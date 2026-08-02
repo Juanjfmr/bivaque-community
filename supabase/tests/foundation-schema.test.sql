@@ -13,8 +13,17 @@ select has_table('private', 'family_account_links', 'accepted family links stay 
 select columns_are(
   'public',
   'profiles',
-  array['user_id', 'locality_id', 'display_name', 'visibility', 'created_at', 'updated_at'],
-  'profiles expose only coarse social fields'
+  array[
+    'user_id',
+    'locality_id',
+    'display_name',
+    'visibility',
+    'consent_version',
+    'consented_at',
+    'created_at',
+    'updated_at'
+  ],
+  'profiles expose only coarse social fields plus consent tracking'
 );
 select columns_are(
   'private',
