@@ -1,5 +1,6 @@
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { log } from "../../../lib/logger"
 import {
   acceptFamilyInvitationAndProvision,
   addToWaitlist,
@@ -89,6 +90,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "unknown action" }, { status: 400 })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "internal server error"
+    log.error("onboarding request failed", { error: message, action: body["action"] as string })
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

@@ -1,0 +1,18 @@
+{
+  "name": "Bivaque",
+  "short_name": "Bivaque",
+  "description": "Comunidade privada Bivaque.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f6ef",
+  "theme_color": "#2f7654",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "pt-BR"
+}
