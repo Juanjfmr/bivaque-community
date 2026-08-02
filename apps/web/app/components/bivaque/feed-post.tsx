@@ -5,6 +5,7 @@ import { Button, Input, TextArea } from "@heroui/react"
 import { useCallback, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { ReportButton } from "./report-button"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
 type CommentRow = Database["public"]["Tables"]["comments"]["Row"]
@@ -36,7 +37,10 @@ function CommentItem({ comment }: { comment: CommentRow }) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm break-words">{comment.content}</p>
-        <span className="text-xs text-muted">{formatRelativeTime(comment.created_at)}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted">{formatRelativeTime(comment.created_at)}</span>
+          <ReportButton targetType="comment" targetId={comment.id} label="Denunciar" />
+        </div>
       </div>
     </div>
   )
@@ -85,7 +89,7 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
     const { error } = await supabase.from("comments").insert({
       post_id: post.id,
       content: trimmed,
-    } as never)
+    } as Database["public"]["Tables"]["comments"]["Insert"])
 
     if (error) {
       setCommentError(error.message)
@@ -149,6 +153,7 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
             <Button variant="tertiary" size="sm" onPress={handleToggleComments}>
               {post.comment_count > 0 ? `${post.comment_count} comentarios` : "Comentar"}
             </Button>
+            <ReportButton targetType="post" targetId={post.id} label="Denunciar" />
           </div>
 
           {showComments && (
@@ -247,23 +252,26 @@ export function CreatePostModal({ localityId, onCreated, onClose }: CreatePostMo
 
     setSubmitting(true)
 
-    const insertData: Record<string, unknown> = {
+    const insertData = {
       locality_id: localityId,
       post_type: postType,
       content: content.trim(),
-    }
+    } as const
 
+    const extras: Record<string, unknown> = {}
     if (postType === "photo" && photoPath.trim()) {
-      insertData["photo_path"] = photoPath.trim()
+      extras["photo_path"] = photoPath.trim()
     }
     if (postType === "link" && linkUrl.trim()) {
-      insertData["link_url"] = linkUrl.trim()
+      extras["link_url"] = linkUrl.trim()
     }
     if (postType === "poll" && pollOptions.length >= 2) {
-      insertData["poll_options"] = pollOptions
+      extras["poll_options"] = pollOptions
     }
 
-    const { error: insertError } = await supabase.from("posts").insert(insertData as never)
+    const { error: insertError } = await supabase
+      .from("posts")
+      .insert({ ...insertData, ...extras } as Database["public"]["Tables"]["posts"]["Insert"])
 
     if (insertError) {
       setError(insertError.message)

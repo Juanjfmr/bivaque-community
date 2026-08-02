@@ -14,6 +14,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          is_deleted: boolean
           post_id: string
           user_id: string
         }
@@ -21,6 +22,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           post_id: string
           user_id: string
         }
@@ -28,6 +30,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           post_id?: string
           user_id?: string
         }
@@ -37,6 +40,115 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_blocks: {
+        Row: {
+          blocked_user_id: string
+          blocker_user_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_user_id: string
+          blocker_user_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_user_id?: string
+          blocker_user_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      dm_conversations: {
+        Row: {
+          context_id: string
+          context_type: Database["public"]["Enums"]["dm_context_type"]
+          created_at: string
+          id: string
+          participant_a: string
+          participant_b: string
+        }
+        Insert: {
+          context_id: string
+          context_type: Database["public"]["Enums"]["dm_context_type"]
+          created_at?: string
+          id?: string
+          participant_a: string
+          participant_b: string
+        }
+        Update: {
+          context_id?: string
+          context_type?: Database["public"]["Enums"]["dm_context_type"]
+          created_at?: string
+          id?: string
+          participant_a?: string
+          participant_b?: string
+        }
+        Relationships: []
+      }
+      dm_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "dm_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_reports: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          reason: string
+          reporter_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          reason: string
+          reporter_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          reason?: string
+          reporter_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "dm_messages"
             referencedColumns: ["id"]
           },
         ]
@@ -164,6 +276,7 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          is_deleted: boolean
           locality_id: string
           name: string
           owner_user_id: string
@@ -174,6 +287,7 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          is_deleted?: boolean
           locality_id: string
           name: string
           owner_user_id: string
@@ -184,6 +298,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          is_deleted?: boolean
           locality_id?: string
           name?: string
           owner_user_id?: string
@@ -255,12 +370,49 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_user_id: string
+          target_id: string
+          target_type: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_user_id: string
+          target_id: string
+          target_type: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_user_id?: string
+          target_id?: string
+          target_type?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           content: string
           created_at: string
           group_id: string | null
           id: string
+          is_deleted: boolean
           link_url: string | null
           locality_id: string
           photo_path: string | null
@@ -273,6 +425,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_deleted?: boolean
           link_url?: string | null
           locality_id: string
           photo_path?: string | null
@@ -285,6 +438,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_deleted?: boolean
           link_url?: string | null
           locality_id?: string
           photo_path?: string | null
@@ -445,6 +599,45 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          operator_note: string | null
+          reason: string
+          reporter_user_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: Database["public"]["Enums"]["report_target_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          operator_note?: string | null
+          reason: string
+          reporter_user_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: Database["public"]["Enums"]["report_target_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          operator_note?: string | null
+          reason?: string
+          reporter_user_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id?: string
+          target_type?: Database["public"]["Enums"]["report_target_type"]
+        }
+        Relationships: []
+      }
       waitlist: {
         Row: {
           created_at: string
@@ -540,12 +733,24 @@ export type Database = {
       }
     }
     Enums: {
+      dm_context_type:
+        | "shared_group"
+        | "shared_event"
+        | "recommendation_thread"
+        | "accepted_family"
       event_rsvp_status: "interested" | "going"
       event_status: "upcoming" | "cancelled"
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
       group_visibility: "public" | "private"
       locality_admission_mode: "invite_only" | "waitlist_only"
+      notification_type:
+        | "comment"
+        | "group_admission"
+        | "invitation_accepted"
+        | "event_rsvp"
+        | "event_change"
+        | "direct_message"
       post_type: "text" | "photo" | "link" | "poll"
       profile_visibility: "locality_members" | "hidden"
       recommendation_category:
@@ -557,6 +762,8 @@ export type Database = {
         | "transporte"
         | "moradia"
         | "outros"
+      report_status: "open" | "resolved"
+      report_target_type: "post" | "comment" | "group" | "message"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -684,12 +891,26 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      dm_context_type: [
+        "shared_group",
+        "shared_event",
+        "recommendation_thread",
+        "accepted_family",
+      ],
       event_rsvp_status: ["interested", "going"],
       event_status: ["upcoming", "cancelled"],
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
       group_visibility: ["public", "private"],
       locality_admission_mode: ["invite_only", "waitlist_only"],
+      notification_type: [
+        "comment",
+        "group_admission",
+        "invitation_accepted",
+        "event_rsvp",
+        "event_change",
+        "direct_message",
+      ],
       post_type: ["text", "photo", "link", "poll"],
       profile_visibility: ["locality_members", "hidden"],
       recommendation_category: [
@@ -702,6 +923,8 @@ export const Constants = {
         "moradia",
         "outros",
       ],
+      report_status: ["open", "resolved"],
+      report_target_type: ["post", "comment", "group", "message"],
     },
   },
 } as const

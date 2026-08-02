@@ -4,6 +4,7 @@ import { brandTokens } from "@bivaque/tokens"
 import { Button, Form, Input, TextArea } from "@heroui/react"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../lib/supabase/client"
+import { ReportButton } from "../components/bivaque/report-button"
 
 type GroupRow = {
   id: string
@@ -114,15 +115,13 @@ export default function GroupsPage() {
     setError(null)
 
     try {
-      const args: Record<string, unknown> = {
+      const args = {
         p_name: createName,
         p_visibility: createVisibility,
         p_locality_id: profileLocalityId,
+        ...(createDescription ? { p_description: createDescription } : {}),
       }
-      if (createDescription) {
-        args["p_description"] = createDescription
-      }
-      const { error: rpcError } = await supabase.rpc("create_group" as never, args as never)
+      const { error: rpcError } = await supabase.rpc("create_group", args)
       if (rpcError) throw new Error(rpcError.message)
 
       setCreateName("")
@@ -142,10 +141,9 @@ export default function GroupsPage() {
     setError(null)
 
     try {
-      const { error: rpcError } = await supabase.rpc(
-        "join_group" as never,
-        { p_group_id: groupId } as never,
-      )
+      const { error: rpcError } = await supabase.rpc("join_group", {
+        p_group_id: groupId,
+      })
       if (rpcError) throw new Error(rpcError.message)
       await loadData()
     } catch (err) {
@@ -180,10 +178,10 @@ export default function GroupsPage() {
     setError(null)
 
     try {
-      const { error: rpcError } = await supabase.rpc(
-        "approve_group_member" as never,
-        { p_group_id: groupId, p_user_id: targetUserId } as never,
-      )
+      const { error: rpcError } = await supabase.rpc("approve_group_member", {
+        p_group_id: groupId,
+        p_user_id: targetUserId,
+      })
       if (rpcError) throw new Error(rpcError.message)
       await loadGroupMembers(groupId)
       await loadData()
@@ -199,10 +197,10 @@ export default function GroupsPage() {
     setError(null)
 
     try {
-      const { error: rpcError } = await supabase.rpc(
-        "add_group_moderator" as never,
-        { p_group_id: groupId, p_user_id: targetUserId } as never,
-      )
+      const { error: rpcError } = await supabase.rpc("add_group_moderator", {
+        p_group_id: groupId,
+        p_user_id: targetUserId,
+      })
       if (rpcError) throw new Error(rpcError.message)
       await loadGroupMembers(groupId)
     } catch (err) {
@@ -217,10 +215,10 @@ export default function GroupsPage() {
     setError(null)
 
     try {
-      const { error: rpcError } = await supabase.rpc(
-        "remove_group_moderator" as never,
-        { p_group_id: groupId, p_user_id: targetUserId } as never,
-      )
+      const { error: rpcError } = await supabase.rpc("remove_group_moderator", {
+        p_group_id: groupId,
+        p_user_id: targetUserId,
+      })
       if (rpcError) throw new Error(rpcError.message)
       await loadGroupMembers(groupId)
     } catch (err) {
@@ -360,6 +358,7 @@ export default function GroupsPage() {
                     <span className="rounded-full bg-[color-mix(in_oklch,var(--foreground)_8%,transparent)] px-2 py-0.5 text-xs text-muted">
                       {group.visibility === "public" ? "Público" : "Privado"}
                     </span>
+                    <ReportButton targetType="group" targetId={group.id} label="Denunciar" />
                   </div>
                   {group.description && <p className="text-sm text-muted">{group.description}</p>}
                 </div>
