@@ -10,6 +10,7 @@
     "build": "pnpm --filter web build",
     "db:lint": "supabase db lint --local --level error",
     "db:reset": "supabase db reset --local",
+    "generate:types": "supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts",
     "lint": "biome check .",
     "test:db": "supabase test db",
     "test:e2e": "playwright test",

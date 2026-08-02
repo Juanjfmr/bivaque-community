@@ -54,6 +54,11 @@ jobs:
       - name: Start local Supabase
         run: pnpm exec supabase start
 
+      - name: Check generated types drift
+        run: |
+          pnpm generate:types
+          git diff --exit-code -- supabase/database.generated.ts
+
       - name: Reset local database
         run: pnpm db:reset
 

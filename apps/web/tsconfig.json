@@ -5,7 +5,10 @@
     "jsx": "preserve",
     "noEmit": true,
     "incremental": true,
-    "plugins": [{ "name": "next" }]
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "supabase/database.generated": ["../../supabase/database.generated.ts"]
+    }
   },
   "include": [
     "next-env.d.ts",
@@ -13,6 +16,7 @@
     ".next/dev/types/**/*.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
+    "lib/**/*.ts",
     "next.config.ts"
   ],
   "exclude": ["node_modules"]

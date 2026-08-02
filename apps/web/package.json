@@ -16,6 +16,7 @@
     "@bivaque/tokens": "workspace:*",
     "@heroui/react": "^3.2.3",
     "@heroui/styles": "^3.2.3",
+    "@supabase/supabase-js": "^2.59.1",
     "next": "^16.2.12",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
