@@ -122,7 +122,7 @@ export function classifyPortalResponse(response: PortalApiResponse): Verificatio
   }
 
   const record = response[0]
-  if (record === undefined) {
+  if (record === undefined || record === null || typeof record !== "object") {
     return { status: "rejected" }
   }
 

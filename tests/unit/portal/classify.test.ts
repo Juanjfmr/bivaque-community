@@ -236,4 +236,73 @@ describe("classifyPortalResponse", () => {
       expect(result).toEqual<VerificationResult>({ status: "rejected" })
     })
   })
+
+  describe("additional ambiguous statuses", () => {
+    it("rejects DISPONIBILIDADE status", () => {
+      const result = classifyPortalResponse([
+        { orgao_servidor: "Comando da Marinha", situacao_funcional: "DISPONIBILIDADE" },
+      ])
+      expect(result).toEqual<VerificationResult>({ status: "rejected" })
+    })
+
+    it("rejects LICENÇA status", () => {
+      const result = classifyPortalResponse([
+        { orgao_servidor: "Comando da Aeronáutica", situacao_funcional: "LICENÇA" },
+      ])
+      expect(result).toEqual<VerificationResult>({ status: "rejected" })
+    })
+
+    it("rejects EXONERADO status", () => {
+      const result = classifyPortalResponse([
+        { orgao_servidor: "Ministério da Defesa", situacao_funcional: "EXONERADO" },
+      ])
+      expect(result).toEqual<VerificationResult>({ status: "rejected" })
+    })
+
+    it("rejects DEMITIDO status", () => {
+      const result = classifyPortalResponse([
+        { orgao_servidor: "Comando do Exército", situacao_funcional: "DEMITIDO" },
+      ])
+      expect(result).toEqual<VerificationResult>({ status: "rejected" })
+    })
+  })
+
+  describe("edge case records", () => {
+    it("rejects a null record element", () => {
+      const result = classifyPortalResponse([null] as unknown as PortalApiResponse)
+      expect(result).toEqual<VerificationResult>({ status: "rejected" })
+    })
+
+    it("rejects an empty object record", () => {
+      const result = classifyPortalResponse([{}] as PortalApiResponse)
+      expect(result).toEqual<VerificationResult>({ status: "rejected" })
+    })
+
+    it("rejects a record with only org field but non-military", () => {
+      const result = classifyPortalResponse([{ orgao_servidor: "Ministério da Educação" }])
+      expect(result.status).toBe("rejected")
+    })
+
+    it("rejects a record with only situacao but no org", () => {
+      const result = classifyPortalResponse([{ situacao_funcional: "ATIVO PERMANENTE" }])
+      expect(result.status).toBe("rejected")
+    })
+
+    it("rejects a record with non-string org field", () => {
+      const result = classifyPortalResponse([
+        { orgao_servidor: 42, situacao_funcional: "ATIVO PERMANENTE" },
+      ] as unknown as PortalApiResponse)
+      expect(result).toEqual<VerificationResult>({ status: "rejected" })
+    })
+  })
+
+  describe("mixed civil and military multiple match", () => {
+    it("rejects when one record is federal military and another is civil", () => {
+      const result = classifyPortalResponse([
+        { orgao_servidor: "Comando do Exército", situacao_funcional: "ATIVO PERMANENTE" },
+        { orgao_servidor: "Ministério da Educação", situacao_funcional: "ATIVO PERMANENTE" },
+      ])
+      expect(result).toEqual<VerificationResult>({ status: "rejected" })
+    })
+  })
 })
