@@ -67,6 +67,8 @@ export type Database = {
       }
       profiles: {
         Row: {
+          consent_version: number
+          consented_at: string | null
           created_at: string
           display_name: string
           locality_id: string
@@ -75,6 +77,8 @@ export type Database = {
           visibility: Database["public"]["Enums"]["profile_visibility"]
         }
         Insert: {
+          consent_version?: number
+          consented_at?: string | null
           created_at?: string
           display_name: string
           locality_id: string
@@ -83,6 +87,8 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["profile_visibility"]
         }
         Update: {
+          consent_version?: number
+          consented_at?: string | null
           created_at?: string
           display_name?: string
           locality_id?: string
@@ -100,12 +106,56 @@ export type Database = {
           },
         ]
       }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          locality_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          locality_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          locality_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_family_invitation: {
+        Args: { p_accepted_by_user_id: string; p_token_digest: string }
+        Returns: string
+      }
+      add_to_waitlist: {
+        Args: { p_email: string; p_locality_id: string }
+        Returns: undefined
+      }
+      upsert_verification_outcome: {
+        Args: {
+          p_eligibility_class?: string
+          p_status: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       locality_admission_mode: "invite_only" | "waitlist_only"
