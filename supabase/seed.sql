@@ -1,0 +1,2 @@
+-- Manaus is durable reference data and is inserted by the first migration.
+-- User and authorization fixtures belong only in supabase/tests and roll back per test.

@@ -1,0 +1,22 @@
+@layer theme, base, components, utilities;
+
+@import "tailwindcss";
+@import "@heroui/styles";
+
+:root,
+[data-theme="bivaque"] {
+  color-scheme: light;
+  --background: oklch(0.985 0.008 96);
+  --foreground: oklch(0.205 0.018 72);
+  --surface: oklch(1 0 0);
+  --surface-foreground: var(--foreground);
+  --accent: oklch(0.48 0.115 155);
+  --accent-foreground: oklch(0.985 0.008 96);
+  --focus: var(--accent);
+  --link: var(--accent);
+  --radius: 0.75rem;
+}
+
+body {
+  margin: 0;
+}

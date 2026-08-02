@@ -1,0 +1,30 @@
+{
+  "name": "bivaque-community",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "pnpm --filter web build",
+    "db:lint": "supabase db lint --local --level error",
+    "db:reset": "supabase db reset --local",
+    "lint": "biome check .",
+    "test:db": "supabase test db",
+    "test:e2e": "playwright test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm test:unit && pnpm test:scope",
+    "test:unit": "vitest run tests/unit",
+    "test:scope": "node --test tests/scope/*.test.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.6",
+    "@bivaque/contracts": "workspace:*",
+    "@playwright/test": "1.51.1",
+    "@types/node": "^26.1.2",
+    "supabase": "2.107.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}
