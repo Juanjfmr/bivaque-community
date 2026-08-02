@@ -15,8 +15,21 @@
   --focus: var(--accent);
   --link: var(--accent);
   --radius: 0.75rem;
+  --nav-height: 3.5rem;
+  --header-height: 3rem;
 }
 
 body {
   margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s;
+    animation-iteration-count: 1;
+    transition-duration: 0s;
+    scroll-behavior: auto;
+  }
 }

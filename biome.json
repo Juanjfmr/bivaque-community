@@ -8,7 +8,8 @@
       "!**/dist",
       "!**/next-env.d.ts",
       "!**/node_modules",
-      "!**/pnpm-lock.yaml"
+      "!**/pnpm-lock.yaml",
+      "!supabase/database.generated.ts"
     ]
   },
   "formatter": {

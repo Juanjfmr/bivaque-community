@@ -1,6 +1,7 @@
 import { brandTokens } from "@bivaque/tokens"
 import type { Metadata, Viewport } from "next"
 import type { ReactNode } from "react"
+import { AppShell } from "./components/bivaque/app-shell"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -21,7 +22,9 @@ type RootLayoutProperties = Readonly<{
 export default function RootLayout({ children }: RootLayoutProperties) {
   return (
     <html lang="pt-BR" data-theme="bivaque">
-      <body className="bg-background text-foreground antialiased">{children}</body>
+      <body className="bg-background text-foreground antialiased">
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   )
 }

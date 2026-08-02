@@ -7,7 +7,7 @@ const pilotLocality: LocalityCode = PILOT_LOCALITY_CODE
 
 export default function HomePage() {
   return (
-    <main className="grid min-h-dvh place-items-center px-6 py-12">
+    <div className="grid flex-1 place-items-center px-6 py-12">
       <section className="flex max-w-md flex-col items-start gap-4" aria-labelledby="page-title">
         <p className="text-sm font-medium text-muted">Manaus, AM</p>
         <h1 id="page-title" className="text-4xl font-semibold tracking-tight">
@@ -20,6 +20,6 @@ export default function HomePage() {
           Ambiente privado
         </Button>
       </section>
-    </main>
+    </div>
   )
 }
