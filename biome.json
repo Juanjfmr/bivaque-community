@@ -9,7 +9,9 @@
       "!**/next-env.d.ts",
       "!**/node_modules",
       "!**/pnpm-lock.yaml",
-      "!supabase/database.generated.ts"
+      "!supabase/database.generated.ts",
+      "!**/playwright-report",
+      "!**/test-results"
     ]
   },
   "formatter": {

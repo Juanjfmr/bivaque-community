@@ -45,8 +45,11 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Unit and scope tests
+      - name: Unit, privacy and scope tests
         run: pnpm test
+
+      - name: Secrets scan
+        run: pnpm test:secrets
 
       - name: Build web app
         run: pnpm build
