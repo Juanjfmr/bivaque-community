@@ -437,8 +437,12 @@ test.describe("accessibility across journeys", () => {
 
     for (let index = 0; index < count; index++) {
       const tab = tabs.nth(index)
-      await tab.waitFor({ state: "visible" })
-      const box = await tab.boundingBox()
+      await expect(tab).toBeVisible()
+      let box = await tab.boundingBox()
+      for (let attempt = 0; attempt < 5 && box === null; attempt++) {
+        await page.waitForTimeout(250)
+        box = await tab.boundingBox()
+      }
       expect(box).not.toBeNull()
 
       if (box) {
