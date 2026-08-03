@@ -18,7 +18,8 @@
     "test": "pnpm test:unit && pnpm test:privacy && pnpm test:scope",
     "test:unit": "vitest run tests/unit",
     "test:privacy": "vitest run tests/privacy",
-    "test:scope": "node --test tests/scope/*.test.mjs"
+    "test:scope": "node --test tests/scope/*.test.mjs",
+    "test:secrets": "node tests/secrets-scan.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.6",
