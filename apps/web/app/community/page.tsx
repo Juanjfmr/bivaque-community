@@ -16,11 +16,21 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const supabase = createBrowserClient()
 
   const loadFeed = useCallback(async () => {
     setLoading(true)
     setError("")
+
+    const supabase = createBrowserClient()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      setError("Sessão expirada. Faça login novamente.")
+      setLoading(false)
+      return
+    }
 
     const { data, error: feedError } = await supabase.rpc("feed_posts", {
       p_locality_id: MANAUS_LOCALITY_ID,
@@ -34,7 +44,7 @@ export default function CommunityPage() {
     }
 
     setLoading(false)
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     loadFeed()
