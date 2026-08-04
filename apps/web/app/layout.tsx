@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next"
 import type { ReactNode } from "react"
 import { AppShell } from "./components/bivaque/app-shell"
 import { ServiceWorkerRegistration } from "./components/bivaque/service-worker-registration"
+import { SupabaseAuthProvider } from "./components/bivaque/supabase-auth-provider"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -25,7 +26,9 @@ export default function RootLayout({ children }: RootLayoutProperties) {
   return (
     <html lang="pt-BR" data-theme="bivaque">
       <body className="bg-background text-foreground antialiased">
-        <AppShell>{children}</AppShell>
+        <SupabaseAuthProvider>
+          <AppShell>{children}</AppShell>
+        </SupabaseAuthProvider>
         <ServiceWorkerRegistration />
       </body>
     </html>

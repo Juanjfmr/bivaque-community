@@ -23,10 +23,10 @@ export default function CommunityPage() {
 
     const supabase = createBrowserClient()
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       setError("Sessão expirada. Faça login novamente.")
       setLoading(false)
       return
