@@ -104,7 +104,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] bg-[var(--surface)] pb-[env(safe-area-inset-bottom,0px)]"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--surface)] pb-[env(safe-area-inset-bottom,0px)]"
     >
       <Tabs selectedKey={selectedKey} variant="primary" aria-label="Navegação principal">
         <Tabs.List aria-label="Seções do aplicativo" className="flex justify-around">

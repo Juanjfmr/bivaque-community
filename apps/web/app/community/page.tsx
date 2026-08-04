@@ -52,7 +52,7 @@ export default function CommunityPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="sticky top-12 z-30 border-b border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] bg-[var(--surface)] px-4 py-3">
+      <div className="sticky top-12 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <h1 className="text-lg font-semibold tracking-tight">Minha comunidade</h1>
           <Button

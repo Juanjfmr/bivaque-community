@@ -49,7 +49,7 @@ const MOCK_REQUESTS: RecommendationRequest[] = [
 
 function ScopeBadge({ scope }: { scope: string }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-[color-mix(in_oklch,var(--foreground)_15%,transparent)] px-2 py-0.5 text-xs text-muted">
+    <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs text-muted">
       {scope}
     </span>
   )
@@ -107,7 +107,7 @@ export default function RecommendationsPage() {
               aria-label="Filtrar por categoria"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as CategoryId | "")}
-              className="max-w-xs rounded-md border border-[color-mix(in_oklch,var(--foreground)_15%,transparent)] bg-[var(--surface)] px-3 py-2 text-sm"
+              className="max-w-xs rounded-md border border-border bg-[var(--surface)] px-3 py-2 text-sm"
             >
               <option value="">Todas as categorias</option>
               {CATEGORIES.map((cat) => (
@@ -166,7 +166,7 @@ export default function RecommendationsPage() {
               required
               aria-label="Categoria"
               defaultValue=""
-              className="max-w-xs rounded-md border border-[color-mix(in_oklch,var(--foreground)_15%,transparent)] bg-[var(--surface)] px-3 py-2 text-sm"
+              className="max-w-xs rounded-md border border-border bg-[var(--surface)] px-3 py-2 text-sm"
             >
               <option value="" disabled>
                 Selecione uma categoria
@@ -182,7 +182,7 @@ export default function RecommendationsPage() {
               required
               aria-label="Título"
               placeholder="Título da sua indicação"
-              className="rounded-md border border-[color-mix(in_oklch,var(--foreground)_15%,transparent)] bg-[var(--surface)] px-3 py-2 text-sm"
+              className="rounded-md border border-border bg-[var(--surface)] px-3 py-2 text-sm"
             />
 
             <textarea
@@ -190,7 +190,7 @@ export default function RecommendationsPage() {
               aria-label="Descrição"
               placeholder="Descreva o que você está procurando. Evite termos comerciais como preço, pagamento, anúncio ou contato comercial."
               rows={3}
-              className="rounded-md border border-[color-mix(in_oklch,var(--foreground)_15%,transparent)] bg-[var(--surface)] px-3 py-2 text-sm"
+              className="rounded-md border border-border bg-[var(--surface)] px-3 py-2 text-sm"
             />
 
             <p className="text-xs text-muted">

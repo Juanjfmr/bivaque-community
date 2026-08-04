@@ -31,7 +31,7 @@ export default function ConsentPage() {
           Termos de uso
         </h1>
 
-        <div className="prose prose-sm max-h-64 overflow-y-auto rounded-lg border border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] p-4 text-sm text-muted">
+        <div className="prose prose-sm max-h-64 overflow-y-auto rounded-lg border border-border p-4 text-sm text-muted">
           <p>
             Bem-vindo ao {brandTokens.productName}, uma comunidade privada para militares federais
             ativos, veteranos e pensionistas militares.

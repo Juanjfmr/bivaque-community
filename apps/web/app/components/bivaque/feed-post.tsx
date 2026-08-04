@@ -102,7 +102,7 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
   }, [commentText, post.id, supabase, loadComments])
 
   return (
-    <div className="rounded-xl border border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] bg-[var(--surface)] p-4">
+    <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
       <div className="flex items-start gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklch,var(--foreground)_12%,transparent)] text-sm font-medium">
           {post.display_name?.charAt(0) ?? "?"}
@@ -129,7 +129,7 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
               href={post.link_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 block truncate text-sm underline"
+              className="mt-2 flex min-h-11 items-center truncate text-sm underline transition-colors duration-[var(--duration-instant)]"
               style={{ color: brandTokens.color.accent }}
             >
               {post.link_url}
@@ -139,10 +139,7 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
           {post.post_type === "poll" && post.poll_options && (
             <div className="mt-2 space-y-1">
               {(post.poll_options as unknown as string[]).map((option) => (
-                <div
-                  key={option}
-                  className="rounded-md border border-[color-mix(in_oklch,var(--foreground)_12%,transparent)] px-3 py-1.5 text-sm"
-                >
+                <div key={option} className="rounded-md border border-border px-3 py-1.5 text-sm">
                   {option}
                 </div>
               ))}
@@ -157,7 +154,7 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
           </div>
 
           {showComments && (
-            <div className="mt-2 border-t border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] pt-2">
+            <div className="mt-2 border-t border-border pt-2">
               {comments.map((c) => (
                 <CommentItem key={c.id} comment={c} />
               ))}
@@ -297,7 +294,7 @@ export function CreatePostModal({ localityId, onCreated, onClose }: CreatePostMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-[color-mix(in_oklch,var(--foreground)_12%,transparent)] bg-[var(--surface)] p-6 shadow-lg">
+      <div className="w-full max-w-lg rounded-xl border border-border bg-[var(--surface)] p-6 shadow-lg">
         <h2 className="text-lg font-semibold">Criar publicacao</h2>
 
         <div className="mt-4 space-y-4">

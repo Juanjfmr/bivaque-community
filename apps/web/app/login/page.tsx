@@ -73,9 +73,9 @@ export default function LoginPage() {
         </Button>
 
         <div className="flex items-center gap-3">
-          <hr className="flex-1 border-[color-mix(in_oklch,var(--foreground)_12%,transparent)]" />
+          <hr className="flex-1 border-border" />
           <span className="text-xs text-muted">ou</span>
-          <hr className="flex-1 border-[color-mix(in_oklch,var(--foreground)_12%,transparent)]" />
+          <hr className="flex-1 border-border" />
         </div>
 
         <Form

@@ -31,7 +31,7 @@ interface AppShellProperties {
 export function AppShell({ children }: AppShellProperties) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-50 border-b border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] bg-[var(--surface)]">
+      <header className="sticky top-0 z-50 border-b border-border bg-[var(--surface)]">
         <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4">
           <span className="text-base font-semibold tracking-tight">{brandTokens.productName}</span>
 

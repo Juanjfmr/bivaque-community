@@ -6,6 +6,8 @@
 :root,
 [data-theme="bivaque"] {
   color-scheme: light;
+
+  /* Color — DESIGN_SPEC.md §1. Base tokens keep their existing values. */
   --background: oklch(0.985 0.008 96);
   --foreground: oklch(0.205 0.018 72);
   --surface: oklch(1 0 0);
@@ -14,13 +16,104 @@
   --accent-foreground: oklch(0.985 0.008 96);
   --focus: var(--accent);
   --link: var(--accent);
+
+  /* Cards above the page background. */
+  --surface-raised: var(--surface);
+  /* Inset areas (composer field, empty states). */
+  --surface-sunken: color-mix(in oklch, var(--background) 95%, var(--foreground) 5%);
+  /* Hairlines — the single border color; components must not inline color-mix borders. */
+  --border: color-mix(in oklch, var(--foreground) 12%, transparent);
+  /* Secondary text; holds ≥ 4.5:1 on --surface. */
+  --muted: oklch(0.5 0.02 72);
+  /* 12% accent tint for selected chips and active nav. */
+  --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
+  /* Destructive + report affordances, moderation / verification states. */
+  --danger: oklch(0.6532 0.2328 25.74);
+  --danger-soft: color-mix(in oklch, var(--danger) 15%, transparent);
+  --warning: oklch(0.7819 0.1585 72.33);
+  --success: oklch(0.7329 0.1935 150.81);
+  /* Modal scrim. DESIGN_SPEC §1 names this role "--overlay", but HeroUI v3 reserves
+     --overlay for the floating surface (dialog/popover/menu), so the scrim lives in
+     --backdrop, HeroUI's scrim knob. Mixed against --foreground, never raw black. */
+  --backdrop: color-mix(in oklch, var(--foreground) 45%, transparent);
+
+  /* Elevation — shadows mix against --foreground, never black. */
+  --elevation-0: none;
+  --elevation-1:
+    0 1px 2px color-mix(in oklch, var(--foreground) 10%, transparent),
+    0 1px 3px color-mix(in oklch, var(--foreground) 8%, transparent);
+  --elevation-2:
+    0 2px 4px color-mix(in oklch, var(--foreground) 10%, transparent),
+    0 8px 16px color-mix(in oklch, var(--foreground) 12%, transparent);
+  --elevation-3:
+    0 4px 8px color-mix(in oklch, var(--foreground) 12%, transparent),
+    0 16px 40px color-mix(in oklch, var(--foreground) 18%, transparent);
+
+  /* Spacing — 4px scale. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  /* Radius. */
+  --radius-sm: 0.5rem;
   --radius: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+
+  /* Typography — nothing below 12px. */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+
+  /* Motion. */
+  --duration-instant: 100ms;
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Interactive controls — DESIGN_SPEC §4: every target is ≥ 44×44 CSS px. */
+  --control-min-height: 2.75rem;
+
   --nav-height: 3.5rem;
   --header-height: 3rem;
 }
 
 body {
   margin: 0;
+}
+
+@layer base {
+  body {
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    line-height: 1.2;
+  }
+}
+
+@layer components {
+  .button,
+  .input,
+  .tabs__tab {
+    min-height: var(--control-min-height);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

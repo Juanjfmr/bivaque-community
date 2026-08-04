@@ -278,7 +278,7 @@ export default function GroupsPage() {
       {showCreate && profileLocalityId && (
         <Form
           onSubmit={handleCreate}
-          className="flex flex-col gap-4 rounded-lg border border-[color-mix(in_oklch,var(--foreground)_12%,transparent)] p-4"
+          className="flex flex-col gap-4 rounded-lg border border-border p-4"
         >
           <h2 className="text-base font-semibold">Novo grupo</h2>
 
@@ -347,10 +347,7 @@ export default function GroupsPage() {
           const isSelected = selectedGroupId === group.id
 
           return (
-            <div
-              key={group.id}
-              className="flex flex-col gap-3 rounded-lg border border-[color-mix(in_oklch,var(--foreground)_12%,transparent)] p-4"
-            >
+            <div key={group.id} className="flex flex-col gap-3 rounded-lg border border-border p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
@@ -412,7 +409,7 @@ export default function GroupsPage() {
               </div>
 
               {isSelected && isModerator && (
-                <div className="flex flex-col gap-2 border-t border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] pt-3">
+                <div className="flex flex-col gap-2 border-t border-border pt-3">
                   <h4 className="text-sm font-semibold">Membros</h4>
                   {selectedGroupMembers.length === 0 && (
                     <p className="text-xs text-muted">Nenhum membro encontrado.</p>
@@ -420,7 +417,7 @@ export default function GroupsPage() {
                   {selectedGroupMembers.map((m) => (
                     <div
                       key={m.user_id}
-                      className="flex items-center justify-between gap-2 rounded border border-[color-mix(in_oklch,var(--foreground)_6%,transparent)] px-3 py-2 text-sm"
+                      className="flex items-center justify-between gap-2 rounded border border-border px-3 py-2 text-sm"
                     >
                       <div className="flex items-center gap-2">
                         <span>{m.user_id === userId ? "Você" : m.user_id.slice(0, 8)}</span>

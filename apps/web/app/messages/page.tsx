@@ -247,7 +247,7 @@ export default function MessagesPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="sticky top-12 z-30 border-b border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] bg-[var(--surface)] px-4 py-3">
+      <div className="sticky top-12 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <h1 className="text-lg font-semibold tracking-tight">Mensagens</h1>
         </div>
@@ -276,7 +276,7 @@ export default function MessagesPage() {
         {!loading && conversations.length > 0 && (
           <div className="flex w-full gap-4">
             {/* Conversation list */}
-            <div className="w-64 shrink-0 space-y-1 border-r border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] pr-4">
+            <div className="w-64 shrink-0 space-y-1 border-r border-border pr-4">
               {conversations.map((conversation) => {
                 const otherId = otherParticipantId(conversation)
                 if (!otherId) return null
@@ -311,7 +311,7 @@ export default function MessagesPage() {
               ) : (
                 <>
                   {/* Conversation header */}
-                  <div className="mb-3 flex items-center justify-between border-b border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] pb-2">
+                  <div className="mb-3 flex items-center justify-between border-b border-border pb-2">
                     <div>
                       <span className="text-sm font-medium">
                         Conversa via{" "}
@@ -398,7 +398,7 @@ export default function MessagesPage() {
                             </div>
 
                             {reportingMessageId === message.id && (
-                              <div className="mt-2 space-y-1 border-t border-[color-mix(in_oklch,var(--foreground)_10%,transparent)] pt-2">
+                              <div className="mt-2 space-y-1 border-t border-border pt-2">
                                 <TextArea
                                   placeholder="Motivo da denuncia (min. 10 caracteres)"
                                   value={reportReason}
@@ -438,7 +438,7 @@ export default function MessagesPage() {
                   {/* Message input */}
                   {!selectedBlockedByOther && (
                     <Form
-                      className="mt-3 flex gap-2 border-t border-[color-mix(in_oklch,var(--foreground)_8%,transparent)] pt-3"
+                      className="mt-3 flex gap-2 border-t border-border pt-3"
                       onSubmit={(e) => {
                         e.preventDefault()
                         void handleSendMessage()
