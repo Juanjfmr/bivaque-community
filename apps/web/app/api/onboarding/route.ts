@@ -11,6 +11,14 @@ import { createServerClient } from "../../../lib/supabase/server"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
+interface OnboardingRequestBody {
+  action?: string
+  cpf?: string
+  token?: string
+  email?: string
+  locality_id?: string
+}
+
 export async function POST(request: Request) {
   const authHeader = request.headers.get("authorization")
   if (!authHeader?.startsWith("Bearer ")) {
@@ -32,9 +40,9 @@ export async function POST(request: Request) {
 
   const userId = authUser.id
 
-  let body: Record<string, unknown>
+  let body: OnboardingRequestBody
   try {
-    body = (await request.json()) as Record<string, unknown>
+    body = (await request.json()) as OnboardingRequestBody
   } catch {
     return NextResponse.json({ error: "invalid json" }, { status: 400 })
   }
@@ -43,11 +51,11 @@ export async function POST(request: Request) {
   const consentVersionStr = cookieStore.get("bivaque-consent-version")?.value ?? "0"
   const consentVersion = Number.parseInt(consentVersionStr, 10)
 
-  const action = body["action"]
+  const action = body.action
 
   try {
     if (action === "verify-cpf") {
-      const cpf = body["cpf"]
+      const cpf = body.cpf
       if (typeof cpf !== "string" || cpf.length === 0) {
         return NextResponse.json({ error: "cpf is required" }, { status: 400 })
       }
@@ -57,7 +65,7 @@ export async function POST(request: Request) {
     }
 
     if (action === "accept-family-invite") {
-      const tokenHex = body["token"]
+      const tokenHex = body.token
       if (typeof tokenHex !== "string" || tokenHex.length === 0) {
         return NextResponse.json({ error: "token is required" }, { status: 400 })
       }
@@ -72,8 +80,8 @@ export async function POST(request: Request) {
     }
 
     if (action === "join-waitlist") {
-      const email = body["email"]
-      const localityId = body["locality_id"]
+      const email = body.email
+      const localityId = body.locality_id
 
       if (typeof email !== "string" || email.length === 0) {
         return NextResponse.json({ error: "email is required" }, { status: 400 })
@@ -90,7 +98,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "unknown action" }, { status: 400 })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "internal server error"
-    log.error("onboarding request failed", { error: message, action: body["action"] as string })
+    log.error("onboarding request failed", { error: message, action: body.action as string })
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
