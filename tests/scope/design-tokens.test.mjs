@@ -121,3 +121,25 @@ test("exports the full token set from @bivaque/tokens", () => {
   assert.match(tokens, /surfaceRaised:/)
   assert.match(tokens, /backdrop:/)
 })
+
+test("defines the DESIGN_SPEC section 2 motion utilities with reduced-motion intact", () => {
+  // Given the web application global stylesheet
+  const globals = readFileSync(join(root, "apps/web/app/globals.css"), "utf8")
+
+  // When the motion layer is inspected
+  const utilities = [
+    "motion-card-enter",
+    "motion-scrim-enter",
+    "motion-panel-enter",
+    "motion-press",
+    "motion-lift",
+  ]
+
+  // Then the enter/press/lift utilities exist and read from tokens
+  const missing = utilities.filter((utility) => !globals.includes(`.${utility}`))
+  assert.deepEqual(missing, [])
+
+  // And every interactive element still resolves motion via the reduced-motion block
+  assert.match(globals, /animation-duration:\s*0s/)
+  assert.match(globals, /transition-duration:\s*0s/)
+})

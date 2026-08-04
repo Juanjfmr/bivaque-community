@@ -45,7 +45,7 @@ function CommentItem({ comment }: { comment: CommentRow }) {
   )
 }
 
-export function FeedPost({ post }: { post: FeedPostRow }) {
+export function FeedPost({ post, index = 0 }: { post: FeedPostRow; index?: number }) {
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState<CommentRow[]>([])
   const [commentText, setCommentText] = useState("")
@@ -101,7 +101,10 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
   }, [commentText, post.id, supabase, loadComments])
 
   return (
-    <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+    <div
+      className="motion-card-enter motion-lift rounded-xl border border-border bg-[var(--surface)] p-4"
+      style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
+    >
       <div className="flex items-start gap-3">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-sm font-medium">
           {post.display_name?.charAt(0) ?? "?"}
@@ -288,8 +291,8 @@ export function CreatePostModal({ localityId, onCreated, onClose }: CreatePostMo
   ])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop)] p-4">
-      <div className="w-full max-w-lg rounded-xl border border-border bg-[var(--surface)] p-6 shadow-[var(--elevation-3)]">
+    <div className="motion-scrim-enter fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop)] p-4">
+      <div className="motion-panel-enter w-full max-w-lg rounded-xl border border-border bg-[var(--surface)] p-6 shadow-[var(--elevation-3)]">
         <h2 className="text-lg font-semibold">Criar publicacao</h2>
 
         <div className="mt-4 space-y-4">

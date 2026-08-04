@@ -288,7 +288,7 @@ export default function MessagesPage() {
                     key={conversation.id}
                     type="button"
                     onClick={() => selectConversation(conversation.id)}
-                    className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--duration-instant)] ${
+                    className={`motion-press w-full rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--duration-instant)] ${
                       selectedConversationId === conversation.id
                         ? "bg-[var(--accent-soft)]"
                         : "hover:bg-[var(--surface-subtle)]"
@@ -384,7 +384,7 @@ export default function MessagesPage() {
                                     setReportingMessageId(message.id)
                                     setReportReason("")
                                   }}
-                                  className="text-xs text-muted hover:text-[var(--danger)]"
+                                  className="motion-press text-xs text-muted transition-colors duration-[var(--duration-instant)] hover:text-[var(--danger)]"
                                 >
                                   Denunciar
                                 </button>

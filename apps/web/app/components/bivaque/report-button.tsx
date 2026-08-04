@@ -62,8 +62,8 @@ export function ReportButton({ targetType, targetId, label = "Denunciar" }: Repo
       </Button>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop)] p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-[var(--surface)] p-6 shadow-[var(--elevation-3)]">
+        <div className="motion-scrim-enter fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop)] p-4">
+          <div className="motion-panel-enter w-full max-w-md rounded-xl border border-border bg-[var(--surface)] p-6 shadow-[var(--elevation-3)]">
             <h2 className="text-lg font-semibold">Denunciar conteudo</h2>
             <p className="mt-1 text-sm text-muted">
               Descreva por que este conteudo viola as regras da comunidade.

@@ -91,8 +91,8 @@ export default function CommunityPage() {
 
         {!loading && posts.length > 0 && (
           <div className="space-y-3">
-            {posts.map((post) => (
-              <FeedPost key={post.id} post={post} />
+            {posts.map((post, index) => (
+              <FeedPost key={post.id} post={post} index={index} />
             ))}
           </div>
         )}

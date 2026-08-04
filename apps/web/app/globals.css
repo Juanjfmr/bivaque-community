@@ -120,6 +120,60 @@ body {
   .skeleton--shimmer:after {
     animation-duration: 1.4s;
   }
+
+  /* Motion — DESIGN_SPEC §2. All durations/easings read from tokens; the
+     prefers-reduced-motion block below zeroes these for every element. */
+  .motion-card-enter {
+    animation: motion-card-enter var(--duration-base) var(--ease-out) both;
+  }
+
+  .motion-scrim-enter {
+    animation: motion-fade var(--duration-fast) ease-out both;
+  }
+
+  .motion-panel-enter {
+    animation: motion-panel-enter var(--duration-slow) var(--ease-out) both;
+  }
+
+  .motion-press {
+    transition: transform var(--duration-fast) var(--ease-spring);
+  }
+
+  .motion-press:active {
+    transform: scale(0.97);
+  }
+
+  @media (hover: hover) {
+    .motion-lift {
+      transition:
+        box-shadow var(--duration-base) var(--ease-out),
+        transform var(--duration-fast) var(--ease-spring);
+    }
+
+    .motion-lift:hover {
+      box-shadow: var(--elevation-2);
+    }
+  }
+}
+
+@keyframes motion-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes motion-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
