@@ -1,6 +1,5 @@
 "use client"
 
-import { brandTokens } from "@bivaque/tokens"
 import { Button, Input, TextArea } from "@heroui/react"
 import { useCallback, useState } from "react"
 import type { Database } from "supabase/database.generated"
@@ -32,7 +31,7 @@ function formatRelativeTime(iso: string): string {
 function CommentItem({ comment }: { comment: CommentRow }) {
   return (
     <div className="flex gap-2 py-2">
-      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklch,var(--foreground)_12%,transparent)] text-xs font-medium">
+      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-xs font-medium">
         ?
       </div>
       <div className="min-w-0 flex-1">
@@ -104,7 +103,7 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
   return (
     <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
       <div className="flex items-start gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklch,var(--foreground)_12%,transparent)] text-sm font-medium">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-sm font-medium">
           {post.display_name?.charAt(0) ?? "?"}
         </div>
         <div className="min-w-0 flex-1">
@@ -119,7 +118,7 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
           <p className="mt-1 text-sm break-words whitespace-pre-wrap">{post.content}</p>
 
           {post.post_type === "photo" && post.photo_path && (
-            <div className="mt-2 rounded-md bg-[color-mix(in_oklch,var(--foreground)_4%,transparent)] p-3 text-center text-sm text-muted">
+            <div className="mt-2 rounded-md bg-[var(--surface-sunken)] p-3 text-center text-sm text-muted">
               Foto: {post.photo_path}
             </div>
           )}
@@ -129,8 +128,7 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
               href={post.link_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 flex min-h-11 items-center truncate text-sm underline transition-colors duration-[var(--duration-instant)]"
-              style={{ color: brandTokens.color.accent }}
+              className="mt-2 flex min-h-11 items-center truncate text-sm underline transition-colors duration-[var(--duration-instant)] text-accent"
             >
               {post.link_url}
             </a>
@@ -169,17 +167,14 @@ export function FeedPost({ post }: { post: FeedPostRow }) {
                 />
                 <Button
                   size="sm"
+                  variant="primary"
                   onPress={handleAddComment}
                   isDisabled={submitting || !commentText.trim()}
-                  style={{
-                    backgroundColor: brandTokens.color.accent,
-                    color: brandTokens.color.accentForeground,
-                  }}
                 >
                   Enviar
                 </Button>
               </div>
-              {commentError && <p className="mt-1 text-xs text-red-500">{commentError}</p>}
+              {commentError && <p className="mt-1 text-xs text-[var(--danger)]">{commentError}</p>}
             </div>
           )}
         </div>
@@ -293,8 +288,8 @@ export function CreatePostModal({ localityId, onCreated, onClose }: CreatePostMo
   ])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-border bg-[var(--surface)] p-6 shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop)] p-4">
+      <div className="w-full max-w-lg rounded-xl border border-border bg-[var(--surface)] p-6 shadow-[var(--elevation-3)]">
         <h2 className="text-lg font-semibold">Criar publicacao</h2>
 
         <div className="mt-4 space-y-4">
@@ -377,7 +372,7 @@ export function CreatePostModal({ localityId, onCreated, onClose }: CreatePostMo
             </div>
           )}
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
         </div>
 
         <div className="mt-6 flex justify-end gap-2">
@@ -393,10 +388,7 @@ export function CreatePostModal({ localityId, onCreated, onClose }: CreatePostMo
           <Button
             onPress={handleSubmit}
             isDisabled={submitting || !content.trim()}
-            style={{
-              backgroundColor: brandTokens.color.accent,
-              color: brandTokens.color.accentForeground,
-            }}
+            variant="primary"
           >
             Publicar
           </Button>

@@ -1,6 +1,5 @@
 "use client"
 
-import { brandTokens } from "@bivaque/tokens"
 import { Button, TextArea } from "@heroui/react"
 import { useCallback, useState } from "react"
 import type { Database } from "supabase/database.generated"
@@ -53,11 +52,7 @@ export function ReportButton({ targetType, targetId, label = "Denunciar" }: Repo
   }, [reason, targetType, targetId, supabase])
 
   if (success) {
-    return (
-      <span className="text-xs" style={{ color: brandTokens.color.accent }}>
-        Denuncia enviada
-      </span>
-    )
+    return <span className="text-xs text-accent">Denuncia enviada</span>
   }
 
   return (
@@ -67,8 +62,8 @@ export function ReportButton({ targetType, targetId, label = "Denunciar" }: Repo
       </Button>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl border border-border bg-[var(--surface)] p-6 shadow-lg">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop)] p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-[var(--surface)] p-6 shadow-[var(--elevation-3)]">
             <h2 className="text-lg font-semibold">Denunciar conteudo</h2>
             <p className="mt-1 text-sm text-muted">
               Descreva por que este conteudo viola as regras da comunidade.
@@ -84,7 +79,7 @@ export function ReportButton({ targetType, targetId, label = "Denunciar" }: Repo
               />
             </div>
 
-            {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+            {error && <p className="mt-2 text-sm text-[var(--danger)]">{error}</p>}
 
             <div className="mt-6 flex justify-end gap-2">
               <Button
@@ -100,10 +95,7 @@ export function ReportButton({ targetType, targetId, label = "Denunciar" }: Repo
               <Button
                 onPress={handleSubmit}
                 isDisabled={submitting || !reason.trim()}
-                style={{
-                  backgroundColor: brandTokens.color.accent,
-                  color: brandTokens.color.accentForeground,
-                }}
+                variant="primary"
               >
                 {submitting ? "Enviando..." : "Enviar denuncia"}
               </Button>

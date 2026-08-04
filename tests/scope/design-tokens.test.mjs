@@ -21,6 +21,7 @@ test("defines the DESIGN_SPEC section 1 token set in globals.css", () => {
   const required = [
     "--surface-raised",
     "--surface-sunken",
+    "--surface-subtle",
     "--border",
     "--muted",
     "--accent-soft",
@@ -83,6 +84,25 @@ test("keeps the hairline in the --border token, not inlined", () => {
   // And the extracted token is the foreground hairline mix
   const globals = readFileSync(join(root, "apps/web/app/globals.css"), "utf8")
   assert.match(globals, /--border:\s*color-mix\(in oklch, var\(--foreground\) 12%, transparent\)/)
+})
+
+test("keeps colors in tokens, not in component inline styles", () => {
+  // Given every source file under apps/web
+  const sources = walk(join(root, "apps/web")).map((path) => readFileSync(path, "utf8"))
+
+  // When they are scanned for inlined colors and raw tailwind reds
+  const inlineColor = /style=\{\{[^}]*?(backgroundColor|color):/
+  const rawReds = /(?:bg|border|text)-(?:red|rose)-[0-9]{2,3}\b/
+
+  // Then no component inlines a background/foreground color anymore
+  assert.equal(
+    sources.some((source) => inlineColor.test(source)),
+    false,
+  )
+  assert.equal(
+    sources.some((source) => rawReds.test(source)),
+    false,
+  )
 })
 
 test("exports the full token set from @bivaque/tokens", () => {

@@ -14,6 +14,8 @@ export const brandTokens = {
     surfaceRaised: "oklch(1 0 0)",
     // Inset areas (composer field, empty states).
     surfaceSunken: "color-mix(in oklch, oklch(0.985 0.008 96) 95%, oklch(0.205 0.018 72) 5%)",
+    // Subtle neutral fills (avatar initials, chips, hover rows).
+    surfaceSubtle: "color-mix(in oklch, oklch(0.205 0.018 72) 8%, transparent)",
     // Hairlines; replaces the inlined color-mix borders.
     border: "color-mix(in oklch, oklch(0.205 0.018 72) 12%, transparent)",
     // Secondary text; holds ≥ 4.5:1 on --surface.

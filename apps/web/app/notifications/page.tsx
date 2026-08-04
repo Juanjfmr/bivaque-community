@@ -1,9 +1,9 @@
 "use client"
 
-import { brandTokens } from "@bivaque/tokens"
 import { Button } from "@heroui/react"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../lib/supabase/client"
+import { EmptyState } from "../components/bivaque/empty-state"
 
 type NotificationRow = {
   id: string
@@ -136,13 +136,7 @@ export default function NotificationsPage() {
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold tracking-tight">Notificacoes</h1>
             {unreadCount > 0 && (
-              <span
-                className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-medium"
-                style={{
-                  backgroundColor: brandTokens.color.accent,
-                  color: brandTokens.color.accentForeground,
-                }}
-              >
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1.5 text-xs font-medium text-[var(--accent-foreground)]">
                 {unreadCount}
               </span>
             )}
@@ -162,19 +156,21 @@ export default function NotificationsPage() {
 
       <div className="mx-auto w-full max-w-2xl px-4 py-4">
         {error && (
-          <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mb-4 rounded-md border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]">
             {error}
           </div>
         )}
 
         {loading && (
-          <p className="py-12 text-center text-sm text-muted">Carregando notificacoes...</p>
+          <div className="space-y-2 py-4" aria-busy="true">
+            <div className="h-10 animate-pulse rounded-lg bg-[var(--surface-sunken)]" />
+            <div className="h-10 animate-pulse rounded-lg bg-[var(--surface-sunken)]" />
+            <div className="h-10 animate-pulse rounded-lg bg-[var(--surface-sunken)]" />
+          </div>
         )}
 
         {!loading && !error && notifications.length === 0 && (
-          <div className="py-12 text-center">
-            <p className="text-sm text-muted">Nenhuma notificacao ainda.</p>
-          </div>
+          <EmptyState title="Nenhuma notificacao ainda" />
         )}
 
         {!loading && notifications.length > 0 && (
@@ -182,10 +178,8 @@ export default function NotificationsPage() {
             {notifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors ${
-                  notification.read_at
-                    ? ""
-                    : "bg-[color-mix(in_oklch,var(--foreground)_4%,transparent)]"
+                className={`flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors duration-[var(--duration-instant)] ${
+                  notification.read_at ? "" : "bg-[var(--accent-soft)]"
                 }`}
               >
                 <div className="flex-1 min-w-0">

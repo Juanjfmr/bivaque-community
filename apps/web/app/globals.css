@@ -21,6 +21,8 @@
   --surface-raised: var(--surface);
   /* Inset areas (composer field, empty states). */
   --surface-sunken: color-mix(in oklch, var(--background) 95%, var(--foreground) 5%);
+  /* Subtle neutral fills (avatar initials, chips, hover rows). */
+  --surface-subtle: color-mix(in oklch, var(--foreground) 8%, transparent);
   /* Hairlines — the single border color; components must not inline color-mix borders. */
   --border: color-mix(in oklch, var(--foreground) 12%, transparent);
   /* Secondary text; holds ≥ 4.5:1 on --surface. */
@@ -113,6 +115,10 @@ body {
   .input,
   .tabs__tab {
     min-height: var(--control-min-height);
+  }
+
+  .skeleton--shimmer:after {
+    animation-duration: 1.4s;
   }
 }
 

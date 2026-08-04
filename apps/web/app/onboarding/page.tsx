@@ -266,7 +266,7 @@ function OnboardingFlow() {
 
             {error && (
               <div
-                className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+                className="rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]"
                 role="alert"
               >
                 {error}
@@ -312,7 +312,7 @@ function OnboardingFlow() {
 
         {error && (
           <div
-            className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+            className="rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]"
             role="alert"
           >
             {error}

@@ -262,7 +262,7 @@ export default function GroupsPage() {
 
       {error && (
         <div
-          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]"
           role="alert"
         >
           {error}
@@ -352,7 +352,7 @@ export default function GroupsPage() {
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold">{group.name}</h3>
-                    <span className="rounded-full bg-[color-mix(in_oklch,var(--foreground)_8%,transparent)] px-2 py-0.5 text-xs text-muted">
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-xs text-muted">
                       {group.visibility === "public" ? "Público" : "Privado"}
                     </span>
                     <ReportButton targetType="group" targetId={group.id} label="Denunciar" />
@@ -373,7 +373,7 @@ export default function GroupsPage() {
                   )}
 
                   {membership?.status === "pending" && (
-                    <span className="rounded-full bg-[color-mix(in_oklch,var(--foreground)_8%,transparent)] px-2 py-0.5 text-xs text-muted">
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-xs text-muted">
                       Aguardando aprovação
                     </span>
                   )}
@@ -390,7 +390,7 @@ export default function GroupsPage() {
                   )}
 
                   {membership?.role === "owner" && (
-                    <span className="rounded-full bg-[color-mix(in_oklch,var(--foreground)_8%,transparent)] px-2 py-0.5 text-xs text-muted">
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-xs text-muted">
                       Proprietário
                     </span>
                   )}

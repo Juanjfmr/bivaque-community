@@ -1,9 +1,9 @@
 "use client"
 
-import { brandTokens } from "@bivaque/tokens"
 import { Button, Form, Input, TextArea } from "@heroui/react"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../lib/supabase/client"
+import { EmptyState } from "../components/bivaque/empty-state"
 
 type ConversationRow = {
   id: string
@@ -255,22 +255,24 @@ export default function MessagesPage() {
 
       <div className="mx-auto flex w-full max-w-2xl flex-1 px-4 py-4">
         {loading && (
-          <p className="w-full py-12 text-center text-sm text-muted">Carregando conversas...</p>
+          <div className="w-full space-y-2 py-4" aria-busy="true">
+            <div className="h-12 animate-pulse rounded-lg bg-[var(--surface-sunken)]" />
+            <div className="h-12 animate-pulse rounded-lg bg-[var(--surface-sunken)]" />
+            <div className="h-12 animate-pulse rounded-lg bg-[var(--surface-sunken)]" />
+          </div>
         )}
 
         {error && (
-          <div className="mb-4 w-full rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+          <div className="mb-4 w-full rounded-md border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]">
             {error}
           </div>
         )}
 
         {!loading && conversations.length === 0 && (
-          <div className="w-full py-12 text-center">
-            <p className="text-sm text-muted">
-              Nenhuma conversa ainda. Suas mensagens aparecerao aqui quando voce interagir em
-              grupos, eventos, recomendacoes ou com familiares.
-            </p>
-          </div>
+          <EmptyState
+            title="Nenhuma conversa ainda"
+            description="Suas mensagens aparecerao aqui quando voce interagir em grupos, eventos, recomendacoes ou com familiares."
+          />
         )}
 
         {!loading && conversations.length > 0 && (
@@ -286,17 +288,17 @@ export default function MessagesPage() {
                     key={conversation.id}
                     type="button"
                     onClick={() => selectConversation(conversation.id)}
-                    className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
+                    className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--duration-instant)] ${
                       selectedConversationId === conversation.id
-                        ? "bg-[color-mix(in_oklch,var(--foreground)_10%,transparent)]"
-                        : "hover:bg-[color-mix(in_oklch,var(--foreground)_4%,transparent)]"
+                        ? "bg-[var(--accent-soft)]"
+                        : "hover:bg-[var(--surface-subtle)]"
                     }`}
                   >
                     <div className="truncate font-medium">{otherId?.slice(0, 8)}...</div>
                     <div className="text-xs text-muted">
                       {CONTEXT_LABELS[conversation.context_type] ?? conversation.context_type}
                     </div>
-                    {blocked && <div className="text-xs text-red-500">Bloqueado</div>}
+                    {blocked && <div className="text-xs text-[var(--danger)]">Bloqueado</div>}
                   </button>
                 )
               })}
@@ -323,7 +325,7 @@ export default function MessagesPage() {
                       {selectedOtherId &&
                         (selectedIsBlocked ? (
                           selectedBlockedByOther ? (
-                            <span className="text-xs text-red-500">Voce foi bloqueado</span>
+                            <span className="text-xs text-[var(--danger)]">Voce foi bloqueado</span>
                           ) : (
                             <Button
                               size="sm"
@@ -363,17 +365,9 @@ export default function MessagesPage() {
                           <div
                             className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
                               isOwn
-                                ? "text-[var(--accent-foreground)]"
-                                : "bg-[color-mix(in_oklch,var(--foreground)_6%,transparent)]"
+                                ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
+                                : "bg-[var(--surface-subtle)]"
                             }`}
-                            style={
-                              isOwn
-                                ? {
-                                    backgroundColor: brandTokens.color.accent,
-                                    color: brandTokens.color.accentForeground,
-                                  }
-                                : undefined
-                            }
                           >
                             <p className="whitespace-pre-wrap break-words">{message.content}</p>
                             <div className="mt-1 flex items-center justify-between gap-2">
@@ -390,7 +384,7 @@ export default function MessagesPage() {
                                     setReportingMessageId(message.id)
                                     setReportReason("")
                                   }}
-                                  className="text-xs text-muted hover:text-red-500"
+                                  className="text-xs text-muted hover:text-[var(--danger)]"
                                 >
                                   Denunciar
                                 </button>
@@ -410,12 +404,9 @@ export default function MessagesPage() {
                                 <div className="flex gap-1">
                                   <Button
                                     size="sm"
+                                    variant="primary"
                                     onPress={() => handleReport(message.id)}
                                     isDisabled={reportReason.trim().length < 10}
-                                    style={{
-                                      backgroundColor: brandTokens.color.accent,
-                                      color: brandTokens.color.accentForeground,
-                                    }}
                                   >
                                     Enviar
                                   </Button>
@@ -455,11 +446,8 @@ export default function MessagesPage() {
                       <Button
                         type="submit"
                         size="sm"
+                        variant="primary"
                         isDisabled={!newMessage.trim() || selectedIsBlocked}
-                        style={{
-                          backgroundColor: brandTokens.color.accent,
-                          color: brandTokens.color.accentForeground,
-                        }}
                       >
                         Enviar
                       </Button>

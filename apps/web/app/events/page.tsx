@@ -201,7 +201,7 @@ function EventsContent() {
 
       {error && (
         <div
-          className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+          className="rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]"
           role="alert"
         >
           {error}
@@ -237,7 +237,9 @@ function EventsContent() {
                     <h2 className="text-base font-semibold">
                       {event.title}
                       {event.status === "cancelled" && (
-                        <span className="ml-2 text-xs font-normal text-red-600">Cancelado</span>
+                        <span className="ml-2 text-xs font-normal text-[var(--danger)]">
+                          Cancelado
+                        </span>
                       )}
                     </h2>
                     {event.description && <p className="text-sm text-muted">{event.description}</p>}

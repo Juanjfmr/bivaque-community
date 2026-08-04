@@ -58,7 +58,7 @@ function ScopeBadge({ scope }: { scope: string }) {
 function CategoryBadge({ category }: { category: CategoryId }) {
   const label = CATEGORIES.find((c) => c.id === category)?.label ?? category
   return (
-    <span className="inline-flex items-center rounded-full bg-[color-mix(in_oklch,var(--accent)_12%,transparent)] px-2 py-0.5 text-xs font-medium">
+    <span className="inline-flex items-center rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-medium">
       {label}
     </span>
   )
