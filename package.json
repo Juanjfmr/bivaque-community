@@ -19,7 +19,9 @@
     "test:unit": "vitest run tests/unit",
     "test:privacy": "vitest run tests/privacy",
     "test:scope": "node --test tests/scope/*.test.mjs",
-    "test:secrets": "node tests/secrets-scan.mjs"
+    "test:secrets": "node tests/secrets-scan.mjs",
+    "visual:capture": "node scripts/visual/capture.mjs",
+    "visual:loop": "node scripts/visual/loop.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.6",

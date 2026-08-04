@@ -5,8 +5,12 @@ coverage/
 *.tsbuildinfo
 playwright-report/
 test-results/
+.visual/
 dev-server.log
 dev-server.pid
 .env
 .env.*
 !.env.example
+
+# Local agent evidence and run state
+.omo/

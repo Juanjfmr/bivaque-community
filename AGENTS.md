@@ -25,6 +25,18 @@ npx pnpm@11.18.0 test:e2e    # playwright test (needs Docker-free; starts its ow
   db:reset → test:db → db:lint → `playwright install --with-deps chromium` → test:e2e → upload
   artifacts (always).
 
+## Visual build loop (UI work)
+
+```sh
+node scripts/visual/loop.mjs          # gates -> build -> serve -> screenshot -> audit -> .visual/<run>/
+node scripts/visual/loop.mjs --fast   # capture only, against an already-running dev server
+```
+
+Screenshots every route at 375/768/1440 plus a deterministic audit (touch targets, contrast,
+overflow, motion presence, token discipline) into `.visual/<run>/`. The spec it judges against is
+`docs/agents/DESIGN_SPEC.md`; the driving prompt is `docs/agents/QWEN_BUILD_PROMPT.md`. Set
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` when the managed browser bundle is not installed.
+
 ## Repo contracts enforced by `tests/scope/*.test.mjs` (guardrails)
 
 These tests fail CI if you break them — update them only when a contract deliberately changes:

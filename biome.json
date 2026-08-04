@@ -11,7 +11,9 @@
       "!**/pnpm-lock.yaml",
       "!supabase/database.generated.ts",
       "!**/playwright-report",
-      "!**/test-results"
+      "!**/test-results",
+      "!**/.omo",
+      "!**/.visual"
     ]
   },
   "formatter": {
