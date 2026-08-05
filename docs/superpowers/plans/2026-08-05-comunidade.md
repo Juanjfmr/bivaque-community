@@ -1,6 +1,18 @@
 # Comunidade — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Para quem executa (humano ou agente):** este plano é autocontido e não
+> depende de nenhuma ferramenta específica. Execute **uma task por vez**, na
+> ordem, sem pular steps — cada step é uma ação de 2 a 5 minutos e os steps de
+> teste existem para falhar antes da implementação. Marque os checkboxes
+> (`- [ ]`) conforme avança.
+>
+> **Não** invoque skills do Claude Code (`superpowers:*`, `anthropic-skills:*`):
+> elas não existem fora dele e o plano não precisa delas.
+>
+> Regra de parada: se um step de verificação não produzir a saída esperada,
+> **pare e investigue** em vez de seguir para o próximo. Leia antes a seção
+> "Falsos positivos conhecidos" — três falhas comuns deste repositório não têm
+> relação alguma com o código que você acabou de escrever.
 
 **Goal:** Adicionar a entidade Comunidade — camada opcional entre localidade e grupo (Vilas, Turmas) com feed próprio, grupos e eventos internos que nunca aparecem para a cidade.
 
@@ -38,6 +50,48 @@ Para iterar num arquivo só, mais rápido que a suíte inteira:
 ```bash
 docker exec -i supabase_db_bivaque-community psql -U postgres -d postgres -f - < supabase/tests/community-scope.sql
 ```
+
+### Falsos positivos conhecidos
+
+As três falhas abaixo aparecem como erro de teste ou de lint **sem relação com
+a mudança em curso**. Todas já custaram tempo neste repositório. Se qualquer
+uma aparecer, o conserto **não** é mexer no código que você acabou de escrever.
+
+**1. Perfil fantasma `Visual Capture`.** O tooling de `scripts/visual/` insere
+um perfil no banco local quando roda. Se um dev server ou uma captura visual
+tocar o stack entre `db:reset` e `test:db`, seis asserts de listagem de perfil
+falham de uma vez:
+
+```
+locality-profile-access.sql        (Failed test 2)
+authz-allowed-matrix.sql           (Failed tests 12, 15, 18)
+authz-denied-matrix.sql            (Failed test 13)
+full-regression.sql                (Failed test 35)
+```
+
+Todos com a mesma assinatura: `have: ("Visual Capture") / want: NULL`.
+
+A string **não existe no repositório** — `.visual/` é gitignored, então grep
+não acha e a busca vira beco sem saída. Diagnóstico correto: rodar
+`db:reset && test:db` de novo, sem nada tocando o stack no meio. Se passar,
+era isto.
+
+> Regra geral: **falha de suíte só conta depois de reproduzir com `db:reset`
+> limpo.** Nunca atribua uma falha ao seu código na primeira ocorrência.
+
+**2. Artefatos do Playwright quebram o lint.** `playwright-report/` e
+`test-results/` não estão no `.gitignore`, e `biome check .` os varre. Se
+`pnpm lint` falhar com erros em arquivos que você não escreveu:
+
+```bash
+rm -rf playwright-report test-results
+```
+
+**3. `AGENTS.md` referencia caminhos fora do repositório.** As decisões de
+produto estão em `C:\Users\juana\Forja-90\.omo\plans\` e `\drafts\`,
+inalcançáveis para quem executa com permissão restrita ao workspace. **Não
+tente abri-los e não trate a ausência como bloqueio** — tudo o que este plano
+precisa está no plano e no spec.
 
 ### Regras que não podem ser violadas
 
