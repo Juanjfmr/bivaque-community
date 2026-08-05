@@ -1,29 +1,11 @@
 "use client"
 
 import { brandTokens } from "@bivaque/tokens"
+import { SparklesIcon } from "@heroicons/react/24/outline"
 import { Button } from "@heroui/react"
 import { usePathname, useRouter } from "next/navigation"
 import type { ReactNode } from "react"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
-
-function IndicationsIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-5 w-5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.5}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 01-1.423 1.423z"
-      />
-    </svg>
-  )
-}
 
 interface AppShellProperties {
   children: ReactNode
@@ -47,7 +29,7 @@ export function AppShell({ children }: AppShellProperties) {
             className="min-h-11 min-w-11"
             onPress={() => router.push("/recommendations")}
           >
-            <IndicationsIcon />
+            <SparklesIcon className="h-5 w-5" />
             <span className="sr-only">Indicações</span>
           </Button>
         </div>
@@ -58,6 +40,7 @@ export function AppShell({ children }: AppShellProperties) {
         <aside className="hidden w-56 shrink-0 border-r border-border bg-[var(--surface)] lg:block">
           <nav aria-label="Navegação principal" className="sticky top-12 flex flex-col gap-1 p-3">
             {NAV_ITEMS.map((item) => {
+              const Icon = item.Icon
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
               return (
                 <a
@@ -70,18 +53,13 @@ export function AppShell({ children }: AppShellProperties) {
                       : "text-muted hover:bg-[var(--surface-subtle)] hover:text-foreground"
                   }`}
                 >
-                  <svg
+                  <Icon
                     aria-hidden="true"
-                    viewBox="0 0 24 24"
                     fill={active ? "currentColor" : "none"}
                     stroke="currentColor"
                     strokeWidth={1.5}
                     className="h-5 w-5"
-                  >
-                    {item.paths.map((d) => (
-                      <path key={d} strokeLinecap="round" strokeLinejoin="round" d={d} />
-                    ))}
-                  </svg>
+                  />
                   {item.label}
                 </a>
               )
