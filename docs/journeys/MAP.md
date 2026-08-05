@@ -653,6 +653,44 @@ detalhada separadamente antes da execução.
 > "criar superfície"; com **[C2]**, a onda de admissão deixou de
 > precisar de migration e virou independente.
 
+### 10.2 Toda onda termina em auditoria visual — e ela bloqueia
+
+**Regra:** uma onda só está concluída depois que as telas que ela tocou
+passam pela auditoria visual. **Nenhum trabalho seguinte começa antes
+disso** — nem a próxima onda, nem trabalho paralelo em outra frente.
+
+O procedimento está em
+[`docs/superpowers/plans/2026-08-05-auditoria-telas.md`](../superpowers/plans/2026-08-05-auditoria-telas.md);
+o critério é a rubrica do `VISUAL_GUIDE.md` §9.
+
+**Por que é bloqueante e não "quando der".** Auditoria adiada vira
+auditoria não feita, e o custo de corrigir hierarquia e densidade cresce
+com o número de telas que já copiaram o padrão errado. Uma onda que
+entrega ciclo funcional fechado e tela mal resolvida entregou metade, e
+a metade que falta fica invisível até alguém reclamar.
+
+**O que isso não significa.** Auditoria não é sinônimo de polimento
+completo. Achado da rubrica que exija decisão de produto vira linha
+nesta matriz, não bloqueio da onda. O que bloqueia é *não ter olhado* —
+o veredito escrito com evidência, previsto na Task 7 do plano, é o
+artefato que fecha a onda.
+
+**Ordem de dependência com a auditoria embutida:**
+
+```
+Onda N  →  auditar as telas tocadas por N  →  Onda N+1
+```
+
+Telas que a onda **cria** (`/groups/:id`, `/events/:id`,
+`/onboarding/status`, painel administrativo, superfície de comunidade)
+entram na auditoria dentro da própria onda que as criou. Não existe
+rodada de auditoria "no final" — cada onda paga a sua.
+
+A exceção continua sendo a do §1: correção de acessibilidade, bug visual
+crítico e segurança não esperam onda nenhuma. As Fases 1 e 2 do plano de
+auditoria são exatamente isso e podem correr a qualquer momento, em
+qualquer tela.
+
 ---
 
 ## 11. Anexo: índice de arquivos lidos nesta sessão

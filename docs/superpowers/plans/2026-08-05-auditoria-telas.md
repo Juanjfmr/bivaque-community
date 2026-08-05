@@ -22,6 +22,11 @@ regra → 0). A 3 estende o auditor às regras da rubrica que dá para mecanizar
 define a revisão de julgamento, que **não** é automatizável e o plano não finge
 que seja.
 
+**As Tasks 1 a 6 e 8 rodam uma vez. A Task 7 é permanente** — roda a cada onda
+do `MAP.md`, sobre as telas que aquela onda tocou ou criou, e bloqueia o
+trabalho seguinte (§10.2 do MAP). Este documento não é consumido ao ser
+executado; a Task 7 continua sendo o procedimento de referência depois disso.
+
 **Tech Stack:** Playwright (3 viewports: 375/768/1440), auditoria determinística
 in-page em `scripts/visual/capture.mjs`, relatórios em `.visual/<run>/`.
 
@@ -545,18 +550,47 @@ git commit -m "feat(visual): audit active-nav state and forbidden UI copy"
 
 ---
 
-## Task 7: Revisão de julgamento, tela a tela
+## Task 7: Revisão de julgamento, tela a tela — **recorrente**
 
 Os itens 1, 2, 5 e 6 da rubrica — hierarquia, ritmo, densidade, responsivo —
 **não são mecanizáveis** e este plano não finge que sejam. Precisam de olho nas
 capturas.
 
-**Escopo:** apenas as telas cujo ciclo funcional fecha, conforme a tabela do
-início deste plano. Hoje: **`/community`, `/profile`, `/login`, `/consent`.**
+### Esta task não termina
 
-As demais entram nesta task depois das ondas correspondentes do MAP.md — não
+As Tasks 1 a 6 rodam uma vez. **Esta roda a cada onda do MAP.md**, sobre as
+telas que aquela onda tocou ou criou, e é **bloqueante**: pelo §10.2 do MAP,
+nenhum trabalho seguinte começa antes de a auditoria da onda fechar — nem a
+próxima onda, nem trabalho paralelo em outra frente.
+
+```
+Onda N  →  Task 7 sobre as telas de N  →  Onda N+1
+```
+
+Não existe rodada de auditoria "no final". Cada onda paga a sua, porque o custo
+de corrigir hierarquia e densidade cresce com o número de telas que já copiaram
+o padrão errado.
+
+**O que bloqueia é não ter olhado.** Achado que exija decisão de produto vira
+linha na matriz do MAP, não trava a onda. O artefato que fecha a onda é o
+veredito escrito do Step 3 — sem ele, a onda não está concluída.
+
+### Escopo desta primeira execução
+
+Apenas as telas cujo ciclo funcional já fecha, conforme a tabela do início deste
+plano: **`/community`, `/profile`, `/login`, `/consent`.**
+
+As demais entram na Task 7 **dentro da onda do MAP que as consertar** — não
 antes, porque hierarquia e densidade dependem de conteúdo e navegação que ainda
-não existem.
+não existem; e não numa rodada separada depois, porque aí já é retrabalho.
+
+Telas que uma onda **cria** — `/groups/:id`, `/events/:id`,
+`/onboarding/status`, painel administrativo, superfície de comunidade — são
+auditadas dentro da própria onda que as criou. Elas não existem hoje e por isso
+não aparecem na linha de base deste plano.
+
+> As Fases 1 e 2 seguem regra diferente: são acessibilidade, valem a exceção do
+> §1 do MAP e não esperam onda nenhuma.
 
 - [ ] **Step 1: Gerar capturas frescas**
 
@@ -598,7 +632,10 @@ git commit -m "docs(design): record per-screen visual audit verdict"
 
 ---
 
-## Task 8: Gate final
+## Task 8: Gate final desta rodada
+
+Fecha a **primeira** execução, não a auditoria como prática. A Task 7 continua
+valendo a cada onda do MAP daqui em diante.
 
 - [ ] **Step 1: Auditoria zerada**
 
