@@ -58,8 +58,6 @@ function formatShortDate(iso: string): string {
   })
 }
 
-export const dynamic = "force-dynamic"
-
 export default function ProfilePage() {
   const supabase = createBrowserClient()
   const [profile, setProfile] = useState<ProfileRow | null>(null)
@@ -113,7 +111,8 @@ export default function ProfilePage() {
       setError("Perfil nao encontrado.")
     }
 
-    setPosts((postRows ?? []) as unknown as PostRow[])
+    const allPosts = (postRows ?? []) as unknown as PostRow[]
+    setPosts(allPosts.slice(0, 20))
     setEvents((eventRows ?? []) as EventRow[])
     setLoading(false)
   }, [supabase])
@@ -124,19 +123,23 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center px-4 py-12">
-        <p className="text-sm text-muted">Carregando perfil...</p>
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-3 px-4 py-12">
+        <div className="h-16 w-16 animate-pulse rounded-full bg-[var(--surface-subtle)]" />
+        <div className="h-5 w-40 animate-pulse rounded bg-[var(--surface-subtle)]" />
+        <div className="h-3 w-56 animate-pulse rounded bg-[var(--surface-subtle)]" />
       </div>
     )
   }
 
-  if (error || !profile) {
+  if (error) {
     return (
       <div className="flex flex-1 items-center justify-center px-4 py-12">
-        <p className="text-sm text-[var(--danger)]">{error || "Perfil nao encontrado."}</p>
+        <p className="text-sm text-[var(--danger)]">{error}</p>
       </div>
     )
   }
+
+  if (!profile) return null
 
   const initials = (profile.display_name ?? "?").charAt(0).toUpperCase()
   const localityName = membership?.localities?.city_name ?? "Manaus"
