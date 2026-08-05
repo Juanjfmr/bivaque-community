@@ -57,7 +57,12 @@ export function ReportButton({ targetType, targetId, label = "Denunciar" }: Repo
 
   return (
     <>
-      <Button variant="tertiary" size="sm" onPress={() => setShowModal(true)}>
+      <Button
+        variant="tertiary"
+        size="sm"
+        onPress={() => setShowModal(true)}
+        aria-label={`${label} ${targetType}`}
+      >
         {label}
       </Button>
 
