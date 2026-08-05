@@ -43,6 +43,27 @@ cinco erros que mudavam a ordem de execução:
 Correções aplicadas nas seções 4, 5, 7, 8, 9, 10 e 11, marcadas
 inline como **[C1]**…**[C5]**.
 
+### 0.2 Rodada de segurança (2026-08-05) — 2 vazamentos fechados
+
+Ao revisar as policies do feed para desenhar o escopo de conteúdo,
+apareceram dois vazamentos que **não estavam em nenhuma das 39 linhas**
+originais. Ambos já foram corrigidos e testados antes deste registro:
+migration `20260805170545_fix_post_scope_leak.sql`, com 24 asserts em
+`supabase/tests/post-scope-leak.sql` (suíte completa: 595 testes, verde;
+`db:lint` sem erros).
+
+| # | Vazamento | Por que era P0 |
+|---|---|---|
+| **S1** | As policies de `posts`, `comments`, `post_reactions` e `post_saves` gateavam só por `private.is_locality_member(locality_id)` e ignoravam `posts.group_id`. Qualquer membro de Manaus **lia e escrevia** conteúdo de grupo privado | Quebra frontalmente a promessa de grupo privado — o produto oferecia uma fronteira que não existia |
+| **S2** | `feed_posts()` é `security definer`, recebe `p_locality_id` por parâmetro, é concedida a `authenticated` e **nunca checava membership**. Qualquer usuário autenticado — sem verificação, sem vínculo com Manaus — enumerava o feed inteiro chamando a RPC direto | Pior que S1: contorna a RLS por completo e não exige sequer ser membro da localidade |
+
+Registrados como linhas **4e** e **4f** na matriz. A auditoria de
+`pg_proc` que se seguiu mostrou que a classe do S2 está contida: das 10
+funções `security definer` em `public`, as três sensíveis
+(`upsert_verification_outcome`, `accept_family_invitation`,
+`add_to_waitlist`) **não** são executáveis por `authenticated`, e as
+demais são RPCs de grupo com checagem interna de moderador.
+
 ---
 
 ## 1. Propósito
@@ -113,7 +134,11 @@ exceções e devem ser rastreadas à parte, com justificativa registrada.
 **Contagem por estado:** 0 completas, 0 assistidas, 9 parciais,
 2 ausentes.
 
-**P0 (2 áreas, 4 subdivisões):** Área 1 (1a verify quebrado + 1b waitlist quebrada + 1c pending quebrado) e Área 4 (4b denúncia sem operação). Itens 10 e 11 foram rebaixados para P1 após auditoria (ver seção 5): a operação atual com SQL/Dashboard é viável para piloto fechado; a re-verificação de identidade é um refinamento importante mas não bloqueia a operação.
+**P0 (2 áreas, 4 subdivisões abertas + 2 fechadas):** Área 1 (1a verify
+quebrado + 1b waitlist quebrada + 1c pending quebrado) e Área 4 (4b
+denúncia sem operação). As subdivisões **4e** e **4f** também eram P0 —
+dois vazamentos de privacidade descobertos depois (§0.2) — e já estão
+**corrigidas e testadas**. Itens 10 e 11 foram rebaixados para P1 após auditoria (ver seção 5): a operação atual com SQL/Dashboard é viável para piloto fechado; a re-verificação de identidade é um refinamento importante mas não bloqueia a operação.
 
 **P1 (8 áreas, mais subdivisões):** 2 (perfil), 3 (convite familiar self-service), 5 (grupos — 5a, 5b), 6 (eventos — 6a, 6b, 6c), 8 (notificações), 9 (mensagens), 10 (painel admin — viável em modo degradado), 11 (re-verificação). Também subdivisões 1e (sessão expirada), 1f (error/loading/not-found em preauth), 4c (ocultar conteúdo).
 
@@ -126,7 +151,7 @@ resolução.
 
 ---
 
-## 4. Matriz por área (39 linhas, 11 áreas)
+## 4. Matriz por área (41 linhas, 11 áreas)
 
 Legenda de evidência:
 
@@ -157,6 +182,8 @@ Legenda de evidência:
 | 4 | Feed | 4b — denunciar | Parcial | P0 | **[C1]** A camada de dados está **pronta**: `reports` tem `status` (open/resolved), `operator_note`, `resolved_by`, `resolved_at`, índice parcial de abertos e grants `service_role`. Falta **exclusivamente a superfície do operador** — nenhuma rota consome a fila; o denunciante não recebe retorno | `20260802001600_reports.sql:25-50,105-114`; `report-button.tsx:22-52`; ausência de rota admin | [V] |
 | 4 | Feed | 4c — ocultar conteúdo | Parcial | P1 | **[C1]** "Ocultar publicação" na UI só esconde localmente (Set em React). Mas a **moderação global já existe no banco**: `is_deleted` em posts/comments/groups, `feed_posts` filtra `is_deleted = false`, e trigger impede `authenticated` de togglar a coluna. Falta a superfície que aciona isso via `service_role` | `20260802001600_reports.sql:54-56,201,213-245`; `feed-post.tsx:185-207`; `community/page.tsx:27,93-95` | [V] |
 | 4 | Feed | 4d — `?post=` deep link | Parcial | P2 | `feed-post.tsx:485` constrói URL com `?post=<id>`, mas `/community?post=<id>` não tem handler para abrir o card destacado | `feed-post.tsx:485`; ausência de uso da query em `community/page.tsx` | [V] |
+| 4 | Feed | 4e — escopo de grupo no post surface | **Corrigida** | ~~P0~~ | **[S1]** Policies de `posts`/`comments`/`post_reactions`/`post_saves` ignoravam `posts.group_id`; conteúdo de grupo privado era legível e gravável por qualquer membro da localidade. A migration `017` já tinha corrigido a classe idêntica em `events` — o post surface ficou de fora. `pending` não qualifica mais como membership | `20260805170545_fix_post_scope_leak.sql`; `supabase/tests/post-scope-leak.sql`; comparar com `20260802001700_scope_group_events.sql` | [V] |
+| 4 | Feed | 4f — autorização de `feed_posts()` | **Corrigida** | ~~P0~~ | **[S2]** RPC `security definer` concedida a `authenticated`, com a localidade vindo por parâmetro e nenhuma checagem de membership — enumerava o feed inteiro contornando a RLS. O teste de negação existente só cobria `select from public.posts`, nunca a RPC | `20260805170545_fix_post_scope_leak.sql`; `supabase/tests/post-scope-leak.sql` | [V] |
 | 5 | Grupos | 5a — listar/entrar/sair | Parcial | P1 | Funciona; **sem página de detalhe do grupo** | `apps/web/app/(shell)/groups/page.tsx:231-267`; `docs/agents/VISUAL_GUIDE.md:111` ("Detalhe (futura)") | [V][C] |
 | 5 | Grupos | 5b — criar | Parcial | P1 | Form e RPC funcionam; sem foto/capa/descrição rica; sem categorias; sem regras de entrada além de `public`/`private` | `groups/page.tsx:203-229,556-615` | [V] |
 | 5 | Grupos | 5c — moderar (aprovar, promover, rebaixar) | Parcial | P2 | RPCs existem; **sem transferência de ownership**; **sem convite para grupo**; **sem log de moderação** | `groups/page.tsx:269-322` | [V] |
@@ -242,8 +269,9 @@ escopo do piloto sem nova decisão de produto.
 
 ## 7. Padrões recorrentes (causas raiz) — **a parte mais útil do mapa**
 
-Cinco padrões explicam **a maioria** das lacunas. Corrigir cada padrão
-em uma onda tem efeito em cascata.
+Seis padrões explicam **a maioria** das lacunas. Corrigir cada padrão
+em uma onda tem efeito em cascata. Os cinco primeiros são lacunas de
+produto; o sexto (§7, Padrão 6) é de segurança e veio da rodada §0.2.
 
 ### Padrão 1 — Tabela existe, UI não
 
@@ -308,6 +336,34 @@ Aparece em pelo menos **4 lugares**:
   continua aparecendo no feed sem distinção.
 
 **Subdivisões afetadas (matriz):** 4b, 4c.
+
+### Padrão 6 — Coluna de escopo existe, política nunca revisitada
+
+Descoberto na rodada de segurança (§0.2). `posts.group_id` existe desde
+a migration `009`, e a própria policy daquela migration carregava o
+comentário `"or group if group-scoped in future"`. A coluna entrou no
+modelo de dados; a política nunca voltou para usá-la.
+
+O mesmo aconteceu em `events` — só que ali alguém percebeu e corrigiu na
+migration `017`. O cabeçalho dela descreve exatamente o bug. O post
+surface tinha o buraco idêntico e ficou aberto mais nove migrations.
+
+Sinais de alerta deste padrão, úteis para varredura futura:
+
+- Comentário de policy prometendo escopo "no futuro".
+- Coluna de escopo (`group_id`, e amanhã `community_id`) presente na
+  tabela mas ausente da cláusula `using` / `with check`.
+- Função `security definer` concedida a `authenticated` que recebe o
+  escopo **por parâmetro** em vez de derivá-lo de `auth.uid()`.
+- Correção aplicada a uma tabela de uma família (eventos) e não às
+  irmãs (posts, comentários, reações).
+
+**Subdivisões afetadas (matriz):** 4e, 4f.
+
+> **Consequência direta para a camada de comunidade:** quando
+> `community_id` entrar, ele nasce com o mesmo risco. Toda policy do
+> post surface e toda RPC `security definer` precisam ser revisitadas
+> na mesma migration que criar a coluna — não "no futuro".
 
 ---
 
@@ -599,6 +655,22 @@ detalhada separadamente antes da execução.
   (assinaturas de função)
 - Varredura de `supabase/migrations/*.sql` por conceito de
   operador/role — **nenhum encontrado** além de `group_membership_role`
+
+**Lidos na rodada de segurança (§0.2):**
+
+- `supabase/migrations/20260802000900_community_feed.sql` (tabela
+  `posts`, todas as policies de posts e comments, `feed_posts` original)
+- `supabase/migrations/20260802001000_groups_moderation.sql` (tabelas,
+  enums, `is_group_member`, `is_group_moderator`)
+- `supabase/migrations/20260802001300_fix_forbidden_content_regex.sql`
+- `supabase/migrations/20260802001700_scope_group_events.sql` (íntegra —
+  é o precedente da correção)
+- `supabase/migrations/20260804212011_post_reactions.sql` (íntegra)
+- `supabase/migrations/20260805153451_post_saves.sql` (íntegra)
+- `supabase/tests/community-feed-denials.sql` e
+  `supabase/tests/fixtures/{foundation,groups,community}.inc`
+- Auditoria de `pg_proc` no banco local: funções `security definer` em
+  `public` e privilégio de execução de `authenticated`
 - `apps/web/app/api/**` (inventário) e busca por consumidores de
   `service_role` — apenas `apps/web/lib/supabase/server.ts`
 
