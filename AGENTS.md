@@ -6,6 +6,40 @@ pensioners, piloted in Manaus. Server-rendered Next.js on Supabase. Product deci
 `C:\Users\juana\Forja-90\.omo\drafts\bivaque-community-pilot.md` (outside this repo) — read them
 before feature work. Forja-90 is a legacy codebase: reference patterns only, never copy its files.
 
+## READ FIRST — before any work in this repository
+
+**[`docs/journeys/MAP.md`](docs/journeys/MAP.md) is the entry point.** Read it before
+touching code, before planning, before answering a question about what this product does. It
+carries the functional state of every area, what is prioritised, and the sequencing rules that
+govern what work is allowed to start.
+
+Three rules from it that decide whether your work is legitimate at all:
+
+- **§10.2 — the visual audit blocks.** A wave is not finished until the screens it touched pass
+  the audit in [`docs/superpowers/plans/2026-08-05-auditoria-telas.md`](docs/superpowers/plans/2026-08-05-auditoria-telas.md).
+  No following work starts before that — not the next wave, not parallel work on another front.
+  Screens a wave creates are audited inside that wave. There is no audit round "at the end".
+- **§1 — the accessibility exemption.** Accessibility fixes, critical visual bugs and security do
+  not wait for any wave. Phases 1 and 2 of the audit plan are exactly this and may run at any
+  time, on any screen. Everything else cosmetic waits its turn.
+- **Matrix legend — what "Corrigida" means.** State describes what the user can do, not what the
+  schema permits. Capability in the database does not close a row on its own. Marking a row
+  Corrigida because the migration landed makes the map promise what the product does not deliver.
+
+**§7 Padrão 6 is the failure this repository keeps repeating**: a scope column shipped without the
+policies that read it. It has produced four privacy leaks so far. If you add a scope column, the
+policies that read it land in the **same migration** — never "in future".
+
+### Where things are
+
+| Document | Answers |
+|---|---|
+| `docs/journeys/MAP.md` | What is broken, what is prioritised, what blocks what |
+| `docs/agents/DESIGN_SPEC.md` | The visual language, and the source of truth for tokens |
+| `docs/agents/VISUAL_GUIDE.md` §9 | The audit rubric — how well a screen must be made |
+| `docs/superpowers/specs/` | Approved designs, with dated conflicts recorded rather than hidden |
+| `docs/superpowers/plans/` | Executable plans derived from those specs |
+
 ## Commands (root, pnpm 11.18 pinned, Node >=22)
 
 ```sh

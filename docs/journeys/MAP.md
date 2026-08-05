@@ -1,5 +1,13 @@
 # Mapa de Jornadas e Lacunas Funcionais — Bivaque Community
 
+> **Ponto de entrada do repositório.** Este é o primeiro documento a ser lido em
+> qualquer sessão — humana ou de agente — antes de mexer em código, planejar
+> trabalho ou responder o que o produto faz. O `AGENTS.md` aponta para cá.
+>
+> O mínimo a levar daqui: **§10.2** (a auditoria visual bloqueia a onda
+> seguinte), **§1** (acessibilidade e segurança não esperam onda nenhuma) e a
+> **legenda da matriz** (capacidade no banco não fecha linha).
+
 > Documento de trabalho, **anterior a qualquer polimento de UI**.
 > Produzido a partir de evidência em código (`apps/web`), specs (`docs/agents/`)
 > e runbook (`docs/PILOT_RUNBOOK.md`).
