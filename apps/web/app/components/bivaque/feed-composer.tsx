@@ -2,9 +2,8 @@
 
 import { Button } from "@heroui/react"
 import { useEffect, useState } from "react"
+import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
-
-const MANAUS_LOCALITY_ID = "00000000-0000-4000-8000-000000000001"
 
 interface FeedComposerProps {
   onOpenModal: (defaultPostType?: string) => void
@@ -26,7 +25,7 @@ export function FeedComposer({ onOpenModal }: FeedComposerProps) {
         .from("profiles")
         .select("display_name")
         .eq("user_id", user.id)
-        .eq("locality_id", MANAUS_LOCALITY_ID)
+        .eq("locality_id", PILOT_LOCALITY_ID)
         .maybeSingle()
 
       if (cancelled) return

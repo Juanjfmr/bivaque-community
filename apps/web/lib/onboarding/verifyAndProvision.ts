@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { PILOT_LOCALITY_ID } from "../locality"
 import type { VerificationResult } from "../portal"
 import { verifyCpf } from "../portal"
 
-const MANAUS_LOCALITY_ID = "00000000-0000-4000-8000-000000000001"
 const CURRENT_CONSENT_VERSION = 1
 
 export interface OnboardingVerifyInput {
@@ -57,7 +57,7 @@ export async function verifyAndProvision(
   if (outcome.status === "verified") {
     const { error: membershipError } = await supabase
       .from("locality_memberships")
-      .upsert({ user_id: userId, locality_id: MANAUS_LOCALITY_ID })
+      .upsert({ user_id: userId, locality_id: PILOT_LOCALITY_ID })
 
     if (membershipError) {
       throw new Error(`Failed to create membership: ${membershipError.message}`)
@@ -65,7 +65,7 @@ export async function verifyAndProvision(
 
     const { error: profileError } = await supabase.from("profiles").upsert({
       user_id: userId,
-      locality_id: MANAUS_LOCALITY_ID,
+      locality_id: PILOT_LOCALITY_ID,
       display_name: "Novo membro",
       visibility: "locality_members" as const,
       consent_version: CURRENT_CONSENT_VERSION,
@@ -124,7 +124,7 @@ export async function acceptFamilyInvitationAndProvision(
 
   const { error: membershipError } = await supabase
     .from("locality_memberships")
-    .upsert({ user_id: userId, locality_id: MANAUS_LOCALITY_ID })
+    .upsert({ user_id: userId, locality_id: PILOT_LOCALITY_ID })
 
   if (membershipError) {
     throw new Error(`Failed to create membership: ${membershipError.message}`)
@@ -132,7 +132,7 @@ export async function acceptFamilyInvitationAndProvision(
 
   const { error: profileError } = await supabase.from("profiles").upsert({
     user_id: userId,
-    locality_id: MANAUS_LOCALITY_ID,
+    locality_id: PILOT_LOCALITY_ID,
     display_name: "Novo membro",
     visibility: "locality_members" as const,
     consent_version: CURRENT_CONSENT_VERSION,

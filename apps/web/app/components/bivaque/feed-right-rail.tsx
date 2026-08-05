@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
 
 interface EventItem {
@@ -51,15 +52,11 @@ export function FeedRightRail() {
         supabase
           .from("events")
           .select("id, title, starts_at")
-          .eq("locality_id", "00000000-0000-4000-8000-000000000001")
+          .eq("locality_id", PILOT_LOCALITY_ID)
           .gte("starts_at", now)
           .order("starts_at", { ascending: true })
           .limit(3),
-        supabase
-          .from("groups")
-          .select("id, name")
-          .eq("locality_id", "00000000-0000-4000-8000-000000000001")
-          .limit(3),
+        supabase.from("groups").select("id, name").eq("locality_id", PILOT_LOCALITY_ID).limit(3),
       ])
 
       if (cancelled) return

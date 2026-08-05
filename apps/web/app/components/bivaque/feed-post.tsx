@@ -1,6 +1,16 @@
 "use client"
 
 import { Button, Input, TextArea } from "@heroui/react"
+import {
+  BadgeCheck,
+  Bookmark,
+  ExternalLink,
+  Heart,
+  Link2,
+  MessageCircle,
+  MoreHorizontal,
+  Share2,
+} from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -36,171 +46,136 @@ function CommentItem({ comment }: { comment: CommentRow }) {
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm break-words">{comment.content}</p>
-        <span className="text-xs text-muted">{formatRelativeTime(comment.created_at)}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted">{formatRelativeTime(comment.created_at)}</span>
+          <ReportButton targetType="comment" targetId={comment.id} label="Denunciar" />
+        </div>
       </div>
     </div>
   )
 }
 
-interface OverflowMenuProps {
-  reportTargetType: "post" | "comment"
-  reportTargetId: string
+interface LeanOverflowMenuProps {
+  postId: string
+  onHide?: ((postId: string) => void) | undefined
+  isBookmarked?: boolean
+  onBookmarkToggle?: ((postId: string) => void) | undefined
 }
 
-function OverflowMenu({ reportTargetType, reportTargetId }: OverflowMenuProps) {
+function LeanOverflowMenu({
+  postId,
+  onHide,
+  isBookmarked = false,
+  onBookmarkToggle,
+}: LeanOverflowMenuProps) {
   const [open, setOpen] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [reason, setReason] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [reportError, setReportError] = useState("")
   const ref = useRef<HTMLDivElement>(null)
-  const supabase = createBrowserClient()
 
   useEffect(() => {
     if (!open) return
-    function onClick(e: MouseEvent) {
+    function handleClickOutside(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false)
       }
     }
-    document.addEventListener("mousedown", onClick)
-    return () => document.removeEventListener("mousedown", onClick)
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false)
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("keydown", onKeyDown)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("keydown", onKeyDown)
+    }
   }, [open])
 
-  const handleSubmitReport = useCallback(async () => {
-    const trimmed = reason.trim()
-    if (!trimmed) {
-      setReportError("Descreva o motivo da denuncia.")
-      return
-    }
-
-    setSubmitting(true)
-    setReportError("")
-
-    const { error: insertError } = await supabase.from("reports").insert({
-      target_type: reportTargetType,
-      target_id: reportTargetId,
-      reason: trimmed,
-    } as Database["public"]["Tables"]["reports"]["Insert"])
-
-    if (insertError) {
-      if (insertError.message.includes("duplicate") || insertError.code === "23505") {
-        setReportError("Voce ja denunciou este conteudo.")
-      } else if (insertError.message.includes("own content")) {
-        setReportError("Voce nao pode denunciar seu proprio conteudo.")
-      } else {
-        setReportError("Nao foi possivel enviar a denuncia.")
+  const handleShare = useCallback(async () => {
+    const url = `${window.location.origin}/community?post=${postId}`
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: "Bivaque", url })
+      } catch {
+        try {
+          await navigator.clipboard.writeText(url)
+        } catch {
+          /* noop */
+        }
       }
     } else {
-      setSuccess(true)
-      setReason("")
+      try {
+        await navigator.clipboard.writeText(url)
+      } catch {
+        /* noop */
+      }
     }
-
-    setSubmitting(false)
-  }, [reason, reportTargetType, reportTargetId, supabase])
+    setOpen(false)
+  }, [postId])
 
   return (
-    <div ref={ref} className="relative ml-auto">
+    <div className="relative" ref={ref}>
       <button
         type="button"
+        aria-label="Mais opções"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
         className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-          <circle cx="3" cy="8" r="1.5" />
-          <circle cx="8" cy="8" r="1.5" />
-          <circle cx="13" cy="8" r="1.5" />
-        </svg>
+        <MoreHorizontal size={18} aria-hidden="true" />
       </button>
+
       {open && (
-        <div className="motion-scrim-enter absolute right-0 z-40 mt-1 min-w-[160px] rounded-lg border border-border bg-[var(--surface)] py-1 shadow-[var(--elevation-2)]">
+        <div className="absolute right-0 top-full z-40 mt-1 w-52 rounded-xl border border-border bg-[var(--surface)] py-1 shadow-[var(--elevation-2)]">
           <button
             type="button"
             onClick={() => {
+              onHide?.(postId)
               setOpen(false)
-              setShowModal(true)
             }}
-            className="flex w-full min-h-11 items-center px-3 text-sm text-left transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]"
+            className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]"
           >
-            Denunciar
+            <span className="text-muted">Ocultar publicação</span>
           </button>
-        </div>
-      )}
 
-      {showModal && (
-        <div className="motion-scrim-enter fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop)] p-4">
-          <div className="motion-panel-enter w-full max-w-md rounded-xl border border-border bg-[var(--surface)] p-6 shadow-[var(--elevation-3)]">
-            {success ? (
-              <div className="text-center">
-                <p className="text-sm text-accent">Denuncia enviada</p>
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  className="mt-4"
-                  onPress={() => {
-                    setShowModal(false)
-                    setSuccess(false)
-                  }}
-                >
-                  Fechar
-                </Button>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-lg font-semibold">Denunciar conteudo</h2>
-                <p className="mt-1 text-sm text-muted">
-                  Descreva por que este conteudo viola as regras da comunidade.
-                </p>
+          <button
+            type="button"
+            onClick={() => {
+              onBookmarkToggle?.(postId)
+              setOpen(false)
+            }}
+            className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]"
+          >
+            <span className="text-muted">{isBookmarked ? "Remover dos salvos" : "Salvar"}</span>
+          </button>
 
-                <div className="mt-4">
-                  <TextArea
-                    aria-label="Motivo da denuncia"
-                    placeholder="Descreva o motivo..."
-                    value={reason}
-                    onChange={(e) => setReason((e.target as HTMLTextAreaElement).value)}
-                    className="w-full"
-                  />
-                </div>
-
-                {reportError && <p className="mt-2 text-sm text-[var(--danger)]">{reportError}</p>}
-
-                <div className="mt-6 flex justify-end gap-2">
-                  <Button
-                    variant="tertiary"
-                    onPress={() => {
-                      setShowModal(false)
-                      setReason("")
-                      setReportError("")
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onPress={handleSubmitReport}
-                    isDisabled={submitting || !reason.trim()}
-                    variant="primary"
-                  >
-                    {submitting ? "Enviando..." : "Enviar denuncia"}
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={handleShare}
+            className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]"
+          >
+            <span className="text-muted">Compartilhar</span>
+          </button>
         </div>
       )}
     </div>
   )
 }
 
-interface FeedPostProps {
+export interface FeedPostProps {
   post: FeedPostRow
   index?: number
+  onHide?: (postId: string) => void
+  isBookmarked?: boolean
+  onBookmarkToggle?: (postId: string) => void
 }
 
-export function FeedPost({ post, index = 0 }: FeedPostProps) {
+export function FeedPost({
+  post,
+  index = 0,
+  onHide,
+  isBookmarked = false,
+  onBookmarkToggle,
+}: FeedPostProps) {
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState<CommentRow[]>([])
   const [commentText, setCommentText] = useState("")
@@ -240,7 +215,7 @@ export function FeedPost({ post, index = 0 }: FeedPostProps) {
       /(an[ôo]nimo|v[íi]deo|marketplace|comercial|venda|compr[oa]|IA gerad[oa]|gerad[oa] por IA|intelig[êe]ncia artificial|verificado publicamente|selo de verifica[çc][ãa]o|organiza[çc][ãa]o militar|\bOM\b|patente|posto militar|gradua[çc][ãa]o militar|endere[çc]o residencial|\bCEP\b|\bCPF\b)/i
 
     if (prohibitedPattern.test(trimmed)) {
-      setCommentError("Comentario contem termos nao permitidos")
+      setCommentError("Comentário contém termos não permitidos")
       return
     }
 
@@ -253,7 +228,7 @@ export function FeedPost({ post, index = 0 }: FeedPostProps) {
     } as Database["public"]["Tables"]["comments"]["Insert"])
 
     if (error) {
-      setCommentError("Nao foi possivel enviar o comentario")
+      setCommentError("Não foi possível enviar o comentário")
     } else {
       setCommentText("")
       await loadComments()
@@ -304,30 +279,75 @@ export function FeedPost({ post, index = 0 }: FeedPostProps) {
 
   const previewComments = comments.slice(-2)
 
+  const linkHostname = (() => {
+    if (!post.link_url) return ""
+    try {
+      return new URL(post.link_url).hostname
+    } catch {
+      return ""
+    }
+  })()
+
   return (
-    <div
-      className="motion-card-enter motion-lift rounded-xl border border-border bg-[var(--surface)] p-4"
+    <article
+      className="motion-card-enter motion-lift rounded-2xl border border-border bg-[var(--surface)] shadow-[var(--elevation-2)] overflow-hidden"
       style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-sm font-medium">
-          {post.display_name?.charAt(0) ?? "?"}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start gap-2">
+      <div className="flex">
+        {/* Left accent rail */}
+        <div className="w-0.5 shrink-0 bg-[var(--accent)] opacity-75 rounded-full my-3 ml-3" />
+
+        <div className="flex-1 min-w-0 p-4 pl-3">
+          {/* Header row */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-sm font-medium ring-1 ring-border">
+              {post.display_name?.charAt(0) ?? "?"}
+            </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium">{post.display_name ?? "Membro"}</span>
-                <span className="text-xs text-muted">
-                  {POST_TYPE_LABELS[post.post_type] ?? post.post_type} ·{" "}
-                  {formatRelativeTime(post.created_at)}
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-semibold truncate">
+                  {post.display_name ?? "Membro"}
                 </span>
+                <BadgeCheck
+                  size={16}
+                  className="shrink-0 text-[var(--accent)]"
+                  aria-label="Membro verificado"
+                />
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted">
+                <span>{POST_TYPE_LABELS[post.post_type] ?? post.post_type}</span>
+                <span aria-hidden="true">·</span>
+                <span>{formatRelativeTime(post.created_at)}</span>
               </div>
             </div>
-            <OverflowMenu reportTargetType="post" reportTargetId={post.id} />
+
+            {/* Bookmark + overflow */}
+            <div className="flex items-center gap-1 ml-auto shrink-0">
+              <button
+                type="button"
+                aria-label={isBookmarked ? "Remover dos salvos" : "Salvar publicação"}
+                onClick={() => onBookmarkToggle?.(post.id)}
+                className={`flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 ${isBookmarked ? "text-[var(--accent)]" : "text-muted"}`}
+              >
+                <Bookmark
+                  size={18}
+                  fill={isBookmarked ? "currentColor" : "none"}
+                  aria-hidden="true"
+                />
+              </button>
+              <LeanOverflowMenu
+                postId={post.id}
+                onHide={onHide}
+                isBookmarked={isBookmarked}
+                onBookmarkToggle={onBookmarkToggle}
+              />
+            </div>
           </div>
 
-          <p className={`mt-1 text-sm break-words whitespace-pre-wrap ${clampedClass}`}>
+          {/* Content */}
+          <p
+            className={`mt-3 text-sm break-words whitespace-pre-wrap leading-relaxed ${clampedClass}`}
+          >
             {post.content}
           </p>
           {bodyLong && (
@@ -335,64 +355,87 @@ export function FeedPost({ post, index = 0 }: FeedPostProps) {
               type="button"
               onClick={() => setExpanded(!expanded)}
               aria-expanded={expanded}
-              aria-label={expanded ? "Recolher publicacao" : "Expandir publicacao"}
-              className="mt-1 min-h-11 text-sm font-medium transition-colors duration-[var(--duration-instant)] text-accent hover:underline"
+              aria-label={expanded ? "Recolher publicação" : "Expandir publicação"}
+              className="mt-2 inline-flex min-h-11 items-center rounded-full bg-[var(--surface-subtle)] px-3 text-sm font-medium transition-colors duration-[var(--duration-instant)] text-accent hover:bg-[var(--surface-sunken)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
             >
               {expanded ? "Ver menos" : "Ver mais"}
             </button>
           )}
 
+          {/* Photo placeholder */}
           {post.post_type === "photo" && post.photo_path && (
-            <div className="mt-2 rounded-md bg-[var(--surface-sunken)] p-3 text-center text-sm text-muted">
-              Foto: {post.photo_path}
+            <div className="mt-3 rounded-lg bg-[var(--surface-sunken)] p-4 text-center">
+              <div className="flex flex-col items-center gap-2 text-muted">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+                <span className="text-xs">Foto: {post.photo_path}</span>
+              </div>
             </div>
           )}
 
+          {/* Rich link preview */}
           {post.post_type === "link" && post.link_url && (
             <a
               href={post.link_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 flex min-h-11 items-center truncate text-sm underline transition-colors duration-[var(--duration-instant)] text-accent"
+              aria-label={`Abrir link: ${linkHostname}`}
+              className="mt-3 block min-h-11"
             >
-              {post.link_url}
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-[var(--surface-sunken)]/60 p-3 transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]">
+                <Link2 className="h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs text-muted">{linkHostname || post.link_url}</p>
+                  <p className="truncate text-sm">{post.link_url}</p>
+                </div>
+                <ExternalLink className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
+              </div>
             </a>
           )}
 
+          {/* Poll */}
           {post.post_type === "poll" && post.poll_options && (
-            <div className="mt-2 space-y-1">
-              {(post.poll_options as unknown as string[]).map((option) => (
-                <div key={option} className="rounded-md border border-border px-3 py-1.5 text-sm">
-                  {option}
+            <div className="mt-3 space-y-1.5">
+              {(post.poll_options as unknown as string[]).map((option, i) => (
+                <div
+                  key={option}
+                  className="flex items-center gap-2.5 rounded-lg bg-[var(--surface-sunken)] px-3 py-2.5 text-sm"
+                >
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-xs text-muted">
+                    {i + 1}
+                  </span>
+                  <span>{option}</span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* reaction row */}
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          {/* Reaction row — three-zone footer with dividers */}
+          <div className="mt-4 flex items-stretch divide-x divide-border border-t border-border">
             <button
               type="button"
               onClick={handleReaction}
-              aria-label={myReaction ? "Descurtir publicacao" : "Curtir publicacao"}
+              aria-label={myReaction ? "Descurtir publicação" : "Curtir publicação"}
               aria-pressed={myReaction}
-              className={`flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
-                myReaction
-                  ? "bg-[var(--accent-soft)] text-accent"
-                  : "text-muted hover:bg-[var(--surface-subtle)]"
-              }`}
+              className={`flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)] ${myReaction ? "text-[var(--accent)]" : "text-muted"}`}
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
+              <Heart
+                size={18}
                 fill={myReaction ? "currentColor" : "none"}
-                stroke="currentColor"
-                strokeWidth="1.5"
+                className={myReaction ? "text-[var(--accent)]" : ""}
                 aria-hidden="true"
-              >
-                <path d="M8 2.5C8 1.67 7.33 1 6.5 1S5 1.67 5 2.5c0 1.5 1 2.5 2 3.5H4c-1.1 0-2 .9-2 2s.9 2 2 2h7c.55 0 1 .45 1 1s-.45 1-1 1H9.5c-.28 0-.5.22-.5.5s.22.5.5.5H11c1.1 0 2-.9 2-2s-.9-2-2-2H8c1 0 3-1 3-3s-1.5-3-3-3z" />
-              </svg>
+              />
               {reactionCount > 0 && <span>{reactionCount}</span>}
               <span className={reactionCount > 0 ? "sr-only" : ""}>Curtir</span>
             </button>
@@ -400,52 +443,32 @@ export function FeedPost({ post, index = 0 }: FeedPostProps) {
             <button
               type="button"
               onClick={handleToggleComments}
-              aria-label={showComments ? "Ocultar comentarios" : "Ver comentarios"}
+              aria-label={showComments ? "Ocultar comentários" : "Ver comentários"}
               aria-expanded={showComments}
-              className="flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]"
+              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <path d="M2 2h12v8H5.5L2 14V2z" />
-              </svg>
+              <MessageCircle size={18} aria-hidden="true" />
               {post.comment_count > 0 ? post.comment_count : "Comentar"}
             </button>
 
             <button
               type="button"
               onClick={handleShare}
-              aria-label="Compartilhar publicacao"
-              className="flex min-h-11 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]"
+              aria-label="Compartilhar publicação"
+              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                aria-hidden="true"
-              >
-                <path d="M6 5h4l4 4-4 4H6M2 5l4 4-4 4" />
-              </svg>
+              <Share2 size={18} aria-hidden="true" />
               Compartilhar
             </button>
-
-            {shareFeedback && (
-              <span aria-live="polite" className="text-xs text-accent">
-                {shareFeedback}
-              </span>
-            )}
           </div>
 
-          {/* comment preview + inline reply */}
+          {shareFeedback && (
+            <p aria-live="polite" className="mt-1 text-xs text-accent text-center">
+              {shareFeedback}
+            </p>
+          )}
+
+          {/* Comment preview */}
           {previewComments.length > 0 && !showComments && (
             <div className="mt-2 border-t border-border pt-2">
               {previewComments.map((c) => (
@@ -455,20 +478,21 @@ export function FeedPost({ post, index = 0 }: FeedPostProps) {
                 <button
                   type="button"
                   onClick={handleToggleComments}
-                  aria-label={`Ver todos os ${comments.length} comentarios`}
-                  className="min-h-11 text-xs text-muted hover:underline"
+                  aria-label={`Ver todos os ${comments.length} comentários`}
+                  className="min-h-11 text-xs text-muted transition-colors duration-[var(--duration-instant)] hover:underline"
                 >
-                  Ver todos os comentarios
+                  Ver todos os comentários
                 </button>
               )}
             </div>
           )}
 
+          {/* Inline comment field */}
           {(!showComments || comments.length > 0) && (
             <div className="mt-2 flex min-w-0 gap-2">
               <Input
-                aria-label="Comentario"
-                placeholder="Escreva um comentario..."
+                aria-label="Comentário"
+                placeholder="Escreva um comentário..."
                 value={commentText}
                 onChange={(e) => setCommentText((e.target as HTMLInputElement).value)}
                 className="min-w-0 flex-1"
@@ -478,7 +502,7 @@ export function FeedPost({ post, index = 0 }: FeedPostProps) {
                 variant="primary"
                 onPress={handleAddComment}
                 isDisabled={submitting || !commentText.trim()}
-                aria-label="Enviar comentario"
+                aria-label="Enviar comentário"
               >
                 Enviar
               </Button>
@@ -487,27 +511,20 @@ export function FeedPost({ post, index = 0 }: FeedPostProps) {
 
           {commentError && <p className="mt-1 text-xs text-[var(--danger)]">{commentError}</p>}
 
+          {/* Expanded comments */}
           {showComments && (
             <div className="mt-2 border-t border-border pt-2">
+              {comments.length === 0 && (
+                <p className="py-2 text-center text-xs text-muted">Nenhum comentário ainda.</p>
+              )}
               {comments.map((c) => (
-                <div key={c.id} className="flex gap-2 py-1.5">
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-[10px] font-medium">
-                    ?
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm break-words">{c.content}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted">{formatRelativeTime(c.created_at)}</span>
-                      <ReportButton targetType="comment" targetId={c.id} label="Denunciar" />
-                    </div>
-                  </div>
-                </div>
+                <CommentItem key={c.id} comment={c} />
               ))}
             </div>
           )}
         </div>
       </div>
-    </div>
+    </article>
   )
 }
 
@@ -559,7 +576,7 @@ export function CreatePostModal({
       /(an[ôo]nimo|v[íi]deo|marketplace|comercial|venda|compr[oa]|IA gerad[oa]|gerad[oa] por IA|intelig[êe]ncia artificial|verificado publicamente|selo de verifica[çc][ãa]o|organiza[çc][ãa]o militar|\bOM\b|patente|posto militar|gradua[çc][ãa]o militar|endere[çc]o residencial|\bCEP\b|\bCPF\b)/i
 
     if (prohibitedPattern.test(content.trim())) {
-      setError("Conteudo contem termos nao permitidos")
+      setError("Conteúdo contém termos não permitidos")
       return
     }
 
@@ -572,7 +589,7 @@ export function CreatePostModal({
       return
     }
     if (postType === "poll" && pollOptions.length < 2) {
-      setError("Enquete requer pelo menos 2 opcoes")
+      setError("Enquete requer pelo menos 2 opções")
       return
     }
 
@@ -600,7 +617,7 @@ export function CreatePostModal({
       .insert({ ...insertData, ...extras } as Database["public"]["Tables"]["posts"]["Insert"])
 
     if (insertError) {
-      setError("Nao foi possivel criar a publicacao")
+      setError("Não foi possível criar a publicação")
     } else {
       resetForm()
       onCreated()
@@ -624,7 +641,7 @@ export function CreatePostModal({
   return (
     <div className="motion-scrim-enter fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop)] p-4">
       <div className="motion-panel-enter w-full max-w-lg rounded-xl border border-border bg-[var(--surface)] p-6 shadow-[var(--elevation-3)]">
-        <h2 className="text-lg font-semibold">Criar publicacao</h2>
+        <h2 className="text-lg font-semibold">Criar publicação</h2>
 
         <div className="mt-4 space-y-4">
           <div className="flex gap-2 overflow-x-auto">
@@ -659,9 +676,9 @@ export function CreatePostModal({
           )}
 
           <TextArea
-            aria-label="Conteudo"
+            aria-label="Conteúdo"
             placeholder={
-              postType === "poll" ? "Pergunta da enquete..." : "O que voce quer compartilhar?"
+              postType === "poll" ? "Pergunta da enquete..." : "O que você quer compartilhar?"
             }
             value={content}
             onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
@@ -671,8 +688,8 @@ export function CreatePostModal({
             <div className="space-y-2">
               <div className="flex gap-2">
                 <Input
-                  aria-label="Opcao da enquete"
-                  placeholder="Adicionar opcao"
+                  aria-label="Opção da enquete"
+                  placeholder="Adicionar opção"
                   value={pollOption}
                   onChange={(e) => setPollOption((e.target as HTMLInputElement).value)}
                   onKeyDown={(e: React.KeyboardEvent) => {

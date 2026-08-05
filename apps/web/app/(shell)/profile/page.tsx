@@ -1,0 +1,431 @@
+"use client"
+
+import { Avatar, Button, Input, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
+import { useCallback, useEffect, useState } from "react"
+import { PILOT_LOCALITY_ID } from "../../../lib/locality"
+import { createBrowserClient } from "../../../lib/supabase/client"
+
+interface ProfileRow {
+  user_id: string
+  display_name: string | null
+  locality_id: string
+  visibility: string
+}
+
+interface MembershipRow {
+  joined_at: string
+  localities: { city_name: string; state_code: string } | null
+}
+
+interface PostRow {
+  id: string
+  content: string | null
+  post_type: string
+  created_at: string
+  comment_count: number | null
+  reaction_count: number | null
+}
+
+interface EventRow {
+  id: string
+  title: string
+  starts_at: string
+  locality_id: string
+}
+
+const MONTHS = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+]
+
+function formatJoinedMonthYear(iso: string): string {
+  const d = new Date(iso)
+  return `${MONTHS[d.getMonth()]} de ${d.getFullYear()}`
+}
+
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  })
+}
+
+function pluralize(count: number, singular: string, plural: string): string {
+  return count === 1 ? singular : plural
+}
+
+export default function ProfilePage() {
+  const supabase = createBrowserClient()
+  const [profile, setProfile] = useState<ProfileRow | null>(null)
+  const [membership, setMembership] = useState<MembershipRow | null>(null)
+  const [posts, setPosts] = useState<PostRow[]>([])
+  const [events, setEvents] = useState<EventRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  const [displayName, setDisplayName] = useState("")
+  const [savingName, setSavingName] = useState(false)
+  const [nameFeedback, setNameFeedback] = useState<{
+    type: "success" | "error"
+    message: string
+  } | null>(null)
+
+  const [visibility, setVisibility] = useState("locality_members")
+  const [savingVisibility, setSavingVisibility] = useState(false)
+  const [visibilityFeedback, setVisibilityFeedback] = useState<{
+    type: "success" | "error"
+    message: string
+  } | null>(null)
+
+  const loadProfile = useCallback(async () => {
+    setLoading(true)
+    setError("")
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      setError("Sessão expirada. Faça login novamente.")
+      setLoading(false)
+      return
+    }
+
+    const [{ data: profileRow }, { data: membershipRow }, { data: postRows }, { data: eventRows }] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("user_id, display_name, locality_id, visibility")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("locality_memberships")
+          .select("joined_at, localities(city_name, state_code)")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase.rpc("feed_posts", {
+          p_locality_id: PILOT_LOCALITY_ID,
+          p_order: "recent",
+        }),
+        supabase
+          .from("events")
+          .select("id, title, starts_at, locality_id")
+          .order("starts_at", { ascending: true })
+          .limit(10),
+      ])
+
+    if (profileRow) {
+      setProfile(profileRow as ProfileRow)
+      setDisplayName((profileRow as ProfileRow).display_name ?? "")
+      setVisibility((profileRow as ProfileRow).visibility ?? "locality_members")
+      if (membershipRow) setMembership(membershipRow as MembershipRow)
+    } else {
+      setError("Perfil não encontrado.")
+    }
+
+    const allPosts = (postRows ?? []) as unknown as PostRow[]
+    setPosts(allPosts.slice(0, 20))
+    setEvents((eventRows ?? []) as EventRow[])
+    setLoading(false)
+  }, [supabase])
+
+  useEffect(() => {
+    loadProfile()
+  }, [loadProfile])
+
+  const handleSaveDisplayName = async () => {
+    const trimmed = displayName.trim()
+    setNameFeedback(null)
+
+    if (trimmed.length < 2 || trimmed.length > 80) {
+      setNameFeedback({ type: "error", message: "O nome deve ter entre 2 e 80 caracteres." })
+      return
+    }
+
+    setSavingName(true)
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ display_name: trimmed })
+      .eq("user_id", profile?.user_id ?? "")
+
+    if (updateError) {
+      setNameFeedback({ type: "error", message: updateError.message })
+    } else {
+      setNameFeedback({ type: "success", message: "Nome atualizado." })
+      setProfile((prev) => (prev ? { ...prev, display_name: trimmed } : prev))
+    }
+    setSavingName(false)
+  }
+
+  const handleSaveVisibility = async (value: "locality_members" | "hidden") => {
+    setVisibilityFeedback(null)
+    setSavingVisibility(true)
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ visibility: value })
+      .eq("user_id", profile?.user_id ?? "")
+
+    if (updateError) {
+      setVisibilityFeedback({ type: "error", message: updateError.message })
+    } else {
+      setVisibility(value)
+      setVisibilityFeedback({ type: "success", message: "Visibilidade atualizada." })
+      setProfile((prev) => (prev ? { ...prev, visibility: value } : prev))
+    }
+    setSavingVisibility(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-3 px-4 py-12">
+        <div className="h-16 w-16 animate-pulse rounded-full bg-[var(--surface-subtle)]" />
+        <div className="h-5 w-40 animate-pulse rounded bg-[var(--surface-subtle)]" />
+        <div className="h-3 w-56 animate-pulse rounded bg-[var(--surface-subtle)]" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-1 items-center justify-center px-4 py-12">
+        <p className="text-sm text-[var(--danger)]">{error}</p>
+      </div>
+    )
+  }
+
+  if (!profile) return null
+
+  const initials = (profile.display_name ?? "?").charAt(0).toUpperCase()
+  const localityName = membership?.localities?.city_name ?? "Manaus"
+  const localityState = membership?.localities?.state_code ?? "AM"
+  const joinedLabel = membership?.joined_at
+    ? `membro desde ${formatJoinedMonthYear(membership.joined_at)}`
+    : null
+
+  return (
+    <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-8">
+      <header className="flex flex-col items-center gap-3 text-center">
+        <Avatar className="h-16 w-16 bg-[var(--surface-subtle)] text-[var(--foreground)] text-xl">
+          {initials}
+        </Avatar>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {profile.display_name ?? "Membro"}
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            {localityName}, {localityState}
+            {joinedLabel ? (
+              <>
+                {" \u00b7 "}
+                {joinedLabel}
+              </>
+            ) : null}
+          </p>
+        </div>
+      </header>
+
+      <Tabs aria-label="Seções do perfil" variant="primary" className="rounded-xl">
+        <TabList>
+          <Tab id="posts">Publicações</Tab>
+          <Tab id="events">Eventos</Tab>
+          <Tab id="settings">Configurações</Tab>
+        </TabList>
+
+        <TabPanel id="posts">
+          {posts.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-muted">
+              Você ainda não publicou nada.
+            </div>
+          ) : (
+            <ul className="mt-3 space-y-3">
+              {posts.map((p) => (
+                <li key={p.id} className="rounded-xl border border-border bg-[var(--surface)] p-4">
+                  <p className="text-sm break-words whitespace-pre-wrap">{p.content ?? ""}</p>
+                  <div className="mt-2 flex items-center gap-3 text-xs text-muted">
+                    <span>{formatShortDate(p.created_at)}</span>
+                    {p.reaction_count !== null && p.reaction_count > 0 && (
+                      <span>
+                        {p.reaction_count} {pluralize(p.reaction_count, "reação", "reações")}
+                      </span>
+                    )}
+                    {p.comment_count !== null && p.comment_count > 0 && (
+                      <span>
+                        {p.comment_count} {pluralize(p.comment_count, "comentário", "comentários")}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </TabPanel>
+
+        <TabPanel id="events">
+          {events.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-muted">
+              Nenhum evento cadastrado.
+            </div>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {events.map((e) => (
+                <li
+                  key={e.id}
+                  className="flex items-center justify-between rounded-xl border border-border bg-[var(--surface)] px-4 py-3"
+                >
+                  <span className="text-sm font-medium">{e.title}</span>
+                  <span className="text-xs text-muted">{formatShortDate(e.starts_at)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </TabPanel>
+
+        <TabPanel id="settings">
+          <div className="mt-3 space-y-3">
+            <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+              <p className="text-sm font-medium">Nome de exibição</p>
+              <p className="mt-0.5 text-xs text-muted">
+                Visível para outros membros da comunidade. Use entre 2 e 80 caracteres.
+              </p>
+              <div className="mt-3 flex items-start gap-2">
+                <Input
+                  aria-label="Nome de exibição"
+                  value={displayName}
+                  onChange={(e) => {
+                    setDisplayName((e.target as HTMLInputElement).value)
+                    setNameFeedback(null)
+                  }}
+                  maxLength={80}
+                  className="flex-1"
+                />
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onPress={handleSaveDisplayName}
+                  isDisabled={savingName}
+                  className="min-h-10"
+                >
+                  {savingName ? "Salvando…" : "Salvar"}
+                </Button>
+              </div>
+              {nameFeedback && (
+                <p
+                  className={`mt-2 text-xs ${
+                    nameFeedback.type === "success"
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--danger)]"
+                  }`}
+                  role="alert"
+                >
+                  {nameFeedback.message}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+              <p className="text-sm font-medium">Visibilidade do perfil</p>
+              <p className="mt-0.5 text-xs text-muted">
+                Controle quem pode ver seu perfil dentro da comunidade.
+              </p>
+              <div className="mt-3 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveVisibility("locality_members")}
+                  disabled={savingVisibility}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                    visibility === "locality_members"
+                      ? "border-[var(--accent)] bg-[var(--accent)]/10 font-medium"
+                      : "border-border bg-[var(--surface-subtle)] hover:border-[var(--accent)]/50"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3 w-3 rounded-full border-2 ${
+                      visibility === "locality_members"
+                        ? "border-[var(--accent)] bg-[var(--accent)]"
+                        : "border-[var(--muted)]"
+                    }`}
+                  />
+                  Membros da localidade
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveVisibility("hidden")}
+                  disabled={savingVisibility}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                    visibility === "hidden"
+                      ? "border-[var(--accent)] bg-[var(--accent)]/10 font-medium"
+                      : "border-border bg-[var(--surface-subtle)] hover:border-[var(--accent)]/50"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-3 w-3 rounded-full border-2 ${
+                      visibility === "hidden"
+                        ? "border-[var(--accent)] bg-[var(--accent)]"
+                        : "border-[var(--muted)]"
+                    }`}
+                  />
+                  Oculto
+                </button>
+              </div>
+              {visibilityFeedback && (
+                <p
+                  className={`mt-2 text-xs ${
+                    visibilityFeedback.type === "success"
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--danger)]"
+                  }`}
+                  role="alert"
+                >
+                  {visibilityFeedback.message}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+              <p className="text-sm font-medium">Preferências de notificação</p>
+              <p className="mt-1 text-xs text-muted">
+                Receber alertas de novas mensagens, comentários e eventos. Em breve.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+              <p className="text-sm font-medium">Convites de família</p>
+              <p className="mt-1 text-xs text-muted">
+                Gerencie os convites enviados para familiares. Em breve.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                if (!window.confirm("Tem certeza que deseja sair da conta?")) {
+                  return
+                }
+                const { error: signOutError } = await supabase.auth.signOut()
+                if (signOutError) {
+                  console.error("Erro ao sair:", signOutError.message)
+                  return
+                }
+                window.location.href = "/login"
+              }}
+              className="flex w-full min-h-11 items-center justify-center rounded-xl border border-[var(--danger-soft)] bg-[var(--surface)] px-4 py-3 text-sm font-medium text-[var(--danger)] hover:bg-[var(--danger-soft)]"
+            >
+              Sair da conta
+            </button>
+          </div>
+        </TabPanel>
+      </Tabs>
+    </div>
+  )
+}

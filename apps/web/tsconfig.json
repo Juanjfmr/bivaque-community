@@ -17,6 +17,7 @@
     "app/**/*.ts",
     "app/**/*.tsx",
     "lib/**/*.ts",
+    "middleware.ts",
     "next.config.ts"
   ],
   "exclude": ["node_modules"]
