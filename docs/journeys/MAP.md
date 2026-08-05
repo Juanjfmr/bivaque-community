@@ -189,6 +189,19 @@ Legenda de evidência:
   reconfirmar a linha exata.
 - `[I]` — inferência razoável mas não verificada linha-a-linha.
 
+> **Critério para marcar uma linha como Corrigida.** O estado descreve o
+> que o usuário consegue fazer, não o que o schema permite — capacidade
+> no banco, sozinha, não fecha linha. A **4b** tem `is_deleted`,
+> `feed_posts` filtrando e grants de `service_role`, e segue **Parcial**
+> porque falta a superfície do operador. A **5d** tem `feed_group` e
+> `feed_community`, e segue **Parcial** pelo mesmo motivo: não existe
+> rota `/groups/:id`. Marcar qualquer uma como Corrigida faria o mapa
+> prometer o que o produto não entrega.
+>
+> As linhas **4e** e **4f** são Corrigidas porque eram vazamentos de
+> privacidade: ali o defeito estava inteiro dentro do banco, e fechá-lo
+> no banco fecha o problema.
+
 | # | Área | Subdivisão | Estado | Pri. | Lacunas | Evidência | Conf. |
 |---|---|---|---|---|---|---|---|
 | 1 | Admissão / Onboarding | 1a — verify CPF + done verificado | Parcial | P0 | Após `done`, redireciona para `/community` sem tela de boas-vindas, sem primeira ação sugerida, sem explicação de como o feed funciona | `apps/web/app/(preauth)/onboarding/page.tsx:138-141`; ausência de rota de boas-vindas | [V] |
@@ -216,7 +229,7 @@ Legenda de evidência:
 | 5 | Grupos | 5a — listar/entrar/sair | Parcial | P1 | Funciona; **sem página de detalhe do grupo** | `apps/web/app/(shell)/groups/page.tsx:231-267`; `docs/agents/VISUAL_GUIDE.md:111` ("Detalhe (futura)") | [V][C] |
 | 5 | Grupos | 5b — criar | Parcial | P1 | Form e RPC funcionam; sem foto/capa/descrição rica; sem categorias; sem regras de entrada além de `public`/`private` | `groups/page.tsx:203-229,556-615` | [V] |
 | 5 | Grupos | 5c — moderar (aprovar, promover, rebaixar) | Parcial | P2 | RPCs existem; **sem transferência de ownership**; **sem convite para grupo**; **sem log de moderação** | `groups/page.tsx:269-322` | [V] |
-| 5 | Grupos | 5d — feed/membros do grupo | **Corrigida** | ~~P2~~ | A camada de banco está fechada: `public.feed_group(p_group_id uuid)` agrega posts do grupo respeitando escopo (público interno visível só a membros da comunidade; privado só a membros do grupo). `public.feed_community(p_community_id uuid)` cobre o nível da vila incluindo grupos públicos internos. UI continua com o card-resumo de `(shell)/groups/page.tsx`; a página `/groups/:id` permanece como camada de aplicação, fora deste plano | `20260805215020_community_feeds.sql`; `supabase/tests/community-feeds.sql` (8 asserts, casos 8/8b/9/10/14/D6) | [V] |
+| 5 | Grupos | 5d — feed/membros do grupo | Parcial | P2 | **Metade fechada.** A camada de banco está pronta: `public.feed_group(p_group_id uuid)` agrega posts do grupo respeitando escopo (público interno visível só a membros da comunidade; privado só a membros do grupo). `public.feed_community(p_community_id uuid)` cobre o nível da vila incluindo grupos públicos internos. UI continua com o card-resumo de `(shell)/groups/page.tsx`; a página `/groups/:id` permanece como camada de aplicação, fora deste plano | `20260805215020_community_feeds.sql`; `supabase/tests/community-feeds.sql` (8 asserts, casos 8/8b/9/10/14/D6) | [V] |
 | 6 | Eventos | 6a — criar/listar | Parcial | P1 | Form e listagem funcionam; **convite para evento é placeholder** ("em breve") | `apps/web/app/(shell)/events/page.tsx:537-543,549-601` | [V] |
 | 6 | Eventos | 6b — RSVP | Parcial | P1 | interested/going funcionam; sem "não vou" explícito; sem atualização pelo organizador quando o evento muda | `events/page.tsx:275-295` | [V] |
 | 6 | Eventos | 6c — detalhe do evento | Ausente | P1 | Sem rota `/events/:id` com descrição completa, comentários, lista de confirmados | Ausência de rota | [V] |
