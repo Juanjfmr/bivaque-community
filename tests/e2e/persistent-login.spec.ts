@@ -58,13 +58,21 @@ const SUPABASE_ANON_KEY =
   readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
   readEnvLocal("SUPABASE_ANON_KEY")
 
+const USER_EMAIL =
+  process.env.USER_EMAIL ?? readEnvLocal("BIVAQUE_VISUAL_EMAIL") ?? "visual@bivaque.example.invalid"
+const USER_PASSWORD = process.env.USER_PASSWORD ?? readEnvLocal("BIVAQUE_VISUAL_PASSWORD")
+
 if (!SUPABASE_ANON_KEY) {
   throw new Error(
-    "SUPABASE_ANON_KEY is required. Set it in the environment or in apps/web/.env.local.",
+    "SUPABASE_ANON_KEY is required. Set it in the environment or as NEXT_PUBLIC_SUPABASE_ANON_KEY in apps/web/.env.local.",
   )
 }
-const USER_EMAIL = process.env.USER_EMAIL ?? "visual@bivaque.example.invalid"
-const USER_PASSWORD = process.env.USER_PASSWORD ?? "V1sual-Bivaque-2026!"
+
+if (!USER_PASSWORD) {
+  throw new Error(
+    "USER_PASSWORD is required. Set it in the environment or as BIVAQUE_VISUAL_PASSWORD in apps/web/.env.local.",
+  )
+}
 
 async function getSessionViaPasswordGrant(): Promise<{
   accessToken: string
