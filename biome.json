@@ -33,9 +33,6 @@
         "noNonNullAssertion": "error",
         "noParameterAssign": "error",
         "useImportType": "error"
-      },
-      "complexity": {
-        "useLiteralKeys": "info"
       }
     }
   },
