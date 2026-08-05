@@ -1,10 +1,17 @@
 # AGENTS.md — Bivaque Community
 
 Private, invite-only community product for verified federal military, Veterans and military
-pensioners, piloted in Manaus. Server-rendered Next.js on Supabase. Product decisions live in
+pensioners, piloted in Manaus. Server-rendered Next.js on Supabase.
+
+The original product decisions live outside this repository, in
 `C:\Users\juana\Forja-90\.omo\plans\bivaque-community-pilot.md` and
-`C:\Users\juana\Forja-90\.omo\drafts\bivaque-community-pilot.md` (outside this repo) — read them
-before feature work. Forja-90 is a legacy codebase: reference patterns only, never copy its files.
+`…\drafts\bivaque-community-pilot.md`. **Do not block on them.** They are unreachable from a
+workspace-scoped session, and everything needed to work here has been carried into
+`docs/journeys/MAP.md` and `docs/superpowers/specs/` — including the exclusions decided there
+(marketplace, ads, AI, video, native app, other cities), recorded in §6 of the map. Read the
+originals only if you already have access and are reopening a product decision.
+
+Forja-90 is a legacy codebase: reference patterns only, never copy its files.
 
 ## READ FIRST — before any work in this repository
 
@@ -111,11 +118,16 @@ These tests fail CI if you break them — update them only when a contract delib
 - Projects: `mobile-375`, `tablet-768`, `desktop-1440`; `webServer` builds then serves the app on
   `http://127.0.0.1:3000`. Smoke spec asserts the home heading "Bivaque" and
   `/api/health` → `{"status":"ok"}` — changing either breaks E2E.
-- Local gotcha: `playwright-report/` and `test-results/` are NOT gitignored — running `test:e2e`
-  locally leaves artifacts that `biome check .` then scans, failing `pnpm lint`. Delete them before
-  linting locally. (CI installs browsers normally; the optional
-  `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` override in `playwright.config.ts` is a dev-host escape
-  hatch only.)
+- `playwright-report/` and `test-results/` need no cleanup before linting. They are in
+  `.gitignore` (lines 6-7) **and** excluded in `biome.json` (lines 13-14), so a local `test:e2e`
+  run cannot fail `pnpm lint` or reach a commit. Earlier revisions of this file said the opposite
+  and told you to delete them by hand; that is obsolete.
+- CI installs browsers normally. The optional `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` override in
+  `playwright.config.ts` is a dev-host escape hatch only.
+- E2E specs must not inline credentials. Read them from the environment, falling back to
+  `apps/web/.env.local`, and throw when neither supplies one — see
+  `tests/e2e/persistent-login.spec.ts`. The secrets scan enforces this for anything bound to a
+  `password`, `secret`, `api_key` or `credential` name.
 
 ## Style
 
