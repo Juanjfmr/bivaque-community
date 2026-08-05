@@ -855,6 +855,10 @@ export type Database = {
         Args: { p_accepted_by_user_id: string; p_token_digest: string }
         Returns: string
       }
+      add_community_moderator: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: undefined
+      }
       add_group_moderator: {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
@@ -863,14 +867,36 @@ export type Database = {
         Args: { p_email: string; p_locality_id: string }
         Returns: undefined
       }
+      approve_community_member: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: undefined
+      }
       approve_group_member: {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
+      }
+      create_community: {
+        Args: {
+          p_description: string
+          p_locality_id: string
+          p_name: string
+          p_owner_user_id: string
+        }
+        Returns: string
       }
       create_group: {
         Args: {
           p_description?: string
           p_locality_id: string
+          p_name: string
+          p_visibility: Database["public"]["Enums"]["group_visibility"]
+        }
+        Returns: string
+      }
+      create_group_in_community: {
+        Args: {
+          p_community_id: string
+          p_description: string
           p_name: string
           p_visibility: Database["public"]["Enums"]["group_visibility"]
         }
@@ -935,8 +961,24 @@ export type Database = {
         }[]
       }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
+      remove_community_member: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      remove_community_moderator: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: undefined
+      }
       remove_group_moderator: {
         Args: { p_group_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      request_community_membership: {
+        Args: { p_community_id: string }
+        Returns: undefined
+      }
+      transfer_community_ownership: {
+        Args: { p_community_id: string; p_new_owner_user_id: string }
         Returns: undefined
       }
       transfer_group_ownership: {
