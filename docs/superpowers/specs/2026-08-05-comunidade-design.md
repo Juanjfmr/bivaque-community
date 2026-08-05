@@ -244,13 +244,30 @@ ver só os posts do nível da vila.
 estendendo a policy `events_select_locality_member` que a migration 017
 já reescreveu para grupos.
 
-**Fan-out de notificação é superfície de vazamento própria.** Evento de
-comunidade não pode notificar a cidade inteira. A suíte
-`notifications-approved-events` precisa ganhar o caso de comunidade — não
-basta ajustar a policy de `select`.
+**Correção (2026-08-05, pós-aprovação).** Esta seção afirmava que o
+fan-out de notificação era superfície de vazamento própria, e que evento
+de comunidade poderia notificar a cidade inteira. **Isso está errado** —
+não existe fan-out de evento para a localidade. As funções são
+`notify_comment`, `notify_group_admission`, `notify_event_rsvp` (avisa só
+o organizador) e `notify_event_change` (avisa só quem deu RSVP).
+
+O vazamento real estava em `event_rsvps`, e **já foi corrigido** na
+migration `20260805191237_event_rsvp_scope.sql`, antes da comunidade
+existir. As policies checavam apenas `private.is_event_locality_member`,
+que é `security definer` e ignora RLS — qualquer membro da cidade
+conseguia dar RSVP em evento de grupo privado. O prejuízo vinha depois,
+pela notificação: `notify_event_change` avisa **todos os RSVPs**, então o
+intruso passava a receber título, local e horário do evento privado.
+
+**Consequência para este design:** existe agora
+`private.can_access_event(uuid)`, espelhando a policy de `select` de
+`events`. Ela precisa ganhar o ramo de comunidade **na mesma migration
+que adicionar `events.community_id`** — nunca depois. É o Padrão 6
+aplicado a si mesmo.
 
 RSVP herda o escopo do evento: quem não acessa o evento não pode
-confirmar presença.
+confirmar presença. Isso agora é garantido por `can_access_event`, não
+por coincidência.
 
 ---
 
@@ -386,10 +403,14 @@ por acidente.
 | 18 | Remover o dono da comunidade sem transferir | bloqueado |
 | 19 | Perfil `hidden` co-membro da vila | visível ao co-membro |
 | 20 | Perfil `hidden` para membro da cidade fora da vila | invisível |
-| 21 | Evento de comunidade notifica a cidade | negado |
+| 21 | Membro da cidade fora da vila dá RSVP em evento da vila | negado — via `can_access_event` |
 
 Linhas **2, 6, 7, 16 e 17** são as que justificam a suíte: são os modos
 de falha que jamais aparecem em teste de caminho feliz.
+
+> A linha 21 já tem cobertura parcial em
+> `supabase/tests/event-rsvp-scope.sql` para a dimensão de grupo. Falta
+> só estender ao ramo de comunidade quando `events.community_id` entrar.
 
 ---
 

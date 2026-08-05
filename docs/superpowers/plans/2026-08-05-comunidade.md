@@ -1028,6 +1028,68 @@ using (
 );
 
 -- ── events: same container rule, extending 017 ───────────────────────────────
+-- ORDER MATTERS AGAIN. Migration 019 introduced private.can_access_event, and
+-- both event_rsvps policies depend on it — so it cannot be dropped while they
+-- exist. Same trap as the post helpers above.
+
+drop policy event_rsvps_select_locality_member on public.event_rsvps;
+drop policy event_rsvps_insert_self on public.event_rsvps;
+drop function private.can_access_event(uuid);
+
+create function private.can_access_event(p_event_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.events e
+    where e.id = p_event_id
+      and private.is_locality_member(e.locality_id)
+      and (
+        e.community_id is null
+        or private.is_community_member(e.community_id)
+      )
+      and (
+        e.group_id is null
+        or private.is_group_member(e.group_id)
+        or exists (
+          select 1
+          from public.groups g
+          where g.id = e.group_id
+            and g.visibility = 'public'
+            and (
+              g.community_id is null
+              or private.is_community_member(g.community_id)
+            )
+        )
+      )
+  );
+$$;
+
+revoke all on function private.can_access_event(uuid) from public;
+revoke all on function private.can_access_event(uuid) from anon;
+revoke all on function private.can_access_event(uuid) from authenticated;
+grant execute on function private.can_access_event(uuid) to authenticated;
+
+create policy event_rsvps_select_locality_member
+on public.event_rsvps
+for select
+to authenticated
+using (
+  private.can_access_event(event_id)
+);
+
+create policy event_rsvps_insert_self
+on public.event_rsvps
+for insert
+to authenticated
+with check (
+  user_id = (select auth.uid())
+  and private.can_access_event(event_id)
+);
 
 drop policy events_select_locality_member on public.events;
 
@@ -1977,7 +2039,26 @@ git commit -m "feat(community): add creation, membership and moderation RPCs"
 
 ---
 
-## Task 5: Escopo de RSVP
+## Task 5: Escopo de RSVP — ✅ EXECUTADA (2026-08-05, `b2853c2`)
+
+> **Executada fora de ordem, extraída do plano**, porque fechava um vazamento
+> que já existia em produção. Entregue apenas a **dimensão de grupo** —
+> `20260805191237_event_rsvp_scope.sql` mais `supabase/tests/event-rsvp-scope.sql`
+> (7 asserts). Suíte em 602 testes, `db:lint` limpo.
+>
+> **Uma descoberta mudou o diagnóstico:** só o `INSERT` vazava. A policy de
+> `SELECT` aninha `select 1 from public.events`, e essa subquery respeita a RLS
+> de `events` que a 017 apertou — ou seja, já estava protegida por acidente.
+> O `INSERT` usava `is_event_locality_member`, `security definer`, que ignora
+> RLS. O prejuízo aparecia pela notificação: `notify_event_change` avisa todos
+> os RSVPs, então o intruso recebia título, local e horário do evento privado.
+>
+> **O que sobra e migrou para a Task 2:** estender `private.can_access_event`
+> com o ramo de comunidade. Já está escrito no Step 5 da Task 2, incluindo a
+> ordem de `drop` obrigatória — as duas policies de `event_rsvps` dependem da
+> função e precisam cair antes dela.
+>
+> O texto abaixo fica como registro do que foi feito.
 
 O fan-out de notificação **não** precisa de correção: `notify_event_change` notifica apenas quem deu RSVP, e `notify_event_rsvp` notifica só o organizador. Não existe fan-out de evento para a localidade. O alcance fica limitado por transitividade assim que o RSVP for escopado — que é o que falta.
 
