@@ -1,6 +1,6 @@
 "use client"
 
-import { Button, Input, TextArea } from "@heroui/react"
+import { Button, Dropdown, Input, Modal, TextArea, useOverlayState } from "@heroui/react"
 import {
   BadgeCheck,
   Bookmark,
@@ -11,9 +11,11 @@ import {
   MoreHorizontal,
   Share2,
 } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { MemberAvatar } from "./avatar"
+import { FeedbackAlert } from "./feedback-alert"
 import { ReportButton } from "./report-button"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
@@ -41,9 +43,7 @@ function formatRelativeTime(iso: string): string {
 function CommentItem({ comment }: { comment: CommentRow }) {
   return (
     <div className="flex gap-2 py-1.5">
-      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-[10px] font-medium">
-        ?
-      </div>
+      <MemberAvatar name="?" size="sm" className="h-5 w-5 text-[10px]" />
       <div className="min-w-0 flex-1">
         <p className="text-sm break-words">{comment.content}</p>
         <div className="flex items-center gap-2">
@@ -68,27 +68,6 @@ function LeanOverflowMenu({
   isBookmarked = false,
   onBookmarkToggle,
 }: LeanOverflowMenuProps) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false)
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    document.addEventListener("keydown", onKeyDown)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-      document.removeEventListener("keydown", onKeyDown)
-    }
-  }, [open])
-
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}/community?post=${postId}`
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
@@ -108,56 +87,48 @@ function LeanOverflowMenu({
         /* noop */
       }
     }
-    setOpen(false)
   }, [postId])
 
+  const handleAction = useCallback(
+    (key: React.KeyboardEvent | React.MouseEvent | string | number) => {
+      if (key === "hide") {
+        onHide?.(postId)
+      } else if (key === "bookmark") {
+        onBookmarkToggle?.(postId)
+      } else if (key === "share") {
+        void handleShare()
+      }
+    },
+    [postId, onHide, onBookmarkToggle, handleShare],
+  )
+
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        aria-label="Mais opções"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
-      >
-        <MoreHorizontal size={18} aria-hidden="true" />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 top-full z-40 mt-1 w-52 rounded-xl border border-border bg-[var(--surface)] py-1 shadow-[var(--elevation-2)]">
-          <button
-            type="button"
-            onClick={() => {
-              onHide?.(postId)
-              setOpen(false)
-            }}
-            className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]"
-          >
-            <span className="text-muted">Ocultar publicação</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              onBookmarkToggle?.(postId)
-              setOpen(false)
-            }}
-            className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]"
-          >
-            <span className="text-muted">{isBookmarked ? "Remover dos salvos" : "Salvar"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleShare}
-            className="flex w-full min-h-11 items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]"
-          >
-            <span className="text-muted">Compartilhar</span>
-          </button>
-        </div>
-      )}
-    </div>
+    <Dropdown>
+      <Dropdown.Trigger>
+        <Button
+          isIconOnly
+          variant="tertiary"
+          size="sm"
+          aria-label="Mais opções"
+          className="rounded-full"
+        >
+          <MoreHorizontal size={18} aria-hidden="true" />
+        </Button>
+      </Dropdown.Trigger>
+      <Dropdown.Popover placement="bottom end">
+        <Dropdown.Menu aria-label="Ações da publicação" onAction={handleAction}>
+          <Dropdown.Item key="hide" id="hide">
+            Ocultar publicação
+          </Dropdown.Item>
+          <Dropdown.Item key="bookmark" id="bookmark">
+            {isBookmarked ? "Remover dos salvos" : "Salvar"}
+          </Dropdown.Item>
+          <Dropdown.Item key="share" id="share">
+            Compartilhar
+          </Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown.Popover>
+    </Dropdown>
   )
 }
 
@@ -300,9 +271,7 @@ export function FeedPost({
         <div className="flex-1 min-w-0 p-4 pl-3">
           {/* Header row */}
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-sm font-medium ring-1 ring-border">
-              {post.display_name?.charAt(0) ?? "?"}
-            </div>
+            <MemberAvatar name={post.display_name} className="h-9 w-9 text-sm" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-semibold truncate">
@@ -509,7 +478,11 @@ export function FeedPost({
             </div>
           )}
 
-          {commentError && <p className="mt-1 text-xs text-[var(--danger)]">{commentError}</p>}
+          {commentError && (
+            <div className="mt-1">
+              <FeedbackAlert variant="danger" description={commentError} />
+            </div>
+          )}
 
           {/* Expanded comments */}
           {showComments && (
@@ -541,6 +514,7 @@ export function CreatePostModal({
   onCreated,
   onClose,
 }: CreatePostModalProps) {
+  const modal = useOverlayState({ defaultOpen: true, onOpenChange: (open) => !open && onClose() })
   const [postType, setPostType] = useState(defaultPostType ?? "text")
   const [content, setContent] = useState("")
   const [photoPath, setPhotoPath] = useState("")
@@ -550,6 +524,12 @@ export function CreatePostModal({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const supabase = createBrowserClient()
+
+  useEffect(() => {
+    if (!modal.isOpen) {
+      onClose()
+    }
+  }, [modal.isOpen, onClose])
 
   const resetForm = useCallback(() => {
     setPostType("text")
@@ -618,13 +598,13 @@ export function CreatePostModal({
 
     if (insertError) {
       setError("Não foi possível criar a publicação")
-    } else {
-      resetForm()
-      onCreated()
-      onClose()
+      setSubmitting(false)
+      return
     }
 
-    setSubmitting(false)
+    resetForm()
+    onCreated()
+    modal.close()
   }, [
     postType,
     content,
@@ -635,116 +615,129 @@ export function CreatePostModal({
     supabase,
     resetForm,
     onCreated,
-    onClose,
+    modal,
   ])
 
+  const handleCancel = useCallback(() => {
+    resetForm()
+    modal.close()
+  }, [resetForm, modal])
+
   return (
-    <div className="motion-scrim-enter fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop)] p-4">
-      <div className="motion-panel-enter w-full max-w-lg rounded-xl border border-border bg-[var(--surface)] p-6 shadow-[var(--elevation-3)]">
-        <h2 className="text-lg font-semibold">Criar publicação</h2>
-
-        <div className="mt-4 space-y-4">
-          <div className="flex gap-2 overflow-x-auto">
-            {(["text", "photo", "link", "poll"] as const).map((type) => (
-              <Button
-                key={type}
-                size="sm"
-                variant={postType === type ? "primary" : "tertiary"}
-                onPress={() => setPostType(type)}
-              >
-                {POST_TYPE_LABELS[type]}
-              </Button>
-            ))}
-          </div>
-
-          {postType === "photo" && (
-            <Input
-              aria-label="Caminho da foto"
-              placeholder="Caminho da foto (event-photos/...)"
-              value={photoPath}
-              onChange={(e) => setPhotoPath((e.target as HTMLInputElement).value)}
-            />
-          )}
-
-          {postType === "link" && (
-            <Input
-              aria-label="URL"
-              placeholder="URL (https://...)"
-              value={linkUrl}
-              onChange={(e) => setLinkUrl((e.target as HTMLInputElement).value)}
-            />
-          )}
-
-          <TextArea
-            aria-label="Conteúdo"
-            placeholder={
-              postType === "poll" ? "Pergunta da enquete..." : "O que você quer compartilhar?"
-            }
-            value={content}
-            onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
-          />
-
-          {postType === "poll" && (
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  aria-label="Opção da enquete"
-                  placeholder="Adicionar opção"
-                  value={pollOption}
-                  onChange={(e) => setPollOption((e.target as HTMLInputElement).value)}
-                  onKeyDown={(e: React.KeyboardEvent) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      handleAddPollOption()
-                    }
-                  }}
-                  className="flex-1"
-                />
-                <Button size="sm" variant="tertiary" onPress={handleAddPollOption}>
-                  Adicionar
-                </Button>
+    <Modal state={modal}>
+      <Modal.Backdrop>
+        <Modal.Container size="lg">
+          <Modal.Dialog>
+            <Modal.Header>
+              <Modal.Heading>Criar publicação</Modal.Heading>
+              <Modal.CloseTrigger />
+            </Modal.Header>
+            <Modal.Body>
+              <div className="flex gap-2 overflow-x-auto">
+                {(["text", "photo", "link", "poll"] as const).map((type) => (
+                  <Button
+                    key={type}
+                    size="sm"
+                    variant={postType === type ? "primary" : "tertiary"}
+                    onPress={() => setPostType(type)}
+                  >
+                    {POST_TYPE_LABELS[type]}
+                  </Button>
+                ))}
               </div>
-              {pollOptions.length > 0 && (
-                <ul className="space-y-1">
-                  {pollOptions.map((opt) => (
-                    <li key={opt} className="flex items-center gap-2 text-sm">
-                      <span className="flex-1">{opt}</span>
-                      <Button
-                        size="sm"
-                        variant="tertiary"
-                        onPress={() => setPollOptions(pollOptions.filter((item) => item !== opt))}
-                      >
-                        x
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
 
-          {error && <p className="text-sm text-[var(--danger)]">{error}</p>}
-        </div>
+              {postType === "photo" ? (
+                <Input
+                  aria-label="Caminho da foto"
+                  placeholder="Caminho da foto (event-photos/...)"
+                  value={photoPath}
+                  onChange={(e) => setPhotoPath((e.target as HTMLInputElement).value)}
+                  className="mt-4"
+                />
+              ) : null}
 
-        <div className="mt-6 flex justify-end gap-2">
-          <Button
-            variant="tertiary"
-            onPress={() => {
-              resetForm()
-              onClose()
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            onPress={handleSubmit}
-            isDisabled={submitting || !content.trim()}
-            variant="primary"
-          >
-            Publicar
-          </Button>
-        </div>
-      </div>
-    </div>
+              {postType === "link" ? (
+                <Input
+                  aria-label="URL"
+                  placeholder="URL (https://...)"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl((e.target as HTMLInputElement).value)}
+                  className="mt-4"
+                />
+              ) : null}
+
+              <TextArea
+                aria-label="Conteúdo"
+                placeholder={
+                  postType === "poll" ? "Pergunta da enquete..." : "O que você quer compartilhar?"
+                }
+                value={content}
+                onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
+                className="mt-4"
+              />
+
+              {postType === "poll" ? (
+                <div className="mt-4 space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      aria-label="Opção da enquete"
+                      placeholder="Adicionar opção"
+                      value={pollOption}
+                      onChange={(e) => setPollOption((e.target as HTMLInputElement).value)}
+                      onKeyDown={(e: React.KeyboardEvent) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault()
+                          handleAddPollOption()
+                        }
+                      }}
+                      className="flex-1"
+                    />
+                    <Button size="sm" variant="tertiary" onPress={handleAddPollOption}>
+                      Adicionar
+                    </Button>
+                  </div>
+                  {pollOptions.length > 0 ? (
+                    <ul className="space-y-1">
+                      {pollOptions.map((opt) => (
+                        <li key={opt} className="flex items-center gap-2 text-sm">
+                          <span className="flex-1">{opt}</span>
+                          <Button
+                            size="sm"
+                            variant="tertiary"
+                            onPress={() =>
+                              setPollOptions(pollOptions.filter((item) => item !== opt))
+                            }
+                          >
+                            x
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {error ? (
+                <div className="mt-4">
+                  <FeedbackAlert variant="danger" description={error} />
+                </div>
+              ) : null}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="tertiary" onPress={handleCancel}>
+                Cancelar
+              </Button>
+              <Button
+                onPress={handleSubmit}
+                isDisabled={submitting || !content.trim()}
+                variant="primary"
+              >
+                Publicar
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </Modal>
   )
 }

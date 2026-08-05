@@ -1,6 +1,6 @@
 "use client"
 
-import { Button, Input, Modal, useOverlayState } from "@heroui/react"
+import { Button, Input, ListBox, Modal, useOverlayState } from "@heroui/react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import {
@@ -10,6 +10,7 @@ import {
 } from "../../components/bivaque/chat-thread"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
+import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { MessagesIllustration } from "../../components/bivaque/illustrations"
 import { ConversationListSkeleton } from "../../components/bivaque/skeleton"
 import { showToast } from "../../components/bivaque/toast"
@@ -519,7 +520,16 @@ export default function MessagesPage() {
                 showThreadOnMobile ? "hidden" : "flex"
               } md:flex w-full md:w-80 shrink-0 flex-col border-r border-border`}
             >
-              <div className="flex-1 overflow-y-auto py-1">
+              <ListBox
+                aria-label="Conversas"
+                selectionMode="single"
+                selectedKeys={selectedConversationId ? [selectedConversationId] : []}
+                onSelectionChange={(keys) => {
+                  const key = Array.from(keys)[0]
+                  if (typeof key === "string") selectConversation(key)
+                }}
+                className="flex-1 overflow-y-auto py-1"
+              >
                 {conversations.map((conv) => {
                   const oid = otherUserId(conv)
                   const name = profiles.get(oid)?.display_name ?? oid.slice(0, 8)
@@ -527,17 +537,9 @@ export default function MessagesPage() {
                   const preview = formatLastMessagePreview(lastMsg, userId ?? "")
                   const blocked = blockedIds.has(oid)
                   const blockedBy = blockedByOthers.has(oid)
-                  const isSelected = selectedConversationId === conv.id
 
                   return (
-                    <button
-                      key={conv.id}
-                      type="button"
-                      onClick={() => selectConversation(conv.id)}
-                      className={`motion-press w-full px-3 py-2.5 text-left transition-colors duration-[var(--duration-instant)] ${
-                        isSelected ? "bg-[var(--accent-soft)]" : "hover:bg-[var(--surface-subtle)]"
-                      }`}
-                    >
+                    <ListBox.Item key={conv.id} id={conv.id} textValue={name}>
                       <div className="flex items-start justify-between gap-2">
                         <span className="truncate text-sm font-medium">{name}</span>
                         {lastMsg && (
@@ -547,8 +549,9 @@ export default function MessagesPage() {
                         )}
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5">
-                        {preview && <span className="truncate text-xs text-muted">{preview}</span>}
-                        {!preview && (
+                        {preview ? (
+                          <span className="truncate text-xs text-muted">{preview}</span>
+                        ) : (
                           <span className="text-xs text-muted">
                             {CONTEXT_LABELS[conv.context_type] ?? conv.context_type}
                           </span>
@@ -559,10 +562,10 @@ export default function MessagesPage() {
                           {blockedBy ? "Bloqueado(a)" : "Você bloqueou"}
                         </span>
                       )}
-                    </button>
+                    </ListBox.Item>
                   )
                 })}
-              </div>
+              </ListBox>
             </div>
 
             {/* Thread pane */}
@@ -611,11 +614,7 @@ export default function MessagesPage() {
                   ou vínculo familiar).
                 </p>
 
-                {createError && (
-                  <div className="rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-surface)] px-3 py-2 text-xs text-[var(--danger)]">
-                    {createError}
-                  </div>
-                )}
+                {createError && <FeedbackAlert variant="danger" description={createError} />}
 
                 {pickerLoading && (
                   <div className="space-y-2 py-4">
@@ -629,9 +628,7 @@ export default function MessagesPage() {
                 )}
 
                 {!pickerLoading && pickerError && !createError && (
-                  <div className="rounded-xl border border-dashed border-border bg-[var(--surface-sunken)] px-4 py-6 text-center">
-                    <p className="text-sm text-muted">{pickerError}</p>
-                  </div>
+                  <FeedbackAlert variant="warning" description={pickerError} />
                 )}
 
                 {!pickerLoading && !pickerError && contacts.length > 0 && (
@@ -643,33 +640,48 @@ export default function MessagesPage() {
                       className="mt-1"
                     />
 
-                    <div className="max-h-64 space-y-0.5 overflow-y-auto">
+                    <ListBox
+                      aria-label="Contatos"
+                      selectionMode="single"
+                      disabledKeys={
+                        creatingConversation ? filteredContacts.map((c) => c.user_id) : []
+                      }
+                      onAction={(key) => {
+                        const contact = filteredContacts.find((c) => c.user_id === key)
+                        if (contact) handleCreateConversation(contact)
+                      }}
+                      className="max-h-64 overflow-y-auto"
+                    >
                       {filteredContacts.length === 0 ? (
-                        <p className="py-4 text-center text-sm text-muted">
-                          Nenhum contato encontrado para &ldquo;{pickerSearch}&rdquo;
-                        </p>
+                        <ListBox.Item key="empty" id="empty" isDisabled>
+                          <p className="py-4 text-center text-sm text-muted">
+                            Nenhum contato encontrado para &ldquo;{pickerSearch}&rdquo;
+                          </p>
+                        </ListBox.Item>
                       ) : (
                         filteredContacts.map((contact) => (
-                          <button
+                          <ListBox.Item
                             key={contact.user_id}
-                            type="button"
-                            onClick={() => handleCreateConversation(contact)}
-                            disabled={creatingConversation}
-                            className="motion-press flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface-subtle)] disabled:opacity-50"
+                            id={contact.user_id}
+                            textValue={contact.display_name}
                           >
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-sm font-medium text-[var(--accent)]">
-                              {contact.display_name.charAt(0).toUpperCase()}
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--accent-soft)] text-sm font-medium text-[var(--accent)]">
+                                {contact.display_name.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium">
+                                  {contact.display_name}
+                                </p>
+                                <p className="truncate text-xs text-muted">
+                                  Grupo: {contact.group_name}
+                                </p>
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">{contact.display_name}</p>
-                              <p className="truncate text-xs text-muted">
-                                Grupo: {contact.group_name}
-                              </p>
-                            </div>
-                          </button>
+                          </ListBox.Item>
                         ))
                       )}
-                    </div>
+                    </ListBox>
                   </>
                 )}
               </Modal.Body>

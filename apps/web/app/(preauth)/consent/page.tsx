@@ -4,6 +4,7 @@ import { brandTokens } from "@bivaque/tokens"
 import { Button } from "@heroui/react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 
 const CONSENT_VERSION = 1
 
@@ -53,14 +54,7 @@ export default function ConsentPage() {
           </ul>
         </div>
 
-        {error && (
-          <div
-            className="rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
+        {error && <FeedbackAlert variant="danger" description={error} />}
 
         <Button variant="primary" className="w-full" onPress={handleAccept} isDisabled={accepted}>
           {accepted ? "Aceito" : "Aceitar e continuar"}

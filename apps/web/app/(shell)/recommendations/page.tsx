@@ -1,11 +1,12 @@
 "use client"
 
-import { Button, Card, Tabs } from "@heroui/react"
+import { Button, Card, Chip, Input, ListBox, Select, Tabs, TextArea } from "@heroui/react"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
+import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../components/bivaque/skeleton"
 
 // ── local types (matching migration shapes, no generated-types import needed) ──
@@ -447,11 +448,8 @@ export default function RecommendationsPage() {
         <div key="browse" role="tabpanel">
           {/* feedback banner */}
           {joinFeedback && (
-            <div
-              className="mb-4 rounded-lg border border-border bg-[var(--surface-raised)] px-4 py-2 text-sm"
-              role="status"
-            >
-              {joinFeedback}
+            <div className="mb-4">
+              <FeedbackAlert variant="success" description={joinFeedback} />
             </div>
           )}
 
@@ -528,15 +526,9 @@ export default function RecommendationsPage() {
                             <div className="flex min-w-0 flex-1 flex-col gap-1">
                               <div className="flex items-center gap-2">
                                 <h3 className="truncate text-sm font-semibold">{group.name}</h3>
-                                <span
-                                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
-                                    group.visibility === "public"
-                                      ? "bg-[var(--surface-subtle)] text-muted"
-                                      : "bg-[var(--surface-sunken)] text-xs"
-                                  }`}
-                                >
+                                <Chip size="sm" variant="soft">
                                   {group.visibility === "public" ? "Público" : "Privado"}
-                                </span>
+                                </Chip>
                               </div>
 
                               {group.description && (
@@ -603,9 +595,9 @@ export default function RecommendationsPage() {
                           <div className="flex flex-col gap-2">
                             <div className="flex items-start justify-between gap-2">
                               <h3 className="text-sm font-semibold">{event.title}</h3>
-                              <span className="shrink-0 rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-xs text-muted">
+                              <Chip size="sm" variant="soft">
                                 {event.group_id ? "Grupo" : "Comunidade"}
-                              </span>
+                              </Chip>
                             </div>
 
                             <div className="flex items-center gap-3 text-xs text-muted">
@@ -632,75 +624,68 @@ export default function RecommendationsPage() {
         <div key="request" role="tabpanel">
           {/* feedback banner */}
           {requestFeedback && (
-            <div
-              className="mb-4 rounded-lg border border-border bg-[var(--surface-raised)] px-4 py-2 text-sm"
-              role="status"
-            >
-              {requestFeedback}
+            <div className="mb-4">
+              <FeedbackAlert variant="success" description={requestFeedback} />
             </div>
           )}
 
           {/* error banner */}
           {requestError && (
-            <div
-              className="mb-4 rounded-lg border border-[var(--danger)] bg-[var(--surface-raised)] px-4 py-2 text-sm text-[var(--danger)]"
-              role="alert"
-            >
-              {requestError}
+            <div className="mb-4">
+              <FeedbackAlert variant="danger" description={requestError} />
             </div>
           )}
 
           <form className="flex flex-col gap-4" onSubmit={handleSubmitRequest}>
-            <div className="flex flex-col gap-1">
-              <select
-                required
-                aria-label="Categoria"
-                value={requestCategory}
-                onChange={(e) => {
-                  setRequestCategory(e.target.value as RecommendationCategory)
+            <Select
+              aria-label="Categoria"
+              selectedKey={requestCategory || null}
+              onSelectionChange={(key) => {
+                if (typeof key === "string") {
+                  setRequestCategory(key as RecommendationCategory)
                   setRequestError("")
-                }}
-                className="max-w-xs rounded-md border border-border bg-[var(--surface)] px-3 py-2 text-sm"
-              >
-                <option value="" disabled>
-                  Selecione uma categoria
-                </option>
-                {CATEGORIES.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+                }
+              }}
+              isRequired
+              className="max-w-xs"
+            >
+              <Select.Trigger>
+                <Select.Value>Selecione uma categoria</Select.Value>
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  {CATEGORIES.map((cat) => (
+                    <ListBox.Item key={cat.id} id={cat.id}>
+                      {cat.label}
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
 
-            <div className="flex flex-col gap-1">
-              <input
-                required
-                aria-label="Título"
-                placeholder="Título da sua indicação"
-                value={requestTitle}
-                onChange={(e) => {
-                  setRequestTitle(e.target.value)
-                  setRequestError("")
-                }}
-                className="rounded-md border border-border bg-[var(--surface)] px-3 py-2 text-sm"
-              />
-            </div>
+            <Input
+              required
+              aria-label="Título"
+              placeholder="Título da sua indicação"
+              value={requestTitle}
+              onChange={(e) => {
+                setRequestTitle((e.target as HTMLInputElement).value)
+                setRequestError("")
+              }}
+            />
 
-            <div className="flex flex-col gap-1">
-              <textarea
-                required
-                aria-label="Descrição"
-                placeholder="Descreva o que você está procurando. Evite termos comerciais como preço, pagamento, anúncio ou contato comercial."
-                rows={3}
-                value={requestDescription}
-                onChange={(e) => {
-                  setRequestDescription(e.target.value)
-                  setRequestError("")
-                }}
-                className="rounded-md border border-border bg-[var(--surface)] px-3 py-2 text-sm"
-              />
-            </div>
+            <TextArea
+              required
+              aria-label="Descrição"
+              placeholder="Descreva o que você está procurando. Evite termos comerciais como preço, pagamento, anúncio ou contato comercial."
+              rows={3}
+              value={requestDescription}
+              onChange={(e) => {
+                setRequestDescription((e.target as HTMLTextAreaElement).value)
+                setRequestError("")
+              }}
+            />
 
             <p className="text-xs text-muted">
               Sua indicação será visível apenas para membros da sua localidade ou grupo. Este espaço
@@ -723,11 +708,8 @@ export default function RecommendationsPage() {
         <div key="saved" role="tabpanel">
           {/* error */}
           {savesError && (
-            <div
-              className="mb-4 rounded-lg border border-[var(--danger)] bg-[var(--surface-raised)] px-4 py-2 text-sm text-[var(--danger)]"
-              role="alert"
-            >
-              {savesError}
+            <div className="mb-4">
+              <FeedbackAlert variant="danger" description={savesError} />
             </div>
           )}
 
@@ -762,9 +744,9 @@ export default function RecommendationsPage() {
                         <div className="flex min-w-0 flex-1 flex-col gap-1">
                           <h3 className="text-sm font-semibold">{req.title}</h3>
                           <div className="flex items-center gap-2 text-xs text-muted">
-                            <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5">
+                            <Chip size="sm" variant="soft">
                               {categoryLabel}
-                            </span>
+                            </Chip>
                             <span>
                               {new Date(req.created_at).toLocaleDateString("pt-BR", {
                                 day: "2-digit",

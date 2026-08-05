@@ -1,6 +1,6 @@
 "use client"
 
-import { Button, Form, Input, Tab, TabList, TabPanel, Tabs, TextArea } from "@heroui/react"
+import { Button, Chip, Form, Input, Tab, TabList, TabPanel, Tabs, TextArea } from "@heroui/react"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -107,9 +107,9 @@ function EventCard({
             <h2 className="truncate text-sm font-semibold">
               {event.title}
               {cancelled && (
-                <span className="ml-1.5 inline-block rounded bg-[var(--danger)]/10 px-1.5 py-0.5 text-[11px] font-medium text-[var(--danger)]">
+                <Chip size="sm" color="danger" variant="soft" className="ml-1.5">
                   Cancelado
-                </span>
+                </Chip>
               )}
             </h2>
 

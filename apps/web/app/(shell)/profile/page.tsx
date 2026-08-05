@@ -1,9 +1,23 @@
 "use client"
 
-import { Avatar, Button, Input, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
+import {
+  Avatar,
+  Button,
+  Input,
+  Modal,
+  Radio,
+  RadioGroup,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+  useOverlayState,
+} from "@heroui/react"
 import { useCallback, useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
+import { Skeleton } from "../../components/bivaque/skeleton"
 
 interface ProfileRow {
   user_id: string
@@ -86,6 +100,10 @@ export default function ProfilePage() {
     type: "success" | "error"
     message: string
   } | null>(null)
+
+  const signOutModal = useOverlayState()
+  const [signingOut, setSigningOut] = useState(false)
+  const [signOutError, setSignOutError] = useState("")
 
   const loadProfile = useCallback(async () => {
     setLoading(true)
@@ -186,12 +204,25 @@ export default function ProfilePage() {
     setSavingVisibility(false)
   }
 
+  const handleConfirmSignOut = async () => {
+    setSigningOut(true)
+    setSignOutError("")
+    const { error: signOutError } = await supabase.auth.signOut()
+    setSigningOut(false)
+    if (signOutError) {
+      setSignOutError(signOutError.message)
+      return
+    }
+    signOutModal.close()
+    window.location.href = "/login"
+  }
+
   if (loading) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-3 px-4 py-12">
-        <div className="h-16 w-16 animate-pulse rounded-full bg-[var(--surface-subtle)]" />
-        <div className="h-5 w-40 animate-pulse rounded bg-[var(--surface-subtle)]" />
-        <div className="h-3 w-56 animate-pulse rounded bg-[var(--surface-subtle)]" />
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <Skeleton className="h-5 w-40 rounded" />
+        <Skeleton className="h-3 w-56 rounded" />
       </div>
     )
   }
@@ -320,75 +351,50 @@ export default function ProfilePage() {
                 </Button>
               </div>
               {nameFeedback && (
-                <p
-                  className={`mt-2 text-xs ${
-                    nameFeedback.type === "success"
-                      ? "text-[var(--accent)]"
-                      : "text-[var(--danger)]"
-                  }`}
-                  role="alert"
-                >
-                  {nameFeedback.message}
-                </p>
+                <div className="mt-2">
+                  <FeedbackAlert
+                    variant={nameFeedback.type === "success" ? "success" : "danger"}
+                    description={nameFeedback.message}
+                  />
+                </div>
               )}
             </div>
 
             <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
-              <p className="text-sm font-medium">Visibilidade do perfil</p>
-              <p className="mt-0.5 text-xs text-muted">
+              <RadioGroup
+                aria-label="Visibilidade do perfil"
+                value={visibility}
+                onChange={(value) => handleSaveVisibility(value as "locality_members" | "hidden")}
+                isDisabled={savingVisibility}
+                orientation="vertical"
+              >
+                <Radio value="locality_members">
+                  <div className="flex flex-col gap-0.5">
+                    <span>Membros da localidade</span>
+                    <span className="text-xs text-muted">
+                      Membros da sua comunidade podem ver seu perfil.
+                    </span>
+                  </div>
+                </Radio>
+                <Radio value="hidden">
+                  <div className="flex flex-col gap-0.5">
+                    <span>Oculto</span>
+                    <span className="text-xs text-muted">
+                      Seu perfil fica oculto para outros membros.
+                    </span>
+                  </div>
+                </Radio>
+              </RadioGroup>
+              <p className="mt-2 text-xs text-muted">
                 Controle quem pode ver seu perfil dentro da comunidade.
               </p>
-              <div className="mt-3 flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleSaveVisibility("locality_members")}
-                  disabled={savingVisibility}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                    visibility === "locality_members"
-                      ? "border-[var(--accent)] bg-[var(--accent)]/10 font-medium"
-                      : "border-border bg-[var(--surface-subtle)] hover:border-[var(--accent)]/50"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3 w-3 rounded-full border-2 ${
-                      visibility === "locality_members"
-                        ? "border-[var(--accent)] bg-[var(--accent)]"
-                        : "border-[var(--muted)]"
-                    }`}
-                  />
-                  Membros da localidade
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveVisibility("hidden")}
-                  disabled={savingVisibility}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
-                    visibility === "hidden"
-                      ? "border-[var(--accent)] bg-[var(--accent)]/10 font-medium"
-                      : "border-border bg-[var(--surface-subtle)] hover:border-[var(--accent)]/50"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-3 w-3 rounded-full border-2 ${
-                      visibility === "hidden"
-                        ? "border-[var(--accent)] bg-[var(--accent)]"
-                        : "border-[var(--muted)]"
-                    }`}
-                  />
-                  Oculto
-                </button>
-              </div>
               {visibilityFeedback && (
-                <p
-                  className={`mt-2 text-xs ${
-                    visibilityFeedback.type === "success"
-                      ? "text-[var(--accent)]"
-                      : "text-[var(--danger)]"
-                  }`}
-                  role="alert"
-                >
-                  {visibilityFeedback.message}
-                </p>
+                <div className="mt-2">
+                  <FeedbackAlert
+                    variant={visibilityFeedback.type === "success" ? "success" : "danger"}
+                    description={visibilityFeedback.message}
+                  />
+                </div>
               )}
             </div>
 
@@ -406,26 +412,44 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={async () => {
-                if (!window.confirm("Tem certeza que deseja sair da conta?")) {
-                  return
-                }
-                const { error: signOutError } = await supabase.auth.signOut()
-                if (signOutError) {
-                  console.error("Erro ao sair:", signOutError.message)
-                  return
-                }
-                window.location.href = "/login"
-              }}
-              className="flex w-full min-h-11 items-center justify-center rounded-xl border border-[var(--danger-soft)] bg-[var(--surface)] px-4 py-3 text-sm font-medium text-[var(--danger)] hover:bg-[var(--danger-soft)]"
-            >
+            <Button type="button" variant="danger" onPress={signOutModal.open} className="w-full">
               Sair da conta
-            </button>
+            </Button>
           </div>
         </TabPanel>
       </Tabs>
+
+      <Modal state={signOutModal}>
+        <Modal.Backdrop>
+          <Modal.Container size="sm">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>Sair da conta</Modal.Heading>
+                <Modal.CloseTrigger />
+              </Modal.Header>
+              <Modal.Body>
+                <p className="text-sm text-muted">
+                  Tem certeza que deseja sair da conta? Você podera entrar novamente a qualquer
+                  momento.
+                </p>
+                {signOutError && (
+                  <div className="mt-2">
+                    <FeedbackAlert variant="danger" description={signOutError} />
+                  </div>
+                )}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="tertiary" onPress={signOutModal.close}>
+                  Cancelar
+                </Button>
+                <Button variant="danger" onPress={handleConfirmSignOut} isDisabled={signingOut}>
+                  {signingOut ? "Saindo..." : "Sair"}
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
     </div>
   )
 }

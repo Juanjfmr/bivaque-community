@@ -1,7 +1,7 @@
 "use client"
 
 import { brandTokens } from "@bivaque/tokens"
-import { Button } from "@heroui/react"
+import { Button, Kbd, Tooltip } from "@heroui/react"
 import { Bell, ChevronDown, ChevronsLeft, MapPin, PanelLeft } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
@@ -137,12 +137,11 @@ export function AppShell({ children }: AppShellProperties) {
           <nav aria-label="Navegação principal" className="flex flex-col gap-1 p-3 flex-1">
             {NAV_ITEMS.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
-              return (
+              const anchor = (
                 <a
                   key={item.id}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  title={sidebarCollapsed ? item.label : undefined}
                   className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
                     active
                       ? "bg-[var(--accent-soft)] text-[var(--accent)]"
@@ -160,6 +159,14 @@ export function AppShell({ children }: AppShellProperties) {
                   </span>
                   {!sidebarCollapsed && <span>{item.label}</span>}
                 </a>
+              )
+              return sidebarCollapsed ? (
+                <Tooltip key={item.id} delay={0}>
+                  <Tooltip.Trigger>{anchor}</Tooltip.Trigger>
+                  <Tooltip.Content>{item.label}</Tooltip.Content>
+                </Tooltip>
+              ) : (
+                anchor
               )
             })}
 
@@ -203,8 +210,11 @@ export function AppShell({ children }: AppShellProperties) {
 
       {/* Keyboard shortcut hint */}
       <div className="hidden md:flex fixed bottom-4 right-4 z-30">
-        <span className="text-[10px] text-muted bg-[var(--surface)] border border-border rounded-md px-2 py-1 shadow-[var(--elevation-1)]">
-          {sidebarCollapsed ? "Ctrl+B para expandir" : "Ctrl+B para recolher"}
+        <span className="flex items-center gap-1.5 text-[10px] text-muted bg-[var(--surface)] border border-border rounded-md px-2 py-1 shadow-[var(--elevation-1)]">
+          <Kbd>Ctrl</Kbd>
+          <span>+</span>
+          <Kbd>B</Kbd>
+          <span>para {sidebarCollapsed ? "expandir" : "recolher"}</span>
         </span>
       </div>
     </div>
