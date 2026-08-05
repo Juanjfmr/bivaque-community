@@ -7,18 +7,22 @@
 [data-theme="bivaque"] {
   color-scheme: light;
 
-  /* Color — DESIGN_SPEC.md §1. Base tokens keep their existing values. */
-  --background: oklch(0.985 0.008 96);
-  --foreground: oklch(0.205 0.018 72);
-  --surface: oklch(1 0 0);
+  /* Color — Navy Professional palette (DESIGN_SPEC.md §1).
+     Authority + trust for a verified federal-military invite-only community.
+     Primary blue-900 for action, slate-950 for foreground, slate-50 surface
+     background, white cards. oklch is kept where the value is consumed by
+     color-mix() so the hue shifts naturally with the foreground. */
+  --background: #f8fafc; /* slate-50 — page background */
+  --foreground: #020617; /* slate-950 — primary text */
+  --surface: #ffffff; /* white — card surface */
   --surface-foreground: var(--foreground);
-  --accent: oklch(0.48 0.115 155);
-  --accent-foreground: oklch(0.985 0.008 96);
+  --accent: #1e3a8a; /* blue-900 — primary action / focus / link */
+  --accent-foreground: #ffffff;
   --focus: var(--accent);
   --link: var(--accent);
 
   /* Cards above the page background. */
-  --surface-raised: var(--surface);
+  --surface-raised: #ffffff;
   /* Inset areas (composer field, empty states). */
   --surface-sunken: color-mix(in oklch, var(--background) 95%, var(--foreground) 5%);
   /* Subtle neutral fills (avatar initials, chips, hover rows). */
@@ -26,17 +30,17 @@
   /* Hairlines — the single border color; components must not inline color-mix borders. */
   --border: color-mix(in oklch, var(--foreground) 12%, transparent);
   /* Secondary text; holds ≥ 4.5:1 on --surface. */
-  --muted: oklch(0.5 0.02 72);
+  --muted: #475569; /* slate-600 — secondary text */
   /* 12% accent tint for selected chips and active nav. */
   --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
   /* Destructive + report affordances, moderation / verification states. */
-  --danger: oklch(0.6532 0.2328 25.74);
+  --danger: #dc2626; /* red-600 */
   --danger-soft: color-mix(in oklch, var(--danger) 15%, transparent);
-  --warning: oklch(0.7819 0.1585 72.33);
-  --success: oklch(0.7329 0.1935 150.81);
-  /* Modal scrim. DESIGN_SPEC §1 names this role "--overlay", but HeroUI v3 reserves
-     --overlay for the floating surface (dialog/popover/menu), so the scrim lives in
-     --backdrop, HeroUI's scrim knob. Mixed against --foreground, never raw black. */
+  --warning: #d97706; /* amber-600 */
+  --success: #059669; /* emerald-600 */
+  /* Modal scrim. HeroUI v3 reserves --overlay for the floating surface (dialog/
+     popover/menu), so the scrim lives in --backdrop. Mixed against --foreground,
+     never raw black. */
   --backdrop: color-mix(in oklch, var(--foreground) 45%, transparent);
 
   /* Elevation — shadows mix against --foreground, never black. */
@@ -98,6 +102,9 @@ body {
 @layer base {
   body {
     line-height: 1.5;
+    font-family:
+      ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+      sans-serif;
   }
 
   h1,
@@ -107,6 +114,7 @@ body {
   h5,
   h6 {
     line-height: 1.2;
+    letter-spacing: -0.011em;
   }
 }
 

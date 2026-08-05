@@ -2,42 +2,45 @@
 // Every value here is mirrored as a CSS custom property in apps/web/app/globals.css;
 // keep the two in sync. Components must read tokens (var(--…) or brandTokens), never
 // raw colors.
+//
+// Palette: Navy Professional — authority + trust for a verified federal-military
+// invite-only community.
 export const brandTokens = {
   productName: "Bivaque",
   color: {
-    background: "oklch(0.985 0.008 96)",
-    foreground: "oklch(0.205 0.018 72)",
-    surface: "oklch(1 0 0)",
-    accent: "oklch(0.48 0.115 155)",
-    accentForeground: "oklch(0.985 0.008 96)",
+    background: "#F8FAFC", // slate-50 — page background
+    foreground: "#020617", // slate-950 — primary text
+    surface: "#FFFFFF", // white — card surface
+    accent: "#1E3A8A", // blue-900 — primary action / focus / link
+    accentForeground: "#FFFFFF",
     // Cards above the page background.
-    surfaceRaised: "oklch(1 0 0)",
+    surfaceRaised: "#FFFFFF",
     // Inset areas (composer field, empty states).
-    surfaceSunken: "color-mix(in oklch, oklch(0.985 0.008 96) 95%, oklch(0.205 0.018 72) 5%)",
+    surfaceSunken: "color-mix(in oklch, #F8FAFC 95%, #020617 5%)",
     // Subtle neutral fills (avatar initials, chips, hover rows).
-    surfaceSubtle: "color-mix(in oklch, oklch(0.205 0.018 72) 8%, transparent)",
+    surfaceSubtle: "color-mix(in oklch, #020617 8%, transparent)",
     // Hairlines; replaces the inlined color-mix borders.
-    border: "color-mix(in oklch, oklch(0.205 0.018 72) 12%, transparent)",
+    border: "color-mix(in oklch, #020617 12%, transparent)",
     // Secondary text; holds ≥ 4.5:1 on --surface.
-    muted: "oklch(0.5 0.02 72)",
+    muted: "#475569", // slate-600
     // 12% accent tint for selected chips and active nav.
-    accentSoft: "color-mix(in oklch, oklch(0.48 0.115 155) 12%, transparent)",
-    danger: "oklch(0.6532 0.2328 25.74)",
-    dangerSoft: "color-mix(in oklch, oklch(0.6532 0.2328 25.74) 15%, transparent)",
-    warning: "oklch(0.7819 0.1585 72.33)",
-    success: "oklch(0.7329 0.1935 150.81)",
+    accentSoft: "color-mix(in oklch, #1E3A8A 12%, transparent)",
+    danger: "#DC2626", // red-600
+    dangerSoft: "color-mix(in oklch, #DC2626 15%, transparent)",
+    warning: "#D97706", // amber-600
+    success: "#059669", // emerald-600
     // Floating surface (HeroUI v3 semantics: modal dialog, popovers, menus).
-    overlay: "oklch(1 0 0)",
+    overlay: "#FFFFFF",
     // Modal scrim. DESIGN_SPEC §1 names this role "--overlay", but HeroUI v3 reserves
     // --overlay for the floating surface, so the scrim lives in --backdrop.
-    backdrop: "color-mix(in oklch, oklch(0.205 0.018 72) 45%, transparent)",
+    backdrop: "color-mix(in oklch, #020617 45%, transparent)",
   },
   // Shadows mix against the foreground color, never raw black.
   elevation: {
     0: "none",
-    1: "0 1px 2px color-mix(in oklch, oklch(0.205 0.018 72) 10%, transparent), 0 1px 3px color-mix(in oklch, oklch(0.205 0.018 72) 8%, transparent)",
-    2: "0 2px 4px color-mix(in oklch, oklch(0.205 0.018 72) 10%, transparent), 0 8px 16px color-mix(in oklch, oklch(0.205 0.018 72) 12%, transparent)",
-    3: "0 4px 8px color-mix(in oklch, oklch(0.205 0.018 72) 12%, transparent), 0 16px 40px color-mix(in oklch, oklch(0.205 0.018 72) 18%, transparent)",
+    1: "0 1px 2px color-mix(in oklch, #020617 10%, transparent), 0 1px 3px color-mix(in oklch, #020617 8%, transparent)",
+    2: "0 2px 4px color-mix(in oklch, #020617 10%, transparent), 0 8px 16px color-mix(in oklch, #020617 12%, transparent)",
+    3: "0 4px 8px color-mix(in oklch, #020617 12%, transparent), 0 16px 40px color-mix(in oklch, #020617 18%, transparent)",
   },
   // 4px scale.
   space: {
@@ -78,4 +81,7 @@ export const brandTokens = {
       spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
     },
   },
+  // Secondary blue for hover/highlights and second-tier CTAs (e.g. "Entrar"
+  // on group cards). Surfaces read --accent (blue-900) as the dominant action.
+  secondaryAccent: "#3B82F6", // blue-500
 } as const

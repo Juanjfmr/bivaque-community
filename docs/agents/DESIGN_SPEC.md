@@ -15,18 +15,34 @@ Everything visual reads from tokens. A raw hex or `rgb()` in a component is a de
 
 ### Color
 
-Keep the existing base (`--background`, `--foreground`, `--surface`, `--accent`) and add:
+Palette: **Navy Professional** — authority + trust for a verified federal-military
+invite-only community. Sober and institutional, not consumer-playful.
 
-| Token | Purpose |
-| --- | --- |
-| `--surface-raised` | cards above the page background |
-| `--surface-sunken` | inset areas (composer field, empty states) |
-| `--border` | hairlines; currently inlined as `color-mix(...)` everywhere — extract it |
-| `--muted` | secondary text; must hold 4.5:1 on `--surface` |
-| `--accent-soft` | 12% accent tint for selected chips and active nav |
-| `--danger`, `--danger-soft` | destructive + report affordances |
-| `--warning`, `--success` | moderation / verification states |
-| `--overlay` | modal scrim |
+| Token | Value | Purpose |
+| --- | --- | --- |
+| `--background` | `#F8FAFC` (slate-50) | page background |
+| `--foreground` | `#020617` (slate-950) | primary text |
+| `--surface` | `#FFFFFF` | card surface |
+| `--accent` | `#1E3A8A` (blue-900) | primary action / focus / link |
+| `--accent-foreground` | `#FFFFFF` | text on `--accent` |
+| `--accent-soft` | `color-mix(in oklch, var(--accent) 12%, transparent)` | selected chips, active nav |
+| `--secondary-accent` | `#3B82F6` (blue-500) | secondary CTAs, hover highlights |
+| `--surface-raised` | `#FFFFFF` | cards above the page background |
+| `--surface-sunken` | `color-mix(in oklch, var(--background) 95%, var(--foreground) 5%)` | inset areas (composer field, empty states) |
+| `--surface-subtle` | `color-mix(in oklch, var(--foreground) 8%, transparent)` | avatar initials, chips, hover rows |
+| `--border` | `color-mix(in oklch, var(--foreground) 12%, transparent)` | hairlines |
+| `--muted` | `#475569` (slate-600) | secondary text; must hold 4.5:1 on `--surface` |
+| `--danger` | `#DC2626` (red-600) | destructive + report affordances |
+| `--danger-soft` | `color-mix(in oklch, var(--danger) 15%, transparent)` | destructive bg |
+| `--warning` | `#D97706` (amber-600) | moderation / verification states |
+| `--success` | `#059669` (emerald-600) | moderation / verification states |
+| `--backdrop` | `color-mix(in oklch, var(--foreground) 45%, transparent)` | modal scrim (HeroUI reserves `--overlay` for the floating surface) |
+| `--focus` | `var(--accent)` | focus ring |
+| `--link` | `var(--accent)` | hyperlinks |
+
+All colors must hold 4.5:1 against their background surface (3:1 for ≥24px or
+≥18.66px bold). Components must read tokens (`var(--…)` or `brandTokens`), never raw
+colors.
 
 ### Elevation
 
