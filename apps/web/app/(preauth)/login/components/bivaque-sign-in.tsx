@@ -1,10 +1,11 @@
 "use client"
 
 import { brandTokens } from "@bivaque/tokens"
-import { Button, Input } from "@heroui/react"
+import { Button, Checkbox, Input, Separator } from "@heroui/react"
 import { Eye, EyeOff } from "lucide-react"
 import { useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
+import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 
 export interface BivaqueTestimonial {
   initials: string
@@ -285,14 +286,7 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
               )}
 
               <div className="motion-card-enter [animation-delay:240ms] flex items-center justify-between text-sm">
-                <label className="flex cursor-pointer items-center gap-3 text-[var(--muted)]">
-                  <input
-                    type="checkbox"
-                    name="rememberMe"
-                    className="h-4 w-4 rounded border-border accent-[var(--accent)]"
-                  />
-                  <span>Manter conectado</span>
-                </label>
+                <Checkbox name="rememberMe">Manter conectado</Checkbox>
                 <button
                   type="button"
                   onClick={onResetPassword}
@@ -313,7 +307,7 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
             </form>
 
             <div className="motion-card-enter [animation-delay:320ms] relative flex items-center justify-center">
-              <hr className="w-full border-border" />
+              <Separator className="w-full" />
               <span className="absolute bg-[var(--background)] px-4 text-xs text-[var(--muted)]">
                 ou
               </span>
@@ -330,21 +324,15 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
             </Button>
 
             {error && (
-              <p
-                role="alert"
-                className="motion-card-enter rounded-lg border border-[var(--danger)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]"
-              >
-                {error}
-              </p>
+              <FeedbackAlert variant="danger" description={error} className="motion-card-enter" />
             )}
 
             {sent && useInternalMagicLink && (
-              <p
-                role="status"
-                className="motion-card-enter rounded-lg border border-[var(--success)] bg-[var(--accent-soft)] p-3 text-sm text-[var(--foreground)]"
-              >
-                Link enviado! Verifique seu e-mail e clique no link para continuar.
-              </p>
+              <FeedbackAlert
+                variant="success"
+                description="Link enviado! Verifique seu e-mail e clique no link para continuar."
+                className="motion-card-enter"
+              />
             )}
 
             <p className="motion-card-enter [animation-delay:400ms] text-center text-sm text-[var(--muted)]">

@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@heroui/react"
+import { Button, ButtonGroup, ToggleButton } from "@heroui/react"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
@@ -207,38 +207,25 @@ export default function CommunityPage() {
           <FeedComposer onOpenModal={handleOpenModal} />
 
           {/* sort control */}
-          <div
-            role="tablist"
+          <ButtonGroup
+            variant="tertiary"
+            fullWidth
             aria-label="Ordenar publicações"
-            className="flex gap-1 rounded-lg bg-[var(--surface-sunken)] p-1"
+            className="bg-[var(--surface-sunken)] p-1"
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={sortOrder === "recent"}
-              onClick={() => handleSortChange("recent")}
-              className={`flex-1 min-h-11 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
-                sortOrder === "recent"
-                  ? "bg-[var(--surface)] shadow-[var(--elevation-1)]"
-                  : "text-muted hover:bg-[var(--surface-subtle)]"
-              }`}
+            <ToggleButton
+              isSelected={sortOrder === "recent"}
+              onChange={() => handleSortChange("recent")}
             >
               Recentes
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={sortOrder === "relevant"}
-              onClick={() => handleSortChange("relevant")}
-              className={`flex-1 min-h-11 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
-                sortOrder === "relevant"
-                  ? "bg-[var(--surface)] shadow-[var(--elevation-1)]"
-                  : "text-muted hover:bg-[var(--surface-subtle)]"
-              }`}
+            </ToggleButton>
+            <ToggleButton
+              isSelected={sortOrder === "relevant"}
+              onChange={() => handleSortChange("relevant")}
             >
               Relevantes
-            </button>
-          </div>
+            </ToggleButton>
+          </ButtonGroup>
 
           {/* error state */}
           {error && <ErrorState message={error} onRetry={() => loadFeed(sortOrder)} />}

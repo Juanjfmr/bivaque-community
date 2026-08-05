@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 
 type OnboardingStep = "verify" | "family" | "waitlist" | "done" | "loading"
 
@@ -276,9 +277,7 @@ function OnboardingFlow() {
 
         {step === "done" && result && (
           <div className="flex flex-col gap-4">
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
-              {result}
-            </div>
+            <FeedbackAlert variant="success" description={result} />
           </div>
         )}
 
@@ -331,14 +330,7 @@ function OnboardingFlow() {
               conta independente.
             </p>
 
-            {error && (
-              <div
-                className="rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]"
-                role="alert"
-              >
-                {error}
-              </div>
-            )}
+            {error && <FeedbackAlert variant="danger" description={error} />}
 
             <Button
               variant="primary"
@@ -377,14 +369,7 @@ function OnboardingFlow() {
           </>
         )}
 
-        {error && (
-          <div
-            className="rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-soft)] p-3 text-sm text-[var(--danger)]"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
+        {error && <FeedbackAlert variant="danger" description={error} />}
 
         {step !== "done" && !(step === "verify" && loading) && (
           <p className="text-xs text-muted text-center">

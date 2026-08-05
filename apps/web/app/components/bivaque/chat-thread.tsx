@@ -4,6 +4,7 @@ import { Button, TextArea } from "@heroui/react"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
+import { FeedbackAlert } from "./feedback-alert"
 import { MessageAreaSkeleton } from "./skeleton"
 
 type MessageRow = {
@@ -231,12 +232,17 @@ export function ChatThread({
         {loadingMessages && <MessageAreaSkeleton />}
 
         {msgError && (
-          <div className="py-8 text-center">
-            <p className="text-sm text-[var(--danger)]">Erro ao carregar mensagens</p>
-            <p className="text-xs text-muted mt-1">{msgError}</p>
-            <Button size="sm" variant="tertiary" className="mt-2" onPress={() => loadMessages()}>
-              Tentar novamente
-            </Button>
+          <div className="py-8">
+            <FeedbackAlert
+              variant="danger"
+              title="Erro ao carregar mensagens"
+              description={msgError}
+              actions={
+                <Button size="sm" variant="tertiary" onPress={() => loadMessages()}>
+                  Tentar novamente
+                </Button>
+              }
+            />
           </div>
         )}
 
@@ -322,8 +328,8 @@ export function ChatThread({
 
       {/* Input area */}
       {sendError && (
-        <div className="mx-3 mb-1 rounded-lg border border-[var(--danger-soft)] bg-[var(--danger-surface)] px-3 py-1.5 text-xs text-[var(--danger)]">
-          {sendError}
+        <div className="mx-3 mb-1">
+          <FeedbackAlert variant="danger" description={sendError} />
         </div>
       )}
 

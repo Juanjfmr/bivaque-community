@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { Link } from "@heroui/react"
 import { EmptyState } from "./empty-state"
 import { ErrorState } from "./error-state"
 import { FeedCardSkeleton } from "./skeleton"
@@ -37,7 +37,7 @@ export function SegmentNotFound() {
         title="Pagina nao encontrada"
         description="O endereco que voce acessou nao existe nesta comunidade."
         action={
-          <Link href="/community" className="text-sm font-medium text-accent underline">
+          <Link href="/community" className="text-sm font-medium underline">
             Voltar para a comunidade
           </Link>
         }

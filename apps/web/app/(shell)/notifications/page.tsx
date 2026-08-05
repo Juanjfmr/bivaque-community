@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@heroui/react"
+import { Button, ListBox, Tabs } from "@heroui/react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
@@ -253,37 +253,32 @@ export default function NotificationsPage() {
         </div>
 
         {/* ── tab bar ── */}
-        <nav className="mx-auto mt-2 flex max-w-2xl" aria-label="Categorias de notificações">
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.key
-            const count = tabCounts[tab.key]
-
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`relative flex items-center gap-1.5 px-4 pb-2.5 pt-1 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${isActive ? "text-[var(--accent)]" : "text-muted hover:text-[var(--foreground)]"}`}
-              >
-                {tab.label}
-                {count > 0 && (
-                  <span
-                    className={`flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[11px] font-semibold leading-none ${
-                      isActive
-                        ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                        : "bg-[var(--border)] text-muted"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-                {isActive && (
-                  <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-[var(--accent)]" />
-                )}
-              </button>
-            )
-          })}
-        </nav>
+        <Tabs
+          aria-label="Categorias de notificações"
+          selectedKey={activeTab}
+          onSelectionChange={(key) => setActiveTab(key as TabKey)}
+          className="mx-auto mt-2 max-w-2xl"
+        >
+          <Tabs.ListContainer>
+            <Tabs.List>
+              {TABS.map((tab) => {
+                const count = tabCounts[tab.key]
+                return (
+                  <Tabs.Tab key={tab.key} id={tab.key}>
+                    <span className="flex items-center gap-1.5">
+                      {tab.label}
+                      {count > 0 && (
+                        <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--border)] px-1 text-[11px] font-semibold leading-none text-muted">
+                          {count}
+                        </span>
+                      )}
+                    </span>
+                  </Tabs.Tab>
+                )
+              })}
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </Tabs>
       </div>
 
       {/* ── content ── */}
@@ -319,46 +314,46 @@ export default function NotificationsPage() {
         )}
 
         {!loading && !error && filtered.length > 0 && (
-          <div className="space-y-2">
+          <ListBox aria-label="Notificações" selectionMode="none" className="space-y-2">
             {grouped.map(({ group, items }) => (
-              <section key={group}>
-                <h2 className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
+              <ListBox.Section key={group} className="space-y-1">
+                <header className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
                   {GROUP_LABELS[group]}
-                </h2>
-                <div className="space-y-1">
-                  {items.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors duration-[var(--duration-instant)] ${
-                        notification.read_at ? "" : "bg-[var(--accent-soft)]"
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm leading-snug">
-                          <span className="text-muted">Alguém </span>
-                          {formatNotificationLabel(notification)}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted">
-                          {timeAgo(notification.created_at)}
-                        </p>
-                      </div>
-                      {!notification.read_at && (
-                        <Button
-                          size="sm"
-                          variant="tertiary"
-                          onPress={() => markAsRead(notification.id)}
-                          isDisabled={markingRead.has(notification.id)}
-                          className="shrink-0"
-                        >
-                          Lida
-                        </Button>
-                      )}
+                </header>
+                {items.map((notification) => (
+                  <ListBox.Item
+                    key={notification.id}
+                    id={notification.id}
+                    textValue={notification.id}
+                    className={`flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors duration-[var(--duration-instant)] ${
+                      notification.read_at ? "" : "bg-[var(--accent-soft)]"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm leading-snug">
+                        <span className="text-muted">Alguém </span>
+                        {formatNotificationLabel(notification)}
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted">
+                        {timeAgo(notification.created_at)}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </section>
+                    {!notification.read_at && (
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onPress={() => markAsRead(notification.id)}
+                        isDisabled={markingRead.has(notification.id)}
+                        className="shrink-0"
+                      >
+                        Lida
+                      </Button>
+                    )}
+                  </ListBox.Item>
+                ))}
+              </ListBox.Section>
             ))}
-          </div>
+          </ListBox>
         )}
       </div>
     </div>

@@ -1,6 +1,16 @@
 "use client"
 
-import { Button, Form, Input, TextArea } from "@heroui/react"
+import {
+  Button,
+  Chip,
+  Form,
+  Input,
+  ProgressBar,
+  Radio,
+  RadioGroup,
+  SearchField,
+  TextArea,
+} from "@heroui/react"
 import type { SVGProps } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -27,22 +37,6 @@ type MembershipRow = {
   role: "member" | "moderator" | "owner"
   status: "pending" | "approved"
   joined_at: string
-}
-
-function SearchIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <circle cx="11" cy="11" r="8" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35" />
-    </svg>
-  )
 }
 
 function CloseIcon(props: SVGProps<SVGSVGElement>) {
@@ -103,9 +97,7 @@ function OnboardingBlock({ groupName, onDismiss }: { groupName: string; onDismis
       </div>
 
       <div className="mt-4 flex items-center gap-3">
-        <div className="h-1.5 flex-1 rounded-full bg-amber-200">
-          <div className="h-full w-0 rounded-full bg-amber-500 transition-all duration-500" />
-        </div>
+        <ProgressBar value={0} maxValue={3} color="warning" className="flex-1" />
         <span className="shrink-0 text-xs font-medium text-amber-700">
           0 de 3 passos conclu&iacute;dos
         </span>
@@ -390,9 +382,9 @@ export default function GroupsPage() {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <h3 className="font-semibold">{group.name}</h3>
-              <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-xs text-muted">
+              <Chip size="sm" variant="soft">
                 {group.visibility === "public" ? "Público" : "Privado"}
-              </span>
+              </Chip>
               <ReportButton targetType="group" targetId={group.id} label="Denunciar" />
             </div>
             {group.description && <p className="text-sm text-muted">{group.description}</p>}
@@ -411,9 +403,9 @@ export default function GroupsPage() {
             )}
 
             {membership?.status === "pending" && (
-              <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-xs text-muted">
+              <Chip size="sm" variant="soft">
                 Aguardando aprovação
-              </span>
+              </Chip>
             )}
 
             {membership?.status === "approved" && membership.role !== "owner" && (
@@ -428,9 +420,9 @@ export default function GroupsPage() {
             )}
 
             {membership?.role === "owner" && (
-              <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-xs text-muted">
+              <Chip size="sm" variant="soft">
                 Proprietário
-              </span>
+              </Chip>
             )}
 
             {isModerator && (
@@ -516,27 +508,19 @@ export default function GroupsPage() {
         <p className="text-sm text-muted">Grupos da sua comunidade.</p>
       </section>
 
-      <div className="flex max-w-md items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-        <SearchIcon className="h-4 w-4 shrink-0 text-muted" />
-        <input
-          type="search"
-          aria-label="Buscar grupos"
-          placeholder="Buscar grupos..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="inline-flex shrink-0 items-center text-muted hover:text-foreground"
-            aria-label="Limpar busca"
-          >
-            <CloseIcon className="h-4 w-4" />
-          </button>
-        )}
-      </div>
+      <SearchField
+        aria-label="Buscar grupos"
+        value={searchQuery}
+        onChange={(value) => setSearchQuery(value)}
+        onClear={() => setSearchQuery("")}
+        className="max-w-md"
+      >
+        <SearchField.Group>
+          <SearchField.SearchIcon />
+          <SearchField.Input placeholder="Buscar grupos..." />
+          {searchQuery ? <SearchField.ClearButton /> : null}
+        </SearchField.Group>
+      </SearchField>
 
       {error && <ErrorState message={error} onRetry={() => loadData()} />}
 
@@ -576,32 +560,28 @@ export default function GroupsPage() {
             onChange={(e) => setCreateDescription((e.target as HTMLTextAreaElement).value)}
           />
 
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium">Visibilidade</p>
-            <div className="flex gap-2">
-              <Button
-                variant={createVisibility === "public" ? "primary" : "tertiary"}
-                size="sm"
-                onPress={() => setCreateVisibility("public")}
-                isDisabled={creating}
-              >
-                Público
-              </Button>
-              <Button
-                variant={createVisibility === "private" ? "primary" : "tertiary"}
-                size="sm"
-                onPress={() => setCreateVisibility("private")}
-                isDisabled={creating}
-              >
-                Privado
-              </Button>
-            </div>
-            <p className="text-xs text-muted">
-              {createVisibility === "public"
-                ? "Qualquer membro da comunidade pode entrar."
-                : "Novos membros precisam de aprovação."}
-            </p>
-          </div>
+          <RadioGroup
+            aria-label="Visibilidade do grupo"
+            value={createVisibility}
+            onChange={(value) => setCreateVisibility(value as "public" | "private")}
+            isDisabled={creating}
+            orientation="vertical"
+          >
+            <Radio value="public">
+              <div className="flex flex-col gap-0.5">
+                <span>Público</span>
+                <span className="text-xs text-muted">
+                  Qualquer membro da comunidade pode entrar.
+                </span>
+              </div>
+            </Radio>
+            <Radio value="private">
+              <div className="flex flex-col gap-0.5">
+                <span>Privado</span>
+                <span className="text-xs text-muted">Novos membros precisam de aprovação.</span>
+              </div>
+            </Radio>
+          </RadioGroup>
 
           <div className="flex gap-2">
             <Button type="submit" variant="primary" isDisabled={creating || !createName}>

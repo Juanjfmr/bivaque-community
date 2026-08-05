@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { Skeleton } from "./skeleton"
 
 interface EventItem {
   id: string
@@ -97,16 +98,15 @@ export function FeedRightRail() {
         {/* Proximos eventos */}
         <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
           <h3 className="text-sm font-semibold">Proximos eventos</h3>
-          {!loaded && (
+          {!loaded ? (
             <div className="mt-3 space-y-2">
-              <div className="h-4 w-full rounded bg-[var(--surface-sunken)]" />
-              <div className="h-4 w-3/4 rounded bg-[var(--surface-sunken)]" />
-              <div className="h-4 w-1/2 rounded bg-[var(--surface-sunken)]" />
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-4 w-3/4 rounded" />
+              <Skeleton className="h-4 w-1/2 rounded" />
             </div>
-          )}
-          {loaded && events.length === 0 && (
+          ) : events.length === 0 ? (
             <p className="mt-3 text-sm text-muted">Nenhum evento proximo</p>
-          )}
+          ) : null}
           {loaded && events.length > 0 && (
             <div className="mt-3 space-y-2">
               {events.map((evt) => (
@@ -124,15 +124,14 @@ export function FeedRightRail() {
         {/* Grupos ativos */}
         <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
           <h3 className="text-sm font-semibold">Grupos ativos</h3>
-          {!loaded && (
+          {!loaded ? (
             <div className="mt-3 space-y-2">
-              <div className="h-4 w-full rounded bg-[var(--surface-sunken)]" />
-              <div className="h-4 w-3/4 rounded bg-[var(--surface-sunken)]" />
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-4 w-3/4 rounded" />
             </div>
-          )}
-          {loaded && groups.length === 0 && (
+          ) : groups.length === 0 ? (
             <p className="mt-3 text-sm text-muted">Nenhum grupo ainda</p>
-          )}
+          ) : null}
           {loaded && groups.length > 0 && (
             <div className="mt-3 space-y-2">
               {groups.map((grp) => (
