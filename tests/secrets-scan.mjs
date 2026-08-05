@@ -40,6 +40,16 @@ const patterns = [
     regex: /https:\/\/[a-z0-9]{20}\.supabase\.co/g,
   },
   {
+    name: "Credential assigned as a literal",
+    // A bare password has no recognisable shape, so it is caught by the name it
+    // is bound to, not by the value. Matches PASSWORD/SECRET/API_KEY/CREDENTIAL
+    // identifiers receiving a quoted string. Reads from process.env or a helper
+    // call are function/member expressions, not string literals, so they never
+    // match. Exclusions for placeholders and inert values are in the filter.
+    regex:
+      /\b[A-Za-z0-9_]*(?:password|passwd|secret|api[_-]?key|credential)[A-Za-z0-9_]*\s*[:=]\s*(["'`])([^"'`\n]{6,})\1/gi,
+  },
+  {
     name: "Generic base64-looking token (40+ chars)",
     // Only flag if it looks like a standalone token, not part of a URL or placeholder
     regex: /(?<![<"'\w])[A-Za-z0-9+/]{40,}(?![>"'\w])/g,
@@ -144,6 +154,16 @@ for (const file of trackedFiles) {
 
       // Skip base64-looking tokens that are inside angle-bracket placeholders
       if (match[0].includes("<") || match[0].includes(">")) continue
+
+      // Skip config enums that happen to be bound to a credential-ish name,
+      // e.g. password_requirements = "letters_digits" in supabase/config.toml.
+      // A real credential carries a digit, a capital or a symbol; a value of
+      // only lowercase letters and underscores is a setting. The cost is that
+      // an all-lowercase-letters password would pass, which is accepted: the
+      // alternative is a false positive on every such config key.
+      if (pattern.name === "Credential assigned as a literal" && /^[a-z_]+$/.test(match[2])) {
+        continue
+      }
 
       // Skip repo-relative source paths. The generic token regex allows "/",
       // so any path of 40+ chars matches it — docs that cite a file by full
