@@ -64,6 +64,35 @@ funções `security definer` em `public`, as três sensíveis
 `add_to_waitlist`) **não** são executáveis por `authenticated`, e as
 demais são RPCs de grupo com checagem interna de moderador.
 
+### 0.3 Área Comunidade — schema fechado (2026-08-05)
+
+Quatro migrations (`019..022`) implementam a **camada de banco** da nova
+entidade Comunidade como subdivisão opcional entre Localidade e Grupo
+(Vilas, Turmas), com feed próprio, grupos internos e eventos internos
+que **nunca** aparecem para a cidade:
+
+- `20260805211933_communities_foundation.sql` — tabelas
+  `public.communities` e `public.community_memberships`, RLS+force,
+  helpers `private.is_community_member`/`is_community_moderator`,
+  policies `communities_select_locality_member` e
+  `community_memberships_select_comember`
+- `20260805214709_community_scope.sql` (atômica) — `community_id` em
+  `groups`/`posts`/`events`, constraints I1/I2, triggers I3/D7/D8,
+  `can_access_post_scope` v2 (3-arg) + `can_access_event` estendido
+  para comunidade, policy aditiva `profiles_select_community_comember`
+  (perfil oculto visível só a co-membros aprovados)
+- `20260805215020_community_feeds.sql` — funções set-based
+  `public.feed_community`/`feed_group` + `feed_posts` convertida
+- `20260805215419_community_rpcs.sql` — oito RPCs públicas de criação,
+  membership e moderação. `create_community` é **service_role only**
+
+Suíte em **641 testes** (`test:db`), `db:lint` limpo. **A linha 5d
+(feed/membros do grupo) está resolvida no banco** — `feed_group` agrega
+posts respeitando escopo, e `feed_community` cobre o nível da vila
+incluindo grupos públicos internos. UI (seletor de comunidade, chips
+de filtro do §5.3, aviso de divulgação do §8.1) é camada de aplicação
+e fica fora deste plano.
+
 ---
 
 ## 1. Propósito
@@ -187,7 +216,7 @@ Legenda de evidência:
 | 5 | Grupos | 5a — listar/entrar/sair | Parcial | P1 | Funciona; **sem página de detalhe do grupo** | `apps/web/app/(shell)/groups/page.tsx:231-267`; `docs/agents/VISUAL_GUIDE.md:111` ("Detalhe (futura)") | [V][C] |
 | 5 | Grupos | 5b — criar | Parcial | P1 | Form e RPC funcionam; sem foto/capa/descrição rica; sem categorias; sem regras de entrada além de `public`/`private` | `groups/page.tsx:203-229,556-615` | [V] |
 | 5 | Grupos | 5c — moderar (aprovar, promover, rebaixar) | Parcial | P2 | RPCs existem; **sem transferência de ownership**; **sem convite para grupo**; **sem log de moderação** | `groups/page.tsx:269-322` | [V] |
-| 5 | Grupos | 5d — feed/membros do grupo | Ausente | P2 | Não há página `/groups/:id` com feed interno; existe só o card-resumo | Ausência em `apps/web/app/(shell)/groups/page.tsx` | [V] |
+| 5 | Grupos | 5d — feed/membros do grupo | **Corrigida** | ~~P2~~ | A camada de banco está fechada: `public.feed_group(p_group_id uuid)` agrega posts do grupo respeitando escopo (público interno visível só a membros da comunidade; privado só a membros do grupo). `public.feed_community(p_community_id uuid)` cobre o nível da vila incluindo grupos públicos internos. UI continua com o card-resumo de `(shell)/groups/page.tsx`; a página `/groups/:id` permanece como camada de aplicação, fora deste plano | `20260805215020_community_feeds.sql`; `supabase/tests/community-feeds.sql` (8 asserts, casos 8/8b/9/10/14/D6) | [V] |
 | 6 | Eventos | 6a — criar/listar | Parcial | P1 | Form e listagem funcionam; **convite para evento é placeholder** ("em breve") | `apps/web/app/(shell)/events/page.tsx:537-543,549-601` | [V] |
 | 6 | Eventos | 6b — RSVP | Parcial | P1 | interested/going funcionam; sem "não vou" explícito; sem atualização pelo organizador quando o evento muda | `events/page.tsx:275-295` | [V] |
 | 6 | Eventos | 6c — detalhe do evento | Ausente | P1 | Sem rota `/events/:id` com descrição completa, comentários, lista de confirmados | Ausência de rota | [V] |
