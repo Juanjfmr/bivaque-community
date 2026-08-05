@@ -11,6 +11,8 @@
 // grant + injecao de cookie no Playwright para simular o que o callback
 // route faria (cookie de sessao com Max-Age=34560000).
 
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import {
   type APIRequestContext,
   type BrowserContext,
@@ -21,11 +23,46 @@ import {
   test,
 } from "@playwright/test"
 
+// The anon key is never inlined here. Even the Supabase local demo key is a
+// well-formed JWT, so hardcoding it trips the secrets scan — and a fallback
+// that silently works also lets the suite pass against the wrong instance.
+// Read it the same way scripts/visual/capture.mjs does: environment first,
+// then apps/web/.env.local.
+function readEnvLocal(key: string): string | undefined {
+  try {
+    const file = readFileSync(
+      join(import.meta.dirname, "..", "..", "apps", "web", ".env.local"),
+      "utf-8",
+    )
+    for (const line of file.split("\n")) {
+      const trimmed = line.trim()
+      if (trimmed.length === 0 || trimmed.startsWith("#")) continue
+      const eq = trimmed.indexOf("=")
+      if (eq === -1) continue
+      if (trimmed.slice(0, eq).trim() !== key) continue
+      return trimmed
+        .slice(eq + 1)
+        .trim()
+        .replace(/^["']|["']$/g, "")
+    }
+  } catch {
+    return undefined
+  }
+  return undefined
+}
+
 const APP_URL = process.env.APP_URL ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:55321"
 const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0"
+  readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
+  readEnvLocal("SUPABASE_ANON_KEY")
+
+if (!SUPABASE_ANON_KEY) {
+  throw new Error(
+    "SUPABASE_ANON_KEY is required. Set it in the environment or in apps/web/.env.local.",
+  )
+}
 const USER_EMAIL = process.env.USER_EMAIL ?? "visual@bivaque.example.invalid"
 const USER_PASSWORD = process.env.USER_PASSWORD ?? "V1sual-Bivaque-2026!"
 
