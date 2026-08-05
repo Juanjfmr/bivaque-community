@@ -501,8 +501,8 @@ select results_eq(
     where schemaname = 'public'
       and tablename = 'profiles'
   $$,
-  array[3::bigint],
-  'GUARD: profiles has exactly 3 policies'
+  array[4::bigint],
+  'GUARD: profiles has exactly 4 policies (visible_in_locality, insert_self, update_self, community_comember)'
 );
 
 select results_eq(
