@@ -11,7 +11,7 @@
  */
 
 import { execSync } from "node:child_process"
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
 const root = join(import.meta.dirname, "..")
@@ -99,6 +99,19 @@ function isPlaceholder(lineContent) {
   return false
 }
 
+// Repo-relative source paths, e.g. apps/web/lib/onboarding/verifyAndProvision.
+// The generic token regex accepts "/", so any path of 40+ characters looks like
+// a base64 blob to it. Anchoring on the workspace's real top-level directories
+// keeps the exclusion narrow: a credential does not start with "apps/".
+const repoRoots = ["apps", "packages", "supabase", "scripts", "tests", "docs"]
+
+function isRepoPath(matchText) {
+  const slash = matchText.indexOf("/")
+  if (slash === -1) return false
+  if (!repoRoots.includes(matchText.slice(0, slash))) return false
+  return /^[A-Za-z0-9._/-]+$/.test(matchText)
+}
+
 // ── scan ──
 
 const trackedFiles = execSync("git ls-files", { encoding: "utf8", cwd: root })
@@ -109,7 +122,9 @@ const trackedFiles = execSync("git ls-files", { encoding: "utf8", cwd: root })
 let totalFindings = 0
 
 for (const file of trackedFiles) {
-  const content = readFileSync(join(root, file), "utf8")
+  const fullPath = join(root, file)
+  if (!existsSync(fullPath)) continue
+  const content = readFileSync(fullPath, "utf8")
   const lines = content.split("\n")
 
   for (const pattern of patterns) {
@@ -129,6 +144,12 @@ for (const file of trackedFiles) {
 
       // Skip base64-looking tokens that are inside angle-bracket placeholders
       if (match[0].includes("<") || match[0].includes(">")) continue
+
+      // Skip repo-relative source paths. The generic token regex allows "/",
+      // so any path of 40+ chars matches it — docs that cite a file by full
+      // path would otherwise fail the scan. Anchored to real top-level
+      // directories of this workspace: a credential never starts at "apps/".
+      if (pattern.name.startsWith("Generic base64") && isRepoPath(match[0])) continue
 
       console.error(`${file}:${lineIdx + 1}: ${pattern.name} — ${match[0].substring(0, 60)}`)
       totalFindings++
