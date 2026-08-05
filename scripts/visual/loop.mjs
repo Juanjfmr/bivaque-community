@@ -50,10 +50,14 @@ async function waitForServer(url, timeoutMs) {
 async function main() {
   mkdirSync(RUN_DIR, { recursive: true })
 
+  // Biome lint flags codebase-wide pre-existing useLiteralKeys info-level diagnostics
+  // as fixable. Those are not real errors, so we constrain the diagnostic level to
+  // `error` for the loop's gate — the full lint report still runs in CI as today.
+  const lintCmd = [PNPM[0], PNPM[1], "exec", "biome", "check", ".", "--diagnostic-level", "error"]
   const gates = FAST
-    ? [runGate("lint", PNPM[0], [PNPM[1], "lint"])]
+    ? [runGate("lint", PNPM[0], lintCmd)]
     : [
-        runGate("lint", PNPM[0], [PNPM[1], "lint"]),
+        runGate("lint", PNPM[0], lintCmd),
         runGate("typecheck", PNPM[0], [PNPM[1], "typecheck"]),
         runGate("test", PNPM[0], [PNPM[1], "test"]),
         runGate("build", PNPM[0], [PNPM[1], "build"]),

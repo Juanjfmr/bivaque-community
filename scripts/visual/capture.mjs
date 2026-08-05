@@ -9,7 +9,7 @@
 // model cannot read images. Screenshots stay authoritative for taste; the audit is
 // authoritative for the mechanical rules (touch targets, overflow, contrast, motion).
 
-import { mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { chromium } from "@playwright/test"
 
@@ -38,14 +38,51 @@ const ROUTES = [
 ]
 
 // --------------------------------------------------------------------------
+// .env.local fallback — when process env is empty, parse the local dotenv file
+// --------------------------------------------------------------------------
+
+function parseEnvFile(path) {
+  try {
+    const content = readFileSync(path, "utf-8")
+    const result = {}
+    for (const line of content.split("\n")) {
+      const trimmed = line.trim()
+      if (trimmed.length === 0 || trimmed.startsWith("#")) continue
+      const eq = trimmed.indexOf("=")
+      if (eq === -1) continue
+      const key = trimmed.slice(0, eq).trim()
+      let value = trimmed.slice(eq + 1).trim()
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1)
+      }
+      result[key] = value
+    }
+    return result
+  } catch {
+    return {}
+  }
+}
+
+const APP_DOTENV = join(import.meta.dirname, "..", "..", "apps", "web", ".env.local")
+const dotEnv = parseEnvFile(APP_DOTENV)
+
+// --------------------------------------------------------------------------
 // auth — optional; without credentials the gated routes are captured signed out
 // --------------------------------------------------------------------------
 
 async function fetchSession() {
-  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"] ?? process.env["SUPABASE_URL"]
-  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  const email = process.env["BIVAQUE_VISUAL_EMAIL"]
-  const password = process.env["BIVAQUE_VISUAL_PASSWORD"]
+  const url =
+    process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
+    process.env["SUPABASE_URL"] ??
+    dotEnv["NEXT_PUBLIC_SUPABASE_URL"] ??
+    dotEnv["SUPABASE_URL"]
+  const anonKey =
+    process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  const email = process.env["BIVAQUE_VISUAL_EMAIL"] ?? dotEnv["BIVAQUE_VISUAL_EMAIL"]
+  const password = process.env["BIVAQUE_VISUAL_PASSWORD"] ?? dotEnv["BIVAQUE_VISUAL_PASSWORD"]
 
   if (!url || !anonKey || !email || !password) return null
 
@@ -241,6 +278,18 @@ async function main() {
     ])
 
     if (auth) {
+      // supabase-js stores the session in localStorage; @supabase/ssr (the new B2 middleware)
+      // reads it from a cookie of the same name. Without the cookie the server-side middleware
+      // has no session and redirects every gated route to /login.
+      const sessionValue = JSON.stringify(auth.session)
+      await context.addCookies([
+        {
+          name: auth.storageKey,
+          value: sessionValue,
+          path: "/",
+          domain: "127.0.0.1",
+        },
+      ])
       await context.addInitScript(
         ([key, session]) => window.localStorage.setItem(key, JSON.stringify(session)),
         [auth.storageKey, auth.session],
