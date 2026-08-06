@@ -723,11 +723,27 @@ detalhada separadamente antes da execução.
   introduzidos (2 HIGH preexistentes em /login e /onboarding são
   backlog Phase 2)._
 
-- **Onda 7 — Refinamentos (P2).**
+- **Onda 7 — Refinamentos (P2).** ~~[DONE]~~
   Pós-evento; logout via router; transferência de ownership de grupo;
   personalização de recomendações; histórico multi-ação de denúncia
   **se** a Onda 1 mostrar necessidade. Resolve 2c-3, 2f, 5c, 6d, 7a,
   7b, 7c, 10b.
+  _Fechada em 2026-08-06. Entregas: 2f (logout via router) `8cced7e`;
+  2c-3 (avatar no feed — endpoint `/api/avatar/[userId]` +
+  feed-post + feed-composer) `5a51ccc`; 5c (UI de transferência de
+  ownership, RPC já existia na 010) `2bf1eb5`; 6d (pós-evento —
+  enum `completed` + RPC `complete_event` + botão Encerrar)
+  `38f2dc5`. **Não implementado — condição não concretizada:**
+  10b (histórico multi-ação de denúncia) era condicional a "a Onda
+  1 mostrar necessidade"; a Onda 1 fechou o ciclo com uma única
+  ação por denúncia + `operator_note` (reports é append-only sem
+  policy de DELETE, com resolvedor/timestamp) — `report_actions`
+  seria YAGNI no piloto. 7a/7b/7c (personalização de
+  recomendações) ficam para fora — refinamento que não aparece na
+  primeira sessão. Veredito em
+  `docs/agents/VISUAL_AUDIT-2026-08-06-refinements.md`: loop §10.2
+  completo (lint+typecheck+test+build+capture, high=0). **Todas as
+  Ondas 0-7 do §10.1 estão DONE.**_
 
 > **Grafo de dependência:** Onda 0 → {1, 3, parte de 4}. Ondas 2, 5 e 6
 > são independentes de tudo e podem correr em paralelo.
