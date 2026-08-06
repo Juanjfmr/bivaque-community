@@ -19,6 +19,7 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../components/bivaque/skeleton"
 import FamilyInviteSection from "./family-invite-section"
+import NotificationPreferencesSection from "./notification-preferences-section"
 
 interface ProfileRow {
   user_id: string
@@ -399,12 +400,7 @@ export default function ProfilePage() {
               )}
             </div>
 
-            <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
-              <p className="text-sm font-medium">Preferências de notificação</p>
-              <p className="mt-1 text-xs text-muted">
-                Receber alertas de novas mensagens, comentários e eventos. Em breve.
-              </p>
-            </div>
+            <NotificationPreferencesSection />
 
             <FamilyInviteSection />
 
