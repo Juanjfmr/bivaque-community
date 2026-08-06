@@ -13,6 +13,7 @@ import {
   Tabs,
   useOverlayState,
 } from "@heroui/react"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -82,6 +83,7 @@ function pluralize(count: number, singular: string, plural: string): string {
 }
 
 export default function ProfilePage() {
+  const router = useRouter()
   const supabase = createBrowserClient()
   const [profile, setProfile] = useState<ProfileRow | null>(null)
   const [membership, setMembership] = useState<MembershipRow | null>(null)
@@ -217,7 +219,7 @@ export default function ProfilePage() {
       return
     }
     signOutModal.close()
-    window.location.href = "/login"
+    router.push("/login")
   }
 
   if (loading) {
