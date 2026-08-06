@@ -987,6 +987,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      is_current_user_operator: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
       read_verification_status: {
         Args: { p_user_id: string }
