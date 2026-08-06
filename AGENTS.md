@@ -89,6 +89,51 @@ These tests fail CI if you break them — update them only when a contract delib
   casually; both pin and section are locked by tests.
 - Root scripts/devDeps and the three Playwright viewport projects are asserted verbatim.
 
+## HeroUI v3 components in use (post waves 1–5 + 7)
+
+After the visual audit migration (merge `5d0dc62` / PR #2) the frontend
+relies on these sub-components of `@heroui/react`:
+
+- **Forms**: `Button`, `Form`, `Input`, `SearchField`, `TextArea`,
+  `Checkbox`, `Radio`, `RadioGroup`, `Select`
+- **Feedback**: `Alert` (via the `FeedbackAlert` wrapper), `Spinner`,
+  `Skeleton`, `Toast` (via `ToastProvider`), `Chip`, `Kbd`
+- **Overlays**: `Modal` (with `useOverlayState`), `Dropdown` (compound
+  `Trigger`/`Popover`/`Menu`/`Item`), `Tooltip`, `ListBox`
+- **Layout**: `Tabs` (+ `Tab`/`TabList`/`TabPanel`), `ButtonGroup`,
+  `ToggleButton`, `Separator`, `Link`, `ProgressBar`, `Avatar` (via the
+  `MemberAvatar` wrapper), `CloseButton`
+
+Available but **deliberately deferred** (current code is functional; full
+migration is follow-up work): `Drawer`, `Table`, `Pagination`,
+`NumberInput`, `Autocomplete`, `ComboBox`, `Slider`, `Switch`,
+`Accordion`, `Disclosure`, `ScrollShadow`, `Meter`. (`Snippet` and
+`Image` were **removed** in HeroUI v3 — use `Typography.Code`/`Prose`
+and `next/image` respectively.)
+
+### UI component wrappers (token-driven front for HeroUI)
+
+Every primitive in `apps/web/app/components/bivaque/` is a thin,
+token-aware wrapper over a HeroUI v3 sub-component. Never import HeroUI
+directly for patterns that already have a wrapper — the wrapper is what
+keeps the design system coherent.
+
+| Wrapper | Wraps | Purpose |
+|---|---|---|
+| `Card` | `Card` | Surface container with elevation |
+| `Skeleton` | `Skeleton` | Loading placeholder |
+| `ToastProvider` + `showToast` | `Toast.Provider` + `toast()` | Queued toasts |
+| `ErrorState` | `Alert` (via `FeedbackAlert`) | User-safe error UI |
+| `FeedbackAlert` | `Alert` | info/success/warning/danger, role-aware (assertive for danger/warning, polite for info/success) |
+| `MemberAvatar` | `Avatar` | Initial-fallback avatar for verified members |
+
+**Critical: `ToastProvider` must be mounted.** It was defined in
+`bivaque/toast.tsx` and shipped unused for months; calls to
+`toast.success()` / `toast.danger()` silently dropped on the floor
+because no provider was in the tree. It is mounted once under
+`(shell)/layout.tsx`. If you ever refactor those layouts, **keep the
+provider** — the global `toast()` helper only renders through it.
+
 ## Supabase (source of truth: `supabase/migrations/`)
 
 - Never edit an applied migration — add a timestamped one via
@@ -128,6 +173,11 @@ These tests fail CI if you break them — update them only when a contract delib
   `apps/web/.env.local`, and throw when neither supplies one — see
   `tests/e2e/persistent-login.spec.ts`. The secrets scan enforces this for anything bound to a
   `password`, `secret`, `api_key` or `credential` name.
+- **CI secrets required for the E2E gate.** Two env vars must be configured in `Settings →
+  Secrets and variables → Actions` for the `Root E2E tests` step to pass:
+  `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Without them `next start`
+  fails before any spec runs. This is repository-side configuration, not a code contract —
+  the test:e2e gate will stay red until the secrets are in place.
 
 ## Style
 
