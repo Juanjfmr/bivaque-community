@@ -1066,7 +1066,7 @@ export type Database = {
       }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
-      list_pending_family_invitations: {
+      list_pending_invites: {
         Args: { p_user_id: string }
         Returns: {
           created_at: string

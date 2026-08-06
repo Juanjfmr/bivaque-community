@@ -24,9 +24,9 @@ select is(
 );
 
 select is(
-  (select count(*) from public.list_pending_family_invitations('10000000-0000-4000-8000-000000000001'::uuid))::integer,
+  (select count(*) from public.list_pending_invites('10000000-0000-4000-8000-000000000001'::uuid))::integer,
   1::integer,
-  'list_pending_family_invitations returns the foundation.inc pending invite'
+  'list_pending_invites returns the foundation.inc pending invite'
 );
 
 select is(

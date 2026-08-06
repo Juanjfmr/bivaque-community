@@ -45,7 +45,7 @@ export async function getFamilyInviteDataAction(): Promise<FamilyInviteData | nu
   const supabase = createServiceClient()
   const [{ data: isVerified }, { data: pendingData }] = await Promise.all([
     supabase.rpc("is_verified_holder", { p_user_id: userId }),
-    supabase.rpc("list_pending_family_invitations", { p_user_id: userId }),
+    supabase.rpc("list_pending_invites", { p_user_id: userId }),
   ])
 
   return {
