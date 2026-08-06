@@ -680,11 +680,22 @@ detalhada separadamente antes da execução.
   `/community`, `/messages`, `/notifications` são backlog
   pré-Onda-5)._
 
-- **Onda 6 — Robustez do preauth (P1, subdivisão 1f).**
+- **Onda 6 — Robustez do preauth (P1, subdivisão 1f).** ~~[DONE]~~
   Adicionar `error.tsx`/`loading.tsx`/`not-found.tsx` em
   `(preauth)/login`, `(preauth)/consent`, `(preauth)/onboarding`.
   Pequena e isolada — boa primeira tarefa para calibrar um agente
   executor neste repositório.
+  _Fechada em 2026-08-06. 5 commits: plan em `6f3c9da`, Task 1
+  (error.tsx × 3) em `932e338`, Task 2 (loading.tsx × 3) em
+  `8c64544`, Task 3 (not-found.tsx × 3) em `3e814bb`, Task 4
+  (capture.mjs + verdict) neste commit. 9 arquivos novos,
+  cada um ~5–12 linhas, reusando `SegmentError` /
+  `SegmentLoading` / `SegmentNotFound` de
+  `components/bivaque/segment-fallbacks.tsx` — mesmo pattern que
+  o `(shell)/` já tem. Veredito visual em
+  `docs/agents/VISUAL_AUDIT-2026-08-06-preauth.md`: 0 achados
+  introduzidos (2 HIGH preexistentes em /login e /onboarding são
+  backlog Phase 2)._
 
 - **Onda 7 — Refinamentos (P2).**
   Pós-evento; logout via router; transferência de ownership de grupo;

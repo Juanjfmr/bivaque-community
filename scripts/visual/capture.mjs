@@ -27,6 +27,7 @@ const ROUTES = [
   { path: "/", name: "root", auth: false },
   { path: "/login", name: "login", auth: false },
   { path: "/consent", name: "consent", auth: false },
+  { path: "/onboarding", name: "onboarding", auth: false },
   { path: "/onboarding", name: "onboarding", auth: true },
   { path: "/onboarding/status", name: "onboarding-status", auth: true },
   { path: "/onboarding/welcome", name: "onboarding-welcome", auth: true },
