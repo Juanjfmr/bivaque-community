@@ -610,13 +610,29 @@ detalhada separadamente antes da execução.
   de soft delete — já existe.** **Não criar `report_actions`.**
   Resolve 4b e 4c. **Depende** da Onda 0.
 
-- **Onda 2 — Fechar o ciclo de admissão (P0, área 1).**
+- **Onda 2 — Fechar o ciclo de admissão (P0, área 1).** ~~Tasks 1-5 [DONE]~~
   **[C2]** Rota server-side lendo `private.verification_outcomes` →
   `/onboarding/status` com `pending` e `rejected`. **[C5]** Sem
   posição de fila. Tela de boas-vindas após verify OK com primeira
   ação sugerida. Toast + preservação de formulário na sessão expirada.
   Resolve 1a, 1b, 1c e parcialmente 1e. **Independente** — não precisa
   da Onda 0.
+  _Fechada em 2026-08-06. Tasks 1-6: 6 commits (`16429aa` plan + Task 1,
+  `fbe7c16` Tasks 2+5, `c5bf1d9` Task 3, `86f3fb2` Task 4,
+  `audit-capture` Task 6 infra, `welcome-fix` Task 6 fix, este commit).
+  RPC `public.read_verification_status` (service_role-only) + endpoint
+  `/api/onboarding/status`; boot logic do `/onboarding/page.tsx` que
+  busca o status real e roteia; 3 `router.push("/login")` silenciosos
+  trocados por `showToast({ variant: "warning" })` + `sessionStorage`;
+  páginas `/onboarding/status` (pending/rejected com canal
+  explícito, sem promessa de posição) e `/onboarding/welcome` (3
+  cards de primeira ação); `handleVerifyCpf` sucesso empurra para
+  `/onboarding/welcome`. Veredito visual em
+  `docs/agents/VISUAL_AUDIT-2026-08-06.md`: welcome passa nos 4
+  itens da rubrica §9; status ficou sem veredito (audit não navega
+  com search params); 1 achado HIGH residual (touch-target pós-fix)
+  possivelmente por purge do Tailwind, documentado para
+  follow-up. Ondas seguintes desbloqueadas._
 
 - **Onda 3 — Contrato de acesso aos convites familiares (P1, área 3).**
   **[C3]** Expor `private.create_family_invitation` /
