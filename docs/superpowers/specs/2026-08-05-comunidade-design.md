@@ -185,9 +185,11 @@ Escrita usa o mesmo portão, conforme estabelecido em 018.
 
 ### 4.3 Nomenclatura
 
-Não usar "locality" no nome de helpers novos de escopo genérico. Posts
-nacionais (§10.2) tornarão a localidade opcional, e renomear helper
-referenciado por N policies é caro.
+**Retirada (2026-08-06).** Esta regra existia só para preservar a
+possibilidade de posts nacionais (§10, agora descartada). Com a
+localidade permanecendo raiz obrigatória da escada de escopo, nomear
+helpers com "locality" quando fizer sentido não tem mais custo de
+rename futuro — a restrição não se aplica.
 
 ---
 
@@ -414,48 +416,58 @@ de falha que jamais aparecem em teste de caminho feliz.
 
 ---
 
-## 10. Conflitos conhecidos e datados
+## 10. Escopo nacional — descartado (decisão fechada em 2026-08-06)
 
-Registrados como decisões conscientes, não descuidos.
+Esta seção registrava dois itens como conflito aberto: turma atravessando
+localidades (exigindo multi-localidade por pessoa) e posts com alcance
+nacional. **Ambos foram descartados**, não adiados. Mantida a versão
+anterior como histórico de por que a decisão é sólida, não porque o
+trabalho continue pendente.
 
-### 10.1 Turma × movimentação (conflito real)
+### 10.1 Por que descartar custa zero
 
-`communities.locality_id` é `not null`. **Turma não é geográfica.**
+O piloto tem **uma** localidade. Nenhum membro atual tem para onde um
+recurso nacional o levaria — o valor marginal de qualquer uma das duas
+peças é zero até uma segunda cidade existir de fato. Adiar não perde
+nada; construir agora seria segurar `locality_memberships` (`user_id`
+como PK — uma pessoa, uma localidade, para sempre) e reescrever RLS que
+atravessa posts, perfis, grupos, eventos e comunidades, para servir
+demanda inexistente. É o caso limpo de YAGNI: zero custo de adiar, custo
+real de antecipar.
 
-Pior: turma é a única comunidade que *deveria* sobreviver à
-transferência. No modelo atual, o militar transferido perde a localidade
-e, com ela, a turma. **O caso que mais justifica turma existir é o que o
-desenho quebra.**
+Turma continua **igual à vila** — escopada a Manaus. Quem sai da
+localidade perde acesso, sem tratamento especial. É consistente com o
+resto do produto, não uma degradação: nenhuma comunidade sobrevive à
+saída da localidade, e turma não é exceção.
 
-No piloto Manaus-only não aparece. Saída futura: `locality_id` nulável
-(comunidade sem localidade = nacional). Migration aditiva, mas ver §10.2.
+### 10.2 O que motivou a decisão (registro técnico, não plano)
 
-### 10.2 Posts nacionais custam mais que uma coluna
+Os dois obstáculos técnicos que tornavam a ideia cara, para quem
+reabrir esta pergunta no futuro precisar entender o tamanho do trabalho:
 
-A escada de escopo tem a localidade como raiz — comunidade e grupo apenas
-*estreitam*. Nacional é mais **largo**, não mais estreito: quebra a
-suposição de raiz obrigatória.
+- **Turma não é geográfica**, e `communities.locality_id` é `not null`.
+  Turma seria a única comunidade que deveria sobreviver a uma
+  transferência — o desenho atual garante que não sobrevive.
+- **A escada de escopo tem a localidade como raiz**; comunidade e grupo
+  apenas *estreitam* a partir dela. Nacional é mais **largo**, não mais
+  estreito — quebra a suposição de raiz obrigatória. `locality_id`
+  nulável seria coluna aditiva, mas a política não: cada policy do post
+  surface ganharia ramo de nulo, e `feed_posts(p_locality_id)` deixaria
+  de servir — viraria função nova.
+- **O bloqueio de fundo é `locality_memberships.user_id` como PK.**
+  `private.is_locality_member` já é um `exists`, então funcionaria sem
+  alteração se um dia houver múltiplas linhas — mas a PK e a FK composta
+  de `profiles` são o que impede isso hoje, e mexer nelas é trabalho de
+  fundação, não de comunidade.
 
-A coluna é aditiva; **a política não**. `locality_id` nulável obriga ramo
-de nulo em toda policy do post surface, e `feed_posts(p_locality_id)` não
-serve para feed nacional — vira função nova. É reescrita de política.
+### 10.3 Se isto for revisitado
 
-### 10.3 Multi-localidade é da fundação, não da comunidade
-
-```sql
-create table public.locality_memberships (
-  user_id uuid primary key ...
-```
-
-`user_id` é PK: uma pessoa, uma localidade, para sempre. E `profiles` tem
-FK composta para `(user_id, locality_id)` com `user_id` também PK.
-
-`private.is_locality_member` já é um `exists`, então **funciona sem
-alteração** quando houver várias linhas. O bloqueio é a PK e a FK de
-`profiles`.
-
-Nada neste design assume localidade única — a comunidade herda de graça o
-que a fundação resolver.
+Só faz sentido reabrir quando uma segunda localidade estiver
+efetivamente em planejamento — e nesse ponto haverá dado real de uso
+para responder uma pergunta anterior a esta: se turma, escopada a uma
+cidade só, teve adesão suficiente para justificar o custo de
+multi-localidade. Hoje essa pergunta também está em aberto, sem dado
+nenhum.
 
 ---
 
