@@ -33,7 +33,9 @@ test.describe("onboarding: verified holder and invited family", () => {
   test("onboarding page shows verification flow", async ({ page }) => {
     await page.goto("/onboarding")
 
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
+    // Onboarding is a `(preauth)` route with no shell header, so its own H1 is
+    // the landmark rather than the Bivaque wordmark.
+    await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Verificar elegibilidade" })).toBeVisible()
     await expect(page.getByRole("button", { name: /lista de espera/ })).toBeVisible()
 
