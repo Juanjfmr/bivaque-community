@@ -226,6 +226,44 @@ export type Database = {
           },
         ]
       }
+      event_invites: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          invited_by: string
+          invitee_user_id: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["event_invite_status"]
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          invited_by: string
+          invitee_user_id: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["event_invite_status"]
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          invited_by?: string
+          invitee_user_id?: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["event_invite_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_invites_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_rsvps: {
         Row: {
           created_at: string
@@ -1091,6 +1129,7 @@ export type Database = {
         | "shared_event"
         | "recommendation_thread"
         | "accepted_family"
+      event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going"
       event_status: "upcoming" | "cancelled"
       group_membership_role: "member" | "moderator" | "owner"
@@ -1252,6 +1291,7 @@ export const Constants = {
         "recommendation_thread",
         "accepted_family",
       ],
+      event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going"],
       event_status: ["upcoming", "cancelled"],
       group_membership_role: ["member", "moderator", "owner"],

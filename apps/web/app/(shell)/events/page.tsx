@@ -8,6 +8,7 @@ import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { EventsIllustration } from "../../components/bivaque/illustrations"
 import { EventCardSkeleton } from "../../components/bivaque/skeleton"
+import EventInvitesSection from "./event-invites-section"
 
 type EventRow = {
   id: string
@@ -535,11 +536,7 @@ function EventsContent() {
               </TabPanel>
 
               <TabPanel key="invited" className="pt-3">
-                <EmptyState
-                  title="Convites em breve"
-                  description="O sistema de convites para eventos ainda não está disponível. Ele será ativado em uma atualização futura."
-                  illustration={<EventsIllustration />}
-                />
+                <EventInvitesSection />
               </TabPanel>
             </Tabs>
           </section>
