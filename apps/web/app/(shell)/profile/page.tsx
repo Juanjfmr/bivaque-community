@@ -18,6 +18,7 @@ import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../components/bivaque/skeleton"
+import AvatarSection from "./avatar-section"
 import FamilyInviteSection from "./family-invite-section"
 import NotificationPreferencesSection from "./notification-preferences-section"
 
@@ -399,6 +400,8 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
+
+            <AvatarSection />
 
             <NotificationPreferencesSection />
 
