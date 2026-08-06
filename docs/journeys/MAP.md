@@ -668,11 +668,25 @@ detalhada separadamente antes da execução.
   `docs/agents/VISUAL_AUDIT-2026-08-06-family-invite.md`. 0
   achados introduzidos (4/4 da rubrica §9 no `/profile`)._
 
-- **Onda 4 — Resto do padrão 2 (P1, áreas 2, 6).**
+- **Onda 4 — Resto do padrão 2 (P1, áreas 2, 6).** ~~[DONE]~~
   Migration `notification_preferences` + UI em
   `profile/page.tsx:395-400`; upload de avatar; convite de evento
   (`events/page.tsx:537-543`). Resolve 2c-2, 2d, 6a.
   **Independente** das outras.
+  _Fechada em 2026-08-06. 6 commits: Task 1+2 `848a527`
+  (migration `notification_preferences` + RLS own-row + 7 pgTAP),
+  Task 3 `c64face` (preferências de notificação com Checkbox
+  HeroUI + Server Actions), Task 4 `db243fb` (upload de avatar
+  via bucket `avatars` existente + `MemberAvatar` com `src`),
+  Task 5 `29c4e85` (migration `event_invites` + RLS organizer/
+  invitee + 6 pgTAP + tab "Convidado"), Task 6 (rename
+  `list_pending_family_invitations` → `list_pending_invites` em
+  `d70f671` — destravou o privacy test — + verdict e este MAP).
+  Veredito em `docs/agents/VISUAL_AUDIT-2026-08-06-pattern2.md`:
+  **primeira run da sessão com o loop §10.2 completo** (lint +
+  typecheck + test + build + capture + high=0), 0 achados
+  mecânicos em todas as 15 rotas × 3 viewports. Ondas 0-6 todas
+  DONE; resta só a Onda 7 (P2)._
 
 - **Onda 5 — Navegação e detalhe (P1, áreas 4, 5, 6, 8, 9).** ~~[DONE]~~
   Handler de clique em notificações; deep link `?post=`;
