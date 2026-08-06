@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(12);
 
 \ir fixtures/foundation.inc
 
@@ -106,7 +106,26 @@ select lives_ok(
   $$
     select private.promote_operator_by_email('op-one@example.invalid')
   $$,
-  'service_role can call promote_operator_by_email; idempotent on existing row'
+  'service_role can call promote_operator_by_email on an existing row'
+);
+
+-- op-one was revoked earlier in this file. Promoting again must bring them
+-- back, not silently no-op: the function returns the user id either way, so a
+-- caller has no other signal that the grant did not take effect.
+
+select is(
+  private.is_operator('10000000-0000-4000-8000-000000000007'),
+  true,
+  'promoting a revoked operator reactivates them'
+);
+
+select is_empty(
+  $$
+    select 1 from public.operators
+    where auth_user_id = '10000000-0000-4000-8000-000000000007'
+      and revoked_at is not null
+  $$,
+  'reactivation clears revoked_at'
 );
 
 select throws_ok(
