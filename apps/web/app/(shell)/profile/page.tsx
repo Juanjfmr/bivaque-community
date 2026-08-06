@@ -18,6 +18,7 @@ import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../components/bivaque/skeleton"
+import FamilyInviteSection from "./family-invite-section"
 
 interface ProfileRow {
   user_id: string
@@ -405,12 +406,7 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
-              <p className="text-sm font-medium">Convites de família</p>
-              <p className="mt-1 text-xs text-muted">
-                Gerencie os convites enviados para familiares. Em breve.
-              </p>
-            </div>
+            <FamilyInviteSection />
 
             <Button type="button" variant="danger" onPress={signOutModal.open} className="w-full">
               Sair da conta

@@ -57,3 +57,40 @@ revoke all on function public.revoke_family_invitation(uuid, uuid) from anon;
 revoke all on function public.revoke_family_invitation(uuid, uuid) from authenticated;
 
 grant execute on function public.revoke_family_invitation(uuid, uuid) to service_role;
+
+create function public.list_pending_family_invitations(p_user_id uuid)
+returns table (
+  id uuid,
+  invitee_email_digest bytea,
+  created_at timestamptz,
+  expires_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select * from private.list_pending_family_invitations(p_user_id);
+$$;
+
+revoke all on function public.list_pending_family_invitations(uuid) from public;
+revoke all on function public.list_pending_family_invitations(uuid) from anon;
+revoke all on function public.list_pending_family_invitations(uuid) from authenticated;
+
+grant execute on function public.list_pending_family_invitations(uuid) to service_role;
+
+create function public.is_verified_holder(p_user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select private.check_verified_holder(p_user_id);
+$$;
+
+revoke all on function public.is_verified_holder(uuid) from public;
+revoke all on function public.is_verified_holder(uuid) from anon;
+revoke all on function public.is_verified_holder(uuid) from authenticated;
+
+grant execute on function public.is_verified_holder(uuid) to service_role;

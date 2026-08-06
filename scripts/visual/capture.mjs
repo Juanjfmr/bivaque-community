@@ -34,6 +34,7 @@ const ROUTES = [
   { path: "/admin/reports", name: "admin-reports", auth: true },
   { path: "/groups", name: "groups", auth: true },
   { path: "/groups/70000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
+  { path: "/profile", name: "profile", auth: true },
   { path: "/events", name: "events", auth: true },
   { path: "/events/80000000-0000-4000-8000-000000000001", name: "event-detail", auth: true },
   { path: "/community", name: "community", auth: true },

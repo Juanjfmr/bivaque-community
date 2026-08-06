@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(4);
+select plan(7);
 
 \ir fixtures/foundation.inc
 
@@ -10,6 +10,24 @@ insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-00000000000b', 'invitee-1@example.invalid');
 
 reset role;
+
+select is(
+  public.is_verified_holder('10000000-0000-4000-8000-000000000001'::uuid),
+  true,
+  'is_verified_holder returns true for a verified user'
+);
+
+select is(
+  public.is_verified_holder('10000000-0000-4000-8000-000000000005'::uuid),
+  false,
+  'is_verified_holder returns false for an unverified user'
+);
+
+select is(
+  (select count(*) from public.list_pending_family_invitations('10000000-0000-4000-8000-000000000001'::uuid))::integer,
+  1::integer,
+  'list_pending_family_invitations returns the foundation.inc pending invite'
+);
 
 select is(
   public.create_family_invitation(
