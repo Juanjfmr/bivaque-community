@@ -596,7 +596,7 @@ Ordem sugerida. Não executar antes da aprovação deste mapa.
 A divisão abaixo é apenas um ponto de partida. Cada onda deve ser
 detalhada separadamente antes da execução.
 
-- **Onda 0 — Modelo de autorização de operador (pré-requisito).**
+- **Onda 0 — Modelo de autorização de operador (pré-requisito).** ~~[DONE]~~
   **[C4]** Decidir e implementar quem é operador: tabela `operators`,
   custom claim de JWT, ou allowlist por variável de ambiente. Uma
   migration + helper `private.is_operator()` + teste pgTAP positivo e
