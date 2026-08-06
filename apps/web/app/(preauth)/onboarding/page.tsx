@@ -6,6 +6,7 @@ import { Suspense, useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
+import { showToast } from "../../components/bivaque/toast"
 
 type OnboardingStep = "verify" | "family" | "waitlist" | "done" | "loading"
 
@@ -87,7 +88,7 @@ function OnboardingFlow() {
   const inviteToken = searchParams.get("invite")
 
   useEffect(() => {
-    const checkSession = async () => {
+    const boot = async () => {
       const {
         data: { session },
       } = await createBrowserClient().auth.getSession()
@@ -96,15 +97,44 @@ function OnboardingFlow() {
         setFamilyToken(inviteToken)
         setStep("family")
         setFlow("family")
-      } else if (session) {
-        setStep("verify")
-      } else {
-        setStep("verify")
+        return
       }
+
+      if (!session) {
+        setStep("verify")
+        return
+      }
+
+      setStep("verify")
+
+      try {
+        const res = await fetch("/api/onboarding/status", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        if (!res.ok) return
+
+        const data = (await res.json()) as {
+          status: "pending" | "verified" | "rejected" | "temporary_error" | null
+          localityMember: boolean
+        }
+
+        if (data.localityMember || data.status === "verified") {
+          router.replace("/community")
+          return
+        }
+        if (data.status === "pending") {
+          router.replace("/onboarding/status?state=pending")
+          return
+        }
+        if (data.status === "rejected") {
+          router.replace("/onboarding/status?state=rejected")
+          return
+        }
+      } catch {}
     }
 
-    checkSession()
-  }, [inviteToken])
+    boot()
+  }, [inviteToken, router])
 
   const handleVerifyCpf = async () => {
     setError(null)
@@ -115,7 +145,13 @@ function OnboardingFlow() {
     } = await createBrowserClient().auth.getSession()
 
     if (!session) {
-      router.push("/login")
+      showToast({
+        title: "Sua sessão expirou",
+        description: "Vamos levar você de volta ao login.",
+        variant: "warning",
+      })
+      sessionStorage.setItem("onboarding:cpf", cpf)
+      router.push("/login?return=/onboarding")
       return
     }
 
@@ -139,7 +175,7 @@ function OnboardingFlow() {
       if (data["localityMember"]) {
         setResult("Verificação concluída! Bem-vindo à comunidade de Manaus.")
         setStep("done")
-        router.push("/community")
+        router.push("/onboarding/welcome")
       } else {
         const outcome = data["outcome"] as Record<string, unknown>
         if (outcome["status"] === "rejected") {
@@ -149,8 +185,7 @@ function OnboardingFlow() {
           setFlow("waitlist")
           setStep("waitlist")
         } else if (outcome["status"] === "pending") {
-          setResult("Sua verificação está pendente. Isso pode levar alguns instantes.")
-          setStep("done")
+          router.push("/onboarding/status?state=pending")
         } else if (outcome["status"] === "temporary_error") {
           setError(
             `Erro temporário na verificação: ${String(outcome["reason"] ?? "tente novamente")}`,
@@ -173,7 +208,13 @@ function OnboardingFlow() {
     } = await createBrowserClient().auth.getSession()
 
     if (!session) {
-      router.push("/login")
+      showToast({
+        title: "Sua sessão expirou",
+        description: "Vamos levar você de volta ao login.",
+        variant: "warning",
+      })
+      sessionStorage.setItem("onboarding:familyToken", familyToken)
+      router.push("/login?return=/onboarding")
       return
     }
 
@@ -215,7 +256,13 @@ function OnboardingFlow() {
     } = await createBrowserClient().auth.getSession()
 
     if (!session) {
-      router.push("/login")
+      showToast({
+        title: "Sua sessão expirou",
+        description: "Vamos levar você de volta ao login.",
+        variant: "warning",
+      })
+      sessionStorage.setItem("onboarding:email", email)
+      router.push("/login?return=/onboarding")
       return
     }
 
