@@ -1,6 +1,7 @@
 "use client"
 
 import { Button, Input, ListBox, Modal, useOverlayState } from "@heroui/react"
+import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import {
@@ -91,6 +92,27 @@ export default function MessagesPage() {
   const [mobileShowThread, setMobileShowThread] = useState(false)
 
   const initialLoadDone = useRef(false)
+  const searchParams = useSearchParams()
+  const targetConversationId = searchParams.get("conversation")
+
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener("change", handler)
+    return () => mq.removeEventListener("change", handler)
+  }, [])
+
+  useEffect(() => {
+    if (!targetConversationId) return
+    if (conversations.length === 0) return
+    const found = conversations.find((c) => c.id === targetConversationId)
+    if (!found) return
+    if (selectedConversationId === targetConversationId) return
+    setSelectedConversationId(targetConversationId)
+    setMobileShowThread(true)
+  }, [targetConversationId, conversations, selectedConversationId])
 
   // ── auth ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -442,7 +464,6 @@ export default function MessagesPage() {
   const isBlockedByOther = selectedOtherId !== null ? blockedByOthers.has(selectedOtherId) : false
 
   const showThreadOnMobile = mobileShowThread && selectedConv !== undefined
-  const isMobile = true // detect via CSS; layout switches with md: breakpoint
 
   return (
     <div className="flex flex-1 flex-col">
