@@ -25,7 +25,6 @@ export interface NavItem {
   href: string
   Icon: ComponentType<SVGProps<SVGSVGElement>>
   IconActive: ComponentType<SVGProps<SVGSVGElement>>
-  desktopOnly?: boolean
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -56,7 +55,6 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Indicações",
     shortLabel: "Indicações",
     href: "/recommendations",
-    desktopOnly: true,
     Icon: SparklesIcon,
     IconActive: SparklesSolid,
   },
@@ -94,19 +92,18 @@ function NavIcon({
 export function BottomNav() {
   const pathname = usePathname()
 
-  const items = NAV_ITEMS.filter((item) => !item.desktopOnly)
   const selectedKey =
-    items.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
+    NAV_ITEMS.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
     "community"
 
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--surface)] pb-[env(safe-area-inset-bottom,0px)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--surface)] pb-[env(safe-area-inset-bottom,0px)] md:hidden"
     >
       <Tabs selectedKey={selectedKey} variant="primary" aria-label="Navegação principal">
         <Tabs.List aria-label="Seções do aplicativo" className="flex justify-around">
-          {items.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <Tabs.Tab
               key={item.id}
               id={item.id}
