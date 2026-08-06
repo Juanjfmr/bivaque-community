@@ -4,7 +4,7 @@
 > depende de nenhuma ferramenta específica. Execute **uma task por vez**, na
 > ordem, sem pular steps — cada step é uma ação de 2 a 5 minutos e os steps de
 > teste existem para falhar antes da implementação. Marque os checkboxes
-> (`- [ ]`) conforme avança.
+> (`- [x]`) conforme avança.
 >
 > **Não** invoque skills do Claude Code (`superpowers:*`, `anthropic-skills:*`):
 > elas não existem fora dele e o plano não precisa delas.
@@ -139,13 +139,13 @@ independentemente de comunidade. A Task 5 corrige isso.
 - Create: `supabase/tests/fixtures/communities.inc`
 - Create: `supabase/tests/community-scope.sql`
 
-- [ ] **Step 1: Criar o arquivo de migration**
+- [x] **Step 1: Criar o arquivo de migration**
 
 ```bash
 npx pnpm@11.18.0 exec supabase migration new communities_foundation
 ```
 
-- [ ] **Step 2: Escrever a fixture**
+- [x] **Step 2: Escrever a fixture**
 
 Criar `supabase/tests/fixtures/communities.inc`. Duas comunidades na mesma localidade de Manaus (`00000000-0000-4000-8000-000000000001`).
 
@@ -191,7 +191,7 @@ Mapa dos atores, para consultar ao escrever asserts:
 | `005` non-member | — | — |
 | `003` other-locality | outra localidade | — |
 
-- [ ] **Step 3: Escrever o teste que falha**
+- [x] **Step 3: Escrever o teste que falha**
 
 Criar `supabase/tests/community-scope.sql` com apenas os casos desta task. Os demais entram nas tasks seguintes.
 
@@ -256,7 +256,7 @@ select * from finish();
 rollback;
 ```
 
-- [ ] **Step 4: Rodar e confirmar que falha**
+- [x] **Step 4: Rodar e confirmar que falha**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
@@ -264,7 +264,7 @@ npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
 
 Esperado: FAIL com `relation "public.communities" does not exist`.
 
-- [ ] **Step 5: Escrever a migration**
+- [x] **Step 5: Escrever a migration**
 
 ```sql
 -- 019: Community entity — the optional belonging circle between locality and group.
@@ -398,7 +398,7 @@ using (
 -- through the RPCs added in the community_rpcs migration.
 ```
 
-- [ ] **Step 6: Rodar e confirmar que passa**
+- [x] **Step 6: Rodar e confirmar que passa**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lint
@@ -406,7 +406,7 @@ npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lin
 
 Esperado: `All tests successful.` e `No schema errors found`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/migrations supabase/tests
@@ -424,13 +424,13 @@ Esta task é maior que as outras de propósito. A coluna de escopo e **todas** a
 - Modify: `supabase/tests/fixtures/communities.inc`
 - Modify: `supabase/tests/community-scope.sql`
 
-- [ ] **Step 1: Criar o arquivo**
+- [x] **Step 1: Criar o arquivo**
 
 ```bash
 npx pnpm@11.18.0 exec supabase migration new community_scope
 ```
 
-- [ ] **Step 2: Estender a fixture com grupos e posts internos**
+- [x] **Step 2: Estender a fixture com grupos e posts internos**
 
 Anexar ao final de `supabase/tests/fixtures/communities.inc`:
 
@@ -519,7 +519,7 @@ values
 
 Atenção ao `CHECK` de conteúdo proibido (`post_no_forbidden_terms`): evite as palavras `venda`, `compra`, `comercial`, `OM`, `CPF`, `CEP`, `patente`, `video`, `marketplace`. Os textos acima já respeitam isso — `Vendas` no **nome do grupo** é permitido porque o CHECK só cobre `content` de posts e comentários.
 
-- [ ] **Step 3: Escrever os testes que falham**
+- [x] **Step 3: Escrever os testes que falham**
 
 Substituir `select plan(6);` por `select plan(23);` e inserir os casos abaixo antes de `select * from finish();`.
 
@@ -726,7 +726,7 @@ select is_empty(
 > Posicione-os logo após os asserts de leitura de post e antes do
 > `set local role postgres;`.
 
-- [ ] **Step 4: Rodar e confirmar que falha**
+- [x] **Step 4: Rodar e confirmar que falha**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
@@ -734,7 +734,7 @@ npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
 
 Esperado: FAIL com `column "community_id" of relation "groups" does not exist`.
 
-- [ ] **Step 5: Escrever a migration**
+- [x] **Step 5: Escrever a migration**
 
 ```sql
 -- 020: Community scope on the content surface. ATOMIC BY DESIGN.
@@ -1290,7 +1290,7 @@ using (
 );
 ```
 
-- [ ] **Step 6: Rodar e confirmar que passa**
+- [x] **Step 6: Rodar e confirmar que passa**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lint
@@ -1300,7 +1300,7 @@ Esperado: `All tests successful.` — inclusive as suítes antigas `post-scope-l
 
 Se `locality-profile-access.sql` ou `authz-denied-matrix.sql` falharem, a policy aditiva de `profiles` está larga demais — revise a cláusula `theirs.status = 'approved'`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/migrations supabase/tests
@@ -1315,13 +1315,13 @@ git commit -m "feat(community): scope posts, groups and events to communities"
 - Create: `supabase/migrations/<ts>_community_feeds.sql`
 - Create: `supabase/tests/community-feeds.sql`
 
-- [ ] **Step 1: Criar o arquivo**
+- [x] **Step 1: Criar o arquivo**
 
 ```bash
 npx pnpm@11.18.0 exec supabase migration new community_feeds
 ```
 
-- [ ] **Step 2: Escrever o teste que falha**
+- [x] **Step 2: Escrever o teste que falha**
 
 Criar `supabase/tests/community-feeds.sql`:
 
@@ -1395,7 +1395,7 @@ select * from finish();
 rollback;
 ```
 
-- [ ] **Step 3: Rodar e confirmar que falha**
+- [x] **Step 3: Rodar e confirmar que falha**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
@@ -1403,7 +1403,7 @@ npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
 
 Esperado: FAIL com `function public.feed_community(uuid) does not exist`.
 
-- [ ] **Step 4: Escrever a migration**
+- [x] **Step 4: Escrever a migration**
 
 ```sql
 -- 021: Set-based feed functions.
@@ -1653,7 +1653,7 @@ revoke all on function public.feed_group(uuid, text) from authenticated;
 grant execute on function public.feed_group(uuid, text) to authenticated;
 ```
 
-- [ ] **Step 5: Rodar e confirmar que passa**
+- [x] **Step 5: Rodar e confirmar que passa**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lint
@@ -1661,7 +1661,7 @@ npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lin
 
 Esperado: `All tests successful.`
 
-- [ ] **Step 6: Regenerar os tipos**
+- [x] **Step 6: Regenerar os tipos**
 
 ```bash
 npx pnpm@11.18.0 generate:types
@@ -1669,7 +1669,7 @@ npx pnpm@11.18.0 generate:types
 
 `feed_community` e `feed_group` são funções `public`, então entram em `supabase/database.generated.ts`. Confira que **nenhum** símbolo do schema `private` apareceu no diff.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/migrations supabase/tests supabase/database.generated.ts
@@ -1684,13 +1684,13 @@ git commit -m "feat(community): add set-based community and group feeds"
 - Create: `supabase/migrations/<ts>_community_rpcs.sql`
 - Create: `supabase/tests/community-rpcs.sql`
 
-- [ ] **Step 1: Criar o arquivo**
+- [x] **Step 1: Criar o arquivo**
 
 ```bash
 npx pnpm@11.18.0 exec supabase migration new community_rpcs
 ```
 
-- [ ] **Step 2: Escrever o teste que falha**
+- [x] **Step 2: Escrever o teste que falha**
 
 Criar `supabase/tests/community-rpcs.sql`:
 
@@ -1788,7 +1788,7 @@ select * from finish();
 rollback;
 ```
 
-- [ ] **Step 3: Rodar e confirmar que falha**
+- [x] **Step 3: Rodar e confirmar que falha**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
@@ -1796,7 +1796,7 @@ npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
 
 Esperado: FAIL com `function public.create_community(...) does not exist`.
 
-- [ ] **Step 4: Escrever a migration**
+- [x] **Step 4: Escrever a migration**
 
 ```sql
 -- 022: Community RPCs.
@@ -2075,7 +2075,7 @@ revoke all on function public.create_group_in_community(text, text, public.group
 grant execute on function public.create_group_in_community(text, text, public.group_visibility, uuid) to authenticated;
 ```
 
-- [ ] **Step 5: Rodar e confirmar que passa**
+- [x] **Step 5: Rodar e confirmar que passa**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lint
@@ -2083,7 +2083,7 @@ npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lin
 
 Esperado: `All tests successful.`
 
-- [ ] **Step 6: Regenerar tipos e commitar**
+- [x] **Step 6: Regenerar tipos e commitar**
 
 ```bash
 npx pnpm@11.18.0 generate:types
@@ -2123,7 +2123,7 @@ O fan-out de notificação **não** precisa de correção: `notify_event_change`
 - Create: `supabase/tests/event-rsvp-scope.sql`
 - Modify: `supabase/tests/fixtures/communities.inc`
 
-- [ ] **Step 1: Estender a fixture com eventos**
+- [x] **Step 1: Estender a fixture com eventos**
 
 Anexar ao final de `supabase/tests/fixtures/communities.inc`.
 
@@ -2172,7 +2172,7 @@ Confirme o nome da coluna de status de RSVP antes de rodar:
 grep -n -A10 "create table public.event_rsvps" supabase/migrations/20260802001200_events_rsvp.sql
 ```
 
-- [ ] **Step 2: Escrever o teste que falha**
+- [x] **Step 2: Escrever o teste que falha**
 
 Criar `supabase/tests/event-rsvp-scope.sql`:
 
@@ -2265,7 +2265,7 @@ select * from finish();
 rollback;
 ```
 
-- [ ] **Step 3: Rodar e confirmar que falha**
+- [x] **Step 3: Rodar e confirmar que falha**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
@@ -2273,7 +2273,7 @@ npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db
 
 Esperado: FAIL nos dois primeiros asserts — hoje `is_event_locality_member` deixa passar qualquer membro da localidade.
 
-- [ ] **Step 4: Escrever a migration**
+- [x] **Step 4: Escrever a migration**
 
 ```bash
 npx pnpm@11.18.0 exec supabase migration new event_rsvp_scope
@@ -2351,7 +2351,7 @@ with check (
 
 `event_rsvps_update_self` e `event_rsvps_delete_self` já são restritas à própria linha e não precisam do portão de escopo: quem já tem RSVP passou por ele na inserção.
 
-- [ ] **Step 5: Rodar e confirmar que passa**
+- [x] **Step 5: Rodar e confirmar que passa**
 
 ```bash
 npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lint
@@ -2361,7 +2361,7 @@ Esperado: `All tests successful.` — incluindo `events-rsvp.sql`, `events-priva
 
 Se `events-rsvp.sql` falhar, provavelmente ele assume que qualquer membro da localidade pode confirmar presença em evento de grupo. Verifique se o evento daquele teste tem `group_id` — se tiver, o teste documentava o bug, e aí corrigir o teste é o certo. Registre isso na mensagem de commit.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add supabase/migrations supabase/tests
@@ -2370,7 +2370,7 @@ git commit -m "fix(events): scope event_rsvps to group and community membership"
 
 ## Task 6: Gate final
 
-- [ ] **Step 1: Rodar a suíte completa na ordem do CI**
+- [x] **Step 1: Rodar a suíte completa na ordem do CI**
 
 ```bash
 npx pnpm@11.18.0 lint
@@ -2384,7 +2384,7 @@ npx pnpm@11.18.0 db:lint
 
 Se `lint` falhar por artefatos do Playwright, apague `playwright-report/` e `test-results/` antes — eles não são gitignored e o Biome os varre.
 
-- [ ] **Step 2: Confirmar que nenhum símbolo `private` vazou para os tipos**
+- [x] **Step 2: Confirmar que nenhum símbolo `private` vazou para os tipos**
 
 ```bash
 grep -c "verification_outcomes\|family_invitations\|family_account_links" supabase/database.generated.ts
@@ -2392,7 +2392,7 @@ grep -c "verification_outcomes\|family_invitations\|family_account_links" supaba
 
 Esperado: `0`.
 
-- [ ] **Step 3: Auditar a superfície de funções**
+- [x] **Step 3: Auditar a superfície de funções**
 
 ```bash
 docker exec -i supabase_db_bivaque-community psql -U postgres -d postgres -t -A -F' | ' -c "
@@ -2404,11 +2404,11 @@ order by 2 desc, 1;"
 
 `create_community` **tem** que aparecer como `f`. Se aparecer como `t`, o grant está errado e qualquer membro pode capturar o nome de uma vila.
 
-- [ ] **Step 4: Atualizar o MAP**
+- [x] **Step 4: Atualizar o MAP**
 
 Marcar na matriz de `docs/journeys/MAP.md` que a linha **5d — feed/membros do grupo** (hoje `Ausente/P2`) foi resolvida por `feed_group`, e registrar a comunidade como área funcional nova.
 
-- [ ] **Step 5: Commit final**
+- [x] **Step 5: Commit final**
 
 ```bash
 git add docs/journeys/MAP.md
