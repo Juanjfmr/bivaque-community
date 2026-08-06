@@ -1,15 +1,210 @@
-export default function EventDetailPage() {
+import { Button } from "@heroui/react"
+import { createServerClient } from "@supabase/ssr"
+import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+import type { Database } from "supabase/database.generated"
+import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
+
+type EventRow = Database["public"]["Tables"]["events"]["Row"]
+type EventRsvpRow = Database["public"]["Tables"]["event_rsvps"]["Row"]
+type AttendeeRow = EventRsvpRow & {
+  profiles: { display_name: string } | null
+}
+
+async function setRsvpAction(formData: FormData) {
+  "use server"
+  const eventId = formData.get("eventId")
+  const status = formData.get("status")
+  if (typeof eventId !== "string" || eventId.length === 0) throw new Error("eventId required")
+  if (status !== "going" && status !== "interested") throw new Error("invalid status")
+
+  const supabase = createServiceClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  await supabase
+    .from("event_rsvps")
+    .upsert({ event_id: eventId, user_id: user.id, status }, { onConflict: "event_id,user_id" })
+
+  revalidatePath(`/events/${eventId}`)
+  revalidatePath("/events")
+}
+
+async function cancelRsvpAction(formData: FormData) {
+  "use server"
+  const eventId = formData.get("eventId")
+  if (typeof eventId !== "string" || eventId.length === 0) throw new Error("eventId required")
+
+  const supabase = createServiceClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  await supabase.from("event_rsvps").delete().eq("event_id", eventId).eq("user_id", user.id)
+
+  revalidatePath(`/events/${eventId}`)
+  revalidatePath("/events")
+}
+
+function formatDateTime(iso: string) {
+  const d = new Date(iso)
+  const date = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
+  const time = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+  return `${date} às ${time}`
+}
+
+export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: eventId } = await params
+
+  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
+  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  if (!url || !anonKey) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
+  }
+
+  const cookieStore = await cookies()
+  const authClient = createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
+      },
+      setAll() {},
+    },
+  })
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!user) {
+    redirect(`/login?return=/events/${eventId}`)
+  }
+
+  const supabase = createServiceClient()
+
+  const { data: eventData } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", eventId)
+    .maybeSingle()
+
+  const event = eventData as EventRow | null
+  if (!event) {
+    redirect("/events")
+  }
+
+  const { data: rsvpData } = await supabase
+    .from("event_rsvps")
+    .select("*")
+    .eq("event_id", event.id)
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  const myRsvp = (rsvpData as EventRsvpRow | null)?.status ?? null
+
+  const { data: attendeesData } = await supabase
+    .from("event_rsvps")
+    .select("event_id, user_id, status, created_at, profiles:profiles!inner(display_name)")
+    .eq("event_id", event.id)
+    .eq("status", "going")
+    .limit(20)
+
+  const attendees = (attendeesData as AttendeeRow[] | null) ?? []
+
+  const isOrganizer = event.organizer_id === user.id
+  const isCancelled = event.status === "cancelled"
+
   return (
-    <div className="grid flex-1 place-items-center px-6 py-12">
-      <section
-        className="flex w-full max-w-sm flex-col gap-4"
-        aria-labelledby="event-detail-heading"
-      >
-        <h1 id="event-detail-heading" className="text-2xl font-semibold tracking-tight">
-          Detalhe do evento
-        </h1>
-        <p className="text-sm text-muted">Página em construção. Onda 5 Task 4.</p>
-      </section>
+    <div className="flex flex-1 flex-col">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6">
+        <article aria-labelledby="event-heading">
+          <header className="flex flex-col gap-2">
+            <h1 id="event-heading" className="text-2xl font-semibold tracking-tight">
+              {event.title}
+            </h1>
+            <p className="text-sm text-muted">
+              {formatDateTime(event.starts_at)}
+              {event.ends_at &&
+                ` - ${new Date(event.ends_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
+            </p>
+            {event.venue && <p className="text-sm text-muted">{event.venue}</p>}
+            {isCancelled && (
+              <p className="text-sm font-medium text-danger">Este evento foi cancelado.</p>
+            )}
+          </header>
+
+          {event.description && (
+            <p className="mt-4 text-sm whitespace-pre-wrap">{event.description}</p>
+          )}
+
+          {!isCancelled && (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {myRsvp === "going" ? (
+                <form action={cancelRsvpAction}>
+                  <input type="hidden" name="eventId" value={event.id} />
+                  <Button type="submit" size="sm" variant="tertiary">
+                    Não vou
+                  </Button>
+                </form>
+              ) : (
+                <form action={setRsvpAction}>
+                  <input type="hidden" name="eventId" value={event.id} />
+                  <input type="hidden" name="status" value="going" />
+                  <Button type="submit" size="sm" variant="primary">
+                    Vou
+                  </Button>
+                </form>
+              )}
+              {myRsvp === "interested" ? (
+                <form action={cancelRsvpAction}>
+                  <input type="hidden" name="eventId" value={event.id} />
+                  <Button type="submit" size="sm" variant="tertiary">
+                    Cancelar
+                  </Button>
+                </form>
+              ) : (
+                <form action={setRsvpAction}>
+                  <input type="hidden" name="eventId" value={event.id} />
+                  <input type="hidden" name="status" value="interested" />
+                  <Button type="submit" size="sm" variant="secondary">
+                    Talvez
+                  </Button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {isOrganizer && (
+            <p className="mt-4 text-xs text-muted">Você é o organizador deste evento.</p>
+          )}
+        </article>
+
+        <section aria-labelledby="attendees-heading">
+          <h2 id="attendees-heading" className="mb-2 text-sm font-semibold tracking-tight">
+            Quem vai ({attendees.length})
+          </h2>
+          {attendees.length > 0 ? (
+            <ul className="space-y-1">
+              {attendees.map((a) => (
+                <li key={a.user_id} className="text-sm text-muted">
+                  {a.profiles?.display_name ?? "Membro"}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted">Ninguém confirmou presença ainda.</p>
+          )}
+        </section>
+
+        <section aria-labelledby="comments-heading">
+          <h2 id="comments-heading" className="mb-2 text-sm font-semibold tracking-tight">
+            Comentários
+          </h2>
+          <p className="text-sm text-muted">Em breve.</p>
+        </section>
+      </div>
     </div>
   )
 }
