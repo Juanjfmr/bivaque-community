@@ -1,6 +1,7 @@
 "use client"
 
 import { Button, ListBox, Tabs } from "@heroui/react"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
@@ -111,7 +112,34 @@ function timeAgo(dateStr: string): string {
 
 // ── page ───────────────────────────────────────────────────────────────────
 
+function navigateToNotification(
+  router: ReturnType<typeof useRouter>,
+  notification: NotificationRow,
+): void {
+  switch (notification.type) {
+    case "comment":
+      router.push(`/community?post=${notification.target_id}`)
+      return
+    case "group_admission":
+      router.push(`/groups/${notification.target_id}`)
+      return
+    case "invitation_accepted":
+      router.push(`/profile?user=${notification.actor_user_id ?? ""}`)
+      return
+    case "event_rsvp":
+    case "event_change":
+      router.push(`/events/${notification.target_id}`)
+      return
+    case "direct_message":
+      router.push(`/messages?conversation=${notification.target_id}`)
+      return
+    default:
+      return
+  }
+}
+
 export default function NotificationsPage() {
+  const router = useRouter()
   const [notifications, setNotifications] = useState<NotificationRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -325,7 +353,13 @@ export default function NotificationsPage() {
                     key={notification.id}
                     id={notification.id}
                     textValue={notification.id}
-                    className={`flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors duration-[var(--duration-instant)] ${
+                    onAction={() => {
+                      if (!notification.read_at) {
+                        markAsRead(notification.id)
+                      }
+                      navigateToNotification(router, notification)
+                    }}
+                    className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 transition-colors duration-[var(--duration-instant)] ${
                       notification.read_at ? "" : "bg-[var(--accent-soft)]"
                     }`}
                   >
@@ -342,6 +376,7 @@ export default function NotificationsPage() {
                       <Button
                         size="sm"
                         variant="tertiary"
+                        onClick={(e) => e.stopPropagation()}
                         onPress={() => markAsRead(notification.id)}
                         isDisabled={markingRead.has(notification.id)}
                         className="shrink-0"
