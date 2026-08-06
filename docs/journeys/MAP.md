@@ -647,7 +647,7 @@ detalhada separadamente antes da execução.
   possivelmente por purge do Tailwind, documentado para
   follow-up. Ondas seguintes desbloqueadas._
 
-- **Onda 3 — Contrato de acesso aos convites familiares (P1, área 3).**
+- **Onda 3 — Contrato de acesso aos convites familiares (P1, área 3).** ~~[DONE]~~
   **[C3]** Expor `private.create_family_invitation` /
   `private.revoke_family_invitation` por wrapper `public.`
   security-definer **ou** route handler service-side — decisão de
@@ -655,6 +655,18 @@ detalhada separadamente antes da execução.
   obrigatórios: a fronteira `private` é o núcleo do modelo de
   privacidade. Só então a UI em `profile/page.tsx:402-407`.
   Resolve 3a, 3b.
+  _Fechada em 2026-08-06. 4 commits: wrappers+test em
+  `b78f1f6` (inclui a fix do build via Server Action getter +
+  helpers em `private.*` para o privacy test não leakar o nome
+  das tabelas). Arquivos: 2 migrations novas
+  (`20260806160941` helpers, `20260806160942` wrappers com 4
+  funções públicas), 1 test pgTAP com 7 casos (4 originais + 3
+  novos para read path), Server Component `family-invite-section.tsx`
+  + Server Action `family-invite-section-actions.ts`, modificação
+  em `profile/page.tsx` para renderizar o novo card. Veredito
+  visual em
+  `docs/agents/VISUAL_AUDIT-2026-08-06-family-invite.md`. 0
+  achados introduzidos (4/4 da rubrica §9 no `/profile`)._
 
 - **Onda 4 — Resto do padrão 2 (P1, áreas 2, 6).**
   Migration `notification_preferences` + UI em
