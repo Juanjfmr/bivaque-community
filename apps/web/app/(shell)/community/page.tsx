@@ -1,6 +1,7 @@
 "use client"
 
 import { Button, ButtonGroup, ToggleButton } from "@heroui/react"
+import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
@@ -26,6 +27,12 @@ export default function CommunityPage() {
   const [atEnd, setAtEnd] = useState(false)
   const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set())
   const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set())
+
+  const searchParams = useSearchParams()
+  const targetPostId = searchParams.get("post")
+  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null)
+  const postRefs = useRef<Map<string, HTMLElement | null>>(new Map())
+  const hasScrolledToDeepLink = useRef(false)
 
   const supabase = createBrowserClient()
 
@@ -181,6 +188,32 @@ export default function CommunityPage() {
     }
   }, [loadFeed, sortOrder])
 
+  useEffect(() => {
+    if (hasScrolledToDeepLink.current) return
+    if (!targetPostId) return
+    if (posts.length === 0) return
+
+    const target = posts.find((p) => p.id === targetPostId)
+    if (!target) return
+
+    hasScrolledToDeepLink.current = true
+
+    const raf = requestAnimationFrame(() => {
+      const el = postRefs.current.get(targetPostId)
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    })
+
+    setHighlightedPostId(targetPostId)
+    const timer = setTimeout(() => setHighlightedPostId(null), 2500)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      clearTimeout(timer)
+    }
+  }, [posts, targetPostId])
+
   return (
     <div className="flex flex-1 flex-col">
       {/* locality header — sticky under app header */}
@@ -264,14 +297,29 @@ export default function CommunityPage() {
               {posts
                 .filter((post) => !hiddenPostIds.has(post.id))
                 .map((post, index) => (
-                  <FeedPost
+                  <div
                     key={post.id}
-                    post={post}
-                    index={index}
-                    onHide={handleHidePost}
-                    isBookmarked={bookmarkedPostIds.has(post.id)}
-                    onBookmarkToggle={handleBookmarkToggle}
-                  />
+                    ref={(el) => {
+                      if (el) {
+                        postRefs.current.set(post.id, el)
+                      } else {
+                        postRefs.current.delete(post.id)
+                      }
+                    }}
+                    className={
+                      highlightedPostId === post.id
+                        ? "rounded-lg ring-2 ring-accent transition-all duration-300"
+                        : undefined
+                    }
+                  >
+                    <FeedPost
+                      post={post}
+                      index={index}
+                      onHide={handleHidePost}
+                      isBookmarked={bookmarkedPostIds.has(post.id)}
+                      onBookmarkToggle={handleBookmarkToggle}
+                    />
+                  </div>
                 ))}
             </div>
           )}
