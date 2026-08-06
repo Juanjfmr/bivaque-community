@@ -662,11 +662,23 @@ detalhada separadamente antes da execução.
   (`events/page.tsx:537-543`). Resolve 2c-2, 2d, 6a.
   **Independente** das outras.
 
-- **Onda 5 — Navegação e detalhe (P1, áreas 4, 5, 6, 8, 9).**
+- **Onda 5 — Navegação e detalhe (P1, áreas 4, 5, 6, 8, 9).** ~~[DONE]~~
   Handler de clique em notificações; deep link `?post=`;
   `/groups/:id`, `/events/:id`; tratamento do `isMobile` em
   `messages/page.tsx:444`. Resolve 4a, 4d, 5a, 5d, 6c, 8a, 9a, 9b.
   **Independente** — 100% paralelizável.
+  _Fechada em 2026-08-06. 6 commits: plan em `b5c3317`, Task 1
+  em `10645ef` (notification click), Task 2 em `839b9fd`
+  (`?post=` deep link), Task 3 em `f9abc4e` (`/groups/:id`
+  detail), Task 4 em `d6050b9` (`/events/:id` detail), Task 5 em
+  `a8d6cd3` (messages isMobile + `?conversation=` handler),
+  Task 6 neste commit (capture.mjs + verdict em
+  `docs/agents/VISUAL_AUDIT-2026-08-06-navigation.md`). As 2
+  páginas novas passam nos 4 itens da rubrica §9 nos 3 viewports
+  com 0 achados mecânicos; as modificações nas telas existentes
+  não introduzem achados novos (os 2 HIGH preexistentes em
+  `/community`, `/messages`, `/notifications` são backlog
+  pré-Onda-5)._
 
 - **Onda 6 — Robustez do preauth (P1, subdivisão 1f).**
   Adicionar `error.tsx`/`loading.tsx`/`not-found.tsx` em
