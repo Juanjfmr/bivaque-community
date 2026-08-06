@@ -38,7 +38,10 @@ export default function OnboardingWelcomePage() {
           </p>
         </a>
 
-        <a href="/community" className="text-center text-sm text-accent underline">
+        <a
+          href="/community"
+          className="block rounded-md border border-border py-3 text-center text-sm text-accent transition-colors hover:bg-surface"
+        >
           Ir para a comunidade →
         </a>
       </section>
