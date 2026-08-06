@@ -13,13 +13,35 @@ interface AppShellProperties {
   children: ReactNode
 }
 
+// Below this width the sidebar is always an icon rail: there is room for the
+// rail but not for labels, and collapsing to a mobile bottom nav on a tablet
+// would be the wrong trade. The expand/collapse toggle only applies above it.
+const EXPANDABLE_QUERY = "(min-width: 1024px)"
+
 export function AppShell({ children }: AppShellProperties) {
   const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [createPostOpen, setCreatePostOpen] = useState(false)
+  // Read synchronously on the first client render so a tablet never paints the
+  // expanded sidebar before snapping to the rail.
+  const [canExpand, setCanExpand] = useState(() =>
+    typeof window === "undefined" ? true : window.matchMedia(EXPANDABLE_QUERY).matches,
+  )
+
+  // Between md and lg the rail is forced, so the user's collapse preference
+  // only takes effect once the viewport is wide enough to show labels.
+  const isRail = !canExpand || sidebarCollapsed
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((previous) => !previous)
+  }, [])
+
+  useEffect(() => {
+    const query = window.matchMedia(EXPANDABLE_QUERY)
+    const sync = () => setCanExpand(query.matches)
+    sync()
+    query.addEventListener("change", sync)
+    return () => query.removeEventListener("change", sync)
   }, [])
 
   useEffect(() => {
@@ -53,10 +75,10 @@ export function AppShell({ children }: AppShellProperties) {
             <button
               type="button"
               onClick={toggleSidebar}
-              aria-label={sidebarCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
-              className="hidden md:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              aria-label={isRail ? "Expandir menu lateral" : "Recolher menu lateral"}
+              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
             >
-              {sidebarCollapsed ? (
+              {isRail ? (
                 <PanelLeft size={20} aria-hidden="true" />
               ) : (
                 <ChevronsLeft size={20} aria-hidden="true" />
@@ -105,27 +127,31 @@ export function AppShell({ children }: AppShellProperties) {
 
       {/* ---- Body: sidebar + main ---- */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Desktop sidebar */}
+        {/* Sidebar from md up, BottomNav below it, so exactly one primary
+            navigation landmark is on screen at any width — two navs sharing the
+            accessible name "Navegação principal" would otherwise both be
+            exposed. Between md and lg it renders as an icon rail. */}
         <aside
           className="hidden md:flex flex-col shrink-0 border-r border-border bg-[var(--surface)] transition-[width] duration-[var(--duration-base)] ease-[var(--ease-out)] overflow-hidden"
-          style={{ width: sidebarCollapsed ? "4rem" : "16rem" }}
+          style={{ width: isRail ? "4rem" : "16rem" }}
         >
           {/* Sidebar header */}
           <div
-            className={`flex items-center h-[var(--nav-height)] shrink-0 border-b border-border ${sidebarCollapsed ? "justify-center" : "px-3"}`}
+            className={`flex items-center h-[var(--nav-height)] shrink-0 border-b border-border ${isRail ? "justify-center" : "px-3"}`}
           >
-            {!sidebarCollapsed && (
+            {!isRail && (
               <span className="text-base font-semibold tracking-tight truncate flex-1">
                 {brandTokens.productName}
               </span>
             )}
+            {/* Only offered where expanding is possible; below lg the rail is fixed. */}
             <button
               type="button"
               onClick={toggleSidebar}
-              aria-label={sidebarCollapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              aria-label={isRail ? "Expandir menu lateral" : "Recolher menu lateral"}
+              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
             >
-              {sidebarCollapsed ? (
+              {isRail ? (
                 <PanelLeft size={20} aria-hidden="true" />
               ) : (
                 <ChevronsLeft size={20} aria-hidden="true" />
@@ -146,7 +172,7 @@ export function AppShell({ children }: AppShellProperties) {
                     active
                       ? "bg-[var(--accent-soft)] text-[var(--accent)]"
                       : "text-muted hover:bg-[var(--surface-subtle)] hover:text-foreground"
-                  } ${sidebarCollapsed ? "justify-center px-0" : ""}`}
+                  } ${isRail ? "justify-center px-0" : ""}`}
                 >
                   {/* Icon crossfade: outline ↔ solid */}
                   <span className="relative inline-flex h-5 w-5 shrink-0" aria-hidden="true">
@@ -157,10 +183,13 @@ export function AppShell({ children }: AppShellProperties) {
                       className={`absolute inset-0 h-5 w-5 transition-opacity duration-[var(--duration-fast)] ${active ? "opacity-100" : "opacity-0"}`}
                     />
                   </span>
-                  {!sidebarCollapsed && <span>{item.label}</span>}
+                  {/* Kept in the accessibility tree even as a rail: the icon is
+                      aria-hidden, so hiding the label outright would leave the
+                      link with no accessible name. */}
+                  <span className={isRail ? "sr-only" : undefined}>{item.label}</span>
                 </a>
               )
-              return sidebarCollapsed ? (
+              return isRail ? (
                 <Tooltip key={item.id} delay={0}>
                   <Tooltip.Trigger>{anchor}</Tooltip.Trigger>
                   <Tooltip.Content>{item.label}</Tooltip.Content>
@@ -174,7 +203,7 @@ export function AppShell({ children }: AppShellProperties) {
             <div className="flex-1" />
 
             {/* Sidebar user footer (expanded only) */}
-            {!sidebarCollapsed && (
+            {!isRail && (
               <div className="flex items-center gap-3 rounded-lg px-3 py-2 mt-auto">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] text-sm font-semibold">
                   C
@@ -191,7 +220,7 @@ export function AppShell({ children }: AppShellProperties) {
         {/* Main content */}
         <main className="flex-1 overflow-y-auto">
           {children}
-          {/* Extra bottom padding on mobile so content clears the bottom nav */}
+          {/* Extra bottom padding so content clears the bottom nav wherever it shows */}
           <div className="h-20 md:h-0" />
         </main>
       </div>
@@ -209,12 +238,12 @@ export function AppShell({ children }: AppShellProperties) {
       )}
 
       {/* Keyboard shortcut hint */}
-      <div className="hidden md:flex fixed bottom-4 right-4 z-30">
+      <div className="hidden lg:flex fixed bottom-4 right-4 z-30">
         <span className="flex items-center gap-1.5 text-[10px] text-muted bg-[var(--surface)] border border-border rounded-md px-2 py-1 shadow-[var(--elevation-1)]">
           <Kbd>Ctrl</Kbd>
           <span>+</span>
           <Kbd>B</Kbd>
-          <span>para {sidebarCollapsed ? "expandir" : "recolher"}</span>
+          <span>para {isRail ? "expandir" : "recolher"}</span>
         </span>
       </div>
     </div>
