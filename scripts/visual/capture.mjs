@@ -28,6 +28,8 @@ const ROUTES = [
   { path: "/login", name: "login", auth: false },
   { path: "/consent", name: "consent", auth: false },
   { path: "/onboarding", name: "onboarding", auth: true },
+  { path: "/onboarding/status", name: "onboarding-status", auth: true },
+  { path: "/onboarding/welcome", name: "onboarding-welcome", auth: true },
   { path: "/community", name: "community", auth: true },
   { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },
