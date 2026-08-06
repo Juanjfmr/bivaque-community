@@ -988,6 +988,15 @@ export type Database = {
         }[]
       }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
+      read_verification_status: {
+        Args: { p_user_id: string }
+        Returns: {
+          checked_at: string
+          eligibility_class: string
+          status: string
+          updated_at: string
+        }[]
+      }
       remove_community_member: {
         Args: { p_community_id: string; p_user_id: string }
         Returns: undefined
