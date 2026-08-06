@@ -6,11 +6,18 @@ import type { ReactNode } from "react"
 // HeroUI v3 toast surface, token-tinted, rendered above the bottom nav
 // (placement="bottom"). Auto-dismiss, pause-on-hover and Esc dismissal are
 // provided by HeroUI's toast queue. Mount this provider once at the shell.
+//
+// Toast.Provider is a toast *region*, not a context wrapper: it renders the
+// queued toasts and nothing else, and its `children` prop is the per-toast
+// render template (omitted here so HeroUI renders its default toast). Passing
+// the app tree as children hides the whole shell whenever the queue is empty,
+// so the region is mounted as a sibling instead.
 export function ToastProvider({ children }: { children: ReactNode }) {
   return (
-    <HeroToast.Provider placement="bottom" width={360}>
+    <>
       {children}
-    </HeroToast.Provider>
+      <HeroToast.Provider placement="bottom" width={360} />
+    </>
   )
 }
 
