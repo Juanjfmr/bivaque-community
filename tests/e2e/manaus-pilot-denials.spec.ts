@@ -347,8 +347,9 @@ test.describe("consent cookie tampering: denial paths", () => {
     // When the user navigates to /onboarding
     await page.goto("/onboarding")
 
-    // Then the onboarding page renders regardless
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
+    // Then the onboarding page renders regardless. It is a `(preauth)` route
+    // with no shell header, so its own H1 is the landmark.
+    await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
   })
 })
 
@@ -362,14 +363,17 @@ test.describe("accessibility on denial pages", () => {
     await page.goto("/consent")
     await page.waitForSelector("button", { timeout: 10000 })
 
-    // When Tab is pressed, focus moves forward (not trapped)
-    await page.keyboard.press("Tab")
-    const afterFirstTab = await page.locator("*:focus").count()
-    expect(afterFirstTab).toBeGreaterThanOrEqual(1)
+    // Consent is a `(preauth)` route with no shell chrome, so "Aceitar e
+    // continuar" is its only focusable control. Counting focused elements
+    // after two Tabs would therefore read 0 once focus leaves the document —
+    // which is correct behaviour, not a trap. Assert the control can take
+    // focus and that Tab releases it.
+    const accept = page.getByRole("button", { name: "Aceitar e continuar" })
+    await accept.focus()
+    await expect(accept).toBeFocused()
 
     await page.keyboard.press("Tab")
-    const afterSecondTab = await page.locator("*:focus").count()
-    expect(afterSecondTab).toBeGreaterThanOrEqual(1)
+    await expect(accept).not.toBeFocused()
   })
 
   test("no horizontal overflow on consent page at 375px", async ({ page }) => {
