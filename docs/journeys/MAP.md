@@ -603,12 +603,25 @@ detalhada separadamente antes da execução.
   negativo. **Bloqueia as Ondas 1, 3 e parte da 4.** É decisão de
   segurança — não delegar a agente.
 
-- **Onda 1 — Superfície de moderação (P0, área 4).**
+- **Onda 1 — Superfície de moderação (P0, área 4).** ~~[DONE]~~
   **[C1]** O banco já entrega tudo. Criar route handlers com
   `service_role` + `(admin)/reports`: fila de abertos, ação de ocultar
   (`is_deleted`), resolver com `operator_note`. **Não criar migration
   de soft delete — já existe.** **Não criar `report_actions`.**
   Resolve 4b e 4c. **Depende** da Onda 0.
+  _Fechada em 2026-08-06. 5 commits: plan em `c5d8a53`, RPC
+  `public.is_current_user_operator(p_user_id)` + pgTAP no mesmo
+  commit, `(admin)/layout.tsx` em `0a57805` (gate duplo de auth
+  + operador), `/api/admin/reports/[id]/route.ts` em `16d438e`
+  (POST com Bearer + ação `resolve`/`hide` via service_role),
+  `(admin)/reports/page.tsx` em `78d4318` (Server Actions inline
+  com revalidação), e verdict + capture.mjs em `195fd58`.
+  Veredito visual em
+  `docs/agents/VISUAL_AUDIT-2026-08-06-moderation.md`: 4/4 itens
+  da rubrica §9 passam, 0 achados mecânicos novos. O operador
+  vê a fila e age em segundos; o denunciante continua sem
+  retorno explícito (5 da rubrica de classificação — segue como
+  follow-up)._
 
 - **Onda 2 — Fechar o ciclo de admissão (P0, área 1).** ~~Tasks 1-5 [DONE]~~
   **[C2]** Rota server-side lendo `private.verification_outcomes` →
