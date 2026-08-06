@@ -271,7 +271,11 @@ export function FeedPost({
         <div className="flex-1 min-w-0 p-4 pl-3">
           {/* Header row */}
           <div className="flex items-center gap-3">
-            <MemberAvatar name={post.display_name} className="h-9 w-9 text-sm" />
+            <MemberAvatar
+              name={post.display_name}
+              src={post.user_id ? `/api/avatar/${post.user_id}` : null}
+              className="h-9 w-9 text-sm"
+            />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-semibold truncate">

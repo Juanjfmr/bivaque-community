@@ -4,6 +4,7 @@ import { Button } from "@heroui/react"
 import { useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { MemberAvatar } from "./avatar"
 
 interface FeedComposerProps {
   onOpenModal: (defaultPostType?: string) => void
@@ -11,6 +12,7 @@ interface FeedComposerProps {
 
 export function FeedComposer({ onOpenModal }: FeedComposerProps) {
   const [avatarLetter, setAvatarLetter] = useState("?")
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
   const supabase = createBrowserClient()
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export function FeedComposer({ onOpenModal }: FeedComposerProps) {
           ? profile.display_name.charAt(0).toUpperCase()
           : (user.email?.charAt(0).toUpperCase() ?? "?"),
       )
+      setAvatarSrc(`/api/avatar/${user.id}`)
     })()
     return () => {
       cancelled = true
@@ -42,9 +45,7 @@ export function FeedComposer({ onOpenModal }: FeedComposerProps) {
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-[var(--surface)] p-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-sm font-medium">
-        {avatarLetter}
-      </div>
+      <MemberAvatar name={avatarLetter} src={avatarSrc} className="h-10 w-10 text-sm" />
 
       <button
         type="button"
