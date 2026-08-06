@@ -50,6 +50,24 @@ async function cancelRsvpAction(formData: FormData) {
   revalidatePath("/events")
 }
 
+async function completeEventAction(formData: FormData) {
+  "use server"
+  const eventId = formData.get("eventId")
+  if (typeof eventId !== "string" || eventId.length === 0) throw new Error("eventId required")
+
+  const supabase = createServiceClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  const { error } = await supabase.rpc("complete_event", { p_event_id: eventId })
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/events/${eventId}`)
+  revalidatePath("/events")
+}
+
 function formatDateTime(iso: string) {
   const d = new Date(iso)
   const date = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
@@ -115,6 +133,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
   const isOrganizer = event.organizer_id === user.id
   const isCancelled = event.status === "cancelled"
+  const isCompleted = event.status === "completed"
 
   return (
     <div className="flex flex-1 flex-col">
@@ -177,7 +196,20 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           )}
 
           {isOrganizer && (
-            <p className="mt-4 text-xs text-muted">Você é o organizador deste evento.</p>
+            <div className="mt-4 flex items-center gap-3">
+              <p className="text-xs text-muted">Você é o organizador deste evento.</p>
+              {!isCancelled && !isCompleted && (
+                <form action={completeEventAction}>
+                  <input type="hidden" name="eventId" value={event.id} />
+                  <Button type="submit" size="sm" variant="tertiary">
+                    Encerrar evento
+                  </Button>
+                </form>
+              )}
+              {isCompleted && (
+                <span className="text-xs font-medium text-muted">Evento encerrado.</span>
+              )}
+            </div>
           )}
         </article>
 

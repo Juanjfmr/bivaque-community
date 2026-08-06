@@ -967,6 +967,7 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      complete_event: { Args: { p_event_id: string }; Returns: undefined }
       create_community: {
         Args: {
           p_description: string
@@ -1131,7 +1132,7 @@ export type Database = {
         | "accepted_family"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going"
-      event_status: "upcoming" | "cancelled"
+      event_status: "upcoming" | "cancelled" | "completed"
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
       group_visibility: "public" | "private"
@@ -1293,7 +1294,7 @@ export const Constants = {
       ],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going"],
-      event_status: ["upcoming", "cancelled"],
+      event_status: ["upcoming", "cancelled", "completed"],
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
       group_visibility: ["public", "private"],
