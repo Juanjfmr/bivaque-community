@@ -2,7 +2,7 @@
 
 > **Para quem executa (humano ou agente):** este plano é autocontido e não
 > depende de nenhuma ferramenta específica. Execute **uma task por vez**, na
-> ordem. Marque os checkboxes (`- [ ]`) conforme avança.
+> ordem. Marque os checkboxes (`- [x]`) conforme avança.
 >
 > Regra de parada: se um step de verificação não produzir a saída esperada,
 > **pare e investigue** antes de seguir.
@@ -123,7 +123,7 @@ para consultar diretamente — o teste está errado, não o schema.
 **Files:**
 - Create: `apps/web/app/api/onboarding/status/route.ts`
 
-- [ ] **Step 1: Criar o arquivo**
+- [x] **Step 1: Criar o arquivo**
 
 Caminho completo: `apps/web/app/api/onboarding/status/route.ts`. Export
 `GET` que:
@@ -151,7 +151,7 @@ Caminho completo: `apps/web/app/api/onboarding/status/route.ts`. Export
 O acesso a `private.verification_outcomes` pelo `service_role` é
 trivial: a role tem ALL na tabela (migration `003`).
 
-- [ ] **Step 2: Garantir tipagem**
+- [x] **Step 2: Garantir tipagem**
 
 ```ts
 import "server-only"
@@ -164,7 +164,7 @@ import { createServerClient } from "@/lib/supabase/server"
 (Adapte conforme o padrão do repo. Olhe `apps/web/app/api/onboarding/route.ts`
 existente — se houver — para ver como autentica hoje.)
 
-- [ ] **Step 3: Testar manualmente**
+- [x] **Step 3: Testar manualmente**
 
 ```bash
 # Stack deve estar UP.
@@ -176,7 +176,7 @@ curl -i http://localhost:3000/api/onboarding/status -b "$(cat .cookiejar)"
 Esperado: 401 sem cookie; 200 com `{ status: null }` para usuário que
 ainda não verificou; 200 com `{ status: "pending" }` para quem está na fila.
 
-- [ ] **Step 4: Typecheck + lint**
+- [x] **Step 4: Typecheck + lint**
 
 ```bash
 npx pnpm@11.18.0 typecheck
@@ -186,7 +186,7 @@ npx pnpm@11.18.0 lint
 Esperado: nenhum erro novo. O erro pré-existente em
 `database.generated.ts` continua — não é regressão.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/app/api/onboarding/status/route.ts
@@ -200,7 +200,7 @@ git commit -m "feat(onboarding): server-side endpoint reading verification statu
 **Files:**
 - Modify: `apps/web/app/(preauth)/onboarding/page.tsx`
 
-- [ ] **Step 1: No `useEffect` de boot, após `checkSession`, fazer
+- [x] **Step 1: No `useEffect` de boot, após `checkSession`, fazer
   `fetch('/api/onboarding/status')` e rotear**
 
 - Se `status === "verified"` ou `localityMember === true`: `router.replace("/community")`.
@@ -208,7 +208,7 @@ git commit -m "feat(onboarding): server-side endpoint reading verification statu
 - Se `status === "rejected"`: `router.replace("/onboarding/status?state=rejected")`.
 - Se `status === null`: manter o fluxo atual (form de CPF).
 
-- [ ] **Step 2: Substituir `router.push("/login")` silencioso por
+- [x] **Step 2: Substituir `router.push("/login")` silencioso por
   `toast.warning(...)` + preservação de estado**
 
 Três lugares: `handleVerifyCpf`, `handleAcceptFamilyInvite`,
@@ -220,11 +220,11 @@ sessionStorage.setItem("onboarding:cpf", cpf)  // ou familyToken, ou email
 router.push("/login?return=/onboarding")
 ```
 
-- [ ] **Step 3: No fluxo `verify-cpf` (`handleVerifyCpf`), quando o
+- [x] **Step 3: No fluxo `verify-cpf` (`handleVerifyCpf`), quando o
   outcome volta `pending`, NÃO chamar `router.push("/community")` —
   ir para `/onboarding/status?state=pending`**
 
-- [ ] **Step 4: Typecheck + lint + manual**
+- [x] **Step 4: Typecheck + lint + manual**
 
 ```bash
 npx pnpm@11.18.0 typecheck
@@ -232,7 +232,7 @@ npx pnpm@11.18.0 lint
 # Manual: login fresh → /onboarding → verify → deve cair em /onboarding/status
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/app/\(preauth\)/onboarding/page.tsx
@@ -246,14 +246,14 @@ git commit -m "feat(onboarding): route by real status; replace silent login with
 **Files:**
 - Create: `apps/web/app/(preauth)/onboarding/status/page.tsx`
 
-- [ ] **Step 1: Server Component que lê `searchParams.state`**
+- [x] **Step 1: Server Component que lê `searchParams.state`**
 
 Renderiza duas variantes: `pending` e `rejected`. Conteúdo vem do
 `private.verification_outcomes` via fetch do próprio endpoint
 (cuidado: Server Component pode ler diretamente via service_role — mais
 limpo que fetch de Server Component para si mesmo).
 
-- [ ] **Step 2: Layout**
+- [x] **Step 2: Layout**
 
 - Pending: hero "Sua verificação está em andamento", texto "Prazo
   médio: 24h em dias úteis", link de suporte (mailto:bivaque@…).
@@ -262,7 +262,7 @@ limpo que fetch de Server Component para si mesmo).
   reconsideração. **Sem número de fila.**
 - Em ambos: CTA secundário "Sair" que faz `signOut()`.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/app/\(preauth\)/onboarding/status/page.tsx
@@ -276,16 +276,16 @@ git commit -m "feat(onboarding): status screen with explicit channel for pending
 **Files:**
 - Create: `apps/web/app/(preauth)/onboarding/welcome/page.tsx`
 
-- [ ] **Step 1: Server Component, primeira ação sugerida**
+- [x] **Step 1: Server Component, primeira ação sugerida**
 
 Render: hero "Bem-vindo à comunidade de Manaus", três cards de ação:
 "Entrar em um grupo público", "Ver recomendações", "Completar perfil"
 (completa perfil é parte da Onda 4 — se ainda não implementada, link
 para `/profile` em vez de CTA novo).
 
-- [ ] **Step 2: CTA primário "Ir para a comunidade" → `/community`**
+- [x] **Step 2: CTA primário "Ir para a comunidade" → `/community`**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/app/\(preauth\)/onboarding/welcome/page.tsx
@@ -299,10 +299,10 @@ git commit -m "feat(onboarding): welcome screen with three first-action suggesti
 **Files:**
 - Modify: `apps/web/app/(preauth)/onboarding/page.tsx`
 
-- [ ] **Step 1: Quando `data.localityMember === true`, chamar
+- [x] **Step 1: Quando `data.localityMember === true`, chamar
   `router.push("/onboarding/welcome")` em vez de `/community`**
 
-- [ ] **Step 2: Commit (junto com a Task 4 ou separado, decisão do executor)**
+- [x] **Step 2: Commit (junto com a Task 4 ou separado, decisão do executor)**
 
 ---
 
@@ -311,7 +311,7 @@ git commit -m "feat(onboarding): welcome screen with three first-action suggesti
 **Files:**
 - Create: `tests/e2e/onboarding-cycle.spec.ts`
 
-- [ ] **Step 1: Smoke Playwright cobrindo os 4 caminhos**
+- [x] **Step 1: Smoke Playwright cobrindo os 4 caminhos**
 
 - Login fresh → /onboarding → verify CPF válido → cai em /onboarding/welcome.
 - Logout → login → /onboarding → verify CPF rejeitado (stub do Portal da
@@ -319,7 +319,7 @@ git commit -m "feat(onboarding): welcome screen with three first-action suggesti
 - Mesmo cenário, status=pending (stub do Portal com fixture `pending`).
 - Sessão expirada durante verify → toast aparece, formulário preservado.
 
-- [ ] **Step 2: Rodar auditoria visual nas novas telas**
+- [x] **Step 2: Rodar auditoria visual nas novas telas**
 
 ```bash
 node scripts/visual/loop.mjs --fast
@@ -327,7 +327,7 @@ node scripts/visual/loop.mjs --fast
 
 Critério §9 do `VISUAL_GUIDE.md`. Sem achados mecânicos novos.
 
-- [ ] **Step 3: CI gates verdes**
+- [x] **Step 3: CI gates verdes**
 
 ```bash
 npx pnpm@11.18.0 lint
@@ -336,7 +336,7 @@ npx pnpm@11.18.0 test
 npx pnpm@11.18.0 test:e2e
 ```
 
-- [ ] **Step 4: Atualizar MAP.md**
+- [x] **Step 4: Atualizar MAP.md**
 
 Marcar 1a, 1b, 1c, 1e como Corrigidas na matriz §4 e atualizar §10.1
 para marcar a Onda 2 como concluída.

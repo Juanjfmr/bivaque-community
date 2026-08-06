@@ -2,7 +2,7 @@
 
 > **Para quem executa (humano ou agente):** este plano é autocontido e não
 > depende de nenhuma ferramenta específica. Execute **uma task por vez**, na
-> ordem. Marque os checkboxes (`- [ ]`) conforme avança.
+> ordem. Marque os checkboxes (`- [x]`) conforme avança.
 >
 > Regra de parada: se um step de verificação não produzir a saída esperada,
 > **pare e investigue** antes de seguir.
@@ -124,13 +124,13 @@ projeto.
 **Files:**
 - Create: `supabase/migrations/<ts>_family_invite_wrappers.sql`
 
-- [ ] **Step 1: Criar migration via CLI**
+- [x] **Step 1: Criar migration via CLI**
 
 ```bash
 npx pnpm@11.18.0 exec supabase migration new family_invite_wrappers
 ```
 
-- [ ] **Step 2: Conteúdo da migration**
+- [x] **Step 2: Conteúdo da migration**
 
 ```sql
 -- 030: Public wrappers for the family invite write path.
@@ -188,7 +188,7 @@ revoke all on function public.revoke_family_invitation(uuid, uuid) from authenti
 grant execute on function public.revoke_family_invitation(uuid, uuid) to service_role;
 ```
 
-- [ ] **Step 3: db:reset + test:db + db:lint**
+- [x] **Step 3: db:reset + test:db + db:lint**
 
 ```bash
 npx pnpm@11.18.0 exec supabase db reset --local
@@ -199,7 +199,7 @@ npx pnpm@11.18.0 exec supabase db lint --local --level error
 Esperado: testes existentes (661) + 4 novos = 665 verde, db:lint
 clean (erros preexistentes do pgtap extensions schema, sem regressão).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations supabase/tests
@@ -213,7 +213,7 @@ git commit -m "feat(db): public wrappers for family invite write path (Onda 3 Ta
 **Files:**
 - Create: `supabase/tests/family-invite-wrappers.sql`
 
-- [ ] **Step 1: Conteúdo do teste**
+- [x] **Step 1: Conteúdo do teste**
 
 ```sql
 begin;
@@ -294,7 +294,7 @@ select * from finish();
 rollback;
 ```
 
-- [ ] **Step 2: Re-rodar test:db**
+- [x] **Step 2: Re-rodar test:db**
 
 ```bash
 npx pnpm@11.18.0 test:db
@@ -302,7 +302,7 @@ npx pnpm@11.18.0 test:db
 
 Esperado: 4 testes novos verdes (665 total).
 
-- [ ] **Step 3: Commit (junto com Task 1 não — esse teste vai no
+- [x] **Step 3: Commit (junto com Task 1 não — esse teste vai no
 próximo commit se for junto, ou aqui)**
 
 ```bash
@@ -317,10 +317,10 @@ git commit -m "test(db): pgTAP for family invite public wrappers (Onda 3 Task 2)
 **Files:**
 - Modify: `apps/web/app/(shell)/profile/page.tsx`
 
-- [ ] **Step 1: Ler o estado atual de `profile/page.tsx` para entender
+- [x] **Step 1: Ler o estado atual de `profile/page.tsx` para entender
   a estrutura de Server Actions e estado local já existente
 
-- [ ] **Step 2: Substituir o card "Em breve" (linha 402-407 do
+- [x] **Step 2: Substituir o card "Em breve" (linha 402-407 do
   onboarding/page.tsx original; no profile/page.tsx atual a linha
   é diferente — buscar via grep) por 2 Server Components:
 
@@ -332,7 +332,7 @@ git commit -m "test(db): pgTAP for family invite public wrappers (Onda 3 Task 2)
      cada linha com botão "Revogar" que é um form
      `revokeFamilyInviteAction`.
 
-- [ ] **Step 3: Definir as 2 Server Actions (com `"use server"`):**
+- [x] **Step 3: Definir as 2 Server Actions (com `"use server"`):**
 
 ```ts
 async function sendFamilyInviteAction(formData: FormData) {
@@ -352,7 +352,7 @@ async function revokeFamilyInviteAction(formData: FormData) {
 }
 ```
 
-- [ ] **Step 4: typecheck + lint + commit**
+- [x] **Step 4: typecheck + lint + commit**
 
 ```bash
 npx pnpm@11.18.0 typecheck
@@ -365,10 +365,10 @@ git commit -m "feat(profile): family invite send and revoke UI (Onda 3 Task 3)"
 
 ## Task 4: Audit visual §10.2
 
-- [ ] Adicionar `/profile` em `scripts/visual/capture.mjs` (com
+- [x] Adicionar `/profile` em `scripts/visual/capture.mjs` (com
   `auth: true` — a página exige login).
-- [ ] Rodar `node scripts/visual/loop.mjs`.
-- [ ] Escrever `docs/agents/VISUAL_AUDIT-<data>-family-invite.md`
+- [x] Rodar `node scripts/visual/loop.mjs`.
+- [x] Escrever `docs/agents/VISUAL_AUDIT-<data>-family-invite.md`
   com veredito tela-a-tela, focado no card de convite familiar.
 
 ---

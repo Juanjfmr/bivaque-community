@@ -2,7 +2,7 @@
 
 > **Para quem executa (humano ou agente):** este plano é autocontido e não
 > depende de nenhuma ferramenta específica. Execute **uma task por vez**, na
-> ordem. Marque os checkboxes (`- [ ]`) conforme avança.
+> ordem. Marque os checkboxes (`- [x]`) conforme avança.
 >
 > Regra de parada: se um step de verificação não produzir a saída esperada,
 > **pare e investigue** antes de seguir.
@@ -121,7 +121,7 @@ handler de clique no notifications (Client Component) usa
 **Files:**
 - Modify: `apps/web/app/(shell)/notifications/page.tsx`
 
-- [ ] **Step 1: Mapear tipos de notificação para URLs**
+- [x] **Step 1: Mapear tipos de notificação para URLs**
 
 Ler o componente de notificação e o type/helper que classifica
 `type` (campo da tabela `notifications`). Tipos esperados:
@@ -136,7 +136,7 @@ Ler o componente de notificação e o type/helper que classifica
 - `direct_message` → `/messages?conversation=<conversation_id>`
   (Task 5 adiciona o suporte)
 
-- [ ] **Step 2: Adicionar `onClick` no card**
+- [x] **Step 2: Adicionar `onClick` no card**
 
 ```tsx
 <article
@@ -149,7 +149,7 @@ Ler o componente de notificação e o type/helper que classifica
 >
 ```
 
-- [ ] **Step 3: Função `navigateTo` com `switch` exaustivo**
+- [x] **Step 3: Função `navigateTo` com `switch` exaustivo**
 
 ```tsx
 function navigateTo(n: Notification): void {
@@ -176,18 +176,18 @@ function navigateTo(n: Notification): void {
 }
 ```
 
-- [ ] **Step 4: Garantir acessibilidade (Enter / Space)**
+- [x] **Step 4: Garantir acessibilidade (Enter / Space)**
 
 `onKeyDown` deve disparar a navegação com Enter ou Space.
 
-- [ ] **Step 5: Typecheck + lint**
+- [x] **Step 5: Typecheck + lint**
 
 ```bash
 npx pnpm@11.18.0 typecheck
 npx pnpm@11.18.0 lint
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add 'apps/web/app/(shell)/notifications/page.tsx'
@@ -201,13 +201,13 @@ git commit -m "feat(notifications): card click navigates to the target object"
 **Files:**
 - Modify: `apps/web/app/(shell)/community/page.tsx`
 
-- [ ] **Step 1: No boot do componente, ler `searchParams.post`**
+- [x] **Step 1: No boot do componente, ler `searchParams.post`**
 
 ```tsx
 const postId = searchParams.get("post")
 ```
 
-- [ ] **Step 2: Após o feed carregar, se `postId` está presente,
+- [x] **Step 2: Após o feed carregar, se `postId` está presente,
   rolar até o card e destacá-lo**
 
 - Encontrar o post na lista (já carregada).
@@ -217,7 +217,7 @@ const postId = searchParams.get("post")
 - Se NÃO encontrado (post soft-deleted, ou ID inválido): não fazer
   nada (silencioso). O feed continua visível.
 
-- [ ] **Step 3: Typecheck + lint + commit**
+- [x] **Step 3: Typecheck + lint + commit**
 
 ```bash
 git add 'apps/web/app/(shell)/community/page.tsx'
@@ -231,7 +231,7 @@ git commit -m "feat(community): open ?post=<id> deep link and highlight the card
 **Files:**
 - Create: `apps/web/app/(shell)/groups/[id]/page.tsx`
 
-- [ ] **Step 1: Server Component. Params: `{ id: string }`.**
+- [x] **Step 1: Server Component. Params: `{ id: string }`.**
 
 - Buscar o grupo via `supabase.from("groups").select(...).eq("id", id).single()`.
   Se não existe ou `is_deleted = true`, redirect para `/groups` (a
@@ -243,7 +243,7 @@ git commit -m "feat(community): open ?post=<id> deep link and highlight the card
 - Buscar posts do grupo: usar `feed_group(p_group_id uuid)` (RPC da
   Onda 0, expansion community).
 
-- [ ] **Step 2: Layout**
+- [x] **Step 2: Layout**
 
 - Header: nome do grupo, descrição, visibilidade (public/private).
 - Action bar:
@@ -257,7 +257,7 @@ git commit -m "feat(community): open ?post=<id> deep link and highlight the card
 - Seção "Posts": feed_group do grupo, com o componente `feed-post`
   reutilizado.
 
-- [ ] **Step 3: Typecheck + lint + commit**
+- [x] **Step 3: Typecheck + lint + commit**
 
 ```bash
 git add 'apps/web/app/(shell)/groups/[id]/page.tsx'
@@ -271,7 +271,7 @@ git commit -m "feat(groups): detail page with header, members, and group feed"
 **Files:**
 - Create: `apps/web/app/(shell)/events/[id]/page.tsx`
 
-- [ ] **Step 1: Server Component. Params: `{ id: string }`.**
+- [x] **Step 1: Server Component. Params: `{ id: string }`.**
 
 - Buscar o evento via `supabase.from("events").select(...).eq("id", id).single()`.
   Se não existe ou `is_deleted = true`, redirect para `/events`.
@@ -280,7 +280,7 @@ git commit -m "feat(groups): detail page with header, members, and group feed"
 - Buscar lista de confirmados (count + top 20): `from("event_rsvps").select(...).eq("event_id",
   id).eq("status", "going").limit(20)`.
 
-- [ ] **Step 2: Layout**
+- [x] **Step 2: Layout**
 
 - Header: título, data/hora, local, descrição completa.
 - Action bar:
@@ -290,7 +290,7 @@ git commit -m "feat(groups): detail page with header, members, and group feed"
 - Seção "Comentários" (placeholder — fora do escopo, mas reservada
   para onda futura).
 
-- [ ] **Step 3: Typecheck + lint + commit**
+- [x] **Step 3: Typecheck + lint + commit**
 
 ```bash
 git add 'apps/web/app/(shell)/events/[id]/page.tsx'
@@ -304,14 +304,14 @@ git commit -m "feat(events): detail page with header, RSVP, and attendees"
 **Files:**
 - Modify: `apps/web/app/(shell)/messages/page.tsx`
 
-- [ ] **Step 1: Fix `isMobile` hardcoded**
+- [x] **Step 1: Fix `isMobile` hardcoded**
 
 Substituir `const isMobile = true` (linha 444) por detecção real via
 hook `useMediaQuery` (Tailwind) ou window.matchMedia. Padrão
 preferido: hook próprio em `apps/web/lib/media-query.ts` que retorna
 `boolean` e reage ao resize.
 
-- [ ] **Step 2: Adicionar `onClick` nos cards de DM (se vier via
+- [x] **Step 2: Adicionar `onClick` nos cards de DM (se vier via
   notification)**
 
 A notificação de DM tem `type='direct_message'` e
@@ -320,7 +320,7 @@ faz `router.push('/messages?conversation=<id>')`. O componente
 messages deve ler o query param, encontrar a conversa e abrir o
 chat.
 
-- [ ] **Step 3: Typecheck + lint + commit**
+- [x] **Step 3: Typecheck + lint + commit**
 
 ```bash
 git add 'apps/web/app/(shell)/messages/page.tsx'
@@ -331,10 +331,10 @@ git commit -m "fix(messages): real isMobile detection and DM deep-link open"
 
 ## Task 6: Audit visual §10.2
 
-- [ ] Adicionar `/groups/:id` e `/events/:id` em
+- [x] Adicionar `/groups/:id` e `/events/:id` em
   `scripts/visual/capture.mjs` (com `auth: true`).
-- [ ] Rodar `node scripts/visual/loop.mjs`.
-- [ ] Escrever `docs/agents/VISUAL_AUDIT-<data>-navigation.md` com
+- [x] Rodar `node scripts/visual/loop.mjs`.
+- [x] Escrever `docs/agents/VISUAL_AUDIT-<data>-navigation.md` com
   veredito por tela, focado nas 2 novas páginas (`/groups/:id`,
   `/events/:id`) e nas modificações de comportamento das existentes
   (notifications, community, messages).

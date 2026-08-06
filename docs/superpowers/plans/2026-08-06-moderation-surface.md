@@ -2,7 +2,7 @@
 
 > **Para quem executa (humano ou agente):** este plano é autocontido e não
 > depende de nenhuma ferramenta específica. Execute **uma task por vez**, na
-> ordem. Marque os checkboxes (`- [ ]`) conforme avança.
+> ordem. Marque os checkboxes (`- [x]`) conforme avança.
 >
 > Regra de parada: se um step de verificação não produzir a saída esperada,
 > **pare e investigue** antes de seguir.
@@ -128,7 +128,7 @@ mutação (hide / resolve); a autorização fica no caller.
 **Files:**
 - Create: `apps/web/app/(admin)/layout.tsx`
 
-- [ ] **Step 1: Criar Server Component que valida sessão e operador**
+- [x] **Step 1: Criar Server Component que valida sessão e operador**
 
 Caminho: `apps/web/app/(admin)/layout.tsx`. Server Component. Recebe
 `children: ReactNode`.
@@ -171,14 +171,14 @@ Para esta Task 1, marcar como pendente e usar `router.push("/community")`
 condicional num TODO. Se a RPC não existir quando o layout rodar, todo
 acesso ao `/admin/*` redireciona (fail-closed).
 
-- [ ] **Step 2: Typecheck + lint**
+- [x] **Step 2: Typecheck + lint**
 
 ```bash
 npx pnpm@11.18.0 typecheck
 npx pnpm@11.18.0 lint
 ```
 
-- [ ] **Step 3: Commit isolado (mesmo se o layout for stub)**
+- [x] **Step 3: Commit isolado (mesmo se o layout for stub)**
 
 ```bash
 git add 'apps/web/app/(admin)/layout.tsx'
@@ -193,7 +193,7 @@ git commit -m "feat(admin): layout gate for operator-only routes"
 - Create: `supabase/migrations/<ts>_is_current_user_operator.sql`
 - Create: `supabase/tests/is-current-user-operator.sql`
 
-- [ ] **Step 1: Criar migration**
+- [x] **Step 1: Criar migration**
 
 ```sql
 -- Operator check for the calling auth.uid(). Used by the (admin) layout
@@ -222,7 +222,7 @@ revoke all on function public.is_current_user_operator() from authenticated;
 grant execute on function public.is_current_user_operator() to service_role;
 ```
 
-- [ ] **Step 2: Test pgTAP**
+- [x] **Step 2: Test pgTAP**
 
 ```bash
 npx pnpm@11.18.0 exec supabase db reset --local
@@ -232,13 +232,13 @@ npx pnpm@11.18.0 test:db
 Esperado: 4 testes verdes (positive authenticated, negative revoked,
 negative anon, negative non-existent).
 
-- [ ] **Step 3: db lint**
+- [x] **Step 3: db lint**
 
 ```bash
 npx pnpm@11.18.0 exec supabase db lint --local --level error
 ```
 
-- [ ] **Step 4: Commit isolado**
+- [x] **Step 4: Commit isolado**
 
 ```bash
 git add supabase/migrations supabase/tests
@@ -252,7 +252,7 @@ git commit -m "feat(db): add public.is_current_user_operator() for admin routes"
 **Files:**
 - Create: `apps/web/app/api/admin/reports/[id]/route.ts`
 
-- [ ] **Step 1: POST handler que valida Bearer + is_operator + executa ação**
+- [x] **Step 1: POST handler que valida Bearer + is_operator + executa ação**
 
 ```ts
 // Pattern (esboço — adaptar para o que o repositório espera):
@@ -269,9 +269,9 @@ A RPC do passo 5 fica em public (pode ser chamada via supabase.rpc),
 ou inline se o grants + RLS de `reports` permitir o UPDATE
 direto. Investigar no momento.
 
-- [ ] **Step 2: Testes pgTAP para o route handler**
+- [x] **Step 2: Testes pgTAP para o route handler**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
@@ -280,19 +280,19 @@ direto. Investigar no momento.
 **Files:**
 - Create: `apps/web/app/(admin)/reports/page.tsx`
 
-- [ ] **Step 1: Server Component que lista reports abertos via service_role**
+- [x] **Step 1: Server Component que lista reports abertos via service_role**
 
-- [ ] **Step 2: Cada card tem 2 forms (`hide` e `resolve`) que postam para o route handler**
+- [x] **Step 2: Cada card tem 2 forms (`hide` e `resolve`) que postam para o route handler**
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ---
 
 ## Task 5: Audit visual §10.2
 
-- [ ] Adicionar rotas `(admin)/reports` ao `scripts/visual/capture.mjs` (com `auth: true`)
-- [ ] Rodar `node scripts/visual/loop.mjs`
-- [ ] Escrever `docs/agents/VISUAL_AUDIT-<data>.md` com veredito tela-a-tela
+- [x] Adicionar rotas `(admin)/reports` ao `scripts/visual/capture.mjs` (com `auth: true`)
+- [x] Rodar `node scripts/visual/loop.mjs`
+- [x] Escrever `docs/agents/VISUAL_AUDIT-<data>.md` com veredito tela-a-tela
 
 ---
 

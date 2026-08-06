@@ -2,7 +2,7 @@
 
 > **Para quem executa (humano ou agente):** este plano é autocontido e não
 > depende de nenhuma ferramenta específica. Execute **uma task por vez**, na
-> ordem. Marque os checkboxes (`- [ ]`) conforme avança.
+> ordem. Marque os checkboxes (`- [x]`) conforme avança.
 >
 > Regra de parada: se um step de verificação não produzir a saída esperada,
 > **pare e investigue** antes de seguir.
@@ -83,7 +83,7 @@ em `(shell)/community/` segue esse pattern — copiar literalmente.
 **Files:**
 - Create: 3 files
 
-- [ ] **Step 1: Criar `(preauth)/login/error.tsx`**
+- [x] **Step 1: Criar `(preauth)/login/error.tsx`**
 
 ```tsx
 "use client"
@@ -100,20 +100,20 @@ export default function SegmentErrorBoundary({
 }
 ```
 
-- [ ] **Step 2: Criar `(preauth)/consent/error.tsx`** — idêntico, mesmo
+- [x] **Step 2: Criar `(preauth)/consent/error.tsx`** — idêntico, mesmo
   import path.
 
-- [ ] **Step 3: Criar `(preauth)/onboarding/error.tsx`** — idêntico,
+- [x] **Step 3: Criar `(preauth)/onboarding/error.tsx`** — idêntico,
   com import path um nível acima: `../../../components/...`
 
-- [ ] **Step 4: Typecheck + lint**
+- [x] **Step 4: Typecheck + lint**
 
 ```bash
 npx pnpm@11.18.0 typecheck
 npx pnpm@11.18.0 lint
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add 'apps/web/app/(preauth)/login/error.tsx' \
@@ -129,7 +129,7 @@ git commit -m "feat(preauth): error boundary on login, consent, onboarding"
 **Files:**
 - Create: 3 files
 
-- [ ] **Step 1: Criar `(preauth)/login/loading.tsx`**
+- [x] **Step 1: Criar `(preauth)/login/loading.tsx`**
 
 ```tsx
 import { SegmentLoading } from "../../components/bivaque/segment-fallbacks"
@@ -139,12 +139,12 @@ export default function Loading() {
 }
 ```
 
-- [ ] **Step 2: Criar `(preauth)/consent/loading.tsx`** — idêntico.
+- [x] **Step 2: Criar `(preauth)/consent/loading.tsx`** — idêntico.
 
-- [ ] **Step 3: Criar `(preauth)/onboarding/loading.tsx`** — idêntico,
+- [x] **Step 3: Criar `(preauth)/onboarding/loading.tsx`** — idêntico,
   com import path um nível acima.
 
-- [ ] **Step 4: Typecheck + lint + commit**
+- [x] **Step 4: Typecheck + lint + commit**
 
 ```bash
 git add 'apps/web/app/(preauth)/login/loading.tsx' \
@@ -160,7 +160,7 @@ git commit -m "feat(preauth): loading state on login, consent, onboarding"
 **Files:**
 - Create: 3 files
 
-- [ ] **Step 1: Criar `(preauth)/login/not-found.tsx`**
+- [x] **Step 1: Criar `(preauth)/login/not-found.tsx`**
 
 ```tsx
 import { SegmentNotFound } from "../../components/bivaque/segment-fallbacks"
@@ -170,12 +170,12 @@ export default function NotFound() {
 }
 ```
 
-- [ ] **Step 2: Criar `(preauth)/consent/not-found.tsx`** — idêntico.
+- [x] **Step 2: Criar `(preauth)/consent/not-found.tsx`** — idêntico.
 
-- [ ] **Step 3: Criar `(preauth)/onboarding/not-found.tsx`** — idêntico,
+- [x] **Step 3: Criar `(preauth)/onboarding/not-found.tsx`** — idêntico,
   com import path um nível acima.
 
-- [ ] **Step 4: Typecheck + lint + commit**
+- [x] **Step 4: Typecheck + lint + commit**
 
 ```bash
 git add 'apps/web/app/(preauth)/login/not-found.tsx' \
@@ -188,10 +188,10 @@ git commit -m "feat(preauth): not-found page on login, consent, onboarding"
 
 ## Task 4: Audit visual §10.2
 
-- [ ] Adicionar as 3 rotas em `scripts/visual/capture.mjs`
+- [x] Adicionar as 3 rotas em `scripts/visual/capture.mjs`
   (com `auth: false` — preauth é público).
-- [ ] Rodar `node scripts/visual/loop.mjs`.
-- [ ] Escrever `docs/agents/VISUAL_AUDIT-<data>-preauth.md` com
+- [x] Rodar `node scripts/visual/loop.mjs`.
+- [x] Escrever `docs/agents/VISUAL_AUDIT-<data>-preauth.md` com
   veredito por tela.
 
 ---
