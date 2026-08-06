@@ -30,10 +30,7 @@ import {
 // then apps/web/.env.local.
 function readEnvLocal(key: string): string | undefined {
   try {
-    const file = readFileSync(
-      join(import.meta.dirname, "..", "..", "apps", "web", ".env.local"),
-      "utf-8",
-    )
+    const file = readFileSync(join(process.cwd(), "apps", "web", ".env.local"), "utf-8")
     for (const line of file.split("\n")) {
       const trimmed = line.trim()
       if (trimmed.length === 0 || trimmed.startsWith("#")) continue
