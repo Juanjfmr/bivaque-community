@@ -60,6 +60,31 @@ async function leaveGroupAction(formData: FormData) {
   revalidatePath("/groups")
 }
 
+async function transferOwnershipAction(formData: FormData) {
+  "use server"
+  const groupId = formData.get("groupId")
+  const newOwnerId = formData.get("newOwnerId")
+  if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
+  if (typeof newOwnerId !== "string" || newOwnerId.length === 0) {
+    throw new Error("newOwnerId required")
+  }
+
+  const supabase = createServiceClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  const { error } = await supabase.rpc("transfer_group_ownership", {
+    p_group_id: groupId,
+    p_new_owner_user_id: newOwnerId,
+  })
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/groups/${groupId}`)
+  revalidatePath("/groups")
+}
+
 export default async function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: groupId } = await params
 
@@ -122,6 +147,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
 
   const isApproved = membership?.status === "approved"
   const isPending = membership?.status === "pending"
+  const isOwner = group.owner_user_id === user.id
 
   return (
     <div className="flex flex-1 flex-col">
@@ -181,6 +207,32 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
                 </li>
               ))}
             </ul>
+
+            {isOwner && (
+              <form action={transferOwnershipAction} className="mt-3 flex items-center gap-2">
+                <input type="hidden" name="groupId" value={group.id} />
+                <select
+                  name="newOwnerId"
+                  required
+                  aria-label="Transferir ownership para"
+                  className="rounded-md border border-border bg-[var(--surface)] px-2 py-1.5 text-sm"
+                >
+                  <option value="" disabled>
+                    Transferir ownership...
+                  </option>
+                  {members
+                    .filter((m) => m.user_id !== user.id)
+                    .map((m) => (
+                      <option key={m.user_id} value={m.user_id}>
+                        {m.profiles?.display_name ?? "Membro"}
+                      </option>
+                    ))}
+                </select>
+                <Button type="submit" size="sm" variant="tertiary">
+                  Transferir
+                </Button>
+              </form>
+            )}
           </section>
         )}
 
