@@ -63,9 +63,9 @@ describe("final scope and PII audit", () => {
       /\b(marketplace|firebase|microservice|anonymous posting|anon_posts?|public verification badge|alerts? broadcast)\b/i,
       [
         /feed-post\.tsx$/,
-        /recommendations\\page\.tsx$/,
-        /contracts\\src\\index\.ts$/,
-        /domain\\src\\index\.ts$/,
+        /recommendations[\\/]page\.tsx$/,
+        /contracts[\\/]src[\\/]index\.ts$/,
+        /domain[\\/]src[\\/]index\.ts$/,
         /community_feed\.sql$/,
         /recommendations\.sql$/,
         /fix_forbidden_content_regex\.sql$/,
@@ -80,7 +80,7 @@ describe("final scope and PII audit", () => {
         /log-redaction\.test\.ts$/,
         /PILOT_RUNBOOK\.md$/,
         /GO-NO-GO-REPORT\.md$/,
-        /\.omo\\/,
+        /\.omo[\\/]/,
         /notepad/,
       ],
     )
