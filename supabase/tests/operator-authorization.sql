@@ -73,10 +73,16 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 
-select results_eq(
-  'select count(*)::int from public.operators',
-  $$ values (1::int) $$,
-  'authenticated can SELECT from public.operators (transparency)'
+-- The roster is a target list: it names everyone with elevated privilege, and
+-- carries free-text notes plus who granted and revoked. Ordinary members get
+-- nothing. Nothing breaks, because authorization runs through
+-- private.is_operator(), which is security definer and bypasses RLS — the
+-- positive asserts at the top of this file prove it still resolves for a
+-- caller who cannot read a single row here.
+
+select is_empty(
+  'select 1 from public.operators',
+  'authenticated cannot read the operator roster'
 );
 
 select throws_ok(

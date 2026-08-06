@@ -513,6 +513,33 @@ export type Database = {
         }
         Relationships: []
       }
+      operators: {
+        Row: {
+          auth_user_id: string
+          granted_at: string
+          granted_by: string | null
+          notes: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+        }
+        Insert: {
+          auth_user_id: string
+          granted_at?: string
+          granted_by?: string | null
+          notes?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Update: {
+          auth_user_id?: string
+          granted_at?: string
+          granted_by?: string | null
+          notes?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Relationships: []
+      }
       post_reactions: {
         Row: {
           created_at: string
