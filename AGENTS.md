@@ -50,6 +50,8 @@ policies that read it land in the **same migration** — never "in future".
 ## Commands (root, pnpm 11.18 pinned, Node >=22)
 
 ```sh
+npx pnpm@11.18.0 gate        # PORTA ÚNICA: lint -> typecheck -> test -> secrets, para no primeiro vermelho
+npx pnpm@11.18.0 gate --fast # só lint + typecheck, para o loop de edição (não autoriza declarar pronto)
 npx pnpm@11.18.0 lint        # biome check . (Biome 2.5.6)
 npx pnpm@11.18.0 typecheck   # tsc --noEmit across all workspaces
 npx pnpm@11.18.0 test        # test:unit (vitest) + test:scope (node --test)
@@ -88,6 +90,36 @@ These tests fail CI if you break them — update them only when a contract delib
   rejects `local_smtp` with `invalid keys` (renamed only in 2.108+). Do not upgrade the pinned CLI
   casually; both pin and section are locked by tests.
 - Root scripts/devDeps and the three Playwright viewport projects are asserted verbatim.
+
+## Known traps — check these BEFORE blaming your diff
+
+Each of these surfaces as a test or lint failure unrelated to the change in flight. That is
+exactly the signal that makes an autonomous agent "fix" what is not broken. **Confirm a failure
+reproduces from a clean state before attributing it to code.**
+
+- **The "Visual Capture" ghost profile.** The `.visual/` tooling inserts a profile row into the
+  local database when it runs. If a dev server or a visual capture touches the stack between
+  `db:reset` and `test:db`, six profile-listing asserts fail — `locality-profile-access`,
+  `authz-*-matrix`, `full-regression`. It looks like a real regression and is not. `.visual/` is
+  gitignored, so grepping the repo for the string finds nothing. **Fix: re-run `db:reset` with no
+  dev server and no capture running, then `test:db`.** This is also why the Playwright MCP is
+  disabled in `.opencode/opencode.json` — drive the browser through `scripts/visual/loop.mjs`,
+  which is deterministic and cleans up after itself.
+- **Stale `dev-server.pid` / `dev-server.log`.** A pid file left behind from a killed run makes
+  the visual loop attach to a server that is not there. Both are gitignored; delete and retry.
+- **Product decisions live outside the repo.** `C:\Users\juana\Forja-90\.omo\…` is unreachable
+  from a workspace-scoped session. Do not block on it — see the header of this file.
+
+## Harness (OpenCode)
+
+- `.opencode/opencode.json` holds the project MCP config. It merges over the global one at
+  `~/.config/opencode/opencode.json`, where destructive-command guard-rails live (`--linked` is
+  denied, `db:reset` asks).
+- `/run-plan <caminho>` executes a plan from `docs/superpowers/plans/` todo by todo, gating
+  between each. `/gate` measures without fixing. `/harness-doctor` audits the config itself.
+- Plans may reference `superpowers:*` or `anthropic-skills:*` skills. **Those are Claude Code
+  plugins and do not exist in OpenCode.** The equivalent protocol is in the `plan-execution` and
+  `gate-before-done` skills, which live in `~/.claude/skills/` and are read by both harnesses.
 
 ## HeroUI v3 components in use (post waves 1–5 + 7)
 

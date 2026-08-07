@@ -1,0 +1,36 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Config de projeto. Mescla sobre `~/.config/opencode/opencode.json`.
+  // MCP custa contexto em TODA request — só liga aqui o que este repo usa.
+
+  "mcp": {
+    "supabase": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp",
+      "enabled": true
+    },
+
+    // Desligado de propósito. O repo já tem loop determinístico de browser em
+    // `scripts/visual/loop.mjs` (captura + auditoria + artefatos em .visual/).
+    // Dirigir o browser por fora dele é o gatilho do perfil fantasma "Visual
+    // Capture" — ver a seção de armadilhas no AGENTS.md.
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "@playwright/mcp@latest"],
+      "enabled": false
+    },
+
+    // Este repo não tem grafo. Gere um com `graphify` antes de ligar, e aponte
+    // para o graph.json DESTE repo — o de `~/bivaque` é de outro projeto e
+    // responde com confiança sobre o codebase errado.
+    "graphify": {
+      "type": "local",
+      "command": [
+        "C:\\Users\\juana\\.local\\bin\\graphify-mcp.exe",
+        "C:\\Users\\juana\\bivaque-community\\graphify-out\\graph.json"
+      ],
+      "enabled": false
+    }
+  }
+}
