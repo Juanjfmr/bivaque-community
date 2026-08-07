@@ -180,7 +180,7 @@ Consequência a registrar: nada depois do build jamais rodou no CI. `test:db`,
 `db:lint` e `test:e2e` não estão "falhando" — estão **inalcançáveis**. Não há
 evidência de que passem.
 
-- [ ] **Step 0: Marcar as rotas `(admin)` como dinâmicas**
+- [x] **Step 0: Marcar as rotas `(admin)` como dinâmicas**
 
   Em `apps/web/app/(admin)/reports/page.tsx` (e no `(admin)/layout.tsx`, se o
   Next ainda tentar prerenderizar), declarar:
@@ -196,7 +196,7 @@ evidência de que passem.
   Verificação: `npx pnpm@11.18.0 build` precisa passar **sem** `.env.local`
   presente. Renomeie o arquivo temporariamente para confirmar.
 
-- [ ] **Step 1: Reordenar o workflow**
+- [x] **Step 1: Reordenar o workflow**
 
   Em `.github/workflows/pull-request-ci.yml`, mover o step
   `Start local Supabase` (`pnpm exec supabase start`) para **antes** do step
@@ -209,7 +209,7 @@ evidência de que passem.
   → Install Playwright → Root E2E tests
   ```
 
-- [ ] **Step 2: Adicionar o step que escreve o env**
+- [x] **Step 2: Adicionar o step que escreve o env**
 
   Logo após `Start local Supabase`:
 
@@ -243,7 +243,7 @@ evidência de que passem.
   `Root E2E tests` precisa **chegar a executar** (pode falhar em asserção nesta
   Task — não pode falhar em coleta nem em erro de ambiente).
 
-- [ ] **Step 4: Commit isolado**
+- [x] **Step 4: Commit isolado**
 
   ```
   ci: provision local Supabase env before the web build
