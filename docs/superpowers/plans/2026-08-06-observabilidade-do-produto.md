@@ -373,14 +373,27 @@ com zero conteúdo.
 **Por quê:** as 14 falhas únicas restantes são três problemas distintos, e dois
 deles só podem ser resolvidos depois da Task 2.
 
-**Grupo A — 12 testes que simulam sessão com cookie de consent (9 em
-`manaus-pilot-full-journey.spec.ts`, 2 em `manaus-pilot-denials.spec.ts`, 1 em
-`onboarding-holder-family.spec.ts`).** Eles setam só `bivaque-consent-version` e
+**Grupo A — 11 testes que simulam sessão com cookie de consent, todos em
+`manaus-pilot-full-journey.spec.ts`.** Eles setam só `bivaque-consent-version` e
 esperam conteúdo do shell. Com o gate ativo isso redireciona para `/login`.
 Esses testes contradizem diretamente `middleware-session-gate.spec.ts`, que
 exige o redirect — **não existe configuração em que ambos passem**. O gate está
 certo: o produto é uma comunidade privada verificada. Os testes é que precisam
 autenticar.
+
+> **Correção (2026-08-07).** A redação anterior dizia "12 testes (9 em
+> full-journey, 2 em denials, 1 em onboarding-holder-family)". Verificado no
+> repositório, os três números estavam errados:
+>
+> - São **11** chamadas em `manaus-pilot-full-journey.spec.ts`, não 9 (13 no
+>   repositório inteiro, não 12).
+> - `onboarding-holder-family.spec.ts` **não tem nenhuma** chamada a
+>   `setConsentCookie`. Só o Grupo B se aplica a ele.
+> - As **2 de `manaus-pilot-denials.spec.ts` não pertencem ao Grupo A e não
+>   devem ser migradas.** São testes de negação — `"groups page with consent but
+>   no Supabase auth shows error state"` e `"messages page with consent but no
+>   auth shows empty state"`. Dar sessão a eles com `seedSession` apaga
+>   exatamente a condição que estão afirmando. Mantenha `setConsentCookie` ali.
 
 **Grupo B — texto do botão Google.** Os testes esperam `"Entrar com Google"`; o
 app diz `"Continuar com Google"`
