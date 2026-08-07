@@ -7,7 +7,7 @@ test.describe("onboarding: verified holder and invited family", () => {
     await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
 
     // The login page renders the Google OAuth button and magic link form
-    await expect(page.getByRole("button", { name: "Entrar com Google" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Enviar link mágico" })).toBeVisible()
 
     // Navigate to the consent page

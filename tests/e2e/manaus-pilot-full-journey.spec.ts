@@ -34,7 +34,7 @@ test.describe("holder onboarding journey", () => {
     await page.goto("/login")
 
     // Then the auth entry points are rendered
-    await expect(page.getByRole("button", { name: "Entrar com Google" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Enviar link mágico" })).toBeVisible()
 
     const emailInput = page.getByLabel("E-mail")
