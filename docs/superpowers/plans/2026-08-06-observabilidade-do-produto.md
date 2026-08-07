@@ -275,7 +275,7 @@ com zero conteúdo.
   Constraint `post_photo_requires_photo_type`: `photo_path` só com
   `post_type = 'photo'`. Use `text` para o volume.
 
-- [ ] **Step 1: Criar os dois usuários exigidos pelo runbook**
+- [x] **Step 1: Criar os dois usuários exigidos pelo runbook**
 
   Reescrever `supabase/seed.sql` preservando o comentário sobre Manaus ser
   dado de referência da migration, e **substituindo** a regra atual sobre
@@ -337,7 +337,7 @@ com zero conteúdo.
   em 375px, a primeira dobra tem que estar cheia e precisar de scroll. Se
   couber tudo na tela, o volume está baixo demais para auditar densidade.
 
-- [ ] **Step 3: Verificação**
+- [x] **Step 3: Verificação**
 
   ```bash
   npx pnpm@11.18.0 db:reset
@@ -360,7 +360,7 @@ com zero conteúdo.
 
   Espere HTTP 200 com `access_token`. Se vier 400, o hash da senha está errado.
 
-- [ ] **Step 4: Commit isolado**
+- [x] **Step 4: Commit isolado**
 
   ```
   feat(db): durable local seed with Manaus fixtures
