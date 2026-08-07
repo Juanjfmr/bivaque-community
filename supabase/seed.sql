@@ -41,14 +41,27 @@ begin
     jsonb_build_object('sub', v_vis_id::text, 'email', 'visual@bivaque.example.invalid', 'email_verified', true),
     'email', v_vis_id::text, now(), now(), now());
 
-  -- Perfil e locality_membership NÃO são criados aqui porque os testes pgTAP
-  -- usam results_eq com contagem exata de linhas sobre public.profiles, e
-  -- qualquer linha extra em Manaus quebra as asserts. O auth.users é suficiente
-  -- para o password grant. O perfil com display_name legível será criado pelo
-  -- setup de e2e (Task 3 do plano de observabilidade).
+  -- O perfil vem logo abaixo. A primeira versão deste seed o omitiu por
+  -- receio de quebrar o pgTAP; a hipótese foi testada e não se confirma
+  -- para perfis 'hidden'. Ver a nota na inserção.
 
   insert into private.verification_outcomes (user_id, status, eligibility_class, checked_at)
   values (v_vis_id, 'verified', 'active_federal_military', now());
+
+  -- Membership ANTES do perfil: profiles tem FK composta
+  -- profiles_user_id_locality_id_fkey apontando para locality_memberships.
+  insert into public.locality_memberships (user_id, locality_id)
+  values (v_vis_id, '00000000-0000-4000-8000-000000000001');
+
+  -- visibility = 'hidden' é o que torna este perfil compatível com o pgTAP.
+  -- A policy de select em 20260802000300_foundation_rls.sql:67 só expõe
+  -- perfis com visibility = 'locality_members' a outros membros, e
+  -- locality-profile-access.sql fixa esse conjunto exato em ('Member One',
+  -- 'Member Two'). Um perfil 'hidden' fica fora daquele assert e continua
+  -- visível para o próprio dono — que é o que /profile lê.
+  -- Verificado: db:reset + test:db = 685 asserts, PASS.
+  insert into public.profiles (user_id, display_name, locality_id, visibility)
+  values (v_vis_id, 'Ana Verificada', '00000000-0000-4000-8000-000000000001', 'hidden');
 
   -- Rejeitado: rejected@bivaque.example.invalid
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
@@ -76,12 +89,20 @@ $$;
 -- VOLUME DATA DEFERRED
 --
 -- Os ~300 membros, ~400 posts, 8 grupos e 10 eventos que o plano prescreve
--- (Task 2 Step 2) não podem coexistir com os testes pgTAP atuais porque os
--- testes contam linhas e esperam valores exatos de fixture. Inserir dados
--- de volume na localidade de Manaus inflaria contagens e quebraria asserts
--- de ordenação alfabética em 15+ testes.
+-- (Task 2 Step 2) continuam fora — e aqui a restrição é real.
 --
--- A separação correta seria um seed de "volume" que só roda depois dos
--- testes, mas o Supabase CLI não oferece hooks pós-teste. Até que os testes
--- pgTAP sejam adaptados para filtrar dados de seed, o volume fica fora.
+-- Volume só serve ao seu propósito (julgar densidade e carga de moderação)
+-- se os perfis forem VISÍVEIS, isto é, visibility = 'locality_members'. E é
+-- exatamente isso que locality-profile-access.sql proíbe: ele fixa o conjunto
+-- visível em ('Member One', 'Member Two'). O truque do 'hidden' que viabiliza
+-- o titular acima não se aplica ao volume, porque um membro invisível não
+-- povoa tela nenhuma.
+--
+-- A saída é separar os consumidores, não enfraquecer o teste:
+--   supabase/seed.sql      → fixtures que o pgTAP tolera (este arquivo)
+--   supabase/seed-dev.sql  → volume, aplicado sob demanda por `pnpm db:seed`
+-- Assim `db:reset && test:db` continua limpo, e dev/e2e/captura visual
+-- rodam `db:reset && db:seed` antes de precisar de densidade.
+--
+-- Isso é mudança de arquitetura de seed e está fora do escopo desta task.
 -- ═══════════════════════════════════════════════════════════════════════════
