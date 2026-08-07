@@ -149,8 +149,10 @@ a porta está livre.
 
 ## Task 1: Destravar o pipeline — o CI falha no build, não no e2e
 
-**Por quê:** verificado no run `31144924193` (2026-08-07). O CI **não chega ao
-e2e**. Ele morre no passo 6 de ~14, `Build web app`:
+**Por quê:** verificado no run de CI de 2026-08-07 sobre o PR #4 (o ID numérico
+foi omitido de propósito: onze dígitos seguidos disparam a regra "CPF numeric"
+do `tests/secrets-scan.mjs`). O CI **não chega ao e2e**. Ele morre no passo 6
+de ~14, `Build web app`:
 
 ```
 Error occurred prerendering page "/reports"

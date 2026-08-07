@@ -13,7 +13,8 @@
       "!**/playwright-report",
       "!**/test-results",
       "!**/.omo",
-      "!**/.visual"
+      "!**/.visual",
+      "!**/.claude"
     ]
   },
   "formatter": {
