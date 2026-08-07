@@ -56,7 +56,7 @@ jobs:
 
       - name: Write local Supabase env
         run: |
-          supabase status -o env > /tmp/supabase.env
+          pnpm exec supabase status -o env > /tmp/supabase.env
           . /tmp/supabase.env
           {
             echo "SUPABASE_URL=$API_URL"
