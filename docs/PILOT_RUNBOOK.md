@@ -193,9 +193,11 @@ O operador revisa e age.
 - [ ] Localizar o conteudo denunciado (post, mensagem, evento) pelo ID.
 - [ ] No console SQL do Supabase, inspecionar o registro:
       ```sql
-      -- Exemplo para posts da comunidade
-      select id, author_id, content, created_at
-      from public.community_posts
+      -- Exemplo para posts da comunidade.
+      -- A coluna do autor e `user_id` (nao `author_id`), e `is_deleted`
+      -- indica se o conteudo ja foi ocultado por moderacao.
+      select id, user_id, group_id, locality_id, content, is_deleted, created_at
+      from public.posts
       where id = '<post-id>';
       ```
 - [ ] Classificar: conteudo proibido (discurso de odio, assedio, exposicao de
