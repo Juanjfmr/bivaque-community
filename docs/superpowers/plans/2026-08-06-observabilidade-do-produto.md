@@ -123,6 +123,7 @@ a porta está livre.
 | Arquivo | Mudança |
 |---|---|
 | `.github/workflows/pull-request-ci.yml` | **Edita.** Reordena e injeta env. |
+| `apps/web/app/(admin)/reports/page.tsx` | **Edita.** `dynamic = "force-dynamic"`. |
 | `supabase/seed.sql` | **Reescreve.** Fixtures duráveis de Manaus. |
 | `tests/e2e/helpers/session.ts` | **Edita.** Defaults das credenciais do seed. |
 | `tests/e2e/manaus-pilot-full-journey.spec.ts` | **Edita.** 9 testes autenticam. |
@@ -146,12 +147,52 @@ a porta está livre.
 
 ---
 
-## Task 1: CI injeta o ambiente do Supabase local antes do build
+## Task 1: Destravar o pipeline — o CI falha no build, não no e2e
 
-**Por quê:** o workflow roda `pnpm build` **antes** de `supabase start`, e nunca
-escreve `apps/web/.env.local`. O Next inlineia `NEXT_PUBLIC_*` em tempo de
-build, então o bundle sai sem credenciais e o middleware lança em toda rota
-protegida. Nenhum teste e2e pode passar nesse estado, independente do resto.
+**Por quê:** verificado no run `31144924193` (2026-08-07). O CI **não chega ao
+e2e**. Ele morre no passo 6 de ~14, `Build web app`:
+
+```
+Error occurred prerendering page "/reports"
+Error: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required
+Export encountered an error on /(admin)/reports/page: /reports, exiting the build.
+```
+
+Duas causas somadas:
+
+1. **O workflow nunca injetou o ambiente.** Não há bloco `env:`, e
+   `pnpm build` roda **antes** de `supabase start`. O Next inlineia
+   `NEXT_PUBLIC_*` em tempo de build.
+2. **`(admin)/reports/page.tsx` é prerenderizado.** Não declara
+   `dynamic = "force-dynamic"`, então o Next tenta gerá-la estaticamente no
+   build; ela constrói cliente Supabase e lança. Uma página que exige sessão
+   de operador nunca deveria ser estática — isso é bug de arquitetura,
+   independente do CI.
+
+O painel entrou em `78d4318` (Onda 1 Task 4). **O CI está vermelho desde
+então**, e as Ondas seguintes foram fechadas por cima disso — enquanto o §9 do
+runbook manda, diariamente, *"verificar que o ultimo pipeline esta verde (lint,
+typecheck, test, test:db, test:e2e)"*.
+
+Consequência a registrar: nada depois do build jamais rodou no CI. `test:db`,
+`db:lint` e `test:e2e` não estão "falhando" — estão **inalcançáveis**. Não há
+evidência de que passem.
+
+- [ ] **Step 0: Marcar as rotas `(admin)` como dinâmicas**
+
+  Em `apps/web/app/(admin)/reports/page.tsx` (e no `(admin)/layout.tsx`, se o
+  Next ainda tentar prerenderizar), declarar:
+
+  ```ts
+  export const dynamic = "force-dynamic"
+  ```
+
+  Isto é correção de arquitetura, não contorno de CI: a página lê via
+  `service_role` atrás de `is_current_user_operator` e não tem versão estática
+  possível. Aplique o mesmo à `(admin)/admissions` da Task 9.
+
+  Verificação: `npx pnpm@11.18.0 build` precisa passar **sem** `.env.local`
+  presente. Renomeie o arquivo temporariamente para confirmar.
 
 - [ ] **Step 1: Reordenar o workflow**
 
