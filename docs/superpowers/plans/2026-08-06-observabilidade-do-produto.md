@@ -149,7 +149,9 @@ a porta está livre.
 
 ## Task 1: Destravar o pipeline — o CI falha no build, não no e2e
 
-**Por quê:** verificado no run `31144924193` (2026-08-07). O CI **não chega ao
+**Por quê:** verificado no
+[run de 2026-08-07](https://github.com/Juanjfmr/bivaque-community/actions/runs/31144924193).
+O CI **não chega ao
 e2e**. Ele morre no passo 6 de ~14, `Build web app`:
 
 ```
