@@ -4,6 +4,8 @@ import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createServerClient as createServiceClient } from "../../lib/supabase/server"
 
+export const dynamic = "force-dynamic"
+
 export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]

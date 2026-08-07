@@ -3,6 +3,8 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
+export const dynamic = "force-dynamic"
+
 const ADMIN_NOTES_THRESHOLD = 1
 
 async function getAuthedUserId(): Promise<string | null> {
