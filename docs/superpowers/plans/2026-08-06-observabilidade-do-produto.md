@@ -390,7 +390,7 @@ app diz `"Continuar com Google"`
 `/profile` renderiza `"Perfil não encontrado."` — o usuário não tinha linha em
 `profiles`. A Task 2 resolve sem tocar no spec.
 
-- [ ] **Step 1: Defaults no helper para o CI funcionar sem `.env.local`**
+- [x] **Step 1: Defaults no helper para o CI funcionar sem `.env.local`**
 
   Em `tests/e2e/helpers/session.ts`, `requireEnv()` hoje lança se
   `USER_PASSWORD` não resolver. Como o seed passa a garantir credenciais
@@ -410,7 +410,7 @@ app diz `"Continuar com Google"`
   Manter a resolução por env/`.env.local` na frente do default, para que uma
   máquina com credenciais próprias continue mandando.
 
-- [ ] **Step 2: Grupo A — autenticar em vez de simular**
+- [x] **Step 2: Grupo A — autenticar em vez de simular**
 
   Nos 12 testes, trocar a chamada a `setConsentCookie(page)` por
   `await seedSession(context)` (o helper já instala **os dois** cookies:
@@ -430,7 +430,7 @@ app diz `"Continuar com Google"`
 
   Se `setConsentCookie` ficar sem uso, remova-o.
 
-- [ ] **Step 3: Grupo B — alinhar o texto ao app**
+- [x] **Step 3: Grupo B — alinhar o texto ao app**
 
   Trocar `"Entrar com Google"` por `"Continuar com Google"` em
   `manaus-pilot-full-journey.spec.ts` e `onboarding-holder-family.spec.ts`.
@@ -451,7 +451,7 @@ app diz `"Continuar com Google"`
   Alvo: **333 passando, 0 falhando**. Qualquer teste restante em vermelho é
   achado novo — documente antes de mexer.
 
-- [ ] **Step 5: Commit isolado**
+- [x] **Step 5: Commit isolado**
 
   ```
   test(e2e): authenticate the specs that assert shell content
