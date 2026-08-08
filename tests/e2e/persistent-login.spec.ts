@@ -28,12 +28,14 @@ import {
 // that silently works also lets the suite pass against the wrong instance.
 // Read it the same way scripts/visual/capture.mjs does: environment first,
 // then apps/web/.env.local.
+// `import.meta.dirname` cannot be used here. capture.mjs is real ESM, but a
+// spec is transpiled to CJS by Playwright, and the emitted `require` then
+// blows up as "require is not defined in ES module scope" at load time —
+// aborting collection for the whole suite, not just this file. Playwright is
+// always invoked from the repo root, so resolve from the cwd instead.
 function readEnvLocal(key: string): string | undefined {
   try {
-    const file = readFileSync(
-      join(import.meta.dirname, "..", "..", "apps", "web", ".env.local"),
-      "utf-8",
-    )
+    const file = readFileSync(join(process.cwd(), "apps", "web", ".env.local"), "utf-8")
     for (const line of file.split("\n")) {
       const trimmed = line.trim()
       if (trimmed.length === 0 || trimmed.startsWith("#")) continue
