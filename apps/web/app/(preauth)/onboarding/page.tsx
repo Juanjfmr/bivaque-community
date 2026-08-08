@@ -308,10 +308,13 @@ function OnboardingFlow() {
 
   return (
     <div className="grid flex-1 place-items-center px-6 py-12">
-      <section className="flex w-full max-w-sm flex-col gap-6" aria-labelledby="onboarding-heading">
+      <section
+        className="flex w-full max-w-sm min-w-0 flex-col gap-6"
+        aria-labelledby="onboarding-heading"
+      >
         <SegmentedProgress steps={flowLabels[flow]} activeIndex={getProgressIndex(step, loading)} />
 
-        <h1 id="onboarding-heading" className="text-2xl font-semibold tracking-tight">
+        <h1 id="onboarding-heading" className="break-words text-2xl font-semibold tracking-tight">
           Verificação de elegibilidade
         </h1>
 
