@@ -74,15 +74,18 @@ test.describe("private group admission: denial paths", () => {
     expect(page.url()).toContain("/consent")
   })
 
-  test("groups page with consent but no Supabase auth shows error state", async ({ page }) => {
+  test("groups page with consent but no Supabase auth redirects to /login", async ({ page }) => {
     // Given a browser with the consent cookie but no Supabase auth session
     await setConsentCookie(page)
 
     // When the user navigates to the groups page
     await page.goto("/groups")
 
-    // Then the page shows an auth-required message (client-side Supabase check)
-    await expect(page.getByText(/Você precisa entrar/)).toBeVisible({ timeout: 15000 })
+    // Then the middleware session gate (apps/web/middleware.ts) sends them
+    // to /login antes da pagina renderizar; o setError("Voce precisa
+    // entrar para acessar os grupos.") de apps/web/app/(shell)/groups/page.tsx
+    // nunca tem chance de aparecer.
+    await page.waitForURL(/\/login/, { timeout: 10000 })
   })
 
   test("user without consent cannot access private group directly", async ({ page }) => {
@@ -112,18 +115,17 @@ test.describe("DM without context: denial paths", () => {
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
   })
 
-  test("messages page with consent but no auth shows empty state", async ({ page }) => {
+  test("messages page with consent but no auth redirects to /login", async ({ page }) => {
     // Given a browser with the consent cookie but no Supabase session
     await setConsentCookie(page)
 
     // When the user navigates to the messages page
     await page.goto("/messages")
 
-    // Then the messages page renders (stuck in loading without auth session)
-    await expect(page.getByRole("heading", { name: "Mensagens" })).toBeVisible()
-
-    // And the loading state is displayed (conversations never load without auth)
-    await expect(page.getByText(/Carregando conversas/)).toBeVisible()
+    // Then the middleware session gate (apps/web/middleware.ts) sends them
+    // to /login; o heading "Mensagens" e o loading "Carregando conversas"
+    // de apps/web/app/(shell)/messages/page.tsx nunca renderizam.
+    await page.waitForURL(/\/login/, { timeout: 10000 })
   })
 })
 
