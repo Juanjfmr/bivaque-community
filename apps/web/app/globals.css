@@ -121,12 +121,23 @@ body {
 @layer components {
   .button,
   .input,
-  .tabs__tab {
+  .tabs__tab,
+  .search-field__input,
+  .select__trigger {
     min-height: var(--control-min-height);
   }
 
   .button {
     min-width: var(--control-min-height);
+  }
+
+  /* HiddenSelect nativo que o react-aria renderiza dentro do Select do HeroUI:
+     nesta versão ele sai sem o style visually-hidden (position static, 26x23
+     visível, title vazio). O Select do produto não usa name — o valor flui via
+     estado React — então escondê-lo do layout não afeta a submissão e zera o
+     box para o auditor (que pula 0x0). */
+  select[tabindex="-1"] {
+    display: none;
   }
 
   .skeleton--shimmer:after {

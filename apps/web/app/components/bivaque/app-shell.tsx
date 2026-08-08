@@ -168,7 +168,7 @@ export function AppShell({ children }: AppShellProperties) {
                   key={item.id}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
+                  className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
                     active
                       ? "bg-[var(--accent-soft)] text-[var(--accent)]"
                       : "text-muted hover:bg-[var(--surface-subtle)] hover:text-foreground"
