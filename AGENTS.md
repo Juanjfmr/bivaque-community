@@ -178,8 +178,15 @@ provider** — the global `toast()` helper only renders through it.
   `npx pnpm@11.18.0 exec supabase migration new <name>`.
 - pgTAP tests live in `supabase/tests/*.sql` (run by `test:db`). Fixtures in
   `supabase/tests/fixtures/foundation.inc` use `example.invalid` identities and fixed UUIDs and are
-  included inside each transaction (auto-rollback). **Never** put users in `seed.sql` or real
-  personal data in fixtures.
+  included inside each transaction (auto-rollback). Never put real personal data in fixtures.
+- **`seed.sql` is a separate concept from the pgTAP fixtures, and it does carry users.** It is the
+  durable LOCAL development seed (the E2E account plus whatever the operator and the §10.2 visual
+  capture need) that runs only on `supabase db reset --local`. Its credentials are public and
+  disposable by design. pgTAP fixtures stay transactional and stay in `supabase/tests/*` — the two
+  must not be merged.
+- **Seeding `auth.users` requires the token columns as `''`, never NULL.** GoTrue scans
+  `confirmation_token` and its siblings as Go `string`; a NULL makes the password grant fail with
+  HTTP 500, not the 400 you would expect from bad credentials.
 - Client types: `npx supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts`
   — generate ONLY the `public` schema, never the `private` trust schema.
 - Privacy boundary: `private` schema (`verification_outcomes`, `family_invitations`,

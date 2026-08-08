@@ -65,6 +65,8 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
             echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "BIVAQUE_VISUAL_EMAIL=visual@bivaque.example.invalid"
+            echo "BIVAQUE_VISUAL_PASSWORD=bivaque-e2e-local"
           } > apps/web/.env.local
 
       - name: Build web app
@@ -75,8 +77,12 @@ jobs:
           pnpm generate:types
           git diff --exit-code -- supabase/database.generated.ts
 
-      - name: Reset local database
-        run: pnpm db:reset
+      # pgTAP compares the exact set of profiles visible in Manaus against its
+      # own fixtures, so it has to run against a database WITHOUT the
+      # development seed. E2E needs the opposite - it authenticates as a seeded
+      # user - hence the second reset further down.
+      - name: Reset local database (no seed)
+        run: pnpm exec supabase db reset --local --no-seed
 
       - name: Database tests
         run: pnpm test:db
@@ -86,6 +92,9 @@ jobs:
 
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Reset local database (with seed)
+        run: pnpm exec supabase db reset --local
 
       - name: Root E2E tests
         run: pnpm test:e2e
