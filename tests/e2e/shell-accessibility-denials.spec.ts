@@ -72,8 +72,8 @@ test.describe("Touch target minimum size", () => {
 
     // Then each visible tab has a minimum touch target of 44px both dimensions
     const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
+    await expect(tabs).toHaveCount(5)
     const count = await tabs.count()
-    expect(count).toBe(5)
 
     for (let index = 0; index < count; index++) {
       const tab = tabs.nth(index)
