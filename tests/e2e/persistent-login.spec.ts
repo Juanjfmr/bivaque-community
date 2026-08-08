@@ -269,6 +269,16 @@ test.describe("Login persistente Instagram-style", () => {
     const sairBtn = page.getByRole("button", { name: /Sair da conta/i })
     await expect(sairBtn, "Botao 'Sair da conta' presente").toBeVisible({ timeout: 5000 })
     await sairBtn.click()
+    // O modal de confirmacao (adicionado como guard de UX contra saida
+    // acidental) exige um segundo clique no botao "Sair" para efetivamente
+    // chamar supabase.auth.signOut(). Sem isso, a URL permanece em /profile.
+    const confirmarBtn = page.getByRole("button", { name: /^Sair$/i })
+    await expect(confirmarBtn, "Botao 'Sair' do modal de confirmacao presente").toBeVisible({
+      timeout: 5000,
+    })
+    await confirmarBtn.click()
+    await page.waitForTimeout(3000)
+    expect(page.url(), "Logout redireciona para /login").toContain("/login")
     await page.waitForTimeout(3000)
     expect(page.url(), "Logout redireciona para /login").toContain("/login")
 

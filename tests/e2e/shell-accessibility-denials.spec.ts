@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { BOTTOM_NAV, seedSession } from "./helpers/session"
 
 test.describe("Horizontal overflow prevention", () => {
   test("has no horizontal overflow at 375px viewport", async ({ page }) => {
@@ -38,11 +39,14 @@ test.describe("Horizontal overflow prevention", () => {
 })
 
 test.describe("Keyboard focus visibility", () => {
-  test("bottom nav tabs show visible focus indicator when focused", async ({ page }) => {
-    // Given the mobile-375 viewport
+  test("bottom nav tabs show visible focus indicator when focused", async ({ page, context }) => {
+    // Given an authenticated member on a viewport that still shows the BottomNav
+    await seedSession(context)
+    await page.setViewportSize({ width: 375, height: 812 })
+
     // When the first bottom nav tab receives keyboard focus
-    await page.goto("/")
-    const firstTab = page.locator("[role='tab']").first()
+    await page.goto("/community")
+    const firstTab = page.locator(BOTTOM_NAV).getByRole("tab").first()
     await firstTab.focus()
 
     // Then the focused element is a tab with a visible style
@@ -58,15 +62,18 @@ test.describe("Keyboard focus visibility", () => {
 })
 
 test.describe("Touch target minimum size", () => {
-  test("bottom nav tabs have touch targets of at least 44px", async ({ page }) => {
-    // Given the mobile-375 viewport
+  test("bottom nav tabs have touch targets of at least 44px", async ({ page, context }) => {
+    // Given an authenticated member on a viewport that still shows the BottomNav
+    await seedSession(context)
+    await page.setViewportSize({ width: 375, height: 812 })
+
     // When the bottom nav is rendered
-    await page.goto("/")
+    await page.goto("/community")
 
     // Then each visible tab has a minimum touch target of 44px both dimensions
-    const tabs = page.locator("[role='tablist'] [role='tab']")
+    const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
+    await expect(tabs).toHaveCount(5)
     const count = await tabs.count()
-    expect(count).toBe(4)
 
     for (let index = 0; index < count; index++) {
       const tab = tabs.nth(index)
@@ -85,14 +92,18 @@ test.describe("Touch target minimum size", () => {
     }
   })
 
-  test("Indicações button has a touch target of at least 44px", async ({ page }) => {
-    // Given the mobile-375 viewport
-    // When the header is rendered
-    await page.goto("/")
+  test("Indicações entry has a touch target of at least 44px", async ({ page, context }) => {
+    // Given an authenticated member on the mobile-375 viewport, where
+    // Indicações now rides in the BottomNav alongside the other entries
+    await seedSession(context)
+    await page.setViewportSize({ width: 375, height: 812 })
 
-    // Then the Indicações button has a minimum touch target of 44px both dimensions
-    const button = page.getByRole("button", { name: "Indicações" })
-    const box = await button.boundingBox()
+    // When the bottom nav is rendered
+    await page.goto("/community")
+
+    // Then the Indicações entry has a minimum touch target of 44px
+    const entry = page.locator(BOTTOM_NAV).getByRole("tab", { name: "Indicações" })
+    const box = await entry.boundingBox()
     expect(box).not.toBeNull()
 
     if (box) {

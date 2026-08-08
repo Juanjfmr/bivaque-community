@@ -12,14 +12,15 @@
 -- Roda apenas em `supabase db reset --local`. Credenciais são públicas e
 -- descartáveis por design.
 --
--- Faixa de UUID: 20000000-… (a conta exigida pela suíte e2e). Não colide com
--- supabase/tests/fixtures/foundation.inc, que usa a faixa 10000000-….
+-- Faixas de UUID, para não colidir com supabase/tests/fixtures/foundation.inc,
+-- que usa a faixa 10000000-…:
+--   20000000-…  as duas contas exigidas pelo PILOT_RUNBOOK §1
 
 begin;
 
--- ── Conta da suíte e2e ────────────────────────────────────────────────────
+-- ── Titular verificado ────────────────────────────────────────────────────
 -- O e-mail precisa ser exatamente este: é o default lido por
--- tests/e2e/persistent-login.spec.ts.
+-- tests/e2e/persistent-login.spec.ts e pelo helper de sessão da suíte e2e.
 
 -- Os campos de token vão como '' e não como NULL de propósito. O schema os
 -- aceita nulos, mas o GoTrue os lê como `string` em Go: um NULL derruba o
@@ -61,6 +62,25 @@ values
     '', '', '', '', '', '', '', '',
     now() - interval '90 days',
     now()
+  ),
+  -- ── Conta rejeitada ─────────────────────────────────────────────────────
+  -- Sem locality_membership por design: a linha em locality_memberships só
+  -- existe quando o resultado é `verified`. Como public.profiles tem FK
+  -- composta (user_id, locality_id) -> locality_memberships, esta conta
+  -- também não tem profile — não é omissão, é o schema.
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-000000000002',
+    'authenticated',
+    'authenticated',
+    'rejected@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '10 days',
+    now()
   )
 on conflict (id) do nothing;
 
@@ -72,7 +92,8 @@ values
     'verified',
     'active_federal_military',
     now() - interval '90 days'
-  )
+  ),
+  ('20000000-0000-4000-8000-000000000002', 'rejected', null, now() - interval '10 days')
 on conflict (user_id) do nothing;
 
 insert into public.locality_memberships (user_id, locality_id, joined_at)
@@ -84,6 +105,8 @@ values
   )
 on conflict (user_id, locality_id) do nothing;
 
+-- display_name legível: a auditoria visual julga o header do perfil, e
+-- "Novo membro" não permite julgar nada.
 insert into public.profiles (
   user_id,
   locality_id,
@@ -102,5 +125,335 @@ values
     now() - interval '90 days'
   )
 on conflict (user_id) do nothing;
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- Volume de conteúdo
+--
+-- O piloto abre com ~300 militares mais dependentes, então o seed modela essa
+-- ordem de grandeza e não uma fração dela: julgar densidade, ritmo de feed e
+-- carga de moderação contra 5 linhas não significa nada.
+--
+-- Tudo gerado por generate_series a partir de índices — nenhum INSERT à mão.
+-- Os textos evitam o vocabulário barrado por post_no_forbidden_terms e
+-- comment_no_forbidden_terms (venda, compra, patente, OM, CPF, vídeo,
+-- inteligência artificial, …), e os locais evitam events_venue_check
+-- (rua, avenida, quadra, quartel, …).
+--
+-- Faixas de UUID:
+--   30000000-…  membros          40000000-…  dependentes
+--   50000000-…  convites família 60000000-…  grupos
+--   70000000-…  eventos          80000000-…  posts
+-- ══════════════════════════════════════════════════════════════════════════
+
+-- ── ~300 membros de Manaus ────────────────────────────────────────────────
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  email_change_token_current, phone_change, phone_change_token,
+  reauthentication_token,
+  created_at, updated_at
+)
+select
+  '00000000-0000-0000-0000-000000000000',
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  'authenticated',
+  'authenticated',
+  'membro-' || i || '@bivaque.example.invalid',
+  crypt('bivaque-e2e-local', gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{}'::jsonb,
+  '', '', '', '', '', '', '', '',
+  now() - make_interval(days => 90 - (i % 90)),
+  now()
+from generate_series(1, 300) as i
+on conflict (id) do nothing;
+
+insert into private.verification_outcomes (user_id, status, eligibility_class, checked_at)
+select
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  'verified',
+  (array['active_federal_military', 'veteran', 'military_pensioner'])[1 + (i % 3)]::private.eligibility_class,
+  now() - make_interval(days => 90 - (i % 90))
+from generate_series(1, 300) as i
+on conflict (user_id) do nothing;
+
+insert into public.locality_memberships (user_id, locality_id, joined_at)
+select
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  '00000000-0000-4000-8000-000000000001',
+  now() - make_interval(days => 90 - (i % 90))
+from generate_series(1, 300) as i
+on conflict (user_id, locality_id) do nothing;
+
+insert into public.profiles (
+  user_id, locality_id, display_name, visibility, consent_version, consented_at
+)
+select
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  '00000000-0000-4000-8000-000000000001',
+  (array[
+    'Ana', 'Bruno', 'Carla', 'Diego', 'Elaine', 'Fábio', 'Gabriela', 'Heitor',
+    'Isabela', 'João', 'Karina', 'Lucas', 'Mariana', 'Nelson', 'Olívia',
+    'Paulo', 'Queila', 'Rafael', 'Sofia', 'Tiago'
+  ])[1 + (i % 20)]
+  || ' '
+  || (array[
+    'Almeida', 'Barbosa', 'Cavalcante', 'Duarte', 'Esteves', 'Ferreira',
+    'Gomes', 'Henriques', 'Ibrahim', 'Ju de Souza', 'Klein', 'Lima',
+    'Monteiro', 'Nogueira', 'Oliveira'
+  ])[1 + ((i / 20) % 15)],
+  'locality_members',
+  1,
+  now() - make_interval(days => 90 - (i % 90))
+from generate_series(1, 300) as i
+on conflict (user_id) do nothing;
+
+-- ── ~60 dependentes, ligados por family_account_links ─────────────────────
+-- Contas de família continuam sendo Auth users independentes. Elas não
+-- recebem profile aqui de propósito: o plano conta 300 membros e 60
+-- dependentes separadamente, e o vínculo é o que precisa ser exercitado.
+
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  email_change_token_current, phone_change, phone_change_token,
+  reauthentication_token,
+  created_at, updated_at
+)
+select
+  '00000000-0000-0000-0000-000000000000',
+  ('40000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  'authenticated',
+  'authenticated',
+  'dependente-' || i || '@bivaque.example.invalid',
+  crypt('bivaque-e2e-local', gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{}'::jsonb,
+  '', '', '', '', '', '', '', '',
+  now() - make_interval(days => 60 - (i % 60)),
+  now()
+from generate_series(1, 60) as i
+on conflict (id) do nothing;
+
+-- O convite entra já como `accepted`: inserir aceito não dispara o trigger de
+-- notificação, que só roda em UPDATE.
+insert into private.family_invitations (
+  id, inviter_user_id, token_digest, invitee_email_digest, status,
+  expires_at, accepted_by_user_id, accepted_at, created_at
+)
+select
+  ('50000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  sha256(convert_to('seed-family-token-' || i, 'UTF8')),
+  sha256(convert_to('dependente-' || i || '@bivaque.example.invalid', 'UTF8')),
+  'accepted',
+  now() + interval '30 days',
+  ('40000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  now() - make_interval(days => 60 - (i % 60)),
+  now() - make_interval(days => 61 - (i % 60))
+from generate_series(1, 60) as i
+on conflict (id) do nothing;
+
+insert into private.family_account_links (
+  invitation_id, holder_user_id, family_user_id, linked_at
+)
+select
+  ('50000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  ('40000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  now() - make_interval(days => 60 - (i % 60))
+from generate_series(1, 60) as i;
+
+-- ── 8 grupos, 2 privados, com membros sobrepostos ─────────────────────────
+
+insert into public.groups (
+  id, name, description, visibility, locality_id, created_by, owner_user_id,
+  created_at
+)
+select
+  ('60000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  (array[
+    'Caminhada no Mindu', 'Pais e Filhos', 'Corrida às Terças',
+    'Trocas de Livros', 'Estudos para Concurso', 'Mães da Cidade',
+    'Reformas e Consertos', 'Pesca e Trilha'
+  ])[i],
+  (array[
+    'Grupo para combinar caminhadas cedo, antes do calor apertar.',
+    'Conversas sobre escola, atividades e passeios com as crianças.',
+    'Encontro fixo às terças, ritmo leve, todo mundo é bem-vindo.',
+    'Cada um traz um livro lido e leva outro para casa.',
+    'Material, cronograma e apoio para quem está estudando.',
+    'Espaço reservado para as mães trocarem experiências do dia a dia.',
+    'Indicações de quem faz um bom serviço e resolve rápido.',
+    'Roteiros de fim de semana, trilhas leves e pontos de pesca.'
+  ])[i],
+  (case when i in (6, 8) then 'private' else 'public' end)::group_visibility,
+  '00000000-0000-4000-8000-000000000001',
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  now() - make_interval(days => 80 - (i * 3))
+from generate_series(1, 8) as i
+on conflict (id) do nothing;
+
+-- Sobreposição proposital: cada membro entra em (i % 3) + 1 grupos, então
+-- muita gente aparece em mais de um.
+insert into public.group_memberships (group_id, user_id, role, status, joined_at)
+select distinct
+  ('60000000-0000-4000-8000-' || lpad(to_hex(1 + ((i + g) % 8)), 12, '0'))::uuid,
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  (case when i <= 8 and g = 0 then 'owner' else 'member' end)::group_membership_role,
+  'approved'::group_membership_status,
+  now() - make_interval(days => 70 - (i % 70))
+from generate_series(1, 300) as i, generate_series(0, 2) as g
+where g <= (i % 3)
+on conflict (group_id, user_id) do nothing;
+
+-- ── ~400 posts de texto ao longo dos últimos 30 dias ──────────────────────
+-- Autoria desigual de propósito: 4 em cada 5 posts saem de 20 pessoas muito
+-- ativas, o resto se espalha pela cauda longa silenciosa. É assim que uma
+-- comunidade real se comporta, e é o que a auditoria de densidade precisa ver.
+
+insert into public.posts (
+  id, locality_id, user_id, group_id, post_type, content, created_at
+)
+select
+  ('80000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  '00000000-0000-4000-8000-000000000001',
+  (
+    '30000000-0000-4000-8000-'
+    || lpad(to_hex(case when i % 5 <> 0 then 1 + (i % 20) else 21 + (i % 279) end), 12, '0')
+  )::uuid,
+  case
+    when i % 7 = 0
+      then ('60000000-0000-4000-8000-' || lpad(to_hex(1 + (i % 8)), 12, '0'))::uuid
+    else null
+  end,
+  'text',
+  (array[
+    'A feira do fim de semana abriu mais cedo e estava tranquila na primeira hora.',
+    'Quem já passou no trecho novo da ciclovia? Achei bem sinalizado e seguro.',
+    'Chuva forte de manhã, mas o trânsito fluiu melhor do que eu esperava.',
+    'Dica rápida: a padaria da esquina abre às cinco e o pão sai quentinho.',
+    'Alguém indica um lugar bom para levar as crianças no domingo de manhã?',
+    'Terminei o curso de manutenção que comecei em janeiro e recomendo bastante.',
+    'O parque ficou cheio no fim da tarde, clima ótimo para caminhar.',
+    'Encontrei um grupo de corrida que sai cedo às terças e às quintas.',
+    'Estou organizando um mutirão para limpar a área do campinho no sábado.',
+    'Passei na biblioteca e tem oficina gratuita de leitura para os pequenos.',
+    'Boa notícia: o posto de saúde voltou a atender aos sábados pela manhã.',
+    'Resolvi a papelada da mudança numa manhã só, foi mais rápido do que imaginei.'
+  ])[1 + (i % 12)]
+  || repeat(
+    (array[
+      ' Vale muito a pena conferir com calma.',
+      ' Se alguém quiser ir junto, é só avisar por aqui.',
+      ' Depois eu volto para contar como foi.',
+      ' Achei que seria mais complicado, mas deu tudo certo no fim.'
+    ])[1 + (i % 4)],
+    1 + (i % 4)
+  ),
+  now() - make_interval(days => 30) + make_interval(mins => (i * 108))
+from generate_series(1, 400) as i
+on conflict (id) do nothing;
+
+-- Uma fração com reações e comentários, para o feed não parecer inerte.
+insert into public.post_reactions (post_id, user_id, created_at)
+select distinct
+  ('80000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  ('30000000-0000-4000-8000-' || lpad(to_hex(1 + ((i * 7 + r * 31) % 300)), 12, '0'))::uuid,
+  now() - make_interval(days => 29) + make_interval(mins => (i * 110))
+from generate_series(1, 400) as i, generate_series(1, 5) as r
+where i % 3 = 0 and r <= 1 + (i % 5)
+on conflict (post_id, user_id) do nothing;
+
+insert into public.comments (post_id, user_id, content, created_at)
+select
+  ('80000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  ('30000000-0000-4000-8000-' || lpad(to_hex(1 + ((i * 13 + c * 47) % 300)), 12, '0'))::uuid,
+  (array[
+    'Também achei, passei por lá ontem.',
+    'Obrigada pela dica, vou tentar no fim de semana.',
+    'Alguém sabe se funciona também no feriado?',
+    'Estive lá na semana passada e recomendo.'
+  ])[1 + ((i + c) % 4)],
+  now() - make_interval(days => 28) + make_interval(mins => (i * 112 + c * 20))
+from generate_series(1, 400) as i, generate_series(1, 3) as c
+where i % 5 = 0 and c <= 1 + (i % 3);
+
+-- ── 4 eventos passados e 6 futuros ────────────────────────────────────────
+-- Os locais evitam qualquer termo de logradouro ou instalação militar, que
+-- events_venue_check barra.
+
+insert into public.events (
+  id, organizer_id, locality_id, title, description, starts_at, ends_at,
+  venue, status, created_at
+)
+select
+  ('70000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  ('30000000-0000-4000-8000-' || lpad(to_hex(1 + (i % 12)), 12, '0'))::uuid,
+  '00000000-0000-4000-8000-000000000001',
+  (array[
+    'Caminhada matinal no parque', 'Feira de troca de livros',
+    'Roda de conversa sobre estudos', 'Mutirão de limpeza do campinho',
+    'Piquenique das famílias', 'Torneio amistoso de futebol',
+    'Oficina de leitura para crianças', 'Encontro do grupo de corrida',
+    'Tarde de jogos de tabuleiro', 'Café da manhã coletivo'
+  ])[i],
+  'Encontro aberto a quem é da comunidade. Chegue alguns minutos antes.',
+  case when i <= 4
+    then now() - make_interval(days => 5 * i)
+    else now() + make_interval(days => 3 * (i - 4))
+  end,
+  case when i <= 4
+    then now() - make_interval(days => 5 * i) + interval '2 hours'
+    else now() + make_interval(days => 3 * (i - 4)) + interval '2 hours'
+  end,
+  (array[
+    'Parque do Mindu', 'Centro de Convivência', 'Praça da Saudade',
+    'Campinho do Coroado', 'Parque dos Bilhares', 'Ginásio Municipal',
+    'Biblioteca Pública', 'Parque do Mindu', 'Centro de Convivência',
+    'Praça da Saudade'
+  ])[i],
+  (case when i <= 4 then 'completed' else 'upcoming' end)::event_status,
+  now() - interval '40 days'
+from generate_series(1, 10) as i
+on conflict (id) do nothing;
+
+-- ── ~15 denúncias abertas ─────────────────────────────────────────────────
+-- Um operador único olhando 15 denúncias abertas é um teste de usabilidade
+-- diferente de olhar 2. O autor nunca é o denunciante: reports_block_self
+-- levanta exceção nesse caso.
+
+insert into public.reports (
+  reporter_user_id, target_type, target_id, reason, status, created_at
+)
+select
+  (
+    select pr.user_id
+    from public.profiles pr
+    where pr.user_id <> p.user_id
+      and pr.locality_id = '00000000-0000-4000-8000-000000000001'
+    order by pr.user_id
+    limit 1
+  ),
+  'post'::report_target_type,
+  p.id,
+  (array[
+    'Mensagem parece fora do tema da comunidade.',
+    'Conteúdo repetido várias vezes no mesmo dia.',
+    'Tom agressivo com outro morador nos comentários.',
+    'Parece divulgação de serviço sem relação com o grupo.',
+    'Informação incorreta sobre horário de atendimento.'
+  ])[1 + (row_number() over (order by p.created_at))::int % 5],
+  'open'::report_status,
+  now() - make_interval(days => 12) + make_interval(hours => 7)
+from public.posts p
+where p.id between '80000000-0000-4000-8000-000000000001'::uuid
+              and '80000000-0000-4000-8000-00000000000f'::uuid;
 
 commit;

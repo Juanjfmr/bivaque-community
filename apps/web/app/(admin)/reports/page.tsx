@@ -3,6 +3,11 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
+// The operator panel reads through `service_role` behind `is_current_user_operator`
+// and has no possible static form. Without this, `next build` prerenders it and
+// throws on the missing NEXT_PUBLIC_* credentials before any request exists.
+export const dynamic = "force-dynamic"
+
 const ADMIN_NOTES_THRESHOLD = 1
 
 async function getAuthedUserId(): Promise<string | null> {

@@ -7,7 +7,7 @@ test.describe("onboarding: verified holder and invited family", () => {
     await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
 
     // The login page renders the Google OAuth button and magic link form
-    await expect(page.getByRole("button", { name: "Entrar com Google" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Enviar link mágico" })).toBeVisible()
 
     // Navigate to the consent page
@@ -33,7 +33,9 @@ test.describe("onboarding: verified holder and invited family", () => {
   test("onboarding page shows verification flow", async ({ page }) => {
     await page.goto("/onboarding")
 
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
+    // Onboarding is a `(preauth)` route with no shell header, so its own H1 is
+    // the landmark rather than the Bivaque wordmark.
+    await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Verificar elegibilidade" })).toBeVisible()
     await expect(page.getByRole("button", { name: /lista de espera/ })).toBeVisible()
 

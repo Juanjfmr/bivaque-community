@@ -64,9 +64,17 @@ npx pnpm@11.18.0 test:e2e    # playwright test (needs Docker-free; starts its ow
 - Supabase commands need Docker and a running stack: `npx pnpm@11.18.0 exec supabase start` FIRST,
   then `db:reset` / `test:db` / `db:lint`. `db:reset` is destructive — local only, never `--linked`.
 - Canonical db test script is **`test:db`** (`supabase test db`). `db:test` is forbidden — a scope
-  test asserts it does not exist. CI runs: lint → typecheck → test → build → supabase start →
-  db:reset → test:db → db:lint → `playwright install --with-deps chromium` → test:e2e → upload
-  artifacts (always).
+  test asserts it does not exist. CI runs: lint → typecheck → test → secrets → supabase start →
+  write env → build → types drift → db:reset `--no-seed` → test:db → db:lint →
+  `playwright install --with-deps chromium` → db:reset (with seed) → test:e2e → upload artifacts
+  (always).
+- **The two resets are deliberate.** pgTAP compares the exact set of profiles visible in Manaus
+  against its own fixtures, so it must run against a database WITHOUT the development seed; E2E
+  needs the opposite, because it authenticates as a seeded user. Collapsing them back into one
+  reset turns six profile-listing asserts red.
+- **The build needs the env before it runs.** Next inlines `NEXT_PUBLIC_*` at build time, so
+  `supabase start` and the step that writes `apps/web/.env.local` both precede `pnpm build`.
+  Moving the build earlier reintroduces the prerender crash that kept CI red from `78d4318` on.
 
 ## Visual build loop (UI work)
 
@@ -180,13 +188,14 @@ provider** — the global `toast()` helper only renders through it.
   `supabase/tests/fixtures/foundation.inc` use `example.invalid` identities and fixed UUIDs and are
   included inside each transaction (auto-rollback). Never put real personal data in fixtures.
 - **`seed.sql` is a separate concept from the pgTAP fixtures, and it does carry users.** It is the
-  durable LOCAL development seed (the E2E account plus whatever the operator and the §10.2 visual
-  capture need) that runs only on `supabase db reset --local`. Its credentials are public and
-  disposable by design. pgTAP fixtures stay transactional and stay in `supabase/tests/*` — the two
-  must not be merged.
+  durable LOCAL development seed (two runbook accounts plus ~300 Manaus members, 400 posts, groups,
+  events and open reports) that the operator, the E2E suite and the §10.2 visual capture all need.
+  Its credentials are public and disposable by design. pgTAP fixtures stay transactional and stay
+  in `supabase/tests/*` — the two must not be merged.
 - **Seeding `auth.users` requires the token columns as `''`, never NULL.** GoTrue scans
   `confirmation_token` and its siblings as Go `string`; a NULL makes the password grant fail with
-  HTTP 500, not the 400 you would expect from bad credentials.
+  HTTP 500 (`converting NULL to string is unsupported`), not the 400 you would expect from a bad
+  password hash.
 - Client types: `npx supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts`
   — generate ONLY the `public` schema, never the `private` trust schema.
 - Privacy boundary: `private` schema (`verification_outcomes`, `family_invitations`,
@@ -218,11 +227,14 @@ provider** — the global `toast()` helper only renders through it.
   `apps/web/.env.local`, and throw when neither supplies one — see
   `tests/e2e/persistent-login.spec.ts`. The secrets scan enforces this for anything bound to a
   `password`, `secret`, `api_key` or `credential` name.
-- **CI secrets required for the E2E gate.** Two env vars must be configured in `Settings →
-  Secrets and variables → Actions` for the `Root E2E tests` step to pass:
-  `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Without them `next start`
-  fails before any spec runs. This is repository-side configuration, not a code contract —
-  the test:e2e gate will stay red until the secrets are in place.
+- **No repository secrets are needed for the E2E gate.** An earlier revision of this file said
+  `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` had to be configured under
+  `Settings → Secrets and variables → Actions`. That is obsolete: CI now derives both from the
+  local stack (`supabase status -o env`) and writes `apps/web/.env.local` before the build.
+- **Specs are transpiled to CJS — `import.meta` is not available in them.** `scripts/visual/*.mjs`
+  is real ESM and may use `import.meta.dirname`; a spec may not. The emitted `require` fails as
+  "require is not defined in ES module scope" at load time and aborts collection for the WHOLE
+  suite, reporting `Total: 0 tests in 0 files`. Resolve paths from `process.cwd()` instead.
 
 ## Style
 

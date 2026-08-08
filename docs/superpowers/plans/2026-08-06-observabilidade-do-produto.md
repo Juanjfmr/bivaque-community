@@ -180,7 +180,7 @@ Consequência a registrar: nada depois do build jamais rodou no CI. `test:db`,
 `db:lint` e `test:e2e` não estão "falhando" — estão **inalcançáveis**. Não há
 evidência de que passem.
 
-- [ ] **Step 0: Marcar as rotas `(admin)` como dinâmicas**
+- [x] **Step 0: Marcar as rotas `(admin)` como dinâmicas**
 
   Em `apps/web/app/(admin)/reports/page.tsx` (e no `(admin)/layout.tsx`, se o
   Next ainda tentar prerenderizar), declarar:
@@ -196,7 +196,7 @@ evidência de que passem.
   Verificação: `npx pnpm@11.18.0 build` precisa passar **sem** `.env.local`
   presente. Renomeie o arquivo temporariamente para confirmar.
 
-- [ ] **Step 1: Reordenar o workflow**
+- [x] **Step 1: Reordenar o workflow**
 
   Em `.github/workflows/pull-request-ci.yml`, mover o step
   `Start local Supabase` (`pnpm exec supabase start`) para **antes** do step
@@ -209,7 +209,7 @@ evidência de que passem.
   → Install Playwright → Root E2E tests
   ```
 
-- [ ] **Step 2: Adicionar o step que escreve o env**
+- [x] **Step 2: Adicionar o step que escreve o env**
 
   Logo após `Start local Supabase`:
 
@@ -243,7 +243,7 @@ evidência de que passem.
   `Root E2E tests` precisa **chegar a executar** (pode falhar em asserção nesta
   Task — não pode falhar em coleta nem em erro de ambiente).
 
-- [ ] **Step 4: Commit isolado**
+- [x] **Step 4: Commit isolado**
 
   ```
   ci: provision local Supabase env before the web build
@@ -275,7 +275,7 @@ com zero conteúdo.
   Constraint `post_photo_requires_photo_type`: `photo_path` só com
   `post_type = 'photo'`. Use `text` para o volume.
 
-- [ ] **Step 1: Criar os dois usuários exigidos pelo runbook**
+- [x] **Step 1: Criar os dois usuários exigidos pelo runbook**
 
   Reescrever `supabase/seed.sql` preservando o comentário sobre Manaus ser
   dado de referência da migration, e **substituindo** a regra atual sobre
@@ -337,7 +337,7 @@ com zero conteúdo.
   em 375px, a primeira dobra tem que estar cheia e precisar de scroll. Se
   couber tudo na tela, o volume está baixo demais para auditar densidade.
 
-- [ ] **Step 3: Verificação**
+- [x] **Step 3: Verificação**
 
   ```bash
   npx pnpm@11.18.0 db:reset
@@ -360,7 +360,7 @@ com zero conteúdo.
 
   Espere HTTP 200 com `access_token`. Se vier 400, o hash da senha está errado.
 
-- [ ] **Step 4: Commit isolado**
+- [x] **Step 4: Commit isolado**
 
   ```
   feat(db): durable local seed with Manaus fixtures
@@ -390,7 +390,7 @@ app diz `"Continuar com Google"`
 `/profile` renderiza `"Perfil não encontrado."` — o usuário não tinha linha em
 `profiles`. A Task 2 resolve sem tocar no spec.
 
-- [ ] **Step 1: Defaults no helper para o CI funcionar sem `.env.local`**
+- [x] **Step 1: Defaults no helper para o CI funcionar sem `.env.local`**
 
   Em `tests/e2e/helpers/session.ts`, `requireEnv()` hoje lança se
   `USER_PASSWORD` não resolver. Como o seed passa a garantir credenciais
@@ -410,7 +410,7 @@ app diz `"Continuar com Google"`
   Manter a resolução por env/`.env.local` na frente do default, para que uma
   máquina com credenciais próprias continue mandando.
 
-- [ ] **Step 2: Grupo A — autenticar em vez de simular**
+- [x] **Step 2: Grupo A — autenticar em vez de simular**
 
   Nos 12 testes, trocar a chamada a `setConsentCookie(page)` por
   `await seedSession(context)` (o helper já instala **os dois** cookies:
@@ -430,7 +430,7 @@ app diz `"Continuar com Google"`
 
   Se `setConsentCookie` ficar sem uso, remova-o.
 
-- [ ] **Step 3: Grupo B — alinhar o texto ao app**
+- [x] **Step 3: Grupo B — alinhar o texto ao app**
 
   Trocar `"Entrar com Google"` por `"Continuar com Google"` em
   `manaus-pilot-full-journey.spec.ts` e `onboarding-holder-family.spec.ts`.
@@ -451,7 +451,7 @@ app diz `"Continuar com Google"`
   Alvo: **333 passando, 0 falhando**. Qualquer teste restante em vermelho é
   achado novo — documente antes de mexer.
 
-- [ ] **Step 5: Commit isolado**
+- [x] **Step 5: Commit isolado**
 
   ```
   test(e2e): authenticate the specs that assert shell content
