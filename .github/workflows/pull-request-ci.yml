@@ -51,11 +51,24 @@ jobs:
       - name: Secrets scan
         run: pnpm test:secrets
 
-      - name: Build web app
-        run: pnpm build
-
       - name: Start local Supabase
         run: pnpm exec supabase start
+
+      # Next inlines NEXT_PUBLIC_* at build time, so the stack has to be up and
+      # the env written before `pnpm build` runs - not after it.
+      - name: Write local Supabase env
+        run: |
+          pnpm exec supabase status -o env > /tmp/supabase.env
+          . /tmp/supabase.env
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+          } > apps/web/.env.local
+
+      - name: Build web app
+        run: pnpm build
 
       - name: Check generated types drift
         run: |
