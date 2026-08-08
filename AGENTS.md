@@ -120,6 +120,12 @@ reproduces from a clean state before attributing it to code.**
 
 ## Harness (OpenCode)
 
+- **The Bivaque code graph is `codebase-memory-mcp` — NOT graphify.** The project index is
+  `project: "bivaque-community"` (`~/.local/bin/codebase-memory-mcp.exe cli <tool> --project
+  bivaque-community`). Consult it for architecture/symbol questions (`search_graph`,
+  `trace_path`, `get_architecture`, `get_code_snippet`, `detect_changes`). Never run the
+  graphify pipeline (`graphify-out/` does not exist here and is not the tool for this repo).
+  Tools require the `project` param — without it they fail.
 - `.opencode/opencode.json` holds the project MCP config. It merges over the global one at
   `~/.config/opencode/opencode.json`, where destructive-command guard-rails live (`--linked` is
   denied, `db:reset` asks).
