@@ -307,7 +307,7 @@ function OnboardingFlow() {
   }
 
   return (
-    <div className="grid flex-1 place-items-center px-6 py-12">
+    <div className="grid flex-1 place-items-center overflow-x-hidden px-6 py-12">
       <section
         className="flex w-full max-w-sm min-w-0 flex-col gap-6"
         aria-labelledby="onboarding-heading"
