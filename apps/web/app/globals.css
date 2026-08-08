@@ -131,6 +131,13 @@ body {
     min-width: var(--control-min-height);
   }
 
+  /* Wrapper do Tooltip do HeroUI no rail retraído: tem role="button" e é o
+     elemento que o auditor mede, mas display:block herda a largura do rail
+     estreito (39px) sem acompanhar o <a> filho (44px via min-w-11). */
+  .tooltip__trigger {
+    min-width: var(--control-min-height);
+  }
+
   /* HiddenSelect nativo que o react-aria renderiza dentro do Select do HeroUI:
      nesta versão ele sai sem o style visually-hidden (position static, 26x23
      visível, title vazio). O Select do produto não usa name — o valor flui via
