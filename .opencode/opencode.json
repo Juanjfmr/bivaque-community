@@ -29,9 +29,7 @@
     // binário é manual (re-baixar a release); o índice se atualiza sozinho.
     "codebase-memory-mcp": {
       "type": "local",
-      "command": [
-        "C:\\Users\\juana\\.local\\bin\\codebase-memory-mcp.exe"
-      ],
+      "command": ["C:\\Users\\juana\\.local\\bin\\codebase-memory-mcp.exe"],
       "enabled": true
     },
 
