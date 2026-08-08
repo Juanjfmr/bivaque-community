@@ -104,13 +104,13 @@ function LeanOverflowMenu({
 
   return (
     <Dropdown>
-      <Dropdown.Trigger>
+      <Dropdown.Trigger aria-label="Abrir menu da publicacao">
         <Button
           isIconOnly
           variant="tertiary"
           size="sm"
-          aria-label="Mais opções"
-          className="rounded-full"
+          aria-label="Mais opcoes"
+          className="rounded-full min-h-11 min-w-11"
         >
           <MoreHorizontal size={18} aria-hidden="true" />
         </Button>
