@@ -125,6 +125,10 @@ body {
     min-height: var(--control-min-height);
   }
 
+  .button {
+    min-width: var(--control-min-height);
+  }
+
   .skeleton--shimmer:after {
     animation-duration: 1.4s;
   }
