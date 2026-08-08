@@ -21,16 +21,28 @@
       "enabled": false
     },
 
-    // Este repo não tem grafo. Gere um com `graphify` antes de ligar, e aponte
-    // para o graph.json DESTE repo — o de `~/bivaque` é de outro projeto e
-    // responde com confiança sobre o codebase errado.
-    "graphify": {
+    // Grafo de código local — codebase-memory-mcp 0.9.1-rc.1 (instalado
+    // manualmente em ~/.local/bin, verificado via SHA-256 + gh attestation
+    // verify). Consulta estrutural que o agente chama sozinho: trace_path,
+    // detect_changes, search_graph, get_architecture. Indexa em
+    // ~/.cache/codebase-memory-mcp; sem rede, sem API key. Atualização do
+    // binário é manual (re-baixar a release); o índice se atualiza sozinho.
+    "codebase-memory-mcp": {
       "type": "local",
-      "command": [
-        "C:\\Users\\juana\\.local\\bin\\graphify-mcp.exe",
-        "C:\\Users\\juana\\bivaque-community\\graphify-out\\graph.json"
-      ],
-      "enabled": false
+      "command": ["C:\\Users\\juana\\.local\\bin\\codebase-memory-mcp.exe"],
+      "enabled": true
+    },
+
+    // Debugger de browser (console, rede, performance, DOM). Complementa o
+    // loop visual: loop.mjs FOTOGRAFA, este DEBUGA — não substitui nem
+    // conflita. Restrições: (1) nunca usar para dirigir o loop visual —
+    // browser de captura é só via scripts/visual/loop.mjs; (2) não navegar
+    // no app local durante janelas db:reset → test:db (gatilho do perfil
+    // fantasma "Visual Capture" — ver armadilhas no AGENTS.md).
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "chrome-devtools-mcp@latest"],
+      "enabled": true
     }
   }
 }

@@ -1,0 +1,71 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - ".visual/**"
+  workflow_dispatch:
+
+concurrency:
+  group: claude-review-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write  # exigido pelo claude-code-action@v1 (OIDC token)
+
+jobs:
+  review:
+    name: Claude Code review (DeepSeek V4 Pro)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          # Chave DeepSeek (formato Anthropic em api.deepseek.com/anthropic).
+          # Rota "tolerada sem suporte" — ver AGENTS.md/notas de decisão.
+          anthropic_api_key: ${{ secrets.DEEPSEEK_API_KEY }}
+          settings: |
+            {
+              "env": {
+                "ANTHROPIC_BASE_URL": "https://api.deepseek.com/anthropic",
+                "ANTHROPIC_DEFAULT_OPUS_MODEL": "deepseek-v4-pro",
+                "ANTHROPIC_DEFAULT_SONNET_MODEL": "deepseek-v4-pro",
+                "ANTHROPIC_DEFAULT_HAIKU_MODEL": "deepseek-v4-flash",
+                "CLAUDE_CODE_SUBAGENT_MODEL": "deepseek-v4-flash"
+              }
+            }
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            HEAD SHA: ${{ github.event.pull_request.head.sha }}
+
+            Revise este PR do Bivaque Community (Next.js 16 + TypeScript + Supabase + pnpm).
+            Leia o AGENTS.md antes. Foque em:
+
+            1. **Spec/contrato**: o diff cumpre o que o título/comentário promete?
+            2. **RLS/Supabase**: scope column com policy na MESMA migration (Padrão 6 —
+               a falha recorrente do repo). RLS forcada, grants mínimos.
+            3. **Testes**: cada via de permissão tem teste positivo E negativo?
+            4. **Bugs/segurança**: secrets, injeção, dead code, estilo Biome.
+
+            Poste comentários inline via MCP do GitHub apenas nos pontos que
+            exigem ação. Termine com um resumo: APROVADO / MUDANÇAS PEDIDAS e
+            os 3 achados mais importantes. Não invente problemas — só o que é real.
+          claude_args: |
+            --model deepseek-v4-pro
+            --max-turns 20
+            --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git show:*),Bash(git log:*),mcp__github_inline_comment__create_inline_comment"
+            --disallowedTools "Bash(pnpm install*),Bash(npx pnpm*),Edit,Write"
+
+      - name: Resultado
+        run: echo "Review concluído — ver comentários no PR"
