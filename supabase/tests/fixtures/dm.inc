@@ -167,7 +167,7 @@ values (
   'accepted',
   '10000000-0000-4000-8000-000000000009',
   '2026-08-03 12:00:00+00',
-  '2026-08-09 12:00:00+00'
+  now() + interval '7 days'
 );
 
 insert into private.family_account_links (
