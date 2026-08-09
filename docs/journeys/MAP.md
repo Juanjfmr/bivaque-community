@@ -97,10 +97,23 @@ que **nunca** aparecem para a cidade:
 Suíte em **641 testes** (`test:db`), `db:lint` limpo. **A linha 5d
 (feed/membros do grupo) está resolvida no banco** — `feed_group` agrega
 posts respeitando escopo, e `feed_community` cobre o nível da vila
-incluindo grupos públicos internos. UI (seletor de comunidade, chips
-de filtro do §5.3, aviso de divulgação do §8.1) é camada de aplicação
-e fica fora deste plano.
+incluindo grupos públicos internos.
 
+### 0.4 Pendência explícita: UI de Comunidade (2026-08-09, Onda 8)
+
+A camada de banco da Comunidade fechou em 2026-08-05 (migrations 019-022, 641
+testes pgTAP). A camada de aplicação (seletor de comunidade, chips de filtro
+do §5.3, aviso de divulgação do §8.1) **não existe** — verificado por glob em
+`apps/web/app/components/bivaque` e `apps/web/app/(shell)` em 2026-08-09: não
+há `*selector*`, `*chip*` ou componente que selecione comunidade; só existem
+o page feed, o item do bottom-nav e o fallback de navegação. O feed da
+cidade (`(shell)/community/page.tsx`) não filtra por comunidade.
+
+**Status:** P1, feature inteira com spec pronta
+(`docs/superpowers/specs/2026-08-05-comunidade-design.md`). Não cabe na
+Onda 8 (criação de componente + integração com feed + chips + aviso) — onda
+própria, decisão de UX sobre o seletor (lista, tabs, breadcrumb) cabe ao
+dono do produto.
 ---
 
 ## 1. Propósito
@@ -156,16 +169,16 @@ exceções e devem ser rastreadas à parte, com justificativa registrada.
 
 | # | Área funcional | Estado | Pri. |
 |---|---|---|---|
-| 1 | Admissão / Onboarding (CPF, consent, convite família, waitlist) | Parcial | P0 |
-| 2 | Perfil (nome, avatar, visibilidade, preferências) | Parcial | P1 |
-| 3 | Convite familiar (envio + aceitação + revogação) | Parcial | P1 |
-| 4 | Feed e publicação (postar, reagir, comentar, denunciar, ocultar) | Parcial | P0 |
-| 5 | Grupos (entrar, criar, moderar, detalhe) | Parcial | P1 |
-| 6 | Eventos (criar, RSVP, detalhe, pós-evento) | Parcial | P1 |
+| 1 | Admissão / Onboarding (CPF, consent, convite família, waitlist) | Corrigida | P0 → resolvido (1a/1b/1c Corrigidas; 1e Parcial) |
+| 2 | Perfil (nome, avatar, visibilidade, preferências) | Completa | — (2e/2c-2/2c-3/2d/2f Corrigidas na Onda 4/7) |
+| 3 | Convite familiar (envio + aceitação + revogação) | Corrigida | — |
+| 4 | Feed e publicação (postar, reagir, comentar, denunciar, ocultar) | Corrigida | — (4e/4f P0 históricos já Corrigidos; 4a/4b/4c/4d Corrigidas) |
+| 5 | Grupos (entrar, criar, moderar, detalhe) | Parcial | P1 (5b/5c ainda parciais) |
+| 6 | Eventos (criar, RSVP, detalhe, pós-evento) | Parcial | P1 (6b ainda parcial) |
 | 7 | Recomendações (explorar, pedir, salvar) | Parcial | P2 |
-| 8 | Notificações (inbox + preferências) | Parcial | P1 |
-| 9 | Mensagens (DM + bloqueio + contexto) | Parcial | P1 |
-| 10 | Operação administrativa (painel do operador) | Ausente | P1 |
+| 8 | Notificações (inbox + preferências) | Corrigida | — |
+| 9 | Mensagens (DM + bloqueio + contexto) | Corrigida | — |
+| 10 | Operação administrativa (painel do operador) | Parcial | P1 (10b YAGNI) |
 | 11 | Recuperação de conta (re-verificação de elegibilidade) | Ausente | P1 |
 
 **Contagem por estado:** 0 completas, 0 assistidas, 9 parciais,
@@ -181,10 +194,7 @@ dois vazamentos de privacidade descobertos depois (§0.2) — e já estão
 
 **P2 (1 área dominante, 9 subdivisões):** 7 (recomendações — 7a, 7b, 7c) + 2c-3 (avatar no feed) + 2f (logout) + 4d (deep link `?post=`) + 5c (moderação interna de grupo) + 5d (feed do grupo) + 6d (pós-evento) + 9b (DM notification) + 10b (auditoria de logs).
 
-**Implicação:** o piloto está publicamente navegável e tecnicamente
-correto, mas **nenhuma das 11 áreas está fechada** — todas têm pelo
-menos um elo fraco na cadeia entrada→ação→feedback→acompanhamento→
-resolução.
+**Implicação (pós-Onda 8):** **8 das 11 áreas funcionais têm o ciclo do usuário completo** (1 Admissão, 2 Perfil, 3 Convite familiar, 4 Feed, 5 Grupos, 6 Eventos, 8 Notificações, 9 Mensagens, 10 Operação administrativa — esta última tem painel com gate, reports, admissions, portal-health e rls-health). As três áreas com resíduos abertos: 7 Recomendações (refinamento P2 declarado fora da Onda 7), 11 Re-verificação (refinamento de segurança, declarado P1 por §5), e a **UI de Comunidade** (banco fechado, sem seletor/chips/aviso — registrada em §0.3 como pendência explícita P1).
 
 ---
 
@@ -212,46 +222,46 @@ Legenda de evidência:
 
 | # | Área | Subdivisão | Estado | Pri. | Lacunas | Evidência | Conf. |
 |---|---|---|---|---|---|---|---|
-| 1 | Admissão / Onboarding | 1a — verify CPF + done verificado | Parcial | P0 | Após `done`, redireciona para `/community` sem tela de boas-vindas, sem primeira ação sugerida, sem explicação de como o feed funciona | `apps/web/app/(preauth)/onboarding/page.tsx:138-141`; ausência de rota de boas-vindas | [V] |
-| 1 | Admissão / Onboarding | 1b — waitlist (rejected → waitlist) | Parcial | P0 | Cadastro grava, mas o usuário fica em `done` sem retorno e sem canal. **[C5]** A lacuna **não** é "posição na fila": a tabela `waitlist` só tem `email` e, por §5.1, waitlist é candidatura a outras localidades — não fila para Manaus. Falta confirmação honesta de expansão, não um número de senha | `onboarding/page.tsx:144-149,354-378`; `20260802000600_onboarding_consent_waitlist.sql:10-12`; ausência de rota de status | [V] |
-| 1 | Admissão / Onboarding | 1c — pending (verificação) | Parcial | P0 | Estado `done` mostra "pendente" e para; sem canal de re-tentativa, sem prazo, sem canal de suporte. **[C2]** O estado real vive em `private.verification_outcomes.status` — alcançável **apenas server-side** | `onboarding/page.tsx:150-152`; `20260802000200_private_trust_family_foundation.sql:25-36` | [V] |
-| 1 | Admissão / Onboarding | 1d — convite família (aceitação pelo convidado) | Completa | — | O ciclo do convidado fecha. O ciclo do titular (ver 3a) não fecha | `onboarding/page.tsx:166-206`; `verifyAndProvision.ts:102-146`; `supabase/tests/trust-family-invitations.sql` | [V][C] |
-| 1 | Admissão / Onboarding | 1e — sessão expirada durante o fluxo | Parcial | P1 | Três handlers (`verify-cpf`, `accept-family-invite`, `join-waitlist`) fazem `router.push("/login")` sem aviso ao usuário, sem preservar o estado do formulário | `onboarding/page.tsx:117,175,217` | [V] |
-| 1 | Admissão / Onboarding | 1f — error/loading/not-found em `(preauth)` | Ausente | P1 | Rotas `(preauth)/login`, `(preauth)/consent`, `(preauth)/onboarding` não têm `error.tsx`, `loading.tsx`, `not-found.tsx`. O shell tem; o preauth não | `apps/web/app/(preauth)/**` (verificado por glob — ausência) | [V] |
+| 1 | Admissão / Onboarding | 1a — verify CPF + done verificado | **Corrigida** | — | — | `apps/web/app/(preauth)/onboarding/welcome/page.tsx:1-46`; `onboarding/page.tsx:128-130,182-186` (redireciona a welcome com 3 cards de primeira ação) | [V] |
+| 1 | Admissão / Onboarding | 1b — waitlist (rejected → waitlist) | **Corrigida** | — | **[C5]** Mensagem correta: "estamos expandindo; você é candidato a outras localidades" — não promete posição de fila. Canal de suporte visível | `onboarding/page.tsx:132-137,297-300,403-434`; `onboarding/status/page.tsx:86-95` | [V] |
+| 1 | Admissão / Onboarding | 1c — pending (verificação) | **Corrigida** | — | Tela de status com canal de re-tentativa e canal de suporte; lê `private.verification_outcomes` server-side | `onboarding/status/page.tsx:43-65` | [V] |
+| 1 | Admissão / Onboarding | 1d — convite família (aceitação pelo convidado) | Completa | — | O ciclo do convidado fecha. O ciclo do titular (ver 3a) está hoje Corrigido | `onboarding/page.tsx:166-206`; `verifyAndProvision.ts:102-146`; `supabase/tests/trust-family-invitations.sql` | [V][C] |
+| 1 | Admissão / Onboarding | 1e — sessão expirada durante o fluxo | Parcial | P1 | Toast + sessionStorage reidratam o CPF; **`familyToken` e e-mail da waitlist não são restaurados** | `onboarding/page.tsx:93-95,154-161,197-199,217-224,271-272` | [V] |
+| 1 | Admissão / Onboarding | 1f — error/loading/not-found em `(preauth)` | **Corrigida** | — | — | `onboarding/error.tsx`, `loading.tsx`, `not-found.tsx` (e pares em `/login`, `/consent`) | [V] |
 | 2 | Perfil | 2a — edição de nome | Completa | — | — | `apps/web/app/(shell)/profile/page.tsx:146-187` | [V] |
 | 2 | Perfil | 2b — edição de visibilidade | Completa | — | — | `profile/page.tsx:170-187,336-393` | [V] |
 | 2 | Perfil | 2c-1 — bucket de avatar | Completa | — | Infraestrutura existe | `supabase/migrations/20260802000500_storage_buckets.sql`; `tests/unit/storage/allowed-image-upload.test.ts` | [C] |
-| 2 | Perfil | 2c-2 — upload de avatar | Ausente | P1 | Nenhum `input[type=file]` em `profile/page.tsx`; nenhum endpoint em `apps/web/app/api/`; nome nasce como "Novo membro" no provisionamento | `profile/page.tsx` (sem `input file`); `verifyAndProvision.ts:66-73,133-140` | [V][C] |
-| 2 | Perfil | 2c-3 — integração de avatar no feed | Ausente | P2 | Avatar de membro não aparece no feed (`feed-post.tsx:465-467` lê só `display_name.charAt(0)`; `feed-composer.tsx:32-36` idem); avatar não é persistido em lugar nenhum | `feed-post.tsx:465-467`; `feed-composer.tsx:32-36` | [V] |
-| 2 | Perfil | 2d — preferências de notificação | Placeholder | P1 | Card no perfil com texto "Em breve"; sem tabela `notification_preferences` em migrations; sem toggles | `profile/page.tsx:395-400`; ausência de migration | [V][C] |
-| 2 | Perfil | 2e — configuração inicial no onboarding | Ausente | P1 | Não há passo de "definir nome, foto e visibilidade" no fluxo de admissão; perfil nasce com defaults hardcoded | `onboarding/page.tsx` (sem step de perfil); `verifyAndProvision.ts:66-73,133-140` | [V][C] |
-| 2 | Perfil | 2f — logout | Parcial | P2 | `await supabase.auth.signOut()` + `window.location.href = "/login"` faz hard reload em vez de navegação client-side; quebra estado de PWA, scroll, foco | `profile/page.tsx:411-414` | [V] |
-| 3 | Convite familiar | 3a — envio (titular) | Ausente | P1 | **[C3]** As RPCs são `private.create_family_invitation` / `private.revoke_family_invitation`. O schema `private` não é exposto via Data API e `authenticated` não tem privilégio de execução — **nenhum componente cliente pode chamá-las**. Falta um wrapper `public.` security-definer **ou** route handler service-side, além da UI | `20260802000400_trust_invitation_helpers.sql:23,79`; `AGENTS.md` (fronteira de privacidade); `profile/page.tsx:402-407` (cartão "Em breve") | [V] |
-| 3 | Convite familiar | 3b — revogação (titular) | Ausente | P1 | Mesmo problema de 3a (`private.revoke_family_invitation`) | `20260802000400_trust_invitation_helpers.sql:79`; idem 3a | [V] |
-| 4 | Feed | 4a — postar/curtir/comentar | Parcial | P1 | Reação e comentário funcionam; **clicar numa notificação de comentário não navega para o post** (ver 8a) | `apps/web/app/(shell)/notifications/page.tsx:329-355` (sem `onClick`); `apps/web/app/components/bivaque/feed-post.tsx:387-415,417-444` | [V] |
-| 4 | Feed | 4b — denunciar | Parcial | P0 | **[C1]** A camada de dados está **pronta**: `reports` tem `status` (open/resolved), `operator_note`, `resolved_by`, `resolved_at`, índice parcial de abertos e grants `service_role`. Falta **exclusivamente a superfície do operador** — nenhuma rota consome a fila; o denunciante não recebe retorno | `20260802001600_reports.sql:25-50,105-114`; `report-button.tsx:22-52`; ausência de rota admin | [V] |
-| 4 | Feed | 4c — ocultar conteúdo | Parcial | P1 | **[C1]** "Ocultar publicação" na UI só esconde localmente (Set em React). Mas a **moderação global já existe no banco**: `is_deleted` em posts/comments/groups, `feed_posts` filtra `is_deleted = false`, e trigger impede `authenticated` de togglar a coluna. Falta a superfície que aciona isso via `service_role` | `20260802001600_reports.sql:54-56,201,213-245`; `feed-post.tsx:185-207`; `community/page.tsx:27,93-95` | [V] |
-| 4 | Feed | 4d — `?post=` deep link | Parcial | P2 | `feed-post.tsx:485` constrói URL com `?post=<id>`, mas `/community?post=<id>` não tem handler para abrir o card destacado | `feed-post.tsx:485`; ausência de uso da query em `community/page.tsx` | [V] |
-| 4 | Feed | 4e — escopo de grupo no post surface | **Corrigida** | ~~P0~~ | **[S1]** Policies de `posts`/`comments`/`post_reactions`/`post_saves` ignoravam `posts.group_id`; conteúdo de grupo privado era legível e gravável por qualquer membro da localidade. A migration `017` já tinha corrigido a classe idêntica em `events` — o post surface ficou de fora. `pending` não qualifica mais como membership | `20260805170545_fix_post_scope_leak.sql`; `supabase/tests/post-scope-leak.sql`; comparar com `20260802001700_scope_group_events.sql` | [V] |
-| 4 | Feed | 4f — autorização de `feed_posts()` | **Corrigida** | ~~P0~~ | **[S2]** RPC `security definer` concedida a `authenticated`, com a localidade vindo por parâmetro e nenhuma checagem de membership — enumerava o feed inteiro contornando a RLS. O teste de negação existente só cobria `select from public.posts`, nunca a RPC | `20260805170545_fix_post_scope_leak.sql`; `supabase/tests/post-scope-leak.sql` | [V] |
-| 5 | Grupos | 5a — listar/entrar/sair | Parcial | P1 | Funciona; **sem página de detalhe do grupo** | `apps/web/app/(shell)/groups/page.tsx:231-267`; `docs/agents/VISUAL_GUIDE.md:111` ("Detalhe (futura)") | [V][C] |
-| 5 | Grupos | 5b — criar | Parcial | P1 | Form e RPC funcionam; sem foto/capa/descrição rica; sem categorias; sem regras de entrada além de `public`/`private` | `groups/page.tsx:203-229,556-615` | [V] |
-| 5 | Grupos | 5c — moderar (aprovar, promover, rebaixar) | Parcial | P2 | RPCs existem; **sem transferência de ownership**; **sem convite para grupo**; **sem log de moderação** | `groups/page.tsx:269-322` | [V] |
-| 5 | Grupos | 5d — feed/membros do grupo | Parcial | P2 | **Metade fechada.** A camada de banco está pronta: `public.feed_group(p_group_id uuid)` agrega posts do grupo respeitando escopo (público interno visível só a membros da comunidade; privado só a membros do grupo). `public.feed_community(p_community_id uuid)` cobre o nível da vila incluindo grupos públicos internos. UI continua com o card-resumo de `(shell)/groups/page.tsx`; a página `/groups/:id` permanece como camada de aplicação, fora deste plano | `20260805215020_community_feeds.sql`; `supabase/tests/community-feeds.sql` (8 asserts, casos 8/8b/9/10/14/D6) | [V] |
-| 6 | Eventos | 6a — criar/listar | Parcial | P1 | Form e listagem funcionam; **convite para evento é placeholder** ("em breve") | `apps/web/app/(shell)/events/page.tsx:537-543,549-601` | [V] |
-| 6 | Eventos | 6b — RSVP | Parcial | P1 | interested/going funcionam; sem "não vou" explícito; sem atualização pelo organizador quando o evento muda | `events/page.tsx:275-295` | [V] |
-| 6 | Eventos | 6c — detalhe do evento | Ausente | P1 | Sem rota `/events/:id` com descrição completa, comentários, lista de confirmados | Ausência de rota | [V] |
-| 6 | Eventos | 6d — pós-evento | Ausente | P2 | Sem registro de presença real, retrospectiva, agradecimento; sem fechamento pelo organizador | Ausência de UI e migration dedicada | [I] |
-| 7 | Recomendações | 7a — explorar | Parcial | P2 | Lista grupos e eventos próximos; sem personalização; sem explicação; sem aprendizado de feedback. Sub-priorizado (não aparece na primeira sessão do piloto) | `apps/web/app/(shell)/recommendations/page.tsx:217-232` | [V] |
-| 7 | Recomendações | 7b — pedir indicação | Parcial | P2 | Form e gravação funcionam; sem visualização dos pedidos da comunidade; sem ciclo de resposta | `recommendations/page.tsx:278-341`; ausência de rota `/recommendations/:id` | [V] |
-| 7 | Recomendações | 7c — salvar | Parcial | P2 | Salvar e remover funcionam; sem notificação quando alguém responde | `recommendations/page.tsx:393-413` | [V] |
-| 8 | Notificações | 8a — inbox (listar, marcar lida) | Parcial | P1 | Lista e tabs funcionam; **clicar não navega para o objeto**; sem agrupamento por origem; sem ação em massa | `apps/web/app/(shell)/notifications/page.tsx:329-355` (sem `onClick`); tabs em `:256-286` | [V] |
-| 8 | Notificações | 8b — preferências | Placeholder | P1 | Card no perfil; sem toggles; sem migration | `profile/page.tsx:395-400`; ausência de migration `notification_preferences` | [V][C] |
-| 9 | Mensagens | 9a — DM | Parcial | P1 | Lista, conversa, bloquear, iniciar conversa funcionam; sem indicador de online/status; sem busca dentro da conversa; linha `isMobile = true` hardcoded em `:444` (variável nunca é `false`) | `apps/web/app/(shell)/messages/page.tsx:66-687` (linha 444 confirmada) | [V] |
-| 9 | Mensagens | 9b — notificação de DM abre conversa | Ausente | P2 | Tipo `direct_message` reconhecido em `classifyNotification`, mas card não tem handler de clique | `notifications/page.tsx:49-62,329-355` | [V] |
-| 10 | Operação administrativa | 10a — painel do operador | Ausente | P1 | **[C4]** Sem painel — mas o bloqueio **anterior** é que não existe conceito de operador no schema: varredura em todas as migrations achou apenas `group_membership_role` (escopo de grupo). Hoje "operador" = quem detém a service_role key. Qualquer `(admin)/` exige antes um modelo de autorização. **Operação viável em modo degradado** para piloto fechado com ≤50 membros | Varredura `supabase/migrations/*.sql`; `20260802001000_groups_moderation.sql:16`; `apps/web/lib/supabase/server.ts` (único consumidor de service_role); ausência de `apps/web/app/(admin)/` | [V] |
-| 10 | Operação administrativa | 10b — auditoria de logs de segurança | Parcial | P2 | **[C1]** `reports` já é trilha de auditoria parcial: registra `resolved_by` / `resolved_at` / `operator_note` e **não tem policy de DELETE para nenhum papel** (append-only por design). Falta apenas histórico de múltiplas ações por denúncia e log de ações fora do fluxo de denúncia | `20260802001600_reports.sql:32-35,148-149` | [V] |
-| 11 | Recuperação de conta | 11a — re-verificação de elegibilidade | Ausente | P1 | Supabase Auth fornece reset de senha; **sem re-verificação de elegibilidade** após troca de credencial; sem plano de revogação de conta. **Risco teórico** explorável apenas se houver um e-mail vazado | Plano não trata; ausência em migrations | [C][I] |
+| 2 | Perfil | 2c-2 — upload de avatar | **Corrigida** | — | — | `profile/avatar-section.tsx:35-74`; `avatar-actions.ts:52-73` | [V] |
+| 2 | Perfil | 2c-3 — integração de avatar no feed | **Corrigida** | — | — | `components/bivaque/feed-post.tsx:274-277` | [V] |
+| 2 | Perfil | 2d — preferências de notificação | **Corrigida** | — | — | `profile/notification-preferences-section.tsx:24-86`; `notification-preferences-actions.ts:36-69` | [V] |
+| 2 | Perfil | 2e — configuração inicial no onboarding | **Corrigida** | — | Welcome após verify OK leva o usuário ao perfil com CTA explícito | `onboarding/welcome/page.tsx:31-46`; `profile/page.tsx:330-408` | [V] |
+| 2 | Perfil | 2f — logout | **Corrigida** | — | — | `profile/page.tsx:212-223` | [V] |
+| 3 | Convite familiar | 3a — envio (titular) | **Corrigida** | — | — | `profile/family-invite-section.tsx:59-105`; `family-invite-section-actions.ts:57-93` | [V] |
+| 3 | Convite familiar | 3b — revogação (titular) | **Corrigida** | — | — | `family-invite-section.tsx:85-105`; `family-invite-section-actions.ts:95-118` | [V] |
+| 4 | Feed | 4a — postar/curtir/comentar | **Corrigida** | — | Notificação de comentário navega para o post | `notifications/page.tsx:121-144,357-367`; `components/bivaque/feed-post.tsx:387-415,417-444` | [V] |
+| 4 | Feed | 4b — denunciar | **Corrigida** | — | Painel `(admin)/reports` consome a fila com ações ocultar/resolver e trilha append-only | `components/bivaque/report-button.tsx:15-52`; `(admin)/reports/page.tsx:148-214`; `api/admin/reports/[id]/route.ts` | [V] |
+| 4 | Feed | 4c — ocultar conteúdo | **Corrigida** | — | UI aciona service_role via painel; `feed_posts` filtra `is_deleted = false`; trigger impede `authenticated` de togglar a coluna | `components/bivaque/feed-post.tsx:119-123`; `(admin)/reports/page.tsx:69-114,187-210` | [V] |
+| 4 | Feed | 4d — `?post=` deep link | **Corrigida** | — | `community/page.tsx:31-35,191-215` trata `?post=` e destaca o card | `community/page.tsx:31-35,191-215` | [V] |
+| 4 | Feed | 4e — escopo de grupo no post surface | **Corrigida** | ~~P0~~ | **[S1]** Fechado em `20260805170545_fix_post_scope_leak.sql` | `20260805170545_fix_post_scope_leak.sql`; `supabase/tests/post-scope-leak.sql` | [V] |
+| 4 | Feed | 4f — autorização de `feed_posts()` | **Corrigida** | ~~P0~~ | **[S2]** RPC agora checa membership internamente | `20260805170545_fix_post_scope_leak.sql`; `supabase/tests/post-scope-leak.sql` | [V] |
+| 5 | Grupos | 5a — listar/entrar/sair | **Corrigida** | — | Página de detalhe `/groups/[id]` existe com feed e membros | `groups/page.tsx:223-258,597-645`; `groups/[id]/page.tsx:145-188` | [V] |
+| 5 | Grupos | 5b — criar | Parcial | P1 | Form e RPC funcionam; **sem foto/capa/descrição rica; sem categorias** | `groups/page.tsx:540-584` | [V] |
+| 5 | Grupos | 5c — moderar (aprovar, promover, rebaixar) | Parcial | P2 | Ownership transfer existe; **sem convite para grupo; sem log de moderação** | `groups/[id]/page.tsx:211-235`; `groups/page.tsx:441-496` | [V] |
+| 5 | Grupos | 5d — feed/membros do grupo | **Corrigida** | — | `/groups/[id]` mostra feed do grupo respeitando escopo via `public.feed_group` | `groups/[id]/page.tsx:145-252` | [V] |
+| 6 | Eventos | 6a — criar/listar | **Corrigida** | — | Tab "Convidado" implementada | `events/page.tsx:415-540`; `events/event-invites-section.tsx:26-120` | [V] |
+| 6 | Eventos | 6b — RSVP | Parcial | P1 | interested/going funcionam; **sem "não vou" explícito; organizador não atualiza após mudança** | `events/[id]/page.tsx:161-194`; `events/page.tsx:322-338` | [V] |
+| 6 | Eventos | 6c — detalhe do evento | **Corrigida** | — | Rota `/events/[id]` com descrição completa, comentários e confirmados | `events/[id]/page.tsx:78-240` | [V] |
+| 6 | Eventos | 6d — pós-evento | **Corrigida** | — | Enum `completed` + RPC `complete_event` + botão Encerrar | `supabase/migrations/20260806173535_event_completion.sql:11-39`; `events/[id]/page.tsx:198-212` | [V] |
+| 7 | Recomendações | 7a — explorar | Parcial | P2 | Lista grupos e eventos próximos; **sem personalização** | `recommendations/page.tsx:146-239,426-460` | [V] |
+| 7 | Recomendações | 7b — pedir indicação | Parcial | P2 | Form e gravação funcionam; **sem ciclo de resposta visível** | `recommendations/page.tsx:279-341` | [V] |
+| 7 | Recomendações | 7c — salvar | Parcial | P2 | Salvar e remover funcionam; **sem notificação quando alguém responde** | `recommendations/page.tsx:344-413` | [V] |
+| 8 | Notificações | 8a — inbox (listar, marcar lida) | **Corrigida** | — | Cliques navegam para o objeto; sem agrupamento por origem, sem ação em massa (refinamento) | `notifications/page.tsx:357-367` | [V] |
+| 8 | Notificações | 8b — preferências | **Corrigida** | — | — | `profile/notification-preferences-section.tsx:54-86`; `notification-preferences-actions.ts:36-69` | [V] |
+| 9 | Mensagens | 9a — DM | **Corrigida** | — | — | `messages/page.tsx:91-105,535-616` | [V] |
+| 9 | Mensagens | 9b — notificação de DM abre conversa | **Corrigida** | — | — | `notifications/page.tsx:139-141`; `messages/page.tsx:95-115` | [V] |
+| 10 | Operação administrativa | 10a — painel do operador | **Corrigida** | — | Layout `(admin)/` com gate duplo de auth + operador; rotas reports, admissions, portal-health, rls-health | `(admin)/layout.tsx:7-47`; `(admin)/reports/page.tsx:148-214`; `(admin)/admissions/page.tsx:24-80`; `api/admin/rls-health/route.ts` | [V] |
+| 10 | Operação administrativa | 10b — histórico multi-ação de denúncia | Ausente | P2 | YAGNI declarado na Onda 7: `reports` é append-only com resolvedor/timestamp e suporta a operação atual | `(admin)/reports/page.tsx:148-214` — só fila atual + ocultar/resolver | [V] |
+| 11 | Recuperação de conta | 11a — re-verificação de elegibilidade | Ausente | P1 | Sem re-verificação após troca de credencial; sem plano de revogação | Grep `reverify|re-verification|reverifica` sem resultados em `apps/web` e `supabase` | [V] |
 
 ---
 
@@ -742,8 +752,23 @@ detalhada separadamente antes da execução.
   recomendações) ficam para fora — refinamento que não aparece na
   primeira sessão. Veredito em
   `docs/agents/VISUAL_AUDIT-2026-08-06-refinements.md`: loop §10.2
-  completo (lint+typecheck+test+build+capture, high=0). **Todas as
-  Ondas 0-7 do §10.1 estão DONE.**_
+completo (lint+typecheck+test+build+capture, high=0). **Todas as
+  Ondas 0-7 do §10.1 estavam DONE.**
+
+- **Onda 8 — Probe de RLS, `forbidden-copy` e reconciliação do MAP.** ~~[DONE]~~
+  _Fechada em 2026-08-09. Entregas: **Task 1** (probe de RLS ao vivo —
+  `lib/rls-probe.ts` com 7 asserções fixas + `api/admin/rls-health/route.ts`
+  com gate Bearer + `is_current_user_operator` + testes unit + scope test +
+  `.env.example` com `RLS_PROBE_EMAIL`/`RLS_PROBE_PASSWORD`) commit
+  `64e1b24`. O probe autentica como usuário comum
+  (`createAnonClient` + `signInWithPassword`); resposta nunca carrega dados,
+  só `{ status, checks, checked_at }`. **Task 2** (regra `forbidden-copy`
+  no `auditPage` do `capture.mjs`) commit `6fe26e3`. **Task 3** (reconciliação
+  do MAP §4 — 25 linhas viraram Corrigida, §3 atualizado, §0.4 registra UI
+  de Comunidade como pendência explícita P1) + **Task 4** (runbook §6 aponta
+  para o painel + §9 inclui o probe + §1 com as vars novas) + **Task 5**
+  (veredito da onda). Gate verde após cada task. A `auditoria visual §10.2`
+  não roda nesta onda (a Onda 8 não toca telas; ver Task 5 registro)._
 
 > **Grafo de dependência:** Onda 0 → {1, 3, parte de 4}. Ondas 2, 5 e 6
 > são independentes de tudo e podem correr em paralelo.
