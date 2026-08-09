@@ -1,0 +1,47 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/Manaus"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 5
+    groups:
+      production:
+        dependency-type: "production"
+        patterns:
+          - "*"
+      development:
+        dependency-type: "development"
+        patterns:
+          - "*"
+    ignore:
+      # Workspace is pinned to pnpm@11.18.0 — bump deliberately, not by Dependabot.
+      - dependency-name: "pnpm"
+        versions: ["*"]
+    # Do not let Dependabot introduce pnpm itself; the workspace pins the manager.
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/Manaus"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns:
+          - "*"
