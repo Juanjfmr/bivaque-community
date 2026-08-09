@@ -24,7 +24,7 @@ values (
   decode(repeat('af', 32), 'hex'),
   decode(repeat('bf', 32), 'hex'),
   'revoked',
-  '2026-08-09 12:00:00+00',
+  now() + interval '7 days',
   '2026-08-02 10:00:00+00'
 );
 
