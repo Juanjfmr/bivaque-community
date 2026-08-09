@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import { SUPPORT_EMAIL, SUPPORT_SLA_HOURS } from "../../../../lib/support"
 
@@ -11,7 +12,7 @@ export default async function OnboardingStatusPage({ searchParams }: StatusPageP
   const params = await searchParams
   const state = params.state
 
-  if (state !== "pending" && state !== "rejected") {
+  if (state !== "pending" && state !== "rejected" && state !== "temporary_error") {
     redirect("/onboarding")
   }
 
@@ -40,6 +41,7 @@ export default async function OnboardingStatusPage({ searchParams }: StatusPageP
   }
 
   const isPending = state === "pending"
+  const isTemporaryError = state === "temporary_error"
 
   return (
     <div className="grid flex-1 place-items-center px-6 py-12">
@@ -47,7 +49,9 @@ export default async function OnboardingStatusPage({ searchParams }: StatusPageP
         <h1 id="status-heading" className="text-2xl font-semibold tracking-tight">
           {isPending
             ? "Sua verificação está em andamento"
-            : "Você não atende aos critérios de Manaus neste momento"}
+            : isTemporaryError
+              ? "Sua verificação encontrou uma instabilidade"
+              : "Você não atende aos critérios de Manaus neste momento"}
         </h1>
 
         {isPending ? (
@@ -59,6 +63,26 @@ export default async function OnboardingStatusPage({ searchParams }: StatusPageP
             </a>
             .
           </p>
+        ) : isTemporaryError ? (
+          <>
+            <p className="text-sm text-muted">
+              Houve uma falha temporária na consulta. Seus dados não foram perdidos — tente
+              novamente em alguns minutos.
+            </p>
+            <p className="text-sm text-muted">
+              Se o problema persistir, escreva para{" "}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">
+                {SUPPORT_EMAIL}
+              </a>
+              .
+            </p>
+            <Link
+              href="/onboarding"
+              className="rounded-md border border-border bg-accent px-4 py-2 text-center text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+            >
+              Tentar novamente
+            </Link>
+          </>
         ) : (
           <>
             <p className="text-sm text-muted">

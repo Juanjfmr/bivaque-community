@@ -4,6 +4,7 @@ import { Button, Form, Input, Spinner } from "@heroui/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
+import { verificationErrorMessage } from "../../../lib/portal/verification-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { SUPPORT_EMAIL, SUPPORT_SLA_HOURS } from "../../../lib/support"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
@@ -89,6 +90,11 @@ function OnboardingFlow() {
   const inviteToken = searchParams.get("invite")
 
   useEffect(() => {
+    const savedCpf = sessionStorage.getItem("onboarding:cpf")
+    if (savedCpf) {
+      setCpf(savedCpf)
+    }
+
     const boot = async () => {
       const {
         data: { session },
@@ -188,9 +194,9 @@ function OnboardingFlow() {
         } else if (outcome["status"] === "pending") {
           router.push("/onboarding/status?state=pending")
         } else if (outcome["status"] === "temporary_error") {
-          setError(
-            `Erro temporário na verificação: ${String(outcome["reason"] ?? "tente novamente")}`,
-          )
+          sessionStorage.setItem("onboarding:cpf", cpf)
+          const errorCode = typeof outcome["errorCode"] === "string" ? outcome["errorCode"] : ""
+          setError(verificationErrorMessage(errorCode, SUPPORT_EMAIL))
         }
       }
     } catch (err: unknown) {
