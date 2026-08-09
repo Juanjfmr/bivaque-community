@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { SUPPORT_EMAIL, SUPPORT_SLA_HOURS } from "../../../../lib/support"
 
 interface StatusPageProps {
   searchParams: Promise<{ state?: string }>
@@ -52,13 +53,10 @@ export default async function OnboardingStatusPage({ searchParams }: StatusPageP
         {isPending ? (
           <>
             <p className="text-sm text-muted">
-              Isso pode levar até 24 horas em dias úteis. Você receberá um aviso quando a
-              verificação for concluída.
-            </p>
-            <p className="text-sm text-muted">
-              Em caso de dúvida, escreva para{" "}
-              <a href="mailto:suporte@bivaque.local" className="underline">
-                suporte@bivaque.local
+              Sua verificação está em análise. Respondemos em até {SUPPORT_SLA_HOURS} horas úteis.{" "}
+              Se passar disso, escreva para{" "}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">
+                {SUPPORT_EMAIL}
               </a>
               .
             </p>

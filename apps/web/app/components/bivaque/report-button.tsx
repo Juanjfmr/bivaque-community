@@ -60,7 +60,11 @@ export function ReportButton({ targetType, targetId, label = "Denunciar" }: Repo
   }, [modal])
 
   if (success) {
-    return <span className="text-xs text-accent">Denuncia enviada</span>
+    return (
+      <span className="text-xs text-accent">
+        Denuncia recebida. A analise acontece e o resultado chega como notificacao no app.
+      </span>
+    )
   }
 
   return (

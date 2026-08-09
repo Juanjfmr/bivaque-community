@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { SUPPORT_EMAIL, SUPPORT_SLA_HOURS } from "../../../lib/support"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { showToast } from "../../components/bivaque/toast"
 
@@ -416,6 +417,14 @@ function OnboardingFlow() {
                 {loading ? "Enviando..." : "Entrar na lista de espera"}
               </Button>
             </Form>
+            <p className="text-sm text-muted">
+              Avisaremos por e-mail se houver expansão para sua localidade. Em caso de dúvida sobre
+              sua candidatura, escreva para{" "}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">
+                {SUPPORT_EMAIL}
+              </a>{" "}
+              — respondemos em até {SUPPORT_SLA_HOURS} horas úteis.
+            </p>
           </>
         )}
 
