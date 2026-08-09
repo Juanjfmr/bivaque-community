@@ -191,12 +191,12 @@ test.describe("groups journey", () => {
     await page.goto("/groups")
 
     // Then exactly one primary navigation is on screen: the BottomNav below
-    // md (5 tabs in NAV_ITEMS order), the sidebar from md up (rail or
-    // expanded, links).
+    // md (5 tabs, profile filtered out in favor of the header avatar), the
+    // sidebar from md up (rail or expanded, links).
     const width = page.viewportSize()?.width ?? 0
 
     if (width < 768) {
-      // Mobile: BottomNav with 5 tabs in NAV_ITEMS order
+      // Mobile: BottomNav with 5 tabs in NAV_ITEMS order, minus profile
       const nav = page.locator(BOTTOM_NAV)
       await expect(nav).toBeVisible()
       const tabs = nav.getByRole("tab")
@@ -205,19 +205,20 @@ test.describe("groups journey", () => {
       await expect(tabs.nth(1)).toContainText("Grupos")
       await expect(tabs.nth(2)).toContainText("Eventos")
       await expect(tabs.nth(3)).toContainText("Indicações")
-      await expect(tabs.nth(4)).toContainText("Perfil")
+      await expect(tabs.nth(4)).toContainText("Mensagens")
     } else {
       // Tablet rail / desktop sidebar: BottomNav hidden, sidebar links visible
       await expect(page.locator(BOTTOM_NAV)).toBeHidden()
       const sidebar = page.locator(SIDEBAR)
       await expect(sidebar).toBeVisible()
       const links = sidebar.getByRole("link")
-      await expect(links).toHaveCount(5)
+      await expect(links).toHaveCount(6)
       await expect(links.nth(0)).toHaveAttribute("href", "/community")
       await expect(links.nth(1)).toHaveAttribute("href", "/groups")
       await expect(links.nth(2)).toHaveAttribute("href", "/events")
       await expect(links.nth(3)).toHaveAttribute("href", "/recommendations")
-      await expect(links.nth(4)).toHaveAttribute("href", "/profile")
+      await expect(links.nth(4)).toHaveAttribute("href", "/messages")
+      await expect(links.nth(5)).toHaveAttribute("href", "/profile")
     }
   })
 })

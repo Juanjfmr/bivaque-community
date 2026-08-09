@@ -112,15 +112,15 @@ export function AppShell({ children }: AppShellProperties) {
               <Bell size={20} aria-hidden="true" />
             </button>
 
-            <button
-              type="button"
+            <a
+              href="/profile"
               aria-label="Perfil"
               className="flex min-h-11 min-w-11 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] text-sm font-semibold ring-2 ring-transparent transition-all duration-[var(--duration-instant)] hover:ring-[var(--accent-soft)]">
                 C
               </div>
-            </button>
+            </a>
           </div>
         </div>
       </header>

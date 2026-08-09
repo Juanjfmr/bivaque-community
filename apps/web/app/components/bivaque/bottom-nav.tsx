@@ -2,6 +2,7 @@
 
 import {
   CalendarDaysIcon,
+  ChatBubbleLeftRightIcon,
   HomeIcon,
   SparklesIcon,
   UserCircleIcon,
@@ -9,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline"
 import {
   CalendarDaysIcon as CalendarDaysSolid,
+  ChatBubbleLeftRightIcon as ChatBubbleLeftRightSolid,
   HomeIcon as HomeSolid,
   SparklesIcon as SparklesSolid,
   UserCircleIcon as UserCircleSolid,
@@ -59,6 +61,13 @@ export const NAV_ITEMS: NavItem[] = [
     IconActive: SparklesSolid,
   },
   {
+    id: "messages",
+    label: "Mensagens",
+    href: "/messages",
+    Icon: ChatBubbleLeftRightIcon,
+    IconActive: ChatBubbleLeftRightSolid,
+  },
+  {
     id: "profile",
     label: "Perfil",
     href: "/profile",
@@ -92,8 +101,13 @@ function NavIcon({
 export function BottomNav() {
   const pathname = usePathname()
 
+  // Perfil sai do bottom nav: é tela de configuração e já tem entrada
+  // permanente no avatar do header. As cinco vagas ficam para destinos
+  // de conteúdo — cinco é o teto do iOS HIG e do Material.
+  const items = NAV_ITEMS.filter((item) => item.id !== "profile")
+
   const selectedKey =
-    NAV_ITEMS.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
+    items.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
     "community"
 
   return (
@@ -103,7 +117,7 @@ export function BottomNav() {
     >
       <Tabs selectedKey={selectedKey} variant="primary" aria-label="Navegação principal">
         <Tabs.List aria-label="Seções do aplicativo" className="flex justify-around">
-          {NAV_ITEMS.map((item) => (
+          {items.map((item) => (
             <Tabs.Tab
               key={item.id}
               id={item.id}

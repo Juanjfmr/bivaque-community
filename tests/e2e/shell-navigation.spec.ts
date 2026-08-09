@@ -30,7 +30,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await expect(tabs.nth(1)).toContainText("Grupos")
     await expect(tabs.nth(2)).toContainText("Eventos")
     await expect(tabs.nth(3)).toContainText("Indicações")
-    await expect(tabs.nth(4)).toContainText("Perfil")
+    await expect(tabs.nth(4)).toContainText("Mensagens")
   })
 
   test("gives way to the icon rail at 768px", async ({ page, context }) => {
@@ -123,11 +123,31 @@ test.describe("Navigation tab links", () => {
     // Then each tab links to the expected route
     const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
 
-    const expectedHrefs = ["/community", "/groups", "/events", "/recommendations", "/profile"]
+    const expectedHrefs = ["/community", "/groups", "/events", "/recommendations", "/messages"]
 
     for (let index = 0; index < expectedHrefs.length; index++) {
       const href = await tabs.nth(index).getAttribute("href")
       expect(href).toBe(expectedHrefs[index])
     }
+  })
+})
+
+test.describe("Profile reachable from the header avatar", () => {
+  test("header avatar links to /profile on mobile", async ({ page, context }) => {
+    // Given an authenticated member on the mobile-375 viewport
+    await seedSession(context)
+    await page.setViewportSize({ width: 375, height: 812 })
+
+    // When they open the community route
+    await page.goto("/community")
+
+    // Then the header avatar links to /profile — the regression this plan can cause
+    const avatar = page.getByRole("link", { name: "Perfil" })
+    await expect(avatar).toBeVisible()
+    await expect(avatar).toHaveAttribute("href", "/profile")
+
+    // And activating it lands on the profile route
+    await avatar.click()
+    await expect(page).toHaveURL(/\/profile/)
   })
 })
