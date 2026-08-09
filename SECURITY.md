@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository hosts **Bivaque Community**, a private invite-only community product for verified federal military, Veterans, and military pensioners, piloted in Manaus. The Bivaque codebase and its deployment are in scope.
+This repository hosts **Bivaque Community**, a private, verification-gated community product for verified federal military, Veterans, and military pensioners, piloted in Manaus. The Bivaque codebase and its deployment are in scope.
 
 The following are **out of scope** for this policy — report them to their maintainers directly:
 
@@ -49,6 +49,6 @@ We credit reporters in the fix commit unless anonymity is requested. A "thank yo
 
 - Findings that require the attacker to already control a verified, invited member account.
 - Findings in upstream dependencies without an exploitable path through Bivaque.
-- Rate-limiting / DoS against the invite-only surface without demonstrated impact.
+- Rate-limiting / DoS against the gated surface without demonstrated impact.
 - UI/UX issues without a security consequence.
 - Reports about features that the product map (`docs/journeys/MAP.md`) records as **explicitly excluded** (marketplace, ads, AI, video, native app, other cities) — those are not built and not built toward.

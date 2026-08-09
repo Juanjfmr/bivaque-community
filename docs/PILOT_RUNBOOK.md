@@ -1,6 +1,6 @@
 # Bivaque Community — Pilot Runbook
 
-Versao alvo: piloto fechado de Manaus (fase de convite).
+Versao alvo: piloto fechado de Manaus, com admissao por verificacao (cadastro aberto + verificacao de elegibilidade via Portal).
 
 Este documento descreve os procedimentos operacionais, de privacidade e de
 incidente para o operador humano que conduz o piloto fechado do Bivaque
@@ -80,27 +80,28 @@ npx pnpm@11.18.0 test:unit -- tests/unit/portal/
 
 ---
 
-## 3. Invite issuance
+## 3. Admissao — cadastro aberto com verificacao
 
-O piloto de Manaus opera por convite. Nao ha auto-cadastro publico. O operador
-emite convites manualmente ou via ferramenta administrativa.
+O cadastro e aberto: qualquer pessoa cria conta (magic link ou Google OAuth) e
+segue para a verificacao de elegibilidade. O acesso so se completa apos a
+verificacao no Portal da Transparencia. O operador nao emite convites: monitora
+a fila de verificacao e age quando ela falha ou estagna.
 
-### Checklist de emissao de convite
+### Checklist de monitoramento da admissao
 
-- [ ] Confirmar que o convidado esta na lista de espera da cidade (Manaus).
-- [ ] Verificar que o email do convidado nao esta associado a uma conta
+- [ ] Confirmar que o novo usuario entrou pelo fluxo de onboarding (magic link
+      ou Google OAuth) e criou conta.
+- [ ] Verificar que o email do usuario nao esta associado a uma conta
       existente (Supabase Dashboard → Authentication → Users → buscar email).
-- [ ] Confirmar que o convidado pertence ao publico elegivel: militar federal
+- [ ] Confirmar que o usuario pertence ao publico elegivel: militar federal
       ativo, veterano (`reformado`) ou pensionista militar federal, com vinculo
       ao municipio de Manaus.
-- [ ] Emitir o convite:
-      - Console do Supabase → Authentication → Users → Add user (ou via
-        ferramenta administrativa do app).
-      - O convite deve conter o email do convidado e redirecionar para o fluxo
-        de verificacao via Portal da Transparencia.
-- [ ] Registrar: data do convite, email (hash), localidade (manaus-am).
+- [ ] Monitorar a verificacao pendente: quando o Portal nao responde ou a
+      verificacao estagna, o operador diagnostica (secao 4) e reemite a
+      verificacao se a causa for `TIMEOUT` ou `INVALID_KEY`.
+- [ ] Registrar: data da admissao, email (hash), localidade (manaus-am).
 
-### Comando de verificacao de convites pendentes
+### Comando de verificacao de admissao pendente
 
 ```sh
 # Listar usuarios criados nos ultimos 7 dias (console SQL do Supabase):
@@ -112,9 +113,9 @@ order by created_at desc;
 
 ### Nao fazer
 
-- Nao convidar quem nao passou pela lista de espera.
+- Nao aprovar manualmente quem nao passou pela verificacao do Portal.
 - Nao pular a etapa de verificacao do Portal.
-- Nao emitir convites em lote sem rastreabilidade individual.
+- Nao criar contas em lote sem rastreabilidade individual.
 
 ---
 
@@ -253,17 +254,16 @@ npx pnpm@11.18.0 db:lint
 
 ---
 
-## 8. City waitlist communication
+## 8. Waitlist communication (outras localidades)
 
-A lista de espera de Manaus e gerenciada fora do banco principal (planilha ou
-ferramenta de fila). O operador coordena a comunicacao com candidatos.
+A waitlist e candidatura a **outras localidades** (MAP §5.1), nao uma fila
+para Manaus. Candidatos de localidades futuras registram o email no fluxo de
+onboarding. O operador coordena a comunicacao com esses candidatos.
 
 ### Checklist de comunicacao
 
-- [ ] Antes de cada lote de convites, revisar a posicao de cada candidato na
-      fila.
-- [ ] Enviar email de convite apenas para o endereco registrado na lista de
-      espera.
+- [ ] Antes de cada comunicacao, revisar a posicao de cada candidato na fila.
+- [ ] Enviar comunicacao apenas para o endereco registrado na lista de espera.
 - [ ] Atualizar o status do candidato na lista de espera apos envio.
 - [ ] Se o candidato nao responder em 7 dias, enviar um lembrete unico.
 - [ ] Se nao houver resposta apos 14 dias, mover para lista de inativos.
@@ -293,8 +293,8 @@ Executar uma vez por dia durante o piloto.
       npx pnpm@11.18.0 test:privacy
       npx pnpm@11.18.0 test:secrets
       ```
-- [ ] **Convites pendentes**: Verificar se ha convites emitidos ha mais de 48h
-      sem verificacao concluida. Se houver, enviar lembrete (secao 8).
+- [ ] **Verificacoes pendentes**: Verificar se ha admisssoes estagnadas ha mais
+      de 48h sem verificacao concluida. Se houver, diagnosticar (secao 4) e agir.
 - [ ] **Denuncias abertas**: Verificar se ha denuncias nao resolvidas. Zero
       denuncias abertas ha mais de 24h e a meta.
 - [ ] **Custo do Supabase**: Dashboard → Billing — verificar se o consumo esta
@@ -324,7 +324,7 @@ banco de producao — e uma discussao guiada por checklist.
 - [ ] **Decisao 1**: Quem detecta? (alerta de log? denuncia externa?)
 - [ ] **Decisao 2**: Quem tem autoridade para revogar a chave?
 - [ ] **Decisao 3**: A aplicacao continua funcionando sem verificacao de novos
-      usuarios? Ou suspende convites?
+      usuarios? Ou pausa novas admisssoes?
 - [ ] **Decisao 4**: Quanto tempo entre deteccao e revogacao? Quem executa o
       rodizio?
 - [ ] **Decisao 5**: Como os usuarios afetados sao comunicados?
@@ -347,7 +347,7 @@ banco de producao — e uma discussao guiada por checklist.
 - [ ] **Decisao 2**: Ha um plano de contingencia (fallback para projeto de
       contingencia)?
 - [ ] **Decisao 3**: Por quanto tempo o piloto pode operar offline antes de
-      suspender convites?
+      pausar novas admisssoes?
 - [ ] **Decisao 4**: Quem comunica aos testadores?
 - [ ] **Decisao 5**: Quando restaurar, quais health checks validam a
       integridade?

@@ -8,7 +8,7 @@
   color-scheme: light;
 
   /* Color — Navy Professional palette (DESIGN_SPEC.md §1).
-     Authority + trust for a verified federal-military invite-only community.
+     Authority + trust for a verified federal-military community.
      Primary blue-900 for action, slate-950 for foreground, slate-50 surface
      background, white cards. oklch is kept where the value is consumed by
      color-mix() so the hue shifts naturally with the foreground. */

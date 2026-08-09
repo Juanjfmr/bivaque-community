@@ -7,12 +7,12 @@ const runbookPath = join(root, "docs", "PILOT_RUNBOOK.md")
 
 const requiredProcedures = [
   "Portal token stewardship (chave-api-dados)",
-  "Invite issuance",
+  "Admissao — cadastro aberto com verificacao",
   "Verification failure response",
   "Family-invite revocation",
   "Report resolution",
   "Backup and rollback",
-  "City waitlist communication",
+  "Waitlist communication (outras localidades)",
   "Daily health checks",
   "Rollback tabletop test decision points",
   "Post-incident review",

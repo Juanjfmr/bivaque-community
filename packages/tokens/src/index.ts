@@ -4,7 +4,7 @@
 // raw colors.
 //
 // Palette: Navy Professional — authority + trust for a verified federal-military
-// invite-only community.
+// verification-gated community.
 export const brandTokens = {
   productName: "Bivaque",
   color: {

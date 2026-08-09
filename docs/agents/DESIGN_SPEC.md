@@ -3,7 +3,7 @@
 Reference product: **Nextdoor**. Copy its *interaction architecture* — feed density, card
 anatomy, compose entry points, locality framing, discovery chips. Never copy its brand:
 no Nextdoor colors, logo, illustrations, copy, or asset files. Bivaque is a private,
-invite-only network for verified federal military, Veterans and pensioners in Manaus —
+verification-gated network for verified federal military, Veterans and pensioners in Manaus —
 the tone is sober and institutional, not consumer-playful.
 
 ---
@@ -16,7 +16,7 @@ Everything visual reads from tokens. A raw hex or `rgb()` in a component is a de
 ### Color
 
 Palette: **Navy Professional** — authority + trust for a verified federal-military
-invite-only community. Sober and institutional, not consumer-playful.
+verification-gated community. Sober and institutional, not consumer-playful.
 
 | Token | Value | Purpose |
 | --- | --- | --- |
@@ -107,7 +107,7 @@ bottom nav is mobile/tablet only; at ≥1024px it becomes a left sidebar.
 ### 3.1 `/login`
 Centered card on `--background`. Wordmark, one-line value prop, Google OAuth button,
 divider "ou", e-mail field + magic link. Magic-link success replaces the form with an
-inline "Verifique seu e-mail" state (no alert box). Invite-only note in the footer.
+inline "Verifique seu e-mail" state (no alert box). Verification-gated note in the footer.
 
 ### 3.2 `/consent` and `/onboarding`
 Multi-step with a top progress bar (segments, not percent) and per-step slide transition

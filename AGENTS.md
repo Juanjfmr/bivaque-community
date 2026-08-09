@@ -1,6 +1,6 @@
 # AGENTS.md — Bivaque Community
 
-Private, invite-only community product for verified federal military, Veterans and military
+Private, verification-gated community product for verified federal military, Veterans and military
 pensioners, piloted in Manaus. Server-rendered Next.js on Supabase.
 
 The original product decisions live outside this repository, in

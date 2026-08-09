@@ -16,7 +16,7 @@ available.
 ## MISSION
 
 You are implementing **Bivaque Community** end to end — backend and frontend — in
-`C:\Users\juana\bivaque-community`. It is a private, invite-only network for verified
+`C:\Users\juana\bivaque-community`. It is a private, verification-gated network for verified
 federal military, Veterans and military pensioners, piloted in Manaus (AM). Server-rendered
 Next.js 16 on Supabase.
 
