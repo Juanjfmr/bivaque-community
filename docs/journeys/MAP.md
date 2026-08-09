@@ -763,22 +763,23 @@ completo (lint+typecheck+test+build+capture, high=0). **Todas as
   `64e1b24`. O probe autentica como usuário comum
   (`createAnonClient` + `signInWithPassword`); resposta nunca carrega dados,
   só `{ status, checks, checked_at }`. **Task 2** (regra `forbidden-copy`
-  no `auditPage` do `capture.mjs`) commit `6fe26e3`. **Task 3** (reconciliação
+  no `auditPage` do `capture.mjs`) commit `6fe26e3`. Regra refinada
+  em commit `pending` para detectar *exposição* (possessivo + label `:`/`-`)
+  em vez de menção crua, evitando falso positivo em `/consent` que lista
+  os termos como "dados que não armazenamos". **Task 3** (reconciliação
   do MAP §4 — 25 linhas viraram Corrigida, §3 atualizado, §0.4 registra UI
   de Comunidade como pendência explícita P1) + **Task 4** (runbook §6 aponta
   para o painel + §9 inclui o probe + §1 com as vars novas) + **Task 5**
-  (veredito: loop §10.2 não roda porque a Onda 8 não toca superfícies
-  visuais — não criou telas novas, não modificou componentes renderizados.
-  Gate verde após cada task: lint + typecheck + test (188 unit + 184 privacy
-  + 24 scope = 396) + secrets. Probe runtime validado contra o banco local
-  com a conta do seed: `status: "ok"` (7/7 asserções passaram). Visual loop
-  foi tentado mas o dev server não sobe no ambiente local — Supabase realtime,
-  edge_runtime e analytics parados impedem o middleware de inicializar.
-  Não-bloqueante: a onda não toca UI).
-  de Comunidade como pendência explícita P1) + **Task 4** (runbook §6 aponta
-  para o painel + §9 inclui o probe + §1 com as vars novas) + **Task 5**
-  (veredito da onda). Gate verde após cada task. A `auditoria visual §10.2`
-  não roda nesta onda (a Onda 8 não toca telas; ver Task 5 registro)._
+  (veredito: visual loop §10.2 **rodou** em 2026-08-09T20:46 com 60 capturas
+  (rotas × viewports) e **0 achados high** introduzidos pela onda. Medium
+  preexistentes: `no-transition` 48, `font-too-small` 159 — backlog herdado
+  das Ondas 0-7, fora do escopo desta onda. Probe runtime validado contra
+  o banco local com a conta do seed: `status: "ok"` (7/7 asserções passaram,
+  incluindo `private_verification` e `private_family` que confirmam o schema
+  `private` inalcançável para usuário comum). Gate verde após cada task:
+  lint + typecheck + test (188 unit + 184 privacy + 23 scope = 395) +
+  secrets. 5 commits: `64e1b24`, `6fe26e3`, `c4c6a44`, `43c8950`, `3e67fd0`,
+  mais o refinamento da regex.)_
 
 > **Grafo de dependência:** Onda 0 → {1, 3, parte de 4}. Ondas 2, 5 e 6
 > são independentes de tudo e podem correr em paralelo.

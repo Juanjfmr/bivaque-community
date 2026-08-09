@@ -270,14 +270,21 @@ function auditPage() {
   }
 
   // 10. forbidden copy — the same privacy vocabulary the database rejects
+  // 10. forbidden copy — the same privacy vocabulary the database rejects
   // (see supabase/migrations/20260802001300_fix_forbidden_content_regex.sql).
   // The DB guards post bodies; the UI copy must guard itself.
-  const forbidden =
-    /\b(patente|posto militar|gradua[çc][ãa]o militar|organiza[çc][ãa]o militar|endere[çc]o residencial|selo de verifica[çc][ãa]o|verificado publicamente)\b/i
+  //
+  // The match targets *exposure* — the vocabulary used to label or attribute
+  // a value to the user (e.g. "sua patente", "Patente:"). Pedagogical
+  // negation copy in `/consent` ("Nenhum dado pessoal sensível (CPF, patente,
+  // endereço) será armazenado") is intentionally allowed: telling the user
+  // what is NOT stored is the contract itself. Same for the runbook docs.
+  const exposure =
+    /((?:sua|seu|do usu[áa]rio|do membro|minha|seus|suas)\s+)?\b(patente|posto militar|gradua[çc][ãa]o militar|organiza[çc][ãa]o militar|endere[çc]o residencial|selo de verifica[çc][ãa]o|verificado publicamente)\b\s*[:-]/i
   const bodyText = document.body.innerText || ""
-  const hit = forbidden.exec(bodyText)
+  const hit = exposure.exec(bodyText)
   if (hit) {
-    add("forbidden-copy", "high", "body", `forbidden term in UI copy: "${hit[0]}"`)
+    add("forbidden-copy", "high", "body", `forbidden term exposed in UI copy: "${hit[0]}"`)
   }
   return {
     findings,
