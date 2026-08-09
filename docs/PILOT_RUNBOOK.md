@@ -36,6 +36,8 @@ execucao Next.js em producao.
 | `NEXT_PUBLIC_SUPABASE_URL` | URL do Supabase exposta ao navegador | Cliente |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anonima exposta ao navegador | Cliente |
 | `PORTAL_DADOS_API_KEY` | Chave da API do Portal da Transparencia | Servidor — nunca cliente |
+| `RLS_PROBE_EMAIL` | E-mail da conta de teste do probe de RLS (usuário comum) | Servidor |
+| `RLS_PROBE_PASSWORD` | Senha da conta de teste do probe de RLS | Servidor — nunca cliente |
 
 O arquivo `.env` e gitignorado. O arquivo `.env.example` contem apenas
 placeholders (`<...>`) e e seguro commit. A chave do Portal vive no header
@@ -188,34 +190,37 @@ conta Auth do familiar.
 
 ## 6. Report resolution
 
-Denuncias de conteudo (comunidade, DM, eventos) chegam via canal de suporte.
-O operador revisa e age.
+Denuncias de conteudo (comunidade, DM, eventos) chegam via **notificacao in-app** (`report_resolved` na Onda 11 do plano de observabilidade, em `docs/superpowers/plans/2026-08-06-observabilidade-do-produto.md`) — o denunciante **nao** espera um e-mail externo, o sistema responde dentro da plataforma. O operador revisa e age pelo painel.
 
 ### Checklist de resolucao de denuncia
 
-- [ ] Localizar o conteudo denunciado (post, mensagem, evento) pelo ID.
-- [ ] No console SQL do Supabase, inspecionar o registro:
+- [ ] Abrir o painel `/admin/reports` autenticado como operador (gate duplo: auth + `is_current_user_operator`).
+- [ ] A fila lista abertas com idade em destaque; item com mais de 48h sem resolucao exige triagem imediata (ver §4).
+- [ ] Clicar no item abre os detalhes; classificar: conteudo proibido (discurso de odio, assedio, exposicao de dados privados) ou falsa denuncia.
+- [ ] **Ocultar** (acao `hide`): marca `is_deleted = true` no alvo (post, comentario ou grupo) via `service_role`. A UI some para todos. O sistema registra `operator_note` automatico.
+- [ ] **Resolver** (acao `resolve`): marca `status = 'resolved'` com `operator_note`, `resolved_by` (operador) e `resolved_at`. O sistema emite notificacao `report_resolved` para o denunciante **sem revelar a acao tomada** — o runbook §6 antigo exigia isso, agora a plataforma cumpre.
+- [ ] **Diagnostico SQL** (quando o painel nao bastar): preservado como passo de inspecao, NAO como primeiro passo. A coluna do autor e `user_id` (nao `author_id`), e `is_deleted` indica se o conteudo ja foi ocultado por moderacao:
+
       ```sql
-      -- Exemplo para posts da comunidade.
-      -- A coluna do autor e `user_id` (nao `author_id`), e `is_deleted`
-      -- indica se o conteudo ja foi ocultado por moderacao.
       select id, user_id, group_id, locality_id, content, is_deleted, created_at
       from public.posts
       where id = '<post-id>';
       ```
-- [ ] Classificar: conteudo proibido (discurso de odio, assedio, exposicao de
-      dados privados) ou falsa denuncia.
-- [ ] Se conteudo proibido: remover o registro e notificar o autor.
-- [ ] Se exposicao de dados privados: remover imediatamente e escalar para
-      revisao de incidente (secao 9).
-- [ ] Registrar: ID do conteudo, classificacao, acao, timestamp.
-- [ ] Responder ao denunciante com confimacao de recebimento (sem revelar a
-      acao tomada).
+- [ ] Se exposicao de dados privados (CPF, endereco, patente, organizacao militar): ocultar **imediatamente** via painel e escalar para revisao de incidente (secao 9).
+
+### Como alguem vira operador
+
+A tabela `public.operators` controla o acesso ao painel `(admin)/`. Nao ha UI para isso; a autorizacao e por SQL direto:
+
+```sql
+insert into public.operators (auth_user_id, granted_by)
+values ('<uuid-do-novo-operador>', '<uuid-de-quem-autoriza>')
+on conflict (auth_user_id) do nothing;
+```
+
+**Quem autoriza:** decisao do dono do produto. O runbook nao define; documente a politica interna (ex.: "apenas o admin principal concede; revogar com `delete from public.operators where auth_user_id = '<uuid>'`"). O acesso do painel e verificado pelo RPC `public.is_current_user_operator` (`apps/web/app/api/admin/route.ts` e migrations `20260806040949_operator_authorization.sql`, `20260806095803_fix_operator_repromotion.sql`, `20260806100231_restrict_operator_roster.sql`, `20260806111744_is_current_user_operator.sql`).
 
 ### Escalacao
-
-Se a denuncia envolver dados pessoais expostos (CPF, endereco, patente,
-organizacao militar), seguir o fluxo de incidente de dados (secao 9).
 
 ---
 
@@ -291,10 +296,7 @@ Executar uma vez por dia durante o piloto.
 - [ ] **Conexao com Portal**: Acessar `/api/admin/portal-health` autenticado
       como operador e confirmar `status: "ok"` (ou o codigo do §4 para
       diagnosticar). A chave nunca sai do servidor.
-- [ ] **RLS e privacidade**: `test:privacy` e `test:secrets` sao suites de
-      codigo, cobertas pelo CI a cada PR — **nao verificam producao**. A
-      garantia de RLS em producao vem da paridade de migration: `test:db`
-      (pgTAP) roda contra um banco local com as mesmas migrations no CI.
+- [ ] **RLS e privacidade**: Acessar `/api/admin/rls-health` autenticado como operador e confirmar `status: "ok"` (ou `degraded` → investigar qual check falhou; `not_configured` → configurar `RLS_PROBE_EMAIL`/`RLS_PROBE_PASSWORD` no env). O probe roda 7 asserções de RLS com um usuário comum (nunca `service_role`) contra o banco de producao: `self_profile`, `private_verification`, `private_family`, `operators_insert`, `is_deleted_update`, `foreign_notifications`, `admissions_queue`. `test:privacy` e `test:secrets` sao suites de codigo, cobertas pelo CI a cada PR — **nao verificam producao**.
 - [ ] **Verificacoes pendentes**: Verificar se ha admisssoes estagnadas ha mais
       de 48h sem verificacao concluida. Se houver, diagnosticar (secao 4) e agir.
 - [ ] **Denuncias abertas**: Verificar se ha denuncias nao resolvidas. Zero
