@@ -19,7 +19,9 @@ execucao Next.js em producao.
 - Acesso ao dashboard do Supabase do projeto de producao (projeto separado de
   dev e teste).
 - Acesso ao servidor onde a aplicacao Next.js esta implantada.
-- Acesso de leitura a este repositorio e ao arquivo `.env` de producao.
+- Acesso de leitura a este repositorio. O `.env` de producao so e acessado
+  em excecao de incidente — o check diario do Portal usa o probe
+  `/api/admin/portal-health`, nao a chave local.
 - Pelo menos duas contas de teste com perfis em Manaus (uma verificada como
   `active_federal_military`, uma como `rejected`).
 - Ambiente local com Node >= 22, Docker rodando (para a stack local do
@@ -286,13 +288,13 @@ Executar uma vez por dia durante o piloto.
       novos usuarios validos (nem zero nem pico anormal).
 - [ ] **Verificacao Portal**: Verificar logs para erros `INVALID_KEY`,
       `TIMEOUT`, `RATE_LIMITED`. Se houver mais de 5 erros em 24h, investigar.
-- [ ] **Conexao com Portal**: Testar manualmente uma requisicao ao Portal com
-      a chave de producao (via script de teste local com `.env` de producao).
-- [ ] **RLS e privacidade**: Executar localmente contra o banco de producao:
-      ```sh
-      npx pnpm@11.18.0 test:privacy
-      npx pnpm@11.18.0 test:secrets
-      ```
+- [ ] **Conexao com Portal**: Acessar `/api/admin/portal-health` autenticado
+      como operador e confirmar `status: "ok"` (ou o codigo do §4 para
+      diagnosticar). A chave nunca sai do servidor.
+- [ ] **RLS e privacidade**: `test:privacy` e `test:secrets` sao suites de
+      codigo, cobertas pelo CI a cada PR — **nao verificam producao**. A
+      garantia de RLS em producao vem da paridade de migration: `test:db`
+      (pgTAP) roda contra um banco local com as mesmas migrations no CI.
 - [ ] **Verificacoes pendentes**: Verificar se ha admisssoes estagnadas ha mais
       de 48h sem verificacao concluida. Se houver, diagnosticar (secao 4) e agir.
 - [ ] **Denuncias abertas**: Verificar se ha denuncias nao resolvidas. Zero
