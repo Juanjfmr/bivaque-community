@@ -74,5 +74,5 @@ values (
   '10000000-0000-4000-8000-000000000001',
   decode(repeat('ab', 32), 'hex'),
   decode(repeat('cd', 32), 'hex'),
-  '2026-08-09 12:00:00+00'
+  now() + interval '7 days'
 );
