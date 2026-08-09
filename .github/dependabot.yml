@@ -27,7 +27,14 @@ updates:
       # Workspace is pinned to pnpm@11.18.0 — bump deliberately, not by Dependabot.
       - dependency-name: "pnpm"
         versions: ["*"]
-    # Do not let Dependabot introduce pnpm itself; the workspace pins the manager.
+      # @playwright/test and supabase CLI are pinned by tests/scope/local-command-surface.test.mjs
+      # (asserts 1.51.1 and 2.107.0 verbatim). The Supabase CLI pin is also deliberate:
+      # 2.107.0 is the last version accepting [inbucket] in supabase/config.toml — 2.108+
+      # renamed it to [local_smtp]. Bumping either breaks test:scope; do it manually.
+      - dependency-name: "@playwright/test"
+        versions: ["*"]
+      - dependency-name: "supabase"
+        versions: ["*"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
