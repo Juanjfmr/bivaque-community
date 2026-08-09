@@ -269,6 +269,54 @@ select
   now() - make_interval(days => 60 - (i % 60))
 from generate_series(1, 60) as i;
 
+-- ── Fila de admissão: quem ainda não entrou ────────────────────────────────
+-- O painel do operador (Task 9) julga a fila com volume real: ~300 contas
+-- entre pending, temporary_error e rejected, com created_at espalhado para o
+-- destaque de 48h do SLA aparecer. Nenhuma tem profile: quem não passou da
+-- verificação ainda não completou o onboarding. Faixa 90000000-….
+--
+-- rejected é raro (i % 40) e temporary_error é o ruído esperado num pico
+-- de lançamento (i % 6): é exatamente o mix que o operador precisa ler.
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, recovery_token, email_change_token_new, email_change,
+  email_change_token_current, phone_change, phone_change_token,
+  reauthentication_token,
+  created_at, updated_at
+)
+select
+  '00000000-0000-0000-0000-000000000000',
+  ('90000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  'authenticated',
+  'authenticated',
+  'admissao-' || i || '@bivaque.example.invalid',
+  crypt('bivaque-e2e-local', gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}'::jsonb,
+  '{}'::jsonb,
+  '', '', '', '', '', '', '', '',
+  now() - make_interval(days => 15 - (i % 15)),
+  now()
+from generate_series(1, 300) as i
+on conflict (id) do nothing;
+
+insert into private.verification_outcomes (
+  user_id, status, eligibility_class, checked_at, created_at
+)
+select
+  ('90000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  (case
+    when i % 40 = 0 then 'rejected'
+    when i % 6 = 0 then 'temporary_error'
+    else 'pending'
+  end)::private.verification_status,
+  null,
+  null,
+  now() - make_interval(hours => 6 + (i % 340))
+from generate_series(1, 300) as i
+on conflict (user_id) do nothing;
+
 -- ── 8 grupos, 2 privados, com membros sobrepostos ─────────────────────────
 
 insert into public.groups (

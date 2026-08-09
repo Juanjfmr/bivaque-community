@@ -1076,6 +1076,15 @@ export type Database = {
           invitee_email_digest: string
         }[]
       }
+      list_verification_queue: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          status: string
+          user_id: string
+        }[]
+      }
       read_verification_status: {
         Args: { p_user_id: string }
         Returns: {
@@ -1136,7 +1145,10 @@ export type Database = {
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
       group_visibility: "public" | "private"
-      locality_admission_mode: "invite_only" | "verification_gated" | "waitlist_only"
+      locality_admission_mode:
+        | "invite_only"
+        | "waitlist_only"
+        | "verification_gated"
       notification_type:
         | "comment"
         | "group_admission"
@@ -1298,7 +1310,11 @@ export const Constants = {
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
       group_visibility: ["public", "private"],
-      locality_admission_mode: ["invite_only", "verification_gated", "waitlist_only"],
+      locality_admission_mode: [
+        "invite_only",
+        "waitlist_only",
+        "verification_gated",
+      ],
       notification_type: [
         "comment",
         "group_admission",
