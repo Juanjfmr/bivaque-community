@@ -31,6 +31,11 @@ jobs:
       - name: Claude Code Review
         uses: anthropics/claude-code-action@v1
         with:
+          # Allowlist Dependabot so its mechanical version bumps still pass review.
+          # The action's hardcoded default blocks any bot; we permit this one explicit
+          # actor and nothing else. '*' is intentionally not used — the project's docs
+          # are public (AGENTS.md, .claude/memory.md) and the action warns about it.
+          allowed_bots: dependabot[bot]
           # Chave DeepSeek (formato Anthropic em api.deepseek.com/anthropic).
           # Rota "tolerada sem suporte" — ver AGENTS.md/notas de decisão.
           anthropic_api_key: ${{ secrets.DEEPSEEK_API_KEY }}
