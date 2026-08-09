@@ -63,7 +63,7 @@ function GlassInputWrapper({ children }: { children: React.ReactNode }) {
 
 function DefaultHeroPanel() {
   return (
-    <div className="absolute inset-4 rounded-3xl bg-gradient-to-br from-[var(--accent)] via-[var(--accent)]/80 to-[var(--accent)]/40 motion-panel-enter">
+    <div className="absolute inset-4 rounded-3xl bg-[var(--accent)] bg-gradient-to-br from-[var(--accent)] via-[color-mix(in oklch, var(--accent) 85%, var(--background))] to-[color-mix(in oklch, var(--accent) 45%, var(--background))] motion-panel-enter">
       <div className="flex h-full flex-col items-center justify-center gap-6 p-8 text-center text-white">
         <div
           aria-hidden="true"
@@ -290,7 +290,7 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
                 <button
                   type="button"
                   onClick={onResetPassword}
-                  className="text-[var(--accent)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:underline"
+                  className="min-h-11 text-[var(--accent)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:underline"
                 >
                   Esqueci minha senha
                 </button>
@@ -340,7 +340,7 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
               <button
                 type="button"
                 onClick={onCreateAccount}
-                className="text-[var(--accent)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:underline"
+                className="min-h-11 text-[var(--accent)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:underline"
               >
                 Solicitar convite
               </button>
