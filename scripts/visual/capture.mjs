@@ -268,6 +268,17 @@ function auditPage() {
       )
     }
   }
+
+  // 10. forbidden copy — the same privacy vocabulary the database rejects
+  // (see supabase/migrations/20260802001300_fix_forbidden_content_regex.sql).
+  // The DB guards post bodies; the UI copy must guard itself.
+  const forbidden =
+    /\b(patente|posto militar|gradua[çc][ãa]o militar|organiza[çc][ãa]o militar|endere[çc]o residencial|selo de verifica[çc][ãa]o|verificado publicamente)\b/i
+  const bodyText = document.body.innerText || ""
+  const hit = forbidden.exec(bodyText)
+  if (hit) {
+    add("forbidden-copy", "high", "body", `forbidden term in UI copy: "${hit[0]}"`)
+  }
   return {
     findings,
     title: document.title,
