@@ -767,6 +767,16 @@ completo (lint+typecheck+test+build+capture, high=0). **Todas as
   do MAP §4 — 25 linhas viraram Corrigida, §3 atualizado, §0.4 registra UI
   de Comunidade como pendência explícita P1) + **Task 4** (runbook §6 aponta
   para o painel + §9 inclui o probe + §1 com as vars novas) + **Task 5**
+  (veredito: loop §10.2 não roda porque a Onda 8 não toca superfícies
+  visuais — não criou telas novas, não modificou componentes renderizados.
+  Gate verde após cada task: lint + typecheck + test (188 unit + 184 privacy
+  + 24 scope = 396) + secrets. Probe runtime validado contra o banco local
+  com a conta do seed: `status: "ok"` (7/7 asserções passaram). Visual loop
+  foi tentado mas o dev server não sobe no ambiente local — Supabase realtime,
+  edge_runtime e analytics parados impedem o middleware de inicializar.
+  Não-bloqueante: a onda não toca UI).
+  de Comunidade como pendência explícita P1) + **Task 4** (runbook §6 aponta
+  para o painel + §9 inclui o probe + §1 com as vars novas) + **Task 5**
   (veredito da onda). Gate verde após cada task. A `auditoria visual §10.2`
   não roda nesta onda (a Onda 8 não toca telas; ver Task 5 registro)._
 
