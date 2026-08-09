@@ -162,7 +162,17 @@ export function AppShell({ children }: AppShellProperties) {
           {/* Nav items */}
           <nav aria-label="Navegação principal" className="flex flex-col gap-1 p-3 flex-1">
             {NAV_ITEMS.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+              // Fallback to "community" when the route is not in primary nav (e.g. /messages,
+              // /notifications) so the sidebar never shows no active item. Mirrors bottom-nav's
+              // selectedKey fallback so the two navs stay in sync.
+              const inPrimaryNav = NAV_ITEMS.some(
+                (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
+              )
+              const active =
+                pathname === item.href ||
+                pathname.startsWith(`${item.href}/`) ||
+                (!inPrimaryNav && item.id === "community")
+
               const anchor = (
                 <a
                   key={item.id}
