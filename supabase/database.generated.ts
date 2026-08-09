@@ -1136,7 +1136,7 @@ export type Database = {
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
       group_visibility: "public" | "private"
-      locality_admission_mode: "invite_only" | "waitlist_only"
+      locality_admission_mode: "invite_only" | "verification_gated" | "waitlist_only"
       notification_type:
         | "comment"
         | "group_admission"
@@ -1298,7 +1298,7 @@ export const Constants = {
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
       group_visibility: ["public", "private"],
-      locality_admission_mode: ["invite_only", "waitlist_only"],
+      locality_admission_mode: ["invite_only", "verification_gated", "waitlist_only"],
       notification_type: [
         "comment",
         "group_admission",

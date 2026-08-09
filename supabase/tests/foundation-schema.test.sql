@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(19);
 
 select has_table('public', 'localities', 'localities is part of the public foundation');
 select has_table('public', 'locality_memberships', 'membership gates locality access');
@@ -54,8 +54,8 @@ select results_eq(
     from public.localities
     where slug = 'manaus-am'
   $$,
-  $$ values ('Manaus'::text, 'AM'::text, 'BR'::text, 'invite_only'::text) $$,
-  'Manaus is the invite-only pilot locality'
+  $$ values ('Manaus'::text, 'AM'::text, 'BR'::text, 'verification_gated'::text) $$,
+  'Manaus is a verification-gated pilot locality'
 );
 
 select results_eq(
@@ -142,6 +142,13 @@ select col_default_is(
   'waitlist_only'::public.locality_admission_mode,
   'new localities default to waitlist-only admission'
 );
+
+select enum_has_labels(
+  'locality_admission_mode',
+  array['invite_only', 'waitlist_only', 'verification_gated'],
+  'locality_admission_mode supports invite-only, verification-gated, and waitlist-only admission models'
+);
+
 
 select function_privs_are(
   'private',
