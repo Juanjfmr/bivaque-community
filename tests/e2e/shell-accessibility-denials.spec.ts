@@ -75,7 +75,6 @@ test.describe("Touch target minimum size", () => {
     await expect(tabs).toHaveCount(5)
     const count = await tabs.count()
 
-
     for (let index = 0; index < count; index++) {
       const tab = tabs.nth(index)
       await tab.waitFor({ state: "visible" })
