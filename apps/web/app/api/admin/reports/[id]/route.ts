@@ -95,6 +95,27 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return NextResponse.json({ error: "not found or already resolved" }, { status: 404 })
       }
 
+      // Task 11: notify the reporter that the report was analysed. The runbook
+      // §6 requires "sem revelar a ação tomada" — only structural references
+      // (recipient, actor, type, action, target) are stored; never the reported
+      // content, its author, or the outcome applied to it.
+      const { error: notifyError } = await supabase.from("notifications").insert({
+        recipient_user_id: report.reporter_user_id,
+        actor_user_id: userId,
+        type: "report_resolved",
+        action: "resolved",
+        target_type: "report",
+        target_id: reportId,
+      })
+
+      if (notifyError) {
+        log.error("notify reporter failed", {
+          error: notifyError.message,
+          userId,
+          reportId,
+        })
+      }
+
       return NextResponse.json({ ok: true, action: "resolve", report })
     }
 

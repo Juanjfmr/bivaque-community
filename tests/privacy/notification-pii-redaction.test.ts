@@ -28,9 +28,17 @@ const NOTIFICATION_TYPE_LABELS = [
   "event_rsvp",
   "event_change",
   "direct_message",
+  "report_resolved",
 ] as const
 
-const NOTIFICATION_ACTION_LABELS = ["created", "approved", "accepted", "rsvped", "updated"] as const
+const NOTIFICATION_ACTION_LABELS = [
+  "created",
+  "approved",
+  "accepted",
+  "rsvped",
+  "updated",
+  "resolved",
+] as const
 
 const NOTIFICATION_TARGET_TYPE_LABELS = [
   "post",
@@ -38,6 +46,7 @@ const NOTIFICATION_TARGET_TYPE_LABELS = [
   "family_invitation",
   "event",
   "direct_message",
+  "report",
 ] as const
 
 const NOTIFICATION_COLUMNS = [
@@ -133,15 +142,15 @@ describe("notification privacy boundary — payload carries no PII", () => {
   }
 
   it("notification_type values are a closed set — no extensible labels", () => {
-    expect(NOTIFICATION_TYPE_LABELS).toHaveLength(6)
+    expect(NOTIFICATION_TYPE_LABELS).toHaveLength(7)
     const unique = new Set(NOTIFICATION_TYPE_LABELS)
-    expect(unique.size).toBe(6)
+    expect(unique.size).toBe(7)
   })
 
   it("notification action values are a closed set — no extensible labels", () => {
-    expect(NOTIFICATION_ACTION_LABELS).toHaveLength(5)
+    expect(NOTIFICATION_ACTION_LABELS).toHaveLength(6)
     const unique = new Set(NOTIFICATION_ACTION_LABELS)
-    expect(unique.size).toBe(5)
+    expect(unique.size).toBe(6)
   })
 
   it("no notification label contains Portal reference", () => {

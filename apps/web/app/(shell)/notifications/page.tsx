@@ -57,6 +57,8 @@ function classifyNotification(notification: NotificationRow): TabKey {
     case "invitation_accepted":
     case "direct_message":
       return "minha-atividade"
+    case "report_resolved":
+      return "alertas"
     default:
       return "alertas"
   }
@@ -90,6 +92,10 @@ function formatNotificationLabel(notification: NotificationRow): string {
       return "atualizou um evento com sua presença"
     case "direct_message":
       return "enviou uma mensagem direta"
+    case "report_resolved":
+      // Confirma a análise, nunca o desfecho aplicado ao conteúdo (runbook §6:
+      // "sem revelar a ação tomada").
+      return "analisou sua denúncia"
     default:
       return "nova notificação"
   }

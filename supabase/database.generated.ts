@@ -1156,6 +1156,7 @@ export type Database = {
         | "event_rsvp"
         | "event_change"
         | "direct_message"
+        | "report_resolved"
       post_type: "text" | "photo" | "link" | "poll"
       profile_visibility: "locality_members" | "hidden"
       recommendation_category:
@@ -1322,6 +1323,7 @@ export const Constants = {
         "event_rsvp",
         "event_change",
         "direct_message",
+        "report_resolved",
       ],
       post_type: ["text", "photo", "link", "poll"],
       profile_visibility: ["locality_members", "hidden"],
