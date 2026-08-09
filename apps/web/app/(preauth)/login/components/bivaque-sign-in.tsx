@@ -22,7 +22,6 @@ interface BivaqueSignInProps {
   onMagicLinkSignIn?: (email: string) => Promise<void> | void
   onGoogleSignIn?: () => Promise<void> | void
   onResetPassword?: () => void
-  onCreateAccount?: () => void
 }
 
 function GoogleIcon() {
@@ -138,7 +137,7 @@ const DEFAULT_TESTIMONIALS: BivaqueTestimonial[] = [
     initials: "SF",
     name: "Sgt. Ferreira",
     context: "São Luís · MA",
-    text: "O convite restrito passou a sensação de pertencer a algo real.",
+    text: "Saber que todos ali passaram pela verificação traz a sensação de pertencer a algo real.",
   },
 ]
 
@@ -154,7 +153,6 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
   onMagicLinkSignIn,
   onGoogleSignIn,
   onResetPassword,
-  onCreateAccount,
 }) => {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
@@ -336,14 +334,8 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
             )}
 
             <p className="motion-card-enter [animation-delay:400ms] text-center text-sm text-[var(--muted)]">
-              Ainda não faz parte?{" "}
-              <button
-                type="button"
-                onClick={onCreateAccount}
-                className="min-h-11 text-[var(--accent)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:underline"
-              >
-                Solicitar convite
-              </button>
+              Comunidade verificada para militares federais ativos, veteranos e pensionistas. O
+              acesso é confirmado via Portal da Transparência após o cadastro.
             </p>
           </div>
         </div>
