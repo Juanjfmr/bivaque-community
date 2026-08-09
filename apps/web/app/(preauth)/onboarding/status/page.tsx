@@ -51,16 +51,14 @@ export default async function OnboardingStatusPage({ searchParams }: StatusPageP
         </h1>
 
         {isPending ? (
-          <>
-            <p className="text-sm text-muted">
-              Sua verificação está em análise. Respondemos em até {SUPPORT_SLA_HOURS} horas úteis.{" "}
-              Se passar disso, escreva para{" "}
-              <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">
-                {SUPPORT_EMAIL}
-              </a>
-              .
-            </p>
-          </>
+          <p className="text-sm text-muted">
+            Sua verificação está em análise. Respondemos em até {SUPPORT_SLA_HOURS} horas úteis. Se
+            passar disso, escreva para{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">
+              {SUPPORT_EMAIL}
+            </a>
+            .
+          </p>
         ) : (
           <>
             <p className="text-sm text-muted">
