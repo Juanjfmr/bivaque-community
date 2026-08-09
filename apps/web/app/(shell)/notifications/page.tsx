@@ -302,7 +302,7 @@ export default function NotificationsPage() {
                     <span className="flex items-center gap-1.5">
                       {tab.label}
                       {count > 0 && (
-                        <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--border)] px-1 text-[11px] font-semibold leading-none text-muted">
+                        <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--border)] px-1 text-xs font-semibold leading-none text-muted">
                           {count}
                         </span>
                       )}

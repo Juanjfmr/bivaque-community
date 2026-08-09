@@ -57,9 +57,7 @@ function DateBadge({ iso }: { iso: string }) {
   return (
     <div className="flex w-14 shrink-0 flex-col items-center rounded-lg border border-border bg-[var(--surface-sunken)] px-1 py-2 text-center">
       <span className="text-lg font-bold leading-none text-[var(--accent)]">{day}</span>
-      <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-muted">
-        {month}
-      </span>
+      <span className="mt-0.5 text-xs font-medium uppercase tracking-wide text-muted">{month}</span>
     </div>
   )
 }

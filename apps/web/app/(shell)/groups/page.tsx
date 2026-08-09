@@ -517,7 +517,7 @@ export default function GroupsPage() {
       >
         <SearchField.Group>
           <SearchField.SearchIcon />
-          <SearchField.Input placeholder="Buscar grupos..." />
+          <SearchField.Input placeholder="Buscar grupos..." className="transition-colors" />
           {searchQuery ? <SearchField.ClearButton /> : null}
         </SearchField.Group>
       </SearchField>

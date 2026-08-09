@@ -62,7 +62,7 @@ function SegmentedProgress({ steps, activeIndex }: { steps: string[]; activeInde
         {steps.map((label, i) => (
           <span
             key={label}
-            className={`text-[0.625rem] leading-tight transition-colors ${
+            className={`text-xs leading-tight transition-colors ${
               i <= activeIndex ? "font-medium text-[var(--accent)]" : "text-[var(--muted)]/60"
             }`}
           >

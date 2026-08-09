@@ -115,7 +115,7 @@ export function AppShell({ children }: AppShellProperties) {
             <a
               href="/profile"
               aria-label="Perfil"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] text-sm font-semibold ring-2 ring-transparent transition-all duration-[var(--duration-instant)] hover:ring-[var(--accent-soft)]">
                 C
@@ -249,7 +249,7 @@ export function AppShell({ children }: AppShellProperties) {
 
       {/* Keyboard shortcut hint */}
       <div className="hidden lg:flex fixed bottom-4 right-4 z-30">
-        <span className="flex items-center gap-1.5 text-[10px] text-muted bg-[var(--surface)] border border-border rounded-md px-2 py-1 shadow-[var(--elevation-1)]">
+        <span className="flex items-center gap-1.5 text-xs text-muted bg-[var(--surface)] border border-border rounded-md px-2 py-1 shadow-[var(--elevation-1)]">
           <Kbd>Ctrl</Kbd>
           <span>+</span>
           <Kbd>B</Kbd>

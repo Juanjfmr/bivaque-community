@@ -43,7 +43,7 @@ function formatRelativeTime(iso: string): string {
 function CommentItem({ comment }: { comment: CommentRow }) {
   return (
     <div className="flex gap-2 py-1.5">
-      <MemberAvatar name="?" size="sm" className="h-5 w-5 text-[10px]" />
+      <MemberAvatar name="?" size="sm" className="h-5 w-5 text-xs" />
       <div className="min-w-0 flex-1">
         <p className="text-sm break-words">{comment.content}</p>
         <div className="flex items-center gap-2">
