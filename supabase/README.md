@@ -61,8 +61,14 @@ access to another account's profile or data.
 
 `tests/fixtures/foundation.inc` contains synthetic `example.invalid` identities
 and fixed UUIDs. It is included inside each pgTAP transaction, so the CLI test
-runner rolls it back. Do not place users in `seed.sql`, copy hosted data, use live
-Portal calls, or add real personal data to fixtures.
+runner rolls it back. Do not copy hosted data, use live Portal calls, or add
+real personal data to fixtures.
+
+`seed.sql` is a separate concept and **does carry users**: it is the durable
+LOCAL development seed (the E2E account plus whatever the operator and the
+§10.2 visual capture need), running only on `supabase db reset --local`, with
+credentials that are public and disposable by design. pgTAP fixtures stay
+transactional and stay in `supabase/tests/*` — the two must not be merged.
 
 ```sh
 npx supabase start

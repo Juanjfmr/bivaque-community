@@ -28,6 +28,11 @@ import {
 // that silently works also lets the suite pass against the wrong instance.
 // Read it the same way scripts/visual/capture.mjs does: environment first,
 // then apps/web/.env.local.
+// `import.meta.dirname` cannot be used here. capture.mjs is real ESM, but a
+// spec is transpiled to CJS by Playwright, and the emitted `require` then
+// blows up as "require is not defined in ES module scope" at load time —
+// aborting collection for the whole suite, not just this file. Playwright is
+// always invoked from the repo root, so resolve from the cwd instead.
 function readEnvLocal(key: string): string | undefined {
   try {
     const file = readFileSync(join(process.cwd(), "apps", "web", ".env.local"), "utf-8")
@@ -264,6 +269,16 @@ test.describe("Login persistente Instagram-style", () => {
     const sairBtn = page.getByRole("button", { name: /Sair da conta/i })
     await expect(sairBtn, "Botao 'Sair da conta' presente").toBeVisible({ timeout: 5000 })
     await sairBtn.click()
+    // O modal de confirmacao (adicionado como guard de UX contra saida
+    // acidental) exige um segundo clique no botao "Sair" para efetivamente
+    // chamar supabase.auth.signOut(). Sem isso, a URL permanece em /profile.
+    const confirmarBtn = page.getByRole("button", { name: /^Sair$/i })
+    await expect(confirmarBtn, "Botao 'Sair' do modal de confirmacao presente").toBeVisible({
+      timeout: 5000,
+    })
+    await confirmarBtn.click()
+    await page.waitForTimeout(3000)
+    expect(page.url(), "Logout redireciona para /login").toContain("/login")
     await page.waitForTimeout(3000)
     expect(page.url(), "Logout redireciona para /login").toContain("/login")
 

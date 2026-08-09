@@ -250,6 +250,24 @@ function auditPage() {
   const h1Count = document.querySelectorAll("h1").length
   if (h1Count !== 1) add("heading-structure", "medium", "h1", `${h1Count} h1 elements (expected 1)`)
 
+  // 9. active navigation — each visible nav has exactly one current item (rubrica item 4).
+  // Anchors use aria-current="page"; tab role anchors use aria-selected="true" (ARIA Tabs pattern).
+  for (const nav of document.querySelectorAll("nav")) {
+    if (nav.offsetWidth === 0 && nav.offsetHeight === 0) continue
+    const anchors = nav.querySelectorAll("a")
+    if (anchors.length === 0) continue
+    const current = nav.querySelectorAll(
+      'a[aria-current="page"], a[data-active="true"], a[role="tab"][aria-selected="true"]',
+    )
+    if (current.length !== 1) {
+      add(
+        "nav-active",
+        "medium",
+        "nav",
+        `${current.length} active nav items (expected 1) in nav: ${nav.getAttribute("aria-label") || "unlabeled"}`,
+      )
+    }
+  }
   return {
     findings,
     title: document.title,
@@ -259,6 +277,7 @@ function auditPage() {
 }
 
 // --------------------------------------------------------------------------
+
 // driver
 // --------------------------------------------------------------------------
 

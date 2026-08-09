@@ -1,16 +1,9 @@
 import { expect, test } from "@playwright/test"
+import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
-
-async function setConsentCookie(page: import("@playwright/test").Page) {
-  // Given a fresh page context
-  // When the consent cookie is set
-  await page
-    .context()
-    .addCookies([{ name: "bivaque-consent-version", value: "1", path: "/", domain: "127.0.0.1" }])
-}
 
 // ---------------------------------------------------------------------------
 // Flow 1: Holder onboarding — login → consent → onboarding → community entry
@@ -34,7 +27,7 @@ test.describe("holder onboarding journey", () => {
     await page.goto("/login")
 
     // Then the auth entry points are rendered
-    await expect(page.getByRole("button", { name: "Entrar com Google" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Enviar link mágico" })).toBeVisible()
 
     const emailInput = page.getByLabel("E-mail")
@@ -138,25 +131,25 @@ test.describe("community feed", () => {
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
   })
 
-  test("feed page with consent cookie renders the community heading", async ({ page }) => {
+  test("feed page with consent cookie renders the community heading", async ({ page, context }) => {
     // Given a browser with the consent cookie set
-    await setConsentCookie(page)
+    await seedSession(context)
 
     // When the user navigates to the community page
     await page.goto("/community")
 
     // Then the community page renders (middleware passes, Supabase may show error or empty)
-    await expect(page.getByRole("heading", { name: "Minha comunidade" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Publicar" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
   })
 
-  test("feed page is reachable at all three viewport widths", async ({ page }) => {
+  test("feed page is reachable at all three viewport widths", async ({ page, context }) => {
     // Given the consent cookie and the mobile-375 viewport
-    await setConsentCookie(page)
+    await seedSession(context)
     await page.goto("/community")
 
     // Then the community page renders without horizontal overflow
-    await expect(page.getByRole("heading", { name: "Minha comunidade" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible()
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
     const viewportWidth = await page.evaluate(() => window.innerWidth)
     expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)
@@ -178,9 +171,9 @@ test.describe("groups journey", () => {
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
   })
 
-  test("groups page with consent cookie renders groups UI", async ({ page }) => {
+  test("groups page with consent cookie renders groups UI", async ({ page, context }) => {
     // Given a browser with consent cookie
-    await setConsentCookie(page)
+    await seedSession(context)
 
     // When the user navigates to the groups page
     await page.goto("/groups")
@@ -189,16 +182,43 @@ test.describe("groups journey", () => {
     await expect(page.locator("h1").first()).toBeVisible({ timeout: 15000 })
   })
 
-  test("groups page shows bottom nav with correct tab order", async ({ page }) => {
-    // Given the consent cookie
-    await setConsentCookie(page)
+  test("groups page shows primary navigation with correct item order", async ({
+    page,
+    context,
+  }) => {
+    // Given an authenticated member
+    await seedSession(context)
     await page.goto("/groups")
 
-    // Then the bottom navigation is visible with 4 tabs
-    const nav = page.getByRole("navigation", { name: "Navegação principal" })
-    await expect(nav).toBeVisible()
-    const tabs = nav.getByRole("tab")
-    await expect(tabs).toHaveCount(4)
+    // Then exactly one primary navigation is on screen: the BottomNav below
+    // md (5 tabs in NAV_ITEMS order), the sidebar from md up (rail or
+    // expanded, links).
+    const width = page.viewportSize()?.width ?? 0
+
+    if (width < 768) {
+      // Mobile: BottomNav with 5 tabs in NAV_ITEMS order
+      const nav = page.locator(BOTTOM_NAV)
+      await expect(nav).toBeVisible()
+      const tabs = nav.getByRole("tab")
+      await expect(tabs).toHaveCount(5)
+      await expect(tabs.nth(0)).toContainText("Comunidade")
+      await expect(tabs.nth(1)).toContainText("Grupos")
+      await expect(tabs.nth(2)).toContainText("Eventos")
+      await expect(tabs.nth(3)).toContainText("Indicações")
+      await expect(tabs.nth(4)).toContainText("Perfil")
+    } else {
+      // Tablet rail / desktop sidebar: BottomNav hidden, sidebar links visible
+      await expect(page.locator(BOTTOM_NAV)).toBeHidden()
+      const sidebar = page.locator(SIDEBAR)
+      await expect(sidebar).toBeVisible()
+      const links = sidebar.getByRole("link")
+      await expect(links).toHaveCount(5)
+      await expect(links.nth(0)).toHaveAttribute("href", "/community")
+      await expect(links.nth(1)).toHaveAttribute("href", "/groups")
+      await expect(links.nth(2)).toHaveAttribute("href", "/events")
+      await expect(links.nth(3)).toHaveAttribute("href", "/recommendations")
+      await expect(links.nth(4)).toHaveAttribute("href", "/profile")
+    }
   })
 })
 
@@ -217,16 +237,16 @@ test.describe("recommendations journey", () => {
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
   })
 
-  test("recommendations page with consent cookie renders browse tab", async ({ page }) => {
+  test("recommendations page with consent cookie renders browse tab", async ({ page, context }) => {
     // Given a browser with consent cookie
-    await setConsentCookie(page)
+    await seedSession(context)
 
     // When the user navigates to the recommendations page
     await page.goto("/recommendations")
 
     // Then the recommendations page renders mock data
     await expect(page.getByRole("heading", { name: "Indicações" })).toBeVisible()
-    await expect(page.getByText("Peça e compartilhe recomendações")).toBeVisible()
+    await expect(page.getByText(/Descubra grupos e eventos da sua comunidade/)).toBeVisible()
 
     // The "Explorar" tab is visible with mock recommendation cards
     await expect(page.getByRole("tab", { name: "Explorar" })).toBeVisible()
@@ -234,9 +254,12 @@ test.describe("recommendations journey", () => {
     await expect(page.getByRole("tab", { name: "Salvas" })).toBeVisible()
   })
 
-  test("recommendations browse tab renders cards and tabs are present", async ({ page }) => {
+  test("recommendations browse tab renders cards and tabs are present", async ({
+    page,
+    context,
+  }) => {
     // Given the consent cookie
-    await setConsentCookie(page)
+    await seedSession(context)
     await page.goto("/recommendations")
 
     // Then the three tabs are present
@@ -267,9 +290,9 @@ test.describe("events journey", () => {
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
   })
 
-  test("events page with consent cookie renders events UI", async ({ page }) => {
+  test("events page with consent cookie renders events UI", async ({ page, context }) => {
     // Given a browser with consent cookie
-    await setConsentCookie(page)
+    await seedSession(context)
 
     // When the user navigates to the events page
     await page.goto("/events")
@@ -278,9 +301,9 @@ test.describe("events journey", () => {
     await expect(page.getByRole("heading", { name: "Eventos" })).toBeVisible()
   })
 
-  test("events page shows create event toggle", async ({ page }) => {
+  test("events page shows create event toggle", async ({ page, context }) => {
     // Given the consent cookie
-    await setConsentCookie(page)
+    await seedSession(context)
     await page.goto("/events")
 
     // Then the create event button is visible
@@ -303,15 +326,18 @@ test.describe("notifications journey", () => {
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
   })
 
-  test("notifications page with consent cookie renders notifications UI", async ({ page }) => {
+  test("notifications page with consent cookie renders notifications UI", async ({
+    page,
+    context,
+  }) => {
     // Given a browser with consent cookie
-    await setConsentCookie(page)
+    await seedSession(context)
 
     // When the user navigates to the notifications page
     await page.goto("/notifications")
 
     // Then the notifications page renders
-    await expect(page.getByRole("heading", { name: "Notificacoes" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Notificações" })).toBeVisible()
   })
 })
 
@@ -330,16 +356,16 @@ test.describe("contextual DM and report journey", () => {
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
   })
 
-  test("messages page with consent cookie renders messages UI", async ({ page }) => {
+  test("messages page with consent cookie renders messages UI", async ({ page, context }) => {
     // Given a browser with consent cookie
-    await setConsentCookie(page)
+    await seedSession(context)
 
     // When the user navigates to the messages page
     await page.goto("/messages")
 
-    // Then the messages page renders (shows loading state without auth session)
+    // Then the messages page renders its heading and primary action
     await expect(page.getByRole("heading", { name: "Mensagens" })).toBeVisible()
-    await expect(page.getByText(/Carregando conversas/)).toBeVisible()
+    await expect(page.getByRole("button", { name: "Nova conversa" })).toBeVisible()
   })
 })
 
@@ -402,9 +428,10 @@ test.describe("accessibility across journeys", () => {
 
   test("no horizontal overflow on community page at 375px with consent cookie", async ({
     page,
+    context,
   }) => {
     // Given the consent cookie
-    await setConsentCookie(page)
+    await seedSession(context)
     // When the browser opens /community
     await page.goto("/community")
 

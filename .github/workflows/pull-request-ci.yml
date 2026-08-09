@@ -14,21 +14,21 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
 
       - name: Cache Next.js build artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: apps/web/.next/cache
           key: ${{ runner.os }}-next-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.[jt]s', 'apps/web/**/*.[jt]sx') }}
@@ -51,19 +51,44 @@ jobs:
       - name: Secrets scan
         run: pnpm test:secrets
 
-      - name: Build web app
-        run: pnpm build
-
       - name: Start local Supabase
         run: pnpm exec supabase start
+
+      # Next inlines NEXT_PUBLIC_* at build time, so the stack has to be up and
+      # the env written before `pnpm build` runs — not after it.
+      #
+      # The two BIVAQUE_VISUAL_* values are the development seed's account
+      # (supabase/seed.sql), public and disposable by design. They are supplied
+      # here rather than defaulted inside a spec so that the specs keep the
+      # contract this repo enforces: read the credential from the environment,
+      # and throw when nothing provides one.
+      - name: Write local Supabase env
+        run: |
+          pnpm exec supabase status -o env > /tmp/supabase.env
+          . /tmp/supabase.env
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "BIVAQUE_VISUAL_EMAIL=visual@bivaque.example.invalid"
+            echo "BIVAQUE_VISUAL_PASSWORD=bivaque-e2e-local"
+          } > apps/web/.env.local
+
+      - name: Build web app
+        run: pnpm build
 
       - name: Check generated types drift
         run: |
           pnpm generate:types
           git diff --exit-code -- supabase/database.generated.ts
 
-      - name: Reset local database
-        run: pnpm db:reset
+      # pgTAP compares the exact set of profiles visible in Manaus against its
+      # own fixtures, so it has to run against a database WITHOUT the
+      # development seed. E2E needs the opposite — it authenticates as a seeded
+      # user — hence the second reset further down.
+      - name: Reset local database (no seed)
+        run: pnpm exec supabase db reset --local --no-seed
 
       - name: Database tests
         run: pnpm test:db
@@ -74,12 +99,15 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
+      - name: Reset local database (with seed)
+        run: pnpm exec supabase db reset --local
+
       - name: Root E2E tests
         run: pnpm test:e2e
 
       - name: Upload Playwright artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-artifacts
           if-no-files-found: ignore

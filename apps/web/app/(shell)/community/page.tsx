@@ -249,12 +249,14 @@ export default function CommunityPage() {
             <ToggleButton
               isSelected={sortOrder === "recent"}
               onChange={() => handleSortChange("recent")}
+              className="min-h-11"
             >
               Recentes
             </ToggleButton>
             <ToggleButton
               isSelected={sortOrder === "relevant"}
               onChange={() => handleSortChange("relevant")}
+              className="min-h-11"
             >
               Relevantes
             </ToggleButton>

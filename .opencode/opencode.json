@@ -1,0 +1,48 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Config de projeto. Mescla sobre `~/.config/opencode/opencode.json`.
+  // MCP custa contexto em TODA request — só liga aqui o que este repo usa.
+
+  "mcp": {
+    "supabase": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp",
+      "enabled": true
+    },
+
+    // Desligado de propósito. O repo já tem loop determinístico de browser em
+    // `scripts/visual/loop.mjs` (captura + auditoria + artefatos em .visual/).
+    // Dirigir o browser por fora dele é o gatilho do perfil fantasma "Visual
+    // Capture" — ver a seção de armadilhas no AGENTS.md.
+    "playwright": {
+      "type": "local",
+      "command": ["npx", "@playwright/mcp@latest"],
+      "enabled": false
+    },
+
+    // Grafo de código local — codebase-memory-mcp 0.9.1-rc.1 (instalado
+    // manualmente em ~/.local/bin, verificado via SHA-256 + gh attestation
+    // verify). Consulta estrutural que o agente chama sozinho: trace_path,
+    // detect_changes, search_graph, get_architecture. Indexa em
+    // ~/.cache/codebase-memory-mcp; sem rede, sem API key. Atualização do
+    // binário é manual (re-baixar a release); o índice se atualiza sozinho.
+    "codebase-memory-mcp": {
+      "type": "local",
+      "command": ["C:\\Users\\juana\\.local\\bin\\codebase-memory-mcp.exe"],
+      "enabled": true
+    },
+
+    // Debugger de browser (console, rede, performance, DOM). Complementa o
+    // loop visual: loop.mjs FOTOGRAFA, este DEBUGA — não substitui nem
+    // conflita. Restrições: (1) nunca usar para dirigir o loop visual —
+    // browser de captura é só via scripts/visual/loop.mjs; (2) não navegar
+    // no app local durante janelas db:reset → test:db (gatilho do perfil
+    // fantasma "Visual Capture" — ver armadilhas no AGENTS.md).
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "chrome-devtools-mcp@latest"],
+      "enabled": true
+    }
+  }
+}

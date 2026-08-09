@@ -92,8 +92,22 @@ const syntheticCpfPatterns = [
   /^00011122233$/, // known test fixture
 ]
 
+// A real CPF always satisfies the mod-11 check digits, so requiring them costs
+// nothing in coverage and drops ~99% of unrelated 11-digit runs of numbers
+// (CI run ids, timestamps, phone digits) that the bare \d{11} regex flags.
+function hasValidCpfCheckDigits(digits) {
+  const digit = (upTo) => {
+    let sum = 0
+    for (let i = 0; i < upTo; i++) sum += Number(digits[i]) * (upTo + 1 - i)
+    const rest = (sum * 10) % 11
+    return rest === 10 ? 0 : rest
+  }
+  return digit(9) === Number(digits[9]) && digit(10) === Number(digits[10])
+}
+
 function isSyntheticCpf(matchText) {
   const normalized = matchText.replace(/[.\s-]/g, "")
+  if (!hasValidCpfCheckDigits(normalized)) return true
   return syntheticCpfPatterns.some((p) => p.test(normalized))
 }
 

@@ -50,6 +50,8 @@ policies that read it land in the **same migration** — never "in future".
 ## Commands (root, pnpm 11.18 pinned, Node >=22)
 
 ```sh
+npx pnpm@11.18.0 gate        # PORTA ÚNICA: lint -> typecheck -> test -> secrets, para no primeiro vermelho
+npx pnpm@11.18.0 gate --fast # só lint + typecheck, para o loop de edição (não autoriza declarar pronto)
 npx pnpm@11.18.0 lint        # biome check . (Biome 2.5.6)
 npx pnpm@11.18.0 typecheck   # tsc --noEmit across all workspaces
 npx pnpm@11.18.0 test        # test:unit (vitest) + test:scope (node --test)
@@ -62,9 +64,17 @@ npx pnpm@11.18.0 test:e2e    # playwright test (needs Docker-free; starts its ow
 - Supabase commands need Docker and a running stack: `npx pnpm@11.18.0 exec supabase start` FIRST,
   then `db:reset` / `test:db` / `db:lint`. `db:reset` is destructive — local only, never `--linked`.
 - Canonical db test script is **`test:db`** (`supabase test db`). `db:test` is forbidden — a scope
-  test asserts it does not exist. CI runs: lint → typecheck → test → build → supabase start →
-  db:reset → test:db → db:lint → `playwright install --with-deps chromium` → test:e2e → upload
-  artifacts (always).
+  test asserts it does not exist. CI runs: lint → typecheck → test → secrets → supabase start →
+  write env → build → types drift → db:reset `--no-seed` → test:db → db:lint →
+  `playwright install --with-deps chromium` → db:reset (with seed) → test:e2e → upload artifacts
+  (always).
+- **The two resets are deliberate.** pgTAP compares the exact set of profiles visible in Manaus
+  against its own fixtures, so it must run against a database WITHOUT the development seed; E2E
+  needs the opposite, because it authenticates as a seeded user. Collapsing them back into one
+  reset turns six profile-listing asserts red.
+- **The build needs the env before it runs.** Next inlines `NEXT_PUBLIC_*` at build time, so
+  `supabase start` and the step that writes `apps/web/.env.local` both precede `pnpm build`.
+  Moving the build earlier reintroduces the prerender crash that kept CI red from `78d4318` on.
 
 ## Visual build loop (UI work)
 
@@ -88,6 +98,42 @@ These tests fail CI if you break them — update them only when a contract delib
   rejects `local_smtp` with `invalid keys` (renamed only in 2.108+). Do not upgrade the pinned CLI
   casually; both pin and section are locked by tests.
 - Root scripts/devDeps and the three Playwright viewport projects are asserted verbatim.
+
+## Known traps — check these BEFORE blaming your diff
+
+Each of these surfaces as a test or lint failure unrelated to the change in flight. That is
+exactly the signal that makes an autonomous agent "fix" what is not broken. **Confirm a failure
+reproduces from a clean state before attributing it to code.**
+
+- **The "Visual Capture" ghost profile.** The `.visual/` tooling inserts a profile row into the
+  local database when it runs. If a dev server or a visual capture touches the stack between
+  `db:reset` and `test:db`, six profile-listing asserts fail — `locality-profile-access`,
+  `authz-*-matrix`, `full-regression`. It looks like a real regression and is not. `.visual/` is
+  gitignored, so grepping the repo for the string finds nothing. **Fix: re-run `db:reset` with no
+  dev server and no capture running, then `test:db`.** This is also why the Playwright MCP is
+  disabled in `.opencode/opencode.json` — drive the browser through `scripts/visual/loop.mjs`,
+  which is deterministic and cleans up after itself.
+- **Stale `dev-server.pid` / `dev-server.log`.** A pid file left behind from a killed run makes
+  the visual loop attach to a server that is not there. Both are gitignored; delete and retry.
+- **Product decisions live outside the repo.** `C:\Users\juana\Forja-90\.omo\…` is unreachable
+  from a workspace-scoped session. Do not block on it — see the header of this file.
+
+## Harness (OpenCode)
+
+- **The Bivaque code graph is `codebase-memory-mcp` — NOT graphify.** The project index is
+  `project: "bivaque-community"` (`~/.local/bin/codebase-memory-mcp.exe cli <tool> --project
+  bivaque-community`). Consult it for architecture/symbol questions (`search_graph`,
+  `trace_path`, `get_architecture`, `get_code_snippet`, `detect_changes`). Never run the
+  graphify pipeline (`graphify-out/` does not exist here and is not the tool for this repo).
+  Tools require the `project` param — without it they fail.
+- `.opencode/opencode.json` holds the project MCP config. It merges over the global one at
+  `~/.config/opencode/opencode.json`, where destructive-command guard-rails live (`--linked` is
+  denied, `db:reset` asks).
+- `/run-plan <caminho>` executes a plan from `docs/superpowers/plans/` todo by todo, gating
+  between each. `/gate` measures without fixing. `/harness-doctor` audits the config itself.
+- Plans may reference `superpowers:*` or `anthropic-skills:*` skills. **Those are Claude Code
+  plugins and do not exist in OpenCode.** The equivalent protocol is in the `plan-execution` and
+  `gate-before-done` skills, which live in `~/.claude/skills/` and are read by both harnesses.
 
 ## HeroUI v3 components in use (post waves 1–5 + 7)
 
@@ -140,8 +186,16 @@ provider** — the global `toast()` helper only renders through it.
   `npx pnpm@11.18.0 exec supabase migration new <name>`.
 - pgTAP tests live in `supabase/tests/*.sql` (run by `test:db`). Fixtures in
   `supabase/tests/fixtures/foundation.inc` use `example.invalid` identities and fixed UUIDs and are
-  included inside each transaction (auto-rollback). **Never** put users in `seed.sql` or real
-  personal data in fixtures.
+  included inside each transaction (auto-rollback). Never put real personal data in fixtures.
+- **`seed.sql` is a separate concept from the pgTAP fixtures, and it does carry users.** It is the
+  durable LOCAL development seed (two runbook accounts plus ~300 Manaus members, 400 posts, groups,
+  events and open reports) that the operator, the E2E suite and the §10.2 visual capture all need.
+  Its credentials are public and disposable by design. pgTAP fixtures stay transactional and stay
+  in `supabase/tests/*` — the two must not be merged.
+- **Seeding `auth.users` requires the token columns as `''`, never NULL.** GoTrue scans
+  `confirmation_token` and its siblings as Go `string`; a NULL makes the password grant fail with
+  HTTP 500 (`converting NULL to string is unsupported`), not the 400 you would expect from a bad
+  password hash.
 - Client types: `npx supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts`
   — generate ONLY the `public` schema, never the `private` trust schema.
 - Privacy boundary: `private` schema (`verification_outcomes`, `family_invitations`,
@@ -173,11 +227,14 @@ provider** — the global `toast()` helper only renders through it.
   `apps/web/.env.local`, and throw when neither supplies one — see
   `tests/e2e/persistent-login.spec.ts`. The secrets scan enforces this for anything bound to a
   `password`, `secret`, `api_key` or `credential` name.
-- **CI secrets required for the E2E gate.** Two env vars must be configured in `Settings →
-  Secrets and variables → Actions` for the `Root E2E tests` step to pass:
-  `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Without them `next start`
-  fails before any spec runs. This is repository-side configuration, not a code contract —
-  the test:e2e gate will stay red until the secrets are in place.
+- **No repository secrets are needed for the E2E gate.** An earlier revision of this file said
+  `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` had to be configured under
+  `Settings → Secrets and variables → Actions`. That is obsolete: CI now derives both from the
+  local stack (`supabase status -o env`) and writes `apps/web/.env.local` before the build.
+- **Specs are transpiled to CJS — `import.meta` is not available in them.** `scripts/visual/*.mjs`
+  is real ESM and may use `import.meta.dirname`; a spec may not. The emitted `require` fails as
+  "require is not defined in ES module scope" at load time and aborts collection for the WHOLE
+  suite, reporting `Total: 0 tests in 0 files`. Resolve paths from `process.cwd()` instead.
 
 ## Style
 
