@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
+import { sanitizeNext } from "../../../lib/security/sanitize-next"
 
 const COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 400,
@@ -13,7 +14,7 @@ const COOKIE_OPTIONS = {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
-  const next = searchParams.get("next") ?? "/"
+  const next = sanitizeNext(searchParams.get("next"))
 
   if (!code) {
     return NextResponse.json({ error: "Missing code parameter" }, { status: 400 })
