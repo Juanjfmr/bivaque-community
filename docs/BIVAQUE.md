@@ -311,6 +311,37 @@ Referência de faixa: o Nextdoor cobra
 em patrocínio de bairro, e o gasto típico de pequeno negócio fica entre US$ 100 e 500 por
 mês.
 
+### 7.2.1 Categorias da vitrine
+
+Lista fechada. Categoria primária é o sinal mais forte de descoberta, e é o que faz filtro e
+busca funcionarem — sem ela a vitrine é uma lista que ninguém percorre.
+
+**Alimentação** · **Casa e reformas** · **Assistência técnica** · **Mudança e transporte** ·
+**Imóveis** · **Documentação e finanças** · **Saúde e bem-estar** · **Beleza** ·
+**Educação e aulas** · **Automotivo** · **Eventos e festas** · **Pets**
+
+Baseada em GetNinjas e OLX, com três desvios deliberados do padrão de mercado:
+
+- **Alimentação** não existe como categoria de serviço em nenhuma das duas, e é o caso
+  demonstrado no grupo de classificados da vila — peixe, marmita, bolo.
+- **Documentação e finanças** é específica deste público: pensão, inventário, transferência,
+  despachante, seguro.
+- **Assistência técnica** fica separada de Casa e reformas porque ar-condicionado em Manaus
+  é, na prática, uma categoria própria.
+
+Três regras que sustentam a lista:
+
+1. **Não existe "Outros".** Vira depósito, chega a metade das fichas e mata o filtro. O que
+   não couber é sinal para criar categoria por decisão — nunca por usuário.
+2. **Categoria só se divide** quando passar de ~15 fichas ativas. Começar largo e dividir sob
+   pressão é reversível; abrir com doze categorias vazias não é.
+3. **Produto e serviço convivem na mesma taxonomia.** O catálogo do WhatsApp Business já
+   prova que o mesmo formato — item com foto, descrição e preço — serve para corte de peixe e
+   para "Limpeza Pós-Obra". A ficha não precisa de tipo separado.
+
+A granularidade da vitrine tem o mesmo problema de densidade do feed (§3.4): categoria demais
+com prestador de menos faz tudo parecer vazio ao mesmo tempo.
+
 ### 7.3 Proibido
 
 1. **Intermediar o pagamento do serviço entre membro e prestador.** O dinheiro do corte de
