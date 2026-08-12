@@ -92,8 +92,8 @@ encontrado ocupado nos três mercados pesquisados em 2026-08-11.
 **Sobre o teto da categoria.** RallyPoint foi fundado em 2012, levantou cerca de US$ 21,5
 milhões e declarou 1 milhão de membros em 2017. Números de estágio de investimento e receita
 por membro circulam em agregadores (Tracxn, CB Insights, Crunchbase) e **não foram
-confirmados em fonte primária** — a única fonte primária localizada é um
-[Form D de 2024](https://www.sec.gov/Archives/edgar/data/1565538/000156553824000004/0001565538-24-000004-index.html),
+confirmados em fonte primária** — a única fonte primária localizada é um Form D de 2024 no
+[EDGAR da SEC](https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=1565538&type=D),
 que registra a oferta e não sustenta receita. Tratar como sinal direcional, não como
 referência de modelagem: rede só-militar cresce devagar mesmo no maior mercado do mundo.
 
