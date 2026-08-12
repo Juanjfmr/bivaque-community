@@ -103,15 +103,18 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
-| Ficha de prestador | **não existe** | ficha grátis na própria vila | — | — | G |
-| Conta de prestador | **não existe** | login que administra só a própria ficha, sem ler feed nenhum | fronteira precisa nascer na mesma migration que o tipo de conta | — | G |
-| Alcance pago | **não existe** | pago para aparecer além da própria vila | — | — | G |
+| Ficha de prestador | **não existe** | identidade + catálogo + portfólio (D45) | prova social e avisos ficam para depois de F e H | — | G |
+| Conta de prestador | **não existe** | usuário do Auth com papel, sem membership (D37) | sem membership nenhuma policy de conteúdo casa — a fronteira precisa nascer na mesma migration que o tipo de conta | — | G |
+| Dashboard do prestador | **não existe** | anúncio, métrica e caixa de pedidos | depende do PostHog para a métrica | — | G |
+| Busca de prestador | **não existe** | filtro exato por categoria e vila + `pg_trgm` no nome (D44) | — | — | G |
+| Alcance pago | **não existe** | assinatura por Asaas, checkout hospedado, webhook liga a flag (D41) | exige CNPJ | — | G |
 
 ## 8. Mensagens e notificações
 
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
-| DM | superfície publicada e funcional no caminho feliz | **removida do piloto** | bloqueio é só de UI: o teste SQL afirma que o bloqueador continua enviando | `20260802001500:185-211`, `supabase/tests/dm-context-denials.sql:389-451` `[A]` | B |
+| DM entre membros | superfície publicada e funcional no caminho feliz | **adiada** — a superfície fica, o acesso entre membros não abre | — | `messages/page.tsx` `[A]` | — |
+| Conversa membro ↔ prestador | **não existe** | contexto `provider` na máquina que já existe (D36) | exige corrigir antes: bloqueio contornável pelo bloqueador (P0), criação por ordem de UUID, contexto declarado não validado | `20260802001500:185-211`, `supabase/tests/dm-context-denials.sql:389-451` `[A]` | G |
 | Inbox | lista e marca como lida; cliques navegam | igual | notificação de aceite familiar abre o perfil do próprio titular | `notifications/page.tsx:81-89` `[A]` | E |
 | Preferências | quatro booleanos persistidos | só sobrevive canal com produtor | nenhum trigger lê `notification_preferences`; "menção" nem é tipo de notificação | `notification-preferences-actions.ts:36-47`, `20260802001400:70-232` `[V]` | B |
 | E-mail transacional | **não existe** | resposta a pedido e lembrete de encontro | sem ele não há canal de retorno próprio | — | D |
@@ -136,6 +139,25 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 |---|---|---|---|---|---|
 | Filtro de vocabulário | CHECK no banco rejeita palavras comuns em posts, comentários, pedidos e respostas | removido; aviso de PII na UI | bloqueia "patente", "posto militar", "OM", "CPF", "plano", "preço", "telefone" — inclusive o conteúdo real da comunidade | `20260802001100:36-41,55-63`, `20260802001300_fix_forbidden_content_regex.sql:15,21` `[V]` | C |
 | pgTAP do filtro | afirma a rejeição | mudar junto com a constraint | teste verde que trava a correção | `supabase/tests/community-feed-denials.sql:150-155,289-294` `[A]` | C |
+
+## 11. Infraestrutura
+
+Nenhuma linha desta seção existe hoje. Todas entram na onda D1, que não entrega tela e
+destrava quase todo o resto.
+
+| Superfície | Estado atual | Estado-alvo | Lacuna | Onda |
+|---|---|---|---|---|
+| E-mail transacional | **não existe** | Resend, domínio verificado com DKIM e SPF | **bloqueio externo:** exige conta e registro de DNS | D1 |
+| Canal WhatsApp | **não existe** | não-oficial com número descartável, adaptador no `outbox` (§7.8 do BIVAQUE) | **bloqueio externo:** exige chip dedicado | D1 |
+| Rate limit | **não existe** | Upstash com os quatro limites: CPF por hora, cota de convite, leitura de perfil, throttle global do Portal | quatro decisões dependem dele | D1 |
+| Circuit breaker do Portal | **não existe** | no Upstash: em 429, parar e mandar todos para `pending` | sem ele, um retry em laço suspende o token por 8h no meio do lançamento | D1 |
+| Agendador | **não existe** | pg_cron; confirmar `pg_net` para a reconciliação de `pending` | reconciliação, expiração de TTL e lembrete dependem dele | D1 |
+| Fila de saída | **não existe** | tabela `outbox` com estado + worker no pg_cron; verifica preferência e opt-out antes de enviar | é onde canal, retentativa e rastro vivem | D1 |
+| Rastreamento de erro | só log da Vercel | Sentry com filtro de PII antes do envio | erro intermitente hoje é invisível | D1 |
+| Métrica de produto | **não existe** | PostHog | sai dado comportamental para terceiro: exige base legal declarada | H |
+| Cobrança | **não existe** | Asaas, checkout hospedado, webhook liga a flag | **bloqueio externo:** exige CNPJ | G |
+| Deploy de banco | manual, não documentado | GitHub Action no merge, credencial como secret do CI | hoje a credencial de produção vive no laptop — Task 8 do plano de observabilidade | D1 |
+| Staging | **não existe e não vai existir** | — | risco aceito (D42): erro de migração sobre dado real chega direto à produção | — |
 
 ---
 

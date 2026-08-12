@@ -29,7 +29,13 @@ para **o que a pessoa escolhe dizer** sobre si.
 ## Decision
 
 Permitir que o membro declare, opcionalmente, força, situação, OM e turma no próprio
-perfil, e permitir busca e filtro por esses campos dentro da localidade.
+perfil.
+
+**A afiliação é exibida, não é buscável.** Decisão de 2026-08-11: não existe busca de
+pessoas no piloto. A OM aparece no perfil de quem o membro encontrou por conteúdo, evento ou
+grupo — gerando o reconhecimento que cria laço — e não há filtro que devolva "todos da OM X".
+Isso remove o vetor principal de enumeração e é o que torna esta decisão aprovável com
+requisitos menores do que a versão anterior exigia.
 
 **O que muda:** `AGENTS.md:205` deixa de proibir organização militar e posto de forma
 absoluta, e passa a proibir a persistência do que vem do **payload do Portal**. Campos
@@ -112,10 +118,12 @@ de remoção, comunicação a quem declarou, e nenhuma garantia sobre cópias j�
 
 Esta decisão **não pode ser implementada** enquanto os cinco itens abaixo não existirem:
 
-1. **Threat model escrito** para enumeração e scraping do diretório, com o orçamento de
-   requisições que um atacante autenticado precisaria e o custo dele.
-2. **Proteção além de paginação e rate limit** — a decisão anterior citava as duas como
-   suficientes e não são contra conta autenticada paciente. Definir o mecanismo.
+1. **Threat model escrito** — reduzido pela decisão de não haver busca. O vetor que resta é
+   caminhar por perfis a partir de conteúdo, que é lento e ruidoso. Documentar o custo desse
+   caminho e o limite de leitura de perfil por hora no Upstash.
+2. ~~Proteção além de paginação e rate limit~~ — **resolvido por ausência de superfície.**
+   Não existindo filtro por OM, não há a consulta que a proteção precisaria conter. Se a
+   busca de pessoas for reaberta, este requisito volta e este ADR precisa ser revisto.
 3. **Tela de consentimento** no momento da declaração, dizendo para quem o campo fica
    visível, com opção de não declarar e de remover depois.
 4. **Tratamento dos perfis `hidden` existentes**: consultar se há perfil não-seed com

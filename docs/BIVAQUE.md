@@ -313,8 +313,13 @@ mês.
 
 ### 7.3 Proibido
 
-1. **Intermediar transação.** Nem interesse do produto, nem superfície que um fundador solo
-   sustente — meio de pagamento traz regulação, obrigação fiscal e disputa de estorno.
+1. **Intermediar o pagamento do serviço entre membro e prestador.** O dinheiro do corte de
+   cabelo, do conserto ou do peixe nunca passa pelo Bivaque — nem interesse do produto, nem
+   superfície que um fundador solo sustente, porque meio de pagamento traz regulação,
+   obrigação fiscal e disputa de estorno.
+   > **Isto não proíbe a plataforma de cobrar pelos próprios produtos.** Impulsionamento,
+   > ferramenta e assinatura de organização são receita do Bivaque e são permitidos (§7.2).
+   > A fronteira é entre "ser o caixa da transação alheia" e "vender o que é seu".
 2. **Cobrar para não ser enterrado.** É vender proteção. Numa comunidade onde todos se
    conhecem, a percepção circula em dias.
 3. **Ordenar indicação por dinheiro.** Mata o único ativo do produto.
@@ -360,6 +365,83 @@ sobrevive à transferência dele.
 
 ---
 
+## 7.7 Stack e infraestrutura
+
+O que já existe: **Next 16** em runtime de servidor na **Vercel**, React 19, **Supabase**
+(`ssr` + `js`), **HeroUI v3** como única biblioteca de componentes, Tailwind 4, Biome, pnpm
+11.18 com `apps/web` mais `packages/{contracts,domain,tokens}`. PWA com manifest e service
+worker. Cinco camadas de teste: unit e privacy em Vitest, scope em `node --test`, pgTAP e
+Playwright.
+
+O que as decisões de 2026-08-11 acrescentam:
+
+| Necessidade | Escolha | Por quê |
+|---|---|---|
+| E-mail transacional | **Resend** | feito para transacional em stack JS; domínio e DKIM são trabalho humano, não de agente |
+| Segundo canal de retorno | **WhatsApp não-oficial agora, Cloud API ao escalar** | ver §7.8 — carrega risco assumido |
+| Rate limit e circuit breaker | **Upstash Redis** | um mecanismo só para os quatro limites; não põe escrita no banco primário a cada requisição, o que importa em 50 mil membros |
+| Agendamento | **pg_cron** | vive junto do dado, entra por migration, versionado como o resto do schema |
+| Disparo de notificação | **tabela `outbox` + worker no pg_cron** | sobrevive a queda do provedor, permite retentativa, deixa rastro, e é onde a preferência e o descadastro são verificados |
+| Rastreamento de erro | **Sentry** | com filtro de PII obrigatório antes do envio |
+| Produto e métrica | **PostHog** | responde as perguntas de 90 dias sem escrever SQL. Sai dado comportamental para terceiro: exige base legal declarada na governança LGPD |
+| Cobrança da plataforma | **Asaas** | Pix e boleto nativos, que é como prestador pequeno brasileiro paga. Checkout hospedado; o cartão nunca toca o Bivaque |
+| Migration para produção | **GitHub Action no merge para `main`** | credencial de produção como secret do CI, nunca no laptop — é o que a Task 8 do plano de observabilidade pede |
+| Busca de prestador | **filtro exato + `pg_trgm` no nome** | nativo do Postgres, aguenta muito além de 50 mil, sem serviço novo onde dado pessoal passe a viver |
+
+**Sem ambiente de staging.** A Action leva a migration direto para produção. O CI roda
+`db:reset` mais pgTAP contra banco limpo em todo PR, o que pega erro estrutural mas **não
+pega erro de migração sobre dado real**. Risco aceito conscientemente.
+
+**Sem modo escuro.** Verificado em 2026-08-11: `globals.css` tem apenas
+`[data-theme="bivaque"]`, nenhum `prefers-color-scheme`, e nenhum token de dark. Não entra no
+piloto.
+
+### 7.8 O canal de WhatsApp — risco assumido e como sobreviver a ele
+
+O Cloud API oficial exige **CNPJ**, site público com domínio batendo com o nome, endereço e
+telefone conferindo com o registro, e número dedicado. Está acoplado ao veículo jurídico do
+§7.6, que depende de parecer. Até lá, o canal é não-oficial.
+
+O que isso custa, para constar: viola os termos explicitamente, o banimento é **permanente e
+sem recurso**, e os sinais de detecção descritos pela Meta — baixa taxa de resposta, mensagem
+para quem está longe no grafo de contatos, temporização robótica, tráfego de datacenter —
+descrevem exatamente este caso de uso. Relatos de banimento em 2 a 8 semanas.
+
+Requisitos que tornam a decisão sobrevivível, e que são obrigatórios:
+
+1. **Número descartável e dedicado.** Nunca o do fundador, nunca o de um administrador de
+   vila. O que se perde num banimento tem que ser um chip.
+2. **Canal abstraído no `outbox`.** Coluna de canal e adaptadores no worker. Migrar para o
+   Cloud API depois é adaptador novo, não reescrita.
+3. **Degradar, não quebrar.** Falha ou banimento cai para e-mail automaticamente.
+4. **Reduzir sinal:** só para quem optou, só para quem está na comunidade, com jitter e
+   volume baixo. O tráfego de datacenter é inevitável na Vercel e no Supabase.
+5. **Opt-out com "PARE"**, verificado no worker antes de cada envio.
+
+### 7.9 O limite do Portal da Transparência
+
+| Janela | Limite |
+|---|---|
+| 00:00 às 06:00 | 700 requisições/minuto |
+| Demais horários | 400 requisições/minuto |
+| APIs restritas | 180 requisições/minuto |
+| **Ultrapassar** | **token suspenso por 8 horas** |
+
+Fonte: [página da API de Dados](https://portaldatransparencia.gov.br/api-de-dados) e o
+[Swagger](https://api.portaldatransparencia.gov.br/swagger-ui/index.html) — confirmar antes
+de codificar, porque não sabemos se o endpoint de servidores conta como API restrita.
+
+**O risco não é o volume, é a punição.** Uma vila de 630 pessoas cabe em minutos mesmo no
+limite mais baixo, e o teto de 3 consultas por hora por usuário espalha muito mais que isso.
+Mas um retry em laço, ou um bug, mata a admissão por 8 horas no meio do lançamento. Portanto:
+
+- **throttle global no servidor**, com teto bem abaixo de 180/min;
+- **circuit breaker no Upstash**: ao receber 429, parar de chamar e mandar todos para
+  `pending` — é isto que torna a D08 crítica;
+- **proibido retry automático em laço.**
+
+Com os três, a entrada por link aberto é segura.
+
 ## 8. Fora e adiado
 
 **Fora por decisão:** publicação anônima, vídeo, escopo nacional, alerta por push e SMS.
@@ -370,11 +452,16 @@ Anúncio merece distinção, porque as duas menções neste documento parecem se
 não se contradizem: **anúncio de terceiro sem relação com a comunidade** está adiado e pode
 voltar; **anúncio no meio do feed** está proibido pela D29 e não volta.
 
-**Mensagem direta** é o caso a explicar: existe no banco e na tela, mas o bloqueio é
-contornável pelo bloqueador, não há realtime nem notificação, a autorização sobrevive à
-expulsão do grupo e a denúncia cai em fila que ninguém lê. Meio canal privado é pior que
-nenhum. Volta quando houver operação para sustentá-lo — e enquanto isso a ajuda acontece em
-público, que é mais moderável.
+**Mensagem direta entre membros** continua adiada: o bloqueio é contornável pelo bloqueador,
+não há realtime nem notificação, a autorização sobrevive à expulsão do grupo e a denúncia
+cai em fila que ninguém lê. Meio canal privado é pior que nenhum, e a ajuda entre membros
+acontece em público, que é mais moderável.
+
+**Mas a conversa membro ↔ prestador abre** (D36). A máquina existente é reaproveitada com um
+contexto novo em vez de removida — ela já tem autorização contextual, bloqueio, denúncia e
+limite de tamanho, e os defeitos que a auditoria achou precisariam ser corrigidos de
+qualquer forma. Consequência prática: **a onda B não remove mais a superfície de DM**, e as
+correções de bloqueio e contexto passam a ser pré-requisito da onda G, não item descartado.
 
 ---
 
@@ -416,7 +503,23 @@ aqui, com data e motivo.
 | **D28** | vigente | 2026-08-11 | Grátis na própria vila; pago para alcançar além | é distribuição, não proteção | — |
 | **D29** | vigente | 2026-08-11 | Proibidos: anúncio no feed, ordenação por dinheiro, consignado, pagar para não ser enterrado | cada um destrói o ativo de confiança | — |
 | **D30** | vigente | 2026-08-11 | O fundador não é a cabeça do produto | Art. 29, e sobrevivência à transferência. Arranjo pendente de parecer (§7.6) | — |
-| **D31** | vigente | 2026-08-11 | Fora: anônimo, vídeo, nacional, push e SMS. Adiados: IA, nativo, outras cidades, DM | — | — |
+| **D31** | vigente | 2026-08-11 | Fora: anônimo, vídeo, nacional, push e SMS, modo escuro. Adiados: IA, nativo, outras cidades, DM entre membros | — | — |
+| **D32** | vigente | 2026-08-11 | E-mail transacional por **Resend** | transacional em stack JS; domínio e DNS são trabalho humano | — |
+| **D33** | vigente | 2026-08-11 | **WhatsApp não-oficial** agora, Cloud API quando houver CNPJ (§7.8) | o oficial está bloqueado pelo veículo jurídico; risco assumido com cinco requisitos de sobrevivência | banimento do número, ou CNPJ constituído |
+| **D34** | vigente | 2026-08-11 | **Upstash Redis** para os quatro limites e o circuit breaker | não põe escrita no banco primário a cada requisição; escala a 50 mil sem refazer | — |
+| **D35** | vigente | 2026-08-11 | **pg_cron** como agendador, **`outbox` + worker** como disparo | agendamento versionado por migration; envio que sobrevive a queda de provedor | — |
+| **D36** | vigente | 2026-08-11 | Conversa **membro ↔ prestador** reaproveita a máquina de DM com contexto `provider` | os defeitos precisariam ser corrigidos de qualquer forma; reconstruir custa mais | — |
+| **D37** | vigente | 2026-08-11 | Prestador é usuário do Auth com papel, sem membership, e tem **dashboard próprio** — anúncio, métrica e caixa de pedidos | sem membership nenhuma policy de conteúdo casa: falha fechado por construção | — |
+| **D38** | vigente | 2026-08-11 | Suspensão por **flag em `profiles` + helper na RLS** | reversível, auditável, permite suspensão temporária. Entra em toda policy de escrita na mesma migration | — |
+| **D39** | vigente | 2026-08-11 | **Sentry** para erro, com filtro de PII antes do envio | log da Vercel some e ninguém lê | — |
+| **D40** | vigente | 2026-08-11 | **PostHog** para métrica de produto | responde as perguntas de 90 dias. Sai dado comportamental para terceiro: exige base legal na governança LGPD | — |
+| **D41** | vigente | 2026-08-11 | **Asaas** para a cobrança da plataforma; checkout hospedado, cartão nunca toca o Bivaque | Pix e boleto nativos, que é como prestador pequeno paga | cobrança internacional |
+| **D42** | vigente | 2026-08-11 | Migration para produção por **GitHub Action no merge**; **sem staging** | tira a credencial de produção do laptop. Risco de migração sobre dado real fica aceito | primeira migração de dado que exija ensaio |
+| **D43** | vigente | 2026-08-11 | **Não existe busca de pessoas no piloto.** A OM é exibida no perfil, não é filtrável | remove o vetor principal de enumeração e reduz o que o ADR precisa provar | quando o ADR da OM for aprovado com threat model |
+| **D44** | vigente | 2026-08-11 | Busca de prestador por **filtro exato + `pg_trgm` no nome** | nativo do Postgres, sem serviço novo onde dado pessoal passe a viver | — |
+| **D45** | vigente | 2026-08-11 | Ficha de vitrine = **identidade + catálogo + portfólio**. Prova social e avisos ficam para depois | são os três blocos que o prestador preenche sozinho no dia um. Prova social depende do ciclo de indicação rodando; avisos dependem de moderação | — |
+| **D46** | vigente | 2026-08-11 | **Throttle global + circuit breaker** contra o Portal; retry em laço proibido (§7.9) | o risco não é volume, é a suspensão de 8 horas do token no meio do lançamento | — |
+| **D47** | vigente | 2026-08-11 | **Nada é cortado do escopo.** O lançamento é por vila, com o que estiver pronto | não cortar não significa tudo pronto em dezembro; significa ordenar para que o inacabado não impeça abrir a primeira vila | — |
 
 **Superado pela D09:** a decisão D9 da `2026-08-05-comunidade-design.md` (co-membro vê
 perfil oculto) perdeu objeto. O aviso de divulgação na entrada continua valendo para o nome.
@@ -452,21 +555,55 @@ escola e serviço, e sai gente que precisa vender móvel e passar contato. Deman
 bilateral, com data marcada, que se repete todo ano. Se o produto não for usado em dezembro,
 não vai ser usado.
 
-| # | Onda | Fecha |
-|---|---|---|
-| **A** | Portas e vazamentos | open redirect no callback; `service_role` sem policy em detalhe de grupo e evento; endpoint de avatar; destinos de notificação; CPF fora do `sessionStorage`; selo público removido |
-| **B** | Coerência por subtração | affordances mortas; remoção do perfil oculto, com a pré-condição do §4.3; superfície de DM; preferência sem produtor |
-| **C** | Devolver a fala | derrubar as CHECK de vocabulário e ajustar os pgTAP que afirmam a rejeição; aviso de PII |
-| **D** | A porta | gate único pelo estado real; aceite do convite amarrado ao e-mail; consentimento versionado; `pending` real; validação de CPF separada de elegibilidade; e-mail transacional |
-| **E** | A vila | ligar a camada de comunidade que já existe no banco; fila de aprovação em lote; convite com escopo; diretório |
-| **F** | O laço semanal | resposta de indicação, controles do autor, escopo explícito, salvar com destino, eventos recorrentes |
-| **G** | Vitrine | ficha de prestador, login de prestador, alcance pago |
-| **H** | Operação que age | denúncia unificada, suspensão com motivo, retorno ao denunciante, admissões que decide |
+| # | Onda | O que entra | Tamanho |
+|---|---|---|---|
+| **A** | Portas e vazamentos | open redirect no callback; `service_role` sem policy em detalhe de grupo e evento; endpoint de avatar; destinos de notificação; CPF fora do `sessionStorage`; selo público removido | pequena |
+| **B** | Coerência por subtração | affordances mortas; remoção do perfil oculto com a pré-condição do §4.3; preferência sem produtor; o diff pendente do login. **Não remove mais a DM** (D36) | pequena |
+| **C** | Devolver a fala | derrubar as CHECK de vocabulário; ajustar os pgTAP que afirmam a rejeição; aviso de PII na UI | pequena |
+| **D1** | Infraestrutura | Resend com domínio e DKIM; Upstash com os quatro limites e o circuit breaker; pg_cron; `outbox` com worker; Sentry | média, **zero tela** |
+| **D2** | A porta | gate pelo estado real; `pending` com produtor; upload de documento com TTL; recurso de rejeição; convite familiar amarrado ao e-mail; consentimento e código de conduta versionados; validação de CPF; waitlist com cidade | grande |
+| **E** | A vila | ligar a camada de comunidade que já está no banco; fila de aprovação em lote; convite de membro com escopo; perfil de outro membro; afiliação declarada | grande |
+| **F** | O laço semanal | resposta de indicação com detalhe e controles do autor; escopo explícito e FK do `group_id`; salvar com destino; RSVP completo; convite de evento com fan-out; encontro recorrente | média-grande |
+| **G** | Vitrine | ficha com identidade, catálogo e portfólio; conta e dashboard de prestador; conversa membro↔prestador com os P0 da DM corrigidos; Asaas com alcance pago; busca de prestador | grande |
+| **H** | Operação | denúncia unificada em todos os alvos; ocultação por tipo; suspensão com flag e RLS; retorno ao denunciante; admissões que decide; PostHog | média |
 
-A onda A não espera as outras — segurança corre em paralelo. Cada onda termina em auditoria
-visual, que bloqueia a seguinte, conforme
-[`superpowers/plans/2026-08-05-auditoria-telas.md`](superpowers/plans/2026-08-05-auditoria-telas.md).
-Cada onda vira um plano próprio em `superpowers/plans/`.
+### 10.1 Caminho crítico
+
+```
+A ─┐
+B ─┼──→ (independentes, correm em paralelo)
+C ─┘         │
+             ▼
+        D1 ──┬──→ D2 ──→ H
+             ├──→ E ───→ G
+             └──→ F
+```
+
+A **D1 não entrega tela nenhuma e destrava quase tudo** — é a onda mais fácil de subestimar
+e a mais cara de adiar. A onda A não espera ninguém, pela exceção de segurança.
+
+### 10.2 Nada é cortado, e o lançamento é por vila
+
+A D47 fecha o escopo sem cortes. Isso **não** significa tudo pronto em dezembro — significa
+que a ordem tem que permitir abrir com o que estiver pronto.
+
+O modelo vila a vila resolve isso: não é preciso ter tudo para todas as vilas, só o
+suficiente para **uma**. Dezembro abre Ajuricaba e Flores com o que existir; G e H aterrissam
+enquanto a segunda vila espera. Isso também combina com o risco do tiro único (§5.1) — abrir
+uma vila, aprender, depois a próxima.
+
+Para a primeira vila existir, o mínimo é **A, B, C, D1, D2, E e F**: entrar, a vila chegar
+inteira, pedir e receber ajuda, marcar encontro — sem vazar e sem mentir.
+
+Se algo escorregar, o que escorrega são G e H, e cada um custa diferente. Sem **G**, falta a
+vitrine, que é o comportamento que o grupo de 630 pessoas já demonstra hoje — e é a única
+onda com receita. Sem **H**, abre-se para centenas de militares identificáveis com moderação
+parcial: denúncia de DM e de indicação não chegam ao painel, e não existe suspensão. **H é a
+que não deveria escorregar**, porque o custo não é feature, é o primeiro incidente.
+
+Cada onda termina em auditoria visual, que bloqueia a seguinte, conforme
+[`superpowers/plans/2026-08-05-auditoria-telas.md`](superpowers/plans/2026-08-05-auditoria-telas.md),
+e vira um plano próprio em `superpowers/plans/`.
 
 ---
 
@@ -483,8 +620,17 @@ Cada onda vira um plano próprio em `superpowers/plans/`.
    migration nova.
 6. **A D21 muda testes que hoje passam.** Os pgTAP que afirmam a rejeição de vocabulário
    mudam no mesmo todo.
-7. **O escopo cresceu e não foi somado contra dezembro** (§9.1).
-8. **O produto precisa sobreviver à transferência do fundador.**
+7. **O escopo cresceu e nada foi cortado** (§9.1, D47). A mitigação é a ordem e o lançamento
+   por vila (§10.2), não o corte. Se dezembro chegar com G e H incompletas, a decisão de
+   abrir mesmo assim é do dono — e H incompleta significa abrir sem suspensão de conta.
+8. **Três bloqueios não são resolvíveis por agente:** conta e DNS do Resend; número
+   descartável para o WhatsApp; CNPJ para o Cloud API e para o Asaas. Enquanto não
+   existirem, D1 não fecha, e sem D1 quase nada fecha.
+9. **Sem staging** (D42): erro de migração sobre dado real chega direto à produção.
+10. **O produto precisa sobreviver à transferência do fundador.**
+11. **Trabalho de escrita ainda pendente**, e nenhum deles é decisão: o texto do código de
+    conduta (exigido pela D12), a governança LGPD (§4.4) e a lista fechada de categorias da
+    vitrine — essa última tem que sair do conteúdo real do grupo, não de suposição.
 
 ---
 
