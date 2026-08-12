@@ -1,6 +1,22 @@
 # Mapa de Jornadas e Lacunas Funcionais — Bivaque Community
 
-> **Ponto de entrada do repositório.** Este é o primeiro documento a ser lido em
+> # ⚠️ DOCUMENTO HISTÓRICO — SUPERADO EM 2026-08-11
+>
+> **Não use como fonte.** Sucessores:
+> [`docs/BIVAQUE.md`](../BIVAQUE.md) para visão e decisões,
+> [`docs/PRODUCT_STATUS.md`](../PRODUCT_STATUS.md) para o estado implementado.
+>
+> **Por que foi superado.** Este mapa misturava estado e intenção, e por isso marcou 25
+> linhas como "Corrigida" com base em capacidade no banco — contrariando o próprio critério
+> que ele mesmo escreveu na §4. A auditoria de 2026-08-10 encontrou 151 achados
+> ([`docs/red-team/`](../red-team/)) e a maioria dessas linhas não se sustenta. O §6 também
+> lista marketplace, anúncios e IA como excluídos, o que o dono desmentiu em 2026-08-11:
+> estão adiados.
+>
+> Mantido apenas como trilha de auditoria — as seções §0.1, §0.2 e §7 registram erros
+> materiais e vazamentos corrigidos, e essa memória continua útil.
+
+> **[Histórico] Ponto de entrada do repositório.** Este é o primeiro documento a ser lido em
 > qualquer sessão — humana ou de agente — antes de mexer em código, planejar
 > trabalho ou responder o que o produto faz. O `AGENTS.md` aponta para cá.
 >

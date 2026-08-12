@@ -3,45 +3,61 @@
 Private, verification-gated community product for verified federal military, Veterans and military
 pensioners, piloted in Manaus. Server-rendered Next.js on Supabase.
 
-The original product decisions live outside this repository, in
-`C:\Users\juana\Forja-90\.omo\plans\bivaque-community-pilot.md` and
-`…\drafts\bivaque-community-pilot.md`. **Do not block on them.** They are unreachable from a
-workspace-scoped session, and everything needed to work here has been carried into
-`docs/journeys/MAP.md` and `docs/superpowers/specs/` — including the exclusions decided there
-(marketplace, ads, AI, video, native app, other cities), recorded in §6 of the map. Read the
-originals only if you already have access and are reopening a product decision.
+**This is a deliberate fork of a larger product.** The parent, `Juanjfmr/Bivaque` (private
+GitHub repo), carries 74 sovereign decisions, 19 features and a formal ADR regime — the
+governance that stopped it from shipping. This repository is the smallest slice that can
+launch, absorbing the parent's features afterwards. The parent is **reference, not law**;
+[`docs/BIVAQUE.md`](docs/BIVAQUE.md) §1.5 records the relationship.
+
+An earlier revision of this file said the original decisions lived in
+`C:\Users\juana\Forja-90\.omo\…` and were unreachable, telling you not to block on them.
+That was wrong and it cost a week: the canon is the GitHub repo above
+(`docs/FOUNDER-INTENT.md`, `docs/DECISIONS.md`, `FEATURES.yaml`, `docs/MONETIZACAO.md`).
 
 Forja-90 is a legacy codebase: reference patterns only, never copy its files.
 
 ## READ FIRST — before any work in this repository
 
-**[`docs/journeys/MAP.md`](docs/journeys/MAP.md) is the entry point.** Read it before
-touching code, before planning, before answering a question about what this product does. It
-carries the functional state of every area, what is prioritised, and the sequencing rules that
-govern what work is allowed to start.
+**Two documents, and you need both.** Read them before touching code, before planning,
+before answering a question about what this product does.
 
-Three rules from it that decide whether your work is legitimate at all:
+- **[`docs/BIVAQUE.md`](docs/BIVAQUE.md)** — what the product **must be**: vision, roles,
+  community model, decisions, monetisation, limits, sequencing. This is the source of truth
+  for product questions.
+- **[`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md)** — what the code **does today**,
+  with file:line evidence and the gap to the target.
 
-- **§10.2 — the visual audit blocks.** A wave is not finished until the screens it touched pass
+**Never infer one from the other.** `BIVAQUE.md` describes decisions, many of them not yet
+built; `PRODUCT_STATUS.md` describes reality. Reading a decision as a delivered feature is
+the mistake that produced the document these two replace.
+
+`docs/journeys/MAP.md` is **historical** — superseded 2026-08-11, kept for audit trail only.
+
+Three rules that decide whether your work is legitimate at all:
+
+- **The visual audit blocks.** A wave is not finished until the screens it touched pass
   the audit in [`docs/superpowers/plans/2026-08-05-auditoria-telas.md`](docs/superpowers/plans/2026-08-05-auditoria-telas.md).
   No following work starts before that — not the next wave, not parallel work on another front.
   Screens a wave creates are audited inside that wave. There is no audit round "at the end".
-- **§1 — the accessibility exemption.** Accessibility fixes, critical visual bugs and security do
-  not wait for any wave. Phases 1 and 2 of the audit plan are exactly this and may run at any
-  time, on any screen. Everything else cosmetic waits its turn.
-- **Matrix legend — what "Corrigida" means.** State describes what the user can do, not what the
-  schema permits. Capability in the database does not close a row on its own. Marking a row
-  Corrigida because the migration landed makes the map promise what the product does not deliver.
+- **Accessibility and security do not wait for any wave.** Phases 1 and 2 of the audit plan
+  are exactly this and may run at any time, on any screen. Everything else cosmetic waits
+  its turn. Wave A of `BIVAQUE.md` §10 is under this exemption.
+- **A row leaves `PRODUCT_STATUS.md` only when the user closes the cycle** — entry, action,
+  feedback, follow-up and the main sad path. Capability in the database does not close a row
+  on its own. Doing that is what made the previous map promise what the product never
+  delivered.
 
-**§7 Padrão 6 is the failure this repository keeps repeating**: a scope column shipped without the
-policies that read it. It has produced four privacy leaks so far. If you add a scope column, the
-policies that read it land in the **same migration** — never "in future".
+**Scope column and the policies that read it land in the same migration** — never "in
+future". This is the failure this repository keeps repeating; it has produced four privacy
+leaks so far.
 
 ### Where things are
 
 | Document | Answers |
 |---|---|
-| `docs/journeys/MAP.md` | What is broken, what is prioritised, what blocks what |
+| `docs/BIVAQUE.md` | What the product must be: vision, roles, decisions, monetisation, sequencing |
+| `docs/PRODUCT_STATUS.md` | What the code does today, the gap to the target, and which wave closes it |
+| `docs/decisions/` | R3 decisions as ADRs, and `RISK_MATRIX.md` — what an agent may decide alone |
 | `docs/agents/DESIGN_SPEC.md` | The visual language, and the source of truth for tokens |
 | `docs/agents/VISUAL_GUIDE.md` §9 | The audit rubric — how well a screen must be made |
 | `docs/superpowers/specs/` | Approved designs, with dated conflicts recorded rather than hidden |
@@ -205,6 +221,13 @@ provider** — the global `toast()` helper only renders through it.
 - Never persist: raw CPF, Portal payload, military organization, rank, residential address,
   documents, or a public verification badge. Portal source label `reformado` maps to internal
   `veteran` only. Family accounts stay independent Auth users after accepting an invite.
+  > **Open R3 proposal against this line.**
+  > [`ADR-20260811-om-declarada`](docs/decisions/ADR-20260811-om-declarada.md) proposes
+  > allowing the member to *declare* branch, status, unit and class — distinguishing what the
+  > State asserts from what the person chooses to say. It is `proposed`, not approved, and
+  > carries five prerequisites (threat model, consent screen, LGPD governance, and more).
+  > **Until it is approved, the prohibition above is the contract.** Do not implement
+  > declared affiliation.
 
 ## Portal da Transparência integration
 
