@@ -97,10 +97,28 @@ obtém a foto de qualquer membro conhecendo o id. A URL assinada dura uma hora.
   Depois de obter `user`, negar quando quem pede não pode ver quem é pedido. O caso próprio
   (`user.id === userId`) sempre passa.
 
-  Para o caso de terceiro, a checagem é de **membership na mesma localidade**. Use o helper
-  que já existe — `private.is_locality_member` é `security definer` — em vez de escrever
-  consulta nova. Confira a assinatura em
-  `supabase/migrations/20260802000300_foundation_rls.sql` antes de chamar.
+  Para o caso de terceiro, **deixe a RLS responder**: leia o perfil do alvo com o
+  **cliente autenticado** — o mesmo `authClient` que já está na rota — e não com o
+  `service_role`.
+
+  ```ts
+  const { data: target } = await authClient
+    .from("profiles").select("user_id").eq("user_id", userId).maybeSingle()
+  if (!target) return NextResponse.json({ error: "not found" }, { status: 404 })
+  ```
+
+  Se a linha volta, quem pede tem permissão de ver aquela pessoa; se não volta, não tem. A
+  policy de `profiles` já codifica a regra inteira, e é a mesma que governa todo o resto do
+  produto — nenhuma lógica nova para divergir depois.
+
+  > **Não use `private.is_locality_member` aqui.** Ela recebe uma **localidade**, não um
+  > usuário, e responde "o chamador é membro desta localidade" resolvendo `auth.uid()`
+  > (`20260802000300_foundation_rls.sql:14-26`). Sob `service_role`, `auth.uid()` é nulo e
+  > ela devolve falso sempre. Usá-la aqui exigiria buscar a localidade do alvo antes, com
+  > privilégio elevado — reintroduzindo o padrão que esta onda existe para eliminar.
+
+  Só depois da linha voltar é que o `service_role` entra, e apenas para assinar o arquivo no
+  storage — que é a única coisa que ele precisa fazer aqui.
 
   Resposta para negado: **404, não 403**. 403 confirma que o id existe, o que transforma o
   endpoint em oráculo de existência de conta.
