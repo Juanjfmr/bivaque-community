@@ -19,6 +19,7 @@
 | linguagem visual e rubrica | [`agents/DESIGN_SPEC.md`](agents/DESIGN_SPEC.md), [`agents/VISUAL_GUIDE.md`](agents/VISUAL_GUIDE.md) |
 | implementação da camada de comunidade | [`superpowers/specs/2026-08-05-comunidade-design.md`](superpowers/specs/2026-08-05-comunidade-design.md) |
 | evidência dos 151 achados | [`red-team/`](red-team/) |
+| textos que o membro aceita | [`legal/CODIGO_DE_CONDUTA.md`](legal/CODIGO_DE_CONDUTA.md), [`legal/PRIVACIDADE.md`](legal/PRIVACIDADE.md) |
 
 ---
 
@@ -201,12 +202,22 @@ requisitos antes de aprovar: threat model de enumeração, proteção além de r
 de consentimento, tratamento dos perfis `hidden` existentes, e governança LGPD publicada.
 **Enquanto o ADR estiver `proposed`, o contrato vigente é a proibição.**
 
-### 4.4 Governança LGPD — a escrever
+### 4.4 Governança LGPD
 
-Falta publicar: controlador, finalidade de cada tratamento, base legal, prazo de retenção,
-processo de eliminação, exercício dos direitos do titular, canal de contato e plano de
-resposta a incidente. A ANPD orienta medidas técnicas e administrativas mesmo para agente de
-pequeno porte, e explicita os direitos de acesso, correção e eliminação.
+Rascunho escrito em [`legal/PRIVACIDADE.md`](legal/PRIVACIDADE.md), junto do
+[código de conduta](legal/CODIGO_DE_CONDUTA.md) que a D12 exige. Os dois são o texto que o
+membro aceita, com versão registrada.
+
+**Nenhum dos dois está pronto para publicar.** O de privacidade precisa de revisão jurídica
+e tem três lacunas que só o dono fecha: quem é o controlador — depende do veículo jurídico do
+§7.6 —, o canal oficial e o encarregado. O código de conduta precisa da assinatura do dono,
+porque é ele que justifica suspender alguém.
+
+O que o rascunho já resolve: finalidade e base legal de cada tratamento, os prazos (7 dias
+para documento de verificação, 30 dias para exclusão de conta, 2 anos para registro de
+moderação), a lista honesta dos oito terceiros que recebem dado, os direitos do titular e o
+plano de aviso em caso de incidente. A ANPD orienta medidas técnicas e administrativas mesmo
+para agente de pequeno porte, e explicita os direitos de acesso, correção e eliminação.
 [Guia da ANPD](https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/guia-orientativo-sobre-seguranca-da-informacao-para-agentes-de-tratamento-de-pequeno-porte) ·
 [direitos dos titulares](https://www.gov.br/anpd/pt-br/assuntos/titular-de-dados-1/direito-dos-titulares).
 
@@ -659,9 +670,11 @@ e vira um plano próprio em `superpowers/plans/`.
    existirem, D1 não fecha, e sem D1 quase nada fecha.
 9. **Sem staging** (D42): erro de migração sobre dado real chega direto à produção.
 10. **O produto precisa sobreviver à transferência do fundador.**
-11. **Trabalho de escrita ainda pendente**, e nenhum deles é decisão: o texto do código de
-    conduta (exigido pela D12), a governança LGPD (§4.4) e a lista fechada de categorias da
-    vitrine — essa última tem que sair do conteúdo real do grupo, não de suposição.
+11. **Os dois textos que o membro aceita existem em rascunho** e nenhum está pronto para
+    publicar: [`legal/CODIGO_DE_CONDUTA.md`](legal/CODIGO_DE_CONDUTA.md) espera a assinatura
+    do dono, e [`legal/PRIVACIDADE.md`](legal/PRIVACIDADE.md) espera revisão jurídica mais a
+    definição do controlador, do canal e do encarregado. Sem os dois, a D12 não fecha e a
+    onda D2 não fecha junto.
 
 ---
 
