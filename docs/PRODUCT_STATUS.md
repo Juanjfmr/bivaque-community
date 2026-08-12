@@ -75,7 +75,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 | Fila de aprovação | **não existe** | lista em lote, com afiliação visível e delegação | sem ela a vila não chega inteira | — | E |
 | Feed municipal | `feed_posts(PILOT_LOCALITY_ID)` | audiência explícita antes de publicar | usuário não sabe para quem publica | `(shell)/community/page.tsx:55-58` `[V]` | E |
 | Composer — foto e enquete | botões sem comportamento | removidos até funcionarem | affordance falsa | `[A]` | B |
-| Detalhe de grupo | lê com `service_role` sem reaplicar `can_access_*` | negar antes de montar a UI | objeto privado acessível por deep link | `groups/[id]/page.tsx` `[A]` | **A** |
+| Detalhe de grupo | lê grupo, memberships, lista de membros e feed com `service_role`; a membership só decide estado de UI | negar antes de montar a UI | quem não é do grupo vê nome, visibilidade e **dez nomes de membros** por deep link. O feed provavelmente vem vazio, porque `feed_group` resolve `auth.uid()`, que é nulo sob `service_role` — confirmar com teste | `groups/[id]/page.tsx:113-145` `[V]` | **A** |
 | Gestão de grupo | entrar, sair, aprovar, transferir posse | fechar cancelamento, rejeição, remoção, exclusão | ciclo do administrador incompleto | `groups/page.tsx:441-496` `[A]` | F |
 | Busca / diretório | **não existe** | filtro por força, situação, OM e turma | é o que o WhatsApp não faz, e não existe | — | E |
 
@@ -115,7 +115,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 |---|---|---|---|---|---|
 | DM entre membros | superfície publicada e funcional no caminho feliz | **adiada** — a superfície fica, o acesso entre membros não abre | — | `messages/page.tsx` `[A]` | — |
 | Conversa membro ↔ prestador | **não existe** | contexto `provider` na máquina que já existe (D36) | exige corrigir antes: bloqueio contornável pelo bloqueador (P0), criação por ordem de UUID, contexto declarado não validado | `20260802001500:185-211`, `supabase/tests/dm-context-denials.sql:389-451` `[A]` | G |
-| Inbox | lista e marca como lida; cliques navegam | igual | notificação de aceite familiar abre o perfil do próprio titular | `notifications/page.tsx:81-89` `[A]` | E |
+| Inbox | lista e marca como lida com cliente anônimo, sob RLS; cliques navegam | igual | **não há vazamento próprio aqui** — verificado em 2026-08-11. Os destinos `/groups/:id` e `/events/:id` é que leem com `service_role`, e se corrigem na onda A. O que resta é a notificação de aceite familiar, que abre o perfil do próprio titular | `notifications/page.tsx:121-144` `[V]` | E |
 | Preferências | quatro booleanos persistidos | só sobrevive canal com produtor | nenhum trigger lê `notification_preferences`; "menção" nem é tipo de notificação | `notification-preferences-actions.ts:36-47`, `20260802001400:70-232` `[V]` | B |
 | E-mail transacional | **não existe** | resposta a pedido e lembrete de encontro | sem ele não há canal de retorno próprio | — | D |
 | Push e SMS | não existem | permanecem fora | — | — | — |
