@@ -168,24 +168,40 @@ inteira do produto.
 > provavelmente devolve vazio — o vazamento confirmado é o **metadado e a lista de
 > membros**, não o conteúdo. Confirme com um teste antes de descrever o alcance no commit.
 
-- [ ] **Step 1: negar antes de montar a UI**
+- [ ] **Step 1: trocar o cliente, não adicionar lógica**
 
-  Em ambas as páginas, logo após obter o usuário: chamar o helper de acesso e sair antes de
-  qualquer leitura de conteúdo. Para evento existe `private.can_access_event(uuid)`; para
-  grupo, use `private.is_group_member` combinado com a regra de visibilidade da §4.1 da
-  [spec de comunidade](../specs/2026-08-05-comunidade-design.md) — grupo público é visível a
-  quem é do contêiner; privado, só a membro.
+  A correção é **remover `createServiceClient()` das duas páginas** e ler tudo com o cliente
+  autenticado. Não escreva helper de autorização, não chame função de acesso, não crie
+  arquivo novo. As policies já codificam a regra inteira:
 
-  Grupo público continua acessível a membro da localidade; é o esperado.
+  | Leitura | O que a policy já faz |
+  |---|---|
+  | linha do grupo | `groups_select_locality_member` (`20260805214709_community_scope.sql:333`) exige membership na localidade e, se o grupo estiver em comunidade, membership nela |
+  | lista de membros | `group_memberships_select` (`20260802001000_groups_moderation.sql:160`) gateia por visibilidade do grupo — pública mostra, privada só a membro |
+  | feed | `feed_group` é `security definer` e resolve `auth.uid()`. Chamada pelo cliente autenticado, ela se auto-gateia |
+  | evento | a policy de select de `events` já usa `private.can_access_event` internamente |
 
-  Negado vai para `notFound()`, não para uma tela de "sem permissão". A tela de permissão
-  confirma que o grupo existe.
+  Se a linha do grupo voltar nula, a pessoa não pode nem saber que ele existe: `notFound()`.
+  Nunca uma tela de "sem permissão" — ela confirma que o objeto existe.
 
-- [ ] **Step 2: preferir o cliente autenticado**
+  Que o metadado do grupo seja legível por membro da localidade é **deliberado**: grupo
+  precisa ser descobrível para alguém pedir entrada. O que vazava era a **lista de membros**,
+  e é a policy dela que passa a valer quando o `service_role` sai.
 
-  Onde a leitura passa pela RLS sem ajuda, use o cliente autenticado e deixe a policy
-  trabalhar. `service_role` deve sobrar apenas onde há razão explícita — e essa razão vai
-  escrita em comentário na linha.
+  > **Não chame `private.is_group_member`, `private.is_community_member` nem
+  > `private.is_locality_member` a partir do cliente.** `supabase/config.toml:6` expõe à Data
+  > API apenas `["public", "graphql_public"]`; esses helpers vivem em `private` e não têm
+  > wrapper público. A chamada falha, e se o `error` for descartado o `data` nulo vira
+  > negação silenciosa — quebra a página inteira parecendo que a autorização funcionou.
+  >
+  > Eles funcionam **dentro** de policy e de função `security definer`, que é onde já estão
+  > sendo usados. É por isso que trocar o cliente basta.
+
+- [ ] **Step 2: nunca descartar `error` em caminho de autorização**
+
+  `const { data } = await client...` sem ler o `error` transforma falha de infraestrutura em
+  decisão de permissão. Em toda leitura que decide acesso, leia o `error` e trate falha como
+  falha — não como negação.
 
 - [ ] **Step 3: testes**
 
