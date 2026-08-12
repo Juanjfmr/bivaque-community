@@ -145,6 +145,11 @@ reproduces from a clean state before attributing it to code.**
 - `.opencode/opencode.json` holds the project MCP config. It merges over the global one at
   `~/.config/opencode/opencode.json`, where destructive-command guard-rails live (`--linked` is
   denied, `db:reset` asks).
+- **Before executing any wave, read [`docs/superpowers/plans/README.md`](docs/superpowers/plans/README.md)
+  in full.** It carries the execution order, why the waves run serially, the mandatory stops,
+  and what closes a wave. The `directory-readme` plugin only injects the README of the working
+  directory — it will not surface that file on its own, and a session that skips it has
+  already gone looking for orientation in the wrong place once.
 - `/run-plan <caminho>` executes a plan from `docs/superpowers/plans/` todo by todo, gating
   between each. `/gate` measures without fixing. `/harness-doctor` audits the config itself.
 - Plans may reference `superpowers:*` or `anthropic-skills:*` skills. **Those are Claude Code
