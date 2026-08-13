@@ -277,18 +277,36 @@ provisiona quem abrir — e esta é a única via que concede acesso sem verifica
 
 ## 6. A experiência-alvo
 
-A tela inicial é **pedidos abertos e próximo encontro**, não uma linha do tempo. Feed exige
-centenas de pessoas para não parecer deserto; lista de pedidos funciona com dezenas.
+**A tela inicial é o feed da vila.** Quem pertence a uma comunidade cai nela; quem não
+pertence a nenhuma — militar que não mora em vila — cai no feed de Manaus.
 
-O ciclo semanal é **pedir e responder**: alguém pergunta, alguém responde, o autor é avisado
-por e-mail, marca como resolvido, e quem respondeu acumula isso no perfil. É o menor ciclo
-que fecha, e é exatamente o que o WhatsApp destrói.
+> **Revisado em 2026-08-11.** A versão anterior desta seção dizia que a home era uma lista de
+> pedidos abertos, "porque feed exige centenas de pessoas para não parecer deserto e lista de
+> pedidos funciona com dezenas". Isso foi escrito quando eu supunha que o piloto tinha
+> dezenas de membros. A evidência chegou depois: um único grupo de WhatsApp de duas vilas tem
+> **630 membros**. Com a densidade da §3.4 — ~125 ativos semanais numa vila, ~600 em Manaus —
+> o feed passa folgado do limiar, e a seção passou a contradizer a §3.4 do próprio documento.
+> É exatamente o erro que este par de documentos existe para impedir: decisão tomada antes da
+> evidência e não revisitada depois.
 
-O ciclo mensal é o **encontro presencial recorrente** — o que deu identidade ao Military App
+A vila é a home porque é onde o laço é mais forte: 500 a 600 pessoas que moram no mesmo
+condomínio, com os mesmos ciclos de transferência, a mesma escola e o mesmo posto de saúde.
+Manaus fica um nível acima, para o que atravessa as três forças.
+
+**Pedidos abertos e próximo encontro não somem — eles vivem dentro do feed**, em posição
+fixa e alta, porque são o que tem prazo. O resto da linha do tempo é conversa.
+
+O **ciclo semanal** é pedir e responder: alguém pergunta, alguém responde, o autor é avisado,
+marca como resolvido, e quem respondeu acumula isso no perfil. É o menor ciclo que fecha, e é
+o que o WhatsApp destrói — a resposta boa de março não serve ninguém em novembro.
+
+O **ciclo mensal** é o encontro presencial recorrente — o que deu identidade ao Military App
 e o que uma rede nacional não entrega.
 
-Sustentando os dois: verificação na porta, diretório buscável, vitrine de prestador,
-moderação que age, e e-mail transacional como único canal de retorno.
+Sustentando os dois: verificação na porta, vitrine de prestador com busca por categoria e
+vila, moderação que age, e o canal de retorno — e-mail mais WhatsApp (D32, D33). **Não há
+busca de pessoas** (D43): a afiliação aparece no perfil de quem você encontrou por conteúdo,
+evento ou grupo, e não é filtrável.
 
 O estado de cada uma dessas superfícies está em [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md).
 
