@@ -1,10 +1,8 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
-import {
-  AVATAR_SIGNED_URL_EXPIRY_SECONDS,
-  canReadAvatar,
-} from "../../../../lib/security/avatar-authz"
+import type { Database } from "supabase/database.generated"
+import { AVATAR_SIGNED_URL_EXPIRY_SECONDS } from "../../../../lib/security/avatar-authz"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 
 export const runtime = "nodejs"
@@ -12,13 +10,15 @@ export const dynamic = "force-dynamic"
 
 const AVATAR_BUCKET = "avatars"
 
-// Authorizing the read of third-party avatars is mandatory: the previous
-// implementation authenticated the caller and then read with `service_role`,
-// which bypasses RLS and lets any signed-in account fetch any other member's
-// photo. The unit-tested helper `canReadAvatar` captures the full decision
-// (self, same-locality, denied) so the route stays thin and the matrix is
-// provable without Docker. Every denial — including the "no locality" case —
-// is 404 so the endpoint cannot be used as an existence oracle.
+// Authorisation here is the profiles RLS policy, not code in this route: the
+// target's profile row is read with the authenticated client, so a row comes
+// back only when the viewer is the holder or someone the profile's visibility
+// allows (co-locality member). No row means "you may not see this person" —
+// 404, never 403, so the endpoint cannot be used as an account-existence
+// oracle. The service-role client enters only after authorisation, to sign
+// the storage object — the one thing it is needed for here. A failed read is
+// infrastructure failure, not a denial, so the error is never swallowed into
+// a 404.
 export async function GET(_request: Request, { params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
 
@@ -29,7 +29,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ use
   }
 
   const cookieStore = await cookies()
-  const authClient = createServerClient(url, anonKey, {
+  const authClient = createServerClient<Database>(url, anonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll()
@@ -45,46 +45,38 @@ export async function GET(_request: Request, { params }: { params: Promise<{ use
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
-  let targetLocalityId: string | null = null
-  if (user.id !== userId) {
-    // The locality_memberships table grants only `select_self`, so the target
-    // row is read with service_role. The helper that gates the read runs
-    // through the authenticated client so `auth.uid()` resolves to the caller.
-    const service = createServiceClient()
-    const { data: membership } = await service
-      .from("locality_memberships")
-      .select("locality_id")
-      .eq("user_id", userId)
-      .maybeSingle()
-    targetLocalityId = (membership as { locality_id: string } | null)?.locality_id ?? null
+  const { data: target, error: targetError } = await authClient
+    .from("profiles")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle()
 
-    const { data: allowed } = await authClient.rpc("is_locality_member", {
-      target_locality_id: targetLocalityId ?? "",
-    })
-
-    if (
-      !canReadAvatar({
-        viewerId: user.id,
-        targetUserId: userId,
-        targetLocalityId,
-        viewerIsLocalityMember: Boolean(allowed),
-      })
-    ) {
-      return NextResponse.json({ error: "not found" }, { status: 404 })
-    }
+  if (targetError) {
+    return NextResponse.json({ error: "unavailable" }, { status: 500 })
+  }
+  if (!target) {
+    return NextResponse.json({ error: "not found" }, { status: 404 })
   }
 
   const service = createServiceClient()
-  const { data } = await service.storage.from(AVATAR_BUCKET).list(userId, { limit: 1 })
-  const file = data?.[0]
+  const { data: files, error: listError } = await service.storage
+    .from(AVATAR_BUCKET)
+    .list(userId, { limit: 1 })
+  if (listError) {
+    return NextResponse.json({ error: "unavailable" }, { status: 500 })
+  }
+  const file = files?.[0]
   if (!file) {
     return NextResponse.json({ error: "not found" }, { status: 404 })
   }
 
-  const { data: signed } = await service.storage
+  const { data: signed, error: signError } = await service.storage
     .from(AVATAR_BUCKET)
     .createSignedUrl(`${userId}/${file.name}`, AVATAR_SIGNED_URL_EXPIRY_SECONDS)
 
+  if (signError) {
+    return NextResponse.json({ error: "unavailable" }, { status: 500 })
+  }
   if (!signed?.signedUrl) {
     return NextResponse.json({ error: "not found" }, { status: 404 })
   }
