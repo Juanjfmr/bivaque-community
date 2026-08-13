@@ -2,7 +2,7 @@ import { Button } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 
@@ -11,6 +11,14 @@ type EventRsvpRow = Database["public"]["Tables"]["event_rsvps"]["Row"]
 type AttendeeRow = EventRsvpRow & {
   profiles: { display_name: string } | null
 }
+
+// ── Server actions (writes) ──────────────────────────────────────────────────
+// These mutate through the service role, following the codebase convention
+// for server actions (see event-invites-actions.ts): they authenticate via
+// cookies, then write. complete_event is additionally a service_role-only
+// RPC, and event_rsvps has no delete policy for authenticated — both reasons
+// live in supabase/migrations, not here. The page's data reads below
+// deliberately use the authenticated client so RLS decides what is visible.
 
 async function setRsvpAction(formData: FormData) {
   "use server"
@@ -85,7 +93,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   }
 
   const cookieStore = await cookies()
-  const authClient = createServerClient(url, anonKey, {
+  const authClient = createServerClient<Database>(url, anonKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll()
@@ -100,36 +108,44 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     redirect(`/login?return=/events/${eventId}`)
   }
 
-  const supabase = createServiceClient()
-
-  const { data: eventData } = await supabase
+  // All reads go through the authenticated client so RLS — not this page —
+  // decides what is visible: events_select_locality_member already encodes
+  // can_access_event internally (locality, community and group branches). A
+  // null row means the viewer may not even know the event exists: 404, never
+  // a permission screen that would confirm existence. A failed read is
+  // infrastructure failure, not a denial, so errors are thrown instead of
+  // being swallowed.
+  const { data: eventData, error: eventError } = await authClient
     .from("events")
     .select("*")
     .eq("id", eventId)
     .maybeSingle()
 
+  if (eventError) throw new Error(`failed to read event: ${eventError.message}`)
   const event = eventData as EventRow | null
   if (!event) {
-    redirect("/events")
+    notFound()
   }
 
-  const { data: rsvpData } = await supabase
+  const { data: rsvpData, error: rsvpError } = await authClient
     .from("event_rsvps")
     .select("*")
     .eq("event_id", event.id)
     .eq("user_id", user.id)
     .maybeSingle()
 
+  if (rsvpError) throw new Error(`failed to read rsvp: ${rsvpError.message}`)
   const myRsvp = (rsvpData as EventRsvpRow | null)?.status ?? null
 
-  const { data: attendeesData } = await supabase
+  const { data: attendeesData, error: attendeesError } = await authClient
     .from("event_rsvps")
     .select("event_id, user_id, status, created_at, profiles:profiles!inner(display_name)")
     .eq("event_id", event.id)
     .eq("status", "going")
     .limit(20)
 
-  const attendees = (attendeesData as AttendeeRow[] | null) ?? []
+  if (attendeesError) throw new Error(`failed to read attendees: ${attendeesError.message}`)
+  const attendees = (attendeesData as unknown as AttendeeRow[] | null) ?? []
 
   const isOrganizer = event.organizer_id === user.id
   const isCancelled = event.status === "cancelled"
