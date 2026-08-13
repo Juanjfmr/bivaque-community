@@ -13,6 +13,7 @@
 | Onde procurar | Documento |
 |---|---|
 | o que o produto **deve** ser | este arquivo |
+| o que precisa **ser verdade** no sistema, com requisito numerado | [`../SPEC.md`](../SPEC.md) |
 | o que o código **faz** hoje | [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md) |
 | decisões R3, com risco e reversão | [`decisions/`](decisions/) e a régua em [`RISK_MATRIX.md`](decisions/RISK_MATRIX.md) |
 | comandos, armadilhas, contratos de teste | [`../AGENTS.md`](../AGENTS.md) |

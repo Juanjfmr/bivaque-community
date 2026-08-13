@@ -8,6 +8,7 @@
 | Pergunta | Documento |
 |---|---|
 | o que o produto **deve** ser | [`docs/BIVAQUE.md`](../../BIVAQUE.md) |
+| o que precisa **ser verdade** no sistema, com requisito numerado | [`SPEC.md`](../../../SPEC.md) |
 | o que o código **faz** hoje | [`docs/PRODUCT_STATUS.md`](../../PRODUCT_STATUS.md) |
 | comandos, armadilhas, contratos de teste | [`AGENTS.md`](../../../AGENTS.md) |
 | decisões R3 e a régua de risco | [`docs/decisions/`](../../decisions/) |

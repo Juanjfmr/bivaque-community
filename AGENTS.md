@@ -56,6 +56,7 @@ leaks so far.
 | Document | Answers |
 |---|---|
 | `docs/BIVAQUE.md` | What the product must be: vision, roles, decisions, monetisation, sequencing |
+| `SPEC.md` | What must be true of the system: entities, trust boundary, authorisation matrix, state machines, numbered requirements and where each is enforced |
 | `docs/PRODUCT_STATUS.md` | What the code does today, the gap to the target, and which wave closes it |
 | `docs/decisions/` | R3 decisions as ADRs, and `RISK_MATRIX.md` — what an agent may decide alone |
 | `docs/agents/DESIGN_SPEC.md` | The visual language, and the source of truth for tokens |

@@ -17,6 +17,7 @@ envelhece.
 | Pergunta | Documento |
 |---|---|
 | o que o produto **deve** ser — visão, papéis, decisões, monetização, sequenciamento | [`docs/BIVAQUE.md`](docs/BIVAQUE.md) |
+| o que precisa **ser verdade** no sistema — entidades, autorização, estados, invariantes | [`SPEC.md`](SPEC.md) |
 | o que o código **faz** hoje, e a distância até o alvo | [`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md) |
 | comandos, armadilhas de ambiente, contratos de teste | [`AGENTS.md`](AGENTS.md) |
 | decisões de risco alto, como ADR, e a régua que classifica risco | [`docs/decisions/`](docs/decisions/) |
@@ -30,6 +31,10 @@ envelhece.
 **`docs/BIVAQUE.md` e `docs/PRODUCT_STATUS.md` nunca se inferem um do outro.** O primeiro
 descreve decisões, muitas ainda não construídas; o segundo descreve realidade. Ler decisão
 como feature entregue é o erro que produziu o mapa que esses dois substituíram.
+
+O `SPEC.md` fica entre os dois: traduz decisão em requisito com ID, e diz onde cada um é
+imposto. Requisito estar especificado ali **não** significa estar construído — quem responde
+isso continua sendo o `PRODUCT_STATUS.md`.
 
 ## Rodar
 
