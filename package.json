@@ -27,6 +27,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",
     "@bivaque/contracts": "workspace:*",
+    "@bivaque/domain": "workspace:*",
     "@playwright/test": "1.51.1",
     "@types/node": "^26.1.2",
     "supabase": "2.107.0",

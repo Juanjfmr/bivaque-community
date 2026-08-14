@@ -81,6 +81,31 @@ Três coisas que **você não faz**, mesmo que pareçam a correção certa:
    `bivaque-sign-in.tsx` tem modificação pendente que pertence à Task 1 da onda B — incorpore
    lá, não commite separado.
 
+## O E2E precisa de um humano, e por quê
+
+Isto não é opinião sobre disciplina: é uma restrição do ambiente que torna o E2E
+**inalcançável** para uma execução autônoma, e ela custou uma onda inteira para aparecer.
+
+Todo trabalho de pgTAP exige `db:reset --no-seed`. O E2E exige o oposto, `db:reset` com
+seed, porque autentica como usuário semeado. **Os dois estados são mutuamente exclusivos**, e
+qualquer onda que mexa em migration apaga o seed ao verificar o próprio pgTAP.
+
+Some a isso que `db:reset` é auto-rejeitado em `opencode run` headless — o guarda pede
+aprovação e não há ninguém para dar. Resultado: um executor que percorre as ondas em sequência
+faz pgTAP na B, pgTAP na C, pgTAP na D2, e o E2E que deveria fechar a onda A é órfão em todas.
+
+**Consequência prática, e ela vale para toda onda:**
+
+1. Escreva os specs de E2E dentro da onda que os exige, e **commite-os sem executar** se o
+   banco estiver sem seed. Registre no `PRODUCT_STATUS.md` como "código feito", que é o
+   terceiro estado documentado lá.
+2. **Não peça `db:reset` no meio do trabalho.** Peça uma vez, ao dono, quando houver um lote
+   de E2E acumulado para rodar.
+3. O E2E é a **última** coisa antes de devolver o banco ao estado de pgTAP — não a primeira.
+
+Uma onda pode fechar com o E2E pendente, desde que isso esteja escrito na linha. O que não
+pode é a linha dizer que fechou.
+
 ## Fim de cada onda
 
 1. **Auditoria visual** sobre as telas tocadas: `node scripts/visual/loop.mjs`. Ela

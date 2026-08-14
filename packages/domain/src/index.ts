@@ -41,3 +41,37 @@ export const COMMENT_CONTENT_MAX_LENGTH = 1000
 
 export const PROHIBITED_CONTENT_PATTERN =
   /(an[ôo]nimo|v[íi]deo|marketplace|comercial|venda|compr[oa]|IA gerad[oa]|gerad[oa] por IA|intelig[êe]ncia artificial|verificado publicamente|selo de verifica[çc][ãa]o|organiza[çc][ãa]o militar|\bOM\b|patente|posto militar|gradua[çc][ãa]o militar|endere[çc]o residencial|\bCEP\b|\bCPF\b)/i
+
+// ── PII pattern detection (D21: warn on real patterns, never on words) ─────
+
+const CPF_CANDIDATE_PATTERN = /\b(\d{3})[.\s-]?(\d{3})[.\s-]?(\d{3})[-.\s]?(\d{2})\b/g
+
+export function isValidCpf(digits: string): boolean {
+  if (!/^\d{11}$/.test(digits)) return false
+  // A CPF made of a single repeated digit has a valid check digit but is not
+  // a real CPF.
+  if (/^(\d)\1{10}$/.test(digits)) return false
+
+  const digit = (index: number) => Number(digits[index])
+  const checkDigit = (weightStart: number) => {
+    let sum = 0
+    for (let i = 0; i < weightStart; i++) {
+      sum += digit(i) * (weightStart + 1 - i)
+    }
+    const remainder = sum % 11
+    return remainder < 2 ? 0 : 11 - remainder
+  }
+
+  return checkDigit(9) === digit(9) && checkDigit(10) === digit(10)
+}
+
+export function detectCpf(text: string): boolean {
+  for (const match of text.matchAll(CPF_CANDIDATE_PATTERN)) {
+    if (isValidCpf(match.slice(1).join(""))) return true
+  }
+  return false
+}
+
+export function detectCep(text: string): boolean {
+  return /\b\d{5}-\d{3}\b/.test(text)
+}

@@ -1,5 +1,6 @@
 "use client"
 
+import { detectCep, detectCpf } from "@bivaque/domain"
 import { Button, Card, Chip, Input, ListBox, Select, Tabs, TextArea } from "@heroui/react"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
@@ -131,6 +132,7 @@ export default function RecommendationsPage() {
   const [requestFeedback, setRequestFeedback] = useState("")
   const [requestError, setRequestError] = useState("")
   const [requestSubmitting, setRequestSubmitting] = useState(false)
+  const [piiWarning, setPiiWarning] = useState(false)
 
   // saved tab
   const [savedRequests, setSavedRequests] = useState<SavedRequestRow[]>([])
@@ -287,6 +289,12 @@ export default function RecommendationsPage() {
         return
       }
 
+      const piiText = `${requestTitle.trim()} ${requestDescription.trim()}`
+      if (!piiWarning && (detectCpf(piiText) || detectCep(piiText))) {
+        setPiiWarning(true)
+        return
+      }
+
       setRequestSubmitting(true)
 
       try {
@@ -327,6 +335,7 @@ export default function RecommendationsPage() {
         setRequestCategory("")
         setRequestTitle("")
         setRequestDescription("")
+        setPiiWarning(false)
         setRequestFeedback("Pedido publicado!")
         setRequestSubmitting(false)
 
@@ -338,7 +347,7 @@ export default function RecommendationsPage() {
         setRequestSubmitting(false)
       }
     },
-    [supabase, requestCategory, requestTitle, requestDescription],
+    [supabase, requestCategory, requestTitle, requestDescription, piiWarning],
   )
 
   // ── saved tab ──────────────────────────────────────────────────────────────
@@ -672,6 +681,7 @@ export default function RecommendationsPage() {
               onChange={(e) => {
                 setRequestTitle((e.target as HTMLInputElement).value)
                 setRequestError("")
+                setPiiWarning(false)
               }}
             />
 
@@ -684,13 +694,35 @@ export default function RecommendationsPage() {
               onChange={(e) => {
                 setRequestDescription((e.target as HTMLTextAreaElement).value)
                 setRequestError("")
+                setPiiWarning(false)
               }}
             />
 
             <p className="text-xs text-muted">
-              Sua indicação será visível apenas para membros da sua localidade ou grupo. Este espaço
-              não permite conteúdo comercial, anúncios ou promoções.
+              Sua indicação será visível apenas para membros da sua localidade ou grupo.
             </p>
+
+            {piiWarning ? (
+              <div className="rounded-lg border border-border bg-[var(--surface)] p-3">
+                <FeedbackAlert
+                  variant="warning"
+                  description="Isso parece um CPF ou CEP. Quer mesmo publicar?"
+                />
+                <div className="mt-2 flex gap-2">
+                  <Button type="submit" size="sm" variant="primary" isDisabled={requestSubmitting}>
+                    Publicar mesmo
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="tertiary"
+                    onPress={() => setPiiWarning(false)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            ) : null}
 
             <Button
               type="submit"

@@ -1,5 +1,6 @@
 "use client"
 
+import { detectCep, detectCpf } from "@bivaque/domain"
 import { Button, Dropdown, Input, Modal, TextArea, useOverlayState } from "@heroui/react"
 import {
   BadgeCheck,
@@ -481,6 +482,7 @@ export function CreatePostModal({
   const [pollOptions, setPollOptions] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [piiWarning, setPiiWarning] = useState(false)
   const supabase = createBrowserClient()
 
   useEffect(() => {
@@ -497,6 +499,7 @@ export function CreatePostModal({
     setPollOption("")
     setPollOptions([])
     setError("")
+    setPiiWarning(false)
   }, [])
 
   const handleAddPollOption = useCallback(() => {
@@ -520,6 +523,11 @@ export function CreatePostModal({
     }
     if (postType === "poll" && pollOptions.length < 2) {
       setError("Enquete requer pelo menos 2 opções")
+      return
+    }
+
+    if (!piiWarning && (detectCpf(content.trim()) || detectCep(content.trim()))) {
+      setPiiWarning(true)
       return
     }
 
@@ -561,6 +569,7 @@ export function CreatePostModal({
     photoPath,
     linkUrl,
     pollOptions,
+    piiWarning,
     localityId,
     supabase,
     resetForm,
@@ -670,6 +679,22 @@ export function CreatePostModal({
               {error ? (
                 <div className="mt-4">
                   <FeedbackAlert variant="danger" description={error} />
+                </div>
+              ) : null}
+              {piiWarning ? (
+                <div className="mt-4">
+                  <FeedbackAlert
+                    variant="warning"
+                    description="Isso parece um CPF ou CEP. Quer mesmo publicar?"
+                  />
+                  <div className="mt-2 flex gap-2">
+                    <Button size="sm" variant="primary" onPress={handleSubmit}>
+                      Publicar mesmo
+                    </Button>
+                    <Button size="sm" variant="tertiary" onPress={() => setPiiWarning(false)}>
+                      Cancelar
+                    </Button>
+                  </div>
                 </div>
               ) : null}
             </Modal.Body>
