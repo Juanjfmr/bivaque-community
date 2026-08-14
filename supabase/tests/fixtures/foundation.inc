@@ -46,7 +46,7 @@ values
     '10000000-0000-4000-8000-000000000004',
     '00000000-0000-4000-8000-000000000001',
     'Hidden Member',
-    'hidden'
+    'locality_members'
   );
 
 insert into private.verification_outcomes (

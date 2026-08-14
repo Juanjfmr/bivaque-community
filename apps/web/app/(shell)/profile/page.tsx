@@ -5,8 +5,6 @@ import {
   Button,
   Input,
   Modal,
-  Radio,
-  RadioGroup,
   Tab,
   TabList,
   TabPanel,
@@ -27,7 +25,6 @@ interface ProfileRow {
   user_id: string
   display_name: string | null
   locality_id: string
-  visibility: string
 }
 
 interface MembershipRow {
@@ -99,13 +96,6 @@ export default function ProfilePage() {
     message: string
   } | null>(null)
 
-  const [visibility, setVisibility] = useState("locality_members")
-  const [savingVisibility, setSavingVisibility] = useState(false)
-  const [visibilityFeedback, setVisibilityFeedback] = useState<{
-    type: "success" | "error"
-    message: string
-  } | null>(null)
-
   const signOutModal = useOverlayState()
   const [signingOut, setSigningOut] = useState(false)
   const [signOutError, setSignOutError] = useState("")
@@ -128,7 +118,7 @@ export default function ProfilePage() {
       await Promise.all([
         supabase
           .from("profiles")
-          .select("user_id, display_name, locality_id, visibility")
+          .select("user_id, display_name, locality_id")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -150,7 +140,6 @@ export default function ProfilePage() {
     if (profileRow) {
       setProfile(profileRow as ProfileRow)
       setDisplayName((profileRow as ProfileRow).display_name ?? "")
-      setVisibility((profileRow as ProfileRow).visibility ?? "locality_members")
       if (membershipRow) setMembership(membershipRow as MembershipRow)
     } else {
       setError("Perfil não encontrado.")
@@ -188,25 +177,6 @@ export default function ProfilePage() {
       setProfile((prev) => (prev ? { ...prev, display_name: trimmed } : prev))
     }
     setSavingName(false)
-  }
-
-  const handleSaveVisibility = async (value: "locality_members" | "hidden") => {
-    setVisibilityFeedback(null)
-    setSavingVisibility(true)
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ visibility: value })
-      .eq("user_id", profile?.user_id ?? "")
-
-    if (updateError) {
-      setVisibilityFeedback({ type: "error", message: updateError.message })
-    } else {
-      setVisibility(value)
-      setVisibilityFeedback({ type: "success", message: "Visibilidade atualizada." })
-      setProfile((prev) => (prev ? { ...prev, visibility: value } : prev))
-    }
-    setSavingVisibility(false)
   }
 
   const handleConfirmSignOut = async () => {
@@ -360,44 +330,6 @@ export default function ProfilePage() {
                   <FeedbackAlert
                     variant={nameFeedback.type === "success" ? "success" : "danger"}
                     description={nameFeedback.message}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
-              <RadioGroup
-                aria-label="Visibilidade do perfil"
-                value={visibility}
-                onChange={(value) => handleSaveVisibility(value as "locality_members" | "hidden")}
-                isDisabled={savingVisibility}
-                orientation="vertical"
-              >
-                <Radio value="locality_members">
-                  <div className="flex flex-col gap-0.5">
-                    <span>Membros da localidade</span>
-                    <span className="text-xs text-muted">
-                      Membros da sua comunidade podem ver seu perfil.
-                    </span>
-                  </div>
-                </Radio>
-                <Radio value="hidden">
-                  <div className="flex flex-col gap-0.5">
-                    <span>Oculto</span>
-                    <span className="text-xs text-muted">
-                      Seu perfil fica oculto para outros membros.
-                    </span>
-                  </div>
-                </Radio>
-              </RadioGroup>
-              <p className="mt-2 text-xs text-muted">
-                Controle quem pode ver seu perfil dentro da comunidade.
-              </p>
-              {visibilityFeedback && (
-                <div className="mt-2">
-                  <FeedbackAlert
-                    variant={visibilityFeedback.type === "success" ? "success" : "danger"}
-                    description={visibilityFeedback.message}
                   />
                 </div>
               )}

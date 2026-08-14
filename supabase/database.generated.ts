@@ -1158,7 +1158,7 @@ export type Database = {
         | "direct_message"
         | "report_resolved"
       post_type: "text" | "photo" | "link" | "poll"
-      profile_visibility: "locality_members" | "hidden"
+      profile_visibility: "locality_members"
       recommendation_category:
         | "servicos_locais"
         | "saude_bem_estar"
@@ -1326,7 +1326,7 @@ export const Constants = {
         "report_resolved",
       ],
       post_type: ["text", "photo", "link", "poll"],
-      profile_visibility: ["locality_members", "hidden"],
+      profile_visibility: ["locality_members"],
       recommendation_category: [
         "servicos_locais",
         "saude_bem_estar",

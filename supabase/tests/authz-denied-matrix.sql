@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(21);
 
 \ir fixtures/foundation.inc
 \ir fixtures/authz.inc
@@ -45,17 +45,6 @@ select is_empty(
     where user_id = '10000000-0000-4000-8000-000000000003'
   $$,
   'Manaus member cannot read a cross-locality profile'
-);
-
--- ── hidden profile denial ──────────────────────────────────────────────────
-
-select is_empty(
-  $$
-    select 1
-    from public.profiles
-    where user_id = '10000000-0000-4000-8000-000000000004'
-  $$,
-  'hidden profile is not visible to another locality member'
 );
 
 -- ── nonmember denial (user 005, authenticated but not in any locality) ─────
@@ -141,7 +130,7 @@ select results_eq(
 select results_eq(
   'select display_name from public.profiles order by display_name',
   $$ values ('Hidden Member'::text), ('Member One'::text), ('Member Two'::text) $$,
-  'unverified member sees visible profiles plus their own hidden profile'
+  'unverified member sees visible profiles in their locality'
 );
 
 -- ── accepted family member cannot modify the holder profile ────────────────

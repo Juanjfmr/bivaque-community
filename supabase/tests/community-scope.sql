@@ -150,19 +150,19 @@ select isnt_empty(
     select 1 from public.profiles
     where user_id = '10000000-0000-4000-8000-000000000004'
   $$,
-  'caso 19: co-membro aprovado ve o perfil oculto de outro membro da vila'
+  'caso 19: co-membro aprovado ve o perfil de outro membro da vila'
 );
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select is_empty(
+select isnt_empty(
   $$
     select 1 from public.profiles
     where user_id = '10000000-0000-4000-8000-000000000004'
   $$,
-  'caso 20: membro da cidade fora da vila continua sem ver o perfil oculto'
+  'caso 20: membro da cidade ve o perfil agora visivel (sem estado oculto)'
 );
 
 set local role authenticated;

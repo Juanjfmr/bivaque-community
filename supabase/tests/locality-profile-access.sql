@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(6);
+select plan(5);
 
 \ir fixtures/foundation.inc
 
@@ -21,7 +21,7 @@ select results_eq(
 
 select results_eq(
   'select display_name from public.profiles order by display_name',
-  $$ values ('Member One'::text), ('Member Two'::text) $$,
+  $$ values ('Hidden Member'::text), ('Member One'::text), ('Member Two'::text) $$,
   'a Manaus member sees visible coarse profiles in Manaus'
 );
 
@@ -48,15 +48,6 @@ select results_eq(
   $$,
   $$ values ('Member One Updated'::text) $$,
   'the self-scoped profile update is visible'
-);
-
-select lives_ok(
-  $$
-    update public.profiles
-    set visibility = 'hidden'
-    where user_id = '10000000-0000-4000-8000-000000000001'
-  $$,
-  'a member can hide their own profile'
 );
 
 select * from finish();

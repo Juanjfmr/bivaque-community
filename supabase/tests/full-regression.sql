@@ -184,7 +184,7 @@ select results_eq(
 
 select results_eq(
   'select display_name from public.profiles order by display_name',
-  $$ values ('Member One'::text), ('Member Two'::text) $$,
+  $$ values ('Hidden Member'::text), ('Member One'::text), ('Member Two'::text) $$,
   'verified member sees visible profiles in their locality'
 );
 

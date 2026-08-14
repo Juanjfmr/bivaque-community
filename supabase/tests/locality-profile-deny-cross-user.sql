@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(7);
 
 \ir fixtures/foundation.inc
 
@@ -29,15 +29,6 @@ select is_empty(
     where user_id = '10000000-0000-4000-8000-000000000003'
   $$,
   'a Manaus member cannot read a cross-locality profile'
-);
-
-select is_empty(
-  $$
-    select 1
-    from public.profiles
-    where user_id = '10000000-0000-4000-8000-000000000004'
-  $$,
-  'a hidden profile is not visible to another member'
 );
 
 select results_eq(
