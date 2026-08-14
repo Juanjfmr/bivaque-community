@@ -76,7 +76,7 @@ select throws_ok(
   'non-member cannot insert a recommendation request into a locality'
 );
 
--- ── commercial title CHECK violation ───────────────────────────────────────
+-- ── commercial vocabulary is accepted (D21) ────────────────────────────────
 
 set local role authenticated;
 select set_config(
@@ -86,7 +86,7 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.recommendation_requests (
       author_id,
@@ -99,18 +99,14 @@ select throws_ok(
       '10000000-0000-4000-8000-000000000001',
       '00000000-0000-4000-8000-000000000001',
       'Promocao imperdivel de produtos!',
-      'Esta e uma descricao valida o suficiente para passar mas o titulo deve falhar.',
+      'Esta e uma descricao valida o suficiente para passar.',
       'outros'
     )
   $$,
-  23514,
-  null,
-  'commercial word "promocao" in title is rejected by CHECK constraint'
+  'commercial word "promocao" in title is accepted (D21)'
 );
 
--- ── commercial body CHECK violation ────────────────────────────────────────
-
-select throws_ok(
+select lives_ok(
   $$
     insert into public.recommendation_requests (
       author_id,
@@ -122,17 +118,15 @@ select throws_ok(
     values (
       '10000000-0000-4000-8000-000000000001',
       '00000000-0000-4000-8000-000000000001',
-      'Titulo valido',
+      'Procuro plano de saude para dependente',
       'Ligue agora para contratar nossos servicos com preco promocional! whatsapp disponivel.',
       'outros'
     )
   $$,
-  23514,
-  null,
-  'commercial terms in body ("contratar", "preco", "whatsapp") are rejected'
+  'commercial terms in body ("contratar", "preco", "whatsapp") are accepted (D21)'
 );
 
--- ── commercial reply CHECK violation ───────────────────────────────────────
+-- ── commercial reply is accepted (D21) ─────────────────────────────────────
 
 set local role authenticated;
 select set_config(
@@ -142,7 +136,7 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.recommendation_replies (
       request_id,
@@ -155,9 +149,7 @@ select throws_ok(
       'Faca seu pagamento via PIX! Desconto exclusivo para quem fechar o contrato hoje.'
     )
   $$,
-  23514,
-  null,
-  'commercial terms in reply ("pagamento", "desconto", "contrato") are rejected'
+  'commercial terms in reply ("pagamento", "desconto", "contrato") are accepted (D21)'
 );
 
 -- ── origin scope CHECK: cannot set both locality AND group ─────────────────

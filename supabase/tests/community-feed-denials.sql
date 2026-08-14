@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(30);
 
 \ir fixtures/foundation.inc
 \ir fixtures/community.inc
@@ -95,9 +95,9 @@ select throws_ok(
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- DENIAL: forbidden content types are rejected at the schema CHECK level
--- These tests run as member-one (a valid Manaus member) to prove the denial
--- comes from the CHECK constraint, not from RLS.
+-- ACCEPTANCE: vocabulary is no longer rejected at the schema level (D21).
+-- These tests run as member-one (a valid Manaus member) to prove the words the
+-- community actually uses now insert cleanly; abuse is handled by moderation.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 set local role authenticated;
@@ -110,7 +110,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- anonymous / video / marketplace / AI terms
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -120,12 +120,10 @@ select throws_ok(
       'Post anônimo na comunidade'
     )
   $$,
-  '23514',
-  null,
-  'post with "anonimo" in content rejected by CHECK'
+  'post with "anonimo" in content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -135,12 +133,10 @@ select throws_ok(
       'Assista ao vídeo da semana'
     )
   $$,
-  '23514',
-  null,
-  'post with "video" in content rejected by CHECK'
+  'post with "video" in content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -150,12 +146,10 @@ select throws_ok(
       'Ofertas do marketplace local'
     )
   $$,
-  '23514',
-  null,
-  'post with "marketplace" in content rejected by CHECK'
+  'post with "marketplace" in content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -165,12 +159,10 @@ select throws_ok(
       'Conteudo gerado por IA'
     )
   $$,
-  '23514',
-  null,
-  'post with "gerado por IA" in content rejected by CHECK'
+  'post with "gerado por IA" in content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -180,14 +172,12 @@ select throws_ok(
       'Texto com inteligencia artificial'
     )
   $$,
-  '23514',
-  null,
-  'post with "inteligencia artificial" in content rejected by CHECK'
+  'post with "inteligencia artificial" in content is accepted (D21)'
 );
 
 -- OM / rank / address / CPF / verification labels
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -197,12 +187,10 @@ select throws_ok(
       'Minha OM e o batalhao'
     )
   $$,
-  '23514',
-  null,
-  'post with "OM" in content rejected by CHECK'
+  'post with "OM" in content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -212,12 +200,10 @@ select throws_ok(
       'Qual a sua patente?'
     )
   $$,
-  '23514',
-  null,
-  'post with "patente" in content rejected by CHECK'
+  'post with "patente" in content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -227,12 +213,10 @@ select throws_ok(
       'Meu endereco residencial fica na rua X'
     )
   $$,
-  '23514',
-  null,
-  'post with "endereco residencial" in content rejected by CHECK'
+  'post with "endereco residencial" in content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -242,12 +226,10 @@ select throws_ok(
       'Meu CPF foi bloqueado'
     )
   $$,
-  '23514',
-  null,
-  'post with "CPF" in content rejected by CHECK'
+  'post with "CPF" in content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -257,12 +239,10 @@ select throws_ok(
       'Selo de verificacao para membros'
     )
   $$,
-  '23514',
-  null,
-  'post with "selo de verificacao" in content rejected by CHECK'
+  'post with "selo de verificacao" in content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -272,14 +252,12 @@ select throws_ok(
       'Posto militar e graduacao militar'
     )
   $$,
-  '23514',
-  null,
-  'post with "posto militar" in content rejected by CHECK'
+  'post with "posto militar" in content is accepted (D21)'
 );
 
 -- commercial / sales terms
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values (
@@ -289,9 +267,35 @@ select throws_ok(
       'Anuncio comercial com venda de produtos'
     )
   $$,
-  '23514',
-  null,
-  'post with "comercial" and "venda" in content rejected by CHECK'
+  'post with "comercial" and "venda" in content is accepted (D21)'
+);
+
+-- Motivating cases from D21 (BIVAQUE.md): these must publish.
+
+select lives_ok(
+  $$
+    insert into public.posts (locality_id, user_id, post_type, content)
+    values (
+      '00000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
+      'text',
+      'Procuro plano de saúde para dependente'
+    )
+  $$,
+  'post asking for a health plan is accepted (D21)'
+);
+
+select lives_ok(
+  $$
+    insert into public.posts (locality_id, user_id, post_type, content)
+    values (
+      '00000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
+      'text',
+      'Alguém tem o telefone do despachante?'
+    )
+  $$,
+  'post asking for a phone number is accepted (D21)'
 );
 
 -- structural integrity: link post without URL
@@ -362,7 +366,7 @@ select results_eq(
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- DENIAL: forbidden terms in comments
+-- ACCEPTANCE: vocabulary in comments is no longer rejected (D21)
 -- ═══════════════════════════════════════════════════════════════════════════
 
 set local role authenticated;
@@ -373,7 +377,7 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.comments (post_id, user_id, content)
     values (
@@ -382,9 +386,7 @@ select throws_ok(
       'Meu CPF e 123'
     )
   $$,
-  '23514',
-  null,
-  'comment with "CPF" in content rejected by CHECK'
+  'comment with "CPF" in content is accepted (D21)'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════

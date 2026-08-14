@@ -534,38 +534,35 @@ select throws_ok(
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- NEGATIVE: forbidden content CHECK constraints
+-- ACCEPTANCE: vocabulary is no longer rejected at the schema level (D21)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values ('00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'text', 'Meu CPF e 123456')
   $$,
-  '23514', null,
-  'CPF in post content rejected'
+  'CPF in post content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.posts (locality_id, user_id, post_type, content)
     values ('00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'text', 'Minha patente militar')
   $$,
-  '23514', null,
-  'patente in post content rejected'
+  'patente in post content is accepted (D21)'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.comments (post_id, user_id, content)
     values ('e0000000-0000-4000-8000-000000000010', '10000000-0000-4000-8000-000000000001', 'Meu endereco residencial fica na rua X')
   $$,
-  '23514', null,
-  'endereco residencial in comment content rejected'
+  'endereco residencial in comment content is accepted (D21)'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
