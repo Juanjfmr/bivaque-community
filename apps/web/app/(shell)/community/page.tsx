@@ -26,7 +26,6 @@ export default function CommunityPage() {
   const [transitioning, setTransitioning] = useState(false)
   const [atEnd, setAtEnd] = useState(false)
   const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set())
-  const [bookmarkedPostIds, setBookmarkedPostIds] = useState<Set<string>>(new Set())
 
   const searchParams = useSearchParams()
   const targetPostId = searchParams.get("post")
@@ -101,63 +100,7 @@ export default function CommunityPage() {
     setHiddenPostIds((prev) => new Set(prev).add(postId))
   }, [])
 
-  const handleBookmarkToggle = useCallback(
-    async (postId: string) => {
-      const wasBookmarked = bookmarkedPostIds.has(postId)
-
-      setBookmarkedPostIds((prev) => {
-        const next = new Set(prev)
-        if (wasBookmarked) {
-          next.delete(postId)
-        } else {
-          next.add(postId)
-        }
-        return next
-      })
-
-      if (wasBookmarked) {
-        const { error } = await supabase.from("post_saves").delete().eq("post_id", postId)
-        if (error) {
-          setBookmarkedPostIds((prev) => new Set(prev).add(postId))
-        }
-      } else {
-        const { error } = await supabase
-          .from("post_saves")
-          .insert({ post_id: postId } as Database["public"]["Tables"]["post_saves"]["Insert"])
-        if (error) {
-          setBookmarkedPostIds((prev) => {
-            const next = new Set(prev)
-            next.delete(postId)
-            return next
-          })
-        }
-      }
-    },
-    [bookmarkedPostIds, supabase],
-  )
-
   const initialLoadDone = useRef(false)
-
-  // load saved (bookmarked) post IDs
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user || cancelled) return
-
-      const { data } = await supabase.from("post_saves").select("post_id").eq("user_id", user.id)
-
-      if (cancelled) return
-      if (data) {
-        setBookmarkedPostIds(new Set(data.map((row) => row.post_id)))
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [supabase])
 
   // load member count
   useEffect(() => {
@@ -314,13 +257,7 @@ export default function CommunityPage() {
                         : undefined
                     }
                   >
-                    <FeedPost
-                      post={post}
-                      index={index}
-                      onHide={handleHidePost}
-                      isBookmarked={bookmarkedPostIds.has(post.id)}
-                      onBookmarkToggle={handleBookmarkToggle}
-                    />
+                    <FeedPost post={post} index={index} onHide={handleHidePost} />
                   </div>
                 ))}
             </div>

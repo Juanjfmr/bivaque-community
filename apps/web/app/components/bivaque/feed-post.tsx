@@ -3,7 +3,6 @@
 import { Button, Dropdown, Input, Modal, TextArea, useOverlayState } from "@heroui/react"
 import {
   BadgeCheck,
-  Bookmark,
   ExternalLink,
   Heart,
   Link2,
@@ -58,16 +57,9 @@ function CommentItem({ comment }: { comment: CommentRow }) {
 interface LeanOverflowMenuProps {
   postId: string
   onHide?: ((postId: string) => void) | undefined
-  isBookmarked?: boolean
-  onBookmarkToggle?: ((postId: string) => void) | undefined
 }
 
-function LeanOverflowMenu({
-  postId,
-  onHide,
-  isBookmarked = false,
-  onBookmarkToggle,
-}: LeanOverflowMenuProps) {
+function LeanOverflowMenu({ postId, onHide }: LeanOverflowMenuProps) {
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}/community?post=${postId}`
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
@@ -93,13 +85,11 @@ function LeanOverflowMenu({
     (key: React.KeyboardEvent | React.MouseEvent | string | number) => {
       if (key === "hide") {
         onHide?.(postId)
-      } else if (key === "bookmark") {
-        onBookmarkToggle?.(postId)
       } else if (key === "share") {
         void handleShare()
       }
     },
-    [postId, onHide, onBookmarkToggle, handleShare],
+    [postId, onHide, handleShare],
   )
 
   return (
@@ -120,9 +110,6 @@ function LeanOverflowMenu({
           <Dropdown.Item key="hide" id="hide">
             Ocultar publicação
           </Dropdown.Item>
-          <Dropdown.Item key="bookmark" id="bookmark">
-            {isBookmarked ? "Remover dos salvos" : "Salvar"}
-          </Dropdown.Item>
           <Dropdown.Item key="share" id="share">
             Compartilhar
           </Dropdown.Item>
@@ -136,17 +123,9 @@ export interface FeedPostProps {
   post: FeedPostRow
   index?: number
   onHide?: (postId: string) => void
-  isBookmarked?: boolean
-  onBookmarkToggle?: (postId: string) => void
 }
 
-export function FeedPost({
-  post,
-  index = 0,
-  onHide,
-  isBookmarked = false,
-  onBookmarkToggle,
-}: FeedPostProps) {
+export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState<CommentRow[]>([])
   const [commentText, setCommentText] = useState("")
@@ -294,26 +273,9 @@ export function FeedPost({
               </div>
             </div>
 
-            {/* Bookmark + overflow */}
+            {/* Overflow */}
             <div className="flex items-center gap-1 ml-auto shrink-0">
-              <button
-                type="button"
-                aria-label={isBookmarked ? "Remover dos salvos" : "Salvar publicação"}
-                onClick={() => onBookmarkToggle?.(post.id)}
-                className={`flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 ${isBookmarked ? "text-[var(--accent)]" : "text-muted"}`}
-              >
-                <Bookmark
-                  size={18}
-                  fill={isBookmarked ? "currentColor" : "none"}
-                  aria-hidden="true"
-                />
-              </button>
-              <LeanOverflowMenu
-                postId={post.id}
-                onHide={onHide}
-                isBookmarked={isBookmarked}
-                onBookmarkToggle={onBookmarkToggle}
-              />
+              <LeanOverflowMenu postId={post.id} onHide={onHide} />
             </div>
           </div>
 

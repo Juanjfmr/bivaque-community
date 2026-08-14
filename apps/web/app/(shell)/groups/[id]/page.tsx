@@ -261,7 +261,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           {feed.length > 0 ? (
             <div className="space-y-2">
               {feed.map((post, index) => (
-                <FeedPost key={post.id} post={post} index={index} isBookmarked={false} />
+                <FeedPost key={post.id} post={post} index={index} />
               ))}
             </div>
           ) : (
