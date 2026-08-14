@@ -68,7 +68,7 @@ commitados e nunca executados, porque o banco está sem seed. Não é "pronto" e
 | Avatar no cabeçalho | cabeçalho renderiza só a inicial; a foto aparece na seção e no feed | uma fonte só | três representações do mesmo usuário | `profile/page.tsx:245-272`, `profile/avatar-section.tsx:14-20` `[A]` | E |
 | Selo "Membro verificado" | exibido publicamente | removido | proibido pelo contrato, e redundante numa rede onde todos são verificados | `[A]` | **A** |
 | Perfil de outro membro | **não existe**; `/profile` sempre lê a sessão | existe, com histórico | a copy de privacidade pressupõe uma tela que não há | `profile/page.tsx:117-133` `[A]` | E |
-| Afiliação declarada | **não existe** | força, situação, OM e turma, opcionais | depende do ADR R3 da OM | — | E |
+| Afiliação declarada | **não existe** | força, situação, OM e turma, opcionais | depende do ADR R3 da OM; a regra `forbidden-copy` da auditoria visual (onda C, Task 6) fica adiada até o ADR ser aprovado | — | E |
 | Aba "Publicações" | chama `feed_posts` da localidade e corta 20 | filtrar pelo titular | mostra post de terceiro como histórico do usuário | `profile/page.tsx:38-45,274-308` `[A]` | E |
 | Aba "Eventos" | lê os dez próximos eventos, sem filtro | eventos do titular | nenhuma relação com quem está olhando | `profile/page.tsx:47-52` `[A]` | E |
 | Política de nomes | valida só comprimento 2-80 | normalizar Unicode, barrar controle e bidi | nome enganoso é possível | `20260802000100:31-40` `[A]` | E |
@@ -146,8 +146,8 @@ commitados e nunca executados, porque o banco está sem seed. Não é "pronto" e
 
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
-| Filtro de vocabulário | CHECK no banco rejeita palavras comuns em posts, comentários, pedidos e respostas | removido; aviso de PII na UI | bloqueia "patente", "posto militar", "OM", "CPF", "plano", "preço", "telefone" — inclusive o conteúdo real da comunidade | `20260802001100:36-41,55-63`, `20260802001300_fix_forbidden_content_regex.sql:15,21` `[V]` | C |
-| pgTAP do filtro | afirma a rejeição | mudar junto com a constraint | teste verde que trava a correção | `supabase/tests/community-feed-denials.sql:150-155,289-294` `[A]` | C |
+| Filtro de vocabulário | removido (D21); aviso de PII na UI | removido; aviso de PII na UI | — | `20260814070858_drop_vocabulary_filter.sql`, `packages/domain/src/index.ts` `[V]` | C |
+| pgTAP do filtro | afirma a aceitação (D21) | mudar junto com a constraint | — | `supabase/tests/community-feed-denials.sql`, `recommendations-scope-denials.sql` `[V]` | C |
 
 ## 11. Infraestrutura
 
