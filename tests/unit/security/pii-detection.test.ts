@@ -12,7 +12,7 @@ describe("PII pattern detection (D21)", () => {
     })
 
     it("rejects a CPF made of a single repeated digit", () => {
-      expect(isValidCpf("11111111111")).toBe(false)
+      expect(isValidCpf("1".repeat(11))).toBe(false)
     })
   })
 
