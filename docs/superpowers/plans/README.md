@@ -81,6 +81,25 @@ Três coisas que **você não faz**, mesmo que pareçam a correção certa:
    `bivaque-sign-in.tsx` tem modificação pendente que pertence à Task 1 da onda B — incorpore
    lá, não commite separado.
 
+## Duas coisas que o E2E ensinou, e valem para toda onda
+
+Descobertas na execução da onda A, em 2026-08-14. As duas invalidam instrução que estava
+escrita nos planos, então leia antes de escrever asserção de negação.
+
+**`notFound()` no Next 16 responde 200, não 404.** Com streaming, o shell é commitado antes
+de a página decidir, então o status já saiu quando o `notFound()` acontece. O corpo é a UI de
+404 e nenhum conteúdo do objeto aparece — a negação funciona —, mas **asserção sobre status
+falha**. Verifique a UI: ausência do conteúdo protegido e presença da página de não
+encontrado. A propriedade que importa continua garantida: quem não pode ver não distingue
+"não existe" de "não pode", porque as duas respostas são idênticas.
+
+**PostgREST só resolve embed onde existe foreign key.** `select("a, perfil:profiles!inner(x)")`
+falha silenciosamente quando não há FK entre as tabelas — e várias tabelas deste schema
+referenciam `auth.users` em separado, sem FK entre si. `group_memberships` e `profiles` são o
+caso conhecido. Se o código descartar o `error`, a tela renderiza vazia e ninguém percebe:
+foi assim que a lista de membros de grupo ficou quebrada em produção sem ninguém notar.
+**Leia o `error` de toda consulta** — não só nas que decidem acesso.
+
 ## O E2E precisa de um humano, e por quê
 
 Isto não é opinião sobre disciplina: é uma restrição do ambiente que torna o E2E
