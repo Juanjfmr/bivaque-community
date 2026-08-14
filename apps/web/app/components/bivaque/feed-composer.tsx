@@ -59,29 +59,11 @@ export function FeedComposer({ onOpenModal }: FeedComposerProps) {
         <Button
           size="sm"
           variant="tertiary"
-          aria-label="Nova publicacao com foto"
-          onPress={() => onOpenModal("photo")}
-          className="min-h-11 min-w-11"
-        >
-          Foto
-        </Button>
-        <Button
-          size="sm"
-          variant="tertiary"
           aria-label="Nova publicacao com link"
           onPress={() => onOpenModal("link")}
           className="min-h-11 min-w-11"
         >
           Link
-        </Button>
-        <Button
-          size="sm"
-          variant="tertiary"
-          aria-label="Nova enquete"
-          onPress={() => onOpenModal("poll")}
-          className="min-h-11 min-w-11"
-        >
-          Enquete
         </Button>
       </div>
     </div>
