@@ -277,38 +277,80 @@ provisiona quem abrir — e esta é a única via que concede acesso sem verifica
 
 ## 6. A experiência-alvo
 
-**A tela inicial é o feed da vila.** Quem pertence a uma comunidade cai nela; quem não
-pertence a nenhuma — militar que não mora em vila — cai no feed de Manaus.
+### 6.1 A vila é a sala. Manaus não é (D48)
 
-> **Revisado em 2026-08-11.** A versão anterior desta seção dizia que a home era uma lista de
-> pedidos abertos, "porque feed exige centenas de pessoas para não parecer deserto e lista de
-> pedidos funciona com dezenas". Isso foi escrito quando eu supunha que o piloto tinha
-> dezenas de membros. A evidência chegou depois: um único grupo de WhatsApp de duas vilas tem
-> **630 membros**. Com a densidade da §3.4 — ~125 ativos semanais numa vila, ~600 em Manaus —
-> o feed passa folgado do limiar, e a seção passou a contradizer a §3.4 do próprio documento.
-> É exatamente o erro que este par de documentos existe para impedir: decisão tomada antes da
-> evidência e não revisitada depois.
+**A tela inicial é o feed da vila.** Quem não pertence a nenhuma comunidade — militar que não
+mora em vila — cai na home de Manaus descrita em §6.2.
 
-A vila é a home porque é onde o laço é mais forte: 500 a 600 pessoas que moram no mesmo
-condomínio, com os mesmos ciclos de transferência, a mesma escola e o mesmo posto de saúde.
-Manaus fica um nível acima, para o que atravessa as três forças.
+A vila é a sala porque tem **gerador de conteúdo**: circunstância física compartilhada. Faltou
+água, tem churrasco sábado, alguém está vendendo geladeira, o portão quebrou. O conteúdo se
+escreve sozinho porque 500 a 600 pessoas dividem o mesmo condomínio, os mesmos ciclos de
+transferência, a mesma escola e o mesmo posto de saúde.
 
-**Pedidos abertos e próximo encontro não somem — eles vivem dentro do feed**, em posição
-fixa e alta, porque são o que tem prazo. O resto da linha do tempo é conversa.
+**Manaus não tem esse gerador.** O que 3 a 4 mil pessoas de três forças espalhadas pela cidade
+têm em comum é institucional, não situacional — e conteúdo institucional é quase todo
+**referência**: qual colégio aceita dependente no meio do ano, qual hospital atende o quê,
+quem é despachante bom, como funciona a pensão.
+
+Pergunta de referência tem uma propriedade que mata feed: cada pessoa pergunta uma vez, e a
+resposta não muda. Num feed ela rola para fora da tela, é reperguntada no mês seguinte, e a
+boa resposta de março não serve ninguém em novembro. **Um feed municipal reproduziria, dentro
+do Bivaque, exatamente o defeito do grupo de WhatsApp descrito na §1.1** — o defeito que o
+produto existe para corrigir.
+
+### 6.2 O que Manaus é, então
+
+Quatro coisas, nenhuma delas uma linha do tempo:
+
+| | O que é |
+|---|---|
+| **Alcance de post** | você publica na sua vila e escolhe se vai além dela. Manaus é uma configuração no momento de postar, não uma sala que se visita |
+| **Eventos da cidade** | quadro de avisos do que atravessa as três forças — corrida, formatura, confraternização |
+| **Vitrine** | prestador que atende a cidade inteira, não só uma vila |
+| **Guia de chegada** | referência curada e buscável: colégio, hospital, transportadora, despachante. Permanente, que é o oposto de feed |
+
+O alcance como configuração resolve dois problemas com um mecanismo: a regra 2 da §12 já exige
+mostrar a audiência antes do submit, por privacidade. **O seletor de audiência que precisa
+existir de qualquer forma é o nível Manaus.**
+
+E resolve dezembro melhor do que um feed resolveria: quem chega transferido precisa de
+referência e de encontro, e nenhum dos dois é linha do tempo.
+
+### 6.3 Os dois ciclos
 
 O **ciclo semanal** é pedir e responder: alguém pergunta, alguém responde, o autor é avisado,
 marca como resolvido, e quem respondeu acumula isso no perfil. É o menor ciclo que fecha, e é
-o que o WhatsApp destrói — a resposta boa de março não serve ninguém em novembro.
+o que o WhatsApp destrói.
 
-O **ciclo mensal** é o encontro presencial recorrente — o que deu identidade ao Military App
-e o que uma rede nacional não entrega.
+O **ciclo mensal** é o encontro presencial recorrente — o que deu identidade ao Military App e
+o que uma rede nacional não entrega.
 
-Sustentando os dois: verificação na porta, vitrine de prestador com busca por categoria e
-vila, moderação que age, e o canal de retorno — e-mail mais WhatsApp (D32, D33). **Não há
-busca de pessoas** (D43): a afiliação aparece no perfil de quem você encontrou por conteúdo,
-evento ou grupo, e não é filtrável.
+Pedidos abertos e próximo encontro vivem **dentro do feed da vila**, em posição fixa e alta,
+porque são o que tem prazo. O resto da linha do tempo é conversa.
+
+> **Hipótese, não padrão de mercado.** Pedido sem resposta na vila em 48 horas sobe para
+> Manaus sozinho. Dá função conversacional ao nível largo sem criar sala vazia, e é movido por
+> demanda real em vez de oferta. O Nextdoor tem ampliação de alcance, mas **não** tem gatilho
+> por falta de resposta — isto é proposta minha e precisa ser validada, não copiada.
+
+### 6.4 O que sustenta os dois ciclos
+
+Verificação na porta, vitrine com busca por categoria e vila, moderação que age, e o canal de
+retorno — e-mail mais WhatsApp (D32, D33). **Não há busca de pessoas** (D43): a afiliação
+aparece no perfil de quem você encontrou por conteúdo, evento ou grupo, e não é filtrável.
 
 O estado de cada uma dessas superfícies está em [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md).
+
+> **Histórico desta seção, porque ela errou duas vezes.** A primeira versão dizia que a home
+> era uma lista de pedidos abertos, "porque feed exige centenas de pessoas para não parecer
+> deserto". Foi escrita quando eu supunha um piloto de dezenas; a evidência dos 630 membros num
+> único grupo chegou depois, e a seção passou a contradizer a §3.4. A segunda versão corrigiu a
+> home para o feed da vila e manteve um feed municipal ao lado — que é o que esta terceira
+> remove, por forma e não por volume.
+>
+> As duas correções têm a mesma causa: **esta era a única seção do documento sem número de
+> decisão.** Prosa sem número não tem condição de reabertura, então ninguém a revisita quando a
+> evidência muda. Por isso ela agora é a D48.
 
 ---
 
@@ -580,6 +622,7 @@ aqui, com data e motivo.
 | **D45** | vigente | 2026-08-11 | Ficha de vitrine = **identidade + catálogo + portfólio**. Prova social e avisos ficam para depois | são os três blocos que o prestador preenche sozinho no dia um. Prova social depende do ciclo de indicação rodando; avisos dependem de moderação | — |
 | **D46** | vigente | 2026-08-11 | **Throttle global + circuit breaker** contra o Portal; retry em laço proibido (§7.9) | o risco não é volume, é a suspensão de 8 horas do token no meio do lançamento | — |
 | **D47** | vigente | 2026-08-11 | **Nada é cortado do escopo.** O lançamento é por vila, com o que estiver pronto | não cortar não significa tudo pronto em dezembro; significa ordenar para que o inacabado não impeça abrir a primeira vila | — |
+| **D48** | vigente | 2026-08-14 | **A vila é a sala; Manaus não é.** O nível municipal é alcance de post, eventos, vitrine e guia de chegada — nunca um feed (§6) | a vila tem gerador de conteúdo — circunstância física compartilhada. Manaus só tem laço institucional, que produz referência, e feed é o pior contêiner para referência: reproduziria dentro do produto o defeito do grupo de WhatsApp da §1.1 | se os pedidos com alcance ampliado forem muitos **e** receberem resposta, o nível largo tem demanda conversacional e a sala se justifica. Medir na primeira vila |
 
 **Superado pela D09:** a decisão D9 da `2026-08-05-comunidade-design.md` (co-membro vê
 perfil oculto) perdeu objeto. O aviso de divulgação na entrada continua valendo para o nome.
@@ -622,7 +665,7 @@ não vai ser usado.
 | **C** | Devolver a fala | derrubar as CHECK de vocabulário; ajustar os pgTAP que afirmam a rejeição; aviso de PII na UI | pequena |
 | **D1** | Infraestrutura | Resend com domínio e DKIM; Upstash com os quatro limites e o circuit breaker; pg_cron; `outbox` com worker; Sentry | média, **zero tela** |
 | **D2** | A porta | gate pelo estado real; `pending` com produtor; upload de documento com TTL; recurso de rejeição; convite familiar amarrado ao e-mail; consentimento e código de conduta versionados; validação de CPF; waitlist com cidade | grande |
-| **E** | A vila | ligar a camada de comunidade que já está no banco; fila de aprovação em lote; convite de membro com escopo; perfil de outro membro; afiliação declarada | grande |
+| **E** | A vila | ligar a camada de comunidade que já está no banco; **a home passa a ser o feed da vila e o municipal deixa de ser sala (D48)**; seletor de audiência no compositor; guia de chegada; fila de aprovação em lote; convite de membro com escopo; perfil de outro membro; afiliação declarada | grande |
 | **F** | O laço semanal | resposta de indicação com detalhe e controles do autor; escopo explícito e FK do `group_id`; salvar com destino; RSVP completo; convite de evento com fan-out; encontro recorrente | média-grande |
 | **G** | Vitrine | ficha com identidade, catálogo e portfólio; conta e dashboard de prestador; conversa membro↔prestador com os P0 da DM corrigidos; Asaas com alcance pago; busca de prestador | grande |
 | **H** | Operação | denúncia unificada em todos os alvos; ocultação por tipo; suspensão com flag e RLS; retorno ao denunciante; admissões que decide; PostHog | média |
