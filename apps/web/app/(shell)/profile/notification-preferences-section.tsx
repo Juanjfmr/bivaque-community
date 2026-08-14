@@ -8,17 +8,13 @@ import {
 } from "./notification-preferences-actions"
 
 type NotificationPrefs = {
-  messages: boolean
   comments: boolean
   events: boolean
-  mentions: boolean
 }
 
 const DEFAULT_PREFS: NotificationPrefs = {
-  messages: true,
   comments: true,
   events: true,
-  mentions: true,
 }
 
 export default function NotificationPreferencesSection() {
@@ -53,13 +49,6 @@ export default function NotificationPreferencesSection() {
 
       <form action={updateNotificationPreferencesAction} className="mt-3 flex flex-col gap-2">
         <Checkbox
-          name="messages"
-          isSelected={prefs.messages}
-          onChange={(v) => setPrefs((prev) => ({ ...prev, messages: v }))}
-        >
-          Mensagens diretas
-        </Checkbox>
-        <Checkbox
           name="comments"
           isSelected={prefs.comments}
           onChange={(v) => setPrefs((prev) => ({ ...prev, comments: v }))}
@@ -72,13 +61,6 @@ export default function NotificationPreferencesSection() {
           onChange={(v) => setPrefs((prev) => ({ ...prev, events: v }))}
         >
           Eventos
-        </Checkbox>
-        <Checkbox
-          name="mentions"
-          isSelected={prefs.mentions}
-          onChange={(v) => setPrefs((prev) => ({ ...prev, mentions: v }))}
-        >
-          Menções
         </Checkbox>
         <Button type="submit" size="sm" variant="primary" className="mt-1 self-start">
           Salvar

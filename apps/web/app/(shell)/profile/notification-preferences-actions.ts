@@ -6,10 +6,8 @@ import { cookies } from "next/headers"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 type NotificationPrefs = {
-  messages: boolean
   comments: boolean
   events: boolean
-  mentions: boolean
 }
 
 async function readSessionUserId(): Promise<string | null> {
@@ -40,7 +38,7 @@ export async function getNotificationPreferencesAction(): Promise<NotificationPr
   const supabase = createServiceClient()
   const { data } = await supabase
     .from("notification_preferences")
-    .select("messages, comments, events, mentions")
+    .select("comments, events")
     .eq("user_id", userId)
     .maybeSingle()
 
@@ -52,10 +50,8 @@ export async function updateNotificationPreferencesAction(formData: FormData) {
   if (!userId) throw new Error("não autenticado")
 
   const prefs: NotificationPrefs = {
-    messages: formData.get("messages") === "on",
     comments: formData.get("comments") === "on",
     events: formData.get("events") === "on",
-    mentions: formData.get("mentions") === "on",
   }
 
   const supabase = createServiceClient()
