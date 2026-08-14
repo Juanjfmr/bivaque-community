@@ -1,8 +1,8 @@
 "use client"
 
 import { brandTokens } from "@bivaque/tokens"
-import { Button, Checkbox, Input, Separator } from "@heroui/react"
-import { Eye, EyeOff } from "lucide-react"
+import { Button, Input, Separator } from "@heroui/react"
+
 import { useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
@@ -21,7 +21,6 @@ interface BivaqueSignInProps {
   testimonials?: BivaqueTestimonial[]
   onMagicLinkSignIn?: (email: string) => Promise<void> | void
   onGoogleSignIn?: () => Promise<void> | void
-  onResetPassword?: () => void
 }
 
 function GoogleIcon() {
@@ -152,9 +151,7 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
   testimonials,
   onMagicLinkSignIn,
   onGoogleSignIn,
-  onResetPassword,
 }) => {
-  const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -249,51 +246,6 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
                 </GlassInputWrapper>
               </div>
 
-              {showPassword !== undefined && (
-                <div className="motion-card-enter [animation-delay:200ms]">
-                  <label
-                    htmlFor="bivaque-signin-password"
-                    className="block text-sm font-medium text-[var(--muted)]"
-                  >
-                    Senha
-                  </label>
-                  <GlassInputWrapper>
-                    <div className="relative">
-                      <Input
-                        id="bivaque-signin-password"
-                        type={showPassword ? "text" : "password"}
-                        aria-label="Senha"
-                        placeholder="Sua senha"
-                        className="bg-transparent shadow-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                        className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center pr-3 text-[var(--muted)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:text-[var(--foreground)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 rounded-r-2xl"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-5 w-5" />
-                        ) : (
-                          <Eye className="h-5 w-5" />
-                        )}
-                      </button>
-                    </div>
-                  </GlassInputWrapper>
-                </div>
-              )}
-
-              <div className="motion-card-enter [animation-delay:240ms] flex items-center justify-between text-sm">
-                <Checkbox name="rememberMe">Manter conectado</Checkbox>
-                <button
-                  type="button"
-                  onClick={onResetPassword}
-                  className="min-h-11 text-[var(--accent)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:underline"
-                >
-                  Esqueci minha senha
-                </button>
-              </div>
-
               <Button
                 type="submit"
                 variant="primary"
@@ -302,6 +254,9 @@ export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
               >
                 {loading ? "Enviando…" : "Enviar link mágico"}
               </Button>
+              <p className="motion-card-enter [animation-delay:300ms] text-center text-xs text-[var(--muted)]">
+                Sua sessão dura 400 dias.
+              </p>
             </form>
 
             <div className="motion-card-enter [animation-delay:320ms] relative flex items-center justify-center">
