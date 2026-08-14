@@ -72,3 +72,5 @@ export function detectCpf(text: string): boolean {
 export function detectCep(text: string): boolean {
   return /\b\d{5}-\d{3}\b/.test(text)
 }
+
+export * from "./rate-limit"
