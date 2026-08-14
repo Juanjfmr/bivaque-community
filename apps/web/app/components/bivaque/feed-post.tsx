@@ -2,15 +2,7 @@
 
 import { detectCep, detectCpf } from "@bivaque/domain"
 import { Button, Dropdown, Input, Modal, TextArea, useOverlayState } from "@heroui/react"
-import {
-  BadgeCheck,
-  ExternalLink,
-  Heart,
-  Link2,
-  MessageCircle,
-  MoreHorizontal,
-  Share2,
-} from "lucide-react"
+import { ExternalLink, Heart, Link2, MessageCircle, MoreHorizontal, Share2 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -253,11 +245,6 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
                 <span className="text-sm font-semibold truncate">
                   {post.display_name ?? "Membro"}
                 </span>
-                <BadgeCheck
-                  size={16}
-                  className="shrink-0 text-[var(--accent)]"
-                  aria-label="Membro verificado"
-                />
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted">
                 <span>{POST_TYPE_LABELS[post.post_type] ?? post.post_type}</span>
