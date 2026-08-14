@@ -10,7 +10,6 @@ import {
   POST_CONTENT_MAX_LENGTH,
   POST_TYPES,
   PRIVACY_VISIBILITIES,
-  PROHIBITED_CONTENT_PATTERN,
   RECOMMENDATION_CATEGORIES,
 } from "@bivaque/domain"
 import { z } from "zod"
@@ -88,25 +87,9 @@ export type PostType = z.infer<typeof PostTypeSchema>
 export const FeedOrderSchema = z.enum(FEED_ORDERS)
 export type FeedOrder = z.infer<typeof FeedOrderSchema>
 
-export const PostContentSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(POST_CONTENT_MAX_LENGTH)
-  .refine((v) => !PROHIBITED_CONTENT_PATTERN.test(v), {
-    message:
-      "content must not contain prohibited terms (anonymous, video, marketplace, AI, verification labels, OM, rank, address, CPF)",
-  })
+export const PostContentSchema = z.string().trim().min(1).max(POST_CONTENT_MAX_LENGTH)
 
-export const CommentContentSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(COMMENT_CONTENT_MAX_LENGTH)
-  .refine((v) => !PROHIBITED_CONTENT_PATTERN.test(v), {
-    message:
-      "content must not contain prohibited terms (anonymous, video, marketplace, AI, verification labels, OM, rank, address, CPF)",
-  })
+export const CommentContentSchema = z.string().trim().min(1).max(COMMENT_CONTENT_MAX_LENGTH)
 
 export const CreatePostSchema = z
   .strictObject({
@@ -148,32 +131,12 @@ export const CreateCommentSchema = z
 
 export type CreateComment = z.infer<typeof CreateCommentSchema>
 
-const commercialTitlePattern =
-  /\b(pag[ao]|pagamento|compr[aeo]|venda|an[uú]ncio|patroc[ií]n(?:io)?|pre[cç]o|promo[cç][aã]o|desconto|oferta|contrat|plano|assinatura|mensalidade)\b/i
-
-const commercialBodyPattern =
-  /\b(pag[ao]|pagamento|compr[aeo]|venda|an[uú]ncio|patroc[ií]n(?:io)?|pre[cç]o|promo[cç][aã]o|desconto|oferta|contrat|plano|assinatura|mensalidade|whatsapp|telefone|celular|ligue|contato comercial)\b/i
-
 export const RecommendationCategorySchema = z.enum(RECOMMENDATION_CATEGORIES)
 export type RecommendationCategory = z.infer<typeof RecommendationCategorySchema>
 
-export const RecommendationTitleSchema = z
-  .string()
-  .trim()
-  .min(3)
-  .max(200)
-  .refine((v) => !commercialTitlePattern.test(v), {
-    message: "commercial terms in title are prohibited",
-  })
+export const RecommendationTitleSchema = z.string().trim().min(3).max(200)
 
-export const RecommendationBodySchema = z
-  .string()
-  .trim()
-  .min(10)
-  .max(2000)
-  .refine((v) => !commercialBodyPattern.test(v), {
-    message: "commercial terms in body are prohibited",
-  })
+export const RecommendationBodySchema = z.string().trim().min(10).max(2000)
 
 export const RecommendationRejectProviderSchema = z
   .strictObject({

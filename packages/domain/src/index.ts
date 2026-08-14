@@ -39,9 +39,6 @@ export type FeedOrder = (typeof FEED_ORDERS)[number]
 export const POST_CONTENT_MAX_LENGTH = 2000
 export const COMMENT_CONTENT_MAX_LENGTH = 1000
 
-export const PROHIBITED_CONTENT_PATTERN =
-  /(an[ôo]nimo|v[íi]deo|marketplace|comercial|venda|compr[oa]|IA gerad[oa]|gerad[oa] por IA|intelig[êe]ncia artificial|verificado publicamente|selo de verifica[çc][ãa]o|organiza[çc][ãa]o militar|\bOM\b|patente|posto militar|gradua[çc][ãa]o militar|endere[çc]o residencial|\bCEP\b|\bCPF\b)/i
-
 // ── PII pattern detection (D21: warn on real patterns, never on words) ─────
 
 const CPF_CANDIDATE_PATTERN = /\b(\d{3})[.\s-]?(\d{3})[.\s-]?(\d{3})[-.\s]?(\d{2})\b/g
