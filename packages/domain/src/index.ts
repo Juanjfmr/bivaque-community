@@ -73,4 +73,5 @@ export function detectCep(text: string): boolean {
   return /\b\d{5}-\d{3}\b/.test(text)
 }
 
+export * from "./pii-scrub"
 export * from "./rate-limit"
