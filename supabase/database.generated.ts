@@ -605,6 +605,45 @@ export type Database = {
         }
         Relationships: []
       }
+      outbox: {
+        Row: {
+          attempts: number
+          channel: Database["public"]["Enums"]["outbox_channel"]
+          created_at: string
+          id: string
+          last_error: string | null
+          payload: Json
+          recipient: string
+          status: Database["public"]["Enums"]["outbox_status"]
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          channel: Database["public"]["Enums"]["outbox_channel"]
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          recipient: string
+          status?: Database["public"]["Enums"]["outbox_status"]
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          channel?: Database["public"]["Enums"]["outbox_channel"]
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          recipient?: string
+          status?: Database["public"]["Enums"]["outbox_status"]
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       post_reactions: {
         Row: {
           created_at: string
@@ -1157,6 +1196,8 @@ export type Database = {
         | "event_change"
         | "direct_message"
         | "report_resolved"
+      outbox_channel: "email" | "whatsapp"
+      outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
       profile_visibility: "locality_members"
       recommendation_category:
@@ -1325,6 +1366,8 @@ export const Constants = {
         "direct_message",
         "report_resolved",
       ],
+      outbox_channel: ["email", "whatsapp"],
+      outbox_status: ["pending", "sent", "failed", "skipped"],
       post_type: ["text", "photo", "link", "poll"],
       profile_visibility: ["locality_members"],
       recommendation_category: [
