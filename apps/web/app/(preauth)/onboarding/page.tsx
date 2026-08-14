@@ -4,6 +4,7 @@ import { Button, Form, Input, Spinner } from "@heroui/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
+import { purgeCpfResidue } from "../../../lib/onboarding/storage"
 import { verificationErrorMessage } from "../../../lib/portal/verification-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { SUPPORT_EMAIL, SUPPORT_SLA_HOURS } from "../../../lib/support"
@@ -90,10 +91,9 @@ function OnboardingFlow() {
   const inviteToken = searchParams.get("invite")
 
   useEffect(() => {
-    const savedCpf = sessionStorage.getItem("onboarding:cpf")
-    if (savedCpf) {
-      setCpf(savedCpf)
-    }
+    // A versão anterior do fluxo gravava o CPF aqui; quem já passou por ela
+    // pode ter a chave no navegador. Removemos no boot, sem ler de volta.
+    purgeCpfResidue(sessionStorage)
 
     const boot = async () => {
       const {
@@ -157,7 +157,6 @@ function OnboardingFlow() {
         description: "Vamos levar você de volta ao login.",
         variant: "warning",
       })
-      sessionStorage.setItem("onboarding:cpf", cpf)
       router.push("/login?return=/onboarding")
       return
     }
@@ -194,7 +193,6 @@ function OnboardingFlow() {
         } else if (outcome["status"] === "pending") {
           router.push("/onboarding/status?state=pending")
         } else if (outcome["status"] === "temporary_error") {
-          sessionStorage.setItem("onboarding:cpf", cpf)
           const errorCode = typeof outcome["errorCode"] === "string" ? outcome["errorCode"] : ""
           setError(verificationErrorMessage(errorCode, SUPPORT_EMAIL))
         }
