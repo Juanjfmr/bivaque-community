@@ -2,7 +2,7 @@
 
 import { brandTokens } from "@bivaque/tokens"
 import { Button, Kbd, Tooltip } from "@heroui/react"
-import { Bell, ChevronDown, ChevronsLeft, MapPin, PanelLeft } from "lucide-react"
+import { Bell, ChevronsLeft, MapPin, PanelLeft } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { PILOT_LOCALITY_ID } from "../../../lib/locality"
@@ -89,7 +89,6 @@ export function AppShell({ children }: AppShellProperties) {
             <div className="flex items-center gap-1.5 min-h-11 px-2 rounded-lg">
               <MapPin size={16} className="text-[var(--accent)]" aria-hidden="true" />
               <span className="text-sm font-medium hidden sm:inline">Manaus, AM</span>
-              <ChevronDown size={14} className="text-muted" aria-hidden="true" />
             </div>
           </div>
 
