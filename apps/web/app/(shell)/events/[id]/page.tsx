@@ -245,13 +245,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             <p className="text-sm text-muted">Ninguém confirmou presença ainda.</p>
           )}
         </section>
-
-        <section aria-labelledby="comments-heading">
-          <h2 id="comments-heading" className="mb-2 text-sm font-semibold tracking-tight">
-            Comentários
-          </h2>
-          <p className="text-sm text-muted">Em breve.</p>
-        </section>
       </div>
     </div>
   )

@@ -1,16 +1,6 @@
 "use client"
 
-import {
-  Button,
-  Chip,
-  Form,
-  Input,
-  ProgressBar,
-  Radio,
-  RadioGroup,
-  SearchField,
-  TextArea,
-} from "@heroui/react"
+import { Button, Chip, Form, Input, Radio, RadioGroup, SearchField, TextArea } from "@heroui/react"
 import type { SVGProps } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -94,13 +84,6 @@ function OnboardingBlock({ groupName, onDismiss }: { groupName: string; onDismis
           <h4 className="mt-2 text-sm font-semibold text-foreground">Compartilhe</h4>
           <p className="mt-0.5 text-xs text-muted">Publique sua primeira mensagem.</p>
         </div>
-      </div>
-
-      <div className="mt-4 flex items-center gap-3">
-        <ProgressBar value={0} maxValue={3} color="warning" className="flex-1" />
-        <span className="shrink-0 text-xs font-medium text-amber-700">
-          0 de 3 passos conclu&iacute;dos
-        </span>
       </div>
     </div>
   )
