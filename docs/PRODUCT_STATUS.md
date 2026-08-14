@@ -23,6 +23,12 @@ na auditoria de 2026-08-10 e não reconferido linha a linha. Reconfirmar `[A]` a
 ação, feedback, acompanhamento e o sad path principal. Capacidade em migration não fecha
 linha. Foi ignorar isto que produziu o MAP anterior.
 
+**"Onda A (código feito)"** é um terceiro estado, e existe porque o segundo erro é tão fácil
+quanto o primeiro. O código foi escrito e revisado, mas a suíte que prova o comportamento
+ainda não rodou — no caso da onda A, os dois specs de E2E de negação foram escritos,
+commitados e nunca executados, porque o banco está sem seed. Não é "pronto" e não é
+"parado": é pronto e não verificado, e a distinção some se não estiver escrita.
+
 ---
 
 ## 1. Entrada e admissão
@@ -30,7 +36,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
 | Login | E-mail com magic link e Google, sem affordances de senha | igual | — | `login/components/bivaque-sign-in.tsx` `[V]` | B |
-| Callback | `next` vem da query string e vai para `new URL` sem allowlist | só caminho relativo validado | destino externo aceito após autenticar | `auth/callback/route.ts:14-16,51-53` `[A]` | **A** |
+| Callback | `next` validado como caminho interno antes do redirect | igual | — falta só o E2E, que nunca rodou | `auth/callback/route.ts`, `lib/security/sanitize-next.ts` `[V]` | A (código feito) |
 | Falha de callback | JSON 400/401 com mensagem do provedor | tela humana com recomeço | sad path principal termina fora do produto | `auth/callback/route.ts:18-26,45-49` `[A]` | D |
 | Gate do shell | middleware checa sessão + cookie de consentimento | derivar do estado real de verificação | `pending`, `rejected` e `temporary_error` entram no shell e veem compositor e "Publicar" | `middleware.ts:79-103`, `(shell)/layout.tsx:9-14` `[A]` | D |
 | Verificação de CPF | caminho único: Portal, síncrono, aborta em 10s | dual-path: Portal + upload auditado | sem máscara, sem validação de dígito; string vazia vira `rejected` | `onboarding/page.tsx:348-365`, `api/onboarding/route.ts:57-64`, `lib/portal/classify.ts:115-121` `[A]` | D |
@@ -58,7 +64,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
 | Visibilidade | estado único `locality_members`; escolha removida da UI | estado único | — | `20260814052814_remove_hidden_visibility.sql` `[V]` | B |
-| Endpoint de avatar | `service_role` serve a foto de qualquer `userId` a qualquer autenticado | checar localidade e autorização | vaza foto entre localidades e para não-membros | `api/avatar/[userId]/route.ts:11-38,44-52` `[A]` | **A** |
+| Endpoint de avatar | lê o perfil do alvo com o cliente autenticado e deixa a RLS de `profiles` decidir; erro vira 500 e ausência vira 404; `service_role` só assina o arquivo | igual | — falta só o E2E, que nunca rodou | `api/avatar/[userId]/route.ts` `[V]` | A (código feito) |
 | Avatar no cabeçalho | cabeçalho renderiza só a inicial; a foto aparece na seção e no feed | uma fonte só | três representações do mesmo usuário | `profile/page.tsx:245-272`, `profile/avatar-section.tsx:14-20` `[A]` | E |
 | Selo "Membro verificado" | exibido publicamente | removido | proibido pelo contrato, e redundante numa rede onde todos são verificados | `[A]` | **A** |
 | Perfil de outro membro | **não existe**; `/profile` sempre lê a sessão | existe, com histórico | a copy de privacidade pressupõe uma tela que não há | `profile/page.tsx:117-133` `[A]` | E |
@@ -77,7 +83,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 | Seletor de audiência | **não existe** | escolher vila ou Manaus antes de publicar. É o mecanismo que substitui o feed municipal e satisfaz a regra 2 da §12 | sem ele o membro não sabe para quem publica, e o nível Manaus não tem como existir | — | E |
 | Guia de chegada | **não existe** | referência curada e buscável de Manaus: colégio, hospital, transportadora, despachante | é o que o feed municipal não consegue ser — permanente em vez de rolante | — | E |
 | Composer — foto e enquete | botões Foto/Link/Enquete abrem o compositor com o tipo | upload real de foto | "Foto" pede caminho de texto, não upload de arquivo; enquete e link fecham o ciclo | `feed-composer.tsx:58-86`, `feed-post.tsx:653-661` `[V]` | F |
-| Detalhe de grupo | lê grupo, memberships, lista de membros e feed com `service_role`; a membership só decide estado de UI | negar antes de montar a UI | quem não é do grupo vê nome, visibilidade e **dez nomes de membros** por deep link. O feed provavelmente vem vazio, porque `feed_group` resolve `auth.uid()`, que é nulo sob `service_role` — confirmar com teste | `groups/[id]/page.tsx:113-145` `[V]` | **A** |
+| Detalhe de grupo | leitura inteira pelo cliente autenticado, com `error` lido em cada consulta e `notFound()` na negação; `service_role` saiu do caminho de renderização | igual | — falta só o E2E, que nunca rodou. **As Server Actions no topo do arquivo continuam com `service_role`** — ver a linha própria na §4 | `groups/[id]/page.tsx` `[V]` | A (código feito) |
 | Gestão de grupo | entrar, sair, aprovar, transferir posse | fechar cancelamento, rejeição, remoção, exclusão | ciclo do administrador incompleto | `groups/page.tsx:441-496` `[A]` | F |
 | **Server Actions de grupo e evento** | seis ações — entrar, sair e transferir posse, em grupo e em evento — fazem `createServiceClient()` e depois `supabase.auth.getUser()` **no mesmo cliente `service_role`** | ler o usuário do cliente autenticado, e só então agir | **não verificado, e há dois desfechos possíveis.** O cliente `service_role` é criado sem cookie e com `persistSession: false`, então `getUser()` provavelmente devolve nulo e as seis ações lançam "unauthenticated" sempre — entrar em grupo estaria quebrado hoje. Se em vez disso ele resolver algum usuário, é escalada de privilégio: `transfer_group_ownership` chamada com `service_role` a partir de formulário. **Medir antes de corrigir** — o teste é escrever um caso que exercite uma das ações com sessão válida e observar o que acontece | `groups/[id]/page.tsx:32,57,78`; `events/[id]/page.tsx:30,49,66` `[V]` estrutura, `[A]` comportamento | F |
 | Busca / diretório | **não existe** | filtro por força, situação, OM e turma | é o que o WhatsApp não faz, e não existe | — | E |
@@ -86,7 +92,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
-| Detalhe de evento | lê com `service_role` sem reaplicar policy | negar antes de montar | mesmo defeito do grupo | `events/[id]/page.tsx` `[A]` | **A** |
+| Detalhe de evento | leitura pelo cliente autenticado, com `notFound()` na negação | igual | — falta só o E2E, que nunca rodou | `events/[id]/page.tsx` `[V]` | A (código feito) |
 | RSVP | `interested` e `going` | incluir "não vou"; avisar o organizador na mudança | organizador não sabe quem desistiu | `events/[id]/page.tsx:161-194` `[A]` | F |
 | Convite de evento | migration, RLS e UI de aceitar/recusar existem | envio pelo organizador + notificação | não há caminho de envio; o comentário no código dizendo que o mecanismo não existe está desatualizado | `20260806171204_event_invites.sql`, `events/event-invites-section.tsx:26-120`, comentário obsoleto em `events/page.tsx:334` `[A]` | F |
 | Encontro recorrente | **não existe** | padrão de primeira classe | é a tese central do produto | — | F |
