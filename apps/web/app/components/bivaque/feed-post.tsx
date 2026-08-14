@@ -161,14 +161,6 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
     const trimmed = commentText.trim()
     if (!trimmed) return
 
-    const prohibitedPattern =
-      /(an[ôo]nimo|v[íi]deo|marketplace|comercial|venda|compr[oa]|IA gerad[oa]|gerad[oa] por IA|intelig[êe]ncia artificial|verificado publicamente|selo de verifica[çc][ãa]o|organiza[çc][ãa]o militar|\bOM\b|patente|posto militar|gradua[çc][ãa]o militar|endere[çc]o residencial|\bCEP\b|\bCPF\b)/i
-
-    if (prohibitedPattern.test(trimmed)) {
-      setCommentError("Comentário contém termos não permitidos")
-      return
-    }
-
     setSubmitting(true)
     setCommentError("")
 
@@ -517,14 +509,6 @@ export function CreatePostModal({
 
   const handleSubmit = useCallback(async () => {
     setError("")
-
-    const prohibitedPattern =
-      /(an[ôo]nimo|v[íi]deo|marketplace|comercial|venda|compr[oa]|IA gerad[oa]|gerad[oa] por IA|intelig[êe]ncia artificial|verificado publicamente|selo de verifica[çc][ãa]o|organiza[çc][ãa]o militar|\bOM\b|patente|posto militar|gradua[çc][ãa]o militar|endere[çc]o residencial|\bCEP\b|\bCPF\b)/i
-
-    if (prohibitedPattern.test(content.trim())) {
-      setError("Conteúdo contém termos não permitidos")
-      return
-    }
 
     if (postType === "photo" && !photoPath.trim()) {
       setError("Foto requer o caminho da imagem")
