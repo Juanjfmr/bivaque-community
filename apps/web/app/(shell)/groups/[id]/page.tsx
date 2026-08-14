@@ -10,8 +10,11 @@ import { FeedPost } from "../../../components/bivaque/feed-post"
 type GroupRow = Database["public"]["Tables"]["groups"]["Row"]
 type MembershipRow = Database["public"]["Tables"]["group_memberships"]["Row"]
 type FeedGroupRow = Database["public"]["Functions"]["feed_group"]["Returns"][number]
-type MemberRow = MembershipRow & {
-  profiles: { display_name: string } | null
+type MemberListRow = {
+  user_id: string
+  role: MembershipRow["role"]
+  status: MembershipRow["status"]
+  joined_at: string
 }
 
 // ── Server actions (writes) ──────────────────────────────────────────────────
@@ -148,13 +151,35 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
 
   const { data: membersData, error: membersError } = await authClient
     .from("group_memberships")
-    .select("user_id, role, status, joined_at, profiles:profiles!inner(display_name)")
+    .select("user_id, role, status, joined_at")
     .eq("group_id", group.id)
     .eq("status", "approved")
     .limit(10)
 
   if (membersError) throw new Error(`failed to read members: ${membersError.message}`)
-  const members = (membersData as unknown as MemberRow[] | null) ?? []
+  const members = (membersData as unknown as MemberListRow[] | null) ?? []
+
+  // PostgREST cannot embed profiles here: there is no FK between
+  // group_memberships and profiles (profiles has a composite key), so the
+  // names are read in a second, equally RLS-gated query and joined in memory.
+  // A profile the viewer may not see simply has no name — it renders as the
+  // "Membro" fallback, never as a leak.
+  const memberIds = members.map((m) => m.user_id)
+  let memberNames = new Map<string, string>()
+  if (memberIds.length > 0) {
+    const { data: namesData, error: namesError } = await authClient
+      .from("profiles")
+      .select("user_id, display_name")
+      .in("user_id", memberIds)
+
+    if (namesError) throw new Error(`failed to read member names: ${namesError.message}`)
+    memberNames = new Map(
+      ((namesData as { user_id: string; display_name: string }[] | null) ?? []).map((p) => [
+        p.user_id,
+        p.display_name,
+      ]),
+    )
+  }
 
   const { data: feedData, error: feedError } = await authClient.rpc("feed_group", {
     p_group_id: group.id,
@@ -216,7 +241,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             <ul className="space-y-1">
               {members.map((m) => (
                 <li key={m.user_id} className="text-sm text-muted">
-                  {m.profiles?.display_name ?? "Membro"}
+                  {memberNames.get(m.user_id) ?? "Membro"}
                   {m.role !== "member" && (
                     <span className="ml-1 text-xs uppercase tracking-wide text-muted">
                       ({m.role})
@@ -242,7 +267,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
                     .filter((m) => m.user_id !== user.id)
                     .map((m) => (
                       <option key={m.user_id} value={m.user_id}>
-                        {m.profiles?.display_name ?? "Membro"}
+                        {memberNames.get(m.user_id) ?? "Membro"}
                       </option>
                     ))}
                 </select>

@@ -8,8 +8,11 @@ import { createServerClient as createServiceClient } from "../../../../lib/supab
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"]
 type EventRsvpRow = Database["public"]["Tables"]["event_rsvps"]["Row"]
-type AttendeeRow = EventRsvpRow & {
-  profiles: { display_name: string } | null
+type AttendeeListRow = {
+  event_id: string
+  user_id: string
+  status: EventRsvpRow["status"]
+  created_at: string
 }
 
 // ── Server actions (writes) ──────────────────────────────────────────────────
@@ -139,13 +142,33 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
   const { data: attendeesData, error: attendeesError } = await authClient
     .from("event_rsvps")
-    .select("event_id, user_id, status, created_at, profiles:profiles!inner(display_name)")
+    .select("event_id, user_id, status, created_at")
     .eq("event_id", event.id)
     .eq("status", "going")
     .limit(20)
 
   if (attendeesError) throw new Error(`failed to read attendees: ${attendeesError.message}`)
-  const attendees = (attendeesData as unknown as AttendeeRow[] | null) ?? []
+  const attendees = (attendeesData as unknown as AttendeeListRow[] | null) ?? []
+
+  // Same schema constraint as the group page: no FK between event_rsvps and
+  // profiles, so PostgREST cannot embed the names; a second RLS-gated query
+  // joins them in memory. Unreadable profiles simply have no name.
+  const attendeeIds = attendees.map((a) => a.user_id)
+  let attendeeNames = new Map<string, string>()
+  if (attendeeIds.length > 0) {
+    const { data: namesData, error: namesError } = await authClient
+      .from("profiles")
+      .select("user_id, display_name")
+      .in("user_id", attendeeIds)
+
+    if (namesError) throw new Error(`failed to read attendee names: ${namesError.message}`)
+    attendeeNames = new Map(
+      ((namesData as { user_id: string; display_name: string }[] | null) ?? []).map((p) => [
+        p.user_id,
+        p.display_name,
+      ]),
+    )
+  }
 
   const isOrganizer = event.organizer_id === user.id
   const isCancelled = event.status === "cancelled"
@@ -237,7 +260,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             <ul className="space-y-1">
               {attendees.map((a) => (
                 <li key={a.user_id} className="text-sm text-muted">
-                  {a.profiles?.display_name ?? "Membro"}
+                  {attendeeNames.get(a.user_id) ?? "Membro"}
                 </li>
               ))}
             </ul>

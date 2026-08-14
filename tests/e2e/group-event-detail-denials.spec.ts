@@ -144,11 +144,17 @@ test.describe("group detail: RLS decides, not the page", () => {
     await expect(page.getByRole("heading", { name: "Membros" })).toHaveCount(0)
   })
 
-  test("authenticated outsider without locality membership gets 404", async ({ page }) => {
+  test("authenticated outsider without locality membership gets the not-found page", async ({
+    page,
+  }) => {
     await signInAs(page, OUTSIDER_EMAIL)
-    const response = await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
+    await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
 
-    expect(response?.status()).toBe(404)
+    // Next streams the shell before the page segment resolves, so the HTTP
+    // status commits as 200 before notFound() fires. The security property
+    // is the UI: no group content, only the not-found screen.
+    await expect(page.getByText("This page could not be found.")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toHaveCount(0)
   })
 
   test("public group opens for any locality member", async ({ page }) => {
@@ -169,10 +175,15 @@ test.describe("event detail: RLS decides, not the page", () => {
     await expect(page.getByRole("heading", { name: "Torneio amistoso de futebol" })).toBeVisible()
   })
 
-  test("authenticated outsider without locality membership gets 404", async ({ page }) => {
+  test("authenticated outsider without locality membership gets the not-found page", async ({
+    page,
+  }) => {
     await signInAs(page, OUTSIDER_EMAIL)
-    const response = await page.goto(`/events/${UPCOMING_EVENT_ID}`)
+    await page.goto(`/events/${UPCOMING_EVENT_ID}`)
 
-    expect(response?.status()).toBe(404)
+    // Same streaming constraint as the group case: assert the UI, not the
+    // status. No event content may render for someone who cannot access it.
+    await expect(page.getByText("This page could not be found.")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Torneio amistoso de futebol" })).toHaveCount(0)
   })
 })
