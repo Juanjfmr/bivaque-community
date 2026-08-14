@@ -6,7 +6,7 @@
 > Substitui [`docs/journeys/MAP.md`](journeys/MAP.md), que misturava estado e intenção e,
 > por isso, marcava como "Corrigida" linha cujo ciclo de usuário não fechava.
 >
-> Última reconciliação: **2026-08-11**. Atualizar ao fim de cada onda.
+> Última reconciliação: **2026-08-14**. Atualizar ao fim de cada onda.
 
 ## Como ler
 
@@ -29,7 +29,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
-| Login | E-mail com magic link e Google. Não há campo de senha | igual | "Manter conectado" e "Esqueci minha senha" são botões mortos | `login/components/bivaque-sign-in.tsx:229-259` `[V]` | B |
+| Login | E-mail com magic link e Google, sem affordances de senha | igual | — | `login/components/bivaque-sign-in.tsx` `[V]` | B |
 | Callback | `next` vem da query string e vai para `new URL` sem allowlist | só caminho relativo validado | destino externo aceito após autenticar | `auth/callback/route.ts:14-16,51-53` `[A]` | **A** |
 | Falha de callback | JSON 400/401 com mensagem do provedor | tela humana com recomeço | sad path principal termina fora do produto | `auth/callback/route.ts:18-26,45-49` `[A]` | D |
 | Gate do shell | middleware checa sessão + cookie de consentimento | derivar do estado real de verificação | `pending`, `rejected` e `temporary_error` entram no shell e veem compositor e "Publicar" | `middleware.ts:79-103`, `(shell)/layout.tsx:9-14` `[A]` | D |
@@ -57,7 +57,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
-| Visibilidade | enum com `locality_members` e `hidden`; UI oferece os dois | estado único | **pré-condição:** verificar se há perfil não-seed com `hidden` antes da migration; nunca virar a chave em silêncio | `20260802000100_locality_profile_foundation.sql:8`, `profile/page.tsx:193,372,384` `[V]` | B |
+| Visibilidade | estado único `locality_members`; escolha removida da UI | estado único | — | `20260814052814_remove_hidden_visibility.sql` `[V]` | B |
 | Endpoint de avatar | `service_role` serve a foto de qualquer `userId` a qualquer autenticado | checar localidade e autorização | vaza foto entre localidades e para não-membros | `api/avatar/[userId]/route.ts:11-38,44-52` `[A]` | **A** |
 | Avatar no cabeçalho | cabeçalho renderiza só a inicial; a foto aparece na seção e no feed | uma fonte só | três representações do mesmo usuário | `profile/page.tsx:245-272`, `profile/avatar-section.tsx:14-20` `[A]` | E |
 | Selo "Membro verificado" | exibido publicamente | removido | proibido pelo contrato, e redundante numa rede onde todos são verificados | `[A]` | **A** |
@@ -76,7 +76,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 | Feed municipal | `feed_posts(PILOT_LOCALITY_ID)` é a home hoje | **deixa de ser sala** (D48): vira alcance de post. A home passa a ser o feed da vila | é o inverso do que existe — hoje o município é a home e a vila não existe na UI | `(shell)/community/page.tsx:55-58` `[V]` | E |
 | Seletor de audiência | **não existe** | escolher vila ou Manaus antes de publicar. É o mecanismo que substitui o feed municipal e satisfaz a regra 2 da §12 | sem ele o membro não sabe para quem publica, e o nível Manaus não tem como existir | — | E |
 | Guia de chegada | **não existe** | referência curada e buscável de Manaus: colégio, hospital, transportadora, despachante | é o que o feed municipal não consegue ser — permanente em vez de rolante | — | E |
-| Composer — foto e enquete | botões sem comportamento | removidos até funcionarem | affordance falsa | `[A]` | B |
+| Composer — foto e enquete | botões Foto/Link/Enquete abrem o compositor com o tipo | upload real de foto | "Foto" pede caminho de texto, não upload de arquivo; enquete e link fecham o ciclo | `feed-composer.tsx:58-86`, `feed-post.tsx:653-661` `[V]` | F |
 | Detalhe de grupo | lê grupo, memberships, lista de membros e feed com `service_role`; a membership só decide estado de UI | negar antes de montar a UI | quem não é do grupo vê nome, visibilidade e **dez nomes de membros** por deep link. O feed provavelmente vem vazio, porque `feed_group` resolve `auth.uid()`, que é nulo sob `service_role` — confirmar com teste | `groups/[id]/page.tsx:113-145` `[V]` | **A** |
 | Gestão de grupo | entrar, sair, aprovar, transferir posse | fechar cancelamento, rejeição, remoção, exclusão | ciclo do administrador incompleto | `groups/page.tsx:441-496` `[A]` | F |
 | **Server Actions de grupo e evento** | seis ações — entrar, sair e transferir posse, em grupo e em evento — fazem `createServiceClient()` e depois `supabase.auth.getUser()` **no mesmo cliente `service_role`** | ler o usuário do cliente autenticado, e só então agir | **não verificado, e há dois desfechos possíveis.** O cliente `service_role` é criado sem cookie e com `persistSession: false`, então `getUser()` provavelmente devolve nulo e as seis ações lançam "unauthenticated" sempre — entrar em grupo estaria quebrado hoje. Se em vez disso ele resolver algum usuário, é escalada de privilégio: `transfer_group_ownership` chamada com `service_role` a partir de formulário. **Medir antes de corrigir** — o teste é escrever um caso que exercite uma das ações com sessão válida e observar o que acontece | `groups/[id]/page.tsx:32,57,78`; `events/[id]/page.tsx:30,49,66` `[V]` estrutura, `[A]` comportamento | F |
@@ -119,7 +119,7 @@ linha. Foi ignorar isto que produziu o MAP anterior.
 | DM entre membros | superfície publicada e funcional no caminho feliz | **adiada** — a superfície fica, o acesso entre membros não abre | — | `messages/page.tsx` `[A]` | — |
 | Conversa membro ↔ prestador | **não existe** | contexto `provider` na máquina que já existe (D36) | exige corrigir antes: bloqueio contornável pelo bloqueador (P0), criação por ordem de UUID, contexto declarado não validado | `20260802001500:185-211`, `supabase/tests/dm-context-denials.sql:389-451` `[A]` | G |
 | Inbox | lista e marca como lida com cliente anônimo, sob RLS; cliques navegam | igual | **não há vazamento próprio aqui** — verificado em 2026-08-11. Os destinos `/groups/:id` e `/events/:id` é que leem com `service_role`, e se corrigem na onda A. O que resta é a notificação de aceite familiar, que abre o perfil do próprio titular | `notifications/page.tsx:121-144` `[V]` | E |
-| Preferências | quatro booleanos persistidos | só sobrevive canal com produtor | nenhum trigger lê `notification_preferences`; "menção" nem é tipo de notificação | `notification-preferences-actions.ts:36-47`, `20260802001400:70-232` `[V]` | B |
+| Preferências | comentário e evento consultam `notification_preferences`; DM e menção saíram da tela | só sobrevive canal com produtor | mensagens e menções seguem sem produtor, mas não são mais prometidas | `20260814053908_honour_notification_preferences.sql`, `notification-preferences-section.tsx` `[V]` | B |
 | E-mail transacional | **não existe** | resposta a pedido e lembrete de encontro | sem ele não há canal de retorno próprio | — | D |
 | Push e SMS | não existem | permanecem fora | — | — | — |
 
