@@ -8,6 +8,7 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
+import RecommendationRequests from "../../components/bivaque/recommendation-requests"
 import { Skeleton } from "../../components/bivaque/skeleton"
 
 // ── local types (matching migration shapes, no generated-types import needed) ──
@@ -127,12 +128,14 @@ export default function RecommendationsPage() {
 
   // request form
   const [requestCategory, setRequestCategory] = useState<RecommendationCategory | "">("")
+  const [requestScope, setRequestScope] = useState<"locality" | string>("locality")
   const [requestTitle, setRequestTitle] = useState("")
   const [requestDescription, setRequestDescription] = useState("")
   const [requestFeedback, setRequestFeedback] = useState("")
   const [requestError, setRequestError] = useState("")
   const [requestSubmitting, setRequestSubmitting] = useState(false)
   const [piiWarning, setPiiWarning] = useState(false)
+  const [myGroups, setMyGroups] = useState<GroupRow[]>([])
 
   // saved tab
   const [savedRequests, setSavedRequests] = useState<SavedRequestRow[]>([])
@@ -194,14 +197,17 @@ export default function RecommendationsPage() {
       // 4. my memberships (group IDs only)
       const { data: membershipsData, error: membershipsError } = await supabase
         .from("group_memberships")
-        .select("group_id")
+        .select("group_id, status")
         .eq("user_id", user.id)
 
       if (membershipsError) throw new Error(membershipsError.message)
 
       const myGroupIds = new Set(
-        (membershipsData as { group_id: string }[] | null)?.map((m) => m.group_id) ?? [],
+        (membershipsData as { group_id: string; status: string }[] | null)
+          ?.filter((membership) => membership.status === "approved")
+          .map((membership) => membership.group_id) ?? [],
       )
+      setMyGroups(allGroups.filter((group) => myGroupIds.has(group.id)))
 
       // 5. upcoming events in locality
       const { data: eventsData, error: eventsError } = await supabase
@@ -320,10 +326,11 @@ export default function RecommendationsPage() {
           return
         }
 
+        const scopeIsGroup = requestScope !== "locality"
         const { error: insertError } = await supabase.from("recommendation_requests").insert({
           author_id: user.id,
-          locality_id: locId,
-          group_id: null,
+          locality_id: scopeIsGroup ? null : locId,
+          group_id: scopeIsGroup ? requestScope : null,
           title: requestTitle.trim(),
           body: requestDescription.trim(),
           category: requestCategory,
@@ -333,6 +340,7 @@ export default function RecommendationsPage() {
 
         // Success
         setRequestCategory("")
+        setRequestScope("locality")
         setRequestTitle("")
         setRequestDescription("")
         setPiiWarning(false)
@@ -347,7 +355,7 @@ export default function RecommendationsPage() {
         setRequestSubmitting(false)
       }
     },
-    [supabase, requestCategory, requestTitle, requestDescription, piiWarning],
+    [supabase, requestCategory, requestScope, requestTitle, requestDescription, piiWarning],
   )
 
   // ── saved tab ──────────────────────────────────────────────────────────────
@@ -450,6 +458,7 @@ export default function RecommendationsPage() {
         <Tabs.List>
           <Tabs.Tab key="browse">Explorar</Tabs.Tab>
           <Tabs.Tab key="request">Pedir indicação</Tabs.Tab>
+          <Tabs.Tab key="requests">Pedidos</Tabs.Tab>
           <Tabs.Tab key="saved">Salvas</Tabs.Tab>
         </Tabs.List>
 
@@ -673,6 +682,36 @@ export default function RecommendationsPage() {
               </Select.Popover>
             </Select>
 
+            <Select
+              aria-label="Alcance"
+              selectedKey={requestScope}
+              onSelectionChange={(key) => {
+                if (typeof key === "string") {
+                  setRequestScope(key)
+                  setRequestError("")
+                }
+              }}
+              isRequired
+              className="max-w-xs"
+            >
+              <Select.Trigger>
+                <Select.Value>Escolha o alcance</Select.Value>
+                <Select.Indicator />
+              </Select.Trigger>
+              <Select.Popover>
+                <ListBox>
+                  <ListBox.Item key="locality" id="locality">
+                    Manaus
+                  </ListBox.Item>
+                  {myGroups.map((group) => (
+                    <ListBox.Item key={group.id} id={group.id}>
+                      {group.name}
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
+            </Select>
+
             <Input
               required
               aria-label="Título"
@@ -699,7 +738,8 @@ export default function RecommendationsPage() {
             />
 
             <p className="text-xs text-muted">
-              Sua indicação será visível apenas para membros da sua localidade ou grupo.
+              Sua indicação será visível apenas para o alcance escolhido: Manaus ou um grupo do qual
+              você participa.
             </p>
 
             {piiWarning ? (
@@ -734,6 +774,11 @@ export default function RecommendationsPage() {
               {requestSubmitting ? "Publicando..." : "Publicar pedido"}
             </Button>
           </form>
+        </div>
+
+        {/* ═══ Pedidos ═════════════════════════════════════════════════════════ */}
+        <div key="requests" role="tabpanel">
+          <RecommendationRequests />
         </div>
 
         {/* ═══ Salvas ═════════════════════════════════════════════════════════ */}
