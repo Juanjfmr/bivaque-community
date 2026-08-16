@@ -52,6 +52,19 @@ Para evitar nova regressão conceitual:
 - **Multi-localidade simultânea por usuário:** permitir que o mesmo usuário pertença a mais de uma localidade ao mesmo tempo. Isso é uma decisão distinta e não faz parte desta P0.
 - **Multi-tenancy/organizações:** é uma dimensão arquitetural separada de geografia. O Bivaque original já foi concebido multi-tenant; esta P0 não deve ser descrita como introdução ou remoção de multi-tenancy.
 
+### Precedência sobre o canon ainda não reconciliado
+
+Até `docs/BIVAQUE.md` ser reconciliado nesta P0, **este ADR prevalece sobre qualquer trecho geográfico conflitante daquele documento**. Em particular, ficam superadas imediatamente as formulações que tratam:
+
+- §1.2: o público como restrito a "pensionistas de Manaus";
+- §5.2: "Manaus" como concessão geográfica fixa após verificação, em vez da localidade real selecionada;
+- §8: "escopo nacional" como fora do produto e "outras cidades" como adiadas;
+- D02: Manaus como fronteira do piloto a ser reaberta somente quando uma segunda cidade entrar em planejamento;
+- D14: Manaus como localidade concedida por verificação;
+- D31: qualquer cláusula que coloque escopo nacional fora ou outras cidades adiadas.
+
+As partes não geográficas dessas decisões permanecem válidas. A reconciliação de `BIVAQUE.md` é critério de aceite da Issue #20 e deve ocorrer **antes do merge da implementação**, para restaurar uma única fonte de verdade.
+
 ### Não decidido neste ADR
 
 - Permitir múltiplas localidades simultâneas para o mesmo usuário.
