@@ -161,7 +161,7 @@ test.describe("Login persistente Instagram-style", () => {
     ])
     const page: Page = await ctx.newPage()
 
-    await page.goto(`${APP_URL}/community`, { waitUntil: "networkidle" })
+    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     expect(page.url(), "/community NAO redireciona para /login (sessao aceita)").not.toContain(
       "/login",
     )
@@ -229,7 +229,7 @@ test.describe("Login persistente Instagram-style", () => {
       ])
     }
     const freshPage = await freshCtx.newPage()
-    await freshPage.goto(`${APP_URL}/community`, { waitUntil: "networkidle" })
+    await freshPage.goto(`${APP_URL}/community`, { waitUntil: "load" })
     expect(freshPage.url(), "Sessao persiste apos fechar/reabrir").not.toContain("/login")
 
     await browser.close()
@@ -256,12 +256,17 @@ test.describe("Login persistente Instagram-style", () => {
     ])
     const page = await ctx.newPage()
 
-    await page.goto(`${APP_URL}/community`, { waitUntil: "networkidle" })
+    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     expect(page.url(), "Sessao valida permite /community").not.toContain("/login")
 
-    await page.goto(`${APP_URL}/profile`, { waitUntil: "networkidle" })
+    await page.goto(`${APP_URL}/profile`, { waitUntil: "load" })
     const configTab = page.getByRole("tab", { name: /Configurações/i })
-    if ((await configTab.count()) > 0) {
+    // The profile page is a client component: with waitUntil "load" the React
+    // tree may still be hydrating, so an instant count() can read 0 and skip
+    // the click that reveals the sign-out button inside the tab panel. Wait
+    // for the tab to become visible (or give up quietly if it is not there).
+    await configTab.waitFor({ state: "visible", timeout: 5000 }).catch(() => {})
+    if (await configTab.isVisible()) {
       await configTab.click()
       await page.waitForTimeout(500)
     }
@@ -282,7 +287,7 @@ test.describe("Login persistente Instagram-style", () => {
     await page.waitForTimeout(3000)
     expect(page.url(), "Logout redireciona para /login").toContain("/login")
 
-    await page.goto(`${APP_URL}/community`, { waitUntil: "networkidle" })
+    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     expect(page.url(), "Apos logout, /community redireciona para /login").toContain("/login")
 
     await browser.close()
