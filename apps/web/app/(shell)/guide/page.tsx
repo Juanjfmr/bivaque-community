@@ -92,7 +92,7 @@ export default function GuidePage() {
           placeholder="Buscar por nome ou descrição..."
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          className="min-h-11 w-full rounded-lg border border-border bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]"
+          className="min-h-11 w-full rounded-lg border border-border bg-[var(--surface)] px-3 py-2 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)]"
         />
 
         <fieldset className="flex flex-wrap gap-2">
@@ -160,7 +160,7 @@ export default function GuidePage() {
                       href={entry.website_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-accent hover:underline"
+                      className="inline-flex min-h-11 min-w-11 items-center text-accent transition-colors hover:underline"
                     >
                       Ver site
                     </a>

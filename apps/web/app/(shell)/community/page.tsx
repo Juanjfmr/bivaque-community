@@ -201,7 +201,10 @@ export default function CommunityPage() {
               </span>
             )}
             {!primaryCommunityName && (
-              <a href="/guide" className="text-sm font-medium text-accent hover:underline">
+              <a
+                href="/guide"
+                className="inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-accent transition-colors hover:underline"
+              >
                 Guia de chegada
               </a>
             )}
