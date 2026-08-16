@@ -16,6 +16,10 @@ export default defineConfig({
     command: "pnpm --filter web build && pnpm --filter web start --hostname 127.0.0.1 --port 3000",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
+    // The Next production build does not fit the 60s default on a cold
+    // Windows filesystem; CI runs the same build with cache and benefits
+    // from the same headroom.
+    timeout: 300_000,
   },
   projects: [
     {
