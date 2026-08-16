@@ -307,7 +307,7 @@ Quatro coisas, nenhuma delas uma linha do tempo:
 | **Alcance de post** | você publica na sua vila e escolhe se vai além dela. Manaus é uma configuração no momento de postar, não uma sala que se visita |
 | **Eventos da cidade** | quadro de avisos do que atravessa as três forças — corrida, formatura, confraternização |
 | **Vitrine** | prestador que atende a cidade inteira, não só uma vila |
-| **Guia de chegada** | referência curada e buscável: colégio, hospital, transportadora, despachante. Permanente, que é o oposto de feed |
+| **Guia de chegada** | referência curada e buscável: colégio, hospital, transportadora, despachante. Permanente, que é o oposto de feed. Curadoria nasce das respostas de indicação e passa por **IA sugere → operador aprova** (D49) |
 
 O alcance como configuração resolve dois problemas com um mecanismo: a regra 2 da §12 já exige
 mostrar a audiência antes do submit, por privacidade. **O seletor de audiência que precisa
@@ -605,7 +605,7 @@ aqui, com data e motivo.
 | **D28** | vigente | 2026-08-11 | Grátis na própria vila; pago para alcançar além | é distribuição, não proteção | — |
 | **D29** | vigente | 2026-08-11 | Proibidos: anúncio no feed, ordenação por dinheiro, consignado, pagar para não ser enterrado | cada um destrói o ativo de confiança | — |
 | **D30** | vigente | 2026-08-11 | O fundador não é a cabeça do produto | Art. 29, e sobrevivência à transferência. Arranjo pendente de parecer (§7.6) | — |
-| **D31** | vigente | 2026-08-11 | Fora: anônimo, vídeo, nacional, push e SMS, modo escuro. Adiados: IA, nativo, outras cidades, DM entre membros | — | — |
+| **D31** | vigente | 2026-08-11 | Fora: anônimo, vídeo, nacional, push e SMS, modo escuro. Adiados: IA, nativo, outras cidades, DM entre membros. **Reaberto em 2026-08-15 apenas para curadoria do Guia de Chegada** — ver D49 | a IA sai do adiamento num escopo estreito, sem tocar feed, moderação ou DM | quando a curadoria do guia fechar ou o ADR associado for rejeitado |
 | **D32** | vigente | 2026-08-11 | E-mail transacional por **Resend** | transacional em stack JS; domínio e DNS são trabalho humano | — |
 | **D33** | vigente | 2026-08-11 | **WhatsApp não-oficial** agora, Cloud API quando houver CNPJ (§7.8) | o oficial está bloqueado pelo veículo jurídico; risco assumido com cinco requisitos de sobrevivência | banimento do número, ou CNPJ constituído |
 | **D34** | vigente | 2026-08-11 | **Upstash Redis** para os quatro limites e o circuit breaker | não põe escrita no banco primário a cada requisição; escala a 50 mil sem refazer | — |
@@ -623,6 +623,7 @@ aqui, com data e motivo.
 | **D46** | vigente | 2026-08-11 | **Throttle global + circuit breaker** contra o Portal; retry em laço proibido (§7.9) | o risco não é volume, é a suspensão de 8 horas do token no meio do lançamento | — |
 | **D47** | vigente | 2026-08-11 | **Nada é cortado do escopo.** O lançamento é por vila, com o que estiver pronto | não cortar não significa tudo pronto em dezembro; significa ordenar para que o inacabado não impeça abrir a primeira vila | — |
 | **D48** | vigente | 2026-08-14 | **A vila é a sala; Manaus não é.** O nível municipal é alcance de post, eventos, vitrine e guia de chegada — nunca um feed (§6) | a vila tem gerador de conteúdo — circunstância física compartilhada. Manaus só tem laço institucional, que produz referência, e feed é o pior contêiner para referência: reproduziria dentro do produto o defeito do grupo de WhatsApp da §1.1 | se os pedidos com alcance ampliado forem muitos **e** receberem resposta, o nível largo tem demanda conversacional e a sala se justifica. Medir na primeira vila |
+| **D49** | **proposta** | 2026-08-15 | **A curadoria do Guia de Chegada nasce das respostas de indicação.** A IA extrai uma sugestão estruturada, mas **nunca publica**: operador aprova ou rejeita cada item | o guia é acervo permanente, não feed; curadoria 100% manual não escala e a resposta da comunidade já carrega a evidência | [ADR-20260815-guia-curadoria-ia](decisions/ADR-20260815-guia-curadoria-ia.md). Reaberta quando a LGPD e a onda F estiverem fechadas |
 
 **Superado pela D09:** a decisão D9 da `2026-08-05-comunidade-design.md` (co-membro vê
 perfil oculto) perdeu objeto. O aviso de divulgação na entrada continua valendo para o nome.

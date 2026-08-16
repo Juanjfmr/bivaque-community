@@ -9,6 +9,78 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      arrival_guide_entries: {
+        Row: {
+          category: Database["public"]["Enums"]["arrival_guide_category"]
+          confidence: number | null
+          created_at: string
+          description: string
+          id: string
+          locality_id: string
+          name: string
+          phone: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: "manual" | "ai"
+          source_reply_id: string | null
+          status: "pending" | "approved" | "rejected"
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["arrival_guide_category"]
+          confidence?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          locality_id: string
+          name: string
+          phone?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: "manual" | "ai"
+          source_reply_id?: string | null
+          status?: "pending" | "approved" | "rejected"
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["arrival_guide_category"]
+          confidence?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          locality_id?: string
+          name?: string
+          phone?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: "manual" | "ai"
+          source_reply_id?: string | null
+          status?: "pending" | "approved" | "rejected"
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arrival_guide_entries_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arrival_guide_entries_source_reply_id_fkey"
+            columns: ["source_reply_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
@@ -116,6 +188,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      consent_acceptances: {
+        Row: {
+          accepted_at: string
+          code_of_conduct_version: number
+          consent_version: number
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          code_of_conduct_version: number
+          consent_version: number
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          code_of_conduct_version?: number
+          consent_version?: number
+          user_id?: string
+        }
+        Relationships: []
       }
       dm_blocks: {
         Row: {
@@ -515,6 +608,24 @@ export type Database = {
           },
         ]
       }
+      notification_opt_outs: {
+        Row: {
+          channel: Database["public"]["Enums"]["outbox_channel"]
+          created_at: string
+          recipient: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["outbox_channel"]
+          created_at?: string
+          recipient: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["outbox_channel"]
+          created_at?: string
+          recipient?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           comments: boolean
@@ -610,6 +721,8 @@ export type Database = {
           attempts: number
           channel: Database["public"]["Enums"]["outbox_channel"]
           created_at: string
+          fallback_channel: Database["public"]["Enums"]["outbox_channel"] | null
+          fallback_reason: string | null
           id: string
           last_error: string | null
           payload: Json
@@ -622,6 +735,10 @@ export type Database = {
           attempts?: number
           channel: Database["public"]["Enums"]["outbox_channel"]
           created_at?: string
+          fallback_channel?:
+            | Database["public"]["Enums"]["outbox_channel"]
+            | null
+          fallback_reason?: string | null
           id?: string
           last_error?: string | null
           payload?: Json
@@ -634,6 +751,10 @@ export type Database = {
           attempts?: number
           channel?: Database["public"]["Enums"]["outbox_channel"]
           created_at?: string
+          fallback_channel?:
+            | Database["public"]["Enums"]["outbox_channel"]
+            | null
+          fallback_reason?: string | null
           id?: string
           last_error?: string | null
           payload?: Json
@@ -881,6 +1002,13 @@ export type Database = {
             referencedRelation: "localities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "recommendation_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
         ]
       }
       recommendation_saves: {
@@ -950,22 +1078,28 @@ export type Database = {
       }
       waitlist: {
         Row: {
+          city_name: string | null
           created_at: string
           email: string
           id: string
-          locality_id: string
+          locality_id: string | null
+          state_code: string | null
         }
         Insert: {
+          city_name?: string | null
           created_at?: string
           email: string
           id?: string
-          locality_id: string
+          locality_id?: string | null
+          state_code?: string | null
         }
         Update: {
+          city_name?: string | null
           created_at?: string
           email?: string
           id?: string
-          locality_id?: string
+          locality_id?: string | null
+          state_code?: string | null
         }
         Relationships: [
           {
@@ -995,7 +1129,7 @@ export type Database = {
         Returns: undefined
       }
       add_to_waitlist: {
-        Args: { p_email: string; p_locality_id: string }
+        Args: { p_city_name: string; p_email: string; p_state_code: string }
         Returns: undefined
       }
       approve_community_member: {
@@ -1007,6 +1141,10 @@ export type Database = {
         Returns: undefined
       }
       complete_event: { Args: { p_event_id: string }; Returns: undefined }
+      consume_verification_attempt: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       create_community: {
         Args: {
           p_description: string
@@ -1100,6 +1238,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      has_accepted_consent: {
+        Args: {
+          p_code_of_conduct_version: number
+          p_consent_version: number
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       is_current_user_operator: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -1113,6 +1259,17 @@ export type Database = {
           expires_at: string
           id: string
           invitee_email_digest: string
+        }[]
+      }
+      list_verification_documents: {
+        Args: never
+        Returns: {
+          document_id: string
+          expires_at: string
+          mime_type: string
+          review_status: string
+          uploaded_at: string
+          user_id: string
         }[]
       }
       list_verification_queue: {
@@ -1132,6 +1289,14 @@ export type Database = {
           status: string
           updated_at: string
         }[]
+      }
+      record_consent_acceptance: {
+        Args: {
+          p_code_of_conduct_version: number
+          p_consent_version: number
+          p_user_id: string
+        }
+        Returns: undefined
       }
       remove_community_member: {
         Args: { p_community_id: string; p_user_id: string }
@@ -1153,6 +1318,14 @@ export type Database = {
         Args: { p_invitation_id: string; p_inviter_user_id: string }
         Returns: undefined
       }
+      submit_verification_document: {
+        Args: {
+          p_mime_type: string
+          p_storage_object_path: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       transfer_community_ownership: {
         Args: { p_community_id: string; p_new_owner_user_id: string }
         Returns: undefined
@@ -1171,6 +1344,7 @@ export type Database = {
       }
     }
     Enums: {
+      arrival_guide_category: "school" | "hospital" | "transporter" | "courier"
       community_membership_role: "member" | "moderator" | "owner"
       community_membership_status: "pending" | "approved"
       dm_context_type:
@@ -1338,6 +1512,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      arrival_guide_category: ["school", "hospital", "transporter", "courier"],
       community_membership_role: ["member", "moderator", "owner"],
       community_membership_status: ["pending", "approved"],
       dm_context_type: [
@@ -1385,4 +1560,3 @@ export const Constants = {
     },
   },
 } as const
-

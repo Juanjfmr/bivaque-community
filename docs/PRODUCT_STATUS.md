@@ -6,7 +6,7 @@
 > Substitui [`docs/journeys/MAP.md`](journeys/MAP.md), que misturava estado e intenção e,
 > por isso, marcava como "Corrigida" linha cujo ciclo de usuário não fechava.
 >
-> Última reconciliação: **2026-08-14**. Atualizar ao fim de cada onda.
+> Última reconciliação: **2026-08-15**. Atualizar ao fim de cada onda.
 
 ## Como ler
 
@@ -37,17 +37,17 @@ commitados e nunca executados, porque o banco está sem seed. Não é "pronto" e
 |---|---|---|---|---|---|
 | Login | E-mail com magic link e Google, sem affordances de senha | igual | — | `login/components/bivaque-sign-in.tsx` `[V]` | B |
 | Callback | `next` validado como caminho interno antes do redirect | igual | — falta só o E2E, que nunca rodou | `auth/callback/route.ts`, `lib/security/sanitize-next.ts` `[V]` | A (código feito) |
-| Falha de callback | JSON 400/401 com mensagem do provedor | tela humana com recomeço | sad path principal termina fora do produto | `auth/callback/route.ts:18-26,45-49` `[A]` | D |
-| Gate do shell | middleware checa sessão + cookie de consentimento | derivar do estado real de verificação | `pending`, `rejected` e `temporary_error` entram no shell e veem compositor e "Publicar" | `middleware.ts:79-103`, `(shell)/layout.tsx:9-14` `[A]` | D |
-| Verificação de CPF | caminho único: Portal, síncrono, aborta em 10s | dual-path: Portal + upload auditado | sem máscara, sem validação de dígito; string vazia vira `rejected` | `onboarding/page.tsx:348-365`, `api/onboarding/route.ts:57-64`, `lib/portal/classify.ts:115-121` `[A]` | D |
-| Upload de documento | **não existe** | caminho de exceção auditado, TTL curto | não há bucket, rota nem decisão manual | — | D |
-| `pending` | nenhum produtor: timeout vira `temporary_error` | timeout e instabilidade produzem `pending` | o contrato promete 48h úteis e nada gera o estado | `lib/portal/client.ts:34-40`, `lib/portal/classify.ts:115-146` `[A]` | D |
-| Tela de status | lê `?state=` da URL; não chama o endpoint que existe | derivar do servidor e reconciliar | qualquer conta troca o próprio status editando o endereço | `onboarding/status/page.tsx:11-44`; endpoint em `api/onboarding/status/route.ts:34-92` `[A]` | D |
-| Recurso de rejeição | **não existe** | retentativa limitada + caso na fila de admissões | rejeição é beco sem saída | `onboarding/status/page.tsx:86-97` `[A]` | D |
-| CPF no cliente | guardado em `sessionStorage` | não guardar | contradiz a promessa de `/consent` | `onboarding/page.tsx:93-95` `[A]`; copy em `consent/page.tsx:47-49` | **A** |
-| Welcome | rota pública; não autentica nem checa membership | gatear por membership real | qualquer visitante lê "Você foi verificado" | `onboarding/welcome/page.tsx:1-46`, `middleware.ts:5-14` `[A]` | D |
-| Waitlist | grava `email` + `PILOT_LOCALITY_ID` (Manaus) | coletar a localidade desejada | é fila "para outras localidades" e grava Manaus; copy promete contato sem canal | `onboarding/page.tsx:283-287`, `lib/locality.ts:1-14` `[A]` | D |
-| Consentimento | cookie de gate | aceite versionado, com código de conduta | `profiles.consent_version` e `consented_at` existem e não são usados como trilha | `consent/page.tsx:16-23` `[A]` | D |
+| Falha de callback | redireciona para tela humana com "voltar para o login" | tela humana com recomeço | falta o E2E do sad path | `auth/callback/route.ts`, `auth/callback-error/page.tsx` `[V]` | A (código feito) |
+| Gate do shell | middleware checa consentimento, sessão e membership; `/onboarding` e `/onboarding/status` ficam fora do shell | derivar do estado real de verificação | falta o E2E dos estados `pending`/`rejected` | `middleware.ts:9-104` `[V]` | A (código feito) |
+| Verificação de CPF | Portal, síncrono, aborta em 10s; CPF com máscara e validação de dígito no cliente e no servidor | dual-path: Portal + upload auditado | falta a decisão manual do operador e o E2E do dual-path | `onboarding/page.tsx:16-20,332-382`, `api/onboarding/route.ts:70-80`, `lib/portal/classify.ts` `[V]` | D |
+| Upload de documento | upload privado (PDF/JPEG/PNG, 10MB) com TTL de 7 dias; metadata na fila de documentos do operador | caminho de exceção auditado, TTL curto, decisão manual | falta a decisão do operador e o E2E do envio | `onboarding/document-upload.tsx`, `onboarding/document-actions.ts`, `20260815132000_verification_documents.sql`, `supabase/tests/verification-documents.sql` `[V]` | D |
+| `pending` | timeout, HTTP não-2xx e 429 do Portal produzem `pending` | timeout e instabilidade produzem `pending` | falta o E2E do produtor | `lib/portal/client.ts:14-19,108-121`, `tests/unit/portal/verify-cpf.test.ts` `[V]` | A (código feito) |
+| Tela de status | consulta `read_verification_status` no servidor e reconcilia com membership | derivar do servidor e reconciliar | falta o E2E do fluxo | `onboarding/status/page.tsx:28-67` `[V]` | A (código feito) |
+| Recurso de rejeição | retentativa limitada a 3/hora em janela rolante no servidor; upload de documento e waitlist ligados na tela de status; decisão do operador ainda não existe | retentativa limitada + caso na fila de admissões auditada | falta a decisão manual do operador e o E2E dos caminhos de negação | `onboarding/status/page.tsx`, `verifyAndProvision.ts`, `20260815133000_verification_attempt_limit.sql`, `supabase/tests/verification-attempt-limit.sql` `[V]` | D |
+| CPF no cliente | não é guardado; resíduo antigo é removido no boot | não guardar | — | `onboarding/page.tsx:104-108`, `lib/onboarding/storage.ts` `[V]` | **A** |
+| Welcome | gateado por membership real no middleware | gatear por membership real | falta o E2E do gate | `middleware.ts:100-104` `[V]` | A (código feito) |
+| Waitlist | coleta e grava cidade/UF; `locality_id` fica nulo para cidade futura | coletar a localidade desejada | falta o E2E do envio e o canal de aviso real | `onboarding/page.tsx:431-474`, `verifyAndProvision.ts:92-108`, `20260815120000_waitlist_desired_city.sql` `[V]` | D |
+| Consentimento | cookie só faz gate de navegação; aceite versionado é gravado em `consent_acceptances` e o `/api/onboarding` exige o registro no servidor | aceite versionado, com código de conduta | a tela ainda não exibe o código de conduta; falta o E2E do aceite persistido | `consent/actions.ts`, `consent/page.tsx`, `20260815131000_consent_acceptances.sql`, `api/onboarding/route.ts:60-68`, `supabase/tests/consent-acceptances.sql` `[V]` | D |
 
 ## 2. Convites
 
@@ -77,11 +77,11 @@ commitados e nunca executados, porque o banco está sem seed. Não é "pronto" e
 
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
-| Camada de comunidade | **banco completo, zero tela.** Tabelas, RLS, `feed_community`, `feed_group` e 8 RPCs | vila como subcomunidade, com entrada, feed, moderação | o app nunca chama `feed_community`; nenhuma rota `commun*` existe | `20260805211933`, `20260805214709`, `20260805215020`, `20260805215419`; grep 0 em `apps/web` `[V]` | E |
-| Fila de aprovação | **não existe** | lista em lote, com afiliação visível e delegação | sem ela a vila não chega inteira | — | E |
-| Feed municipal | `feed_posts(PILOT_LOCALITY_ID)` é a home hoje | **deixa de ser sala** (D48): vira alcance de post. A home passa a ser o feed da vila | é o inverso do que existe — hoje o município é a home e a vila não existe na UI | `(shell)/community/page.tsx:55-58` `[V]` | E |
-| Seletor de audiência | **não existe** | escolher vila ou Manaus antes de publicar. É o mecanismo que substitui o feed municipal e satisfaz a regra 2 da §12 | sem ele o membro não sabe para quem publica, e o nível Manaus não tem como existir | — | E |
-| Guia de chegada | **não existe** | referência curada e buscável de Manaus: colégio, hospital, transportadora, despachante | é o que o feed municipal não consegue ser — permanente em vez de rolante | — | E |
+| Camada de comunidade | rotas `/communities` e `/communities/[id]` ligam descoberta, pedido de entrada, fila básica de aprovação e `feed_community` | vila como subcomunidade, com entrada, feed, moderação | a home ainda é o feed municipal; falta seletor de audiência, guia de chegada e aprovação em lote com afiliação | `communities/page.tsx`, `communities/[id]/page.tsx`, `communities/actions.ts`, `20260805211933`, `20260805214709`, `20260805215020`, `20260805215419` `[V]` | E |
+| Fila de aprovação | fila básica de pedidos na página da comunidade, com aprovar/recusar por moderador | lista em lote, com afiliação visível e delegação | falta seleção em lote, afiliação visível e delegação de moderação | `communities/[id]/page.tsx`, `community_rpcs.sql` `[V]` | E |
+| Feed municipal | a home prioriza `feed_community` da primeira comunidade aprovada; sem comunidade, mantém `feed_posts(PILOT_LOCALITY_ID)` | **deixa de ser sala** (D48): vira alcance de post. A home passa a ser o feed da vila | falta separar a referência municipal (guia de chegada, eventos e vitrine) do feed; post sem comunidade ainda cai em Manaus | `(shell)/community/page.tsx` `[V]` | E |
+| Seletor de audiência | seletor no modal de publicação lista as comunidades aprovadas e Manaus; post ganha `community_id` | escolher vila ou Manaus antes de publicar. É o mecanismo que substitui o feed municipal e satisfaz a regra 2 da §12 | falta ligar o feed municipal ao alcance Manaus e validar visualmente | `feed-post.tsx` `[V]` | E |
+| Guia de chegada | rota `/guide` exibe só itens aprovados e filtra por categoria; fila do operador em `/guide-queue` aprova ou rejeita sugestões; parser e adaptador DeepSeek existem, mas a chamada externa fica desligada por governança | referência curada e buscável de Manaus: colégio, hospital, transportadora, despachante. Curadoria nasce das respostas de indicação, com **IA sugere → operador aprova** (D49) | falta fechar a governança LGPD e ligar o gatilho real às respostas da onda F | `guide/page.tsx`, `(admin)/guide-queue/page.tsx`, `lib/guide/ai-curation.ts`, `lib/guide/deepseek.ts`, `20260815181708_arrival_guide.sql`, `20260815210000_arrival_guide_curation.sql`, `supabase/seed.sql` `[V]` | E |
 | Composer — foto e enquete | botões Foto/Link/Enquete abrem o compositor com o tipo | upload real de foto | "Foto" pede caminho de texto, não upload de arquivo; enquete e link fecham o ciclo | `feed-composer.tsx:58-86`, `feed-post.tsx:653-661` `[V]` | F |
 | Detalhe de grupo | leitura inteira pelo cliente autenticado, com `error` lido em cada consulta e `notFound()` na negação; lista de membros por consulta separada; `service_role` saiu da renderização | igual | E2E reexecutado pendente de seed. **As Server Actions no topo do arquivo continuam com `service_role`** — linha própria abaixo | `groups/[id]/page.tsx` `[V]` | A (código feito) |
 | ~~Vazamento da lista de membros~~ | **o achado estava exagerado.** A consulta original usava embed `profiles!inner`, e **não existe FK de `group_memberships` para `profiles`** — as duas referenciam `auth.users` em separado, então o PostgREST nunca resolveu o embed. O código descartava o `error` e renderizava vazio | — | o que vazava era o **metadado** do grupo (nome, visibilidade), não os dez nomes. A lista estava quebrada para todo mundo, inclusive para quem tinha direito. Descoberto pelo E2E ao exigir leitura do `error` | `20260802001000_groups_moderation.sql` (sem FK); `groups/[id]/page.tsx` `[V]` | A (corrigido) |
@@ -103,11 +103,11 @@ commitados e nunca executados, porque o banco está sem seed. Não é "pronto" e
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
 | Explorar | 6 grupos e 4 eventos por recência | mesmos, com link para o detalhe | card de grupo não abre `/groups/[id]`; evento aponta para a lista genérica | `recommendations/page.tsx:519-565,588-615` `[A]` | F |
-| Pedir indicação | insere e responde "Pedido publicado!" | listagem, detalhe e resposta visível | **`recommendation_replies` existe no banco e o app nunca lê nem escreve** | `20260802001100_recommendations.sql:55`; grep 0 em `apps/web` `[V]` | F |
-| Controle do autor | RLS permite editar e excluir; não há tela | autor encontra, edita e exclui | quem publicou algo pessoal não consegue interromper a exposição | `20260802001100:157-170` `[A]` | F |
-| Escopo do pedido | formulário sempre envia `group_id: null`; copy diz "localidade ou grupo" | escopo escolhido, com Saúde começando em grupo | pedido de saúde vai para Manaus inteira amarrado ao autor | `recommendations/page.tsx:315-322` `[A]` | F |
-| `group_id` | sem foreign key; insert não checa membership | FK e checagem na mesma migration que expuser o escopo | UUID arbitrário aceito; ninguém do grupo consegue ler | `20260802001100:22-35,128-155` `[A]` | F |
-| Salvas | recupera saves; não há botão de salvar nem destino | salvar de verdade, com destino | a UI não consegue criar o que a aba lê | `recommendations/page.tsx:344-413` `[A]` | F |
+| Pedir indicação | formulário publica e a aba Pedidos lista os pedidos visíveis, lê as respostas e permite responder | listagem, detalhe e resposta visível | falta autor/notificação de resposta e link do Explorar para o detalhe | `recommendation-requests.tsx`, `recommendations/page.tsx`, `20260815220000_recommendation_reply_cycle.sql` `[V]` | F |
+| Controle do autor | autor edita/exclui o pedido na UI; autor de resposta ganhou `update`/`delete` no banco | autor encontra, edita e exclui | a UI de resposta ainda não expõe editar/excluir a própria resposta | `recommendation-requests.tsx`, `20260815220000_recommendation_reply_cycle.sql` `[V]` | F |
+| Escopo do pedido | formulário escolhe Manaus ou um grupo do qual o autor participa e envia `locality_id`/`group_id` de acordo | escopo escolhido, com Saúde começando em grupo | Saúde ainda não é forçada a começar em grupo | `recommendations/page.tsx`, `recommendation-requests.tsx` `[V]` | F |
+| `group_id` | FK para `groups`, insert checa membership de grupo e RLS expõe pedido/resposta apenas ao grupo | FK e checagem na mesma migration que expuser o escopo | falta E2E do escopo de grupo | `20260815220000_recommendation_reply_cycle.sql`, `supabase/tests/recommendations-reply-cycle.sql` `[V]` | F |
+| Salvas | botão Salvar/Salvo nos cards de pedido e a aba Salvas continua lendo os salvos | salvar de verdade, com destino | falta notificação de resposta para quem salvou | `recommendation-requests.tsx`, `recommendations/page.tsx` `[V]` | F |
 
 ## 7. Vitrine
 
@@ -152,22 +152,27 @@ commitados e nunca executados, porque o banco está sem seed. Não é "pronto" e
 
 ## 11. Infraestrutura
 
-Nenhuma linha desta seção existe hoje. Todas entram na onda D1, que não entrega tela e
-destrava quase todo o resto.
+D1 está em andamento. **O agendador e a fila de saída já têm caminho local completo, mas
+nenhuma peça abaixo está ativa em produção ainda.** A coluna `Estado atual` distingue o
+que existe no código do que funciona em produção: “biblioteca/configuração” não é “fluxo
+entregue”.
 
-| Superfície | Estado atual | Estado-alvo | Lacuna | Onda |
-|---|---|---|---|---|
-| E-mail transacional | **não existe** | Resend, domínio verificado com DKIM e SPF | **bloqueio externo:** exige conta e registro de DNS | D1 |
-| Canal WhatsApp | **não existe** | não-oficial com número descartável, adaptador no `outbox` (§7.8 do BIVAQUE) | **bloqueio externo:** exige chip dedicado | D1 |
-| Rate limit | **não existe** | Upstash com os quatro limites: CPF por hora, cota de convite, leitura de perfil, throttle global do Portal | quatro decisões dependem dele | D1 |
-| Circuit breaker do Portal | **não existe** | no Upstash: em 429, parar e mandar todos para `pending` | sem ele, um retry em laço suspende o token por 8h no meio do lançamento | D1 |
-| Agendador | **não existe** | pg_cron; confirmar `pg_net` para a reconciliação de `pending` | reconciliação, expiração de TTL e lembrete dependem dele | D1 |
-| Fila de saída | **não existe** | tabela `outbox` com estado + worker no pg_cron; verifica preferência e opt-out antes de enviar | é onde canal, retentativa e rastro vivem | D1 |
-| Rastreamento de erro | só log da Vercel | Sentry com filtro de PII antes do envio | erro intermitente hoje é invisível | D1 |
-| Métrica de produto | **não existe** | PostHog | sai dado comportamental para terceiro: exige base legal declarada | H |
-| Cobrança | **não existe** | Asaas, checkout hospedado, webhook liga a flag | **bloqueio externo:** exige CNPJ | G |
-| Deploy de banco | manual, não documentado | GitHub Action no merge, credencial como secret do CI | hoje a credencial de produção vive no laptop — Task 8 do plano de observabilidade | D1 |
-| Staging | **não existe e não vai existir** | — | risco aceito (D42): erro de migração sobre dado real chega direto à produção | — |
+**Dispensa de auditoria visual (D1):** esta onda não toca tela nenhuma; a auditoria visual
+de fim de onda não se aplica, conforme o plano D1.
+
+| Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
+|---|---|---|---|---|---|
+| E-mail transacional | **não existe** | Resend, domínio verificado com DKIM e SPF | **bloqueio externo:** exige conta e registro de DNS | — | D1 |
+| Canal WhatsApp | **não existe** | não-oficial com número descartável, adaptador no `outbox` (§7.8 do BIVAQUE) | **bloqueio externo:** exige chip dedicado e CNPJ | — | D1 |
+| Rate limit | throttle global do Portal e limite de CPF por usuário ligados no fluxo de verificação via Upstash; o limite em banco segue como fallback anti-enumeração | Upstash com os quatro limites: CPF por hora, cota de convite, leitura de perfil, throttle global do Portal | cota de convite e leitura de perfil ainda não estão ligadas | `apps/web/lib/portal/guard.ts`, `apps/web/lib/onboarding/verifyAndProvision.ts`, `packages/domain/src/rate-limit.ts`, `apps/web/lib/limits.ts`, `tests/unit/security/rate-limit.test.ts` `[V]` | D1→D2 |
+| Circuit breaker do Portal | o fluxo de verificação abre o breaker ao receber 429 do Portal e, enquanto aberto, responde `pending` genérico | no Upstash: em 429, parar e mandar todos para `pending` | ainda não há telemetria de estado do breaker; a lógica de tempo está testada | `apps/web/lib/portal/guard.ts`, `apps/web/lib/onboarding/verifyAndProvision.ts`, `apps/web/lib/portal/client.ts`, `tests/unit/portal/verify-cpf-with-error-code.test.ts` `[V]` | D1→D2 |
+| Agendador | **`pg_cron` com o job `bivaque-outbox-worker`; `pg_net` usado pelo dispatch** | pg_cron + `pg_net` para a reconciliação de `pending` | caminho local comprovado; disponibilidade do `pg_net` em produção ainda depende do deploy | `20260814074813_enable_pg_cron.sql`, `20260814174705_outbox_worker.sql`, `supabase/tests/pg-cron-enabled.sql`, `supabase/tests/outbox-worker.sql` `[V]` | D1 |
+| Fila de saída | **tabela `outbox` + worker no pg_cron + endpoint interno + adaptadores** | tabela `outbox` com estado + worker no pg_cron; verifica preferência e opt-out antes de enviar | falta só ligar adaptadores reais (Resend/WhatsApp), bloqueados por Resend + chip/CNPJ | `20260814081735_outbox_table.sql`, `20260814174705_outbox_worker.sql`, `apps/web/app/api/internal/outbox/route.ts`, `apps/web/lib/outbox/adapters.ts`, `supabase/tests/outbox-worker.sql`, `tests/unit/infra/outbox-delivery.test.ts` `[V]` | D1 |
+| Rastreamento de erro | **Sentry instalado com scrub de PII** | Sentry com filtro de PII antes do envio | o código de envio está pronto; o DSN de produção é configuração externa | `apps/web/sentry.server.config.ts`, `packages/domain/src/pii-scrub.ts`, `tests/unit/security/pii-scrub.test.ts` `[V]` | D1 |
+| Métrica de produto | **não existe** | PostHog | sai dado comportamental para terceiro: exige base legal declarada | — | H |
+| Cobrança | **não existe** | Asaas, checkout hospedado, webhook liga a flag | **bloqueio externo:** exige CNPJ | — | G |
+| Deploy de banco | **workflow `deploy-migrations.yml`: `db push` só após o gate** | GitHub Action no merge, credencial como secret do CI | falta configurar os secrets de produção no repositório e tirar a chave do laptop | `.github/workflows/deploy-migrations.yml`, `tests/scope/deploy-migrations.test.mjs` `[V]` | D1 |
+| Staging | **não existe e não vai existir** | — | risco aceito (D42): erro de migração sobre dado real chega direto à produção | — | — |
 
 ---
 
@@ -185,7 +190,6 @@ aqui.
 
 ## O que não foi verificado
 
-- A suíte pgTAP não rodou nesta sessão — o Docker estava parado. As linhas `[A]` que citam
-  migration descrevem o texto do SQL, não o comportamento do banco.
+- pgTAP rodou em 2026-08-15 (sessão noturna): **48 arquivos, 756 testes, tudo verde**; `supabase db lint --local --level error` sem erros. Inclui os três arquivos que a reconciliação diurna não tinha rodado — `arrival-guide.sql`, a curadoria em `full-regression.sql`/`rls-or-column-regression.test.sql` e `recommendations-reply-cycle.sql` — após duas correções de execução: o teste do ciclo de resposta passou a setar o usuário que responde, e uma migration de fix (`20260816001059`) devolveu ao CHECK `recommendation_origin_scope` a resposta 23514 que o teste 10 de `recommendations-scope-denials.sql` exige. As linhas `[A]` continuam descrevendo evidência de código/migration, não um veredito de produção.
 - O limite de taxa da API do Portal da Transparência sob rajada não foi medido. Isso decide
   se a entrada da vila é por link aberto ou por lotes.
