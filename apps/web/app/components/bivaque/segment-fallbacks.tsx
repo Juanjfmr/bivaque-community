@@ -37,7 +37,10 @@ export function SegmentNotFound() {
         title="Pagina nao encontrada"
         description="O endereco que voce acessou nao existe nesta comunidade."
         action={
-          <Link href="/community" className="text-sm font-medium underline">
+          <Link
+            href="/community"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm font-medium underline"
+          >
             Voltar para a comunidade
           </Link>
         }
