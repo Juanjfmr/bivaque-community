@@ -29,6 +29,13 @@ ainda não rodou — no caso da onda A, os dois specs de E2E de negação foram 
 commitados e nunca executados, porque o banco está sem seed. Não é "pronto" e não é
 "parado": é pronto e não verificado, e a distinção some se não estiver escrita.
 
+**E2E executado em 2026-08-16** (primeiro lote, ver "O que não foi verificado"): a suíte
+completa rodou com seed e a execução serial (`--workers=1`) passou por inteiro. O que o
+lote não cobre continua "código feito": o callback real via magic link/Google OAuth (o
+mailpit local não responde — os specs injetam a sessão via password grant), o Portal da
+Transparência real (nunca chamado por design) e a decisão manual do operador na fila de
+admissões.
+
 ---
 
 ## 1. Entrada e admissão
@@ -36,7 +43,7 @@ commitados e nunca executados, porque o banco está sem seed. Não é "pronto" e
 | Superfície | Estado atual | Estado-alvo | Lacuna | Evidência | Onda |
 |---|---|---|---|---|---|
 | Login | E-mail com magic link e Google, sem affordances de senha | igual | — | `login/components/bivaque-sign-in.tsx` `[V]` | B |
-| Callback | `next` validado como caminho interno antes do redirect | igual | — falta só o E2E, que nunca rodou | `auth/callback/route.ts`, `lib/security/sanitize-next.ts` `[V]` | A (código feito) |
+| Callback | `next` validado como caminho interno antes do redirect | igual | o E2E do fluxo de admissão rodou (lote 16/08, serial verde); o callback real via magic link continua fora — o mailpit local não responde, specs injetam a sessão | `auth/callback/route.ts`, `lib/security/sanitize-next.ts` `[V]` | A (código feito) |
 | Falha de callback | redireciona para tela humana com "voltar para o login" | tela humana com recomeço | falta o E2E do sad path | `auth/callback/route.ts`, `auth/callback-error/page.tsx` `[V]` | A (código feito) |
 | Gate do shell | middleware checa consentimento, sessão e membership; `/onboarding` e `/onboarding/status` ficam fora do shell | derivar do estado real de verificação | falta o E2E dos estados `pending`/`rejected` | `middleware.ts:9-104` `[V]` | A (código feito) |
 | Verificação de CPF | Portal, síncrono, aborta em 10s; CPF com máscara e validação de dígito no cliente e no servidor | dual-path: Portal + upload auditado | falta a decisão manual do operador e o E2E do dual-path | `onboarding/page.tsx:16-20,332-382`, `api/onboarding/route.ts:70-80`, `lib/portal/classify.ts` `[V]` | D |
@@ -193,3 +200,12 @@ aqui.
 - pgTAP rodou em 2026-08-15 (sessão noturna): **48 arquivos, 756 testes, tudo verde**; `supabase db lint --local --level error` sem erros. Inclui os três arquivos que a reconciliação diurna não tinha rodado — `arrival-guide.sql`, a curadoria em `full-regression.sql`/`rls-or-column-regression.test.sql` e `recommendations-reply-cycle.sql` — após duas correções de execução: o teste do ciclo de resposta passou a setar o usuário que responde, e uma migration de fix (`20260816001059`) devolveu ao CHECK `recommendation_origin_scope` a resposta 23514 que o teste 10 de `recommendations-scope-denials.sql` exige. As linhas `[A]` continuam descrevendo evidência de código/migration, não um veredito de produção.
 - O limite de taxa da API do Portal da Transparência sob rajada não foi medido. Isso decide
   se a entrada da vila é por link aberto ou por lotes.
+- E2E (Playwright) rodou pela primeira vez em 2026-08-16: suíte completa com seed e Chrome
+  do sistema; a execução serial (`--workers=1`) passou por inteiro, incluindo os specs de
+  admissão de 15/08 (manaus-pilot-denials, manaus-pilot-full-journey, onboarding-denials,
+  onboarding-holder-family). Na execução paralela local (3 viewports, workers default), 11
+  testes estouram os timeouts default (5s/30s) por carga da máquina — os mesmos passam em
+  série, então o registro é de capacidade local, não de código; o CI em ubuntu é a fonte da
+  execução paralela completa. O lote não cobre: callback real via magic link/Google OAuth
+  (mailpit local não responde — specs injetam a sessão via password grant), Portal real
+  (nunca chamado por design) e decisão manual do operador na fila de admissões.
