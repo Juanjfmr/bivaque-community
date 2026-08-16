@@ -31,12 +31,12 @@ espera acontece.
 
 Um mecanismo só. Não crie contador em tabela para uns e Redis para outros.
 
-- [ ] **Step 1: cliente e configuração**
+- [x] **Step 1: cliente e configuração**
 
   Adicionar a dependência e as variáveis em `apps/web/.env.example`. Sem valor real no
   arquivo — só o nome da variável.
 
-- [ ] **Step 2: os quatro limites**
+- [x] **Step 2: os quatro limites**
 
   | Limite | Chave | Teto |
   |---|---|---|
@@ -47,7 +47,7 @@ Um mecanismo só. Não crie contador em tabela para uns e Redis para outros.
 
   Janela deslizante, não janela fixa — janela fixa deixa passar o dobro na virada.
 
-- [ ] **Step 3: o circuit breaker do Portal**
+- [x] **Step 3: o circuit breaker do Portal**
 
   Chave global no Redis. Ao receber 429 ou sinal de suspensão: abrir o breaker e **parar de
   chamar**. Enquanto aberto, toda verificação cai em `pending` — nunca em `rejected`, nunca
@@ -58,7 +58,7 @@ Um mecanismo só. Não crie contador em tabela para uns e Redis para outros.
 
   **Retry automático em laço é proibido.** É o que transforma um bug numa suspensão.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
   Unitário sobre a lógica de limite: dentro do teto passa, acima é negado, e a janela desliza
   como esperado. Sobre o breaker: fechado deixa passar, 429 abre, aberto devolve `pending`,
@@ -66,7 +66,7 @@ Um mecanismo só. Não crie contador em tabela para uns e Redis para outros.
 
   Não bata no Redis real no teste — abstraia o armazenamento.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(infra): rate limiting and the Portal circuit breaker on Upstash`.
 
@@ -74,7 +74,7 @@ Um mecanismo só. Não crie contador em tabela para uns e Redis para outros.
 
 ## Task 2: pg_cron
 
-- [ ] **Step 1: confirmar disponibilidade**
+- [x] **Step 1: confirmar disponibilidade**
 
   `pg_cron` e `pg_net` no plano Supabase em uso. **`pg_net` é o que permite chamada HTTP a
   partir do banco**, e sem ele a reconciliação de `pending` da onda D2 não funciona como
@@ -83,17 +83,17 @@ Um mecanismo só. Não crie contador em tabela para uns e Redis para outros.
   Se `pg_net` não estiver disponível: **pare e reporte.** A alternativa é o worker chamar o
   Portal a partir da aplicação, e isso muda o desenho da D2 — é decisão, não improviso.
 
-- [ ] **Step 2: migration**
+- [x] **Step 2: migration**
 
   Habilitar a extensão e criar o primeiro job, mesmo que trivial, para provar que o
   agendamento funciona de ponta a ponta.
 
-- [ ] **Step 3: teste**
+- [x] **Step 3: teste**
 
   pgTAP: a extensão está habilitada e o job existe. Sem isso, uma falha de agendamento só
   aparece quando alguém reparar que nada roda.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit**
 
   `feat(infra): enable pg_cron and prove scheduling end to end`.
 
@@ -103,7 +103,7 @@ Um mecanismo só. Não crie contador em tabela para uns e Redis para outros.
 
 O coração da entrega de notificação. O trigger não envia — ele enfileira.
 
-- [ ] **Step 1: a tabela**
+- [x] **Step 1: a tabela**
 
   Migration criando `outbox` com, no mínimo: destinatário, **canal** (`email`, `whatsapp`),
   tipo, carga, estado (`pending`, `sent`, `failed`, `skipped`), tentativas, erro da última
@@ -115,7 +115,7 @@ O coração da entrega de notificação. O trigger não envia — ele enfileira.
   RLS habilitada e forçada. `authenticated` não tem privilégio nenhum aqui: é tabela de
   operação, e a carga contém conteúdo de notificação.
 
-- [ ] **Step 2: o worker**
+- [x] **Step 2: o worker**
 
   Job do pg_cron que lê `pending`, envia pelo adaptador do canal e marca o resultado.
 
@@ -125,21 +125,24 @@ O coração da entrega de notificação. O trigger não envia — ele enfileira.
   Retentativa com recuo exponencial e teto de tentativas. Depois do teto, `failed` fica
   registrado, não some.
 
-- [ ] **Step 3: degradar em vez de quebrar**
+- [x] **Step 3: degradar em vez de quebrar**
 
   Falha persistente no WhatsApp cai para e-mail (§7.8, requisito 3). Registrar a troca de
   canal na linha, senão ninguém descobre que o WhatsApp morreu.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
   pgTAP: linha enfileirada sai como `sent`; com preferência desligada sai como `skipped` sem
   enviar; falha incrementa tentativa; acima do teto vira `failed`; opt-out nunca envia.
 
   O caso de opt-out precisa dos dois lados testados.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(infra): outbox table and delivery worker on pg_cron`.
+
+  Executado em duas partes: a tabela em `c5b5a2c` e o worker
+  (`feat(infra): outbox delivery worker on pg_cron`).
 
 ---
 
@@ -205,9 +208,9 @@ decisão de risco assumido, com requisitos que não são opcionais.
 
 ## Task 6: Sentry
 
-- [ ] **Step 1: instalar e configurar** para servidor e cliente.
+- [x] **Step 1: instalar e configurar** para servidor e cliente.
 
-- [ ] **Step 2: filtro de PII — antes de qualquer evento sair**
+- [x] **Step 2: filtro de PII — antes de qualquer evento sair**
 
   Remover, do corpo e das URLs: CPF, e-mail, token, cabeçalho de autorização e conteúdo de
   post ou mensagem. O padrão é **não enviar**; o que for enviado é escolha explícita.
@@ -215,12 +218,12 @@ decisão de risco assumido, com requisitos que não são opcionais.
   Um produto que trata dado de militar não pode descobrir o vazamento depois de vê-lo no
   painel de um terceiro.
 
-- [ ] **Step 3: teste**
+- [x] **Step 3: teste**
 
   Unitário sobre o filtro: evento contendo CPF, e-mail e token sai limpo. Este teste é a
   task — sem ele, o Sentry é uma superfície nova de vazamento.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit**
 
   `feat(infra): Sentry with mandatory PII scrubbing`.
 
@@ -230,19 +233,19 @@ decisão de risco assumido, com requisitos que não são opcionais.
 
 Depende de a credencial de produção existir como secret.
 
-- [ ] **Step 1: o workflow**
+- [x] **Step 1: o workflow**
 
   No merge para `main`, **depois do gate verde**, rodar `supabase db push` contra produção. A
   credencial é secret do repositório e nunca sai em log.
 
   Gate vermelho não empurra. Nunca.
 
-- [ ] **Step 2: `--linked` é proibido no ambiente local**
+- [x] **Step 2: `--linked` é proibido no ambiente local**
 
   O workflow é o único lugar que fala com produção. Se houver script local que aceite
   `--linked`, ele sai.
 
-- [ ] **Step 3: teste de escopo**
+- [x] **Step 3: teste de escopo**
 
   Em `tests/scope/`: o workflow existe, roda depois do gate, e nenhum script de
   `package.json` aponta para produção.

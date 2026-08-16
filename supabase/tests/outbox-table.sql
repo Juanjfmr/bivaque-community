@@ -17,6 +17,8 @@ select columns_are(
     'status',
     'attempts',
     'last_error',
+    'fallback_channel',
+    'fallback_reason',
     'created_at',
     'updated_at'
   ],
