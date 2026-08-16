@@ -476,7 +476,7 @@ regressÃ£o-guarda permanente em vez de inspeÃ§Ã£o manual repetida.
 **Files:**
 - Modify: `scripts/visual/capture.mjs` (funÃ§Ã£o `auditPage`)
 
-- [ ] **Step 1: Adicionar a regra `nav-active` (rubrica item 4)**
+- [x] **Step 1: Adicionar a regra `nav-active` (rubrica item 4)**
 
 Dentro de `auditPage`, junto Ã s demais checagens. A rubrica exige: sidebar
 ativa correta no desktop, bottom nav ativa no mobile, prÃ©-auth sem nav.
@@ -499,7 +499,7 @@ ativa correta no desktop, bottom nav ativa no mobile, prÃ©-auth sem nav.
   }
 ```
 
-- [ ] **Step 2: Adicionar a regra `forbidden-copy` (rubrica item 8)**
+- [x] **Step 2: Adicionar a regra `forbidden-copy` (rubrica item 8)**
 
 O produto proÃ­be expor posto, OM, endereÃ§o e selo de verificaÃ§Ã£o. O banco jÃ¡
 impÃµe isso no conteÃºdo do usuÃ¡rio via `post_no_forbidden_terms`
@@ -517,7 +517,7 @@ impÃµe isso no conteÃºdo do usuÃ¡rio via `post_no_forbidden_terms`
   }
 ```
 
-- [ ] **Step 3: Rodar e confirmar que as regras novas ficam em zero**
+- [x] **Step 3: Rodar e confirmar que as regras novas ficam em zero**
 
 ```bash
 node scripts/visual/loop.mjs --fast
@@ -538,7 +538,7 @@ ajuste a regra se o componente marcar estado ativo por um mecanismo diferente
 de `aria-current` / `data-active`; nesse caso, prefira **mudar o componente
 para usar `aria-current`**, que Ã© o que leitor de tela entende.
 
-- [ ] **Step 4: Commitar**
+- [x] **Step 4: Commitar**
 
 ```bash
 rm -rf playwright-report test-results
