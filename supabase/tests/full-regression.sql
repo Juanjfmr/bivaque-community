@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(83);
+select plan(85);
 
 \ir fixtures/foundation.inc
 \ir fixtures/regression.inc
@@ -29,6 +29,7 @@ select has_table('public', 'dm_messages', 'dm_messages');
 select has_table('public', 'dm_blocks', 'dm_blocks');
 select has_table('public', 'dm_reports', 'dm_reports');
 select has_table('public', 'reports', 'reports');
+select has_table('public', 'arrival_guide_entries', 'arrival_guide_entries');
 select has_table('private', 'verification_outcomes', 'verification_outcomes');
 select has_table('private', 'family_invitations', 'family_invitations');
 select has_table('private', 'family_account_links', 'family_account_links');
@@ -49,14 +50,15 @@ select results_eq(
         'recommendation_requests', 'recommendation_replies', 'recommendation_saves',
         'events', 'event_rsvps', 'notifications',
         'dm_conversations', 'dm_messages', 'dm_blocks', 'dm_reports',
+        'arrival_guide_entries',
         'reports',
         'verification_outcomes', 'family_invitations', 'family_account_links'
       )
       and c.relrowsecurity
       and c.relforcerowsecurity
   $$,
-  array[22::bigint],
-  'RLS enabled and forced on all 22 application tables'
+  array[23::bigint],
+  'RLS enabled and forced on all 23 application tables'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
@@ -166,6 +168,16 @@ select results_eq(
   $$,
   array[1::bigint],
   'reports_insert_authenticated policy exists'
+);
+
+select results_eq(
+  $$
+    select count(*) from pg_policies
+    where schemaname = 'public' and tablename = 'arrival_guide_entries'
+      and policyname = 'arrival_guide_select_approved_locality_member'
+  $$,
+  array[1::bigint],
+  'arrival_guide_select_approved_locality_member policy exists'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════

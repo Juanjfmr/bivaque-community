@@ -447,9 +447,12 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
   )
 }
 
+type CommunityOption = { id: string; name: string }
+
 interface CreatePostModalProps {
   localityId: string
   defaultPostType?: string | undefined
+  defaultCommunityId?: string | undefined
   onCreated: () => void
   onClose: () => void
 }
@@ -457,6 +460,7 @@ interface CreatePostModalProps {
 export function CreatePostModal({
   localityId,
   defaultPostType,
+  defaultCommunityId,
   onCreated,
   onClose,
 }: CreatePostModalProps) {
@@ -470,6 +474,8 @@ export function CreatePostModal({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [piiWarning, setPiiWarning] = useState(false)
+  const [communityId, setCommunityId] = useState<string | null>(defaultCommunityId ?? null)
+  const [availableCommunities, setAvailableCommunities] = useState<CommunityOption[]>([])
   const supabase = createBrowserClient()
 
   useEffect(() => {
@@ -477,6 +483,43 @@ export function CreatePostModal({
       onClose()
     }
   }, [modal.isOpen, onClose])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (cancelled || !user) return
+
+      const { data: membershipsData } = await supabase
+        .from("community_memberships")
+        .select("community_id")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+
+      const communityIds = ((membershipsData as { community_id: string }[] | null) ?? []).map(
+        (membership) => membership.community_id,
+      )
+      if (cancelled || communityIds.length === 0) return
+
+      const { data: communitiesData } = await supabase
+        .from("communities")
+        .select("id, name")
+        .in("id", communityIds)
+
+      if (cancelled) return
+      setAvailableCommunities(
+        ((communitiesData as { id: string; name: string }[] | null) ?? []).map((community) => ({
+          id: community.id,
+          name: community.name,
+        })),
+      )
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [supabase])
 
   const resetForm = useCallback(() => {
     setPostType("text")
@@ -487,6 +530,7 @@ export function CreatePostModal({
     setPollOptions([])
     setError("")
     setPiiWarning(false)
+    setCommunityId(null)
   }, [])
 
   const handleAddPollOption = useCallback(() => {
@@ -524,6 +568,7 @@ export function CreatePostModal({
       locality_id: localityId,
       post_type: postType,
       content: content.trim(),
+      community_id: communityId,
     } as const
 
     const extras: { photo_path?: string; link_url?: string; poll_options?: string[] } = {}
@@ -556,6 +601,7 @@ export function CreatePostModal({
     photoPath,
     linkUrl,
     pollOptions,
+    communityId,
     piiWarning,
     localityId,
     supabase,
@@ -590,6 +636,25 @@ export function CreatePostModal({
                     {POST_TYPE_LABELS[type]}
                   </Button>
                 ))}
+              </div>
+
+              <div className="mt-4">
+                <label htmlFor="post-audience" className="mb-1 block text-sm font-medium">
+                  Audiência
+                </label>
+                <select
+                  id="post-audience"
+                  value={communityId ?? ""}
+                  onChange={(event) => setCommunityId(event.target.value || null)}
+                  className="w-full rounded-md border border-border bg-[var(--surface)] px-3 py-2 text-sm"
+                >
+                  <option value="">Manaus</option>
+                  {availableCommunities.map((community) => (
+                    <option key={community.id} value={community.id}>
+                      {community.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {postType === "photo" ? (

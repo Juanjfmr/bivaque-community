@@ -504,4 +504,82 @@ from public.posts p
 where p.id between '80000000-0000-4000-8000-000000000001'::uuid
               and '80000000-0000-4000-8000-00000000000f'::uuid;
 
+-- ── Guia de chegada: referência curada de Manaus ─────────────────────────
+-- Dados fictícios de desenvolvimento local; a curadoria real entra via
+-- service_role/runbook, nunca por seed de produção.
+insert into public.arrival_guide_entries (
+  id, locality_id, category, name, description, website_url, phone
+)
+values
+  (
+    'a0000000-0000-4000-8000-000000000001',
+    '00000000-0000-4000-8000-000000000001',
+    'school',
+    'Escola Modelo do Centro',
+    'Ensino fundamental e médio, com turno integral e acolhimento de transferidos no meio do ano.',
+    'https://escola-modelo.example.invalid',
+    '(92) 3000-0001'
+  ),
+  (
+    'a0000000-0000-4000-8000-000000000002',
+    '00000000-0000-4000-8000-000000000001',
+    'hospital',
+    'Hospital de Referência da Cidade',
+    'Pronto-atendimento adulto e pediátrico; o guia não substitui orientação médica.',
+    'https://hospital-referencia.example.invalid',
+    '(92) 3000-0002'
+  ),
+  (
+    'a0000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000001',
+    'transporter',
+    'Transportadora Ajuricaba',
+    'Mudanças locais e interestaduais, com avaliação de volume antes do fechamento.',
+    'https://transportadora-ajuricaba.example.invalid',
+    '(92) 3000-0003'
+  ),
+  (
+    'a0000000-0000-4000-8000-000000000004',
+    '00000000-0000-4000-8000-000000000001',
+    'courier',
+    'Despachante Central',
+    'Documentação veicular e apoio para quem acabou de chegar e precisa regularizar o carro.',
+    null,
+    '(92) 3000-0004'
+  )
+on conflict (id) do nothing;
+
+-- ── Guia de chegada: fila de curadoria pendente (desenvolvimento) ──────────
+-- A leitura pública enxerga apenas status = approved; estes dois itens
+-- exercitam a fila do operador sem aparecer para membros.
+insert into public.arrival_guide_entries (
+  id, locality_id, category, name, description, website_url, phone, status, source, confidence
+)
+values
+  (
+    'a0000000-0000-4000-8000-000000000005',
+    '00000000-0000-4000-8000-000000000001',
+    'school',
+    'Escola de Acolhimento Militar',
+    'Sugestão extraída de indicação da comunidade para transferência no meio do ano.',
+    'https://escola-acolhimento.example.invalid',
+    '(92) 3000-0005',
+    'pending',
+    'ai',
+    78
+  ),
+  (
+    'a0000000-0000-4000-8000-000000000006',
+    '00000000-0000-4000-8000-000000000001',
+    'transporter',
+    'Mudanças Rápido Norte',
+    'Sugestão manual aguardando conferência de telefone antes de publicar.',
+    null,
+    '(92) 3000-0006',
+    'pending',
+    'manual',
+    null
+  )
+on conflict (id) do nothing;
+
 commit;

@@ -22,6 +22,8 @@ export default function CommunityPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [defaultPostType, setDefaultPostType] = useState<string | undefined>(undefined)
   const [memberCount, setMemberCount] = useState<number | null>(null)
+  const [primaryCommunityId, setPrimaryCommunityId] = useState<string | null>(null)
+  const [primaryCommunityName, setPrimaryCommunityName] = useState<string | null>(null)
   const [sortOrder, setSortOrder] = useState<"recent" | "relevant">("recent")
   const [transitioning, setTransitioning] = useState(false)
   const [atEnd, setAtEnd] = useState(false)
@@ -51,19 +53,46 @@ export default function CommunityPage() {
         return
       }
 
-      const { data, error: feedError } = await supabase.rpc("feed_posts", {
-        p_locality_id: PILOT_LOCALITY_ID,
-        p_order: order,
-      })
+      const { data: membershipsData } = await supabase
+        .from("community_memberships")
+        .select("community_id")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        .limit(1)
 
-      if (feedError) {
+      const communityId = ((membershipsData as { community_id: string }[] | null) ?? [])[0]
+        ?.community_id
+
+      let communityName: string | null = null
+      if (communityId) {
+        const { data: communityData } = await supabase
+          .from("communities")
+          .select("name")
+          .eq("id", communityId)
+          .maybeSingle()
+        communityName = (communityData as { name: string } | null)?.name ?? null
+      }
+
+      const feed = communityId
+        ? await supabase.rpc("feed_community", {
+            p_community_id: communityId,
+            p_order: order,
+          })
+        : await supabase.rpc("feed_posts", {
+            p_locality_id: PILOT_LOCALITY_ID,
+            p_order: order,
+          })
+
+      if (feed.error) {
         setError("Não foi possível carregar as publicações. Tente novamente.")
         setLoading(false)
         return
       }
 
-      const newPosts = (data as unknown as FeedPostRow[]) ?? []
+      const newPosts = (feed.data as unknown as FeedPostRow[]) ?? []
       setPosts(newPosts)
+      setPrimaryCommunityId(communityId ?? null)
+      setPrimaryCommunityName(communityName)
       setLoading(false)
 
       if (newPosts.length === 0) {
@@ -163,11 +192,18 @@ export default function CommunityPage() {
       <div className="sticky top-12 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
         <div className="mx-auto flex max-w-[56rem] items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <h1 className="text-lg font-semibold tracking-tight">Manaus, AM</h1>
-            {memberCount !== null && (
+            <h1 className="text-lg font-semibold tracking-tight">
+              {primaryCommunityName ?? "Manaus, AM"}
+            </h1>
+            {!primaryCommunityName && memberCount !== null && (
               <span className="text-sm text-muted">
                 {memberCount} {memberCount === 1 ? "membro" : "membros"}
               </span>
+            )}
+            {!primaryCommunityName && (
+              <a href="/guide" className="text-sm font-medium text-accent hover:underline">
+                Guia de chegada
+              </a>
             )}
           </div>
           <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
@@ -277,6 +313,7 @@ export default function CommunityPage() {
         <CreatePostModal
           localityId={PILOT_LOCALITY_ID}
           defaultPostType={defaultPostType}
+          defaultCommunityId={primaryCommunityId ?? undefined}
           onCreated={handleCreated}
           onClose={() => {
             setShowCreateModal(false)

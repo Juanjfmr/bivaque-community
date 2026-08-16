@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createServerClient as createServiceClient } from "../../lib/supabase/server"
@@ -31,7 +32,7 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
   } = await authClient.auth.getUser()
 
   if (!user) {
-    redirect("/login?return=/admin/reports")
+    redirect("/login?return=/reports")
   }
 
   const serviceClient = createServiceClient()
@@ -43,5 +44,37 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
     redirect("/community")
   }
 
-  return <>{children}</>
+  return (
+    <div className="flex min-h-screen flex-col">
+      <nav aria-label="Painel do operador" className="border-b border-border bg-surface px-6 py-3">
+        <ul className="flex flex-wrap gap-4 text-sm">
+          <li>
+            <Link
+              href="/admissions"
+              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
+            >
+              Admissões
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/reports"
+              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
+            >
+              Denúncias
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/guide-queue"
+              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
+            >
+              Guia de chegada
+            </Link>
+          </li>
+        </ul>
+      </nav>
+      {children}
+    </div>
+  )
 }
