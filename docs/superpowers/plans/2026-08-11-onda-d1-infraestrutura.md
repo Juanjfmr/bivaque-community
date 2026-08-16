@@ -250,7 +250,7 @@ Depende de a credencial de produção existir como secret.
   Em `tests/scope/`: o workflow existe, roda depois do gate, e nenhum script de
   `package.json` aponta para produção.
 
-- [ ] **Step 4: atualizar o runbook**
+- [x] **Step 4: atualizar o runbook**
 
   `docs/PILOT_RUNBOOK.md` §9 ainda manda testar o Portal com a chave de produção localmente,
   e afirma que `test:privacy` e `test:secrets` verificam produção — **eles não abrem conexão
@@ -260,7 +260,7 @@ Depende de a credencial de produção existir como secret.
 
   Isso fecha a Task 8 do plano de observabilidade, que está aberta desde 2026-08-06.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(ci): push migrations from CI and take the production key off the laptop`.
 

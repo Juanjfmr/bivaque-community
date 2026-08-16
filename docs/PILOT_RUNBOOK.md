@@ -74,13 +74,12 @@ Se houver suspeita de comprometimento:
 
 ### Verificacao apos atualizacao
 
-```sh
-# Teste local com a nova chave (nao commitar o .env de producao)
-SUPABASE_URL="<url>" \
-SUPABASE_SERVICE_ROLE_KEY="<key>" \
-PORTAL_DADOS_API_KEY="<nova-chave>" \
-npx pnpm@11.18.0 test:unit -- tests/unit/portal/
-```
+Nao teste a chave localmente contra o Portal com credenciais de producao.
+Apos atualizar `PORTAL_DADOS_API_KEY` no `.env` de producao e reiniciar o
+servidor, autentique-se como operador e abra `/api/admin/portal-health`.
+O probe chama o Portal com a chave do servidor e devolve `status: "ok"`
+(ou o codigo do §4 para diagnosticar). A chave nunca sai do servidor.
+
 
 ---
 
