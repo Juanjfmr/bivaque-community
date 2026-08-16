@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
+import { log } from "../../../lib/logger"
 import { sanitizeNext } from "../../../lib/security/sanitize-next"
 
 const COOKIE_OPTIONS = {
@@ -17,14 +18,15 @@ export async function GET(request: Request) {
   const next = sanitizeNext(searchParams.get("next"))
 
   if (!code) {
-    return NextResponse.json({ error: "Missing code parameter" }, { status: 400 })
+    return NextResponse.redirect(new URL("/auth/callback-error", request.url))
   }
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const key = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
 
   if (!url || !key) {
-    return NextResponse.json({ error: "Missing Supabase environment variables" }, { status: 500 })
+    log.error("auth callback failed: missing Supabase environment variables")
+    return NextResponse.redirect(new URL("/auth/callback-error", request.url))
   }
 
   const cookieStore = await cookies()
@@ -46,7 +48,8 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error) {
-    return NextResponse.json({ error: `Code exchange failed: ${error.message}` }, { status: 401 })
+    log.error("auth callback failed", { error: error.message })
+    return NextResponse.redirect(new URL("/auth/callback-error", request.url))
   }
 
   const redirectUrl = new URL(next, request.url)

@@ -47,9 +47,9 @@ test.describe("onboarding: denial paths", () => {
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
   })
 
-  test("onboarding page is accessible without auth", async ({ page }) => {
-    const response = await page.goto("/onboarding")
-    expect(response?.ok()).toBeTruthy()
+  test("onboarding without consent redirects to the consent gate", async ({ page }) => {
+    await page.goto("/onboarding")
+    await page.waitForURL(/\/consent/)
   })
 
   test("health endpoint is always accessible", async ({ request }) => {

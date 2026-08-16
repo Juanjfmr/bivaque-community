@@ -1,3 +1,4 @@
+import { isValidCpf } from "@bivaque/domain"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import { log } from "../../../lib/logger"
@@ -16,7 +17,8 @@ interface OnboardingRequestBody {
   cpf?: string
   token?: string
   email?: string
-  locality_id?: string
+  city_name?: string
+  state_code?: string
 }
 
 export async function POST(request: Request) {
@@ -50,14 +52,28 @@ export async function POST(request: Request) {
   const cookieStore = await cookies()
   const consentVersionStr = cookieStore.get("bivaque-consent-version")?.value ?? "0"
   const consentVersion = Number.parseInt(consentVersionStr, 10)
+  const codeOfConductVersion = 1
 
   const action = body.action
 
   try {
+    const { data: hasAcceptedConsent } = await supabase.rpc("has_accepted_consent", {
+      p_user_id: userId,
+      p_consent_version: consentVersion,
+      p_code_of_conduct_version: codeOfConductVersion,
+    })
+
+    if (!hasAcceptedConsent) {
+      return NextResponse.json({ error: "consent is required" }, { status: 403 })
+    }
+
     if (action === "verify-cpf") {
       const cpf = body.cpf
       if (typeof cpf !== "string" || cpf.length === 0) {
         return NextResponse.json({ error: "cpf is required" }, { status: 400 })
+      }
+      if (!isValidCpf(cpf)) {
+        return NextResponse.json({ error: "cpf is invalid" }, { status: 400 })
       }
 
       const result = await verifyAndProvision(supabase, { userId, cpf, consentVersion })
@@ -81,17 +97,22 @@ export async function POST(request: Request) {
 
     if (action === "join-waitlist") {
       const email = body.email
-      const localityId = body.locality_id
+      const cityName = body.city_name
+      const stateCode = body.state_code
 
       if (typeof email !== "string" || email.length === 0) {
         return NextResponse.json({ error: "email is required" }, { status: 400 })
       }
 
-      if (typeof localityId !== "string" || localityId.length === 0) {
-        return NextResponse.json({ error: "locality_id is required" }, { status: 400 })
+      if (typeof cityName !== "string" || cityName.length === 0) {
+        return NextResponse.json({ error: "city_name is required" }, { status: 400 })
       }
 
-      const result = await addToWaitlist(supabase, email, localityId)
+      if (typeof stateCode !== "string" || (stateCode.length !== 0 && stateCode.length !== 2)) {
+        return NextResponse.json({ error: "state_code is invalid" }, { status: 400 })
+      }
+
+      const result = await addToWaitlist(supabase, email, cityName, stateCode)
       return NextResponse.json(result)
     }
 

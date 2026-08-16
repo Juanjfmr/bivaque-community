@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(68);
+select plan(70);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- GUARD 1: anon/authenticated have ZERO privileges on private.* tables
@@ -88,13 +88,23 @@ select hasnt_column('public', 'waitlist', 'address', 'GUARD: waitlist has no add
 select hasnt_column('public', 'waitlist', 'om', 'GUARD: waitlist has no om column');
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- GUARD 5: verification_outcomes has ONLY the 6 authorized columns
+-- GUARD 5: verification_outcomes has ONLY the 9 authorized columns
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 select columns_are(
   'private',
   'verification_outcomes',
-  array['user_id', 'status', 'eligibility_class', 'checked_at', 'created_at', 'updated_at'],
+  array[
+    'user_id',
+    'status',
+    'eligibility_class',
+    'checked_at',
+    'created_at',
+    'updated_at',
+    'attempt_count',
+    'first_attempt_at',
+    'last_attempt_at'
+  ],
   'GUARD: verification_outcomes columns match authorized set'
 );
 
@@ -133,6 +143,7 @@ select results_eq(
         'recommendation_requests', 'recommendation_replies', 'recommendation_saves',
         'events', 'event_rsvps', 'notifications',
         'dm_conversations', 'dm_messages', 'dm_blocks', 'dm_reports',
+        'arrival_guide_entries',
         'reports'
       )
       and cmd in ('ALL', 'INSERT', 'UPDATE', 'DELETE', 'SELECT')
@@ -342,13 +353,15 @@ select results_eq(
         'recommendation_requests_delete_own',
         'recommendation_replies_select',
         'recommendation_replies_insert',
+        'recommendation_replies_update_own',
+        'recommendation_replies_delete_own',
         'recommendation_saves_select_own',
         'recommendation_saves_insert_own',
         'recommendation_saves_delete_own'
       )
   $$,
-  array[9::bigint],
-  'GUARD: all 9 recommendation policies intact'
+  array[11::bigint],
+  'GUARD: all 11 recommendation policies intact'
 );
 
 select results_eq(
@@ -440,6 +453,19 @@ select results_eq(
   $$,
   array[2::bigint],
   'GUARD: all 2 reports policies intact'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'arrival_guide_entries'
+      and policyname = 'arrival_guide_select_approved_locality_member'
+      and cmd = 'SELECT'
+  $$,
+  array[1::bigint],
+  'GUARD: arrival_guide_select_approved_locality_member policy intact'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
@@ -600,8 +626,8 @@ select results_eq(
     where schemaname = 'public'
       and tablename = 'recommendation_replies'
   $$,
-  array[2::bigint],
-  'GUARD: recommendation_replies has exactly 2 policies'
+  array[4::bigint],
+  'GUARD: recommendation_replies has exactly 4 policies'
 );
 
 select results_eq(
@@ -681,8 +707,19 @@ select results_eq(
   'GUARD: reports has exactly 2 policies (no UPDATE, no DELETE)'
 );
 
+select results_eq(
+  $$
+    select count(*)
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'arrival_guide_entries'
+  $$,
+  array[1::bigint],
+  'GUARD: arrival_guide_entries has exactly 1 policy'
+);
+
 -- ═══════════════════════════════════════════════════════════════════════════════
--- GUARD 11: RLS is enabled AND forced on all 22 application tables
+-- GUARD 11: RLS is enabled AND forced on all 23 application tables
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 select results_eq(
@@ -697,14 +734,15 @@ select results_eq(
         'recommendation_requests', 'recommendation_replies', 'recommendation_saves',
         'events', 'event_rsvps', 'notifications',
         'dm_conversations', 'dm_messages', 'dm_blocks', 'dm_reports',
+        'arrival_guide_entries',
         'reports',
         'verification_outcomes', 'family_invitations', 'family_account_links'
       )
       and c.relrowsecurity
       and c.relforcerowsecurity
   $$,
-  array[22::bigint],
-  'GUARD: RLS enabled and forced on all 22 application tables'
+  array[23::bigint],
+  'GUARD: RLS enabled and forced on all 23 application tables'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════

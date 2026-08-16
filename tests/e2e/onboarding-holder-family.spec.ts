@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { seedSession } from "./helpers/session"
 
 test.describe("onboarding: verified holder and invited family", () => {
   test("verified Manaus holder completes onboarding and reaches community", async ({ page }) => {
@@ -17,6 +18,7 @@ test.describe("onboarding: verified holder and invited family", () => {
   })
 
   test("consent page shows terms and accept button", async ({ page }) => {
+    await seedSession(page.context())
     await page.goto("/consent")
 
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
@@ -31,6 +33,7 @@ test.describe("onboarding: verified holder and invited family", () => {
   })
 
   test("onboarding page shows verification flow", async ({ page }) => {
+    await seedSession(page.context())
     await page.goto("/onboarding")
 
     // Onboarding is a `(preauth)` route with no shell header, so its own H1 is
@@ -44,6 +47,7 @@ test.describe("onboarding: verified holder and invited family", () => {
   })
 
   test("onboarding page shows waitlist flow when switching from verify", async ({ page }) => {
+    await seedSession(page.context())
     await page.goto("/onboarding")
 
     const waitlistButton = page.getByRole("button", { name: /lista de espera/ })

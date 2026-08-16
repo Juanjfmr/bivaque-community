@@ -28,7 +28,17 @@ select columns_are(
 select columns_are(
   'private',
   'verification_outcomes',
-  array['user_id', 'status', 'eligibility_class', 'checked_at', 'created_at', 'updated_at'],
+  array[
+    'user_id',
+    'status',
+    'eligibility_class',
+    'checked_at',
+    'created_at',
+    'updated_at',
+    'attempt_count',
+    'first_attempt_at',
+    'last_attempt_at'
+  ],
   'verification outcomes retain only the normalized private decision'
 );
 select columns_are(

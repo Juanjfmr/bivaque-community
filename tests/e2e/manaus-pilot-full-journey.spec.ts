@@ -51,6 +51,7 @@ test.describe("holder onboarding journey", () => {
 
   test("accepting consent navigates to onboarding", async ({ page }) => {
     // Given the consent page
+    await seedSession(page.context())
     await page.goto("/consent")
 
     // When the user clicks the accept button
@@ -66,6 +67,7 @@ test.describe("holder onboarding journey", () => {
   test("onboarding page renders verify eligibility flow", async ({ page }) => {
     // Given the production Next server
     // When a user navigates to the onboarding page
+    await seedSession(page.context())
     await page.goto("/onboarding")
 
     // Then the verify eligibility UI is rendered
@@ -83,6 +85,7 @@ test.describe("holder onboarding journey", () => {
 
   test("onboarding shows waitlist flow when switching from verify", async ({ page }) => {
     // Given the onboarding page with the verify flow visible
+    await seedSession(page.context())
     await page.goto("/onboarding")
 
     // When the user clicks the "não sou de Manaus" waitlist button
@@ -103,6 +106,7 @@ test.describe("family invite journey", () => {
   test("onboarding page with invite token renders family acceptance flow", async ({ page }) => {
     // Given an invite token in the query string
     // When a user opens the onboarding page with an invite token
+    await seedSession(page.context())
     await page.goto(
       "/onboarding?invite=0000000000000000000000000000000000000000000000000000000000000000",
     )
@@ -522,6 +526,7 @@ test.describe("preauth page headings", () => {
 
   test("onboarding page leads with the eligibility heading", async ({ page }) => {
     // Given the onboarding page
+    await seedSession(page.context())
     await page.goto("/onboarding")
 
     // Then the eligibility heading is visible

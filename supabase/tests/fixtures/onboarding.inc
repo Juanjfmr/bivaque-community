@@ -28,14 +28,18 @@ insert into private.verification_outcomes (user_id, status)
 values ('60000000-0000-4000-8000-000000000002', 'rejected');
 
 -- waitlist entries for outside-city users
-insert into public.waitlist (id, email, locality_id)
+insert into public.waitlist (id, email, locality_id, city_name, state_code)
 values (
   '70000000-0000-4000-8000-000000000001',
   'outsider@example.invalid',
-  '00000000-0000-4000-8000-000000000001'
+  null,
+  'Brasília',
+  'DF'
 ),
 (
   '70000000-0000-4000-8000-000000000002',
   'another-city@example.invalid',
-  '00000000-0000-4000-8000-000000000002'
+  null,
+  'Belém',
+  'PA'
 );

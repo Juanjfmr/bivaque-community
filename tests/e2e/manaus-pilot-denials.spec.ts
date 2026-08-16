@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -172,6 +173,7 @@ test.describe("non-Manaus locality: denial paths", () => {
   test("waitlist button is discoverable from onboarding for non-Manaus users", async ({ page }) => {
     // Given the onboarding page
     // When a non-Manaus user visits the onboarding page
+    await seedSession(page.context())
     await page.goto("/onboarding")
 
     // Then the waitlist entry point is visible
@@ -344,13 +346,24 @@ test.describe("consent cookie tampering: denial paths", () => {
     await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
   })
 
-  test("onboarding page is always accessible regardless of cookie state", async ({ page }) => {
-    // Given any consent cookie state
+  test("onboarding redirects to consent when the consent cookie is missing", async ({ page }) => {
+    // Given a browser without the consent cookie
     // When the user navigates to /onboarding
     await page.goto("/onboarding")
 
-    // Then the onboarding page renders regardless. It is a `(preauth)` route
-    // with no shell header, so its own H1 is the landmark.
+    // Then the consent gate is applied before the CPF form
+    await page.waitForURL(/\/consent/)
+    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+  })
+
+  test("onboarding renders when consent is present", async ({ page }) => {
+    // Given the consent cookie
+    await seedSession(page.context())
+
+    // When the user navigates to /onboarding
+    await page.goto("/onboarding")
+
+    // Then the eligibility heading is visible
     await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
   })
 })

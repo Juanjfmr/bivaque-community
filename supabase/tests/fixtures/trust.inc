@@ -49,7 +49,7 @@ values (
   '30000000-0000-4000-8000-000000000003',
   '10000000-0000-4000-8000-000000000001',
   decode(repeat('03', 32), 'hex'),
-  decode(repeat('e3', 32), 'hex'),
+  digest('non-member@example.invalid', 'sha256'),
   now() + interval '7 days'
 ),
 (

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import { PILOT_LOCALITY_ID } from "../locality"
 import type { VerificationResult } from "../portal"
-import { verifyCpf } from "../portal"
+import { createPortalVerificationGuard, verifyCpfWithErrorCode } from "../portal"
 
 const CURRENT_CONSENT_VERSION = 1
 
@@ -35,7 +35,33 @@ export async function verifyAndProvision(
     throw new Error("PORTAL_DADOS_API_KEY is required for verification")
   }
 
-  const outcome = await verifyCpf(cpf, apiKey)
+  const portalGuard = await createPortalVerificationGuard()
+  if (portalGuard && !(await portalGuard.allows(userId))) {
+    return { outcome: { status: "pending" }, localityMember: false, waitlistEntry: false }
+  }
+
+  // Anti-enumeration gate: at most three Portal attempts per rolling hour.
+  // The response below is generic so the browser cannot distinguish a CPF
+  // that is absent from a CPF that is merely rate-limited.
+  const { data: canAttempt, error: attemptError } = await supabase.rpc(
+    "consume_verification_attempt",
+    { p_user_id: userId },
+  )
+
+  if (attemptError) {
+    throw new Error(`Failed to consume verification attempt: ${attemptError.message}`)
+  }
+
+  if (canAttempt !== true) {
+    return { outcome: { status: "pending" }, localityMember: false, waitlistEntry: false }
+  }
+
+  const attempt = await verifyCpfWithErrorCode(cpf, apiKey)
+  const outcome = attempt.result
+
+  if (attempt.errorCode === "RATE_LIMITED" && portalGuard) {
+    await portalGuard.trip()
+  }
 
   const rpcArgs =
     outcome.status === "verified"
@@ -85,11 +111,13 @@ export async function verifyAndProvision(
 export async function addToWaitlist(
   supabase: AnySupabaseClient,
   email: string,
-  localityId: string,
+  cityName: string,
+  stateCode: string,
 ): Promise<{ waitlistEntry: boolean }> {
   const { error } = await supabase.rpc("add_to_waitlist", {
     p_email: email,
-    p_locality_id: localityId,
+    p_city_name: cityName,
+    p_state_code: stateCode,
   })
 
   if (error) {

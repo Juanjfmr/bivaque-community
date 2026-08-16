@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(26);
 
 \ir fixtures/foundation.inc
 \ir fixtures/onboarding.inc
@@ -23,6 +23,8 @@ select has_table('public', 'waitlist', 'waitlist table exists');
 select has_column('public', 'waitlist', 'id', 'waitlist has id');
 select has_column('public', 'waitlist', 'email', 'waitlist has email');
 select has_column('public', 'waitlist', 'locality_id', 'waitlist has locality_id');
+select has_column('public', 'waitlist', 'city_name', 'waitlist has city_name');
+select has_column('public', 'waitlist', 'state_code', 'waitlist has state_code');
 select has_column('public', 'waitlist', 'created_at', 'waitlist has created_at');
 
 -- prohibited columns
@@ -73,10 +75,12 @@ select results_eq(
   $$
     select count(*)
     from public.waitlist
-    where locality_id = '00000000-0000-4000-8000-000000000001'
+    where locality_id is null
+      and city_name = 'Brasília'
+      and state_code = 'DF'
   $$,
   array[1::bigint],
-  'Manaus waitlist has one entry'
+  'outside-city waitlist has one Brasília entry'
 );
 
 select results_eq(
@@ -84,21 +88,22 @@ select results_eq(
     select count(*)
     from public.waitlist
     where email = 'outsider@example.invalid'
-      and locality_id = '00000000-0000-4000-8000-000000000001'
+      and city_name = 'Brasília'
+      and state_code = 'DF'
   $$,
   array[1::bigint],
-  'outside-city user is on Manaus waitlist'
+  'outside-city user is on the Brasília waitlist'
 );
 
 -- ── Waitlist unique constraint ──
 
 select throws_ok(
   $$
-    insert into public.waitlist (email, locality_id)
-    values ('outsider@example.invalid', '00000000-0000-4000-8000-000000000001')
+    insert into public.waitlist (email, city_name, state_code)
+    values ('outsider@example.invalid', 'Brasília', 'DF')
   $$,
   null,
-  'duplicate email+locality pair is rejected on waitlist'
+  'duplicate email+city pair is rejected on waitlist'
 );
 
 -- ── Pending user has no profile ──

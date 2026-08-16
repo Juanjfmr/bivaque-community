@@ -6,7 +6,6 @@ const PUBLIC_PATHS = [
   "/login",
   "/auth/callback",
   "/consent",
-  "/onboarding",
   "/api",
   "/_next",
   "/favicon.ico",
@@ -98,6 +97,23 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL("/login", request.url)
     loginUrl.searchParams.set("redirect", pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Onboarding keeps its own screen and is not part of the verified shell.
+  if (pathname === "/onboarding" || pathname.startsWith("/onboarding/status")) {
+    return supabaseResponse
+  }
+
+  // The welcome screen is a reward for a verified membership, not a public page.
+  const isMember = await supabase
+    .from("locality_memberships")
+    .select("locality_id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle()
+
+  if (isMember.data === null) {
+    return NextResponse.redirect(new URL("/onboarding", request.url))
   }
 
   return supabaseResponse

@@ -3,7 +3,7 @@ import type { PortalApiResponse, VerificationResult } from "./types"
 
 const PORTAL_BASE_URL = "https://api.portaldatransparencia.gov.br"
 
-type PortalErrorCode =
+export type PortalErrorCode =
   | "SCHEMA_DRIFT"
   | "HTTP_ERROR"
   | "TIMEOUT"
@@ -14,6 +14,12 @@ type PortalErrorCode =
 type PortalErrorResult = Extract<VerificationResult, { status: "temporary_error" }> & {
   errorCode: PortalErrorCode
 }
+
+const PENDING_ERROR_CODES: ReadonlySet<PortalErrorCode> = new Set([
+  "TIMEOUT",
+  "HTTP_ERROR",
+  "RATE_LIMITED",
+])
 
 export function temporaryError(reason: string, errorCode: PortalErrorCode): PortalErrorResult {
   return { status: "temporary_error", reason, errorCode }
@@ -40,7 +46,7 @@ async function fetchFromPortal(
     const response = await fetch(url, { headers, signal: linkedSignal })
 
     if (response.status === 401) {
-      return []
+      throw temporaryError("Portal API key rejected", "INVALID_KEY")
     }
 
     if (response.status === 429) {
@@ -79,20 +85,26 @@ async function fetchFromPortal(
   }
 }
 
-export async function verifyCpf(
+export interface VerificationAttempt {
+  result: VerificationResult
+  errorCode?: PortalErrorCode
+}
+
+export async function verifyCpfWithErrorCode(
   cpf: string,
   apiKey: string,
   signal?: AbortSignal,
-): Promise<VerificationResult> {
+): Promise<VerificationAttempt> {
   if (!apiKey) {
-    return temporaryError("Portal API key not configured", "INVALID_KEY")
+    const result = temporaryError("Portal API key not configured", "INVALID_KEY")
+    return { result, errorCode: "INVALID_KEY" }
   }
 
   const endpoint = `/api-de-dados/servidores?cpf=${encodeURIComponent(cpf.replace(/\D/g, ""))}`
 
   try {
-    const response = await fetchFromPortal(endpoint, apiKey, signal)
-    return classifyPortalResponse(response)
+    const result = classifyPortalResponse(await fetchFromPortal(endpoint, apiKey, signal))
+    return { result }
   } catch (error: unknown) {
     if (
       error !== null &&
@@ -100,12 +112,29 @@ export async function verifyCpf(
       "status" in error &&
       (error as { status: string }).status === "temporary_error"
     ) {
-      return error as VerificationResult
+      const errorCode = (error as { errorCode?: PortalErrorCode }).errorCode
+      if (errorCode !== undefined && PENDING_ERROR_CODES.has(errorCode)) {
+        return { result: { status: "pending" }, errorCode }
+      }
+      if (errorCode !== undefined) {
+        return { result: error as VerificationResult, errorCode }
+      }
+      return { result: error as VerificationResult }
     }
 
-    return temporaryError(
+    const result = temporaryError(
       `Portal verification failed: ${error instanceof Error ? error.message : "unknown"}`,
       "HTTP_ERROR",
     )
+    return { result, errorCode: "HTTP_ERROR" }
   }
+}
+
+export async function verifyCpf(
+  cpf: string,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<VerificationResult> {
+  const attempt = await verifyCpfWithErrorCode(cpf, apiKey, signal)
+  return attempt.result
 }

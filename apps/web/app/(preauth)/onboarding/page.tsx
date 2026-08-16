@@ -1,9 +1,9 @@
 "use client"
 
+import { isValidCpf } from "@bivaque/domain"
 import { Button, Form, Input, Spinner } from "@heroui/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
-import { PILOT_LOCALITY_ID } from "../../../lib/locality"
 import { purgeCpfResidue } from "../../../lib/onboarding/storage"
 import { verificationErrorMessage } from "../../../lib/portal/verification-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -12,6 +12,13 @@ import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { showToast } from "../../components/bivaque/toast"
 
 type OnboardingStep = "verify" | "family" | "waitlist" | "done" | "loading"
+
+function formatCpf(digits: string): string {
+  if (digits.length <= 3) return digits
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`
+}
 
 export default function OnboardingPage() {
   return (
@@ -84,11 +91,14 @@ function OnboardingFlow() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState("")
+  const [cityName, setCityName] = useState("")
+  const [stateCode, setStateCode] = useState("")
   const [familyToken, setFamilyToken] = useState("")
   const [result, setResult] = useState<string | null>(null)
   const [flow, setFlow] = useState<"verify" | "family" | "waitlist">("verify")
 
   const inviteToken = searchParams.get("invite")
+  const waitlistParam = searchParams.get("flow")
 
   useEffect(() => {
     // A versão anterior do fluxo gravava o CPF aqui; quem já passou por ela
@@ -112,6 +122,12 @@ function OnboardingFlow() {
         return
       }
 
+      if (waitlistParam === "waitlist") {
+        setFlow("waitlist")
+        setStep("waitlist")
+        return
+      }
+
       setStep("verify")
 
       try {
@@ -130,21 +146,25 @@ function OnboardingFlow() {
           return
         }
         if (data.status === "pending") {
-          router.replace("/onboarding/status?state=pending")
+          router.replace("/onboarding/status")
           return
         }
         if (data.status === "rejected") {
-          router.replace("/onboarding/status?state=rejected")
+          router.replace("/onboarding/status")
           return
         }
       } catch {}
     }
 
     boot()
-  }, [inviteToken, router])
+  }, [inviteToken, waitlistParam, router])
 
   const handleVerifyCpf = async () => {
     setError(null)
+    if (!isValidCpf(cpf)) {
+      setError("CPF inválido. Confira os 11 dígitos.")
+      return
+    }
     setLoading(true)
 
     const {
@@ -186,12 +206,12 @@ function OnboardingFlow() {
         const outcome = data["outcome"] as Record<string, unknown>
         if (outcome["status"] === "rejected") {
           setResult(
-            "Infelizmente, você não atende aos critérios de elegibilidade para Manaus. Você pode entrar na lista de espera para outras localidades.",
+            "Infelizmente, você não atende aos critérios do piloto de Manaus. Você pode entrar na lista de espera para outras localidades.",
           )
           setFlow("waitlist")
           setStep("waitlist")
         } else if (outcome["status"] === "pending") {
-          router.push("/onboarding/status?state=pending")
+          router.push("/onboarding/status")
         } else if (outcome["status"] === "temporary_error") {
           const errorCode = typeof outcome["errorCode"] === "string" ? outcome["errorCode"] : ""
           setError(verificationErrorMessage(errorCode, SUPPORT_EMAIL))
@@ -254,6 +274,10 @@ function OnboardingFlow() {
 
   const handleJoinWaitlist = async () => {
     setError(null)
+    if (cityName.trim().length === 0) {
+      setError("Informe a cidade onde você quer ser avisado.")
+      return
+    }
     setLoading(true)
 
     const {
@@ -281,7 +305,8 @@ function OnboardingFlow() {
         body: JSON.stringify({
           action: "join-waitlist",
           email,
-          locality_id: PILOT_LOCALITY_ID,
+          city_name: cityName.trim(),
+          state_code: stateCode.trim().toUpperCase(),
         }),
       })
 
@@ -339,8 +364,8 @@ function OnboardingFlow() {
         {step === "verify" && !loading && (
           <>
             <p className="text-sm text-muted">
-              Para acessar a comunidade de Manaus, precisamos verificar sua elegibilidade como
-              militar federal ativo, veterano ou pensionista militar.
+              O piloto hoje acontece só em Manaus. A verificação confere sua elegibilidade como
+              militar federal ativo, veterano ou pensionista — ela não confere endereço.
             </p>
 
             <Form
@@ -353,8 +378,13 @@ function OnboardingFlow() {
               <Input
                 aria-label="CPF"
                 placeholder="000.000.000-00"
-                value={cpf}
-                onChange={(e) => setCpf((e.target as HTMLInputElement).value)}
+                value={formatCpf(cpf)}
+                onChange={(e) => {
+                  const digits = (e.target as HTMLInputElement).value
+                    .replace(/\D/g, "")
+                    .slice(0, 11)
+                  setCpf(digits)
+                }}
                 required
                 maxLength={14}
               />
@@ -372,7 +402,7 @@ function OnboardingFlow() {
                   setStep("waitlist")
                 }}
               >
-                Não sou de Manaus — entrar na lista de espera
+                Entrar na lista de espera de outras localidades
               </Button>
             </div>
           </>
@@ -417,6 +447,30 @@ function OnboardingFlow() {
                 onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
                 required
               />
+              <div className="flex gap-3">
+                <Input
+                  aria-label="Cidade"
+                  placeholder="Cidade"
+                  value={cityName}
+                  onChange={(e) => setCityName((e.target as HTMLInputElement).value)}
+                  className="flex-1"
+                  required
+                />
+                <Input
+                  aria-label="UF"
+                  placeholder="UF"
+                  value={stateCode}
+                  onChange={(e) => {
+                    const value = (e.target as HTMLInputElement).value
+                      .replace(/[^a-zA-Z]/g, "")
+                      .toUpperCase()
+                      .slice(0, 2)
+                    setStateCode(value)
+                  }}
+                  className="w-20"
+                  maxLength={2}
+                />
+              </div>
               <Button type="submit" variant="primary" className="w-full" isDisabled={loading}>
                 {loading ? "Enviando..." : "Entrar na lista de espera"}
               </Button>
