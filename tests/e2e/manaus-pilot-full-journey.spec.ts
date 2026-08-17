@@ -78,23 +78,21 @@ test.describe("holder onboarding journey", () => {
     await expect(cpfInput).toBeVisible()
     await cpfInput.fill("123.456.789-09")
     await expect(cpfInput).toHaveValue("123.456.789-09")
-
-    // And the waitlist fallback is discoverable
-    await expect(page.getByRole("button", { name: /lista de espera/ })).toBeVisible()
   })
 
-  test("onboarding shows waitlist flow when switching from verify", async ({ page }) => {
+  test("onboarding does not offer a geographic waitlist fallback", async ({ page }) => {
     // Given the onboarding page with the verify flow visible
     await seedSession(page.context())
     await page.goto("/onboarding")
 
-    // When the user clicks the "não sou de Manaus" waitlist button
-    const waitlistButton = page.getByRole("button", { name: /lista de espera/ })
-    await waitlistButton.click()
+    // Then the verify step offers no geographic waitlist — P0 Task 8 makes
+    // eligibility, not geography, the gate. Whoever is eligible joins their
+    // own locality; whoever is not is rejected without a waitlist detour.
+    await expect(page.getByRole("button", { name: /lista de espera/ })).toHaveCount(0)
+    await expect(page.getByRole("link", { name: /lista de espera/ })).toHaveCount(0)
 
-    // Then the waitlist form is displayed
-    await expect(page.getByLabel("E-mail")).toBeVisible()
-    await expect(page.getByRole("button", { name: "Entrar na lista de espera" })).toBeVisible()
+    // And the waitlist form (city/UF/email) is not rendered
+    await expect(page.getByLabel("E-mail")).toHaveCount(0)
   })
 })
 

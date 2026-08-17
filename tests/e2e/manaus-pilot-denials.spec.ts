@@ -170,22 +170,20 @@ test.describe("non-Manaus locality: denial paths", () => {
     expect(response.status()).toBe(401)
   })
 
-  test("waitlist button is discoverable from onboarding for non-Manaus users", async ({ page }) => {
+  test("onboarding does not offer a geographic waitlist for non-Manaus users", async ({ page }) => {
     // Given the onboarding page
     // When a non-Manaus user visits the onboarding page
     await seedSession(page.context())
     await page.goto("/onboarding")
 
-    // Then the waitlist entry point is visible
-    const waitlistButton = page.getByRole("button", { name: /lista de espera/ })
-    await expect(waitlistButton).toBeVisible()
+    // Then the geographic waitlist entry point is gone — P0 Task 8 makes
+    // eligibility, not geography, the gate. Whoever is eligible joins their
+    // own locality; whoever is not is rejected without a waitlist detour.
+    await expect(page.getByRole("button", { name: /lista de espera/ })).toHaveCount(0)
+    await expect(page.getByRole("link", { name: /lista de espera/ })).toHaveCount(0)
 
-    // When the user clicks the waitlist button
-    await waitlistButton.click()
-
-    // Then the waitlist form is rendered
-    await expect(page.getByLabel("E-mail")).toBeVisible()
-    await expect(page.getByRole("button", { name: "Entrar na lista de espera" })).toBeVisible()
+    // And the waitlist form (which used to load on click) is not rendered
+    await expect(page.getByLabel("E-mail")).toHaveCount(0)
   })
 })
 

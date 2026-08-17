@@ -40,21 +40,20 @@ test.describe("onboarding: verified holder and invited family", () => {
     // the landmark rather than the Bivaque wordmark.
     await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Verificar elegibilidade" })).toBeVisible()
-    await expect(page.getByRole("button", { name: /lista de espera/ })).toBeVisible()
 
     const cpfInput = page.getByLabel("CPF")
     await expect(cpfInput).toBeVisible()
   })
 
-  test("onboarding page shows waitlist flow when switching from verify", async ({ page }) => {
+  test("onboarding does not offer a geographic waitlist as a fallback", async ({ page }) => {
     await seedSession(page.context())
     await page.goto("/onboarding")
 
-    const waitlistButton = page.getByRole("button", { name: /lista de espera/ })
-    await waitlistButton.click()
-
-    await expect(page.getByLabel("E-mail")).toBeVisible()
-    await expect(page.getByRole("button", { name: "Entrar na lista de espera" })).toBeVisible()
+    // P0 Task 8: the verify step no longer offers a geographic waitlist.
+    // Eligibility is the gate; whoever passes it joins their own locality.
+    await expect(page.getByRole("button", { name: /lista de espera/ })).toHaveCount(0)
+    await expect(page.getByRole("link", { name: /lista de espera/ })).toHaveCount(0)
+    await expect(page.getByLabel("E-mail")).toHaveCount(0)
   })
 
   test("login page is the entry point when not authenticated", async ({ page }) => {
