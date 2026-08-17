@@ -77,7 +77,7 @@ parecer pedir uma dessas, ela está errada — **pare e reporte**.
 `city_name`, `state_code`, `country_code` e `admission_mode`. **Não tem código IBGE**, que é a
 identificação canônica que a issue #20 pede.
 
-- [ ] **Step 1: de onde vem o dado**
+- [x] **Step 1: de onde vem o dado**
 
   [BrasilAPI](https://brasilapi.com.br/docs), verificada na fonte em 2026-08-16:
 
@@ -96,7 +96,7 @@ identificação canônica que a issue #20 pede.
   - **`codigo_ibge` é string, não número.** Sete dígitos. Tratar como número é a porta para
     perder zero à esquerda no dia em que alguém reformatar. **Guarde como texto.**
 
-- [ ] **Step 2: a BrasilAPI é dependência de geração, nunca de runtime**
+- [x] **Step 2: a BrasilAPI é dependência de geração, nunca de runtime**
 
   `scripts/localities/generate-catalog.mjs` consulta os 27 UFs, monta as linhas e **emite SQL
   versionado no repositório**. O onboarding nunca chama a BrasilAPI.
@@ -116,7 +116,7 @@ identificação canônica que a issue #20 pede.
   O script roda quando alguém decide rodar. **Não entra em CI, não entra em build, não entra em
   request.** Vale para toda a BrasilAPI neste repositório — ver o apêndice.
 
-- [ ] **Step 3: a migration**
+- [x] **Step 3: a migration**
 
   `npx pnpm@11.18.0 exec supabase migration new locality_ibge_catalog`.
 
@@ -132,13 +132,13 @@ identificação canônica que a issue #20 pede.
     `profiles`, `posts`, `groups`, `events` e os pgTAP que fixam UUID. **`update`, nunca
     `delete`+`insert`.**
 
-- [ ] **Step 4: a carga**
+- [x] **Step 4: a carga**
 
   O SQL gerado entra como migration de dados timestamped. **Não como `seed.sql`:** o seed é o de
   desenvolvimento local e é apagado por `db:reset --no-seed`, que é como o pgTAP roda. Catálogo
   tem que existir nos dois estados.
 
-- [ ] **Step 5: feriados nacionais, pelo mesmo script**
+- [x] **Step 5: feriados nacionais, pelo mesmo script**
 
   Enquanto o script está aberto, gere a tabela de feriados nacionais, alguns anos à frente, na
   mesma migration de dados. Não é escopo criativo: é insumo da **Task 4 da onda F** (encontro
@@ -147,7 +147,7 @@ identificação canônica que a issue #20 pede.
   **Só feriado nacional existe nessa rota.** Feriado municipal e estadual não estão lá; não os
   invente e não os semeie à mão.
 
-- [ ] **Step 6: testes**
+- [x] **Step 6: testes**
 
   - pgTAP em `supabase/tests/locality-catalog.sql`: `ibge_code` único e obrigatório; código com 6
     dígitos rejeitado; **Manaus manteve o UUID original** (asserção literal sobre o id); o total
@@ -158,7 +158,7 @@ identificação canônica que a issue #20 pede.
     `bom-jesus-pi`; **dois municípios homônimos em UFs diferentes produzem slugs distintos** —
     este é o teste da task.
 
-- [ ] **Step 7: gate e commit**
+- [x] **Step 7: gate e commit**
 
   `feat(localities): canonical IBGE municipality catalog and national holidays`.
 
