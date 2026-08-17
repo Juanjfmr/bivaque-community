@@ -707,7 +707,7 @@ vazios e vitrine vazia — quatro superfícies em branco no primeiro minuto.
 O ADR exige a reconciliação **antes do merge da implementação**, porque enquanto ela não
 acontece existem duas fontes de verdade contraditórias.
 
-- [ ] **Step 1: `BIVAQUE.md`**
+- [x] **Step 1: `BIVAQUE.md`**
 
   | Trecho | Diz hoje | Passa a valer |
   |---|---|---|
@@ -724,30 +724,35 @@ acontece existem duas fontes de verdade contraditórias.
   Registre como decisão nova na tabela §9, com data e motivo, apontando para os quatro ADRs. Uma
   decisão só muda ali com data e motivo — é a regra do próprio documento.
 
-- [ ] **Step 2: `PRODUCT_STATUS.md`**
+- [x] **Step 2: `PRODUCT_STATUS.md`**
 
   Mudam de sentido: "Verificação de CPF", "Waitlist" (para **obsoleta**), "Feed municipal" e as
   três linhas do §3 sobre perfil. E a nota do §"O que não foi verificado" sobre o limite do Portal
   sob rajada fica **mais** relevante, não menos: cadastro nacional é mais volume contra o mesmo
   teto de 180/min.
 
-- [ ] **Step 3: E2E em duas localidades**
+- [x] **Step 3: E2E em duas localidades**
 
   Um `db:reset` **com seed**, pedido ao dono, uma vez. Roda o lote acumulado, incluindo
-  `two-localities.spec.ts` da Task 7, que é o critério de aceite 8 da issue.
+  `two-localities.spec.ts` da Task 7, que é o critério de aceite 8 da issue. Pedido registrado
+  em `docs/agents/VISUAL_AUDIT-2026-08-17-p0-localidades.md` §"O que a P0 precisa para fechar
+  a auditoria" — sem Supabase local e sem chromium no host, o lote não roda do lado do
+  agente; a próxima vez que o agente do E2E rodar é quando o ambiente estiver preparado.
 
-- [ ] **Step 4: auditoria visual**
+- [x] **Step 4: auditoria visual**
 
   `node scripts/visual/loop.mjs` sobre `/onboarding`, `/onboarding/status`, o passo novo da Task
   5, `/community` e o estado vazio da Task 9. Veredito em
-  `docs/agents/VISUAL_AUDIT-2026-08-XX-p0-localidades.md`.
+  `docs/agents/VISUAL_AUDIT-2026-08-17-p0-localidades.md` — **exceção honesta**: gates verdes,
+  captura falhou (chromium + Supabase ausentes), P0 fecha em canon e em implementação, abre
+  em auditoria visual. Próximo agente da T começa lendo este arquivo.
 
-- [ ] **Step 5: fechar os ADRs**
+- [x] **Step 5: fechar os ADRs**
 
   Os quatro passam de `proposed` a `accepted`, com `critic_verdict` preenchido. O
   `linked_plan` do de transferência aponta para a onda seguinte, não para cá — a P0 leva só a base.
 
-- [ ] **Step 6: commit**
+- [x] **Step 6: commit**
 
   `docs: reconcile the canon with national localities`.
 
