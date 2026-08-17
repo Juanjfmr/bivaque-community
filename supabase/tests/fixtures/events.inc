@@ -9,10 +9,9 @@ values ('10000000-0000-4000-8000-000000000007', 'member-three@example.invalid');
 insert into public.locality_memberships (user_id, locality_id)
 values ('10000000-0000-4000-8000-000000000007', '00000000-0000-4000-8000-000000000001');
 
-insert into public.profiles (user_id, locality_id, display_name, visibility)
+insert into public.profiles (user_id, display_name, visibility)
 values (
   '10000000-0000-4000-8000-000000000007',
-  '00000000-0000-4000-8000-000000000001',
   'Member Three',
   'locality_members'
 );

@@ -14,17 +14,15 @@ values
   ('10000000-0000-4000-8000-000000000010', '00000000-0000-4000-8000-000000000001'),
   ('10000000-0000-4000-8000-000000000011', '00000000-0000-4000-8000-000000000001');
 
-insert into public.profiles (user_id, locality_id, display_name, visibility)
+insert into public.profiles (user_id, display_name, visibility)
 values
   (
     '10000000-0000-4000-8000-000000000010',
-    '00000000-0000-4000-8000-000000000001',
     'Notify Recipient',
     'locality_members'
   ),
   (
     '10000000-0000-4000-8000-000000000011',
-    '00000000-0000-4000-8000-000000000001',
     'Notify Actor',
     'locality_members'
   );

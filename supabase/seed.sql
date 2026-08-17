@@ -109,7 +109,6 @@ on conflict (user_id, locality_id) do nothing;
 -- "Novo membro" não permite julgar nada.
 insert into public.profiles (
   user_id,
-  locality_id,
   display_name,
   visibility,
   consent_version,
@@ -118,7 +117,6 @@ insert into public.profiles (
 values
   (
     '20000000-0000-4000-8000-000000000001',
-    '00000000-0000-4000-8000-000000000001',
     'Ana Verificada',
     'locality_members',
     1,
@@ -189,11 +187,10 @@ from generate_series(1, 300) as i
 on conflict (user_id, locality_id) do nothing;
 
 insert into public.profiles (
-  user_id, locality_id, display_name, visibility, consent_version, consented_at
+  user_id, display_name, visibility, consent_version, consented_at
 )
 select
   ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
-  '00000000-0000-4000-8000-000000000001',
   (array[
     'Ana', 'Bruno', 'Carla', 'Diego', 'Elaine', 'Fábio', 'Gabriela', 'Heitor',
     'Isabela', 'João', 'Karina', 'Lucas', 'Mariana', 'Nelson', 'Olívia',

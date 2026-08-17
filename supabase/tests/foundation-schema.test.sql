@@ -15,7 +15,6 @@ select columns_are(
   'profiles',
   array[
     'user_id',
-    'locality_id',
     'display_name',
     'visibility',
     'consent_version',
@@ -23,7 +22,7 @@ select columns_are(
     'created_at',
     'updated_at'
   ],
-  'profiles expose only coarse social fields plus consent tracking'
+  'profiles expose only coarse social fields plus consent tracking (locality lives in the membership, P0 Task 3)'
 );
 select columns_are(
   'private',

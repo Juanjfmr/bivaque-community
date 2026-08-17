@@ -74,16 +74,15 @@ select is_empty(
 
 select throws_ok(
   $$
-    insert into public.profiles (user_id, locality_id, display_name)
+    insert into public.profiles (user_id, display_name)
     values (
-      '10000000-0000-4000-8000-000000000005',
-      '00000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
       'Intruder'
     )
   $$,
   42501,
   null,
-  'nonmember cannot insert a profile into a locality they do not belong to'
+  'nonmember cannot insert another user profile (insert is self-scoped only)'
 );
 
 -- ── waitlist user denial (user 006, pending verification, no membership) ───
@@ -166,16 +165,15 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.profiles (user_id, locality_id, display_name)
+    insert into public.profiles (user_id, display_name)
     values (
-      '10000000-0000-4000-8000-000000000006',
-      '00000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
       'Waitlist Intruder'
     )
   $$,
   42501,
   null,
-  'waitlist user cannot insert a profile'
+  'waitlist user cannot insert another user profile (insert is self-scoped only)'
 );
 
 -- ── authenticated cannot access private tables ─────────────────────────────

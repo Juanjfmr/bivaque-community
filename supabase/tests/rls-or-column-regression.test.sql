@@ -60,7 +60,6 @@ select columns_are(
   'profiles',
   array[
     'user_id',
-    'locality_id',
     'display_name',
     'visibility',
     'consent_version',
@@ -68,7 +67,7 @@ select columns_are(
     'created_at',
     'updated_at'
   ],
-  'GUARD: profiles exposes only coarse social + consent columns'
+  'GUARD: profiles exposes only coarse social + consent columns (locality lives in the membership, P0 Task 3)'
 );
 
 select hasnt_column('public', 'profiles', 'cpf', 'GUARD: profiles has no cpf column');

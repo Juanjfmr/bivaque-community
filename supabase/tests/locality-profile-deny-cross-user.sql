@@ -59,10 +59,9 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.profiles (user_id, locality_id, display_name)
+    insert into public.profiles (user_id, display_name)
     values (
       '10000000-0000-4000-8000-000000000005',
-      '00000000-0000-4000-8000-000000000001',
       'Unauthorized Profile'
     )
   $$,

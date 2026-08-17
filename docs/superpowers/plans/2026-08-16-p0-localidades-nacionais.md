@@ -224,7 +224,7 @@ lembrete e a degradação são a onda seguinte.
 > **Antes de atribuir qualquer falha ao seu diff:** `db:reset` limpo, sem dev server e sem
 > captura visual rodando, depois `test:db`. Se a falha some, era o fantasma.
 
-- [ ] **Step 1: `locality_memberships` aceita mais de uma linha**
+- [x] **Step 1: `locality_memberships` aceita mais de uma linha**
 
   A chave primária vira `(user_id, locality_id)`. O `unique (user_id, locality_id)` que hoje
   convive com a PK (`20260802000100:25`) **não faz nada** enquanto `user_id` for PK — é
@@ -234,7 +234,7 @@ lembrete e a degradação são a onda seguinte.
   (`20260802000300_foundation_rls.sql:21-26`) **não muda uma linha**: é um teste de pertencimento
   a conjunto, e já funciona com N linhas. Confirme lendo, não presuma.
 
-- [ ] **Step 2: `profiles` perde a localidade — e o alcance é maior que uma coluna**
+- [x] **Step 2: `profiles` perde a localidade — e o alcance é maior que uma coluna**
 
   Um perfil por pessoa. `locality_id` sai de `public.profiles`, junto com a FK composta para
   `locality_memberships (user_id, locality_id)` (`20260802000100:38-40`) e o índice
@@ -265,7 +265,7 @@ lembrete e a degradação são a onda seguinte.
   qualquer nome de coluna difere — e **repita os `revoke`/`grant`**: recriar descarta os
   privilégios, e esquecer isso deixa `authenticated` sem `execute` e o feed inteiro em branco.
 
-- [ ] **Step 3: "quem pode ver meu perfil" passa a ser calculado**
+- [x] **Step 3: "quem pode ver meu perfil" passa a ser calculado**
 
   `profiles_select_visible_in_locality` deixa de comparar uma coluna e passa a perguntar se quem
   olha divide **alguma** localidade com o dono do perfil, pelas memberships.
@@ -274,13 +274,13 @@ lembrete e a degradação são a onda seguinte.
   positivo e negativo obrigatórios** (§12 regra 7), e o negativo é o que importa: membro de
   Manaus **não** vê perfil de membro exclusivo do Rio.
 
-- [ ] **Step 4: a P0 continua entregando uma localidade por pessoa**
+- [x] **Step 4: a P0 continua entregando uma localidade por pessoa**
 
   O schema passa a permitir duas linhas; **o produto ainda cria uma**. Não construa aqui o
   vínculo de saída, o prazo, o lembrete nem o seletor — é a onda de transferência, e misturar
   torna esta task impossível de revisar.
 
-- [ ] **Step 5: testes**
+- [x] **Step 5: testes**
 
   - pgTAP em `supabase/tests/locality-membership-multi.sql`: duas memberships para o mesmo
     usuário são aceitas; `is_locality_member` devolve verdadeiro para as duas; **um usuário sem
@@ -292,7 +292,7 @@ lembrete e a degradação são a onda seguinte.
     `community-feeds.sql`, `post-reactions.sql`, `reports-denials.sql` — todos tocam as junções
     ou as policies. **Rode a suíte inteira**, não só o arquivo novo.
 
-- [ ] **Step 6: gate e commit**
+- [x] **Step 6: gate e commit**
 
   `feat(locality): belonging stops being exclusive and the profile becomes one per person`.
 
