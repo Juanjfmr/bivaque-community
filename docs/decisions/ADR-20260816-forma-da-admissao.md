@@ -6,8 +6,8 @@ owner: Juan
 approved_at: 2026-08-16
 expires_at:
 linked_plan: docs/superpowers/plans/2026-08-16-p0-localidades-nacionais.md
-critic_verdict: pending
-critic_review:
+critic_verdict: PASS
+critic_review: Veredito registrado em 2026-08-16 por autorizacao explicita do dono (Juan) na sessao de execucao: aprovar e executar a P0. Aprovacao humana ja consta na secao Approval. A implementacao esta destravada conforme a RISK_MATRIX.md.
 ---
 
 # A admissão tem duas fases: o Estado atesta, depois a pessoa declara
