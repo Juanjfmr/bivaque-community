@@ -5,7 +5,7 @@ import { Button, Kbd, Tooltip } from "@heroui/react"
 import { Bell, ChevronsLeft, MapPin, PanelLeft } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
-import { PILOT_LOCALITY_ID } from "../../../lib/locality"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
 import { CreatePostModal } from "./feed-post"
 
@@ -22,6 +22,7 @@ export function AppShell({ children }: AppShellProperties) {
   const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [createPostOpen, setCreatePostOpen] = useState(false)
+  const { current } = useLocalityContext()
   // Read synchronously on the first client render so a tablet never paints the
   // expanded sidebar before snapping to the rail.
   const [canExpand, setCanExpand] = useState(() =>
@@ -240,7 +241,7 @@ export function AppShell({ children }: AppShellProperties) {
       {/* CreatePostModal */}
       {createPostOpen && (
         <CreatePostModal
-          localityId={PILOT_LOCALITY_ID}
+          localityId={current.id}
           onCreated={handlePostCreated}
           onClose={handlePostClose}
         />

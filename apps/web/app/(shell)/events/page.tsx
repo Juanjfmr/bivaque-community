@@ -2,7 +2,7 @@
 
 import { Button, Chip, Form, Input, Tab, TabList, TabPanel, Tabs, TextArea } from "@heroui/react"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
-import { PILOT_LOCALITY_ID } from "../../../lib/locality"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
@@ -193,6 +193,7 @@ function EventsContent() {
   const [startsAt, setStartsAt] = useState("")
   const [venue, setVenue] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const { current } = useLocalityContext()
 
   const fetchEvents = useCallback(async () => {
     const supabase = createBrowserClient()
@@ -249,7 +250,7 @@ function EventsContent() {
 
     const { error: insertError } = await supabase.from("events").insert({
       organizer_id: session.user.id,
-      locality_id: PILOT_LOCALITY_ID,
+      locality_id: current.id,
       title,
       description: description || null,
       starts_at: new Date(startsAt).toISOString(),

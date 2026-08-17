@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { Database } from "supabase/database.generated"
-import { PILOT_LOCALITY_ID } from "../../../lib/locality"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { Skeleton } from "../../components/bivaque/skeleton"
@@ -25,6 +25,7 @@ export default function GuidePage() {
   const [error, setError] = useState("")
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState<"all" | GuideCategory>("all")
+  const { current } = useLocalityContext()
 
   const supabase = createBrowserClient()
 
@@ -44,7 +45,7 @@ export default function GuidePage() {
     const { data, error: guideError } = await supabase
       .from("arrival_guide_entries")
       .select("*")
-      .eq("locality_id", PILOT_LOCALITY_ID)
+      .eq("locality_id", current.id)
       .eq("status", "approved")
       .order("category")
       .order("name")
@@ -57,7 +58,7 @@ export default function GuidePage() {
 
     setEntries((data as GuideEntry[] | null) ?? [])
     setLoading(false)
-  }, [supabase])
+  }, [supabase, current.id])
 
   useEffect(() => {
     loadEntries()

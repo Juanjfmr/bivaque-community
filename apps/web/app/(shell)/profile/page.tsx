@@ -13,7 +13,7 @@ import {
 } from "@heroui/react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
-import { PILOT_LOCALITY_ID } from "../../../lib/locality"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../components/bivaque/skeleton"
@@ -98,6 +98,7 @@ export default function ProfilePage() {
   const signOutModal = useOverlayState()
   const [signingOut, setSigningOut] = useState(false)
   const [signOutError, setSignOutError] = useState("")
+  const { current } = useLocalityContext()
 
   const loadProfile = useCallback(async () => {
     setLoading(true)
@@ -126,7 +127,7 @@ export default function ProfilePage() {
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase.rpc("feed_posts", {
-          p_locality_id: PILOT_LOCALITY_ID,
+          p_locality_id: current.id,
           p_order: "recent",
         }),
         supabase
@@ -148,7 +149,7 @@ export default function ProfilePage() {
     setPosts(allPosts.slice(0, 20))
     setEvents((eventRows ?? []) as EventRow[])
     setLoading(false)
-  }, [supabase])
+  }, [supabase, current.id])
 
   useEffect(() => {
     loadProfile()

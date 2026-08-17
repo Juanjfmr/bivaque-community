@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { PILOT_LOCALITY_ID } from "../../../lib/locality"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Skeleton } from "./skeleton"
 
@@ -41,6 +41,7 @@ export function FeedRightRail() {
   const [events, setEvents] = useState<EventItem[]>([])
   const [groups, setGroups] = useState<GroupItem[]>([])
   const [loaded, setLoaded] = useState(false)
+  const { current } = useLocalityContext()
   const supabase = createBrowserClient()
 
   useEffect(() => {
@@ -48,16 +49,17 @@ export function FeedRightRail() {
 
     async function load() {
       const now = new Date().toISOString()
+      const localityId = current.id
 
       const [{ data: eventsData }, { data: groupsData }] = await Promise.all([
         supabase
           .from("events")
           .select("id, title, starts_at")
-          .eq("locality_id", PILOT_LOCALITY_ID)
+          .eq("locality_id", localityId)
           .gte("starts_at", now)
           .order("starts_at", { ascending: true })
           .limit(3),
-        supabase.from("groups").select("id, name").eq("locality_id", PILOT_LOCALITY_ID).limit(3),
+        supabase.from("groups").select("id, name").eq("locality_id", localityId).limit(3),
       ])
 
       if (cancelled) return
@@ -90,7 +92,7 @@ export function FeedRightRail() {
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [supabase, current.id])
 
   return (
     <aside className="hidden w-72 shrink-0 lg:block">

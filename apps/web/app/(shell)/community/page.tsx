@@ -4,7 +4,7 @@ import { Button, ButtonGroup, ToggleButton } from "@heroui/react"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
-import { PILOT_LOCALITY_ID } from "../../../lib/locality"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
@@ -28,6 +28,8 @@ export default function CommunityPage() {
   const [transitioning, setTransitioning] = useState(false)
   const [atEnd, setAtEnd] = useState(false)
   const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set())
+
+  const { current } = useLocalityContext()
 
   const searchParams = useSearchParams()
   const targetPostId = searchParams.get("post")
@@ -79,7 +81,7 @@ export default function CommunityPage() {
             p_order: order,
           })
         : await supabase.rpc("feed_posts", {
-            p_locality_id: PILOT_LOCALITY_ID,
+            p_locality_id: current.id,
             p_order: order,
           })
 
@@ -99,7 +101,7 @@ export default function CommunityPage() {
         setAtEnd(false)
       }
     },
-    [sortOrder, supabase],
+    [sortOrder, supabase, current.id],
   )
 
   const handleSortChange = useCallback(
@@ -139,7 +141,7 @@ export default function CommunityPage() {
         const { count } = await supabase
           .from("locality_memberships")
           .select("*", { count: "exact", head: true })
-          .eq("locality_id", PILOT_LOCALITY_ID)
+          .eq("locality_id", current.id)
         if (!cancelled && count !== null) {
           setMemberCount(count)
         }
@@ -150,7 +152,7 @@ export default function CommunityPage() {
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [supabase, current.id])
 
   // initial load
   useEffect(() => {
@@ -314,7 +316,7 @@ export default function CommunityPage() {
 
       {showCreateModal && (
         <CreatePostModal
-          localityId={PILOT_LOCALITY_ID}
+          localityId={current.id}
           defaultPostType={defaultPostType}
           defaultCommunityId={primaryCommunityId ?? undefined}
           onCreated={handleCreated}
