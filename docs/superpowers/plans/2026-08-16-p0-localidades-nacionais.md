@@ -180,24 +180,24 @@ dados — e a decisão 3 do ADR das localidades é violada sem que exista uma li
 `PILOT_LOCALITY_ID` em lugar nenhum. É o `pilot=true` que a decisão 8 proíbe, já no schema antes
 de a decisão existir.
 
-- [ ] **Step 1: o default muda**
+- [x] **Step 1: o default muda**
 
   `alter column admission_mode set default 'verification_gated'`, e `update` nas linhas do
   catálogo. Elegibilidade é o CPF contra o Portal, não a geografia.
 
-- [ ] **Step 2: a coluna sobrevive, com propósito escrito**
+- [x] **Step 2: a coluna sobrevive, com propósito escrito**
 
   Não remova. `invite_only` e `waitlist_only` continuam sendo exceções legítimas para uma
   localidade específica no futuro; o que muda é **deixarem de ser o padrão**. O comentário na
   migration diz isso com todas as letras, incluindo que nenhum código de runtime lê a coluna hoje.
 
-- [ ] **Step 3: o teste de escopo que trava a recaída**
+- [x] **Step 3: o teste de escopo que trava a recaída**
 
   `tests/scope/admission-mode.test.mjs`: o default no schema é `verification_gated`, e nenhuma
   localidade do catálogo está em `waitlist_only`. Quem quiser exceção quebra o teste e justifica —
   que é o comportamento desejado.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit**
 
   `fix(localities): admission mode stops encoding rollout as eligibility`.
 

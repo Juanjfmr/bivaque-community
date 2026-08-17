@@ -149,8 +149,8 @@ select col_default_is(
   'public',
   'localities',
   'admission_mode',
-  'waitlist_only'::public.locality_admission_mode,
-  'new localities default to waitlist-only admission'
+  'verification_gated'::public.locality_admission_mode,
+  'new localities default to verification-gated admission (P0 Task 2)'
 );
 
 select enum_has_labels(
