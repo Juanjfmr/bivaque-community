@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { useLocalityContext } from "../../../lib/locality-context"
+import { isLocalityStale } from "../../../lib/locality-density"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
@@ -258,11 +259,22 @@ export default function CommunityPage() {
             </div>
           )}
 
-          {/* empty state */}
+          {/* empty state — P0 Task 9: below the §3.4 density threshold the copy
+              reads "Você é dos primeiros aqui" instead of "Nenhuma publicação
+              ainda", because the second sentence describes a quiet room, not a
+              beginning. The threshold is the locality member count, not Manaus. */}
           {!loading && !error && posts.length === 0 && (
             <EmptyState
-              title="Nenhuma publicação ainda"
-              description="Seja o primeiro a compartilhar algo com a sua comunidade."
+              title={
+                isLocalityStale(memberCount)
+                  ? "Você é dos primeiros aqui."
+                  : "Nenhuma publicação ainda"
+              }
+              description={
+                isLocalityStale(memberCount)
+                  ? "Esta comunidade está começando. Publique algo para abrir caminho para quem chegar depois."
+                  : "Seja o primeiro a compartilhar algo com a sua comunidade."
+              }
               action={
                 <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
                   Publicar
