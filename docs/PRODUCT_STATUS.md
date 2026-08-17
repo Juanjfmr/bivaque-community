@@ -53,7 +53,7 @@ admissões.
 | Recurso de rejeição | retentativa limitada a 3/hora em janela rolante no servidor; upload de documento e waitlist ligados na tela de status; decisão do operador ainda não existe | retentativa limitada + caso na fila de admissões auditada | falta a decisão manual do operador e o E2E dos caminhos de negação | `onboarding/status/page.tsx`, `verifyAndProvision.ts`, `20260815133000_verification_attempt_limit.sql`, `supabase/tests/verification-attempt-limit.sql` `[V]` | D |
 | CPF no cliente | não é guardado; resíduo antigo é removido no boot | não guardar | — | `onboarding/page.tsx:104-108`, `lib/onboarding/storage.ts` `[V]` | **A** |
 | Welcome | gateado por membership real no middleware | gatear por membership real | falta o E2E do gate | `middleware.ts:100-104` `[V]` | A (código feito) |
-| Waitlist | coleta e grava cidade/UF; `locality_id` fica nulo para cidade futura | coletar a localidade desejada | falta o E2E do envio e o canal de aviso real | `onboarding/page.tsx:431-474`, `verifyAndProvision.ts:92-108`, `20260815120000_waitlist_desired_city.sql` `[V]` | D |
+| Waitlist | **obsoleta (P0 Task 8).** A UI de entrada — "Entrar na lista de espera de outras localidades" em `onboarding/page.tsx` e o link na tela de rejected em `onboarding/status/page.tsx` — foi removida; rejeição é de elegibilidade, não de geografia. O branch `join-waitlist` em `api/onboarding/route.ts` e a função `addToWaitlist` em `verifyAndProvision.ts` ficaram sem chamador de UI. | coletar a localidade desejada | o caminho de UI não existe mais; a remoção do schema (`public.waitlist`, RPC `add_to_waitlist`, `20260802000600_onboarding_consent_waitlist.sql`, pgTAP `onboarding-consent-waitlist.sql`) é trabalho seguinte com prazo — ver "Linhas obsoletas" abaixo | `onboarding/page.tsx`, `onboarding/status/page.tsx` (sem waitlist) `[V]` | obsoleta (P0 Task 8) |
 | Consentimento | cookie só faz gate de navegação; aceite versionado é gravado em `consent_acceptances` e o `/api/onboarding` exige o registro no servidor | aceite versionado, com código de conduta | a tela ainda não exibe o código de conduta; falta o E2E do aceite persistido | `consent/actions.ts`, `consent/page.tsx`, `20260815131000_consent_acceptances.sql`, `api/onboarding/route.ts:60-68`, `supabase/tests/consent-acceptances.sql` `[V]` | D |
 
 ## 2. Convites
@@ -194,6 +194,15 @@ Estes rodam em milissegundos em `npx pnpm@11.18.0 test:scope` e falham antes do 
 Ver [`tests/scope/rls-structure.test.mjs`](../tests/scope/rls-structure.test.mjs). Os dois
 primeiros padrões vieram de bugs que o projeto-mãe teve em produção; nenhum foi herdado
 aqui.
+
+## Linhas obsoletas
+
+Linhas que viraram código morto nesta onda, com prazo escrito para remoção. **Código morto
+sem prazo vira feature aos olhos de quem chega depois** (P0 Task 8).
+
+| Linha | Schema afetado | Próxima migration | Prazo |
+|---|---|---|---|
+| Waitlist (UI em `onboarding/page.tsx`, `onboarding/status/page.tsx`) | `public.waitlist`, RPC `add_to_waitlist(text, text, text)`, `20260802000600_onboarding_consent_waitlist.sql`, pgTAP `supabase/tests/onboarding-consent-waitlist.sql` | `202608XXXX_drop_waitlist` (a abrir) | antes da abertura da onda T — o painel de demanda que a T traz lê de `locality_memberships`, não da waitlist, e a coalescência é o ponto em que a remoção fica segura |
 
 ## O que não foi verificado
 
