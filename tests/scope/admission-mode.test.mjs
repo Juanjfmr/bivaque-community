@@ -30,7 +30,6 @@ test("the admission_mode default is set to verification_gated after the catalog 
   assert.ok(defaultMigration, "admission_mode_verification_default migration not found")
 
   // When both are read
-  const dataSql = readFileSync(join(MIGRATIONS, dataMigration), "utf8")
   const defaultSql = readFileSync(join(MIGRATIONS, defaultMigration), "utf8")
 
   // Then the flip lands after the catalog rows were inserted
