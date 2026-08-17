@@ -430,7 +430,7 @@ saber que passou.
 `acceptFamilyInvitationAndProvision` (`verifyAndProvision.ts:130-175`) grava
 `PILOT_LOCALITY_ID` em `:155` e `:163`.
 
-- [ ] **Step 1: a regra, e ela ficou mais precisa que no ADR**
+- [x] **Step 1: a regra, e ela ficou mais precisa que no ADR**
 
   A localidade do dependente é a **corrente** do titular no momento do **aceite**.
 
@@ -444,19 +444,19 @@ saber que passou.
     CPF (D16), com cota de 5 por titular. Deixar o convidado escolher transformaria isso em cinco
     contas não verificadas colocáveis em qualquer município do Brasil.
 
-- [ ] **Step 2: o titular sem membership**
+- [x] **Step 2: o titular sem membership**
 
   Estado que hoje não pode acontecer — `is_verified_holder` protege o envio — mas que o código
   precisa tratar com erro explícito em vez de gravar nulo.
 
-- [ ] **Step 3: testes**
+- [x] **Step 3: testes**
 
   pgTAP em `supabase/tests/family-invite-locality.sql`: titular em Manaus produz dependente em
   Manaus; titular numa segunda localidade produz dependente **naquela** (é o teste que prova a
   decisão); titular sem membership faz o aceite falhar (negativo); **dependente não consegue
   escolher a própria localidade** (negativo).
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit**
 
   `fix(family-invite): derive the dependant locality from the holder`.
 
