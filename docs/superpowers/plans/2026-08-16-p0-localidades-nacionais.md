@@ -509,7 +509,7 @@ Três defeitos concretos, além da contagem:
 
 ### A forma correta
 
-- [ ] **Step 1: resolver uma vez, no servidor, no shell**
+- [x] **Step 1: resolver uma vez, no servidor, no shell**
 
   A resolução acontece em **`apps/web/app/(shell)/layout.tsx`**, que é Server Component e roda
   uma vez por navegação. Um provider de cliente montado ali entrega o valor aos componentes de
@@ -518,7 +518,7 @@ Três defeitos concretos, além da contagem:
   Vale saber: `middleware.ts:108-113` **já consulta** `locality_memberships` no gate. O valor já
   é buscado uma vez por requisição; o problema é jogá-lo fora e buscar de novo cinco vezes.
 
-- [ ] **Step 2: a forma do valor, e por que não é um id solto**
+- [x] **Step 2: a forma do valor, e por que não é um id solto**
 
   ```ts
   type LocalityContext = {
@@ -542,7 +542,7 @@ Três defeitos concretos, além da contagem:
   ser explícito e comentado agora, senão a onda T herda `joined_at asc` e devolve a cidade que a
   pessoa está deixando.
 
-- [ ] **Step 3: o `null` morre no shell, não nas folhas**
+- [x] **Step 3: o `null` morre no shell, não nas folhas**
 
   Dentro de `(shell)`, a localidade **nunca** é nula: quem não tem membership não deveria ter
   passado pelo gate — é o estado "elegível sem membership" que a Task 1 da D2 roteia para o passo
@@ -555,7 +555,7 @@ Três defeitos concretos, além da contagem:
   E o erro da consulta **é lido**. Falha de infraestrutura não é "sem localidade": é falha, e
   sobe.
 
-- [ ] **Step 4: os call sites**
+- [x] **Step 4: os call sites**
 
   `community/page.tsx` (44, 94, 154) · `feed-right-rail.tsx` (51) · `app-shell.tsx` (42) ·
   `events/page.tsx` (250) · `guide/page.tsx` (47) · `profile/page.tsx` (129).
@@ -566,7 +566,7 @@ Três defeitos concretos, além da contagem:
   `feed-composer.tsx` saiu da lista: a primeira tentativa já o resolveu por outro caminho.
   Confirme com o teste de escopo, não com esta frase.
 
-- [ ] **Step 5: a ordem dos commits — a constante sai por ÚLTIMO**
+- [x] **Step 5: a ordem dos commits — a constante sai por ÚLTIMO**
 
   Foi inverter isto que produziu o estado atual: a constante saiu primeiro e a migração inteira
   ficou sem ponto de commit verde.
@@ -582,24 +582,24 @@ Três defeitos concretos, além da contagem:
   Um commit por passo, não um por task. Quando a ferramenta de edição falhar no meio — e ela
   falhou nesta task —, perde-se um arquivo, não a árvore.
 
-- [ ] **Step 6: o teste de escopo já está pronto**
+- [x] **Step 6: o teste de escopo já está pronto**
 
   `tests/scope/no-pilot-locality.test.mjs` mecaniza o critério *"runtime não usa
   `PILOT_LOCALITY_ID` para conceder acesso, provisionar ou filtrar conteúdo"* da issue #20.
   **Não o reescreva.** Se a lista `FORBIDDEN` precisar de entrada nova, acrescente.
 
-- [ ] **Step 7: E2E**
+- [x] **Step 7: E2E**
 
   `tests/e2e/two-localities.spec.ts` já existe: duas sessões, duas localidades; cada uma vê o
   próprio feed, os próprios eventos e o próprio guia; **nenhuma vê conteúdo da outra** — negativo,
   e é o que prova que a mudança não abriu vazamento entre cidades.
 
-- [ ] **Step 8: não rode banco para fechar esta task**
+- [x] **Step 8: não rode banco para fechar esta task**
 
   Esta task não toca migration nenhuma. `db:reset`, `test:db` e `db:lint` não se aplicam, e rodar
   a captura visual junto expõe ao perfil fantasma "Visual Capture". **O gate é o critério.**
 
-- [ ] **Step 9: commit final**
+- [x] **Step 9: commit final**
 
   `refactor(locality): resolve the member scope once in the shell`.
 
@@ -607,7 +607,7 @@ Três defeitos concretos, além da contagem:
 
 Achados ao revisar esta task. São pequenos e ficam mais caros depois.
 
-- [ ] **`suggestedName` está chegando em CAIXA ALTA.** `classify.ts` lê `nomeCivil` via
+- [x] **`suggestedName` está chegando em CAIXA ALTA.** `classify.ts` lê `nomeCivil` via
   `objectString`, que passa por `normalizeString` → `.trim().toUpperCase()`. O campo do passo
   pós-elegibilidade vai propor "JOÃO DA SILVA".
 
@@ -616,7 +616,7 @@ Achados ao revisar esta task. São pequenos e ficam mais caros depois.
 
   É o mesmo caso do `"ALVARÃES"` que a Task 1 manda normalizar; aqui passou.
 
-- [ ] **O caminho `servidor.pessoa.nome` não está verificado.** Se o campo não existir com esse
+- [x] **O caminho `servidor.pessoa.nome` não está verificado.** Se o campo não existir com esse
   nome na resposta real, `suggestedName` fica sempre ausente e o campo sempre vazio, em silêncio.
 
   Dois unitários com fixture: um com o campo, devolvendo o nome com a caixa preservada; outro
