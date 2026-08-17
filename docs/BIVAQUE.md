@@ -39,8 +39,11 @@ novembro, e a informação permanente acaba enfiada na descrição do grupo.
 ### 1.2 A proposta
 
 Uma comunidade local de **acesso controlado** para militares federais, veteranos e
-pensionistas de Manaus. O que o WhatsApp não pode dar: elegibilidade conferida na entrada,
-fluxos separados por escopo, e acervo que fica e é buscável.
+pensionistas de todo o Brasil. O que o WhatsApp não pode dar: elegibilidade conferida na entrada,
+fluxos separados por escopo, e acervo que fica e é buscável. Manaus é o piloto operacional
+— a unidade de rollout, aquisição, curadoria e suporte — mas a fronteira é a elegibilidade,
+não a geografia. O catálogo é nacional; a P0 reconciliou o canon com os quatro ADRs
+de 2026-08-16 (ver `09`).
 
 ### 1.3 Quem entra, e como
 
@@ -195,6 +198,13 @@ controle de visibilidade que o membro tinha, e por isso carrega uma pré-condiç
 se existe perfil real com `hidden` antes de qualquer migration, e **nunca virar a chave em
 silêncio**. Ver `PRODUCT_STATUS.md` §3.
 
+**Um perfil por pessoa; a localidade vive na membership.** A P0 (Task 3) trocou a chave
+primária de `locality_memberships` para `(user_id, locality_id)` — o pertencimento deixa de
+ser exclusivo e o perfil passa a ser único por pessoa. `profiles.locality_id` foi removido:
+a coluna viveria no perfil a afirmação "este membro é desta cidade", e sob D48 isso
+restringiria a vila certa de crescer. A rigor, a pessoa está onde está a `locality_membership`
+corrente; o prazo, o lembrete e a degradação da saída vivem na onda de transferência.
+
 **Afiliação declarada — decisão pendente.** Permitir que o membro declare força, situação,
 OM e turma contradiz `AGENTS.md:205`, que proíbe persistir organização militar. Isso é R3 e
 está em [`ADR-20260811-om-declarada`](decisions/ADR-20260811-om-declarada.md), com cinco
@@ -241,7 +251,7 @@ outras em vinte e quatro horas, porque os administradores se conhecem.
 
 | Nível | Concessão |
 |---|---|
-| **Manaus** | automática após verificação — é fato que o Estado atesta |
+| **Localidade escolhida** | automática após verificação — é fato que o Estado atesta. Manaus é a primeira, e a P0 reconciliou o canon para que a frase deixe de falar de Manaus e passe a falar da **localidade selecionada** (ver D14, revisada 2026-08-17) |
 | **Vila** | aprovação explícita do dono da comunidade |
 
 O link **não concede** a vila. Herdar uma lista de WhatsApp acumulada em vinte meses
@@ -546,9 +556,12 @@ Com os três, a entrada por link aberto é segura.
 
 ## 8. Fora e adiado
 
-**Fora por decisão:** publicação anônima, vídeo, escopo nacional, alerta por push e SMS.
+**Fora por decisão:** publicação anônima, vídeo, alerta por push e SMS.
 
-**Adiado, não proibido:** IA, app nativo, outras cidades, mensagem direta.
+**Adiado, não proibido:** IA, app nativo, mensagem direta. **Saem da lista no
+reconciliation da P0:** "escopo nacional" deixa de ser "fora" (o produto é
+multi-localidade desde o cadastro) e "outras cidades" deixa de ser "adiado"
+(ver D31, revisada 2026-08-17).
 
 Anúncio merece distinção, porque as duas menções neste documento parecem se contradizer e
 não se contradizem: **anúncio de terceiro sem relação com a comunidade** está adiado e pode
@@ -576,7 +589,7 @@ aqui, com data e motivo.
 | ID | Status | Data | Decisão | Motivo | Reabrir quando |
 |---|---|---|---|---|---|
 | **D01** | vigente | 2026-08-11 | Fork deliberado do produto-mãe; o canon é referência, não lei | a governança do original impediu o lançamento | o fork alcançar escala que justifique o regime completo |
-| **D02** | vigente | 2026-08-11 | A localidade é a unidade do piloto — Manaus, não a OM | a comunidade real é geográfica; OM vira afiliação | segunda cidade entrar em planejamento |
+| **D02** | vigente | 2026-08-11 (revisada 2026-08-17) | A localidade é prioridade de **rollout** — Manaus, não a OM. Manaus recebe toda a atenção operacional (aquisição, curadoria, prestadores, eventos, suporte, medição); a elegibilidade é nacional | a comunidade real é geográfica; OM vira afiliação. A P0 reconciliou este ponto: a unidade do piloto e a fronteira do produto são coisas diferentes, e a fronteira é a elegibilidade | quando a segunda cidade deixar de precisar de prioridade de rollout |
 | **D03** | vigente | 2026-08-11 | Três níveis com pertencimento aditivo | uma sala indiferenciada já é insuportável em 630 | — |
 | **D04** | vigente | 2026-08-05 | Interesse é grupo; circunstância é comunidade | mantém o conjunto limitado pelo mundo real | — |
 | **D05** | vigente | 2026-08-11 | Vila é a primeira comunidade; o modelo não grava "vila" | outros eixos vão aparecer | — |
@@ -588,7 +601,7 @@ aqui, com data e motivo.
 | **D11** | vigente | herdada | Nunca persistir CPF em claro, payload do Portal, endereço, documento além do TTL, selo público | fronteira de privacidade do produto | — |
 | **D12** | vigente | 2026-08-11 | Consentimento e código de conduta com aceite versionado | é a base contratual da suspensão | — |
 | **D13** | vigente | 2026-08-11 | A vila chega inteira, pelo administrador do grupo existente | a comunidade já existe; converter é mais barato que criar | — |
-| **D14** | vigente | 2026-08-11 | Manaus é concedida por verificação; a vila, pelo dono da comunidade | ninguém confia numa checagem que não fez | — |
+| **D14** | vigente | 2026-08-11 (revisada 2026-08-17) | A **localidade escolhida** é concedida por verificação; a vila, pelo dono da comunidade. A metade da vila continua sendo o alicerce da onda E e da própria decisão da transferência — preservada integ | ninguém confia numa checagem que não fez. A P0 reconciliou a metade da Manaus, que era falso recorte geográfico, e manteve a metade da vila, que é o que sustenta a separação "elegibilidade ≠ comunidade" | — |
 | **D15** | vigente | 2026-08-11 | Convite de membro carrega atribuição e escopo; verificação sempre obrigatória | é canal de aquisição, não atalho de verificação | — |
 | **D16** | vigente | 2026-08-11 | Convite familiar é a única via sem CPF; o aceite confere o e-mail-alvo | senão é passe ao portador para a via mais permissiva | — |
 | **D17** | vigente | 2026-08-11 | Prestador civil tem login apenas para a própria ficha | sem ele não há oferta; com acesso amplo não há fronteira | — |
@@ -605,7 +618,7 @@ aqui, com data e motivo.
 | **D28** | vigente | 2026-08-11 | Grátis na própria vila; pago para alcançar além | é distribuição, não proteção | — |
 | **D29** | vigente | 2026-08-11 | Proibidos: anúncio no feed, ordenação por dinheiro, consignado, pagar para não ser enterrado | cada um destrói o ativo de confiança | — |
 | **D30** | vigente | 2026-08-11 | O fundador não é a cabeça do produto | Art. 29, e sobrevivência à transferência. Arranjo pendente de parecer (§7.6) | — |
-| **D31** | vigente | 2026-08-11 | Fora: anônimo, vídeo, nacional, push e SMS, modo escuro. Adiados: IA, nativo, outras cidades, DM entre membros. **Reaberto em 2026-08-15 apenas para curadoria do Guia de Chegada** — ver D49 | a IA sai do adiamento num escopo estreito, sem tocar feed, moderação ou DM | quando a curadoria do guia fechar ou o ADR associado for rejeitado |
+| **D31** | vigente | 2026-08-11 (revisada 2026-08-17) | **Fora:** anônimo, vídeo, push e SMS, modo escuro. **Adiados:** IA, nativo, DM entre membros. "Nacional" e "outras cidades" saem da lista — a P0 reconciliou o canon: o Bivaque é multi-localidade desde o cadastro, e Manaus é prioridade de rollout, não fronteira de produto. **Reaberto em 2026-08-15 apenas para curadoria do Guia de Chegada** — ver D49 | a IA sai do adiamento num escopo estreito, sem tocar feed, moderação ou DM | quando a curadoria do guia fechar ou o ADR associado for rejeitado |
 | **D32** | vigente | 2026-08-11 | E-mail transacional por **Resend** | transacional em stack JS; domínio e DNS são trabalho humano | — |
 | **D33** | vigente | 2026-08-11 | **WhatsApp não-oficial** agora, Cloud API quando houver CNPJ (§7.8) | o oficial está bloqueado pelo veículo jurídico; risco assumido com cinco requisitos de sobrevivência | banimento do número, ou CNPJ constituído |
 | **D34** | vigente | 2026-08-11 | **Upstash Redis** para os quatro limites e o circuit breaker | não põe escrita no banco primário a cada requisição; escala a 50 mil sem refazer | — |
@@ -624,6 +637,7 @@ aqui, com data e motivo.
 | **D47** | vigente | 2026-08-11 | **Nada é cortado do escopo.** O lançamento é por vila, com o que estiver pronto | não cortar não significa tudo pronto em dezembro; significa ordenar para que o inacabado não impeça abrir a primeira vila | — |
 | **D48** | vigente | 2026-08-14 | **A vila é a sala; Manaus não é.** O nível municipal é alcance de post, eventos, vitrine e guia de chegada — nunca um feed (§6) | a vila tem gerador de conteúdo — circunstância física compartilhada. Manaus só tem laço institucional, que produz referência, e feed é o pior contêiner para referência: reproduziria dentro do produto o defeito do grupo de WhatsApp da §1.1 | se os pedidos com alcance ampliado forem muitos **e** receberem resposta, o nível largo tem demanda conversacional e a sala se justifica. Medir na primeira vila |
 | **D49** | **proposta** | 2026-08-15 | **A curadoria do Guia de Chegada nasce das respostas de indicação.** A IA extrai uma sugestão estruturada, mas **nunca publica**: operador aprova ou rejeita cada item | o guia é acervo permanente, não feed; curadoria 100% manual não escala e a resposta da comunidade já carrega a evidência | [ADR-20260815-guia-curadoria-ia](decisions/ADR-20260815-guia-curadoria-ia.md). Reaberta quando a LGPD e a onda F estiverem fechadas |
+| **D50** | vigente | 2026-08-17 | **O Bivaque é nacional desde o cadastro; Manaus é prioridade de rollout, não fronteira de produto.** A P0 reconciliou o canon com os quatro ADRs de 2026-08-16: [`national-localities`](decisions/ADR-20260816-national-localities.md), [`forma-da-admissao`](decisions/ADR-20260816-forma-da-admissao.md), [`transferencia-e-pertencimento`](decisions/ADR-20260816-transferencia-e-pertencimento.md), [`shells-e-navegacao`](decisions/ADR-20260816-shells-e-navegacao.md). A elegibilidade é conferida na entrada (CPF contra o Portal) e é nacional; a locality é escolhida no passo pós-elegibilidade; a membership aceita N linhas; a home e os escopos derivam do estado real do membro, não de `PILOT_LOCALITY_ID`. Manaus recebe prioridade operacional — aquisição, curadoria, prestadores, eventos, suporte, medição — registrada em estratégia de rollout, não em condicional de código | a separação entre "elegibilidade" e "comunidade" precisa ser explícita: a primeira é regra de produto conferida pelo Estado, a segunda é vínculo social conferido pela vila. Misturar as duas é o erro que esta decisão desfaz | quando uma segunda cidade mostrar, por medição, padrão de dano de retenção/confiança maior do que o benefício de aquisição orgânica, ou se houver restrição operacional ou jurídica que exija limitar admissões por cidade |
 
 **Superado pela D09:** a decisão D9 da `2026-08-05-comunidade-design.md` (co-membro vê
 perfil oculto) perdeu objeto. O aviso de divulgação na entrada continua valendo para o nome.
