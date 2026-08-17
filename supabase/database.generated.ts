@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -22,9 +22,9 @@ export type Database = {
           review_note: string | null
           reviewed_at: string | null
           reviewed_by: string | null
-          source: "manual" | "ai"
+          source: string
           source_reply_id: string | null
-          status: "pending" | "approved" | "rejected"
+          status: string
           updated_at: string
           website_url: string | null
         }
@@ -40,9 +40,9 @@ export type Database = {
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
-          source?: "manual" | "ai"
+          source?: string
           source_reply_id?: string | null
-          status?: "pending" | "approved" | "rejected"
+          status?: string
           updated_at?: string
           website_url?: string | null
         }
@@ -58,9 +58,9 @@ export type Database = {
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
-          source?: "manual" | "ai"
+          source?: string
           source_reply_id?: string | null
-          status?: "pending" | "approved" | "rejected"
+          status?: string
           updated_at?: string
           website_url?: string | null
         }
@@ -558,6 +558,7 @@ export type Database = {
           city_name: string
           country_code: string
           created_at: string
+          ibge_code: string
           id: string
           slug: string
           state_code: string
@@ -567,6 +568,7 @@ export type Database = {
           city_name: string
           country_code?: string
           created_at?: string
+          ibge_code: string
           id?: string
           slug: string
           state_code: string
@@ -576,6 +578,7 @@ export type Database = {
           city_name?: string
           country_code?: string
           created_at?: string
+          ibge_code?: string
           id?: string
           slug?: string
           state_code?: string
@@ -607,6 +610,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      national_holidays: {
+        Row: {
+          date: string
+          name: string
+          type: string
+        }
+        Insert: {
+          date: string
+          name: string
+          type: string
+        }
+        Update: {
+          date?: string
+          name?: string
+          type?: string
+        }
+        Relationships: []
       }
       notification_opt_outs: {
         Row: {
@@ -893,7 +914,6 @@ export type Database = {
           consented_at: string | null
           created_at: string
           display_name: string
-          locality_id: string
           updated_at: string
           user_id: string
           visibility: Database["public"]["Enums"]["profile_visibility"]
@@ -903,7 +923,6 @@ export type Database = {
           consented_at?: string | null
           created_at?: string
           display_name: string
-          locality_id: string
           updated_at?: string
           user_id: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]
@@ -913,20 +932,11 @@ export type Database = {
           consented_at?: string | null
           created_at?: string
           display_name?: string
-          locality_id?: string
           updated_at?: string
           user_id?: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_user_id_locality_id_fkey"
-            columns: ["user_id", "locality_id"]
-            isOneToOne: false
-            referencedRelation: "locality_memberships"
-            referencedColumns: ["user_id", "locality_id"]
-          },
-        ]
+        Relationships: []
       }
       recommendation_replies: {
         Row: {
@@ -996,17 +1006,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "recommendation_requests_locality_id_fkey"
-            columns: ["locality_id"]
-            isOneToOne: false
-            referencedRelation: "localities"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "recommendation_requests_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_requests_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
             referencedColumns: ["id"]
           },
         ]
@@ -1178,6 +1188,10 @@ export type Database = {
           p_name: string
           p_visibility: Database["public"]["Enums"]["group_visibility"]
         }
+        Returns: string
+      }
+      family_accept_holder_locality: {
+        Args: { p_link_id: string }
         Returns: string
       }
       feed_community: {
@@ -1560,3 +1574,4 @@ export const Constants = {
     },
   },
 } as const
+

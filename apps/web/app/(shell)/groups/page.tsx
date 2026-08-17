@@ -127,23 +127,19 @@ export default function GroupsPage() {
       }
       setUserId(authData.user.id)
 
-      const { data: profileData } = await supabase
-        .from("profiles")
+      const { data: membershipData } = await supabase
+        .from("locality_memberships")
         .select("locality_id")
         .eq("user_id", authData.user.id)
-        .single()
+        .limit(1)
+        .maybeSingle()
 
-      if (!profileData) {
-        setError("Você precisa ter um perfil para acessar os grupos.")
+      if (!membershipData) {
+        setError("Você ainda não pertence a uma localidade.")
         setLoading(false)
         return
       }
-      const localityId = (profileData as { locality_id: string }).locality_id
-      if (!localityId) {
-        setError("Perfil sem localidade associada.")
-        setLoading(false)
-        return
-      }
+      const localityId = membershipData.locality_id
       setProfileLocalityId(localityId)
 
       const { data: groupsData } = await supabase

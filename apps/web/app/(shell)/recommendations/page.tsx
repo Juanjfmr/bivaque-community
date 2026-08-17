@@ -164,24 +164,20 @@ export default function RecommendationsPage() {
         return
       }
 
-      // 2. profile → locality
-      const { data: profileData } = await supabase
-        .from("profiles")
+      // 2. membership → locality (P0 Task 3: locality lives in the membership)
+      const { data: membershipData } = await supabase
+        .from("locality_memberships")
         .select("locality_id")
         .eq("user_id", user.id)
-        .single()
+        .limit(1)
+        .maybeSingle()
 
-      if (!profileData) {
-        setError("Perfil não encontrado. Complete seu cadastro primeiro.")
+      if (!membershipData) {
+        setError("Você ainda não pertence a uma localidade.")
         setLoading(false)
         return
       }
-      const locId = (profileData as { locality_id: string }).locality_id
-      if (!locId) {
-        setError("Perfil sem localidade associada.")
-        setLoading(false)
-        return
-      }
+      const locId = membershipData.locality_id
 
       // 3. all groups in locality
       const { data: groupsData, error: groupsError } = await supabase

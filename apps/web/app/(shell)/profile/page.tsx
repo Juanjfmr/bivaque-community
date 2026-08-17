@@ -24,7 +24,6 @@ import NotificationPreferencesSection from "./notification-preferences-section"
 interface ProfileRow {
   user_id: string
   display_name: string | null
-  locality_id: string
 }
 
 interface MembershipRow {
@@ -118,7 +117,7 @@ export default function ProfilePage() {
       await Promise.all([
         supabase
           .from("profiles")
-          .select("user_id, display_name, locality_id")
+          .select("user_id, display_name")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
