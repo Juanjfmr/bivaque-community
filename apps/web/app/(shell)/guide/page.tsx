@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { useLocalityContext } from "../../../lib/locality-context"
+import { isLocalityStale } from "../../../lib/locality-density"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { Skeleton } from "../../components/bivaque/skeleton"
 
@@ -25,6 +27,7 @@ export default function GuidePage() {
   const [error, setError] = useState("")
   const [query, setQuery] = useState("")
   const [category, setCategory] = useState<"all" | GuideCategory>("all")
+  const [memberCount, setMemberCount] = useState<number | null>(null)
   const { current } = useLocalityContext()
 
   const supabase = createBrowserClient()
@@ -63,6 +66,30 @@ export default function GuidePage() {
   useEffect(() => {
     loadEntries()
   }, [loadEntries])
+
+  // P0 Task 9: load the locality member count to branch the empty state on the
+  // §3.4 density threshold. The metric is a proxy (membership count, not weekly
+  // active) — see comment in lib/locality-density.ts.
+  useEffect(() => {
+    let cancelled = false
+    const supabase = createBrowserClient()
+    ;(async () => {
+      try {
+        const { count } = await supabase
+          .from("locality_memberships")
+          .select("*", { count: "exact", head: true })
+          .eq("locality_id", current.id)
+        if (!cancelled && count !== null) {
+          setMemberCount(count)
+        }
+      } catch {
+        /* silently fail — the empty state falls back to the standard copy */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [current.id])
 
   const filteredEntries = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -136,7 +163,26 @@ export default function GuidePage() {
         </div>
       )}
 
-      {!loading && !error && filteredEntries.length === 0 && (
+      {!loading && !error && entries.length === 0 && (
+        // P0 Task 9: the guide is empty. The copy branches on the §3.4 density
+        // threshold — the same rule as feed and events. There is no member action
+        // here: suggestions do not enter the public guide directly; the operator
+        // curates from indications as the density argument of F arrives.
+        <EmptyState
+          title={
+            isLocalityStale(memberCount)
+              ? "Você é dos primeiros aqui."
+              : "O guia desta cidade está vazio."
+          }
+          description={
+            isLocalityStale(memberCount)
+              ? "O guia desta cidade está em construção. Conforme houver indicações, o operador curará cada entrada."
+              : "Nenhuma entrada aprovada para esta cidade ainda."
+          }
+        />
+      )}
+
+      {!loading && !error && entries.length > 0 && filteredEntries.length === 0 && (
         <p className="text-sm text-muted">Nenhum item encontrado no guia.</p>
       )}
 
