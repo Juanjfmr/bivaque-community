@@ -3,6 +3,7 @@
 import { Button, Chip, Form, Input, Tab, TabList, TabPanel, Tabs, TextArea } from "@heroui/react"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
+import { isLocalityStale } from "../../../lib/locality-density"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
@@ -193,6 +194,7 @@ function EventsContent() {
   const [startsAt, setStartsAt] = useState("")
   const [venue, setVenue] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [memberCount, setMemberCount] = useState<number | null>(null)
   const { current } = useLocalityContext()
 
   const fetchEvents = useCallback(async () => {
@@ -236,6 +238,30 @@ function EventsContent() {
   useEffect(() => {
     fetchEvents()
   }, [fetchEvents])
+
+  // P0 Task 9: load the locality member count to branch the empty state on the
+  // §3.4 density threshold. The metric is a proxy (membership count, not weekly
+  // active) — see comment in lib/locality-density.ts.
+  useEffect(() => {
+    let cancelled = false
+    const supabase = createBrowserClient()
+    ;(async () => {
+      try {
+        const { count } = await supabase
+          .from("locality_memberships")
+          .select("*", { count: "exact", head: true })
+          .eq("locality_id", current.id)
+        if (!cancelled && count !== null) {
+          setMemberCount(count)
+        }
+      } catch {
+        /* silently fail — the empty state falls back to the standard copy */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [current.id])
 
   const handleCreate = async () => {
     setError(null)
@@ -371,8 +397,14 @@ function EventsContent() {
 
           {events.length === 0 && (
             <EmptyState
-              title="Nenhum evento ainda"
-              description="Organize encontros e atividades para a sua comunidade."
+              title={
+                isLocalityStale(memberCount) ? "Você é dos primeiros aqui." : "Nenhum evento ainda"
+              }
+              description={
+                isLocalityStale(memberCount)
+                  ? "Esta comunidade está começando. Crie o primeiro evento para abrir caminho para quem chegar depois."
+                  : "Organize encontros e atividades para a sua comunidade."
+              }
               illustration={<EventsIllustration />}
               action={
                 <Button variant="primary" size="sm" onPress={() => setView("create")}>
