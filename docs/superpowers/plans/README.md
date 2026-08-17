@@ -148,21 +148,91 @@ Nenhum agente resolve, e sem eles a D1 para no meio:
 As tasks 1, 2, 3 e 6 da D1 não dependem de nenhum deles e podem correr enquanto a espera
 acontece.
 
+## A ordem mudou em 2026-08-16, e quatro ADRs mandam agora
+
+Uma sessão de treze decisões reordenou o roadmap e produziu quatro ADRs. **Leia os quatro antes
+de abrir qualquer plano** — os planos os executam e não os repetem.
+
+| ADR | Risco | O que decide |
+|---|---|---|
+| [`national-localities`](../../decisions/ADR-20260816-national-localities.md) | R3 | o Bivaque é nacional desde o cadastro; Manaus é piloto operacional |
+| [`forma-da-admissao`](../../decisions/ADR-20260816-forma-da-admissao.md) | R3 | admissão em duas fases; nome sugerido pelo Portal e confirmado; waitlist geográfica sai |
+| [`transferencia-e-pertencimento`](../../decisions/ADR-20260816-transferencia-e-pertencimento.md) | R3 | o militar transferido acessa origem e destino; um perfil por pessoa |
+| [`shells-e-navegacao`](../../decisions/ADR-20260816-shells-e-navegacao.md) | R2 | papéis são shells; navegação é container; dois consoles de administração |
+
+**A ordem passou a ser: P0 → T → D2 → E → F.**
+
+Dois motivos, e nenhum é preferência. `PILOT_LOCALITY_ID` aparece **15 vezes em 8 arquivos de
+runtime**, e 6 desses 8 são editados por D2, E e F — rodar as ondas antes é fazer o mesmo
+trabalho duas vezes. E a **Task 3 da P0 muda duas chaves primárias**, que é a única parte
+irreversível depois de existir usuário real, num projeto sem staging (D42): tem que acontecer
+antes do primeiro membro.
+
+**Um portão humano antes de começar:** os quatro ADRs estão `critic_verdict: pending`, três são
+R3, e a `RISK_MATRIX.md` bloqueia a implementação até `PASS`. A aprovação humana já consta nos
+quatro. O merge do `origin` foi feito em 2026-08-16 e os ADRs existem localmente.
+
 ## O que ainda não tem plano
 
-D2 (a porta), E (a vila), F (o laço semanal), G (vitrine — provavelmente dividida em duas) e
-H (operação). Elas serão escritas quando a anterior fechar, contra o código no estado real —
-plano detalhado escrito hoje para código que quatro ondas vão reescrever nasce com evidência
-vencida.
+G (vitrine — provavelmente dividida em duas) e H (operação). As duas ficam fora do mínimo de
+dezembro (§10.2 do `BIVAQUE.md`), e a G depende de CNPJ, que é bloqueio humano. O apêndice da
+P0 já deixa avaliado, para a G, o que a BrasilAPI oferece de CNPJ — inclusive a armadilha de
+privacidade do campo `qsa`.
+
+D2, E e F foram escritas em **2026-08-16**, a pedido do dono, para fechar o caminho crítico de
+dezembro. Elas carregam o custo que esta seção antes previa e que continua real: a D2 foi
+escrita contra evidência de um dia de idade e é confiável; **E e F citam linhas de arquivos que
+a onda anterior pode reescrever.** Cada uma abre com um aviso dizendo exatamente quais arquivos
+reconferir antes de editar. Reconfira — não é formalidade.
 
 ## Os planos
 
 | Onda | Arquivo | Tamanho | Bloqueio |
 |---|---|---|---|
+| **P0** | [`2026-08-16-p0-localidades-nacionais.md`](2026-08-16-p0-localidades-nacionais.md) | 10 tasks | `critic_verdict: PASS` nos quatro ADRs |
+| **T** | [`2026-08-16-onda-t-transferencia.md`](2026-08-16-onda-t-transferencia.md) | 6 tasks | Task 3 da P0 (as duas chaves primárias) |
 | A | [`2026-08-11-onda-a-portas-e-vazamentos.md`](2026-08-11-onda-a-portas-e-vazamentos.md) | 6 tasks | nenhum |
 | B | [`2026-08-11-onda-b-coerencia-por-subtracao.md`](2026-08-11-onda-b-coerencia-por-subtracao.md) | 8 tasks | nenhum |
 | C | [`2026-08-11-onda-c-devolver-a-fala.md`](2026-08-11-onda-c-devolver-a-fala.md) | 7 tasks | nenhum |
 | D1 | [`2026-08-11-onda-d1-infraestrutura.md`](2026-08-11-onda-d1-infraestrutura.md) | 7 tasks | três humanos, acima |
+| D2 | [`2026-08-16-onda-d2-a-porta.md`](2026-08-16-onda-d2-a-porta.md) | 8 tasks (7 superada, 9 nova) | `outbox` + Resend da D1 (Tasks 4 e 5) |
+| E | [`2026-08-16-onda-e-a-vila.md`](2026-08-16-onda-e-a-vila.md) | 11 tasks | cota de convite da D1 (Task 6); afiliação bloqueada pelo ADR da OM |
+| F | [`2026-08-16-onda-f-o-laco-semanal.md`](2026-08-16-onda-f-o-laco-semanal.md) | 10 tasks | Task 1 é pré-requisito interno das Tasks 2, 3 e 8 |
+
+Três mudanças de escopo que a sessão de decisões produziu, e que não estão visíveis pelo nome dos
+arquivos:
+
+- **A Task 7 da D2 foi superada** pela Task 8 da P0 — ela polia a waitlist geográfica que o ADR
+  elimina. Riscada no arquivo, com o motivo, em vez de apagada.
+- **A D2 ganhou a Task 9:** os dois consoles de administração, como shells separados. Ela vem
+  **antes** da Task 6, que passa a viver dentro do console do fundador.
+- **A E ganhou as Tasks 10 e 11:** os containers de navegação e os assuntos de interesse. A
+  **Task 10 vem antes da Task 3**, porque é ela que define onde a camada da cidade aterrissa.
+
+Cinco coisas que os planos novos assumem e que valem ser lidas antes de executá-los:
+
+- **A Task 3 da P0 é a mais perigosa do roadmap.** Ela muda as chaves primárias de
+  `locality_memberships` e `profiles`, e os seis asserts de `locality-profile-access.sql` mudam
+  junto — **os mesmos seis que o perfil fantasma "Visual Capture" quebra.** Durante essa task vai
+  ser difícil distinguir regressão real de armadilha conhecida. `db:reset` limpo antes de
+  atribuir qualquer falha ao diff.
+
+- **A BrasilAPI entra como dependência de geração, nunca de runtime.** O catálogo de municípios
+  (IBGE) e os feriados nacionais viram artefato SQL versionado no repositório, produzido por um
+  script que roda quando alguém decide rodar. Não é só arquitetura: o README da BrasilAPI pede
+  que o volume "tenha a natureza de uma pessoa real requisitando um determinado dado", e o
+  Portal da Transparência já ocupa a vaga de terceiro no caminho crítico da admissão.
+
+
+- **A D2 é menor do que o `BIVAQUE.md` §10 sugere.** Cinco migrations de 2026-08-15 já
+  entregaram verificação, TTL, consentimento em banco e o vínculo do convite familiar ao e-mail.
+  O plano abre com a tabela do que já existe. Não reimplemente.
+- **Na onda E, a Task 1 vem antes da Task 2, e a ordem não é estética.** A home municipal é hoje
+  o único lugar que exibe post de alcance Manaus; removê-la antes de `feed_community` passar a
+  incluir esses posts tira conteúdo de circulação entre um commit e o outro.
+- **Na onda F, a Task 1 é medição antes de correção.** Seis Server Actions autenticam no cliente
+  `service_role`; o `PRODUCT_STATUS.md` registra dois desfechos possíveis e pede a medida. As
+  Tasks 2, 3 e 8 escrevem sobre esse mesmo caminho.
 
 Os planos anteriores neste diretório, de agosto de 2026, são das ondas 0 a 8 já executadas.
 Servem de registro do que foi feito e por quê — não de fila de trabalho.
