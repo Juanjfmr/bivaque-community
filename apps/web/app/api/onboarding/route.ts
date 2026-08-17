@@ -2,9 +2,11 @@ import { isValidCpf } from "@bivaque/domain"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import { log } from "../../../lib/logger"
+import { validateProvisionInput } from "../../../lib/onboarding/provision-validation"
 import {
   acceptFamilyInvitationAndProvision,
   addToWaitlist,
+  provisionMember,
   verifyEligibility,
 } from "../../../lib/onboarding/verifyAndProvision"
 import { createServerClient } from "../../../lib/supabase/server"
@@ -20,6 +22,7 @@ interface OnboardingRequestBody {
   city_name?: string
   state_code?: string
   display_name?: string
+  ibge_code?: string
 }
 
 export async function POST(request: Request) {
@@ -78,6 +81,43 @@ export async function POST(request: Request) {
       }
 
       const result = await verifyEligibility(supabase, { userId, cpf, consentVersion })
+      return NextResponse.json(result)
+    }
+
+    if (action === "provision") {
+      // P0 Task 5: o passo pós-elegibilidade. A localidade é validada contra o
+      // catálogo canônico ANTES de provisionar — nunca texto livre de cidade,
+      // e nunca um código de formato certo mas ausente do catálogo.
+      const validation = validateProvisionInput({
+        ibgeCode: typeof body.ibge_code === "string" ? body.ibge_code : "",
+        displayName: typeof body.display_name === "string" ? body.display_name : "",
+      })
+
+      if (!validation.ok) {
+        return NextResponse.json({ error: validation.error }, { status: 400 })
+      }
+
+      const localityCode = validation.ibgeCode as string
+      const { data: locality, error: localityError } = await supabase
+        .from("localities")
+        .select("id, ibge_code")
+        .eq("ibge_code", localityCode)
+        .maybeSingle()
+
+      if (localityError) {
+        throw new Error(`Failed to validate locality: ${localityError.message}`)
+      }
+      if (!locality) {
+        // Formato certo mas ausente do catálogo: 400, sem eco de mensagem de banco.
+        return NextResponse.json({ error: "locality is unknown" }, { status: 400 })
+      }
+
+      const result = await provisionMember(supabase, {
+        userId,
+        localityId: locality.id,
+        displayName: validation.displayName as string,
+        consentVersion,
+      })
       return NextResponse.json(result)
     }
 

@@ -46,6 +46,8 @@ describe("classifyPortalResponse with the real Portal /servidores shape", () => 
     expect(result).toEqual<VerificationResult>({
       status: "verified",
       eligibilityClass: "active_federal_military",
+      // P0 Task 5: o nome civil atravessa em memória, para preencher o campo.
+      suggestedName: "FULANO DE TAL",
     })
   })
 
@@ -61,6 +63,7 @@ describe("classifyPortalResponse with the real Portal /servidores shape", () => 
     expect(result).toEqual<VerificationResult>({
       status: "verified",
       eligibilityClass: "veteran",
+      suggestedName: "FULANO DE TAL",
     })
   })
 
@@ -76,6 +79,7 @@ describe("classifyPortalResponse with the real Portal /servidores shape", () => 
     expect(result).toEqual<VerificationResult>({
       status: "verified",
       eligibilityClass: "military_pensioner",
+      suggestedName: "FULANO DE TAL",
     })
   })
 

@@ -36,6 +36,10 @@ type NormalizedPortalRecord = {
   hasFichaMilitar: boolean
   hasFichaReformado: boolean
   hasFichaPensaoMilitar: boolean
+  // P0 Task 5: só o nome civil atravessa a fronteira do payload, em memória,
+  // para preencher o campo do passo pós-elegibilidade. Nunca é persistido
+  // aqui (D11): o que persiste é a declaração da pessoa.
+  nomeCivil: string
 }
 
 function normalizeString(value: unknown): string {
@@ -94,6 +98,7 @@ function firstFicha(record: PortalRecord | null, keys: string[]): PortalRecord |
 
 function normalizePortalRecord(record: PortalRecord): NormalizedPortalRecord {
   const servidor = asRecord(record["servidor"])
+  const nomeCivil = objectString(asRecord(servidor?.["pessoa"]), "nome")
   const fichaMilitar =
     firstFicha(record, ["fichasMilitar"]) ?? firstFicha(servidor, ["fichasMilitar"])
   const fichaReformado =
@@ -130,6 +135,7 @@ function normalizePortalRecord(record: PortalRecord): NormalizedPortalRecord {
     hasFichaMilitar: fichaMilitar !== null,
     hasFichaReformado: fichaReformado !== null,
     hasFichaPensaoMilitar: fichaPensaoMilitar !== null,
+    nomeCivil,
   }
 }
 
@@ -231,6 +237,11 @@ export function classifyPortalResponse(response: PortalApiResponse): Verificatio
 
   const eligibilityClass = determineEligibilityClass(record)
   if (eligibilityClass !== null) {
+    // suggestedName: só o nome, em memória, para preencher o campo. OM, posto
+    // e situação não atravessam (AGENTS.md:205, D11).
+    if (record.nomeCivil.length > 0) {
+      return { status: "verified", eligibilityClass, suggestedName: record.nomeCivil }
+    }
     return { status: "verified", eligibilityClass }
   }
 

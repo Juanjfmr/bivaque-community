@@ -211,8 +211,15 @@ function OnboardingFlow() {
         router.push("/onboarding/welcome")
       } else {
         const outcome = data["outcome"] as Record<string, unknown>
-        // P0 Task 4: verified without membership goes to the locality step.
+        // P0 Task 5: o nome que o Portal sugeriu atravessa a fronteira em
+        // memória (D11) e é guardado em sessionStorage descartável para o passo
+        // pós-elegibilidade preencher o campo. Nunca é persistido no banco.
         if (outcome["status"] === "verified") {
+          const suggested =
+            typeof outcome["suggestedName"] === "string" ? outcome["suggestedName"] : ""
+          if (suggested.length > 0) {
+            window.sessionStorage.setItem("onboarding:suggestedName", suggested)
+          }
           router.push("/onboarding/locality")
         } else if (outcome["status"] === "rejected") {
           setResult(

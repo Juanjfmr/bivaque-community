@@ -8,6 +8,11 @@ export type VerificationResult =
   | {
       status: "verified"
       eligibilityClass: EligibilityClass
+      // P0 Task 5: o nome civil atravessa a fronteira do payload em memória,
+      // para preencher o campo do passo pós-elegibilidade. NUNCA é persistido
+      // aqui — o que persiste é a declaração da pessoa (D11). Só o nome
+      // atravessa; OM, posto e situação continuam proibidos (AGENTS.md:205).
+      suggestedName?: string
     }
   | {
       status: "rejected"

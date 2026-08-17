@@ -362,7 +362,7 @@ elegibilidade; a pessoa declara onde mora; o dono da comunidade atesta a vila.
 A tela onde a pessoa informa o que só ela sabe. Acontece uma vez, com ela presente, depois de
 saber que passou.
 
-- [ ] **Step 1: localidade, obrigatória, validada no servidor**
+- [x] **Step 1: localidade, obrigatória, validada no servidor**
 
   Seleção de UF e depois município, com busca por nome. 27 + N opções não cabem num `<select>`
   único — e o `Select` do HeroUI é o componente, não um `<select>` cru.
@@ -375,7 +375,7 @@ saber que passou.
   cidade:** é o caminho para o catálogo duplicado que o risco 2 do ADR descreve. Localidade
   ausente ou desconhecida → 400, sem eco de mensagem de banco.
 
-- [ ] **Step 2: o nome — o Portal sugere, a pessoa confirma**
+- [x] **Step 2: o nome — o Portal sugere, a pessoa confirma**
 
   Hoje `classifyPortalResponse` (`lib/portal/classify.ts`) lê `orgao`, `situacao` e
   `tipoServidor` e **joga fora**; `VerificationResult` (`lib/portal/types.ts`) carrega `status` e
@@ -389,7 +389,7 @@ saber que passou.
   D11 e o [`ADR-20260811-om-declarada`](../../decisions/ADR-20260811-om-declarada.md), que segue
   `proposed` com cinco pré-requisitos abertos. Não amplie o `VerificationResult` além do nome.
 
-- [ ] **Step 3: a política de nomes (D23) se aplica aqui**
+- [x] **Step 3: a política de nomes (D23) se aplica aqui**
 
   `20260802000100:31-40` valida só comprimento 2-80. Migration nova: normalização Unicode NFC,
   barrar caracteres de controle e marcas bidi. É segurança, não produto — nome que se lê como
@@ -398,7 +398,7 @@ saber que passou.
   Este é o único lugar do produto onde a política tem onde ser aplicada, e é por isso que ela sai
   da onda E e vem para cá.
 
-- [ ] **Step 4: o que NÃO entra neste passo**
+- [x] **Step 4: o que NÃO entra neste passo**
 
   **Assuntos de interesse e grupos sugeridos ficam na onda E.** Em cidade recém-aberta não existe
   grupo a sugerir, e o passo apareceria vazio exatamente onde a solidão já é o risco 1 do ADR.
@@ -408,7 +408,7 @@ saber que passou.
   **Pedido de entrada em vila também não.** Misturaria dois atestadores diferentes na mesma
   interação, e a §5.2 os separa de propósito.
 
-- [ ] **Step 5: testes**
+- [x] **Step 5: testes**
 
   - Unitário sobre a rota: `ibge_code` válido passa; código inexistente é 400; **código com
     formato certo mas ausente do catálogo é 400** (negativo — é a diferença entre validar formato
@@ -419,7 +419,7 @@ saber que passou.
     é o que impede a OM de entrar por descuido.
   - E2E: o formulário lista municípios de uma segunda UF e conclui a escolha.
 
-- [ ] **Step 6: gate e commit**
+- [x] **Step 6: gate e commit**
 
   `feat(onboarding): post-eligibility step with locality and confirmed name`.
 
