@@ -15,5 +15,8 @@ dev-server.pid
 # Local agent evidence and run state
 .omo/
 
+# Local run logs and pid files from dev/E2E diagnostics
+work/
+
 # Claude Code managed worktrees (each contains a full node_modules clone)
 .claude/worktrees/
