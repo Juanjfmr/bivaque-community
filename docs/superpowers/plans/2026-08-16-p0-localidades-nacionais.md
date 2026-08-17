@@ -627,13 +627,13 @@ Achados ao revisar esta task. São pequenos e ficam mais caros depois.
 
 ## Task 8: a waitlist geográfica sai do caminho
 
-- [ ] **Step 1: o desvio some**
+- [x] **Step 1: o desvio some**
 
   A opção "Não sou de Manaus" (`onboarding/page.tsx:431-474`) e o link "Entrar na lista de espera
   de outras localidades" na tela de status (`onboarding/status/page.tsx:127-132`) saem. Quem é
   elegível entra; quem não é, é rejeitado — e rejeição não é geográfica.
 
-- [ ] **Step 2: a tabela fica, e a remoção é migration própria — decisão do dono, tomada**
+- [x] **Step 2: a tabela fica, e a remoção é migration própria — decisão do dono, tomada**
 
   `public.waitlist`, a RPC `add_to_waitlist(text, text, text)`,
   `20260815120000_waitlist_desired_city.sql` e o pgTAP
@@ -646,19 +646,19 @@ Achados ao revisar esta task. São pequenos e ficam mais caros depois.
   abra a migration de remoção como trabalho seguinte com prazo escrito. Código morto sem prazo
   vira feature aos olhos de quem chega depois.
 
-- [ ] **Step 3: o painel de demanda muda de fonte**
+- [x] **Step 3: o painel de demanda muda de fonte**
 
   A ideia de "o operador vê a demanda por cidade" sobrevive, mas não da waitlist: sob o ADR
   qualquer pessoa elegível entra na própria cidade, então o sinal está em
   `locality_memberships` por localidade. Isso pertence ao console do fundador, e o console é a
   onda **D2** — registre e siga.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
   E2E: pessoa elegível numa segunda localidade conclui o onboarding **sem** passar por lista de
   espera. É o critério de aceite 2 da issue #20, literal.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(onboarding): eligible members join their own locality, no geographic waitlist`.
 
