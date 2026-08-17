@@ -1,11 +1,12 @@
 ---
 id: ADR-20260816-transferencia-e-pertencimento
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
 approved_at: 2026-08-16
+accepted_at: 2026-08-17
 expires_at:
-linked_plan: docs/superpowers/plans/2026-08-16-p0-localidades-nacionais.md
+linked_plan: docs/superpowers/plans/2026-08-16-onda-t-transferencia.md
 critic_verdict: PASS
 critic_review: Veredito registrado em 2026-08-16 por autorizacao explicita do dono (Juan) na sessao de execucao: aprovar e executar a P0. Aprovacao humana ja consta na secao Approval. A implementacao esta destravada conforme a RISK_MATRIX.md.
 ---

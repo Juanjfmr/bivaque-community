@@ -1,6 +1,6 @@
 ---
 id: ADR-20260816-national-localities
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
 approved_at: 2026-08-16

@@ -1,6 +1,6 @@
 ---
 id: ADR-20260816-shells-e-navegacao
-status: proposed
+status: accepted
 risk: R2
 owner: Juan
 approved_at: 2026-08-16
