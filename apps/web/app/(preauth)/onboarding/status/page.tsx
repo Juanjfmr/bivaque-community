@@ -131,12 +131,6 @@ export default async function OnboardingStatusPage() {
               >
                 Tentar novamente
               </Link>
-              <Link
-                href="/onboarding?flow=waitlist"
-                className="rounded-md border border-border px-4 py-2 text-center text-sm font-medium transition-colors hover:bg-accent/10"
-              >
-                Entrar na lista de espera de outras localidades
-              </Link>
             </div>
           </>
         )}
