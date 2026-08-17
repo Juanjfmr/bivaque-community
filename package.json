@@ -25,11 +25,11 @@
     "visual:loop": "node scripts/visual/loop.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.7",
+    "@biomejs/biome": "^2.5.8",
     "@bivaque/contracts": "workspace:*",
     "@bivaque/domain": "workspace:*",
     "@playwright/test": "1.51.1",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "supabase": "2.107.0",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
