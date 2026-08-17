@@ -49,6 +49,21 @@ function normalizeString(value: unknown): string {
   return value.trim().toUpperCase()
 }
 
+// P0 Task 5 / Task 7 follow-up: the suggested name is the only field that
+// crosses the verification boundary into the post-eligibility step. The
+// Portal payload hands it in the original casing, and the post-eligibility
+// screen must show it the way the member wrote it - not as "JOÃO DA
+// SILVA". `normalizeString` uppercases for classification against the
+// Set of orgão and situação, and that contract is enforced; adding a
+// non-uppercasing variant here is the line that keeps the two
+// requirements from pulling each other apart.
+function trimmedString(value: unknown): string {
+  if (typeof value !== "string") {
+    return ""
+  }
+  return value.trim()
+}
+
 function asRecord(value: unknown): PortalRecord | null {
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     return value as PortalRecord
@@ -98,7 +113,7 @@ function firstFicha(record: PortalRecord | null, keys: string[]): PortalRecord |
 
 function normalizePortalRecord(record: PortalRecord): NormalizedPortalRecord {
   const servidor = asRecord(record["servidor"])
-  const nomeCivil = objectString(asRecord(servidor?.["pessoa"]), "nome")
+  const nomeCivil = trimmedString(asRecord(servidor?.["pessoa"])?.["nome"])
   const fichaMilitar =
     firstFicha(record, ["fichasMilitar"]) ?? firstFicha(servidor, ["fichasMilitar"])
   const fichaReformado =

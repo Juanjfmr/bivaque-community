@@ -305,4 +305,51 @@ describe("classifyPortalResponse", () => {
       expect(result).toEqual<VerificationResult>({ status: "rejected" })
     })
   })
+
+  // P0 Task 5 / Task 7 follow-up: the suggested name comes from the Portal
+  // payload. The path is `servidor.pessoa.nome`. The classifier must
+  // - preserve the original casing (the field is shown to the member
+  //   in the post-eligibility step, and the member wrote it the way
+  //   they wrote it), and
+  // - tolerate the field being absent (the verification continues and
+  //   the post-eligibility step simply starts with an empty name).
+  describe("suggestedName from servidor.pessoa.nome", () => {
+    it("preserves the original casing when the field is present", () => {
+      // Given a verified record with a mixed-case name at the deep path
+      const result = classifyPortalResponse([
+        {
+          orgao_servidor: "Comando do Exército",
+          situacao_funcional: "ATIVO PERMANENTE",
+          servidor: { pessoa: { nome: "João da Silva" } },
+        },
+      ])
+
+      // When the verdict is verified
+      // Then the suggested name carries the original casing, not uppercased
+      expect(result).toEqual<VerificationResult>({
+        status: "verified",
+        eligibilityClass: "active_federal_military",
+        suggestedName: "João da Silva",
+      })
+    })
+
+    it("verifies without suggestedName when the field is absent", () => {
+      // Given a verified record with no name at the deep path
+      const result = classifyPortalResponse([
+        {
+          orgao_servidor: "Comando do Exército",
+          situacao_funcional: "ATIVO PERMANENTE",
+        },
+      ])
+
+      // When the verdict is verified
+      // Then there is no suggestedName - the post-eligibility step starts
+      // with an empty name, and the absence does not break the verification.
+      expect(result).toEqual<VerificationResult>({
+        status: "verified",
+        eligibilityClass: "active_federal_military",
+      })
+      expect(result).not.toHaveProperty("suggestedName")
+    })
+  })
 })
