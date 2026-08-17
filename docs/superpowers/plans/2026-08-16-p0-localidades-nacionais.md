@@ -310,7 +310,7 @@ consultada, os dois dados que só ela pode fornecer são inventados: a localidad
 A §4.1 diz o contrário: **cada fato é atestado por quem consegue atestá-lo.** O Estado atesta
 elegibilidade; a pessoa declara onde mora; o dono da comunidade atesta a vila.
 
-- [ ] **Step 1: `verify` e `provision`**
+- [x] **Step 1: `verify` e `provision`**
 
   `verifyAndProvision` se parte em duas funções. `verify` consulta o Portal, consome tentativa,
   grava o outcome e para. `provision` recebe localidade e nome **já validados** e cria membership
@@ -319,12 +319,12 @@ elegibilidade; a pessoa declara onde mora; o dono da comunidade atesta a vila.
   O import de `PILOT_LOCALITY_ID` (`:3`) sai do arquivo. As quatro chamadas somem **por
   construção**, não por substituição — que é a diferença entre corrigir e remendar.
 
-- [ ] **Step 2: `provision` exige localidade, sem default**
+- [x] **Step 2: `provision` exige localidade, sem default**
 
   Campo obrigatório na entrada. **Um default aqui é `PILOT_LOCALITY_ID` disfarçado**, e
   reintroduz o bug no primeiro chamador que esquecer de passar.
 
-- [ ] **Step 3: a reconciliação de `pending` não provisiona**
+- [x] **Step 3: a reconciliação de `pending` não provisiona**
 
   Isto resolve, sem coluna nova, o problema que a D2 Task 2 enfrentaria:
   `private.verification_outcomes` (`20260802000200:25-36`) guarda `status`, `eligibility_class` e
@@ -335,7 +335,7 @@ elegibilidade; a pessoa declara onde mora; o dono da comunidade atesta a vila.
   `verification_outcomes`: seria dado coletado que pode nunca ter uso, o que a LGPD trata como
   finalidade sem propósito.
 
-- [ ] **Step 4: o gate reconhece "elegível sem membership"**
+- [x] **Step 4: o gate reconhece "elegível sem membership"**
 
   `onboarding/status/page.tsx:58` hoje faz `if (membershipResult.data !== null || status ===
   "verified") redirect("/community")`. Depois desta task isso está **errado**: quem é `verified`
@@ -343,7 +343,7 @@ elegibilidade; a pessoa declara onde mora; o dono da comunidade atesta a vila.
 
   Este é o estado novo que a fase dupla cria, e é o mais fácil de esquecer.
 
-- [ ] **Step 5: testes**
+- [x] **Step 5: testes**
 
   - Unitário: `verify` não escreve em `locality_memberships` nem em `profiles` (**negativo, e é o
     teste da task**); `provision` sem localidade é erro de tipo, não silêncio.
@@ -351,7 +351,7 @@ elegibilidade; a pessoa declara onde mora; o dono da comunidade atesta a vila.
     memberships corretas; o perfil é **um só** nos dois casos (consequência da Task 3).
   - Unitário sobre o job de reconciliação: verificado enfileira `outbox` e **não** cria membership.
 
-- [ ] **Step 6: gate e commit**
+- [x] **Step 6: gate e commit**
 
   `refactor(onboarding): split eligibility from provisioning`.
 

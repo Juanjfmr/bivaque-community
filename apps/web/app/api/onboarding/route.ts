@@ -5,7 +5,7 @@ import { log } from "../../../lib/logger"
 import {
   acceptFamilyInvitationAndProvision,
   addToWaitlist,
-  verifyAndProvision,
+  verifyEligibility,
 } from "../../../lib/onboarding/verifyAndProvision"
 import { createServerClient } from "../../../lib/supabase/server"
 
@@ -19,6 +19,7 @@ interface OnboardingRequestBody {
   email?: string
   city_name?: string
   state_code?: string
+  display_name?: string
 }
 
 export async function POST(request: Request) {
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "cpf is invalid" }, { status: 400 })
       }
 
-      const result = await verifyAndProvision(supabase, { userId, cpf, consentVersion })
+      const result = await verifyEligibility(supabase, { userId, cpf, consentVersion })
       return NextResponse.json(result)
     }
 
@@ -86,12 +87,17 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "token is required" }, { status: 400 })
       }
 
-      const result = await acceptFamilyInvitationAndProvision(
-        supabase,
+      const displayName = body.display_name
+      if (typeof displayName !== "string" || displayName.trim().length < 2) {
+        return NextResponse.json({ error: "display_name is required" }, { status: 400 })
+      }
+
+      const result = await acceptFamilyInvitationAndProvision(supabase, {
         tokenHex,
         userId,
+        displayName: displayName.trim(),
         consentVersion,
-      )
+      })
       return NextResponse.json(result)
     }
 

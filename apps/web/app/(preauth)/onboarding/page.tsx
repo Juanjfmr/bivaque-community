@@ -94,6 +94,7 @@ function OnboardingFlow() {
   const [cityName, setCityName] = useState("")
   const [stateCode, setStateCode] = useState("")
   const [familyToken, setFamilyToken] = useState("")
+  const [familyName, setFamilyName] = useState("")
   const [result, setResult] = useState<string | null>(null)
   const [flow, setFlow] = useState<"verify" | "family" | "waitlist">("verify")
 
@@ -141,8 +142,14 @@ function OnboardingFlow() {
           localityMember: boolean
         }
 
-        if (data.localityMember || data.status === "verified") {
+        if (data.localityMember) {
           router.replace("/community")
+          return
+        }
+        // P0 Task 4: verified without membership is a real state — the person
+        // must choose a locality at the post-eligibility step, not the feed.
+        if (data.status === "verified") {
+          router.replace("/onboarding/locality")
           return
         }
         if (data.status === "pending") {
@@ -204,7 +211,10 @@ function OnboardingFlow() {
         router.push("/onboarding/welcome")
       } else {
         const outcome = data["outcome"] as Record<string, unknown>
-        if (outcome["status"] === "rejected") {
+        // P0 Task 4: verified without membership goes to the locality step.
+        if (outcome["status"] === "verified") {
+          router.push("/onboarding/locality")
+        } else if (outcome["status"] === "rejected") {
           setResult(
             "Infelizmente, você não atende aos critérios do piloto de Manaus. Você pode entrar na lista de espera para outras localidades.",
           )
@@ -226,6 +236,10 @@ function OnboardingFlow() {
 
   const handleAcceptFamilyInvite = async () => {
     setError(null)
+    if (familyName.trim().length < 2) {
+      setError("Informe seu nome para aceitar o convite.")
+      return
+    }
     setLoading(true)
 
     const {
@@ -250,7 +264,11 @@ function OnboardingFlow() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ action: "accept-family-invite", token: familyToken }),
+        body: JSON.stringify({
+          action: "accept-family-invite",
+          token: familyToken,
+          display_name: familyName.trim(),
+        }),
       })
 
       const data = (await response.json()) as Record<string, unknown>
@@ -416,6 +434,15 @@ function OnboardingFlow() {
             </p>
 
             {error && <FeedbackAlert variant="danger" description={error} />}
+
+            <Input
+              aria-label="Seu nome"
+              placeholder="Seu nome completo"
+              value={familyName}
+              onChange={(e) => setFamilyName((e.target as HTMLInputElement).value)}
+              required
+              maxLength={80}
+            />
 
             <Button
               variant="primary"

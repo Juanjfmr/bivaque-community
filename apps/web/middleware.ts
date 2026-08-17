@@ -100,7 +100,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // Onboarding keeps its own screen and is not part of the verified shell.
-  if (pathname === "/onboarding" || pathname.startsWith("/onboarding/status")) {
+  // /onboarding/locality is the post-eligibility step (P0 Task 5): an
+  // eligible-but-not-yet-provisioned member lands there, not on the feed.
+  if (
+    pathname === "/onboarding" ||
+    pathname.startsWith("/onboarding/status") ||
+    pathname.startsWith("/onboarding/locality")
+  ) {
     return supabaseResponse
   }
 

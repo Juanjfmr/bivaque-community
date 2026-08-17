@@ -55,8 +55,15 @@ export default async function OnboardingStatusPage() {
   const row = (outcomeResult.data as OutcomeRpcRow[] | null)?.[0] ?? null
   const status = row?.status ?? null
 
-  if (membershipResult.data !== null || status === "verified") {
+  // P0 Task 4: with the two-phase admission, "verified without membership"
+  // is a real state — the person passed eligibility but has not chosen a
+  // locality yet. That goes to the post-eligibility step, not the feed.
+  if (membershipResult.data !== null) {
     redirect("/community")
+  }
+
+  if (status === "verified") {
+    redirect("/onboarding/locality")
   }
 
   if (status === null || !VALID_STATES.includes(status as (typeof VALID_STATES)[number])) {
