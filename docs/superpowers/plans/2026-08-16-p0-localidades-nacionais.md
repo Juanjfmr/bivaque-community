@@ -670,7 +670,7 @@ Critério de aceite 10 da issue e **risco 1** do ADR. É o custo real da decisã
 nesta task: quem se cadastra numa cidade onde ninguém entrou vê feed vazio, guia vazio, eventos
 vazios e vitrine vazia — quatro superfícies em branco no primeiro minuto.
 
-- [ ] **Step 1: o estado vazio diz a verdade**
+- [x] **Step 1: o estado vazio diz a verdade**
 
   Não "nenhuma publicação ainda" — isso descreve uma sala que existe e está quieta. A verdade é
   outra: **você é dos primeiros aqui.** Diga isso, e ofereça o que faz sentido para quem é o
@@ -679,23 +679,24 @@ vazios e vitrine vazia — quatro superfícies em branco no primeiro minuto.
   O componente `EmptyState` (`app/components/bivaque/empty-state.tsx`) já existe. É copy e
   ramificação, não componente novo.
 
-- [ ] **Step 2: a densidade é fato, não adjetivo**
+- [x] **Step 2: a densidade é fato, não adjetivo**
 
   A regra da §3.4 é de 30 a 40 pessoas ativas por semana. Abaixo disso a tela admite que a cidade
   está começando, em vez de fingir movimento.
 
-- [ ] **Step 3: Manaus continua prioritária, e isso não toca elegibilidade**
+- [x] **Step 3: Manaus continua prioritária, e isso não toca elegibilidade**
 
   Decisão 7 do ADR. Prioridade vive no runbook e na métrica — **não** numa condicional que decide
   acesso. Se você precisar de um `if` sobre Manaus para implementar prioridade, o desenho está
   errado: **pare e reporte**.
 
-- [ ] **Step 4: teste**
+- [x] **Step 4: teste**
 
   E2E: sessão numa localidade sem conteúdo vê o estado vazio com caminho de ação, e **não** vê
-  mensagem de erro nem tela em branco.
+  mensagem de erro nem tela em branco. Coberto por `tests/e2e/empty-locality.spec.ts` (em árvore,
+  execução pendente de Task 10).
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(ux): honest empty state for localities that are just starting`.
 
