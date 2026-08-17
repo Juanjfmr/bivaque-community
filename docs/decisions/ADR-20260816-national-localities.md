@@ -1,16 +1,37 @@
 ---
 id: ADR-20260816-national-localities
 status: proposed
-risk: R2
+risk: R3
 owner: Juan
 approved_at: 2026-08-16
 expires_at:
-linked_plan: GitHub issue #20 — national locality onboarding
+linked_plan: docs/superpowers/plans/2026-08-16-p0-localidades-nacionais.md — GitHub issue #20
 critic_verdict: pending
 critic_review:
 ---
 
 # Bivaque nacional no cadastro; Manaus como piloto operacional
+
+> **Emendado em 2026-08-16, depois da sessão de decisões que produziu o plano da P0.** Quatro
+> mudanças, e três delas invalidam texto que está abaixo:
+>
+> 1. **`risk: R2` → `R3`.** A `RISK_MATRIX.md:40` é explícita: *"Any plan touching RLS, private
+>    data, **identity verification**, Supabase policies, secrets, or destructive database
+>    operations is R3."* Esta P0 reescreve `verifyAndProvision`, que é o caminho de verificação
+>    de identidade, e a remoção da waitlist é operação destrutiva. A aprovação humana já constava,
+>    então a exigência prática não muda — o que muda é a régua que o próximo agente lê.
+> 2. **Multi-localidade simultânea por usuário deixou de estar fora de escopo.** Ver
+>    [`ADR-20260816-transferencia-e-pertencimento`](ADR-20260816-transferencia-e-pertencimento.md),
+>    que reabre essa linha a partir do caso do militar transferido. As men­ções abaixo em
+>    "Guardrail de terminologia", "Não decidido neste ADR" e nos Riscos ficam **superadas**.
+> 3. **A forma da admissão foi decidida**, e ela muda como a localidade é coletada: em duas
+>    fases, elegibilidade primeiro. Ver
+>    [`ADR-20260816-forma-da-admissao`](ADR-20260816-forma-da-admissao.md).
+> 4. **O ponto que este ADR deixou aberto sobre o convite familiar está fechado:** o dependente
+>    é provisionado na localidade **corrente** do titular no momento do **aceite** — não a do
+>    envio, e não a de saída, se ele tiver um vínculo de transferência ativo. Motivo: se o
+>    titular foi transferido entre convidar e aceitar, o dependente tem que cair onde a família
+>    está, não sozinho numa cidade de onde todos saíram.
 
 ## Problem
 
@@ -48,8 +69,8 @@ Evidência atual:
 Para evitar nova regressão conceitual:
 
 - **Multi-localidade da plataforma:** capacidade de o Bivaque possuir e operar múltiplas localidades simultaneamente. Isso **já faz parte do modelo do produto** e não é feature futura.
-- **Localidade atual do usuário:** no schema atual, `locality_memberships.user_id` é chave primária, portanto cada usuário possui uma localidade corrente. Isso não significa que a plataforma seja mono-localidade.
-- **Multi-localidade simultânea por usuário:** permitir que o mesmo usuário pertença a mais de uma localidade ao mesmo tempo. Isso é uma decisão distinta e não faz parte desta P0.
+- **Localidade atual do usuário:** ~~no schema atual, `locality_memberships.user_id` é chave primária, portanto cada usuário possui uma localidade corrente.~~ **Superado em 2026-08-16:** a chave primária passa a ser `(user_id, locality_id)`, e o usuário tem uma localidade **corrente** mais, no máximo, um vínculo de saída com prazo. Isso continua não significando que a plataforma seja mono-localidade.
+- **Multi-localidade simultânea por usuário:** ~~permitir que o mesmo usuário pertença a mais de uma localidade ao mesmo tempo. Isso é uma decisão distinta e não faz parte desta P0.~~ **Superado em 2026-08-16:** é decisão distinta, sim — e foi tomada em [`ADR-20260816-transferencia-e-pertencimento`](ADR-20260816-transferencia-e-pertencimento.md). A P0 leva a **base**: a mudança das duas chaves primárias, que é a única parte irreversível depois de existir dado real. O prazo, o lembrete, a degradação e o seletor de localidade são onda própria, logo depois.
 - **Multi-tenancy/organizações:** é uma dimensão arquitetural separada de geografia. O Bivaque original já foi concebido multi-tenant; esta P0 não deve ser descrita como introdução ou remoção de multi-tenancy.
 
 ### Precedência sobre o canon ainda não reconciliado
@@ -67,8 +88,10 @@ As partes não geográficas dessas decisões permanecem válidas. A reconciliaç
 
 ### Não decidido neste ADR
 
-- Permitir múltiplas localidades simultâneas para o mesmo usuário.
-- Troca de localidade e histórico de mudanças.
+- ~~Permitir múltiplas localidades simultâneas para o mesmo usuário.~~ **Decidido em
+  2026-08-16**, em ADR próprio — ver a emenda no topo.
+- ~~Troca de localidade e histórico de mudanças.~~ A **troca** foi decidida junto com a
+  transferência; o **histórico** de mudanças como superfície de produto continua não decidido.
 - Alterações na arquitetura de tenancy/organizações já concebida para o Bivaque, ou reexpansão dessa camada no fork `bivaque-community`.
 - White-label, subdomínios ou planos pagos.
 - Estratégia comercial de expansão para cada cidade.
