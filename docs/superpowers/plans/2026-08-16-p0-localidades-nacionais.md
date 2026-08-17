@@ -462,50 +462,166 @@ saber que passou.
 
 ---
 
-## Task 7: o shell e os feeds resolvem a localidade real
+## Task 7: o shell resolve a localidade — reescrita em 2026-08-17
 
-As oito chamadas restantes.
+> **Esta task foi tentada, compila, e não deve ser commitada como está.** O trabalho está na
+> árvore, sem commit. Leia esta seção inteira antes de tocar em qualquer arquivo: **a maior parte
+> se aproveita** e a correção é cirúrgica, não um recomeço.
+>
+> **O que se aproveita, e é bom:** `tests/scope/no-pilot-locality.test.mjs` está **melhor do que
+> esta task pedia** — tira comentários antes de buscar, preserva string literal, pega o UUID cru
+> de Manaus, tem guarda contra passar vazio e testa o próprio stripper. **Não reescreva.** O
+> inventário de call sites e o `tests/e2e/two-localities.spec.ts` também ficam.
+>
+> **O que muda: a forma do resolvedor e o número de leituras.**
 
-- [ ] **Step 1: um resolvedor, não oito leituras**
+### O que a primeira tentativa produziu, e por que não passa
 
-  A localidade corrente do usuário é lida **uma vez** e distribuída. Espalhar oito consultas é
-  trocar um acoplamento por outro, e a próxima tela adiciona a nona.
+`lib/locality.ts` expõe `getCurrentLocalityId(supabase): Promise<string | null>`, que faz uma
+consulta por chamador. O resultado medido:
 
-  `apps/web/lib/locality.ts` deixa de exportar uma constante e passa a expor a resolução. **O nome
-  `PILOT_LOCALITY_ID` sai** — nome errado sobrevive à refatoração e ensina o próximo agente a
-  coisa errada.
+| Arquivo | Chamadas |
+|---|---|
+| `community/page.tsx` | **3** — linhas 44, 94, 154 |
+| `feed-right-rail.tsx` | 1 — linha 51 |
+| `app-shell.tsx` | 1 — linha 42 |
+| `events/page.tsx` | 1 — linha 250 |
+| `guide/page.tsx` | 1 — linha 47 |
+| `profile/page.tsx` | 1 — linha 129 |
 
-  O resolvedor já devolve **a localidade corrente**, mesmo que hoje só exista uma. A onda de
-  transferência acrescenta o seletor sem reescrever quem chama — se você desenhar como "a
-  localidade", ela reescreve.
+São **oito call sites, onze chamadas** — e `feed-right-rail` e `app-shell` renderizam dentro da
+`community/page`, então **abrir a home dispara cinco consultas para o mesmo valor**. Era
+literalmente o que o Step 1 original proibia: *"espalhar oito consultas é trocar um acoplamento
+por outro, e a próxima tela adiciona a nona"*.
 
-- [ ] **Step 2: os arquivos, na ordem**
+Três defeitos concretos, além da contagem:
 
-  `community/page.tsx` (`:82`, `:142`, `:317`) · `feed-right-rail.tsx` (`:56`, `:60`) ·
-  `feed-composer.tsx` (`:30`) · `app-shell.tsx` (`:243`) · `profile/page.tsx` (`:130`) ·
-  `guide/page.tsx` (`:47`) · `events/page.tsx` (`:252`).
+1. **`.order("joined_at", { ascending: true }).limit(1)` devolve a membership mais ANTIGA.** Na
+   onda T o vínculo antigo é a cidade de **origem** — a que a pessoa está deixando. Este
+   resolvedor vai devolver a cidade errada, e não é um caso de "precisa reescrever": é resultado
+   incorreto, silencioso.
+2. **`if (error) return null` engole o erro.** Falha de infraestrutura vira "você não tem
+   localidade", que vira tela vazia. É exatamente a armadilha que o
+   [`README.md`](README.md) deste diretório documenta: *"leia o `error` de toda consulta"*.
+3. **`?? ""` em cinco lugares** produz `.eq("locality_id", "")`. O Postgres não devolve vazio —
+   devolve `invalid input syntax for type uuid`. É um caminho de erro que ninguém desenhou, com
+   mensagem que não diz a causa real.
 
-  Cuidado com `community/page.tsx:142`: é a contagem de membros da localidade, exibida no
-  cabeçalho de quem não tem vila. A onda E reescreve essa tela — se E já rodou, reconfira o alvo.
+### A forma correta
 
-- [ ] **Step 3: o teste de escopo que mecaniza o critério de aceite**
+- [ ] **Step 1: resolver uma vez, no servidor, no shell**
 
-  `tests/scope/no-pilot-locality.test.mjs`: nenhum arquivo em `apps/web/app/` ou `apps/web/lib/`
-  referencia identificador de localidade constante para conceder acesso, provisionar ou filtrar
-  conteúdo.
+  A resolução acontece em **`apps/web/app/(shell)/layout.tsx`**, que é Server Component e roda
+  uma vez por navegação. Um provider de cliente montado ali entrega o valor aos componentes de
+  cliente — mesmo padrão do `ToastProvider`, que o `AGENTS.md` manda manter montado.
 
-  Este teste **é** o critério *"runtime não usa `PILOT_LOCALITY_ID`…"* da issue #20. Sem ele o
-  critério é uma frase que alguém confere uma vez.
+  Vale saber: `middleware.ts:108-113` **já consulta** `locality_memberships` no gate. O valor já
+  é buscado uma vez por requisição; o problema é jogá-lo fora e buscar de novo cinco vezes.
 
-- [ ] **Step 4: testes**
+- [ ] **Step 2: a forma do valor, e por que não é um id solto**
 
-  E2E `tests/e2e/two-localities.spec.ts`: duas sessões, duas localidades; cada uma vê o próprio
-  feed, os próprios eventos e o próprio guia; **nenhuma vê conteúdo da outra** — negativo, e é o
-  que prova que a mudança não abriu vazamento entre cidades.
+  ```ts
+  type LocalityContext = {
+    current: { id: string; cityName: string }
+    // onda T acrescenta aqui, sem tocar em nenhum consumidor:
+    // outbound: { id: string; cityName: string; endsAt: string; readOnly: boolean } | null
+  }
+  ```
 
-- [ ] **Step 5: gate e commit**
+  Três propriedades, cada uma resolvendo um dos problemas acima:
 
-  `refactor(locality): resolve scope from the member instead of a pilot constant`.
+  - **É objeto, não `string`.** A onda T acrescenta um campo; nenhum consumidor muda de
+    assinatura. É a diferença entre acrescentar e reescrever onze lugares.
+  - **Carrega `cityName`.** As Tasks 3 e 4 da onda E precisam do nome da cidade para o rótulo da
+    navegação, o título da rota e o chip de alcance. Sem ele, cada tela consulta `localities` de
+    novo — a nona consulta, de novo.
+  - **`current` é não-nulo.** Ver o Step 3.
+
+  A escolha de **qual** membership é a corrente não pode ser "a mais antiga". Enquanto a P0
+  entrega uma por pessoa, qualquer critério funciona — e é justamente por isso que ele tem que
+  ser explícito e comentado agora, senão a onda T herda `joined_at asc` e devolve a cidade que a
+  pessoa está deixando.
+
+- [ ] **Step 3: o `null` morre no shell, não nas folhas**
+
+  Dentro de `(shell)`, a localidade **nunca** é nula: quem não tem membership não deveria ter
+  passado pelo gate — é o estado "elegível sem membership" que a Task 1 da D2 roteia para o passo
+  de localidade da Task 5.
+
+  Então o `layout.tsx` resolve e, se vier nulo, **redireciona**; não renderiza. O provider recebe
+  valor não-nulo e o TypeScript garante o resto: nenhum consumidor trata `null`, porque o tipo não
+  permite. **Onze tratamentos viram um, e o invariante fica estrutural em vez de combinado.**
+
+  E o erro da consulta **é lido**. Falha de infraestrutura não é "sem localidade": é falha, e
+  sobe.
+
+- [ ] **Step 4: os call sites**
+
+  `community/page.tsx` (44, 94, 154) · `feed-right-rail.tsx` (51) · `app-shell.tsx` (42) ·
+  `events/page.tsx` (250) · `guide/page.tsx` (47) · `profile/page.tsx` (129).
+
+  Nos componentes de cliente, o `useEffect` que busca a localidade **some** — e com ele a condição
+  de corrida do primeiro render, em que o valor ainda é nulo enquanto o feed já disparou.
+
+  `feed-composer.tsx` saiu da lista: a primeira tentativa já o resolveu por outro caminho.
+  Confirme com o teste de escopo, não com esta frase.
+
+- [ ] **Step 5: a ordem dos commits — a constante sai por ÚLTIMO**
+
+  Foi inverter isto que produziu o estado atual: a constante saiu primeiro e a migração inteira
+  ficou sem ponto de commit verde.
+
+  1. Adicionar o provider e o hook, **mantendo** o que existe. Nada consome ainda. Gate verde.
+     Commit.
+  2. Migrar os **Server Components** — `events`, `guide`, `profile`. Gate verde. Commit.
+  3. Migrar os **Client Components** — `community/page`, `app-shell`, `feed-right-rail`. Gate
+     verde. Commit.
+  4. Remover `getCurrentLocalityId` **e** manter o teste de escopo passando, no mesmo commit.
+     Gate verde. Commit.
+
+  Um commit por passo, não um por task. Quando a ferramenta de edição falhar no meio — e ela
+  falhou nesta task —, perde-se um arquivo, não a árvore.
+
+- [ ] **Step 6: o teste de escopo já está pronto**
+
+  `tests/scope/no-pilot-locality.test.mjs` mecaniza o critério *"runtime não usa
+  `PILOT_LOCALITY_ID` para conceder acesso, provisionar ou filtrar conteúdo"* da issue #20.
+  **Não o reescreva.** Se a lista `FORBIDDEN` precisar de entrada nova, acrescente.
+
+- [ ] **Step 7: E2E**
+
+  `tests/e2e/two-localities.spec.ts` já existe: duas sessões, duas localidades; cada uma vê o
+  próprio feed, os próprios eventos e o próprio guia; **nenhuma vê conteúdo da outra** — negativo,
+  e é o que prova que a mudança não abriu vazamento entre cidades.
+
+- [ ] **Step 8: não rode banco para fechar esta task**
+
+  Esta task não toca migration nenhuma. `db:reset`, `test:db` e `db:lint` não se aplicam, e rodar
+  a captura visual junto expõe ao perfil fantasma "Visual Capture". **O gate é o critério.**
+
+- [ ] **Step 9: commit final**
+
+  `refactor(locality): resolve the member scope once in the shell`.
+
+### Dois reparos da Task 5, que cabem aqui
+
+Achados ao revisar esta task. São pequenos e ficam mais caros depois.
+
+- [ ] **`suggestedName` está chegando em CAIXA ALTA.** `classify.ts` lê `nomeCivil` via
+  `objectString`, que passa por `normalizeString` → `.trim().toUpperCase()`. O campo do passo
+  pós-elegibilidade vai propor "JOÃO DA SILVA".
+
+  **Não mexa em `normalizeString`** — ela existe para casar contra os `Set` de órgão e situação, e
+  alterá-la quebra a classificação. Leia o nome por uma função própria que só faz `trim`.
+
+  É o mesmo caso do `"ALVARÃES"` que a Task 1 manda normalizar; aqui passou.
+
+- [ ] **O caminho `servidor.pessoa.nome` não está verificado.** Se o campo não existir com esse
+  nome na resposta real, `suggestedName` fica sempre ausente e o campo sempre vazio, em silêncio.
+
+  Dois unitários com fixture: um com o campo, devolvendo o nome com a caixa preservada; outro
+  **sem** o campo, devolvendo `verified` sem `suggestedName` — o negativo é o que prova que a
+  ausência não quebra a verificação. Fixture, nunca chamada real ao Portal.
 
 ---
 
