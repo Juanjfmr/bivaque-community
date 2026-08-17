@@ -7,11 +7,11 @@ import { Suspense, useEffect, useState } from "react"
 import { purgeCpfResidue } from "../../../lib/onboarding/storage"
 import { verificationErrorMessage } from "../../../lib/portal/verification-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { SUPPORT_EMAIL, SUPPORT_SLA_HOURS } from "../../../lib/support"
+import { SUPPORT_EMAIL } from "../../../lib/support"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { showToast } from "../../components/bivaque/toast"
 
-type OnboardingStep = "verify" | "family" | "waitlist" | "done" | "loading"
+type OnboardingStep = "verify" | "family" | "done" | "loading"
 
 function formatCpf(digits: string): string {
   if (digits.length <= 3) return digits
@@ -34,10 +34,9 @@ export default function OnboardingPage() {
   )
 }
 
-const flowLabels: Record<"verify" | "family" | "waitlist", string[]> = {
+const flowLabels: Record<"verify" | "family", string[]> = {
   verify: ["CPF", "Verificando", "Concluído"],
   family: ["Convite", "Processando", "Concluído"],
-  waitlist: ["Cadastro", "Enviando", "Concluído"],
 }
 
 function getProgressIndex(step: OnboardingStep, loading: boolean): number {
@@ -90,16 +89,12 @@ function OnboardingFlow() {
   const [cpf, setCpf] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [email, setEmail] = useState("")
-  const [cityName, setCityName] = useState("")
-  const [stateCode, setStateCode] = useState("")
   const [familyToken, setFamilyToken] = useState("")
   const [familyName, setFamilyName] = useState("")
   const [result, setResult] = useState<string | null>(null)
-  const [flow, setFlow] = useState<"verify" | "family" | "waitlist">("verify")
+  const [flow, setFlow] = useState<"verify" | "family">("verify")
 
   const inviteToken = searchParams.get("invite")
-  const waitlistParam = searchParams.get("flow")
 
   useEffect(() => {
     // A versão anterior do fluxo gravava o CPF aqui; quem já passou por ela
@@ -120,12 +115,6 @@ function OnboardingFlow() {
 
       if (!session) {
         setStep("verify")
-        return
-      }
-
-      if (waitlistParam === "waitlist") {
-        setFlow("waitlist")
-        setStep("waitlist")
         return
       }
 
@@ -164,7 +153,7 @@ function OnboardingFlow() {
     }
 
     boot()
-  }, [inviteToken, waitlistParam, router])
+  }, [inviteToken, router])
 
   const handleVerifyCpf = async () => {
     setError(null)
@@ -222,11 +211,10 @@ function OnboardingFlow() {
           }
           router.push("/onboarding/locality")
         } else if (outcome["status"] === "rejected") {
-          setResult(
-            "Infelizmente, você não atende aos critérios do piloto de Manaus. Você pode entrar na lista de espera para outras localidades.",
-          )
-          setFlow("waitlist")
-          setStep("waitlist")
+          // P0 Task 8: rejection is not geographic. The rejected member goes
+          // to /onboarding/status, where the canonical rejected screen is
+          // rendered without a waitlist detour.
+          router.push("/onboarding/status")
         } else if (outcome["status"] === "pending") {
           router.push("/onboarding/status")
         } else if (outcome["status"] === "temporary_error") {
@@ -297,62 +285,6 @@ function OnboardingFlow() {
     }
   }
 
-  const handleJoinWaitlist = async () => {
-    setError(null)
-    if (cityName.trim().length === 0) {
-      setError("Informe a cidade onde você quer ser avisado.")
-      return
-    }
-    setLoading(true)
-
-    const {
-      data: { session },
-    } = await createBrowserClient().auth.getSession()
-
-    if (!session) {
-      showToast({
-        title: "Sua sessão expirou",
-        description: "Vamos levar você de volta ao login.",
-        variant: "warning",
-      })
-      sessionStorage.setItem("onboarding:email", email)
-      router.push("/login?return=/onboarding")
-      return
-    }
-
-    try {
-      const response = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          action: "join-waitlist",
-          email,
-          city_name: cityName.trim(),
-          state_code: stateCode.trim().toUpperCase(),
-        }),
-      })
-
-      const data = (await response.json()) as Record<string, unknown>
-
-      if (typeof data["error"] === "string") {
-        setError(data["error"] as string)
-        return
-      }
-
-      setResult(
-        "Você foi adicionado à lista de espera. Entraremos em contato quando houver vagas na sua localidade.",
-      )
-      setStep("done")
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao entrar na lista de espera")
-    } finally {
-      setLoading(false)
-    }
-  }
-
   if (step === "loading") {
     return (
       <div className="grid flex-1 place-items-center px-6 py-12">
@@ -417,19 +349,6 @@ function OnboardingFlow() {
                 Verificar elegibilidade
               </Button>
             </Form>
-
-            <div className="text-center">
-              <Button
-                variant="tertiary"
-                size="sm"
-                onPress={() => {
-                  setFlow("waitlist")
-                  setStep("waitlist")
-                }}
-              >
-                Entrar na lista de espera de outras localidades
-              </Button>
-            </div>
           </>
         )}
 
@@ -459,64 +378,6 @@ function OnboardingFlow() {
             >
               {loading ? "Processando..." : "Aceitar convite"}
             </Button>
-          </>
-        )}
-
-        {step === "waitlist" && (
-          <>
-            {result && <p className="text-sm text-muted">{result}</p>}
-
-            <Form
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleJoinWaitlist()
-              }}
-              className="flex flex-col gap-3"
-            >
-              <Input
-                type="email"
-                aria-label="E-mail"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail((e.target as HTMLInputElement).value)}
-                required
-              />
-              <div className="flex gap-3">
-                <Input
-                  aria-label="Cidade"
-                  placeholder="Cidade"
-                  value={cityName}
-                  onChange={(e) => setCityName((e.target as HTMLInputElement).value)}
-                  className="flex-1"
-                  required
-                />
-                <Input
-                  aria-label="UF"
-                  placeholder="UF"
-                  value={stateCode}
-                  onChange={(e) => {
-                    const value = (e.target as HTMLInputElement).value
-                      .replace(/[^a-zA-Z]/g, "")
-                      .toUpperCase()
-                      .slice(0, 2)
-                    setStateCode(value)
-                  }}
-                  className="w-20"
-                  maxLength={2}
-                />
-              </div>
-              <Button type="submit" variant="primary" className="w-full" isDisabled={loading}>
-                {loading ? "Enviando..." : "Entrar na lista de espera"}
-              </Button>
-            </Form>
-            <p className="text-sm text-muted">
-              Avisaremos por e-mail se houver expansão para sua localidade. Em caso de dúvida sobre
-              sua candidatura, escreva para{" "}
-              <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">
-                {SUPPORT_EMAIL}
-              </a>{" "}
-              — respondemos em até {SUPPORT_SLA_HOURS} horas úteis.
-            </p>
           </>
         )}
 
