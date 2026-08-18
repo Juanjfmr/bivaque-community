@@ -124,6 +124,139 @@ values
   )
 on conflict (user_id) do nothing;
 
+-- ── Segunda localidade (Rio de Janeiro) para a suíte e2e ─────────────────
+-- A auditoria visual P0 precisa de uma 2ª UF no seed para os specs
+-- tests/e2e/two-localities.spec.ts e tests/e2e/empty-locality.spec.ts:
+--   membro-rio@bivaque.example.invalid        — SECOND_LOCALITY_EMAIL
+--   verified-no-membership@bivaque.example.invalid — VERIFIED_NO_MEMBERSHIP_EMAIL
+--   membro-vazia@bivaque.example.invalid      — EMPTY_LOCALITY_EMAIL
+--
+-- O Rio existe no catálogo (20260817022707, ibge_code '3304557'), mas o seu
+-- id é gerado por gen_random_uuid() a cada reset — nunca o referencie por
+-- UUID fixo. As memberships abaixo resolvem o id por subquery no ibge_code,
+-- a identidade canônica do catálogo.
+--
+-- Duas contas são membros do Rio e duas asserções dependem disso:
+--   * two-localities Grupo 1: o feed/eventos/guia do membro do Rio não
+--     mostra marcadores de Manaus (asserções negativas, toHaveCount(0));
+--   * empty-locality: o Rio tem 2 membros (< STALE_LOCALITY_THRESHOLD, 30),
+--     então feed/eventos/guia renderizam o estado vazio honesto
+--     ("Você é dos primeiros aqui.").
+-- verified-no-membership é verificado mas não escolheu localidade: sem
+-- membership e sem profile — a linha em locality_memberships só existe para
+-- quem completou o onboarding, e public.profiles nasce do membership.
+
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  email_change_token_current,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-000000000003',
+    'authenticated',
+    'authenticated',
+    'membro-rio@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '45 days',
+    now()
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-000000000004',
+    'authenticated',
+    'authenticated',
+    'verified-no-membership@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '30 days',
+    now()
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-000000000005',
+    'authenticated',
+    'authenticated',
+    'membro-vazia@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '15 days',
+    now()
+  )
+on conflict (id) do nothing;
+
+insert into private.verification_outcomes (user_id, status, eligibility_class, checked_at)
+values
+  ('20000000-0000-4000-8000-000000000003', 'verified', 'active_federal_military', now() - interval '45 days'),
+  ('20000000-0000-4000-8000-000000000004', 'verified', 'veteran', now() - interval '30 days'),
+  ('20000000-0000-4000-8000-000000000005', 'verified', 'military_pensioner', now() - interval '15 days')
+on conflict (user_id) do nothing;
+
+-- Só as duas contas que escolheram o Rio ganham membership. O id do Rio é
+-- resolvido pelo ibge_code ('3304557') — nunca por UUID fixo, porque o id do
+-- catálogo é gen_random_uuid() e muda a cada reset.
+insert into public.locality_memberships (user_id, locality_id, joined_at)
+select v.user_id, l.id, v.joined_at
+from (values
+  ('20000000-0000-4000-8000-000000000003'::uuid, now() - interval '45 days'),
+  ('20000000-0000-4000-8000-000000000005'::uuid, now() - interval '15 days')
+) as v(user_id, joined_at)
+cross join public.localities l
+where l.ibge_code = '3304557'
+on conflict (user_id, locality_id) do nothing;
+
+-- display_name legível: a auditoria visual julga o header do perfil.
+insert into public.profiles (
+  user_id,
+  display_name,
+  visibility,
+  consent_version,
+  consented_at
+)
+values
+  (
+    '20000000-0000-4000-8000-000000000003',
+    'Membro do Rio',
+    'locality_members',
+    1,
+    now() - interval '45 days'
+  ),
+  (
+    '20000000-0000-4000-8000-000000000005',
+    'Primeiro do Rio',
+    'locality_members',
+    1,
+    now() - interval '15 days'
+  )
+on conflict (user_id) do nothing;
+
 -- ══════════════════════════════════════════════════════════════════════════
 -- Volume de conteúdo
 --
@@ -481,8 +614,10 @@ select
   (
     select pr.user_id
     from public.profiles pr
+    join public.locality_memberships lm
+      on lm.user_id = pr.user_id
     where pr.user_id <> p.user_id
-      and pr.locality_id = '00000000-0000-4000-8000-000000000001'
+      and lm.locality_id = '00000000-0000-4000-8000-000000000001'
     order by pr.user_id
     limit 1
   ),
