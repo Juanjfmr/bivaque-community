@@ -106,10 +106,15 @@ em qualquer ordem:**
 
 **E a sessão autenticada:** o `scripts/visual/loop.mjs` precisa do
 `apps/web/.env.local` com `BIVAQUE_VISUAL_EMAIL` + `BIVAQUE_VISUAL_PASSWORD`
-para autenticar como seed user de Manaus. O `capture.mjs` foi atualizado
-para usar `BIVAQUE_E2E_LOCALITY_TWO_EMAIL` quando precisar navegar a
-2ª UF (Task 7 do plano da auditoria, registrada em
-`docs/superpowers/plans/2026-08-05-auditoria-telas.md`).
+para autenticar como seed user de Manaus. O `capture.mjs` autentica UMA
+sessão com essas duas variáveis e navega todas as rotas `auth: true` com
+ela — inclusive `/onboarding/locality`, adicionada à lista em 2026-08-18.
+Não existe navegação a uma 2ª UF no loop: as contas de Rio
+(`membro-rio@`, `membro-vazia@`, `verified-no-membership@`) são usadas
+pela suíte e2e (`two-localities.spec.ts`, `empty-locality.spec.ts`), que
+leem as próprias variáveis (`BIVAQUE_E2E_LOCALITY_TWO_EMAIL`,
+`BIVAQUE_E2E_VERIFIED_NO_MEMBERSHIP_EMAIL`, `BIVAQUE_E2E_EMPTY_LOCALITY_EMAIL`)
+— nada disso é lido pelo `capture.mjs`.
 
 **Sem a auditoria visual fechada, a onda T (transferência) fica
 bloqueada** — §10.2 do `MAP.md`, regra que o `AGENTS.md` repete. A
@@ -136,3 +141,44 @@ se a exceção honesta é aceitável, ou se a auditoria visual tem que
 rodar antes da T abrir. A documentação desta exceção é a parte
 que a P0 fez — a captura é trabalho humano ou de um agente com
 ambiente de execução.
+
+---
+
+## Run que fechou (2026-08-18)
+
+A auditoria rodou no host de desenvolvimento. Run:
+`.visual/2026-08-18T00-42-49-518Z/` — `ITERATION.md` termina em
+**ITERATION COMPLETE**, `report.json` com `high = 0`, todas as gates
+verdes (lint / typecheck / test / build / capture).
+
+**Correção de diagnóstico:** o run anterior (`.visual/2026-08-18T00-20-57-150Z/`)
+acusou 3 achados high em `/communities` que **não eram regressão** — o
+`waitForServer` do loop aceitou um listener stale na porta 3000
+(EADDRINUSE), o servidor novo do loop não subiu e a captura rodou contra
+o build velho. Matado o listener e rodado o loop limpo, `/communities`
+captura **clean** com os fixes de `profiles.locality_id` →
+`locality_memberships` em `communities/page.tsx` e `recommendations/page.tsx`.
+
+**Veredito das telas P0 na run que fechou:**
+
+| Tela | Tarefa | Veredito na run |
+|---|---|---|
+| `/onboarding` (verify step) | Task 8 | **clean** (capturada auth:false e auth:true) |
+| `/onboarding/status` | Task 8 | **clean** |
+| `/community` (feed) | Task 7 + Task 9 | **clean** |
+| `/events` / `/guide` (empty state 1ª UF) | Task 9 | **clean** |
+| `/onboarding/locality` | Task 5 | **rota adicionada ao `capture.mjs` (2026-08-18)** — captura pendente do passo único do dono (Task 10 Step 3: `db:reset` com 2ª UF + re-rodar o loop) |
+| Estado vazio honesto em 2ª UF | Task 9 | pendente do passo único do dono (Task 10 Step 3: `db:reset` com 2ª UF) |
+
+Achados medium residuais (não bloqueiam): `heading-structure` (0 h1) em
+`/groups/[id]` e `/events/[id]`, nas 3 viewports — padrão pré-existente
+de páginas de detalhe, fora das telas que a P0 tocou.
+
+**Bloqueio da onda T:** liberado — existe run com `report.md` concluído e
+`high = 0`, como o §"O que a P0 precisa para fechar a auditoria" exigia.
+Duas pendências registradas acima seguem abertas e são do dono decidir:
+(1) re-capturar `/onboarding/locality` — a rota já consta na lista do
+`capture.mjs` (adicionada em 2026-08-18); falta o passo único do dono
+(`db:reset` com 2ª UF, Task 10 Step 3) e re-rodar o loop;
+(2) o estado vazio de 2ª UF. Nenhuma delas bloqueia a T por si, mas nenhuma
+é apresentada como auditada.
