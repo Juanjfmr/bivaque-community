@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
-import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
+import { createServerClient as createServiceRoleClient } from "../../../../lib/supabase/server"
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"]
 type EventRsvpRow = Database["public"]["Tables"]["event_rsvps"]["Row"]
@@ -16,12 +16,29 @@ type AttendeeListRow = {
 }
 
 // ── Server actions (writes) ──────────────────────────────────────────────────
-// These mutate through the service role, following the codebase convention
-// for server actions (see event-invites-actions.ts): they authenticate via
-// cookies, then write. complete_event is additionally a service_role-only
-// RPC, and event_rsvps has no delete policy for authenticated — both reasons
-// live in supabase/migrations, not here. The page's data reads below
-// deliberately use the authenticated client so RLS decides what is visible.
+// Authenticate from cookies and write through the authenticated client so
+// RLS decides. The pattern is the same as communities/actions.ts. complete_event
+// stays on service_role because the RPC is granted to service_role only — the
+// plan names this as one of two exceptions, with the rule that anyone who
+// concludes a third exception must stop and report.
+
+async function getAuthClient() {
+  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
+  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  if (!url || !anonKey) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
+  }
+
+  const cookieStore = await cookies()
+  return createServerClient<Database>(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
+      },
+      setAll() {},
+    },
+  })
+}
 
 async function setRsvpAction(formData: FormData) {
   "use server"
@@ -30,15 +47,19 @@ async function setRsvpAction(formData: FormData) {
   if (typeof eventId !== "string" || eventId.length === 0) throw new Error("eventId required")
   if (status !== "going" && status !== "interested") throw new Error("invalid status")
 
-  const supabase = createServiceClient()
+  const supabase = await getAuthClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
-  await supabase
+  // event_rsvps_insert_self enforces user_id = auth.uid() and
+  // can_access_event — the latter checks locality and group membership,
+  // so a member of a private event's group can RSVP and an outsider cannot.
+  const { error } = await supabase
     .from("event_rsvps")
     .upsert({ event_id: eventId, user_id: user.id, status }, { onConflict: "event_id,user_id" })
+  if (error) throw new Error(error.message)
 
   revalidatePath(`/events/${eventId}`)
   revalidatePath("/events")
@@ -49,13 +70,22 @@ async function cancelRsvpAction(formData: FormData) {
   const eventId = formData.get("eventId")
   if (typeof eventId !== "string" || eventId.length === 0) throw new Error("eventId required")
 
-  const supabase = createServiceClient()
+  const supabase = await getAuthClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
-  await supabase.from("event_rsvps").delete().eq("event_id", eventId).eq("user_id", user.id)
+  // event_rsvps has no delete policy for authenticated today (the snapshot
+  // records it). The fix lands in the next commit. Today the action
+  // becomes a visible RLS denial — better than the silent escalation of
+  // yesterday, and the precondition for the policy that follows.
+  const { error } = await supabase
+    .from("event_rsvps")
+    .delete()
+    .eq("event_id", eventId)
+    .eq("user_id", user.id)
+  if (error) throw new Error(error.message)
 
   revalidatePath(`/events/${eventId}`)
   revalidatePath("/events")
@@ -66,18 +96,18 @@ async function completeEventAction(formData: FormData) {
   const eventId = formData.get("eventId")
   if (typeof eventId !== "string" || eventId.length === 0) throw new Error("eventId required")
 
-  const supabase = createServiceClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) throw new Error("unauthenticated")
-
+  // complete_event stays on service_role — the RPC is granted to
+  // service_role only and checks that the caller is the organiser. The
+  // plan names this as one of two exceptions.
+  const supabase = createServiceRoleClient()
   const { error } = await supabase.rpc("complete_event", { p_event_id: eventId })
   if (error) throw new Error(error.message)
 
   revalidatePath(`/events/${eventId}`)
   revalidatePath("/events")
 }
+
+export { cancelRsvpAction, completeEventAction, setRsvpAction }
 
 function formatDateTime(iso: string) {
   const d = new Date(iso)

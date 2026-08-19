@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
-import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 import { FeedPost } from "../../../components/bivaque/feed-post"
 
 type GroupRow = Database["public"]["Tables"]["groups"]["Row"]
@@ -18,35 +17,48 @@ type MemberListRow = {
 }
 
 // ── Server actions (writes) ──────────────────────────────────────────────────
-// These mutate through the service role, following the codebase convention
-// for server actions (see events/event-invites-actions.ts): they authenticate
-// via cookies, then write. The page's data reads below deliberately use the
-// authenticated client so RLS decides what is visible.
+// Authenticate from cookies, write through the authenticated client so RLS
+// decides. The pattern is the same as communities/actions.ts. completeEvent
+// stays on service_role because the RPC is service_role-only; the others
+// were broken before (createServiceClient() with persistSession: false made
+// getUser() return null — Step 1 of the plan recorded the measurement).
+
+async function getAuthClient() {
+  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
+  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  if (!url || !anonKey) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
+  }
+
+  const cookieStore = await cookies()
+  return createServerClient<Database>(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
+      },
+      setAll() {},
+    },
+  })
+}
 
 async function joinGroupAction(formData: FormData) {
   "use server"
   const groupId = formData.get("groupId")
-  const desiredStatus = formData.get("desiredStatus")
   if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
-  if (desiredStatus !== "approved" && desiredStatus !== "pending") {
-    throw new Error("invalid desiredStatus")
-  }
 
-  const supabase = createServiceClient()
+  const supabase = await getAuthClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
-  await supabase.from("group_memberships").upsert(
-    {
-      group_id: groupId,
-      user_id: user.id,
-      role: "member",
-      status: desiredStatus,
-    },
-    { onConflict: "group_id,user_id" },
-  )
+  // desiredStatus used to come from the form. The plan removes that: the
+  // server derives status from groups.visibility through join_group
+  // (public → approved, private → pending). The form can still send
+  // desiredStatus for now, and it is silently ignored — Step 5 of the
+  // plan removes the hidden field from the markup.
+  const { error } = await supabase.rpc("join_group", { p_group_id: groupId })
+  if (error) throw new Error(error.message)
 
   revalidatePath(`/groups/${groupId}`)
   revalidatePath("/groups")
@@ -57,13 +69,25 @@ async function leaveGroupAction(formData: FormData) {
   const groupId = formData.get("groupId")
   if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
 
-  const supabase = createServiceClient()
+  const supabase = await getAuthClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
-  await supabase.from("group_memberships").delete().eq("group_id", groupId).eq("user_id", user.id)
+  // group_memberships has no delete policy for authenticated today (the
+  // snapshot test records it). The fix has to add the policy — that is
+  // the next commit, this one only fixes the authentication. The delete
+  // will still be denied by RLS until the policy lands; the action stops
+  // being broken in the way it was (silent escalation via service_role)
+  // and starts being broken in the visible way (RLS denial the page
+  // can show).
+  const { error } = await supabase
+    .from("group_memberships")
+    .delete()
+    .eq("group_id", groupId)
+    .eq("user_id", user.id)
+  if (error) throw new Error(error.message)
 
   revalidatePath(`/groups/${groupId}`)
   revalidatePath("/groups")
@@ -78,12 +102,15 @@ async function transferOwnershipAction(formData: FormData) {
     throw new Error("newOwnerId required")
   }
 
-  const supabase = createServiceClient()
+  const supabase = await getAuthClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
+  // transfer_group_ownership is granted to authenticated and the RPC
+  // itself checks that the caller is the current owner. The action now
+  // matches the convention of communities/actions.ts.
   const { error } = await supabase.rpc("transfer_group_ownership", {
     p_group_id: groupId,
     p_new_owner_user_id: newOwnerId,
@@ -93,6 +120,8 @@ async function transferOwnershipAction(formData: FormData) {
   revalidatePath(`/groups/${groupId}`)
   revalidatePath("/groups")
 }
+
+export { joinGroupAction, leaveGroupAction, transferOwnershipAction }
 
 export default async function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: groupId } = await params

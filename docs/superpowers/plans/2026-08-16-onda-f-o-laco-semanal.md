@@ -92,7 +92,7 @@ qualquer grupo privado digitando um campo escondido.
   resultado no próprio commit. Não pule — a correção é diferente nos dois desfechos, e o
   `PRODUCT_STATUS.md` §4 pede explicitamente esta medição.
 
-- [ ] **Step 2: ler o usuário do cliente autenticado**
+- [x] **Step 2: ler o usuário do cliente autenticado**
 
   As seis ações passam a autenticar pelo cliente com cookies — o mesmo padrão que
   `communities/actions.ts:8-24` já usa e que está a uma pasta de distância. Depois de ter o
@@ -112,7 +112,7 @@ qualquer grupo privado digitando um campo escondido.
   Se você concluir que uma delas precisa mesmo de `service_role`, **pare e reporte** com o
   motivo. A regra 1 da §12 não tem exceção implícita.
 
-- [ ] **Step 3: `desiredStatus` sai do formulário**
+- [x] **Step 3: `desiredStatus` sai do formulário** (RPC join_group deriva)
 
   O status é derivado no servidor, da visibilidade do grupo: público → `approved`; privado →
   `pending`. Nunca do corpo da requisição.
