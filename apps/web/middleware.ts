@@ -1,3 +1,4 @@
+import { CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
@@ -12,7 +13,6 @@ const PUBLIC_PATHS = [
   "/icon.svg",
 ]
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 
 const SUPABASE_URL = process.env["NEXT_PUBLIC_SUPABASE_URL"]
 const SUPABASE_ANON_KEY = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
@@ -80,13 +80,13 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       return NextResponse.redirect(new URL("/login", request.url))
     }
-    const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === CURRENT_CONSENT
+    const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
     return NextResponse.redirect(new URL(hasConsent ? "/community" : "/consent", request.url))
   }
 
   // Protected paths: consent gate first (unchanged from original), then
   // the session gate (new).
-  const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === CURRENT_CONSENT
+  const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
   if (!hasConsent) {
     const consentUrl = new URL("/consent", request.url)
     consentUrl.searchParams.set("redirect", pathname)

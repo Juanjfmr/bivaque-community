@@ -1,37 +1,24 @@
-"use client"
+import { promises as fs } from "node:fs"
+import path from "node:path"
+import { CONSENT_VERSION } from "@bivaque/domain"
+import { ConsentForm } from "./consent-form"
+import { renderLegalDocument } from "./document-render"
 
-import { brandTokens } from "@bivaque/tokens"
-import { Button } from "@heroui/react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
-import { recordConsentAction } from "./actions"
+// D2 Task 3: the legal text is rendered from the versioned files in
+// docs/legal/ — never copied into JSX, so a change to the document can never
+// diverge from the screen. The version numbers come from @bivaque/domain (the
+// single source); the acceptance row records the versions that were shown.
 
-const CONSENT_VERSION = 1
+async function readLegalDocument(relativePath: string): Promise<string> {
+  const filePath = path.join(process.cwd(), "docs", "legal", relativePath)
+  return fs.readFile(filePath, "utf8")
+}
 
-export default function ConsentPage() {
-  const router = useRouter()
-  const [accepted, setAccepted] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleAccept = async () => {
-    setError(null)
-    setLoading(true)
-    try {
-      await recordConsentAction()
-      // biome-ignore lint/suspicious/noDocumentCookie: consent cookie requires direct cookie access
-      document.cookie = `bivaque-consent-version=${CONSENT_VERSION}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
-      setAccepted(true)
-      router.push("/onboarding")
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao registrar consentimento. Tente novamente.",
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
+export default async function ConsentPage() {
+  const [codeOfConduct, privacy] = await Promise.all([
+    readLegalDocument("CODIGO_DE_CONDUTA.md"),
+    readLegalDocument("PRIVACIDADE.md"),
+  ])
 
   return (
     <div className="grid flex-1 place-items-center px-6 py-12">
@@ -40,41 +27,39 @@ export default function ConsentPage() {
           Termos de uso
         </h1>
 
-        <div className="prose prose-sm max-h-64 overflow-y-auto rounded-lg border border-border p-4 text-sm text-muted">
-          <p>
-            Bem-vindo ao {brandTokens.productName}, uma comunidade privada para militares federais
-            ativos, veteranos e pensionistas militares.
-          </p>
-          <p>Ao aceitar, voc&ecirc; concorda que:</p>
-          <ul className="list-disc pl-4 space-y-1">
-            <li>
-              Seus dados de verifica&ccedil;&atilde;o ser&atilde;o processados atrav&eacute;s do
-              Portal da Transpar&ecirc;ncia.
-            </li>
-            <li>
-              Nenhum dado pessoal sens&iacute;vel (CPF, patente, endere&ccedil;o) ser&aacute;
-              armazenado ou exibido publicamente.
-            </li>
-            <li>
-              Voc&ecirc; &eacute; respons&aacute;vel pelo conte&uacute;do que publica na comunidade.
-            </li>
-            <li>O acesso &eacute; limitado &agrave; sua localidade e grupos autorizados.</li>
-          </ul>
-        </div>
+        <section aria-labelledby="conduct-heading" className="flex flex-col gap-1">
+          <h2 id="conduct-heading" className="text-base font-semibold">
+            Código de conduta
+          </h2>
+          <section
+            className="prose prose-sm max-h-48 overflow-y-auto rounded-lg border border-border p-4 text-sm text-muted"
+            aria-label="Código de conduta"
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: the scrollable consent box must be reachable by keyboard (D2 Task 3 Step 4)
+            tabIndex={0}
+          >
+            {renderLegalDocument(codeOfConduct)}
+          </section>
+        </section>
 
-        {error && <FeedbackAlert variant="danger" description={error} />}
+        <section aria-labelledby="privacy-heading" className="flex flex-col gap-1">
+          <h2 id="privacy-heading" className="text-base font-semibold">
+            Política de privacidade
+          </h2>
+          <section
+            className="prose prose-sm max-h-48 overflow-y-auto rounded-lg border border-border p-4 text-sm text-muted"
+            aria-label="Política de privacidade"
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: the scrollable privacy box must be reachable by keyboard (D2 Task 3 Step 4)
+            tabIndex={0}
+          >
+            {renderLegalDocument(privacy)}
+          </section>
+        </section>
 
-        <Button
-          variant="primary"
-          className="w-full"
-          onPress={handleAccept}
-          isDisabled={accepted || loading}
-        >
-          {accepted ? "Aceito" : loading ? "Registrando..." : "Aceitar e continuar"}
-        </Button>
+        <ConsentForm consentVersion={CONSENT_VERSION} />
 
-        <p className="text-xs text-muted text-center">
-          Ao continuar, voc&ecirc; confirma que leu e concorda com os termos de uso.
+        <p className="text-center text-xs text-muted">
+          Ao continuar, você confirma que leu e concorda com o código de conduta e com a política de
+          privacidade nas versões exibidas.
         </p>
       </section>
     </div>

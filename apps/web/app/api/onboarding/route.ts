@@ -1,5 +1,4 @@
-import { isValidCpf } from "@bivaque/domain"
-import { cookies } from "next/headers"
+import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION, isValidCpf } from "@bivaque/domain"
 import { NextResponse } from "next/server"
 import { log } from "../../../lib/logger"
 import { validateProvisionInput } from "../../../lib/onboarding/provision-validation"
@@ -53,12 +52,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid json" }, { status: 400 })
   }
 
-  const cookieStore = await cookies()
-  const consentVersionStr = cookieStore.get("bivaque-consent-version")?.value ?? "0"
-  const consentVersion = Number.parseInt(consentVersionStr, 10)
-  const codeOfConductVersion = 1
-
   const action = body.action
+
+  // The consent cookie is a navigation shortcut (middleware), never the
+  // authority. The check below uses the deployed constant versions, so a
+  // forged or stale cookie cannot accept on the user's behalf —
+  // has_accepted_consent still requires a real acceptance row for both
+  // current versions (D2 Task 3 single source).
+  const consentVersion = CONSENT_VERSION
+  const codeOfConductVersion = CODE_OF_CONDUCT_VERSION
 
   try {
     const { data: hasAcceptedConsent } = await supabase.rpc("has_accepted_consent", {

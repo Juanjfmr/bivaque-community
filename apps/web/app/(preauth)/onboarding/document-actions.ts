@@ -1,13 +1,12 @@
 "use server"
 
+import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 const DOCUMENT_BUCKET = "verification-documents"
 const MAX_BYTES = 10 * 1024 * 1024
-const CONSENT_VERSION = 1
-const CODE_OF_CONDUCT_VERSION = 1
 const ALLOWED_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"])
 
 async function readSessionUserId(): Promise<string | null> {

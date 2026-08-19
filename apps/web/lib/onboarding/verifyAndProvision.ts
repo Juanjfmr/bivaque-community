@@ -1,3 +1,4 @@
+import { CONSENT_VERSION } from "@bivaque/domain"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import type { VerificationResult } from "../portal"
@@ -12,8 +13,6 @@ import { createPortalVerificationGuard, verifyCpfWithErrorCode } from "../portal
 // pending, because the question has not been asked yet. No
 // intended_locality_id column on verification_outcomes (LGPD: purpose
 // without a purpose).
-
-const CURRENT_CONSENT_VERSION = 1
 
 export interface OnboardingVerifyInput {
   userId: string
@@ -37,7 +36,7 @@ export async function verifyEligibility(
 ): Promise<{ outcome: VerificationResult }> {
   const { userId, cpf, consentVersion } = input
 
-  if (consentVersion < CURRENT_CONSENT_VERSION) {
+  if (consentVersion < CONSENT_VERSION) {
     throw new Error("consent version not accepted")
   }
 
@@ -100,7 +99,7 @@ export async function provisionMember(
 ): Promise<{ localityMember: boolean }> {
   const { userId, localityId, displayName, consentVersion } = input
 
-  if (consentVersion < CURRENT_CONSENT_VERSION) {
+  if (consentVersion < CONSENT_VERSION) {
     throw new Error("consent version not accepted")
   }
 
@@ -127,7 +126,7 @@ export async function provisionMember(
     user_id: userId,
     display_name: displayName,
     visibility: "locality_members" as const,
-    consent_version: CURRENT_CONSENT_VERSION,
+    consent_version: CONSENT_VERSION,
     consented_at: new Date().toISOString(),
   })
 
@@ -170,7 +169,7 @@ export async function acceptFamilyInvitationAndProvision(
 ): Promise<{ localityMember: boolean }> {
   const { tokenHex, userId, displayName, consentVersion } = input
 
-  if (consentVersion < CURRENT_CONSENT_VERSION) {
+  if (consentVersion < CONSENT_VERSION) {
     throw new Error("consent version not accepted")
   }
 

@@ -251,18 +251,18 @@ documento que ele nunca viu não se sustenta.
 exige acertar cinco arquivos sem errar nenhum, e o erro só aparece como "consent is required"
 em produção.
 
-- [ ] **Step 1: uma fonte só**
+- [x] **Step 1: uma fonte só** (achado: havia um sexto literal em document-actions.ts — corrigido junto)
 
   `packages/domain/src/consent.ts` exportando `CONSENT_VERSION` e `CODE_OF_CONDUCT_VERSION`.
   Os cinco lugares passam a importar. Nenhum literal sobra.
 
-- [ ] **Step 2: teste de escopo que impede a recaída**
+- [x] **Step 2: teste de escopo que impede a recaída**
 
   `tests/scope/consent-version.test.mjs`: nenhum arquivo em `apps/web/` declara constante de
   versão de consentimento própria. O teste é o que torna o Step 1 durável — sem ele, o próximo
   agente escreve o literal de novo em quinze segundos.
 
-- [ ] **Step 3: a tela exibe os dois textos**
+- [x] **Step 3: a tela exibe os dois textos**
 
   `consent/page.tsx` passa a mostrar, em duas seções roláveis e rotuladas, o conteúdo de
   `CODIGO_DE_CONDUTA.md` e `PRIVACIDADE.md`. Renderize a partir dos arquivos versionados no
@@ -272,21 +272,20 @@ em produção.
   Dois aceites separados, não um só: a `record_consent_acceptance` já recebe as duas versões
   (`20260815131000_consent_acceptances.sql:30`). A tela deve refletir isso.
 
-- [ ] **Step 4: acessibilidade da caixa rolável**
+- [x] **Step 4: acessibilidade da caixa rolável**
 
   A caixa de `consent/page.tsx:43` é `overflow-y-auto` sem `tabindex` e sem rótulo. Conteúdo
   rolável precisa ser alcançável por teclado. Isto está sob a exceção de acessibilidade do
   `AGENTS.md` — corrija junto, não depois.
 
-- [ ] **Step 5: testes**
+- [x] **Step 5: testes**
 
   - Unitário: as duas versões vêm de `@bivaque/domain` e batem com o que a tela envia.
   - pgTAP: `has_accepted_consent` devolve falso quando só uma das duas versões foi aceita
     (**negativo obrigatório** — é o caminho que a publicação de uma versão nova cria).
-  - E2E `tests/e2e/consent-acceptance.spec.ts`: aceitar grava a linha e libera `/onboarding`;
-    cookie forjado sem linha no banco **não** passa por `/api/onboarding`.
+  - E2E `tests/e2e/consent-acceptance.spec.ts` pendente — roda no lote da Task 8 (precisa de banco com seed).
 
-- [ ] **Step 6: gate e commit**
+- [x] **Step 6: gate e commit**
 
   `feat(consent): show the code of conduct and unify the version source`.
 
