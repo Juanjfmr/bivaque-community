@@ -20,6 +20,14 @@ export default async function CommunityAdminHome({ params }: { params: Promise<{
             Pedidos de entrada
           </Link>
         </li>
+        <li>
+          <Link
+            href={`/communities/${communityId}/admin/moderators` as Route}
+            className="inline-flex min-h-11 items-center rounded-md border border-border bg-[var(--surface-sunken)] px-3 text-foreground hover:underline"
+          >
+            Moderadores
+          </Link>
+        </li>
       </ul>
     </div>
   )
