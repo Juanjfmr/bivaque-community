@@ -1,6 +1,8 @@
+import { Button, Input } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import { callGuideCurationRpc } from "../../../lib/guide-curation-rpcs"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 export const dynamic = "force-dynamic"
@@ -11,6 +13,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   transporter: "Transportadora",
   courier: "Despachante",
 }
+
+// Wave E Task 8: the four guide categories, mirrored here for the promote form.
+const GUIDE_CATEGORIES = ["school", "hospital", "transporter", "courier"] as const
+type GuideCategory = (typeof GUIDE_CATEGORIES)[number]
 
 interface GuideQueueEntry {
   id: string
@@ -118,17 +124,151 @@ async function rejectGuideEntryAction(formData: FormData) {
   revalidatePath("/guide-queue")
 }
 
-export default async function AdminGuidePage() {
+// Wave E Task 8 — manual curation path. Operator picks a reply, writes the
+// canonical name + description, and the function creates an approved entry
+// linked back to the source reply (audit trail via source_reply_id + the
+// recommendation_reply_promotions table).
+async function promoteReplyToGuideAction(formData: FormData) {
+  "use server"
+  const userId = await getAuthedUserId()
+  if (!userId) throw new Error("unauthenticated")
+  if (!(await authorizeOperator(userId))) throw new Error("forbidden")
+
+  const replyId = formData.get("replyId")
+  const localityId = formData.get("localityId")
+  const category = formData.get("category")
+  const name = formData.get("name")
+  const description = formData.get("description")
+  const websiteUrl = formData.get("websiteUrl")
+  const phone = formData.get("phone")
+
+  if (
+    typeof replyId !== "string" ||
+    typeof localityId !== "string" ||
+    typeof category !== "string" ||
+    typeof name !== "string" ||
+    typeof description !== "string"
+  ) {
+    throw new Error("campos obrigatórios ausentes")
+  }
+
+  if (!(GUIDE_CATEGORIES as readonly string[]).includes(category)) {
+    throw new Error("categoria inválida")
+  }
+
+  const trimmedName = name.trim()
+  if (trimmedName.length < 2 || trimmedName.length > 120) {
+    throw new Error("nome deve ter entre 2 e 120 caracteres")
+  }
+
+  const trimmedDescription = description.trim()
+  if (trimmedDescription.length > 500) {
+    throw new Error("descrição deve ter até 500 caracteres")
+  }
+
+  const cleanWebsite =
+    typeof websiteUrl === "string" && websiteUrl.trim().length > 0 ? websiteUrl.trim() : null
+  const cleanPhone = typeof phone === "string" && phone.trim().length > 0 ? phone.trim() : null
+
+  const serviceClient = createServiceClient()
+  const { error } = await callGuideCurationRpc(serviceClient, "promote_reply_to_guide_entry", {
+    p_reply_id: replyId,
+    p_locality_id: localityId,
+    p_category: category as GuideCategory,
+    p_name: trimmedName,
+    p_description: trimmedDescription,
+    p_website_url: cleanWebsite,
+    p_phone: cleanPhone,
+    p_operator_user_id: userId,
+  })
+
+  if (error) {
+    if (error.message.includes("only operators")) {
+      throw new Error("apenas operadores podem promover respostas")
+    }
+    if (error.message.includes("already promoted")) {
+      throw new Error("esta resposta já foi promovida para o guia")
+    }
+    if (error.message.includes("reply locality")) {
+      throw new Error("resposta pertence a outra cidade")
+    }
+    if (error.message.includes("not found")) {
+      throw new Error("resposta não encontrada")
+    }
+    throw new Error(error.message)
+  }
+
+  revalidatePath("/guide-queue")
+  revalidatePath("/guide")
+}
+
+interface PromotableReply {
+  reply_id: string
+  body: string
+  created_at: string
+  request_title: string
+  request_category: string
+  author_display_name: string | null
+}
+
+async function getOperatorLocalityId(userId: string): Promise<string | null> {
   const serviceClient = createServiceClient()
   const { data } = await serviceClient
-    .from("arrival_guide_entries")
-    .select(
-      "id, category, name, description, website_url, phone, source, confidence, source_reply_id, created_at",
-    )
-    .eq("status", "pending")
-    .order("created_at", { ascending: true })
+    .from("locality_memberships")
+    .select("locality_id")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle()
+  return (data as { locality_id: string } | null)?.locality_id ?? null
+}
 
-  const queue = (data as GuideQueueEntry[] | null) ?? []
+export default async function AdminGuidePage() {
+  const userId = await getAuthedUserId()
+  if (!userId) return null
+
+  const isOperator = await authorizeOperator(userId)
+  if (!isOperator) {
+    return (
+      <section
+        className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-12"
+        aria-labelledby="guide-queue-heading"
+      >
+        <h1 id="guide-queue-heading" className="text-2xl font-semibold tracking-tight">
+          Curadoria do guia
+        </h1>
+        <p className="text-sm text-muted">Apenas operadores podem revisar o guia.</p>
+      </section>
+    )
+  }
+
+  const localityId = await getOperatorLocalityId(userId)
+  const serviceClient = createServiceClient()
+
+  const [pendingResult, promotableResult] = await Promise.all([
+    serviceClient
+      .from("arrival_guide_entries")
+      .select(
+        "id, category, name, description, website_url, phone, source, confidence, source_reply_id, created_at",
+      )
+      .eq("status", "pending")
+      .order("created_at", { ascending: true }),
+    localityId
+      ? callGuideCurationRpc(serviceClient, "list_promotable_replies", {
+          p_locality_id: localityId,
+          p_limit: 30,
+        })
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  if (pendingResult.error) {
+    throw new Error(`Falha ao ler a fila do guia: ${pendingResult.error.message}`)
+  }
+  if (promotableResult.error) {
+    throw new Error(`Falha ao ler respostas promovíveis: ${promotableResult.error.message}`)
+  }
+
+  const queue = (pendingResult.data as GuideQueueEntry[] | null) ?? []
+  const promotable = (promotableResult.data as PromotableReply[] | null) ?? []
 
   return (
     <section
@@ -215,6 +355,96 @@ export default async function AdminGuidePage() {
           </article>
         ))
       )}
+
+      {/* Wave E Task 8 — manual curation from recommendation replies. */}
+      <section aria-labelledby="guide-promote-heading" className="mt-6 flex flex-col gap-4">
+        <h2 id="guide-promote-heading" className="text-base font-semibold tracking-tight">
+          Promover resposta de indicação
+        </h2>
+        <p className="text-sm text-muted">
+          Respostas da comunidade viram itens do guia depois que você escreve o nome canônico e a
+          descrição. Cada resposta pode ser promovida uma vez — o caminho manual existe enquanto a
+          curadoria por IA segue desligada por governança (D49).
+        </p>
+
+        {promotable.length === 0 ? (
+          <p className="text-sm text-muted">Nenhuma resposta disponível para promover.</p>
+        ) : (
+          promotable.map((reply) => (
+            <article
+              key={reply.reply_id}
+              className="flex flex-col gap-3 rounded-md border border-border p-4"
+            >
+              <header className="flex flex-col gap-1">
+                <p className="text-xs uppercase tracking-wide text-muted">
+                  Pedido: {reply.request_title}
+                </p>
+                <p className="text-sm">{reply.body}</p>
+                <p className="text-xs text-muted">
+                  por {reply.author_display_name ?? "membro"} em{" "}
+                  {new Date(reply.created_at).toLocaleString("pt-BR")}
+                </p>
+              </header>
+
+              <form action={promoteReplyToGuideAction} className="flex flex-col gap-2">
+                <input type="hidden" name="replyId" value={reply.reply_id} />
+                <input type="hidden" name="localityId" value={localityId ?? ""} />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium">Categoria</span>
+                    <select
+                      name="category"
+                      required
+                      aria-label="Categoria do guia"
+                      className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                    >
+                      {GUIDE_CATEGORIES.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {CATEGORY_LABELS[cat] ?? cat}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium">Nome canônico</span>
+                    <Input
+                      name="name"
+                      required
+                      minLength={2}
+                      maxLength={120}
+                      aria-label="Nome canônico"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium">Descrição</span>
+                  <Input
+                    name="description"
+                    required
+                    maxLength={500}
+                    aria-label="Descrição do item"
+                  />
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium">Site (opcional)</span>
+                    <Input name="websiteUrl" placeholder="https://..." aria-label="Site" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium">Telefone (opcional)</span>
+                    <Input name="phone" placeholder="+55 92 ..." aria-label="Telefone" />
+                  </div>
+                </div>
+                <div>
+                  <Button type="submit" size="sm" variant="primary">
+                    Promover para o guia
+                  </Button>
+                </div>
+              </form>
+            </article>
+          ))
+        )}
+      </section>
     </section>
   )
 }
