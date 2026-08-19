@@ -56,7 +56,12 @@ const VERIFIED_NO_MEMBERSHIP_EMAIL =
 // scoped to a pilot constant instead of the member's locality. The community
 // page heading cannot anchor locality (it shows the primary community name,
 // with "Manaus, AM" only as a fallback), so content markers carry the proof.
-const MANAUS_POST_MARKER = "Alguém sabe se funciona também no feriado?"
+// Texto-base real de um post do seed (supabase/seed.sql L516, renderizado nos
+// ~33 posts de Manaus). O marcador anterior ("Alguém sabe se funciona também
+// no feriado?") só existia em comments e nunca aparecia no feed — o teste
+// positivo falhava e o negativo passava por vacuidade.
+const MANAUS_POST_MARKER =
+  "A feira do fim de semana abriu mais cedo e estava tranquila na primeira hora."
 const MANAUS_EVENT_TITLE = "Torneio amistoso de futebol"
 const MANAUS_GUIDE_ENTRY = "Escola Modelo do Centro"
 
@@ -298,8 +303,18 @@ test.describe("eligible second-locality onboarding: no geographic waitlist", () 
     })
 
     // And the catalog-backed UF selector is present (the page fetches
-    // /api/localities and renders a Select for the 27 UFs).
-    await expect(page.getByLabel("Estado")).toBeVisible({ timeout: 15000 })
+    // /api/localities and renders a Select for the 27 UFs). The trigger's
+    // accessible name is the React Aria Select composition: SelectValue
+    // placeholder text ("Selecione o estado") + the aria-label ("Estado") =
+    // "Selecione o estado Estado" — verified by aria-snapshot dump on the
+    // running DOM. The city trigger's accname is "Selecione o estado
+    // primeiro Cidade" (placeholder "Selecione o estado primeiro" + aria-label
+    // "Cidade"), so exact match on the full UF accname disambiguates without
+    // regex/DOM traversal. getByLabel("Estado") previously failed in strict
+    // mode because "estado" is a substring of both placeholders.
+    await expect(
+      page.getByRole("button", { name: "Selecione o estado Estado", exact: true }),
+    ).toBeVisible({ timeout: 15000 })
 
     // And the waitlist entry point is not on this page — the eligible path
     // never offers the geographic waitlist.
