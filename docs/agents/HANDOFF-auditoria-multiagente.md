@@ -161,21 +161,21 @@ quais agentes entram e já registra achados que bloqueiam.
 
 Composição desta run: `audit-produto` + `audit-conformidade` + `audit-carrasco` + `audit-arbitro`.
 
-## P0 já encontrados na triagem — bloqueiam antes da rodada 1
+## Achados de privacidade na triagem — revisados após a decisão da OM
 
-Violam a regra de privacidade do `AGENTS.md` (§Supabase): patente, OM, endereço, documento
-e **badge público de verificação** são proibidos. Quatro vazamentos de privacidade já
-saíram dessa regra sendo ignorada.
+O dono confirmou que **afiliação declarada (força, situação, OM, turma) está aceita** e não
+sai: dá pertencimento. Isso rebaixa dois dos quatro achados originais. Ver a nota em
+`docs/agents/ANTI-SLOP.md` §Afiliação declarada.
 
-| # | Tela | Achado | Regra |
+| # | Tela | Achado | Situação |
 |---|---|---|---|
-| P0-1 | `01_agora.png` | Saudação **"Bom dia, Capitão!"** — patente na primeira linha da tela principal | `SLOP-16` · patente |
-| P0-2 | `12_perfil.png` | Nome exibido como **"Capitão João Silva"** — patente no identificador | `SLOP-16` · patente |
-| P0-3 | `12_perfil.png` | Selo **"✓ Membro verificado"** | `SLOP-16` · badge público de verificação |
-| P0-4 | `12_perfil.png` | Avatar **fardado, com insígnia legível** — divulga patente e força por imagem | `SLOP-16` · o próprio `README.md` do pacote proíbe ("sem camuflagem, brasões, patente") |
+| ~~P0-1~~ | `01_agora.png` | Saudação "Bom dia, Capitão!" | **Rebaixado.** Posto declarado é permitido. Continua sendo escolha de tom a discutir, não violação |
+| ~~P0-2~~ | `12_perfil.png` | Nome exibido como "Capitão João Silva" | **Rebaixado.** Mesma razão |
+| **P0-3** | `12_perfil.png` | Selo **"✓ Membro verificado"** | **De pé, e reforçado.** O `ADR-20260811-om-declarada` diz *"Nada declarado é exibido como verificado pelo sistema"*. O selo cai **por causa** da OM declarada, não apesar dela |
+| P1 | `12_perfil.png` | Avatar fardado com insígnia legível | **Rebaixado a inconsistência.** Não é campo declarado; mas o `README.md` do próprio pacote proíbe ("sem camuflagem, brasões, patente"). O pacote contradiz a si mesmo |
 
-Enquanto estiverem em pé, nenhuma tela passa de **C**. Não gaste rodada de Carrasco antes
-de resolver: leve ao responsável primeiro.
+Continua valendo, e vale para qualquer arquitetura: **exibida, não buscável.** Não há busca de
+pessoas no piloto — nenhuma tela pode oferecer filtro "todos da OM X".
 
 ## P0-5 — a vitrine sumiu, e ela é a única onda com receita
 
@@ -234,9 +234,16 @@ Nenhuma seria pega por rubrica visual. Todas precisam de decisão, não de polim
   features e o regime de ADR travaram o pai. Pergunta obrigatória ao pacote: **o que sai
   para isso entrar?**
 
+## Proposta de containers
+
+O desenho concreto dos containers do shell do membro, com o mapa das 11 seções do
+`PRODUCT_STATUS.md` e o teste de absorção das ondas E, F, G e H, está em
+[`CONTAINERS-proposta.md`](CONTAINERS-proposta.md). O `audit-produto` deve lê-lo e
+criticá-lo junto com o pacote — ele é proposta, não contrato.
+
 ## Ordem sugerida
 
-1. Levar os cinco P0 ao responsável. São decisão de produto e privacidade, não de design.
+1. Levar P0-3 (selo) e P0-5 (vitrine) ao responsável. São decisão de produto, não de design.
 2. `audit-produto` sobre o `CRITIQUE_BRIEF` — é o que o pacote está pedindo de verdade.
 3. `audit-conformidade` e `audit-carrasco` **só depois**, e restritos ao que sobreviver:
    arquitetura de interação, hierarquia, densidade, paleta. Sem julgamento tipográfico fino.

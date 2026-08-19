@@ -31,12 +31,17 @@ overflow) · Copy (acentuação, erro amigável)
 
 ## Falha dura, não negociável
 
-Patente, OM, endereço residencial, classe ou **badge público de verificação** na tela é
-violação da regra de privacidade do `AGENTS.md` — quatro vazamentos de privacidade já
-saíram daqui. Reporte como **P0** e diga explicitamente que bloqueia a rodada.
+**Selo público de verificação** — ou qualquer marca de "verificado pelo sistema" — payload
+do Portal, CPF em claro, endereço residencial e documento além do TTL na tela são violação.
+Reporte como **P0** e diga explicitamente que bloqueia a rodada.
 
-O `ADR-20260811-om-declarada` propõe afrouxar isso. Está `proposed`, **não aprovado**.
-Até aprovação, a proibição é o contrato.
+**Afiliação declarada é permitida.** Força, situação, OM e turma declarados pelo membro
+podem aparecer no perfil — decisão do dono, registrada em `docs/agents/ANTI-SLOP.md`
+§Afiliação declarada. Não reporte esses campos como violação.
+
+A fronteira exata: declarado é permitido, chancelado pelo sistema não é. *"Nada declarado é
+exibido como verificado pelo sistema."* E é **exibida, não buscável** — filtro do tipo
+"todos da OM X" é P0, porque não existe busca de pessoas no piloto.
 
 ## Saída
 

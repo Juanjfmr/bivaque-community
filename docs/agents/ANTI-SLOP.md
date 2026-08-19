@@ -36,7 +36,7 @@ prescrição não conta como achado; conta como ruído do próprio auditor.
 | `SLOP-13` | Cor crua (hex/`rgb()`) em CSS, classe ou componente | `var(--…)` ou `brandTokens` |
 | `SLOP-14` | Raio de borda fora da escala (`--radius-sm`/`--radius`/`--radius-lg`/`--radius-full`) | Token da escala |
 | `SLOP-15` | Simetria forçada — conteúdo inventado para preencher coluna ou card vazio | Layout que aceita a assimetria real do conteúdo |
-| `SLOP-16` | **Falha dura.** Badge/selo de verificação visível, patente, OM, endereço ou classe na tela | Remover. É violação da regra de privacidade do `AGENTS.md`, não questão de gosto |
+| `SLOP-16` | **Falha dura.** Selo público de verificação, ou qualquer marca de "verificado pelo sistema"; payload do Portal; CPF em claro; endereço residencial; documento além do TTL | Remover. Violação de privacidade, não questão de gosto — ver a nota sobre afiliação declarada abaixo |
 
 ## Escala de nota (o Carrasco atribui por tela)
 
@@ -50,3 +50,21 @@ Ausência de slop **não é AAA**. Limpo e sem graça é AA. AAA exige acerto po
 - **A** — no máximo 1 SLOP de baixa gravidade, 8/8 na §9.
 - **B** — 2+ SLOP, ou item da §9 falhando.
 - **C** — `SLOP-16` acionado, ou P0 do Medidor aberto.
+
+## Afiliação declarada — o que é permitido, e o que continua não sendo
+
+**Força, situação, OM e turma declarados pelo membro são permitidos.** O dono decidiu manter:
+dão pertencimento. Podem aparecer no perfil. O `SLOP-16` **não** aciona por eles.
+
+O registro no repo ainda está atrasado — `ADR-20260811-om-declarada` consta `proposed` e o
+`AGENTS.md` ainda manda não implementar. Trate a decisão do dono como vigente e não reabra.
+
+O que **não** muda, pelo próprio texto do ADR:
+
+- Selo público de verificação continua proibido. A frase que decide é
+  *"Nada declarado é exibido como verificado pelo sistema"* — a OM é declarável **porque** o
+  sistema não chancela o que o membro diz. Um selo ao lado de um campo declarado desfaz a
+  condição que tornou o campo aprovável.
+- Payload do Portal, CPF em claro, endereço residencial e documento além do TTL seguem proibidos.
+- **Exibida, não buscável.** Não existe busca de pessoas no piloto: nenhuma tela pode oferecer
+  filtro do tipo "todos da OM X". Um filtro desses aciona `SLOP-16`.

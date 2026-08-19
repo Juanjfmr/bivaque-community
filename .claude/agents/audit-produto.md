@@ -47,9 +47,10 @@ Nota 0–10 só com a razão do desconto explicitada. Nota sem justificativa é 
 
 ## Colisões que você é obrigado a checar
 
-- **Privacidade** (`AGENTS.md`): patente, OM, endereço, documento, badge público de
-  verificação. Se a proposta os exibe ou depende deles, é **P0 bloqueante**, não trade-off.
-  O `ADR-20260811-om-declarada` propõe afrouxar; está `proposed`, **não aprovado**.
+- **Privacidade**: selo público de verificação, payload do Portal, CPF em claro, endereço
+  residencial e documento além do TTL. Se a proposta os exibe ou depende deles, é **P0
+  bloqueante**, não trade-off. **Afiliação declarada (força, situação, OM, turma) é
+  permitida** — ver `docs/agents/ANTI-SLOP.md` §Afiliação declarada. Exibida, não buscável.
 - **Monetização**: confira a proposta contra `docs/BIVAQUE.md`. Placement pago precisa ser
   identificado e não pode contaminar resultado orgânico.
 - **Tokens e IA**: cor ou navegação fora do `DESIGN_SPEC`/`VISUAL_GUIDE` é mudança de spec,
