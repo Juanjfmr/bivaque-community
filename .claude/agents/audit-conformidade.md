@@ -33,15 +33,14 @@ overflow) · Copy (acentuação, erro amigável)
 
 **Selo público de verificação** — ou qualquer marca de "verificado pelo sistema" — payload
 do Portal, CPF em claro, endereço residencial e documento além do TTL na tela são violação.
-Reporte como **P0** e diga explicitamente que bloqueia a rodada.
+Reporte como **P0** e diga explicitamente que bloqueia a rodada. Filtro do tipo "todos da
+OM X" também é P0: não existe busca de pessoas no piloto.
 
-**Afiliação declarada é permitida.** Força, situação, OM e turma declarados pelo membro
-podem aparecer no perfil — decisão do dono, registrada em `docs/agents/ANTI-SLOP.md`
-§Afiliação declarada. Não reporte esses campos como violação.
-
-A fronteira exata: declarado é permitido, chancelado pelo sistema não é. *"Nada declarado é
-exibido como verificado pelo sistema."* E é **exibida, não buscável** — filtro do tipo
-"todos da OM X" é P0, porque não existe busca de pessoas no piloto.
+**Patente, OM, força e turma são caso à parte, e você NÃO decide.** A §9 item 8 diz "nada de
+patente/OM/endereço/badge"; o dono declarou em sessão que afiliação declarada está aceita; o
+`ADR-20260811-om-declarada` segue `proposed`. Reporte esses campos como **`CONFLITO-OM`** —
+nem `PASSA`, nem `FALHA` — com tela e elemento, e siga. Ver `docs/agents/ANTI-SLOP.md`
+§Afiliação declarada.
 
 ## Saída
 

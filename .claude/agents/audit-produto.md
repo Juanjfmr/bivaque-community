@@ -49,8 +49,9 @@ Nota 0–10 só com a razão do desconto explicitada. Nota sem justificativa é 
 
 - **Privacidade**: selo público de verificação, payload do Portal, CPF em claro, endereço
   residencial e documento além do TTL. Se a proposta os exibe ou depende deles, é **P0
-  bloqueante**, não trade-off. **Afiliação declarada (força, situação, OM, turma) é
-  permitida** — ver `docs/agents/ANTI-SLOP.md` §Afiliação declarada. Exibida, não buscável.
+  bloqueante**, não trade-off. **Afiliação declarada (força, situação, OM, turma) está em
+  conflito de registro aberto** — reporte como `CONFLITO-OM` e não decida; ver
+  `docs/agents/ANTI-SLOP.md` §Afiliação declarada.
 - **Monetização**: confira a proposta contra `docs/BIVAQUE.md`. Placement pago precisa ser
   identificado e não pode contaminar resultado orgânico.
 - **Tokens e IA**: cor ou navegação fora do `DESIGN_SPEC`/`VISUAL_GUIDE` é mudança de spec,

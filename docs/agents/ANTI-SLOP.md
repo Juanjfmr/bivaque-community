@@ -51,20 +51,39 @@ Ausência de slop **não é AAA**. Limpo e sem graça é AA. AAA exige acerto po
 - **B** — 2+ SLOP, ou item da §9 falhando.
 - **C** — `SLOP-16` acionado, ou P0 do Medidor aberto.
 
-## Afiliação declarada — o que é permitido, e o que continua não sendo
+## Afiliação declarada — conflito de registro ABERTO
 
-**Força, situação, OM e turma declarados pelo membro são permitidos.** O dono decidiu manter:
-dão pertencimento. Podem aparecer no perfil. O `SLOP-16` **não** aciona por eles.
+**Não resolva este conflito. Reporte-o.** Ele é R3 e pertence ao dono, não a um agente.
 
-O registro no repo ainda está atrasado — `ADR-20260811-om-declarada` consta `proposed` e o
-`AGENTS.md` ainda manda não implementar. Trate a decisão do dono como vigente e não reabra.
+O dono declarou em sessão (2026-08-19) que **afiliação declarada — força, situação, OM e
+turma — está aceita e não deve ser removida**, porque dá pertencimento.
 
-O que **não** muda, pelo próprio texto do ADR:
+O registro escrito diz outra coisa, e diz em três lugares:
 
-- Selo público de verificação continua proibido. A frase que decide é
-  *"Nada declarado é exibido como verificado pelo sistema"* — a OM é declarável **porque** o
-  sistema não chancela o que o membro diz. Um selo ao lado de um campo declarado desfaz a
-  condição que tornou o campo aprovável.
-- Payload do Portal, CPF em claro, endereço residencial e documento além do TTL seguem proibidos.
-- **Exibida, não buscável.** Não existe busca de pessoas no piloto: nenhuma tela pode oferecer
-  filtro do tipo "todos da OM X". Um filtro desses aciona `SLOP-16`.
+| Fonte | O que diz hoje |
+|---|---|
+| `ADR-20260811-om-declarada` | `status: proposed` · `approved_at:` vazio · `critic_verdict: pending` |
+| `AGENTS.md` §Supabase | *"Until it is approved, the prohibition above is the contract. Do not implement declared affiliation."* |
+| `VISUAL_GUIDE.md` §9 item 8 | *"nada de patente/OM/endereço/badge"* |
+
+### Como o agente se comporta enquanto isso não se resolve
+
+- **Força, situação, OM e turma em tela → reporte como `CONFLITO-OM`**, com a tela e o
+  elemento. Não é P0 e não é passe livre: é item que sobe para decisão humana.
+- **Não** trate como falha dura, e **não** trate como permitido. As duas leituras são
+  palpite de agente sobre uma decisão R3.
+- Uma nota de prosa não revoga ADR. Só sai desse estado quando o ADR for aprovado **e**
+  `AGENTS.md` e `VISUAL_GUIDE.md` §9 item 8 forem atualizados na **mesma** mudança — que é o
+  padrão que o próprio `AGENTS.md` exige e cuja violação produziu quatro vazamentos.
+
+### O que continua proibido nas duas leituras — isto sim é `SLOP-16`
+
+Não depende do desfecho do ADR, porque é o que o próprio ADR mantém proibido:
+
+- **Selo público de verificação**, ou qualquer marca de "verificado pelo sistema". A frase
+  que decide: *"Nada declarado é exibido como verificado pelo sistema."* A OM é declarável
+  **porque** o sistema não chancela o que o membro diz — um selo ao lado de campo declarado
+  desfaz a condição que tornaria o campo aprovável.
+- Payload do Portal, CPF em claro, endereço residencial, documento além do TTL.
+- **Busca de pessoas.** Não existe no piloto. Filtro do tipo "todos da OM X" é `SLOP-16` em
+  qualquer cenário, porque a afiliação seria exibida, nunca buscável.

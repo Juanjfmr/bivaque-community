@@ -120,30 +120,29 @@ Falta ainda o que nenhum ajuste de container resolve: o pacote desenhou **um dos
 shells**. Console do fundador, console do dono e prestador não existem nele — e é por isso
 que a vitrine não tem onde morar, não por esquecimento de tela.
 
-## Afiliação declarada
+## Afiliação declarada — conflito de registro aberto
 
-O dono informou em sessão que a **OM declarada está aceita** e não deve ser removida — ela dá
-pertencimento. Esta proposta assume isso: força, situação, OM e turma declarados pelo membro
-vivem em **Eu**, e aparecem no perfil.
+O dono declarou em sessão que **afiliação declarada (força, situação, OM, turma) está aceita**
+e não sai: dá pertencimento. Nesta proposta, esses campos vivem em **Eu**.
 
-**O registro no repositório ainda não reflete isso.**
-[`ADR-20260811-om-declarada`](../decisions/ADR-20260811-om-declarada.md) está
-`status: proposed`, `critic_verdict: pending`, `approved_at:` vazio, e o `AGENTS.md` continua
-mandando não implementar afiliação declarada. Enquanto os dois não forem atualizados, toda
-sessão futura vai reabrir esse conflito — como esta reabriu.
+**O registro escrito ainda diz o contrário**, em três lugares: o
+[`ADR-20260811-om-declarada`](../decisions/ADR-20260811-om-declarada.md) está `proposed` com
+`critic_verdict: pending`, o `AGENTS.md` manda não implementar afiliação declarada até a
+aprovação, e o `VISUAL_GUIDE.md` §9 item 8 lista "nada de patente/OM/endereço/badge".
 
-O próprio ADR delimita o que **continua proibido**, e isso não muda com a aprovação:
+Enquanto os três não forem atualizados na **mesma** mudança, o conflito é reportado, não
+resolvido — nenhum agente decide questão R3 por conta própria. Há precedente de forma no
+repositório: o `ADR-20260816-shells-e-navegacao` registra no próprio frontmatter a
+autorização explícita do dono dada em sessão.
 
-- payload do Portal, CPF em claro, endereço residencial, documento além do TTL;
-- **selo público de verificação** — e a linha decisiva: *"Nada declarado é exibido como
-  verificado pelo sistema."*
+O que **não** muda com o desfecho, porque é o que o próprio ADR mantém proibido:
 
-Por isso o selo **"✓ Membro verificado"** de `12_perfil.png` continua sendo P0. Ele não cai com
-a aprovação da OM declarada: cai **por causa** dela, já que a OM é declarada justamente sob a
-condição de o sistema não chancelar o que o membro diz.
-
-A afiliação é **exibida, não buscável** (sem busca de pessoas no piloto), o que tem
-consequência direta de IA: nenhum container pode oferecer filtro "todos da OM X".
+- **Selo público de verificação** — *"Nada declarado é exibido como verificado pelo sistema."*
+  A OM é declarável **porque** o sistema não chancela o que o membro diz; um selo ao lado de
+  campo declarado desfaz a condição que tornaria o campo aprovável.
+- Payload do Portal, CPF em claro, endereço residencial, documento além do TTL.
+- **Exibida, não buscável**: sem busca de pessoas no piloto, nenhum container pode oferecer
+  filtro "todos da OM X".
 
 ## Em aberto
 

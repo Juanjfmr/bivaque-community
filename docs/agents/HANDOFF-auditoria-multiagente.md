@@ -161,21 +161,18 @@ quais agentes entram e já registra achados que bloqueiam.
 
 Composição desta run: `audit-produto` + `audit-conformidade` + `audit-carrasco` + `audit-arbitro`.
 
-## Achados de privacidade na triagem — revisados após a decisão da OM
-
-O dono confirmou que **afiliação declarada (força, situação, OM, turma) está aceita** e não
-sai: dá pertencimento. Isso rebaixa dois dos quatro achados originais. Ver a nota em
-`docs/agents/ANTI-SLOP.md` §Afiliação declarada.
+## Achados de privacidade na triagem
 
 | # | Tela | Achado | Situação |
 |---|---|---|---|
-| ~~P0-1~~ | `01_agora.png` | Saudação "Bom dia, Capitão!" | **Rebaixado.** Posto declarado é permitido. Continua sendo escolha de tom a discutir, não violação |
-| ~~P0-2~~ | `12_perfil.png` | Nome exibido como "Capitão João Silva" | **Rebaixado.** Mesma razão |
-| **P0-3** | `12_perfil.png` | Selo **"✓ Membro verificado"** | **De pé, e reforçado.** O `ADR-20260811-om-declarada` diz *"Nada declarado é exibido como verificado pelo sistema"*. O selo cai **por causa** da OM declarada, não apesar dela |
-| P1 | `12_perfil.png` | Avatar fardado com insígnia legível | **Rebaixado a inconsistência.** Não é campo declarado; mas o `README.md` do próprio pacote proíbe ("sem camuflagem, brasões, patente"). O pacote contradiz a si mesmo |
+| **P0-3** | `12_perfil.png` | Selo **"✓ Membro verificado"** | **De pé.** Proibido nas duas leituras do conflito da OM. O `ADR-20260811` diz *"Nada declarado é exibido como verificado pelo sistema"* — o selo cai por causa da OM declarada, não apesar dela |
+| `CONFLITO-OM` | `01_agora.png` | Saudação "Bom dia, Capitão!" | Sobe para decisão humana. O dono declarou a OM aceita; `AGENTS.md` e `VISUAL_GUIDE` §9 item 8 ainda proíbem. **Nenhum agente decide isso** |
+| `CONFLITO-OM` | `12_perfil.png` | Nome exibido como "Capitão João Silva" | Idem |
+| P1 | `12_perfil.png` | Avatar fardado com insígnia legível | Inconsistência interna: o `README.md` do próprio pacote proíbe ("sem camuflagem, brasões, patente") |
 
-Continua valendo, e vale para qualquer arquitetura: **exibida, não buscável.** Não há busca de
-pessoas no piloto — nenhuma tela pode oferecer filtro "todos da OM X".
+O estado do conflito e as regras de comportamento estão em `docs/agents/ANTI-SLOP.md`
+§Afiliação declarada. Ele só fecha quando o ADR for aprovado **e** `AGENTS.md` e o
+`VISUAL_GUIDE` §9 item 8 forem atualizados na mesma mudança.
 
 ## P0-5 — a vitrine sumiu, e ela é a única onda com receita
 
@@ -243,7 +240,8 @@ criticá-lo junto com o pacote — ele é proposta, não contrato.
 
 ## Ordem sugerida
 
-1. Levar P0-3 (selo) e P0-5 (vitrine) ao responsável. São decisão de produto, não de design.
+1. Levar P0-3 (selo), P0-5 (vitrine) e o `CONFLITO-OM` ao responsável. São decisão de
+   produto e de governança, não de design.
 2. `audit-produto` sobre o `CRITIQUE_BRIEF` — é o que o pacote está pedindo de verdade.
 3. `audit-conformidade` e `audit-carrasco` **só depois**, e restritos ao que sobreviver:
    arquitetura de interação, hierarquia, densidade, paleta. Sem julgamento tipográfico fino.
