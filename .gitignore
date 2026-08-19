@@ -20,3 +20,6 @@ work/
 
 # Claude Code managed worktrees (each contains a full node_modules clone)
 .claude/worktrees/
+
+# auditoria multiagente (working state; o veredito final vai para docs/agents/)
+.audit/
