@@ -28,7 +28,7 @@ Metade dos "destinos" que disputariam vaga não disputam nada — estão em outr
 | **Membro** | membro, dependente | os containers abaixo |
 | **Console do fundador** | operador | moderação, aprovação, pendências, denúncias, financeiro, delegação |
 | **Console do dono** | dono de comunidade, moderador | moderação e aprovação da própria comunidade |
-| **Prestador** | prestador civil | apenas a própria ficha (D37) — não lê feed, perfil nem grupo |
+| **Prestador** | prestador civil | apenas a própria ficha (D17) — não lê feed, perfil nem grupo. Dashboard próprio (D37) amplia essa superfície |
 
 ## Os containers do shell do membro
 
