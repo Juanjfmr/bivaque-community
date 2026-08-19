@@ -6,6 +6,7 @@ import { Bell, ChevronsLeft, MapPin, PanelLeft } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
+import { MemberAvatar } from "./avatar"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
 import { CreatePostModal } from "./feed-post"
 
@@ -117,9 +118,11 @@ export function AppShell({ children }: AppShellProperties) {
               aria-label="Perfil"
               className="flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] text-sm font-semibold ring-2 ring-transparent transition-all duration-[var(--duration-instant)] hover:ring-[var(--accent-soft)]">
-                C
-              </div>
+              <MemberAvatar
+                name="C"
+                size="sm"
+                className="ring-2 ring-transparent transition-all duration-[var(--duration-instant)] hover:ring-[var(--accent-soft)]"
+              />
             </a>
           </div>
         </div>
@@ -222,9 +225,7 @@ export function AppShell({ children }: AppShellProperties) {
             {/* Sidebar user footer (expanded only) */}
             {!isRail && (
               <div className="flex items-center gap-3 rounded-lg px-3 py-2 mt-auto">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)] text-sm font-semibold">
-                  C
-                </div>
+                <MemberAvatar name="C" size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">Minha conta</p>
                   <p className="text-xs text-muted truncate">Manaus, AM</p>

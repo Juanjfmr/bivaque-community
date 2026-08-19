@@ -13,7 +13,7 @@ import {
 } from "@heroui/react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
-import { useLocalityContext } from "../../../lib/locality-context"
+import { callProfileRpc } from "../../../lib/profile-rpcs"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../components/bivaque/skeleton"
@@ -36,8 +36,6 @@ interface PostRow {
   content: string | null
   post_type: string
   created_at: string
-  comment_count: number | null
-  reaction_count: number | null
 }
 
 interface EventRow {
@@ -74,10 +72,6 @@ function formatShortDate(iso: string): string {
   })
 }
 
-function pluralize(count: number, singular: string, plural: string): string {
-  return count === 1 ? singular : plural
-}
-
 export default function ProfilePage() {
   const router = useRouter()
   const supabase = createBrowserClient()
@@ -98,7 +92,6 @@ export default function ProfilePage() {
   const signOutModal = useOverlayState()
   const [signingOut, setSigningOut] = useState(false)
   const [signOutError, setSignOutError] = useState("")
-  const { current } = useLocalityContext()
 
   const loadProfile = useCallback(async () => {
     setLoading(true)
@@ -126,15 +119,13 @@ export default function ProfilePage() {
           .select("joined_at, localities(city_name, state_code)")
           .eq("user_id", user.id)
           .maybeSingle(),
-        supabase.rpc("feed_posts", {
-          p_locality_id: current.id,
-          p_order: "recent",
-        }),
-        supabase
-          .from("events")
-          .select("id, title, starts_at, locality_id")
-          .order("starts_at", { ascending: true })
-          .limit(10),
+        // Onda E Task 7: posts AND events scoped to the viewer (the same RPC
+        // used by the other-member profile). For the self-profile, the viewer
+        // IS the target — the query returns "posts the user posted in
+        // containers they can see". feed_posts(PILOT_LOCALITY_ID) used to leak
+        // cross-user content; the RPC replaces it server-side.
+        callProfileRpc(supabase, "profile_posts_for", { p_target_user_id: user.id }),
+        callProfileRpc(supabase, "profile_events_for", { p_target_user_id: user.id }),
       ])
 
     if (profileRow) {
@@ -149,7 +140,7 @@ export default function ProfilePage() {
     setPosts(allPosts.slice(0, 20))
     setEvents((eventRows ?? []) as EventRow[])
     setLoading(false)
-  }, [supabase, current.id])
+  }, [supabase])
 
   useEffect(() => {
     loadProfile()
@@ -260,16 +251,6 @@ export default function ProfilePage() {
                   <p className="text-sm break-words whitespace-pre-wrap">{p.content ?? ""}</p>
                   <div className="mt-2 flex items-center gap-3 text-xs text-muted">
                     <span>{formatShortDate(p.created_at)}</span>
-                    {p.reaction_count !== null && p.reaction_count > 0 && (
-                      <span>
-                        {p.reaction_count} {pluralize(p.reaction_count, "reação", "reações")}
-                      </span>
-                    )}
-                    {p.comment_count !== null && p.comment_count > 0 && (
-                      <span>
-                        {p.comment_count} {pluralize(p.comment_count, "comentário", "comentários")}
-                      </span>
-                    )}
                   </div>
                 </li>
               ))}
