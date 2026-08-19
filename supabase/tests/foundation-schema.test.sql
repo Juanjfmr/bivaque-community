@@ -49,13 +49,14 @@ select columns_are(
     'inviter_user_id',
     'token_digest',
     'invitee_email_digest',
+    'invitee_email_hint',
     'status',
     'expires_at',
     'accepted_by_user_id',
     'accepted_at',
     'created_at'
   ],
-  'family invitations retain digests and lifecycle metadata only'
+  'family invitations retain digests plus the display hint (D2 Task 4) and lifecycle metadata only'
 );
 
 select results_eq(

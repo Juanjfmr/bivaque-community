@@ -123,7 +123,8 @@ select columns_are(
   'family_invitations',
   array[
     'id', 'inviter_user_id', 'token_digest', 'invitee_email_digest',
-    'status', 'expires_at', 'accepted_by_user_id', 'accepted_at', 'created_at'
+    'invitee_email_hint', 'status', 'expires_at', 'accepted_by_user_id',
+    'accepted_at', 'created_at'
   ],
   'GUARD: family_invitations columns match authorized set'
 );

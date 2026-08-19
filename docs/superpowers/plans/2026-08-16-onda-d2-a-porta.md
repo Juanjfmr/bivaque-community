@@ -304,7 +304,7 @@ const tokenDigest = createHash("sha256").update(token).digest("hex")
 lista, e o dependente nunca recebe nada. Não há caminho utilizável. A funcionalidade inteira é
 uma affordance morta — o que a regra 4 da §12 proíbe.
 
-- [ ] **Step 1: o link existe, e aparece uma vez**
+- [x] **Step 1: o link existe, e aparece uma vez**
 
   A ação passa a devolver o token em claro **uma única vez**, para renderizar o link
   `/onboarding?invite=<token>` na tela do titular, com botão de copiar.
@@ -312,7 +312,7 @@ uma affordance morta — o que a regra 4 da §12 proíbe.
   O digest continua sendo a única coisa persistida. Não grave o token; não o mande para log; não
   o ponha em `revalidatePath` nem em query string de navegação interna.
 
-- [ ] **Step 2: o convite também é enviado**
+- [x] **Step 2: o convite também é enviado** (enfileirado; entrega é D1)
 
   Enfileirar no `outbox` (canal `email`, tipo `family_invite`) para o e-mail que o titular
   digitou. O e-mail é o alvo do `invitee_email_digest` — o mesmo que
@@ -322,7 +322,7 @@ uma affordance morta — o que a regra 4 da §12 proíbe.
   **O e-mail em claro não vira coluna.** Passe-o como destinatário da linha do `outbox` e nada
   mais; `private.family_invitations` continua guardando só o digest.
 
-- [ ] **Step 3: a lista identifica sem expor**
+- [x] **Step 3: a lista identifica sem expor**
 
   `family-invite-section.tsx:85-104` mostra só datas — dois convites do mesmo dia são
   indistinguíveis e o titular revoga o errado. Como só existe o digest, o e-mail não pode ser
@@ -332,7 +332,7 @@ uma affordance morta — o que a regra 4 da §12 proíbe.
   Coluna nova em `private.family_invitations` **na mesma migration** que a policy/função que a
   lê — regra 6 da §12, e é a falha que este repositório já cometeu quatro vezes.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
   - pgTAP em `supabase/tests/family-invite-hint.sql`: a dica é gravada; ela **não** permite
     reconstruir o e-mail (asserção sobre o formato); `authenticated` não lê a tabela `private`
@@ -341,7 +341,7 @@ uma affordance morta — o que a regra 4 da §12 proíbe.
     antes do `@` não vaza a segunda letra.
   - Unitário sobre a ação: o token devolvido não aparece em nenhuma linha persistida.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(family-invite): deliver the invite link and identify pending invites`.
 

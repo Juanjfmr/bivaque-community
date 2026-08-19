@@ -7,7 +7,8 @@ import { createServerClient as createServiceClient } from "../../../lib/supabase
 
 type PendingInviteRow = {
   id: string
-  invitee_email_digest: Buffer
+  invitee_email_digest: string
+  invitee_email_hint: string | null
   created_at: string
   expires_at: string
 }
@@ -45,7 +46,7 @@ export async function getFamilyInviteDataAction(): Promise<FamilyInviteData | nu
   const supabase = createServiceClient()
   const [{ data: isVerified }, { data: pendingData }] = await Promise.all([
     supabase.rpc("is_verified_holder", { p_user_id: userId }),
-    supabase.rpc("list_pending_invites", { p_user_id: userId }),
+    supabase.rpc("list_pending_invites_with_hint", { p_user_id: userId }),
   ])
 
   return {
@@ -54,7 +55,26 @@ export async function getFamilyInviteDataAction(): Promise<FamilyInviteData | nu
   }
 }
 
-export async function sendFamilyInviteAction(formData: FormData) {
+// Shared mask rule with the SQL function private.family_invite_email_hint:
+// display at most two characters of the local part and two of the domain, then
+// a mask. The mask identifies a pending invite in the list without letting
+// anyone reconstruct the e-mail.
+export function emailHint(email: string): string {
+  const trimmed = email.trim().toLowerCase()
+  const at = trimmed.indexOf("@")
+  if (at <= 0 || at === trimmed.length - 1) return "***@***"
+  const local = trimmed.slice(0, at)
+  const domain = trimmed.slice(at + 1)
+  const visibleLocal = local.length <= 2 ? local.slice(0, 1) : local.slice(0, 2)
+  const dot = domain.indexOf(".")
+  const visibleDomain = domain.length <= 2 ? domain.slice(0, 1) : domain.slice(0, 2)
+  const tld = dot > 2 ? domain.slice(dot) : ""
+  return `${visibleLocal}***@${visibleDomain}***${tld}`
+}
+
+export async function sendFamilyInviteAction(
+  formData: FormData,
+): Promise<{ token: string } | undefined> {
   const email = formData.get("email")
   if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new Error("email inválido")
@@ -74,12 +94,14 @@ export async function sendFamilyInviteAction(formData: FormData) {
   const { createHash, randomBytes } = await import("node:crypto")
   const token = randomBytes(32)
   const tokenDigest = createHash("sha256").update(token).digest("hex")
-  const emailDigest = createHash("sha256").update(email.toLowerCase().trim()).digest("hex")
+  const normalizedEmail = email.trim().toLowerCase()
+  const emailDigest = createHash("sha256").update(normalizedEmail).digest("hex")
 
   const { error } = await supabase.rpc("create_family_invitation", {
     p_inviter_user_id: userId,
     p_token_digest: tokenDigest,
     p_invitee_email_digest: emailDigest,
+    p_invitee_email_hint: emailHint(email),
   })
 
   if (error) {
@@ -89,7 +111,25 @@ export async function sendFamilyInviteAction(formData: FormData) {
     throw new Error(error.message)
   }
 
+  // The link must reach the invitee. Enqueueing is the contract — the Resend
+  // adapter (D1) delivers. The raw e-mail only ever lives in the outbox
+  // recipient column and never becomes a private table column.
+  const { error: outboxError } = await supabase.from("outbox").insert({
+    recipient: normalizedEmail,
+    channel: "email",
+    type: "family_invite",
+    payload: { user_id: userId },
+  })
+
+  if (outboxError) {
+    throw new Error(`Falha ao enfileirar o convite: ${outboxError.message}`)
+  }
+
   revalidatePath("/profile")
+
+  // The token is shown exactly once, right here: it is not persisted, logged,
+  // or sent in navigation. The digest is the only stored form (20260815130000).
+  return { token: token.toString("hex") }
 }
 
 export async function revokeFamilyInviteAction(formData: FormData) {

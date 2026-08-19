@@ -1173,14 +1173,24 @@ export type Database = {
         }
         Returns: string
       }
-      create_family_invitation: {
-        Args: {
-          p_invitee_email_digest: string
-          p_inviter_user_id: string
-          p_token_digest: string
-        }
-        Returns: string
-      }
+      create_family_invitation:
+        | {
+            Args: {
+              p_invitee_email_digest: string
+              p_inviter_user_id: string
+              p_token_digest: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_invitee_email_digest: string
+              p_invitee_email_hint: string
+              p_inviter_user_id: string
+              p_token_digest: string
+            }
+            Returns: string
+          }
       create_group: {
         Args: {
           p_description?: string
@@ -1291,6 +1301,16 @@ export type Database = {
           expires_at: string
           id: string
           invitee_email_digest: string
+        }[]
+      }
+      list_pending_invites_with_hint: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          expires_at: string
+          id: string
+          invitee_email_digest: string
+          invitee_email_hint: string
         }[]
       }
       list_verification_documents: {
