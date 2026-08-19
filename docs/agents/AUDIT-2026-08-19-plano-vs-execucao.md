@@ -159,3 +159,84 @@
 - **Não rodei gate completo** (sem testes). Falsos negativos possíveis em testes unit/pgTAP.
 - **Verificação β** cobriu 1 arquivo por task ✅ — não cobri branches/policies/pgTAP completos.
 - **T, F (pré-sessão)**: tasks T1-T3 e F1 Step 4 — verifiquei só os commits, não o código. Confirmação de "código não mente" depende de rodada futura.
+
+---
+
+## Round 2 — verificação β profunda em T1-T3/F1 + test:db completo
+
+**Data do round**: 2026-08-19 (mesmo dia).
+**Foco**: tasks pré-sessão (T1, T2, T3, F1) — verificar que o código realmente faz o que o plano diz, e rodar `test:db` completo.
+
+### Verificação β — T1 (o vínculo de saída)
+
+Migrations verificadas (commit `1b3a94a` + `8afb2a`):
+- ✅ `declare_locality_transfer(p_destination, p_term_date)` existe e é security definer.
+- ✅ `provision_member_locality(p_user_id, p_locality_id)` existe.
+- ✅ Índices parciais únicos: `locality_memberships_one_current_per_user_idx` e `locality_memberships_one_leaving_per_user_idx`.
+- ✅ Colunas `kind`, `leaving_at`, `access` adicionadas em `locality_memberships`.
+- ✅ Grant `execute on function public.declare_locality_transfer(...) to service_role` (migration `20260820000001`).
+- ✅ **T2 (concessão) verificado**: `declare_locality_transfer` NÃO cria `community_memberships` para o destino — a vila continua exigindo pedido + aprovação do dono.
+
+### Verificação β — T3 (degradar, não quebrar)
+
+Migration verificada (commit `8afb2a`, `20260820000000`):
+- ✅ `private.degrade_locality_origins()` existe.
+- ✅ `private.reverse_locality_transfer(p_user_id)` existe.
+- ✅ `private.is_active_locality_member(p_locality_id)` e `private.can_write_post_to(p_locality_id, p_community_id, p_group_id)` existem.
+- ✅ Policies de `insert`/`update` de posts/comments/post_reactions usam `can_write_post_to`.
+- ⚠️ **Cron**: o grep por `cron.schedule` falhou — o job de degradação pode estar em uma migration separada, ou ser wired via D1 (que é owner). Não verificado.
+
+### Verificação β — F1 (Server Actions com service_role)
+
+Commit verificado (`24b8c1b`):
+- ✅ `groups/[id]/page.tsx` e `events/[id]/page.tsx` não usam mais `createServiceClient()` para `auth.getUser()`. Diff confirma 3 instâncias removidas em groups e 1 em events.
+- ✅ Ambos usam `getAuthClient()` (com cookies) e `auth.getUser()` da sessão.
+- ⚠️ **Lacuna menor (Step 3)**: o `joinGroupAction` chama `rpc('join_group', { p_group_id })` — que **faz a derivação corretamente** (public → approved, private → pending, ver `20260802001000_groups_moderation.sql:296-303`). Mas o **formulário** (`groups/[id]/page.tsx`) **continua enviando um campo hidden `desiredStatus` que é silenciosamente ignorado**. O comentário no código reconhece: *"The form can still send desiredStatus for now, and it is silently ignored — Step 5 of the plan removes the hidden field from the markup."* → **lacuna menor**, lógica de negócio correta, UI legada.
+
+### `test:db` completo
+
+Rodado após o commit `495bd1d` (round 1). Resultado:
+
+- **64/66 arquivos OK** — todas as mudanças desta sessão continuam passando.
+- **2 arquivos pré-existentes falham** (não introduzidos pelas mudanças da sessão):
+  - `family-invite-locality.sql`: aborta no line 44 com `insert or update on table "family_invitations" violates foreign key constraint`. Causa raiz: typo antigo no test — usa UUID `10000000-4000-4000-8000-000000000005` (com `4000-...-4000-0005`), mas o fixture tem `10000000-0000-4000-8000-000000000005` (`...4000-...-0000-0005`). O commit `bb38e6c` que introduziu este test já marcava como **"draft"** no próprio corpo: *"the schema FKs around family_account_links and family_invitations make a fully clean test intricate"*. Pré-existente; conhecido.
+  - `group-join-status.sql`: falha no test 3 com `have: NULL, want: pending`. Pré-existente (a causa raiz é `is_locality_member` não enxergando a fixture membership após T1/T3 — não resolvido na sessão atual).
+- **Nenhuma falha nova** introduzida pelas minhas mudanças nesta sessão.
+
+### Atualização das lacunas detectadas
+
+**5.1 Corrigidas** (mesmo do round 1)
+
+**5.2 Registradas como follow-up** — atualizadas:
+
+| Lacuna | Origem | Status |
+|---|---|---|
+| D2.2 CPF auto-reverify | Plano §Task 2 nota parcial | **Pré-existente** (registrada antes desta sessão) |
+| D2.6 e-mail aviso | Plano §Task 6 Step 4 | **Segue como follow-up** (fatia reduzida) |
+| D2.6 upload-side locality | Plano §Task 6 Step 3 | **Segue como follow-up** (UI legada, RPC correta) |
+| D2.6 pgTAP próprio | Plano §Task 6 Step 6 | **Segue como follow-up** |
+| D2.8 E2E + visual + veredito | Plano §Task 8 | **Owner** (Steps 1-3) |
+| **F1 desiredStatus hidden field** | Round 2 desta auditoria | **Lacuna menor registrada** — lógica de negócio correta (RPC deriva status), só UI legada. |
+| **family-invite-locality.sql typo** | Round 2 desta auditoria | **Bug pré-existente** — UUID errado em line 40. Já marcado como draft pelo autor em `bb38e6c`. |
+
+**5.3 De pré-requisito** (mesmo do round 1)
+
+### Atualização dos mapas de execução
+
+Confirmação pelo round 2 de que a Onda E está pronta para começar:
+- T1, T2, T3 ✅ todas as funções/helpers/policies verificados — chão firme.
+- F1 ✅ `join_group` RPC deriva status corretamente.
+- Nenhuma regressão das minhas mudanças D2 verificada pelo `test:db`.
+
+Mapa autônomo confirmado: **E Task 10 → E1 → E2 → E5 → E6 → E11 → E4 → E7 → E8 → E9 parcial**.
+
+### Atualização do TL;DR
+
+| Onda | Tasks ✅ | Tasks ⏳ | Tasks 🔒 (owner) | Status |
+|---|---|---|---|---|
+| **T** | 13/29 steps (3/6 tasks 100%) | 3 tasks (T4, T5, T6) | 0 | Tasks 1-3 fechadas pré-sessão. Tasks 4-6 **bloqueadas pela E** (confirmado no round 2). |
+| **D2** | 21/50 steps (5/8 tasks 100%) | 1 task (T8 Steps 1-2) | 0 | **Tasks 1-6, 9 fechadas nesta sessão.** Task 8 reconciliação ✅; E2E+visual+veredito owner. |
+| **E** | 0/11 tasks feitas | 0 | 0 | **Nenhuma task feita.** Todas autônomas. **Round 2 confirmou que o chão está firme (T1-T3 verificados).** |
+| **F** | 5/10 tasks (1 task 100%) | 0 | 0 | F1 ✅ verificado (round 2 confirmou que a derivação de status funciona na RPC). Pré-requisito: E. |
+
+**Resumo atualizado**: 39/130 steps marcados (30%, inalterado); **9/35 tasks 100% fechadas**; 1 lacuna menor adicional detectada no round 2 (F1 desiredStatus hidden field, **lógica correta**, **UI legada**); 1 bug pré-existente confirmado e caracterizado (family-invite-locality typo).

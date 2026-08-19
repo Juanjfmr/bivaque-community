@@ -79,3 +79,33 @@ documentado como follow-up. Não invente — se não conseguir confirmar, declar
 Esta rodada da auditoria foi rodada em **2026-08-19** com MiniMax-M3 (DSH padrão) em vez de
 DeepSeek v4 pro. O prompt acima é portável e reprodutível. Comparações futuras entre os dois
 modelos sobre o mesmo conjunto de ondas são bem-vindas e servem para calibrar este prompt.
+
+## Atualização pós round 2 (2026-08-19)
+
+**Lições do round 2**:
+
+1. **`test:db` completo é viável** — 64/66 arquivos rodaram sem falhas. As 2 falhas restantes
+   são **pré-existentes** (e em um dos casos o autor já marcou como "draft" no corpo do commit
+   que introduziu o test). **Recomendação**: rodar `test:db` completo em rodadas futuras e
+   listar separadamente as falhas pré-existentes para não atribuir regressões falsas ao diff
+   corrente.
+2. **Verificação β mais profunda em tasks pré-sessão é valiosa** — encontrou 1 lacuna menor
+   (F1 desiredStatus hidden field — lógica correta, UI legada) que o round 1 não pegou.
+3. **`git show <sha> -- <path>` é a forma mais rápida de confirmar o que um commit pré-sessão
+   realmente entregou**, sem precisar rodar o ambiente de novo.
+4. **A regra 6 da §12 se aplica à auditoria**: a migration que tem a coluna deve ser a mesma
+   que tem a função que lê essa coluna — ao auditar, conferir se o commit da coluna é o mesmo
+   que o commit da função. Exemplo positivo: `locality_transfer.sql` (T1) tem coluna +
+   declare_locality_transfer + provision_member_locality; `locality_degradation.sql` (T3)
+   tem coluna + degrade/reverse/can_write_post_to + policies.
+
+## Limitação adicional descoberta (round 2)
+
+**Lacunas menores de UI vs. lógica de negócio**: no F1, a RPC `join_group` deriva status
+corretamente (public → approved, private → pending, ver `20260802001000_groups_moderation.sql:296-303`),
+mas o formulário continua enviando um campo hidden `desiredStatus` que é silenciosamente
+ignorado pelo action. O comentário no código reconhece: *"The form can still send desiredStatus
+for now, and it is silently ignored — Step 5 of the plan removes the hidden field from the markup."*
+→ **Lacuna menor registrada**, lógica de negócio correta, UI legada.
+
+Para futuras auditorias: **separar "lógica de negócio" de "UI/surface"** ao reportar lacunas.
