@@ -86,7 +86,7 @@ E há um terceiro problema que **independe dos outros dois**: `joinGroupAction`
 em que a autenticação for consertada sem consertar isto, qualquer pessoa entra aprovada em
 qualquer grupo privado digitando um campo escondido.
 
-- [ ] **Step 1: medir antes de mexer**
+- [x] **Step 1: medir antes de mexer**
 
   Escreva um caso que exercite `joinGroupAction` com sessão válida e **observe**. Registre o
   resultado no próprio commit. Não pule — a correção é diferente nos dois desfechos, e o
@@ -117,7 +117,7 @@ qualquer grupo privado digitando um campo escondido.
   O status é derivado no servidor, da visibilidade do grupo: público → `approved`; privado →
   `pending`. Nunca do corpo da requisição.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
   - pgTAP em `supabase/tests/group-join-status.sql`: entrar em grupo público dá `approved`;
     entrar em grupo privado dá `pending`; **tentar gravar `approved` direto em grupo privado é
@@ -127,9 +127,9 @@ qualquer grupo privado digitando um campo escondido.
   - E2E `tests/e2e/group-join.spec.ts`: entrar em grupo público funciona de ponta a ponta. É a
     prova de que o caminho feliz voltou a existir.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
-  `fix(authz): stop authenticating on the service-role client in six server actions`.
+  `fix(authz): stop authenticating on the service-role client in six server actions` (`24b8c1b` + `b3c192b`).
 
 ---
 
@@ -166,7 +166,7 @@ avisa ninguém — o organizador de um churrasco descobre a desistência ao cont
   Um aviso por mudança, não por clique: quem alterna três vezes gera um aviso, não três. Sem
   isso o produto ensina o organizador a silenciar a notificação, que é exatamente a dor da §1.1.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
   pgTAP em `supabase/tests/event-rsvp-not-going.sql`: os três estados gravam; mudar para
   `not_going` enfileira uma linha para o organizador; **preferência desligada não enfileira**
@@ -208,7 +208,7 @@ desatualizado — metade dele existe.
   `events/page.tsx:334`. Comentário que mente é pior que comentário ausente: foi ele que fez
   esta capability ficar parada.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
   pgTAP em `supabase/tests/event-invite-fanout.sql`: organizador convida e as linhas nascem;
   **não-organizador convidando é negado** (negativo); convidar alguém que não alcança o evento é
@@ -436,7 +436,7 @@ de storage. A affordance está lá e o fluxo não fecha — regra 4 da §12.
   **Este step é a task.** Sem ele, o upload é uma superfície nova de vazamento de localização de
   militar — exatamente o dado que a §4.3 protege.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
   - Unitário: arquivo com EXIF de GPS sai sem EXIF; tipo não permitido é rejeitado no servidor
     mesmo com o cliente adulterado (negativo).

@@ -603,8 +603,8 @@ select results_eq(
     where schemaname = 'public'
       and tablename = 'event_rsvps'
   $$,
-  array[3::bigint],
-  'GUARD: event_rsvps has exactly 3 policies'
+  array[4::bigint],
+  'GUARD: event_rsvps has exactly 4 policies (select + insert + update + delete_self; the delete_self is F1 Step 2b for cancelRsvpAction)'
 );
 
 select results_eq(
