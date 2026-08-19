@@ -110,7 +110,23 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  // The welcome screen is a reward for a verified membership, not a public page.
+  // D2 Task 1 — the gate now reads the real verification state, not just
+  // the membership row. The previous behaviour was: pending and
+  // temporary_error and rejected all looked the same as "never
+  // verified" because the redirect was the same, and the person
+  // burned a verification attempt to find that out. The new path routes
+  // each state to its own screen:
+  //   - never verified  -> /onboarding
+  //   - pending, rejected, temporary_error -> /onboarding/status
+  //   - verified, no membership -> /onboarding/locality
+  //     (P0 Task 4 two-phase admission step; verified is the gap
+  //      between eligibility and provisioning)
+  //
+  // The cookie that consent/page.tsx writes is a navigation shortcut, not
+  // the authority — /api/onboarding reconfirms with has_accepted_consent.
+  // The verification status is read through a SECURITY DEFINER RPC that
+  // scopes by auth.uid() server-side (no p_user_id parameter to get
+  // wrong). One extra round trip only when membership is missing.
   const isMember = await supabase
     .from("locality_memberships")
     .select("locality_id")
@@ -119,6 +135,21 @@ export async function middleware(request: NextRequest) {
     .maybeSingle()
 
   if (isMember.data === null) {
+    // No membership yet — read the verification state to route by it.
+    const { data: statusRows, error: statusError } = await supabase.rpc("my_verification_status")
+    if (statusError) {
+      // We cannot route safely. Fail closed to /onboarding so the user
+      // sees a deterministic page rather than a half-decision. The error
+      // reaches the server logger; the page does not surface it.
+      return NextResponse.redirect(new URL("/onboarding", request.url))
+    }
+    const status = (statusRows?.[0]?.status ?? null) as string | null
+    if (status === "verified") {
+      return NextResponse.redirect(new URL("/onboarding/locality", request.url))
+    }
+    if (status === "pending" || status === "temporary_error" || status === "rejected") {
+      return NextResponse.redirect(new URL("/onboarding/status", request.url))
+    }
     return NextResponse.redirect(new URL("/onboarding", request.url))
   }
 
