@@ -162,16 +162,23 @@ export function AppShell({ children }: AppShellProperties) {
           {/* Nav items */}
           <nav aria-label="Navegação principal" className="flex flex-col gap-1 p-3 flex-1">
             {NAV_ITEMS.map((item) => {
-              // Fallback to "community" when the route is not in primary nav (e.g. /messages,
-              // /notifications) so the sidebar never shows no active item. Mirrors bottom-nav's
-              // selectedKey fallback so the two navs stay in sync.
+              // When a route is not one of the four containers (e.g. /messages,
+              // /notifications), fall back so the sidebar never shows no active
+              // item. Destinations that were once top-level now live inside a
+              // container: /messages under "me", /recommendations under the
+              // community cycle. Mirrors bottom-nav's selectedKey fallback so
+              // the two navs stay in sync.
               const inPrimaryNav = NAV_ITEMS.some(
                 (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
               )
+              const fallbackId =
+                pathname.startsWith("/messages") || pathname.startsWith("/notifications")
+                  ? "me"
+                  : "community"
               const active =
                 pathname === item.href ||
                 pathname.startsWith(`${item.href}/`) ||
-                (!inPrimaryNav && item.id === "community")
+                (!inPrimaryNav && item.id === fallbackId)
 
               const anchor = (
                 <a

@@ -1,18 +1,9 @@
 "use client"
 
+import { HomeIcon, MapPinIcon, UserCircleIcon, UserGroupIcon } from "@heroicons/react/24/outline"
 import {
-  CalendarDaysIcon,
-  ChatBubbleLeftRightIcon,
-  HomeIcon,
-  SparklesIcon,
-  UserCircleIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/outline"
-import {
-  CalendarDaysIcon as CalendarDaysSolid,
-  ChatBubbleLeftRightIcon as ChatBubbleLeftRightSolid,
   HomeIcon as HomeSolid,
-  SparklesIcon as SparklesSolid,
+  MapPinIcon as MapPinSolid,
   UserCircleIcon as UserCircleSolid,
   UserGroupIcon as UserGroupSolid,
 } from "@heroicons/react/24/solid"
@@ -29,7 +20,44 @@ export interface NavItem {
   IconActive: ComponentType<SVGProps<SVGSVGElement>>
 }
 
+// ── Os containers de navegação ──────────────────────────────────────────────
+//
+// A navegação do shell do membro espelha o MODELO DE PRODUTO, não a lista de
+// features (ADR-20260816-shells-e-navegacao, regra 2). Os containers derivam de
+// BIVAQUE.md §3.1 (três níveis de pertencimento: localidade → comunidade →
+// grupo) e §6.3 (os dois ciclos). São exatamente quatro, e o quarto é o próprio
+// membro ("Eu"), onde moram perfil, conta, mensagens e — quando existir — o
+// convite de membro.
+//
+//   - "cidade"     → o nível da localidade: eventos da cidade, guia de chegada,
+//                    vitrine e busca de prestador (onda G). O ADR é explícito:
+//                    vitrine e busca de prestador caem AQUI.
+//   - "community"  → o nível da comunidade: a home (feed da vila) e os dois
+//                    ciclos (§6.3: pedir/responder na semana, o encontro mensal).
+//   - "groups"     → o nível do grupo: conversa por interesse (§3.2).
+//   - "me"         → o membro: perfil, conta, mensagens (DM, mantida pela D36)
+//                    e convite de membro (onda E Task 6), que cai em "eu".
+//
+// Eventos não é aba própria: "eventos da cidade" é uma das quatro coisas que o
+// nível municipal é (§6.2), e eventos de vila pertencem à vila. Ele aterrissa
+// dentro do container "cidade". Indicações e Mensagens também saem da nav de
+// nível superior: Indicações vive no header (spec §0 Navegação) e Mensagens
+// dentro de "eu".
+//
+// REGRA FALSIFICÁVEL (ADR, regra 2): se um destino novo não couber em nenhum
+// container, o destino está confuso — não falta vaga. Nesse caso, pare e
+// reporte; NÃO adicione uma nova aba.
+//
+// O teto continua cinco (iOS HIG / Material). Quatro containers ≤ cinco.
 export const NAV_ITEMS: NavItem[] = [
+  {
+    id: "cidade",
+    label: "Cidade",
+    shortLabel: "Cidade",
+    href: "/localidade",
+    Icon: MapPinIcon,
+    IconActive: MapPinSolid,
+  },
   {
     id: "community",
     label: "Minha comunidade",
@@ -46,30 +74,8 @@ export const NAV_ITEMS: NavItem[] = [
     IconActive: UserGroupSolid,
   },
   {
-    id: "events",
-    label: "Eventos",
-    href: "/events",
-    Icon: CalendarDaysIcon,
-    IconActive: CalendarDaysSolid,
-  },
-  {
-    id: "indications",
-    label: "Indicações",
-    shortLabel: "Indicações",
-    href: "/recommendations",
-    Icon: SparklesIcon,
-    IconActive: SparklesSolid,
-  },
-  {
-    id: "messages",
-    label: "Mensagens",
-    href: "/messages",
-    Icon: ChatBubbleLeftRightIcon,
-    IconActive: ChatBubbleLeftRightSolid,
-  },
-  {
-    id: "profile",
-    label: "Perfil",
+    id: "me",
+    label: "Eu",
     href: "/profile",
     Icon: UserCircleIcon,
     IconActive: UserCircleSolid,
@@ -101,10 +107,7 @@ function NavIcon({
 export function BottomNav() {
   const pathname = usePathname()
 
-  // Perfil sai do bottom nav: é tela de configuração e já tem entrada
-  // permanente no avatar do header. As cinco vagas ficam para destinos
-  // de conteúdo — cinco é o teto do iOS HIG e do Material.
-  const items = NAV_ITEMS.filter((item) => item.id !== "profile")
+  const items = NAV_ITEMS
 
   const selectedKey =
     items.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??

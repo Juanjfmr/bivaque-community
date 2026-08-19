@@ -43,10 +43,23 @@
 - Destrutivo/report: dentro de overflow menu (⋯), nunca inline em card (finding #6).
 - Toda ação ≥44px (`min-h-11 min-w-11`).
 
-### Navegação
-- **Desktop ≥1024px**: sidebar esquerda 224px (`w-56`), itens: Minha comunidade, Grupos, Eventos, **Indicações**, Perfil (5 itens — Indicações ganha entrada no desktop para descobribilidade; finding de descobribilidade). Item ativo: `var(--accent-soft)` bg + ícone preenchido + texto `var(--accent)`. Bottom nav oculto.
-- **Mobile/tablet <1024px**: bottom nav fixa com 4 itens (Minha comunidade, Grupos, Eventos, Perfil — spec). Indicações via ícone no header. Item ativo: ícone preenchido + label `var(--accent)`. Sidebar oculta.
+### Navegação — containers derivados do modelo (ADR-20260816-shells-e-navegacao)
+A navegação do shell do membro **espelha o modelo de produto**, não a lista de features. Os containers derivam de `BIVAQUE.md` §3.1 (três níveis: localidade → comunidade → grupo) e §6.3 (os dois ciclos), e são exatamente **quatro**:
+
+| # | Container | `id` | Rota | O que guarda |
+|---|---|---|---|---|
+| 1 | **Cidade** | `cidade` | `/localidade` | o nível da localidade: eventos da cidade, guia de chegada, vitrine e busca de prestador (onda G) |
+| 2 | **Minha comunidade** | `community` | `/community` | o nível da comunidade: a home (feed da vila) e os dois ciclos (§6.3) |
+| 3 | **Grupos** | `groups` | `/groups` | o nível do grupo: conversa por interesse (§3.2) |
+| 4 | **Eu** | `me` | `/profile` | o membro: perfil, conta, mensagens (DM — D36) e convite de membro (onda E Task 6) |
+
+- **Todo destino novo aterrissa DENTRO de um container, nunca como aba nova.** Vitrine e busca de prestador caem em Cidade; convite de membro cai em Eu; o seletor de localidade da transferência cai onde o nível de pertencimento é escolhido. **Regra falsificável:** se um destino não couber em nenhum container, o destino está confuso — não falta vaga; pare e reporte.
+- **Eventos não é aba própria.** "Eventos da cidade" é uma das quatro coisas que o nível municipal é (§6.2), e eventos de vila pertencem à vila — aterrissam dentro de Cidade (`/events` continua como rota interna). **Indicações** vive no header (ícone), **Mensagens** dentro de "Eu".
+- **Teto de itens: 5** (iOS HIG / Material). Quatro containers ≤ cinco — verificado por `tests/scope/navigation.test.mjs`.
+- **Desktop ≥1024px**: sidebar esquerda 224px (`w-56`) com os quatro containers. Item ativo: `var(--accent-soft)` bg + ícone preenchido + texto `var(--accent)`. Bottom nav oculto.
+- **Mobile/tablet <1024px**: bottom nav fixa com os quatro containers (Cidade, Comunidade, Grupos, Eu). Item ativo: ícone preenchido + label `var(--accent)`. Sidebar oculta. Indicações via ícone no header.
 - **Pré-auth (/login, /consent, /onboarding): SEM bottom nav e SEM sidebar** (finding #3). AppShell condicional por sessão, ou rotas pré-auth fora do shell.
+- **Papéis não entram.** Os consoles do fundador e do dono são shells separados (D2 Task 9) e não disputam container nenhum; o prestador (D37) não tem membership e não compartilha esta navegação.
 - Header: brand à esquerda (não centralizado), à direita: ícone Indicações + avatar do usuário (dropdown com Perfil/Sair) — "real header actions" (finding #9).
 
 ### Estados (todas as telas de lista)
