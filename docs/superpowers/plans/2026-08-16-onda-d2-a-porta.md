@@ -91,7 +91,7 @@ manda para `/onboarding`. Quem está em `pending` cai no formulário de CPF de n
 `/onboarding/status` existe, deriva o estado corretamente
 (`onboarding/status/page.tsx:41-64`) e **nada roteia para ela**.
 
-- [ ] **Step 1: uma função que devolve só o próprio estado**
+- [x] **Step 1: uma função que devolve só o próprio estado**
 
   `read_verification_status(p_user_id uuid)` hoje é chamada com `service_role`
   (`onboarding/status/page.tsx:42`). O middleware roda no Edge e **não pode** carregar
@@ -105,7 +105,7 @@ manda para `/onboarding`. Quem está em `pending` cai no formulário de CPF de n
   Sem parâmetro é o ponto: uma função que aceita `p_user_id` e é chamada por `authenticated`
   vira enumeração de estado alheio no dia em que alguém esquecer a checagem interna.
 
-- [ ] **Step 2: o roteamento**
+- [x] **Step 2: o roteamento**
 
   Em `middleware.ts`, depois da checagem de membership (linha 108), quando `isMember.data` for
   nulo:
@@ -129,7 +129,7 @@ manda para `/onboarding`. Quem está em `pending` cai no formulário de CPF de n
   Uma chamada a mais por requisição **só** quando não há membership. Membro aprovado não paga
   nada — a consulta de membership já existia.
 
-- [ ] **Step 3: o cookie de consentimento não é autoridade**
+- [x] **Step 3: o cookie de consentimento não é autoridade**
 
   `middleware.ts:14-15,89` confia num cookie que `consent/page.tsx:24` escreve com
   `document.cookie` no navegador. Qualquer pessoa passa o gate digitando uma linha no console.
@@ -142,7 +142,7 @@ manda para `/onboarding`. Quem está em `pending` cai no formulário de CPF de n
   Não troque o cookie por consulta ao banco no middleware — isso põe uma ida ao banco em toda
   requisição de toda pessoa, para proteger uma tela que já é protegida no servidor.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
   - pgTAP em `supabase/tests/my-verification-status.sql`: usuário com `pending` recebe
     `pending`; usuário sem linha recebe vazio; **usuário A não consegue ver o estado de B**
@@ -152,7 +152,7 @@ manda para `/onboarding`. Quem está em `pending` cai no formulário de CPF de n
     chega em `/onboarding/status`, e o formulário de CPF **não** aparece.
     Commite sem executar se o banco estiver sem seed — ver `README.md` §"O E2E precisa de um humano".
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(onboarding): route the shell gate by real verification state`.
 
@@ -167,7 +167,18 @@ A reconciliação não existe — quem cai em `pending` porque o Portal estava f
 Sob entrada em lote (§5.1) isso é o modo de falha do lançamento: o Portal oscila numa tarde e
 a vila inteira congela.
 
-- [ ] **Step 1: o job**
+> **BLOQUEIO PARCIAL (decisão do dono) — achado em 2026-08-19.** O coração da Task 2 —
+> re-consultar o Portal para re-verificar quem caiu em `pending` — é **impossível sem o CPF
+> cru**, e este repositório nunca persiste CPF (AGENTS.md; o guard de colunas de
+> `verification_outcomes` e o teste `onboarding-cpf-session-storage` existem exatamente para
+> isso). `verifyCpfWithErrorCode` consulta `/servidores?cpf=...` e o CPF só existe no
+> navegador (useState + purga no boot). Executado aqui o que não depende dessa decisão: o job
+> (cron 15 min), a seleção de linhas paradas (30 min sem mudança), o teto de tentativas com
+> handoff à fila manual do operador (rejected) e o aviso por e-mail via outbox. Para a
+> re-verificação automática o dono decide: (a) armazenar CPF cifrado e transitório (mudança de
+> privacidade, com ajuste dos guards), ou (b) manter o retry pelo próprio usuário na tela.
+
+- [x] **Step 1: o job** (parcial — sem re-verificação no Portal, ver nota abaixo)
 
   Migration nova com um job de `pg_cron` que, a cada 15 minutos:
 
@@ -202,24 +213,24 @@ a vila inteira congela.
   porquê em comentário — sem isso, a reconciliação esgota a cota da pessoa e ela nunca mais
   consegue tentar sozinha.
 
-- [ ] **Step 3: retry em laço continua proibido**
+- [x] **Step 3: retry em laço continua proibido**
 
   Teto de tentativas por linha. Depois do teto, o estado vira `rejected` e a pessoa entra na
   fila de decisão manual da Task 5 — **nunca** um laço que reencosta no Portal.
 
-- [ ] **Step 4: avisar quando resolver**
+- [x] **Step 4: avisar quando resolver**
 
   Reconciliação que resulta em `verified` enfileira e-mail no `outbox` (tipo
   `verification_resolved`). Sem isso a pessoa foi aprovada e não sabe: o ciclo não fecha.
 
-- [ ] **Step 5: testes**
+- [x] **Step 5: testes**
 
   pgTAP em `supabase/tests/verification-reconcile.sql`: o job existe e está agendado; linha
   `pending` antiga é elegível; linha `pending` de dois minutos atrás **não** é; linha acima do
   teto de tentativas não é reelegível. Unitário sobre o endpoint: verificado enfileira
   `outbox`, ainda-pendente não enfileira nada.
 
-- [ ] **Step 6: gate e commit**
+- [x] **Step 6: gate e commit**
 
   `feat(onboarding): reconcile pending verifications on pg_cron`.
 

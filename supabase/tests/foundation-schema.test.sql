@@ -36,9 +36,10 @@ select columns_are(
     'updated_at',
     'attempt_count',
     'first_attempt_at',
-    'last_attempt_at'
+    'last_attempt_at',
+    'reconcile_attempts'
   ],
-  'verification outcomes retain only the normalized private decision'
+  'verification outcomes retain only the normalized private decision (reconcile_attempts is a counter, not PII — D2 Task 2)'
 );
 select columns_are(
   'private',

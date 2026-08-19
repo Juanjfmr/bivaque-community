@@ -87,7 +87,9 @@ select hasnt_column('public', 'waitlist', 'address', 'GUARD: waitlist has no add
 select hasnt_column('public', 'waitlist', 'om', 'GUARD: waitlist has no om column');
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- GUARD 5: verification_outcomes has ONLY the 9 authorized columns
+-- GUARD 5: verification_outcomes has ONLY the 10 authorized columns
+-- (reconcile_attempts added by D2 Task 2; it is a counter, not PII — the
+-- privacy-safe column set stays otherwise identical).
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 select columns_are(
@@ -102,7 +104,8 @@ select columns_are(
     'updated_at',
     'attempt_count',
     'first_attempt_at',
-    'last_attempt_at'
+    'last_attempt_at',
+    'reconcile_attempts'
   ],
   'GUARD: verification_outcomes columns match authorized set'
 );

@@ -1207,6 +1207,7 @@ export type Database = {
           leaving_locality_id: string
         }[]
       }
+      degrade_locality_origins: { Args: never; Returns: number }
       family_accept_holder_locality: {
         Args: { p_link_id: string }
         Returns: string
@@ -1312,6 +1313,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      my_verification_status: {
+        Args: never
+        Returns: {
+          checked_at: string
+          eligibility_class: string
+          status: string
+          updated_at: string
+        }[]
+      }
       provision_member_locality: {
         Args: { p_locality_id: string; p_user_id: string }
         Returns: undefined
@@ -1349,6 +1359,10 @@ export type Database = {
         Args: { p_community_id: string }
         Returns: undefined
       }
+      reverse_locality_transfer: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       revoke_family_invitation: {
         Args: { p_invitation_id: string; p_inviter_user_id: string }
         Returns: undefined
@@ -1376,6 +1390,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      verification_reconcile_step: {
+        Args: { p_user_id: string }
+        Returns: string
       }
     }
     Enums: {
