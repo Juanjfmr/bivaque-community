@@ -5,7 +5,7 @@
 
 ## O que é
 
-Auditoria de telas conduzida por quatro subagentes, em rodadas, contra rubrica congelada,
+Auditoria conduzida por subagentes, em rodadas, contra rubrica congelada,
 até convergir ou estourar o teto. Inspirada no padrão "fan-out + crítico duro + loop", com
 três correções sem as quais o padrão não converge (§ *Por que não é só soltar um crítico*).
 
@@ -19,13 +19,16 @@ três correções sem as quais o padrão não converge (§ *Por que não é só 
 | Autoridade do AAA | O Árbitro **propõe**. AAA só existe com **assinatura humana** |
 | Teto | **5 rodadas.** Estourou, entrega o estado real + backlog |
 
-## Os quatro agentes (já definidos em `.claude/agents/`)
+## Os cinco agentes (já definidos em `.claude/agents/`)
+
+Nem todos entram em toda run — a composição depende da entrada. Ver a triagem da run.
 
 | Agente | Camada | Papel |
 |---|---|---|
 | `audit-medidor` | determinística | Mede as 6 regras mecânicas. Não opina |
 | `audit-conformidade` | contrato | Rubrica §9 + tokens + regra de privacidade |
 | `audit-carrasco` | ofício | Checklist anti-slop congelada + A/B contra refs. Dá nota |
+| `audit-produto` | estratégia | Os 14 itens do CRITIQUE_BRIEF contra BIVAQUE.md. Autonomia para propor incluir, excluir e fundir telas |
 | `audit-arbitro` | processo | Compara rodada N vs N−1. Único que propõe convergência |
 
 **Eles não conversam entre si.** Não existe canal agente↔agente: a sessão orquestradora é o
@@ -35,8 +38,9 @@ que torna a "conversa" auditável e retomável se a sessão cair.
 ## Preparação
 
 ```sh
-git fetch origin claude/subagentes-invocacao-b9fe0u
-git checkout claude/subagentes-invocacao-b9fe0u
+# Antes do merge deste HANDOFF: use a branch que o traz.
+# Depois do merge: main já basta.
+git checkout main && git pull origin main
 
 RUN=$(date -u +%Y-%m-%dT%H-%M-%SZ)
 mkdir -p .audit/$RUN/entrada
@@ -100,7 +104,8 @@ de hierarquia, densidade ou copy que só faz sentido para esta comunidade. Ver a
 `VISUAL_AUDIT-2026-08-17-p0-localidades.md`): veredito por tela, evidência, e o que ficou
 pendente. Mais `BACKLOG.md` do que não entrou no gate.
 
-Commit convencional na branch `claude/subagentes-invocacao-b9fe0u`. Rode
+Commit convencional numa branch própria da run — a auditoria é recorrente, e cada run rende
+seu próprio veredito datado em `docs/agents/`. Rode
 `npx pnpm@11.18.0 gate` antes de declarar pronto — mesmo sendo run só de documento.
 
 ## Por que não é só soltar um crítico duro no loop
@@ -126,3 +131,109 @@ pede sóbrio e institucional. Uma tela que ficou divertida falhou, ainda que fiq
 Nada disso é hipotético para este repo: a rubrica §9, o `capture.mjs` e a regra de
 privacidade existem porque a alternativa já falhou aqui — inclusive com quatro vazamentos
 de privacidade.
+
+---
+
+# Run 1 — pacote `bivaque_redesign_10_10_claude_critique1` (triagem já feita)
+
+Triagem executada em 2026-08-19 sobre o zip entregue. **Leia antes de rodar** — ela muda
+quais agentes entram e já registra achados que bloqueiam.
+
+## O que veio
+
+16 PNG + `README.md` + `CRITIQUE_BRIEF.md` + `manifest.json`. **Nenhum HTML, nenhum `.tsx`.**
+
+| Consequência | Detalhe |
+|---|---|
+| `audit-medidor` **inativo** | Contraste, touch target, overflow, transição e cor crua não se medem em pixel. Não estime; registre `NÃO MEDIDO` |
+| §9 item 6 inauditável | Resoluções são 460×1084, 420×714, 1040×780 — não são os viewports 375/768/1440 |
+| Julgamento tipográfico fino **suspenso** | As imagens são geradas e o texto está corrompido em várias ("1.245 mommbros", "4l2 membros", "1.24S", "30S"). Julgar ritmo e tipografia aí é auditar o gerador, não o design |
+| `audit-produto` **entra** | O `CRITIQUE_BRIEF` tem 14 itens, e a maioria é estratégia. Os quatro agentes visuais cobrem só os itens 8, 9 e 10 |
+
+Composição desta run: `audit-produto` + `audit-conformidade` + `audit-carrasco` + `audit-arbitro`.
+
+## P0 já encontrados na triagem — bloqueiam antes da rodada 1
+
+Violam a regra de privacidade do `AGENTS.md` (§Supabase): patente, OM, endereço, documento
+e **badge público de verificação** são proibidos. Quatro vazamentos de privacidade já
+saíram dessa regra sendo ignorada.
+
+| # | Tela | Achado | Regra |
+|---|---|---|---|
+| P0-1 | `01_agora.png` | Saudação **"Bom dia, Capitão!"** — patente na primeira linha da tela principal | `SLOP-16` · patente |
+| P0-2 | `12_perfil.png` | Nome exibido como **"Capitão João Silva"** — patente no identificador | `SLOP-16` · patente |
+| P0-3 | `12_perfil.png` | Selo **"✓ Membro verificado"** | `SLOP-16` · badge público de verificação |
+| P0-4 | `12_perfil.png` | Avatar **fardado, com insígnia legível** — divulga patente e força por imagem | `SLOP-16` · o próprio `README.md` do pacote proíbe ("sem camuflagem, brasões, patente") |
+
+Enquanto estiverem em pé, nenhuma tela passa de **C**. Não gaste rodada de Carrasco antes
+de resolver: leve ao responsável primeiro.
+
+## P0-5 — a vitrine sumiu, e ela é a única onda com receita
+
+O pacote não tem vitrine. Nenhuma das 16 telas cobre ficha de prestador, conta de
+prestador, dashboard, busca de prestador ou alcance pago. A remoção **não é declarada** em
+lugar nenhum do `README.md`.
+
+O que a vitrine é, segundo o contrato vigente:
+
+| Fonte | O que diz |
+|---|---|
+| `BIVAQUE.md` §10, onda **G** | Ficha com identidade, catálogo e portfólio; conta e dashboard de prestador; conversa membro↔prestador; Asaas com alcance pago; busca de prestador |
+| `BIVAQUE.md` :716 | *"Sem **G**, falta a vitrine, que é o comportamento que o grupo de 630 pessoas já demonstra hoje — e é a **única onda com receita**."* |
+| `D20` **vigente** | Vitrine entra no piloto |
+| `D45` **vigente** | Ficha de vitrine = identidade + catálogo + portfólio |
+| `D41` / `D44` **vigentes** | Alcance pago por Asaas com webhook; busca por categoria e vila com `pg_trgm` |
+| `D48` **vigente** | *"A vila é a sala; Manaus não é. O nível municipal é alcance de post, eventos, **vitrine** e guia de chegada — **nunca um feed**."* |
+| `BIVAQUE.md` :54 | **Prestador civil** é um dos papéis do produto. Sua superfície inteira é a própria ficha de vitrine |
+| `D27` **vigente** | Acesso grátis, amplificação paga. *"Militar nunca paga"* criaria vitrine de duas classes |
+
+Três consequências, e todas são decisão de produto, não de design:
+
+1. **O pacote remove a receita.** E o `CRITIQUE_BRIEF` item 7 pergunta qual seria a primeira
+   vertical monetizável entre Serviços, Benefícios, Moradia e Marketplace — quatro verticais
+   novas e não decididas — enquanto `D20` já respondeu isso, com provedor de pagamento e
+   modelo de cobrança definidos.
+2. **O pacote remove um papel.** Prestador civil deixa de ter superfície. Nenhuma tela do
+   pacote é a ficha dele.
+3. **O pacote inverte `D48` nas duas metades.** `D48` diz que o nível municipal é alcance,
+   eventos, vitrine e guia — **nunca feed**. "Agora" é uma superfície municipal com cara de
+   feed, e a vitrine, que `D48` nomeia explicitamente, não está lá.
+
+Marketplace e Serviços podem ser a vitrine reinventada com outro nome — mas sem o papel de
+prestador, sem `D45` e sem o modelo de cobrança de `D27`. Se for essa a intenção, precisa
+ser dita, e as decisões precisam ser revogadas com data, não contornadas por renomeação.
+
+**Este é o achado que valida a autonomia do `audit-produto`.** Nenhuma rubrica visual pegaria
+uma tela que não está lá. Auditar só o que foi desenhado é auditar o recorte de quem desenhou.
+
+## Colisões com o contrato — para o `audit-produto`
+
+Nenhuma seria pega por rubrica visual. Todas precisam de decisão, não de polimento.
+
+- **Teal e canvas quente não existem no sistema.** O `DESIGN_SPEC` trava Navy Professional:
+  `--accent #1E3A8A`, `--secondary-accent #3B82F6`, `--background #F8FAFC` (frio). O pacote
+  propõe teal como cor de contexto e canvas "levemente quente" — hue nova e temperatura
+  invertida. É mudança de spec datada, ou é violação.
+- **É substituição de arquitetura de informação, não redesenho.** Agora / Descobrir / Criar /
+  Agenda / Inbox no lugar de `/community`, `/groups`, `/events`, `/recommendations`,
+  `/messages`, `/notifications`. As telas **não correspondem a nenhuma rota existente**, então
+  não há "antes" contra o qual auditar.
+- **"Sem feed infinito"** contradiz o `DESIGN_SPEC`, cujo produto de referência é o Nextdoor
+  justamente pela densidade de feed e anatomia de card.
+- **Reexpansão de escopo.** Moradia, Serviços, Benefícios, Marketplace, Talentos, Pergunte ao
+  Bivaque. Este fork existe por ser "the smallest slice that can launch", depois que 19
+  features e o regime de ADR travaram o pai. Pergunta obrigatória ao pacote: **o que sai
+  para isso entrar?**
+
+## Ordem sugerida
+
+1. Levar os cinco P0 ao responsável. São decisão de produto e privacidade, não de design.
+2. `audit-produto` sobre o `CRITIQUE_BRIEF` — é o que o pacote está pedindo de verdade.
+3. `audit-conformidade` e `audit-carrasco` **só depois**, e restritos ao que sobreviver:
+   arquitetura de interação, hierarquia, densidade, paleta. Sem julgamento tipográfico fino.
+4. `audit-arbitro` fecha a rodada e propõe. A assinatura de AAA continua sendo humana.
+
+**A auditoria tem autonomia sobre o conjunto de telas** — pode propor inclusão, exclusão,
+fusão e renomeação, não só criticar o que foi desenhado. O ônus da prova está em
+`.claude/agents/audit-produto.md`. Excluir decisão `vigente` exige nomear o `Dxx` e propor
+revogação datada; sumiço não declarado, como o da vitrine, é P0.
