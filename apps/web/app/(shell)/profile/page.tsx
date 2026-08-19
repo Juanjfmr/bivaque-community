@@ -341,6 +341,21 @@ export default function ProfilePage() {
 
             <FamilyInviteSection />
 
+            <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+              <p className="text-sm font-medium">Assuntos de interesse</p>
+              <p className="mt-1 text-xs text-muted">
+                Sugerem grupos da sua cidade. Usados só para isso.
+              </p>
+              <div className="mt-3">
+                <a
+                  href="/profile/interests"
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--accent)] hover:underline"
+                >
+                  Escolher assuntos de interesse
+                </a>
+              </div>
+            </div>
+
             <Button type="button" variant="danger" onPress={signOutModal.open} className="w-full">
               Sair da conta
             </Button>
