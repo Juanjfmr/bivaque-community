@@ -7,7 +7,12 @@ import type { Database } from "supabase/database.generated"
 import { createServerClient as createServiceRoleClient } from "../../../../lib/supabase/server"
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"]
-type EventRsvpRow = Database["public"]["Tables"]["event_rsvps"]["Row"]
+// F2 added 'not_going' to event_rsvp_status (migration 029). The generated
+// types do not include it until `supabase gen types` runs against a stack with
+// the migration applied — the union below mirrors the SQL enum locally.
+type EventRsvpRow = Omit<Database["public"]["Tables"]["event_rsvps"]["Row"], "status"> & {
+  status: "going" | "interested" | "not_going"
+}
 type AttendeeListRow = {
   event_id: string
   user_id: string
@@ -45,7 +50,12 @@ async function setRsvpAction(formData: FormData) {
   const eventId = formData.get("eventId")
   const status = formData.get("status")
   if (typeof eventId !== "string" || eventId.length === 0) throw new Error("eventId required")
-  if (status !== "going" && status !== "interested") throw new Error("invalid status")
+  // F2 Step 2: 'not_going' is the third state (Wave F Task 2). The server
+  // is the only place that decides status — there is no client-side override.
+  if (status !== "going" && status !== "interested" && status !== "not_going") {
+    throw new Error("invalid status")
+  }
+  const validStatus = status as "going" | "interested" | "not_going"
 
   const supabase = await getAuthClient()
   const {
@@ -58,7 +68,9 @@ async function setRsvpAction(formData: FormData) {
   // so a member of a private event's group can RSVP and an outsider cannot.
   const { error } = await supabase
     .from("event_rsvps")
-    .upsert({ event_id: eventId, user_id: user.id, status }, { onConflict: "event_id,user_id" })
+    .upsert({ event_id: eventId, user_id: user.id, status: validStatus } as never, {
+      onConflict: "event_id,user_id",
+    })
   if (error) throw new Error(error.message)
 
   revalidatePath(`/events/${eventId}`)
@@ -108,6 +120,36 @@ async function completeEventAction(formData: FormData) {
 }
 
 export { cancelRsvpAction, completeEventAction, setRsvpAction }
+
+function RsvpButton({
+  eventId,
+  status,
+  label,
+  isCurrent,
+  variant = "primary",
+}: {
+  eventId: string
+  status: "going" | "interested" | "not_going"
+  label: string
+  isCurrent: boolean
+  variant?: "primary" | "secondary" | "tertiary" | "danger"
+}) {
+  return (
+    <form action={setRsvpAction}>
+      <input type="hidden" name="eventId" value={eventId} />
+      <input type="hidden" name="status" value={status} />
+      <Button
+        type="submit"
+        size="sm"
+        variant={isCurrent ? "primary" : variant}
+        isDisabled={isCurrent}
+        aria-pressed={isCurrent}
+      >
+        {isCurrent ? `${label} ✓` : label}
+      </Button>
+    </form>
+  )
+}
 
 function formatDateTime(iso: string) {
   const d = new Date(iso)
@@ -168,7 +210,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     .maybeSingle()
 
   if (rsvpError) throw new Error(`failed to read rsvp: ${rsvpError.message}`)
-  const myRsvp = (rsvpData as EventRsvpRow | null)?.status ?? null
+  const myRsvp: "going" | "interested" | "not_going" | null =
+    (rsvpData as EventRsvpRow | null)?.status ?? null
 
   const { data: attendeesData, error: attendeesError } = await authClient
     .from("event_rsvps")
@@ -229,35 +272,36 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
 
           {!isCancelled && (
             <div className="mt-6 flex flex-wrap gap-2">
-              {myRsvp === "going" ? (
+              {/* Wave F Task 2 Step 2: three mutually-exclusive states (going,
+                  interested, not_going). The current selection is highlighted;
+                  clicking the same one is a no-op (debouncing on the server
+                  side via UPDATE OF status). "Cancelar" removes the row
+                  entirely — different from "Não vou". */}
+              <RsvpButton
+                eventId={event.id}
+                status="going"
+                label="Vou"
+                isCurrent={myRsvp === "going"}
+              />
+              <RsvpButton
+                eventId={event.id}
+                status="interested"
+                label="Talvez"
+                isCurrent={myRsvp === "interested"}
+                variant="secondary"
+              />
+              <RsvpButton
+                eventId={event.id}
+                status="not_going"
+                label="Não vou"
+                isCurrent={myRsvp === "not_going"}
+                variant="tertiary"
+              />
+              {myRsvp !== null && (
                 <form action={cancelRsvpAction}>
                   <input type="hidden" name="eventId" value={event.id} />
                   <Button type="submit" size="sm" variant="tertiary">
-                    Não vou
-                  </Button>
-                </form>
-              ) : (
-                <form action={setRsvpAction}>
-                  <input type="hidden" name="eventId" value={event.id} />
-                  <input type="hidden" name="status" value="going" />
-                  <Button type="submit" size="sm" variant="primary">
-                    Vou
-                  </Button>
-                </form>
-              )}
-              {myRsvp === "interested" ? (
-                <form action={cancelRsvpAction}>
-                  <input type="hidden" name="eventId" value={event.id} />
-                  <Button type="submit" size="sm" variant="tertiary">
-                    Cancelar
-                  </Button>
-                </form>
-              ) : (
-                <form action={setRsvpAction}>
-                  <input type="hidden" name="eventId" value={event.id} />
-                  <input type="hidden" name="status" value="interested" />
-                  <Button type="submit" size="sm" variant="secondary">
-                    Talvez
+                    Remover meu RSVP
                   </Button>
                 </form>
               )}
