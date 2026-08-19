@@ -309,13 +309,15 @@ export default function RecommendationsPage() {
           return
         }
 
-        const { data: profileData } = await supabase
-          .from("profiles")
+        // P0 Task 3: locality lives in the membership, not the profile
+        const { data: membershipData } = await supabase
+          .from("locality_memberships")
           .select("locality_id")
           .eq("user_id", user.id)
-          .single()
+          .limit(1)
+          .maybeSingle()
 
-        const locId = (profileData as { locality_id: string } | null)?.locality_id
+        const locId = (membershipData as { locality_id: string } | null)?.locality_id
         if (!locId) {
           setRequestError("Perfil sem localidade associada.")
           setRequestSubmitting(false)

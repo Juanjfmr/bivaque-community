@@ -32,18 +32,21 @@ export default async function CommunitiesPage() {
     redirect("/login?return=/communities")
   }
 
-  const { data: profileData, error: profileError } = await supabase
-    .from("profiles")
+  // P0 Task 7: locality lives in the membership, not the profile — the
+  // migration 20260817031237 dropped profiles.locality_id. Mirror the
+  // resolution in (shell)/layout.tsx: one membership, ordered by joined_at.
+  const { data: membershipData, error: membershipError } = await supabase
+    .from("locality_memberships")
     .select("locality_id")
-    .eq("user_id", user.id)
+    .order("joined_at", { ascending: true })
+    .limit(1)
     .maybeSingle()
 
-  if (profileError) {
-    throw new Error(`Falha ao ler o perfil: ${profileError.message}`)
+  if (membershipError) {
+    throw new Error(`Falha ao ler a localidade: ${membershipError.message}`)
   }
 
-  const profile = profileData as { locality_id: string } | null
-  const localityId = profile?.locality_id
+  const localityId = (membershipData as { locality_id: string } | null)?.locality_id
 
   let communities: CommunityRow[] = []
   if (localityId) {
