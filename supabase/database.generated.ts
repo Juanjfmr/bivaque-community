@@ -1209,6 +1209,10 @@ export type Database = {
         }
         Returns: string
       }
+      decide_verification_document: {
+        Args: { p_decision: string; p_document_id: string; p_reason: string }
+        Returns: undefined
+      }
       declare_locality_transfer: {
         Args: { p_destination_locality_id: string; p_term_date: string }
         Returns: {
@@ -1349,6 +1353,15 @@ export type Database = {
       provision_member_locality: {
         Args: { p_locality_id: string; p_user_id: string }
         Returns: undefined
+      }
+      read_verification_document_path: {
+        Args: { p_document_id: string }
+        Returns: {
+          document_id: string
+          expires_at: string
+          mime_type: string
+          storage_object_path: string
+        }[]
       }
       read_verification_status: {
         Args: { p_user_id: string }

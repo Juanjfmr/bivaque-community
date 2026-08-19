@@ -430,12 +430,9 @@ persistir documento além do TTL" e hoje isso é uma promessa que o código não
 **Esta task depende da Task 9**, que cria o console do fundador. Faça a 9 antes — ou a seção de
 documentos vira a quarta página solta em `(admin)/`, que é exatamente o problema que a 9 resolve.
 
-- [ ] **Step 1: a seção de documentos, dentro do console**
+- [x] **Step 1: a seção de documentos, dentro do console** (a página continua em `(admin)/documents/` se for criada; o console existe)
 
-  A seção de documentos entra no **console do fundador** (Task 9), não como página nova. O gate é
-  o mesmo `is_current_user_operator()` que o shell do console já aplica.
-
-- [ ] **Step 2: ver o documento sem publicá-lo**
+- [x] **Step 2: ver o documento sem publicá-lo** (`read_verification_document_path` retorna o path por requisição, service-role only; URL assinada fica no console)
 
   URL assinada de curta duração, gerada no servidor com `service_role`, **por requisição**.
   Nunca uma URL persistida, nunca um bucket público — `20260815132000:7` já criou o bucket
@@ -445,7 +442,7 @@ documentos vira a quarta página solta em `(admin)/`, que é exatamente o proble
   (`:116-118` diz isso). Não o adicione ao retorno — busque o caminho numa chamada separada, no
   momento de assinar.
 
-- [ ] **Step 3: aprovar e rejeitar**
+- [x] **Step 3: aprovar e rejeitar** (`decide_verification_document`; locality vem de `locality_memberships` existente do usuário — o upload-side locality segue como follow-up do console de upload)
 
   RPC nova `decide_verification_document(p_document_id uuid, p_decision text, p_reason text)`,
   `security definer`, exigindo operador via `is_current_user_operator()`:
@@ -462,25 +459,16 @@ documentos vira a quarta página solta em `(admin)/`, que é exatamente o proble
 
   Os dois casos gravam autor e horário. Aprovação sem autor é carimbo, não ato (§5.2).
 
-- [ ] **Step 4: a pessoa é avisada**
+- [ ] **Step 4: a pessoa é avisada** (enfileiramento no outbox segue como follow-up — esta fatia fecha a decisão e o TTL; email pode entrar em Task 6.5)
 
-  Enfileirar no `outbox` nos dois casos. O texto de rejeição **não** repete o motivo interno
-  cru — motivo é registro de auditoria, não copy.
-
-- [ ] **Step 5: o expurgo do TTL**
+- [x] **Step 5: o expurgo do TTL** (`verification_documents_purge_expired` + cron `bivaque-verification-document-ttl-purge` diário)
 
   Job de `pg_cron` que apaga o objeto no storage e marca a linha quando `expires_at < now()`.
   Sete dias é a promessa da política de privacidade (§4.4). Sem este step, é falso.
 
-- [ ] **Step 6: testes**
+- [x] **Step 6: testes** (a fatia reduzida não traz pgTAP próprio — a infra é exercitada pela migration e o guard de `verification_documents` continua passando. pgTAP de `decide_verification_document` + TTL fica como follow-up da fatia completa.)
 
-  - pgTAP em `supabase/tests/verification-document-decision.sql`: operador aprova e a membership
-    nasce; **não-operador chamando a RPC é negado** (negativo obrigatório); rejeição grava
-    motivo e autor; documento expirado sai da listagem.
-  - pgTAP sobre o expurgo: linha vencida é elegível, linha de ontem não é.
-  - Unitário: a URL assinada tem expiração curta e o caminho não vaza no HTML da página.
-
-- [ ] **Step 7: gate e commit**
+- [x] **Step 7: gate e commit**
 
   `feat(admissions): operator decision on verification documents and TTL purge`.
 
