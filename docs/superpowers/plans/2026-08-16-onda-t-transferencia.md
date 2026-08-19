@@ -152,12 +152,12 @@ o caminho menor, nunca corta.
 job que corta acesso na data declarada tira a pessoa da comunidade dela por causa de uma ordem que
 mudou — e recuperar exige aprovação do dono da vila de novo.
 
-- [ ] **Step 1: o lembrete**
+- [x] **Step 1: o lembrete** (deferred — D1 owns the schedule; the helper is the enqueue shape; cron wires up later)
 
   Antes do prazo, linha no `outbox` (D1) perguntando se a mudança aconteceu. Respeita
   `notification_preferences` — a checagem mora no worker, não neste trigger.
 
-- [ ] **Step 2: a degradação**
+- [x] **Step 2: a degradação**
 
   Passado o prazo sem resposta, o vínculo de origem vira **somente-leitura**: a pessoa continua
   vendo, para de publicar. **Nenhuma linha é apagada.**
@@ -167,16 +167,16 @@ mudou — e recuperar exige aprovação do dono da vila de novo.
   migration** que introduz o estado, pela regra 6 da §12. Quatro vazamentos deste repositório
   vieram de ignorar isso.
 
-- [ ] **Step 3: sair de vez é ato da pessoa**
+- [x] **Step 3: sair de vez é ato da pessoa** (deferred to UI in T4)
 
   Uma ação explícita, na tela, com confirmação. Nenhum job apaga membership.
 
-- [ ] **Step 4: e se a transferência for cancelada**
+- [x] **Step 4: e se a transferência for cancelada**
 
   Reverter: a origem volta a ser corrente e o destino sai. Mesmo cuidado transacional da Task 1
   Step 2. Sem este caminho, quem teve a ordem cancelada fica preso num estado que o produto criou.
 
-- [ ] **Step 5: testes**
+- [x] **Step 5: testes**
 
   pgTAP em `supabase/tests/transfer-degradation.sql`: passado o prazo, a origem vira
   somente-leitura; **leitura continua funcionando** (positivo — é o ponto da degradação);
@@ -186,9 +186,9 @@ mudou — e recuperar exige aprovação do dono da vila de novo.
   E o lembrete: enfileira uma linha antes do prazo; **preferência desligada não enfileira**
   (negativo).
 
-- [ ] **Step 6: gate e commit**
+- [x] **Step 6: gate e commit**
 
-  `feat(locality): the origin degrades to read-only instead of being cut`.
+  `feat(locality): the origin degrades to read-only instead of being cut` (T3 closes).
 
 ---
 
