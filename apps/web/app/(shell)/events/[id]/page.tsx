@@ -5,6 +5,7 @@ import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
 import { createServerClient as createServiceRoleClient } from "../../../../lib/supabase/server"
+import { EventInviteFanoutSection } from "../event-invite-fanout-section"
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"]
 // F2 added 'not_going' to event_rsvp_status (migration 029). The generated
@@ -322,6 +323,12 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               {isCompleted && (
                 <span className="text-xs font-medium text-muted">Evento encerrado.</span>
               )}
+            </div>
+          )}
+
+          {isOrganizer && !isCancelled && !isCompleted && (
+            <div className="mt-5">
+              <EventInviteFanoutSection eventId={event.id} />
             </div>
           )}
         </article>
