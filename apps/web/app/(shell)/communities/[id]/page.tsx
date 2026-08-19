@@ -154,6 +154,16 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
           </p>
         )}
 
+        {isApproved && (
+          <p className="text-sm text-muted">
+            Convite de membro carrega o escopo desta vila.{" "}
+            <a href={`/communities/${community.id}/invite`} className="underline">
+              Convidar membros
+            </a>
+            .
+          </p>
+        )}
+
         {isApproved && approvedMembers.length > 0 && (
           <section aria-labelledby="members-heading">
             <h2 id="members-heading" className="mb-2 text-sm font-semibold tracking-tight">
