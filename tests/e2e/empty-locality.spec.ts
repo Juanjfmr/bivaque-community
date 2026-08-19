@@ -192,8 +192,12 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
 
     // And there is no action button — suggestions do not enter the public
     // guide directly; the operator curates from indications as F arrives.
-    // The empty state must not pretend otherwise.
-    await expect(page.getByRole("button", { name: /sugerir|criar|adicionar/i })).toHaveCount(0)
+    // The empty state must not pretend otherwise. Scoped to <main>: the
+    // global AppShell header carries a "Criar publicação" button outside the
+    // page content, which must not count here.
+    await expect(
+      page.getByRole("main").getByRole("button", { name: /sugerir|criar|adicionar/i }),
+    ).toHaveCount(0)
   })
 
   test("the empty state is not a blank page or an error message", async ({ page }) => {
