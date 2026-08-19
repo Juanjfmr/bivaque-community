@@ -1288,6 +1288,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_current_user_community_moderator: {
+        Args: { p_community_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_current_user_operator: {
         Args: { p_user_id: string }
         Returns: boolean

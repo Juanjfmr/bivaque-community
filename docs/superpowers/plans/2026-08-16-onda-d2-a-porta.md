@@ -551,9 +551,7 @@ e a fragmentação já começou: `(admin)/` tem três páginas soltas (`admissio
 `guide-queue`) sem console em volta, e a moderação do dono está dentro de
 `communities/[id]/page.tsx`, misturada com o feed.
 
-- [ ] **Step 1: o console do fundador**
-
-  Shell sob `(admin)/`, com navegação própria, reunindo o que já existe hoje em páginas soltas.
+- [x] **Step 1: o console do fundador** (já estava em `(admin)/layout.tsx` antes desta sessão; reescrevi o `(shell)/communities/[id]/page.tsx` para que a fila de pedidos deixe de dividir a tela com o feed)
   Gate por `is_current_user_operator()`, aplicado **no shell**, não repetido em cada página.
 
   Ele atravessa cinco ondas, e cada uma pendura a sua seção:
@@ -570,16 +568,12 @@ e a fragmentação já começou: `(admin)/` tem três páginas soltas (`admissio
   **Seção só aparece quando o ciclo fecha** (§12 regra 3). Um console com seis abas vazias é pior
   que três páginas soltas.
 
-- [ ] **Step 2: o console do dono**
-
-  Shell próprio para dono e moderador de comunidade: aprovação e moderação **da própria
-  comunidade**. Tira a fila de aprovação de dentro de `communities/[id]/page.tsx`, onde ela
-  divide tela com o feed.
+- [x] **Step 2: o console do dono** (`(owner)/communities/[id]/admin/` com gate por `is_current_user_community_moderator`; a fila foi para `(owner)/communities/[id]/admin/pending`)
 
   A fila em lote com paginação é a **Task 5 da onda E** — aqui só nasce o shell e a fila básica
   que já existe muda de casa.
 
-- [ ] **Step 3: as duas autorizações são caminhos separados, não um `prop`**
+- [x] **Step 3: as duas autorizações são caminhos separados, não um `prop`**
 
   `is_current_user_operator()` é global; a do dono é por comunidade e já vive nas RPCs
   (`approve_community_member`, `add_community_moderator`). **Não compartilhe um componente de
@@ -588,7 +582,7 @@ e a fragmentação já começou: `(admin)/` tem três páginas soltas (`admissio
 
   Componentes de apresentação podem ser compartilhados. A **autorização** não.
 
-- [ ] **Step 4: testes — cada console com positivo e negativo**
+- [x] **Step 4: testes — cada console com positivo e negativo**
 
   §12 regra 7, e aqui ela não é formalidade:
 
@@ -599,7 +593,7 @@ e a fragmentação já começou: `(admin)/` tem três páginas soltas (`admissio
   - operador **não** herda automaticamente papel de dono numa comunidade — confira o que as RPCs
     fazem hoje antes de afirmar; se ele herdar, isso é achado, **reporte**.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(admin): founder and community-owner consoles as separate shells`.
 

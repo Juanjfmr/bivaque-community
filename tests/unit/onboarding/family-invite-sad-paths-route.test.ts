@@ -46,7 +46,7 @@ function makeRequest(token: string, body: unknown): Request {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: "Bearer " + token,
+      authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(body),
   })
@@ -74,7 +74,7 @@ describe("POST /api/onboarding accept-family-invite sad paths (D2 Task 5)", () =
           data: null,
           error: {
             code,
-            message: "family_invitation_" + code.toLowerCase(),
+            message: `family_invitation_${code.toLowerCase()}`,
             details: null,
             hint: null,
           },

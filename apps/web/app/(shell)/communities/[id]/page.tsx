@@ -4,12 +4,7 @@ import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
 import { FeedPost } from "../../../components/bivaque/feed-post"
-import {
-  approveCommunityMemberAction,
-  removeCommunityMemberAction,
-  requestCommunityMembershipAction,
-  transferCommunityOwnershipAction,
-} from "../actions"
+import { requestCommunityMembershipAction, transferCommunityOwnershipAction } from "../actions"
 
 type CommunityRow = Database["public"]["Tables"]["communities"]["Row"]
 type MembershipRow = Database["public"]["Tables"]["community_memberships"]["Row"]
@@ -78,39 +73,27 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
   const isPending = membership?.status === "pending"
   const canModerate = isApproved && membership.role !== "member"
 
-  const [approvedResult, pendingResult, feedResult] = await Promise.all([
+  const [approvedResult, feedResult] = await Promise.all([
     supabase
       .from("community_memberships")
       .select("user_id, role, status, joined_at")
       .eq("community_id", community.id)
       .eq("status", "approved")
       .limit(30),
-    canModerate
-      ? supabase
-          .from("community_memberships")
-          .select("user_id, role, status, joined_at")
-          .eq("community_id", community.id)
-          .eq("status", "pending")
-          .limit(30)
-      : Promise.resolve({ data: [] as MemberListRow[], error: null }),
     supabase.rpc("feed_community", { p_community_id: community.id }),
   ])
 
   if (approvedResult.error) {
     throw new Error(`Falha ao ler os membros: ${approvedResult.error.message}`)
   }
-  if (pendingResult.error) {
-    throw new Error(`Falha ao ler a fila de aprovação: ${pendingResult.error.message}`)
-  }
   if (feedResult.error) {
     throw new Error(`Falha ao ler o feed da comunidade: ${feedResult.error.message}`)
   }
 
   const approvedMembers = (approvedResult.data as MemberListRow[] | null) ?? []
-  const pendingMembers = canModerate ? ((pendingResult.data as MemberListRow[] | null) ?? []) : []
   const feed = (feedResult.data as FeedCommunityRow[] | null) ?? []
 
-  const memberIds = [...approvedMembers, ...pendingMembers].map((member) => member.user_id)
+  const memberIds = approvedMembers.map((member) => member.user_id)
   const memberNames = new Map<string, string>()
   if (memberIds.length > 0) {
     const { data: namesData, error: namesError } = await supabase
@@ -161,38 +144,14 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
       </div>
 
       <div className="mx-auto w-full max-w-2xl space-y-6 px-4 pt-4 pb-8">
-        {canModerate && pendingMembers.length > 0 && (
-          <section aria-labelledby="approval-queue-heading">
-            <h2 id="approval-queue-heading" className="mb-2 text-sm font-semibold tracking-tight">
-              Pedidos de entrada
-            </h2>
-            <ul className="space-y-2">
-              {pendingMembers.map((member) => (
-                <li
-                  key={member.user_id}
-                  className="flex items-center justify-between gap-3 rounded-md border border-border p-3 text-sm"
-                >
-                  <span>{memberNames.get(member.user_id) ?? "Membro"}</span>
-                  <div className="flex gap-2">
-                    <form action={approveCommunityMemberAction}>
-                      <input type="hidden" name="communityId" value={community.id} />
-                      <input type="hidden" name="userId" value={member.user_id} />
-                      <Button type="submit" size="sm" variant="primary">
-                        Aprovar
-                      </Button>
-                    </form>
-                    <form action={removeCommunityMemberAction}>
-                      <input type="hidden" name="communityId" value={community.id} />
-                      <input type="hidden" name="userId" value={member.user_id} />
-                      <Button type="submit" size="sm" variant="tertiary">
-                        Recusar
-                      </Button>
-                    </form>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
+        {canModerate && (
+          <p className="text-sm text-muted">
+            Você modera esta comunidade. Pedidos de entrada estão em{" "}
+            <a href={`/communities/${community.id}/admin/pending`} className="underline">
+              /admin/pending
+            </a>
+            .
+          </p>
         )}
 
         {isApproved && approvedMembers.length > 0 && (
