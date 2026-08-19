@@ -109,9 +109,15 @@ export async function provisionMember(
     throw new Error("locality is required to provision a member")
   }
 
-  const { error: membershipError } = await supabase
-    .from("locality_memberships")
-    .upsert({ user_id: userId, locality_id: localityId })
+  // Provision through the SECURITY DEFINER helper (migration 20260819021416):
+  // it converts the existing current to leaving and creates the new current,
+  // so the partial unique index on (user_id) WHERE kind = 'current' is never
+  // violated. A direct upsert fails for a user who already holds a current
+  // membership elsewhere — which the T1 model allows.
+  const { error: membershipError } = await supabase.rpc("provision_member_locality", {
+    p_user_id: userId,
+    p_locality_id: localityId,
+  })
 
   if (membershipError) {
     throw new Error(`Failed to create membership: ${membershipError.message}`)

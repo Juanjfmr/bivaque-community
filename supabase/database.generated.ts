@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -96,7 +96,7 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           post_id: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           content?: string
@@ -587,17 +587,26 @@ export type Database = {
       }
       locality_memberships: {
         Row: {
+          access: Database["public"]["Enums"]["locality_membership_access"]
           joined_at: string
+          kind: Database["public"]["Enums"]["locality_membership_kind"]
+          leaving_at: string | null
           locality_id: string
           user_id: string
         }
         Insert: {
+          access?: Database["public"]["Enums"]["locality_membership_access"]
           joined_at?: string
+          kind?: Database["public"]["Enums"]["locality_membership_kind"]
+          leaving_at?: string | null
           locality_id: string
           user_id: string
         }
         Update: {
+          access?: Database["public"]["Enums"]["locality_membership_access"]
           joined_at?: string
+          kind?: Database["public"]["Enums"]["locality_membership_kind"]
+          leaving_at?: string | null
           locality_id?: string
           user_id?: string
         }
@@ -797,7 +806,7 @@ export type Database = {
           created_at?: string
           id?: string
           post_id: string
-          user_id: string
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -868,7 +877,7 @@ export type Database = {
           photo_path?: string | null
           poll_options?: Json | null
           post_type: Database["public"]["Enums"]["post_type"]
-          user_id: string
+          user_id?: string
         }
         Update: {
           community_id?: string | null
@@ -1190,6 +1199,14 @@ export type Database = {
         }
         Returns: string
       }
+      declare_locality_transfer: {
+        Args: { p_destination_locality_id: string; p_term_date: string }
+        Returns: {
+          current_locality_id: string
+          leaving_at: string
+          leaving_locality_id: string
+        }[]
+      }
       family_accept_holder_locality: {
         Args: { p_link_id: string }
         Returns: string
@@ -1295,6 +1312,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      provision_member_locality: {
+        Args: { p_locality_id: string; p_user_id: string }
+        Returns: undefined
+      }
       read_verification_status: {
         Args: { p_user_id: string }
         Returns: {
@@ -1376,6 +1397,8 @@ export type Database = {
         | "invite_only"
         | "waitlist_only"
         | "verification_gated"
+      locality_membership_access: "active" | "read_only"
+      locality_membership_kind: "current" | "leaving"
       notification_type:
         | "comment"
         | "group_admission"
@@ -1546,6 +1569,8 @@ export const Constants = {
         "waitlist_only",
         "verification_gated",
       ],
+      locality_membership_access: ["active", "read_only"],
+      locality_membership_kind: ["current", "leaving"],
       notification_type: [
         "comment",
         "group_admission",

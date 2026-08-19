@@ -7,25 +7,30 @@ select plan(4);
 -- given locality and one profile per person (Task 3 consequence). The TS
 -- provisionMember does exactly two upserts; the pgTAP mirrors them so the
 -- schema consequence is proven where the data lives.
+--
+-- Onda T Task 1 (Step 5): the partial unique index on (user_id) WHERE
+-- kind = 'current' forbids a second `current` row. The helper that respects
+-- the model is provision_member_locality (SECURITY DEFINER), which converts
+-- the existing current to leaving (term_at null until the user declares one)
+-- and creates the destination as current. The pgTAP here calls the helper,
+-- not a raw insert — the same shape the route handler uses.
 
 \ir fixtures/foundation.inc
 
--- user 003 already has a membership in the fixture locality (0002) and a
--- profile. Provision them in Manaus (0001): the second membership lands, and
--- the profile stays a single row.
+-- user 003 already has a current membership in the fixture locality (0002)
+-- and a profile. Provision them in Manaus (0001): the helper converts the
+-- existing row to leaving and creates Manaus as current, and the profile
+-- stays a single row.
 set local role service_role;
 
 select lives_ok(
   $$
-    insert into public.locality_memberships (user_id, locality_id)
-    values ('10000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000001')
-    on conflict (user_id, locality_id) do nothing;
-
-    insert into public.profiles (user_id, display_name, visibility)
-    values ('10000000-0000-4000-8000-000000000003', 'Third Locality', 'locality_members')
-    on conflict (user_id) do update set display_name = excluded.display_name;
+    select public.provision_member_locality(
+      '10000000-0000-4000-8000-000000000003'::uuid,
+      '00000000-0000-4000-8000-000000000001'::uuid
+    );
   $$,
-  'provisioning in a second locality succeeds'
+  'provisioning in a second locality succeeds via the helper'
 );
 
 select results_eq(
@@ -50,13 +55,16 @@ select results_eq(
 
 select results_eq(
   $$
-    select locality_id::text
+    select locality_id::text || ':' || kind::text
     from public.locality_memberships
     where user_id = '10000000-0000-4000-8000-000000000003'
-    order by locality_id
+    order by locality_id, kind
   $$,
-  $$ values ('00000000-0000-4000-8000-000000000001'::text), ('00000000-0000-4000-8000-000000000002'::text) $$,
-  'both memberships carry their correct localities'
+  $$ values
+    ('00000000-0000-4000-8000-000000000001'::text || ':current'),
+    ('00000000-0000-4000-8000-000000000002'::text || ':leaving')
+  $$,
+  'the new locality is current and the previous current became leaving'
 );
 
 select * from finish();

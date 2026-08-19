@@ -6,14 +6,25 @@ select plan(5);
 -- P0 Task 3 (Step 5): the schema accepts more than one membership per user,
 -- and is_locality_member is a set test that answers true for both. The
 -- negative matters: a user with no membership sees nobody's profile.
+--
+-- Onda T Task 1 (Step 5): the partial unique index on (user_id) WHERE
+-- kind = 'current' (one current per user) means a plain insert that
+-- defaults to current cannot add a second current row. The pgTAP uses
+-- the same SECURITY DEFINER helper as the application (provision_member_
+-- locality), which converts the existing current to leaving (30-day
+-- default deadline) and creates the destination as current — the same
+-- shape the route handler takes.
 
 \ir fixtures/foundation.inc
 
--- user 003 (other-locality@example.invalid) already has a membership in the
--- fixture locality (00000000-...-0002). Give them a second one in Manaus:
--- the PK is now (user_id, locality_id), so this insert must succeed.
-insert into public.locality_memberships (user_id, locality_id)
-values ('10000000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000001');
+-- user 003 (other-locality@example.invalid) already has a current membership
+-- in the fixture locality (0002). Provision them in Manaus (0001) through the
+-- helper. The PK (user_id, locality_id) lets two memberships land.
+set local role service_role;
+select public.provision_member_locality(
+  '10000000-0000-4000-8000-000000000003'::uuid,
+  '00000000-0000-4000-8000-000000000001'::uuid
+);
 
 select throws_ok(
   $$
