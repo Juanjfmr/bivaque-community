@@ -7,6 +7,7 @@ import type { Database } from "supabase/database.generated"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { isLocalityStale } from "../../../lib/locality-density"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { CityReference } from "../../components/bivaque/city-reference"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedComposer } from "../../components/bivaque/feed-composer"
@@ -25,6 +26,7 @@ export default function CommunityPage() {
   const [memberCount, setMemberCount] = useState<number | null>(null)
   const [primaryCommunityId, setPrimaryCommunityId] = useState<string | null>(null)
   const [primaryCommunityName, setPrimaryCommunityName] = useState<string | null>(null)
+  const [hasResolved, setHasResolved] = useState(false)
   const [sortOrder, setSortOrder] = useState<"recent" | "relevant">("recent")
   const [transitioning, setTransitioning] = useState(false)
   const [atEnd, setAtEnd] = useState(false)
@@ -53,38 +55,62 @@ export default function CommunityPage() {
       if (!user) {
         setError("Sessão expirada. Faça login novamente.")
         setLoading(false)
+        setHasResolved(true)
         return
       }
 
-      const { data: membershipsData } = await supabase
+      const { data: membershipsData, error: membershipsError } = await supabase
         .from("community_memberships")
         .select("community_id")
         .eq("user_id", user.id)
         .eq("status", "approved")
+        .order("joined_at", { ascending: true })
         .limit(1)
+
+      if (membershipsError) {
+        // Reading the error is not optional: silently swallowing it is how the
+        // group member list rendered empty in production before — README §"Duas
+        // coisas que o E2E ensinou".
+        setError("Não foi possível identificar sua comunidade. Tente novamente.")
+        setLoading(false)
+        return
+      }
 
       const communityId = ((membershipsData as { community_id: string }[] | null) ?? [])[0]
         ?.community_id
 
       let communityName: string | null = null
       if (communityId) {
-        const { data: communityData } = await supabase
+        const { data: communityData, error: communityError } = await supabase
           .from("communities")
           .select("name")
           .eq("id", communityId)
           .maybeSingle()
+        if (communityError) {
+          setError("Não foi possível identificar sua comunidade. Tente novamente.")
+          setLoading(false)
+          return
+        }
         communityName = (communityData as { name: string } | null)?.name ?? null
       }
 
-      const feed = communityId
-        ? await supabase.rpc("feed_community", {
-            p_community_id: communityId,
-            p_order: order,
-          })
-        : await supabase.rpc("feed_posts", {
-            p_locality_id: current.id,
-            p_order: order,
-          })
+      // Onda E Task 2: quando o membro não pertence a comunidade nenhuma, NÃO
+      // caímos no feed_posts (Manhattan-reach). A home passa a ser a referência
+      // da cidade (§6.2), renderizada por <CityReference />. O RPC feed_posts
+      // continua existindo — profile/page.tsx:129 o usa e a Task 7 conserta.
+      if (!communityId) {
+        setPosts([])
+        setPrimaryCommunityId(null)
+        setPrimaryCommunityName(null)
+        setLoading(false)
+        setHasResolved(true)
+        return
+      }
+
+      const feed = await supabase.rpc("feed_community", {
+        p_community_id: communityId,
+        p_order: order,
+      })
 
       if (feed.error) {
         setError("Não foi possível carregar as publicações. Tente novamente.")
@@ -97,12 +123,13 @@ export default function CommunityPage() {
       setPrimaryCommunityId(communityId ?? null)
       setPrimaryCommunityName(communityName)
       setLoading(false)
+      setHasResolved(true)
 
       if (newPosts.length === 0) {
         setAtEnd(false)
       }
     },
-    [sortOrder, supabase, current.id],
+    [sortOrder, supabase],
   )
 
   const handleSortChange = useCallback(
@@ -191,152 +218,177 @@ export default function CommunityPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-      {/* locality header — sticky under app header */}
-      <div className="sticky top-12 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
-        <div className="mx-auto flex max-w-[56rem] items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-lg font-semibold tracking-tight">
-              {primaryCommunityName ?? "Manaus, AM"}
-            </h1>
-            {!primaryCommunityName && memberCount !== null && (
-              <span className="text-sm text-muted">
-                {memberCount} {memberCount === 1 ? "membro" : "membros"}
-              </span>
-            )}
-            {!primaryCommunityName && (
-              <a
-                href="/guide"
-                className="inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-accent transition-colors hover:underline"
-              >
-                Guia de chegada
-              </a>
-            )}
-          </div>
-          <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
-            Publicar
-          </Button>
-        </div>
-      </div>
-
-      <div className="mx-auto flex w-full max-w-[56rem] flex-1 gap-6 px-4 pt-4 pb-8">
-        {/* feed column */}
-        <div className="min-w-0 flex-1 space-y-3">
-          {/* composer entry */}
-          <FeedComposer onOpenModal={handleOpenModal} />
-
-          {/* sort control */}
-          <ButtonGroup
-            variant="tertiary"
-            fullWidth
-            aria-label="Ordenar publicações"
-            className="bg-[var(--surface-sunken)] p-1"
-          >
-            <ToggleButton
-              isSelected={sortOrder === "recent"}
-              onChange={() => handleSortChange("recent")}
-              className="min-h-11"
-            >
-              Recentes
-            </ToggleButton>
-            <ToggleButton
-              isSelected={sortOrder === "relevant"}
-              onChange={() => handleSortChange("relevant")}
-              className="min-h-11"
-            >
-              Relevantes
-            </ToggleButton>
-          </ButtonGroup>
-
-          {/* error state */}
-          {error && <ErrorState message={error} onRetry={() => loadFeed(sortOrder)} />}
-
-          {/* skeleton loading */}
-          {loading && !error && (
-            <div className="space-y-2" aria-busy="true">
-              <FeedCardSkeleton />
-              <FeedCardSkeleton />
-              <FeedCardSkeleton />
-            </div>
+      {/* Onda E Task 2: quando o membro não pertence a nenhuma comunidade, a
+          home é a referência da cidade (§6.2), não o feed da vila. O feed
+          municipal é morto pela D48. CityReference é o mesmo conteúdo que a
+          rota /localidade (Task 3) vai expor. O CreatePostModal continua
+          disponível — o membro ainda pode publicar com alcance da cidade
+          mesmo sem estar numa vila. */}
+      {hasResolved && !primaryCommunityId && !error ? (
+        <>
+          <CityReference onPublish={() => handleOpenModal()} />
+          {showCreateModal && (
+            <CreatePostModal
+              localityId={current.id}
+              defaultPostType={defaultPostType}
+              onCreated={handleCreated}
+              onClose={() => {
+                setShowCreateModal(false)
+                setDefaultPostType(undefined)
+              }}
+            />
           )}
+        </>
+      ) : (
+        <>
+          {/* locality header — sticky under app header */}
+          <div className="sticky top-12 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
+            <div className="mx-auto flex max-w-[56rem] items-center justify-between">
+              <div className="flex items-baseline gap-2">
+                <h1 className="text-lg font-semibold tracking-tight">
+                  {primaryCommunityName ?? "Manaus, AM"}
+                </h1>
+                {!primaryCommunityName && memberCount !== null && (
+                  <span className="text-sm text-muted">
+                    {memberCount} {memberCount === 1 ? "membro" : "membros"}
+                  </span>
+                )}
+                {!primaryCommunityName && (
+                  <a
+                    href="/guide"
+                    className="inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-accent transition-colors hover:underline"
+                  >
+                    Guia de chegada
+                  </a>
+                )}
+              </div>
+              <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
+                Publicar
+              </Button>
+            </div>
+          </div>
 
-          {/* empty state — P0 Task 9: below the §3.4 density threshold the copy
+          <div className="mx-auto flex w-full max-w-[56rem] flex-1 gap-6 px-4 pt-4 pb-8">
+            {/* feed column */}
+            <div className="min-w-0 flex-1 space-y-3">
+              {/* composer entry */}
+              <FeedComposer onOpenModal={handleOpenModal} />
+
+              {/* sort control */}
+              <ButtonGroup
+                variant="tertiary"
+                fullWidth
+                aria-label="Ordenar publicações"
+                className="bg-[var(--surface-sunken)] p-1"
+              >
+                <ToggleButton
+                  isSelected={sortOrder === "recent"}
+                  onChange={() => handleSortChange("recent")}
+                  className="min-h-11"
+                >
+                  Recentes
+                </ToggleButton>
+                <ToggleButton
+                  isSelected={sortOrder === "relevant"}
+                  onChange={() => handleSortChange("relevant")}
+                  className="min-h-11"
+                >
+                  Relevantes
+                </ToggleButton>
+              </ButtonGroup>
+
+              {/* error state */}
+              {error && <ErrorState message={error} onRetry={() => loadFeed(sortOrder)} />}
+
+              {/* skeleton loading */}
+              {loading && !error && (
+                <div className="space-y-2" aria-busy="true">
+                  <FeedCardSkeleton />
+                  <FeedCardSkeleton />
+                  <FeedCardSkeleton />
+                </div>
+              )}
+
+              {/* empty state — P0 Task 9: below the §3.4 density threshold the copy
               reads "Você é dos primeiros aqui" instead of "Nenhuma publicação
               ainda", because the second sentence describes a quiet room, not a
               beginning. The threshold is the locality member count, not Manaus. */}
-          {!loading && !error && posts.length === 0 && (
-            <EmptyState
-              title={
-                isLocalityStale(memberCount)
-                  ? "Você é dos primeiros aqui."
-                  : "Nenhuma publicação ainda"
-              }
-              description={
-                isLocalityStale(memberCount)
-                  ? "Esta comunidade está começando. Publique algo para abrir caminho para quem chegar depois."
-                  : "Seja o primeiro a compartilhar algo com a sua comunidade."
-              }
-              action={
-                <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
-                  Publicar
-                </Button>
-              }
+              {!loading && !error && posts.length === 0 && (
+                <EmptyState
+                  title={
+                    isLocalityStale(memberCount)
+                      ? "Você é dos primeiros aqui."
+                      : "Nenhuma publicação ainda"
+                  }
+                  description={
+                    isLocalityStale(memberCount)
+                      ? "Esta comunidade está começando. Publique algo para abrir caminho para quem chegar depois."
+                      : "Seja o primeiro a compartilhar algo com a sua comunidade."
+                  }
+                  action={
+                    <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
+                      Publicar
+                    </Button>
+                  }
+                />
+              )}
+
+              {/* feed list */}
+              {!loading && posts.length > 0 && (
+                <div
+                  className="space-y-2 transition-opacity"
+                  style={{
+                    opacity: transitioning ? 0.6 : 1,
+                    transitionDuration: "var(--duration-fast)",
+                  }}
+                >
+                  {posts
+                    .filter((post) => !hiddenPostIds.has(post.id))
+                    .map((post, index) => (
+                      <div
+                        key={post.id}
+                        ref={(el) => {
+                          if (el) {
+                            postRefs.current.set(post.id, el)
+                          } else {
+                            postRefs.current.delete(post.id)
+                          }
+                        }}
+                        className={
+                          highlightedPostId === post.id
+                            ? "rounded-lg ring-2 ring-accent transition-all duration-300"
+                            : undefined
+                        }
+                      >
+                        <FeedPost post={post} index={index} onHide={handleHidePost} />
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {/* end-of-feed marker */}
+              {!loading && !error && posts.length > 0 && !atEnd && (
+                <p className="py-4 text-center text-sm text-muted"> Você está em dia</p>
+              )}
+            </div>
+
+            {/* right rail */}
+            <FeedRightRail />
+          </div>
+
+          {showCreateModal && (
+            <CreatePostModal
+              localityId={current.id}
+              defaultPostType={defaultPostType}
+              defaultCommunityId={primaryCommunityId ?? undefined}
+              onCreated={handleCreated}
+              onClose={() => {
+                setShowCreateModal(false)
+                setDefaultPostType(undefined)
+              }}
             />
           )}
-
-          {/* feed list */}
-          {!loading && posts.length > 0 && (
-            <div
-              className="space-y-2 transition-opacity"
-              style={{
-                opacity: transitioning ? 0.6 : 1,
-                transitionDuration: "var(--duration-fast)",
-              }}
-            >
-              {posts
-                .filter((post) => !hiddenPostIds.has(post.id))
-                .map((post, index) => (
-                  <div
-                    key={post.id}
-                    ref={(el) => {
-                      if (el) {
-                        postRefs.current.set(post.id, el)
-                      } else {
-                        postRefs.current.delete(post.id)
-                      }
-                    }}
-                    className={
-                      highlightedPostId === post.id
-                        ? "rounded-lg ring-2 ring-accent transition-all duration-300"
-                        : undefined
-                    }
-                  >
-                    <FeedPost post={post} index={index} onHide={handleHidePost} />
-                  </div>
-                ))}
-            </div>
-          )}
-
-          {/* end-of-feed marker */}
-          {!loading && !error && posts.length > 0 && !atEnd && (
-            <p className="py-4 text-center text-sm text-muted"> Você está em dia</p>
-          )}
-        </div>
-
-        {/* right rail */}
-        <FeedRightRail />
-      </div>
-
-      {showCreateModal && (
-        <CreatePostModal
-          localityId={current.id}
-          defaultPostType={defaultPostType}
-          defaultCommunityId={primaryCommunityId ?? undefined}
-          onCreated={handleCreated}
-          onClose={() => {
-            setShowCreateModal(false)
-            setDefaultPostType(undefined)
-          }}
-        />
+        </>
       )}
     </div>
   )
