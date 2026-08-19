@@ -592,7 +592,7 @@ e a fragmentação já começou: `(admin)/` tem três páginas soltas (`admissio
 Esta task é o fechamento da onda. Não a trate como burocracia — é ela que decide se a linha do
 `PRODUCT_STATUS.md` pode sair de "código feito".
 
-- [ ] **Step 1: rodar o lote acumulado de E2E**
+- [ ] **Step 1: rodar o lote acumulado de E2E** (depende de `db:reset` com seed — owner)
 
   Peça `db:reset` **com seed** ao dono, uma vez só, no fim. Rodam juntos: os dois specs órfãos
   da onda A (`onboarding-denials`, `group-event-detail-denials`), os desta onda, e o que B e C
@@ -601,7 +601,7 @@ Esta task é o fechamento da onda. Não a trate como burocracia — é ela que d
   Este é o único momento em que o banco sai do estado de pgTAP. Ver `README.md` §"O E2E precisa
   de um humano".
 
-- [ ] **Step 2: auditoria visual**
+- [ ] **Step 2: auditoria visual** (depende do `db:reset` com seed + Node + Playwright — owner)
 
   `node scripts/visual/loop.mjs` sobre as telas tocadas: `/consent`, `/onboarding`,
   `/onboarding/status`, `/profile` (seção de convite familiar) e **os dois consoles da Task 9**.
@@ -609,12 +609,12 @@ Esta task é o fechamento da onda. Não a trate como burocracia — é ela que d
   Sem dev server e sem captura rodando entre `db:reset` e `test:db` — o perfil fantasma
   "Visual Capture" quebra seis asserts e parece regressão real.
 
-- [ ] **Step 3: veredito escrito**
+- [ ] **Step 3: veredito escrito** (`docs/agents/VISUAL_AUDIT-2026-08-XX-onda-d2.md` — escrito após a auditoria)
 
   `docs/agents/VISUAL_AUDIT-2026-08-XX-onda-d2.md`, no formato dos que já estão em
   `docs/agents/`.
 
-- [ ] **Step 4: reconciliar o `PRODUCT_STATUS.md`**
+- [x] **Step 4: reconciliar o `PRODUCT_STATUS.md`** (linhas Gate/Upload/Recurso/Consentimento/Convites atualizadas com as mudanças da D2 Tasks 1, 3, 4, 5, 6 — todas marcadas como código feito em D)
 
   Com atenção a três coisas:
 
@@ -624,7 +624,7 @@ Esta task é o fechamento da onda. Não a trate como burocracia — é ela que d
   - uma linha só sai da tabela quando o ciclo fecha. Documento aprovado sem aviso à pessoa não
     fecha ciclo.
 
-- [ ] **Step 5: commit**
+- [x] **Step 5: commit** (`docs(status): reconcile the admission door after wave D2`)
 
   `docs(status): reconcile the admission door after wave D2`.
 
