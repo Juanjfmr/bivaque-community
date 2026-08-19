@@ -25,7 +25,7 @@ Nem todos entram em toda run — a composição depende da entrada. Ver a triage
 
 | Agente | Camada | Papel |
 |---|---|---|
-| `audit-medidor` | determinística | Mede as 6 regras mecânicas. Não opina |
+| `audit-medidor` | determinística | Mede as 11 regras mecânicas de `capture.mjs`. Não opina |
 | `audit-conformidade` | contrato | Rubrica §9 + tokens + regra de privacidade |
 | `audit-carrasco` | ofício | Checklist anti-slop congelada + A/B contra refs. Dá nota |
 | `audit-produto` | estratégia | Os 14 itens do CRITIQUE_BRIEF contra BIVAQUE.md. Autonomia para propor incluir, excluir e fundir telas |

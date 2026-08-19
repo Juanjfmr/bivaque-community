@@ -46,8 +46,8 @@ servível, prefira rodá-la a reimplementar o cálculo.
 | `heading-structure` | medium | página sem exatamente um `h1` — mede o item 7 da §9 ("um h1") mecanicamente |
 | `nav-active` | medium | nav visível sem exatamente um item corrente — mede o item 4 da §9 (nav ativa) mecanicamente |
 
-**Três destas já são a medição de um item da rubrica §9**, não achado à parte:
-`heading-structure` → item 7 (h1), `nav-active` → item 4 (nav), `touch-target`/`contrast`
+**Quatro destas já são a medição de um item da rubrica §9**, não achado à parte:
+`heading-structure` → item 7 (h1), `nav-active` → item 4 (nav), `touch-target` e `contrast`
 → item 7 (a11y). Reporte o dado; o `audit-conformidade` fecha o item da §9 com ele — não
 duplique como se fosse um segundo achado independente.
 
