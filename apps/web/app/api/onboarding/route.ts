@@ -168,6 +168,40 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "internal server error"
     log.error("onboarding request failed", { error: message, action: body.action as string })
-    return NextResponse.json({ error: message }, { status: 500 })
+
+    // D2 Task 5: the four family-invite sad paths and the email-divergence
+    // case map to a human HTTP status. The route never echoes the database
+    // message — only the logged message carries that detail. The
+    // e-mail-divergence case (P0001) deliberately returns the same response
+    // as not_found, so a forwarded link cannot distinguish "token errado" de
+    // "token certo, pessoa errada".
+    const err = error as { code?: string; message?: string }
+    if (action === "accept-family-invite") {
+      switch (err.code) {
+        case "P0001":
+          return NextResponse.json(
+            { error: "Este convite não existe. Peça um novo ao titular." },
+            { status: 404 },
+          )
+        case "P0002":
+          return NextResponse.json(
+            { error: "Este convite expirou. Peça um novo ao titular." },
+            { status: 410 },
+          )
+        case "P0003":
+          return NextResponse.json({ error: "Este convite já foi usado." }, { status: 409 })
+        case "P0004":
+          return NextResponse.json(
+            { error: "Este convite foi cancelado pelo titular." },
+            { status: 410 },
+          )
+        default:
+          break
+      }
+    }
+
+    // Generic 500: never echo the database message in the body. The detail
+    // is in the log; the user sees a stable, internal-error string.
+    return NextResponse.json({ error: "internal server error" }, { status: 500 })
   }
 }

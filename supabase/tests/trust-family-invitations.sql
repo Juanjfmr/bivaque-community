@@ -191,7 +191,8 @@ select throws_ok(
       '10000000-0000-4000-8000-000000000005'
     )
   $$,
-  'invitation not found, already accepted, revoked, or expired',
+  'P0004',
+  'family_invitation_revoked',
   'a revoked invitation cannot be accepted'
 );
 

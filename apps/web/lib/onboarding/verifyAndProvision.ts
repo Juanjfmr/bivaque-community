@@ -179,7 +179,13 @@ export async function acceptFamilyInvitationAndProvision(
   })
 
   if (error) {
-    throw new Error(`Family invitation acceptance failed: ${error.message}`)
+    // Preserve the Postgres errcode so the route can map the four sad
+    // paths (D2 Task 5) and so the generic 500 never echoes the database
+    // message. The thrown message is still generic; the detail lives in the
+    // log.
+    const wrapped = new Error(`Family invitation acceptance failed: ${error.message}`)
+    ;(wrapped as { code?: string }).code = error.code
+    throw wrapped
   }
 
   if (!linkId) {

@@ -361,7 +361,7 @@ Duas consequências, e a segunda é de segurança:
    que o token é válido** e que pertence a outra pessoa. Isso é enumeração, na única via que
    concede acesso sem CPF.
 
-- [ ] **Step 1: códigos, não frases**
+- [x] **Step 1: códigos, não frases**
 
   A função passa a levantar com `errcode` distinto por caso (use `raise exception ... using
   errcode = ...` com códigos da faixa `P0001`+ ou uma coluna de detalhe estruturada). Quatro
@@ -370,7 +370,7 @@ Duas consequências, e a segunda é de segurança:
 
   Migration nova. **Não edite** `20260815130000` — ela está aplicada.
 
-- [ ] **Step 2: quatro telas humanas**
+- [x] **Step 2: quatro telas humanas**
 
   A rota mapeia código → status HTTP e mensagem. Nada de eco de `error.message`:
 
@@ -384,18 +384,18 @@ Duas consequências, e a segunda é de segurança:
   Cada uma com o caminho de recomeço, como a tela de falha de callback da onda A já faz
   (`auth/callback-error/page.tsx` é o modelo de tom).
 
-- [ ] **Step 3: e-mail divergente é genérico, de propósito**
+- [x] **Step 3: e-mail divergente é genérico, de propósito**
 
   Devolve **exatamente** a mesma resposta de "este convite não existe". Quem encaminhou o link
   não pode distinguir "token errado" de "token certo, pessoa errada". Escreva o porquê em
   comentário, senão alguém "melhora" a mensagem de erro em seis meses.
 
-- [ ] **Step 4: o 500 para de ecoar o banco**
+- [x] **Step 4: o 500 para de ecoar o banco**
 
   `api/onboarding/route.ts:120-124` passa a registrar `message` no `log.error` e devolver corpo
   genérico. Vale para **todas** as ações da rota, não só o convite.
 
-- [ ] **Step 5: testes**
+- [x] **Step 5: testes**
 
   - pgTAP em `supabase/tests/family-invite-sad-paths.sql`: os quatro casos levantam códigos
     distintos; e-mail divergente levanta o de não-encontrado (positivo **e** negativo).
@@ -404,7 +404,7 @@ Duas consequências, e a segunda é de segurança:
   - E2E `tests/e2e/family-invite-denials.spec.ts`: link expirado mostra a tela humana com
     recomeço, e nenhum conteúdo do titular aparece.
 
-- [ ] **Step 6: gate e commit**
+- [x] **Step 6: gate e commit**
 
   `fix(family-invite): distinct sad paths and no database detail in responses`.
 
