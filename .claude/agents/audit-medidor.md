@@ -33,7 +33,10 @@ ou ≥18.66px bold) · `font-too-small` · `no-transition` · `hardcoded-color`
 A implementação de referência é `scripts/visual/capture.mjs` — ela é a autoridade sobre
 as regras mecânicas. Se houver DOM servível, prefira rodá-la a reimplementar o cálculo.
 
-## Saída — grave em `.audit/<run>/R<N>-medicao.json` e resuma no relatório
+## Saída
+
+Você é **read-only**: devolva o conteúdo no seu relatório final. Quem persiste é a sessão
+orquestradora, que grava em `.audit/<run>/R<N>-medicao.json`. Não tente escrever você mesmo.
 
 ```json
 { "rodada": 1, "medido": ["…"], "naoMedido": [{ "alvo": "…", "razao": "…" }],

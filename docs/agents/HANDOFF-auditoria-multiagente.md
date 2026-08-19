@@ -35,6 +35,12 @@ Nem todos entram em toda run — a composição depende da entrada. Ver a triage
 barramento. Por isso o estado da rodada vive **em disco**, não na cabeça dos agentes — é o
 que torna a "conversa" auditável e retomável se a sessão cair.
 
+**Os cinco são read-only, de propósito, e quem grava é a sessão orquestradora.** Nenhum tem
+`Write` ou `Edit`: um juiz que pode editar o que julga não é juiz. Cada agente devolve o
+conteúdo no relatório final, e a sessão o persiste em `.audit/<run>/` com o nome que a
+etapa pede — antes de disparar a etapa seguinte, porque o Árbitro lê os arquivos, não a
+memória da conversa.
+
 ## Preparação
 
 ```sh
@@ -80,6 +86,9 @@ Etapa 3  audit-carrasco     →  R<N>-carrasco.md         (recebe 1 e 2 como ent
 Etapa 4  audit-arbitro      →  R<N>-veredito.md         (lê tudo, decide)
          ── PARA. Mostra o veredito. Espera destravar. ──
 ```
+
+A sessão grava o relatório de cada etapa antes de disparar a próxima — os agentes não
+escrevem.
 
 Da R2 em diante, use `SendMessage` para continuar o **mesmo** agente em vez de abrir um
 novo — ele mantém o contexto da rodada anterior e não recomeça frio.

@@ -48,7 +48,12 @@ o backlog. Nunca declare pronto o que não está. O terceiro estado ("feito, nã
 Você **propõe**. `AAA` só existe com assinatura humana do responsável pela sessão. Escreva
 o veredito como proposta, e diga o que exatamente está sendo pedido para assinar.
 
-## Saída — `.audit/<run>/R<N>-veredito.md`
+## Saída
+
+Você é **read-only**: devolva o conteúdo no seu relatório final. Quem persiste é a sessão
+orquestradora, que grava em `.audit/<run>/R<N>-veredito.md`. Não tente escrever você mesmo.
+
+O relatório deve conter:
 
 `CONVERGIU` / `NÃO CONVERGIU` / `RODADA INVÁLIDA` + razão · delta contra R<N-1> ·
 o que falta, por tela · o que foi para o backlog e por quê.

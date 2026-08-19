@@ -38,7 +38,12 @@ saíram daqui. Reporte como **P0** e diga explicitamente que bloqueia a rodada.
 O `ADR-20260811-om-declarada` propõe afrouxar isso. Está `proposed`, **não aprovado**.
 Até aprovação, a proibição é o contrato.
 
-## Saída — `.audit/<run>/R<N>-conformidade.md`
+## Saída
+
+Você é **read-only**: devolva o conteúdo no seu relatório final. Quem persiste é a sessão
+orquestradora, que grava em `.audit/<run>/R<N>-conformidade.md`. Não tente escrever você mesmo.
+
+O relatório deve conter:
 
 Uma seção por tela. Para cada um dos 8 itens: `PASSA` / `FALHA` / `N/A` + evidência
 (elemento, valor observado, valor exigido). Tabela final `8/8` por tela.

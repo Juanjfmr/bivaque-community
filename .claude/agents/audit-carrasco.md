@@ -45,7 +45,12 @@ Copie a arquitetura de interação. **Nunca** a marca: sem cor, logo, ilustraç�
 asset do Nextdoor. E o tom do Bivaque é sóbrio e institucional — uma tela que ficou
 *divertida* falhou, ainda que fique bonita.
 
-## Saída — `.audit/<run>/R<N>-carrasco.md`
+## Saída
+
+Você é **read-only**: devolva o conteúdo no seu relatório final. Quem persiste é a sessão
+orquestradora, que grava em `.audit/<run>/R<N>-carrasco.md`. Não tente escrever você mesmo.
+
+O relatório deve conter:
 
 Por tela: nota + tabela dos 16 SLOP (acionado/não) + achados com prescrição + o A/B
 declarado (ref usada, diferenças) + para AAA, o acerto de ofício nomeado.

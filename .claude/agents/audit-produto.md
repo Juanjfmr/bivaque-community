@@ -74,7 +74,12 @@ Você é a camada que pega isso. Compare o conjunto de telas proposto contra §7
 `PRODUCT_STATUS.md` e as ondas do `BIVAQUE.md` §10, e **liste o que sumiu** — sumiço não
 declarado é achado, e normalmente P0.
 
-## Saída — `.audit/<run>/R<N>-produto.md`
+## Saída
+
+Você é **read-only**: devolva o conteúdo no seu relatório final. Quem persiste é a sessão
+orquestradora, que grava em `.audit/<run>/R<N>-produto.md`. Não tente escrever você mesmo.
+
+O relatório deve conter:
 
 Os 14 itens respondidos · tabela de notas com a razão de cada desconto · P0 bloqueantes
 separados do resto · e a resposta explícita a "o que cortar antes de adicionar".
