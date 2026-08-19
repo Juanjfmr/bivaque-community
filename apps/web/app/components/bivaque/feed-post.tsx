@@ -1,16 +1,33 @@
 "use client"
 
 import { detectCep, detectCpf } from "@bivaque/domain"
-import { Button, Dropdown, Input, Modal, TextArea, useOverlayState } from "@heroui/react"
+import {
+  Button,
+  Chip,
+  Dropdown,
+  Input,
+  ListBox,
+  Modal,
+  Select,
+  TextArea,
+  useOverlayState,
+} from "@heroui/react"
 import { ExternalLink, Heart, Link2, MessageCircle, MoreHorizontal, Share2 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
 import { FeedbackAlert } from "./feedback-alert"
 import { ReportButton } from "./report-button"
 
-type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
+// FeedPostRow represents a single post shown in any feed. The base shape comes
+// from feed_posts (no community_id, used for the now-removed city feed); when
+// the post comes from feed_community, community_id is populated and the chip
+// in the header is the §12 regra 2 / E4 Step 4 reach indicator.
+type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number] & {
+  community_id?: string | null
+}
 type CommentRow = Database["public"]["Tables"]["comments"]["Row"]
 
 const POST_TYPE_LABELS: Record<string, string> = {
@@ -128,7 +145,29 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
   const [reactionCount, setReactionCount] = useState(Number(post.reaction_count ?? 0))
   const [myReaction, setMyReaction] = useState(Boolean(post.my_reaction))
   const [shareFeedback, setShareFeedback] = useState("")
+  const [localityName, setLocalityName] = useState<string>("")
   const supabase = createBrowserClient()
+
+  // City-reach post (community_id IS NULL) precisa de um chip com o nome da
+  // cidade — sem ele, a pessoa responde algo de vizinhança achando que fala
+  // para 500 pessoas quando fala para milhares (regra 2 da §12). O nome vem
+  // da locality do post, nunca de constante.
+  useEffect(() => {
+    if (post.community_id !== null) return
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase
+        .from("localities")
+        .select("city_name")
+        .eq("id", post.locality_id)
+        .maybeSingle()
+      if (cancelled) return
+      setLocalityName((data as { city_name: string } | null)?.city_name ?? "")
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [post.locality_id, post.community_id, supabase])
 
   const bodyLong = (post.content ?? "").length > 280
   const clampedClass = expanded ? "" : "line-clamp-4"
@@ -245,6 +284,12 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
                 <span className="text-sm font-semibold truncate">
                   {post.display_name ?? "Membro"}
                 </span>
+                {/* Onda E Task 4 Step 4: chip de alcance para posts city-reach. */}
+                {post.community_id === null ? (
+                  <Chip size="sm" variant="soft" aria-label={`Alcance: ${localityName} inteira`}>
+                    {localityName ? `${localityName} inteira` : "Cidade inteira"}
+                  </Chip>
+                ) : null}
               </div>
               <div className="flex items-center gap-1.5 text-xs text-muted">
                 <span>{POST_TYPE_LABELS[post.post_type] ?? post.post_type}</span>
@@ -465,6 +510,7 @@ export function CreatePostModal({
   onClose,
 }: CreatePostModalProps) {
   const modal = useOverlayState({ defaultOpen: true, onOpenChange: (open) => !open && onClose() })
+  const { current: locality } = useLocalityContext()
   const [postType, setPostType] = useState(defaultPostType ?? "text")
   const [content, setContent] = useState("")
   const [photoPath, setPhotoPath] = useState("")
@@ -530,8 +576,12 @@ export function CreatePostModal({
     setPollOptions([])
     setError("")
     setPiiWarning(false)
-    setCommunityId(null)
-  }, [])
+    // PRIVACY (Step 3 da onda E): depois de publicar na vila, o seletor
+    // CONTINUA na vila. Zerar para null fazia o segundo post da sessão sair
+    // para a cidade inteira sem a pessoa ter escolhido — exatamente o
+    // vazamento por desatenção que o plano mandou evitar.
+    setCommunityId(defaultCommunityId ?? null)
+  }, [defaultCommunityId])
 
   const handleAddPollOption = useCallback(() => {
     const trimmed = pollOption.trim()
@@ -642,19 +692,50 @@ export function CreatePostModal({
                 <label htmlFor="post-audience" className="mb-1 block text-sm font-medium">
                   Audiência
                 </label>
-                <select
+                <Select
+                  aria-label="Audiência da publicação"
                   id="post-audience"
-                  value={communityId ?? ""}
-                  onChange={(event) => setCommunityId(event.target.value || null)}
-                  className="w-full rounded-md border border-border bg-[var(--surface)] px-3 py-2 text-sm"
+                  selectedKey={communityId ?? "__city__"}
+                  onSelectionChange={(key) => {
+                    if (key === "__city__") {
+                      setCommunityId(null)
+                    } else if (typeof key === "string") {
+                      setCommunityId(key)
+                    }
+                  }}
+                  className="w-full"
                 >
-                  <option value="">Manaus</option>
-                  {availableCommunities.map((community) => (
-                    <option key={community.id} value={community.id}>
-                      {community.name}
-                    </option>
-                  ))}
-                </select>
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {/* "Cidade inteira" — community_id IS NULL. O nome da cidade
+                          vem da locality do membro (NUNCA um literal hardcoded
+                          como "Manaus" — P0). */}
+                      <ListBox.Item key="__city__" id="__city__">
+                        {locality.cityName} inteira
+                      </ListBox.Item>
+                      {availableCommunities.map((community) => (
+                        <ListBox.Item key={community.id} id={community.id}>
+                          Só a {community.name}
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+                {/* Aviso de audiência — a diferença entre um campo de formulário
+                    e um aviso sobre quem vai ler (regra 2 da §12). */}
+                <p
+                  aria-live="polite"
+                  className="mt-2 text-xs text-muted"
+                  data-testid="audience-notice"
+                >
+                  {communityId
+                    ? `Só os aprovados desta vila vão ler.`
+                    : `Toda ${locality.cityName} — todos os membros verificados da cidade vão ler.`}
+                </p>
               </div>
 
               {postType === "photo" ? (

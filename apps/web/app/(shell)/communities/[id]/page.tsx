@@ -1,4 +1,4 @@
-import { Button } from "@heroui/react"
+import { Button, ListBox, Select } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
@@ -214,23 +214,29 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
             </h2>
             <form action={transferCommunityOwnershipAction} className="flex items-center gap-2">
               <input type="hidden" name="communityId" value={community.id} />
-              <select
+              <Select
                 name="newOwnerId"
-                required
                 aria-label="Novo dono da comunidade"
-                className="rounded-md border border-border bg-[var(--surface)] px-2 py-1.5 text-sm"
+                isRequired
+                placeholder="Escolher novo dono..."
+                className="min-w-56"
               >
-                <option value="" disabled>
-                  Escolher novo dono...
-                </option>
-                {approvedMembers
-                  .filter((member) => member.user_id !== user.id)
-                  .map((member) => (
-                    <option key={member.user_id} value={member.user_id}>
-                      {memberNames.get(member.user_id) ?? "Membro"}
-                    </option>
-                  ))}
-              </select>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {approvedMembers
+                      .filter((member) => member.user_id !== user.id)
+                      .map((member) => (
+                        <ListBox.Item key={member.user_id} id={member.user_id}>
+                          {memberNames.get(member.user_id) ?? "Membro"}
+                        </ListBox.Item>
+                      ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
               <Button type="submit" size="sm" variant="tertiary">
                 Transferir
               </Button>
