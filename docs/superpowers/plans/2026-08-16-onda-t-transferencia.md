@@ -63,7 +63,7 @@ modelando "uma membership temporária de destino", parou de seguir o ADR.
 
 ## Task 1: o vínculo de saída
 
-- [ ] **Step 1: o modelo**
+- [x] **Step 1: o modelo**
 
   `npx pnpm@11.18.0 exec supabase migration new locality_transfer`.
 
@@ -74,7 +74,7 @@ modelando "uma membership temporária de destino", parou de seguir o ADR.
   convenção — um índice único parcial sobre `(user_id)` filtrado pelo papel. Convenção em
   aplicação vira duas linhas de saída no primeiro caminho que alguém esquecer.
 
-- [ ] **Step 2: declarar a transferência**
+- [x] **Step 2: declarar a transferência**
 
   RPC que, numa transação: cria a membership do destino como **corrente**, e converte a atual em
   **saída** com a data declarada. As duas coisas juntas ou nenhuma — um estado com duas correntes
@@ -83,7 +83,7 @@ modelando "uma membership temporária de destino", parou de seguir o ADR.
   A pessoa escolhe o destino no catálogo canônico da P0, validado no servidor. **Nunca texto
   livre.**
 
-- [ ] **Step 3: a declaração não é verificável, e o comentário diz por quê**
+- [x] **Step 3: a declaração não é verificável, e o comentário diz por quê**
 
   O Portal atesta que a pessoa é militar, não onde ela serve. Mas a localidade **sempre** foi
   autodeclarada — a §4.1 diz que o Estado nunca vai saber que alguém é de Ajuricaba. Transferência
@@ -101,7 +101,7 @@ modelando "uma membership temporária de destino", parou de seguir o ADR.
 
 - [ ] **Step 5: gate e commit**
 
-  `feat(locality): declared transfer with origin, destination and term`.
+  `feat(locality): declared transfer with origin, destination and term` (`1b3a94a`).
 
 ---
 
@@ -109,7 +109,7 @@ modelando "uma membership temporária de destino", parou de seguir o ADR.
 
 A task mais fácil de errar por generosidade.
 
-- [ ] **Step 1: o nível municipal do destino abre**
+- [x] **Step 1: o nível municipal do destino abre**
 
   Guia de chegada, eventos da cidade, vitrine quando existir (onda G), e poder **perguntar** no
   nível da cidade. Isso é o caso inteiro: escola, casa, despachante.
@@ -118,12 +118,12 @@ A task mais fácil de errar por generosidade.
   (`20260802000300:21-26`) — confirme lendo. O trabalho aqui é garantir que nada além do nível
   municipal siga junto.
 
-- [ ] **Step 2: nenhuma vila abre**
+- [x] **Step 2: nenhuma vila abre**
 
   Pedir entrada numa vila do destino continua sendo pedido, decidido pelo dono. Esta é a fronteira
   que a §5.2 protege e que o link vazado nunca atravessou — a transferência também não atravessa.
 
-- [ ] **Step 3: testes — o negativo é a task**
+- [x] **Step 3: testes — o negativo é a task**
 
   pgTAP em `supabase/tests/transfer-scope-denials.sql`:
 
@@ -137,9 +137,9 @@ A task mais fácil de errar por generosidade.
   | vira membro de vila do destino automaticamente | **não acontece** |
   | lê feed de vila de uma **terceira** cidade | **não vê** |
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit**
 
-  `feat(locality): transfer grants the municipal level, never a vila`.
+  `feat(locality): transfer grants the municipal level, never a vila` (`T2 closes`).
 
 ---
 
