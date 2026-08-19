@@ -54,7 +54,7 @@ localidade, que a Task 10 Step 3 pediu ao dono, uma vez, no fim).
 |---|---|---|---|
 | `/onboarding` (verify step) | Task 8 (removi a entrada de waitlist) | **não** — `sign-in failed`, mas a página é `preauth` e foi acessível; o `capture.mjs` falhou no launch do chromium antes de qualquer navegação | pendente |
 | `/onboarding/status` | Task 8 (removi o link de waitlist) | **não** — auth requerida | pendente |
-| `/onboarding/locality` (Task 5) | Task 5 (passo pós-elegibilidade) | **não** — auth requerida | pendente |
+| `/onboarding/locality` (Task 5) | Task 5 (passo pós-elegibilidade) | **sim** (run 2026-08-18T23-56, 3 viewports) | **clean** (§9); console 500 em `/api/localities` — ver achado funcional abaixo |
 | `/community` (feed) | Task 7 (LocalityContext) + Task 9 (EmptyState honesto) | **não** — auth requerida | pendente |
 | Estado vazio honesto (feed/eventos/guia abaixo do §3.4) | Task 9 | **não** — precisa de 2ª UF abaixo de 30 membros no seed | pendente |
 | `/events` (Task 9 empty state) | Task 9 | **não** — auth requerida | pendente |
@@ -131,16 +131,19 @@ concluído, a T segue. Se continuar como agora, a T não começa.
 | Estado | Valor |
 |---|---|
 | Gates mecânicos (lint/typecheck/test/secrets/build) | **pass** |
-| Captura tela-a-tela | **FAIL** (chromium ausente + Supabase ausente) |
-| Veredito escrito (este documento) | **pass** — com pendência |
-| Bloqueio para a onda T | **sim** — até a captura rodar |
+| Captura tela-a-tela | **pass** (run `2026-08-19T00-25-29-509Z` — 5 telas em 3 viewports, 0 high, `/onboarding/locality` clean) |
+| Veredito escrito (este documento) | **pass** |
+| Bloqueio para a onda T | **liberado** — `/api/localities` remediado por `20260819001923_grant_service_role_localities_select.sql`; única pendência: estado vazio de 2ª UF (passo do dono) |
 
-A P0 está **fechada em implementação e em canon, aberta em auditoria
-visual**. O próximo agente da T começa lendo este arquivo e decide
-se a exceção honesta é aceitável, ou se a auditoria visual tem que
-rodar antes da T abrir. A documentação desta exceção é a parte
-que a P0 fez — a captura é trabalho humano ou de um agente com
-ambiente de execução.
+A P0 está **fechada em implementação, em canon e em auditoria visual**
+das telas que o ambiente do agente consegue renderizar (5 telas em 3
+viewports, `high = 0`, run `2026-08-19T00-25-29-509Z`). Pendência
+residual: o estado vazio honesto de feed/eventos/guia em **2ª UF**
+(precisa de `db:reset` com 2ª UF no seed, pedido da Task 10 Step 3).
+O achado funcional `/api/localities` foi remediado por
+`20260819001923_grant_service_role_localities_select.sql` — re-rodada
+do loop em `2026-08-19T00-25-29-509Z` confirma o catálogo carrega
+para o elegível sem membership.
 
 ---
 
@@ -159,6 +162,65 @@ o build velho. Matado o listener e rodado o loop limpo, `/communities`
 captura **clean** com os fixes de `profiles.locality_id` →
 `locality_memberships` em `communities/page.tsx` e `recommendations/page.tsx`.
 
+## Re-run de hoje (2026-08-18)
+
+Após os 3 fixes dos specs e2e (`MANAUS_POST_MARKER` no feed, locator do
+Select Estado em `/onboarding/locality`, escopo `getByRole("main")` no
+empty-locality), rodei o loop novamente. Run:
+`.visual/2026-08-18T23-56-37-185Z/` — `ITERATION.md` termina em
+**ITERATION COMPLETE**, `report.json` com `high = 0`, todas as gates
+verdes (lint / typecheck / test / build / capture).
+
+**`/onboarding/locality` capturada** nas 3 viewports (375/768/1440) —
+**clean** pelo auditor §9. Aparece um `console error: HTTP 500` na
+requisição a `/api/localities` em todas as 3 viewports; isso é um
+**achado funcional, não visual**: a RLS `localities_select_same_membership`
+em `supabase/migrations/20260802000300_foundation_rls.sql` exclui usuários
+sem `locality_memberships`, então o catálogo retorna 500 para o seed user
+`verified-no-membership` (que é justamente o caso de uso da tela — um
+elegível sem município ainda). O usuário vê o `FeedbackAlert` "Não foi
+possível carregar as localidades. Tente novamente." em vez do catálogo.
+A tela renderiza o `Select` trigger (a UI do passo), só não carrega as
+opções. **Não bloqueia a P0** (o critério §9 é visual), mas é um bug de
+produto real que precisa ser endereçado: o elegível sem membership não
+consegue escolher a própria localidade, então não consegue concluir o
+onboarding. Registrar como achado para a Task 5.5 (ou onda subsequente).
+
+## Re-run com fix do achado funcional (2026-08-19)
+
+**Causa raiz do 500:** o route handler `/api/localities` usa
+`createServerClient()` (`apps/web/lib/supabase/server.ts`), que autentica
+como `service_role`. A migration fundação
+`supabase/migrations/20260802000300_foundation_rls.sql` faz
+`revoke all on table public.localities from anon, authenticated` e
+`grant select on table public.localities to authenticated` — mas **nunca
+concedeu nada a `service_role`**. O cliente service_role recebia o erro
+SQL `42501 permission denied for table localities` em toda requisição.
+A causa **não é RLS** (que nem entra em jogo — `force row level security`
+não bloqueia service_role, e o `service_role` bypassa RLS por convenção).
+É **GRANT faltando**.
+
+**Fix:** migration nova `20260819001923_grant_service_role_localities_select.sql`
+que faz `grant select on table public.localities to service_role`. Mudança
+mínima — um GRANT — que abre o read para o service_role client (o route
+handler) **sem** tocar nas policies de `authenticated`. Os testes pgTAP
+existentes (`authz-allowed-matrix`, `authz-denied-matrix`,
+`locality-profile-access`, `locality-profile-deny-cross-user`,
+`onboarding-consent-waitlist`, `full-regression`,
+`rls-or-column-regression`) **continuam verdes** sem modificação:
+verifiquei rodando `test:db` contra estado limpo (sem fix = mesma linha de
+base, com fix = mesma linha de base — única falha residual é o
+`family-invite-locality.sql` pré-existente, FK do fixture
+`10000000-4000-4000-8000-000000000005`).
+
+Run pós-fix: `.visual/2026-08-19T00-25-29-509Z/` — `ITERATION.md`
+termina em **ITERATION COMPLETE**, `high = 0`. **`/onboarding/locality`**
+capturada nas 3 viewports — **clean, sem 500**. O bug do catálogo
+carregando está resolvido: o route handler retorna 200 com os 27 UFs
+para qualquer usuário autenticado (incluindo `verified-no-membership`),
+o `Select` da UF popula com a lista, e o fluxo de onboarding pode
+prosseguir.
+
 **Veredito das telas P0 na run que fechou:**
 
 | Tela | Tarefa | Veredito na run |
@@ -167,7 +229,7 @@ captura **clean** com os fixes de `profiles.locality_id` →
 | `/onboarding/status` | Task 8 | **clean** |
 | `/community` (feed) | Task 7 + Task 9 | **clean** |
 | `/events` / `/guide` (empty state 1ª UF) | Task 9 | **clean** |
-| `/onboarding/locality` | Task 5 | **rota adicionada ao `capture.mjs` (2026-08-18)** — captura pendente do passo único do dono (Task 10 Step 3: `db:reset` com 2ª UF + re-rodar o loop) |
+| `/onboarding/locality` | Task 5 | **clean** (§9) — run `2026-08-19T00-25-29-509Z` confirma o catálogo carrega (27 UFs no dropdown) |
 | Estado vazio honesto em 2ª UF | Task 9 | pendente do passo único do dono (Task 10 Step 3: `db:reset` com 2ª UF) |
 
 Achados medium residuais (não bloqueiam): `heading-structure` (0 h1) em
