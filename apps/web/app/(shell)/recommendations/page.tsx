@@ -541,7 +541,14 @@ export default function RecommendationsPage() {
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex min-w-0 flex-1 flex-col gap-1">
                               <div className="flex items-center gap-2">
-                                <h3 className="truncate text-sm font-semibold">{group.name}</h3>
+                                {/* F5 Step 3: the group card links to its detail, not
+                                    the generic list. */}
+                                <Link
+                                  href={`/groups/${group.id}`}
+                                  className="truncate text-sm font-semibold hover:underline"
+                                >
+                                  {group.name}
+                                </Link>
                                 <Chip size="sm" variant="soft">
                                   {group.visibility === "public" ? "Público" : "Privado"}
                                 </Chip>
@@ -604,7 +611,7 @@ export default function RecommendationsPage() {
                     {upcomingEvents.map((event) => (
                       <Link
                         key={event.id}
-                        href={`/events`}
+                        href={`/events/${event.id}`}
                         className="transition-colors duration-[var(--duration-instant)]"
                       >
                         <Card className="p-4">

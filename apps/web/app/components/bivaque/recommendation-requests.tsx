@@ -17,6 +17,7 @@ type RequestRow = {
   body: string
   category: string
   created_at: string
+  is_resolved: boolean
 }
 
 type ReplyRow = {
@@ -61,6 +62,9 @@ export default function RecommendationRequests() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
   const [editBody, setEditBody] = useState("")
+  const [editReplyId, setEditReplyId] = useState<string | null>(null)
+  const [editReplyText, setEditReplyText] = useState("")
+  const [resolvingId, setResolvingId] = useState<string | null>(null)
 
   const loadRequests = useCallback(async () => {
     setLoading(true)
@@ -263,6 +267,78 @@ export default function RecommendationRequests() {
     [supabase, currentUserId, loadRequests],
   )
 
+  // Wave F Task 5 Step 2 — the author can edit or delete their own reply.
+  const handleDeleteReply = useCallback(
+    async (replyId: string) => {
+      setFeedback("")
+      const { error: deleteError } = await supabase
+        .from("recommendation_replies")
+        .delete()
+        .eq("id", replyId)
+        .eq("author_id", currentUserId)
+
+      if (deleteError) {
+        setFeedback(deleteError.message)
+        return
+      }
+      await loadRequests()
+    },
+    [supabase, currentUserId, loadRequests],
+  )
+
+  const cancelEditReply = useCallback(() => {
+    setEditReplyId(null)
+    setEditReplyText("")
+  }, [])
+
+  const saveEditReply = useCallback(
+    async (replyId: string) => {
+      setFeedback("")
+      if (editReplyText.trim().length < 5) {
+        setFeedback("A resposta precisa de ao menos 5 caracteres.")
+        return
+      }
+      const { error: updateError } = await supabase
+        .from("recommendation_replies")
+        .update({ body: editReplyText.trim() })
+        .eq("id", replyId)
+        .eq("author_id", currentUserId)
+
+      if (updateError) {
+        setFeedback(updateError.message)
+        return
+      }
+      cancelEditReply()
+      await loadRequests()
+    },
+    [supabase, currentUserId, editReplyText, cancelEditReply, loadRequests],
+  )
+
+  // Wave F Task 5 Step 4 — the author marks the request resolved (closes the
+  // §6.3 cycle; feeds guide curation).
+  const handleMarkResolved = useCallback(
+    async (requestId: string) => {
+      setFeedback("")
+      setResolvingId(requestId)
+      // The RPC is new (migration 033) — not in generated types yet until
+      // `supabase gen types`. Cast the call; the runtime contract is SQL.
+      const resolvedRpc = supabase.rpc as unknown as (
+        name: "mark_recommendation_resolved",
+        args: { p_request_id: string },
+      ) => Promise<{ data: null; error: { message: string } | null }>
+      const { error: rpcError } = await resolvedRpc("mark_recommendation_resolved", {
+        p_request_id: requestId,
+      })
+      setResolvingId(null)
+      if (rpcError) {
+        setFeedback(rpcError.message)
+        return
+      }
+      await loadRequests()
+    },
+    [supabase, loadRequests],
+  )
+
   return (
     <div className="flex flex-col gap-4">
       {feedback && (
@@ -365,12 +441,83 @@ export default function RecommendationRequests() {
                   {replies.length > 0 && (
                     <ul className="flex flex-col gap-2 border-t border-border pt-3">
                       {replies.map((reply) => (
-                        <li key={reply.id} className="text-sm text-muted">
-                          {reply.body}
+                        <li
+                          key={reply.id}
+                          className="flex flex-col gap-1 rounded-md border border-border p-2 text-sm"
+                        >
+                          {editReplyId === reply.id ? (
+                            <div className="flex flex-col gap-2">
+                              <TextArea
+                                aria-label="Editar resposta"
+                                rows={2}
+                                value={editReplyText}
+                                onChange={(event) =>
+                                  setEditReplyText((event.target as HTMLTextAreaElement).value)
+                                }
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="primary"
+                                  onPress={() => saveEditReply(reply.id)}
+                                >
+                                  Salvar
+                                </Button>
+                                <Button size="sm" variant="tertiary" onPress={cancelEditReply}>
+                                  Cancelar
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-sm text-muted">{reply.body}</span>
+                              {reply.author_id === currentUserId && (
+                                <div className="flex shrink-0 gap-1.5">
+                                  <Button
+                                    size="sm"
+                                    variant="tertiary"
+                                    className="text-xs"
+                                    onPress={() => {
+                                      setEditReplyId(reply.id)
+                                      setEditReplyText(reply.body)
+                                    }}
+                                  >
+                                    Editar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="tertiary"
+                                    className="text-xs"
+                                    onPress={() => handleDeleteReply(reply.id)}
+                                  >
+                                    Excluir
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </li>
                       ))}
                     </ul>
                   )}
+
+                  {request.is_resolved ? (
+                    <div className="flex items-center gap-2 rounded-md bg-[var(--surface-sunken)] px-3 py-2 text-xs font-medium text-muted">
+                      ✅ Pedido resolvido
+                    </div>
+                  ) : isAuthor ? (
+                    <div className="flex justify-end border-t border-border pt-3">
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        className="text-xs"
+                        isDisabled={resolvingId === request.id}
+                        onPress={() => handleMarkResolved(request.id)}
+                      >
+                        Marcar como resolvido
+                      </Button>
+                    </div>
+                  ) : null}
 
                   <div className="flex flex-col gap-2 border-t border-border pt-3">
                     <TextArea
