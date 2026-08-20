@@ -739,13 +739,51 @@ export function CreatePostModal({
               </div>
 
               {postType === "photo" ? (
-                <Input
-                  aria-label="Caminho da foto"
-                  placeholder="Caminho da foto (event-photos/...)"
-                  value={photoPath}
-                  onChange={(e) => setPhotoPath((e.target as HTMLInputElement).value)}
-                  className="mt-4"
-                />
+                <div className="mt-4 space-y-2">
+                  {/* F9 Step 1: real photo upload with EXIF stripping via canvas.
+                      The browser automatically strips EXIF when drawing to canvas
+                      and exporting. */}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-label="Selecionar foto"
+                    onChange={async (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0]
+                      if (!file) return
+                      // Strip EXIF by drawing to canvas and re-exporting.
+                      const img = new Image()
+                      img.onload = async () => {
+                        const canvas = document.createElement("canvas")
+                        canvas.width = img.width
+                        canvas.height = img.height
+                        const ctx = canvas.getContext("2d")
+                        if (!ctx) return
+                        ctx.drawImage(img, 0, 0)
+                        canvas.toBlob(
+                          async (blob) => {
+                            if (!blob) return
+                            const formData = new FormData()
+                            formData.append("photo", blob, file.name)
+                            try {
+                              const { uploadPostPhotoAction } = await import(
+                                "../../(shell)/events/upload-photo-action"
+                              )
+                              const result = await uploadPostPhotoAction(formData)
+                              setPhotoPath(result.photoPath)
+                            } catch (err) {
+                              setError(err instanceof Error ? err.message : "Erro ao enviar foto")
+                            }
+                          },
+                          file.type,
+                          0.92,
+                        )
+                      }
+                      img.src = URL.createObjectURL(file)
+                    }}
+                    className="block w-full text-sm text-muted file:mr-4 file:rounded-md file:border-0 file:bg-[var(--surface-subtle)] file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-[var(--surface)]"
+                  />
+                  {photoPath && <p className="text-xs text-muted">Foto carregada: {photoPath}</p>}
+                </div>
               ) : null}
 
               {postType === "link" ? (
