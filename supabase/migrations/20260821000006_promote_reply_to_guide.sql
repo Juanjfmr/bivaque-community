@@ -144,8 +144,10 @@ as $$
     p.display_name
   from public.recommendation_replies rr
   join public.recommendation_requests r on r.id = rr.request_id
+  -- user_id-only: profiles.locality_id was dropped by P0 Task 3
+  -- (20260817031237_belonging_multi_membership.sql) — one profile per person.
   left join public.profiles p
-    on p.user_id = rr.author_id and p.locality_id = r.locality_id
+    on p.user_id = rr.author_id
   where r.locality_id = p_locality_id
     and not exists (
       select 1 from public.recommendation_reply_promotions rp

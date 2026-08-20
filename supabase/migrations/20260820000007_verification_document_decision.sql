@@ -116,17 +116,17 @@ begin
     values (v_row.user_id, v_locality_id)
     on conflict (user_id, locality_id) do nothing;
 
-    insert into public.profiles (user_id, locality_id, display_name, visibility, consent_version, consented_at)
+    -- profiles has no locality_id (P0 Task 3 — one profile per person, the
+    -- locality lives on locality_memberships, already inserted above).
+    insert into public.profiles (user_id, display_name, visibility, consent_version, consented_at)
     values (
       v_row.user_id,
-      v_locality_id,
       'Membro',
       'locality_members'::public.profile_visibility,
       1,
       now()
     )
     on conflict (user_id) do update set
-      locality_id = excluded.locality_id,
       consent_version = greatest(profiles.consent_version, excluded.consent_version),
       consented_at = coalesce(profiles.consented_at, excluded.consented_at);
   else

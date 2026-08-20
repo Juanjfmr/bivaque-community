@@ -87,8 +87,10 @@ as $$
     select true as has_reacted from public.post_reactions r2
     where r2.post_id = p.id and r2.user_id = (select auth.uid()) limit 1
   ) my_r on true
+  -- user_id-only: profiles.locality_id was dropped by P0 Task 3
+  -- (20260817031237_belonging_multi_membership.sql) — one profile per person.
   left join public.profiles pr
-    on pr.user_id = p.user_id and pr.locality_id = p.locality_id
+    on pr.user_id = p.user_id
   where exists (select 1 from am_member)
     and p.is_deleted = false
     and (
