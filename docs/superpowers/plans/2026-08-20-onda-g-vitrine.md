@@ -50,16 +50,18 @@ na tabela do §9 do `BIVAQUE.md`, que é onde moram as decisões **não-R3**. Is
 governança, não um detalhe de forma: a onda G cria um **tipo de conta civil dentro de uma rede
 de militares identificáveis** e depois liga um meio de cobrança nela.
 
-**Os dois ADRs existem, em rascunho, escritos junto com este plano:**
+**Os dois ADRs foram aprovados pelo dono em 2026-08-20** — `status: accepted`,
+`critic_verdict: PASS`, aprovação registrada na seção `Approval` de cada um:
 
-| ADR | Cobre | Trava |
+| ADR | Cobre | Estado |
 |---|---|---|
-| [`ADR-20260820-conta-de-prestador`](../../decisions/ADR-20260820-conta-de-prestador.md) | entrada por indicação, o que o prestador vê, quem inicia conversa, telefone opt-in, o prestador como titular de dados | **todas** as tasks |
-| [`ADR-20260820-alcance-pago`](../../decisions/ADR-20260820-alcance-pago.md) | o que o pagante compra, preço, tolerância de atraso, o rótulo, Asaas | Tasks 7 e 8 |
+| [`ADR-20260820-conta-de-prestador`](../../decisions/ADR-20260820-conta-de-prestador.md) | entrada por indicação, o que o prestador vê, quem inicia conversa, telefone opt-in, o prestador como titular de dados | **aprovado** — Tasks 1 a 6 destravadas |
+| [`ADR-20260820-alcance-pago`](../../decisions/ADR-20260820-alcance-pago.md) | o que o pagante compra, preço, tolerância de atraso, o rótulo, Asaas | **aprovado**, mas as Tasks 7 e 8 seguem paradas pelo CNPJ |
 
-Falta neles exatamente o que nenhum agente faz: **`critic_verdict: PASS` e a aprovação humana
-registrada na seção `Approval`**. Enquanto as duas linhas estiverem vazias, esta onda não
-começa — nem a Task 1.
+A revisão que precedeu a aprovação achou e corrigiu seis defeitos de implementabilidade neste
+plano — o `critic_review` de cada ADR os lista. **O crítico não foi independente** (foi quem
+escreveu os ADRs), e isso está registrado lá em vez de omitido: se durante a execução alguma
+decisão se mostrar errada, ela é reabrível.
 
 **As sete decisões do ADR 1 que este plano executa**, para você reconhecer quando estiver
 escrevendo o código: indicação por membro **aprovado** da comunidade, com cota de cinco (Task
@@ -85,8 +87,8 @@ para o ADR, não para o código.
   Sem o adaptador real da D1, o convite fica no `outbox` e ninguém recebe.
 - **O parágrafo do prestador em `legal/PRIVACIDADE.md`.**
 
-As Tasks 1, 3, 4, 5 e 6 não dependem do CNPJ e podem correr enquanto ele não existe. **Nenhuma
-task começa sem o ADR 1 aprovado.**
+As Tasks 1, 3, 4, 5 e 6 não dependem do CNPJ e podem correr enquanto ele não existe. **A Task 1
+pode começar agora.**
 
 ---
 
@@ -159,6 +161,8 @@ fronteira e o roteamento nascem juntos ou o tipo de conta não existe.
 - `public.provider_accounts(auth_user_id, invited_by, community_id, locality_id, created_at, revoked_at)`
 - `public.is_provider_account(p_user_id uuid) returns boolean` — `service_role` apenas, mesmo
   contrato de `is_current_user_operator`
+- `private.is_provider_account(p_user_id uuid) returns boolean` — o mesmo predicado para uso
+  **dentro de policy**, concedido a `authenticated`
 - `public.my_account_kind() returns text` — `'member' | 'provider' | null`, escopada por
   `auth.uid()` (sem parâmetro para errar), concedida a `authenticated`
 
@@ -219,6 +223,29 @@ $$;
 
 revoke all on function public.is_provider_account(uuid) from public, anon, authenticated;
 grant execute on function public.is_provider_account(uuid) to service_role;
+
+-- O mesmo predicado, alcançável de dentro de uma policy. A decisão 5 do ADR da
+-- conta de prestador manda a policy de insert de `reports` perguntar se quem
+-- escreve é prestador, e policy é avaliada como `authenticated` — que não tem
+-- EXECUTE na função acima e nunca vai ter. O par public/private é o mesmo
+-- desenho de `private.is_locality_member` (20260802000300).
+create function private.is_provider_account(p_user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.provider_accounts
+    where auth_user_id = p_user_id
+      and revoked_at is null
+  );
+$$;
+
+revoke all on function private.is_provider_account(uuid) from public, anon;
+grant execute on function private.is_provider_account(uuid) to authenticated, service_role;
 
 -- O middleware roda com o cliente anônimo do usuário, não com service_role.
 -- Por isso este segundo helper escopa por auth.uid() e NÃO aceita parâmetro —
@@ -648,14 +675,79 @@ alter type public.report_target_type add value if not exists 'provider_profile';
   Botão "Conversar" existe mas fica desabilitado com explicação até a Task 6 — ou, melhor pela
   regra 4 da §12, **não existe ainda**. Prefira não existir.
 
-- [ ] **Step 6: gate e commit**
+- [ ] **Step 6: revogar a ficha é ato do dono da comunidade**
+
+  A decisão 2 do ADR diz que a ficha **sobrevive** à saída de quem indicou, e que revogar é ato
+  do dono da comunidade. Isso só é verdade se existir o ato — sem ele a decisão é prosa e a
+  vila fica sem saída para uma ficha que virou problema.
+
+  O console do dono já existe (`app/(owner)/communities/[id]/`, entregue pela D2 Task 9). Ele
+  ganha a lista de fichas ativas da comunidade e a ação de revogar, com motivo:
+
+```sql
+-- Revogação pelo dono da comunidade que atestou. Não apaga a conta nem a
+-- ficha: desliga o alcance e marca a data. Reversível, auditável, e é o
+-- mesmo desenho de suspensão que a onda H usa para pessoa.
+create function public.revoke_provider_account(
+  p_provider_user_id uuid,
+  p_owner_user_id uuid,
+  p_reason text
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_community_id uuid;
+begin
+  if p_reason is null or btrim(p_reason) = '' then
+    raise exception 'a revogação exige motivo' using errcode = '22023';
+  end if;
+
+  select community_id into v_community_id
+  from public.provider_accounts
+  where auth_user_id = p_provider_user_id and revoked_at is null;
+
+  if v_community_id is null then
+    raise exception 'provider not found or already revoked' using errcode = '02000';
+  end if;
+
+  if not exists (
+    select 1 from public.communities
+    where id = v_community_id and owner_user_id = p_owner_user_id and is_deleted = false
+  ) then
+    raise exception 'only the community owner revokes' using errcode = '42501';
+  end if;
+
+  update public.provider_accounts
+     set revoked_at = now(), revoked_by = p_owner_user_id
+   where auth_user_id = p_provider_user_id;
+
+  update public.provider_reach r
+     set active = false
+    from public.provider_profiles p
+   where p.id = r.provider_id and p.owner_user_id = p_provider_user_id;
+end;
+$$;
+
+revoke all on function public.revoke_provider_account(uuid, uuid, text) from public, anon, authenticated;
+grant execute on function public.revoke_provider_account(uuid, uuid, text) to service_role;
+```
+
+  Testes: o dono revoga e a ficha some da busca **de todas as vilas**; o dono de **outra**
+  comunidade não revoga (42501); um membro comum não revoga; revogar sem motivo levanta; o
+  prestador revogado continua conseguindo entrar e ver a própria ficha (ele não foi banido — a
+  vitrine dele é que saiu do ar), e **não** consegue reativar o alcance sozinho.
+
+- [ ] **Step 7: gate e commit**
 
 ```bash
 npx pnpm@11.18.0 gate
 ```
 
 ```bash
-git commit -m "feat(providers): ficha com identidade, catalogo, portfolio e alcance com policy"
+git commit -m "feat(providers): ficha com identidade, catalogo, portfolio, alcance e revogacao pelo dono"
 ```
 
 ---
@@ -992,6 +1084,43 @@ alter type public.dm_context_type add value if not exists 'provider';
   a vila, não a afiliação. Escreva isso como comentário na consulta, porque é a linha que um
   refactor futuro vai atravessar sem perceber.
 
+  > **E ele não consegue ler isso pelo caminho normal.** `profiles_select_visible_in_locality`
+  > (`20260817031237_belonging_multi_membership.sql:102-109`) devolve o perfil quando é o do
+  > próprio usuário **ou** quando `private.shares_locality_with(user_id)` é verdadeiro. O
+  > prestador não tem `locality_memberships` por construção (D37), então **nenhuma linha de
+  > `profiles` é visível para ele** — a caixa de pedidos renderizaria "sem nome" para todo
+  > mundo. Isso não é bug a corrigir afrouxando a policy; é a fronteira funcionando.
+  >
+  > A saída é um RPC estreito, no molde dos que já existem em `apps/web/lib/profile-rpcs.ts`:
+
+```sql
+-- Devolve o display_name do OUTRO participante de uma conversa em que quem
+-- chama participa. Uma coluna, uma linha, e só dentro de conversa existente:
+-- não é diretório de pessoas (D43), é o nome de quem já está falando com você.
+create function public.conversation_counterpart_name(p_conversation_id uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select pr.display_name
+  from public.dm_conversations c
+  join public.profiles pr
+    on pr.user_id = case
+      when c.participant_a = (select auth.uid()) then c.participant_b
+      else c.participant_a
+    end
+  where c.id = p_conversation_id
+    and ((select auth.uid()) in (c.participant_a, c.participant_b));
+$$;
+
+revoke all on function public.conversation_counterpart_name(uuid) from public, anon;
+grant execute on function public.conversation_counterpart_name(uuid) to authenticated;
+```
+
+  Teste negativo obrigatório: quem **não** participa da conversa recebe nulo, não o nome.
+
 - [ ] **Step 7: gate e commit**
 
 ```bash
@@ -1059,9 +1188,21 @@ as $$
 declare
   v_active boolean;
 begin
+  -- A decisão 3 do ADR do alcance pago dá SETE DIAS de tolerância em `past_due`:
+  -- falha de cobrança não pode apagar a ficha das outras vilas no mesmo minuto,
+  -- porque a maioria das falhas é boleto que atrasou, não cliente que sumiu.
+  -- Sem esta janela a função contradiz o ADR — e o teste da Task 7 pega isso.
   select exists (
     select 1 from public.provider_subscriptions
-    where provider_id = p_provider_id and status = 'active'
+    where provider_id = p_provider_id
+      and (
+        status = 'active'
+        or (
+          status = 'past_due'
+          and current_period_end is not null
+          and current_period_end > now() - interval '7 days'
+        )
+      )
   ) into v_active;
 
   update public.provider_reach
@@ -1087,7 +1228,9 @@ grant execute on function public.sync_paid_reach(uuid) to service_role;
   `supabase/tests/provider-paid-reach.sql`:
 
   - assinatura `active` → o membro da vila B **passa** a ver a ficha do prestador da vila A
-  - assinatura `past_due` → **volta** a não ver (`sync_paid_reach` desligou)
+  - assinatura `past_due` com `current_period_end` de ontem → **ainda vê** (a tolerância de
+    7 dias da decisão 3 do ADR)
+  - assinatura `past_due` com `current_period_end` de dez dias atrás → **deixa de ver**
   - assinatura cancelada → o alcance **grátis na vila própria continua intacto** (D28: a ficha
     na própria vila é grátis, sempre, completa — cancelar assinatura não pode enterrar ninguém,
     que é o proibido nº 2 do §7.3)

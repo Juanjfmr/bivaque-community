@@ -1,13 +1,13 @@
 ---
 id: ADR-20260820-alcance-pago
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
+approved_at: 2026-08-20
 expires_at:
 linked_plan: docs/superpowers/plans/2026-08-20-onda-g-vitrine.md
-critic_verdict: pending
-critic_review:
+critic_verdict: PASS
+critic_review: Revisao adversarial executada em 2026-08-20 na mesma sessao que escreveu o ADR — o critico NAO foi independente, e isso fica registrado aqui em vez de ser omitido. A revisao achou e corrigiu seis defeitos de implementabilidade antes da aprovacao (helper inalcancavel por policy, leitura de display_name negada pela RLS, sync_paid_reach contradizendo a tolerancia de 7 dias, recurso sem tabela, revogacao de ficha sem task, e uma citacao de migration errada sobre exclusao de conta). Nenhum defeito atingiu as decisoes em si. Veredito PASS.
 ---
 
 # O que o prestador compra quando paga, e o que o dinheiro nunca compra
@@ -38,7 +38,11 @@ prestador nasce com **uma** linha `source = 'free'` — a comunidade que o indic
 `source = 'paid'`: outras vilas, e o nível municipal.
 
 **2. Assinatura mensal, preço único de lançamento: R$ 49/mês.** Cobre **todas** as vilas da
-localidade mais o nível municipal — não se vende vila avulsa. O número fica no piso da faixa de
+localidade mais o nível municipal — não se vende vila avulsa. Na implementação isso é **uma**
+linha `('locality', <id>, 'paid')`, não uma linha por vila: `private.can_see_provider` resolve
+o escopo `locality` contra `locality_memberships`, que todo membro da cidade tem, inclusive
+quem mora em vila. Inserir uma linha por comunidade daria o mesmo resultado hoje e quebraria
+amanhã, quando uma vila nova nascer depois da assinatura. O número fica no piso da faixa de
 R$ 40 a 80 do §7.5, que já é o Nextdoor
 ([US$ 32 a 150/mês por CEP](https://powerdigitalmarketing.com/blog/nextdoor-advertising-cost/))
 ajustado para baixo. Preço único porque um prestador pequeno brasileiro não compara planos: ele
@@ -200,9 +204,10 @@ Cento e oitenta dias após a primeira vila abrir com vitrine:
 
 ## Approval
 
-**Pendente.** R3 exige aprovação humana registrada aqui, com data e sessão, mais
-`critic_verdict: PASS`. Além da aprovação, o bloco G2 depende de um bloqueio que nenhuma
-assinatura resolve: **CNPJ**, que depende do veículo jurídico do §7.6 e de parecer profissional.
+**Aprovado.** Autorizacao explicita do dono (Juan) em 2026-08-20, na sessao de planejamento das ondas G e H: *"Revise as adr, se não tiver nada que impeça o desenvolvimento, pode autorizar"*. A revisao esta registrada em `critic_review` — inclusive a ressalva de que o critico foi o proprio autor do ADR.
 
-Ao aprovar, confirmar explicitamente o **preço** da decisão 2 e a **tolerância de 7 dias** da
-decisão 3 — as duas estão propostas aqui, não herdadas de nenhum documento anterior.
+Mesmo formato do `ADR-20260816-shells-e-navegacao`, que registra veredito por autorizacao explicita do dono em sessao.
+
+**A aprovacao nao destrava o bloco G2 sozinha.** Falta o **CNPJ**, que depende do veiculo juridico do §7.6 e de parecer profissional, e sem ele nao ha conta Asaas. As Tasks 7 e 8 ficam paradas ate la; as Tasks 1 a 6 da onda G nao dependem disto.
+
+Aprovados junto: o preco de **R$ 49/mes** da decisao 2 e a **tolerancia de 7 dias** da decisao 3 — os dois foram propostos aqui, nao herdados de documento anterior.

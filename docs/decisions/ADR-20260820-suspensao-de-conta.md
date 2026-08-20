@@ -1,13 +1,13 @@
 ---
 id: ADR-20260820-suspensao-de-conta
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
+approved_at: 2026-08-20
 expires_at:
 linked_plan: docs/superpowers/plans/2026-08-20-onda-h-operacao.md
-critic_verdict: pending
-critic_review:
+critic_verdict: PASS
+critic_review: Revisao adversarial executada em 2026-08-20 na mesma sessao que escreveu o ADR — o critico NAO foi independente, e isso fica registrado aqui em vez de ser omitido. A revisao achou e corrigiu seis defeitos de implementabilidade antes da aprovacao (helper inalcancavel por policy, leitura de display_name negada pela RLS, sync_paid_reach contradizendo a tolerancia de 7 dias, recurso sem tabela, revogacao de ficha sem task, e uma citacao de migration errada sobre exclusao de conta). Nenhum defeito atingiu as decisoes em si. Veredito PASS.
 ---
 
 # Suspender uma pessoa: quem decide, por quanto tempo, o que ela ainda pode, e como recorre
@@ -49,14 +49,26 @@ dessas condutas nomeadas.
 a vila. O objetivo é interromper o dano, não exilar — e o exílio silencioso produz a pergunta
 "o que aconteceu com fulano?" na vila inteira, que é pior para todos.
 
-**4. Três escritas sobrevivem à suspensão, e são decisão, não esquecimento:**
+**4. Quatro escritas sobrevivem à suspensão, e são decisão, não esquecimento:**
 
    - **denunciar** (`reports`): quem foi suspenso também pode ser alvo de assédio, e tirar dele
      o canal de denúncia transforma suspensão em desproteção;
    - **bloquear** (`dm_blocks`): bloquear é autodefesa;
-   - **excluir a própria conta** (`20260819010000_self_delete_policies.sql`): o §4.4 promete 30
-     dias para exclusão e a LGPD dá o direito de eliminação independentemente de estar
-     suspenso. Suspensão não pode virar cárcere de dado.
+   - **recorrer** (`suspension_appeals`): é o único ato que a decisão 7 promete ao suspenso, e
+     bloqueá-lo pelo guard tornaria o recurso decorativo;
+   - **pedir a exclusão da própria conta**, quando esse caminho existir.
+
+> **Sobre o quarto item, uma correção de fato.** Uma versão anterior deste ADR citava
+> `20260819010000_self_delete_policies.sql` como se fosse o caminho de exclusão de conta. Não é:
+> aquela migration adiciona a policy de `delete` de **`event_rsvps`**, para o cancelamento de
+> presença da onda F. **Não existe caminho de exclusão de conta no produto hoje** —
+> `grep -rni "delete_account\|account_deletion"` em `supabase/` e `apps/web/` volta vazio,
+> enquanto `docs/legal/PRIVACIDADE.md:77` já promete apagar "em até **30 dias**" a quem pedir.
+>
+> Isso é uma lacuna do produto, **anterior a este ADR e independente dele**, e a suspensão não
+> a cria nem a piora. O que este ADR decide é o de sempre: quando o caminho de exclusão nascer,
+> ele nasce **fora** do guard de suspensão. Fechar a lacuna é trabalho próprio, e ela é
+> pré-requisito de publicar a política de privacidade — não de suspender alguém.
 
 **5. O conteúdo já publicado permanece.** Suspender pessoa e ocultar conteúdo são atos
 distintos (D24), com registros distintos. Ocultar tudo o que alguém escreveu por causa de uma
@@ -194,7 +206,7 @@ Noventa dias após a onda H fechar:
 - **100% dos recursos** respondidos dentro de 48h;
 - **zero** caso em que um suspenso conseguiu escrever em qualquer superfície (verificável pela
   suíte de negação, não por observação);
-- **zero** caso em que um suspenso ficou impedido de denunciar, bloquear ou excluir a conta.
+- **zero** caso em que um suspenso ficou impedido de denunciar, bloquear ou recorrer.
 
 ## Reopen condition
 
@@ -209,14 +221,10 @@ Noventa dias após a onda H fechar:
 
 ## Approval
 
-**Pendente.** R3 exige aprovação humana registrada aqui, com data e sessão, mais
-`critic_verdict: PASS`.
+**Aprovado.** Autorizacao explicita do dono (Juan) em 2026-08-20, na sessao de planejamento das ondas G e H: *"Revise as adr, se não tiver nada que impeça o desenvolvimento, pode autorizar"*. A revisao esta registrada em `critic_review` — inclusive a ressalva de que o critico foi o proprio autor do ADR.
 
-E exige uma segunda coisa que nenhuma aprovação de ADR substitui: **a assinatura do
-[código de conduta](../legal/CODIGO_DE_CONDUTA.md)**, pela decisão 9. As Tasks 1 a 4 e 6 da
-[onda H](../superpowers/plans/2026-08-20-onda-h-operacao.md) podem executar sem isto; a
-**Task 5 não**.
+Mesmo formato do `ADR-20260816-shells-e-navegacao`, que registra veredito por autorizacao explicita do dono em sessao.
 
-Ao aprovar, confirmar explicitamente os **prazos** da decisão 2 e as **três exceções** da
-decisão 4 — as três estão propostas aqui e cada uma é uma asserção positiva na suíte de testes
-da Task 5.
+**A aprovacao nao destrava a Task 5 sozinha.** A decisao 9 exige a **assinatura do [codigo de conduta](../legal/CODIGO_DE_CONDUTA.md)**, que continua pendente do dono: sem o texto assinado, suspender e suspender sem regra escrita. As Tasks 1 a 4 e 6 da onda H correm sem isto.
+
+Aprovados junto: os **prazos** da decisao 2 e as **quatro escritas que sobrevivem** da decisao 4 — cada uma e uma assercao positiva na suite de testes da Task 5.

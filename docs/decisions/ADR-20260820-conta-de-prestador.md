@@ -1,13 +1,13 @@
 ---
 id: ADR-20260820-conta-de-prestador
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
+approved_at: 2026-08-20
 expires_at:
 linked_plan: docs/superpowers/plans/2026-08-20-onda-g-vitrine.md
-critic_verdict: pending
-critic_review:
+critic_verdict: PASS
+critic_review: Revisao adversarial executada em 2026-08-20 na mesma sessao que escreveu o ADR — o critico NAO foi independente, e isso fica registrado aqui em vez de ser omitido. A revisao achou e corrigiu seis defeitos de implementabilidade antes da aprovacao (helper inalcancavel por policy, leitura de display_name negada pela RLS, sync_paid_reach contradizendo a tolerancia de 7 dias, recurso sem tabela, revogacao de ficha sem task, e uma citacao de migration errada sobre exclusao de conta). Nenhum defeito atingiu as decisoes em si. Veredito PASS.
 ---
 
 # A conta do prestador civil: como entra, o que vê, e o que nunca vê
@@ -57,8 +57,16 @@ indicou — faria a vitrine desabar em dezembro, que é exatamente quando metade
 **3. O que o prestador vê, exaustivamente:** a própria ficha, o próprio catálogo, o próprio
 portfólio, o próprio alcance, e as conversas que **um membro** abriu com ele. Dentro da
 conversa, vê o `display_name` do membro e mais nada — não o e-mail, não a vila, não a
-afiliação, não a localidade. Fora disso: nenhum post, nenhum perfil, nenhum grupo, nenhum
-evento, nenhuma comunidade, nenhuma lista de membros e nenhuma lista de outros prestadores.
+afiliação, não a localidade.
+
+Fora disso: nenhum post, nenhum perfil, nenhum grupo, nenhum evento, nenhuma comunidade,
+nenhuma lista de membros e nenhuma lista de outros prestadores.
+
+> E o nome ele vê **por um RPC estreito**, não pela tabela:
+> `profiles_select_visible_in_locality` (`20260817031237:102-109`) exige localidade
+> compartilhada, e o prestador não tem nenhuma. Sem o RPC a caixa de pedidos mostraria "sem
+> nome" para todo mundo — o que é a fronteira funcionando, não um defeito a corrigir
+> afrouxando a policy.
 
 **4. O prestador nunca inicia conversa.** Só o membro abre. O prestador responde dentro de
 conversa existente. Uma conta civil abrindo conversa com militar identificável é contato não
@@ -66,9 +74,14 @@ solicitado, e é a porta que a rede fecha na entrada — abri-la pelo lado de de
 verificação.
 
 **5. O prestador pode denunciar mensagem — e só mensagem.** A policy de insert de `reports`
-ganha `or (public.is_provider_account((select auth.uid())) and target_type = 'message')`. Um
+ganha `or (private.is_provider_account((select auth.uid())) and target_type = 'message')`. Um
 civil assediado dentro do produto precisa de canal; dar a ele os outros alvos seria dar leitura
 de conteúdo que ele não tem.
+
+> O helper é o de `private`, não o de `public`. Policy é avaliada como `authenticated`, e o
+> `public.is_provider_account` é concedido só a `service_role` — a versão `public` existe para
+> o gate do shell, que roda com `service_role`, e a de `private` para as policies. Mesmo par
+> que `private.is_locality_member` já usa. Sem essa distinção, a policy falha por privilégio.
 
 **6. Telefone é opcional e opt-in.** `contact_phone` pode ficar em branco e a ficha funciona
 sem ele. Quando preenchido, é publicado para quem alcança a ficha, com aviso explícito no
@@ -204,9 +217,10 @@ Noventa dias após a primeira vila abrir com vitrine:
 
 ## Approval
 
-**Pendente.** R3 exige aprovação humana registrada aqui, com data e sessão, mais
-`critic_verdict: PASS`. Enquanto estas duas linhas estiverem vazias, a
-[onda G](../superpowers/plans/2026-08-20-onda-g-vitrine.md) **não começa** — nem a Task 1.
+**Aprovado.** Autorizacao explicita do dono (Juan) em 2026-08-20, na sessao de planejamento das ondas G e H: *"Revise as adr, se não tiver nada que impeça o desenvolvimento, pode autorizar"*. A revisao esta registrada em `critic_review` — inclusive a ressalva de que o critico foi o proprio autor do ADR.
 
-Ao aprovar, registrar também qualquer divergência das sete decisões acima: a onda G foi escrita
-assumindo exatamente estas, e cada mudança tem uma task correspondente indicada no plano.
+Mesmo formato do `ADR-20260816-shells-e-navegacao`, que registra veredito por autorizacao explicita do dono em sessao.
+
+A onda G esta destravada da Task 1 a Task 6. O bloco G2 continua parado pelo CNPJ e pelo [ADR do alcance pago](ADR-20260820-alcance-pago.md).
+
+Se durante a execucao alguma das sete decisoes se mostrar errada, a correcao entra aqui e o plano acompanha — nao o contrario.

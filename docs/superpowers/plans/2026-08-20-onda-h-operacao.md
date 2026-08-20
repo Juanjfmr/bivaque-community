@@ -44,13 +44,15 @@ A [`RISK_MATRIX.md`](../../decisions/RISK_MATRIX.md) eleva automaticamente `noti
 ponto de vista de quem a sofre no momento em que a sofre, e é ato que precisa de base
 contratual.
 
-**Um ADR, obrigatório antes da Task 5, e ele existe em rascunho:**
-[`ADR-20260820-suspensao-de-conta`](../../decisions/ADR-20260820-suspensao-de-conta.md),
-escrito junto com este plano. A D38 decidia só o *mecanismo* — flag em `profiles` mais helper
-na RLS; o ADR decide o *devido processo*. Falta nele o que nenhum agente faz:
-**`critic_verdict: PASS` e a aprovação humana** na seção `Approval`.
+**Um ADR, obrigatório antes da Task 5, e ele foi aprovado pelo dono em 2026-08-20:**
+[`ADR-20260820-suspensao-de-conta`](../../decisions/ADR-20260820-suspensao-de-conta.md) está
+`accepted`, com `critic_verdict: PASS`. A D38 decidia só o *mecanismo* — flag em `profiles`
+mais helper na RLS; o ADR decide o *devido processo*.
 
-**As nove decisões que a Task 5 executa**, para você reconhecê-las no código:
+**A aprovação do ADR não é suficiente para a Task 5.** A decisão 9 dele exige a assinatura do
+código de conduta, e ela continua pendente. As Tasks 1 a 4 e 6 correm sem isso.
+
+**As decisões que a Task 5 executa**, para você reconhecê-las no código:
 
 1. **suspende o operador, e só ele** — o dono da comunidade remove da vila, poder que já tem
    (D14); a conta atravessa localidades e o poder dele para na vila;
@@ -64,7 +66,9 @@ na RLS; o ADR decide o *devido processo*. Falta nele o que nenhum agente faz:
    instância, e a tela diz isso;
 8. **toda suspensão e todo levantamento viram linha em `moderation_actions`**, retenção de 2
    anos (§4.4);
-9. **base contratual é o código de conduta assinado** — sem ele a Task 5 não sobe.
+9. **base contratual é o código de conduta assinado** — sem ele a Task 5 não sobe;
+10. e a revisão acrescentou a **quarta** escrita que sobrevive à suspensão: o próprio
+    recurso, que precisa de tabela e de fila — ver a Task 5, Step 4.
 
 Se você discordar de alguma delas durante a execução, **pare e reporte** — a discordância vai
 para o ADR, não para o código.
@@ -182,12 +186,14 @@ drop table public.dm_reports;
 ```
 
   > **O `drop table` é destrutivo, e a `RISK_MATRIX.md` classifica migration destrutiva como
-  > R3.** Ele precisa de um "sim" explícito do dono — uma linha, não um ADR inteiro, porque a
-  > decisão de fundo (um modelo, todos os alvos) já é a D24. Se o dono preferir não apagar,
-  > a alternativa equivalente e reversível é manter a tabela e cortar o acesso:
-  > `revoke insert on public.dm_reports from authenticated`, deixando as linhas antigas como
-  > arquivo morto. As duas satisfazem o resto desta task; a primeira deixa o schema limpo, a
-  > segunda deixa o histórico à mão. **Não escolha sozinho.**
+  > R3 — por isso ele exigia autorização explícita, e ela foi dada.**
+  > **Autorizado pelo dono (Juan) em 2026-08-20, em sessão:** *"autorizo apagar a linha
+  > dm_reports"*. Execute o `drop` como está escrito acima, **com o `insert … select` de cópia
+  > na mesma transação** — se a cópia falhar, o `drop` não acontece.
+  >
+  > A alternativa que ficou para trás, registrada porque a escolha foi real: manter a tabela e
+  > cortar o acesso com `revoke insert on public.dm_reports from authenticated`, deixando as
+  > linhas como arquivo morto.
 
   E o gatilho de auto-denúncia (`private.reports_block_self`, `20260802001600:60-88`) ganha os
   ramos novos — hoje o `case` cobre post, comment e group, e cai no `else v_owner_id := null`
@@ -677,9 +683,66 @@ create table public.moderation_actions (
   - o middleware redireciona o suspenso para `/conta/suspensa` em qualquer rota de escrita;
   - a tela diz **que** está suspenso, **até quando**, e **qual regra** do código de conduta
     fundamenta — nunca o texto livre do motivo, que pode conter o que o denunciante escreveu;
-  - a tela oferece o **recurso**, na forma que o ADR decidir;
-  - leitura continua funcionando enquanto a suspensão for temporária — o ADR decide, e o padrão
-    deste plano é: lê, não escreve.
+  - leitura continua funcionando: a decisão 3 do ADR é explícita — tira escrita, não leitura.
+
+  **O recurso precisa de onde morar, e é aqui que ele nasce.** A decisão 7 do ADR fixou um
+  recurso por suspensão, resposta em 48 horas, julgado pelo operador. Sem tabela e sem fila,
+  "a tela oferece o recurso" é um botão que escreve num lugar que ninguém lê — que é
+  exatamente o defeito do `dm_reports` que a Task 1 desta onda existe para apagar. Não repita
+  o erro na mesma onda que o corrige:
+
+```sql
+create type public.appeal_status as enum ('open', 'upheld', 'denied');
+
+create table public.suspension_appeals (
+  id uuid primary key default gen_random_uuid(),
+  subject_user_id uuid not null references auth.users (id) on delete cascade,
+  -- Amarra o recurso à suspensão que ele contesta: um por suspensão (decisão 7).
+  moderation_action_id uuid not null unique
+    references public.moderation_actions (id) on delete cascade,
+  body text not null check (char_length(body) between 10 and 2000),
+  status public.appeal_status not null default 'open',
+  decided_by uuid references auth.users (id),
+  decided_at timestamptz,
+  decision_note text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.suspension_appeals enable row level security;
+alter table public.suspension_appeals force row level security;
+
+revoke all on table public.suspension_appeals from anon, authenticated;
+grant select, insert on table public.suspension_appeals to authenticated;
+grant select, update on table public.suspension_appeals to service_role;
+
+-- O suspenso lê e escreve o próprio recurso. É a QUARTA escrita que sobrevive à
+-- suspensão, e ela não estava na lista da decisão 4 do ADR por um motivo bobo:
+-- a lista foi escrita antes de o recurso ter tabela. Sem esta policy, o guard
+-- de suspensão da Step 2 bloquearia o único ato que o ADR promete ao suspenso.
+create policy suspension_appeals_select_own
+on public.suspension_appeals
+for select
+to authenticated
+using (subject_user_id = (select auth.uid()));
+
+create policy suspension_appeals_insert_own
+on public.suspension_appeals
+for insert
+to authenticated
+with check (
+  subject_user_id = (select auth.uid())
+  and private.is_suspended((select auth.uid()))
+);
+```
+
+  A fila do recurso entra no console do operador, ao lado da fila de denúncias, com a mesma
+  marca de SLA de 48h da Task 4 — e deferir o recurso chama `lift_suspension`, não um segundo
+  caminho paralelo.
+
+  > **Atenção à ordem da Step 2:** `suspension_appeals` é a **quarta** exceção ao guard de
+  > suspensão, junto de `reports`, `dm_blocks` e o caminho de exclusão de conta. Se você
+  > aplicar o guard antes de criar esta tabela, cuide para não incluí-la depois por
+  > "coerência" — o teste positivo dela é obrigatório.
 
 - [ ] **Step 5: os testes — este é o maior conjunto da onda**
 
