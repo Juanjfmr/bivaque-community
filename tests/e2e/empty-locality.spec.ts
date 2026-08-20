@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
+import { encodeAuthCookieValue } from "./helpers/session"
 
 // P0 Task 9 Step 4: honest empty state for localities that are just starting.
 //
@@ -102,14 +103,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
     token_type: string
   }
 
-  const session = {
-    access_token: body.access_token,
-    refresh_token: body.refresh_token,
-    expires_at: body.expires_at,
-    expires_in: body.expires_in,
-    token_type: body.token_type,
-    user: { email },
-  }
+  const cookieValue = encodeAuthCookieValue(body, email)
   const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
   const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400
   const shared = {
@@ -122,7 +116,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
   }
 
   await page.context().addCookies([
-    { name: `sb-${projectRef}-auth-token`, value: JSON.stringify(session), ...shared },
+    { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
     { name: CONSENT_COOKIE, value: CURRENT_CONSENT, ...shared },
   ])
 }

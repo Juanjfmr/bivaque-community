@@ -8,6 +8,7 @@ import {
   request,
   test,
 } from "@playwright/test"
+import { encodeAuthCookieValue } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
 // Cinco pessoas sintéticas interagindo (uma janela por vez)
@@ -119,14 +120,7 @@ async function mintSession(email: string): Promise<PasswordGrant> {
 // parametrizado por conta para assinar mais de um usuário de seed.
 async function signInContext(context: BrowserContext, email: string): Promise<void> {
   const grant = await mintSession(email)
-  const session = {
-    access_token: grant.access_token,
-    refresh_token: grant.refresh_token,
-    expires_at: grant.expires_at,
-    expires_in: grant.expires_in,
-    token_type: grant.token_type,
-    user: { email },
-  }
+  const cookieValue = encodeAuthCookieValue(grant, email)
   const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
   const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400
   const shared = {
@@ -138,7 +132,7 @@ async function signInContext(context: BrowserContext, email: string): Promise<vo
     sameSite: "Lax" as const,
   }
   await context.addCookies([
-    { name: `sb-${projectRef}-auth-token`, value: JSON.stringify(session), ...shared },
+    { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
     { name: CONSENT_COOKIE, value: CURRENT_CONSENT, ...shared },
   ])
 }

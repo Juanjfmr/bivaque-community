@@ -22,6 +22,7 @@ import {
   request,
   test,
 } from "@playwright/test"
+import { encodeAuthCookieValue } from "./helpers/session"
 
 // The anon key is never inlined here. Even the Supabase local demo key is a
 // well-formed JWT, so hardcoding it trips the secrets scan — and a fallback
@@ -116,20 +117,22 @@ function buildSessionCookie(grant: Awaited<ReturnType<typeof getSessionViaPasswo
   secure: boolean
   sameSite: "Lax" | "Strict" | "None"
 } {
-  const session = {
-    access_token: grant.accessToken,
-    refresh_token: grant.refreshToken,
-    expires_at: grant.expiresAt,
-    expires_in: grant.expiresIn,
-    token_type: grant.tokenType,
-    user: { email: USER_EMAIL },
-  }
+  const cookieValue = encodeAuthCookieValue(
+    {
+      access_token: grant.accessToken,
+      refresh_token: grant.refreshToken,
+      expires_at: grant.expiresAt,
+      expires_in: grant.expiresIn,
+      token_type: grant.tokenType,
+    },
+    USER_EMAIL,
+  )
   const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
   const storageKey = `sb-${projectRef}-auth-token`
   const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400
   return {
     name: storageKey,
-    value: JSON.stringify(session),
+    value: cookieValue,
     domain: "127.0.0.1",
     path: "/",
     expires,
