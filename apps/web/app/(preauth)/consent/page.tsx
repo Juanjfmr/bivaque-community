@@ -10,7 +10,13 @@ import { renderLegalDocument } from "./document-render"
 // single source); the acceptance row records the versions that were shown.
 
 async function readLegalDocument(relativePath: string): Promise<string> {
-  const filePath = path.join(process.cwd(), "docs", "legal", relativePath)
+  // process.cwd() for `next dev`/`next build` is apps/web (where next.config.ts
+  // lives), but docs/legal/ is monorepo-root-level, shared reference text — two
+  // levels up. A plain `process.cwd()` join only worked for whichever cwd a dev
+  // server happened to run from; a real `next build` (apps/web as cwd, always)
+  // never found the file, crashing static generation of /consent — found
+  // running the onda T/F closing E2E batch, unrelated to either wave's code.
+  const filePath = path.join(process.cwd(), "..", "..", "docs", "legal", relativePath)
   return fs.readFile(filePath, "utf8")
 }
 

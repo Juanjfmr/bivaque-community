@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
+import { emailHint } from "./family-invite-email-hint"
 
 type PendingInviteRow = {
   id: string
@@ -53,23 +54,6 @@ export async function getFamilyInviteDataAction(): Promise<FamilyInviteData | nu
     isVerified: isVerified === true,
     pending: (pendingData as PendingInviteRow[] | null) ?? [],
   }
-}
-
-// Shared mask rule with the SQL function private.family_invite_email_hint:
-// display at most two characters of the local part and two of the domain, then
-// a mask. The mask identifies a pending invite in the list without letting
-// anyone reconstruct the e-mail.
-export function emailHint(email: string): string {
-  const trimmed = email.trim().toLowerCase()
-  const at = trimmed.indexOf("@")
-  if (at <= 0 || at === trimmed.length - 1) return "***@***"
-  const local = trimmed.slice(0, at)
-  const domain = trimmed.slice(at + 1)
-  const visibleLocal = local.length <= 2 ? local.slice(0, 1) : local.slice(0, 2)
-  const dot = domain.indexOf(".")
-  const visibleDomain = domain.length <= 2 ? domain.slice(0, 1) : domain.slice(0, 2)
-  const tld = dot > 2 ? domain.slice(dot) : ""
-  return `${visibleLocal}***@${visibleDomain}***${tld}`
 }
 
 export async function sendFamilyInviteAction(
