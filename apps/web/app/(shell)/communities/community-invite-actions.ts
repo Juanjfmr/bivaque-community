@@ -72,7 +72,10 @@ export async function getCommunityInviteDataAction(
   const supabase = createServiceClient()
   const [verifiedResult, memberResult, pendingResult] = await Promise.all([
     supabase.rpc("is_verified_holder", { p_user_id: userId }),
-    callCommunityInviteRpc(supabase, "is_community_member", { p_community_id: communityId }),
+    callCommunityInviteRpc(supabase, "is_community_member", {
+      p_community_id: communityId,
+      p_user_id: userId,
+    }),
     callCommunityInviteRpc(supabase, "list_pending_community_invitations", {
       p_inviter_user_id: userId,
       p_community_id: communityId,

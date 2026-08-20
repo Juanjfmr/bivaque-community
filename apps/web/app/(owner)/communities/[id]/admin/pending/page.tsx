@@ -159,7 +159,24 @@ export default async function CommunityPendingPage({
                     value={member.user_id}
                     aria-label={`Selecionar ${memberNames.get(member.user_id) ?? "membro"}`}
                   >
-                    <Checkbox.Content>
+                    {/* min-h-11 min-w-11: this checkbox has no visible text
+                        sibling (only aria-label), so its label's hit box
+                        would otherwise be exactly the 16x16 control icon.
+                        The real, visually-hidden <input> that carries the
+                        actual click target is positioned ~10px off from the
+                        visible control (confirmed live: getBoundingClientRect
+                        on both, a HeroUI/react-aria-components layout quirk
+                        present on every Checkbox in this codebase) — the
+                        other, working usages (e.g. notification-preferences-
+                        section.tsx) tolerate the same offset only because
+                        their label's hit box is enlarged by the visible text
+                        next to the icon. Without that text, clicks miss the
+                        label entirely and land on the <li> behind it —
+                        found investigating why this list's batch-approve
+                        checkboxes could not be checked by any method,
+                        including a real browser click. This also happens to
+                        be the accessible 44x44 touch-target minimum. */}
+                    <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
                       <Checkbox.Control>
                         <Checkbox.Indicator />
                       </Checkbox.Control>

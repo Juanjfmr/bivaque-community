@@ -1,10 +1,18 @@
 -- Onda E Task 5 — batch approval, pagination and moderator delegation.
 --
 -- The batch path does NOT loosen authorization: every iteration calls
--- approve_community_member, which rechecks private.is_community_moderator per
+-- approve_community_member, which rechecks the caller's moderator status per
 -- call. The same test set covers the single approval path; this file is about
 -- asserting that the batch path inherits the per-item check rather than
 -- trusting one gate for N items.
+--
+-- Rewritten (20260821000025): the RPCs used to read the caller's identity
+-- from `(select auth.uid())` internally — correct only for `authenticated`
+-- callers with their own JWT, which is not how the app calls them (it always
+-- uses service_role, no JWT). Every one of these four RPCs silently denied
+-- every caller as a result — none had ever worked. Fixed with an explicit
+-- p_caller_user_id parameter; this file now calls them the way the app does,
+-- as service_role, with the caller passed explicitly.
 
 begin;
 
@@ -31,27 +39,25 @@ where community_id = '70000000-0000-4000-8000-000000000001'
 -- chamada valida item a item. O batch é loop no servidor; cada iter herda a
 -- checagem da RPC, não relaxa nada.
 
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000001',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
+reset role;
+set local role service_role;
 
 do $$
 begin
   perform public.approve_community_member(
     '70000000-0000-4000-8000-000000000001',
-    '10000000-0000-4000-8000-000000000002'
+    '10000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000001'
   );
   perform public.approve_community_member(
     '70000000-0000-4000-8000-000000000001',
-    '10000000-0000-4000-8000-000000000003'
+    '10000000-0000-4000-8000-000000000003',
+    '10000000-0000-4000-8000-000000000001'
   );
   perform public.approve_community_member(
     '70000000-0000-4000-8000-000000000001',
-    '10000000-0000-4000-8000-000000000005'
+    '10000000-0000-4000-8000-000000000005',
+    '10000000-0000-4000-8000-000000000001'
   );
 end;
 $$;
@@ -76,59 +82,34 @@ select results_eq(
 -- O RPC throws exception quando o chamador não é moderador; o batch é loop,
 -- então a primeira chamada quebra a transação.
 
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000003',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-
 select throws_ok(
   $$
     select public.approve_community_member(
       '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000005'
+      '10000000-0000-4000-8000-000000000005',
+      '10000000-0000-4000-8000-000000000003'
     )
   $$,
   'P0001',
   null,
-  'E5-: membro comum negado item a item pelo gate de is_community_moderator'
+  'E5-: membro comum negado item a item pelo gate de is_current_user_community_moderator'
 );
 
 -- ── POSITIVE: moderador pode aprovar.
 
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000002',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-
 -- Reset member-five to pending first (the throws_ok above left the test
--- transaction's prior state, but we re-set to be explicit). Direct table
--- writes need the owner role — community_memberships has no UPDATE grant
--- for authenticated, only the security definer RPC does.
-reset role;
+-- transaction's prior state, but we re-set to be explicit).
 update public.community_memberships
 set status = 'pending'
 where community_id = '70000000-0000-4000-8000-000000000001'
   and user_id = '10000000-0000-4000-8000-000000000005';
 
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000002',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-
 select lives_ok(
   $$
     select public.approve_community_member(
       '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000005'
+      '10000000-0000-4000-8000-000000000005',
+      '10000000-0000-4000-8000-000000000002'
     )
   $$,
   'E5+: moderador pode aprovar (gate permite owner e moderator)'
@@ -138,56 +119,34 @@ select lives_ok(
 -- 023, add_community_moderator usava is_community_moderator, que aceita
 -- moderador. Após o fix, só o owner promove.
 
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000001',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-
 -- Member-three is approved member of community -001; owner promotes to mod.
 select lives_ok(
   $$
     select public.add_community_moderator(
       '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000003'
+      '10000000-0000-4000-8000-000000000003',
+      '10000000-0000-4000-8000-000000000001'
     )
   $$,
   'E5+: owner promove membro aprovado para moderator'
 );
 
 -- Now: moderator (member-two) tries to promote another member → deve falhar.
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000002',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- Reset member-three back to plain member so we have someone to try to
 -- promote. (The previous lives_ok promoted them, but member-three is not
 -- the subject of this test — we just need to attempt promotion of a member.)
-reset role;
 update public.community_memberships
 set role = 'member'
 where community_id = '70000000-0000-4000-8000-000000000001'
   and user_id = '10000000-0000-4000-8000-000000000003';
 
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000002',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-
 select throws_ok(
   $$
     select public.add_community_moderator(
       '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000003'
+      '10000000-0000-4000-8000-000000000003',
+      '10000000-0000-4000-8000-000000000002'
     )
   $$,
   'P0001',

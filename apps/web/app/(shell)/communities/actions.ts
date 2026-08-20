@@ -48,46 +48,6 @@ export async function requestCommunityMembershipAction(formData: FormData) {
   revalidatePath("/communities")
 }
 
-export async function approveCommunityMemberAction(formData: FormData) {
-  const communityId = requiredString(formData.get("communityId"))
-  const userId = requiredString(formData.get("userId"))
-  const supabase = await getAuthClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) throw new Error("não autenticado")
-
-  const { error } = await supabase.rpc("approve_community_member", {
-    p_community_id: communityId,
-    p_user_id: userId,
-  })
-  if (error) throw new Error(error.message)
-
-  revalidatePath(`/communities/${communityId}`)
-  revalidatePath("/communities")
-}
-
-export async function removeCommunityMemberAction(formData: FormData) {
-  const communityId = requiredString(formData.get("communityId"))
-  const userId = requiredString(formData.get("userId"))
-  const supabase = await getAuthClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) throw new Error("não autenticado")
-
-  const { error } = await supabase.rpc("remove_community_member", {
-    p_community_id: communityId,
-    p_user_id: userId,
-  })
-  if (error) throw new Error(error.message)
-
-  revalidatePath(`/communities/${communityId}`)
-  revalidatePath("/communities")
-}
-
 export async function transferCommunityOwnershipAction(formData: FormData) {
   const communityId = requiredString(formData.get("communityId"))
   const newOwnerId = requiredString(formData.get("newOwnerId"))

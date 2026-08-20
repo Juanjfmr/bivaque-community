@@ -1277,7 +1277,11 @@ export type Database = {
         Returns: string
       }
       add_community_moderator: {
-        Args: { p_community_id: string; p_user_id: string }
+        Args: {
+          p_caller_user_id: string
+          p_community_id: string
+          p_user_id: string
+        }
         Returns: undefined
       }
       add_group_moderator: {
@@ -1290,7 +1294,11 @@ export type Database = {
       }
       advance_recurring_events: { Args: never; Returns: number }
       approve_community_member: {
-        Args: { p_community_id: string; p_user_id: string }
+        Args: {
+          p_caller_user_id: string
+          p_community_id: string
+          p_user_id: string
+        }
         Returns: undefined
       }
       approve_group_member: {
@@ -1449,6 +1457,10 @@ export type Database = {
           p_consent_version: number
           p_user_id: string
         }
+        Returns: boolean
+      }
+      is_community_member: {
+        Args: { p_community_id: string; p_user_id: string }
         Returns: boolean
       }
       is_current_user_community_moderator: {
@@ -1667,11 +1679,19 @@ export type Database = {
         Returns: undefined
       }
       remove_community_member: {
-        Args: { p_community_id: string; p_user_id: string }
+        Args: {
+          p_caller_user_id: string
+          p_community_id: string
+          p_user_id: string
+        }
         Returns: undefined
       }
       remove_community_moderator: {
-        Args: { p_community_id: string; p_user_id: string }
+        Args: {
+          p_caller_user_id: string
+          p_community_id: string
+          p_user_id: string
+        }
         Returns: undefined
       }
       remove_group_moderator: {

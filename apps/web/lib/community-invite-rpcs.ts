@@ -34,7 +34,7 @@ export interface CommunityInviteRpcs {
       created_at: string
     }>
   }
-  is_community_member: { args: { p_community_id: string }; returns: boolean }
+  is_community_member: { args: { p_community_id: string; p_user_id: string }; returns: boolean }
 }
 
 // The cast on supabase.rpc is intentional: the generated types do not include

@@ -1,12 +1,52 @@
 "use server"
 
+import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda E Task 5: batch approval path. The plan is explicit — iterating in
 // the server does NOT loosen authorization. Each call hits the existing RPC,
-// which rechecks private.is_community_moderator. "gate once, write N"
-// would be a privilege escalation; this code is the safe one.
+// which rechecks the caller's moderator status. "gate once, write N" would
+// be a privilege escalation; this code is the safe one.
+//
+// Found investigating the batch-approval checkbox (20260821000025): every
+// action here calls its RPC through service_role, which carries no JWT —
+// the RPCs used to read the caller's identity from `(select auth.uid())`
+// internally, which was always NULL, so every one of these silently denied
+// every caller. The single-row actions additionally passed the wrong id
+// entirely: `is_current_user_community_moderator(communityId, userId)` with
+// `userId` bound from the FORM's target-member field, checking whether the
+// pending member being approved was themselves a moderator (never true) —
+// not whether the caller was. Both bugs are fixed by reading the caller's
+// own id once per action, from the authenticated (JWT-carrying) client, and
+// passing it explicitly to every RPC as p_caller_user_id — the RPC is what
+// actually re-validates it (server-side, not just gating a client's say-so).
+
+async function requireCallerUserId(): Promise<string> {
+  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
+  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  if (!url || !anonKey) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
+  }
+  const cookieStore = await cookies()
+  const authClient = createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
+      },
+      setAll() {
+        // Server Action mutates via service_role below; this client is
+        // read-only, used only to resolve the caller's own identity.
+      },
+    },
+  })
+  const {
+    data: { user },
+  } = await authClient.auth.getUser()
+  if (!user) throw new Error("não autenticado")
+  return user.id
+}
 
 async function approveCommunityMemberAction(formData: FormData) {
   const communityId = formData.get("communityId")
@@ -18,18 +58,12 @@ async function approveCommunityMemberAction(formData: FormData) {
     throw new Error("userId required")
   }
 
+  const callerId = await requireCallerUserId()
   const supabase = createServiceClient()
-  const { data: isVerified } = await supabase.rpc("is_current_user_community_moderator", {
-    p_community_id: communityId,
-    p_user_id: userId,
-  })
-  if (!isVerified) {
-    throw new Error("apenas moderadores podem aprovar")
-  }
-
   const { error } = await supabase.rpc("approve_community_member", {
     p_community_id: communityId,
     p_user_id: userId,
+    p_caller_user_id: callerId,
   })
   if (error) {
     throw new Error(error.message)
@@ -50,18 +84,12 @@ async function removeCommunityMemberAction(formData: FormData) {
     throw new Error("userId required")
   }
 
+  const callerId = await requireCallerUserId()
   const supabase = createServiceClient()
-  const { data: isVerified } = await supabase.rpc("is_current_user_community_moderator", {
-    p_community_id: communityId,
-    p_user_id: userId,
-  })
-  if (!isVerified) {
-    throw new Error("apenas moderadores podem remover")
-  }
-
   const { error } = await supabase.rpc("remove_community_member", {
     p_community_id: communityId,
     p_user_id: userId,
+    p_caller_user_id: callerId,
   })
   if (error) {
     throw new Error(error.message)
@@ -89,6 +117,7 @@ async function approveCommunityMembersBatchAction(formData: FormData) {
     return
   }
 
+  const callerId = await requireCallerUserId()
   const supabase = createServiceClient()
 
   // A iteração chama a mesma RPC e a mesma checagem. Não relaxamos authz:
@@ -99,6 +128,7 @@ async function approveCommunityMembersBatchAction(formData: FormData) {
     const { error } = await supabase.rpc("approve_community_member", {
       p_community_id: communityId,
       p_user_id: userId,
+      p_caller_user_id: callerId,
     })
     if (error) {
       throw new Error(error.message)
@@ -124,12 +154,14 @@ async function removeCommunityMembersBatchAction(formData: FormData) {
     return
   }
 
+  const callerId = await requireCallerUserId()
   const supabase = createServiceClient()
 
   for (const userId of userIds) {
     const { error } = await supabase.rpc("remove_community_member", {
       p_community_id: communityId,
       p_user_id: userId,
+      p_caller_user_id: callerId,
     })
     if (error) {
       throw new Error(error.message)
@@ -154,10 +186,12 @@ async function addCommunityModeratorAction(formData: FormData) {
     throw new Error("userId required")
   }
 
+  const callerId = await requireCallerUserId()
   const supabase = createServiceClient()
   const { error } = await supabase.rpc("add_community_moderator", {
     p_community_id: communityId,
     p_user_id: userId,
+    p_caller_user_id: callerId,
   })
   if (error) {
     throw new Error(error.message)
@@ -177,10 +211,12 @@ async function removeCommunityModeratorAction(formData: FormData) {
     throw new Error("userId required")
   }
 
+  const callerId = await requireCallerUserId()
   const supabase = createServiceClient()
   const { error } = await supabase.rpc("remove_community_moderator", {
     p_community_id: communityId,
     p_user_id: userId,
+    p_caller_user_id: callerId,
   })
   if (error) {
     throw new Error(error.message)

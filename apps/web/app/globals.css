@@ -228,3 +228,31 @@ body {
 .checkbox__indicator {
   pointer-events: none;
 }
+
+/* The real, visually-hidden <input type="checkbox"> (the sr-only span
+   wrapping it: clip/clip-path + width/height: 1px, all inline styles) does
+   not actually overlap the visible .checkbox__control it sits next to —
+   confirmed live via getBoundingClientRect on both: they can be 10+px
+   apart. .checkbox__content lays the two out with `display: flex`, and an
+   absolutely-positioned flex child with no offsets falls back to a
+   browser-computed "static position" that does not, in practice, land on
+   top of its sibling. Checkboxes with a visible text label (e.g.
+   notification-preferences-section.tsx) get away with it because the
+   text enlarges the <label>'s own clickable box enough to still contain
+   wherever the real input ends up; icon-only checkboxes (e.g. the
+   community pending-approval list) have no such margin, and clicks landed
+   on whatever sat behind the checkbox entirely — confirmed by directly
+   checking .checked after both a real click and Playwright's forced
+   .check(): it never flipped. Forcing inset: 0 (and overriding the inline
+   width/height, which alone would win over inset) makes the real input's
+   box exactly match its label ancestor — including the visible control —
+   regardless of flex-child count. */
+.checkbox__content > span:has(input[type="checkbox"]) {
+  position: absolute;
+  /* biome-ignore lint/complexity/noImportantStyles: overriding an inline style (React's own, set by the library) — nothing short of !important wins that specificity battle from an external stylesheet */
+  inset: 0 !important;
+  /* biome-ignore lint/complexity/noImportantStyles: same as above — the inline width/height: 1px must lose for inset: 0 to actually stretch the box */
+  width: auto !important;
+  /* biome-ignore lint/complexity/noImportantStyles: same as above */
+  height: auto !important;
+}
