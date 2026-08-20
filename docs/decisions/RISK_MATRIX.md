@@ -48,3 +48,20 @@ Any plan touching RLS, private data, identity verification, Supabase policies, s
 - Success metric and reopen condition.
 - Independent critic verdict of exactly `PASS`.
 - Human approval recorded in the ADR.
+
+## Incidents (postmortem is not optional)
+
+An **incident** is any of: a privacy or personal-data leak, unauthorized access or
+visibility, a destructive/irreversible operation, a CI red state caused by tooling
+that writes to the local database (e.g. the "Visual Capture" ghost), or a
+regression that shipped. When one happens in this repo:
+
+- Open [`POSTMORTEM.md`](POSTMORTEM.md) **before** fixing, so the timeline captures
+  the reproducing state (the fix alone often erases the evidence).
+- The postmortem is **not closed** by a fix landing. It closes only when every action
+  in its §5 is `[*]` with a real closing proof **and** the §6 prevention checkboxes are
+  all marked, **and** a named human verifier signs §7.
+- If the postmortem opens a debt entry (medium/low finding or follow-up action), it
+  must be tracked in the visual/known-issues ledger — never left as prose only.
+- An agent may open and fill a postmortem (R0/R1 evidence) but **may not sign §7**:
+  closing an incident is a human-only act, mirroring the R3 rule.

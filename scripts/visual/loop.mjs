@@ -10,12 +10,20 @@
 import { spawn, spawnSync } from "node:child_process"
 import { createWriteStream, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { consume, DEFAULT_BUDGET, itemKey, readState, reset, writeState } from "./budget.mjs"
+import { probeFootprint } from "./footprint.mjs"
+import { mergeRun, readLedger, summarize, writeLedger } from "./ledger.mjs"
 
 const FAST = process.argv.includes("--fast")
 const BASE_URL = process.env["BIVAQUE_VISUAL_BASE_URL"] ?? "http://127.0.0.1:3000"
 const RUN_ID = new Date().toISOString().replace(/[:.]/g, "-")
 const RUN_DIR = join(".visual", RUN_ID)
 const PNPM = ["npx", "pnpm@11.18.0"]
+const LEDGER_PATH = join(".visual", "known-issues.json")
+const STATE_PATH = join(".visual", "iteration-state.json")
+// Backlog item this loop is iterating on, passed by the driver. Without it the
+// iteration budget stays dormant (legacy behaviour — no ceiling).
+const LOOP_ITEM = itemKey(process.env["BIVAQUE_LOOP_ITEM"] ?? "")
 
 function runGate(name, command, args, env) {
   process.stdout.write(`[loop] ${name}… `)
@@ -45,6 +53,71 @@ async function waitForServer(url, timeoutMs) {
     await new Promise((resolve) => setTimeout(resolve, 1000))
   }
   return false
+}
+
+// —— Loop 2: escalada ————————————————————————————————————————————————
+// When the driver passes BIVAQUE_LOOP_ITEM, the loop tracks spent iterations in
+// .visual/iteration-state.json and refuses to keep burning past the budget.
+// A spent iteration always counts; a clean one resets the counter so a fix
+// starts fresh.
+function applyBudget() {
+  if (!LOOP_ITEM) return { active: false, over: false, iterations: 0, budget: DEFAULT_BUDGET }
+  const state = readState(STATE_PATH)
+  const outcome = consume(state, LOOP_ITEM, DEFAULT_BUDGET)
+  writeState(STATE_PATH, state)
+  return { active: true, ...outcome }
+}
+
+// Item fechado numa iteração limpa: zera o contador para o mesmo item poder
+// começar fresco no próximo backlog.
+function resetBudget() {
+  if (!LOOP_ITEM) return
+  const state = readState(STATE_PATH)
+  reset(state, LOOP_ITEM)
+  writeState(STATE_PATH, state)
+}
+
+function writeEscalation() {
+  const path = join(RUN_DIR, "ESCALATE.md")
+  const last = readLedger(LEDGER_PATH)
+  const summary = summarize(last)
+  const body = [
+    `# Escalada — ${RUN_ID}`,
+    "",
+    `Item: **${process.env["BIVAQUE_LOOP_ITEM"] ?? "(não informado)"}**`,
+    `Iterações gastas atingiram o orçamento (${DEFAULT_BUDGET}) sem fechar.`,
+    "",
+    "## Estado que o humano recebe",
+    "",
+    "- `ITERATION.md` — o veredito e o log da última iteração.",
+    "- `report.md` / `report.json` — a auditoria visual determinística.",
+    "- `shots/` — os screenshots das 3 viewports por rota.",
+    "- `server.log` — o log do servidor de produção desta iteração.",
+    "",
+    "## Dívida aberta (ledger)",
+    "",
+    `- Open: **${summary.open}** (medium ${summary.bySeverity.medium}, low ${summary.bySeverity.low}).`,
+    `- Decidida/resolvida: **${summary.decided}**.`,
+    "",
+    "## Próximo passo humano",
+    "",
+    "- Decida o item: continuar (subir `DEFAULT_BUDGET` em `scripts/visual/loop.mjs` — só depois de ler os artefatos) ou abortar/repensar a abordagem.",
+    "- Se o achado é dívida aceitável, registre a decisão no ledger (`decision`, via `scripts/visual/ledger.mjs`) para deixar de bloquear.",
+    "- Não suba o budget antes de olhar os artefatos — o gate já parou no vermelho por um motivo.",
+  ]
+  writeFileSync(path, `${body.join("\n")}\n`)
+  return path
+}
+
+// —— Loop 1: dívida —————————————————————————————————————————————————
+// Merge the medium/low audit findings into the persistent ledger so they don't
+// evaporate between runs. High severity still blocks in report.json (unchanged).
+function updateLedger(results) {
+  const nowIso = new Date().toISOString()
+  const existing = readLedger(LEDGER_PATH)
+  const merged = mergeRun(existing, results, nowIso)
+  writeLedger(LEDGER_PATH, merged.entries)
+  return merged
 }
 
 // A captura visual autenticada entrou (e ainda entra) para a lista de "perfil
@@ -199,6 +272,31 @@ async function main() {
   const allGates = [...gates, capture]
   const ok = allGates.every((gate) => gate.passed) && high === 0
 
+  // Ledger atualiza mesmo em falha — o achado que não bloqueou hoje é dívida
+  // que não pode evaporar. `ok` (não o resultado do gate) decide + it-só-clean.
+  let ledgerDelta = { opened: 0, stillOpen: 0 }
+  let audit = null
+  try {
+    audit = JSON.parse(readFileSync(auditPath, "utf8"))
+  } catch {
+    audit = null
+  }
+  if (audit?.results) ledgerDelta = updateLedger(audit.results)
+
+  // Footprint do banco local observado nesta iteração (best-effort: sem Docker,
+  // reporta unavailable em vez de derrubar o loop). Permite ver se tooling
+  // deixou linhas para trás (seed/e2e/legacy capture) sem ler dado pessoal.
+  const footprint = probeFootprint()
+
+  // Escalada: iteração limpa zera o contador (a dívida foi paga); iteração
+  // falha gasta do orçamento e pode estourar → escreve ESCALATE.md.
+  let budget = { active: false, over: false, iterations: 0, budget: DEFAULT_BUDGET }
+  if (ok) {
+    resetBudget()
+  } else {
+    budget = applyBudget()
+  }
+
   const lines = [
     `# Iteration ${RUN_ID}`,
     "",
@@ -206,8 +304,23 @@ async function main() {
     "| --- | --- |",
     ...allGates.map((gate) => `| ${gate.name} | ${gate.passed ? "pass" : "FAIL"} |`),
     `| high-severity visual findings | ${high ?? "n/a"} |`,
+    budget.active
+      ? `| iterations spent on "${process.env["BIVAQUE_LOOP_ITEM"]}" | ${budget.iterations}/${budget.budget} |`
+      : null,
     "",
     `Verdict: **${ok ? "ITERATION COMPLETE" : "KEEP ITERATING"}**`,
+    "",
+    "## Debt ledger",
+    "",
+    budget.active
+      ? `- Opened this run: **${ledgerDelta.opened}** · still open: **${ledgerDelta.stillOpen}**.`
+      : `Ledger: **${ledgerDelta.stillOpen}** open.`,
+    "",
+    "## Data footprint (local stack)",
+    "",
+    footprint.available
+      ? `- profiles: **${footprint.counts.profiles ?? "n/a"}** · with membership: **${footprint.counts.profiles_with_membership ?? "n/a"}** · auth users: **${footprint.counts.auth_users ?? "n/a"}**`
+      : "- stack indisponível (sem Docker? mid-reset?) — footprint não medido. Detalhe em `footprint.json`.",
     "",
     "## Failure output",
     "",
@@ -221,7 +334,20 @@ async function main() {
       : `Fix the failures above, then re-read \`${join(RUN_DIR, "report.md")}\` and the screenshots in \`${join(RUN_DIR, "shots")}\`.`,
   ]
 
-  writeFileSync(join(RUN_DIR, "ITERATION.md"), `${lines.join("\n")}\n`)
+  writeFileSync(join(RUN_DIR, "ITERATION.md"), `${lines.filter(Boolean).join("\n")}\n`)
+  writeFileSync(
+    join(RUN_DIR, "footprint.json"),
+    `${JSON.stringify({ runId: RUN_ID, takenAt: new Date().toISOString(), ...footprint }, null, 2)}\n`,
+  )
+
+  // Budget estourado sem fechar → não continua: escreve o relatório de escalada
+  // e para (exit 2, distinto do 1 de "falha reparável").
+  if (budget.active && budget.over && !ok) {
+    const escalatePath = writeEscalation()
+    console.log(`[loop] BUDGET EXHAUSTED → ${escalatePath}`)
+    process.exit(2)
+  }
+
   console.log(`[loop] ${ok ? "COMPLETE" : "KEEP ITERATING"} → ${join(RUN_DIR, "ITERATION.md")}`)
   process.exit(ok ? 0 : 1)
 }

@@ -20,3 +20,6 @@ work/
 
 # Claude Code managed worktrees (each contains a full node_modules clone)
 .claude/worktrees/
+
+# Reasonix desktop host runtime metadata — not repo state
+.reasonix/
