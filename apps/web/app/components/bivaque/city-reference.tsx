@@ -20,7 +20,7 @@
 import { Button } from "@heroui/react"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
-import { useLocalityContext } from "../../../lib/locality-context"
+import { type LocalityCurrent, useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "./empty-state"
 import { Skeleton } from "./skeleton"
@@ -51,8 +51,21 @@ function formatDayMonth(iso: string): string {
   return `${day} ${months[d.getMonth()]}`
 }
 
-export function CityReference({ onPublish }: { onPublish?: () => void }) {
+export function CityReference({
+  onPublish,
+  locality,
+}: {
+  onPublish?: () => void
+  // Onda T Task 4: the switcher passes the origin here to render its
+  // reference content without changing which locality is canonically
+  // "current" (that stays a DB fact, decided only by declare/reverse
+  // transfer). Defaults to the context's current locality — every existing
+  // caller (the community home fallback) keeps behaving exactly as before.
+  locality?: LocalityCurrent
+}) {
   const { current } = useLocalityContext()
+  const viewing = locality ?? current
+  const isAlternate = locality !== undefined && locality.id !== current.id
   const supabase = createBrowserClient()
   const [events, setEvents] = useState<EventItem[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -65,7 +78,7 @@ export function CityReference({ onPublish }: { onPublish?: () => void }) {
     const { data, error: eventsError } = await supabase
       .from("events")
       .select("id, title, starts_at")
-      .eq("locality_id", current.id)
+      .eq("locality_id", viewing.id)
       .gte("starts_at", now)
       .order("starts_at", { ascending: true })
       .limit(6)
@@ -78,7 +91,7 @@ export function CityReference({ onPublish }: { onPublish?: () => void }) {
 
     setEvents((data ?? []) as unknown as EventItem[])
     setLoaded(true)
-  }, [supabase, current.id])
+  }, [supabase, viewing.id])
 
   useEffect(() => {
     load()
@@ -89,10 +102,12 @@ export function CityReference({ onPublish }: { onPublish?: () => void }) {
       {/* Locality header */}
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">{current.cityName}</h1>
+          <h1 className="text-xl font-semibold tracking-tight">{viewing.cityName}</h1>
           <p className="text-sm text-muted">
-            Você está em {current.cityName}. Esta é a referência da cidade — eventos, guia de
-            chegada e o caminho para pedir entrada numa vila.
+            {isAlternate
+              ? `Referência de ${viewing.cityName} — eventos, guia de chegada e o caminho para pedir entrada numa vila.`
+              : `Você está em ${viewing.cityName}. Esta é a referência da cidade — eventos, guia de
+            chegada e o caminho para pedir entrada numa vila.`}
           </p>
         </div>
         {onPublish ? (
@@ -138,7 +153,10 @@ export function CityReference({ onPublish }: { onPublish?: () => void }) {
           </ul>
         )}
         <div className="mt-3">
-          <Link href="/events" className="text-sm font-medium text-[var(--accent)] hover:underline">
+          <Link
+            href={isAlternate ? `/events?locality=${viewing.id}` : "/events"}
+            className="text-sm font-medium text-[var(--accent)] hover:underline"
+          >
             Ver todos os eventos
           </Link>
         </div>
@@ -158,7 +176,7 @@ export function CityReference({ onPublish }: { onPublish?: () => void }) {
         </p>
         <div className="mt-3">
           <Link
-            href="/guide"
+            href={isAlternate ? `/guide?locality=${viewing.id}` : "/guide"}
             className="inline-flex min-h-11 items-center rounded-full bg-[var(--accent)] px-4 text-sm font-semibold text-[var(--accent-foreground)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
           >
             Abrir o guia de chegada

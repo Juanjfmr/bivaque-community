@@ -257,6 +257,93 @@ values
   )
 on conflict (user_id) do nothing;
 
+-- ── Conta com transferência declarada, para o seletor de localidade (T4) ──
+-- tests/e2e/transfer-switch.spec.ts precisa de um titular já em trânsito
+-- entre Manaus (origem, kind='leaving', ainda ativo) e o Rio (destino,
+-- kind='current') sem depender do RPC declare_locality_transfer em runtime —
+-- inserir direto aqui, como as outras contas deste arquivo, mantém o spec
+-- livre de um passo de setup que mutaria a conta compartilhada `visual@`.
+-- leaving_at fica 20 dias no futuro: declarado, mas não degradado — o
+-- pgTAP em supabase/tests/transfer-degradation.sql já cobre o caminho
+-- degradado isoladamente.
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  email_change_token_current,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-000000000006',
+    'authenticated',
+    'authenticated',
+    'membro-transferencia@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '60 days',
+    now()
+  )
+on conflict (id) do nothing;
+
+insert into private.verification_outcomes (user_id, status, eligibility_class, checked_at)
+values
+  ('20000000-0000-4000-8000-000000000006', 'verified', 'active_federal_military', now() - interval '60 days')
+on conflict (user_id) do nothing;
+
+insert into public.locality_memberships (user_id, locality_id, joined_at, kind, leaving_at, access)
+values
+  (
+    '20000000-0000-4000-8000-000000000006',
+    '00000000-0000-4000-8000-000000000001',
+    now() - interval '60 days',
+    'leaving',
+    (current_date + interval '20 days')::date,
+    'active'
+  )
+on conflict (user_id, locality_id) do nothing;
+
+insert into public.locality_memberships (user_id, locality_id, joined_at, kind, access)
+select '20000000-0000-4000-8000-000000000006'::uuid, l.id, now() - interval '5 days', 'current', 'active'
+from public.localities l
+where l.ibge_code = '3304557'
+on conflict (user_id, locality_id) do nothing;
+
+insert into public.profiles (
+  user_id,
+  display_name,
+  visibility,
+  consent_version,
+  consented_at
+)
+values
+  (
+    '20000000-0000-4000-8000-000000000006',
+    'Em Transferência',
+    'locality_members',
+    1,
+    now() - interval '60 days'
+  )
+on conflict (user_id) do nothing;
+
 -- ══════════════════════════════════════════════════════════════════════════
 -- Volume de conteúdo
 --

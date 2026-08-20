@@ -28,10 +28,21 @@ export type LocalityCurrent = {
   cityName: string
 }
 
-// Onda T adds `outbound` here, without changing any consumer signature.
-//   outbound: { id: string; cityName: string; endsAt: string; readOnly: boolean } | null
+// Onda T Task 4: the leaving link, surfaced to the client. `endsAt` is the
+// declared term date (ISO); `readOnly` mirrors the DB's access='read_only'
+// flip once degrade_locality_origins() has run past that date. `null` means
+// the member never declared a transfer — the common case, and the reason
+// every existing consumer of `current` keeps working unchanged.
+export type LocalityOutbound = {
+  id: string
+  cityName: string
+  endsAt: string
+  readOnly: boolean
+}
+
 export type LocalityContextValue = {
   current: LocalityCurrent
+  outbound: LocalityOutbound | null
 }
 
 const LocalityContext = createContext<LocalityContextValue | null>(null)

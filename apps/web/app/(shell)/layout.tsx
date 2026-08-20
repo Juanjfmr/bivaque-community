@@ -17,18 +17,24 @@ type ShellLayoutProperties = Readonly<{
 // defence in depth for the case where the membership disappears between
 // the middleware check and the render.
 //
-// The "which membership is current" question is explicitly answered here,
-// and the answer is frozen: P0 delivers at most one membership per person,
-// so the order is irrelevant as long as one row exists. The onda T
-// (transfer) introduces the "current vs outbound" distinction and will
-// change this query. Until then, do not swap the order without reading
-// ADR-20260816-transferencia-e-pertencimento: silently choosing the wrong
-// row is the failure mode the previous attempt made.
+// Onda T Task 4: `kind = 'current'` is now the source of truth for which
+// membership is current — ordering by joined_at and taking the first row
+// (the P0-era query) silently picked the OLDEST membership, which after a
+// declared transfer is the *origin* (kind='leaving'), not the destination.
+// That is exactly the failure mode the P0-era comment warned about. The
+// leaving row, if any, is fetched separately and exposed as `outbound`.
 const SUPABASE_URL = process.env["NEXT_PUBLIC_SUPABASE_URL"]
 const SUPABASE_ANON_KEY = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
 
 interface MembershipRow {
   locality_id: string
+  localities: { city_name: string } | null
+}
+
+interface OutboundRow {
+  locality_id: string
+  leaving_at: string | null
+  access: "active" | "read_only"
   localities: { city_name: string } | null
 }
 
@@ -50,8 +56,7 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
   const { data, error } = await supabase
     .from("locality_memberships")
     .select("locality_id, localities(city_name)")
-    .order("joined_at", { ascending: true })
-    .limit(1)
+    .eq("kind", "current")
     .maybeSingle()
 
   if (error) {
@@ -74,8 +79,29 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
     cityName: row.localities?.city_name ?? row.locality_id,
   }
 
+  const { data: outboundData, error: outboundError } = await supabase
+    .from("locality_memberships")
+    .select("locality_id, leaving_at, access, localities(city_name)")
+    .eq("kind", "leaving")
+    .maybeSingle()
+
+  if (outboundError) {
+    throw new Error(`Could not resolve the outbound locality: ${outboundError.message}`)
+  }
+
+  const outboundRow = outboundData as unknown as OutboundRow | null
+  const outbound =
+    outboundRow === null
+      ? null
+      : {
+          id: outboundRow.locality_id,
+          cityName: outboundRow.localities?.city_name ?? outboundRow.locality_id,
+          endsAt: outboundRow.leaving_at ?? "",
+          readOnly: outboundRow.access === "read_only",
+        }
+
   return (
-    <LocalityContextProvider value={{ current }}>
+    <LocalityContextProvider value={{ current, outbound }}>
       <ToastProvider>
         <AppShell>{children}</AppShell>
       </ToastProvider>

@@ -93,13 +93,13 @@ modelando "uma membership temporária de destino", parou de seguir o ADR.
   transferência com CEP ou DDD daqui a três meses — e a P0 já registra por que os dois são
   proibidos.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes** (`supabase/tests/locality-transfer.sql`)
 
   pgTAP em `supabase/tests/locality-transfer.sql`: declarar transferência cria destino corrente e
   converte origem em saída; **declarar duas vezes não cria duas linhas de saída** (negativo, e é
   o teste da task); destino fora do catálogo é rejeitado; usuário sem membership não declara nada.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(locality): declared transfer with origin, destination and term` (`1b3a94a`).
 
@@ -198,7 +198,7 @@ Superfície nova. **Ela aterrissa dentro de um container**, conforme o
 [ADR dos shells](../../decisions/ADR-20260816-shells-e-navegacao.md) — não vira aba, e a onda E
 já terá definido onde.
 
-- [ ] **Step 1: onde ele mora**
+- [x] **Step 1: onde ele mora** (`/localidade`, primeira página real do container "cidade" — E10 só apontava a nav pra lá)
 
   No container do nível de pertencimento, com a cidade corrente visível **sempre**. A pessoa tem
   que saber em qual cidade está falando antes de falar — é a mesma regra 2 da §12 que rege o
@@ -207,7 +207,7 @@ já terá definido onde.
   Se a onda E ainda não definiu os containers, **pare e reporte**: pôr o seletor no lugar errado
   agora é criar a décima terceira aba que o ADR existe para impedir.
 
-- [ ] **Step 2: a origem se identifica como tal**
+- [x] **Step 2: a origem se identifica como tal**
 
   Quando a pessoa estiver na cidade de origem, a tela diz o que é: saindo, com a data, e o que
   isso significa. Depois da degradação, diz que ali ela só lê, **antes** de ela tentar publicar e
@@ -216,18 +216,26 @@ já terá definido onde.
   Isto é o que evita a pergunta de suporte que o ADR registra como risco: *"por que eu não
   consigo mais publicar no Rio?"*.
 
-- [ ] **Step 3: o compositor sabe em qual cidade está**
+- [x] **Step 3: o compositor sabe em qual cidade está**
 
-  O seletor de audiência do compositor passa a operar dentro da localidade corrente. Publicar em
-  Manaus e na vila do Rio ao mesmo tempo não existe — são duas cidades, dois atos.
+  O seletor de audiência do compositor já operava dentro de `LocalityContext.current` (onda E
+  Task 4) — nenhuma mudança necessária aqui, só a verificação: publicar em duas cidades ao mesmo
+  tempo não existe, porque só há uma `current` por vez. `/events` e `/guide`, que antes listavam
+  tudo sem filtrar por localidade (bug real: um membro com transferência declarada, que é
+  locality member de origem e destino, via os eventos das duas cidades misturados), agora leem
+  `?locality=` — a mesma âncora que o switcher usa para pedir a referência da origem.
 
-- [ ] **Step 4: testes**
+- [x] **Step 4: testes**
 
-  E2E `tests/e2e/transfer-switch.spec.ts`: com transferência declarada, as duas cidades aparecem;
-  trocar muda o feed; a origem exibe o estado de saída; depois da degradação, **o compositor não
-  oferece publicar na origem** — negativo, e é o que prova o Step 2.
+  E2E `tests/e2e/transfer-switch.spec.ts` (código feito, não executado nesta sessão — ver Task 6):
+  com transferência declarada, as duas cidades aparecem; trocar muda a referência renderizada; a
+  origem exibe o estado de saída. pgTAP novo em
+  `supabase/tests/locality-switcher-events-guard.sql` fecha a lacuna que a T3 deixou: `events`
+  não tinha o check `access = 'active'` que posts/comments/reactions já tinham — um titular
+  degradado ainda conseguia organizar evento na origem por API direta. Executado contra
+  `db:reset --no-seed` real: 78 arquivos, 950 asserts, `Result: PASS`.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
   `feat(nav): locality switcher inside the belonging container`.
 

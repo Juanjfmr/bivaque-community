@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { isLocalityStale } from "../../../lib/locality-density"
@@ -22,6 +23,21 @@ const CATEGORY_LABELS: Record<GuideCategory, string> = {
 const CATEGORY_ORDER: GuideCategory[] = ["school", "hospital", "transporter", "courier"]
 
 export default function GuidePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8" aria-busy="true">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      }
+    >
+      <GuideContent />
+    </Suspense>
+  )
+}
+
+function GuideContent() {
   const [entries, setEntries] = useState<GuideEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -29,6 +45,10 @@ export default function GuidePage() {
   const [category, setCategory] = useState<"all" | GuideCategory>("all")
   const [memberCount, setMemberCount] = useState<number | null>(null)
   const { current } = useLocalityContext()
+  const searchParams = useSearchParams()
+  // Onda T Task 4: same fix as /events — ?locality lets the city switcher
+  // ask for the origin's guide specifically; absent it, defaults to current.
+  const viewingLocalityId = searchParams.get("locality") ?? current.id
 
   const supabase = createBrowserClient()
 
@@ -48,7 +68,7 @@ export default function GuidePage() {
     const { data, error: guideError } = await supabase
       .from("arrival_guide_entries")
       .select("*")
-      .eq("locality_id", current.id)
+      .eq("locality_id", viewingLocalityId)
       .eq("status", "approved")
       .order("category")
       .order("name")
@@ -61,7 +81,7 @@ export default function GuidePage() {
 
     setEntries((data as GuideEntry[] | null) ?? [])
     setLoading(false)
-  }, [supabase, current.id])
+  }, [supabase, viewingLocalityId])
 
   useEffect(() => {
     loadEntries()
@@ -78,7 +98,7 @@ export default function GuidePage() {
         const { count } = await supabase
           .from("locality_memberships")
           .select("*", { count: "exact", head: true })
-          .eq("locality_id", current.id)
+          .eq("locality_id", viewingLocalityId)
         if (!cancelled && count !== null) {
           setMemberCount(count)
         }
@@ -89,7 +109,7 @@ export default function GuidePage() {
     return () => {
       cancelled = true
     }
-  }, [current.id])
+  }, [viewingLocalityId])
 
   const filteredEntries = useMemo(() => {
     const normalized = query.trim().toLowerCase()

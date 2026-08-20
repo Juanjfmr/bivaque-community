@@ -1,6 +1,7 @@
 "use client"
 
 import { Button, Chip, Form, Input, Tab, TabList, TabPanel, Tabs, TextArea } from "@heroui/react"
+import { useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { isLocalityStale } from "../../../lib/locality-density"
@@ -196,6 +197,13 @@ function EventsContent() {
   const [submitting, setSubmitting] = useState(false)
   const [memberCount, setMemberCount] = useState<number | null>(null)
   const { current } = useLocalityContext()
+  const searchParams = useSearchParams()
+  // Onda T Task 4: without this filter, a member with a declared transfer
+  // (who is a locality member of both origin and destination) saw every
+  // event from both cities mixed in one list. ?locality lets the city
+  // switcher (CityReference) ask for the origin's events specifically;
+  // absent it, this is always the member's current city.
+  const viewingLocalityId = searchParams.get("locality") ?? current.id
 
   const fetchEvents = useCallback(async () => {
     const supabase = createBrowserClient()
@@ -213,6 +221,7 @@ function EventsContent() {
     const { data: eventsData, error: eventsError } = await supabase
       .from("events")
       .select("id, title, description, starts_at, ends_at, venue, status, organizer_id")
+      .eq("locality_id", viewingLocalityId)
       .order("starts_at", { ascending: true })
 
     if (eventsError) {
@@ -233,7 +242,7 @@ function EventsContent() {
 
     setRsvps((rsvpsData as RsvpRow[]) ?? [])
     setLoading(false)
-  }, [])
+  }, [viewingLocalityId])
 
   useEffect(() => {
     fetchEvents()
@@ -250,7 +259,7 @@ function EventsContent() {
         const { count } = await supabase
           .from("locality_memberships")
           .select("*", { count: "exact", head: true })
-          .eq("locality_id", current.id)
+          .eq("locality_id", viewingLocalityId)
         if (!cancelled && count !== null) {
           setMemberCount(count)
         }
@@ -261,7 +270,7 @@ function EventsContent() {
     return () => {
       cancelled = true
     }
-  }, [current.id])
+  }, [viewingLocalityId])
 
   const handleCreate = async () => {
     setError(null)
@@ -276,7 +285,7 @@ function EventsContent() {
 
     const { error: insertError } = await supabase.from("events").insert({
       organizer_id: session.user.id,
-      locality_id: current.id,
+      locality_id: viewingLocalityId,
       title,
       description: description || null,
       starts_at: new Date(startsAt).toISOString(),
