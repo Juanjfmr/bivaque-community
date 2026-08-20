@@ -136,6 +136,22 @@ function isRepoPath(matchText) {
   return /^[A-Za-z0-9._/-]+$/.test(matchText)
 }
 
+// Prose that happens to be slash-separated. The same "/" in the generic token
+// regex makes a line like "Gate/Upload/Recurso/Consentimento/Convites" — five
+// section names listed in a plan — read as a 41-character blob. Three or more
+// segments that are each a plain word, with no digit and no "+" anywhere, is
+// not a shape base64 produces: a 40-character token without a single digit has
+// a probability under one in a thousand, and the word segments drive it to
+// zero. Narrower than excluding docs/ from the scan, which would let a real
+// credential pasted into a document through.
+function isSlashSeparatedProse(matchText) {
+  if (!matchText.includes("/")) return false
+  if (/[0-9+]/.test(matchText)) return false
+  const segments = matchText.split("/")
+  if (segments.length < 3) return false
+  return segments.every((segment) => /^[A-Za-z]{2,}$/.test(segment))
+}
+
 // ── scan ──
 
 const trackedFiles = execSync("git ls-files", { encoding: "utf8", cwd: root })
@@ -184,6 +200,11 @@ for (const file of trackedFiles) {
       // path would otherwise fail the scan. Anchored to real top-level
       // directories of this workspace: a credential never starts at "apps/".
       if (pattern.name.startsWith("Generic base64") && isRepoPath(match[0])) continue
+
+      // Skip slash-separated prose. Same root cause as the repo-path exclusion
+      // above: the generic token regex accepts "/", so a list of words joined
+      // by slashes inside a plan or a doc looks like a token.
+      if (pattern.name.startsWith("Generic base64") && isSlashSeparatedProse(match[0])) continue
 
       console.error(`${file}:${lineIdx + 1}: ${pattern.name} — ${match[0].substring(0, 60)}`)
       totalFindings++
