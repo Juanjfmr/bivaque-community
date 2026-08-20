@@ -3,6 +3,7 @@
 import { detectCep, detectCpf } from "@bivaque/domain"
 import { Button, Card, Chip, Input, ListBox, Select, Tabs, TextArea } from "@heroui/react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
@@ -143,6 +144,10 @@ export default function RecommendationsPage() {
   const [savesError, setSavesError] = useState("")
   const [unsavingId, setUnsavingId] = useState<string | null>(null)
 
+  // F6 Step 2: a saved request link focuses it on the Pedidos tab. The
+  // request card carries id="req-<id>" so the browser scrolls to the hash.
+  const searchParams = useSearchParams()
+
   // tabs
   const [selectedTab, setSelectedTab] = useState("browse")
 
@@ -245,6 +250,16 @@ export default function RecommendationsPage() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  // F6 Step 2: when the saved tab links to ?focus=<id>, switch to the Pedidos
+  // tab. The browser scrolls to #req-<id> on the hash; no client-side
+  // scrollIntoView needed.
+  useEffect(() => {
+    const focus = searchParams.get("focus")
+    if (focus) {
+      setSelectedTab("requests")
+    }
+  }, [searchParams])
 
   // ── join group ────────────────────────────────────────────────────────────
 
@@ -824,7 +839,16 @@ export default function RecommendationsPage() {
                     <div className="flex flex-col gap-2">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 flex-1 flex-col gap-1">
-                          <h3 className="text-sm font-semibold">{req.title}</h3>
+                          <h3 className="text-sm font-semibold">
+                            {/* F6 Step 2: clicking the title focuses the request
+                               on the Pedidos tab so the user reads replies. */}
+                            <Link
+                              href={`/recommendations?focus=${req.id}#req-${req.id}`}
+                              className="hover:underline"
+                            >
+                              {req.title}
+                            </Link>
+                          </h3>
                           <div className="flex items-center gap-2 text-xs text-muted">
                             <Chip size="sm" variant="soft">
                               {categoryLabel}
