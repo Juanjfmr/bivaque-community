@@ -70,7 +70,12 @@ async function setRsvpAction(formData: FormData) {
   const { error } = await supabase
     .from("event_rsvps")
     .upsert({ event_id: eventId, user_id: user.id, status: validStatus } as never, {
-      onConflict: "event_id,user_id",
+      // occurrence_date is not in the payload: the BEFORE INSERT trigger
+      // (private.default_event_rsvp_occurrence) fills it from the event's
+      // current starts_at before the conflict target is matched — see
+      // 20260820052745_recurring_events.sql. Listing it here anyway would
+      // require this action to know the event's current occurrence itself.
+      onConflict: "event_id,user_id,occurrence_date",
     })
   if (error) throw new Error(error.message)
 
@@ -89,6 +94,20 @@ async function cancelRsvpAction(formData: FormData) {
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
+  // Onda F Task 4: event_rsvps is keyed by occurrence_date now — a recurring
+  // event that has already advanced could hold an RSVP from a past
+  // occurrence. Without this filter, "Remover meu RSVP" on the CURRENT
+  // occurrence would delete every occurrence's row for this event. The
+  // current occurrence is read fresh from the server, never trusted from
+  // the client.
+  const { data: eventRow, error: eventError } = await supabase
+    .from("events")
+    .select("starts_at")
+    .eq("id", eventId)
+    .single()
+  if (eventError) throw new Error(eventError.message)
+  const occurrenceDate = (eventRow.starts_at as string).slice(0, 10)
+
   // event_rsvps has no delete policy for authenticated today (the snapshot
   // records it). The fix lands in the next commit. Today the action
   // becomes a visible RLS denial — better than the silent escalation of
@@ -98,6 +117,7 @@ async function cancelRsvpAction(formData: FormData) {
     .delete()
     .eq("event_id", eventId)
     .eq("user_id", user.id)
+    .eq("occurrence_date", occurrenceDate)
   if (error) throw new Error(error.message)
 
   revalidatePath(`/events/${eventId}`)
@@ -203,11 +223,18 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     notFound()
   }
 
+  // Onda F Task 4: event_rsvps accumulates one row per occurrence for a
+  // recurring event — filtering to the event's current starts_at is what
+  // keeps "who's going" and "my RSVP" about THIS occurrence, not a mix of
+  // every occurrence anyone ever RSVP'd to.
+  const currentOccurrenceDate = event.starts_at.slice(0, 10)
+
   const { data: rsvpData, error: rsvpError } = await authClient
     .from("event_rsvps")
     .select("*")
     .eq("event_id", event.id)
     .eq("user_id", user.id)
+    .eq("occurrence_date", currentOccurrenceDate)
     .maybeSingle()
 
   if (rsvpError) throw new Error(`failed to read rsvp: ${rsvpError.message}`)
@@ -218,6 +245,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     .from("event_rsvps")
     .select("event_id, user_id, status, created_at")
     .eq("event_id", event.id)
+    .eq("occurrence_date", currentOccurrenceDate)
     .eq("status", "going")
     .limit(20)
 

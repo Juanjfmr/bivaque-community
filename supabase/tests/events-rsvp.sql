@@ -101,7 +101,7 @@ select lives_ok(
       '10000000-0000-4000-8000-000000000002',
       'going'
     )
-    on conflict (event_id, user_id) do update
+    on conflict (event_id, user_id, occurrence_date) do update
     set status = 'going', updated_at = now()
   $$,
   'locality member can upsert RSVP from interested to going'

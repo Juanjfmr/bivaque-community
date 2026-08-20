@@ -52,6 +52,7 @@ function classifyNotification(notification: NotificationRow): TabKey {
     case "group_admission":
     case "event_rsvp":
     case "event_change":
+    case "event_reminder":
       return "vizinhança"
     case "comment":
     case "invitation_accepted":
@@ -90,6 +91,8 @@ function formatNotificationLabel(notification: NotificationRow): string {
       return "confirmou presença no seu evento"
     case "event_change":
       return "atualizou um evento com sua presença"
+    case "event_reminder":
+      return "é amanhã — o encontro recorrente que você confirmou"
     case "direct_message":
       return "enviou uma mensagem direta"
     case "report_resolved":
@@ -134,6 +137,7 @@ function navigateToNotification(
       return
     case "event_rsvp":
     case "event_change":
+    case "event_reminder":
       router.push(`/events/${notification.target_id}`)
       return
     case "direct_message":

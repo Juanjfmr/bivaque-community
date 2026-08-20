@@ -221,7 +221,7 @@ desatualizado — metade dele existe.
 Não existe nada. É a tese central do produto (§6.3, ciclo mensal) e o que diferencia de uma
 rede nacional.
 
-- [ ] **Step 1: o modelo mais simples que resolve**
+- [x] **Step 1: o modelo mais simples que resolve** (opção B do owner call registrado em `docs/agents/F4-design-question.md` — virtual, `occurrence_date` em `event_rsvps`)
 
   Recorrência é **coluna no evento**, não tabela nova de série com instâncias materializadas.
   Comece com o mínimo que cobre "toda primeira sexta" e "todo dia 15": um padrão declarado e a
@@ -231,18 +231,18 @@ rede nacional.
   problema de edição em cascata. Se depois ficar apertado, materializar é migração para frente;
   o contrário não é.
 
-- [ ] **Step 2: a próxima ocorrência**
+- [x] **Step 2: a próxima ocorrência** (`advance_recurring_events`, cron `bivaque-advance-recurring-events`, `0 6 * * *`)
 
   Job de `pg_cron` que avança a data quando a ocorrência passa. O agendador existe desde a D1
   (`20260814074813_enable_pg_cron.sql`) — reuse, não crie um segundo mecanismo.
 
-- [ ] **Step 3: o RSVP é da ocorrência**
+- [x] **Step 3: o RSVP é da ocorrência** (`event_rsvps.occurrence_date`, PK `(event_id, user_id, occurrence_date)`)
 
   Marcar presença em "o churrasco de setembro" não marca presença em outubro. Se o modelo do
   Step 1 não distinguir as duas, ele está errado — **pare e reporte antes de escrever a
   migration**, porque isto decide o desenho inteiro.
 
-- [ ] **Step 4: o feriado é avisado, não corrigido**
+- [x] **Step 4: o feriado é avisado, não corrigido**
 
   Insumo novo, vindo da P0. A P0 gera uma tabela de **feriados nacionais** versionada, a partir
   de `GET https://brasilapi.com.br/api/feriados/v1/{ano}` — `{date, name, type, weekday}`, 14
@@ -259,12 +259,12 @@ rede nacional.
   Limitação a registrar na UI: a rota devolve só feriado **nacional**. Feriado municipal e
   estadual não estão lá e **não devem ser inventados** — a tela diz que confere só os nacionais.
 
-- [ ] **Step 5: lembrete**
+- [x] **Step 5: lembrete** (`private.send_recurring_event_reminders`, cron `bivaque-recurring-event-reminders`, `0 12 * * *` — `notifications` + `outbox`, mesmo par que `recommendation_reply_notify`)
 
   Enfileirar no `outbox` antes da ocorrência, respeitando preferência. Encontro que ninguém
   lembra não é ciclo mensal — é uma linha na tabela.
 
-- [ ] **Step 6: testes**
+- [x] **Step 6: testes** (`supabase/tests/recurring-events.sql`, 14 asserts)
 
   pgTAP em `supabase/tests/recurring-events.sql`: padrão mensal produz a data certa na virada do
   mês; **dia 31 em mês de 30 não produz data inválida** (é o caso que quebra implementação
@@ -272,9 +272,31 @@ rede nacional.
 
   Unitário sobre o aviso de feriado: recorrência que cai em 2026-02-16 é sinalizada como
   Carnaval; recorrência em dia útil não é sinalizada (positivo e negativo); **a data não é
-  alterada em nenhum dos dois casos**.
+  alterada em nenhum dos dois casos**. A checagem vive no banco (`check_recurrence_holiday`),
+  não em JS — o teste fica em pgTAP em vez de `tests/unit` por isso, mas é a mesma asserção que
+  o plano pede, na mesma data que o plano nomeia (`2026-02-16`, Carnaval, do catálogo da P0).
 
-- [ ] **Step 7: gate e commit**
+  **QA manual no navegador** (checklist real, não só pgTAP): logado como conta com transferência
+  declarada, criei um evento recorrente ponta a ponta pela UI real — checkbox, seletor de
+  padrão, aviso de feriado ao vivo (mudei o dia para 16/fev e o banner "cai em Carnaval"
+  apareceu antes do submit), snap para a data real (1ª sexta de setembro → 4/set, conferido
+  contra `generate_series` independente), evento aparecendo na referência da cidade. A QA achou
+  e corrigiu dois bugs reais no caminho, nenhum deles no código desta task:
+  - `Checkbox` do HeroUI v3 (`@heroui/react`) é composto — `<Checkbox>texto</Checkbox>` sozinho
+    renderiza só um `<div>` sem controle clicável algum. Corrigido aqui com
+    `Checkbox.Content`/`Control`/`Indicator`; as outras quatro telas com o mesmo padrão quebrado
+    (preferências de notificação, fila de aprovação em lote, convite de evento, interesses do
+    perfil) foram sinalizadas à parte, não corrigidas nesta task.
+  - `events_select_locality_member` (`20260805214709_community_scope.sql`) fazia
+    `is_event_locality_member(id)` — uma função STABLE que re-consulta `events` pelo próprio id
+    da linha sendo inserida. `insert ... returning` (o que `.insert().select()` do supabase-js
+    gera) não enxerga a própria linha dentro da mesma transação sob esse snapshot, e a RLS nega
+    com `42501` mesmo para um membro verificado e ativo. Corrigido em
+    `20260820060533_fix_events_insert_returning_rls.sql`, trocando pela checagem direta em
+    `locality_id` (sem auto-referência); regressão coberta em
+    `supabase/tests/events-insert-returning.sql`.
+
+- [x] **Step 7: gate e commit**
 
   `feat(events): recurring meetups as a first-class pattern`.
 

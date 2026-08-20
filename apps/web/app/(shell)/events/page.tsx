@@ -1,6 +1,19 @@
 "use client"
 
-import { Button, Chip, Form, Input, Tab, TabList, TabPanel, Tabs, TextArea } from "@heroui/react"
+import {
+  Button,
+  Checkbox,
+  Chip,
+  Form,
+  Input,
+  ListBox,
+  Select,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+  TextArea,
+} from "@heroui/react"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
@@ -8,9 +21,13 @@ import { isLocalityStale } from "../../../lib/locality-density"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
+import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { EventsIllustration } from "../../components/bivaque/illustrations"
 import { EventCardSkeleton } from "../../components/bivaque/skeleton"
 import EventInvitesSection from "./event-invites-section"
+
+const WEEKDAY_LABELS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"]
+const ORDINAL_LABELS = ["1ª", "2ª", "3ª", "4ª"]
 
 type EventRow = {
   id: string
@@ -27,6 +44,7 @@ type RsvpRow = {
   event_id: string
   user_id: string
   status: string
+  occurrence_date: string
 }
 
 type ViewMode = "list" | "create"
@@ -196,6 +214,19 @@ function EventsContent() {
   const [venue, setVenue] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [memberCount, setMemberCount] = useState<number | null>(null)
+  // Onda F Task 4: o encontro recorrente. Só dois padrões, os mesmos exemplos
+  // do plano — "toda primeira sexta" (monthly_weekday_ordinal) e "todo dia 15"
+  // (monthly_day_of_month). A data final é calculada no servidor
+  // (next_occurrence, via o trigger de criação) — aqui só se chama a mesma
+  // função pra pré-visualizar e avisar de feriado antes do publicar.
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurrenceType, setRecurrenceType] = useState<
+    "monthly_weekday_ordinal" | "monthly_day_of_month"
+  >("monthly_weekday_ordinal")
+  const [recurrenceWeekday, setRecurrenceWeekday] = useState(5) // sexta
+  const [recurrenceOrdinal, setRecurrenceOrdinal] = useState(1)
+  const [recurrenceDayOfMonth, setRecurrenceDayOfMonth] = useState(15)
+  const [holidayWarning, setHolidayWarning] = useState<string | null>(null)
   const { current } = useLocalityContext()
   const searchParams = useSearchParams()
   // Onda T Task 4: without this filter, a member with a declared transfer
@@ -204,6 +235,52 @@ function EventsContent() {
   // switcher (CityReference) ask for the origin's events specifically;
   // absent it, this is always the member's current city.
   const viewingLocalityId = searchParams.get("locality") ?? current.id
+
+  // Onda F Task 4 Step 4: "a tela avisa o organizador no momento de
+  // publicar a recorrência, e ele decide" — não move a data sozinho, só
+  // avisa. Roda no momento em que os campos de recorrência mudam, não só no
+  // submit, porque é aí que a pessoa ainda pode reconsiderar.
+  useEffect(() => {
+    if (!isRecurring || !startsAt) {
+      setHolidayWarning(null)
+      return
+    }
+    let cancelled = false
+    const supabase = createBrowserClient()
+    ;(async () => {
+      const anchor = startsAt.slice(0, 10)
+      const { data: nextDate, error: nextError } = await supabase.rpc("next_occurrence", {
+        p_from: anchor,
+        p_recurrence_type: recurrenceType,
+        // exactOptionalPropertyTypes rejects an explicit `undefined` for an
+        // optional key — the conditional spreads omit the key entirely
+        // instead, for whichever pattern is not selected.
+        ...(recurrenceType === "monthly_weekday_ordinal"
+          ? { p_recurrence_weekday: recurrenceWeekday, p_recurrence_ordinal: recurrenceOrdinal }
+          : { p_recurrence_day_of_month: recurrenceDayOfMonth }),
+      })
+      if (nextError || !nextDate || cancelled) return
+
+      const { data: holidayData } = await supabase.rpc("check_recurrence_holiday", {
+        p_date: nextDate,
+      })
+      if (cancelled) return
+      const holiday = (
+        holidayData as { is_holiday: boolean; holiday_name: string | null }[] | null
+      )?.[0]
+      setHolidayWarning(holiday?.is_holiday ? holiday.holiday_name : null)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [
+    isRecurring,
+    startsAt,
+    recurrenceType,
+    recurrenceWeekday,
+    recurrenceOrdinal,
+    recurrenceDayOfMonth,
+  ])
 
   const fetchEvents = useCallback(async () => {
     const supabase = createBrowserClient()
@@ -230,17 +307,26 @@ function EventsContent() {
       return
     }
 
-    setEvents((eventsData as EventRow[]) ?? [])
+    const events = (eventsData as EventRow[]) ?? []
+    setEvents(events)
 
     const { data: rsvpsData } = await supabase
       .from("event_rsvps")
-      .select("event_id, user_id, status")
+      .select("event_id, user_id, status, occurrence_date")
       .in(
         "event_id",
-        (eventsData as EventRow[]).map((e) => e.id),
+        events.map((e) => e.id),
       )
 
-    setRsvps((rsvpsData as RsvpRow[]) ?? [])
+    // Onda F Task 4: a recurring event accumulates one event_rsvps row per
+    // occurrence. Without this filter, "quem vai"/counts on the list mix
+    // every occurrence anyone ever RSVP'd to into one number.
+    const currentOccurrenceByEvent = new Map(events.map((e) => [e.id, e.starts_at.slice(0, 10)]))
+    const currentRsvps = ((rsvpsData as RsvpRow[]) ?? []).filter(
+      (r) => r.occurrence_date === currentOccurrenceByEvent.get(r.event_id),
+    )
+
+    setRsvps(currentRsvps)
     setLoading(false)
   }, [viewingLocalityId])
 
@@ -288,8 +374,18 @@ function EventsContent() {
       locality_id: viewingLocalityId,
       title,
       description: description || null,
+      // The server snaps this to the actual next occurrence of the pattern
+      // (private.snap_recurring_event_start) — this is only the search
+      // anchor and the time-of-day when isRecurring is set.
       starts_at: new Date(startsAt).toISOString(),
       venue: venue || null,
+      recurrence_type: isRecurring ? recurrenceType : null,
+      recurrence_weekday:
+        isRecurring && recurrenceType === "monthly_weekday_ordinal" ? recurrenceWeekday : null,
+      recurrence_ordinal:
+        isRecurring && recurrenceType === "monthly_weekday_ordinal" ? recurrenceOrdinal : null,
+      recurrence_day_of_month:
+        isRecurring && recurrenceType === "monthly_day_of_month" ? recurrenceDayOfMonth : null,
     })
 
     if (insertError) {
@@ -302,6 +398,8 @@ function EventsContent() {
     setDescription("")
     setStartsAt("")
     setVenue("")
+    setIsRecurring(false)
+    setHolidayWarning(null)
     setSubmitting(false)
     setView("list")
     fetchEvents()
@@ -313,12 +411,13 @@ function EventsContent() {
     const supabase = createBrowserClient()
 
     const { error: rsvpError } = await supabase.from("event_rsvps").upsert(
-      {
-        event_id: eventId,
-        user_id: userId,
-        status,
-      },
-      { onConflict: "event_id,user_id" },
+      // occurrence_date is filled by the BEFORE INSERT trigger from the
+      // event's current starts_at — see the comment in events/[id]/page.tsx.
+      // The generated Insert type marks it required because it has no SQL
+      // DEFAULT (only a trigger); `as never` matches the same override
+      // events/[id]/page.tsx already uses for this exact shape.
+      { event_id: eventId, user_id: userId, status } as never,
+      { onConflict: "event_id,user_id,occurrence_date" },
     )
 
     if (rsvpError) {
@@ -630,6 +729,124 @@ function EventsContent() {
               O local deve ser um espa&ccedil;o p&uacute;blico. Endere&ccedil;os pessoais ou
               militares n&atilde;o s&atilde;o permitidos.
             </p>
+
+            {/* HeroUI v3 Checkbox is a compound component: the bare
+                <Checkbox>label</Checkbox> shape renders only the layout
+                field, with no clickable control — the interactive button
+                lives in Checkbox.Content, and the visual box in
+                Checkbox.Control/Indicator. Every other Checkbox call site in
+                this app is missing this too (flagged separately). */}
+            <Checkbox isSelected={isRecurring} onChange={setIsRecurring}>
+              <Checkbox.Content>
+                <Checkbox.Control>
+                  <Checkbox.Indicator />
+                </Checkbox.Control>
+                Este é um encontro recorrente
+              </Checkbox.Content>
+            </Checkbox>
+
+            {isRecurring && (
+              <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
+                <Select
+                  aria-label="Tipo de recorrência"
+                  selectedKey={recurrenceType}
+                  onSelectionChange={(key) => {
+                    if (typeof key === "string") {
+                      setRecurrenceType(key as typeof recurrenceType)
+                    }
+                  }}
+                >
+                  <Select.Trigger>
+                    <Select.Value />
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      <ListBox.Item key="monthly_weekday_ordinal" id="monthly_weekday_ordinal">
+                        Dia da semana do mês (ex: toda primeira sexta)
+                      </ListBox.Item>
+                      <ListBox.Item key="monthly_day_of_month" id="monthly_day_of_month">
+                        Dia fixo do mês (ex: todo dia 15)
+                      </ListBox.Item>
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+
+                {recurrenceType === "monthly_weekday_ordinal" ? (
+                  <div className="flex gap-2">
+                    <Select
+                      aria-label="Qual ocorrência do mês"
+                      selectedKey={String(recurrenceOrdinal)}
+                      onSelectionChange={(key) => {
+                        if (typeof key === "string") setRecurrenceOrdinal(Number(key))
+                      }}
+                      className="flex-1"
+                    >
+                      <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          {ORDINAL_LABELS.map((label, i) => (
+                            <ListBox.Item key={label} id={String(i + 1)}>
+                              {label}
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                    <Select
+                      aria-label="Dia da semana"
+                      selectedKey={String(recurrenceWeekday)}
+                      onSelectionChange={(key) => {
+                        if (typeof key === "string") setRecurrenceWeekday(Number(key))
+                      }}
+                      className="flex-1"
+                    >
+                      <Select.Trigger>
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          {WEEKDAY_LABELS.map((label, i) => (
+                            <ListBox.Item key={label} id={String(i)}>
+                              {label}
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                  </div>
+                ) : (
+                  <Input
+                    aria-label="Dia do mês"
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={String(recurrenceDayOfMonth)}
+                    onChange={(e) =>
+                      setRecurrenceDayOfMonth(Number((e.target as HTMLInputElement).value))
+                    }
+                  />
+                )}
+
+                <p className="text-xs text-muted">
+                  A data acima só define o horário e o ponto de partida — o dia real é calculado
+                  pelo padrão escolhido. Em meses mais curtos, o dia fixo é ajustado para o último
+                  dia do mês, nunca para uma data inválida.
+                </p>
+
+                {holidayWarning && (
+                  <FeedbackAlert
+                    variant="warning"
+                    description={`A próxima ocorrência cai em ${holidayWarning}. A data não é alterada automaticamente — mantenha, pule esta ocorrência depois de criar, ou escolha outro padrão.`}
+                  />
+                )}
+              </div>
+            )}
+
             <Button type="submit" variant="primary" className="w-full" isDisabled={submitting}>
               {submitting ? "Criando..." : "Criar evento"}
             </Button>

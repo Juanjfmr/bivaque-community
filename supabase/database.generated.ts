@@ -405,6 +405,7 @@ export type Database = {
         Row: {
           created_at: string
           event_id: string
+          occurrence_date: string
           status: Database["public"]["Enums"]["event_rsvp_status"]
           updated_at: string
           user_id: string
@@ -412,6 +413,7 @@ export type Database = {
         Insert: {
           created_at?: string
           event_id: string
+          occurrence_date: string
           status: Database["public"]["Enums"]["event_rsvp_status"]
           updated_at?: string
           user_id: string
@@ -419,6 +421,7 @@ export type Database = {
         Update: {
           created_at?: string
           event_id?: string
+          occurrence_date?: string
           status?: Database["public"]["Enums"]["event_rsvp_status"]
           updated_at?: string
           user_id?: string
@@ -441,8 +444,13 @@ export type Database = {
           ends_at: string | null
           group_id: string | null
           id: string
+          last_reminder_sent_for: string | null
           locality_id: string
           organizer_id: string
+          recurrence_day_of_month: number | null
+          recurrence_ordinal: number | null
+          recurrence_type: string | null
+          recurrence_weekday: number | null
           starts_at: string
           status: Database["public"]["Enums"]["event_status"]
           title: string
@@ -456,8 +464,13 @@ export type Database = {
           ends_at?: string | null
           group_id?: string | null
           id?: string
+          last_reminder_sent_for?: string | null
           locality_id: string
           organizer_id: string
+          recurrence_day_of_month?: number | null
+          recurrence_ordinal?: number | null
+          recurrence_type?: string | null
+          recurrence_weekday?: number | null
           starts_at: string
           status?: Database["public"]["Enums"]["event_status"]
           title: string
@@ -471,8 +484,13 @@ export type Database = {
           ends_at?: string | null
           group_id?: string | null
           id?: string
+          last_reminder_sent_for?: string | null
           locality_id?: string
           organizer_id?: string
+          recurrence_day_of_month?: number | null
+          recurrence_ordinal?: number | null
+          recurrence_type?: string | null
+          recurrence_weekday?: number | null
           starts_at?: string
           status?: Database["public"]["Enums"]["event_status"]
           title?: string
@@ -1270,6 +1288,7 @@ export type Database = {
         Args: { p_city_name: string; p_email: string; p_state_code: string }
         Returns: undefined
       }
+      advance_recurring_events: { Args: never; Returns: number }
       approve_community_member: {
         Args: { p_community_id: string; p_user_id: string }
         Returns: undefined
@@ -1277,6 +1296,13 @@ export type Database = {
       approve_group_member: {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
+      }
+      check_recurrence_holiday: {
+        Args: { p_date: string }
+        Returns: {
+          holiday_name: string
+          is_holiday: boolean
+        }[]
       }
       complete_event: { Args: { p_event_id: string }; Returns: undefined }
       consume_verification_attempt: {
@@ -1539,6 +1565,16 @@ export type Database = {
           updated_at: string
         }[]
       }
+      next_occurrence: {
+        Args: {
+          p_from: string
+          p_recurrence_day_of_month?: number
+          p_recurrence_ordinal?: number
+          p_recurrence_type: string
+          p_recurrence_weekday?: number
+        }
+        Returns: string
+      }
       profile_events_for: {
         Args: { p_target_user_id: string }
         Returns: {
@@ -1718,6 +1754,7 @@ export type Database = {
         | "event_change"
         | "direct_message"
         | "report_resolved"
+        | "event_reminder"
         | "recommendation_reply"
       outbox_channel: "email" | "whatsapp"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
@@ -1897,6 +1934,7 @@ export const Constants = {
         "event_change",
         "direct_message",
         "report_resolved",
+        "event_reminder",
         "recommendation_reply",
       ],
       outbox_channel: ["email", "whatsapp"],
