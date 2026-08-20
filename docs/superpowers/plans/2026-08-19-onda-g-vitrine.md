@@ -1,519 +1,400 @@
 # Onda G — Vitrine
 
-> **DRAFT de plano de execução**, escrito em 2026-08-19 contra `main@ce918f1`.
+> **DRAFT R3 — revisão v2 em 2026-08-19**, contra `main@ce918f1` e o código/commits já existentes.
 >
-> Este arquivo ainda não é autorizador de execução. G toca marketplace, dados pessoais, RLS e monetização; pela `RISK_MATRIX.md`, é **R3**. Antes da Task 1 deve existir ADR aprovado, `critic_verdict: PASS` e aprovação humana cobrindo a fronteira de prestador e o modelo de amplificação/billing.
+> Esta onda não começa do zero: Auth, localidades, communities, recommendations, DM, outbox, notifications e operação básica já existem. O trabalho é criar o domínio de prestador e conectá-lo a essas foundations sem abrir a comunidade civil.
 >
-> Marque `- [x]` somente durante a execução real e faça **um commit por task**.
+> G toca marketplace, dados pessoais, RLS e monetização. Antes de execução precisa de ADR aplicável, `critic_verdict: PASS` e aprovação humana conforme `RISK_MATRIX.md`.
 
-## 0. Precedência
+## 0. Decisões vigentes que este plano executa
 
-Antes desta onda:
+- D17 — prestador civil tem login apenas para a própria ficha.
+- D20 — Vitrine entra no piloto.
+- D27/D28 — acesso/ficha local grátis; amplificação é paga.
+- D29 — dinheiro nunca ordena confiança/ranking; sem anúncio no feed.
+- D36 — conversa membro↔prestador reutiliza a máquina de DM.
+- D37 — provider é usuário Auth, sem membership, com dashboard próprio.
+- D41 — cobrança da plataforma via Asaas, checkout hospedado.
+- D44 — busca: filtro exato + `pg_trgm` no nome.
+- D45 — ficha = identidade + catálogo + portfólio.
+
+## 1. O que já existe e deve ser reutilizado
+
+### Auth e shell
+
+O app já tem Auth/Supabase, sessão persistida e shells. Não criar um segundo sistema de identidade.
+
+### Localidade/comunidade
+
+P0 entregou catálogo nacional + `LocalityContext`. E fecha a semântica da vila/localidade. Provider discovery deve usar essa mesma dimensão, nunca constante de Manaus.
+
+### Recommendations
+
+Pedidos/respostas já provam o comportamento de procurar/indicar serviço. A Vitrine pode receber atribuição dessa origem, mas não deve transformar recommendation em cadastro comercial automaticamente.
+
+### DM
+
+Já existe:
+
+- `/messages`;
+- thread;
+- conversation context;
+- ordenação estável de `participant_a/b` no cliente;
+- RLS/context tests;
+- block/report;
+- deep-link.
+
+**Não construir chat novo.** Para G falta contexto `provider` **server-owned** e safety floor H0.
+
+### Moderação
+
+`reports` + fila + hide/resolve + retorno ao denunciante existem para alvos atuais. H0 amplia isso antes de provider DM.
+
+### Infra
+
+`outbox`, worker, pg_cron/pg_net e Sentry existem. Reusar para convite/provider lifecycle e eventos de cobrança.
+
+## 2. Precedência
+
+Obrigatório antes de G1:
 
 ```text
-S0 → T → D2 → E → F
+T → D2Δ → EΔ → FΔ → H0
 ```
 
-Além disso, **H0 (Tasks 1–4 do plano H) precisa estar concluída antes da Task 7**, que abre conversa privada membro↔prestador.
+G1 ficha/discovery pode começar tecnicamente após E, mas **provider DM não abre antes de H0**. Para Goal Mode, manter a ordem serial evita um provider entrar numa superfície privada sem suspensão/report operacional.
 
-A razão não é estética: hoje `dm_reports` não chega ao painel do operador e não existe suspensão de pessoa. Não abra um canal privado comercial sem o sad path de segurança.
-
-## 1. O que G entrega
-
-G tem duas subfases deliberadas.
-
-### G1 — Vitrine Core
-
-- prestador entra por indicação de membro;
-- Auth account sem `locality_membership`;
-- acesso apenas ao shell/dashboard próprio;
-- ficha com identidade, categoria, catálogo e portfólio;
-- ficha grátis na comunidade que o indicou;
-- busca por categoria/container + `pg_trgm` no nome;
-- contato membro↔prestador via contexto `provider`;
-- métrica first-party de contatos recebidos.
-
-### G2 — Amplificação
-
-- entitlement de alcance além da comunidade de origem;
-- Asaas com checkout hospedado;
-- webhook idempotente;
-- cancelamento/expiração;
-- indicação visível de alcance pago;
-- **dinheiro nunca altera ranking**.
-
-G1 não espera CNPJ. G2 espera.
-
-## 2. Decisões que este plano não pode inventar
-
-O ADR R3 precisa fixar, antes da Task 1:
-
-1. convite de prestador single-use e vinculado ao e-mail-alvo;
-2. comunidade que indicou = unidade grátis de origem;
-3. entitlement pago pode apontar para `community` e/ou `locality`;
-4. preço/tier não vive hardcoded em RLS;
-5. cobrança é da plataforma, nunca do serviço contratado entre membro e prestador;
-6. provider pode ler/editar **somente** sua superfície e suas conversas `provider`;
-7. provider não ganha `locality_membership`, não lê feed, grupo, evento de membro ou perfil alheio.
-
-Se o ADR decidir diferente, **o ADR vence este plano** e este arquivo precisa ser reconciliado antes da execução.
-
-## 3. Contexto obrigatório
-
-Leia antes de começar:
-
-- `docs/BIVAQUE.md` §1.3, §6.2, §6.4, §7 inteiro; D17, D20, D26–D29, D36, D37, D41, D44, D45;
-- `docs/PRODUCT_STATUS.md` §7, §8 e §11;
-- `docs/audit/GAP_ANALYSIS.md` C01–C06;
-- `docs/audit/DEPENDENCY_MAP.md` §§7–9;
-- `AGENTS.md` inteiro, especialmente Supabase/RLS e regra de scope+policy na mesma migration;
-- plano H, Tasks 1–4, antes da Task 7.
+G2/Asaas exige ainda CNPJ e governança R3 específica.
 
 ---
 
 # G1 — Vitrine Core
 
-## Task 1: a conta de prestador nasce fail-closed
+## Task G1.1 — account/provider boundary
 
-O prestador é um usuário do Supabase Auth, **não é membro** e não recebe membership de localidade/comunidade como atalho.
+### Objetivo
 
-- [ ] **Step 1: modelo de conta**
+Criar o papel de provider sem conceder membership nem acesso ao conteúdo comunitário.
 
-  Migration nova para uma entidade de papel explícita, por exemplo `public.provider_accounts`, com no mínimo:
+### Antes de codificar
 
-  - `user_id` PK/FK para `auth.users`;
-  - `invited_by_user_id`;
-  - `home_community_id`;
-  - `status` (`pending`, `active`, `suspended` ou o conjunto aprovado no ADR);
-  - timestamps.
+Reconfirmar se `profiles` é identidade comum a todo usuário Auth ou identidade de member. Isso decide onde D38/suspensão se aplica. **Não criar um segundo mecanismo de suspensão.**
 
-  Não coloque `provider` em `profiles` se isso fizer a conta parecer membro. `profiles` é identidade de membro no desenho atual; misturar os dois cria policy ambígua.
+### Implementação
 
-- [ ] **Step 2: convite de prestador**
+A solução precisa garantir:
 
-  Criar convite single-use, com token persistido apenas como digest e, se aprovado no ADR, binding ao e-mail-alvo. Carrega obrigatoriamente:
+- provider é `auth.users`;
+- provider **não** recebe `locality_memberships`, `community_memberships` nem `group_memberships` por ser provider;
+- provider shell permite somente própria ficha/dashboard/caixa de contatos;
+- provider não lê feed, perfis de membros, communities ou diretórios;
+- member pode encontrar a ficha pelas superfícies autorizadas;
+- role/account type é imposto no servidor e protegido por RLS.
 
-  - quem indicou;
-  - `community_id` de origem;
-  - destinatário;
-  - expiração/status.
+Se uma coluna de account type for criada, as policies que dependem dela entram no **mesmo change set**.
 
-  Só membro verificado e com membership ativa naquela comunidade pode indicar.
+### Testes obrigatórios
 
-- [ ] **Step 3: aceite**
+- provider lê/escreve própria ficha;
+- provider não lê feed;
+- provider não lê profile de member;
+- provider não ingressa em community/group pela ausência de membership;
+- member não edita provider alheio;
+- anon não lê dados que exigem sessão.
 
-  O destinatário autentica no Auth e aceita. A transação cria `provider_accounts` **sem** criar qualquer linha em `locality_memberships`, `community_memberships` ou `group_memberships`.
+### Done
 
-- [ ] **Step 4: RLS nasce junto**
-
-  Na mesma migration:
-
-  - provider lê a própria `provider_account`;
-  - provider não lê contas de outros;
-  - membro não enumera provider accounts internos;
-  - service/operator só acessa pelo helper autorizado.
-
-- [ ] **Step 5: testes**
-
-  pgTAP:
-
-  - membro da comunidade cria convite;
-  - membro de outra comunidade não cria convite para aquela origem;
-  - token usado/expirado não provisiona;
-  - conta provider nasce sem membership;
-  - provider não consegue `select` de `profiles`, posts, grupos ou memberships por ganhar o novo papel.
-
-- [ ] **Step 6: gate e commit**
-
-  `feat(provider): fail-closed provider account by member referral`.
+Boundary provada por pgTAP positivo/negativo e shell sem rota lateral para comunidade.
 
 ---
 
-## Task 2: identidade da ficha e categoria canônica
+## Task G1.2 — indicação e ativação do prestador
 
-D45 fixa a ficha em **identidade + catálogo + portfólio**. Esta task constrói o primeiro bloco.
+O canon diz que um prestador civil entra por indicação de membro verificado. Implementar sem fazer do link um passe de acesso comunitário.
 
-- [ ] **Step 1: categorias próprias da vitrine**
+### Contrato
 
-  Não reutilize `recommendation_category`: aquele domínio contém `outros`, proibido em §7.2.1.
+- member elegível indica provider;
+- convite carrega attribution e escopo inicial;
+- e-mail/token é limitado, expira e não concede membership;
+- provider cria/associa conta Auth;
+- após ativação cai diretamente no provider shell;
+- indicação duplicada converge para a mesma entidade, não duplica ficha.
 
-  Crie catálogo estável de categorias com slug/id e label. Começa com as categorias do canon; mudança futura é decisão, não texto livre do provider.
+### Reuso
 
-- [ ] **Step 2: `provider_profiles`**
+Usar padrões de token digest/expiry já existentes em family/member invites onde forem adequados; não compartilhar semântica de autorização.
 
-  Campos mínimos:
+### Testes
 
-  - `provider_user_id` unique/FK;
-  - nome comercial/display;
-  - descrição curta;
-  - categoria primária;
-  - `publication_status` (`draft`/`published`);
-  - timestamps.
-
-  Evite endereço residencial. Não copie OM, patente, CPF ou dado militar para a ficha.
-
-- [ ] **Step 3: assets privados**
-
-  Logo/avatar/portfólio em bucket privado. Leitura por URL assinada emitida no servidor após verificar que:
-
-  - provider é dono do asset; ou
-  - membro autenticado pode ver a ficha naquele container.
-
-  Bucket público transforma foto de uma comunidade fechada em URL pública fora do produto; não use.
-
-- [ ] **Step 4: draft não é público**
-
-  Membro não vê `draft`. Provider vê/edita a própria ficha. Operator vê para moderação conforme helper.
-
-- [ ] **Step 5: testes**
-
-  - provider A não edita provider B;
-  - membro não vê draft;
-  - membro autorizado vê published;
-  - não-membro/anon não enumera ficha;
-  - categoria fora do catálogo falha.
-
-- [ ] **Step 6: gate e commit**
-
-  `feat(provider): provider identity and canonical marketplace categories`.
+- token válido ativa o provider esperado;
+- token encaminhado para identidade errada não toma conta da ficha;
+- expirado/usado/revogado têm sad paths;
+- provider ativado continua sem membership.
 
 ---
 
-## Task 3: catálogo e portfólio
+## Task G1.3 — domínio da ficha
 
-- [ ] **Step 1: catálogo**
+### Ficha mínima D45
 
-  `provider_catalog_items` pertencem a uma ficha. Formato único para produto e serviço.
+**Identidade**
 
-  Mínimo:
+- nome comercial / nome exibido;
+- categoria primária;
+- descrição curta;
+- canais de contato autorizados;
+- escopo onde atende.
 
-  - nome;
-  - descrição curta;
-  - preço opcional/forma aprovada pelo ADR (`price_cents` + qualifier, ou equivalente tipado);
-  - ativo/inativo;
-  - posição manual dentro da própria ficha.
+**Catálogo**
 
-  Não existe checkout do serviço. O preço é informativo.
+Item mínimo:
 
-- [ ] **Step 2: portfólio**
+- título;
+- descrição;
+- preço opcional/faixa quando aplicável;
+- imagem opcional;
+- estado ativo/inativo;
+- ordenação manual dentro da própria ficha.
 
-  `provider_portfolio_items` com asset privado, legenda opcional, posição e ativo/inativo.
+**Portfólio**
 
-- [ ] **Step 3: limites do piloto**
+- imagens/itens de trabalho;
+- legenda;
+- ordenação.
 
-  Defina limites razoáveis em contrato/config — quantidade de itens e fotos — para impedir abuso de storage. Não crie “plano pago = mais ranking”. Ferramenta/catálogo maior pode ser produto futuro, mas não entra sem decisão de pricing.
+### Taxonomia
 
-- [ ] **Step 4: UI de edição**
+Usar a lista fechada de 12 categorias do canon. **Não reutilizar automaticamente `recommendation_category`**, porque o histórico ali contém `outros` e a Vitrine proíbe `Outros`.
 
-  Dashboard provider permite criar/editar/reordenar/desativar itens e portfólio. Feedback explícito de sucesso/erro; nenhuma affordance aponta para feed/comunidades.
+### Privacidade
 
-- [ ] **Step 5: testes**
+- não persistir endereço residencial;
+- escopo de atendimento é localidade/comunidade autorizada, não endereço;
+- uploads privados durante processamento; somente assets destinados à ficha tornam-se publicáveis conforme contrato.
 
-  - owner CRUD passa;
-  - provider alheio é negado;
-  - membro só lê item ativo de ficha published alcançável;
-  - asset alheio não assina URL.
+### Testes
 
-- [ ] **Step 6: visual + commit**
-
-  Rodar o loop visual nas telas novas.
-
-  `feat(provider): catalog and portfolio on the provider card`.
-
----
-
-## Task 4: alcance grátis e busca
-
-A regra de monetização começa pelo grátis: ficha completa na comunidade de origem, sem pagar.
-
-- [ ] **Step 1: função de visibilidade**
-
-  Criar helper/RPC que responde se uma ficha é alcançável pelo membro no **container atual**.
-
-  Antes de G2, o único alcance é `home_community_id`.
-
-  Durante transferência, localidade municipal pode mudar/duplicar conforme T, mas isso **não concede comunidade**. A ficha grátis continua presa à comunidade de origem.
-
-- [ ] **Step 2: índice de nome**
-
-  `pg_trgm` no nome da ficha, conforme D44. Categoria é filtro exato.
-
-- [ ] **Step 3: busca**
-
-  A busca recebe:
-
-  - container/community atual;
-  - categoria opcional;
-  - termo de nome opcional.
-
-  Não existe busca de pessoas. O resultado é ficha comercial, não diretório humano.
-
-- [ ] **Step 4: ordenação**
-
-  Dinheiro não participa. Antes de existir reputação robusta, use regra determinística neutra definida no código/SQL e documentada. Não invente “score premium”.
-
-- [ ] **Step 5: testes de fronteira**
-
-  - membro da comunidade origem encontra provider;
-  - membro de outra comunidade não encontra sem entitlement;
-  - anon não encontra;
-  - provider draft não aparece;
-  - busca por nome trigram e categoria exata retornam somente conjunto alcançável.
-
-- [ ] **Step 6: E2E + commit**
-
-  E2E com duas comunidades e, se seed permitir, duas localidades.
-
-  `feat(marketplace): scoped provider search without paid ranking`.
+RLS own-write, member-read, provider-other-write denied, category contract, file constraints e soft-disable.
 
 ---
 
-## Task 5: shell e dashboard do prestador
+## Task G1.4 — discovery e busca
 
-O provider não deve cair no shell de membro e descobrir, por 403 sucessivos, o que não pode acessar. O shell já nasce separado.
+### Objetivo
 
-- [ ] **Step 1: roteamento por papel**
+Encontrar prestador sem transformar o Bivaque em diretório de pessoas.
 
-  Depois do Auth:
+### Query contract
 
-  - membro → shell de membro;
-  - provider ativo → `/provider` (ou shell aprovado);
-  - provider pending → status próprio;
-  - operador continua no console existente.
+- filtro exato por categoria;
+- filtro exato pelo escopo visível ao member;
+- nome com `pg_trgm`;
+- apenas fichas ativas;
+- provider sem entitlement pago aparece onde tem alcance orgânico;
+- nenhuma dimensão de patente/OM/pessoa entra na busca.
 
-  Nunca inferir provider por ausência de membership; o papel precisa ser explícito.
+### Ranking
 
-- [ ] **Step 2: dashboard**
+Ordenar por relevância/reputação definida pelo produto, **nunca por pagamento**.
 
-  Primeira versão mostra somente fluxos que existem:
+Paid reach altera o conjunto de lugares onde a ficha é elegível para aparecer; não altera score dentro desse conjunto.
 
-  - estado da ficha;
-  - editar identidade;
-  - catálogo;
-  - portfólio;
-  - caixa de conversas quando Task 7 fechar;
-  - métrica first-party quando Task 8 fechar.
+### UX
 
-  Não renderize cards “em breve” como se fossem capability.
+- estado vazio honesto por categoria/localidade;
+- filtros persistem durante navegação;
+- card leva à ficha;
+- nenhum feed ad.
 
-- [ ] **Step 3: navegação negativa**
+### Testes
 
-  Provider não tem affordance para `/community`, `/groups`, `/events`, `/guide`, perfis de membros ou busca de pessoas.
-
-- [ ] **Step 4: E2E**
-
-  Provider autenticado abre dashboard e recebe negação indistinguível/redirect adequado ao tentar uma rota exclusiva de membro. Membro não abre dashboard provider alheio.
-
-- [ ] **Step 5: visual + commit**
-
-  `feat(provider): dedicated provider shell and dashboard`.
+- escopo correto;
+- outra localidade não vaza sem entitlement;
+- filtro e trigram;
+- inativo não aparece;
+- paid flag, quando existir, não muda ordering function.
 
 ---
 
-## Task 6: corrigir a máquina de DM antes de reutilizá-la
+## Task G1.5 — dashboard do provider
 
-**Esta task ainda não abre provider DM.** Ela torna o motor reutilizável.
+### Superfícies
 
-- [ ] **Step 1: bloqueio bilateral**
+- editar identidade;
+- gerir catálogo;
+- gerir portfólio;
+- ver contatos/solicitações;
+- status da ficha;
+- alcance atual;
+- métrica simples first-party.
 
-  Corrigir helper/policy: se existe block entre A e B em qualquer direção, **nenhum dos dois envia**.
+### Métrica inicial
 
-  O teste atual que diz `blocker can still send` precisa virar negativo.
+Não depender de PostHog para uma métrica que é contrato comercial. Começar com dados first-party derivados do banco, por exemplo:
 
-- [ ] **Step 2: criação deixa de confiar no cliente**
+- contatos iniciados a partir da ficha;
+- conversas provider abertas no período.
 
-  Não faça o browser ordenar UUID e inserir `dm_conversations` como mecanismo de autorização.
+Definir exatamente o evento que conta; não chamar page view de lead.
 
-  Criar RPC/Server Action específica para abertura de conversa contextual. Para provider, a API recebe o provider/ficha e deriva participantes/contexto no servidor.
+### Testes
 
-- [ ] **Step 3: contexto declarado é validado**
-
-  Um `context_type` não é prova. O helper precisa conferir que o `context_id` realmente concede aquele contexto àquele par.
-
-- [ ] **Step 4: member↔member continua adiado**
-
-  Remover/desabilitar `Nova conversa` genérica que hoje lista membros de grupos. Não apague histórico; apenas não abra criação nova fora dos contextos permitidos pelo canon.
-
-- [ ] **Step 5: testes**
-
-  - block em qualquer direção nega send dos dois;
-  - UUID invertido não é preocupação do cliente;
-  - context spoofing é negado;
-  - member↔member não ganha novo entrypoint.
-
-- [ ] **Step 6: gate e commit**
-
-  `fix(dm): make blocking symmetric and context creation server-owned`.
+provider vê somente seus próprios números e não consegue inferir identidade/atividade de membros fora das conversas legítimas.
 
 ---
 
-## Task 7: conversa membro ↔ prestador
+## Task G1.6 — contexto `provider` na DM
 
-> **HARD STOP:** H0 precisa estar verde antes desta task.
+### Pré-requisito duro
 
-- [ ] **Step 1: contexto `provider`**
+H0 concluída: unified reporting, block bilateral e suspensão aplicável.
 
-  Adicionar o contexto na máquina DM. `context_id` aponta para a ficha/entidade aprovada pelo ADR.
+### Não fazer
 
-  `can_dm_between`/substituto precisa provar:
+- não abrir busca de pessoas;
+- não usar o picker member↔member existente para providers;
+- não confiar em `context_type/context_id` enviados pelo browser como prova de autorização;
+- não permitir que provider inicie conversa arbitrária com members.
 
-  - um lado é membro legítimo do container que vê a ficha;
-  - o outro lado é provider owner daquela ficha;
-  - a ficha está published e alcançável;
-  - não existe block;
-  - nenhum dos dois está suspenso para escrita.
+### Fluxo
 
-- [ ] **Step 2: entrypoint único**
+1. member abre ficha;
+2. CTA `Conversar` chama uma Server Action/RPC;
+3. servidor valida que a ficha é visível e provider está ativo/não suspenso;
+4. servidor cria ou encontra conversation `provider` para aquele member + provider;
+5. deep-link abre `/messages?conversation=...` ou shell equivalente;
+6. provider vê a conversa no próprio dashboard/inbox.
 
-  Botão `Conversar` vive na ficha. Não existe diretório de pessoas.
+### Reuso
 
-- [ ] **Step 3: inbox provider**
+A thread, mensagens, previews e deep link existentes continuam. Adicionar `CONTEXT_LABELS.provider` e apenas o mínimo de UI específico.
 
-  Provider lê apenas conversas `provider` em que é participante. Não herda regras de member membership.
+### Safety
 
-- [ ] **Step 4: report**
+- bilateral block;
+- report chega à fila única;
+- suspensão impede novos envios;
+- expirar alcance pago não apaga conversa legítima já criada;
+- expulsão/suspensão não deixa authorization congelada em contexto stale.
 
-  `Denunciar` da mensagem usa o modelo unificado da H0. Nada grava mais numa fila que o operador não vê.
+### Testes
 
-- [ ] **Step 5: testes**
-
-  - member alcançável inicia;
-  - member fora do alcance não inicia por UUID direto;
-  - provider não inicia conversa com member arbitrário;
-  - provider não lê outra conversa;
-  - block/suspensão fecham send;
-  - report aparece na fila unificada.
-
-- [ ] **Step 6: E2E + visual + commit**
-
-  `feat(provider): member-to-provider conversations with operational reporting`.
-
----
-
-## Task 8: métrica first-party do dashboard
-
-Não use PostHog como fonte de verdade do que será mostrado ao prestador.
-
-- [ ] **Step 1: métrica inicial**
-
-  Contatos recebidos = contagem de conversas `context_type = provider` criadas para aquela ficha no período.
-
-  É derivável do banco, auditável e não requer tracking adicional.
-
-- [ ] **Step 2: período**
-
-  7/30 dias ou a janela aprovada no ADR/UI. Não invente projeção, lead qualificado ou conversão sem dado que prove isso.
-
-- [ ] **Step 3: RLS/RPC**
-
-  Provider consulta somente a própria métrica; operator pode observar agregados necessários.
-
-- [ ] **Step 4: testes**
-
-  provider A não lê métrica de B; conversa member↔member histórica não conta; conversa duplicada não infla se a constraint impedir duplicata.
-
-- [ ] **Step 5: commit**
-
-  `feat(provider): first-party contact metric on provider dashboard`.
+- member↔provider válido cria;
+- provider↔member arbitrário nega;
+- member não vê provider fora do escopo;
+- bloqueio em qualquer lado impede ambos;
+- suspended não envia;
+- report DM chega ao operador.
 
 ---
 
-# G2 — Amplificação
+## Task G1.7 — visual/E2E/reconciliação
 
-## Task 9: entitlement de alcance separado de billing
+Rotas mínimas a auditar:
 
-- [ ] **Step 1: modelo**
+- discovery Vitrine;
+- ficha;
+- provider activation;
+- provider dashboard;
+- catálogo edit;
+- provider conversation entry.
 
-  Criar `provider_reach_entitlements` (nome a confirmar) com:
+E2E mínimo:
 
-  - provider/ficha;
-  - `scope_type` (`community`/`locality` se aprovado);
-  - `scope_id` validado;
-  - origem (`billing`, `operator`, etc. se o ADR permitir);
-  - vigência início/fim;
-  - status.
+1. member encontra provider da própria área;
+2. abre ficha;
+3. inicia contato;
+4. provider recebe e responde;
+5. member bloqueia/reporta;
+6. operador recebe o caso.
 
-- [ ] **Step 2: busca lê entitlement**
-
-  O conjunto elegível passa a ser:
-
-  ```text
-  home_community
-  OR active entitlement for current community/locality
-  ```
-
-  Ranking continua idêntico.
-
-- [ ] **Step 3: sinalização**
-
-  Se o membro vê a ficha apenas porque houve alcance pago, a UI declara isso de forma curta e inequívoca. Não chamar de “recomendado”.
-
-- [ ] **Step 4: testes**
-
-  ativar entitlement expande visibilidade; expirar remove expansão; home community continua vendo; ordem não muda ao pagar.
-
-- [ ] **Step 5: commit**
-
-  `feat(marketplace): paid reach as visibility entitlement, never ranking`.
+Atualizar `PRODUCT_STATUS.md` somente com ciclos efetivamente provados.
 
 ---
 
-## Task 10: Asaas — checkout hospedado e webhook idempotente
+# G2 — Amplificação / Asaas
 
-> **HARD STOP humano:** CNPJ + credenciais + pricing aprovado.
+> G2 é separada para que CNPJ/billing não bloqueie a ficha gratuita.
 
-- [ ] **Step 1: adapter**
+## Task G2.1 — entitlement de alcance
 
-  Isolar Asaas em módulo próprio. Browser nunca recebe secret. Cartão nunca toca o Bivaque.
+Modelar o que é comprado, não o pagamento:
 
-- [ ] **Step 2: checkout**
+- provider/ficha;
+- origem/orgânico;
+- destinos adicionais autorizados;
+- início/fim;
+- status;
+- origem da concessão (billing/admin quando aplicável).
 
-  Provider escolhe o produto de alcance aprovado e recebe checkout hospedado.
+Discovery consulta entitlement; não consulta Asaas diretamente.
 
-- [ ] **Step 3: webhook**
+**Ranking permanece independente de dinheiro.**
 
-  Endpoint valida autenticidade conforme contrato atual do Asaas e persiste `event_id`/idempotency key antes de aplicar efeito.
+## Task G2.2 — produto/checkout Asaas
 
-  Eventos repetidos não criam entitlement duplicado.
+Após CNPJ/conta:
 
-- [ ] **Step 4: state machine**
+- produto/plano mapeado internamente;
+- checkout hospedado;
+- cartão nunca toca Bivaque;
+- Pix/boleto conforme decisão;
+- retorno humano da UI não ativa entitlement por si só.
 
-  Mapear somente estados necessários para ativar, cancelar, expirar e falhar. Não espalhar strings do Asaas pelo domínio.
+## Task G2.3 — webhook idempotente
 
-- [ ] **Step 5: nenhum pagamento do serviço**
+- validar autenticidade conforme contrato vigente do Asaas no momento da implementação;
+- idempotency/event ledger;
+- pagamento confirmado ativa;
+- cancelamento/overdue/chargeback seguem regra explicitamente aprovada;
+- replay não duplica efeito;
+- payload sensível não é logado sem necessidade.
 
-  Não existe order/payment entre member e provider. O billing é exclusivamente do produto Bivaque.
+## Task G2.4 — reconciliação
 
-- [ ] **Step 6: testes**
+Job para comparar billing state ↔ entitlement e corrigir drift. Falha do Asaas não derruba ficha orgânica.
 
-  - webhook válido ativa;
-  - replay é no-op;
-  - assinatura/evento inválido não altera estado;
-  - cancelamento/expiração remove alcance extra;
-  - ficha grátis permanece;
-  - provider não consegue ligar flag direto pelo cliente.
+## Task G2.5 — UX paid reach
 
-- [ ] **Step 7: commit**
+Provider vê claramente:
 
-  `feat(billing): Asaas-hosted paid reach with idempotent entitlements`.
+- alcance gratuito atual;
+- o que a amplificação adiciona;
+- período/status;
+- link para checkout/gestão.
+
+Member vê sinalização de alcance patrocinado quando necessário, sem transformar indicação/reputação em publicidade disfarçada.
+
+## Task G2.6 — testes
+
+- webhook replay;
+- evento fora de ordem;
+- pagamento pendente não ativa;
+- cancelamento expira corretamente;
+- entitlement muda visibilidade, não ranking;
+- serviço member↔provider nunca passa pelo Bivaque.
 
 ---
 
-## Task 11: fechamento da onda G
+## Gate de cada Task
 
-- [ ] rodar gate completo;
-- [ ] `db:reset --no-seed` + pgTAP + db lint;
-- [ ] `db:reset` com seed + E2E serial e CI paralelo;
-- [ ] auditoria visual de todas as telas provider/vitrine tocadas em 375/768/1440;
-- [ ] threat review específico de enumeração de provider/member e signed assets;
-- [ ] reconciliar `docs/PRODUCT_STATUS.md` §7, §8 e §11;
-- [ ] registrar o que G1 fechou e, se G2 estiver bloqueada por CNPJ, escrever **bloqueada externamente**, nunca `DONE`;
-- [ ] atualizar o índice de planos somente depois de critic PASS/human approval deste plano.
+Seguir `AGENTS.md` e `docs/superpowers/plans/README.md` vigentes no momento da execução. Em qualquer task com migration:
 
-### Critério de aceite final de G1
+- scope/RLS positivos e negativos;
+- `gate`;
+- `test:db` quando aplicável;
+- E2E quando o ciclo fecha;
+- audit visual para tela tocada;
+- um commit por task.
 
-Um membro de uma comunidade encontra uma ficha publicada originada ali, abre identidade/catalog/portfólio, inicia conversa; o provider recebe e responde no próprio shell; qualquer mensagem é reportável e operável; provider não ganha acesso a conteúdo de membro.
+## Stop conditions
 
-### Critério de aceite final de G2
+Parar, não improvisar, se:
 
-O provider compra amplificação da plataforma, o entitlement expande **onde a ficha aparece**, não **onde ela rankeia**, e cancelamento remove apenas a expansão paga.
+- account/provider boundary exigir decisão não coberta pelo ADR;
+- suspension model conflitar com a identidade real de provider;
+- a taxonomia vigente tiver mudado;
+- Asaas/CNPJ não estiver disponível para G2;
+- implementação exigir intermediar a transação do serviço;
+- dinheiro começar a afetar ranking/confiança.
