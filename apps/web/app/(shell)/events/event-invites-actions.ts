@@ -112,64 +112,27 @@ export async function listInvitableMembersAction(eventId: string): Promise<Invit
   if (!userId) return []
 
   const supabase = createServiceClient()
-  const { data: eventData, error: eventError } = await supabase
-    .from("events")
-    .select("id, locality_id, community_id, group_id, organizer_id")
-    .eq("id", eventId)
-    .maybeSingle()
-  if (eventError) return []
-  const event = eventData as {
-    id: string
-    locality_id: string
-    community_id: string | null
-    group_id: string | null
-    organizer_id: string
-  } | null
-  if (!event || event.organizer_id !== userId) return []
+  // Single round trip: list_invitable_members_for_event does the locality-
+  // membership scan, the per-candidate can_receive_invite_to_event check
+  // and the profile/invite join server-side. The previous version built the
+  // candidate list client-side (one row per Manaus member — 300+ in the
+  // real seed), called can_receive_invite_to_event once per candidate
+  // (300+ sequential round trips), then queried
+  // `.in("user_id", allowed)` with the survivors — which PostgREST
+  // rejects outright once the id list gets long ("URI too long"). None of
+  // that ever showed up against a pgTAP fixture's 5-10 users; it only
+  // surfaced running against seed.sql's real member count.
+  const { data, error } = await supabase.rpc("list_invitable_members_for_event", {
+    p_event_id: eventId,
+    p_user_id: userId,
+  })
+  if (error) return []
 
-  const { data: localityMembers } = await supabase
-    .from("locality_memberships")
-    .select("user_id")
-    .eq("locality_id", event.locality_id)
-  const candidates = ((localityMembers ?? []) as { user_id: string }[]).map((r) => r.user_id)
-  if (candidates.length === 0) return []
-
-  // F3: the cast is intentional â€” can_receive_invite_to_event was added in the
-  // same migration and is not in the generated types until `supabase gen types`.
-  const rpc = supabase.rpc as unknown as (
-    name: "can_receive_invite_to_event",
-    args: { p_event_id: string; p_user_id: string },
-  ) => Promise<{ data: boolean | null; error: { message: string } | null }>
-
-  const allowed: string[] = []
-  for (const id of candidates) {
-    if (id === event.organizer_id) continue
-    const { data: ok } = await rpc("can_receive_invite_to_event", {
-      p_event_id: event.id,
-      p_user_id: id,
-    })
-    if (ok === true) allowed.push(id)
-  }
-  if (allowed.length === 0) return []
-
-  const { data: profilesData } = await supabase
-    .from("profiles")
-    .select("user_id, display_name")
-    .in("user_id", allowed)
-
-  const { data: invitedData } = await supabase
-    .from("event_invites")
-    .select("invitee_user_id")
-    .eq("event_id", event.id)
-  const invitedSet = new Set((invitedData ?? []).map((r) => r.invitee_user_id))
-
-  return ((profilesData ?? []) as { user_id: string; display_name: string | null }[])
-    .map((p) => ({
-      user_id: p.user_id,
-      display_name: p.display_name,
-      is_already_invited: invitedSet.has(p.user_id),
-    }))
-    .sort((a, b) => (a.display_name ?? "").localeCompare(b.display_name ?? ""))
+  return (data ?? []).map((row) => ({
+    user_id: row.user_id,
+    display_name: row.display_name,
+    is_already_invited: row.is_already_invited,
+  }))
 }
 
 async function eventInviteQuota(

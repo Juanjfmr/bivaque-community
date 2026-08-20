@@ -1297,6 +1297,10 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      can_receive_invite_to_event: {
+        Args: { p_event_id: string; p_user_id: string }
+        Returns: boolean
+      }
       check_recurrence_holiday: {
         Args: { p_date: string }
         Returns: {
@@ -1475,6 +1479,14 @@ export type Database = {
           arriving_from_locality_name: string
           display_name: string
           requested_at: string
+          user_id: string
+        }[]
+      }
+      list_invitable_members_for_event: {
+        Args: { p_event_id: string; p_user_id: string }
+        Returns: {
+          display_name: string
+          is_already_invited: boolean
           user_id: string
         }[]
       }

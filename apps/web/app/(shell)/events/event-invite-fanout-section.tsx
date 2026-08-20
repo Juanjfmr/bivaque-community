@@ -79,6 +79,14 @@ export function EventInviteFanoutSection({ eventId }: { eventId: string }) {
           className="space-y-2"
         >
           <input type="hidden" name="eventId" value={eventId} />
+          {/* sendEventInvitesAction reads formData.getAll("inviteeId") — the
+              checkbox selection lives in React state (`selected`), so each
+              selected id needs its own hidden input to actually reach the
+              action. Without this the form always submitted zero invitees
+              (found alongside the HeroUI Checkbox compound-structure fix). */}
+          {Array.from(selected).map((id) => (
+            <input key={id} type="hidden" name="inviteeId" value={id} />
+          ))}
           <ul className="space-y-1">
             {invitable.map((m) => (
               <li
@@ -89,7 +97,13 @@ export function EventInviteFanoutSection({ eventId }: { eventId: string }) {
                   aria-label={`Convidar ${m.display_name ?? "membro"}`}
                   isSelected={selected.has(m.user_id)}
                   onChange={() => toggle(m.user_id)}
-                />
+                >
+                  <Checkbox.Content>
+                    <Checkbox.Control>
+                      <Checkbox.Indicator />
+                    </Checkbox.Control>
+                  </Checkbox.Content>
+                </Checkbox>
                 <span className="flex-1 truncate">{m.display_name ?? "Membro"}</span>
               </li>
             ))}
