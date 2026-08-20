@@ -117,16 +117,23 @@ export default async function CommunityPendingPage({
       {pending.length === 0 ? (
         <p className="text-sm text-muted">Nenhum pedido pendente.</p>
       ) : (
-        <>
-          {/* Ações de lote — uma única <form> envolve toda a fila. Cada linha
-              contribui com um input hidden "userIds"; o server action itera
-              item a item, sem afrouxar authz (a checagem é da RPC, não da
-              ação). */}
-          <form
-            action={approveCommunityMembersBatchAction}
-            className="flex flex-wrap items-center gap-2"
-          >
-            <input type="hidden" name="communityId" value={communityId} />
+        // Uma única <form> envolve toda a fila — batch e por-linha. Os
+        // checkboxes "userIds" viviam FORA da <form> de lote (dois blocos
+        // JSX irmãos, form fechando antes da <ul> abrir): marcar linhas e
+        // clicar "Aprovar selecionados" sempre enviava um FormData sem
+        // nenhum userIds, e approveCommunityMembersBatchAction faz no-op
+        // silencioso nesse caso (linha 87-90 de actions.ts) — o recurso
+        // nunca funcionou. As ações de linha única usam `userId` (singular),
+        // as de lote usam `userIds` (plural, getAll) — nomes distintos, então
+        // fundir tudo numa form não faz um botão "Aprovar" de linha também
+        // aprovar o que estiver marcado nos checkboxes. Botões de linha viram
+        // formAction em vez de <form> aninhada (HTML não permite form dentro
+        // de form) — encontrado ao investigar o gap de seed que impedia o
+        // /communities/:id/admin/pending de renderizar durante a onda de
+        // realinhamento de E2E.
+        <form action={approveCommunityMembersBatchAction} className="space-y-4">
+          <input type="hidden" name="communityId" value={communityId} />
+          <div className="flex flex-wrap items-center gap-2">
             <Button type="submit" size="sm" variant="primary">
               Aprovar selecionados
             </Button>
@@ -138,7 +145,7 @@ export default async function CommunityPendingPage({
             >
               Recusar selecionados
             </Button>
-          </form>
+          </div>
 
           <ul className="space-y-2">
             {pending.map((member) => (
@@ -172,25 +179,38 @@ export default async function CommunityPendingPage({
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <form action={approveCommunityMemberAction}>
-                    <input type="hidden" name="communityId" value={communityId} />
-                    <input type="hidden" name="userId" value={member.user_id} />
-                    <Button type="submit" size="sm" variant="primary">
-                      Aprovar
-                    </Button>
-                  </form>
-                  <form action={removeCommunityMemberAction}>
-                    <input type="hidden" name="communityId" value={communityId} />
-                    <input type="hidden" name="userId" value={member.user_id} />
-                    <Button type="submit" size="sm" variant="tertiary">
-                      Recusar
-                    </Button>
-                  </form>
+                  {/* name+value on the button itself, not a shared hidden
+                      input: every row's userId now lives in the same outer
+                      form, so a hidden input named "userId" would submit
+                      the FIRST row's value no matter which row's button was
+                      clicked. Only the activated submit button's name/value
+                      pair is included in FormData — the correct per-row
+                      identity. */}
+                  <Button
+                    type="submit"
+                    name="userId"
+                    value={member.user_id}
+                    size="sm"
+                    variant="primary"
+                    formAction={approveCommunityMemberAction}
+                  >
+                    Aprovar
+                  </Button>
+                  <Button
+                    type="submit"
+                    name="userId"
+                    value={member.user_id}
+                    size="sm"
+                    variant="tertiary"
+                    formAction={removeCommunityMemberAction}
+                  >
+                    Recusar
+                  </Button>
                 </div>
               </li>
             ))}
           </ul>
-        </>
+        </form>
       )}
     </div>
   )

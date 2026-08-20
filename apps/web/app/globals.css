@@ -216,3 +216,15 @@ body {
     scroll-behavior: auto;
   }
 }
+
+/* HeroUI's Checkbox indicator (checkbox__control > checkbox__indicator >
+   svg) has no pointer-events rule of its own, and its checkmark svg sits
+   over the real clickable control — a click lands on the aria-hidden svg
+   instead of toggling the input, so BOTH manual mouse clicks and
+   Playwright's .check() intermittently time out with "element intercepts
+   pointer events" (found running the E2E realignment,
+   community-batch-approval.spec.ts). The indicator is decorative
+   (aria-hidden="true"); it should never be a click target. */
+.checkbox__indicator {
+  pointer-events: none;
+}
