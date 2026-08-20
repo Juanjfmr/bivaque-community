@@ -1,233 +1,192 @@
 # Bivaque Community — mapa de dependências
 
-> Derivado do estado real em 2026-08-19 e do canon vigente. Este arquivo descreve **ordem técnica**, não prioridade comercial isolada.
+> Revisão v2 — 2026-08-19. O grafo abaixo representa **deltas ainda necessários**, não epics completos. Muitas foundations já existem.
 
 ## 1. Grafo principal
 
 ```text
-S0 — baseline confiável
-│
-├─ corrigir types drift/BOM
-├─ corrigir family-invite-locality pgTAP
-├─ tornar review check não-ambíguo
-└─ reconciliar PRODUCT_STATUS pós-P0
-│
-▼
+PRE-FLIGHT CI (não é onda de produto)
+        │
+        ▼
 T — transferência
-│
-▼
-D2 — a porta
-│
-▼
-E — a vila
-│
-▼
-F — o laço semanal
-│
-├───────────────┐
-│               │
-▼               ▼
-H0              G1
-safety floor    vitrine core sem DM
-│               │
-└───────┬───────┘
-        ▼
-G1-contact
-membro ↔ prestador
         │
         ▼
-G2 — amplificação / Asaas
+D2 — fechar admissão
         │
         ▼
-H1 — operação completa + analytics
+E — fechar vila / D48
+        │
+        ▼
+F — fechar laço + authz
+        │
+        ▼
+H0 — safety floor
+   ┌────┴──────────────┐
+   ▼                   ▼
+G1 — Vitrine Core     H1 — Operação/analytics
+   │
+   ▼
+G2 — Amplificação/Asaas
 ```
 
-A única quebra deliberada da ordem antiga “G → H” é H0. Ela existe porque a superfície privada de G não pode abrir enquanto denúncia de DM cai numa fila órfã e não existe suspensão de pessoa.
+H1 pode avançar em paralelo a G1 depois de H0 onde não depender de providers. G2 não bloqueia G1.
 
-## 2. S0 — baseline confiável
+## 2. O que já é foundation e não entra novamente no grafo
 
-**Depende de:** nada.
+Estas peças são pré-existentes e devem ser reutilizadas:
 
-**Destrava:** tudo.
+- Auth + sessão + shell;
+- verificação CPF, `pending`, attempt limit e circuit breaker;
+- catálogo nacional de localidades + `LocalityContext`;
+- upload privado de documento;
+- consent acceptance;
+- communities/groups/memberships/feeds básicos;
+- events + RSVP básico + event invite receiver;
+- recommendations + replies + saves;
+- notification inbox + deep links;
+- DM UI, thread, context RLS, block/report foundation;
+- operator role + reports queue + hide/resolve + reporter notification;
+- admissions queue read-only;
+- `outbox` + worker + `pg_cron`/`pg_net`;
+- Sentry + PII scrub;
+- deployment workflow.
 
-Entregáveis:
+Planejar essas foundations como Tasks novas cria reimplementação e regressão.
 
-- `main` sem BOM no types file;
-- pgTAP completo com fixtures válidas;
-- diferença clara entre falha de reviewer e falha do workflow do reviewer;
-- gate completo reproduzível;
-- `PRODUCT_STATUS.md` reconciliado com P0.
+## 3. Dependências duras
 
-## 3. T — transferência
+### T → D2/E/F
 
-**Depende de:** P0 fechada + S0.
+T muda a semântica de `locality_memberships`: corrente vs saída. D2/E/F leem localidade e pertencimento. Executá-las antes de T pode obrigar retrabalho em authorization, shell e queries.
 
-**Destrava:** D2/E/G com o modelo correto de localidade corrente + origem de saída.
+### D2 → H1 admissions
 
-O que G deve assumir após T:
+H1 só consegue decidir/adjudicar admissão corretamente depois que os estados e contratos finais da porta estiverem estáveis.
 
-- um membro pode estar legitimamente visível em duas localidades municipais durante a transferência;
-- isso não concede automaticamente comunidade/vila no destino;
-- busca de prestador por localidade deve respeitar o container corrente escolhido, não “localidade do perfil”.
+### E → G1
 
-## 4. D2 — a porta
+Vitrine precisa saber onde o prestador atende e onde a ficha aparece. A semântica de localidade/comunidade e a navegação precisam estar fechadas antes de desenhar discovery provider sobre elas.
 
-**Depende de:** T e partes de D1 (`outbox`/worker; adaptadores podem continuar externos).
+### F → H0
 
-**Destrava:** entrada confiável, provider/member role split sem conflitar com gates e consoles.
+F corrige Server Actions e fecha ciclos que geram novos alvos/notifications. H0 deve consolidar moderation sobre a superfície já estabilizada, não sobre contratos em movimento.
 
-Saídas relevantes para G/H:
+### H0 → provider DM em G1
 
-- gate derivado do estado real;
-- console do fundador;
-- decisão manual de documento preparada para operação;
-- consentimento/código de conduta versionados;
-- convite familiar fechado;
-- fluxos `pending/rejected` coerentes.
+Provider DM não abre antes de:
 
-## 5. E — a vila
+- report privado chegar ao operador;
+- bloqueio bilateral;
+- suspensão existir e bloquear writes;
+- contexto `provider` ser validado server-side.
 
-**Depende de:** D2.
+A UI/infra de DM já existe. A dependência é safety, não chat.
 
-**Destrava:** o container comercial gratuito da G.
+### G1 → G2
 
-G não deve inventar uma unidade de alcance própria. A unidade grátis nasce da comunidade/vila que já existe depois de E.
+Cobrança compra **amplificação de uma ficha existente**. Não há produto de billing sem ficha, escopo e entitlement de alcance.
 
-Saídas relevantes:
+### CNPJ → G2
 
-- home de vila;
-- referência de localidade;
-- navegação por container;
-- dono/moderador de comunidade;
-- convite de membro;
-- perfil alheio;
-- audiência explícita.
+Asaas é bloqueio externo. Não bloquear ficha gratuita, discovery, dashboard nem contato por causa dele.
 
-## 6. F — o laço semanal
+## 4. Dependências que **não são duras**
 
-**Depende de:** E.
+### PostHog → dashboard provider
 
-**Destrava:** prova social futura, referrals úteis para provider acquisition, e base de eventos/requests consistente.
+Não é dependência. Métrica inicial do prestador pode ser first-party: contatos/conversas originadas da ficha e outros contadores derivados do banco. PostHog é analytics de produto, não ledger do provider.
 
-Saídas relevantes para G/H:
+### H1 inteiro → G1 inteiro
 
-- authz de server actions saneada;
-- pedidos/respostas com ciclo fechado;
-- RSVP/eventos mais completos;
-- targets adicionais que H precisa saber denunciar/moderar.
+Também não. Apenas H0 é safety floor obrigatório. Admissions/PostHog/visão operacional ampliada podem avançar em paralelo depois.
 
-## 7. H0 — safety floor
+### WhatsApp → ciclos de produto
 
-**Depende de:** F.
+`outbox` abstrai canal. O critério das features é enfileirar corretamente; adaptador externo pode degradar para e-mail. Não transformar bloqueio de conta/chip em bloqueio de domínio.
 
-**Pode rodar em paralelo com:** G1 sem DM, desde que não toquem a mesma migration/superfície e o banco local seja coordenado conforme `plans/README.md`.
-
-Entregáveis mínimos antes de abrir conversa provider:
-
-1. `reports` unificado ou adapter único que inclua `dm_message`;
-2. `dm_reports` não pode mais ser fila órfã;
-3. motivo com tamanho/normalização e PII-safe handling;
-4. ação do operador sobre todos os targets já expostos;
-5. suspensão de escrita em pessoa, com helper presente em todas as policies de escrita na mesma migration;
-6. teste positivo + negativo para cada fronteira.
-
-## 8. G1 — vitrine core
-
-### G1a — pode começar após F
-
-- convite/admissão de prestador;
-- provider account sem membership;
-- ficha draft/published;
-- categoria canônica;
-- catálogo;
-- portfólio;
-- busca por categoria/container/nome;
-- dashboard próprio sem analytics de terceiro.
-
-### G1b — só depois de H0
-
-- criação de conversa membro↔prestador;
-- provider inbox;
-- denúncia dentro da conversa;
-- métrica first-party de contatos/conversas.
-
-## 9. G2 — amplificação
-
-**Depende de:** G1 + CNPJ + ADR/pricing aprovado + integração Asaas disponível.
-
-**Não depende de:** PostHog.
-
-Modelo esperado:
+## 5. Dependências internas de G
 
 ```text
-provider_profile
+G-ADR / account boundary
+       │
+       ▼
+provider identity + role
+       │
+       ├──► ficha/catalog/portfolio
+       │          │
+       │          ▼
+       │       discovery/search
+       │          │
+       │          ▼
+       │       member contact
+       │          │
+       │          ▼
+       │       provider dashboard
+       │
+       └──► entitlement model
+                    │
+                    ▼
+                  Asaas
+```
+
+`member contact` exige H0 antes de ser liberado em produção.
+
+## 6. Dependências internas de H
+
+```text
+report contract único
+      │
+      ├──► todos os alvos chegam à fila
+      │
+      └──► reason sanitizado
+
+account suspension model
+      │
+      ▼
+RLS write helper aplicado globalmente
+      │
+      ▼
+operator suspend/unsuspend + audit
+      │
+      ▼
+E2E de suspensão
+
+D2 final
   │
-  ├── home_community_id  ── alcance grátis
+  ▼
+admission decision
+
+base legal/config
   │
-  └── provider_reach_entitlements
-         ├── community:<id>
-         └── locality:<id>
+  ▼
+PostHog
 ```
 
-Billing altera entitlement; **não altera score de ranking**.
+## 7. Portões humanos/R3
 
-Webhook Asaas precisa ser idempotente. Expiração/cancelamento remove o entitlement no cálculo de visibilidade, não a ficha gratuita de origem.
+Pela `RISK_MATRIX.md`, estes pontos não são delegáveis a um Goal Mode sem governança prévia:
 
-## 10. H1 — operação completa
+- mudança de RLS/permissions;
+- suspensão/exclusão de escrita;
+- provider account boundary;
+- marketplace/monetização;
+- Asaas/webhooks/entitlements;
+- PostHog e saída de dado comportamental;
+- tratamento de documentos/decisão de admissão.
 
-**Depende de:** G porque precisa incluir provider/profile/catalog/DM nos alvos reais.
+G/H permanecem drafts até ADR aplicável + critic `PASS` + aprovação humana.
 
-Entregáveis:
+## 8. Ordem recomendada para MiniMax M3 / Goal Mode
 
-- fila unificada completa;
-- feedback ao denunciante;
-- decisões de admissão;
-- suspensão/reativação auditáveis;
-- PostHog com allowlist sem conteúdo/PII;
-- health probe/RLS expandido;
-- SLA operacional e reconciliação documental.
+Nunca entregue o grafo inteiro como um único goal. Use uma onda/delta por execução:
 
-## 11. Dependências externas
+1. preflight técnico;
+2. T;
+3. D2 restante;
+4. E restante;
+5. F — primeiro authz, depois ciclos;
+6. H0;
+7. G1 em blocos: account → ficha → discovery → contact/dashboard;
+8. H1 e G2 conforme dependências externas.
 
-```text
-Resend account + DNS ───────────────► entrega e-mail real
-CNPJ ─────┬─────────────────────────► Asaas / G2
-          └─────────────────────────► WhatsApp Cloud API futuro
-número WhatsApp dedicado ───────────► canal não-oficial atual
-revisão jurídica ───────────────────► política de privacidade publicável
-assinatura do dono ─────────────────► código de conduta publicável
-pricing aprovado ───────────────────► produtos/entitlements G2
-```
-
-Nenhuma dessas deve ser simulada como “DONE” por agente.
-
-## 12. Dependências de revisão
-
-Para execução agentic:
-
-```text
-executor
-  ↓
-gate determinístico
-  ↓
-reviewer independente
-  ↓
-PASS ──► próxima task
-FAIL ──► rework da mesma task
-```
-
-O reviewer não substitui pgTAP/E2E/visual audit. Ele revisa contra acceptance criteria e diff; os gates provam propriedades executáveis.
-
-## 13. Ordem recomendada final
-
-1. **S0** — estabilização do baseline.
-2. **T** — executar plano existente.
-3. **D2** — executar plano existente.
-4. **E** — executar plano existente.
-5. **F** — executar plano existente.
-6. **H0** — executar Tasks 1–4 do plano H proposto.
-7. **G1** — vitrine core e contato seguro.
-8. **G2** — amplificação paga quando os bloqueios humanos fecharem.
-9. **H1** — admissões, feedback, analytics e operação final.
-
-A abertura ao público pode ocorrer antes de G2 se a decisão do dono for lançar sem monetização; **não** deve ocorrer com H0 ausente se DM provider estiver habilitada.
+Cada bloco encerra em gate determinístico + reviewer independente antes do seguinte.
