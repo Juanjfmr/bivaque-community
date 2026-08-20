@@ -9,9 +9,18 @@ import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 //
 // BottomNav labels come from NavItem.shortLabel when present, so the community
 // tab reads "Comunidade", not "Minha comunidade".
+//
+// ADR-20260816-shells-e-navegacao (see bottom-nav.tsx's own header comment,
+// enforced by tests/scope/navigation.test.mjs) collapsed the nav to exactly
+// four product-model containers — Cidade, Comunidade, Grupos, Eu. Eventos
+// lives inside Cidade, Mensagens inside Eu, and Indicações moved to a header
+// icon reachable at every width (VISUAL_GUIDE.md §0). This spec previously
+// asserted the pre-ADR five-tab model (Comunidade/Grupos/Eventos/Indicações/
+// Mensagens as five siblings) and never actually ran against the shipped
+// shell — found realigning E2E against the real seed/app after onda T/F.
 
 test.describe("BottomNav visibility across viewports", () => {
-  test("shows all 5 navigation items at 375px", async ({ page, context }) => {
+  test("shows all 4 navigation items at 375px", async ({ page, context }) => {
     // Given an authenticated member on the mobile-375 viewport
     await seedSession(context)
     await page.setViewportSize({ width: 375, height: 812 })
@@ -19,18 +28,17 @@ test.describe("BottomNav visibility across viewports", () => {
     // When they open the community route
     await page.goto("/community")
 
-    // Then all 5 bottom navigation items are visible, in NAV_ITEMS order
+    // Then all 4 bottom navigation items are visible, in NAV_ITEMS order
     const nav = page.locator(BOTTOM_NAV)
     await expect(nav).toBeVisible()
 
     const tabs = nav.getByRole("tab")
-    await expect(tabs).toHaveCount(5)
+    await expect(tabs).toHaveCount(4)
 
-    await expect(tabs.nth(0)).toContainText("Comunidade")
-    await expect(tabs.nth(1)).toContainText("Grupos")
-    await expect(tabs.nth(2)).toContainText("Eventos")
-    await expect(tabs.nth(3)).toContainText("Indicações")
-    await expect(tabs.nth(4)).toContainText("Mensagens")
+    await expect(tabs.nth(0)).toContainText("Cidade")
+    await expect(tabs.nth(1)).toContainText("Comunidade")
+    await expect(tabs.nth(2)).toContainText("Grupos")
+    await expect(tabs.nth(3)).toContainText("Eu")
   })
 
   test("gives way to the icon rail at 768px", async ({ page, context }) => {
@@ -67,7 +75,7 @@ test.describe("BottomNav visibility across viewports", () => {
 })
 
 test.describe("Indicações discoverable entry", () => {
-  test("is reachable from the BottomNav at 375px", async ({ page, context }) => {
+  test("is reachable from the header at 375px", async ({ page, context }) => {
     // Given an authenticated member on the mobile-375 viewport
     await seedSession(context)
     await page.setViewportSize({ width: 375, height: 812 })
@@ -75,8 +83,9 @@ test.describe("Indicações discoverable entry", () => {
     // When they open the community route
     await page.goto("/community")
 
-    // Then Indicações is in the BottomNav, not desktop-only
-    const indications = page.locator(BOTTOM_NAV).getByRole("tab", { name: "Indicações" })
+    // Then Indicações is a header icon, visible at every width — not a
+    // BottomNav tab (the ceiling of four containers has no room for it)
+    const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
     await expect(indications).toHaveAttribute("href", "/recommendations")
   })
@@ -89,14 +98,13 @@ test.describe("Indicações discoverable entry", () => {
     // When they open the community route
     await page.goto("/community")
 
-    // Then the rail entry is still named, even though only the icon is drawn —
-    // the icon itself is aria-hidden, so the label carries the name.
+    // Then the header entry is still named and reachable
     const indications = page.getByRole("link", { name: "Indicações" })
-    await expect(indications).toBeAttached()
+    await expect(indications).toBeVisible()
     await expect(indications).toHaveAttribute("href", "/recommendations")
   })
 
-  test("is reachable from the sidebar at 1440px", async ({ page, context }) => {
+  test("is reachable from the header at 1440px", async ({ page, context }) => {
     // Given an authenticated member on the desktop-1440 viewport
     await seedSession(context)
     await page.setViewportSize({ width: 1440, height: 900 })
@@ -104,7 +112,7 @@ test.describe("Indicações discoverable entry", () => {
     // When they open the community route
     await page.goto("/community")
 
-    // Then Indicações is reachable from the sidebar, where it is a link
+    // Then Indicações is reachable from the header, where it is a link
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
     await expect(indications).toHaveAttribute("href", "/recommendations")
@@ -123,7 +131,7 @@ test.describe("Navigation tab links", () => {
     // Then each tab links to the expected route
     const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
 
-    const expectedHrefs = ["/community", "/groups", "/events", "/recommendations", "/messages"]
+    const expectedHrefs = ["/localidade", "/community", "/groups", "/profile"]
 
     for (let index = 0; index < expectedHrefs.length; index++) {
       const href = await tabs.nth(index).getAttribute("href")

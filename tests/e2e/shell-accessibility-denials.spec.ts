@@ -72,7 +72,7 @@ test.describe("Touch target minimum size", () => {
 
     // Then each visible tab has a minimum touch target of 44px both dimensions
     const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
-    await expect(tabs).toHaveCount(5)
+    await expect(tabs).toHaveCount(4)
     const count = await tabs.count()
 
     for (let index = 0; index < count; index++) {
@@ -94,15 +94,16 @@ test.describe("Touch target minimum size", () => {
 
   test("Indicações entry has a touch target of at least 44px", async ({ page, context }) => {
     // Given an authenticated member on the mobile-375 viewport, where
-    // Indicações now rides in the BottomNav alongside the other entries
+    // Indicações is a header icon (ADR-20260816-shells-e-navegacao — it does
+    // not fit inside the four-container BottomNav ceiling)
     await seedSession(context)
     await page.setViewportSize({ width: 375, height: 812 })
 
-    // When the bottom nav is rendered
+    // When the header is rendered
     await page.goto("/community")
 
     // Then the Indicações entry has a minimum touch target of 44px
-    const entry = page.locator(BOTTOM_NAV).getByRole("tab", { name: "Indicações" })
+    const entry = page.getByRole("link", { name: "Indicações" })
     const box = await entry.boundingBox()
     expect(box).not.toBeNull()
 

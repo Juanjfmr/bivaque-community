@@ -2,7 +2,7 @@
 
 import { brandTokens } from "@bivaque/tokens"
 import { Button, Kbd, Tooltip } from "@heroui/react"
-import { Bell, ChevronsLeft, MapPin, PanelLeft } from "lucide-react"
+import { Bell, ChevronsLeft, Lightbulb, MapPin, PanelLeft } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
@@ -104,6 +104,14 @@ export function AppShell({ children }: AppShellProperties) {
             >
               Publicar
             </Button>
+
+            <a
+              href="/recommendations"
+              aria-label="Indicações"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+            >
+              <Lightbulb size={20} aria-hidden="true" />
+            </a>
 
             <button
               type="button"

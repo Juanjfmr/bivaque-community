@@ -41,9 +41,16 @@ test.describe("holder onboarding journey", () => {
     // When a user navigates to the consent page
     await page.goto("/consent")
 
-    // Then the terms of use are displayed
+    // Then the terms of use are displayed. "Bem-vindo ao Bivaque" never
+    // existed on this page — found realigning this spec against the real
+    // rendered /consent (apps/web/app/(preauth)/consent/page.tsx), which
+    // renders "Termos de uso" plus the Código de conduta and Política de
+    // privacidade sections, no separate welcome line.
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
-    await expect(page.getByText("Bem-vindo ao Bivaque")).toBeVisible()
+    // Scoped to the page's own section heading id: the rendered legal
+    // document body also contains a "Código de conduta" heading of its own,
+    // so a bare role query resolves to two elements (strict-mode violation).
+    await expect(page.locator("#conduct-heading")).toBeVisible()
 
     const acceptButton = page.getByRole("button", { name: "Aceitar e continuar" })
     await expect(acceptButton).toBeVisible()
@@ -193,34 +200,31 @@ test.describe("groups journey", () => {
     await page.goto("/groups")
 
     // Then exactly one primary navigation is on screen: the BottomNav below
-    // md (5 tabs, profile filtered out in favor of the header avatar), the
+    // md (4 tabs — the ADR-20260816-shells-e-navegacao containers), the
     // sidebar from md up (rail or expanded, links).
     const width = page.viewportSize()?.width ?? 0
 
     if (width < 768) {
-      // Mobile: BottomNav with 5 tabs in NAV_ITEMS order, minus profile
+      // Mobile: BottomNav with 4 tabs in NAV_ITEMS order
       const nav = page.locator(BOTTOM_NAV)
       await expect(nav).toBeVisible()
       const tabs = nav.getByRole("tab")
-      await expect(tabs).toHaveCount(5)
-      await expect(tabs.nth(0)).toContainText("Comunidade")
-      await expect(tabs.nth(1)).toContainText("Grupos")
-      await expect(tabs.nth(2)).toContainText("Eventos")
-      await expect(tabs.nth(3)).toContainText("Indicações")
-      await expect(tabs.nth(4)).toContainText("Mensagens")
+      await expect(tabs).toHaveCount(4)
+      await expect(tabs.nth(0)).toContainText("Cidade")
+      await expect(tabs.nth(1)).toContainText("Comunidade")
+      await expect(tabs.nth(2)).toContainText("Grupos")
+      await expect(tabs.nth(3)).toContainText("Eu")
     } else {
       // Tablet rail / desktop sidebar: BottomNav hidden, sidebar links visible
       await expect(page.locator(BOTTOM_NAV)).toBeHidden()
       const sidebar = page.locator(SIDEBAR)
       await expect(sidebar).toBeVisible()
       const links = sidebar.getByRole("link")
-      await expect(links).toHaveCount(6)
-      await expect(links.nth(0)).toHaveAttribute("href", "/community")
-      await expect(links.nth(1)).toHaveAttribute("href", "/groups")
-      await expect(links.nth(2)).toHaveAttribute("href", "/events")
-      await expect(links.nth(3)).toHaveAttribute("href", "/recommendations")
-      await expect(links.nth(4)).toHaveAttribute("href", "/messages")
-      await expect(links.nth(5)).toHaveAttribute("href", "/profile")
+      await expect(links).toHaveCount(4)
+      await expect(links.nth(0)).toHaveAttribute("href", "/localidade")
+      await expect(links.nth(1)).toHaveAttribute("href", "/community")
+      await expect(links.nth(2)).toHaveAttribute("href", "/groups")
+      await expect(links.nth(3)).toHaveAttribute("href", "/profile")
     }
   })
 })
