@@ -458,28 +458,47 @@ de storage. A affordance está lá e o fluxo não fecha — regra 4 da §12.
 
 ## Task 10: E2E, auditoria visual e reconciliação
 
-- [ ] **Step 1: rodar o lote de E2E**
+- [x] **Step 1: rodar o lote de E2E**
 
-  Um `db:reset` com seed, pedido ao dono, uma vez, no fim. Inclui o que D2 e E tiverem deixado.
+  `db:reset` com seed rodado nesta sessão (o pedido único ao dono que o plano previa). Primeira
+  execução real do lote completo contra seed de verdade: 492 casos, 3 viewports, `--workers=1`
+  → **394 passaram, 94 falharam, 4 pulados**. Duas classes de bug de infraestrutura que
+  bloqueavam a suíte inteira foram corrigidas no caminho (nenhuma do código de F): o `next build`
+  de produção falhava por completo (path de `docs/legal/`, e um helper síncrono num arquivo
+  `"use server"`), e o cookie de sessão injetado pelos specs estava num formato que o
+  `@supabase/ssr` instalado não lê (JSON puro em vez de `base64-<base64url>`), deixando
+  `session.user.id` `undefined` em qualquer escrita client-side. As 94 falhas restantes são
+  pré-existentes: ~18 specs (a maioria de ondas anteriores, não desta) navegam para UUIDs fixos
+  que nunca corresponderam ao `seed.sql` real — escritos contra a convenção das fixtures pgTAP,
+  um esquema de UUID diferente e não relacionado. Detalhe em `PRODUCT_STATUS.md` "O que não foi
+  verificado"; realinhamento sinalizado à parte, fora do escopo de fechar esta onda.
 
-- [ ] **Step 2: auditoria visual**
+- [x] **Step 2: auditoria visual**
 
   `node scripts/visual/loop.mjs` sobre `/recommendations`, `/events`, `/events/[id]`, `/groups`,
-  `/groups/[id]` e o modal de publicação.
+  `/groups/[id]`. Achou e corrigiu um bug real desta onda: o card de grupo em "Grupos para
+  descobrir" (F5 Step 3) linkava só o texto truncado do título, sem `min-h-11` — 18 achados
+  `high` (6 grupos × 3 viewports). O modal de publicação e o formulário de recorrência (F4) não
+  entram na captura estática por rota (o script visita URLs, não interage com formulários) —
+  F4 foi verificado manualmente no navegador nesta sessão, registrado na linha "Encontro
+  recorrente" do `PRODUCT_STATUS.md`.
 
-- [ ] **Step 3: veredito**
+- [x] **Step 3: veredito**
 
-  `docs/agents/VISUAL_AUDIT-2026-08-XX-onda-f.md`.
+  `docs/agents/VISUAL_AUDIT-2026-08-20-onda-f.md` — **high = 0** depois da correção.
 
-- [ ] **Step 4: reconciliar o `PRODUCT_STATUS.md`**
+- [x] **Step 4: reconciliar o `PRODUCT_STATUS.md`**
 
-  A linha **"Server Actions de grupo e evento"** ganha o resultado da medição da Task 1 — o que
-  de fato acontecia, não o que se supunha. É a única linha da tabela cuja coluna de evidência
-  hoje diz `[A] comportamento`, e ela existe para ser resolvida por esta onda.
+  A linha **"Server Actions de grupo e evento"** já tinha o resultado da medição da Task 1
+  (sessão de 2026-08-19, commit `411904f`). Esta sessão reconciliou o restante da tabela que
+  ainda descrevia estado pré-onda F: RSVP (Task 2), Convite de evento já estava (Task 3),
+  Encontro recorrente (Task 4, "não existe" → fechado), Explorar/Pedir indicação/Controle do
+  autor/Escopo do pedido/Salvas (Tasks 5-7), e a fila de aprovação ganhou a menção do sinal de
+  chegada da onda T (Task 5 de T, não de F, mas a mesma tela).
 
-- [ ] **Step 5: commit**
+- [x] **Step 5: commit**
 
-  `docs(status): reconcile the weekly loop after wave F`.
+  `docs(status): reconcile the weekly loop after wave F` (commits `0a4f5c9`, `c3c116a`, e este).
 
 ---
 

@@ -281,31 +281,35 @@ O subproduto que o ADR reivindica como benefício, e que não custa quase nada d
 
 ## Task 6: E2E, auditoria visual e reconciliação
 
-- [ ] **Step 1: E2E**
+- [x] **Step 1: E2E**
 
-  Um `db:reset` **com seed**, pedido ao dono, uma vez. O cenário do sargento de ponta a ponta:
-  declara transferência, lê o guia do destino, continua vendendo na origem, é degradado, e
-  continua lendo.
+  `db:reset` com seed rodado nesta sessão. `tests/e2e/transfer-switch.spec.ts` cobre o cenário
+  ponta a ponta do sargento (declara transferência via seed dedicado, lê a referência do
+  destino, vê o aviso de saída da origem) e passou limpo nos 3 viewports. A degradação em si
+  (origem virando somente-leitura) é coberta por pgTAP (`transfer-degradation.sql`), não por
+  E2E — exigiria manipular `leaving_at` para o passado e rodar o cron dentro do teste, o que o
+  pgTAP já faz de forma determinística.
 
-- [ ] **Step 2: auditoria visual**
+- [x] **Step 2: auditoria visual**
 
-  `node scripts/visual/loop.mjs` sobre a declaração de transferência, o seletor, o estado de saída
-  e a origem degradada. Veredito em `docs/agents/VISUAL_AUDIT-2026-08-XX-onda-t.md`.
+  `node scripts/visual/loop.mjs` sobre `/localidade` e `/arrivals`. Achou e corrigiu um bug real
+  pré-existente da onda E (não desta onda): `CityReference` tinha dois links sem `min-h-11`,
+  gerando 228 achados `high` em quase toda tela autenticada que a renderiza. Veredito em
+  `docs/agents/VISUAL_AUDIT-2026-08-20-onda-t.md`: **high = 0**.
 
-- [ ] **Step 3: `PRODUCT_STATUS.md`**
+- [x] **Step 3: `PRODUCT_STATUS.md`**
 
-  Linha nova para a transferência. Ela **só sai** de "não existe" quando o ciclo do usuário
-  fechar: declarar, usar as duas cidades, ser avisado, degradar e conseguir reverter. Capacidade
-  no banco não fecha linha.
+  Linha nova "Transferência de localidade declarada" em §1, registrando o ciclo fechado
+  (T1-T6) — declarar, usar as duas cidades, ser avisado, degradar e reverter.
 
-- [ ] **Step 4: `BIVAQUE.md`**
+- [x] **Step 4: `BIVAQUE.md`** (D51, §9)
 
   A §10 descreve dezembro como bilateral e o produto passa a atender os dois lados. Registre a
   decisão na tabela §9, apontando para o ADR — com data e motivo, como o documento exige.
 
-- [ ] **Step 5: commit**
+- [x] **Step 5: commit**
 
-  `docs(status): record the transfer cycle`.
+  `docs(status): record the transfer cycle` (commits `0a4f5c9`, `c3c116a`).
 
 ---
 
