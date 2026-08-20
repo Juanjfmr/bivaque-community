@@ -23,6 +23,9 @@ set
 --'s
 -- visibility (the photo is accessible if the member can see the post).
 
+-- Locality membership is required, not just "authenticated" (unlike avatars,
+-- which are a global identity photo) — event photos are locality-scoped
+-- content, and no event/post row exists yet to check at upload time.
 create policy event_photos_insert_self
 on storage.objects
 for insert
@@ -30,6 +33,10 @@ to authenticated
 with check (
   bucket_id = 'event-photos'
   and owner = auth.uid()
+  and exists (
+    select 1 from public.locality_memberships
+    where user_id = (select auth.uid())
+  )
 );
 
 create policy event_photos_select_scoped
