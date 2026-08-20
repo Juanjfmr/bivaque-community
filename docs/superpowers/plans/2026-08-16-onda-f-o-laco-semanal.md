@@ -139,7 +139,7 @@ qualquer grupo privado digitando um campo escondido.
 `event_rsvp_status as enum ('interested', 'going')`. Falta "não vou", e a mudança de RSVP não
 avisa ninguém — o organizador de um churrasco descobre a desistência ao contar as cadeiras.
 
-- [ ] **Step 1: o valor novo**
+- [x] **Step 1: o valor novo** (`20260821000007_event_rsvp_not_going.sql`)
 
   `alter type public.event_rsvp_status add value 'not_going';`
 
@@ -149,13 +149,13 @@ avisa ninguém — o organizador de um churrasco descobre a desistência ao cont
   referencie, ela falha. Duas migrations timestamped, na ordem. O precedente no repositório é
   `20260809184316_notify_report_resolved.sql:18`, que adiciona e não usa.
 
-- [ ] **Step 2: a UI**
+- [x] **Step 2: a UI**
 
   Três estados, mutuamente exclusivos, com o atual visível antes do clique. "Cancelar RSVP"
   (`events/[id]/page.tsx:47-62`) continua existindo e significa outra coisa: apagar a resposta,
   não responder "não vou".
 
-- [ ] **Step 3: o organizador é avisado**
+- [x] **Step 3: o organizador é avisado** (`20260821000008_event_rsvp_change_notification.sql`)
 
   Trigger enfileira no `outbox` — e **respeita `notification_preferences`**, que é onde a regra
   mora (Task 3 da D1, Step 2). Não replique a checagem de preferência no trigger.
@@ -172,9 +172,7 @@ avisa ninguém — o organizador de um churrasco descobre a desistência ao cont
   `not_going` enfileira uma linha para o organizador; **preferência desligada não enfileira**
   (negativo); alternar duas vezes em um minuto não gera dois avisos.
 
-- [ ] **Step 5: gate e commit**
-
-  `feat(events): complete RSVP with "not going" and notify the organiser`.
+- [x] **Step 5: gate e commit** (`7c5e0e0`)
 
 ---
 
@@ -185,7 +183,7 @@ Migration, RLS e UI de aceitar/recusar existem (`20260806171204_event_invites.sq
 ninguém.** O comentário em `events/page.tsx:334` diz que o mecanismo não existe e está
 desatualizado — metade dele existe.
 
-- [ ] **Step 1: a tela do organizador**
+- [x] **Step 1: a tela do organizador** (`89a0cd4`)
 
   Na página do evento, para o organizador: escolher entre quem ele pode convidar e enviar.
 
@@ -194,7 +192,7 @@ desatualizado — metade dele existe.
   comunidade do evento e membros dos grupos do organizador. Se a tela precisar de um campo de
   busca livre de pessoas, o desenho está errado — **pare e reporte**.
 
-- [ ] **Step 2: fan-out**
+- [x] **Step 2: fan-out** (`89a0cd4`, correção de duplicata em `46bb8fb`)
 
   Convidar N pessoas cria N linhas em `event_invites` e N linhas no `outbox`. A policy
   `event_invites_insert_organizer` (`:59`) já confere quem insere — passe pelo cliente
@@ -203,7 +201,7 @@ desatualizado — metade dele existe.
   Teto por evento e por janela, pela cota do Upstash da D1. Convite de evento é o vetor de spam
   mais barato que este produto vai ter.
 
-- [ ] **Step 3: o comentário obsoleto sai**
+- [x] **Step 3: o comentário obsoleto sai** (confirmado: `events/page.tsx:334` não contém mais o comentário)
 
   `events/page.tsx:334`. Comentário que mente é pior que comentário ausente: foi ele que fez
   esta capability ficar parada.
@@ -214,9 +212,7 @@ desatualizado — metade dele existe.
   **não-organizador convidando é negado** (negativo); convidar alguém que não alcança o evento é
   negado; convite duplicado não cria segunda linha.
 
-- [ ] **Step 5: gate e commit**
-
-  `feat(events): organiser-driven event invitations with fan-out`.
+- [x] **Step 5: gate e commit** (`89a0cd4`)
 
 ---
 
@@ -290,7 +286,7 @@ O banco fechou o ciclo em 2026-08-15 (`20260815220000_recommendation_reply_cycle
 `group_id` com FK real, escopo validado por membership, `update`/`delete` da própria resposta).
 Faltam as três coisas que fazem a pessoa **saber** que foi respondida.
 
-- [ ] **Step 1: o autor é avisado**
+- [x] **Step 1: o autor é avisado** (`3928064`)
 
   Resposta nova enfileira no `outbox` para o autor do pedido, com destino que abre o pedido. É o
   elo que falta no ciclo semanal inteiro — sem ele o produto tem exatamente o defeito que existe
@@ -298,18 +294,18 @@ Faltam as três coisas que fazem a pessoa **saber** que foi respondida.
 
   `notification_type` não tem valor para isto. Adicione com o cuidado do enum da Task 2.
 
-- [ ] **Step 2: a UI expõe editar e excluir a própria resposta**
+- [x] **Step 2: a UI expõe editar e excluir a própria resposta** (`3928064`)
 
   A migration concedeu `update`/`delete` ao autor (`:105`, `:112`) e
   `recommendation-requests.tsx` não mostra nenhum dos dois. Capability sem tela é a regra 3 da
   §12 sendo quebrada de novo, três dias depois.
 
-- [ ] **Step 3: o Explorar leva ao detalhe**
+- [x] **Step 3: o Explorar leva ao detalhe** (`3928064`)
 
   `recommendations/page.tsx:519-565` — card de grupo não abre `/groups/[id]`; `:588-615` —
   evento aponta para a lista genérica. Dois `href`. Faça os dois.
 
-- [ ] **Step 4: resolvido**
+- [x] **Step 4: resolvido** (`3928064`)
 
   O autor marca o pedido como resolvido, e isso aparece. É o fechamento do ciclo da §6.3 e o que
   alimenta a curadoria do guia (Task 8 da onda E).
@@ -322,9 +318,7 @@ Faltam as três coisas que fazem a pessoa **saber** que foi respondida.
 
   E2E: responder um pedido faz a notificação aparecer para o autor.
 
-- [ ] **Step 6: gate e commit**
-
-  `feat(recommendations): close the ask-and-answer loop with notification`.
+- [x] **Step 6: gate e commit** (`3928064`)
 
 ---
 
@@ -333,12 +327,12 @@ Faltam as três coisas que fazem a pessoa **saber** que foi respondida.
 `recommendation-requests.tsx` tem Salvar/Salvo e a aba Salvas lê os salvos. Falta o motivo de
 salvar existir: **quem salvou um pedido quer saber quando alguém responder.**
 
-- [ ] **Step 1: notificação para quem salvou**
+- [x] **Step 1: notificação para quem salvou** (`76c7fdc`)
 
   Mesmo caminho da Task 5, outra lista de destinatários. Uma linha por pessoa, respeitando
   preferência — o worker é quem checa (D1).
 
-- [ ] **Step 2: a aba Salvas leva a algum lugar**
+- [x] **Step 2: a aba Salvas leva a algum lugar** (`76c7fdc`)
 
   Cada item abre o pedido, na resposta certa quando houver.
 
@@ -347,9 +341,7 @@ salvar existir: **quem salvou um pedido quer saber quando alguém responder.**
   pgTAP: pessoa que salvou recebe; pessoa que **des-salvou** não recebe (negativo); o autor não
   recebe duas linhas por ter salvo o próprio pedido.
 
-- [ ] **Step 4: gate e commit**
-
-  `feat(recommendations): saved requests notify their followers`.
+- [x] **Step 4: gate e commit** (`76c7fdc`)
 
 ---
 
@@ -359,12 +351,12 @@ O formulário já escolhe entre Manaus e um grupo do autor, e envia `locality_id
 conforme (`recommendations/page.tsx`, `recommendation-requests.tsx`). Falta a regra: pedido de
 Saúde **não** pode nascer em Manaus.
 
-- [ ] **Step 1: a regra no banco, não só na tela**
+- [x] **Step 1: a regra no banco, não só na tela** (`9419dc4`)
 
   `check` ou policy que rejeita categoria de saúde com `group_id` nulo. Validação só no cliente
   não é validação — a inserção é feita pelo próprio navegador, sob RLS.
 
-- [ ] **Step 2: a tela explica antes de bloquear**
+- [x] **Step 2: a tela explica antes de bloquear** (`9419dc4`)
 
   Escolher Saúde restringe o seletor de escopo aos grupos do autor, com uma linha dizendo por
   quê. Erro depois do submit é a pior forma de ensinar uma regra.
@@ -376,9 +368,7 @@ Saúde **não** pode nascer em Manaus.
   já asserta códigos de erro específicos e `20260816001059` existe justamente para devolver o
   `23514` que o teste 10 exige. Não quebre esse contrato.
 
-- [ ] **Step 4: gate e commit**
-
-  `feat(recommendations): health requests must start inside a group`.
+- [x] **Step 4: gate e commit** (`9419dc4`)
 
 ---
 
@@ -388,25 +378,23 @@ Saúde **não** pode nascer em Manaus.
 próprio pedido, rejeitar pedido alheio, remover membro e excluir o grupo. Todo administrador
 que precisar de uma dessas quatro descobre que a única saída é abandonar o grupo que ele criou.
 
-- [ ] **Step 1: as quatro ações**
+- [x] **Step 1: as quatro ações** (`67a393d`)
 
   Pelo cliente autenticado, com a RLS decidindo — Task 1 é pré-requisito e não deve ser
   contornada aqui.
 
-- [ ] **Step 2: excluir é `is_deleted`, não `delete`**
+- [x] **Step 2: excluir é `is_deleted`, não `delete`** (`67a393d`; botão corrigido em `6f2ccbc` — o trigger `block_soft_delete_groups` rejeitava o toggle vindo do cliente `authenticated`, corrigido com a RPC `delete_group`)
 
   O schema já usa exclusão lógica em `groups` e `posts`. Manter o padrão preserva o rastro de
   moderação, que a onda H vai precisar.
 
-- [ ] **Step 3: testes**
+- [x] **Step 3: testes**
 
   pgTAP em `supabase/tests/group-admin-cycle.sql`: dono remove membro; **membro não remove
   membro** (negativo); autor cancela o próprio pedido; **não cancela o de outro** (negativo);
   grupo excluído some do feed e do Explorar.
 
-- [ ] **Step 4: gate e commit**
-
-  `feat(groups): complete the group administrator cycle`.
+- [x] **Step 4: gate e commit** (`67a393d`, `6f2ccbc`)
 
 ---
 
@@ -416,18 +404,18 @@ que precisar de uma dessas quatro descobre que a única saída é abandonar o gr
 caminho da imagem ("Caminho da foto (event-photos/...)"). Nenhuma pessoa real digita um caminho
 de storage. A affordance está lá e o fluxo não fecha — regra 4 da §12.
 
-- [ ] **Step 1: upload de verdade**
+- [x] **Step 1: upload de verdade** (`2ecbf63`)
 
   Bucket privado com política de leitura por escopo. O modelo é
   `20260815132000_verification_documents.sql:7-26` e `supabase/tests/storage-policies.sql` — os
   dois estão prontos e testados; siga-os em vez de inventar.
 
-- [ ] **Step 2: limites nas bordas**
+- [x] **Step 2: limites nas bordas** (`2ecbf63`; RLS de storage por localidade em `8d3cb4f`)
 
   Tipo e tamanho conferidos **no servidor**, não só no `accept` do input. `image/jpeg`,
   `image/png`, `image/webp`; teto explícito.
 
-- [ ] **Step 3: sem EXIF**
+- [x] **Step 3: sem EXIF** (`2ecbf63`)
 
   Foto de celular carrega coordenada de GPS. Este produto se recusa a persistir endereço
   residencial (D11) e não pode aceitá-lo por dentro de um JPEG. Remova a metadata no servidor,
@@ -442,9 +430,7 @@ de storage. A affordance está lá e o fluxo não fecha — regra 4 da §12.
     mesmo com o cliente adulterado (negativo).
   - pgTAP: objeto do bucket não é legível por quem não alcança o post (negativo).
 
-- [ ] **Step 5: gate e commit**
-
-  `feat(composer): real photo upload with EXIF stripping`.
+- [x] **Step 5: gate e commit** (`2ecbf63`)
 
 ---
 
