@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(8);
 
 -- Onda F Task 1 — Step 4: pgTAP for the authz fix.
 
@@ -41,11 +41,15 @@ select is(
 -- 2. Entering a private group via the join_group RPC lands as pending.
 select public.join_group('80000000-0000-4000-8000-000000000002'::uuid);
 
+-- group_memberships_select requires is_group_member (status = 'approved') for
+-- a private group — member-one's own row is still 'pending', so they can't
+-- see it yet under RLS. Check as the owner instead.
+reset role;
 select is(
   (
     select status::text
     from public.group_memberships
-    where group_id = '80000000-0000-4000-8000-800000000002'::uuid
+    where group_id = '80000000-0000-4000-8000-000000000002'::uuid
       and user_id = '10000000-0000-4000-8000-000000000001'::uuid
   ),
   'pending',
@@ -82,6 +86,18 @@ select is_empty(
 
 -- 5. The holder of an event_rsvps can delete it.
 -- 6. An outsider cannot delete another user's rsvp.
+-- Event organized by member-two so member-one (the RSVP holder below) isn't
+-- the organizer — event_rsvps_block_self_trigger blocks an organizer's own RSVP.
+reset role;
+insert into public.events (id, organizer_id, locality_id, title, starts_at)
+values (
+  '60000000-0000-4000-8000-000000000001'::uuid,
+  '10000000-0000-4000-8000-000000000002'::uuid,
+  '00000000-0000-4000-8000-000000000001'::uuid,
+  'Evento para teste de RSVP',
+  '2026-09-01 10:00:00+00'
+);
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);

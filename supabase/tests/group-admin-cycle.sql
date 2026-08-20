@@ -3,7 +3,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(6);
+select plan(9);
 
 \ir fixtures/foundation.inc
 \ir fixtures/groups.inc
@@ -33,20 +33,40 @@ select is_empty(
 );
 
 -- ── NEGATIVE 2: non-moderator cannot remove a member ────────────────────────
+-- member-four needs a real membership row in group 001 first, or the delete
+-- below would trivially match nothing regardless of RLS.
+reset role;
+insert into public.group_memberships (group_id, user_id, role, status)
+values (
+  '40000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000004',
+  'member',
+  'approved'
+);
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
--- member-two tries to remove member-four (004) from group 001.
-select throws_ok(
+-- member-two tries to remove member-four (004) from group 001. RLS on
+-- DELETE filters rows silently (no exception) rather than raising 42501 —
+-- the assertion is that the statement runs but removes nothing.
+select lives_ok(
   $$
     delete from public.group_memberships
     where group_id = '40000000-0000-4000-8000-000000000001'::uuid
       and user_id = '10000000-0000-4000-8000-000000000004'::uuid
   $$,
-  '42501',
-  null,
-  'F8-: non-moderator cannot remove a member (RLS denies)'
+  'F8-: non-moderator delete attempt runs without error (RLS silently excludes the row)'
+);
+
+select isnt_empty(
+  $$
+    select 1 from public.group_memberships
+    where group_id = '40000000-0000-4000-8000-000000000001'::uuid
+      and user_id = '10000000-0000-4000-8000-000000000004'::uuid
+  $$,
+  'F8-: non-moderator cannot remove a member (row still exists, RLS denies)'
 );
 
 -- ── POSITIVE 3: author cancels own pending request ──────────────────────────
@@ -70,26 +90,48 @@ select is_empty(
 -- ── NEGATIVE 4: author cannot cancel another's request ──────────────────────
 -- Already covered by RLS: group_memberships_delete_self only allows deleting
 -- own membership. This test verifies that member-two cannot delete member-three's
--- membership in group 002.
+-- membership in group 002. POSITIVE 3 just deleted that exact row, so re-add
+-- it — otherwise the delete below trivially matches nothing regardless of RLS.
+reset role;
+insert into public.group_memberships (group_id, user_id, role, status)
+values (
+  '40000000-0000-4000-8000-000000000002',
+  '10000000-0000-4000-8000-000000000003',
+  'member',
+  'pending'
+);
+
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select throws_ok(
+select lives_ok(
   $$
     delete from public.group_memberships
     where group_id = '40000000-0000-4000-8000-000000000002'::uuid
       and user_id = '10000000-0000-4000-8000-000000000003'::uuid
   $$,
-  '42501',
-  null,
-  'F8-: author cannot cancel another member request (RLS denies)'
+  'F8-: another member delete attempt runs without error (RLS silently excludes the row)'
+);
+
+-- group 002 is private and member-two isn't a member of it, so
+-- group_memberships_select would hide the row from them regardless of
+-- whether the delete above actually ran — check as the owner instead.
+reset role;
+select isnt_empty(
+  $$
+    select 1 from public.group_memberships
+    where group_id = '40000000-0000-4000-8000-000000000002'::uuid
+      and user_id = '10000000-0000-4000-8000-000000000003'::uuid
+  $$,
+  'F8-: author cannot cancel another member request (row still exists, RLS denies)'
 );
 
 -- ── POSITIVE 5: soft-deleted group disappears from feed/explorer ────────────
-set local role authenticated;
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
-select set_config('request.jwt.claim.role', 'authenticated', true);
+-- Groups are only soft-deleted through the operator report-hiding path
+-- (api/admin/reports/[id]/route.ts), which runs as service_role — the
+-- block_soft_delete_groups trigger rejects the toggle from `authenticated`.
+set local role service_role;
 
 update public.groups
 set is_deleted = true
@@ -105,7 +147,7 @@ select is_empty(
 );
 
 -- ── POSITIVE 6: the is_deleted column exists and defaults to false ──────────
-select col_is_not_null('public', 'groups', 'is_deleted', 'is_deleted is NOT NULL');
+select col_not_null('public', 'groups', 'is_deleted', 'is_deleted is NOT NULL');
 select col_has_default('public', 'groups', 'is_deleted', 'is_deleted has default');
 
 select * from finish();
