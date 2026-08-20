@@ -1,192 +1,209 @@
 # Bivaque Community — gap analysis
 
-> Data: 2026-08-19. Baseline analisado: `main@ce918f1`.
+> Revisão v2 — 2026-08-19. Esta versão corrige falsos negativos da auditoria inicial: várias capabilities marcadas como pendentes já tinham implementação anterior ao último `PRODUCT_STATUS.md` reconciliado.
 
-## 1. Diagnóstico executivo
+## 1. Diagnóstico
 
-O Bivaque Community não está travado por falta de features. Está travado por **fechamento de ciclos e ordem de dependências**.
+O problema agora não é "construir o Bivaque inteiro". É **fechar corretamente uma base já extensa** e só então adicionar as duas áreas realmente novas: Vitrine e a parte ausente de Operação.
 
-A P0 fez a correção estrutural mais importante recente: produto nacional desde o cadastro, localidade como membership e Manaus como rollout, não fronteira. O próximo risco é voltar a construir horizontalmente e deixar capacidades pela metade.
+Os gaps de maior impacto são:
 
-A prioridade real é:
+1. transferência entre localidades ainda não aterrissou;
+2. admissão tem infraestrutura forte, mas exceção manual e alguns sad paths não fecham;
+3. comunidade/vila já existe, mas D48 e a arquitetura de navegação ainda não estão plenamente refletidas no runtime;
+4. eventos/recomendações/grupos têm ciclos incompletos e um problema importante de Server Actions/authz;
+5. DM existe, mas conflita com o canon de member↔member adiada e o bloqueio não é bilateral em conversa existente;
+6. Vitrine/provider é majoritariamente greenfield;
+7. moderação já opera conteúdo e retorna ao denunciante, mas não unifica DM/outros alvos nem suspende pessoas;
+8. admissions ainda observa sem decidir;
+9. PostHog e Asaas continuam ausentes.
 
-1. restaurar baseline/gates confiáveis;
-2. executar T;
-3. fechar D2;
-4. executar E;
-5. executar F;
-6. instalar o piso de moderação necessário para abrir superfícies privadas/comerciais;
-7. construir G;
-8. fechar H e telemetria.
+## 2. Gaps que **não** devem mais constar como ausência
 
-## 2. Gaps bloqueantes de engenharia
+Remover dos planos qualquer premissa de que estes itens não existem:
 
-### GAP-E01 — CI não distingue regressão de dívida preexistente
+- painel de denúncias do operador;
+- ação de ocultar/resolver post, comentário e grupo;
+- retorno ao denunciante após resolução;
+- inbox de notificações e deep links;
+- DM funcional com thread, criação por contexto compartilhado, ordenação de participantes, block UI e report de mensagem;
+- comunidades/grupos/feed de comunidade;
+- eventos básicos e RSVP;
+- recommendation requests, replies e saves;
+- `LocalityContext` nacional;
+- upload privado de documento com TTL e fila;
+- `outbox`, `pg_cron`, `pg_net`, worker e Sentry.
 
-`main` ainda carrega o BOM em `supabase/database.generated.ts`. O PR #24 prova que, ao removê-lo, o pipeline avança e revela um segundo problema em `family-invite-locality.sql`: fixture com UUID inválido e contagem de asserts inconsistente.
+Essas peças são **foundations reutilizáveis**, não Tasks novas.
 
-**Consequência:** Goal Mode/autonomous loop sobre esse baseline pode gastar tentativas “corrigindo” falhas que não pertencem à task.
+## 3. Gaps verdadeiros por frente
 
-**Fechamento:** gate completo verde e reproduzível antes de T.
+### 3.1 Preflight de execução autônoma
 
-### GAP-E02 — harness de review tem falso vermelho
+Não é produto, mas deve ser resolvido antes de um Goal Mode longo:
 
-O check Claude/DeepSeek pode terminar com sucesso e zero achados, mas falhar pelo teto de 40 turns. O problema é de julgamento do harness, não do código revisado.
+- BOM/types drift ainda está em PR #24, não em `main`;
+- `family-invite-locality.sql` tem falha preexistente exposta pelo CI desbloqueado;
+- review automático pode estourar limite de turns mesmo sem achados.
 
-**Fechamento:** separar “review produziu FAIL” de “infra do reviewer excedeu orçamento”. Não aceitar check vermelho ambíguo como juiz determinístico.
+Critério: o executor deve conseguir iniciar numa baseline em que vermelho novo seja atribuível ao próprio diff.
 
-### GAP-E03 — `PRODUCT_STATUS.md` está temporalmente atrás da P0
+### 3.2 Onda T — transferência
 
-A data global ainda é 15/08; commits de 17–19/08 mudaram localidade, membership, seed, E2E e auditoria visual.
+**Estado:** plano pronto, implementação não encontrada em `main`.
 
-**Fechamento:** nova reconciliação factual antes de usar o documento como contrato de execução.
+Falta:
 
-## 3. Gaps de produto por domínio
+- membership corrente vs saída;
+- data de saída e degradação para read-only;
+- declaração atômica de transferência;
+- seletor entre localidades;
+- reminder/termo;
+- autorização que conceda nível municipal do destino sem conceder vila.
 
-### Entrada e confiança
+Esse continua sendo o maior delta estrutural antes das ondas seguintes.
 
-- decisão manual de upload documental não existe;
-- `pending` existe, mas o ciclo operacional ainda depende da D2;
-- consentimento versiona o aceite, mas os textos não podem ser tratados como publicados enquanto os bloqueios humanos/jurídicos não fecharem;
-- convite familiar ainda precisa fechar entrega/sad paths;
-- waitlist geográfica virou código morto;
-- transferência é alvo crítico de dezembro e ainda não começou.
+### 3.3 D2 — fechar a porta
 
-### Comunidade
+**Não reconstruir:** CPF, pending, attempt limit, upload, consent persistence, email-binding do convite familiar e guards já existem.
 
-- camada de comunidade existe, mas a home ainda não executa completamente D48;
-- fila de dono de comunidade ainda não é operação em lote completa;
-- perfil alheio e convite de membro ainda não fecham aquisição/pertencimento;
-- navegação/container ainda depende de E.
+Falta confirmar/fechar:
 
-### Ciclo semanal e mensal
+- roteamento integral pelos estados reais de verificação;
+- reconciliação de `pending`;
+- entrega utilizável do convite familiar;
+- sad paths de convite e recuperação;
+- expurgo efetivo do documento no TTL;
+- decisão manual do documento pelo operador;
+- consentimento exibindo os textos corretos/versionados;
+- consoles e suas fronteiras finais;
+- E2E específico dos ramos ainda não provados.
 
-- respostas de indicação ainda não fecham retorno/notificação;
-- server actions de grupo/evento têm risco de authz conhecido;
-- RSVP é incompleto;
-- evento recorrente não existe;
-- fan-out de convite de evento não existe.
+### 3.4 E — fechar a vila
 
-### Vitrine
+**Já existe:** communities, memberships, approval básica, `feed_community`, seletor de audiência, guide foundation.
 
-Tudo o que define a experiência de prestador é `NOT STARTED`: identidade, admission, listing, search, dashboard, billing e alcance.
+Falta:
 
-### Operação
+- semântica D48 completa: vila é sala; localidade é referência/alcance;
+- post de alcance da localidade aparecer corretamente no feed da vila;
+- home sem vila virar referência, não feed municipal;
+- containers/navegação coerentes;
+- seleção explícita quando usuário tem múltiplas comunidades;
+- aprovação em lote e delegação;
+- convite de membro com escopo;
+- perfil de outro membro e histórico correto;
+- grupos sugeridos/assuntos conforme plano;
+- afiliação continua bloqueada pelo ADR específico enquanto não aprovada.
 
-Existe fila e ação sobre parte do conteúdo, mas não existe sistema operacional completo:
+### 3.5 F — fechar o laço semanal
 
-- `dm_reports` órfã;
-- alvos novos não reportáveis;
-- texto livre de denúncia pode carregar PII;
-- suspensão de pessoa não existe;
-- denunciante não recebe retorno;
-- admissões não têm decisão;
-- PostHog não existe.
+**Já existe:** grupos, detalhe de evento, RSVP básico, event invite receive/accept, requests/replies/saves e notification inbox.
 
-## 4. Contradições/arestas que o roadmap atual não resolve sozinho
+Falta:
 
-### C01 — G depende de H antes de H “começar”
+- corrigir seis Server Actions que autenticam no cliente de `service_role`;
+- impedir `desiredStatus` controlado pelo formulário;
+- RSVP `not_going` + notificação adequada;
+- envio/fan-out de convite pelo organizador;
+- encontro recorrente com RSVP por ocorrência;
+- ciclo de resposta: notificar autor/salvadores e oferecer destino correto;
+- controles completos de reply;
+- fechar administração de grupo;
+- escalada de pedido sem resposta, apenas se a hipótese continuar vigente após medição.
 
-O canon abre conversa membro↔prestador em G. Hoje denúncia de DM cai em uma tabela que nenhum painel lê e não existe suspensão de pessoa. Abrir a DM comercial antes de corrigir isso significa lançar um canal privado cujo principal sad path de segurança não fecha.
+### 3.6 H0 — safety floor
 
-**Correção proposta:** H deve ter uma subfase **H0 — safety floor** antes do task de DM da G:
+H já tem operação de conteúdo. O gap prioritário é a **inconsistência entre superfícies privadas e a operação**.
 
-- denúncia unificada incluindo DM;
-- motivo limitado/sanitizado;
-- operador consegue agir;
-- suspensão de escrita existe.
+Falta:
 
-H continua fechando depois de G com admissões, feedback e PostHog.
+- unificar `dm_reports` com a fila operacional ou criar uma camada única de leitura/ação sem duas verdades;
+- incluir alvos de recommendation/provider/event conforme o produto passe a permiti-los;
+- sanitizar/limitar motivo de denúncia antes de persistir;
+- suspensão reversível de pessoa com motivo e trilha;
+- helper de suspensão aplicado às policies de escrita no mesmo change set;
+- bloqueio realmente bilateral na DM;
+- E2E de pessoa suspensa e de denúncia privada chegando ao operador.
 
-### C02 — `PRODUCT_STATUS` diz que dashboard de prestador depende de PostHog
+**Retorno ao denunciante não é gap:** já existe.
 
-Essa dependência não é necessária. D37 pede “métrica”; D40 escolhe PostHog para métrica de produto. Misturar os dois torna dado apresentado ao prestador dependente de um terceiro de analytics e obriga H a preceder G inteira.
+### 3.7 G1 — Vitrine Core
 
-**Correção proposta:** a primeira métrica do dashboard é first-party e auditável: **conversas/contatos iniciados no contexto `provider`**, derivada do próprio banco. PostHog fica para analytics interno em H. Se no futuro houver page views no dashboard, decidir separadamente como medi-los.
+Aqui sim o produto é majoritariamente novo.
 
-### C03 — G tem dois produtos escondidos no mesmo nome
+Falta:
 
-“Vitrine” reúne:
+- account role/provider boundary;
+- caminho de indicação/admissão do provider;
+- ficha identidade + catálogo + portfólio;
+- taxonomia fechada sem `Outros`;
+- escopo de atendimento/localidade/vila;
+- dashboard próprio;
+- busca exata por categoria/escopo + `pg_trgm` no nome;
+- contato membro↔provider reutilizando DM sob contexto `provider` validado pelo servidor;
+- métricas first-party úteis ao provider.
 
-1. marketplace gratuito funcional;
-2. monetização/amplificação paga.
+### 3.8 G2 — Amplificação/Asaas
 
-O segundo depende de CNPJ, pricing e webhook Asaas; o primeiro não.
+Falta tudo no runtime:
 
-**Correção proposta:** executar G em duas subfases:
+- produto/entitlement de alcance;
+- checkout hospedado;
+- webhook idempotente;
+- cancelamento/expiração/reconciliação;
+- visibilidade ampliada sem alterar ranking;
+- trilha de cobrança.
 
-- **G1 — Vitrine Core:** prestador, ficha, catálogo, portfólio, busca, dashboard básico, contato seguro;
-- **G2 — Amplificação:** entitlement, checkout Asaas, webhook, alcance pago, sinalização de alcance.
+**Bloqueio externo:** CNPJ e conta/configuração do Asaas.
 
-G1 pode entregar valor e validar oferta mesmo com G2 bloqueada externamente.
+### 3.9 H1 — Operação completa
 
-### C04 — DM entre membros está adiada, mas a UI ainda cria DM entre membros
+Falta:
 
-`/messages` tem `Nova conversa` e lista membros de grupos compartilhados. O canon mantém a superfície de DM apenas porque a máquina será reutilizada para prestador; não autoriza reabrir member↔member.
+- decisão de admissões/documentos no console;
+- expurgo operacional/verificável de documentos;
+- tratamento de SLA e retry da fila;
+- visão operacional consolidada;
+- PostHog com política de dados explícita;
+- eventos de produto necessários às perguntas de 90 dias.
 
-**Correção proposta:** em G, remover/desabilitar a criação genérica de conversa entre membros e permitir criação nova somente pela ficha de prestador. Conversas históricas podem continuar legíveis conforme as policies vigentes.
+## 4. Conflitos que exigem decisão, não implementação automática
 
-### C05 — bloqueio da DM é assimétrico
+### DM membro↔membro
 
-O pgTAP atual considera positivo que o bloqueador continue enviando para quem bloqueou. Isso é incompatível com a expectativa de “bloqueio” e permite assédio unilateral.
+O canon diz "adiada", mas `/messages` hoje permite iniciar conversa com membro de grupo compartilhado. Há duas saídas legítimas:
 
-**Correção proposta:** bloqueio fecha escrita nos dois sentidos; desbloqueio só pelo bloqueador reabre.
+1. fechar a affordance/creation para member↔member até reabertura da decisão; ou
+2. reabrir formalmente a decisão e aceitar a capability.
 
-### C06 — pagamento e ordenação precisam ser independentes
+Um agente não deve decidir isso silenciosamente.
 
-D27–D29 permitem pagar por amplificação e proíbem pagar por ordenação. Implementar “plano pago” como peso de ranking violaria o canon mesmo que a cobrança esteja tecnicamente correta.
+### Categoria `outros`
 
-**Correção proposta:** billing gera **entitlement de visibilidade/alcance**, nunca score de ordenação. Dentro do conjunto elegível, ordenação permanece não financeira.
+O domínio de recommendations possui histórico de categoria `outros`, enquanto a taxonomia da Vitrine proíbe `Outros`. Não reaproveitar enum automaticamente na Vitrine. O provider precisa de contrato próprio ou mapeamento explícito.
 
-### C07 — suspensão precisa entrar em todas as policies de escrita de uma vez
+### Suspensão e providers
 
-D38 é explícita. Adicionar uma coluna `suspended` primeiro e “aplicar nas policies depois” abre uma janela de bypass e repete o padrão de scope/policy que já produziu vazamentos.
+D38 fala em flag em `profiles`, enquanto G define provider como usuário Auth sem membership. Antes de implementar H0+G, confirmar se todo account possui `profiles` ou se é necessário um identity/account record comum. Não criar dois mecanismos de suspensão.
 
-**Correção proposta:** uma única migration cria o estado, helper e altera todas as policies de INSERT/UPDATE/DELETE. Scope test deve garantir que novas policies não esqueçam o helper.
+## 5. Prioridade por risco
 
-### C08 — H unifica reports, mas novos alvos chegam em F/G
+| Gap | Prioridade | Motivo |
+|---|---|---|
+| baseline confiável para Goal Mode | P0 execução | sem isso o agente corrige dívida alheia |
+| T | P0 produto | altera pertencimento e precede consumidores |
+| D2 sad paths/operação | P0 produto | entrada é trust boundary |
+| F authz Server Actions | P0 segurança | potencial falha de autenticação/privilégio |
+| H0 suspensão/report privado | P0 antes de provider DM | canal privado sem operação suficiente |
+| E fechamento D48 | P1 | define experiência principal |
+| F ciclos | P1 | tese de retenção semanal/mensal |
+| G1 | P1 comercial | primeira grande superfície nova |
+| H1 | P1 operação | escala operacional/analytics |
+| G2 Asaas | P2 condicionado | depende de CNPJ; não bloquear G1 |
 
-Se H esperar G terminar, recomendação, evento, provider profile/catalog e provider DM podem nascer sem alvo de denúncia.
+## 6. Critério para considerar o mapa atualizado
 
-**Correção proposta:** o report model de H0 nasce extensível antes da DM de G e aceita a taxonomia completa conhecida. Cada feature nova só entra se registrar seu alvo de report no mesmo todo.
+Uma linha só é gap se houver evidência contemporânea de que o ciclo não fecha. Documento stale não prova ausência; migration isolada também não prova entrega. O padrão é:
 
-## 5. Bloqueios humanos que não devem virar “todo de agente”
-
-1. definição/revisão do veículo jurídico;
-2. CNPJ para Asaas/Cloud API;
-3. conta Resend + domínio + DKIM/SPF;
-4. número WhatsApp dedicado;
-5. revisão jurídica da política de privacidade;
-6. assinatura/aceite do código de conduta;
-7. decisão de pricing e produtos de alcance antes de ativar G2;
-8. aprovação R3/critic PASS para pagamentos, novas fronteiras de prestador e suspensão/moderação.
-
-Agente pode preparar código atrás de feature/config gate quando o plano permitir; não pode declarar produção pronta sem esses fatos.
-
-## 6. Decisões que precisam ficar explícitas antes de executar G/H
-
-### G
-
-- convite de prestador deve ser single-use e vinculado ao e-mail-alvo? **Recomendado: sim**;
-- unidade grátis é a comunidade que indicou o prestador? **Recomendado: sim**, coerente com D28;
-- alcance pago pode ser por comunidade e/ou localidade? **Recomendado: modelar entitlement genérico para ambos, sem inventar preço**;
-- busca exibe apenas provider publicado e alcançável pelo container atual;
-- catálogo não reutiliza `recommendation_category` porque aquele domínio contém `outros`, proibido pela regra da vitrine.
-
-### H
-
-- suspensão bloqueia escrita, não leitura, conforme D38;
-- motivo/ação ficam em log de moderação, não como texto mutável no perfil;
-- retorno ao denunciante confirma análise sem revelar sanção ou dado do denunciado;
-- eventos do PostHog são allowlist e nunca carregam texto de post, DM, busca, denúncia, nome, CPF, OM, endereço ou documento.
-
-## 7. Critérios para reabrir o roadmap
-
-Replanejar a ordem se qualquer um ocorrer:
-
-- T exigir mudança estrutural que altere o conceito de container usado por E/G;
-- E trocar o modo de pertencimento da vila ou o shell de prestador;
-- F mudar a máquina de DM/recommendation de forma incompatível com provider context;
-- parecer jurídico impedir a linha de monetização D27/D28;
-- H0 mostrar que a máquina de DM atual é mais cara de corrigir do que substituir;
-- segundo rollout de cidade exigir entitlement geográfico diferente do previsto.
+`runtime + policy + teste + caminho do usuário + sad path principal`.
