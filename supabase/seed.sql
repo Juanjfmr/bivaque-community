@@ -124,6 +124,23 @@ values
   )
 on conflict (user_id) do nothing;
 
+-- Unresolved recommendation request authored by the same account, for
+-- tests/e2e/recommendation-reply-notify.spec.ts ("Marcar como resolvido" is
+-- only reachable for the request's own author). recommendation_requests had
+-- zero rows before this — found running the E2E realignment.
+insert into public.recommendation_requests (
+  id, author_id, locality_id, title, body, category
+)
+values (
+  '80000000-0000-4000-8000-000000000f00',
+  '20000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001',
+  'Alguém conhece um bom encanador?',
+  'Preciso resolver um vazamento no banheiro esta semana.',
+  'outros'
+)
+on conflict (id) do nothing;
+
 -- ── Segunda localidade (Rio de Janeiro) para a suíte e2e ─────────────────
 -- A auditoria visual P0 precisa de uma 2ª UF no seed para os specs
 -- tests/e2e/two-localities.spec.ts e tests/e2e/empty-locality.spec.ts:
@@ -344,6 +361,85 @@ values
   )
 on conflict (user_id) do nothing;
 
+-- ── Conta operadora, para tests/e2e/guide-manual-curation.spec.ts ─────────
+-- public.operators é um allowlist vazio por padrão — nenhuma das ~300
+-- contas de membro é operadora. O painel /guide-queue (e o resto do grupo
+-- de rotas (admin)) exige is_current_user_operator(); sem uma linha aqui o
+-- teste do caminho "é operador" não tinha como existir — encontrado
+-- realinhando os specs de E2E.
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  email_change_token_current,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-000000000007',
+    'authenticated',
+    'authenticated',
+    'operador@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '60 days',
+    now()
+  )
+on conflict (id) do nothing;
+
+insert into private.verification_outcomes (user_id, status, eligibility_class, checked_at)
+values
+  ('20000000-0000-4000-8000-000000000007', 'verified', 'active_federal_military', now() - interval '60 days')
+on conflict (user_id) do nothing;
+
+insert into public.locality_memberships (user_id, locality_id, joined_at)
+values
+  (
+    '20000000-0000-4000-8000-000000000007',
+    '00000000-0000-4000-8000-000000000001',
+    now() - interval '60 days'
+  )
+on conflict (user_id, locality_id) do nothing;
+
+insert into public.profiles (
+  user_id,
+  display_name,
+  visibility,
+  consent_version,
+  consented_at
+)
+values
+  (
+    '20000000-0000-4000-8000-000000000007',
+    'Operador Manaus',
+    'locality_members',
+    1,
+    now() - interval '60 days'
+  )
+on conflict (user_id) do nothing;
+
+insert into public.operators (auth_user_id, notes)
+values ('20000000-0000-4000-8000-000000000007', 'seeded operator for local dev / E2E')
+on conflict (auth_user_id) do nothing;
+
 -- ══════════════════════════════════════════════════════════════════════════
 -- Volume de conteúdo
 --
@@ -360,7 +456,8 @@ on conflict (user_id) do nothing;
 -- Faixas de UUID:
 --   30000000-…  membros          40000000-…  dependentes
 --   50000000-…  convites família 60000000-…  grupos
---   70000000-…  eventos          80000000-…  posts
+--   70000000-…  eventos          71000000-…  comunidades
+--   80000000-…  posts
 -- ══════════════════════════════════════════════════════════════════════════
 
 -- ── ~300 membros de Manaus ────────────────────────────────────────────────
@@ -577,6 +674,140 @@ select distinct
 from generate_series(1, 300) as i, generate_series(0, 2) as g
 where g <= (i % 3)
 on conflict (group_id, user_id) do nothing;
+
+-- ── Vila Ajuricaba (comunidade), para os specs de E2E de comunidade ───────
+-- public.communities estava com zero linhas: nenhuma das ~300 contas de
+-- membro pertence a uma comunidade, então tests/e2e/community-batch-
+-- approval.spec.ts, community-invitations.spec.ts e vila-home.spec.ts não
+-- tinham como passar — encontrado realinhando os specs de E2E. A conta
+-- dona é dedicada (dono-vila@), não a visual@ padrão: vila-home.spec.ts
+-- precisa da MESMA conta seedSession() ser simultaneamente "sem comunidade
+-- aprovada" (seu segundo teste) e "membro aprovado da Vila Ajuricaba" (seu
+-- primeiro teste) — mutuamente exclusivo para uma única conta. A conta
+-- visual@ permanece sem comunidade, como antes.
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  email_change_token_current,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-000000000008',
+    'authenticated',
+    'authenticated',
+    'dono-vila@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '80 days',
+    now()
+  )
+on conflict (id) do nothing;
+
+insert into private.verification_outcomes (user_id, status, eligibility_class, checked_at)
+values
+  ('20000000-0000-4000-8000-000000000008', 'verified', 'active_federal_military', now() - interval '80 days')
+on conflict (user_id) do nothing;
+
+insert into public.locality_memberships (user_id, locality_id, joined_at)
+values
+  (
+    '20000000-0000-4000-8000-000000000008',
+    '00000000-0000-4000-8000-000000000001',
+    now() - interval '80 days'
+  )
+on conflict (user_id, locality_id) do nothing;
+
+insert into public.profiles (user_id, display_name, visibility, consent_version, consented_at)
+values
+  (
+    '20000000-0000-4000-8000-000000000008',
+    'Dono da Vila',
+    'locality_members',
+    1,
+    now() - interval '80 days'
+  )
+on conflict (user_id) do nothing;
+
+insert into public.communities (id, locality_id, name, description, created_by, owner_user_id, created_at)
+values (
+  '71000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001',
+  'Vila Ajuricaba',
+  'A vila do bairro Ajuricaba, para quem mora ou já morou por perto.',
+  '20000000-0000-4000-8000-000000000008',
+  '20000000-0000-4000-8000-000000000008',
+  now() - interval '80 days'
+)
+on conflict (id) do nothing;
+
+insert into public.community_memberships (community_id, user_id, role, status, joined_at)
+values
+  (
+    '71000000-0000-4000-8000-000000000001',
+    '20000000-0000-4000-8000-000000000008',
+    'owner',
+    'approved',
+    now() - interval '80 days'
+  )
+on conflict (community_id, user_id) do nothing;
+
+-- Um membro aprovado comum, elegível para promoção a moderador
+-- (community-batch-approval.spec.ts "promote page lists eligible members").
+insert into public.community_memberships (community_id, user_id, role, status, joined_at)
+values (
+  '71000000-0000-4000-8000-000000000001',
+  ('30000000-0000-4000-8000-' || lpad(to_hex(25), 12, '0'))::uuid,
+  'member',
+  'approved',
+  now() - interval '20 days'
+)
+on conflict (community_id, user_id) do nothing;
+
+-- Cinco pedidos pendentes: community-batch-approval.spec.ts aprova 3 de 5 e
+-- espera exatamente 2 restantes.
+insert into public.community_memberships (community_id, user_id, role, status, joined_at)
+select
+  '71000000-0000-4000-8000-000000000001'::uuid,
+  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  'member'::community_membership_role,
+  'pending'::community_membership_status,
+  now() - make_interval(days => 30 - i)
+from generate_series(20, 24) as i
+on conflict (community_id, user_id) do nothing;
+
+-- Post de alcance municipal (community_id IS NULL), para
+-- vila-home.spec.ts: aparece no feed de qualquer vila, inclusive a Vila
+-- Ajuricaba.
+insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+values (
+  '80000000-0000-4000-8000-000000000f01',
+  '00000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000008',
+  'text',
+  'Aviso da cidade para todas as vilas',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
 
 -- ── ~400 posts de texto ao longo dos últimos 30 dias ──────────────────────
 -- Autoria desigual de propósito: 4 em cada 5 posts saem de 20 pessoas muito
