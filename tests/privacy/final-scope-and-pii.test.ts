@@ -15,6 +15,10 @@ const EXCLUDED_DIRS = new Set([
   "test-results",
   "supabase/.temp",
   "supabase/.branches",
+  // .claude/worktrees/<name>/ can hold a full nested checkout of this repo;
+  // without this the scan walked it twice, which under load pushed this
+  // test past its 5s timeout (found closing onda T/F, 2026-08-20).
+  ".claude",
 ])
 
 function collectFiles(dir: string): string[] {

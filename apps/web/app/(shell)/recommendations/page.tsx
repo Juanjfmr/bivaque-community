@@ -560,7 +560,7 @@ export default function RecommendationsPage() {
                                     the generic list. */}
                                 <Link
                                   href={`/groups/${group.id}`}
-                                  className="truncate text-sm font-semibold hover:underline"
+                                  className="inline-flex min-h-11 items-center truncate text-sm font-semibold transition-colors hover:underline"
                                 >
                                   {group.name}
                                 </Link>

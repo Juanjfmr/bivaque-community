@@ -136,17 +136,17 @@ export function CityReference({
         ) : events.length === 0 ? (
           <p className="mt-3 text-sm text-muted">Nenhum evento próximo na cidade.</p>
         ) : (
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-3 space-y-1">
             {events.map((evt) => (
-              <li key={evt.id} className="flex items-center gap-3">
-                <span className="shrink-0 text-xs font-medium text-muted w-12 text-right">
-                  {formatDayMonth(evt.starts_at)}
-                </span>
+              <li key={evt.id}>
                 <Link
                   href={`/events/${evt.id}`}
-                  className="text-sm truncate hover:underline focus:outline-none focus-visible:underline"
+                  className="flex min-h-11 items-center gap-3 rounded-md transition-colors hover:underline focus:outline-none focus-visible:underline"
                 >
-                  {evt.title}
+                  <span className="shrink-0 text-xs font-medium text-muted w-12 text-right">
+                    {formatDayMonth(evt.starts_at)}
+                  </span>
+                  <span className="text-sm truncate">{evt.title}</span>
                 </Link>
               </li>
             ))}
@@ -155,7 +155,7 @@ export function CityReference({
         <div className="mt-3">
           <Link
             href={isAlternate ? `/events?locality=${viewing.id}` : "/events"}
-            className="text-sm font-medium text-[var(--accent)] hover:underline"
+            className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--accent)] transition-colors hover:underline"
           >
             Ver todos os eventos
           </Link>

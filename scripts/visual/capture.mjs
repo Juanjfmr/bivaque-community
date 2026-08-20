@@ -43,6 +43,13 @@ const ROUTES = [
   { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
   { path: "/guide", name: "arrival-guide", auth: true },
+  // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
+  // pointed here since E10 (406d4f6), but the route did not exist until T4.
+  { path: "/localidade", name: "localidade", auth: true },
+  // Onda T Task 5: the founder console's arrivals volume. Renders empty for
+  // the default seed account (no operator session captured), which is the
+  // honest empty state, not a missing screen.
+  { path: "/arrivals", name: "admin-arrivals", auth: true },
   { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },
   { path: "/recommendations", name: "recommendations", auth: true },
