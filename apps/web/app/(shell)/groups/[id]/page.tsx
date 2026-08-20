@@ -121,7 +121,116 @@ async function transferOwnershipAction(formData: FormData) {
   revalidatePath("/groups")
 }
 
-export { joinGroupAction, leaveGroupAction, transferOwnershipAction }
+// F8 Step 1: complete the group administrator cycle.
+
+async function cancelPendingMembershipAction(formData: FormData) {
+  "use server"
+  const groupId = formData.get("groupId")
+  if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  // Cancel own pending request. RLS group_memberships_delete_self allows
+  // deleting own membership regardless of status.
+  const { error } = await supabase
+    .from("group_memberships")
+    .delete()
+    .eq("group_id", groupId)
+    .eq("user_id", user.id)
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/groups/${groupId}`)
+  revalidatePath("/groups")
+}
+
+async function rejectMembershipAction(formData: FormData) {
+  "use server"
+  const groupId = formData.get("groupId")
+  const targetUserId = formData.get("targetUserId")
+  if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
+  if (typeof targetUserId !== "string" || targetUserId.length === 0) {
+    throw new Error("targetUserId required")
+  }
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  // Reject another member's pending request. RLS group_memberships_delete_moderator
+  // requires the caller to be a moderator of the group.
+  const { error } = await supabase
+    .from("group_memberships")
+    .delete()
+    .eq("group_id", groupId)
+    .eq("user_id", targetUserId)
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/groups/${groupId}`)
+  revalidatePath("/groups")
+}
+
+async function removeMemberAction(formData: FormData) {
+  "use server"
+  const groupId = formData.get("groupId")
+  const targetUserId = formData.get("targetUserId")
+  if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
+  if (typeof targetUserId !== "string" || targetUserId.length === 0) {
+    throw new Error("targetUserId required")
+  }
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  // Remove an approved member. RLS group_memberships_delete_moderator applies.
+  const { error } = await supabase
+    .from("group_memberships")
+    .delete()
+    .eq("group_id", groupId)
+    .eq("user_id", targetUserId)
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/groups/${groupId}`)
+  revalidatePath("/groups")
+}
+
+async function deleteGroupAction(formData: FormData) {
+  "use server"
+  const groupId = formData.get("groupId")
+  if (typeof groupId !== "string" || groupId.length === 0) throw new Error("groupId required")
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  // Soft-delete: set is_deleted=true. The groups_update_owner policy allows
+  // this because the owner is also a moderator (is_group_moderator returns true).
+  const { error } = await supabase.from("groups").update({ is_deleted: true }).eq("id", groupId)
+  if (error) throw new Error(error.message)
+
+  revalidatePath(`/groups/${groupId}`)
+  revalidatePath("/groups")
+}
+
+export {
+  cancelPendingMembershipAction,
+  deleteGroupAction,
+  joinGroupAction,
+  leaveGroupAction,
+  rejectMembershipAction,
+  removeMemberAction,
+  transferOwnershipAction,
+}
 
 export default async function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: groupId } = await params
@@ -220,6 +329,8 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   const isApproved = membership?.status === "approved"
   const isPending = membership?.status === "pending"
   const isOwner = group.owner_user_id === user.id
+  // F8: moderator can reject/remove members. Owner is implicitly a moderator.
+  const isModerator = isOwner || membership?.role === "moderator"
 
   return (
     <div className="flex flex-1 flex-col">
@@ -242,9 +353,18 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
               </Button>
             </form>
           ) : isPending ? (
-            <Button size="sm" variant="tertiary" isDisabled>
-              Aguardando aprovação
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="tertiary" isDisabled>
+                Aguardando aprovação
+              </Button>
+              {/* F8 Step 1: cancel own pending request */}
+              <form action={cancelPendingMembershipAction}>
+                <input type="hidden" name="groupId" value={group.id} />
+                <Button type="submit" size="sm" variant="tertiary">
+                  Cancelar pedido
+                </Button>
+              </form>
+            </div>
           ) : (
             <form action={joinGroupAction}>
               <input type="hidden" name="groupId" value={group.id} />
@@ -267,43 +387,87 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
             <h2 id="members-heading" className="mb-2 text-sm font-semibold tracking-tight">
               Membros
             </h2>
-            <ul className="space-y-1">
-              {members.map((m) => (
-                <li key={m.user_id} className="text-sm text-muted">
-                  {memberNames.get(m.user_id) ?? "Membro"}
-                  {m.role !== "member" && (
-                    <span className="ml-1 text-xs uppercase tracking-wide text-muted">
-                      ({m.role})
-                    </span>
-                  )}
-                </li>
-              ))}
+            <ul className="space-y-2">
+              {members.map((m) => {
+                const isSelf = m.user_id === user.id
+                const canModerate = isOwner || isModerator
+                return (
+                  <li
+                    key={m.user_id}
+                    className="flex items-center justify-between gap-3 rounded-md border border-border p-2 text-sm"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="text-muted">{memberNames.get(m.user_id) ?? "Membro"}</span>
+                      {m.role !== "member" && (
+                        <span className="ml-1 text-xs uppercase tracking-wide text-muted">
+                          ({m.role})
+                        </span>
+                      )}
+                      {m.status === "pending" && (
+                        <span className="ml-1 text-xs italic text-muted">(pendente)</span>
+                      )}
+                    </div>
+                    {/* F8 Step 1: moderator actions for non-self members */}
+                    {canModerate && !isSelf && (
+                      <div className="flex shrink-0 gap-1.5">
+                        {m.status === "pending" ? (
+                          <form action={rejectMembershipAction}>
+                            <input type="hidden" name="groupId" value={group.id} />
+                            <input type="hidden" name="targetUserId" value={m.user_id} />
+                            <Button type="submit" size="sm" variant="tertiary">
+                              Rejeitar
+                            </Button>
+                          </form>
+                        ) : null}
+                        {m.status === "approved" ? (
+                          <form action={removeMemberAction}>
+                            <input type="hidden" name="groupId" value={group.id} />
+                            <input type="hidden" name="targetUserId" value={m.user_id} />
+                            <Button type="submit" size="sm" variant="tertiary">
+                              Remover
+                            </Button>
+                          </form>
+                        ) : null}
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
 
             {isOwner && (
-              <form action={transferOwnershipAction} className="mt-3 flex items-center gap-2">
-                <input type="hidden" name="groupId" value={group.id} />
-                <select
-                  name="newOwnerId"
-                  required
-                  aria-label="Transferir ownership para"
-                  className="rounded-md border border-border bg-[var(--surface)] px-2 py-1.5 text-sm"
-                >
-                  <option value="" disabled>
-                    Transferir ownership...
-                  </option>
-                  {members
-                    .filter((m) => m.user_id !== user.id)
-                    .map((m) => (
-                      <option key={m.user_id} value={m.user_id}>
-                        {memberNames.get(m.user_id) ?? "Membro"}
-                      </option>
-                    ))}
-                </select>
-                <Button type="submit" size="sm" variant="tertiary">
-                  Transferir
-                </Button>
-              </form>
+              <div className="mt-3 space-y-2">
+                <form action={transferOwnershipAction} className="flex items-center gap-2">
+                  <input type="hidden" name="groupId" value={group.id} />
+                  <select
+                    name="newOwnerId"
+                    required
+                    aria-label="Transferir ownership para"
+                    className="rounded-md border border-border bg-[var(--surface)] px-2 py-1.5 text-sm"
+                  >
+                    <option value="" disabled>
+                      Transferir ownership...
+                    </option>
+                    {members
+                      .filter((m) => m.user_id !== user.id)
+                      .map((m) => (
+                        <option key={m.user_id} value={m.user_id}>
+                          {memberNames.get(m.user_id) ?? "Membro"}
+                        </option>
+                      ))}
+                  </select>
+                  <Button type="submit" size="sm" variant="tertiary">
+                    Transferir
+                  </Button>
+                </form>
+                {/* F8 Step 2: soft-delete the group */}
+                <form action={deleteGroupAction}>
+                  <input type="hidden" name="groupId" value={group.id} />
+                  <Button type="submit" size="sm" variant="danger">
+                    Excluir grupo
+                  </Button>
+                </form>
+              </div>
             )}
           </section>
         )}
