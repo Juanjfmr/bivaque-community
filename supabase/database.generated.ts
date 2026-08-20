@@ -1588,7 +1588,7 @@ export type Database = {
         Returns: string
       }
       profile_events_for: {
-        Args: { p_target_user_id: string }
+        Args: { p_target_user_id: string; p_viewer_user_id: string }
         Returns: {
           id: string
           locality_id: string
@@ -1597,11 +1597,11 @@ export type Database = {
         }[]
       }
       profile_is_visible_to_viewer: {
-        Args: { p_target_user_id: string }
+        Args: { p_target_user_id: string; p_viewer_user_id: string }
         Returns: boolean
       }
       profile_posts_for: {
-        Args: { p_target_user_id: string }
+        Args: { p_target_user_id: string; p_viewer_user_id: string }
         Returns: {
           community_id: string
           content: string

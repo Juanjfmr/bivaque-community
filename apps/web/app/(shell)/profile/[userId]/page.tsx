@@ -116,7 +116,7 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
   const { data: isVisible, error: visibilityError } = await callProfileRpc(
     serviceClient,
     "profile_is_visible_to_viewer",
-    { p_target_user_id: userId },
+    { p_target_user_id: userId, p_viewer_user_id: viewer.id },
   )
   if (visibilityError) {
     throw new Error(`Falha ao verificar visibilidade: ${visibilityError.message}`)
@@ -141,8 +141,14 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
 
   // Posts and events: scoped by the RPC (Step 3: server-side visibility).
   const [postsResult, eventsResult] = await Promise.all([
-    callProfileRpc(serviceClient, "profile_posts_for", { p_target_user_id: userId }),
-    callProfileRpc(serviceClient, "profile_events_for", { p_target_user_id: userId }),
+    callProfileRpc(serviceClient, "profile_posts_for", {
+      p_target_user_id: userId,
+      p_viewer_user_id: viewer.id,
+    }),
+    callProfileRpc(serviceClient, "profile_events_for", {
+      p_target_user_id: userId,
+      p_viewer_user_id: viewer.id,
+    }),
   ])
   if (postsResult.error) {
     throw new Error(`Falha ao ler publicações: ${postsResult.error.message}`)

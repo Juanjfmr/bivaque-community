@@ -124,8 +124,14 @@ export default function ProfilePage() {
         // IS the target — the query returns "posts the user posted in
         // containers they can see". feed_posts(PILOT_LOCALITY_ID) used to leak
         // cross-user content; the RPC replaces it server-side.
-        callProfileRpc(supabase, "profile_posts_for", { p_target_user_id: user.id }),
-        callProfileRpc(supabase, "profile_events_for", { p_target_user_id: user.id }),
+        callProfileRpc(supabase, "profile_posts_for", {
+          p_target_user_id: user.id,
+          p_viewer_user_id: user.id,
+        }),
+        callProfileRpc(supabase, "profile_events_for", {
+          p_target_user_id: user.id,
+          p_viewer_user_id: user.id,
+        }),
       ])
 
     if (profileRow) {

@@ -1,6 +1,16 @@
 -- Onda E Task 7 Step 1 — profile_posts_for visibility (server-side, not client).
 -- A post of vila A must NOT appear in the target user's profile for a viewer
 -- who is not approved in A. The query must return only what the viewer can see.
+--
+-- Rewritten (20260821000023): the original version called these functions as
+-- `authenticated` with `set_config('request.jwt.claim.sub', ...)`, which only
+-- exercises the auth.uid()-based implementation the app never actually uses.
+-- apps/web/app/(shell)/profile/[userId]/page.tsx calls all three through the
+-- service_role client, which carries no JWT — auth.uid() was always NULL
+-- there, so every visibility check silently failed regardless of viewer. This
+-- file now calls the functions the way the app does: as service_role, with
+-- the viewer passed explicitly as p_viewer_user_id. Same gap shape as the
+-- event-invite RPCs (event-invite-rpc-exposure.sql).
 
 begin;
 
@@ -34,23 +44,15 @@ insert into public.posts (
     '2026-08-04 13:00:00+00'
   );
 
--- Add member-two as APPROVED in community -002 (they already are per fixture),
--- and ensure they are NOT approved in -001 (they are PENDING in -001).
--- This is exactly the cross-vila scenario: same locality, different community.
+reset role;
+set local role service_role;
 
 -- ── POSITIVE: member-two sees the -002 post of member-one (their vila) ────
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000002',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-
 select isnt_empty(
   $$
     select id from public.profile_posts_for(
-      '10000000-0000-4000-8000-000000000001'::uuid
+      '10000000-0000-4000-8000-000000000001'::uuid,
+      '10000000-0000-4000-8000-000000000002'::uuid
     )
     where id = '90000000-0000-4000-8000-000000000021'::uuid
   $$,
@@ -61,7 +63,8 @@ select isnt_empty(
 select is_empty(
   $$
     select id from public.profile_posts_for(
-      '10000000-0000-4000-8000-000000000001'::uuid
+      '10000000-0000-4000-8000-000000000001'::uuid,
+      '10000000-0000-4000-8000-000000000002'::uuid
     )
     where id = '90000000-0000-4000-8000-000000000020'::uuid
   $$,
@@ -71,18 +74,11 @@ select is_empty(
 -- ── NEGATIVE: other-locality user sees nothing of member-one's profile ──
 -- other-locality (member-three) is in locality 2 only, no overlap with
 -- member-one's locality 1.
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000003',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-
 select is_empty(
   $$
     select id from public.profile_posts_for(
-      '10000000-0000-4000-8000-000000000001'::uuid
+      '10000000-0000-4000-8000-000000000001'::uuid,
+      '10000000-0000-4000-8000-000000000003'::uuid
     )
   $$,
   'E7-: a member of another locality sees no posts from member-one at all'
@@ -90,7 +86,10 @@ select is_empty(
 
 -- ── NEGATIVE: profile_is_visible_to_viewer denies cross-locality ────────
 select is(
-  public.profile_is_visible_to_viewer('10000000-0000-4000-8000-000000000001'::uuid),
+  public.profile_is_visible_to_viewer(
+    '10000000-0000-4000-8000-000000000001'::uuid,
+    '10000000-0000-4000-8000-000000000003'::uuid
+  ),
   false,
   'E7-: profile_is_visible_to_viewer is false for a member of another locality'
 );

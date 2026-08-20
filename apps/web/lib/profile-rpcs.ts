@@ -9,7 +9,7 @@ type ServiceClient = SupabaseClient<Database>
 
 export interface ProfileRpcs {
   profile_posts_for: {
-    args: { p_target_user_id: string }
+    args: { p_target_user_id: string; p_viewer_user_id: string }
     returns: Array<{
       id: string
       locality_id: string
@@ -24,7 +24,7 @@ export interface ProfileRpcs {
     }>
   }
   profile_events_for: {
-    args: { p_target_user_id: string }
+    args: { p_target_user_id: string; p_viewer_user_id: string }
     returns: Array<{
       id: string
       title: string
@@ -33,7 +33,7 @@ export interface ProfileRpcs {
     }>
   }
   profile_is_visible_to_viewer: {
-    args: { p_target_user_id: string }
+    args: { p_target_user_id: string; p_viewer_user_id: string }
     returns: boolean
   }
 }

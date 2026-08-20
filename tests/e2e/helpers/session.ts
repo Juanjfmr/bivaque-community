@@ -26,7 +26,7 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { type BrowserContext, request } from "@playwright/test"
 
-function readEnvLocal(key: string): string | undefined {
+export function readEnvLocal(key: string): string | undefined {
   try {
     const file = readFileSync(join(process.cwd(), "apps", "web", ".env.local"), "utf-8")
     for (const line of file.split("\n")) {
