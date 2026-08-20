@@ -323,7 +323,7 @@ select results_eq(
     select count(*) from public.notifications
     where recipient_user_id = '10000000-0000-4000-8000-000000000001'
   $$,
-  array[6::bigint],
+  array[7::bigint],
   'member-one sees their notifications (seeded + trigger-generated)'
 );
 
@@ -517,7 +517,7 @@ select results_eq(
   $$
     select count(*) from public.notifications
   $$,
-  array[6::bigint],
+  array[7::bigint],
   'member-one sees only their own notifications (not member-twos)'
 );
 

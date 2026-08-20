@@ -199,7 +199,7 @@ select results_eq(
     where recipient_user_id = '10000000-0000-4000-8000-000000000001'
       and type = 'event_rsvp'
   $$,
-  $$ values ('event_rsvp'::text, 'rsvped'::text, 'event'::text) $$,
+  $$ values ('event_rsvp'::text, 'going'::text, 'event'::text) $$,
   'event RSVP creates notification for the organizer'
 );
 

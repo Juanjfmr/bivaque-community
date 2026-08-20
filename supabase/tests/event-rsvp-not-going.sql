@@ -40,6 +40,10 @@ insert into public.event_rsvps (event_id, user_id, status) values (
   'going'
 );
 
+-- notifications_select_recipient restricts SELECT to recipient_user_id =
+-- auth.uid() — member-two (the actor, not the recipient) can't see the
+-- organizer's notification, so these checks read as the owner (RLS bypass).
+reset role;
 select is(
   (
     select count(*) from public.notifications
@@ -53,11 +57,16 @@ select is(
 );
 
 -- ── POSITIVE 2: changing to 'not_going' notifies again (debouncing: status changed) ──
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
 update public.event_rsvps
 set status = 'not_going'
 where event_id = '60000000-0000-4000-8000-000000000001'
   and user_id = '10000000-0000-4000-8000-000000000002';
 
+reset role;
 select is(
   (
     select count(*) from public.notifications
@@ -71,11 +80,16 @@ select is(
 );
 
 -- ── NEGATIVE: debouncing — no notification if status didn't change ────────
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
 update public.event_rsvps
 set updated_at = now()
 where event_id = '60000000-0000-4000-8000-000000000001'
   and user_id = '10000000-0000-4000-8000-000000000002';
 
+reset role;
 select is(
   (
     select count(*) from public.notifications
@@ -88,11 +102,12 @@ select is(
 );
 
 -- ── NEGATIVE: preference off → no notification ─────────────────────────────
+-- Disable events preference for member-one (the organizer) — as themselves,
+-- since notification_preferences_insert_own requires user_id = auth.uid().
 set local role authenticated;
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
-select set_config('request.jwt.claim.role', 'service_role', true);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 
--- Disable events preference for member-one (the organizer).
 insert into public.notification_preferences (user_id, events)
 values ('10000000-0000-4000-8000-000000000001', false)
 on conflict (user_id) do update set events = excluded.events;
@@ -108,6 +123,7 @@ set status = 'interested'
 where event_id = '60000000-0000-4000-8000-000000000001'
   and user_id = '10000000-0000-4000-8000-000000000002';
 
+reset role;
 select is(
   (
     select count(*) from public.notifications

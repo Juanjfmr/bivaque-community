@@ -22,8 +22,9 @@ describe("notify_event_rsvp trigger (F2 Step 3)", () => {
   it("the trigger function debounces on no-op UPDATEs", () => {
     const source = readFileSync(migration, "utf8")
     // The debouncing clause references old.status AND new.status in
-    // the UPDATE-only branch (tg_op() = "UPDATE").
-    expect(source).toMatch(/tg_op\(\)\s*=\s*.UPDATE.[\s\S]*?old\.status[\s\S]*?new\.status/)
+    // the UPDATE-only branch (tg_op = "UPDATE" — TG_OP is a plpgsql
+    // trigger variable, not a function call).
+    expect(source).toMatch(/tg_op\s*=\s*.UPDATE.[\s\S]*?old\.status[\s\S]*?new\.status/)
   })
 
   it("the trigger honours notification_preferences.events", () => {

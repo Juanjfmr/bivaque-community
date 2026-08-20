@@ -44,7 +44,7 @@ begin
 
   -- Debouncing on UPDATE: if status didn't change, no notification. The
   -- INSERT path skips this check (TG_OP = 'INSERT' and old.* is null).
-  if tg_op() = 'UPDATE' and old.status is not distinct from new.status then
+  if tg_op = 'UPDATE' and old.status is not distinct from new.status then
     return new;
   end if;
 
