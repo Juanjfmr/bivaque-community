@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr"
+import type { Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import { redirect } from "next/navigation"
@@ -70,6 +71,14 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
               className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
             >
               Guia de chegada
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={"/arrivals" as Route}
+              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
+            >
+              Chegadas
             </Link>
           </li>
         </ul>

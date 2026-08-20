@@ -1442,6 +1442,24 @@ export type Database = {
           visibility: Database["public"]["Enums"]["group_visibility"]
         }[]
       }
+      list_community_pending_arrivals: {
+        Args: { p_community_id: string; p_limit?: number; p_user_id: string }
+        Returns: {
+          arriving_at: string
+          arriving_from_locality_name: string
+          display_name: string
+          requested_at: string
+          user_id: string
+        }[]
+      }
+      list_locality_arrivals_volume: {
+        Args: { p_user_id: string }
+        Returns: {
+          arrivals_count: number
+          city_name: string
+          locality_id: string
+        }[]
+      }
       list_pending_community_invitations: {
         Args: { p_community_id: string; p_inviter_user_id: string }
         Returns: {

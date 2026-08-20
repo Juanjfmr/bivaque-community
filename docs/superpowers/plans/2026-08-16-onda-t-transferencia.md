@@ -246,7 +246,7 @@ já terá definido onde.
 O subproduto que o ADR reivindica como benefício, e que não custa quase nada depois das Tasks 1 a
 3: o produto passa a saber **quem está chegando onde e quando**.
 
-- [ ] **Step 1: a fila do dono da vila enxerga**
+- [x] **Step 1: a fila do dono da vila enxerga**
 
   Quem pediu entrada numa vila do destino e declarou transferência aparece como tal na fila de
   aprovação — que a onda E constrói em lote. É contexto legítimo para uma decisão que hoje é
@@ -256,7 +256,7 @@ O subproduto que o ADR reivindica como benefício, e que não custa quase nada d
   mostra força, situação, OM nem turma — `AGENTS.md:205` e o
   [ADR da OM](../../decisions/ADR-20260811-om-declarada.md) seguem valendo.
 
-- [ ] **Step 2: o console do fundador enxerga**
+- [x] **Step 2: o console do fundador enxerga** (`(admin)/arrivals`, nova entrada na nav do console do fundador)
 
   Volume de chegadas por localidade, por período. É o dado que decide para onde a operação vai
   em seguida — e substitui o painel de demanda que morreu com a waitlist geográfica (Task 8 da
@@ -264,13 +264,16 @@ O subproduto que o ADR reivindica como benefício, e que não custa quase nada d
 
   Vive no console do fundador, definido na onda D2.
 
-- [ ] **Step 3: testes**
+- [x] **Step 3: testes** (`supabase/tests/declared-arrivals.sql`, 8 asserts)
 
   pgTAP: a fila do dono mostra a transferência declarada de quem pediu entrada; **não mostra
-  nenhum campo de afiliação** (negativo — é o teste que protege a proibição); um dono não vê
-  chegadas de outra comunidade.
+  nenhum campo de afiliação** (negativo — provado lendo a assinatura de retorno da função via
+  `pg_get_function_result`, não só a UI); um requerente não-transferido continua com o sinal nulo;
+  um não-moderador é negado a fila (42501); o console do fundador conta certo por cidade de
+  destino e um não-operador é negado (42501). Executado contra `db:reset --no-seed` real: 79
+  arquivos, 958 asserts, `Result: PASS`.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit**
 
   `feat(admin): surface declared arrivals to the vila owner and the founder console`.
 

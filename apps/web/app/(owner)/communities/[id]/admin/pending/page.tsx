@@ -9,11 +9,12 @@ import {
   removeCommunityMembersBatchAction,
 } from "../../../actions"
 
-type MemberRow = {
+type ArrivalRow = {
   user_id: string
-  role: string
-  status: string
-  joined_at: string
+  display_name: string | null
+  requested_at: string
+  arriving_from_locality_name: string | null
+  arriving_at: string | null
 }
 
 // Onda E Task 5:
@@ -27,6 +28,14 @@ type MemberRow = {
 //     proibição é o contrato. Se alguém ler §5.2 daqui a três meses e achar
 //     que falta implementar afiliação, este comentário é a primeira coisa
 //     que deve aparecer.
+//
+// Onda T Task 5: list_community_pending_arrivals (20260820051230) substitui
+// a leitura direta de community_memberships + profiles por uma RPC que já
+// junta o sinal de transferência declarada — "chegando de <cidade> em
+// <data>" quando o requerente tem uma linha kind='leaving'. Continua sendo
+// SÓ nome, datas e a cidade de origem: nada de força/OM/posto/turma, e o
+// pgTAP em supabase/tests/declared-arrivals.sql prova isso lendo a própria
+// assinatura da função.
 
 const QUEUE_FETCH_LIMIT = 500
 
@@ -75,32 +84,19 @@ export default async function CommunityPendingPage({
     throw new Error(`Falha ao contar a fila: ${totalError.message}`)
   }
 
-  const { data: pendingData, error: pendingError } = await serviceClient
-    .from("community_memberships")
-    .select("user_id, role, status, joined_at")
-    .eq("community_id", communityId)
-    .eq("status", "pending")
-    .order("joined_at", { ascending: true })
-    .limit(QUEUE_FETCH_LIMIT)
+  const { data: arrivalsData, error: pendingError } = await serviceClient.rpc(
+    "list_community_pending_arrivals",
+    { p_community_id: communityId, p_user_id: user.id, p_limit: QUEUE_FETCH_LIMIT },
+  )
 
   if (pendingError) {
     throw new Error(`Falha ao ler a fila de aprovação: ${pendingError.message}`)
   }
 
-  const pending = (pendingData as MemberRow[] | null) ?? []
-  const memberIds = pending.map((member) => member.user_id)
+  const pending = (arrivalsData as ArrivalRow[] | null) ?? []
   const memberNames = new Map<string, string>()
-  if (memberIds.length > 0) {
-    const { data: namesData, error: namesError } = await serviceClient
-      .from("profiles")
-      .select("user_id, display_name")
-      .in("user_id", memberIds)
-    if (namesError) {
-      throw new Error(`Falha ao ler os nomes: ${namesError.message}`)
-    }
-    for (const profile of (namesData as { user_id: string; display_name: string }[] | null) ?? []) {
-      memberNames.set(profile.user_id, profile.display_name)
-    }
+  for (const row of pending) {
+    memberNames.set(row.user_id, row.display_name ?? "Membro")
   }
 
   return (
@@ -159,8 +155,14 @@ export default async function CommunityPendingPage({
                   <div>
                     <div>{memberNames.get(member.user_id) ?? "Membro"}</div>
                     <div className="text-xs text-muted">
-                      Pedido em {new Date(member.joined_at).toLocaleDateString("pt-BR")}
+                      Pedido em {new Date(member.requested_at).toLocaleDateString("pt-BR")}
                     </div>
+                    {member.arriving_from_locality_name && member.arriving_at && (
+                      <div className="text-xs text-[var(--accent)]">
+                        Transferência declarada de {member.arriving_from_locality_name} — chegando
+                        em {new Date(`${member.arriving_at}T00:00:00`).toLocaleDateString("pt-BR")}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">
