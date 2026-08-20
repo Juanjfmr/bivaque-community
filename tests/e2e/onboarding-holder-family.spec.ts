@@ -21,8 +21,14 @@ test.describe("onboarding: verified holder and invited family", () => {
     await seedSession(page.context())
     await page.goto("/consent")
 
+    // "Bem-vindo ao Bivaque" never existed on this page — found realigning
+    // this spec against the real rendered /consent, which renders "Termos de
+    // uso" plus the Código de conduta and Política de privacidade sections.
     await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
-    await expect(page.getByText("Bem-vindo ao Bivaque")).toBeVisible()
+    // Scoped to the page's own section heading id: the rendered legal
+    // document body also contains a "Código de conduta" heading of its own,
+    // so a bare role query resolves to two elements (strict-mode violation).
+    await expect(page.locator("#conduct-heading")).toBeVisible()
     await expect(page.getByRole("button", { name: "Aceitar e continuar" })).toBeVisible()
 
     const acceptButton = page.getByRole("button", { name: "Aceitar e continuar" })
