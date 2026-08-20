@@ -151,7 +151,13 @@ export default async function CommunityPendingPage({
                     name="userIds"
                     value={member.user_id}
                     aria-label={`Selecionar ${memberNames.get(member.user_id) ?? "membro"}`}
-                  />
+                  >
+                    <Checkbox.Content>
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                    </Checkbox.Content>
+                  </Checkbox>
                   <div>
                     <div>{memberNames.get(member.user_id) ?? "Membro"}</div>
                     <div className="text-xs text-muted">

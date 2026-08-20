@@ -133,7 +133,13 @@ export function InterestsSection() {
                       defaultSelected={checked}
                       isDisabled={group.already_member}
                       aria-label={`Marcar ${group.name} como interesse`}
-                    />
+                    >
+                      <Checkbox.Content>
+                        <Checkbox.Control>
+                          <Checkbox.Indicator />
+                        </Checkbox.Control>
+                      </Checkbox.Content>
+                    </Checkbox>
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-medium">{group.name}</div>

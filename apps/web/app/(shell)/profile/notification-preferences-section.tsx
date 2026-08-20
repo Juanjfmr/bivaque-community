@@ -53,14 +53,24 @@ export default function NotificationPreferencesSection() {
           isSelected={prefs.comments}
           onChange={(v) => setPrefs((prev) => ({ ...prev, comments: v }))}
         >
-          Comentários
+          <Checkbox.Content>
+            <Checkbox.Control>
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            Comentários
+          </Checkbox.Content>
         </Checkbox>
         <Checkbox
           name="events"
           isSelected={prefs.events}
           onChange={(v) => setPrefs((prev) => ({ ...prev, events: v }))}
         >
-          Eventos
+          <Checkbox.Content>
+            <Checkbox.Control>
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            Eventos
+          </Checkbox.Content>
         </Checkbox>
         <Button type="submit" size="sm" variant="primary" className="mt-1 self-start">
           Salvar
