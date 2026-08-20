@@ -172,12 +172,45 @@ antes do primeiro membro.
 R3, e a `RISK_MATRIX.md` bloqueia a implementação até `PASS`. A aprovação humana já consta nos
 quatro. O merge do `origin` foi feito em 2026-08-16 e os ADRs existem localmente.
 
-## O que ainda não tem plano
+## G e H ganharam plano em 2026-08-20
 
-G (vitrine — provavelmente dividida em duas) e H (operação). As duas ficam fora do mínimo de
-dezembro (§10.2 do `BIVAQUE.md`), e a G depende de CNPJ, que é bloqueio humano. O apêndice da
-P0 já deixa avaliado, para a G, o que a BrasilAPI oferece de CNPJ — inclusive a armadilha de
-privacidade do campo `qsa`.
+Esta seção dizia que G e H não tinham plano. Agora têm, e as duas abrem com um **portão humano
+que nenhum agente atravessa**:
+
+- **G (vitrine)** está dividida em dois blocos dentro do mesmo arquivo, como esta seção previa:
+  **G1** (Tasks 1-6) é a vitrine sem dinheiro e não depende de CNPJ; **G2** (Tasks 7-8) é o
+  alcance pago e depende. Se dezembro apertar, o corte é entre as duas. O apêndice da P0 já
+  deixa avaliado o que a BrasilAPI oferece de CNPJ — inclusive a armadilha de privacidade do
+  campo `qsa`.
+- **H (operação)** trava a suspensão em duas coisas que só o dono fecha: a **assinatura do
+  código de conduta**, que a D12 chama de base contratual da suspensão, e a revisão jurídica de
+  `legal/PRIVACIDADE.md`, que o PostHog exige. As Tasks 1 a 4 e 6 correm sem nenhuma das duas.
+
+**As duas ondas são R3, e os três ADRs que faltavam foram escritos em 2026-08-20 — como
+rascunho.** D20, D28, D37, D38, D40, D41, D44 e D45 vivem na tabela do §9 do `BIVAQUE.md`, que
+é onde moram as decisões **não-R3**; a `RISK_MATRIX.md` exige ADR aprovado,
+`critic_verdict: PASS` e aprovação humana para tudo que toca RLS, dado pessoal, pagamento ou
+monetização.
+
+| ADR | Status | Trava |
+|---|---|---|
+| [`ADR-20260820-conta-de-prestador`](../../decisions/ADR-20260820-conta-de-prestador.md) | `proposed` | a onda G inteira |
+| [`ADR-20260820-alcance-pago`](../../decisions/ADR-20260820-alcance-pago.md) | `proposed` | o bloco G2 (Tasks 7-8) |
+| [`ADR-20260820-suspensao-de-conta`](../../decisions/ADR-20260820-suspensao-de-conta.md) | `proposed` | a Task 5 da onda H |
+
+Os três estão completos no que um agente consegue preencher — problema, decisão, alternativas,
+baseline, riscos, custo de reversão, métrica e condição de reabertura. **Falta em cada um
+exatamente duas linhas**, e nenhuma delas é trabalho de agente: `critic_verdict: PASS` e a
+aprovação humana na seção `Approval`. Cada plano lista, no topo, as decisões do ADR que ele
+executa — se você discordar de alguma durante a execução, a discordância vai para o ADR, não
+para o código.
+
+Eles ainda **não** estão na tabela do §9 do `BIVAQUE.md`: uma decisão entra no canon quando é
+aprovada, não quando é proposta.
+
+As duas continuam fora do mínimo de dezembro (§10.2 do `BIVAQUE.md`) — mas o §10.2 também diz
+qual das duas não deveria escorregar, e é a **H**: sem ela abre-se para centenas de militares
+identificáveis com denúncia de DM e de indicação sem destino e sem suspensão nenhuma.
 
 D2, E e F foram escritas em **2026-08-16**, a pedido do dono, para fechar o caminho crítico de
 dezembro. Elas carregam o custo que esta seção antes previa e que continua real: a D2 foi
@@ -198,6 +231,8 @@ reconferir antes de editar. Reconfira — não é formalidade.
 | D2 | [`2026-08-16-onda-d2-a-porta.md`](2026-08-16-onda-d2-a-porta.md) | 8 tasks (7 superada, 9 nova) | `outbox` + Resend da D1 (Tasks 4 e 5) |
 | E | [`2026-08-16-onda-e-a-vila.md`](2026-08-16-onda-e-a-vila.md) | 11 tasks | cota de convite da D1 (Task 6); afiliação bloqueada pelo ADR da OM |
 | F | [`2026-08-16-onda-f-o-laco-semanal.md`](2026-08-16-onda-f-o-laco-semanal.md) | 10 tasks | Task 1 é pré-requisito interno das Tasks 2, 3 e 8 |
+| G | [`2026-08-20-onda-g-vitrine.md`](2026-08-20-onda-g-vitrine.md) | 9 tasks (G1: 1-6, G2: 7-8) | [`ADR-20260820-conta-de-prestador`](../../decisions/ADR-20260820-conta-de-prestador.md) aprovado; para o G2, também [`ADR-20260820-alcance-pago`](../../decisions/ADR-20260820-alcance-pago.md) e o CNPJ |
+| H | [`2026-08-20-onda-h-operacao.md`](2026-08-20-onda-h-operacao.md) | 8 tasks | Tasks 1-4 e 6 destravadas; Task 5 espera [`ADR-20260820-suspensao-de-conta`](../../decisions/ADR-20260820-suspensao-de-conta.md) + código de conduta assinado; Task 7 espera a LGPD publicada |
 
 Três mudanças de escopo que a sessão de decisões produziu, e que não estão visíveis pelo nome dos
 arquivos:
