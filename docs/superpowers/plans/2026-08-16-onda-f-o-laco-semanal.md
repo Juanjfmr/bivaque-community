@@ -332,13 +332,20 @@ Faltam as três coisas que fazem a pessoa **saber** que foi respondida.
   O autor marca o pedido como resolvido, e isso aparece. É o fechamento do ciclo da §6.3 e o que
   alimenta a curadoria do guia (Task 8 da onda E).
 
-- [ ] **Step 5: testes**
+- [x] **Step 5: testes** (`3928064`, E2E `cc39c20`)
 
   pgTAP em `supabase/tests/recommendation-reply-notify.sql`: resposta enfileira exatamente uma
   linha para o autor; **responder ao próprio pedido não gera aviso para si** (negativo); autor
-  edita a própria resposta e **não** edita a de outro (positivo e negativo).
+  edita a própria resposta e **não** edita a de outro (positivo e negativo). Todos os 8 asserts
+  passam (`supabase test db`).
 
-  E2E: responder um pedido faz a notificação aparecer para o autor.
+  E2E: responder um pedido faz a notificação aparecer para o autor —
+  `tests/e2e/recommendation-reply-notify.spec.ts`, fechando também um bug real que o próprio E2E
+  encontrou: `recommendation_reply` tinha o valor no enum e a trigger enfileirava certo, mas
+  `notifications/page.tsx` nunca ganhou um `case` para ele nos três `switch` (classificação,
+  rótulo, navegação) — toda notificação de resposta caía em "nova notificação" sem destino de
+  clique. Corrigido em `cc39c20`, junto com um bug não relacionado no `ListBox` da HeroUI (a
+  lista renderizava vazia ao trocar de aba, verificado ao vivo no navegador).
 
 - [x] **Step 6: gate e commit** (`3928064`)
 
@@ -358,10 +365,11 @@ salvar existir: **quem salvou um pedido quer saber quando alguém responder.**
 
   Cada item abre o pedido, na resposta certa quando houver.
 
-- [ ] **Step 3: testes**
+- [x] **Step 3: testes** (`76c7fdc`, fixture corrigida em `ecb9d4b`)
 
-  pgTAP: pessoa que salvou recebe; pessoa que **des-salvou** não recebe (negativo); o autor não
-  recebe duas linhas por ter salvo o próprio pedido.
+  pgTAP em `supabase/tests/saved-request-notify.sql`: pessoa que salvou recebe; pessoa que
+  **des-salvou** não recebe (negativo); autor não recebe duas linhas por ter salvo o próprio
+  pedido. 4 asserts, todos passam (`supabase test db`).
 
 - [x] **Step 4: gate e commit** (`76c7fdc`)
 
@@ -383,12 +391,11 @@ Saúde **não** pode nascer em Manaus.
   Escolher Saúde restringe o seletor de escopo aos grupos do autor, com uma linha dizendo por
   quê. Erro depois do submit é a pior forma de ensinar uma regra.
 
-- [ ] **Step 3: teste**
+- [x] **Step 3: teste** (`9419dc4`)
 
   pgTAP em `supabase/tests/recommendations-health-scope.sql`: pedido de saúde com grupo passa;
-  **sem grupo é rejeitado com o código esperado** (negativo). Cuidado: `recommendations-scope-denials.sql`
-  já asserta códigos de erro específicos e `20260816001059` existe justamente para devolver o
-  `23514` que o teste 10 exige. Não quebre esse contrato.
+  **sem grupo é rejeitado com o código esperado** (negativo, `23514`). 3 asserts, todos passam;
+  `recommendations-scope-denials.sql` continua intacto (`supabase test db`, 980/980).
 
 - [x] **Step 4: gate e commit** (`9419dc4`)
 
