@@ -3,7 +3,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(8);
 
 \ir fixtures/foundation.inc
 
@@ -28,7 +28,7 @@ insert into public.recommendation_replies (
   '80000000-0000-4000-8000-000000000020',
   '70000000-0000-4000-8000-000000000020',
   '10000000-0000-4000-8000-000000000002',
-  'O despachante X é muito bom e atende perto da Vila Ajuricaba.',
+  'O despachante X é muito bom e atende perto da Vila Ajuricaba.'
 );
 
 select is(
@@ -60,7 +60,7 @@ insert into public.recommendation_replies (
   '80000000-0000-4000-8000-000000000021',
   '70000000-0000-4000-8000-000000000020',
   '10000000-0000-4000-8000-000000000001',
-  '(membro-one respondendo ao próprio pedido, sem aviso para si)',
+  '(membro-one respondendo ao próprio pedido, sem aviso para si)'
 );
 
 select is(
@@ -87,15 +87,22 @@ select lives_ok(
   'F5+: author edits their own reply'
 );
 
-select throws_ok(
+-- RLS UPDATE ... USING filters rows silently (no exception) rather than
+-- raising 42501 — the assertion is that the statement runs but changes nothing.
+select lives_ok(
   $$
     update public.recommendation_replies
     set body = 'Nao autorizado a editar a resposta do outro.'
     where id = '80000000-0000-4000-8000-000000000020'::uuid
   $$,
-  '42501',
-  null,
-  'F5-: author cannot edit another member reply (RLS denies)'
+  'F5-: edit attempt on another member reply runs without error (RLS silently excludes the row)'
+);
+
+select isnt(
+  (select body from public.recommendation_replies
+    where id = '80000000-0000-4000-8000-000000000020'::uuid),
+  'Nao autorizado a editar a resposta do outro.',
+  'F5-: author cannot edit another member reply (body unchanged, RLS denies)'
 );
 
 -- ── POSITIVE 4: mark_recommendation_resolved (author only) ──────────────────

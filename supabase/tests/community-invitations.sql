@@ -79,7 +79,7 @@ select throws_ok(
   $$
     select public.accept_community_invitation(
       decode(repeat('bb', 32), 'hex'),
-      '10000000-0000-4000-4000-8000-000000000003'::uuid
+      '10000000-0000-4000-8000-000000000003'::uuid
     )
   $$,
   '42501',
@@ -91,7 +91,7 @@ select is_empty(
   $$
     select 1 from public.community_memberships
     where community_id = '70000000-0000-4000-8000-000000000001'::uuid
-      and user_id = '10000000-0000-4000-4000-8000-000000000003'::uuid
+      and user_id = '10000000-0000-4000-8000-000000000003'::uuid
   $$,
   'E6-: unverified acceptance creates no community_membership row'
 );

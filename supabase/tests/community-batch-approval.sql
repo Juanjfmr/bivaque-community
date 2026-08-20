@@ -58,7 +58,7 @@ $$;
 
 select results_eq(
   $$
-    select status from public.community_memberships
+    select status::text from public.community_memberships
     where community_id = '70000000-0000-4000-8000-000000000001'
     order by user_id
   $$,
@@ -79,7 +79,7 @@ select results_eq(
 set local role authenticated;
 select set_config(
   'request.jwt.claim.sub',
-  '10000000-0000-4000-4000-8000-000000000003',
+  '10000000-0000-4000-8000-000000000003',
   true
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -107,11 +107,22 @@ select set_config(
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- Reset member-five to pending first (the throws_ok above left the test
--- transaction's prior state, but we re-set to be explicit).
+-- transaction's prior state, but we re-set to be explicit). Direct table
+-- writes need the owner role — community_memberships has no UPDATE grant
+-- for authenticated, only the security definer RPC does.
+reset role;
 update public.community_memberships
 set status = 'pending'
 where community_id = '70000000-0000-4000-8000-000000000001'
   and user_id = '10000000-0000-4000-8000-000000000005';
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000002',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
@@ -140,7 +151,7 @@ select lives_ok(
   $$
     select public.add_community_moderator(
       '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-4000-8000-000000000003'
+      '10000000-0000-4000-8000-000000000003'
     )
   $$,
   'E5+: owner promove membro aprovado para moderator'
@@ -158,16 +169,25 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 -- Reset member-three back to plain member so we have someone to try to
 -- promote. (The previous lives_ok promoted them, but member-three is not
 -- the subject of this test — we just need to attempt promotion of a member.)
+reset role;
 update public.community_memberships
 set role = 'member'
 where community_id = '70000000-0000-4000-8000-000000000001'
-  and user_id = '10000000-0000-4000-4000-8000-000000000003';
+  and user_id = '10000000-0000-4000-8000-000000000003';
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000002',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
     select public.add_community_moderator(
       '70000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-4000-8000-000000000003'
+      '10000000-0000-4000-8000-000000000003'
     )
   $$,
   'P0001',

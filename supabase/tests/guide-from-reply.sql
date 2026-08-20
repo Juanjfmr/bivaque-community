@@ -12,10 +12,11 @@ select plan(5);
 reset role;
 
 -- Mark member-one as verified (already true in foundation.inc) AND make him
--- the operator (the operator check lives in is_current_user_operator; for
--- this test we operate directly via the migration's grant execute on the
--- function — the wrapper enforces the operator check at runtime, which
--- the unit test exercises separately).
+-- the operator (the operator check lives in is_current_user_operator, which
+-- reads public.operators — never seeded here before, so promote_reply_to_guide_entry
+-- always raised 42501 "only operators can promote replies").
+insert into public.operators (auth_user_id)
+values ('10000000-0000-4000-8000-000000000001');
 
 -- Create a recommendation request + reply for member-one (already verified).
 insert into public.recommendation_requests (
@@ -26,7 +27,7 @@ insert into public.recommendation_requests (
   '10000000-0000-4000-8000-000000000001',
   'Procuro colégio para o dependente',
   'Indicam um colégio que atenda bem?',
-  'pedi_recurso_publico'
+  'educacao'
 );
 
 insert into public.recommendation_replies (
@@ -35,7 +36,7 @@ insert into public.recommendation_replies (
   '80000000-0000-4000-8000-000000000010',
   '70000000-0000-4000-8000-000000000010',
   '10000000-0000-4000-8000-000000000001',
-  'O Colégio X atende dependentes de militar e fica perto da Vila Ajuricaba.',
+  'O Colégio X atende dependentes de militar e fica perto da Vila Ajuricaba.'
 );
 
 -- ── POSITIVE: operator promotes a reply → entry is approved with author ──
@@ -94,7 +95,7 @@ insert into public.recommendation_replies (
   '80000000-0000-4000-8000-000000000011',
   '70000000-0000-4000-8000-000000000010',
   '10000000-0000-4000-8000-000000000001',
-  'Outro reply de teste para checagem de escopo',
+  'Outro reply de teste para checagem de escopo'
 );
 
 select throws_ok(

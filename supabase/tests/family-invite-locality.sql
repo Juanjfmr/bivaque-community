@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(6);
+select plan(5);
 
 -- P0 Task 6: a localidade do dependente é a corrente do titular no momento do
 -- aceite — nunca escolhida pelo dependente, e nunca uma constante de piloto.
@@ -37,7 +37,7 @@ values (
 insert into private.family_invitations (id, inviter_user_id, token_digest, invitee_email_digest, expires_at)
 values (
   '50000000-0000-4000-8000-000000000032',
-  '10000000-4000-4000-8000-000000000005',
+  '10000000-0000-4000-8000-000000000005',
   decode(repeat('cc', 32), 'hex'),
   digest('other-locality@example.invalid', 'sha256'),
   now() + interval '7 days'
@@ -54,9 +54,9 @@ values (
 );
 
 -- Aceites reais. O role default do runner (postgres) chama a RPC security
--- definer. setamos o claim sub para o user aceitando (a RPC valida o email
--- do auth.uid() contra o invitee_email_digest).
-set local role authenticated;
+-- definer (execute é concedido só a service_role; authenticated não pode
+-- chamá-la diretamente). setamos o claim sub para o user aceitando (a RPC
+-- valida o email do auth.uid() contra o invitee_email_digest).
 set local request.jwt.claim.sub to '10000000-0000-4000-8000-000000000002';
 select private.accept_family_invitation(decode(repeat('ca', 32), 'hex'), '10000000-0000-4000-8000-000000000002'::uuid);
 
@@ -71,9 +71,12 @@ select private.accept_family_invitation(decode(repeat('cd', 32), 'hex'), '100000
 
 -- O titular 001 (link do aceite 030 ou 033) tem membership em Manaus (001).
 -- 031: holder 003, membership em EX (002). 032: holder 005, sem membership.
--- O titular 001 ganha uma segunda membership (para o teste 033).
-insert into public.locality_memberships (user_id, locality_id)
-values ('10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000002');
+-- O titular 001 ganha uma segunda membership (para o teste 033). Só uma
+-- membership 'current' por usuário (locality_memberships_one_current_per_user_idx),
+-- então a segunda entra como 'leaving' — o helper não filtra por kind, só
+-- ordena por joined_at, então o cenário (a mais antiga vence) continua válido.
+insert into public.locality_memberships (user_id, locality_id, kind, leaving_at)
+values ('10000000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000002', 'leaving', now() + interval '30 days');
 
 -- Titular em Manaus: o dependente herda a localidade de Manaus.
 select results_eq(
@@ -111,7 +114,7 @@ select is(
 -- (o código lança antes de provisionar; nunca grava nulo).
 select is(
   public.family_accept_holder_locality(
-    (select id from private.family_account_links where holder_user_id = '10000000-4000-4000-8000-000000000005')
+    (select id from private.family_account_links where holder_user_id = '10000000-0000-4000-8000-000000000005')
   ),
   null,
   'a holder without membership resolves to null (never a locality)'

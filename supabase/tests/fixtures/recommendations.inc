@@ -34,7 +34,7 @@ values (
   '00000000-0000-4000-8000-000000000001',
   'Algum dentista de confianca na zona leste?',
   'Estou procurando um dentista que atenda na zona leste de Manaus, de preferencia com horario flexivel.',
-  'saude_bem_estar',
+  'servicos_locais',
   '2026-08-02 14:00:00+00'
 );
 

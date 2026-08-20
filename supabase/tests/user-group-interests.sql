@@ -10,7 +10,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(8);
 
 \ir fixtures/foundation.inc
 \ir fixtures/groups.inc
@@ -61,8 +61,8 @@ insert into public.groups (
   'Mesma modalidade, outra cidade',
   'public',
   '00000000-0000-4000-8000-000000000002',
-  '10000000-0000-4000-4000-8000-000000000003',
-  '10000000-0000-4000-4000-8000-000000000003'
+  '10000000-0000-4000-8000-000000000003',
+  '10000000-0000-4000-8000-000000000003'
 );
 
 -- ── POSITIVE: record an interest, list it back ─────────────────────────────
@@ -106,7 +106,7 @@ select lives_ok(
   $$
     select public.record_user_group_interests(
       '10000000-0000-4000-8000-000000000001'::uuid,
-      '00000000-0000-4000-8000-8000-000000000001'::uuid,
+      '00000000-0000-4000-8000-000000000001'::uuid,
       array[]::uuid[]
     )
   $$,
@@ -116,8 +116,8 @@ select lives_ok(
 select isnt_empty(
   $$
     select id from public.suggest_groups_for_user(
-      '10000000-0000-4000-8000-8000-000000000001'::uuid,
-      '00000000-0000-4000-8000-8000-000000000001'::uuid
+      '10000000-0000-4000-8000-000000000001'::uuid,
+      '00000000-0000-4000-8000-000000000001'::uuid
     )
     where id = '40000000-0000-4000-8000-000000000010'::uuid
   $$,
@@ -130,8 +130,8 @@ select isnt_empty(
 select is_empty(
   $$
     select id from public.suggest_groups_for_user(
-      '10000000-0000-4000-8000-8000-000000000001'::uuid,
-      '00000000-0000-4000-8000-8000-000000000001'::uuid
+      '10000000-0000-4000-8000-000000000001'::uuid,
+      '00000000-0000-4000-8000-000000000001'::uuid
     )
     where id = '40000000-0000-4000-8000-000000000030'::uuid
   $$,
@@ -144,8 +144,8 @@ select is_empty(
 select is_empty(
   $$
     select id from public.suggest_groups_for_user(
-      '10000000-0000-4000-8000-8000-000000000001'::uuid,
-      '00000000-0000-4000-8000-8000-000000000001'::uuid
+      '10000000-0000-4000-8000-000000000001'::uuid,
+      '00000000-0000-4000-8000-000000000001'::uuid
     )
     where id = '40000000-0000-4000-8000-000000000020'::uuid
   $$,
@@ -156,8 +156,8 @@ select is_empty(
 select throws_ok(
   $$
     select public.record_user_group_interests(
-      '10000000-0000-4000-8000-8000-000000000001'::uuid,
-      '00000000-0000-4000-8000-8000-000000000001'::uuid,
+      '10000000-0000-4000-8000-000000000001'::uuid,
+      '00000000-0000-4000-8000-000000000001'::uuid,
       array['40000000-0000-4000-8000-000000000030'::uuid]
     )
   $$,

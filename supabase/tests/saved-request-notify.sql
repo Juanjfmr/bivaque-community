@@ -24,11 +24,11 @@ insert into public.recommendation_requests (
 
 insert into public.recommendation_saves (user_id, request_id) values
   ('10000000-0000-4000-8000-000000000002', '70000000-0000-4000-8000-000000000030'),
-  ('10000000-0000-4000-4000-8000-000000000003', '70000000-0000-4000-8000-000000000030');
+  ('10000000-0000-4000-8000-000000000003', '70000000-0000-4000-8000-000000000030');
 
 -- member-three unsaves BEFORE the reply lands.
 delete from public.recommendation_saves
-where user_id = '10000000-0000-4000-4000-8000-000000000003'::uuid
+where user_id = '10000000-0000-4000-8000-000000000003'::uuid
   and request_id = '70000000-0000-4000-8000-000000000030'::uuid;
 
 -- member-four (004, hidden-member) saves too — they should receive.
@@ -42,7 +42,7 @@ insert into public.recommendation_replies (
   '80000000-0000-4000-8000-000000000030',
   '70000000-0000-4000-8000-000000000030',
   '10000000-0000-4000-8000-000000000005',
-  'Recomendo o eletricista X — atende bem e cobra razoável.',
+  'Recomendo o eletricista X — atende bem e cobra razoável.'
 );
 
 -- ── POSITIVE 1: follower who is still saved receives a notification ────────
@@ -74,7 +74,7 @@ select is_empty(
   $$
     select 1 from public.notifications
     where action = 'replied_to_saved'
-      and recipient_user_id = '10000000-0000-4000-4000-8000-000000000003'::uuid
+      and recipient_user_id = '10000000-0000-4000-8000-000000000003'::uuid
       and target_id = '70000000-0000-4000-8000-000000000030'::uuid
   $$,
   'F6-: un-saved follower (member-three) does NOT receive (negative)'
