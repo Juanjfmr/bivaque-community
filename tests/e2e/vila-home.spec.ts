@@ -10,17 +10,70 @@
 // session helper mints a session via the password grant and sets the cookie
 // the middleware expects; the seed sets the user up as an approved member of
 // Vila Ajuricaba.
+//
+// Realigned: the seed had zero communities, so seed.sql now seeds "Vila
+// Ajuricaba" (71000000-...-0001, see community-batch-approval.spec.ts's
+// header) owned by a dedicated dono-vila@ account. It can't be the default
+// seedSession() account: this file's own second test requires that account
+// to have NO approved community — mutually exclusive with test 1's need.
 
+import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { seedSession } from "./helpers/session"
+import { encodeAuthCookieValue, readEnvLocal, seedSession } from "./helpers/session"
+
+const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
+const CONSENT_COOKIE = "bivaque-consent-version"
+const CURRENT_CONSENT = "1"
+const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+
+async function signInAs(page: Page, email: string): Promise<void> {
+  const anonKey =
+    process.env["SUPABASE_ANON_KEY"] ??
+    readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
+    readEnvLocal("SUPABASE_ANON_KEY")
+  const password = process.env["USER_PASSWORD"] ?? "bivaque-e2e-local"
+  if (!anonKey) throw new Error("SUPABASE_ANON_KEY is required")
+
+  const api = page.context().request
+  const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    headers: { apikey: anonKey, "Content-Type": "application/json" },
+    data: { email, password },
+  })
+  if (response.status() !== 200) {
+    throw new Error(`Password grant for ${email} failed with ${response.status()}`)
+  }
+  const body = (await response.json()) as {
+    access_token: string
+    refresh_token: string
+    expires_at: number
+    expires_in: number
+    token_type: string
+  }
+
+  const cookieValue = encodeAuthCookieValue(body, email)
+  const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
+  const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400
+  const shared = {
+    domain: "127.0.0.1",
+    path: "/",
+    expires,
+    httpOnly: false,
+    secure: false,
+    sameSite: "Lax" as const,
+  }
+  await page.context().addCookies([
+    { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
+    { name: CONSENT_COOKIE, value: CURRENT_CONSENT, ...shared },
+  ])
+}
 
 test.describe("home is the vila feed; without a vila, the city reference", () => {
   test("approved member of Vila Ajuricaba sees the vila feed with the locality-reach post", async ({
     page,
   }) => {
     // Given an authenticated session whose seed membership is approved in
-    // Vila Ajuricaba (foundation.inc + communities.inc fixtures)
-    await seedSession(page.context())
+    // Vila Ajuricaba
+    await signInAs(page, VILA_OWNER_EMAIL)
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When the member opens the home
@@ -51,10 +104,14 @@ test.describe("home is the vila feed; without a vila, the city reference", () =>
     // Then there is no feed list (no post cards)
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0)
 
-    // And the city reference renders the four things from §6.2
+    // And the city reference renders the four things from §6.2. "Guia de
+    // chegada" appears three times (a lead paragraph, this heading, and the
+    // "Abrir o guia de chegada" link) — scoped to the heading role so the
+    // locator resolves to exactly one element instead of a strict-mode
+    // violation.
     await expect(page.getByRole("heading", { name: /.*/ }).first()).toBeVisible()
     await expect(page.getByText("Próximos eventos da cidade")).toBeVisible()
-    await expect(page.getByText("Guia de chegada")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Guia de chegada" })).toBeVisible()
     await expect(page.getByText("Vitrine de prestadores")).toBeVisible()
     await expect(page.getByText("Entrar numa vila")).toBeVisible()
 

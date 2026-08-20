@@ -19,9 +19,12 @@ test.describe("group interests", () => {
     // When they open the interests page
     await page.goto("/profile/interests")
 
-    // Then the heading and the locality copy are visible
+    // Then the heading and the locality copy are visible. The real copy
+    // (interests-section.tsx) reads "usados para sugerir grupos da sua
+    // cidade" — "sugerir" (infinitive), not "sugerem" — found running the
+    // E2E realignment.
     await expect(page.getByRole("heading", { name: "Assuntos de interesse" })).toBeVisible()
-    await expect(page.getByText(/sugerem grupos da sua cidade/i)).toBeVisible()
+    await expect(page.getByText(/sugerir grupos da sua cidade/i)).toBeVisible()
 
     // And the save button is enabled
     const saveButton = page.getByRole("button", { name: /Salvar interesses/ })
@@ -32,8 +35,11 @@ test.describe("group interests", () => {
     // Given the authenticated member
     await seedSession(page.context())
 
-    // When they open the profile
+    // When they open the profile and switch to the settings tab — the link
+    // lives in the "Configurações" tab panel, not the default "Publicações"
+    // one the profile page lands on.
     await page.goto("/profile")
+    await page.getByRole("tab", { name: "Configurações" }).click()
 
     // Then a link to the interests page is rendered
     await expect(page.getByRole("link", { name: /Escolher assuntos de interesse/ })).toBeVisible()
@@ -47,6 +53,12 @@ test.describe("group interests", () => {
 
     // When they open the interests page
     await page.goto("/profile/interests")
+
+    // The section fetches its data client-side and renders null until it
+    // resolves (interests-section.tsx: `if (!loaded) return null`) — wait
+    // for the heading first, so the isVisible() snapshots below don't race
+    // an unloaded page and read both as false.
+    await expect(page.getByRole("heading", { name: "Assuntos de interesse" })).toBeVisible()
 
     // Then either the empty-state offer is rendered OR the group list is
     // rendered (the test passes when one or the other is visible).

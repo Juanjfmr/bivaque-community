@@ -39,6 +39,10 @@ const CURRENT_CONSENT = "1"
 // Manaus seed account — the same one tests/e2e/helpers/session.ts reads.
 const MANAUS_EMAIL = process.env["USER_EMAIL"] ?? "visual@bivaque.example.invalid"
 
+// Manaus account that belongs to a community (Vila Ajuricaba) — needed for
+// the /community feed test specifically; see its inline comment.
+const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+
 // Second-locality seed account. The seed does not carry a second locality yet
 // (Task 10 Step 3 adds it). These env vars let the operator point the spec at
 // a second seeded account and locality heading without touching the spec.
@@ -153,8 +157,16 @@ async function signInAs(page: Page, email: string): Promise<void> {
 
 test.describe("two localities: each member sees only their own city", () => {
   test("Manaus member sees Manaus feed content", async ({ page }) => {
-    // Given a member whose current locality is Manaus
-    await signInAs(page, MANAUS_EMAIL)
+    // Given a member whose current locality is Manaus AND who belongs to a
+    // community — /community's feed_community RPC only runs when the viewer
+    // has a primary community (apps/web/app/(shell)/community/page.tsx:101,
+    // "Onda E Task 2"); without one the route renders <CityReference/>
+    // instead, so MANAUS_EMAIL (visual@, deliberately community-less per
+    // vila-home.spec.ts) can never see feed content here regardless of what
+    // marker text exists in the seed. dono-vila@ (Vila Ajuricaba's owner,
+    // see community-batch-approval.spec.ts's header) does have one — found
+    // running the E2E realignment.
+    await signInAs(page, VILA_OWNER_EMAIL)
 
     // When they open the community feed
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })

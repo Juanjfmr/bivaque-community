@@ -5,20 +5,74 @@
 //   - Promote/demote via the delegation page.
 //
 // Like other E2E specs in this wave, the file is committed without running —
-// it needs the seeded database and the running test server.
+// it needs the seeded database and the running test server. Realigned: the
+// seed had zero communities at all (public.communities was empty), and the
+// original community id (70000000-...-0001) collides with a real seed
+// event of the same id in a different table. seed.sql now seeds "Vila
+// Ajuricaba" (71000000-...-0001) owned by a dedicated dono-vila@ account —
+// not the default seedSession() account, which vila-home.spec.ts's own
+// second test requires to have NO community membership at all.
 
+import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { seedSession } from "./helpers/session"
+import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
+
+const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
+const CONSENT_COOKIE = "bivaque-consent-version"
+const CURRENT_CONSENT = "1"
+const COMMUNITY_ID = "71000000-0000-4000-8000-000000000001"
+const OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+
+async function signInAs(page: Page, email: string): Promise<void> {
+  const anonKey =
+    process.env["SUPABASE_ANON_KEY"] ??
+    readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
+    readEnvLocal("SUPABASE_ANON_KEY")
+  const password = process.env["USER_PASSWORD"] ?? "bivaque-e2e-local"
+  if (!anonKey) throw new Error("SUPABASE_ANON_KEY is required")
+
+  const api = page.context().request
+  const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    headers: { apikey: anonKey, "Content-Type": "application/json" },
+    data: { email, password },
+  })
+  if (response.status() !== 200) {
+    throw new Error(`Password grant for ${email} failed with ${response.status()}`)
+  }
+  const body = (await response.json()) as {
+    access_token: string
+    refresh_token: string
+    expires_at: number
+    expires_in: number
+    token_type: string
+  }
+
+  const cookieValue = encodeAuthCookieValue(body, email)
+  const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
+  const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400
+  const shared = {
+    domain: "127.0.0.1",
+    path: "/",
+    expires,
+    httpOnly: false,
+    secure: false,
+    sameSite: "Lax" as const,
+  }
+  await page.context().addCookies([
+    { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
+    { name: CONSENT_COOKIE, value: CURRENT_CONSENT, ...shared },
+  ])
+}
 
 test.describe("community batch approval and delegation", () => {
   test("approving 3 of 5 selected leaves exactly 2 pending", async ({ page }) => {
     // Given an authenticated session whose seed membership is the owner of a
     // vila with at least 5 pending entries (the dev seed sets this up).
-    await seedSession(page.context())
+    await signInAs(page, OWNER_EMAIL)
     await page.setViewportSize({ width: 1280, height: 800 })
 
     // When the owner opens the pending queue
-    await page.goto("/communities/70000000-0000-4000-8000-000000000001/admin/pending")
+    await page.goto(`/communities/${COMMUNITY_ID}/admin/pending`)
 
     // Then five checkboxes are rendered and selectable
     const checkboxes = page.getByRole("checkbox", { name: /Selecionar/ })
@@ -39,10 +93,10 @@ test.describe("community batch approval and delegation", () => {
 
   test("promote page lists eligible members and offers a promote button", async ({ page }) => {
     // Given the owner
-    await seedSession(page.context())
+    await signInAs(page, OWNER_EMAIL)
 
     // When they open the delegation page
-    await page.goto("/communities/70000000-0000-4000-8000-000000000001/admin/moderators")
+    await page.goto(`/communities/${COMMUNITY_ID}/admin/moderators`)
 
     // Then the current moderators are listed (owner + any seeded moderator)
     await expect(page.getByRole("heading", { name: "Moderadores atuais" })).toBeVisible()
