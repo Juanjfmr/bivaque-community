@@ -94,6 +94,7 @@ select lives_ok(
       '10000000-0000-4000-8000-000000000002'::uuid,
       '10000000-0000-4000-8000-000000000001'::uuid
     )
+    on conflict (event_id, invitee_user_id) do nothing
   $$,
   'F3+: duplicate insert is a no-op (unique constraint)'
 );

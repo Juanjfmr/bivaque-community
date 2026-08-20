@@ -231,11 +231,15 @@ export async function sendEventInvitesAction(
     invited_by: organizerId,
   }))
 
-  // The unique (event_id, invitee_user_id) constraint makes a duplicate invite
-  // a no-op; we rely on it instead of an insert option.
+  // A plain insert throws on the unique (event_id, invitee_user_id)
+  // constraint and aborts the whole batch, including new invitees in the
+  // same call — ignoreDuplicates makes a repeat invite a no-op instead.
   const { data: inserted, error: insertError } = await authClient
     .from("event_invites")
-    .insert(rows as never as Array<Record<string, never>>)
+    .upsert(rows as never as Array<Record<string, never>>, {
+      onConflict: "event_id,invitee_user_id",
+      ignoreDuplicates: true,
+    })
   if (insertError) throw new Error(insertError.message)
   const insertedCount = Array.isArray(inserted as unknown)
     ? (inserted as unknown as unknown[]).length
