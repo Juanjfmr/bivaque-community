@@ -157,6 +157,50 @@ export type Database = {
           },
         ]
       }
+      community_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by_user_id: string | null
+          community_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          inviter_user_id: string
+          status: Database["public"]["Enums"]["community_invitation_status"]
+          token_digest: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          community_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          inviter_user_id: string
+          status?: Database["public"]["Enums"]["community_invitation_status"]
+          token_digest: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          community_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          inviter_user_id?: string
+          status?: Database["public"]["Enums"]["community_invitation_status"]
+          token_digest?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_invitations_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_memberships: {
         Row: {
           community_id: string
@@ -979,6 +1023,42 @@ export type Database = {
           },
         ]
       }
+      recommendation_reply_promotions: {
+        Row: {
+          guide_entry_id: string
+          promoted_at: string
+          promoted_by: string
+          reply_id: string
+        }
+        Insert: {
+          guide_entry_id: string
+          promoted_at?: string
+          promoted_by: string
+          reply_id: string
+        }
+        Update: {
+          guide_entry_id?: string
+          promoted_at?: string
+          promoted_by?: string
+          reply_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_reply_promotions_guide_entry_id_fkey"
+            columns: ["guide_entry_id"]
+            isOneToOne: false
+            referencedRelation: "arrival_guide_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_reply_promotions_reply_id_fkey"
+            columns: ["reply_id"]
+            isOneToOne: true
+            referencedRelation: "recommendation_replies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommendation_requests: {
         Row: {
           author_id: string
@@ -987,7 +1067,10 @@ export type Database = {
           created_at: string
           group_id: string | null
           id: string
+          is_resolved: boolean
           locality_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           title: string
           updated_at: string
         }
@@ -998,7 +1081,10 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_resolved?: boolean
           locality_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           title: string
           updated_at?: string
         }
@@ -1009,7 +1095,10 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_resolved?: boolean
           locality_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           title?: string
           updated_at?: string
         }
@@ -1095,6 +1184,32 @@ export type Database = {
         }
         Relationships: []
       }
+      user_group_interests: {
+        Row: {
+          created_at: string
+          group_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_group_interests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       waitlist: {
         Row: {
           city_name: string | null
@@ -1135,6 +1250,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_community_invitation: {
+        Args: { p_token_digest: string; p_user_id: string }
+        Returns: string
+      }
       accept_family_invitation: {
         Args: { p_accepted_by_user_id: string; p_token_digest: string }
         Returns: string
@@ -1170,6 +1289,15 @@ export type Database = {
           p_locality_id: string
           p_name: string
           p_owner_user_id: string
+        }
+        Returns: string
+      }
+      create_community_invitation: {
+        Args: {
+          p_community_id: string
+          p_expires_at: string
+          p_inviter_user_id: string
+          p_token_digest: string
         }
         Returns: string
       }
@@ -1222,6 +1350,7 @@ export type Database = {
         }[]
       }
       degrade_locality_origins: { Args: never; Returns: number }
+      delete_group: { Args: { p_group_id: string }; Returns: undefined }
       family_accept_holder_locality: {
         Args: { p_link_id: string }
         Returns: string
@@ -1302,6 +1431,26 @@ export type Database = {
       }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
+      list_available_groups_for_interests: {
+        Args: { p_locality_id: string; p_user_id: string }
+        Returns: {
+          already_interest: boolean
+          already_member: boolean
+          description: string
+          id: string
+          name: string
+          visibility: Database["public"]["Enums"]["group_visibility"]
+        }[]
+      }
+      list_pending_community_invitations: {
+        Args: { p_community_id: string; p_inviter_user_id: string }
+        Returns: {
+          community_id: string
+          created_at: string
+          expires_at: string
+          id: string
+        }[]
+      }
       list_pending_invites: {
         Args: { p_user_id: string }
         Returns: {
@@ -1319,6 +1468,24 @@ export type Database = {
           id: string
           invitee_email_digest: string
           invitee_email_hint: string
+        }[]
+      }
+      list_promotable_replies: {
+        Args: { p_limit?: number; p_locality_id: string }
+        Returns: {
+          author_display_name: string
+          body: string
+          created_at: string
+          reply_id: string
+          request_category: Database["public"]["Enums"]["recommendation_category"]
+          request_title: string
+        }[]
+      }
+      list_user_group_interests: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          group_id: string
         }[]
       }
       list_verification_documents: {
@@ -1341,6 +1508,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      mark_recommendation_resolved: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       my_verification_status: {
         Args: never
         Returns: {
@@ -1349,6 +1520,47 @@ export type Database = {
           status: string
           updated_at: string
         }[]
+      }
+      profile_events_for: {
+        Args: { p_target_user_id: string }
+        Returns: {
+          id: string
+          locality_id: string
+          starts_at: string
+          title: string
+        }[]
+      }
+      profile_is_visible_to_viewer: {
+        Args: { p_target_user_id: string }
+        Returns: boolean
+      }
+      profile_posts_for: {
+        Args: { p_target_user_id: string }
+        Returns: {
+          community_id: string
+          content: string
+          created_at: string
+          group_id: string
+          id: string
+          link_url: string
+          locality_id: string
+          photo_path: string
+          poll_options: Json
+          post_type: Database["public"]["Enums"]["post_type"]
+        }[]
+      }
+      promote_reply_to_guide_entry: {
+        Args: {
+          p_category: Database["public"]["Enums"]["arrival_guide_category"]
+          p_description: string
+          p_locality_id: string
+          p_name: string
+          p_operator_user_id: string
+          p_phone: string
+          p_reply_id: string
+          p_website_url: string
+        }
+        Returns: string
       }
       provision_member_locality: {
         Args: { p_locality_id: string; p_user_id: string }
@@ -1380,6 +1592,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_user_group_interests: {
+        Args: {
+          p_group_ids: string[]
+          p_locality_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       remove_community_member: {
         Args: { p_community_id: string; p_user_id: string }
         Returns: undefined
@@ -1400,6 +1620,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      revoke_community_invitation: {
+        Args: { p_invitation_id: string; p_inviter_user_id: string }
+        Returns: undefined
+      }
       revoke_family_invitation: {
         Args: { p_invitation_id: string; p_inviter_user_id: string }
         Returns: undefined
@@ -1411,6 +1635,15 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      suggest_groups_for_user: {
+        Args: { p_locality_id: string; p_user_id: string }
+        Returns: {
+          description: string
+          id: string
+          name: string
+          visibility: Database["public"]["Enums"]["group_visibility"]
+        }[]
       }
       transfer_community_ownership: {
         Args: { p_community_id: string; p_new_owner_user_id: string }
@@ -1435,6 +1668,11 @@ export type Database = {
     }
     Enums: {
       arrival_guide_category: "school" | "hospital" | "transporter" | "courier"
+      community_invitation_status:
+        | "pending"
+        | "accepted"
+        | "revoked"
+        | "expired"
       community_membership_role: "member" | "moderator" | "owner"
       community_membership_status: "pending" | "approved"
       dm_context_type:
@@ -1443,7 +1681,7 @@ export type Database = {
         | "recommendation_thread"
         | "accepted_family"
       event_invite_status: "pending" | "accepted" | "declined"
-      event_rsvp_status: "interested" | "going"
+      event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
@@ -1462,6 +1700,7 @@ export type Database = {
         | "event_change"
         | "direct_message"
         | "report_resolved"
+        | "recommendation_reply"
       outbox_channel: "email" | "whatsapp"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -1605,6 +1844,12 @@ export const Constants = {
   public: {
     Enums: {
       arrival_guide_category: ["school", "hospital", "transporter", "courier"],
+      community_invitation_status: [
+        "pending",
+        "accepted",
+        "revoked",
+        "expired",
+      ],
       community_membership_role: ["member", "moderator", "owner"],
       community_membership_status: ["pending", "approved"],
       dm_context_type: [
@@ -1614,7 +1859,7 @@ export const Constants = {
         "accepted_family",
       ],
       event_invite_status: ["pending", "accepted", "declined"],
-      event_rsvp_status: ["interested", "going"],
+      event_rsvp_status: ["interested", "going", "not_going"],
       event_status: ["upcoming", "cancelled", "completed"],
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
@@ -1634,6 +1879,7 @@ export const Constants = {
         "event_change",
         "direct_message",
         "report_resolved",
+        "recommendation_reply",
       ],
       outbox_channel: ["email", "whatsapp"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

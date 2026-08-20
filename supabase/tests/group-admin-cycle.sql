@@ -3,7 +3,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(9);
+select plan(11);
 
 \ir fixtures/foundation.inc
 \ir fixtures/groups.inc
@@ -127,15 +127,34 @@ select isnt_empty(
   'F8-: author cannot cancel another member request (row still exists, RLS denies)'
 );
 
--- ── POSITIVE 5: soft-deleted group disappears from feed/explorer ────────────
--- Groups are only soft-deleted through the operator report-hiding path
--- (api/admin/reports/[id]/route.ts), which runs as service_role — the
--- block_soft_delete_groups trigger rejects the toggle from `authenticated`.
-set local role service_role;
+-- ── NEGATIVE 5: a non-owner cannot delete the group ─────────────────────────
+-- member-four is an approved member of group 001 (added for NEGATIVE 2) but
+-- not the owner. delete_group raises a real exception (unlike the DELETE
+-- RLS-filter cases above), so throws_ok is the right assertion here.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000004', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
 
-update public.groups
-set is_deleted = true
-where id = '40000000-0000-4000-8000-000000000001'::uuid;
+select throws_ok(
+  $$ select public.delete_group('40000000-0000-4000-8000-000000000001'::uuid) $$,
+  'P0001',
+  'only the group owner can delete the group',
+  'F8-: a non-owner cannot delete the group'
+);
+
+-- ── POSITIVE 5: the owner deletes the group; it disappears from feed/explorer
+-- delete_group is the fix for the "Excluir grupo" button, which used to
+-- write is_deleted through the authenticated client directly and always
+-- threw — block_soft_delete_groups only allows the toggle from service_role.
+-- The RPC runs as its owner (security definer), which the trigger allows.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$ select public.delete_group('40000000-0000-4000-8000-000000000001'::uuid) $$,
+  'F8+: the group owner deletes the group through the delete_group RPC'
+);
 
 select is_empty(
   $$

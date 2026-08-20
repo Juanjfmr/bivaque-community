@@ -213,9 +213,11 @@ async function deleteGroupAction(formData: FormData) {
   } = await supabase.auth.getUser()
   if (!user) throw new Error("unauthenticated")
 
-  // Soft-delete: set is_deleted=true. The groups_update_owner policy allows
-  // this because the owner is also a moderator (is_group_moderator returns true).
-  const { error } = await supabase.from("groups").update({ is_deleted: true }).eq("id", groupId)
+  // block_soft_delete_groups only allows the is_deleted toggle from
+  // service_role — a plain update through the authenticated client always
+  // threw. delete_group is a security definer RPC (same ownership check as
+  // transfer_group_ownership) that runs the toggle as its owner instead.
+  const { error } = await supabase.rpc("delete_group", { p_group_id: groupId })
   if (error) throw new Error(error.message)
 
   revalidatePath(`/groups/${groupId}`)
