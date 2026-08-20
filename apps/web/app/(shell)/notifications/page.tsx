@@ -1,6 +1,6 @@
 "use client"
 
-import { Button, ListBox, Tabs } from "@heroui/react"
+import { Button, Tabs } from "@heroui/react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -57,6 +57,7 @@ function classifyNotification(notification: NotificationRow): TabKey {
     case "comment":
     case "invitation_accepted":
     case "direct_message":
+    case "recommendation_reply":
       return "minha-atividade"
     case "report_resolved":
       return "alertas"
@@ -95,6 +96,12 @@ function formatNotificationLabel(notification: NotificationRow): string {
       return "é amanhã — o encontro recorrente que você confirmou"
     case "direct_message":
       return "enviou uma mensagem direta"
+    case "recommendation_reply":
+      // Two distinct actions share this type (20260821000011/12): the
+      // request's own author vs. someone who saved it.
+      return notification.action === "replied_to_saved"
+        ? "respondeu a um pedido de indicação que você salvou"
+        : "respondeu ao seu pedido de indicação"
     case "report_resolved":
       // Confirma a análise, nunca o desfecho aplicado ao conteúdo (runbook §6:
       // "sem revelar a ação tomada").
@@ -142,6 +149,11 @@ function navigateToNotification(
       return
     case "direct_message":
       router.push(`/messages?conversation=${notification.target_id}`)
+      return
+    case "recommendation_reply":
+      // Same deep-link the Salvas tab uses (F6 Step 2): switches to the
+      // Pedidos tab and scrolls to the request.
+      router.push(`/recommendations?focus=${notification.target_id}#req-${notification.target_id}`)
       return
     default:
       return
@@ -352,53 +364,82 @@ export default function NotificationsPage() {
         )}
 
         {!loading && !error && filtered.length > 0 && (
-          <ListBox aria-label="Notificações" selectionMode="none" className="space-y-2">
+          // Plain semantic markup, not HeroUI's ListBox: react-aria-components'
+          // static-children Collection (ListBox.Section wrapping a JSX
+          // .map() of ListBox.Item) silently rendered an empty <section
+          // role="group"> whenever the list transitioned from unmounted/
+          // empty to populated — exactly what happens switching into a
+          // non-default tab, or on first load with unread items. Confirmed
+          // live: the DOM showed the correct item count in the tab's badge
+          // (computed independently from tabCounts) while the section body
+          // stayed empty — a Collection-diffing bug, not a data bug. The
+          // dynamic-items render-prop form (`items={items}` + a function
+          // child) that would normally sidestep this doesn't type-check
+          // against HeroUI's Section wrapper (its children prop is plain
+          // ReactNode) — found closing onda F Task 5.
+          <div className="space-y-4">
             {grouped.map(({ group, items }) => (
-              <ListBox.Section key={group} className="space-y-1">
+              <section key={group} className="space-y-1">
                 <header className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
                   {GROUP_LABELS[group]}
                 </header>
-                {items.map((notification) => (
-                  <ListBox.Item
-                    key={notification.id}
-                    id={notification.id}
-                    textValue={notification.id}
-                    onAction={() => {
-                      if (!notification.read_at) {
-                        markAsRead(notification.id)
-                      }
-                      navigateToNotification(router, notification)
-                    }}
-                    className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 transition-colors duration-[var(--duration-instant)] ${
-                      notification.read_at ? "" : "bg-[var(--accent-soft)]"
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm leading-snug">
-                        <span className="text-muted">Alguém </span>
-                        {formatNotificationLabel(notification)}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted">
-                        {timeAgo(notification.created_at)}
-                      </p>
-                    </div>
-                    {!notification.read_at && (
-                      <Button
-                        size="sm"
-                        variant="tertiary"
-                        onClick={(e) => e.stopPropagation()}
-                        onPress={() => markAsRead(notification.id)}
-                        isDisabled={markingRead.has(notification.id)}
-                        className="shrink-0"
+                <ul className="space-y-1">
+                  {items.map((notification) => (
+                    <li key={notification.id}>
+                      {/* A <div role="button">, not a native <button>: the
+                          per-row "Lida" action below is itself a real
+                          button, and buttons cannot nest inside buttons. */}
+                      {/* biome-ignore lint/a11y/useSemanticElements: cannot be a real <button> — it wraps another real <button> ("Lida"), and buttons cannot nest */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => {
+                          if (!notification.read_at) {
+                            markAsRead(notification.id)
+                          }
+                          navigateToNotification(router, notification)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault()
+                            if (!notification.read_at) {
+                              markAsRead(notification.id)
+                            }
+                            navigateToNotification(router, notification)
+                          }
+                        }}
+                        className={`flex w-full cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 ${
+                          notification.read_at ? "" : "bg-[var(--accent-soft)]"
+                        }`}
                       >
-                        Lida
-                      </Button>
-                    )}
-                  </ListBox.Item>
-                ))}
-              </ListBox.Section>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm leading-snug">
+                            <span className="text-muted">Alguém </span>
+                            {formatNotificationLabel(notification)}
+                          </p>
+                          <p className="mt-0.5 text-xs text-muted">
+                            {timeAgo(notification.created_at)}
+                          </p>
+                        </div>
+                        {!notification.read_at && (
+                          <Button
+                            size="sm"
+                            variant="tertiary"
+                            onClick={(e) => e.stopPropagation()}
+                            onPress={() => markAsRead(notification.id)}
+                            isDisabled={markingRead.has(notification.id)}
+                            className="shrink-0"
+                          >
+                            Lida
+                          </Button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ListBox>
+          </div>
         )}
       </div>
     </div>
