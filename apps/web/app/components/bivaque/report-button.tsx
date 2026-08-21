@@ -8,14 +8,39 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { SUPPORT_SLA_HOURS } from "../../../lib/support"
 import { FeedbackAlert } from "./feedback-alert"
 
+// Os seis alvos de `public.report_target_type`. Os dois de indicacao entraram
+// na H-Task 1 (20260821000031): a onda F transformou a resposta de indicacao no
+// ciclo central do produto e ela nao era denunciavel.
+export type ReportTargetType =
+  | "post"
+  | "comment"
+  | "group"
+  | "message"
+  | "recommendation_request"
+  | "recommendation_reply"
+
 interface ReportButtonProps {
-  targetType: "post" | "comment" | "group" | "message"
+  targetType: ReportTargetType
   targetId: string
   label?: string
+  /**
+   * Estado de overlay controlado pelo pai. Existe para o alvo `post`: o menu da
+   * publicacao (LeanOverflowMenu) precisa abrir o modal a partir de um
+   * `Dropdown.Item`, e nao de um botao proprio — o feed nao aguenta um
+   * "Denunciar" visivel em cada card. Quando vem preenchido, o gatilho proprio
+   * do componente nao e renderizado.
+   */
+  externalState?: ReturnType<typeof useOverlayState>
 }
 
-export function ReportButton({ targetType, targetId, label = "Denunciar" }: ReportButtonProps) {
-  const modal = useOverlayState()
+export function ReportButton({
+  targetType,
+  targetId,
+  label = "Denunciar",
+  externalState,
+}: ReportButtonProps) {
+  const ownModal = useOverlayState()
+  const modal = externalState ?? ownModal
   const [reason, setReason] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -77,14 +102,16 @@ export function ReportButton({ targetType, targetId, label = "Denunciar" }: Repo
 
   return (
     <>
-      <Button
-        variant="tertiary"
-        size="sm"
-        onPress={modal.open}
-        aria-label={`${label} ${targetType}`}
-      >
-        {label}
-      </Button>
+      {externalState ? null : (
+        <Button
+          variant="tertiary"
+          size="sm"
+          onPress={modal.open}
+          aria-label={`${label} ${targetType}`}
+        >
+          {label}
+        </Button>
+      )}
 
       <Modal state={modal}>
         <Modal.Backdrop>

@@ -141,6 +141,43 @@ o que o `PRODUCT_STATUS.md` sugere.
 
 ## Task 1: um modelo de denúncia, todos os alvos
 
+> **STATUS — 2026-08-21.** A task está **parcialmente entregue**. Os alvos novos, o gatilho de
+> auto-denúncia, as duas affordances e o pgTAP estão feitos e commitados. **A cópia das linhas
+> de `dm_reports` e o `drop table` continuam pendentes** — motivo abaixo. Se você é o outro
+> harness: o resto desta task está fechado; se procura trabalho, pegue a **Task 3**, que é o
+> RPC de resolução e não toca nestes arquivos.
+
+### O `drop table dm_reports` não é limpo — descoberto na execução
+
+A autorização do dono para apagar a tabela foi dada sobre a premissa de que era uma remoção
+isolada. Não é: **cinco suítes de pgTAP afirmam que `dm_reports` existe**, e três delas são as
+guardas estruturais do repositório.
+
+| Arquivo | O que afirma |
+|---|---|
+| `full-regression.sql:30` | `has_table('public', 'dm_reports', …)` |
+| `full-regression.sql:52` | a tabela na lista de RLS forçada |
+| `rls-or-column-regression.test.sql:436-443` | as duas policies, **pelo nome** |
+| `rls-or-column-regression.test.sql:696-699` | "dm_reports tem exatamente 2 policies" |
+| `dm-context-allowed.sql:262-277` e `dm-context-denials.sql:259-281` | inserts na tabela |
+
+Cada uma tem um `plan(N)` no topo — 85, 70, 21 e 19 — que precisa ser decrementado junto. E
+**nenhum desses números pode ser conferido nesta máquina**: `db:reset` está atrás de um hook
+que exige aprovação humana, então `test:db` não roda. Uma cirurgia de cinco arquivos com
+contagem de plano no escuro é exatamente o tipo de mudança que chega vermelha na CI e parece
+regressão de outra coisa.
+
+**Por isso a parte destrutiva ficou de fora deste commit**, e não porque a autorização foi
+ignorada. Ela volta quando `test:db` puder rodar. Enquanto isso o comportamento já está
+corrigido: `chat-thread.tsx` escreve em `public.reports` com `target_type = 'message'`, que é
+o que o F162 pedia — a fila sem consumidor deixou de receber linha nova. A tabela antiga fica
+como arquivo morto até a limpeza.
+
+Quando for fazer: as duas suítes de DM precisam **migrar** as asserções para `reports` com
+`target_type = 'message'`, não perdê-las. As duas guardas estruturais perdem as linhas da
+tabela e decrementam o plano.
+
+
 D24 e o `PRODUCT_STATUS.md` §9: *"um modelo, todos os alvos"*. Hoje são dois modelos e alvos
 faltando.
 
@@ -157,7 +194,7 @@ faltando.
 - `public.report_target_type` ganha `'recommendation_request'` e `'recommendation_reply'`
 - `public.reports` passa a ser a **única** tabela de denúncia
 
-- [ ] **Step 1: a migration — enum, migração das linhas, e a tabela duplicada sai**
+- [~] **Step 1: a migration — enum e o gatilho feitos; a cópia e o `drop` pendentes**
 
 ```sql
 alter type public.report_target_type add value if not exists 'recommendation_request';
@@ -222,7 +259,7 @@ drop table public.dm_reports;
   > 'message')`, com teste positivo (denuncia mensagem) e negativo (não denuncia post). Se a G
   > ainda não rodou, a Task 3 dela faz isso ao criar a conta.
 
-- [ ] **Step 2: o post ganha "Denunciar" (F160)**
+- [x] **Step 2: o post ganha "Denunciar" (F160)**
 
   Em `feed-post.tsx`, o `Dropdown.Menu` das linhas 119-126 tem dois itens. Falta o terceiro. O
   componente `ReportButton` já existe e já sabe o que fazer; o que falta é o alvo `post` estar
@@ -230,7 +267,7 @@ drop table public.dm_reports;
 
   Amplie o tipo em `report-button.tsx:10` para incluir os dois alvos novos.
 
-- [ ] **Step 3: a denúncia de DM passa a ter destino (F162)**
+- [x] **Step 3: a denúncia de DM passa a ter destino (F162)**
 
   `chat-thread.tsx:165-181` insere em `dm_reports`. Troque por `reports` com
   `target_type: "message"`. Ganha de graça o que a tabela nova tem e a antiga não tinha:
@@ -240,7 +277,7 @@ drop table public.dm_reports;
   O mínimo de 10 caracteres do `dm_reports` some — `reports` aceita de 1 a 1000. Mantenha a
   validação de 10 no cliente se ela ajuda o operador; **não** recrie o `check` no banco.
 
-- [ ] **Step 4: os testes — cada alvo com positivo e negativo**
+- [~] **Step 4: os testes — alvos novos cobertos; a asserção da migração espera o `drop`**
 
   Amplie `supabase/tests/reports-denials.sql` e crie
   `supabase/tests/reports-unified-targets.sql`. Para **cada** um dos cinco alvos
@@ -256,7 +293,7 @@ drop table public.dm_reports;
   target_type = 'message'` bate com o que havia em `dm_reports`. Escreva-a como
   `has_table`/`hasnt_table` mais a contagem sobre fixture.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
 ```bash
 npx pnpm@11.18.0 gate

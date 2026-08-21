@@ -67,9 +67,10 @@ function CommentItem({ comment }: { comment: CommentRow }) {
 interface LeanOverflowMenuProps {
   postId: string
   onHide?: ((postId: string) => void) | undefined
+  onReport?: (() => void) | undefined
 }
 
-function LeanOverflowMenu({ postId, onHide }: LeanOverflowMenuProps) {
+function LeanOverflowMenu({ postId, onHide, onReport }: LeanOverflowMenuProps) {
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}/community?post=${postId}`
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
@@ -97,9 +98,11 @@ function LeanOverflowMenu({ postId, onHide }: LeanOverflowMenuProps) {
         onHide?.(postId)
       } else if (key === "share") {
         void handleShare()
+      } else if (key === "report") {
+        onReport?.()
       }
     },
-    [postId, onHide, handleShare],
+    [postId, onHide, onReport, handleShare],
   )
 
   return (
@@ -123,6 +126,13 @@ function LeanOverflowMenu({ postId, onHide }: LeanOverflowMenuProps) {
           <Dropdown.Item key="share" id="share">
             Compartilhar
           </Dropdown.Item>
+          {/* F160: o post e o alvo central do fluxo de moderacao e era o unico
+              sem acao de denuncia — o comentario tinha, o post nao. O menu e o
+              lugar certo: um "Denunciar" visivel em cada card do feed convida
+              ao uso e polui a leitura. */}
+          <Dropdown.Item key="report" id="report">
+            Denunciar publicação
+          </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown.Popover>
     </Dropdown>
@@ -136,6 +146,9 @@ export interface FeedPostProps {
 }
 
 export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
+  // O modal de denuncia do post vive aqui, e nao dentro do menu: o menu fecha
+  // ao escolher o item, e um modal montado dentro dele fecharia junto.
+  const reportModal = useOverlayState()
   const [showComments, setShowComments] = useState(false)
   const [comments, setComments] = useState<CommentRow[]>([])
   const [commentText, setCommentText] = useState("")
@@ -300,7 +313,8 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
 
             {/* Overflow */}
             <div className="flex items-center gap-1 ml-auto shrink-0">
-              <LeanOverflowMenu postId={post.id} onHide={onHide} />
+              <LeanOverflowMenu postId={post.id} onHide={onHide} onReport={reportModal.open} />
+              <ReportButton targetType="post" targetId={post.id} externalState={reportModal} />
             </div>
           </div>
 
