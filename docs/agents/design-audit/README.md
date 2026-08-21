@@ -10,96 +10,190 @@ Produce an independent, evidence-backed reference design standard for Bivaque, t
 
 The audit answers two separate questions in this order:
 
-1. **If Bivaque were designed today from product truth, stack constraints, current standards, and current specialist knowledge — without seeing the incumbent design solution — what should the design/interaction standard be?**
+1. **If Bivaque were designed today from sanitized product truth, stack constraints, current standards, and current specialist knowledge — without seeing the incumbent design solution — what should the design/interaction standard be?**
 2. **Which incumbent rules survive comparison with that independent standard and runtime evidence?**
 
 Core rule:
 
 **Blind to the incumbent solution, not blind to the product.**
 
-## Non-negotiable contamination boundary
+## Phase model
 
-Phase 1 must run in a fresh agent context/session that has not read the incumbent design solution.
+```text
+Phase 1 — independent benchmark
+  PHASE1_PRODUCT_CONTEXT + stack + external evidence
+  -> REFERENCE_DESIGN_SPEC
+  -> REFERENCE_VISUAL_GUIDE
+
+Phase 2 — incumbent extraction
+  DESIGN_SPEC + VISUAL_GUIDE
+  -> RULE_LEDGER
+
+Phase 3 — confrontation
+  frozen reference + incumbent ledger
+  -> CONFLICT_MATRIX
+
+Phase 4 — runtime confrontation
+  implementation + browser/screens + runtime evidence
+  -> RUNTIME_FINDINGS
+
+Phase 5 — adjudication
+  all evidence
+  -> ADJUDICATION
+
+Phase 6 — rewrite
+  adjudicated decisions only
+  -> DESIGN_SPEC / VISUAL_GUIDE vNext
+```
+
+Do not collapse phases for convenience.
+
+# Phase 1 — non-negotiable contamination boundary
+
+Phase 1 must run in a fresh agent context/session that has not consumed the incumbent Bivaque design solution.
 
 **Permission is content-based, not path-based. Transitive contamination counts.**
 
-A nominally allowed document is not safe merely because its path is on an allowlist. If it embeds, quotes, summarizes, reproduces, or substantively describes forbidden incumbent material, consuming that content contaminates Phase 1 exactly as reading the original forbidden source would.
+A nominally permitted file is not safe merely because of its filename or location. If it embeds, quotes, summarizes, reproduces, or substantively describes forbidden incumbent material, consuming that material contaminates Phase 1 exactly as reading the original source would.
 
-Cross-references are not permission. An allowed file may mention another file; do not follow that reference unless the target itself is explicitly allowlisted below.
+Cross-references are not permission. Never follow a local reference unless the target is explicitly present in the exhaustive allowlist below.
 
-### Exhaustive local allowlist for Phase 1
+## Why `docs/BIVAQUE.md` is not allowed
 
-The reference-design agent may read **only** these local project inputs:
+`docs/BIVAQUE.md` is the general product canon, but it mixes durable product truth with implementation/history/current-state material. It is therefore **not a safe blind-design input**.
 
-- `docs/BIVAQUE.md`;
+Phase 1 must not read it directly.
+
+Product truth required for the benchmark is supplied instead through the reviewed, sanitized artifact:
+
+- `docs/agents/design-audit/PHASE1_PRODUCT_CONTEXT.md`
+
+That file intentionally contains only solution-independent product problem, roles, capabilities, trust/privacy invariants, pilot scope, and technical envelope.
+
+## Exhaustive local allowlist for Phase 1
+
+A Phase 1 agent may read only these repository resources:
+
+### Protocol/control
+
+- `docs/agents/design-audit/AGENTS.md`;
+- `docs/agents/design-audit/README.md`;
+- `docs/agents/design-audit/PHASE1_PRODUCT_CONTEXT.md`;
+- `docs/agents/design-audit/REFERENCE_DESIGN_SPEC.md` as the target/template;
+- `docs/agents/design-audit/REFERENCE_VISUAL_GUIDE.md` as the target/template.
+
+### Dependency envelope
+
 - root `package.json`;
 - `apps/web/package.json`;
-- version-matched Next.js docs from `apps/web/node_modules/next/dist/docs/` when available.
+- version-matched Next.js documentation from `apps/web/node_modules/next/dist/docs/` when available.
 
-It may also use current external standards, maintainer documentation for the installed dependency versions, and approved external skills listed below.
+### External sources
 
-**No other repository file is implicitly allowed.** In particular, Phase 1 may not open ADRs, legal documents, plans, status documents, tests, implementation files, tokens, screenshots, or other project documentation merely because a useful product constraint might exist there.
+The agent may use:
 
-If a material product constraint cannot be resolved from the exhaustive allowlist plus current external sources, do not broaden repository access. Stop that line of work and report:
+- current authoritative web standards;
+- current maintainer documentation for the dependency versions established by the allowed package manifests;
+- approved external skills and their current upstream source;
+- current primary/authoritative research needed to justify design standards.
+
+**No other repository file is implicitly allowed.**
+
+Do not read the root `AGENTS.md` or any other scoped `AGENTS.md` during Phase 1. Repository-wide/scoped instructions may contain incumbent design, incident, implementation, or tooling context. For Phase 1, this directory's `AGENTS.md` is the only local agent-instruction file allowed.
+
+## Explicitly forbidden local inputs in Phase 1
+
+Do not read, search, inspect, infer from, or receive substantive content from:
+
+- `docs/BIVAQUE.md`;
+- `docs/PRODUCT_STATUS.md`;
+- `docs/agents/DESIGN_SPEC.md`;
+- `docs/agents/VISUAL_GUIDE.md`;
+- root `AGENTS.md`;
+- `apps/web/AGENTS.md`;
+- any other scoped `AGENTS.md` outside this directory;
+- any ADR;
+- `docs/legal/**`;
+- implementation under `apps/web/app/**` or equivalent rendered source;
+- `packages/tokens/**` or current visual tokens;
+- `.visual/**`;
+- screenshots/captures/snapshots of the current product;
+- tests when they reveal current UI structure/behavior;
+- `docs/superpowers/**` historical plans/specs;
+- old visual reviews, design critiques, redesign proposals, audit findings, or incident descriptions;
+- this directory's Phase 2+ artifacts if they have been populated with incumbent evidence;
+- excerpts, summaries, diffs, screenshots, or secondary descriptions derived from any forbidden source.
+
+Examples of transitive contamination:
+
+- a product document describing current `globals.css`, themes, wrappers, breakpoints, current routes, or rendered shell;
+- an ADR quoting `VISUAL_GUIDE.md`;
+- a note describing `bottom-nav.tsx` or another current UI component;
+- an audit comparing incumbent spec with current code;
+- a secondary document reproducing incumbent visual tokens, geometry, navigation, or screenshot findings;
+- a supposedly generic instruction file carrying project-specific implementation incidents.
+
+A mere filename or link is not itself contamination if no substantive incumbent information is conveyed. Do not follow it.
+
+## No broad repository discovery in Phase 1
+
+Do not:
+
+- run broad code search;
+- list the repository tree for exploration;
+- inspect neighboring files to understand context;
+- search for routes/components/tokens;
+- inspect git history/diffs for design information;
+- open referenced local documents outside the allowlist.
+
+The absence of information is a deliberate part of the protocol.
+
+## Input-gap behavior
+
+If a material product constraint cannot be resolved from `PHASE1_PRODUCT_CONTEXT.md`, allowed package manifests, version-matched framework docs, and current external sources, stop that line of work and report exactly:
 
 `PHASE_1_INPUT_GAP: <minimal description of the missing product constraint>`
 
-The gap must be resolved by changing the protocol/allowlist or by providing a separately reviewed sanitized input in a future revision. The Phase 1 agent must not manufacture the missing constraint and must not inspect additional local files to discover it.
+Do not infer the answer from repository structure. Do not broaden access. Do not manufacture product truth.
 
-### Forbidden local inputs in Phase 1
+The gap must be resolved by updating the sanitized Phase 1 input in a contaminated/non-blind preparation context and then restarting Phase 1 in a fresh session.
 
-The reference-design agent must **not** read, search, inspect, infer from, or receive substantive content from:
+## Contamination behavior
 
-- `docs/agents/DESIGN_SPEC.md`;
-- `docs/agents/VISUAL_GUIDE.md`;
-- any ADR, including design/navigation/shell ADRs, unless a future protocol revision explicitly allowlists a reviewed sanitized artifact instead;
-- `docs/legal/**`;
-- this directory's later-phase incumbent findings;
-- `.visual/` or any current product screenshots/captures;
-- current UI implementation under `apps/web/app/**` or equivalent rendered source;
-- `packages/tokens/**` or current visual tokens;
-- `docs/PRODUCT_STATUS.md`;
-- historical UI plans/specs under `docs/superpowers/**`;
-- old visual reviews, design critiques, or prior redesign proposals;
-- current Playwright screenshots or snapshot artifacts;
-- descriptions, excerpts, summaries, diffs, audit findings, or screenshots derived from any forbidden source, even when embedded inside another document.
+If the Phase 1 agent consumes any forbidden or transitively forbidden incumbent material:
 
-Examples of **transitive contamination** include:
-
-- an ADR quoting `VISUAL_GUIDE.md`;
-- a product note describing the current `bottom-nav.tsx` implementation;
-- an audit summary comparing incumbent visual rules with current code;
-- a copied screenshot or textual description of the current rendered shell;
-- a secondary document reproducing current tokens, breakpoints, navigation layout, component geometry, or incumbent visual findings.
-
-A mere filename/link/reference to a forbidden source does not itself contaminate the session if no substantive incumbent content is conveyed, but the agent must not follow it.
-
-If the fresh agent has already consumed any forbidden or transitively forbidden input, its Phase 1 output is contaminated. Do not salvage it as the reference benchmark; start Phase 1 again in a clean context and report exactly:
+- stop immediately;
+- do not generate, continue, repair, or salvage either reference artifact;
+- do not claim that the information can be mentally ignored;
+- leave `REFERENCE_*` unchanged;
+- report exactly:
 
 `PHASE_1_CONTEXT_CONTAMINATED`
 
-## Required external lenses for Phase 1
+A fresh context/session is required after the protocol/input is corrected.
 
-Do not let one generic design skill become the benchmark. Build the reference from multiple independent lenses and record the source/version/ref used when practical.
+# Required external lenses for Phase 1
 
-### Product / information architecture
+The benchmark must not be generated by one generic design skill. Use multiple independent evidence classes and record the source/version/ref where practical.
 
-Evaluate:
+## Product / information architecture
+
+Evaluate from `PHASE1_PRODUCT_CONTEXT.md`:
 
 - jobs and primary user outcomes;
 - information architecture;
 - locality/community/group mental model;
-- navigation depth and discoverability;
+- discoverability and navigation depth;
 - progressive disclosure;
 - cognitive load;
-- trust and privacy implications of presentation;
+- trust/privacy consequences of presentation;
 - error prevention and recoverability.
 
-This lens starts from product truth, not the incumbent navigation or visual system.
+The lens starts from product truth, not an incumbent navigation model.
 
-### Web standards / accessibility
+## Web standards / accessibility
 
-Use current authoritative guidance, including WCAG/WAI where applicable and Vercel's current `web-design-guidelines` review rules.
+Use current authoritative guidance, including WCAG/WAI where applicable and current Vercel web-interface review guidance.
 
 Evaluate at minimum:
 
@@ -107,7 +201,7 @@ Evaluate at minimum:
 - keyboard/focus;
 - forms and errors;
 - touch targets;
-- contrast and non-color cues;
+- contrast/non-color cues;
 - responsive behavior;
 - motion/reduced motion;
 - navigation/state/deep-linking;
@@ -116,46 +210,46 @@ Evaluate at minimum:
 
 Objective defects are not aesthetic preferences.
 
-### Next.js / React / component engineering
+## Next.js / React / component engineering
 
-Use version-matched installed Next.js docs as framework authority. Use `vercel-react-best-practices` and component guidance only for questions they actually own.
+Use version-matched installed Next.js docs as framework authority. Use React/component guidance only for questions it actually owns.
 
 Evaluate at minimum:
 
 - server/client boundaries that affect UX;
 - loading/streaming/error behavior;
 - performance-visible interaction tradeoffs;
-- component composition and API clarity;
-- avoiding unnecessary client state/dependencies;
+- component composition/API clarity;
+- unnecessary client state/dependencies;
 - browser-verifiable interaction behavior.
 
 External examples do not authorize new dependencies.
 
-### HeroUI
+## HeroUI
 
-Treat the installed HeroUI version as the implementation foundation, not as proof that local wrappers are correct.
+Treat the installed HeroUI version as the implementation foundation, not as proof that any incumbent wrapper or usage is correct.
 
-For components used in the reference design, verify canonical HeroUI behavior and accessibility for compound controls, forms, overlays, selection, focus, and keyboard interaction before inventing local behavior.
+For component classes used in the reference, verify current canonical HeroUI behavior and accessibility for compound controls, forms, overlays, selection, focus, and keyboard interaction before inventing local behavior.
 
-### Visual / UX craft
+## Visual / UX craft
 
-Use at least one independent craft lens such as:
+Use at least one independent craft lens, such as current upstream guidance from:
 
 - `addyosmani/agent-skills` → `frontend-ui-engineering`;
-- `pbakaus/impeccable` → `impeccable` using critique/audit/distill/harden/adapt/polish-style analysis as appropriate.
+- `pbakaus/impeccable` → `impeccable` for critique/audit/distill/harden/adapt/polish-style reasoning where appropriate.
 
-During Phase 1 do **not** run Impeccable `init` or `document`, install hooks, or create a competing root `PRODUCT.md`/`DESIGN.md`.
+During Phase 1 do not run Impeccable `init` or `document`, install hooks, or create competing root product/design context files.
 
-The craft lens may propose a visual system; it may not redefine product truth.
+A craft lens may propose a visual system. It may not redefine product truth.
 
-## Phase 1 output contract — independent reference
+# Phase 1 output contract
 
 Phase 1 produces exactly two primary artifacts:
 
 - `REFERENCE_DESIGN_SPEC.md`;
 - `REFERENCE_VISUAL_GUIDE.md`.
 
-The reference must not mention or compare against incumbent Bivaque design choices because it has not seen them.
+The reference must not mention, compare with, or anticipate incumbent Bivaque design choices.
 
 Every normative statement must carry one strength label:
 
@@ -164,7 +258,7 @@ Every normative statement must carry one strength label:
 - **MAY** — optional implementation/design choice;
 - **EXPERIMENT** — evidence is insufficient to prescribe a fixed solution; compare alternatives in runtime.
 
-Avoid false precision. Exact pixels, breakpoints, radii, counts, durations, or typography values require a rationale proportional to their specificity. When a range or runtime criterion is more defensible than one number, specify the range/criterion.
+Avoid false precision. Exact pixels, breakpoints, radii, counts, durations, typography values, or geometry require rationale proportional to their specificity. Prefer behavioral criteria/ranges when stronger evidence does not justify one exact value.
 
 Each major rule/recommendation should record:
 
@@ -176,7 +270,7 @@ Each major rule/recommendation should record:
 - reference confidence `1–5`;
 - falsification/validation method where practical.
 
-### Reference confidence
+## Reference confidence
 
 - **5** — objective standard, framework contract, accessibility/security requirement, or direct product invariant;
 - **4** — strong established practice supported by multiple credible sources;
@@ -184,33 +278,35 @@ Each major rule/recommendation should record:
 - **2** — heuristic/design judgment;
 - **1** — aesthetic preference or weakly supported opinion.
 
-A confidence-1/2 rule should rarely be a `MUST`.
+A confidence-1/2 rule should rarely be `MUST`.
 
-## Phase 2 — incumbent rule extraction
+When both reference artifacts are complete, record the external source set and declare the Phase 1 reference frozen before beginning Phase 2. Once frozen, do not renumber existing `REF-*` or `RVIS-*` IDs.
 
-Only after both reference artifacts are frozen may a separate auditor read:
+# Phase 2 — incumbent rule extraction
+
+Only after the Phase 1 reference is frozen may a separate auditor read:
 
 - `docs/agents/DESIGN_SPEC.md`;
 - `docs/agents/VISUAL_GUIDE.md`.
 
-Extract every normative rule into `RULE_LEDGER.md`. Do not improve, defend, reinterpret, or merge rules during extraction.
+Extract every normative rule into `RULE_LEDGER.md`. Do not improve, defend, reinterpret, merge, or reconcile rules during extraction.
 
-Flag absolute language automatically for scrutiny:
+Flag absolute wording automatically for scrutiny:
 
-`always`, `never`, `must`, `exactly`, `only`, `every`, `cannot`, and Portuguese equivalents such as `sempre`, `nunca`, `deve`, `exatamente`, `somente`, `todo`, `não pode`.
+`always`, `never`, `must`, `exactly`, `only`, `every`, `cannot`, plus Portuguese equivalents such as `sempre`, `nunca`, `deve`, `exatamente`, `somente`, `todo`, `não pode`.
 
 Absolute wording requires proportionally strong evidence.
 
-For each incumbent rule classify:
+Classify each incumbent rule as:
 
-- `product-invariant` — changes product meaning/trust/privacy/authorized behavior;
-- `design-decision` — intentional but contestable UX/visual choice;
-- `implementation-guidance` — technical/how-to rule;
-- `objective-standard` — accessibility/framework/semantic requirement.
+- `product-invariant`;
+- `design-decision`;
+- `implementation-guidance`;
+- `objective-standard`.
 
-Do not grant higher support merely because a rule is very specific.
+Do not grant higher support merely because a rule is highly specific.
 
-### Current-rule support score
+## Current-rule support score
 
 - **5** — invariant/objective requirement plus strong evidence and runtime confirmation;
 - **4** — strong explicit rationale and supporting evidence;
@@ -219,7 +315,7 @@ Do not grant higher support merely because a rule is very specific.
 - **1** — arbitrary/unexplained choice;
 - **0** — contradicted by stronger evidence or current product truth.
 
-## Phase 3 — confrontation
+# Phase 3 — confrontation
 
 Populate `CONFLICT_MATRIX.md` by comparing each incumbent rule with the frozen reference.
 
@@ -234,83 +330,74 @@ Required comparison outcomes:
 - `EXPERIMENT_REQUIRED`;
 - `INSUFFICIENT_EVIDENCE`.
 
-Do not resolve a conflict merely by picking the newer document or the external source. Record why the evidence differs.
+Do not resolve a conflict by source prestige, age, specificity, or local status alone. Record why the evidence differs.
 
-## Phase 4 — runtime confrontation
+# Phase 4 — runtime confrontation
 
-Only now inspect the actual product implementation, screenshots, browser behavior, and `PRODUCT_STATUS.md` as needed.
+Only now inspect actual implementation, screenshots, browser behavior, tests, and `PRODUCT_STATUS.md` as needed.
 
-Populate `RUNTIME_FINDINGS.md` with evidence that distinguishes:
+Populate `RUNTIME_FINDINGS.md` and distinguish:
 
 - spec defect;
 - implementation defect;
 - both;
 - acceptable divergence;
-- behavior that cannot be judged without an experiment/user evidence.
+- unresolved experiment/user-evidence question.
 
-Test at the real interaction layer. Static JSX is not evidence that a compound control works.
+Test at the real interaction layer. Static JSX is not proof that a compound control works.
 
-Where a numerical/design choice has weak support, prefer bounded comparison over model opinion. Example structure:
+Where a numerical/design choice has weak support, prefer a bounded comparison over model taste.
 
-```text
-Question: desktop navigation width
-Candidates: A / B / C
-Target viewports: defined by product/device evidence
-Criteria: scanability, content width, hierarchy, overflow, interaction cost
-Result: runtime evidence
-```
+# Phase 5 — adjudication
 
-## Phase 5 — adjudication
+Populate `ADJUDICATION.md` using only these verdict classes:
 
-Populate `ADJUDICATION.md`. Allowed verdicts:
+- **KEEP**;
+- **AMEND**;
+- **DELETE**;
+- **EXPERIMENT**;
+- **HUMAN_DECISION**;
+- **ADD** when the reference identifies a materially missing rule supported strongly enough to become normative.
 
-- **KEEP** — incumbent rule is sufficiently supported and remains normative;
-- **AMEND** — intent survives but wording/specificity/scope is wrong;
-- **DELETE** — rule should no longer be normative;
-- **EXPERIMENT** — evidence cannot justify a fixed rule yet;
-- **HUMAN_DECISION** — genuine product/brand tradeoff not derivable from available evidence.
+The adjudicator receives the frozen reference, rule ledger, conflict matrix, and runtime findings. Neither incumbent nor reference is infallible.
 
-The adjudicator receives the frozen reference, rule ledger, conflict matrix, and runtime findings. It must not treat either the incumbent or the reference as infallible.
-
-## Phase 6 — rewrite
+# Phase 6 — rewrite
 
 Only after adjudication may the audit mutate:
 
 - `docs/agents/DESIGN_SPEC.md`;
 - `docs/agents/VISUAL_GUIDE.md`.
 
-The rewrite must be traceable to adjudicated rules. Do not add a new normative rule merely because the synthesizer likes it.
+Every mutation must map to an adjudicated Decision ID. Do not add a normative rule merely because the synthesizer prefers it.
 
 After rewrite:
 
-1. re-run objective standards audit;
-2. re-run runtime/browser verification for affected flows;
-3. record unresolved `EXPERIMENT` and `HUMAN_DECISION` items explicitly;
-4. then finalize `apps/web/AGENTS.md` against the new design contract.
+1. re-run objective-standards review;
+2. re-run affected runtime/browser verification;
+3. keep unresolved `EXPERIMENT` and `HUMAN_DECISION` items visible;
+4. then finalize `apps/web/AGENTS.md` against the rewritten design contract.
 
-## Separation of roles
-
-For this audit, independence matters more than convenience.
+# Separation of roles
 
 Minimum separation:
 
-- Phase 1 reference generator: fresh context, blind to incumbent design;
-- Phase 2 incumbent extractor: may read current docs, does not adjudicate;
-- specialist challengers: UX/craft/standards/engineering lenses;
-- runtime evaluator: skeptical, browser/evidence oriented;
-- adjudicator/synthesizer: receives artifacts, not the prior agents' long reasoning/self-verdicts.
+- Phase 1 reference generator — fresh context, blind to incumbent;
+- Phase 2 incumbent extractor — sees incumbent, does not adjudicate;
+- specialist challengers — UX/craft/standards/engineering lenses;
+- runtime evaluator — skeptical, browser/evidence oriented;
+- adjudicator/synthesizer — receives artifacts/evidence, not prior agents' long reasoning or self-verdicts.
 
-Different models are useful when practical, but **separate context and independent evidence are mandatory** where the role claims independence.
+Different models are useful when practical, but **separate context and independent evidence are mandatory wherever the role claims independence**.
 
-## Completion condition for the audit program
+# Completion condition
 
-The design audit is not complete when a model says the UI is good. It is complete when:
+The audit is complete only when:
 
 - the independent reference is frozen and uncontaminated;
 - incumbent normative rules are exhaustively extracted;
 - every material rule has a comparison outcome;
 - runtime evidence covers disputed interaction behavior;
-- each material rule has an adjudicated verdict;
-- the rewritten design documents are traceable to those verdicts;
+- every material rule has an adjudicated verdict;
+- rewritten design documents are traceable to those verdicts;
 - objective standards checks and affected runtime flows pass;
-- unresolved experiments/human decisions remain visible rather than being silently guessed.
+- unresolved experiments/human decisions remain visible rather than being guessed.
