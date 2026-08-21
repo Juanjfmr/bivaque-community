@@ -107,15 +107,20 @@ jobs:
             const sessionValue = JSON.stringify(session)
             await context.addCookies([
               { name: storageKey, value: sessionValue, path: "/", domain: "127.0.0.1" },
+              { name: "bivaque-consent-version", value: "1", path: "/", domain: "127.0.0.1" },
             ])
             await context.addInitScript(
               ([key, value]) => window.localStorage.setItem(key, JSON.stringify(value)),
               [storageKey, session],
             )
             const page = await context.newPage()
-            await page.goto("/guide", { waitUntil: "networkidle" })
-            await page.getByRole("heading", { name: "Guia de chegada a Manaus" }).waitFor()
-            await page.waitForTimeout(1200)
+            await page.goto("/guide", { waitUntil: "domcontentloaded" })
+            await page.screenshot({
+              path: `guide-render/debug-${viewport.name}.png`,
+              fullPage: true,
+            })
+            await page.getByRole("heading", { name: "Guia de chegada a Manaus" }).waitFor({ timeout: 30000 })
+            await page.waitForTimeout(1800)
             await page.screenshot({
               path: `guide-render/guide-${viewport.name}.png`,
               fullPage: true,
