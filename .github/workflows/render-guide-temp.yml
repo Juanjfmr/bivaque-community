@@ -1,9 +1,7 @@
 name: Render Manaus guide temporary
 
 on:
-  push:
-    branches:
-      - feat/manaus-arrival-guide
+  pull_request:
 
 permissions:
   contents: read
