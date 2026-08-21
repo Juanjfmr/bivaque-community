@@ -144,8 +144,10 @@ o que o `PRODUCT_STATUS.md` sugere.
 > **STATUS — 2026-08-21.** A task está **parcialmente entregue**. Os alvos novos, o gatilho de
 > auto-denúncia, as duas affordances e o pgTAP estão feitos e commitados. **A cópia das linhas
 > de `dm_reports` e o `drop table` continuam pendentes** — motivo abaixo. Se você é o outro
-> harness: o resto desta task está fechado; se procura trabalho, pegue a **Task 3**, que é o
-> RPC de resolução e não toca nestes arquivos.
+> harness: **a raia está livre.** Uma sessão de revisão reivindicou tasks desta onda e
+> implementou as Tasks 1, 3 e 4 — isso foi um desvio, e não se repete. O que sobra da onda é
+> seu: **Task 6** (admissões, com a armadilha registrada nela), **Task 8** (fechamento), e a
+> parte destrutiva desta Task 1.
 
 ### O `drop table dm_reports` não é limpo — descoberto na execução
 
@@ -846,6 +848,31 @@ git commit -m "feat(moderation): suspensao de conta com flag na RLS, registro au
 ---
 
 ## Task 6: admissões que decidem
+
+> **ARMADILHA CONFERIDA — 2026-08-21.** `public.decide_verification_document`
+> (`20260820000007:82`) checa `public.is_current_user_operator((select auth.uid()))`, mas o
+> `EXECUTE` dela é concedido **só a `service_role`** — e sob `service_role` não há JWT, então
+> `auth.uid()` é `NULL`. Medido no banco local:
+>
+> ```
+>  auth_uid_sob_service_role | gate_da_funcao
+> ---------------------------+----------------
+>  NULL                      | f
+> ```
+>
+> Ou seja: **a função não pode ser chamada com sucesso por ninguém hoje.** Pelo cliente
+> autenticado falta o grant; pelo `service_role` o gate sempre nega. A Task 6 não é "ligar o
+> que existe" — é consertar isso primeiro.
+>
+> As duas saídas, e a escolha é de produto: (a) a função passa a receber
+> `p_operator_user_id uuid` explícito e confia no chamador, que é o contrato que
+> `is_current_user_operator`, `read_verification_status` e `resolve_report` já usam neste
+> schema; ou (b) o grant vai para `authenticated` e o gate por `auth.uid()` passa a funcionar,
+> ao custo de a função virar alcançável direto pelo PostgREST. **(a) é o padrão da casa.**
+>
+> O mesmo vale para `verification_reconcile_step` e `read_verification_document_path` —
+> confira o `proacl` das três antes de escrever tela.
+
 
 Hoje o painel observa (`(admin)/admissions/page.tsx:24-80`: um `map` sem um único botão). O
 `PRODUCT_STATUS.md` chama isso de "observação sem ação".
