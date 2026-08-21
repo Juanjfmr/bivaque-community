@@ -23,6 +23,8 @@
 create function private.scrub_report_reason()
 returns trigger
 language plpgsql
+security invoker
+set search_path = ''
 as $$
 declare
   v_scrubbed text;
@@ -45,7 +47,14 @@ begin
     'gi'
   );
 
-  new.reason := v_scrubbed;
+  -- "[documento removido]" tem 20 caracteres e substitui de 11 a 14. O CHECK de
+  -- 1000 caracteres de public.reports roda DEPOIS deste trigger, entao um motivo
+  -- perto do limite passa a ser rejeitado por reports_reason_check com um erro
+  -- que nao explica nada a quem denunciou. E alcancavel pela UI normal, nao so
+  -- pelo bypass: o cliente redige antes do insert, entao quem digita perto do
+  -- limite ja sai do scrubReportReason acima de 1000. Perder o fim de um motivo
+  -- abarrotado de documento e melhor que perder a denuncia inteira.
+  new.reason := left(v_scrubbed, 1000);
   return new;
 end;
 $$;

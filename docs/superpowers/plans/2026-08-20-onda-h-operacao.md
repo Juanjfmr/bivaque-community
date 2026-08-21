@@ -333,18 +333,18 @@ export function scrubReportReason(reason: string): string {
 
   pgTAP: `insert` com CPF no motivo, e o `select` seguinte não contém os dígitos.
 
-### Revisão de 2026-08-21 — dois itens abertos nesta task
+### Revisão de 2026-08-21 — dois itens, os dois fechados
 
-Levantados em revisão durante a execução, contra o estado da árvore de trabalho.
+Levantados em revisão durante a execução e corrigidos no commit seguinte ao da task.
 
-**1. A função do trigger não tem `set search_path = ''`.** Toda função deste schema tem, e a
+**1. ~~A função do trigger não tem `set search_path = ''`~~ — corrigido.** Toda função deste schema tem, e a
 linha de abertura de `20260802001600_reports.sql` declara isso como contrato do repositório
 (*"All functions use set search_path = '' to prevent search-path injection"*). A função é
 `security invoker`, então o risco concreto é baixo — mas a exceção não está justificada em
 lugar nenhum, e o precedente mais próximo (`private.block_authenticated_soft_delete`, na mesma
 migration de `reports`) é `security invoker` **e** tem a linha.
 
-**2. O CHECK de 1000 caracteres roda depois do trigger, e a redação cresce o texto.**
+**2. ~~O CHECK de 1000 caracteres roda depois do trigger, e a redação cresce o texto~~ — corrigido com `left(v_scrubbed, 1000)`.**
 `"[documento removido]"` tem 20 caracteres e substitui de 11 a 14. Um motivo de ~990
 caracteres com alguns CPFs passa de 1000 depois da redação e o insert é **rejeitado** por
 `reports_reason_check` — com um erro que não explica nada a quem denunciou.
@@ -354,6 +354,10 @@ então quem digita perto do limite já sai do `scrubReportReason` acima de 1000.
 qualquer uma resolve — `new.reason := left(v_scrubbed, 1000)` no trigger, ou limite no
 `TextArea` com folga para a expansão. Perder o fim de um motivo abarrotado de documento é
 melhor que perder a denúncia inteira.
+
+Verificado contra o banco local, em transação com rollback: 990 caracteres de CPF repetido
+entram e são gravados como 1000; antes do `left()` a mesma entrada virava 1320 caracteres e
+era rejeitada por `reports_reason_check`.
 
 **Sobre a regex, já resolvido:** este arquivo passou por duas versões inertes antes da atual —
 `'\b…'` em string comum (a barra vira literal com `standard_conforming_strings` ON) e
