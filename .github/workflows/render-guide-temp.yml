@@ -1,0 +1,141 @@
+name: Render Manaus guide temporary
+
+on:
+  push:
+    branches:
+      - feat/manaus-arrival-guide
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start local Supabase
+        run: pnpm exec supabase start
+
+      - name: Write local environment
+        run: |
+          pnpm exec supabase status -o env > /tmp/supabase.env
+          . /tmp/supabase.env
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "BIVAQUE_VISUAL_EMAIL=visual@bivaque.example.invalid"
+            echo "BIVAQUE_VISUAL_PASSWORD=bivaque-e2e-local"
+          } > apps/web/.env.local
+
+      - name: Reset database with visual seed
+        run: pnpm exec supabase db reset --local
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Start Bivaque
+        run: |
+          pnpm --filter web dev > /tmp/bivaque-next.log 2>&1 &
+          echo $! > /tmp/bivaque-next.pid
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/bivaque-next.log
+          exit 1
+
+      - name: Capture real guide UI
+        shell: bash
+        run: |
+          . /tmp/supabase.env
+          export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
+          export BIVAQUE_VISUAL_EMAIL="visual@bivaque.example.invalid"
+          export BIVAQUE_VISUAL_PASSWORD="bivaque-e2e-local"
+          cat > .tmp-guide-render.mjs <<'EOF'
+          import { chromium } from "@playwright/test"
+          import { mkdir } from "node:fs/promises"
+
+          const baseURL = "http://127.0.0.1:3000"
+          const supabaseURL = process.env.NEXT_PUBLIC_SUPABASE_URL
+          const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+          const email = process.env.BIVAQUE_VISUAL_EMAIL
+          const password = process.env.BIVAQUE_VISUAL_PASSWORD
+
+          const response = await fetch(`${supabaseURL}/auth/v1/token?grant_type=password`, {
+            method: "POST",
+            headers: { apikey: anonKey, "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          })
+          if (!response.ok) throw new Error(`visual login failed: ${response.status}`)
+          const session = await response.json()
+          const ref = new URL(supabaseURL).hostname.split(".")[0]
+          const storageKey = `sb-${ref}-auth-token`
+
+          await mkdir("guide-render", { recursive: true })
+          const browser = await chromium.launch()
+          const viewports = [
+            { name: "desktop-1440", width: 1440, height: 900 },
+            { name: "tablet-768", width: 768, height: 1024 },
+            { name: "mobile-375", width: 375, height: 812 },
+          ]
+
+          for (const viewport of viewports) {
+            const context = await browser.newContext({
+              viewport: { width: viewport.width, height: viewport.height },
+              baseURL,
+              locale: "pt-BR",
+            })
+            const sessionValue = JSON.stringify(session)
+            await context.addCookies([
+              { name: storageKey, value: sessionValue, path: "/", domain: "127.0.0.1" },
+            ])
+            await context.addInitScript(
+              ([key, value]) => window.localStorage.setItem(key, JSON.stringify(value)),
+              [storageKey, session],
+            )
+            const page = await context.newPage()
+            await page.goto("/guide", { waitUntil: "networkidle" })
+            await page.getByRole("heading", { name: "Guia de chegada a Manaus" }).waitFor()
+            await page.waitForTimeout(1200)
+            await page.screenshot({
+              path: `guide-render/guide-${viewport.name}.png`,
+              fullPage: true,
+            })
+            await context.close()
+          }
+          await browser.close()
+          EOF
+          node .tmp-guide-render.mjs
+
+      - name: Upload rendered guide
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: manaus-guide-real-render
+          if-no-files-found: error
+          path: guide-render/*.png
+
+      - name: Show server log on failure
+        if: failure()
+        run: cat /tmp/bivaque-next.log || true
