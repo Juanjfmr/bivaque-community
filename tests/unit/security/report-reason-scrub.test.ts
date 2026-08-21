@@ -42,7 +42,7 @@ describe("scrubReportReason (H-Task 2)", () => {
   })
 
   it("lida com múltiplos CPFs no mesmo motivo", () => {
-    expect(scrubReportReason("ele expôs o 529.982.247-25 e o 111.444.777-35 no chat")).toBe(
+    expect(scrubReportReason("ele expôs o 529.982.247-25 e o 000.111.222-33 no chat")).toBe(
       "ele expôs o [documento removido] e o [documento removido] no chat",
     )
   })
