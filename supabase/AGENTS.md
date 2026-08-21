@@ -2,31 +2,50 @@
 
 > **DRAFT.** Applies to `supabase/**` and to any change whose correctness depends on Supabase Database, Auth, Storage, RLS, RPCs, grants, Cron, `pg_net`, or local Supabase state.
 >
-> This file is intentionally **not** a Supabase handbook. General Supabase/Postgres practice comes from the official Supabase agent skills. This file contains only Bivaque-specific constraints and workflow.
+> This file is intentionally **not** a Supabase handbook. General Supabase/Postgres practice comes from the official `supabase/agent-skills` repository. This file contains only Bivaque-specific constraints and the local workflow needed to apply those skills safely.
 
 ## Mandatory upstream instructions
-
-For **every Supabase task**, load and follow the official Supabase skill from:
-
-- `supabase/agent-skills` → `skills/supabase/SKILL.md`
-
-For **anything that writes or changes Postgres**, including a one-column migration, RLS policy, SQL query, function, trigger, index, pgTAP assertion, `pg_cron` job, or schema design, also load:
-
-- `supabase/agent-skills` → `skills/supabase-postgres-best-practices/SKILL.md`
 
 Canonical upstream repository:
 
 `https://github.com/supabase/agent-skills`
 
-If the harness has these skills installed, use the installed skills. Otherwise read the current upstream instructions before implementation.
+For **every task involving Supabase**, load and follow:
+
+- `skills/supabase/SKILL.md`
+
+For **anything that writes, changes, tests, or diagnoses something that lives in Postgres**, also load:
+
+- `skills/supabase-postgres-best-practices/SKILL.md`
+
+This includes even a one-column migration, SQL query, RLS policy, pgTAP assertion, function, trigger, index, `pg_cron` job, schema design, query-performance investigation, locking issue, or rows visible to the wrong user/scope.
+
+The upstream repository currently exposes exactly these two skills. Do not invent additional Supabase skill names.
 
 ### Precedence
 
-1. Product/security decisions recorded in this repository define **what Bivaque is allowed to do**.
-2. Official Supabase agent skills define **how Supabase/Postgres work should be performed safely and correctly**.
-3. This file defines **Bivaque's local Supabase workflow and reproducibility constraints**.
+1. Product/security decisions recorded in Bivaque define **what the product is allowed to do**.
+2. Official Supabase agent skills and current Supabase docs define **how Supabase/Postgres work should be performed safely and correctly**.
+3. This file defines **Bivaque-specific constraints, test states, and trust-boundary lessons**.
 
-If current Supabase guidance conflicts with a locally pinned version/configuration, do not silently upgrade or rewrite the project. Verify the pinned version, explain the incompatibility, and treat an upgrade as its own change.
+If upstream guidance conflicts with a locally pinned dependency/configuration, do not silently upgrade the project. Verify the installed version and treat the upgrade as its own change.
+
+## Freshness is part of correctness
+
+Supabase changes frequently. Do not diagnose or implement from model memory alone.
+
+Before implementing Supabase behavior:
+
+1. load the applicable upstream skill(s);
+2. check the current Supabase changelog for relevant breaking changes;
+3. read the current docs for the feature or failure mode being changed;
+4. discover CLI syntax with the installed CLI `--help` when needed.
+
+The Bivaque repository currently pins Supabase CLI `2.107.0`; use the repository-installed CLI, not an arbitrary global/latest CLI.
+
+For Supabase errors, unexpected empty results, RLS surprises, permission errors, schema-cache issues, timeouts, Auth/Storage/Realtime failures, or performance incidents, consult Supabase's current Monitoring and Debugging guidance and inspect relevant logs before settling on a diagnosis.
+
+If the same approach fails 2–3 times, stop repeating it. Re-read the error, docs, logs, and assumptions before trying another approach.
 
 ## Bivaque sources of truth
 
@@ -39,22 +58,54 @@ If current Supabase guidance conflicts with a locally pinned version/configurati
 
 Generated types, old plans, and application wrappers are not proof of the clean database state.
 
-## Local project constraints
+## Local schema workflow
 
-- This repository currently uses **imperative migrations**. There is no declarative `supabase/schemas/` workflow to substitute without an explicit project decision.
-- Supabase CLI is pinned by the repository. Discover commands from the installed version with `--help`; do not assume latest CLI behavior.
-- Never edit an applied migration. Add a new migration through the pinned CLI.
-- Never use `--linked` for agent-driven destructive operations.
-- Generate client types from the **`public` schema only**. The trust schema must remain outside generated public client types.
-- The `private` schema is not application-facing Data API surface.
-- Never persist data prohibited by the Bivaque privacy contract, including raw CPF, Portal payload, military organization/rank where prohibited, residential address, or verification documents beyond their allowed lifetime.
-- A scope field and the RLS/policies that enforce that scope land together.
+Bivaque currently uses **imperative migrations**. There is no `supabase/schemas/` declarative workflow to substitute without an explicit project decision.
 
-Canonical migration creation:
+For schema/database changes, follow the official imperative workflow rather than accumulating trial-and-error migration files.
+
+### During iteration
+
+Prefer changing the **local** database first with one of the mechanisms allowed by the official skill:
+
+- MCP `execute_sql`; or
+- the repository-installed CLI `supabase db query`.
+
+Iterate there until the desired schema/behavior is correct. Do not use `apply_migration` as an iterative local scratchpad because it writes migration-history entries and makes clean diff/pull workflows unreliable.
+
+### Before committing the schema change
+
+1. run Supabase database advisors and fix applicable findings;
+2. review the upstream security checklist when the change touches RLS, views, functions, triggers, Storage, Auth, or user data;
+3. generate/reconcile a clean migration from the validated local state using the workflow documented by the current official skill;
+4. inspect the generated SQL rather than trusting generation blindly;
+5. verify local migration history;
+6. replay from a clean database and run Bivaque's database gates.
+
+With the currently pinned CLI, the official skill's generated-migration workflow is:
+
+```sh
+npx pnpm@11.18.0 exec supabase db advisors
+npx pnpm@11.18.0 exec supabase db pull <descriptive-name> --local --yes
+npx pnpm@11.18.0 exec supabase migration list --local
+```
+
+If a migration must instead be hand-authored, create its filename with the pinned CLI first:
 
 ```sh
 npx pnpm@11.18.0 exec supabase migration new <name>
 ```
+
+Never invent migration timestamps/filenames from memory. Never edit an already-applied migration.
+
+## Local project constraints
+
+- Never use `--linked` for agent-driven destructive operations.
+- Generate client types from the **`public` schema only**.
+- The `private` schema is not application-facing Data API surface and must remain outside generated public client types.
+- Never persist data prohibited by the Bivaque privacy contract, including raw CPF, Portal payload, military organization/rank where prohibited, residential address, or verification documents beyond their allowed lifetime.
+- A scope field and the RLS/policies that enforce that scope land together.
+- Do not weaken grants, RLS, or privileged-function boundaries merely to make a test/UI path pass.
 
 ## Bivaque-specific authorization trap
 
@@ -73,7 +124,7 @@ For service-role-mediated user actions:
 
 Do not use the target object's `user_id` as caller identity.
 
-This rule supplements the official Supabase guidance; it does not replace its SECURITY DEFINER/RLS checklist.
+This rule supplements the official Supabase SECURITY DEFINER/RLS guidance; it does not replace it.
 
 ## Seed and pgTAP are separate data worlds
 
@@ -89,9 +140,9 @@ Do not mix them.
 
 - uses `supabase/seed.sql`;
 - Playwright must resolve entities/accounts from the real seed contract;
-- never copy a pgTAP fixture UUID into an E2E because it “looks like” the same entity.
+- never copy a pgTAP fixture UUID into an E2E because it "looks like" the same entity.
 
-## Canonical local validation states
+## Canonical Bivaque validation states
 
 With local Supabase running:
 
@@ -107,13 +158,13 @@ npx pnpm@11.18.0 exec supabase db reset --local
 
 Do not run visual capture, a dev tool, or another process that writes rows between the no-seed reset and `test:db`.
 
-The two reset states are intentionally different. Do not “simplify” them into one.
+The two reset states are intentionally different. Do not simplify them into one.
 
 ## Runtime proof required across boundaries
 
 For database changes that affect an application flow, pgTAP alone is not completion evidence.
 
-After the official Supabase verification steps and Bivaque database gates pass, verify the closest runtime layer where the behavior can still fail:
+After upstream Supabase verification and Bivaque database gates pass, verify the closest runtime layer where the behavior can still fail:
 
 - application RPC signature matches the migrated function;
 - required grants exist for the actual client role;
@@ -125,19 +176,20 @@ After the official Supabase verification steps and Bivaque database gates pass, 
 
 ## Before declaring a Supabase task done
 
-- current official `supabase` skill followed;
-- `supabase-postgres-best-practices` followed for Postgres work;
-- relevant current Supabase docs/changelog checked as required by the upstream skill;
+- applicable official skills were loaded and followed;
+- relevant current Supabase changelog/docs were checked;
+- database advisors were run when schema/database work requires them;
 - clean migration replay succeeds;
 - `test:db` and `db:lint` pass in the no-seed state;
-- public generated types updated when required;
+- public generated types are updated when required;
 - auth/RLS changes have positive and negative evidence;
 - application/runtime evidence exists when the change crosses the DB boundary;
+- no database error on the changed path is silently reinterpreted as a valid empty state;
 - no local pinned-version constraint was silently changed.
 
 ## Questions to settle before finalizing this file
 
-1. Should CI verify that the official Supabase skills are installed/available to supported harnesses?
-2. Should we pin an upstream `agent-skills` release/SHA for reproducibility, or deliberately follow current upstream `main`?
+1. Should Bivaque pin the two upstream skills by per-skill release or by repository commit SHA? The upstream repository publishes independent semver versions for both skills.
+2. Should CI verify that the expected Supabase skills are installed/available to supported harnesses?
 3. Which Bivaque incidents should become automated scope tests instead of remaining as local prose here?
 4. Should E2E stop knowing stable UUIDs entirely and use named seed helpers/contracts?
