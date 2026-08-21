@@ -14,18 +14,33 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 >
 > Keep general framework/design knowledge in version-matched docs or external skills. Keep only Bivaque-specific constraints and routing here.
 
-## Authority and precedence
+## Authority and evidence
 
-For frontend work, use this order:
+Do not collapse product invariants, incumbent design decisions, and technical best practices into one precedence list.
 
-1. `docs/BIVAQUE.md`, applicable ADRs, and security/privacy contracts — product truth;
-2. `docs/agents/DESIGN_SPEC.md` and `docs/agents/VISUAL_GUIDE.md` — Bivaque visual/interaction truth;
-3. root and nearest scoped `AGENTS.md` — repository constraints;
-4. version-matched Next.js docs bundled with the installed package;
-5. selected external skills relevant to the task;
-6. generic model knowledge.
+Use these categories:
 
-External guidance never authorizes a new dependency, component library, state library, visual language, product behavior, or trust-boundary change by itself.
+1. **Product/security invariants** — `docs/BIVAQUE.md`, approved ADRs, privacy/security contracts. These constrain what a solution is allowed to do and may not be changed incidentally.
+2. **Repository/technical constraints** — root and nearest scoped `AGENTS.md`, pinned dependencies, exact source, tests, and version-matched framework docs. These define how this repository actually works.
+3. **Incumbent design decisions** — `docs/agents/DESIGN_SPEC.md` and `docs/agents/VISUAL_GUIDE.md`. These describe current visual/interaction intent. They are not proof that the decision is optimal.
+4. **Specialized external evidence** — current official/maintainer guidance, standards, and approved audit skills relevant to the question.
+5. **Generic model knowledge** — lowest authority.
+
+Rules:
+
+- Product/security invariants constrain external guidance.
+- A local visual rule does not override an objective accessibility, framework-correctness, security, or interaction defect merely because it is documented locally.
+- In ordinary feature work, follow the incumbent design contract to avoid accidental drift.
+- In an explicit design audit/redesign task, incumbent design decisions are **challengers, not axioms**: when strong external/runtime evidence materially disputes a local rule, surface the conflict and send it through the design-audit adjudication process instead of silently preserving or overriding it.
+- External guidance never authorizes a new dependency, component library, state library, visual language, product behavior, or trust-boundary change by itself.
+
+Design-audit protocol:
+
+`docs/agents/design-audit/README.md`
+
+Core principle:
+
+**Local documentation is authority about current intent, not proof of quality.**
 
 ## External skill policy
 
@@ -73,20 +88,21 @@ Use it for composition, accessibility, controlled/uncontrolled APIs, typing, and
 
 `vercel-labs/agent-skills` → `vercel-composition-patterns` may be consulted for a specific component-API refactor, but it is not baseline context.
 
-### UI/design craft
+### UI/design craft and audit
 
-Generic UI guidance is **not mandatory baseline context** because Bivaque already has a project-specific design system and visual rubric.
+For explicit UI/design audit work, external design guidance is evidence that may challenge incumbent Bivaque design decisions. It is not automatically subordinate to `DESIGN_SPEC.md` or `VISUAL_GUIDE.md`.
 
-`addyosmani/agent-skills` → `frontend-ui-engineering` may be consulted for a specific accessibility/responsive/UI-engineering question, but its generic file-structure, state-management, breakpoint, and component-size guidance does not override this repository.
+Useful sources include:
 
-For explicit visual critique, audit, or polish work, Impeccable may be used as an optional craft tool:
+- `vercel-labs/agent-skills` → `web-design-guidelines` for accessibility, forms, focus, interaction, navigation/state, performance, motion, typography, touch, and i18n review;
+- `addyosmani/agent-skills` → `frontend-ui-engineering` for an independent UI-engineering/accessibility/responsive lens;
+- `pbakaus/impeccable` → current skill `impeccable` for visual/UX critique, audit, distillation, hardening, adaptation, and polish.
 
-- upstream: `pbakaus/impeccable`
-- current skill: `impeccable`
+For ordinary implementation work, do not preload these merely to restyle a touched surface. For the formal design audit, follow `docs/agents/design-audit/README.md` and preserve the blind-reference boundary.
 
-Do **not** refer to the obsolete `frontend-design` skill name from older catalogs.
+Do **not** refer to the obsolete Impeccable `frontend-design` skill name from older catalogs.
 
-Do not run Impeccable `init`, `document`, install hooks, create/replace root `PRODUCT.md` or `DESIGN.md`, or establish a new visual world unless the task explicitly authorizes changing the repository's design-context architecture. Bivaque's existing design documents remain authoritative.
+During the current design-audit program, do not run Impeccable `init`, `document`, install hooks, create/replace root `PRODUCT.md` or `DESIGN.md`, or establish a new visual world. The audit must first produce evidence and adjudication; document mutation comes later.
 
 ### Playwright
 
@@ -111,7 +127,7 @@ These are Bivaque constraints:
 - Tailwind **4**.
 - Supabase access uses `@supabase/ssr` and `@supabase/supabase-js`.
 - Shared cross-boundary contracts belong in `packages/{contracts,domain,tokens}` only when genuinely shared.
-- Token-aware wrappers under `apps/web/app/components/bivaque/` are part of the design-system contract.
+- Token-aware wrappers under `apps/web/app/components/bivaque/` are part of the current design-system implementation; their existence does not exempt them from explicit design-audit review.
 
 ## Before changing behavior
 
@@ -147,12 +163,13 @@ Detailed database rules live in `supabase/AGENTS.md`.
 
 ## HeroUI and local components
 
-- Reuse a Bivaque wrapper when it already represents the intended pattern.
+- Reuse a Bivaque wrapper when it already represents the intended pattern during ordinary feature work.
 - Do not create wrappers merely to hide imports.
 - Direct HeroUI usage is acceptable when no local wrapper owns the pattern.
 - Preserve required providers when modifying layouts/shells.
 - Prove changed compound-control behavior in a real browser; JSX presence and typecheck are insufficient.
 - Do not migrate working UI to another primitive/library as incidental cleanup.
+- During explicit design audit, compare local wrapper behavior against the canonical behavior/accessibility contract of the installed HeroUI version instead of assuming the wrapper is correct because it exists.
 
 ## User-facing states
 
@@ -196,12 +213,12 @@ A frontend change is not done until:
 - relevant runtime errors are surfaced/handled rather than hidden;
 - required root gates pass;
 - interaction-dependent changes have browser-level proof;
-- visual changes satisfy Bivaque's visual audit when applicable.
+- visual changes satisfy the current Bivaque visual contract or an explicitly adjudicated replacement when applicable.
 
 ## Decisions still open
 
 1. Pin/install selected external skills in the repository/harness versus resolving them upstream on demand.
 2. Add `next-dev-loop` + its browser prerequisite to the supported harness toolchain versus keeping it optional.
 3. Move Playwright local rules into `tests/e2e/AGENTS.md`.
-4. Decide whether Impeccable should remain purely opt-in or become an approved visual-audit tool under a constrained command subset.
+4. After the formal design audit, decide which Impeccable commands become approved recurring audit tools.
 5. Promote recurring frontend failures into executable scope/a11y/runtime checks so this file can shrink further.
