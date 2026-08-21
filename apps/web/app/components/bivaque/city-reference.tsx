@@ -171,8 +171,8 @@ export function CityReference({
           Guia de chegada
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Colégio, hospital, transportadora, despachante — referência curada para quem chega ou
-          precisa de informação permanente sobre a cidade.
+          Moradia, escola, mudança, saúde, transporte e rotina da casa — um roteiro de D-60 a
+          D+60, somado às indicações locais curadas pela comunidade.
         </p>
         <div className="mt-3">
           <Link
