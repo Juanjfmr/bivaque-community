@@ -21,25 +21,39 @@ Core rule:
 
 Phase 1 must run in a fresh agent context/session that has not read the incumbent design solution.
 
-### Allowed local inputs in Phase 1
+**Permission is content-based, not path-based. Transitive contamination counts.**
 
-The reference-design agent may read only product/constraint material needed to understand the problem:
+A nominally allowed document is not safe merely because its path is on an allowlist. If it embeds, quotes, summarizes, reproduces, or substantively describes forbidden incumbent material, consuming that content contaminates Phase 1 exactly as reading the original forbidden source would.
+
+Cross-references are not permission. An allowed file may mention another file; do not follow that reference unless the target itself is explicitly allowlisted below.
+
+### Exhaustive local allowlist for Phase 1
+
+The reference-design agent may read **only** these local project inputs:
 
 - `docs/BIVAQUE.md`;
-- approved product/security/privacy ADRs only when needed to resolve a real product constraint;
-- `docs/legal/` only when a user-facing privacy/consent constraint is relevant;
 - root `package.json`;
 - `apps/web/package.json`;
-- version-matched Next.js docs from `apps/web/node_modules/next/dist/docs/` when available;
-- current upstream documentation for the installed HeroUI major/minor and other pinned framework dependencies;
-- current standards and approved external skills listed below.
+- version-matched Next.js docs from `apps/web/node_modules/next/dist/docs/` when available.
+
+It may also use current external standards, maintainer documentation for the installed dependency versions, and approved external skills listed below.
+
+**No other repository file is implicitly allowed.** In particular, Phase 1 may not open ADRs, legal documents, plans, status documents, tests, implementation files, tokens, screenshots, or other project documentation merely because a useful product constraint might exist there.
+
+If a material product constraint cannot be resolved from the exhaustive allowlist plus current external sources, do not broaden repository access. Stop that line of work and report:
+
+`PHASE_1_INPUT_GAP: <minimal description of the missing product constraint>`
+
+The gap must be resolved by changing the protocol/allowlist or by providing a separately reviewed sanitized input in a future revision. The Phase 1 agent must not manufacture the missing constraint and must not inspect additional local files to discover it.
 
 ### Forbidden local inputs in Phase 1
 
-The reference-design agent must **not** read, search, inspect, infer from, or receive excerpts/screenshots from:
+The reference-design agent must **not** read, search, inspect, infer from, or receive substantive content from:
 
 - `docs/agents/DESIGN_SPEC.md`;
 - `docs/agents/VISUAL_GUIDE.md`;
+- any ADR, including design/navigation/shell ADRs, unless a future protocol revision explicitly allowlists a reviewed sanitized artifact instead;
+- `docs/legal/**`;
 - this directory's later-phase incumbent findings;
 - `.visual/` or any current product screenshots/captures;
 - current UI implementation under `apps/web/app/**` or equivalent rendered source;
@@ -47,9 +61,22 @@ The reference-design agent must **not** read, search, inspect, infer from, or re
 - `docs/PRODUCT_STATUS.md`;
 - historical UI plans/specs under `docs/superpowers/**`;
 - old visual reviews, design critiques, or prior redesign proposals;
-- current Playwright screenshots or snapshot artifacts.
+- current Playwright screenshots or snapshot artifacts;
+- descriptions, excerpts, summaries, diffs, audit findings, or screenshots derived from any forbidden source, even when embedded inside another document.
 
-If the fresh agent has already consumed any forbidden input, its Phase 1 output is contaminated. Do not salvage it as the reference benchmark; start Phase 1 again in a clean context.
+Examples of **transitive contamination** include:
+
+- an ADR quoting `VISUAL_GUIDE.md`;
+- a product note describing the current `bottom-nav.tsx` implementation;
+- an audit summary comparing incumbent visual rules with current code;
+- a copied screenshot or textual description of the current rendered shell;
+- a secondary document reproducing current tokens, breakpoints, navigation layout, component geometry, or incumbent visual findings.
+
+A mere filename/link/reference to a forbidden source does not itself contaminate the session if no substantive incumbent content is conveyed, but the agent must not follow it.
+
+If the fresh agent has already consumed any forbidden or transitively forbidden input, its Phase 1 output is contaminated. Do not salvage it as the reference benchmark; start Phase 1 again in a clean context and report exactly:
+
+`PHASE_1_CONTEXT_CONTAMINATED`
 
 ## Required external lenses for Phase 1
 
