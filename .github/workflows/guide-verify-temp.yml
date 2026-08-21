@@ -1,83 +1,197 @@
-name: Guide downstream verification temporary
+name: Apply guide visual cleanup temporary
 
 on:
-  pull_request:
+  push:
+    branches:
+      - feat/manaus-arrival-guide
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  verify:
-    name: Build, DB, and E2E after baseline scope blocker
+  apply:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/manaus-arrival-guide
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v6
         with:
           run_install: false
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
-      - name: Start local Supabase
-        run: pnpm exec supabase start
-
-      - name: Write local Supabase env
+      - name: Apply Unsplash hero and React persistence fix
+        shell: python
         run: |
-          pnpm exec supabase status -o env > /tmp/supabase.env
-          . /tmp/supabase.env
-          {
-            echo "SUPABASE_URL=$API_URL"
-            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
-            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
-            echo "BIVAQUE_VISUAL_EMAIL=visual@bivaque.example.invalid"
-            echo "BIVAQUE_VISUAL_PASSWORD=bivaque-e2e-local"
-          } > apps/web/.env.local
+          from pathlib import Path
 
-      - name: Build web app
-        run: pnpm build
+          hero = Path("apps/web/app/(shell)/guide/manaus-guide-hero.tsx")
+          hero.write_text('''interface ManausGuideHeroProps {
+            className?: string
+          }
 
-      - name: Check generated types drift
+          const photos = {
+            skyline: {
+              image:
+                "https://images.unsplash.com/photo-1520464399004-1f1e8e938bb3?auto=format&fit=crop&w=1600&q=82",
+              page: "https://unsplash.com/photos/aerial-photograph-of-a-city-at-sunset-yIIEzQwgQSw",
+              alt: "Vista aérea de Manaus ao pôr do sol",
+              label: "Manaus ao fim da tarde",
+            },
+            road: {
+              image:
+                "https://images.unsplash.com/photo-1520258355794-b4023f5ccf41?auto=format&fit=crop&w=900&q=80",
+              page: "https://unsplash.com/photos/a-road-with-cars-and-trees-at-the-side-Snme_310aIM",
+              alt: "Avenida arborizada com carros em Manaus",
+              label: "A cidade em movimento",
+            },
+            river: {
+              image:
+                "https://images.unsplash.com/photo-1516070259022-18b1450e94d4?auto=format&fit=crop&w=900&q=80",
+              page: "https://unsplash.com/photos/an-aerial-view-of-a-large-body-of-water-oF3xIZTKkFM",
+              alt: "Vista aérea da água e da paisagem urbana de Manaus",
+              label: "Rio e cidade",
+            },
+          } as const
+
+          /** Manaus photography sourced from Unsplash, with source links kept visible. */
+          export function ManausGuideHero({ className = "" }: ManausGuideHeroProps) {
+            return (
+              <figure
+                className={`relative grid overflow-hidden rounded-xl bg-[var(--surface-sunken)] sm:grid-cols-[1.7fr_0.8fr] ${className}`}
+                aria-label="Fotografias de Manaus"
+              >
+                <div
+                  role="img"
+                  aria-label={photos.skyline.alt}
+                  className="relative min-h-60 bg-cover bg-center sm:min-h-full"
+                  style={{ backgroundImage: `url(${photos.skyline.image})` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-5">
+                    <p className="text-xs font-medium uppercase tracking-[0.14em] text-white/75">
+                      Chegando em Manaus
+                    </p>
+                    <p className="mt-1 text-lg font-semibold tracking-tight sm:text-xl">
+                      {photos.skyline.label}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="hidden grid-rows-2 gap-px bg-black/10 sm:grid">
+                  {[photos.road, photos.river].map((photo) => (
+                    <div
+                      key={photo.page}
+                      role="img"
+                      aria-label={photo.alt}
+                      className="relative min-h-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${photo.image})` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                      <p className="absolute inset-x-0 bottom-0 p-3 text-xs font-medium text-white">
+                        {photo.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <figcaption className="absolute right-2 top-2 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-medium text-white backdrop-blur-sm">
+                  Fotos: {" "}
+                  <a
+                    href={photos.skyline.page}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2"
+                  >
+                    Tadeu Jnr / Unsplash
+                  </a>
+                </figcaption>
+              </figure>
+            )
+          }
+          ''')
+
+          page = Path("apps/web/app/(shell)/guide/page.tsx")
+          text = page.read_text()
+          hydration = '''  useEffect(() => {
+            try {
+              const savedArrival = window.localStorage.getItem(ARRIVAL_STORAGE_KEY)
+              const savedChecklist = window.localStorage.getItem(CHECKLIST_STORAGE_KEY)
+              if (savedArrival) setArrivalDate(savedArrival)
+              if (savedChecklist) {
+                const parsed = JSON.parse(savedChecklist)
+                if (Array.isArray(parsed)) {
+                  setCheckedIds(new Set(parsed.filter((item): item is string => typeof item === "string")))
+                }
+              }
+            } catch {
+              // Private browsing or blocked storage simply disables persistence.
+            } finally {
+              setStorageReady(true)
+            }
+          }, [])
+          '''
+          persistence = hydration + '''
+          useEffect(() => {
+            if (!storageReady) return
+            try {
+              window.localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify([...checkedIds]))
+            } catch {
+              // The checklist still works for the current session when storage is unavailable.
+            }
+          }, [checkedIds, storageReady])
+          '''
+          if hydration not in text:
+            raise SystemExit("hydration block not found")
+          text = text.replace(hydration, persistence, 1)
+
+          old_toggle = '''  const toggleTask = (taskId: string) => {
+            setCheckedIds((previous) => {
+              const next = new Set(previous)
+              if (next.has(taskId)) next.delete(taskId)
+              else next.add(taskId)
+              try {
+                window.localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify([...next]))
+              } catch {
+                // The checklist still works for the current session.
+              }
+              return next
+            })
+          }
+          '''
+          new_toggle = '''  const toggleTask = (taskId: string) => {
+            setCheckedIds((previous) => {
+              const next = new Set(previous)
+              if (next.has(taskId)) next.delete(taskId)
+              else next.add(taskId)
+              return next
+            })
+          }
+          '''
+          if old_toggle not in text:
+            raise SystemExit("toggle block not found")
+          page.write_text(text.replace(old_toggle, new_toggle, 1))
+
+      - name: Format and check changed files
         run: |
-          pnpm generate:types
-          git diff --exit-code -- supabase/database.generated.ts
+          pnpm exec biome check --write \
+            'apps/web/app/(shell)/guide/page.tsx' \
+            'apps/web/app/(shell)/guide/manaus-guide-hero.tsx'
+          pnpm exec tsc -p apps/web/tsconfig.json --noEmit
 
-      - name: Reset local database without seed
-        run: pnpm exec supabase db reset --local --no-seed
-
-      - name: Database tests
-        run: pnpm test:db
-
-      - name: Schema lint
-        run: pnpm db:lint
-
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Reset local database with seed
-        run: pnpm exec supabase db reset --local
-
-      - name: Root E2E tests
-        run: pnpm test:e2e
-
-      - name: Upload Playwright artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: guide-verification-playwright-artifacts
-          if-no-files-found: ignore
-          path: |
-            playwright-report/
-            test-results/
-            apps/web/playwright-report/
-            apps/web/test-results/
+      - name: Remove this temporary workflow and commit
+        run: |
+          rm .github/workflows/guide-verify-temp.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'apps/web/app/(shell)/guide/page.tsx' 'apps/web/app/(shell)/guide/manaus-guide-hero.tsx' .github/workflows/guide-verify-temp.yml
+          git commit -m "feat(guide): use Manaus photography from Unsplash"
+          git push origin HEAD:feat/manaus-arrival-guide
