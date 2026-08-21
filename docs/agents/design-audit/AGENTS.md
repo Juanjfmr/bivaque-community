@@ -20,12 +20,14 @@ If the requested task spans phases, preserve the order and phase gates in `READM
 
 A Phase 1 agent must be in a fresh context that has not consumed the incumbent Bivaque design solution.
 
-Before generating either reference artifact, explicitly verify that the current session has **not** read or received content from forbidden local inputs listed in `README.md`.
+Before generating either reference artifact, explicitly verify that the current session has **not** read or received content from forbidden local inputs listed in `README.md`, including that content reproduced indirectly inside another file.
+
+**Permission is content-based, not path-based. Transitive contamination counts.**
 
 If contaminated:
 
 - do not generate or edit the reference benchmark;
-- report `PHASE_1_CONTEXT_CONTAMINATED`;
+- report exactly `PHASE_1_CONTEXT_CONTAMINATED`;
 - leave existing reference artifacts unchanged;
 - require a fresh context/session.
 
@@ -33,18 +35,39 @@ Do not attempt to “mentally ignore” information already seen.
 
 ### Phase 1 local access
 
-Use only the allowed local inputs in `README.md` plus current external standards/maintainer sources.
+The local allowlist in `README.md` is **exhaustive**, not illustrative.
 
-Do not search the repository broadly. Broad repository search can reveal forbidden design filenames, code snippets, tokens, or screenshots and contaminate the reference.
+Currently permitted local project inputs are only:
 
-Do not read:
+- `docs/BIVAQUE.md`;
+- root `package.json`;
+- `apps/web/package.json`;
+- version-matched Next.js docs under `apps/web/node_modules/next/dist/docs/` when available.
+
+Do not read ADRs or `docs/legal/**` during Phase 1. Do not broaden access because an allowed document links to them or because a product constraint appears useful.
+
+Do not search the repository broadly. Broad repository search can reveal forbidden design filenames, code snippets, tokens, screenshots, audit findings, or summaries and contaminate the reference.
+
+Do not read or consume substantive descriptions of:
 
 - incumbent design docs;
 - current UI implementation;
 - current visual tokens;
 - current screenshots/captures;
 - `PRODUCT_STATUS.md`;
-- historical UI plans/reviews.
+- historical UI plans/reviews;
+- ADRs that reproduce or summarize incumbent design/implementation evidence;
+- secondary documents that quote, summarize, compare, or describe forbidden material.
+
+A mere filename or link is not contamination if it conveys no substantive incumbent information, but do not follow it unless the target is explicitly allowlisted.
+
+If an allowed input is discovered to contain substantive embedded incumbent material, stop immediately. The fact that the containing path was allowed does not preserve the session's cleanliness.
+
+If a material product constraint cannot be resolved from the exhaustive allowlist plus current external sources, do **not** inspect more repository files. Report:
+
+`PHASE_1_INPUT_GAP: <minimal description of the missing product constraint>`
+
+This is a protocol gap, not permission for exploratory repository access.
 
 ### Phase 1 output discipline
 
