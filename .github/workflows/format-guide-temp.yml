@@ -1,0 +1,65 @@
+name: Format guide temporary
+
+on:
+  push:
+    branches:
+      - feat/manaus-arrival-guide
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply semantic fixes before formatter
+        shell: python
+        run: |
+          from pathlib import Path
+
+          page = Path("apps/web/app/(shell)/guide/page.tsx")
+          text = page.read_text()
+          text = text.replace('<main className="mx-auto w-full max-w-[64rem] px-4 py-6 sm:py-8">', '<div className="mx-auto w-full max-w-[64rem] px-4 py-6 sm:py-8">', 1)
+          text = text.replace('</main>\n  )\n}\n\nfunction CommunityGuide', '</div>\n  )\n}\n\nfunction CommunityGuide', 1)
+          text = text.replace('<main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">', '<div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">', 1)
+          text = text.replace('</main>\n  )\n}\n\nfunction CommunityDirectory', '</div>\n  )\n}\n\nfunction CommunityDirectory', 1)
+          text = text.replace('<div className="mt-4 flex gap-2 overflow-x-auto pb-1" aria-label="Ir para uma fase do guia">', '<nav className="mt-4 flex gap-2 overflow-x-auto pb-1" aria-label="Ir para uma fase do guia">', 1)
+          text = text.replace('        </div>\n      </section>\n\n      <section className="mt-5 rounded-2xl border', '        </nav>\n      </section>\n\n      <section className="mt-5 rounded-2xl border', 1)
+          text = text.replace('                                role="checkbox"\n                                aria-checked={checked}', '                                aria-pressed={checked}', 1)
+          page.write_text(text)
+
+          content = Path("apps/web/app/(shell)/guide/manaus-guide-content.ts")
+          text = content.read_text()
+          text = text.replace('Em Manaus, 8 km no mapa podem significar experiências bem diferentes conforme o horário.', 'Em Manaus, uma distância curta no mapa pode significar uma experiência bem diferente conforme o horário.')
+          content.write_text(text)
+
+          city = Path("apps/web/app/components/bivaque/city-reference.tsx")
+          text = city.read_text()
+          text = text.replace('Moradia, escola, mudança, saúde, transporte e rotina da casa — um roteiro de D-60 a\n          D+60, somado às indicações locais curadas pela comunidade.', 'Referência permanente para quem chega. Em Manaus, inclui o roteiro D-60 a D+60; nas\n          demais cidades, cresce com as indicações locais curadas pela comunidade.')
+          city.write_text(text)
+      - name: Format changed guide files
+        run: |
+          pnpm exec biome check --write \
+            'apps/web/app/(shell)/guide/page.tsx' \
+            'apps/web/app/(shell)/guide/manaus-guide-content.ts' \
+            'apps/web/app/(shell)/guide/manaus-guide-hero.tsx' \
+            'apps/web/app/components/bivaque/city-reference.tsx' \
+            'tests/unit/guide/manaus-guide-content.test.ts'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: formatted-guide-files
+          path: |
+            apps/web/app/(shell)/guide/page.tsx
+            apps/web/app/(shell)/guide/manaus-guide-content.ts
+            apps/web/app/(shell)/guide/manaus-guide-hero.tsx
+            apps/web/app/components/bivaque/city-reference.tsx
+            tests/unit/guide/manaus-guide-content.test.ts
