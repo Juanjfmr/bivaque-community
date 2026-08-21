@@ -1519,6 +1519,19 @@ export type Database = {
           locality_id: string
         }[]
       }
+      list_open_reports: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          open_reports_on_target: number
+          reason: string
+          target_author_name: string
+          target_excerpt: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["report_target_type"]
+        }[]
+      }
       list_pending_community_invitations: {
         Args: { p_community_id: string; p_inviter_user_id: string }
         Returns: {

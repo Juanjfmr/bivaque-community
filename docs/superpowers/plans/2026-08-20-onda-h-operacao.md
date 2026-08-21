@@ -586,7 +586,7 @@ fila cresce.
 - `public.list_open_reports() returns table (id, target_type, target_id, reason, created_at,
   target_excerpt, target_author_name, open_reports_on_target, target_href)` — `service_role`
 
-- [ ] **Step 1: o RPC que monta o caso**
+- [x] **Step 1: o RPC que monta o caso**
 
   Uma função `security definer` que, por `target_type`, busca o trecho do conteúdo (240
   caracteres), o `display_name` do autor e quantas denúncias abertas o **mesmo alvo** já tem —
@@ -598,7 +598,7 @@ fila cresce.
   embed falha em silêncio devolvendo tela vazia. É por isso que isto é um RPC com `join`
   explícito.
 
-- [ ] **Step 2: o card que o runbook pede**
+- [x] **Step 2: o card que o runbook pede**
 
   Idade **relativa** com destaque quando passa do SLA — a constante já existe
   (`apps/web/lib/support.ts:12`, `SUPPORT_SLA_HOURS = 48`) e a página de admissões já a usa
@@ -607,7 +607,7 @@ fila cresce.
 
   Mantenha o UUID visível em texto pequeno — o runbook §12 usa os comandos com id.
 
-- [ ] **Step 3: o prazo público (D25)**
+- [x] **Step 3: o prazo público (D25)**
 
   A D25 é "moderação em três camadas, **com prazo público**", copiado do Nextdoor. Hoje o
   denunciante lê *"A analise acontece e o resultado chega como notificacao no app"*
@@ -615,14 +615,14 @@ fila cresce.
   `SUPPORT_SLA_HOURS` — e repita o prazo no código de conduta. Prometer prazo que o operador
   não cumpre é pior que não prometer: use o mesmo número em ambos e não invente um segundo.
 
-- [ ] **Step 4: os testes**
+- [x] **Step 4: os testes**
 
   pgTAP: o RPC devolve o trecho certo por tipo de alvo; **não** devolve alvo já oculto; o
   contador de denúncias no alvo bate; `authenticated` não tem `execute`.
 
   Teste de unidade para o cálculo de "passou do SLA", com data fixa.
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
 ```bash
 npx pnpm@11.18.0 gate
