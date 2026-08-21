@@ -25,7 +25,7 @@ Examples are illustrative, not normative. Exact pixels, colors, counts, widths, 
 ## 1. Product character, trust, and identity
 
 ### DS-001 — Community-operated character
-**SHOULD:** Bivaque feels calm, trustworthy, practical, local, and community-operated. It must not rely on ceremonial, tactical, prestige, or institutionally authoritative cues to create trust.
+**SHOULD:** Bivaque feels calm, trustworthy, practical, local, and community-operated. Its trust should not depend on ceremonial, tactical, prestige, or institutionally authoritative cues.
 
 Trace: `CUR-015 AMEND` · `RT-DEC-001`.
 
@@ -181,7 +181,7 @@ Trace: `CUR-178 AMEND`; `CUR-179 KEEP`.
 ## 5. Accessibility and responsive behavior
 
 ### DS-029 — Objective accessibility baseline
-**MUST:** Production member and governance interfaces meet applicable WCAG 2.2 Level AA criteria. This includes correct text/non-text contrast, non-color state cues, visible focus, keyboard operation, zoom/text resize, reflow, pointer-target requirements and defined exceptions, language/locale correctness, and reduced-motion behavior.
+**MUST:** Production member and governance interfaces meet applicable WCAG 2.2 Level AA criteria. This includes, where applicable, text/non-text contrast, non-color cues, visible focus, keyboard operation, text resize, reflow, pointer-target requirements and their defined exceptions, and correct language identification. Bivaque's additional reduced-motion contract is defined separately in `DS-025`; it is not represented here as a WCAG 2.2 AA requirement.
 
 Trace: `RT-ADD-007`.
 
