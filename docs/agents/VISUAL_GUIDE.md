@@ -8,7 +8,7 @@
 
 ## 0. Interpretation: design law vs craft bar
 
-Only statements explicitly labeled **MUST**, **SHOULD**, or **EXPERIMENT** are normative in this document, and each must trace to a Phase 5.5 `KEEP`, `AMEND`, or `RT-ADD-*` authority.
+Settled normative statements are labeled **MUST** or **SHOULD** and trace to a Phase 5.5 `KEEP`, `AMEND`, or `RT-ADD-*` authority. **EXPERIMENT** statements trace to the frozen experiment register and are normative only in the sense that the choice must remain unresolved until its decision gate is satisfied.
 
 Statements labeled **CRAFT HEURISTIC** are deliberately non-normative. They are quality-review lenses derived from the adjudicated contract. They may be used to withhold an internal “AAA-ready” declaration, but they do not authorize new product behavior, fixed geometry, tokens, routes, component anatomy, or implementation requirements.
 
