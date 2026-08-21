@@ -100,6 +100,30 @@ caso conhecido. Se o código descartar o `error`, a tela renderiza vazia e ningu
 foi assim que a lista de membros de grupo ficou quebrada em produção sem ninguém notar.
 **Leia o `error` de toda consulta** — não só nas que decidem acesso.
 
+## pgTAP roda sem `db:reset` — descoberto em 2026-08-21
+
+A secao seguinte diz que `db:reset` e um portao humano e que por isso o pgTAP fica sem rodar
+numa execucao autonoma. A primeira metade continua verdadeira; a segunda **nao**.
+
+Todo arquivo de `supabase/tests/` e SQL puro, abre com `begin` e fecha com `rollback`. Se o
+schema local ja esta em dia, da para roda-los direto, um a um, sem resetar nada e sem deixar
+rastro:
+
+```sh
+docker cp supabase/tests supabase_db_bivaque-community:/tmp/
+docker exec -w /tmp/tests supabase_db_bivaque-community   psql -U postgres -X -q -f report-resolution-unified.sql
+```
+
+Conte `^ ok ` e `^ not ok ` na saida. No Git Bash, `export MSYS_NO_PATHCONV=1` antes, senao o
+`/tmp/...` vira caminho do Windows e o `docker exec` nao acha o arquivo.
+
+**O que isto NAO substitui:** `db:reset` reaplica as migrations a partir dos arquivos. Se voce
+escreveu uma migration nova, aplique-a ao banco local antes (`docker cp` + `psql -f`), senao
+esta testando um schema que nao e o que o arquivo descreve. E continua valendo que o E2E
+precisa do estado oposto, com seed — para ele o portao humano permanece.
+
+Tres suites da onda H foram validadas assim, 27 assercoes, antes de qualquer commit.
+
 ## O E2E precisa de um humano, e por quê
 
 Isto não é opinião sobre disciplina: é uma restrição do ambiente que torna o E2E

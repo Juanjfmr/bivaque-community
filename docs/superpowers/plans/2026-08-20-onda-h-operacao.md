@@ -436,7 +436,7 @@ A saída não é notificar nos dois lugares. É **um RPC**, transacional, que os
 - `public.resolve_report(p_report_id uuid, p_operator_user_id uuid, p_action text, p_note text) returns void`
   — `p_action` ∈ `('hide', 'dismiss')`; `service_role` apenas
 
-- [ ] **Step 1: os alvos que ainda não sabem ser ocultados**
+- [x] **Step 1: os alvos que ainda não sabem ser ocultados**
 
   `posts`, `comments` e `groups` têm `is_deleted`. `recommendation_requests`,
   `recommendation_replies` e `dm_messages` **não têm**. Acrescente a coluna nas três, com o
@@ -453,7 +453,7 @@ A saída não é notificar nos dois lugares. É **um RPC**, transacional, que os
 grep -rn "recommendation_requests\|recommendation_replies\|dm_messages" supabase/migrations/*.sql | grep -i "create function\|create policy"
 ```
 
-- [ ] **Step 2: o RPC**
+- [x] **Step 2: o RPC**
 
 ```sql
 create function public.resolve_report(
@@ -535,7 +535,7 @@ grant execute on function public.resolve_report(uuid, uuid, text, text) to servi
   > `when 'provider_profile' then update public.provider_profiles set is_deleted = true …`.
   > Se não, o `else` cobre — e cobrir levantando exceção é o comportamento certo.
 
-- [ ] **Step 3: as duas superfícies passam a chamar o RPC**
+- [x] **Step 3: as duas superfícies passam a chamar o RPC**
 
   Em `(admin)/reports/page.tsx`, apague `markResolved` (55-67), `softDeleteTarget` (69-93) e a
   lógica duplicada dentro das duas Server Actions: elas passam a autenticar o operador e chamar
@@ -545,7 +545,7 @@ grant execute on function public.resolve_report(uuid, uuid, text, text) to servi
   **O ganho não é estético.** Enquanto forem dois códigos, um deles vai divergir de novo, e a
   divergência atual custou o retorno ao denunciante inteiro.
 
-- [ ] **Step 4: os testes**
+- [x] **Step 4: os testes**
 
   `supabase/tests/report-resolution-unified.sql`, ampliando
   `supabase/tests/reports-resolution.sql`:
@@ -557,7 +557,7 @@ grant execute on function public.resolve_report(uuid, uuid, text, text) to servi
   - não-operador chamando `resolve_report` → **negado**
   - `authenticated` com `execute` → **negado** (o grant não existe)
 
-- [ ] **Step 5: gate e commit**
+- [x] **Step 5: gate e commit**
 
 ```bash
 npx pnpm@11.18.0 gate

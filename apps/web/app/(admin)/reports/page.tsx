@@ -41,55 +41,27 @@ async function authorizeOperator(userId: string): Promise<boolean> {
   return data === true
 }
 
-async function fetchReport(reportId: string) {
+// H-Task 3: ocultar, registrar e avisar sao um ato so, dentro de
+// public.resolve_report. Esta pagina e a rota de API faziam a mesma coisa de
+// dois jeitos diferentes, e o jeito daqui — que e o que o operador usa de
+// verdade — nunca notificava o denunciante. Enquanto forem dois codigos, um
+// volta a divergir.
+async function callResolveReport(
+  reportId: string,
+  operatorId: string,
+  action: "hide" | "dismiss",
+  note: string | null,
+) {
   const serviceClient = createServiceClient()
-  const { data, error } = await serviceClient
-    .from("reports")
-    .select("target_type, target_id")
-    .eq("id", reportId)
-    .single()
-  if (error || !data) return null
-  return data
-}
-
-async function markResolved(reportId: string, operatorNote: string, operatorId: string) {
-  const serviceClient = createServiceClient()
-  await serviceClient
-    .from("reports")
-    .update({
-      status: "resolved",
-      operator_note: operatorNote,
-      resolved_by: operatorId,
-      resolved_at: new Date().toISOString(),
-    })
-    .eq("id", reportId)
-    .eq("status", "open")
-}
-
-async function softDeleteTarget(targetType: string, targetId: string): Promise<{ ok: boolean }> {
-  const serviceClient = createServiceClient()
-  if (targetType === "post") {
-    const { error } = await serviceClient
-      .from("posts")
-      .update({ is_deleted: true })
-      .eq("id", targetId)
-    return { ok: !error }
-  }
-  if (targetType === "comment") {
-    const { error } = await serviceClient
-      .from("comments")
-      .update({ is_deleted: true })
-      .eq("id", targetId)
-    return { ok: !error }
-  }
-  if (targetType === "group") {
-    const { error } = await serviceClient
-      .from("groups")
-      .update({ is_deleted: true })
-      .eq("id", targetId)
-    return { ok: !error }
-  }
-  return { ok: false }
+  // `exactOptionalPropertyTypes` esta ligado: passar `p_note: undefined` nao e
+  // o mesmo que omitir a chave. Sem nota, a chave nao vai.
+  const { error } = await serviceClient.rpc("resolve_report", {
+    p_report_id: reportId,
+    p_operator_user_id: operatorId,
+    p_action: action,
+    ...(note === null ? {} : { p_note: note }),
+  })
+  if (error) throw new Error(error.message)
 }
 
 async function hideReportAction(formData: FormData) {
@@ -103,14 +75,8 @@ async function hideReportAction(formData: FormData) {
     throw new Error("reportId required")
   }
 
-  const report = await fetchReport(reportId)
-  if (!report) throw new Error("report not found")
-
-  const { ok } = await softDeleteTarget(report.target_type, report.target_id)
-  if (!ok) throw new Error("hide failed")
-
-  await markResolved(reportId, `content hidden (${report.target_type})`, userId)
-  revalidatePath("/admin/reports")
+  await callResolveReport(reportId, userId, "hide", null)
+  revalidatePath("/reports")
 }
 
 async function resolveReportAction(formData: FormData) {
@@ -127,22 +93,8 @@ async function resolveReportAction(formData: FormData) {
   const operatorNote =
     typeof note === "string" && note.length >= ADMIN_NOTES_THRESHOLD ? note : null
 
-  const serviceClient = createServiceClient()
-  const { data, error } = await serviceClient
-    .from("reports")
-    .update({
-      status: "resolved",
-      operator_note: operatorNote,
-      resolved_by: userId,
-      resolved_at: new Date().toISOString(),
-    })
-    .eq("id", reportId)
-    .eq("status", "open")
-    .select("id")
-    .single()
-
-  if (error || !data) throw new Error("not found or already resolved")
-  revalidatePath("/admin/reports")
+  await callResolveReport(reportId, userId, "dismiss", operatorNote)
+  revalidatePath("/reports")
 }
 
 export default async function AdminReportsPage() {

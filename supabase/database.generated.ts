@@ -305,6 +305,7 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
+          is_deleted: boolean
           sender_id: string
         }
         Insert: {
@@ -312,6 +313,7 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           sender_id: string
         }
         Update: {
@@ -319,6 +321,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           sender_id?: string
         }
         Relationships: [
@@ -1015,6 +1018,7 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          is_deleted: boolean
           request_id: string
         }
         Insert: {
@@ -1022,6 +1026,7 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           request_id: string
         }
         Update: {
@@ -1029,6 +1034,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           request_id?: string
         }
         Relationships: [
@@ -1085,6 +1091,7 @@ export type Database = {
           created_at: string
           group_id: string | null
           id: string
+          is_deleted: boolean
           is_resolved: boolean
           locality_id: string | null
           resolved_at: string | null
@@ -1099,6 +1106,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_deleted?: boolean
           is_resolved?: boolean
           locality_id?: string | null
           resolved_at?: string | null
@@ -1113,6 +1121,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_deleted?: boolean
           is_resolved?: boolean
           locality_id?: string | null
           resolved_at?: string | null
@@ -1702,6 +1711,15 @@ export type Database = {
         Args: { p_community_id: string }
         Returns: undefined
       }
+      resolve_report: {
+        Args: {
+          p_action: string
+          p_note?: string
+          p_operator_user_id: string
+          p_report_id: string
+        }
+        Returns: undefined
+      }
       reverse_locality_transfer: {
         Args: { p_user_id: string }
         Returns: undefined
@@ -1802,7 +1820,13 @@ export type Database = {
         | "moradia"
         | "outros"
       report_status: "open" | "resolved"
-      report_target_type: "post" | "comment" | "group" | "message"
+      report_target_type:
+        | "post"
+        | "comment"
+        | "group"
+        | "message"
+        | "recommendation_request"
+        | "recommendation_reply"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1984,7 +2008,14 @@ export const Constants = {
         "outros",
       ],
       report_status: ["open", "resolved"],
-      report_target_type: ["post", "comment", "group", "message"],
+      report_target_type: [
+        "post",
+        "comment",
+        "group",
+        "message",
+        "recommendation_request",
+        "recommendation_reply",
+      ],
     },
   },
 } as const
