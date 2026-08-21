@@ -189,15 +189,21 @@ conta Auth do familiar.
 
 ## 6. Report resolution
 
-Denuncias de conteudo (comunidade, DM, eventos) chegam via **notificacao in-app** (`report_resolved` na Onda 11 do plano de observabilidade, em `docs/superpowers/plans/2026-08-06-observabilidade-do-produto.md`) — o denunciante **nao** espera um e-mail externo, o sistema responde dentro da plataforma. O operador revisa e age pelo painel.
+Denuncias de conteudo (post, comentario, grupo, DM, pedido de indicacao, resposta de indicacao) chegam via **notificacao in-app** — o denunciante **nao** espera um e-mail externo, o sistema responde dentro da plataforma. O operador revisa e age pelo painel.
+
+O **modelo de denuncia e um so** (H-Task 1, commit `a0c7b65`): todos os 6 alvos vivem em `public.reports`. O caminho de resolucao tambem e um so (H-Task 3, commit `f6af5a4`): o RPC `resolve_report(p_report_id, p_operator_user_id, p_action, p_note)` — `p_action` em `('hide', 'dismiss')`, `service_role`-only — que oculta o alvo por tipo, marca a denuncia como resolvida, e notifica o denunciante num unico ato.
+
+O **motivo da denuncia** (H-Task 2, `bd661e3`) e redigido no cliente por `scrubReportReason` e novamente pelo trigger `before insert or update of reason` em `public.reports` como cinto de seguranca server-side. O motivo passa por redacao automatica de CPF; **nao existe filtro de vocabulario** (D21 derrubou o anterior por proibir "patente" e "OM").
 
 ### Checklist de resolucao de denuncia
 
 - [ ] Abrir o painel `/admin/reports` autenticado como operador (gate duplo: auth + `is_current_user_operator`).
-- [ ] A fila lista abertas com idade em destaque; item com mais de 48h sem resolucao exige triagem imediata (ver §4).
-- [ ] Clicar no item abre os detalhes; classificar: conteudo proibido (discurso de odio, assedio, exposicao de dados privados) ou falsa denuncia.
-- [ ] **Ocultar** (acao `hide`): marca `is_deleted = true` no alvo (post, comentario ou grupo) via `service_role`. A UI some para todos. O sistema registra `operator_note` automatico.
-- [ ] **Resolver** (acao `resolve`): marca `status = 'resolved'` com `operator_note`, `resolved_by` (operador) e `resolved_at`. O sistema emite notificacao `report_resolved` para o denunciante **sem revelar a acao tomada** — o runbook §6 antigo exigia isso, agora a plataforma cumpre.
+- [ ] A triagem mostra conteudo (trecho de 240 chars), autor (display_name), idade relativa com destaque SLA48h, e quantas denuncias abertas o mesmo alvo ja tem — o sinal mais barato de campanha coordenada (H-Task 4, `94aa2b5`).
+- [ ] Item com mais de 48h sem resolucao exige triagem imediata (ver §9 diario).
+- [ ] Classificar: conteudo proibido (discurso de odio, assedio, exposicao de dados privados) ou falsa denuncia.
+- [ ] **Ocultar** (acao `hide`): marca `is_deleted = true` no alvo via `resolve_report`. A UI some para todos. Cobre **6 alvos** agora — posts, comments, groups, dm_messages, recommendation_requests, recommendation_replies. `recommendation_profiles` (vitrine) entra quando a onda G aterrissar.
+- [ ] **Dispensar** (acao `dismiss`): marca `status = 'resolved'` sem ocultar. Para falsa denuncia.
+- [ ] Ambos os caminhos emem notificacao `report_resolved` para o denunciante **sem revelar a acao tomada** — o sistema registra a estrutura (`recipient_user_id`, `actor_user_id`, `type`, `target_id`), nunca o conteudo.
 - [ ] **Diagnostico SQL** (quando o painel nao bastar): preservado como passo de inspecao, NAO como primeiro passo. A coluna do autor e `user_id` (nao `author_id`), e `is_deleted` indica se o conteudo ja foi ocultado por moderacao:
 
       ```sql
@@ -223,7 +229,45 @@ on conflict (auth_user_id) do nothing;
 
 ---
 
-## 7. Backup and rollback
+## 7. Admission decision (H-Task 6)
+
+Admissoes sao a porta de entrada — cada pessoa passa por verificacao de elegibilidade antes de virar membro. A fila do operador existe para os casos que a automacao nao resolve sozinha.
+
+O painel `/admin/admissions` mostra dois conjuntos:
+
+1. **Documentos pendentes de decisao** — usuarios que enviaram PDF como excecao (D2 Task 6). O operador aprova ou rejeita com motivo obrigatorio.
+2. **Fila de verificacao** — usuarios em `pending` ou `temporary_error` que nao enviaram documento.
+
+### Tres acoes que o operador tem
+
+| Acao | Quando | RPC chamado |
+|---|---|---|
+| **Reprocessar pending** | fila de verificacao, sem documento | `verification_reconcile_step` direto |
+| **Aprovar documento** | documento pending | `decide_verification_document(p_document_id, 'approved', null, p_operator_user_id)` |
+| **Rejeitar documento** | documento pending, com motivo | `decide_verification_document(p_document_id, 'rejected', p_reason, p_operator_user_id)` |
+| **Rejeitar definitivamente** | fila sem documento, sem perspectiva | `reject_pending_user(p_user_id, p_operator_user_id, p_reason)` |
+
+### O que o operador NAO faz
+
+- **Nunca sobrepor um `rejected` do Portal** (§4.1). A elegibilidade e conferida pelo Estado; o operador nao concede.
+- A excecao de "rejeitar definitivamente" e para quem esta `pending` ou `temporary_error` ha muito tempo — uma saida forcada quando o operador sabe que nao vai chegar documento.
+
+### Checklist de decisao de admissao
+
+- [ ] Abrir `/admin/admissions` autenticado como operador (gate duplo).
+- [ ] Verificar idade relativa — SLA48h; item alem disso exige triagem imediata.
+- [ ] Se ha documento: clicar "Aprovar" ou "Rejeitar" com motivo. A funcao exige motivo na rejeicao.
+- [ ] Se nao ha documento e ainda nao passou SLA: "Reprocessar" drena a fila (a `verification_reconcile_step` decide pelo teto de tentativas; rejeita apos teto com aviso por e-mail).
+- [ ] Se nao ha documento e ja passou SLA, ou se o reconciliador nao vai resolver: "Rejeitar definitivamente" com motivo. A pessoa recebe `notifications.type='admission_rejected'` e ve o estado em `/onboarding/status`.
+- [ ] Registrar: data, operador, uuid, motivo.
+
+### Armadilha conhecida (registrada no plano da Task 6)
+
+Ate 2026-08-21, `decide_verification_document` (migration `20260820000007:82`) checava `public.is_current_user_operator((select auth.uid()))` e o EXECUTE dela era so `service_role`. Sob service_role, `auth.uid()` e NULL — a funcao **nunca funcionou para ninguem**. A migration `20260821000040_decide_verification_document_fix.sql` adicionou `p_operator_user_id uuid` explicito. Se um servidor antes desse fix rodar em producao, o botao "Aprovar documento" e "Rejeitar documento" levantam excecao.
+
+---
+
+## 8. Backup and rollback
 
 ### Backup
 
@@ -336,7 +380,7 @@ banco de producao — e uma discussao guiada por checklist.
 ### Cenario B: Dados privados expostos em post publico
 
 - [ ] **Decisao 1**: Quem detecta? (denuncia de usuario? scan automatizado?)
-- [ ] **Decisao 2**: A remocao e imediata ou requer aprovacao?
+- [ ] **Decisao 2**: A remocao e imediata ou requer aprovacao? Ate a onda H, ocultar era manual em tres lugares (server action do painel, route de API, RPC via PostgREST direto). Com a Task 3, todas as tres convergem no mesmo RPC `resolve_report(p_action='hide')`. Uma decisao do operador, executada em qualquer superficie, produz o mesmo efeito.
 - [ ] **Decisao 3**: O post e removido (soft delete) ou permanentemente
       excluido?
 - [ ] **Decisao 4**: O autor e notificado? Como?
