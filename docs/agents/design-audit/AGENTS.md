@@ -6,83 +6,114 @@ Read `README.md` before doing any work in this directory.
 
 ## First determine the phase
 
-Do not infer that every artifact can be edited in every session.
-
 - `REFERENCE_DESIGN_SPEC.md` / `REFERENCE_VISUAL_GUIDE.md` → **Phase 1: blind reference**.
 - `RULE_LEDGER.md` → **Phase 2: incumbent extraction**.
 - `CONFLICT_MATRIX.md` → **Phase 3: confrontation**.
 - `RUNTIME_FINDINGS.md` → **Phase 4: runtime evidence**.
 - `ADJUDICATION.md` → **Phase 5/6: verdicts and rewrite manifest**.
 
-If the requested task spans phases, preserve the order and phase gates in `README.md` rather than collapsing them for convenience.
+Do not collapse phases for convenience.
 
-## Phase 1 — hard contamination boundary
+# Phase 1 — hard contamination boundary
 
 A Phase 1 agent must be in a fresh context that has not consumed the incumbent Bivaque design solution.
 
-Before generating either reference artifact, explicitly verify that the current session has **not** read or received content from forbidden local inputs listed in `README.md`, including that content reproduced indirectly inside another file.
-
 **Permission is content-based, not path-based. Transitive contamination counts.**
+
+Before generating either reference artifact, verify that the session has not read, received, summarized, or inferred substantive incumbent material through any source.
 
 If contaminated:
 
-- do not generate or edit the reference benchmark;
+- do not generate/edit the reference benchmark;
+- leave existing `REFERENCE_*` artifacts unchanged;
 - report exactly `PHASE_1_CONTEXT_CONTAMINATED`;
-- leave existing reference artifacts unchanged;
 - require a fresh context/session.
 
-Do not attempt to “mentally ignore” information already seen.
+Do not attempt to mentally ignore information already consumed.
 
-### Phase 1 local access
+## Phase 1 local access is exhaustive
 
-The local allowlist in `README.md` is **exhaustive**, not illustrative.
+The only repository resources that may be read are:
 
-Currently permitted local project inputs are only:
+### Protocol and sanitized product input
 
-- `docs/BIVAQUE.md`;
+- `docs/agents/design-audit/AGENTS.md`;
+- `docs/agents/design-audit/README.md`;
+- `docs/agents/design-audit/PHASE1_PRODUCT_CONTEXT.md`;
+- `docs/agents/design-audit/REFERENCE_DESIGN_SPEC.md` as target/template;
+- `docs/agents/design-audit/REFERENCE_VISUAL_GUIDE.md` as target/template.
+
+### Dependency envelope
+
 - root `package.json`;
 - `apps/web/package.json`;
 - version-matched Next.js docs under `apps/web/node_modules/next/dist/docs/` when available.
 
-Do not read ADRs or `docs/legal/**` during Phase 1. Do not broaden access because an allowed document links to them or because a product constraint appears useful.
+No other local repository file is permitted in Phase 1.
 
-Do not search the repository broadly. Broad repository search can reveal forbidden design filenames, code snippets, tokens, screenshots, audit findings, or summaries and contaminate the reference.
+In particular, **do not read `docs/BIVAQUE.md` in Phase 1**. It is general canon but mixes durable product truth with current-state/implementation material and is therefore not a safe blind-design input. `PHASE1_PRODUCT_CONTEXT.md` exists specifically to replace it for this phase.
 
-Do not read or consume substantive descriptions of:
+Also do not read root `AGENTS.md`, `apps/web/AGENTS.md`, or any scoped `AGENTS.md` outside this directory. This file is the only local agent-instruction file permitted for Phase 1.
 
-- incumbent design docs;
+## No exploratory repository access
+
+Do not:
+
+- search the repository broadly;
+- list the repository tree for context discovery;
+- inspect implementation/routes/components/tokens;
+- inspect ADRs, legal docs, plans, tests, screenshots, snapshots, status docs, or history;
+- follow local cross-references outside the allowlist;
+- inspect git history/diffs to infer the current design;
+- open another file because an allowed file mentions it.
+
+Cross-references are not permission.
+
+## Forbidden incumbent material
+
+Do not consume substantive descriptions of:
+
 - current UI implementation;
-- current visual tokens;
+- incumbent `DESIGN_SPEC.md` / `VISUAL_GUIDE.md`;
+- current routes/navigation/shells/wrappers;
+- current visual tokens, breakpoints, geometry, typography, themes, or responsive rules;
 - current screenshots/captures;
-- `PRODUCT_STATUS.md`;
-- historical UI plans/reviews;
-- ADRs that reproduce or summarize incumbent design/implementation evidence;
-- secondary documents that quote, summarize, compare, or describe forbidden material.
+- current product status;
+- current/historical visual audits or redesign findings;
+- implementation incidents that reveal current UI behavior;
+- migration/database history unless already converted into a solution-independent product invariant in the sanitized brief;
+- secondary files quoting, summarizing, comparing, or describing any of the above.
 
-A mere filename or link is not contamination if it conveys no substantive incumbent information, but do not follow it unless the target is explicitly allowlisted.
+If a nominally allowed file unexpectedly contains substantive incumbent material, stop immediately and report `PHASE_1_CONTEXT_CONTAMINATED`.
 
-If an allowed input is discovered to contain substantive embedded incumbent material, stop immediately. The fact that the containing path was allowed does not preserve the session's cleanliness.
+## Missing product truth
 
-If a material product constraint cannot be resolved from the exhaustive allowlist plus current external sources, do **not** inspect more repository files. Report:
+If a material product constraint cannot be resolved from `PHASE1_PRODUCT_CONTEXT.md`, allowed package manifests, installed framework docs, and external authoritative sources, do not broaden repository access.
+
+Report exactly:
 
 `PHASE_1_INPUT_GAP: <minimal description of the missing product constraint>`
 
-This is a protocol gap, not permission for exploratory repository access.
+The gap must be resolved by updating the sanitized input outside the blind Phase 1 session, then restarting Phase 1 in a fresh context.
 
-### Phase 1 output discipline
+## Phase 1 output discipline
 
 - Produce an independent standard, not a critique of Bivaque's current design.
+- Use multiple evidence classes; one design skill is not the benchmark.
 - Every normative statement is `MUST`, `SHOULD`, `MAY`, or `EXPERIMENT`.
 - Every major rule includes reference confidence `1–5`.
-- Exact numbers require rationale proportional to their precision.
-- Objective standards and product invariants may be `MUST`; aesthetic preference normally may not.
-- Do not add dependencies because an external skill/example uses them.
-- Do not run Impeccable `init` or `document`, install hooks, or create root design/product context files.
+- Exact numerical values require evidence proportional to their precision.
+- Objective standards and product invariants may justify `MUST`; aesthetic preference normally does not.
+- Distinguish product invariant, design decision, implementation guidance, and objective standard.
+- Do not add dependencies because an external example uses them.
+- Use installed/version-matched Next.js docs for framework facts.
+- Verify HeroUI behavior from current maintainer documentation for the installed version.
+- Do not run Impeccable `init` or `document`, install hooks, or create root product/design context files.
 - Once Phase 1 is declared frozen, do not renumber existing `REF-*` or `RVIS-*` IDs.
 
-## Phase 2 — extraction, not judgment
+# Phase 2 — extraction, not judgment
 
-The Phase 2 agent may read incumbent `DESIGN_SPEC.md` and `VISUAL_GUIDE.md`.
+The Phase 2 agent may read incumbent `docs/agents/DESIGN_SPEC.md` and `docs/agents/VISUAL_GUIDE.md`.
 
 Its job is exhaustive extraction into `RULE_LEDGER.md`.
 
@@ -92,12 +123,12 @@ Do not:
 - repair wording;
 - merge away contradictions;
 - soften absolutes;
-- defend a rule because it looks intentional;
-- delete a rule from the ledger because runtime no longer implements it.
+- defend a rule because it appears intentional;
+- delete a rule because runtime no longer implements it.
 
 Flag absolute wording and false precision for later scrutiny.
 
-## Phase 3 — explicit confrontation
+# Phase 3 — explicit confrontation
 
 Compare frozen reference rules against extracted incumbent rules.
 
@@ -112,7 +143,7 @@ Distinguish product context, objective standards, technical constraints, UX evid
 
 Do not issue final verdicts in `CONFLICT_MATRIX.md`.
 
-## Phase 4 — runtime is evidence, not authority
+# Phase 4 — runtime is evidence, not authority
 
 Runtime inspection may now read implementation, screenshots, `PRODUCT_STATUS.md`, tests, browser output, and relevant source.
 
@@ -124,27 +155,25 @@ Do not use a screenshot alone to declare keyboard, focus, form, compound-control
 
 When standards/product invariants do not settle a weak numerical/design rule, create a bounded experiment instead of letting a model choose by taste.
 
-## Phase 5 — adjudication
+# Phase 5 — adjudication
 
 Issue only verdicts allowed by `ADJUDICATION.md`.
 
 Every material verdict must be traceable to IDs from prior artifacts.
 
-The adjudicator should receive artifacts/evidence, not the prior executor's long chain of reasoning or self-verdict.
+The adjudicator receives artifacts/evidence, not the prior executor's long reasoning or self-verdict.
 
 Confidence 1–2 normally means `EXPERIMENT` or `HUMAN_DECISION`, not a new hard rule.
 
-## Phase 6 — mutation gate
+# Phase 6 — mutation gate
 
-Do not edit incumbent `docs/agents/DESIGN_SPEC.md` or `docs/agents/VISUAL_GUIDE.md` from this audit until `ADJUDICATION.md` contains a rewrite manifest mapping the change to adjudicated Decision IDs.
+Do not edit incumbent `docs/agents/DESIGN_SPEC.md` or `docs/agents/VISUAL_GUIDE.md` until `ADJUDICATION.md` contains a rewrite manifest mapping each change to adjudicated Decision IDs.
 
-Do not add an unadjudicated rule during cleanup/rewrite.
+Do not add an unadjudicated rule during rewrite/cleanup.
 
-After rewrite, re-run the objective standards and affected runtime checks required by the decisions.
+After rewrite, re-run objective standards and affected runtime/browser checks required by the decisions.
 
-## Evidence over rhetoric
-
-The audit is deliberately skeptical.
+# Evidence over rhetoric
 
 Reject arguments of the form:
 
