@@ -291,7 +291,7 @@ palavra.
 - Modificar: `apps/web/app/components/bivaque/report-button.tsx`
 - Criar: `supabase/migrations/<ts>_report_reason_guard.sql`
 
-- [ ] **Step 1: reaproveitar o scrub que já existe**
+- [x] **Step 1: reaproveitar o scrub que já existe**
 
   `packages/domain/src/pii-scrub.ts` já é o filtro que roda antes de qualquer envio ao Sentry, e
   já tem teste em `tests/unit/security/pii-scrub.test.ts`. Exporte dele uma função de uso
@@ -310,7 +310,7 @@ export function scrubReportReason(reason: string): string {
 }
 ```
 
-- [ ] **Step 2: o aviso na UI, no molde da onda C**
+- [x] **Step 2: o aviso na UI, no molde da onda C**
 
   Em `report-button.tsx`, acima do `TextArea`: uma linha dizendo que documento e endereço não
   devem ser digitados, que o motivo fica registrado, e por quanto tempo. É o mesmo padrão de
@@ -318,13 +318,13 @@ export function scrubReportReason(reason: string): string {
 
   Aplique `scrubReportReason` **antes** do `insert`.
 
-- [ ] **Step 3: o cinto de segurança no banco**
+- [x] **Step 3: o cinto de segurança no banco**
 
   O cliente pode ser contornado — o `insert` é direto do browser via PostgREST. Um trigger
   `before insert or update` em `reports` aplica a mesma redação server-side. Um trigger, não um
   `check`: ele **corrige**, não recusa.
 
-- [ ] **Step 4: os testes**
+- [x] **Step 4: os testes**
 
   `tests/unit/security/report-reason-scrub.test.ts`: CPF formatado, CPF sem formatação, número
   de 11 dígitos que não é CPF (é redigido mesmo assim — falso positivo aceito de propósito, e o
@@ -333,7 +333,37 @@ export function scrubReportReason(reason: string): string {
 
   pgTAP: `insert` com CPF no motivo, e o `select` seguinte não contém os dígitos.
 
-- [ ] **Step 5: gate e commit**
+### Revisão de 2026-08-21 — dois itens abertos nesta task
+
+Levantados em revisão durante a execução, contra o estado da árvore de trabalho.
+
+**1. A função do trigger não tem `set search_path = ''`.** Toda função deste schema tem, e a
+linha de abertura de `20260802001600_reports.sql` declara isso como contrato do repositório
+(*"All functions use set search_path = '' to prevent search-path injection"*). A função é
+`security invoker`, então o risco concreto é baixo — mas a exceção não está justificada em
+lugar nenhum, e o precedente mais próximo (`private.block_authenticated_soft_delete`, na mesma
+migration de `reports`) é `security invoker` **e** tem a linha.
+
+**2. O CHECK de 1000 caracteres roda depois do trigger, e a redação cresce o texto.**
+`"[documento removido]"` tem 20 caracteres e substitui de 11 a 14. Um motivo de ~990
+caracteres com alguns CPFs passa de 1000 depois da redação e o insert é **rejeitado** por
+`reports_reason_check` — com um erro que não explica nada a quem denunciou.
+
+Isso é alcançável pela UI normal, não só pelo bypass: o cliente redige **antes** do insert,
+então quem digita perto do limite já sai do `scrubReportReason` acima de 1000. Duas saídas, e
+qualquer uma resolve — `new.reason := left(v_scrubbed, 1000)` no trigger, ou limite no
+`TextArea` com folga para a expansão. Perder o fim de um motivo abarrotado de documento é
+melhor que perder a denúncia inteira.
+
+**Sobre a regex, já resolvido:** este arquivo passou por duas versões inertes antes da atual —
+`'\b…'` em string comum (a barra vira literal com `standard_conforming_strings` ON) e
+`E'\b…'` (no Postgres `` é *backspace*, não fronteira de palavra). A versão atual, com
+`[[:<:]]`/`[[:>:]]`, foi verificada contra o banco local e **funciona**. As duas versões mortas
+passariam despercebidas porque o cliente redige antes do insert: a tela funciona, e só o
+caminho que o trigger existe para fechar fica aberto. É a razão de o pgTAP desta task não ser
+opcional.
+
+- [x] **Step 5: gate e commit**
 
 ```bash
 npx pnpm@11.18.0 gate
