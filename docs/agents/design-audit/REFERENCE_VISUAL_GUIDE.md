@@ -2,13 +2,15 @@
 
 > **Status: NOT YET GENERATED.**
 >
-> This file must be produced in the same uncontaminated Phase 1 program as `REFERENCE_DESIGN_SPEC.md`. It may use the frozen reference design spec, but it must not read incumbent design docs, current UI source, current screenshots, current tokens, or visual audit history.
+> This file must be produced in the same uncontaminated Phase 1 program as `REFERENCE_DESIGN_SPEC.md`. It may use the frozen reference design spec and `PHASE1_PRODUCT_CONTEXT.md`, but it must not read `docs/BIVAQUE.md`, incumbent design docs, current UI source, current screenshots, current tokens, or visual-audit history.
 
 ## Purpose
 
 Translate the independent reference design standard into concrete screen/surface guidance without inheriting Bivaque's current visual solution.
 
 This is not a moodboard and not a pixel-perfect redesign. It is an auditable guide for hierarchy, layout, responsive behavior, component usage, states, interaction, and visual language.
+
+If a necessary product fact is missing from `PHASE1_PRODUCT_CONTEXT.md`, follow the `PHASE_1_INPUT_GAP` rule rather than inspecting other repository files.
 
 ## Required structure
 
@@ -42,11 +44,11 @@ Define reference behavior for:
 - content width and responsive reflow;
 - persistent vs contextual actions.
 
-Do not assume the incumbent number, order, size, or shape of navigation items.
+Do not assume any incumbent number, order, size, shape, placement, or breakpoint for navigation items.
 
 ### 3. Surface-by-surface guide
 
-Create one section per material product surface/journey supported by `docs/BIVAQUE.md`.
+Create one section per material product surface/journey derived from `PHASE1_PRODUCT_CONTEXT.md` and the independent reference design spec.
 
 Each section must include:
 
@@ -77,7 +79,7 @@ Do not invent routes solely because the incumbent app may have them. Organize ar
 
 ### 4. Content density rules
 
-Define how density changes by surface type:
+Define how density changes by surface type, for example:
 
 - feed/list;
 - discovery/search;
@@ -101,7 +103,7 @@ Specify:
 - truncation/wrapping rules;
 - language/diacritic/i18n considerations.
 
-Font-family selection must be justified as product/brand/technical choice, not inherited convention.
+Font-family selection must be justified as a product/brand/technical choice, not inherited convention.
 
 ### 6. Color and status semantics
 
@@ -152,7 +154,7 @@ Where exact viewport thresholds are proposed, include evidence/rationale and con
 
 Specify only purposeful motion:
 
-- state change feedback;
+- state-change feedback;
 - navigation transitions;
 - overlay entrance/exit;
 - optimistic/pending feedback;
@@ -183,4 +185,5 @@ Reject:
 - inaccessible contrast/focus/target behavior;
 - patterns that fight canonical HeroUI interaction without rationale;
 - visual rules that redefine product truth;
-- any comparison to incumbent Bivaque design during Phase 1.
+- any comparison to incumbent Bivaque design during Phase 1;
+- any attempt to open a non-allowlisted local file to complete the benchmark.
