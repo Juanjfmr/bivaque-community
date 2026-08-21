@@ -36,16 +36,38 @@ export function ManausGuideHero({ className = "" }: ManausGuideHeroProps) {
         strokeWidth="1.5"
         opacity="0.72"
       />
-      <path d="M105 98l-8 16M135 98l-8 16M165 98l-8 16" stroke={SECONDARY} strokeWidth="2" strokeLinecap="round" opacity="0.55" />
+      <path
+        d="M105 98l-8 16M135 98l-8 16M165 98l-8 16"
+        stroke={SECONDARY}
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
 
       {/* city line */}
-      <path d="M0 174c84-12 132-9 197 0c74 10 132 7 196-3c88-14 182-15 327 4v125H0V174Z" fill={ACCENT_SOFT} opacity="0.42" />
+      <path
+        d="M0 174c84-12 132-9 197 0c74 10 132 7 196-3c88-14 182-15 327 4v125H0V174Z"
+        fill={ACCENT_SOFT}
+        opacity="0.42"
+      />
 
       {/* Teatro Amazonas silhouette */}
       <g transform="translate(285 76)">
-        <path d="M72 42c0-25 20-42 43-42s43 17 43 42H72Z" fill={SECONDARY} opacity="0.26" stroke={ACCENT} strokeWidth="2" />
+        <path
+          d="M72 42c0-25 20-42 43-42s43 17 43 42H72Z"
+          fill={SECONDARY}
+          opacity="0.26"
+          stroke={ACCENT}
+          strokeWidth="2"
+        />
         <path d="M78 42h74v24H78z" fill={SURFACE} stroke={ACCENT} strokeWidth="2" />
-        <path d="M63 66h104l14 17H49l14-17Z" fill={SURFACE} stroke={ACCENT} strokeWidth="2" strokeLinejoin="round" />
+        <path
+          d="M63 66h104l14 17H49l14-17Z"
+          fill={SURFACE}
+          stroke={ACCENT}
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
         <path d="M55 83h120v58H55z" fill={SURFACE} stroke={ACCENT} strokeWidth="2" />
         <path d="M43 141h144v12H43z" fill={SURFACE} stroke={ACCENT} strokeWidth="2" />
         {[70, 92, 114, 136, 158].map((x) => (
@@ -61,13 +83,31 @@ export function ManausGuideHero({ className = "" }: ManausGuideHeroProps) {
         <circle cx="141" cy="190" r="37" fill={ACCENT} opacity="0.13" />
         <circle cx="626" cy="184" r="42" fill={ACCENT} opacity="0.14" />
         <circle cx="676" cy="190" r="34" fill={ACCENT} opacity="0.17" />
-        <path d="M0 205c60-18 122-17 191 7v31H0v-38ZM542 209c68-28 121-26 178-9v43H542v-34Z" fill={ACCENT} opacity="0.14" />
+        <path
+          d="M0 205c60-18 122-17 191 7v31H0v-38ZM542 209c68-28 121-26 178-9v43H542v-34Z"
+          fill={ACCENT}
+          opacity="0.14"
+        />
       </g>
 
       {/* Rio Negro */}
-      <path d="M0 226c124-19 224 24 350 4c134-21 243-16 370 4v66H0v-74Z" fill={ACCENT} opacity="0.16" />
-      <path d="M0 251c119-14 229 17 349 1c138-18 244-11 371 7" stroke={SECONDARY} strokeWidth="2" opacity="0.42" />
-      <path d="M25 274c114-11 207 13 314 2c130-14 244-10 350 4" stroke={ACCENT} strokeWidth="1.5" opacity="0.35" />
+      <path
+        d="M0 226c124-19 224 24 350 4c134-21 243-16 370 4v66H0v-74Z"
+        fill={ACCENT}
+        opacity="0.16"
+      />
+      <path
+        d="M0 251c119-14 229 17 349 1c138-18 244-11 371 7"
+        stroke={SECONDARY}
+        strokeWidth="2"
+        opacity="0.42"
+      />
+      <path
+        d="M25 274c114-11 207 13 314 2c130-14 244-10 350 4"
+        stroke={ACCENT}
+        strokeWidth="1.5"
+        opacity="0.35"
+      />
     </svg>
   )
 }

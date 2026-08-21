@@ -11,6 +11,9 @@ import { ErrorState } from "../../components/bivaque/error-state"
 import { Skeleton } from "../../components/bivaque/skeleton"
 import {
   GUIDE_LAST_REVIEWED,
+  type GuidePhase,
+  type GuideSource,
+  type GuideTopic,
   MANAUS_CONTACTS,
   MANAUS_NEIGHBORHOODS,
   MANAUS_PHASES,
@@ -19,9 +22,6 @@ import {
   relativeDayLabel,
   TOPIC_LABELS,
   TOPIC_ORDER,
-  type GuidePhase,
-  type GuideSource,
-  type GuideTopic,
 } from "./manaus-guide-content"
 import { ManausGuideHero } from "./manaus-guide-hero"
 
@@ -73,7 +73,10 @@ export default function GuidePage() {
   return (
     <Suspense
       fallback={
-        <div className="mx-auto flex w-full max-w-[64rem] flex-col gap-6 px-4 py-8" aria-busy="true">
+        <div
+          className="mx-auto flex w-full max-w-[64rem] flex-col gap-6 px-4 py-8"
+          aria-busy="true"
+        >
           <Skeleton className="h-56 w-full" />
           <Skeleton className="h-36 w-full" />
           <Skeleton className="h-72 w-full" />
@@ -136,7 +139,9 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
       .order("name")
 
     if (guideError) {
-      setError("Não foi possível carregar as indicações da comunidade. O guia editorial continua disponível.")
+      setError(
+        "Não foi possível carregar as indicações da comunidade. O guia editorial continua disponível.",
+      )
       setLoading(false)
       return
     }
@@ -211,9 +216,9 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
     return entries.filter((entry) => {
       if (communityCategory !== "all" && entry.category !== communityCategory) return false
       if (!normalizedQuery) return true
-      return normalize(`${entry.name} ${entry.description} ${CATEGORY_LABELS[entry.category]}`).includes(
-        normalizedQuery,
-      )
+      return normalize(
+        `${entry.name} ${entry.description} ${CATEGORY_LABELS[entry.category]}`,
+      ).includes(normalizedQuery)
     })
   }, [communityCategory, entries, normalizedQuery])
 
@@ -248,7 +253,7 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
   }
 
   return (
-    <main className="mx-auto w-full max-w-[64rem] px-4 py-6 sm:py-8">
+    <div className="mx-auto w-full max-w-[64rem] px-4 py-6 sm:py-8">
       <section className="overflow-hidden rounded-2xl border border-border bg-[var(--surface)]">
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="flex flex-col justify-center gap-4 p-5 sm:p-7 lg:p-8">
@@ -302,7 +307,9 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
           <div className="rounded-xl bg-[var(--surface-sunken)] p-4" aria-live="polite">
             {arrivalDate && currentDay !== null ? (
               <>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted">Sua posição hoje</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                  Sua posição hoje
+                </p>
                 <p className="mt-1 text-2xl font-semibold text-[var(--accent)]">
                   {relativeDayLabel(currentDay)}
                 </p>
@@ -347,7 +354,7 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-1" aria-label="Ir para uma fase do guia">
+        <nav className="mt-4 flex flex-wrap gap-2" aria-label="Ir para uma fase do guia">
           {MANAUS_PHASES.map((phase) => {
             const active = currentPhase?.id === phase.id
             return (
@@ -367,10 +374,13 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
               </button>
             )
           })}
-        </div>
+        </nav>
       </section>
 
-      <section className="mt-5 rounded-2xl border border-border bg-[var(--surface)] p-4 sm:p-5" aria-labelledby="guide-search-heading">
+      <section
+        className="mt-5 rounded-2xl border border-border bg-[var(--surface)] p-4 sm:p-5"
+        aria-labelledby="guide-search-heading"
+      >
         <h2 id="guide-search-heading" className="text-base font-semibold">
           Encontrar uma informação
         </h2>
@@ -383,7 +393,7 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
             onChange={(event) => setQuery(event.target.value)}
             className="min-h-11 w-full rounded-lg border border-border bg-[var(--surface)] px-3 py-2 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
           />
-          <fieldset className="flex gap-2 overflow-x-auto pb-1">
+          <fieldset className="flex flex-wrap gap-2">
             <legend className="sr-only">Filtrar o guia por assunto</legend>
             <button
               type="button"
@@ -451,12 +461,17 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
                       />
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-semibold text-[var(--accent)]">{phase.range}</span>
+                          <span className="text-sm font-semibold text-[var(--accent)]">
+                            {phase.range}
+                          </span>
                           <span className="text-xs font-medium uppercase tracking-wide text-muted">
                             {phase.label}
                           </span>
                         </div>
-                        <h3 id={`guide-phase-title-${phase.id}`} className="mt-1 text-lg font-semibold">
+                        <h3
+                          id={`guide-phase-title-${phase.id}`}
+                          className="mt-1 text-lg font-semibold"
+                        >
                           {phase.title}
                         </h3>
                         <p className="mt-1 text-sm leading-6 text-muted">{phase.intro}</p>
@@ -478,8 +493,7 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
                             <div className="flex items-start gap-3">
                               <button
                                 type="button"
-                                role="checkbox"
-                                aria-checked={checked}
+                                aria-pressed={checked}
                                 aria-label={`${checked ? "Desmarcar" : "Marcar"}: ${task.title}`}
                                 onClick={() => toggleTask(task.id)}
                                 className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border text-base font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 ${
@@ -497,8 +511,12 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
                                 <h4 className="mt-1 font-semibold leading-6">{task.title}</h4>
                                 <p className="mt-2 text-sm leading-6 text-muted">{task.body}</p>
                                 <div className="mt-3 rounded-lg bg-[var(--surface-sunken)] p-3">
-                                  <p className="text-xs font-medium uppercase tracking-wide text-muted">O que fazer</p>
-                                  <p className="mt-1 text-sm font-medium leading-6">{task.action}</p>
+                                  <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                                    O que fazer
+                                  </p>
+                                  <p className="mt-1 text-sm font-medium leading-6">
+                                    {task.action}
+                                  </p>
                                 </div>
                                 {task.sources && task.sources.length > 0 ? (
                                   <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2">
@@ -539,14 +557,19 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {MANAUS_NEIGHBORHOODS.map((area) => (
-                <article key={area.name} className="rounded-xl border border-border bg-[var(--surface)] p-4">
+                <article
+                  key={area.name}
+                  className="rounded-xl border border-border bg-[var(--surface)] p-4"
+                >
                   <p className="text-xs font-medium uppercase tracking-wide text-[var(--accent)]">
                     {area.profile}
                   </p>
                   <h3 className="mt-1 font-semibold">{area.name}</h3>
                   <p className="mt-3 text-sm leading-6 text-muted">{area.goodFor}</p>
                   <div className="mt-3 border-t border-border pt-3">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted">Confira antes</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted">
+                      Confira antes
+                    </p>
                     <p className="mt-1 text-sm leading-6">{area.watch}</p>
                   </div>
                 </article>
@@ -572,7 +595,10 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-6" aria-label="Referência rápida de Manaus">
-          <section className="rounded-xl border border-border bg-[var(--surface)] p-4" aria-labelledby="quick-heading">
+          <section
+            className="rounded-xl border border-border bg-[var(--surface)] p-4"
+            aria-labelledby="quick-heading"
+          >
             <h2 id="quick-heading" className="text-base font-semibold">
               Quatro coisas para saber cedo
             </h2>
@@ -594,7 +620,10 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
             </div>
           </section>
 
-          <section className="rounded-xl border border-border bg-[var(--surface)] p-4" aria-labelledby="emergency-heading">
+          <section
+            className="rounded-xl border border-border bg-[var(--surface)] p-4"
+            aria-labelledby="emergency-heading"
+          >
             <h2 id="emergency-heading" className="text-base font-semibold">
               Emergência
             </h2>
@@ -609,27 +638,35 @@ function ManausGuide({ localityId, cityName }: { localityId: string; cityName: s
                       <span className="block text-sm font-semibold">{contact.label}</span>
                       <span className="block text-xs text-muted">{contact.note}</span>
                     </span>
-                    <span className="text-lg font-semibold text-[var(--accent)]">{contact.value}</span>
+                    <span className="text-lg font-semibold text-[var(--accent)]">
+                      {contact.value}
+                    </span>
                   </a>
                 </li>
               ))}
             </ul>
           </section>
 
-          <section className="rounded-xl border border-border bg-[var(--surface-sunken)] p-4" aria-labelledby="source-note-heading">
+          <section
+            className="rounded-xl border border-border bg-[var(--surface-sunken)] p-4"
+            aria-labelledby="source-note-heading"
+          >
             <h2 id="source-note-heading" className="text-sm font-semibold">
               Como este guia é mantido
             </h2>
             <p className="mt-2 text-xs leading-5 text-muted">
-              Serviço público, documentação e canais de atendimento devem apontar para fonte oficial.
-              Relatos de moradores entram como experiência e precisam ser reconfirmados no endereço ou
-              situação concreta. Indicações da comunidade aparecem separadas logo abaixo.
+              Serviço público, documentação e canais de atendimento devem apontar para fonte
+              oficial. Relatos de moradores entram como experiência e precisam ser reconfirmados no
+              endereço ou situação concreta. Indicações da comunidade aparecem separadas logo
+              abaixo.
             </p>
-            <p className="mt-2 text-xs leading-5 text-muted">Revisão editorial: {GUIDE_LAST_REVIEWED}.</p>
+            <p className="mt-2 text-xs leading-5 text-muted">
+              Revisão editorial: {GUIDE_LAST_REVIEWED}.
+            </p>
           </section>
         </aside>
       </div>
-    </main>
+    </div>
   )
 }
 
@@ -693,7 +730,7 @@ function CommunityGuide({ localityId, cityName }: { localityId: string; cityName
   })
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
       <header className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">Guia de chegada — {cityName}</h1>
         <p className="text-sm text-muted">
@@ -723,7 +760,7 @@ function CommunityGuide({ localityId, cityName }: { localityId: string; cityName
         cityName={cityName}
         compact
       />
-    </main>
+    </div>
   )
 }
 
@@ -759,11 +796,14 @@ function CommunityDirectory({
               Indicações aprovadas pela comunidade
             </h2>
             <p className="mt-1 text-sm leading-6 text-muted">
-              A camada viva do guia: referências locais que passaram pela curadoria do Bivaque em {cityName}.
+              A camada viva do guia: referências locais que passaram pela curadoria do Bivaque em{" "}
+              {cityName}.
             </p>
           </div>
           {entries.length > 0 ? (
-            <span className="text-xs font-medium text-muted">{entries.length} entradas aprovadas</span>
+            <span className="text-xs font-medium text-muted">
+              {entries.length} entradas aprovadas
+            </span>
           ) : null}
         </div>
       </div>
@@ -809,7 +849,11 @@ function CommunityDirectory({
 
       {!loading && !error && entries.length === 0 ? (
         <EmptyState
-          title={isLocalityStale(memberCount) ? "Você é dos primeiros aqui." : "O guia desta cidade está vazio."}
+          title={
+            isLocalityStale(memberCount)
+              ? "Você é dos primeiros aqui."
+              : "O guia desta cidade está vazio."
+          }
           description={
             isLocalityStale(memberCount)
               ? "As indicações locais ainda estão em construção. Conforme a comunidade contribui, o operador cura cada entrada antes de publicar."
@@ -827,7 +871,10 @@ function CommunityDirectory({
       {!loading && !error && filteredEntries.length > 0 ? (
         <ul className="flex flex-col gap-3">
           {filteredEntries.map((entry) => (
-            <li key={entry.id} className="flex flex-col gap-2 rounded-xl border border-border bg-[var(--surface)] p-4">
+            <li
+              key={entry.id}
+              className="flex flex-col gap-2 rounded-xl border border-border bg-[var(--surface)] p-4"
+            >
               <div>
                 <span className="text-xs font-medium uppercase tracking-wide text-[var(--accent)]">
                   {CATEGORY_LABELS[entry.category]}

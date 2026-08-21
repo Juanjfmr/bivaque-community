@@ -181,7 +181,7 @@ export const TOPIC_ORDER: GuideTopic[] = [
 export const MANAUS_QUICK_FACTS = [
   {
     title: "O bairro certo é o que encurta sua rotina",
-    body: "Em Manaus, 8 km no mapa podem significar experiências bem diferentes conforme o horário. Antes de fechar imóvel, faça o trajeto até a sua OM, a escola e os compromissos principais no horário em que você realmente vai circular.",
+    body: "Em Manaus, uma distância curta no mapa pode significar uma experiência bem diferente conforme o horário. Antes de fechar imóvel, faça o trajeto até a sua OM, a escola e os compromissos principais no horário em que você realmente vai circular.",
     source: sources.redditHousing,
   },
   {
@@ -205,32 +205,41 @@ export const MANAUS_NEIGHBORHOODS = [
   {
     name: "Adrianópolis e Vieiralves",
     profile: "Centralidade, serviços e vida urbana",
-    goodFor: "Quem quer mercado, restaurantes, clínicas e deslocamentos relativamente centrais por perto.",
-    watch: "Aluguel costuma ser mais alto e a experiência muda bastante entre ruas. Verifique barulho e trânsito noturno no quarteirão.",
+    goodFor:
+      "Quem quer mercado, restaurantes, clínicas e deslocamentos relativamente centrais por perto.",
+    watch:
+      "Aluguel costuma ser mais alto e a experiência muda bastante entre ruas. Verifique barulho e trânsito noturno no quarteirão.",
   },
   {
     name: "Parque 10 e Parque das Laranjeiras",
     profile: "Equilíbrio para família",
-    goodFor: "Boa oferta de serviços, condomínios e acesso a eixos importantes sem ficar tão distante de várias regiões da cidade.",
-    watch: "Parque 10 é grande. Falar só o nome do bairro não basta: simule a rota a partir do endereço exato.",
+    goodFor:
+      "Boa oferta de serviços, condomínios e acesso a eixos importantes sem ficar tão distante de várias regiões da cidade.",
+    watch:
+      "Parque 10 é grande. Falar só o nome do bairro não basta: simule a rota a partir do endereço exato.",
   },
   {
     name: "Flores, Chapada e Dom Pedro",
     profile: "Praticidade e acesso",
-    goodFor: "Opções interessantes para quem prefere ficar perto de corredores centrais e quer comparar custo com bairros mais disputados.",
-    watch: "Faça a vistoria da rua e da drenagem no entorno; na época chuvosa, a micro-localização pesa muito.",
+    goodFor:
+      "Opções interessantes para quem prefere ficar perto de corredores centrais e quer comparar custo com bairros mais disputados.",
+    watch:
+      "Faça a vistoria da rua e da drenagem no entorno; na época chuvosa, a micro-localização pesa muito.",
   },
   {
     name: "Ponta Negra e Planalto",
     profile: "Condomínio, lazer e Zona Oeste",
     goodFor: "Quem valoriza condomínios, a orla e uma rotina mais voltada para a Zona Oeste.",
-    watch: "Pode ficar excelente ou cansativo dependendo da sua OM e da escola. Não feche pelo apelo da orla sem testar o horário de pico.",
+    watch:
+      "Pode ficar excelente ou cansativo dependendo da sua OM e da escola. Não feche pelo apelo da orla sem testar o horário de pico.",
   },
   {
     name: "Centro, Cachoeirinha e Japiim",
     profile: "Localização funcional para alguns destinos",
-    goodFor: "Podem fazer sentido quando o trabalho ou a rotina está mais ao Sul/Centro e o objetivo é reduzir deslocamento.",
-    watch: "A leitura precisa ser de rua, não de bairro. Visite de dia e à noite e confira estacionamento, ruído, comércio e segurança do quarteirão.",
+    goodFor:
+      "Podem fazer sentido quando o trabalho ou a rotina está mais ao Sul/Centro e o objetivo é reduzir deslocamento.",
+    watch:
+      "A leitura precisa ser de rua, não de bairro. Visite de dia e à noite e confira estacionamento, ruído, comércio e segurança do quarteirão.",
   },
 ]
 
@@ -256,8 +265,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d60-map-routine",
         topic: "moradia",
         title: "Monte o mapa da sua vida antes de procurar apartamento",
-        body:
-          "Marque sua OM, escola ou creche, academia, mercado e qualquer compromisso fixo. Depois procure imóveis a partir dessas rotas. Manaus pune a escolha feita só por reputação do bairro: um endereço muito bom do outro lado da cidade pode custar duas horas por dia.",
+        body: "Marque sua OM, escola ou creche, academia, mercado e qualquer compromisso fixo. Depois procure imóveis a partir dessas rotas. Manaus pune a escolha feita só por reputação do bairro: um endereço muito bom do outro lado da cidade pode custar duas horas por dia.",
         action: "Definir 3 regiões-alvo e simular os trajetos no horário real",
         sources: [sources.redditHousing, sources.redditHousing2026],
       },
@@ -265,8 +273,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d60-school",
         topic: "escola",
         title: "Fale com escolas antes de fechar o bairro",
-        body:
-          "Para quem chega com filhos, escola e moradia precisam ser decididas juntas. Pergunte por vaga na série, turno, adaptação no meio do ano, lista de material, transporte e horário de entrada/saída. Uma escola excelente pode virar uma escolha ruim se criar dois picos de trânsito por dia.",
+        body: "Para quem chega com filhos, escola e moradia precisam ser decididas juntas. Pergunte por vaga na série, turno, adaptação no meio do ano, lista de material, transporte e horário de entrada/saída. Uma escola excelente pode virar uma escolha ruim se criar dois picos de trânsito por dia.",
         action: "Montar uma shortlist de escolas e confirmar vaga, turno e calendário",
         sources: [sources.redditSchools],
       },
@@ -274,25 +281,23 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d60-move-mode",
         topic: "mudanca",
         title: "Decida o que vai por mudança, avião e mala de primeira semana",
-        body:
-          "Não mande tudo no mesmo lote. Separe uma mala de sobrevivência para 7 a 10 dias com documentos, fardamento essencial, remédios, roupa leve, itens da criança e o que você precisa para trabalhar. A mudança pode cumprir o prazo; sua rotina não pode depender disso.",
+        body: "Não mande tudo no mesmo lote. Separe uma mala de sobrevivência para 7 a 10 dias com documentos, fardamento essencial, remédios, roupa leve, itens da criança e o que você precisa para trabalhar. A mudança pode cumprir o prazo; sua rotina não pode depender disso.",
         action: "Criar inventário em três colunas: comigo, carga, comprar em Manaus",
       },
       {
         id: "d60-climate-kit",
         topic: "clima",
         title: "Revise o que sua casa precisa para o clima daqui",
-        body:
-          "Ar-condicionado não é item de luxo para muita gente em Manaus; é parte da rotina de sono e trabalho. Ao avaliar imóvel, olhe quantidade e estado dos aparelhos, incidência de sol, vedação, mofo e custo provável de climatização.",
-        action: "Adicionar ar-condicionado, incidência solar e sinais de umidade à vistoria do imóvel",
+        body: "Ar-condicionado não é item de luxo para muita gente em Manaus; é parte da rotina de sono e trabalho. Ao avaliar imóvel, olhe quantidade e estado dos aparelhos, incidência de sol, vedação, mofo e custo provável de climatização.",
+        action:
+          "Adicionar ar-condicionado, incidência solar e sinais de umidade à vistoria do imóvel",
         sources: [sources.inmetJuly, sources.inmetSeptember],
       },
       {
         id: "d60-health",
         topic: "saude",
         title: "Atualize vacinas e organize receitas contínuas",
-        body:
-          "Confira caderneta de adultos e crianças com antecedência e leve receitas, relatórios e exames de quem faz acompanhamento. A Semsa reforça a atualização vacinal e cita a febre amarela entre as vacinas que merecem atenção em viagens; quando aplicável ao caso, a proteção não é imediata.",
+        body: "Confira caderneta de adultos e crianças com antecedência e leve receitas, relatórios e exames de quem faz acompanhamento. A Semsa reforça a atualização vacinal e cita a febre amarela entre as vacinas que merecem atenção em viagens; quando aplicável ao caso, a proteção não é imediata.",
         action: "Revisar vacinas, receitas, relatórios e estoque de medicação para a transição",
         sources: [sources.vaccines],
       },
@@ -300,8 +305,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d60-pet",
         topic: "pets",
         title: "Planeje a chegada do pet como uma mudança separada",
-        body:
-          "Confirme regras da companhia aérea ou transportadora, caixa de transporte, vacinas e documentos veterinários. Também vale perguntar se o condomínio aceita o animal e como é o entorno para passeio; no calor, o horário muda bastante.",
+        body: "Confirme regras da companhia aérea ou transportadora, caixa de transporte, vacinas e documentos veterinários. Também vale perguntar se o condomínio aceita o animal e como é o entorno para passeio; no calor, o horário muda bastante.",
         action: "Confirmar transporte, documentos veterinários e regra do condomínio",
         sources: [sources.rabies],
       },
@@ -321,17 +325,16 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d30-rent",
         topic: "moradia",
         title: "Não pague sinal de imóvel que ninguém confiável visitou",
-        body:
-          "Se você ainda estiver fora de Manaus, use corretor com registro verificável ou alguém de confiança para visitar. Peça vídeo contínuo do imóvel e do corredor/rua, confira quem está negociando e leia contrato e vistoria. Pressa de transferência é exatamente o cenário em que anúncio falso funciona.",
-        action: "Validar corretor no CRECI, visitar o imóvel e revisar contrato/vistoria antes de pagar",
+        body: "Se você ainda estiver fora de Manaus, use corretor com registro verificável ou alguém de confiança para visitar. Peça vídeo contínuo do imóvel e do corredor/rua, confira quem está negociando e leia contrato e vistoria. Pressa de transferência é exatamente o cenário em que anúncio falso funciona.",
+        action:
+          "Validar corretor no CRECI, visitar o imóvel e revisar contrato/vistoria antes de pagar",
         sources: [sources.creci, sources.redditHousing],
       },
       {
         id: "d30-commute-test",
         topic: "mobilidade",
         title: "Teste o trajeto em terça ou quinta, não no domingo",
-        body:
-          "Abra o mapa no mesmo horário em que você vai sair para o trabalho e para buscar criança. Faça isso em mais de um dia. A diferença entre ‘perto’ e ‘prático’ aparece quando a cidade está funcionando de verdade.",
+        body: "Abra o mapa no mesmo horário em que você vai sair para o trabalho e para buscar criança. Faça isso em mais de um dia. A diferença entre ‘perto’ e ‘prático’ aparece quando a cidade está funcionando de verdade.",
         action: "Registrar tempo de ida e volta das 2 melhores opções de moradia",
         sources: [sources.redditHousing2026],
       },
@@ -339,8 +342,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d30-internet",
         topic: "internet",
         title: "Descubra qual internet funciona naquele prédio",
-        body:
-          "Cobertura no site da operadora é só o começo. Pergunte ao porteiro e a dois moradores quais provedores realmente estão instalados, se a fibra chega até o apartamento e como é a estabilidade. Se sua renda depende de conexão, tenha um plano B móvel.",
+        body: "Cobertura no site da operadora é só o começo. Pergunte ao porteiro e a dois moradores quais provedores realmente estão instalados, se a fibra chega até o apartamento e como é a estabilidade. Se sua renda depende de conexão, tenha um plano B móvel.",
         action: "Confirmar disponibilidade e opinião de vizinhos no endereço exato",
         sources: [sources.redditInternet],
       },
@@ -348,8 +350,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d30-utilities",
         topic: "casa",
         title: "Combine com o proprietário como água e energia serão entregues",
-        body:
-          "Defina por escrito se as contas chegam ativas e quando a titularidade muda. Águas de Manaus e Amazonas Energia oferecem troca de titularidade e outros serviços por canais próprios; isso fica muito mais simples quando você já tem matrícula/conta anterior e contrato em mãos.",
+        body: "Defina por escrito se as contas chegam ativas e quando a titularidade muda. Águas de Manaus e Amazonas Energia oferecem troca de titularidade e outros serviços por canais próprios; isso fica muito mais simples quando você já tem matrícula/conta anterior e contrato em mãos.",
         action: "Pedir ao locador última conta de água e energia e alinhar a troca de titularidade",
         sources: [sources.water, sources.energy],
       },
@@ -357,8 +358,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d30-car",
         topic: "carro",
         title: "Se o carro vai junto, decida a estratégia documental",
-        body:
-          "Quem muda o registro do veículo para o Amazonas precisa de vistoria e agendamento no Detran-AM. Não deixe para descobrir o fluxo depois que o carro chegou: confira documentos, pendências e o que será necessário para a mudança de município.",
+        body: "Quem muda o registro do veículo para o Amazonas precisa de vistoria e agendamento no Detran-AM. Não deixe para descobrir o fluxo depois que o carro chegou: confira documentos, pendências e o que será necessário para a mudança de município.",
         action: "Conferir CRLV-e, débitos, vistoria e agenda do Detran-AM",
         sources: [sources.detran],
       },
@@ -378,24 +378,21 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "arrival-first-night",
         topic: "mudanca",
         title: "Tenha plano para dormir sem depender da carga",
-        body:
-          "Se o imóvel estiver vazio, garanta colchão, roupa de cama, toalha e banho para a primeira noite. Quem chega com criança deve tratar isso como item crítico, junto com alimentação e um canto climatizado.",
+        body: "Se o imóvel estiver vazio, garanta colchão, roupa de cama, toalha e banho para a primeira noite. Quem chega com criança deve tratar isso como item crítico, junto com alimentação e um canto climatizado.",
         action: "Confirmar onde todos vão dormir nas primeiras 48 horas",
       },
       {
         id: "arrival-groceries",
         topic: "rotina",
         title: "Faça uma compra curta, não a compra do mês",
-        body:
-          "Nos primeiros dias, compre água, café da manhã, frutas, proteína simples, material de limpeza e itens de higiene. A compra grande faz mais sentido depois de você entender mercado, armazenamento, rotina e o quanto a casa aguenta sem virar depósito de caixas.",
+        body: "Nos primeiros dias, compre água, café da manhã, frutas, proteína simples, material de limpeza e itens de higiene. A compra grande faz mais sentido depois de você entender mercado, armazenamento, rotina e o quanto a casa aguenta sem virar depósito de caixas.",
         action: "Montar uma lista de 48 horas e deixar a compra grande para depois",
       },
       {
         id: "arrival-heat",
         topic: "clima",
         title: "Mude o ritmo antes de tentar vencer o calor",
-        body:
-          "Se você vem de clima mais ameno, não programe corrida, caminhada longa ou mudança pesada no meio da tarde nos primeiros dias. Beba água com frequência, use roupa leve e descubra quais horários funcionam para você e para as crianças.",
+        body: "Se você vem de clima mais ameno, não programe corrida, caminhada longa ou mudança pesada no meio da tarde nos primeiros dias. Beba água com frequência, use roupa leve e descubra quais horários funcionam para você e para as crianças.",
         action: "Reservar atividades externas para horários mais confortáveis na primeira semana",
         sources: [sources.inmetSeptember],
       },
@@ -403,16 +400,14 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "arrival-safety",
         topic: "seguranca",
         title: "Aprenda a rua antes de criar rotina automática",
-        body:
-          "Observe iluminação, movimento, entrada da garagem, ponto de embarque por aplicativo e onde você vai parar para descarregar compras. Segurança urbana é muito mais micro-local do que um rótulo de bairro.",
+        body: "Observe iluminação, movimento, entrada da garagem, ponto de embarque por aplicativo e onde você vai parar para descarregar compras. Segurança urbana é muito mais micro-local do que um rótulo de bairro.",
         action: "Fazer uma volta diurna e outra noturna no entorno imediato",
       },
       {
         id: "arrival-emergency",
         topic: "saude",
         title: "Salve os números de emergência agora, não quando precisar",
-        body:
-          "SAMU atende pelo 192. Polícia e Bombeiros usam 190 e 193. Em alagamento, risco de desabamento ou problema estrutural relacionado a chuva, a Defesa Civil de Manaus opera a Central 199 em regime 24 horas.",
+        body: "SAMU atende pelo 192. Polícia e Bombeiros usam 190 e 193. Em alagamento, risco de desabamento ou problema estrutural relacionado a chuva, a Defesa Civil de Manaus opera a Central 199 em regime 24 horas.",
         action: "Salvar 190, 192, 193 e 199 nos telefones da família",
         sources: [sources.samu, sources.civilDefense],
       },
@@ -432,8 +427,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d14-water-energy",
         topic: "casa",
         title: "Passe água e energia para a situação correta",
-        body:
-          "Com contrato e dados da unidade em mãos, regularize titularidade e cadastros. Aproveite para guardar matrícula, unidade consumidora e canais oficiais. Se houver instalação nova ou alteração elétrica, confirme o padrão de entrada antes de gastar com material.",
+        body: "Com contrato e dados da unidade em mãos, regularize titularidade e cadastros. Aproveite para guardar matrícula, unidade consumidora e canais oficiais. Se houver instalação nova ou alteração elétrica, confirme o padrão de entrada antes de gastar com material.",
         action: "Regularizar titularidade e salvar matrícula/unidade consumidora",
         sources: [sources.water, sources.energy, sources.energyStandard],
       },
@@ -441,8 +435,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d14-internet-install",
         topic: "internet",
         title: "Teste internet como ferramenta de trabalho, não só Speedtest",
-        body:
-          "Depois da instalação, faça chamada de vídeo, upload, streaming e o uso que realmente importa para você. Velocidade nominal não mostra rota ruim, perda de pacote ou Wi-Fi mal posicionado.",
+        body: "Depois da instalação, faça chamada de vídeo, upload, streaming e o uso que realmente importa para você. Velocidade nominal não mostra rota ruim, perda de pacote ou Wi-Fi mal posicionado.",
         action: "Testar conexão no uso real e corrigir Wi-Fi antes de organizar o escritório",
         sources: [sources.redditInternet],
       },
@@ -450,8 +443,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d14-passafacil",
         topic: "mobilidade",
         title: "Mesmo com carro, saiba usar o ônibus",
-        body:
-          "O PassaFácil pode ser solicitado por canais digitais e retirado em terminal. Talvez não seja seu transporte diário, mas ter a opção pronta ajuda dependente, filho mais velho, pane do carro e dias em que dirigir simplesmente não compensa.",
+        body: "O PassaFácil pode ser solicitado por canais digitais e retirado em terminal. Talvez não seja seu transporte diário, mas ter a opção pronta ajuda dependente, filho mais velho, pane do carro e dias em que dirigir simplesmente não compensa.",
         action: "Avaliar se alguém da família precisa emitir PassaFácil",
         sources: [sources.passafacil, sources.studentPass],
       },
@@ -459,24 +451,21 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d14-school-route",
         topic: "escola",
         title: "Ajuste a rotina escolar depois da primeira semana real",
-        body:
-          "Cronometre entrada e saída, veja onde estacionar, como fica a chuva e quem consegue buscar em emergência. Se houver transporte escolar, peça referência de outras famílias e combine claramente horário e ponto.",
+        body: "Cronometre entrada e saída, veja onde estacionar, como fica a chuva e quem consegue buscar em emergência. Se houver transporte escolar, peça referência de outras famílias e combine claramente horário e ponto.",
         action: "Fechar plano A e plano B para levar e buscar as crianças",
       },
       {
         id: "d14-maintenance",
         topic: "casa",
         title: "Faça manutenção preventiva do ar-condicionado cedo",
-        body:
-          "Se o aparelho veio com o imóvel e você não conhece o histórico, limpeza e avaliação inicial evitam descobrir filtro saturado ou dreno ruim na pior noite. Fotografe qualquer problema preexistente e alinhe responsabilidade com o locador.",
+        body: "Se o aparelho veio com o imóvel e você não conhece o histórico, limpeza e avaliação inicial evitam descobrir filtro saturado ou dreno ruim na pior noite. Fotografe qualquer problema preexistente e alinhe responsabilidade com o locador.",
         action: "Verificar limpeza, dreno e funcionamento dos aparelhos da casa",
       },
       {
         id: "d14-pet-vet",
         topic: "pets",
         title: "Escolha veterinário e rota de emergência antes de precisar",
-        body:
-          "Depois que o pet assentou, localize clínica de rotina e atendimento 24h razoavelmente próximos. Confira também vacinação antirrábica e proteção contra parasitas conforme orientação veterinária local.",
+        body: "Depois que o pet assentou, localize clínica de rotina e atendimento 24h razoavelmente próximos. Confira também vacinação antirrábica e proteção contra parasitas conforme orientação veterinária local.",
         action: "Salvar clínica de rotina e opção de emergência para o pet",
         sources: [sources.rabies],
       },
@@ -496,8 +485,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d30plus-market",
         topic: "rotina",
         title: "Escolha mercado, feira e farmácia de rotina",
-        body:
-          "Compare preço, estacionamento, horário e tempo de fila. Para frutas regionais, farinha, peixes e ingredientes amazônicos, vale conhecer mercados e feiras além das grandes redes — mas escolha um lugar prático para o dia comum.",
+        body: "Compare preço, estacionamento, horário e tempo de fila. Para frutas regionais, farinha, peixes e ingredientes amazônicos, vale conhecer mercados e feiras além das grandes redes — mas escolha um lugar prático para o dia comum.",
         action: "Definir um mercado rápido, um mercado grande e uma farmácia de referência",
         sources: [sources.tourism],
       },
@@ -505,8 +493,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d30plus-health-network",
         topic: "saude",
         title: "Mapeie onde sua família vai buscar atendimento",
-        body:
-          "Separe urgência de consulta de rotina. Salve a UBS de referência, hospital ou pronto atendimento do seu plano quando houver e o caminho até eles. Em emergência com risco à vida, o SAMU orienta pelo 192.",
+        body: "Separe urgência de consulta de rotina. Salve a UBS de referência, hospital ou pronto atendimento do seu plano quando houver e o caminho até eles. Em emergência com risco à vida, o SAMU orienta pelo 192.",
         action: "Salvar UBS, atendimento do plano e rota de urgência",
         sources: [sources.samu],
       },
@@ -514,8 +501,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d30plus-car-rain",
         topic: "carro",
         title: "Aprenda onde sua rota acumula água",
-        body:
-          "Na estação chuvosa, uma via que funciona todos os dias pode mudar rápido sob chuva forte. Observe os pontos críticos das suas rotas e não tente atravessar trecho alagado para economizar alguns minutos.",
+        body: "Na estação chuvosa, uma via que funciona todos os dias pode mudar rápido sob chuva forte. Observe os pontos críticos das suas rotas e não tente atravessar trecho alagado para economizar alguns minutos.",
         action: "Identificar uma rota alternativa para casa, escola e trabalho",
         sources: [sources.civilDefense],
       },
@@ -523,8 +509,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d30plus-culture",
         topic: "lazer",
         title: "Faça um primeiro fim de semana de Manaus, sem maratona turística",
-        body:
-          "Teatro Amazonas e Largo de São Sebastião formam uma boa primeira leitura do Centro. Em outro dia, conheça Mercado Adolpho Lisboa e a Ponta Negra. Melhor ver a cidade em blocos do que tentar ‘zerar Manaus’ num sábado de calor.",
+        body: "Teatro Amazonas e Largo de São Sebastião formam uma boa primeira leitura do Centro. Em outro dia, conheça Mercado Adolpho Lisboa e a Ponta Negra. Melhor ver a cidade em blocos do que tentar ‘zerar Manaus’ num sábado de calor.",
         action: "Escolher dois passeios urbanos para fazer com calma",
         sources: [sources.tourism, sources.teatro],
       },
@@ -532,8 +517,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d30plus-food",
         topic: "lazer",
         title: "Descubra o Amazonas pelo prato",
-        body:
-          "Tambaqui, matrinxã, pirarucu, x-caboquinho, tucumã, farinha do Uarini e frutas regionais aparecem de jeitos muito diferentes pela cidade. Comece simples: pergunte a quem mora aqui onde vai quando quer comer bem, não onde leva turista.",
+        body: "Tambaqui, matrinxã, pirarucu, x-caboquinho, tucumã, farinha do Uarini e frutas regionais aparecem de jeitos muito diferentes pela cidade. Comece simples: pergunte a quem mora aqui onde vai quando quer comer bem, não onde leva turista.",
         action: "Experimentar um peixe regional e um café da manhã com tucumã",
         sources: [sources.tourism],
       },
@@ -553,24 +537,21 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d60plus-community",
         topic: "rotina",
         title: "Entre nas comunidades que realmente fazem parte da sua vida",
-        body:
-          "Vila, escola, esporte, igreja, turma de corrida ou outra circunstância recorrente: é aí que aparecem os melhores atalhos locais. O Bivaque existe para tirar esse conhecimento do ruído e fazer a boa resposta continuar útil depois.",
+        body: "Vila, escola, esporte, igreja, turma de corrida ou outra circunstância recorrente: é aí que aparecem os melhores atalhos locais. O Bivaque existe para tirar esse conhecimento do ruído e fazer a boa resposta continuar útil depois.",
         action: "Entrar nas comunidades e grupos que correspondem à sua rotina real",
       },
       {
         id: "d60plus-review-home",
         topic: "moradia",
         title: "Reavalie a casa com um mês de uso real",
-        body:
-          "Veja conta de energia, ruído, trânsito, internet, calor nos cômodos e pequenos defeitos que só aparecem com rotina. Se algo precisa ser negociado com o locador, faça enquanto a vistoria e a chegada ainda estão frescas.",
+        body: "Veja conta de energia, ruído, trânsito, internet, calor nos cômodos e pequenos defeitos que só aparecem com rotina. Se algo precisa ser negociado com o locador, faça enquanto a vistoria e a chegada ainda estão frescas.",
         action: "Fazer uma revisão da casa e registrar pendências com foto",
       },
       {
         id: "d60plus-nature",
         topic: "lazer",
         title: "Saia da capital com operador e plano, não por impulso",
-        body:
-          "Encontro das Águas, Presidente Figueiredo e outros passeios de natureza são parte da experiência de morar aqui. Confirme operador, horário, alimentação, roupa, sinal de celular e condições do passeio; quando houver água e trilha envolvidas, improviso custa mais.",
+        body: "Encontro das Águas, Presidente Figueiredo e outros passeios de natureza são parte da experiência de morar aqui. Confirme operador, horário, alimentação, roupa, sinal de celular e condições do passeio; quando houver água e trilha envolvidas, improviso custa mais.",
         action: "Planejar um passeio de natureza com logística verificada",
         sources: [sources.tourism],
       },
@@ -578,8 +559,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d60plus-culture-calendar",
         topic: "lazer",
         title: "Acompanhe a agenda cultural, não só os cartões-postais",
-        body:
-          "A Secretaria de Cultura mantém programação de teatros, galerias e espaços públicos. Depois que você já viu o Teatro Amazonas, a cidade fica mais interessante quando passa a acompanhar o que está acontecendo nele e ao redor do Largo.",
+        body: "A Secretaria de Cultura mantém programação de teatros, galerias e espaços públicos. Depois que você já viu o Teatro Amazonas, a cidade fica mais interessante quando passa a acompanhar o que está acontecendo nele e ao redor do Largo.",
         action: "Salvar a agenda de cultura do Amazonas nos favoritos",
         sources: [sources.culture],
       },
@@ -587,8 +567,7 @@ export const MANAUS_PHASES: GuidePhase[] = [
         id: "d60plus-share",
         topic: "rotina",
         title: "Devolva um bizu bom para quem está chegando",
-        body:
-          "Se uma escola, prestador, clínica, transportadora ou solução de mudança realmente funcionou para você, registre a indicação com contexto. ‘É bom’ ajuda pouco; diga para quem serve, em que situação e o que você faria diferente.",
+        body: "Se uma escola, prestador, clínica, transportadora ou solução de mudança realmente funcionou para você, registre a indicação com contexto. ‘É bom’ ajuda pouco; diga para quem serve, em que situação e o que você faria diferente.",
         action: "Registrar pelo menos uma indicação útil no Bivaque",
       },
     ],

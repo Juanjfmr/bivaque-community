@@ -171,8 +171,8 @@ export function CityReference({
           Guia de chegada
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Moradia, escola, mudança, saúde, transporte e rotina da casa — um roteiro de D-60 a
-          D+60, somado às indicações locais curadas pela comunidade.
+          Referência permanente para quem chega. Em Manaus, inclui o roteiro D-60 a D+60; nas demais
+          cidades, cresce com as indicações locais curadas pela comunidade.
         </p>
         <div className="mt-3">
           <Link
