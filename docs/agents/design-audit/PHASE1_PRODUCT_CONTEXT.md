@@ -141,10 +141,7 @@ The reference may propose the best interaction architecture for the product, but
 - Community participation and durable local knowledge are central to the pilot value proposition.
 - Service-provider discovery is a product capability, but Bivaque does not need to intermediate payment in the pilot.
 - Private one-to-one chat is not required for the pilot; do not design the product around private messaging as a foundational dependency.
-- The design should not assume every future capability deserves a new top-level destination.
 - New dependencies, component libraries, or state-management systems are not authorized merely by the reference-design exercise.
-
-The final bullet about top-level destinations is a product-complexity constraint, not a statement that any incumbent navigation count or layout is correct. The reference must independently derive the appropriate information architecture.
 
 ## 9. Technical envelope
 
