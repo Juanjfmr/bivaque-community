@@ -2,11 +2,11 @@
 
 > **Status: NOT YET GENERATED.**
 >
-> This file must be produced in a fresh context under the contamination rules in `README.md`. Do not fill it from a context that has read `docs/agents/DESIGN_SPEC.md`, `docs/agents/VISUAL_GUIDE.md`, current UI source, or current screenshots.
+> This file must be produced in a fresh context under the contamination rules in `README.md`. Do not fill it from a context that has read `docs/BIVAQUE.md`, `docs/agents/DESIGN_SPEC.md`, `docs/agents/VISUAL_GUIDE.md`, current UI source, current screenshots, or any other forbidden local input.
 
 ## Generation contract
 
-The generator receives product truth + stack constraints + current standards/specialist sources, but not the incumbent design solution.
+The generator receives only the sanitized product brief in `PHASE1_PRODUCT_CONTEXT.md`, the allowlisted dependency envelope, and current standards/specialist sources. It does not receive the incumbent design solution.
 
 The output must answer:
 
@@ -14,11 +14,13 @@ The output must answer:
 
 Do not compare against the current Bivaque design. Do not preserve a choice merely because it may already exist.
 
+If a necessary product constraint is missing from `PHASE1_PRODUCT_CONTEXT.md`, do not inspect other repository files. Follow the `PHASE_1_INPUT_GAP` rule in `README.md`.
+
 ## Required structure
 
 ### 1. Product interaction principles
 
-Define the smallest set of durable principles that follow from Bivaque's actual product problem and trust model.
+Define the smallest set of durable principles that follow from the sanitized product problem and trust model.
 
 For each principle record:
 
@@ -43,11 +45,11 @@ Specify:
 - role-specific surfaces;
 - mobile/desktop implications.
 
-Do not hard-code a number of destinations or containers unless product evidence justifies it.
+Do not hard-code a number of destinations or containers unless independent product evidence justifies it.
 
 ### 3. Core journeys
 
-Cover at minimum the current product-significant journeys described in `docs/BIVAQUE.md`, including controlled access, locality/community participation, content consumption/creation, discovery, moderation/reporting where applicable, and service-provider/vitrine boundaries where applicable.
+Cover at minimum the product-significant journeys defined in `PHASE1_PRODUCT_CONTEXT.md`, including controlled access, locality/community participation, scoped content consumption/creation, durable knowledge recovery, local/service discovery, relevant events/information, membership-context understanding, and authorized governance where applicable.
 
 For each journey define:
 
@@ -181,4 +183,5 @@ Reject these failure modes:
 - framework advice from model memory instead of version-matched docs;
 - adding dependencies because an external example uses them;
 - redesigning product truth instead of the interface around it;
-- mentioning or anticipating incumbent design choices.
+- mentioning, anticipating, or inferring incumbent design choices;
+- opening any non-allowlisted local file to fill a product-context gap.
