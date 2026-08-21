@@ -12,140 +12,135 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 > **DRAFT.** Applies to `apps/web/**`.
 >
-> This file is intentionally **not** a general frontend handbook. `finfin/awesome-frontend-skills` is the curated discovery index for external frontend skills; Bivaque keeps only project-specific constraints here.
+> Keep general framework/design knowledge in version-matched docs or external skills. Keep only Bivaque-specific constraints and routing here.
 
-## Frontend skill sources
+## Authority and precedence
 
-Curated index:
+For frontend work, use this order:
 
-`https://github.com/finfin/awesome-frontend-skills`
+1. `docs/BIVAQUE.md`, applicable ADRs, and security/privacy contracts — product truth;
+2. `docs/agents/DESIGN_SPEC.md` and `docs/agents/VISUAL_GUIDE.md` — Bivaque visual/interaction truth;
+3. root and nearest scoped `AGENTS.md` — repository constraints;
+4. version-matched Next.js docs bundled with the installed package;
+5. selected external skills relevant to the task;
+6. generic model knowledge.
 
-The index is **discovery**, not normative authority. Prefer official/maintainer-owned skills and current upstream repositories over copying guidance from the index itself.
+External guidance never authorizes a new dependency, component library, state library, visual language, product behavior, or trust-boundary change by itself.
 
-### Base guidance for React work
+## External skill policy
 
-For React/Next.js code, load:
+`https://github.com/finfin/awesome-frontend-skills` is a **discovery catalog only**. It is not normative and may lag its upstream sources. Always verify the current upstream skill before relying on an entry.
 
-- Vercel Engineering — `vercel-react-best-practices`
-  - upstream: `vercel-labs/agent-skills`
-  - path: `skills/react-best-practices/SKILL.md`
+Load the smallest set of skills needed for the task. Do not preload the catalog.
 
-Use it for React components, pages, data fetching, server/client performance, bundle behavior, rendering, and refactors.
+### Next.js — framework knowledge
 
-### Next.js guidance
+For Next.js APIs and conventions, the authoritative technical reference is the documentation bundled with the installed Next version:
 
-Do **not** install the retired `next-best-practices` skill referenced by older versions of the curated index.
+`node_modules/next/dist/docs/`
 
-For Next.js 16.3+, Vercel moved version-matched reference knowledge into:
+Do not use the retired `next-best-practices` skill. Next.js 16.3+ intentionally moved framework knowledge into version-matched bundled docs and the managed block at the top of this file.
 
-- the bundled docs at `node_modules/next/dist/docs/`;
-- the auto-generated agent rules at the top of this file.
+### Next.js — runtime verification
 
-Current workflow skills, when relevant, live in:
+For non-trivial Next.js behavior changes, prefer the official workflow skill when its prerequisites are already available:
 
-`https://github.com/vercel/next.js/tree/canary/skills`
+- upstream: `vercel/next.js`
+- skill: `next-dev-loop`
 
-Read the installed Next 16 docs before using framework APIs that may have changed from model training data.
+It cross-checks the running `next dev` server through `/_next/mcp` with a real browser and is specifically designed to prove runtime behavior after edits.
 
-### User-facing UI work
+Do not install or upgrade `agent-browser`, Next.js, or other tooling as an incidental side effect merely to invoke this skill. If its prerequisites are unavailable, use the repository's existing browser/Playwright/runtime verification path instead.
 
-For building or materially changing user-facing UI, also load:
+### React implementation and performance
 
-- Addy Osmani — `frontend-ui-engineering`
-  - upstream: `addyosmani/agent-skills`
-  - path: `skills/frontend-ui-engineering/SKILL.md`
+For non-trivial React/Next.js implementation, data-fetching, rendering, bundle, or refactor work, use:
 
-This covers component architecture, responsive behavior, accessibility, interaction quality, states, and avoiding generic AI-generated UI patterns.
+- upstream: `vercel-labs/agent-skills`
+- skill: `vercel-react-best-practices`
+- path: `skills/react-best-practices/SKILL.md`
 
-Bivaque's own `docs/agents/DESIGN_SPEC.md` and `docs/agents/VISUAL_GUIDE.md` override generic aesthetic advice. External skills may improve execution; they may not redesign the product's visual language by themselves.
+This is primarily a performance/architecture guide, not a product or design authority. Do not add SWR, a cache, or another dependency solely because an external rule uses it as an example.
 
-### Visual design / polish
+### Reusable component APIs
 
-For explicit visual redesign or polish tasks, the project may additionally use:
+When creating or materially redesigning a reusable Bivaque wrapper/component API, optionally use:
 
-- `pbakaus/impeccable` → `frontend-design`
+- upstream: `vercel/components.build`
+- skill: `building-components`
 
-Use it as a craft aid under the Bivaque design system and visual audit, never as permission to introduce a new visual direction outside the task.
+Use it for composition, accessibility, controlled/uncontrolled APIs, typing, and component contracts. HeroUI v3 and existing Bivaque wrappers remain the implementation foundation; do not rebuild primitives that HeroUI already owns.
 
-### Playwright work
+`vercel-labs/agent-skills` → `vercel-composition-patterns` may be consulted for a specific component-API refactor, but it is not baseline context.
 
-When writing, repairing, restructuring, or debugging Playwright tests, load:
+### UI/design craft
 
-- Currents — `playwright-best-practices`
-  - upstream: `currents-dev/playwright-best-practices-skill`
-  - path: `playwright-best-practices/SKILL.md`
+Generic UI guidance is **not mandatory baseline context** because Bivaque already has a project-specific design system and visual rubric.
 
-Do not load Playwright guidance for tasks that do not touch browser/E2E behavior.
+`addyosmani/agent-skills` → `frontend-ui-engineering` may be consulted for a specific accessibility/responsive/UI-engineering question, but its generic file-structure, state-management, breakpoint, and component-size guidance does not override this repository.
 
-## Skill loading rule
+For explicit visual critique, audit, or polish work, Impeccable may be used as an optional craft tool:
 
-**Load only the skills relevant to the task.**
+- upstream: `pbakaus/impeccable`
+- current skill: `impeccable`
 
-Typical selection:
+Do **not** refer to the obsolete `frontend-design` skill name from older catalogs.
 
-| Task | Required external guidance |
-|---|---|
-| React logic/refactor | Vercel React |
-| Next.js route/RSC/Server Action | Vercel React + installed Next 16 docs |
-| new or materially changed UI | Vercel React + frontend-ui-engineering + Next docs as needed |
-| visual redesign/polish | above + frontend-design |
-| Playwright/E2E | playwright-best-practices + framework guidance only if app code also changes |
+Do not run Impeccable `init`, `document`, install hooks, create/replace root `PRODUCT.md` or `DESIGN.md`, or establish a new visual world unless the task explicitly authorizes changing the repository's design-context architecture. Bivaque's existing design documents remain authoritative.
 
-Do not preload the entire `awesome-frontend-skills` catalog. More skills are not inherently better context.
+### Playwright
 
-If a referenced skill is installed in the active harness, use the installed skill. Otherwise read the current upstream `SKILL.md` before implementation.
+When writing, repairing, restructuring, or debugging Playwright tests, use:
+
+- upstream: `currents-dev/playwright-best-practices-skill`
+- skill: `playwright-best-practices`
+
+Treat it as test-authoring guidance. Its generic parallelism, fixture, auth, data, and server examples do not override Bivaque's seed/reset/isolation contracts.
+
+`microsoft/playwright-cli` → `playwright-cli` is browser-automation tooling, not the repository's test-design standard and is not required for ordinary E2E changes.
+
+Playwright-specific local rules should eventually live in `tests/e2e/AGENTS.md`; until then, the constraints below apply.
 
 ## Local architecture
 
-These are Bivaque constraints, not suggestions from external skills:
+These are Bivaque constraints:
 
-- Next.js **16.3.x**, server runtime.
+- Next.js **16.3.x**, server runtime; `next dev` is the local dev command.
 - React **19**.
 - HeroUI **v3** is the only component library. Do not add shadcn, Radix, Headless UI, or a second primitive system.
 - Tailwind **4**.
 - Supabase access uses `@supabase/ssr` and `@supabase/supabase-js`.
-- Shared cross-boundary contracts live in `packages/{contracts,domain,tokens}` when genuinely shared.
-- Existing token-aware wrappers under `apps/web/app/components/bivaque/` are part of the design-system contract.
-
-## Local precedence
-
-For frontend work, apply instructions in this order:
-
-1. product/security decisions in `docs/BIVAQUE.md` and applicable ADRs;
-2. local Bivaque design system and visual rubric;
-3. this scoped file and root repository contracts;
-4. official/selected external frontend skills;
-5. generic model knowledge.
-
-An external best practice does not authorize changing a Bivaque product decision, library choice, design language, or trust boundary.
+- Shared cross-boundary contracts belong in `packages/{contracts,domain,tokens}` only when genuinely shared.
+- Token-aware wrappers under `apps/web/app/components/bivaque/` are part of the design-system contract.
 
 ## Before changing behavior
 
 - Read the nearest implementation and tests first.
 - Reconcile product-changing work against `docs/BIVAQUE.md` and `docs/PRODUCT_STATUS.md`.
-- For local mechanical edits, do not preload unrelated product history.
-- For Supabase/auth/RLS/database behavior, also follow `supabase/AGENTS.md` and the official Supabase skills.
+- Read the relevant installed Next.js docs before using framework APIs that may have changed from training data.
+- For Supabase/Auth/RLS/database behavior, also follow `supabase/AGENTS.md` and the official Supabase skills.
+- Do not turn a local mechanical edit into a redesign or architecture migration.
 
 ## Runtime evidence
 
 **Existence is not evidence. Runtime behavior is evidence.**
 
-A page, component, Server Action, RPC call, migration, or E2E file existing in the tree does not prove the user flow works.
+A page, component, Server Action, RPC call, migration, or test file in the tree does not prove a user flow works.
 
-For changed interaction behavior, verify at the closest layer where the failure can still occur:
+For changed behavior, prove the property at the closest layer where it can still fail:
 
-- unit/component test for isolated deterministic behavior;
-- server/API integration evidence for server behavior;
-- browser/Playwright evidence for forms, navigation, compound controls, hydration, and state transitions;
-- database evidence when persistence or authorization is part of the flow.
+- pure deterministic logic → unit test;
+- server behavior → targeted integration/API evidence;
+- forms, navigation, compound controls, hydration, state transitions → real browser/Playwright evidence;
+- persistence/authorization → database evidence plus runtime evidence when the boundary crosses into the app.
 
-A query failure rendered as an empty list is not a valid empty state.
+A failed query rendered as an empty list is a bug, not a valid empty state.
 
-## Bivaque-specific server/client boundary
+## Server/client trust boundary
 
 - `service_role` is privilege, not caller identity.
-- Server Actions and route handlers performing privileged work must resolve the authenticated caller from real server context.
-- Never trust caller identity, role, locality, community, ownership, or authorization merely because it arrived in `FormData`, query params, hidden inputs, or client state.
+- Privileged Server Actions and route handlers resolve the real authenticated caller from server context.
+- Never trust identity, role, locality, community, ownership, or authorization merely because it arrived in `FormData`, query params, hidden inputs, or client state.
 - Do not silently discard Supabase/PostgREST errors on critical paths.
 
 Detailed database rules live in `supabase/AGENTS.md`.
@@ -153,15 +148,15 @@ Detailed database rules live in `supabase/AGENTS.md`.
 ## HeroUI and local components
 
 - Reuse a Bivaque wrapper when it already represents the intended pattern.
-- Do not create wrappers just to hide imports.
-- Direct HeroUI usage is acceptable when no local wrapper represents the pattern, subject to the current design-system contract.
+- Do not create wrappers merely to hide imports.
+- Direct HeroUI usage is acceptable when no local wrapper owns the pattern.
 - Preserve required providers when modifying layouts/shells.
-- Compound HeroUI controls must be proven actionable in a real browser when their behavior changes; JSX presence and typecheck are insufficient.
-- Do not migrate working UI to another component primitive as incidental cleanup.
+- Prove changed compound-control behavior in a real browser; JSX presence and typecheck are insufficient.
+- Do not migrate working UI to another primitive/library as incidental cleanup.
 
 ## User-facing states
 
-Where relevant, asynchronous surfaces must deliberately distinguish:
+Where relevant, asynchronous surfaces distinguish deliberately between:
 
 - loading;
 - true empty;
@@ -169,21 +164,19 @@ Where relevant, asynchronous surfaces must deliberately distinguish:
 - recoverable error;
 - successful populated state.
 
-Do not manufacture blank UI by swallowing failures.
+Do not create blank UI by swallowing failures.
 
-## Bivaque test/data constraint
+## E2E data boundary
 
 E2E uses the real development contract in `supabase/seed.sql`.
 
 pgTAP uses separate transactional fixtures.
 
-Never infer E2E entity UUIDs from pgTAP fixture conventions.
-
-When touching Playwright, follow both the selected Playwright skill and the repository's seed/reset constraints.
+Never infer E2E entity UUIDs from pgTAP fixture conventions. External Playwright examples do not override this rule.
 
 ## Local validation
 
-From repository root, use the pinned project commands:
+From repository root:
 
 ```sh
 npx pnpm@11.18.0 gate --fast
@@ -191,24 +184,24 @@ npx pnpm@11.18.0 gate
 npx pnpm@11.18.0 build
 ```
 
-Run targeted tests during iteration. UI work also follows the repository visual-audit contract.
+Run targeted tests during iteration. UI changes also follow the repository visual-audit contract. Interaction-dependent changes require browser-level proof.
 
-## Definition of done for `apps/web`
+## Definition of done
 
 A frontend change is not done until:
 
 - the changed property is directly evidenced at the appropriate layer;
-- changed failure/empty/loading states are deliberate;
+- changed loading/error/empty states are deliberate;
 - authorization-sensitive behavior has allowed and denied evidence;
-- relevant runtime errors are consumed explicitly rather than hidden;
+- relevant runtime errors are surfaced/handled rather than hidden;
 - required root gates pass;
 - interaction-dependent changes have browser-level proof;
 - visual changes satisfy Bivaque's visual audit when applicable.
 
-## Questions to settle before this becomes final
+## Decisions still open
 
-1. Should these external skills be installed and versioned inside the repository/harness, or resolved from current upstream on demand?
-2. Should `frontend-ui-engineering` be mandatory for every UI diff or only material UI/interaction work?
-3. Should `frontend-design` remain conditional to redesign/polish, or become part of every visual-audit remediation loop?
-4. Should Playwright guidance move later into a dedicated `tests/e2e/AGENTS.md`, leaving only a pointer here?
-5. Which local frontend rules can become executable scope/a11y checks and disappear from this file entirely?
+1. Pin/install selected external skills in the repository/harness versus resolving them upstream on demand.
+2. Add `next-dev-loop` + its browser prerequisite to the supported harness toolchain versus keeping it optional.
+3. Move Playwright local rules into `tests/e2e/AGENTS.md`.
+4. Decide whether Impeccable should remain purely opt-in or become an approved visual-audit tool under a constrained command subset.
+5. Promote recurring frontend failures into executable scope/a11y/runtime checks so this file can shrink further.
