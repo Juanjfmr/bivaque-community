@@ -1,191 +1,143 @@
-# supabase — scoped agent instructions
+# Supabase — scoped agent instructions
 
-> **DRAFT.** This file defines database/auth/storage-local guidance only. Root `AGENTS.md` remains authoritative until the repository instruction architecture is redesigned.
+> **DRAFT.** Applies to `supabase/**` and to any change whose correctness depends on Supabase Database, Auth, Storage, RLS, RPCs, grants, Cron, `pg_net`, or local Supabase state.
+>
+> This file is intentionally **not** a Supabase handbook. General Supabase/Postgres practice comes from the official Supabase agent skills. This file contains only Bivaque-specific constraints and workflow.
 
-## Scope
+## Mandatory upstream instructions
 
-Applies to `supabase/**` and to any change whose correctness depends on schema, RLS, grants, RPCs, auth context, Storage policies, database jobs, or seed state.
+For **every Supabase task**, load and follow the official Supabase skill from:
 
-The goal of this file is to keep trust-boundary rules close to the database instead of repeating them in every agent prompt.
+- `supabase/agent-skills` → `skills/supabase/SKILL.md`
 
-## Sources of truth
+For **anything that writes or changes Postgres**, including a one-column migration, RLS policy, SQL query, function, trigger, index, pgTAP assertion, `pg_cron` job, or schema design, also load:
 
-- Applied schema history: `supabase/migrations/`.
-- Generated public client types: `supabase/database.generated.ts`.
-- Database behavioral tests: `supabase/tests/*.sql`.
-- Development/E2E data: `supabase/seed.sql`.
-- Product authorization intent: `docs/BIVAQUE.md` + relevant ADRs.
-- Implemented-state inventory: `docs/PRODUCT_STATUS.md`.
+- `supabase/agent-skills` → `skills/supabase-postgres-best-practices/SKILL.md`
 
-Generated types are not proof that the currently running database exposes the same behavior. Migrations and runtime evidence win.
+Canonical upstream repository:
 
-## Non-negotiable trust boundaries
+`https://github.com/supabase/agent-skills`
 
-- Never persist raw CPF, Portal payload, military organization, rank, residential address, or verification documents beyond their allowed lifetime.
-- The `private` schema is not a public application API. Keep it outside generated public client types and Data API exposure.
-- RLS must remain enabled and forced where the current schema contract requires it.
-- `service_role` bypasses RLS. Treat every use as privileged code that must establish authorization separately.
-- Scope data and the policies that enforce that scope must land together. Do not add a scope column now and defer its policy.
-- Never weaken a policy, grant, or SECURITY DEFINER boundary merely to make a test or UI path pass.
+If the harness has these skills installed, use the installed skills. Otherwise read the current upstream instructions before implementation.
 
-## Migrations
+### Precedence
 
-- Never edit an applied migration.
-- Create a new timestamped migration with the pinned Supabase CLI.
-- Keep a migration focused on one coherent schema/security change when practical.
-- A migration that creates or changes authorization must ship with tests for the same property.
-- When changing a function signature, search every application call site and every pgTAP caller before declaring the migration complete.
-- When dropping or renaming a column/function/table, search later migrations too; PL/pgSQL bodies can preserve references that only fail at runtime.
+1. Product/security decisions recorded in this repository define **what Bivaque is allowed to do**.
+2. Official Supabase agent skills define **how Supabase/Postgres work should be performed safely and correctly**.
+3. This file defines **Bivaque's local Supabase workflow and reproducibility constraints**.
 
-Canonical creation command:
+If current Supabase guidance conflicts with a locally pinned version/configuration, do not silently upgrade or rewrite the project. Verify the pinned version, explain the incompatibility, and treat an upgrade as its own change.
+
+## Bivaque sources of truth
+
+- Migration history: `supabase/migrations/`
+- Public generated types: `supabase/database.generated.ts`
+- Database tests: `supabase/tests/*.sql`
+- Local runtime/E2E data: `supabase/seed.sql`
+- Product authorization intent: `docs/BIVAQUE.md` + applicable ADRs
+- Implemented-state inventory: `docs/PRODUCT_STATUS.md`
+
+Generated types, old plans, and application wrappers are not proof of the clean database state.
+
+## Local project constraints
+
+- This repository currently uses **imperative migrations**. There is no declarative `supabase/schemas/` workflow to substitute without an explicit project decision.
+- Supabase CLI is pinned by the repository. Discover commands from the installed version with `--help`; do not assume latest CLI behavior.
+- Never edit an applied migration. Add a new migration through the pinned CLI.
+- Never use `--linked` for agent-driven destructive operations.
+- Generate client types from the **`public` schema only**. The trust schema must remain outside generated public client types.
+- The `private` schema is not application-facing Data API surface.
+- Never persist data prohibited by the Bivaque privacy contract, including raw CPF, Portal payload, military organization/rank where prohibited, residential address, or verification documents beyond their allowed lifetime.
+- A scope field and the RLS/policies that enforce that scope land together.
+
+Canonical migration creation:
 
 ```sh
 npx pnpm@11.18.0 exec supabase migration new <name>
 ```
 
-## Authorization model: caller identity is explicit evidence
+## Bivaque-specific authorization trap
 
-Do not conflate these concepts:
+Recent runtime failures established a recurring project-specific pattern:
 
-- authenticated database caller;
-- application user whose action is being performed;
-- privileged `service_role` connection;
-- operator/community-owner/moderator authorization.
+**`service_role` is not the application caller.**
 
-A function invoked through `service_role` cannot rely on `auth.uid()` or `auth.jwt()` to identify the application caller unless the connection actually carries that user JWT.
+When application code calls an RPC through a `service_role` client, do not assume `auth.uid()` or `auth.jwt()` inside that RPC identifies the human user. The privileged connection may carry no user JWT at all.
 
-When application code invokes a privileged RPC on behalf of a user:
+For service-role-mediated user actions:
 
-1. resolve the user from authenticated server context;
-2. pass only the minimum caller identity/context required;
-3. re-check authorization inside the database or another authoritative server boundary;
-4. test both the allowed caller and at least one denied caller.
+1. resolve the real user from authenticated server context;
+2. pass only the caller/context required by the RPC;
+3. authorize again at an authoritative server/database boundary;
+4. prove both allowed and denied cases.
 
-Never use a target object’s `user_id` as evidence that the caller is authorized to mutate that object.
+Do not use the target object's `user_id` as caller identity.
 
-## SECURITY DEFINER functions
+This rule supplements the official Supabase guidance; it does not replace its SECURITY DEFINER/RLS checklist.
 
-For every new or materially changed SECURITY DEFINER function:
-
-- set an explicit safe `search_path` according to existing repository conventions;
-- grant EXECUTE only to roles that need it;
-- validate caller/target/scope relationships inside the function when RLS is bypassed;
-- avoid returning more data than the caller needs;
-- add positive and negative tests;
-- inspect whether the function is called from RLS policies and preserve recursion-safe structure.
-
-A SECURITY DEFINER function is a privilege boundary, not a convenience wrapper.
-
-## RLS proof standard
-
-For permission-sensitive behavior, prove the property, not merely the policy text.
-
-At minimum consider:
-
-1. authorized user succeeds;
-2. unauthorized user fails;
-3. user from another locality/community/group fails when cross-scope access is forbidden;
-4. direct database/API access cannot bypass a UI-only restriction;
-5. service-role application paths perform their own authorization where necessary.
-
-If a read denial intentionally maps to “not found”, test that protected content is absent; do not rely only on HTTP status behavior from Next.js.
-
-## Grants and RPC existence
-
-Whenever the application starts calling an RPC or table through a new role/client:
-
-- verify the function/table exists after a clean reset;
-- verify the role has the required grant;
-- verify its dependencies exist at the point its migration runs;
-- verify the application uses the current signature.
-
-A TypeScript declaration, wrapper, or old migration reference is not evidence that the RPC exists in the clean current schema.
-
-## Seed and pgTAP are different worlds
+## Seed and pgTAP are separate data worlds
 
 Do not mix them.
 
 ### pgTAP
 
-- Runs against a clean database **without** development seed.
-- Uses transactional fixtures under `supabase/tests/fixtures/`.
-- Fixture UUID conventions are local to those tests.
+- runs against a clean database **without** development seed;
+- uses transactional fixtures under `supabase/tests/fixtures/`;
+- fixture UUID conventions belong only to pgTAP.
 
 ### E2E / visual / local product runtime
 
-- Uses `supabase/seed.sql`.
-- Seeded accounts/entities must be treated as the runtime truth for Playwright.
-- Do not copy pgTAP fixture UUIDs into E2E specs.
+- uses `supabase/seed.sql`;
+- Playwright must resolve entities/accounts from the real seed contract;
+- never copy a pgTAP fixture UUID into an E2E because it “looks like” the same entity.
 
-The two required reset states are intentionally incompatible.
-
-## Canonical database validation sequence
+## Canonical local validation states
 
 With local Supabase running:
 
 ```sh
-# database tests: no dev seed
+# DB verification state — NO development seed
 npx pnpm@11.18.0 exec supabase db reset --local --no-seed
 npx pnpm@11.18.0 test:db
 npx pnpm@11.18.0 db:lint
 
-# E2E/runtime state: with seed
+# Runtime/E2E state — WITH development seed
 npx pnpm@11.18.0 exec supabase db reset --local
 ```
 
-Do not run visual capture or a dev tool that writes rows between the no-seed reset and `test:db`.
+Do not run visual capture, a dev tool, or another process that writes rows between the no-seed reset and `test:db`.
 
-Never use `--linked` for agent-driven destructive operations.
+The two reset states are intentionally different. Do not “simplify” them into one.
 
-## Error handling across the application boundary
+## Runtime proof required across boundaries
 
-Database errors on critical paths must remain observable to the application layer.
+For database changes that affect an application flow, pgTAP alone is not completion evidence.
 
-Do not design an RPC/query contract that forces the caller to interpret these as the same state unless the product explicitly wants that:
+After the official Supabase verification steps and Bivaque database gates pass, verify the closest runtime layer where the behavior can still fail:
 
-- no rows;
-- access denied;
-- function missing;
-- schema mismatch;
-- transport failure;
-- provider failure.
+- application RPC signature matches the migrated function;
+- required grants exist for the actual client role;
+- privileged call has the correct caller identity;
+- UI/server code consumes database errors rather than turning them into false empty states;
+- E2E/live runtime proves the cross-layer flow when interaction is part of the property.
 
-Silent failure is especially dangerous when UI logic interprets `null`/`[]` as “nothing to show”.
+**Existence is not evidence. Runtime behavior is evidence.**
 
-## Storage
+## Before declaring a Supabase task done
 
-For verification or other private uploads:
-
-- bucket visibility and Storage policies are part of the authorization change;
-- signed access should be short-lived and generated only after authorization;
-- persisted metadata must not accidentally extend the lifetime of the underlying sensitive document;
-- test direct Storage access, not only the UI path.
-
-## Cron, outbox, and jobs
-
-For `pg_cron`, `pg_net`, outbox, reconciliation, or cleanup jobs:
-
-- migration defines the job and its database-side contract;
-- job execution must be idempotent or explicitly safe to retry;
-- failure must leave enough state to diagnose/retry without duplicating side effects;
-- local/runtime limitations must be documented as `RUNTIME UNVERIFIED`, not silently treated as passing.
-
-## Definition of done for database changes
-
-A Supabase change is not done until:
-
+- current official `supabase` skill followed;
+- `supabase-postgres-best-practices` followed for Postgres work;
+- relevant current Supabase docs/changelog checked as required by the upstream skill;
 - clean migration replay succeeds;
-- `test:db` and `db:lint` pass in the correct no-seed state;
-- generated public types are updated when the public schema changed;
-- authorization-sensitive paths have positive and negative proof;
-- application call sites match the final function/schema contract;
-- runtime/E2E evidence exists when the property crosses the DB/UI boundary;
-- no privileged path relies on implicit caller identity that is absent in its real execution context.
+- `test:db` and `db:lint` pass in the no-seed state;
+- public generated types updated when required;
+- auth/RLS changes have positive and negative evidence;
+- application/runtime evidence exists when the change crosses the DB boundary;
+- no local pinned-version constraint was silently changed.
 
-## Questions to settle before this becomes final
+## Questions to settle before finalizing this file
 
-1. Should we add a scope test that compares application `.rpc()` names against functions present after migration replay?
-2. Can we statically flag RPCs called through `service_role` that reference `auth.uid()`/`auth.jwt()`?
-3. Which SECURITY DEFINER invariants should become automated structural tests rather than prose?
-4. Should every authorization RPC require an explicit caller parameter, or only service-role-mediated paths?
-5. Should seed entities expose stable named helpers/fixtures for E2E instead of letting specs know UUIDs at all?
+1. Should CI verify that the official Supabase skills are installed/available to supported harnesses?
+2. Should we pin an upstream `agent-skills` release/SHA for reproducibility, or deliberately follow current upstream `main`?
+3. Which Bivaque incidents should become automated scope tests instead of remaining as local prose here?
+4. Should E2E stop knowing stable UUIDs entirely and use named seed helpers/contracts?
