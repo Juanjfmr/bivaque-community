@@ -1,0 +1,674 @@
+{
+  "title": "Bivaque — mapa de fechamento e lançamento do MVP",
+  "updatedAt": "22/08/2026 · snapshot do worktree e GitHub",
+  "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift até reconciliação explícita.",
+  "cards": [
+    {
+      "id": "MVP-00-REBASELINE",
+      "title": "Rebaseline técnico e contrato de lançamento",
+      "phase": "MVP-00",
+      "priority": "P0",
+      "category": "backend",
+      "status": "now",
+      "description": "Transformar o estado real do repositório em uma sequência única de fechamento, sem tratar migration ou UI isolada como capacidade entregue.",
+      "checklist": [
+        "Inventariar schema, RPCs, rotas, Server Actions, cron e storage",
+        "Mapear cada caller service_role e sua prova de identidade",
+        "Definir Definition of Done por fronteira",
+        "Separar provas de contrato, integração e browser",
+        "Publicar BACKEND_COMPLETION.md apenas no freeze"
+      ],
+      "proof": [
+        "docs/PRODUCT_STATUS.md é a base de runtime, mas contém lacunas e correções posteriores",
+        "217 arquivos de migration/teste e 114 specs foram identificados no worktree"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "supabase test db",
+        "Playwright somente nos ciclos que dependem do browser"
+      ],
+      "links": [
+        "Status atual | ../../docs/PRODUCT_STATUS.md",
+        "Planos | ../../docs/superpowers/plans/README.md"
+      ]
+    },
+    {
+      "id": "MVP-01-ADMISSION",
+      "title": "Admissão, localidade e convites: fechar ciclos pendentes",
+      "phase": "MVP-01",
+      "priority": "P0",
+      "category": "backend",
+      "status": "now",
+      "description": "Há caminho nacional, transferência e documento privado implementados; ainda faltam provas de jornadas negativas e entrega de decisão por e-mail.",
+      "checklist": [
+        "Executar E2E de callback, pending, rejected, consentimento e welcome",
+        "Fechar e-mail da decisão documental no outbox",
+        "Retestar geração e cópia do convite de comunidade",
+        "Revisar re-verificação Portal sem CPF persistido",
+        "Reavaliar Issue #20 pelo estado atual"
+      ],
+      "proof": [
+        "Transferência tem migrations, pgTAP e spec E2E commitado",
+        "decide_verification_document e TTL existem",
+        "convite comunitário ganhou RPC is_community_member em 2026-08-21"
+      ],
+      "tests": [
+        "supabase/tests/verification-documents.sql",
+        "supabase/tests/locality-transfer.sql",
+        "tests/e2e/community-invitations.spec.ts"
+      ],
+      "links": [
+        "Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20",
+        "Status: entrada | ../../docs/PRODUCT_STATUS.md"
+      ]
+    },
+    {
+      "id": "MVP-02-AUTHZ",
+      "title": "Authorization / RLS hardening com caller real",
+      "phase": "MVP-02",
+      "priority": "P0",
+      "category": "backend",
+      "status": "now",
+      "description": "O histórico recente confirmou falhas repetidas: RPCs corretas sob authenticated falhavam sob service_role porque auth.uid() era null.",
+      "checklist": [
+        "Inventariar todas as RPCs SECURITY DEFINER e grants",
+        "Comparar caller em runtime, RLS e pgTAP",
+        "Criar testes de integração para cada caminho service_role",
+        "Cobrir negações cross-user, locality, community e ownership",
+        "Auditar grants de storage e private schema"
+      ],
+      "proof": [
+        "profile RPCs, moderação, admissões e convite de evento exigiram correções de caller explícito",
+        "migrations 20260821000022–25 e 40 registram a classe de falha"
+      ],
+      "tests": [
+        "supabase/tests/authz-denied-matrix.sql",
+        "supabase/tests/community-batch-approval.sql",
+        "supabase/tests/admissions-decision.sql"
+      ],
+      "links": ["Matriz de risco | ../../docs/decisions/RISK_MATRIX.md"]
+    },
+    {
+      "id": "MVP-03-COMMUNITY",
+      "title": "Fechamento Community Graph e ciclos sociais",
+      "phase": "MVP-03",
+      "priority": "P1",
+      "category": "backend",
+      "status": "now",
+      "description": "Comunidades, grupos, feed, moderação, eventos e indicações existem em partes. O trabalho é fechar contratos, sad paths e efeitos de notificação.",
+      "checklist": [
+        "Cobrir ownership, convite, saída, soft-delete e moderação",
+        "Fechar pedidos e respostas de indicação",
+        "Reconciliar event_invite com preferenceKey() no outbox",
+        "Cobrir RSVP, recorrência, convite e conclusão de evento",
+        "Garantir que erro nunca se apresente como estado vazio"
+      ],
+      "proof": [
+        "Evento-convite foi corrigido após quatro falhas encadeadas",
+        "community batch approval agora tem caller explícito e QA manual"
+      ],
+      "tests": [
+        "supabase/tests/event-invite-rpc-exposure.sql",
+        "supabase/tests/community-rpcs.sql",
+        "tests/e2e/community-batch-approval.spec.ts"
+      ],
+      "links": ["Status: comunidade | ../../docs/PRODUCT_STATUS.md"]
+    },
+    {
+      "id": "MVP-04-PROVIDER-FOUNDATION",
+      "title": "Vitrine G1: fundação da conta de prestador",
+      "phase": "MVP-04",
+      "priority": "P1",
+      "category": "backend",
+      "status": "now",
+      "description": "A conta e shell de prestador já existem no worktree; falta fechar perfil, catálogo, moderação, ownership e discovery sem depender de membership militar.",
+      "checklist": [
+        "Validar migration provider_accounts desde db reset limpo",
+        "Definir provider profile, listings, mídia e publicação",
+        "Aplicar RLS para prestador, membro, operador e service_role",
+        "Adicionar report, hide/suspend/restore e audit trail",
+        "Testar handoff de contato sem pagamento no MVP"
+      ],
+      "proof": [
+        "supabase/migrations/20260822014934_provider_accounts.sql",
+        "apps/web/app/(provider)/prestador/ já protege o shell e expõe placeholder"
+      ],
+      "tests": [
+        "Novo pgTAP provider_accounts e RLS",
+        "Integração do shell com caller service_role"
+      ],
+      "drift": {
+        "documented": "PRODUCT_STATUS descreve dashboard e vitrine como inexistentes.",
+        "observed": "A migration provider_accounts e o shell provider existem no HEAD, mas são fundação/placeholder, não vitrine concluída.",
+        "action": "Atualizar status para distinguir fundação implementada de perfil/listings ainda abertos após validar reset e testes."
+      },
+      "links": [
+        "Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md",
+        "Status: vitrine | ../../docs/PRODUCT_STATUS.md"
+      ]
+    },
+    {
+      "id": "MVP-05-TEST-BASELINE",
+      "title": "Baseline reproduzível de testes e tipos",
+      "phase": "MVP-05",
+      "priority": "P1",
+      "category": "infra",
+      "status": "now",
+      "description": "O MVP precisa provar migrations a partir do zero, negações de autorização e callers reais; E2E só cobre a fronteira que realmente precisa do navegador.",
+      "checklist": [
+        "Rodar db reset limpo sem interferência do Visual Capture",
+        "Manter pgTAP verde com negativos de autorização",
+        "Gerar e revisar database.generated.ts",
+        "Eliminar migrations dependentes de estado histórico",
+        "Separar lote E2E seed-driven e registrar execução"
+      ],
+      "proof": [
+        "O README dos planos documenta a interferência do perfil Visual Capture",
+        "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset"
+      ],
+      "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
+      "links": ["Protocolo | ../../docs/superpowers/plans/README.md"]
+    },
+    {
+      "id": "MVP-06-DISCOVERY-INDEX",
+      "title": "Discovery index e busca híbrida global",
+      "phase": "MVP-06",
+      "priority": "P1",
+      "category": "intelligence",
+      "status": "next",
+      "description": "Criar contrato de descoberta por vertical com ACL antes da entrega; começar com Postgres FTS e pg_trgm, sem motor externo prematuro.",
+      "checklist": [
+        "Definir discovery_document e projeções por vertical",
+        "Aplicar ACL/locality/community antes do resultado",
+        "Projetar discovery_search(query, actor, scope, filters)",
+        "Adicionar lexical search e pg_trgm",
+        "Avaliar pgvector somente com evidência"
+      ],
+      "proof": [
+        "PRODUCT_STATUS registra busca/diretório como inexistente",
+        "O briefing de fechamento define B5 como contrato transversal"
+      ],
+      "tests": ["Negações cross-locality/community", "Ranking e filtro tipado por vertical"],
+      "links": ["Status: busca | ../../docs/PRODUCT_STATUS.md"]
+    },
+    {
+      "id": "MVP-07-KNOWLEDGE",
+      "title": "Knowledge Capsule e projeção do Guia",
+      "phase": "MVP-07",
+      "priority": "P1",
+      "category": "intelligence",
+      "status": "next",
+      "description": "Conhecimento derivado precisa preservar origem, confiança, validade e moderação; o Guia deixa de ser datastore primário.",
+      "checklist": [
+        "Modelar knowledge_claim com source_refs e validade",
+        "Separar evidência, conhecimento e resposta de LLM",
+        "Projetar Guide Projection por localidade",
+        "Exigir aprovação humana antes de promover síntese",
+        "Criar contratos para onboarding, busca e guia"
+      ],
+      "proof": [
+        "A migração promote_reply_to_guide_entry existe, mas não é Knowledge Capsule",
+        "D49 exige IA sugere e operador aprova"
+      ],
+      "tests": [
+        "Proveniência obrigatória",
+        "Negação de promoção automática",
+        "ACL de claims por escopo"
+      ],
+      "links": ["ADR de curadoria | ../../docs/decisions/ADR-20260815-guia-curadoria-ia.md"]
+    },
+    {
+      "id": "MVP-08-INTELLIGENCE",
+      "title": "Context Assembly, Tool Layer e evals",
+      "phase": "MVP-08",
+      "priority": "P2",
+      "category": "intelligence",
+      "status": "next",
+      "description": "A IA consome contratos autorizados e condensados; ela não recebe SQL genérico nem se torna dependência do produto comunitário.",
+      "checklist": [
+        "Implementar assembleContext determinístico",
+        "Criar poucas ferramentas estáveis de alto nível",
+        "Adicionar redaction, freshness e token budget",
+        "Montar corpus de perguntas reais",
+        "Avaliar grounding, ACL, trajeto de ferramenta, latência e custo"
+      ],
+      "proof": [
+        "Ainda não há camada de IA no runtime",
+        "O princípio de desligamento foi definido como requisito de arquitetura"
+      ],
+      "tests": ["Corpus de evals", "Testes de ausência de vazamento", "Smoke sem provider de LLM"],
+      "links": ["Visão: IA | ../../docs/BIVAQUE.md"]
+    },
+    {
+      "id": "MVP-09-OPERABILITY",
+      "title": "Observabilidade, jobs e recuperação",
+      "phase": "MVP-09",
+      "priority": "P2",
+      "category": "infra",
+      "status": "next",
+      "description": "Fechar retries, outbox, idempotência, dead-letter, telemetria e planos de consulta antes de declarar o backend congelado.",
+      "checklist": [
+        "Auditar cron idempotente e recuperável",
+        "Definir retry e failure strategy",
+        "Adicionar telemetria e circuit breaker verificáveis",
+        "Revisar índices e query plans",
+        "Exigir erro explícito, nunca engolido"
+      ],
+      "proof": [
+        "outbox e worker existem, mas adaptadores concretos não",
+        "Sentry tem scrubber configurado no runtime"
+      ],
+      "tests": ["outbox worker", "replay de job", "falha de adaptador e recovery"],
+      "links": ["Plano D1 | ../../docs/superpowers/plans/2026-08-11-onda-d1-infraestrutura.md"]
+    },
+    {
+      "id": "MVP-10-BACKEND-FREEZE",
+      "title": "BACKEND FROZEN: contrato consumível por outro frontend",
+      "phase": "MVP-10",
+      "priority": "P1",
+      "category": "backend",
+      "status": "next",
+      "description": "Marco final de backend: migrations reproduzíveis, segurança comprovada e contratos estáveis sem depender da UI para proteger regras de negócio.",
+      "checklist": [
+        "db reset reproduz tudo do zero",
+        "Todos os contratos e callers reais estão testados",
+        "Jobs são idempotentes e observáveis",
+        "Tipos gerados estão sincronizados",
+        "Gerar BACKEND_COMPLETION.md, versão dos contratos e tag de freeze"
+      ],
+      "proof": [],
+      "tests": [
+        "Gate completo",
+        "pgTAP completo",
+        "Integração service_role",
+        "E2E de fronteiras browser-only"
+      ],
+      "links": ["Critério de fechamento | ../../docs/BIVAQUE.md"]
+    },
+    {
+      "id": "BLOCK-RESEND",
+      "title": "Resend e domínio de e-mail transacional",
+      "phase": "Launch blocker",
+      "priority": "BLOCK",
+      "category": "infra",
+      "status": "blocked",
+      "description": "O outbox enfileira, mas não entrega sem conta, domínio e DNS configurados.",
+      "checklist": [
+        "Criar conta",
+        "Verificar domínio",
+        "Configurar DKIM e SPF",
+        "Inserir secret fora do Git",
+        "Ativar adaptador e prova de entrega"
+      ],
+      "proof": [
+        "apps/web/lib/outbox/adapters.ts mantém adaptadores indisponíveis",
+        "convites e decisão de documento já enfileiram mensagens"
+      ],
+      "blockers": ["Conta Resend", "Domínio e DNS", "Decisão do dono"],
+      "links": ["Status: infraestrutura | ../../docs/PRODUCT_STATUS.md"]
+    },
+    {
+      "id": "BLOCK-WHATSAPP",
+      "title": "Canal WhatsApp do outbox",
+      "phase": "Launch blocker",
+      "priority": "BLOCK",
+      "category": "infra",
+      "status": "blocked",
+      "description": "O canal secundário exige número dedicado e uma decisão explícita de MVP; não deve bloquear freeze se for removido oficialmente do lançamento.",
+      "checklist": [
+        "Decidir se o canal fica no MVP",
+        "Providenciar chip descartável",
+        "Definir adaptador e operação",
+        "Registrar fallback e falha"
+      ],
+      "proof": ["outbox_channel inclui whatsapp", "adaptador atual retorna indisponível"],
+      "blockers": ["Chip dedicado", "CNPJ para Cloud API futura", "Decisão de produto"],
+      "links": ["Decisão D33 | ../../docs/BIVAQUE.md"]
+    },
+    {
+      "id": "BLOCK-LEGAL-AI",
+      "title": "Governança LGPD para IA e terceiros",
+      "phase": "Launch blocker",
+      "priority": "BLOCK",
+      "category": "governance",
+      "status": "blocked",
+      "description": "Antes de conteúdo comunitário sair para provedor externo, definir finalidade, base legal, retenção, redaction, audit trail e opt-out quando aplicável.",
+      "checklist": [
+        "Definir controlador, canal e encarregado",
+        "Revisar PRIVACIDADE.md juridicamente",
+        "Definir providers e categorias permitidas",
+        "Decidir opt-out e retenção",
+        "Publicar governança aprovada"
+      ],
+      "proof": [
+        "BIVAQUE.md declara o texto de privacidade não publicável ainda",
+        "PostHog e IA transferem dados para terceiros"
+      ],
+      "blockers": ["Revisão jurídica", "Decisões do dono"],
+      "links": ["Privacidade | ../../docs/legal/PRIVACIDADE.md"]
+    },
+    {
+      "id": "BLOCK-AFFILIATION",
+      "title": "Afiliação militar declarada",
+      "phase": "R3",
+      "priority": "HOLD",
+      "category": "governance",
+      "status": "blocked",
+      "description": "Força, situação, OM e turma não podem ser implementadas enquanto o ADR R3 permanecer proposto.",
+      "checklist": [
+        "Threat model de enumeração",
+        "Consentimento",
+        "Governança LGPD",
+        "Tratamento dos perfis hidden",
+        "ADR aprovado com critic verdict PASS"
+      ],
+      "proof": ["AGENTS.md proíbe persistir organização militar", "O estado do ADR é proposed"],
+      "blockers": ["Decisão R3 humana"],
+      "links": ["ADR OM declarada | ../../docs/decisions/ADR-20260811-om-declarada.md"]
+    },
+    {
+      "id": "BLOCK-ASAAS",
+      "title": "Vitrine paga / Asaas",
+      "phase": "G2",
+      "priority": "HOLD",
+      "category": "governance",
+      "status": "blocked",
+      "description": "Alcance pago é entitlement separado e não pode alterar ranking orgânico; Vitrine Core continua independente deste bloqueio.",
+      "checklist": [
+        "Constituir CNPJ",
+        "Definir checkout hospedado",
+        "Projetar webhook e entitlement",
+        "Provar que dinheiro não altera relevance ranking"
+      ],
+      "proof": ["ADR de alcance pago foi aceito, mas o plano separa G1 e G2"],
+      "blockers": ["CNPJ", "Decisão operacional de cobrança"],
+      "links": ["ADR alcance pago | ../../docs/decisions/ADR-20260820-alcance-pago.md"]
+    },
+    {
+      "id": "FRONTEND-RUNTIME-CONFORMANCE",
+      "title": "Phase 6 Runtime Conformance",
+      "phase": "Frontend",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "frozen",
+      "description": "Há não conformidades documentadas de locality truth, navegação, erro versus vazio, cópia segura, acessibilidade e locale. Não entram no caminho backend-first sem decisão explícita.",
+      "checklist": [
+        "Preservar achados da Phase 6",
+        "Não alterar por conveniência durante backend-first",
+        "Reexecutar auditoria visual quando a trilha frontend reiniciar",
+        "Manter consertos de segurança/acessibilidade permitidos pelas regras do repo"
+      ],
+      "proof": [
+        "PHASE6_REVIEW marca runtime como non-conforming",
+        "DS-021 foi remediado; DS-029 ainda precisa de verificação mais ampla"
+      ],
+      "links": ["Phase 6 | ../../docs/agents/design-audit/PHASE6_REVIEW.md"]
+    },
+    {
+      "id": "FRONTEND-VISUAL-AAA",
+      "title": "Visual AAA / redesign",
+      "phase": "Frontend",
+      "priority": "HOLD",
+      "category": "frontend",
+      "status": "frozen",
+      "description": "Design system, tokens, shell, cards e navegação não são escopo deste fechamento. O contrato visual permanece congelado.",
+      "checklist": [
+        "Não tocar DESIGN_SPEC.md ou VISUAL_GUIDE.md",
+        "Não criar novo layout durante backend-first",
+        "Planejar work separado após backend freeze"
+      ],
+      "proof": ["Phase 6D declara a implementação atual não elegível para AAA-ready"],
+      "links": ["Design spec | ../../docs/agents/DESIGN_SPEC.md"]
+    },
+    {
+      "id": "REPO-ISSUE-20",
+      "title": "Issue #20 — multi-localidade",
+      "phase": "Triagem",
+      "priority": "P0",
+      "category": "repo",
+      "status": "repo",
+      "description": "A issue ainda está aberta, mas o worktree contém catálogo nacional, memberships múltiplas e transferência. Reavaliar escopo residual antes de manter como P0 aberto.",
+      "checklist": [
+        "Comparar issue com migrations P0/T",
+        "Listar lacunas ainda não fechadas",
+        "Atualizar ou fechar com evidência"
+      ],
+      "proof": [
+        "Issue #20 aberta no GitHub em 22/08/2026",
+        "PRODUCT_STATUS registra P0 e T como implementadas em grande parte"
+      ],
+      "drift": {
+        "documented": "A issue afirma necessidade de remover hardcode Manaus e abrir onboarding nacional.",
+        "observed": "O runtime descreve catálogo nacional e a home deixou de usar PILOT_LOCALITY_ID.",
+        "action": "Reescrever a issue para a lacuna residual ou encerrá-la com links de prova."
+      },
+      "links": ["Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"]
+    },
+    {
+      "id": "REPO-PR-24",
+      "title": "PR #24 — BOM em database.generated.ts",
+      "phase": "Triagem",
+      "priority": "P1",
+      "category": "repo",
+      "status": "repo",
+      "description": "Correção pequena que limpa a baseline de CI; revisar isoladamente antes de mudanças maiores de tipo gerado.",
+      "checklist": ["Revisar diff", "Rodar gate relevante", "Merge ou encerrar"],
+      "proof": ["PR draft aberto em 22/08/2026"],
+      "links": ["PR #24 | https://github.com/Juanjfmr/bivaque-community/pull/24"]
+    },
+    {
+      "id": "REPO-PR-28",
+      "title": "PR #28 — Agent Harness",
+      "phase": "Triagem",
+      "priority": "P1",
+      "category": "repo",
+      "status": "repo",
+      "description": "Estabilizar apenas o que reduz falsos positivos e bloqueios de execução; não transformar o harness em produto paralelo.",
+      "checklist": [
+        "Identificar falso positivo do scanner de segredos",
+        "Resolver reviewer CI/max turns somente se bloquearem execução",
+        "Congelar após baseline estável"
+      ],
+      "proof": ["PR draft aberto em 22/08/2026"],
+      "links": ["PR #28 | https://github.com/Juanjfmr/bivaque-community/pull/28"]
+    },
+    {
+      "id": "REPO-PR-25",
+      "title": "PR #25 — master plan G/H",
+      "phase": "Triagem",
+      "priority": "P1",
+      "category": "repo",
+      "status": "repo",
+      "description": "Extrair fatos ainda válidos, mas evitar um segundo roadmap concorrente ao mapa backend-first, discovery, knowledge e IA.",
+      "checklist": [
+        "Confrontar com código e planos atuais",
+        "Mover apenas fatos verificáveis",
+        "Arquivar o que foi superado"
+      ],
+      "proof": ["PR draft aberto em 22/08/2026"],
+      "links": ["PR #25 | https://github.com/Juanjfmr/bivaque-community/pull/25"]
+    },
+    {
+      "id": "REPO-PR-18",
+      "title": "PR #18 — SPEC.md como contrato normativo",
+      "phase": "Triagem",
+      "priority": "P1",
+      "category": "repo",
+      "status": "repo",
+      "description": "Pode ser uma camada útil de requisitos, desde que não concorra com visão, estado runtime e checklist de fechamento.",
+      "checklist": [
+        "Definir fronteira entre BIVAQUE, PRODUCT_STATUS, SPEC e BACKEND_COMPLETION",
+        "Validar referências contra migrations e testes",
+        "Decidir merge, revisão ou encerramento"
+      ],
+      "proof": ["SPEC.md está ausente nesta branch", "PR #18 draft propõe o arquivo"],
+      "drift": {
+        "documented": "O PR propõe uma spec como referência normativa consolidada.",
+        "observed": "O arquivo não está presente no worktree atual e não pode ser tomado como estado implementado.",
+        "action": "Triar o PR antes de citar SPEC.md como fonte no Kanban ou README."
+      },
+      "links": ["PR #18 | https://github.com/Juanjfmr/bivaque-community/pull/18"]
+    },
+    {
+      "id": "REPO-PR-FRONTEND",
+      "title": "PRs #23 e #27 — auditoria visual e guia editorial",
+      "phase": "Triagem",
+      "priority": "HOLD",
+      "category": "repo",
+      "status": "repo",
+      "description": "Ambos pertencem à trilha frontend/editorial congelada; preservar conteúdo útil, sem puxá-los para o caminho crítico técnico atual.",
+      "checklist": [
+        "Classificar #23 como congelado até backend freeze",
+        "Revisar #27 como conteúdo fonte para Knowledge Capsule no futuro",
+        "Evitar merge que reabra auditoria visual"
+      ],
+      "proof": ["PRs #23 e #27 estão em draft"],
+      "links": [
+        "PR #23 | https://github.com/Juanjfmr/bivaque-community/pull/23",
+        "PR #27 | https://github.com/Juanjfmr/bivaque-community/pull/27"
+      ]
+    },
+    {
+      "id": "REPO-DEPENDABOT",
+      "title": "PRs #21 e #22 — Dependabot",
+      "phase": "Triagem",
+      "priority": "P3",
+      "category": "repo",
+      "status": "repo",
+      "description": "Atualizações de dependência só entram sobre baseline verde e com escopo separado do fechamento funcional.",
+      "checklist": ["Confirmar baseline verde", "Revisar breaking changes", "Rodar gate completo"],
+      "proof": ["PRs #21 e #22 estão ready para revisão"],
+      "links": [
+        "PR #21 | https://github.com/Juanjfmr/bivaque-community/pull/21",
+        "PR #22 | https://github.com/Juanjfmr/bivaque-community/pull/22"
+      ]
+    },
+    {
+      "id": "REPO-SECRETS-ROTATION",
+      "title": "Rotação de chaves Portal e Resend",
+      "phase": "Segurança",
+      "priority": "P0",
+      "category": "governance",
+      "status": "repo",
+      "description": "A documentação registra recomendação de rotação porque credenciais de dev podem ter aparecido em transcript externo. Não registrar valores no card.",
+      "checklist": [
+        "Decisão do dono sobre janela",
+        "Rotacionar no provedor",
+        "Atualizar ambiente local/CI com segurança",
+        "Confirmar que scanner e logs não expõem valores"
+      ],
+      "proof": ["PRODUCT_STATUS § segurança registra a recomendação em 2026-08-21"],
+      "links": ["Status: segurança | ../../docs/PRODUCT_STATUS.md"]
+    },
+    {
+      "id": "DRIFT-STATUS-RECONCILIATION",
+      "title": "Reconciliar documentação com runtime após cada ciclo",
+      "phase": "Governança",
+      "priority": "P1",
+      "category": "governance",
+      "status": "repo",
+      "description": "O mapa não substitui fontes primárias. Ele aponta o que precisa ser reconciliado quando código, migrations, testes, status e PRs divergem.",
+      "checklist": [
+        "Rever claims após cada migration e caller real",
+        "Registrar capability como código feito até o ciclo do usuário fechar",
+        "Não remover linha do status sem entrada, ação, feedback, follow-up e sad path",
+        "Anexar prova de teste e commit no card"
+      ],
+      "proof": [
+        "Convites, moderação, perfil e eventos tiveram 'fechamentos' que só QA posterior desmentiu",
+        "provider_accounts expõe drift atual entre runtime e status"
+      ],
+      "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"]
+    },
+    {
+      "id": "DONE-NATIONAL-LOCALITIES",
+      "title": "Fundação nacional de localidades e transferência",
+      "phase": "P0 / T",
+      "priority": "P0",
+      "category": "backend",
+      "status": "done",
+      "description": "Catálogo nacional, memberships múltiplas e transferência declarada foram implementados; jornadas E2E acumuladas ainda pertencem ao fechamento de testes.",
+      "checklist": [
+        "Migration aplicada",
+        "Políticas e RPCs",
+        "pgTAP de transferência",
+        "QA manual documentado"
+      ],
+      "proof": [
+        "migrations 20260819021416, 20260820000000, 20260820045749 e 20260820051230",
+        "PRODUCT_STATUS marca onda T fechada"
+      ],
+      "tests": ["locality-transfer.sql", "transfer-scope-denials.sql", "transfer-degradation.sql"],
+      "completedAt": "2026-08-20",
+      "links": ["Status: transferência | ../../docs/PRODUCT_STATUS.md"]
+    },
+    {
+      "id": "DONE-COMMUNITY-MODERATION",
+      "title": "Fila comunitária em lote e delegação",
+      "phase": "E / T",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "description": "Aprovação, remoção e delegação passaram a usar caller explícito sob service_role e foram verificadas no navegador com seleção real.",
+      "checklist": [
+        "RLS e grants",
+        "Caller explícito",
+        "Teste positivo e negativo",
+        "QA de checkbox e lote"
+      ],
+      "proof": [
+        "migrations 20260821000024 e 20260821000025",
+        "PRODUCT_STATUS registra pgTAP 982/982"
+      ],
+      "tests": [
+        "community-batch-approval.sql",
+        "community-rpcs.sql",
+        "community-batch-approval.spec.ts"
+      ],
+      "completedAt": "2026-08-21"
+    },
+    {
+      "id": "DONE-PROFILE-RPCS",
+      "title": "Perfil de outro membro com caller service_role real",
+      "phase": "E",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "description": "As RPCs de perfil passaram a receber viewer explícito e protegem contra spoofing quando chamadas como authenticated.",
+      "checklist": [
+        "Fix de auth.uid nulo",
+        "Guarda anti-spoofing",
+        "pgTAP pelo caller real",
+        "E2E executado"
+      ],
+      "proof": [
+        "migrations 20260821000022 e 20260821000023",
+        "PRODUCT_STATUS registra confirmação ao vivo"
+      ],
+      "tests": ["other-member-profile.sql", "member-profile-denials.spec.ts"],
+      "completedAt": "2026-08-21"
+    },
+    {
+      "id": "DONE-OUTBOX-FOUNDATION",
+      "title": "Outbox, worker e preferências: fundação",
+      "phase": "D1",
+      "priority": "P1",
+      "category": "infra",
+      "status": "done",
+      "description": "A infraestrutura de enfileiramento existe com estado e worker; a entrega por provedor continua nos bloqueios externos.",
+      "checklist": [
+        "Tabela outbox",
+        "Worker pg_cron",
+        "Endpoint interno",
+        "Adaptadores indisponíveis explícitos",
+        "Testes unitários e banco"
+      ],
+      "proof": [
+        "migrations 20260814081735 e 20260814174705",
+        "apps/web/app/api/internal/outbox/route.ts"
+      ],
+      "tests": ["outbox-worker.sql", "outbox-delivery.test.ts"],
+      "completedAt": "2026-08-14"
+    }
+  ]
+}

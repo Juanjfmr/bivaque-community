@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Kanban local e versionado do caminho de fechamento e lançamento do MVP Bivaque."
+    />
+    <title>Bivaque — Mapa do MVP</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#board">Pular para o quadro</a>
+    <main>
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Bivaque Community · fonte versionada no Git</p>
+          <h1>Mapa de fechamento do MVP</h1>
+          <p class="lede">
+            Código, migrations e testes definem a realidade. Documentação divergente entra como
+            <strong>drift</strong> até ser reconciliada.
+          </p>
+        </div>
+        <div class="header-meta">
+          <span id="updated-at">Carregando dados…</span>
+          <span class="git-note">Colaboração: commits pequenos por card</span>
+        </div>
+      </header>
+
+      <section class="principles" aria-label="Princípios de execução">
+        <article>
+          <span class="principle-label">Regra de autorização</span>
+          <p>
+            <code>service_role</code> não carrega identidade. RPCs que usam <code>auth.uid()</code>
+            exigem teste com o mesmo caller do runtime.
+          </p>
+        </article>
+        <article>
+          <span class="principle-label">Princípio de IA</span>
+          <p><strong>AI is a consumer of Bivaque.</strong> Com IA desligada, o produto continua.</p>
+        </article>
+        <article>
+          <span class="principle-label">Definição de concluído</span>
+          <p>Um card só vai para DONE com contrato, negações, caller real e prova registrada.</p>
+        </article>
+      </section>
+
+      <section class="metrics" aria-label="Resumo do quadro" id="metrics"></section>
+
+      <section class="controls" aria-label="Filtros do quadro">
+        <label class="search-control">
+          <span>Buscar cards</span>
+          <input id="search" type="search" placeholder="ID, frente, prova, bloqueio…" autocomplete="off" />
+        </label>
+        <fieldset class="filter-control">
+          <legend>Filtrar por frente</legend>
+          <div class="filter-buttons" id="filters"></div>
+        </fieldset>
+      </section>
+
+      <p class="result-summary" id="result-summary" aria-live="polite"></p>
+      <section class="board" id="board" aria-label="Quadro de lançamento do MVP"></section>
+    </main>
+    <template id="card-template">
+      <article class="card">
+        <div class="card-topline">
+          <span class="priority"></span>
+          <span class="category"></span>
+          <span class="phase"></span>
+        </div>
+        <p class="card-title"></p>
+        <p class="description"></p>
+        <div class="card-signals"></div>
+        <details>
+          <summary>Contrato, provas e próximos passos</summary>
+          <div class="card-detail"></div>
+        </details>
+      </article>
+    </template>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

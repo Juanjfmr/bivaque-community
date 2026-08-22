@@ -54,7 +54,7 @@ function scan(pattern: RegExp, exclude: RegExp[] = []): string[] {
   return hits
 }
 
-describe("final scope and PII audit", () => {
+describe("product boundaries and PII audit", () => {
   it("has no static export or forbidden framework config", () => {
     // Given the Next config
     const nextConfig = readFileSync(join(root, "apps/web/next.config.ts"), "utf8")
@@ -64,11 +64,11 @@ describe("final scope and PII audit", () => {
     expect(nextConfig).not.toContain('"export"')
   })
 
-  it("has no forbidden product modules in source", () => {
+  it("keeps declared product-boundary terms out of product source", () => {
     // Given the source tree (excluding files that legitimately mention
-    // prohibited terms inside prohibition regexes, denial tests, and docs)
+    // boundary terms inside prohibition regexes, denial tests, and docs)
     const hits = scan(
-      /\b(marketplace|firebase|microservice|anonymous posting|anon_posts?|public verification badge|alerts? broadcast)\b/i,
+      /\b(firebase|microservice|anonymous posting|anon_posts?|public verification badge|alerts? broadcast)\b/i,
       [
         /feed-post\.tsx$/,
         /recommendations[\\/]page\.tsx$/,
@@ -80,7 +80,7 @@ describe("final scope and PII audit", () => {
         /community-feed-denials\.sql$/,
         /prohibited-content\.test\.ts$/,
         /prohibited-commercial-fields\.test\.ts$/,
-        /final-scope-and-pii\.test\.ts$/,
+        /product-boundaries-and-pii\.test\.ts$/,
         /dm-pii-redaction\.test\.ts$/,
         /notification-pii-redaction\.test\.ts$/,
         /reports-pii-redaction\.test\.ts$/,
@@ -93,7 +93,10 @@ describe("final scope and PII audit", () => {
       ],
     )
 
-    // Then no forbidden feature terms appear in product code
+    // Then no unsupported product-boundary term appears in product code.
+    // "marketplace" is deliberately absent from this rule: the Bivaque
+    // Vitrine is a valid product surface and a lexical ban was a false proxy
+    // for an implementation constraint.
     expect(hits).toEqual([])
   })
 
