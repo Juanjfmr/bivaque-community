@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
-import { createServerClient as createServiceRoleClient } from "../../../../lib/supabase/server"
 import { EventInviteFanoutSection } from "../event-invite-fanout-section"
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"]
@@ -23,10 +22,7 @@ type AttendeeListRow = {
 
 // ── Server actions (writes) ──────────────────────────────────────────────────
 // Authenticate from cookies and write through the authenticated client so
-// RLS decides. The pattern is the same as communities/actions.ts. complete_event
-// stays on service_role because the RPC is granted to service_role only — the
-// plan names this as one of two exceptions, with the rule that anyone who
-// concludes a third exception must stop and report.
+// RLS decides. The pattern is the same as communities/actions.ts.
 
 async function getAuthClient() {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -129,11 +125,18 @@ async function completeEventAction(formData: FormData) {
   const eventId = formData.get("eventId")
   if (typeof eventId !== "string" || eventId.length === 0) throw new Error("eventId required")
 
-  // complete_event stays on service_role — the RPC is granted to
-  // service_role only and checks that the caller is the organiser. The
-  // plan names this as one of two exceptions.
-  const supabase = createServiceRoleClient()
-  const { error } = await supabase.rpc("complete_event", { p_event_id: eventId })
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("unauthenticated")
+
+  // P-02-AUTHZ fix: complete_event now accepts p_caller_user_id and grants
+  // to authenticated; no longer needs service_role, so auth.uid() null is gone.
+  const { error } = await supabase.rpc("complete_event", {
+    p_event_id: eventId,
+    p_caller_user_id: user.id,
+  })
   if (error) throw new Error(error.message)
 
   revalidatePath(`/events/${eventId}`)
