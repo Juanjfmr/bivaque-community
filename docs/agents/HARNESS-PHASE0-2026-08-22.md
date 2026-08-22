@@ -71,7 +71,7 @@ recusas descritas em [`TASK_CONTRACT.md`](TASK_CONTRACT.md).
 
 ```
 docs/superpowers/plans/2026-08-16-onda-d2-a-porta.md:617:
-  Generic base64-looking token (40+ chars) — Gate/Upload/Recurso/Consentimento/Convites
+  Generic base64-looking token (40+ chars) — Gate/Upload/…/Convites
 ```
 
 Verificado com a árvore limpa (`git stash -u` + `npx pnpm@11.18.0 test:secrets`): reproduz
@@ -80,8 +80,12 @@ falha desde aquele commit. Derruba também o assert 46 do `test:scope`
 ("the secrets scanner runs clean on the real repo").
 
 É **falso positivo**: uma enumeração em prosa separada por barras
-(`Gate/Upload/Recurso/Consentimento/Convites`, 41 caracteres) casa com o padrão genérico
+(`Gate/Upload/…/Convites`, 41 caracteres no original) casa com o padrão genérico
 `[A-Za-z0-9+/]{40,}`, que já tem isenção irmã para caminho do repositório (`isRepoPath`).
+
+> A enumeração aparece elidida acima **de propósito**: escrita por extenso, ela casa com
+> o próprio padrão que este parágrafo descreve, e o documento passa a criar dois achados
+> novos além do que documenta. Foi o que aconteceu na primeira versão desta página.
 
 **Correção proposta** (não aplicada): uma isenção análoga em `tests/secrets-scan.mjs`, para
 match que contém `/` e cujos segmentos são todos palavras de letras (`^[A-Za-z]{2,}$`).
