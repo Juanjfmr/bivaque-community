@@ -13,7 +13,6 @@
     "gate": "node scripts/gate.mjs",
     "generate:types": "supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts",
     "lint": "biome check .",
-    "task:check": "node scripts/agents/task-contract.mjs",
     "test:db": "supabase test db",
     "test:e2e": "playwright test",
     "typecheck": "pnpm -r --if-present typecheck",
