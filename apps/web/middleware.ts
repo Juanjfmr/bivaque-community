@@ -124,7 +124,18 @@ export async function middleware(request: NextRequest) {
     // decisão.
     return NextResponse.redirect(new URL("/onboarding", request.url))
   }
-  const kind = (kindRows?.[0]?.my_account_kind ?? null) as "member" | "provider" | null
+  // `my_account_kind()` devolve um ESCALAR (`returns text`), e o PostgREST
+  // responde com o valor cru — a string "member", nao uma lista de linhas.
+  // Ler como `kindRows?.[0]?.my_account_kind` faz `[0]` indexar a string ("m")
+  // e a propriedade sair `undefined`: `kind` virava SEMPRE null, e todo membro
+  // autenticado — com localidade, vila e perfil — caia no ramo do estado
+  // desconhecido e era despejado em /onboarding/locality. O produto inteiro
+  // ficava atras do formulario de cadastro.
+  //
+  // Nao ha tipo nem lint que pegue isso: o formato e decidido pelo PostgREST em
+  // runtime. Foi a auditoria visual que revelou, ao capturar a MESMA tela de
+  // onboarding em 21 rotas distintas.
+  const kind = (kindRows ?? null) as "member" | "provider" | null
 
   if (kind === "provider") {
     // O prestador vive fora do shell do membro (D36; ADR de shells e
