@@ -69,7 +69,27 @@ export function readElevationTerms(path = RISK_MATRIX_PATH) {
   return cachedTerms
 }
 
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+
+const matcherCache = new Map()
+
+// Termo casa por PALAVRA, não por substring. Com `includes`, "rls" casava com "urls",
+// "secret" com "secretaria" e "auth" com "author" — um contrato R1 falando em "URLs de
+// compartilhamento" era recusado como R3. O sufixo opcional preserva o plural
+// ("convites", "acessos") sem reabrir o casamento por pedaço de palavra.
+function termMatcher(term) {
+  const cached = matcherCache.get(term)
+  if (cached) return cached
+  const matcher = new RegExp(String.raw`\b${escapeRegExp(term)}(?:e?s)?\b`, "i")
+  matcherCache.set(term, matcher)
+  return matcher
+}
+
+export const matchesTerm = (haystack, term) => termMatcher(term).test(haystack)
+
 // Termos que sobem direto para R3 — trust boundary, dado pessoal, destrutivo.
+// `private` sem ponto: a forma que o AGENTS.md usa é "schema `private`", e exigir
+// o ponto literal deixava passar como R0 exatamente o caso que precisa de R3.
 export const R3_TERMS = [
   "rls",
   "policy",
@@ -77,7 +97,7 @@ export const R3_TERMS = [
   "supabase/migrations",
   "cpf",
   "secret",
-  "private.",
+  "private",
 ]
 
 // "Existence is not evidence." Pelo menos uma prova precisa ser executável.
@@ -205,8 +225,8 @@ export function requiredRiskLevel(contract) {
     .map((part) => String(part ?? "").toLowerCase())
     .join(" ")
 
-  if (R3_TERMS.some((term) => haystack.includes(term))) return "R3"
-  if (readElevationTerms().some((term) => haystack.includes(term))) return "R2"
+  if (R3_TERMS.some((term) => matchesTerm(haystack, term))) return "R3"
+  if (readElevationTerms().some((term) => matchesTerm(haystack, term))) return "R2"
   return "R0"
 }
 

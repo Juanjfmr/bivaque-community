@@ -59,6 +59,12 @@ O escaneamento cobre `objective`, `allowed_paths`, `acceptance` e `risk`: o que 
 **toca**. `forbidden` fica de fora de propósito — proibir mexer em migration não pode
 transformar a tarefa em R3.
 
+O casamento é **por palavra inteira** (com plural), não por substring: `rls` não casa com
+"urls", `secret` não casa com "secretaria", `auth` não casa com "author". No outro sentido,
+o termo é `private` e não `private.`, porque a forma usada no `AGENTS.md` é "schema
+`private`" — exigir o ponto literal deixava passar como R0 justamente o caso que mais
+precisa de R3.
+
 O vocabulário de elevação **não** é duplicado no validador: ele é lido do bloco
 `Automatic elevation terms` da própria [`RISK_MATRIX.md`](../decisions/RISK_MATRIX.md).
 Duplicá-lo criaria drift entre a régua e o validador — e faria o scanner de privacidade

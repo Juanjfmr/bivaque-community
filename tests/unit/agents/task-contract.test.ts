@@ -217,6 +217,27 @@ describe("elevação automática de risco", () => {
     expect(validateContract(contract).valid).toBe(true)
   })
 
+  it("casa termo por palavra, não por pedaço de palavra", () => {
+    // `includes` fazia "rls" casar com "urls", "secret" com "secretaria" e "auth" com
+    // "author": um contrato R1 falando em URLs de compartilhamento virava R3 e passava
+    // a exigir ADR que ninguém precisava assinar.
+    expect(requiredRiskLevel({ objective: "Expor URLs de compartilhamento no perfil" })).toBe("R0")
+    expect(requiredRiskLevel({ objective: "Ajustar o rótulo da secretaria" })).toBe("R0")
+    expect(requiredRiskLevel({ objective: "Mostrar o author do post no card" })).toBe("R0")
+  })
+
+  it("eleva o schema private sem exigir o ponto literal", () => {
+    // O termo era "private." — com ponto. A forma que o AGENTS.md usa é "schema
+    // `private`", então o caso que MAIS precisa de R3 passava como R0.
+    expect(requiredRiskLevel({ objective: "Ler uma função do schema private" })).toBe("R3")
+    expect(requiredRiskLevel({ objective: "Ajustar as policies de RLS do perfil" })).toBe("R3")
+  })
+
+  it("preserva o plural ao casar por palavra", () => {
+    expect(requiredRiskLevel({ objective: "Refazer o fluxo de convites" })).toBe("R2")
+    expect(requiredRiskLevel({ objective: "Revisar os acessos do grupo" })).toBe("R2")
+  })
+
   it("aceita R3 declarado com ADR", () => {
     const source = contractWith("adr: docs/decisions/ADR-20260811-om-declarada.md").replace(
       "risk_level: R1",
