@@ -110,37 +110,52 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  // D2 Task 1 — the gate now reads the real verification state, not just
-  // the membership row. The previous behaviour was: pending and
-  // temporary_error and rejected all looked the same as "never
-  // verified" because the redirect was the same, and the person
-  // burned a verification attempt to find that out. The new path routes
-  // each state to its own screen:
-  //   - never verified  -> /onboarding
-  //   - pending, rejected, temporary_error -> /onboarding/status
-  //   - verified, no membership -> /onboarding/locality
-  //     (P0 Task 4 two-phase admission step; verified is the gap
-  //      between eligibility and provisioning)
-  //
-  // The cookie that consent/page.tsx writes is a navigation shortcut, not
-  // the authority — /api/onboarding reconfirms with has_accepted_consent.
-  // The verification status is read through a SECURITY DEFINER RPC that
-  // scopes by auth.uid() server-side (no p_user_id parameter to get
-  // wrong). One extra round trip only when membership is missing.
-  const isMember = await supabase
-    .from("locality_memberships")
-    .select("locality_id")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle()
+  // Onda G — Task 1: a conta de prestador civil existe e precisa de
+  // roteamento próprio, senão o middleware empurra o prestador para o
+  // funil de admissão de membro (que pede CPF). D37: prestador é
+  // usuário do Auth com papel e SEM membership — daí a leitura única
+  // "qual é o tipo da minha conta" via my_account_kind() (uma ida só ao
+  // banco, em vez de duas).
+  const { data: kindRows, error: kindError } = await supabase.rpc("my_account_kind")
+  if (kindError) {
+    // Não dá para rotear com segurança. Falha fechado em /onboarding é
+    // a mesma decisão que o bloco abaixo toma quando o estado é
+    // desconhecido: a tela determinística é melhor do que uma meia
+    // decisão.
+    return NextResponse.redirect(new URL("/onboarding", request.url))
+  }
+  const kind = (kindRows?.[0]?.my_account_kind ?? null) as "member" | "provider" | null
 
-  if (isMember.data === null) {
-    // No membership yet — read the verification state to route by it.
+  if (kind === "provider") {
+    // O prestador vive fora do shell do membro (D36; ADR de shells e
+    // navegação). Deixa-o passar em /prestador e manda-o de volta para
+    // lá em qualquer outra rota — sem membership, toda policy de
+    // conteúdo nega; o redirect evita a tela vazia.
+    return pathname.startsWith("/prestador")
+      ? supabaseResponse
+      : NextResponse.redirect(new URL("/prestador", request.url))
+  }
+
+  if (kind === null) {
+    // D2 Task 1 — a porta agora lê o estado real de verificação, não só
+    // a linha de membership. O comportamento anterior era: pending,
+    // temporary_error e rejected pareciam o mesmo que "nunca
+    // verificou" porque o redirect era o mesmo, e a pessoa gastava uma
+    // tentativa de verificação para descobrir isso. O novo caminho
+    // roteia cada estado para a tela dele:
+    //   - nunca verificou       -> /onboarding
+    //   - pending, rejected, temporary_error -> /onboarding/status
+    //   - verified, sem membership -> /onboarding/locality
+    //     (P0 Task 4 two-phase admission step; verified é o gap entre
+    //      elegibilidade e provisionamento)
+    //
+    // O cookie que consent/page.tsx escreve é atalho de navegação, não
+    // a autoridade — /api/onboarding reconfirma com has_accepted_consent.
+    // O status de verificação é lido via RPC SECURITY DEFINER que escopa
+    // por auth.uid() server-side (sem parâmetro p_user_id para errar).
+    // Uma ida extra ao banco só quando falta membership.
     const { data: statusRows, error: statusError } = await supabase.rpc("my_verification_status")
     if (statusError) {
-      // We cannot route safely. Fail closed to /onboarding so the user
-      // sees a deterministic page rather than a half-decision. The error
-      // reaches the server logger; the page does not surface it.
       return NextResponse.redirect(new URL("/onboarding", request.url))
     }
     const status = (statusRows?.[0]?.status ?? null) as string | null
