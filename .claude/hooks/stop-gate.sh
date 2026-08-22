@@ -13,7 +13,9 @@ if [ "$active" = "true" ]; then
 fi
 
 # aviso apenas se houver mudancas nao verificadas e o repo tiver gate
-cd "C:/Users/juana/bivaque-community" 2>/dev/null || exit 0
+project_dir="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}"
+[ -n "$project_dir" ] || exit 0
+cd "$project_dir" 2>/dev/null || exit 0
 dirty=$(git status --porcelain 2>/dev/null | head -c 400)
 
 if [ -n "$dirty" ]; then
