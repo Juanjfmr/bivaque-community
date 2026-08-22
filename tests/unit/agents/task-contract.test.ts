@@ -139,6 +139,24 @@ describe("as recusas que dão dentes ao contrato", () => {
     )
   })
 
+  it("aplica o teto padrão quando o contrato não declara orçamento", () => {
+    // A tabela do TASK_CONTRACT.md promete "padrão 3". Sem aplicar o default, um
+    // contrato sem `retry_budget` passava sem teto nenhum — régua prometendo o que
+    // o validador não entregava.
+    const source = validContract.replace("retry_budget: 3\n", "")
+    const parsed = parseContract(source)
+    expect(parsed.retry_budget).toBeUndefined()
+
+    const result = validateContract(parsed)
+    expect(result.valid).toBe(true)
+    expect(result.effectiveRetryBudget).toBe(3)
+  })
+
+  it("preserva o orçamento declarado quando ele existe", () => {
+    const source = validContract.replace("retry_budget: 3", "retry_budget: 5")
+    expect(validateContract(parseContract(source)).effectiveRetryBudget).toBe(5)
+  })
+
   it("recusa orçamento de tentativa fora de 1..5", () => {
     const source = validContract.replace("retry_budget: 3", "retry_budget: 99")
     expect(validateContract(parseContract(source)).errors.join(" ")).toMatch(/retry_budget/)

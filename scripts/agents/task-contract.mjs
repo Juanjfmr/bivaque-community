@@ -305,13 +305,16 @@ export function validateContract(contract) {
     )
   }
 
-  if (contract.retry_budget !== undefined) {
-    const budget = contract.retry_budget
-    if (!Number.isInteger(budget) || budget < 1 || budget > 5) {
-      push(
-        "`retry_budget` deve ser inteiro entre 1 e 5 — sem teto, o agente queima horas num item só",
-      )
-    }
+  // Contrato sem `retry_budget` não é contrato sem teto: cai no padrão, e o teto
+  // efetivo sai no resultado para que quem executa leia um número, não uma promessa.
+  const effectiveRetryBudget =
+    contract.retry_budget === undefined ? DEFAULT_RETRY_BUDGET : contract.retry_budget
+  const budgetInRange =
+    Number.isInteger(effectiveRetryBudget) && effectiveRetryBudget >= 1 && effectiveRetryBudget <= 5
+  if (!budgetInRange) {
+    push(
+      "`retry_budget` deve ser inteiro entre 1 e 5 — sem teto, o agente queima horas num item só",
+    )
   }
 
   if (contract.on_budget_exhausted !== undefined) {
@@ -323,7 +326,12 @@ export function validateContract(contract) {
     }
   }
 
-  return { valid: errors.length === 0, errors, effectiveRiskLevel: effective }
+  return {
+    valid: errors.length === 0,
+    errors,
+    effectiveRiskLevel: effective,
+    effectiveRetryBudget,
+  }
 }
 
 export function checkSource(source) {
@@ -360,6 +368,7 @@ function main() {
       valid: result.valid,
       errors: result.errors,
       riskLevel: result.effectiveRiskLevel,
+      retryBudget: result.effectiveRetryBudget,
     }
   })
 
@@ -371,9 +380,8 @@ function main() {
     console.log(`Nenhum contrato em ${TASKS_DIR}/ — nada a validar.`)
   } else {
     for (const report of reports) {
-      console.log(
-        `${report.valid ? "  ok " : "FAIL "} ${report.file}${report.valid ? ` (${report.riskLevel})` : ""}`,
-      )
+      const summary = report.valid ? ` (${report.riskLevel}, retry ${report.retryBudget})` : ""
+      console.log(`${report.valid ? "  ok " : "FAIL "} ${report.file}${summary}`)
       for (const error of report.errors) console.log(`       · ${error}`)
     }
     console.log(
