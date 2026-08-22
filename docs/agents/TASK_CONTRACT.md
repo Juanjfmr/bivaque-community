@@ -73,6 +73,26 @@ acusar termo comercial proibido dentro de código de produto, com razão.
 
 ## Parser
 
-O validador lê um subconjunto restrito de YAML (mapa, lista, escalar `>` e `|`,
-comentários de linha) para não trazer dependência nova. Um contrato exótico **falha alto**
-em vez de ser interpretado errado — o erro traz o número da linha.
+O validador lê um subconjunto restrito de YAML para não trazer dependência nova. O
+subconjunto é este, e nada além:
+
+| Suportado | Forma |
+|---|---|
+| mapa | `chave: valor`, aninhado por indentação |
+| lista | `- item` sob a chave |
+| escalar em bloco | `chave: >` (dobrado) e `chave: \|` (literal) |
+| escalar entre aspas | `"valor"` / `'valor'`, com comentário de cauda opcional |
+| comentário | linha inteira, ou cauda de linha de chave — **nunca** dentro de bloco |
+| tipos | inteiro, `true`/`false`, resto é string |
+
+Fora disso o parser **para alto**, com o número da linha, em vez de interpretar errado:
+aspas não fechadas, linha que não é `chave: valor`, indentação inesperada.
+
+Duas armadilhas fechadas por teste, porque as duas passavam caladas antes: `#` é conteúdo
+dentro de escalar em bloco (um objetivo citando "issue #42" era truncado), e o comentário
+de cauda sai mesmo quando o valor está entre aspas (senão o valor guardava aspas e
+comentário dentro de si).
+
+**Se o formato precisar crescer além desta tabela, a decisão certa deixa de ser estender o
+parser e passa a ser adotar um parser YAML de verdade.** Cada extensão desta tabela é uma
+nova classe de caso de borda para manter.

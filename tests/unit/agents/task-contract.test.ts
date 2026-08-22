@@ -83,6 +83,23 @@ risk: acessibilidade  # rótulo, não valor
     expect(parsed.risk).toBe("acessibilidade")
   })
 
+  it("remove comentário de cauda em valor entre aspas, e preserva `#` dentro delas", () => {
+    // O stripper de linha se desliga quando há aspas, então a cauda sobrava DENTRO do
+    // valor: `objective: "texto"  # nota` virava o literal com aspas e comentário, e
+    // passava calado — o mesmo "interpretar errado" do caso sem aspas.
+    const parsed = parseContract(`task_id: DS-042
+objective: "Corrigir o seletor"  # comentário de cauda
+acceptance:
+  - "trata o caso #42"
+`)
+    expect(parsed.objective).toBe("Corrigir o seletor")
+    expect(parsed.acceptance).toEqual(["trata o caso #42"])
+  })
+
+  it("para alto em aspas não fechadas, com o número da linha", () => {
+    expect(() => parseContract('objective: "sem fechar\n')).toThrow(/linha 1.*mal formado/)
+  })
+
   it("falha alto, com o número da linha, em vez de adivinhar", () => {
     expect(() => parseContract("task_id: X\nisto não é chave: valor\n")).toThrow(/linha 2/)
   })

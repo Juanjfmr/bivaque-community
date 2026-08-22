@@ -141,14 +141,26 @@ export const BUDGET_OUTCOMES = ["FAIL", "BLOCKED", "HUMAN_DECISION"]
 
 const KEY_PATTERN = /^([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)$/
 
-function parseScalar(raw) {
+function parseScalar(raw, line) {
   const text = raw.trim()
   if (text === "") return ""
   if (text === "true") return true
   if (text === "false") return false
   if (/^-?\d+$/.test(text)) return Number(text)
-  const quoted = /^"(.*)"$/.exec(text) ?? /^'(.*)'$/.exec(text)
-  return quoted ? quoted[1] : text
+
+  // Valor entre aspas fecha aqui o buraco que o stripper de linha deixa aberto: ele se
+  // desliga quando há aspas na linha, porque um `#` dentro da string é conteúdo. Sem
+  // este tratamento, `objective: "texto"  # nota` virava o literal com aspas E
+  // comentário dentro, e passava calado na validação. Aspas não fechadas param alto.
+  if (text.startsWith('"') || text.startsWith("'")) {
+    const quoted = /^(["'])([\s\S]*?)\1\s*(?:#.*)?$/.exec(text)
+    if (!quoted) {
+      const where = line === undefined ? "" : `linha ${line}: `
+      throw new Error(`${where}valor entre aspas mal formado: ${text}`)
+    }
+    return quoted[2]
+  }
+  return text
 }
 
 function readLines(source) {
@@ -197,7 +209,7 @@ function parseNode(lines, cursor, indent) {
     while (index < lines.length && lines[index].indent === indent) {
       const { text } = lines[index]
       if (!text.startsWith("- ") && text !== "-") break
-      items.push(parseScalar(text.slice(1)))
+      items.push(parseScalar(text.slice(1), lines[index].number))
       index += 1
     }
     return [items, index]
@@ -232,7 +244,7 @@ function parseNode(lines, cursor, indent) {
       continue
     }
 
-    map[key] = parseScalar(rest)
+    map[key] = parseScalar(rest, line.number)
   }
   return [map, index]
 }
