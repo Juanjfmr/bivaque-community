@@ -337,6 +337,14 @@ export function validateContract(contract) {
     )
   }
 
+  // Um contrato pode ser válido e, ainda assim, não poder fechar agora: `blocked_by`
+  // registra isso onde quem executa lê. A alternativa — encolher `proof` até caber no
+  // que fica verde — é ajustar a régua ao resultado, que é o que este harness combate.
+  const blocked = contract.blocked_by !== undefined && String(contract.blocked_by).trim() !== ""
+  if (contract.blocked_by !== undefined && !blocked) {
+    push("`blocked_by` precisa dizer o que bloqueia a prova, ou ser removido")
+  }
+
   if (contract.on_budget_exhausted !== undefined) {
     const outcome = String(contract.on_budget_exhausted).toUpperCase()
     if (!BUDGET_OUTCOMES.includes(outcome)) {
@@ -351,6 +359,7 @@ export function validateContract(contract) {
     errors,
     effectiveRiskLevel: effective,
     effectiveRetryBudget,
+    blocked,
   }
 }
 
@@ -389,6 +398,7 @@ function main() {
       errors: result.errors,
       riskLevel: result.effectiveRiskLevel,
       retryBudget: result.effectiveRetryBudget,
+      blocked: result.blocked,
     }
   })
 
@@ -400,7 +410,10 @@ function main() {
     console.log(`Nenhum contrato em ${TASKS_DIR}/ — nada a validar.`)
   } else {
     for (const report of reports) {
-      const summary = report.valid ? ` (${report.riskLevel}, retry ${report.retryBudget})` : ""
+      const flags = report.blocked ? ", BLOQUEADO" : ""
+      const summary = report.valid
+        ? ` (${report.riskLevel}, retry ${report.retryBudget}${flags})`
+        : ""
       console.log(`${report.valid ? "  ok " : "FAIL "} ${report.file}${summary}`)
       for (const error of report.errors) console.log(`       · ${error}`)
     }

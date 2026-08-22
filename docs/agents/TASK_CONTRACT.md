@@ -33,6 +33,7 @@ modelo, de harness e de sessão; o contrato continua.
 | `risk_level` | sim | `R0`–`R3` da [`RISK_MATRIX`](../decisions/RISK_MATRIX.md) |
 | `adr` | em R3 | caminho para o ADR aprovado em `docs/decisions/` |
 | `reviewer_must_differ_from_executor` | sim | `true` fora de R0. Revisor ancorado não é revisor |
+| `blocked_by` | não | registra que a tarefa é válida mas não pode fechar agora: prova impedida por achado pré-existente ou decisão pendente. O validador marca `BLOQUEADO` |
 | `retry_budget` | não | inteiro 1–5, padrão 3 **aplicado pelo validador** (que reporta o teto efetivo). Tentativas de reparo do mesmo item |
 | `on_budget_exhausted` | não | `FAIL`, `BLOCKED` ou `HUMAN_DECISION`. **`PASS` é recusado** |
 | `closure` | sim | `requires_runtime_evidence: true` fora de R0 |

@@ -171,6 +171,24 @@ describe("as recusas que dão dentes ao contrato", () => {
   })
 })
 
+describe("contrato bloqueado", () => {
+  it("aceita um contrato que declara o que impede a prova", () => {
+    const source = contractWith("blocked_by: test:secrets vermelho por achado pré-existente")
+    const result = validateContract(parseContract(source))
+    expect(result.valid).toBe(true)
+    expect(result.blocked).toBe(true)
+  })
+
+  it("não marca bloqueio quando o campo está ausente", () => {
+    expect(validateContract(parseContract(validContract)).blocked).toBe(false)
+  })
+
+  it("recusa blocked_by vazio — bloqueio sem causa não é registro", () => {
+    const source = contractWith('blocked_by: ""')
+    expect(validateContract(parseContract(source)).errors.join(" ")).toMatch(/blocked_by/)
+  })
+})
+
 describe("elevação automática de risco", () => {
   it("eleva a R3 o que toca a fronteira de confiança", () => {
     const contract = parseContract(

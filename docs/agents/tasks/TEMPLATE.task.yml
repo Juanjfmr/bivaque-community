@@ -59,6 +59,11 @@ risk_level: R1
 # do implementador não é revisor.
 reviewer_must_differ_from_executor: true
 
+# Opcional. Registra que a tarefa é válida mas NÃO pode fechar agora — prova
+# impedida por achado pré-existente, dependência externa ou decisão pendente.
+# Encolher `proof` até caber no que fica verde é ajustar a régua ao resultado.
+# blocked_by: o que impede a prova, e o que precisa acontecer para destravar
+
 # Teto de tentativas de reparo. Esgotar nunca produz PASS.
 retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION

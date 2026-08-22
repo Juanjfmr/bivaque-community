@@ -94,3 +94,9 @@ credencial é decisão de segurança, não faxina de harness — e o próprio va
 contrato classifica uma tarefa com `tests/secrets-scan.mjs` em `allowed_paths` como R3,
 recusando-a sem `adr:`. A regra vale contra quem a escreveu: fica registrada aqui,
 esperando decisão humana.
+
+**Consequência para esta própria tarefa:** o `proof` de `HRN-001` lista o gate completo,
+e o gate não pode ficar verde enquanto isso durar. O veredito corrente de HRN-001 é
+portanto `BLOCKED`, não `PASS` — registrado no campo `blocked_by` do contrato, que o
+validador reporta. Encolher o `proof` até caber no que fica verde seria ajustar a régua
+ao resultado, que é exatamente o que este harness existe para impedir.
