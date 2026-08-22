@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -1009,6 +1009,51 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_accounts: {
+        Row: {
+          auth_user_id: string
+          community_id: string
+          created_at: string
+          invited_by: string
+          locality_id: string
+          revoked_at: string | null
+          revoked_by: string | null
+        }
+        Insert: {
+          auth_user_id: string
+          community_id: string
+          created_at?: string
+          invited_by: string
+          locality_id: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Update: {
+          auth_user_id?: string
+          community_id?: string
+          created_at?: string
+          invited_by?: string
+          locality_id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_accounts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_accounts_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommendation_replies: {
         Row: {
           author_id: string
@@ -1471,6 +1516,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      is_provider_account: { Args: { p_user_id: string }; Returns: boolean }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
       list_available_groups_for_interests: {
@@ -1580,6 +1626,7 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      my_account_kind: { Args: never; Returns: string }
       my_verification_status: {
         Args: never
         Returns: {
