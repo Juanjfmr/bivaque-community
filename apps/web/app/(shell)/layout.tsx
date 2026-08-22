@@ -28,14 +28,14 @@ const SUPABASE_ANON_KEY = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
 
 interface MembershipRow {
   locality_id: string
-  localities: { city_name: string } | null
+  localities: { city_name: string; state_code: string } | null
 }
 
 interface OutboundRow {
   locality_id: string
   leaving_at: string | null
   access: "active" | "read_only"
-  localities: { city_name: string } | null
+  localities: { city_name: string; state_code: string } | null
 }
 
 export default async function ShellLayout({ children }: ShellLayoutProperties) {
@@ -55,7 +55,7 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
 
   const { data, error } = await supabase
     .from("locality_memberships")
-    .select("locality_id, localities(city_name)")
+    .select("locality_id, localities(city_name, state_code)")
     .eq("kind", "current")
     .maybeSingle()
 
@@ -77,11 +77,12 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
   const current: LocalityCurrent = {
     id: row.locality_id,
     cityName: row.localities?.city_name ?? row.locality_id,
+    stateCode: row.localities?.state_code ?? "",
   }
 
   const { data: outboundData, error: outboundError } = await supabase
     .from("locality_memberships")
-    .select("locality_id, leaving_at, access, localities(city_name)")
+    .select("locality_id, leaving_at, access, localities(city_name, state_code)")
     .eq("kind", "leaving")
     .maybeSingle()
 
@@ -96,6 +97,7 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
       : {
           id: outboundRow.locality_id,
           cityName: outboundRow.localities?.city_name ?? outboundRow.locality_id,
+          stateCode: outboundRow.localities?.state_code ?? "",
           endsAt: outboundRow.leaving_at ?? "",
           readOnly: outboundRow.access === "read_only",
         }

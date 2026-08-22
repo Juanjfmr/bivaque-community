@@ -109,9 +109,11 @@ export function BottomNav() {
 
   const items = NAV_ITEMS
 
+  const fallbackId =
+    pathname.startsWith("/messages") || pathname.startsWith("/notifications") ? "me" : "community"
   const selectedKey =
     items.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
-    "community"
+    fallbackId
 
   return (
     <nav

@@ -13,7 +13,7 @@ import {
   useOverlayState,
 } from "@heroui/react"
 import { ExternalLink, Heart, Link2, MessageCircle, MoreHorizontal, Share2 } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -522,6 +522,7 @@ export function CreatePostModal({
   const [piiWarning, setPiiWarning] = useState(false)
   const [communityId, setCommunityId] = useState<string | null>(defaultCommunityId ?? null)
   const [availableCommunities, setAvailableCommunities] = useState<CommunityOption[]>([])
+  const dialogContentRef = useRef<HTMLDivElement>(null)
   const supabase = createBrowserClient()
 
   useEffect(() => {
@@ -529,6 +530,17 @@ export function CreatePostModal({
       onClose()
     }
   }, [modal.isOpen, onClose])
+
+  useLayoutEffect(() => {
+    if (!modal.isOpen) return
+    if (!dialogContentRef.current) return
+    const focusable = dialogContentRef.current.querySelector<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
+    )
+    if (focusable && document.activeElement !== focusable) {
+      focusable.focus()
+    }
+  }, [modal.isOpen])
 
   useEffect(() => {
     let cancelled = false
@@ -675,7 +687,7 @@ export function CreatePostModal({
               <Modal.CloseTrigger />
             </Modal.Header>
             <Modal.Body>
-              <div className="flex gap-2 overflow-x-auto">
+              <div ref={dialogContentRef} className="flex gap-2 overflow-x-auto">
                 {(["text", "photo", "link", "poll"] as const).map((type) => (
                   <Button
                     key={type}

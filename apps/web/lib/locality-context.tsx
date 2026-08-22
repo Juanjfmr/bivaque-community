@@ -26,6 +26,7 @@ import { createContext, type ReactNode, useContext } from "react"
 export type LocalityCurrent = {
   id: string
   cityName: string
+  stateCode: string
 }
 
 // Onda T Task 4: the leaving link, surfaced to the client. `endsAt` is the
@@ -36,6 +37,7 @@ export type LocalityCurrent = {
 export type LocalityOutbound = {
   id: string
   cityName: string
+  stateCode: string
   endsAt: string
   readOnly: boolean
 }

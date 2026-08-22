@@ -44,6 +44,10 @@ function CloseIcon(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+function safeErrorMessage(action: string): string {
+  return `Não foi possível ${action}. Tente novamente.`
+}
+
 function OnboardingBlock({ groupName, onDismiss }: { groupName: string; onDismiss: () => void }) {
   return (
     <div
@@ -142,21 +146,32 @@ export default function GroupsPage() {
       const localityId = membershipData.locality_id
       setProfileLocalityId(localityId)
 
-      const { data: groupsData } = await supabase
+      const { data: groupsData, error: groupsError } = await supabase
         .from("groups")
         .select("*")
         .eq("locality_id", localityId)
         .order("created_at", { ascending: false })
 
-      const { data: membershipsData } = await supabase
+      const { data: membershipsData, error: membershipsError } = await supabase
         .from("group_memberships")
         .select("*")
         .eq("user_id", authData.user.id)
 
+      if (groupsError || membershipsError) {
+        if (groupsError) console.error("[groups] groups query failed:", groupsError)
+        if (membershipsError)
+          console.error("[groups] group_memberships query failed:", membershipsError)
+        setError(safeErrorMessage("carregar os grupos"))
+        setGroups([])
+        setMemberships([])
+        return
+      }
+
       setGroups((groupsData as GroupRow[] | null) ?? [])
       setMemberships((membershipsData as MembershipRow[] | null) ?? [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar dados.")
+      console.error("[groups] loadData unexpected error:", err)
+      setError(safeErrorMessage("carregar os grupos"))
     } finally {
       setLoading(false)
     }
@@ -177,123 +192,132 @@ export default function GroupsPage() {
     setCreating(true)
     setError(null)
 
-    try {
-      const args = {
-        p_name: createName,
-        p_visibility: createVisibility,
-        p_locality_id: profileLocalityId,
-        ...(createDescription ? { p_description: createDescription } : {}),
-      }
-      const { error: rpcError } = await supabase.rpc("create_group", args)
-      if (rpcError) throw new Error(rpcError.message)
-
-      setCreateName("")
-      setCreateDescription("")
-      setCreateVisibility("public")
-      setShowCreate(false)
-      await loadData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar grupo.")
-    } finally {
-      setCreating(false)
+    const args = {
+      p_name: createName,
+      p_visibility: createVisibility,
+      p_locality_id: profileLocalityId,
+      ...(createDescription ? { p_description: createDescription } : {}),
     }
+    const { error: rpcError } = await supabase.rpc("create_group", args)
+    if (rpcError) {
+      console.error("[groups] create_group failed:", rpcError)
+      setError(safeErrorMessage("criar o grupo"))
+      setCreating(false)
+      return
+    }
+
+    setCreateName("")
+    setCreateDescription("")
+    setCreateVisibility("public")
+    setShowCreate(false)
+    await loadData()
+    setCreating(false)
   }
 
   const handleJoin = async (groupId: string) => {
     setActionLoading(groupId)
     setError(null)
 
-    try {
-      const { error: rpcError } = await supabase.rpc("join_group", {
-        p_group_id: groupId,
-      })
-      if (rpcError) throw new Error(rpcError.message)
-      setRecentlyJoinedGroupId(groupId)
-      await loadData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao entrar no grupo.")
-    } finally {
+    const { error: rpcError } = await supabase.rpc("join_group", {
+      p_group_id: groupId,
+    })
+    if (rpcError) {
+      console.error("[groups] join_group failed:", rpcError)
+      setError(safeErrorMessage("entrar no grupo"))
       setActionLoading(null)
+      return
     }
+    setRecentlyJoinedGroupId(groupId)
+    await loadData()
+    setActionLoading(null)
   }
 
   const handleLeave = async (groupId: string) => {
     setActionLoading(groupId)
     setError(null)
 
-    try {
-      const { error: deleteError } = await supabase
-        .from("group_memberships")
-        .delete()
-        .eq("group_id", groupId)
-        .eq("user_id", userId ?? "")
+    const { error: deleteError } = await supabase
+      .from("group_memberships")
+      .delete()
+      .eq("group_id", groupId)
+      .eq("user_id", userId ?? "")
 
-      if (deleteError) throw new Error(deleteError.message)
-      await loadData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao sair do grupo.")
-    } finally {
+    if (deleteError) {
+      console.error("[groups] group_memberships delete failed:", deleteError)
+      setError(safeErrorMessage("sair do grupo"))
       setActionLoading(null)
+      return
     }
+    await loadData()
+    setActionLoading(null)
   }
 
   const handleApprove = async (groupId: string, targetUserId: string) => {
     setActionLoading(groupId)
     setError(null)
 
-    try {
-      const { error: rpcError } = await supabase.rpc("approve_group_member", {
-        p_group_id: groupId,
-        p_user_id: targetUserId,
-      })
-      if (rpcError) throw new Error(rpcError.message)
-      await loadGroupMembers(groupId)
-      await loadData()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao aprovar membro.")
-    } finally {
+    const { error: rpcError } = await supabase.rpc("approve_group_member", {
+      p_group_id: groupId,
+      p_user_id: targetUserId,
+    })
+    if (rpcError) {
+      console.error("[groups] approve_group_member failed:", rpcError)
+      setError(safeErrorMessage("aprovar o membro"))
       setActionLoading(null)
+      return
     }
+    await loadGroupMembers(groupId)
+    await loadData()
+    setActionLoading(null)
   }
 
   const handleAddModerator = async (groupId: string, targetUserId: string) => {
     setActionLoading(groupId)
     setError(null)
 
-    try {
-      const { error: rpcError } = await supabase.rpc("add_group_moderator", {
-        p_group_id: groupId,
-        p_user_id: targetUserId,
-      })
-      if (rpcError) throw new Error(rpcError.message)
-      await loadGroupMembers(groupId)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao adicionar moderador.")
-    } finally {
+    const { error: rpcError } = await supabase.rpc("add_group_moderator", {
+      p_group_id: groupId,
+      p_user_id: targetUserId,
+    })
+    if (rpcError) {
+      console.error("[groups] add_group_moderator failed:", rpcError)
+      setError(safeErrorMessage("adicionar o moderador"))
       setActionLoading(null)
+      return
     }
+    await loadGroupMembers(groupId)
+    setActionLoading(null)
   }
 
   const handleRemoveModerator = async (groupId: string, targetUserId: string) => {
     setActionLoading(groupId)
     setError(null)
 
-    try {
-      const { error: rpcError } = await supabase.rpc("remove_group_moderator", {
-        p_group_id: groupId,
-        p_user_id: targetUserId,
-      })
-      if (rpcError) throw new Error(rpcError.message)
-      await loadGroupMembers(groupId)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao remover moderador.")
-    } finally {
+    const { error: rpcError } = await supabase.rpc("remove_group_moderator", {
+      p_group_id: groupId,
+      p_user_id: targetUserId,
+    })
+    if (rpcError) {
+      console.error("[groups] remove_group_moderator failed:", rpcError)
+      setError(safeErrorMessage("remover o moderador"))
       setActionLoading(null)
+      return
     }
+    await loadGroupMembers(groupId)
+    setActionLoading(null)
   }
 
   const loadGroupMembers = async (groupId: string) => {
-    const { data } = await supabase.from("group_memberships").select("*").eq("group_id", groupId)
+    const { data, error } = await supabase
+      .from("group_memberships")
+      .select("*")
+      .eq("group_id", groupId)
+    if (error) {
+      console.error("[groups] loadGroupMembers failed:", error)
+      setError(safeErrorMessage("carregar os membros"))
+      setSelectedGroupMembers([])
+      return
+    }
     setSelectedGroupMembers((data as MembershipRow[] | null) ?? [])
   }
 
@@ -573,7 +597,7 @@ export default function GroupsPage() {
         </Form>
       )}
 
-      {groups.length === 0 && !showCreate ? (
+      {!error && groups.length === 0 && !showCreate ? (
         <EmptyState
           title="Nenhum grupo ainda"
           description="Crie ou entre em um grupo para se conectar com outros membros da sua comunidade."

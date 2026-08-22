@@ -13,6 +13,7 @@
 // via declare_locality_transfer / reverse_locality_transfer. É puramente
 // qual referência de cidade está sendo lida nesta tela.
 
+import { Tab, TabList, TabPanel, Tabs } from "@heroui/react"
 import { useState } from "react"
 import { type LocalityCurrent, useLocalityContext } from "../../../lib/locality-context"
 import { CityReference } from "../../components/bivaque/city-reference"
@@ -32,59 +33,55 @@ export default function LocalidadePage() {
     return <CityReference />
   }
 
-  const outboundAsCurrent: LocalityCurrent = { id: outbound.id, cityName: outbound.cityName }
+  const outboundAsCurrent: LocalityCurrent = {
+    id: outbound.id,
+    cityName: outbound.cityName,
+    stateCode: outbound.stateCode,
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-[56rem] flex-col gap-4 px-4 pt-6">
-      <div
-        role="tablist"
+      <Tabs
         aria-label="Escolher cidade"
-        className="flex gap-2 rounded-full border border-border bg-[var(--surface-sunken)] p-1"
+        variant="primary"
+        selectedKey={viewingOutbound ? "outbound" : "current"}
+        onSelectionChange={(key) => setViewingOutbound(key === "outbound")}
+        className="rounded-full"
       >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={!viewingOutbound}
-          onClick={() => setViewingOutbound(false)}
-          className={`min-h-11 flex-1 rounded-full px-4 text-sm font-medium transition-colors ${
-            !viewingOutbound
-              ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-              : "text-muted hover:bg-surface-subtle"
-          }`}
+        <TabList
+          aria-label="Cidades"
+          className="flex w-full gap-2 rounded-full border border-border bg-[var(--surface-sunken)] p-1"
         >
-          {current.cityName}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={viewingOutbound}
-          onClick={() => setViewingOutbound(true)}
-          className={`min-h-11 flex-1 rounded-full px-4 text-sm font-medium transition-colors ${
-            viewingOutbound
-              ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-              : "text-muted hover:bg-surface-subtle"
-          }`}
-        >
-          {outbound.cityName} (saindo)
-        </button>
-      </div>
+          <Tab
+            id="current"
+            className="min-h-11 flex-1 rounded-full px-4 text-sm font-medium transition-colors text-muted hover:bg-surface-subtle aria-[selected=true]:bg-[var(--accent)] aria-[selected=true]:text-[var(--accent-foreground)]"
+          >
+            {current.cityName}
+          </Tab>
+          <Tab
+            id="outbound"
+            className="min-h-11 flex-1 rounded-full px-4 text-sm font-medium transition-colors text-muted hover:bg-surface-subtle aria-[selected=true]:bg-[var(--accent)] aria-[selected=true]:text-[var(--accent-foreground)]"
+          >
+            {outbound.cityName} (saindo)
+          </Tab>
+        </TabList>
 
-      {viewingOutbound && (
-        <FeedbackAlert
-          variant="warning"
-          description={
-            outbound.readOnly
-              ? `Você só lê aqui — a transferência já aconteceu. Para publicar, use ${current.cityName}.`
-              : `Você está saindo de ${outbound.cityName} em ${formatDate(outbound.endsAt)}. Até lá, continua podendo publicar aqui normalmente.`
-          }
-        />
-      )}
+        <TabPanel id="current">
+          <CityReference locality={current} />
+        </TabPanel>
 
-      {viewingOutbound ? (
-        <CityReference locality={outboundAsCurrent} />
-      ) : (
-        <CityReference locality={current} />
-      )}
+        <TabPanel id="outbound">
+          <FeedbackAlert
+            variant="warning"
+            description={
+              outbound.readOnly
+                ? `Você só lê aqui — a transferência já aconteceu. Para publicar, use ${current.cityName}.`
+                : `Você está saindo de ${outbound.cityName} em ${formatDate(outbound.endsAt)}. Até lá, continua podendo publicar aqui normalmente.`
+            }
+          />
+          <CityReference locality={outboundAsCurrent} />
+        </TabPanel>
+      </Tabs>
     </div>
   )
 }
