@@ -27,6 +27,14 @@ before answering a question about what this product does.
 - **[`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md)** — what the code **does today**,
   with file:line evidence and the gap to the target.
 
+**For a task that plans or changes the repository, read the operational summary too.**
+
+- **[`tools/backend-kanban/BOARD.md`](tools/backend-kanban/BOARD.md)** — the generated, concise
+  view of the current path to MVP launch. Use the stable card ID from that summary to consult the
+  canonical [`board.json`](tools/backend-kanban/public/board.json) before planning the change. The
+  board sets execution priority; it never overrides product decisions or runtime evidence in the
+  two documents above. Never edit `BOARD.md` by hand.
+
 **Never infer one from the other.** `BIVAQUE.md` describes decisions, many of them not yet
 built; `PRODUCT_STATUS.md` describes reality. Reading a decision as a delivered feature is
 the mistake that produced the document these two replace.
@@ -47,6 +55,15 @@ Three rules that decide whether your work is legitimate at all:
   on its own. Doing that is what made the previous map promise what the product never
   delivered.
 
+- **Keep material board transitions with the work.** Before planning or implementation, identify
+  the matching card from `BOARD.md` and consult its canonical entry in `board.json`. In the same
+  commit, update the card only when the work gains proof, becomes blocked, reveals drift, changes
+  priority/status or completes — merely starting work is not a board transition. Regenerate the
+  summary with `node tools/backend-kanban/src/board.mjs --write-summary`; CI rejects invalid data
+  or a stale summary. Do not create a second task system or mark a card `done` without its
+  applicable Definition of Done and recorded evidence. Routine questions and read-only answers
+  do not require a board update.
+
 **Scope column and the policies that read it land in the same migration** — never "in
 future". This is the failure this repository keeps repeating; it has produced four privacy
 leaks so far.
@@ -57,6 +74,8 @@ leaks so far.
 |---|---|
 | `docs/BIVAQUE.md` | What the product must be: vision, roles, decisions, monetisation, sequencing |
 | `docs/PRODUCT_STATUS.md` | What the code does today, the gap to the target, and which wave closes it |
+| `tools/backend-kanban/BOARD.md` | Concise generated MVP path agents read before planning or implementation |
+| `tools/backend-kanban/public/board.json` | Canonical board data, evidence and documentation drift by stable card ID |
 | `docs/decisions/` | R3 decisions as ADRs, and `RISK_MATRIX.md` — what an agent may decide alone |
 | `docs/agents/DESIGN_SPEC.md` | The visual language, and the source of truth for tokens |
 | `docs/agents/VISUAL_GUIDE.md` §9 | The audit rubric — how well a screen must be made |

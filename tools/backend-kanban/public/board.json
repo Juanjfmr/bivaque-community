@@ -368,7 +368,7 @@
     },
     {
       "id": "BLOCK-ASAAS",
-      "title": "Vitrine paga / Asaas",
+      "title": "Marketplace pago / Asaas",
       "phase": "G2",
       "priority": "HOLD",
       "category": "governance",
@@ -576,7 +576,8 @@
       ],
       "proof": [
         "Convites, moderação, perfil e eventos tiveram 'fechamentos' que só QA posterior desmentiu",
-        "provider_accounts expõe drift atual entre runtime e status"
+        "provider_accounts expõe drift atual entre runtime e status",
+        "AGENTS.md exige leitura do resumo operacional e atualização somente em transições materiais; test:scope valida schema e sincronização"
       ],
       "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"]
     },

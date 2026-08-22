@@ -36,14 +36,30 @@ $env:KANBAN_PORT=4176; npx pnpm@11.18.0 --dir tools/backend-kanban dev
 O arquivo canônico é [`public/board.json`](public/board.json). A interface apenas o carrega e
 projeta: busca e filtros não alteram os dados. Portanto, Git é a única sincronização necessária.
 
+Agentes leem primeiro [`BOARD.md`](BOARD.md), um resumo curto gerado a partir do JSON. Depois usam
+o `id` estável para consultar apenas o card relevante no arquivo canônico. `BOARD.md` nunca é
+editado manualmente.
+
 Para atualizar um card:
 
 1. confirme o estado no código, migration, teste ou GitHub;
 2. atualize o card pelo `id` estável, preservando `proof`, `tests` e `links`;
 3. quando houver conflito entre documentação e runtime, preencha `drift` em vez de esconder a
    diferença;
-4. só mova para `done` após o checklist aplicável e a prova estarem registrados;
-5. faça um commit pequeno que mencione o `id` do card.
+4. atualize o board apenas quando houver transição material: prova, bloqueio, drift, prioridade,
+   status ou conclusão; apenas começar a trabalhar não muda o card;
+5. só mova para `done` após o checklist aplicável e a prova estarem registrados;
+6. regenere e valide o resumo;
+7. faça um commit pequeno que mencione o `id` do card.
+
+```sh
+node tools/backend-kanban/src/board.mjs --write-summary
+node tools/backend-kanban/src/board.mjs --check
+```
+
+O `test:scope` executado no gate também valida o schema, IDs, estados, Definition of Done e se o
+resumo está sincronizado. Assim, a estrutura é automática; a decisão semântica de mudar um card
+continua baseada em evidência.
 
 Os campos opcionais `owner`, `branch`, `issuePr`, `proof`, `tests`, `blockedBy` e `completedAt`
 estão previstos no formato. Eles permitem que vários agentes contribuam em worktrees diferentes
