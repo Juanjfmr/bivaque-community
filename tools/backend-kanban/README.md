@@ -65,6 +65,19 @@ Os campos opcionais `owner`, `branch`, `issuePr`, `proof`, `tests`, `blockedBy` 
 estão previstos no formato. Eles permitem que vários agentes contribuam em worktrees diferentes
 sem criar uma segunda fonte de verdade no navegador.
 
+### Tarefas novas
+
+O agente que encontra trabalho ainda não representado procura primeiro IDs, títulos e checklists
+equivalentes. Se pertencer ao mesmo contrato de fechamento, amplia o card existente. Se for uma
+frente realmente nova, cria um card no mesmo commit que revelou a necessidade, com:
+
+- ID estável, prioridade, categoria e status;
+- evidência da origem, checklist e dependências;
+- `blocked` ou `repo` quando depender de decisão de produto, dados pessoais, pagamento, RLS ou
+  outra fronteira R3.
+
+Descobrir uma necessidade não autoriza o agente a inventar escopo ou decisão soberana.
+
 ## Definition of Done
 
 Um card de backend não fica concluído apenas porque há código. Conforme o caso, exige:

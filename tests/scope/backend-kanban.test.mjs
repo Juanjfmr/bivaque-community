@@ -24,3 +24,11 @@ test("agents read the summary and update only material transitions", () => {
   assert.match(agents, /merely starting work is not a board transition/)
   assert.match(agents, /CI rejects invalid data\s+or a stale summary/)
 })
+
+test("the discovering agent records genuinely new work without inventing scope", () => {
+  const agents = readFileSync(agentsPath, "utf8")
+  assert.match(agents, /The discovering agent records a genuinely new task/)
+  assert.match(agents, /Search existing IDs, titles and\s+checklists first/)
+  assert.match(agents, /enters `blocked` or `repo`/)
+  assert.match(agents, /discovery is not authority to invent scope/)
+})

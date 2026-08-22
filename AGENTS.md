@@ -64,6 +64,13 @@ Three rules that decide whether your work is legitimate at all:
   applicable Definition of Done and recorded evidence. Routine questions and read-only answers
   do not require a board update.
 
+- **The discovering agent records a genuinely new task.** Search existing IDs, titles and
+  checklists first; extend an existing card when the work belongs to the same closure contract.
+  When no card covers it, add a card with a stable ID, priority, category, status, source evidence,
+  checklist and dependencies in the same commit that reveals the work. A new task involving a
+  product decision, personal data, payment, RLS or another R3 boundary enters `blocked` or `repo`
+  until the required human decision/ADR exists — discovery is not authority to invent scope.
+
 **Scope column and the policies that read it land in the same migration** — never "in
 future". This is the failure this repository keeps repeating; it has produced four privacy
 leaks so far.

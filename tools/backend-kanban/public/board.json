@@ -577,7 +577,8 @@
       "proof": [
         "Convites, moderação, perfil e eventos tiveram 'fechamentos' que só QA posterior desmentiu",
         "provider_accounts expõe drift atual entre runtime e status",
-        "AGENTS.md exige leitura do resumo operacional e atualização somente em transições materiais; test:scope valida schema e sincronização"
+        "AGENTS.md exige leitura do resumo operacional e atualização somente em transições materiais; test:scope valida schema e sincronização",
+        "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão"
       ],
       "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"]
     },
