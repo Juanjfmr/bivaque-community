@@ -87,7 +87,13 @@ falha desde aquele commit. Derruba também o assert 46 do `test:scope`
 > o próprio padrão que este parágrafo descreve, e o documento passa a criar dois achados
 > novos além do que documenta. Foi o que aconteceu na primeira versão desta página.
 
-**Correção proposta** (não aplicada): uma isenção análoga em `tests/secrets-scan.mjs`, para
+> **Fechado em 2026-08-22, pela primeira opção, com aprovação humana explícita.** A linha
+> 617 do plano da onda D2 passou a separar a enumeração por vírgulas; o registro da onda
+> não mudou de significado, o detector de credencial não foi tocado, e o gate fechou verde
+> pela primeira vez desde `5325c35`. A correção R3 do scanner segue disponível como
+> endurecimento futuro, agora sem urgência. Contrato: `HRN-002`.
+
+**Correção proposta** (a alternativa R3, não aplicada): uma isenção análoga em `tests/secrets-scan.mjs`, para
 match que contém `/` e cujos segmentos são todos palavras de letras (`^[A-Za-z]{2,}$`).
 Um token base64 de 40+ caracteres sem nenhum dígito e partido em pedaços do tamanho de
 palavra é estatisticamente improvável (~0,5% só pela ausência de dígito).

@@ -614,7 +614,7 @@ Esta task é o fechamento da onda. Não a trate como burocracia — é ela que d
   `docs/agents/VISUAL_AUDIT-2026-08-XX-onda-d2.md`, no formato dos que já estão em
   `docs/agents/`.
 
-- [x] **Step 4: reconciliar o `PRODUCT_STATUS.md`** (linhas Gate/Upload/Recurso/Consentimento/Convites atualizadas com as mudanças da D2 Tasks 1, 3, 4, 5, 6 — todas marcadas como código feito em D)
+- [x] **Step 4: reconciliar o `PRODUCT_STATUS.md`** (linhas Gate, Upload, Recurso, Consentimento e Convites atualizadas com as mudanças da D2 Tasks 1, 3, 4, 5, 6 — todas marcadas como código feito em D)
 
   Com atenção a três coisas:
 
