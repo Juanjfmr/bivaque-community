@@ -251,9 +251,25 @@ describe("elevação automática de risco", () => {
     expect(requiredRiskLevel({ objective: "Ajustar as policies de RLS do perfil" })).toBe("R3")
   })
 
-  it("preserva o plural ao casar por palavra", () => {
+  it("preserva o plural regular ao casar por palavra", () => {
     expect(requiredRiskLevel({ objective: "Refazer o fluxo de convites" })).toBe("R2")
     expect(requiredRiskLevel({ objective: "Revisar os acessos do grupo" })).toBe("R2")
+  })
+
+  it("cobre o plural irregular em -ão, que é metade do vocabulário", () => {
+    // Sufixo `-s`/`-es` no fim do termo deixava "notificações" escapar enquanto
+    // "notificação" subia. O plural é como se escreve objetivo de verdade, então a
+    // assimetria deixava trabalho de produto passar com risco abaixo do devido.
+    expect(requiredRiskLevel({ objective: "Refazer as notificações de grupo" })).toBe("R2")
+    expect(requiredRiskLevel({ objective: "Mudar as retenções dos posts" })).toBe("R2")
+    expect(requiredRiskLevel({ objective: "Discutir as monetizações" })).toBe("R2")
+  })
+
+  it("flexiona a cabeça do termo composto, não a cauda", () => {
+    // "recuperação de conta" pluraliza como "recuperações de conta": sufixo no fim
+    // do termo nunca casaria.
+    expect(requiredRiskLevel({ objective: "Rever as recuperações de conta" })).toBe("R2")
+    expect(requiredRiskLevel({ objective: "Tratar exclusões de escopo" })).toBe("R2")
   })
 
   it("aceita R3 declarado com ADR", () => {

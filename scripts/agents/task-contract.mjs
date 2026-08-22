@@ -75,12 +75,23 @@ const matcherCache = new Map()
 
 // Termo casa por PALAVRA, não por substring. Com `includes`, "rls" casava com "urls",
 // "secret" com "secretaria" e "auth" com "author" — um contrato R1 falando em "URLs de
-// compartilhamento" era recusado como R3. O sufixo opcional preserva o plural
-// ("convites", "acessos") sem reabrir o casamento por pedaço de palavra.
+// compartilhamento" era recusado como R3.
+//
+// A flexão é por PALAVRA, não sufixo no fim do termo. Metade do vocabulário da
+// RISK_MATRIX termina em -ão e pluraliza irregular (notificação → notificações), e
+// termo composto flexiona a cabeça, não a cauda (recuperação de conta →
+// recuperações de conta). Sem isso, "refazer as notificações" ficava R0 enquanto
+// "refazer a notificação" subia para R2 — e o plural é como se escreve objetivo.
+function inflectWord(word) {
+  if (word.endsWith("ão")) return `${escapeRegExp(word.slice(0, -2))}(?:ão|ões)`
+  return `${escapeRegExp(word)}(?:e?s)?`
+}
+
 function termMatcher(term) {
   const cached = matcherCache.get(term)
   if (cached) return cached
-  const matcher = new RegExp(String.raw`\b${escapeRegExp(term)}(?:e?s)?\b`, "i")
+  const pattern = term.split(/\s+/).map(inflectWord).join(String.raw`\s+`)
+  const matcher = new RegExp(String.raw`\b${pattern}\b`, "i")
   matcherCache.set(term, matcher)
   return matcher
 }
