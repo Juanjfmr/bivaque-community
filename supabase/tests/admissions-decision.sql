@@ -23,7 +23,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(15);
 
 \ir fixtures/foundation.inc
 \ir fixtures/reports.inc
@@ -168,6 +168,31 @@ select is(
   'verification_outcome do user 099 vira verified'
 );
 
+-- 4b. a aprovacao enfileira e-mail de decisao no outbox (MVP-01 item 2)
+select results_eq(
+  $$
+    select count(*)::integer
+    from public.outbox
+    where recipient = 'pending-user@example.invalid'
+      and channel = 'email'
+      and type = 'verification_decision'
+      and payload ->> 'status' = 'approved'
+      and payload ? 'user_id'
+  $$,
+  array[1],
+  'aprovacao enfileira outbox verification_decision approved'
+);
+
+-- 4c. o motivo de rejeicao nunca vai para o payload (privacidade)
+select is(
+  (select payload ? 'reason'
+   from public.outbox
+   where recipient = 'pending-user@example.invalid'
+     and type = 'verification_decision'),
+  false,
+  'payload da decisao aprovada nao carrega motivo'
+);
+
 -- 5. rejeitar sem motivo -> falha (documento do user 096)
 select throws_ok(
   $$
@@ -204,6 +229,30 @@ select is(
    where id = '50000000-0000-4000-8000-000000000096'),
   'CPF nao confere com o documento',
   'rejection_reason gravado'
+);
+
+-- 6b. a rejeicao enfileira e-mail de decisao no outbox (MVP-01 item 2)
+select results_eq(
+  $$
+    select count(*)::integer
+    from public.outbox
+    where recipient = 'reject-user@example.invalid'
+      and channel = 'email'
+      and type = 'verification_decision'
+      and payload ->> 'status' = 'rejected'
+  $$,
+  array[1],
+  'rejeicao enfileira outbox verification_decision rejected'
+);
+
+-- 6c. o motivo exato de rejeicao NAO vai para o payload (privacidade)
+select is(
+  (select payload ? 'reason'
+   from public.outbox
+   where recipient = 'reject-user@example.invalid'
+     and type = 'verification_decision'),
+  false,
+  'payload da decisao rejeitada nao carrega o motivo'
 );
 
 -- 7. document ja reviewed -> falha
