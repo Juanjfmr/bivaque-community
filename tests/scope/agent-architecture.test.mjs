@@ -1,8 +1,8 @@
 import assert from "node:assert/strict"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
+import { isAbsolute, join } from "node:path"
 import test from "node:test"
-import { checkSource } from "../../scripts/agents/task-contract.mjs"
+import { checkSource, TASKS_DIR } from "../../scripts/agents/task-contract.mjs"
 
 // Trava a ESTRUTURA do harness — os papéis, as ferramentas que cada papel pode ter, as
 // skills que os documentos prometem e a validade dos contratos. A sequência de execução
@@ -183,6 +183,16 @@ test("refuses PASS as the outcome of an exhausted retry budget", () => {
   // Then the validator refuses it — fechar por cansaço não é fechar
   assert.equal(result.valid, false, "um contrato que promete PASS ao esgotar tentativa foi aceito")
   assert.match(result.errors.join(" | "), /nunca vira PASS/)
+})
+
+test("anchors the contracts directory to the repository, not the working directory", () => {
+  // Resolvido a partir do CWD, rodar o validador de qualquer subpasta devolvia lista
+  // vazia e exit 0 — falso verde num comando cujo princípio é falhar alto.
+  // Given the contracts directory the validator uses
+  // When its path is inspected
+  // Then it is absolute and points at this repository
+  assert.equal(isAbsolute(TASKS_DIR), true, `TASKS_DIR depende do CWD: ${TASKS_DIR}`)
+  assert.equal(TASKS_DIR, join(root, "docs", "agents", "tasks"))
 })
 
 test("keeps the repository rules pointing at the architecture", () => {

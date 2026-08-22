@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   parseContract,
   readElevationTerms,
+  readR3Terms,
   requiredRiskLevel,
   validateContract,
 } from "../../../scripts/agents/task-contract"
@@ -262,7 +263,9 @@ describe("elevação automática de risco", () => {
     // assimetria deixava trabalho de produto passar com risco abaixo do devido.
     expect(requiredRiskLevel({ objective: "Refazer as notificações de grupo" })).toBe("R2")
     expect(requiredRiskLevel({ objective: "Mudar as retenções dos posts" })).toBe("R2")
-    expect(requiredRiskLevel({ objective: "Discutir as monetizações" })).toBe("R2")
+    // A flexão vale nos dois níveis: "monetizações" é R3 porque a matriz põe
+    // monetização na linha R3, não porque o plural mudou de faixa.
+    expect(requiredRiskLevel({ objective: "Discutir as monetizações" })).toBe("R3")
   })
 
   it("flexiona a cabeça do termo composto, não a cauda", () => {
@@ -270,6 +273,23 @@ describe("elevação automática de risco", () => {
     // do termo nunca casaria.
     expect(requiredRiskLevel({ objective: "Rever as recuperações de conta" })).toBe("R2")
     expect(requiredRiskLevel({ objective: "Tratar exclusões de escopo" })).toBe("R2")
+  })
+
+  it("eleva a R3 o que a linha R3 da matriz nomeia, não só a R2", () => {
+    // A lista de elevação automática é piso ("at least R2"), não teto. Pagamento,
+    // monetização e verificação de identidade estão na linha R3 da matriz, e ficavam
+    // em R2 ou R0 — dispensando ADR e security-auditor no que a matriz mais protege.
+    expect(requiredRiskLevel({ objective: "Mudar a monetização do grupo" })).toBe("R3")
+    expect(requiredRiskLevel({ objective: "Definir o pricing do plano" })).toBe("R3")
+    expect(requiredRiskLevel({ objective: "Adicionar pagamento no perfil" })).toBe("R3")
+    expect(requiredRiskLevel({ objective: "Rever a verificação de identidade" })).toBe("R3")
+  })
+
+  it("lê os termos R3 da matriz, como os de elevação", () => {
+    const terms = readR3Terms()
+    expect(terms).toContain("pagamento")
+    expect(terms).toContain("verificação de identidade")
+    expect(terms.length).toBeGreaterThan(5)
   })
 
   it("aceita R3 declarado com ADR", () => {

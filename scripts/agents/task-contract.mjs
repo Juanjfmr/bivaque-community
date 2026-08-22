@@ -18,7 +18,10 @@
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 
-export const TASKS_DIR = join("docs", "agents", "tasks")
+// Ancorado no módulo, não no CWD: resolvido a partir do diretório de trabalho, rodar o
+// validador de qualquer subpasta devolvia lista vazia e exit 0 — falso verde num
+// comando cujo princípio é falhar alto.
+export const TASKS_DIR = join(import.meta.dirname, "..", "..", "docs", "agents", "tasks")
 
 export const REQUIRED_FIELDS = [
   "task_id",
@@ -54,19 +57,35 @@ export const RISK_MATRIX_PATH = join(
   "RISK_MATRIX.md",
 )
 
-let cachedTerms = null
+const cachedBlocks = new Map()
 
-export function readElevationTerms(path = RISK_MATRIX_PATH) {
-  if (cachedTerms) return cachedTerms
+function readMatrixBlock(heading, path) {
+  const key = `${path}\u0000${heading}`
+  const cached = cachedBlocks.get(key)
+  if (cached) return cached
   const matrix = readFileSync(path, "utf8")
-  const section = matrix.slice(matrix.indexOf("Automatic elevation terms"))
-  const fenced = /```text\r?\n([\s\S]*?)```/.exec(section)
-  if (!fenced) throw new Error(`RISK_MATRIX.md sem bloco de termos de elevação (${path})`)
-  cachedTerms = fenced[1]
+  const index = matrix.indexOf(heading)
+  if (index === -1) throw new Error(`RISK_MATRIX.md sem a seção \`${heading}\` (${path})`)
+  const fenced = /```text\r?\n([\s\S]*?)```/.exec(matrix.slice(index))
+  if (!fenced) throw new Error(`RISK_MATRIX.md sem bloco de termos em \`${heading}\` (${path})`)
+  const terms = fenced[1]
     .split(/\r?\n/)
     .map((line) => line.trim().toLowerCase())
     .filter((line) => line.length > 0)
-  return cachedTerms
+  cachedBlocks.set(key, terms)
+  return terms
+}
+
+export function readElevationTerms(path = RISK_MATRIX_PATH) {
+  return readMatrixBlock("Automatic elevation terms", path)
+}
+
+// A linha R3 da matriz nomeia pagamento, monetização e verificação de identidade, que a
+// lista de elevação automática cobria apenas como piso R2 — "at least R2", não "R2". Um
+// contrato de monetização dispensava ADR e `security-auditor`. O bloco R3 da matriz é
+// lido aqui pelo mesmo motivo que o de elevação: a régua mora na matriz, não no código.
+export function readR3Terms(path = RISK_MATRIX_PATH) {
+  return readMatrixBlock("R3 automatic terms", path)
 }
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -236,7 +255,8 @@ export function requiredRiskLevel(contract) {
     .map((part) => String(part ?? "").toLowerCase())
     .join(" ")
 
-  if (R3_TERMS.some((term) => matchesTerm(haystack, term))) return "R3"
+  const r3 = [...R3_TERMS, ...readR3Terms()]
+  if (r3.some((term) => matchesTerm(haystack, term))) return "R3"
   if (readElevationTerms().some((term) => matchesTerm(haystack, term))) return "R2"
   return "R0"
 }
@@ -385,10 +405,12 @@ export function checkSource(source) {
 
 function collectFiles(args) {
   if (args.length > 0) return args
+  // Diretório ausente não é "nada a validar": é o repositório em estado que o validador
+  // não reconhece. Falha alto em vez de devolver verde.
   try {
-    if (!statSync(TASKS_DIR).isDirectory()) return []
-  } catch {
-    return []
+    if (!statSync(TASKS_DIR).isDirectory()) throw new Error("não é um diretório")
+  } catch (error) {
+    throw new Error(`diretório de contratos inacessível em ${TASKS_DIR}: ${error.message}`)
   }
   return readdirSync(TASKS_DIR)
     .filter((entry) => entry.endsWith(".task.yml"))
