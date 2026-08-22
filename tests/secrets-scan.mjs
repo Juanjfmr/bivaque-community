@@ -144,6 +144,22 @@ function isGitSha(matchText) {
   return /^[0-9a-f]{40}$/i.test(matchText) || /^[0-9a-f]{64}$/i.test(matchText)
 }
 
+// Prose that happens to be slash-separated. The same "/" in the generic token
+// regex makes a line like "Gate/Upload/Recurso/Consentimento/Convites" — five
+// section names listed in a plan — read as a 41-character blob. Three or more
+// segments that are each a plain word, with no digit and no "+" anywhere, is
+// not a shape base64 produces: a 40-character token without a single digit has
+// a probability under one in a thousand, and the word segments drive it to
+// zero. Narrower than excluding docs/ from the scan, which would let a real
+// credential pasted into a document through.
+function isSlashSeparatedProse(matchText) {
+  if (!matchText.includes("/")) return false
+  if (/[0-9+]/.test(matchText)) return false
+  const segments = matchText.split("/")
+  if (segments.length < 3) return false
+  return segments.every((segment) => /^[A-Za-z]{2,}$/.test(segment))
+}
+
 // ── scan ──
 
 const trackedFiles = execSync("git ls-files", { encoding: "utf8", cwd: root })
@@ -202,15 +218,19 @@ for (const file of trackedFiles) {
       // (2026-08-21): 17 of the 29 false positives were git SHAs in docs.
       if (pattern.name.startsWith("Generic base64") && isGitSha(match[0])) continue
 
-      // Skip taxonomy strings — slash-separated lowercase labels used in
-      // design-audit docs to enumerate design tokens
-      // (`palette/type/spacing/radius/elevation/motion`,
-      // `loading/empty/error/pending/success/stale`, etc.). Real secrets are
-      // never pure-letter/slash sequences: tokens are base64, JWTs start
-      // with `eyJ`, and any production secret has digits or mixed case. The
-      // accept rule is therefore the inverse: a sequence of only
-      // `[a-zA-Z]` plus `/` is a category label, not a credential.
-      if (pattern.name.startsWith("Generic base64") && /^[a-zA-Z/]+$/.test(match[0])) continue
+      // Skip slash-separated prose: taxonomy labels in the design-audit docs
+      // (`palette/type/spacing/radius`) and section lists in the plans
+      // (`Gate/Upload/Recurso/Consentimento`) both read as one long blob to
+      // the generic regex.
+      //
+      // Merge note (2026-08-21): the two branches wrote this exclusion
+      // independently. The wider form — anything matching `^[a-zA-Z/]+$` —
+      // also swallows a 40-character run of letters with no slash at all, and
+      // a base64 secret with no digit and no +/= is improbable but not
+      // impossible. isSlashSeparatedProse is the stricter of the two and still
+      // covers every documented false positive from both sides, so it is the
+      // one that survives.
+      if (pattern.name.startsWith("Generic base64") && isSlashSeparatedProse(match[0])) continue
 
       console.error(`${file}:${lineIdx + 1}: ${pattern.name} — ${match[0].substring(0, 60)}`)
       totalFindings++

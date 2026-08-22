@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
+import { SUPPORT_SLA_HOURS } from "../../../lib/support"
 
 // The operator panel reads through `service_role` behind `is_current_user_operator`
 // and has no possible static form. Without this, `next build` prerenders it and
@@ -9,6 +10,7 @@ import { createServerClient as createServiceClient } from "../../../lib/supabase
 export const dynamic = "force-dynamic"
 
 const ADMIN_NOTES_THRESHOLD = 1
+const SLA_MS = SUPPORT_SLA_HOURS * 60 * 60 * 1000
 
 async function getAuthedUserId(): Promise<string | null> {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -41,55 +43,27 @@ async function authorizeOperator(userId: string): Promise<boolean> {
   return data === true
 }
 
-async function fetchReport(reportId: string) {
+// H-Task 3: ocultar, registrar e avisar sao um ato so, dentro de
+// public.resolve_report. Esta pagina e a rota de API faziam a mesma coisa de
+// dois jeitos diferentes, e o jeito daqui — que e o que o operador usa de
+// verdade — nunca notificava o denunciante. Enquanto forem dois codigos, um
+// volta a divergir.
+async function callResolveReport(
+  reportId: string,
+  operatorId: string,
+  action: "hide" | "dismiss",
+  note: string | null,
+) {
   const serviceClient = createServiceClient()
-  const { data, error } = await serviceClient
-    .from("reports")
-    .select("target_type, target_id")
-    .eq("id", reportId)
-    .single()
-  if (error || !data) return null
-  return data
-}
-
-async function markResolved(reportId: string, operatorNote: string, operatorId: string) {
-  const serviceClient = createServiceClient()
-  await serviceClient
-    .from("reports")
-    .update({
-      status: "resolved",
-      operator_note: operatorNote,
-      resolved_by: operatorId,
-      resolved_at: new Date().toISOString(),
-    })
-    .eq("id", reportId)
-    .eq("status", "open")
-}
-
-async function softDeleteTarget(targetType: string, targetId: string): Promise<{ ok: boolean }> {
-  const serviceClient = createServiceClient()
-  if (targetType === "post") {
-    const { error } = await serviceClient
-      .from("posts")
-      .update({ is_deleted: true })
-      .eq("id", targetId)
-    return { ok: !error }
-  }
-  if (targetType === "comment") {
-    const { error } = await serviceClient
-      .from("comments")
-      .update({ is_deleted: true })
-      .eq("id", targetId)
-    return { ok: !error }
-  }
-  if (targetType === "group") {
-    const { error } = await serviceClient
-      .from("groups")
-      .update({ is_deleted: true })
-      .eq("id", targetId)
-    return { ok: !error }
-  }
-  return { ok: false }
+  // `exactOptionalPropertyTypes` esta ligado: passar `p_note: undefined` nao e
+  // o mesmo que omitir a chave. Sem nota, a chave nao vai.
+  const { error } = await serviceClient.rpc("resolve_report", {
+    p_report_id: reportId,
+    p_operator_user_id: operatorId,
+    p_action: action,
+    ...(note === null ? {} : { p_note: note }),
+  })
+  if (error) throw new Error(error.message)
 }
 
 async function hideReportAction(formData: FormData) {
@@ -103,14 +77,8 @@ async function hideReportAction(formData: FormData) {
     throw new Error("reportId required")
   }
 
-  const report = await fetchReport(reportId)
-  if (!report) throw new Error("report not found")
-
-  const { ok } = await softDeleteTarget(report.target_type, report.target_id)
-  if (!ok) throw new Error("hide failed")
-
-  await markResolved(reportId, `content hidden (${report.target_type})`, userId)
-  revalidatePath("/admin/reports")
+  await callResolveReport(reportId, userId, "hide", null)
+  revalidatePath("/reports")
 }
 
 async function resolveReportAction(formData: FormData) {
@@ -127,33 +95,41 @@ async function resolveReportAction(formData: FormData) {
   const operatorNote =
     typeof note === "string" && note.length >= ADMIN_NOTES_THRESHOLD ? note : null
 
-  const serviceClient = createServiceClient()
-  const { data, error } = await serviceClient
-    .from("reports")
-    .update({
-      status: "resolved",
-      operator_note: operatorNote,
-      resolved_by: userId,
-      resolved_at: new Date().toISOString(),
-    })
-    .eq("id", reportId)
-    .eq("status", "open")
-    .select("id")
-    .single()
+  await callResolveReport(reportId, userId, "dismiss", operatorNote)
+  revalidatePath("/reports")
+}
 
-  if (error || !data) throw new Error("not found or already resolved")
-  revalidatePath("/admin/reports")
+// H-Task 4 (F164): o card mostrava tipo, data absoluta, motivo e um UUID.
+// Sobre um UUID ninguem decide. O RPC monta o caso — trecho, autor e
+// reincidencia no mesmo alvo — porque o PostgREST nao resolve embed onde nao ha
+// foreign key, e `reports.target_id` e polimorfico.
+const TARGET_LABELS: Record<string, string> = {
+  post: "Publicação",
+  comment: "Comentário",
+  group: "Grupo",
+  message: "Mensagem privada",
+  recommendation_request: "Pedido de indicação",
+  recommendation_reply: "Resposta de indicação",
+}
+
+// Link so onde existe rota de detalhe. Mensagem e indicacao nao tem: um link
+// que cai em 404 e pior que nenhum (regra 4 da §12).
+function targetHref(targetType: string, targetId: string): string | null {
+  if (targetType === "post") return `/community?post=${targetId}`
+  if (targetType === "group") return `/groups/${targetId}`
+  return null
 }
 
 export default async function AdminReportsPage() {
   const serviceClient = createServiceClient()
-  const { data: reports } = await serviceClient
-    .from("reports")
-    .select("id, target_type, target_id, reason, created_at")
-    .eq("status", "open")
-    .order("created_at", { ascending: true })
+  const { data: reports, error } = await serviceClient.rpc("list_open_reports")
+
+  // Ler o `error` de toda consulta: descartar e como a lista de membros de
+  // grupo ficou vazia em producao sem ninguem notar (README, licao do E2E).
+  if (error) throw new Error(`fila de denuncias indisponivel: ${error.message}`)
 
   const queue = reports ?? []
+  const now = Date.now()
 
   return (
     <section
@@ -174,14 +150,49 @@ export default async function AdminReportsPage() {
           >
             <header className="flex items-baseline justify-between gap-2">
               <span className="text-xs uppercase tracking-wide text-muted">
-                {report.target_type}
+                {TARGET_LABELS[report.target_type] ?? report.target_type}
               </span>
-              <time className="text-xs text-muted">
-                {new Date(report.created_at).toLocaleString("pt-BR")}
-              </time>
+              <div className="flex items-center gap-2">
+                {now - new Date(report.created_at).getTime() > SLA_MS && (
+                  <span className="rounded-sm bg-danger px-1.5 py-0.5 text-xs font-medium text-danger-foreground">
+                    +{SUPPORT_SLA_HOURS}h
+                  </span>
+                )}
+                <time className="text-xs text-muted">
+                  {new Date(report.created_at).toLocaleString("pt-BR")}
+                </time>
+              </div>
             </header>
+
             <p className="text-sm">{report.reason}</p>
-            <p className="text-xs text-muted">alvo: {report.target_id}</p>
+
+            <div className="rounded-md border border-border bg-surface p-3">
+              <p className="text-xs text-muted">
+                {report.target_author_name ?? "autor sem perfil"}
+                {report.open_reports_on_target > 1 && (
+                  <span className="ml-2 font-medium text-danger">
+                    {report.open_reports_on_target} denúncias abertas neste alvo
+                  </span>
+                )}
+              </p>
+              <p className="mt-1 text-sm break-words whitespace-pre-wrap">
+                {report.target_excerpt ?? "conteúdo não encontrado — pode já ter sido removido"}
+              </p>
+            </div>
+
+            <p className="text-xs text-muted">
+              {targetHref(report.target_type, report.target_id) ? (
+                <a
+                  className="underline"
+                  href={targetHref(report.target_type, report.target_id) as string}
+                >
+                  abrir o alvo
+                </a>
+              ) : (
+                <span>sem tela de detalhe para este tipo</span>
+              )}
+              <span className="ml-2">id: {report.target_id}</span>
+            </p>
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <form action={hideReportAction} className="flex-1">

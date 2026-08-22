@@ -1,5 +1,6 @@
 "use client"
 
+import { scrubReportReason } from "@bivaque/domain"
 import { Button, TextArea } from "@heroui/react"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -165,14 +166,31 @@ export function ChatThread({
       if (!reportReason.trim() || reportReason.trim().length < 10) return
       setReportError(null)
 
-      const { error } = await supabase.from("dm_reports").insert({
-        message_id: messageId,
+      // H-Task 1 (F162): a denuncia de mensagem passa a viver em `reports`,
+      // que e a tabela que o painel do operador le. `dm_reports` era uma fila
+      // separada, sem `status`, que nenhum painel consultava — assedio em canal
+      // privado gerava registro e nada acontecia. `report_target_type` ja tinha
+      // 'message' desde 20260802001600; nunca foi usado.
+      //
+      // Ganha de graca o que a tabela nova tem e a antiga nao tinha: status,
+      // bloqueio de auto-denuncia (20260821000032), bloqueio de duplicata pelo
+      // indice parcial, redacao de documento no motivo (20260821000030) e um
+      // painel que le.
+      const { error } = await supabase.from("reports").insert({
+        target_type: "message",
+        target_id: messageId,
         reporter_user_id: userId,
-        reason: reportReason.trim(),
+        reason: scrubReportReason(reportReason.trim()),
       })
 
       if (error) {
-        setReportError(error.message)
+        if (error.code === "23505") {
+          setReportError("Voce ja denunciou esta mensagem.")
+        } else if (error.message.includes("own content")) {
+          setReportError("Voce nao pode denunciar a propria mensagem.")
+        } else {
+          setReportError(error.message)
+        }
         return
       }
 

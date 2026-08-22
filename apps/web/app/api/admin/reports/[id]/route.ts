@@ -65,121 +65,35 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   const note = body.note ?? null
-  const resolvedAt = new Date().toISOString()
 
   try {
-    if (action === "resolve") {
-      const { data: report, error: resolveError } = await supabase
-        .from("reports")
-        .update({
-          status: "resolved",
-          operator_note: note,
-          resolved_by: userId,
-          resolved_at: resolvedAt,
-        })
-        .eq("id", reportId)
-        .eq("status", "open")
-        .select()
-        .single()
+    // H-Task 3: ocultar, registrar e avisar sao um ato so. Esta rota e a Server
+    // Action de (admin)/reports/page.tsx faziam a mesma coisa de dois jeitos —
+    // e o jeito da pagina, que e o que o operador usa, nunca notificava o
+    // denunciante. Os dois chamam public.resolve_report agora.
+    //
+    // O nome externo da acao continua "resolve" para nao quebrar quem ja chama
+    // esta rota; no banco ele e 'dismiss'.
+    const { error: rpcError } = await supabase.rpc("resolve_report", {
+      p_report_id: reportId,
+      p_operator_user_id: userId,
+      p_action: action === "hide" ? "hide" : "dismiss",
+      // exactOptionalPropertyTypes: sem nota, a chave nao vai.
+      ...(note === null ? {} : { p_note: note }),
+    })
 
-      if (resolveError) {
-        log.error("resolve failed", {
-          error: resolveError.message,
-          userId,
-          reportId,
-        })
-        return NextResponse.json({ error: "internal" }, { status: 500 })
-      }
-
-      if (!report) {
+    if (rpcError) {
+      if (rpcError.code === "P0002") {
         return NextResponse.json({ error: "not found or already resolved" }, { status: 404 })
       }
-
-      // Task 11: notify the reporter that the report was analysed. The runbook
-      // §6 requires "sem revelar a ação tomada" — only structural references
-      // (recipient, actor, type, action, target) are stored; never the reported
-      // content, its author, or the outcome applied to it.
-      const { error: notifyError } = await supabase.from("notifications").insert({
-        recipient_user_id: report.reporter_user_id,
-        actor_user_id: userId,
-        type: "report_resolved",
-        action: "resolved",
-        target_type: "report",
-        target_id: reportId,
-      })
-
-      if (notifyError) {
-        log.error("notify reporter failed", {
-          error: notifyError.message,
-          userId,
-          reportId,
-        })
+      if (rpcError.code === "42501") {
+        return NextResponse.json({ error: "forbidden" }, { status: 403 })
       }
-
-      return NextResponse.json({ ok: true, action: "resolve", report })
-    }
-
-    const { data: report, error: lookupError } = await supabase
-      .from("reports")
-      .select("target_type, target_id")
-      .eq("id", reportId)
-      .single()
-
-    if (lookupError || !report) {
-      return NextResponse.json({ error: "not found" }, { status: 404 })
-    }
-
-    let hideResult: { error: { message: string } | null } = { error: null }
-    if (report.target_type === "post") {
-      hideResult = await supabase
-        .from("posts")
-        .update({ is_deleted: true })
-        .eq("id", report.target_id)
-    } else if (report.target_type === "comment") {
-      hideResult = await supabase
-        .from("comments")
-        .update({ is_deleted: true })
-        .eq("id", report.target_id)
-    } else if (report.target_type === "group") {
-      hideResult = await supabase
-        .from("groups")
-        .update({ is_deleted: true })
-        .eq("id", report.target_id)
-    } else {
-      return NextResponse.json({ error: "unknown target_type" }, { status: 500 })
-    }
-
-    if (hideResult.error) {
-      log.error("hide failed", {
-        error: hideResult.error.message,
-        userId,
-        reportId,
-        target_type: report.target_type,
-      })
+      log.error("resolve_report failed", { error: rpcError.message, userId, reportId, action })
       return NextResponse.json({ error: "internal" }, { status: 500 })
     }
 
-    const autoNote = note ?? `content hidden (${report.target_type})`
-    const { error: resolveError } = await supabase
-      .from("reports")
-      .update({
-        status: "resolved",
-        operator_note: autoNote,
-        resolved_by: userId,
-        resolved_at: resolvedAt,
-      })
-      .eq("id", reportId)
-      .eq("status", "open")
-
-    if (resolveError) {
-      log.error("resolve after hide failed (target already hidden)", {
-        error: resolveError.message,
-        userId,
-        reportId,
-      })
-    }
-
-    return NextResponse.json({ ok: true, action: "hide", reportId })
+    return NextResponse.json({ ok: true, action, reportId })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "internal server error"
     log.error("admin reports action failed", {

@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -305,6 +305,7 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
+          is_deleted: boolean
           sender_id: string
         }
         Insert: {
@@ -312,6 +313,7 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           sender_id: string
         }
         Update: {
@@ -319,6 +321,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           sender_id?: string
         }
         Relationships: [
@@ -1060,6 +1063,7 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          is_deleted: boolean
           request_id: string
         }
         Insert: {
@@ -1067,6 +1071,7 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           request_id: string
         }
         Update: {
@@ -1074,6 +1079,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           request_id?: string
         }
         Relationships: [
@@ -1130,6 +1136,7 @@ export type Database = {
           created_at: string
           group_id: string | null
           id: string
+          is_deleted: boolean
           is_resolved: boolean
           locality_id: string | null
           resolved_at: string | null
@@ -1144,6 +1151,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_deleted?: boolean
           is_resolved?: boolean
           locality_id?: string | null
           resolved_at?: string | null
@@ -1158,6 +1166,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_deleted?: boolean
           is_resolved?: boolean
           locality_id?: string | null
           resolved_at?: string | null
@@ -1556,6 +1565,19 @@ export type Database = {
           locality_id: string
         }[]
       }
+      list_open_reports: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          open_reports_on_target: number
+          reason: string
+          target_author_name: string
+          target_excerpt: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["report_target_type"]
+        }[]
+      }
       list_pending_community_invitations: {
         Args: { p_community_id: string; p_inviter_user_id: string }
         Returns: {
@@ -1725,6 +1747,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      reject_pending_user: {
+        Args: {
+          p_operator_user_id: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       remove_community_member: {
         Args: {
           p_caller_user_id: string
@@ -1747,6 +1777,15 @@ export type Database = {
       }
       request_community_membership: {
         Args: { p_community_id: string }
+        Returns: undefined
+      }
+      resolve_report: {
+        Args: {
+          p_action: string
+          p_note?: string
+          p_operator_user_id: string
+          p_report_id: string
+        }
         Returns: undefined
       }
       reverse_locality_transfer: {
@@ -1835,6 +1874,7 @@ export type Database = {
         | "report_resolved"
         | "event_reminder"
         | "recommendation_reply"
+        | "admission_rejected"
       outbox_channel: "email" | "whatsapp"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -1849,7 +1889,13 @@ export type Database = {
         | "moradia"
         | "outros"
       report_status: "open" | "resolved"
-      report_target_type: "post" | "comment" | "group" | "message"
+      report_target_type:
+        | "post"
+        | "comment"
+        | "group"
+        | "message"
+        | "recommendation_request"
+        | "recommendation_reply"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2015,6 +2061,7 @@ export const Constants = {
         "report_resolved",
         "event_reminder",
         "recommendation_reply",
+        "admission_rejected",
       ],
       outbox_channel: ["email", "whatsapp"],
       outbox_status: ["pending", "sent", "failed", "skipped"],
@@ -2031,7 +2078,14 @@ export const Constants = {
         "outros",
       ],
       report_status: ["open", "resolved"],
-      report_target_type: ["post", "comment", "group", "message"],
+      report_target_type: [
+        "post",
+        "comment",
+        "group",
+        "message",
+        "recommendation_request",
+        "recommendation_reply",
+      ],
     },
   },
 } as const
