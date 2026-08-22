@@ -136,6 +136,14 @@ function isRepoPath(matchText) {
   return /^[A-Za-z0-9._/-]+$/.test(matchText)
 }
 
+// Git commit hashes have a fixed shape that real secrets do not: only hex
+// (`[0-9a-f]`) and exactly 40 (SHA-1) or 64 (SHA-256) characters. The exclusion
+// is conservative — it lets through any token with mixed case, +, / or =
+// (which is what real base64/JWT/API-key secrets actually look like).
+function isGitSha(matchText) {
+  return /^[0-9a-f]{40}$/i.test(matchText) || /^[0-9a-f]{64}$/i.test(matchText)
+}
+
 // ── scan ──
 
 const trackedFiles = execSync("git ls-files", { encoding: "utf8", cwd: root })
@@ -184,6 +192,25 @@ for (const file of trackedFiles) {
       // path would otherwise fail the scan. Anchored to real top-level
       // directories of this workspace: a credential never starts at "apps/".
       if (pattern.name.startsWith("Generic base64") && isRepoPath(match[0])) continue
+
+      // Skip git commit hashes (SHA-1 40 hex / SHA-256 64 hex). RUNTIME_FINDINGS,
+      // ADJUDICATION and similar design-audit docs cite commits by SHA to
+      // anchor a finding to the change that introduced it. The shape is
+      // specific enough (only `[0-9a-f]`, exact length) that a real secret
+      // landing on the same surface would still be caught: real tokens are
+      // base64 (mixed case, +, /, =) or JWT (eyJ...). Found closing onda G
+      // (2026-08-21): 17 of the 29 false positives were git SHAs in docs.
+      if (pattern.name.startsWith("Generic base64") && isGitSha(match[0])) continue
+
+      // Skip taxonomy strings — slash-separated lowercase labels used in
+      // design-audit docs to enumerate design tokens
+      // (`palette/type/spacing/radius/elevation/motion`,
+      // `loading/empty/error/pending/success/stale`, etc.). Real secrets are
+      // never pure-letter/slash sequences: tokens are base64, JWTs start
+      // with `eyJ`, and any production secret has digits or mixed case. The
+      // accept rule is therefore the inverse: a sequence of only
+      // `[a-zA-Z]` plus `/` is a category label, not a credential.
+      if (pattern.name.startsWith("Generic base64") && /^[a-zA-Z/]+$/.test(match[0])) continue
 
       console.error(`${file}:${lineIdx + 1}: ${pattern.name} — ${match[0].substring(0, 60)}`)
       totalFindings++

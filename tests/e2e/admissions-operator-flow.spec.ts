@@ -16,6 +16,16 @@ import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const OPERATOR_EMAIL = "operador@bivaque.example.invalid"
 
+// Same pattern as persistent-login.spec.ts: never inline the password.
+// Read from environment, fall back to apps/web/.env.local, throw otherwise.
+const OPERATOR_PASSWORD =
+  process.env["BIVAQUE_E2E_OPERATOR_PASSWORD"] ?? readEnvLocal("BIVAQUE_E2E_OPERATOR_PASSWORD")
+if (!OPERATOR_PASSWORD) {
+  throw new Error(
+    "BIVAQUE_E2E_OPERATOR_PASSWORD is required. Set it in the environment or in apps/web/.env.local.",
+  )
+}
+
 interface PasswordGrantBody {
   access_token: string
   refresh_token: string
@@ -48,7 +58,7 @@ async function mintOperatorSession(): Promise<PasswordGrantBody> {
   const api = await request.newContext()
   const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     headers: { apikey: anonKey, "Content-Type": "application/json" },
-    data: { email: OPERATOR_EMAIL, password: "bivaque-e2e-local" },
+    data: { email: OPERATOR_EMAIL, password: OPERATOR_PASSWORD },
   })
   if (response.status() !== 200) {
     await api.dispose()
@@ -69,7 +79,7 @@ async function signInOperator(page: import("@playwright/test").Page): Promise<vo
   const api = await request.newContext()
   const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     headers: { apikey: anonKey, "Content-Type": "application/json" },
-    data: { email: OPERATOR_EMAIL, password: "bivaque-e2e-local" },
+    data: { email: OPERATOR_EMAIL, password: OPERATOR_PASSWORD },
   })
   if (response.status() !== 200) {
     await api.dispose()
