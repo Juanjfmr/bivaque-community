@@ -49,26 +49,36 @@
       "status": "now",
       "description": "Há caminho nacional, transferência e documento privado implementados; ainda faltam provas de jornadas negativas e entrega de decisão por e-mail.",
       "checklist": [
-        "Executar E2E de callback, pending, rejected, consentimento e welcome",
-        "Fechar e-mail da decisão documental no outbox",
-        "Retestar geração e cópia do convite de comunidade",
-        "Revisar re-verificação Portal sem CPF persistido",
-        "Reavaliar Issue #20 pelo estado atual"
+        "Executar E2E de callback, pending, rejected, consentimento e welcome ✅ 264 specs verdes (manaus-pilot, onboarding, denials); admissions-operator-flow 9/9 falhas pendentes (ver drift)",
+        "Fechar e-mail da decisão documental no outbox ✅ migration 20260822215307 enfileira approved/rejected; adaptador Resend em lib/outbox/adapters.ts; 5 testes unit; 4 asserts pgTAP",
+        "Retestar geração e cópia do convite de comunidade ⏳ community-invitations.spec.ts pendente do build do web",
+        "Revisar re-verificação Portal sem CPF persistido ✅ CPF-free por design; guards pgTAP GUARD 5 + rls-or-column; unit verification-reconcile-route",
+        "Reavaliar Issue #20 pelo estado atual ✅ comentário postado na issue + board REPO-ISSUE-20 atualizado"
       ],
       "proof": [
         "Transferência tem migrations, pgTAP e spec E2E commitado",
         "decide_verification_document e TTL existem",
-        "convite comunitário ganhou RPC is_community_member em 2026-08-21"
+        "convite comunitário ganhou RPC is_community_member em 2026-08-21",
+        "E-mail de decisão: 20260822215307_outbox_verification_decision.sql + adaptador Resend (RESEND_API_KEY presente no .env.local)",
+        "Regressão HEAD corrigida: encoding migration 20260822202341, drop complete_event duplicada, testes storage sob policy scoped — pgTAP 1042/1042, gate verde",
+        "Issue #20 reavaliada: runtime fecha quase todos os critérios; residual = E2E two-localities (bloqueado pelo build)"
       ],
       "tests": [
         "supabase/tests/verification-documents.sql",
         "supabase/tests/locality-transfer.sql",
-        "tests/e2e/community-invitations.spec.ts"
+        "tests/e2e/community-invitations.spec.ts",
+        "supabase/tests/admissions-decision.sql (15 asserts, inclui outbox)",
+        "tests/unit/infra/resend-adapter.test.ts (5 testes)"
       ],
       "links": [
         "Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20",
         "Status: entrada | ../../docs/PRODUCT_STATUS.md"
       ],
+      "drift": {
+        "documented": "admissions-operator-flow.spec.ts espera RPCs list_verification_* com token authenticated (403) e painel renderiza fila.",
+        "observed": "RPCs só têm grant service_role (contrato do painel via service client); o spec chama via REST com token do operador.",
+        "action": "Reconciliar spec com o contrato service_role OU expor RPCs a authenticated com gate de operador interno. Bloqueado pelo build do web (landing page em construção no working tree)."
+      },
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": ["BLOCK-RESEND"]
@@ -498,20 +508,24 @@
       "priority": "P0",
       "category": "repo",
       "status": "repo",
-      "description": "A issue ainda está aberta, mas o worktree contém catálogo nacional, memberships múltiplas e transferência. Reavaliar escopo residual antes de manter como P0 aberto.",
+      "description": "Reavaliação 2026-08-22 (MVP-01): runtime resolveu a quase totalidade dos critérios — catálogo nacional IBGE, memberships múltiplas, transferência, onboarding por localidade sem waitlist geográfica, feed locality-reach, PILOT_LOCALITY_ID fora do runtime. Lacuna residual: execução do E2E two-localities/empty-locality (specs commitados), bloqueada pelo build do web.",
       "checklist": [
-        "Comparar issue com migrations P0/T",
-        "Listar lacunas ainda não fechadas",
-        "Atualizar ou fechar com evidência"
+        "Comparar issue com migrations P0/T ✅",
+        "Listar lacunas ainda não fechadas ✅",
+        "Atualizar ou fechar com evidência ✅ — comentário de reavaliação postado na issue"
       ],
       "proof": [
-        "Issue #20 aberta no GitHub em 22/08/2026",
-        "PRODUCT_STATUS registra P0 e T como implementadas em grande parte"
+        "Comentário de reavaliação na issue #20 (2026-08-22) com tabela critério x estado",
+        "Catálogo nacional: 20260817022250 + 20260817022707",
+        "Memberships múltiplas: 20260817031237_belonging_multi_membership",
+        "Transferência: 20260819021416_locality_transfer + onda T",
+        "Feed locality-reach: 20260821000000_community_feed_locality_reach",
+        "PILOT_LOCALITY_ID fora do runtime (grep: só PILOT_LOCALITY_CODE estático)"
       ],
       "drift": {
         "documented": "A issue afirma necessidade de remover hardcode Manaus e abrir onboarding nacional.",
         "observed": "O runtime descreve catálogo nacional e a home deixou de usar PILOT_LOCALITY_ID.",
-        "action": "Reescrever a issue para a lacuna residual ou encerrá-la com links de prova."
+        "action": "Reavaliado 2026-08-22: runtime fecha quase tudo; residual = E2E two-localities (bloqueado por build do web). Issue mantida aberta até o E2E rodar, conforme recomendação no comentário."
       },
       "links": ["Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"],
       "updatedAt": "2026-08-22",
