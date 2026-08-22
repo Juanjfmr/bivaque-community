@@ -1,5 +1,13 @@
 const priorities = new Set(["P0", "P1", "P2", "P3", "BLOCK", "HOLD"])
-const categories = new Set(["backend", "intelligence", "infra", "frontend", "repo", "governance"])
+const categories = new Set([
+  "backend",
+  "intelligence",
+  "infra",
+  "frontend",
+  "repo",
+  "governance",
+  "testing",
+])
 const statuses = new Set(["now", "next", "blocked", "frozen", "repo", "done"])
 
 const priorityOrder = new Map([

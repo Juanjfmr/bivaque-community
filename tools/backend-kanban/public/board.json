@@ -9,31 +9,36 @@
       "phase": "MVP-00",
       "priority": "P0",
       "category": "backend",
-      "status": "now",
+      "status": "done",
       "description": "Transformar o estado real do repositório em uma sequência única de fechamento, sem tratar migration ou UI isolada como capacidade entregue.",
       "checklist": [
-        "Inventariar schema, RPCs, rotas, Server Actions, cron e storage",
-        "Mapear cada caller service_role e sua prova de identidade",
-        "Definir Definition of Done por fronteira",
-        "Separar provas de contrato, integração e browser",
-        "Publicar BACKEND_COMPLETION.md apenas no freeze"
+        "Inventariar schema, RPCs, rotas, Server Actions, cron e storage ✅",
+        "Mapear cada caller service_role e sua prova de identidade ✅",
+        "Definir Definition of Done por fronteira ✅",
+        "Separar provas de contrato (pgTAP), integração (service_role), browser (E2E pendente realinhamento UUID)",
+        "Publicar BACKEND_COMPLETION.md apenas no freeze — não se aplica ainda"
       ],
       "proof": [
         "docs/PRODUCT_STATUS.md é a base de runtime, mas contém lacunas e correções posteriores",
-        "217 arquivos de migration/teste e 114 specs foram identificados no worktree"
+        "217 arquivos de migration/teste e 114 specs foram identificados no worktree",
+        "service_role callers auditado: 11 arquivos admin/owner com identity explícita via RPC SECURITY DEFINER; sem auth.uid() implícito",
+        "storage OR-bypass corrigido: migration 20260822202341 remove event_photos_insert_member e event_photos_select_member antigas"
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
         "supabase test db",
-        "Playwright somente nos ciclos que dependem do browser"
+        "Playwright somente nos ciclos que dependem do browser",
+        "supabase db lint --local --level error (limpo)",
+        "supabase test db (87/88 suites verdes; event-completion.sql falha preexistente de ambiguidade SQL)"
       ],
       "links": [
         "Status atual | ../../docs/PRODUCT_STATUS.md",
         "Planos | ../../docs/superpowers/plans/README.md"
       ],
       "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": []
+      "sourceRevision": "2a4435d",
+      "dependencies": [],
+      "completedAt": "2026-08-22"
     },
     {
       "id": "MVP-01-ADMISSION",
@@ -813,6 +818,33 @@
       "completedAt": "2026-08-14",
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
+      "dependencies": []
+    },
+    {
+      "id": "MVP-00-E2E-UUID-REALIGN",
+      "title": "Realinhar E2E specs contra seed real",
+      "phase": "MVP-00",
+      "priority": "P1",
+      "category": "testing",
+      "status": "now",
+      "description": "~17 E2E specs navegam para UUIDs hardcodeados que não batem com o seed.sql real. Cada spec precisa identificar a entidade pelo tipo correto do seed.",
+      "checklist": [
+        "Auditar cada spec e listar UUIDs hardcoded vs UUIDs reais do seed",
+        "Corrigir specs onde UUID aponta para tabela errada",
+        "Validar owner/organizer de cada entidade contra seed",
+        "Rodar suíte completa em série após correção"
+      ],
+      "proof": [
+        "PRODUCT_STATUS §10 registra 94 falhas em ~18 specs",
+        "seed.sql usa generate_series com faixas de UUID definidas"
+      ],
+      "tests": ["Playwright --workers=1 contra seed completo"],
+      "links": [
+        "E2E status | ../../docs/PRODUCT_STATUS.md",
+        "Seed UUIDs | ../../supabase/seed.sql"
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "2a4435d",
       "dependencies": []
     }
   ]
