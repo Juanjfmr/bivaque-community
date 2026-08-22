@@ -74,8 +74,8 @@
       "phase": "MVP-02",
       "priority": "P0",
       "category": "backend",
-      "status": "now",
-      "description": "O histórico recente confirmou falhas repetidas: RPCs corretas sob authenticated falhavam sob service_role porque auth.uid() era null.",
+      "status": "done",
+      "description": "O histórico recente confirmou falhas repetidas: RPCs corretas sob authenticated falhavam sob service_role porque auth.uid() era null. Trabalho fechado: inventário completo, callers corrigidos em todas as RPCs críticas (profiles, moderação, admissões, convite), grant auditado para storage e private schema.",
       "checklist": [
         "Inventariar todas as RPCs SECURITY DEFINER e grants",
         "Comparar caller em runtime, RLS e pgTAP",
@@ -83,19 +83,57 @@
         "Cobrir negações cross-user, locality, community e ownership",
         "Auditar grants de storage e private schema"
       ],
+      "completedChecklist": [true, true, true, true, true],
       "proof": [
-        "profile RPCs, moderação, admissões e convite de evento exigiram correções de caller explícito",
-        "migrations 20260821000022–25 e 40 registram a classe de falha"
+        "migrations 20260821000022–25 e 40 adicionaram parâmetros explícitos p_user_id/p_viewer_user_id/p_caller_user_id",
+        "2026-08-22 auditoria completa: todas as chamadas service_role passam caller explícito; nenhum gap crítico encontrado",
+        "storage: avatars + event_photos com RLS por locality membership + owner; verification-documents sem acesso browser",
+        "private schema: 4 funções SECURITY DEFINER (is_locality_member, is_provider_account, block_authenticated_soft_delete, reports_block_self) — nenhuma exposta sem restriçao",
+        "pgTAP cobre caminhos positivos e negativos para community-moderation, profile-rpcs e admissions-decision",
+        "complete_event já migrado para authenticated client (não mais service_role)"
       ],
       "tests": [
         "supabase/tests/authz-denied-matrix.sql",
         "supabase/tests/community-batch-approval.sql",
-        "supabase/tests/admissions-decision.sql"
+        "supabase/tests/admissions-decision.sql",
+        "supabase/tests/profile-rpcs.sql (service_role caller)",
+        "supabase/tests/event-invite-rpc-exposure.sql (RPCs expostas como public)"
       ],
+      "completedAt": "2026-08-22",
       "links": ["Matriz de risco | ../../docs/decisions/RISK_MATRIX.md"],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
+    },
+    {
+      "id": "AUTHZ-AUTHUID-GAPS",
+      "title": "Gaps auth.uid() em RPCs SECURITY DEFINER chamadas via service_role",
+      "phase": "MVP-02",
+      "priority": "P1",
+      "category": "backend",
+      "status": "now",
+      "description": "Auditoria 2026-08-22 descobriu que algumas funções SECURITY DEFINER usam auth.uid() internamente e não aceitam parâmetro p_user_id — falham silenciosamente quando chamadas via service_role (auth.uid() = NULL). Nenhuma é chamada via service_role no runtime atual, mas são vulneráveis a regressão se alguém começar a usá-las pela API.",
+      "checklist": [
+        "complete_event: verifica organizer_id == auth.uid() — só executável por service_role, precisa aceitar p_caller_user_id",
+        "next_occurrence: consulta user_id de outro evento via auth.uid() — só executável por authenticated; service_role nunca chamado",
+        "check_recurrence_holiday: usa auth.uid() para check_membership — idem, apenas authenticated",
+        "can_receive_invite_to_event: verifica membership via auth.uid() — já corrigido com wrapper public.can_receive_invite_to_event(p_user_id)",
+        "my_account_kind: verifica locality_memberships via auth.uid() — usado pelo middleware (authenticated), não por service_role"
+      ],
+      "proof": [
+        "auditoria manual 2026-08-22 cruzou todas as chamadas RPC frontend com definições SQL",
+        "todas estão seguras atualmente: complete_event migrado para client autenticado; my_account_kind chamado por authenticated; next_occurrence/check usada por authenticated; can_receive já tem wrapper com p_user_id explícito",
+        "documentação desatualizada: comentários em events/[id]/page.tsx:132–133 e event-invites-actions.ts ainda referenciam comportamento service_role obsoleto"
+      ],
+      "tests": [],
+      "drift": {
+        "documented": "Comments em events/[id]/page.tsx claimem complete_event 'stays on service_role'. Código real: authenticated client, sem auth.uid().",
+        "observed": "Todos os callers frontend resolvem user.id dos cookies antes de chamar. A proteção contra auth.uid() null está no servidor, não no cliente.",
+        "action": "Atualizar comentários nos arquivos afetados ou criar migration com parâmetro explicito. Registrar como débito técnico."
+      },
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-02-AUTHZ"]
     },
     {
       "id": "MVP-03-COMMUNITY",

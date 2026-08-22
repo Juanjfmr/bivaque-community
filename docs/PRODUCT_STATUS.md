@@ -187,6 +187,33 @@ de fim de onda não se aplica, conforme o plano D1.
 
 ---
 
+## Autorização / RLS — auditoria 2026-08-22
+
+**MVP-02-AUTHZ fechado.** Auditoria cruzada de todas as chamadas service_role no frontend com definições SQL das RPCs SECURITY DEFINER confirmou que nenhum gap crítico existe no runtime atual. O trabalho da onda E/F corrigiu a classe de bug completa (auth.uid() null sob service_role) nas RPCs críticas:
+
+| Função | Gap encontrado | Status pós-fix | Chamado por |
+|---|---|---|---|
+| `profile_is_visible_to_viewer` | auth.uid() nulo como `service_role` → perfil invisível incondicionalmente | Parâmetro explícito `p_viewer_user_id` | `service_role` (com user.id dos cookies) |
+| `profile_posts_for` | mesmo gap | Parâmetro `p_viewer_user_id` | `service_role` (com user.id) |
+| `profile_events_for` | mesmo gap | Parâmetro `p_viewer_user_id` | `service_role` (com user.id) |
+| `approve_community_member` | auth.uid() nulo → sempre negava | Parâmetro `p_caller_user_id` | `service_role` (com user.id) |
+| `remove_community_member` | idem | Parâmetro `p_caller_user_id` | `service_role` (com user.id) |
+| `add_community_moderator` | idem | Parâmetro `p_caller_user_id` | `service_role` (com user.id) |
+| `remove_community_moderator` | idem | Parâmetro `p_caller_user_id` | `service_service_role` (com user.id) |
+| `is_current_user_community_moderator` | idem | Parâmetro `p_user_id` | `service_role` (com user.id) |
+| `can_receive_invite_to_event` | nunca exposto como public RPC | Wrapper `public.can_receive_invite_to_event(p_user_id)` criado | `service_role` (com user.id) |
+| `list_invitable_members_for_event` | cast quebrado + type error | Parâmetro `p_event_id` + `p_user_id`, sem cast | `service_role` (com user.id) |
+| `complete_event` | auth.uid() null sob service_role | **Migrado para client autenticado** (não mais service_role) | `authenticated` client via cookies |
+| `delete_group` | idem | Parâmetro `p_caller_user_id` na migration 018 | `service_role` (com user.id) |
+| `is_provider_account` (public) | só executável por service_role, passa p_user_id explicitamente | seguro por design | `service_role` (com user.id) |
+| `my_account_kind` | auth.uid() internamente, mas chamado apenas como `authenticated` pelo middleware | seguro enquanto não for chamado via service_role | `authenticated` |
+
+**Dívida técnica detectada:** cinco funções usam `auth.uid()` internamente e aceitam grant para service_role: `complete_event`, `next_occurrence`, `check_recurrence_holiday`, `my_account_kind` e uma instância residual em `can_receive_invite_to_event`. Nenhuma está chamada via service_role no runtime atual, mas são vulneráveis a regressão se um caller mudar. Card de rastreamento: `AUTHZ-AUTHUID-GAPS`.
+
+**Comentários desatualizados:** `events/[id]/page.tsx:132–133` e `event-invites-actions.ts` ainda referenciam comportamento service_role obsoleto — código real usa authenticated client ou já tem parâmetro explícito.
+
+---
+
 ## Guarda-rails estruturais já ativos
 
 Estes rodam em milissegundos em `npx pnpm@11.18.0 test:scope` e falham antes do pgTAP:

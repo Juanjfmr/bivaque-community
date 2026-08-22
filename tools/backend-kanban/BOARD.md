@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift até reconciliação explícita.
 
-**Mapa:** 31 frentes · 6 agora · 5 bloqueadas · 4 concluídas · 3 drifts
+**Mapa:** 32 frentes · 6 agora · 5 bloqueadas · 5 concluídas · 4 drifts
 
 Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes de planejar ou implementar.
 
@@ -14,7 +14,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 - **MVP-00-REBASELINE** · P0 · Rebaseline técnico e contrato de lançamento
 - **MVP-01-ADMISSION** · P0 · Admissão, localidade e convites: fechar ciclos pendentes
-- **MVP-02-AUTHZ** · P0 · Authorization / RLS hardening com caller real
+- **AUTHZ-AUTHUID-GAPS** · P1 · Gaps auth.uid() em RPCs SECURITY DEFINER chamadas via service_role
 - **MVP-03-COMMUNITY** · P1 · Fechamento Community Graph e ciclos sociais
 - **MVP-04-PROVIDER-FOUNDATION** · P1 · Vitrine G1: fundação da conta de prestador
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
@@ -30,7 +30,8 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 ## Drift aberto
 
 - **REPO-ISSUE-20** · P0 · Issue #20 — multi-localidade — Reescrever a issue para a lacuna residual ou encerrá-la com links de prova.
-- **MVP-04-PROVIDER-FOUNDATION** · P1 · Vitrine G1: fundação da conta de prestador — Atualizar status para distinguir fundação implementada de perfil/listings ainda abertos após validar reset e testes.
+- **AUTHZ-AUTHUID-GAPS** · P1 · Gaps auth.uid() em RPCs SECURITY DEFINER chamadas via service_role — Atualizar comentários nos arquivos afetados ou criar migration com parâmetro explicito. Registrar como débito técnico.
+- **MVP-04-PROVIDER-FOUNDATION** · P1 · Vitrine G1: fundação da conta de prestador — STATUS reconciliado 2026-08-22: linha 'Conta de prestador' movida para primeiro lugar na tabela Vitrine, marcando fundação implementada; ficha/dashboard/busca permanecem como não-implementados.
 - **REPO-PR-18** · P1 · PR #18 — SPEC.md como contrato normativo — Triar o PR antes de citar SPEC.md como fonte no Kanban ou README.
 
 ## Triagem prioritária
