@@ -15,7 +15,9 @@ if [ "$tool" = "Edit" ] || [ "$tool" = "Write" ]; then
       case "$file" in
         */node_modules/*|*/dist/*|*/build/*|*/.next/*|*/playwright-report/*) exit 0 ;;
       esac
-      cd "C:/Users/juana/bivaque-community" 2>/dev/null || exit 0
+          project_dir="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}"
+      [ -n "$project_dir" ] || exit 0
+      cd "$project_dir" 2>/dev/null || exit 0
       npx --no-install biome check --write "$file" >/dev/null 2>&1 || \
       npx --yes pnpm@11.18.0 exec biome check --write "$file" >/dev/null 2>&1
       ;;

@@ -1,0 +1,48 @@
+task_id: HRN-002
+
+objective: >
+  Os dois checks de CI voltam a carregar informação: o gate fecha verde quando o
+  código está são, e o check de revisão termina com o veredito do revisor em vez
+  de estourar teto de turnos. Enquanto os dois falham sempre, ninguém distingue
+  "quebrei algo" de "está vermelho como sempre".
+
+authority:
+  - docs/agents/HARNESS-PHASE0-2026-08-22.md §6
+  - PR #28 §Risks
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    test:secrets reporta 1 achado em docs/superpowers/plans/2026-08-16-onda-d2-a-porta.md:617
+    desde 5325c35; o check de revisão falha com "successful result after 55 turns,
+    exceeding the configured maximum of 40" e 11 negações de permissão.
+
+allowed_paths:
+  - docs/superpowers/plans/2026-08-16-onda-d2-a-porta.md
+  - .github/workflows/claude-review.yml
+
+forbidden:
+  - alterar o detector de credencial — isso é R3 e continua aguardando ADR
+  - tocar em qualquer segredo, chave ou variável de ambiente do workflow
+  - alterar o significado do registro da onda D2
+
+acceptance:
+  - o scanner reporta zero achados e o gate fecha verde
+  - o assert de escopo do scanner passa
+  - o revisor deixa de estourar o teto, e para de gastar turnos em comando proibido
+
+proof:
+  - npx pnpm@11.18.0 test:secrets
+  - npx pnpm@11.18.0 gate
+  - check run "Claude Code review" concluindo sem erro de teto no próximo head
+
+risk: harness
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

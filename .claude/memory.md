@@ -4,8 +4,17 @@ This file is the durable project memory index. The actual memory lives in `docs/
 
 ## Read first
 
-- **[`docs/journeys/MAP.md`](../docs/journeys/MAP.md)** — entry point. Functional state of every area, what is prioritised, sequencing rules that decide whether work is legitimate.
+- **[`docs/BIVAQUE.md`](../docs/BIVAQUE.md)** — what the product **must be**: vision, roles, decisions, monetisation, sequencing.
+- **[`docs/PRODUCT_STATUS.md`](../docs/PRODUCT_STATUS.md)** — what the code **does today**, with file:line evidence and the gap to the target.
 - **[`AGENTS.md`](../AGENTS.md)** — repo rules, gate commands, known traps, scope contracts enforced by `tests/scope/`.
+
+Never infer one of the first two from the other. `docs/journeys/MAP.md` is **historical** (superseded 2026-08-11) — an earlier revision of this file opened by pointing at it, which is exactly how a session ends up reading a decision as a delivered feature.
+
+## Harness (agents, skills, contracts)
+
+- **[`docs/agents/AGENT_ARCHITECTURE.md`](../docs/agents/AGENT_ARCHITECTURE.md)** — the seven roles, the execution loop, the composition patterns, risk routing.
+- **[`docs/agents/TASK_CONTRACT.md`](../docs/agents/TASK_CONTRACT.md)** — the unit of execution. Contracts live in `docs/agents/tasks/`, validated by `node scripts/agents/task-contract.mjs`.
+- **`.claude/skills/`** — the procedures are versioned in this repository, not on a developer's machine: `execute-task`, `adversarial-review`, `runtime-proof`, `gate-before-done`, `plan-execution`, `experiment-protocol`, `visual-system-experiment`.
 
 ## Visual language
 

@@ -62,6 +62,9 @@ leaks so far.
 | `docs/agents/VISUAL_GUIDE.md` §9 | The audit rubric — how well a screen must be made |
 | `docs/superpowers/specs/` | Approved designs, with dated conflicts recorded rather than hidden |
 | `docs/superpowers/plans/` | Executable plans derived from those specs |
+| `docs/agents/AGENT_ARCHITECTURE.md` | The agent roles, the execution loop, and which composition a task gets |
+| `docs/agents/TASK_CONTRACT.md` | The unit of execution — fields, refusals, and how risk is elevated |
+| `.claude/skills/` | The procedures themselves, versioned here rather than on a developer's machine |
 
 ## Commands (root, pnpm 11.18 pinned, Node >=22)
 
@@ -153,8 +156,30 @@ reproduces from a clean state before attributing it to code.**
 - `/run-plan <caminho>` executes a plan from `docs/superpowers/plans/` todo by todo, gating
   between each. `/gate` measures without fixing. `/harness-doctor` audits the config itself.
 - Plans may reference `superpowers:*` or `anthropic-skills:*` skills. **Those are Claude Code
-  plugins and do not exist in OpenCode.** The equivalent protocol is in the `plan-execution` and
-  `gate-before-done` skills, which live in `~/.claude/skills/` and are read by both harnesses.
+  plugins and do not exist in OpenCode.** The equivalent protocol lives in `.claude/skills/`.
+- **The skills are in this repository, not on your machine.** An earlier revision of this file
+  sent you to `~/.claude/skills/` for `plan-execution` and `gate-before-done`. Neither was there:
+  the repo described a harness that depended on whichever laptop was running it. Since
+  2026-08-22 the seven procedures are versioned under `.claude/skills/` — `execute-task`,
+  `adversarial-review`, `runtime-proof`, `gate-before-done`, `plan-execution`,
+  `experiment-protocol`, `visual-system-experiment` — and a scope test fails if one goes missing.
+
+### Agents, contracts and who reviews whom
+
+- **[`docs/agents/AGENT_ARCHITECTURE.md`](docs/agents/AGENT_ARCHITECTURE.md)** is the entry
+  point: seven roles, the execution loop, the composition patterns and the risk routing.
+  Read it before delegating anything to a subagent.
+- **The unit of execution is the task contract, not the agent.** Contracts live in
+  `docs/agents/tasks/*.task.yml` and are validated by `node scripts/agents/task-contract.mjs`.
+  An invalid contract does not reach execution — the validator says what is missing.
+  Format: [`docs/agents/TASK_CONTRACT.md`](docs/agents/TASK_CONTRACT.md).
+- **`implementer` ≠ `reviewer` ≠ `runtime-verifier`.** Whoever implemented does not review,
+  and does not adjudicate their own runtime evidence. A reviewer who read the implementer's
+  rationale before forming a first verdict is not an independent reviewer.
+- **Isolated subagents are the default; a team is the exception you justify.** Agents that
+  talk to each other produce correlated error, and correlated error is invisible in review.
+- **An exhausted `retry_budget` never produces `PASS`** — it produces `FAIL`, `BLOCKED` or
+  `HUMAN_DECISION`. `tests/scope/agent-architecture.test.mjs` locks this structure.
 
 ## HeroUI v3 components in use (post waves 1–5 + 7)
 
