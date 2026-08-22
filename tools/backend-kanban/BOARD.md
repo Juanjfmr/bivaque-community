@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 33 frentes · 6 agora · 5 bloqueadas · 6 concluídas · 4 drifts
+**Mapa:** 38 frentes · 5 agora · 5 bloqueadas · 7 concluídas · 3 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -16,7 +16,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 - **MVP-01-ADMISSION** · P0 · Admissão, localidade e convites: fechar ciclos pendentes
 - **AUTHZ-AUTHUID-GAPS** · P1 · Gaps auth.uid() em RPCs SECURITY DEFINER chamadas via service_role
-- **MVP-04-PROVIDER-FOUNDATION** · P1 · Vitrine G1: fundação da conta de prestador
 - **MVP-00-E2E-UUID-REALIGN** · P1 · Realinhar E2E specs contra seed real
 - **MVP-03-COMMUNITY** · P1 · Fechamento Community Graph e ciclos sociais
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
@@ -32,7 +31,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 ## Drift aberto
 
 - **AUTHZ-AUTHUID-GAPS** · P1 · Gaps auth.uid() em RPCs SECURITY DEFINER chamadas via service_role — Atualizar comentários nos arquivos afetados ou criar migration com parâmetro explicito. Registrar como débito técnico.
-- **MVP-04-PROVIDER-FOUNDATION** · P1 · Vitrine G1: fundação da conta de prestador — STATUS reconciliado 2026-08-22: linha 'Conta de prestador' movida para primeiro lugar na tabela Vitrine, marcando fundação implementada; ficha/dashboard/busca permanecem como não-implementados.
 - **REPO-ISSUE-20** · P0 · Issue #20 — multi-localidade — Reescrever a issue para a lacuna residual ou encerrá-la com links de prova.
 - **REPO-PR-18** · P1 · PR #18 — SPEC.md como contrato normativo — Triar o PR antes de citar SPEC.md como fonte no Kanban ou README.
 
