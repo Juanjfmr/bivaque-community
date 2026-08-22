@@ -1,0 +1,51 @@
+# Triagem, não correção. Este contrato produz diagnóstico; cada conserto vira contrato
+# próprio depois, com o risco que a área dele merecer.
+
+task_id: E2E-001
+
+objective: >
+  As dezoito falhas de E2E reveladas pelo gate destravado deixam de ser uma lista e
+  passam a ser um diagnóstico: cada uma classificada como regressão real de produto,
+  spec desatualizado ou artefato de ambiente, com a evidência que sustenta a classificação
+  e o contrato que a corrige.
+
+authority:
+  - docs/agents/HANDOFF-2026-08-22-e2e-triagem.md
+  - PR #28 §Risks
+  - execução da CI 32584859325
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Run 32584859325 no head 6e82a01 — 18 failed, 4 skipped, 473 passed em 9.6m,
+    seis specs, todas as viewports. Primeira execução de E2E na CI desde 5325c35.
+
+allowed_paths:
+  - docs/agents/
+
+forbidden:
+  - corrigir código de produto nesta unidade — cada conserto é contrato próprio
+  - marcar spec como fixme ou skip para reduzir a contagem
+  - rodar captura visual ou dev server entre db:reset e test:db
+
+acceptance:
+  - cada uma das dezoito falhas tem classificação e a evidência que a sustenta
+  - toda falha classificada como regressão nomeia o comportamento que quebrou
+  - toda falha classificada como spec desatualizado nomeia a decisão que a tornou obsoleta
+  - o relatório propõe um contrato por área, com o nível de risco de cada um
+
+proof:
+  - npx pnpm@11.18.0 db:reset
+  - npx pnpm@11.18.0 test:e2e
+  - npx pnpm@11.18.0 gate
+
+risk: triagem
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
