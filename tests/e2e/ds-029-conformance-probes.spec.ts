@@ -28,8 +28,8 @@ const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
 const CURRENT_CONSENT = "1"
-const VISUAL_EMAIL = process.env["BIVAQUE_E2E_VISUAL_EMAIL"] ?? "visual@bivaque.example.invalid"
-
+const TRANSFERRING_EMAIL =
+  process.env["BIVAQUE_E2E_TRANSFERRING_EMAIL"] ?? "membro-transferencia@bivaque.example.invalid"
 function readEnvLocal(key: string): string | undefined {
   try {
     const file = readFileSync(join(process.cwd(), "apps", "web", ".env.local"), "utf-8")
@@ -95,7 +95,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
 
 test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
   test("opening the composer moves focus into the dialog", async ({ page }) => {
-    await signInAs(page, VISUAL_EMAIL)
+    await signInAs(page, TRANSFERRING_EMAIL)
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
@@ -113,7 +113,7 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
   })
 
   test("Escape closes the modal and focus returns to the trigger", async ({ page }) => {
-    await signInAs(page, VISUAL_EMAIL)
+    await signInAs(page, TRANSFERRING_EMAIL)
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
@@ -135,7 +135,7 @@ test.describe("DS-029 reflow at 320 CSS-px", () => {
   test.use({ viewport: { width: 320, height: 568 } })
 
   test("/community does not produce horizontal scroll at 320px", async ({ page }) => {
-    await signInAs(page, VISUAL_EMAIL)
+    await signInAs(page, TRANSFERRING_EMAIL)
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
@@ -152,7 +152,7 @@ test.describe("DS-029 reflow at 320 CSS-px", () => {
 
 test.describe("DS-029 target-size 24×24 minimum on representative controls", () => {
   test("interactive controls on /community meet the 24×24 floor", async ({ page }) => {
-    await signInAs(page, VISUAL_EMAIL)
+    await signInAs(page, TRANSFERRING_EMAIL)
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
@@ -186,7 +186,7 @@ test.describe("DS-029 target-size 24×24 minimum on representative controls", ()
 
 test.describe("DS-029 visible focus on non-tablist controls", () => {
   test("Tab from the shell puts a real focus ring on the next control", async ({ page }) => {
-    await signInAs(page, VISUAL_EMAIL)
+    await signInAs(page, TRANSFERRING_EMAIL)
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
@@ -220,7 +220,7 @@ test.describe("DS-029 visible focus on non-tablist controls", () => {
 
 test.describe("DS-029 non-color state cues", () => {
   test("error state carries an icon and text, not color alone", async ({ page }) => {
-    await signInAs(page, VISUAL_EMAIL)
+    await signInAs(page, TRANSFERRING_EMAIL)
     await page.route("**/rest/v1/community_memberships**", (route) =>
       route.fulfill({
         status: 500,
@@ -249,7 +249,7 @@ test.describe("DS-029 prefers-reduced-motion contract", () => {
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
-    await signInAs(page, VISUAL_EMAIL)
+    await signInAs(page, TRANSFERRING_EMAIL)
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
