@@ -10,215 +10,232 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # apps/web — scoped agent instructions
 
-> **DRAFT.** Applies to `apps/web/**`.
->
-> Keep general framework/design knowledge in version-matched docs or external skills. Keep only Bivaque-specific constraints and routing here.
+Applies to `apps/web/**`. Read the root `AGENTS.md` first; this file adds frontend-specific rules.
+It follows the AGENTS.md pattern: local context, concrete commands/contracts, and proof requirements.
+It is not a duplicate design system.
 
-## Authority and evidence
+## Canonical frontend sources
 
-Do not collapse product invariants, incumbent design decisions, and technical best practices into one precedence list.
+Before changing user-facing behavior, use the smallest relevant set:
 
-Use these categories:
+- `docs/agents/DESIGN_SPEC.md` — frozen vNext interaction/design authority.
+- `docs/agents/VISUAL_GUIDE.md` — frozen vNext visual/craft authority.
+- `docs/agents/design-audit/PHASE6_REVIEW.md` — current conformance baseline and blocker evidence.
+- `docs/agents/design-audit/RUNTIME_FINDINGS.md` — detailed runtime evidence when a blocker/finding is
+  being remediated.
+- `docs/BIVAQUE.md` — product truth when behavior/capability/role/scope is changing.
+- `docs/PRODUCT_STATUS.md` — implementation reality/status.
+- `node_modules/next/dist/docs/` — authoritative Next.js API/convention docs for the installed version.
+- nearest tests/source — current implementation mechanism, never normative design authority by itself.
 
-1. **Product/security invariants** — `docs/BIVAQUE.md`, approved ADRs, privacy/security contracts. These constrain what a solution is allowed to do and may not be changed incidentally.
-2. **Repository/technical constraints** — root and nearest scoped `AGENTS.md`, pinned dependencies, exact source, tests, and version-matched framework docs. These define how this repository actually works.
-3. **Incumbent design decisions** — `docs/agents/DESIGN_SPEC.md` and `docs/agents/VISUAL_GUIDE.md`. These describe current visual/interaction intent. They are not proof that the decision is optimal.
-4. **Specialized external evidence** — current official/maintainer guidance, standards, and approved audit skills relevant to the question.
-5. **Generic model knowledge** — lowest authority.
+The Phase 6 design contract is frozen for implementation. Do not edit it as incidental cleanup while
+fixing frontend code.
 
-Rules:
+## Phase 6 rules for implementers
 
-- Product/security invariants constrain external guidance.
-- A local visual rule does not override an objective accessibility, framework-correctness, security, or interaction defect merely because it is documented locally.
-- In ordinary feature work, follow the incumbent design contract to avoid accidental drift.
-- In an explicit design audit/redesign task, incumbent design decisions are **challengers, not axioms**: when strong external/runtime evidence materially disputes a local rule, surface the conflict and send it through the design-audit adjudication process instead of silently preserving or overriding it.
-- External guidance never authorizes a new dependency, component library, state library, visual language, product behavior, or trust-boundary change by itself.
+- Settled `DS-*` and settled `VG-*` rules are implementation constraints.
+- `CRAFT HEURISTIC` can block the internal `AAA-ready` label but cannot invent product behavior,
+  routes, fixed geometry, tokens or component anatomy.
+- `EXPERIMENT` means unresolved. Existing code does not select the winner.
+- `HUMAN_DECISION` means stop that product choice until explicit authority resolves it.
+- Deleted Phase 5.5 prescriptions do not regain authority because they still exist in old code,
+  screenshots, tests or wrappers.
+- If runtime evidence contradicts the frozen contract, fix implementation when the contract is
+  settled; if new evidence shows the contract itself is wrong, report it rather than silently
+  rewriting the contract.
 
-Design-audit protocol:
-
-`docs/agents/design-audit/README.md`
-
-Core principle:
-
-**Local documentation is authority about current intent, not proof of quality.**
-
-## External skill policy
-
-`https://github.com/finfin/awesome-frontend-skills` is a **discovery catalog only**. It is not normative and may lag its upstream sources. Always verify the current upstream skill before relying on an entry.
-
-Load the smallest set of skills needed for the task. Do not preload the catalog.
-
-### Next.js — framework knowledge
-
-For Next.js APIs and conventions, the authoritative technical reference is the documentation bundled with the installed Next version:
-
-`node_modules/next/dist/docs/`
-
-Do not use the retired `next-best-practices` skill. Next.js 16.3+ intentionally moved framework knowledge into version-matched bundled docs and the managed block at the top of this file.
-
-### Next.js — runtime verification
-
-For non-trivial Next.js behavior changes, prefer the official workflow skill when its prerequisites are already available:
-
-- upstream: `vercel/next.js`
-- skill: `next-dev-loop`
-
-It cross-checks the running `next dev` server through `/_next/mcp` with a real browser and is specifically designed to prove runtime behavior after edits.
-
-Do not install or upgrade `agent-browser`, Next.js, or other tooling as an incidental side effect merely to invoke this skill. If its prerequisites are unavailable, use the repository's existing browser/Playwright/runtime verification path instead.
-
-### React implementation and performance
-
-For non-trivial React/Next.js implementation, data-fetching, rendering, bundle, or refactor work, use:
-
-- upstream: `vercel-labs/agent-skills`
-- skill: `vercel-react-best-practices`
-- path: `skills/react-best-practices/SKILL.md`
-
-This is primarily a performance/architecture guide, not a product or design authority. Do not add SWR, a cache, or another dependency solely because an external rule uses it as an example.
-
-### Reusable component APIs
-
-When creating or materially redesigning a reusable Bivaque wrapper/component API, optionally use:
-
-- upstream: `vercel/components.build`
-- skill: `building-components`
-
-Use it for composition, accessibility, controlled/uncontrolled APIs, typing, and component contracts. HeroUI v3 and existing Bivaque wrappers remain the implementation foundation; do not rebuild primitives that HeroUI already owns.
-
-`vercel-labs/agent-skills` → `vercel-composition-patterns` may be consulted for a specific component-API refactor, but it is not baseline context.
-
-### UI/design craft and audit
-
-For explicit UI/design audit work, external design guidance is evidence that may challenge incumbent Bivaque design decisions. It is not automatically subordinate to `DESIGN_SPEC.md` or `VISUAL_GUIDE.md`.
-
-Useful sources include:
-
-- `vercel-labs/agent-skills` → `web-design-guidelines` for accessibility, forms, focus, interaction, navigation/state, performance, motion, typography, touch, and i18n review;
-- `addyosmani/agent-skills` → `frontend-ui-engineering` for an independent UI-engineering/accessibility/responsive lens;
-- `pbakaus/impeccable` → current skill `impeccable` for visual/UX critique, audit, distillation, hardening, adaptation, and polish.
-
-For ordinary implementation work, do not preload these merely to restyle a touched surface. For the formal design audit, follow `docs/agents/design-audit/README.md` and preserve the blind-reference boundary.
-
-Do **not** refer to the obsolete Impeccable `frontend-design` skill name from older catalogs.
-
-During the current design-audit program, do not run Impeccable `init`, `document`, install hooks, create/replace root `PRODUCT.md` or `DESIGN.md`, or establish a new visual world. The audit must first produce evidence and adjudication; document mutation comes later.
-
-### Playwright
-
-When writing, repairing, restructuring, or debugging Playwright tests, use:
-
-- upstream: `currents-dev/playwright-best-practices-skill`
-- skill: `playwright-best-practices`
-
-Treat it as test-authoring guidance. Its generic parallelism, fixture, auth, data, and server examples do not override Bivaque's seed/reset/isolation contracts.
-
-`microsoft/playwright-cli` → `playwright-cli` is browser-automation tooling, not the repository's test-design standard and is not required for ordinary E2E changes.
-
-Playwright-specific local rules should eventually live in `tests/e2e/AGENTS.md`; until then, the constraints below apply.
+For known remediation work, the source of truth for current blocker status is
+`PHASE6_REVIEW.md`. A blocker closes only when its original failure property is directly disproved by
+new evidence.
 
 ## Local architecture
 
-These are Bivaque constraints:
-
-- Next.js **16.3.x**, server runtime; `next dev` is the local dev command.
-- React **19**.
-- HeroUI **v3** is the only component library. Do not add shadcn, Radix, Headless UI, or a second primitive system.
-- Tailwind **4**.
+- Next.js 16.3.x, server runtime.
+- React 19.
+- HeroUI v3 is the only component library.
+- Tailwind 4.
 - Supabase access uses `@supabase/ssr` and `@supabase/supabase-js`.
-- Shared cross-boundary contracts belong in `packages/{contracts,domain,tokens}` only when genuinely shared.
-- Token-aware wrappers under `apps/web/app/components/bivaque/` are part of the current design-system implementation; their existence does not exempt them from explicit design-audit review.
+- Shared cross-boundary contracts belong in `packages/{contracts,domain,tokens}` only when genuinely
+  shared.
+- Local wrappers under `apps/web/app/components/bivaque/` are implementation assets, not design
+  authority.
 
-## Before changing behavior
+Do not add shadcn, Radix, Headless UI, a second primitive system, state library or styling system as
+incidental work.
 
-- Read the nearest implementation and tests first.
-- Reconcile product-changing work against `docs/BIVAQUE.md` and `docs/PRODUCT_STATUS.md`.
-- Read the relevant installed Next.js docs before using framework APIs that may have changed from training data.
-- For Supabase/Auth/RLS/database behavior, also follow `supabase/AGENTS.md` and the official Supabase skills.
-- Do not turn a local mechanical edit into a redesign or architecture migration.
+## Before editing
 
-## Runtime evidence
+1. Read the nearest component/page/action and its tests.
+2. Identify the product/design/runtime property being changed.
+3. If using Next.js behavior that may have changed from training data, read the matching installed
+   Next.js guide first.
+4. If touching Supabase/Auth/RLS/database behavior, also read `supabase/AGENTS.md`.
+5. If touching an unresolved visual/IA experiment, do not select a winner unless the task explicitly
+   authorizes that experiment and its comparison protocol.
+6. Keep the diff scoped to the property under repair.
 
-**Existence is not evidence. Runtime behavior is evidence.**
+## Next.js and React
 
-A page, component, Server Action, RPC call, migration, or test file in the tree does not prove a user flow works.
+Use version-matched bundled Next.js docs, not remembered APIs.
 
-For changed behavior, prove the property at the closest layer where it can still fail:
+Prefer server components/server-side data access unless client interactivity genuinely requires a
+client boundary. Do not create client state to mirror state already owned by the URL, server or
+canonical component primitive without a concrete need.
 
-- pure deterministic logic → unit test;
-- server behavior → targeted integration/API evidence;
-- forms, navigation, compound controls, hydration, state transitions → real browser/Playwright evidence;
-- persistence/authorization → database evidence plus runtime evidence when the boundary crosses into the app.
+For non-trivial runtime changes, prove the behavior in the running application. A successful build or
+typecheck does not prove navigation, hydration, focus, forms or state transitions.
 
-A failed query rendered as an empty list is a bug, not a valid empty state.
+## HeroUI, semantics and compound controls
+
+`DS-021` is the baseline:
+
+- native semantics first: links navigate, buttons command;
+- use canonical HeroUI/React Aria behavior for compound controls;
+- preserve name/role/state, focus and expected keyboard behavior;
+- a local wrapper is preferred when it already owns the intended pattern, but wrapper existence is
+  not proof that the behavior is correct;
+- direct HeroUI usage is acceptable when no wrapper owns the pattern;
+- do not invent manual ARIA widgets when a native or canonical library primitive already provides the
+  behavior;
+- if a canonical library composition has a reproducible runtime failure, a simpler semantic fallback
+  is allowed only when the fallback is documented and browser-tested.
+
+For tabs, dialogs, listboxes, comboboxes, menus, radio groups, checkboxes and similar compound
+controls, browser keyboard/focus proof is required after behavior changes.
+
+## Scope, locality and navigation truth
+
+- Visible locality/community/group context comes from current authorized product state, never a
+  pilot-city literal.
+- Task navigation and membership scope are distinct concepts.
+- A route must not acquire a different conceptual parent only because the viewport changes.
+- Before consequential publish/share/moderation, expose effective audience/scope in the same decision
+  context.
+- Retry, draft recovery, navigation and context switching must not silently widen audience.
+
+If changing shell/navigation/scope behavior, test representative nested routes and more than one
+membership/locality state at the affected viewport classes.
+
+## User-facing states and errors
+
+Do not collapse transport/query/action failure into empty data.
+
+Where applicable, keep distinct meanings and recovery paths for:
+
+- loading;
+- true empty;
+- denied/unavailable;
+- recoverable failure;
+- pending/optimistic;
+- success;
+- stale/retry.
+
+Rules:
+
+- branch on Supabase/PostgREST errors before coercing data into arrays/empty state;
+- never render raw Supabase/Postgres/internal error strings to users;
+- optimistic failure must visibly reconcile/roll back;
+- preserve useful entered/query context when recovery is safe;
+- pending actions retain their meaning and prevent harmful duplicate activation.
+
+## Accessibility
+
+Production UI targets applicable WCAG 2.2 Level AA criteria. Do not resurrect the deleted universal
+"44px = WCAG" or "exactly one h1 per screen" rules.
+
+Bivaque also keeps a stronger reduced-motion product contract: non-essential travel/transform motion
+is removed or materially reduced under reduced-motion preference while state feedback remains clear.
+Do not mislabel that stronger contract as an AA success criterion.
+
+For changed interaction surfaces, verify as applicable:
+
+- accessible names/labels and programmatic error/help relationships;
+- keyboard operation;
+- visible focus and focus lifecycle;
+- semantic name/role/state;
+- contrast and non-color state meaning;
+- zoom/text resize/reflow;
+- reduced motion;
+- locale/copy correctness.
+
+A screenshot is not proof of any keyboard/focus/semantic property.
+
+## Visual craft
+
+`AAA-ready` is the internal quality bar in `VISUAL_GUIDE.md`, not WCAG AAA.
+
+A UI change is not visually resolved merely because it renders, uses tokens and passes lint. Review
+representative real content and relevant states for:
+
+- hierarchy;
+- composition;
+- task-appropriate density;
+- Bivaque character;
+- responsive recomposition;
+- state craft;
+- interaction craft;
+- wrapping/alignment/media/metadata resilience.
+
+Do not turn craft heuristics into exact pixels or fixed recipes. Exact palette/type/spacing/radii/
+elevation/motion and other EXP-004 values remain experimental until the experiment selects a coherent
+system.
+
+The legacy visual harness may be used as diagnostic tooling, but its PASS is not proof of WCAG,
+authenticated landed-state correctness or `AAA-ready` quality.
 
 ## Server/client trust boundary
 
 - `service_role` is privilege, not caller identity.
-- Privileged Server Actions and route handlers resolve the real authenticated caller from server context.
-- Never trust identity, role, locality, community, ownership, or authorization merely because it arrived in `FormData`, query params, hidden inputs, or client state.
-- Do not silently discard Supabase/PostgREST errors on critical paths.
+- Privileged Server Actions and route handlers resolve the authenticated caller from server context.
+- Never trust identity, role, locality, community, ownership or authorization because it arrived in
+  `FormData`, query params, hidden inputs or client state.
+- Do not fetch private data to an unauthorized client and then hide it in UI.
+- Do not silently swallow Supabase/PostgREST failures on material paths.
 
-Detailed database rules live in `supabase/AGENTS.md`.
+Detailed database policy belongs to `supabase/AGENTS.md`.
 
-## HeroUI and local components
+## E2E and test data
 
-- Reuse a Bivaque wrapper when it already represents the intended pattern during ordinary feature work.
-- Do not create wrappers merely to hide imports.
-- Direct HeroUI usage is acceptable when no local wrapper owns the pattern.
-- Preserve required providers when modifying layouts/shells.
-- Prove changed compound-control behavior in a real browser; JSX presence and typecheck are insufficient.
-- Do not migrate working UI to another primitive/library as incidental cleanup.
-- During explicit design audit, compare local wrapper behavior against the canonical behavior/accessibility contract of the installed HeroUI version instead of assuming the wrapper is correct because it exists.
+E2E uses the development contract in `supabase/seed.sql`; pgTAP uses separate transactional fixtures.
+Do not infer E2E entity IDs from pgTAP fixtures.
 
-## User-facing states
+For interaction-dependent work, use targeted Playwright/browser proof. Keep authentication/seed/reset
+isolation consistent with the root `AGENTS.md`; external Playwright examples do not override local
+isolation rules.
 
-Where relevant, asynchronous surfaces distinguish deliberately between:
+## Validation
 
-- loading;
-- true empty;
-- denied/not available;
-- recoverable error;
-- successful populated state.
+Run from repository root.
 
-Do not create blank UI by swallowing failures.
-
-## E2E data boundary
-
-E2E uses the real development contract in `supabase/seed.sql`.
-
-pgTAP uses separate transactional fixtures.
-
-Never infer E2E entity UUIDs from pgTAP fixture conventions. External Playwright examples do not override this rule.
-
-## Local validation
-
-From repository root:
+During iteration:
 
 ```sh
 npx pnpm@11.18.0 gate --fast
-npx pnpm@11.18.0 gate
-npx pnpm@11.18.0 build
+npx pnpm@11.18.0 test:scope
 ```
 
-Run targeted tests during iteration. UI changes also follow the repository visual-audit contract. Interaction-dependent changes require browser-level proof.
+Also run the narrow test/browser probe that directly exercises the changed property.
+
+Before integration or at the end of a material implementation batch:
+
+```sh
+npx pnpm@11.18.0 gate
+```
+
+Run `build`, database tests and/or `test:e2e` when the affected layer requires them. Do not claim a
+Phase 6 blocker closed on static inspection alone.
 
 ## Definition of done
 
-A frontend change is not done until:
+A frontend change is done only when:
 
-- the changed property is directly evidenced at the appropriate layer;
-- changed loading/error/empty states are deliberate;
-- authorization-sensitive behavior has allowed and denied evidence;
-- relevant runtime errors are surfaced/handled rather than hidden;
-- required root gates pass;
-- interaction-dependent changes have browser-level proof;
-- visual changes satisfy the current Bivaque visual contract or an explicitly adjudicated replacement when applicable.
-
-## Decisions still open
-
-1. Pin/install selected external skills in the repository/harness versus resolving them upstream on demand.
-2. Add `next-dev-loop` + its browser prerequisite to the supported harness toolchain versus keeping it optional.
-3. Move Playwright local rules into `tests/e2e/AGENTS.md`.
-4. After the formal design audit, decide which Impeccable commands become approved recurring audit tools.
-5. Promote recurring frontend failures into executable scope/a11y/runtime checks so this file can shrink further.
+- the frozen product/design authority was not silently changed;
+- the target property has evidence at the layer where it can fail;
+- changed error/empty/pending/denied states remain truthful;
+- authorization-sensitive behavior has positive and negative evidence where applicable;
+- user-facing failure copy is stable and privacy-safe;
+- interaction-dependent behavior has browser proof;
+- applicable root gates pass;
+- visual changes satisfy the frozen visual contract or remain explicitly experimental;
+- any remediated `RUN-*`/`DS-*` blocker is updated only after new evidence demonstrates the prior
+  failure no longer occurs.
