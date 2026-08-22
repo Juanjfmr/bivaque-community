@@ -79,9 +79,15 @@ infinito.
 trabalho vira um teste de escopo em vez de vinte e cinco migrations de FK — e é o oposto do modo
 de falha da onda T, que injetou guard em três tabelas e esqueceu `events`.
 
-O que resta é um uuid sem nenhum atributo identificante. **O ADR afirma que esse uuid não
-identifica pessoa natural, e este é o ponto que a revisão jurídica precisa confirmar** — está
-nomeado aqui de propósito, para não passar despercebido.
+O que resta é um uuid sem nenhum atributo identificante. **O dono determinou em 2026-08-21 que
+esse uuid não é dado pessoal**, e é sobre essa determinação que a decisão 3 se apoia.
+
+> **O que essa determinação é e o que ela não é.** Ela é a decisão de produto que destrava a
+> implementação, registrada com data e autor no formato que este regime de ADR usa. Ela **não é
+> parecer jurídico**, e não dispensa a revisão que a
+> [`PRIVACIDADE.md`](../legal/PRIVACIDADE.md) já exige do documento inteiro antes de publicar —
+> requisito que existe desde o rascunho de 2026-08-11 e é anterior a este ADR. Se o parecer
+> divergir, o caminho de volta é a alternativa B, que está desenhada e assume sem redesenho.
 
 **4. Três destinos, e cada linha do banco está em exatamente um.**
 
@@ -141,11 +147,22 @@ processo que não pode mais punir ninguém é retenção sem finalidade. O que f
 `moderation_actions`. O denunciante é avisado de que a conta denunciada foi excluída — sem revelar
 qualquer outra coisa, no mesmo padrão do §6 do `PILOT_RUNBOOK.md`.
 
-**9. A promessa dos 30 dias tem uma exceção, e ela é declarada.** Backup não é editado
-cirurgicamente — editar backup é como se corrompe backup. A regra: o backup expira sozinho no
-ciclo dele, **e todo restore reaplica as purgas pendentes antes de a aplicação voltar ao ar**. O
-prazo concreto do ciclo depende do plano Supabase contratado e é **fato que só o dono fecha**, na
-mesma categoria de "quem é o controlador" — e precisa estar escrito na política antes de publicar.
+**9. A promessa dos 30 dias tem uma exceção, e ela é declarada com número.** Backup não é editado
+cirurgicamente — editar backup é como se corrompe backup. A regra: o backup expira sozinho no ciclo
+dele, **e todo restore reaplica as purgas pendentes antes de a aplicação voltar ao ar**.
+
+O ciclo é de **90 dias** (dono, 2026-08-21). Disso sai a única aritmética que a política precisa
+carregar, e ela não é 30:
+
+- a **base viva** é purgada em **D+30**, e é isso que o membro vê acontecer;
+- o último backup que ainda contém os dados dele é o tirado imediatamente antes da purga, e ele
+  expira 90 dias depois de ter sido tirado — ou seja, **no máximo D+120**.
+
+**Cento e vinte dias é o número honesto, e ele é maior que os 90 do WhatsApp.** A política não pode
+dizer "30 dias" e parar aí: ela diz que a base viva é limpa em 30, que cópias de segurança não são
+editadas e expiram sozinhas em até 90, e que qualquer restauração reaplica as exclusões pendentes
+antes de o serviço voltar. Omitir isso é a diferença entre uma exceção declarada e uma reclamação
+procedente na ANPD.
 
 **10. Duas frases da política são corrigidas antes de publicar.**
 
@@ -155,7 +172,9 @@ mesma categoria de "quem é o controlador" — e precisa estar escrito na polít
   aparecer ([`tests/privacy/portal-redaction-and-negative-fixtures.test.ts:558`](../../tests/privacy/portal-redaction-and-negative-fixtures.test.ts)).
   Sem identificador estável, o registro de 2 anos guarda o **ato**, não bloqueia reentrada. A frase
   passa a dizer isso.
-- A das exceções de retenção ganha a exceção do backup da decisão 9.
+- A das exceções de retenção ganha a **terceira** exceção, a do backup: base viva limpa em 30 dias,
+  cópias de segurança não editadas e expirando em até 90, restauração reaplicando as exclusões
+  pendentes — teto real de **120 dias**, escrito como número e não como "aproximadamente".
 
 **11. O que este ADR exige da onda H.** A `moderation_actions` planejada
 ([plano da onda H, linha 714](../superpowers/plans/2026-08-20-onda-h-operacao.md)) precisa de dois
@@ -249,8 +268,15 @@ re-verificar torna o erro caro de desfazer.
 **2. Não teremos a segunda porta do Nextdoor.** Justificada na alternativa E: a janela de 30 dias
 já é o estado reversível e `profile_visibility = 'hidden'` cobre o resto.
 
-Nos 30 dias de prazo total ficamos na ponta mais estrita — metade do WhatsApp, igual ao Nextdoor —,
-o que é coerente com um produto cujo argumento central é não acumular dado.
+**3. E uma terceira que só apareceu quando o backup ganhou número, registrada em vez de escondida.**
+Na **base viva** ficamos na ponta mais estrita: 30 dias, um terço do WhatsApp, igual ao Nextdoor.
+Mas somando a expiração de backup da decisão 9, o teto real é **D+120** — mais longo que os 90 dias
+que o WhatsApp declara.
+
+Não dá para vender isso como rigor. É o custo de um ciclo de backup de 90 dias, e as opções são
+encurtar o ciclo (que é decisão de resiliência, não de privacidade, e tem preço) ou declarar o
+número. Este ADR declara o número. O que não é aceitável é a política dizer 30 e o teto ser 120 sem
+que ninguém tenha escrito.
 
 ## Evidence and sources
 
@@ -360,11 +386,16 @@ janela de arrependimento de 30 dias, público sobrevive e privado morre, sucess�
 o pedido, aceitar a lacuna da reentrada e corrigir a política, e anonimização no lugar. **Isso não
 é a aprovação do ADR**: é o insumo dela. O que falta para aprovar:
 
-1. **Revisão jurídica** confirmando a decisão 3 — que o uuid esvaziado não é dado pessoal — e as
-   bases legais das três retenções da decisão 4.
-2. **O prazo do ciclo de backup** da decisão 9, que depende do plano Supabase contratado.
+1. ~~**Revisão jurídica** confirmando que o uuid esvaziado não é dado pessoal.~~ **Fechado pelo
+   dono em 2026-08-21: não é.** Registrado na decisão 3, junto com o que essa determinação é e o
+   que ela não é — a revisão jurídica do documento de privacidade inteiro, que a
+   [`PRIVACIDADE.md`](../legal/PRIVACIDADE.md) exige desde 2026-08-11, continua valendo e é
+   anterior a este ADR. **As bases legais das três retenções da decisão 4 seguem dentro dela.**
+2. ~~**O prazo do ciclo de backup** da decisão 9.~~ **Fechado pelo dono em 2026-08-21: 90 dias.**
+   Registrado na decisão 9, com a aritmética que dele decorre — teto real de D+120, que a política
+   passa a declarar.
 3. **Veredito de crítico independente**, que a revisão inline registrada no `critic_review` não
-   substitui.
+   substitui. **É o único item que resta**, e é o que mantém este ADR em `proposed`.
 
 **A aprovação não destrava a implementação sozinha.** A decisão 11 exige que a DDL da
 `moderation_actions` da onda H seja corrigida antes ou junto — e a regra do `AGENTS.md` vale aqui
