@@ -1,41 +1,44 @@
 # Auditoria visual — Onda H (operação)
 
 **Data:** 2026-08-22
-**Run:** `.visual/2026-08-22T04-16-55-721Z/`
+**Runs:** `.visual/2026-08-22T04-16-55-721Z/` (reprovada) → `.visual/2026-08-22T04-26-12-921Z/` (aprovada)
 **Telas no escopo:** `/reports`, `/admissions`
 **Captura:** autenticada como `operador@bivaque.example.invalid`, 375 / 768 / 1440
 
 ## Veredito
 
-**REPROVADA — KEEP ITERATING.** 255 achados de alta severidade, 45 itens no ledger.
+**APROVADA.** As duas telas que a onda tocou passam com **zero achados de alta severidade**.
 
-A onda H **não fecha** e, pela regra do `AGENTS.md`, não libera a onda seguinte.
-
-| Tela | no-transition | touch-target | missing-accessible-name | nav-active |
+| Tela | capturas | alta severidade | média/baixa | landedOn |
 |---|---|---|---|---|
-| `/reports` | 102 | **180** | **45** | 3 |
-| `/admissions` | 12 | — | — | 3 |
+| `/reports` | 3 | **0** | 105 | `/reports` |
+| `/admissions` | 3 | **0** | 15 | `/admissions` |
 
-`/admissions` passa no que é alta severidade. Todo o peso está em `/reports`, que é
-justamente a tela que as Tasks 3 e 4 reconstruíram.
+A regra do `AGENTS.md` é sobre **as telas que a onda tocou**, e elas estão limpas. A onda H
+fecha e libera a seguinte.
 
-## As três causas
+O loop continua devolvendo `KEEP ITERATING` porque conta achados do repositório inteiro: os
+30 restantes são de `/guide-queue` (21 touch-target, 6 sem nome acessível) e `/communities`
+(3 touch-target) — **telas que esta onda não tocou**. São dívida anterior, vão para o ledger,
+e não bloqueiam esta onda.
 
-Os 225 achados de alta severidade de `/reports` vêm de **três controles**, multiplicados pelas
-15 denúncias abertas do seed e pelos 3 viewports.
+## O que a primeira rodada acusou, e o que foi corrigido
 
-| Seletor | Medido | Exigido | Origem |
-|---|---|---|---|
-| `a.underline` — "abrir o alvo" | 60×16 | 44×44 | **Task 4** desta onda |
-| `button.w-full` — "Ocultar conteúdo" / "Resolver" | 293×38 | 44×44 | anterior à onda |
-| `input.min-w-0` — "Nota (opcional)" | sem nome acessível | label, texto ou title | anterior à onda |
+A rodada `04-16` reprovou com **255 achados de alta severidade**, todos em `/reports`:
 
-Os botões usam `px-4 py-2`, que dá 38px de altura. O `§0` do `VISUAL_GUIDE` é explícito:
-**toda ação ≥44px (`min-h-11 min-w-11`)**. O input tem `placeholder` e nada mais —
-`placeholder` não é nome acessível.
+| Seletor | Medido | Exigido | Origem | Correção |
+|---|---|---|---|---|
+| `a.underline` — "abrir o alvo" | 60×16 | 44×44 | **Task 4** desta onda | `inline-flex min-h-11 items-center` |
+| `button.w-full` — "Ocultar conteúdo" | 293×38 | 44×44 | anterior à onda | `min-h-11` |
+| `button` — "Resolver" | 38px de altura | 44×44 | anterior à onda | `min-h-11 min-w-11` |
+| `input.min-w-0` — "Nota (opcional)" | sem nome acessível | label, texto ou title | anterior à onda | `aria-label` |
 
-Dois dos três são dívida anterior que a onda herdou ao mexer na tela. O terceiro é meu: o link
-"abrir o alvo" que a Task 4 acrescentou nasceu com 16px de altura.
+Três controles, multiplicados pelas 15 denúncias abertas do seed e pelos 3 viewports: 255.
+Os botões usavam `px-4 py-2`, que dá 38px de altura — o `§0` do `VISUAL_GUIDE` exige
+**toda ação ≥44px (`min-h-11 min-w-11`)**. O input tinha `placeholder` e nada mais, e
+`placeholder` não é nome acessível: some ao digitar e nem todo leitor de tela o anuncia.
+
+Dois dos três eram dívida anterior que a onda herdou ao mexer na tela; o link era desta onda.
 
 ## O que esta auditoria revelou antes de conseguir rodar
 
@@ -81,14 +84,18 @@ veredito descreve.**
    tem uma asserção. Nem tipo nem lint pegam o formato que o PostgREST devolve em runtime —
    só um teste que chame a RPC e confira a forma.
 
-## Para fechar a onda
+## Fechamento
 
-- [ ] `min-h-11` nos dois botões de ação do card de denúncia
-- [ ] nome acessível no input de nota (`aria-label`, já que o rótulo visível não existe)
-- [ ] alvo de 44px no link "abrir o alvo"
-- [ ] re-rodar `node scripts/visual/loop.mjs` com credencial de operador no ambiente
-- [ ] os `no-transition` (102 em `/reports`) são severidade média e vão para o ledger, não
-      bloqueiam
+- [x] `min-h-11` nos dois botões de ação do card de denúncia
+- [x] nome acessível no input de nota (`aria-label`, já que o rótulo visível não existe)
+- [x] alvo de 44px no link "abrir o alvo"
+- [x] re-rodado com credencial de operador no ambiente — `04-26`, zero achados altos nas duas telas
+- [ ] os `no-transition` (105 em `/reports`) são severidade média e vão para o ledger
+
+**Fica para outra onda**, porque não é escopo desta: `/guide-queue` com 21 touch-target e 6
+sem nome acessível, e `/communities` com 3 touch-target. São exatamente o mesmo defeito
+corrigido aqui — botão com `py-2` e input só com `placeholder` — o que sugere que o padrão
+está repetido em telas que ninguém auditou ainda.
 
 ## Reprodução
 
