@@ -32,7 +32,9 @@ before answering a question about what this product does.
 - **[`tools/backend-kanban/BOARD.md`](tools/backend-kanban/BOARD.md)** — the generated, concise
   view of the current path to MVP launch. Use the stable card ID from that summary to consult the
   canonical entry with `node tools/backend-kanban/src/board.mjs --card <ID>` before planning the
-  change; use `--search <terms>` when no ID is known. The board sets execution priority; it never
+  change; use `--search <terms>` when no ID is known. For autonomous card-by-card work, use
+  `node tools/backend-kanban/src/board.mjs --next` and take exactly one returned card through
+  implementation, validation, board update and commit. The board sets execution priority; it never
   overrides product decisions or runtime evidence in the two documents above. Never edit
   `BOARD.md` by hand.
 
@@ -64,6 +66,12 @@ Three rules that decide whether your work is legitimate at all:
   or a stale summary. Do not create a second task system or mark a card `done` without its
   applicable Definition of Done and recorded evidence. Routine questions and read-only answers
   do not require a board update.
+
+- **Resolve cards; do not stop at drift.** Drift is evidence of a mismatch between documentation,
+  GitHub state and runtime. It is not a deliverable and it does not close work. When a card reveals
+  drift, the same agent either reconciles the stale source, implements the missing behavior, marks a
+  true external/R3 blocker, or leaves the card open with the next concrete resolution step. A `done`
+  card may not keep open drift.
 
 - **The discovering agent records a genuinely new task.** Search existing IDs, titles and
   checklists first; extend an existing card when the work belongs to the same closure contract.

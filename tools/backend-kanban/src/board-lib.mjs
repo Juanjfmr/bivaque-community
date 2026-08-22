@@ -19,6 +19,15 @@ const priorityOrder = new Map([
   ["P3", 5],
 ])
 
+const statusOrder = new Map([
+  ["now", 0],
+  ["repo", 1],
+  ["next", 2],
+  ["blocked", 3],
+  ["frozen", 4],
+  ["done", 5],
+])
+
 function isNonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0
 }
@@ -114,6 +123,9 @@ export function validateBoard(board) {
         if (!isNonEmptyString(card.drift[field]))
           errors.push(`${card.id}: drift.${field} é obrigatório`)
       }
+      if (card.status === "done") {
+        errors.push(`${card.id}: card done não pode manter drift aberto`)
+      }
     }
   }
 
@@ -145,11 +157,62 @@ export function searchCards(board, query) {
   )
 }
 
+export function selectNextCard(board) {
+  const cardsById = new Map(board.cards.map((card) => [card.id, card]))
+  const candidates = board.cards.filter((card) => {
+    if (["blocked", "done", "frozen"].includes(card.status)) return false
+    return (card.dependencies ?? []).every((dependencyId) => {
+      const dependency = cardsById.get(dependencyId)
+      if (!dependency) return false
+      return dependency.status === "done"
+    })
+  })
+  return sorted(candidates)[0]
+}
+
+export function renderNextCard(board) {
+  const card = selectNextCard(board)
+  if (!card) {
+    return [
+      "Nenhum card autonomamente executável.",
+      "",
+      "Verifique bloqueios humanos ou dependências abertas antes de abrir trabalho novo.",
+      "",
+    ].join("\n")
+  }
+  const dependencies = card.dependencies.length ? card.dependencies.join(", ") : "nenhuma"
+  const drift = card.drift
+    ? [
+        "",
+        "Drift aberto:",
+        `- Documentado: ${card.drift.documented}`,
+        `- Observado: ${card.drift.observed}`,
+        `- Resolver agora: ${card.drift.action}`,
+      ].join("\n")
+    : ""
+  return [
+    `${card.id}\t${card.status}\t${card.priority}\t${card.title}`,
+    "",
+    "Contrato do agente:",
+    "- resolver o card escolhido; drift é evidência temporária, não entrega final",
+    "- antes de implementar: ler AGENTS.md, docs/BIVAQUE.md, docs/PRODUCT_STATUS.md e BOARD.md",
+    `- abrir o detalhe: node tools/backend-kanban/src/board.mjs --card ${card.id}`,
+    "- ao terminar: atualizar board.json, regenerar BOARD.md, validar e commitar junto da mudança",
+    "",
+    `Dependências fechadas: ${dependencies}`,
+    `Testes esperados: ${card.tests?.length ? card.tests.join("; ") : "definir pelo risco do card"}`,
+    drift,
+    "",
+  ].join("\n")
+}
+
 function sorted(cards) {
   return [...cards].sort((left, right) => {
+    const status = (statusOrder.get(left.status) ?? 99) - (statusOrder.get(right.status) ?? 99)
     const priority =
       (priorityOrder.get(left.priority) ?? 99) - (priorityOrder.get(right.priority) ?? 99)
-    return priority || left.id.localeCompare(right.id, "pt-BR")
+    const drift = Number(Boolean(right.drift)) - Number(Boolean(left.drift))
+    return status || priority || drift || left.id.localeCompare(right.id, "pt-BR")
   })
 }
 
@@ -181,6 +244,8 @@ export function renderBoardSummary(board) {
     `> ${board.sourcePolicy}`,
     "",
     `**Mapa:** ${board.cards.length} frentes · ${counts.get("now")} agora · ${counts.get("blocked")} bloqueadas · ${counts.get("done")} concluídas · ${board.cards.filter((card) => card.drift).length} drifts`,
+    "",
+    "Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.",
     "",
     "Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes de planejar ou implementar.",
     "",
@@ -216,6 +281,7 @@ export function renderBoardSummary(board) {
     "```sh",
     "node tools/backend-kanban/src/board.mjs --check",
     "node tools/backend-kanban/src/board.mjs --write-summary",
+    "node tools/backend-kanban/src/board.mjs --next",
     "node tools/backend-kanban/src/board.mjs --card MVP-02-AUTHZ",
     'node tools/backend-kanban/src/board.mjs --search "service_role"',
     "```",

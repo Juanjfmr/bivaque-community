@@ -19,7 +19,8 @@
           <h1>Mapa de fechamento do MVP</h1>
           <p class="lede">
             Código, migrations e testes definem a realidade. Documentação divergente entra como
-            <strong>drift</strong> até ser reconciliada.
+            <strong>drift</strong> temporário; o card continua aberto até reconciliar, bloquear ou
+            provar conclusão.
           </p>
         </div>
         <div class="header-meta">
@@ -43,6 +44,10 @@
         <article>
           <span class="principle-label">Definição de concluído</span>
           <p>Um card só vai para DONE com contrato, negações, caller real e prova registrada.</p>
+        </article>
+        <article>
+          <span class="principle-label">Fila autônoma</span>
+          <p><code>board.mjs --next</code> escolhe um card elegível; resolva um por commit.</p>
         </article>
       </section>
 

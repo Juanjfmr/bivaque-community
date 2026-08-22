@@ -1,7 +1,13 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
-import { findCard, renderBoardSummary, searchCards, validateBoard } from "./board-lib.mjs"
+import {
+  findCard,
+  renderBoardSummary,
+  renderNextCard,
+  searchCards,
+  validateBoard,
+} from "./board-lib.mjs"
 
 const sourceDirectory = fileURLToPath(new URL(".", import.meta.url))
 const toolDirectory = resolve(sourceDirectory, "..")
@@ -22,7 +28,9 @@ if (errors.length > 0) {
   const summary = renderBoardSummary(board)
   const cardId = argumentValue("--card")
   const searchQuery = argumentValue("--search")
-  if (cardId) {
+  if (process.argv.includes("--next")) {
+    process.stdout.write(renderNextCard(board))
+  } else if (cardId) {
     const card = findCard(board, cardId)
     if (!card) {
       console.error(`Card não encontrado: ${cardId}`)

@@ -4,6 +4,7 @@ const filters = [
   ["intelligence", "Discovery & IA"],
   ["infra", "Infra"],
   ["frontend", "Frontend congelado"],
+  ["testing", "Testes"],
   ["repo", "Repo / PRs"],
   ["governance", "Governança"],
   ["drift", "Com drift"],
@@ -25,6 +26,7 @@ const categoryLabels = {
   infra: "infra",
   intelligence: "discovery & IA",
   repo: "repositório",
+  testing: "testes",
 }
 
 let board
@@ -82,12 +84,12 @@ function createCard(card) {
   const signals = []
   if (card.blockers?.length)
     signals.push(`<span class="signal signal-block">${card.blockers.length} bloqueio(s)</span>`)
-  if (card.drift) signals.push('<span class="signal signal-drift">drift documentado</span>')
+  if (card.drift) signals.push('<span class="signal signal-drift">drift a resolver</span>')
   if (card.proof?.length) signals.push(`<span class="signal">${card.proof.length} prova(s)</span>`)
   cardElement.querySelector(".card-signals").innerHTML = signals.join("")
 
   const drift = card.drift
-    ? `<section class="drift"><h4>Drift a reconciliar</h4><p><strong>Documentado:</strong> ${card.drift.documented}</p><p><strong>Observado:</strong> ${card.drift.observed}</p><p><strong>Ação:</strong> ${card.drift.action}</p></section>`
+    ? `<section class="drift"><h4>Drift a resolver</h4><p><strong>Documentado:</strong> ${card.drift.documented}</p><p><strong>Observado:</strong> ${card.drift.observed}</p><p><strong>Resolver:</strong> ${card.drift.action}</p></section>`
     : ""
   const metadata = [
     card.owner && `<span><strong>Owner:</strong> ${card.owner}</span>`,

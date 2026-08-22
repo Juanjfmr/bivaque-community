@@ -11,8 +11,9 @@ fontes que governam cada decisão:
 - migrations, código e testes: evidência primária do que realmente existe;
 - `docs/superpowers/plans/README.md`: protocolo e ordem das ondas.
 
-Quando uma dessas fontes diverge da evidência primária, registre o card com `drift`. Não trate
-texto desatualizado como funcionalidade entregue.
+Quando uma dessas fontes diverge da evidência primária, registre o card com `drift` apenas como
+evidência temporária. Drift não é entrega: o próximo passo do agente é reconciliar o texto, mudar o
+código, bloquear com motivo real ou fechar o card com prova.
 
 ## Rodar
 
@@ -36,16 +37,24 @@ $env:KANBAN_PORT=4176; npx pnpm@11.18.0 --dir tools/backend-kanban dev
 O arquivo canônico é [`public/board.json`](public/board.json). A interface apenas o carrega e
 projeta: busca e filtros não alteram os dados. Portanto, Git é a única sincronização necessária.
 
-Agentes leem primeiro [`BOARD.md`](BOARD.md), um resumo curto gerado a partir do JSON. Depois usam
-o `id` estável para consultar apenas o card relevante no arquivo canônico. `BOARD.md` nunca é
-editado manualmente.
+Agentes leem primeiro [`BOARD.md`](BOARD.md), um resumo curto gerado a partir do JSON. Para pegar
+trabalho autonomamente, usam a fila local:
+
+```sh
+node tools/backend-kanban/src/board.mjs --next
+```
+
+O comando escolhe o primeiro card não bloqueado, não concluído, com dependências já fechadas. Depois
+o agente usa o `id` estável para consultar apenas o card relevante no arquivo canônico. `BOARD.md`
+nunca é editado manualmente.
 
 Para atualizar um card:
 
 1. confirme o estado no código, migration, teste ou GitHub;
 2. atualize o card pelo `id` estável, preservando `proof`, `tests` e `links`;
 3. quando houver conflito entre documentação e runtime, preencha `drift` em vez de esconder a
-   diferença;
+   diferença, mas continue o trabalho até reconciliar, bloquear por dependência real ou provar a
+   conclusão;
 4. atualize o board apenas quando houver transição material: prova, bloqueio, drift, prioridade,
    status ou conclusão; apenas começar a trabalhar não muda o card;
 5. só mova para `done` após o checklist aplicável e a prova estarem registrados;
@@ -55,6 +64,7 @@ Para atualizar um card:
 ```sh
 node tools/backend-kanban/src/board.mjs --write-summary
 node tools/backend-kanban/src/board.mjs --check
+node tools/backend-kanban/src/board.mjs --next
 node tools/backend-kanban/src/board.mjs --card MVP-02-AUTHZ
 node tools/backend-kanban/src/board.mjs --search service_role
 ```

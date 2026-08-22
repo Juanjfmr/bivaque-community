@@ -1,7 +1,7 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
   "updatedAt": "22/08/2026 · snapshot do worktree e GitHub",
-  "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift até reconciliação explícita.",
+  "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
       "id": "MVP-00-REBASELINE",
