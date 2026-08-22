@@ -119,7 +119,6 @@
       "status": "now",
       "description": "Auditoria 2026-08-22 descobriu que algumas funções SECURITY DEFINER usam auth.uid() internamente e não aceitam parâmetro p_user_id — falham silenciosamente quando chamadas via service_role (auth.uid() = NULL). Nenhuma é chamada via service_role no runtime atual, mas são vulneráveis a regressão se alguém começar a usá-las pela API.",
       "checklist": [
-        "complete_event: verifica organizer_id == auth.uid() — só executável por service_role, precisa aceitar p_caller_user_id",
         "next_occurrence: consulta user_id de outro evento via auth.uid() — só executável por authenticated; service_role nunca chamado",
         "check_recurrence_holiday: usa auth.uid() para check_membership — idem, apenas authenticated",
         "can_receive_invite_to_event: verifica membership via auth.uid() — já corrigido com wrapper public.can_receive_invite_to_event(p_user_id)",
@@ -128,13 +127,14 @@
       "proof": [
         "auditoria manual 2026-08-22 cruzou todas as chamadas RPC frontend com definições SQL",
         "todas estão seguras atualmente: complete_event migrado para client autenticado; my_account_kind chamado por authenticated; next_occurrence/check usada por authenticated; can_receive já tem wrapper com p_user_id explícito",
-        "documentação desatualizada: comentários em events/[id]/page.tsx:132–133 e event-invites-actions.ts ainda referenciam comportamento service_role obsoleto"
+        "complete_event fix implementado via migration 20260822015000_fix_complete_event_caller.sql e frontend authenticated client (commit e8a45f9)",
+        "documentação desatualizada: comentários em events/[id]/page.tsx ainda referenciam comportamento service_role obsoleto"
       ],
       "tests": [],
       "drift": {
-        "documented": "Comments em events/[id]/page.tsx claimem complete_event 'stays on service_role'. Código real: authenticated client, sem auth.uid().",
-        "observed": "Todos os callers frontend resolvem user.id dos cookies antes de chamar. A proteção contra auth.uid() null está no servidor, não no cliente.",
-        "action": "Atualizar comentários nos arquivos afetados ou criar migration com parâmetro explicito. Registrar como débito técnico."
+        "documented": "Comments em events/[id]/page.tsx ainda referenciam complete_event \"stays on service_role\". Código real: authenticated client, auth.uid() never NULL, fix via p_caller_user_id param.",
+        "observed": "Todos os callers frontend resolvem user.id dos cookies antes de chamar. A proteção contra auth.uid() null está no servidor, não no cliente. Fix já no HEAD.",
+        "action": "Remover complete_event da checklist AUTHZ-AUTHUID-GAPS. Commit documentação. Verificar se há outros callers service_role pendentes."
       },
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
