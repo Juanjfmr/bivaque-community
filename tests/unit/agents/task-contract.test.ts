@@ -62,6 +62,27 @@ retry_budget: 3
     expect(parsed.retry_budget).toBe(3)
   })
 
+  it("trata `#` como conteúdo dentro de escalar em bloco", () => {
+    // O stripper de comentário truncava `objective: > … issue #42 …` em silêncio, e o
+    // contrato truncado ainda passava na validação: o validador aprovava OUTRO
+    // contrato. Interpretar errado é o que este parser existe para recusar.
+    const parsed = parseContract(`task_id: DS-042
+objective: >
+  Corrigir o seletor descrito na issue #42 do repositório.
+`)
+    expect(parsed.objective).toContain("#42")
+    expect(parsed.objective).toContain("do repositório.")
+  })
+
+  it("mantém o comentário fora do bloco: linha inteira e cauda de chave", () => {
+    const parsed = parseContract(`# comentário de linha inteira
+task_id: DS-042
+risk: acessibilidade  # rótulo, não valor
+`)
+    expect(parsed.task_id).toBe("DS-042")
+    expect(parsed.risk).toBe("acessibilidade")
+  })
+
   it("falha alto, com o número da linha, em vez de adivinhar", () => {
     expect(() => parseContract("task_id: X\nisto não é chave: valor\n")).toThrow(/linha 2/)
   })

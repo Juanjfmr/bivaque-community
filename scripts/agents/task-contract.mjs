@@ -154,16 +154,26 @@ function parseScalar(raw) {
 function readLines(source) {
   const lines = []
   const rawLines = String(source).split(/\r?\n/)
+  // Dentro de escalar em bloco (`>` / `|`), `#` é CONTEÚDO, não comentário. Sem esta
+  // distinção, um objetivo citando "issue #42" era truncado em silêncio e o validador
+  // aprovava outro contrato — interpretar errado é justamente o que este parser recusa.
+  let blockIndent = null
   for (let index = 0; index < rawLines.length; index += 1) {
     const raw = rawLines[index]
-    // Comentário só é removido em linha sem aspas: um `#` dentro de string é conteúdo.
-    const stripped = raw.includes('"') || raw.includes("'") ? raw : raw.replace(/(^|\s)#.*$/, "$1")
+    const indent = raw.length - raw.trimStart().length
+    if (blockIndent !== null && raw.trim() !== "" && indent <= blockIndent) blockIndent = null
+    const insideBlock = blockIndent !== null && indent > blockIndent
+
+    // Fora do bloco, comentário sai — e só em linha sem aspas: `#` dentro de string
+    // é conteúdo.
+    const stripped =
+      insideBlock || raw.includes('"') || raw.includes("'") ? raw : raw.replace(/(^|\s)#.*$/, "$1")
     if (stripped.trim() === "") continue
-    lines.push({
-      indent: stripped.length - stripped.trimStart().length,
-      text: stripped.trimEnd().trimStart(),
-      number: index + 1,
-    })
+
+    const text = stripped.trim()
+    if (!insideBlock && /^[A-Za-z_][A-Za-z0-9_-]*:\s*[>|]$/.test(text)) blockIndent = indent
+
+    lines.push({ indent, text, number: index + 1 })
   }
   return lines
 }
