@@ -4,8 +4,8 @@
 -- policies with logical OR.
 --
 -- Old wide policies from 20260802000500_storage_buckets.sql:
---   event_photos_insert_member  — any locality member could upload anything
---   event_photos_select_member  — any locality member could read anything
+--   event_photos_insert_member  -- any locality member could upload anything
+--   event_photos_select_member  -- any locality member could read anything
 -- These were replaced by stricter rules requiring ownership + locality for
 -- inserts and post-scoped visibility for selects in the later migration.
 

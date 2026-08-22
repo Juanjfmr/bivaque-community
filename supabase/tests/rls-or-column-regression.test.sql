@@ -486,8 +486,8 @@ select results_eq(
         'avatars_select_authenticated',
         'avatars_update_own',
         'avatars_delete_own',
-        'event_photos_insert_member',
-        'event_photos_select_member',
+        'event_photos_insert_self',
+        'event_photos_select_scoped',
         'event_photos_update_own',
         'event_photos_delete_own'
       )

@@ -310,3 +310,16 @@ values (
   '10000000-0000-4000-8000-000000000001',
   '{"mimetype":"image/jpeg","size":500000}'
 );
+
+-- The scoped read policy (event_photos_select_scoped) exposes a photo only
+-- through a post in the viewer's locality referencing it via photo_path.
+-- This post makes the regression "locality member can view event photos"
+-- assertion test the policy, not the fixture setup.
+insert into public.posts (locality_id, user_id, post_type, content, photo_path)
+values (
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  'photo',
+  'Foto de regressao',
+  'regression/group.jpg'
+);
