@@ -129,9 +129,7 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     expect(own?.reason).toContain("regra")
   })
 
-  test("apos operator resolver, denunciante recebe notification report_resolved", async ({
-    browser,
-  }) => {
+  test("apos operator resolver, denunciante recebe notification report_resolved", async () => {
     const anonKey =
       process.env["SUPABASE_ANON_KEY"] ??
       readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
