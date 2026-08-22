@@ -164,6 +164,27 @@ test("holds every task contract to the validator", () => {
   }
 })
 
+test("refuses PASS as the outcome of an exhausted retry budget", () => {
+  // O AGENTS.md afirma que ESTE teste trava a regra. Validar os contratos existentes
+  // não travava nada: os dois declaram HUMAN_DECISION, então `BUDGET_OUTCOMES` podia
+  // passar a aceitar `PASS` sem o escopo piscar. Aqui a regra é exercida de verdade.
+  const template = readFileSync(join(root, "docs", "agents", "tasks", "TEMPLATE.task.yml"), "utf8")
+
+  // Given the template contract, which closes with a human decision
+  assert.match(template, /on_budget_exhausted:\s*HUMAN_DECISION/)
+
+  // When the same contract declares PASS instead
+  const forced = template.replace(
+    "on_budget_exhausted: HUMAN_DECISION",
+    "on_budget_exhausted: PASS",
+  )
+  const result = checkSource(forced)
+
+  // Then the validator refuses it — fechar por cansaço não é fechar
+  assert.equal(result.valid, false, "um contrato que promete PASS ao esgotar tentativa foi aceito")
+  assert.match(result.errors.join(" | "), /nunca vira PASS/)
+})
+
 test("keeps the repository rules pointing at the architecture", () => {
   // Given the two documents an agent reads first
   const agentsMd = readFileSync(join(root, "AGENTS.md"), "utf8")
