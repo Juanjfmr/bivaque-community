@@ -143,16 +143,17 @@
       ],
       "proof": [
         "supabase/migrations/20260822014934_provider_accounts.sql",
-        "apps/web/app/(provider)/prestador/ já protege o shell e expõe placeholder"
+        "apps/web/app/(provider)/prestador/ já protege o shell e expõe placeholder",
+        "2026-08-22 reconciliação: fundação confirmada no código — migration + RLS + helpers + shell; STATUS atualizado para distinguir fundação (implementado) de perfil/listings/dashboard (não implementados)"
       ],
       "tests": [
         "Novo pgTAP provider_accounts e RLS",
         "Integração do shell com caller service_role"
       ],
       "drift": {
-        "documented": "PRODUCT_STATUS descreve dashboard e vitrine como inexistentes.",
-        "observed": "A migration provider_accounts e o shell provider existem no HEAD, mas são fundação/placeholder, não vitrine concluída.",
-        "action": "Atualizar status para distinguir fundação implementada de perfil/listings ainda abertos após validar reset e testes."
+        "documented": "PRODUCT_STATUS descrevia conta de prestador como inexistente.",
+        "observed": "Migration G Task 1 (`20260822014934`) com RLS+grants, funções `is_provider_account`/`my_account_kind`, shell `(provider)/layout.tsx` e página `/prestador` existem no HEAD.",
+        "action": "STATUS reconciliado 2026-08-22: linha 'Conta de prestador' movida para primeiro lugar na tabela Vitrine, marcando fundação implementada; ficha/dashboard/busca permanecem como não-implementados."
       },
       "links": [
         "Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md",
