@@ -30,7 +30,10 @@
       "links": [
         "Status atual | ../../docs/PRODUCT_STATUS.md",
         "Planos | ../../docs/superpowers/plans/README.md"
-      ]
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "MVP-01-ADMISSION",
@@ -60,7 +63,10 @@
       "links": [
         "Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20",
         "Status: entrada | ../../docs/PRODUCT_STATUS.md"
-      ]
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["BLOCK-RESEND"]
     },
     {
       "id": "MVP-02-AUTHZ",
@@ -86,7 +92,10 @@
         "supabase/tests/community-batch-approval.sql",
         "supabase/tests/admissions-decision.sql"
       ],
-      "links": ["Matriz de risco | ../../docs/decisions/RISK_MATRIX.md"]
+      "links": ["Matriz de risco | ../../docs/decisions/RISK_MATRIX.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "MVP-03-COMMUNITY",
@@ -112,7 +121,10 @@
         "supabase/tests/community-rpcs.sql",
         "tests/e2e/community-batch-approval.spec.ts"
       ],
-      "links": ["Status: comunidade | ../../docs/PRODUCT_STATUS.md"]
+      "links": ["Status: comunidade | ../../docs/PRODUCT_STATUS.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-02-AUTHZ", "BLOCK-RESEND"]
     },
     {
       "id": "MVP-04-PROVIDER-FOUNDATION",
@@ -145,7 +157,10 @@
       "links": [
         "Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md",
         "Status: vitrine | ../../docs/PRODUCT_STATUS.md"
-      ]
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-02-AUTHZ"]
     },
     {
       "id": "MVP-05-TEST-BASELINE",
@@ -167,7 +182,10 @@
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset"
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
-      "links": ["Protocolo | ../../docs/superpowers/plans/README.md"]
+      "links": ["Protocolo | ../../docs/superpowers/plans/README.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "MVP-06-DISCOVERY-INDEX",
@@ -189,7 +207,10 @@
         "O briefing de fechamento define B5 como contrato transversal"
       ],
       "tests": ["Negações cross-locality/community", "Ranking e filtro tipado por vertical"],
-      "links": ["Status: busca | ../../docs/PRODUCT_STATUS.md"]
+      "links": ["Status: busca | ../../docs/PRODUCT_STATUS.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-02-AUTHZ", "MVP-04-PROVIDER-FOUNDATION"]
     },
     {
       "id": "MVP-07-KNOWLEDGE",
@@ -215,7 +236,10 @@
         "Negação de promoção automática",
         "ACL de claims por escopo"
       ],
-      "links": ["ADR de curadoria | ../../docs/decisions/ADR-20260815-guia-curadoria-ia.md"]
+      "links": ["ADR de curadoria | ../../docs/decisions/ADR-20260815-guia-curadoria-ia.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-06-DISCOVERY-INDEX"]
     },
     {
       "id": "MVP-08-INTELLIGENCE",
@@ -237,7 +261,10 @@
         "O princípio de desligamento foi definido como requisito de arquitetura"
       ],
       "tests": ["Corpus de evals", "Testes de ausência de vazamento", "Smoke sem provider de LLM"],
-      "links": ["Visão: IA | ../../docs/BIVAQUE.md"]
+      "links": ["Visão: IA | ../../docs/BIVAQUE.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-06-DISCOVERY-INDEX", "MVP-07-KNOWLEDGE", "BLOCK-LEGAL-AI"]
     },
     {
       "id": "MVP-09-OPERABILITY",
@@ -259,7 +286,10 @@
         "Sentry tem scrubber configurado no runtime"
       ],
       "tests": ["outbox worker", "replay de job", "falha de adaptador e recovery"],
-      "links": ["Plano D1 | ../../docs/superpowers/plans/2026-08-11-onda-d1-infraestrutura.md"]
+      "links": ["Plano D1 | ../../docs/superpowers/plans/2026-08-11-onda-d1-infraestrutura.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-03-COMMUNITY", "MVP-04-PROVIDER-FOUNDATION"]
     },
     {
       "id": "MVP-10-BACKEND-FREEZE",
@@ -283,7 +313,20 @@
         "Integração service_role",
         "E2E de fronteiras browser-only"
       ],
-      "links": ["Critério de fechamento | ../../docs/BIVAQUE.md"]
+      "links": ["Critério de fechamento | ../../docs/BIVAQUE.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": [
+        "MVP-01-ADMISSION",
+        "MVP-02-AUTHZ",
+        "MVP-03-COMMUNITY",
+        "MVP-04-PROVIDER-FOUNDATION",
+        "MVP-05-TEST-BASELINE",
+        "MVP-06-DISCOVERY-INDEX",
+        "MVP-07-KNOWLEDGE",
+        "MVP-08-INTELLIGENCE",
+        "MVP-09-OPERABILITY"
+      ]
     },
     {
       "id": "BLOCK-RESEND",
@@ -305,7 +348,10 @@
         "convites e decisão de documento já enfileiram mensagens"
       ],
       "blockers": ["Conta Resend", "Domínio e DNS", "Decisão do dono"],
-      "links": ["Status: infraestrutura | ../../docs/PRODUCT_STATUS.md"]
+      "links": ["Status: infraestrutura | ../../docs/PRODUCT_STATUS.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "BLOCK-WHATSAPP",
@@ -323,7 +369,10 @@
       ],
       "proof": ["outbox_channel inclui whatsapp", "adaptador atual retorna indisponível"],
       "blockers": ["Chip dedicado", "CNPJ para Cloud API futura", "Decisão de produto"],
-      "links": ["Decisão D33 | ../../docs/BIVAQUE.md"]
+      "links": ["Decisão D33 | ../../docs/BIVAQUE.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "BLOCK-LEGAL-AI",
@@ -345,7 +394,10 @@
         "PostHog e IA transferem dados para terceiros"
       ],
       "blockers": ["Revisão jurídica", "Decisões do dono"],
-      "links": ["Privacidade | ../../docs/legal/PRIVACIDADE.md"]
+      "links": ["Privacidade | ../../docs/legal/PRIVACIDADE.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "BLOCK-AFFILIATION",
@@ -364,7 +416,10 @@
       ],
       "proof": ["AGENTS.md proíbe persistir organização militar", "O estado do ADR é proposed"],
       "blockers": ["Decisão R3 humana"],
-      "links": ["ADR OM declarada | ../../docs/decisions/ADR-20260811-om-declarada.md"]
+      "links": ["ADR OM declarada | ../../docs/decisions/ADR-20260811-om-declarada.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "BLOCK-ASAAS",
@@ -382,7 +437,10 @@
       ],
       "proof": ["ADR de alcance pago foi aceito, mas o plano separa G1 e G2"],
       "blockers": ["CNPJ", "Decisão operacional de cobrança"],
-      "links": ["ADR alcance pago | ../../docs/decisions/ADR-20260820-alcance-pago.md"]
+      "links": ["ADR alcance pago | ../../docs/decisions/ADR-20260820-alcance-pago.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "FRONTEND-RUNTIME-CONFORMANCE",
@@ -402,7 +460,10 @@
         "PHASE6_REVIEW marca runtime como non-conforming",
         "DS-021 foi remediado; DS-029 ainda precisa de verificação mais ampla"
       ],
-      "links": ["Phase 6 | ../../docs/agents/design-audit/PHASE6_REVIEW.md"]
+      "links": ["Phase 6 | ../../docs/agents/design-audit/PHASE6_REVIEW.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-10-BACKEND-FREEZE"]
     },
     {
       "id": "FRONTEND-VISUAL-AAA",
@@ -418,7 +479,10 @@
         "Planejar work separado após backend freeze"
       ],
       "proof": ["Phase 6D declara a implementação atual não elegível para AAA-ready"],
-      "links": ["Design spec | ../../docs/agents/DESIGN_SPEC.md"]
+      "links": ["Design spec | ../../docs/agents/DESIGN_SPEC.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"]
     },
     {
       "id": "REPO-ISSUE-20",
@@ -442,7 +506,10 @@
         "observed": "O runtime descreve catálogo nacional e a home deixou de usar PILOT_LOCALITY_ID.",
         "action": "Reescrever a issue para a lacuna residual ou encerrá-la com links de prova."
       },
-      "links": ["Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"]
+      "links": ["Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "REPO-PR-24",
@@ -454,7 +521,10 @@
       "description": "Correção pequena que limpa a baseline de CI; revisar isoladamente antes de mudanças maiores de tipo gerado.",
       "checklist": ["Revisar diff", "Rodar gate relevante", "Merge ou encerrar"],
       "proof": ["PR draft aberto em 22/08/2026"],
-      "links": ["PR #24 | https://github.com/Juanjfmr/bivaque-community/pull/24"]
+      "links": ["PR #24 | https://github.com/Juanjfmr/bivaque-community/pull/24"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "REPO-PR-28",
@@ -470,7 +540,10 @@
         "Congelar após baseline estável"
       ],
       "proof": ["PR draft aberto em 22/08/2026"],
-      "links": ["PR #28 | https://github.com/Juanjfmr/bivaque-community/pull/28"]
+      "links": ["PR #28 | https://github.com/Juanjfmr/bivaque-community/pull/28"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "REPO-PR-25",
@@ -486,7 +559,10 @@
         "Arquivar o que foi superado"
       ],
       "proof": ["PR draft aberto em 22/08/2026"],
-      "links": ["PR #25 | https://github.com/Juanjfmr/bivaque-community/pull/25"]
+      "links": ["PR #25 | https://github.com/Juanjfmr/bivaque-community/pull/25"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "REPO-PR-18",
@@ -507,7 +583,10 @@
         "observed": "O arquivo não está presente no worktree atual e não pode ser tomado como estado implementado.",
         "action": "Triar o PR antes de citar SPEC.md como fonte no Kanban ou README."
       },
-      "links": ["PR #18 | https://github.com/Juanjfmr/bivaque-community/pull/18"]
+      "links": ["PR #18 | https://github.com/Juanjfmr/bivaque-community/pull/18"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "REPO-PR-FRONTEND",
@@ -526,7 +605,10 @@
       "links": [
         "PR #23 | https://github.com/Juanjfmr/bivaque-community/pull/23",
         "PR #27 | https://github.com/Juanjfmr/bivaque-community/pull/27"
-      ]
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-10-BACKEND-FREEZE"]
     },
     {
       "id": "REPO-DEPENDABOT",
@@ -541,7 +623,10 @@
       "links": [
         "PR #21 | https://github.com/Juanjfmr/bivaque-community/pull/21",
         "PR #22 | https://github.com/Juanjfmr/bivaque-community/pull/22"
-      ]
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": ["MVP-05-TEST-BASELINE"]
     },
     {
       "id": "REPO-SECRETS-ROTATION",
@@ -558,7 +643,10 @@
         "Confirmar que scanner e logs não expõem valores"
       ],
       "proof": ["PRODUCT_STATUS § segurança registra a recomendação em 2026-08-21"],
-      "links": ["Status: segurança | ../../docs/PRODUCT_STATUS.md"]
+      "links": ["Status: segurança | ../../docs/PRODUCT_STATUS.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "DRIFT-STATUS-RECONCILIATION",
@@ -578,9 +666,13 @@
         "Convites, moderação, perfil e eventos tiveram 'fechamentos' que só QA posterior desmentiu",
         "provider_accounts expõe drift atual entre runtime e status",
         "AGENTS.md exige leitura do resumo operacional e atualização somente em transições materiais; test:scope valida schema e sincronização",
-        "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão"
+        "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão",
+        "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision"
       ],
-      "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"]
+      "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "e0538c0",
+      "dependencies": []
     },
     {
       "id": "DONE-NATIONAL-LOCALITIES",
@@ -602,7 +694,10 @@
       ],
       "tests": ["locality-transfer.sql", "transfer-scope-denials.sql", "transfer-degradation.sql"],
       "completedAt": "2026-08-20",
-      "links": ["Status: transferência | ../../docs/PRODUCT_STATUS.md"]
+      "links": ["Status: transferência | ../../docs/PRODUCT_STATUS.md"],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "DONE-COMMUNITY-MODERATION",
@@ -627,7 +722,10 @@
         "community-rpcs.sql",
         "community-batch-approval.spec.ts"
       ],
-      "completedAt": "2026-08-21"
+      "completedAt": "2026-08-21",
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "DONE-PROFILE-RPCS",
@@ -648,7 +746,10 @@
         "PRODUCT_STATUS registra confirmação ao vivo"
       ],
       "tests": ["other-member-profile.sql", "member-profile-denials.spec.ts"],
-      "completedAt": "2026-08-21"
+      "completedAt": "2026-08-21",
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     },
     {
       "id": "DONE-OUTBOX-FOUNDATION",
@@ -670,7 +771,10 @@
         "apps/web/app/api/internal/outbox/route.ts"
       ],
       "tests": ["outbox-worker.sql", "outbox-delivery.test.ts"],
-      "completedAt": "2026-08-14"
+      "completedAt": "2026-08-14",
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
+      "dependencies": []
     }
   ]
 }

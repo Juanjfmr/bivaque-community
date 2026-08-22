@@ -92,11 +92,15 @@ function createCard(card) {
   const metadata = [
     card.owner && `<span><strong>Owner:</strong> ${card.owner}</span>`,
     card.branch && `<span><strong>Branch:</strong> ${card.branch}</span>`,
+    card.updatedAt && `<span><strong>Atualizado:</strong> ${card.updatedAt}</span>`,
+    card.sourceRevision &&
+      `<span><strong>Fonte confrontada:</strong> <code>${card.sourceRevision}</code></span>`,
     card.completedAt && `<span><strong>Concluído:</strong> ${card.completedAt}</span>`,
   ].filter(Boolean)
 
   cardElement.querySelector(".card-detail").innerHTML = [
     metadata.length ? `<p class="metadata">${metadata.join("")}</p>` : "",
+    list("Dependências", card.dependencies),
     list("Checklist de fechamento", card.checklist),
     list("Provas existentes", card.proof),
     list("Testes", card.tests),

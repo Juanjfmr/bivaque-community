@@ -15,13 +15,13 @@ function isNonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0
 }
 
-function validateStringArray(errors, card, field, { required = false } = {}) {
+function validateStringArray(errors, card, field, { required = false, nonEmpty = false } = {}) {
   const value = card[field]
   if (!Array.isArray(value)) {
     if (required) errors.push(`${card.id ?? "card sem id"}: ${field} deve ser um array`)
     return
   }
-  if (required && value.length === 0) {
+  if (nonEmpty && value.length === 0) {
     errors.push(`${card.id}: ${field} não pode ficar vazio`)
   }
   if (value.some((item) => !isNonEmptyString(item))) {
@@ -48,7 +48,16 @@ export function validateBoard(board) {
       errors.push("todo card deve ser um objeto")
       continue
     }
-    for (const field of ["id", "title", "priority", "category", "status", "description"]) {
+    for (const field of [
+      "id",
+      "title",
+      "priority",
+      "category",
+      "status",
+      "description",
+      "updatedAt",
+      "sourceRevision",
+    ]) {
       if (!isNonEmptyString(card[field]))
         errors.push(`${card.id ?? "card sem id"}: ${field} é obrigatório`)
     }
@@ -58,11 +67,26 @@ export function validateBoard(board) {
     if (!categories.has(card.category)) errors.push(`${card.id}: category inválida`)
     if (!statuses.has(card.status)) errors.push(`${card.id}: status inválido`)
 
-    validateStringArray(errors, card, "checklist", { required: true })
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(card.updatedAt ?? "")) {
+      errors.push(`${card.id}: updatedAt deve usar YYYY-MM-DD`)
+    }
+    if (!/^[0-9a-f]{7,40}$/i.test(card.sourceRevision ?? "")) {
+      errors.push(`${card.id}: sourceRevision deve ser um commit Git abreviado ou completo`)
+    }
+
+    validateStringArray(errors, card, "checklist", { required: true, nonEmpty: true })
+    validateStringArray(errors, card, "dependencies", { required: true })
     validateStringArray(errors, card, "proof")
     validateStringArray(errors, card, "tests")
     validateStringArray(errors, card, "blockers")
     validateStringArray(errors, card, "links")
+
+    const hasSourceEvidence =
+      (Array.isArray(card.proof) && card.proof.length > 0) ||
+      (Array.isArray(card.links) && card.links.length > 0)
+    if (!hasSourceEvidence) {
+      errors.push(`${card.id}: card precisa de proof ou links como evidência de origem`)
+    }
 
     if (
       card.status === "blocked" &&
@@ -84,7 +108,33 @@ export function validateBoard(board) {
       }
     }
   }
+
+  for (const card of board.cards) {
+    if (!Array.isArray(card?.dependencies)) continue
+    const dependencies = new Set()
+    for (const dependency of card.dependencies) {
+      if (dependency === card.id) errors.push(`${card.id}: não pode depender de si mesmo`)
+      if (!ids.has(dependency)) errors.push(`${card.id}: dependência inexistente ${dependency}`)
+      if (dependencies.has(dependency))
+        errors.push(`${card.id}: dependência duplicada ${dependency}`)
+      dependencies.add(dependency)
+    }
+  }
   return errors
+}
+
+export function findCard(board, id) {
+  return board.cards.find((card) => card.id === id)
+}
+
+export function searchCards(board, query) {
+  const normalized = query.trim().toLocaleLowerCase("pt-BR")
+  if (!normalized) return []
+  return sorted(
+    board.cards.filter((card) =>
+      JSON.stringify(card).toLocaleLowerCase("pt-BR").includes(normalized),
+    ),
+  )
 }
 
 function sorted(cards) {
@@ -124,7 +174,7 @@ export function renderBoardSummary(board) {
     "",
     `**Mapa:** ${board.cards.length} frentes · ${counts.get("now")} agora · ${counts.get("blocked")} bloqueadas · ${counts.get("done")} concluídas · ${board.cards.filter((card) => card.drift).length} drifts`,
     "",
-    "Use o ID abaixo para consultar o card completo em `public/board.json` antes de planejar ou implementar.",
+    "Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes de planejar ou implementar.",
     "",
   ]
 
@@ -158,6 +208,8 @@ export function renderBoardSummary(board) {
     "```sh",
     "node tools/backend-kanban/src/board.mjs --check",
     "node tools/backend-kanban/src/board.mjs --write-summary",
+    "node tools/backend-kanban/src/board.mjs --card MVP-02-AUTHZ",
+    'node tools/backend-kanban/src/board.mjs --search "service_role"',
     "```",
     "",
   )

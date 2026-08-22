@@ -31,9 +31,10 @@ before answering a question about what this product does.
 
 - **[`tools/backend-kanban/BOARD.md`](tools/backend-kanban/BOARD.md)** — the generated, concise
   view of the current path to MVP launch. Use the stable card ID from that summary to consult the
-  canonical [`board.json`](tools/backend-kanban/public/board.json) before planning the change. The
-  board sets execution priority; it never overrides product decisions or runtime evidence in the
-  two documents above. Never edit `BOARD.md` by hand.
+  canonical entry with `node tools/backend-kanban/src/board.mjs --card <ID>` before planning the
+  change; use `--search <terms>` when no ID is known. The board sets execution priority; it never
+  overrides product decisions or runtime evidence in the two documents above. Never edit
+  `BOARD.md` by hand.
 
 **Never infer one from the other.** `BIVAQUE.md` describes decisions, many of them not yet
 built; `PRODUCT_STATUS.md` describes reality. Reading a decision as a delivered feature is
@@ -67,9 +68,10 @@ Three rules that decide whether your work is legitimate at all:
 - **The discovering agent records a genuinely new task.** Search existing IDs, titles and
   checklists first; extend an existing card when the work belongs to the same closure contract.
   When no card covers it, add a card with a stable ID, priority, category, status, source evidence,
-  checklist and dependencies in the same commit that reveals the work. A new task involving a
-  product decision, personal data, payment, RLS or another R3 boundary enters `blocked` or `repo`
-  until the required human decision/ADR exists — discovery is not authority to invent scope.
+  `updatedAt`, the confronted Git `sourceRevision`, checklist and explicit `dependencies` in the
+  same commit that reveals the work. A new task involving a product decision, personal data,
+  payment, RLS or another R3 boundary enters `blocked` or `repo` until the required human
+  decision/ADR exists — discovery is not authority to invent scope.
 
 **Scope column and the policies that read it land in the same migration** — never "in
 future". This is the failure this repository keeps repeating; it has produced four privacy

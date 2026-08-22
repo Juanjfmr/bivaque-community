@@ -8,7 +8,7 @@
 
 **Mapa:** 31 frentes · 6 agora · 5 bloqueadas · 4 concluídas · 3 drifts
 
-Use o ID abaixo para consultar o card completo em `public/board.json` antes de planejar ou implementar.
+Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes de planejar ou implementar.
 
 ## Agora
 
@@ -48,4 +48,6 @@ Use o ID abaixo para consultar o card completo em `public/board.json` antes de p
 ```sh
 node tools/backend-kanban/src/board.mjs --check
 node tools/backend-kanban/src/board.mjs --write-summary
+node tools/backend-kanban/src/board.mjs --card MVP-02-AUTHZ
+node tools/backend-kanban/src/board.mjs --search "service_role"
 ```

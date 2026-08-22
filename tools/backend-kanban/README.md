@@ -55,6 +55,8 @@ Para atualizar um card:
 ```sh
 node tools/backend-kanban/src/board.mjs --write-summary
 node tools/backend-kanban/src/board.mjs --check
+node tools/backend-kanban/src/board.mjs --card MVP-02-AUTHZ
+node tools/backend-kanban/src/board.mjs --search service_role
 ```
 
 O `test:scope` executado no gate também valida o schema, IDs, estados, Definition of Done e se o
@@ -72,7 +74,8 @@ equivalentes. Se pertencer ao mesmo contrato de fechamento, amplia o card existe
 frente realmente nova, cria um card no mesmo commit que revelou a necessidade, com:
 
 - ID estável, prioridade, categoria e status;
-- evidência da origem, checklist e dependências;
+- evidência da origem, checklist e `dependencies` explícitas, mesmo quando vazias;
+- `updatedAt` (`YYYY-MM-DD`) e `sourceRevision` (commit confrontado com o card);
 - `blocked` ou `repo` quando depender de decisão de produto, dados pessoais, pagamento, RLS ou
   outra fronteira R3.
 
