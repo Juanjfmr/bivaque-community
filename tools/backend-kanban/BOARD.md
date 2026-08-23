@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 44 frentes · 4 agora · 6 bloqueadas · 12 concluídas · 4 drifts
+**Mapa:** 44 frentes · 3 agora · 6 bloqueadas · 13 concluídas · 3 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -15,7 +15,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 ## Agora
 
 - **MVP-01-ADMISSION** · P0 · Admissão, localidade e convites: fechar ciclos pendentes
-- **MVP-00-E2E-UUID-REALIGN** · P1 · Realinhar E2E specs contra seed real
 - **MVP-03-COMMUNITY** · P1 · Fechamento Community Graph e ciclos sociais
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
 
@@ -31,7 +30,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 ## Drift aberto
 
 - **MVP-01-ADMISSION** · P0 · Admissão, localidade e convites: fechar ciclos pendentes — Reconciliar spec com o contrato service_role OU expor RPCs a authenticated com gate de operador interno. Bloqueado pelo build do web (landing page em construção no working tree).
-- **MVP-00-E2E-UUID-REALIGN** · P1 · Realinhar E2E specs contra seed real — Realinhamento de UUID concluído (nada a corrigir). Separar em MVP-00-E2E-FUNCTIONAL as 65 falhas funcionais para triagem.
 - **REPO-ISSUE-20** · P0 · Issue #20 — multi-localidade — Reavaliado 2026-08-22: runtime fecha quase tudo; residual = E2E two-localities (bloqueado por build do web). Issue mantida aberta até o E2E rodar, conforme recomendação no comentário.
 - **REPO-PR-18** · P1 · PR #18 — SPEC.md como contrato normativo — Triar o PR antes de citar SPEC.md como fonte no Kanban ou README.
 

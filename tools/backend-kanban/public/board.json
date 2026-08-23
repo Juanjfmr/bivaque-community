@@ -976,7 +976,7 @@
       "phase": "MVP-00",
       "priority": "P1",
       "category": "testing",
-      "status": "now",
+      "status": "done",
       "description": "~17 E2E specs navegavam para UUIDs hardcoded fora do seed. Auditei todos os UUIDs hardcoded nos specs E2E contra seed.sql (incl. enriquecimento de 22/08: Vila Ajuricaba 71000000-…-0001, Rio …0003, transfer …0006, operador …0007, dono-vila …0008) e eles JÁ batem — nenhuma referência a tabela errada. As 65 falhas remanescentes são divergências de COMPORTAMENTO (ver drift), não de UUID. Realinhamento de UUID concluído: nada a corrigir.",
       "checklist": [
         "Auditar cada spec e listar UUIDs hardcoded vs UUIDs reais do seed",
@@ -988,7 +988,8 @@
         "PRODUCT_STATUS §10 registra 94 falhas em ~18 specs",
         "seed.sql usa generate_series com faixas de UUID definidas",
         "Suíte E2E completa (serial, 3 viewports) em 2026-08-23: 518 verdes / 65 falhas — UUIDs auditados batem 100%",
-        "Enriquecimento de seed de 22/08 já popula Vila Ajuricaba + contas Rio/transfer/operador/dono-vila com UUIDs estáveis"
+        "Enriquecimento de seed de 22/08 já popula Vila Ajuricaba + contas Rio/transfer/operador/dono-vila com UUIDs estáveis",
+        "Card fechado em 2026-08-23: auditoria de UUIDs 100%% conforme seed.sql; suíte E2E serial rodou (518 verdes / 65 falhas funcionais) e as falhas restantes foram separadas em MVP-00-E2E-FUNCTIONAL (commit a197086)"
       ],
       "tests": ["Playwright --workers=1 contra seed completo"],
       "links": [
@@ -996,14 +997,10 @@
         "Seed UUIDs | ../../supabase/seed.sql"
       ],
       "updatedAt": "2026-08-23",
-      "sourceRevision": "015e4ba",
+      "sourceRevision": "810cdf8",
       "dependencies": [],
-      "completedChecklist": [true, true, false, false],
-      "drift": {
-        "documented": "~17 specs falham por UUIDs hardcoded fora do seed; realinhar traria a suíte verde.",
-        "observed": "UUIDs hardcoded nos specs E2E já batem com seed.sql (inclusive entidades do enriquecimento de 22/08). Nenhuma referência a tabela errada. As 65 falhas são divergências de COMPORTAMENTO: seções de owner/admin não renderizam para a conta logada (community-batch-approval, community-invitations, event-invites, group-admin-cycle, reports-operator-flow, admissions-operator-flow), redirect /→/login não ocorre, botão 'Continuar com Google' ausente, copy de empty-locality e fluxo de família faltando.",
-        "action": "Realinhamento de UUID concluído (nada a corrigir). Separar em MVP-00-E2E-FUNCTIONAL as 65 falhas funcionais para triagem."
-      }
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-08-23"
     },
     {
       "id": "G-TASK-1",
