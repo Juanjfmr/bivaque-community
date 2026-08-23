@@ -726,18 +726,23 @@
       "phase": "Triagem",
       "priority": "P1",
       "category": "repo",
-      "status": "repo",
+      "status": "done",
       "description": "Estabilizar apenas o que reduz falsos positivos e bloqueios de execução; não transformar o harness em produto paralelo.",
       "checklist": [
         "Identificar falso positivo do scanner de segredos",
         "Resolver reviewer CI/max turns somente se bloquearem execução",
         "Congelar após baseline estável"
       ],
-      "proof": ["PR draft aberto em 22/08/2026"],
+      "proof": [
+        "PR draft aberto em 22/08/2026",
+        "Triagem 2026-08-23: PR mergeado — squash 4892362 presente no log local; falso positivo do scanner tratado, reviewer CI/max_turns ajustado, baseline verde registrada no próprio PR."
+      ],
       "links": ["PR #28 | https://github.com/Juanjfmr/bivaque-community/pull/28"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": []
+      "updatedAt": "2026-08-23",
+      "sourceRevision": "6e14fe3",
+      "dependencies": [],
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-08-23"
     },
     {
       "id": "REPO-PR-25",
