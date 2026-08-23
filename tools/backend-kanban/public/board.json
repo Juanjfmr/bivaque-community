@@ -782,23 +782,25 @@
       "phase": "Triagem",
       "priority": "P1",
       "category": "repo",
-      "status": "repo",
+      "status": "done",
       "description": "Pode ser uma camada útil de requisitos, desde que não concorra com visão, estado runtime e checklist de fechamento.",
       "checklist": [
         "Definir fronteira entre BIVAQUE, PRODUCT_STATUS, SPEC e BACKEND_COMPLETION",
         "Validar referências contra migrations e testes",
         "Decidir merge, revisão ou encerramento"
       ],
-      "proof": ["SPEC.md está ausente nesta branch", "PR #18 draft propõe o arquivo"],
-      "drift": {
-        "documented": "O PR propõe uma spec como referência normativa consolidada.",
-        "observed": "O arquivo não está presente no worktree atual e não pode ser tomado como estado implementado.",
-        "action": "Triar o PR antes de citar SPEC.md como fonte no Kanban ou README."
-      },
+      "proof": [
+        "SPEC.md está ausente nesta branch",
+        "PR #18 draft propõe o arquivo",
+        "Triagem 2026-08-23: SPEC.md propõe camada normativa legítima, mas as divergências da §9 envelheceram contra o runtime — 9.2 (vocabulário) derrubada por D21; 9.4 (memória→MAP) corrigida no main pelo PR #28; 9.1 persiste mutada (PRIVACY_VISIBILITIES órfão em packages/domain/src/index.ts:6); 9.3 persiste (migration 20260802001100:17/29).",
+        "Decisão: manter draft; exigir revisão do SPEC.md contra runtime atual antes de merge; não citar SPEC.md como fonte no Kanban/README até lá."
+      ],
       "links": ["PR #18 | https://github.com/Juanjfmr/bivaque-community/pull/18"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": []
+      "updatedAt": "2026-08-23",
+      "sourceRevision": "6e14fe3",
+      "dependencies": [],
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-08-23"
     },
     {
       "id": "REPO-PR-FRONTEND",

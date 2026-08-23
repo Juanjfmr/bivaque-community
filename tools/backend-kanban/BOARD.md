@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 44 frentes · 3 agora · 6 bloqueadas · 16 concluídas · 3 drifts
+**Mapa:** 44 frentes · 3 agora · 6 bloqueadas · 17 concluídas · 2 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -31,13 +31,11 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 - **MVP-01-ADMISSION** · P0 · Admissão, localidade e convites: fechar ciclos pendentes — Reconciliar spec com o contrato service_role OU expor RPCs a authenticated com gate de operador interno. Bloqueado pelo build do web (landing page em construção no working tree).
 - **REPO-ISSUE-20** · P0 · Issue #20 — multi-localidade — Reavaliado 2026-08-22: runtime fecha quase tudo; residual = E2E two-localities (bloqueado por build do web). Issue mantida aberta até o E2E rodar, conforme recomendação no comentário.
-- **REPO-PR-18** · P1 · PR #18 — SPEC.md como contrato normativo — Triar o PR antes de citar SPEC.md como fonte no Kanban ou README.
 
 ## Triagem prioritária
 
 - **REPO-ISSUE-20** · P0 · Issue #20 — multi-localidade
 - **REPO-SECRETS-ROTATION** · P0 · Rotação de chaves Portal e Resend
-- **REPO-PR-18** · P1 · PR #18 — SPEC.md como contrato normativo
 - **DRIFT-STATUS-RECONCILIATION** · P1 · Reconciliar documentação com runtime após cada ciclo
 
 ## Comandos
