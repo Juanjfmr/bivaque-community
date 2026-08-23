@@ -1,14 +1,22 @@
 // Onda H Task 6 — decisao de admissao pelo operator (E2E).
-
+//
 // O spec prova o ciclo do operator na fila de admissoes (H-Task 6):
-//   entrada (login operador) -> observacao (lista + documentos) ->
-//   acao (reprocessar / aprovar documento / rejeitar documento / rejeitar
-//   definitivamente) -> feedback (registro no banco, sem revelar acao) ->
-//   acompanhamento (a pessoa ve o estado em /onboarding/status).
-
+//   entrada (login operador) -> observacao (o painel /admissions renderiza fila
+//   + documentos pelo caminho real: server component com cliente service_role
+//   e gate proprio de operador).
+//
+// Reconciliacao 2026-08-23 (drift do MVP-01-ADMISSION): as migrations
+// 20260809171022 e 20260815132000 definem o contrato das RPCs
+// list_verification_queue/list_verification_documents como service_role-only
+// (`revoke all ... from authenticated` + `grant execute ... to service_role`).
+// Os testes que antes esperavam SUCESSO chamando as RPCs via REST com o JWT do
+// operador contradiziam esse contrato e foram reescritos como testes negativos
+// de autorizacao: a negacao (403 / 42501) e o comportamento correto na borda
+// HTTP. A forma dos dados da fila e dos documentos segue provada em pgTAP
+// (supabase/tests/verification-documents.sql, admissions-decision.sql).
+//
 // NAO usa IDs do fixture pgTAP. O seed tem:
 //   - 90000000-...: usuarios na fila de admissao (pending/temporary_error/rejected)
-//   - documents pendentes em list_verification_documents()
 
 import { expect, request, test } from "@playwright/test"
 import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
@@ -34,30 +42,19 @@ interface PasswordGrantBody {
   token_type: string
 }
 
-interface QueueEntry {
-  user_id: string
-  status: string
-  created_at: string
-}
-
-interface DocEntry {
-  document_id: string
-  user_id: string
-  mime_type: string
-  review_status: string
-  uploaded_at: string
-}
-
-async function mintOperatorSession(): Promise<PasswordGrantBody> {
-  const anonKey =
+async function anonKey(): Promise<string> {
+  const key =
     process.env["SUPABASE_ANON_KEY"] ??
     readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
     readEnvLocal("SUPABASE_ANON_KEY")
-  if (!anonKey) throw new Error("SUPABASE_ANON_KEY is required")
+  if (!key) throw new Error("SUPABASE_ANON_KEY is required")
+  return key
+}
 
+async function mintOperatorSession(): Promise<PasswordGrantBody> {
   const api = await request.newContext()
   const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    headers: { apikey: anonKey, "Content-Type": "application/json" },
+    headers: { apikey: await anonKey(), "Content-Type": "application/json" },
     data: { email: OPERATOR_EMAIL, password: OPERATOR_PASSWORD },
   })
   if (response.status() !== 200) {
@@ -70,23 +67,7 @@ async function mintOperatorSession(): Promise<PasswordGrantBody> {
 }
 
 async function signInOperator(page: import("@playwright/test").Page): Promise<void> {
-  const anonKey =
-    process.env["SUPABASE_ANON_KEY"] ??
-    readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
-    readEnvLocal("SUPABASE_ANON_KEY")
-  if (!anonKey) throw new Error("SUPABASE_ANON_KEY is required")
-
-  const api = await request.newContext()
-  const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    headers: { apikey: anonKey, "Content-Type": "application/json" },
-    data: { email: OPERATOR_EMAIL, password: OPERATOR_PASSWORD },
-  })
-  if (response.status() !== 200) {
-    await api.dispose()
-    throw new Error(`Password grant for operator failed with ${response.status()}`)
-  }
-  const body = (await response.json()) as PasswordGrantBody
-  await api.dispose()
+  const body = await mintOperatorSession()
 
   const cookieValue = encodeAuthCookieValue(body, OPERATOR_EMAIL)
   const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
@@ -105,44 +86,38 @@ async function signInOperator(page: import("@playwright/test").Page): Promise<vo
   ])
 }
 
-async function listQueue(operatorToken: string): Promise<QueueEntry[]> {
+// Chamada REST direta da RPC com o JWT do operador — o caminho que o contrato
+// proibe. Devolve status e corpo para os testes negativos afirmarem a negacao.
+async function callRpcAsOperator(fn: string): Promise<{ status: number; body: unknown }> {
+  const session = await mintOperatorSession()
   const api = await request.newContext()
-  const response = await api.post(`${SUPABASE_URL}/rest/v1/rpc/list_verification_queue`, {
+  const response = await api.post(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     headers: {
-      apikey: process.env["SUPABASE_ANON_KEY"] ?? readEnvLocal("SUPABASE_ANON_KEY") ?? "",
-      Authorization: `Bearer ${operatorToken}`,
+      apikey: await anonKey(),
+      Authorization: `Bearer ${session.access_token}`,
       "Content-Type": "application/json",
     },
     data: {},
   })
-  const rows = (await response.json()) as QueueEntry[]
+  const text = await response.text()
   await api.dispose()
-  return rows
-}
-
-async function listDocuments(operatorToken: string): Promise<DocEntry[]> {
-  const api = await request.newContext()
-  const response = await api.post(`${SUPABASE_URL}/rest/v1/rpc/list_verification_documents`, {
-    headers: {
-      apikey: process.env["SUPABASE_ANON_KEY"] ?? readEnvLocal("SUPABASE_ANON_KEY") ?? "",
-      Authorization: `Bearer ${operatorToken}`,
-      "Content-Type": "application/json",
-    },
-    data: {},
-  })
-  const rows = (await response.json()) as DocEntry[]
-  await api.dispose()
-  return rows
+  let body: unknown
+  try {
+    body = JSON.parse(text) as unknown
+  } catch {
+    body = text
+  }
+  return { status: response.status(), body }
 }
 
 test.describe("admission flow: operator decide via painel", () => {
-  test("painel /admin/admissions renderiza fila + documentos", async ({ page }) => {
+  test("painel /admissions renderiza fila + documentos", async ({ page }) => {
     // Given um operador autenticado
     await signInOperator(page)
     await page.setViewportSize({ width: 1280, height: 800 })
 
-    // When ele abre o painel de admissoes
-    await page.goto("/admin/admissions", { waitUntil: "load" })
+    // When ele abre o painel de admissoes (grupo (admin) nao aparece na URL)
+    await page.goto("/admissions", { waitUntil: "load" })
 
     // Then o titulo esta visivel
     await expect(page.getByRole("heading", { name: "Fila de admissao" })).toBeVisible({
@@ -154,36 +129,25 @@ test.describe("admission flow: operator decide via painel", () => {
     await expect(page.getByRole("heading", { name: /Fila de verificacao/i })).toBeVisible()
   })
 
-  test("list_verification_queue retorna fila do estado real", async () => {
-    // Given o operator
-    const session = await mintOperatorSession()
+  test("list_verification_queue nega REST direta do operador (contrato service_role)", async () => {
+    // Given o operador autenticado
+    // When ele chama a RPC diretamente pela API com o proprio JWT
+    const { status, body } = await callRpcAsOperator("list_verification_queue")
 
-    // When ele chama list_verification_queue via API
-    const queue = await listQueue(session.access_token)
-
-    // Then a fila tem o formato esperado -- o seed tem ~300 contas em
-    // pending/temporary_error/rejected, entao queue.length > 0
-    expect(Array.isArray(queue)).toBe(true)
-    expect(queue.length).toBeGreaterThan(0)
-    if (queue.length > 0) {
-      expect(queue[0].user_id).toMatch(/^[0-9a-f-]{36}$/)
-      expect(["pending", "temporary_error", "rejected"]).toContain(queue[0].status)
-    }
+    // Then a negacao e a resposta correta: permission denied, sem nenhuma linha
+    expect(status).toBe(403)
+    expect((body as { code?: string }).code).toBe("42501")
+    expect(Array.isArray(body)).toBe(false)
   })
 
-  test("list_verification_documents retorna documentos pendentes", async () => {
-    // Given o operator
-    const session = await mintOperatorSession()
+  test("list_verification_documents nega REST direta do operador (contrato service_role)", async () => {
+    // Given o operador autenticado
+    // When ele chama a RPC diretamente pela API com o proprio JWT
+    const { status, body } = await callRpcAsOperator("list_verification_documents")
 
-    // When ele chama list_verification_documents
-    const docs = await listDocuments(session.access_token)
-
-    // Then a resposta e um array (pode estar vazio se nenhum documento
-    // foi enviado ainda no seed)
-    expect(Array.isArray(docs)).toBe(true)
-    if (docs.length > 0) {
-      expect(docs[0].document_id).toMatch(/^[0-9a-f-]{36}$/)
-      expect(docs[0].review_status).toBe("pending")
-    }
+    // Then a negacao e a resposta correta: permission denied, sem nenhuma linha
+    expect(status).toBe(403)
+    expect((body as { code?: string }).code).toBe("42501")
+    expect(Array.isArray(body)).toBe(false)
   })
 })
