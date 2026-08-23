@@ -756,18 +756,25 @@
       "phase": "Triagem",
       "priority": "P1",
       "category": "repo",
-      "status": "repo",
+      "status": "done",
       "description": "Extrair fatos ainda válidos, mas evitar um segundo roadmap concorrente ao mapa backend-first, discovery, knowledge e IA.",
       "checklist": [
         "Confrontar com código e planos atuais",
         "Mover apenas fatos verificáveis",
         "Arquivar o que foi superado"
       ],
-      "proof": ["PR draft aberto em 22/08/2026"],
+      "proof": [
+        "PR draft aberto em 22/08/2026",
+        "Triagem 2026-08-23: planos G/H propostos (2026-08-19) superados pelas versões 2026-08-20 aprovadas por ADRs accepted e em execução (G-TASK-1 concluída); a sequência do PR diverge da executada (P0→T→D2→E→F→G).",
+        "Fatos verificáveis já cobertos a montante: conflito DM canon×runtime registrado em PRODUCT_STATUS §8; retorno ao denunciante fechado (H-Task 3).",
+        "Decisão: encerrar como superseded; os audit docs podem ser reaproveitados pelo dono se quiser o histórico."
+      ],
       "links": ["PR #25 | https://github.com/Juanjfmr/bivaque-community/pull/25"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": []
+      "updatedAt": "2026-08-23",
+      "sourceRevision": "6e14fe3",
+      "dependencies": [],
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-08-23"
     },
     {
       "id": "REPO-PR-18",
