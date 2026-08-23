@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "22/08/2026 · snapshot do worktree e GitHub",
+  "updatedAt": "23/08/2026 · snapshot do worktree e GitHub",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -81,7 +81,9 @@
       },
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["BLOCK-RESEND"]
+      "dependencies": [
+        "BLOCK-RESEND"
+      ]
     },
     {
       "id": "MVP-02-AUTHZ",
@@ -98,7 +100,13 @@
         "Cobrir negações cross-user, locality, community e ownership",
         "Auditar grants de storage e private schema"
       ],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "proof": [
         "migrations 20260821000022–25 e 40 adicionaram parâmetros explícitos p_user_id/p_viewer_user_id/p_caller_user_id",
         "2026-08-22 auditoria completa: todas as chamadas service_role passam caller explícito; nenhum gap crítico encontrado",
@@ -115,7 +123,9 @@
         "supabase/tests/event-invite-rpc-exposure.sql (RPCs expostas como public)"
       ],
       "completedAt": "2026-08-22",
-      "links": ["Matriz de risco | ../../docs/decisions/RISK_MATRIX.md"],
+      "links": [
+        "Matriz de risco | ../../docs/decisions/RISK_MATRIX.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -126,7 +136,7 @@
       "phase": "MVP-02",
       "priority": "P1",
       "category": "backend",
-      "status": "now",
+      "status": "done",
       "description": "Auditoria 2026-08-22 descobriu que algumas funções SECURITY DEFINER usam auth.uid() internamente e não aceitam parâmetro p_user_id — falham silenciosamente quando chamadas via service_role (auth.uid() = NULL). Nenhuma é chamada via service_role no runtime atual, mas são vulneráveis a regressão se alguém começar a usá-las pela API.",
       "checklist": [
         "next_occurrence: consulta user_id de outro evento via auth.uid() — só executável por authenticated; service_role nunca chamado",
@@ -138,17 +148,15 @@
         "auditoria manual 2026-08-22 cruzou todas as chamadas RPC frontend com definições SQL",
         "todas estão seguras atualmente: complete_event migrado para client autenticado; my_account_kind chamado por authenticated; next_occurrence/check usada por authenticated; can_receive já tem wrapper com p_user_id explícito",
         "complete_event fix implementado via migration 20260822015000_fix_complete_event_caller.sql e frontend authenticated client (commit e8a45f9)",
-        "documentação desatualizada: comentários em events/[id]/page.tsx ainda referenciam comportamento service_role obsoleto"
+        "documentação reconciliada 2026-08-22: comentários em events/[id]/page.tsx e event-invites-actions.ts já usam client autenticado; callers de next_occurrence/check_recurrence_holiday/my_account_kind confirmados como authenticated; nenhum caller service_role pendente (verificação estática + E2E das ondas F)"
       ],
       "tests": [],
-      "drift": {
-        "documented": "Comments em events/[id]/page.tsx ainda referenciam complete_event \"stays on service_role\". Código real: authenticated client, auth.uid() never NULL, fix via p_caller_user_id param.",
-        "observed": "Todos os callers frontend resolvem user.id dos cookies antes de chamar. A proteção contra auth.uid() null está no servidor, não no cliente. Fix já no HEAD.",
-        "action": "Remover complete_event da checklist AUTHZ-AUTHUID-GAPS. Commit documentação. Verificar se há outros callers service_role pendentes."
-      },
       "updatedAt": "2026-08-22",
+      "completedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-02-AUTHZ"]
+      "dependencies": [
+        "MVP-02-AUTHZ"
+      ]
     },
     {
       "id": "MVP-03-COMMUNITY",
@@ -174,10 +182,15 @@
         "supabase/tests/community-rpcs.sql",
         "tests/e2e/community-batch-approval.spec.ts"
       ],
-      "links": ["Status: comunidade | ../../docs/PRODUCT_STATUS.md"],
+      "links": [
+        "Status: comunidade | ../../docs/PRODUCT_STATUS.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-02-AUTHZ", "BLOCK-RESEND"]
+      "dependencies": [
+        "MVP-02-AUTHZ",
+        "BLOCK-RESEND"
+      ]
     },
     {
       "id": "MVP-05-TEST-BASELINE",
@@ -198,8 +211,14 @@
         "O README dos planos documenta a interferência do perfil Visual Capture",
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset"
       ],
-      "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
-      "links": ["Protocolo | ../../docs/superpowers/plans/README.md"],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 test:db",
+        "npx pnpm@11.18.0 test:e2e"
+      ],
+      "links": [
+        "Protocolo | ../../docs/superpowers/plans/README.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -223,11 +242,19 @@
         "PRODUCT_STATUS registra busca/diretório como inexistente",
         "O briefing de fechamento define B5 como contrato transversal"
       ],
-      "tests": ["Negações cross-locality/community", "Ranking e filtro tipado por vertical"],
-      "links": ["Status: busca | ../../docs/PRODUCT_STATUS.md"],
+      "tests": [
+        "Negações cross-locality/community",
+        "Ranking e filtro tipado por vertical"
+      ],
+      "links": [
+        "Status: busca | ../../docs/PRODUCT_STATUS.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-02-AUTHZ", "G-TASK-1"]
+      "dependencies": [
+        "MVP-02-AUTHZ",
+        "G-TASK-1"
+      ]
     },
     {
       "id": "MVP-07-KNOWLEDGE",
@@ -253,10 +280,14 @@
         "Negação de promoção automática",
         "ACL de claims por escopo"
       ],
-      "links": ["ADR de curadoria | ../../docs/decisions/ADR-20260815-guia-curadoria-ia.md"],
+      "links": [
+        "ADR de curadoria | ../../docs/decisions/ADR-20260815-guia-curadoria-ia.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-06-DISCOVERY-INDEX"]
+      "dependencies": [
+        "MVP-06-DISCOVERY-INDEX"
+      ]
     },
     {
       "id": "MVP-08-INTELLIGENCE",
@@ -277,11 +308,21 @@
         "Ainda não há camada de IA no runtime",
         "O princípio de desligamento foi definido como requisito de arquitetura"
       ],
-      "tests": ["Corpus de evals", "Testes de ausência de vazamento", "Smoke sem provider de LLM"],
-      "links": ["Visão: IA | ../../docs/BIVAQUE.md"],
+      "tests": [
+        "Corpus de evals",
+        "Testes de ausência de vazamento",
+        "Smoke sem provider de LLM"
+      ],
+      "links": [
+        "Visão: IA | ../../docs/BIVAQUE.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-06-DISCOVERY-INDEX", "MVP-07-KNOWLEDGE", "BLOCK-LEGAL-AI"]
+      "dependencies": [
+        "MVP-06-DISCOVERY-INDEX",
+        "MVP-07-KNOWLEDGE",
+        "BLOCK-LEGAL-AI"
+      ]
     },
     {
       "id": "MVP-09-OPERABILITY",
@@ -302,11 +343,20 @@
         "outbox e worker existem, mas adaptadores concretos não",
         "Sentry tem scrubber configurado no runtime"
       ],
-      "tests": ["outbox worker", "replay de job", "falha de adaptador e recovery"],
-      "links": ["Plano D1 | ../../docs/superpowers/plans/2026-08-11-onda-d1-infraestrutura.md"],
+      "tests": [
+        "outbox worker",
+        "replay de job",
+        "falha de adaptador e recovery"
+      ],
+      "links": [
+        "Plano D1 | ../../docs/superpowers/plans/2026-08-11-onda-d1-infraestrutura.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-03-COMMUNITY", "G-TASK-1"]
+      "dependencies": [
+        "MVP-03-COMMUNITY",
+        "G-TASK-1"
+      ]
     },
     {
       "id": "MVP-10-BACKEND-FREEZE",
@@ -330,7 +380,9 @@
         "Integração service_role",
         "E2E de fronteiras browser-only"
       ],
-      "links": ["Critério de fechamento | ../../docs/BIVAQUE.md"],
+      "links": [
+        "Critério de fechamento | ../../docs/BIVAQUE.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": [
@@ -364,8 +416,14 @@
         "apps/web/lib/outbox/adapters.ts mantém adaptadores indisponíveis",
         "convites e decisão de documento já enfileiram mensagens"
       ],
-      "blockers": ["Conta Resend", "Domínio e DNS", "Decisão do dono"],
-      "links": ["Status: infraestrutura | ../../docs/PRODUCT_STATUS.md"],
+      "blockers": [
+        "Conta Resend",
+        "Domínio e DNS",
+        "Decisão do dono"
+      ],
+      "links": [
+        "Status: infraestrutura | ../../docs/PRODUCT_STATUS.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -384,9 +442,18 @@
         "Definir adaptador e operação",
         "Registrar fallback e falha"
       ],
-      "proof": ["outbox_channel inclui whatsapp", "adaptador atual retorna indisponível"],
-      "blockers": ["Chip dedicado", "CNPJ para Cloud API futura", "Decisão de produto"],
-      "links": ["Decisão D33 | ../../docs/BIVAQUE.md"],
+      "proof": [
+        "outbox_channel inclui whatsapp",
+        "adaptador atual retorna indisponível"
+      ],
+      "blockers": [
+        "Chip dedicado",
+        "CNPJ para Cloud API futura",
+        "Decisão de produto"
+      ],
+      "links": [
+        "Decisão D33 | ../../docs/BIVAQUE.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -410,10 +477,47 @@
         "BIVAQUE.md declara o texto de privacidade não publicável ainda",
         "PostHog e IA transferem dados para terceiros"
       ],
-      "blockers": ["Revisão jurídica", "Decisões do dono"],
-      "links": ["Privacidade | ../../docs/legal/PRIVACIDADE.md"],
+      "blockers": [
+        "Revisão jurídica",
+        "Decisões do dono"
+      ],
+      "links": [
+        "Privacidade | ../../docs/legal/PRIVACIDADE.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
+      "dependencies": []
+    },
+    {
+      "id": "BLOCK-LEGAL-ENTRY",
+      "title": "Textos legais da entrada prontos para aceite",
+      "phase": "Launch blocker",
+      "priority": "BLOCK",
+      "category": "governance",
+      "status": "blocked",
+      "description": "A tela de consentimento permite aceitar textos que se apresentam ao membro como rascunhos pendentes de revisão. Código de conduta e privacidade precisam de aprovação humana antes do lançamento.",
+      "checklist": [
+        "Revisar CODIGO_DE_CONDUTA.md com o dono e assessoria jurídica",
+        "Revisar PRIVACIDADE.md com assessoria jurídica e confirmar bases legais",
+        "Aprovar versões publicáveis sem notas editoriais internas",
+        "Incrementar as versões canônicas de consentimento quando o conteúdo aprovado mudar",
+        "Provar novo aceite versionado e rejeição de versão obsoleta"
+      ],
+      "proof": [
+        "Auditoria visual onboarding-aaa-v1-2026-08-22 mostra notas de rascunho e revisão dentro das regiões que o membro aceita",
+        "docs/legal/CODIGO_DE_CONDUTA.md e docs/legal/PRIVACIDADE.md declaram revisão pendente no próprio conteúdo renderizado"
+      ],
+      "blockers": [
+        "Revisão jurídica",
+        "Aprovação do dono"
+      ],
+      "links": [
+        "Código de conduta | ../../docs/legal/CODIGO_DE_CONDUTA.md",
+        "Privacidade | ../../docs/legal/PRIVACIDADE.md",
+        "Status de consentimento | ../../docs/PRODUCT_STATUS.md"
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "015e4ba",
       "dependencies": []
     },
     {
@@ -431,9 +535,16 @@
         "Tratamento dos perfis hidden",
         "ADR aprovado com critic verdict PASS"
       ],
-      "proof": ["AGENTS.md proíbe persistir organização militar", "O estado do ADR é proposed"],
-      "blockers": ["Decisão R3 humana"],
-      "links": ["ADR OM declarada | ../../docs/decisions/ADR-20260811-om-declarada.md"],
+      "proof": [
+        "AGENTS.md proíbe persistir organização militar",
+        "O estado do ADR é proposed"
+      ],
+      "blockers": [
+        "Decisão R3 humana"
+      ],
+      "links": [
+        "ADR OM declarada | ../../docs/decisions/ADR-20260811-om-declarada.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -452,12 +563,196 @@
         "Projetar webhook e entitlement",
         "Provar que dinheiro não altera relevance ranking"
       ],
-      "proof": ["ADR de alcance pago foi aceito, mas o plano separa G1 e G2"],
-      "blockers": ["CNPJ", "Decisão operacional de cobrança"],
-      "links": ["ADR alcance pago | ../../docs/decisions/ADR-20260820-alcance-pago.md"],
+      "proof": [
+        "ADR de alcance pago foi aceito, mas o plano separa G1 e G2"
+      ],
+      "blockers": [
+        "CNPJ",
+        "Decisão operacional de cobrança"
+      ],
+      "links": [
+        "ADR alcance pago | ../../docs/decisions/ADR-20260820-alcance-pago.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
+    },
+    {
+      "id": "FRONTEND-LANDING-AAA",
+      "title": "Landing publica AAA do Bivaque",
+      "phase": "Frontend",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Construir a superficie publica de aquisicao com desejo de pertencimento, verdade de produto, direcao visual autoral e motion acessivel, sem ampliar promessas alem do runtime/canon.",
+      "checklist": [
+        "Posicionar o Bivaque como comunidade nacional de pertencimento e conhecimento duravel",
+        "Construir hero autoral que demonstre conversa dispersa virando referencia recuperavel",
+        "Usar presenca humana apenas anonima e sem sinais militares identificaveis",
+        "Implementar narrativa responsiva e GSAP com fallback reduced-motion",
+        "Preservar redirect autenticado e manter a raiz publica para aquisicao",
+        "Passar gate, build e auditoria visual em 375/768/1440"
+      ],
+      "proof": [
+        "apps/web/app/page.tsx era uma superficie provisoria sem aquisicao antes do worktree atual",
+        "Direcao explicita do dono em 2026-08-22: landing impressionante que gere desejo de ingressar",
+        "apps/web/app/landing/landing.tsx e landing.module.css entregam hero fotografico, narrativa editorial, demonstracao de produto e GSAP com reduced-motion",
+        "apps/web/public/landing/hero-bivaque-arrival.webp usa presenca majoritariamente militar por postura e contexto, sem rostos, uniformes, patentes ou insignias identificaveis",
+        "Gate completo verde em 2026-08-22: 355 unitarios, 189 privacidade, 53 escopo e secrets scan",
+        "Build Next 16 de producao compilado com sucesso em 2026-08-22",
+        ".visual/landing-copy-v4-2026-08-22/report.md: copy refinada da raiz publica anonima com 0 findings e 0 high em 375/768/1440",
+        ".visual/landing-copy-v5-mobile.png: fold final em 375px sem orfao tipografico e com CTAs acima da dobra",
+        ".visual/2026-08-23T00-29-41-828Z: loop global passou lint, typecheck, test, build e capture; 3 highs remanescentes pertencem ao touch target preexistente de /communities"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 build",
+        "node scripts/visual/loop.mjs"
+      ],
+      "links": [
+        "Produto | ../../docs/BIVAQUE.md",
+        "Design spec | ../../docs/agents/DESIGN_SPEC.md",
+        "Auditoria visual | ../../docs/superpowers/plans/2026-08-05-auditoria-telas.md"
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "015e4ba",
+      "dependencies": [],
+      "completedAt": "2026-08-22"
+    },
+    {
+      "id": "FRONTEND-LOGIN-AAA",
+      "title": "Login coerente com a landing publica",
+      "phase": "Frontend",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Reconstruir a entrada do Bivaque como continuacao direta da promessa publica, com autenticacao simples, copy verdadeira e estados acessiveis, sem alterar o contrato de Magic Link e Google OAuth.",
+      "checklist": [
+        "Alinhar direcao visual e verbal do login com a landing publica",
+        "Preservar Magic Link, Google OAuth, callback para consentimento e estados de loading/erro/sucesso",
+        "Remover depoimentos ficticios, linguagem tecnica e promessa universal de verificacao pelo Portal",
+        "Explicar a entrada controlada sem transformar seguranca na proposta principal",
+        "Garantir composicao responsiva e acessivel em 375/768/1440",
+        "Passar gate, build e auditoria visual da rota /login"
+      ],
+      "proof": [
+        ".visual/landing-copy-v4-2026-08-22/shots/login--desktop-1440--fold.png mostra template azul desconectado da landing, copy repetitiva e painel sem mensagem de produto",
+        "Direcao explicita do dono em 2026-08-22: a tela de login e o proximo alvo de refinamento",
+        "apps/web/app/(preauth)/login/components/bivaque-sign-in.tsx e bivaque-sign-in.module.css entregam entrada passwordless, Google OAuth, estados de feedback e continuidade visual com a landing",
+        "Copy final remove depoimentos ficticios, jargao magic link, prazo tecnico de sessao e promessa universal de verificacao pelo Portal",
+        "Gate completo verde em 2026-08-22: 355 unitarios, 189 privacidade, 53 escopo e secrets scan",
+        "Build Next 16 de producao compilado com sucesso em 2026-08-22",
+        ".visual/login-aaa-v3-2026-08-22/report.md: 0 findings e 0 high em 375/768/1440 para o estado anonimo"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 build",
+        "node scripts/visual/loop.mjs"
+      ],
+      "links": [
+        "Produto | ../../docs/BIVAQUE.md",
+        "Landing | ../../apps/web/app/landing/landing.tsx",
+        "Auditoria visual | ../../docs/superpowers/plans/2026-08-05-auditoria-telas.md"
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "015e4ba",
+      "dependencies": [
+        "FRONTEND-LANDING-AAA"
+      ],
+      "completedAt": "2026-08-22"
+    },
+    {
+      "id": "FRONTEND-SIGNUP-AAA",
+      "title": "Primeiro acesso explicito antes do onboarding",
+      "phase": "Frontend",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Separar a intencao de entrar da intencao de criar conta, mantendo autenticacao passwordless e conduzindo o novo usuario para consentimento e elegibilidade sem formulario longo.",
+      "checklist": [
+        "Criar rota publica /signup coerente com landing e login",
+        "Impedir que o fluxo de e-mail de /login crie usuario inexistente silenciosamente",
+        "Manter e-mail e Google como opcoes passwordless com callback interno para /consent",
+        "Ligar CTAs de ingresso da landing a /signup e oferecer navegacao reciproca login/cadastro",
+        "Explicar a sequencia e-mail, regras, elegibilidade e localidade sem linguagem defensiva",
+        "Passar gate, build e auditoria visual em 375/768/1440"
+      ],
+      "proof": [
+        "apps/web/app/(preauth)/login/components/bivaque-sign-in.tsx usa signInWithOtp sem shouldCreateUser, portanto /login tambem cria contas pelo comportamento padrao do Supabase",
+        "Direcao explicita do dono em 2026-08-22: nao ha tela de cadastro de novo usuario",
+        "apps/web/app/(preauth)/signup/page.tsx expoe primeiro acesso explicito reutilizando a mesma superficie visual do login",
+        "O modo login envia shouldCreateUser false e o modo signup envia true no signInWithOtp; ambos preservam callback interno para /consent",
+        "apps/web/app/landing/landing.tsx envia os dois CTAs principais de aquisicao para /signup e mantem Entrar no header",
+        "Gate completo verde em 2026-08-22: 356 unitarios, 189 privacidade, 53 escopo e secrets scan",
+        "Build Next 16 de producao inclui /signup como rota estatica publica",
+        ".visual/signup-aaa-v2-2026-08-22/report.md: 0 findings e 0 high em 375/768/1440 para login, signup e redirecionamentos anonimos"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 build",
+        "node scripts/visual/loop.mjs"
+      ],
+      "links": [
+        "Produto | ../../docs/BIVAQUE.md",
+        "Status de login e onboarding | ../../docs/PRODUCT_STATUS.md",
+        "Login | ../../apps/web/app/(preauth)/login/components/bivaque-sign-in.tsx"
+      ],
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "015e4ba",
+      "dependencies": [
+        "FRONTEND-LOGIN-AAA"
+      ],
+      "completedAt": "2026-08-22"
+    },
+    {
+      "id": "FRONTEND-ONBOARDING-AAA",
+      "title": "Jornada de entrada coerente com a aquisicao",
+      "phase": "Frontend",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Transformar consentimento, elegibilidade, localidade, estados de analise e boas-vindas em uma jornada continua, nacional e acessivel, sem alterar os contratos de admissao existentes.",
+      "checklist": [
+        "Criar shell pre-auth compartilhado com progresso Regras, Elegibilidade e Localidade",
+        "Refazer /consent, /onboarding e /onboarding/locality preservando actions e validacoes",
+        "Refazer pending, temporary_error, rejected e upload de excecao como estados materialmente distintos",
+        "Remover copy obsoleta que limita a entrada a Manaus e boas-vindas com cidade fixa",
+        "Criar chegada final com primeiras acoes coerentes com os containers do produto",
+        "Passar gate, build e auditoria visual em 375/768/1440"
+      ],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "proof": [
+        "OnboardingShell unifica /consent, /onboarding, /onboarding/locality, /onboarding/status e /onboarding/welcome com progresso Regras, Elegibilidade e Localidade",
+        "tests/unit/onboarding/onboarding-experience.test.ts fixa a jornada nacional, a separacao dos passos e o nome acessivel do upload",
+        "gate verde: 360 unit, 189 privacy, 53 scope e secrets scan",
+        "build Next 16 de producao compilou todas as rotas de onboarding",
+        ".visual/onboarding-aaa-final-2026-08-22: consent, locality e welcome com 0 findings em 375/768/1440",
+        ".visual/onboarding-status-release-2026-08-22: rejected e upload de excecao com 0 findings em 375/768/1440",
+        ".visual/onboarding-aaa-v2-2026-08-22: elegibilidade real de usuario novo inspecionada em 375/768/1440"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 build",
+        "node scripts/visual/loop.mjs"
+      ],
+      "links": [
+        "Produto | ../../docs/BIVAQUE.md",
+        "Status de admissao | ../../docs/PRODUCT_STATUS.md",
+        "Design pre-auth | ../../docs/agents/DESIGN_SPEC.md"
+      ],
+      "completedAt": "2026-08-22",
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "015e4ba",
+      "dependencies": [
+        "FRONTEND-SIGNUP-AAA"
+      ]
     },
     {
       "id": "FRONTEND-RUNTIME-CONFORMANCE",
@@ -477,10 +772,14 @@
         "PHASE6_REVIEW marca runtime como non-conforming",
         "DS-021 foi remediado; DS-029 ainda precisa de verificação mais ampla"
       ],
-      "links": ["Phase 6 | ../../docs/agents/design-audit/PHASE6_REVIEW.md"],
+      "links": [
+        "Phase 6 | ../../docs/agents/design-audit/PHASE6_REVIEW.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-10-BACKEND-FREEZE"]
+      "dependencies": [
+        "MVP-10-BACKEND-FREEZE"
+      ]
     },
     {
       "id": "FRONTEND-VISUAL-AAA",
@@ -495,11 +794,18 @@
         "Não criar novo layout durante backend-first",
         "Planejar work separado após backend freeze"
       ],
-      "proof": ["Phase 6D declara a implementação atual não elegível para AAA-ready"],
-      "links": ["Design spec | ../../docs/agents/DESIGN_SPEC.md"],
+      "proof": [
+        "Phase 6D declara a implementação atual não elegível para AAA-ready"
+      ],
+      "links": [
+        "Design spec | ../../docs/agents/DESIGN_SPEC.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"]
+      "dependencies": [
+        "MVP-10-BACKEND-FREEZE",
+        "FRONTEND-RUNTIME-CONFORMANCE"
+      ]
     },
     {
       "id": "REPO-ISSUE-20",
@@ -527,7 +833,9 @@
         "observed": "O runtime descreve catálogo nacional e a home deixou de usar PILOT_LOCALITY_ID.",
         "action": "Reavaliado 2026-08-22: runtime fecha quase tudo; residual = E2E two-localities (bloqueado por build do web). Issue mantida aberta até o E2E rodar, conforme recomendação no comentário."
       },
-      "links": ["Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"],
+      "links": [
+        "Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -540,9 +848,17 @@
       "category": "repo",
       "status": "repo",
       "description": "Correção pequena que limpa a baseline de CI; revisar isoladamente antes de mudanças maiores de tipo gerado.",
-      "checklist": ["Revisar diff", "Rodar gate relevante", "Merge ou encerrar"],
-      "proof": ["PR draft aberto em 22/08/2026"],
-      "links": ["PR #24 | https://github.com/Juanjfmr/bivaque-community/pull/24"],
+      "checklist": [
+        "Revisar diff",
+        "Rodar gate relevante",
+        "Merge ou encerrar"
+      ],
+      "proof": [
+        "PR draft aberto em 22/08/2026"
+      ],
+      "links": [
+        "PR #24 | https://github.com/Juanjfmr/bivaque-community/pull/24"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -560,8 +876,12 @@
         "Resolver reviewer CI/max turns somente se bloquearem execução",
         "Congelar após baseline estável"
       ],
-      "proof": ["PR draft aberto em 22/08/2026"],
-      "links": ["PR #28 | https://github.com/Juanjfmr/bivaque-community/pull/28"],
+      "proof": [
+        "PR draft aberto em 22/08/2026"
+      ],
+      "links": [
+        "PR #28 | https://github.com/Juanjfmr/bivaque-community/pull/28"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -579,8 +899,12 @@
         "Mover apenas fatos verificáveis",
         "Arquivar o que foi superado"
       ],
-      "proof": ["PR draft aberto em 22/08/2026"],
-      "links": ["PR #25 | https://github.com/Juanjfmr/bivaque-community/pull/25"],
+      "proof": [
+        "PR draft aberto em 22/08/2026"
+      ],
+      "links": [
+        "PR #25 | https://github.com/Juanjfmr/bivaque-community/pull/25"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -598,13 +922,18 @@
         "Validar referências contra migrations e testes",
         "Decidir merge, revisão ou encerramento"
       ],
-      "proof": ["SPEC.md está ausente nesta branch", "PR #18 draft propõe o arquivo"],
+      "proof": [
+        "SPEC.md está ausente nesta branch",
+        "PR #18 draft propõe o arquivo"
+      ],
       "drift": {
         "documented": "O PR propõe uma spec como referência normativa consolidada.",
         "observed": "O arquivo não está presente no worktree atual e não pode ser tomado como estado implementado.",
         "action": "Triar o PR antes de citar SPEC.md como fonte no Kanban ou README."
       },
-      "links": ["PR #18 | https://github.com/Juanjfmr/bivaque-community/pull/18"],
+      "links": [
+        "PR #18 | https://github.com/Juanjfmr/bivaque-community/pull/18"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -622,14 +951,18 @@
         "Revisar #27 como conteúdo fonte para Knowledge Capsule no futuro",
         "Evitar merge que reabra auditoria visual"
       ],
-      "proof": ["PRs #23 e #27 estão em draft"],
+      "proof": [
+        "PRs #23 e #27 estão em draft"
+      ],
       "links": [
         "PR #23 | https://github.com/Juanjfmr/bivaque-community/pull/23",
         "PR #27 | https://github.com/Juanjfmr/bivaque-community/pull/27"
       ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-10-BACKEND-FREEZE"]
+      "dependencies": [
+        "MVP-10-BACKEND-FREEZE"
+      ]
     },
     {
       "id": "REPO-DEPENDABOT",
@@ -639,15 +972,23 @@
       "category": "repo",
       "status": "repo",
       "description": "Atualizações de dependência só entram sobre baseline verde e com escopo separado do fechamento funcional.",
-      "checklist": ["Confirmar baseline verde", "Revisar breaking changes", "Rodar gate completo"],
-      "proof": ["PRs #21 e #22 estão ready para revisão"],
+      "checklist": [
+        "Confirmar baseline verde",
+        "Revisar breaking changes",
+        "Rodar gate completo"
+      ],
+      "proof": [
+        "PRs #21 e #22 estão ready para revisão"
+      ],
       "links": [
         "PR #21 | https://github.com/Juanjfmr/bivaque-community/pull/21",
         "PR #22 | https://github.com/Juanjfmr/bivaque-community/pull/22"
       ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-05-TEST-BASELINE"]
+      "dependencies": [
+        "MVP-05-TEST-BASELINE"
+      ]
     },
     {
       "id": "REPO-SECRETS-ROTATION",
@@ -663,8 +1004,12 @@
         "Atualizar ambiente local/CI com segurança",
         "Confirmar que scanner e logs não expõem valores"
       ],
-      "proof": ["PRODUCT_STATUS § segurança registra a recomendação em 2026-08-21"],
-      "links": ["Status: segurança | ../../docs/PRODUCT_STATUS.md"],
+      "proof": [
+        "PRODUCT_STATUS § segurança registra a recomendação em 2026-08-21"
+      ],
+      "links": [
+        "Status: segurança | ../../docs/PRODUCT_STATUS.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -690,7 +1035,10 @@
         "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão",
         "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision"
       ],
-      "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"],
+      "links": [
+        "Estado runtime | ../../docs/PRODUCT_STATUS.md",
+        "Visão | ../../docs/BIVAQUE.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "e0538c0",
       "dependencies": []
@@ -713,9 +1061,15 @@
         "migrations 20260819021416, 20260820000000, 20260820045749 e 20260820051230",
         "PRODUCT_STATUS marca onda T fechada"
       ],
-      "tests": ["locality-transfer.sql", "transfer-scope-denials.sql", "transfer-degradation.sql"],
+      "tests": [
+        "locality-transfer.sql",
+        "transfer-scope-denials.sql",
+        "transfer-degradation.sql"
+      ],
       "completedAt": "2026-08-20",
-      "links": ["Status: transferência | ../../docs/PRODUCT_STATUS.md"],
+      "links": [
+        "Status: transferência | ../../docs/PRODUCT_STATUS.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -766,7 +1120,10 @@
         "migrations 20260821000022 e 20260821000023",
         "PRODUCT_STATUS registra confirmação ao vivo"
       ],
-      "tests": ["other-member-profile.sql", "member-profile-denials.spec.ts"],
+      "tests": [
+        "other-member-profile.sql",
+        "member-profile-denials.spec.ts"
+      ],
       "completedAt": "2026-08-21",
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
@@ -791,7 +1148,10 @@
         "migrations 20260814081735 e 20260814174705",
         "apps/web/app/api/internal/outbox/route.ts"
       ],
-      "tests": ["outbox-worker.sql", "outbox-delivery.test.ts"],
+      "tests": [
+        "outbox-worker.sql",
+        "outbox-delivery.test.ts"
+      ],
       "completedAt": "2026-08-14",
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
@@ -804,7 +1164,7 @@
       "priority": "P1",
       "category": "testing",
       "status": "now",
-      "description": "~17 E2E specs navegam para UUIDs hardcodeados que não batem com o seed.sql real. Cada spec precisa identificar a entidade pelo tipo correto do seed.",
+      "description": "~17 E2E specs navegavam para UUIDs hardcoded fora do seed. Auditei todos os UUIDs hardcoded nos specs E2E contra seed.sql (incl. enriquecimento de 22/08: Vila Ajuricaba 71000000-…-0001, Rio …0003, transfer …0006, operador …0007, dono-vila …0008) e eles JÁ batem — nenhuma referência a tabela errada. As 65 falhas remanescentes são divergências de COMPORTAMENTO (ver drift), não de UUID. Realinhamento de UUID concluído: nada a corrigir.",
       "checklist": [
         "Auditar cada spec e listar UUIDs hardcoded vs UUIDs reais do seed",
         "Corrigir specs onde UUID aponta para tabela errada",
@@ -813,16 +1173,31 @@
       ],
       "proof": [
         "PRODUCT_STATUS §10 registra 94 falhas em ~18 specs",
-        "seed.sql usa generate_series com faixas de UUID definidas"
+        "seed.sql usa generate_series com faixas de UUID definidas",
+        "Suíte E2E completa (serial, 3 viewports) em 2026-08-23: 518 verdes / 65 falhas — UUIDs auditados batem 100%",
+        "Enriquecimento de seed de 22/08 já popula Vila Ajuricaba + contas Rio/transfer/operador/dono-vila com UUIDs estáveis"
       ],
-      "tests": ["Playwright --workers=1 contra seed completo"],
+      "tests": [
+        "Playwright --workers=1 contra seed completo"
+      ],
       "links": [
         "E2E status | ../../docs/PRODUCT_STATUS.md",
         "Seed UUIDs | ../../supabase/seed.sql"
       ],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "2a4435d",
-      "dependencies": []
+      "updatedAt": "2026-08-23",
+      "sourceRevision": "015e4ba",
+      "dependencies": [],
+      "completedChecklist": [
+        true,
+        true,
+        false,
+        false
+      ],
+      "drift": {
+        "documented": "~17 specs falham por UUIDs hardcoded fora do seed; realinhar traria a suíte verde.",
+        "observed": "UUIDs hardcoded nos specs E2E já batem com seed.sql (inclusive entidades do enriquecimento de 22/08). Nenhuma referência a tabela errada. As 65 falhas são divergências de COMPORTAMENTO: seções de owner/admin não renderizam para a conta logada (community-batch-approval, community-invitations, event-invites, group-admin-cycle, reports-operator-flow, admissions-operator-flow), redirect /→/login não ocorre, botão 'Continuar com Google' ausente, copy de empty-locality e fluxo de família faltando.",
+        "action": "Realinhamento de UUID concluído (nada a corrigir). Separar em MVP-00-E2E-FUNCTIONAL as 65 falhas funcionais para triagem."
+      }
     },
     {
       "id": "G-TASK-1",
@@ -844,11 +1219,17 @@
         "apps/web/app/(provider)/prestador/ já protege o shell e expõe placeholder",
         "2026-08-22 reconciliação: fundação confirmada no código — migration + RLS + helpers + shell; STATUS atualizado para distinguir fundação (implementado) de perfil/listings/dashboard (não implementados)"
       ],
-      "tests": ["provider-account-boundary.sql"],
-      "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "provider-account-boundary.sql"
+      ],
+      "links": [
+        "Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-02-AUTHZ"],
+      "dependencies": [
+        "MVP-02-AUTHZ"
+      ],
       "completedAt": "2026-08-22"
     },
     {
@@ -864,11 +1245,18 @@
         "Aceita convite pelo link confere token + email"
       ],
       "proof": [],
-      "tests": ["provider-invitation.sql"],
-      "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "provider-invitation.sql"
+      ],
+      "links": [
+        "Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-1", "BLOCK-RESEND"]
+      "dependencies": [
+        "G-TASK-1",
+        "BLOCK-RESEND"
+      ]
     },
     {
       "id": "G-TASK-3",
@@ -884,11 +1272,17 @@
         "/prestadores/[id] member view"
       ],
       "proof": [],
-      "tests": ["provider-showcase-scope.sql"],
-      "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "provider-showcase-scope.sql"
+      ],
+      "links": [
+        "Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-1"]
+      "dependencies": [
+        "G-TASK-1"
+      ]
     },
     {
       "id": "G-TASK-4",
@@ -903,11 +1297,17 @@
         "/prestador dashboard com placeholders honestos"
       ],
       "proof": [],
-      "tests": ["showcase-form.test.ts"],
-      "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "showcase-form.test.ts"
+      ],
+      "links": [
+        "Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-3"]
+      "dependencies": [
+        "G-TASK-3"
+      ]
     },
     {
       "id": "G-TASK-5",
@@ -922,11 +1322,17 @@
         "city-reference atualiza vitrine em cidade"
       ],
       "proof": [],
-      "tests": ["provider-search-scope.sql"],
-      "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "provider-search-scope.sql"
+      ],
+      "links": [
+        "Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-3"]
+      "dependencies": [
+        "G-TASK-3"
+      ]
     },
     {
       "id": "G-TASK-6",
@@ -942,11 +1348,49 @@
         "valida contexto compartilhado"
       ],
       "proof": [],
-      "tests": ["dm-context-allowed.sql", "dm-context-denials.sql"],
-      "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "dm-context-allowed.sql",
+        "dm-context-denials.sql"
+      ],
+      "links": [
+        "Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-1", "G-TASK-3"]
+      "dependencies": [
+        "G-TASK-1",
+        "G-TASK-3"
+      ]
+    },
+    {
+      "id": "MVP-00-E2E-FUNCTIONAL",
+      "title": "Reconciliar 65 falhas E2E funcionais (app × spec)",
+      "phase": "MVP-00",
+      "priority": "P1",
+      "category": "testing",
+      "status": "next",
+      "description": "Após o realinhamento de UUID (MVP-00-E2E-UUID-REALIGN), restam 65 falhas E2E (23 testes únicos × 3 viewports) que NÃO são de seed/UUID, e sim divergências de comportamento entre o app e os specs. Agrupadas em 4 temas para triagem e fechamento por spec.",
+      "checklist": [
+        "Tema 1 — Auth/redirect shell: / deve redirecionar para /login para não autenticado (manaus-pilot, preauth routes)",
+        "Tema 2 — OAuth UI: login deve render 'Continuar com Google' (decisão de produto/feature?)",
+        "Tema 3 — Owner/admin: specs de community-batch-approval, community-invitations, event-invites, group-admin-cycle, reports-operator-flow, admissions-operator-flow usam a conta correta de owner/organizer do seed (dono-vila/operador), não visual@",
+        "Tema 4 — Copy/flow: empty-locality ('Você é dos primeiros aqui.') e onboarding de família ('Confirme sua elegibilidade.') precisam existir no app ou o spec deve ser atualizado",
+        "Rodar suíte E2E serial após cada correção e zerar as 65 falhas"
+      ],
+      "proof": [
+        "Suíte E2E 2026-08-23: 518 verdes / 65 falhas (serial, mobile/tablet/desktop)",
+        "junit-results.xml analisado: 23 testes únicos falhando, nenhum por UUID/404"
+      ],
+      "tests": [
+        "Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"
+      ],
+      "links": [
+        "E2E status | ../../docs/PRODUCT_STATUS.md",
+        "Seed UUIDs | ../../supabase/seed.sql"
+      ],
+      "updatedAt": "2026-08-23",
+      "sourceRevision": "015e4ba",
+      "dependencies": []
     }
   ]
 }
