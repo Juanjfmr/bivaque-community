@@ -711,14 +711,20 @@
       "phase": "Triagem",
       "priority": "P1",
       "category": "repo",
-      "status": "repo",
+      "status": "done",
       "description": "Correção pequena que limpa a baseline de CI; revisar isoladamente antes de mudanças maiores de tipo gerado.",
       "checklist": ["Revisar diff", "Rodar gate relevante", "Merge ou encerrar"],
-      "proof": ["PR draft aberto em 22/08/2026"],
+      "proof": [
+        "PR draft aberto em 22/08/2026",
+        "Triagem 2026-08-23: defeito não reproduz mais — database.generated.ts sem BOM neste branch e em origin/main (resolvido a montante após a abertura do PR).",
+        "Decisão: encerrar como resolvido a montante; se o autor discordar, reabrir com diff contra o main atual."
+      ],
       "links": ["PR #24 | https://github.com/Juanjfmr/bivaque-community/pull/24"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": []
+      "updatedAt": "2026-08-23",
+      "sourceRevision": "6e14fe3",
+      "dependencies": [],
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-08-23"
     },
     {
       "id": "REPO-PR-28",
