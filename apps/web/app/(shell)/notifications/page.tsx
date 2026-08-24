@@ -173,6 +173,20 @@ export default function NotificationsPage() {
     setLoading(true)
     setError("")
 
+    // H-Task 8 pendencia: a query saia antes do cookie hidratar, e a RLS
+    // devolvia zero linhas. getUser() bloqueia ate a sessao estar pronta;
+    // se user for null, a query NAO e chamada (em vez de sair anonima
+    // e mostrar lista vazia) — o usuario ve o erro, nao o silencio.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      setError("Sessao nao disponivel. Recarregue a pagina.")
+      setLoading(false)
+      return
+    }
+
     const { data, error: fetchError } = await supabase
       .from("notifications")
       .select("*")

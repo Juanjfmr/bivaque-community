@@ -1,50 +1,57 @@
+import { ArrowRight } from "lucide-react"
+import Link from "next/link"
+import { OnboardingShell } from "../components/onboarding-shell"
+import styles from "../onboarding.module.css"
+
 export default function OnboardingWelcomePage() {
   return (
-    <div className="grid flex-1 place-items-center px-6 py-12">
-      <section className="flex w-full max-w-sm flex-col gap-6" aria-labelledby="welcome-heading">
-        <h1 id="welcome-heading" className="text-2xl font-semibold tracking-tight">
-          Bem-vindo à comunidade de Manaus
-        </h1>
+    <OnboardingShell
+      stage="complete"
+      titleId="welcome-heading"
+      eyebrow="Entrada concluída"
+      title="Você chegou ao Bivaque."
+      description="Sua conta, elegibilidade e localidade estão prontas. Agora escolha por onde quer começar."
+      asideEyebrow="Agora você também faz parte do caminho"
+      asideTitle="Chegue, participe e deixe referências."
+      asideDescription="O que você aprende hoje pode facilitar a próxima chegada."
+    >
+      <div className={styles["stack"]}>
+        <Link href="/community" className={styles["primaryLink"]}>
+          Entrar na comunidade <ArrowRight aria-hidden="true" />
+        </Link>
 
-        <p className="text-sm text-muted">
-          Você foi verificado. Comece por uma destas ações para se integrar à cidade.
-        </p>
+        <ul className={styles["actionList"]} aria-label="Primeiros passos">
+          <li>
+            <Link href="/localidade" className={styles["actionItem"]}>
+              <div>
+                <strong>Conhecer minha cidade</strong>
+                <span>Veja referências e o que está acontecendo perto de você.</span>
+              </div>
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </li>
 
-        <a
-          href="/groups"
-          className="flex flex-col gap-1 rounded-md border border-border p-4 transition-colors hover:bg-surface"
-        >
-          <h2 className="font-medium">Entrar em um grupo público</h2>
-          <p className="text-sm text-muted">
-            Grupos públicos são abertos a todos os membros verificados de Manaus.
-          </p>
-        </a>
+          <li>
+            <Link href="/profile" className={styles["actionItem"]}>
+              <div>
+                <strong>Completar meu perfil</strong>
+                <span>Escolha como outros membros encontram você.</span>
+              </div>
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </li>
 
-        <a
-          href="/recommendations"
-          className="flex flex-col gap-1 rounded-md border border-border p-4 transition-colors hover:bg-surface"
-        >
-          <h2 className="font-medium">Ver recomendações</h2>
-          <p className="text-sm text-muted">Indicações e pedidos de outros membros da cidade.</p>
-        </a>
-
-        <a
-          href="/profile"
-          className="flex flex-col gap-1 rounded-md border border-border p-4 transition-colors hover:bg-surface"
-        >
-          <h2 className="font-medium">Completar perfil</h2>
-          <p className="text-sm text-muted">
-            Defina nome, foto e visibilidade para outros membros te encontrarem.
-          </p>
-        </a>
-
-        <a
-          href="/community"
-          className="block rounded-md border border-border py-3 text-center text-sm text-accent transition-colors hover:bg-surface"
-        >
-          Ir para a comunidade →
-        </a>
-      </section>
-    </div>
+          <li>
+            <Link href="/groups" className={styles["actionItem"]}>
+              <div>
+                <strong>Encontrar um grupo</strong>
+                <span>Aproxime-se por interesse e contexto.</span>
+              </div>
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </li>
+        </ul>
+      </div>
+    </OnboardingShell>
   )
 }

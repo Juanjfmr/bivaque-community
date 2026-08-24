@@ -37,10 +37,21 @@ insert into public.reports (
   'comment', '70000000-0000-4000-8000-000000000001', 'ja analisada', 'resolved', now()
 );
 
+-- Conta so as denuncias que ESTE teste criou. list_open_reports e security
+-- definer e enxerga a tabela inteira; o seed de desenvolvimento carrega
+-- denuncias abertas proprias (§seed.sql). Uma asserção sobre o total absoluto
+-- passa num banco sem seed e falha num banco com seed — o mesmo teste dando
+-- respostas diferentes conforme quem rodou o reset por ultimo.
 select is(
-  (select count(*)::int from public.list_open_reports()),
+  (select count(*)::int from public.list_open_reports()
+    where id in (
+      'a0000000-0000-4000-8000-000000000101',
+      'a0000000-0000-4000-8000-000000000102',
+      'a0000000-0000-4000-8000-000000000103',
+      'a0000000-0000-4000-8000-000000000104'
+    )),
   3,
-  'a fila devolve so as denuncias abertas'
+  'a fila devolve as tres denuncias abertas do teste, e nao a ja resolvida'
 );
 
 select is(

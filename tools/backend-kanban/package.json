@@ -1,0 +1,15 @@
+{
+  "name": "@bivaque/backend-kanban",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local, versioned MVP-release Kanban for Bivaque Community",
+  "scripts": {
+    "check": "node ./src/board.mjs --check",
+    "dev": "node ./src/server.mjs",
+    "summary": "node ./src/board.mjs --write-summary",
+    "start": "node ./src/server.mjs"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

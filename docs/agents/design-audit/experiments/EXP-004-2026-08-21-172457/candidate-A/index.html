@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EXP-004 / Candidate A — Civic Editorial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css">
+</head>
+<body class="candidate-a">
+  <a class="skip-link" href="#main">Pular para o conteúdo principal</a>
+
+  <!-- ─────────── Top bar ─────────── -->
+  <header class="topbar" role="banner">
+    <div class="topbar__inner">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">B</span>
+        <span class="brand__wordmark">Bivaque</span>
+      </div>
+      <div class="topbar__meta">
+        <span class="locality-pill" aria-label="Localidade ativa">
+          <span class="locality-pill__dot" aria-hidden="true"></span>
+          Rio de Janeiro, RJ
+        </span>
+      </div>
+      <button class="avatar" aria-label="Conta de Ana Cristina Albuquerque Maranhão">
+        <span class="avatar__initials">AC</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main" class="shell">
+
+    <!-- ─────────── Locality header ─────────── -->
+    <section class="locality" aria-labelledby="locality-h">
+      <p class="locality__eyebrow">Sua cidade · comunidade ativa</p>
+      <h1 id="locality-h" class="locality__title">Rio de Janeiro, RJ</h1>
+      <p class="locality__lede">Recomendações, avisos e conversas entre vizinhos verificados da região. Tudo é moderado pela própria comunidade — sem selo institucional.</p>
+    </section>
+
+    <!-- ─────────── Composer (collapsed entry) ─────────── -->
+    <section class="composer" aria-label="Iniciar publicação">
+      <div class="composer__avatar" aria-hidden="true">AC</div>
+      <button class="composer__trigger" aria-haspopup="dialog">
+        <span class="composer__placeholder">Compartilhe algo com a sua comunidade — uma recomendação, um aviso, uma pergunta…</span>
+        <span class="composer__audience" aria-label="Audiência efetiva">
+          <span class="dot" aria-hidden="true"></span>Rio de Janeiro · Cidade
+        </span>
+      </button>
+      <button class="btn btn--ghost btn--icon" aria-label="Adicionar mídia">＋</button>
+    </section>
+
+    <!-- ─────────── Tabs (segmented) ─────────── -->
+    <nav class="tabs" aria-label="Ordenação da atividade">
+      <div class="tabs__list" role="tablist">
+        <button class="tabs__tab is-active" role="tab" aria-selected="true" aria-controls="panel-recentes" id="tab-recentes">Recentes</button>
+        <button class="tabs__tab" role="tab" aria-selected="false" aria-controls="panel-relevantes" id="tab-relevantes" tabindex="-1">Relevantes</button>
+      </div>
+    </nav>
+
+    <div class="layout">
+      <div class="layout__primary">
+
+        <div role="tabpanel" id="panel-recentes" aria-labelledby="tab-recentes">
+
+          <!-- ─────────── Post 1 ─────────── -->
+          <article class="post" aria-labelledby="post-1-h">
+            <header class="post__head">
+              <div class="post__avatar" aria-hidden="true">MB</div>
+              <div class="post__id">
+                <h2 id="post-1-h" class="post__author">Marcos Bezerra Cavalcante</h2>
+                <p class="post__meta">
+                  <span>Laranjeiras</span>
+                  <span class="post__sep" aria-hidden="true">·</span>
+                  <time datetime="2026-08-21T14:32">há 42 min</time>
+                  <span class="post__sep" aria-hidden="true">·</span>
+                  <span class="post__scope">Rio · Cidade</span>
+                </p>
+              </div>
+            </header>
+            <div class="post__body">
+              <p>Alguém conhece um eletricista de confiança na região de Laranjeiras/Cosme Velho? Preciso trocar a fiação de um apartamento de 92 m² e quero alguém que já tenha trabalhado com instalação antiga. Aceito indicação por DM, sem pressa — obra é para outubro.</p>
+            </div>
+            <footer class="post__foot">
+              <div class="reactions" role="group" aria-label="Reações">
+                <button class="reactions__btn" aria-label="9 pessoas acharam útil">
+                  <span aria-hidden="true">▲</span><span>9 úteis</span>
+                </button>
+                <button class="reactions__btn" aria-label="3 pessoas responderam">
+                  <span aria-hidden="true">◐</span><span>3 respostas</span>
+                </button>
+              </div>
+              <button class="post__action">Responder</button>
+            </footer>
+
+            <section class="comments" aria-label="Pré-visualização de comentários">
+              <article class="comment">
+                <p class="comment__author">Patrícia Salomão Mendes Ribeiro</p>
+                <p class="comment__text">Usei o <strong>Adailton</strong> no Cosme Velho em abril — serviço honesto, cobrou R$ 1.840 pela visita + troca de 12 disjuntores. Posso mandar o telefone pelo canal interno.</p>
+              </article>
+              <article class="comment">
+                <p class="comment__author">João Pedro Vasconcelos Beltrão</p>
+                <p class="comment__text">Confirma o CEP da obra? Tenho um conhecido em Botafogo que atende Laranjeiras em finais de semana.</p>
+              </article>
+            </section>
+          </article>
+
+          <!-- ─────────── Post 2 ─────────── -->
+          <article class="post" aria-labelledby="post-2-h">
+            <header class="post__head">
+              <div class="post__avatar" aria-hidden="true">HA</div>
+              <div class="post__id">
+                <h2 id="post-2-h" class="post__author">Helena Albuquerque Maranhão</h2>
+                <p class="post__meta">
+                  <span>Catete</span>
+                  <span class="post__sep" aria-hidden="true">·</span>
+                  <time datetime="2026-08-21T11:08">há 4 h</time>
+                  <span class="post__sep" aria-hidden="true">·</span>
+                  <span class="post__scope">Rio · Cidade</span>
+                </p>
+              </div>
+            </header>
+            <div class="post__body">
+              <p>Atenção, vizinhos: o <em>Colégio Estadual André Maurois</em> (Rua Bento Lisboa, 120) está recebendo cadastros para o programa de reforço escolar até sexta-feira, dia 26. Vagas para alunos do 6º ao 9º ano. Não é necessário CPF nem comprovante de renda — a inscrição é pela escola. Documento: RG ou declaração escolar.</p>
+            </div>
+            <footer class="post__foot">
+              <div class="reactions" role="group" aria-label="Reações">
+                <button class="reactions__btn" aria-label="22 pessoas salvaram">
+                  <span aria-hidden="true">�</span><span>22 salvaram</span>
+                </button>
+                <button class="reactions__btn" aria-label="6 pessoas comentaram">
+                  <span aria-hidden="true">◐</span><span>6 respostas</span>
+                </button>
+              </div>
+              <button class="post__action">Responder</button>
+            </footer>
+
+            <section class="comments" aria-label="Pré-visualização de comentários">
+              <article class="comment">
+                <p class="comment__author">Renato Figueiredo Cordeiro</p>
+                <p class="comment__text">Confirma se atende também alunos da rede municipal? Minha filha estuda no Municipal Paulo Freire.</p>
+              </article>
+              <article class="comment">
+                <p class="comment__author">Helena Albuquerque Maranhão</p>
+                <p class="comment__text">@Renato — o programa é para qualquer escola pública, mas a inscrição precisa ser feita presencialmente na secretaria do André Maurois entre 9h e 16h.</p>
+              </article>
+            </section>
+          </article>
+
+          <!-- ─────────── Post 3 ─────────── -->
+          <article class="post" aria-labelledby="post-3-h">
+            <header class="post__head">
+              <div class="post__avatar" aria-hidden="true">RG</div>
+              <div class="post__id">
+                <h2 id="post-3-h" class="post__author">Raimundo Galvão Pacheco</h2>
+                <p class="post__meta">
+                  <span>Glória</span>
+                  <span class="post__sep" aria-hidden="true">·</span>
+                  <time datetime="2026-08-21T09:14">há 6 h</time>
+                  <span class="post__sep" aria-hidden="true">·</span>
+                  <span class="post__scope">Rio · Cidade</span>
+                </p>
+              </div>
+            </header>
+            <div class="post__body">
+              <p>Recomendação testada: <strong>Padaria Glória do Carmo</strong> (Rua do Catete, 312) abre das 6h às 21h, pão francês bemfeito até as 10h, e tem fila curta entre 7h e 8h. Funciona há 38 anos no mesmo ponto. Cartão e Pix.</p>
+            </div>
+            <footer class="post__foot">
+              <div class="reactions" role="group" aria-label="Reações">
+                <button class="reactions__btn" aria-label="14 pessoas recomendam">
+                  <span aria-hidden="true">▲</span><span>14 recomendam</span>
+                </button>
+                <button class="reactions__btn" aria-label="1 pessoa respondeu">
+                  <span aria-hidden="true">◐</span><span>1 resposta</span>
+                </button>
+              </div>
+              <button class="post__action">Responder</button>
+            </footer>
+
+            <section class="comments" aria-label="Pré-visualização de comentários">
+              <article class="comment">
+                <p class="comment__author">Sílvia Cordeiro de Albuquerque Maranhão</p>
+                <p class="comment__text">O pão de queijo de lá é o melhor do bairro, só não conta pra ninguém.</p>
+              </article>
+            </section>
+          </article>
+
+          <!-- ─────────── Skeleton ─────────── -->
+          <section class="state-card state-card--skeleton" aria-label="Carregando mais conteúdo">
+            <div class="skeleton skeleton--avatar"></div>
+            <div class="skeleton-stack">
+              <div class="skeleton skeleton--line skeleton--line-50"></div>
+              <div class="skeleton skeleton--line skeleton--line-30"></div>
+              <div class="skeleton skeleton--line skeleton--line-100"></div>
+              <div class="skeleton skeleton--line skeleton--line-90"></div>
+            </div>
+          </section>
+
+          <!-- ─────────── Empty state ─────────── -->
+          <section class="state-card state-card--empty" aria-label="Sem mais conteúdo">
+            <h2 class="state-card__title">Você viu tudo por aqui</h2>
+            <p class="state-card__copy">Quando houver novas conversas em Rio de Janeiro, elas aparecem aqui. Você também pode seguir um bairro específico para ver apenas o que importa pra você.</p>
+            <div class="state-card__actions">
+              <button class="btn btn--primary">Seguir um bairro</button>
+              <button class="btn btn--ghost">Ajustar notificações</button>
+            </div>
+          </section>
+
+          <!-- ─────────── Error state (recoverable) ─────────── -->
+          <section class="state-card state-card--error" role="alert" aria-label="Falha de rede">
+            <h2 class="state-card__title">Não conseguimos atualizar a atividade</h2>
+            <p class="state-card__copy">A conexão com a sua comunidade caiu há 30 segundos. Seu rascunho está preservado. Tente novamente ou aguarde — em geral se resolve sozinho.</p>
+            <div class="state-card__actions">
+              <button class="btn btn--primary">Tentar de novo</button>
+              <button class="btn btn--ghost">Trabalhar offline</button>
+            </div>
+            <p class="state-card__hint">Código interno: <code>NET-RETRY-30s</code></p>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- ─────────── Right rail (≥1024px) ─────────── -->
+      <aside class="layout__rail" aria-label="Contexto adicional">
+        <section class="rail-card">
+          <h3 class="rail-card__title">Próximos eventos</h3>
+          <ul class="rail-list">
+            <li>
+              <p class="rail-list__date">qua · 24 ago · 19h</p>
+              <p class="rail-list__title">Mutirão de limpeza — Praça São Salvador</p>
+              <p class="rail-list__meta">Laranjeiras · 38 confirmados</p>
+            </li>
+            <li>
+              <p class="rail-list__date">sáb · 27 ago · 10h</p>
+              <p class="rail-list__title">Feira de trocas do Catete</p>
+              <p class="rail-list__meta">Catete · entrada gratuita</p>
+            </li>
+          </ul>
+        </section>
+
+        <section class="rail-card">
+          <h3 class="rail-card__title">Grupos ativos</h3>
+          <ul class="rail-list">
+            <li>
+              <p class="rail-list__title">Pais e responsáveis — zona sul</p>
+              <p class="rail-list__meta">412 membros · 7 hoje</p>
+            </li>
+            <li>
+              <p class="rail-list__title">Caminhada &amp; trilhas cariocas</p>
+              <p class="rail-list__meta">287 membros · 3 hoje</p>
+            </li>
+            <li>
+              <p class="rail-list__title">Compras coletivas — Laranjeiras</p>
+              <p class="rail-list__meta">156 membros · 2 hoje</p>
+            </li>
+          </ul>
+        </section>
+
+        <section class="rail-card">
+          <h3 class="rail-card__title">Boas práticas</h3>
+          <ul class="rail-list rail-list--text">
+            <li>Use o nome completo da rua e o número ao pedir indicação.</li>
+            <li>Evite postar telefone em aberto — prefira o canal interno.</li>
+            <li>Recomendação boa traz contexto: quando, quanto, e por quê.</li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <!-- ─────────── Bottom nav (mobile) ─────────── -->
+  <nav class="bottomnav" aria-label="Navegação principal">
+    <a class="bottomnav__item is-active" aria-current="page" href="#">
+      <span class="bottomnav__icon" aria-hidden="true">◉</span>
+      <span class="bottomnav__label">Cidade</span>
+    </a>
+    <a class="bottomnav__item" href="#">
+      <span class="bottomnav__icon" aria-hidden="true">◇</span>
+      <span class="bottomnav__label">Comunidade</span>
+    </a>
+    <a class="bottomnav__item" href="#">
+      <span class="bottomnav__icon" aria-hidden="true">⬡</span>
+      <span class="bottomnav__label">Grupos</span>
+    </a>
+    <a class="bottomnav__item" href="#">
+      <span class="bottomnav__icon" aria-hidden="true">◐</span>
+      <span class="bottomnav__label">Eu</span>
+    </a>
+  </nav>
+</body>
+</html>

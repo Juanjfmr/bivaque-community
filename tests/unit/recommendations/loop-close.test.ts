@@ -36,7 +36,7 @@ describe("recommendation loop (F5)", () => {
 
   it("the Explorar cards link to detail routes", () => {
     const source = readFileSync(explorePath, "utf8")
-    expect(source).toContain("`/groups/${group.id}`")
-    expect(source).toContain("`/events/${event.id}`")
+    expect(source).toContain("`/groups/\${group.id}`")
+    expect(source).toContain("`/events/\${event.id}`")
   })
 })

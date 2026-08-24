@@ -88,9 +88,14 @@ export function AppShell({ children }: AppShellProperties) {
             </button>
 
             {/* Locality context */}
-            <div className="flex items-center gap-1.5 min-h-11 px-2 rounded-lg">
+            <div
+              data-testid="shell-locality-pill"
+              className="flex items-center gap-1.5 min-h-11 px-2 rounded-lg"
+            >
               <MapPin size={16} className="text-[var(--accent)]" aria-hidden="true" />
-              <span className="text-sm font-medium hidden sm:inline">Manaus, AM</span>
+              <span className="text-sm font-medium hidden sm:inline">
+                {current.cityName}, {current.stateCode}
+              </span>
             </div>
           </div>
 
@@ -236,7 +241,9 @@ export function AppShell({ children }: AppShellProperties) {
                 <MemberAvatar name="C" size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">Minha conta</p>
-                  <p className="text-xs text-muted truncate">Manaus, AM</p>
+                  <p className="text-xs text-muted truncate">
+                    {current.cityName}, {current.stateCode}
+                  </p>
                 </div>
               </div>
             )}

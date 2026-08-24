@@ -10,15 +10,15 @@ import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 // ---------------------------------------------------------------------------
 
 test.describe("holder onboarding journey", () => {
-  test("unauthenticated user lands on login page from root", async ({ page }) => {
+  test("unauthenticated user sees the public landing at root", async ({ page }) => {
     // Given the production Next server at the mobile-375 viewport
     // When a browser opens the root route
     await page.goto("/")
 
-    // Then the user is redirected to the login page
-    await page.waitForURL("**/login")
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
-    await expect(page.getByText("Entre para acessar sua comunidade")).toBeVisible()
+    // Then the public marketing landing is served — anonymous visitors are not
+    // redirected to /login (the landing is the acquisition entry point).
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByText("A comunidade vai com você.")).toBeVisible()
   })
 
   test("login page renders Google OAuth button and magic link form", async ({ page }) => {
@@ -28,7 +28,7 @@ test.describe("holder onboarding journey", () => {
 
     // Then the auth entry points are rendered
     await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Enviar link mágico" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Receber link para entrar" })).toBeVisible()
 
     const emailInput = page.getByLabel("E-mail")
     await expect(emailInput).toBeVisible()
@@ -46,13 +46,15 @@ test.describe("holder onboarding journey", () => {
     // rendered /consent (apps/web/app/(preauth)/consent/page.tsx), which
     // renders "Termos de uso" plus the Código de conduta and Política de
     // privacidade sections, no separate welcome line.
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
     // Scoped to the page's own section heading id: the rendered legal
     // document body also contains a "Código de conduta" heading of its own,
     // so a bare role query resolves to two elements (strict-mode violation).
     await expect(page.locator("#conduct-heading")).toBeVisible()
 
-    const acceptButton = page.getByRole("button", { name: "Aceitar e continuar" })
+    const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await expect(acceptButton).toBeVisible()
   })
 
@@ -62,13 +64,13 @@ test.describe("holder onboarding journey", () => {
     await page.goto("/consent")
 
     // When the user clicks the accept button
-    const acceptButton = page.getByRole("button", { name: "Aceitar e continuar" })
+    const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await acceptButton.click()
 
     // Then the user is redirected to the onboarding page. Onboarding is a
     // `(preauth)` route with no shell header, so its own H1 is the landmark.
     await page.waitForURL(/\/onboarding/)
-    await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme sua elegibilidade." })).toBeVisible()
   })
 
   test("onboarding page renders verify eligibility flow", async ({ page }) => {
@@ -78,7 +80,7 @@ test.describe("holder onboarding journey", () => {
     await page.goto("/onboarding")
 
     // Then the verify eligibility UI is rendered
-    const verifyButton = page.getByRole("button", { name: "Verificar elegibilidade" })
+    const verifyButton = page.getByRole("button", { name: "Conferir e continuar" })
     await expect(verifyButton).toBeVisible()
 
     const cpfInput = page.getByLabel("CPF")
@@ -116,12 +118,12 @@ test.describe("family invite journey", () => {
       "/onboarding?invite=0000000000000000000000000000000000000000000000000000000000000000",
     )
 
-    // Then the family acceptance flow is rendered (the invite step shows)
-    // Wait for the onboarding page to resolve the step
+    // Then the family acceptance flow is rendered: the page enters the invite
+    // (family) step instead of the eligibility step.
     await page.waitForURL(/\/onboarding/)
-    await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Aceite seu convite." })).toBeVisible()
     await expect(page.getByRole("button", { name: "Aceitar convite" })).toBeVisible()
-    await expect(page.getByText(/convidado por um membro/)).toBeVisible()
+    await expect(page.getByText(/membro que convidou você/)).toBeVisible()
   })
 })
 
@@ -137,7 +139,9 @@ test.describe("community feed", () => {
 
     // Then the middleware redirects to the consent gate
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("feed page with consent cookie renders the community heading", async ({ page, context }) => {
@@ -177,7 +181,9 @@ test.describe("groups journey", () => {
 
     // Then the middleware redirects to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("groups page with consent cookie renders groups UI", async ({ page, context }) => {
@@ -241,7 +247,9 @@ test.describe("recommendations journey", () => {
 
     // Then the middleware redirects to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("recommendations page with consent cookie renders browse tab", async ({ page, context }) => {
@@ -294,7 +302,9 @@ test.describe("events journey", () => {
 
     // Then the middleware redirects to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("events page with consent cookie renders events UI", async ({ page, context }) => {
@@ -330,7 +340,9 @@ test.describe("notifications journey", () => {
 
     // Then the middleware redirects to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("notifications page with consent cookie renders notifications UI", async ({
@@ -360,7 +372,9 @@ test.describe("contextual DM and report journey", () => {
 
     // Then the middleware redirects to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("messages page with consent cookie renders messages UI", async ({ page, context }) => {
@@ -386,14 +400,15 @@ test.describe("contextual DM and report journey", () => {
 // chrome-free. Positive BottomNav coverage lives in shell-navigation.spec.ts,
 // which signs in first; here we pin the boundary.
 test.describe("preauth routes render no app shell", () => {
-  test("root redirect lands on login without shell chrome", async ({ page }) => {
+  test("root serves the public landing without the app shell", async ({ page }) => {
     // Given the production Next server
     // When a user opens the root route while unauthenticated
     await page.goto("/")
 
-    // Then they land on login and no shell nav is rendered
-    await page.waitForURL("**/login")
-    await expect(page.getByRole("navigation", { name: "Navegação principal" })).toHaveCount(0)
+    // Then the public landing renders and the authenticated app shell (BottomNav)
+    // is absent — the landing is its own marketing chrome, not the (shell) layout.
+    await expect(page.getByText("A comunidade vai com você.")).toBeVisible()
+    await expect(page.locator(BOTTOM_NAV)).toHaveCount(0)
   })
 
   for (const path of ["/login", "/consent", "/onboarding"]) {
@@ -401,9 +416,9 @@ test.describe("preauth routes render no app shell", () => {
       // Given a preauth route
       await page.goto(path)
 
-      // Then neither the shell nav nor the shell header is present
-      await expect(page.getByRole("navigation", { name: "Navegação principal" })).toHaveCount(0)
-      await expect(page.locator("header")).toHaveCount(0)
+      // Then the authenticated app shell (BottomNav) is absent. Preauth pages
+      // keep their own topbar chrome, but must not render the (shell) layout.
+      await expect(page.locator(BOTTOM_NAV)).toHaveCount(0)
     })
   }
 })
@@ -459,7 +474,7 @@ test.describe("accessibility across journeys", () => {
     await page.goto("/login")
 
     // Then its own primary controls meet the 44px minimum
-    const submit = page.getByRole("button", { name: "Enviar link mágico" })
+    const submit = page.getByRole("button", { name: "Receber link para entrar" })
     await expect(submit).toBeVisible()
     const box = await submit.boundingBox()
     expect(box).not.toBeNull()
@@ -523,7 +538,9 @@ test.describe("preauth page headings", () => {
     await page.goto("/consent")
 
     // Then the terms heading is visible
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("onboarding page leads with the eligibility heading", async ({ page }) => {
@@ -532,7 +549,7 @@ test.describe("preauth page headings", () => {
     await page.goto("/onboarding")
 
     // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme sua elegibilidade." })).toBeVisible()
   })
 })
 

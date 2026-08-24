@@ -23,7 +23,7 @@ export function SegmentError({ onRetry }: { onRetry?: () => void }) {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
       <ErrorState
-        message="Nao foi possivel carregar esta pagina. Tente novamente em instantes."
+        message="Não foi possível carregar esta página. Tente novamente em instantes."
         {...(onRetry === undefined ? {} : { onRetry })}
       />
     </div>
@@ -34,8 +34,8 @@ export function SegmentNotFound() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
       <EmptyState
-        title="Pagina nao encontrada"
-        description="O endereco que voce acessou nao existe nesta comunidade."
+        title="Página não encontrada"
+        description="O endereço que você acessou não existe nesta comunidade."
         action={
           <Link
             href="/community"

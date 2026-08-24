@@ -1,6 +1,8 @@
 import { promises as fs } from "node:fs"
 import path from "node:path"
 import { CONSENT_VERSION } from "@bivaque/domain"
+import { OnboardingShell } from "../onboarding/components/onboarding-shell"
+import styles from "../onboarding/onboarding.module.css"
 import { ConsentForm } from "./consent-form"
 import { renderLegalDocument } from "./document-render"
 
@@ -27,47 +29,49 @@ export default async function ConsentPage() {
   ])
 
   return (
-    <div className="grid flex-1 place-items-center px-6 py-12">
-      <section className="flex w-full max-w-md flex-col gap-6" aria-labelledby="consent-heading">
-        <h1 id="consent-heading" className="text-2xl font-semibold tracking-tight">
-          Termos de uso
-        </h1>
-
-        <section aria-labelledby="conduct-heading" className="flex flex-col gap-1">
-          <h2 id="conduct-heading" className="text-base font-semibold">
-            Código de conduta
-          </h2>
-          <section
-            className="prose prose-sm max-h-48 overflow-y-auto rounded-lg border border-border p-4 text-sm text-muted"
-            aria-label="Código de conduta"
-            // biome-ignore lint/a11y/noNoninteractiveTabindex: the scrollable consent box must be reachable by keyboard (D2 Task 3 Step 4)
-            tabIndex={0}
-          >
-            {renderLegalDocument(codeOfConduct)}
+    <OnboardingShell
+      stage="rules"
+      titleId="consent-heading"
+      eyebrow="Um acordo de convivência"
+      title="Antes de entrar, conheça as regras."
+      description="O Bivaque existe para tornar a experiência de cada chegada útil para a próxima. Isso começa com respeito, responsabilidade e cuidado com dados pessoais."
+      asideEyebrow="O que sustenta a comunidade"
+      asideTitle="Confiança não é um detalhe."
+      asideDescription="As regras valem para todos e deixam claro o tipo de convivência que o Bivaque quer preservar."
+    >
+      <div className={styles["stack"]}>
+        <div className={styles["legalGrid"]}>
+          <section aria-labelledby="conduct-heading" className={styles["legalSection"]}>
+            <h2 id="conduct-heading" className="text-base font-semibold">
+              Código de conduta
+            </h2>
+            <section
+              className={styles["legalDocument"]}
+              aria-label="Código de conduta"
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: the scrollable consent box must be reachable by keyboard (D2 Task 3 Step 4)
+              tabIndex={0}
+            >
+              {renderLegalDocument(codeOfConduct)}
+            </section>
           </section>
-        </section>
 
-        <section aria-labelledby="privacy-heading" className="flex flex-col gap-1">
-          <h2 id="privacy-heading" className="text-base font-semibold">
-            Política de privacidade
-          </h2>
-          <section
-            className="prose prose-sm max-h-48 overflow-y-auto rounded-lg border border-border p-4 text-sm text-muted"
-            aria-label="Política de privacidade"
-            // biome-ignore lint/a11y/noNoninteractiveTabindex: the scrollable privacy box must be reachable by keyboard (D2 Task 3 Step 4)
-            tabIndex={0}
-          >
-            {renderLegalDocument(privacy)}
+          <section aria-labelledby="privacy-heading" className={styles["legalSection"]}>
+            <h2 id="privacy-heading" className="text-base font-semibold">
+              Política de privacidade
+            </h2>
+            <section
+              className={styles["legalDocument"]}
+              aria-label="Política de privacidade"
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: the scrollable privacy box must be reachable by keyboard (D2 Task 3 Step 4)
+              tabIndex={0}
+            >
+              {renderLegalDocument(privacy)}
+            </section>
           </section>
-        </section>
+        </div>
 
         <ConsentForm consentVersion={CONSENT_VERSION} />
-
-        <p className="text-center text-xs text-muted">
-          Ao continuar, você confirma que leu e concorda com o código de conduta e com a política de
-          privacidade nas versões exibidas.
-        </p>
-      </section>
-    </div>
+      </div>
+    </OnboardingShell>
   )
 }

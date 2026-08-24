@@ -183,7 +183,7 @@ export default async function AdminReportsPage() {
             <p className="text-xs text-muted">
               {targetHref(report.target_type, report.target_id) ? (
                 <a
-                  className="underline"
+                  className="inline-flex min-h-11 items-center underline"
                   href={targetHref(report.target_type, report.target_id) as string}
                 >
                   abrir o alvo
@@ -199,7 +199,7 @@ export default async function AdminReportsPage() {
                 <input type="hidden" name="reportId" value={report.id} />
                 <button
                   type="submit"
-                  className="w-full rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-danger hover:text-danger-foreground"
+                  className="w-full min-h-11 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-danger hover:text-danger-foreground"
                 >
                   Ocultar conteúdo
                 </button>
@@ -207,15 +207,19 @@ export default async function AdminReportsPage() {
 
               <form action={resolveReportAction} className="flex flex-1 gap-2">
                 <input type="hidden" name="reportId" value={report.id} />
+                {/* `placeholder` não é nome acessível: some ao digitar e nem todo
+                    leitor de tela o anuncia. O rótulo visível não cabe no card,
+                    então o nome vem por aria-label. */}
                 <input
                   type="text"
                   name="note"
+                  aria-label="Nota do operador sobre esta denúncia (opcional)"
                   placeholder="Nota (opcional)"
-                  className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                  className="min-h-11 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm"
                 />
                 <button
                   type="submit"
-                  className="rounded-md border border-border bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+                  className="min-h-11 min-w-11 rounded-md border border-border bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
                 >
                   Resolver
                 </button>

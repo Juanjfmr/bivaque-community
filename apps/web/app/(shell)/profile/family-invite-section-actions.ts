@@ -3,6 +3,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import { byteaDigestParam } from "../../../lib/invites-bytea"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 import { emailHint } from "./family-invite-email-hint"
 
@@ -83,7 +84,7 @@ export async function sendFamilyInviteAction(
 
   const { error } = await supabase.rpc("create_family_invitation", {
     p_inviter_user_id: userId,
-    p_token_digest: tokenDigest,
+    p_token_digest: byteaDigestParam(tokenDigest),
     p_invitee_email_digest: emailDigest,
     p_invitee_email_hint: emailHint(email),
   })
