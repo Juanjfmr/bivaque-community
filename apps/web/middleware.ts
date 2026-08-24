@@ -179,9 +179,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/onboarding/locality", request.url))
     }
     if (status === "pending" || status === "temporary_error" || status === "rejected") {
-      return NextResponse.redirect(new URL("/onboarding/status", request.url))
+      const statusUrl = new URL("/onboarding/status", request.url)
+      statusUrl.searchParams.set("next", pathname)
+      return NextResponse.redirect(statusUrl)
     }
-    return NextResponse.redirect(new URL("/onboarding", request.url))
+    const onboardingUrl = new URL("/onboarding", request.url)
+    onboardingUrl.searchParams.set("next", pathname)
+    return NextResponse.redirect(onboardingUrl)
   }
 
   return supabaseResponse

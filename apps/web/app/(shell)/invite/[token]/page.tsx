@@ -50,6 +50,14 @@ export default async function InviteAcceptPage({ params }: InviteAcceptPageProps
 
   const supabase = createServiceClient()
 
+  // D15 gate — before the RPC, so a non-existent token still preserves ?next=.
+  const { data: userIsVerified } = await supabase.rpc("is_verified_holder", {
+    p_user_id: user.id,
+  })
+  if (userIsVerified !== true) {
+    redirect(`/onboarding?next=/invite/${token}`)
+  }
+
   // Compute the digest locally — the RPC receives the digest, not the raw
   // token. This keeps the token out of the database entirely.
   const { createHash } = await import("node:crypto")
