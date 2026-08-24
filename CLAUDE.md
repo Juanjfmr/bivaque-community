@@ -11,6 +11,22 @@
 - Gate obrigatório antes de declarar pronto: `npx pnpm@11.18.0 gate` — ver a skill `gate-before-done`.
 - Plano como contrato: planos vivem em `docs/superpowers/plans/`; execute todo a todo com a skill `plan-execution`; pare se o todo estiver errado ou impossível.
 - Implementação e teste são um todo só — nunca entregue código sem o teste na mesma unidade.
+
+## Arquitetura de agentes (leia antes de delegar)
+
+**[`docs/agents/AGENT_ARCHITECTURE.md`](docs/agents/AGENT_ARCHITECTURE.md)** — sete papéis,
+o laço de execução, os padrões de composição e o roteamento por risco.
+
+- **A unidade de execução é o contrato de tarefa**, não o agente: `docs/agents/tasks/*.task.yml`,
+  validados por `node scripts/agents/task-contract.mjs`. Contrato inválido não vai para execução.
+  Formato em [`docs/agents/TASK_CONTRACT.md`](docs/agents/TASK_CONTRACT.md).
+- **`implementer` ≠ `reviewer` ≠ `runtime-verifier`.** Quem implementou não revisa nem adjudica
+  a própria evidência. Não explique sua solução ao revisor antes do primeiro parecer dele.
+- **Subagente isolado é o default; time é exceção justificada** — agente que conversa produz
+  erro correlacionado, e erro correlacionado some na revisão.
+- **Existir não é evidência.** Fechar tarefa exige comportamento observado — skill `runtime-proof`.
+- **`retry_budget` esgotado nunca vira `PASS`**: vira `FAIL`, `BLOCKED` ou `HUMAN_DECISION`.
+- As skills estão versionadas em `.claude/skills/` — não dependa de skill instalada na máquina.
 - **Armadilhas conhecidas (ver AGENTS.md §Known traps):**
   - O perfil fantasma "Visual Capture": `.visual/` insere um profile no banco local. Não rodar dev server nem captura visual entre `db:reset` e `test:db`, senão 6 asserts de pgTAP quebram com aparência de regressão real.
   - `dev-server.pid` / `dev-server.log` stale: apagar e tentar de novo antes de atribuir falha ao código.

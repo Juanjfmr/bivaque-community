@@ -1,0 +1,58 @@
+# Contrato da própria Phase 0 do harness. Serve de exemplo executável do formato
+# e é o primeiro contrato real do repositório.
+
+task_id: HRN-001
+
+objective: >
+  O harness deste repositório passa a ter agentes, skills e protocolo versionados
+  no próprio repo, com papéis reconciliados e um contrato de tarefa validável por
+  comando, em vez de depender de skills instaladas na máquina de quem executa.
+
+authority:
+  - AGENTS.md §Harness
+  - docs/agents/HARNESS-PHASE0-2026-08-22.md
+  - docs/agents/AGENT_ARCHITECTURE.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: docs/agents/HARNESS-PHASE0-2026-08-22.md §2 (sete divergências medidas)
+
+allowed_paths:
+  - .claude/agents/
+  - .claude/skills/
+  - .claude/hooks/
+  - scripts/agents/
+  - tests/scope/
+  - tests/unit/agents/
+  - docs/agents/
+  - AGENTS.md
+  - CLAUDE.md
+  - package.json
+
+forbidden:
+  - alterar comportamento de produto
+  - tocar em migration, policy ou schema
+  - implementar DS-021 ou qualquer tarefa de produto nesta unidade
+
+acceptance:
+  - os agentes versionados são exatamente os sete papéis da arquitetura v1
+  - todo agente somente-leitura não declara ferramenta de escrita
+  - as skills que o CLAUDE.md cita existem dentro do repositório
+  - nenhum hook depende de caminho absoluto da máquina de um desenvolvedor
+  - um contrato incompleto falha por comando, não por leitura humana
+
+proof:
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 gate
+  - node scripts/agents/task-contract.mjs
+
+risk: harness
+risk_level: R0
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -39,6 +39,31 @@ exclusão de escopo
 
 Any plan touching RLS, private data, identity verification, Supabase policies, secrets, or destructive database operations is R3.
 
+## R3 automatic terms
+
+The R3 row above is prose; this block is the same rule in operable form, read by
+`scripts/agents/task-contract.mjs`. A plan containing any of these is R3 — it needs an
+approved ADR with human approval, and the `security-auditor` runs alongside the reviewer.
+
+```text
+pagamento
+payments
+cobrança
+monetização
+monetization
+pricing
+marketplace
+verificação de identidade
+identity verification
+dado pessoal
+personal data
+lgpd
+compliance
+```
+
+RLS, policies, secrets, CPF, the `private` schema and `supabase/migrations` are also R3;
+they live in the validator's own list because they name code, not policy.
+
 ## Minimum evidence for R2/R3
 
 - Baseline market or reference pattern.

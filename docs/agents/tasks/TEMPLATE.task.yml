@@ -1,0 +1,72 @@
+# Template de task contract — copie para docs/agents/tasks/<ID>.task.yml
+#
+# O contrato é a unidade de execução do harness. O agente é intercambiável;
+# isto não é. Valide com: node scripts/agents/task-contract.mjs
+#
+# Cada campo existe porque a sua ausência já custou trabalho neste repositório.
+
+# <PREFIXO>-<NNN>. Prefixos em uso: DS (design system), RUN (achado de execução),
+# EXP (experimento), HRN (harness), SEC (trust boundary).
+task_id: XX-000
+
+# O que muda no produto, em uma frase. Não é rótulo: é a condição que passa a valer.
+objective: >
+  Descreva a propriedade que o produto passa a ter, não a tarefa que o agente executa.
+
+# De onde vem a autoridade desta tarefa: spec, ADR, achado de auditoria, linha do
+# PRODUCT_STATUS.md. Tarefa sem autoridade é improviso.
+authority:
+  - docs/BIVAQUE.md §X
+  - docs/agents/VISUAL_AUDIT-....md
+
+# Estado medido ANTES de executar. UNKNOWN é recusado pelo validador de propósito:
+# quem não mediu não sabe se está corrigindo ou reescrevendo.
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: caminho do artefato ou comando que produziu a medição
+
+# Fronteira de escrita. Sem `**` solto: blast radius não declarado é blast radius infinito.
+allowed_paths:
+  - apps/web/app/...
+  - tests/...
+
+# O que esta tarefa não faz, mesmo que pareça a correção certa. Cerca não eleva risco.
+forbidden:
+  - alterar o contrato de design fora do escopo desta tarefa
+  - redesenhar navegação não relacionada
+
+# Condições verificáveis de aceite. Cada uma precisa ser observável por alguém
+# que não confia no executor.
+acceptance:
+  - a propriedade X vale no caminho feliz
+  - o caminho triste Y continua negando
+
+# Como a aceitação vira evidência. Pelo menos uma prova executável (gate, testes,
+# pgTAP, e2e, captura) — existir no código não é evidência de comportamento.
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 test:scope
+
+# Rótulo de categoria (livre) + nível da docs/decisions/RISK_MATRIX.md.
+# O validador recalcula o nível pelo conteúdo e recusa declaração abaixo do devido.
+risk: acessibilidade
+risk_level: R1
+
+# R3 exige ADR aprovado. Remova a linha quando não for R3.
+# adr: docs/decisions/ADR-....md
+
+# Independência do revisor. Só R0 pode dispensar: revisor ancorado pela explicação
+# do implementador não é revisor.
+reviewer_must_differ_from_executor: true
+
+# Opcional. Registra que a tarefa é válida mas NÃO pode fechar agora — prova
+# impedida por achado pré-existente, dependência externa ou decisão pendente.
+# Encolher `proof` até caber no que fica verde é ajustar a régua ao resultado.
+# blocked_by: o que impede a prova, e o que precisa acontecer para destravar
+
+# Teto de tentativas de reparo. Esgotar nunca produz PASS.
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
