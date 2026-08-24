@@ -49,11 +49,12 @@
       "status": "now",
       "description": "Há caminho nacional, transferência e documento privado implementados; ainda faltam provas de jornadas negativas e entrega de decisão por e-mail.",
       "checklist": [
-        "Executar E2E de callback, pending, rejected, consentimento e welcome ✅ 264 specs verdes (manaus-pilot, onboarding, denials); admissions-operator-flow 9/9 falhas pendentes (ver drift)",
+        "Executar E2E de callback, pending, rejected, consentimento e welcome ✅ 264 specs verdes + admissions-operator-flow 9/9 verdes (2026-08-23) após reconciliar o spec com o contrato service_role",
         "Fechar e-mail da decisão documental no outbox ✅ migration 20260822215307 enfileira approved/rejected; adaptador Resend em lib/outbox/adapters.ts; 5 testes unit; 4 asserts pgTAP",
-        "Retestar geração e cópia do convite de comunidade ⏳ community-invitations.spec.ts pendente do build do web",
+        "Retestar geração e cópia do convite de comunidade ✅ geração + botão Copiar verdes nos 3 viewports (2026-08-23), após corrigir a serialização bytea do digest; o redirect do aceite para não-verificados perde ?next — triado em MVP-00-E2E-FUNCTIONAL",
         "Revisar re-verificação Portal sem CPF persistido ✅ CPF-free por design; guards pgTAP GUARD 5 + rls-or-column; unit verification-reconcile-route",
-        "Reavaliar Issue #20 pelo estado atual ✅ comentário postado na issue + board REPO-ISSUE-20 atualizado"
+        "Reavaliar Issue #20 pelo estado atual ✅ comentário postado na issue + board REPO-ISSUE-20 atualizado",
+        "Corrigir serialização bytea dos digests de convite (classe comum: comunidade criar/aceitar e família enviar/aceitar) ✅ helper lib/invites-bytea + guarda unitária"
       ],
       "proof": [
         "Transferência tem migrations, pgTAP e spec E2E commitado",
@@ -61,7 +62,13 @@
         "convite comunitário ganhou RPC is_community_member em 2026-08-21",
         "E-mail de decisão: 20260822215307_outbox_verification_decision.sql + adaptador Resend (RESEND_API_KEY presente no .env.local)",
         "Regressão HEAD corrigida: encoding migration 20260822202341, drop complete_event duplicada, testes storage sob policy scoped — pgTAP 1042/1042, gate verde",
-        "Issue #20 reavaliada: runtime fecha quase todos os critérios; residual = E2E two-localities (bloqueado pelo build)"
+        "Issue #20 reavaliada: runtime fecha quase todos os critérios; residual = E2E two-localities (bloqueado pelo build)",
+        "Spec admissions reconciliado (2026-08-23): positivo pela rota real /admissions (grupo (admin) fora da URL) + dois negativos de autorização (403/42501 nas RPCs list_verification_* chamadas por REST com JWT do operador); 9/9 verdes serial nas 3 viewports. Inclui a correção de rota já presente no working tree.",
+        "O bloqueio \"build do web\" estava obsoleto: next build + serve rodaram limpos contra o working tree atual nas duas execuções E2E de 2026-08-23.",
+        "Classe de bug bytea provada por probes REST contra o stack local: hex nu chega ao Postgres como escape-format (64 bytes) e viola octet_length=32 (22023 na comunidade, 23514 na família); com prefixo \\x a mesma chamada responde 200. Fix: byteaDigestParam em lib/invites-bytea aplicado aos 5 pontos (community create/accept, invite page, family send, family accept) + tests/unit/invites.",
+        "E2E community-invitations passou de 3/9 para 6/9 verdes: geração e cópia fecham; as 3 falhas restantes são a perda de ?next no redirect do aceite (tema próprio do MVP-00-E2E-FUNCTIONAL).",
+        "Convite familiar (envio e aceite) tinha o mesmo defeito de fio e recebeu o mesmo fix; prova E2E própria segue devendo ao lote com seed (o spec onboarding-holder-family nunca exerceu o aceite — só UI de consentimento).",
+        "Reconciliação das linhas §9 Admissões e §2 Convites do PRODUCT_STATUS fica como próximo passo imediato: o arquivo carrega alterações não-commitadas de outro trabalho (landing/signup/onboarding) e commitá-las junto publicaria estado sem código."
       ],
       "tests": [
         "supabase/tests/verification-documents.sql",
@@ -74,14 +81,10 @@
         "Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20",
         "Status: entrada | ../../docs/PRODUCT_STATUS.md"
       ],
-      "drift": {
-        "documented": "admissions-operator-flow.spec.ts espera RPCs list_verification_* com token authenticated (403) e painel renderiza fila.",
-        "observed": "RPCs só têm grant service_role (contrato do painel via service client); o spec chama via REST com token do operador.",
-        "action": "Reconciliar spec com o contrato service_role OU expor RPCs a authenticated com gate de operador interno. Bloqueado pelo build do web (landing page em construção no working tree)."
-      },
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["BLOCK-RESEND"]
+      "updatedAt": "2026-08-23",
+      "sourceRevision": "b1cf3a6",
+      "dependencies": ["BLOCK-RESEND"],
+      "completedChecklist": [true, true, true, true, true, true]
     },
     {
       "id": "MVP-02-AUTHZ",
@@ -1152,18 +1155,29 @@
       "phase": "MVP-00",
       "priority": "P1",
       "category": "testing",
-      "status": "next",
-      "description": "Após o realinhamento de UUID (MVP-00-E2E-UUID-REALIGN), restam 65 falhas E2E (23 testes únicos × 3 viewports) que NÃO são de seed/UUID, e sim divergências de comportamento entre o app e os specs. Agrupadas em 4 temas para triagem e fechamento por spec.",
+      "status": "now",
+      "description": "Após o realinhamento de UUID (MVP-00-E2E-UUID-REALIGN): partimos de 65 falhas (23 testes únicos × 3 viewports). Reduzidas a 34 falhas FUNCIONAIS reais = 12 testes distintos (1-3 viewports cada). 2 realinhamentos de spec seguros já aplicados e verificados em runtime (rotas /admissions e /reports + acento em /Denúncias/). Restam 12 testes que exigem DECISÃO de produto/R3 ou investigação de runtime — não resolvidos autonomamente, conforme disciplina de fronteira R3.",
       "checklist": [
-        "Tema 1 — Auth/redirect shell: / deve redirecionar para /login para não autenticado (manaus-pilot, preauth routes)",
-        "Tema 2 — OAuth UI: login deve render 'Continuar com Google' (decisão de produto/feature?)",
-        "Tema 3 — Owner/admin: specs de community-batch-approval, community-invitations, event-invites, group-admin-cycle, reports-operator-flow, admissions-operator-flow usam a conta correta de owner/organizer do seed (dono-vila/operador), não visual@",
-        "Tema 4 — Copy/flow: empty-locality ('Você é dos primeiros aqui.') e onboarding de família ('Confirme sua elegibilidade.') precisam existir no app ou o spec deve ser atualizado",
-        "Rodar suíte E2E serial após cada correção e zerar as 65 falhas"
+        "Tema 1 — Auth/redirect shell: / serve landing pública para anônimo (Edit B aplicado, verde em manaus-pilot)",
+        "Tema 2 — OAuth UI: login renderiza 'Continuar com Google' (Edit A aplicado; provider ainda NÃO configurado no Supabase — clique erra, spec só checa visibilidade — BLOQUEADO em config de auth)",
+        "Tema 4b — Onboarding família: realinhado para 'Aceite seu convite.' (Edit + teste 7 família, verde)",
+        "admissions :139 — rota /admin/admissions → /admissions (aplicado + verificado 3/3)",
+        "reports :127 — rota /admin/reports → /reports + regex /Denúncias/i (aplicado + verificado 3/3 standalone)",
+        "admissions :157/:174 — RPCs list_verification_queue/documents: grant EXECUTE só service_role; operador bearer falha. DECISÃO R3: conceder a operator/authenticated OU mudar spec para fluxo via UI",
+        "community-batch-approval :68 — sem mismatch estático (rotas/seed/handler presentes); falha em runtime. INVESTIGAR handler de approve em runtime",
+        "community-invitations :72/:92 — sem mismatch estático; rotas/seed/redirect presentes. INVESTIGAR runtime (possível drift de seed/reset)",
+        "event-invites :64 — seed event 700…001 está 'completed'; seção de convite só renderiza se !isCompleted. DECISÃO: mudar seed p/ upcoming OU spec usar evento upcoming",
+        "group-admin-cycle :103 — RLS group_memberships_select esconde a própria pendência do requerente em grupo privado → 'Cancelar pedido' não aparece. BUG RLS (R3). DECISÃO/correção de política",
+        "reports-member-flow :98 — ReportButton não envia reporter_user_id (obrigatório + policy reporter_user_id=auth.uid()); visual@ sem membership de comunidade → sem feed. BUG app (R3). DECISÃO/correção",
+        "synthetic-people :167 — sem mismatch de label/trigger; suspeita notification_preferences.comments=false suprime notify_comment OU reaction count≠2. DECISÃO: default de preferências de notificação",
+        "empty-locality :129 (×4) — membro-vazia@ existe, mas seed não tem 2ª localidade de baixa densidade (Task 10 Step 3). BLOQUEADO em seed",
+        "Rodar suíte E2E serial e zerar as falhas restantes (meta: 0 funcionais)"
       ],
       "proof": [
-        "Suíte E2E 2026-08-23: 518 verdes / 65 falhas (serial, mobile/tablet/desktop)",
-        "junit-results.xml analisado: 23 testes únicos falhando, nenhum por UUID/404"
+        "Suíte E2E 2026-08-23 (pós-Edits A-E + loop preauth + teste 7 família): 34 failed / 550 passed (serial)",
+        "admissions-operator-flow :139 + reports-operator-flow :127 realinhados (rota + acento) e verificados: reports 3/3 standalone, :139 3/3",
+        "admissions :157/:174 permanecem falhando (grant service_role-only) — esperado, sinalizado R3",
+        "6 agentes explore concluídos: 12 testes distintos classificados em temas 3 e 4"
       ],
       "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
       "links": [
