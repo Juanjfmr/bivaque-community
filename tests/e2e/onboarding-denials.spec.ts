@@ -29,22 +29,28 @@ test.describe("onboarding: denial paths", () => {
     await page.goto("/community")
 
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("login page is accessible without auth", async ({ page }) => {
     const response = await page.goto("/login")
     expect(response?.ok()).toBeTruthy()
 
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
-    await expect(page.getByText("Entre para acessar sua comunidade")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Entre no Bivaque" })).toBeVisible()
+    await expect(
+      page.getByText("Receba um link no seu e-mail para continuar. Sem senha para lembrar."),
+    ).toBeVisible()
   })
 
   test("consent page is accessible without auth", async ({ page }) => {
     const response = await page.goto("/consent")
     expect(response?.ok()).toBeTruthy()
 
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("onboarding without consent redirects to the consent gate", async ({ page }) => {

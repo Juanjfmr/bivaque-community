@@ -130,11 +130,11 @@ test.describe("report flow: operator resolve via painel", () => {
     await page.setViewportSize({ width: 1280, height: 800 })
 
     // When ele abre o painel
-    await page.goto("/admin/reports", { waitUntil: "load" })
+    await page.goto("/reports", { waitUntil: "load" })
 
     // Then a pagina renderiza -- a fila pode estar vazia em alguma suite
     // mas o titulo esta sempre visivel
-    await expect(page.getByRole("heading", { name: /Denuncias/i }).first()).toBeVisible({
+    await expect(page.getByRole("heading", { name: /Denúncias/i }).first()).toBeVisible({
       timeout: 5000,
     })
   })

@@ -9,12 +9,14 @@ test.describe("onboarding: verified holder and invited family", () => {
 
     // The login page renders the Google OAuth button and magic link form
     await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Enviar link mágico" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Receber link para entrar" })).toBeVisible()
 
     // Navigate to the consent page
     await page.goto("/consent")
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Aceitar e continuar" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
+    await expect(page.getByRole("button", { name: "Concordar e continuar" })).toBeVisible()
   })
 
   test("consent page shows terms and accept button", async ({ page }) => {
@@ -24,14 +26,16 @@ test.describe("onboarding: verified holder and invited family", () => {
     // "Bem-vindo ao Bivaque" never existed on this page — found realigning
     // this spec against the real rendered /consent, which renders "Termos de
     // uso" plus the Código de conduta and Política de privacidade sections.
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
     // Scoped to the page's own section heading id: the rendered legal
     // document body also contains a "Código de conduta" heading of its own,
     // so a bare role query resolves to two elements (strict-mode violation).
     await expect(page.locator("#conduct-heading")).toBeVisible()
-    await expect(page.getByRole("button", { name: "Aceitar e continuar" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Concordar e continuar" })).toBeVisible()
 
-    const acceptButton = page.getByRole("button", { name: "Aceitar e continuar" })
+    const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await acceptButton.click()
 
     // Accepting stores the consent cookie and proceeds to onboarding
@@ -44,8 +48,8 @@ test.describe("onboarding: verified holder and invited family", () => {
 
     // Onboarding is a `(preauth)` route with no shell header, so its own H1 is
     // the landmark rather than the Bivaque wordmark.
-    await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Verificar elegibilidade" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme sua elegibilidade." })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Conferir e continuar" })).toBeVisible()
 
     const cpfInput = page.getByLabel("CPF")
     await expect(cpfInput).toBeVisible()
@@ -62,12 +66,12 @@ test.describe("onboarding: verified holder and invited family", () => {
     await expect(page.getByLabel("E-mail")).toHaveCount(0)
   })
 
-  test("login page is the entry point when not authenticated", async ({ page }) => {
+  test("root serves the public landing when not authenticated", async ({ page }) => {
     await page.goto("/")
 
-    await page.waitForURL("**/login")
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
-    await expect(page.getByText("Entre para acessar sua comunidade")).toBeVisible()
+    // The root is a public marketing landing; it does not redirect to /login.
+    await expect(page).toHaveURL(/\/$/)
+    await expect(page.getByText("A comunidade vai com você.")).toBeVisible()
   })
 
   test("magic link email input works", async ({ page }) => {
@@ -78,7 +82,7 @@ test.describe("onboarding: verified holder and invited family", () => {
 
     await expect(emailInput).toHaveValue("test@example.invalid")
 
-    const magicLinkButton = page.getByRole("button", { name: "Enviar link mágico" })
+    const magicLinkButton = page.getByRole("button", { name: "Receber link para entrar" })
     await expect(magicLinkButton).toBeVisible()
   })
 })
