@@ -1,25 +1,35 @@
-import type { LocalityCode } from "@bivaque/contracts"
-import { PILOT_LOCALITY_CODE } from "@bivaque/domain"
 import { brandTokens } from "@bivaque/tokens"
-import { Button } from "@heroui/react"
+import type { Metadata, Viewport } from "next"
+import { LandingPage } from "./landing/landing"
 
-const pilotLocality: LocalityCode = PILOT_LOCALITY_CODE
+export const metadata: Metadata = {
+  title: `${brandTokens.productName} — A comunidade vai com você`,
+  description:
+    "Comunidade privada de acesso controlado que reúne militares federais, veteranos, pensionistas e dependentes para trocar ajuda, encontrar referências e preservar o que aprenderam juntos.",
+  keywords: [
+    "comunidade militar",
+    "veteranos",
+    "militares federais",
+    "pensionistas",
+    "pertencimento",
+    "comunidade privada",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: `${brandTokens.productName} — A comunidade vai com você`,
+    description: "Comunidade privada de pertencimento para quem compartilha uma trajetória.",
+    type: "website",
+    locale: "pt_BR",
+    siteName: brandTokens.productName,
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#2f7654",
+}
 
 export default function HomePage() {
-  return (
-    <div className="grid flex-1 place-items-center px-6 py-12">
-      <section className="flex max-w-md flex-col items-start gap-4" aria-labelledby="page-title">
-        <p className="text-sm font-medium text-muted">Manaus, AM</p>
-        <h1 id="page-title" className="text-4xl font-semibold tracking-tight">
-          {brandTokens.productName}
-        </h1>
-        <p className="text-base leading-7 text-muted">
-          A fundação da comunidade privada está em preparação.
-        </p>
-        <Button variant="tertiary" isDisabled aria-label={`Piloto ${pilotLocality} em preparação`}>
-          Ambiente privado
-        </Button>
-      </section>
-    </div>
-  )
+  return <LandingPage />
 }

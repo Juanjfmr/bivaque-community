@@ -5,10 +5,12 @@ import { NextResponse } from "next/server"
 
 const PUBLIC_PATHS = [
   "/login",
+  "/signup",
   "/auth/callback",
   "/consent",
   "/api",
   "/_next",
+  "/landing",
   "/favicon.ico",
   "/icon.svg",
 ]
@@ -75,13 +77,16 @@ export async function middleware(request: NextRequest) {
     // no-op — user remains null
   }
 
-  // Root redirect — session-aware (new behaviour).
+  // Root redirect — session-aware (new behaviour). The marketing landing
+  // lives at "/" and must stay public for acquisition, so an anonymous
+  // visitor is served the landing. Only an authenticated member hitting
+  // "/" is routed into the app (community after consent, else consent).
   if (pathname === "/" || pathname === "") {
-    if (!user) {
-      return NextResponse.redirect(new URL("/login", request.url))
+    if (user) {
+      const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
+      return NextResponse.redirect(new URL(hasConsent ? "/community" : "/consent", request.url))
     }
-    const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
-    return NextResponse.redirect(new URL(hasConsent ? "/community" : "/consent", request.url))
+    return supabaseResponse
   }
 
   // Protected paths: consent gate first (unchanged from original), then
