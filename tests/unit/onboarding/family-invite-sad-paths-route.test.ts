@@ -54,7 +54,7 @@ function makeRequest(token: string, body: unknown): Request {
 
 const HAPPY_BODY = {
   action: "accept-family-invite",
-  token: "deadbeef",
+  token: "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
   display_name: "Maria da Silva",
 }
 
