@@ -472,7 +472,7 @@ mesmo que sÃ³ a linha grÃ¡tis exista atÃ© a Task 7.
 - `public.provider_reach(provider_id, scope_type, scope_id, source, active)`
 - `private.can_see_provider(p_provider_id uuid) returns boolean`
 
-- [ ] **Step 1: as doze categorias, em um lugar sÃ³**
+- [x] **Step 1: as doze categorias, em um lugar sÃ³**
 
   Â§7.2.1 Ã© uma **lista fechada** com trÃªs regras que o cÃ³digo precisa carregar. Em
   `packages/domain/src/index.ts`:
@@ -519,7 +519,7 @@ export const PROVIDER_CATEGORY_LABELS: Record<ProviderCategory, string> = {
   `tests/unit/` que compare o array com o enum lido de `supabase/database.generated.ts` â€” Ã© o
   tipo de divergÃªncia que sÃ³ aparece em produÃ§Ã£o.
 
-- [ ] **Step 2: a migration da ficha e do alcance**
+- [x] **Step 2: a migration da ficha e do alcance**
 
 ```sql
 create type public.provider_category as enum (
@@ -643,14 +643,14 @@ alter type public.report_target_type add value if not exists 'provider_profile';
   > o ramo `provider_profile` ao RPC de resoluÃ§Ã£o dela nesta mesma migration. Se a H ainda nÃ£o
   > rodou, pare aqui: o valor do enum existe, a Task 1 da H cobre o resto.
 
-- [ ] **Step 3: o bucket das fotos**
+- [x] **Step 3: o bucket das fotos**
 
   `provider-photos`, privado, 5 MB, `image/jpeg|png|webp`, no molde exato de
   `20260821000015_event_photos_bucket.sql`. `insert` sÃ³ do dono
   (`owner = auth.uid()` **e** existe `provider_accounts` ativo); `select` gated por
   `private.can_see_provider` a partir do prefixo do caminho.
 
-- [ ] **Step 4: o pgTAP do escopo â€” os dois lados**
+- [x] **Step 4: o pgTAP do escopo â€” os dois lados**
 
   `supabase/tests/provider-showcase-scope.sql`. Fixture: duas vilas na mesma cidade, um
   prestador com `reach` grÃ¡tis sÃ³ na vila A.
@@ -664,7 +664,7 @@ alter type public.report_target_type add value if not exists 'provider_profile';
   - outro prestador **nÃ£o vÃª** a ficha alheia
   - o dono edita a prÃ³pria ficha; **nÃ£o** edita a alheia (`throws_ok`, 42501)
 
-- [ ] **Step 5: a ficha vista pelo membro**
+- [x] **Step 5: a ficha vista pelo membro**
 
   `(shell)/prestadores/[id]/page.tsx`, Server Component, lendo pelo **cliente autenticado**
   (regra 1 da Â§12: nada de `service_role` aqui â€” a RLS Ã© quem decide). TrÃªs blocos na ordem da
@@ -675,7 +675,7 @@ alter type public.report_target_type add value if not exists 'provider_profile';
   BotÃ£o "Conversar" existe mas fica desabilitado com explicaÃ§Ã£o atÃ© a Task 6 â€” ou, melhor pela
   regra 4 da Â§12, **nÃ£o existe ainda**. Prefira nÃ£o existir.
 
-- [ ] **Step 6: revogar a ficha Ã© ato do dono da comunidade**
+- [x] **Step 6: revogar a ficha Ã© ato do dono da comunidade**
 
   A decisÃ£o 2 do ADR diz que a ficha **sobrevive** Ã  saÃ­da de quem indicou, e que revogar Ã© ato
   do dono da comunidade. Isso sÃ³ Ã© verdade se existir o ato â€” sem ele a decisÃ£o Ã© prosa e a
@@ -740,7 +740,7 @@ grant execute on function public.revoke_provider_account(uuid, uuid, text) to se
   prestador revogado continua conseguindo entrar e ver a prÃ³pria ficha (ele nÃ£o foi banido â€” a
   vitrine dele Ã© que saiu do ar), e **nÃ£o** consegue reativar o alcance sozinho.
 
-- [ ] **Step 7: gate e commit**
+- [x] **Step 7: gate e commit**
 
 ```bash
 npx pnpm@11.18.0 gate

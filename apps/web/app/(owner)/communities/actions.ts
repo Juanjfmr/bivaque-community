@@ -226,6 +226,38 @@ async function removeCommunityModeratorAction(formData: FormData) {
   revalidatePath(`/communities/${communityId}/admin/moderators`)
 }
 
+// Onda G Task 3, Step 6: revogar a ficha de um prestador é ato do dono da
+// comunidade que o atestou (ADR conta-de-prestador, decisão 2). O RPC
+// reconfere a posse no banco; aqui o caller real sai do contexto
+// autenticado, nunca do FormData.
+async function revokeProviderAccountAction(formData: FormData) {
+  const communityId = formData.get("communityId")
+  const providerUserId = formData.get("providerUserId")
+  const reason = formData.get("reason")
+  if (typeof communityId !== "string" || communityId.length === 0) {
+    throw new Error("communityId required")
+  }
+  if (typeof providerUserId !== "string" || providerUserId.length === 0) {
+    throw new Error("providerUserId required")
+  }
+  if (typeof reason !== "string" || reason.trim().length === 0) {
+    throw new Error("a revogação exige motivo")
+  }
+
+  const callerId = await requireCallerUserId()
+  const serviceClient = createServiceClient()
+  const { error } = await serviceClient.rpc("revoke_provider_account", {
+    p_provider_user_id: providerUserId,
+    p_owner_user_id: callerId,
+    p_reason: reason.trim(),
+  })
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  revalidatePath(`/communities/${communityId}/admin/providers`)
+}
+
 export {
   addCommunityModeratorAction,
   approveCommunityMemberAction,
@@ -233,4 +265,5 @@ export {
   removeCommunityMemberAction,
   removeCommunityMembersBatchAction,
   removeCommunityModeratorAction,
+  revokeProviderAccountAction,
 }

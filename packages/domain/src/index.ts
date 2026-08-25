@@ -30,6 +30,41 @@ export const RECOMMENDATION_CATEGORIES = [
 ] as const
 export type RecommendationCategory = (typeof RECOMMENDATION_CATEGORIES)[number]
 
+// BIVAQUE.md §7.2.1 — lista fechada. Não existe "Outros": o que não couber
+// exige decisão de produto, e uma categoria só se divide acima de ~15 fichas
+// ativas. Produtos e serviços convivem nesta mesma taxonomia.
+export const PROVIDER_CATEGORIES = [
+  "alimentacao",
+  "casa_e_reformas",
+  "assistencia_tecnica",
+  "mudanca_e_transporte",
+  "imoveis",
+  "documentacao_e_financas",
+  "saude_e_bem_estar",
+  "beleza",
+  "educacao_e_aulas",
+  "automotivo",
+  "eventos_e_festas",
+  "pets",
+] as const
+
+export type ProviderCategory = (typeof PROVIDER_CATEGORIES)[number]
+
+export const PROVIDER_CATEGORY_LABELS: Record<ProviderCategory, string> = {
+  alimentacao: "Alimentação",
+  casa_e_reformas: "Casa e reformas",
+  assistencia_tecnica: "Assistência técnica",
+  mudanca_e_transporte: "Mudança e transporte",
+  imoveis: "Imóveis",
+  documentacao_e_financas: "Documentação e finanças",
+  saude_e_bem_estar: "Saúde e bem-estar",
+  beleza: "Beleza",
+  educacao_e_aulas: "Educação e aulas",
+  automotivo: "Automotivo",
+  eventos_e_festas: "Eventos e festas",
+  pets: "Pets",
+}
+
 export const POST_TYPES = ["text", "photo", "link", "poll"] as const
 export type PostType = (typeof POST_TYPES)[number]
 
