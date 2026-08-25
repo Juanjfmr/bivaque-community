@@ -107,9 +107,20 @@ test.describe("group admin cycle", () => {
 
     // When they request entry to a private group
     await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
-    await page.getByRole("button", { name: "Pedir entrada" }).click()
+
+    // Idempotente: com a self-visibility da própria linha (20260825143505),
+    // um pedido pendente deixado por uma execução anterior já renderiza
+    // "Cancelar pedido" na carga da página. O clique em "Pedir entrada"
+    // acontece só quando o botão existe; a asserção final vale nos dois
+    // caminhos.
+    const pedir = page.getByRole("button", { name: "Pedir entrada" })
+    if (await pedir.isVisible().catch(() => false)) {
+      await pedir.click()
+    }
 
     // Then the cancel button is visible, replacing the request button
-    await expect(page.getByRole("button", { name: /Cancelar pedido/i })).toBeVisible()
+    await expect(page.getByRole("button", { name: /Cancelar pedido/i })).toBeVisible({
+      timeout: 15000,
+    })
   })
 })

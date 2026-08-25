@@ -14,14 +14,21 @@
 // NAO usa IDs do fixture pgTAP (faixa 60000000-..., 70000000-..., 10000000-...).
 // Conforme apps/web/AGENTS.md §E2E data boundary: pgTAP usa fixtures
 // separadas; o seed real (supabase/seed.sql) gera IDs em outra faixa.
-// Aqui so usamos o email `visual@` que existe em ambos, mas a denuncia
-// e feita via UI -- o target_id sai do banco de verdade, nao da fixture.
+// O denunciante é `dono-vila@` (dona da Vila Ajuricaba): a denúncia acontece
+// no feed da vila, que precisa ter posts. `visual@` ficou deliberadamente sem
+// comunidade no seed (pivot D48/E2) — o /community dela renderiza
+// CityReference e não tem menu de post nenhum.
 
+import type { BrowserContext } from "@playwright/test"
 import { expect, request, test } from "@playwright/test"
-import { readEnvLocal, seedSession } from "./helpers/session"
+import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
-const REPORT_REASON = "ele publicou um conteudo que viola as regras da comunidade"
+const APP_BASE = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
+const CONSENT_COOKIE = "bivaque-consent-version"
+const CURRENT_CONSENT = "1"
+const REPORTER_EMAIL = "dono-vila@bivaque.example.invalid"
+const OPERATOR_EMAIL = "operador@bivaque.example.invalid"
 
 interface PasswordGrantBody {
   access_token: string
@@ -38,12 +45,27 @@ interface ReportRow {
   status: string
 }
 
-async function mintSession(email: string, password: string): Promise<PasswordGrantBody> {
+function requireCredentials(): { anonKey: string; password: string } {
   const anonKey =
     process.env["SUPABASE_ANON_KEY"] ??
     readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
     readEnvLocal("SUPABASE_ANON_KEY")
-  if (!anonKey) throw new Error("SUPABASE_ANON_KEY is required")
+  const password = process.env["USER_PASSWORD"] ?? readEnvLocal("BIVAQUE_VISUAL_PASSWORD")
+  if (!anonKey) {
+    throw new Error(
+      "SUPABASE_ANON_KEY is required. Set it in the environment or as NEXT_PUBLIC_SUPABASE_ANON_KEY in apps/web/.env.local.",
+    )
+  }
+  if (!password) {
+    throw new Error(
+      "USER_PASSWORD is required. Set it in the environment or as BIVAQUE_VISUAL_PASSWORD in apps/web/.env.local.",
+    )
+  }
+  return { anonKey, password }
+}
+
+async function mintSession(email: string): Promise<PasswordGrantBody> {
+  const { anonKey, password } = requireCredentials()
 
   const api = await request.newContext()
   const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
@@ -57,6 +79,56 @@ async function mintSession(email: string, password: string): Promise<PasswordGra
   const body = (await response.json()) as PasswordGrantBody
   await api.dispose()
   return body
+}
+
+async function signInAsCookie(context: BrowserContext, email: string): Promise<void> {
+  const grant = await mintSession(email)
+  const cookieValue = encodeAuthCookieValue(grant, email)
+  const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
+  const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400
+  const shared = {
+    domain: "127.0.0.1",
+    path: "/",
+    expires,
+    httpOnly: false,
+    secure: false,
+    sameSite: "Lax" as const,
+  }
+  await context.addCookies([
+    { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
+    { name: CONSENT_COOKIE, value: CURRENT_CONSENT, ...shared },
+  ])
+}
+
+async function dismissStaleOpenReports(anonKey: string): Promise<void> {
+  // Idempotência entre viewports e re-execuções contra o mesmo banco: a
+  // unicidade de denúncia aberta é (repórter × alvo) e o feed é estático —
+  // sem esta limpeza, o segundo viewport esbarra no conflito criado pelo
+  // primeiro. Fecha pelo caminho real de operador (/api/admin/reports);
+  // 'dismiss' registra o desfecho sem ocultar o conteúdo denunciado.
+  const reporter = await mintSession(REPORTER_EMAIL)
+  const open = (await fetchOwnReports(anonKey, reporter.access_token)).filter(
+    (r) => r.status === "open",
+  )
+  if (open.length === 0) return
+
+  const operator = await mintSession(OPERATOR_EMAIL)
+  const api = await request.newContext()
+  try {
+    for (const row of open) {
+      const response = await api.post(`${APP_BASE}/api/admin/reports/${row.id}`, {
+        headers: { authorization: `Bearer ${operator.access_token}` },
+        // O nome externo da acao e "resolve" e o banco o traduz para
+        // 'dismiss': registra o desfecho sem ocultar o conteudo denunciado.
+        data: { action: "resolve", note: "limpeza do lote E2E" },
+      })
+      if (response.status() !== 200) {
+        throw new Error(`dismiss do report ${row.id} falhou com ${response.status()}`)
+      }
+    }
+  } finally {
+    await api.dispose()
+  }
 }
 
 async function fetchOwnReports(anonKey: string, accessToken: string): Promise<ReportRow[]> {
@@ -96,34 +168,38 @@ async function fetchReportNotifications(
 
 test.describe("report flow: membro denuncia e recebe retorno", () => {
   test("denunciar um post cria linha em public.reports com status=open", async ({ browser }) => {
-    const context = await browser.newContext()
-    const page = await context.newPage()
-    await seedSession(context)
-    await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto("/community", { waitUntil: "load" })
-
-    const postMenu = page.getByRole("button", { name: "Mais opcoes" }).first()
-    if (await postMenu.isVisible().catch(() => false)) {
-      await postMenu.click()
-      const reportItem = page.getByRole("menuitem", { name: /Denunciar/i })
-      await reportItem.click()
-      await page.getByRole("textbox", { name: "Motivo da denuncia" }).fill(REPORT_REASON)
-      await page.getByRole("button", { name: "Enviar denuncia" }).click()
-
-      await expect(page.getByText(/A analise acontece em ate 48 horas/)).toBeVisible({
-        timeout: 5000,
-      })
-    }
-
-    const session = await mintSession("visual@bivaque.example.invalid", "bivaque-e2e-local")
+    // Motivo único por execução: denúncia aberta duplicada do mesmo repórter
+    // no mesmo alvo é bloqueada por índice parcial — rodar o spec duas vezes
+    // contra o mesmo banco não pode esbarrar nesse conflito.
+    const reason = `ele publicou um conteudo que viola as regras da comunidade ${Date.now().toString(36)}`
     const anonKey =
       process.env["SUPABASE_ANON_KEY"] ??
       readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
       readEnvLocal("SUPABASE_ANON_KEY")
     if (!anonKey) throw new Error("SUPABASE_ANON_KEY is required")
+    await dismissStaleOpenReports(anonKey)
+
+    const context = await browser.newContext()
+    const page = await context.newPage()
+    await signInAsCookie(context, REPORTER_EMAIL)
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto("/community", { waitUntil: "load" })
+
+    const postMenu = page.getByRole("button", { name: "Mais opcoes" }).first()
+    await expect(postMenu).toBeVisible({ timeout: 10000 })
+    await postMenu.click()
+    await page.getByRole("menuitem", { name: /Denunciar/i }).click()
+    await page.getByRole("textbox", { name: "Motivo da denuncia" }).fill(reason)
+    await page.getByRole("button", { name: "Enviar denuncia" }).click()
+
+    await expect(page.getByText(/A analise acontece em ate 48 horas/)).toBeVisible({
+      timeout: 5000,
+    })
+
+    const session = await mintSession(REPORTER_EMAIL)
 
     const reports = await fetchOwnReports(anonKey, session.access_token)
-    const own = reports.find((r) => r.reason === REPORT_REASON)
+    const own = reports.find((r) => r.reason === reason)
     expect(own).toBeTruthy()
     expect(own?.status).toBe("open")
     expect(own?.reason).toContain("regra")

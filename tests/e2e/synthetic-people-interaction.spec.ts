@@ -39,6 +39,10 @@ const CURRENT_CONSENT = "1"
 // Identidades do seed (públicas e descartáveis por design), mesmo padrão de
 // group-event-detail-denials.spec.ts. A fórmula de group_memberships do seed
 // coloca membro-4 no grupo 6 ("Mães da Cidade") e membro-6 apenas no grupo 7.
+// As três personas do cenário de interação precisam de feed de vila real:
+// o seed as aprova na Vila Ajuricaba. Sem comunidade aprovada, /community
+// renderiza CityReference (D48), que não lista posts, e o post nunca
+// renderiza para curtir/comentar/notificar.
 const AUTHOR_EMAIL = "membro-1@bivaque.example.invalid"
 const COMMENTER_EMAIL = "membro-2@bivaque.example.invalid"
 const SECOND_REACTOR_EMAIL = "membro-3@bivaque.example.invalid"
@@ -230,6 +234,9 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
     //    via API (não pela página): a página de notificações tem uma corrida
     //    de sessão em navegação fresca e mostra a lista vazia mesmo com
     //    notificações no banco. O trigger notify_comment prova o pipeline.
+    //    A busca é filtrada por alvo: um limit=100 sem filtro deixa a
+    //    notificação deste run fora da primeira página conforme o banco
+    //    acumula linhas ao longo das execuções.
     const authorGrant = await mintSession(AUTHOR_EMAIL)
     const { anonKey } = requireCredentials()
     const api = await request.newContext()
@@ -239,14 +246,15 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
       { headers },
     )
     const postRows = (await postRes.json()) as Array<{ id: string }>
+    expect(postRows).toHaveLength(1)
+    const postId = postRows[0].id
     const notifRes = await api.get(
-      `${SUPABASE_URL}/rest/v1/notifications?select=type,target_id&limit=100`,
+      `${SUPABASE_URL}/rest/v1/notifications?select=type,target_id&type=eq.comment&target_id=eq.${postId}`,
       { headers },
     )
     const notifs = (await notifRes.json()) as Array<{ type: string; target_id: string }>
     await api.dispose()
-    expect(postRows).toHaveLength(1)
-    expect(notifs.some((n) => n.type === "comment" && n.target_id === postRows[0].id)).toBe(true)
+    expect(notifs.some((n) => n.type === "comment" && n.target_id === postId)).toBe(true)
   })
 
   test("grupo privado: membro vê a lista, não-membro vê só os metadados", async ({ browser }) => {
