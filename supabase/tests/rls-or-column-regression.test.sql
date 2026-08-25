@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(70);
+select plan(68);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- GUARD 1: anon/authenticated have ZERO privileges on private.* tables
@@ -145,7 +145,7 @@ select results_eq(
         'posts', 'comments', 'groups', 'group_memberships',
         'recommendation_requests', 'recommendation_replies', 'recommendation_saves',
         'events', 'event_rsvps', 'notifications',
-        'dm_conversations', 'dm_messages', 'dm_blocks', 'dm_reports',
+        'dm_conversations', 'dm_messages', 'dm_blocks',
         'arrival_guide_entries',
         'reports'
       )
@@ -433,21 +433,6 @@ select results_eq(
     select count(*)
     from pg_policies
     where schemaname = 'public'
-      and tablename = 'dm_reports'
-      and policyname in (
-        'dm_reports_select_own',
-        'dm_reports_insert_own'
-      )
-  $$,
-  array[2::bigint],
-  'GUARD: all 2 dm_reports policies intact'
-);
-
-select results_eq(
-  $$
-    select count(*)
-    from pg_policies
-    where schemaname = 'public'
       and tablename = 'reports'
       and policyname in (
         'reports_select_reporter_only',
@@ -693,17 +678,6 @@ select results_eq(
     select count(*)
     from pg_policies
     where schemaname = 'public'
-      and tablename = 'dm_reports'
-  $$,
-  array[2::bigint],
-  'GUARD: dm_reports has exactly 2 policies'
-);
-
-select results_eq(
-  $$
-    select count(*)
-    from pg_policies
-    where schemaname = 'public'
       and tablename = 'reports'
   $$,
   array[2::bigint],
@@ -722,7 +696,7 @@ select results_eq(
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- GUARD 11: RLS is enabled AND forced on all 23 application tables
+-- GUARD 11: RLS is enabled AND forced on all 22 application tables
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 select results_eq(
@@ -736,7 +710,7 @@ select results_eq(
         'posts', 'comments', 'groups', 'group_memberships',
         'recommendation_requests', 'recommendation_replies', 'recommendation_saves',
         'events', 'event_rsvps', 'notifications',
-        'dm_conversations', 'dm_messages', 'dm_blocks', 'dm_reports',
+        'dm_conversations', 'dm_messages', 'dm_blocks',
         'arrival_guide_entries',
         'reports',
         'verification_outcomes', 'family_invitations', 'family_account_links'
@@ -744,8 +718,8 @@ select results_eq(
       and c.relrowsecurity
       and c.relforcerowsecurity
   $$,
-  array[23::bigint],
-  'GUARD: RLS enabled and forced on all 23 application tables'
+  array[22::bigint],
+  'GUARD: RLS enabled and forced on all 22 application tables'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════

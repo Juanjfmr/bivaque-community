@@ -334,38 +334,6 @@ export type Database = {
           },
         ]
       }
-      dm_reports: {
-        Row: {
-          created_at: string
-          id: string
-          message_id: string
-          reason: string
-          reporter_user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message_id: string
-          reason: string
-          reporter_user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message_id?: string
-          reason?: string
-          reporter_user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dm_reports_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "dm_messages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       event_invites: {
         Row: {
           created_at: string

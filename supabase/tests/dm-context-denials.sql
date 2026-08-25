@@ -8,6 +8,14 @@ select plan(19);
 \ir fixtures/authz.inc
 \ir fixtures/dm.inc
 
+set local role postgres;
+insert into public.locality_memberships (user_id, locality_id)
+values (
+  '10000000-0000-4000-8000-000000000008',
+  '00000000-0000-4000-8000-000000000001'
+)
+on conflict do nothing;
+
 -- ── no shared context: cannot create conversation ────────────────────────────
 -- 009 and 010 share no group, event, recommendation, or family link.
 
@@ -213,7 +221,7 @@ select throws_ok(
     'insert into public.dm_messages (conversation_id, sender_id, content)
      values (%L, %L, %L)',
     :'dm_conv_id',
-    '10000000-0000-4000-8000-000000000010',
+    '10000000-0000-4000-8000-000000000005',
     'Mensagem intrusa'
   ),
   42501,
@@ -244,27 +252,28 @@ select lives_ok(
   'participant CAN insert message — positive identity check'
 );
 
--- ── non-participant cannot report a message ──────────────────────────────────
+-- ── non-member cannot report any message ─────────────────────────────────────
 
 set local role authenticated;
 select set_config(
   'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000010',
+  '10000000-0000-4000-8000-000000000005',
   true
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   format(
-    'insert into public.dm_reports (message_id, reporter_user_id, reason)
-     values (%L, %L, %L)',
+    'insert into public.reports (reporter_user_id, target_type, target_id, reason)
+     values (%L, %L, %L, %L)',
+    '10000000-0000-4000-8000-000000000005',
+    'message',
     :'dm_msg_id',
-    '10000000-0000-4000-8000-000000000010',
     'Relatando mensagem de outra conversa'
   ),
   42501,
   null,
-  'non-participant cannot report a message from another conversation'
+  'non-member cannot report any message'
 );
 
 -- Positive identity: 008 CAN report a message in their own conversation
@@ -278,15 +287,17 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.dm_reports (message_id, reporter_user_id, reason)
-    select m.id,
-           '10000000-0000-4000-8000-000000000008',
+    insert into public.reports (reporter_user_id, target_type, target_id, reason)
+    select '10000000-0000-4000-8000-000000000008',
+           'message',
+           m.id,
            'Reporte legitimo de conteudo proprio'
     from public.dm_messages m
     join public.dm_conversations c
       on c.id = m.conversation_id
     where c.participant_a = '10000000-0000-4000-8000-000000000008'
       and c.participant_b = '10000000-0000-4000-8000-000000000009'
+      and m.sender_id = '10000000-0000-4000-8000-000000000009'
     limit 1
   $$,
   'participant CAN report message in own conversation — positive identity check'

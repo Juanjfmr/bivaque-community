@@ -8,6 +8,14 @@ select plan(21);
 \ir fixtures/authz.inc
 \ir fixtures/dm.inc
 
+set local role postgres;
+insert into public.locality_memberships (user_id, locality_id)
+values (
+  '10000000-0000-4000-8000-000000000008',
+  '00000000-0000-4000-8000-000000000001'
+)
+on conflict do nothing;
+
 -- ── helper: can_dm_between ───────────────────────────────────────────────────
 
 -- Shared group: 008 and 009 share group 40000000-0000-4000-8000-000000000001
@@ -259,22 +267,27 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.dm_reports (message_id, reporter_user_id, reason)
-    select m.id,
-           '10000000-0000-4000-8000-000000000008',
+    insert into public.reports (reporter_user_id, target_type, target_id, reason)
+    select '10000000-0000-4000-8000-000000000008',
+           'message',
+           m.id,
            'Esta mensagem contem conteudo inapropriado para a comunidade'
     from public.dm_messages m
     join public.dm_conversations c
       on c.id = m.conversation_id
     where c.participant_a = '10000000-0000-4000-8000-000000000008'
       and c.context_type = 'shared_group'
+      and m.sender_id = '10000000-0000-4000-8000-000000000009'
     limit 1
   $$,
   'participant can report a message in their conversation'
 );
 
 select results_eq(
-  'select count(*) from public.dm_reports',
+  $$
+    select count(*) from public.reports
+    where reporter_user_id = '10000000-0000-4000-8000-000000000008'
+  $$,
   array[1::bigint],
   'reporter sees their own report'
 );

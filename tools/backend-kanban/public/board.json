@@ -170,7 +170,7 @@
       "proof": [
         "Evento-convite foi corrigido após quatro falhas encadeadas",
         "community batch approval agora tem caller explícito e QA manual",
-    "Fechado 2026-08-25: test:db com 1052 asserts verdes cobrindo as suítes do card (community-rpcs, event-invite-rpc-exposure, recomendações, eventos); lote funcional E2E da comunidade verde após os consertos de self-visibility e reporter default; entrega de notificação por e-mail segue no BLOCK-RESEND"
+        "Fechado 2026-08-25: test:db com 1052 asserts verdes cobrindo as suítes do card (community-rpcs, event-invite-rpc-exposure, recomendações, eventos); lote funcional E2E da comunidade verde após os consertos de self-visibility e reporter default; entrega de notificação por e-mail segue no BLOCK-RESEND"
       ],
       "tests": [
         "supabase/tests/event-invite-rpc-exposure.sql",
@@ -200,7 +200,7 @@
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
-    "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento"
+        "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento"
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
       "links": ["Protocolo | ../../docs/superpowers/plans/README.md"],
@@ -712,7 +712,7 @@
         "Transferência: 20260819021416_locality_transfer + onda T",
         "Feed locality-reach: 20260821000000_community_feed_locality_reach",
         "PILOT_LOCALITY_ID fora do runtime (grep: só PILOT_LOCALITY_CODE estático)",
-    "Residual executado (2026-08-25): empty-locality.spec verde nos 3 viewports após a vila do Rio entrar no seed; two-localities rodou verde na suíte completa de 2026-08-24 (ausente da lista de 65 falhas)"
+        "Residual executado (2026-08-25): empty-locality.spec verde nos 3 viewports após a vila do Rio entrar no seed; two-localities rodou verde na suíte completa de 2026-08-24 (ausente da lista de 65 falhas)"
       ],
       "links": ["Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"],
       "updatedAt": "2026-08-25",
