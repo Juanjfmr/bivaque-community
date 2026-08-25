@@ -818,7 +818,7 @@ entre as duas coisas Ã© o que o produto vende.
 - Modificar: `apps/web/app/components/bivaque/city-reference.tsx` (a seÃ§Ã£o `city-vitrine-heading`)
 - Criar: `apps/web/app/(shell)/prestadores/page.tsx`
 
-- [ ] **Step 1: extensÃ£o, Ã­ndice e o RPC**
+- [x] **Step 1: extensÃ£o, Ã­ndice e o RPC** — pg_trgm + índice parcial + `search_providers` security definer (20260825203815)
 
 ```sql
 create extension if not exists pg_trgm with schema extensions;
@@ -874,7 +874,7 @@ grant execute on function public.search_providers(public.provider_category, uuid
   to authenticated;
 ```
 
-- [ ] **Step 2: o pgTAP da busca â€” e o teste que existe sÃ³ para a D29**
+- [x] **Step 2: o pgTAP da busca â€” e o teste que existe sÃ³ para a D29** — 9 asserts em provider-search-scope.sql, incluindo a guarda D29 (grátis antes de paga por relevância igual)
 
   `supabase/tests/provider-search-scope.sql`:
 
@@ -887,7 +887,7 @@ grant execute on function public.search_providers(public.provider_category, uuid
     busca **tem que** devolver a grÃ¡tis primeiro. Se um dia alguÃ©m "otimizar" a ordenaÃ§Ã£o para
     priorizar o pagante, este teste fica vermelho, e Ã© para isso que ele existe.
 
-- [ ] **Step 3: a vitrine entra em "cidade"**
+- [x] **Step 3: a vitrine entra em "cidade"** — filtros só quando há ficha; vazio honesto sem promessa de onda
 
   Substitua o `EmptyState` de `city-reference.tsx` (seÃ§Ã£o `city-vitrine-heading`, o bloco que
   hoje diz *"Isso Ã© trabalho da onda G"*) por: filtro de categoria (as doze), campo de busca
@@ -898,7 +898,7 @@ grant execute on function public.search_providers(public.provider_category, uuid
   parecer vazio ao mesmo tempo. **NÃ£o abra as doze categorias como abas vazias**; mostre o
   filtro sÃ³ quando houver ficha.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit** — fechado em 2026-08-25
 
 ```bash
 npx pnpm@11.18.0 gate

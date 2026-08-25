@@ -1963,6 +1963,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      search_providers: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["provider_category"]
+          p_community_id?: string
+          p_query?: string
+        }
+        Returns: {
+          bio: string
+          category: Database["public"]["Enums"]["provider_category"]
+          display_name: string
+          id: string
+          reach_source: Database["public"]["Enums"]["provider_reach_source"]
+        }[]
+      }
       submit_verification_document: {
         Args: {
           p_mime_type: string
