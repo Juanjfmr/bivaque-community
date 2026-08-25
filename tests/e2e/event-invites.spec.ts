@@ -6,6 +6,16 @@
 // realigned against a real seed.sql event, signed in as its actual
 // organizer (the default seedSession() account organizes nothing in the
 // seed) — found running the E2E realignment.
+//
+// Realigned once more: the invite fan-out section (apps/web/(shell)/events/
+// [id]/page.tsx) only renders when the event is not cancelled AND not
+// completed; the seed marks events 1..4 as `completed` and 5..10 as
+// `upcoming`. Event 1 with organizer membro-2 was unusable from this
+// surface; event 5 ("Piquenique das famílias", organized by membro-6 per
+// the cycle `30000000-...-(1 + (i % 12))`) is upcoming and exercises the
+// invite section. event-rsvp keeps the previous event id because the
+// three-state RSVP UI does NOT gate on `isCompleted` — it only gates on
+// `isCancelled`.
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
@@ -15,9 +25,10 @@ const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
 const CURRENT_CONSENT = "1"
 
-// "Caminhada matinal no parque", organized by membro-2 (30000000-...-0002).
-const EVENT_ID = "70000000-0000-4000-8000-000000000001"
-const ORGANIZER_EMAIL = "membro-2@bivaque.example.invalid"
+// "Piquenique das famílias" — upcoming (i=5 of seed.sql events); organized by
+// membro-6 (30000000-...-(1 + (5 % 12)) = 30000000-...-0006).
+const EVENT_ID = "70000000-0000-4000-8000-000000000005"
+const ORGANIZER_EMAIL = "membro-6@bivaque.example.invalid"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
