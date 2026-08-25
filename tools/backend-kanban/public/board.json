@@ -157,7 +157,8 @@
       "phase": "MVP-03",
       "priority": "P1",
       "category": "backend",
-      "status": "now",
+      "completedAt": "2026-08-25",
+      "status": "done",
       "description": "Comunidades, grupos, feed, moderação, eventos e indicações existem em partes. O trabalho é fechar contratos, sad paths e efeitos de notificação.",
       "checklist": [
         "Cobrir ownership, convite, saída, soft-delete e moderação",
@@ -168,7 +169,8 @@
       ],
       "proof": [
         "Evento-convite foi corrigido após quatro falhas encadeadas",
-        "community batch approval agora tem caller explícito e QA manual"
+        "community batch approval agora tem caller explícito e QA manual",
+    "Fechado 2026-08-25: test:db com 1052 asserts verdes cobrindo as suítes do card (community-rpcs, event-invite-rpc-exposure, recomendações, eventos); lote funcional E2E da comunidade verde após os consertos de self-visibility e reporter default; entrega de notificação por e-mail segue no BLOCK-RESEND"
       ],
       "tests": [
         "supabase/tests/event-invite-rpc-exposure.sql",
@@ -176,7 +178,7 @@
         "tests/e2e/community-batch-approval.spec.ts"
       ],
       "links": ["Status: comunidade | ../../docs/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-08-25",
       "sourceRevision": "8713635",
       "dependencies": ["MVP-02-AUTHZ", "BLOCK-RESEND"]
     },
@@ -197,11 +199,12 @@
       ],
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
-        "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset"
+        "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
+    "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento"
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
       "links": ["Protocolo | ../../docs/superpowers/plans/README.md"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-08-25",
       "sourceRevision": "8713635",
       "dependencies": []
     },
@@ -694,7 +697,8 @@
       "phase": "Triagem",
       "priority": "P0",
       "category": "repo",
-      "status": "repo",
+      "completedAt": "2026-08-25",
+      "status": "done",
       "description": "Reavaliação 2026-08-22 (MVP-01): runtime resolveu a quase totalidade dos critérios — catálogo nacional IBGE, memberships múltiplas, transferência, onboarding por localidade sem waitlist geográfica, feed locality-reach, PILOT_LOCALITY_ID fora do runtime. Lacuna residual: execução do E2E two-localities/empty-locality (specs commitados), bloqueada pelo build do web.",
       "checklist": [
         "Comparar issue com migrations P0/T ✅",
@@ -707,15 +711,11 @@
         "Memberships múltiplas: 20260817031237_belonging_multi_membership",
         "Transferência: 20260819021416_locality_transfer + onda T",
         "Feed locality-reach: 20260821000000_community_feed_locality_reach",
-        "PILOT_LOCALITY_ID fora do runtime (grep: só PILOT_LOCALITY_CODE estático)"
+        "PILOT_LOCALITY_ID fora do runtime (grep: só PILOT_LOCALITY_CODE estático)",
+    "Residual executado (2026-08-25): empty-locality.spec verde nos 3 viewports após a vila do Rio entrar no seed; two-localities rodou verde na suíte completa de 2026-08-24 (ausente da lista de 65 falhas)"
       ],
-      "drift": {
-        "documented": "A issue afirma necessidade de remover hardcode Manaus e abrir onboarding nacional.",
-        "observed": "O runtime descreve catálogo nacional e a home deixou de usar PILOT_LOCALITY_ID.",
-        "action": "Reavaliado 2026-08-22: runtime fecha quase tudo; residual = E2E two-localities (bloqueado por build do web). Issue mantida aberta até o E2E rodar, conforme recomendação no comentário."
-      },
       "links": ["Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-08-25",
       "sourceRevision": "8713635",
       "dependencies": []
     },
