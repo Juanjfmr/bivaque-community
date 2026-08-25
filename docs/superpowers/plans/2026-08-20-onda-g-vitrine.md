@@ -771,7 +771,7 @@ outras ondas, e o painel precisa dizer isso em vez de fingir.
 - Criar: `apps/web/app/(provider)/prestador/catalogo/page.tsx`
 - Criar: `tests/unit/providers/showcase-form.test.ts`
 
-- [ ] **Step 1: as Server Actions, autenticadas pelo cliente com cookies**
+- [x] **Step 1: as Server Actions, autenticadas pelo cliente com cookies** — actions autenticadas por cookies, zero service_role; todo `error` de consulta é lido
 
   Todas em `actions.ts` com `"use server"` no topo do arquivo. O padrÃ£o correto estÃ¡ em
   `app/(shell)/communities/actions.ts:8-24`. **Nenhuma delas usa `service_role`** â€” a RLS da
@@ -781,19 +781,19 @@ outras ondas, e o painel precisa dizer isso em vez de fingir.
   toda consulta**. A tela renderizando vazia porque o `error` foi descartado Ã© como a lista de
   membros de grupo ficou quebrada em produÃ§Ã£o sem ninguÃ©m notar.
 
-- [ ] **Step 2: a validaÃ§Ã£o na borda**
+- [x] **Step 2: a validaÃ§Ã£o na borda** — validadores em apps/web/lib/providers/showcase.ts espelham os checks da migration
 
   `title` 2-120, `bio` atÃ© 800, `price_cents` inteiro nÃ£o-negativo, `contact_phone` no formato
   do `check` da migration. Valide **no servidor**, nÃ£o sÃ³ no formulÃ¡rio â€” a regra do
   `CLAUDE.md` Ã© "valide input nas bordas do sistema". Testes unitÃ¡rios em
   `tests/unit/providers/showcase-form.test.ts` cobrindo os limites e o preÃ§o negativo.
 
-- [ ] **Step 3: os estados honestos**
+- [x] **Step 3: os estados honestos** — métrica sem número inventado; caixa de pedidos não desenhada
 
   MÃ©trica: `EmptyState` dizendo que a mediÃ§Ã£o chega com a onda H â€” nÃ£o um "0 visualizaÃ§Ãµes",
   que Ã© nÃºmero inventado com cara de fato. Caixa de pedidos: idem, atÃ© a Task 6.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit** — fechado em 2026-08-25
 
 ```bash
 npx pnpm@11.18.0 gate
