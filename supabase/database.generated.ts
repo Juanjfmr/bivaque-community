@@ -1298,6 +1298,10 @@ export type Database = {
         Args: { p_accepted_by_user_id: string; p_token_digest: string }
         Returns: string
       }
+      accept_provider_invitation: {
+        Args: { p_email: string; p_token: string }
+        Returns: string
+      }
       add_community_moderator: {
         Args: {
           p_caller_user_id: string
@@ -1397,6 +1401,14 @@ export type Database = {
           p_description: string
           p_name: string
           p_visibility: Database["public"]["Enums"]["group_visibility"]
+        }
+        Returns: string
+      }
+      create_provider_invitation: {
+        Args: {
+          p_community_id: string
+          p_display_name: string
+          p_email: string
         }
         Returns: string
       }

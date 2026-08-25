@@ -11,6 +11,7 @@ const PUBLIC_PATHS = [
   "/api",
   "/_next",
   "/landing",
+  "/prestador-convite",
   "/favicon.ico",
   "/icon.svg",
 ]

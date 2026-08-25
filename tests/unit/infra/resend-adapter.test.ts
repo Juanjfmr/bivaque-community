@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { createChannelAdapters } from "../../../apps/web/lib/outbox/adapters"
 
 afterEach(() => {
+  delete process.env["NEXT_PUBLIC_SITE_URL"]
+  delete process.env["VERCEL_URL"]
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
@@ -63,6 +65,30 @@ describe("email channel adapter (D1 Task 4 — Resend)", () => {
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     const body = JSON.parse(String(init.body))
     expect(body.subject).toContain("não foi aprovada")
+  })
+
+  it("renders the provider invitation with its email-bound acceptance link", async () => {
+    process.env["RESEND_API_KEY"] = "re_testkey"
+    process.env["RESEND_FROM_EMAIL"] = "bivaque@example.com"
+    process.env["NEXT_PUBLIC_SITE_URL"] = "https://bivaque.example"
+
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }))
+    vi.stubGlobal("fetch", fetchMock)
+
+    const adapters = createChannelAdapters()
+    await adapters["email"].send(
+      message({
+        recipient: "provider@example.invalid",
+        type: "provider_invite",
+        payload: { invite_path: `/prestador-convite/${"ab".repeat(32)}` },
+      }),
+    )
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    const body = JSON.parse(String(init.body))
+    expect(body.to).toEqual(["provider@example.invalid"])
+    expect(body.subject).toContain("oferecer seus serviços")
+    expect(body.text).toContain(`https://bivaque.example/prestador-convite/${"ab".repeat(32)}`)
   })
 
   it("returns a failure with status on provider error so the worker retries", async () => {

@@ -1,153 +1,153 @@
-# Onda G — a vitrine
+﻿# Onda G â€” a vitrine
 
-> Plano de execução. Escrito em **2026-08-20**. Marque `- [x]` conforme avança e **commite por
+> Plano de execuÃ§Ã£o. Escrito em **2026-08-20**. Marque `- [x]` conforme avanÃ§a e **commite por
 > task**.
 >
-> Leia [`README.md`](README.md) deste diretório inteiro antes de abrir qualquer task.
+> Leia [`README.md`](README.md) deste diretÃ³rio inteiro antes de abrir qualquer task.
 
-## O que esta onda é
+## O que esta onda Ã©
 
-A vitrine é uma das quatro coisas que o nível municipal é (`BIVAQUE.md` §6.2) e é **o
-comportamento que o grupo de WhatsApp de 630 pessoas já demonstra hoje** — peixe, marmita,
-ar-condicionado, despachante. É também a **única onda com receita** (§10.2).
+A vitrine Ã© uma das quatro coisas que o nÃ­vel municipal Ã© (`BIVAQUE.md` Â§6.2) e Ã© **o
+comportamento que o grupo de WhatsApp de 630 pessoas jÃ¡ demonstra hoje** â€” peixe, marmita,
+ar-condicionado, despachante. Ã‰ tambÃ©m a **Ãºnica onda com receita** (Â§10.2).
 
 Entrega, na ordem: a conta do prestador civil, a ficha, o painel dele, a busca, a conversa
-membro ↔ prestador e o alcance pago.
+membro â†” prestador e o alcance pago.
 
-## O que esta onda não é
+## O que esta onda nÃ£o Ã©
 
-- **Não intermedia pagamento de serviço.** D26 e §7.3 regra 1: o dinheiro do corte de cabelo
-  nunca passa pelo Bivaque. O que se cobra é produto da plataforma (§7.2), nunca a transação
-  alheia. Se alguma task levar você a escrever "checkout do serviço", **pare e reporte**.
-- **Não ordena por dinheiro.** D29 e §7.3 regra 3. A ordenação é relevância e reputação. A
-  Task 7 tem um teste que existe só para provar isso.
-- **Não entrega prova social nem avisos.** D45 adia os dois: prova social depende do ciclo de
-  indicação rodando (onda F), avisos dependem de moderação (onda H).
-- **Não abre DM entre membros.** D31 mantém adiada. O que abre é **membro ↔ prestador** (D36).
+- **NÃ£o intermedia pagamento de serviÃ§o.** D26 e Â§7.3 regra 1: o dinheiro do corte de cabelo
+  nunca passa pelo Bivaque. O que se cobra Ã© produto da plataforma (Â§7.2), nunca a transaÃ§Ã£o
+  alheia. Se alguma task levar vocÃª a escrever "checkout do serviÃ§o", **pare e reporte**.
+- **NÃ£o ordena por dinheiro.** D29 e Â§7.3 regra 3. A ordenaÃ§Ã£o Ã© relevÃ¢ncia e reputaÃ§Ã£o. A
+  Task 7 tem um teste que existe sÃ³ para provar isso.
+- **NÃ£o entrega prova social nem avisos.** D45 adia os dois: prova social depende do ciclo de
+  indicaÃ§Ã£o rodando (onda F), avisos dependem de moderaÃ§Ã£o (onda H).
+- **NÃ£o abre DM entre membros.** D31 mantÃ©m adiada. O que abre Ã© **membro â†” prestador** (D36).
 
-## Dois blocos, e o segundo pode virar onda própria
+## Dois blocos, e o segundo pode virar onda prÃ³pria
 
 | Bloco | Tasks | Depende de CNPJ | O que entrega |
 |---|---|---|---|
-| **G1 — a vitrine** | 1 a 6 | não | conta, ficha, painel, busca, conversa |
-| **G2 — o alcance pago** | 7 e 8 | **sim** | assinatura, webhook, alcance além da vila |
+| **G1 â€” a vitrine** | 1 a 6 | nÃ£o | conta, ficha, painel, busca, conversa |
+| **G2 â€” o alcance pago** | 7 e 8 | **sim** | assinatura, webhook, alcance alÃ©m da vila |
 
-O `README.md` já previa "G — provavelmente dividida em duas". Está dividida aqui. Se dezembro
-apertar, **o corte é entre a Task 6 e a Task 7**, e o G1 sozinho entrega o §6.2 inteiro. A
-ordem de corte sugerida pela §9.1 é a mesma: monetização primeiro.
+O `README.md` jÃ¡ previa "G â€” provavelmente dividida em duas". EstÃ¡ dividida aqui. Se dezembro
+apertar, **o corte Ã© entre a Task 6 e a Task 7**, e o G1 sozinho entrega o Â§6.2 inteiro. A
+ordem de corte sugerida pela Â§9.1 Ã© a mesma: monetizaÃ§Ã£o primeiro.
 
 ---
 
-## Portão humano — dois ADRs antes da Task 1
+## PortÃ£o humano â€” dois ADRs antes da Task 1
 
 A [`RISK_MATRIX.md`](../../decisions/RISK_MATRIX.md) eleva automaticamente qualquer plano que
-contenha `marketplace`, `monetização`, `pricing`, `privacidade`, `visibilidade` ou `acesso` —
-esta onda contém os seis. E qualquer plano que toque RLS, dado pessoal ou pagamento **é R3**,
-o que exige **ADR aprovado, `critic_verdict: PASS` e aprovação humana registrada**.
+contenha `marketplace`, `monetizaÃ§Ã£o`, `pricing`, `privacidade`, `visibilidade` ou `acesso` â€”
+esta onda contÃ©m os seis. E qualquer plano que toque RLS, dado pessoal ou pagamento **Ã© R3**,
+o que exige **ADR aprovado, `critic_verdict: PASS` e aprovaÃ§Ã£o humana registrada**.
 
-Hoje **não existe ADR nenhum para a vitrine**. As decisões D20, D28, D37, D41, D44 e D45 vivem
-na tabela do §9 do `BIVAQUE.md`, que é onde moram as decisões **não-R3**. Isso é uma lacuna de
-governança, não um detalhe de forma: a onda G cria um **tipo de conta civil dentro de uma rede
-de militares identificáveis** e depois liga um meio de cobrança nela.
+Hoje **nÃ£o existe ADR nenhum para a vitrine**. As decisÃµes D20, D28, D37, D41, D44 e D45 vivem
+na tabela do Â§9 do `BIVAQUE.md`, que Ã© onde moram as decisÃµes **nÃ£o-R3**. Isso Ã© uma lacuna de
+governanÃ§a, nÃ£o um detalhe de forma: a onda G cria um **tipo de conta civil dentro de uma rede
+de militares identificÃ¡veis** e depois liga um meio de cobranÃ§a nela.
 
-**Os dois ADRs foram aprovados pelo dono em 2026-08-20** — `status: accepted`,
-`critic_verdict: PASS`, aprovação registrada na seção `Approval` de cada um:
+**Os dois ADRs foram aprovados pelo dono em 2026-08-20** â€” `status: accepted`,
+`critic_verdict: PASS`, aprovaÃ§Ã£o registrada na seÃ§Ã£o `Approval` de cada um:
 
 | ADR | Cobre | Estado |
 |---|---|---|
-| [`ADR-20260820-conta-de-prestador`](../../decisions/ADR-20260820-conta-de-prestador.md) | entrada por indicação, o que o prestador vê, quem inicia conversa, telefone opt-in, o prestador como titular de dados | **aprovado** — Tasks 1 a 6 destravadas |
-| [`ADR-20260820-alcance-pago`](../../decisions/ADR-20260820-alcance-pago.md) | o que o pagante compra, preço, tolerância de atraso, o rótulo, Asaas | **aprovado**, mas as Tasks 7 e 8 seguem paradas pelo CNPJ |
+| [`ADR-20260820-conta-de-prestador`](../../decisions/ADR-20260820-conta-de-prestador.md) | entrada por indicaÃ§Ã£o, o que o prestador vÃª, quem inicia conversa, telefone opt-in, o prestador como titular de dados | **aprovado** â€” Tasks 1 a 6 destravadas |
+| [`ADR-20260820-alcance-pago`](../../decisions/ADR-20260820-alcance-pago.md) | o que o pagante compra, preÃ§o, tolerÃ¢ncia de atraso, o rÃ³tulo, Asaas | **aprovado**, mas as Tasks 7 e 8 seguem paradas pelo CNPJ |
 
-A revisão que precedeu a aprovação achou e corrigiu seis defeitos de implementabilidade neste
-plano — o `critic_review` de cada ADR os lista. **O crítico não foi independente** (foi quem
-escreveu os ADRs), e isso está registrado lá em vez de omitido: se durante a execução alguma
-decisão se mostrar errada, ela é reabrível.
+A revisÃ£o que precedeu a aprovaÃ§Ã£o achou e corrigiu seis defeitos de implementabilidade neste
+plano â€” o `critic_review` de cada ADR os lista. **O crÃ­tico nÃ£o foi independente** (foi quem
+escreveu os ADRs), e isso estÃ¡ registrado lÃ¡ em vez de omitido: se durante a execuÃ§Ã£o alguma
+decisÃ£o se mostrar errada, ela Ã© reabrÃ­vel.
 
-**As sete decisões do ADR 1 que este plano executa**, para você reconhecer quando estiver
-escrevendo o código: indicação por membro **aprovado** da comunidade, com cota de cinco (Task
-2); a ficha sobrevive à saída de quem indicou, e revogar é ato do dono da comunidade (Task 3);
-o prestador vê a própria ficha e as conversas que recebeu, e dentro delas só o `display_name`
-(Task 6); **só o membro inicia conversa** (Task 6); o prestador pode denunciar **mensagem, e só
-mensagem** (é a resposta à pergunta que a onda H deixa aberta na Task 1 dela); telefone é
-opt-in e a ficha funciona sem ele (Task 3); e a seção do prestador em `legal/PRIVACIDADE.md`
+**As sete decisÃµes do ADR 1 que este plano executa**, para vocÃª reconhecer quando estiver
+escrevendo o cÃ³digo: indicaÃ§Ã£o por membro **aprovado** da comunidade, com cota de cinco (Task
+2); a ficha sobrevive Ã  saÃ­da de quem indicou, e revogar Ã© ato do dono da comunidade (Task 3);
+o prestador vÃª a prÃ³pria ficha e as conversas que recebeu, e dentro delas sÃ³ o `display_name`
+(Task 6); **sÃ³ o membro inicia conversa** (Task 6); o prestador pode denunciar **mensagem, e sÃ³
+mensagem** (Ã© a resposta Ã  pergunta que a onda H deixa aberta na Task 1 dela); telefone Ã©
+opt-in e a ficha funciona sem ele (Task 3); e a seÃ§Ã£o do prestador em `legal/PRIVACIDADE.md`
 entra antes da primeira ficha real.
 
-**As sete do ADR 2:** o escopo é a unidade vendida; **R$ 49/mês** cobrindo todas as vilas da
-localidade mais o nível municipal; **7 dias de tolerância** em `past_due`; a ordenação nunca lê
-o dinheiro, com teste guardando; rótulo "Alcance patrocinado" visível; checkout hospedado com
-cartão fora do Bivaque; e a lista fechada do que nunca entra na venda.
+**As sete do ADR 2:** o escopo Ã© a unidade vendida; **R$ 49/mÃªs** cobrindo todas as vilas da
+localidade mais o nÃ­vel municipal; **7 dias de tolerÃ¢ncia** em `past_due`; a ordenaÃ§Ã£o nunca lÃª
+o dinheiro, com teste guardando; rÃ³tulo "Alcance patrocinado" visÃ­vel; checkout hospedado com
+cartÃ£o fora do Bivaque; e a lista fechada do que nunca entra na venda.
 
-Se você discordar de alguma delas durante a execução, **pare e reporte** — a discordância vai
-para o ADR, não para o código.
+Se vocÃª discordar de alguma delas durante a execuÃ§Ã£o, **pare e reporte** â€” a discordÃ¢ncia vai
+para o ADR, nÃ£o para o cÃ³digo.
 
 **Bloqueios humanos que nenhum agente resolve:**
 
-- **CNPJ** — trava o Bloco 2 inteiro (§7.6 depende de parecer jurídico).
-- **Resend com domínio verificado** — a Task 2 manda e-mail para um civil que não tem conta.
-  Sem o adaptador real da D1, o convite fica no `outbox` e ninguém recebe.
-- **O parágrafo do prestador em `legal/PRIVACIDADE.md`.**
+- **CNPJ** â€” trava o Bloco 2 inteiro (Â§7.6 depende de parecer jurÃ­dico).
+- **Resend com domÃ­nio verificado** â€” a Task 2 manda e-mail para um civil que nÃ£o tem conta.
+  Sem o adaptador real da D1, o convite fica no `outbox` e ninguÃ©m recebe.
+- **O parÃ¡grafo do prestador em `legal/PRIVACIDADE.md`.**
 
-As Tasks 1, 3, 4, 5 e 6 não dependem do CNPJ e podem correr enquanto ele não existe. **A Task 1
-pode começar agora.**
+As Tasks 1, 3, 4, 5 e 6 nÃ£o dependem do CNPJ e podem correr enquanto ele nÃ£o existe. **A Task 1
+pode comeÃ§ar agora.**
 
 ---
 
-## Precedência: esta onda vem depois de cinco
+## PrecedÃªncia: esta onda vem depois de cinco
 
 ```
-P0 → T → D2 → E → F → G
+P0 â†’ T â†’ D2 â†’ E â†’ F â†’ G
 ```
 
-E é dependência real, não ordem administrativa:
+E Ã© dependÃªncia real, nÃ£o ordem administrativa:
 
-1. **A onda E define onde a vitrine aterrissa.** O `ADR-20260816-shells-e-navegacao` é
-   explícito e o código já registra a decisão em
+1. **A onda E define onde a vitrine aterrissa.** O `ADR-20260816-shells-e-navegacao` Ã©
+   explÃ­cito e o cÃ³digo jÃ¡ registra a decisÃ£o em
    `apps/web/app/components/bivaque/bottom-nav.tsx:33-34`: *"vitrine e busca de prestador caem
-   AQUI"* — no container **"cidade"**, `/localidade`. Não crie aba nova. Se um destino desta
-   onda não couber em "cidade", **pare e reporte** (regra falsificável do ADR).
-2. **A onda E já deixou o buraco pronto.** `apps/web/app/components/bivaque/city-reference.tsx`
-   tem um `EmptyState` honesto que diz *"Isso é trabalho da onda G"* — a Task 5 o substitui.
-3. **A onda D1 entrega o `outbox`**, que é como o convite da Task 2 sai.
-4. **A onda F mexe na máquina de indicação**, que compartilha o `can_dm_between` com a Task 6.
+   AQUI"* â€” no container **"cidade"**, `/localidade`. NÃ£o crie aba nova. Se um destino desta
+   onda nÃ£o couber em "cidade", **pare e reporte** (regra falsificÃ¡vel do ADR).
+2. **A onda E jÃ¡ deixou o buraco pronto.** `apps/web/app/components/bivaque/city-reference.tsx`
+   tem um `EmptyState` honesto que diz *"Isso Ã© trabalho da onda G"* â€” a Task 5 o substitui.
+3. **A onda D1 entrega o `outbox`**, que Ã© como o convite da Task 2 sai.
+4. **A onda F mexe na mÃ¡quina de indicaÃ§Ã£o**, que compartilha o `can_dm_between` com a Task 6.
 
-## Contexto obrigatório antes de começar
+## Contexto obrigatÃ³rio antes de comeÃ§ar
 
-1. [`docs/BIVAQUE.md`](../../BIVAQUE.md) §1.3 (a linha do prestador), §6.2, §7.1 a §7.4
-   (a linha da monetização, as categorias, os cinco proibidos, o filtro de três perguntas),
-   §12 (as oito regras permanentes) e as decisões D17, D20, D26 a D29, D36, D37, D41, D44, D45.
-2. [`docs/PRODUCT_STATUS.md`](../../PRODUCT_STATUS.md) §7 inteiro (cinco linhas, todas
-   "**não existe**") e §8, a linha **"Conversa membro ↔ prestador"**, que lista os três
+1. [`docs/BIVAQUE.md`](../../BIVAQUE.md) Â§1.3 (a linha do prestador), Â§6.2, Â§7.1 a Â§7.4
+   (a linha da monetizaÃ§Ã£o, as categorias, os cinco proibidos, o filtro de trÃªs perguntas),
+   Â§12 (as oito regras permanentes) e as decisÃµes D17, D20, D26 a D29, D36, D37, D41, D44, D45.
+2. [`docs/PRODUCT_STATUS.md`](../../PRODUCT_STATUS.md) Â§7 inteiro (cinco linhas, todas
+   "**nÃ£o existe**") e Â§8, a linha **"Conversa membro â†” prestador"**, que lista os trÃªs
    defeitos que a Task 6 corrige.
-3. As duas lições do E2E no `README.md`: `notFound()` responde **200** no Next 16, e o
-   PostgREST **não resolve embed onde não há foreign key** — e esta onda cria tabelas novas
-   que precisam de FK explícita para `profiles` se você quiser embutir o nome.
+3. As duas liÃ§Ãµes do E2E no `README.md`: `notFound()` responde **200** no Next 16, e o
+   PostgREST **nÃ£o resolve embed onde nÃ£o hÃ¡ foreign key** â€” e esta onda cria tabelas novas
+   que precisam de FK explÃ­cita para `profiles` se vocÃª quiser embutir o nome.
 
-## O que já existe e você não deve reimplementar
+## O que jÃ¡ existe e vocÃª nÃ£o deve reimplementar
 
-| Peça | Onde | Use como |
+| PeÃ§a | Onde | Use como |
 |---|---|---|
 | Shell do operador e do dono | `app/(admin)/layout.tsx`, `app/(owner)/` | modelo do shell do prestador (Task 1) |
 | Gate de papel por RPC | `20260806111744_is_current_user_operator.sql` | modelo exato de `is_provider_account` |
 | Convite atado ao e-mail | `private.family_invitations` + `public.create_family_invitation` | modelo do convite de prestador (Task 2) |
 | Bucket privado com policies | `20260821000015_event_photos_bucket.sql` | modelo do bucket de fotos da ficha |
-| Máquina de DM | `20260802001500_dm_contextual.sql` | é a máquina que a Task 6 corrige e estende |
-| Placeholder da vitrine | `city-reference.tsx` (seção `city-vitrine-heading`) | é o que a Task 5 substitui |
+| MÃ¡quina de DM | `20260802001500_dm_contextual.sql` | Ã© a mÃ¡quina que a Task 6 corrige e estende |
+| Placeholder da vitrine | `city-reference.tsx` (seÃ§Ã£o `city-vitrine-heading`) | Ã© o que a Task 5 substitui |
 
 ---
 
 ## Task 1: a fronteira do prestador nasce antes da ficha
 
-O prestador é **usuário do Auth com papel e sem membership** (D37). O motivo está escrito na
-própria decisão: *"sem membership nenhuma policy de conteúdo casa: falha fechado por
-construção"*. Toda policy de leitura de conteúdo deste schema pergunta por
-`locality_memberships` ou `community_memberships`; um usuário sem nenhuma das duas não lê nada,
-por construção, e é isso que queremos.
+O prestador Ã© **usuÃ¡rio do Auth com papel e sem membership** (D37). O motivo estÃ¡ escrito na
+prÃ³pria decisÃ£o: *"sem membership nenhuma policy de conteÃºdo casa: falha fechado por
+construÃ§Ã£o"*. Toda policy de leitura de conteÃºdo deste schema pergunta por
+`locality_memberships` ou `community_memberships`; um usuÃ¡rio sem nenhuma das duas nÃ£o lÃª nada,
+por construÃ§Ã£o, e Ã© isso que queremos.
 
-**Mas há um obstáculo estrutural que o `PRODUCT_STATUS.md` não registra e que você vai bater
-de frente já no primeiro login:** `apps/web/middleware.ts:135-153` manda **qualquer**
+**Mas hÃ¡ um obstÃ¡culo estrutural que o `PRODUCT_STATUS.md` nÃ£o registra e que vocÃª vai bater
+de frente jÃ¡ no primeiro login:** `apps/web/middleware.ts:135-153` manda **qualquer**
 autenticado sem `locality_memberships` para o funil de onboarding do membro. Um prestador que
-fizer login hoje cai em `/onboarding`, é convidado a digitar CPF, e não existe saída. A
-fronteira e o roteamento nascem juntos ou o tipo de conta não existe.
+fizer login hoje cai em `/onboarding`, Ã© convidado a digitar CPF, e nÃ£o existe saÃ­da. A
+fronteira e o roteamento nascem juntos ou o tipo de conta nÃ£o existe.
 
 **Arquivos:**
 - Criar: `supabase/migrations/<ts>_provider_accounts.sql`
@@ -159,19 +159,19 @@ fronteira e o roteamento nascem juntos ou o tipo de conta não existe.
 
 **Interfaces que as tasks seguintes consomem:**
 - `public.provider_accounts(auth_user_id, invited_by, community_id, locality_id, created_at, revoked_at)`
-- `public.is_provider_account(p_user_id uuid) returns boolean` — `service_role` apenas, mesmo
+- `public.is_provider_account(p_user_id uuid) returns boolean` â€” `service_role` apenas, mesmo
   contrato de `is_current_user_operator`
-- `private.is_provider_account(p_user_id uuid) returns boolean` — o mesmo predicado para uso
+- `private.is_provider_account(p_user_id uuid) returns boolean` â€” o mesmo predicado para uso
   **dentro de policy**, concedido a `authenticated`
-- `public.my_account_kind() returns text` — `'member' | 'provider' | null`, escopada por
-  `auth.uid()` (sem parâmetro para errar), concedida a `authenticated`
+- `public.my_account_kind() returns text` â€” `'member' | 'provider' | null`, escopada por
+  `auth.uid()` (sem parÃ¢metro para errar), concedida a `authenticated`
 
-- [ ] **Step 1: a migration — tabela, RLS e os dois helpers**
+- [ ] **Step 1: a migration â€” tabela, RLS e os dois helpers**
 
 ```sql
--- A conta do prestador civil. D37: usuário do Auth com papel, sem membership.
--- Quem atesta "é bom prestador" é a comunidade que o indicou (§4.1), por isso
--- community_id é NOT NULL: uma ficha órfã de comunidade não tem quem a atestou.
+-- A conta do prestador civil. D37: usuÃ¡rio do Auth com papel, sem membership.
+-- Quem atesta "Ã© bom prestador" Ã© a comunidade que o indicou (Â§4.1), por isso
+-- community_id Ã© NOT NULL: uma ficha Ã³rfÃ£ de comunidade nÃ£o tem quem a atestou.
 create table public.provider_accounts (
   auth_user_id uuid primary key references auth.users (id) on delete cascade,
   invited_by uuid not null references auth.users (id) on delete restrict,
@@ -195,8 +195,8 @@ revoke all on table public.provider_accounts from anon, authenticated;
 grant select on table public.provider_accounts to authenticated;
 grant select, insert, update on table public.provider_accounts to service_role;
 
--- O prestador enxerga a própria linha. Ninguém mais lê a lista: o roster de
--- prestadores de uma vila é informação de operação, não de membro — mesmo
+-- O prestador enxerga a prÃ³pria linha. NinguÃ©m mais lÃª a lista: o roster de
+-- prestadores de uma vila Ã© informaÃ§Ã£o de operaÃ§Ã£o, nÃ£o de membro â€” mesmo
 -- motivo do 20260806100231_restrict_operator_roster.sql.
 create policy provider_accounts_select_self
 on public.provider_accounts
@@ -205,7 +205,7 @@ to authenticated
 using (auth_user_id = (select auth.uid()));
 
 -- Espelha is_current_user_operator: o chamador roda como service_role (que
--- bypassa RLS), então auth.uid() é NULL dentro da função e o id vem explícito.
+-- bypassa RLS), entÃ£o auth.uid() Ã© NULL dentro da funÃ§Ã£o e o id vem explÃ­cito.
 create function public.is_provider_account(p_user_id uuid)
 returns boolean
 language sql
@@ -224,10 +224,10 @@ $$;
 revoke all on function public.is_provider_account(uuid) from public, anon, authenticated;
 grant execute on function public.is_provider_account(uuid) to service_role;
 
--- O mesmo predicado, alcançável de dentro de uma policy. A decisão 5 do ADR da
+-- O mesmo predicado, alcanÃ§Ã¡vel de dentro de uma policy. A decisÃ£o 5 do ADR da
 -- conta de prestador manda a policy de insert de `reports` perguntar se quem
--- escreve é prestador, e policy é avaliada como `authenticated` — que não tem
--- EXECUTE na função acima e nunca vai ter. O par public/private é o mesmo
+-- escreve Ã© prestador, e policy Ã© avaliada como `authenticated` â€” que nÃ£o tem
+-- EXECUTE na funÃ§Ã£o acima e nunca vai ter. O par public/private Ã© o mesmo
 -- desenho de `private.is_locality_member` (20260802000300).
 create function private.is_provider_account(p_user_id uuid)
 returns boolean
@@ -247,8 +247,8 @@ $$;
 revoke all on function private.is_provider_account(uuid) from public, anon;
 grant execute on function private.is_provider_account(uuid) to authenticated, service_role;
 
--- O middleware roda com o cliente anônimo do usuário, não com service_role.
--- Por isso este segundo helper escopa por auth.uid() e NÃO aceita parâmetro —
+-- O middleware roda com o cliente anÃ´nimo do usuÃ¡rio, nÃ£o com service_role.
+-- Por isso este segundo helper escopa por auth.uid() e NÃƒO aceita parÃ¢metro â€”
 -- mesmo desenho de public.my_verification_status (20260820000002).
 create function public.my_account_kind()
 returns text
@@ -273,14 +273,14 @@ revoke all on function public.my_account_kind() from public, anon;
 grant execute on function public.my_account_kind() to authenticated, service_role;
 ```
 
-- [ ] **Step 2: o pgTAP da fronteira — positivo e negativo**
+- [ ] **Step 2: o pgTAP da fronteira â€” positivo e negativo**
 
-  A regra 7 da §12 não tem exceção: todo caminho de permissão tem os dois. Crie
+  A regra 7 da Â§12 nÃ£o tem exceÃ§Ã£o: todo caminho de permissÃ£o tem os dois. Crie
   `supabase/tests/provider-account-boundary.sql` no formato de
-  `supabase/tests/reports-denials.sql` (fixtures incluídas dentro da transação, rollback no
-  fim). O prestador de fixture é um `auth.users` novo, **sem** `locality_memberships`.
+  `supabase/tests/reports-denials.sql` (fixtures incluÃ­das dentro da transaÃ§Ã£o, rollback no
+  fim). O prestador de fixture Ã© um `auth.users` novo, **sem** `locality_memberships`.
 
-  As asserções que precisam existir, todas com `set local role authenticated` e o
+  As asserÃ§Ãµes que precisam existir, todas com `set local role authenticated` e o
   `request.jwt.claim.sub` do prestador:
 
   - `is_empty('select 1 from public.posts', 'prestador nao le post nenhum')`
@@ -288,60 +288,60 @@ grant execute on function public.my_account_kind() to authenticated, service_rol
   - `is_empty('select 1 from public.groups', 'prestador nao le grupo nenhum')`
   - `is_empty('select 1 from public.communities', 'prestador nao le comunidade nenhuma')`
   - `is_empty('select 1 from public.events', 'prestador nao le evento nenhum')`
-  - `throws_ok` no `insert into public.posts (...)` — 42501
-  - a linha própria em `provider_accounts` **é** visível: `isnt_empty(...)`
-  - a linha de **outro** prestador não é: `is_empty(...)`
+  - `throws_ok` no `insert into public.posts (...)` â€” 42501
+  - a linha prÃ³pria em `provider_accounts` **Ã©** visÃ­vel: `isnt_empty(...)`
+  - a linha de **outro** prestador nÃ£o Ã©: `is_empty(...)`
   - `select is(public.my_account_kind(), 'provider', ...)` para o prestador
   - `select is(public.my_account_kind(), 'member', ...)` para `member-one`
 
   Rode: `npx pnpm@11.18.0 exec supabase test db`. **Sem dev server e sem captura visual
-  rodando** — a armadilha do perfil fantasma quebra seis asserts alheios e você vai passar uma
+  rodando** â€” a armadilha do perfil fantasma quebra seis asserts alheios e vocÃª vai passar uma
   hora procurando no lugar errado.
 
 - [ ] **Step 3: o middleware para de empurrar o prestador para o CPF**
 
-  Em `apps/web/middleware.ts`, o bloco que hoje começa em `const isMember = await supabase`
+  Em `apps/web/middleware.ts`, o bloco que hoje comeÃ§a em `const isMember = await supabase`
   (linha 135) faz uma consulta a `locality_memberships` e, no `null`, chama
   `my_verification_status`. Troque a consulta pelo `my_account_kind()`, que responde as duas
-  perguntas numa ida só:
+  perguntas numa ida sÃ³:
 
 ```ts
 const { data: kindRows, error: kindError } = await supabase.rpc("my_account_kind")
 if (kindError) {
-  // Não dá para rotear com segurança. Falha fechado no onboarding do membro,
-  // que é a tela determinística — mesmo critério do bloco que este substitui.
+  // NÃ£o dÃ¡ para rotear com seguranÃ§a. Falha fechado no onboarding do membro,
+  // que Ã© a tela determinÃ­stica â€” mesmo critÃ©rio do bloco que este substitui.
   return NextResponse.redirect(new URL("/onboarding", request.url))
 }
 const kind = (kindRows ?? null) as "member" | "provider" | null
 
 if (kind === "provider") {
   // O prestador vive fora do shell do membro. Deixe-o passar em /prestador e
-  // mande de volta para lá em qualquer outra rota — ele não tem membership e
-  // toda policy de conteúdo já o nega; o redirect evita a tela vazia.
+  // mande de volta para lÃ¡ em qualquer outra rota â€” ele nÃ£o tem membership e
+  // toda policy de conteÃºdo jÃ¡ o nega; o redirect evita a tela vazia.
   return pathname.startsWith("/prestador")
     ? supabaseResponse
     : NextResponse.redirect(new URL("/prestador", request.url))
 }
 
 if (kind === null) {
-  // ... aqui entra, sem alteração, o bloco de my_verification_status que já existe
+  // ... aqui entra, sem alteraÃ§Ã£o, o bloco de my_verification_status que jÃ¡ existe
 }
 ```
 
   Cuidado com a ordem: o bloco de `/onboarding` (linhas 102-110) vem **antes** e continua
-  antes — um prestador nunca chega lá porque o redirect acima o intercepta.
+  antes â€” um prestador nunca chega lÃ¡ porque o redirect acima o intercepta.
 
 - [ ] **Step 4: o shell do prestador**
 
-  `apps/web/app/(provider)/layout.tsx`, no molde de `app/(admin)/layout.tsx`: lê o usuário pelo
+  `apps/web/app/(provider)/layout.tsx`, no molde de `app/(admin)/layout.tsx`: lÃª o usuÃ¡rio pelo
   cliente com cookies, chama `is_provider_account` pelo `service_role`, e **redireciona o
-  membro para `/community`** se ele cair ali. Sem `AppShell`, sem `bottom-nav` — a navegação do
-  membro espelha o modelo de pertencimento (ADR de shells, regra 2) e o prestador não pertence
+  membro para `/community`** se ele cair ali. Sem `AppShell`, sem `bottom-nav` â€” a navegaÃ§Ã£o do
+  membro espelha o modelo de pertencimento (ADR de shells, regra 2) e o prestador nÃ£o pertence
   a nada disso.
 
-  `apps/web/app/(provider)/prestador/page.tsx` nesta task é **honesto e mínimo**: nome da
-  comunidade que o indicou e a frase de que a ficha chega na próxima task. Regra 4 da §12 — UI
-  só mostra affordance se o fluxo fecha hoje. Não desenhe botão de "criar ficha" ainda.
+  `apps/web/app/(provider)/prestador/page.tsx` nesta task Ã© **honesto e mÃ­nimo**: nome da
+  comunidade que o indicou e a frase de que a ficha chega na prÃ³xima task. Regra 4 da Â§12 â€” UI
+  sÃ³ mostra affordance se o fluxo fecha hoje. NÃ£o desenhe botÃ£o de "criar ficha" ainda.
 
 - [ ] **Step 5: gate e commit**
 
@@ -356,18 +356,18 @@ git commit -m "feat(providers): conta de prestador com fronteira de acesso e rot
 
 ---
 
-## Task 2: o convite de prestador — quem atesta é a comunidade
+## Task 2: o convite de prestador â€” quem atesta Ã© a comunidade
 
-`BIVAQUE.md` §1.3: o prestador entra por **indicação de membro verificado**, e quem atesta é
-**a comunidade que o indicou**. Não é auto-cadastro. Não é o operador.
+`BIVAQUE.md` Â§1.3: o prestador entra por **indicaÃ§Ã£o de membro verificado**, e quem atesta Ã©
+**a comunidade que o indicou**. NÃ£o Ã© auto-cadastro. NÃ£o Ã© o operador.
 
-O modelo existe e está pronto para copiar: o convite familiar (D16) já resolve o problema
-difícil — **link encaminhado não pode provisionar quem abrir**, então o aceite confere o
+O modelo existe e estÃ¡ pronto para copiar: o convite familiar (D16) jÃ¡ resolve o problema
+difÃ­cil â€” **link encaminhado nÃ£o pode provisionar quem abrir**, entÃ£o o aceite confere o
 e-mail-alvo. O prestador tem exatamente a mesma propriedade.
 
-**Diferença de semântica que o código não pode confundir** (§5.4): o convite familiar concede
-**acesso de membro sem CPF**; o de prestador **não concede acesso a nada** — cria uma conta que
-só enxerga a própria ficha. São vias distintas e nunca compartilham tabela.
+**DiferenÃ§a de semÃ¢ntica que o cÃ³digo nÃ£o pode confundir** (Â§5.4): o convite familiar concede
+**acesso de membro sem CPF**; o de prestador **nÃ£o concede acesso a nada** â€” cria uma conta que
+sÃ³ enxerga a prÃ³pria ficha. SÃ£o vias distintas e nunca compartilham tabela.
 
 **Arquivos:**
 - Criar: `supabase/migrations/<ts>_provider_invitations.sql`
@@ -381,63 +381,63 @@ só enxerga a própria ficha. São vias distintas e nunca compartilham tabela.
 - `public.accept_provider_invitation(p_token text, p_email text) returns uuid` (devolve o
   `auth_user_id` do prestador provisionado)
 
-- [ ] **Step 1: a migration**
+- [x] **Step 1: a migration** — fechado em 2026-08-25 (`20260825181742_provider_invitations.sql`: tabela privada em digests, RLS forçada, cota de cinco, RPCs `create_provider_invitation`/`accept_provider_invitation`, outbox `provider_invite`)
 
   Espelhe `private.family_invitations` (`20260802000200_private_trust_family_foundation.sql:38-58`):
-  tabela em **`private`**, `token_digest bytea` e `invitee_email_digest bytea` de 32 bytes —
-  **nunca o e-mail em claro, nunca o token em claro** —, `status`, `expires_at`,
-  `accepted_by_user_id`, e o `check` que amarra os três campos de aceite.
+  tabela em **`private`**, `token_digest bytea` e `invitee_email_digest bytea` de 32 bytes â€”
+  **nunca o e-mail em claro, nunca o token em claro** â€”, `status`, `expires_at`,
+  `accepted_by_user_id`, e o `check` que amarra os trÃªs campos de aceite.
 
-  Três regras próprias desta tabela:
+  TrÃªs regras prÃ³prias desta tabela:
 
 ```sql
 -- Cota: cinco convites de prestador ativos por membro, mesma ordem de grandeza
--- do convite familiar (§5.4). Sem cota, um membro sozinho enche a vitrine.
+-- do convite familiar (Â§5.4). Sem cota, um membro sozinho enche a vitrine.
 create index provider_invitations_inviter_pending_idx
   on private.provider_invitations (inviter_user_id) where status = 'pending';
 
--- Só membro APROVADO da comunidade indica. Ser da cidade não basta: quem
--- atesta o prestador é a vila (§4.1), e a vila é community_memberships.
--- Esta checagem vive dentro de create_provider_invitation, não numa policy,
--- porque a tabela é private e authenticated não tem privilégio nenhum nela.
+-- SÃ³ membro APROVADO da comunidade indica. Ser da cidade nÃ£o basta: quem
+-- atesta o prestador Ã© a vila (Â§4.1), e a vila Ã© community_memberships.
+-- Esta checagem vive dentro de create_provider_invitation, nÃ£o numa policy,
+-- porque a tabela Ã© private e authenticated nÃ£o tem privilÃ©gio nenhum nela.
 ```
 
-  `public.create_provider_invitation` é `security definer`, valida que
+  `public.create_provider_invitation` Ã© `security definer`, valida que
   `auth.uid()` tem `community_memberships.status = 'approved'` na `p_community_id`, valida a
-  cota, grava os digests e **enfileira no `outbox`** (a fila da D1 é o único caminho de envio —
-  ela é quem confere preferência e opt-out).
+  cota, grava os digests e **enfileira no `outbox`** (a fila da D1 Ã© o Ãºnico caminho de envio â€”
+  ela Ã© quem confere preferÃªncia e opt-out).
 
   `public.accept_provider_invitation` valida token + e-mail (comparando digests), cria a linha
   em `public.provider_accounts` com `invited_by`, `community_id` e `locality_id` copiados do
-  convite, e marca o convite como `accepted`. **Não** cria `locality_memberships`. **Não** cria
+  convite, e marca o convite como `accepted`. **NÃ£o** cria `locality_memberships`. **NÃ£o** cria
   `profiles`.
 
-- [ ] **Step 2: o pgTAP — positivo e negativo**
+- [x] **Step 2: o pgTAP â€” positivo e negativo** — 16 asserts em `supabase/tests/provider-invitation.sql`; suíte completa 91 arquivos / 1068 PASS
 
   `supabase/tests/provider-invitation.sql`, no molde de
   `supabase/tests/family-invite-email-binding.sql`:
 
-  - membro aprovado da vila cria convite → **ok**
-  - membro da cidade **sem** `community_memberships` aprovada → **negado**
-  - prestador tentando criar convite → **negado**
-  - aceite com e-mail divergente do `invitee_email_digest` → **negado** (este é o teste que o
-    convite familiar existe para ter; não o copie pela metade)
-  - aceite com token expirado → **negado**
-  - aceite duas vezes → o segundo é **negado**
-  - depois do aceite, `provider_accounts` tem a linha e `locality_memberships` **não** tem
+  - membro aprovado da vila cria convite â†’ **ok**
+  - membro da cidade **sem** `community_memberships` aprovada â†’ **negado**
+  - prestador tentando criar convite â†’ **negado**
+  - aceite com e-mail divergente do `invitee_email_digest` â†’ **negado** (este Ã© o teste que o
+    convite familiar existe para ter; nÃ£o o copie pela metade)
+  - aceite com token expirado â†’ **negado**
+  - aceite duas vezes â†’ o segundo Ã© **negado**
+  - depois do aceite, `provider_accounts` tem a linha e `locality_memberships` **nÃ£o** tem
 
-- [ ] **Step 3: as duas telas**
+- [x] **Step 3: as duas telas** — `/communities/[id]/indicar-prestador` no shell e aceite em `/prestador-convite/[token]`; DESVIO registrado: o aceite vive em `(preauth)` porque `(shell)` exige membership e redirecionaria o civil sem conta (URL preservada)
 
-  **Indicar** (`(shell)/communities/[id]/indicar-prestador/page.tsx`): formulário com nome e
-  e-mail, Server Action autenticada pelo **cliente com cookies** (regra 1 da §12 — o padrão a
-  seguir está em `app/(shell)/communities/actions.ts:8-24`), feedback por `showToast`, e o
-  aviso de que o prestador vai ver e não ver.
+  **Indicar** (`(shell)/communities/[id]/indicar-prestador/page.tsx`): formulÃ¡rio com nome e
+  e-mail, Server Action autenticada pelo **cliente com cookies** (regra 1 da Â§12 â€” o padrÃ£o a
+  seguir estÃ¡ em `app/(shell)/communities/actions.ts:8-24`), feedback por `showToast`, e o
+  aviso de que o prestador vai ver e nÃ£o ver.
 
   **Aceitar** (`(shell)/prestador-convite/[token]/page.tsx`): a rota precisa entrar em
-  `PUBLIC_PATHS` do middleware — quem abre o link ainda não tem conta. Confira o e-mail antes
+  `PUBLIC_PATHS` do middleware â€” quem abre o link ainda nÃ£o tem conta. Confira o e-mail antes
   de provisionar, exatamente como `app/(shell)/invite/[token]/`.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit**
 
 ```bash
 npx pnpm@11.18.0 gate
@@ -449,15 +449,15 @@ git commit -m "feat(providers): convite de prestador atado ao e-mail, indicado p
 
 ---
 
-## Task 3: a ficha — identidade, catálogo e portfólio
+## Task 3: a ficha â€” identidade, catÃ¡logo e portfÃ³lio
 
-D45 fecha o escopo em três blocos, e o motivo está na própria decisão: *"são os três blocos que
+D45 fecha o escopo em trÃªs blocos, e o motivo estÃ¡ na prÃ³pria decisÃ£o: *"sÃ£o os trÃªs blocos que
 o prestador preenche sozinho no dia um"*. Prova social e avisos ficam fora.
 
-**A coluna de escopo e as policies que a leem nascem nesta mesma migration.** Regra 6 da §12,
-que o `AGENTS.md` chama de "a falha que este repositório insiste em repetir — quatro vazamentos
-de privacidade até aqui". O alcance da ficha (`provider_reach`) nasce aqui, com as policies,
-mesmo que só a linha grátis exista até a Task 7.
+**A coluna de escopo e as policies que a leem nascem nesta mesma migration.** Regra 6 da Â§12,
+que o `AGENTS.md` chama de "a falha que este repositÃ³rio insiste em repetir â€” quatro vazamentos
+de privacidade atÃ© aqui". O alcance da ficha (`provider_reach`) nasce aqui, com as policies,
+mesmo que sÃ³ a linha grÃ¡tis exista atÃ© a Task 7.
 
 **Arquivos:**
 - Criar: `supabase/migrations/<ts>_provider_showcase.sql`
@@ -472,15 +472,15 @@ mesmo que só a linha grátis exista até a Task 7.
 - `public.provider_reach(provider_id, scope_type, scope_id, source, active)`
 - `private.can_see_provider(p_provider_id uuid) returns boolean`
 
-- [ ] **Step 1: as doze categorias, em um lugar só**
+- [ ] **Step 1: as doze categorias, em um lugar sÃ³**
 
-  §7.2.1 é uma **lista fechada** com três regras que o código precisa carregar. Em
+  Â§7.2.1 Ã© uma **lista fechada** com trÃªs regras que o cÃ³digo precisa carregar. Em
   `packages/domain/src/index.ts`:
 
 ```ts
-// BIVAQUE.md §7.2.1 — lista fechada. NÃO existe "Outros": vira depósito, chega
-// a metade das fichas e mata o filtro. O que não couber é sinal para criar
-// categoria por decisão, nunca por usuário. Categoria só se divide acima de
+// BIVAQUE.md Â§7.2.1 â€” lista fechada. NÃƒO existe "Outros": vira depÃ³sito, chega
+// a metade das fichas e mata o filtro. O que nÃ£o couber Ã© sinal para criar
+// categoria por decisÃ£o, nunca por usuÃ¡rio. Categoria sÃ³ se divide acima de
 // ~15 fichas ativas.
 export const PROVIDER_CATEGORIES = [
   "alimentacao",
@@ -500,15 +500,15 @@ export const PROVIDER_CATEGORIES = [
 export type ProviderCategory = (typeof PROVIDER_CATEGORIES)[number]
 
 export const PROVIDER_CATEGORY_LABELS: Record<ProviderCategory, string> = {
-  alimentacao: "Alimentação",
+  alimentacao: "AlimentaÃ§Ã£o",
   casa_e_reformas: "Casa e reformas",
-  assistencia_tecnica: "Assistência técnica",
-  mudanca_e_transporte: "Mudança e transporte",
-  imoveis: "Imóveis",
-  documentacao_e_financas: "Documentação e finanças",
-  saude_e_bem_estar: "Saúde e bem-estar",
+  assistencia_tecnica: "AssistÃªncia tÃ©cnica",
+  mudanca_e_transporte: "MudanÃ§a e transporte",
+  imoveis: "ImÃ³veis",
+  documentacao_e_financas: "DocumentaÃ§Ã£o e finanÃ§as",
+  saude_e_bem_estar: "SaÃºde e bem-estar",
   beleza: "Beleza",
-  educacao_e_aulas: "Educação e aulas",
+  educacao_e_aulas: "EducaÃ§Ã£o e aulas",
   automotivo: "Automotivo",
   eventos_e_festas: "Eventos e festas",
   pets: "Pets",
@@ -516,8 +516,8 @@ export const PROVIDER_CATEGORY_LABELS: Record<ProviderCategory, string> = {
 ```
 
   O enum do banco carrega os mesmos doze valores, na mesma ordem. Escreva um teste em
-  `tests/unit/` que compare o array com o enum lido de `supabase/database.generated.ts` — é o
-  tipo de divergência que só aparece em produção.
+  `tests/unit/` que compare o array com o enum lido de `supabase/database.generated.ts` â€” Ã© o
+  tipo de divergÃªncia que sÃ³ aparece em produÃ§Ã£o.
 
 - [ ] **Step 2: a migration da ficha e do alcance**
 
@@ -536,18 +536,18 @@ create table public.provider_profiles (
   category public.provider_category not null,
   bio text check (bio is null or char_length(bio) between 1 and 800),
   contact_phone text check (contact_phone is null or contact_phone ~ '^\+?[0-9]{10,15}$'),
-  -- O telefone é dado pessoal de um civil publicado para centenas de militares.
-  -- Ele só aparece quando o prestador escolhe publicá-lo (ADR da conta de
-  -- prestador). Em branco é estado válido e a ficha continua funcionando.
+  -- O telefone Ã© dado pessoal de um civil publicado para centenas de militares.
+  -- Ele sÃ³ aparece quando o prestador escolhe publicÃ¡-lo (ADR da conta de
+  -- prestador). Em branco Ã© estado vÃ¡lido e a ficha continua funcionando.
   contact_is_public boolean not null default false,
   is_deleted boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
--- O alcance. Nasce aqui, com as policies que o leem (regra 6 da §12).
--- 'free'  = a própria vila, sempre grátis e completa (D28).
--- 'paid'  = além dela. A Task 7 insere estas linhas; nenhuma existe hoje.
+-- O alcance. Nasce aqui, com as policies que o leem (regra 6 da Â§12).
+-- 'free'  = a prÃ³pria vila, sempre grÃ¡tis e completa (D28).
+-- 'paid'  = alÃ©m dela. A Task 7 insere estas linhas; nenhuma existe hoje.
 create type public.provider_reach_scope as enum ('community', 'locality');
 create type public.provider_reach_source as enum ('free', 'paid');
 
@@ -569,9 +569,9 @@ create table public.provider_catalog_items (
   provider_id uuid not null references public.provider_profiles (id) on delete cascade,
   title text not null check (char_length(title) between 2 and 120),
   description text check (description is null or char_length(description) between 1 and 600),
-  -- §7.2.1 regra 3: produto e serviço convivem na mesma taxonomia. Item com
-  -- foto, descrição e preço serve para corte de peixe e para limpeza pós-obra.
-  -- Preço é opcional: "sob orçamento" é a resposta honesta de metade delas.
+  -- Â§7.2.1 regra 3: produto e serviÃ§o convivem na mesma taxonomia. Item com
+  -- foto, descriÃ§Ã£o e preÃ§o serve para corte de peixe e para limpeza pÃ³s-obra.
+  -- PreÃ§o Ã© opcional: "sob orÃ§amento" Ã© a resposta honesta de metade delas.
   price_cents integer check (price_cents is null or price_cents between 0 and 100000000),
   photo_path text,
   position integer not null default 0,
@@ -591,8 +591,8 @@ create table public.provider_portfolio_photos (
   O helper de visibilidade, e as policies que o usam:
 
 ```sql
--- Quem vê a ficha: o dono dela, e quem pertence a algum escopo ativo do
--- alcance. Nada mais. Um membro de outra vila NÃO vê, e é exatamente essa
+-- Quem vÃª a ficha: o dono dela, e quem pertence a algum escopo ativo do
+-- alcance. Nada mais. Um membro de outra vila NÃƒO vÃª, e Ã© exatamente essa
 -- fronteira que a Task 7 vende.
 create function private.can_see_provider(p_provider_id uuid)
 returns boolean
@@ -628,66 +628,66 @@ $$;
 ```
 
   Aplique `private.can_see_provider(...)` no `select` das **quatro** tabelas (`provider_profiles`
-  pelo `id`, as outras três pelo `provider_id`), sempre com `and is_deleted = false` onde a
-  coluna existe. `insert`/`update`/`delete` só para o dono
+  pelo `id`, as outras trÃªs pelo `provider_id`), sempre com `and is_deleted = false` onde a
+  coluna existe. `insert`/`update`/`delete` sÃ³ para o dono
   (`owner_user_id = (select auth.uid())`). `enable` **e** `force` RLS nas quatro; `revoke all`
-  antes dos grants mínimos.
+  antes dos grants mÃ­nimos.
 
-  E o alvo de denúncia, porque ele nasce com a tabela e não depois:
+  E o alvo de denÃºncia, porque ele nasce com a tabela e nÃ£o depois:
 
 ```sql
 alter type public.report_target_type add value if not exists 'provider_profile';
 ```
 
-  > Se a **onda H** já tiver aterrissado, ela já roteia a ocultação por tipo de alvo — adicione
-  > o ramo `provider_profile` ao RPC de resolução dela nesta mesma migration. Se a H ainda não
+  > Se a **onda H** jÃ¡ tiver aterrissado, ela jÃ¡ roteia a ocultaÃ§Ã£o por tipo de alvo â€” adicione
+  > o ramo `provider_profile` ao RPC de resoluÃ§Ã£o dela nesta mesma migration. Se a H ainda nÃ£o
   > rodou, pare aqui: o valor do enum existe, a Task 1 da H cobre o resto.
 
 - [ ] **Step 3: o bucket das fotos**
 
   `provider-photos`, privado, 5 MB, `image/jpeg|png|webp`, no molde exato de
-  `20260821000015_event_photos_bucket.sql`. `insert` só do dono
+  `20260821000015_event_photos_bucket.sql`. `insert` sÃ³ do dono
   (`owner = auth.uid()` **e** existe `provider_accounts` ativo); `select` gated por
   `private.can_see_provider` a partir do prefixo do caminho.
 
-- [ ] **Step 4: o pgTAP do escopo — os dois lados**
+- [ ] **Step 4: o pgTAP do escopo â€” os dois lados**
 
   `supabase/tests/provider-showcase-scope.sql`. Fixture: duas vilas na mesma cidade, um
-  prestador com `reach` grátis só na vila A.
+  prestador com `reach` grÃ¡tis sÃ³ na vila A.
 
-  - membro **aprovado** da vila A vê a ficha, o catálogo e o portfólio → `isnt_empty` × 3
-  - membro da vila B **não vê** → `is_empty` × 3
-  - membro da vila A com `status = 'pending'` **não vê** (aprovado ≠ pedinte)
-  - membro da cidade sem vila nenhuma **não vê** — este é o teste que a Task 7 vai inverter
-    quando existir alcance pago de `locality`; ele precisa estar vermelho de propósito lá
-  - o dono vê a própria ficha mesmo sem alcance ativo
-  - outro prestador **não vê** a ficha alheia
-  - o dono edita a própria ficha; **não** edita a alheia (`throws_ok`, 42501)
+  - membro **aprovado** da vila A vÃª a ficha, o catÃ¡logo e o portfÃ³lio â†’ `isnt_empty` Ã— 3
+  - membro da vila B **nÃ£o vÃª** â†’ `is_empty` Ã— 3
+  - membro da vila A com `status = 'pending'` **nÃ£o vÃª** (aprovado â‰  pedinte)
+  - membro da cidade sem vila nenhuma **nÃ£o vÃª** â€” este Ã© o teste que a Task 7 vai inverter
+    quando existir alcance pago de `locality`; ele precisa estar vermelho de propÃ³sito lÃ¡
+  - o dono vÃª a prÃ³pria ficha mesmo sem alcance ativo
+  - outro prestador **nÃ£o vÃª** a ficha alheia
+  - o dono edita a prÃ³pria ficha; **nÃ£o** edita a alheia (`throws_ok`, 42501)
 
 - [ ] **Step 5: a ficha vista pelo membro**
 
   `(shell)/prestadores/[id]/page.tsx`, Server Component, lendo pelo **cliente autenticado**
-  (regra 1 da §12: nada de `service_role` aqui — a RLS é quem decide). Três blocos na ordem da
-  D45: identidade, catálogo, portfólio. Quem não pode ver recebe `notFound()` — e lembre da
-  lição do README: **no Next 16 isso responde 200**, então a asserção do E2E é sobre a UI
-  ("não encontrado" presente, conteúdo protegido ausente), nunca sobre o status.
+  (regra 1 da Â§12: nada de `service_role` aqui â€” a RLS Ã© quem decide). TrÃªs blocos na ordem da
+  D45: identidade, catÃ¡logo, portfÃ³lio. Quem nÃ£o pode ver recebe `notFound()` â€” e lembre da
+  liÃ§Ã£o do README: **no Next 16 isso responde 200**, entÃ£o a asserÃ§Ã£o do E2E Ã© sobre a UI
+  ("nÃ£o encontrado" presente, conteÃºdo protegido ausente), nunca sobre o status.
 
-  Botão "Conversar" existe mas fica desabilitado com explicação até a Task 6 — ou, melhor pela
-  regra 4 da §12, **não existe ainda**. Prefira não existir.
+  BotÃ£o "Conversar" existe mas fica desabilitado com explicaÃ§Ã£o atÃ© a Task 6 â€” ou, melhor pela
+  regra 4 da Â§12, **nÃ£o existe ainda**. Prefira nÃ£o existir.
 
-- [ ] **Step 6: revogar a ficha é ato do dono da comunidade**
+- [ ] **Step 6: revogar a ficha Ã© ato do dono da comunidade**
 
-  A decisão 2 do ADR diz que a ficha **sobrevive** à saída de quem indicou, e que revogar é ato
-  do dono da comunidade. Isso só é verdade se existir o ato — sem ele a decisão é prosa e a
-  vila fica sem saída para uma ficha que virou problema.
+  A decisÃ£o 2 do ADR diz que a ficha **sobrevive** Ã  saÃ­da de quem indicou, e que revogar Ã© ato
+  do dono da comunidade. Isso sÃ³ Ã© verdade se existir o ato â€” sem ele a decisÃ£o Ã© prosa e a
+  vila fica sem saÃ­da para uma ficha que virou problema.
 
-  O console do dono já existe (`app/(owner)/communities/[id]/`, entregue pela D2 Task 9). Ele
-  ganha a lista de fichas ativas da comunidade e a ação de revogar, com motivo:
+  O console do dono jÃ¡ existe (`app/(owner)/communities/[id]/`, entregue pela D2 Task 9). Ele
+  ganha a lista de fichas ativas da comunidade e a aÃ§Ã£o de revogar, com motivo:
 
 ```sql
--- Revogação pelo dono da comunidade que atestou. Não apaga a conta nem a
--- ficha: desliga o alcance e marca a data. Reversível, auditável, e é o
--- mesmo desenho de suspensão que a onda H usa para pessoa.
+-- RevogaÃ§Ã£o pelo dono da comunidade que atestou. NÃ£o apaga a conta nem a
+-- ficha: desliga o alcance e marca a data. ReversÃ­vel, auditÃ¡vel, e Ã© o
+-- mesmo desenho de suspensÃ£o que a onda H usa para pessoa.
 create function public.revoke_provider_account(
   p_provider_user_id uuid,
   p_owner_user_id uuid,
@@ -702,7 +702,7 @@ declare
   v_community_id uuid;
 begin
   if p_reason is null or btrim(p_reason) = '' then
-    raise exception 'a revogação exige motivo' using errcode = '22023';
+    raise exception 'a revogaÃ§Ã£o exige motivo' using errcode = '22023';
   end if;
 
   select community_id into v_community_id
@@ -736,9 +736,9 @@ grant execute on function public.revoke_provider_account(uuid, uuid, text) to se
 ```
 
   Testes: o dono revoga e a ficha some da busca **de todas as vilas**; o dono de **outra**
-  comunidade não revoga (42501); um membro comum não revoga; revogar sem motivo levanta; o
-  prestador revogado continua conseguindo entrar e ver a própria ficha (ele não foi banido — a
-  vitrine dele é que saiu do ar), e **não** consegue reativar o alcance sozinho.
+  comunidade nÃ£o revoga (42501); um membro comum nÃ£o revoga; revogar sem motivo levanta; o
+  prestador revogado continua conseguindo entrar e ver a prÃ³pria ficha (ele nÃ£o foi banido â€” a
+  vitrine dele Ã© que saiu do ar), e **nÃ£o** consegue reativar o alcance sozinho.
 
 - [ ] **Step 7: gate e commit**
 
@@ -754,15 +754,15 @@ git commit -m "feat(providers): ficha com identidade, catalogo, portfolio, alcan
 
 ## Task 4: o painel do prestador
 
-D37 diz o que ele tem: **anúncio, métrica e caixa de pedidos**. Duas das três dependem de
+D37 diz o que ele tem: **anÃºncio, mÃ©trica e caixa de pedidos**. Duas das trÃªs dependem de
 outras ondas, e o painel precisa dizer isso em vez de fingir.
 
 | Bloco | Estado nesta task |
 |---|---|
-| Ficha, catálogo, portfólio | **entrega completa** — criar, editar, reordenar, remover |
-| Caixa de pedidos | **chega na Task 6** — não desenhe caixa vazia antes |
-| Métrica | **depende do PostHog, que é onda H** — estado vazio honesto, nunca número inventado |
-| Alcance | mostra o alcance atual (vila própria, grátis); o upgrade chega na Task 7 |
+| Ficha, catÃ¡logo, portfÃ³lio | **entrega completa** â€” criar, editar, reordenar, remover |
+| Caixa de pedidos | **chega na Task 6** â€” nÃ£o desenhe caixa vazia antes |
+| MÃ©trica | **depende do PostHog, que Ã© onda H** â€” estado vazio honesto, nunca nÃºmero inventado |
+| Alcance | mostra o alcance atual (vila prÃ³pria, grÃ¡tis); o upgrade chega na Task 7 |
 
 **Arquivos:**
 - Modificar: `apps/web/app/(provider)/prestador/page.tsx`
@@ -773,25 +773,25 @@ outras ondas, e o painel precisa dizer isso em vez de fingir.
 
 - [ ] **Step 1: as Server Actions, autenticadas pelo cliente com cookies**
 
-  Todas em `actions.ts` com `"use server"` no topo do arquivo. O padrão correto está em
-  `app/(shell)/communities/actions.ts:8-24`. **Nenhuma delas usa `service_role`** — a RLS da
-  Task 3 já decide, e usar `service_role` aqui é a regra 1 da §12 quebrada.
+  Todas em `actions.ts` com `"use server"` no topo do arquivo. O padrÃ£o correto estÃ¡ em
+  `app/(shell)/communities/actions.ts:8-24`. **Nenhuma delas usa `service_role`** â€” a RLS da
+  Task 3 jÃ¡ decide, e usar `service_role` aqui Ã© a regra 1 da Â§12 quebrada.
 
-  Um cuidado que a onda F pagou caro (`README.md`, lição do PostgREST): **leia o `error` de
-  toda consulta**. A tela renderizando vazia porque o `error` foi descartado é como a lista de
-  membros de grupo ficou quebrada em produção sem ninguém notar.
+  Um cuidado que a onda F pagou caro (`README.md`, liÃ§Ã£o do PostgREST): **leia o `error` de
+  toda consulta**. A tela renderizando vazia porque o `error` foi descartado Ã© como a lista de
+  membros de grupo ficou quebrada em produÃ§Ã£o sem ninguÃ©m notar.
 
-- [ ] **Step 2: a validação na borda**
+- [ ] **Step 2: a validaÃ§Ã£o na borda**
 
-  `title` 2-120, `bio` até 800, `price_cents` inteiro não-negativo, `contact_phone` no formato
-  do `check` da migration. Valide **no servidor**, não só no formulário — a regra do
-  `CLAUDE.md` é "valide input nas bordas do sistema". Testes unitários em
-  `tests/unit/providers/showcase-form.test.ts` cobrindo os limites e o preço negativo.
+  `title` 2-120, `bio` atÃ© 800, `price_cents` inteiro nÃ£o-negativo, `contact_phone` no formato
+  do `check` da migration. Valide **no servidor**, nÃ£o sÃ³ no formulÃ¡rio â€” a regra do
+  `CLAUDE.md` Ã© "valide input nas bordas do sistema". Testes unitÃ¡rios em
+  `tests/unit/providers/showcase-form.test.ts` cobrindo os limites e o preÃ§o negativo.
 
 - [ ] **Step 3: os estados honestos**
 
-  Métrica: `EmptyState` dizendo que a medição chega com a onda H — não um "0 visualizações",
-  que é número inventado com cara de fato. Caixa de pedidos: idem, até a Task 6.
+  MÃ©trica: `EmptyState` dizendo que a mediÃ§Ã£o chega com a onda H â€” nÃ£o um "0 visualizaÃ§Ãµes",
+  que Ã© nÃºmero inventado com cara de fato. Caixa de pedidos: idem, atÃ© a Task 6.
 
 - [ ] **Step 4: gate e commit**
 
@@ -805,20 +805,20 @@ git commit -m "feat(providers): painel do prestador com ficha, catalogo e portfo
 
 ---
 
-## Task 5: a busca — filtro exato mais `pg_trgm` (D44)
+## Task 5: a busca â€” filtro exato mais `pg_trgm` (D44)
 
-D44 é específica sobre o mecanismo e sobre o motivo: **nativo do Postgres, sem serviço novo
-onde dado pessoal passe a viver**. Não introduza índice externo, não introduza serviço de
-busca. E lembre da D43: **não existe busca de pessoas**. Isto busca **ficha**, e a fronteira
-entre as duas coisas é o que o produto vende.
+D44 Ã© especÃ­fica sobre o mecanismo e sobre o motivo: **nativo do Postgres, sem serviÃ§o novo
+onde dado pessoal passe a viver**. NÃ£o introduza Ã­ndice externo, nÃ£o introduza serviÃ§o de
+busca. E lembre da D43: **nÃ£o existe busca de pessoas**. Isto busca **ficha**, e a fronteira
+entre as duas coisas Ã© o que o produto vende.
 
 **Arquivos:**
 - Criar: `supabase/migrations/<ts>_provider_search.sql`
 - Criar: `supabase/tests/provider-search-scope.sql`
-- Modificar: `apps/web/app/components/bivaque/city-reference.tsx` (a seção `city-vitrine-heading`)
+- Modificar: `apps/web/app/components/bivaque/city-reference.tsx` (a seÃ§Ã£o `city-vitrine-heading`)
 - Criar: `apps/web/app/(shell)/prestadores/page.tsx`
 
-- [ ] **Step 1: extensão, índice e o RPC**
+- [ ] **Step 1: extensÃ£o, Ã­ndice e o RPC**
 
 ```sql
 create extension if not exists pg_trgm with schema extensions;
@@ -828,7 +828,7 @@ create index provider_profiles_name_trgm_idx
   where is_deleted = false;
 
 -- Filtro exato por categoria e escopo; pg_trgm apenas no nome (D44).
--- security definer com o filtro de alcance DENTRO da função: quem chama nunca
+-- security definer com o filtro de alcance DENTRO da funÃ§Ã£o: quem chama nunca
 -- escolhe o escopo que enxerga.
 create function public.search_providers(
   p_category public.provider_category default null,
@@ -863,7 +863,7 @@ as $$
       or extensions.similarity(p.display_name, p_query) > 0.2
       or p.display_name ilike '%' || p_query || '%'
     )
-  -- D29 e §7.2: a ordenação NUNCA olha para r.source. Relevância e nada mais.
+  -- D29 e Â§7.2: a ordenaÃ§Ã£o NUNCA olha para r.source. RelevÃ¢ncia e nada mais.
   order by p.id, extensions.similarity(p.display_name, coalesce(p_query, '')) desc,
            p.display_name asc;
 $$;
@@ -874,29 +874,29 @@ grant execute on function public.search_providers(public.provider_category, uuid
   to authenticated;
 ```
 
-- [ ] **Step 2: o pgTAP da busca — e o teste que existe só para a D29**
+- [ ] **Step 2: o pgTAP da busca â€” e o teste que existe sÃ³ para a D29**
 
   `supabase/tests/provider-search-scope.sql`:
 
-  - membro da vila A busca sem filtro → vê a ficha do prestador da vila A
-  - o mesmo membro **não** vê a ficha de um prestador cujo alcance é só a vila B
-  - filtro por categoria devolve só aquela categoria
+  - membro da vila A busca sem filtro â†’ vÃª a ficha do prestador da vila A
+  - o mesmo membro **nÃ£o** vÃª a ficha de um prestador cujo alcance Ã© sÃ³ a vila B
+  - filtro por categoria devolve sÃ³ aquela categoria
   - busca por nome parcial ("clima" achando "Climatiza Manaus") funciona
   - **o teste da D29:** duas fichas na mesma categoria, uma com `source = 'paid'` e outra
-    `'free'`, com nomes escolhidos para que a ordem alfabética coloque a grátis primeiro. A
-    busca **tem que** devolver a grátis primeiro. Se um dia alguém "otimizar" a ordenação para
-    priorizar o pagante, este teste fica vermelho, e é para isso que ele existe.
+    `'free'`, com nomes escolhidos para que a ordem alfabÃ©tica coloque a grÃ¡tis primeiro. A
+    busca **tem que** devolver a grÃ¡tis primeiro. Se um dia alguÃ©m "otimizar" a ordenaÃ§Ã£o para
+    priorizar o pagante, este teste fica vermelho, e Ã© para isso que ele existe.
 
 - [ ] **Step 3: a vitrine entra em "cidade"**
 
-  Substitua o `EmptyState` de `city-reference.tsx` (seção `city-vitrine-heading`, o bloco que
-  hoje diz *"Isso é trabalho da onda G"*) por: filtro de categoria (as doze), campo de busca
+  Substitua o `EmptyState` de `city-reference.tsx` (seÃ§Ã£o `city-vitrine-heading`, o bloco que
+  hoje diz *"Isso Ã© trabalho da onda G"*) por: filtro de categoria (as doze), campo de busca
   por nome, e a lista de resultados com link para `/prestadores/[id]`.
 
-  O estado vazio continua existindo e continua honesto — vila sem prestador cadastrado é o
-  estado normal no dia um, e a §3.4 avisa que categoria demais com prestador de menos faz tudo
-  parecer vazio ao mesmo tempo. **Não abra as doze categorias como abas vazias**; mostre o
-  filtro só quando houver ficha.
+  O estado vazio continua existindo e continua honesto â€” vila sem prestador cadastrado Ã© o
+  estado normal no dia um, e a Â§3.4 avisa que categoria demais com prestador de menos faz tudo
+  parecer vazio ao mesmo tempo. **NÃ£o abra as doze categorias como abas vazias**; mostre o
+  filtro sÃ³ quando houver ficha.
 
 - [ ] **Step 4: gate e commit**
 
@@ -910,36 +910,36 @@ git commit -m "feat(providers): busca por categoria e nome com pg_trgm, dentro d
 
 ---
 
-## Task 6: a conversa membro ↔ prestador — três defeitos antes do contexto novo
+## Task 6: a conversa membro â†” prestador â€” trÃªs defeitos antes do contexto novo
 
-D36 reaproveita a máquina de DM em vez de reconstruí-la, e o `BIVAQUE.md` §8 é explícito sobre
-a consequência: *"as correções de bloqueio e contexto passam a ser pré-requisito da onda G"*.
+D36 reaproveita a mÃ¡quina de DM em vez de reconstruÃ­-la, e o `BIVAQUE.md` Â§8 Ã© explÃ­cito sobre
+a consequÃªncia: *"as correÃ§Ãµes de bloqueio e contexto passam a ser prÃ©-requisito da onda G"*.
 
-O `PRODUCT_STATUS.md` §8 lista os três defeitos. Todos confirmados na leitura de
+O `PRODUCT_STATUS.md` Â§8 lista os trÃªs defeitos. Todos confirmados na leitura de
 `supabase/migrations/20260802001500_dm_contextual.sql`:
 
 | # | Defeito | Onde | Efeito |
 |---|---|---|---|
-| 1 | **Criação por ordem de UUID** | `dm_conversations_ordered check (participant_a < participant_b)` (linha 26) somado a `participant_a = (select auth.uid())` na policy de insert (linha ~229) | só quem tem o UUID menor consegue abrir conversa. O outro recebe violação de constraint. Metade dos pares está quebrada, e qual metade é sorteio |
-| 2 | **Bloqueio contornável pelo bloqueador** | `dm_messages_insert_sender` checa apenas `private.is_dm_blocked_by_other` | quem bloqueia continua podendo escrever para quem bloqueou. Bloqueio que não protege é pior que bloqueio nenhum |
-| 3 | **Contexto declarado não validado** | `private.can_dm_between` confere que existe *alguma* relação; `context_type` e `context_id` entram como o cliente mandar | a conversa alega uma origem que ninguém conferiu, e a moderação da onda H vai ler esse campo como se fosse fato |
+| 1 | **CriaÃ§Ã£o por ordem de UUID** | `dm_conversations_ordered check (participant_a < participant_b)` (linha 26) somado a `participant_a = (select auth.uid())` na policy de insert (linha ~229) | sÃ³ quem tem o UUID menor consegue abrir conversa. O outro recebe violaÃ§Ã£o de constraint. Metade dos pares estÃ¡ quebrada, e qual metade Ã© sorteio |
+| 2 | **Bloqueio contornÃ¡vel pelo bloqueador** | `dm_messages_insert_sender` checa apenas `private.is_dm_blocked_by_other` | quem bloqueia continua podendo escrever para quem bloqueou. Bloqueio que nÃ£o protege Ã© pior que bloqueio nenhum |
+| 3 | **Contexto declarado nÃ£o validado** | `private.can_dm_between` confere que existe *alguma* relaÃ§Ã£o; `context_type` e `context_id` entram como o cliente mandar | a conversa alega uma origem que ninguÃ©m conferiu, e a moderaÃ§Ã£o da onda H vai ler esse campo como se fosse fato |
 
 **Arquivos:**
 - Criar: `supabase/migrations/<ts>_dm_provider_context.sql`
 - Modificar: `supabase/tests/dm-context-denials.sql`, `supabase/tests/dm-context-allowed.sql`
 - Modificar: `apps/web/app/components/bivaque/chat-thread.tsx`
-- Modificar: `apps/web/app/(shell)/prestadores/[id]/page.tsx` (o botão "Conversar")
+- Modificar: `apps/web/app/(shell)/prestadores/[id]/page.tsx` (o botÃ£o "Conversar")
 - Modificar: `apps/web/app/(provider)/prestador/page.tsx` (a caixa de pedidos)
 
-- [ ] **Step 1: corrigir o defeito 1 — o par é ordenado no servidor**
+- [ ] **Step 1: corrigir o defeito 1 â€” o par Ã© ordenado no servidor**
 
-  Mantenha o `check (participant_a < participant_b)`: ele é o que garante uma conversa por par.
-  O que muda é **quem ordena**. Um RPC passa a ser o único caminho de criação.
+  Mantenha o `check (participant_a < participant_b)`: ele Ã© o que garante uma conversa por par.
+  O que muda Ã© **quem ordena**. Um RPC passa a ser o Ãºnico caminho de criaÃ§Ã£o.
 
   > **Ordem dentro da migration importa:** este RPC chama `private.dm_context_valid`, que o
-  > Step 3 define. Escreva os quatro steps num arquivo só, com o helper **antes** da função
-  > que o usa — plpgsql não valida a referência na criação, mas `create function` que chama
-  > SQL inexistente falha no primeiro uso, e você vai descobrir isso no pgTAP em vez de no
+  > Step 3 define. Escreva os quatro steps num arquivo sÃ³, com o helper **antes** da funÃ§Ã£o
+  > que o usa â€” plpgsql nÃ£o valida a referÃªncia na criaÃ§Ã£o, mas `create function` que chama
+  > SQL inexistente falha no primeiro uso, e vocÃª vai descobrir isso no pgTAP em vez de no
   > `db:reset`.
 
 ```sql
@@ -975,12 +975,12 @@ begin
     raise exception 'blocked' using errcode = '42501';
   end if;
 
-  -- A ordenação é aqui, e só aqui. O cliente nunca escolhe quem é A.
+  -- A ordenaÃ§Ã£o Ã© aqui, e sÃ³ aqui. O cliente nunca escolhe quem Ã© A.
   v_a := least(v_me, p_other_user_id);
   v_b := greatest(v_me, p_other_user_id);
 
-  -- O `do update` não muda nada: é o idioma para conseguir RETURNING quando a
-  -- linha já existe. Reabrir conversa é devolver a mesma, não criar outra.
+  -- O `do update` nÃ£o muda nada: Ã© o idioma para conseguir RETURNING quando a
+  -- linha jÃ¡ existe. Reabrir conversa Ã© devolver a mesma, nÃ£o criar outra.
   insert into public.dm_conversations (participant_a, participant_b, context_type, context_id)
   values (v_a, v_b, p_context_type, p_context_id)
   on conflict (participant_a, participant_b) do update set participant_a = excluded.participant_a
@@ -995,12 +995,12 @@ revoke all on function public.open_conversation(uuid, public.dm_context_type, uu
 grant execute on function public.open_conversation(uuid, public.dm_context_type, uuid)
   to authenticated;
 
--- E o caminho antigo fecha: sem policy de insert, a tabela só aceita o RPC.
+-- E o caminho antigo fecha: sem policy de insert, a tabela sÃ³ aceita o RPC.
 drop policy dm_conversations_insert_context_gated on public.dm_conversations;
 revoke insert on table public.dm_conversations from authenticated;
 ```
 
-- [ ] **Step 2: corrigir o defeito 2 — bloqueio nos dois sentidos**
+- [ ] **Step 2: corrigir o defeito 2 â€” bloqueio nos dois sentidos**
 
 ```sql
 create or replace function private.is_dm_blocked_either_way(p_conversation_id uuid)
@@ -1034,19 +1034,19 @@ with check (
 );
 ```
 
-- [ ] **Step 3: corrigir o defeito 3 — o contexto declarado é conferido**
+- [ ] **Step 3: corrigir o defeito 3 â€” o contexto declarado Ã© conferido**
 
   `private.dm_context_valid(a, b, context_type, context_id)` substitui o
-  `can_dm_between` no caminho de criação. Cada ramo confere **aquele** contexto:
-  `shared_group` → os dois têm `group_memberships` aprovada **naquele** `group_id`;
-  `shared_event` → os dois têm `event_rsvps` **naquele** `event_id`;
-  `recommendation_thread` → os dois participam **daquela** `request_id`;
-  `accepted_family` → existe `private.family_account_links` entre os dois;
-  `provider` → o `context_id` é uma `provider_profiles.id`, um dos dois é o
-  `owner_user_id` dela, e o outro pode vê-la (`private.can_see_provider`).
+  `can_dm_between` no caminho de criaÃ§Ã£o. Cada ramo confere **aquele** contexto:
+  `shared_group` â†’ os dois tÃªm `group_memberships` aprovada **naquele** `group_id`;
+  `shared_event` â†’ os dois tÃªm `event_rsvps` **naquele** `event_id`;
+  `recommendation_thread` â†’ os dois participam **daquela** `request_id`;
+  `accepted_family` â†’ existe `private.family_account_links` entre os dois;
+  `provider` â†’ o `context_id` Ã© uma `provider_profiles.id`, um dos dois Ã© o
+  `owner_user_id` dela, e o outro pode vÃª-la (`private.can_see_provider`).
 
-  Mantenha `can_dm_between` no schema: outras chamadas podem existir e removê-la não é o
-  escopo desta task. Se ela ficar órfã ao fim da onda, remova aí.
+  Mantenha `can_dm_between` no schema: outras chamadas podem existir e removÃª-la nÃ£o Ã© o
+  escopo desta task. Se ela ficar Ã³rfÃ£ ao fim da onda, remova aÃ­.
 
 - [ ] **Step 4: o contexto novo, e quem pode iniciar**
 
@@ -1054,49 +1054,49 @@ with check (
 alter type public.dm_context_type add value if not exists 'provider';
 ```
 
-  **Só o membro inicia.** O prestador responde dentro de conversa existente, nunca abre uma.
-  O motivo é a fronteira do produto: uma conta civil abrindo conversa com militar
-  identificável é contato não solicitado, e é a porta que a rede fecha na entrada. O
-  `dm_context_valid` do ramo `provider` exige que **quem chama** (`v_me`) não seja o dono da
+  **SÃ³ o membro inicia.** O prestador responde dentro de conversa existente, nunca abre uma.
+  O motivo Ã© a fronteira do produto: uma conta civil abrindo conversa com militar
+  identificÃ¡vel Ã© contato nÃ£o solicitado, e Ã© a porta que a rede fecha na entrada. O
+  `dm_context_valid` do ramo `provider` exige que **quem chama** (`v_me`) nÃ£o seja o dono da
   ficha.
 
-- [ ] **Step 5: os testes — cada defeito tem positivo e negativo**
+- [ ] **Step 5: os testes â€” cada defeito tem positivo e negativo**
 
   Em `supabase/tests/dm-context-denials.sql` e `dm-context-allowed.sql`:
 
   - defeito 1: o participante de **UUID maior** abre conversa com sucesso (hoje falha)
-  - defeito 2: quem bloqueou **não** consegue enviar mensagem (hoje consegue); quem foi
-    bloqueado também não (continua)
+  - defeito 2: quem bloqueou **nÃ£o** consegue enviar mensagem (hoje consegue); quem foi
+    bloqueado tambÃ©m nÃ£o (continua)
   - defeito 3: `open_conversation` com `context_type = 'shared_group'` e um `context_id` de
-    grupo do qual os dois **não** participam → negado, mesmo existindo outra relação entre eles
-  - contexto novo: membro que vê a ficha abre conversa com o prestador → **ok**
-  - membro que **não** vê a ficha (outra vila) → **negado**
-  - prestador tentando abrir conversa com membro → **negado**
-  - prestador respondendo dentro de conversa aberta pelo membro → **ok**
+    grupo do qual os dois **nÃ£o** participam â†’ negado, mesmo existindo outra relaÃ§Ã£o entre eles
+  - contexto novo: membro que vÃª a ficha abre conversa com o prestador â†’ **ok**
+  - membro que **nÃ£o** vÃª a ficha (outra vila) â†’ **negado**
+  - prestador tentando abrir conversa com membro â†’ **negado**
+  - prestador respondendo dentro de conversa aberta pelo membro â†’ **ok**
 
-- [ ] **Step 6: as três telas**
+- [ ] **Step 6: as trÃªs telas**
 
   `chat-thread.tsx` passa a chamar `open_conversation` em vez de inserir direto. A ficha ganha
-  o botão "Conversar". O painel do prestador ganha a caixa de pedidos, que é a lista de
+  o botÃ£o "Conversar". O painel do prestador ganha a caixa de pedidos, que Ã© a lista de
   conversas com contexto `provider`.
 
-  **O que o prestador vê do membro:** o `display_name` do perfil e nada mais. Não o e-mail, não
-  a vila, não a afiliação. Escreva isso como comentário na consulta, porque é a linha que um
+  **O que o prestador vÃª do membro:** o `display_name` do perfil e nada mais. NÃ£o o e-mail, nÃ£o
+  a vila, nÃ£o a afiliaÃ§Ã£o. Escreva isso como comentÃ¡rio na consulta, porque Ã© a linha que um
   refactor futuro vai atravessar sem perceber.
 
-  > **E ele não consegue ler isso pelo caminho normal.** `profiles_select_visible_in_locality`
-  > (`20260817031237_belonging_multi_membership.sql:102-109`) devolve o perfil quando é o do
-  > próprio usuário **ou** quando `private.shares_locality_with(user_id)` é verdadeiro. O
-  > prestador não tem `locality_memberships` por construção (D37), então **nenhuma linha de
-  > `profiles` é visível para ele** — a caixa de pedidos renderizaria "sem nome" para todo
-  > mundo. Isso não é bug a corrigir afrouxando a policy; é a fronteira funcionando.
+  > **E ele nÃ£o consegue ler isso pelo caminho normal.** `profiles_select_visible_in_locality`
+  > (`20260817031237_belonging_multi_membership.sql:102-109`) devolve o perfil quando Ã© o do
+  > prÃ³prio usuÃ¡rio **ou** quando `private.shares_locality_with(user_id)` Ã© verdadeiro. O
+  > prestador nÃ£o tem `locality_memberships` por construÃ§Ã£o (D37), entÃ£o **nenhuma linha de
+  > `profiles` Ã© visÃ­vel para ele** â€” a caixa de pedidos renderizaria "sem nome" para todo
+  > mundo. Isso nÃ£o Ã© bug a corrigir afrouxando a policy; Ã© a fronteira funcionando.
   >
-  > A saída é um RPC estreito, no molde dos que já existem em `apps/web/lib/profile-rpcs.ts`:
+  > A saÃ­da Ã© um RPC estreito, no molde dos que jÃ¡ existem em `apps/web/lib/profile-rpcs.ts`:
 
 ```sql
 -- Devolve o display_name do OUTRO participante de uma conversa em que quem
--- chama participa. Uma coluna, uma linha, e só dentro de conversa existente:
--- não é diretório de pessoas (D43), é o nome de quem já está falando com você.
+-- chama participa. Uma coluna, uma linha, e sÃ³ dentro de conversa existente:
+-- nÃ£o Ã© diretÃ³rio de pessoas (D43), Ã© o nome de quem jÃ¡ estÃ¡ falando com vocÃª.
 create function public.conversation_counterpart_name(p_conversation_id uuid)
 returns text
 language sql
@@ -1119,7 +1119,7 @@ revoke all on function public.conversation_counterpart_name(uuid) from public, a
 grant execute on function public.conversation_counterpart_name(uuid) to authenticated;
 ```
 
-  Teste negativo obrigatório: quem **não** participa da conversa recebe nulo, não o nome.
+  Teste negativo obrigatÃ³rio: quem **nÃ£o** participa da conversa recebe nulo, nÃ£o o nome.
 
 - [ ] **Step 7: gate e commit**
 
@@ -1133,24 +1133,24 @@ git commit -m "fix(dm): ordem do par, bloqueio bidirecional e contexto conferido
 
 ---
 
-# Bloco 2 — o alcance pago
+# Bloco 2 â€” o alcance pago
 
-> **Não comece sem o ADR do alcance pago e sem o CNPJ.** As duas tasks abaixo são R3 por dois
-> motivos independentes (monetização e pagamento), e a segunda depende de uma conta Asaas que
-> só existe com pessoa jurídica (§7.6).
+> **NÃ£o comece sem o ADR do alcance pago e sem o CNPJ.** As duas tasks abaixo sÃ£o R3 por dois
+> motivos independentes (monetizaÃ§Ã£o e pagamento), e a segunda depende de uma conta Asaas que
+> sÃ³ existe com pessoa jurÃ­dica (Â§7.6).
 
 ---
 
-## Task 7: o alcance pago — o produto antes do dinheiro
+## Task 7: o alcance pago â€” o produto antes do dinheiro
 
-Esta task **não toca em cobrança**. Ela entrega o que o pagante compra e as três garantias que
-o §7.4 exige, com o dinheiro ainda desligado. É deliberado: se o produto não estiver certo sem
-dinheiro, ele não fica certo com dinheiro.
+Esta task **nÃ£o toca em cobranÃ§a**. Ela entrega o que o pagante compra e as trÃªs garantias que
+o Â§7.4 exige, com o dinheiro ainda desligado. Ã‰ deliberado: se o produto nÃ£o estiver certo sem
+dinheiro, ele nÃ£o fica certo com dinheiro.
 
 **Arquivos:**
 - Criar: `supabase/migrations/<ts>_provider_paid_reach.sql`
 - Criar: `supabase/tests/provider-paid-reach.sql`
-- Modificar: `apps/web/app/(shell)/prestadores/page.tsx` e `[id]/page.tsx` (o rótulo)
+- Modificar: `apps/web/app/(shell)/prestadores/page.tsx` e `[id]/page.tsx` (o rÃ³tulo)
 - Modificar: `apps/web/app/(provider)/prestador/page.tsx` (o bloco de alcance)
 
 - [ ] **Step 1: a assinatura, como estado do produto**
@@ -1164,8 +1164,8 @@ create table public.provider_subscriptions (
   id uuid primary key default gen_random_uuid(),
   provider_id uuid not null references public.provider_profiles (id) on delete cascade,
   status public.provider_subscription_status not null default 'inactive',
-  -- Referência opaca ao Asaas. NUNCA cartão, NUNCA CPF/CNPJ do prestador:
-  -- §7.3 e D41 — o checkout é hospedado e o cartão nunca toca o Bivaque.
+  -- ReferÃªncia opaca ao Asaas. NUNCA cartÃ£o, NUNCA CPF/CNPJ do prestador:
+  -- Â§7.3 e D41 â€” o checkout Ã© hospedado e o cartÃ£o nunca toca o Bivaque.
   external_reference text unique,
   current_period_end timestamptz,
   created_at timestamptz not null default now(),
@@ -1173,11 +1173,11 @@ create table public.provider_subscriptions (
 );
 ```
 
-- [ ] **Step 2: ligar e desligar o alcance é uma função só**
+- [ ] **Step 2: ligar e desligar o alcance Ã© uma funÃ§Ã£o sÃ³**
 
 ```sql
--- O único caminho que escreve provider_reach com source='paid'. Assinatura
--- ativa liga; qualquer outro estado desliga. Sem esta concentração, "past_due"
+-- O Ãºnico caminho que escreve provider_reach com source='paid'. Assinatura
+-- ativa liga; qualquer outro estado desliga. Sem esta concentraÃ§Ã£o, "past_due"
 -- vira alcance eterno na primeira falha de webhook.
 create function public.sync_paid_reach(p_provider_id uuid)
 returns void
@@ -1188,10 +1188,10 @@ as $$
 declare
   v_active boolean;
 begin
-  -- A decisão 3 do ADR do alcance pago dá SETE DIAS de tolerância em `past_due`:
-  -- falha de cobrança não pode apagar a ficha das outras vilas no mesmo minuto,
-  -- porque a maioria das falhas é boleto que atrasou, não cliente que sumiu.
-  -- Sem esta janela a função contradiz o ADR — e o teste da Task 7 pega isso.
+  -- A decisÃ£o 3 do ADR do alcance pago dÃ¡ SETE DIAS de tolerÃ¢ncia em `past_due`:
+  -- falha de cobranÃ§a nÃ£o pode apagar a ficha das outras vilas no mesmo minuto,
+  -- porque a maioria das falhas Ã© boleto que atrasou, nÃ£o cliente que sumiu.
+  -- Sem esta janela a funÃ§Ã£o contradiz o ADR â€” e o teste da Task 7 pega isso.
   select exists (
     select 1 from public.provider_subscriptions
     where provider_id = p_provider_id
@@ -1218,25 +1218,25 @@ grant execute on function public.sync_paid_reach(uuid) to service_role;
 
 - [ ] **Step 3: o que o pagante comprou fica declarado**
 
-  §7.4 filtro 2: *"O que o pagante comprou está declarado como pago, visivelmente? Se não, é
+  Â§7.4 filtro 2: *"O que o pagante comprou estÃ¡ declarado como pago, visivelmente? Se nÃ£o, Ã©
   engano."* Toda ficha que aparece num escopo por `source = 'paid'` exibe um `Chip` com
-  **"Alcance patrocinado"** — na busca e na própria ficha. O `search_providers` já devolve
-  `reach_source`; use-o para o rótulo e **nunca** para a ordem.
+  **"Alcance patrocinado"** â€” na busca e na prÃ³pria ficha. O `search_providers` jÃ¡ devolve
+  `reach_source`; use-o para o rÃ³tulo e **nunca** para a ordem.
 
-- [ ] **Step 4: os testes que protegem as três regras**
+- [ ] **Step 4: os testes que protegem as trÃªs regras**
 
   `supabase/tests/provider-paid-reach.sql`:
 
-  - assinatura `active` → o membro da vila B **passa** a ver a ficha do prestador da vila A
-  - assinatura `past_due` com `current_period_end` de ontem → **ainda vê** (a tolerância de
-    7 dias da decisão 3 do ADR)
-  - assinatura `past_due` com `current_period_end` de dez dias atrás → **deixa de ver**
-  - assinatura cancelada → o alcance **grátis na vila própria continua intacto** (D28: a ficha
-    na própria vila é grátis, sempre, completa — cancelar assinatura não pode enterrar ninguém,
-    que é o proibido nº 2 do §7.3)
-  - a ordenação da busca continua ignorando `source` (repita a asserção da Task 5 aqui, com
-    assinatura ativa — é o mesmo invariante em outro estado do mundo)
-  - `authenticated` chamando `sync_paid_reach` diretamente → **negado**
+  - assinatura `active` â†’ o membro da vila B **passa** a ver a ficha do prestador da vila A
+  - assinatura `past_due` com `current_period_end` de ontem â†’ **ainda vÃª** (a tolerÃ¢ncia de
+    7 dias da decisÃ£o 3 do ADR)
+  - assinatura `past_due` com `current_period_end` de dez dias atrÃ¡s â†’ **deixa de ver**
+  - assinatura cancelada â†’ o alcance **grÃ¡tis na vila prÃ³pria continua intacto** (D28: a ficha
+    na prÃ³pria vila Ã© grÃ¡tis, sempre, completa â€” cancelar assinatura nÃ£o pode enterrar ninguÃ©m,
+    que Ã© o proibido nÂº 2 do Â§7.3)
+  - a ordenaÃ§Ã£o da busca continua ignorando `source` (repita a asserÃ§Ã£o da Task 5 aqui, com
+    assinatura ativa â€” Ã© o mesmo invariante em outro estado do mundo)
+  - `authenticated` chamando `sync_paid_reach` diretamente â†’ **negado**
 
 - [ ] **Step 5: gate e commit**
 
@@ -1250,9 +1250,9 @@ git commit -m "feat(providers): alcance pago como estado do produto, declarado e
 
 ---
 
-## Task 8: Asaas — checkout hospedado e webhook
+## Task 8: Asaas â€” checkout hospedado e webhook
 
-D41: **checkout hospedado, o cartão nunca toca o Bivaque**. O Bivaque guarda uma referência
+D41: **checkout hospedado, o cartÃ£o nunca toca o Bivaque**. O Bivaque guarda uma referÃªncia
 opaca e reage a webhook. Nada mais.
 
 **Arquivos:**
@@ -1260,37 +1260,37 @@ opaca e reage a webhook. Nada mais.
 - Criar: `apps/web/lib/billing/asaas.ts`
 - Criar: `tests/unit/billing/asaas-webhook.test.ts`
 - Criar: `tests/unit/billing/fixtures/asaas-*.json`
-- Modificar: `apps/web/app/(provider)/prestador/page.tsx` (o botão de assinar)
+- Modificar: `apps/web/app/(provider)/prestador/page.tsx` (o botÃ£o de assinar)
 
-- [ ] **Step 1: o cliente, server-side e só**
+- [ ] **Step 1: o cliente, server-side e sÃ³**
 
-  `apps/web/lib/billing/asaas.ts` lê a chave de `process.env["ASAAS_API_KEY"]`. **Nunca**
-  `NEXT_PUBLIC_*` — o Next inclina qualquer `NEXT_PUBLIC_` no bundle do cliente, e isso
-  publicaria a chave. O mesmo cuidado que `apps/web/lib/portal/client.ts` já toma com a chave
+  `apps/web/lib/billing/asaas.ts` lÃª a chave de `process.env["ASAAS_API_KEY"]`. **Nunca**
+  `NEXT_PUBLIC_*` â€” o Next inclina qualquer `NEXT_PUBLIC_` no bundle do cliente, e isso
+  publicaria a chave. O mesmo cuidado que `apps/web/lib/portal/client.ts` jÃ¡ toma com a chave
   do Portal. Nenhum log ecoa a chave nem o payload; o scrub de PII de
   `packages/domain/src/pii-scrub.ts` roda antes de qualquer `log.error`.
 
-- [ ] **Step 2: o webhook, com assinatura e idempotência**
+- [ ] **Step 2: o webhook, com assinatura e idempotÃªncia**
 
   A rota valida o segredo do webhook **antes** de ler o corpo, rejeita com 401 sem detalhe,
   grava o evento numa tabela de eventos processados com `unique (external_event_id)` e ignora
-  repetido — provedor de pagamento reentrega, e reentrega é o caso normal, não o excepcional.
+  repetido â€” provedor de pagamento reentrega, e reentrega Ã© o caso normal, nÃ£o o excepcional.
   Depois atualiza `provider_subscriptions.status` e chama `public.sync_paid_reach`.
 
-  **Proibido retry automático em laço** (§7.9 estabeleceu a regra contra o Portal; ela vale
-  para qualquer terceiro): responda 200 ao que já processou, 5xx ao que falhou, e deixe o
+  **Proibido retry automÃ¡tico em laÃ§o** (Â§7.9 estabeleceu a regra contra o Portal; ela vale
+  para qualquer terceiro): responda 200 ao que jÃ¡ processou, 5xx ao que falhou, e deixe o
   provedor reentregar.
 
 - [ ] **Step 3: os testes, com fixture e sem rede**
 
   `tests/unit/billing/asaas-webhook.test.ts`. Como no Portal, **nenhuma chamada real** e
-  nenhum dado real: fixtures JSON com identificadores fictícios.
+  nenhum dado real: fixtures JSON com identificadores fictÃ­cios.
 
-  - assinatura inválida → 401, e **nada** muda no banco
-  - evento de pagamento confirmado → `status = 'active'` e `sync_paid_reach` chamado
-  - o **mesmo** evento entregue duas vezes → segundo é no-op
-  - evento de atraso → `past_due`
-  - corpo malformado → 400, sem exceção vazando para o log
+  - assinatura invÃ¡lida â†’ 401, e **nada** muda no banco
+  - evento de pagamento confirmado â†’ `status = 'active'` e `sync_paid_reach` chamado
+  - o **mesmo** evento entregue duas vezes â†’ segundo Ã© no-op
+  - evento de atraso â†’ `past_due`
+  - corpo malformado â†’ 400, sem exceÃ§Ã£o vazando para o log
 
 - [ ] **Step 4: gate e commit**
 
@@ -1306,23 +1306,23 @@ git commit -m "feat(billing): webhook Asaas com assinatura, idempotencia e sincr
 
 ## Task 9: fechamento da onda
 
-- [ ] **Step 1: os E2E — escritos, commitados, possivelmente não rodados**
+- [ ] **Step 1: os E2E â€” escritos, commitados, possivelmente nÃ£o rodados**
 
-  Especificações novas em `tests/e2e/`: o membro acha um prestador pela busca da cidade e abre
-  a ficha; o prestador entra pelo convite e publica um item de catálogo; o membro de outra vila
-  não acha a ficha.
+  EspecificaÃ§Ãµes novas em `tests/e2e/`: o membro acha um prestador pela busca da cidade e abre
+  a ficha; o prestador entra pelo convite e publica um item de catÃ¡logo; o membro de outra vila
+  nÃ£o acha a ficha.
 
   **Sem credencial inline** (`AGENTS.md`): leia do ambiente com fallback em
-  `apps/web/.env.local` e lance erro quando nenhum dos dois fornecer — o modelo é
-  `tests/e2e/persistent-login.spec.ts`. E **`import.meta` não existe** nos specs: eles são
-  transpilados para CJS e um `import.meta.dirname` aborta a coleta da suíte inteira com
+  `apps/web/.env.local` e lance erro quando nenhum dos dois fornecer â€” o modelo Ã©
+  `tests/e2e/persistent-login.spec.ts`. E **`import.meta` nÃ£o existe** nos specs: eles sÃ£o
+  transpilados para CJS e um `import.meta.dirname` aborta a coleta da suÃ­te inteira com
   `Total: 0 tests in 0 files`. Resolva caminho a partir de `process.cwd()`.
 
   Se o banco estiver sem seed, **commite sem executar** e registre no `PRODUCT_STATUS.md` como
-  "código feito" — é o terceiro estado documentado lá, e o `README.md` explica por que essa é a
-  única saída honesta numa execução autônoma.
+  "cÃ³digo feito" â€” Ã© o terceiro estado documentado lÃ¡, e o `README.md` explica por que essa Ã© a
+  Ãºnica saÃ­da honesta numa execuÃ§Ã£o autÃ´noma.
 
-- [ ] **Step 2: a auditoria visual — ela bloqueia a onda seguinte**
+- [ ] **Step 2: a auditoria visual â€” ela bloqueia a onda seguinte**
 
 ```bash
 node scripts/visual/loop.mjs
@@ -1330,17 +1330,17 @@ node scripts/visual/loop.mjs
 
   Telas tocadas: `/localidade` (a vitrine), `/prestadores`, `/prestadores/[id]`, `/prestador` e
   as filhas, e as duas telas de convite. Veredito escrito em
-  `docs/agents/VISUAL_AUDIT-2026-08-<dd>-onda-g.md`, no formato dos que já existem em
+  `docs/agents/VISUAL_AUDIT-2026-08-<dd>-onda-g.md`, no formato dos que jÃ¡ existem em
   `docs/agents/`.
 
   Depois da captura, **antes de qualquer `test:db`**: `db:reset` limpo. A captura insere o
-  perfil fantasma "Visual Capture" e seis asserts de pgTAP quebram parecendo regressão real.
+  perfil fantasma "Visual Capture" e seis asserts de pgTAP quebram parecendo regressÃ£o real.
 
 - [ ] **Step 3: reconciliar o `PRODUCT_STATUS.md`**
 
-  As cinco linhas do §7 e a linha "Conversa membro ↔ prestador" do §8. Uma linha só sai quando
-  o ciclo do usuário fecha — entrada, ação, feedback, acompanhamento e o sad path principal.
-  Capacidade no banco não fecha linha. Troque `[A]` por `[V]` no que você reconferiu.
+  As cinco linhas do Â§7 e a linha "Conversa membro â†” prestador" do Â§8. Uma linha sÃ³ sai quando
+  o ciclo do usuÃ¡rio fecha â€” entrada, aÃ§Ã£o, feedback, acompanhamento e o sad path principal.
+  Capacidade no banco nÃ£o fecha linha. Troque `[A]` por `[V]` no que vocÃª reconferiu.
 
 - [ ] **Step 4: commit final**
 
@@ -1352,11 +1352,11 @@ git commit -m "docs(status): reconciliar vitrine e conversa membro-prestador apo
 
 ## Se alguma coisa aqui estiver errada
 
-Um plano errado é informação, não obstáculo. **Pare e reporte** em vez de improvisar,
+Um plano errado Ã© informaÃ§Ã£o, nÃ£o obstÃ¡culo. **Pare e reporte** em vez de improvisar,
 especialmente nestes quatro pontos:
 
-1. Qualquer coisa que exija o Bivaque intermediar pagamento de serviço (D26).
-2. Qualquer ordenação que olhe para `provider_reach.source` (D29).
-3. Qualquer `service_role` num caminho de usuário sem helper de acesso antes (regra 1 da §12).
-4. Qualquer coluna de escopo que nasça sem a policy que a lê (regra 6 da §12) — são quatro
-   vazamentos de privacidade neste repositório com essa mesma origem.
+1. Qualquer coisa que exija o Bivaque intermediar pagamento de serviÃ§o (D26).
+2. Qualquer ordenaÃ§Ã£o que olhe para `provider_reach.source` (D29).
+3. Qualquer `service_role` num caminho de usuÃ¡rio sem helper de acesso antes (regra 1 da Â§12).
+4. Qualquer coluna de escopo que nasÃ§a sem a policy que a lÃª (regra 6 da Â§12) â€” sÃ£o quatro
+   vazamentos de privacidade neste repositÃ³rio com essa mesma origem.
