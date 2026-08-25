@@ -1508,6 +1508,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      conversation_counterpart_name: {
+        Args: { p_conversation_id: string }
+        Returns: string
+      }
       create_community: {
         Args: {
           p_description: string
@@ -1823,6 +1827,14 @@ export type Database = {
         }
         Returns: string
       }
+      open_conversation: {
+        Args: {
+          p_context_id: string
+          p_context_type: Database["public"]["Enums"]["dm_context_type"]
+          p_other_user_id: string
+        }
+        Returns: string
+      }
       profile_events_for: {
         Args: { p_target_user_id: string; p_viewer_user_id: string }
         Returns: {
@@ -2029,6 +2041,7 @@ export type Database = {
         | "shared_event"
         | "recommendation_thread"
         | "accepted_family"
+        | "provider"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
@@ -2230,6 +2243,7 @@ export const Constants = {
         "shared_event",
         "recommendation_thread",
         "accepted_family",
+        "provider",
       ],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going", "not_going"],

@@ -2,6 +2,7 @@ import { PROVIDER_CATEGORY_LABELS, type ProviderCategory } from "@bivaque/domain
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
+import { StartConversationButton } from "../../../components/bivaque/start-conversation-button"
 
 // Onda G Task 3, Step 5 — a ficha vista pelo membro.
 //
@@ -12,11 +13,12 @@ import { notFound } from "next/navigation"
 // externa é sobre conteúdo presente/ausente, nunca sobre status HTTP.
 //
 // Ordem dos blocos é a D45: identidade, catálogo, portfólio. O botão
-// "Conversar" deliberadamente NÃO existe até a Task 6 entregar o canal
-// (regra 4 da §12: prefira ausência a botão desabilitado).
+// "Conversar" chegou na Task 6 — e só existe porque o canal fecha: o RPC
+// `open_conversation` aceita contexto `provider` apenas iniciado pelo membro.
 
 type ProviderProfileRow = {
   id: string
+  owner_user_id: string
   display_name: string
   category: ProviderCategory
   bio: string | null
@@ -68,7 +70,7 @@ export default async function ProviderShowcasePage({
 
   const profileQuery = await authClient
     .from("provider_profiles")
-    .select("id, display_name, category, bio, contact_phone, contact_is_public")
+    .select("id, owner_user_id, display_name, category, bio, contact_phone, contact_is_public")
     .eq("id", providerId)
     .maybeSingle()
 
@@ -134,6 +136,8 @@ export default async function ProviderShowcasePage({
           </p>
         )}
       </header>
+
+      <StartConversationButton providerUserId={profile.owner_user_id} profileId={profile.id} />
 
       <section aria-labelledby="catalogo-titulo" className="space-y-3">
         <h2 id="catalogo-titulo" className="text-base font-semibold tracking-tight">

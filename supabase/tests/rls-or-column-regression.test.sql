@@ -393,8 +393,8 @@ select results_eq(
         'dm_conversations_insert_context_gated'
       )
   $$,
-  array[2::bigint],
-  'GUARD: all 2 dm_conversations policies intact'
+  array[1::bigint],
+  'GUARD: only the select policy remains — insert direto fechado pelo open_conversation (onda G Task 6)'
 );
 
 select results_eq(
@@ -647,8 +647,8 @@ select results_eq(
     where schemaname = 'public'
       and tablename = 'dm_conversations'
   $$,
-  array[2::bigint],
-  'GUARD: dm_conversations has exactly 2 policies'
+  array[1::bigint],
+  'GUARD: dm_conversations has exactly 1 policy — criação só via RPC (onda G Task 6)'
 );
 
 select results_eq(

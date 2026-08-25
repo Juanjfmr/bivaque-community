@@ -1000,7 +1000,7 @@ drop policy dm_conversations_insert_context_gated on public.dm_conversations;
 revoke insert on table public.dm_conversations from authenticated;
 ```
 
-- [ ] **Step 2: corrigir o defeito 2 â€” bloqueio nos dois sentidos**
+- [x] **Step 2: corrigir o defeito 2 â€” bloqueio nos dois sentidos**
 
 ```sql
 create or replace function private.is_dm_blocked_either_way(p_conversation_id uuid)
@@ -1034,7 +1034,7 @@ with check (
 );
 ```
 
-- [ ] **Step 3: corrigir o defeito 3 â€” o contexto declarado Ã© conferido**
+- [x] **Step 3: corrigir o defeito 3 â€” o contexto declarado Ã© conferido**
 
   `private.dm_context_valid(a, b, context_type, context_id)` substitui o
   `can_dm_between` no caminho de criaÃ§Ã£o. Cada ramo confere **aquele** contexto:
@@ -1048,7 +1048,7 @@ with check (
   Mantenha `can_dm_between` no schema: outras chamadas podem existir e removÃª-la nÃ£o Ã© o
   escopo desta task. Se ela ficar Ã³rfÃ£ ao fim da onda, remova aÃ­.
 
-- [ ] **Step 4: o contexto novo, e quem pode iniciar**
+- [x] **Step 4: o contexto novo, e quem pode iniciar**
 
 ```sql
 alter type public.dm_context_type add value if not exists 'provider';
@@ -1060,7 +1060,7 @@ alter type public.dm_context_type add value if not exists 'provider';
   `dm_context_valid` do ramo `provider` exige que **quem chama** (`v_me`) nÃ£o seja o dono da
   ficha.
 
-- [ ] **Step 5: os testes â€” cada defeito tem positivo e negativo**
+- [x] **Step 5: os testes â€” cada defeito tem positivo e negativo**
 
   Em `supabase/tests/dm-context-denials.sql` e `dm-context-allowed.sql`:
 
@@ -1074,7 +1074,7 @@ alter type public.dm_context_type add value if not exists 'provider';
   - prestador tentando abrir conversa com membro â†’ **negado**
   - prestador respondendo dentro de conversa aberta pelo membro â†’ **ok**
 
-- [ ] **Step 6: as trÃªs telas**
+- [x] **Step 6: as trÃªs telas**
 
   `chat-thread.tsx` passa a chamar `open_conversation` em vez de inserir direto. A ficha ganha
   o botÃ£o "Conversar". O painel do prestador ganha a caixa de pedidos, que Ã© a lista de
@@ -1121,7 +1121,7 @@ grant execute on function public.conversation_counterpart_name(uuid) to authenti
 
   Teste negativo obrigatÃ³rio: quem **nÃ£o** participa da conversa recebe nulo, nÃ£o o nome.
 
-- [ ] **Step 7: gate e commit**
+- [x] **Step 7: gate e commit** — fechado em 2026-08-25
 
 ```bash
 npx pnpm@11.18.0 gate

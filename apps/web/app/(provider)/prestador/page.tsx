@@ -80,6 +80,33 @@ export default async function PrestadorHomePage() {
     .eq("provider_id", profile?.id ?? "")
   if (photoError) throw new Error(`Falha a contar o portfólio: ${photoError.message}`)
 
+  // PRIVACIDADE (D43/D37) — linha que um refactor futuro vai atravessar sem
+  // perceber: o prestador vê APENAS o display_name do membro, e só consegue
+  // lê-lo porque `conversation_counterpart_name` é um RPC estreito dentro de
+  // conversa existente. NÃO troque por select em `profiles`: o prestador não
+  // tem locality_memberships, nenhuma linha de profiles é visível para ele,
+  // e afrouxar essa policy para "consertar" a lista expõe militares a civis.
+  // Não o e-mail, não a vila, não a afiliação. O nome. E nada mais.
+  const { data: ordersData, error: ordersError } = await authClient
+    .from("dm_conversations")
+    .select("id, context_id, created_at")
+    .eq("context_type", "provider")
+    .order("created_at", { ascending: false })
+  if (ordersError) throw new Error(`Falha ao carregar a caixa de pedidos: ${ordersError.message}`)
+  const orders = (ordersData ?? []) as Array<{
+    id: string
+    context_id: string | null
+    created_at: string
+  }>
+  const orderNames = await Promise.all(
+    orders.map(async (order) => {
+      const { data: name } = await authClient.rpc("conversation_counterpart_name", {
+        p_conversation_id: order.id,
+      })
+      return { ...order, counterpart: name ?? "Membro" }
+    }),
+  )
+
   return (
     <main className="mx-auto w-full max-w-2xl space-y-6 px-6 py-10">
       <header>
@@ -139,6 +166,40 @@ export default async function PrestadorHomePage() {
           <strong>{community?.name ?? "sua comunidade"}</strong>. Fazer a ficha aparecer além dela é
           um passo pago que ainda não existe no produto.
         </p>
+      </section>
+
+      <section aria-label="Pedidos" className="rounded-lg border border-border bg-surface p-5">
+        <h2 className="text-lg font-medium">Pedidos</h2>
+        {profile ? (
+          orderNames.length === 0 ? (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Nenhuma conversa iniciada por membros ainda.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {orderNames.map((order) => (
+                <li key={order.id} className="flex items-center justify-between gap-3 text-sm">
+                  <span>
+                    {order.counterpart} ·{" "}
+                    <span className="text-xs text-muted">
+                      {new Date(order.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                  </span>
+                  <Link
+                    href={`/messages?conversation=${order.id}`}
+                    className="min-h-11 px-1 leading-[2.75rem] underline"
+                  >
+                    Abrir conversa
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : (
+          <p className="mt-1 text-sm text-muted-foreground">
+            Disponível quando sua ficha estiver publicada.
+          </p>
+        )}
       </section>
 
       <section aria-label="Métrica" className="rounded-lg border border-border bg-surface p-5">

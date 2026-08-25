@@ -1,12 +1,43 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(21);
+select plan(26);
 
 \ir fixtures/foundation.inc
 \ir fixtures/trust.inc
 \ir fixtures/authz.inc
 \ir fixtures/dm.inc
+\ir fixtures/communities.inc
+
+-- Onda G Task 6: prestador da vila A para o contexto `provider`.
+set local role postgres;
+insert into auth.users (id, email)
+values ('10000000-0000-4000-8000-000000000025', 'provider-dm@example.invalid');
+insert into public.provider_accounts (
+  auth_user_id, invited_by, community_id, locality_id
+)
+values (
+  '10000000-0000-4000-8000-000000000025',
+  '10000000-0000-4000-8000-000000000001',
+  '70000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001'
+);
+insert into public.provider_profiles (
+  id, owner_user_id, display_name, category
+)
+values (
+  '30000000-0000-4000-8000-000000000025',
+  '10000000-0000-4000-8000-000000000025',
+  'Prestador DM',
+  'alimentacao'
+);
+insert into public.provider_reach (provider_id, scope_type, scope_id, source)
+values (
+  '30000000-0000-4000-8000-000000000025',
+  'community',
+  '70000000-0000-4000-8000-000000000001',
+  'free'
+);
 
 set local role postgres;
 insert into public.locality_memberships (user_id, locality_id)
@@ -81,17 +112,45 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.dm_conversations (
-      participant_a, participant_b, context_type, context_id
-    )
-    values (
-      '10000000-0000-4000-8000-000000000008',
+    select public.open_conversation(
       '10000000-0000-4000-8000-000000000009',
       'shared_group',
       '40000000-0000-4000-8000-000000000001'
     )
   $$,
-  'participant can create conversation via shared_group context'
+  'participant can open conversation via shared_group context through the RPC'
+);
+
+-- Defeito 1 corrigido: o participante de UUID MAIOR também abre o par — a
+-- ordenação é do servidor, e reabrir devolve a MESMA conversa.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000009',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000008',
+      'shared_group',
+      '40000000-0000-4000-8000-000000000001'
+    )
+  $$,
+  'higher-uuid participant opens the same pair without violating ordering'
+);
+
+select results_eq(
+  $$
+    select count(*)
+      from public.dm_conversations
+     where participant_a = '10000000-0000-4000-8000-000000000008'
+       and participant_b = '10000000-0000-4000-8000-000000000009'
+  $$,
+  array[1::bigint],
+  'reopening returns the same conversation, never a second one'
 );
 
 -- Family context: 001 creates conversation with 002
@@ -105,17 +164,13 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.dm_conversations (
-      participant_a, participant_b, context_type, context_id
-    )
-    values (
-      '10000000-0000-4000-8000-000000000001',
+    select public.open_conversation(
       '10000000-0000-4000-8000-000000000002',
       'accepted_family',
       '20000000-0000-4000-8000-000000000001'
     )
   $$,
-  'participant can create conversation via accepted_family context'
+  'participant can open conversation via accepted_family context through the RPC'
 );
 
 -- ── participants can see their conversations ─────────────────────────────────
@@ -340,6 +395,75 @@ select throws_ok(
   23514,
   null,
   'message CHECK rejects address pattern'
+);
+
+-- ── onda G Task 6: contexto `provider` e o nome do correspondente ────────────
+
+-- Membro que VÊ a ficha abre conversa com o prestador.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000001',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000025',
+      'provider',
+      '30000000-0000-4000-8000-000000000025'
+    )
+  $$,
+  'member who can see the showcase opens a provider conversation'
+);
+
+-- O prestador RESPONDE dentro da conversa já existente (aberta pelo membro):
+-- localiza a conversa pelo contexto e insere a mensagem — a policy nova
+-- aceita porque ele é participante e não há bloqueio.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000025',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    select c.id,
+           '10000000-0000-4000-8000-000000000025',
+           'Resposta do prestador dentro da conversa aberta pelo membro'
+      from public.dm_conversations c
+     where c.context_type = 'provider'
+       and c.context_id = '30000000-0000-4000-8000-000000000025'
+     limit 1
+  $$,
+  'provider replies inside the member-opened conversation'
+);
+
+-- Nome do correspondente para quem participa: 008 lê o display_name de 009.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000008',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select results_eq(
+  $$
+    select public.conversation_counterpart_name(
+      (select c.id
+         from public.dm_conversations c
+        where c.participant_a = '10000000-0000-4000-8000-000000000008'
+          and c.participant_b = '10000000-0000-4000-8000-000000000009')
+    )
+  $$,
+  $$ values ('DM User B'::text) $$,
+  'participant reads the counterpart display name via the narrow RPC'
 );
 
 select * from finish();
