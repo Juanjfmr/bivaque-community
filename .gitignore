@@ -18,6 +18,19 @@ dev-server.pid
 # Local run logs and pid files from dev/E2E diagnostics
 work/
 
+# Transient diagnostics from E2E / db runs at the repo root (never repo state)
+e2e-*.log
+e2e-*.xml
+e2e-*.json
+junit-results.xml
+playwright-install.log
+supabase-start.log
+supabase-start.err
+supabase-env.txt
+# accidental shell redirects that created names with a trailing space
+e2e-junit.xml\ 
+e2e-results.json\ 
+
 # Claude Code managed worktrees (each contains a full node_modules clone)
 .claude/worktrees/
 
