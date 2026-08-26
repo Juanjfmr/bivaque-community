@@ -80,11 +80,18 @@ test.describe("home is the vila feed; without a vila, the city reference", () =>
     await page.goto("/community")
 
     // Then the h1 is the vila name (section title), not "Bivaque" and not "Manaus, AM"
-    await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible()
+    // Timeout generoso no PRIMEIRO assert: quando este é o primeiro spec a rodar
+    // contra um servidor recém-compilado (lote serial, projeto mobile), o JIT do
+    // Next estoura os 5s padrão antes de qualquer dado — visto em 2026-08-25.
+    await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
+      timeout: 20000,
+    })
 
     // And a locality-reach post is in the feed — E1 made it possible. The
     // card text is fixture-defined; we just assert it's there.
-    await expect(page.getByText("Aviso da cidade para todas as vilas")).toBeVisible()
+    await expect(page.getByText("Aviso da cidade para todas as vilas")).toBeVisible({
+      timeout: 15000,
+    })
 
     // And the composer is wired
     await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()

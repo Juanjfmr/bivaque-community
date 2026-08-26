@@ -927,6 +927,92 @@ values
   )
 on conflict (community_id, user_id) do nothing;
 
+-- ═══ Prestador semeado para os E2E da vitrine (onda G Task 9) ═══
+-- Conta dedicada no mesmo padrão de credenciais públicas de descarte.
+-- D37 na prática: SEM locality_memberships e SEM linha em profiles — o
+-- prestador é alcançado por provider_accounts/provider_reach, jamais pelo
+-- diretório de membros. Ficha com um item de catálogo para a busca da
+-- localidade ter o que encontrar; nome escolhido para casar com a busca
+-- parcial "climatiza" usada pelos specs.
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  email_change_token_current,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-00000000000a',
+    'authenticated',
+    'authenticated',
+    'prestador-seed@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '30 days',
+    now()
+  )
+on conflict (id) do nothing;
+
+insert into public.provider_accounts (
+  auth_user_id, invited_by, community_id, locality_id
+)
+values (
+  '20000000-0000-4000-8000-00000000000a',
+  '20000000-0000-4000-8000-000000000008',  -- dono-vila@ atestou
+  '71000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001'
+);
+
+insert into public.provider_profiles (
+  id, owner_user_id, display_name, category, bio
+)
+values (
+  '30000000-0000-4000-8000-000000000010',
+  '20000000-0000-4000-8000-00000000000a',
+  'Climatiza Manaus',
+  'assistencia_tecnica',
+  'Manutenção e instalação de ar-condicionado'
+)
+on conflict (id) do nothing;
+
+insert into public.provider_catalog_items (
+  provider_id, title, description, price_cents, position
+)
+values (
+  '30000000-0000-4000-8000-000000000010',
+  'Limpeza completa',
+  'Higienização da evaporadora',
+  15000,
+  0
+);
+
+insert into public.provider_reach (provider_id, scope_type, scope_id, source)
+values (
+  '30000000-0000-4000-8000-000000000010',
+  'community',
+  '71000000-0000-4000-8000-000000000001',
+  'free'
+);
+
 -- Post de alcance municipal (community_id IS NULL), para
 -- vila-home.spec.ts: aparece no feed de qualquer vila, inclusive a Vila
 -- Ajuricaba.
