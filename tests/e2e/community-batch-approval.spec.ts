@@ -14,7 +14,7 @@
 // second test requires to have NO community membership at all.
 
 import type { Page } from "@playwright/test"
-import { expect, test } from "@playwright/test"
+import { expect, request, test } from "@playwright/test"
 import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
@@ -22,6 +22,57 @@ const CONSENT_COOKIE = "bivaque-consent-version"
 const CURRENT_CONSENT = "1"
 const COMMUNITY_ID = "71000000-0000-4000-8000-000000000001"
 const OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+
+// Seed inserts exactly five pending requests on this community with these user_ids
+// (community_memberships.user_id values from seed.sql generate_series(20, 24)).
+const PENDING_USER_IDS = [
+  "30000000-0000-4000-8000-000000000014",
+  "30000000-0000-4000-8000-000000000015",
+  "30000000-0000-4000-8000-000000000016",
+  "30000000-0000-4000-8000-000000000017",
+  "30000000-0000-4000-8000-000000000018",
+]
+
+// Each viewport of this spec reuses the same Supabase database. The approving
+// test mutates the global community_memberships state (3 of 5 pending become
+// approved), so the second viewport already sees fewer than 5 pending and the
+// `nth(4)` assertion fails. Re-seeding the five pending rows from the original
+// seed UUIDs before each test restores the precondition for every viewport
+// without touching the approved rows the app is supposed to leave alone.
+test.beforeEach(async () => {
+  const serviceKey =
+    process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? readEnvLocal("SUPABASE_SERVICE_ROLE_KEY")
+  if (!serviceKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required to reset the pending queue.")
+  }
+  const api = await request.newContext({
+    baseURL: SUPABASE_URL,
+    extraHTTPHeaders: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+    },
+  })
+  try {
+    const rows = PENDING_USER_IDS.map((userId) => ({
+      community_id: COMMUNITY_ID,
+      user_id: userId,
+      role: "member",
+      status: "pending",
+      joined_at: new Date().toISOString(),
+    }))
+    // Upsert so a previous viewport that left these user_ids in status=approved
+    // does not block the INSERT (unique (community_id, user_id) collision).
+    const ins = await api.post(`rest/v1/community_memberships?on_conflict=community_id,user_id`, {
+      data: rows,
+      headers: { Prefer: "resolution=merge-duplicates" },
+    })
+    if (!ins.ok()) {
+      throw new Error(`Failed to upsert pending rows: ${ins.status()} ${await ins.text()}`)
+    }
+  } finally {
+    await api.dispose()
+  }
+})
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =

@@ -16,6 +16,7 @@ import { chromium } from "@playwright/test"
 const BASE_URL = process.env["BIVAQUE_VISUAL_BASE_URL"] ?? "http://127.0.0.1:3000"
 const OUT_ROOT = process.env["BIVAQUE_VISUAL_OUT"] ?? ".visual"
 const RUN_ID = process.env["BIVAQUE_VISUAL_RUN"] ?? new Date().toISOString().replace(/[:.]/g, "-")
+const ROUTE_PATH = process.env["BIVAQUE_VISUAL_ROUTE"]
 
 const VIEWPORTS = [
   { name: "mobile-375", width: 375, height: 812 },
@@ -26,6 +27,7 @@ const VIEWPORTS = [
 const ROUTES = [
   { path: "/", name: "root", auth: false },
   { path: "/login", name: "login", auth: false },
+  { path: "/signup", name: "signup", auth: false },
   { path: "/consent", name: "consent", auth: false },
   { path: "/onboarding", name: "onboarding", auth: false },
   { path: "/onboarding", name: "onboarding", auth: true },
@@ -314,7 +316,12 @@ function auditPage() {
 async function main() {
   const runDir = join(OUT_ROOT, RUN_ID)
   const shotsDir = join(runDir, "shots")
+  const routes = ROUTE_PATH ? ROUTES.filter((route) => route.path === ROUTE_PATH) : ROUTES
   mkdirSync(shotsDir, { recursive: true })
+
+  if (routes.length === 0) {
+    throw new Error(`No visual route configured for ${ROUTE_PATH}`)
+  }
 
   const auth = await fetchSession()
 
@@ -360,7 +367,7 @@ async function main() {
       if (message.type() === "error") consoleErrors.push(message.text().slice(0, 200))
     })
 
-    for (const route of ROUTES) {
+    for (const route of routes) {
       const label = `${route.name}--${viewport.name}`
       try {
         const response = await page.goto(route.path, { waitUntil: "networkidle", timeout: 30_000 })

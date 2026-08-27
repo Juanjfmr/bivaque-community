@@ -36,7 +36,9 @@ test.describe("unverified user: protected route denial", () => {
 
       // Then the middleware redirects to the consent gate
       await page.waitForURL(/\/consent/)
-      await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+      await expect(
+        page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+      ).toBeVisible()
     })
   }
 
@@ -49,14 +51,18 @@ test.describe("unverified user: protected route denial", () => {
 
     // Then they are directed to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
 
     // When they try to navigate back to community (skipping consent)
     await page.goto("/community")
 
     // Then they are redirected again to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 })
 
@@ -113,7 +119,9 @@ test.describe("DM without context: denial paths", () => {
 
     // Then the middleware redirects to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("messages page with consent but no auth redirects to /login", async ({ page }) => {
@@ -250,7 +258,9 @@ test.describe("events RSVP: denial paths", () => {
 
     // Then the middleware redirects to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 })
 
@@ -266,7 +276,9 @@ test.describe("notifications: denial paths", () => {
 
     // Then the middleware redirects to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 })
 
@@ -282,7 +294,9 @@ test.describe("recommendations: denial paths", () => {
 
     // Then the middleware redirects to consent
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 })
 
@@ -304,7 +318,9 @@ test.describe("consent cookie tampering: denial paths", () => {
 
     // Then the middleware redirects to consent (version 0 is not current)
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("protected route redirects to consent when cookie has garbage value", async ({ page }) => {
@@ -320,7 +336,9 @@ test.describe("consent cookie tampering: denial paths", () => {
 
     // Then the middleware redirects to consent (garbage != "1")
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("consent page is always accessible regardless of cookie state", async ({ page }) => {
@@ -329,10 +347,12 @@ test.describe("consent cookie tampering: denial paths", () => {
     await page.goto("/consent")
 
     // Then the consent page renders regardless of auth state
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
 
     // And the accept button is always visible
-    await expect(page.getByRole("button", { name: "Aceitar e continuar" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Concordar e continuar" })).toBeVisible()
   })
 
   test("login page is always accessible regardless of cookie state", async ({ page }) => {
@@ -351,7 +371,9 @@ test.describe("consent cookie tampering: denial paths", () => {
 
     // Then the consent gate is applied before the CPF form
     await page.waitForURL(/\/consent/)
-    await expect(page.getByRole("heading", { name: "Termos de uso" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
+    ).toBeVisible()
   })
 
   test("onboarding renders when consent is present", async ({ page }) => {
@@ -362,7 +384,7 @@ test.describe("consent cookie tampering: denial paths", () => {
     await page.goto("/onboarding")
 
     // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Verificação de elegibilidade" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Confirme sua elegibilidade." })).toBeVisible()
   })
 })
 
@@ -381,7 +403,7 @@ test.describe("accessibility on denial pages", () => {
     // after two Tabs would therefore read 0 once focus leaves the document —
     // which is correct behaviour, not a trap. Assert the control can take
     // focus and that Tab releases it.
-    const accept = page.getByRole("button", { name: "Aceitar e continuar" })
+    const accept = page.getByRole("button", { name: "Concordar e continuar" })
     await accept.focus()
     await expect(accept).toBeFocused()
 

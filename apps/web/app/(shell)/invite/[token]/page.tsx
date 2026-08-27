@@ -15,6 +15,7 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { callCommunityInviteRpc } from "../../../../lib/community-invite-rpcs"
+import { byteaDigestParam } from "../../../../lib/invites-bytea"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 
 interface InviteAcceptPageProps {
@@ -49,6 +50,14 @@ export default async function InviteAcceptPage({ params }: InviteAcceptPageProps
 
   const supabase = createServiceClient()
 
+  // D15 gate — before the RPC, so a non-existent token still preserves ?next=.
+  const { data: userIsVerified } = await supabase.rpc("is_verified_holder", {
+    p_user_id: user.id,
+  })
+  if (userIsVerified !== true) {
+    redirect(`/onboarding?next=/invite/${token}`)
+  }
+
   // Compute the digest locally — the RPC receives the digest, not the raw
   // token. This keeps the token out of the database entirely.
   const { createHash } = await import("node:crypto")
@@ -58,7 +67,7 @@ export default async function InviteAcceptPage({ params }: InviteAcceptPageProps
     supabase,
     "accept_community_invitation",
     {
-      p_token_digest: tokenDigest.toString("hex"),
+      p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
       p_user_id: user.id,
     },
   )

@@ -1,10 +1,13 @@
 "use client"
 
 import { Button, Form, Input, ListBox, Select, Spinner } from "@heroui/react"
+import { MapPinned } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
+import { OnboardingShell } from "../components/onboarding-shell"
+import styles from "../onboarding.module.css"
 
 // P0 Task 5: o passo pós-elegibilidade. Acontece uma vez, com a pessoa
 // presente, depois de saber que passou. Ela informa o que só ela sabe: a
@@ -157,111 +160,146 @@ export default function OnboardingLocalityPage() {
 
   if (loading) {
     return (
-      <div className="grid flex-1 place-items-center px-6 py-12">
-        <Spinner size="lg" color="accent" />
-      </div>
+      <OnboardingShell
+        stage="locality"
+        titleId="locality-loading-heading"
+        eyebrow="Último passo"
+        title="Preparando as localidades."
+        asideEyebrow="A comunidade começa perto"
+        asideTitle="Sua cidade é o primeiro ponto de encontro."
+        asideDescription="É a partir dela que o Bivaque organiza referências, conversas e chegadas."
+      >
+        <div className={styles["loadingState"]}>
+          <Spinner size="lg" color="accent" />
+          <p>Carregando estados e cidades...</p>
+        </div>
+      </OnboardingShell>
     )
   }
 
   return (
-    <div className="grid flex-1 place-items-center px-6 py-12">
-      <section className="flex w-full max-w-sm flex-col gap-6" aria-labelledby="locality-heading">
-        <h1 id="locality-heading" className="text-2xl font-semibold tracking-tight">
-          Escolha sua localidade
-        </h1>
-
+    <OnboardingShell
+      stage="locality"
+      titleId="locality-heading"
+      eyebrow="Último passo"
+      title="Escolha sua localidade."
+      description="Sua cidade organiza o que você encontra primeiro no Bivaque. Você poderá participar de outras localidades quando tiver vínculo com elas."
+      asideEyebrow="A comunidade começa perto"
+      asideTitle="Sua cidade é o primeiro ponto de encontro."
+      asideDescription="É a partir dela que o Bivaque organiza referências, conversas e chegadas."
+    >
+      <div className={styles["stack"]}>
         {success ? (
-          <FeedbackAlert variant="success" description="Cadastro concluído! Bem-vindo." />
+          <FeedbackAlert variant="success" description="Sua localidade foi registrada." />
         ) : (
           <>
-            <p className="text-sm text-muted">
-              Sua elegibilidade foi confirmada. Agora informe onde você mora — é isso que conecta
-              você à sua cidade no Bivaque.
-            </p>
-
             <Form
               onSubmit={(e) => {
                 e.preventDefault()
                 handleSubmit()
               }}
-              className="flex flex-col gap-4"
+              className={styles["form"] ?? ""}
             >
-              <Select
-                aria-label="Estado"
-                selectedKey={uf || null}
-                onSelectionChange={(key) => {
-                  if (typeof key === "string") {
-                    setUf(key)
-                    setError(null)
-                  }
-                }}
-                isRequired
+              <div className={styles["fieldGroup"]}>
+                <p className={styles["fieldLabel"]}>Estado</p>
+                <Select
+                  className={styles["control"] ?? ""}
+                  aria-label="Estado"
+                  selectedKey={uf || null}
+                  onSelectionChange={(key) => {
+                    if (typeof key === "string") {
+                      setUf(key)
+                      setError(null)
+                    }
+                  }}
+                  isRequired
+                >
+                  <Select.Trigger>
+                    <Select.Value>Selecione o estado</Select.Value>
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {ufs.map((code) => (
+                        <ListBox.Item key={code} id={code}>
+                          {code}
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              </div>
+
+              <div className={styles["fieldGroup"]}>
+                <p className={styles["fieldLabel"]}>Cidade</p>
+                <Select
+                  className={styles["control"] ?? ""}
+                  aria-label="Cidade"
+                  selectedKey={municipality || null}
+                  onSelectionChange={(key) => {
+                    if (typeof key === "string") {
+                      setMunicipality(key)
+                      setError(null)
+                    }
+                  }}
+                  isRequired
+                >
+                  <Select.Trigger>
+                    <Select.Value>
+                      {municipalityLoading
+                        ? "Carregando..."
+                        : municipalities.length === 0
+                          ? "Selecione o estado primeiro"
+                          : "Selecione a cidade"}
+                    </Select.Value>
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {municipalities.map((m) => (
+                        <ListBox.Item key={m.id} id={m.id}>
+                          {m.cityName}
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+              </div>
+
+              <div className={styles["fieldGroup"]}>
+                <p className={styles["fieldLabel"]}>Como você quer ser chamado</p>
+                <Input
+                  className={styles["control"] ?? ""}
+                  aria-label="Seu nome"
+                  placeholder="Seu nome"
+                  value={displayName}
+                  onChange={(e) => setDisplayName((e.target as HTMLInputElement).value)}
+                  required
+                  maxLength={80}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                className={styles["primaryButton"] ?? ""}
+                isDisabled={submitting}
               >
-                <Select.Trigger>
-                  <Select.Value>Selecione o estado</Select.Value>
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    {ufs.map((code) => (
-                      <ListBox.Item key={code} id={code}>
-                        {code}
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-
-              <Select
-                aria-label="Cidade"
-                selectedKey={municipality || null}
-                onSelectionChange={(key) => {
-                  if (typeof key === "string") {
-                    setMunicipality(key)
-                    setError(null)
-                  }
-                }}
-                isRequired
-              >
-                <Select.Trigger>
-                  <Select.Value>
-                    {municipalityLoading
-                      ? "Carregando..."
-                      : municipalities.length === 0
-                        ? "Selecione o estado primeiro"
-                        : "Selecione a cidade"}
-                  </Select.Value>
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    {municipalities.map((m) => (
-                      <ListBox.Item key={m.id} id={m.id}>
-                        {m.cityName}
-                      </ListBox.Item>
-                    ))}
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-
-              <Input
-                aria-label="Seu nome"
-                placeholder="Seu nome"
-                value={displayName}
-                onChange={(e) => setDisplayName((e.target as HTMLInputElement).value)}
-                required
-                maxLength={80}
-              />
-
-              <Button type="submit" variant="primary" className="w-full" isDisabled={submitting}>
-                {submitting ? "Concluindo..." : "Concluir cadastro"}
+                {submitting ? "Concluindo..." : "Concluir minha entrada"}
               </Button>
             </Form>
 
             {error && <FeedbackAlert variant="danger" description={error} />}
+
+            <p className={styles["note"]}>
+              <MapPinned aria-hidden="true" />
+              <span>
+                Escolha a cidade onde sua participação começa. Isso não publica seu endereço.
+              </span>
+            </p>
           </>
         )}
-      </section>
-    </div>
+      </div>
+    </OnboardingShell>
   )
 }

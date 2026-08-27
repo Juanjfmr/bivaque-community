@@ -289,7 +289,7 @@ test.describe("eligible second-locality onboarding: no geographic waitlist", () 
     await page.waitForURL(/\/onboarding\/locality/, { timeout: 10000 })
 
     // And the locality chooser is rendered
-    await expect(page.getByRole("heading", { name: "Escolha sua localidade" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Escolha sua localidade." })).toBeVisible()
 
     // And the geographic waitlist form is NOT rendered on the eligible path
     await expect(page.getByRole("button", { name: "Entrar na lista de espera" })).toHaveCount(0)
@@ -304,7 +304,7 @@ test.describe("eligible second-locality onboarding: no geographic waitlist", () 
     await page.goto(`${APP_URL}/onboarding/locality`, { waitUntil: "load" })
 
     // Then the locality chooser heading is visible
-    await expect(page.getByRole("heading", { name: "Escolha sua localidade" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Escolha sua localidade." })).toBeVisible({
       timeout: 15000,
     })
 

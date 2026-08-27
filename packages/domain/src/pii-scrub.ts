@@ -40,3 +40,24 @@ export function scrubEvent(input: unknown): unknown {
   }
   return input
 }
+
+// Onda H — Task 2: a denúncia é o único texto do produto escrito por um
+// terceiro SOBRE outra pessoa. O CPF alheio não pode entrar no banco (D11),
+// mas a frase precisa continuar legível para o operador — por isso redige,
+// não rejeita, e por isso NÃO existe filtro de vocabulário aqui (D21
+// derrubou o anterior por proibir "patente" e "OM", que é como a comunidade
+// real fala). Marca: "[documento removido]". Falso positivo em sequência de
+// 11 dígitos que não é CPF é aceito de propósito, e o teste registra.
+// Aceita separador arbitrário entre os blocos (incluindo ausente) e aceita
+// separador antes dos 2 últimos dígitos — CPFs digitados com ponto no lugar
+// do hífen (529.982.247.25) também são redigidos. A redação por formato é
+// deliberada, mesmo para sequências de 11 dígitos que não sejam CPF — ver
+// o teste unitário.
+const REPORT_DOC_PATTERN_FORMATTED = /\b\d{3}[.\s-]?\d{3}[.\s-]?\d{3}[.\s-]?\d{2}\b/g
+const REPORT_DOC_PATTERN_PLAIN = /\b\d{11}\b/g
+
+export function scrubReportReason(reason: string): string {
+  return reason
+    .replace(REPORT_DOC_PATTERN_FORMATTED, "[documento removido]")
+    .replace(REPORT_DOC_PATTERN_PLAIN, "[documento removido]")
+}

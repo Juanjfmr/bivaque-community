@@ -305,6 +305,7 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
+          is_deleted: boolean
           sender_id: string
         }
         Insert: {
@@ -312,6 +313,7 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           sender_id: string
         }
         Update: {
@@ -319,6 +321,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           sender_id?: string
         }
         Relationships: [
@@ -1009,12 +1012,58 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_accounts: {
+        Row: {
+          auth_user_id: string
+          community_id: string
+          created_at: string
+          invited_by: string
+          locality_id: string
+          revoked_at: string | null
+          revoked_by: string | null
+        }
+        Insert: {
+          auth_user_id: string
+          community_id: string
+          created_at?: string
+          invited_by: string
+          locality_id: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Update: {
+          auth_user_id?: string
+          community_id?: string
+          created_at?: string
+          invited_by?: string
+          locality_id?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_accounts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_accounts_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommendation_replies: {
         Row: {
           author_id: string
           body: string
           created_at: string
           id: string
+          is_deleted: boolean
           request_id: string
         }
         Insert: {
@@ -1022,6 +1071,7 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           request_id: string
         }
         Update: {
@@ -1029,6 +1079,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          is_deleted?: boolean
           request_id?: string
         }
         Relationships: [
@@ -1085,6 +1136,7 @@ export type Database = {
           created_at: string
           group_id: string | null
           id: string
+          is_deleted: boolean
           is_resolved: boolean
           locality_id: string | null
           resolved_at: string | null
@@ -1099,6 +1151,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_deleted?: boolean
           is_resolved?: boolean
           locality_id?: string | null
           resolved_at?: string | null
@@ -1113,6 +1166,7 @@ export type Database = {
           created_at?: string
           group_id?: string | null
           id?: string
+          is_deleted?: boolean
           is_resolved?: boolean
           locality_id?: string | null
           resolved_at?: string | null
@@ -1316,7 +1370,10 @@ export type Database = {
           is_holiday: boolean
         }[]
       }
-      complete_event: { Args: { p_event_id: string }; Returns: undefined }
+      complete_event: {
+        Args: { p_caller_user_id?: string; p_event_id: string }
+        Returns: undefined
+      }
       consume_verification_attempt: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -1376,7 +1433,12 @@ export type Database = {
         Returns: string
       }
       decide_verification_document: {
-        Args: { p_decision: string; p_document_id: string; p_reason: string }
+        Args: {
+          p_decision: string
+          p_document_id: string
+          p_operator_user_id: string
+          p_reason: string
+        }
         Returns: undefined
       }
       declare_locality_transfer: {
@@ -1471,6 +1533,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      is_provider_account: { Args: { p_user_id: string }; Returns: boolean }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
       list_available_groups_for_interests: {
@@ -1508,6 +1571,19 @@ export type Database = {
           arrivals_count: number
           city_name: string
           locality_id: string
+        }[]
+      }
+      list_open_reports: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          open_reports_on_target: number
+          reason: string
+          target_author_name: string
+          target_excerpt: string
+          target_id: string
+          target_type: Database["public"]["Enums"]["report_target_type"]
         }[]
       }
       list_pending_community_invitations: {
@@ -1580,6 +1656,7 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      my_account_kind: { Args: never; Returns: string }
       my_verification_status: {
         Args: never
         Returns: {
@@ -1678,6 +1755,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      reject_pending_user: {
+        Args: {
+          p_operator_user_id: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       remove_community_member: {
         Args: {
           p_caller_user_id: string
@@ -1700,6 +1785,15 @@ export type Database = {
       }
       request_community_membership: {
         Args: { p_community_id: string }
+        Returns: undefined
+      }
+      resolve_report: {
+        Args: {
+          p_action: string
+          p_note?: string
+          p_operator_user_id: string
+          p_report_id: string
+        }
         Returns: undefined
       }
       reverse_locality_transfer: {
@@ -1788,6 +1882,7 @@ export type Database = {
         | "report_resolved"
         | "event_reminder"
         | "recommendation_reply"
+        | "admission_rejected"
       outbox_channel: "email" | "whatsapp"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -1802,7 +1897,13 @@ export type Database = {
         | "moradia"
         | "outros"
       report_status: "open" | "resolved"
-      report_target_type: "post" | "comment" | "group" | "message"
+      report_target_type:
+        | "post"
+        | "comment"
+        | "group"
+        | "message"
+        | "recommendation_request"
+        | "recommendation_reply"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1968,6 +2069,7 @@ export const Constants = {
         "report_resolved",
         "event_reminder",
         "recommendation_reply",
+        "admission_rejected",
       ],
       outbox_channel: ["email", "whatsapp"],
       outbox_status: ["pending", "sent", "failed", "skipped"],
@@ -1984,7 +2086,14 @@ export const Constants = {
         "outros",
       ],
       report_status: ["open", "resolved"],
-      report_target_type: ["post", "comment", "group", "message"],
+      report_target_type: [
+        "post",
+        "comment",
+        "group",
+        "message",
+        "recommendation_request",
+        "recommendation_reply",
+      ],
     },
   },
 } as const

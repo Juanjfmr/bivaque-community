@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EXP-004 / Candidate B — Community Modern</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css">
+</head>
+<body class="candidate-b">
+  <a class="skip-link" href="#main">Pular para o conteúdo principal</a>
+
+  <!-- ─────────── Top bar ─────────── -->
+  <header class="topbar" role="banner">
+    <div class="topbar__inner">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="11" cy="11" r="3" fill="currentColor"/></svg>
+        </span>
+        <span class="brand__wordmark">Bivaque</span>
+      </div>
+      <div class="topbar__meta">
+        <button class="locality-chip" aria-label="Trocar de cidade">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1.5C4.5 1.5 2.5 3.5 2.5 6c0 3.25 4.5 6.5 4.5 6.5s4.5-3.25 4.5-6.5c0-2.5-2-4.5-4.5-4.5z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="7" cy="6" r="1.6" fill="currentColor"/></svg>
+          Rio de Janeiro, RJ
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+        </button>
+      </div>
+      <button class="avatar" aria-label="Conta de Ana Cristina Albuquerque Maranhão">
+        <span class="avatar__initials">AC</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main" class="shell">
+
+    <!-- ─────────── Locality header ─────────── -->
+    <section class="locality" aria-labelledby="locality-h">
+      <div class="locality__left">
+        <p class="locality__eyebrow">Sua cidade · 412 vizinhos online</p>
+        <h1 id="locality-h" class="locality__title">Rio de Janeiro, RJ</h1>
+        <p class="locality__lede">Recomendações, avisos e conversas entre vizinhos verificados da região. Tudo é moderado pela própria comunidade — sem selo institucional.</p>
+      </div>
+      <div class="locality__stats" aria-label="Estatísticas da sua cidade">
+        <div class="stat">
+          <p class="stat__num">1.284</p>
+          <p class="stat__label">vizinhos</p>
+        </div>
+        <div class="stat">
+          <p class="stat__num">28</p>
+          <p class="stat__label">grupos</p>
+        </div>
+        <div class="stat">
+          <p class="stat__num">9</p>
+          <p class="stat__label">eventos esta semana</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── Composer (collapsed entry) ─────────── -->
+    <section class="composer" aria-label="Iniciar publicação">
+      <div class="composer__avatar" aria-hidden="true">AC</div>
+      <button class="composer__trigger" aria-haspopup="dialog">
+        <span class="composer__placeholder">No que você está pensando?</span>
+      </button>
+      <div class="composer__tools">
+        <button class="composer__tool" aria-label="Adicionar foto">
+          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2" y="3" width="14" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+        <button class="composer__audience" aria-label="Audiência efetiva: Rio de Janeiro, cidade">
+          <span class="audience-dot" aria-hidden="true"></span>
+          Cidade
+        </button>
+      </div>
+    </section>
+
+    <!-- ─────────── Tabs (segmented) ─────────── -->
+    <nav class="tabs" aria-label="Ordenação da atividade">
+      <div class="tabs__list" role="tablist">
+        <button class="tabs__tab is-active" role="tab" aria-selected="true" aria-controls="panel-recentes" id="tab-recentes">Recentes</button>
+        <button class="tabs__tab" role="tab" aria-selected="false" aria-controls="panel-relevantes" id="tab-relevantes" tabindex="-1">Relevantes</button>
+        <span class="tabs__count" aria-hidden="true">128 hoje</span>
+      </div>
+    </nav>
+
+    <div class="layout">
+      <div class="layout__primary">
+
+        <div role="tabpanel" id="panel-recentes" aria-labelledby="tab-recentes">
+
+          <!-- ─────────── Post 1 ─────────── -->
+          <article class="post" aria-labelledby="post-1-h">
+            <header class="post__head">
+              <div class="post__avatar" aria-hidden="true">MB</div>
+              <div class="post__id">
+                <h2 id="post-1-h" class="post__author">Marcos Bezerra Cavalcante</h2>
+                <p class="post__meta">
+                  <span class="post__neighborhood">Laranjeiras</span>
+                  <span class="post__dot" aria-hidden="true">•</span>
+                  <time datetime="2026-08-21T14:32">há 42 min</time>
+                </p>
+              </div>
+              <button class="post__menu" aria-label="Mais opções para esta publicação">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><circle cx="13" cy="8" r="1.4" fill="currentColor"/></svg>
+              </button>
+            </header>
+            <div class="post__body">
+              <p>Alguém conhece um eletricista de confiança na região de Laranjeiras/Cosme Velho? Preciso trocar a fiação de um apartamento de 92 m² e quero alguém que já tenha trabalhado com instalação antiga. Aceito indicação por DM, sem pressa — obra é para outubro.</p>
+            </div>
+            <footer class="post__foot">
+              <div class="reactions" role="group" aria-label="Reações">
+                <button class="reactions__btn" aria-label="9 pessoas acharam útil">
+                  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2l1.6 3.5h3.6l-2.9 2.1 1.1 3.4L7 9l-2.4 1.9 1.1-3.4-2.9-2.1h3.6z" fill="currentColor"/></svg>
+                  <span>9 úteis</span>
+                </button>
+                <button class="reactions__btn" aria-label="3 pessoas responderam">
+                  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 3h10v6H7l-3 2v-2H2z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+                  <span>3 respostas</span>
+                </button>
+              </div>
+              <button class="post__action">Responder</button>
+            </footer>
+
+            <section class="comments" aria-label="Pré-visualização de comentários">
+              <article class="comment">
+                <div class="comment__avatar" aria-hidden="true">PS</div>
+                <div class="comment__body">
+                  <p class="comment__author">Patrícia Salomão Mendes Ribeiro</p>
+                  <p class="comment__text">Usei o <strong>Adailton</strong> no Cosme Velho em abril — serviço honesto, cobrou R$ 1.840 pela visita + troca de 12 disjuntores. Posso mandar o telefone pelo canal interno.</p>
+                </div>
+              </article>
+              <article class="comment">
+                <div class="comment__avatar" aria-hidden="true">JV</div>
+                <div class="comment__body">
+                  <p class="comment__author">João Pedro Vasconcelos Beltrão</p>
+                  <p class="comment__text">Confirma o CEP da obra? Tenho um conhecido em Botafogo que atende Laranjeiras em finais de semana.</p>
+                </div>
+              </article>
+            </section>
+          </article>
+
+          <!-- ─────────── Post 2 ─────────── -->
+          <article class="post" aria-labelledby="post-2-h">
+            <header class="post__head">
+              <div class="post__avatar post__avatar--alt" aria-hidden="true">HA</div>
+              <div class="post__id">
+                <h2 id="post-2-h" class="post__author">Helena Albuquerque Maranhão</h2>
+                <p class="post__meta">
+                  <span class="post__neighborhood">Catete</span>
+                  <span class="post__dot" aria-hidden="true">•</span>
+                  <time datetime="2026-08-21T11:08">há 4 h</time>
+                </p>
+              </div>
+              <button class="post__menu" aria-label="Mais opções para esta publicação">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><circle cx="13" cy="8" r="1.4" fill="currentColor"/></svg>
+              </button>
+            </header>
+            <div class="post__body">
+              <p>Atenção, vizinhos: o <em>Colégio Estadual André Maurois</em> (Rua Bento Lisboa, 120) está recebendo cadastros para o programa de reforço escolar até sexta-feira, dia 26. Vagas para alunos do 6º ao 9º ano. Não é necessário CPF nem comprovante de renda — a inscrição é pela escola. Documento: RG ou declaração escolar.</p>
+            </div>
+            <footer class="post__foot">
+              <div class="reactions" role="group" aria-label="Reações">
+                <button class="reactions__btn" aria-label="22 pessoas salvaram">
+                  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 2h8v10l-4-2-4 2z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+                  <span>22 salvaram</span>
+                </button>
+                <button class="reactions__btn" aria-label="6 pessoas comentaram">
+                  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 3h10v6H7l-3 2v-2H2z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+                  <span>6 respostas</span>
+                </button>
+              </div>
+              <button class="post__action">Responder</button>
+            </footer>
+
+            <section class="comments" aria-label="Pré-visualização de comentários">
+              <article class="comment">
+                <div class="comment__avatar" aria-hidden="true">RF</div>
+                <div class="comment__body">
+                  <p class="comment__author">Renato Figueiredo Cordeiro</p>
+                  <p class="comment__text">Confirma se atende também alunos da rede municipal? Minha filha estuda no Municipal Paulo Freire.</p>
+                </div>
+              </article>
+              <article class="comment">
+                <div class="comment__avatar" aria-hidden="true">HA</div>
+                <div class="comment__body">
+                  <p class="comment__author">Helena Albuquerque Maranhão</p>
+                  <p class="comment__text">@Renato — o programa é para qualquer escola pública, mas a inscrição precisa ser feita presencialmente na secretaria do André Maurois entre 9h e 16h.</p>
+                </div>
+              </article>
+            </section>
+          </article>
+
+          <!-- ─────────── Post 3 ─────────── -->
+          <article class="post" aria-labelledby="post-3-h">
+            <header class="post__head">
+              <div class="post__avatar post__avatar--alt2" aria-hidden="true">RG</div>
+              <div class="post__id">
+                <h2 id="post-3-h" class="post__author">Raimundo Galvão Pacheco</h2>
+                <p class="post__meta">
+                  <span class="post__neighborhood">Glória</span>
+                  <span class="post__dot" aria-hidden="true">•</span>
+                  <time datetime="2026-08-21T09:14">há 6 h</time>
+                </p>
+              </div>
+              <button class="post__menu" aria-label="Mais opções para esta publicação">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><circle cx="13" cy="8" r="1.4" fill="currentColor"/></svg>
+              </button>
+            </header>
+            <div class="post__body">
+              <p>Recomendação testada: <strong>Padaria Glória do Carmo</strong> (Rua do Catete, 312) abre das 6h às 21h, pão francês bemfeito até as 10h, e tem fila curta entre 7h e 8h. Funciona há 38 anos no mesmo ponto. Cartão e Pix.</p>
+            </div>
+            <footer class="post__foot">
+              <div class="reactions" role="group" aria-label="Reações">
+                <button class="reactions__btn" aria-label="14 pessoas recomendam">
+                  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2l1.6 3.5h3.6l-2.9 2.1 1.1 3.4L7 9l-2.4 1.9 1.1-3.4-2.9-2.1h3.6z" fill="currentColor"/></svg>
+                  <span>14 recomendam</span>
+                </button>
+                <button class="reactions__btn" aria-label="1 pessoa respondeu">
+                  <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 3h10v6H7l-3 2v-2H2z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+                  <span>1 resposta</span>
+                </button>
+              </div>
+              <button class="post__action">Responder</button>
+            </footer>
+
+            <section class="comments" aria-label="Pré-visualização de comentários">
+              <article class="comment">
+                <div class="comment__avatar" aria-hidden="true">SC</div>
+                <div class="comment__body">
+                  <p class="comment__author">Sílvia Cordeiro de Albuquerque Maranhão</p>
+                  <p class="comment__text">O pão de queijo de lá é o melhor do bairro, só não conta pra ninguém.</p>
+                </div>
+              </article>
+            </section>
+          </article>
+
+          <!-- ─────────── Skeleton ─────────── -->
+          <section class="state-card state-card--skeleton" aria-label="Carregando mais conteúdo">
+            <div class="skeleton skeleton--avatar"></div>
+            <div class="skeleton-stack">
+              <div class="skeleton skeleton--line skeleton--line-50"></div>
+              <div class="skeleton skeleton--line skeleton--line-30"></div>
+              <div class="skeleton skeleton--line skeleton--line-100"></div>
+              <div class="skeleton skeleton--line skeleton--line-90"></div>
+            </div>
+          </section>
+
+          <!-- ─────────── Empty state ─────────── -->
+          <section class="state-card state-card--empty" aria-label="Sem mais conteúdo">
+            <div class="state-card__icon" aria-hidden="true">
+              <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 26h16M24 16v12" stroke="currentColor" stroke-width="2"/></svg>
+            </div>
+            <h2 class="state-card__title">Você chegou ao fim</h2>
+            <p class="state-card__copy">Quando houver novas conversas em Rio de Janeiro, elas aparecem aqui. Você também pode seguir um bairro específico para ver apenas o que importa pra você.</p>
+            <div class="state-card__actions">
+              <button class="btn btn--primary">Seguir um bairro</button>
+              <button class="btn btn--ghost">Ajustar notificações</button>
+            </div>
+          </section>
+
+          <!-- ─────────── Error state (recoverable) ─────────── -->
+          <section class="state-card state-card--error" role="alert" aria-label="Falha de rede">
+            <div class="state-card__icon" aria-hidden="true">
+              <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2"/><path d="M24 14v12M24 32v2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </div>
+            <h2 class="state-card__title">Conexão perdida</h2>
+            <p class="state-card__copy">A conexão com a sua comunidade caiu há 30 segundos. Seu rascunho está preservado. Tente novamente ou aguarde — em geral se resolve sozinho.</p>
+            <div class="state-card__actions">
+              <button class="btn btn--primary">Tentar de novo</button>
+              <button class="btn btn--ghost">Trabalhar offline</button>
+            </div>
+            <p class="state-card__hint">Código interno: <code>NET-RETRY-30s</code></p>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- ─────────── Right rail (≥1024px) ─────────── -->
+      <aside class="layout__rail" aria-label="Contexto adicional">
+        <section class="rail-card">
+          <div class="rail-card__head">
+            <h3 class="rail-card__title">Próximos eventos</h3>
+            <a class="rail-card__link" href="#">Ver todos</a>
+          </div>
+          <ul class="rail-list">
+            <li>
+              <div class="rail-list__date">
+                <span class="date-day">24</span>
+                <span class="date-mon">ago</span>
+              </div>
+              <div class="rail-list__body">
+                <p class="rail-list__title">Mutirão de limpeza — Praça São Salvador</p>
+                <p class="rail-list__meta">qua · 19h · 38 confirmados</p>
+              </div>
+            </li>
+            <li>
+              <div class="rail-list__date">
+                <span class="date-day">27</span>
+                <span class="date-mon">ago</span>
+              </div>
+              <div class="rail-list__body">
+                <p class="rail-list__title">Feira de trocas do Catete</p>
+                <p class="rail-list__meta">sáb · 10h · entrada gratuita</p>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <section class="rail-card">
+          <div class="rail-card__head">
+            <h3 class="rail-card__title">Grupos ativos</h3>
+            <a class="rail-card__link" href="#">Descobrir</a>
+          </div>
+          <ul class="rail-list rail-list--groups">
+            <li>
+              <span class="group-tile" aria-hidden="true">P</span>
+              <div class="rail-list__body">
+                <p class="rail-list__title">Pais e responsáveis — zona sul</p>
+                <p class="rail-list__meta">412 membros · 7 posts hoje</p>
+              </div>
+            </li>
+            <li>
+              <span class="group-tile" aria-hidden="true">C</span>
+              <div class="rail-list__body">
+                <p class="rail-list__title">Caminhada &amp; trilhas cariocas</p>
+                <p class="rail-list__meta">287 membros · 3 posts hoje</p>
+              </div>
+            </li>
+            <li>
+              <span class="group-tile" aria-hidden="true">L</span>
+              <div class="rail-list__body">
+                <p class="rail-list__title">Compras coletivas — Laranjeiras</p>
+                <p class="rail-list__meta">156 membros · 2 posts hoje</p>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <section class="rail-card rail-card--accent">
+          <h3 class="rail-card__title">Boas práticas</h3>
+          <ul class="rail-list rail-list--text">
+            <li>Use o nome completo da rua e o número ao pedir indicação.</li>
+            <li>Evite postar telefone em aberto — prefira o canal interno.</li>
+            <li>Recomendação boa traz contexto: quando, quanto, e por quê.</li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <!-- ─────────── Bottom nav (mobile) ─────────── -->
+  <nav class="bottomnav" aria-label="Navegação principal">
+    <a class="bottomnav__item is-active" aria-current="page" href="#">
+      <svg class="bottomnav__icon" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 2l8 8v11H3V10z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span class="bottomnav__label">Cidade</span>
+    </a>
+    <a class="bottomnav__item" href="#">
+      <svg class="bottomnav__icon" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 19c1-4 4-6 7-6s6 2 7 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span class="bottomnav__label">Comunidade</span>
+    </a>
+    <a class="bottomnav__item" href="#">
+      <svg class="bottomnav__icon" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 7l8-5 8 5v8l-8 5-8-5z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span class="bottomnav__label">Grupos</span>
+    </a>
+    <a class="bottomnav__item" href="#">
+      <svg class="bottomnav__icon" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="7" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 20c0-4 3-7 7-7s7 3 7 7" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+      <span class="bottomnav__label">Eu</span>
+    </a>
+  </nav>
+</body>
+</html>

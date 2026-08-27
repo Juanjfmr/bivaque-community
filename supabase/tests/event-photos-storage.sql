@@ -3,7 +3,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(4);
+select plan(5);
 
 \ir fixtures/foundation.inc
 \ir fixtures/storage.inc
@@ -34,6 +34,24 @@ select lives_ok(
     values ('event-photos', 'test-member-one.jpg', '10000000-0000-4000-8000-000000000001'::uuid)
   $$,
   'F9+: member can insert their own event photo'
+);
+
+-- The scoped read policy exposes the photo only through a post in the
+-- viewer's locality that references it via photo_path. Create that post as
+-- member-one so the visibility assertion below is about the policy, not the
+-- fixture setup.
+select lives_ok(
+  $$
+    insert into public.posts (locality_id, user_id, post_type, content, photo_path)
+    values (
+      '00000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000001',
+      'photo',
+      'Foto do evento',
+      'test-member-one.jpg'
+    )
+  $$,
+  'F9+: post referencing the photo exists in member-one locality'
 );
 
 -- ── Member cannot see another member's photo unless post is visible ─────────

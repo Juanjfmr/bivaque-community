@@ -17,29 +17,45 @@ values (
 
 reset role;
 
--- ── Positive: organizer completes their own event ──────────────────────────
+-- Negative: non-organizer member cannot complete the event.
+-- The RPC now takes an explicit p_caller_user_id (MVP-02-AUTHZ) and is
+-- granted to authenticated; the organizer check is inside the function.
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.complete_event(
+      '80000000-0000-4000-8000-000000000002',
+      '10000000-0000-4000-8000-000000000002'
+    )
+  $$,
+  'P0001',
+  'only the event organizer can complete the event',
+  'non-organizer member cannot complete the event'
+);
+
+reset role;
+
+-- Positive: organizer completes their own event.
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select throws_ok(
+select lives_ok(
   $$
-    select public.complete_event('80000000-0000-4000-8000-000000000002')
+    select public.complete_event(
+      '80000000-0000-4000-8000-000000000002',
+      '10000000-0000-4000-8000-000000000001'
+    )
   $$,
-  '42501',
-  null,
-  'authenticated cannot call complete_event directly (service_role only)'
+  'organizer completes their own event'
 );
 
 reset role;
-
-select lives_ok(
-  $$
-    select public.complete_event('80000000-0000-4000-8000-000000000002')
-  $$,
-  'service_role completes the event'
-);
 
 select is(
   (select status::text from public.events

@@ -1,36 +1,58 @@
 "use client"
 
-import { brandTokens } from "@bivaque/tokens"
-import { Button, Input, Separator } from "@heroui/react"
-
+import { Button } from "@heroui/react"
+import { ArrowLeft, ArrowRight, Mail, ShieldCheck, Tent } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
 import { useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
-
-export interface BivaqueTestimonial {
-  initials: string
-  name: string
-  context: string
-  text: string
-}
+import styles from "./bivaque-sign-in.module.css"
 
 interface BivaqueSignInProps {
-  title?: React.ReactNode
-  description?: React.ReactNode
-  heroPanel?: React.ReactNode
-  testimonials?: BivaqueTestimonial[]
   onMagicLinkSignIn?: (email: string) => Promise<void> | void
   onGoogleSignIn?: () => Promise<void> | void
+  mode?: "login" | "signup"
 }
+
+const entryCopy = {
+  login: {
+    eyebrow: "Bem-vindo de volta",
+    title: "Entre no Bivaque",
+    description: "Receba um link no seu e-mail para continuar. Sem senha para lembrar.",
+    submit: "Receber link para entrar",
+    google: "Continuar com Google",
+    success: "Enviamos o link para",
+    alternateLead: "Ainda não faz parte?",
+    alternateAction: "Criar conta",
+    alternateHref: "/signup",
+    trust:
+      "O acesso é controlado. A elegibilidade é conferida de acordo com o papel de cada pessoa.",
+    visualEyebrow: "A comunidade vai com você.",
+    visualTitle: "Chegue sabendo a quem perguntar.",
+    visualDescription:
+      "Encontre referências de quem conhece o lugar e deixe sua experiência disponível para a próxima chegada.",
+  },
+  signup: {
+    eyebrow: "Primeiro acesso",
+    title: "Comece pelo seu e-mail.",
+    description: "Ele será sua forma de entrar no Bivaque. Sem senha, sem formulário longo.",
+    submit: "Criar conta e continuar",
+    google: "Criar com Google",
+    success: "Criamos sua entrada e enviamos o link para",
+    alternateLead: "Já tem uma conta?",
+    alternateAction: "Entrar",
+    alternateHref: "/login",
+    trust: "Depois do e-mail: regras da comunidade, elegibilidade e escolha da sua localidade.",
+    visualEyebrow: "Há sempre alguém chegando.",
+    visualTitle: "Encontre quem já conhece o caminho.",
+    visualDescription: "Com o tempo, deixe o que você aprendeu disponível para quem chegar depois.",
+  },
+} as const
 
 function GoogleIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-5 w-5"
-      viewBox="0 0 48 48"
-      aria-hidden="true"
-    >
+    <svg className={styles["googleIcon"]} viewBox="0 0 48 48" aria-hidden="true">
       <path
         fill="#FFC107"
         d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s12-5.373 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-2.641-.21-5.236-.611-7.743z"
@@ -51,283 +73,192 @@ function GoogleIcon() {
   )
 }
 
-function GlassInputWrapper({ children }: { children: React.ReactNode }) {
+function Wordmark() {
   return (
-    <div className="rounded-2xl border border-border bg-[var(--surface)]/60 backdrop-blur-sm transition-colors duration-[var(--duration-base)] ease-[var(--ease-out)] focus-within:border-[var(--accent)] focus-within:bg-[var(--accent-soft)]">
-      {children}
-    </div>
-  )
-}
-
-function DefaultHeroPanel() {
-  return (
-    <div className="absolute inset-4 rounded-3xl bg-[var(--accent)] bg-gradient-to-br from-[var(--accent)] via-[color-mix(in oklch, var(--accent) 85%, var(--background))] to-[color-mix(in oklch, var(--accent) 45%, var(--background))] motion-panel-enter">
-      <div className="flex h-full flex-col items-center justify-center gap-6 p-8 text-center text-white">
-        <div
-          aria-hidden="true"
-          className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-12 w-12 text-white"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <title>Escudo militar estilizado</title>
-            <path d="M12 2 L20 6 V14 L12 22 L4 14 V6 Z" />
-            <path d="M4 6 L12 12 L20 6" />
-            <path d="M12 12 V22" />
-          </svg>
-        </div>
-        <div className="max-w-sm space-y-2">
-          <p className="text-3xl font-semibold leading-tight">{brandTokens.productName}</p>
-          <p className="text-sm text-white/80">
-            Comunidade privada e verificada para militares federais, veteranos e pensionistas.
-            Convite restrito, presença confirmada.
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function TestimonialCard({
-  testimonial,
-  delay,
-}: {
-  testimonial: BivaqueTestimonial
-  delay: string
-}) {
-  return (
-    <div
-      className={`motion-card-enter ${delay} flex items-start gap-3 rounded-3xl border border-border bg-[var(--surface-raised)]/90 backdrop-blur-xl p-5 w-64`}
-    >
-      <div
-        aria-hidden="true"
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface-subtle)] text-sm font-medium"
-      >
-        {testimonial.initials}
-      </div>
-      <div className="text-sm leading-snug">
-        <p className="font-medium">{testimonial.name}</p>
-        <p className="text-[var(--muted)]">{testimonial.context}</p>
-        <p className="mt-1 text-[var(--muted)]">{testimonial.text}</p>
-      </div>
-    </div>
-  )
-}
-
-const DEFAULT_TESTIMONIALS: BivaqueTestimonial[] = [
-  {
-    initials: "CA",
-    name: "Cabo Almeida",
-    context: "Manaus · AM",
-    text: "Pude reencontrar colegas de farda em um ambiente seguro e verificado.",
-  },
-  {
-    initials: "TS",
-    name: "Tenente Santos",
-    context: "Belém · PA",
-    text: "As recomendações da minha redondeza me economizaram horas de pesquisa.",
-  },
-  {
-    initials: "SF",
-    name: "Sgt. Ferreira",
-    context: "São Luís · MA",
-    text: "Saber que todos ali passaram pela verificação traz a sensação de pertencer a algo real.",
-  },
-]
-
-export const BivaqueSignIn: React.FC<BivaqueSignInProps> = ({
-  title = (
-    <span className="font-light text-[var(--foreground)] tracking-tighter">
-      {brandTokens.productName}
+    <span className={styles["wordmark"]}>
+      <Tent aria-hidden="true" strokeWidth={1.8} />
+      <span>Bivaque</span>
     </span>
-  ),
-  description = "Entre para acessar sua comunidade verificada.",
-  heroPanel,
-  testimonials,
+  )
+}
+
+export function BivaqueSignIn({
   onMagicLinkSignIn,
   onGoogleSignIn,
-}) => {
+  mode = "login",
+}: BivaqueSignInProps) {
   const [email, setEmail] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<"email" | "google" | null>(null)
   const [sent, setSent] = useState(false)
+  const copy = entryCopy[mode]
+  const titleId = mode === "signup" ? "signup-title" : "login-title"
+  const emailId = mode === "signup" ? "bivaque-signup-email" : "bivaque-signin-email"
 
-  const useInternalMagicLink = !onMagicLinkSignIn
-
-  const handleMagicLink = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (onMagicLinkSignIn) {
-      setError(null)
-      try {
-        await onMagicLinkSignIn(email)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao enviar link mágico.")
-      }
-      return
-    }
+  const handleMagicLink = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setError(null)
-    setLoading(true)
     setSent(false)
-    const { error: signInError } = await createBrowserClient().auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/consent`,
-      },
-    })
-    if (signInError) {
-      setError(signInError.message)
-      setLoading(false)
-      return
+    setLoading("email")
+
+    try {
+      if (onMagicLinkSignIn) {
+        await onMagicLinkSignIn(email)
+      } else {
+        const { error: signInError } = await createBrowserClient().auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/consent`,
+            shouldCreateUser: mode === "signup",
+          },
+        })
+        if (signInError) throw signInError
+      }
+      setSent(true)
+    } catch {
+      setError(
+        mode === "signup"
+          ? "Não foi possível criar sua conta agora. Tente novamente em instantes."
+          : "Não foi possível entrar com este e-mail. Confira o endereço ou crie sua conta.",
+      )
+    } finally {
+      setLoading(null)
     }
-    setSent(true)
-    setLoading(false)
   }
 
   const handleGoogle = async () => {
-    if (onGoogleSignIn) {
-      await onGoogleSignIn()
-      return
-    }
     setError(null)
-    setLoading(true)
-    const { error: signInError } = await createBrowserClient().auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/consent`,
-      },
-    })
-    if (signInError) {
-      setError(signInError.message)
-      setLoading(false)
+    setLoading("google")
+
+    try {
+      if (onGoogleSignIn) {
+        await onGoogleSignIn()
+      } else {
+        const { error: signInError } = await createBrowserClient().auth.signInWithOAuth({
+          provider: "google",
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback?next=/consent`,
+          },
+        })
+        if (signInError) throw signInError
+      }
+    } catch {
+      setError("Não foi possível continuar com o Google agora. Tente novamente em instantes.")
+      setLoading(null)
     }
   }
 
-  const useHero = heroPanel !== null
-  const heroContent = heroPanel ?? (useHero ? <DefaultHeroPanel /> : null)
-  const useTestimonials = (testimonials?.length ?? 0) > 0
-  const shownTestimonials = testimonials ?? DEFAULT_TESTIMONIALS
-
   return (
-    <div className="flex h-[100dvh] w-[100dvw] flex-col font-geist md:flex-row">
-      <section className="flex flex-1 items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <div className="flex flex-col gap-6">
-            <h1 className="motion-card-enter text-4xl font-semibold leading-tight md:text-5xl">
-              {title}
-            </h1>
-            <p className="motion-card-enter text-sm text-[var(--muted)] [animation-delay:80ms]">
-              {description}
-            </p>
+    <main className={styles["root"]}>
+      <section className={styles["formPanel"]} aria-labelledby={titleId}>
+        <header className={styles["topbar"]}>
+          <Link href="/" className={styles["brandLink"]} aria-label="Bivaque, voltar ao início">
+            <Wordmark />
+          </Link>
+          <Link href="/" className={styles["backLink"]}>
+            <ArrowLeft aria-hidden="true" />
+            <span>Voltar</span>
+          </Link>
+        </header>
 
-            <form className="space-y-5" onSubmit={handleMagicLink}>
-              <div className="motion-card-enter [animation-delay:160ms]">
-                <label
-                  htmlFor="bivaque-signin-email"
-                  className="block text-sm font-medium text-[var(--muted)]"
-                >
-                  E-mail
-                </label>
-                <GlassInputWrapper>
-                  <Input
-                    id="bivaque-signin-email"
-                    type="email"
-                    aria-label="E-mail"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="bg-transparent shadow-none"
-                  />
-                </GlassInputWrapper>
-              </div>
+        <div className={styles["mobileImage"]} aria-hidden="true">
+          <Image src="/landing/hero-bivaque-arrival.webp" alt="" fill unoptimized sizes="100vw" />
+        </div>
 
-              <Button
-                type="submit"
-                variant="primary"
-                className="motion-card-enter w-full min-h-11 [animation-delay:280ms]"
-                isDisabled={loading}
-              >
-                {loading ? "Enviando…" : "Enviar link mágico"}
-              </Button>
-              <p className="motion-card-enter [animation-delay:300ms] text-center text-xs text-[var(--muted)]">
-                Sua sessão dura 400 dias.
-              </p>
-            </form>
+        <div className={styles["formContent"]}>
+          <div className={styles["heading"]}>
+            <p className={styles["eyebrow"]}>{copy.eyebrow}</p>
+            <h1 id={titleId}>{copy.title}</h1>
+            <p>{copy.description}</p>
+          </div>
 
-            <div className="motion-card-enter [animation-delay:320ms] relative flex items-center justify-center">
-              <Separator className="w-full" />
-              <span className="absolute bg-[var(--background)] px-4 text-xs text-[var(--muted)]">
-                ou
+          <form className={styles["form"]} onSubmit={handleMagicLink}>
+            <label className={styles["field"]} htmlFor={emailId}>
+              <span>Seu e-mail</span>
+              <span className={styles["inputShell"]}>
+                <Mail aria-hidden="true" />
+                <input
+                  id={emailId}
+                  aria-label="Seu e-mail"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  placeholder="nome@exemplo.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
               </span>
-            </div>
+            </label>
 
             <Button
-              onPress={handleGoogle}
-              variant="outline"
-              className="motion-card-enter flex w-full min-h-11 items-center justify-center gap-3 [animation-delay:360ms]"
-              isDisabled={loading}
+              type="submit"
+              variant="primary"
+              className={styles["primaryButton"] ?? ""}
+              isDisabled={loading !== null}
             >
-              <GoogleIcon />
-              Continuar com Google
+              {loading === "email" ? "Enviando..." : copy.submit}
+              {loading !== "email" && <ArrowRight aria-hidden="true" />}
             </Button>
+          </form>
 
-            {error && (
-              <FeedbackAlert variant="danger" description={error} className="motion-card-enter" />
-            )}
-
-            {sent && useInternalMagicLink && (
-              <FeedbackAlert
-                variant="success"
-                description="Link enviado! Verifique seu e-mail e clique no link para continuar."
-                className="motion-card-enter"
-              />
-            )}
-
-            <p className="motion-card-enter [animation-delay:400ms] text-center text-sm text-[var(--muted)]">
-              Comunidade verificada para militares federais ativos, veteranos e pensionistas. O
-              acesso é confirmado via Portal da Transparência após o cadastro.
-            </p>
+          <div className={styles["divider"]}>
+            <span>ou continue com</span>
           </div>
+
+          <Button
+            onPress={handleGoogle}
+            variant="outline"
+            className={styles["googleButton"] ?? ""}
+            isDisabled={loading !== null}
+          >
+            <GoogleIcon />
+            {loading === "google" ? "Abrindo Google..." : copy.google}
+          </Button>
+
+          {error && <FeedbackAlert variant="danger" description={error} />}
+
+          {sent && (
+            <FeedbackAlert
+              variant="success"
+              title="Confira seu e-mail"
+              description={
+                <>
+                  {copy.success} <strong>{email}</strong>. Abra a mensagem para continuar.
+                </>
+              }
+            />
+          )}
+
+          <p className={styles["accountPrompt"]}>
+            {copy.alternateLead}{" "}
+            <Link href={{ pathname: copy.alternateHref }}>{copy.alternateAction}</Link>
+          </p>
+
+          <p className={styles["trustNote"]}>
+            <ShieldCheck aria-hidden="true" />
+            <span>{copy.trust}</span>
+          </p>
         </div>
       </section>
 
-      {heroContent && (
-        <section className="relative hidden flex-1 p-4 md:block">
-          {heroContent}
-          {useTestimonials && (
-            <div className="absolute bottom-8 left-1/2 flex w-full -translate-x-1/2 justify-center gap-4 px-8">
-              {shownTestimonials[0] && (
-                <TestimonialCard
-                  testimonial={shownTestimonials[0]}
-                  delay="[animation-delay:480ms]"
-                />
-              )}
-              {shownTestimonials[1] && (
-                <div className="hidden xl:block">
-                  <TestimonialCard
-                    testimonial={shownTestimonials[1]}
-                    delay="[animation-delay:560ms]"
-                  />
-                </div>
-              )}
-              {shownTestimonials[2] && (
-                <div className="hidden 2xl:block">
-                  <TestimonialCard
-                    testimonial={shownTestimonials[2]}
-                    delay="[animation-delay:640ms]"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </section>
-      )}
-    </div>
+      <section className={styles["visualPanel"]} aria-label="A comunidade Bivaque">
+        <Image
+          src="/landing/hero-bivaque-arrival.webp"
+          alt="Pessoa chegando a um encontro comunitário enquanto uma cadeira é oferecida"
+          fill
+          priority
+          unoptimized
+          sizes="50vw"
+        />
+        <div className={styles["visualShade"]} aria-hidden="true" />
+        <div className={styles["visualCopy"]}>
+          <p>{copy.visualEyebrow}</p>
+          <h2>{copy.visualTitle}</h2>
+          <span>{copy.visualDescription}</span>
+        </div>
+      </section>
+    </main>
   )
 }
 

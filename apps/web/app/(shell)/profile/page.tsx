@@ -13,6 +13,7 @@ import {
 } from "@heroui/react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { callProfileRpc } from "../../../lib/profile-rpcs"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
@@ -74,6 +75,7 @@ function formatShortDate(iso: string): string {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { current } = useLocalityContext()
   const supabase = createBrowserClient()
   const [profile, setProfile] = useState<ProfileRow | null>(null)
   const [membership, setMembership] = useState<MembershipRow | null>(null)
@@ -118,6 +120,7 @@ export default function ProfilePage() {
           .from("locality_memberships")
           .select("joined_at, localities(city_name, state_code)")
           .eq("user_id", user.id)
+          .eq("kind", "current")
           .maybeSingle(),
         // Onda E Task 7: posts AND events scoped to the viewer (the same RPC
         // used by the other-member profile). For the self-profile, the viewer
@@ -210,8 +213,8 @@ export default function ProfilePage() {
   if (!profile) return null
 
   const initials = (profile.display_name ?? "?").charAt(0).toUpperCase()
-  const localityName = membership?.localities?.city_name ?? "Manaus"
-  const localityState = membership?.localities?.state_code ?? "AM"
+  const localityName = current.cityName
+  const localityState = current.stateCode
   const joinedLabel = membership?.joined_at
     ? `membro desde ${formatJoinedMonthYear(membership.joined_at)}`
     : null

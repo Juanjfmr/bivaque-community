@@ -12,6 +12,7 @@ import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { callCommunityInviteRpc } from "../../../lib/community-invite-rpcs"
+import { byteaDigestParam } from "../../../lib/invites-bytea"
 import { createLimiterStore } from "../../../lib/limits"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
@@ -118,7 +119,7 @@ export async function sendCommunityInviteAction(
     {
       p_community_id: communityId,
       p_inviter_user_id: userId,
-      p_token_digest: tokenDigest.toString("hex"),
+      p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
       p_expires_at: expiresAt.toISOString(),
     },
   )
@@ -198,7 +199,7 @@ export async function acceptCommunityInviteAction(
     supabase,
     "accept_community_invitation",
     {
-      p_token_digest: tokenDigest.toString("hex"),
+      p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
       p_user_id: userId,
     },
   )

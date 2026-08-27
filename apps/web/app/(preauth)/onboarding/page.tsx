@@ -2,6 +2,7 @@
 
 import { isValidCpf } from "@bivaque/domain"
 import { Button, Form, Input, Spinner } from "@heroui/react"
+import { ShieldCheck } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { purgeCpfResidue } from "../../../lib/onboarding/storage"
@@ -10,6 +11,8 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { SUPPORT_EMAIL } from "../../../lib/support"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { showToast } from "../../components/bivaque/toast"
+import { OnboardingShell } from "./components/onboarding-shell"
+import styles from "./onboarding.module.css"
 
 type OnboardingStep = "verify" | "family" | "done" | "loading"
 
@@ -34,53 +37,6 @@ export default function OnboardingPage() {
   )
 }
 
-const flowLabels: Record<"verify" | "family", string[]> = {
-  verify: ["CPF", "Verificando", "Concluído"],
-  family: ["Convite", "Processando", "Concluído"],
-}
-
-function getProgressIndex(step: OnboardingStep, loading: boolean): number {
-  if (step === "done") return 2
-  if (loading) return 1
-  return 0
-}
-
-// Segmented progress bar — DESIGN_SPEC §3.2: multi-step with segments, not percent.
-function SegmentedProgress({ steps, activeIndex }: { steps: string[]; activeIndex: number }) {
-  return (
-    <div
-      className="flex w-full flex-col items-center gap-1.5"
-      role="progressbar"
-      aria-valuenow={activeIndex}
-      aria-valuemin={0}
-      aria-valuemax={steps.length - 1}
-    >
-      <div className="flex w-full items-center gap-1">
-        {steps.map((label, i) => (
-          <div
-            key={label}
-            className={`h-1.5 flex-1 rounded-full transition-colors ${
-              i <= activeIndex ? "bg-[var(--accent)]" : "bg-[var(--border)]"
-            }`}
-          />
-        ))}
-      </div>
-      <div className="flex w-full justify-between">
-        {steps.map((label, i) => (
-          <span
-            key={label}
-            className={`text-xs leading-tight transition-colors ${
-              i <= activeIndex ? "font-medium text-[var(--accent)]" : "text-[var(--muted)]/60"
-            }`}
-          >
-            {label}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function OnboardingFlow() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -92,7 +48,6 @@ function OnboardingFlow() {
   const [familyToken, setFamilyToken] = useState("")
   const [familyName, setFamilyName] = useState("")
   const [result, setResult] = useState<string | null>(null)
-  const [flow, setFlow] = useState<"verify" | "family">("verify")
 
   const inviteToken = searchParams.get("invite")
 
@@ -109,7 +64,6 @@ function OnboardingFlow() {
       if (inviteToken) {
         setFamilyToken(inviteToken)
         setStep("family")
-        setFlow("family")
         return
       }
 
@@ -195,7 +149,7 @@ function OnboardingFlow() {
       }
 
       if (data["localityMember"]) {
-        setResult("Verificação concluída! Bem-vindo à comunidade de Manaus.")
+        setResult("Verificação concluída. Sua entrada está pronta.")
         setStep("done")
         router.push("/onboarding/welcome")
       } else {
@@ -274,7 +228,7 @@ function OnboardingFlow() {
       }
 
       if (data["localityMember"]) {
-        setResult("Convite aceito! Bem-vindo à comunidade de Manaus.")
+        setResult("Convite aceito. Sua conta está pronta.")
         setStep("done")
         router.push("/community")
       }
@@ -287,52 +241,68 @@ function OnboardingFlow() {
 
   if (step === "loading") {
     return (
-      <div className="grid flex-1 place-items-center px-6 py-12">
-        <p className="text-sm text-muted">Carregando...</p>
-      </div>
+      <OnboardingShell
+        stage="eligibility"
+        titleId="onboarding-loading-heading"
+        eyebrow="Sua entrada"
+        title="Preparando o próximo passo."
+        asideEyebrow="Uma entrada de cada vez"
+        asideTitle="Você está a poucos passos de chegar."
+        asideDescription="Regras claras, elegibilidade conferida e uma localidade escolhida por você."
+      >
+        <div className={styles["loadingState"]}>
+          <Spinner size="lg" color="accent" />
+          <p>Consultando o estado da sua entrada...</p>
+        </div>
+      </OnboardingShell>
     )
   }
 
+  const isFamily = step === "family"
+
   return (
-    <div className="grid flex-1 place-items-center overflow-x-hidden px-6 py-12">
-      <section
-        className="flex w-full max-w-sm min-w-0 flex-col gap-6"
-        aria-labelledby="onboarding-heading"
-      >
-        <SegmentedProgress steps={flowLabels[flow]} activeIndex={getProgressIndex(step, loading)} />
-
-        <h1 id="onboarding-heading" className="break-words text-2xl font-semibold tracking-tight">
-          Verificação de elegibilidade
-        </h1>
-
+    <OnboardingShell
+      stage="eligibility"
+      titleId="onboarding-heading"
+      eyebrow={isFamily ? "Convite familiar" : "Segundo passo"}
+      title={isFamily ? "Aceite seu convite." : "Confirme sua elegibilidade."}
+      description={
+        isFamily
+          ? "Seu convite cria uma conta independente, ligada ao membro que convidou você."
+          : "O Bivaque é para militares federais ativos, veteranos e pensionistas militares. A cidade vem no próximo passo."
+      }
+      asideEyebrow="Uma entrada clara para cada pessoa"
+      asideTitle={
+        isFamily ? "Seu vínculo começa com um convite." : "A comunidade começa com confiança."
+      }
+      asideDescription={
+        isFamily
+          ? "Familiares entram pelo convite recebido e seguem com uma conta própria."
+          : "Uma consulta confirma a elegibilidade sem transformar dados pessoais em perfil público."
+      }
+    >
+      <div className={styles["stack"]}>
         {step === "verify" && loading && (
-          <div className="flex flex-col items-center gap-4 py-8">
+          <div className={styles["loadingState"]}>
             <Spinner size="lg" color="accent" />
-            <p className="text-sm text-muted text-center">Verificando sua elegibilidade…</p>
+            <p>Consultando a fonte oficial...</p>
           </div>
         )}
 
-        {step === "done" && result && (
-          <div className="flex flex-col gap-4">
-            <FeedbackAlert variant="success" description={result} />
-          </div>
-        )}
+        {step === "done" && result && <FeedbackAlert variant="success" description={result} />}
 
         {step === "verify" && !loading && (
-          <>
-            <p className="text-sm text-muted">
-              O piloto hoje acontece só em Manaus. A verificação confere sua elegibilidade como
-              militar federal ativo, veterano ou pensionista — ela não confere endereço.
-            </p>
-
-            <Form
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleVerifyCpf()
-              }}
-              className="flex flex-col gap-3"
-            >
+          <Form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleVerifyCpf()
+            }}
+            className={styles["form"] ?? ""}
+          >
+            <div className={styles["fieldGroup"]}>
+              <p className={styles["fieldLabel"]}>CPF</p>
               <Input
+                className={styles["control"] ?? ""}
                 aria-label="CPF"
                 placeholder="000.000.000-00"
                 value={formatCpf(cpf)}
@@ -345,34 +315,31 @@ function OnboardingFlow() {
                 required
                 maxLength={14}
               />
-              <Button type="submit" variant="primary" className="w-full">
-                Verificar elegibilidade
-              </Button>
-            </Form>
-          </>
+            </div>
+            <Button type="submit" variant="primary" className={styles["primaryButton"] ?? ""}>
+              Conferir e continuar
+            </Button>
+          </Form>
         )}
 
         {step === "family" && (
           <>
-            <p className="text-sm text-muted">
-              Voc&ecirc; foi convidado por um membro da comunidade. Aceite o convite para criar sua
-              conta independente.
-            </p>
-
-            {error && <FeedbackAlert variant="danger" description={error} />}
-
-            <Input
-              aria-label="Seu nome"
-              placeholder="Seu nome completo"
-              value={familyName}
-              onChange={(e) => setFamilyName((e.target as HTMLInputElement).value)}
-              required
-              maxLength={80}
-            />
+            <div className={styles["fieldGroup"]}>
+              <p className={styles["fieldLabel"]}>Como você quer ser chamado</p>
+              <Input
+                className={styles["control"] ?? ""}
+                aria-label="Seu nome"
+                placeholder="Seu nome"
+                value={familyName}
+                onChange={(e) => setFamilyName((e.target as HTMLInputElement).value)}
+                required
+                maxLength={80}
+              />
+            </div>
 
             <Button
               variant="primary"
-              className="w-full"
+              className={styles["primaryButton"] ?? ""}
               onPress={handleAcceptFamilyInvite}
               isDisabled={loading}
             >
@@ -384,12 +351,16 @@ function OnboardingFlow() {
         {error && <FeedbackAlert variant="danger" description={error} />}
 
         {step !== "done" && !(step === "verify" && loading) && (
-          <p className="text-xs text-muted text-center">
-            Seus dados s&atilde;o processados exclusivamente pelo servidor. Nenhum dado pessoal
-            sens&iacute;vel &eacute; armazenado.
+          <p className={styles["note"]}>
+            <ShieldCheck aria-hidden="true" />
+            <span>
+              {isFamily
+                ? "O convite é conferido pelo e-mail ao qual foi enviado."
+                : "O CPF é usado nesta consulta e não fica salvo no Bivaque."}
+            </span>
           </p>
         )}
-      </section>
-    </div>
+      </div>
+    </OnboardingShell>
   )
 }

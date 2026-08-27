@@ -1,6 +1,7 @@
 import { CONSENT_VERSION } from "@bivaque/domain"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { byteaDigestParam } from "../invites-bytea"
 import type { VerificationResult } from "../portal"
 import { createPortalVerificationGuard, verifyCpfWithErrorCode } from "../portal"
 
@@ -174,7 +175,7 @@ export async function acceptFamilyInvitationAndProvision(
   }
 
   const { data: linkId, error } = await supabase.rpc("accept_family_invitation", {
-    p_token_digest: tokenHex,
+    p_token_digest: byteaDigestParam(tokenHex),
     p_accepted_by_user_id: userId,
   })
 
