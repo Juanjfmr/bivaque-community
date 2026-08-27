@@ -416,13 +416,6 @@
   line-height: 1.15;
 }
 
-.storyStep div > span {
-  display: block;
-  margin-top: 10px;
-  font-size: 15px;
-  line-height: 1.6;
-}
-
 .productStage {
   overflow: hidden;
   color: var(--ink);
@@ -556,6 +549,13 @@
   color: var(--signal);
   font-size: 12px;
   font-weight: 800;
+}
+
+.storyStep div > span {
+  display: block;
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 .belongingLayer > svg {

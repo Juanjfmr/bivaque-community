@@ -8,8 +8,8 @@
 //
 //   1. Próximos eventos — quadro de avisos do que atravessa as três forças.
 //   2. Guia de chegada — referência curada e buscável (rota /guide).
-//   3. Vitrine de prestadores — placeholder, vazia até a onda G (aqui não finge
-//      movimento).
+//   3. Vitrine de prestadores — busca viva por nome/categoria dentro do
+//      alcance do chamador (onda G Task 5); vazia é o estado normal do dia um.
 //   4. Caminho para pedir entrada numa vila — /communities.
 //
 // O selo "alcance de post" não é uma seção desta tela: é uma configuração no
@@ -17,7 +17,13 @@
 // a partir de lá; quando não está, ele vê esta tela e ainda pode publicar com
 // alcance da cidade a partir do modal.
 
+import {
+  PROVIDER_CATEGORIES,
+  PROVIDER_CATEGORY_LABELS,
+  type ProviderCategory,
+} from "@bivaque/domain"
 import { Button } from "@heroui/react"
+import type { Route } from "next"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 import { type LocalityCurrent, useLocalityContext } from "../../../lib/locality-context"
@@ -29,6 +35,13 @@ interface EventItem {
   id: string
   title: string
   starts_at: string
+}
+
+interface ProviderHit {
+  id: string
+  display_name: string
+  category: ProviderCategory
+  bio: string | null
 }
 
 function formatDayMonth(iso: string): string {
@@ -71,6 +84,35 @@ export function CityReference({
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState("")
 
+  // Onda G Task 5 — vitrine viva na cidade. A primeira carga busca tudo que o
+  // chamador alcança (a RLS da busca decide); os filtros só aparecem quando
+  // existe ficha — §3.4 avisa que categoria demais com prestador de menos faz
+  // tudo parecer vazio ao mesmo tempo.
+  const [providers, setProviders] = useState<ProviderHit[]>([])
+  const [providersLoaded, setProvidersLoaded] = useState(false)
+  const [providersError, setProvidersError] = useState("")
+  const [providerQuery, setProviderQuery] = useState("")
+  const [providerCategory, setProviderCategory] = useState<"" | ProviderCategory>("")
+
+  const loadProviders = useCallback(
+    async (query: string, category: "" | ProviderCategory) => {
+      setProvidersError("")
+      // exactOptionalPropertyTypes: chaves ausentes, não undefined explícito.
+      const args: { p_query?: string; p_category?: ProviderCategory } = {}
+      if (query.trim().length > 0) args.p_query = query.trim()
+      if (category !== "") args.p_category = category
+      const { data, error: rpcError } = await supabase.rpc("search_providers", args)
+      if (rpcError) {
+        setProvidersError("Não foi possível carregar a vitrine agora. Tente novamente.")
+        setProvidersLoaded(true)
+        return
+      }
+      setProviders((data ?? []) as unknown as ProviderHit[])
+      setProvidersLoaded(true)
+    },
+    [supabase],
+  )
+
   const load = useCallback(async () => {
     setLoaded(false)
     setError("")
@@ -96,6 +138,10 @@ export function CityReference({
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    void loadProviders("", "")
+  }, [loadProviders])
 
   return (
     <div className="mx-auto flex w-full max-w-[56rem] flex-col gap-6 px-4 pt-6 pb-8">
@@ -184,7 +230,7 @@ export function CityReference({
         </div>
       </section>
 
-      {/* Vitrine — placeholder honesto até a onda G */}
+      {/* Vitrine de prestadores — onda G Task 5 */}
       <section
         aria-labelledby="city-vitrine-heading"
         className="rounded-xl border border-border bg-[var(--surface)] p-4"
@@ -192,10 +238,85 @@ export function CityReference({
         <h2 id="city-vitrine-heading" className="text-base font-semibold tracking-tight">
           Vitrine de prestadores
         </h2>
-        <EmptyState
-          title="A vitrine ainda está vazia nesta cidade."
-          description="Quando os prestadores que atendem a cidade forem cadastrados, eles aparecem aqui. Isso é trabalho da onda G."
-        />
+        {!providersLoaded ? (
+          <div className="mt-3 space-y-2" aria-busy="true">
+            <Skeleton className="h-4 w-full rounded" />
+            <Skeleton className="h-4 w-2/3 rounded" />
+          </div>
+        ) : providersError ? (
+          <p className="mt-3 text-sm text-[var(--danger)]">{providersError}</p>
+        ) : providers.length === 0 ? (
+          <EmptyState
+            title="Ainda não há prestadores cadastrados por aqui."
+            description="Quando membros das vilas indicarem prestadores de confiança, eles aparecem nesta vitrine."
+          />
+        ) : (
+          <>
+            <form
+              className="mt-3 flex flex-wrap items-end gap-2"
+              onSubmit={(event) => {
+                event.preventDefault()
+                void loadProviders(providerQuery, providerCategory)
+              }}
+            >
+              <label className="text-xs text-muted" htmlFor="provider-search">
+                Buscar por nome
+              </label>
+              <input
+                id="provider-search"
+                value={providerQuery}
+                onChange={(event) => setProviderQuery(event.target.value)}
+                placeholder="Ex.: climatiza"
+                className="min-h-11 flex-1 rounded-md border border-border bg-transparent px-3 text-sm"
+              />
+              <label className="sr-only" htmlFor="provider-category">
+                Categoria
+              </label>
+              <select
+                id="provider-category"
+                value={providerCategory}
+                onChange={(event) => {
+                  const next = event.target.value as "" | ProviderCategory
+                  setProviderCategory(next)
+                  void loadProviders(providerQuery, next)
+                }}
+                className="min-h-11 rounded-md border border-border bg-transparent px-2 text-sm"
+              >
+                <option value="">Todas as categorias</option>
+                {PROVIDER_CATEGORIES.map((value) => (
+                  <option key={value} value={value}>
+                    {PROVIDER_CATEGORY_LABELS[value]}
+                  </option>
+                ))}
+              </select>
+              <Button type="submit" size="sm" variant="secondary">
+                Buscar
+              </Button>
+            </form>
+
+            {providers.length === 0 ? (
+              <p className="mt-3 text-sm text-muted">
+                Nenhum prestador encontrado com esses filtros.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-1">
+                {providers.map((provider) => (
+                  <li key={provider.id}>
+                    <Link
+                      href={`/prestadores/${provider.id}` as Route}
+                      className="flex min-h-11 flex-col justify-center rounded-md px-1 transition-colors hover:underline focus:outline-none focus-visible:underline"
+                    >
+                      <span className="text-sm font-medium">{provider.display_name}</span>
+                      <span className="text-xs text-muted">
+                        {PROVIDER_CATEGORY_LABELS[provider.category] ?? provider.category}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </section>
 
       {/* Pedir entrada numa vila */}

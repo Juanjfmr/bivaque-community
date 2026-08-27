@@ -46,7 +46,7 @@
       "phase": "MVP-01",
       "priority": "P0",
       "category": "backend",
-      "status": "now",
+      "status": "done",
       "description": "Há caminho nacional, transferência e documento privado implementados; ainda faltam provas de jornadas negativas e entrega de decisão por e-mail.",
       "checklist": [
         "Executar E2E de callback, pending, rejected, consentimento e welcome ✅ 264 specs verdes + admissions-operator-flow 9/9 verdes (2026-08-23) após reconciliar o spec com o contrato service_role",
@@ -68,7 +68,8 @@
         "Classe de bug bytea provada por probes REST contra o stack local: hex nu chega ao Postgres como escape-format (64 bytes) e viola octet_length=32 (22023 na comunidade, 23514 na família); com prefixo \\x a mesma chamada responde 200. Fix: byteaDigestParam em lib/invites-bytea aplicado aos 5 pontos (community create/accept, invite page, family send, family accept) + tests/unit/invites.",
         "E2E community-invitations passou de 3/9 para 6/9 verdes: geração e cópia fecham; as 3 falhas restantes são a perda de ?next no redirect do aceite (tema próprio do MVP-00-E2E-FUNCTIONAL).",
         "Convite familiar (envio e aceite) tinha o mesmo defeito de fio e recebeu o mesmo fix; prova E2E própria segue devendo ao lote com seed (o spec onboarding-holder-family nunca exerceu o aceite — só UI de consentimento).",
-        "Reconciliação das linhas §9 Admissões e §2 Convites do PRODUCT_STATUS fica como próximo passo imediato: o arquivo carrega alterações não-commitadas de outro trabalho (landing/signup/onboarding) e commitá-las junto publicaria estado sem código."
+        "Reconciliação das linhas §9 Admissões e §2 Convites do PRODUCT_STATUS fica como próximo passo imediato: o arquivo carrega alterações não-commitadas de outro trabalho (landing/signup/onboarding) e commitá-las junto publicaria estado sem código.",
+        "Fechado 2026-08-25: checklist 6/6 com provas registradas; PRODUCT_STATUS (Admissões/Convites/e-mail outbox) reconciliado nesta data; entrega real de e-mail permanece no card BLOCK-RESEND."
       ],
       "tests": [
         "supabase/tests/verification-documents.sql",
@@ -81,10 +82,11 @@
         "Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20",
         "Status: entrada | ../../docs/PRODUCT_STATUS.md"
       ],
-      "updatedAt": "2026-08-23",
+      "updatedAt": "2026-08-25",
       "sourceRevision": "b1cf3a6",
       "dependencies": ["BLOCK-RESEND"],
-      "completedChecklist": [true, true, true, true, true, true]
+      "completedChecklist": [true, true, true, true, true, true],
+      "completedAt": "2026-08-25"
     },
     {
       "id": "MVP-02-AUTHZ",
@@ -155,7 +157,8 @@
       "phase": "MVP-03",
       "priority": "P1",
       "category": "backend",
-      "status": "now",
+      "completedAt": "2026-08-25",
+      "status": "done",
       "description": "Comunidades, grupos, feed, moderação, eventos e indicações existem em partes. O trabalho é fechar contratos, sad paths e efeitos de notificação.",
       "checklist": [
         "Cobrir ownership, convite, saída, soft-delete e moderação",
@@ -166,7 +169,8 @@
       ],
       "proof": [
         "Evento-convite foi corrigido após quatro falhas encadeadas",
-        "community batch approval agora tem caller explícito e QA manual"
+        "community batch approval agora tem caller explícito e QA manual",
+        "Fechado 2026-08-25: test:db com 1052 asserts verdes cobrindo as suítes do card (community-rpcs, event-invite-rpc-exposure, recomendações, eventos); lote funcional E2E da comunidade verde após os consertos de self-visibility e reporter default; entrega de notificação por e-mail segue no BLOCK-RESEND"
       ],
       "tests": [
         "supabase/tests/event-invite-rpc-exposure.sql",
@@ -174,7 +178,7 @@
         "tests/e2e/community-batch-approval.spec.ts"
       ],
       "links": ["Status: comunidade | ../../docs/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-08-25",
       "sourceRevision": "8713635",
       "dependencies": ["MVP-02-AUTHZ", "BLOCK-RESEND"]
     },
@@ -195,11 +199,12 @@
       ],
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
-        "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset"
+        "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
+        "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento"
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
       "links": ["Protocolo | ../../docs/superpowers/plans/README.md"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-08-25",
       "sourceRevision": "8713635",
       "dependencies": []
     },
@@ -692,7 +697,8 @@
       "phase": "Triagem",
       "priority": "P0",
       "category": "repo",
-      "status": "repo",
+      "completedAt": "2026-08-25",
+      "status": "done",
       "description": "Reavaliação 2026-08-22 (MVP-01): runtime resolveu a quase totalidade dos critérios — catálogo nacional IBGE, memberships múltiplas, transferência, onboarding por localidade sem waitlist geográfica, feed locality-reach, PILOT_LOCALITY_ID fora do runtime. Lacuna residual: execução do E2E two-localities/empty-locality (specs commitados), bloqueada pelo build do web.",
       "checklist": [
         "Comparar issue com migrations P0/T ✅",
@@ -705,15 +711,11 @@
         "Memberships múltiplas: 20260817031237_belonging_multi_membership",
         "Transferência: 20260819021416_locality_transfer + onda T",
         "Feed locality-reach: 20260821000000_community_feed_locality_reach",
-        "PILOT_LOCALITY_ID fora do runtime (grep: só PILOT_LOCALITY_CODE estático)"
+        "PILOT_LOCALITY_ID fora do runtime (grep: só PILOT_LOCALITY_CODE estático)",
+        "Residual executado (2026-08-25): empty-locality.spec verde nos 3 viewports após a vila do Rio entrar no seed; two-localities rodou verde na suíte completa de 2026-08-24 (ausente da lista de 65 falhas)"
       ],
-      "drift": {
-        "documented": "A issue afirma necessidade de remover hardcode Manaus e abrir onboarding nacional.",
-        "observed": "O runtime descreve catálogo nacional e a home deixou de usar PILOT_LOCALITY_ID.",
-        "action": "Reavaliado 2026-08-22: runtime fecha quase tudo; residual = E2E two-localities (bloqueado por build do web). Issue mantida aberta até o E2E rodar, conforme recomendação no comentário."
-      },
       "links": ["Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-08-25",
       "sourceRevision": "8713635",
       "dependencies": []
     },
@@ -1189,15 +1191,16 @@
         "6 agentes explore concluídos: 12 testes distintos classificados em temas 3 e 4",
         "2026-08-24 (commit 364619e): :68 + :92 fechados por fixes de runtime — middleware preserva ?next=, InviteAcceptPage pré-checa is_verified_holder, batch-approval beforeEach idempotente via service_role upsert. Gate verde (lint + typecheck + test:unit/privacy/scope + secrets)",
         "2026-08-24 (commit d1fb2ab): event-invites :64 fechado — spec realinhado de i=1 (completed) para i=5 (upcoming, organizer membro-6); 6/6 (2 testes × 3 viewports). policy UI inalterada",
-        "Após 5 correções: ~25 falhas restantes em 8 testes distintos (esperado pós board update). Reverificar em suíte serial"
+        "Após 5 correções: ~25 falhas restantes em 8 testes distintos (esperado pós board update). Reverificar em suíte serial",
+        "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente."
       ],
       "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
       "links": [
         "E2E status | ../../docs/PRODUCT_STATUS.md",
         "Seed UUIDs | ../../supabase/seed.sql"
       ],
-      "updatedAt": "2026-08-24",
-      "sourceRevision": "015e4ba",
+      "updatedAt": "2026-08-26",
+      "sourceRevision": "4e0e48b",
       "dependencies": []
     }
   ]

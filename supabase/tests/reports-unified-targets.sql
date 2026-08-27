@@ -13,10 +13,54 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(10);
 
 \ir fixtures/foundation.inc
 \ir fixtures/recommendations.inc
+
+-- Prestador verificado, sem locality_memberships, vinculado a uma comunidade.
+insert into auth.users (id, email)
+values ('b2000000-0000-4000-8000-000000000001', 'provider-reporter@example.invalid');
+
+insert into private.verification_outcomes (
+  user_id, status, eligibility_class, checked_at
+)
+values (
+  'b2000000-0000-4000-8000-000000000001',
+  'verified',
+  'active_federal_military',
+  '2026-08-21 09:00:00+00'
+);
+
+insert into public.communities (
+  id, locality_id, name, created_by, owner_user_id
+)
+values (
+  'b2000000-0000-4000-8000-000000000002',
+  '00000000-0000-4000-8000-000000000001',
+  'Vila do Prestador Reporter',
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001'
+);
+
+insert into public.provider_accounts (
+  auth_user_id, invited_by, community_id, locality_id
+)
+values (
+  'b2000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  'b2000000-0000-4000-8000-000000000002',
+  '00000000-0000-4000-8000-000000000001'
+);
+
+insert into public.posts (id, locality_id, user_id, post_type, content)
+values (
+  'b2000000-0000-4000-8000-000000000003',
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  'text',
+  'publicacao que serve de alvo negativo para o prestador'
+);
 
 -- Uma conversa e uma mensagem de member-one, para servir de alvo 'message'.
 -- Inserido com privilegio: o objetivo aqui e o alvo, nao a policy da DM, que
@@ -172,6 +216,40 @@ select throws_ok(
   42501,
   null,
   'nao-membro nao denuncia nem os alvos novos'
+);
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- provider: denuncia mensagem, e somente mensagem
+-- ═══════════════════════════════════════════════════════════════════════════
+
+select set_config('request.jwt.claim.sub', 'b2000000-0000-4000-8000-000000000001', true);
+
+select lives_ok(
+  $$
+    insert into public.reports (reporter_user_id, target_type, target_id, reason)
+    values (
+      'b2000000-0000-4000-8000-000000000001',
+      'message',
+      '80000000-0000-4000-8000-0000000000aa',
+      'prestador denunciando mensagem recebida'
+    )
+  $$,
+  'prestador sem membership consegue denunciar mensagem'
+);
+
+select throws_ok(
+  $$
+    insert into public.reports (reporter_user_id, target_type, target_id, reason)
+    values (
+      'b2000000-0000-4000-8000-000000000001',
+      'post',
+      'b2000000-0000-4000-8000-000000000003',
+      'prestador tentando denunciar publicacao'
+    )
+  $$,
+  42501,
+  null,
+  'prestador sem membership nao consegue denunciar post'
 );
 
 select * from finish();

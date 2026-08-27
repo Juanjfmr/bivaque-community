@@ -102,8 +102,11 @@ export default async function CommunitiesPage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
-                    <h2 className="font-semibold">
-                      <a href={`/communities/${community.id}`} className="hover:underline">
+                    <h2 className="leading-none">
+                      <a
+                        href={`/communities/${community.id}`}
+                        className="inline-flex min-h-11 items-center transition-colors hover:underline focus-visible:underline"
+                      >
                         {community.name}
                       </a>
                     </h2>

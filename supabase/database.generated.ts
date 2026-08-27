@@ -334,38 +334,6 @@ export type Database = {
           },
         ]
       }
-      dm_reports: {
-        Row: {
-          created_at: string
-          id: string
-          message_id: string
-          reason: string
-          reporter_user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          message_id: string
-          reason: string
-          reporter_user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          message_id?: string
-          reason?: string
-          reporter_user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dm_reports_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "dm_messages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       event_invites: {
         Row: {
           created_at: string
@@ -1057,6 +1025,164 @@ export type Database = {
           },
         ]
       }
+      provider_catalog_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          photo_path: string | null
+          position: number
+          price_cents: number | null
+          provider_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          photo_path?: string | null
+          position?: number
+          price_cents?: number | null
+          provider_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          photo_path?: string | null
+          position?: number
+          price_cents?: number | null
+          provider_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_catalog_items_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_portfolio_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          photo_path: string
+          position: number
+          provider_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          photo_path: string
+          position?: number
+          provider_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          photo_path?: string
+          position?: number
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_portfolio_photos_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_profiles: {
+        Row: {
+          bio: string | null
+          category: Database["public"]["Enums"]["provider_category"]
+          contact_is_public: boolean
+          contact_phone: string | null
+          created_at: string
+          display_name: string
+          id: string
+          is_deleted: boolean
+          owner_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          category: Database["public"]["Enums"]["provider_category"]
+          contact_is_public?: boolean
+          contact_phone?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          is_deleted?: boolean
+          owner_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          category?: Database["public"]["Enums"]["provider_category"]
+          contact_is_public?: boolean
+          contact_phone?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_deleted?: boolean
+          owner_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_profiles_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: true
+            referencedRelation: "provider_accounts"
+            referencedColumns: ["auth_user_id"]
+          },
+        ]
+      }
+      provider_reach: {
+        Row: {
+          active: boolean
+          created_at: string
+          provider_id: string
+          scope_id: string
+          scope_type: Database["public"]["Enums"]["provider_reach_scope"]
+          source: Database["public"]["Enums"]["provider_reach_source"]
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          provider_id: string
+          scope_id: string
+          scope_type: Database["public"]["Enums"]["provider_reach_scope"]
+          source: Database["public"]["Enums"]["provider_reach_source"]
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          provider_id?: string
+          scope_id?: string
+          scope_type?: Database["public"]["Enums"]["provider_reach_scope"]
+          source?: Database["public"]["Enums"]["provider_reach_source"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_reach_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recommendation_replies: {
         Row: {
           author_id: string
@@ -1235,7 +1361,7 @@ export type Database = {
           id?: string
           operator_note?: string | null
           reason: string
-          reporter_user_id: string
+          reporter_user_id?: string
           resolved_at?: string | null
           resolved_by?: string | null
           status?: Database["public"]["Enums"]["report_status"]
@@ -1330,6 +1456,10 @@ export type Database = {
         Args: { p_accepted_by_user_id: string; p_token_digest: string }
         Returns: string
       }
+      accept_provider_invitation: {
+        Args: { p_email: string; p_token: string }
+        Returns: string
+      }
       add_community_moderator: {
         Args: {
           p_caller_user_id: string
@@ -1377,6 +1507,10 @@ export type Database = {
       consume_verification_attempt: {
         Args: { p_user_id: string }
         Returns: boolean
+      }
+      conversation_counterpart_name: {
+        Args: { p_conversation_id: string }
+        Returns: string
       }
       create_community: {
         Args: {
@@ -1429,6 +1563,14 @@ export type Database = {
           p_description: string
           p_name: string
           p_visibility: Database["public"]["Enums"]["group_visibility"]
+        }
+        Returns: string
+      }
+      create_provider_invitation: {
+        Args: {
+          p_community_id: string
+          p_display_name: string
+          p_email: string
         }
         Returns: string
       }
@@ -1557,6 +1699,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_community_providers: {
+        Args: { p_community_id: string; p_limit?: number; p_user_id: string }
+        Returns: {
+          category: Database["public"]["Enums"]["provider_category"]
+          display_name: string
+          provider_user_id: string
+          revoked_at: string
+        }[]
+      }
       list_invitable_members_for_event: {
         Args: { p_event_id: string; p_user_id: string }
         Returns: {
@@ -1673,6 +1824,14 @@ export type Database = {
           p_recurrence_ordinal?: number
           p_recurrence_type: string
           p_recurrence_weekday?: number
+        }
+        Returns: string
+      }
+      open_conversation: {
+        Args: {
+          p_context_id: string
+          p_context_type: Database["public"]["Enums"]["dm_context_type"]
+          p_other_user_id: string
         }
         Returns: string
       }
@@ -1808,6 +1967,28 @@ export type Database = {
         Args: { p_invitation_id: string; p_inviter_user_id: string }
         Returns: undefined
       }
+      revoke_provider_account: {
+        Args: {
+          p_owner_user_id: string
+          p_provider_user_id: string
+          p_reason: string
+        }
+        Returns: undefined
+      }
+      search_providers: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["provider_category"]
+          p_community_id?: string
+          p_query?: string
+        }
+        Returns: {
+          bio: string
+          category: Database["public"]["Enums"]["provider_category"]
+          display_name: string
+          id: string
+          reach_source: Database["public"]["Enums"]["provider_reach_source"]
+        }[]
+      }
       submit_verification_document: {
         Args: {
           p_mime_type: string
@@ -1860,6 +2041,7 @@ export type Database = {
         | "shared_event"
         | "recommendation_thread"
         | "accepted_family"
+        | "provider"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
@@ -1887,6 +2069,21 @@ export type Database = {
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
       profile_visibility: "locality_members"
+      provider_category:
+        | "alimentacao"
+        | "casa_e_reformas"
+        | "assistencia_tecnica"
+        | "mudanca_e_transporte"
+        | "imoveis"
+        | "documentacao_e_financas"
+        | "saude_e_bem_estar"
+        | "beleza"
+        | "educacao_e_aulas"
+        | "automotivo"
+        | "eventos_e_festas"
+        | "pets"
+      provider_reach_scope: "community" | "locality"
+      provider_reach_source: "free" | "paid"
       recommendation_category:
         | "servicos_locais"
         | "saude_bem_estar"
@@ -1904,6 +2101,7 @@ export type Database = {
         | "message"
         | "recommendation_request"
         | "recommendation_reply"
+        | "provider_profile"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2045,6 +2243,7 @@ export const Constants = {
         "shared_event",
         "recommendation_thread",
         "accepted_family",
+        "provider",
       ],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going", "not_going"],
@@ -2075,6 +2274,22 @@ export const Constants = {
       outbox_status: ["pending", "sent", "failed", "skipped"],
       post_type: ["text", "photo", "link", "poll"],
       profile_visibility: ["locality_members"],
+      provider_category: [
+        "alimentacao",
+        "casa_e_reformas",
+        "assistencia_tecnica",
+        "mudanca_e_transporte",
+        "imoveis",
+        "documentacao_e_financas",
+        "saude_e_bem_estar",
+        "beleza",
+        "educacao_e_aulas",
+        "automotivo",
+        "eventos_e_festas",
+        "pets",
+      ],
+      provider_reach_scope: ["community", "locality"],
+      provider_reach_source: ["free", "paid"],
       recommendation_category: [
         "servicos_locais",
         "saude_bem_estar",
@@ -2093,6 +2308,7 @@ export const Constants = {
         "message",
         "recommendation_request",
         "recommendation_reply",
+        "provider_profile",
       ],
     },
   },

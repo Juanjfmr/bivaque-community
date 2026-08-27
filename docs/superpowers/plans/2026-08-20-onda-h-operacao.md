@@ -196,7 +196,7 @@ faltando.
 - `public.report_target_type` ganha `'recommendation_request'` e `'recommendation_reply'`
 - `public.reports` passa a ser a **única** tabela de denúncia
 
-- [~] **Step 1: a migration — enum e o gatilho feitos; a cópia e o `drop` pendentes**
+- [x] **Step 1: a migration — enum e o gatilho feitos; a cópia e o `drop` pendentes** — fechado em 2026-08-25 por `20260825175718_drop_dm_reports_unified.sql`: cópia de `dm_reports` → `reports` (target `message`, status `open`) e `drop` na mesma transação; a policy de insert ganhou o ramo do prestador (`is_provider_account` + `message`) que este plano condicionava à fundação da G já aterrissada.
 
 ```sql
 alter type public.report_target_type add value if not exists 'recommendation_request';
@@ -279,7 +279,7 @@ drop table public.dm_reports;
   O mínimo de 10 caracteres do `dm_reports` some — `reports` aceita de 1 a 1000. Mantenha a
   validação de 10 no cliente se ela ajuda o operador; **não** recrie o `check` no banco.
 
-- [~] **Step 4: os testes — alvos novos cobertos; a asserção da migração espera o `drop`**
+- [x] **Step 4: os testes — alvos novos cobertos; a asserção da migração espera o `drop`** — fechado em 2026-08-25: cirurgia nas cinco suítes (dm-context-allowed 21/21, dm-context-denials 19/19, full-regression 85/85 com `hasnt_table` e lista 22, rls-or-column-regression 68/68, reports-unified-targets 10/10 com positivo `message` e negativo `post` do prestador); `test:db` 90 arquivos / 1052 asserts PASS. Nota de execução: `fixtures/dm.inc` já concede membership a 008 **e** 010, então o não-membro real dos negativos é 005.
 
   Amplie `supabase/tests/reports-denials.sql` e crie
   `supabase/tests/reports-unified-targets.sql`. Para **cada** um dos cinco alvos

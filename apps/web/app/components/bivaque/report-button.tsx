@@ -77,13 +77,14 @@ export function ReportButton({
         setError(insertError.message)
       }
     } else {
+      // O feedback fica dentro do modal aberto: fechar aqui escondia a
+      // confirmacao junto com o dialogo e o membro nunca via o desfecho.
       setSuccess(true)
       setReason("")
-      modal.close()
     }
 
     setSubmitting(false)
-  }, [reason, targetType, targetId, supabase, modal])
+  }, [reason, targetType, targetId, supabase])
 
   const handleClose = useCallback(() => {
     modal.close()
@@ -122,39 +123,56 @@ export function ReportButton({
                 <Modal.CloseTrigger />
               </Modal.Header>
               <Modal.Body>
-                <p className="text-sm text-muted">
-                  Descreva por que este conteudo viola as regras da comunidade.
-                </p>
-                <p className="mt-2 text-xs text-muted" role="note">
-                  Nao digite CPF, telefone nem endereco. O motivo fica registrado por dois anos e
-                  passa por redacao automatica antes de chegar ao operador.
-                </p>
-                <div className="mt-4">
-                  <TextArea
-                    aria-label="Motivo da denuncia"
-                    placeholder="Descreva o motivo..."
-                    value={reason}
-                    onChange={(e) => setReason((e.target as HTMLTextAreaElement).value)}
-                    className="w-full"
-                  />
-                </div>
-                {error && (
-                  <div className="mt-2">
-                    <FeedbackAlert variant="danger" description={error} />
-                  </div>
+                {success ? (
+                  <span className="text-sm text-accent">
+                    Denuncia recebida. A analise acontece em ate {SUPPORT_SLA_HOURS} horas e o
+                    resultado chega como notificacao no app.
+                  </span>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted">
+                      Descreva por que este conteudo viola as regras da comunidade.
+                    </p>
+                    <p className="mt-2 text-xs text-muted" role="note">
+                      Nao digite CPF, telefone nem endereco. O motivo fica registrado por dois anos
+                      e passa por redacao automatica antes de chegar ao operador.
+                    </p>
+                    <div className="mt-4">
+                      <TextArea
+                        aria-label="Motivo da denuncia"
+                        placeholder="Descreva o motivo..."
+                        value={reason}
+                        onChange={(e) => setReason((e.target as HTMLTextAreaElement).value)}
+                        className="w-full"
+                      />
+                    </div>
+                    {error && (
+                      <div className="mt-2">
+                        <FeedbackAlert variant="danger" description={error} />
+                      </div>
+                    )}
+                  </>
                 )}
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="tertiary" onPress={handleClose}>
-                  Cancelar
-                </Button>
-                <Button
-                  onPress={handleSubmit}
-                  isDisabled={submitting || !reason.trim()}
-                  variant="primary"
-                >
-                  {submitting ? "Enviando..." : "Enviar denuncia"}
-                </Button>
+                {success ? (
+                  <Button variant="primary" onPress={handleClose}>
+                    Fechar
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="tertiary" onPress={handleClose}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      onPress={handleSubmit}
+                      isDisabled={submitting || !reason.trim()}
+                      variant="primary"
+                    >
+                      {submitting ? "Enviando..." : "Enviar denuncia"}
+                    </Button>
+                  </>
+                )}
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>

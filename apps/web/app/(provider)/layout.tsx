@@ -1,4 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
+import type { Route } from "next"
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createServerClient as createServiceClient } from "../../lib/supabase/server"
@@ -55,11 +57,26 @@ export default async function ProviderLayout({ children }: Readonly<{ children: 
     <div className="flex min-h-screen flex-col">
       <nav aria-label="Painel do prestador" className="border-b border-border bg-surface px-6 py-3">
         <ul className="flex flex-wrap gap-4 text-sm">
-          {/* Minha ficha — placeholder; Task 3 da onda G cria a rota. */}
           <li>
-            <span className="inline-flex min-h-11 items-center rounded-md px-3 text-muted">
-              Minha ficha (em construção)
-            </span>
+            <Link href="/prestador" className="inline-flex min-h-11 items-center rounded-md px-3">
+              Painel
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={"/prestador/ficha" as Route}
+              className="inline-flex min-h-11 items-center rounded-md px-3"
+            >
+              Minha ficha
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={"/prestador/catalogo" as Route}
+              className="inline-flex min-h-11 items-center rounded-md px-3"
+            >
+              Catálogo e portfólio
+            </Link>
           </li>
         </ul>
       </nav>

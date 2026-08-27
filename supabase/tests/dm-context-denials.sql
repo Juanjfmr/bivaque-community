@@ -1,12 +1,62 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(19);
+select plan(25);
 
 \ir fixtures/foundation.inc
 \ir fixtures/trust.inc
 \ir fixtures/authz.inc
 \ir fixtures/dm.inc
+\ir fixtures/communities.inc
+
+-- Onda G Task 6: prestador da vila A e um grupo que o par NÃO compartilha.
+set local role postgres;
+insert into auth.users (id, email)
+values ('10000000-0000-4000-8000-000000000025', 'provider-dm-denials@example.invalid');
+insert into public.provider_accounts (
+  auth_user_id, invited_by, community_id, locality_id
+)
+values (
+  '10000000-0000-4000-8000-000000000025',
+  '10000000-0000-4000-8000-000000000001',
+  '70000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001'
+);
+insert into public.provider_profiles (
+  id, owner_user_id, display_name, category
+)
+values (
+  '30000000-0000-4000-8000-000000000025',
+  '10000000-0000-4000-8000-000000000025',
+  'Prestador DM Denials',
+  'alimentacao'
+);
+insert into public.provider_reach (provider_id, scope_type, scope_id, source)
+values (
+  '30000000-0000-4000-8000-000000000025',
+  'community',
+  '70000000-0000-4000-8000-000000000001',
+  'free'
+);
+insert into public.groups (
+  id, name, visibility, locality_id, created_by, owner_user_id
+)
+values (
+  '40000000-0000-4000-8000-000000000099',
+  'Grupo Alheio ao Par DM',
+  'public',
+  '00000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000010',
+  '10000000-0000-4000-8000-000000000010'
+);
+
+set local role postgres;
+insert into public.locality_memberships (user_id, locality_id)
+values (
+  '10000000-0000-4000-8000-000000000008',
+  '00000000-0000-4000-8000-000000000001'
+)
+on conflict do nothing;
 
 -- ── no shared context: cannot create conversation ────────────────────────────
 -- 009 and 010 share no group, event, recommendation, or family link.
@@ -47,17 +97,13 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.dm_conversations (
-      participant_a, participant_b, context_type, context_id
-    )
-    values (
-      '10000000-0000-4000-8000-000000000008',
+    select public.open_conversation(
       '10000000-0000-4000-8000-000000000009',
       'shared_group',
       '40000000-0000-4000-8000-000000000001'
     )
   $$,
-  'same user CAN create conversation with user they share context with'
+  'same user CAN open conversation with user they share context with'
 );
 
 -- Save the conversation ID for later non-participant tests.
@@ -213,7 +259,7 @@ select throws_ok(
     'insert into public.dm_messages (conversation_id, sender_id, content)
      values (%L, %L, %L)',
     :'dm_conv_id',
-    '10000000-0000-4000-8000-000000000010',
+    '10000000-0000-4000-8000-000000000005',
     'Mensagem intrusa'
   ),
   42501,
@@ -244,27 +290,28 @@ select lives_ok(
   'participant CAN insert message — positive identity check'
 );
 
--- ── non-participant cannot report a message ──────────────────────────────────
+-- ── non-member cannot report any message ─────────────────────────────────────
 
 set local role authenticated;
 select set_config(
   'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000010',
+  '10000000-0000-4000-8000-000000000005',
   true
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   format(
-    'insert into public.dm_reports (message_id, reporter_user_id, reason)
-     values (%L, %L, %L)',
+    'insert into public.reports (reporter_user_id, target_type, target_id, reason)
+     values (%L, %L, %L, %L)',
+    '10000000-0000-4000-8000-000000000005',
+    'message',
     :'dm_msg_id',
-    '10000000-0000-4000-8000-000000000010',
     'Relatando mensagem de outra conversa'
   ),
   42501,
   null,
-  'non-participant cannot report a message from another conversation'
+  'non-member cannot report any message'
 );
 
 -- Positive identity: 008 CAN report a message in their own conversation
@@ -278,15 +325,17 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.dm_reports (message_id, reporter_user_id, reason)
-    select m.id,
-           '10000000-0000-4000-8000-000000000008',
+    insert into public.reports (reporter_user_id, target_type, target_id, reason)
+    select '10000000-0000-4000-8000-000000000008',
+           'message',
+           m.id,
            'Reporte legitimo de conteudo proprio'
     from public.dm_messages m
     join public.dm_conversations c
       on c.id = m.conversation_id
     where c.participant_a = '10000000-0000-4000-8000-000000000008'
       and c.participant_b = '10000000-0000-4000-8000-000000000009'
+      and m.sender_id = '10000000-0000-4000-8000-000000000009'
     limit 1
   $$,
   'participant CAN report message in own conversation — positive identity check'
@@ -354,9 +403,9 @@ select throws_ok(
       '40000000-0000-4000-8000-000000000001'
     )
   $$,
-  23505,
+  '42501',
   null,
-  'cannot create duplicate conversation between same pair'
+  'direct insert path is closed — duplicates are impossible by design (RPC reopens the same row)'
 );
 
 -- ── participant ordering enforcement ─────────────────────────────────────────
@@ -381,9 +430,9 @@ select throws_ok(
       '40000000-0000-4000-8000-000000000001'
     )
   $$,
-  23514,
+  '42501',
   null,
-  'CHECK constraint enforces participant_a < participant_b ordering'
+  'direct insert path is closed — ordering is decided server-side by open_conversation'
 );
 
 -- ── block prevents sending in an existing conversation ───────────────────────
@@ -428,16 +477,8 @@ select throws_ok(
   'blocked user cannot send message in existing conversation'
 );
 
--- Positive identity: 009 (blocker) can still send
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '10000000-0000-4000-8000-000000000009',
-  true
-);
-select set_config('request.jwt.claim.role', 'authenticated', true);
-
-select lives_ok(
+-- O defeito 2 morre aqui: o BLOQUEADOR também perde o envio nesta conversa.
+select throws_ok(
   $$
     insert into public.dm_messages (conversation_id, sender_id, content)
     select c.id,
@@ -448,7 +489,154 @@ select lives_ok(
       and c.participant_b = '10000000-0000-4000-8000-000000000009'
     limit 1
   $$,
-  'blocker can still send in existing conversation — positive identity check'
+  '42501',
+  null,
+  'blocker can no longer send either — block protects both ways'
+);
+
+-- ── onda G Task 6: denials do RPC novo ───────────────────────────────────────
+
+-- Defeito 3: par COMPARTILHA grupo e evento, mas declara um grupo do qual não
+-- participam os dois — negado mesmo existindo outra relação entre eles.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000008',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000009',
+      'shared_group',
+      '40000000-0000-4000-8000-000000000099'
+    )
+  $$,
+  '42501',
+  null,
+  'declared context that the pair does not share is denied even with other relations'
+);
+
+-- Contexto `provider`: membro de outra vila (sem alcance) não inicia.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000010',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000025',
+      'provider',
+      '30000000-0000-4000-8000-000000000025'
+    )
+  $$,
+  '42501',
+  null,
+  'member who cannot see the showcase cannot open a provider conversation'
+);
+
+-- O prestador nunca inicia: só responde.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000025',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000001',
+      'provider',
+      '30000000-0000-4000-8000-000000000025'
+    )
+  $$,
+  '42501',
+  null,
+  'provider cannot initiate a conversation with a member'
+);
+
+-- Defeito 2: bloqueio vale nos DOIS sentidos na conversa já existente.
+reset role;
+insert into public.dm_conversations (
+  participant_a, participant_b, context_type, context_id
+)
+values (
+  '10000000-0000-4000-8000-000000000008',
+  '10000000-0000-4000-8000-000000000010',
+  'shared_group',
+  '40000000-0000-4000-8000-000000000001'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000010',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    select c.id, '10000000-0000-4000-8000-000000000010', 'tentativa do bloqueado'
+      from public.dm_conversations c
+     where c.participant_a = '10000000-0000-4000-8000-000000000008'
+       and c.participant_b = '10000000-0000-4000-8000-000000000010'
+     limit 1
+  $$,
+  '42501',
+  null,
+  'blocked member still cannot send'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000008',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    select c.id, '10000000-0000-4000-8000-000000000008', 'tentativa da bloqueadora'
+      from public.dm_conversations c
+     where c.participant_a = '10000000-0000-4000-8000-000000000008'
+       and c.participant_b = '10000000-0000-4000-8000-000000000010'
+     limit 1
+  $$,
+  '42501',
+  null,
+  'blocker also cannot send — block now protects both ways'
+);
+
+-- Nome do correspondente: quem NÃO participa recebe nulo, nunca o nome.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000010',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select is(
+  public.conversation_counterpart_name(
+    (select c.id
+       from public.dm_conversations c
+      where c.participant_a = '10000000-0000-4000-8000-000000000008'
+        and c.participant_b = '10000000-0000-4000-8000-000000000009')
+  ),
+  null,
+  'non-participant gets null counterpart name, never a real one'
 );
 
 select * from finish();

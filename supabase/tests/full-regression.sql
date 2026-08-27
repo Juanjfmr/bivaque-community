@@ -27,7 +27,11 @@ select has_table('public', 'notifications', 'notifications');
 select has_table('public', 'dm_conversations', 'dm_conversations');
 select has_table('public', 'dm_messages', 'dm_messages');
 select has_table('public', 'dm_blocks', 'dm_blocks');
-select has_table('public', 'dm_reports', 'dm_reports');
+select hasnt_table(
+  'public',
+  'dm_reports',
+  'dm_reports removida — denuncias unificadas em public.reports'
+);
 select has_table('public', 'reports', 'reports');
 select has_table('public', 'arrival_guide_entries', 'arrival_guide_entries');
 select has_table('private', 'verification_outcomes', 'verification_outcomes');
@@ -49,7 +53,7 @@ select results_eq(
         'posts', 'comments', 'groups', 'group_memberships',
         'recommendation_requests', 'recommendation_replies', 'recommendation_saves',
         'events', 'event_rsvps', 'notifications',
-        'dm_conversations', 'dm_messages', 'dm_blocks', 'dm_reports',
+        'dm_conversations', 'dm_messages', 'dm_blocks',
         'arrival_guide_entries',
         'reports',
         'verification_outcomes', 'family_invitations', 'family_account_links'
@@ -57,8 +61,8 @@ select results_eq(
       and c.relrowsecurity
       and c.relforcerowsecurity
   $$,
-  array[23::bigint],
-  'RLS enabled and forced on all 23 application tables'
+  array[22::bigint],
+  'RLS enabled and forced on all 22 application tables'
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════════

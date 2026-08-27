@@ -69,6 +69,23 @@ function renderEmail(message: OutboxMessage): RenderedEmail {
         subject: "Você recebeu um convite",
         text: "Alguém da sua família te convidou para a comunidade. Acesse o Bivaque para aceitar.",
       }
+    case "provider_invite": {
+      const path =
+        typeof payload["invite_path"] === "string" &&
+        payload["invite_path"].startsWith("/prestador-convite/")
+          ? payload["invite_path"]
+          : "/"
+      const configuredOrigin = process.env["NEXT_PUBLIC_SITE_URL"]?.replace(/\/$/, "")
+      const vercelHost = process.env["VERCEL_URL"]?.replace(/^https?:\/\//, "").replace(/\/$/, "")
+      const origin =
+        configuredOrigin ?? (vercelHost ? `https://${vercelHost}` : "http://127.0.0.1:3000")
+      return {
+        subject: "Você recebeu um convite para oferecer seus serviços",
+        text:
+          "Uma comunidade do Bivaque indicou você como prestador. " +
+          `Confirme seu e-mail e aceite o convite em ${origin}${path}`,
+      }
+    }
     case "event_invite":
       return {
         subject: "Você recebeu um convite de evento",

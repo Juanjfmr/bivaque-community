@@ -1,4 +1,4 @@
-# Onda G — a vitrine
+﻿# Onda G — a vitrine
 
 > Plano de execução. Escrito em **2026-08-20**. Marque `- [x]` conforme avança e **commite por
 > task**.
@@ -9,10 +9,10 @@
 
 A vitrine é uma das quatro coisas que o nível municipal é (`BIVAQUE.md` §6.2) e é **o
 comportamento que o grupo de WhatsApp de 630 pessoas já demonstra hoje** — peixe, marmita,
-ar-condicionado, despachante. É também a **única onda com receita** (§10.2).
+ar-condicionado, despachante. Ã‰ também a **única onda com receita** (§10.2).
 
 Entrega, na ordem: a conta do prestador civil, a ficha, o painel dele, a busca, a conversa
-membro ↔ prestador e o alcance pago.
+membro â†” prestador e o alcance pago.
 
 ## O que esta onda não é
 
@@ -23,7 +23,7 @@ membro ↔ prestador e o alcance pago.
   Task 7 tem um teste que existe só para provar isso.
 - **Não entrega prova social nem avisos.** D45 adia os dois: prova social depende do ciclo de
   indicação rodando (onda F), avisos dependem de moderação (onda H).
-- **Não abre DM entre membros.** D31 mantém adiada. O que abre é **membro ↔ prestador** (D36).
+- **Não abre DM entre membros.** D31 mantém adiada. O que abre é **membro â†” prestador** (D36).
 
 ## Dois blocos, e o segundo pode virar onda própria
 
@@ -95,7 +95,7 @@ pode começar agora.**
 ## Precedência: esta onda vem depois de cinco
 
 ```
-P0 → T → D2 → E → F → G
+P0 â†’ T â†’ D2 â†’ E â†’ F â†’ G
 ```
 
 E é dependência real, não ordem administrativa:
@@ -116,7 +116,7 @@ E é dependência real, não ordem administrativa:
    (a linha da monetização, as categorias, os cinco proibidos, o filtro de três perguntas),
    §12 (as oito regras permanentes) e as decisões D17, D20, D26 a D29, D36, D37, D41, D44, D45.
 2. [`docs/PRODUCT_STATUS.md`](../../PRODUCT_STATUS.md) §7 inteiro (cinco linhas, todas
-   "**não existe**") e §8, a linha **"Conversa membro ↔ prestador"**, que lista os três
+   "**não existe**") e §8, a linha **"Conversa membro â†” prestador"**, que lista os três
    defeitos que a Task 6 corrige.
 3. As duas lições do E2E no `README.md`: `notFound()` responde **200** no Next 16, e o
    PostgREST **não resolve embed onde não há foreign key** — e esta onda cria tabelas novas
@@ -248,7 +248,7 @@ revoke all on function private.is_provider_account(uuid) from public, anon;
 grant execute on function private.is_provider_account(uuid) to authenticated, service_role;
 
 -- O middleware roda com o cliente anônimo do usuário, não com service_role.
--- Por isso este segundo helper escopa por auth.uid() e NÃO aceita parâmetro —
+-- Por isso este segundo helper escopa por auth.uid() e NÃƒO aceita parâmetro —
 -- mesmo desenho de public.my_verification_status (20260820000002).
 create function public.my_account_kind()
 returns text
@@ -381,7 +381,7 @@ só enxerga a própria ficha. São vias distintas e nunca compartilham tabela.
 - `public.accept_provider_invitation(p_token text, p_email text) returns uuid` (devolve o
   `auth_user_id` do prestador provisionado)
 
-- [ ] **Step 1: a migration**
+- [x] **Step 1: a migration** — fechado em 2026-08-25 (`20260825181742_provider_invitations.sql`: tabela privada em digests, RLS forçada, cota de cinco, RPCs `create_provider_invitation`/`accept_provider_invitation`, outbox `provider_invite`)
 
   Espelhe `private.family_invitations` (`20260802000200_private_trust_family_foundation.sql:38-58`):
   tabela em **`private`**, `token_digest bytea` e `invitee_email_digest bytea` de 32 bytes —
@@ -412,21 +412,21 @@ create index provider_invitations_inviter_pending_idx
   convite, e marca o convite como `accepted`. **Não** cria `locality_memberships`. **Não** cria
   `profiles`.
 
-- [ ] **Step 2: o pgTAP — positivo e negativo**
+- [x] **Step 2: o pgTAP — positivo e negativo** — 16 asserts em `supabase/tests/provider-invitation.sql`; suíte completa 91 arquivos / 1068 PASS
 
   `supabase/tests/provider-invitation.sql`, no molde de
   `supabase/tests/family-invite-email-binding.sql`:
 
-  - membro aprovado da vila cria convite → **ok**
-  - membro da cidade **sem** `community_memberships` aprovada → **negado**
-  - prestador tentando criar convite → **negado**
-  - aceite com e-mail divergente do `invitee_email_digest` → **negado** (este é o teste que o
+  - membro aprovado da vila cria convite â†’ **ok**
+  - membro da cidade **sem** `community_memberships` aprovada â†’ **negado**
+  - prestador tentando criar convite â†’ **negado**
+  - aceite com e-mail divergente do `invitee_email_digest` â†’ **negado** (este é o teste que o
     convite familiar existe para ter; não o copie pela metade)
-  - aceite com token expirado → **negado**
-  - aceite duas vezes → o segundo é **negado**
+  - aceite com token expirado â†’ **negado**
+  - aceite duas vezes â†’ o segundo é **negado**
   - depois do aceite, `provider_accounts` tem a linha e `locality_memberships` **não** tem
 
-- [ ] **Step 3: as duas telas**
+- [x] **Step 3: as duas telas** — `/communities/[id]/indicar-prestador` no shell e aceite em `/prestador-convite/[token]`; DESVIO registrado: o aceite vive em `(preauth)` porque `(shell)` exige membership e redirecionaria o civil sem conta (URL preservada)
 
   **Indicar** (`(shell)/communities/[id]/indicar-prestador/page.tsx`): formulário com nome e
   e-mail, Server Action autenticada pelo **cliente com cookies** (regra 1 da §12 — o padrão a
@@ -437,7 +437,7 @@ create index provider_invitations_inviter_pending_idx
   `PUBLIC_PATHS` do middleware — quem abre o link ainda não tem conta. Confira o e-mail antes
   de provisionar, exatamente como `app/(shell)/invite/[token]/`.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit**
 
 ```bash
 npx pnpm@11.18.0 gate
@@ -472,13 +472,13 @@ mesmo que só a linha grátis exista até a Task 7.
 - `public.provider_reach(provider_id, scope_type, scope_id, source, active)`
 - `private.can_see_provider(p_provider_id uuid) returns boolean`
 
-- [ ] **Step 1: as doze categorias, em um lugar só**
+- [x] **Step 1: as doze categorias, em um lugar só**
 
   §7.2.1 é uma **lista fechada** com três regras que o código precisa carregar. Em
   `packages/domain/src/index.ts`:
 
 ```ts
-// BIVAQUE.md §7.2.1 — lista fechada. NÃO existe "Outros": vira depósito, chega
+// BIVAQUE.md §7.2.1 — lista fechada. NÃƒO existe "Outros": vira depósito, chega
 // a metade das fichas e mata o filtro. O que não couber é sinal para criar
 // categoria por decisão, nunca por usuário. Categoria só se divide acima de
 // ~15 fichas ativas.
@@ -519,7 +519,7 @@ export const PROVIDER_CATEGORY_LABELS: Record<ProviderCategory, string> = {
   `tests/unit/` que compare o array com o enum lido de `supabase/database.generated.ts` — é o
   tipo de divergência que só aparece em produção.
 
-- [ ] **Step 2: a migration da ficha e do alcance**
+- [x] **Step 2: a migration da ficha e do alcance**
 
 ```sql
 create type public.provider_category as enum (
@@ -592,7 +592,7 @@ create table public.provider_portfolio_photos (
 
 ```sql
 -- Quem vê a ficha: o dono dela, e quem pertence a algum escopo ativo do
--- alcance. Nada mais. Um membro de outra vila NÃO vê, e é exatamente essa
+-- alcance. Nada mais. Um membro de outra vila NÃƒO vê, e é exatamente essa
 -- fronteira que a Task 7 vende.
 create function private.can_see_provider(p_provider_id uuid)
 returns boolean
@@ -643,28 +643,28 @@ alter type public.report_target_type add value if not exists 'provider_profile';
   > o ramo `provider_profile` ao RPC de resolução dela nesta mesma migration. Se a H ainda não
   > rodou, pare aqui: o valor do enum existe, a Task 1 da H cobre o resto.
 
-- [ ] **Step 3: o bucket das fotos**
+- [x] **Step 3: o bucket das fotos**
 
   `provider-photos`, privado, 5 MB, `image/jpeg|png|webp`, no molde exato de
   `20260821000015_event_photos_bucket.sql`. `insert` só do dono
   (`owner = auth.uid()` **e** existe `provider_accounts` ativo); `select` gated por
   `private.can_see_provider` a partir do prefixo do caminho.
 
-- [ ] **Step 4: o pgTAP do escopo — os dois lados**
+- [x] **Step 4: o pgTAP do escopo — os dois lados**
 
   `supabase/tests/provider-showcase-scope.sql`. Fixture: duas vilas na mesma cidade, um
   prestador com `reach` grátis só na vila A.
 
-  - membro **aprovado** da vila A vê a ficha, o catálogo e o portfólio → `isnt_empty` × 3
-  - membro da vila B **não vê** → `is_empty` × 3
-  - membro da vila A com `status = 'pending'` **não vê** (aprovado ≠ pedinte)
+  - membro **aprovado** da vila A vê a ficha, o catálogo e o portfólio â†’ `isnt_empty` Ã— 3
+  - membro da vila B **não vê** â†’ `is_empty` Ã— 3
+  - membro da vila A com `status = 'pending'` **não vê** (aprovado â‰  pedinte)
   - membro da cidade sem vila nenhuma **não vê** — este é o teste que a Task 7 vai inverter
     quando existir alcance pago de `locality`; ele precisa estar vermelho de propósito lá
   - o dono vê a própria ficha mesmo sem alcance ativo
   - outro prestador **não vê** a ficha alheia
   - o dono edita a própria ficha; **não** edita a alheia (`throws_ok`, 42501)
 
-- [ ] **Step 5: a ficha vista pelo membro**
+- [x] **Step 5: a ficha vista pelo membro**
 
   `(shell)/prestadores/[id]/page.tsx`, Server Component, lendo pelo **cliente autenticado**
   (regra 1 da §12: nada de `service_role` aqui — a RLS é quem decide). Três blocos na ordem da
@@ -675,7 +675,7 @@ alter type public.report_target_type add value if not exists 'provider_profile';
   Botão "Conversar" existe mas fica desabilitado com explicação até a Task 6 — ou, melhor pela
   regra 4 da §12, **não existe ainda**. Prefira não existir.
 
-- [ ] **Step 6: revogar a ficha é ato do dono da comunidade**
+- [x] **Step 6: revogar a ficha é ato do dono da comunidade**
 
   A decisão 2 do ADR diz que a ficha **sobrevive** à saída de quem indicou, e que revogar é ato
   do dono da comunidade. Isso só é verdade se existir o ato — sem ele a decisão é prosa e a
@@ -740,7 +740,7 @@ grant execute on function public.revoke_provider_account(uuid, uuid, text) to se
   prestador revogado continua conseguindo entrar e ver a própria ficha (ele não foi banido — a
   vitrine dele é que saiu do ar), e **não** consegue reativar o alcance sozinho.
 
-- [ ] **Step 7: gate e commit**
+- [x] **Step 7: gate e commit**
 
 ```bash
 npx pnpm@11.18.0 gate
@@ -771,7 +771,7 @@ outras ondas, e o painel precisa dizer isso em vez de fingir.
 - Criar: `apps/web/app/(provider)/prestador/catalogo/page.tsx`
 - Criar: `tests/unit/providers/showcase-form.test.ts`
 
-- [ ] **Step 1: as Server Actions, autenticadas pelo cliente com cookies**
+- [x] **Step 1: as Server Actions, autenticadas pelo cliente com cookies** — actions autenticadas por cookies, zero service_role; todo `error` de consulta é lido
 
   Todas em `actions.ts` com `"use server"` no topo do arquivo. O padrão correto está em
   `app/(shell)/communities/actions.ts:8-24`. **Nenhuma delas usa `service_role`** — a RLS da
@@ -781,19 +781,19 @@ outras ondas, e o painel precisa dizer isso em vez de fingir.
   toda consulta**. A tela renderizando vazia porque o `error` foi descartado é como a lista de
   membros de grupo ficou quebrada em produção sem ninguém notar.
 
-- [ ] **Step 2: a validação na borda**
+- [x] **Step 2: a validação na borda** — validadores em apps/web/lib/providers/showcase.ts espelham os checks da migration
 
   `title` 2-120, `bio` até 800, `price_cents` inteiro não-negativo, `contact_phone` no formato
   do `check` da migration. Valide **no servidor**, não só no formulário — a regra do
   `CLAUDE.md` é "valide input nas bordas do sistema". Testes unitários em
   `tests/unit/providers/showcase-form.test.ts` cobrindo os limites e o preço negativo.
 
-- [ ] **Step 3: os estados honestos**
+- [x] **Step 3: os estados honestos** — métrica sem número inventado; caixa de pedidos não desenhada
 
   Métrica: `EmptyState` dizendo que a medição chega com a onda H — não um "0 visualizações",
   que é número inventado com cara de fato. Caixa de pedidos: idem, até a Task 6.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit** — fechado em 2026-08-25
 
 ```bash
 npx pnpm@11.18.0 gate
@@ -818,7 +818,7 @@ entre as duas coisas é o que o produto vende.
 - Modificar: `apps/web/app/components/bivaque/city-reference.tsx` (a seção `city-vitrine-heading`)
 - Criar: `apps/web/app/(shell)/prestadores/page.tsx`
 
-- [ ] **Step 1: extensão, índice e o RPC**
+- [x] **Step 1: extensão, índice e o RPC** — pg_trgm + índice parcial + `search_providers` security definer (20260825203815)
 
 ```sql
 create extension if not exists pg_trgm with schema extensions;
@@ -874,11 +874,11 @@ grant execute on function public.search_providers(public.provider_category, uuid
   to authenticated;
 ```
 
-- [ ] **Step 2: o pgTAP da busca — e o teste que existe só para a D29**
+- [x] **Step 2: o pgTAP da busca — e o teste que existe só para a D29** — 9 asserts em provider-search-scope.sql, incluindo a guarda D29 (grátis antes de paga por relevância igual)
 
   `supabase/tests/provider-search-scope.sql`:
 
-  - membro da vila A busca sem filtro → vê a ficha do prestador da vila A
+  - membro da vila A busca sem filtro â†’ vê a ficha do prestador da vila A
   - o mesmo membro **não** vê a ficha de um prestador cujo alcance é só a vila B
   - filtro por categoria devolve só aquela categoria
   - busca por nome parcial ("clima" achando "Climatiza Manaus") funciona
@@ -887,7 +887,7 @@ grant execute on function public.search_providers(public.provider_category, uuid
     busca **tem que** devolver a grátis primeiro. Se um dia alguém "otimizar" a ordenação para
     priorizar o pagante, este teste fica vermelho, e é para isso que ele existe.
 
-- [ ] **Step 3: a vitrine entra em "cidade"**
+- [x] **Step 3: a vitrine entra em "cidade"** — filtros só quando há ficha; vazio honesto sem promessa de onda
 
   Substitua o `EmptyState` de `city-reference.tsx` (seção `city-vitrine-heading`, o bloco que
   hoje diz *"Isso é trabalho da onda G"*) por: filtro de categoria (as doze), campo de busca
@@ -898,7 +898,7 @@ grant execute on function public.search_providers(public.provider_category, uuid
   parecer vazio ao mesmo tempo. **Não abra as doze categorias como abas vazias**; mostre o
   filtro só quando houver ficha.
 
-- [ ] **Step 4: gate e commit**
+- [x] **Step 4: gate e commit** — fechado em 2026-08-25
 
 ```bash
 npx pnpm@11.18.0 gate
@@ -910,7 +910,7 @@ git commit -m "feat(providers): busca por categoria e nome com pg_trgm, dentro d
 
 ---
 
-## Task 6: a conversa membro ↔ prestador — três defeitos antes do contexto novo
+## Task 6: a conversa membro â†” prestador — três defeitos antes do contexto novo
 
 D36 reaproveita a máquina de DM em vez de reconstruí-la, e o `BIVAQUE.md` §8 é explícito sobre
 a consequência: *"as correções de bloqueio e contexto passam a ser pré-requisito da onda G"*.
@@ -1000,7 +1000,7 @@ drop policy dm_conversations_insert_context_gated on public.dm_conversations;
 revoke insert on table public.dm_conversations from authenticated;
 ```
 
-- [ ] **Step 2: corrigir o defeito 2 — bloqueio nos dois sentidos**
+- [x] **Step 2: corrigir o defeito 2 — bloqueio nos dois sentidos**
 
 ```sql
 create or replace function private.is_dm_blocked_either_way(p_conversation_id uuid)
@@ -1034,21 +1034,21 @@ with check (
 );
 ```
 
-- [ ] **Step 3: corrigir o defeito 3 — o contexto declarado é conferido**
+- [x] **Step 3: corrigir o defeito 3 — o contexto declarado é conferido**
 
   `private.dm_context_valid(a, b, context_type, context_id)` substitui o
   `can_dm_between` no caminho de criação. Cada ramo confere **aquele** contexto:
-  `shared_group` → os dois têm `group_memberships` aprovada **naquele** `group_id`;
-  `shared_event` → os dois têm `event_rsvps` **naquele** `event_id`;
-  `recommendation_thread` → os dois participam **daquela** `request_id`;
-  `accepted_family` → existe `private.family_account_links` entre os dois;
-  `provider` → o `context_id` é uma `provider_profiles.id`, um dos dois é o
+  `shared_group` â†’ os dois têm `group_memberships` aprovada **naquele** `group_id`;
+  `shared_event` â†’ os dois têm `event_rsvps` **naquele** `event_id`;
+  `recommendation_thread` â†’ os dois participam **daquela** `request_id`;
+  `accepted_family` â†’ existe `private.family_account_links` entre os dois;
+  `provider` â†’ o `context_id` é uma `provider_profiles.id`, um dos dois é o
   `owner_user_id` dela, e o outro pode vê-la (`private.can_see_provider`).
 
   Mantenha `can_dm_between` no schema: outras chamadas podem existir e removê-la não é o
   escopo desta task. Se ela ficar órfã ao fim da onda, remova aí.
 
-- [ ] **Step 4: o contexto novo, e quem pode iniciar**
+- [x] **Step 4: o contexto novo, e quem pode iniciar**
 
 ```sql
 alter type public.dm_context_type add value if not exists 'provider';
@@ -1060,7 +1060,7 @@ alter type public.dm_context_type add value if not exists 'provider';
   `dm_context_valid` do ramo `provider` exige que **quem chama** (`v_me`) não seja o dono da
   ficha.
 
-- [ ] **Step 5: os testes — cada defeito tem positivo e negativo**
+- [x] **Step 5: os testes — cada defeito tem positivo e negativo**
 
   Em `supabase/tests/dm-context-denials.sql` e `dm-context-allowed.sql`:
 
@@ -1068,13 +1068,13 @@ alter type public.dm_context_type add value if not exists 'provider';
   - defeito 2: quem bloqueou **não** consegue enviar mensagem (hoje consegue); quem foi
     bloqueado também não (continua)
   - defeito 3: `open_conversation` com `context_type = 'shared_group'` e um `context_id` de
-    grupo do qual os dois **não** participam → negado, mesmo existindo outra relação entre eles
-  - contexto novo: membro que vê a ficha abre conversa com o prestador → **ok**
-  - membro que **não** vê a ficha (outra vila) → **negado**
-  - prestador tentando abrir conversa com membro → **negado**
-  - prestador respondendo dentro de conversa aberta pelo membro → **ok**
+    grupo do qual os dois **não** participam â†’ negado, mesmo existindo outra relação entre eles
+  - contexto novo: membro que vê a ficha abre conversa com o prestador â†’ **ok**
+  - membro que **não** vê a ficha (outra vila) â†’ **negado**
+  - prestador tentando abrir conversa com membro â†’ **negado**
+  - prestador respondendo dentro de conversa aberta pelo membro â†’ **ok**
 
-- [ ] **Step 6: as três telas**
+- [x] **Step 6: as três telas**
 
   `chat-thread.tsx` passa a chamar `open_conversation` em vez de inserir direto. A ficha ganha
   o botão "Conversar". O painel do prestador ganha a caixa de pedidos, que é a lista de
@@ -1121,7 +1121,7 @@ grant execute on function public.conversation_counterpart_name(uuid) to authenti
 
   Teste negativo obrigatório: quem **não** participa da conversa recebe nulo, não o nome.
 
-- [ ] **Step 7: gate e commit**
+- [x] **Step 7: gate e commit** — fechado em 2026-08-25
 
 ```bash
 npx pnpm@11.18.0 gate
@@ -1144,7 +1144,7 @@ git commit -m "fix(dm): ordem do par, bloqueio bidirecional e contexto conferido
 ## Task 7: o alcance pago — o produto antes do dinheiro
 
 Esta task **não toca em cobrança**. Ela entrega o que o pagante compra e as três garantias que
-o §7.4 exige, com o dinheiro ainda desligado. É deliberado: se o produto não estiver certo sem
+o §7.4 exige, com o dinheiro ainda desligado. Ã‰ deliberado: se o produto não estiver certo sem
 dinheiro, ele não fica certo com dinheiro.
 
 **Arquivos:**
@@ -1227,16 +1227,16 @@ grant execute on function public.sync_paid_reach(uuid) to service_role;
 
   `supabase/tests/provider-paid-reach.sql`:
 
-  - assinatura `active` → o membro da vila B **passa** a ver a ficha do prestador da vila A
-  - assinatura `past_due` com `current_period_end` de ontem → **ainda vê** (a tolerância de
+  - assinatura `active` â†’ o membro da vila B **passa** a ver a ficha do prestador da vila A
+  - assinatura `past_due` com `current_period_end` de ontem â†’ **ainda vê** (a tolerância de
     7 dias da decisão 3 do ADR)
-  - assinatura `past_due` com `current_period_end` de dez dias atrás → **deixa de ver**
-  - assinatura cancelada → o alcance **grátis na vila própria continua intacto** (D28: a ficha
+  - assinatura `past_due` com `current_period_end` de dez dias atrás â†’ **deixa de ver**
+  - assinatura cancelada â†’ o alcance **grátis na vila própria continua intacto** (D28: a ficha
     na própria vila é grátis, sempre, completa — cancelar assinatura não pode enterrar ninguém,
     que é o proibido nº 2 do §7.3)
   - a ordenação da busca continua ignorando `source` (repita a asserção da Task 5 aqui, com
     assinatura ativa — é o mesmo invariante em outro estado do mundo)
-  - `authenticated` chamando `sync_paid_reach` diretamente → **negado**
+  - `authenticated` chamando `sync_paid_reach` diretamente â†’ **negado**
 
 - [ ] **Step 5: gate e commit**
 
@@ -1286,11 +1286,11 @@ opaca e reage a webhook. Nada mais.
   `tests/unit/billing/asaas-webhook.test.ts`. Como no Portal, **nenhuma chamada real** e
   nenhum dado real: fixtures JSON com identificadores fictícios.
 
-  - assinatura inválida → 401, e **nada** muda no banco
-  - evento de pagamento confirmado → `status = 'active'` e `sync_paid_reach` chamado
-  - o **mesmo** evento entregue duas vezes → segundo é no-op
-  - evento de atraso → `past_due`
-  - corpo malformado → 400, sem exceção vazando para o log
+  - assinatura inválida â†’ 401, e **nada** muda no banco
+  - evento de pagamento confirmado â†’ `status = 'active'` e `sync_paid_reach` chamado
+  - o **mesmo** evento entregue duas vezes â†’ segundo é no-op
+  - evento de atraso â†’ `past_due`
+  - corpo malformado â†’ 400, sem exceção vazando para o log
 
 - [ ] **Step 4: gate e commit**
 
@@ -1306,7 +1306,7 @@ git commit -m "feat(billing): webhook Asaas com assinatura, idempotencia e sincr
 
 ## Task 9: fechamento da onda
 
-- [ ] **Step 1: os E2E — escritos, commitados, possivelmente não rodados**
+- [x] **Step 1: os E2E — escritos, commitados, possivelmente não rodados** — provider-vitrine.spec.ts com os três ciclos; prestador semeado no seed (prestador-seed@/Climatiza Manaus); vila-home ganhou teto de cold start
 
   Especificações novas em `tests/e2e/`: o membro acha um prestador pela busca da cidade e abre
   a ficha; o prestador entra pelo convite e publica um item de catálogo; o membro de outra vila
@@ -1336,9 +1336,9 @@ node scripts/visual/loop.mjs
   Depois da captura, **antes de qualquer `test:db`**: `db:reset` limpo. A captura insere o
   perfil fantasma "Visual Capture" e seis asserts de pgTAP quebram parecendo regressão real.
 
-- [ ] **Step 3: reconciliar o `PRODUCT_STATUS.md`**
+- [x] **Step 3: reconciliar o `PRODUCT_STATUS.md`** — §7 cinco linhas e §8 conversa reconciliadas em 2026-08-25
 
-  As cinco linhas do §7 e a linha "Conversa membro ↔ prestador" do §8. Uma linha só sai quando
+  As cinco linhas do §7 e a linha "Conversa membro â†” prestador" do §8. Uma linha só sai quando
   o ciclo do usuário fecha — entrada, ação, feedback, acompanhamento e o sad path principal.
   Capacidade no banco não fecha linha. Troque `[A]` por `[V]` no que você reconferiu.
 

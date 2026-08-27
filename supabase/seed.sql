@@ -795,6 +795,224 @@ select
 from generate_series(20, 24) as i
 on conflict (community_id, user_id) do nothing;
 
+-- ═══ Aprovações extras na Ajuricaba e a vila do Rio (reconciliação E2E) ═══
+-- Duas premissas de spec que o seed não provia, achadas reconciliando o lote
+-- funcional de 2026-08-25:
+--
+-- * synthetic-people-interaction.spec.ts precisa de três contas com feed de
+--   vila real (autor, comentarista e segunda reação). Sem aprovação na vila,
+--   essas contas caem na CityReference (D48), que não lista posts — o post
+--   nunca renderiza e o cenário morre no primeiro passo.
+-- * empty-locality.spec.ts espera que um membro COM comunidade aprovada numa
+--   localidade abaixo do limiar §3.4 veja "Você é dos primeiros aqui." no
+--   FEED da vila. O Rio tinha membros mas nenhuma vila: o /community de
+--   membro-vazia@ renderizava CityReference e o estado vazio do feed nunca
+--   aparecia.
+insert into public.community_memberships (community_id, user_id, role, status, joined_at)
+values
+  (
+    '71000000-0000-4000-8000-000000000001',
+    ('30000000-0000-4000-8000-' || lpad(to_hex(1), 12, '0'))::uuid,
+    'member',
+    'approved',
+    now() - interval '15 days'
+  ),
+  (
+    '71000000-0000-4000-8000-000000000001',
+    ('30000000-0000-4000-8000-' || lpad(to_hex(2), 12, '0'))::uuid,
+    'member',
+    'approved',
+    now() - interval '15 days'
+  ),
+  (
+    '71000000-0000-4000-8000-000000000001',
+    ('30000000-0000-4000-8000-' || lpad(to_hex(3), 12, '0'))::uuid,
+    'member',
+    'approved',
+    now() - interval '15 days'
+  )
+on conflict (community_id, user_id) do nothing;
+
+-- Owner dedicada do Rio, mesmo padrão de dono-vila@ (próximo id livre da faixa).
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  email_change_token_current,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-000000000009',
+    'authenticated',
+    'authenticated',
+    'dono-vila-rio@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '40 days',
+    now()
+  )
+on conflict (id) do nothing;
+
+insert into private.verification_outcomes (user_id, status, eligibility_class, checked_at)
+values
+  ('20000000-0000-4000-8000-000000000009', 'verified', 'active_federal_military', now() - interval '40 days')
+on conflict (user_id) do nothing;
+
+-- O id do Rio nasce de gen_random_uuid() a cada reset; resolve sempre pelo
+-- ibge_code do catálogo, mesma regra das memberships do Rio lá em cima.
+insert into public.locality_memberships (user_id, locality_id, joined_at)
+select '20000000-0000-4000-8000-000000000009', id, now() - interval '40 days'
+from public.localities
+where ibge_code = '3304557'
+on conflict (user_id, locality_id) do nothing;
+
+insert into public.profiles (user_id, display_name, visibility, consent_version, consented_at)
+values
+  (
+    '20000000-0000-4000-8000-000000000009',
+    'Dona da Vila Rio',
+    'locality_members',
+    1,
+    now() - interval '40 days'
+  )
+on conflict (user_id) do nothing;
+
+insert into public.communities (id, locality_id, name, description, created_by, owner_user_id, created_at)
+select
+  '71000000-0000-4000-8000-000000000002',
+  id,
+  'Vila Petrópolis',
+  'A vila do bairro Petrópolis, para quem mora ou já morou por perto.',
+  '20000000-0000-4000-8000-000000000009',
+  '20000000-0000-4000-8000-000000000009',
+  now() - interval '40 days'
+from public.localities
+where ibge_code = '3304557'
+on conflict (id) do nothing;
+
+insert into public.community_memberships (community_id, user_id, role, status, joined_at)
+values
+  (
+    '71000000-0000-4000-8000-000000000002',
+    '20000000-0000-4000-8000-000000000009',
+    'owner',
+    'approved',
+    now() - interval '40 days'
+  ),
+  (
+    '71000000-0000-4000-8000-000000000002',
+    '20000000-0000-4000-8000-000000000005',  -- membro-vazia@
+    'member',
+    'approved',
+    now() - interval '15 days'
+  )
+on conflict (community_id, user_id) do nothing;
+
+-- ═══ Prestador semeado para os E2E da vitrine (onda G Task 9) ═══
+-- Conta dedicada no mesmo padrão de credenciais públicas de descarte.
+-- D37 na prática: SEM locality_memberships e SEM linha em profiles — o
+-- prestador é alcançado por provider_accounts/provider_reach, jamais pelo
+-- diretório de membros. Ficha com um item de catálogo para a busca da
+-- localidade ter o que encontrar; nome escolhido para casar com a busca
+-- parcial "climatiza" usada pelos specs.
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  confirmation_token,
+  recovery_token,
+  email_change_token_new,
+  email_change,
+  email_change_token_current,
+  phone_change,
+  phone_change_token,
+  reauthentication_token,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '20000000-0000-4000-8000-00000000000a',
+    'authenticated',
+    'authenticated',
+    'prestador-seed@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '30 days',
+    now()
+  )
+on conflict (id) do nothing;
+
+insert into public.provider_accounts (
+  auth_user_id, invited_by, community_id, locality_id
+)
+values (
+  '20000000-0000-4000-8000-00000000000a',
+  '20000000-0000-4000-8000-000000000008',  -- dono-vila@ atestou
+  '71000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001'
+);
+
+insert into public.provider_profiles (
+  id, owner_user_id, display_name, category, bio
+)
+values (
+  '30000000-0000-4000-8000-000000000010',
+  '20000000-0000-4000-8000-00000000000a',
+  'Climatiza Manaus',
+  'assistencia_tecnica',
+  'Manutenção e instalação de ar-condicionado'
+)
+on conflict (id) do nothing;
+
+insert into public.provider_catalog_items (
+  provider_id, title, description, price_cents, position
+)
+values (
+  '30000000-0000-4000-8000-000000000010',
+  'Limpeza completa',
+  'Higienização da evaporadora',
+  15000,
+  0
+);
+
+insert into public.provider_reach (provider_id, scope_type, scope_id, source)
+values (
+  '30000000-0000-4000-8000-000000000010',
+  'community',
+  '71000000-0000-4000-8000-000000000001',
+  'free'
+);
+
 -- Post de alcance municipal (community_id IS NULL), para
 -- vila-home.spec.ts: aparece no feed de qualquer vila, inclusive a Vila
 -- Ajuricaba.

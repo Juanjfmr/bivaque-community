@@ -201,7 +201,7 @@ O **motivo da denuncia** (H-Task 2, `bd661e3`) e redigido no cliente por `scrubR
 - [ ] A triagem mostra conteudo (trecho de 240 chars), autor (display_name), idade relativa com destaque SLA48h, e quantas denuncias abertas o mesmo alvo ja tem — o sinal mais barato de campanha coordenada (H-Task 4, `94aa2b5`).
 - [ ] Item com mais de 48h sem resolucao exige triagem imediata (ver §9 diario).
 - [ ] Classificar: conteudo proibido (discurso de odio, assedio, exposicao de dados privados) ou falsa denuncia.
-- [ ] **Ocultar** (acao `hide`): marca `is_deleted = true` no alvo via `resolve_report`. A UI some para todos. Cobre **6 alvos** agora — posts, comments, groups, dm_messages, recommendation_requests, recommendation_replies. `recommendation_profiles` (vitrine) entra quando a onda G aterrissar.
+- [ ] **Ocultar** (acao `hide`): marca `is_deleted = true` no alvo via `resolve_report`. A UI some para todos. Cobre **7 alvos** — posts, comments, groups, dm_messages, recommendation_requests, recommendation_replies e, desde a onda G (`20260825185327`), `provider_profile` (a ficha da vitrine sai do ar para todos os escopos).
 - [ ] **Dispensar** (acao `dismiss`): marca `status = 'resolved'` sem ocultar. Para falsa denuncia.
 - [ ] Ambos os caminhos emem notificacao `report_resolved` para o denunciante **sem revelar a acao tomada** — o sistema registra a estrutura (`recipient_user_id`, `actor_user_id`, `type`, `target_id`), nunca o conteudo.
 - [ ] **Diagnostico SQL** (quando o painel nao bastar): preservado como passo de inspecao, NAO como primeiro passo. A coluna do autor e `user_id` (nao `author_id`), e `is_deleted` indica se o conteudo ja foi ocultado por moderacao:
@@ -224,6 +224,12 @@ on conflict (auth_user_id) do nothing;
 ```
 
 **Quem autoriza:** decisao do dono do produto. O runbook nao define; documente a politica interna (ex.: "apenas o admin principal concede; revogar com `delete from public.operators where auth_user_id = '<uuid>'`"). O acesso do painel e verificado pelo RPC `public.is_current_user_operator` (`apps/web/app/api/admin/route.ts` e migrations `20260806040949_operator_authorization.sql`, `20260806095803_fix_operator_repromotion.sql`, `20260806100231_restrict_operator_roster.sql`, `20260806111744_is_current_user_operator.sql`).
+
+### Suspensao e recurso (estado atual)
+
+O desenho aprovado esta no ADR `suspensao-de-conta`: escrita do suspenso bloqueada por `private.is_suspended` em toda policy, tela propria em `/conta/suspensa`, recurso pelo canal de suporte com decisao registrada. **A implementacao nao comecou** — espera a assinatura do codigo de conduta (decisao humana pendente), e enquanto ela nao existir este runbook NAO descreve passos de suspensao porque executar passos de feature inexistente sob pressao e pior que nao ter secao.
+
+**O que o operador faz hoje num incidente grave:** ocultar o conteudo (`hide`) e/ou revogar o acesso envolvido pelos mecanismos que EXISTEM — revogacao de ficha de prestador e ato do dono da comunidade (onda G Task 6), remocao de moderador/pedido no console da vila, e escalacao para o dono (secao 9). A suspensao de conta entra neste runbook somente quando o codigo entrar no repositorio.
 
 ### Escalacao
 

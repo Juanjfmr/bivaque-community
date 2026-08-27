@@ -170,7 +170,8 @@ export function ChatThread({
       // que e a tabela que o painel do operador le. `dm_reports` era uma fila
       // separada, sem `status`, que nenhum painel consultava — assedio em canal
       // privado gerava registro e nada acontecia. `report_target_type` ja tinha
-      // 'message' desde 20260802001600; nunca foi usado.
+      // 'message' desde 20260802001600; nunca foi usado. A tabela antiga foi
+      // removida por 20260825175718 (copias migraram para `reports`).
       //
       // Ganha de graca o que a tabela nova tem e a antiga nao tinha: status,
       // bloqueio de auto-denuncia (20260821000032), bloqueio de duplicata pelo
