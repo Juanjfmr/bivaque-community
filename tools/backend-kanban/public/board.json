@@ -1190,7 +1190,9 @@
         "2026-08-24 (commit 364619e): :68 + :92 fechados por fixes de runtime — middleware preserva ?next=, InviteAcceptPage pré-checa is_verified_holder, batch-approval beforeEach idempotente via service_role upsert. Gate verde (lint + typecheck + test:unit/privacy/scope + secrets)",
         "2026-08-24 (commit d1fb2ab): event-invites :64 fechado — spec realinhado de i=1 (completed) para i=5 (upcoming, organizer membro-6); 6/6 (2 testes × 3 viewports). policy UI inalterada",
         "Após 5 correções: ~25 falhas restantes em 8 testes distintos (esperado pós board update). Reverificar em suíte serial",
-        "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente."
+        "2026-08-26 (execução local): db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente.",
+        "2026-08-26 (CI, run 33036419934, job 98399974378, commit 3d1f087): 588 testes; 10 failed, 4 skipped e 574 passed (9,4m). Falhas: empty-locality:129, group-admin-cycle:103 e reports-member-flow:98 nas três viewports; synthetic-people-interaction:167 apenas em desktop-1440.",
+        "A divergência entre as medições não está explicada; não escolher um baseline até esclarecer o efeito de paralelismo, ordem de execução ou estado do banco entre runs."
       ],
       "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
       "links": [
