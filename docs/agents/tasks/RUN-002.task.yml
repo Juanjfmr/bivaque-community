@@ -25,6 +25,12 @@ baseline:
     getByRole('button', { name: /Cancelar pedido/i }), "element(s) not found", na linha 122.
     É o único teste vermelho da suíte. No head anterior 3d1f087 eram 10 falhas em 4 testes;
     a onda G fechou os outros três.
+    SEGUNDA MEDIÇÃO, e ela muda a natureza do achado: run 33116131360, job 98671125223,
+    head 3cb3fb1, mesmo dia — 1 failed, 4 skipped, 592 passed de 597, e a única falha foi
+    em mobile-375. A diferença entre 5d87985 e 3cb3fb1 são dois arquivos YAML de contrato,
+    nenhuma linha de código. Logo o teste é INTERMITENTE: três viewports numa execução,
+    uma na seguinte, sem mudança que explique. Quem tratar isto como falha determinística
+    vai "consertar", ver verde uma vez e fechar em cima de sorte.
     O ponto que exige diagnóstico e não repetição: a migration 20260825143505 descreve
     exatamente este sintoma no próprio cabeçalho e afirma tê-lo corrigido com uma regra de
     auto-visibilidade. Ela está aplicada. O ciclo continua sem fechar.
@@ -43,12 +49,15 @@ acceptance:
   - o solicitante vê o próprio pedido pendente ao carregar a página, sem depender de clicar antes
   - o caminho triste continua valendo — quem não pediu nada segue vendo o botão de pedir
   - o diagnóstico nomeia por que a auto-visibilidade de 20260825143505 não fechou o ciclo
+  - o diagnóstico explica a intermitência — por que três viewports num head e uma no seguinte, sem mudança de código
+  - o teste passa em cinco repetições seguidas nas três viewports, não numa passagem isolada
   - nenhuma asserção do spec foi enfraquecida para o teste passar
   - a suíte E2E completa fecha com zero falhas
 
 proof:
   - npx pnpm@11.18.0 db:reset
   - npx pnpm@11.18.0 exec playwright test tests/e2e/group-admin-cycle.spec.ts
+  - npx pnpm@11.18.0 exec playwright test tests/e2e/group-admin-cycle.spec.ts --repeat-each=5
   - npx pnpm@11.18.0 test:e2e
   - npx pnpm@11.18.0 gate
 
