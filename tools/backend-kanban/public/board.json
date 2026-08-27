@@ -1189,15 +1189,16 @@
         "6 agentes explore concluídos: 12 testes distintos classificados em temas 3 e 4",
         "2026-08-24 (commit 364619e): :68 + :92 fechados por fixes de runtime — middleware preserva ?next=, InviteAcceptPage pré-checa is_verified_holder, batch-approval beforeEach idempotente via service_role upsert. Gate verde (lint + typecheck + test:unit/privacy/scope + secrets)",
         "2026-08-24 (commit d1fb2ab): event-invites :64 fechado — spec realinhado de i=1 (completed) para i=5 (upcoming, organizer membro-6); 6/6 (2 testes × 3 viewports). policy UI inalterada",
-        "Após 5 correções: ~25 falhas restantes em 8 testes distintos (esperado pós board update). Reverificar em suíte serial"
+        "Após 5 correções: ~25 falhas restantes em 8 testes distintos (esperado pós board update). Reverificar em suíte serial",
+        "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente."
       ],
       "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
       "links": [
         "E2E status | ../../docs/PRODUCT_STATUS.md",
         "Seed UUIDs | ../../supabase/seed.sql"
       ],
-      "updatedAt": "2026-08-24",
-      "sourceRevision": "015e4ba",
+      "updatedAt": "2026-08-26",
+      "sourceRevision": "4e0e48b",
       "dependencies": []
     }
   ]
