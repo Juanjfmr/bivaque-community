@@ -1370,7 +1370,10 @@ export type Database = {
           is_holiday: boolean
         }[]
       }
-      complete_event: { Args: { p_event_id: string }; Returns: undefined }
+      complete_event: {
+        Args: { p_caller_user_id?: string; p_event_id: string }
+        Returns: undefined
+      }
       consume_verification_attempt: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -1430,7 +1433,12 @@ export type Database = {
         Returns: string
       }
       decide_verification_document: {
-        Args: { p_decision: string; p_document_id: string; p_reason: string }
+        Args: {
+          p_decision: string
+          p_document_id: string
+          p_operator_user_id: string
+          p_reason: string
+        }
         Returns: undefined
       }
       declare_locality_transfer: {
