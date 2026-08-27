@@ -1,5 +1,6 @@
 ﻿import { Button, Input, TextArea } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
+import type { Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import {
@@ -72,7 +73,10 @@ export default async function PrestadorCatalogoPage() {
           Crie sua ficha primeiro — o catálogo se prende a ela.
         </p>
         <div className="mt-3 text-sm">
-          <Link href="/prestador/ficha" className="min-h-11 px-1 leading-[2.75rem] underline">
+          <Link
+            href={"/prestador/ficha" as Route}
+            className="min-h-11 px-1 leading-[2.75rem] underline"
+          >
             Criar minha ficha
           </Link>
         </div>
@@ -115,11 +119,7 @@ export default async function PrestadorCatalogoPage() {
         className="rounded-lg border border-border bg-surface p-5"
       >
         <h1 className="text-lg font-medium">Publicar item</h1>
-        <form
-          action={saveCatalogItemAction}
-          aria-label="Publicar item"
-          className="mt-4 space-y-4"
-        >
+        <form action={saveCatalogItemAction} aria-label="Publicar item" className="mt-4 space-y-4">
           <input type="hidden" name="providerId" value={profileId} />
           <div>
             <label htmlFor="novo-titulo" className="text-sm font-medium">
@@ -288,7 +288,7 @@ export default async function PrestadorCatalogoPage() {
               name="file"
               accept="image/jpeg,image/png,image/webp"
               required
-              className="mt-1 block w-full text-sm"
+              className="mt-1 block min-h-11 w-full cursor-pointer text-sm"
             />
           </div>
           <TextArea

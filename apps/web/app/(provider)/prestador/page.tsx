@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr"
+import type { Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
@@ -125,18 +126,21 @@ export default async function PrestadorHomePage() {
               catálogo · {photoCount ?? 0} {photoCount === 1 ? "foto" : "fotos"} no portfólio
             </p>
             <div className="mt-3 flex flex-wrap gap-3 text-sm">
-              <Link href="/prestador/ficha" className="min-h-11 px-1 leading-[2.75rem] underline">
+              <Link
+                href={"/prestador/ficha" as Route}
+                className="min-h-11 px-1 leading-[2.75rem] underline"
+              >
                 Editar ficha
               </Link>
               <Link
-                href="/prestador/catalogo"
+                href={"/prestador/catalogo" as Route}
                 className="min-h-11 px-1 leading-[2.75rem] underline"
               >
                 Catálogo e portfólio
               </Link>
               {profile.id ? (
                 <Link
-                  href={`/prestadores/${profile.id}`}
+                  href={`/prestadores/${profile.id}` as Route}
                   className="min-h-11 px-1 leading-[2.75rem] underline"
                 >
                   Ver como o membro vê
@@ -151,7 +155,10 @@ export default async function PrestadorHomePage() {
               descrição curta do que você faz.
             </p>
             <div className="mt-3 text-sm">
-              <Link href="/prestador/ficha" className="min-h-11 px-1 leading-[2.75rem] underline">
+              <Link
+                href={"/prestador/ficha" as Route}
+                className="min-h-11 px-1 leading-[2.75rem] underline"
+              >
                 Criar minha ficha
               </Link>
             </div>

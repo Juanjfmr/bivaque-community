@@ -48,10 +48,26 @@ const ROUTES = [
   // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
   // pointed here since E10 (406d4f6), but the route did not exist until T4.
   { path: "/localidade", name: "localidade", auth: true },
-  // Onda T Task 5: the founder console's arrivals volume. Renders empty for
-  // the default seed account (no operator session captured), which is the
-  // honest empty state, not a missing screen.
+  // Onda T Task 5: o console do fundador. Renders empty state honesto para a
+  // conta default do seed (sem operador capturado), que é a tela vazia com
+  // identificação, não uma tela ausente.
   { path: "/arrivals", name: "admin-arrivals", auth: true },
+  // Onda G: a vitrine do prestador. Com a conta default (membro sem vila) a
+  // ficha pública renderiza o 404 honesto e o painel o estado sem-permissão —
+  // telas do CRUD real usam runs dedicadas com prestador-seed@ (ver VISUAL_AUDIT G).
+  { path: "/prestador", name: "provider-panel", auth: true },
+  { path: "/prestador/ficha", name: "provider-ficha", auth: true },
+  { path: "/prestador/catalogo", name: "provider-catalogo", auth: true },
+  {
+    path: "/prestadores/30000000-0000-4000-8000-000000000010",
+    name: "provider-public-ficha",
+    auth: true,
+  },
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador",
+    name: "provider-indicar",
+    auth: true,
+  },
   { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },
   { path: "/recommendations", name: "recommendations", auth: true },
@@ -208,12 +224,21 @@ function auditPage() {
     }
 
     // 4. accessible name
-    const name = (
-      element.getAttribute("aria-label") ??
-      element.textContent ??
-      element.getAttribute("title") ??
-      ""
-    ).trim()
+    // Resolve `<label for=id>` associations: a label-for is a valid source of
+    // an accessible name (ARIA), and the repo labels inputs through it (the
+    // HeroUI lesson — its Input does not forward aria-label). Without this
+    // resolution every properly-labeled input is a false positive every wave.
+    let name = (element.getAttribute("aria-label") ?? "").trim()
+    if (name.length === 0 && element.id) {
+      const labeled = document.querySelector(`label[for="${CSS.escape(element.id)}"]`)
+      name = (labeled?.textContent ?? "").trim()
+    }
+    if (name.length === 0) {
+      name = (element.textContent ?? "").trim()
+    }
+    if (name.length === 0) {
+      name = (element.getAttribute("title") ?? "").trim()
+    }
     if (name.length === 0) {
       add("missing-accessible-name", "high", describe(element), "no label, text, or title")
     }

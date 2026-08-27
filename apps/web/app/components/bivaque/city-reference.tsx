@@ -23,6 +23,7 @@ import {
   type ProviderCategory,
 } from "@bivaque/domain"
 import { Button } from "@heroui/react"
+import type { Route } from "next"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 import { type LocalityCurrent, useLocalityContext } from "../../../lib/locality-context"
@@ -302,7 +303,7 @@ export function CityReference({
                 {providers.map((provider) => (
                   <li key={provider.id}>
                     <Link
-                      href={`/prestadores/${provider.id}`}
+                      href={`/prestadores/${provider.id}` as Route}
                       className="flex min-h-11 flex-col justify-center rounded-md px-1 transition-colors hover:underline focus:outline-none focus-visible:underline"
                     >
                       <span className="text-sm font-medium">{provider.display_name}</span>

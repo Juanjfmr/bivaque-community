@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr"
+import type { Route } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
@@ -63,7 +64,7 @@ export default async function ProviderLayout({ children }: Readonly<{ children: 
           </li>
           <li>
             <Link
-              href="/prestador/ficha"
+              href={"/prestador/ficha" as Route}
               className="inline-flex min-h-11 items-center rounded-md px-3"
             >
               Minha ficha
@@ -71,7 +72,7 @@ export default async function ProviderLayout({ children }: Readonly<{ children: 
           </li>
           <li>
             <Link
-              href="/prestador/catalogo"
+              href={"/prestador/catalogo" as Route}
               className="inline-flex min-h-11 items-center rounded-md px-3"
             >
               Catálogo e portfólio
