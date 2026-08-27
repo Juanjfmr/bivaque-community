@@ -57,7 +57,7 @@ jobs:
       # Next inlines NEXT_PUBLIC_* at build time, so the stack has to be up and
       # the env written before `pnpm build` runs — not after it.
       #
-      # The two BIVAQUE_VISUAL_* values are the development seed's account
+      # The three BIVAQUE_* values below are development seed credentials
       # (supabase/seed.sql), public and disposable by design. They are supplied
       # here rather than defaulted inside a spec so that the specs keep the
       # contract this repo enforces: read the credential from the environment,
@@ -73,6 +73,7 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
             echo "BIVAQUE_VISUAL_EMAIL=visual@bivaque.example.invalid"
             echo "BIVAQUE_VISUAL_PASSWORD=bivaque-e2e-local"
+            echo "BIVAQUE_E2E_OPERATOR_PASSWORD=bivaque-e2e-local"
           } > apps/web/.env.local
 
       - name: Build web app
