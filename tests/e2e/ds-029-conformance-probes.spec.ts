@@ -126,8 +126,13 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
     await page.keyboard.press("Escape")
     await expect(dialog).toBeHidden({ timeout: 5000 })
 
-    const focusReturned = await trigger.evaluate((el) => document.activeElement === el)
-    expect(focusReturned).toBe(true)
+    // A restauração de foco pelo overlay do HeroUI é assíncrona: `toBeHidden()`
+    // resolver não garante que o foco já voltou ao gatilho. Um retrato único de
+    // document.activeElement amostra um instante arbitrário e falha em corrida —
+    // foi o que quebrou a CI no head 51fd42a, num commit que só mexeu em markdown.
+    // `toBeFocused()` repete até o timeout, então continua vermelho se o foco
+    // realmente não voltar: tolera a espera, não esconde o defeito.
+    await expect(trigger).toBeFocused({ timeout: 5000 })
   })
 })
 
