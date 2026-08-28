@@ -1215,7 +1215,7 @@
         "✅ event-invites :64 — spec realinhado para evento upcoming do seed (commit d1fb2ab — verificado 6/6 = 2 testes × 3 viewports)",
         "admissions :157/:174 — RPCs list_verification_queue/documents: grant EXECUTE só service_role; operador bearer falha. DECISÃO R3: conceder a operator/authenticated OU mudar spec para fluxo via UI",
         "community-invitations :72 — sem mismatch estático; rotas/seed/redirect presentes. INVESTIGAR runtime (possível drift de seed/reset)",
-        "group-admin-cycle :103 — RLS group_memberships_select esconde a própria pendência do requerente em grupo privado → 'Cancelar pedido' não aparece. BUG RLS (R3). DECISÃO/correção de política",
+        "group-admin-cycle :103 — DIAGNÓSTICO CORRIGIDO em 2026-08-28: group_memberships_select NÃO é a culpada. A migration 20260825143505 já lhe deu self-visibility (user_id = auth.uid() em qualquer status). Suspeitos restantes: a pré-condição private.is_locality_member(g.locality_id) do group_memberships_insert_self, ou a action de pedido no app. Confirmar com stack local antes de mexer em política",
         "reports-member-flow :98 — ReportButton não envia reporter_user_id (obrigatório + policy reporter_user_id=auth.uid()); visual@ sem membership de comunidade → sem feed. BUG app (R3). DECISÃO/correção",
         "synthetic-people :167 — sem mismatch de label/trigger; suspeita notification_preferences.comments=false suprime notify_comment OU reaction count≠2. DECISÃO: default de preferências de notificação",
         "empty-locality :129 (×4) — membro-vazia@ existe, mas seed não tem 2ª localidade de baixa densidade (Task 10 Step 3). BLOQUEADO em seed",
@@ -1228,15 +1228,18 @@
         "2026-08-24 (commit 364619e): :68 + :92 fechados por fixes de runtime — middleware preserva ?next=, InviteAcceptPage pré-checa is_verified_holder, batch-approval beforeEach idempotente via service_role upsert. Gate verde (lint + typecheck + test:unit/privacy/scope + secrets)",
         "2026-08-24 (commit d1fb2ab): event-invites :64 fechado — spec realinhado de i=1 (completed) para i=5 (upcoming, organizer membro-6); 6/6 (2 testes × 3 viewports). policy UI inalterada",
         "Após 5 correções: ~25 falhas restantes em 8 testes distintos (esperado pós board update). Reverificar em suíte serial",
-        "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente."
+        "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente.",
+        "2026-08-28, PR #35 head f0f2e70: group-admin-cycle:103 falhou nos TRÊS viewports (590 passed / 3 failed). Deixou de ser intermitente — nas duas execuções anteriores falhava só no primeiro viewport e passava nos outros dois, o que era estado vazando entre projetos do Playwright dentro do mesmo banco, não o teste passando de verdade",
+        "Fixture verificado e íntegro: o grupo 60000000-...-006 existe no seed (índice 6, 'Mães da Cidade'), é visibility='private' e locality Manaus (seed.sql:641,657). A falha não é fixture ausente",
+        "group_memberships_select pós-20260825143505 concede self-visibility incondicional por status — logo a leitura da própria pendência não é o bloqueio. Restam o INSERT (is_locality_member) e o caminho de app"
       ],
       "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
       "links": [
         "E2E status | ../../docs/PRODUCT_STATUS.md",
         "Seed UUIDs | ../../supabase/seed.sql"
       ],
-      "updatedAt": "2026-08-26",
-      "sourceRevision": "4e0e48b",
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "f0f2e70",
       "dependencies": []
     },
     {
