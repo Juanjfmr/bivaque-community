@@ -337,8 +337,8 @@
         "DECISÃO DE ESCOPO PENDENTE: as dependências declaradas incluem MVP-06-DISCOVERY-INDEX, MVP-07-KNOWLEDGE e MVP-08-INTELLIGENCE, que são camada de produto (discovery, guia, evals), não endurecimento de backend. Se o freeze é sobre 'contrato consumível por outro frontend', essas três provavelmente não pertencem à dependência — mas remover dependência de marco é decisão do dono, não do agente"
       ],
       "proof": [
-        "Dependências: 4 de 9 fechadas (MVP-01-ADMISSION, MVP-02-AUTHZ, MVP-03-COMMUNITY, G-TASK-1). Abertas: MVP-05 (now), MVP-06, MVP-07, MVP-08, MVP-09 (next)",
-        "2026-08-28: onda G reconciliada — G-TASK-6 fechado com pgTAP verde na CI; G-TASK-2, 3, 4 e 5 com backend provado e apenas a auditoria visual do Task 9 Step 2 pendente. A auditoria é gate único para todo card da onda que entrega tela",
+        "Dependências: 4 de 11 fechadas (MVP-01-ADMISSION, MVP-02-AUTHZ, MVP-03-COMMUNITY, G-TASK-1). Abertas, 7: MVP-05-TEST-BASELINE e MVP-00-E2E-FUNCTIONAL (now), MVP-06-DISCOVERY-INDEX, MVP-07-KNOWLEDGE, MVP-08-INTELLIGENCE, MVP-09-OPERABILITY e MVP-RETENTION-PURGE (next)",
+        "2026-08-28: onda G reconciliada — os cinco cards saem de proof vazia para backend provado por 94 asserts de pgTAP verdes na CI. Nenhum fecha ainda: G-TASK-2, 3, 4 e 5 esperam a auditoria visual do Task 9 Step 2, e G-TASK-6 espera a aresta que declara para G-TASK-3. Uma auditoria fecha os cinco",
         "CI verde em 7a127aa cobre db:reset --no-seed, test:db, db:lint, build, types drift e test:e2e — o que já satisfaz dois itens deste checklist",
         "Nenhum BACKEND_COMPLETION.md existe no repositório, e não há tag de freeze"
       ],
@@ -1234,12 +1234,13 @@
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
-      "status": "done",
+      "status": "next",
       "description": "Correção dos três defeitos de DM (ordem do par no servidor, bloqueio bidirecional, contexto conferido) mais a extensão de prestador. Só o membro inicia conversa.",
       "checklist": [
         "open_conversation ordena par no servidor",
         "dm_blocked_either_way impede bloqueio contorn�vel",
-        "valida contexto compartilhado"
+        "valida contexto compartilhado",
+        "PENDENTE: este card não toca tela e não entra na auditoria do Task 9 Step 2. O que o segura é a aresta declarada para G-TASK-3, que o modelo do board só considera satisfeita quando o dependente está `done` (selectNextCard exige status === 'done'). Alternativa que o dono pode preferir: remover a aresta, já que a extensão de DM precisa da tabela provider_profiles — artefato de backend do G-TASK-3, implementado e coberto por pgTAP — e não da tela que falta auditar. Remover aresta de dependência é decisão de modelagem, não do agente"
       ],
       "proof": [
         "supabase/migrations/20260825205847_dm_provider_context.sql e 20260825212538_dm_provider_context_rpcs.sql — open_conversation ordena o par no servidor, dm_blocked_either_way, validação de contexto compartilhado",
@@ -1252,7 +1253,11 @@
       "updatedAt": "2026-08-28",
       "sourceRevision": "354f608",
       "dependencies": ["G-TASK-1", "G-TASK-3"],
-      "completedAt": "2026-08-28"
+      "drift": {
+        "documented": "Em 2026-08-28 eu marquei G-TASK-6 como done.",
+        "observed": "O card declara dependência de G-TASK-3, que está `next` com auditoria visual pendente. `selectNextCard` (board-lib.mjs:164-168) só considera uma dependência satisfeita quando ela está `done`, então um card done com dependência aberta contradiz o modelo. `validateBoard` não checa isso, então a CI seguia verde com o estado inconsistente. Achado por revisão no PR #37.",
+        "action": "Fechar G-TASK-3 pela auditoria visual — o que fecha este junto —, ou o dono decide remover a aresta por ela apontar para o backend do G-TASK-3, que já está provado."
+      }
     },
     {
       "id": "MVP-00-E2E-FUNCTIONAL",
