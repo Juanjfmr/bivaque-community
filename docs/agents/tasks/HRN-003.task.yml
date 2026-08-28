@@ -1,0 +1,93 @@
+# Jornada zero: antes de fechar qualquer jornada de usuário ou de admin com prova de
+# runtime, a régua precisa dar a mesma medida duas vezes. Hoje ela não dá — duas
+# execuções do mesmo código produzem listas de vermelhos diferentes. Este contrato
+# conserta a régua, não o produto. Cada defeito de produto que ele nomear vira
+# contrato próprio, com o risco da área dele.
+
+task_id: HRN-003
+
+objective: >
+  A suíte E2E passa a dar o mesmo veredito duas vezes seguidas no mesmo commit — a mesma
+  lista nominal de testes vermelhos, e não apenas a mesma contagem —, e cada vermelho
+  remanescente fica classificado como defeito de produto ou como defeito da própria régua.
+  Hoje o mesmo código produz listas diferentes a cada execução, e enquanto isso valer
+  nenhuma jornada pode ser fechada com evidência de runtime: não há como separar
+  regressão de ruído.
+
+authority:
+  - tools/backend-kanban/BOARD.md — card MVP-05-TEST-BASELINE, drift aberto
+  - tools/backend-kanban/public/board.json — card MVP-00-E2E-FUNCTIONAL, bloco proof de 2026-08-28
+  - docs/agents/tasks/RUN-002.task.yml — a série de quatro medições do mesmo teste
+  - AGENTS.md §Known traps — o perfil fantasma do .visual/
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    A instabilidade está medida em duas séries independentes, ambas sobre código de
+    produto idêntico.
+    SÉRIE 1, registrada no card MVP-05-TEST-BASELINE: duas execuções consecutivas da CI
+    no PR #35 falharam em UM teste cada, e em testes DIFERENTES — group-admin-cycle:103
+    (mobile-375) no head 8ded62c, ds-029-conformance-probes:115 (desktop-1440) no head
+    51fd42a. Entre os dois commits nenhuma linha de código mudou: o segundo é só markdown
+    e board.json.
+    SÉRIE 2, registrada em RUN-002: 5d87985 → 3 falhas, 3cb3fb1 → 1 falha, b54f2d1 → 0
+    falhas de 597, também sem mudança de código de produto entre os heads.
+    UMA CAUSA JÁ FOI ISOLADA e serve de padrão para a varredura: ds-029:130 tirava um
+    retrato único de document.activeElement logo após toBeHidden(), mas a restauração de
+    foco pelo overlay do HeroUI é assíncrona. Trocada por expect(trigger).toBeFocused({timeout}),
+    que repete até o teto e segue vermelha se o foco realmente não voltar. O checklist do
+    card aponta o mesmo padrão ainda presente em ds-029:110.
+    UM FATO ESTRUTURAL, registrado no proof do card MVP-00-E2E-FUNCTIONAL: os três projetos
+    de viewport dividem o MESMO banco, e no head f0f2e70 uma falha no primeiro cascateou
+    para os outros dois — três vermelhos que são um só defeito contado três vezes.
+    MEDIÇÃO PRÓPRIA no head 5329545, feita por leitura de arquivo e sem banco:
+    playwright.config.ts (46 linhas) não define `workers` nem `retries`, então os dois
+    caem no padrão do Playwright; `scripts.test:e2e` é exatamente "playwright test", sem
+    flag (package.json, string travada verbatim por tests/scope/local-command-surface.test.mjs:23);
+    e .github/workflows/pull-request-ci.yml:138 roda exatamente `pnpm test:e2e`. Ou seja:
+    o protocolo documentado no card é `--workers=1`, e nenhuma das duas portas de execução
+    passa esse flag. O número EFETIVO de workers nas execuções acima não foi medido — nem
+    o padrão do Playwright no runner da CI. Medir isso faz parte deste contrato, porque
+    execução paralela sobre um banco compartilhado explicaria as duas séries sem que exista
+    defeito nenhum nos testes que ficaram vermelhos.
+
+allowed_paths:
+  - tests/e2e/
+  - playwright.config.ts
+  - docs/agents/
+
+forbidden:
+  - adicionar `retries` à configuração, ou repetir teste vermelho até sair verde — repetição que esconde variação é o oposto do que este contrato produz
+  - marcar teste como skip ou fixme, aumentar timeout ou remover asserção para reduzir a contagem de vermelhos
+  - corrigir defeito de produto aqui — cada um vira contrato próprio, com o risco da sua área; group-admin-cycle:103 já é o RUN-002 e continua dele
+  - alterar migration aplicada, policy ou regra de RLS para fazer teste passar
+  - mudar o valor de `scripts.test:e2e` no package.json — a string é travada verbatim por tests/scope/local-command-surface.test.mjs:23; o comportamento serial, se for a correção, entra na configuração do Playwright
+  - remover ou renomear os três projetos de viewport — travados por tests/scope/local-command-surface.test.mjs:38
+  - rodar dev server ou captura visual entre db:reset e a suíte — é o perfil fantasma do .visual/, e ele produz vermelho com cara de regressão real
+
+acceptance:
+  - duas execuções seguidas da suíte no mesmo commit produzem a MESMA lista nominal de testes vermelhos — contagem igual com testes diferentes é falha deste contrato, não sucesso
+  - o relatório nomeia o número efetivo de workers da execução e diz se os três projetos de viewport dividem o mesmo banco, medido na execução e não inferido da configuração
+  - se dividem, o relatório mostra com evidência da execução se uma falha no primeiro projeto contamina os outros dois, e o que passou a impedir isso
+  - a varredura por asserção de retrato único está completa: cada ocorrência do padrão de ds-029:130 — uma leitura única de estado que o navegador ainda vai mudar — aparece no relatório como corrigida ou como examinada e descartada, com o motivo escrito
+  - para cada asserção trocada, o relatório mostra que a nova continua vermelha quando o comportamento realmente falha — asserção que repete e nunca reprova é asserção morta
+  - cada vermelho remanescente fica classificado como defeito de produto, com o contrato que o corrige nomeado, ou como defeito da régua, corrigido aqui — sem terceira categoria
+  - o protocolo de execução que produz o resultado reprodutível fica escrito onde quem executa a suíte encontra, em vez de viver na memória de uma sessão
+
+proof:
+  - npx pnpm@11.18.0 db:reset
+  - npx pnpm@11.18.0 test:e2e
+  - npx pnpm@11.18.0 db:reset && npx pnpm@11.18.0 test:e2e
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 gate
+
+risk: reprodutibilidade da suíte que mede todo o resto
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -196,19 +196,21 @@
         "Gerar e revisar database.generated.ts",
         "Eliminar migrations dependentes de estado histórico",
         "Separar lote E2E seed-driven e registrar execução",
-        "Varrer o E2E por asserção de retrato único onde cabe asserção que repete — o mesmo padrão de ds-029:130 aparece em ds-029:110 (containment de foco após abrir o diálogo)"
+        "Varrer o E2E por asserção de retrato único onde cabe asserção que repete — o mesmo padrão de ds-029:130 aparece em ds-029:110 (containment de foco após abrir o diálogo)",
+        "Medir workers efetivos e contaminação entre os três projetos de viewport antes de atribuir a variação a asserção frágil — contrato HRN-003"
       ],
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
         "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento",
         "2026-08-28, PR #35: duas execuções consecutivas da CI falharam em UM teste cada, e testes DIFERENTES — group-admin-cycle:103 (mobile-375) no head 8ded62c, ds-029-conformance-probes:115 (desktop-1440) no head 51fd42a. Entre os dois commits NENHUMA linha de código mudou: o segundo é só markdown e board.json. Suíte instável, independente do diff",
-        "Causa de ds-029:130 identificada e corrigida no PR #35: a asserção tirava um retrato único de document.activeElement logo após toBeHidden(), mas a restauração de foco pelo overlay do HeroUI é assíncrona. Trocada por expect(trigger).toBeFocused({timeout}), que repete — segue vermelha se o foco realmente não voltar"
+        "Causa de ds-029:130 identificada e corrigida no PR #35: a asserção tirava um retrato único de document.activeElement logo após toBeHidden(), mas a restauração de foco pelo overlay do HeroUI é assíncrona. Trocada por expect(trigger).toBeFocused({timeout}), que repete — segue vermelha se o foco realmente não voltar",
+        "2026-08-28, medição por leitura no head 5329545: playwright.config.ts não define workers nem retries, scripts.test:e2e é exatamente \"playwright test\" (travado verbatim por tests/scope/local-command-surface.test.mjs:23) e pull-request-ci.yml:138 roda esse script sem flag. O protocolo do card é --workers=1 e nenhuma porta de execução o passa — execução paralela sobre o banco compartilhado pelos três viewports é hipótese não descartada para a variação das duas séries. Medir os workers efetivos e a contaminação entre projetos é o contrato HRN-003."
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
       "links": ["Protocolo | ../../docs/superpowers/plans/README.md"],
       "updatedAt": "2026-08-28",
-      "sourceRevision": "51fd42a",
+      "sourceRevision": "5329545",
       "dependencies": [],
       "drift": {
         "documented": "O baseline de 2026-08-25 registra pgTAP 1052 asserts PASS e trata a suíte como reproduzível.",
