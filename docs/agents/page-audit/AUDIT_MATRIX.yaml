@@ -1,0 +1,63 @@
+version: 1
+baseline_page_map: 39457a00118009641027cb0d998bc252d3cab2d1
+authority:
+  design_contract: docs/agents/DESIGN_SPEC.md
+  visual_contract: docs/agents/VISUAL_GUIDE.md
+  phase6_review: docs/agents/design-audit/PHASE6_REVIEW.md
+  page_registry: docs/product-map/PAGE_REGISTRY.yaml
+status_values: [PASS-EVIDENCED, FAIL-EVIDENCED, FAIL-SOURCE, PARTIAL, NOT_OBSERVED, EXPERIMENT, N/A]
+verdict_values: [READY, CONDITIONAL, NOT_READY, NOT_AUDITED]
+dimensions:
+  - job_and_scope
+  - entry_exit_navigation
+  - state_model
+  - content_copy
+  - accessibility_semantics
+  - responsive_reflow
+  - visual_hierarchy_consistency
+  - trust_privacy
+  - interaction_feedback_recovery
+  - performance_resilience
+pages:
+  - { id: PUB-01, wave: A, name: Landing, route: /, verdict: NOT_AUDITED }
+  - { id: AUTH-01, wave: A, name: Login, route: /login, verdict: NOT_AUDITED }
+  - { id: AUTH-02, wave: A, name: Cadastro, route: /signup, verdict: NOT_AUDITED }
+  - { id: AUTH-03, wave: A, name: Erro de callback, route: /auth/callback-error, verdict: NOT_AUDITED }
+  - { id: AUTH-04, wave: A, name: Consentimento, route: /consent, verdict: NOT_AUDITED }
+  - { id: ONB-01, wave: A, name: Elegibilidade, route: /onboarding, verdict: NOT_AUDITED }
+  - { id: ONB-02, wave: A, name: Status da verificação, route: /onboarding/status, verdict: NOT_AUDITED }
+  - { id: ONB-03, wave: A, name: Localidade, route: /onboarding/locality, verdict: NOT_AUDITED }
+  - { id: ONB-04, wave: A, name: Boas-vindas, route: /onboarding/welcome, verdict: NOT_AUDITED }
+  - { id: INV-01, wave: A, name: Convite de prestador, route: /prestador-convite/[token], verdict: NOT_AUDITED }
+  - { id: INV-02, wave: A, name: Convite de membro, route: /invite/[token], verdict: NOT_AUDITED }
+
+  - { id: LOC-01, wave: B, name: Cidade, route: /localidade, verdict: NOT_AUDITED }
+  - { id: LOC-02, wave: B, name: Guia de chegada, route: /guide, verdict: NOT_AUDITED }
+  - { id: EVT-01, wave: B, name: Eventos, route: /events, verdict: NOT_AUDITED }
+  - { id: EVT-02, wave: B, name: Evento, route: /events/[id], verdict: NOT_AUDITED }
+  - { id: PRV-01, wave: B, name: Prestador, route: /prestadores/[id], verdict: NOT_AUDITED }
+  - { id: COM-01, wave: B, name: Feed da comunidade, route: /community, verdict: NOT_AUDITED }
+  - { id: COM-02, wave: B, name: Comunidades, route: /communities, verdict: NOT_AUDITED }
+  - { id: COM-03, wave: B, name: Comunidade, route: /communities/[id], verdict: NOT_AUDITED }
+  - { id: COM-04, wave: B, name: Convidar membros, route: /communities/[id]/invite, verdict: NOT_AUDITED }
+  - { id: COM-05, wave: B, name: Indicar prestador, route: /communities/[id]/indicar-prestador, verdict: NOT_AUDITED }
+  - { id: REC-01, wave: B, name: Indicações, route: /recommendations, verdict: NOT_AUDITED }
+  - { id: GRP-01, wave: B, name: Grupos, route: /groups, verdict: NOT_AUDITED }
+  - { id: GRP-02, wave: B, name: Grupo, route: /groups/[id], verdict: NOT_AUDITED }
+  - { id: ME-01, wave: B, name: Meu perfil, route: /profile, verdict: NOT_AUDITED }
+  - { id: ME-02, wave: B, name: Perfil de membro, route: /profile/[userId], verdict: NOT_AUDITED }
+  - { id: ME-03, wave: B, name: Interesses, route: /profile/interests, verdict: NOT_AUDITED }
+  - { id: MSG-01, wave: B, name: Mensagens, route: /messages, verdict: NOT_AUDITED }
+  - { id: NOT-01, wave: B, name: Notificações, route: /notifications, verdict: NOT_AUDITED }
+
+  - { id: PRO-01, wave: C, name: Painel do prestador, route: /prestador, verdict: NOT_AUDITED }
+  - { id: PRO-02, wave: C, name: Minha ficha, route: /prestador/ficha, verdict: NOT_AUDITED }
+  - { id: PRO-03, wave: C, name: Catálogo e portfólio, route: /prestador/catalogo, verdict: NOT_AUDITED }
+  - { id: ADM-01, wave: C, name: Admissões, route: /admissions, verdict: NOT_AUDITED }
+  - { id: ADM-02, wave: C, name: Chegadas, route: /arrivals, verdict: NOT_AUDITED }
+  - { id: ADM-03, wave: C, name: Fila do guia, route: /guide-queue, verdict: NOT_AUDITED }
+  - { id: ADM-04, wave: C, name: Denúncias, route: /reports, verdict: NOT_AUDITED }
+  - { id: OWN-01, wave: C, name: Console da comunidade, route: /communities/[id]/admin, verdict: NOT_AUDITED }
+  - { id: OWN-02, wave: C, name: Pedidos de entrada, route: /communities/[id]/admin/pending, verdict: NOT_AUDITED }
+  - { id: OWN-03, wave: C, name: Moderadores, route: /communities/[id]/admin/moderators, verdict: NOT_AUDITED }
+  - { id: OWN-04, wave: C, name: Prestadores da comunidade, route: /communities/[id]/admin/providers, verdict: NOT_AUDITED }
