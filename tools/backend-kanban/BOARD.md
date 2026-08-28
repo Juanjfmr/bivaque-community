@@ -28,7 +28,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Drift aberto
 
-- **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos — Após o merge do PR #35, rodar test:e2e serial duas vezes seguidas no mesmo commit e comparar: se as falhas mudarem de teste outra vez, há mais asserção sem repetição a varrer antes de chamar o baseline de reproduzível.
+- **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos — Executar o contrato docs/agents/tasks/HRN-003.task.yml: duas execuções da suíte no mesmo commit comparadas por LISTA NOMINAL de vermelhos (contagem igual com testes diferentes é falha), medindo os workers efetivos e a contaminação entre os três projetos ANTES de atribuir a variação a asserção frágil. O procedimento serial pós-PR #35 que estava escrito aqui está superado: o PR foi mergeado em 2026-08-28T02:30Z e a comparação por contagem não distingue os dois casos.
 - **BLOCK-LEGAL-ENTRY** · BLOCK · Textos legais da entrada prontos para aceite — Reconciliar a tabela de operadores de PRIVACIDADE.md com a dos Termos na mesma revisão jurídica, antes de qualquer publicação — dois documentos do mesmo acordo declarando compartilhamentos diferentes é exatamente a contradição que vira sanção.
 
 ## Triagem prioritária

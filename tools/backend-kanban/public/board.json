@@ -214,8 +214,8 @@
       "dependencies": [],
       "drift": {
         "documented": "O baseline de 2026-08-25 registra pgTAP 1052 asserts PASS e trata a suíte como reproduzível.",
-        "observed": "O lote E2E não é reproduzível: 2 execuções seguidas em 2026-08-28, sem mudança de código entre elas, falharam em testes distintos (group-admin-cycle:103 e ds-029:115). Uma das duas causas era asserção de retrato único e foi corrigida; a outra é o bug RLS R3 já listado em MVP-00-E2E-FUNCTIONAL.",
-        "action": "Após o merge do PR #35, rodar test:e2e serial duas vezes seguidas no mesmo commit e comparar: se as falhas mudarem de teste outra vez, há mais asserção sem repetição a varrer antes de chamar o baseline de reproduzível."
+        "observed": "O lote E2E não é reproduzível, e o quadro é mais largo do que duas causas. Em 2026-08-28, duas execuções seguidas sem mudança de código falharam em testes distintos (group-admin-cycle:103 e ds-029:115); a asserção de retrato único de ds-029 foi corrigida no PR #35 e a segunda causa é o bug R3 listado em MVP-00-E2E-FUNCTIONAL. Somam-se a elas duas coisas medidas depois: (a) playwright.config.ts não define workers nem retries e nenhuma porta de execução passa o --workers=1 do protocolo, então paralelismo sobre o banco que os três viewports compartilham segue como causa NÃO descartada; (b) no head 1a463df, cujo diff é só documentação, apareceu photo-upload:9 — um vermelho ENTRANTE, fora dos oito testes catalogados. O conjunto instável admite membros novos sobre código intocado.",
+        "action": "Executar o contrato docs/agents/tasks/HRN-003.task.yml: duas execuções da suíte no mesmo commit comparadas por LISTA NOMINAL de vermelhos (contagem igual com testes diferentes é falha), medindo os workers efetivos e a contaminação entre os três projetos ANTES de atribuir a variação a asserção frágil. O procedimento serial pós-PR #35 que estava escrito aqui está superado: o PR foi mergeado em 2026-08-28T02:30Z e a comparação por contagem não distingue os dois casos."
       }
     },
     {
@@ -1283,7 +1283,7 @@
       "status": "repo",
       "description": "O check \"Claude Code review (DeepSeek V4 Pro)\" falha em TODO PR desde 2026-08-24 e ninguém percebeu, porque ele falha igual em todos. A arquitetura de agentes exige revisor independente do implementador (AGENTS.md §Agents); enquanto o check está morto, esse papel não existe na CI e todo PR mergeado desde então entrou sem ele.",
       "checklist": [
-        "Confirmar com execução real que o revisor volta a POSTAR parecer, não só a sair verde — job curto demais e modelUsage vazio é a assinatura de que ele não revisou nada",
+        "FECHADO em 28/08 — o revisor voltou a postar parecer, com dois achados reais no PR #39, não apenas a sair verde",
         "Separar no workflow \"revisor não conseguiu rodar\" de \"revisor rodou e pediu mudanças\": hoje os dois são o mesmo X vermelho, e foi por isso que 18 falhas passaram por 4 dias sem ninguém olhar",
         "Decidir se PR mergeado entre 24/08 e 28/08 precisa de revisão retroativa — nenhum passou pelo revisor independente que a arquitetura exige"
       ],
@@ -1292,7 +1292,8 @@
         "Assinatura do log (job 98955262436, head 1a463df): {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":929,\"num_turns\":1,\"total_cost_usd\":0,\"modelUsage\":{}} — o modelo nunca produziu turno nem consumo; a chamada é rejeitada na entrada",
         ".github/workflows/claude-review.yml não mudou desde 6e82a01, o mesmo head do último sucesso — logo a causa está fora do repositório: a chave secrets.DEEPSEEK_API_KEY ou o endpoint api.deepseek.com/anthropic",
         "Nenhum card cobria isto antes de 2026-08-28 (busca por \"review\", \"deepseek\" e \"claude-review\" no board)",
-        "2026-08-28, reativação: o dono informou que o DeepSeek voltou a ficar ativo. O bloqueio externo cai, mas a volta do check NÃO está confirmada por execução — a última tentativa, no head 660d426 às 19:12Z, ainda falhou com a mesma assinatura. Re-run direto do job foi negado (HTTP 403, sem permissão de rerun-failed-jobs), então a confirmação vem do próximo evento de pull_request no branch."
+        "2026-08-28, reativação: o dono informou que o DeepSeek voltou a ficar ativo. O bloqueio externo cai, mas a volta do check NÃO está confirmada por execução — a última tentativa, no head 660d426 às 19:12Z, ainda falhou com a mesma assinatura. Re-run direto do job foi negado (HTTP 403, sem permissão de rerun-failed-jobs), então a confirmação vem do próximo evento de pull_request no branch.",
+        "2026-08-28, CONFIRMADO VIVO: após a reativação do DeepSeek pelo dono, o revisor voltou a POSTAR parecer — dois achados reais no PR #39, ambos procedentes e verificados contra os arquivos antes de aceitar. (1) incoerência entre acceptance #7 e allowed_paths no HRN-003, corrigida em c0690d6; (2) bloco drift de MVP-05-TEST-BASELINE desatualizado e contradizendo o proof novo, com board.mjs --next imprimindo como \"Resolver agora\" uma instrução cuja precondição (merge do PR #35) já tinha passado. O primeiro item do checklist fecha: ele não só sai verde, ele revisa."
       ],
       "links": ["Papéis e independência do revisor | ../../docs/agents/AGENT_ARCHITECTURE.md"],
       "updatedAt": "2026-08-28",
