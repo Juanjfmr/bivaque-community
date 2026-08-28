@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 45 frentes · 2 agora · 6 bloqueadas · 20 concluídas · 1 drifts
+**Mapa:** 45 frentes · 2 agora · 6 bloqueadas · 20 concluídas · 2 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -14,8 +14,8 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Agora
 
-- **MVP-00-E2E-FUNCTIONAL** · P1 · Reconciliar 65 falhas E2E funcionais (app × spec)
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
+- **MVP-00-E2E-FUNCTIONAL** · P1 · Reconciliar 65 falhas E2E funcionais (app × spec)
 
 ## Bloqueios
 
@@ -28,6 +28,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Drift aberto
 
+- **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos — Após o merge do PR #35, rodar test:e2e serial duas vezes seguidas no mesmo commit e comparar: se as falhas mudarem de teste outra vez, há mais asserção sem repetição a varrer antes de chamar o baseline de reproduzível.
 - **BLOCK-LEGAL-ENTRY** · BLOCK · Textos legais da entrada prontos para aceite — Reconciliar a tabela de operadores de PRIVACIDADE.md com a dos Termos na mesma revisão jurídica, antes de qualquer publicação — dois documentos do mesmo acordo declarando compartilhamentos diferentes é exatamente a contradição que vira sanção.
 
 ## Triagem prioritária
