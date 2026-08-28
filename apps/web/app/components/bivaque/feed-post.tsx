@@ -276,15 +276,25 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
   })()
 
   return (
+    // A post is a row in a ruled column, not a floating card. It used to be a
+    // rounded-2xl surface with an ambient shadow and a hover lift, separated by
+    // a gap from its neighbours — the treatment that makes a feed read as a
+    // stack of unrelated widgets and costs roughly a third of the items that
+    // fit in a viewport. The separator now comes from the parent's `.ruled`
+    // hairline, so the column reads as one continuous body of writing.
+    //
+    // This is the mitigation for EXP-004 candidate A's own recorded weakness:
+    // its tradeoff ledger scored it 3/5 on scan density precisely because a
+    // generous editorial measure fits fewer items per screen.
     <article
-      className="motion-card-enter motion-lift rounded-2xl border border-border bg-[var(--surface)] shadow-[var(--elevation-2)] overflow-hidden"
+      className="motion-card-enter bg-[var(--surface-raised)] transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-subtle)]"
       style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
     >
       <div className="flex">
         {/* Left accent rail */}
-        <div className="w-0.5 shrink-0 bg-[var(--accent)] opacity-75 rounded-full my-3 ml-3" />
+        <div className="w-0.5 shrink-0 bg-[var(--accent)] opacity-75 rounded-full my-4 ml-3" />
 
-        <div className="flex-1 min-w-0 p-4 pl-3">
+        <div className="flex-1 min-w-0 py-5 pr-4 pl-3">
           {/* Header row */}
           <div className="flex items-center gap-3">
             <MemberAvatar

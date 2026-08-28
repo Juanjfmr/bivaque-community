@@ -3,6 +3,7 @@
 import { Link } from "@heroui/react"
 import { EmptyState } from "./empty-state"
 import { ErrorState } from "./error-state"
+import { SearchIllustration } from "./illustrations"
 import { FeedCardSkeleton } from "./skeleton"
 
 // Segment-level fallbacks (DESIGN_SPEC §2 "Route change"). Mounted by each
@@ -34,6 +35,7 @@ export function SegmentNotFound() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
       <EmptyState
+        illustration={<SearchIllustration />}
         title="Página não encontrada"
         description="O endereço que você acessou não existe nesta comunidade."
         action={

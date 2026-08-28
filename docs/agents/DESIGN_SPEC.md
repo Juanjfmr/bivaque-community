@@ -222,7 +222,22 @@ Trace: `CUR-293 KEEP`; `RT-ADD-007`.
 ### DS-036 — Exact aesthetic system remains an experiment
 **EXPERIMENT:** Brand accent, exact palette, font family, typography scale, spacing scale, radii, elevation, motion durations, content widths, and responsive thresholds are selected as coherent systems through comparative validation. The incumbent Navy/system-sans combination is one candidate, not baseline truth.
 
-Trace: `CUR-018 EXPERIMENT`; `CUR-280 EXPERIMENT`; `EXP-004`; `RT-DEC-002`.
+> **Resolved for palette and type on 2026-08-28 by explicit product authority.**
+> `EXP-004` ran three candidates (`docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/`)
+> and deliberately did not name a winner, because its first open question —
+> local paper (A) / community platform (B) / operational tool (C) — is a product
+> call. The owner answered it in favour of the editorial register, and
+> [`ADR-20260828-sistema-visual-editorial`](../decisions/ADR-20260828-sistema-visual-editorial.md)
+> records the decision, the two deliberate divergences from candidate A, and the
+> contrast evidence. The palette, the two type families, the radius/elevation
+> restraint and the ruled-list surface strategy are therefore no longer open.
+>
+> **Still `EXPERIMENT` under this rule:** the typography and spacing *scales*,
+> motion durations, content widths and responsive thresholds. Adopting a
+> direction is not the same as validating every value inside it, and the rest of
+> §7 is untouched.
+
+Trace: `CUR-018 EXPERIMENT`; `CUR-280 EXPERIMENT`; `EXP-004`; `RT-DEC-002`; `ADR-20260828-sistema-visual-editorial`.
 
 The visual acceptance bar and craft implications are defined in `VISUAL_GUIDE.md`. They constrain quality without selecting the unresolved EXP-004 values.
 
@@ -237,7 +252,7 @@ These remain explicitly unresolved. A Phase 6 implementation may prototype them 
 | `EXP-001` | Primary task navigation + scope model; destination set; narrow/medium/wide presentation. |
 | `EXP-002` | Composer disclosure: modal vs inline vs adaptive. |
 | `EXP-003` | Groups discovery: cards vs rows vs hybrid. |
-| `EXP-004` | Coherent visual system: palette/type/spacing/radius/elevation/motion. |
+| `EXP-004` | ~~Coherent visual system: palette/type/spacing/radius/elevation/motion.~~ **Palette, type, radius and elevation resolved** by `ADR-20260828-sistema-visual-editorial`; scales, motion durations, widths and thresholds remain open. |
 | `EXP-005` | Admission grouping: single surface vs short staged flow. |
 | `EXP-006` | Activity sorting: whether `Recentes / Relevantes` improves retrieval/noise. |
 | `EXP-007` | Event presentation: date grouping and RSVP model. |

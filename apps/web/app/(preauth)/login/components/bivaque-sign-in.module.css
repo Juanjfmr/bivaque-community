@@ -1,15 +1,21 @@
 .root {
-  --login-ink: #17211d;
-  --login-muted: #56635c;
-  --login-paper: #f7f4ec;
-  --login-surface: #fffdf7;
-  --login-forest: #245b43;
-  --login-forest-deep: #102f25;
-  --login-signal: #b4472e;
-  --login-gold: #d7a44c;
-  --login-rule: rgba(23, 33, 29, 0.18);
-  --login-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --login-sans: Inter, "Segoe UI", Arial, sans-serif;
+  /* These local names are kept so the module's own rules read unchanged, but
+     every one of them now resolves to the shared token instead of a literal.
+     The same eleven values used to be copy-pasted into three CSS modules
+     (--ink here, --login-ink, --flow-ink), which is what let the funnel and the
+     member shell drift apart in the first place, and is what DS-034 forbids:
+     shared visual roles belong to the token layer, not to a local one-off. */
+  --login-ink: var(--foreground);
+  --login-muted: var(--muted);
+  --login-paper: var(--background);
+  --login-surface: var(--surface);
+  --login-forest: var(--accent);
+  --login-forest-deep: var(--forest-deep);
+  --login-signal: var(--signal);
+  --login-gold: var(--gold);
+  --login-rule: var(--border);
+  --login-serif: var(--font-serif);
+  --login-sans: var(--font-sans);
   display: grid;
   min-height: 100svh;
   color: var(--login-ink);

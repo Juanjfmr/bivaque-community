@@ -6,6 +6,7 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "./card"
 import { EmptyState } from "./empty-state"
 import { FeedbackAlert } from "./feedback-alert"
+import { GuideIllustration } from "./illustrations"
 import { Skeleton } from "./skeleton"
 
 type RequestRow = {
@@ -356,6 +357,7 @@ export default function RecommendationRequests() {
 
       {!loading && !error && requests.length === 0 && (
         <EmptyState
+          illustration={<GuideIllustration />}
           title="Nenhum pedido por aqui"
           description="Quando alguém pedir uma indicação, ela aparecerá nesta lista com as respostas."
         />

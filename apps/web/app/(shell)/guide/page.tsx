@@ -8,6 +8,7 @@ import { isLocalityStale } from "../../../lib/locality-density"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
+import { GuideIllustration } from "../../components/bivaque/illustrations"
 import { Skeleton } from "../../components/bivaque/skeleton"
 
 type GuideEntry = Database["public"]["Tables"]["arrival_guide_entries"]["Row"]
@@ -189,6 +190,7 @@ function GuideContent() {
         // here: suggestions do not enter the public guide directly; the operator
         // curates from indications as the density argument of F arrives.
         <EmptyState
+          illustration={<GuideIllustration />}
           title={
             isLocalityStale(memberCount)
               ? "Você é dos primeiros aqui."

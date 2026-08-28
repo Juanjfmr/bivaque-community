@@ -1,16 +1,25 @@
 .root {
-  --ink: #17211d;
-  --ink-soft: #435049;
-  --paper: #f5f2e9;
-  --paper-bright: #fffdf7;
-  --forest: #245b43;
-  --forest-deep: #102f25;
+  /* These local names are kept so the module's own rules read unchanged, but
+     every one of them now resolves to the shared token instead of a literal.
+     The same eleven values used to be copy-pasted into three CSS modules
+     (--ink here, --login-ink, --flow-ink), which is what let the funnel and the
+     member shell drift apart in the first place, and is what DS-034 forbids:
+     shared visual roles belong to the token layer, not to a local one-off. */
+  --ink: var(--foreground);
+  --ink-soft: var(--muted);
+  --paper: var(--background);
+  --paper-bright: var(--surface);
+  --forest: var(--accent);
+  /* --forest-deep is not redeclared here: the local name collides with the
+     global token, and a custom property that references itself forms a cycle
+     and computes to the guaranteed-invalid value. It is inherited from :root. */
   --blue: #31576b;
-  --signal: #b4472e;
-  --rule: rgba(23, 33, 29, 0.16);
+  /* --signal is not redeclared here either: same name as the global token, and
+     a self-referencing custom property computes to guaranteed-invalid. */
+  --rule: var(--border);
   --gutter: max(20px, calc((100vw - 1280px) / 2));
-  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --sans: Inter, "Segoe UI", Arial, sans-serif;
+  --serif: var(--font-serif);
+  --sans: var(--font-sans);
   color: var(--ink);
   background: var(--paper);
   font-family: var(--sans);

@@ -156,7 +156,7 @@ export function AppShell({ children }: AppShellProperties) {
             className={`flex items-center h-[var(--nav-height)] shrink-0 border-b border-border ${isRail ? "justify-center" : "px-3"}`}
           >
             {!isRail && (
-              <span className="text-base font-semibold tracking-tight truncate flex-1">
+              <span className="flex-1 truncate font-serif text-[var(--text-xl)] font-semibold text-[var(--forest-deep)]">
                 {brandTokens.productName}
               </span>
             )}
@@ -201,10 +201,10 @@ export function AppShell({ children }: AppShellProperties) {
                   key={item.id}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
+                  className={`flex min-h-11 min-w-11 items-center gap-3 rounded-[var(--radius-sm)] border-l-2 px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
                     active
-                      ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-                      : "text-muted hover:bg-[var(--surface-subtle)] hover:text-foreground"
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                      : "border-transparent text-muted hover:bg-[var(--surface-subtle)] hover:text-foreground"
                   } ${isRail ? "justify-center px-0" : ""}`}
                 >
                   {/* Icon crossfade: outline ↔ solid */}

@@ -9,6 +9,7 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
+import { GuideIllustration, SearchIllustration } from "../../components/bivaque/illustrations"
 import RecommendationRequests from "../../components/bivaque/recommendation-requests"
 import { Skeleton } from "../../components/bivaque/skeleton"
 
@@ -511,6 +512,7 @@ export default function RecommendationsPage() {
           {/* loaded: empty */}
           {!loading && !error && !hasContent && (
             <EmptyState
+              illustration={<GuideIllustration />}
               title="Nada por aqui ainda"
               description="Quando houver grupos ou eventos na sua comunidade, eles aparecerão aqui. Que tal explorar os grupos?"
               action={
@@ -838,6 +840,7 @@ export default function RecommendationsPage() {
           {/* loaded: empty */}
           {!savesLoading && !savesError && savedRequests.length === 0 && (
             <EmptyState
+              illustration={<SearchIllustration />}
               title="Nenhuma indicação salva"
               description="Você ainda não salvou nenhuma indicação. Quando outros membros publicarem pedidos, você poderá salvá-los aqui para consultar depois."
             />

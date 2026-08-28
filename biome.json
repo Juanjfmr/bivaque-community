@@ -19,6 +19,12 @@
       "!**/docs/agents/design-audit/experiments"
     ]
   },
+  "css": {
+    "parser": {
+      "cssModules": true,
+      "tailwindDirectives": true
+    }
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",

@@ -12,25 +12,38 @@
 ### Superfícies e ritmo
 - Fundo da tela: `var(--background)` (`#F8FAFC` slate-50) — página inteira.
 - Cards: `var(--surface)` / `var(--surface-raised)` brancos sobre o fundo slate-50. Inset areas (composer, empty states): `var(--surface-sunken)`.
-- Raio: 12px (`rounded-xl`) para cards de conteúdo; 16px (`rounded-2xl`) para empty states e modais; pill (`rounded-full`) para CTAs e bottom-nav items.
+- Raio: 6px (`var(--radius)`) para conteúdo; 8px (`--radius-lg`) para modais; pill só onde o controle é de fato pílula (chips, avatares, CTAs). Raio de 12–16px em conteúdo lê como mobília de card, não como página.
+- **Lista com fio, não pilha de cards.** Feed, grupos e notificações são uma coluna `.paper .ruled`: os itens são separados por hairline, sem borda ou sombra própria e sem `gap`. Um item que também carrega `border-b` dentro de `.ruled` duplica o fio.
+- Elevação rasa: sombra só para o que de fato flutua (menu, modal, toast). Um card se distingue pela superfície de papel contra o fundo mais quente, não por sombra ambiente.
 - Padding interno do card: 16px (`p-4`). Padding lateral da página: 16px (`px-4`).
 - **Gap entre cards: 12-16px (`gap-3`/`space-y-3`).** Nunca >24px entre cards de lista — o feed deve ler como LISTA coesa, não objetos flutuando (finding #7 do julgamento visual).
 - Separação entre seções: 24px (`mt-6`).
 - Divisores: `var(--border)` hairline.
 
-### Paleta (Navy Professional)
-- **Accent primário** (`--accent`): `#1E3A8A` (blue-900) — CTAs principais (Publicar, Criar evento, Criar grupo, Verificar elegibilidade), links, focus ring, item ativo da nav. Texto sobre accent: `--accent-foreground` `#FFFFFF`.
-- **Accent secundário** (`brandTokens.secondaryAccent`): `#3B82F6` (blue-500) — CTAs secundárias ("Entrar", "Interested?", links de navegação mais leves).
-- **Accent-soft** (`--accent-soft`): 12% blue-900 — fundo do item ativo na sidebar/bottom nav (`bg-[var(--accent-soft)]`).
-- **Foreground** (`--foreground`): `#020617` (slate-950) — texto principal.
-- **Muted** (`--muted`): `#475569` (slate-600) — meta, timestamps, subtexto.
-- **Danger** (`--danger`): `#DC2626` — report/destrutivo.
-- **Success / Warning / Danger-soft**: ver tokens.
-- Contraste: tudo deve atingir ≥4.5:1 (texto normal) ou ≥3:1 (≥24px/≥18.66px bold).
+### Paleta (Papel & Mata) — `ADR-20260828-sistema-visual-editorial`
+> Substitui a paleta "Navy Professional" (slate-50 / slate-950 / blue-900), que
+> era a tríade padrão do Tailwind e nunca tinha sido selecionada — DS-036 a
+> tratava como candidata. O `EXP-004` foi fechado na direção do candidato A
+> (Civic Editorial) por decisão do owner em 2026-08-28.
+
+- **Accent primário** (`--accent`): `#245B43` (floresta) — CTAs principais (Publicar, Criar evento, Criar grupo, Verificar elegibilidade), links, focus ring, item ativo da nav. Texto sobre accent: `--accent-foreground` `#FFFDF7`.
+- **Accent secundário** (`brandTokens.secondaryAccent`): `#2C4F62` (azul-ardósia) — CTAs secundárias e links que não devem competir com o primário.
+- **Accent-soft** (`--accent-soft`): 12% floresta — fundo do item ativo na sidebar/bottom nav (`bg-[var(--accent-soft)]`), sempre acompanhado do fio à esquerda (estado não pode depender só de cor — DS-033).
+- **Background** (`--background`): `#F5F2E9` (papel quente) — fundo de página.
+- **Surface** (`--surface` / `--surface-raised`): `#FFFDF7` — superfície de conteúdo.
+- **Foreground** (`--foreground`): `#17211D` (tinta quente) — texto principal.
+- **Muted** (`--muted`): `#4A574F` — meta, timestamps, subtexto.
+- **Danger** (`--danger`): `#A33D26` — report/destrutivo.
+- **Signal** (`--signal`): `#B4472E` — ênfase/CTA do funil. **Não é `--danger`**: "aja nisto" e "isto é destrutivo" são papéis distintos que por acaso são vizinhos na roda.
+- **Forest-deep** (`--forest-deep`): `#102F25` — superfície invertida (masthead). **Gold** (`--gold`): `#D7A44C`, **decorativo apenas**, nunca carrega texto — quem carrega é `--warning` (`#7A5312`).
+- Contraste: todo par de texto em uso foi medido e está ≥4.5:1; todo sólido com texto ≥4.5:1.
 
 ### Tipografia
-- Sans-serif system stack (`ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`) — declarado no body em globals.css. Sem fetch externo de fonte.
-- h1 de seção: `var(--text-xl)` (20px) semibold, tracking-tight. h2: `var(--text-lg)` (18px). Corpo: `var(--text-base)` (16px). Meta/secundário: `var(--text-sm)` (14px) `var(--muted)`.
+- **Literata** (títulos/display) + **Inter** (UI/corpo), auto-hospedadas via `next/font` no `layout.tsx` — sem requisição a terceiro em runtime (também melhor sob LGPD). Declaradas em `@theme` no globals.css, o que gera junto os utilitários `font-serif` / `font-sans`; declará-las só em `:root` faz `font-serif` cair no stack embutido do Tailwind.
+- **h1–h3 em serifado; h4–h6 em sans.** Os três primeiros são display e carregam a identidade; os demais são rótulos estruturais dentro de uma seção e devem ler como UI. Peso 600 — um serifado old-style em 700 vira institucional, e DS-001 proíbe apoiar confiança em pista de autoridade.
+- **Corpo em sans, nunca em serifado.** O `tradeoff ledger` do candidato A registra que corpo serifado em contexto de comunidade "can read as newsletter"; restringir o serifado ao título preserva o registro editorial sem esse custo.
+- h1 de seção: `var(--text-2xl)` (28px) serifado. h2: `var(--text-xl)` (22px). Corpo: `var(--text-base)` (16px). Meta/secundário: `var(--text-sm)` (14px) `var(--muted)`.
+- **Eyebrow** (`.eyebrow`): rótulo de seção, 12px, 600, `letter-spacing: .08em`, caixa alta, `--muted`. Acompanha o h1; nunca substitui um título (não é landmark).
 - Nada abaixo de `var(--text-xs)` (12px). line-height body 1.5+, headings 1.2 com letter-spacing -0.011em.
 - **Um h1 por tela; o h1 é o TÍTULO DA SEÇÃO** ("Minha comunidade", "Grupos", "Eventos"…), nunca "Bivaque" dentro de rotas autenticadas (finding #4).
 

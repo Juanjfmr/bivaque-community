@@ -3,57 +3,99 @@
 @import "tailwindcss";
 @import "@heroui/styles";
 
+/* Type families live in @theme, not in :root, so Tailwind generates the
+   `font-sans` / `font-serif` utilities from them as well as emitting the custom
+   properties. Declaring them only in :root leaves `font-serif` resolving to
+   Tailwind's built-in stack, which silently defeats the whole typographic
+   identity. (HeroUI's theme.css already does the equivalent for colour, mapping
+   --color-* onto our semantic tokens; fonts had no such mapping.)
+
+   Bound by next/font in layout.tsx — self-hosted, so no runtime request to a
+   third party is tied to a visitor (LGPD). The fallback stacks are metric-near
+   so an unstyled first paint does not reflow the page. */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-serif:
+    var(--font-literata), "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
 :root,
 [data-theme="bivaque"] {
   color-scheme: light;
 
-  /* Color — Navy Professional palette (DESIGN_SPEC.md §1).
-     Authority + trust for a verified federal-military community.
-     Primary blue-900 for action, slate-950 for foreground, slate-50 surface
-     background, white cards. oklch is kept where the value is consumed by
-     color-mix() so the hue shifts naturally with the foreground. */
-  --background: #f8fafc; /* slate-50 — page background */
-  --foreground: #020617; /* slate-950 — primary text */
-  --surface: #ffffff; /* white — card surface */
+  /* Color — "Papel & Mata" palette (DESIGN_SPEC.md §1, tokens mirrored in
+     packages/tokens/src/index.ts).
+
+     This replaces the previous Navy Professional set, which was slate-50 /
+     slate-950 / blue-900 — the literal Tailwind default triad. That is the
+     palette every SaaS starter ships, and it is why the authenticated product
+     read as generic. It was also never selected: DS-036 (EXP-004) keeps
+     palette/type/spacing/radius/elevation/motion open and states that the
+     incumbent Navy/system-sans pair is one candidate, not baseline truth.
+
+     These values are the system the product already shows every visitor in the
+     acquisition funnel (landing, login, onboarding), where they had been
+     copy-pasted into three CSS modules as --ink / --login-ink / --flow-ink.
+     Promoting them to the token layer is what lets the member shell continue
+     the identity the funnel promises, and retires that triplication (DS-034).
+
+     Every text/background pair here is >= 4.5:1, verified numerically. */
+  --background: #f5f2e9; /* warm paper — page background */
+  --foreground: #17211d; /* warm ink — primary text (14.75:1 on paper) */
+  --surface: #fffdf7; /* paper bright — card surface */
   --surface-foreground: var(--foreground);
-  --accent: #1e3a8a; /* blue-900 — primary action / focus / link */
-  --accent-foreground: #ffffff;
+  --accent: #245b43; /* forest — primary action / focus / link (7.07:1) */
+  --accent-foreground: #fffdf7;
   --focus: var(--accent);
   --link: var(--accent);
 
   /* Cards above the page background. */
-  --surface-raised: #ffffff;
+  --surface-raised: #fffdf7;
   /* Inset areas (composer field, empty states). */
-  --surface-sunken: color-mix(in oklch, var(--background) 95%, var(--foreground) 5%);
+  --surface-sunken: #ede8da;
   /* Subtle neutral fills (avatar initials, chips, hover rows). */
-  --surface-subtle: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --surface-subtle: color-mix(in oklch, var(--foreground) 7%, transparent);
   /* Hairlines — the single border color; components must not inline color-mix borders. */
   --border: color-mix(in oklch, var(--foreground) 12%, transparent);
-  /* Secondary text; holds ≥ 4.5:1 on --surface. */
-  --muted: #475569; /* slate-600 — secondary text */
+  /* Secondary text; holds ≥ 4.5:1 on --surface (7.46:1) and --background (6.78:1). */
+  --muted: #4a574f;
   /* 12% accent tint for selected chips and active nav. */
   --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
   /* Destructive + report affordances, moderation / verification states. */
-  --danger: #dc2626; /* red-600 */
-  --danger-soft: color-mix(in oklch, var(--danger) 15%, transparent);
-  --warning: #d97706; /* amber-600 */
-  --success: #059669; /* emerald-600 */
+  --danger: #a33d26; /* terracotta signal (5.77:1 on paper) */
+  --danger-soft: color-mix(in oklch, var(--danger) 14%, transparent);
+  --warning: #7a5312; /* burnt gold, darkened to carry text (6.10:1) */
+  --success: #1f6347; /* deep forest (6.39:1) */
   /* Modal scrim. HeroUI v3 reserves --overlay for the floating surface (dialog/
-     popover/menu), so the scrim lives in --backdrop. Mixed against --foreground,
-     never raw black. */
-  --backdrop: color-mix(in oklch, var(--foreground) 45%, transparent);
+     popover/menu), so the scrim lives in --backdrop. Mixed against the deep
+     forest, never raw black. */
+  --backdrop: color-mix(in oklch, var(--forest-deep) 55%, transparent);
 
-  /* Elevation — shadows mix against --foreground, never black. */
+  /* Editorial accents. --forest-deep is the masthead / inverted surface the
+     landing header already uses. --gold is decorative ONLY (rules, marks); it
+     never carries text — --warning is the readable member of that family. */
+  --forest-deep: #102f25;
+  --gold: #d7a44c;
+  /* Terracotta emphasis. This is the acquisition funnel's call-to-action colour
+     and it is NOT --danger: an accent that means "act on this" must not share a
+     token with one that means "this is destructive", or the first refactor that
+     retunes destructive UI silently repaints the sign-up button. The two happen
+     to be neighbours on the wheel; they are different roles.
+     5.32:1 against paper-bright as a solid, 4.83:1 as text on paper. */
+  --signal: #b4472e;
+
+  /* Elevation — deliberately shallow. The previous set leaned on 16–40px ambient
+     shadows, which is what made every list read as cards floating over grey. A
+     card is now told apart by its paper surface against the warmer page plus a
+     hairline; shadow is reserved for things that genuinely float. */
   --elevation-0: none;
-  --elevation-1:
-    0 1px 2px color-mix(in oklch, var(--foreground) 10%, transparent),
-    0 1px 3px color-mix(in oklch, var(--foreground) 8%, transparent);
+  --elevation-1: 0 1px 0 color-mix(in oklch, var(--foreground) 6%, transparent);
   --elevation-2:
-    0 2px 4px color-mix(in oklch, var(--foreground) 10%, transparent),
-    0 8px 16px color-mix(in oklch, var(--foreground) 12%, transparent);
+    0 1px 2px color-mix(in oklch, var(--foreground) 8%, transparent),
+    0 2px 6px color-mix(in oklch, var(--foreground) 6%, transparent);
   --elevation-3:
-    0 4px 8px color-mix(in oklch, var(--foreground) 12%, transparent),
-    0 16px 40px color-mix(in oklch, var(--foreground) 18%, transparent);
+    0 4px 8px color-mix(in oklch, var(--foreground) 10%, transparent),
+    0 16px 40px color-mix(in oklch, var(--foreground) 16%, transparent);
 
   /* Spacing — 4px scale. */
   --space-1: 0.25rem;
@@ -64,20 +106,26 @@
   --space-8: 2rem;
   --space-12: 3rem;
 
-  /* Radius. */
-  --radius-sm: 0.5rem;
-  --radius: 0.75rem;
-  --radius-lg: 1rem;
+  /* Radius — editorial: near-square for content surfaces. Content no longer uses
+     12–16px rounding, which reads as app-store card furniture rather than a page.
+     The pill survives only where a control is genuinely pill-shaped. */
+  --radius-sm: 0.25rem;
+  --radius: 0.375rem;
+  --radius-lg: 0.5rem;
   --radius-full: 9999px;
 
-  /* Typography — nothing below 12px. */
+  /* Typography — nothing below 12px. The display scale is wider than the
+     previous one so a serif headline can actually behave like a headline. */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+
+  /* Readable measure for long-form regions (DS-031). */
+  --measure: 68ch;
 
   /* Motion. */
   --duration-instant: 100ms;
@@ -101,24 +149,102 @@ body {
 
 @layer base {
   body {
-    line-height: 1.5;
-    font-family:
-      ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-      sans-serif;
+    line-height: 1.55;
+    font-family: var(--font-sans);
+    /* Warm paper deserves the optical corrections a screen serif expects. */
+    font-feature-settings: "kern" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
+  /* Headings carry the identity, so they are set in the serif rather than a
+     heavier weight of the UI sans. This is the single largest reason the shell
+     stopped reading as a generic dashboard: a sans-only hierarchy separated
+     only by font-weight is what every admin template looks like. Weight stays
+     moderate (600) because an old-style serif at 700 turns institutional, and
+     DS-001 forbids leaning on authoritative cues for trust. */
   h1,
   h2,
-  h3,
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.006em;
+  }
+
+  /* h4–h6 are structural labels inside a section, not display type; they stay
+     in the sans so they read as UI rather than competing headlines. */
   h4,
   h5,
   h6 {
-    line-height: 1.2;
-    letter-spacing: -0.011em;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    line-height: 1.3;
   }
 }
 
 @layer components {
+  /* ── Editorial primitives ───────────────────────────────────────────────
+     These exist so screens stop composing the same look out of ad-hoc utility
+     strings. They are the shape half of the identity; the token block above is
+     the colour half. */
+
+  /* Section label. Small, letterspaced, uppercase — the thing that makes a
+     page read as a publication with named sections instead of a stack of
+     unlabelled widgets. Always paired with a real heading; never a substitute
+     for one, since it is not a landmark. */
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Bounded reading measure for long-form regions (DS-031). Scan and
+     comparison surfaces deliberately do not use it. */
+  .measure {
+    max-width: var(--measure);
+  }
+
+  /* A list whose items are separated by hairlines instead of being individual
+     floating cards. This is the main structural fix: DS-032 wants list items to
+     expose decision-critical metadata, and a ruled list does that at far higher
+     density than a stack of rounded boxes with 16px gaps and drop shadows. */
+  .ruled > * + * {
+    border-top: 1px solid var(--border);
+  }
+
+  /* The editorial content surface: paper, hairline, near-square. Replaces the
+     rounded-2xl + ambient-shadow card as the default container. */
+  .paper {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  /* Decorative gold rule used to close a section (end-of-feed, section feet).
+     Decorative only — never the sole carrier of meaning (DS-033). */
+  .rule-mark {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--muted);
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .rule-mark::before,
+  .rule-mark::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
   .button,
   .input,
   .tabs__tab,
@@ -207,6 +333,10 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* biome-ignore lint/style/noDescendingSpecificity: this is a deliberate global
+     reset and must stay last so it wins by order over every animated selector
+     declared above it, including the decorative .rule-mark pseudo-elements.
+     Raising its specificity to satisfy the rule would defeat the purpose. */
   *,
   *::before,
   *::after {

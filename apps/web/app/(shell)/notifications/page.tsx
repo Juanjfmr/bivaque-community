@@ -350,7 +350,7 @@ export default function NotificationsPage() {
         {error && <ErrorState message={error} onRetry={() => loadNotifications()} />}
 
         {loading && (
-          <div className="space-y-1 py-4" aria-busy="true">
+          <div className="paper ruled overflow-hidden" aria-busy="true">
             <NotificationItemSkeleton />
             <NotificationItemSkeleton />
             <NotificationItemSkeleton />
@@ -394,10 +394,8 @@ export default function NotificationsPage() {
           <div className="space-y-4">
             {grouped.map(({ group, items }) => (
               <section key={group} className="space-y-1">
-                <header className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
-                  {GROUP_LABELS[group]}
-                </header>
-                <ul className="space-y-1">
+                <header className="eyebrow mb-2 px-1">{GROUP_LABELS[group]}</header>
+                <ul className="paper ruled overflow-hidden">
                   {items.map((notification) => (
                     <li key={notification.id}>
                       {/* A <div role="button">, not a native <button>: the
@@ -422,7 +420,7 @@ export default function NotificationsPage() {
                             navigateToNotification(router, notification)
                           }
                         }}
-                        className={`flex w-full cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 ${
+                        className={`flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2 ${
                           notification.read_at ? "" : "bg-[var(--accent-soft)]"
                         }`}
                       >

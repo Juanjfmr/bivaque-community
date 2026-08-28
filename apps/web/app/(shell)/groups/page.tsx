@@ -365,7 +365,7 @@ export default function GroupsPage() {
           <Skeleton className="h-7 w-40" />
           <Skeleton className="h-4 w-56" />
         </section>
-        <div className="flex flex-col gap-4" aria-busy="true">
+        <div className="paper ruled overflow-hidden" aria-busy="true">
           <GroupCardSkeleton />
           <GroupCardSkeleton />
           <GroupCardSkeleton />
@@ -380,7 +380,7 @@ export default function GroupsPage() {
     const isSelected = selectedGroupId === group.id
 
     return (
-      <div key={group.id} className="flex flex-col gap-3 rounded-lg border border-border p-4">
+      <div key={group.id} className="flex flex-col gap-3 px-4 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
@@ -627,7 +627,7 @@ export default function GroupsPage() {
               {myGroups.length === 0 ? (
                 <p className="text-sm text-muted">Nenhum grupo seu corresponde à busca.</p>
               ) : (
-                <div className="flex flex-col gap-4">{myGroups.map(renderGroupCard)}</div>
+                <div className="paper ruled overflow-hidden">{myGroups.map(renderGroupCard)}</div>
               )}
             </section>
           )}

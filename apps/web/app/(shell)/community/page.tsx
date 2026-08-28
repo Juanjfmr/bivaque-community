@@ -13,6 +13,7 @@ import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedComposer } from "../../components/bivaque/feed-composer"
 import { CreatePostModal, FeedPost } from "../../components/bivaque/feed-post"
 import { FeedRightRail } from "../../components/bivaque/feed-right-rail"
+import { GroupsIllustration } from "../../components/bivaque/illustrations"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
@@ -242,27 +243,33 @@ export default function CommunityPage() {
       ) : (
         <>
           {/* locality header — sticky under app header */}
-          <div className="sticky top-12 z-30 border-b border-border bg-[var(--surface)] px-4 py-3">
-            <div className="mx-auto flex max-w-[56rem] items-center justify-between">
-              <div className="flex items-baseline gap-2">
-                <h1 className="text-lg font-semibold tracking-tight">
-                  {primaryCommunityName ?? "Manaus, AM"}
-                </h1>
-                {!primaryCommunityName && memberCount !== null && (
-                  <span className="text-sm text-muted">
-                    {memberCount} {memberCount === 1 ? "membro" : "membros"}
-                  </span>
-                )}
-                {!primaryCommunityName && (
-                  <a
-                    href="/guide"
-                    className="inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-accent transition-colors hover:underline"
-                  >
-                    Guia de chegada
-                  </a>
-                )}
+          <div className="sticky top-12 z-30 border-b border-border bg-[var(--background)]/95 px-4 py-4 backdrop-blur-sm">
+            <div className="mx-auto flex max-w-[56rem] items-end justify-between gap-4">
+              <div className="min-w-0">
+                <p className="eyebrow mb-1">Minha comunidade</p>
+                <h1 className="text-[var(--text-2xl)]">{primaryCommunityName ?? "Manaus, AM"}</h1>
+                <div className="mt-1 flex items-baseline gap-3">
+                  {!primaryCommunityName && memberCount !== null && (
+                    <span className="text-sm text-muted">
+                      {memberCount} {memberCount === 1 ? "membro" : "membros"}
+                    </span>
+                  )}
+                  {!primaryCommunityName && (
+                    <a
+                      href="/guide"
+                      className="inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-accent transition-colors hover:underline"
+                    >
+                      Guia de chegada
+                    </a>
+                  )}
+                </div>
               </div>
-              <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
+              <Button
+                size="sm"
+                variant="primary"
+                onPress={() => handleOpenModal()}
+                className="shrink-0"
+              >
                 Publicar
               </Button>
             </div>
@@ -302,7 +309,7 @@ export default function CommunityPage() {
 
               {/* skeleton loading */}
               {loading && !error && (
-                <div className="space-y-2" aria-busy="true">
+                <div className="paper ruled overflow-hidden" aria-busy="true">
                   <FeedCardSkeleton />
                   <FeedCardSkeleton />
                   <FeedCardSkeleton />
@@ -315,6 +322,7 @@ export default function CommunityPage() {
               beginning. The threshold is the locality member count, not Manaus. */}
               {!loading && !error && posts.length === 0 && (
                 <EmptyState
+                  illustration={<GroupsIllustration />}
                   title={
                     isLocalityStale(memberCount)
                       ? "Você é dos primeiros aqui."
@@ -336,7 +344,7 @@ export default function CommunityPage() {
               {/* feed list */}
               {!loading && posts.length > 0 && (
                 <div
-                  className="space-y-2 transition-opacity"
+                  className="paper ruled overflow-hidden transition-opacity"
                   style={{
                     opacity: transitioning ? 0.6 : 1,
                     transitionDuration: "var(--duration-fast)",
@@ -356,7 +364,7 @@ export default function CommunityPage() {
                         }}
                         className={
                           highlightedPostId === post.id
-                            ? "rounded-lg ring-2 ring-accent transition-all duration-300"
+                            ? "ring-2 ring-inset ring-accent transition-all duration-300"
                             : undefined
                         }
                       >
@@ -368,7 +376,7 @@ export default function CommunityPage() {
 
               {/* end-of-feed marker */}
               {!loading && !error && posts.length > 0 && !atEnd && (
-                <p className="py-4 text-center text-sm text-muted"> Você está em dia</p>
+                <p className="rule-mark py-6">Você está em dia</p>
               )}
             </div>
 
