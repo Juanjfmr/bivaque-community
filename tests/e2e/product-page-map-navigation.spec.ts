@@ -6,8 +6,7 @@ import { encodeAuthCookieValue } from "./helpers/session"
 
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
-const MEMBER_EMAIL =
-  process.env["BIVAQUE_VISUAL_EMAIL"] ?? "visual@bivaque.example.invalid"
+const MEMBER_EMAIL = process.env["BIVAQUE_VISUAL_EMAIL"] ?? "visual@bivaque.example.invalid"
 const CONSENT_COOKIE = "bivaque-consent-version"
 const CURRENT_CONSENT = "1"
 
@@ -44,13 +43,12 @@ function credentials(): { anonKey: string; password: string } {
 
 async function signInAsSeededMember(page: Page): Promise<void> {
   const { anonKey, password } = credentials()
-  const response = await page.context().request.post(
-    `${SUPABASE_URL}/auth/v1/token?grant_type=password`,
-    {
+  const response = await page
+    .context()
+    .request.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       headers: { apikey: anonKey, "Content-Type": "application/json" },
       data: { email: MEMBER_EMAIL, password },
-    },
-  )
+    })
 
   if (response.status() !== 200) {
     throw new Error(`Password grant failed: ${response.status()}`)

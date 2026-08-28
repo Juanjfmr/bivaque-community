@@ -11,7 +11,7 @@ const registryLines = registryText.split(/\r?\n/)
 
 function topLevelBlock(name) {
   const marker = `${name}:`
-  const start = registryLines.findIndex((line) => line === marker)
+  const start = registryLines.indexOf(marker)
   assert.notEqual(start, -1, `Missing ${marker} in PAGE_REGISTRY.yaml`)
 
   let end = registryLines.length
@@ -42,7 +42,7 @@ function mapList(name) {
       continue
     }
 
-    const field = line.match(/^  ([a-z_]+):(?: (.*))?$/)
+    const field = line.match(/^ {2}([a-z_]+):(?: (.*))?$/)
     if (field && current) current[field[1]] = scalar(field[2])
   }
 
@@ -57,7 +57,7 @@ function scalarList(name) {
 
 function inheritedExitIds() {
   return topLevelBlock("navigation_profiles")
-    .map((line) => line.match(/^    - ([A-Z]+-\d+)$/)?.[1])
+    .map((line) => line.match(/^ {4}- ([A-Z]+-\d+)$/)?.[1])
     .filter(Boolean)
 }
 
@@ -100,7 +100,7 @@ const inheritedExits = inheritedExitIds()
 const pageIds = new Set(pages.map((page) => page.id))
 
 test("product page registry covers every App Router page exactly once", () => {
-  const declaredCount = Number(registryText.match(/\n  ui_pages: (\d+)/)?.[1])
+  const declaredCount = Number(registryText.match(/\n {2}ui_pages: (\d+)/)?.[1])
   assert.equal(pages.length, declaredCount, "scope.ui_pages must match registry page count")
 
   unique(
