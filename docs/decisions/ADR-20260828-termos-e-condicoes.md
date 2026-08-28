@@ -78,13 +78,26 @@ fingir que a revisão jurídica aconteceu.
 **8. Cinco posições substantivas do texto são propostas desta ADR** e precisam da decisão do
 dono, porque nenhuma delas é derivável do que já está decidido:
 
-| # | Posição proposta | Por quê |
+**Decididas pelo dono em 2026-08-28.** Duas mudaram em relação ao que eu havia proposto, e a
+mudança está registrada em vez de ser silenciada.
+
+| # | Decisão | Por quê |
 |---|---|---|
-| 8.1 | **18 anos para qualquer conta, inclusive familiar** | o convite familiar mira dependente, e dependente pode ser menor. Admitir menor aciona o art. 14 (consentimento específico do responsável) e exige mecanismo de verificação de responsável que não existe. A posição conservadora é a única implementável hoje |
-| 8.2 | Licença sobre conteúdo **não exclusiva, gratuita, limitada à operação do Bivaque e revogável** | é o mínimo para exibir o post no escopo escolhido. Não permite vender, sublicenciar nem usar em publicidade |
-| 8.3 | Registro de moderação em **legítimo interesse (art. 7º, IX) + exercício regular de direitos (art. 7º, VI)**, retido 2 anos | já era o prazo do rascunho de privacidade; o que faltava era a base legal nomeada |
-| 8.4 | Cancelamento do alcance assinado **desativa ao fim do período pago, sem devolução proporcional** | é o que o [`ADR-20260820-alcance-pago`](ADR-20260820-alcance-pago.md) §3 já decidiu; aqui vira cláusula |
-| 8.5 | Foro eleito **com ressalva expressa do domicílio do consumidor** | foro de eleição puro contra consumidor é abusivo; a ressalva é o que o torna defensável |
+| 8.1 | **18 anos para qualquer conta, inclusive familiar** | o convite familiar mira dependente, e dependente pode ser menor. Admitir menor aciona o art. 14 (consentimento específico do responsável) e exige mecanismo de verificação que não existe. É a única posição implementável hoje. **Reabre** se a demanda por adolescente na vila aparecer: a faixa 16+ evita o corte de "criança" do art. 14 §1º e é o próximo degrau |
+| 8.2 | Licença **não exclusiva, gratuita, limitada à operação, revogável — e com cláusula de sucessão** | a licença mínima estava certa; faltava a sucessão. Sem ela, transferir o Bivaque para o veículo jurídico do §7.6 obrigaria a recolher aceite de toda a base para seguir exibindo o que já foi publicado. A cláusula preserva as condições e dá ao membro aviso prévio e saída — não amplia nada |
+| 8.3 | Registro de moderação em **legítimo interesse (art. 7º, IX) + exercício regular de direitos (art. 7º, VI)**, com prazo **escalonado**: remoção e suspensão grave 2 anos, conversa reservada e conteúdo ocultado 6 meses | os 2 anos uniformes do rascunho não passavam no teste de necessidade do art. 6º, III: a finalidade declarada — impedir o retorno de quem foi removido — não cobre um aviso reservado. O prazo agora acompanha a finalidade, ao custo de um job de expurgo com TTL por tipo de ação |
+| 8.4 | Cancelamento **ao fim do período pago, sem devolução proporcional**, mais o **arrependimento de 7 dias do art. 49 do CDC** declarado no texto | o cancelamento é o que o [`ADR-20260820-alcance-pago`](ADR-20260820-alcance-pago.md) §3 já decidira. O arrependimento faltava: vale por lei mesmo com o contrato calado, e calar sobre ele é omissão de informação que o próprio CDC pune |
+| 8.5 | Foro da **comarca de Manaus**, com ressalva expressa do domicílio do consumidor | Manaus não é conveniência do Bivaque — é onde o piloto roda e onde a comunidade está, o que afasta a abusividade que o CPC art. 63 §3º autoriza o juiz a reconhecer de ofício. A ressalva cobre o membro transferido (D51) |
+
+**9. As quatro lacunas do veículo jurídico, decididas em 2026-08-28.** Duas fecharam sem
+depender da constituição da entidade; duas seguem abertas por dependerem dela.
+
+| Lacuna | Decisão | Estado |
+|---|---|---|
+| **Encarregado** | Não indicar nominalmente por ora. A Resolução CD/ANPD nº 2/2022 dispensa o **agente de tratamento de pequeno porte** de indicar encarregado, exigindo canal de comunicação com o titular — que passa a existir. Indicação nominal quando o veículo for constituído | **fechada** — o `<<DEFINIR>>` virou frase afirmativa |
+| **Foro** | Comarca de Manaus, com ressalva ao consumidor (item 8.5) | **fechada** |
+| **Canal do titular** | Endereço dedicado de privacidade, roteado ao encarregado e separado do suporte comum, com 15 dias para dado pessoal | decidida; o **endereço concreto** depende do domínio próprio — entra no `BLOCK-RESEND` |
+| **Controlador** | Hipótese de trabalho levada ao parecer: **sociedade limitada com terceiro na gerência, fundador como quotista sem gerência** — a exceção que o próprio Art. 29 da Lei 6.880/80 carimba. Produz o CNPJ de que Asaas, WhatsApp Cloud API e o domínio dependem | direção fixada; **razão social, CNPJ e endereço só existem com a entidade constituída**. Segue `<<DEFINIR>>` |
 
 ## Alternatives considered
 
@@ -208,12 +221,19 @@ manifestação da ANPD sobre tratamento de dado de agente público por comunidad
 
 ## Approval
 
-**Pendente.** Requer aprovação humana explícita do dono (R3) e revisão jurídica profissional.
+**As oito decisões de conteúdo estão aprovadas pelo dono em 2026-08-28**, uma a uma, em sessão:
+as cinco posições substantivas do item 8 e as quatro lacunas do item 9. Onde a decisão divergiu
+da minha proposta — sucessão na licença (8.2), retenção escalonada (8.3), arrependimento (8.4) —
+a divergência está registrada na própria tabela, e o texto foi reescrito para segui-la.
 
-Decisões que só o dono fecha, e sem as quais o texto não é publicável:
+**O ADR permanece `proposed`, e isso não é formalidade.** Faltam duas coisas que a aprovação do
+dono não substitui:
 
-1. Controlador — razão social, CNPJ e endereço, dependente do veículo jurídico do §7.6.
-2. Encarregado pelo tratamento (art. 41) — nome e canal.
-3. Canal oficial de atendimento ao titular.
-4. Foro e comarca.
-5. As cinco posições substantivas do item 8, uma a uma.
+1. **Parecer jurídico profissional.** Escrevi o texto e não sou advogado. O primeiro ponto a
+   olhar é o capítulo 11 (limitação de responsabilidade) contra o CDC; o segundo é o
+   enquadramento do Art. 29 da Lei 6.880/80 sobre a hipótese de veículo do item 9.
+2. **Constituição do veículo jurídico.** Sem entidade não há razão social, CNPJ nem endereço, e
+   o capítulo 8.1 não pode deixar de ser `<<DEFINIR>>` — a guarda de escopo
+   (`tests/scope/legal-documents.test.mjs`) impede publicar com placeholder aberto.
+
+Não há veredito de crítico independente sobre este ADR. Registrado aqui em vez de omitido.

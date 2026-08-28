@@ -5,11 +5,8 @@ status: draft
 review_blocker: BLOCK-LEGAL-ENTRY
 updated_at: 2026-08-28
 pending:
-  - controlador (razão social, CNPJ e endereço) — depende do veículo jurídico do BIVAQUE.md §7.6
-  - encarregado pelo tratamento de dados pessoais (LGPD art. 41)
-  - canal oficial de atendimento ao titular
-  - foro e comarca
-  - idade mínima para conta familiar (§3.3 e o ADR-20260828-termos-e-condicoes)
+  - controlador (razão social, CNPJ e endereço) — depende da constituição do veículo jurídico
+  - endereço concreto do canal de privacidade — depende do domínio próprio (BLOCK-RESEND)
 note: >
   Rascunho. Precisa de revisão jurídica e da aprovação do dono antes de ser publicado ou
   colocado no fluxo de aceite. Enquanto `status` for `draft`, este arquivo não é o texto
@@ -176,7 +173,14 @@ com uma exceção que o capítulo 8.5 explica: o que você publicou dentro de um
 outras pessoas permanece, desvinculado do seu nome, porque apagar metade de um diálogo deixa
 a outra pessoa falando sozinha.
 
-**7.3 Sobre o seu nome de exibição e a sua foto.** Você nos autoriza a exibi-los para os
+**7.3 Se o Bivaque mudar de mãos.** Se a operação do Bivaque for transferida para outra
+entidade — por reorganização, sucessão ou constituição do veículo jurídico definitivo — estes
+Termos e a licença do item 7.1 continuam valendo **nas mesmas condições**, sem ampliação do que
+pode ser feito com o seu conteúdo. Você é avisado **com antecedência**, e pode encerrar a conta
+antes de a transferência acontecer. Sem esta cláusula, uma troca de entidade obrigaria a
+recolher aceite de toda a comunidade para continuar exibindo o que já foi publicado.
+
+**7.4 Sobre o seu nome de exibição e a sua foto.** Você nos autoriza a exibi-los para os
 membros que compartilham escopo com você. A foto de perfil é opcional e você pode removê-la a
 qualquer momento.
 
@@ -252,7 +256,8 @@ destes Termos.
 |---|---|
 | Documento do caminho de exceção | **7 dias**, e apagado após a decisão |
 | Dados da conta, se você pedir exclusão ou sair | eliminados em até **30 dias** |
-| Registro de moderação e suspensão | **2 anos** após a saída |
+| Registro de **remoção da comunidade e suspensão grave** | **2 anos** após a saída |
+| Registro de **conversa reservada e conteúdo ocultado** | **6 meses** |
 | Registro fiscal da cobrança do prestador | pelo prazo da legislação aplicável |
 
 Duas exceções à eliminação, e é justo você saber antes de aceitar:
@@ -260,9 +265,12 @@ Duas exceções à eliminação, e é justo você saber antes de aceitar:
 O que você publicou **em conversa com outras pessoas** — comentário, resposta a pedido —
 permanece, desvinculado do seu nome, com fundamento no art. 16, I da LGPD.
 
-O **registro de moderação** contra você permanece por 2 anos mesmo depois de você sair, com
-fundamento no art. 7º, IX e no art. 16, I. É o que impede alguém removido por perseguição de
-voltar no dia seguinte com outro cadastro.
+O **registro de moderação** contra você permanece mesmo depois de você sair, com fundamento no
+art. 7º, IX e no art. 16, I — mas só pelo prazo que a finalidade justifica. Remoção da
+comunidade e suspensão grave ficam **2 anos**: é o que impede alguém removido por perseguição de
+voltar no dia seguinte com outro cadastro. Conversa reservada e conteúdo ocultado ficam **6
+meses**, porque essa finalidade não sustenta mais que isso, e guardar além do necessário é o que
+o art. 6º, III proíbe.
 
 ### 8.6 Seus direitos
 
@@ -305,9 +313,14 @@ fazer.
 
 ### 8.9 Encarregado
 
-O encarregado pelo tratamento de dados pessoais, nos termos do art. 41 da LGPD, é
-**`<<DEFINIR>>`**. Canal para exercício de direitos e para qualquer assunto de dados
-pessoais: **`<<DEFINIR>>`**.
+O Bivaque é **agente de tratamento de pequeno porte**. A Resolução CD/ANPD nº 2/2022 dispensa
+esse agente de indicar encarregado, exigindo dele um canal de comunicação com o titular — e o
+canal existe, é dedicado e está abaixo. Quando o veículo jurídico for constituído, o encarregado
+será indicado nominalmente e este item ganha versão nova.
+
+Canal exclusivo para exercício de direitos e para qualquer assunto de dados pessoais:
+**`<<DEFINIR>>`**. É um endereço só para isso, separado do suporte comum, para que pedido com
+prazo legal não se perca em fila de atendimento.
 
 ### 8.10 Decisões automatizadas
 
@@ -336,6 +349,11 @@ pagamento mantém o alcance assinado ativo por **7 dias corridos**, com aviso; d
 alcance assinado é desativado e o alcance gratuito original permanece intacto. O cancelamento
 desativa o alcance assinado **ao fim do período já pago**, sem devolução proporcional. Você
 pode cancelar a qualquer momento, sem multa e sem fidelidade.
+
+**9.5 Direito de arrependimento.** Como a contratação acontece pela internet, você tem **7 dias**
+a contar dela para desistir, nos termos do art. 49 do Código de Defesa do Consumidor, e receber
+**de volta tudo o que pagou**, corrigido. Basta avisar pelo canal de contato. Esse prazo é
+independente do cancelamento comum do item 9.4.
 
 ## 10. Moderação, suspensão e encerramento
 
@@ -386,8 +404,9 @@ Estes Termos são regidos pela lei brasileira, em especial a Lei nº 13.709/2018
 nº 12.965/2014 (Marco Civil da Internet) e, quando aplicável, a Lei nº 8.078/1990 (Código de
 Defesa do Consumidor).
 
-Fica eleito o foro de **`<<DEFINIR>>`**, ressalvado o direito do consumidor de demandar no
-foro do seu domicílio.
+Fica eleito o foro da **comarca de Manaus/AM**, onde o piloto opera e onde está a comunidade,
+**ressalvado o direito do consumidor de demandar no foro do seu domicílio** — inclusive o membro
+que declarou transferência e já mora em outra cidade.
 
 ## 14. Contato
 

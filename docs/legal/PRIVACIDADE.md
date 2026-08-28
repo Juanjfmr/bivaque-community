@@ -23,8 +23,8 @@ você pode exigir. Sem juridiquês onde dá para evitar.
 
 ## Quem responde pelos dados
 
-O controlador é **[a definir — depende da constituição do veículo jurídico]**. Contato para
-qualquer assunto de dados: **[canal de suporte]**.
+O controlador é **`<<DEFINIR>>`** — depende da constituição do veículo jurídico. Contato para
+qualquer assunto de dados: **`<<DEFINIR>>`**, um endereço dedicado, separado do suporte comum.
 
 ## O que a gente guarda
 
@@ -92,8 +92,10 @@ O que você publicou em conversa com outras pessoas — comentário, resposta a 
 desvinculado do seu nome. Apagar sua metade de uma conversa deixa a outra pessoa falando
 sozinha.
 
-Registro de moderação contra você fica por **2 anos**, mesmo depois de você sair. É o que
-impede alguém removido por perseguição de voltar no dia seguinte com outro cadastro.
+Registro de moderação contra você fica mesmo depois de você sair, mas só pelo tempo que a
+razão de guardar sustenta. Remoção da comunidade e suspensão grave ficam **2 anos** — é o que
+impede alguém removido por perseguição de voltar no dia seguinte com outro cadastro. Conversa
+reservada e conteúdo ocultado ficam **6 meses**: para esses, a razão acaba antes.
 
 ## O que você pode exigir
 
