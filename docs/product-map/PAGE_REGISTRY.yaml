@@ -1,0 +1,463 @@
+version: 1
+source_revision: 53295458b9ad526f7b15914a6657828ffbfc38bb
+scope:
+  method: static_route_and_navigation_audit
+  ui_pages: 40
+  excludes:
+  - app/api/**/route.ts
+  - loading.tsx
+  - error.tsx
+  - not-found.tsx
+  - modal-only states
+  runtime_note: Evidência estática identifica rotas e defeitos de navegação; candidatos permanecem candidatos até prova
+    em browser.
+section_prefixes:
+  PUB: public
+  AUTH: auth
+  ONB: onboarding
+  INV: invites
+  LOC: locality
+  EVT: events
+  PRV: providers
+  COM: community
+  REC: recommendations
+  GRP: groups
+  ME: profile
+  MSG: messages
+  NOT: notifications
+  PRO: provider_portal
+  ADM: admin
+  OWN: community_admin
+navigation_profiles:
+  member_shell:
+    inherited_exits:
+    - LOC-01
+    - COM-01
+    - GRP-01
+    - ME-01
+    - REC-01
+    note: Quatro containers primários + Indicações no header. Notificações fica fora porque o controle atual não navega.
+  provider_shell:
+    inherited_exits:
+    - PRO-01
+    - PRO-02
+    - PRO-03
+  operator_shell:
+    inherited_exits:
+    - ADM-01
+    - ADM-02
+    - ADM-03
+    - ADM-04
+  community_admin_shell:
+    inherited_exits:
+    - OWN-02
+    - COM-03
+    note: O layout atual expõe Pedidos de entrada e Voltar à comunidade.
+pages:
+- id: PUB-01
+  section: public
+  name: Landing
+  route: /
+  file: apps/web/app/page.tsx
+  access: public
+- id: AUTH-01
+  section: auth
+  name: Login
+  route: /login
+  file: apps/web/app/(preauth)/login/page.tsx
+  access: public
+- id: AUTH-02
+  section: auth
+  name: Cadastro
+  route: /signup
+  file: apps/web/app/(preauth)/signup/page.tsx
+  access: public
+- id: AUTH-03
+  section: auth
+  name: Erro de callback
+  route: /auth/callback-error
+  file: apps/web/app/auth/callback-error/page.tsx
+  access: public
+  entry_mode: external_or_system
+- id: AUTH-04
+  section: auth
+  name: Consentimento
+  route: /consent
+  file: apps/web/app/(preauth)/consent/page.tsx
+  access: public
+- id: ONB-01
+  section: onboarding
+  name: Elegibilidade
+  route: /onboarding
+  file: apps/web/app/(preauth)/onboarding/page.tsx
+  access: authenticated
+- id: ONB-02
+  section: onboarding
+  name: Status da verificação
+  route: /onboarding/status
+  file: apps/web/app/(preauth)/onboarding/status/page.tsx
+  access: authenticated
+- id: ONB-03
+  section: onboarding
+  name: Localidade
+  route: /onboarding/locality
+  file: apps/web/app/(preauth)/onboarding/locality/page.tsx
+  access: authenticated
+- id: ONB-04
+  section: onboarding
+  name: Boas-vindas
+  route: /onboarding/welcome
+  file: apps/web/app/(preauth)/onboarding/welcome/page.tsx
+  access: member
+- id: INV-01
+  section: invites
+  name: Convite de prestador
+  route: /prestador-convite/[token]
+  file: apps/web/app/(preauth)/prestador-convite/[token]/page.tsx
+  access: public
+  entry_mode: external_or_system
+- id: INV-02
+  section: invites
+  name: Convite de membro
+  route: /invite/[token]
+  file: apps/web/app/(shell)/invite/[token]/page.tsx
+  access: member
+  navigation_profile: member_shell
+  entry_mode: external_or_system
+- id: LOC-01
+  section: locality
+  name: Cidade
+  route: /localidade
+  file: apps/web/app/(shell)/localidade/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: LOC-02
+  section: locality
+  name: Guia de chegada
+  route: /guide
+  file: apps/web/app/(shell)/guide/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: EVT-01
+  section: events
+  name: Eventos
+  route: /events
+  file: apps/web/app/(shell)/events/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: EVT-02
+  section: events
+  name: Evento
+  route: /events/[id]
+  file: apps/web/app/(shell)/events/[id]/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: PRV-01
+  section: providers
+  name: Prestador
+  route: /prestadores/[id]
+  file: apps/web/app/(shell)/prestadores/[id]/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: COM-01
+  section: community
+  name: Feed da comunidade
+  route: /community
+  file: apps/web/app/(shell)/community/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: COM-02
+  section: community
+  name: Comunidades
+  route: /communities
+  file: apps/web/app/(shell)/communities/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: COM-03
+  section: community
+  name: Comunidade
+  route: /communities/[id]
+  file: apps/web/app/(shell)/communities/[id]/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: COM-04
+  section: community
+  name: Convidar membros
+  route: /communities/[id]/invite
+  file: apps/web/app/(shell)/communities/[id]/invite/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: COM-05
+  section: community
+  name: Indicar prestador
+  route: /communities/[id]/indicar-prestador
+  file: apps/web/app/(shell)/communities/[id]/indicar-prestador/page.tsx
+  access: member
+  navigation_profile: member_shell
+  inbound_status: candidate_orphan
+- id: REC-01
+  section: recommendations
+  name: Indicações
+  route: /recommendations
+  file: apps/web/app/(shell)/recommendations/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: GRP-01
+  section: groups
+  name: Grupos
+  route: /groups
+  file: apps/web/app/(shell)/groups/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: GRP-02
+  section: groups
+  name: Grupo
+  route: /groups/[id]
+  file: apps/web/app/(shell)/groups/[id]/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: ME-01
+  section: profile
+  name: Meu perfil
+  route: /profile
+  file: apps/web/app/(shell)/profile/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: ME-02
+  section: profile
+  name: Perfil de membro
+  route: /profile/[userId]
+  file: apps/web/app/(shell)/profile/[userId]/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: ME-03
+  section: profile
+  name: Interesses
+  route: /profile/interests
+  file: apps/web/app/(shell)/profile/interests/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: MSG-01
+  section: messages
+  name: Mensagens
+  route: /messages
+  file: apps/web/app/(shell)/messages/page.tsx
+  access: member
+  navigation_profile: member_shell
+- id: NOT-01
+  section: notifications
+  name: Notificações
+  route: /notifications
+  file: apps/web/app/(shell)/notifications/page.tsx
+  access: member
+  navigation_profile: member_shell
+  inbound_status: broken_affordance
+- id: PRO-01
+  section: provider_portal
+  name: Painel do prestador
+  route: /prestador
+  file: apps/web/app/(provider)/prestador/page.tsx
+  access: provider
+  navigation_profile: provider_shell
+- id: PRO-02
+  section: provider_portal
+  name: Minha ficha
+  route: /prestador/ficha
+  file: apps/web/app/(provider)/prestador/ficha/page.tsx
+  access: provider
+  navigation_profile: provider_shell
+- id: PRO-03
+  section: provider_portal
+  name: Catálogo e portfólio
+  route: /prestador/catalogo
+  file: apps/web/app/(provider)/prestador/catalogo/page.tsx
+  access: provider
+  navigation_profile: provider_shell
+- id: ADM-01
+  section: admin
+  name: Admissões
+  route: /admissions
+  file: apps/web/app/(admin)/admissions/page.tsx
+  access: operator
+  navigation_profile: operator_shell
+- id: ADM-02
+  section: admin
+  name: Chegadas
+  route: /arrivals
+  file: apps/web/app/(admin)/arrivals/page.tsx
+  access: operator
+  navigation_profile: operator_shell
+- id: ADM-03
+  section: admin
+  name: Fila do guia
+  route: /guide-queue
+  file: apps/web/app/(admin)/guide-queue/page.tsx
+  access: operator
+  navigation_profile: operator_shell
+- id: ADM-04
+  section: admin
+  name: Denúncias
+  route: /reports
+  file: apps/web/app/(admin)/reports/page.tsx
+  access: operator
+  navigation_profile: operator_shell
+- id: OWN-01
+  section: community_admin
+  name: Console da comunidade
+  route: /communities/[id]/admin
+  file: apps/web/app/(owner)/communities/[id]/admin/page.tsx
+  access: moderator
+  navigation_profile: community_admin_shell
+- id: OWN-02
+  section: community_admin
+  name: Pedidos de entrada
+  route: /communities/[id]/admin/pending
+  file: apps/web/app/(owner)/communities/[id]/admin/pending/page.tsx
+  access: moderator
+  navigation_profile: community_admin_shell
+- id: OWN-03
+  section: community_admin
+  name: Moderadores
+  route: /communities/[id]/admin/moderators
+  file: apps/web/app/(owner)/communities/[id]/admin/moderators/page.tsx
+  access: moderator
+  navigation_profile: community_admin_shell
+- id: OWN-04
+  section: community_admin
+  name: Prestadores da comunidade
+  route: /communities/[id]/admin/providers
+  file: apps/web/app/(owner)/communities/[id]/admin/providers/page.tsx
+  access: moderator
+  navigation_profile: community_admin_shell
+  inbound_status: candidate_orphan
+verified_edges:
+- from: PUB-01
+  to: AUTH-01
+  kind: link
+  label: Entrar
+- from: PUB-01
+  to: AUTH-02
+  kind: link
+  label: Quero fazer parte
+- from: ONB-03
+  to: ONB-04
+  kind: router_replace
+  label: provisionamento concluído
+- from: ONB-04
+  to: COM-01
+  kind: link
+  label: Entrar na comunidade
+- from: ONB-04
+  to: LOC-01
+  kind: link
+  label: Conhecer minha cidade
+- from: ONB-04
+  to: ME-01
+  kind: link
+  label: Completar meu perfil
+- from: ONB-04
+  to: GRP-01
+  kind: link
+  label: Encontrar um grupo
+- from: LOC-01
+  to: EVT-01
+  kind: link
+  label: Ver todos os eventos
+- from: LOC-01
+  to: EVT-02
+  kind: dynamic_link
+  label: evento da cidade
+- from: LOC-01
+  to: LOC-02
+  kind: link
+  label: Abrir o guia de chegada
+- from: LOC-01
+  to: PRV-01
+  kind: dynamic_link
+  label: prestador da vitrine
+- from: LOC-01
+  to: COM-02
+  kind: product_path
+  label: pedir entrada numa comunidade
+- from: COM-02
+  to: COM-03
+  kind: dynamic_link
+  label: Abrir comunidade
+- from: COM-03
+  to: COM-04
+  kind: dynamic_link
+  label: Convidar membros
+- from: COM-03
+  to: OWN-02
+  kind: role_link
+  label: Pedidos de entrada
+- from: OWN-01
+  to: OWN-02
+  kind: link
+  label: Pedidos de entrada
+- from: OWN-01
+  to: OWN-03
+  kind: link
+  label: Moderadores
+- from: PRV-01
+  to: MSG-01
+  kind: router_push
+  label: Conversar
+system_edges:
+- from: AUTH-04
+  to: ONB-01
+  kind: middleware_state
+  condition: authenticated, no membership, no verification
+- from: AUTH-04
+  to: ONB-02
+  kind: middleware_state
+  condition: verification pending/rejected/temporary_error
+- from: AUTH-04
+  to: ONB-03
+  kind: middleware_state
+  condition: verified, no membership
+- from: PUB-01
+  to: COM-01
+  kind: middleware_redirect
+  condition: authenticated + current consent
+- from: PUB-01
+  to: AUTH-04
+  kind: middleware_redirect
+  condition: authenticated + consent missing
+- from: any_protected
+  to: AUTH-04
+  kind: middleware_redirect
+  condition: consent missing
+- from: any_protected
+  to: AUTH-01
+  kind: middleware_redirect
+  condition: session missing after consent
+- from: any_member_route
+  to: PRO-01
+  kind: middleware_redirect
+  condition: provider account
+external_entry_pages:
+- AUTH-03
+- INV-01
+- INV-02
+audit_flags:
+- id: NAV-001
+  severity: high
+  type: dead_control
+  page: NOT-01
+  status: confirmed_static
+  summary: O controle Notificações no AppShell é um button sem href/onPress/onClick; a rota /notifications existe.
+- id: NAV-002
+  severity: medium
+  type: orphan_candidate
+  page: OWN-04
+  status: candidate_static
+  summary: A rota de prestadores da comunidade existe, mas não há entrada nos links inspecionados do console, home
+    administrativa ou detalhe da comunidade.
+- id: NAV-003
+  severity: medium
+  type: orphan_candidate
+  page: COM-05
+  status: candidate_static
+  summary: A rota Indicar prestador existe e funciona como formulário, mas não foi encontrada entrada nas superfícies
+    de comunidade e cidade inspecionadas.
