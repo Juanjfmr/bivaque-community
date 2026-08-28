@@ -329,7 +329,7 @@
       "status": "next",
       "description": "Marco final de backend: migrations reproduzíveis, segurança comprovada e contratos estáveis sem depender da UI para proteger regra de negócio. Detalhado item a item em 2026-08-28 contra o estado real: dois dos cinco itens já estão satisfeitos pela CI verde e só faltava registrar; um depende de MVP-00-E2E; um depende inteiro de MVP-09; e o quinto é o entregável, que só pode ser escrito por último.",
       "checklist": [
-        "[SATISFEITO, falta registrar] db reset reproduz tudo do zero — a CI roda db:reset --no-seed seguido de test:db e db:lint a cada PR (pull-request-ci.yml:95-98), verde em 7a127aa. Falta só citar a execução como evidência de freeze",
+        "[SATISFEITO, falta registrar] db reset reproduz tudo do zero — a CI roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' a cada PR (pull-request-ci.yml:122-129), verdes. Falta só citar a execução como evidência de freeze",
         "[SATISFEITO, falta registrar] Tipos gerados sincronizados — a CI tem passo de types drift antes do build, verde na mesma execução",
         "[PARCIAL] Todos os contratos e callers reais testados — MVP-02-AUTHZ fechou a auditoria cruzada service_role x RPCs SECURITY DEFINER (PRODUCT_STATUS §Autorização, 2026-08-22). Falta o lado E2E: MVP-00-E2E-FUNCTIONAL segue aberto, e MVP-05-TEST-BASELINE registra que a suíte não é reprodutível — verde uma vez não é baseline",
         "[NÃO INICIADO] Jobs idempotentes e observáveis — depende inteiro de MVP-09-OPERABILITY, que está em 'next'. Some-se a isso MVP-RETENTION-PURGE: o contrato publicado promete prazos de retenção que nenhum job aplica hoje",
@@ -1124,7 +1124,7 @@
         "supabase/migrations/20260825181742_provider_invitations.sql — create_provider_invitation, token_digest e invitee_email_digest (bytea, 32 bytes), enfileiramento no outbox",
         "apps/web/app/(shell)/communities/[id]/indicar-prestador/actions.ts — caller real do RPC",
         "supabase/tests/provider-invitation.sql — plan(16), 299 linhas",
-        "CI verde em 7a127aa (2026-08-28, job 'Install, test, and build'): o pipeline roda db:reset --no-seed -> test:db -> db:lint (.github/workflows/pull-request-ci.yml:95-98). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
       ],
       "tests": ["provider-invitation.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
@@ -1132,7 +1132,7 @@
       "sourceRevision": "354f608",
       "dependencies": ["G-TASK-1", "BLOCK-RESEND"],
       "drift": {
-        "documented": "Em 2026-08-28 eu fechei G-TASK-2 como done, apoiado só no pgTAP verde da CI.",
+        "documented": "O board mantinha G-TASK-2 em 'next' com proof vazia e sourceRevision de 2026-08-22, enquanto o código da onda G entrou em 2026-08-25.",
         "observed": "O card entrega tela (as duas telas de convite), e o Task 9 Step 2 do plano da onda G segue `[ ]`, nomeando essa tela e declarando que a auditoria bloqueia a onda seguinte. Fechar aqui aplicava critério diferente do que segurou G-TASK-3 e G-TASK-4 pelo mesmo motivo. Achado por revisão no PR #37, conferido contra o plano.",
         "action": "Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência."
       }
@@ -1156,7 +1156,7 @@
         "private.can_see_provider referenciada em três migrations (showcase, search, dm_provider_context_rpcs)",
         "apps/web/app/(shell)/prestadores/[id]/ — visão do membro existe",
         "supabase/tests/provider-showcase-scope.sql — plan(18), 251 linhas",
-        "CI verde em 7a127aa (2026-08-28, job 'Install, test, and build'): o pipeline roda db:reset --no-seed -> test:db -> db:lint (.github/workflows/pull-request-ci.yml:95-98). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
       ],
       "tests": ["provider-showcase-scope.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
@@ -1185,7 +1185,7 @@
       "proof": [
         "apps/web/app/(provider)/prestador/ — actions.ts (Server Actions CRUD), ficha/, catalogo/, page.tsx",
         "tests/unit/providers/showcase-form.test.ts — validadores de borda, verde no gate",
-        "CI verde em 7a127aa (2026-08-28, job 'Install, test, and build'): o pipeline roda db:reset --no-seed -> test:db -> db:lint (.github/workflows/pull-request-ci.yml:95-98). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
       ],
       "tests": ["showcase-form.test.ts"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
@@ -1215,7 +1215,7 @@
         "supabase/migrations/20260825203815_provider_search.sql — extensão pg_trgm, índice GIN gin_trgm_ops em display_name, função search_providers com similarity > 0.2",
         "supabase/tests/provider-search-scope.sql — plan(9), 159 linhas",
         "ADR-20260820-alcance-pago §4: a cláusula order by não menciona reach_source, e há assert de pgTAP que fica vermelho se alguém 'otimizar' isso",
-        "CI verde em 7a127aa (2026-08-28, job 'Install, test, and build'): o pipeline roda db:reset --no-seed -> test:db -> db:lint (.github/workflows/pull-request-ci.yml:95-98). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
       ],
       "tests": ["provider-search-scope.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
@@ -1223,7 +1223,7 @@
       "sourceRevision": "354f608",
       "dependencies": ["G-TASK-3"],
       "drift": {
-        "documented": "Em 2026-08-28 eu fechei G-TASK-5 como done, apoiado só no pgTAP verde da CI.",
+        "documented": "O board mantinha G-TASK-5 em 'next' com proof vazia e sourceRevision de 2026-08-22, enquanto o código da onda G entrou em 2026-08-25.",
         "observed": "O card entrega tela (/localidade — a vitrine da cidade), e o Task 9 Step 2 do plano da onda G segue `[ ]`, nomeando essa tela e declarando que a auditoria bloqueia a onda seguinte. Fechar aqui aplicava critério diferente do que segurou G-TASK-3 e G-TASK-4 pelo mesmo motivo. Achado por revisão no PR #37, conferido contra o plano.",
         "action": "Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência."
       }
@@ -1245,8 +1245,7 @@
       "proof": [
         "supabase/migrations/20260825205847_dm_provider_context.sql e 20260825212538_dm_provider_context_rpcs.sql — open_conversation ordena o par no servidor, dm_blocked_either_way, validação de contexto compartilhado",
         "supabase/tests/dm-context-allowed.sql — plan(26), 470 linhas; supabase/tests/dm-context-denials.sql — plan(25), 643 linhas",
-        "CI verde em 7a127aa (2026-08-28, job 'Install, test, and build'): o pipeline roda db:reset --no-seed -> test:db -> db:lint (.github/workflows/pull-request-ci.yml:95-98). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código",
-        "Mantido done após a revisão do PR #37: o Task 9 Step 2 do plano da onda G não lista tela de conversa entre as auditadas (/localidade, /prestadores, /prestadores/[id], /prestador e filhas, e as duas telas de convite), e o checklist deste card é inteiramente de servidor"
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
       ],
       "tests": ["dm-context-allowed.sql", "dm-context-denials.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
@@ -1254,8 +1253,8 @@
       "sourceRevision": "354f608",
       "dependencies": ["G-TASK-1", "G-TASK-3"],
       "drift": {
-        "documented": "Em 2026-08-28 eu marquei G-TASK-6 como done.",
-        "observed": "O card declara dependência de G-TASK-3, que está `next` com auditoria visual pendente. `selectNextCard` (board-lib.mjs:164-168) só considera uma dependência satisfeita quando ela está `done`, então um card done com dependência aberta contradiz o modelo. `validateBoard` não checa isso, então a CI seguia verde com o estado inconsistente. Achado por revisão no PR #37.",
+        "documented": "O board mantinha G-TASK-6 em 'next' com proof vazia e sourceRevision de 2026-08-22, enquanto o código da onda G entrou em 2026-08-25.",
+        "observed": "O backend está implementado e provado por pgTAP verde na CI. O que segura o card não é código: é a aresta que ele declara para G-TASK-3, que está `next`. `selectNextCard` (board-lib.mjs:164-168) só considera uma dependência satisfeita quando ela está `done`, então fechar este contradiria o modelo. `validateBoard` não checa isso — só a existência da aresta —, então a CI passaria com o estado inconsistente. Achado por revisão no PR #37.",
         "action": "Fechar G-TASK-3 pela auditoria visual — o que fecha este junto —, ou o dono decide remover a aresta por ela apontar para o backend do G-TASK-3, que já está provado."
       }
     },
