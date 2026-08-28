@@ -338,7 +338,7 @@
       ],
       "proof": [
         "Dependências: 4 de 9 fechadas (MVP-01-ADMISSION, MVP-02-AUTHZ, MVP-03-COMMUNITY, G-TASK-1). Abertas: MVP-05 (now), MVP-06, MVP-07, MVP-08, MVP-09 (next)",
-        "2026-08-28: onda G reconciliada — G-TASK-2, 5 e 6 fechados com pgTAP verde na CI; G-TASK-3 e 4 com backend provado e apenas a auditoria visual pendente",
+        "2026-08-28: onda G reconciliada — G-TASK-6 fechado com pgTAP verde na CI; G-TASK-2, 3, 4 e 5 com backend provado e apenas a auditoria visual do Task 9 Step 2 pendente. A auditoria é gate único para todo card da onda que entrega tela",
         "CI verde em 7a127aa cobre db:reset --no-seed, test:db, db:lint, build, types drift e test:e2e — o que já satisfaz dois itens deste checklist",
         "Nenhum BACKEND_COMPLETION.md existe no repositório, e não há tag de freeze"
       ],
@@ -1113,11 +1113,12 @@
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
-      "status": "done",
+      "status": "next",
       "description": "Quem atesta é a comunidade: convite por indicação com binding de e-mail e outbox worker. O aceite confere token e e-mail-alvo na entrada do prestador.",
       "checklist": [
         "create_provider_invitation RPC valida cota e enfileira no outbox",
-        "Aceita convite pelo link confere token + email"
+        "Aceita convite pelo link confere token + email",
+        "PENDENTE E BLOQUEANTE: auditoria visual — o plano da onda G (2026-08-20-onda-g-vitrine.md, Task 9 Step 2) está `[ ]` e diz 'ela bloqueia a onda seguinte'. As telas que ele nomeia incluem as deste card. Rodar `node scripts/visual/loop.mjs`, escrever o veredito em docs/agents/VISUAL_AUDIT-2026-08-<dd>-onda-g.md e rodar `db:reset` limpo depois da captura, antes de qualquer test:db (o perfil fantasma Visual Capture quebra 6 asserts)"
       ],
       "proof": [
         "supabase/migrations/20260825181742_provider_invitations.sql — create_provider_invitation, token_digest e invitee_email_digest (bytea, 32 bytes), enfileiramento no outbox",
@@ -1130,7 +1131,11 @@
       "updatedAt": "2026-08-28",
       "sourceRevision": "354f608",
       "dependencies": ["G-TASK-1", "BLOCK-RESEND"],
-      "completedAt": "2026-08-28"
+      "drift": {
+        "documented": "Em 2026-08-28 eu fechei G-TASK-2 como done, apoiado só no pgTAP verde da CI.",
+        "observed": "O card entrega tela (as duas telas de convite), e o Task 9 Step 2 do plano da onda G segue `[ ]`, nomeando essa tela e declarando que a auditoria bloqueia a onda seguinte. Fechar aqui aplicava critério diferente do que segurou G-TASK-3 e G-TASK-4 pelo mesmo motivo. Achado por revisão no PR #37, conferido contra o plano.",
+        "action": "Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência."
+      }
     },
     {
       "id": "G-TASK-3",
@@ -1199,11 +1204,12 @@
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
-      "status": "done",
+      "status": "next",
       "description": "Busca híbrida global: pg_trgm no nome e filtro exato por categoria dentro do alcance (D44). Vitrine da city-reference atualizada.",
       "checklist": [
         "search_providers RPC com pg_trgm e filtro de categoria",
-        "city-reference atualiza vitrine em cidade"
+        "city-reference atualiza vitrine em cidade",
+        "PENDENTE E BLOQUEANTE: auditoria visual — o plano da onda G (2026-08-20-onda-g-vitrine.md, Task 9 Step 2) está `[ ]` e diz 'ela bloqueia a onda seguinte'. As telas que ele nomeia incluem as deste card. Rodar `node scripts/visual/loop.mjs`, escrever o veredito em docs/agents/VISUAL_AUDIT-2026-08-<dd>-onda-g.md e rodar `db:reset` limpo depois da captura, antes de qualquer test:db (o perfil fantasma Visual Capture quebra 6 asserts)"
       ],
       "proof": [
         "supabase/migrations/20260825203815_provider_search.sql — extensão pg_trgm, índice GIN gin_trgm_ops em display_name, função search_providers com similarity > 0.2",
@@ -1216,7 +1222,11 @@
       "updatedAt": "2026-08-28",
       "sourceRevision": "354f608",
       "dependencies": ["G-TASK-3"],
-      "completedAt": "2026-08-28"
+      "drift": {
+        "documented": "Em 2026-08-28 eu fechei G-TASK-5 como done, apoiado só no pgTAP verde da CI.",
+        "observed": "O card entrega tela (/localidade — a vitrine da cidade), e o Task 9 Step 2 do plano da onda G segue `[ ]`, nomeando essa tela e declarando que a auditoria bloqueia a onda seguinte. Fechar aqui aplicava critério diferente do que segurou G-TASK-3 e G-TASK-4 pelo mesmo motivo. Achado por revisão no PR #37, conferido contra o plano.",
+        "action": "Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência."
+      }
     },
     {
       "id": "G-TASK-6",
@@ -1234,7 +1244,8 @@
       "proof": [
         "supabase/migrations/20260825205847_dm_provider_context.sql e 20260825212538_dm_provider_context_rpcs.sql — open_conversation ordena o par no servidor, dm_blocked_either_way, validação de contexto compartilhado",
         "supabase/tests/dm-context-allowed.sql — plan(26), 470 linhas; supabase/tests/dm-context-denials.sql — plan(25), 643 linhas",
-        "CI verde em 7a127aa (2026-08-28, job 'Install, test, and build'): o pipeline roda db:reset --no-seed -> test:db -> db:lint (.github/workflows/pull-request-ci.yml:95-98). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+        "CI verde em 7a127aa (2026-08-28, job 'Install, test, and build'): o pipeline roda db:reset --no-seed -> test:db -> db:lint (.github/workflows/pull-request-ci.yml:95-98). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código",
+        "Mantido done após a revisão do PR #37: o Task 9 Step 2 do plano da onda G não lista tela de conversa entre as auditadas (/localidade, /prestadores, /prestadores/[id], /prestador e filhas, e as duas telas de convite), e o checklist deste card é inteiramente de servidor"
       ],
       "tests": ["dm-context-allowed.sql", "dm-context-denials.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
