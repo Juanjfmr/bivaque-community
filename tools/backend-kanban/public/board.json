@@ -1221,7 +1221,8 @@
         "reports-member-flow :98 — ReportButton não envia reporter_user_id (obrigatório + policy reporter_user_id=auth.uid()); visual@ sem membership de comunidade → sem feed. BUG app (R3). DECISÃO/correção",
         "synthetic-people :167 — sem mismatch de label/trigger; suspeita notification_preferences.comments=false suprime notify_comment OU reaction count≠2. DECISÃO: default de preferências de notificação",
         "empty-locality :129 (×4) — membro-vazia@ existe, mas seed não tem 2ª localidade de baixa densidade (Task 10 Step 3). BLOQUEADO em seed",
-        "Rodar suíte E2E serialmente após cada decisão de produto/R3 — confirmar 0 falhas funcionais"
+        "Rodar suíte E2E serialmente após cada decisão de produto/R3 — confirmar 0 falhas funcionais",
+        "photo-upload :9 (desktop-1440) — entrante em 28/08 sobre diff de documentação. Classificar: intermitente ou defeito real de main. Não confundir com os oito acima até haver repetição"
       ],
       "proof": [
         "Suíte E2E 2026-08-23 (pós-Edits A-E + loop preauth + teste 7 família): 34 failed / 550 passed (serial)",
@@ -1233,7 +1234,8 @@
         "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente.",
         "2026-08-28, PR #35: group-admin-cycle:103 tem DOIS modos de falha e segue intermitente. head 8ded62c falhou só no mobile-375 (insert ok, botão não trocou a tempo — corrida de revalidação); head 51fd42a passou; head f0f2e70 falhou nos três (a linha nunca ficou visível, e 2º e 3º viewport herdaram a ausência porque os três projetos do Playwright dividem o MESMO banco: uma falha no primeiro cascateia). A branch task-3-run-003 passou a suíte inteira às 00:29Z no mesmo dia — logo NÃO é negação determinística de política",
         "Fixture verificado e íntegro: o grupo 60000000-...-006 existe no seed (índice 6, 'Mães da Cidade'), é visibility='private' e locality Manaus (seed.sql:641,657). A falha não é fixture ausente",
-        "group_memberships_select pós-20260825143505 concede self-visibility incondicional por status — logo a leitura da própria pendência não é o bloqueio. Restam o INSERT (is_locality_member) e o caminho de app"
+        "group_memberships_select pós-20260825143505 concede self-visibility incondicional por status — logo a leitura da própria pendência não é o bloqueio. Restam o INSERT (is_locality_member) e o caminho de app",
+        "2026-08-28, head 1a463df (run 33202524772): 2 failed / 4 skipped / 591 passed em 9,5 min sobre um diff SÓ de documentação — um contrato em docs/agents/tasks/ e cinco linhas em board.json, zero código de produto. Os vermelhos foram group-admin-cycle:103 (mobile-375) e photo-upload.spec.ts:9 (desktop-1440, input[type=\"file\"] não encontrado). photo-upload:9 é ENTRANTE: não está entre os oito testes desta lista nem na série anterior. O conjunto instável admite membros novos sobre código intocado — classificar photo-upload:9 como intermitente ou como defeito real de main é trabalho do contrato HRN-003, não conclusão desta linha."
       ],
       "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
       "links": [
@@ -1241,7 +1243,7 @@
         "Seed UUIDs | ../../supabase/seed.sql"
       ],
       "updatedAt": "2026-08-28",
-      "sourceRevision": "f0f2e70",
+      "sourceRevision": "1a463df",
       "dependencies": []
     },
     {

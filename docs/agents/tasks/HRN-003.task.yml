@@ -50,6 +50,19 @@ baseline:
     o padrão do Playwright no runner da CI. Medir isso faz parte deste contrato, porque
     execução paralela sobre um banco compartilhado explicaria as duas séries sem que exista
     defeito nenhum nos testes que ficaram vermelhos.
+    QUINTA MEDIÇÃO, produzida pela CI DESTE contrato e a mais limpa da série: head 1a463df,
+    run 33202524772, job 98955262456, 28/08 — 2 failed, 4 skipped, 591 passed em 9,5 min. O
+    diff desse head é UM contrato em docs/agents/tasks/ e cinco linhas em board.json: nenhuma
+    linha de código de produto, nenhum spec, nenhuma migration. Os dois vermelhos foram
+    group-admin-cycle.spec.ts:103 em mobile-375 (o de sempre) e photo-upload.spec.ts:9 em
+    desktop-1440 — "the composer has a file picker for photos", input[type="file"] não
+    encontrado em 5s.
+    photo-upload:9 é ENTRANTE: não aparece na série anterior nem entre os oito testes que o
+    card MVP-00-E2E-FUNCTIONAL ainda lista. Ou seja, o conjunto dos vermelhos não é só
+    instável em quais falham — ele admite membros novos sobre código de produto intocado.
+    Isto não decide se photo-upload:9 é intermitente ou defeito real já presente em main;
+    decidir isso é trabalho deste contrato, e a distinção não pode ser feita enquanto a
+    suíte não repetir o próprio resultado.
 
 allowed_paths:
   - tests/e2e/
