@@ -1,0 +1,60 @@
+# Primeira fatia do card MVP-03-COMMUNITY. O card tem cinco itens e nenhum fechado;
+# cada um vira contrato próprio, com o risco da sua área. Este é o mais estreito e o
+# mais verificável: um defeito de fio, achado por leitura, com fronteira de um arquivo.
+
+task_id: RUN-003
+
+objective: >
+  Um convite de evento passa a respeitar a escolha de quem vai recebê-lo: quem desligou
+  o aviso de eventos deixa de receber convite por esse canal, e quem manteve ligado
+  continua recebendo — em vez de o convite ser entregue sempre, como acontece hoje.
+
+authority:
+  - tools/backend-kanban/BOARD.md — card MVP-03-COMMUNITY, item "Reconciliar event_invite com preferenceKey() no outbox"
+  - docs/BIVAQUE.md §Comunidade e eventos
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Leitura do código no head 5d87985. Em apps/web/app/api/internal/outbox/route.ts a
+    função preferenceKey (linhas 42-48) mapeia quatro tipos — comment, event_rsvp,
+    event_change e direct_message — e devolve null para qualquer outro. Na linha 164 o
+    gate de preferência é `return key === null || preference[key]`: um tipo não mapeado
+    passa direto, sem consultar preferência nenhuma.
+    `event_invite` é um tipo real e não está no mapa: apps/web/lib/outbox/adapters.ts:89
+    tem o case que monta assunto e corpo dele, e a migration 20260821000009 documenta o
+    tipo como texto livre `event_invite`. Efeito: o convite de evento é entregue mesmo a
+    quem desligou o aviso de eventos.
+    A defasagem não foi observada em runtime — nenhum teste exercita esse caminho hoje.
+    Medir antes de corrigir faz parte deste contrato.
+
+allowed_paths:
+  - apps/web/app/api/internal/outbox/
+  - tests/unit/
+
+forbidden:
+  - mudar o comportamento dos quatro tipos já mapeados
+  - ampliar para outros tipos não mapeados sem evidência de que cada um tem o mesmo defeito
+  - resolver os outros quatro itens do card MVP-03-COMMUNITY aqui — cada um é contrato próprio
+  - tratar o padrão para tipo desconhecido como detalhe de implementação — ele vira decisão explícita
+
+acceptance:
+  - o convite de evento deixa de ser entregue a quem desligou o aviso de eventos
+  - quem manteve o aviso ligado continua recebendo o convite
+  - o padrão para um tipo ainda não mapeado fica declarado no código, com o motivo escrito, em vez de decorrer por acidente
+  - existe teste negativo e positivo para o convite de evento, e os quatro tipos antigos seguem como estavam
+
+proof:
+  - npx pnpm@11.18.0 test:unit
+  - npx pnpm@11.18.0 gate
+
+risk: notificação entregue contra a escolha do destinatário
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

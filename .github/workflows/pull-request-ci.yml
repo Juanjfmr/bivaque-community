@@ -59,10 +59,6 @@ jobs:
       # that are needed later with bounded backoff while the failure is still
       # attributable to the registry pull. Once present, the dependent steps
       # use Docker's local cache instead of pulling concurrently with tests.
-      #
-      # Portado do PR #34 (fix(ci): retry Supabase image pulls) enquanto ele não
-      # entra na main: `supabase test db` morreu com `toomanyrequests` puxando
-      # pg_prove:3.36 no PR #37. Vira no-op quando a base carregar o mesmo passo.
       - name: Warm Supabase test images
         shell: bash
         run: |
