@@ -1278,26 +1278,23 @@
       "phase": "Governança",
       "priority": "P1",
       "category": "governance",
-      "status": "blocked",
+      "status": "repo",
       "description": "O check \"Claude Code review (DeepSeek V4 Pro)\" falha em TODO PR desde 2026-08-24 e ninguém percebeu, porque ele falha igual em todos. A arquitetura de agentes exige revisor independente do implementador (AGENTS.md §Agents); enquanto o check está morto, esse papel não existe na CI e todo PR mergeado desde então entrou sem ele.",
       "checklist": [
-        "Descobrir por que a chamada a api.deepseek.com/anthropic morre em ~900ms sem consumo — chave DEEPSEEK_API_KEY revogada, sem crédito, ou modelo deepseek-v4-pro não mais aceito no endpoint",
-        "Decidir provedor: renovar a chave DeepSeek ou trocar a rota do revisor (decisão do dono — custa dinheiro e escolhe fornecedor)",
-        "Fazer o check falhar ALTO: hoje ele reprova em silêncio e vira ruído aceito; um revisor que nunca revisa e sempre reprova ensina a ignorá-lo",
-        "Confirmar com um PR real que o revisor volta a postar parecer, não só a sair verde"
+        "Confirmar com execução real que o revisor volta a POSTAR parecer, não só a sair verde — job curto demais e modelUsage vazio é a assinatura de que ele não revisou nada",
+        "Separar no workflow \"revisor não conseguiu rodar\" de \"revisor rodou e pediu mudanças\": hoje os dois são o mesmo X vermelho, e foi por isso que 18 falhas passaram por 4 dias sem ninguém olhar",
+        "Decidir se PR mergeado entre 24/08 e 28/08 precisa de revisão retroativa — nenhum passou pelo revisor independente que a arquitetura exige"
       ],
       "proof": [
         "2026-08-28: 18 execuções consecutivas do workflow claude-review.yml em FALHA, em 8 branches sem relação entre si (dependabot, fix/ci-e2e-operator-password, fix/types-regenerate-complete-event, task-1-ci-image-pulls, task-3-run-003, claude/lgpd-terms-conditions, claude/generic-saas-design, claude/codex-execution-contract). Último sucesso: 2026-08-22T16:29Z no head 6e82a01",
         "Assinatura do log (job 98955262436, head 1a463df): {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":929,\"num_turns\":1,\"total_cost_usd\":0,\"modelUsage\":{}} — o modelo nunca produziu turno nem consumo; a chamada é rejeitada na entrada",
         ".github/workflows/claude-review.yml não mudou desde 6e82a01, o mesmo head do último sucesso — logo a causa está fora do repositório: a chave secrets.DEEPSEEK_API_KEY ou o endpoint api.deepseek.com/anthropic",
-        "Nenhum card cobria isto antes de 2026-08-28 (busca por \"review\", \"deepseek\" e \"claude-review\" no board)"
-      ],
-      "blockers": [
-        "Chave DEEPSEEK_API_KEY válida, ou decisão do dono sobre trocar o provedor do revisor"
+        "Nenhum card cobria isto antes de 2026-08-28 (busca por \"review\", \"deepseek\" e \"claude-review\" no board)",
+        "2026-08-28, reativação: o dono informou que o DeepSeek voltou a ficar ativo. O bloqueio externo cai, mas a volta do check NÃO está confirmada por execução — a última tentativa, no head 660d426 às 19:12Z, ainda falhou com a mesma assinatura. Re-run direto do job foi negado (HTTP 403, sem permissão de rerun-failed-jobs), então a confirmação vem do próximo evento de pull_request no branch."
       ],
       "links": ["Papéis e independência do revisor | ../../docs/agents/AGENT_ARCHITECTURE.md"],
       "updatedAt": "2026-08-28",
-      "sourceRevision": "1a463df",
+      "sourceRevision": "660d426",
       "dependencies": []
     }
   ]

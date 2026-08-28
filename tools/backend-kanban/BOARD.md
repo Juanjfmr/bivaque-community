@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 46 frentes · 2 agora · 7 bloqueadas · 20 concluídas · 2 drifts
+**Mapa:** 46 frentes · 2 agora · 6 bloqueadas · 20 concluídas · 2 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -23,7 +23,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **BLOCK-LEGAL-AI** · BLOCK · Governança LGPD para IA e terceiros — Revisão jurídica; Decisões do dono
 - **BLOCK-RESEND** · BLOCK · Resend e domínio de e-mail transacional — Criar o projeto de deploy do Bivaque e configurar RESEND_API_KEY e RESEND_FROM_EMAIL; Provar uma entrega real pelo outbox em ambiente implantado
 - **BLOCK-WHATSAPP** · BLOCK · Canal WhatsApp do outbox — Chip dedicado; CNPJ para Cloud API futura; Decisão de produto
-- **REPO-REVIEW-CHECK-DEAD** · P1 · Revisor adversarial da CI morto desde 24/08 — Chave DEEPSEEK_API_KEY válida, ou decisão do dono sobre trocar o provedor do revisor
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Decisão R3 humana
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança
 
@@ -36,6 +35,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 - **REPO-SECRETS-ROTATION** · P0 · Rotação de chaves Portal e Resend
 - **DRIFT-STATUS-RECONCILIATION** · P1 · Reconciliar documentação com runtime após cada ciclo
+- **REPO-REVIEW-CHECK-DEAD** · P1 · Revisor adversarial da CI morto desde 24/08
 
 ## Comandos
 
