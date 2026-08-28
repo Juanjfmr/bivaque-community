@@ -1,0 +1,65 @@
+# Achado de execução: o arquivo de tipos gerado ficou para trás das migrations que
+# entraram no main. O passo `Check generated types drift` da CI é determinístico e
+# roda ANTES de banco, pgTAP e E2E — então tudo depois dele é pulado, e todo PR do
+# repositório herda o vermelho. Não é falha de nenhum PR em particular: é do main.
+
+task_id: RUN-001
+
+objective: >
+  O arquivo supabase/database.generated.ts volta a descrever as funções que existem
+  de fato no schema public, de modo que `pnpm generate:types` seguido de
+  `git diff --exit-code` não produza saída — e a CI passe do passo de drift para os
+  passos de banco e de E2E, que hoje nem chegam a executar.
+
+authority:
+  - AGENTS.md §Supabase — tipos do cliente, somente o schema public
+  - .github/workflows/pull-request-ci.yml §Check generated types drift
+  - execução da CI 32741062495 (job 97475371836)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Run 32741062495, job 97475371836, passo 14 "Check generated types drift", 24/08
+    14:53Z, head f946b935 (PR do dependabot, base main). O passo saiu com exit code 1
+    e imprimiu o diff do gerador. Duas entradas defasadas: complete_event ganhou
+    p_caller_user_id (migration 20260822015000_fix_complete_event_caller.sql) e
+    decide_verification_document ganhou p_operator_user_id (migration
+    20260821000040_decide_verification_document_fix.sql). Confirmado no arquivo
+    versionado em origin/main — linha 1373 ainda diz
+    `complete_event: { Args: { p_event_id: string }; Returns: undefined }`.
+    Os passos 15 a 20 (reset, test:db, db:lint, playwright, E2E) ficaram skipped.
+
+allowed_paths:
+  - supabase/database.generated.ts
+
+forbidden:
+  - editar o arquivo à mão — ele é saída de gerador, e o gerador é a única fonte
+  - gerar qualquer schema além de public, em especial o schema private
+  - alterar migration já aplicada para fazer a assinatura casar com o arquivo velho
+  - relaxar, condicionar ou remover o passo de drift do workflow da CI
+  - rodar dev server ou captura visual entre db:reset e test:db
+
+acceptance:
+  - rodar o gerador sobre um banco com todas as migrations aplicadas não deixa diff
+  - a entrada de complete_event traz p_caller_user_id além de p_event_id
+  - a entrada de decide_verification_document traz p_operator_user_id além dos três argumentos antigos
+  - o arquivo cobre apenas o schema public, como o script de geração já determina
+  - o diff da tarefa toca um arquivo só, e é saída literal do gerador
+
+proof:
+  - npx pnpm@11.18.0 exec supabase start
+  - npx pnpm@11.18.0 db:reset
+  - npx pnpm@11.18.0 generate:types
+  - git diff --exit-code -- supabase/database.generated.ts
+  - npx pnpm@11.18.0 gate
+
+risk: drift de artefato gerado
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -1,0 +1,82 @@
+# Último teste vermelho da suíte E2E. A migration que deveria ter fechado este ciclo
+# existe e está aplicada — e o ciclo continua aberto. O trabalho é descobrir por quê,
+# não repetir o conserto que já foi tentado.
+
+task_id: RUN-002
+
+objective: >
+  Quem pede entrada num grupo privado passa a ver o próprio pedido pendente ao carregar
+  a página do grupo, com o botão de cancelar no lugar do de pedir, nas três viewports —
+  fechando o ciclo do solicitante, que hoje reabre o formulário e leva o usuário a um
+  segundo clique que colide com o pedido que ele já tem.
+
+authority:
+  - tools/backend-kanban/BOARD.md — card MVP-00-E2E-FUNCTIONAL
+  - supabase/migrations/20260825143505_group_membership_self_visible.sql (cabeçalho)
+  - execução da CI 33100302083
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Run 33100302083, job 98615901132, passo 20, head 5d87985, 27/08. A suíte inteira
+    rodou em 10,4 min: 3 failed, 4 skipped, 590 passed de 597. As três falhas são o
+    mesmo teste nas três viewports — tests/e2e/group-admin-cycle.spec.ts:103 "a pending
+    member can cancel their request" — com timeout de 15s em
+    getByRole('button', { name: /Cancelar pedido/i }), "element(s) not found", na linha 122.
+    É o único teste vermelho da suíte. No head anterior 3d1f087 eram 10 falhas em 4 testes;
+    a onda G fechou os outros três.
+    SEGUNDA MEDIÇÃO, e ela muda a natureza do achado: run 33116131360, job 98671125223,
+    head 3cb3fb1, mesmo dia — 1 failed, 4 skipped, 592 passed de 597, e a única falha foi
+    em mobile-375. A diferença entre 5d87985 e 3cb3fb1 são dois arquivos YAML de contrato,
+    nenhuma linha de código. Logo o teste é INTERMITENTE: três viewports numa execução,
+    uma na seguinte, sem mudança que explique. Quem tratar isto como falha determinística
+    vai "consertar", ver verde uma vez e fechar em cima de sorte.
+    QUARTA MEDIÇÃO, e ela fecha a série: run 33123112542, head b54f2d1 (o branch da
+    correção de pull de imagem, que não toca produto), 27/08 22:49Z — "4 skipped /
+    593 passed" em 8,9 min, ZERO falhas de 597. O group-admin-cycle:103 passou nas três
+    viewports. E playwright.config.ts não define `retries`, então o default é 0: foram
+    593 passagens de primeira, sem repetição escondendo nada.
+    A série completa, sobre código de produto idêntico: 5d87985 → 3 falhas | 3cb3fb1 →
+    1 falha | b54f2d1 → 0 falhas. Um head verde NÃO fecha este contrato — é o terceiro
+    ponto de uma distribuição, não prova de conserto. Quem vier depois precisa explicar
+    a variação, e a prova continua sendo --repeat-each=5 nas três viewports.
+    O ponto que exige diagnóstico e não repetição: a migration 20260825143505 descreve
+    exatamente este sintoma no próprio cabeçalho e afirma tê-lo corrigido com uma regra de
+    auto-visibilidade. Ela está aplicada. O ciclo continua sem fechar.
+
+allowed_paths:
+  - apps/web/app/(shell)/groups/
+  - tests/e2e/group-admin-cycle.spec.ts
+
+forbidden:
+  - marcar o teste como fixme ou skip, aumentar o timeout ou remover asserção para fechar
+  - alterar migration já aplicada
+  - PARAR e abrir contrato próprio se a causa raiz exigir mudar regra de acesso no banco — é R3 e exige ADR aprovado
+  - rodar dev server ou captura visual entre db:reset e test:db (perfil fantasma do .visual/)
+
+acceptance:
+  - o solicitante vê o próprio pedido pendente ao carregar a página, sem depender de clicar antes
+  - o caminho triste continua valendo — quem não pediu nada segue vendo o botão de pedir
+  - o diagnóstico nomeia por que a auto-visibilidade de 20260825143505 não fechou o ciclo
+  - o diagnóstico explica a intermitência — por que três viewports num head e uma no seguinte, sem mudança de código
+  - o teste passa em cinco repetições seguidas nas três viewports, não numa passagem isolada
+  - nenhuma asserção do spec foi enfraquecida para o teste passar
+  - a suíte E2E completa fecha com zero falhas
+
+proof:
+  - npx pnpm@11.18.0 db:reset
+  - npx pnpm@11.18.0 exec playwright test tests/e2e/group-admin-cycle.spec.ts
+  - npx pnpm@11.18.0 exec playwright test tests/e2e/group-admin-cycle.spec.ts --repeat-each=5
+  - npx pnpm@11.18.0 test:e2e
+  - npx pnpm@11.18.0 gate
+
+risk: visibilidade do próprio pedido em grupo privado
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
