@@ -1082,7 +1082,7 @@
     },
     {
       "id": "G-TASK-1",
-      "title": "Founda��o conta de prestador (T1)",
+      "title": "Fundação conta de prestador (T1)",
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
@@ -1102,7 +1102,7 @@
       ],
       "tests": ["provider-account-boundary.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-08-28",
       "sourceRevision": "8713635",
       "dependencies": ["MVP-02-AUTHZ"],
       "completedAt": "2026-08-22"
@@ -1230,7 +1230,7 @@
     },
     {
       "id": "G-TASK-6",
-      "title": "Conversa membro ? prestador (T6)",
+      "title": "Conversa membro ↔ prestador (T6)",
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
@@ -1238,7 +1238,7 @@
       "description": "Correção dos três defeitos de DM (ordem do par no servidor, bloqueio bidirecional, contexto conferido) mais a extensão de prestador. Só o membro inicia conversa.",
       "checklist": [
         "open_conversation ordena par no servidor",
-        "dm_blocked_either_way impede bloqueio contorn�vel",
+        "dm_blocked_either_way impede bloqueio contornável",
         "valida contexto compartilhado",
         "PENDENTE: este card não toca tela e não entra na auditoria do Task 9 Step 2. O que o segura é a aresta declarada para G-TASK-3, que o modelo do board só considera satisfeita quando o dependente está `done` (selectNextCard exige status === 'done'). Alternativa que o dono pode preferir: remover a aresta, já que a extensão de DM precisa da tabela provider_profiles — artefato de backend do G-TASK-3, implementado e coberto por pgTAP — e não da tela que falta auditar. Remover aresta de dependência é decisão de modelagem, não do agente"
       ],

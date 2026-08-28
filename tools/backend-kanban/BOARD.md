@@ -33,7 +33,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **G-TASK-3** · P1 · Ficha de prestador (T3) — Rodar a auditoria visual da vitrine e registrá-la; só então o card fecha. Nenhuma implementação de backend pendente.
 - **G-TASK-4** · P1 · Painel do prestador (T4) — Rodar a auditoria visual da vitrine e registrá-la; só então o card fecha. Nenhuma implementação de backend pendente.
 - **G-TASK-5** · P1 · Busca por categoria e nome (T5) — Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência.
-- **G-TASK-6** · P1 · Conversa membro ? prestador (T6) — Fechar G-TASK-3 pela auditoria visual — o que fecha este junto —, ou o dono decide remover a aresta por ela apontar para o backend do G-TASK-3, que já está provado.
+- **G-TASK-6** · P1 · Conversa membro ↔ prestador (T6) — Fechar G-TASK-3 pela auditoria visual — o que fecha este junto —, ou o dono decide remover a aresta por ela apontar para o backend do G-TASK-3, que já está provado.
 - **BLOCK-LEGAL-ENTRY** · BLOCK · Textos legais da entrada prontos para aceite — Reconciliar a tabela de operadores de PRIVACIDADE.md com a dos Termos na mesma revisão jurídica, antes de qualquer publicação — dois documentos do mesmo acordo declarando compartilhamentos diferentes é exatamente a contradição que vira sanção.
 
 ## Triagem prioritária
