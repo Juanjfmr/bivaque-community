@@ -33,9 +33,10 @@ flowchart LR
   ANY --> GRP01["GRP-01<br/>Grupos"]
   ANY --> ME01["ME-01<br/>Perfil"]
   ANY --> REC01["REC-01<br/>Indicações"]
+  ANY --> NOT01["NOT-01<br/>Notificações"]
 ```
 
-`NOT-01` não entra neste conjunto porque o controle de Notificações no shell atual é um botão sem navegação.
+As seis arestas seguras acima entram no gate `tests/e2e/product-page-map-navigation.spec.ts`, executado pelos três projetos Playwright (375/768/1440).
 
 ## 3. Cidade
 

@@ -11,6 +11,10 @@ scope:
   - modal-only states
   runtime_note: Evidência estática identifica rotas e defeitos de navegação; candidatos permanecem candidatos até prova
     em browser.
+automation:
+  static_gate: tests/scope/product-page-map.test.mjs
+  runtime_gate: tests/e2e/product-page-map-navigation.spec.ts
+  policy: O gate estático bloqueia drift estrutural; o runtime prova apenas arestas seguras declaradas por persona.
 section_prefixes:
   PUB: public
   AUTH: auth
@@ -36,7 +40,8 @@ navigation_profiles:
     - GRP-01
     - ME-01
     - REC-01
-    note: Quatro containers primários + Indicações no header. Notificações fica fora porque o controle atual não navega.
+    - NOT-01
+    note: Quatro containers primários + Indicações e Notificações no header.
   provider_shell:
     inherited_exits:
     - PRO-01
@@ -251,7 +256,6 @@ pages:
   file: apps/web/app/(shell)/notifications/page.tsx
   access: member
   navigation_profile: member_shell
-  inbound_status: broken_affordance
 - id: PRO-01
   section: provider_portal
   name: Painel do prestador
@@ -445,8 +449,8 @@ audit_flags:
   severity: high
   type: dead_control
   page: NOT-01
-  status: confirmed_static
-  summary: O controle Notificações no AppShell é um button sem href/onPress/onClick; a rota /notifications existe.
+  status: resolved_static_runtime_pending
+  summary: O AppShell agora expõe Notificações como link para /notifications; a aresta entra no gate Playwright.
 - id: NAV-002
   severity: medium
   type: orphan_candidate
