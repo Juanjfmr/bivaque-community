@@ -13,7 +13,6 @@ import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedComposer } from "../../components/bivaque/feed-composer"
 import { CreatePostModal, FeedPost } from "../../components/bivaque/feed-post"
 import { FeedRightRail } from "../../components/bivaque/feed-right-rail"
-import { GroupsIllustration } from "../../components/bivaque/illustrations"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
@@ -322,7 +321,10 @@ export default function CommunityPage() {
               beginning. The threshold is the locality member count, not Manaus. */}
               {!loading && !error && posts.length === 0 && (
                 <EmptyState
-                  illustration={<GroupsIllustration />}
+                  image={{
+                    src: "/landing/friends-gathering.jpg",
+                    alt: "Pessoas reunidas em volta de uma mesa ao ar livre, no fim da tarde",
+                  }}
                   title={
                     isLocalityStale(memberCount)
                       ? "Você é dos primeiros aqui."

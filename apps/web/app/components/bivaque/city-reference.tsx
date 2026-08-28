@@ -29,7 +29,6 @@ import { useCallback, useEffect, useState } from "react"
 import { type LocalityCurrent, useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "./empty-state"
-import { ShowcaseIllustration } from "./illustrations"
 import { Skeleton } from "./skeleton"
 
 interface EventItem {
@@ -248,7 +247,10 @@ export function CityReference({
           <p className="mt-3 text-sm text-[var(--danger)]">{providersError}</p>
         ) : providers.length === 0 ? (
           <EmptyState
-            illustration={<ShowcaseIllustration />}
+            image={{
+              src: "/landing/hero-bivaque-community.webp",
+              alt: "Rua de bairro no início da noite, com moradores conversando na calçada",
+            }}
             title="Ainda não há prestadores cadastrados por aqui."
             description="Quando membros das vilas indicarem prestadores de confiança, eles aparecem nesta vitrine."
           />
