@@ -1,0 +1,207 @@
+version: 1
+status: NOT_ASSESSED
+baseline_page_map: 39457a00118009641027cb0d998bc252d3cab2d1
+scoring:
+  scale:
+    0: ABSENT
+    1: WEAK
+    2: FUNCTIONAL
+    3: POLISHED
+    4: PREMIUM
+  non_numeric: [NOT_ASSESSED, OUT_OF_SCOPE_INTENTIONAL]
+  classification:
+    PREMIUM-CANDIDATE: ">=85"
+    STRONG: "70-84.99"
+    FUNCTIONAL: "50-69.99"
+    BELOW-PREMIUM: "<50"
+  rule: criteria are equally weighted inside each pillar unless explicitly revised before assessment
+hard_gates:
+  - id: HG-01
+    statement: no open BLOCKER in Page Readiness
+    status: NOT_ASSESSED
+  - id: HG-02
+    statement: no open HIGH affecting primary navigation, trust/privacy, accessibility, or core-flow performance
+    status: NOT_ASSESSED
+  - id: HG-03
+    statement: all three perception gates PASS-EVIDENCED
+    status: NOT_ASSESSED
+  - id: HG-04
+    statement: every pillar reaches at least 70/100
+    status: NOT_ASSESSED
+  - id: HG-05
+    statement: core mobile journeys are evidenced
+    status: NOT_ASSESSED
+  - id: HG-06
+    statement: core loading/error/empty states do not create false emptiness, raw-error leakage, or abandonment without guidance
+    status: NOT_ASSESSED
+  - id: HG-07
+    statement: moderation, reporting, and trust affordances are findable and understandable for applicable roles
+    status: NOT_ASSESSED
+perception_gates:
+  - id: PG-01
+    name: Findability
+    statement: É fácil encontrar o que preciso.
+    status: NOT_ASSESSED
+  - id: PG-02
+    name: Participation value
+    statement: Vale a pena participar.
+    status: NOT_ASSESSED
+  - id: PG-03
+    name: Trust and care
+    statement: Este ambiente é confiável e bem cuidado.
+    status: NOT_ASSESSED
+pillars:
+  - id: P1
+    name: Visual e marca
+    weight: 20
+    score: NOT_ASSESSED
+    criteria:
+      - id: PRM-001
+        name: Identidade visual consistente
+        audit_type: cross-cutting
+        targets: [ALL]
+        score: NOT_ASSESSED
+      - id: PRM-018
+        name: Microinterações e feedback visual
+        audit_type: cross-cutting
+        targets: [ALL]
+        score: NOT_ASSESSED
+      - id: PRM-022
+        name: Ausência de poluição visual
+        audit_type: cross-cutting
+        targets: [ALL]
+        score: NOT_ASSESSED
+  - id: P2
+    name: Usabilidade e navegação
+    weight: 25
+    score: NOT_ASSESSED
+    criteria:
+      - id: PRM-003
+        name: Navegação simples e previsível
+        audit_type: journey
+        targets: [PUB-01, AUTH-01, AUTH-02, ONB-01, ONB-02, ONB-03, ONB-04, LOC-01, COM-01, GRP-01, ME-01, PRO-01, ADM-01, OWN-01]
+        score: NOT_ASSESSED
+      - id: PRM-008
+        name: Busca avançada e descoberta
+        audit_type: capability-level
+        targets: [COM-01, COM-02, REC-01, GRP-01, ME-02, EVT-01]
+        score: NOT_ASSESSED
+      - id: PRM-010
+        name: Onboarding de alta qualidade
+        audit_type: journey
+        targets: [AUTH-02, AUTH-04, ONB-01, ONB-02, ONB-03, ONB-04]
+        score: NOT_ASSESSED
+      - id: PRM-016
+        name: Excelente experiência mobile
+        audit_type: cross-cutting
+        targets: [ALL]
+        score: NOT_ASSESSED
+      - id: PRM-023
+        name: Estados vazios bem trabalhados
+        audit_type: cross-cutting
+        targets: [COM-01, COM-02, GRP-01, EVT-01, REC-01, MSG-01, NOT-01, ADM-02, ADM-03, ADM-04]
+        score: NOT_ASSESSED
+  - id: P3
+    name: Engajamento e comunidade
+    weight: 20
+    score: NOT_ASSESSED
+    criteria:
+      - id: PRM-004
+        name: Perfis de membros completos
+        audit_type: page-local
+        targets: [ME-01, ME-02, ME-03]
+        score: NOT_ASSESSED
+      - id: PRM-005
+        name: Reputação e reconhecimento
+        audit_type: capability-level
+        targets: [ME-01, ME-02, COM-01, GRP-02]
+        score: NOT_ASSESSED
+      - id: PRM-006
+        name: Feed de comunidade bem estruturado
+        audit_type: page-local
+        targets: [COM-01]
+        score: NOT_ASSESSED
+      - id: PRM-007
+        name: Grupos ou espaços temáticos
+        audit_type: journey
+        targets: [GRP-01, GRP-02]
+        score: NOT_ASSESSED
+      - id: PRM-012
+        name: Eventos integrados
+        audit_type: journey
+        targets: [EVT-01, EVT-02, LOC-01]
+        score: NOT_ASSESSED
+      - id: PRM-013
+        name: Mensagens e networking
+        audit_type: capability-level
+        targets: [MSG-01, ME-02, PRV-01, COM-03]
+        score: NOT_ASSESSED
+  - id: P4
+    name: Personalização e exclusividade
+    weight: 20
+    score: NOT_ASSESSED
+    criteria:
+      - id: PRM-002
+        name: Homepage ou dashboard personalizado
+        audit_type: journey
+        targets: [COM-01, LOC-01, ONB-04]
+        score: NOT_ASSESSED
+      - id: PRM-009
+        name: Notificações inteligentes
+        audit_type: capability-level
+        targets: [NOT-01, ME-01]
+        score: NOT_ASSESSED
+      - id: PRM-011
+        name: Conteúdo ou benefícios exclusivos
+        audit_type: capability-level
+        targets: [LOC-02, REC-01, COM-03, GRP-02, EVT-02]
+        score: NOT_ASSESSED
+      - id: PRM-014
+        name: Gamificação elegante
+        audit_type: capability-level
+        targets: [ME-01, ME-02, COM-01, GRP-02]
+        score: NOT_ASSESSED
+      - id: PRM-015
+        name: Personalização
+        audit_type: capability-level
+        targets: [ME-03, COM-01, REC-01, LOC-01, NOT-01]
+        score: NOT_ASSESSED
+      - id: PRM-024
+        name: Métricas e progresso do membro
+        audit_type: capability-level
+        targets: [ME-01, ME-02]
+        score: NOT_ASSESSED
+  - id: P5
+    name: Confiança, acessibilidade e performance
+    weight: 15
+    score: NOT_ASSESSED
+    criteria:
+      - id: PRM-017
+        name: Acessibilidade
+        audit_type: cross-cutting
+        targets: [ALL]
+        score: NOT_ASSESSED
+      - id: PRM-019
+        name: Segurança e confiança
+        audit_type: cross-cutting
+        targets: [ALL]
+        score: NOT_ASSESSED
+      - id: PRM-020
+        name: Suporte Premium
+        audit_type: capability-level
+        targets: [PUB-01, AUTH-01, AUTH-02, ME-01]
+        score: NOT_ASSESSED
+      - id: PRM-021
+        name: Performance
+        audit_type: cross-cutting
+        targets: [ALL]
+        score: NOT_ASSESSED
+      - id: PRM-025
+        name: Moderação profissional
+        audit_type: capability-level
+        targets: [ADM-04, COM-03, OWN-01, OWN-02, OWN-03, OWN-04]
+        score: NOT_ASSESSED
+result:
+  weighted_score: NOT_ASSESSED
+  classification: NOT_ASSESSED
+  premium_evidenced: false

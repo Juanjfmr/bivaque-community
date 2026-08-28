@@ -1,6 +1,6 @@
 # Bivaque — auditoria de todas as páginas
 
-Esta pasta executa a auditoria de conformidade página a página do runtime atual do Bivaque.
+Esta pasta executa a auditoria de conformidade página a página do runtime atual do Bivaque e uma avaliação transversal de maturidade Premium.
 
 ## Autoridade
 
@@ -12,6 +12,30 @@ A auditoria **não cria um novo design system**. Ela aplica, nesta ordem:
 4. runtime real: browser, screenshots, testes e fonte, conforme o tipo de afirmação.
 
 O runtime é evidência, não autoridade. Uma implementação existente não passa porque já existe.
+
+## Duas camadas de auditoria
+
+### 1. Page Readiness
+
+Avalia cada uma das 40 páginas individualmente. O objetivo é responder: **esta tela e seus estados estão corretos, utilizáveis e conformes?**
+
+Vereditos: `READY`, `CONDITIONAL`, `NOT_READY`, `NOT_AUDITED`.
+
+### 2. Premium Maturity
+
+Avalia o Bivaque como experiência integrada. O objetivo é responder: **o produto transmite qualidade, confiança, exclusividade, facilidade de uso e valor de participação suficientes para uma percepção Premium?**
+
+Esta camada usa os cinco pilares e pesos definidos para a auditoria:
+
+- Visual e marca — 20%;
+- Usabilidade e navegação — 25%;
+- Engajamento e comunidade — 20%;
+- Personalização e exclusividade — 20%;
+- Confiança, acessibilidade e performance — 15%.
+
+A especificação completa fica em `PREMIUM_ASSESSMENT.md` e o estado machine-readable em `PREMIUM_SCORECARD.yaml`.
+
+**A pontuação Premium nunca substitui o veredito de uma página.** Um `BLOCKER` ou `HIGH` material não pode ser compensado por boa estética ou por média alta em outros critérios.
 
 ## Universo
 
@@ -74,7 +98,7 @@ Use somente:
 - `NOT_READY` — ao menos um BLOCKER/HIGH ou ausência de prova em dimensão crítica;
 - `NOT_AUDITED` — auditoria ainda não executada.
 
-Não existe média numérica: um único blocker não pode ser compensado por nove dimensões bonitas.
+Não existe média numérica para Page Readiness: um único blocker não pode ser compensado por nove dimensões bonitas.
 
 ## Evidência mínima
 
@@ -86,7 +110,8 @@ Para uma página ser considerada auditada:
 - tarefa principal exercida até feedback/landed state;
 - estados alternativos aplicáveis exercidos ou marcados `NOT_OBSERVED`;
 - keyboard/focus testado quando houver controle composto, modal, formulário ou navegação relevante;
-- achados registrados com Page ID, regra violada, evidência e critério de fechamento.
+- achados registrados com Page ID, regra violada, evidência e critério de fechamento;
+- critérios `PRM-*` relacionados recebem evidência ou permanecem explicitamente `NOT_ASSESSED`.
 
 Screenshots sozinhos não provam interação, keyboard, focus, autorização ou recoverability.
 
@@ -94,6 +119,8 @@ Screenshots sozinhos não provam interação, keyboard, focus, autorização ou 
 
 - `AUDIT_MATRIX.yaml` — estado e veredito de todas as páginas;
 - `FINDINGS.md` — ledger de achados concretos;
+- `PREMIUM_ASSESSMENT.md` — método e critérios da avaliação Premium;
+- `PREMIUM_SCORECARD.yaml` — 25 critérios Premium, cinco pilares, pesos, evidência e classificação;
 - futuros relatórios por onda em `waves/`;
 - screenshots/traces ficam como artifacts do Playwright, não como autoridade normativa no repo.
 
