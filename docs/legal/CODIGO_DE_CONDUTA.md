@@ -1,7 +1,18 @@
-# Código de conduta
+---
+id: codigo-de-conduta
+version: 1
+status: draft
+review_blocker: BLOCK-LEGAL-ENTRY
+updated_at: 2026-08-11
+pending:
+  - assinatura do dono — é este texto que justifica suspender alguém
+note: >
+  Rascunho. Precisa da revisão do dono antes de virar aceite, porque é este texto que
+  justifica suspender alguém. O front matter não é renderizado na tela de consentimento:
+  a nota de revisão vive aqui, e não dentro do texto que o membro aceita.
+---
 
-> Rascunho de 2026-08-11. Precisa da revisão do dono antes de virar aceite, porque é este
-> texto que justifica suspender alguém. Versão a registrar no aceite: `1.0`.
+# Código de conduta
 
 O Bivaque é uma comunidade fechada. Todo mundo aqui teve a elegibilidade conferida, e é isso
 que faz o lugar funcionar. Estas regras existem para manter assim.

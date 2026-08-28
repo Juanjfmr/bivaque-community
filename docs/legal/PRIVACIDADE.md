@@ -1,12 +1,22 @@
-# Privacidade e dados
+---
+id: privacidade
+version: 1
+status: draft
+review_blocker: BLOCK-LEGAL-ENTRY
+updated_at: 2026-08-11
+pending:
+  - controlador (razão social, CNPJ e endereço) — depende do veículo jurídico do BIVAQUE.md §7.6
+  - encarregado pelo tratamento de dados pessoais (LGPD art. 41)
+  - canal oficial de atendimento ao titular
+  - confirmação das bases legais de cada tratamento por assessoria jurídica
+note: >
+  Rascunho. Precisa de revisão jurídica antes de publicar. O conteúdo técnico e o texto para
+  o membro estão escritos; a base legal de cada tratamento precisa de confirmação
+  profissional. O front matter não é renderizado na tela de consentimento: a nota de revisão
+  vive aqui, e não dentro do texto que o membro aceita.
+---
 
-> Rascunho de 2026-08-11. **Precisa de revisão jurídica antes de publicar** — eu escrevi o
-> conteúdo técnico e o texto para o membro, mas não sou advogado, e a base legal de cada
-> tratamento precisa ser confirmada. A revisão do §7.6 do `BIVAQUE.md` já é necessária de
-> qualquer forma. Versão a registrar no aceite: `1.0`.
->
-> Pendências que só o dono resolve: quem é o controlador (depende do veículo jurídico), o
-> endereço e o canal oficial, e o encarregado.
+# Privacidade e dados
 
 Este texto explica o que o Bivaque guarda sobre você, por quanto tempo, quem mais vê, e o que
 você pode exigir. Sem juridiquês onde dá para evitar.

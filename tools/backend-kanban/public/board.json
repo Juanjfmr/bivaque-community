@@ -421,12 +421,17 @@
       ],
       "proof": [
         "BIVAQUE.md declara o texto de privacidade não publicável ainda",
-        "PostHog e IA transferem dados para terceiros"
+        "PostHog e IA transferem dados para terceiros",
+        "TERMOS_E_CONDICOES.md §8.4 fixa em contrato que conteúdo comunitário não sai para provedor de IA enquanto esta governança não estiver publicada e aprovada"
       ],
       "blockers": ["Revisão jurídica", "Decisões do dono"],
-      "links": ["Privacidade | ../../docs/legal/PRIVACIDADE.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
+      "links": [
+        "Privacidade | ../../docs/legal/PRIVACIDADE.md",
+        "Termos e condições | ../../docs/legal/TERMOS_E_CONDICOES.md",
+        "ADR dos termos | ../../docs/decisions/ADR-20260828-termos-e-condicoes.md"
+      ],
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "5c13510",
       "dependencies": []
     },
     {
@@ -436,27 +441,43 @@
       "priority": "BLOCK",
       "category": "governance",
       "status": "blocked",
-      "description": "A tela de consentimento permite aceitar textos que se apresentam ao membro como rascunhos pendentes de revisão. Código de conduta e privacidade precisam de aprovação humana antes do lançamento.",
+      "description": "A peça contratual passou a existir: TERMOS_E_CONDICOES.md, na estrutura dos Termos de Serviço da Meta, com capítulo LGPD substantivo. O estado editorial saiu do corpo aceito e virou front matter, o que resolve o achado da auditoria. O que continua bloqueando é humano: revisão jurídica profissional, as quatro lacunas do veículo jurídico e as cinco posições substantivas do ADR-20260828.",
       "checklist": [
         "Revisar CODIGO_DE_CONDUTA.md com o dono e assessoria jurídica",
         "Revisar PRIVACIDADE.md com assessoria jurídica e confirmar bases legais",
-        "Aprovar versões publicáveis sem notas editoriais internas",
+        "Revisar TERMOS_E_CONDICOES.md com assessoria jurídica",
+        "Decidir controlador, encarregado, canal oficial e foro — os quatro <<DEFINIR>>",
+        "Decidir as cinco posições substantivas do ADR-20260828 §8 (idade mínima, licença de conteúdo, base legal da moderação, cancelamento sem devolução, foro com ressalva)",
+        "Reconciliar a tabela de operadores de PRIVACIDADE.md com a dos Termos",
+        "Virar os três documentos para status: published (a guarda de escopo exige zero <<DEFINIR>>)",
+        "Migration para record_consent_acceptance receber a versão dos Termos (hoje recebe duas, precisa de três) e TERMS_VERSION em @bivaque/domain",
         "Incrementar as versões canônicas de consentimento quando o conteúdo aprovado mudar",
         "Provar novo aceite versionado e rejeição de versão obsoleta"
       ],
       "proof": [
-        "Auditoria visual onboarding-aaa-v1-2026-08-22 mostra notas de rascunho e revisão dentro das regiões que o membro aceita",
-        "docs/legal/CODIGO_DE_CONDUTA.md e docs/legal/PRIVACIDADE.md declaram revisão pendente no próprio conteúdo renderizado"
+        "docs/legal/TERMOS_E_CONDICOES.md — contrato com capítulo LGPD (bases legais por tratamento, retenção, operadores, direitos do art. 18, art. 20, art. 33, art. 41, art. 48)",
+        "docs/decisions/ADR-20260828-termos-e-condicoes.md — R3 proposed, lista as decisões que só o dono fecha",
+        "Achado da auditoria onboarding-aaa-v1-2026-08-22 corrigido: o estado editorial dos três documentos vive em front matter YAML e o renderizador de /consent o descarta (apps/web/app/(preauth)/consent/front-matter.ts)",
+        "tests/unit/legal/front-matter.test.ts — 7 asserts, garante que metadado e nota de rascunho não chegam à tela",
+        "tests/scope/legal-documents.test.mjs — 5 asserts: version casa com @bivaque/domain, documento draft aponta card de bloqueio aberto, documento published não carrega <<DEFINIR>>. Falha provada por mutação nas duas primeiras",
+        "Os três documentos seguem status: draft — nenhum é texto vigente para membro nenhum"
       ],
       "blockers": ["Revisão jurídica", "Aprovação do dono"],
       "links": [
+        "Termos e condições | ../../docs/legal/TERMOS_E_CONDICOES.md",
+        "ADR dos termos | ../../docs/decisions/ADR-20260828-termos-e-condicoes.md",
         "Código de conduta | ../../docs/legal/CODIGO_DE_CONDUTA.md",
         "Privacidade | ../../docs/legal/PRIVACIDADE.md",
         "Status de consentimento | ../../docs/PRODUCT_STATUS.md"
       ],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "015e4ba",
-      "dependencies": []
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "5c13510",
+      "dependencies": [],
+      "drift": {
+        "documented": "PRIVACIDADE.md lista oito terceiros recebendo dado pessoal, entre eles PostHog, Asaas e WhatsApp, sem distinguir o que já opera do que é planejado.",
+        "observed": "Nenhum dos três está integrado — não há dependência em package.json nem variável de ambiente para PostHog, Asaas ou WhatsApp; PRODUCT_STATUS.md registra 'Métrica de produto: não existe'. TERMOS_E_CONDICOES.md §8.4 já separa 'em uso' de 'quando o recurso for ativado'.",
+        "action": "Reconciliar a tabela de operadores de PRIVACIDADE.md com a dos Termos na mesma revisão jurídica, antes de qualquer publicação — dois documentos do mesmo acordo declarando compartilhamentos diferentes é exatamente a contradição que vira sanção."
+      }
     },
     {
       "id": "BLOCK-AFFILIATION",
