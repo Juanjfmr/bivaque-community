@@ -68,6 +68,7 @@ allowed_paths:
   - tests/e2e/
   - playwright.config.ts
   - docs/agents/
+  - AGENTS.md
 
 forbidden:
   - adicionar `retries` à configuração, ou repetir teste vermelho até sair verde — repetição que esconde variação é o oposto do que este contrato produz
@@ -76,6 +77,7 @@ forbidden:
   - alterar migration aplicada, policy ou regra de RLS para fazer teste passar
   - mudar o valor de `scripts.test:e2e` no package.json — a string é travada verbatim por tests/scope/local-command-surface.test.mjs:23; o comportamento serial, se for a correção, entra na configuração do Playwright
   - remover ou renomear os três projetos de viewport — travados por tests/scope/local-command-surface.test.mjs:38
+  - editar o AGENTS.md além do protocolo de execução da suíte — o arquivo entra na cerca para uma seção, não para ser reescrito
   - rodar dev server ou captura visual entre db:reset e a suíte — é o perfil fantasma do .visual/, e ele produz vermelho com cara de regressão real
 
 acceptance:
@@ -85,7 +87,7 @@ acceptance:
   - a varredura por asserção de retrato único está completa: cada ocorrência do padrão de ds-029:130 — uma leitura única de estado que o navegador ainda vai mudar — aparece no relatório como corrigida ou como examinada e descartada, com o motivo escrito
   - para cada asserção trocada, o relatório mostra que a nova continua vermelha quando o comportamento realmente falha — asserção que repete e nunca reprova é asserção morta
   - cada vermelho remanescente fica classificado como defeito de produto, com o contrato que o corrige nomeado, ou como defeito da régua, corrigido aqui — sem terceira categoria
-  - o protocolo de execução que produz o resultado reprodutível fica escrito onde quem executa a suíte encontra, em vez de viver na memória de uma sessão
+  - o protocolo de execução que produz o resultado reprodutível fica escrito no AGENTS.md, junto da linha que já documenta `test:e2e`, em vez de viver na memória de uma sessão — protocolo que só existe no relatório desta tarefa não sobrevive a ela
 
 proof:
   - npx pnpm@11.18.0 db:reset
