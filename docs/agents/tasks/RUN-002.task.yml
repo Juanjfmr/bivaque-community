@@ -31,6 +31,15 @@ baseline:
     nenhuma linha de código. Logo o teste é INTERMITENTE: três viewports numa execução,
     uma na seguinte, sem mudança que explique. Quem tratar isto como falha determinística
     vai "consertar", ver verde uma vez e fechar em cima de sorte.
+    QUARTA MEDIÇÃO, e ela fecha a série: run 33123112542, head b54f2d1 (o branch da
+    correção de pull de imagem, que não toca produto), 27/08 22:49Z — "4 skipped /
+    593 passed" em 8,9 min, ZERO falhas de 597. O group-admin-cycle:103 passou nas três
+    viewports. E playwright.config.ts não define `retries`, então o default é 0: foram
+    593 passagens de primeira, sem repetição escondendo nada.
+    A série completa, sobre código de produto idêntico: 5d87985 → 3 falhas | 3cb3fb1 →
+    1 falha | b54f2d1 → 0 falhas. Um head verde NÃO fecha este contrato — é o terceiro
+    ponto de uma distribuição, não prova de conserto. Quem vier depois precisa explicar
+    a variação, e a prova continua sendo --repeat-each=5 nas três viewports.
     O ponto que exige diagnóstico e não repetição: a migration 20260825143505 descreve
     exatamente este sintoma no próprio cabeçalho e afirma tê-lo corrigido com uma regra de
     auto-visibilidade. Ela está aplicada. O ciclo continua sem fechar.
