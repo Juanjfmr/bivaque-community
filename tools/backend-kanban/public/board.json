@@ -733,16 +733,17 @@
       "proof": [
         "Phase 6D declara a implementação atual não elegível para AAA-ready",
         "Aprovação do dono em 2026-08-29: Glifo oficial, Pátio secundário e paleta Grafite/Papel/Brasa",
-        "Assets web, ícones, tokens estruturados, componente canônico e diretrizes operacionais versionados sem alterar o tema ativo"
+        "Assets web, ícones, tokens estruturados, componente canônico e diretrizes operacionais versionados sem alterar o tema ativo",
+        "Decisão do dono em 2026-08-29: identidade integrada à auditoria das telas; ausência/provisório é dívida média enquanto o runtime segue frozen, uso incorreto do ativo oficial é high"
       ],
       "links": [
         "Design spec ativo | ../../docs/agents/DESIGN_SPEC.md",
         "Fundação da marca | ../../docs/brand/README.md"
       ],
       "updatedAt": "2026-08-29",
-      "sourceRevision": "018bd89",
+      "sourceRevision": "ed55ddd",
       "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"],
-      "tests": ["tests/scope/brand-identity.test.mjs"]
+      "tests": ["tests/scope/brand-identity.test.mjs", "tests/scope/brand-visual-audit.test.mjs"]
     },
     {
       "id": "REPO-ISSUE-20",

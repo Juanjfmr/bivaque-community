@@ -168,6 +168,7 @@ Judge against these, in priority order:
 6. **Density** — Nextdoor-like scannability: does the feed read as a list of distinct
    cards, or as a wall?
 7. **Responsiveness** — 375 is not a squeezed 1440, and 1440 is not a stretched 375.
+8. **Brand integrity** — use the approved Glifo/wordmark, the right composition for the rendered size, sufficient clear space and contrast; Pátio never replaces the mark. Apply `docs/brand/SCREEN_AUDIT.md`.
 
 **6. FIX.** Address every high-severity audit finding and every judgment finding. Then go
 back to step 3. Do not advance to the next backlog item while `ITERATION.md` says
