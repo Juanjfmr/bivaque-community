@@ -932,18 +932,22 @@
         "Rever claims após cada migration e caller real",
         "Registrar capability como código feito até o ciclo do usuário fechar",
         "Não remover linha do status sem entrada, ação, feedback, follow-up e sad path",
-        "Anexar prova de teste e commit no card"
+        "Anexar prova de teste e commit no card",
+        "✅ validateBoard recusa card `done` com dependência em now/next/repo (2026-08-28) — depender de blocked/frozen segue permitido, porque é espera por humano e não trabalho"
       ],
       "proof": [
         "Convites, moderação, perfil e eventos tiveram 'fechamentos' que só QA posterior desmentiu",
         "provider_accounts expõe drift atual entre runtime e status",
         "AGENTS.md exige leitura do resumo operacional e atualização somente em transições materiais; test:scope valida schema e sincronização",
         "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão",
-        "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision"
+        "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision",
+        "2026-08-28: buraco fechado no validador. `selectNextCard` (board-lib.mjs) só libera card quando toda dependência está `done`, mas `validateBoard` conferia só a EXISTÊNCIA da aresta — G-TASK-6 chegou a ficar `done` com G-TASK-3 em `next` e a CI passou verde. Achado por revisão no PR #37, não por teste",
+        "tests/scope/backend-kanban.test.mjs — dois testes: recusa nos três estados executáveis (now/next/repo) e aceita nos dois de espera humana (blocked/frozen). Falha da guarda provada por mutação: neutralizada, o teste negativo fica vermelho",
+        "MVP-01-ADMISSION e MVP-03-COMMUNITY seguem `done` dependendo de BLOCK-RESEND e continuam válidos — a guarda distingue bloqueio humano de trabalho pendente, em vez de proibir os dois"
       ],
       "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "e0538c0",
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "cb8b838",
       "dependencies": []
     },
     {
