@@ -2,7 +2,7 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 23/08/2026 · snapshot do worktree e GitHub
+**Snapshot:** 29/08/2026 · identidade oficial aprovada e preparada para integração
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 

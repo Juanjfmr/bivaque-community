@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "23/08/2026 · snapshot do worktree e GitHub",
+  "updatedAt": "29/08/2026 · identidade oficial aprovada e preparada para integração",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -723,17 +723,26 @@
       "priority": "HOLD",
       "category": "frontend",
       "status": "frozen",
-      "description": "Design system, tokens, shell, cards e navegação não são escopo deste fechamento. O contrato visual permanece congelado.",
+      "description": "A identidade oficial está aprovada e versionada, mas design system, tokens ativos, shell, cards e navegação permanecem congelados até as dependências do frontend fecharem.",
       "checklist": [
         "Não tocar DESIGN_SPEC.md ou VISUAL_GUIDE.md",
         "Não criar novo layout durante backend-first",
+        "Fundação oficial versionada sem ativação no runtime ✅",
         "Planejar work separado após backend freeze"
       ],
-      "proof": ["Phase 6D declara a implementação atual não elegível para AAA-ready"],
-      "links": ["Design spec | ../../docs/agents/DESIGN_SPEC.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"]
+      "proof": [
+        "Phase 6D declara a implementação atual não elegível para AAA-ready",
+        "Aprovação do dono em 2026-08-29: Glifo oficial, Pátio secundário e paleta Grafite/Papel/Brasa",
+        "Assets web, ícones, tokens estruturados, componente canônico e diretrizes operacionais versionados sem alterar o tema ativo"
+      ],
+      "links": [
+        "Design spec ativo | ../../docs/agents/DESIGN_SPEC.md",
+        "Fundação da marca | ../../docs/brand/README.md"
+      ],
+      "updatedAt": "2026-08-29",
+      "sourceRevision": "018bd89",
+      "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"],
+      "tests": ["tests/scope/brand-identity.test.mjs"]
     },
     {
       "id": "REPO-ISSUE-20",
