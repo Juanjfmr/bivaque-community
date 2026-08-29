@@ -1,11 +1,14 @@
-# HOME sem vila — wireframe textual Premium
+# HOME sem vínculo de vila — wireframe textual Premium
 
 ## Escopo
 
-Variante de `/community` para membro autenticado e localizado, porém sem vila aprovada.
+Variante de `/community` para membro autenticado e localizado, sem vínculo aprovado com uma vila.
+
+**Esse é um estado de primeira classe.** O wireframe não trata ausência de vila como progresso incompleto e não exige adesão futura.
 
 Este wireframe é **proposta de produto**, não contrato normativo. Ele respeita:
 
+- vínculo de vila é opcional;
 - D48: cidade é referência, não timeline;
 - `DS-009/010`: tarefa e escopo não se confundem;
 - quatro containers de navegação atuais enquanto `EXP-001` permanece aberto;
@@ -22,13 +25,11 @@ Este wireframe é **proposta de produto**, não contrato normativo. Ele respeita
 │ Bivaque                     ◇  ♢  (A) │  shell global
 ├───────────────────────────────────────┤
 │ Manaus, AM                            │
-│ Você ainda não está em uma vila.      │
-│                                       │
 │ Sua referência na cidade              │
-│ Eventos, guia e prestadores enquanto  │
-│ você escolhe onde participar.         │
+│ Eventos, guia e prestadores para      │
+│ resolver o que você precisa por aqui. │
 │                                       │
-│ [ Encontrar uma vila ]                │  CTA primário
+│ [ Ver próximos eventos ]              │  CTA contextual
 │ [ Abrir guia de chegada ]             │  secundário
 ├───────────────────────────────────────┤
 │ PARA AGORA                            │
@@ -49,8 +50,6 @@ Este wireframe é **proposta de produto**, não contrato normativo. Ele respeita
 │ 31 ago   Piquenique das famílias      │
 │ 03 set   Torneio amistoso             │
 │ 06 set   Oficina de leitura           │
-│                                       │
-│ [ Ver todos os eventos ]              │
 ├───────────────────────────────────────┤
 │ VITRINE DE PRESTADORES                │
 │ [ Buscar por nome................ ]   │
@@ -63,18 +62,17 @@ Este wireframe é **proposta de produto**, não contrato normativo. Ele respeita
 │ “Nenhum prestador com esses filtros.” │
 │ [ Limpar filtros ]                    │
 ├───────────────────────────────────────┤
+│ PARTICIPE DO SEU JEITO                │
+│ Eventos · Grupos · Indicações         │
+│ caminhos de participação disponíveis  │
+│ sem exigir vínculo de vila            │
+├───────────────────────────────────────┤
 │ VILAS EM MANAUS                       │
-│ A vila é onde a conversa recorrente   │
-│ acontece. Você pede entrada e o dono  │
-│ aprova.                               │
+│ Se fizer sentido para você, conheça   │
+│ vilas onde a conversa recorrente      │
+│ acontece.                             │
 │                                       │
-│ Vila Ajuricaba                        │
-│ contexto útil · [Solicitar entrada]   │
-│                                       │
-│ Vila X                                │
-│ contexto útil · [Solicitar entrada]   │
-│                                       │
-│ [ Ver todas as vilas ]                │
+│ [ Explorar vilas ]                    │  CTA secundário
 ├───────────────────────────────────────┤
 │ CONFIANÇA E AJUDA                     │
 │ Comunidade privada de acesso          │
@@ -87,8 +85,9 @@ Este wireframe é **proposta de produto**, não contrato normativo. Ele respeita
 
 ### Regras da primeira dobra mobile
 
-- O usuário precisa enxergar `Manaus, AM`, o estado “sem vila” e o CTA `Encontrar uma vila` rapidamente.
-- Não colocar seis eventos antes do guia e do caminho de pertencimento.
+- O usuário precisa enxergar `Manaus, AM` e valor imediato sem uma mensagem de déficit por não ter vila.
+- O CTA principal deve levar a uma utilidade real disponível agora, não obrigatoriamente a uma vila.
+- Não colocar seis eventos antes do guia e da vitrine.
 - Não duplicar `Publicar` no header da página.
 - Se `/community` continuar exibindo esta variante, o parent/selected state precisa ser resolvido explicitamente (PA-001). O wireframe não legitima a inconsistência atual.
 
@@ -99,8 +98,8 @@ Este wireframe é **proposta de produto**, não contrato normativo. Ele respeita
 ```text
 ┌──────┬────────────────────────────────────────────────────┐
 │ rail │ Manaus, AM                         utilidades      │
-│      │ Você ainda não está em uma vila.                  │
-│      │ [ Encontrar uma vila ] [ Abrir guia ]              │
+│      │ Sua referência na cidade                          │
+│      │ [ Próximos eventos ] [ Abrir guia ]               │
 │      ├────────────────────────────────────────────────────┤
 │      │ PARA AGORA                                        │
 │      │ ┌ Próximo evento ─────┐ ┌ Guia de chegada ──────┐ │
@@ -113,8 +112,10 @@ Este wireframe é **proposta de produto**, não contrato normativo. Ele respeita
 │      │ Vitrine                                           │
 │      │ busca + categoria persistentes                    │
 │      ├────────────────────────────────────────────────────┤
-│      │ Vilas em Manaus                                   │
-│      │ 2–3 itens ou CTA de descoberta                    │
+│      │ Participe do seu jeito                            │
+│      │ eventos / grupos / indicações                     │
+│      ├────────────────────────────────────────────────────┤
+│      │ Vilas em Manaus — descoberta opcional             │
 └──────┴────────────────────────────────────────────────────┘
 ```
 
@@ -130,35 +131,36 @@ Tablet usa rail conforme o shell atual/contrato. O conteúdo não vira simplesme
 ├──────────────┬───────────────────────────────────┬───────────────────┤
 │ SIDEBAR      │ MAIN                              │ RIGHT RAIL        │
 │              │                                   │                   │
-│ Cidade       │ Manaus, AM                        │ SEU PRÓXIMO PASSO │
-│ Comunidade   │ Você ainda não está em uma vila.  │                   │
-│ Grupos       │                                   │ Entre numa vila   │
-│ Eu           │ [ Encontrar uma vila ]            │ para participar   │
-│              │ [ Abrir guia ]                    │ do ciclo local.   │
-│              │                                   │ [Ver vilas]       │
-│              │ PARA AGORA                        │                   │
-│              │ ┌ evento ─────┐ ┌ guia ────────┐ │ CONFIANÇA         │
-│              │ └──────────────┘ └──────────────┘ │ Regras             │
-│              │                                   │ Ajuda              │
-│              │ PRÓXIMOS EVENTOS                  │ Denúncia           │
-│              │ 3 linhas compactas + Todos        │                   │
+│ Cidade       │ Manaus, AM                        │ ATALHOS ÚTEIS     │
+│ Comunidade   │ Sua referência na cidade          │ Próximo evento    │
+│ Grupos       │                                   │ Guia de chegada   │
+│ Eu           │ [ Próximos eventos ]              │ Grupos            │
+│              │ [ Abrir guia ]                    │                   │
+│              │                                   │ CONFIANÇA         │
+│              │ PARA AGORA                        │ Regras             │
+│              │ ┌ evento ─────┐ ┌ guia ────────┐ │ Ajuda              │
+│              │ └──────────────┘ └──────────────┘ │ Denúncia           │
 │              │                                   │                   │
+│              │ PRÓXIMOS EVENTOS                  │ VILAS              │
+│              │ 3 linhas compactas + Todos        │ Explorar vilas     │
+│              │                                   │ se quiser          │
 │              │ VITRINE                           │                   │
 │              │ busca + filtro + resultados       │                   │
 │              │                                   │                   │
-│              │ VILAS EM MANAUS                   │                   │
-│              │ itens de descoberta               │                   │
+│              │ PARTICIPAÇÃO                      │                   │
+│              │ grupos/eventos/indicações         │                   │
 ├──────────────┴───────────────────────────────────┴───────────────────┤
 ```
 
 ### Right rail
 
-O rail não deve ser preenchido apenas para eliminar espaço vazio (`DS-031`). Ele existe porque duas informações permanentes merecem persistência durante a rolagem:
+O rail não deve ser preenchido apenas para eliminar espaço vazio (`DS-031`). Ele só permanece se melhorar tarefa/scan. Conteúdo elegível:
 
-1. próximo passo de pertencimento;
-2. acesso a confiança/ajuda.
+1. atalhos úteis do contexto atual;
+2. confiança/ajuda;
+3. descoberta opcional de vila.
 
-Se isso não melhorar tarefa/scan em teste, o rail deve desaparecer em vez de virar decoração.
+Não usar o rail para dizer que “entrar numa vila” é o próximo passo necessário.
 
 ---
 
@@ -193,8 +195,8 @@ Não foi possível carregar os eventos agora.
 ```text
 Vitrine de prestadores
 Ainda não há prestadores cadastrados por aqui.
-Quando membros das vilas indicarem prestadores de confiança,
-eles aparecem nesta vitrine.
+Quando houver indicações com alcance para a cidade,
+elas aparecem nesta vitrine.
 ```
 
 A busca pode ser omitida neste **empty estrutural** se não existe universo pesquisável.
@@ -224,12 +226,12 @@ Não foi possível carregar a vitrine agora.
 
 ```text
 Vilas em Manaus
-Ainda não há uma vila disponível para sua entrada.
-Você pode continuar usando eventos, guia e prestadores da cidade.
+Não há vilas disponíveis para entrada neste momento.
+Eventos, guia, grupos e prestadores continuam disponíveis normalmente.
 [ Como funcionam as vilas ]
 ```
 
-Não converter ausência de vila em feed municipal.
+A ausência de vila não degrada a experiência principal e não cria feed municipal.
 
 ### Solicitação de entrada pendente
 
@@ -239,7 +241,7 @@ Pedido enviado
 [ Pendente ]
 ```
 
-O estado persiste até mudança real (`DS-028`).
+O estado persiste até mudança real (`DS-028`). Isso é específico de quem optou por solicitar entrada; não é estado global do membro.
 
 ---
 
@@ -247,30 +249,35 @@ O estado persiste até mudança real (`DS-028`).
 
 ### Preferir
 
-- “Você ainda não está em uma vila.”
-- “Encontre uma vila para participar das conversas recorrentes.”
 - “Sua referência em Manaus.”
 - “Eventos, guia e prestadores da cidade.”
+- “Participe do seu jeito.”
+- “Se fizer sentido para você, explore as vilas disponíveis.”
+- “Vilas são um dos espaços de convivência do Bivaque.”
 
 ### Evitar
 
+- “Você ainda não está em uma vila.”
+- “Complete sua experiência entrando numa vila.”
+- “Seu próximo passo é entrar numa vila.”
 - “Sua comunidade de Manaus” para conteúdo municipal;
 - “os melhores”, “elite”, “exclusivo para poucos”, “verificado premium”;
 - linguagem institucional das Forças Armadas;
 - números sociais sem função de decisão;
-- claims de personalização (“escolhido para você”) quando só houve ordenação genérica.
+- claims de personalização quando só houve ordenação genérica.
 
 ---
 
 ## Ordem de implementação
 
 1. corrigir PA-001 a PA-005;
-2. implementar hero contextual + prioridade `Encontrar uma vila`;
+2. implementar hero contextual orientado à utilidade da cidade;
 3. reduzir eventos para preview orientado à decisão;
 4. corrigir vitrine e no-results;
-5. melhorar descoberta de vilas;
-6. adicionar confiança/ajuda;
-7. validar 375/768/1440;
-8. só então experimentar personalização P2.
+5. tornar participação sem vila explicitamente sustentável;
+6. reposicionar descoberta de vilas como opcional;
+7. adicionar confiança/ajuda;
+8. validar 375/768/1440;
+9. só então experimentar personalização P2.
 
-O wireframe deve ser julgado pelos três perception gates do `PREMIUM_ASSESSMENT.md`, não por fidelidade a uma estética específica.
+O wireframe deve ser julgado pelos três perception gates do `PREMIUM_ASSESSMENT.md`, não por fidelidade a uma estética específica nem por taxa de adesão a vila.
