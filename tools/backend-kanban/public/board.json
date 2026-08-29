@@ -329,15 +329,21 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Marco final de backend: migrations reproduzíveis, segurança comprovada e contratos estáveis sem depender da UI para proteger regras de negócio.",
+      "description": "Marco final de backend: migrations reproduzíveis, segurança comprovada e contratos estáveis sem depender da UI para proteger regra de negócio. Detalhado item a item em 2026-08-28 contra o estado real: dois dos cinco itens já estão satisfeitos pela CI verde e só faltava registrar; um depende de MVP-00-E2E; um depende inteiro de MVP-09; e o quinto é o entregável, que só pode ser escrito por último.",
       "checklist": [
-        "db reset reproduz tudo do zero",
-        "Todos os contratos e callers reais estão testados",
-        "Jobs são idempotentes e observáveis",
-        "Tipos gerados estão sincronizados",
-        "Gerar BACKEND_COMPLETION.md, versão dos contratos e tag de freeze"
+        "[SATISFEITO, falta registrar] db reset reproduz tudo do zero — a CI roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' a cada PR (pull-request-ci.yml:122-129), verdes. Falta só citar a execução como evidência de freeze",
+        "[SATISFEITO, falta registrar] Tipos gerados sincronizados — a CI tem passo de types drift antes do build, verde na mesma execução",
+        "[PARCIAL] Todos os contratos e callers reais testados — MVP-02-AUTHZ fechou a auditoria cruzada service_role x RPCs SECURITY DEFINER (PRODUCT_STATUS §Autorização, 2026-08-22). Falta o lado E2E: MVP-00-E2E-FUNCTIONAL segue aberto, e MVP-05-TEST-BASELINE registra que a suíte não é reprodutível — verde uma vez não é baseline",
+        "[NÃO INICIADO] Jobs idempotentes e observáveis — depende inteiro de MVP-09-OPERABILITY, que está em 'next'. Some-se a isso MVP-RETENTION-PURGE: o contrato publicado promete prazos de retenção que nenhum job aplica hoje",
+        "[ÚLTIMO] Gerar BACKEND_COMPLETION.md, versão dos contratos e tag de freeze — entregável final, só depois dos quatro acima",
+        "DECISÃO DE ESCOPO PENDENTE: as dependências declaradas incluem MVP-06-DISCOVERY-INDEX, MVP-07-KNOWLEDGE e MVP-08-INTELLIGENCE, que são camada de produto (discovery, guia, evals), não endurecimento de backend. Se o freeze é sobre 'contrato consumível por outro frontend', essas três provavelmente não pertencem à dependência — mas remover dependência de marco é decisão do dono, não do agente"
       ],
-      "proof": [],
+      "proof": [
+        "Dependências: 4 de 11 fechadas (MVP-01-ADMISSION, MVP-02-AUTHZ, MVP-03-COMMUNITY, G-TASK-1). Abertas, 7: MVP-05-TEST-BASELINE e MVP-00-E2E-FUNCTIONAL (now), MVP-06-DISCOVERY-INDEX, MVP-07-KNOWLEDGE, MVP-08-INTELLIGENCE, MVP-09-OPERABILITY e MVP-RETENTION-PURGE (next)",
+        "2026-08-28: onda G reconciliada — os cinco cards saem de proof vazia para backend provado por 94 asserts de pgTAP verdes na CI. Nenhum fecha ainda: G-TASK-2, 3, 4 e 5 esperam a auditoria visual do Task 9 Step 2, e G-TASK-6 espera a aresta que declara para G-TASK-3. Uma auditoria fecha os cinco",
+        "CI verde em 7a127aa cobre db:reset --no-seed, test:db, db:lint, build, types drift e test:e2e — o que já satisfaz dois itens deste checklist",
+        "Nenhum BACKEND_COMPLETION.md existe no repositório, e não há tag de freeze"
+      ],
       "tests": [
         "Gate completo",
         "pgTAP completo",
@@ -345,8 +351,8 @@
         "E2E de fronteiras browser-only"
       ],
       "links": ["Critério de fechamento | ../../docs/BIVAQUE.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
       "dependencies": [
         "MVP-01-ADMISSION",
         "MVP-02-AUTHZ",
@@ -356,7 +362,9 @@
         "MVP-06-DISCOVERY-INDEX",
         "MVP-07-KNOWLEDGE",
         "MVP-08-INTELLIGENCE",
-        "MVP-09-OPERABILITY"
+        "MVP-09-OPERABILITY",
+        "MVP-00-E2E-FUNCTIONAL",
+        "MVP-RETENTION-PURGE"
       ]
     },
     {
@@ -926,18 +934,22 @@
         "Rever claims após cada migration e caller real",
         "Registrar capability como código feito até o ciclo do usuário fechar",
         "Não remover linha do status sem entrada, ação, feedback, follow-up e sad path",
-        "Anexar prova de teste e commit no card"
+        "Anexar prova de teste e commit no card",
+        "✅ validateBoard recusa card `done` com dependência em now/next/repo (2026-08-28) — depender de blocked/frozen segue permitido, porque é espera por humano e não trabalho"
       ],
       "proof": [
         "Convites, moderação, perfil e eventos tiveram 'fechamentos' que só QA posterior desmentiu",
         "provider_accounts expõe drift atual entre runtime e status",
         "AGENTS.md exige leitura do resumo operacional e atualização somente em transições materiais; test:scope valida schema e sincronização",
         "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão",
-        "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision"
+        "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision",
+        "2026-08-28: buraco fechado no validador. `selectNextCard` (board-lib.mjs) só libera card quando toda dependência está `done`, mas `validateBoard` conferia só a EXISTÊNCIA da aresta — G-TASK-6 chegou a ficar `done` com G-TASK-3 em `next` e a CI passou verde. Achado por revisão no PR #37, não por teste",
+        "tests/scope/backend-kanban.test.mjs — dois testes: recusa nos três estados executáveis (now/next/repo) e aceita nos dois de espera humana (blocked/frozen). Falha da guarda provada por mutação: neutralizada, o teste negativo fica vermelho",
+        "MVP-01-ADMISSION e MVP-03-COMMUNITY seguem `done` dependendo de BLOCK-RESEND e continuam válidos — a guarda distingue bloqueio humano de trabalho pendente, em vez de proibir os dois"
       ],
       "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "e0538c0",
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "cb8b838",
       "dependencies": []
     },
     {
@@ -1076,7 +1088,7 @@
     },
     {
       "id": "G-TASK-1",
-      "title": "Founda��o conta de prestador (T1)",
+      "title": "Fundação conta de prestador (T1)",
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
@@ -1096,7 +1108,7 @@
       ],
       "tests": ["provider-account-boundary.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-08-28",
       "sourceRevision": "8713635",
       "dependencies": ["MVP-02-AUTHZ"],
       "completedAt": "2026-08-22"
@@ -1108,17 +1120,28 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Quem atesta � a comunidade: convite por indica��o com binding de email e outbox worker. Quem confirma o e-mail na entrada do prestador.",
+      "description": "Quem atesta é a comunidade: convite por indicação com binding de e-mail e outbox worker. O aceite confere token e e-mail-alvo na entrada do prestador.",
       "checklist": [
         "create_provider_invitation RPC valida cota e enfileira no outbox",
-        "Aceita convite pelo link confere token + email"
+        "Aceita convite pelo link confere token + email",
+        "PENDENTE E BLOQUEANTE: auditoria visual — o plano da onda G (2026-08-20-onda-g-vitrine.md, Task 9 Step 2) está `[ ]` e diz 'ela bloqueia a onda seguinte'. As telas que ele nomeia incluem as deste card. Rodar `node scripts/visual/loop.mjs`, escrever o veredito em docs/agents/VISUAL_AUDIT-2026-08-<dd>-onda-g.md e rodar `db:reset` limpo depois da captura, antes de qualquer test:db (o perfil fantasma Visual Capture quebra 6 asserts)"
       ],
-      "proof": [],
+      "proof": [
+        "supabase/migrations/20260825181742_provider_invitations.sql — create_provider_invitation, token_digest e invitee_email_digest (bytea, 32 bytes), enfileiramento no outbox",
+        "apps/web/app/(shell)/communities/[id]/indicar-prestador/actions.ts — caller real do RPC",
+        "supabase/tests/provider-invitation.sql — plan(16), 299 linhas",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["provider-invitation.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-1", "BLOCK-RESEND"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-1", "BLOCK-RESEND"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-2 em 'next' com proof vazia e sourceRevision de 2026-08-22, enquanto o código da onda G entrou em 2026-08-25.",
+        "observed": "O card entrega tela (as duas telas de convite), e o Task 9 Step 2 do plano da onda G segue `[ ]`, nomeando essa tela e declarando que a auditoria bloqueia a onda seguinte. Fechar aqui aplicava critério diferente do que segurou G-TASK-3 e G-TASK-4 pelo mesmo motivo. Achado por revisão no PR #37, conferido contra o plano.",
+        "action": "Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência."
+      }
     },
     {
       "id": "G-TASK-3",
@@ -1127,18 +1150,30 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Identidade, cat�logo, portf�lio, alcance por vila/comunidade e revoga��o pelo dono da comunidade. As tr�s colunas que o prestador preenche sozinho no dia um.",
+      "description": "Identidade, catálogo, portfólio, alcance por vila e revogação pelo dono da comunidade. As três colunas que o prestador preenche sozinho.",
       "checklist": [
         "provider_profiles/catalago/portfolio tabelas com RLS",
         "can_see_provider gating visibilidade",
-        "/prestadores/[id] member view"
+        "/prestadores/[id] member view",
+        "PENDENTE E BLOQUEANTE: auditoria visual das telas que este card cria — AGENTS.md exige que a tela criada por uma onda seja auditada dentro dela, e não há registro de auditoria da vitrine em PRODUCT_STATUS.md. Rodar `node scripts/visual/loop.mjs` e registrar o resultado"
       ],
-      "proof": [],
+      "proof": [
+        "supabase/migrations/20260825185327_provider_showcase.sql — tabelas provider_profiles, provider_reach, provider_catalog_items e provider_portfolio_photos com RLS",
+        "private.can_see_provider referenciada em três migrations (showcase, search, dm_provider_context_rpcs)",
+        "apps/web/app/(shell)/prestadores/[id]/ — visão do membro existe",
+        "supabase/tests/provider-showcase-scope.sql — plan(18), 251 linhas",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["provider-showcase-scope.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-1"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-1"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-3 em 'next' com proof vazia e sourceRevision de 2026-08-22.",
+        "observed": "O backend do card está implementado e provado por pgTAP verde na CI de 2026-08-28. O que falta não é código de servidor: é a auditoria visual das telas que o card cria.",
+        "action": "Rodar a auditoria visual da vitrine e registrá-la; só então o card fecha. Nenhuma implementação de backend pendente."
+      }
     },
     {
       "id": "G-TASK-4",
@@ -1147,17 +1182,27 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Dashboard do prestador com ficha, cat�logo, portf�lio edit�veis, an�ncio e m�trica. M�tricas ficam em placeholder honesto at� PostHog (Onda H).",
+      "description": "Painel do prestador com ficha, catálogo e portfólio editáveis. A métrica fica em placeholder honesto até o provedor de métrica ser ativado.",
       "checklist": [
         "Server Actions CRUD profile/catalog/portfolio",
-        "/prestador dashboard com placeholders honestos"
+        "/prestador dashboard com placeholders honestos",
+        "PENDENTE E BLOQUEANTE: auditoria visual das telas que este card cria — AGENTS.md exige que a tela criada por uma onda seja auditada dentro dela, e não há registro de auditoria da vitrine em PRODUCT_STATUS.md. Rodar `node scripts/visual/loop.mjs` e registrar o resultado"
       ],
-      "proof": [],
+      "proof": [
+        "apps/web/app/(provider)/prestador/ — actions.ts (Server Actions CRUD), ficha/, catalogo/, page.tsx",
+        "tests/unit/providers/showcase-form.test.ts — validadores de borda, verde no gate",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["showcase-form.test.ts"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-3"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-3"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-4 em 'next' com proof vazia e sourceRevision de 2026-08-22.",
+        "observed": "O backend do card está implementado e provado por pgTAP verde na CI de 2026-08-28. O que falta não é código de servidor: é a auditoria visual das telas que o card cria.",
+        "action": "Rodar a auditoria visual da vitrine e registrá-la; só então o card fecha. Nenhuma implementação de backend pendente."
+      }
     },
     {
       "id": "G-TASK-5",
@@ -1166,37 +1211,58 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Busca h�brida global: pg_trgm no nome e filtro exato por categoria dentro do alcance (D44). Vitrine em city-reference atualizada.",
+      "description": "Busca híbrida global: pg_trgm no nome e filtro exato por categoria dentro do alcance (D44). Vitrine da city-reference atualizada.",
       "checklist": [
         "search_providers RPC com pg_trgm e filtro de categoria",
-        "city-reference atualiza vitrine em cidade"
+        "city-reference atualiza vitrine em cidade",
+        "PENDENTE E BLOQUEANTE: auditoria visual — o plano da onda G (2026-08-20-onda-g-vitrine.md, Task 9 Step 2) está `[ ]` e diz 'ela bloqueia a onda seguinte'. As telas que ele nomeia incluem as deste card. Rodar `node scripts/visual/loop.mjs`, escrever o veredito em docs/agents/VISUAL_AUDIT-2026-08-<dd>-onda-g.md e rodar `db:reset` limpo depois da captura, antes de qualquer test:db (o perfil fantasma Visual Capture quebra 6 asserts)"
       ],
-      "proof": [],
+      "proof": [
+        "supabase/migrations/20260825203815_provider_search.sql — extensão pg_trgm, índice GIN gin_trgm_ops em display_name, função search_providers com similarity > 0.2",
+        "supabase/tests/provider-search-scope.sql — plan(9), 159 linhas",
+        "ADR-20260820-alcance-pago §4: a cláusula order by não menciona reach_source, e há assert de pgTAP que fica vermelho se alguém 'otimizar' isso",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["provider-search-scope.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-3"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-3"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-5 em 'next' com proof vazia e sourceRevision de 2026-08-22, enquanto o código da onda G entrou em 2026-08-25.",
+        "observed": "O card entrega tela (/localidade — a vitrine da cidade), e o Task 9 Step 2 do plano da onda G segue `[ ]`, nomeando essa tela e declarando que a auditoria bloqueia a onda seguinte. Fechar aqui aplicava critério diferente do que segurou G-TASK-3 e G-TASK-4 pelo mesmo motivo. Achado por revisão no PR #37, conferido contra o plano.",
+        "action": "Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência."
+      }
     },
     {
       "id": "G-TASK-6",
-      "title": "Conversa membro ? prestador (T6)",
+      "title": "Conversa membro ↔ prestador (T6)",
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Corre��o dos 3 defeitos de DM (ordem par UUID, bloqueio bidirecional, contexto conferido) + extens�o provider. S� membro inicia conversa.",
+      "description": "Correção dos três defeitos de DM (ordem do par no servidor, bloqueio bidirecional, contexto conferido) mais a extensão de prestador. Só o membro inicia conversa.",
       "checklist": [
         "open_conversation ordena par no servidor",
-        "dm_blocked_either_way impede bloqueio contorn�vel",
-        "valida contexto compartilhado"
+        "dm_blocked_either_way impede bloqueio contornável",
+        "valida contexto compartilhado",
+        "PENDENTE: este card não toca tela e não entra na auditoria do Task 9 Step 2. O que o segura é a aresta declarada para G-TASK-3, que o modelo do board só considera satisfeita quando o dependente está `done` (selectNextCard exige status === 'done'). Alternativa que o dono pode preferir: remover a aresta, já que a extensão de DM precisa da tabela provider_profiles — artefato de backend do G-TASK-3, implementado e coberto por pgTAP — e não da tela que falta auditar. Remover aresta de dependência é decisão de modelagem, não do agente"
       ],
-      "proof": [],
+      "proof": [
+        "supabase/migrations/20260825205847_dm_provider_context.sql e 20260825212538_dm_provider_context_rpcs.sql — open_conversation ordena o par no servidor, dm_blocked_either_way, validação de contexto compartilhado",
+        "supabase/tests/dm-context-allowed.sql — plan(26), 470 linhas; supabase/tests/dm-context-denials.sql — plan(25), 643 linhas",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["dm-context-allowed.sql", "dm-context-denials.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-1", "G-TASK-3"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-1", "G-TASK-3"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-6 em 'next' com proof vazia e sourceRevision de 2026-08-22, enquanto o código da onda G entrou em 2026-08-25.",
+        "observed": "O backend está implementado e provado por pgTAP verde na CI. O que segura o card não é código: é a aresta que ele declara para G-TASK-3, que está `next`. `selectNextCard` (board-lib.mjs:164-168) só considera uma dependência satisfeita quando ela está `done`, então fechar este contradiria o modelo. `validateBoard` não checa isso — só a existência da aresta —, então a CI passaria com o estado inconsistente. Achado por revisão no PR #37.",
+        "action": "Fechar G-TASK-3 pela auditoria visual — o que fecha este junto —, ou o dono decide remover a aresta por ela apontar para o backend do G-TASK-3, que já está provado."
+      }
     },
     {
       "id": "MVP-00-E2E-FUNCTIONAL",

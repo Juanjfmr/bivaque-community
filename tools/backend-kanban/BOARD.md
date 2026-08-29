@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 46 frentes · 2 agora · 6 bloqueadas · 20 concluídas · 2 drifts
+**Mapa:** 46 frentes · 2 agora · 6 bloqueadas · 20 concluídas · 7 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -29,6 +29,11 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 ## Drift aberto
 
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos — Executar o contrato docs/agents/tasks/HRN-003.task.yml: duas execuções da suíte no mesmo commit comparadas por LISTA NOMINAL de vermelhos (contagem igual com testes diferentes é falha), medindo os workers efetivos e a contaminação entre os três projetos ANTES de atribuir a variação a asserção frágil. O procedimento serial pós-PR #35 que estava escrito aqui está superado: o PR foi mergeado em 2026-08-28T02:30Z e a comparação por contagem não distingue os dois casos.
+- **G-TASK-2** · P1 · Convite de prestador (T2) — Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência.
+- **G-TASK-3** · P1 · Ficha de prestador (T3) — Rodar a auditoria visual da vitrine e registrá-la; só então o card fecha. Nenhuma implementação de backend pendente.
+- **G-TASK-4** · P1 · Painel do prestador (T4) — Rodar a auditoria visual da vitrine e registrá-la; só então o card fecha. Nenhuma implementação de backend pendente.
+- **G-TASK-5** · P1 · Busca por categoria e nome (T5) — Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência.
+- **G-TASK-6** · P1 · Conversa membro ↔ prestador (T6) — Fechar G-TASK-3 pela auditoria visual — o que fecha este junto —, ou o dono decide remover a aresta por ela apontar para o backend do G-TASK-3, que já está provado.
 - **BLOCK-LEGAL-ENTRY** · BLOCK · Textos legais da entrada prontos para aceite — Reconciliar a tabela de operadores de PRIVACIDADE.md com a dos Termos na mesma revisão jurídica, antes de qualquer publicação — dois documentos do mesmo acordo declarando compartilhamentos diferentes é exatamente a contradição que vira sanção.
 
 ## Triagem prioritária
