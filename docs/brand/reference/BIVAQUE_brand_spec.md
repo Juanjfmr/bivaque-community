@@ -32,7 +32,9 @@ Manter ao menos X em todos os lados. A distância símbolo-wordmark é 1,27X.
 
 ## Cores digitais
 
-Tema claro é padrão. Tema escuro é opcional. No escuro, usar Brasa Clara #E07A5A.
+O piloto é light-only. A compatibilidade escura documenta a robustez futura da identidade,
+mas não autoriza dark mode no runtime. Se uma decisão futura o liberar, usar Brasa Clara
+#E07A5A para ações sobre fundo escuro.
 
 ## Paleta secundária
 
