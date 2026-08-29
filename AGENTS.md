@@ -102,6 +102,7 @@ leaks so far.
 | `docs/decisions/` | R3 decisions as ADRs, and `RISK_MATRIX.md` — what an agent may decide alone |
 | `docs/agents/DESIGN_SPEC.md` | The visual language, and the source of truth for tokens |
 | `docs/agents/VISUAL_GUIDE.md` §9 | The audit rubric — how well a screen must be made |
+| `docs/brand/README.md` | Approved identity assets, machine-readable values and the frozen-runtime activation contract |
 | `docs/superpowers/specs/` | Approved designs, with dated conflicts recorded rather than hidden |
 | `docs/superpowers/plans/` | Executable plans derived from those specs |
 | `docs/agents/AGENT_ARCHITECTURE.md` | The agent roles, the execution loop, and which composition a task gets |

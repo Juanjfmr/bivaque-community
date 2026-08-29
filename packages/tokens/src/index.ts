@@ -85,3 +85,5 @@ export const brandTokens = {
   // on group cards). Surfaces read --accent (blue-900) as the dominant action.
   secondaryAccent: "#3B82F6", // blue-500
 } as const
+
+export { officialBrandIdentity } from "./official-brand"
