@@ -67,6 +67,12 @@ Three rules that decide whether your work is legitimate at all:
   applicable Definition of Done and recorded evidence. Routine questions and read-only answers
   do not require a board update.
 
+  **A `done` card may not depend on a card that still has work.** `selectNextCard` only releases
+  a card when every dependency is `done`, so closing one whose dependency sits in `now`, `next`
+  or `repo` contradicts the model — the validator now refuses it. Depending on a `blocked` or
+  `frozen` card is allowed: those wait on a human decision, not on work, and "done, with the
+  delivery channel held by the owner" is a legitimate state.
+
 - **Resolve cards; do not stop at drift.** Drift is evidence of a mismatch between documentation,
   GitHub state and runtime. It is not a deliverable and it does not close work. When a card reveals
   drift, the same agent either reconciles the stale source, implements the missing behavior, marks a
