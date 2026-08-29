@@ -28,6 +28,7 @@ parte desta entrega. O card `FRONTEND-VISUAL-AAA` continua `frozen`; portanto:
 | Regras completas para humanos e agentes | `docs/brand/GUIDELINES.md` |
 | Tokens portáveis | `docs/brand/reference/brand-tokens.json` e `.css` |
 | Mestre vetorial | `docs/brand/reference/bivaque-master-artwork.svg` |
+| Auditoria nas telas | `docs/brand/SCREEN_AUDIT.md` |
 
 ## Contrato de uso
 

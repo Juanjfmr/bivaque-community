@@ -175,3 +175,4 @@ Para cada tela tocada, verificar nas capturas 375/768/1440:
 6. Responsivo: 375 não é 1440 espremido; 1440 usa right rail/sidebar (sem margem morta).
 7. A11y: targets 44px, um h1, foco visível, sem overflow horizontal.
 8. Copy: acentos corretos; erros amigáveis; nada de patente/OM/endereço/badge.
+9. Marca: Glifo oficial, composição correta para a escala, contraste e clear space; Brasa só no limiar; Pátio nunca como assinatura. Aplicar `docs/brand/SCREEN_AUDIT.md`.

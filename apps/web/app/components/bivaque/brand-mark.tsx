@@ -45,6 +45,9 @@ export function BrandMark({
     <Image
       alt={alt}
       className={className}
+      data-bivaque-brand="official"
+      data-brand-asset={asset}
+      data-brand-tone={tone}
       height={size.height}
       priority={priority}
       src={sourceFor(asset, tone)}
