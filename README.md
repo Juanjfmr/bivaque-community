@@ -17,6 +17,7 @@ envelhece.
 | Pergunta | Documento |
 |---|---|
 | o que o produto **deve** ser — visão, papéis, decisões, monetização, sequenciamento | [`docs/BIVAQUE.md`](docs/BIVAQUE.md) |
+| qual é o domínio canônico e como ele deve ser usado | [`docs/DOMAIN.md`](docs/DOMAIN.md) |
 | o que o código **faz** hoje, e a distância até o alvo | [`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md) |
 | comandos, armadilhas de ambiente, contratos de teste | [`AGENTS.md`](AGENTS.md) |
 | decisões de risco alto, como ADR, e a régua que classifica risco | [`docs/decisions/`](docs/decisions/) |
