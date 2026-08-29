@@ -7,6 +7,7 @@ const root = join(import.meta.dirname, "..", "..")
 const publicBrand = join(root, "apps", "web", "public", "brand")
 
 const officialMarks = [
+  "bivaque-graphic-patio.svg",
   "bivaque-logo-primary.svg",
   "bivaque-logo-primary-graphite.svg",
   "bivaque-logo-primary-white.svg",
@@ -57,6 +58,9 @@ test("ships the small-size and platform icon set", () => {
     "icons/bivaque-maskable-512.png",
     "icons/bivaque-android-foreground.svg",
     "icons/bivaque-android-background.svg",
+    "icons/bivaque-avatar-circle.svg",
+    "icons/bivaque-avatar-square.svg",
+    "icons/bivaque-ios-safe-area.svg",
   ]
 
   const missing = required.filter((path) => !existsSync(join(publicBrand, path)))
