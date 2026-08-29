@@ -36,7 +36,7 @@ pages:
   - { id: EVT-01, wave: B, name: Eventos, route: /events, verdict: NOT_AUDITED }
   - { id: EVT-02, wave: B, name: Evento, route: /events/[id], verdict: NOT_AUDITED }
   - { id: PRV-01, wave: B, name: Prestador, route: /prestadores/[id], verdict: NOT_AUDITED }
-  - { id: COM-01, wave: B, name: Feed da comunidade, route: /community, verdict: NOT_AUDITED }
+  - { id: COM-01, wave: B, name: Feed da comunidade, route: /community, verdict: NOT_READY }
   - { id: COM-02, wave: B, name: Comunidades, route: /communities, verdict: NOT_AUDITED }
   - { id: COM-03, wave: B, name: Comunidade, route: /communities/[id], verdict: NOT_AUDITED }
   - { id: COM-04, wave: B, name: Convidar membros, route: /communities/[id]/invite, verdict: NOT_AUDITED }
