@@ -37,4 +37,68 @@ Esses itens não recebem automaticamente um novo `PA-*`. O finding nasce quando 
 
 ## Findings confirmados
 
-Nenhum ainda nesta branch. O scaffold não transforma evidência histórica em novo veredito sem atribuição por página.
+### PA-001 — Conteúdo de Cidade sob parent ativo Comunidade
+
+- **Page IDs:** `COM-01` — variante sem vila aprovada.
+- **Dimensão:** `entry_exit_navigation`.
+- **Severidade:** `HIGH`.
+- **Status de evidência:** `FAIL-SOURCE`.
+- **Regra:** `DS-009`; Visual Guide §0 “Navegação — containers derivados do modelo”.
+- **Evidência concreta:** `CommunityPage` renderiza `CityReference` em `/community` quando não há `primaryCommunityId`; `BottomNav` seleciona `community` para `/community`. O Visual Guide coloca eventos da cidade, guia e vitrine dentro de `Cidade`, enquanto `Minha comunidade` representa a home/feed da vila.
+- **Impacto:** conteúdo e parent conceitual divergem. Isso reduz previsibilidade e findability e torna o estado sem vila um caso especial não explicado pela navegação.
+- **Critério de fechamento:** escolher e provar uma solução coerente sem criar feed municipal — por exemplo, aterrissar/redirectar no container Cidade ou ajustar formalmente a estratégia de selected/landed state. Não criar quinta aba “Home” sem resolver `EXP-001`.
+- **Correção:** pendente.
+
+### PA-002 — Erros de eventos/vitrine não oferecem recovery
+
+- **Page IDs:** `COM-01`, `LOC-01`.
+- **Dimensão:** `state_model`, `interaction_feedback_recovery`.
+- **Severidade:** `HIGH`.
+- **Status de evidência:** `FAIL-SOURCE`.
+- **Regra:** `DS-014`, `DS-027`; Visual Guide §0 “Estados”.
+- **Evidência concreta:** em `CityReference`, falha de eventos ou prestadores renderiza apenas um `<p>` de erro. `load()` e `loadProviders()` existem, mas nenhum retry é exposto ao usuário.
+- **Impacto:** falha transitória vira beco sem saída e exige reload/navegação externa para nova tentativa.
+- **Critério de fechamento:** manter o módulo e apresentar erro estável com retry para a operação correspondente, preservando contexto seguro.
+- **Correção:** pendente.
+
+### PA-003 — No-results de prestador remove query e filtros
+
+- **Page IDs:** `COM-01`, `LOC-01`.
+- **Dimensão:** `state_model`, `interaction_feedback_recovery`.
+- **Severidade:** `HIGH`.
+- **Status de evidência:** `FAIL-SOURCE`.
+- **Regra:** `DS-019`.
+- **Evidência concreta:** `CityReference` usa `providers.length === 0` no ramo externo para renderizar o empty state sem formulário. Como `providers` também recebe o resultado filtrado, uma busca que retorna zero remove input, categoria e submit. O ramo interno “Nenhum prestador encontrado com esses filtros” fica estruturalmente inalcançável quando a lista chega a zero.
+- **Impacto:** o usuário perde justamente a query e os filtros necessários para corrigir a busca.
+- **Critério de fechamento:** distinguir catálogo inicial vazio de no-results; no segundo caso manter query/filtros visíveis, oferecer limpar/ajustar filtros e preservar contexto.
+- **Correção:** pendente.
+
+### PA-004 — Duas ações primárias `Publicar` competem na home sem vila
+
+- **Page IDs:** `COM-01` — variante sem vila aprovada.
+- **Dimensão:** `visual_hierarchy_consistency`.
+- **Severidade:** `MEDIUM`.
+- **Status de evidência:** `FAIL-SOURCE` (craft).
+- **Regra:** Visual Guide §0 “CTAs e ações”; Visual Guide §9.1 “Hierarquia”.
+- **Evidência concreta:** `AppShell` sempre oferece `Publicar` no header; `CommunityPage` também passa `onPublish` a `CityReference`, que renderiza outro `Publicar` no header da página.
+- **Impacto:** duplicação compete por atenção e reduz a clareza de prioridade da primeira dobra.
+- **Critério de fechamento:** manter uma única entrada primária por viewport, ou diferenciar semanticamente as ações se representarem consequências/audiências realmente distintas.
+- **Correção:** pendente.
+
+### PA-005 — Header mobile não exibe a marca prevista pelo Visual Guide
+
+- **Page IDs:** `member_shell` (observado em `COM-01`).
+- **Dimensão:** `visual_hierarchy_consistency`.
+- **Severidade:** `MEDIUM`.
+- **Status de evidência:** `FAIL-SOURCE`.
+- **Regra:** Visual Guide §0 “Navegação — containers derivados do modelo”, item “Header: brand à esquerda”.
+- **Evidência concreta:** o header atual usa o contexto de localidade à esquerda; em 375px o texto da localidade está `hidden sm:inline`, restando o ícone de pin. Não há wordmark/brand no header autenticado.
+- **Impacto:** a principal superfície recorrente perde reconhecimento de marca e o topo fica predominantemente utilitário.
+- **Critério de fechamento:** implementar a presença de marca prevista sem comprometer a inspeção de escopo, ou reabrir/alterar formalmente a rubrica visual com evidência comparativa.
+- **Correção:** pendente.
+
+## Auditorias associadas
+
+- `HOME_NO_VILA_AUDIT.md` — atribuição detalhada e baseline Premium da variante de `COM-01` sem vila.
+- `HOME_NO_VILA_PREMIUM_BRIEF.md` — brief de redesign sem violar D48.
+- `HOME_NO_VILA_WIREFRAME.md` — wireframe textual 375/768/1440 e estados obrigatórios.
