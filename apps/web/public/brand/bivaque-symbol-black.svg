@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+<title>Bivaque</title>
 <path id="bivaque-symbol-body" fill="#000000" fill-rule="evenodd" d="
 M23 5H54C73 5 84 15 84 31C84 42 78 49 67 53C81 57 89 67 89 80C89 91 79 95 63 95H23L14 86V59H36V44H14V14L23 5Z
 M36 20V40H54C63 40 68 36 68 30C68 24 63 20 54 20H36Z

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+<title>Bivaque</title>
 <path id="bivaque-patio" fill="#253033" fill-rule="evenodd" d="
 M24 5H66C84 5 95 17 95 34V66C95 84 83 95 66 95H24L14 85V59H27V43H14V15L24 5Z
 M29 20H57C71 20 80 28 80 39C80 47 76 52 69 55C78 58 83 65 83 74C83 85 74 90 60 90H29V20Z

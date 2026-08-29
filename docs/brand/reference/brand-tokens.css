@@ -1,11 +1,12 @@
 :root {
   --bivaque-graphite: #253033;
-  --bivaque-paper: #F2F0EB;
-  --bivaque-brasa: #B84A3A;
-  --bivaque-charcoal: #171E20;
-  --bivaque-raised: #20292B;
-  --bivaque-mist: #78979B;
-  --bivaque-brasa-light: #E07A5A;
+  --bivaque-paper: #f2f0eb;
+  --bivaque-brasa: #b84a3a;
+  --bivaque-charcoal: #171e20;
+  --bivaque-raised: #20292b;
+  --bivaque-mist: #78979b;
+  --bivaque-brasa-light: #e07a5a;
   --bivaque-font-display: "Noto Serif", Georgia, serif;
-  --bivaque-font-interface: "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --bivaque-font-interface:
+    "Noto Sans", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
