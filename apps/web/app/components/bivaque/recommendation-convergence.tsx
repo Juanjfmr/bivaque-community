@@ -6,9 +6,9 @@ import { useEffect, useMemo, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import {
   hasUsefulRecommendationQuery,
-  rankSimilarRecommendationRequests,
   type RankedRecommendationCandidate,
   type RecommendationSimilarityCandidate,
+  rankSimilarRecommendationRequests,
 } from "../../../lib/recommendation-similarity"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { FeedbackAlert } from "./feedback-alert"
@@ -55,9 +55,7 @@ export function RecommendationConvergence({
       const scopeIsGroup = scope !== "locality"
       let requestQuery = supabase
         .from("recommendation_requests")
-        .select(
-          "id, title, body, category, locality_id, group_id, created_at, is_resolved",
-        )
+        .select("id, title, body, category, locality_id, group_id, created_at, is_resolved")
         .eq("category", category)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
@@ -166,6 +164,7 @@ export function RecommendationConvergence({
   if (loading && matches.length === 0) {
     return (
       <div
+        role="status"
         className="flex flex-col gap-2"
         aria-label="Procurando pedidos parecidos"
         aria-busy="true"
@@ -188,7 +187,8 @@ export function RecommendationConvergence({
           Já perguntaram algo parecido por aqui
         </h3>
         <p className="text-xs text-muted">
-          Você pode aproveitar as respostas existentes e concentrar novas indicações no mesmo tópico.
+          Você pode aproveitar as respostas existentes e concentrar novas indicações no mesmo
+          tópico.
         </p>
       </div>
 
