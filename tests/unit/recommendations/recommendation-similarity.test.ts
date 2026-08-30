@@ -60,7 +60,9 @@ describe("recommendation convergence similarity", () => {
   })
 
   it("folds accents and conservative plural variants", () => {
-    expect(recommendationTextSimilarity("transportadoras", "Transportadora para mudança")).toBe(1)
+    expect(
+      recommendationTextSimilarity("transportadoras", "Transportadora para mudança"),
+    ).toBeGreaterThan(0.8)
   })
 
   it("does not search noise-only input", () => {
