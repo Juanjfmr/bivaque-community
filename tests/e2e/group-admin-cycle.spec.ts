@@ -108,19 +108,26 @@ test.describe("group admin cycle", () => {
     // When they request entry to a private group
     await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
 
-    // Idempotente: com a self-visibility da própria linha (20260825143505),
-    // um pedido pendente deixado por uma execução anterior já renderiza
-    // "Cancelar pedido" na carga da página. O clique em "Pedir entrada"
-    // acontece só quando o botão existe; a asserção final vale nos dois
-    // caminhos.
     const pedir = page.getByRole("button", { name: "Pedir entrada" })
-    if (await pedir.isVisible().catch(() => false)) {
-      await pedir.click()
+    const cancelar = page.getByRole("button", { name: "Cancelar pedido" })
+
+    // Wait for the server-rendered membership state before branching. A bare
+    // locator.isVisible() does not auto-wait and could miss "Pedir entrada"
+    // during the first cold navigation.
+    await expect(pedir.or(cancelar)).toBeVisible({ timeout: 15000 })
+
+    // Normalize residue from an interrupted run so every project exercises
+    // the same request -> pending -> cancel cycle.
+    if (await cancelar.isVisible()) {
+      await cancelar.click()
+      await expect(pedir).toBeVisible()
     }
 
-    // Then the cancel button is visible, replacing the request button
-    await expect(page.getByRole("button", { name: /Cancelar pedido/i })).toBeVisible({
-      timeout: 15000,
-    })
+    await pedir.click()
+    await expect(cancelar).toBeVisible({ timeout: 15000 })
+
+    // Exercise the behavior named by the test and restore the shared seed.
+    await cancelar.click()
+    await expect(pedir).toBeVisible({ timeout: 15000 })
   })
 })
