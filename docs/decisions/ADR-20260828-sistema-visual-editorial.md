@@ -108,7 +108,7 @@ Divergimos em três pontos, e são as divergências que sustentam a distinção:
 
 1. **Fio no lugar de sombra.** Lista contínua separada por hairline em vez de
    cards flutuantes.
-2. **Serifado real na hierarquia.** Títulos em Literata, não sans em peso maior.
+2. **Serifado real na hierarquia.** Títulos em Noto Serif, não sans em peso maior.
 3. **Papel quente no lugar de cinza frio.**
 
 Divergimos também do próprio candidato A em dois pontos, ambos endereçando
@@ -118,7 +118,8 @@ fraquezas que o experimento registrou nele:
   "serif body in a social/community context can read as newsletter". Restringir
   o serifado aos títulos preserva o registro editorial sem o custo.
 - **Duas famílias, não três.** O A carregava Newsreader + Inter Tight +
-  JetBrains Mono e por isso levou 3/5 em custo de implementação. Aqui são duas.
+  JetBrains Mono e por isso levou 3/5 em custo de implementação. Aqui são duas,
+  e são as da marca aprovada: Noto Serif e Noto Sans.
 
 A terceira fraqueza registrada do A — 3/5 em densidade de leitura, porque
 "hairlines + generous measure mean fewer items per viewport" — é endereçada
@@ -139,10 +140,17 @@ ela substitui.
   duplicados, antes desta mudança.
 - Contraste medido numericamente antes de fixar a paleta: todos os pares de
   texto ≥ 4.5:1 e todo sólido com texto ≥ 4.5:1 (DS-029 / WCAG 2.2 AA).
-- Verificação de runtime: build de produção com as 27 rotas, 21 arquivos de
-  fonte auto-hospedados em `.next/static/media`, e captura em 375/1440 de
-  `/`, `/login`, `/signup`, `/onboarding` confirmando
-  `body=Inter head=Literata bg=rgb(245, 242, 233)`.
+- Verificação de runtime **após a emenda**: build de produção com 24 arquivos
+  de fonte auto-hospedados em `.next/static/media`, e captura em 375/1440 de
+  `/`, `/login` e `/onboarding` confirmando
+  `body="Noto Sans" head="Noto Serif" bg=rgb(242, 240, 235)` — ou seja, o Papel
+  oficial `#F2F0EB` e a tipografia oficial, não os valores da versão revogada.
+- Os fundos sólidos da landing caíram de seis valores misturados (que ainda
+  traziam escuros esverdeados da identidade antiga) para três, todos oficiais:
+  `rgb(242,240,235)` papel, `rgb(23,30,32)` grafite, `rgb(251,250,247)` superfície.
+- `tests/scope/token-references.test.mjs`, adicionado nesta entrega, falha se
+  qualquer `var(--x)` apontar para token não declarado. Foi ele que encontrou a
+  nona referência órfã da troca de paleta — a única que não vinha deste PR.
 
 ## Benefits
 
@@ -160,9 +168,22 @@ ela substitui.
 - **Acessibilidade**: paleta nova. Mitigado por medição numérica de contraste
   antes da adoção; nenhum par ficou abaixo de AA.
 - **Regressão visual em telas não capturadas**: o shell autenticado não pôde ser
-  fotografado nesta sessão (sem daemon Docker, logo sem stack Supabase). O risco
-  é real e está declarado — a auditoria visual de `docs/superpowers/plans/2026-08-05-auditoria-telas.md`
-  continua devendo para as telas autenticadas.
+  fotografado nesta sessão. A causa é de rede, não de disposição: o daemon do
+  Docker sobe normalmente, mas o pull das imagens do Supabase leva 403 do CDN do
+  registry, que não está na allowlist do proxy do ambiente (testado em
+  2026-08-28 e 2026-08-29). Sem imagem não há Postgres, sem Postgres não há
+  seed, e sem seed o `scripts/visual/loop.mjs` não tem rotas autenticadas para
+  fotografar. A auditoria de
+  `docs/superpowers/plans/2026-08-05-auditoria-telas.md` continua devendo para as
+  telas autenticadas, e precisa rodar numa máquina com acesso ao registry.
+- **Referência órfã de token ao trocar paleta** — risco que **se materializou**.
+  Um `var(--x)` sem `--x` declarado não quebra build, lint nem typecheck: vira
+  guaranteed-invalid e o elemento herda outra coisa; num SVG, `fill`/`stroke`
+  inválidos herdam do `<svg>` raiz. A troca deixou nove órfãs em seis arquivos,
+  que apagaram o CTA do login, as marcas das gravuras e o fundo da seção de
+  fechamento da landing — todas em silêncio. Mitigado depois do fato por
+  `tests/scope/token-references.test.mjs`, que falha se qualquer referência
+  apontar para token não declarado.
 - **Custo de peso**: duas famílias de webfont. Mitigado por subset latin +
   latin-ext e `display: swap`.
 - **Deriva documental**: `VISUAL_GUIDE.md` descrevia a paleta Navy; atualizado
