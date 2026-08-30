@@ -1,0 +1,60 @@
+task_id: RUN-004
+
+objective: >
+  Ao redigir um pedido de indicação, o membro vê pedidos semanticamente semelhantes no mesmo
+  escopo e categoria antes de publicar, podendo abrir/acompanhar o tópico existente ou ainda
+  publicar o novo pedido conscientemente.
+
+authority:
+  - docs/BIVAQUE.md §1.1 e §6
+  - docs/decisions/ADR-20260829-guia-auto-curadoria-evidencia.md §1
+  - decisão explícita do dono em 2026-08-29: o guia deve se autoalimentar e pedidos repetidos devem convergir
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/recommendations/page.tsx faz INSERT direto em recommendation_requests
+    depois da validação de PII; não consulta pedidos semelhantes antes do submit.
+
+allowed_paths:
+  - apps/web/app/(shell)/recommendations/page.tsx
+  - apps/web/app/components/bivaque/
+  - apps/web/lib/recommendation-similarity.ts
+  - tests/unit/recommendation-similarity.test.ts
+  - tests/e2e/
+  - docs/agents/tasks/RUN-004.task.yml
+
+forbidden:
+  - bloquear hard a criação de pedido semelhante
+  - ampliar RLS ou consultar conteúdo fora do escopo que o membro já pode ler
+  - misturar pedidos de categorias diferentes
+  - misturar locality_id e group_id como se fossem o mesmo alcance
+  - introduzir serviço externo ou modelo de IA para similaridade nesta etapa
+  - alterar navegação global ou design system
+
+acceptance:
+  - a busca só começa quando há categoria e texto suficientes para produzir sinal útil
+  - candidatos são limitados à mesma categoria e ao mesmo escopo selecionado
+  - pedidos semanticamente próximos aparecem sob a mensagem "Já perguntaram algo parecido por aqui"
+  - cada candidato permite "Ver respostas" e "Acompanhar"
+  - "Perguntar mesmo assim" mantém a publicação disponível e explícita
+  - selecionar "Acompanhar" reutiliza recommendation_saves e não cria novo pedido
+  - a experiência não revela pedidos que RLS já ocultaria do usuário
+  - estados loading, vazio e erro da sugestão não impedem o formulário normal
+
+proof:
+  - npx pnpm@11.18.0 test:unit
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 gate
+  - visual audit de /recommendations em 375, 768 e 1440 px
+
+risk: convergência de conteúdo visível sem alteração de trust boundary
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
