@@ -1,0 +1,76 @@
+task_id: SEC-001
+
+objective: >
+  Respostas de indicação de localidade com entidade declarada passam a consolidar uma referência
+  comunitária automaticamente por evidência de autores distintos, sem elevar conteúdo de grupo e
+  sem exigir aprovação humana no caminho feliz.
+
+authority:
+  - docs/BIVAQUE.md D48-D49
+  - docs/decisions/ADR-20260829-guia-auto-curadoria-evidencia.md
+  - decisão explícita do dono em 2026-08-29: curadoria ordinária não pode depender de humano
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    supabase/migrations/20260821000006_promote_reply_to_guide.sql exige operador e promove uma
+    resposta por vez; apps/web/app/(shell)/guide/page.tsx lê apenas arrival_guide_entries aprovadas.
+
+allowed_paths:
+  - docs/decisions/ADR-20260829-guia-auto-curadoria-evidencia.md
+  - docs/BIVAQUE.md
+  - docs/PRODUCT_STATUS.md
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/(shell)/guide/
+  - apps/web/app/(admin)/guide-queue/
+  - apps/web/app/components/bivaque/recommendation-requests.tsx
+  - apps/web/lib/
+  - tests/unit/
+  - tests/e2e/
+  - tools/backend-kanban/
+
+forbidden:
+  - enviar texto de indicação a modelo ou serviço externo
+  - publicar automaticamente resposta originada de group_id no guia municipal
+  - usar quantidade bruta de respostas como evidência; a confiança conta autores distintos
+  - expor identidade dos recomendadores ou texto integral das respostas no guia agregado
+  - criar conta, ficha comercial ou alcance pago para uma entidade apenas porque foi indicada
+  - inferir subject_name retroativamente de respostas históricas em texto livre
+  - editar migration já aplicada
+
+acceptance:
+  - recommendation_replies aceita subject_name opcional e mantém body como contexto livre
+  - uma única fonte independente mantém a entidade como candidate e invisível no guia público
+  - duas fontes independentes na mesma localidade/categoria publicam automaticamente a entidade
+  - duas respostas do mesmo autor continuam valendo como uma única evidência
+  - editar ou excluir evidência recalcula a projeção e pode rebaixar published para candidate
+  - resposta originada de grupo nunca cria nem aumenta evidência municipal
+  - membro de outra localidade não lê entrada comunitária publicada fora do próprio escopo
+  - authenticated não recebe INSERT/UPDATE/DELETE direto na projeção comunitária
+  - o Guia distingue visualmente referência comunitária do acervo legado
+  - o caminho ordinário não exige operador; humano aparece somente em exceções de governança
+
+proof:
+  - npx pnpm@11.18.0 exec supabase db reset --no-seed
+  - npx pnpm@11.18.0 test:supabase
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 test:unit
+  - visual audit de /guide e /recommendations em 375, 768 e 1440 px
+
+risk: trust boundary de RLS e publicação automática de conhecimento comunitário
+risk_level: R3
+adr: docs/decisions/ADR-20260829-guia-auto-curadoria-evidencia.md
+
+reviewer_must_differ_from_executor: true
+blocked_by: >
+  O ADR tem aprovação do dono, mas ainda precisa de critic PASS independente antes da mudança R3
+  ser considerada autorizada para fechamento; security audit e runtime proof também são gates.
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
