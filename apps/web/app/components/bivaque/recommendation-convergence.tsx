@@ -7,6 +7,7 @@ import { useLocalityContext } from "../../../lib/locality-context"
 import {
   hasUsefulRecommendationQuery,
   rankSimilarRecommendationRequests,
+  type RankedRecommendationCandidate,
   type RecommendationSimilarityCandidate,
 } from "../../../lib/recommendation-similarity"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -18,13 +19,20 @@ type Props = {
   scope: "locality" | string
   title: string
   body: string
+  onMatchStateChange?: (hasMatches: boolean) => void
 }
 
-export function RecommendationConvergence({ category, scope, title, body }: Props) {
+export function RecommendationConvergence({
+  category,
+  scope,
+  title,
+  body,
+  onMatchStateChange,
+}: Props) {
   const { current } = useLocalityContext()
   const router = useRouter()
   const supabase = useMemo(() => createBrowserClient(), [])
-  const [matches, setMatches] = useState<RecommendationSimilarityCandidate[]>([])
+  const [matches, setMatches] = useState<RankedRecommendationCandidate[]>([])
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState("")
@@ -36,6 +44,7 @@ export function RecommendationConvergence({ category, scope, title, body }: Prop
     if (!useful) {
       setMatches([])
       setLoading(false)
+      onMatchStateChange?.(false)
       return
     }
 
@@ -65,6 +74,7 @@ export function RecommendationConvergence({ category, scope, title, body }: Prop
         // Similarity is an assistive affordance, never a gate to publishing.
         setMatches([])
         setLoading(false)
+        onMatchStateChange?.(false)
         return
       }
 
@@ -80,6 +90,7 @@ export function RecommendationConvergence({ category, scope, title, body }: Prop
         candidates,
       )
       setMatches(ranked)
+      onMatchStateChange?.(ranked.length > 0)
 
       if (ranked.length > 0) {
         const {
@@ -113,7 +124,7 @@ export function RecommendationConvergence({ category, scope, title, body }: Prop
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [supabase, current.id, category, scope, title, body])
+  }, [supabase, current.id, category, scope, title, body, onMatchStateChange])
 
   async function followRequest(requestId: string) {
     if (savedIds.has(requestId)) {
@@ -140,7 +151,9 @@ export function RecommendationConvergence({ category, scope, title, body }: Prop
 
     setFollowingId(null)
     if (error) {
-      setFeedback("Não foi possível acompanhar agora. O seu pedido ainda pode ser publicado normalmente.")
+      setFeedback(
+        "Não foi possível acompanhar agora. O seu pedido ainda pode ser publicado normalmente.",
+      )
       return
     }
 
@@ -152,7 +165,11 @@ export function RecommendationConvergence({ category, scope, title, body }: Prop
 
   if (loading && matches.length === 0) {
     return (
-      <div className="flex flex-col gap-2" aria-label="Procurando pedidos parecidos" aria-busy="true">
+      <div
+        className="flex flex-col gap-2"
+        aria-label="Procurando pedidos parecidos"
+        aria-busy="true"
+      >
         <Skeleton className="h-4 w-56" />
         <Skeleton className="h-20 w-full" />
       </div>
@@ -179,13 +196,18 @@ export function RecommendationConvergence({ category, scope, title, body }: Prop
         {matches.map((match) => {
           const isSaved = savedIds.has(match.id)
           return (
-            <li key={match.id} className="flex flex-col gap-2 rounded-lg border border-border bg-[var(--surface)] p-3">
+            <li
+              key={match.id}
+              className="flex flex-col gap-2 rounded-lg border border-border bg-[var(--surface)] p-3"
+            >
               <div className="flex flex-wrap items-center gap-2">
                 {match.is_resolved ? (
-                  <Chip size="sm" variant="soft">Resolvido</Chip>
+                  <Chip size="sm" variant="soft">
+                    Resolvido
+                  </Chip>
                 ) : null}
                 <span className="text-xs text-muted">
-                  {Math.round(("similarity" in match ? Number(match.similarity) : 0) * 100)}% parecido
+                  {Math.round(match.similarity * 100)}% parecido
                 </span>
               </div>
               <p className="text-sm font-semibold">{match.title}</p>
@@ -206,7 +228,11 @@ export function RecommendationConvergence({ category, scope, title, body }: Prop
                   isDisabled={isSaved || followingId === match.id}
                   onPress={() => followRequest(match.id)}
                 >
-                  {isSaved ? "Acompanhando" : followingId === match.id ? "Salvando..." : "Acompanhar"}
+                  {isSaved
+                    ? "Acompanhando"
+                    : followingId === match.id
+                      ? "Salvando..."
+                      : "Acompanhar"}
                 </Button>
               </div>
             </li>
