@@ -736,7 +736,8 @@
         "pendente — substituir os wordmarks provisórios pelo BrandMark canônico (passo 3 da Ativação futura)",
         "pendente — manifest, favicons e ícones PWA a partir de public/brand/icons (passo 4)",
         "pendente — captura 375/768/1440 do shell autenticado e rubrica VISUAL_GUIDE §9",
-        "pendente — parecer de revisor independente (critic_verdict do ADR está pending)"
+        "pendente — parecer de revisor independente (critic_verdict do ADR está pending)",
+        "avaliar — next/font/local em vez de next/font/google: elimina o fetch de build, ao custo de binários versionados. Sem problema em curso (a CI alcança o CDN de fontes); decidir junto com os passos 3 e 4 da Ativação futura, quando a estratégia de asset for revista de uma vez"
       ],
       "proof": [
         "Gate verde: lint + typecheck + test + secrets",
@@ -752,7 +753,7 @@
         "ADR | ../../docs/decisions/ADR-20260828-sistema-visual-editorial.md",
         "EXP-004 | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md"
       ],
-      "updatedAt": "2026-08-29",
+      "updatedAt": "2026-08-30",
       "sourceRevision": "65708af",
       "dependencies": ["FRONTEND-RUNTIME-CONFORMANCE"],
       "tests": [
