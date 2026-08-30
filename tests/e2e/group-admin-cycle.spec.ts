@@ -65,7 +65,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("group admin cycle", () => {
+test.describe("group admin cycle", { tag: "@stateful" }, () => {
   test("the owner sees delete and transfer options", async ({ page }) => {
     // Given a session of the group's actual owner
     await signInAs(page, GROUP_OWNER_EMAIL)
