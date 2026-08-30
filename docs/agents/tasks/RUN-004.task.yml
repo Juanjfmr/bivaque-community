@@ -35,10 +35,10 @@ forbidden:
 acceptance:
   - a busca só começa quando há categoria e texto suficientes para produzir sinal útil
   - candidatos são limitados à mesma categoria e ao mesmo escopo selecionado
-  - pedidos semanticamente próximos aparecem sob a mensagem "Já perguntaram algo parecido por aqui"
-  - cada candidato permite "Ver respostas" e "Acompanhar"
-  - "Perguntar mesmo assim" mantém a publicação disponível e explícita
-  - selecionar "Acompanhar" reutiliza recommendation_saves e não cria novo pedido
+  - pedidos semanticamente próximos aparecem sob a mensagem Já perguntaram algo parecido por aqui
+  - cada candidato permite Ver respostas e Acompanhar
+  - Perguntar mesmo assim mantém a publicação disponível e explícita
+  - selecionar Acompanhar reutiliza recommendation_saves e não cria novo pedido
   - a experiência não revela pedidos que RLS já ocultaria do usuário
   - estados loading, vazio e erro da sugestão não impedem o formulário normal
 
