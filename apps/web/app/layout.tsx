@@ -15,11 +15,16 @@ import "./globals.css"
 // nenhum next/font — o que aparecia era Segoe UI ou Arial conforme o sistema
 // operacional. E o serifado era stack de sistema ("Iowan Old Style", Palatino,
 // Georgia), ou seja, a identidade mudava de máquina para máquina.
+// Sem `weight`: as duas são fontes variáveis no Google Fonts, e omitir o peso é
+// o que faz o next/font baixar o eixo variável inteiro (font-weight: 100 900)
+// em vez de instâncias estáticas. Declarar ["400","500","600","700"] aqui, como
+// esta chamada fazia, desligava a variável e gerava 64 declarações @font-face
+// estáticas contra as 8 do sans — assimetria que era omissão minha, mas ao
+// contrário do que parecia: o lado errado era o serifado, não o sans.
 const notoSerif = Noto_Serif({
   subsets: ["latin", "latin-ext"],
   display: "swap",
   variable: "--font-noto-serif",
-  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
 })
 
