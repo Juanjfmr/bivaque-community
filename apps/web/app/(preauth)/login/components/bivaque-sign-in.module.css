@@ -10,9 +10,8 @@
   --login-paper: var(--background);
   --login-surface: var(--surface);
   --login-forest: var(--accent);
-  --login-forest-deep: var(--forest-deep);
+  --login-forest-deep: var(--charcoal);
   --login-signal: var(--accent);
-  --login-gold: var(--gold);
   --login-rule: var(--border);
   --login-serif: var(--font-serif);
   --login-sans: var(--font-sans);

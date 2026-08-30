@@ -10,9 +10,8 @@
   --flow-paper: var(--background);
   --flow-surface: var(--surface);
   --flow-forest: var(--accent);
-  --flow-forest-deep: var(--forest-deep);
+  --flow-forest-deep: var(--charcoal);
   --flow-signal: var(--accent);
-  --flow-gold: var(--gold);
   --flow-rule: var(--border);
   --flow-serif: var(--font-serif);
   --flow-sans: var(--font-sans);

@@ -156,7 +156,7 @@ export function AppShell({ children }: AppShellProperties) {
             className={`flex items-center h-[var(--nav-height)] shrink-0 border-b border-border ${isRail ? "justify-center" : "px-3"}`}
           >
             {!isRail && (
-              <span className="flex-1 truncate font-serif text-[var(--text-xl)] font-semibold text-[var(--forest-deep)]">
+              <span className="flex-1 truncate font-serif text-[var(--text-xl)] font-semibold text-foreground">
                 {brandTokens.productName}
               </span>
             )}

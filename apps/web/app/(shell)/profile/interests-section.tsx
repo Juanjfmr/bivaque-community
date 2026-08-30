@@ -168,7 +168,7 @@ export function InterestsSection() {
           </div>
 
           {error ? <p className="text-xs text-[var(--danger)]">{error}</p> : null}
-          {success ? <p className="text-xs text-[var(--muted-foreground)]">{success}</p> : null}
+          {success ? <p className="text-xs text-muted">{success}</p> : null}
         </form>
       )}
     </div>

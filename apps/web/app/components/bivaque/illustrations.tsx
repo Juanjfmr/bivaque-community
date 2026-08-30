@@ -17,7 +17,11 @@
 const INK = "var(--foreground)"
 const FOREST = "var(--accent)"
 const MUTED = "var(--muted)"
-const GOLD = "var(--gold)"
+// Brasa é o sinal/ênfase da identidade oficial; as marcas decorativas destas
+// gravuras são exatamente isso. Antes apontava para --gold, que a paleta oficial
+// não tem: num SVG, fill/stroke com var() inválido herda do <svg> raiz (fill="none",
+// sem stroke), então as marcas ficavam invisíveis em vez de trocar de cor.
+const GOLD = "var(--accent)"
 const PAPER = "var(--surface)"
 
 interface IllustrationProps {
