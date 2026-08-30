@@ -4,13 +4,14 @@ status: accepted
 risk: R1
 owner: Juan
 approved_at: 2026-08-28
+amended_at: 2026-08-29
 expires_at:
 linked_plan:
 critic_verdict: pending
 critic_review:
 ---
 
-# Sistema visual editorial ("Papel & Mata") — fecha o EXP-004
+# Sistema visual editorial sobre a identidade oficial — fecha o EXP-004
 
 ## Problem
 
@@ -39,31 +40,45 @@ Três agravantes:
 
 ## Decision
 
-Adotar **"Papel & Mata"** como o sistema visual do produto inteiro, promovido à
-camada de tokens (`packages/tokens/src/index.ts` + `apps/web/app/globals.css`),
-e retirar a triplicação apontando os três módulos CSS do funil para esses
-tokens.
+Adotar o **registro editorial** como sistema visual do produto inteiro, promovido à
+camada de tokens (`packages/tokens/src/index.ts` + `apps/web/app/globals.css`), e
+retirar a triplicação apontando os três módulos CSS do funil para esses tokens.
 
-Isto **fecha o `EXP-004`** na direção do **candidato A — Civic Editorial**, com
-duas divergências deliberadas registradas abaixo.
+Isto **fecha o `EXP-004`** na direção do **candidato A — Civic Editorial**, com duas
+divergências deliberadas registradas abaixo.
+
+> **Emenda de 2026-08-29.** A primeira versão desta decisão instalava a paleta
+> "Papel & Mata" (papel quente, verde-mata `#245B43`, Literata + Inter), derivada
+> do que o funil já shipava. Um dia depois, a **identidade oficial** entrou no
+> `main` (`#42`, `#43`) com outra paleta e outra tipografia. A direção editorial
+> continua valendo — é o que o owner escolheu, e é forma, não cor. Os **valores**
+> passam a ser os da marca aprovada. Esta é a "entrega visual própria" que
+> `docs/brand/README.md` §Ativação futura exige, liberada por autoridade explícita
+> do owner; o congelamento do card não caiu por decisão de agente.
 
 O que muda:
 
-- **Cor**: papel `#F5F2E9`, tinta `#17211D`, superfície `#FFFDF7`, acento
-  floresta `#245B43`, `--muted` `#4A574F`. Papéis novos: `--forest-deep`,
-  `--gold` (decorativo) e `--signal` (`#B4472E`, o CTA do funil).
-- **Tipografia**: Literata (display/títulos) + Inter (UI/corpo), auto-hospedadas
-  via `next/font`, declaradas em `@theme` para gerar também `font-serif` /
-  `font-sans`.
+- **Cor**: Papel `#F2F0EB`, Grafite `#253033`, Brasa `#B84A3A` — oficiais.
+  Derivados **declarados**, porque o brandbook cobre identidade e não sistema de
+  UI: `--surface` `#FBFAF7`, `--surface-sunken` `#E8E5DE`, `--muted` `#556366`,
+  `--danger` `#8F2E23`, `--warning` `#7A5312`, `--success` `#2F6A4F`.
+- **`--accent-strong` `#9E3B2C`, separado de `--accent`**: a brasa cheia dá 4.52:1
+  no papel — passa raspando — e **falha** no `--surface-sunken` (4.09). Texto de
+  acento e link usam a escurecida; preenchimento sólido usa a brasa aprovada.
+- **`--danger` mais fundo que a brasa**: "aja nisto" e "isto destrói" não podem
+  ser a mesma cor.
+- **`--mist` é decorativo**: 2.75:1 no papel. Nunca carrega texto — quem carrega
+  texto secundário é `--muted`. Isto está escrito no token e no VISUAL_GUIDE
+  porque é a armadilha óbvia de quem só olhar o brandbook.
+- **Tipografia**: Noto Serif (display) + Noto Sans (interface), auto-hospedadas
+  via `next/font`, declaradas em `@theme` para gerar também `font-serif`/`font-sans`.
 - **Forma**: elevação rasa (sombra só para o que de fato flutua), raios
-  quase-retos para conteúdo, listas separadas por fio (`.ruled`) no lugar de
-  cards flutuando, e primitivas editoriais (`.eyebrow`, `.paper`, `.rule-mark`,
-  `.measure`).
+  quase-retos, listas separadas por fio (`.ruled`) no lugar de cards flutuando, e
+  primitivas editoriais (`.eyebrow`, `.paper`, `.rule-mark`, `.measure`).
 
 O que **não** muda: os quatro containers de navegação
-(`ADR-20260816-shells-e-navegacao`), a anatomia de rotas, e qualquer regra
-`MUST` de `DESIGN_SPEC.md`. Nenhuma decisão de produto, privacidade ou acesso é
-tocada.
+(`ADR-20260816-shells-e-navegacao`), a anatomia de rotas, e qualquer regra `MUST`
+de `DESIGN_SPEC.md`. Nenhuma decisão de produto, privacidade ou acesso é tocada.
 
 ## Alternatives considered
 

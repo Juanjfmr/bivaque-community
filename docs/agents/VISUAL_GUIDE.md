@@ -20,32 +20,31 @@
 - Separação entre seções: 24px (`mt-6`).
 - Divisores: `var(--border)` hairline.
 
-### Paleta (Papel & Mata) — `ADR-20260828-sistema-visual-editorial`
-> Substitui a paleta "Navy Professional" (slate-50 / slate-950 / blue-900), que
-> era a tríade padrão do Tailwind e nunca tinha sido selecionada — DS-036 a
-> tratava como candidata. O `EXP-004` foi fechado na direção do candidato A
-> (Civic Editorial) por decisão do owner em 2026-08-28.
+### Paleta — identidade oficial (`docs/brand/README.md`, aprovada 2026-08-29)
+> Substitui a paleta "Navy Professional" (slate-50 / slate-950 / blue-900, a tríade
+> padrão do Tailwind, que DS-036 tratava como candidata) e a "Papel & Mata"
+> (verde-mata + Literata/Inter), que o owner selecionou ao fechar o `EXP-004` e que
+> estava certa na forma e errada na cor. Valores canônicos em
+> `packages/tokens/src/official-brand.ts`.
 
-- **Accent primário** (`--accent`): `#245B43` (floresta) — CTAs principais (Publicar, Criar evento, Criar grupo, Verificar elegibilidade), links, focus ring, item ativo da nav. Texto sobre accent: `--accent-foreground` `#FFFDF7`.
-- **Accent secundário** (`brandTokens.secondaryAccent`): `#2C4F62` (azul-ardósia) — CTAs secundárias e links que não devem competir com o primário.
-- **Accent-soft** (`--accent-soft`): 12% floresta — fundo do item ativo na sidebar/bottom nav (`bg-[var(--accent-soft)]`), sempre acompanhado do fio à esquerda (estado não pode depender só de cor — DS-033).
-- **Background** (`--background`): `#F5F2E9` (papel quente) — fundo de página.
-- **Surface** (`--surface` / `--surface-raised`): `#FFFDF7` — superfície de conteúdo.
-- **Foreground** (`--foreground`): `#17211D` (tinta quente) — texto principal.
-- **Muted** (`--muted`): `#4A574F` — meta, timestamps, subtexto.
-- **Danger** (`--danger`): `#A33D26` — report/destrutivo.
-- **Signal** (`--signal`): `#B4472E` — ênfase/CTA do funil. **Não é `--danger`**: "aja nisto" e "isto é destrutivo" são papéis distintos que por acaso são vizinhos na roda.
-- **Forest-deep** (`--forest-deep`): `#102F25` — superfície invertida (masthead). **Gold** (`--gold`): `#D7A44C`, **decorativo apenas**, nunca carrega texto — quem carrega é `--warning` (`#7A5312`).
+- **Accent primário** (`--accent`): `#B84A3A` **Brasa** — a ação decisiva, focus ring, item ativo da nav. Texto sobre accent: `--accent-foreground` `#FBFAF7` (5.15:1). Brasa é sinal e ênfase: **não é fundo longo de leitura**, e a rubrica §9 exige "Brasa só no limiar".
+- **Accent para texto** (`--accent-strong`): `#9E3B2C`. A brasa cheia dá 4.52:1 no papel — passa raspando — e **falha** no `--surface-sunken` (4.09). Link e texto de acento usam esta; preenchimento sólido usa a brasa aprovada. `--link` aponta para cá.
+- **Accent-soft** (`--accent-soft`): 12% de brasa — fundo do item ativo, sempre acompanhado do fio à esquerda (estado não pode depender só de cor — DS-033).
+- **Background** (`--background`): `#F2F0EB` **Papel** — oficial.
+- **Surface** (`--surface` / `--surface-raised`): `#FBFAF7` — **derivado**. O brandbook cobre identidade, não sistema de UI, e não define superfície elevada clara.
+- **Foreground** (`--foreground`): `#253033` **Grafite** — oficial (11.90:1).
+- **Muted** (`--muted`): `#556366` — **derivado** (5.48:1 no papel).
+- **Danger** (`--danger`): `#8F2E23` — **derivado** mais fundo que a brasa, para que "aja nisto" e "isto destrói" não sejam a mesma cor.
+- **Charcoal** (`--charcoal`): `#171E20` — superfície invertida / masthead. **Mist** (`--mist`): `#78979B` é **decorativo apenas**: 2.75:1 no papel, **nunca carrega texto** — quem carrega texto secundário é `--muted`.
+- **Secundário** (`brandTokens.secondaryAccent`): `#253033` grafite — ações de segundo nível, que não devem competir com a brasa.
 - Contraste: todo par de texto em uso foi medido e está ≥4.5:1; todo sólido com texto ≥4.5:1.
 
 ### Tipografia
-- **Literata** (títulos/display) + **Inter** (UI/corpo), auto-hospedadas via `next/font` no `layout.tsx` — sem requisição a terceiro em runtime (também melhor sob LGPD). Declaradas em `@theme` no globals.css, o que gera junto os utilitários `font-serif` / `font-sans`; declará-las só em `:root` faz `font-serif` cair no stack embutido do Tailwind.
-- **h1–h3 em serifado; h4–h6 em sans.** Os três primeiros são display e carregam a identidade; os demais são rótulos estruturais dentro de uma seção e devem ler como UI. Peso 600 — um serifado old-style em 700 vira institucional, e DS-001 proíbe apoiar confiança em pista de autoridade.
-- **Corpo em sans, nunca em serifado.** O `tradeoff ledger` do candidato A registra que corpo serifado em contexto de comunidade "can read as newsletter"; restringir o serifado ao título preserva o registro editorial sem esse custo.
+- **Noto Serif** (display) + **Noto Sans** (interface) — a tipografia da identidade oficial, auto-hospedadas via `next/font` no `layout.tsx`, sem requisição a terceiro em runtime (também melhor sob LGPD). Declaradas em `@theme` no globals.css, o que gera junto os utilitários `font-serif` / `font-sans`; declará-las só em `:root` faz `font-serif` cair no stack embutido do Tailwind.
+- **h1–h3 em serifado; h4–h6 em sans.** Os três primeiros são display e carregam a identidade; os demais são rótulos estruturais dentro de uma seção e devem ler como UI. Peso 600 — um serifado em 700 vira institucional, e DS-001 proíbe apoiar confiança em pista de autoridade.
+- **Corpo em sans, nunca em serifado.** O *tradeoff ledger* do candidato A do EXP-004 registra que corpo serifado em contexto de comunidade "can read as newsletter"; restringir o serifado ao título preserva o registro editorial sem esse custo.
 - h1 de seção: `var(--text-2xl)` (28px) serifado. h2: `var(--text-xl)` (22px). Corpo: `var(--text-base)` (16px). Meta/secundário: `var(--text-sm)` (14px) `var(--muted)`.
 - **Eyebrow** (`.eyebrow`): rótulo de seção, 12px, 600, `letter-spacing: .08em`, caixa alta, `--muted`. Acompanha o h1; nunca substitui um título (não é landmark).
-- Nada abaixo de `var(--text-xs)` (12px). line-height body 1.5+, headings 1.2 com letter-spacing -0.011em.
-- **Um h1 por tela; o h1 é o TÍTULO DA SEÇÃO** ("Minha comunidade", "Grupos", "Eventos"…), nunca "Bivaque" dentro de rotas autenticadas (finding #4).
 
 ### Copy e acentos
 - **Acentos corretos em toda copy nova e nos headers refeitos** ("Notificações", "Indicações", "Você está em dia"). Unificar no polish de cada tela tocada.
@@ -188,3 +187,4 @@ Para cada tela tocada, verificar nas capturas 375/768/1440:
 6. Responsivo: 375 não é 1440 espremido; 1440 usa right rail/sidebar (sem margem morta).
 7. A11y: targets 44px, um h1, foco visível, sem overflow horizontal.
 8. Copy: acentos corretos; erros amigáveis; nada de patente/OM/endereço/badge.
+9. Marca: Glifo oficial, composição correta para a escala, contraste e clear space; Brasa só no limiar; Pátio nunca como assinatura. Aplicar `docs/brand/SCREEN_AUDIT.md`.

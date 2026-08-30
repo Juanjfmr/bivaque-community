@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 301.2 72" fill="none">
+<title>Bivaque</title>
+<g transform="translate(4 4) scale(.64)"><path id="bivaque-symbol-body" fill="#253033" fill-rule="evenodd" d="
+M23 5H54C73 5 84 15 84 31C84 42 78 49 67 53C81 57 89 67 89 80C89 91 79 95 63 95H23L14 86V59H36V44H14V14L23 5Z
+M36 20V40H54C63 40 68 36 68 30C68 24 63 20 54 20H36Z
+M36 61V80H63C71 80 76 77 76 71C76 65 71 61 63 61H36Z"/>
+<path id="bivaque-threshold" fill="#253033" d="M36 44H48V59H36V44Z"/></g>
+<g transform="translate(82 16) scale(0.4)"><g transform="translate(-14 0)"><path id="bivaque-symbol-body" fill="#253033" fill-rule="evenodd" d="
+M23 5H54C73 5 84 15 84 31C84 42 78 49 67 53C81 57 89 67 89 80C89 91 79 95 63 95H23L14 86V59H36V44H14V14L23 5Z
+M36 20V40H54C63 40 68 36 68 30C68 24 63 20 54 20H36Z
+M36 61V80H63C71 80 76 77 76 71C76 65 71 61 63 61H36Z"/>
+<path id="bivaque-threshold" fill="#253033" d="M36 44H48V59H36V44Z"/></g>
+<g transform="translate(85 5) scale(1 .9)"><path fill="#253033" d="M5 0H23V100H5V0Z"/></g>
+<g transform="translate(122 5) scale(1 .9)"><path fill="#253033" d="M0 0H19L36 72L53 0H72L47 100H25L0 0Z"/></g>
+<g transform="translate(203 5) scale(1 .9)"><path fill="#253033" fill-rule="evenodd" d="M0 100L25 0H47L72 100H53L48 79H24L19 100H0ZM29 61H43L36 31L29 61Z"/></g>
+<g transform="translate(284 5) scale(1 .9)"><path fill="#253033" fill-rule="evenodd" d="M42 0C16 0 0 18 0 50C0 82 16 100 42 100C52 100 61 97 68 91L82 105H104L78 80C83 72 86 62 86 50C86 18 70 0 42 0ZM42 18C58 18 67 29 67 50C67 61 64 69 59 75L49 65H28L46 83C45 83 43 83 42 83C27 83 19 72 19 50C19 29 27 18 42 18Z"/></g>
+<g transform="translate(397 5) scale(1 .9)"><path fill="#253033" d="M0 0H19V64C19 78 26 84 39 84C52 84 59 78 59 64V0H78V65C78 89 64 102 39 102C14 102 0 89 0 65V0Z"/></g>
+<g transform="translate(484 5) scale(1 .9)"><path fill="#253033" d="M0 0H62V18H19V40H56V58H19V82H64V100H0V0Z"/></g></g>
+</svg>

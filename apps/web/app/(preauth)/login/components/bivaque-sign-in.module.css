@@ -11,7 +11,7 @@
   --login-surface: var(--surface);
   --login-forest: var(--accent);
   --login-forest-deep: var(--forest-deep);
-  --login-signal: var(--signal);
+  --login-signal: var(--accent);
   --login-gold: var(--gold);
   --login-rule: var(--border);
   --login-serif: var(--font-serif);

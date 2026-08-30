@@ -1,34 +1,32 @@
 import { brandTokens } from "@bivaque/tokens"
 import type { Metadata, Viewport } from "next"
-import { Inter, Literata } from "next/font/google"
+import { Noto_Sans, Noto_Serif } from "next/font/google"
 import type { ReactNode } from "react"
 import { ServiceWorkerRegistration } from "./components/bivaque/service-worker-registration"
 import { SupabaseAuthProvider } from "./components/bivaque/supabase-auth-provider"
 import "./globals.css"
 
-// Both families are self-hosted by next/font at build time: the browser never
-// requests a third-party font server, so no visitor request leaves for Google
-// (LGPD), and there is no render-blocking external stylesheet.
+// As duas famílias da identidade oficial (packages/tokens/src/official-brand.ts),
+// auto-hospedadas pelo next/font em tempo de build: o navegador nunca pede fonte
+// a servidor de terceiro, então nenhuma requisição de visitante sai para o
+// Google (LGPD), e não há stylesheet externo bloqueando o render.
 //
-// Literata is the display face. The funnel already committed to an old-style
-// serif ("Iowan Old Style", Palatino, Georgia) but only as a system stack, so
-// what a visitor actually saw depended on their OS — Georgia on most Windows
-// machines, nothing consistent. Literata is a real screen serif in that same
-// old-style family, so the identity is now the same on every device.
-const literata = Literata({
+// Antes desta entrega, `Inter` era nomeada nas três pilhas de fonte do funil sem
+// nenhum next/font — o que aparecia era Segoe UI ou Arial conforme o sistema
+// operacional. E o serifado era stack de sistema ("Iowan Old Style", Palatino,
+// Georgia), ou seja, a identidade mudava de máquina para máquina.
+const notoSerif = Noto_Serif({
   subsets: ["latin", "latin-ext"],
   display: "swap",
-  variable: "--font-literata",
+  variable: "--font-noto-serif",
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
 })
 
-// Inter is the UI workhorse. It was already named in the funnel's font stack
-// but never loaded, so every screen silently fell back to Segoe UI or Arial.
-const inter = Inter({
+const notoSans = Noto_Sans({
   subsets: ["latin", "latin-ext"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-noto-sans",
 })
 
 export const metadata: Metadata = {
@@ -49,7 +47,11 @@ type RootLayoutProperties = Readonly<{
 
 export default function RootLayout({ children }: RootLayoutProperties) {
   return (
-    <html lang="pt-BR" data-theme="bivaque" className={`${literata.variable} ${inter.variable}`}>
+    <html
+      lang="pt-BR"
+      data-theme="bivaque"
+      className={`${notoSerif.variable} ${notoSans.variable}`}
+    >
       <body className="bg-background text-foreground antialiased">
         <SupabaseAuthProvider>{children}</SupabaseAuthProvider>
         <ServiceWorkerRegistration />

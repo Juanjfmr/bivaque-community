@@ -265,7 +265,7 @@
 
 .primaryAction {
   color: #fffdf7;
-  background: var(--signal);
+  background: var(--accent);
 }
 
 .primaryAction:hover {
@@ -555,7 +555,7 @@
 }
 
 .belongingLayer > span {
-  color: var(--signal);
+  color: var(--accent-strong);
   font-size: 12px;
   font-weight: 800;
 }

@@ -3,91 +3,91 @@
 @import "tailwindcss";
 @import "@heroui/styles";
 
-/* Type families live in @theme, not in :root, so Tailwind generates the
-   `font-sans` / `font-serif` utilities from them as well as emitting the custom
-   properties. Declaring them only in :root leaves `font-serif` resolving to
-   Tailwind's built-in stack, which silently defeats the whole typographic
-   identity. (HeroUI's theme.css already does the equivalent for colour, mapping
-   --color-* onto our semantic tokens; fonts had no such mapping.)
+/* As famílias vivem em @theme, não em :root, para que o Tailwind gere também os
+   utilitários `font-sans` / `font-serif` além de emitir as custom properties.
+   Declaradas só em :root, `font-serif` resolve para o stack embutido do
+   Tailwind e a identidade tipográfica é silenciosamente derrotada. (O theme.css
+   do HeroUI já faz o equivalente para cor, mapeando --color-* nos nossos tokens
+   semânticos; fonte não tinha esse mapeamento.)
 
-   Bound by next/font in layout.tsx — self-hosted, so no runtime request to a
-   third party is tied to a visitor (LGPD). The fallback stacks are metric-near
-   so an unstyled first paint does not reflow the page. */
+   Noto Serif e Noto Sans são a tipografia da identidade oficial; o fallback é o
+   `webFallback` declarado em official-brand.ts. Auto-hospedadas via next/font,
+   sem requisição a terceiro atada ao visitante (LGPD). */
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
-  --font-serif:
-    var(--font-literata), "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-sans:
+    var(--font-noto-sans), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-serif: var(--font-noto-serif), Georgia, "Times New Roman", serif;
 }
 
 :root,
 [data-theme="bivaque"] {
   color-scheme: light;
 
-  /* Color — "Papel & Mata" palette (DESIGN_SPEC.md §1, tokens mirrored in
-     packages/tokens/src/index.ts).
+  /* Cor — a IDENTIDADE OFICIAL, aprovada em 2026-08-29 e versionada em
+     packages/tokens/src/official-brand.ts: Grafite #253033, Papel #F2F0EB,
+     Brasa #B84A3A.
 
-     This replaces the previous Navy Professional set, which was slate-50 /
-     slate-950 / blue-900 — the literal Tailwind default triad. That is the
-     palette every SaaS starter ships, and it is why the authenticated product
-     read as generic. It was also never selected: DS-036 (EXP-004) keeps
-     palette/type/spacing/radius/elevation/motion open and states that the
-     incumbent Navy/system-sans pair is one candidate, not baseline truth.
+     Substitui, nesta ordem: "Navy Professional" (#F8FAFC/#020617/#1E3A8A — a
+     tríade padrão do Tailwind, nunca escolhida, que DS-036 chamava de "one
+     candidate, not baseline truth") e "Papel & Mata" (papel quente + verde-mata
+     + Literata/Inter, a direção editorial que o owner selecionou ao fechar o
+     EXP-004). A segunda estava certa na FORMA e errada na COR: a marca oficial
+     entrou um dia depois, com outra paleta e outra tipografia.
 
-     These values are the system the product already shows every visitor in the
-     acquisition funnel (landing, login, onboarding), where they had been
-     copy-pasted into three CSS modules as --ink / --login-ink / --flow-ink.
-     Promoting them to the token layer is what lets the member shell continue
-     the identity the funnel promises, and retires that triplication (DS-034).
+     A estrutura editorial permanece — lista com fio, elevação rasa, raio
+     quase-reto, .eyebrow/.paper/.ruled. Mudam os valores.
 
-     Every text/background pair here is >= 4.5:1, verified numerically. */
-  --background: #f5f2e9; /* warm paper — page background */
-  --foreground: #17211d; /* warm ink — primary text (14.75:1 on paper) */
-  --surface: #fffdf7; /* paper bright — card surface */
+     Os "derivado" abaixo existem porque o brandbook cobre identidade, não
+     sistema de UI: ele não define superfície elevada clara nem texto
+     secundário. Cada um é declarado, não inventado em silêncio.
+
+     Todo par texto/fundo em uso é >= 4.5:1, medido antes de fixar. */
+  --background: #f2f0eb; /* Papel — oficial */
+  --foreground: #253033; /* Grafite — oficial (11.90:1) */
+  --surface: #fbfaf7; /* derivado: papel elevado */
   --surface-foreground: var(--foreground);
-  --accent: #245b43; /* forest — primary action / focus / link (7.07:1) */
-  --accent-foreground: #fffdf7;
+  --accent: #b84a3a; /* Brasa — oficial. Ação decisiva, foco, item ativo */
+  --accent-foreground: #fbfaf7;
   --focus: var(--accent);
-  --link: var(--accent);
 
-  /* Cards above the page background. */
-  --surface-raised: #fffdf7;
-  /* Inset areas (composer field, empty states). */
-  --surface-sunken: #ede8da;
-  /* Subtle neutral fills (avatar initials, chips, hover rows). */
+  /* Brasa cheia dá 4.52:1 no papel — passa raspando, e falha no sunken (4.09).
+     Link e texto de acento usam a versão escurecida; preenchimento sólido usa a
+     brasa aprovada, onde o texto claro sobre ela dá 5.15:1. */
+  --accent-strong: #9e3b2c;
+  --link: var(--accent-strong);
+
+  /* Cards acima do fundo da página. */
+  --surface-raised: #fbfaf7; /* derivado */
+  /* Áreas rebaixadas (compositor, estados vazios). */
+  --surface-sunken: #e8e5de; /* derivado */
+  /* Preenchimentos neutros sutis (iniciais de avatar, chips, hover). */
   --surface-subtle: color-mix(in oklch, var(--foreground) 7%, transparent);
-  /* Hairlines — the single border color; components must not inline color-mix borders. */
+  /* Fio de cabelo — a única cor de borda; componentes não inlinam color-mix. */
   --border: color-mix(in oklch, var(--foreground) 12%, transparent);
-  /* Secondary text; holds ≥ 4.5:1 on --surface (7.46:1) and --background (6.78:1). */
-  --muted: #4a574f;
-  /* 12% accent tint for selected chips and active nav. */
+  /* Texto secundário; derivado. 5.48:1 no papel, 5.98:1 na superfície. */
+  --muted: #556366;
+  /* Tinta de 12% do acento para chip selecionado e nav ativa. */
   --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
-  /* Destructive + report affordances, moderation / verification states. */
-  --danger: #a33d26; /* terracotta signal (5.77:1 on paper) */
+  /* Destrutivo. Derivado mais fundo que a brasa, para que "aja nisto" e "isto
+     destrói" não sejam a mesma cor (7.14:1). */
+  --danger: #8f2e23;
   --danger-soft: color-mix(in oklch, var(--danger) 14%, transparent);
-  --warning: #7a5312; /* burnt gold, darkened to carry text (6.10:1) */
-  --success: #1f6347; /* deep forest (6.39:1) */
-  /* Modal scrim. HeroUI v3 reserves --overlay for the floating surface (dialog/
-     popover/menu), so the scrim lives in --backdrop. Mixed against the deep
-     forest, never raw black. */
-  --backdrop: color-mix(in oklch, var(--forest-deep) 55%, transparent);
+  --warning: #7a5312; /* derivado (6.00:1) */
+  --success: #2f6a4f; /* derivado (5.60:1) */
+  /* Scrim do modal. O HeroUI v3 reserva --overlay para a superfície flutuante
+     (dialog/popover/menu), então o scrim mora em --backdrop. */
+  --backdrop: color-mix(in oklch, var(--charcoal) 55%, transparent);
 
-  /* Editorial accents. --forest-deep is the masthead / inverted surface the
-     landing header already uses. --gold is decorative ONLY (rules, marks); it
-     never carries text — --warning is the readable member of that family. */
-  --forest-deep: #102f25;
-  --gold: #d7a44c;
-  /* Terracotta emphasis. This is the acquisition funnel's call-to-action colour
-     and it is NOT --danger: an accent that means "act on this" must not share a
-     token with one that means "this is destructive", or the first refactor that
-     retunes destructive UI silently repaints the sign-up button. The two happen
-     to be neighbours on the wheel; they are different roles.
-     5.32:1 against paper-bright as a solid, 4.83:1 as text on paper. */
-  --signal: #b4472e;
+  /* Neutros oficiais secundários. --charcoal é a superfície invertida
+     (masthead). --mist é DECORATIVO: 2.75:1 no papel, nunca carrega texto —
+     quem carrega texto secundário é --muted. */
+  --charcoal: #171e20;
+  --mist: #78979b;
 
-  /* Elevation — deliberately shallow. The previous set leaned on 16–40px ambient
-     shadows, which is what made every list read as cards floating over grey. A
-     card is now told apart by its paper surface against the warmer page plus a
-     hairline; shadow is reserved for things that genuinely float. */
+  /* Elevação — deliberadamente rasa. O conjunto anterior usava sombras
+     ambientes de 16–40px, que é o que fazia toda lista ler como cards
+     flutuando sobre cinza. Um card se distingue pela superfície contra o papel
+     mais quente, mais um fio; sombra fica para o que de fato flutua. */
   --elevation-0: none;
   --elevation-1: 0 1px 0 color-mix(in oklch, var(--foreground) 6%, transparent);
   --elevation-2:
@@ -97,7 +97,7 @@
     0 4px 8px color-mix(in oklch, var(--foreground) 10%, transparent),
     0 16px 40px color-mix(in oklch, var(--foreground) 16%, transparent);
 
-  /* Spacing — 4px scale. */
+  /* Espaçamento — escala de 4px. */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -106,16 +106,16 @@
   --space-8: 2rem;
   --space-12: 3rem;
 
-  /* Radius — editorial: near-square for content surfaces. Content no longer uses
-     12–16px rounding, which reads as app-store card furniture rather than a page.
-     The pill survives only where a control is genuinely pill-shaped. */
+  /* Raio — editorial: quase reto para conteúdo. Arredondamento de 12–16px lê
+     como mobília de card, não como página. A pílula sobrevive só onde o
+     controle é de fato pílula. */
   --radius-sm: 0.25rem;
   --radius: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-full: 9999px;
 
-  /* Typography — nothing below 12px. The display scale is wider than the
-     previous one so a serif headline can actually behave like a headline. */
+  /* Tipografia — nada abaixo de 12px. A escala de display é mais larga que a
+     anterior para que um título serifado se comporte como título. */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -124,10 +124,10 @@
   --text-2xl: 1.75rem;
   --text-3xl: 2.25rem;
 
-  /* Readable measure for long-form regions (DS-031). */
+  /* Medida de leitura para regiões longas (DS-031). */
   --measure: 68ch;
 
-  /* Motion. */
+  /* Movimento. */
   --duration-instant: 100ms;
   --duration-fast: 160ms;
   --duration-base: 240ms;
@@ -136,7 +136,7 @@
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Interactive controls — DESIGN_SPEC §4: every target is ≥ 44×44 CSS px. */
+  /* Controles — DESIGN_SPEC §4: todo alvo tem >= 44x44 px CSS. */
   --control-min-height: 2.75rem;
 
   --nav-height: 3.5rem;

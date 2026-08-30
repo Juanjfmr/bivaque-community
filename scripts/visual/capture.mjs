@@ -285,11 +285,129 @@ function auditPage() {
     }
   }
 
-  // 8. exactly one h1 per screen
+  // 8. official brand integrity — measurable subset of docs/brand/SCREEN_AUDIT.md.
+  const sourceOf = (image) => {
+    const raw = image.currentSrc || image.getAttribute("src") || ""
+    try {
+      return decodeURIComponent(raw)
+    } catch {
+      return raw
+    }
+  }
+  const isVisible = (element) => {
+    const box = element.getBoundingClientRect()
+    return box.width > 0 && box.height > 0
+  }
+  const officialBrandMarks = [
+    ...document.querySelectorAll("[data-bivaque-brand='official'], img"),
+  ].filter((element) => {
+    if (!isVisible(element)) return false
+    if (element.getAttribute("data-bivaque-brand") === "official") return true
+    if (!(element instanceof HTMLImageElement)) return false
+    return /\/brand\/bivaque-(?:logo-|wordmark|symbol)/i.test(sourceOf(element))
+  })
+
+  if (officialBrandMarks.length === 0) {
+    add(
+      "brand-presence",
+      "medium",
+      "body",
+      "no approved Glifo/wordmark asset is visible; defer only while FRONTEND-VISUAL-AAA is frozen",
+    )
+  }
+
+  let provisionalBrand = 0
+  const brandScopes = document.querySelectorAll(
+    "header, nav, [class*='wordmark'], [class*='brand']",
+  )
+  for (const scope of brandScopes) {
+    if (!isVisible(scope) || !/\bbivaque\b/i.test(scope.textContent ?? "")) continue
+    const carriesOfficialMark =
+      scope.matches("[data-bivaque-brand='official']") ||
+      scope.querySelector("[data-bivaque-brand='official'], img[src*='/brand/bivaque-']")
+    if (!carriesOfficialMark) provisionalBrand += 1
+  }
+  if (provisionalBrand > 0) {
+    add(
+      "provisional-brand",
+      "medium",
+      "header, nav, .wordmark",
+      `${provisionalBrand} visible brand surface(s) rebuild Bivaque without the approved asset`,
+    )
+  }
+
+  for (const mark of officialBrandMarks) {
+    const source = mark instanceof HTMLImageElement ? sourceOf(mark) : ""
+    const asset =
+      mark.getAttribute("data-brand-asset") ||
+      (/symbol/i.test(source) ? "symbol" : /horizontal/i.test(source) ? "horizontal" : "full")
+    const tone =
+      mark.getAttribute("data-brand-tone") ||
+      (/-white\.svg/i.test(source)
+        ? "white"
+        : /-black\.svg/i.test(source)
+          ? "black"
+          : /-graphite\.svg/i.test(source)
+            ? "graphite"
+            : "color")
+    const box = mark.getBoundingClientRect()
+    const minimum = asset === "symbol" ? 16 : asset === "horizontal" ? 72 : 120
+    if (box.width < minimum || box.height < 16) {
+      add(
+        "brand-minimum-size",
+        "high",
+        describe(mark),
+        `${Math.round(box.width)}x${Math.round(box.height)} for ${asset} (minimum width ${minimum}px; minimum height 16px)`,
+      )
+    }
+    if (asset === "symbol") {
+      const ratio = box.height === 0 ? 0 : box.width / box.height
+      if (ratio < 0.9 || ratio > 1.1) {
+        add(
+          "brand-proportions",
+          "high",
+          describe(mark),
+          `symbol rendered at ${ratio.toFixed(2)} width/height ratio (expected 1.00)`,
+        )
+      }
+    }
+
+    const backgroundLuminance = luminance(backgroundOf(mark))
+    const insufficientContrast =
+      (tone === "white" && backgroundLuminance > 0.55) ||
+      (tone !== "white" && backgroundLuminance < 0.12)
+    if (insufficientContrast) {
+      add(
+        "brand-contrast",
+        "high",
+        describe(mark),
+        `${tone} mark conflicts with background luminance ${backgroundLuminance.toFixed(2)}`,
+      )
+    }
+  }
+
+  for (const image of document.querySelectorAll("img")) {
+    const source = sourceOf(image)
+    if (!/bivaque-graphic-patio\.svg/i.test(source) || !isVisible(image)) continue
+    const usedAsIdentity =
+      image.getAttribute("data-bivaque-brand") !== null ||
+      (image.getAttribute("alt") ?? "").trim().toLocaleLowerCase("pt-BR") === "bivaque" ||
+      image.closest("header, nav") !== null
+    if (usedAsIdentity) {
+      add(
+        "patio-as-primary-mark",
+        "high",
+        describe(image),
+        "Pátio is secondary graphics and cannot replace the official Glifo",
+      )
+    }
+  }
+
+  // 9. exactly one h1 per screen
   const h1Count = document.querySelectorAll("h1").length
   if (h1Count !== 1) add("heading-structure", "medium", "h1", `${h1Count} h1 elements (expected 1)`)
 
-  // 9. active navigation — each visible nav has exactly one current item (rubrica item 4).
+  // 10. active navigation — each visible nav has exactly one current item (rubrica item 4).
   // Anchors use aria-current="page"; tab role anchors use aria-selected="true" (ARIA Tabs pattern).
   for (const nav of document.querySelectorAll("nav")) {
     if (nav.offsetWidth === 0 && nav.offsetHeight === 0) continue
@@ -308,8 +426,7 @@ function auditPage() {
     }
   }
 
-  // 10. forbidden copy — the same privacy vocabulary the database rejects
-  // 10. forbidden copy — the same privacy vocabulary the database rejects
+  // 11. forbidden copy — the same privacy vocabulary the database rejects
   // (see supabase/migrations/20260802001300_fix_forbidden_content_regex.sql).
   // The DB guards post bodies; the UI copy must guard itself.
   //
@@ -329,6 +446,10 @@ function auditPage() {
     findings,
     title: document.title,
     heading: document.querySelector("h1")?.textContent?.trim() ?? null,
+    brand: {
+      officialMarks: officialBrandMarks.length,
+      provisionalSurfaces: provisionalBrand,
+    },
     url: location.pathname,
   }
 }
@@ -463,6 +584,11 @@ function writeResults(runDir, results, authenticated) {
     }
     if (entry.screenshot) {
       lines.push(`- fold: \`${entry.screenshot}\` · full: \`${entry.screenshotFull}\``)
+    }
+    if (entry.brand) {
+      lines.push(
+        `- brand: ${entry.brand.officialMarks} official mark(s) · ${entry.brand.provisionalSurfaces} provisional surface(s)`,
+      )
     }
     for (const error of entry.consoleErrors ?? []) lines.push(`- console error: ${error}`)
     if (findings.length === 0) {

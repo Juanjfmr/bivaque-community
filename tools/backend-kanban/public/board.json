@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-08-28",
+  "updatedAt": "2026-08-29",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -723,31 +723,37 @@
       "priority": "P1",
       "category": "frontend",
       "status": "now",
-      "description": "Sistema visual \"Papel & Mata\" promovido à camada de tokens, fechando o EXP-004 na direção do candidato A (Civic Editorial) por decisão do owner em 2026-08-28 (ADR-20260828-sistema-visual-editorial). O congelamento anterior caiu por autoridade de produto explícita, não por decisão de agente. Falta a prova visual do shell autenticado — não capturável na sessão da mudança por ausência de daemon Docker.",
+      "description": "Migração visual para a identidade oficial (Grafite #253033, Papel #F2F0EB, Brasa #B84A3A, Noto Serif + Noto Sans), promovida à camada de tokens. Isto é a \"entrega visual própria\" que docs/brand/README.md pede na Ativação futura, liberada por autoridade explícita do owner em 2026-08-29 — o congelamento não caiu por decisão de agente. Fecha o EXP-004 para paleta, tipografia, raio e elevação (ADR-20260828-sistema-visual-editorial). Falta a prova visual do shell autenticado.",
       "checklist": [
-        "feito — paleta, tipografia, elevação e raio promovidos a packages/tokens + globals.css",
-        "feito — Literata + Inter auto-hospedadas via next/font, declaradas em @theme",
+        "feito — paleta oficial e Noto Serif/Noto Sans promovidos a packages/tokens + globals.css",
+        "feito — contraste medido antes de fixar; todo par de texto em uso >= 4.5:1 (DS-029)",
+        "feito — --accent-strong separado de --accent: brasa cheia dá 4.52:1 no papel e falha no sunken",
+        "feito — --danger derivado mais fundo que a brasa, para \"aja nisto\" e \"isto destrói\" não serem a mesma cor",
+        "feito — mist marcado como decorativo (2.75:1); quem carrega texto secundário é muted",
         "feito — triplicação dos tokens nos três módulos CSS do funil retirada (DS-034)",
-        "feito — --signal separado de --danger (papéis distintos)",
-        "feito — EmptyState, skeletons e ilustrações refeitos; lista com fio no lugar de cards flutuantes",
+        "feito — EmptyState com foto e com gravura, skeletons e lista com fio",
         "feito — DESIGN_SPEC DS-036 e VISUAL_GUIDE §0 reconciliados com o código",
+        "pendente — substituir os wordmarks provisórios pelo BrandMark canônico (passo 3 da Ativação futura)",
+        "pendente — manifest, favicons e ícones PWA a partir de public/brand/icons (passo 4)",
         "pendente — captura 375/768/1440 do shell autenticado e rubrica VISUAL_GUIDE §9",
         "pendente — parecer de revisor independente (critic_verdict do ADR está pending)"
       ],
       "proof": [
-        "Gate verde: lint + typecheck + test (67 asserts de escopo) + secrets",
-        "Build de produção: 27 rotas compiladas, 21 arquivos de fonte auto-hospedados em .next/static/media",
-        "Runtime 375/1440 em /, /login, /signup, /onboarding: body=Inter head=Literata bg=rgb(245,242,233)",
-        "Contraste medido antes da adoção: todo par de texto >= 4.5:1 (DS-029)"
+        "Gate verde: lint + typecheck + test + secrets",
+        "Build de produção com as rotas compiladas e as fontes auto-hospedadas em .next/static/media",
+        "Contraste medido numericamente antes da adoção, não por inspeção visual",
+        "tests/scope/brand-visual-audit.test.mjs passa com este diff"
       ],
       "links": [
         "Design spec | ../../docs/agents/DESIGN_SPEC.md",
+        "Marca oficial | ../../docs/brand/README.md",
         "ADR | ../../docs/decisions/ADR-20260828-sistema-visual-editorial.md",
         "EXP-004 | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md"
       ],
-      "updatedAt": "2026-08-28",
-      "sourceRevision": "3f060b1",
-      "dependencies": ["FRONTEND-RUNTIME-CONFORMANCE"]
+      "updatedAt": "2026-08-29",
+      "sourceRevision": "65708af",
+      "dependencies": ["FRONTEND-RUNTIME-CONFORMANCE"],
+      "tests": ["tests/scope/brand-identity.test.mjs", "tests/scope/brand-visual-audit.test.mjs"]
     },
     {
       "id": "REPO-ISSUE-20",
