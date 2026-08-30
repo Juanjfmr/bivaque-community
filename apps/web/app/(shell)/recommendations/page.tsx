@@ -9,6 +9,7 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
+import { RecommendationConvergence } from "../../components/bivaque/recommendation-convergence"
 import RecommendationRequests from "../../components/bivaque/recommendation-requests"
 import { Skeleton } from "../../components/bivaque/skeleton"
 
@@ -137,6 +138,7 @@ export default function RecommendationsPage() {
   const [requestSubmitting, setRequestSubmitting] = useState(false)
   const [piiWarning, setPiiWarning] = useState(false)
   const [myGroups, setMyGroups] = useState<GroupRow[]>([])
+  const [hasSimilarRequests, setHasSimilarRequests] = useState(false)
 
   // saved tab
   const [savedRequests, setSavedRequests] = useState<SavedRequestRow[]>([])
@@ -357,6 +359,7 @@ export default function RecommendationsPage() {
         setRequestTitle("")
         setRequestDescription("")
         setPiiWarning(false)
+        setHasSimilarRequests(false)
         setRequestFeedback("Pedido publicado!")
         setRequestSubmitting(false)
 
@@ -774,6 +777,14 @@ export default function RecommendationsPage() {
               }}
             />
 
+            <RecommendationConvergence
+              category={requestCategory}
+              scope={requestScope}
+              title={requestTitle}
+              body={requestDescription}
+              onMatchStateChange={setHasSimilarRequests}
+            />
+
             <p className="text-xs text-muted">
               Sua indicação será visível apenas para o alcance escolhido: Manaus ou um grupo do qual
               você participa.
@@ -808,7 +819,11 @@ export default function RecommendationsPage() {
               className="self-start"
               isDisabled={requestSubmitting}
             >
-              {requestSubmitting ? "Publicando..." : "Publicar pedido"}
+              {requestSubmitting
+                ? "Publicando..."
+                : hasSimilarRequests
+                  ? "Perguntar mesmo assim"
+                  : "Publicar pedido"}
             </Button>
           </form>
         </div>
