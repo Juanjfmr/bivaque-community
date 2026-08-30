@@ -12,9 +12,18 @@ sem liberar a migração geral de tema, shell ou tokens ativos.
 - uso indevido do Pátio como assinatura principal;
 - identificação semântica fornecida pelo componente `BrandMark`.
 
-Ausência da marca oficial e wordmark provisório entram como dívida **média** enquanto
-`FRONTEND-VISUAL-AAA` estiver congelado. Uma assinatura oficial aplicada abaixo do mínimo, sem
-contraste ou com Pátio no lugar do Glifo é erro **alto**, porque já constitui uso incorreto.
+Ausência da marca oficial e wordmark provisório entram como dívida **média**. Uma assinatura
+oficial aplicada abaixo do mínimo, sem contraste ou com Pátio no lugar do Glifo é erro **alto**,
+porque já constitui uso incorreto.
+
+> **Atualizado em 2026-08-30.** Este parágrafo condicionava a dívida a
+> `FRONTEND-VISUAL-AAA` estar congelado. O card saiu de `frozen` por autoridade
+> explícita do owner, e a migração de paleta e tipografia para a identidade
+> oficial já está feita (`ADR-20260828-sistema-visual-editorial`, emendado). O
+> que **continua** devendo é o passo 3 da Ativação futura: substituir os
+> wordmarks provisórios pelo componente `BrandMark`, e os ícones/manifest do
+> passo 4. Enquanto isso, a dívida média acima segue valendo — pelo wordmark
+> provisório, não pelo congelamento.
 
 ## O que exige julgamento visual
 

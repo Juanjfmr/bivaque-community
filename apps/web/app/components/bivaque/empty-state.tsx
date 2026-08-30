@@ -18,6 +18,12 @@ interface EmptyStateProps {
   secondaryAction?: ReactNode
   /** Last line, smaller: the rule that explains *why* it is empty. */
   hint?: string
+  /** Nível do heading do título. Precisa acompanhar a estrutura da tela: um
+   *  nível fixo pula degrau onde o estado vazio é o conteúdo principal logo
+   *  abaixo do h1, e a rubrica do repo exige "sem níveis pulados" (DS-029).
+   *  Default 2 — o caso comum é o estado vazio ser a própria seção da página.
+   *  Passe 3 quando ele mora dentro de uma seção que já tem o próprio h2. */
+  headingLevel?: 2 | 3
   className?: string
 }
 
@@ -46,8 +52,10 @@ export function EmptyState({
   action,
   secondaryAction,
   hint,
+  headingLevel = 2,
   className = "",
 }: EmptyStateProps) {
+  const Heading = headingLevel === 3 ? "h3" : "h2"
   return (
     <div
       className={`overflow-hidden rounded-[var(--radius)] border border-border bg-[var(--surface-raised)] ${className}`}
@@ -77,9 +85,9 @@ export function EmptyState({
       <div className="px-6 py-10 text-center">
         <div className="mx-auto flex max-w-md flex-col items-center">
           {!image && illustration && <div className="mb-5">{illustration}</div>}
-          <h3 className="font-serif text-[var(--text-xl)] font-semibold text-foreground">
+          <Heading className="font-serif text-[var(--text-xl)] font-semibold text-foreground">
             {title}
-          </h3>
+          </Heading>
           {description && (
             <p className="mt-2 text-pretty text-sm leading-relaxed text-muted">{description}</p>
           )}

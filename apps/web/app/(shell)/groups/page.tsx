@@ -599,6 +599,7 @@ export default function GroupsPage() {
 
       {!error && groups.length === 0 && !showCreate ? (
         <EmptyState
+          headingLevel={3}
           title="Nenhum grupo ainda"
           description="Crie ou entre em um grupo para se conectar com outros membros da sua comunidade."
           illustration={<GroupsIllustration />}

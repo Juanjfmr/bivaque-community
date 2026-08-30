@@ -740,9 +740,11 @@
       ],
       "proof": [
         "Gate verde: lint + typecheck + test + secrets",
-        "Build de produção com as rotas compiladas e as fontes auto-hospedadas em .next/static/media",
-        "Contraste medido numericamente antes da adoção, não por inspeção visual",
-        "tests/scope/brand-visual-audit.test.mjs passa com este diff"
+        "Build de produção com as fontes oficiais auto-hospedadas em .next/static/media",
+        "Runtime 375/1440 em /, /login e /onboarding: body=\"Noto Sans\" head=\"Noto Serif\" bg=rgb(242,240,235)",
+        "Fundos sólidos da landing: de seis valores misturados para três, todos oficiais",
+        "Contraste de todo par em uso medido numericamente antes da adoção (DS-029)",
+        "tests/scope/token-references.test.mjs, adicionado aqui, é o que de fato guarda esta mudança: falha se qualquer var(--x) apontar para token não declarado"
       ],
       "links": [
         "Design spec | ../../docs/agents/DESIGN_SPEC.md",
@@ -753,7 +755,12 @@
       "updatedAt": "2026-08-29",
       "sourceRevision": "65708af",
       "dependencies": ["FRONTEND-RUNTIME-CONFORMANCE"],
-      "tests": ["tests/scope/brand-identity.test.mjs", "tests/scope/brand-visual-audit.test.mjs"]
+      "tests": [
+        "tests/scope/brand-identity.test.mjs",
+        "tests/scope/brand-visual-audit.test.mjs",
+        "tests/scope/token-references.test.mjs",
+        "tests/scope/design-tokens.test.mjs"
+      ]
     },
     {
       "id": "REPO-ISSUE-20",

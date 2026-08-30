@@ -505,6 +505,7 @@ function EventsContent() {
 
           {events.length === 0 && (
             <EmptyState
+              headingLevel={3}
               title={
                 isLocalityStale(memberCount) ? "Você é dos primeiros aqui." : "Nenhum evento ainda"
               }
@@ -566,6 +567,7 @@ function EventsContent() {
               <TabPanel key="host" className="pt-3">
                 {seusFiltered.length === 0 ? (
                   <EmptyState
+                    headingLevel={3}
                     title="Você não organiza nenhum evento"
                     description="Crie um evento para sua comunidade e ele aparecerá aqui."
                     illustration={<EventsIllustration />}
@@ -605,6 +607,7 @@ function EventsContent() {
               <TabPanel key="going" className="pt-3">
                 {seusFiltered.length === 0 ? (
                   <EmptyState
+                    headingLevel={3}
                     title="Nenhum evento confirmado"
                     description="Confirme presença em eventos da sua comunidade."
                     illustration={<EventsIllustration />}
@@ -641,6 +644,7 @@ function EventsContent() {
               <TabPanel key="interested" className="pt-3">
                 {seusFiltered.length === 0 ? (
                   <EmptyState
+                    headingLevel={3}
                     title="Nenhum evento como interessado"
                     description="Marque interesse em eventos para acompanhá-los."
                     illustration={<EventsIllustration />}

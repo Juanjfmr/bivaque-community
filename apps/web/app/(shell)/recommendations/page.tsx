@@ -512,6 +512,7 @@ export default function RecommendationsPage() {
           {/* loaded: empty */}
           {!loading && !error && !hasContent && (
             <EmptyState
+              headingLevel={3}
               illustration={<GuideIllustration />}
               title="Nada por aqui ainda"
               description="Quando houver grupos ou eventos na sua comunidade, eles aparecerão aqui. Que tal explorar os grupos?"
@@ -840,6 +841,7 @@ export default function RecommendationsPage() {
           {/* loaded: empty */}
           {!savesLoading && !savesError && savedRequests.length === 0 && (
             <EmptyState
+              headingLevel={3}
               illustration={<SearchIllustration />}
               title="Nenhuma indicação salva"
               description="Você ainda não salvou nenhuma indicação. Quando outros membros publicarem pedidos, você poderá salvá-los aqui para consultar depois."

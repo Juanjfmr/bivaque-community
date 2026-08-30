@@ -190,6 +190,7 @@ function GuideContent() {
         // here: suggestions do not enter the public guide directly; the operator
         // curates from indications as the density argument of F arrives.
         <EmptyState
+          headingLevel={3}
           illustration={<GuideIllustration />}
           title={
             isLocalityStale(memberCount)
