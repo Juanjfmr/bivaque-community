@@ -64,7 +64,7 @@ describe("recommendation convergence similarity", () => {
   })
 
   it("does not search noise-only input", () => {
-    expect(hasUsefulRecommendationQuery("Quero indicação", "Alguém indica?")) .toBe(false)
+    expect(hasUsefulRecommendationQuery("Quero indicação", "Alguém indica?")).toBe(false)
   })
 
   it("keeps candidates inside the exact locality and category", () => {
