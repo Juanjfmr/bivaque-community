@@ -14,8 +14,18 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { FeedbackAlert } from "./feedback-alert"
 import { Skeleton } from "./skeleton"
 
+type RecommendationCategory =
+  | "servicos_locais"
+  | "saude_bem_estar"
+  | "educacao"
+  | "esporte_lazer"
+  | "alimentacao"
+  | "transporte"
+  | "moradia"
+  | "outros"
+
 type Props = {
-  category: string
+  category: RecommendationCategory | ""
   scope: "locality" | string
   title: string
   body: string
@@ -40,8 +50,7 @@ export function RecommendationConvergence({
 
   useEffect(() => {
     let cancelled = false
-    const useful = Boolean(category) && hasUsefulRecommendationQuery(title, body)
-    if (!useful) {
+    if (!category || !hasUsefulRecommendationQuery(title, body)) {
       setMatches([])
       setLoading(false)
       onMatchStateChange?.(false)
