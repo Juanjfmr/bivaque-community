@@ -639,7 +639,7 @@ export default function GroupsPage() {
             {nearbyGroups.length === 0 ? (
               <p className="text-sm text-muted">Nenhum grupo próximo corresponde à busca.</p>
             ) : (
-              <div className="flex flex-col gap-4">{nearbyGroups.map(renderGroupCard)}</div>
+              <div className="paper ruled overflow-hidden">{nearbyGroups.map(renderGroupCard)}</div>
             )}
           </section>
         </>
