@@ -26,7 +26,7 @@ allowed_paths:
 
 forbidden:
   - bloquear hard a criação de pedido semelhante
-  - ampliar RLS ou consultar conteúdo fora do escopo que o membro já pode ler
+  - consultar pedidos fora do alcance selecionado pelo membro
   - misturar pedidos de categorias diferentes
   - misturar locality_id e group_id como se fossem o mesmo alcance
   - introduzir serviço externo ou modelo de IA para similaridade nesta etapa
@@ -34,12 +34,12 @@ forbidden:
 
 acceptance:
   - a busca só começa quando há categoria e texto suficientes para produzir sinal útil
-  - candidatos são limitados à mesma categoria e ao mesmo escopo selecionado
+  - candidatos são limitados à mesma categoria e ao mesmo alcance selecionado
   - pedidos semanticamente próximos aparecem sob a mensagem Já perguntaram algo parecido por aqui
   - cada candidato permite Ver respostas e Acompanhar
   - Perguntar mesmo assim mantém a publicação disponível e explícita
   - selecionar Acompanhar reutiliza recommendation_saves e não cria novo pedido
-  - a experiência não revela pedidos que RLS já ocultaria do usuário
+  - a consulta reutiliza somente a leitura autenticada já existente no produto
   - estados loading, vazio e erro da sugestão não impedem o formulário normal
 
 proof:
@@ -48,10 +48,12 @@ proof:
   - npx pnpm@11.18.0 gate
   - visual audit de /recommendations em 375, 768 e 1440 px
 
-risk: convergência de conteúdo visível sem alteração de trust boundary
-risk_level: R1
+risk: mudança reversível no comportamento de convergência de pedidos por alcance
+risk_level: R2
+adr: docs/decisions/ADR-20260829-guia-auto-curadoria-evidencia.md
 
 reviewer_must_differ_from_executor: true
+blocked_by: revisão independente do comportamento e da decisão associada antes de fechar a tarefa
 
 retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
