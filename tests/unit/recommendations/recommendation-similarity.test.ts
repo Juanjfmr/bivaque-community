@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 import {
   hasUsefulRecommendationQuery,
+  type RecommendationSimilarityCandidate,
   rankSimilarRecommendationRequests,
   recommendationTextSimilarity,
-  type RecommendationSimilarityCandidate,
 } from "../../../apps/web/lib/recommendation-similarity"
 
 const BASE: RecommendationSimilarityCandidate[] = [
