@@ -5,7 +5,7 @@ import test from "node:test"
 
 // D2 Task 3 Step 2: the scope guard that mechanizes the single-source rule for
 // consent and code-of-conduct versions. The versions used to live as literals
-// in five places (middleware, the consent page, the consent action, the
+// in five places (proxy, the consent page, the consent action, the
 // onboarding route and the provision flow). Publishing a version 2 meant
 // editing five files and the failure surfaced only as "consent is required"
 // in production. The guard forbids any local declaration of these constants in
@@ -21,7 +21,7 @@ const FORBIDDEN_LOCAL =
 
 // Files that must import the versions from @bivaque/domain (the single source).
 const MUST_IMPORT = [
-  join(root, "apps", "web", "middleware.ts"),
+  join(root, "apps", "web", "proxy.ts"),
   join(root, "apps", "web", "app", "(preauth)", "consent", "page.tsx"),
   join(root, "apps", "web", "app", "(preauth)", "consent", "actions.ts"),
   join(root, "apps", "web", "app", "api", "onboarding", "route.ts"),
