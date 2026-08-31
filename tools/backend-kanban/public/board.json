@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "23/08/2026 · snapshot do worktree e GitHub",
+  "updatedAt": "31/08/2026 · card mobile autorizado; snapshot do worktree",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -431,31 +431,33 @@
     },
     {
       "id": "BLOCK-LEGAL-ENTRY",
-      "title": "Textos legais da entrada prontos para aceite",
+      "title": "Textos legais da entrada prontos para abertura pública",
       "phase": "Launch blocker",
       "priority": "BLOCK",
       "category": "governance",
       "status": "blocked",
-      "description": "A tela de consentimento permite aceitar textos que se apresentam ao membro como rascunhos pendentes de revisão. Código de conduta e privacidade precisam de aprovação humana antes do lançamento.",
+      "description": "Não bloqueia o Alpha fechado: os documentos foram informados como previamente aprovados pelo dono, identificam Juan Felipe de Melo Reis como controlador e usam juanjfmr1@gmail.com como canal. Continua pendente para a abertura pública a formalização jurídica definitiva e a prova E2E/deploy do aceite.",
       "checklist": [
-        "Revisar CODIGO_DE_CONDUTA.md com o dono e assessoria jurídica",
-        "Revisar PRIVACIDADE.md com assessoria jurídica e confirmar bases legais",
-        "Aprovar versões publicáveis sem notas editoriais internas",
-        "Incrementar as versões canônicas de consentimento quando o conteúdo aprovado mudar",
-        "Provar novo aceite versionado e rejeição de versão obsoleta"
+        "✅ Alpha fechado: usar documentos informados como aprovados pelo dono",
+        "✅ Alpha fechado: identificar controlador e canal de contato",
+        "✅ Alpha fechado: remover notas de rascunho dos documentos apresentados",
+        "Abertura pública: formalizar veículo e governança jurídica definitiva",
+        "Abertura pública: provar aceite versionado em E2E e ambiente implantado"
       ],
       "proof": [
-        "Auditoria visual onboarding-aaa-v1-2026-08-22 mostra notas de rascunho e revisão dentro das regiões que o membro aceita",
-        "docs/legal/CODIGO_DE_CONDUTA.md e docs/legal/PRIVACIDADE.md declaram revisão pendente no próprio conteúdo renderizado"
+        "Decisão do dono nesta sessão: a pendência jurídica completa fica para a segunda etapa; não bloqueia o Alpha fechado",
+        "docs/legal/CODIGO_DE_CONDUTA.md e docs/legal/PRIVACIDADE.md versão 2 identificam o controlador e o canal",
+        "consent/page.tsx exige checkbox; /privacidade e /codigo-de-conduta exibem os documentos completos",
+        "tests/scope/consent-version.test.mjs e tests/scope/support-channel.test.mjs verdes em 2026-08-31"
       ],
-      "blockers": ["Revisão jurídica", "Aprovação do dono"],
+      "blockers": ["Abertura pública", "Prova E2E/deploy"],
       "links": [
         "Código de conduta | ../../docs/legal/CODIGO_DE_CONDUTA.md",
         "Privacidade | ../../docs/legal/PRIVACIDADE.md",
         "Status de consentimento | ../../docs/PRODUCT_STATUS.md"
       ],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "015e4ba",
+      "updatedAt": "2026-08-31",
+      "sourceRevision": "5c13510",
       "dependencies": []
     },
     {
@@ -690,6 +692,50 @@
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"]
+    },
+    {
+      "id": "MOBILE-00-ARCHITECTURE",
+      "title": "App mobile React Native: arquitetura e readiness",
+      "phase": "Mobile",
+      "priority": "P1",
+      "category": "governance",
+      "status": "blocked",
+      "description": "Abrir a trilha oficial do aplicativo Android/iOS sem converter o web nem contornar o guardrail atual: decidir a arquitetura, versionar o contrato consumível pelo cliente nativo e definir a fronteira segura de autenticação, dados e distribuição antes de criar código mobile.",
+      "checklist": [
+        "Aprovar ADR R3 que emende somente o adiamento de app nativo em D31 e registre a decisão de dois clientes: web desktop e app mobile; push, SMS, vídeo, modo escuro, DM e IA permanecem nas decisões atuais",
+        "Adotar repositório mobile separado como default; monorepo exige decisão deliberada adicional sobre o guardrail, ownership, CI e reversão",
+        "Definir contrato backend versionado, compatibilidade, tipos, erros e capacidades server-only consumíveis pelo mobile",
+        "Definir autenticação com PKCE/app links, Keychain/Keystore ou equivalente, refresh, logout, revogação, purge de cache e proibição de service_role/private schema no app",
+        "Definir como o cliente nativo adapta a futura direção visual, acessibilidade, offline/retry, observabilidade, privacidade e paridade de jornada/autorização sem copiar telas do web",
+        "Definir política de assets editoriais sem pessoas/rostos e tratamento separado de mídia UGC, EXIF, permissões e storage, sem introduzir detecção facial",
+        "Definir development builds, assinatura, preview, TestFlight, Play Internal Testing e gates de submissão às lojas",
+        "Decompor a implementação em cards dependentes após o ADR e o backend freeze: busca consome MVP-06 com ACL server-side; shell/motion consome FRONTEND-VISUAL-AAA; web responsiva permanece suportada"
+      ],
+      "proof": [
+        "Direção explícita do dono em 2026-08-31: manter web para desktop e criar app mobile para Android/iOS",
+        "docs/BIVAQUE.md D31 ainda registra app nativo como adiado e precisa de decisão formal superveniente",
+        "tests/scope/workspace-foundation.test.mjs exige que apps/mobile não exista no repositório atual",
+        "MVP-10-BACKEND-FREEZE existe para entregar contrato consumível por outro frontend"
+      ],
+      "tests": [
+        "node scripts/agents/task-contract.mjs <contrato-mobile>",
+        "security-auditor PASS sobre autenticação, sessão, dados pessoais e fronteiras do cliente nativo",
+        "ADR aprovado com alternativas, ameaças, reversão, critérios de sucesso e decisão humana"
+      ],
+      "blockers": [
+        "ADR R3 mobile aprovado e registrado",
+        "Decisão sobre repositório, ownership e contas de distribuição"
+      ],
+      "links": [
+        "Decisão D31 | ../../docs/BIVAQUE.md",
+        "Matriz de risco | ../../docs/decisions/RISK_MATRIX.md",
+        "Backend freeze | #MVP-10-BACKEND-FREEZE",
+        "Busca global | #MVP-06-DISCOVERY-INDEX",
+        "Direção visual | #FRONTEND-VISUAL-AAA"
+      ],
+      "updatedAt": "2026-08-31",
+      "sourceRevision": "5c13510",
+      "dependencies": ["MVP-10-BACKEND-FREEZE"]
     },
     {
       "id": "REPO-ISSUE-20",

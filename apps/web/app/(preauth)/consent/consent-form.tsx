@@ -1,7 +1,8 @@
 "use client"
 
-import { Button } from "@heroui/react"
-import { ShieldCheck } from "lucide-react"
+import { Button, Checkbox } from "@heroui/react"
+import type { Route } from "next"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
@@ -15,6 +16,11 @@ export function ConsentForm({ consentVersion }: { consentVersion: number }) {
   const [error, setError] = useState<string | null>(null)
 
   const handleAccept = async () => {
+    if (!accepted) {
+      setError("Leia os documentos e marque o aceite para continuar.")
+      return
+    }
+
     setError(null)
     setLoading(true)
     try {
@@ -34,18 +40,48 @@ export function ConsentForm({ consentVersion }: { consentVersion: number }) {
     <div className={styles["stack"]}>
       {error && <FeedbackAlert variant="danger" description={error} />}
 
+      <Checkbox isSelected={accepted} onChange={setAccepted} isDisabled={loading}>
+        <Checkbox.Content>
+          <Checkbox.Control>
+            <Checkbox.Indicator />
+          </Checkbox.Control>
+          <span className="text-sm text-muted">
+            Li e concordo com a{" "}
+            <Link
+              href={"/privacidade" as Route}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-foreground underline underline-offset-4"
+              onClick={(event) => event.stopPropagation()}
+            >
+              Política de privacidade
+            </Link>{" "}
+            e o{" "}
+            <Link
+              href={"/codigo-de-conduta" as Route}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-foreground underline underline-offset-4"
+              onClick={(event) => event.stopPropagation()}
+            >
+              Código de conduta
+            </Link>{" "}
+            do Alpha fechado.
+          </span>
+        </Checkbox.Content>
+      </Checkbox>
+
       <Button
         variant="primary"
         className={styles["primaryButton"] ?? ""}
         onPress={handleAccept}
-        isDisabled={accepted || loading}
+        isDisabled={!accepted || loading}
       >
-        {accepted ? "Acordo registrado" : loading ? "Registrando..." : "Concordar e continuar"}
+        {loading ? "Registrando..." : "Concordar e continuar"}
       </Button>
 
       <p className={styles["note"]}>
-        <ShieldCheck aria-hidden="true" />
-        <span>Seu aceite fica registrado com a versão das regras que você leu.</span>
+        <span>Seu aceite fica registrado com as versões dos documentos apresentados.</span>
       </p>
     </div>
   )

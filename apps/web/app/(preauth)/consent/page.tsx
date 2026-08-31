@@ -1,74 +1,48 @@
-import { promises as fs } from "node:fs"
-import path from "node:path"
 import { CONSENT_VERSION } from "@bivaque/domain"
+import type { Route } from "next"
+import Link from "next/link"
 import { OnboardingShell } from "../onboarding/components/onboarding-shell"
 import styles from "../onboarding/onboarding.module.css"
 import { ConsentForm } from "./consent-form"
-import { renderLegalDocument } from "./document-render"
-
-// D2 Task 3: the legal text is rendered from the versioned files in
-// docs/legal/ — never copied into JSX, so a change to the document can never
-// diverge from the screen. The version numbers come from @bivaque/domain (the
-// single source); the acceptance row records the versions that were shown.
-
-async function readLegalDocument(relativePath: string): Promise<string> {
-  // process.cwd() for `next dev`/`next build` is apps/web (where next.config.ts
-  // lives), but docs/legal/ is monorepo-root-level, shared reference text — two
-  // levels up. A plain `process.cwd()` join only worked for whichever cwd a dev
-  // server happened to run from; a real `next build` (apps/web as cwd, always)
-  // never found the file, crashing static generation of /consent — found
-  // running the onda T/F closing E2E batch, unrelated to either wave's code.
-  const filePath = path.join(process.cwd(), "..", "..", "docs", "legal", relativePath)
-  return fs.readFile(filePath, "utf8")
-}
-
-export default async function ConsentPage() {
-  const [codeOfConduct, privacy] = await Promise.all([
-    readLegalDocument("CODIGO_DE_CONDUTA.md"),
-    readLegalDocument("PRIVACIDADE.md"),
-  ])
-
+export default function ConsentPage() {
   return (
     <OnboardingShell
       stage="rules"
       titleId="consent-heading"
       eyebrow="Um acordo de convivência"
       title="Antes de entrar, conheça as regras."
-      description="O Bivaque existe para tornar a experiência de cada chegada útil para a próxima. Isso começa com respeito, responsabilidade e cuidado com dados pessoais."
+      description="O Bivaque usa verificação de elegibilidade e dados pessoais para manter uma comunidade fechada. Leia os documentos antes de continuar."
       asideEyebrow="O que sustenta a comunidade"
       asideTitle="Confiança não é um detalhe."
-      asideDescription="As regras valem para todos e deixam claro o tipo de convivência que o Bivaque quer preservar."
+      asideDescription="As regras valem para todos. O aceite fica registrado com a versão apresentada nesta tela."
     >
       <div className={styles["stack"]}>
-        <div className={styles["legalGrid"]}>
-          <section aria-labelledby="conduct-heading" className={styles["legalSection"]}>
-            <h2 id="conduct-heading" className="text-base font-semibold">
-              Código de conduta
-            </h2>
-            <section
-              className={styles["legalDocument"]}
-              aria-label="Código de conduta"
-              // biome-ignore lint/a11y/noNoninteractiveTabindex: the scrollable consent box must be reachable by keyboard (D2 Task 3 Step 4)
-              tabIndex={0}
+        <section aria-labelledby="documents-heading" className="space-y-3">
+          <h2 id="documents-heading" className="text-base font-semibold">
+            Documentos do Alpha
+          </h2>
+          <p className="text-sm text-muted">
+            Consulte a versão completa da política e do código antes de marcar o aceite.
+          </p>
+          <div className="flex flex-col gap-2 text-sm">
+            <Link
+              href={"/privacidade" as Route}
+              target="_blank"
+              rel="noreferrer"
+              className="min-h-11 rounded-md border border-border px-3 py-2 underline underline-offset-4"
             >
-              {renderLegalDocument(codeOfConduct)}
-            </section>
-          </section>
-
-          <section aria-labelledby="privacy-heading" className={styles["legalSection"]}>
-            <h2 id="privacy-heading" className="text-base font-semibold">
-              Política de privacidade
-            </h2>
-            <section
-              className={styles["legalDocument"]}
-              aria-label="Política de privacidade"
-              // biome-ignore lint/a11y/noNoninteractiveTabindex: the scrollable privacy box must be reachable by keyboard (D2 Task 3 Step 4)
-              tabIndex={0}
+              Ler a Política de privacidade completa
+            </Link>
+            <Link
+              href={"/codigo-de-conduta" as Route}
+              target="_blank"
+              rel="noreferrer"
+              className="min-h-11 rounded-md border border-border px-3 py-2 underline underline-offset-4"
             >
-              {renderLegalDocument(privacy)}
-            </section>
-          </section>
-        </div>
+              Ler o Código de conduta completo
+            </Link>
+          </div>
+        </section>
 
         <ConsentForm consentVersion={CONSENT_VERSION} />
       </div>

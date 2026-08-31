@@ -5,8 +5,8 @@
  * Quem já está dentro da plataforma é atendido pela própria plataforma
  * (Task 11), não por canal externo.
  *
- * O placeholder abaixo NÃO pode chegar em produção: tests/scope/
- * support-channel.test.mjs falha enquanto ele estiver presente.
+ * O valor pode ser sobrescrito pelo ambiente de produção, mas o canal aprovado
+ * do Alpha também fica como fallback para não operar com endereço indefinido.
  */
-export const SUPPORT_EMAIL = process.env["NEXT_PUBLIC_SUPPORT_EMAIL"] ?? "<<DEFINIR>>"
+export const SUPPORT_EMAIL = process.env["NEXT_PUBLIC_SUPPORT_EMAIL"] ?? "juanjfmr1@gmail.com"
 export const SUPPORT_SLA_HOURS = 48

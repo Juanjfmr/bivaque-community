@@ -1,3 +1,4 @@
+import { CONSENT_VERSION } from "@bivaque/domain"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { provisionMember, verifyEligibility } from "web/lib/onboarding/verifyAndProvision"
 
@@ -35,9 +36,25 @@ describe("verifyEligibility (P0 Task 4)", () => {
       verifyEligibility(supabase, {
         userId: "user-1",
         cpf: "12345678901",
-        consentVersion: 1,
+        consentVersion: CONSENT_VERSION,
       }),
     ).rejects.toThrow("PORTAL_DADOS_API_KEY is required for verification")
+
+    expect(supabase.rpc).not.toHaveBeenCalled()
+  })
+
+  it("rejects a consent version older than the current one before consuming an attempt", async () => {
+    vi.stubEnv("PORTAL_DADOS_API_KEY", "chave-valida")
+
+    const supabase = makeSupabase(true)
+
+    await expect(
+      verifyEligibility(supabase, {
+        userId: "user-1",
+        cpf: "12345678901",
+        consentVersion: CONSENT_VERSION - 1,
+      }),
+    ).rejects.toThrow("consent version not accepted")
 
     expect(supabase.rpc).not.toHaveBeenCalled()
   })
@@ -50,7 +67,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
     const result = await verifyEligibility(supabase, {
       userId: "user-1",
       cpf: "12345678901",
-      consentVersion: 1,
+      consentVersion: CONSENT_VERSION,
     })
 
     expect(result).toEqual({ outcome: { status: "pending" } })
@@ -71,7 +88,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
     await verifyEligibility(supabase, {
       userId: "user-1",
       cpf: "12345678901",
-      consentVersion: 1,
+      consentVersion: CONSENT_VERSION,
     })
 
     // The negative is the test of the task: verify touches no table.
@@ -93,7 +110,7 @@ describe("provisionMember (P0 Task 4)", () => {
         userId: "user-1",
         localityId: "",
         displayName: "Ana",
-        consentVersion: 1,
+        consentVersion: CONSENT_VERSION,
       }),
     ).rejects.toThrow("locality is required to provision a member")
   })
