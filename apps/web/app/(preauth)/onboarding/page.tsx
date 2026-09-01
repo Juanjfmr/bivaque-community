@@ -13,6 +13,7 @@ import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { showToast } from "../../components/bivaque/toast"
 import { ConsentCheckbox } from "./components/consent-checkbox"
 import { OnboardingShell } from "./components/onboarding-shell"
+import DocumentUpload from "./document-upload"
 import styles from "./onboarding.module.css"
 
 type OnboardingStep = "verify" | "family" | "done" | "loading"
@@ -51,6 +52,7 @@ function OnboardingFlow() {
   const [result, setResult] = useState<string | null>(null)
   const [hasAcceptedConsent, setHasAcceptedConsent] = useState(false)
   const [acceptConsent, setAcceptConsent] = useState(false)
+  const [showDocumentFallback, setShowDocumentFallback] = useState(false)
 
   const inviteToken = searchParams.get("invite")
 
@@ -117,6 +119,7 @@ function OnboardingFlow() {
 
   const handleVerifyCpf = async () => {
     setError(null)
+    setShowDocumentFallback(false)
     if (!isValidCpf(cpf)) {
       setError("CPF inválido. Confira os 11 dígitos.")
       return
@@ -190,6 +193,7 @@ function OnboardingFlow() {
         } else if (outcome["status"] === "temporary_error") {
           const errorCode = typeof outcome["errorCode"] === "string" ? outcome["errorCode"] : ""
           setError(verificationErrorMessage(errorCode, SUPPORT_EMAIL))
+          setShowDocumentFallback(true)
         }
       }
     } catch (err: unknown) {
@@ -382,6 +386,8 @@ function OnboardingFlow() {
         )}
 
         {error && <FeedbackAlert variant="danger" description={error} />}
+
+        {showDocumentFallback && <DocumentUpload hasAcceptedConsent={hasAcceptedConsent} />}
 
         {step !== "done" && !(step === "verify" && loading) && (
           <p className={styles["note"]}>
