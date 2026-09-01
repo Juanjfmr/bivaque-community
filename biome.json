@@ -16,7 +16,12 @@
       "!**/.visual",
       "!.claude/worktrees",
       "!**/.reasonix",
-      "!**/docs/agents/design-audit/experiments"
+      "!**/docs/agents/design-audit/experiments",
+      "!**/.vercel",
+      "!**/supabase/.temp",
+      "!**/apps/mobile/dist-android",
+      "!**/apps/mobile/dist-ios",
+      "!**/apps/mobile/.expo"
     ]
   },
   "formatter": {

@@ -36,3 +36,6 @@ e2e-results.json\
 
 # Reasonix desktop host runtime metadata — not repo state
 .reasonix/
+
+# Vercel project linkage and downloaded local runtime metadata
+.vercel/

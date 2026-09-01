@@ -9,17 +9,20 @@ import {
   ListBox,
   Modal,
   Select,
+  Spinner,
   TextArea,
   useOverlayState,
 } from "@heroui/react"
 import { ExternalLink, Heart, Link2, MessageCircle, MoreHorizontal, Share2 } from "lucide-react"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
+import { classifyPublishError } from "../../../lib/composer/publish-error"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
 import { FeedbackAlert } from "./feedback-alert"
 import { ReportButton } from "./report-button"
+import { showToast } from "./toast"
 
 // FeedPostRow represents a single post shown in any feed. The base shape comes
 // from feed_posts (no community_id, used for the now-removed city feed); when
@@ -536,6 +539,9 @@ export function CreatePostModal({
   const [piiWarning, setPiiWarning] = useState(false)
   const [communityId, setCommunityId] = useState<string | null>(defaultCommunityId ?? null)
   const [availableCommunities, setAvailableCommunities] = useState<CommunityOption[]>([])
+  const [communitiesLoadAttempt, setCommunitiesLoadAttempt] = useState(0)
+  const [communitiesLoadError, setCommunitiesLoadError] = useState<string | null>(null)
+  const [communitiesLoading, setCommunitiesLoading] = useState(true)
   const dialogContentRef = useRef<HTMLDivElement>(null)
   const supabase = createBrowserClient()
 
@@ -556,42 +562,84 @@ export function CreatePostModal({
     }
   }, [modal.isOpen])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this effect intentionally reloads only on retry
   useEffect(() => {
     let cancelled = false
+    setCommunitiesLoading(true)
+    setCommunitiesLoadError(null)
     ;(async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (cancelled || !user) return
+      if (cancelled || !user) {
+        if (!cancelled) setCommunitiesLoading(false)
+        return
+      }
 
-      const { data: membershipsData } = await supabase
+      const { data: membershipsData, error: membershipsError } = await supabase
         .from("community_memberships")
         .select("community_id")
         .eq("user_id", user.id)
         .eq("status", "approved")
 
+      if (cancelled) return
+      if (membershipsError) {
+        // Não oferecemos silenciosamente a cidade quando a vila default
+        // ainda está selecionada — o aviso `Só os aprovados desta vila vão
+        // ler` estaria mentindo sobre o que o membro vê. Forçamos a cópia
+        // de cidade para alinhar o aviso com a única opção disponível
+        // quando a lista está vazia (DS-002/DS-014: audiência reflete o
+        // que o membro pode escolher; não pode ser fingida).
+        setCommunitiesLoadError(
+          "Não foi possível carregar suas vilas. O post será publicado para toda a cidade.",
+        )
+        setAvailableCommunities([])
+        setCommunityId(null)
+        setCommunitiesLoading(false)
+        return
+      }
+
       const communityIds = ((membershipsData as { community_id: string }[] | null) ?? []).map(
         (membership) => membership.community_id,
       )
-      if (cancelled || communityIds.length === 0) return
+      if (cancelled) return
+      if (communityIds.length === 0) {
+        setAvailableCommunities([])
+        setCommunitiesLoading(false)
+        return
+      }
 
-      const { data: communitiesData } = await supabase
+      const { data: communitiesData, error: communitiesError } = await supabase
         .from("communities")
         .select("id, name")
         .in("id", communityIds)
 
       if (cancelled) return
+      if (communitiesError) {
+        setCommunitiesLoadError(
+          "Não foi possível carregar suas vilas. Você ainda pode publicar para a cidade inteira.",
+        )
+        setAvailableCommunities([])
+        setCommunitiesLoading(false)
+        return
+      }
+
       setAvailableCommunities(
         ((communitiesData as { id: string; name: string }[] | null) ?? []).map((community) => ({
           id: community.id,
           name: community.name,
         })),
       )
+      setCommunitiesLoading(false)
     })()
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [supabase, communitiesLoadAttempt])
+
+  const retryCommunitiesLoad = useCallback(() => {
+    setCommunitiesLoadAttempt((prev) => prev + 1)
+  }, [])
 
   const resetForm = useCallback(() => {
     setPostType("text")
@@ -663,14 +711,32 @@ export function CreatePostModal({
       .insert({ ...insertData, ...extras } as Database["public"]["Tables"]["posts"]["Insert"])
 
     if (insertError) {
-      setError("Não foi possível criar a publicação")
+      // Anti-enumeração: 42501 (RLS), 23505 (unique) e qualquer outra
+      // resposta do PostgREST compartilham a mesma mensagem. O `kind`
+      // discrimina o que fazer (mostrar feedback inline vs. pedir para
+      // checar a conexão); o texto nunca revela o motivo do servidor.
+      const view = classifyPublishError(insertError)
+      setError(view.message)
+      // `preserveDraft` é sobre o conteúdo do TextArea (não limpamos);
+      // o botão precisa voltar a ficar clicável para a pessoa corrigir
+      // e tentar de novo — manter `submitting` aqui trancaria o caminho
+      // de recuperação.
       setSubmitting(false)
       return
     }
 
     resetForm()
+    const publishedToCity = communityId === null
+    showToast({
+      title: publishedToCity ? "Publicado para toda a cidade" : "Publicado na sua vila",
+      description: publishedToCity
+        ? `Os membros verificados de ${locality.cityName} podem ler agora.`
+        : "Os aprovados desta vila podem ler agora.",
+      variant: "success",
+    })
     onCreated()
     modal.close()
+    setSubmitting(false)
   }, [
     postType,
     content,
@@ -680,6 +746,7 @@ export function CreatePostModal({
     communityId,
     piiWarning,
     localityId,
+    locality.cityName,
     supabase,
     resetForm,
     onCreated,
@@ -763,6 +830,37 @@ export function CreatePostModal({
                     : `Toda ${locality.cityName} — todos os membros verificados da cidade vão ler.`}
                 </p>
               </div>
+
+              {communitiesLoading ? (
+                <div
+                  className="mt-3 flex items-center gap-2 text-xs text-muted"
+                  aria-live="polite"
+                  data-testid="communities-loading"
+                >
+                  <Spinner size="sm" aria-label="Carregando suas vilas" />
+                  Carregando suas vilas…
+                </div>
+              ) : null}
+
+              {communitiesLoadError ? (
+                <div className="mt-3" data-testid="communities-error">
+                  <FeedbackAlert
+                    variant="danger"
+                    title="Não foi possível listar suas vilas"
+                    description={communitiesLoadError}
+                    actions={
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onPress={retryCommunitiesLoad}
+                        aria-label="Tentar carregar as vilas novamente"
+                      >
+                        Tentar novamente
+                      </Button>
+                    }
+                  />
+                </div>
+              ) : null}
 
               {postType === "photo" ? (
                 <div className="mt-4 space-y-2">
@@ -896,15 +994,24 @@ export function CreatePostModal({
               ) : null}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="tertiary" onPress={handleCancel}>
+              <Button variant="tertiary" onPress={handleCancel} isDisabled={submitting}>
                 Cancelar
               </Button>
               <Button
                 onPress={handleSubmit}
                 isDisabled={submitting || !content.trim()}
                 variant="primary"
+                aria-busy={submitting}
+                data-testid="publish-submit"
               >
-                Publicar
+                {submitting ? (
+                  <>
+                    <Spinner size="sm" aria-label="Publicando" />
+                    Publicando…
+                  </>
+                ) : (
+                  "Publicar"
+                )}
               </Button>
             </Modal.Footer>
           </Modal.Dialog>

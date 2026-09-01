@@ -9,15 +9,15 @@ import {
 } from "@heroicons/react/24/solid"
 import { Tabs } from "@heroui/react"
 import { usePathname } from "next/navigation"
-import type { ComponentType, SVGProps } from "react"
+import type { ElementType, SVGProps } from "react"
 
 export interface NavItem {
   id: string
   label: string
   shortLabel?: string
   href: string
-  Icon: ComponentType<SVGProps<SVGSVGElement>>
-  IconActive: ComponentType<SVGProps<SVGSVGElement>>
+  Icon: ElementType<SVGProps<SVGSVGElement>>
+  IconActive: ElementType<SVGProps<SVGSVGElement>>
 }
 
 // ── Os containers de navegação ──────────────────────────────────────────────
@@ -87,8 +87,8 @@ function NavIcon({
   IconActive,
   active,
 }: {
-  Icon: ComponentType<SVGProps<SVGSVGElement>>
-  IconActive: ComponentType<SVGProps<SVGSVGElement>>
+  Icon: ElementType<SVGProps<SVGSVGElement>>
+  IconActive: ElementType<SVGProps<SVGSVGElement>>
   active: boolean
 }) {
   const fade = "transition-opacity duration-[var(--duration-fast)]"
