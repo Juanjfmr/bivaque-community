@@ -34,23 +34,9 @@
 }
 
 .wordmark {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--forest-deep);
-  font-family: var(--serif);
-  font-size: 25px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.wordmark[data-inverse="true"] {
-  color: #fffdf7;
-}
-
-.wordmark svg {
-  width: 23px;
-  height: 23px;
+  display: block;
+  width: 162px;
+  height: auto;
 }
 
 .header {
@@ -436,7 +422,7 @@
 }
 
 .productTopbar .wordmark {
-  font-size: 20px;
+  width: 118px;
 }
 
 .productTopbar > span {

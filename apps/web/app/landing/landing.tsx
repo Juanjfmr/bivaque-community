@@ -20,6 +20,7 @@ import {
 import Image from "next/image"
 import Link from "next/link"
 import { useLayoutEffect, useRef } from "react"
+import { BrandMark } from "../components/bivaque/brand-mark"
 import styles from "./landing.module.css"
 
 gsap.registerPlugin(ScrollTrigger)
@@ -56,7 +57,7 @@ const BELONGING = [
   {
     icon: Tent,
     name: "Comunidade",
-    copy: "As pessoas com quem você divide uma referência, uma fase ou uma história.",
+    copy: "Pessoas que compartilham uma fase, um lugar ou uma história.",
   },
   { icon: Compass, name: "Grupo", copy: "Conversas sobre um assunto específico." },
 ]
@@ -64,27 +65,30 @@ const BELONGING = [
 const TRUST = [
   {
     icon: ShieldCheck,
-    title: "Entrada coerente com cada papel",
-    copy: "A elegibilidade é conferida de acordo com o papel de cada pessoa.",
+    title: "Entre pelo caminho que faz sentido para você",
+    copy: "A entrada considera o papel de cada pessoa na comunidade.",
   },
   {
     icon: LockKeyhole,
-    title: "Seu perfil é para convivência",
-    copy: "CPF, patente, organização militar, endereço e documentos não aparecem no perfil.",
+    title: "Seus dados ficam protegidos",
+    copy: "A verificação confirma seu acesso, mas seus documentos e dados pessoais não aparecem no perfil.",
   },
   {
     icon: Search,
-    title: "Encontros pelo que importa",
-    copy: "Você encontra pessoas pelas conversas, pelos interesses e pelas comunidades em comum.",
+    title: "Encontre conversas que combinam com você",
+    copy: "Descubra pessoas, interesses e comunidades em comum para trocar experiências úteis.",
   },
 ]
 
 function Wordmark({ inverse = false }: { inverse?: boolean }) {
   return (
-    <span className={styles["wordmark"]} data-inverse={inverse}>
-      <Tent aria-hidden="true" strokeWidth={1.8} />
-      <span>Bivaque</span>
-    </span>
+    <BrandMark
+      alt="Bivaque"
+      asset="horizontal"
+      className={styles["wordmark"] ?? ""}
+      priority={inverse}
+      tone={inverse ? "white" : "graphite"}
+    />
   )
 }
 
@@ -196,15 +200,15 @@ export function LandingPage() {
           <div className={styles["heroShade"]} aria-hidden="true" />
           <div className={styles["heroContent"]}>
             <p className={styles["heroEyebrow"]}>
-              Para militares federais, veteranos, pensionistas e dependentes
+              Para militares federais, veteranos, pensionistas e suas famílias
             </p>
             <h1 id="hero-title" className={styles["heroTitle"]}>
               <span className={styles["heroTitleLine"]}>Bivaque.</span>
               <span className={styles["heroTitleLine"]}>A comunidade vai com você.</span>
             </h1>
             <p className={styles["heroLead"]}>
-              Encontre quem conhece o lugar, a rotina e as perguntas que chegam com cada mudança.
-              Compartilhe o que aprendeu e facilite o caminho de quem vier depois.
+              Chegue a uma nova cidade encontrando pessoas, referências e respostas que fazem
+              diferença. Compartilhe o que você aprendeu e ajude a próxima pessoa a chegar melhor.
             </p>
             <div className={styles["heroActions"]}>
               <Link href={{ pathname: "/signup" }} className={styles["primaryAction"]}>
@@ -307,8 +311,8 @@ export function LandingPage() {
             <p className={styles["kicker"]}>Onde você participa</p>
             <h2>Sua cidade, suas comunidades e os grupos que fazem parte da sua vida.</h2>
             <p>
-              Você participa da localidade, das comunidades e dos grupos que fazem sentido para a
-              sua rotina. Cada conversa chega às pessoas certas.
+              Encontre seu lugar, acompanhe conversas próximas da sua rotina e participe do que
+              importa para você.
             </p>
           </div>
           <div className={styles["belongingLayers"]} data-reveal>
@@ -340,10 +344,10 @@ export function LandingPage() {
           <div className={styles["transferCopy"]} data-reveal>
             <Route aria-hidden="true" />
             <p className={styles["kicker"]}>Na próxima mudança</p>
-            <h2>Conheça o próximo destino antes de chegar.</h2>
+            <h2>Mude de cidade sem começar do zero.</h2>
             <p>
-              Encontre referências, comunidades e respostas do novo lugar enquanto mantém acesso ao
-              que construiu na origem.
+              Encontre referências, comunidades e respostas no novo lugar — e leve com você os
+              vínculos que fazem parte da sua história.
             </p>
           </div>
         </section>
@@ -351,7 +355,7 @@ export function LandingPage() {
         <section id="confianca" className={styles["trust"]}>
           <div className={styles["trustHeading"]} data-reveal>
             <p className={styles["kicker"]}>Confiança</p>
-            <h2>Uma comunidade feita para conversas que pedem contexto.</h2>
+            <h2>Um lugar para perguntar, encontrar e fazer parte.</h2>
           </div>
           <div className={styles["trustList"]}>
             {TRUST.map((item) => {
@@ -370,10 +374,10 @@ export function LandingPage() {
         <section className={styles["closing"]}>
           <div className={styles["closingCopy"]} data-reveal>
             <Wordmark inverse />
-            <h2>Você pode chegar com uma pergunta. Logo terá algo para compartilhar.</h2>
+            <h2>Chegue com uma pergunta. Encontre um lugar para participar.</h2>
             <p>
-              Entre para conhecer o lugar, resolver dúvidas e deixar a sua experiência disponível
-              para quem chegar depois.
+              O Bivaque aproxima você de quem já conhece o caminho — e guarda o que pode ajudar quem
+              chegar depois.
             </p>
             <Link href={{ pathname: "/signup" }} className={styles["primaryAction"]}>
               Quero fazer parte <ArrowRight aria-hidden="true" />
