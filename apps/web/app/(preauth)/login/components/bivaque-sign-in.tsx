@@ -9,6 +9,13 @@ import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import styles from "./bivaque-sign-in.module.css"
 
+const AUTH_CALLBACK_PATH = "/auth/callback?next=/"
+
+function getAuthCallbackUrl(): string {
+  const configuredOrigin = process.env["NEXT_PUBLIC_SITE_URL"]?.replace(/\/+$/, "")
+  return `${configuredOrigin || window.location.origin}${AUTH_CALLBACK_PATH}`
+}
+
 interface BivaqueSignInProps {
   onMagicLinkSignIn?: (email: string) => Promise<void> | void
   onGoogleSignIn?: () => Promise<void> | void
@@ -108,7 +115,7 @@ export function BivaqueSignIn({
         const { error: signInError } = await createBrowserClient().auth.signInWithOtp({
           email,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/consent`,
+            emailRedirectTo: getAuthCallbackUrl(),
             shouldCreateUser: mode === "signup",
           },
         })
@@ -137,7 +144,7 @@ export function BivaqueSignIn({
         const { error: signInError } = await createBrowserClient().auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: `${window.location.origin}/auth/callback?next=/consent`,
+            redirectTo: getAuthCallbackUrl(),
           },
         })
         if (signInError) throw signInError
