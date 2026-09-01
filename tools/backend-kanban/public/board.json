@@ -1335,7 +1335,8 @@
         "Bundle Metro Android: 2.52 MB (commit 29d9496)",
         "Bundle Metro iOS: 2.53 MB (commit 29d9496)",
         "Java 17 + Android SDK present, mas toolchain de AVD incompleta",
-        "Sem credenciais Apple/EAS no host"
+        "Sem credenciais Apple/EAS no host",
+        "2026-09-01 tentativa 1 de bootstrap Android falhou: Invoke-WebRequest contra https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip excedeu 360s sem completar o download. cmdline-tools continua ausente; sem cmdline-tools, sem sdkmanager, sem system-image, sem AVD. Próxima tentativa exige rota alternativa: usar curl.exe do Git for Windows (PATH tem C:\\Program Files\\Git\\cmd\\) ou um mirror; ou rodar o download em background com retry."
       ],
       "tests": [
         "Pendente: emulator boot + install + launch + smoke test (Minha comunidade → feed → compositor)",
@@ -1346,7 +1347,7 @@
         "Próxima sessão | MOB-001-SESSION (gate antes da jornada autenticada)"
       ],
       "updatedAt": "2026-09-01",
-      "sourceRevision": "990359e",
+      "sourceRevision": "867c5b0",
       "blockers": [
         "cmdline-tools + system-image + AVD ausentes (Android)",
         "Apple Developer Program + EAS credentials ausentes (iOS)"
