@@ -1,9 +1,9 @@
 ---
-id: ADR-20260901-suspension
-status: draft
+id: ADR-20260901-account-suspension
+status: approved
 risk: R3
 owner: Juan
-approved_at:
+approved_at: 2026-09-01
 expires_at:
 linked_plan:
 critic_verdict:

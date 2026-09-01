@@ -1,9 +1,9 @@
 ---
 id: ADR-20260901-mobile-session
-status: draft
+status: approved
 risk: R3
 owner: Juan
-approved_at:
+approved_at: 2026-09-01
 expires_at:
 linked_plan:
 critic_verdict:
