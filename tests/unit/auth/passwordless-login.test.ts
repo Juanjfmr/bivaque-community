@@ -54,4 +54,13 @@ describe("passwordless login has no password affordances", () => {
     expect(entrySource).toContain('alternateHref: "/signup"')
     expect(landingSource).toContain('pathname: "/signup"')
   })
+
+  it("sends both passwordless providers through the canonical post-auth router", () => {
+    const source = readFileSync(loginComponent, "utf8")
+
+    expect(source).toContain('const AUTH_CALLBACK_PATH = "/auth/callback?next=/"')
+    expect(source).toContain("emailRedirectTo: getAuthCallbackUrl()")
+    expect(source).toContain("redirectTo: getAuthCallbackUrl()")
+    expect(source).not.toContain("next=/consent")
+  })
 })
