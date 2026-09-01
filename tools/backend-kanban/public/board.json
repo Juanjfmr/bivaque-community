@@ -1322,11 +1322,12 @@
       "status": "blocked",
       "description": "A fundação MOB-000 já produz bundles Metro para Android e iOS (2.52/2.53 MB Hermes). A prova de runtime real exige Android emulator rodando o app, e/ou iOS device/TestFlight. No host atual: cmdline-tools ausente em $LOCALAPPDATA/Android/Sdk (sem sdkmanager.bat); nenhuma system-image; nenhum AVD. iOS runtime exige Apple Developer Program (US$ 99/ano) + credenciais EAS + TestFlight, ativos externos que não estão na máquina. Sem proof de runtime, MOB-001 (sessão) e MOB-002 (golden slice nativa) só podem ser validados em bundle estático e lint/typecheck.",
       "checklist": [
-        "Android: instalar cmdline-tools/latest/ em $LOCALAPPDATA/Android/Sdk (download ~150 MB)",
-        "Android: sdkmanager licenses + sdkmanager system-images;android-34;google_apis_playstore;x86_64",
-        "Android: avdmanager create avd com Pixel 7 API 34",
-        "Android: emulator -avd Pixel_7_API_34 -no-window -no-audio -no-snapshot (requer Hyper-V/HAXM)",
-        "Android: npx expo run:android --variant release (ou --variant debug)",
+        "Android: cmdline-tools/latest instalado (concluído 2026-09-01)",
+        "Android: licenças aceitas (concluído 2026-09-01)",
+        "Android: system-images;android-34;default;x86_64 instalada (concluído 2026-09-01)",
+        "Android: AVD bivaque_ci criado (concluído 2026-09-01)",
+        "Android: HAXM instalado ou Hyper-V confirmado como acelerador disponível para emulador (pendente — usuário)",
+        "Android: emulator bootar via `emulator.exe -avd bivaque_ci -no-window -gpu swiftshader_indirect` e `adb shell getprop sys.boot_completed` = 1 (pendente — depois de HAXM)",
         "iOS: conta Apple Developer Program inscrita",
         "iOS: eas login + eas build --platform ios --auto-submit (requer Apple ID)",
         "iOS: TestFlight + Internal Tester"
@@ -1336,7 +1337,9 @@
         "Bundle Metro iOS: 2.53 MB (commit 29d9496)",
         "Java 17 + Android SDK present, mas toolchain de AVD incompleta",
         "Sem credenciais Apple/EAS no host",
-        "2026-09-01 tentativa 1 de bootstrap Android falhou: Invoke-WebRequest contra https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip excedeu 360s sem completar o download. cmdline-tools continua ausente; sem cmdline-tools, sem sdkmanager, sem system-image, sem AVD. Próxima tentativa exige rota alternativa: usar curl.exe do Git for Windows (PATH tem C:\\Program Files\\Git\\cmd\\) ou um mirror; ou rodar o download em background com retry."
+        "2026-09-01 tentativa 1 de bootstrap Android falhou: Invoke-WebRequest contra https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip excedeu 360s sem completar o download. cmdline-tools continua ausente; sem cmdline-tools, sem sdkmanager, sem system-image, sem AVD. Próxima tentativa exige rota alternativa: usar curl.exe do Git for Windows (PATH tem C:\\Program Files\\Git\\cmd\\) ou um mirror; ou rodar o download em background com retry.",
+        "2026-09-01 bootstrap Android tentativamente completo: (1) cmdline-tools/latest extraído em C:\\Users\\juana\\AppData\\Local\\Android\\Sdk\\cmdline-tools\\latest\\ (sdkmanager --version = 12.0); (2) licenças aceitas via `yes | sdkmanager --licenses` (saída: 'All SDK package licenses accepted'); (3) system-images;android-34;default;x86_64 instalada; (4) AVD bivaque_ci criado (Pixel, Android 14.0 UpsideDownCake, default/x86_64); (5) emulator 36.6.11 disponível. JDK real localizada: C:\\Program Files\\Java\\jdk-17.0.3.1 (registry HKLM\\SOFTWARE\\JavaSoft\\JDK\\17.0.3.1).",
+        "2026-09-01 tentativa de boot headless falhou: tentativa A com `-accel off -gpu swiftshader_indirect` — emulador morre durante init (processo termina em ~5s, sem banner de boot); tentativa B sem `-accel off` (deixa detectar Hyper-V) — Start-Process trava o shell do bash. WMI reporta HypervisorPresent: True (Hyper-V ativo), mas HAXM NÃO instalado (sem HKLM\\SOFTWARE\\Intel\\HAXM). Diagnóstico: emulador Android x86_64 em Windows sem HAXM cai no qemu; Hyper-V provavelmente ocupado pelo Docker Desktop (WSL2) ou pelo host hypervisor. Próximo passo: usuário instalará HAXM; após instalado, `emulator.exe -avd bivaque_ci -no-window -gpu swiftshader_indirect` deve bootar. iOS device continua bloqueado por Apple Developer Program ausente."
       ],
       "tests": [
         "Pendente: emulator boot + install + launch + smoke test (Minha comunidade → feed → compositor)",
@@ -1347,7 +1350,7 @@
         "Próxima sessão | MOB-001-SESSION (gate antes da jornada autenticada)"
       ],
       "updatedAt": "2026-09-01",
-      "sourceRevision": "867c5b0",
+      "sourceRevision": "496f971",
       "blockers": [
         "cmdline-tools + system-image + AVD ausentes (Android)",
         "Apple Developer Program + EAS credentials ausentes (iOS)"
