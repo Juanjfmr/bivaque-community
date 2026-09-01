@@ -37,6 +37,8 @@ test.describe("PWA and health endpoints", () => {
     await expect(response).toBeOK()
     const body = await response.text()
     expect(body).toContain("CACHE_NAME")
+    expect(body).toContain('"bivaque-v2"')
+    expect(body).toContain('pathname.startsWith("/_next/")')
   })
 
   test("service worker registers in the browser", async ({ page }) => {

@@ -484,7 +484,8 @@
         "Oito decisões registradas no ADR-20260828 §8 e §9 com data e divergências da proposta original explicitadas (sucessão na licença, retenção escalonada, arrependimento do art. 49 do CDC)",
         "Lacunas do veículo jurídico caíram de 4 para 2: encarregado e foro fechados sem depender da entidade; sobram controlador e o endereço do canal",
         "<<DEFINIR>> nos Termos: de 4 distintos para 2 (controlador e endereço do canal)",
-        "2026-09-01: o aceite da entrada saiu da tela longa /consent e passou a checkbox obrigatório em /login e /signup; os documentos completos permanecem acessíveis por links e o callback registra as versões no servidor."
+        "2026-09-01: o aceite da entrada saiu da tela longa /consent e passou a checkbox obrigatório em /login e /signup; os documentos completos permanecem acessíveis por links e o callback registra as versões no servidor.",
+        "2026-09-01: a migração consent_acceptances foi aplicada no Supabase de produção; tabela e funções de registro/leitura existem, service_role executa a gravação e anon/authenticated não têm acesso direto."
       ],
       "blockers": ["Revisão jurídica", "Aprovação do dono"],
       "links": [
@@ -495,7 +496,7 @@
         "Status de consentimento | ../../docs/PRODUCT_STATUS.md"
       ],
       "updatedAt": "2026-09-01",
-      "sourceRevision": "ea715f6",
+      "sourceRevision": "0b03bf5",
       "dependencies": ["BLOCK-RESEND"],
       "drift": {
         "documented": "PRIVACIDADE.md lista oito terceiros recebendo dado pessoal, entre eles PostHog, Asaas e WhatsApp, sem distinguir o que já opera do que é planejado.",
