@@ -1391,6 +1391,42 @@
       "blockers": [],
       "dependencies": ["MVP-00-E2E-FUNCTIONAL"],
       "completedAt": "2026-09-01"
+    },
+    {
+      "id": "S4-MOBILE-COMPOSER",
+      "title": "Mobile: composer + reações + comentários (S4 do mobile, read-only parcial do S3)",
+      "phase": "Mobile",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "S3 entregou apenas o read-only (feed da Vila Ajuricaba). Falta o caminho de escrita para fechar a golden slice nativa no mobile: composer modal (criar publicacao com tipos texto/foto/link/enquete), selecao de audiencia (vila default, sem outras vilas para o membro aprovado), submit com feedback toast + pending state + copy generica em erro de RLS, e reactions inline (post_reactions insert). Comentarios inline ficam para S5. Sem S4, o membro ve o feed mas nao pode publicar — exatamente o caminho que W1 cobriu na web (golden slice estados completos) mas nao cobre no mobile.",
+      "checklist": [
+        "Mobile composer: app/(tabs)/community.tsx -> botao Publicar abre sheet com tabs Texto/Foto/Link/Enquete",
+        "Mobile composer: seletor de audiencia le communities approved do proprio membro (apenas a dele, sem cross-community)",
+        "Mobile composer: submit -> POST /rest/v1/posts com optimistic update + error feedback generico (anti-enumeracao §4.3, classifica 42501 como 'server' em lib/composer/publish-error.ts — mas no mobile a funcao equivalente precisa existir ou reusar a do web via bundle compartilhado)",
+        "Mobile composer: feedback toast com mesma copy do web ('Publicado na sua vila')",
+        "Mobile reactions: botao de apoio no PostCard; insere em post_reactions; idempotente (PK violation nao derruba o app)",
+        "Gate full verde; tipcheck Expo export android + ios continua produzindo bundle",
+        "Atualizar MOB-001-SESSION proof com o caminho de runtime do composer em device"
+      ],
+      "proof": [
+        "S3 (commit 69a9251) proveu a infra: cliente Supabase singleton com auth persistida no Keychain/Keystore",
+        "ADR-20260901-account-suspension (commit afcde5d + bb6803f) proveu RLS: posts insert veta conta suspensa com copy generica"
+      ],
+      "tests": [
+        "apps/mobile vitest: adicionar composer unit tests (publish error classifier portado para mobile, ou reusado)",
+        "E2E no Expo: Maestro ou Detox contra o emulador arm64-v8a (commit d970fb8 provou que adb fala com o emulador)"
+      ],
+      "links": [
+        "S3 parcial | commit 69a9251",
+        "S2 (sessao) | commit b7ca57f",
+        "W1 (golden slice web, espelho) | commit efab5a9",
+        "BLOCK-MOBILE-RUNTIME Android runtime provado | commit d970fb8"
+      ],
+      "updatedAt": "2026-09-01",
+      "sourceRevision": "69a9251",
+      "blockers": [],
+      "dependencies": ["MOB-001-SESSION"]
     }
   ]
 }
