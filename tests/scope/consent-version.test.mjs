@@ -22,7 +22,8 @@ const FORBIDDEN_LOCAL =
 // Files that must import the versions from @bivaque/domain (the single source).
 const MUST_IMPORT = [
   join(root, "apps", "web", "middleware.ts"),
-  join(root, "apps", "web", "app", "(preauth)", "login", "components", "bivaque-sign-in.tsx"),
+  join(root, "apps", "web", "app", "(preauth)", "onboarding", "page.tsx"),
+  join(root, "apps", "web", "app", "(preauth)", "onboarding", "document-actions.ts"),
   join(root, "apps", "web", "app", "auth", "callback", "route.ts"),
   join(root, "apps", "web", "app", "api", "onboarding", "route.ts"),
   join(root, "apps", "web", "lib", "onboarding", "verifyAndProvision.ts"),

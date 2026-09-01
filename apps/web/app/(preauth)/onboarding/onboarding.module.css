@@ -158,6 +158,20 @@
   gap: 16px;
 }
 
+.consentCheckbox {
+  align-items: flex-start;
+  color: var(--flow-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.consentCheckbox a {
+  color: var(--flow-forest);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .fieldGroup {
   display: flex;
   flex-direction: column;

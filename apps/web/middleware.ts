@@ -82,23 +82,14 @@ export async function middleware(request: NextRequest) {
 
   // Root redirect — session-aware (new behaviour). The marketing landing
   // lives at "/" and must stay public for acquisition, so an anonymous
-  // visitor is served the landing. Only an authenticated member hitting
-  // "/" is routed into the app (community after consent, else consent).
+  // visitor is served the landing. A new authenticated user starts the
+  // eligibility flow, where acceptance is collected beside CPF/document proof.
   if (pathname === "/" || pathname === "") {
     if (user) {
       const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
-      return NextResponse.redirect(new URL(hasConsent ? "/community" : "/consent", request.url))
+      return NextResponse.redirect(new URL(hasConsent ? "/community" : "/onboarding", request.url))
     }
     return supabaseResponse
-  }
-
-  // Protected paths: consent gate first (unchanged from original), then
-  // the session gate (new).
-  const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
-  if (!hasConsent) {
-    const consentUrl = new URL("/consent", request.url)
-    consentUrl.searchParams.set("redirect", pathname)
-    return NextResponse.redirect(consentUrl)
   }
 
   if (!user) {
@@ -116,6 +107,14 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/onboarding/locality")
   ) {
     return supabaseResponse
+  }
+
+  // The browser cookie is only a routing hint. The onboarding API confirms
+  // the durable versioned record before CPF, document, locality or provision
+  // operations. Users without it go to the one-time acceptance step there.
+  const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
+  if (!hasConsent) {
+    return NextResponse.redirect(new URL("/onboarding", request.url))
   }
 
   // Onda G — Task 1: a conta de prestador civil existe e precisa de

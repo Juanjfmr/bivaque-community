@@ -1,3 +1,4 @@
+import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient as createSsrServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import Link from "next/link"
@@ -40,7 +41,7 @@ export default async function OnboardingStatusPage() {
   }
 
   const serviceClient = createServiceClient()
-  const [outcomeResult, membershipResult] = await Promise.all([
+  const [outcomeResult, membershipResult, consentResult] = await Promise.all([
     serviceClient.rpc("read_verification_status", { p_user_id: user.id }),
     serviceClient
       .from("locality_memberships")
@@ -48,9 +49,14 @@ export default async function OnboardingStatusPage() {
       .eq("user_id", user.id)
       .limit(1)
       .maybeSingle(),
+    serviceClient.rpc("has_accepted_consent", {
+      p_user_id: user.id,
+      p_consent_version: CONSENT_VERSION,
+      p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION,
+    }),
   ])
 
-  if (outcomeResult.error || membershipResult.error) {
+  if (outcomeResult.error || membershipResult.error || consentResult.error) {
     throw new Error("Falha ao consultar o estado da verificação. Tente novamente.")
   }
 
@@ -138,7 +144,7 @@ export default async function OnboardingStatusPage() {
           </>
         )}
 
-        {!isPending && <DocumentUpload />}
+        {!isPending && <DocumentUpload hasAcceptedConsent={consentResult.data === true} />}
       </div>
     </OnboardingShell>
   )

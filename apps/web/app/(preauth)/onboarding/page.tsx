@@ -11,6 +11,7 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { SUPPORT_EMAIL } from "../../../lib/support"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { showToast } from "../../components/bivaque/toast"
+import { ConsentCheckbox } from "./components/consent-checkbox"
 import { OnboardingShell } from "./components/onboarding-shell"
 import styles from "./onboarding.module.css"
 
@@ -48,6 +49,8 @@ function OnboardingFlow() {
   const [familyToken, setFamilyToken] = useState("")
   const [familyName, setFamilyName] = useState("")
   const [result, setResult] = useState<string | null>(null)
+  const [hasAcceptedConsent, setHasAcceptedConsent] = useState(false)
+  const [acceptConsent, setAcceptConsent] = useState(false)
 
   const inviteToken = searchParams.get("invite")
 
@@ -83,7 +86,10 @@ function OnboardingFlow() {
         const data = (await res.json()) as {
           status: "pending" | "verified" | "rejected" | "temporary_error" | null
           localityMember: boolean
+          hasAcceptedConsent: boolean
         }
+
+        setHasAcceptedConsent(data.hasAcceptedConsent)
 
         if (data.localityMember) {
           router.replace("/community")
@@ -115,6 +121,10 @@ function OnboardingFlow() {
       setError("CPF inválido. Confira os 11 dígitos.")
       return
     }
+    if (!hasAcceptedConsent && !acceptConsent) {
+      setError("Leia e aceite as regras antes de enviar seu CPF.")
+      return
+    }
     setLoading(true)
 
     const {
@@ -138,7 +148,11 @@ function OnboardingFlow() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ action: "verify-cpf", cpf: cpf.replace(/\D/g, "") }),
+        body: JSON.stringify({
+          action: "verify-cpf",
+          cpf: cpf.replace(/\D/g, ""),
+          accept_consent: acceptConsent,
+        }),
       })
 
       const data = (await response.json()) as Record<string, unknown>
@@ -147,6 +161,8 @@ function OnboardingFlow() {
         setError(data["error"] as string)
         return
       }
+
+      setHasAcceptedConsent(true)
 
       if (data["localityMember"]) {
         setResult("Verificação concluída. Sua entrada está pronta.")
@@ -189,6 +205,10 @@ function OnboardingFlow() {
       setError("Informe seu nome para aceitar o convite.")
       return
     }
+    if (!hasAcceptedConsent && !acceptConsent) {
+      setError("Leia e aceite as regras antes de aceitar o convite.")
+      return
+    }
     setLoading(true)
 
     const {
@@ -217,6 +237,7 @@ function OnboardingFlow() {
           action: "accept-family-invite",
           token: familyToken,
           display_name: familyName.trim(),
+          accept_consent: acceptConsent,
         }),
       })
 
@@ -316,7 +337,15 @@ function OnboardingFlow() {
                 maxLength={14}
               />
             </div>
-            <Button type="submit" variant="primary" className={styles["primaryButton"] ?? ""}>
+            {!hasAcceptedConsent && (
+              <ConsentCheckbox isSelected={acceptConsent} onChange={setAcceptConsent} />
+            )}
+            <Button
+              type="submit"
+              variant="primary"
+              className={styles["primaryButton"] ?? ""}
+              isDisabled={!hasAcceptedConsent && !acceptConsent}
+            >
               Conferir e continuar
             </Button>
           </Form>
@@ -337,11 +366,15 @@ function OnboardingFlow() {
               />
             </div>
 
+            {!hasAcceptedConsent && (
+              <ConsentCheckbox isSelected={acceptConsent} onChange={setAcceptConsent} />
+            )}
+
             <Button
               variant="primary"
               className={styles["primaryButton"] ?? ""}
               onPress={handleAcceptFamilyInvite}
-              isDisabled={loading}
+              isDisabled={loading || (!hasAcceptedConsent && !acceptConsent)}
             >
               {loading ? "Processando..." : "Aceitar convite"}
             </Button>

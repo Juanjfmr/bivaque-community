@@ -4,13 +4,19 @@ import { Button } from "@heroui/react"
 import { Upload } from "lucide-react"
 import { type FormEvent, useRef, useState, useTransition } from "react"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
+import { ConsentCheckbox } from "./components/consent-checkbox"
 import { uploadVerificationDocumentAction } from "./document-actions"
 import styles from "./onboarding.module.css"
 
-export default function DocumentUpload() {
+interface DocumentUploadProps {
+  hasAcceptedConsent: boolean
+}
+
+export default function DocumentUpload({ hasAcceptedConsent }: DocumentUploadProps) {
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string | null>(null)
+  const [acceptConsent, setAcceptConsent] = useState(false)
   const [pending, startTransition] = useTransition()
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -62,11 +68,14 @@ export default function DocumentUpload() {
           </label>
           <span className={styles["fileName"]}>{fileName ?? "Nenhum arquivo selecionado"}</span>
         </div>
+        {!hasAcceptedConsent && (
+          <ConsentCheckbox isSelected={acceptConsent} onChange={setAcceptConsent} />
+        )}
         <Button
           type="submit"
           variant="secondary"
           className={styles["secondaryButton"] ?? ""}
-          isDisabled={pending}
+          isDisabled={pending || (!hasAcceptedConsent && !acceptConsent)}
         >
           <Upload aria-hidden="true" />
           {pending ? "Enviando..." : "Enviar documento"}

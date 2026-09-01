@@ -1,3 +1,4 @@
+import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import { NextResponse } from "next/server"
 import { log } from "../../../../lib/logger"
 import { createServerClient } from "../../../../lib/supabase/server"
@@ -22,6 +23,7 @@ interface StatusResponse {
   updated_at: string | null
   eligibility_class: EligibilityClass | null
   localityMember: boolean
+  hasAcceptedConsent: boolean
 }
 
 interface OutcomeRpcRow {
@@ -52,7 +54,7 @@ export async function GET(request: Request) {
   const userId = authUser.id
 
   try {
-    const [outcomeResult, membershipResult] = await Promise.all([
+    const [outcomeResult, membershipResult, consentResult] = await Promise.all([
       supabase.rpc("read_verification_status", { p_user_id: userId }),
       supabase
         .from("locality_memberships")
@@ -60,6 +62,11 @@ export async function GET(request: Request) {
         .eq("user_id", userId)
         .limit(1)
         .maybeSingle(),
+      supabase.rpc("has_accepted_consent", {
+        p_user_id: userId,
+        p_consent_version: CONSENT_VERSION,
+        p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION,
+      }),
     ])
 
     if (outcomeResult.error) {
@@ -77,6 +84,10 @@ export async function GET(request: Request) {
       })
       return NextResponse.json({ error: "internal" }, { status: 500 })
     }
+    if (consentResult.error) {
+      log.error("failed to read consent status", { error: consentResult.error.message, userId })
+      return NextResponse.json({ error: "internal" }, { status: 500 })
+    }
 
     const outcomeRows = outcomeResult.data as OutcomeRpcRow[] | null
     const row = outcomeRows?.[0] ?? null
@@ -87,6 +98,7 @@ export async function GET(request: Request) {
       updated_at: row?.updated_at ?? null,
       eligibility_class: (row?.eligibility_class as EligibilityClass | null) ?? null,
       localityMember: membershipResult.data !== null,
+      hasAcceptedConsent: consentResult.data === true,
     }
 
     return NextResponse.json(response)
