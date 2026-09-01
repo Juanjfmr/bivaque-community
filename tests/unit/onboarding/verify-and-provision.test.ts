@@ -26,7 +26,7 @@ afterEach(() => {
 })
 
 describe("verifyEligibility (P0 Task 4)", () => {
-  it("validates the Portal key before consuming a verification attempt", async () => {
+  it("returns a safe temporary result when the Portal key is missing", async () => {
     vi.stubEnv("PORTAL_DADOS_API_KEY", "")
 
     const supabase = makeSupabase(true)
@@ -37,7 +37,13 @@ describe("verifyEligibility (P0 Task 4)", () => {
         cpf: "12345678901",
         consentVersion: 1,
       }),
-    ).rejects.toThrow("PORTAL_DADOS_API_KEY is required for verification")
+    ).resolves.toEqual({
+      outcome: {
+        status: "temporary_error",
+        reason: "Portal API key not configured",
+        errorCode: "INVALID_KEY",
+      },
+    })
 
     expect(supabase.rpc).not.toHaveBeenCalled()
   })

@@ -16,29 +16,38 @@ describe("verificationErrorMessage", () => {
   it("maps RATE_LIMITED to the launch-peak copy without the raw code", () => {
     const message = verificationErrorMessage("RATE_LIMITED", SUPPORT_EMAIL)
     expect(message).toBe(
-      "Estamos com muitos cadastros agora. Tente de novo em alguns minutos — seus dados não foram perdidos.",
+      "O Portal da Transparência está recebendo muitas consultas agora. Tente de novo em alguns minutos — seus dados não foram perdidos.",
     )
     expect(message).not.toContain("RATE_LIMITED")
-    expect(message).not.toContain("Portal")
+    expect(message).toContain("Portal da Transparência")
   })
 
   it("maps TIMEOUT and HTTP_ERROR to the retry copy without the raw code", () => {
     for (const code of ["TIMEOUT", "HTTP_ERROR"]) {
       const message = verificationErrorMessage(code, SUPPORT_EMAIL)
-      expect(message).toBe("A consulta demorou mais que o esperado. Tente de novo.")
+      expect(message).toBe(
+        "O Portal da Transparência demorou mais que o esperado para responder. Tente de novo em alguns minutos.",
+      )
       expect(message).not.toContain(code)
     }
   })
 
-  it("maps INVALID_KEY and SCHEMA_DRIFT to the instability copy with the support channel", () => {
-    for (const code of ["INVALID_KEY", "SCHEMA_DRIFT"]) {
-      const message = verificationErrorMessage(code, SUPPORT_EMAIL)
-      expect(message).toBe(
-        `Estamos com uma instabilidade. Já fomos avisados — tente mais tarde ou fale com a gente: ${SUPPORT_EMAIL}.`,
-      )
-      expect(message).not.toContain(code)
-      expect(message).toContain(SUPPORT_EMAIL)
-    }
+  it("names the Portal when its key is unavailable", () => {
+    const message = verificationErrorMessage("INVALID_KEY", SUPPORT_EMAIL)
+    expect(message).toBe(
+      `Não foi possível consultar o Portal da Transparência agora. Tente mais tarde ou fale com a gente: ${SUPPORT_EMAIL}.`,
+    )
+    expect(message).not.toContain("INVALID_KEY")
+    expect(message).toContain(SUPPORT_EMAIL)
+  })
+
+  it("maps schema drift to the instability copy with the support channel", () => {
+    const message = verificationErrorMessage("SCHEMA_DRIFT", SUPPORT_EMAIL)
+    expect(message).toBe(
+      `O Portal da Transparência está instável no momento. Tente mais tarde ou fale com a gente: ${SUPPORT_EMAIL}.`,
+    )
+    expect(message).not.toContain("SCHEMA_DRIFT")
+    expect(message).toContain(SUPPORT_EMAIL)
   })
 
   it("never leaks a raw error code into any known message", () => {
@@ -53,8 +62,16 @@ describe("verificationErrorMessage", () => {
   it("falls back to the instability copy for unknown codes without leaking them", () => {
     const message = verificationErrorMessage("SOME_FUTURE_CODE", SUPPORT_EMAIL)
     expect(message).toBe(
-      `Estamos com uma instabilidade. Já fomos avisados — tente mais tarde ou fale com a gente: ${SUPPORT_EMAIL}.`,
+      `O Portal da Transparência está instável no momento. Tente mais tarde ou fale com a gente: ${SUPPORT_EMAIL}.`,
     )
     expect(message).not.toContain("SOME_FUTURE_CODE")
+  })
+
+  it("does not leave a broken support suffix when the email is unavailable", () => {
+    const message = verificationErrorMessage("INVALID_KEY", "")
+    expect(message).toBe(
+      "Não foi possível consultar o Portal da Transparência agora. Tente mais tarde.",
+    )
+    expect(message).not.toContain(": .")
   })
 })

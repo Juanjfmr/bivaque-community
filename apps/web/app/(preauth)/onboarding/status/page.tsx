@@ -102,7 +102,7 @@ export default async function OnboardingStatusPage() {
         isPending
           ? "Você não precisa repetir seus dados. Assim que a análise terminar, sua entrada continua do ponto em que parou."
           : isTemporaryError
-            ? "A fonte oficial não respondeu como esperado. Sua tentativa não foi perdida."
+            ? "O Portal da Transparência não respondeu como esperado. Sua tentativa não foi perdida."
             : "A consulta automática não encontrou confirmação para um dos papéis aceitos pelo Bivaque."
       }
       asideEyebrow="Cada estado pede uma resposta"
@@ -110,7 +110,7 @@ export default async function OnboardingStatusPage() {
       asideDescription={
         isPending
           ? "Quando houver uma decisão, você retorna ao passo certo sem refazer a jornada."
-          : "Tente outra vez quando a consulta estiver disponível ou envie um documento para análise."
+          : "Tente outra vez quando o Portal da Transparência estiver disponível ou envie um documento para análise."
       }
     >
       <div className={styles["stack"]}>

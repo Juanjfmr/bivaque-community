@@ -70,7 +70,8 @@
         "Convite familiar (envio e aceite) tinha o mesmo defeito de fio e recebeu o mesmo fix; prova E2E própria segue devendo ao lote com seed (o spec onboarding-holder-family nunca exerceu o aceite — só UI de consentimento).",
         "Reconciliação das linhas §9 Admissões e §2 Convites do PRODUCT_STATUS fica como próximo passo imediato: o arquivo carrega alterações não-commitadas de outro trabalho (landing/signup/onboarding) e commitá-las junto publicaria estado sem código.",
         "Fechado 2026-08-25: checklist 6/6 com provas registradas; PRODUCT_STATUS (Admissões/Convites/e-mail outbox) reconciliado nesta data; entrega real de e-mail permanece no card BLOCK-RESEND.",
-        "Produção reconciliada em 2026-09-01: as 127 migrações versionadas do repositório foram aplicadas no projeto Supabase pjgvnfiscwwfhezbqwxi; read_verification_status, consume_verification_attempt e upsert_verification_outcome confirmados, com RLS ativo nas tabelas expostas."
+        "Produção reconciliada em 2026-09-01: as 127 migrações versionadas do repositório foram aplicadas no projeto Supabase pjgvnfiscwwfhezbqwxi; read_verification_status, consume_verification_attempt e upsert_verification_outcome confirmados, com RLS ativo nas tabelas expostas.",
+        "Prova de runtime em 2026-09-01: o POST de verificação chegou ao Vercel, mas parou antes da chamada ao Portal porque PORTAL_DADOS_API_KEY estava vazia no ambiente de produção; a rota agora converte essa configuração ausente em temporary_error seguro, e a cópia identifica o Portal sem expor detalhes internos."
       ],
       "tests": [
         "supabase/tests/verification-documents.sql",

@@ -17,10 +17,17 @@
  */
 
 const RATE_LIMITED_COPY =
-  "Estamos com muitos cadastros agora. Tente de novo em alguns minutos — seus dados não foram perdidos."
-const TIMEOUT_COPY = "A consulta demorou mais que o esperado. Tente de novo."
+  "O Portal da Transparência está recebendo muitas consultas agora. Tente de novo em alguns minutos — seus dados não foram perdidos."
+const TIMEOUT_COPY =
+  "O Portal da Transparência demorou mais que o esperado para responder. Tente de novo em alguns minutos."
+const UNAVAILABLE_COPY = (supportEmail: string) =>
+  supportEmail
+    ? `Não foi possível consultar o Portal da Transparência agora. Tente mais tarde ou fale com a gente: ${supportEmail}.`
+    : "Não foi possível consultar o Portal da Transparência agora. Tente mais tarde."
 const INSTABILITY_COPY = (supportEmail: string) =>
-  `Estamos com uma instabilidade. Já fomos avisados — tente mais tarde ou fale com a gente: ${supportEmail}.`
+  supportEmail
+    ? `O Portal da Transparência está instável no momento. Tente mais tarde ou fale com a gente: ${supportEmail}.`
+    : "O Portal da Transparência está instável no momento. Tente mais tarde."
 
 export function verificationErrorMessage(errorCode: string, supportEmail: string): string {
   switch (errorCode) {
@@ -30,6 +37,7 @@ export function verificationErrorMessage(errorCode: string, supportEmail: string
     case "HTTP_ERROR":
       return TIMEOUT_COPY
     case "INVALID_KEY":
+      return UNAVAILABLE_COPY(supportEmail)
     case "SCHEMA_DRIFT":
     case "EMPTY_RESPONSE":
       return INSTABILITY_COPY(supportEmail)
