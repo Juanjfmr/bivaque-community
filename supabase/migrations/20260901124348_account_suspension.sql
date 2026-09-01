@@ -1,0 +1,107 @@
+-- ADR-20260901-account-suspension (aprovado em 2026-09-01, commit 7532aea).
+--
+-- Idempotente: aplica somente o que ainda nao existe, e recria as
+-- policies de INSERT com a restricao AND NOT is_account_suspended().
+--
+-- Comportamento esperado em re-run:
+--   - coluna / indice / funcao: NOTICES, no-op
+--   - policies: DROP IF EXISTS + CREATE
+
+-- 1) Coluna + indice (ja podem existir do apply parcial)
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS is_suspended boolean NOT NULL DEFAULT false;
+
+CREATE INDEX IF NOT EXISTS profiles_suspended_true_idx
+  ON public.profiles (user_id)
+  WHERE is_suspended = true;
+
+-- 2) Helper (pode ja existir)
+CREATE OR REPLACE FUNCTION public.is_account_suspended(p_user_id uuid)
+  RETURNS boolean
+  LANGUAGE sql
+  STABLE
+  SECURITY DEFINER
+  SET search_path = public, pg_temp
+AS $$
+  SELECT COALESCE(
+    (SELECT is_suspended FROM public.profiles WHERE user_id = p_user_id),
+    false
+  );
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'is_account_suspended'
+  ) THEN
+    REVOKE ALL ON FUNCTION public.is_account_suspended(uuid) FROM PUBLIC;
+    GRANT EXECUTE ON FUNCTION public.is_account_suspended(uuid) TO authenticated;
+  END IF;
+END
+$$;
+
+-- 3) Policies de INSERT vetam conta suspensa. Recria com a restricao.
+
+-- posts.insert
+DROP POLICY IF EXISTS posts_insert_locality_member ON public.posts;
+CREATE POLICY posts_insert_locality_member ON public.posts
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    private.can_access_post_scope(locality_id, community_id, group_id)
+    AND NOT public.is_account_suspended(auth.uid())
+  );
+
+-- comments.insert
+DROP POLICY IF EXISTS comments_insert_member ON public.comments;
+CREATE POLICY comments_insert_member ON public.comments
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    user_id = (SELECT auth.uid() AS uid)
+    AND EXISTS (
+      SELECT 1 FROM posts p
+      WHERE p.id = comments.post_id
+        AND private.can_write_post_to(p.locality_id, p.community_id, p.group_id)
+    )
+    AND NOT public.is_account_suspended(auth.uid())
+  );
+
+-- post_reactions.insert (tabela correta e post_reactions, nao reactions)
+DROP POLICY IF EXISTS post_reactions_insert_locality_member ON public.post_reactions;
+CREATE POLICY post_reactions_insert_locality_member ON public.post_reactions
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    user_id = (SELECT auth.uid() AS uid)
+    AND private.can_access_post(post_id)
+    AND NOT public.is_account_suspended(auth.uid())
+  );
+
+DROP POLICY IF EXISTS post_reactions_insert_self ON public.post_reactions;
+CREATE POLICY post_reactions_insert_self ON public.post_reactions
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    user_id = (SELECT auth.uid() AS uid)
+    AND EXISTS (
+      SELECT 1 FROM posts p
+      WHERE p.id = post_reactions.post_id
+        AND private.can_write_post_to(p.locality_id, p.community_id, p.group_id)
+    )
+    AND NOT public.is_account_suspended(auth.uid())
+  );
+
+-- reports.insert
+DROP POLICY IF EXISTS reports_insert_authenticated ON public.reports;
+CREATE POLICY reports_insert_authenticated ON public.reports
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    reporter_user_id = (SELECT auth.uid() AS uid)
+    AND (
+      EXISTS (
+        SELECT 1 FROM locality_memberships
+        WHERE locality_memberships.user_id = (SELECT auth.uid() AS uid)
+      )
+      OR (private.is_provider_account((SELECT auth.uid() AS uid)) AND target_type = 'message'::report_target_type)
+    )
+    AND NOT public.is_account_suspended(auth.uid())
+  );
