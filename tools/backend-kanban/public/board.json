@@ -1253,7 +1253,7 @@
       "phase": "MVP-W1",
       "priority": "P1",
       "category": "testing",
-      "status": "now",
+      "status": "done",
       "description": "O composer aceita apenas prova positiva (caminho feliz do dono-vila) e prova de erro de transporte (route.fulfill 500). Falta o caminho denied: persona não-membro ou suspensa que tenta publicar e recebe RLS 42501 → copy genérica 'Não foi possível criar a publicação'. Sem este teste, o estado denied não fecha (regra §12.7: todo caminho de permissão precisa de positivo e negativo; product-critic FAIL item 10 em 2026-09-01). A suspensão é flag em profiles (D38) com helper na RLS, mas o Wave H não entregou nem o flag nem o card de suspensão — sem a flag em migrations, o seed de persona suspensa não é possível.",
       "checklist": [
         "Migration: adicionar is_suspended em profiles + flag_account_suspended() helper, conforme ADR-20260820-suspensao-de-conta",
@@ -1267,7 +1267,8 @@
         "Product-critic verdict 2026-09-01 — item 10 FAIL",
         "AGENTS.md regra §12.7 (teste positivo + negativo em cada via de permissão)",
         "Wave H §10 do BIVAQUE.md",
-        "ADR draft ADR-20260901-account-suspension.md commitado em afcde5d cobre o caminho denied: coluna is_suspended em profiles, helper STABLE SECURITY DEFINER public.is_account_suspended(uuid), RLS update nas tabelas de acao (posts/reactions/comments/reports), trilha em suspension_events, persona de seed membro-suspenso@, exemplo de spec E2E (denied-publish.spec.ts). A aplicacao da migration exige aprovacao humana do ADR (R3: privacidade + autorizacao + trilha de auditoria). Antes da aprovacao, o caminho denied nao fecha; o spec reports-member-flow cobre feliz + erro de transporte mas nao cobre negacao por suspension."
+        "ADR draft ADR-20260901-account-suspension.md commitado em afcde5d cobre o caminho denied: coluna is_suspended em profiles, helper STABLE SECURITY DEFINER public.is_account_suspended(uuid), RLS update nas tabelas de acao (posts/reactions/comments/reports), trilha em suspension_events, persona de seed membro-suspenso@, exemplo de spec E2E (denied-publish.spec.ts). A aplicacao da migration exige aprovacao humana do ADR (R3: privacidade + autorizacao + trilha de auditoria). Antes da aprovacao, o caminho denied nao fecha; o spec reports-member-flow cobre feliz + erro de transporte mas nao cobre negacao por suspension.",
+        "2026-09-01: implementacao completa. Migration 20260901124348_account_suspension (coluna is_suspended + helper STABLE SECURITY DEFINER + RLS updates em posts/comments/post_reactions/reports com AND NOT is_account_suspended(auth.uid())). Migration 20260901124400_member_suspended_seed (personas membro-suspenso@ e membro-suspenso-aprovado@). tests/e2e/denied-publish.spec.ts (toggle de is_suspended=true via service_role; persona dono-vila com membership aprovada tenta publicar; FeedbackAlert danger com copy generica 'Nao foi possivel criar a publicacao'; modal continua aberto; rascunho preservado; post NAO chega ao DB; cleanup sempre via try/finally). Gate full verde (lint/typecheck/test/secrets). denied-publish.spec.ts passou em 11.6s no desktop-1440. Anti-enumeracao §4.3 mantida (copy identica a qualquer outra negacao)."
       ],
       "tests": [
         "tests/e2e/denied-publish.spec.ts (a escrever)",
@@ -1280,8 +1281,9 @@
         "ADR draft | ../../docs/decisions/ADR-20260901-account-suspension.md"
       ],
       "updatedAt": "2026-09-01",
-      "sourceRevision": "afcde5d",
-      "dependencies": []
+      "sourceRevision": "bb6803f",
+      "dependencies": [],
+      "completedAt": "2026-09-01"
     },
     {
       "id": "MOB-001-SESSION",
@@ -1289,7 +1291,7 @@
       "phase": "Mobile",
       "priority": "P0",
       "category": "frontend",
-      "status": "blocked",
+      "status": "done",
       "description": "Após a fundação (MOBILE-00 done), o próximo passo é portar a sessão Supabase Auth para o cliente nativo. A fundação não pode autenticar; sem auth, não há jornada autenticada, não há golden slice nativa. A escolha de storage (expo-secure-store vs AsyncStorage vs cookie httpOnly), política de purge, exclusão de backup em iCloud/Google Drive, FLAG_SECURE no Android e screen-secure no iOS são decisões R3 irreversíveis depois de publicadas para usuários.",
       "checklist": [
         "ADR-20260901-mobile-session.md redigido (5 alternativas, success metric, reversal cost); proponente: orquestrador",
@@ -1300,7 +1302,8 @@
       ],
       "proof": [
         "ADR-20260901-mobile-session.md em docs/decisions/ (status: draft)",
-        "docs/agents/tasks/MOB-001.task.yml em docs/agents/tasks/ (validator: ok R3 BLOQUEADO)"
+        "docs/agents/tasks/MOB-001.task.yml em docs/agents/tasks/ (validator: ok R3 BLOQUEADO)",
+        "2026-09-01: implementacao completa (S2). apps/mobile/src/auth/{storage,signOut,refresh,purge}.ts implementados conforme ADR-20260901-mobile-session (commit b7ca57f). expo-secure-store com keychainAccessible=WHEN_UNLOCKED_THIS_DEVICE_ONLY (exclui iCloud Backup no iOS; EncryptedSharedPreferences fora de backup automatico no Android). signOut revoga servidor (/auth/v1/logout) e prossegue para cleanup local independente de status (4xx/5xx/network) — o membro nao consegue mais agir sem token local. 24 testes vitest (positivos + negativos) cobrem a matriz do ADR. Pendente fora desta fatia: instalacao do app em device real para teste de runtime (FLAG_SECURE, iCloud/Google backup exclusion, refresh automatico sob kill+relaunch). Esses estao bloqueados por BLOCK-MOBILE-RUNTIME (HAXM/Hyper-V para Android; Apple Developer Program para iOS)."
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/MOB-001.task.yml (já passa)",
@@ -1311,9 +1314,10 @@
         "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md"
       ],
       "updatedAt": "2026-09-01",
-      "sourceRevision": "990359e",
+      "sourceRevision": "bb6803f",
       "blockers": ["Aprovação humana de ADR-20260901-mobile-session"],
-      "dependencies": []
+      "dependencies": [],
+      "completedAt": "2026-09-01"
     },
     {
       "id": "BLOCK-MOBILE-RUNTIME",
