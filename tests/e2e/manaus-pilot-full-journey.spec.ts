@@ -49,13 +49,15 @@ test.describe("holder onboarding journey", () => {
     await expect(
       page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
     ).toBeVisible()
-    // Scoped to the page's own section heading id: the rendered legal
-    // document body also contains a "Código de conduta" heading of its own,
-    // so a bare role query resolves to two elements (strict-mode violation).
-    await expect(page.locator("#conduct-heading")).toBeVisible()
+    await expect(page.locator("#documents-heading")).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: "Ler a Política de privacidade completa" }),
+    ).toBeVisible()
+    await expect(page.getByRole("link", { name: "Ler o Código de conduta completo" })).toBeVisible()
 
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await expect(acceptButton).toBeVisible()
+    await expect(acceptButton).toBeDisabled()
   })
 
   test("accepting consent navigates to onboarding", async ({ page }) => {
@@ -63,8 +65,14 @@ test.describe("holder onboarding journey", () => {
     await seedSession(page.context())
     await page.goto("/consent")
 
-    // When the user clicks the accept button
+    // When the user explicitly records that they read the legal documents
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
+    await expect(acceptButton).toBeDisabled()
+    const consentCheckbox = page.getByRole("checkbox", { name: /Li e concordo com a/ })
+    await consentCheckbox.focus()
+    await page.keyboard.press("Space")
+    await expect(consentCheckbox).toBeChecked()
+    await expect(acceptButton).toBeEnabled()
     await acceptButton.click()
 
     // Then the user is redirected to the onboarding page. Onboarding is a

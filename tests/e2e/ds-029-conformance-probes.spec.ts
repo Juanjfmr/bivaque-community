@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 // DS-029 — WCAG 2.2 AA conformance gate (probe wave 2).
 //
@@ -27,7 +27,6 @@ import { encodeAuthCookieValue } from "./helpers/session"
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 const TRANSFERRING_EMAIL =
   process.env["BIVAQUE_E2E_TRANSFERRING_EMAIL"] ?? "membro-transferencia@bivaque.example.invalid"
 function readEnvLocal(key: string): string | undefined {
@@ -126,8 +125,7 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
     await page.keyboard.press("Escape")
     await expect(dialog).toBeHidden({ timeout: 5000 })
 
-    const focusReturned = await trigger.evaluate((el) => document.activeElement === el)
-    expect(focusReturned).toBe(true)
+    await expect(trigger).toBeFocused()
   })
 })
 

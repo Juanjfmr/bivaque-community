@@ -75,7 +75,11 @@ function requireEnv(): { anonKey: string; email: string; password: string } {
 }
 
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
+// The middleware gates on strict equality with CONSENT_VERSION from
+// @bivaque/domain, so every spec session must carry this exact value. Specs
+// import this constant instead of declaring their own. tests/scope/
+// consent-version.test.mjs fails if it drifts from the domain source.
+export const CURRENT_CONSENT = "2"
 
 interface PasswordGrantBody {
   access_token: string

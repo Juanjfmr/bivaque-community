@@ -21,12 +21,11 @@
 
 import type { BrowserContext } from "@playwright/test"
 import { expect, request, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const APP_BASE = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 const REPORTER_EMAIL = "dono-vila@bivaque.example.invalid"
 const OPERATOR_EMAIL = "operador@bivaque.example.invalid"
 

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 // Group and event detail pages (wave A, task 3): the pages read through the
 // authenticated client so RLS decides what is visible, and a null row is a
@@ -29,7 +29,6 @@ const LOCALITY_MEMBER_EMAIL = "membro-3@bivaque.example.invalid"
 const OUTSIDER_EMAIL = "rejected@bivaque.example.invalid"
 
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 
 function readEnvLocal(key: string): string | undefined {
   try {

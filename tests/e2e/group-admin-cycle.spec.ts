@@ -9,11 +9,15 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal, seedSession } from "./helpers/session"
+import {
+  CURRENT_CONSENT,
+  encodeAuthCookieValue,
+  readEnvLocal,
+  seedSession,
+} from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 
 // Group 1 "Caminhada no Mindu" is owned by membro-1 (30000000-...-0001).
 const GROUP_OWNER_EMAIL = "membro-1@bivaque.example.invalid"

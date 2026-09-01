@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { seedSession } from "./helpers/session"
+import { CURRENT_CONSENT, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -10,7 +10,9 @@ async function setConsentCookie(page: import("@playwright/test").Page) {
   // When the consent cookie is set
   await page
     .context()
-    .addCookies([{ name: "bivaque-consent-version", value: "1", path: "/", domain: "127.0.0.1" }])
+    .addCookies([
+      { name: "bivaque-consent-version", value: CURRENT_CONSENT, path: "/", domain: "127.0.0.1" },
+    ])
 }
 
 // ---------------------------------------------------------------------------
@@ -398,17 +400,21 @@ test.describe("accessibility on denial pages", () => {
     await page.goto("/consent")
     await page.waitForSelector("button", { timeout: 10000 })
 
-    // Consent is a `(preauth)` route with no shell chrome, so "Aceitar e
-    // continuar" is its only focusable control. Counting focused elements
-    // after two Tabs would therefore read 0 once focus leaves the document —
-    // which is correct behaviour, not a trap. Assert the control can take
-    // focus and that Tab releases it.
-    const accept = page.getByRole("button", { name: "Concordar e continuar" })
-    await accept.focus()
-    await expect(accept).toBeFocused()
+    // Consent requires a deliberate checkbox before the submit control is
+    // enabled. Verify keyboard users can select it and Tab moves focus away;
+    // no control may trap a keyboard user on this pre-auth screen.
+    const checkbox = page.getByRole("checkbox", { name: /Li e concordo com a/ })
+    await checkbox.focus()
+    await expect(checkbox).toBeFocused()
+
+    await page.keyboard.press("Space")
+    await expect(checkbox).toBeChecked()
 
     await page.keyboard.press("Tab")
-    await expect(accept).not.toBeFocused()
+    await expect(checkbox).not.toBeFocused()
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement !== document.body))
+      .toBe(true)
   })
 
   test("no horizontal overflow on consent page at 375px", async ({ page }) => {

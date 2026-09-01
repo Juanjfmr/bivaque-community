@@ -5,11 +5,15 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal, seedSession } from "./helpers/session"
+import {
+  CURRENT_CONSENT,
+  encodeAuthCookieValue,
+  readEnvLocal,
+  seedSession,
+} from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 // Vila Ajuricaba's owner (see community-batch-approval.spec.ts's header for
 // the full seed story). /community's feed only renders when the viewer has
 // a primary community — apps/web/app/(shell)/community/page.tsx:101 skips

@@ -22,7 +22,7 @@ import {
   request,
   test,
 } from "@playwright/test"
-import { encodeAuthCookieValue } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 // The anon key is never inlined here. Even the Supabase local demo key is a
 // well-formed JWT, so hardcoding it trips the secrets scan — and a fallback
@@ -153,7 +153,7 @@ test.describe("Login persistente Instagram-style", () => {
       cookie,
       {
         name: "bivaque-consent-version",
-        value: "1",
+        value: CURRENT_CONSENT,
         domain: "127.0.0.1",
         path: "/",
         expires: cookie.expires,
@@ -191,7 +191,7 @@ test.describe("Login persistente Instagram-style", () => {
       cookie,
       {
         name: "bivaque-consent-version",
-        value: "1",
+        value: CURRENT_CONSENT,
         domain: "127.0.0.1",
         path: "/",
         expires: cookie.expires,
@@ -248,7 +248,7 @@ test.describe("Login persistente Instagram-style", () => {
       cookie,
       {
         name: "bivaque-consent-version",
-        value: "1",
+        value: CURRENT_CONSENT,
         domain: "127.0.0.1",
         path: "/",
         expires: cookie.expires,

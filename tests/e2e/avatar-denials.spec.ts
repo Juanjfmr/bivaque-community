@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 // Avatar endpoint authorisation (wave A, task 2): the route lets the profiles
 // RLS policy answer who may see whom, so the negative cases assert the STATUS
@@ -15,7 +15,6 @@ const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const MEMBER_4_ID = "30000000-0000-4000-8000-000000000004"
 const OUTSIDER_EMAIL = "rejected@bivaque.example.invalid"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 
 function readEnvLocal(key: string): string | undefined {
   try {

@@ -695,36 +695,28 @@
     },
     {
       "id": "MOBILE-00-ARCHITECTURE",
-      "title": "App mobile React Native: arquitetura e readiness",
+      "title": "App mobile React Native + Expo: fundação nativa",
       "phase": "Mobile",
-      "priority": "P1",
-      "category": "governance",
-      "status": "blocked",
-      "description": "Abrir a trilha oficial do aplicativo Android/iOS sem converter o web nem contornar o guardrail atual: decidir a arquitetura, versionar o contrato consumível pelo cliente nativo e definir a fronteira segura de autenticação, dados e distribuição antes de criar código mobile.",
+      "priority": "P0",
+      "category": "frontend",
+      "status": "now",
+      "description": "Construir a fundação nativa React Native + Expo para Android e iOS em paralelo ao web desktop, sem WebView, autenticação, dados de produto ou jornada golden. O cliente futuro compartilha domínio, contratos e autorização com o produto existente, mas terá UI, navegação e acessibilidade nativas.",
       "checklist": [
-        "Aprovar ADR R3 que emende somente o adiamento de app nativo em D31 e registre a decisão de dois clientes: web desktop e app mobile; push, SMS, vídeo, modo escuro, DM e IA permanecem nas decisões atuais",
-        "Adotar repositório mobile separado como default; monorepo exige decisão deliberada adicional sobre o guardrail, ownership, CI e reversão",
-        "Definir contrato backend versionado, compatibilidade, tipos, erros e capacidades server-only consumíveis pelo mobile",
-        "Definir autenticação com PKCE/app links, Keychain/Keystore ou equivalente, refresh, logout, revogação, purge de cache e proibição de service_role/private schema no app",
-        "Definir como o cliente nativo adapta a futura direção visual, acessibilidade, offline/retry, observabilidade, privacidade e paridade de jornada/autorização sem copiar telas do web",
-        "Definir política de assets editoriais sem pessoas/rostos e tratamento separado de mídia UGC, EXIF, permissões e storage, sem introduzir detecção facial",
-        "Definir development builds, assinatura, preview, TestFlight, Play Internal Testing e gates de submissão às lojas",
-        "Decompor a implementação em cards dependentes após o ADR e o backend freeze: busca consome MVP-06 com ACL server-side; shell/motion consome FRONTEND-VISUAL-AAA; web responsiva permanece suportada"
+        "Criar a fundação Expo em apps/mobile, com Android e iOS como alvos reais de desenvolvimento",
+        "Manter web desktop e mobile como clientes independentes; nenhum WebView ou cópia de componentes web",
+        "Limitar a fundação a navegação e superfícies estáticas nativas; não introduzir sessão, chave, API ou dados pessoais",
+        "Configurar development builds, assinatura, preview, TestFlight e Play Internal Testing sem distribuir uma jornada autenticada",
+        "Registrar que sessão, backend, busca, assets, paridade e golden slice exigem contratos R3 próprios; busca consome MVP-06 e shell/motion aguarda FRONTEND-VISUAL-AAA"
       ],
       "proof": [
         "Direção explícita do dono em 2026-08-31: manter web para desktop e criar app mobile para Android/iOS",
-        "docs/BIVAQUE.md D31 ainda registra app nativo como adiado e precisa de decisão formal superveniente",
-        "tests/scope/workspace-foundation.test.mjs exige que apps/mobile não exista no repositório atual",
-        "MVP-10-BACKEND-FREEZE existe para entregar contrato consumível por outro frontend"
+        "D31 foi emendada em docs/BIVAQUE.md: o app nativo React Native + Expo é frente ativa",
+        "tests/scope/workspace-foundation.test.mjs agora permite apps/mobile"
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs <contrato-mobile>",
-        "security-auditor PASS sobre autenticação, sessão, dados pessoais e fronteiras do cliente nativo",
-        "ADR aprovado com alternativas, ameaças, reversão, critérios de sucesso e decisão humana"
-      ],
-      "blockers": [
-        "ADR R3 mobile aprovado e registrado",
-        "Decisão sobre repositório, ownership e contas de distribuição"
+        "Android e iOS iniciam a fundação nativa sem WebView e sem acesso a dados de produto",
+        "security-auditor PASS antes de qualquer jornada autenticada"
       ],
       "links": [
         "Decisão D31 | ../../docs/BIVAQUE.md",
@@ -734,8 +726,8 @@
         "Direção visual | #FRONTEND-VISUAL-AAA"
       ],
       "updatedAt": "2026-08-31",
-      "sourceRevision": "5c13510",
-      "dependencies": ["MVP-10-BACKEND-FREEZE"]
+      "sourceRevision": "017add4",
+      "dependencies": []
     },
     {
       "id": "REPO-ISSUE-20",
@@ -1213,7 +1205,7 @@
       "priority": "P1",
       "category": "testing",
       "status": "now",
-      "description": "Após o realinhamento de UUID (MVP-00-E2E-UUID-REALIGN): partimos de 65 falhas (23 testes únicos × 3 viewports). Reduzidas para 9 falhas = 8 testes distintos restantes. Fechados: rotas /admissions + /reports + acento /Denúncias/, middleware preservando ?next=, InviteAcceptPage pré-checa is_verified_holder, batch-approval beforeEach idempotente via service_role upsert, e event-invites apontando para um evento upcoming do seed. Restam 8 R3/decision/blocked.",
+      "description": "Após o realinhamento de UUID (MVP-00-E2E-UUID-REALIGN), a suíte serial contra o seed foi reduzida de 65 falhas para uma. Em 2026-08-31, 590 testes passaram e 6 foram ignorados; a falha residual de interação sintética foi diagnosticada como reload cancelando a segunda reação ainda otimista e passou no recorte desktop após aguardar o POST confirmado. O card permanece aberto até uma suíte integral limpa confirmar zero falhas funcionais.",
       "checklist": [
         "Tema 1 — Auth/redirect shell: / serve landing pública para anônimo (Edit B aplicado, verde em manaus-pilot)",
         "Tema 2 — OAuth UI: login renderiza 'Continuar com Google' (Edit A aplicado; provider ainda NÃO configurado no Supabase — clique erra, spec só checa visibilidade — BLOQUEADO em config de auth)",
@@ -1223,13 +1215,9 @@
         "✅ community-batch-approval :68 — beforeEach idempotente via service_role upsert (commit 364619e — verificado 3/3)",
         "✅ community-invitations :92 — middleware preserva ?next= + InviteAcceptPage pré-checa is_verified_holder (commit 364619e — verificado 3/3)",
         "✅ event-invites :64 — spec realinhado para evento upcoming do seed (commit d1fb2ab — verificado 6/6 = 2 testes × 3 viewports)",
-        "admissions :157/:174 — RPCs list_verification_queue/documents: grant EXECUTE só service_role; operador bearer falha. DECISÃO R3: conceder a operator/authenticated OU mudar spec para fluxo via UI",
-        "community-invitations :72 — sem mismatch estático; rotas/seed/redirect presentes. INVESTIGAR runtime (possível drift de seed/reset)",
-        "group-admin-cycle :103 — RLS group_memberships_select esconde a própria pendência do requerente em grupo privado → 'Cancelar pedido' não aparece. BUG RLS (R3). DECISÃO/correção de política",
-        "reports-member-flow :98 — ReportButton não envia reporter_user_id (obrigatório + policy reporter_user_id=auth.uid()); visual@ sem membership de comunidade → sem feed. BUG app (R3). DECISÃO/correção",
-        "synthetic-people :167 — sem mismatch de label/trigger; suspeita notification_preferences.comments=false suprime notify_comment OU reaction count≠2. DECISÃO: default de preferências de notificação",
-        "empty-locality :129 (×4) — membro-vazia@ existe, mas seed não tem 2ª localidade de baixa densidade (Task 10 Step 3). BLOQUEADO em seed",
-        "Rodar suíte E2E serialmente após cada decisão de produto/R3 — confirmar 0 falhas funcionais"
+        "✅ 2026-08-31 — admissions, community invitations, group-admin-cycle, reports-member-flow e empty-locality passaram na suíte serial com seed limpo.",
+        "✅ synthetic-people :170 desktop — o reload cancelava o POST da segunda reação após o estado otimista; o spec agora aguarda HTTP 201 e o recorte 2/2 passou.",
+        "Rodar suíte E2E serialmente sobre seed limpo após a correção — confirmar 0 falhas funcionais."
       ],
       "proof": [
         "Suíte E2E 2026-08-23 (pós-Edits A-E + loop preauth + teste 7 família): 34 failed / 550 passed (serial)",
@@ -1238,15 +1226,17 @@
         "2026-08-24 (commit 364619e): :68 + :92 fechados por fixes de runtime — middleware preserva ?next=, InviteAcceptPage pré-checa is_verified_holder, batch-approval beforeEach idempotente via service_role upsert. Gate verde (lint + typecheck + test:unit/privacy/scope + secrets)",
         "2026-08-24 (commit d1fb2ab): event-invites :64 fechado — spec realinhado de i=1 (completed) para i=5 (upcoming, organizer membro-6); 6/6 (2 testes × 3 viewports). policy UI inalterada",
         "Após 5 correções: ~25 falhas restantes em 8 testes distintos (esperado pós board update). Reverificar em suíte serial",
-        "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente."
+        "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente.",
+        "2026-08-31: após db:reset com seed, build de produção e Playwright serial, 590 passaram, 6 skips e 1 falhou. As 15 falhas reproduzidas no início do ciclo (consentimento, seletor de foto, navegação e grupos) passaram nos três viewports; residual único em synthetic-people desktop, linha 170.",
+        "2026-08-31: diagnóstico da falha residual comprovou que a segunda reação não chegava ao banco porque o reload era disparado antes de o POST terminar; esperar a resposta 201 preserva a asserção de persistência. synthetic-people desktop 2/2 passou."
       ],
       "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
       "links": [
         "E2E status | ../../docs/PRODUCT_STATUS.md",
         "Seed UUIDs | ../../supabase/seed.sql"
       ],
-      "updatedAt": "2026-08-26",
-      "sourceRevision": "4e0e48b",
+      "updatedAt": "2026-08-31",
+      "sourceRevision": "a2f4937",
       "dependencies": []
     }
   ]
