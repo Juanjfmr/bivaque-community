@@ -85,7 +85,7 @@
         "Status: entrada | ../../docs/PRODUCT_STATUS.md"
       ],
       "updatedAt": "2026-09-01",
-      "sourceRevision": "605a1e8",
+      "sourceRevision": "ab3ea10",
       "dependencies": ["BLOCK-RESEND"],
       "completedChecklist": [true, true, true, true, true, true],
       "completedAt": "2026-08-25"
