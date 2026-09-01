@@ -1,0 +1,51 @@
+task_id: HRN-003
+
+objective: >
+  O repositório passa a autorizar a fundação do cliente React Native + Expo em apps/mobile,
+  mantendo o web desktop como cliente independente do mesmo produto.
+
+authority:
+  - Direção explícita do dono em 2026-08-31
+  - docs/decisions/ADR-20260831-mobile-native.md
+  - docs/BIVAQUE.md §8 e D31
+  - tools/backend-kanban/public/board.json MOBILE-00-ARCHITECTURE
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: AGENTS.md e tests/scope/workspace-foundation.test.mjs proibiam apps/mobile
+
+allowed_paths:
+  - AGENTS.md
+  - docs/BIVAQUE.md
+  - docs/decisions/ADR-20260831-mobile-native.md
+  - docs/agents/tasks/HRN-003.task.yml
+  - tests/scope/workspace-foundation.test.mjs
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - alterar dados pessoais, RLS, policies ou migrations
+  - criar um WebView como cliente mobile
+  - alterar as decisões de push, SMS, vídeo, modo escuro, IA ou DM entre membros
+
+acceptance:
+  - D31 declara o app React Native e Expo como frente ativa
+  - o guardrail aceita apenas apps/web e apps/mobile como raízes de aplicações
+  - a fundação mobile não autoriza por si só uma jornada autenticada, dados ou push
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HRN-003.task.yml
+  - npx pnpm@11.18.0 test:scope
+
+risk: privacidade, autorização e arquitetura de produto
+risk_level: R3
+
+adr: docs/decisions/ADR-20260831-mobile-native.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
