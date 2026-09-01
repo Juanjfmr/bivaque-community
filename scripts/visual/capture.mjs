@@ -357,42 +357,42 @@ async function main() {
   const results = []
 
   for (const viewport of VIEWPORTS) {
-    const context = await browser.newContext({
-      viewport: { width: viewport.width, height: viewport.height },
-      baseURL: BASE_URL,
-      locale: "pt-BR",
-    })
-
-    await context.addCookies([
-      { name: "bivaque-consent-version", value: "1", path: "/", domain: "127.0.0.1" },
-    ])
-
-    if (auth) {
-      // supabase-js stores the session in localStorage; @supabase/ssr (the new B2 middleware)
-      // reads it from a cookie of the same name. Without the cookie the server-side middleware
-      // has no session and redirects every gated route to /login.
-      const sessionValue = JSON.stringify(auth.session)
-      await context.addCookies([
-        {
-          name: auth.storageKey,
-          value: sessionValue,
-          path: "/",
-          domain: "127.0.0.1",
-        },
-      ])
-      await context.addInitScript(
-        ([key, session]) => window.localStorage.setItem(key, JSON.stringify(session)),
-        [auth.storageKey, auth.session],
-      )
-    }
-
-    const page = await context.newPage()
-    const consoleErrors = []
-    page.on("console", (message) => {
-      if (message.type() === "error") consoleErrors.push(message.text().slice(0, 200))
-    })
-
     for (const route of routes) {
+      // Public routes must be inspected as visitors see them. Reusing a signed-in
+      // context makes `/` redirect to the member funnel and turns a landing audit
+      // into a consent-screen audit.
+      const context = await browser.newContext({
+        viewport: { width: viewport.width, height: viewport.height },
+        baseURL: BASE_URL,
+        locale: "pt-BR",
+      })
+
+      if (route.auth && auth) {
+        // supabase-js stores the session in localStorage; @supabase/ssr (the new B2 middleware)
+        // reads it from a cookie of the same name. Without the cookie the server-side middleware
+        // has no session and redirects every gated route to /login.
+        const sessionValue = JSON.stringify(auth.session)
+        await context.addCookies([
+          { name: "bivaque-consent-version", value: "1", path: "/", domain: "127.0.0.1" },
+          {
+            name: auth.storageKey,
+            value: sessionValue,
+            path: "/",
+            domain: "127.0.0.1",
+          },
+        ])
+        await context.addInitScript(
+          ([key, session]) => window.localStorage.setItem(key, JSON.stringify(session)),
+          [auth.storageKey, auth.session],
+        )
+      }
+
+      const page = await context.newPage()
+      const consoleErrors = []
+      page.on("console", (message) => {
+        if (message.type() === "error") consoleErrors.push(message.text().slice(0, 200))
+      })
+
       const label = `${route.name}--${viewport.name}`
       try {
         const response = await page.goto(route.path, { waitUntil: "networkidle", timeout: 30_000 })
@@ -424,10 +424,10 @@ async function main() {
           error: String(error).slice(0, 300),
           findings: [],
         })
+      } finally {
+        await context.close()
       }
     }
-
-    await context.close()
   }
 
   await browser.close()
