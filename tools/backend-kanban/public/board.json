@@ -69,7 +69,8 @@
         "E2E community-invitations passou de 3/9 para 6/9 verdes: geração e cópia fecham; as 3 falhas restantes são a perda de ?next no redirect do aceite (tema próprio do MVP-00-E2E-FUNCTIONAL).",
         "Convite familiar (envio e aceite) tinha o mesmo defeito de fio e recebeu o mesmo fix; prova E2E própria segue devendo ao lote com seed (o spec onboarding-holder-family nunca exerceu o aceite — só UI de consentimento).",
         "Reconciliação das linhas §9 Admissões e §2 Convites do PRODUCT_STATUS fica como próximo passo imediato: o arquivo carrega alterações não-commitadas de outro trabalho (landing/signup/onboarding) e commitá-las junto publicaria estado sem código.",
-        "Fechado 2026-08-25: checklist 6/6 com provas registradas; PRODUCT_STATUS (Admissões/Convites/e-mail outbox) reconciliado nesta data; entrega real de e-mail permanece no card BLOCK-RESEND."
+        "Fechado 2026-08-25: checklist 6/6 com provas registradas; PRODUCT_STATUS (Admissões/Convites/e-mail outbox) reconciliado nesta data; entrega real de e-mail permanece no card BLOCK-RESEND.",
+        "Produção reconciliada em 2026-09-01: as 127 migrações versionadas do repositório foram aplicadas no projeto Supabase pjgvnfiscwwfhezbqwxi; read_verification_status, consume_verification_attempt e upsert_verification_outcome confirmados, com RLS ativo nas tabelas expostas."
       ],
       "tests": [
         "supabase/tests/verification-documents.sql",
@@ -82,8 +83,8 @@
         "Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20",
         "Status: entrada | ../../docs/PRODUCT_STATUS.md"
       ],
-      "updatedAt": "2026-08-25",
-      "sourceRevision": "b1cf3a6",
+      "updatedAt": "2026-09-01",
+      "sourceRevision": "605a1e8",
       "dependencies": ["BLOCK-RESEND"],
       "completedChecklist": [true, true, true, true, true, true],
       "completedAt": "2026-08-25"
