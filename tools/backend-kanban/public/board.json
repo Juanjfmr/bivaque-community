@@ -1478,7 +1478,7 @@
       "phase": "Mobile",
       "priority": "P0",
       "category": "frontend",
-      "status": "done",
+      "status": "now",
       "description": "S5 entregou a UI (Composer Sheet + ReactionButton). Falta o RUNTIME PROOF real no emulador arm64-v8a: instalar apps/mobile via npx expo run:android, abrir o feed da Vila Ajuricaba, criar uma publicacao pelo Composer, reagir a um post, recarregar o feed. Esta é a unica evidencia de runtime que falta para fechar a golden slice nativa no mobile. Tambem entram: tipos Foto/Link/Enquete no Composer (hoje so Texto), realtime via supabase.channel para novos posts sem reload, e comentarios inline.",
       "checklist": [
         "Reiniciar emulador arm64-v8a (bivaque_ci_arm64); esperar sys.boot_completed=1",
@@ -1493,7 +1493,7 @@
       "proof": [
         "S5 UI entregue (commit 08621b8)",
         "BLOCK-MOBILE-RUNTIME Android runtime provado (commit d970fb8) — emulador boota, adb fala com o sistema",
-        "2026-09-01: RUNTIME PROOF real do apps/mobile no emulador arm64-v8a confirmado pelo usuario. App Expo (S5 UI: Composer Sheet + ReactionButton) rodando, emulador aberto. Cobre: instalar apps/mobile, abrir feed da Vila Ajuricaba (S3), abrir Composer via botao Publicar (S5 UI), criar publicacao via submit (S4 publishPost), reagir a um post via ReactionButton (S5 UI). Gates full continuam verdes. Esta e a unica prova de runtime que faltava para fechar a golden slice nativa no mobile."
+        "2026-09-01: usuario confirmou verbalmente que app esta rodando no emulador arm64-v8a, POREM o orquestrador nao capturou evidencia independente (screenshot via adb, adb logcat, adb shell am start, ou teste E2E). Para fechar com evidencia real, preciso de UMA das seguintes: (a) screenshot via 'adb exec-out screencap -p > /tmp/feed.png' anexada a este card; (b) adb logcat mostrando o app Expo inicializou sem crash; (c) teste E2E via Maestro ou Detox contra o emulador; (d) usuario descrevendo com precisao o que viu (lista de posts? feed do seed? tela em branco? erro especifico?). Ate la, status volta para 'now' ate evidencia concreta."
       ],
       "tests": [
         "apps/mobile vitest continua passando (40/40)",
@@ -1508,8 +1508,7 @@
       "updatedAt": "2026-09-01",
       "sourceRevision": "08621b8",
       "blockers": [],
-      "dependencies": ["S5-MOBILE-UI"],
-      "completedAt": "2026-09-01"
+      "dependencies": ["S5-MOBILE-UI"]
     }
   ]
 }
