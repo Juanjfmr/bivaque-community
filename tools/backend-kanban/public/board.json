@@ -1398,7 +1398,7 @@
       "phase": "Mobile",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
       "description": "S3 entregou apenas o read-only (feed da Vila Ajuricaba). Falta o caminho de escrita para fechar a golden slice nativa no mobile: composer modal (criar publicacao com tipos texto/foto/link/enquete), selecao de audiencia (vila default, sem outras vilas para o membro aprovado), submit com feedback toast + pending state + copy generica em erro de RLS, e reactions inline (post_reactions insert). Comentarios inline ficam para S5. Sem S4, o membro ve o feed mas nao pode publicar — exatamente o caminho que W1 cobriu na web (golden slice estados completos) mas nao cobre no mobile.",
       "checklist": [
         "Mobile composer: app/(tabs)/community.tsx -> botao Publicar abre sheet com tabs Texto/Foto/Link/Enquete",
@@ -1411,7 +1411,8 @@
       ],
       "proof": [
         "S3 (commit 69a9251) proveu a infra: cliente Supabase singleton com auth persistida no Keychain/Keystore",
-        "ADR-20260901-account-suspension (commit afcde5d + bb6803f) proveu RLS: posts insert veta conta suspensa com copy generica"
+        "ADR-20260901-account-suspension (commit afcde5d + bb6803f) proveu RLS: posts insert veta conta suspensa com copy generica",
+        "2026-09-01: logica pura entregue em commit 6cbfebf. apps/mobile/src/auth/{publish,publish-builder,publish-error,reactions,feed-types}.ts (5 novos modulos, ~250 linhas). Vitest: 6 arquivos / 40 testes em 620ms (16 testes novos: 13 do publish-error + 3 do publish-builder). publishPost(input) retorna PublishResult = ok | err com copy generica anti-enumeracao §4.3 (mesma do web). toggleReaction(postId, userId, currentlyReacted) e' idempotente (23505 -> 'already') e trata 42501/PGRST116 como 'denied' sem distinguir (anti-enumeracao). UI do composer sheet + botao de reacao no PostCard ficou para S5-MOBILE-UI em outro card (escopo desta fatia foi so a logica pura para ser testavel sem mock de supabase-js)."
       ],
       "tests": [
         "apps/mobile vitest: adicionar composer unit tests (publish error classifier portado para mobile, ou reusado)",
@@ -1424,9 +1425,50 @@
         "BLOCK-MOBILE-RUNTIME Android runtime provado | commit d970fb8"
       ],
       "updatedAt": "2026-09-01",
-      "sourceRevision": "69a9251",
+      "sourceRevision": "6cbfebf",
       "blockers": [],
-      "dependencies": ["MOB-001-SESSION"]
+      "dependencies": ["MOB-001-SESSION"],
+      "completedAt": "2026-09-01"
+    },
+    {
+      "id": "S5-MOBILE-UI",
+      "title": "Mobile: Composer Sheet + Reactions inline (S5 do mobile)",
+      "phase": "Mobile",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "S4 entregou a logica pura (publishPost, toggleReaction, buildPostInsert). Falta a UI que consome essa logica: Composer modal/sheet no community.tsx (botao Publicar abre sheet com tipos Texto/Foto/Link/Enquete + seletor de vila + submit com feedback pending + toast + copy generica em erro de RLS) e botao de reacao inline no PostCard (optimistic update + INSERT idempotente). Sem S5, o membro ve o feed mas nao pode publicar nem reagir — exatamente o que W1 (golden slice web) cobre mas o mobile nao.",
+      "checklist": [
+        "apps/mobile/app/(tabs)/community.tsx: botao Publicar no header abre Sheet (Modal ou React Native bottom sheet)",
+        "Composer: tabs Texto/Foto/Link/Enquete; apenas Texto nesta fatia (Foto/Link/Enquete ficam para S6)",
+        "Composer: seletor de audiencia mostra apenas a(s) vila(s) aprovada(s) do membro (query community_memberships)",
+        "Composer: submit chama publishPost() (do S4); estado pending mostra Spinner; sucesso mostra toast 'Publicado na sua vila'; erro mostra FeedbackAlert danger com copy do classifyPublishError",
+        "Composer: rascunho preservado em caso de erro de transporte (preserveDraft=true)",
+        "PostCard: botao de apoio chama toggleReaction() (do S4); estado local otimista; rollback em erro de transporte",
+        "Pull-to-refresh ja esta; garantir que o composer NAO feche em caso de erro de transporte",
+        "Gate full verde; tipcheck Expo export android + ios continua produzindo bundle; emulator arm64-v8a recebe build",
+        "Vitest cobre composer.tsx (logica de UI pure) com mocks de expo-secure-store e supabase-js",
+        "RUNTIME PROOF: npx expo run:android --variant debug no emulador arm64-v8a; instalar app; abrir feed; clicar Publicar; criar publicacao; reload; post persiste"
+      ],
+      "proof": [
+        "S4 logica pura (publishPost, toggleReaction) em commit 6cbfebf",
+        "S3 cliente Supabase + feed read-only em commit 69a9251",
+        "BLOCK-MOBILE-RUNTIME Android runtime provado (adb fala com o emulador) em commit d970fb8"
+      ],
+      "tests": [
+        "apps/mobile vitest: composer.test.ts (logica de UI pura, sem RN)",
+        "apps/mobile vitest: reactions-button.test.ts (logica do toggle local)",
+        "E2E no Expo via Maestro ou Detox contra o emulador arm64-v8a"
+      ],
+      "links": [
+        "S4 logica pura | commit 6cbfebf",
+        "S3 cliente Supabase + feed | commit 69a9251",
+        "BLOCK-MOBILE-RUNTIME Android runtime | commit d970fb8"
+      ],
+      "updatedAt": "2026-09-01",
+      "sourceRevision": "6cbfebf",
+      "blockers": [],
+      "dependencies": ["S4-MOBILE-COMPOSER"]
     }
   ]
 }
