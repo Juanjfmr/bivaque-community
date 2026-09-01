@@ -1,7 +1,9 @@
 "use client"
 
-import { Button } from "@heroui/react"
+import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
+import { Button, Checkbox } from "@heroui/react"
 import { ArrowLeft, ArrowRight, Mail, ShieldCheck, Tent } from "lucide-react"
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
@@ -10,10 +12,21 @@ import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import styles from "./bivaque-sign-in.module.css"
 
 const AUTH_CALLBACK_PATH = "/auth/callback?next=/"
+const CONSENT_INTENT_COOKIE = "bivaque-consent-intent"
+const CONSENT_INTENT_MAX_AGE = 60 * 30
 
 function getAuthCallbackUrl(): string {
   const configuredOrigin = process.env["NEXT_PUBLIC_SITE_URL"]?.replace(/\/+$/, "")
   return `${configuredOrigin || window.location.origin}${AUTH_CALLBACK_PATH}`
+}
+
+function recordConsentIntent(): void {
+  const intent = `${CONSENT_VERSION}:${CODE_OF_CONDUCT_VERSION}`
+  const secure = window.location.protocol === "https:" ? "; Secure" : ""
+  // The callback consumes this short-lived intent only after Supabase has
+  // established the session. The database remains the consent authority.
+  // biome-ignore lint/suspicious/noDocumentCookie: OAuth needs this intent after leaving the site
+  document.cookie = `${CONSENT_INTENT_COOKIE}=${intent}; path=/; max-age=${CONSENT_INTENT_MAX_AGE}; SameSite=Lax${secure}`
 }
 
 interface BivaqueSignInProps {
@@ -98,6 +111,7 @@ export function BivaqueSignIn({
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<"email" | "google" | null>(null)
   const [sent, setSent] = useState(false)
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false)
   const copy = entryCopy[mode]
   const titleId = mode === "signup" ? "signup-title" : "login-title"
   const emailId = mode === "signup" ? "bivaque-signup-email" : "bivaque-signin-email"
@@ -109,6 +123,7 @@ export function BivaqueSignIn({
     setLoading("email")
 
     try {
+      recordConsentIntent()
       if (onMagicLinkSignIn) {
         await onMagicLinkSignIn(email)
       } else {
@@ -138,6 +153,7 @@ export function BivaqueSignIn({
     setLoading("google")
 
     try {
+      recordConsentIntent()
       if (onGoogleSignIn) {
         await onGoogleSignIn()
       } else {
@@ -198,11 +214,13 @@ export function BivaqueSignIn({
               </span>
             </label>
 
+            <TermsCheckbox isSelected={hasAcceptedTerms} onChange={setHasAcceptedTerms} />
+
             <Button
               type="submit"
               variant="primary"
               className={styles["primaryButton"] ?? ""}
-              isDisabled={loading !== null}
+              isDisabled={loading !== null || !hasAcceptedTerms}
             >
               {loading === "email" ? "Enviando..." : copy.submit}
               {loading !== "email" && <ArrowRight aria-hidden="true" />}
@@ -217,7 +235,7 @@ export function BivaqueSignIn({
             onPress={handleGoogle}
             variant="outline"
             className={styles["googleButton"] ?? ""}
-            isDisabled={loading !== null}
+            isDisabled={loading !== null || !hasAcceptedTerms}
           >
             <GoogleIcon />
             {loading === "google" ? "Abrindo Google..." : copy.google}
@@ -266,6 +284,40 @@ export function BivaqueSignIn({
         </div>
       </section>
     </main>
+  )
+}
+
+function TermsCheckbox({
+  isSelected,
+  onChange,
+}: {
+  isSelected: boolean
+  onChange: (selected: boolean) => void
+}) {
+  return (
+    <Checkbox
+      aria-label="Aceito o Código de conduta e a Política de privacidade"
+      className={styles["termsCheckbox"] ?? ""}
+      isSelected={isSelected}
+      onChange={onChange}
+    >
+      <Checkbox.Content>
+        <Checkbox.Control>
+          <Checkbox.Indicator />
+        </Checkbox.Control>
+        <span>
+          Li e concordo com o{" "}
+          <Link className={styles["termsLink"] ?? ""} href={"/codigo-de-conduta" as Route}>
+            Código de conduta
+          </Link>{" "}
+          e a{" "}
+          <Link className={styles["termsLink"] ?? ""} href={"/privacidade" as Route}>
+            Política de privacidade
+          </Link>
+          .
+        </span>
+      </Checkbox.Content>
+    </Checkbox>
   )
 }
 

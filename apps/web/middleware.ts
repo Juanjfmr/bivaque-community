@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   "/signup",
   "/auth/callback",
   "/consent",
+  "/codigo-de-conduta",
+  "/privacidade",
   "/api",
   "/_next",
   "/landing",

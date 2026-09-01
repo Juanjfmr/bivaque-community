@@ -29,6 +29,8 @@ const ROUTES = [
   { path: "/login", name: "login", auth: false },
   { path: "/signup", name: "signup", auth: false },
   { path: "/consent", name: "consent", auth: false },
+  { path: "/codigo-de-conduta", name: "codigo-de-conduta", auth: false },
+  { path: "/privacidade", name: "privacidade", auth: false },
   { path: "/onboarding", name: "onboarding", auth: false },
   { path: "/onboarding", name: "onboarding", auth: true },
   { path: "/onboarding/status", name: "onboarding-status", auth: true },
@@ -199,7 +201,15 @@ function auditPage() {
   const interactive = [...document.querySelectorAll("a, button, [role='button'], input, select")]
 
   for (const element of interactive) {
-    const box = element.getBoundingClientRect()
+    // HeroUI renders a checkbox's native input inside a visually-hidden span and
+    // makes its wrapping label the actual 44px+ interaction surface. Audit the
+    // label in that compound control, otherwise the scanner measures an element
+    // the user cannot touch and reports a false accessibility failure.
+    const target =
+      element instanceof HTMLInputElement && element.type === "checkbox"
+        ? (element.closest("label") ?? element)
+        : element
+    const box = target.getBoundingClientRect()
     if (box.width === 0 && box.height === 0) continue
 
     // 2. touch targets — 44x44 CSS px minimum
@@ -207,12 +217,12 @@ function auditPage() {
       add(
         "touch-target",
         "high",
-        describe(element),
+        describe(target),
         `${Math.round(box.width)}x${Math.round(box.height)} (min 44x44)`,
       )
     }
 
-    const style = getComputedStyle(element)
+    const style = getComputedStyle(target)
 
     // 3. motion presence — interactive elements need a state transition
     const hasTransition = style.transitionDuration
@@ -232,6 +242,9 @@ function auditPage() {
     if (name.length === 0 && element.id) {
       const labeled = document.querySelector(`label[for="${CSS.escape(element.id)}"]`)
       name = (labeled?.textContent ?? "").trim()
+    }
+    if (name.length === 0) {
+      name = (element.closest("label")?.textContent ?? "").trim()
     }
     if (name.length === 0) {
       name = (element.textContent ?? "").trim()

@@ -232,6 +232,37 @@
   font-weight: 800;
 }
 
+.termsCheckbox {
+  align-items: flex-start;
+  gap: 10px;
+  margin: 2px 0 0;
+  padding: 2px 0;
+  color: var(--login-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.termsCheckbox :global([data-slot="checkbox-content"]) {
+  min-height: 44px;
+  align-items: center;
+}
+
+.termsLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--login-forest);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(36, 91, 67, 0.38);
+  text-underline-offset: 3px;
+}
+
+.termsLink:hover {
+  color: var(--login-signal);
+  text-decoration-color: currentcolor;
+}
+
 .primaryButton {
   display: inline-flex;
   align-items: center;
