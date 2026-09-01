@@ -1,19 +1,13 @@
 // apps/mobile/app/(tabs)/community.tsx
 //
-// Container "Minha comunidade" (id `community`, rota canônica /community
-// no web). Nesta fatia da S3 (golden slice nativa no mobile) entregamos
-// apenas o read-only: feed da vila com estados loading/empty/error.
-//
-// Fora do escopo desta fatia (proxima S4 do mobile):
-//   - Composer (criar publicacao)
-//   - Reacao / comentario inline
-//   - Pull-to-refresh (RefreshControl)
-//   - Realtime (supabase.channel) para novos posts sem reload
+// Container "Minha comunidade" (id `community`, rota canonica /community
+// no web). S5 do mobile: integra Composer (S4 UI) e ReactionButton
+// (S5 UI) sobre o feed read-only que S3 entregou.
 //
 // ADR-20260901-mobile-session (S2): a sessao e' persistida no
 // Keychain/Keystore via expo-secure-store e hidratada no cold start
-// via `hydrateSessionFromStorage()`. Sem essa hidratacao o cliente
-// comeca sem sessao e o RLS em public.posts bloqueia o SELECT.
+// via `hydrateSessionFromStorage()`. Sem isso o cliente comeca sem
+// sessao e o RLS em public.posts bloqueia o SELECT.
 //
 // DS-007 (nao ecoar dado sensivel): o feed mostra display_name
 // (publico por design), conteudo (publico), contagem de likes.
@@ -21,8 +15,8 @@
 //
 // DS-015 (failure feedback supports recovery): o estado de erro
 // mostra mensagem humana + botao "Tentar de novo" que reexecuta
-// a query. Nao distingui "sem internet" de "expulso" etc. para nao
-// vazar estado da conta (anti-enumeracao §4.3).
+// a query. Copy do composer e' identica ao web (classifyPublishError
+// do S4 e' porta direta do apps/web/lib/composer/publish-error.ts).
 import { useCallback, useEffect, useState } from "react"
 import {
   ActivityIndicator,
@@ -35,6 +29,8 @@ import {
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { hydrateSessionFromStorage, supabase } from "../../src/auth/client"
+import { Composer } from "../../src/components/Composer"
+import { ReactionButton } from "../../src/components/ReactionButton"
 import { theme } from "../../src/theme"
 
 const VILA_AJURICABA_ID = "71000000-0000-4000-8000-000000000001"
@@ -58,10 +54,6 @@ interface FeedState {
 }
 
 async function loadVilaFeed(): Promise<FeedState> {
-  // SELECT + embedded profiles (join) + reactions_count (sub-select
-  // com PostgREST). Mantem o RLS happy: a sessao hidratada precisa
-  // ter membership approved em VILA_AJURICABA; sem isso o SELECT
-  // retorna [] mesmo se houver posts (RLS de SELECT bloqueia).
   const { data, error } = await supabase
     .from("posts")
     .select(
@@ -81,6 +73,11 @@ async function loadVilaFeed(): Promise<FeedState> {
     : { status: "ready", posts: rows, errorMessage: null }
 }
 
+async function currentUserId(): Promise<string | null> {
+  const { data } = await supabase.auth.getUser()
+  return data.user?.id ?? null
+}
+
 export default function CommunityScreen() {
   const [state, setState] = useState<FeedState>({
     status: "loading",
@@ -88,6 +85,8 @@ export default function CommunityScreen() {
     errorMessage: null,
   })
   const [refreshing, setRefreshing] = useState(false)
+  const [composerOpen, setComposerOpen] = useState(false)
+  const [currentAuthorId, setCurrentAuthorId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, status: "loading", errorMessage: null }))
@@ -103,10 +102,10 @@ export default function CommunityScreen() {
   }, [])
 
   useEffect(() => {
-    // Hidrata a sessao do S2 antes do primeiro fetch — sem isso o
-    // cliente supabase comeca sem token e o RLS bloqueia o SELECT.
     void (async () => {
       await hydrateSessionFromStorage()
+      const uid = await currentUserId()
+      setCurrentAuthorId(uid)
       await load()
     })()
   }, [load])
@@ -118,7 +117,12 @@ export default function CommunityScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.scroll}
         ItemSeparatorComponent={Separator}
-        ListHeaderComponent={<FeedHeader status={state.status} />}
+        ListHeaderComponent={
+          <FeedHeader
+            status={state.status}
+            onPublishPress={currentAuthorId ? () => setComposerOpen(true) : null}
+          />
+        }
         ListEmptyComponent={<EmptyOrError state={state} onRetry={load} />}
         refreshControl={
           <RefreshControl
@@ -127,17 +131,54 @@ export default function CommunityScreen() {
             tintColor={theme.color.foreground}
           />
         }
-        renderItem={({ item }) => <PostCard post={item} />}
+        renderItem={({ item }) => <PostCard post={item} authorId={currentAuthorId} />}
+      />
+      <Composer
+        open={composerOpen}
+        authorId={currentAuthorId ?? ""}
+        communityId={VILA_AJURICABA_ID}
+        localityId={null}
+        onClose={() => setComposerOpen(false)}
+        onPublished={() => {
+          // Recarrega o feed para incluir o novo post sem optimistic update
+          // (S6 cobre realtime; por ora o pull-to-refresh e' suficiente).
+          void load()
+        }}
       />
     </SafeAreaView>
   )
 }
 
-function FeedHeader({ status }: { status: FeedState["status"] }) {
+function FeedHeader({
+  status,
+  onPublishPress,
+}: {
+  status: FeedState["status"]
+  onPublishPress: (() => void) | null
+}) {
   return (
     <View style={styles.header}>
-      <Text style={styles.h1}>Minha comunidade</Text>
-      <Text style={styles.lead}>Vila Ajuricaba — só para quem mora (ou morou)</Text>
+      <View style={styles.headerRow}>
+        <View style={styles.headerText}>
+          <Text style={styles.h1}>Minha comunidade</Text>
+          <Text style={styles.lead}>Vila Ajuricaba — só para quem mora (ou morou)</Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Criar nova publicação"
+          accessibilityState={{ disabled: onPublishPress === null }}
+          onPress={onPublishPress ?? undefined}
+          disabled={onPublishPress === null}
+          testID="publish-button"
+          style={({ pressed }) => [
+            styles.publishButton,
+            onPublishPress === null && styles.publishButtonDisabled,
+            pressed && onPublishPress && styles.publishButtonPressed,
+          ]}
+        >
+          <Text style={styles.publishButtonText}>Publicar</Text>
+        </Pressable>
+      </View>
       {status === "loading" && (
         <View style={styles.loadingRow}>
           <ActivityIndicator color={theme.color.foreground} />
@@ -152,29 +193,35 @@ function Separator() {
   return <View style={styles.separator} />
 }
 
-function PostCard({ post }: { post: PostRow }) {
+function PostCard({ post, authorId }: { post: PostRow; authorId: string | null }) {
   const reactions = post.reactions_count?.[0]?.count ?? 0
   const author = post.profiles?.display_name ?? "Membro"
   const time = formatRelativeTime(post.created_at)
   return (
-    <Pressable
-      accessibilityRole="text"
-      accessibilityLabel={`${author} publicou ${time}: ${post.content}`}
-      style={({ pressed }) => [styles.postCard, pressed && styles.postCardPressed]}
-    >
-      <View style={styles.postHeader}>
-        <Text style={styles.postAuthor}>{author}</Text>
-        <Text style={styles.postTime}>{time}</Text>
-      </View>
-      <Text style={styles.postBody} numberOfLines={6}>
-        {post.content}
-      </Text>
-      <View style={styles.postFooter}>
-        <Text style={styles.postMeta}>
-          {reactions} {reactions === 1 ? "apoio" : "apoios"}
+    <View style={styles.postCard}>
+      <Pressable
+        accessibilityRole="text"
+        accessibilityLabel={`${author} publicou ${time}: ${post.content}`}
+        style={({ pressed }) => [styles.postCardBody, pressed && styles.postCardPressed]}
+      >
+        <View style={styles.postHeader}>
+          <Text style={styles.postAuthor}>{author}</Text>
+          <Text style={styles.postTime}>{time}</Text>
+        </View>
+        <Text style={styles.postBody} numberOfLines={6}>
+          {post.content}
         </Text>
+      </Pressable>
+      <View style={styles.postFooter}>
+        {authorId ? (
+          <ReactionButton postId={post.id} userId={authorId} initialCount={reactions} />
+        ) : (
+          <Text style={styles.postMeta}>
+            {reactions} {reactions === 1 ? "apoio" : "apoios"}
+          </Text>
+        )}
       </View>
-    </Pressable>
+    </View>
   )
 }
 
@@ -239,6 +286,32 @@ const styles = StyleSheet.create({
   header: {
     gap: theme.space[2],
   },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: theme.space[3],
+  },
+  headerText: {
+    flex: 1,
+  },
+  publishButton: {
+    paddingVertical: theme.space[2],
+    paddingHorizontal: theme.space[4],
+    backgroundColor: theme.color.foreground,
+    borderRadius: theme.radius.base,
+  },
+  publishButtonDisabled: {
+    opacity: 0.4,
+  },
+  publishButtonPressed: {
+    opacity: 0.7,
+  },
+  publishButtonText: {
+    color: theme.color.background,
+    fontSize: theme.text.sm,
+    fontWeight: "600",
+  },
   h1: {
     fontSize: theme.text.xl,
     fontWeight: "600",
@@ -267,6 +340,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.color.border,
     padding: theme.space[4],
+    gap: theme.space[2],
+  },
+  postCardBody: {
     gap: theme.space[2],
   },
   postCardPressed: {
