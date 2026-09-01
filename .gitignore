@@ -39,3 +39,8 @@ e2e-results.json\
 
 # Vercel project linkage and downloaded local runtime metadata
 .vercel/
+
+# JetBrains / Android Studio local IDE state (workspace.xml, caches, .iml)
+# Nunca commitar — paths e caches são específicos da máquina.
+.idea/
+*.iml
