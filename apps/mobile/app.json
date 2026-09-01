@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Bivaque",
+    "slug": "bivaque-community-mobile",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bivaque.community.mobile"
+    },
+    "android": {
+      "package": "com.bivaque.community.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#F8FAFC"
+      }
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}
