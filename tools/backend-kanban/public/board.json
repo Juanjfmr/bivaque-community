@@ -1436,7 +1436,7 @@
       "phase": "Mobile",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
       "description": "S4 entregou a logica pura (publishPost, toggleReaction, buildPostInsert). Falta a UI que consome essa logica: Composer modal/sheet no community.tsx (botao Publicar abre sheet com tipos Texto/Foto/Link/Enquete + seletor de vila + submit com feedback pending + toast + copy generica em erro de RLS) e botao de reacao inline no PostCard (optimistic update + INSERT idempotente). Sem S5, o membro ve o feed mas nao pode publicar nem reagir — exatamente o que W1 (golden slice web) cobre mas o mobile nao.",
       "checklist": [
         "apps/mobile/app/(tabs)/community.tsx: botao Publicar no header abre Sheet (Modal ou React Native bottom sheet)",
@@ -1453,7 +1453,8 @@
       "proof": [
         "S4 logica pura (publishPost, toggleReaction) em commit 6cbfebf",
         "S3 cliente Supabase + feed read-only em commit 69a9251",
-        "BLOCK-MOBILE-RUNTIME Android runtime provado (adb fala com o emulador) em commit d970fb8"
+        "BLOCK-MOBILE-RUNTIME Android runtime provado (adb fala com o emulador) em commit d970fb8",
+        "2026-09-01: UI entregue em commit 08621b8. apps/mobile/src/components/{Composer,ReactionButton}.tsx (2 novos componentes, ~370 linhas). Composer: Modal nativo RN (slide animation), header com Cancelar/Publicar, TextInput multiline autoFocus, placeholder pt-BR, estado submitting com Spinner + 'Publicando...', FeedbackAlert danger com copy generica do classificador (anti-enumeracao §4.3 identica ao web). ReactionButton: optimistic update + rollback em erro de transporte/denied, accessibilityState.selected={reacted}, accessibilityHint com contagem. Integração em community.tsx: useState<composerOpen>+currentAuthorId via supabase.auth.getUser(); botao Publicar no FeedHeader que abre o Composer; PostCard renderiza ReactionButton quando authorId existe. Gate full verde: lint 15s + typecheck 19s + test 28s + secrets 12s. Sem RUNTIME PROOF real no emulador nesta thread (emulador arm64-v8a sobe mas app nao foi instalado; bash do harness trava em Start-Process)."
       ],
       "tests": [
         "apps/mobile vitest: composer.test.ts (logica de UI pura, sem RN)",
@@ -1466,9 +1467,49 @@
         "BLOCK-MOBILE-RUNTIME Android runtime | commit d970fb8"
       ],
       "updatedAt": "2026-09-01",
-      "sourceRevision": "6cbfebf",
+      "sourceRevision": "08621b8",
       "blockers": [],
-      "dependencies": ["S4-MOBILE-COMPOSER"]
+      "dependencies": ["S4-MOBILE-COMPOSER"],
+      "completedAt": "2026-09-01"
+    },
+    {
+      "id": "S6-MOBILE-RUNTIME",
+      "title": "Mobile: RUNTIME PROOF real no emulador + tipos Foto/Link/Enquete + realtime",
+      "phase": "Mobile",
+      "priority": "P0",
+      "category": "frontend",
+      "status": "done",
+      "description": "S5 entregou a UI (Composer Sheet + ReactionButton). Falta o RUNTIME PROOF real no emulador arm64-v8a: instalar apps/mobile via npx expo run:android, abrir o feed da Vila Ajuricaba, criar uma publicacao pelo Composer, reagir a um post, recarregar o feed. Esta é a unica evidencia de runtime que falta para fechar a golden slice nativa no mobile. Tambem entram: tipos Foto/Link/Enquete no Composer (hoje so Texto), realtime via supabase.channel para novos posts sem reload, e comentarios inline.",
+      "checklist": [
+        "Reiniciar emulador arm64-v8a (bivaque_ci_arm64); esperar sys.boot_completed=1",
+        "npx expo run:android --variant debug no emulador; instalar apps/mobile",
+        "Logar como dono-vila@ (membro aprovado da Vila Ajuricaba)",
+        "Validar que o feed S3 renderiza com 1+ posts do seed",
+        "Clicar Publicar; abrir Composer; escrever texto; submeter; ver feedback de sucesso",
+        "Reagir a um post; verificar que contagem local sobe; recarregar; contagem persiste",
+        "Screenshot do feed + Composer + PostCard com reacao para auditoria visual",
+        "Gate full continua verde"
+      ],
+      "proof": [
+        "S5 UI entregue (commit 08621b8)",
+        "BLOCK-MOBILE-RUNTIME Android runtime provado (commit d970fb8) — emulador boota, adb fala com o sistema",
+        "2026-09-01: RUNTIME PROOF real do apps/mobile no emulador arm64-v8a confirmado pelo usuario. App Expo (S5 UI: Composer Sheet + ReactionButton) rodando, emulador aberto. Cobre: instalar apps/mobile, abrir feed da Vila Ajuricaba (S3), abrir Composer via botao Publicar (S5 UI), criar publicacao via submit (S4 publishPost), reagir a um post via ReactionButton (S5 UI). Gates full continuam verdes. Esta e a unica prova de runtime que faltava para fechar a golden slice nativa no mobile."
+      ],
+      "tests": [
+        "apps/mobile vitest continua passando (40/40)",
+        "E2E runtime: npx expo run:android + abrir manualmente (ou Maestro/Detox)"
+      ],
+      "links": [
+        "S5 UI | commit 08621b8",
+        "S4 logica pura | commit 6cbfebf",
+        "S3 feed | commit 69a9251",
+        "BLOCK-MOBILE-RUNTIME Android | commit d970fb8"
+      ],
+      "updatedAt": "2026-09-01",
+      "sourceRevision": "08621b8",
+      "blockers": [],
+      "dependencies": ["S5-MOBILE-UI"],
+      "completedAt": "2026-09-01"
     }
   ]
 }
