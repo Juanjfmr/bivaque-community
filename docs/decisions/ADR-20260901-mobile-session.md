@@ -152,3 +152,45 @@ por ADR futuro.
 **Pendente de aprovação humana explícita.** Esta ADR foi redigida pelo
 orquestrador para reduzir a fricção da decisão, mas a escolha é
 irreversível depois de publicada. Espera o sinal do dono.
+
+## Anexo técnico (adicionado 2026-09-01) — o que a implementação vai encontrar
+
+Não é parte da decisão, é insumo para reduzir a fricção do humano
+que for aprovar. Foi levantado durante o bootstrap Android
+(correlato, ver `BLOCK-MOBILE-RUNTIME` no board):
+
+- **JDK real**: `C:\Program Files\Java\jdk-17.0.3.1` (registry
+  `HKLM\SOFTWARE\JavaSoft\JDK\17.0.3.1`). NÃO é o `javapath` shim
+  em `C:\Program Files\Common Files\Oracle\Java\javapath\` (esse é
+  wrapper que delega; `sdkmanager --licenses` rejeita por
+  `JAVA_HOME` inválido).
+- **Android Studio**: instalado em
+  `C:\Program Files\Android\Android Studio\`, com JBR-21 bundled
+  em `jbr/`. O Studio usa esse runtime internamente — `JAVA_HOME`
+  no shell pode continuar apontando para a JDK 17 do sistema.
+- **cmdline-tools 12.0**: extraído em
+  `C:\Users\juana\AppData\Local\Android\Sdk\cmdline-tools\latest\`,
+  licenças aceitas.
+- **system-image android-34 x86_64**: instalada. AVD `bivaque_ci`
+  (Pixel, default/x86_64) criado em
+  `C:\Users\juana\.android\avd\bivaque_ci.avd`.
+- **HypervisorPresent = True** (Hyper-V ativo); HAXM não instalado.
+  Emulador x86_64 headless bootou o bash do harness em duas
+  tentativas — **a sessão precisa ser testada no Android Studio
+  (que lida com HAXM/Hyper-V automaticamente) ou após instalar
+  HAXM**, não via `emulator.exe` direto deste shell.
+
+Implicações para a implementação:
+
+- Implementação A2 pode começar imediatamente após aprovação da
+  ADR: `pnpm --filter mobile add expo-secure-store` e escrever os
+  módulos `src/auth/storage.ts`, `src/auth/signOut.ts`,
+  `src/auth/purge.ts`. Não precisa esperar infra.
+- O teste runtime de "secure-store guarda e recupera" pode ser
+  feito em Jest (mock de `expo-secure-store`) **sem emulador**.
+- O teste "refresh automático renova JWT antes de expirar" precisa
+  de clock controlado ou fake timers; também sem emulador.
+- O teste "FLAG_SECURE ativo no Android" precisa de device real;
+  o gap é conhecido e aceito nesta ADR.
+- O teste "iCloud backup exclui" precisa de TestFlight + dispositivo
+  Apple — bloqueado por Apple Developer Program ausente.
