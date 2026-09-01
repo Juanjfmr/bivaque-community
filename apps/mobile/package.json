@@ -10,14 +10,18 @@
     "export:android": "expo export --platform android --output-dir dist-android",
     "export:ios": "expo export --platform ios --output-dir dist-ios",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@bivaque/tokens": "workspace:*",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~54.0.0",
     "expo-constants": "~18.0.0",
+    "expo-file-system": "~19.0.0",
     "expo-linking": "~8.0.0",
     "expo-router": "~6.0.0",
+    "expo-secure-store": "^14.0.0",
     "expo-status-bar": "~3.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -28,6 +32,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",
     "@types/react": "^19.2.0",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "vitest": "^4.1.0"
   }
 }
