@@ -1266,7 +1266,8 @@
       "proof": [
         "Product-critic verdict 2026-09-01 — item 10 FAIL",
         "AGENTS.md regra §12.7 (teste positivo + negativo em cada via de permissão)",
-        "Wave H §10 do BIVAQUE.md"
+        "Wave H §10 do BIVAQUE.md",
+        "ADR draft ADR-20260901-account-suspension.md commitado em afcde5d cobre o caminho denied: coluna is_suspended em profiles, helper STABLE SECURITY DEFINER public.is_account_suspended(uuid), RLS update nas tabelas de acao (posts/reactions/comments/reports), trilha em suspension_events, persona de seed membro-suspenso@, exemplo de spec E2E (denied-publish.spec.ts). A aplicacao da migration exige aprovacao humana do ADR (R3: privacidade + autorizacao + trilha de auditoria). Antes da aprovacao, o caminho denied nao fecha; o spec reports-member-flow cobre feliz + erro de transporte mas nao cobre negacao por suspension."
       ],
       "tests": [
         "tests/e2e/denied-publish.spec.ts (a escrever)",
@@ -1275,10 +1276,11 @@
       "links": [
         "Onda H | ../../docs/BIVAQUE.md §10",
         "ADR-20260820-suspensao-de-conta | ../../docs/decisions/ADR-20260820-suspensao-de-conta.md",
-        "MVP-00 (este card bloqueia) | ./board.json"
+        "MVP-00 (este card bloqueia) | ./board.json",
+        "ADR draft | ../../docs/decisions/ADR-20260901-account-suspension.md"
       ],
       "updatedAt": "2026-09-01",
-      "sourceRevision": "efab5a9",
+      "sourceRevision": "afcde5d",
       "dependencies": []
     },
     {
@@ -1339,7 +1341,8 @@
         "Sem credenciais Apple/EAS no host",
         "2026-09-01 tentativa 1 de bootstrap Android falhou: Invoke-WebRequest contra https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip excedeu 360s sem completar o download. cmdline-tools continua ausente; sem cmdline-tools, sem sdkmanager, sem system-image, sem AVD. Próxima tentativa exige rota alternativa: usar curl.exe do Git for Windows (PATH tem C:\\Program Files\\Git\\cmd\\) ou um mirror; ou rodar o download em background com retry.",
         "2026-09-01 bootstrap Android tentativamente completo: (1) cmdline-tools/latest extraído em C:\\Users\\juana\\AppData\\Local\\Android\\Sdk\\cmdline-tools\\latest\\ (sdkmanager --version = 12.0); (2) licenças aceitas via `yes | sdkmanager --licenses` (saída: 'All SDK package licenses accepted'); (3) system-images;android-34;default;x86_64 instalada; (4) AVD bivaque_ci criado (Pixel, Android 14.0 UpsideDownCake, default/x86_64); (5) emulator 36.6.11 disponível. JDK real localizada: C:\\Program Files\\Java\\jdk-17.0.3.1 (registry HKLM\\SOFTWARE\\JavaSoft\\JDK\\17.0.3.1).",
-        "2026-09-01 tentativa de boot headless falhou: tentativa A com `-accel off -gpu swiftshader_indirect` — emulador morre durante init (processo termina em ~5s, sem banner de boot); tentativa B sem `-accel off` (deixa detectar Hyper-V) — Start-Process trava o shell do bash. WMI reporta HypervisorPresent: True (Hyper-V ativo), mas HAXM NÃO instalado (sem HKLM\\SOFTWARE\\Intel\\HAXM). Diagnóstico: emulador Android x86_64 em Windows sem HAXM cai no qemu; Hyper-V provavelmente ocupado pelo Docker Desktop (WSL2) ou pelo host hypervisor. Próximo passo: usuário instalará HAXM; após instalado, `emulator.exe -avd bivaque_ci -no-window -gpu swiftshader_indirect` deve bootar. iOS device continua bloqueado por Apple Developer Program ausente."
+        "2026-09-01 tentativa de boot headless falhou: tentativa A com `-accel off -gpu swiftshader_indirect` — emulador morre durante init (processo termina em ~5s, sem banner de boot); tentativa B sem `-accel off` (deixa detectar Hyper-V) — Start-Process trava o shell do bash. WMI reporta HypervisorPresent: True (Hyper-V ativo), mas HAXM NÃO instalado (sem HKLM\\SOFTWARE\\Intel\\HAXM). Diagnóstico: emulador Android x86_64 em Windows sem HAXM cai no qemu; Hyper-V provavelmente ocupado pelo Docker Desktop (WSL2) ou pelo host hypervisor. Próximo passo: usuário instalará HAXM; após instalado, `emulator.exe -avd bivaque_ci -no-window -gpu swiftshader_indirect` deve bootar. iOS device continua bloqueado por Apple Developer Program ausente.",
+        "Re-verificacao 2026-09-01: HAXM continua NAO instalado (sem HKLM\\SOFTWARE\\Intel\\HAXM, sem haxm*.sys em System32, sem arquivos em C:\\Program Files\\Intel\\HAXM). Hyper-V continua ativo (HypervisorPresent: True). AVD bivaque_ci continua presente em ~/.android/avd/. Adendo tecnico do ADR-20260901-mobile-session (commit ff68650) documenta o estado da infra para o implementador que for começar MOB-001."
       ],
       "tests": [
         "Pendente: emulator boot + install + launch + smoke test (Minha comunidade → feed → compositor)",
@@ -1347,7 +1350,8 @@
       ],
       "links": [
         "Fundação | commit 29d9496 (apps/mobile scaffold)",
-        "Próxima sessão | MOB-001-SESSION (gate antes da jornada autenticada)"
+        "Próxima sessão | MOB-001-SESSION (gate antes da jornada autenticada)",
+        "Adendo tecnico infra | docs/decisions/ADR-20260901-mobile-session.md (secao 'Anexo tecnico')"
       ],
       "updatedAt": "2026-09-01",
       "sourceRevision": "496f971",
