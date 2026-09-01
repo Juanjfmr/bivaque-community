@@ -958,13 +958,14 @@
       ],
       "proof": [
         "migrations 20260819021416, 20260820000000, 20260820045749 e 20260820051230",
-        "PRODUCT_STATUS marca onda T fechada"
+        "PRODUCT_STATUS marca onda T fechada",
+        "20260901190000_locality_state_codes_rpc: consulta distinta das 27 UFs validada em produção; /api/localities não fica limitada a 1.000 municípios"
       ],
       "tests": ["locality-transfer.sql", "transfer-scope-denials.sql", "transfer-degradation.sql"],
       "completedAt": "2026-08-20",
       "links": ["Status: transferência | ../../docs/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
+      "updatedAt": "2026-09-01",
+      "sourceRevision": "d225e03",
       "dependencies": []
     },
     {

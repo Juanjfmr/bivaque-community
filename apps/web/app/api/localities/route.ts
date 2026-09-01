@@ -11,15 +11,12 @@ export const dynamic = "force-dynamic"
 export async function GET() {
   const supabase = createServerClient()
 
-  const { data, error } = await supabase
-    .from("localities")
-    .select("state_code")
-    .order("state_code", { ascending: true })
+  const { data, error } = await supabase.rpc("list_locality_state_codes")
 
   if (error) {
     return NextResponse.json({ error: "internal" }, { status: 500 })
   }
 
-  const ufs = [...new Set((data ?? []).map((row) => row.state_code))]
+  const ufs = (data ?? []).map((row) => row.state_code)
   return NextResponse.json({ ufs })
 }
