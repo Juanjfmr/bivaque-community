@@ -66,12 +66,14 @@ forbidden:
   - baixar o limite de um teste existente para fazer a suite passar
 
 acceptance:
-  - todo nome de token citado em DESIGN_SYSTEM.md existe em packages/tokens/src/tokens.json, e um teste de escopo falha quando um nome citado nao existe na fonte
+  - o documento cita cada token pelo nome que a fonte usa: nenhum nome com namespace por ponto sobrevive no corpo do documento, nenhum dicionario de traducao entre documento e fonte e criado, e um teste falha quando um nome citado nao resolve diretamente em packages/tokens/src/tokens.json
   - existe uma matriz de contraste executavel que calcula, a partir de tokens.json, todo par texto sobre superficie e todo par nao-textual, e falha abaixo de 4.5 para 1 em texto e abaixo de 3 para 1 em foco e limite de controle
   - o indicador de foco satisfaz 3 para 1 contra as quatro superficies onde ele pousa hoje, incluindo o botao primario e o botao de acao destrutiva, e o documento descreve a anatomia adotada
   - o limite visual de campo de formulario satisfaz 3 para 1 contra o proprio preenchimento e contra o fundo de pagina, sem engrossar divisorias decorativas que nao identificam controle
   - os tokens semanticos derivados deixam de repetir o valor literal do primitivo de tinta, e passam a deriva-lo, com o teste que hoje trava a string literal atualizado no mesmo commit
-  - existem tokens de estado para repouso, sobrevoo, pressionado, desabilitado e carregando nos dois contratos de componente ja presentes na fonte, botao e campo
+  - cada estado de botao e de campo resolve para um valor proprio e distinto do repouso, verificado por teste que falha quando dois estados de um mesmo componente resolvem para a mesma cor
+  - o estado desabilitado preserva contraste de texto em 4,5 para 1 ou mais e de limite de controle em 3 para 1 ou mais, sem recorrer a opacidade sobre a cor final
+  - o limite de controle em repouso nao usa a mesma cor do anel de foco, para que receber foco continue legivel como mudanca de estado e nao apenas como espessura
   - scripts/visual/capture.mjs emite achado proprio para contraste nao-textual de foco e de limite de controle, e seu piso de tamanho de texto passa a refletir o minimo declarado no documento
   - a cor de tema do documento web deixa de ser um valor fora da paleta e passa a derivar da fonte de tokens
   - a auditoria visual em 375, 768 e 1440 nao introduz achado novo de sobreposicao, alvo ou contraste em relacao a captura de baseline
@@ -107,6 +109,19 @@ execution_notes: |
   que ele passe a comparar documento com fonte.
   Sobre a cor de tema: apps/web/app/page.tsx declara 2f7654, um verde que nao existe na
   paleta e que e a primeira cor que um membro ve na barra do navegador em Android.
+  Tres aceites foram reescritos em 2026-09-02, depois da primeira tentativa, porque
+  pediam existencia e nao efeito, e existencia e o que a revisao recusou. Um pedia que
+  todo nome citado no documento existisse na fonte, e foi satisfeito criando um
+  dicionario de traducao dentro do tokens.json, com o documento intacto: quem seguir o
+  documento continua escrevendo uma variavel que o CSS nao tem. Outro pedia que
+  existissem tokens de estado, e foi satisfeito com sobrevoo, pressionado, desabilitado
+  e carregando resolvendo todos para a mesma cor do repouso — o mesmo defeito que este
+  contrato acusa na biblioteca de componentes, reproduzido na nossa propria fonte. Nao
+  repita nenhuma das duas saidas: reescreva o documento e de valor proprio a cada estado.
+  O contraste, esse, fechou de verdade na primeira tentativa e foi confirmado por
+  recalculo independente. Nao refaca o anel duplo, e nao mexa nos seis pares
+  nao-textuais ja declarados: eles cobrem os casos certos.
+
   O que fica de fora, de proposito, e por que: tipografia e o asset da familia dependem
   de decisao de asset e mudam toda a aparencia, o que exige onda propria com auditoria
   completa. A migracao dos consumidores para a camada semantica toca dezenas de telas e
