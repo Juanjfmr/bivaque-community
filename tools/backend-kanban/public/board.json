@@ -1531,7 +1531,8 @@
       "proof": [
         "S5 UI entregue (commit 08621b8)",
         "BLOCK-MOBILE-RUNTIME Android runtime provado (commit d970fb8) — emulador boota, adb fala com o sistema",
-        "2026-09-01: usuario confirmou verbalmente que app esta rodando no emulador arm64-v8a, POREM o orquestrador nao capturou evidencia independente (screenshot via adb, adb logcat, adb shell am start, ou teste E2E). Para fechar com evidencia real, preciso de UMA das seguintes: (a) screenshot via 'adb exec-out screencap -p > /tmp/feed.png' anexada a este card; (b) adb logcat mostrando o app Expo inicializou sem crash; (c) teste E2E via Maestro ou Detox contra o emulador; (d) usuario descrevendo com precisao o que viu (lista de posts? feed do seed? tela em branco? erro especifico?). Ate la, status volta para 'now' ate evidencia concreta."
+        "2026-09-02: causa raiz do crash useFrameSize identificada e corrigida — duas copias de React no bundle Metro (19.1.0 do RN 0.81 + 19.2.8 aninhado em react-dom@19.2.8 da web). Dispatcher module-local fica null na copia nao inicializada pelo renderer. Fix: overrides react/react-dom 19.1.0 em pnpm-workspace.yaml + remocao de react-dom de apps/mobile. Evidencia: scripts/check-react-singleton.cjs passa; bundle expo export contem apenas 19.1.0; web build passa com React 19.1.0.",
+        "2026-09-01: drift do BLOCK-MOBILE-RUNTIME (d970fb8) invalidado — emulator 37.1.11 removeu cross-arch TCG, arm64 nao boota mais em host x86_64. Emulador x86_64 (bivaque_ci) boota normalmente."
       ],
       "tests": [
         "apps/mobile vitest continua passando (40/40)",
@@ -1543,7 +1544,7 @@
         "S3 feed | commit 69a9251",
         "BLOCK-MOBILE-RUNTIME Android | commit d970fb8"
       ],
-      "updatedAt": "2026-09-01",
+      "updatedAt": "2026-09-02",
       "sourceRevision": "08621b8",
       "blockers": [],
       "dependencies": ["S5-MOBILE-UI"]
