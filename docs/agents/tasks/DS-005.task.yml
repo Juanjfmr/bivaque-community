@@ -1,0 +1,108 @@
+# Contrato DS-005 — as tres telas de chegada passam a falar a mesma lingua visual do
+# resto do produto, e saem do inventario de transicao com prova, nao com promessa.
+#
+# Executar DEPOIS de DS-002, DS-003 e DS-004: a matriz de contraste, a tipografia e o
+# tema da biblioteca precisam estar fechados, senao estas telas migram para um alvo movel.
+
+task_id: DS-005
+
+objective: >
+  A primeira impressao do Bivaque deixa de ser governada por convencoes locais nao
+  verificaveis: entrada, admissao e pagina publica passam a derivar cor, tipografia,
+  espaco, forma e movimento da fonte unica de tokens, e a secao de inventario de
+  transicao perde essas tres linhas com evidencia visual e de runtime.
+
+authority:
+  - docs/decisions/ADR-20260901-design-system.md — a primeira impressao de uma comunidade de acesso controlado nao pode depender de convencao local nao verificavel
+  - docs/agents/DESIGN_SYSTEM.md secao 12.1.1 — as tres superficies estao inventariadas como transicao, com prova exigida para sair
+  - docs/agents/DESIGN_SYSTEM.md secao 5.4 — valor cru so sobrevive em midia, arte aprovada ou gradiente local, com motivo comentado
+  - docs/agents/DESIGN_SYSTEM.md secao 9.1 — WCAG 2.2 AA e requisito de entrega
+  - docs/agents/DESIGN_SYSTEM.md secao 7.5 — formulario explica finalidade, mostra consequencia e mantem resposta generica quando recusa
+  - Critica de sistema de design em 2026-09-02, com medicoes reproduzidas no baseline abaixo
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 2026-09-02 na branch task-4-measure-mvp-03. As tres folhas somam 1.969
+    linhas e carregam paleta propria: 68 valores de cor crus e 34 propriedades locais
+    declaradas fora da fonte de tokens, entre elas nomes proprios de tinta, regua, verde e
+    familia com serifa. As cores incluem verdes e dourados que nao existem em nenhuma
+    camada da fonte de tokens, ou seja, nao sao um desvio de tom da paleta escolhida, sao
+    outra paleta. O teste de escopo em tests/scope/design-tokens.test.mjs mantem os tres
+    arquivos numa lista de excecao, o que institucionaliza a divergencia e a torna
+    invisivel para a suite: hoje a suite fica verde exatamente porque foi ensinada a nao
+    olhar para eles. Nao ha prazo associado a essa excecao. Como sao as telas por onde
+    todo membro entra, o resultado observavel e que a identidade que o sistema declara so
+    comeca a valer depois que a pessoa ja passou pela parte do produto que a apresenta.
+
+allowed_paths:
+  - docs/agents/DESIGN_SYSTEM.md
+  - docs/agents/tasks/DS-005.task.yml
+  - apps/web/app/landing/
+  - apps/web/app/(preauth)/
+  - apps/web/app/page.tsx
+  - tests/scope/design-tokens.test.mjs
+  - tests/scope/design-system-contract.test.mjs
+
+forbidden:
+  - redesenhar a composicao, a hierarquia ou o fluxo destas telas — esta tarefa troca a lingua visual, nao o arranjo nem a jornada
+  - alterar campo, validacao, mensagem de recusa ou qualquer regra que decida quem entra
+  - fazer a tela prometer aprovacao, prazo ou acesso que o servidor nao garante
+  - ecoar em tela qualquer identificador enviado no formulario, ou revelar motivo interno de recusa
+  - alterar autorizacao, migracao de banco, esquema de confianca ou regra de visibilidade de conteudo
+  - introduzir familia tipografica nova, biblioteca de componentes nova ou modo escuro
+  - manter a lista de excecao no teste de escopo, mesmo que parcialmente, depois que a migracao fechar
+  - baixar o limite de um teste existente para fazer a suite passar
+
+acceptance:
+  - as tres folhas nao declaram mais paleta propria, e cor, tipografia, espaco, forma e movimento derivam da fonte de tokens
+  - nenhum valor de cor cru sobrevive nas tres folhas fora da excecao que a secao 5.4 permite, e cada sobrevivente carrega o motivo comentado
+  - a lista de excecao dessas tres folhas sai do teste de escopo, e elas passam a ser cobradas pela mesma regra que vale para o resto do produto
+  - todo par de texto e de superficie das tres telas passa na matriz de contraste, com 4,5 para 1 em texto e 3 para 1 em foco e limite de controle
+  - a jornada de admissao continua fechando de ponta a ponta, do caminho feliz ao caminho de recusa, com a mensagem de recusa igualmente generica antes e depois
+  - a auditoria visual das tres superficies em 375, 768 e 1440 nao introduz achado novo de contraste, alvo, sobreposicao ou tamanho minimo em relacao a captura de baseline
+  - a secao 12.1.1 perde as linhas destas tres superficies, e a remocao cita a evidencia visual e de runtime que a autorizou, nao a intencao de migrar
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/DS-005.task.yml
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+  - npx pnpm@11.18.0 test:e2e
+
+depends_on: DS-002, DS-003, DS-004
+
+execution_notes: |
+  Ordem. Esta e a ultima das quatro. Antes dela a matriz de contraste precisa existir,
+  a familia tipografica precisa estar definida e o tema da biblioteca precisa estar
+  fechado. Migrar estas telas para um alvo que ainda vai mudar significa migra-las duas
+  vezes, e a segunda passagem nao tem orcamento.
+  Tire a captura de baseline das tres superficies antes de comecar. Sao 1.969 linhas de
+  folha e a diferenca entre regressao e mudanca pretendida so existe contra a captura.
+  Sobre o escopo. A instrucao e trocar a lingua, nao o arranjo. Se durante a migracao
+  aparecer um problema de composicao, de hierarquia ou de jornada, ele nao se resolve
+  aqui: registre e siga. Misturar redesenho com migracao de token e como se perde a
+  capacidade de dizer o que causou uma regressao.
+  Sobre a lista de excecao. Ela e o item que fecha a tarefa e o mais facil de esquecer.
+  Enquanto os tres caminhos estiverem nela, a suite continua verde por nao olhar, e a
+  proxima pessoa herda a mesma divergencia com a mesma aparencia de conformidade.
+  Sair da lista e a prova; migrar sem sair nao fecha nada.
+  Sobre a jornada. Estas telas decidem quem entra. Qualquer mudanca que altere campo,
+  validacao ou texto de recusa esta fora do contrato, e a recusa precisa continuar
+  dizendo exatamente o mesmo tanto que dizia antes: uma tela mais bonita que explica
+  melhor por que alguem foi recusado e uma regressao, nao uma melhoria.
+  Sobre a secao 12.1.1. Remover a linha e a ultima acao, depois da prova, nunca junto com
+  a mudanca. O inventario existe para impedir que fundacao seja confundida com migracao
+  concluida, e apaga-lo cedo reproduz o defeito que ele foi criado para evitar.
+
+risk: identidade visual das telas de chegada e de admissao
+risk_level: R2
+adr: docs/decisions/ADR-20260901-design-system.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -1,0 +1,131 @@
+# Contrato DS-004 — a fronteira entre a fonte de tokens do Bivaque e o tema da
+# biblioteca de componentes deixa de ter buraco.
+#
+# Este contrato NAO e migrar chamadas para a camada semantica. A camada de alias e o
+# contrato de tema que a folha da biblioteca le; ela nao e legado e nao sai. O problema e
+# que ela cobre 27 das 197 variaveis que a biblioteca consome, e o que fica descoberto
+# chega a tela vindo do padrao da biblioteca, fora da paleta e fora do documento.
+#
+# Executar DEPOIS de DS-002, que cria os tokens de estado que este contrato liga.
+
+task_id: DS-004
+
+objective: >
+  Nenhuma cor, estado, forma ou curva de movimento chega a tela do Bivaque sem vir da
+  fonte de tokens: a camada de adaptacao da biblioteca passa a ser declarada como tal,
+  a cobrir toda variavel que decide aparencia, e o codigo proprio do produto passa a ler
+  as camadas semantica e de componente em vez do adaptador.
+
+authority:
+  - docs/decisions/ADR-20260901-design-system.md — decisao R2 aceita, arquitetura primitive para semantic para component
+  - docs/agents/DESIGN_SYSTEM.md secao 5.1 — componentes consomem semantic ou component, nunca valor bruto
+  - docs/agents/DESIGN_SYSTEM.md secao 5.3 — repouso, sobrevoo, pressionado, foco, desabilitado e carregando sao tokens projetados, nao acidente
+  - docs/agents/DESIGN_SYSTEM.md secao 5.4 — cor em classe de paleta direta e defeito em componente de produto
+  - docs/agents/DESIGN_SYSTEM.md secao 9.1 — WCAG 2.2 AA e requisito de entrega
+  - Critica de sistema de design em 2026-09-02, com medicoes reproduzidas no baseline abaixo
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 2026-09-02 na branch task-4-measure-mvp-03. A folha da biblioteca consome
+    197 variaveis proprias, fora as do utilitario de classes, e a fonte de tokens do
+    Bivaque declara 27 delas: cobertura de 13,7 por cento. O que fica descoberto nao
+    desaparece, cai no padrao que a propria biblioteca define e chega a tela. Quatro casos
+    medidos. A superficie neutra da biblioteca vale um cinza azulado com 150 usos, cor que
+    nao existe na paleta do documento e que nenhuma decisao escolheu. O sobrevoo dessa
+    mesma superficie e definido como identica ao repouso, ou seja, o estado de sobrevoo
+    nao muda nada em nenhum componente que dependa dela. O estado desabilitado e uma
+    opacidade cega de 0,5, o que derruba o texto principal para 3,18 para 1 e o botao
+    primario para 2,35 para 1, abaixo do minimo AA e em contradicao direta com a secao 5.3,
+    que exige que desabilitado preserve contraste. A curva de movimento padrao da
+    biblioteca, usada 124 vezes, e a curva generica do navegador e nao a curva declarada
+    na fonte de tokens. Alem disso, o gerador de tokens descreve essa camada como alias
+    legado que existe apenas enquanto consumidores migram, o que descreve errado uma
+    camada que e permanente enquanto a biblioteca for esta: dos 56 nomes do adaptador, 32
+    nao sao lidos pela biblioteca e sao de uso exclusivo do produto, e esses sim deveriam
+    ler as camadas semantica e de componente.
+
+allowed_paths:
+  - docs/agents/DESIGN_SYSTEM.md
+  - docs/agents/tasks/DS-004.task.yml
+  - packages/tokens/src/tokens.json
+  - packages/tokens/src/tokens.css
+  - packages/tokens/src/index.ts
+  - scripts/tokens/generate.mjs
+  - apps/web/app/globals.css
+  - apps/web/app/components/bivaque/
+  - tests/scope/design-tokens.test.mjs
+  - tests/scope/design-system-contract.test.mjs
+  - tests/scope/design-vendor-theme.test.mjs
+
+forbidden:
+  - remover, renomear ou esvaziar um nome do adaptador que a biblioteca le — isso apaga o tema dela e o dano aparece longe da mudanca
+  - trocar a biblioteca de componentes, ou introduzir uma segunda alem da que o repositorio ja fixa
+  - redesenhar composicao, hierarquia, layout ou navegacao de qualquer tela
+  - alterar tipografia, familia, tamanho, peso ou entrelinha — isso pertence a tarefa anterior
+  - retematizar landing, entrada ou onboarding, que tem tarefa propria e inventario proprio
+  - introduzir modo escuro, token de modo ou qualquer superficie de tema
+  - alterar autorizacao, migracao de banco, esquema de confianca, elegibilidade ou regra de visibilidade de conteudo
+  - resolver o estado desabilitado com opacidade sobre a cor final, que e exatamente o que derruba o contraste hoje
+  - baixar o limite de um teste existente para fazer a suite passar
+
+acceptance:
+  - o documento e o gerador descrevem a camada de adaptacao pelo que ela e, ligacao permanente com a biblioteca de componentes derivada das camadas semantica e de componente, e param de prometer que ela sera removida
+  - toda variavel que a biblioteca consome e que decide cor, estado, forma ou movimento e declarada pela fonte de tokens, e um teste enumera as variaveis da folha da biblioteca e falha quando uma decisoria fica descoberta
+  - a superficie neutra da biblioteca passa a ser uma cor da paleta do documento, e nenhuma cor fora da paleta sobrevive como padrao herdado
+  - o estado de sobrevoo deixa de ser identico ao de repouso em toda superficie interativa que a biblioteca resolve por essa variavel
+  - o estado desabilitado preserva contraste de texto em 4,5 para 1 ou mais e de limite de controle em 3 para 1 ou mais, medido pela matriz de contraste, sem recorrer a opacidade sobre a cor final
+  - a curva e a duracao de movimento resolvidas pela biblioteca derivam dos tokens de movimento do sistema
+  - os nomes do adaptador que a biblioteca nao le deixam de ser consumidos pelo codigo proprio do produto, que passa a ler as camadas semantica e de componente
+  - um teste falha quando codigo proprio novo consome um nome do adaptador que a biblioteca nao le, e continua permitindo os nomes que ela le
+  - a auditoria visual em 375, 768 e 1440 nao introduz achado novo de contraste, alvo ou sobreposicao em relacao a captura de baseline
+  - a jornada de ponta a ponta continua passando, incluindo os caminhos em que um controle desabilitado ou em carregamento decide o que a pessoa pode fazer
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/DS-004.task.yml
+  - node scripts/tokens/generate.mjs --check
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+  - npx pnpm@11.18.0 test:e2e
+
+depends_on: DS-002
+
+execution_notes: |
+  Leia isto antes de comecar, porque o enunciado obvio desta tarefa esta errado.
+  O enunciado errado e "o codigo usa alias, migre para semantic". A camada de alias e o
+  contrato de tema que a folha da biblioteca le: ela procura por esses nomes, e a folha
+  de tokens do produto e importada depois da folha dela justamente para vencer. Trocar
+  esses nomes por nomes semanticos nao migra nada, apaga o tema e devolve a aparencia
+  padrao da biblioteca. A separacao correta e outra e ja esta medida: dos 56 nomes,
+  24 sao lidos pela biblioteca e ficam, 32 nao sao e sao de uso exclusivo do produto.
+  Comece produzindo essa lista com um comando, nao a olho: enumere as variaveis usadas
+  pela folha da biblioteca e cruze com os nomes do adaptador. A lista e o insumo dos dois
+  testes que esta tarefa pede, e ela muda quando a biblioteca sobe de versao, e por isso
+  o teste precisa recalcula-la em vez de guardar uma copia.
+  Sobre o desabilitado. A saida errada e reduzir opacidade da cor final, porque foi
+  exatamente isso que produziu 3,18 e 2,35. A saida correta e um par proprio de tokens
+  de superficie e de texto para o estado, com contraste medido pela matriz. Desabilitado
+  precisa parecer indisponivel sem virar ilegivel: quem nao consegue ler o rotulo nao
+  consegue entender por que a acao esta fora de alcance.
+  Sobre a cor neutra da biblioteca. Ela decide botao secundario, marcador, separador e
+  fundo de varios componentes. Trocar por uma cor da paleta muda pixel em muitas telas de
+  uma vez, e e por isso que a captura de baseline antes da mudanca nao e opcional.
+  Sobre o teste de cobertura. Ele nao pode exigir que as 197 variaveis sejam declaradas:
+  boa parte e geometria interna da biblioteca e nao decide aparencia do produto. O criterio
+  e decisoria, cor, estado, forma e movimento. Escreva o criterio como lista explicita no
+  teste, com o motivo de cada exclusao, para que a proxima pessoa consiga discordar dele.
+  O que fica de fora, de proposito. Tipografia pertence a tarefa anterior. As tres telas de
+  entrada tem tarefa propria e continuam com paleta local ate la.
+
+risk: sistema de design, tema de biblioteca e estados de componente
+risk_level: R2
+adr: docs/decisions/ADR-20260901-design-system.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
