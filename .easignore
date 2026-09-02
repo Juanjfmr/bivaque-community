@@ -1,0 +1,24 @@
+# EAS Build exclusions
+# Generated/dev artifacts that should not be uploaded
+.codegraph
+.codex-remote-attachments
+.omo
+.visual
+.vercel
+.idea
+.work
+.opencode
+.reasonix
+debug-journal.md
+.debug-journal.md
+.env.local
+.env
+*.log
+e2e-junit.xml
+e2e-results.json
+playwright-report
+test-results
+visual-captures
+apps/mobile/android
+apps/mobile/build.apk
+apps/mobile/dist-android
