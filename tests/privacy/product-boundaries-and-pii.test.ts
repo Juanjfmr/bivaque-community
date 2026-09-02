@@ -23,6 +23,15 @@ const EXCLUDED_DIRS = new Set([
   // without this the scan walked it twice, which under load pushed this
   // test past its 5s timeout (found closing onda T/F, 2026-08-20).
   ".claude",
+  // .pnpm-store/ is the package store: 82k entries, none of them scannable,
+  // because the store names content by hash and not by extension. The walk
+  // still had to statSync every one of them to discard it, which took the
+  // scan from under 5s to 35s and failed both boundary tests by timeout —
+  // looking exactly like a product-boundary violation (found running the
+  // DS-003 visual audit, 2026-09-02).
+  ".pnpm-store",
+  // .omo/evidence/ is per-run agent evidence, not product source.
+  ".omo",
 ])
 
 function collectFiles(dir: string): string[] {
