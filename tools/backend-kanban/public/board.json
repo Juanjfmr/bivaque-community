@@ -1532,6 +1532,7 @@
         "S5 UI entregue (commit 08621b8)",
         "BLOCK-MOBILE-RUNTIME Android runtime provado (commit d970fb8) — emulador boota, adb fala com o sistema",
         "2026-09-02: causa raiz do crash useFrameSize identificada e corrigida — duas copias de React no bundle Metro (19.1.0 do RN 0.81 + 19.2.8 aninhado em react-dom@19.2.8 da web). Dispatcher module-local fica null na copia nao inicializada pelo renderer. Fix: overrides react/react-dom 19.1.0 em pnpm-workspace.yaml + remocao de react-dom de apps/mobile. Evidencia: scripts/check-react-singleton.cjs passa; bundle expo export contem apenas 19.1.0; web build passa com React 19.1.0.",
+        "2026-09-02: drift corrigido no fix acima — d8764a8 trocou react-native-screens de 4.24.0 para 4.17.1 sem pedido e fora da faixa do SDK 54 (expo install --check pedia ~4.16.0); revertido para ~4.16.0, hoje instalado 4.16.0 e nao mais sinalizado. apps/web declarava react/react-dom ^19.2.8 enquanto o override resolvia 19.1.0 — range nao cobria a versao instalada; reconciliado para 19.1.0 exato. Evidencia: gate verde nos quatro passos, build da web exit 0, check-react-singleton verde.",
         "2026-09-01: drift do BLOCK-MOBILE-RUNTIME (d970fb8) invalidado — emulator 37.1.11 removeu cross-arch TCG, arm64 nao boota mais em host x86_64. Emulador x86_64 (bivaque_ci) boota normalmente."
       ],
       "tests": [
@@ -1545,7 +1546,7 @@
         "BLOCK-MOBILE-RUNTIME Android | commit d970fb8"
       ],
       "updatedAt": "2026-09-02",
-      "sourceRevision": "08621b8",
+      "sourceRevision": "e1bb839",
       "blockers": [],
       "dependencies": ["S5-MOBILE-UI"]
     }
