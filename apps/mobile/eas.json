@@ -5,6 +5,7 @@
   "build": {
     "preview": {
       "node": "22.13.1",
+      "environment": "preview",
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease",

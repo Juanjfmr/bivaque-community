@@ -1,24 +1,62 @@
-# EAS Build exclusions
-# Generated/dev artifacts that should not be uploaded
+# EAS Build exclusions — o que NAO sobe no tarball do build.
+#
+# ATENCAO: o .easignore SUBSTITUI o .gitignore, nao soma com ele.
+# A doc do Expo (docs.expo.dev/build-reference/easignore) diz: "If you create
+# a .easignore file, the EAS CLI prioritizes it over the .gitignore file" e
+# recomenda "include all files and directories from your .gitignore file".
+# Por isso tudo que esta no .gitignore precisa estar repetido aqui.
+# Ao adicionar uma regra no .gitignore, adicione aqui tambem.
+
+# --- espelho do .gitignore ---
+node_modules/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+.visual/
+dev-server.log
+dev-server.pid
+.env
+.env.*
+.omo/
+work/
+e2e-*.log
+e2e-*.xml
+e2e-*.json
+junit-results.xml
+playwright-install.log
+supabase-start.log
+supabase-start.err
+supabase-env.txt
+# redirects de shell que criaram nomes com espaco no fim
+e2e-junit.xml\
+e2e-results.json\
+.claude/worktrees/
+.reasonix/
+.vercel/
+.idea/
+*.iml
+
+# --- exclusivo do build EAS ---
+# Store local do pnpm: ~82 mil arquivos, nenhum deles fonte. Nao esta no
+# .gitignore (segue untracked), entao precisa ser barrado aqui explicitamente.
+.pnpm-store/
+
+# Estado de ferramenta e evidencia de agente: nunca entra no build.
 .codegraph
-.codex-remote-attachments
-.omo
-.visual
-.vercel
-.idea
-.work
-.opencode
-.reasonix
+.codex-remote-attachments/
+.opencode/
+.work/
 debug-journal.md
 .debug-journal.md
-.env.local
-.env
+visual-captures/
 *.log
-e2e-junit.xml
-e2e-results.json
-playwright-report
-test-results
-visual-captures
-apps/mobile/android
-apps/mobile/build.apk
-apps/mobile/dist-android
+
+# Saida de build local do mobile. O EAS roda o proprio prebuild na nuvem;
+# subir um android/ local faz o build usar artefato da maquina de quem enviou.
+apps/mobile/android/
+apps/mobile/dist-*/
+apps/mobile/*.apk
+apps/mobile/build-log-*.txt
