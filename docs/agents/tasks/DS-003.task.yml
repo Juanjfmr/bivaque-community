@@ -67,7 +67,7 @@ forbidden:
 acceptance:
   - a familia declarada e auto-hospedada no repositorio, carregada localmente com pre-carga e alternativa de metrica ajustada, e o arquivo de licenca acompanha o asset
   - nenhuma requisicao de fonte para dominio externo ocorre no carregamento de qualquer rota, e um teste de escopo falha se uma referencia externa a familia reaparecer
-  - o peso declarado no documento para cada papel e renderizavel pela familia empacotada, seja porque o eixo de peso o alcanca, seja porque o documento passou a declarar um peso que ele alcanca — a divergencia entre os dois nao sobrevive
+  - a familia e empacotada na variante de eixo continuo de peso, e o peso 650 que o documento declara para Display, Page title e Section title e de fato aplicado nesses tres papeis — cortes fixos nao satisfazem este item, e reescrever o documento para um peso menor tambem nao
   - os sete papeis existem na fonte de tokens com tamanho, peso, entrelinha e espacamento entre letras proprios, e nenhum dos valores fica escrito direto na folha de estilo
   - os sete papeis sao aplicados por padrao aos elementos semanticos correspondentes e ficam disponiveis como utilitario, sem que nenhum componente de produto seja editado
   - todo tamanho tipografico presente na fonte tem papel declarado no documento, e todo papel do documento tem nome na camada que a aplicacao consome, incluindo o maior deles
@@ -95,13 +95,15 @@ execution_notes: |
   texto do produto: quebra de linha, altura de bloco, alvo de toque, transbordo.
   Esta e a mudanca de maior risco visual do sistema inteiro, e o risco e de regressao
   silenciosa, nao de gosto.
-  Sobre o peso 650. Ele so existe se a familia for empacotada na variante de eixo
-  continuo de peso. Se a escolha for empacotar cortes fixos, entao 650 nao e alcancavel
-  e o caminho correto e o documento passar a declarar o peso que existe, nao o codigo
-  fingir que 650 foi aplicado. O aceite aceita as duas saidas e recusa a terceira, que e
-  manter documento e runtime discordando. Cortes fixos custam menos bytes; o eixo
-  continuo custa um arquivo maior e entrega os pesos intermediarios. Decida pelo peso da
-  pagina, e registre a escolha no documento.
+  Sobre o peso 650. A decisao ja foi tomada pelo dono em 2026-09-02 e nao esta em aberto:
+  empacote a variante de EIXO CONTINUO de peso e aplique 650 de verdade em Display,
+  Page title e Section title. Nao empacote cortes fixos, e nao reescreva o documento
+  para um peso menor — as duas saidas que o aceite antes permitia foram fechadas. O
+  arquivo fica maior que o de cortes fixos, e esse custo foi aceito em troca dos pesos
+  intermediarios. Declare 650 como token de peso proprio: reaproveitar semibold 600 no
+  lugar dele e o mesmo defeito de estado nominal que ja custou uma reexecucao no DS-002.
+  Se o eixo da familia nao alcancar 650, isso e um achado que PARA a tarefa e volta como
+  decisao humana; nao escolha um vizinho em silencio.
   Sobre a alternativa de metrica. A familia nova tem metricas diferentes da alternativa
   de sistema que o produto usa hoje, entao trocar sem ajustar a alternativa produz salto
   de layout no primeiro render. Use o carregador local do framework, que resolve
