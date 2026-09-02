@@ -2,36 +2,24 @@
 # PreToolUse firewall — bloqueia comandos destrutivos e acesso a secrets.
 # stdin: JSON com {tool_name, tool_input}
 # exit 0 = permite | exit 2 = bloqueia (stderr vira o motivo lido pelo modelo)
+#
+# A decisao vive em bash-guard.mjs. Este arquivo e so o ponto de entrada porque
+# o caminho esta fixado em .claude/settings.local.json.
+#
+# Por que Node e nao bash: a extracao anterior usava
+#   grep -o '"command":"[^"]*"'
+# que para na primeira aspa escapada do JSON. Comando iniciado por atribuicao
+# com aspas (DIR="/tmp/x" && rm -rf /) era lido como `DIR=\` e escapava de todas
+# as regras. Ver o comentario de cabecalho do .mjs.
 
-input=$(cat)
-tool=$(printf '%s' "$input" | grep -o '"tool_name":"[^"]*"' | cut -d'"' -f4)
-cmd=$(printf '%s' "$input" | grep -o '"command":"[^"]*"' | cut -d'"' -f4)
+here=$(dirname "$0")
 
-block() {
-  echo "BLOQUEADO: $1" >&2
+if ! command -v node >/dev/null 2>&1; then
+  # Falha FECHADA. Sem o parser nao da para decidir, e liberar por omissao foi o
+  # defeito que este arquivo existe para corrigir. Para destravar: instale o Node
+  # (o repo exige >= 22) ou remova o hook PreToolUse de .claude/settings.local.json.
+  echo "BLOQUEADO: node nao encontrado — guard nao consegue avaliar o comando" >&2
   exit 2
-}
-
-# Proteção de arquivos sensíveis em Edit/Write
-if [ "$tool" = "Edit" ] || [ "$tool" = "Write" ]; then
-  file=$(printf '%s' "$input" | grep -o '"file_path":"[^"]*"' | cut -d'"' -f4)
-  case "$file" in
-    *.env|*.env.*|*.env.example) [ "$file" = "*.env.example" ] || block "arquivo .env nao pode ser escrito/alterado" ;;
-    *.key|*.pem|*.p12) block "arquivo de chave/segredo nao pode ser alterado" ;;
-  esac
 fi
 
-# Firewall de comandos Bash destrutivos
-if [ "$tool" = "Bash" ]; then
-  case "$cmd" in
-    *"rm -rf"*) block "rm -rf e proibido — use remocao cirurgica com confirmacao" ;;
-    *"rm -fr"*) block "rm -fr e proibido — use remocao cirurgica com confirmacao" ;;
-    *"git push"*"--force"*) block "git push --force e proibido sem aprovacao" ;;
-    *"git push"*"-f"*) block "git push -f e proibido sem aprovacao" ;;
-    *"--linked"*) block "supabase --linked aponta para producao — proibido" ;;
-    *"db:reset"*|*"db reset"*) block "db:reset requer aprovacao explicita — use --yes apenas com confirmacao" ;;
-    *".env"*) block "comando referenciando .env — nao manipule arquivos .env" ;;
-  esac
-fi
-
-exit 0
+exec node "$here/bash-guard.mjs"
