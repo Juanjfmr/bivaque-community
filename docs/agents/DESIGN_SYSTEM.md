@@ -193,11 +193,12 @@ valor bruto   intenção      contrato de uso
 ```
 
 - **Primitive:** escala sem significado de interface, por exemplo `primitive.terra-700` e
-  `space.4`. Só foundations e gerador de tokens podem usá-las.
-- **Semantic:** intenção estável, por exemplo `color.action.primary`, `surface.sunken` e
-  `text.secondary`. É a camada permitida em layout e componentes.
-- **Component:** contrato local, por exemplo `button.primary.background` e
-  `field.invalid.border`. Só referencia semantic ou outro component token.
+  `primitive.space-4`. Só foundations e gerador de tokens podem usá-las.
+- **Semantic:** intenção estável, por exemplo `semantic.action-primary`,
+  `semantic.surface-sunken` e `semantic.text-secondary`. É a camada permitida em layout e
+  componentes.
+- **Component:** contrato local, por exemplo `component.button-primary-bg` e
+  `component.field-invalid-border`. Só referencia semantic ou outro component token.
 
 Todo token deve declarar tipo, descrição, estado, modo e par de contraste quando aplicável.
 `packages/tokens/src/tokens.json` é a fonte única publicável. `tokens.css` é gerado por
@@ -221,9 +222,9 @@ pelos testes de contrato:
 `component.button-danger-bg-default`, `component.field-bg-default`,
 `component.field-border-default`, `component.field-invalid-border`.
 
-A notação histórica usada em trechos anteriores deste documento permanece registrada em
-`tokens.json.documentation.aliases`; ela aponta para os caminhos canônicos e não cria uma segunda
-fonte de valores.
+Não há aliases documentais para tokens: cada nome acima resolve diretamente em uma chave da
+camada correspondente de `packages/tokens/src/tokens.json`. Se uma chave mudar, este inventário
+e o teste de contrato mudam no mesmo commit.
 
 ### 5.2 Inventário mínimo
 
@@ -420,15 +421,28 @@ que automação não entende.
 O foco usa anatomia de anel duplo: `semantic.focus-inner` é o anel claro imediatamente sobre o
 controle sólido e `semantic.focus-outer` é o anel escuro que se separa dele e contrasta com a
 superfície externa. Assim o indicador não precisa usar uma única cor contra superfícies que têm
-luminâncias opostas. A matriz exige pelo menos `3:1` para cada anel no fundo em que ele aparece.
+luminâncias opostas. A matriz cobre os estados de botão e exige pelo menos `3:1` para cada anel
+no fundo em que ele aparece.
 
-O limite que identifica um campo usa `semantic.control-border`, derivado de `primitive.petrol-700`.
-Ele é separado de `semantic.border`, que continua sendo a divisória decorativa sutil. Campo,
-select e checkbox usam o limite de controle; divisórias não engrossam por causa desta regra.
+O limite que identifica um campo usa `semantic.control-border`, derivado de `primitive.ink-700`,
+e seus estados percorrem uma rampa neutra da mesma família: `semantic.control-border-hover`
+escurece para `primitive.ink-800`, `semantic.control-border-pressed` chega a `primitive.ink-900`
+e `semantic.control-border-disabled` recua para `primitive.ink-500`. Ele é separado de
+`semantic.border`, que continua sendo a divisória decorativa sutil. Campo, select e checkbox usam
+o limite de controle; divisórias não engrossam por causa desta regra.
 
-Todo par de token de texto/superfície entra numa matriz de contraste. A matriz é reavaliada ao
-alterar primitive, modo, opacidade ou componente. Captura visual não prova foco, teclado,
-leitor de tela, foco de modal ou autorização; cada um exige teste apropriado.
+**Estado de campo não empresta cor de outro significado.** A rampa é neutra de propósito:
+terracota, petróleo, verde e vermelho carregam significado próprio no sistema, e um campo com
+limite vermelho ao ser pressionado diz à pessoa que ela errou. Carregando não tem cor própria —
+`component.field-bg-loading` e `component.field-border-loading` apontam para o estado desabilitado
+e recebem movimento, que é o contrato de Skeleton na §6. Um estado herda apontando para o estado
+pai; o teste recusa dois estados que colidam por acidente e aceita a herança declarada.
+
+Todo par de token de texto/superfície e de indicador não textual entra na matriz executável de
+`packages/tokens/src/tokens.json`, incluindo os estados desabilitados. Texto normal exige `4.5:1`;
+foco e limite de controle exigem `3:1`. O piso de texto da captura é `13` px. A matriz é
+reavaliada ao alterar primitive, modo, opacidade ou componente. Captura visual não prova foco,
+teclado, leitor de tela, foco de modal ou autorização; cada um exige teste apropriado.
 
 ---
 

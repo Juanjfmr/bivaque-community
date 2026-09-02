@@ -194,10 +194,53 @@ test("keeps component states in the token source and derives ink-based values", 
   const tokens = JSON.parse(readFileSync(join(root, "packages/tokens/src/tokens.json"), "utf8"))
   const requiredStates = ["default", "hover", "pressed", "disabled", "loading"]
 
+  const resolve = (reference, seen = new Set()) => {
+    const [layer, name] = reference.split(".")
+    assert.ok(layer && name && Object.hasOwn(tokens[layer], name), `unknown token: ${reference}`)
+    assert.equal(seen.has(reference), false, `cyclic token reference: ${reference}`)
+    const value = tokens[layer][name]
+    const match = /^var\(--(primitive|semantic|component)-([a-z0-9-]+)\)$/.exec(value)
+    return match ? resolve(`${match[1]}.${match[2]}`, new Set([...seen, reference])) : value
+  }
+
   for (const component of ["button-primary-bg", "button-danger-bg", "field-bg", "field-border"]) {
     for (const state of requiredStates) {
       assert.ok(tokens.component[`${component}-${state}`], `missing ${component}-${state}`)
     }
+
+    // Um estado pode herdar de outro, e diz isso apontando para ele: `field-bg-loading`
+    // referencia `component.field-bg-disabled`. Um campo carregando não tem cor própria
+    // — ele fica indisponível e recebe movimento, que é o contrato de Skeleton na §6.
+    // Exigir cinco cores distintas aqui foi o que produziu borda vermelha em campo
+    // pressionado e verde em campo carregando: cores emprestadas de outros significados,
+    // escolhidas para satisfazer a contagem. A regra correta é que estado nenhum resolva
+    // por acidente para o valor de outro — herdar é explícito e aponta para o pai.
+    const inherits = (state) => {
+      const value = tokens.component[`${component}-${state}`]
+      const match = /^var\(--component-([a-z0-9-]+)\)$/.exec(value)
+      if (!match) return null
+      const parent = match[1].replace(`${component}-`, "")
+      assert.ok(
+        requiredStates.includes(parent),
+        `${component}-${state} inherits from ${match[1]}, which is not a state of this component`,
+      )
+      return parent
+    }
+
+    const ownStates = requiredStates.filter((state) => inherits(state) === null)
+    const resolvedOwn = ownStates.map((state) => resolve(`component.${component}-${state}`))
+    assert.equal(
+      new Set(resolvedOwn).size,
+      ownStates.length,
+      `${component} states without a declared parent must resolve to distinct values`,
+    )
+  }
+
+  assert.notEqual(resolve("semantic.control-border"), resolve("semantic.focus-outer"))
+  for (const value of Object.values(tokens.component).filter(
+    (value) => typeof value === "string",
+  )) {
+    assert.doesNotMatch(value, /opacity/i, "disabled states must not use opacity")
   }
 
   for (const value of [

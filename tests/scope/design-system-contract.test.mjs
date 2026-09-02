@@ -44,22 +44,27 @@ test("documented token paths resolve in the canonical token source", () => {
     .map(([layer, name]) => `${layer}.${name}`)
   assert.deepEqual(missing, [])
 
-  const documentedNames = [...source.matchAll(/`([a-z][a-z0-9]*(?:\.[a-z0-9-]+)+)`/g)]
-    .map(([, name]) => name)
-    .filter((name) => !name.startsWith("tokens."))
-  const aliases = tokens.documentation.aliases
-  const unresolved = documentedNames.filter((name) => {
-    if (
-      name.startsWith("primitive.") ||
-      name.startsWith("semantic.") ||
-      name.startsWith("component.")
-    ) {
-      const [layer, tokenName] = name.split(".")
-      return !Object.hasOwn(tokens[layer], tokenName)
-    }
-    return !Object.hasOwn(aliases, name)
-  })
+  assert.equal(Object.hasOwn(tokens, "documentation"), false)
+  const documentedTokenNames = [
+    ...source.matchAll(/`(primitive|semantic|component)\.([a-z0-9-]+)`/g),
+  ]
+  const unresolved = documentedTokenNames
+    .filter(([, layer, name]) => !Object.hasOwn(tokens[layer], name))
+    .map(([, layer, name]) => `${layer}.${name}`)
   assert.deepEqual(unresolved, [])
+
+  const legacyNames = [
+    "color.action.primary",
+    "surface.sunken",
+    "text.secondary",
+    "button.primary.background",
+    "field.invalid.border",
+  ]
+  assert.deepEqual(
+    legacyNames.filter((name) => source.includes(`\`${name}\``)),
+    [],
+    "token names in the canonical document must use the source namespace",
+  )
 })
 
 test("legacy design documents redirect to the one canonical system", () => {
@@ -86,6 +91,12 @@ test("the web token stylesheet is generated from the canonical token source", ()
     encoding: "utf8",
   })
   assert.equal(result.status, 0, result.stderr || result.stdout)
+})
+
+test("the browser theme color is derived from the token adapter", () => {
+  const page = read("apps", "web", "app", "page.tsx")
+  assert.match(page, /themeColor:\s*brandTokens\.color\.accent/)
+  assert.doesNotMatch(page, /2f7654/i)
 })
 
 test("reporting never exposes database errors and keeps a usable disclosure control", () => {

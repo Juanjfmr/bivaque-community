@@ -56,21 +56,61 @@ const contrast = (foreground, background) => {
 }
 
 test("every documented text/surface pair meets WCAG AA", () => {
-  const pairs = tokens.contrast.textPairs
-  assert.equal(pairs.length, 21, "the palette matrix must cover all text colors over all surfaces")
+  const expected = tokens.contrast.textForegrounds.flatMap((foreground) =>
+    tokens.contrast.surfaceBackgrounds.map((background) => ({ foreground, background })),
+  )
+  const actual = tokens.contrast.textPairs
+  const key = (pair) => `${pair.foreground} on ${pair.background}`
+  assert.deepEqual(
+    actual.map(key).sort(),
+    expected.map(key).sort(),
+    "the text matrix must cover every source foreground/surface combination exactly once",
+  )
 
-  for (const pair of pairs) {
+  for (const pair of actual) {
     const ratio = contrast(pair.foreground, pair.background)
     assert.ok(ratio >= 4.5, `${pair.foreground} on ${pair.background}: ${ratio.toFixed(2)}:1`)
   }
 })
 
+test("disabled text states meet WCAG AA without opacity", () => {
+  for (const pair of tokens.contrast.stateTextPairs) {
+    const ratio = contrast(pair.foreground, pair.background)
+    assert.ok(ratio >= 4.5, `${pair.name}: ${ratio.toFixed(2)}:1`)
+  }
+
+  for (const name of ["button-primary-bg-disabled", "button-danger-bg-disabled"]) {
+    assert.doesNotMatch(tokens.component[name], /opacity/i, `${name} must be a solid token`)
+  }
+})
+
 test("every documented non-text pair meets the 3:1 boundary", () => {
   const pairs = tokens.contrast.nonTextPairs
-  assert.equal(pairs.length, 6, "focus and control-boundary coverage must be explicit")
+  assert.ok(pairs.length >= 6, "focus and control-boundary coverage must be explicit")
+  assert.equal(new Set(pairs.map((pair) => pair.name)).size, pairs.length)
+
+  for (const name of [
+    "focus-inner-on-primary",
+    "focus-inner-on-danger",
+    "focus-outer-on-canvas",
+    "focus-outer-on-sunken",
+    "control-border-on-field",
+    "control-border-on-canvas",
+  ]) {
+    assert.ok(
+      pairs.some((pair) => pair.name === name),
+      `missing non-text pair: ${name}`,
+    )
+  }
 
   for (const pair of pairs) {
     const ratio = contrast(pair.foreground, pair.background)
     assert.ok(ratio >= 3, `${pair.name}: ${ratio.toFixed(2)}:1`)
   }
+
+  assert.notEqual(
+    resolveToken("semantic.control-border"),
+    resolveToken("semantic.focus-outer"),
+    "resting control boundary must differ from focus ring",
+  )
 })

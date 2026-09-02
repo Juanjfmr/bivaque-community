@@ -33,7 +33,7 @@ export const nativeTokens = {
   // CSS may use color-mix; React Native receives the same primitive with its
   // documented hairline alpha resolved here, without a duplicated color value.
   border: hexWithAlpha(primitive("ink-900"), 0.14),
-  controlBorder: primitive("petrol-700"),
+  controlBorder: primitive("ink-700"),
   foreground: primitive("ink-900"),
   muted: primitive("ink-700"),
   accent: primitive("terra-700"),

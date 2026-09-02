@@ -107,6 +107,12 @@ function parseEnvFile(path) {
 
 const APP_DOTENV = join(import.meta.dirname, "..", "..", "apps", "web", ".env.local")
 const dotEnv = parseEnvFile(APP_DOTENV)
+const TOKEN_SOURCE = JSON.parse(
+  readFileSync(
+    join(import.meta.dirname, "..", "..", "packages", "tokens", "src", "tokens.json"),
+    "utf8",
+  ),
+)
 
 // --------------------------------------------------------------------------
 // auth — optional; without credentials the gated routes are captured signed out
@@ -145,7 +151,7 @@ async function fetchSession() {
 // audit — runs inside the page, returns plain JSON
 // --------------------------------------------------------------------------
 
-function auditPage() {
+function auditPage({ nonTextPairs, minimumTextSize }) {
   const findings = []
   const add = (rule, severity, selector, detail) =>
     findings.push({ rule, severity, selector, detail })
@@ -262,7 +268,8 @@ function auditPage() {
 
     const style = getComputedStyle(element)
     const size = Number.parseFloat(style.fontSize)
-    if (size < 13) add("font-too-small", "medium", describe(element), `${size}px (min 13px)`)
+    if (size < minimumTextSize)
+      add("font-too-small", "medium", describe(element), `${size}px (min ${minimumTextSize}px)`)
 
     const foreground = parseColor(style.color)
     if (!foreground) continue
@@ -281,23 +288,17 @@ function auditPage() {
 
   // 6. non-text contrast — focus rings and control boundaries are measured
   // from the generated token values, not inferred from text color.
-  const nonTextPairs = [
-    [
-      "focus-inner-on-primary",
-      "--component-button-focus-ring-inner",
-      "--component-button-primary-bg-default",
-    ],
-    [
-      "focus-inner-on-danger",
-      "--component-button-focus-ring-inner",
-      "--component-button-danger-bg-default",
-    ],
-    ["focus-outer-on-canvas", "--component-button-focus-ring-outer", "--semantic-canvas"],
-    ["focus-outer-on-sunken", "--component-button-focus-ring-outer", "--semantic-surface-sunken"],
-    ["control-border-on-field", "--component-field-border-default", "--component-field-bg-default"],
-    ["control-border-on-canvas", "--component-field-border-default", "--semantic-canvas"],
-  ]
-  for (const [name, foregroundToken, backgroundToken] of nonTextPairs) {
+  const cssVariable = (reference) => {
+    const [layer, name] = reference.split(".")
+    return `--${layer}-${name}`
+  }
+  for (const {
+    name,
+    foreground: foregroundReference,
+    background: backgroundReference,
+  } of nonTextPairs) {
+    const foregroundToken = cssVariable(foregroundReference)
+    const backgroundToken = cssVariable(backgroundReference)
     const foreground = tokenColor(foregroundToken)
     const background = tokenColor(backgroundToken)
     if (!foreground || !background) {
@@ -457,7 +458,10 @@ async function main() {
         const full = join(shotsDir, `${label}--full.png`)
         await page.screenshot({ path: fold })
         await page.screenshot({ path: full, fullPage: true })
-        const audit = await page.evaluate(auditPage)
+        const audit = await page.evaluate(auditPage, {
+          nonTextPairs: TOKEN_SOURCE.contrast.nonTextPairs,
+          minimumTextSize: TOKEN_SOURCE.contrast.minimumTextSize,
+        })
 
         results.push({
           route: route.path,
