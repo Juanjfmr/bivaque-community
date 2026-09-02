@@ -10,18 +10,119 @@ body {
 
 @layer base {
   body {
-    line-height: var(--line-height-body);
+    font-size: var(--semantic-typography-body-size);
+    font-weight: var(--semantic-typography-body-weight);
+    line-height: var(--semantic-typography-body-line-height);
+    letter-spacing: var(--semantic-typography-body-letter-spacing);
     font-family: var(--font-family-interface);
   }
 
-  h1,
-  h2,
+  h1 {
+    font-size: var(--semantic-typography-page-title-size);
+    font-weight: var(--semantic-typography-page-title-weight);
+    line-height: var(--semantic-typography-page-title-line-height);
+    letter-spacing: var(--semantic-typography-page-title-letter-spacing);
+  }
+
+  h2 {
+    font-size: var(--semantic-typography-section-title-size);
+    font-weight: var(--semantic-typography-section-title-weight);
+    line-height: var(--semantic-typography-section-title-line-height);
+    letter-spacing: var(--semantic-typography-section-title-letter-spacing);
+  }
+
   h3,
   h4,
   h5,
   h6 {
-    line-height: 1.2;
-    letter-spacing: -0.011em;
+    font-size: var(--semantic-typography-card-title-size);
+    font-weight: var(--semantic-typography-card-title-weight);
+    line-height: var(--semantic-typography-card-title-line-height);
+    letter-spacing: var(--semantic-typography-card-title-letter-spacing);
+  }
+
+  p,
+  li {
+    font-size: var(--semantic-typography-body-size);
+    font-weight: var(--semantic-typography-body-weight);
+    line-height: var(--semantic-typography-body-line-height);
+    letter-spacing: var(--semantic-typography-body-letter-spacing);
+  }
+
+  label,
+  button,
+  [role="button"] {
+    font-size: var(--semantic-typography-label-size);
+    font-weight: var(--semantic-typography-label-weight);
+    line-height: var(--semantic-typography-label-line-height);
+    letter-spacing: var(--semantic-typography-label-letter-spacing);
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: var(--semantic-typography-body-size);
+    font-weight: var(--semantic-typography-body-weight);
+    line-height: var(--semantic-typography-body-line-height);
+    letter-spacing: var(--semantic-typography-body-letter-spacing);
+  }
+}
+
+@layer utilities {
+  .type-display {
+    font-size: var(--semantic-typography-display-size);
+    font-weight: var(--semantic-typography-display-weight);
+    line-height: var(--semantic-typography-display-line-height);
+    letter-spacing: var(--semantic-typography-display-letter-spacing);
+  }
+
+  .type-page-title {
+    font-size: var(--semantic-typography-page-title-size);
+    font-weight: var(--semantic-typography-page-title-weight);
+    line-height: var(--semantic-typography-page-title-line-height);
+    letter-spacing: var(--semantic-typography-page-title-letter-spacing);
+  }
+
+  .type-section-title {
+    font-size: var(--semantic-typography-section-title-size);
+    font-weight: var(--semantic-typography-section-title-weight);
+    line-height: var(--semantic-typography-section-title-line-height);
+    letter-spacing: var(--semantic-typography-section-title-letter-spacing);
+  }
+
+  .type-card-title {
+    font-size: var(--semantic-typography-card-title-size);
+    font-weight: var(--semantic-typography-card-title-weight);
+    line-height: var(--semantic-typography-card-title-line-height);
+    letter-spacing: var(--semantic-typography-card-title-letter-spacing);
+  }
+
+  .type-body {
+    font-size: var(--semantic-typography-body-size);
+    font-weight: var(--semantic-typography-body-weight);
+    line-height: var(--semantic-typography-body-line-height);
+    letter-spacing: var(--semantic-typography-body-letter-spacing);
+  }
+
+  .type-label {
+    font-size: var(--semantic-typography-label-size);
+    font-weight: var(--semantic-typography-label-weight);
+    line-height: var(--semantic-typography-label-line-height);
+    letter-spacing: var(--semantic-typography-label-letter-spacing);
+  }
+
+  .type-meta,
+  [data-typography="meta"] {
+    font-size: var(--semantic-typography-meta-size);
+    font-weight: var(--semantic-typography-meta-weight);
+    line-height: var(--semantic-typography-meta-line-height);
+    letter-spacing: var(--semantic-typography-meta-letter-spacing);
+  }
+
+  .measure-reading,
+  [data-reading-measure] {
+    inline-size: 100%;
+    max-inline-size: var(--semantic-typography-reading-measure);
   }
 }
 

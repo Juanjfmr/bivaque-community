@@ -151,7 +151,7 @@ async function fetchSession() {
 // audit — runs inside the page, returns plain JSON
 // --------------------------------------------------------------------------
 
-function auditPage({ nonTextPairs, minimumTextSize }) {
+function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
   const findings = []
   const add = (rule, severity, selector, detail) =>
     findings.push({ rule, severity, selector, detail })
@@ -212,6 +212,20 @@ function auditPage({ nonTextPairs, minimumTextSize }) {
   }
 
   const interactive = [...document.querySelectorAll("a, button, [role='button'], input, select")]
+
+  // Fonts must be served by the application itself. This catches a stylesheet or
+  // component that silently reintroduces a hosted font after the local loader runs.
+  for (const entry of performance.getEntriesByType("resource")) {
+    const url = new URL(entry.name)
+    if (/\.(?:woff2?|ttf|otf)(?:$|\?)/i.test(url.pathname) && url.origin !== location.origin) {
+      add(
+        "external-font-request",
+        "high",
+        url.hostname,
+        "font asset requested outside the app origin",
+      )
+    }
+  }
 
   for (const element of interactive) {
     const box = element.getBoundingClientRect()
@@ -282,6 +296,25 @@ function auditPage({ nonTextPairs, minimumTextSize }) {
         "high",
         describe(element),
         `${ratio.toFixed(2)}:1 (needs ${required}:1) — ${style.color} on background`,
+      )
+    }
+  }
+
+  // Reading surfaces opt into the measure audit with a class or data attribute.
+  // The estimate uses the current font size and the CSS `ch` convention, so it
+  // remains useful across the three capture widths without hardcoded layout sizes.
+  for (const element of document.querySelectorAll(".measure-reading, [data-reading-measure]")) {
+    const box = element.getBoundingClientRect()
+    const style = getComputedStyle(element)
+    const size = Number.parseFloat(style.fontSize)
+    if (box.width === 0 || size === 0) continue
+    const charactersPerLine = box.width / (size * 0.5)
+    if (charactersPerLine > readingMeasureMax) {
+      add(
+        "reading-measure",
+        "medium",
+        describe(element),
+        `${Math.round(charactersPerLine)} characters per line (max ${readingMeasureMax})`,
       )
     }
   }
@@ -461,6 +494,7 @@ async function main() {
         const audit = await page.evaluate(auditPage, {
           nonTextPairs: TOKEN_SOURCE.contrast.nonTextPairs,
           minimumTextSize: TOKEN_SOURCE.contrast.minimumTextSize,
+          readingMeasureMax: Number(TOKEN_SOURCE.primitive["type-reading-max-characters"]),
         })
 
         results.push({

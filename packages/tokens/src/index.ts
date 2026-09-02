@@ -7,6 +7,54 @@ export const primitives = source.primitive
 export const semanticTokens = source.semantic
 export const componentTokens = source.component
 
+// Typography roles are semantic contracts backed by primitive measurements.
+// Keep this adapter data-only so the web and audit tooling consume the same source.
+export const typographyTokens = {
+  display: {
+    fontSize: source.semantic["typography-display-size"],
+    fontWeight: source.semantic["typography-display-weight"],
+    lineHeight: source.semantic["typography-display-line-height"],
+    letterSpacing: source.semantic["typography-display-letter-spacing"],
+  },
+  pageTitle: {
+    fontSize: source.semantic["typography-page-title-size"],
+    fontWeight: source.semantic["typography-page-title-weight"],
+    lineHeight: source.semantic["typography-page-title-line-height"],
+    letterSpacing: source.semantic["typography-page-title-letter-spacing"],
+  },
+  sectionTitle: {
+    fontSize: source.semantic["typography-section-title-size"],
+    fontWeight: source.semantic["typography-section-title-weight"],
+    lineHeight: source.semantic["typography-section-title-line-height"],
+    letterSpacing: source.semantic["typography-section-title-letter-spacing"],
+  },
+  cardTitle: {
+    fontSize: source.semantic["typography-card-title-size"],
+    fontWeight: source.semantic["typography-card-title-weight"],
+    lineHeight: source.semantic["typography-card-title-line-height"],
+    letterSpacing: source.semantic["typography-card-title-letter-spacing"],
+  },
+  body: {
+    fontSize: source.semantic["typography-body-size"],
+    fontWeight: source.semantic["typography-body-weight"],
+    lineHeight: source.semantic["typography-body-line-height"],
+    letterSpacing: source.semantic["typography-body-letter-spacing"],
+  },
+  label: {
+    fontSize: source.semantic["typography-label-size"],
+    fontWeight: source.semantic["typography-label-weight"],
+    lineHeight: source.semantic["typography-label-line-height"],
+    letterSpacing: source.semantic["typography-label-letter-spacing"],
+  },
+  meta: {
+    fontSize: source.semantic["typography-meta-size"],
+    fontWeight: source.semantic["typography-meta-weight"],
+    lineHeight: source.semantic["typography-meta-line-height"],
+    letterSpacing: source.semantic["typography-meta-letter-spacing"],
+  },
+  readingMeasure: source.semantic["typography-reading-measure"],
+} as const
+
 const primitive = (name: keyof typeof primitives) => primitives[name]
 const semantic = (name: keyof typeof semanticTokens) => semanticTokens[name]
 

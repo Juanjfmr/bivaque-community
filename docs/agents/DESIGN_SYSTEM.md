@@ -148,10 +148,10 @@ texto.
 
 ### 4.3 Tipografia
 
-O sistema adota **Public Sans** para interface e leitura. O token de família já declara a cadeia
-com fallback; a fonte ainda não está empacotada, portanto o runtime usa a primeira fallback local
-disponível até a task de asset auto-hospedar WOFF2 com subset latin-ext. Nunca a carregue de um
-terceiro no caminho crítico. Essa lacuna é estado de adoção, não uma alegação de conformidade.
+O sistema adota **Public Sans** para interface e leitura. A variante de eixo contínuo de peso está
+auto-hospedada em WOFF2 nos subsets `latin` e `latin-ext`, com licença OFL-1.1 em
+`apps/web/app/fonts/OFL.txt`. O carregador local aplica pré-carga, `font-display: swap` e ajuste de
+métrica da alternativa. Nunca carregue a família de um terceiro no caminho crítico.
 
 | Papel | Tamanho / entrelinha | Peso | Uso |
 |---|---:|---:|---|
@@ -163,7 +163,18 @@ terceiro no caminho crítico. Essa lacuna é estado de adoção, não uma alega�
 | Label | 14 / 20 | 600 | controle e metadado acionável |
 | Meta | 13 / 18 | 400 | data, escopo e fonte |
 
-Texto corrido fica entre 45 e 72 caracteres por linha. Não use texto menor que 13 px; controles,
+Cada papel é um token semântico com `size`, `weight`, `line-height` e `letter-spacing` próprios
+(`semantic.typography-*`), derivados dos primitives `primitive.type-*`. As três ocorrências de
+peso 650 dependem do eixo contínuo da fonte; substituí-las por um corte 600 perde a decisão
+nominal. `type-display-*`, `type-page-title-*` e `type-section-title-*` usam 650 de verdade.
+
+Os aliases legados `text-lg` (18 px) e `text-2xl` (24 px) permanecem por compatibilidade durante a
+transição. Eles são tamanhos nomeados como **Legacy large** e **Legacy extra-large**, usados por
+componentes ainda não migrados; não são papéis novos do sistema e serão removidos somente com a
+prova das superfícies que os consomem.
+
+Texto corrido fica entre 45 e 72 caracteres por linha, com limite em
+`semantic.typography-reading-measure` e auditoria própria no loop visual. Não use texto menor que 13 px; controles,
 mensagens de erro e conteúdos essenciais usam 14 px ou mais. Caixa alta só para etiqueta curta
 e nunca para instrução, navegação ou conteúdo longo.
 
@@ -220,7 +231,22 @@ pelos testes de contrato:
 `semantic.success`, `semantic.warning`, `semantic.danger`, `semantic.focus-inner`,
 `semantic.focus-outer`, `semantic.control-border`, `component.button-primary-bg`,
 `component.button-danger-bg-default`, `component.field-bg-default`,
-`component.field-border-default`, `component.field-invalid-border`.
+`component.field-border-default`, `component.field-invalid-border`,
+`semantic.typography-display-size`, `semantic.typography-display-weight`,
+`semantic.typography-display-line-height`, `semantic.typography-display-letter-spacing`,
+`semantic.typography-page-title-size`, `semantic.typography-page-title-weight`,
+`semantic.typography-page-title-line-height`, `semantic.typography-page-title-letter-spacing`,
+`semantic.typography-section-title-size`, `semantic.typography-section-title-weight`,
+`semantic.typography-section-title-line-height`, `semantic.typography-section-title-letter-spacing`,
+`semantic.typography-card-title-size`, `semantic.typography-card-title-weight`,
+`semantic.typography-card-title-line-height`, `semantic.typography-card-title-letter-spacing`,
+`semantic.typography-body-size`, `semantic.typography-body-weight`,
+`semantic.typography-body-line-height`, `semantic.typography-body-letter-spacing`,
+`semantic.typography-label-size`, `semantic.typography-label-weight`,
+`semantic.typography-label-line-height`, `semantic.typography-label-letter-spacing`,
+`semantic.typography-meta-size`, `semantic.typography-meta-weight`,
+`semantic.typography-meta-line-height`, `semantic.typography-meta-letter-spacing`,
+`semantic.typography-reading-measure`.
 
 Não há aliases documentais para tokens: cada nome acima resolve diretamente em uma chave da
 camada correspondente de `packages/tokens/src/tokens.json`. Se uma chave mudar, este inventário
@@ -232,7 +258,7 @@ e o teste de contrato mudam no mesmo commit.
 |---|---|---|---|
 | Cor | `ink`, `paper`, `terra`, `petrol`, `leaf`, `amber`, `rose` | canvas, surface, text, border, action, status, focus | button, field, card, alert, nav, chip |
 | Espaço | 0–64 px | page, section, cluster, inset | card, dialog, list-row, composer |
-| Tipo | família, tamanho, peso, leading | display, title, body, label, meta | heading, button, input, card |
+| Tipo | família, tamanho, peso, leading, tracking | display, title, body, label, meta, medida | heading, button, input, card |
 | Forma | 6/10/14/20/pill | control, container, overlay | button, input, card, modal |
 | Elevação | flat/raised/overlay | surface hierarchy | card, popover, modal |
 | Movimento | 0/120/180/240 | feedback, enter, exit | button, toast, overlay, skeleton |
