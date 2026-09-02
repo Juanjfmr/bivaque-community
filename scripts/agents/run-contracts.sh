@@ -19,6 +19,19 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ROOT_WIN="$(cd "$ROOT" && pwd -W 2>/dev/null || echo "$ROOT")"
+
+# O `codex` do PATH em AppData\Local\Programs\OpenAI\Codex\bin é um shim que não
+# resolve codex-resources/codex-windows-sandbox-setup.exe: TODO comando que o agente
+# tenta executar morre em `orchestrator_helper_launch_failed: program not found`, e o
+# agente termina relatando que não conseguiu provar nada. O binário do pacote standalone
+# resolve. Preferimos ele, e caímos no PATH quando não existe.
+CODEX_BIN="$(ls -1d "$HOME"/.codex/packages/standalone/releases/*/bin/codex.exe 2>/dev/null | sort -V | tail -1)"
+[ -x "$CODEX_BIN" ] || CODEX_BIN="codex"
+
+# O cache do npm fica FORA do workspace, e workspace-write só libera workdir, /tmp e
+# $TMPDIR — sem isto, `npx pnpm@11.18.0` morre com EPERM ao resolver o pacote e nenhuma
+# prova do contrato roda.
+NPM_CACHE="$(npm config get cache 2>/dev/null | tr -d '\r')"
 RUN_ID="$(date +%Y%m%d-%H%M%S)"
 EVIDENCE="$ROOT/.omo/evidence/bivaque-community-pilot/design-system-$RUN_ID"
 
@@ -65,7 +78,10 @@ REGRAS DE EXECUÇÃO:
   forbidden é cerca dura, mesmo quando a correção parecer óbvia.
 - Implementação e prova são a mesma unidade. Nenhum item de acceptance fecha sem o
   comando de proof correspondente executado e a saída lida.
-- Use npx pnpm@11.18.0 — pnpm e corepack não estão no PATH.
+- Use npx pnpm@11.18.0 — pnpm e corepack não estão no PATH. Invoque-o SEMPRE por
+  `cmd /c npx pnpm@11.18.0 ...`: seus comandos passam por powershell.exe, e a política
+  de execução desta máquina recusa npx.ps1 com UnauthorizedAccess. Sem o `cmd /c`
+  nenhuma prova roda, e o contrato não aceita implementação sem prova.
 - retry_budget é 3 por item. Esgotado nunca vira PASS: vira FAIL, BLOCKED ou
   HUMAN_DECISION.
 - Se um item for impossível dentro da fronteira, pare nele, termine todos os outros e
@@ -120,10 +136,11 @@ for id in "${CONTRACTS[@]}"; do
 
   echo "  → codex exec"
   { core_prompt; echo; echo "CONTRATO: $contract"; } \
-    | codex exec \
+    | "$CODEX_BIN" exec \
         -C "$ROOT_WIN" \
         -s workspace-write \
         -c sandbox_workspace_write.network_access=true \
+        ${NPM_CACHE:+--add-dir "$NPM_CACHE"} \
         -o "$EVIDENCE/$id-relatorio.md" \
         - 2>&1 | tee "$EVIDENCE/$id-codex.log"
   codex_status=${PIPESTATUS[1]}
