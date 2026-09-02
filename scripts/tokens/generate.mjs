@@ -27,7 +27,7 @@ const css = [
   "  /* Component tokens: wrappers bind contracts to semantic roles. */",
   ...variables("component", source.component),
   "",
-  "  /* Legacy aliases remain only while consumers migrate. */",
+  "  /* Permanent HeroUI theme adapter: library-facing names resolve to Bivaque tokens. */",
   ...variables("", source.web.aliases),
   "}",
   "",

@@ -14,7 +14,7 @@ body {
     font-weight: var(--semantic-typography-body-weight);
     line-height: var(--semantic-typography-body-line-height);
     letter-spacing: var(--semantic-typography-body-letter-spacing);
-    font-family: var(--font-family-interface);
+    font-family: var(--semantic-font-family-interface);
   }
 
   h1 {
@@ -132,11 +132,11 @@ body {
   .tabs__tab,
   .search-field__input,
   .select__trigger {
-    min-height: var(--control-min-height);
+    min-height: var(--semantic-control-min-height);
   }
 
   .button {
-    min-width: var(--control-min-height);
+    min-width: var(--semantic-control-min-height);
   }
 
   :where(a, button, input, select, textarea, [role="button"], [role="checkbox"]):focus-visible {
@@ -167,7 +167,7 @@ body {
      elemento que o auditor mede, mas display:block herda a largura do rail
      estreito (39px) sem acompanhar o <a> filho (44px via min-w-11). */
   .tooltip__trigger {
-    min-width: var(--control-min-height);
+    min-width: var(--semantic-control-min-height);
   }
 
   /* HiddenSelect nativo que o react-aria renderiza dentro do Select do HeroUI:
@@ -186,19 +186,21 @@ body {
   /* Motion — DESIGN_SPEC §2. All durations/easings read from tokens; the
      prefers-reduced-motion block below zeroes these for every element. */
   .motion-card-enter {
-    animation: motion-card-enter var(--duration-base) var(--ease-out) both;
+    animation: motion-card-enter var(--semantic-motion-duration-base)
+      var(--semantic-motion-ease-out) both;
   }
 
   .motion-scrim-enter {
-    animation: motion-fade var(--duration-fast) ease-out both;
+    animation: motion-fade var(--semantic-motion-duration-fast) var(--semantic-motion-ease-out) both;
   }
 
   .motion-panel-enter {
-    animation: motion-panel-enter var(--duration-slow) var(--ease-out) both;
+    animation: motion-panel-enter var(--semantic-motion-duration-slow)
+      var(--semantic-motion-ease-out) both;
   }
 
   .motion-press {
-    transition: transform var(--duration-fast) var(--ease-spring);
+    transition: transform var(--semantic-motion-duration-fast) var(--semantic-motion-ease-spring);
   }
 
   .motion-press:active {
@@ -208,12 +210,12 @@ body {
   @media (hover: hover) {
     .motion-lift {
       transition:
-        box-shadow var(--duration-base) var(--ease-out),
-        transform var(--duration-fast) var(--ease-spring);
+        box-shadow var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+        transform var(--semantic-motion-duration-fast) var(--semantic-motion-ease-spring);
     }
 
     .motion-lift:hover {
-      box-shadow: var(--elevation-2);
+      box-shadow: var(--semantic-elevation-raised);
     }
   }
 }

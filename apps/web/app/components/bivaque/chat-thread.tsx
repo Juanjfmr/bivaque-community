@@ -219,7 +219,7 @@ export function ChatThread({
           <button
             type="button"
             onClick={onBack}
-            className="motion-press mr-1 flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-[var(--surface-subtle)]"
+            className="motion-press mr-1 flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-[var(--semantic-selected)]"
             aria-label="Voltar para conversas"
           >
             <svg
@@ -242,7 +242,7 @@ export function ChatThread({
           <p className="truncate text-xs text-muted">{contextLabel}</p>
         </div>
         {isBlockedByOther ? (
-          <span className="text-xs text-[var(--danger)]">Você foi bloqueado</span>
+          <span className="text-xs text-[var(--semantic-danger)]">Você foi bloqueado</span>
         ) : isBlocked ? (
           <Button size="sm" variant="ghost" onPress={() => onUnblock(conversationId)}>
             Desbloquear
@@ -287,8 +287,8 @@ export function ChatThread({
                 <div
                   className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                     isOwn
-                      ? "rounded-br-md bg-[var(--accent)] text-[var(--accent-foreground)]"
-                      : "rounded-bl-md bg-[var(--surface-subtle)]"
+                      ? "rounded-br-md bg-[var(--semantic-action-primary)] text-[var(--semantic-action-on-strong)]"
+                      : "rounded-bl-md bg-[var(--semantic-selected)]"
                   }`}
                 >
                   <p className="whitespace-pre-wrap break-words">{msg.content}</p>
@@ -315,7 +315,7 @@ export function ChatThread({
                           if (node) reportTriggerRefs.current.set(msg.id, node)
                           else reportTriggerRefs.current.delete(msg.id)
                         }}
-                        className="motion-press min-h-11 min-w-11 px-2 text-sm text-muted transition-colors hover:text-[var(--danger)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus)]"
+                        className="motion-press min-h-11 min-w-11 px-2 text-sm text-muted transition-colors hover:text-[var(--semantic-danger)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus)]"
                         aria-expanded={reportingMessageId === msg.id}
                         aria-controls={`message-report-${msg.id}`}
                       >
@@ -410,7 +410,7 @@ export function ChatThread({
             />
             <div className="flex items-center gap-1 text-xs text-muted self-end pb-1">
               {newMessage.length > 1800 && (
-                <span className={newMessage.length >= 2000 ? "text-[var(--danger)]" : ""}>
+                <span className={newMessage.length >= 2000 ? "text-[var(--semantic-danger)]" : ""}>
                   {2000 - newMessage.length}
                 </span>
               )}

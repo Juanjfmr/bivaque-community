@@ -252,6 +252,16 @@ Não há aliases documentais para tokens: cada nome acima resolve diretamente em
 camada correspondente de `packages/tokens/src/tokens.json`. Se uma chave mudar, este inventário
 e o teste de contrato mudam no mesmo commit.
 
+### 5.1.1 Adaptador permanente da biblioteca
+
+`web.aliases` é uma fronteira de integração, não uma camada legada. A folha do HeroUI v3
+consome esses nomes (`surface`, `accent`, `field-border`, estados, forma e movimento), por isso
+eles permanecem estáveis e cada valor aponta para `primitive`, `semantic` ou `component`. O
+produto não deve criar decisões visuais novas nessa fronteira: consumidores Bivaque usam os
+tokens semânticos ou de componente. O teste de escopo enumera dinamicamente a versão instalada
+da folha, verifica a cobertura da lista explícita de decisões e documenta as exclusões de
+internals de componente, utilitários e geometria de layout.
+
 ### 5.2 Inventário mínimo
 
 | Categoria | Primitive | Semantic | Componentes que devem derivar |
@@ -566,8 +576,8 @@ humana, ele continua identificado como experimento e não se torna regra de sist
 
 ### 12.1 Ordem de adoção
 
-1. **Fundação:** transformar a fonte atual de tokens em primitive → semantic → component, sem
-   remover aliases até migrar consumidores e testes.
+1. **Fundação:** transformar a fonte atual de tokens em primitive → semantic → component,
+   mantendo o adaptador permanente de nomes que a folha do HeroUI consome.
 2. **Primitivas:** Button, Field, FeedbackAlert, Card, EmptyState, Skeleton, Avatar e shell.
 3. **Padrões críticos:** admissão, composer/audiência, feed, descoberta e governança.
 4. **Assets:** Public Sans auto-hospedada, wordmark aprovado, iconografia e ilustrações.
@@ -581,7 +591,7 @@ commit grande sem estados e jornadas reais.
 
 | Superfície | Estado atual | Dono de adoção | Prova para remover o marcador |
 |---|---|---|---|
-| Shell autenticado | tokens gerados importados; aliases legados ativos | DS-001 + dono da próxima primitiva | captura 375/768/1440, teclado e reflow |
+| Shell autenticado | tokens gerados importados; adaptador permanente do HeroUI ativo | DS-001 + dono da próxima primitiva | captura 375/768/1440, teclado e reflow |
 | Landing pública (`apps/web/app/landing/landing.module.css`) | paleta e tipografia locais legadas | próxima task de landing | contraste, foco e captura em três larguras |
 | Entrada (`apps/web/app/(preauth)/login/components/bivaque-sign-in.module.css`) e onboarding (`apps/web/app/(preauth)/onboarding/onboarding.module.css`) | paleta e tipografia locais legadas | próxima task de admissão | jornada E2E, erro seguro e auditoria visual |
 | Mobile | `nativeTokens` resolve cores para RN | próxima task mobile | build nativo + revisão de contraste e alvo |

@@ -502,7 +502,7 @@ export default function RecommendationRequests() {
                   )}
 
                   {request.is_resolved ? (
-                    <div className="flex items-center gap-2 rounded-md bg-[var(--surface-sunken)] px-3 py-2 text-xs font-medium text-muted">
+                    <div className="flex items-center gap-2 rounded-md bg-[var(--semantic-surface-sunken)] px-3 py-2 text-xs font-medium text-muted">
                       ✅ Pedido resolvido
                     </div>
                   ) : isAuthor ? (

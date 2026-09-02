@@ -7,6 +7,10 @@ export const primitives = source.primitive
 export const semanticTokens = source.semantic
 export const componentTokens = source.component
 
+// Permanent adapter for the HeroUI stylesheet. Keep these library-facing names stable;
+// product code should prefer semanticTokens/componentTokens for its own visual decisions.
+export const vendorThemeTokens = source.web.aliases
+
 // Typography roles are semantic contracts backed by primitive measurements.
 // Keep this adapter data-only so the web and audit tooling consume the same source.
 export const typographyTokens = {
@@ -92,7 +96,8 @@ export const nativeTokens = {
   focusOuter: primitive("petrol-700"),
 } as const
 
-// Compatibility adapter for existing consumers. Do not use it for new UI.
+// Compatibility adapter for native/metadata consumers. Web visual decisions belong to the
+// semantic/component layers; this object remains public for existing clients.
 export const brandTokens = {
   productName: "Bivaque",
   color: {

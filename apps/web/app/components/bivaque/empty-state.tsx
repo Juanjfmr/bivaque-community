@@ -21,7 +21,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`rounded-2xl border border-dashed border-border bg-[var(--surface-sunken)] px-6 py-10 text-center ${className}`}
+      className={`rounded-2xl border border-dashed border-border bg-[var(--semantic-surface-sunken)] px-6 py-10 text-center ${className}`}
     >
       <div className="mx-auto flex max-w-sm flex-col items-center gap-3">
         {illustration && <div className="mb-1 opacity-80">{illustration}</div>}

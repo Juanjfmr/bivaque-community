@@ -280,12 +280,12 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
 
   return (
     <article
-      className="motion-card-enter motion-lift rounded-2xl border border-border bg-[var(--surface)] shadow-[var(--elevation-2)] overflow-hidden"
+      className="motion-card-enter motion-lift rounded-2xl border border-border bg-[var(--semantic-surface)] shadow-[var(--semantic-elevation-raised)] overflow-hidden"
       style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
     >
       <div className="flex">
         {/* Left accent rail */}
-        <div className="w-0.5 shrink-0 bg-[var(--accent)] opacity-75 rounded-full my-3 ml-3" />
+        <div className="w-0.5 shrink-0 bg-[var(--semantic-action-primary)] opacity-75 rounded-full my-3 ml-3" />
 
         <div className="flex-1 min-w-0 p-4 pl-3">
           {/* Header row */}
@@ -333,7 +333,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               onClick={() => setExpanded(!expanded)}
               aria-expanded={expanded}
               aria-label={expanded ? "Recolher publicação" : "Expandir publicação"}
-              className="mt-2 inline-flex min-h-11 items-center rounded-full bg-[var(--surface-subtle)] px-3 text-sm font-medium transition-colors duration-[var(--duration-instant)] text-accent hover:bg-[var(--surface-sunken)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="mt-2 inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-selected)] px-3 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] text-accent hover:bg-[var(--semantic-surface-sunken)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               {expanded ? "Ver menos" : "Ver mais"}
             </button>
@@ -341,7 +341,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
 
           {/* Photo placeholder */}
           {post.post_type === "photo" && post.photo_path && (
-            <div className="mt-3 rounded-lg bg-[var(--surface-sunken)] p-4 text-center">
+            <div className="mt-3 rounded-lg bg-[var(--semantic-surface-sunken)] p-4 text-center">
               <div className="flex flex-col items-center gap-2 text-muted">
                 <svg
                   width="32"
@@ -370,7 +370,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               aria-label={`Abrir link: ${linkHostname}`}
               className="mt-3 block min-h-11"
             >
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-[var(--surface-sunken)]/60 p-3 transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]">
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-[var(--semantic-surface-sunken)]/60 p-3 transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)]">
                 <Link2 className="h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs text-muted">{linkHostname || post.link_url}</p>
@@ -387,7 +387,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               {(post.poll_options as unknown as string[]).map((option, i) => (
                 <div
                   key={option}
-                  className="flex items-center gap-2.5 rounded-lg bg-[var(--surface-sunken)] px-3 py-2.5 text-sm"
+                  className="flex items-center gap-2.5 rounded-lg bg-[var(--semantic-surface-sunken)] px-3 py-2.5 text-sm"
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-xs text-muted">
                     {i + 1}
@@ -405,12 +405,12 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               onClick={handleReaction}
               aria-label={myReaction ? "Descurtir publicação" : "Curtir publicação"}
               aria-pressed={myReaction}
-              className={`flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)] ${myReaction ? "text-[var(--accent)]" : "text-muted"}`}
+              className={`flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--semantic-focus)] ${myReaction ? "text-[var(--semantic-action-primary)]" : "text-muted"}`}
             >
               <Heart
                 size={18}
                 fill={myReaction ? "currentColor" : "none"}
-                className={myReaction ? "text-[var(--accent)]" : ""}
+                className={myReaction ? "text-[var(--semantic-action-primary)]" : ""}
                 aria-hidden="true"
               />
               {reactionCount > 0 && <span>{reactionCount}</span>}
@@ -422,7 +422,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               onClick={handleToggleComments}
               aria-label={showComments ? "Ocultar comentários" : "Ver comentários"}
               aria-expanded={showComments}
-              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]"
+              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--semantic-focus)]"
             >
               <MessageCircle size={18} aria-hidden="true" />
               {post.comment_count > 0 ? post.comment_count : "Comentar"}
@@ -432,7 +432,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               type="button"
               onClick={handleShare}
               aria-label="Compartilhar publicação"
-              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]"
+              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--semantic-focus)]"
             >
               <Share2 size={18} aria-hidden="true" />
               Compartilhar
@@ -456,7 +456,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
                   type="button"
                   onClick={handleToggleComments}
                   aria-label={`Ver todos os ${comments.length} comentários`}
-                  className="min-h-11 text-xs text-muted transition-colors duration-[var(--duration-instant)] hover:underline"
+                  className="min-h-11 text-xs text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline"
                 >
                   Ver todos os comentários
                 </button>
@@ -904,7 +904,7 @@ export function CreatePostModal({
                       }
                       img.src = URL.createObjectURL(file)
                     }}
-                    className="block w-full text-sm text-muted file:mr-4 file:rounded-md file:border-0 file:bg-[var(--surface-subtle)] file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-[var(--surface)]"
+                    className="block w-full text-sm text-muted file:mr-4 file:rounded-md file:border-0 file:bg-[var(--semantic-selected)] file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-[var(--semantic-surface)]"
                   />
                   {photoPath && <p className="text-xs text-muted">Foto carregada: {photoPath}</p>}
                 </div>
