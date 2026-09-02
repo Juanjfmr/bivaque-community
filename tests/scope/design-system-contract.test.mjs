@@ -30,6 +30,38 @@ test("the canonical design system covers the complete product-design contract", 
   assert.match(source, /primitive\s+→\s+semantic\s+→\s+component/)
 })
 
+test("documented token paths resolve in the canonical token source", () => {
+  const source = read("docs", "agents", "DESIGN_SYSTEM.md")
+  const tokens = JSON.parse(read("packages", "tokens", "src", "tokens.json"))
+  const inventory = source.match(/#### Nomes[\s\S]*?(?=\n### )/)?.[0] ?? ""
+  const paths = [...inventory.matchAll(/`(primitive|semantic|component)\.([a-z0-9-]+)`/g)].map(
+    ([, layer, name]) => [layer, name],
+  )
+  assert.ok(paths.length >= 20, "the document must carry a real token inventory")
+
+  const missing = paths
+    .filter(([layer, name]) => !Object.hasOwn(tokens[layer], name))
+    .map(([layer, name]) => `${layer}.${name}`)
+  assert.deepEqual(missing, [])
+
+  const documentedNames = [...source.matchAll(/`([a-z][a-z0-9]*(?:\.[a-z0-9-]+)+)`/g)]
+    .map(([, name]) => name)
+    .filter((name) => !name.startsWith("tokens."))
+  const aliases = tokens.documentation.aliases
+  const unresolved = documentedNames.filter((name) => {
+    if (
+      name.startsWith("primitive.") ||
+      name.startsWith("semantic.") ||
+      name.startsWith("component.")
+    ) {
+      const [layer, tokenName] = name.split(".")
+      return !Object.hasOwn(tokens[layer], tokenName)
+    }
+    return !Object.hasOwn(aliases, name)
+  })
+  assert.deepEqual(unresolved, [])
+})
+
 test("legacy design documents redirect to the one canonical system", () => {
   for (const file of ["DESIGN_SPEC.md", "VISUAL_GUIDE.md"]) {
     const source = read("docs", "agents", file)

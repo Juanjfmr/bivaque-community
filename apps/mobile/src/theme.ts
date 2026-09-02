@@ -26,12 +26,15 @@ export const theme = {
     surfaceSunken: nativeTokens.surfaceSunken,
     surfaceSubtle: nativeTokens.surfaceSubtle,
     border: nativeTokens.border,
+    controlBorder: nativeTokens.controlBorder,
     foreground: nativeTokens.foreground,
     muted: nativeTokens.muted,
     accent: nativeTokens.accent,
     accentForeground: nativeTokens.accentForeground,
     accentSoft: nativeTokens.surfaceSubtle,
     danger: nativeTokens.danger,
+    focus: nativeTokens.focusOuter,
+    focusInner: nativeTokens.focusInner,
   },
   // 4px scale, conforme DESIGN_SYSTEM §4.
   space: {

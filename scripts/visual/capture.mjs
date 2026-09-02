@@ -176,6 +176,15 @@ function auditPage() {
     return (high + 0.05) / (low + 0.05)
   }
 
+  const tokenColor = (name) => {
+    const probe = document.createElement("span")
+    probe.style.color = `var(${name})`
+    document.body.append(probe)
+    const color = parseColor(getComputedStyle(probe).color)
+    probe.remove()
+    return color
+  }
+
   const backgroundOf = (element) => {
     let node = element
     while (node) {
@@ -253,7 +262,7 @@ function auditPage() {
 
     const style = getComputedStyle(element)
     const size = Number.parseFloat(style.fontSize)
-    if (size < 12) add("font-too-small", "medium", describe(element), `${size}px (min 12px)`)
+    if (size < 13) add("font-too-small", "medium", describe(element), `${size}px (min 13px)`)
 
     const foreground = parseColor(style.color)
     if (!foreground) continue
@@ -270,7 +279,51 @@ function auditPage() {
     }
   }
 
-  // 6. design-token discipline — no raw colors in inline styles
+  // 6. non-text contrast — focus rings and control boundaries are measured
+  // from the generated token values, not inferred from text color.
+  const nonTextPairs = [
+    [
+      "focus-inner-on-primary",
+      "--component-button-focus-ring-inner",
+      "--component-button-primary-bg-default",
+    ],
+    [
+      "focus-inner-on-danger",
+      "--component-button-focus-ring-inner",
+      "--component-button-danger-bg-default",
+    ],
+    ["focus-outer-on-canvas", "--component-button-focus-ring-outer", "--semantic-canvas"],
+    ["focus-outer-on-sunken", "--component-button-focus-ring-outer", "--semantic-surface-sunken"],
+    ["control-border-on-field", "--component-field-border-default", "--component-field-bg-default"],
+    ["control-border-on-canvas", "--component-field-border-default", "--semantic-canvas"],
+  ]
+  for (const [name, foregroundToken, backgroundToken] of nonTextPairs) {
+    const foreground = tokenColor(foregroundToken)
+    const background = tokenColor(backgroundToken)
+    if (!foreground || !background) {
+      add(
+        "non-text-contrast-unmeasurable",
+        "high",
+        name,
+        "focus or control-boundary token is not a color",
+      )
+      continue
+    }
+    const ratio = contrast(foreground, background)
+    if (ratio < 3) {
+      const rule = name.startsWith("focus-")
+        ? "non-text-contrast-focus"
+        : "non-text-contrast-control-boundary"
+      add(
+        rule,
+        "high",
+        name,
+        `${ratio.toFixed(2)}:1 (needs 3:1) — ${foregroundToken} on ${backgroundToken}`,
+      )
+    }
+  }
+
+  // 7. design-token discipline — no raw colors in inline styles
   for (const element of document.querySelectorAll("[style]")) {
     const inline = element.getAttribute("style") ?? ""
     if (/#[0-9a-f]{3,8}\b|rgba?\(/i.test(inline)) {
@@ -278,18 +331,18 @@ function auditPage() {
     }
   }
 
-  // 7. images need alt text
+  // 8. images need alt text
   for (const image of document.querySelectorAll("img")) {
     if (image.getAttribute("alt") === null) {
       add("missing-alt", "high", describe(image), image.getAttribute("src") ?? "")
     }
   }
 
-  // 8. exactly one h1 per screen
+  // 9. exactly one h1 per screen
   const h1Count = document.querySelectorAll("h1").length
   if (h1Count !== 1) add("heading-structure", "medium", "h1", `${h1Count} h1 elements (expected 1)`)
 
-  // 9. active navigation — each visible nav has exactly one current item (rubrica item 4).
+  // 10. active navigation — each visible nav has exactly one current item (rubrica item 4).
   // Anchors use aria-current="page"; tab role anchors use aria-selected="true" (ARIA Tabs pattern).
   for (const nav of document.querySelectorAll("nav")) {
     if (nav.offsetWidth === 0 && nav.offsetHeight === 0) continue
@@ -308,7 +361,7 @@ function auditPage() {
     }
   }
 
-  // 10. forbidden copy — the same privacy vocabulary the database rejects
+  // 11. forbidden copy — the same privacy vocabulary the database rejects
   // 10. forbidden copy — the same privacy vocabulary the database rejects
   // (see supabase/migrations/20260802001300_fix_forbidden_content_regex.sql).
   // The DB guards post bodies; the UI copy must guard itself.

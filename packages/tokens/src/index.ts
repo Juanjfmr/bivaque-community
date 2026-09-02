@@ -10,6 +10,19 @@ export const componentTokens = source.component
 const primitive = (name: keyof typeof primitives) => primitives[name]
 const semantic = (name: keyof typeof semanticTokens) => semanticTokens[name]
 
+const hexWithAlpha = (hex: string, alpha: number) => {
+  const value = hex.replace("#", "")
+  const channels =
+    value.length === 3
+      ? value
+          .split("")
+          .map((channel) => channel + channel)
+          .join("")
+      : value
+  const rgb = [0, 2, 4].map((index) => Number.parseInt(channels.slice(index, index + 2), 16))
+  return `rgba(${rgb.join(", ")}, ${alpha})`
+}
+
 // React Native consumes resolved primitive/semantic values; CSS syntax never
 // crosses this boundary. Values are derived, not duplicated in a native list.
 export const nativeTokens = {
@@ -17,13 +30,18 @@ export const nativeTokens = {
   surface: primitive("paper-0"),
   surfaceSunken: primitive("paper-100"),
   surfaceSubtle: primitive("terra-100"),
-  border: semantic("border"),
+  // CSS may use color-mix; React Native receives the same primitive with its
+  // documented hairline alpha resolved here, without a duplicated color value.
+  border: hexWithAlpha(primitive("ink-900"), 0.14),
+  controlBorder: primitive("petrol-700"),
   foreground: primitive("ink-900"),
   muted: primitive("ink-700"),
   accent: primitive("terra-700"),
   accentForeground: primitive("paper-0"),
   danger: primitive("rose-700"),
   focus: primitive("petrol-700"),
+  focusInner: primitive("paper-0"),
+  focusOuter: primitive("petrol-700"),
 } as const
 
 // Compatibility adapter for existing consumers. Do not use it for new UI.

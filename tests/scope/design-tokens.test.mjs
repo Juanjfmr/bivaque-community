@@ -94,7 +94,11 @@ test("keeps the hairline in the --border token, not inlined", () => {
   // And the alias resolves through the semantic border role.
   const generated = readFileSync(join(root, "packages/tokens/src/tokens.css"), "utf8")
   assert.match(generated, /--border:\s*var\(--semantic-border\)/)
-  assert.match(generated, /--semantic-border:\s*rgba\(23, 33, 58, 0\.14\)/)
+  assert.match(
+    generated,
+    /--semantic-border:\s*color-mix\(in srgb, var\(--primitive-ink-900\) 14%, transparent\)/,
+  )
+  assert.doesNotMatch(generated, /rgba\(23, 33, 58, 0\.14\)/)
 })
 
 test("keeps colors in tokens, not in component inline styles", () => {
@@ -184,4 +188,25 @@ test("defines motion utilities with reduced-motion intact", () => {
   // And every interactive element still resolves motion via the reduced-motion block
   assert.match(globals, /animation-duration:\s*0s/)
   assert.match(globals, /transition-duration:\s*0s/)
+})
+
+test("keeps component states in the token source and derives ink-based values", () => {
+  const tokens = JSON.parse(readFileSync(join(root, "packages/tokens/src/tokens.json"), "utf8"))
+  const requiredStates = ["default", "hover", "pressed", "disabled", "loading"]
+
+  for (const component of ["button-primary-bg", "button-danger-bg", "field-bg", "field-border"]) {
+    for (const state of requiredStates) {
+      assert.ok(tokens.component[`${component}-${state}`], `missing ${component}-${state}`)
+    }
+  }
+
+  for (const value of [
+    tokens.semantic.border,
+    tokens.semantic.backdrop,
+    tokens.semantic["elevation-raised"],
+    tokens.semantic["elevation-overlay"],
+  ]) {
+    assert.match(value, /var\(--primitive-ink-900\)/)
+    assert.doesNotMatch(value, /23, 33, 58/)
+  }
 })

@@ -130,19 +130,19 @@ cor como único sinal de seleção, erro, leitura, pendência ou prioridade.
 
 | Papel | Token semântico | Valor v1 | Uso |
 |---|---|---:|---|
-| Canvas | `color.canvas` | `#FFFDF9` | fundo de página |
-| Surface | `color.surface` | `#FFFFFF` | cards, menus e inputs |
-| Ink | `color.text.primary` | `#17213A` | texto e ícones principais |
-| Muted | `color.text.secondary` | `#526077` | metadados e apoio |
-| Primary | `color.action.primary` | `#9F3A23` | CTA principal e link de ação |
-| Context | `color.action.context` | `#1D5D89` | localização, navegação e informação |
-| Success | `color.status.success` | `#146C4C` | confirmação positiva |
-| Warning | `color.status.warning` | `#8A4B00` | atenção e pendência |
-| Danger | `color.status.danger` | `#B42318` | dano, denúncia e remoção |
-| Focus | `color.focus` | `#1D5D89` | foco visível, com halo translúcido |
+| Canvas | `semantic.canvas` | `#FFFDF9` | fundo de página |
+| Surface | `semantic.surface` | `#FFFFFF` | cards, menus e inputs |
+| Ink | `semantic.text-primary` | `#17213A` | texto e ícones principais |
+| Muted | `semantic.text-secondary` | `#526077` | metadados e apoio |
+| Primary | `semantic.action-primary` | `#9F3A23` | CTA principal e link de ação |
+| Context | `semantic.action-context` | `#1D5D89` | localização, navegação e informação |
+| Success | `semantic.success` | `#146C4C` | confirmação positiva |
+| Warning | `semantic.warning` | `#8A4B00` | atenção e pendência |
+| Danger | `semantic.danger` | `#B42318` | dano, denúncia e remoção |
+| Focus | `semantic.focus-outer` | `#1D5D89` | foco visível, com anel duplo |
 
 `Primary`, `Context`, `Success`, `Warning` e `Danger` sobre branco usam texto na própria cor;
-sobre botão sólido, usam `color.text.on-strong` branco somente após contraste automatizado.
+sobre botão sólido, usam `semantic.text-on-strong` branco somente após contraste automatizado.
 Tons suaves derivam de mistura opaca com canvas, nunca de reduzir arbitrariamente a opacidade do
 texto.
 
@@ -192,7 +192,7 @@ primitive  →  semantic  →  component
 valor bruto   intenção      contrato de uso
 ```
 
-- **Primitive:** escala sem significado de interface, por exemplo `color.terra.700` e
+- **Primitive:** escala sem significado de interface, por exemplo `primitive.terra-700` e
   `space.4`. Só foundations e gerador de tokens podem usá-las.
 - **Semantic:** intenção estável, por exemplo `color.action.primary`, `surface.sunken` e
   `text.secondary`. É a camada permitida em layout e componentes.
@@ -204,6 +204,26 @@ Todo token deve declarar tipo, descrição, estado, modo e par de contraste quan
 `scripts/tokens/generate.mjs` e `--check` bloqueia divergência; `nativeTokens` deriva os mesmos
 primitives/semantics para React Native (sem `var()`, `color-mix()` ou sombra CSS). CSS e runtime
 nativo nunca recebem uma lista de valores editada independentemente.
+
+#### Nomes verificáveis
+
+Os nomes canônicos são caminhos no JSON, sempre com a camada (`primitive`, `semantic` ou
+`component`) seguida da chave existente. A lista abaixo é a superfície documental mínima usada
+pelos testes de contrato:
+
+`primitive.paper-0`, `primitive.paper-50`, `primitive.ink-900`, `primitive.ink-700`,
+`primitive.terra-700`, `primitive.petrol-700`, `primitive.leaf-700`, `primitive.amber-700`,
+`primitive.rose-700`, `primitive.space-4`, `semantic.canvas`, `semantic.surface`,
+`semantic.surface-sunken`, `semantic.text-primary`, `semantic.text-secondary`,
+`semantic.text-on-strong`, `semantic.action-primary`, `semantic.action-context`,
+`semantic.success`, `semantic.warning`, `semantic.danger`, `semantic.focus-inner`,
+`semantic.focus-outer`, `semantic.control-border`, `component.button-primary-bg`,
+`component.button-danger-bg-default`, `component.field-bg-default`,
+`component.field-border-default`, `component.field-invalid-border`.
+
+A notação histórica usada em trechos anteriores deste documento permanece registrada em
+`tokens.json.documentation.aliases`; ela aponta para os caminhos canônicos e não cria uma segunda
+fonte de valores.
 
 ### 5.2 Inventário mínimo
 
@@ -396,6 +416,15 @@ que automação não entende.
 - Português usa diacríticos, datas e números locais; idioma de texto alternativo é marcado.
 
 ### 9.3 Contraste e teste
+
+O foco usa anatomia de anel duplo: `semantic.focus-inner` é o anel claro imediatamente sobre o
+controle sólido e `semantic.focus-outer` é o anel escuro que se separa dele e contrasta com a
+superfície externa. Assim o indicador não precisa usar uma única cor contra superfícies que têm
+luminâncias opostas. A matriz exige pelo menos `3:1` para cada anel no fundo em que ele aparece.
+
+O limite que identifica um campo usa `semantic.control-border`, derivado de `primitive.petrol-700`.
+Ele é separado de `semantic.border`, que continua sendo a divisória decorativa sutil. Campo,
+select e checkbox usam o limite de controle; divisórias não engrossam por causa desta regra.
 
 Todo par de token de texto/superfície entra numa matriz de contraste. A matriz é reavaliada ao
 alterar primitive, modo, opacidade ou componente. Captura visual não prova foco, teclado,

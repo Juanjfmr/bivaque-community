@@ -38,6 +38,30 @@ body {
     min-width: var(--control-min-height);
   }
 
+  :where(a, button, input, select, textarea, [role="button"], [role="checkbox"]):focus-visible {
+    outline: 2px solid var(--semantic-focus-outer);
+    outline-offset: 2px;
+  }
+
+  /* A double focus ring keeps each edge above 3:1: the clear inner ring
+     separates from solid controls, while the dark outer ring separates from
+     the page surface. */
+  :where(
+    .button[data-variant="primary"],
+    .button[data-variant="danger"],
+    button[data-variant="primary"],
+    button[data-variant="danger"]
+  ):focus-visible {
+    outline: 2px solid var(--component-button-focus-ring-inner);
+    outline-offset: 0;
+    box-shadow: 0 0 0 4px var(--component-button-focus-ring-outer);
+  }
+
+  :where(.input, .select__trigger, .checkbox__control) {
+    background-color: var(--component-field-bg-default);
+    border-color: var(--component-field-border-default);
+  }
+
   /* Wrapper do Tooltip do HeroUI no rail retraído: tem role="button" e é o
      elemento que o auditor mede, mas display:block herda a largura do rail
      estreito (39px) sem acompanhar o <a> filho (44px via min-w-11). */
