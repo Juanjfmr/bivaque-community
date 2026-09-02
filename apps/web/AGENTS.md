@@ -22,7 +22,7 @@ Use these categories:
 
 1. **Product/security invariants** — `docs/BIVAQUE.md`, approved ADRs, privacy/security contracts. These constrain what a solution is allowed to do and may not be changed incidentally.
 2. **Repository/technical constraints** — root and nearest scoped `AGENTS.md`, pinned dependencies, exact source, tests, and version-matched framework docs. These define how this repository actually works.
-3. **Incumbent design decisions** — `docs/agents/DESIGN_SPEC.md` and `docs/agents/VISUAL_GUIDE.md`. These describe current visual/interaction intent. They are not proof that the decision is optimal.
+3. **Design-system contract** — `docs/agents/DESIGN_SYSTEM.md`. It defines the current visual and interaction contract; runtime conformance still requires evidence.
 4. **Specialized external evidence** — current official/maintainer guidance, standards, and approved audit skills relevant to the question.
 5. **Generic model knowledge** — lowest authority.
 
@@ -30,8 +30,8 @@ Rules:
 
 - Product/security invariants constrain external guidance.
 - A local visual rule does not override an objective accessibility, framework-correctness, security, or interaction defect merely because it is documented locally.
-- In ordinary feature work, follow the incumbent design contract to avoid accidental drift.
-- In an explicit design audit/redesign task, incumbent design decisions are **challengers, not axioms**: when strong external/runtime evidence materially disputes a local rule, surface the conflict and send it through the design-audit adjudication process instead of silently preserving or overriding it.
+- In ordinary feature work, follow the design-system contract to avoid accidental drift.
+- In an explicit design audit/redesign task, the system is **challenged by evidence, not replaced by taste**: when strong external/runtime evidence materially disputes a rule, surface the conflict and send it through ADR/experiment governance instead of silently overriding it.
 - External guidance never authorizes a new dependency, component library, state library, visual language, product behavior, or trust-boundary change by itself.
 
 Design-audit protocol:
@@ -90,7 +90,7 @@ Use it for composition, accessibility, controlled/uncontrolled APIs, typing, and
 
 ### UI/design craft and audit
 
-For explicit UI/design audit work, external design guidance is evidence that may challenge incumbent Bivaque design decisions. It is not automatically subordinate to `DESIGN_SPEC.md` or `VISUAL_GUIDE.md`.
+For explicit UI/design audit work, external design guidance is evidence that may challenge the Bivaque design-system contract. It is not automatically authoritative.
 
 Useful sources include:
 

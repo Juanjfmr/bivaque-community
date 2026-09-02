@@ -13,9 +13,11 @@ const walk = (dir) =>
     return path.endsWith(".tsx") || path.endsWith(".css") ? [path] : []
   })
 
-test("defines the DESIGN_SPEC section 1 token set in globals.css", () => {
-  // Given the web application global stylesheet
+test("defines the canonical design-system token set from the generated web stylesheet", () => {
+  // Given the generated stylesheet imported by the web global stylesheet
   const globals = readFileSync(join(root, "apps/web/app/globals.css"), "utf8")
+  const generated = readFileSync(join(root, "packages/tokens/src/tokens.css"), "utf8")
+  assert.match(globals, /@import "\.\.\/\.\.\/\.\.\/packages\/tokens\/src\/tokens\.css"/)
 
   // When the required token names are checked
   const required = [
@@ -40,7 +42,9 @@ test("defines the DESIGN_SPEC section 1 token set in globals.css", () => {
     "--space-4",
     "--space-6",
     "--space-8",
+    "--space-10",
     "--space-12",
+    "--space-16",
     "--radius-sm",
     "--radius-lg",
     "--radius-full",
@@ -58,10 +62,16 @@ test("defines the DESIGN_SPEC section 1 token set in globals.css", () => {
     "--ease-out",
     "--ease-in",
     "--ease-spring",
+    "--primitive-paper-50",
+    "--primitive-terra-700",
+    "--semantic-canvas",
+    "--semantic-action-primary",
+    "--component-button-primary-bg",
+    "--component-card-bg",
   ]
 
   // Then every token from the spec is declared
-  const missing = required.filter((token) => !globals.includes(`${token}:`))
+  const missing = required.filter((token) => !generated.includes(`${token}:`))
   assert.deepEqual(missing, [])
 
   // And the reduced-motion path survives the token work
@@ -81,9 +91,10 @@ test("keeps the hairline in the --border token, not inlined", () => {
     false,
   )
 
-  // And the extracted token is the foreground hairline mix
-  const globals = readFileSync(join(root, "apps/web/app/globals.css"), "utf8")
-  assert.match(globals, /--border:\s*color-mix\(in oklch, var\(--foreground\) 12%, transparent\)/)
+  // And the alias resolves through the semantic border role.
+  const generated = readFileSync(join(root, "packages/tokens/src/tokens.css"), "utf8")
+  assert.match(generated, /--border:\s*var\(--semantic-border\)/)
+  assert.match(generated, /--semantic-border:\s*rgba\(23, 33, 58, 0\.14\)/)
 })
 
 test("keeps colors in tokens, not in component inline styles", () => {
@@ -103,26 +114,57 @@ test("keeps colors in tokens, not in component inline styles", () => {
     sources.some((source) => rawReds.test(source)),
     false,
   )
+
+  // Legacy surfaces may carry a temporary local palette only while the canonical
+  // document inventories them. New CSS with a raw color is a scope failure.
+  const legacy = new Set([
+    join(root, "apps/web/app/landing/landing.module.css"),
+    join(root, "apps/web/app/(preauth)/login/components/bivaque-sign-in.module.css"),
+    join(root, "apps/web/app/(preauth)/onboarding/onboarding.module.css"),
+  ])
+  const rawColor = /#[0-9A-Fa-f]{3,8}\b/
+  const cssOutsideLegacy = walk(join(root, "apps/web/app")).filter(
+    (path) =>
+      path.endsWith(".css") && path !== join(root, "apps/web/app/globals.css") && !legacy.has(path),
+  )
+  assert.equal(
+    cssOutsideLegacy.some((path) => rawColor.test(readFileSync(path, "utf8"))),
+    false,
+  )
+  const system = readFileSync(join(root, "docs/agents/DESIGN_SYSTEM.md"), "utf8")
+  for (const path of [
+    "apps/web/app/landing/landing.module.css",
+    "apps/web/app/(preauth)/login/components/bivaque-sign-in.module.css",
+    "apps/web/app/(preauth)/onboarding/onboarding.module.css",
+  ]) {
+    assert.ok(system.includes(path))
+  }
 })
 
-test("exports the full token set from @bivaque/tokens", () => {
+test("exports primitive, semantic and component token layers", () => {
   // Given the shared tokens package source
   const tokens = readFileSync(join(root, "packages/tokens/src/index.ts"), "utf8")
 
-  // When its exported groups are inspected
-  const groups = ["color:", "elevation:", "space:", "radius:", "text:", "motion:"]
+  // When its architectural layers are inspected
+  const groups = [
+    "export const primitives",
+    "export const semanticTokens",
+    "export const componentTokens",
+    "export const nativeTokens",
+  ]
 
-  // Then the package carries the same sets the stylesheet declares
+  // Then the package carries the same architectural layers the stylesheet declares.
   const missing = groups.filter((group) => !tokens.includes(group))
   assert.deepEqual(missing, [])
 
-  // And the privacy-safe brand surface stays intact for existing consumers
+  // And the compatibility adapter remains safe for existing consumers.
   assert.match(tokens, /productName:\s*"Bivaque"/)
   assert.match(tokens, /surfaceRaised:/)
   assert.match(tokens, /backdrop:/)
+  assert.match(tokens, /tokens\.json/)
 })
 
-test("defines the DESIGN_SPEC section 2 motion utilities with reduced-motion intact", () => {
+test("defines motion utilities with reduced-motion intact", () => {
   // Given the web application global stylesheet
   const globals = readFileSync(join(root, "apps/web/app/globals.css"), "utf8")
 

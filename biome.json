@@ -10,6 +10,7 @@
       "!**/node_modules",
       "!**/pnpm-lock.yaml",
       "!supabase/database.generated.ts",
+      "!packages/tokens/src/tokens.css",
       "!**/playwright-report",
       "!**/test-results",
       "!**/.omo",

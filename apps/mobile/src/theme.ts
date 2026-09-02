@@ -6,11 +6,10 @@
 // aceita hex strings em cores — convertemos os valores rem para px usando
 // 16px como base (alinhado com apps/web, que usa o mesmo escalonamento).
 //
-// Esta é a única divergência honesta em apps/mobile: cores vêm direto do
-// pacote compartilhado, espaço e tipografia passam por aqui. Tokens são a
-// fonte de verdade (DESIGN_SPEC.md §0, DS-034); este módulo é só o tradutor
-// para o runtime nativo.
-import { brandTokens } from "@bivaque/tokens"
+// Esta é a única divergência honesta em apps/mobile: espaço e tipografia
+// passam por aqui. Cores vêm do adaptador nativo, que nunca contém CSS como
+// `var()` ou `color-mix()`. Tokens são a fonte de verdade (DESIGN_SYSTEM §5).
+import { brandTokens, nativeTokens } from "@bivaque/tokens"
 
 const REM_BASE_PX = 16
 
@@ -21,20 +20,20 @@ const remToPx = (rem: string): number => {
 
 export const theme = {
   color: {
-    background: brandTokens.color.background,
-    surface: brandTokens.color.surface,
-    surfaceRaised: brandTokens.color.surfaceRaised,
-    surfaceSunken: brandTokens.color.surfaceSunken,
-    surfaceSubtle: brandTokens.color.surfaceSubtle,
-    border: brandTokens.color.border,
-    foreground: brandTokens.color.foreground,
-    muted: brandTokens.color.muted,
-    accent: brandTokens.color.accent,
-    accentForeground: brandTokens.color.accentForeground,
-    accentSoft: brandTokens.color.accentSoft,
-    danger: brandTokens.color.danger,
+    background: nativeTokens.canvas,
+    surface: nativeTokens.surface,
+    surfaceRaised: nativeTokens.surface,
+    surfaceSunken: nativeTokens.surfaceSunken,
+    surfaceSubtle: nativeTokens.surfaceSubtle,
+    border: nativeTokens.border,
+    foreground: nativeTokens.foreground,
+    muted: nativeTokens.muted,
+    accent: nativeTokens.accent,
+    accentForeground: nativeTokens.accentForeground,
+    accentSoft: nativeTokens.surfaceSubtle,
+    danger: nativeTokens.danger,
   },
-  // 4px scale, conforme DESIGN_SPEC.md §0.
+  // 4px scale, conforme DESIGN_SYSTEM §4.
   space: {
     1: remToPx(brandTokens.space[1]),
     2: remToPx(brandTokens.space[2]),
@@ -49,7 +48,7 @@ export const theme = {
     base: remToPx(brandTokens.radius.base),
     lg: remToPx(brandTokens.radius.lg),
   },
-  // Nada abaixo de 12px (DESIGN_SPEC.md §0); body line-height 1.5+.
+  // Nada abaixo de 12px (DESIGN_SYSTEM §4); body line-height 1.5+.
   text: {
     xs: remToPx(brandTokens.text.xs),
     sm: remToPx(brandTokens.text.sm),

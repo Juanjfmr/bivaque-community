@@ -94,8 +94,7 @@ leaks so far.
 | `tools/backend-kanban/BOARD.md` | Concise generated MVP path agents read before planning or implementation |
 | `tools/backend-kanban/public/board.json` | Canonical board data, evidence and documentation drift by stable card ID |
 | `docs/decisions/` | R3 decisions as ADRs, and `RISK_MATRIX.md` — what an agent may decide alone |
-| `docs/agents/DESIGN_SPEC.md` | The visual language, and the source of truth for tokens |
-| `docs/agents/VISUAL_GUIDE.md` §9 | The audit rubric — how well a screen must be made |
+| `docs/agents/DESIGN_SYSTEM.md` | The visual language, tokens, components and audit rubric |
 | `docs/superpowers/specs/` | Approved designs, with dated conflicts recorded rather than hidden |
 | `docs/superpowers/plans/` | Executable plans derived from those specs |
 | `docs/agents/AGENT_ARCHITECTURE.md` | The agent roles, the execution loop, and which composition a task gets |
@@ -140,7 +139,7 @@ node scripts/visual/loop.mjs --fast   # capture only, against an already-running
 
 Screenshots every route at 375/768/1440 plus a deterministic audit (touch targets, contrast,
 overflow, motion presence, token discipline) into `.visual/<run>/`. The spec it judges against is
-`docs/agents/DESIGN_SPEC.md`; the driving prompt is `docs/agents/QWEN_BUILD_PROMPT.md`. Set
+`docs/agents/DESIGN_SYSTEM.md`; the driving prompt is `docs/agents/QWEN_BUILD_PROMPT.md`. Set
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` when the managed browser bundle is not installed.
 
 ## Repo contracts enforced by `tests/scope/*.test.mjs` (guardrails)

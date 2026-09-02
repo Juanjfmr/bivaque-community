@@ -16,7 +16,7 @@
 | o que o código **faz** hoje | [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md) |
 | decisões R3, com risco e reversão | [`decisions/`](decisions/) e a régua em [`RISK_MATRIX.md`](decisions/RISK_MATRIX.md) |
 | comandos, armadilhas, contratos de teste | [`../AGENTS.md`](../AGENTS.md) |
-| linguagem visual e rubrica | [`agents/DESIGN_SPEC.md`](agents/DESIGN_SPEC.md), [`agents/VISUAL_GUIDE.md`](agents/VISUAL_GUIDE.md) |
+| design system e rubrica visual | [`agents/DESIGN_SYSTEM.md`](agents/DESIGN_SYSTEM.md) |
 | implementação da camada de comunidade | [`superpowers/specs/2026-08-05-comunidade-design.md`](superpowers/specs/2026-08-05-comunidade-design.md) |
 | evidência dos 151 achados | [`red-team/`](red-team/) |
 | textos que o membro aceita | [`legal/CODIGO_DE_CONDUTA.md`](legal/CODIGO_DE_CONDUTA.md), [`legal/PRIVACIDADE.md`](legal/PRIVACIDADE.md) |

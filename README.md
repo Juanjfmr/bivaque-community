@@ -21,7 +21,7 @@ envelhece.
 | comandos, armadilhas de ambiente, contratos de teste | [`AGENTS.md`](AGENTS.md) |
 | decisões de risco alto, como ADR, e a régua que classifica risco | [`docs/decisions/`](docs/decisions/) |
 | ondas de trabalho e como executá-las | [`docs/superpowers/plans/README.md`](docs/superpowers/plans/README.md) |
-| linguagem visual e rubrica de auditoria de tela | [`docs/agents/DESIGN_SPEC.md`](docs/agents/DESIGN_SPEC.md), [`docs/agents/VISUAL_GUIDE.md`](docs/agents/VISUAL_GUIDE.md) |
+| design system, linguagem visual e rubrica de auditoria | [`docs/agents/DESIGN_SYSTEM.md`](docs/agents/DESIGN_SYSTEM.md) |
 | o banco: ambientes, migrations, RLS | [`supabase/README.md`](supabase/README.md) |
 | textos que o membro aceita | [`docs/legal/`](docs/legal/) |
 | auditoria de coerência produto × backend, com 151 achados | [`docs/red-team/`](docs/red-team/) |

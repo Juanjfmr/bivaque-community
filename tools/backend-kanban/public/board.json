@@ -694,6 +694,43 @@
       "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"]
     },
     {
+      "id": "DS-001-DESIGN-SYSTEM",
+      "title": "Sistema de design canônico Casa comum",
+      "phase": "Foundation",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "Consolidar identidade, foundations, tokens, componentes, padrões, acessibilidade e governança em uma única fonte de verdade, com adoção de runtime auditável e sem alterar fronteiras de produto.",
+      "checklist": [
+        "Criar DESIGN_SYSTEM.md como fonte canônica e transformar os documentos antigos em redirecionamentos",
+        "Registrar a direção Casa comum, alternativas e autorização R2 na ADR",
+        "Estruturar tokens em primitive → semantic → component mantendo aliases legados",
+        "Proteger contrato, redirecionamentos, tokens e containers por testes de escopo",
+        "Obter três críticas adversariais independentes e resolver cada achado acionável",
+        "Rodar task contract, test:scope, gate e auditoria visual proporcional às superfícies afetadas"
+      ],
+      "proof": [
+        "Baseline: DESIGN_SPEC e VISUAL_GUIDE tinham autoridade concorrente; EXP-004 não tinha vencedor",
+        "ADR-20260901-design-system registra a decisão R2, alternativas, métricas, condição de reabertura e três pareceres independentes PASS",
+        "2026-09-02: task contract, 69 testes de escopo, geração de tokens e typechecks de web/tokens/mobile passaram; E2E e auditoria visual seguem como prova de runtime antes do fechamento",
+        "Gate global não é evidência limpa enquanto artefatos Android pré-existentes no worktree entram no Biome"
+      ],
+      "tests": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/DS-001.task.yml",
+        "npx pnpm@11.18.0 test:scope",
+        "npx pnpm@11.18.0 gate",
+        "node scripts/visual/loop.mjs"
+      ],
+      "links": [
+        "Sistema canônico | ../../docs/agents/DESIGN_SYSTEM.md",
+        "ADR | ../../docs/decisions/ADR-20260901-design-system.md",
+        "Experimento de baseline | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md"
+      ],
+      "updatedAt": "2026-09-02",
+      "sourceRevision": "b67dbac",
+      "dependencies": []
+    },
+    {
       "id": "MOBILE-00-ARCHITECTURE",
       "title": "App mobile React Native + Expo: fundação nativa",
       "phase": "Mobile",

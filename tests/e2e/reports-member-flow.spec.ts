@@ -37,6 +37,9 @@ const CONSENT_COOKIE = "bivaque-consent-version"
 // da vila que ele vê tem apenas posts de outros membros.
 const REPORTER_EMAIL = "membro-1@bivaque.example.invalid"
 const OPERATOR_EMAIL = "operador@bivaque.example.invalid"
+const PROVIDER_EMAIL = "prestador-seed@bivaque.example.invalid"
+const PROVIDER_USER_ID = "20000000-0000-4000-8000-00000000000a"
+const PROVIDER_PROFILE_ID = "30000000-0000-4000-8000-000000000010"
 
 interface PasswordGrantBody {
   access_token: string
@@ -214,6 +217,39 @@ async function fetchReportNotifications(
   return rows
 }
 
+async function openProviderConversation(anonKey: string, accessToken: string): Promise<string> {
+  const api = await request.newContext()
+  const response = await api.post(`${SUPABASE_URL}/rest/v1/rpc/open_conversation`, {
+    headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
+    data: {
+      p_other_user_id: PROVIDER_USER_ID,
+      p_context_type: "provider",
+      p_context_id: PROVIDER_PROFILE_ID,
+    },
+  })
+  expect(response.ok()).toBeTruthy()
+  const conversationId = (await response.json()) as string
+  await api.dispose()
+  return conversationId
+}
+
+async function sendProviderMessage(anonKey: string, conversationId: string): Promise<string> {
+  const providerSession = await mintSession(PROVIDER_EMAIL)
+  const content = `Mensagem para denúncia acessível ${Date.now().toString(36)}`
+  const api = await request.newContext()
+  const response = await api.post(`${SUPABASE_URL}/rest/v1/dm_messages`, {
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${providerSession.access_token}`,
+      Prefer: "return=representation",
+    },
+    data: { conversation_id: conversationId, sender_id: PROVIDER_USER_ID, content },
+  })
+  expect(response.ok()).toBeTruthy()
+  await api.dispose()
+  return content
+}
+
 test.describe("report flow: membro denuncia e recebe retorno", () => {
   test("denunciar um post cria linha em public.reports com status=open", async ({ browser }) => {
     // Motivo único por execução: denúncia aberta duplicada do mesmo repórter
@@ -277,5 +313,47 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
 
     const resolved = await fetchResolvedReportsCount(anonKey, session.access_token)
     expect(typeof resolved).toBe("number")
+  })
+
+  test("denúncia de mensagem move foco, associa ajuda e não expõe erro interno", async ({
+    browser,
+  }) => {
+    const { anonKey } = requireCredentials()
+    const reporterSession = await mintSession(REPORTER_EMAIL)
+    const conversationId = await openProviderConversation(anonKey, reporterSession.access_token)
+    const message = await sendProviderMessage(anonKey, conversationId)
+
+    const context = await browser.newContext()
+    const page = await context.newPage()
+    await signInAsCookie(context, REPORTER_EMAIL)
+    await page.goto(`/messages?conversation=${conversationId}`, { waitUntil: "load" })
+
+    await expect(page.getByText(message)).toBeVisible({ timeout: 10000 })
+    const trigger = page.getByRole("button", { name: "Denunciar" }).last()
+    await trigger.focus()
+    await page.keyboard.press("Enter")
+
+    const field = page.getByRole("textbox", { name: "Motivo da denúncia" })
+    await expect(field).toBeFocused()
+    await expect(field).toHaveAccessibleDescription(/Não inclua CPF, telefone ou endereço/)
+    await expect(trigger).toHaveAttribute("aria-expanded", "true")
+
+    await page.route("**/rest/v1/reports", async (route) => {
+      if (route.request().method() !== "POST") return route.continue()
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "database diagnostic that must stay private" }),
+      })
+    })
+    await field.fill("Motivo de teste que força a falha segura da denúncia")
+    await page.locator('[id^="message-report-"]').getByRole("button", { name: "Enviar" }).click()
+    await expect(field).toHaveAttribute("aria-invalid", "true")
+    await expect(field).toHaveAttribute("aria-errormessage", /report-error-/)
+    await expect(field).toHaveAccessibleDescription(/Nao foi possivel enviar a denuncia agora/)
+    await expect(page.getByText("database diagnostic that must stay private")).toHaveCount(0)
+
+    await page.getByRole("button", { name: "Fechar denúncia" }).press("Enter")
+    await expect(trigger).toBeFocused()
   })
 })

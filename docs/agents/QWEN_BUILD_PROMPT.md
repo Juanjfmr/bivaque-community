@@ -27,8 +27,8 @@ audit — not a functional prototype.
 ## READ FIRST (in this order, before writing any code)
 
 1. `AGENTS.md` — repo contracts. These are enforced by tests; breaking one fails CI.
-2. `docs/agents/DESIGN_SPEC.md` — the design language, token system, motion spec, and the
-   per-screen specification you are building against.
+2. `docs/agents/DESIGN_SYSTEM.md` — the design language, token system, component contracts,
+   motion spec and visual audit rubric you are building against.
 3. `docs/PILOT_RUNBOOK.md`.
 4. The screen you are about to touch, plus the migration that backs it in
    `supabase/migrations/` and its pgTAP test in `supabase/tests/`.
