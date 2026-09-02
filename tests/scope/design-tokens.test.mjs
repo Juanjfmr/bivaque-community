@@ -119,30 +119,14 @@ test("keeps colors in tokens, not in component inline styles", () => {
     false,
   )
 
-  // Legacy surfaces may carry a temporary local palette only while the canonical
-  // document inventories them. New CSS with a raw color is a scope failure.
-  const legacy = new Set([
-    join(root, "apps/web/app/landing/landing.module.css"),
-    join(root, "apps/web/app/(preauth)/login/components/bivaque-sign-in.module.css"),
-    join(root, "apps/web/app/(preauth)/onboarding/onboarding.module.css"),
-  ])
   const rawColor = /#[0-9A-Fa-f]{3,8}\b/
-  const cssOutsideLegacy = walk(join(root, "apps/web/app")).filter(
-    (path) =>
-      path.endsWith(".css") && path !== join(root, "apps/web/app/globals.css") && !legacy.has(path),
+  const cssSheets = walk(join(root, "apps/web/app")).filter(
+    (path) => path.endsWith(".css") && path !== join(root, "apps/web/app/globals.css"),
   )
   assert.equal(
-    cssOutsideLegacy.some((path) => rawColor.test(readFileSync(path, "utf8"))),
+    cssSheets.some((path) => rawColor.test(readFileSync(path, "utf8"))),
     false,
   )
-  const system = readFileSync(join(root, "docs/agents/DESIGN_SYSTEM.md"), "utf8")
-  for (const path of [
-    "apps/web/app/landing/landing.module.css",
-    "apps/web/app/(preauth)/login/components/bivaque-sign-in.module.css",
-    "apps/web/app/(preauth)/onboarding/onboarding.module.css",
-  ]) {
-    assert.ok(system.includes(path))
-  }
 })
 
 test("exports primitive, semantic and component token layers", () => {

@@ -592,12 +592,20 @@ commit grande sem estados e jornadas reais.
 | Superfície | Estado atual | Dono de adoção | Prova para remover o marcador |
 |---|---|---|---|
 | Shell autenticado | tokens gerados importados; adaptador permanente do HeroUI ativo | DS-001 + dono da próxima primitiva | captura 375/768/1440, teclado e reflow |
-| Landing pública (`apps/web/app/landing/landing.module.css`) | paleta e tipografia locais legadas | próxima task de landing | contraste, foco e captura em três larguras |
-| Entrada (`apps/web/app/(preauth)/login/components/bivaque-sign-in.module.css`) e onboarding (`apps/web/app/(preauth)/onboarding/onboarding.module.css`) | paleta e tipografia locais legadas | próxima task de admissão | jornada E2E, erro seguro e auditoria visual |
 | Mobile | `nativeTokens` resolve cores para RN | próxima task mobile | build nativo + revisão de contraste e alvo |
 
 Nenhuma dessas linhas diz que a superfície já aderiu ao sistema; ela impede que a fundação seja
 confundida com migração concluída.
+
+**Landing, entrada e onboarding saíram deste inventário em 2026-09-02, pelo DS-005.** As três
+folhas deixaram de declarar paleta própria: zero valores de cor crus onde havia 68, uma
+propriedade local onde havia 34, e 393 referências aos tokens do sistema. A lista de exceção que
+isentava esses três caminhos em `tests/scope/design-tokens.test.mjs` foi removida, então eles
+passam a ser cobrados pela mesma regra que vale para o resto do produto. A auditoria de
+375/768/1440 fechou com captura aprovada e sem nenhum achado de contraste; em `/onboarding` os
+achados de alvo e de nome acessível são exatamente os mesmos da captura anterior à migração, o
+que mostra que nada foi introduzido. O que resta nessas telas é acessibilidade de tela, que não
+pertence à fundação e não se resolve trocando token.
 
 ### 12.2 Assuntos que continuam abertos
 
