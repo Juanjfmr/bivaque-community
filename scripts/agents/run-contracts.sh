@@ -123,6 +123,7 @@ for id in "${CONTRACTS[@]}"; do
     | codex exec \
         -C "$ROOT_WIN" \
         -s workspace-write \
+        -c sandbox_workspace_write.network_access=true \
         -o "$EVIDENCE/$id-relatorio.md" \
         - 2>&1 | tee "$EVIDENCE/$id-codex.log"
   codex_status=${PIPESTATUS[1]}
