@@ -63,6 +63,58 @@ npx expo run:android                   # requer Android SDK local
 npx expo run:ios                       # requer Xcode local
 ```
 
+### Build nativo local no Windows — o que trava e por quê
+
+O build nativo local **funciona** (provado em 2026-09-03: CMake compilou
+`expo-modules-core`, `react-native-screens` e o app, e o APK rodou no emulador).
+Isso só passou a valer depois que `nodeLinker: hoisted` foi efetivamente
+aplicado num install limpo: o caminho de `react-native` caiu de ~137 para 59
+caracteres, saindo do limite de 250 do CMake. Antes disso o MAX_PATH era real —
+ver o comentário em `pnpm-workspace.yaml`.
+
+Restam duas armadilhas, ambas de Java, e a janela entre elas é estreita:
+
+1. **`gradlew.bat` passa `-classpath ""`.** O wrapper do Gradle 8.14.3 faz
+   `set CLASSPATH=` e mesmo assim entrega `-classpath "%CLASSPATH%"`. JDKs
+   antigos abortam com `Error: -classpath requires class path specification`
+   antes de configurar qualquer coisa. Reproduz com `java -classpath "" -version`.
+   Correção: remover esse argumento da última linha do `gradlew.bat` — o `-jar`
+   já entrega o wrapper sozinho.
+   **Some a cada `expo prebuild`**, porque `android/` é gerado e não versionado.
+2. **`JAVA_HOME` precisa ser o JDK 17.** O JBR do Android Studio (OpenJDK 25)
+   aceita o classpath vazio, mas o plugin Gradle do React Native não entende a
+   string de versão e falha com
+   `Error resolving plugin [id: 'com.facebook.react.settings'] > 25.0.3`.
+
+Combinação que funciona nesta máquina:
+
+```sh
+export JAVA_HOME='C:\Program Files\Java\jdk-17.0.3.1'
+export ANDROID_HOME='C:\Users\<user>\AppData\Local\Android\Sdk'
+npx expo run:android --variant debug
+```
+
+Nada disso afeta o EAS: lá o build roda em Linux e usa o `gradlew` shell, que
+não tem o defeito do `.bat`.
+
+### Variáveis de ambiente
+
+`src/auth/client.ts` lança no import quando faltam `EXPO_PUBLIC_SUPABASE_URL` e
+`EXPO_PUBLIC_SUPABASE_ANON_KEY`. O Expo as embute no bundle **em tempo de
+build**, lendo do ambiente do processo do Metro:
+
+```sh
+EXPO_PUBLIC_SUPABASE_URL=http://10.0.2.2:55321 \
+EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon do supabase status -o env> \
+npx expo start
+```
+
+`10.0.2.2` é o alias do host visto de dentro do emulador Android padrão — no
+Genymotion é `10.0.3.2`, e num aparelho físico nenhum dos dois resolve. Para o
+build EAS, as mesmas variáveis vivem no ambiente `preview` do projeto
+(`eas env:list --environment preview`), puxadas pelo `"environment": "preview"`
+do `eas.json`.
+
 ## Layout
 
 ```
@@ -75,6 +127,7 @@ apps/mobile/
 ├── expo-env.d.ts
 ├── app/
 │   ├── _layout.tsx        # Stack raiz; sem provider de sessão
+│   ├── index.tsx          # redirect de "/" para a primeira aba (Cidade)
 │   └── (tabs)/
 │       ├── _layout.tsx    # Tabs com os quatro containers
 │       ├── cidade.tsx

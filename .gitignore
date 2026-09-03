@@ -44,3 +44,16 @@ e2e-results.json\
 # Nunca commitar — paths e caches são específicos da máquina.
 .idea/
 *.iml
+
+# Projeto nativo gerado por `expo prebuild` e saída dos builds locais do mobile.
+# Regenerável; nunca é fonte. O .cxx/ do CMake ainda faz o Biome tentar formatar
+# JSON de build — por isso o mesmo caminho está excluído em biome.json.
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/dist-android/
+apps/mobile/dist-ios/
+apps/mobile/*.apk
+apps/mobile/build-log-*.txt
+
+# Store local do pnpm: ~82 mil arquivos, nunca versionado.
+.pnpm-store/

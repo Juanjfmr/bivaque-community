@@ -22,7 +22,10 @@
       "!**/supabase/.temp",
       "!**/apps/mobile/dist-android",
       "!**/apps/mobile/dist-ios",
-      "!**/apps/mobile/.expo"
+      "!**/apps/mobile/.expo",
+      "!**/apps/mobile/android",
+      "!**/apps/mobile/ios",
+      "!**/.pnpm-store"
     ]
   },
   "formatter": {
