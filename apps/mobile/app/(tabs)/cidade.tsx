@@ -5,12 +5,11 @@
 // cidade, guia de chegada, vitrine, busca de prestador — chega com o
 // contrato da jornada, em ondas posteriores (ver VISUAL_GUIDE.md §0).
 import { ScrollView, StyleSheet, Text, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { theme } from "../../src/theme"
 
 export default function CidadeScreen() {
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+    <View style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.h1}>Cidade</Text>
         <Text style={styles.lead}>O nível da localidade</Text>
@@ -19,7 +18,7 @@ export default function CidadeScreen() {
           <Text style={styles.cardBody}>Conteúdo chega com o contrato da jornada.</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 

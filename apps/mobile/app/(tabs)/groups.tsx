@@ -2,12 +2,11 @@
 // Container "Grupos" (id `groups`, rota canônica `/groups` no web).
 // Conversa por interesse (BIVAQUE.md §3.2).
 import { ScrollView, StyleSheet, Text, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { theme } from "../../src/theme"
 
 export default function GroupsScreen() {
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+    <View style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.h1}>Grupos</Text>
         <Text style={styles.lead}>Conversas por interesse</Text>
@@ -16,7 +15,7 @@ export default function GroupsScreen() {
           <Text style={styles.cardBody}>Conteúdo chega com o contrato da jornada.</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 

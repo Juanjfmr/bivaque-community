@@ -13,6 +13,8 @@
 // não falta aba. NÃO adicione uma quinta aba sem ADR.
 import { Tabs } from "expo-router"
 import { StyleSheet, Text, View } from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { getTabBarStyle } from "../../src/layout/tab-bar"
 import { theme } from "../../src/theme"
 
 interface TabIconProps {
@@ -59,6 +61,8 @@ const tabStyles = StyleSheet.create({
 })
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets()
+
   return (
     <Tabs
       screenOptions={{
@@ -70,9 +74,7 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: theme.color.surface,
           borderTopColor: theme.color.border,
-          height: 64,
-          paddingTop: theme.space[2],
-          paddingBottom: theme.space[2],
+          ...getTabBarStyle(insets.bottom),
         },
         tabBarLabelStyle: {
           fontSize: theme.text.xs,

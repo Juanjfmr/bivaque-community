@@ -27,7 +27,6 @@ import {
   Text,
   View,
 } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { hydrateSessionFromStorage, supabase } from "../../src/auth/client"
 import { Composer } from "../../src/components/Composer"
 import { ReactionButton } from "../../src/components/ReactionButton"
@@ -111,7 +110,7 @@ export default function CommunityScreen() {
   }, [load])
 
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+    <View style={styles.safe}>
       <FlatList
         data={state.posts}
         keyExtractor={(item) => item.id}
@@ -145,7 +144,7 @@ export default function CommunityScreen() {
           void load()
         }}
       />
-    </SafeAreaView>
+    </View>
   )
 }
 

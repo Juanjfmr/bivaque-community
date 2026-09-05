@@ -2,12 +2,11 @@
 // Container "Eu" (id `me`, rota canônica `/profile` no web). Hospeda perfil,
 // conta, mensagens (D36) e convite de membro (onda E Task 6).
 import { ScrollView, StyleSheet, Text, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { theme } from "../../src/theme"
 
 export default function MeScreen() {
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+    <View style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.h1}>Eu</Text>
         <Text style={styles.lead}>Perfil, conta e configurações</Text>
@@ -16,7 +15,7 @@ export default function MeScreen() {
           <Text style={styles.cardBody}>Conteúdo chega com o contrato da jornada.</Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 
