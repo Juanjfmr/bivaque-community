@@ -18,6 +18,8 @@ const remToPx = (rem: string): number => {
   return Number.isFinite(value) ? value * REM_BASE_PX : 0
 }
 
+export const bodyLineHeight = (fontSize: number): number => fontSize * 1.5
+
 export const theme = {
   color: {
     background: nativeTokens.canvas,

@@ -5,7 +5,7 @@
 // cidade, guia de chegada, vitrine, busca de prestador — chega com o
 // contrato da jornada, em ondas posteriores (ver VISUAL_GUIDE.md §0).
 import { ScrollView, StyleSheet, Text, View } from "react-native"
-import { theme } from "../../src/theme"
+import { bodyLineHeight, theme } from "../../src/theme"
 
 export default function CidadeScreen() {
   return (
@@ -58,6 +58,6 @@ const styles = StyleSheet.create({
   cardBody: {
     fontSize: theme.text.sm,
     color: theme.color.muted,
-    lineHeight: 1.5,
+    lineHeight: bodyLineHeight(theme.text.sm),
   },
 })
