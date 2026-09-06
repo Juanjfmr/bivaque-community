@@ -115,7 +115,12 @@ const retrySecondsFrom = (message: string, error: ShapeProbe): number => {
   const parsed = RETRY_SECONDS_PATTERN.exec(message)
   if (parsed?.[1]) {
     const seconds = Number.parseInt(parsed[1], 10)
-    if (Number.isFinite(seconds) && seconds > 0) return seconds
+    // Zero é resposta legítima, não ausência de resposta: com `max_frequency`
+    // curto o GoTrue devolve literalmente "after 0 seconds" (medido em
+    // 2026-09-06 contra a stack local, `max_frequency = "1s"`). Exigir `> 0`
+    // aqui fazia o padrão de 60s entrar no lugar e mandava a pessoa esperar um
+    // minuto para um reenvio que o servidor já teria aceitado.
+    if (Number.isFinite(seconds) && seconds >= 0) return seconds
   }
   const header = asNumber((error as { retryAfter?: unknown }).retryAfter)
   return header && header > 0 ? header : DEFAULT_RETRY_SECONDS
@@ -148,7 +153,10 @@ export function classifyEntrySend(error: unknown): EntrySendView {
     const retryAfterSeconds = retrySecondsFrom(message, shape)
     return {
       outcome: "rate-limited",
-      message: `Aguarde ${retryAfterSeconds}s para pedir outro link.`,
+      message:
+        retryAfterSeconds > 0
+          ? `Aguarde ${retryAfterSeconds}s para pedir outro link.`
+          : "Muitos pedidos seguidos. Tente de novo.",
       retryAfterSeconds,
       diagnostic,
     }

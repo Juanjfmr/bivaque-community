@@ -9,9 +9,17 @@ const authError = (fields: Record<string, unknown>) => Object.assign(new Error()
 
 describe("classifyEntrySend — anti-enumeração", () => {
   it("trata sucesso e conta inexistente como o mesmo estado visível", () => {
+    // Os dois lados são respostas reais do GoTrue, medidas em 2026-09-06
+    // contra a stack local: POST /auth/v1/otp com create_user:false devolve
+    // 200 {} para endereço com conta e 422 otp_disabled para endereço sem.
     const success = classifyEntrySend(null)
     const unknownAccount = classifyEntrySend(
-      authError({ name: "AuthApiError", message: "Signups not allowed for otp", status: 422 }),
+      authError({
+        name: "AuthApiError",
+        message: "Signups not allowed for otp",
+        code: "otp_disabled",
+        status: 422,
+      }),
     )
 
     expect(success.outcome).toBe("sent")
@@ -81,6 +89,22 @@ describe("classifyEntrySend — o que continua distinguível", () => {
     const view = classifyEntrySend(authError({ code: "over_email_send_rate_limit", status: 429 }))
     expect(view.outcome).toBe("rate-limited")
     expect(view.retryAfterSeconds).toBe(60)
+  })
+
+  it("respeita zero segundo, em vez de inventar um minuto de espera", () => {
+    // Payload real, medido contra a stack local em 2026-09-06 com
+    // `max_frequency = "1s"`. Tratar 0 como "não respondeu" prendia a pessoa
+    // por 60s num reenvio que o servidor já teria aceitado.
+    const view = classifyEntrySend(
+      authError({
+        message: "For security purposes, you can only request this after 0 seconds.",
+        code: "over_email_send_rate_limit",
+        status: 429,
+      }),
+    )
+    expect(view.outcome).toBe("rate-limited")
+    expect(view.retryAfterSeconds).toBe(0)
+    expect(view.message).not.toContain("0s")
   })
 
   it("trata erro desconhecido como falha genérica, não como enviado", () => {
