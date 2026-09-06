@@ -17,9 +17,16 @@
 // `expires_at - 60s` e renova automaticamente via /auth/v1/token.
 // PersistSession grava no storage apos cada refresh.
 //
-// Por que `detectSessionInUrl: false`: o app nativo nao lida com
-// deep links de auth callback (o fluxo de login do nativo e' diferente,
-// por implementar em contrato R3 proprio).
+// Por que `detectSessionInUrl: false`: nao existe barra de endereco no
+// nativo para o supabase-js inspecionar. O retorno chega por deep link e e'
+// tratado a mao em src/auth/deep-link.ts + o listener do app/_layout.tsx,
+// que chama exchangeCodeForSession com o code da query.
+//
+// Por que `flowType: "pkce"`: ADR-20260901-mobile-session §Decision. O app
+// nao pode portar client_secret, entao o verifier fica no secure-store e so
+// o proprio aparelho consegue trocar o code por sessao. Sem esta linha o
+// supabase-js usaria o fluxo implicito, que devolve o token direto na URL do
+// deep link — token em URL vaza para log do sistema e historico do browser.
 //
 // A configuracao EXPO_PUBLIC_* vem do Expo Constants. Sem ela, o
 // cliente nao conecta — caller trata como bug de build (throw).
@@ -72,6 +79,7 @@ export const supabase: SupabaseClient =
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
+      flowType: "pkce",
       // Mantemos o lock do refresh em uma implementacao padrao do
       // supabase-js (memoria local). Expo nao tem Web Locks API.
     },

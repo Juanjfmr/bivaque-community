@@ -1335,7 +1335,7 @@
       "phase": "Mobile",
       "priority": "P0",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
       "description": "Após a fundação (MOBILE-00 done), o próximo passo é portar a sessão Supabase Auth para o cliente nativo. A fundação não pode autenticar; sem auth, não há jornada autenticada, não há golden slice nativa. A escolha de storage (expo-secure-store vs AsyncStorage vs cookie httpOnly), política de purge, exclusão de backup em iCloud/Google Drive, FLAG_SECURE no Android e screen-secure no iOS são decisões R3 irreversíveis depois de publicadas para usuários.",
       "checklist": [
         "ADR-20260901-mobile-session.md redigido (5 alternativas, success metric, reversal cost); proponente: orquestrador",
@@ -1351,7 +1351,12 @@
         "2026-09-01: implementacao completa (S2). apps/mobile/src/auth/{storage,signOut,refresh,purge}.ts implementados conforme ADR-20260901-mobile-session (commit b7ca57f). expo-secure-store com keychainAccessible=WHEN_UNLOCKED_THIS_DEVICE_ONLY (exclui iCloud Backup no iOS; EncryptedSharedPreferences fora de backup automatico no Android). signOut revoga servidor (/auth/v1/logout) e prossegue para cleanup local independente de status (4xx/5xx/network) — o membro nao consegue mais agir sem token local. 24 testes vitest (positivos + negativos) cobrem a matriz do ADR. Pendente fora desta fatia: instalacao do app em device real para teste de runtime (FLAG_SECURE, iCloud/Google backup exclusion, refresh automatico sob kill+relaunch). Esses estao bloqueados por BLOCK-MOBILE-RUNTIME (HAXM/Hyper-V para Android; Apple Developer Program para iOS).",
         "2026-09-06 REABERTO: o card estava done com o primeiro criterio de aceite aberto. Evidencia medida em a90370f: nao existe apps/mobile/app/login/**, nenhum import de expo-linking, nenhuma chamada a exchangeCodeForSession em apps/mobile/**, e src/auth/client.ts fixa detectSessionInUrl:false com o comentario \"o fluxo de login do nativo e diferente, por implementar\". Storage, refresh, signOut e purge continuam entregues e testados (51 testes verdes); o que falta e a entrada.",
         "2026-09-06: ADR-20260901-mobile-session se contradizia — frontmatter approved/approved_at 2026-09-01 com critic_verdict vazio, corpo dizendo \"pendente de aprovacao humana explicita\". Confrontado, o dono confirmou que aprovou; o corpo do ADR foi reconciliado e o blocked_by do contrato removido. O bloqueio restante e de ambiente (aparelho/emulador), nao de decisao.",
-        "2026-09-06: a tela nativa de boas-vindas e o passo de e-mail ja existem (commit 87cf04b) e roteiam o modo escolhido; falta ligar signInWithOtp com emailRedirectTo bivaque://, registrar o scheme em supabase/config.toml additional_redirect_urls e tratar o retorno do deep link."
+        "2026-09-06: a tela nativa de boas-vindas e o passo de e-mail ja existem (commit 87cf04b) e roteiam o modo escolhido; falta ligar signInWithOtp com emailRedirectTo bivaque://, registrar o scheme em supabase/config.toml additional_redirect_urls e tratar o retorno do deep link.",
+        "2026-09-06 FECHADO com prova de runtime no emulador bivaque_ci (Android), contra a stack Supabase local. Ciclo observado: boas-vindas -> passo de e-mail -> signInWithOtp real (mensagem entregue no Mailpit com token pkce_) -> GoTrue responde Location bivaque://auth-callback/?code=<uuid> -> app troca por sessao -> chega no conteudo. Confirmado no banco, independente da interface: auth.users.last_sign_in_at preenchido para tres contas de teste.",
+        "2026-09-06: kill+relaunch sem re-login, verificado por force-stop + relaunch com o app abrindo direto no conteudo. Exigiu corrigir app/index.tsx, que redirecionava cego para boas-vindas e mandava quem ja tinha entrado fazer login de novo.",
+        "2026-09-06: caminho triste verificado — code invalido entregue por intent produz \"Nao deu para entrar\" com acao de recuperacao, nao tela branca nem Unmatched Route.",
+        "2026-09-06: primeira tentativa punha o listener na raiz. A troca acontecia (sessao no banco) e mesmo assim a pessoa terminava em Unmatched Route, porque o expo-router procura a rota do caminho do deep link. Corrigido movendo o retorno para app/auth-callback.tsx.",
+        "2026-09-06 NAO VERIFICADO: iOS. Nao ha aparelho nem simulador nesta sessao; o ciclo foi exercitado so em Android."
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/MOB-001.task.yml (já passa)",
@@ -1362,7 +1367,7 @@
         "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md"
       ],
       "updatedAt": "2026-09-06",
-      "sourceRevision": "a90370fbe0f6a242c8cc7e6f26ddd5dcb5f59a1e",
+      "sourceRevision": "b56ce20eab29239c3ab9137c425ed3b32a5f69e6",
       "blockers": ["Aprovação humana de ADR-20260901-mobile-session"],
       "dependencies": [],
       "completedAt": "2026-09-01"
