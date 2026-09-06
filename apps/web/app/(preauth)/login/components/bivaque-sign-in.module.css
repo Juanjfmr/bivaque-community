@@ -318,6 +318,19 @@
   height: 20px;
 }
 
+.resend {
+  display: flex;
+  align-items: center;
+  gap: var(--primitive-space-3);
+  margin-top: var(--primitive-space-3);
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+}
+
+.resendButton {
+  min-height: 44px;
+}
+
 .accountPrompt {
   margin: 20px 0 0;
   color: var(--semantic-text-secondary);

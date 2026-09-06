@@ -4,7 +4,8 @@ import { Button } from "@heroui/react"
 import { ArrowLeft, ArrowRight, Mail, ShieldCheck, Tent } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { classifyEntrySend, type EntrySendView } from "../../../../lib/auth/entry-send"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import styles from "./bivaque-sign-in.module.css"
@@ -22,7 +23,7 @@ const entryCopy = {
     description: "Receba um link no seu e-mail para continuar. Sem senha para lembrar.",
     submit: "Receber link para entrar",
     google: "Continuar com Google",
-    success: "Enviamos o link para",
+    success: "Link enviado para",
     alternateLead: "Ainda não faz parte?",
     alternateAction: "Criar conta",
     alternateHref: "/signup",
@@ -39,7 +40,7 @@ const entryCopy = {
     description: "Ele será sua forma de entrar no Bivaque. Sem senha, sem formulário longo.",
     submit: "Criar conta e continuar",
     google: "Criar com Google",
-    success: "Criamos sua entrada e enviamos o link para",
+    success: "Link enviado para",
     alternateLead: "Já tem uma conta?",
     alternateAction: "Entrar",
     alternateHref: "/login",
@@ -53,6 +54,13 @@ const entryCopy = {
 // As duas entradas são destinos distintos, não abas de um formulário só:
 // a escolha muda a rota, o `shouldCreateUser` do OTP e a mensagem de erro.
 // Manter isso como navegação preserva voltar/avançar e link compartilhável.
+// O limite real é do servidor (`max_frequency` do GoTrue). Este número só
+// controla o que a tela mostra enquanto isso.
+const RESEND_COOLDOWN_SECONDS = 60
+
+// Neutra de propósito: não diz que a conta existe. Ver lib/auth/entry-send.ts.
+const SENT_HINT = "Se não chegar em alguns minutos, confira o endereço e o spam."
+
 const entryModes = [
   { mode: "login", label: "Entrar", href: "/login" },
   { mode: "signup", label: "Criar conta", href: "/signup" },
@@ -98,40 +106,63 @@ export function BivaqueSignIn({
   const [email, setEmail] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<"email" | "google" | null>(null)
-  const [sent, setSent] = useState(false)
+  // O resultado do envio é um estado só. Antes eram `sent` e `error`
+  // independentes, e era isso que permitia a tela responder de forma diferente
+  // para um endereço com conta e um sem — ver lib/auth/entry-send.ts.
+  const [result, setResult] = useState<EntrySendView | null>(null)
+  const [sentTo, setSentTo] = useState("")
+  const [cooldown, setCooldown] = useState(0)
+  const sent = result?.outcome === "sent"
   const copy = entryCopy[mode]
   const titleId = mode === "signup" ? "signup-title" : "login-title"
   const emailId = mode === "signup" ? "bivaque-signup-email" : "bivaque-signin-email"
 
-  const handleMagicLink = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  // Contagem regressiva do reenvio. Roda no cliente só para dizer quanto
+  // falta: quem impõe o limite é o servidor, e o botão liberado antes da hora
+  // apenas recebe outro 429 — a espera visível nunca é a autorização.
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = setTimeout(() => setCooldown((seconds) => seconds - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [cooldown])
+
+  const sendMagicLink = async (address: string) => {
     setError(null)
-    setSent(false)
     setLoading("email")
 
+    let caught: unknown = null
     try {
       if (onMagicLinkSignIn) {
-        await onMagicLinkSignIn(email)
+        await onMagicLinkSignIn(address)
       } else {
         const { error: signInError } = await createBrowserClient().auth.signInWithOtp({
-          email,
+          email: address,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback?next=/consent`,
             shouldCreateUser: mode === "signup",
           },
         })
-        if (signInError) throw signInError
+        caught = signInError
       }
-      setSent(true)
-    } catch {
-      setError(
-        mode === "signup"
-          ? "Não foi possível criar sua conta agora. Tente novamente em instantes."
-          : "Não foi possível entrar com este e-mail. Confira o endereço ou crie sua conta.",
-      )
-    } finally {
-      setLoading(null)
+    } catch (thrown) {
+      caught = thrown
     }
+
+    const view = classifyEntrySend(caught)
+    setResult(view)
+    if (view.outcome === "sent") {
+      setSentTo(address)
+      setCooldown(RESEND_COOLDOWN_SECONDS)
+    }
+    if (view.outcome === "rate-limited") {
+      setCooldown(view.retryAfterSeconds ?? RESEND_COOLDOWN_SECONDS)
+    }
+    setLoading(null)
+  }
+
+  const handleMagicLink = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    await sendMagicLink(email)
   }
 
   const handleGoogle = async () => {
@@ -240,16 +271,45 @@ export function BivaqueSignIn({
 
           {error && <FeedbackAlert variant="danger" description={error} />}
 
+          {result?.outcome === "offline" && (
+            <FeedbackAlert variant="warning" title="Sem conexão" description={result.message} />
+          )}
+
+          {result?.outcome === "failed" && (
+            <FeedbackAlert variant="danger" description={result.message} />
+          )}
+
+          {result?.outcome === "rate-limited" && (
+            <FeedbackAlert variant="warning" title="Muitos pedidos" description={result.message} />
+          )}
+
           {sent && (
             <FeedbackAlert
               variant="success"
               title="Confira seu e-mail"
               description={
                 <>
-                  {copy.success} <strong>{email}</strong>. Abra a mensagem para continuar.
+                  {copy.success} <strong>{sentTo}</strong>. {SENT_HINT}
                 </>
               }
             />
+          )}
+
+          {(sent || result?.outcome === "rate-limited") && (
+            <div className={styles["resend"]}>
+              <Button
+                type="button"
+                variant="ghost"
+                className={styles["resendButton"] ?? ""}
+                isDisabled={loading !== null || cooldown > 0}
+                onPress={() => void sendMagicLink(sentTo || email)}
+              >
+                {loading === "email" ? "Reenviando..." : "Reenviar link"}
+              </Button>
+              <span aria-live="polite">
+                {cooldown > 0 ? `Disponível em ${cooldown}s` : "Não chegou? Peça outro."}
+              </span>
+            </div>
           )}
 
           <p className={styles["accountPrompt"]}>

@@ -46,7 +46,7 @@ a política de purge e a interação com backup em nuvem são decisões
 de produto e segurança **irreversíveis** depois de publicadas para
 os usuários.
 
-## Decision (proposed — pendente de aprovação humana)
+## Decision (aprovada — ver §Approval)
 
 Adotar a biblioteca **`expo-secure-store`** como storage de token e
 metadados de sessão, com PKCE no login, refresh automático gerenciado
@@ -149,9 +149,20 @@ por ADR futuro.
 
 ## Approval
 
-**Pendente de aprovação humana explícita.** Esta ADR foi redigida pelo
-orquestrador para reduzir a fricção da decisão, mas a escolha é
-irreversível depois de publicada. Espera o sinal do dono.
+**Aprovada pelo dono.** O frontmatter registrava `status: approved` e
+`approved_at: 2026-09-01` desde a redação, mas o corpo continuou dizendo que
+esperava o sinal do dono — o documento afirmava as duas coisas ao mesmo tempo.
+Confrontado em 2026-09-06, o dono confirmou que a decisão é dele e está
+aprovada; esta seção passa a concordar com o frontmatter.
+
+A contradição não era cosmética: sendo R3, um agente que lesse só o corpo
+travaria a jornada de auth nativa, e um que lesse só o frontmatter
+implementaria uma escolha irreversível sem assinatura. Quem editar este
+arquivo depois deve mover as duas pontas juntas.
+
+`critic_verdict` continua **vazio** de propósito: a aprovação humana e o
+parecer do crítico são mecanismos distintos, e nenhum agente pode preencher
+o segundo em nome do primeiro.
 
 ## Anexo técnico (adicionado 2026-09-01) — o que a implementação vai encontrar
 

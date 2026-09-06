@@ -8,12 +8,18 @@ objective: >
 
 authority:
   - ADR-20260831-mobile-native (fundação aprovada, R3)
-  - ADR-20260901-mobile-session (proposta, pendente de aprovação humana)
+  - ADR-20260901-mobile-session (aprovada; confirmada pelo dono em 2026-09-06)
   - docs/BIVAQUE.md §4.3 Privacidade, §7.3 Proibidos, §10 Ondas
 
 baseline:
   status: FAIL-EVIDENCED
-  evidence: apps/mobile/src/** e apps/mobile/app/** NÃO importam expo-secure-store, @supabase/supabase-js, expo-crypto nem expo-linking; não há fluxo de sessão.
+  evidence: >
+    2026-09-06, remedido em b2bf676..a90370f. Storage, refresh, signOut e purge
+    existem e têm teste (apps/mobile/src/auth/**, 51 testes verdes). O LOGIN não:
+    não há apps/mobile/app/login/**, nenhum import de expo-linking, nenhuma
+    chamada a exchangeCodeForSession, e client.ts fixa detectSessionInUrl:false
+    com o comentário "o fluxo de login do nativo é diferente, por implementar".
+    O card MOB-001-SESSION foi marcado done com este critério de aceite aberto.
 
 allowed_paths:
   - apps/mobile/src/auth/**
@@ -22,6 +28,9 @@ allowed_paths:
   - apps/mobile/src/auth/signOut.ts
   - apps/mobile/src/auth/purge.ts
   - apps/mobile/app/login/**
+  - apps/mobile/app/(auth)/**
+  - apps/mobile/src/components/ui/**
+  - supabase/config.toml
   - apps/mobile/app/_layout.tsx
   - apps/mobile/app/(tabs)/_layout.tsx
   - apps/mobile/app.json
@@ -67,8 +76,10 @@ adr: docs/decisions/ADR-20260901-mobile-session.md
 
 reviewer_must_differ_from_executor: true
 
-blocked_by:
-  - Aprovação humana de ADR-20260901-mobile-session
+# blocked_by removido em 2026-09-06: o dono confirmou a aprovação da ADR quando
+# confrontado com a contradição entre o frontmatter (approved) e o corpo
+# (pendente). O bloqueio que resta é de ambiente, não de decisão: fechar este
+# contrato exige aparelho ou emulador, que a sessão de 2026-09-06 não tinha.
 
 retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
