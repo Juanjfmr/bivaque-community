@@ -707,13 +707,19 @@
         "Estruturar tokens em primitive → semantic → component mantendo aliases legados",
         "Proteger contrato, redirecionamentos, tokens e containers por testes de escopo",
         "Obter três críticas adversariais independentes e resolver cada achado acionável",
-        "Rodar task contract, test:scope, gate e auditoria visual proporcional às superfícies afetadas"
+        "Rodar task contract, test:scope, gate e auditoria visual proporcional às superfícies afetadas",
+        "Migrar a paleta em runtime para a direcao autorizada em 06/09/2026 e provar nas superficies de entrada"
       ],
       "proof": [
         "Baseline: DESIGN_SPEC e VISUAL_GUIDE tinham autoridade concorrente; EXP-004 não tinha vencedor",
         "ADR-20260901-design-system registra a decisão R2, alternativas, métricas, condição de reabertura e três pareceres independentes PASS",
         "2026-09-02: task contract, 69 testes de escopo, geração de tokens e typechecks de web/tokens/mobile passaram; E2E e auditoria visual seguem como prova de runtime antes do fechamento",
-        "Gate global não é evidência limpa enquanto artefatos Android pré-existentes no worktree entram no Biome"
+        "Gate global não é evidência limpa enquanto artefatos Android pré-existentes no worktree entram no Biome",
+        "2026-09-06: paleta autorizada migrada no token source — primitive.terra-* substituida por pine-* (#164734), canvas #FAFBF8, selected #EEF1E7. Provado em runtime no dev server: --semantic-action-primary resolve #164734, --semantic-canvas #fafbf8, --primitive-terra-700 ausente.",
+        "2026-09-06: gate completo verde (lint/typecheck/test/secrets) apos migracao; 101 testes de escopo incluindo o de contraste AA sobre a paleta nova; pnpm build ok; apps/mobile vitest 51/51; expo export android bundlou 1033 modulos.",
+        "2026-09-06: tela de entrada web (/login, /signup) com escolha explicita entrar/criar conta — 375/768/1440 sem overflow horizontal, sem alvo de toque abaixo de 44px, sem texto abaixo de 13px. Auditoria visual do loop nao rodou: exige stack Supabase, que esta fora do ar neste ambiente.",
+        "2026-09-06: PENDENTE — .visualCopy > span usa branco a 80% de opacidade sobre a foto do painel; DESIGN_SYSTEM 4.2 proibe derivar tom suave de opacidade. Falta um papel de texto sobre imagem no sistema.",
+        "2026-09-06: PENDENTE — mobile: boas-vindas e passo de e-mail existem e compilam, mas o envio do link nao esta ligado (client nativo com detectSessionInUrl:false, sem callback de deep link). Runtime nativo NAO verificado: sem emulador/aparelho nesta sessao."
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/DS-001.task.yml",
@@ -726,8 +732,8 @@
         "ADR | ../../docs/decisions/ADR-20260901-design-system.md",
         "Experimento de baseline | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md"
       ],
-      "updatedAt": "2026-09-02",
-      "sourceRevision": "b67dbac",
+      "updatedAt": "2026-09-06",
+      "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
       "dependencies": []
     },
     {

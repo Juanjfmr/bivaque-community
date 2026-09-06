@@ -117,7 +117,9 @@ largura. Em interfaces autenticadas, a marca orienta; o título `h1` identifica 
 
 ### 4.1 Direção visual: Casa comum
 
-Superfícies claras e quentes, texto azul-noite, ação em terracota e contexto em azul-petróleo.
+Superfícies claras e neutras, texto grafite-esverdeado, ação em verde profundo e contexto em
+azul-petróleo. Direção autorizada em 06/09/2026 pelo guia visual
+`docs/design/visual-guide-2026-09-06/`, que substitui a paleta terracota anterior.
 O contraste de registros é intencional: a base é serena para leitura longa; a ação é viva sem
 parecer oferta agressiva; o contexto é estável sem soar oficial. Ilustrações têm gesto simples,
 linhas arredondadas e áreas vazias generosas. Fotos mostram vida cotidiana, serviços reais,
@@ -130,15 +132,16 @@ cor como único sinal de seleção, erro, leitura, pendência ou prioridade.
 
 | Papel | Token semântico | Valor v1 | Uso |
 |---|---|---:|---|
-| Canvas | `semantic.canvas` | `#FFFDF9` | fundo de página |
+| Canvas | `semantic.canvas` | `#FAFBF8` | fundo de página |
 | Surface | `semantic.surface` | `#FFFFFF` | cards, menus e inputs |
-| Ink | `semantic.text-primary` | `#17213A` | texto e ícones principais |
-| Muted | `semantic.text-secondary` | `#526077` | metadados e apoio |
-| Primary | `semantic.action-primary` | `#9F3A23` | CTA principal e link de ação |
+| Ink | `semantic.text-primary` | `#16211C` | texto e ícones principais |
+| Muted | `semantic.text-secondary` | `#4A594F` | metadados e apoio |
+| Primary | `semantic.action-primary` | `#164734` | CTA principal e link de ação |
 | Context | `semantic.action-context` | `#1D5D89` | localização, navegação e informação |
 | Success | `semantic.success` | `#146C4C` | confirmação positiva |
 | Warning | `semantic.warning` | `#8A4B00` | atenção e pendência |
 | Danger | `semantic.danger` | `#B42318` | dano, denúncia e remoção |
+| Selecionado | `semantic.selected` | `#EEF1E7` | seleção, aba ativa e destaque calmo |
 | Focus | `semantic.focus-outer` | `#1D5D89` | foco visível, com anel duplo |
 
 `Primary`, `Context`, `Success`, `Warning` e `Danger` sobre branco usam texto na própria cor;
@@ -203,7 +206,7 @@ primitive  →  semantic  →  component
 valor bruto   intenção      contrato de uso
 ```
 
-- **Primitive:** escala sem significado de interface, por exemplo `primitive.terra-700` e
+- **Primitive:** escala sem significado de interface, por exemplo `primitive.pine-700` e
   `primitive.space-4`. Só foundations e gerador de tokens podem usá-las.
 - **Semantic:** intenção estável, por exemplo `semantic.action-primary`,
   `semantic.surface-sunken` e `semantic.text-secondary`. É a camada permitida em layout e
@@ -224,7 +227,7 @@ Os nomes canônicos são caminhos no JSON, sempre com a camada (`primitive`, `se
 pelos testes de contrato:
 
 `primitive.paper-0`, `primitive.paper-50`, `primitive.ink-900`, `primitive.ink-700`,
-`primitive.terra-700`, `primitive.petrol-700`, `primitive.leaf-700`, `primitive.amber-700`,
+`primitive.pine-700`, `primitive.petrol-700`, `primitive.leaf-700`, `primitive.amber-700`,
 `primitive.rose-700`, `primitive.space-4`, `semantic.canvas`, `semantic.surface`,
 `semantic.surface-sunken`, `semantic.text-primary`, `semantic.text-secondary`,
 `semantic.text-on-strong`, `semantic.action-primary`, `semantic.action-context`,
@@ -468,7 +471,8 @@ e `semantic.control-border-disabled` recua para `primitive.ink-500`. Ele é sepa
 o limite de controle; divisórias não engrossam por causa desta regra.
 
 **Estado de campo não empresta cor de outro significado.** A rampa é neutra de propósito:
-terracota, petróleo, verde e vermelho carregam significado próprio no sistema, e um campo com
+verde profundo, petróleo, verde de sucesso e vermelho carregam significado próprio no sistema,
+e um campo com
 limite vermelho ao ser pressionado diz à pessoa que ela errou. Carregando não tem cor própria —
 `component.field-bg-loading` e `component.field-border-loading` apontam para o estado desabilitado
 e recebem movimento, que é o contrato de Skeleton na §6. Um estado herda apontando para o estado

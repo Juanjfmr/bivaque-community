@@ -22,6 +22,7 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: theme.color.background },
         }}
       >
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
     </SafeAreaProvider>

@@ -14,8 +14,9 @@
 }
 
 .root :where(a, button, input):focus-visible {
-  outline: 2px solid var(--semantic-action-primary);
-  outline-offset: 3px;
+  outline: 2px solid var(--semantic-focus-outer);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--semantic-focus-inner);
 }
 
 .formPanel {
@@ -125,13 +126,49 @@
   padding-bottom: 28px;
 }
 
+.modeSwitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--primitive-space-1);
+  margin-bottom: var(--primitive-space-6);
+  padding: var(--primitive-space-1);
+  background: var(--semantic-surface-sunken);
+  border-radius: var(--primitive-radius-full);
+}
+
+.modeOption {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--primitive-space-4);
+  color: var(--semantic-text-secondary);
+  border-radius: var(--primitive-radius-full);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
+  text-decoration: none;
+  transition:
+    background var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.modeOption:hover {
+  color: var(--semantic-text-primary);
+}
+
+.modeOption[data-active="true"] {
+  background: var(--semantic-surface);
+  color: var(--semantic-action-primary);
+  box-shadow: var(--semantic-elevation-raised);
+}
+
 .heading {
   margin-bottom: 28px;
 }
 
 .eyebrow {
   margin: 0 0 10px;
-  color: var(--semantic-success);
+  color: var(--semantic-action-primary);
   font-size: var(--semantic-typography-meta-size);
   font-weight: var(--semantic-typography-label-weight);
   text-transform: uppercase;
@@ -184,9 +221,9 @@
 }
 
 .inputShell:focus-within {
-  border-color: var(--semantic-success);
+  border-color: var(--semantic-focus-outer);
   background: var(--semantic-surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--semantic-success) 12%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--semantic-focus-outer) 18%, transparent);
 }
 
 .inputShell svg {
@@ -293,10 +330,10 @@
   min-height: 44px;
   align-items: center;
   padding: 0 2px;
-  color: var(--semantic-success);
+  color: var(--semantic-action-primary);
   font-weight: var(--semantic-typography-label-weight);
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--semantic-success) 32%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--semantic-action-primary) 32%, transparent);
   text-underline-offset: 4px;
   transition:
     color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
@@ -304,7 +341,7 @@
 }
 
 .accountPrompt a:hover {
-  color: var(--semantic-action-primary);
+  color: var(--semantic-action-primary-hover);
   text-decoration-color: currentcolor;
 }
 
@@ -323,7 +360,7 @@
 .trustNote svg {
   width: 18px;
   height: 18px;
-  color: var(--semantic-success);
+  color: var(--semantic-action-primary);
 }
 
 .visualPanel {

@@ -63,7 +63,7 @@ test("defines the canonical design-system token set from the generated web style
     "--ease-in",
     "--ease-spring",
     "--primitive-paper-50",
-    "--primitive-terra-700",
+    "--primitive-pine-700",
     "--semantic-canvas",
     "--semantic-action-primary",
     "--component-button-primary-bg",
@@ -76,6 +76,26 @@ test("defines the canonical design-system token set from the generated web style
 
   // And the reduced-motion path survives the token work
   assert.match(globals, /prefers-reduced-motion:\s*reduce/)
+})
+
+test("carries the palette authorised on 2026-09-06", () => {
+  // Given the single token source
+  const tokens = JSON.parse(readFileSync(join(root, "packages/tokens/src/tokens.json"), "utf8"))
+
+  // When the approved values are checked
+  // (docs/design/visual-guide-2026-09-06: verde profundo, fundo claro, sálvia)
+  assert.equal(tokens.primitive["pine-700"], "#164734")
+  assert.equal(tokens.primitive["paper-50"], "#FAFBF8")
+  assert.equal(tokens.primitive["pine-100"], "#EEF1E7")
+
+  // Then the product roles resolve to them, and the terracotta family is gone
+  assert.equal(tokens.semantic["action-primary"], "var(--primitive-pine-700)")
+  assert.equal(tokens.semantic.canvas, "var(--primitive-paper-50)")
+  assert.equal(tokens.semantic.selected, "var(--primitive-pine-100)")
+  assert.deepEqual(
+    Object.keys(tokens.primitive).filter((name) => name.startsWith("terra-")),
+    [],
+  )
 })
 
 test("keeps the hairline in the --border token, not inlined", () => {

@@ -33,6 +33,8 @@ export const theme = {
     muted: nativeTokens.muted,
     accent: nativeTokens.accent,
     accentForeground: nativeTokens.accentForeground,
+    accentPressed: nativeTokens.accentPressed,
+    accentDisabled: nativeTokens.accentDisabled,
     accentSoft: nativeTokens.surfaceSubtle,
     danger: nativeTokens.danger,
     focus: nativeTokens.focusOuter,

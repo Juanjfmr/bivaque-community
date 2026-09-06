@@ -50,6 +50,14 @@ const entryCopy = {
   },
 } as const
 
+// As duas entradas são destinos distintos, não abas de um formulário só:
+// a escolha muda a rota, o `shouldCreateUser` do OTP e a mensagem de erro.
+// Manter isso como navegação preserva voltar/avançar e link compartilhável.
+const entryModes = [
+  { mode: "login", label: "Entrar", href: "/login" },
+  { mode: "signup", label: "Criar conta", href: "/signup" },
+] as const
+
 function GoogleIcon() {
   return (
     <svg className={styles["googleIcon"]} viewBox="0 0 48 48" aria-hidden="true">
@@ -166,6 +174,20 @@ export function BivaqueSignIn({
         </div>
 
         <div className={styles["formContent"]}>
+          <nav className={styles["modeSwitch"]} aria-label="Escolha como entrar no Bivaque">
+            {entryModes.map((entry) => (
+              <Link
+                key={entry.mode}
+                href={{ pathname: entry.href }}
+                className={styles["modeOption"]}
+                aria-current={entry.mode === mode ? "page" : undefined}
+                data-active={entry.mode === mode ? "true" : undefined}
+              >
+                {entry.label}
+              </Link>
+            ))}
+          </nav>
+
           <div className={styles["heading"]}>
             <p className={styles["eyebrow"]}>{copy.eyebrow}</p>
             <h1 id={titleId}>{copy.title}</h1>

@@ -81,15 +81,19 @@ export const nativeTokens = {
   canvas: primitive("paper-50"),
   surface: primitive("paper-0"),
   surfaceSunken: primitive("paper-100"),
-  surfaceSubtle: primitive("terra-100"),
+  surfaceSubtle: primitive("pine-100"),
   // CSS may use color-mix; React Native receives the same primitive with its
   // documented hairline alpha resolved here, without a duplicated color value.
   border: hexWithAlpha(primitive("ink-900"), 0.14),
   controlBorder: primitive("ink-700"),
   foreground: primitive("ink-900"),
   muted: primitive("ink-700"),
-  accent: primitive("terra-700"),
+  accent: primitive("pine-700"),
   accentForeground: primitive("paper-0"),
+  // Estados da ação primária. O nativo não tem :hover, mas tem pressionado e
+  // desabilitado; derivá-los aqui evita que cada tela invente um tom próprio.
+  accentPressed: primitive("pine-pressed"),
+  accentDisabled: primitive("pine-disabled"),
   danger: primitive("rose-700"),
   focus: primitive("petrol-700"),
   focusInner: primitive("paper-0"),
