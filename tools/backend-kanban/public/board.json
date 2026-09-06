@@ -1559,6 +1559,37 @@
       "sourceRevision": "e1bb839",
       "blockers": [],
       "dependencies": ["S5-MOBILE-UI"]
+    },
+    {
+      "id": "AUTH-001-EMAIL-PTBR",
+      "title": "E-mail de acesso do GoTrue sai em ingles",
+      "phase": "Auth e onboarding",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "O link de entrada e enviado pelo Supabase Auth com o template padrao, em ingles: assunto \"Your sign-in link\" e corpo \"Follow the link below to sign in\". O Bivaque so fala portugues, e este e o primeiro e-mail que qualquer pessoa recebe do produto. Nao existe supabase/templates/ nem secao [auth.email.template] em supabase/config.toml. Distinto de BLOCK-RESEND: aquele card trata do outbox da aplicacao; este e-mail sai do proprio GoTrue e nao passa por ele.",
+      "checklist": [
+        "Criar supabase/templates/magic-link.html em portugues, com a mesma acao e o mesmo aviso de uso unico",
+        "Declarar [auth.email.template.magic_link] em supabase/config.toml apontando para o arquivo",
+        "Conferir se os demais templates disparados pelo produto (convite, recuperacao, troca de e-mail) tambem precisam de versao propria",
+        "Provar a entrega lendo a mensagem no Mailpit da stack local, nao so a existencia do arquivo"
+      ],
+      "proof": [
+        "2026-09-06: medido na stack local. POST /auth/v1/otp entregou a mensagem no Mailpit com assunto \"Your sign-in link\" e corpo \"Follow the link below to sign in. This link expires shortly and can only be used once.\"",
+        "supabase/config.toml nao tem [auth.email.template]; o diretorio supabase/templates/ nao existe no repositorio"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 exec supabase start",
+        "leitura da mensagem em http://127.0.0.1:55324/api/v1/messages"
+      ],
+      "links": [
+        "Estados obrigatorios de auth | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
+        "Config do provedor | ../../supabase/config.toml"
+      ],
+      "updatedAt": "2026-09-06",
+      "sourceRevision": "afdb30e9b6574919774904b7ca51a2b26a2821a9",
+      "blockers": [],
+      "dependencies": []
     }
   ]
 }
