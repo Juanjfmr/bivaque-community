@@ -15,7 +15,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 ## Agora
 
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
-- **MVP-00-E2E-FUNCTIONAL** · P1 · Reconciliar 65 falhas E2E funcionais (app × spec)
+- **MVP-00-E2E-FUNCTIONAL** · P1 · Reconciliar falhas E2E funcionais (app × spec)
 
 ## Bloqueios
 
