@@ -39,7 +39,7 @@ servível, prefira rodá-la a reimplementar o cálculo.
 | `contrast` | high | texto abaixo de 4.5:1 (ou 3:1 para ≥24px / ≥18.66px bold) |
 | `missing-accessible-name` | high | elemento interativo sem `aria-label`, texto ou `title` |
 | `missing-alt` | high | `<img>` sem atributo `alt` |
-| `forbidden-copy` | high | copy expõe vocabulário de privacidade — mesma lista que a migration `20260802001300_fix_forbidden_content_regex.sql` rejeita no banco: patente, posto/organização militar, endereço residencial, **selo de verificação**, **verificado publicamente**. É o backstop mecânico exato do que fundamenta `SLOP-16` e o item 8 da §9 — se ela disparar, não precisa de julgamento de tela para confirmar |
+| `forbidden-copy` | high | copy expõe vocabulário de privacidade — **subconjunto** da lista que a migration `20260802001300_fix_forbidden_content_regex.sql` rejeita no banco: patente, posto/organização militar, endereço residencial, **selo de verificação**, **verificado publicamente**, cada um só quando seguido de `:` ou `-` (a regex é `\b(termo)\b\s*[:-]`). É backstop **parcial**, não substituto do julgamento — ver as duas lacunas abaixo |
 | `font-too-small` | medium | corpo de texto < 12px |
 | `no-transition` | medium | elemento interativo sem `transition`/`animation` |
 | `hardcoded-color` | medium | cor crua em `style` inline — `SLOP-13` |
@@ -80,6 +80,19 @@ A regex do `capture.mjs` cobre duas categorias, e elas não são a mesma coisa:
 
 Leia `hit[0]` (a captura no relatório de achado) antes de classificar — nunca assuma pelo
 nome da regra.
+
+**Duas lacunas mecânicas que `forbidden-copy` NÃO cobre — não conte com ela para isto:**
+
+1. **Precisa de `:` ou `-` logo após o termo.** Um selo escrito como "✓ Membro verificado",
+   sem pontuação depois, **não dispara a regra** — é exatamente o formato do `P0-3` já
+   registrado no `HANDOFF-auditoria-multiagente.md`. Esse achado só existe porque o
+   `audit-carrasco`/`audit-conformidade` leram a tela; `forbidden-copy` teria deixado passar.
+2. **Não cobre as siglas.** A migration rejeita `OM`, `CEP` e `CPF` como tokens soltos; a
+   regex daqui só tem as formas por extenso. Um "CPF:" ou "OM:" vazando na UI não aciona
+   `forbidden-copy`.
+
+Por isso o Medidor não substitui o Conformidade nem o Carrasco nestes dois casos — mede o
+que mede, e fica claro sobre o que não mede.
 
 ## Falsos positivos conhecidos — cheque ANTES de reportar
 
