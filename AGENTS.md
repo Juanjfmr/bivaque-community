@@ -1,7 +1,39 @@
 # AGENTS.md — Bivaque Community
 
-Private, verification-gated community product for verified federal military, Veterans and military
-pensioners, piloted in Manaus. Server-rendered Next.js on Supabase.
+## Owner corrections — 2026-09-07
+
+Read [the six explicit corrections](docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md). They require city-wide questions, event information requests, an optional reason for joining, the exact military label, fast CPF verification with identity/AI fallback, and optional self-declared Armed Force/OM with individual visibility controls. These are current product instructions, not delivered runtime. They supersede conflicting older product prohibitions; retain server authorization, privacy and data-integrity requirements.
+
+National, verification-gated community product for federal military, veterans, pensioners and
+families. Next.js web and React Native/Expo mobile, with a shared Supabase backend.
+
+## Visual coverage update — 2026-09-07
+
+Read the [screen coverage map](docs/design/visual-guide-2026-09-06/MAPA-DE-TELAS.md) and [guide consumption instructions](docs/design/visual-guide-2026-09-06/AGENTS.md) after the construction process. Select the relevant mobile/web references and recovery states before coding. Only files actually present in the manifest count as delivered images; visual coverage is not runtime completion.
+
+## Current build authority — mandatory, 2026-09-06
+
+**Read [`PROCESSO-DE-CONSTRUCAO.md`](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md)
+before planning, implementing or reviewing this reconstruction.** Then read the
+[visual correction notes](docs/design/visual-guide-2026-09-06/README.md) and inspect the relevant
+images in the [visual guide](docs/design/visual-guide-2026-09-06/index.html).
+
+The owner explicitly authorized this version **independently of conflicting older product
+documentation**. Its product scope, navigation, visual direction and construction sequence
+supersede conflicting older specs, ADR design choices, wave order and scoped agent guidance.
+Do not restore the old product or request approval merely because those documents disagree.
+This authorization does not remove security, privacy, authorization, accessibility or data-integrity
+requirements. Preserve compatible, proven infrastructure.
+
+The target is national; Manaus is an example/pilot, not an access boundary. Primary navigation is
+**Início / Explorar / Comunidades / Perfil**, with explicit Guia and Mercado entry points.
+The approved direction uses light surfaces and deep green. Historical documentation below helps
+locate existing mechanisms; it does not redefine this target.
+
+**Independent verification:** follow section 14 of the construction process. A model's own
+completion report is not independent verification. CI, code review and runtime verification are
+different layers; report which actually ran against the delivered revision. There is no fully
+automated independent reviewer/runtime-verifier chain today. Do not claim there is one.
 
 **This is a deliberate fork of a larger product.** The parent, `Juanjfmr/Bivaque` (private
 GitHub repo), carries 74 sovereign decisions, 19 features and a formal ADR regime — the
@@ -18,12 +50,12 @@ Forja-90 is a legacy codebase: reference patterns only, never copy its files.
 
 ## READ FIRST — before any work in this repository
 
-**Two documents, and you need both.** Read them before touching code, before planning,
-before answering a question about what this product does.
+**Read the current construction process above first.** Also read these two documents to
+understand the starting point before touching code or answering implementation questions.
 
-- **[`docs/BIVAQUE.md`](docs/BIVAQUE.md)** — what the product **must be**: vision, roles,
-  community model, decisions, monetisation, limits, sequencing. This is the source of truth
-  for product questions.
+- **[`docs/BIVAQUE.md`](docs/BIVAQUE.md)** — historical vision, roles, community model and
+  decisions. Use compatible details as context; the current construction process takes
+  precedence for the target product and experience.
 - **[`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md)** — what the code **does today**,
   with file:line evidence and the gap to the target.
 
@@ -35,11 +67,12 @@ before answering a question about what this product does.
   change; use `--search <terms>` when no ID is known. For autonomous card-by-card work, use
   `node tools/backend-kanban/src/board.mjs --next` and take exactly one returned card through
   implementation, validation, board update and commit. The board sets execution priority; it never
-  overrides product decisions or runtime evidence in the two documents above. Never edit
+  overrides the current construction authority or actual runtime evidence. Reconcile affected
+  cards when the current version replaces their assumptions. Never edit
   `BOARD.md` by hand.
 
-**Never infer one from the other.** `BIVAQUE.md` describes decisions, many of them not yet
-built; `PRODUCT_STATUS.md` describes reality. Reading a decision as a delivered feature is
+**Never infer intent from implementation or vice versa.** The construction process describes
+the current target; `PRODUCT_STATUS.md` describes recorded runtime evidence. Reading a decision as a delivered feature is
 the mistake that produced the document these two replace.
 
 `docs/journeys/MAP.md` is **historical** — superseded 2026-08-11, kept for audit trail only.
@@ -89,12 +122,13 @@ leaks so far.
 
 | Document | Answers |
 |---|---|
-| `docs/BIVAQUE.md` | What the product must be: vision, roles, decisions, monetisation, sequencing |
+| `docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md` | Current version to build, owner authorization, execution sequence and independent verification |
+| `docs/BIVAQUE.md` | Historical product decisions; compatible context for the new version |
 | `docs/PRODUCT_STATUS.md` | What the code does today, the gap to the target, and which wave closes it |
 | `tools/backend-kanban/BOARD.md` | Concise generated MVP path agents read before planning or implementation |
 | `tools/backend-kanban/public/board.json` | Canonical board data, evidence and documentation drift by stable card ID |
 | `docs/decisions/` | R3 decisions as ADRs, and `RISK_MATRIX.md` — what an agent may decide alone |
-| `docs/agents/DESIGN_SYSTEM.md` | The visual language, tokens, components and audit rubric |
+| `docs/agents/DESIGN_SYSTEM.md` | Existing tokens, components and audit mechanics; conflicting appearance is superseded by the current guide |
 | `docs/superpowers/specs/` | Approved designs, with dated conflicts recorded rather than hidden |
 | `docs/superpowers/plans/` | Executable plans derived from those specs |
 | `docs/agents/AGENT_ARCHITECTURE.md` | The agent roles, the execution loop, and which composition a task gets |
@@ -139,7 +173,7 @@ node scripts/visual/loop.mjs --fast   # capture only, against an already-running
 
 Screenshots every route at 375/768/1440 plus a deterministic audit (touch targets, contrast,
 overflow, motion presence, token discipline) into `.visual/<run>/`. The spec it judges against is
-`docs/agents/DESIGN_SYSTEM.md`; the driving prompt is `docs/agents/QWEN_BUILD_PROMPT.md`. Set
+`docs/agents/DESIGN_SYSTEM.md`; the version-aligned driving prompt is `docs/agents/QWEN_BUILD_PROMPT.md` and the low-cost vision-model guidance is `docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md`. Set
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` when the managed browser bundle is not installed.
 
 ## Repo contracts enforced by `tests/scope/*.test.mjs` (guardrails)
@@ -286,16 +320,21 @@ provider** — the global `toast()` helper only renders through it.
   `family_account_links`) is never exposed via Data API; `anon`/`authenticated` have no table
   privileges there — only `private.is_locality_member(uuid)` execution. RLS is enabled AND forced
   on every table; grants are minimal.
-- Never persist: raw CPF, Portal payload, military organization, rank, residential address,
-  documents, or a public verification badge. Portal source label `reformado` maps to internal
+- Never persist: raw CPF, Portal payload, inferred military organization, rank, residential address,
+  or a public verification badge. The owner now authorizes optional self-declared Armed Force/OM
+  with visibility controls and private identity-document processing as the CPF fallback; follow
+  the 2026-09-07 corrections before implementing storage, processing and deletion contracts. Portal source label `reformado` maps to internal
   `veteran` only. Family accounts stay independent Auth users after accepting an invite.
   > **Open R3 proposal against this line.**
   > [`ADR-20260811-om-declarada`](docs/decisions/ADR-20260811-om-declarada.md) proposes
   > allowing the member to *declare* branch, status, unit and class — distinguishing what the
   > State asserts from what the person chooses to say. It is `proposed`, not approved, and
   > carries five prerequisites (threat model, consent screen, LGPD governance, and more).
-  > **Until it is approved, the prohibition above is the contract.** Do not implement
-  > declared affiliation.
+  > **Product authorization updated 2026-09-07:** optional self-declared Armed Force/OM and
+  > user-controlled visibility are explicitly authorized in the current guide. Older proposed
+  > scope (status, class and other fields) is not automatically approved. Preserve the technical
+  > privacy requirements and reconcile the ADR when implementing; do not ask again for the
+  > product choice already made.
 
 ## Portal da Transparência integration
 

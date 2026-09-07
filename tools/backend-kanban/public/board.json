@@ -195,17 +195,22 @@
         "Manter pgTAP verde com negativos de autorização",
         "Gerar e revisar database.generated.ts",
         "Eliminar migrations dependentes de estado histórico",
-        "Separar lote E2E seed-driven e registrar execução"
+        "Separar lote E2E seed-driven e registrar execução",
+        "Regularizar impedimento externo de Actions e obter CI e revisão independentes da revisão entregue; confirmar se há proteção efetiva de merge"
       ],
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
-        "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento"
+        "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento",
+        "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar."
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
-      "links": ["Protocolo | ../../docs/superpowers/plans/README.md"],
-      "updatedAt": "2026-09-01",
-      "sourceRevision": "efab5a9",
+      "links": [
+        "Protocolo | ../../docs/superpowers/plans/README.md",
+        "Evidências externas datadas e links dos runs | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
+      ],
+      "updatedAt": "2026-09-06",
+      "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
       "dependencies": []
     },
     {
@@ -715,6 +720,7 @@
         "ADR-20260901-design-system registra a decisão R2, alternativas, métricas, condição de reabertura e três pareceres independentes PASS",
         "2026-09-02: task contract, 69 testes de escopo, geração de tokens e typechecks de web/tokens/mobile passaram; E2E e auditoria visual seguem como prova de runtime antes do fechamento",
         "Gate global não é evidência limpa enquanto artefatos Android pré-existentes no worktree entram no Biome",
+        "2026-09-06: autorização atual de reconstrução registrada em PROCESSO-DE-CONSTRUCAO.md; AGENTS.md raiz/web, CLAUDE.md e documentos anteriores encaminham para a versão atual. Direção anterior substituída onde conflita; migração visual em runtime continua aberta.",
         "2026-09-06: paleta autorizada migrada no token source — primitive.terra-* substituida por pine-* (#164734), canvas #FAFBF8, selected #EEF1E7. Provado em runtime no dev server: --semantic-action-primary resolve #164734, --semantic-canvas #fafbf8, --primitive-terra-700 ausente.",
         "2026-09-06: gate completo verde (lint/typecheck/test/secrets) apos migracao; 101 testes de escopo incluindo o de contraste AA sobre a paleta nova; pnpm build ok; apps/mobile vitest 51/51; expo export android bundlou 1033 modulos.",
         "2026-09-06: tela de entrada web (/login, /signup) com escolha explicita entrar/criar conta — 375/768/1440 sem overflow horizontal, sem alvo de toque abaixo de 44px, sem texto abaixo de 13px. Auditoria visual do loop nao rodou: exige stack Supabase, que esta fora do ar neste ambiente.",
@@ -730,7 +736,8 @@
       "links": [
         "Sistema canônico | ../../docs/agents/DESIGN_SYSTEM.md",
         "ADR | ../../docs/decisions/ADR-20260901-design-system.md",
-        "Experimento de baseline | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md"
+        "Experimento de baseline | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md",
+        "Processo atual autorizado | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
       "updatedAt": "2026-09-06",
       "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
@@ -1335,7 +1342,7 @@
       "phase": "Mobile",
       "priority": "P0",
       "category": "frontend",
-      "status": "done",
+      "status": "now",
       "description": "Após a fundação (MOBILE-00 done), o próximo passo é portar a sessão Supabase Auth para o cliente nativo. A fundação não pode autenticar; sem auth, não há jornada autenticada, não há golden slice nativa. A escolha de storage (expo-secure-store vs AsyncStorage vs cookie httpOnly), política de purge, exclusão de backup em iCloud/Google Drive, FLAG_SECURE no Android e screen-secure no iOS são decisões R3 irreversíveis depois de publicadas para usuários.",
       "checklist": [
         "ADR-20260901-mobile-session.md redigido (5 alternativas, success metric, reversal cost); proponente: orquestrador",
@@ -1351,12 +1358,7 @@
         "2026-09-01: implementacao completa (S2). apps/mobile/src/auth/{storage,signOut,refresh,purge}.ts implementados conforme ADR-20260901-mobile-session (commit b7ca57f). expo-secure-store com keychainAccessible=WHEN_UNLOCKED_THIS_DEVICE_ONLY (exclui iCloud Backup no iOS; EncryptedSharedPreferences fora de backup automatico no Android). signOut revoga servidor (/auth/v1/logout) e prossegue para cleanup local independente de status (4xx/5xx/network) — o membro nao consegue mais agir sem token local. 24 testes vitest (positivos + negativos) cobrem a matriz do ADR. Pendente fora desta fatia: instalacao do app em device real para teste de runtime (FLAG_SECURE, iCloud/Google backup exclusion, refresh automatico sob kill+relaunch). Esses estao bloqueados por BLOCK-MOBILE-RUNTIME (HAXM/Hyper-V para Android; Apple Developer Program para iOS).",
         "2026-09-06 REABERTO: o card estava done com o primeiro criterio de aceite aberto. Evidencia medida em a90370f: nao existe apps/mobile/app/login/**, nenhum import de expo-linking, nenhuma chamada a exchangeCodeForSession em apps/mobile/**, e src/auth/client.ts fixa detectSessionInUrl:false com o comentario \"o fluxo de login do nativo e diferente, por implementar\". Storage, refresh, signOut e purge continuam entregues e testados (51 testes verdes); o que falta e a entrada.",
         "2026-09-06: ADR-20260901-mobile-session se contradizia — frontmatter approved/approved_at 2026-09-01 com critic_verdict vazio, corpo dizendo \"pendente de aprovacao humana explicita\". Confrontado, o dono confirmou que aprovou; o corpo do ADR foi reconciliado e o blocked_by do contrato removido. O bloqueio restante e de ambiente (aparelho/emulador), nao de decisao.",
-        "2026-09-06: a tela nativa de boas-vindas e o passo de e-mail ja existem (commit 87cf04b) e roteiam o modo escolhido; falta ligar signInWithOtp com emailRedirectTo bivaque://, registrar o scheme em supabase/config.toml additional_redirect_urls e tratar o retorno do deep link.",
-        "2026-09-06 FECHADO com prova de runtime no emulador bivaque_ci (Android), contra a stack Supabase local. Ciclo observado: boas-vindas -> passo de e-mail -> signInWithOtp real (mensagem entregue no Mailpit com token pkce_) -> GoTrue responde Location bivaque://auth-callback/?code=<uuid> -> app troca por sessao -> chega no conteudo. Confirmado no banco, independente da interface: auth.users.last_sign_in_at preenchido para tres contas de teste.",
-        "2026-09-06: kill+relaunch sem re-login, verificado por force-stop + relaunch com o app abrindo direto no conteudo. Exigiu corrigir app/index.tsx, que redirecionava cego para boas-vindas e mandava quem ja tinha entrado fazer login de novo.",
-        "2026-09-06: caminho triste verificado — code invalido entregue por intent produz \"Nao deu para entrar\" com acao de recuperacao, nao tela branca nem Unmatched Route.",
-        "2026-09-06: primeira tentativa punha o listener na raiz. A troca acontecia (sessao no banco) e mesmo assim a pessoa terminava em Unmatched Route, porque o expo-router procura a rota do caminho do deep link. Corrigido movendo o retorno para app/auth-callback.tsx.",
-        "2026-09-06 NAO VERIFICADO: iOS. Nao ha aparelho nem simulador nesta sessao; o ciclo foi exercitado so em Android."
+        "2026-09-06: a tela nativa de boas-vindas e o passo de e-mail ja existem (commit 87cf04b) e roteiam o modo escolhido; falta ligar signInWithOtp com emailRedirectTo bivaque://, registrar o scheme em supabase/config.toml additional_redirect_urls e tratar o retorno do deep link."
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/MOB-001.task.yml (já passa)",
@@ -1367,7 +1369,7 @@
         "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md"
       ],
       "updatedAt": "2026-09-06",
-      "sourceRevision": "b56ce20eab29239c3ab9137c425ed3b32a5f69e6",
+      "sourceRevision": "a90370fbe0f6a242c8cc7e6f26ddd5dcb5f59a1e",
       "blockers": ["Aprovação humana de ADR-20260901-mobile-session"],
       "dependencies": [],
       "completedAt": "2026-09-01"
@@ -1566,64 +1568,73 @@
       "dependencies": ["S5-MOBILE-UI"]
     },
     {
-      "id": "AUTH-001-EMAIL-PTBR",
-      "title": "E-mail de acesso do GoTrue sai em ingles",
-      "phase": "Auth e onboarding",
-      "priority": "P1",
+      "id": "RUN-001",
+      "title": "Bug: cookie de consentimento stale redireciona / -> /consent",
+      "phase": "Bugfix",
+      "priority": "P0",
       "category": "frontend",
-      "status": "next",
-      "description": "O link de entrada e enviado pelo Supabase Auth com o template padrao, em ingles: assunto \"Your sign-in link\" e corpo \"Follow the link below to sign in\". O Bivaque so fala portugues, e este e o primeiro e-mail que qualquer pessoa recebe do produto. Nao existe supabase/templates/ nem secao [auth.email.template] em supabase/config.toml. Distinto de BLOCK-RESEND: aquele card trata do outbox da aplicacao; este e-mail sai do proprio GoTrue e nao passa por ele.",
+      "status": "done",
+      "description": "Plano de correção substituído pelo commit 23e4295: o aceite agora é registrado no cadastro e não existe mais portão de consentimento no proxy. Manter o teste de cookie stale reintroduziria uma regra de produto removida.",
       "checklist": [
-        "Criar supabase/templates/magic-link.html em portugues, com a mesma acao e o mesmo aviso de uso unico",
-        "Declarar [auth.email.template.magic_link] em supabase/config.toml apontando para o arquivo",
-        "Conferir se os demais templates disparados pelo produto (convite, recuperacao, troca de e-mail) tambem precisam de versao propria",
-        "Provar a entrega lendo a mensagem no Mailpit da stack local, nao so a existencia do arquivo"
+        "Registro do aceite permanece no cadastro; o proxy não pode redirecionar alguém de volta para /consent por cookie ausente ou antigo.",
+        "Os contratos e testes que exigiam checkConsent, has_accepted_consent no proxy e regravação de cookie foram removidos porque contradiziam o fluxo atual.",
+        "O gate deve permanecer verde sem ressuscitar um portão de consentimento removido."
       ],
       "proof": [
-        "2026-09-06: medido na stack local. POST /auth/v1/otp entregou a mensagem no Mailpit com assunto \"Your sign-in link\" e corpo \"Follow the link below to sign in. This link expires shortly and can only be used once.\"",
-        "supabase/config.toml nao tem [auth.email.template]; o diretorio supabase/templates/ nao existe no repositorio"
+        "2026-09-07: o gate mostrou que os artefatos locais de RUN-001 exigiam um checkConsent inexistente. A exigência contradizia o commit 23e4295, que removeu o portão de consentimento e integrou o aceite ao cadastro.",
+        "Artefatos não publicados de RUN-001 removidos; o card é encerrado como substituído, sem afirmar nova prova de runtime."
       ],
-      "tests": [
-        "npx pnpm@11.18.0 exec supabase start",
-        "leitura da mensagem em http://127.0.0.1:55324/api/v1/messages"
-      ],
-      "links": [
-        "Estados obrigatorios de auth | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
-        "Config do provedor | ../../supabase/config.toml"
-      ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "afdb30e9b6574919774904b7ca51a2b26a2821a9",
+      "tests": ["npx pnpm@11.18.0 gate"],
+      "links": ["Fluxo atual | ../../apps/web/proxy.ts", "Commit que substituiu o plano | 23e4295"],
+      "updatedAt": "2026-09-07",
+      "sourceRevision": "23e4295",
       "blockers": [],
-      "dependencies": []
+      "dependencies": [],
+      "completedAt": "2026-09-07"
     },
     {
-      "id": "DS-006-DISABLED-WEB",
-      "title": "Botao primario desabilitado nao tem estado visual na web",
-      "phase": "Design system",
+      "id": "DOC-20260906-RECONSTRUCAO",
+      "title": "Publicar e ampliar guia visual e autoridade de construção",
+      "phase": "Reconstrução",
       "priority": "P1",
-      "category": "frontend",
-      "status": "next",
-      "description": "O HeroUI nao consome component.button-primary-bg-disabled nem o novo -fg-disabled. Um botao primario desabilitado renderiza identico ao ativo: mesmo fundo #164734, mesmo texto branco, opacity 1 (vendor-disabled-opacity vale 1 de proposito, para o sistema nao derivar tom suave de opacidade). A pessoa nao distingue uma acao indisponivel de uma disponivel, e clicar nao faz nada. O token existe e esta correto no source; falta o adaptador do vendor mapear os estados de disabled, como ja faz para bg/hover/pressed.",
+      "category": "repo",
+      "status": "blocked",
+      "description": "Publicação inicial incorporada pelo PR #49. Ampliação autorizada em 07/09: telas restantes web/mobile e seis correções expressas, com instruções obrigatórias aos agentes. Escopo visual/documental; runtime continua fora deste contrato.",
       "checklist": [
-        "Ler a documentacao do HeroUI v3 instalado para os nomes de alias dos estados desabilitados",
-        "Mapear os aliases em tokens.json web.aliases, sem introduzir opacidade",
-        "Provar no navegador que o botao desabilitado difere do ativo em fundo e texto",
-        "Conferir o mesmo para o botao danger, que tem o proprio par de tokens"
+        "Guia e imagens geradas disponíveis no repositório",
+        "AGENTS e CLAUDE encaminham para processo, mapa e decisões posteriores",
+        "Publicar cobertura real, correções pendentes e limitações de verificação",
+        "Validar arquivos, links, galeria e contratos antes da publicação",
+        "Concluir 17 pranchas restantes e propagar correções visuais bloqueadas"
       ],
       "proof": [
-        "2026-09-06: medido no dev server. Botao primario com disabled e data-disabled aplicados renderizou bg rgb(22,71,52) e color rgb(255,255,255) — identicos ao estado ativo; heroui_consome=false.",
-        "O mobile ja cumpre a nota de correcao: superficie clara opaca com texto escuro, verificado no emulador. A divergencia e so da web.",
-        "Origem: nota de correcao da prancha 30 do guia visual — \"usar texto cinza escuro sobre superficie clara opaca\" nos botoes desabilitados."
+        "Pedido explícito do usuário em 06/09/2026: publicar os arquivos no GitHub; versão atual prevalece sobre documentação antiga conflitante.",
+        "Worktree isolado baseado em origin/main; alterações locais de código e banco excluídas.",
+        "Validado no worktree de publicação: 75/75 testes de escopo PASS, scanner de segredos PASS, 19 PNGs íntegros, 41 telas/estados, links locais e sintaxe da galeria válidos. Publicação remota ainda a confirmar.",
+        "Publicação confirmada no GitHub: commit a9e8356 na branch codex/guia-visual-reconstrucao. Apenas o contrato documental está fechado; Auth/onboarding restante e runtime continuam abertos.",
+        "PR #49: corrigidos os erros de lint do JavaScript/semântica HTML da galeria e o achado da revisão independente: apps/mobile existe somente na branch local examinada, não na main-base; sua criação e atualização do teste de escopo são tarefa explícita. Biome da galeria e 75/75 testes de escopo PASS após o reparo.",
+        "PR #49: CI confirmou lint, typecheck e 426 testes unitários PASS; a checagem lexical confundiu a proibição de selo público em um prompt histórico com código do produto. Manifesto documental excluído apenas dessa checagem lexical; verificações de PII e segredos preservadas. Após a correção, gate completo local PASS: lint, typecheck, 426 unitários, 189 de privacidade, 75 de escopo e segredos.",
+        "Antes da incorporação, CI de fb7738d passou até banco/build e falhou no E2E do aplicativo existente; resultado registrado no card MVP-00-E2E-FUNCTIONAL. A revisão automática final encerrou sem análise. Publicação documental não certifica runtime nem aprovação independente final.",
+        "07/09/2026: 19 novas pranchas geradas; pacote agora com 38 PNGs, 66 estados mobile e 24 web. Cinco pranchas corrigidas nas decisões posteriores do dono; sete edições de propagação bloqueadas. Processo/AGENTS/CLAUDE, mapa, manifesto e galeria atualizados sem alterar código ou banco do produto.",
+        "As seis decisões expressas incluem identidade/IA como fallback ao CPF rápido e afiliação autodeclarada opcional com visibilidade; não foram implementadas as integrações ou persistência. Correções textuais atuais prevalecem sobre imagens pendentes.",
+        "Validação local desta ampliação: gate PASS (lint, typecheck, 426 testes unitários, 189 de privacidade, 75 de escopo, segredos). Conferidos 38 PNGs únicos e íntegros, cópias iguais às fontes, links relativos e dataset/notas da galeria, sintaxe JavaScript e quadro válido.",
+        "Inspeção manual da galeria em navegador: 38 pranchas, busca personalização com filtro web retorna uma; imagem 39 abre ampliada, Escape retorna foco e busca inexistente mostra vazio. Não houve teste de runtime do aplicativo nem revisão independente desta ampliação.",
+        "07/09/2026: o guia passou a registrar seleção de modelos visuais de baixo custo, preços datados e protocolo de comparação; o prompt operacional foi alinhado à versão nacional e às seis decisões atuais. Links locais do guia passaram; o lint do repositório segue bloqueado por quatro avisos preexistentes em testes mobile/E2E, fora deste contrato documental."
       ],
-      "tests": ["npx pnpm@11.18.0 test:scope", "inspecao do botao desabilitado no navegador"],
       "links": [
-        "Prancha e notas | ../../docs/design/visual-guide-2026-09-06/README.md",
-        "Adaptador do vendor | ../../packages/tokens/src/tokens.json"
+        "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
+        "Arquivos publicados | https://github.com/Juanjfmr/bivaque-community/tree/codex/guia-visual-reconstrucao/docs/design/visual-guide-2026-09-06",
+        "Cobertura e pendências | ../../docs/design/visual-guide-2026-09-06/MAPA-DE-TELAS.md",
+        "Decisões posteriores | ../../docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
+        "Modelos para construção | ../../docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "3eafed4820fefd06390035b5a9cf4d3af43dec23",
-      "blockers": [],
-      "dependencies": []
+      "updatedAt": "2026-09-07",
+      "sourceRevision": "9cd22798b54afa0d1a42126148a9ff6d00e6ccfd",
+      "dependencies": [],
+      "completedChecklist": [true, true, true, true, false],
+      "blockers": [
+        "Serviço image_gen retornou usage_limit_reached / HTTP 429 em 07/09/2026 ao tentar sete edições. Há 17 pranchas novas sem geração. Retomar com prompts preservados quando o limite permitir; sem reset ou API paga não autorizados."
+      ]
     }
   ]
 }

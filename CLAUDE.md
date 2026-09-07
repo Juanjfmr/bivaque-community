@@ -1,9 +1,25 @@
 # Bivaque Community — Claude Code
 
+## Owner corrections — 2026-09-07
+
+Read [the six explicit corrections](docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md). They require city-wide questions, event information requests, an optional reason for joining, the exact military label, fast CPF verification with identity/AI fallback, and optional self-declared Armed Force/OM with individual visibility controls. These are current product instructions, not delivered runtime. They supersede conflicting older product prohibitions; retain server authorization, privacy and data-integrity requirements.
+
 > Fonte de verdade: **AGENTS.md** (na raiz). Este CLAUDE.md é uma ponte fina —
 > leia o AGENTS.md inteiro antes de qualquer trabalho, e siga-o.
 
 @AGENTS.md
+
+## Versão atual — leitura obrigatória
+
+Leia [o processo de construção de 06/09/2026](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md)
+antes de planejar, implementar ou revisar a reconstrução. A autorização atual do usuário
+substitui decisões antigas conflitantes de produto, aparência, navegação e sequência.
+As regras técnicas e de proteção dos dados continuam aplicáveis. A seção 14 explica o que
+é verificação independente e quais camadas ainda dependem de execução externa à sessão.
+
+## Ampliação visual — 07/09/2026
+
+Após o processo, leia o [mapa de telas](docs/design/visual-guide-2026-09-06/MAPA-DE-TELAS.md) e as [instruções do guia](docs/design/visual-guide-2026-09-06/AGENTS.md). Inspecione a referência da plataforma e os estados de falha antes de implementar. Não confunda imagem gerada com fluxo funcional nem repita onboarding já concluído.
 
 ## Regras específicas do Claude Code
 

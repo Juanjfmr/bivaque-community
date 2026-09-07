@@ -1,7 +1,10 @@
 # Bivaque — visão e decisões
 
-> **Fonte de verdade sobre o que o produto deve ser.** Visão, papéis, princípios, modelo de
-> comunidade, monetização, limites e roadmap.
+> **Atualização de autoridade — 06/09/2026:** para a reconstrução, leia primeiro o
+> [processo de construção atual](design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md).
+> O usuário autorizou essa versão independentemente das decisões antigas conflitantes.
+> Este documento preserva a visão e decisões anteriores como contexto; não redefine o
+> escopo, a navegação, a aparência ou a sequência atuais.
 >
 > **Não descreve o que está construído.** Para o estado implementado, com evidência
 > arquivo-linha, ver [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md). Confundir os dois é o defeito

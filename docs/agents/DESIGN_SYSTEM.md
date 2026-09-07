@@ -1,5 +1,11 @@
 # Bivaque Design System — Casa comum
 
+> **Reconstrução de 06/09/2026:** o [processo atual](../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md)
+> e seu guia visual substituem decisões conflitantes de aparência e interação deste documento,
+> por autorização expressa do usuário. O texto abaixo registra o sistema anterior e seus
+> mecanismos de componentes, tokens e auditoria. Reaproveite os mecanismos compatíveis;
+> não restaure a direção visual antiga. Isto não declara uma migração de runtime concluída.
+
 > **Status:** canônico desde 2026-09-01, pela
 > [`ADR-20260901-design-system`](../decisions/ADR-20260901-design-system.md).
 >
