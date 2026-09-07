@@ -83,7 +83,10 @@ export async function POST(request: Request) {
       }
 
       const result = await verifyEligibility(supabase, { userId, cpf, consentVersion })
-      if (result.outcome.status === "temporary_error" && result.outcome.errorCode === "INVALID_KEY") {
+      if (
+        result.outcome.status === "temporary_error" &&
+        result.outcome.errorCode === "INVALID_KEY"
+      ) {
         log.error("Portal verification unavailable: API key not configured", {
           action: "verify-cpf",
         })
