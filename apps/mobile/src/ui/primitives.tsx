@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  View,
   type TextInputProps,
   type TextProps,
 } from "react-native"
@@ -89,7 +90,7 @@ type BivaqueFieldProps = TextInputProps & {
 
 export function BivaqueField({ label, error, style, ...props }: BivaqueFieldProps) {
   return (
-    <Text style={styles.fieldGroup}>
+    <View style={styles.fieldGroup}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
         {...props}
@@ -98,7 +99,7 @@ export function BivaqueField({ label, error, style, ...props }: BivaqueFieldProp
         style={[styles.field, error ? styles.fieldError : null, style]}
       />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-    </Text>
+    </View>
   )
 }
 
@@ -168,13 +169,12 @@ const styles = StyleSheet.create({
     color: nativeTokens.color.disabledForeground,
   },
   fieldGroup: {
-    display: "flex",
+    gap: nativeTokens.space[2],
   },
   fieldLabel: {
     color: nativeTokens.color.foreground,
     fontSize: nativeTokens.text.sm,
     fontWeight: "700",
-    marginBottom: nativeTokens.space[2],
   },
   field: {
     minHeight: nativeTokens.controlMinHeight,
@@ -192,6 +192,5 @@ const styles = StyleSheet.create({
   errorText: {
     color: nativeTokens.color.danger,
     fontSize: nativeTokens.text.sm,
-    marginTop: nativeTokens.space[2],
   },
 })
