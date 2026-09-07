@@ -280,6 +280,44 @@
   height: 18px;
 }
 
+.revealButton {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  color: var(--semantic-text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.revealButton:hover {
+  color: var(--semantic-text-primary);
+}
+
+.forgotRow {
+  margin: 0;
+  text-align: right;
+  font-size: var(--semantic-typography-label-size);
+}
+
+.forgotRow a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--semantic-action-primary);
+  font-weight: var(--semantic-typography-label-weight);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--semantic-action-primary) 32%, transparent);
+  text-underline-offset: 4px;
+}
+
+.forgotRow a:hover {
+  text-decoration-color: currentcolor;
+}
+
 .divider {
   display: flex;
   align-items: center;

@@ -1,17 +1,32 @@
 "use client"
 
 import { Button } from "@heroui/react"
-import { ArrowLeft, ArrowRight, Mail, ShieldCheck, Tent } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  ShieldCheck,
+  Tent,
+  User,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-import { classifyEntrySend, type EntrySendView } from "../../../../lib/auth/entry-send"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import {
+  classifySignIn,
+  classifySignUp,
+  type PasswordAuthView,
+  passwordProblem,
+} from "../../../../lib/auth/password-auth"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import styles from "./bivaque-sign-in.module.css"
 
 interface BivaqueSignInProps {
-  onMagicLinkSignIn?: (email: string) => Promise<void> | void
   onGoogleSignIn?: () => Promise<void> | void
   mode?: "login" | "signup"
 }
@@ -20,10 +35,9 @@ const entryCopy = {
   login: {
     eyebrow: "Bem-vindo de volta",
     title: "Entre no Bivaque",
-    description: "Receba um link no seu e-mail para continuar. Sem senha para lembrar.",
-    submit: "Receber link para entrar",
+    description: "Use seu e-mail e sua senha para continuar.",
+    submit: "Entrar",
     google: "Continuar com Google",
-    success: "Link enviado para",
     alternateLead: "Ainda não faz parte?",
     alternateAction: "Criar conta",
     alternateHref: "/signup",
@@ -36,15 +50,14 @@ const entryCopy = {
   },
   signup: {
     eyebrow: "Primeiro acesso",
-    title: "Comece pelo seu e-mail.",
-    description: "Ele será sua forma de entrar no Bivaque. Sem senha, sem formulário longo.",
-    submit: "Criar conta e continuar",
+    title: "Crie sua conta",
+    description: "Escolha uma senha para entrar sempre que quiser, sem depender do e-mail.",
+    submit: "Criar conta",
     google: "Criar com Google",
-    success: "Link enviado para",
     alternateLead: "Já tem uma conta?",
     alternateAction: "Entrar",
     alternateHref: "/login",
-    trust: "Depois do e-mail: regras da comunidade, elegibilidade e escolha da sua localidade.",
+    trust: "Depois da conta: regras da comunidade, elegibilidade e escolha da sua localidade.",
     visualEyebrow: "Há sempre alguém chegando.",
     visualTitle: "Encontre quem já conhece o caminho.",
     visualDescription: "Com o tempo, deixe o que você aprendeu disponível para quem chegar depois.",
@@ -52,15 +65,8 @@ const entryCopy = {
 } as const
 
 // As duas entradas são destinos distintos, não abas de um formulário só:
-// a escolha muda a rota, o `shouldCreateUser` do OTP e a mensagem de erro.
-// Manter isso como navegação preserva voltar/avançar e link compartilhável.
-// O limite real é do servidor (`max_frequency` do GoTrue). Este número só
-// controla o que a tela mostra enquanto isso.
-const RESEND_COOLDOWN_SECONDS = 60
-
-// Neutra de propósito: não diz que a conta existe. Ver lib/auth/entry-send.ts.
-const SENT_HINT = "Se não chegar em alguns minutos, confira o endereço e o spam."
-
+// a escolha muda a rota, os campos e a operação no provedor. Manter isso como
+// navegação preserva voltar/avançar e link compartilhável.
 const entryModes = [
   { mode: "login", label: "Entrar", href: "/login" },
   { mode: "signup", label: "Criar conta", href: "/signup" },
@@ -98,91 +104,86 @@ function Wordmark() {
   )
 }
 
-export function BivaqueSignIn({
-  onMagicLinkSignIn,
-  onGoogleSignIn,
-  mode = "login",
-}: BivaqueSignInProps) {
+export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInProps) {
+  const router = useRouter()
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState<"email" | "google" | null>(null)
-  // O resultado do envio é um estado só. Antes eram `sent` e `error`
-  // independentes, e era isso que permitia a tela responder de forma diferente
-  // para um endereço com conta e um sem — ver lib/auth/entry-send.ts.
-  const [result, setResult] = useState<EntrySendView | null>(null)
-  const [sentTo, setSentTo] = useState("")
-  const [cooldown, setCooldown] = useState(0)
-  const sent = result?.outcome === "sent"
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [result, setResult] = useState<PasswordAuthView | null>(null)
+  const [loading, setLoading] = useState<"form" | "google" | null>(null)
+
   const copy = entryCopy[mode]
   const titleId = mode === "signup" ? "signup-title" : "login-title"
-  const emailId = mode === "signup" ? "bivaque-signup-email" : "bivaque-signin-email"
+  const prefix = mode === "signup" ? "bivaque-signup" : "bivaque-signin"
 
-  // Contagem regressiva do reenvio. Roda no cliente só para dizer quanto
-  // falta: quem impõe o limite é o servidor, e o botão liberado antes da hora
-  // apenas recebe outro 429 — a espera visível nunca é a autorização.
-  useEffect(() => {
-    if (cooldown <= 0) return
-    const timer = setTimeout(() => setCooldown((seconds) => seconds - 1), 1000)
-    return () => clearTimeout(timer)
-  }, [cooldown])
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setResult(null)
 
-  const sendMagicLink = async (address: string) => {
-    setError(null)
-    setLoading("email")
+    // No cadastro a senha é conferida antes de sair daqui: mandar o servidor
+    // recusar uma senha curta é uma ida e volta que a pessoa não precisa
+    // esperar. No login não se valida formato — a senha antiga pode ter
+    // qualquer forma, e recusá-la aqui contaria que ela não é a atual.
+    if (mode === "signup") {
+      const problem = passwordProblem(password)
+      if (problem) {
+        setResult({ outcome: "weak-password", message: problem, diagnostic: "local" })
+        return
+      }
+    }
 
-    let caught: unknown = null
+    setLoading("form")
+    const supabase = createBrowserClient()
+
     try {
-      if (onMagicLinkSignIn) {
-        await onMagicLinkSignIn(address)
-      } else {
-        const { error: signInError } = await createBrowserClient().auth.signInWithOtp({
-          email: address,
-          options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/consent`,
-            shouldCreateUser: mode === "signup",
-          },
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { data: { display_name: name.trim() } },
         })
-        caught = signInError
+        const view = classifySignUp(error)
+        if (view.outcome === "ok") {
+          router.push("/consent")
+          return
+        }
+        setResult(view)
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
+        const view = classifySignIn(error)
+        if (view.outcome === "ok") {
+          router.push("/consent")
+          return
+        }
+        setResult(view)
       }
     } catch (thrown) {
-      caught = thrown
+      setResult(mode === "signup" ? classifySignUp(thrown) : classifySignIn(thrown))
+    } finally {
+      setLoading(null)
     }
-
-    const view = classifyEntrySend(caught)
-    setResult(view)
-    if (view.outcome === "sent") {
-      setSentTo(address)
-      setCooldown(RESEND_COOLDOWN_SECONDS)
-    }
-    if (view.outcome === "rate-limited") {
-      setCooldown(view.retryAfterSeconds ?? RESEND_COOLDOWN_SECONDS)
-    }
-    setLoading(null)
-  }
-
-  const handleMagicLink = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    await sendMagicLink(email)
   }
 
   const handleGoogle = async () => {
-    setError(null)
+    setResult(null)
     setLoading("google")
 
     try {
       if (onGoogleSignIn) {
         await onGoogleSignIn()
       } else {
-        const { error: signInError } = await createBrowserClient().auth.signInWithOAuth({
+        const { error } = await createBrowserClient().auth.signInWithOAuth({
           provider: "google",
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback?next=/consent`,
-          },
+          options: { redirectTo: `${window.location.origin}/auth/callback?next=/consent` },
         })
-        if (signInError) throw signInError
+        if (error) throw error
       }
-    } catch {
-      setError("Não foi possível continuar com o Google agora. Tente novamente em instantes.")
+    } catch (thrown) {
+      setResult(classifySignIn(thrown))
       setLoading(null)
     }
   }
@@ -225,14 +226,31 @@ export function BivaqueSignIn({
             <p>{copy.description}</p>
           </div>
 
-          <form className={styles["form"]} onSubmit={handleMagicLink}>
-            <label className={styles["field"]} htmlFor={emailId}>
+          <form className={styles["form"]} onSubmit={handleSubmit}>
+            {mode === "signup" && (
+              <label className={styles["field"]} htmlFor={`${prefix}-name`}>
+                <span>Como podemos chamar você?</span>
+                <span className={styles["inputShell"]}>
+                  <User aria-hidden="true" />
+                  <input
+                    id={`${prefix}-name`}
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Seu nome"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    required
+                  />
+                </span>
+              </label>
+            )}
+
+            <label className={styles["field"]} htmlFor={`${prefix}-email`}>
               <span>Seu e-mail</span>
               <span className={styles["inputShell"]}>
                 <Mail aria-hidden="true" />
                 <input
-                  id={emailId}
-                  aria-label="Seu e-mail"
+                  id={`${prefix}-email`}
                   type="email"
                   inputMode="email"
                   autoComplete="email"
@@ -244,14 +262,47 @@ export function BivaqueSignIn({
               </span>
             </label>
 
+            <label className={styles["field"]} htmlFor={`${prefix}-password`}>
+              <span>Sua senha</span>
+              <span className={styles["inputShell"]}>
+                <Lock aria-hidden="true" />
+                <input
+                  id={`${prefix}-password`}
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  placeholder={mode === "signup" ? "Ao menos 8 caracteres" : "Sua senha"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+                {/* Ver a senha digitada é acessibilidade antes de ser conveniência:
+                    quem tem dificuldade motora ou visual erra mais em campo mascarado. */}
+                <button
+                  type="button"
+                  className={styles["revealButton"]}
+                  onClick={() => setShowPassword((shown) => !shown)}
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                </button>
+              </span>
+            </label>
+
+            {mode === "login" && (
+              <p className={styles["forgotRow"]}>
+                <Link href={{ pathname: "/recuperar-senha" }}>Esqueci minha senha</Link>
+              </p>
+            )}
+
             <Button
               type="submit"
               variant="primary"
               className={styles["primaryButton"] ?? ""}
               isDisabled={loading !== null}
             >
-              {loading === "email" ? "Enviando..." : copy.submit}
-              {loading !== "email" && <ArrowRight aria-hidden="true" />}
+              {loading === "form" ? "Entrando..." : copy.submit}
+              {loading !== "form" && <ArrowRight aria-hidden="true" />}
             </Button>
           </form>
 
@@ -269,47 +320,19 @@ export function BivaqueSignIn({
             {loading === "google" ? "Abrindo Google..." : copy.google}
           </Button>
 
-          {error && <FeedbackAlert variant="danger" description={error} />}
-
-          {result?.outcome === "offline" && (
-            <FeedbackAlert variant="warning" title="Sem conexão" description={result.message} />
-          )}
-
-          {result?.outcome === "failed" && (
-            <FeedbackAlert variant="danger" description={result.message} />
-          )}
-
-          {result?.outcome === "rate-limited" && (
-            <FeedbackAlert variant="warning" title="Muitos pedidos" description={result.message} />
-          )}
-
-          {sent && (
+          {result && result.outcome !== "ok" && (
             <FeedbackAlert
-              variant="success"
-              title="Confira seu e-mail"
+              variant={result.outcome === "offline" ? "warning" : "danger"}
               description={
-                <>
-                  {copy.success} <strong>{sentTo}</strong>. {SENT_HINT}
-                </>
+                result.suggestSignIn ? (
+                  <>
+                    {result.message} <Link href={{ pathname: "/login" }}>Entrar</Link>
+                  </>
+                ) : (
+                  result.message
+                )
               }
             />
-          )}
-
-          {(sent || result?.outcome === "rate-limited") && (
-            <div className={styles["resend"]}>
-              <Button
-                type="button"
-                variant="ghost"
-                className={styles["resendButton"] ?? ""}
-                isDisabled={loading !== null || cooldown > 0}
-                onPress={() => void sendMagicLink(sentTo || email)}
-              >
-                {loading === "email" ? "Reenviando..." : "Reenviar link"}
-              </Button>
-              <span aria-live="polite">
-                {cooldown > 0 ? `Disponível em ${cooldown}s` : "Não chegou? Peça outro."}
-              </span>
-            </div>
           )}
 
           <p className={styles["accountPrompt"]}>

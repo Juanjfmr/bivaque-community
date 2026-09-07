@@ -6,6 +6,13 @@ import { NextResponse } from "next/server"
 const PUBLIC_PATHS = [
   "/login",
   "/signup",
+  // Recuperação de senha precisa ser pública pelos dois lados. Sem sessão, o
+  // portão mandaria para /login justamente quem não consegue entrar; com a
+  // sessão que o link de recuperação cria, o portão de consentimento mandaria
+  // para /consent antes de a pessoa definir a senha nova, e ela nunca chegaria
+  // a definir. ADR-20260907-login-com-senha.
+  "/recuperar-senha",
+  "/nova-senha",
   "/auth/callback",
   "/consent",
   "/privacidade",
