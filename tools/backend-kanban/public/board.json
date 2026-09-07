@@ -1362,7 +1362,7 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "repo",
-      "status": "now",
+      "status": "done",
       "description": "Publicar o processo autorizado pelo usuário e as referências visuais; tornar a leitura obrigatória nas entradas dos agentes. Escopo documental, sem migração visual ou alteração de runtime.",
       "checklist": [
         "Guia e imagens disponíveis no repositório",
@@ -1373,12 +1373,18 @@
       "proof": [
         "Pedido explícito do usuário em 06/09/2026: publicar os arquivos no GitHub; versão atual prevalece sobre documentação antiga conflitante.",
         "Worktree isolado baseado em origin/main; alterações locais de código e banco excluídas.",
-        "Validado no worktree de publicação: 75/75 testes de escopo PASS, scanner de segredos PASS, 19 PNGs íntegros, 41 telas/estados, links locais e sintaxe da galeria válidos. Publicação remota ainda a confirmar."
+        "Validado no worktree de publicação: 75/75 testes de escopo PASS, scanner de segredos PASS, 19 PNGs íntegros, 41 telas/estados, links locais e sintaxe da galeria válidos. Publicação remota ainda a confirmar.",
+        "Publicação confirmada no GitHub: commit a9e8356 na branch codex/guia-visual-reconstrucao. Apenas o contrato documental está fechado; Auth/onboarding restante e runtime continuam abertos."
       ],
-      "links": ["Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"],
+      "links": [
+        "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
+        "Arquivos publicados | https://github.com/Juanjfmr/bivaque-community/tree/codex/guia-visual-reconstrucao/docs/design/visual-guide-2026-09-06"
+      ],
       "updatedAt": "2026-09-06",
       "sourceRevision": "157a59294a69b87f22637b538f930e8a2ca34617",
-      "dependencies": []
+      "dependencies": [],
+      "completedAt": "2026-09-06",
+      "completedChecklist": [true, true, true, true]
     }
   ]
 }
