@@ -1374,14 +1374,15 @@
         "Pedido explícito do usuário em 06/09/2026: publicar os arquivos no GitHub; versão atual prevalece sobre documentação antiga conflitante.",
         "Worktree isolado baseado em origin/main; alterações locais de código e banco excluídas.",
         "Validado no worktree de publicação: 75/75 testes de escopo PASS, scanner de segredos PASS, 19 PNGs íntegros, 41 telas/estados, links locais e sintaxe da galeria válidos. Publicação remota ainda a confirmar.",
-        "Publicação confirmada no GitHub: commit a9e8356 na branch codex/guia-visual-reconstrucao. Apenas o contrato documental está fechado; Auth/onboarding restante e runtime continuam abertos."
+        "Publicação confirmada no GitHub: commit a9e8356 na branch codex/guia-visual-reconstrucao. Apenas o contrato documental está fechado; Auth/onboarding restante e runtime continuam abertos.",
+        "PR #49: corrigidos os erros de lint do JavaScript/semântica HTML da galeria e o achado da revisão independente: apps/mobile existe somente na branch local examinada, não na main-base; sua criação e atualização do teste de escopo são tarefa explícita. Biome da galeria e 75/75 testes de escopo PASS após o reparo."
       ],
       "links": [
         "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
         "Arquivos publicados | https://github.com/Juanjfmr/bivaque-community/tree/codex/guia-visual-reconstrucao/docs/design/visual-guide-2026-09-06"
       ],
       "updatedAt": "2026-09-06",
-      "sourceRevision": "157a59294a69b87f22637b538f930e8a2ca34617",
+      "sourceRevision": "3a7c83cbcee45b9e6ab1d50d94aeb7eb9bdec024",
       "dependencies": [],
       "completedAt": "2026-09-06",
       "completedChecklist": [true, true, true, true]

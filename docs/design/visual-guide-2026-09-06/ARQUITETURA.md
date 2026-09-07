@@ -6,7 +6,7 @@ Recomendação de 6 de setembro de 2026, baseada nos manifests atuais do reposit
 
 **Next.js + TypeScript no web; React Native + Expo no Android/iOS; Supabase como backend compartilhado.**
 
-Essa base já aparece em `apps/web/package.json` e `apps/mobile/package.json`. O investimento deve se concentrar na consistência dos componentes, nas regras compartilhadas e na entrega de fluxos completos.
+Na `main` usada como base desta publicação, `apps/web/package.json` existe, mas `apps/mobile` ainda não existe. A recomendação inicial também examinou uma branch local com trabalho mobile ainda não incorporado à `main`. Para começar a partir da `main`, criar a base React Native/Expo é uma tarefa explícita da Etapa 1, incluindo sua integração ao workspace e a atualização deliberada do teste que hoje proíbe essa raiz. Se o trabalho mobile for incorporado antes, inspecione e reaproveite sua implementação comprovada.
 
 | Camada | Recomendação | Aplicação |
 |---|---|---|

@@ -30,7 +30,7 @@ h1{font-size:clamp(30px,4vw,48px);line-height:1.12;letter-spacing:-1.7px;margin:
 .controls label{font-size:13px;font-weight:650;display:grid;gap:5px}
 .search{flex:1;min-width:240px}
 input,select{height:46px;border:1px solid #becbbf;border-radius:9px;background:#fff;padding:0 13px;color:#1a2c21;min-width:0}
-.segment{display:flex;gap:4px;padding:4px;background:#e6ebe3;border-radius:11px;align-self:end}
+.segment{display:flex;gap:4px;padding:4px;background:#e6ebe3;border:0;margin:0;min-width:0;border-radius:11px;align-self:end}
 .segment button{background:transparent;border:0;border-radius:8px;padding:8px 17px;min-height:40px;color:#394f40}
 .segment button[aria-pressed="true"]{background:var(--ink);color:white}
 .results{font-size:14px;color:var(--muted);margin:0 0 18px}
@@ -50,7 +50,7 @@ summary{cursor:pointer;color:#665023;font-weight:600}
 details ul{padding-left:18px;margin-bottom:0;color:#4c564f}
 details li+li{margin-top:8px}
 .empty{padding:48px;border:1px dashed #b9c6bc;border-radius:12px;text-align:center;grid-column:1/-1}
-footer{padding-top:28px;padding-bottom:48px!important;color:var(--muted);font-size:13px}
+footer{padding-top:28px;padding-bottom:48px;color:var(--muted);font-size:13px}
 dialog{width:min(1500px,96vw);max-width:96vw;height:94vh;max-height:94vh;border:1px solid #82998b;border-radius:14px;padding:0;background:var(--paper);color:#152b20}
 dialog::backdrop{background:rgba(12,24,18,.78);backdrop-filter:blur(3px)}
 .dialoghead{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);background:white}
@@ -63,9 +63,9 @@ dialog::backdrop{background:rgba(12,24,18,.78);backdrop-filter:blur(3px)}
 .viewer.zoomed img{max-height:none;max-width:none;width:1800px}
 .dialogfoot{display:flex;align-items:center;gap:14px;padding:10px 20px;border-top:1px solid var(--line);background:white;font-size:13px}
 .dialogfoot p{margin:0;flex:1;color:var(--muted)}
-[hidden]{display:none!important}
+[hidden]{display:none}
 @media(max-width:850px){.gallery{grid-template-columns:1fr}.wrap{padding-left:20px;padding-right:20px}.topnav{gap:13px}.top .wrap{flex-wrap:wrap}.controls{align-items:stretch}.search{flex-basis:100%}.hero{padding-top:32px}.dialoghead{flex-wrap:wrap}.dialoghead h2{flex-basis:70%}.dialogfoot{flex-wrap:wrap}.viewer{height:calc(94vh - 195px)}.counts{gap:18px}}
-@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 </style>
 </head>
 <body>
@@ -79,7 +79,7 @@ dialog::backdrop{background:rgba(12,24,18,.78);backdrop-filter:blur(3px)}
 <div class="pending"><strong>Geração parcial:</strong> o artigo completo do Guia no desktop e as demais telas de Auth/onboarding aguardam geração por limite de uso. Auth tem boas-vindas, login e cadastro mobile. As observações de cada prancha registram os ajustes que precisam ser considerados na construção.</div>
 </section>
 <section class="wrap controls" aria-label="Filtros da galeria">
-<div class="segment" role="group" aria-label="Plataforma"><button type="button" data-kind="all" aria-pressed="true">Todas</button><button type="button" data-kind="mobile" aria-pressed="false">Mobile</button><button type="button" data-kind="web" aria-pressed="false">Web</button></div>
+<fieldset class="segment" aria-label="Plataforma"><button type="button" data-kind="all" aria-pressed="true">Todas</button><button type="button" data-kind="mobile" aria-pressed="false">Mobile</button><button type="button" data-kind="web" aria-pressed="false">Web</button></fieldset>
 <label class="search">Buscar tela ou fluxo<input id="search" type="search" placeholder="Conversa, imóveis, anúncio..." autocomplete="off"></label>
 <label>Fluxo<select id="group"><option value="all">Todos os fluxos</option><option value="auth">Auth e onboarding</option><option value="base">Início e descoberta</option><option value="conversa">Conversa</option><option value="pedidos">Pedido de serviço</option><option value="imoveis">Imóveis</option><option value="anuncios">Meus anúncios</option><option value="negocio">Meu negócio</option><option value="mercado">Mercado</option><option value="guia">Guia</option></select></label>
 </section>
@@ -87,7 +87,7 @@ dialog::backdrop{background:rgba(12,24,18,.78);backdrop-filter:blur(3px)}
 </main>
 <footer class="wrap">Imagens geradas com image_gen. Conteúdo e dados ilustrativos. As pranchas orientam a aparência e a interação; validação de permissões, acessibilidade e comportamento ocorre no aplicativo. <a href="./README.md">Ler as observações de construção.</a></footer>
 <dialog id="lightbox" aria-labelledby="dialogtitle">
-<div class="dialoghead"><h2 id="dialogtitle"></h2><button class="toolbutton" type="button" id="zoom">Ampliar</button><a id="original" class="toolbutton" href="#" target="_blank" rel="noopener">Abrir PNG</a><button class="toolbutton" type="button" id="close" aria-label="Fechar visualização">Fechar ×</button></div>
+<div class="dialoghead"><h2 id="dialogtitle">Visualização da prancha</h2><button class="toolbutton" type="button" id="zoom">Ampliar</button><a id="original" class="toolbutton" href="./00-mobile-inicio.png" target="_blank" rel="noopener">Abrir PNG</a><button class="toolbutton" type="button" id="close" aria-label="Fechar visualização">Fechar ×</button></div>
 <div class="viewer" id="viewer"><img id="large" alt=""></div>
 <div class="dialogfoot"><button type="button" class="toolbutton" id="prev">← Anterior</button><p id="position"></p><button type="button" class="toolbutton" id="next">Próxima →</button></div>
 </dialog>
@@ -103,24 +103,24 @@ const normalize=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase
 function element(tag,text,cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el}
 function render(){
 const term=normalize(search.value.trim());
-filtered=items.filter(a=>(platform==="all"||a.kind===platform)&&(group.value==="all"||a.group===group.value)&&(!term||normalize(a.title+" "+a.group+" "+a.screens.join(" ")).includes(term)));
+filtered=items.filter(a=>(platform==="all"||a.kind===platform)&&(group.value==="all"||a.group===group.value)&&(!term||normalize(`${a.title} ${a.group} ${a.screens.join(" ")}`).includes(term)));
 gallery.replaceChildren();
-count.textContent=filtered.length+" "+(filtered.length===1?"prancha encontrada":"pranchas encontradas");
+count.textContent=`${filtered.length} ${filtered.length===1?"prancha encontrada":"pranchas encontradas"}`;
 if(!filtered.length){const empty=element("div",undefined,"empty");empty.append(element("h2","Nenhuma prancha com esses filtros"),element("p","Tente outro termo ou selecione todos os fluxos."));gallery.append(empty);return}
 filtered.forEach((a,index)=>{
-const card=element("article",undefined,"card"),button=element("button",undefined,"thumb");button.type="button";button.setAttribute("aria-label","Visualizar "+a.title);
-const img=element("img");img.src=a.file;img.alt=a.title+" — "+a.screens.join(", ");img.loading=index<2?"eager":"lazy";img.decoding="async";
+const card=element("article",undefined,"card"),button=element("button",undefined,"thumb");button.type="button";button.setAttribute("aria-label",`Visualizar ${a.title}`);
+const img=element("img");img.src=a.file;img.alt=`${a.title} — ${a.screens.join(", ")}`;img.loading=index<2?"eager":"lazy";img.decoding="async";
 button.append(img,element("span","Ampliar","open"));button.addEventListener("click",()=>open(index));
 const info=element("div",undefined,"info"),meta=element("div",undefined,"meta");meta.append(element("span",a.kind==="web"?"Desktop web":"Mobile · 3 telas"),element("span",a.id.split("-")[0]));
 info.append(meta,element("h2",a.title),element("p",a.screens.join(" · "),"screenlist"));
 const links=element("div",undefined,"cardlinks"),link=element("a","Abrir PNG original");link.href=a.file;link.target="_blank";link.rel="noopener";const dl=element("a","Baixar");dl.href=a.file;dl.download=a.file;links.append(link,dl);info.append(links);
-if(a.reviewNotes.length){const detail=element("details"),summary=element("summary","Ajustes de construção ("+a.reviewNotes.length+")"),ul=element("ul");a.reviewNotes.forEach(n=>ul.append(element("li",n)));detail.append(summary,ul);info.append(detail)}
+if(a.reviewNotes.length){const detail=element("details"),summary=element("summary",`Ajustes de construção (${a.reviewNotes.length})`),ul=element("ul");a.reviewNotes.forEach(n=>{ul.append(element("li",n))});detail.append(summary,ul);info.append(detail)}
 card.append(button,info);gallery.append(card);
 });
 }
-function show(index){current=index;const a=filtered[index];document.getElementById("dialogtitle").textContent=a.title;large.src=a.file;large.alt=a.title+" — "+a.screens.join(", ");document.getElementById("original").href=a.file;document.getElementById("position").textContent=(index+1)+" de "+filtered.length+" · "+a.screens.join(" · ");document.getElementById("prev").disabled=index===0;document.getElementById("next").disabled=index===filtered.length-1;viewer.classList.remove("zoomed");document.getElementById("zoom").textContent="Ampliar"}
+function show(index){current=index;const a=filtered[index];document.getElementById("dialogtitle").textContent=a.title;large.src=a.file;large.alt=`${a.title} — ${a.screens.join(", ")}`;document.getElementById("original").href=a.file;document.getElementById("position").textContent=`${index+1} de ${filtered.length} · ${a.screens.join(" · ")}`;document.getElementById("prev").disabled=index===0;document.getElementById("next").disabled=index===filtered.length-1;viewer.classList.remove("zoomed");document.getElementById("zoom").textContent="Ampliar"}
 function open(index){show(index);dialog.showModal()}
-document.querySelectorAll("[data-kind]").forEach(b=>b.addEventListener("click",()=>{platform=b.dataset.kind;document.querySelectorAll("[data-kind]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));render()}));
+document.querySelectorAll("[data-kind]").forEach(b=>{b.addEventListener("click",()=>{platform=b.dataset.kind;document.querySelectorAll("[data-kind]").forEach(x=>{x.setAttribute("aria-pressed",String(x===b))});render()})});
 search.addEventListener("input",render);group.addEventListener("change",render);
 document.getElementById("close").addEventListener("click",()=>dialog.close());
 document.getElementById("prev").addEventListener("click",()=>show(current-1));
