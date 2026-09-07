@@ -198,19 +198,24 @@
         "Gerar e revisar database.generated.ts",
         "Eliminar migrations dependentes de estado histórico",
         "Separar lote E2E seed-driven e registrar execução",
-        "Varrer o E2E por asserção de retrato único onde cabe asserção que repete — o mesmo padrão de ds-029:130 aparece em ds-029:110 (containment de foco após abrir o diálogo)"
+        "Varrer o E2E por asserção de retrato único onde cabe asserção que repete — o mesmo padrão de ds-029:130 aparece em ds-029:110 (containment de foco após abrir o diálogo)",
+        "Regularizar impedimento externo de Actions e obter CI e revisão independentes da revisão entregue; confirmar se há proteção efetiva de merge"
       ],
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
         "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento",
         "2026-08-28, PR #35: duas execuções consecutivas da CI falharam em UM teste cada, e testes DIFERENTES — group-admin-cycle:103 (mobile-375) no head 8ded62c, ds-029-conformance-probes:115 (desktop-1440) no head 51fd42a. Entre os dois commits NENHUMA linha de código mudou: o segundo é só markdown e board.json. Suíte instável, independente do diff",
-        "Causa de ds-029:130 identificada e corrigida no PR #35: a asserção tirava um retrato único de document.activeElement logo após toBeHidden(), mas a restauração de foco pelo overlay do HeroUI é assíncrona. Trocada por expect(trigger).toBeFocused({timeout}), que repete — segue vermelha se o foco realmente não voltar"
+        "Causa de ds-029:130 identificada e corrigida no PR #35: a asserção tirava um retrato único de document.activeElement logo após toBeHidden(), mas a restauração de foco pelo overlay do HeroUI é assíncrona. Trocada por expect(trigger).toBeFocused({timeout}), que repete — segue vermelha se o foco realmente não voltar",
+        "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar."
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
-      "links": ["Protocolo | ../../docs/superpowers/plans/README.md"],
-      "updatedAt": "2026-08-28",
-      "sourceRevision": "51fd42a",
+      "links": [
+        "Protocolo | ../../docs/superpowers/plans/README.md",
+        "Evidências externas datadas e links dos runs | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
+      ],
+      "updatedAt": "2026-09-06",
+      "sourceRevision": "157a59294a69b87f22637b538f930e8a2ca34617",
       "dependencies": [],
       "drift": {
         "documented": "O baseline de 2026-08-25 registra pgTAP 1052 asserts PASS e trata a suíte como reproduzível.",
@@ -1279,12 +1284,12 @@
     },
     {
       "id": "MVP-00-E2E-FUNCTIONAL",
-      "title": "Reconciliar 65 falhas E2E funcionais (app × spec)",
+      "title": "Reconciliar falhas E2E funcionais (app × spec)",
       "phase": "MVP-00",
       "priority": "P1",
       "category": "testing",
       "status": "now",
-      "description": "Após o realinhamento de UUID (MVP-00-E2E-UUID-REALIGN): partimos de 65 falhas (23 testes únicos × 3 viewports). Reduzidas para 9 falhas = 8 testes distintos restantes. Fechados: rotas /admissions + /reports + acento /Denúncias/, middleware preservando ?next=, InviteAcceptPage pré-checa is_verified_holder, batch-approval beforeEach idempotente via service_role upsert, e event-invites apontando para um evento upcoming do seed. Restam 8 R3/decision/blocked.",
+      "description": "Após o realinhamento de UUID (MVP-00-E2E-UUID-REALIGN): partimos de 65 falhas (23 testes únicos × 3 viewports). Reduzidas para 9 falhas = 8 testes distintos restantes. Fechados: rotas /admissions + /reports + acento /Denúncias/, middleware preservando ?next=, InviteAcceptPage pré-checa is_verified_holder, batch-approval beforeEach idempotente via service_role upsert, e event-invites apontando para um evento upcoming do seed. Restam 8 R3/decision/blocked. Em 07/09/2026, CI do PR documental #49 registrou 109 falhas, 484 sucessos e 4 skips na revisão fb7738d. Os totais anteriores são históricos; é necessário reconciliar o relatório atual antes de fechar.",
       "checklist": [
         "Tema 1 — Auth/redirect shell: / serve landing pública para anônimo (Edit B aplicado, verde em manaus-pilot)",
         "Tema 2 — OAuth UI: login renderiza 'Continuar com Google' (Edit A aplicado; provider ainda NÃO configurado no Supabase — clique erra, spec só checa visibilidade — BLOQUEADO em config de auth)",
@@ -1312,15 +1317,17 @@
         "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente.",
         "2026-08-28, PR #35: group-admin-cycle:103 tem DOIS modos de falha e segue intermitente. head 8ded62c falhou só no mobile-375 (insert ok, botão não trocou a tempo — corrida de revalidação); head 51fd42a passou; head f0f2e70 falhou nos três (a linha nunca ficou visível, e 2º e 3º viewport herdaram a ausência porque os três projetos do Playwright dividem o MESMO banco: uma falha no primeiro cascateia). A branch task-3-run-003 passou a suíte inteira às 00:29Z no mesmo dia — logo NÃO é negação determinística de política",
         "Fixture verificado e íntegro: o grupo 60000000-...-006 existe no seed (índice 6, 'Mães da Cidade'), é visibility='private' e locality Manaus (seed.sql:641,657). A falha não é fixture ausente",
-        "group_memberships_select pós-20260825143505 concede self-visibility incondicional por status — logo a leitura da própria pendência não é o bloqueio. Restam o INSERT (is_locality_member) e o caminho de app"
+        "group_memberships_select pós-20260825143505 concede self-visibility incondicional por status — logo a leitura da própria pendência não é o bloqueio. Restam o INSERT (is_locality_member) e o caminho de app",
+        "2026-09-07, PR #49, fb7738d: CI passou lint, typecheck, testes unitários/privacidade/escopo, segredos, build, tipos, pgTAP e db:lint; E2E: 109 failed / 484 passed / 4 skipped. Diff contra main sem alterações em runtime, E2E, dependências, banco ou workflows. Há specs esperando /consent para anônimos enquanto o middleware da mesma base redireciona /login; group-admin-cycle:103 também falhou. Não houve nova reprodução isolada de cada falha; reconciliar as expectativas e investigar a falha de grupo antes de repetir a suíte."
       ],
       "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
       "links": [
         "E2E status | ../../docs/PRODUCT_STATUS.md",
-        "Seed UUIDs | ../../supabase/seed.sql"
+        "Seed UUIDs | ../../supabase/seed.sql",
+        "CI PR #49 | https://github.com/Juanjfmr/bivaque-community/commit/fb7738d/checks"
       ],
-      "updatedAt": "2026-08-28",
-      "sourceRevision": "f0f2e70",
+      "updatedAt": "2026-09-07",
+      "sourceRevision": "fb7738dff619c775f0eb3bd14a720fdcc8ed3760",
       "dependencies": []
     },
     {
@@ -1350,6 +1357,39 @@
       "updatedAt": "2026-08-28",
       "sourceRevision": "8ded62c",
       "dependencies": ["BLOCK-LEGAL-ENTRY"]
+    },
+    {
+      "id": "DOC-20260906-RECONSTRUCAO",
+      "title": "Publicar guia visual e autoridade atual de construção",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "repo",
+      "status": "done",
+      "description": "Publicar o processo autorizado pelo usuário e as referências visuais; tornar a leitura obrigatória nas entradas dos agentes. Escopo documental, sem migração visual ou alteração de runtime.",
+      "checklist": [
+        "Guia e imagens disponíveis no repositório",
+        "AGENTS e CLAUDE encaminham para a autoridade atual",
+        "Pendências de Auth e limitações da verificação externa explícitas",
+        "Validar arquivos, links e contratos de escopo antes da publicação"
+      ],
+      "proof": [
+        "Pedido explícito do usuário em 06/09/2026: publicar os arquivos no GitHub; versão atual prevalece sobre documentação antiga conflitante.",
+        "Worktree isolado baseado em origin/main; alterações locais de código e banco excluídas.",
+        "Validado no worktree de publicação: 75/75 testes de escopo PASS, scanner de segredos PASS, 19 PNGs íntegros, 41 telas/estados, links locais e sintaxe da galeria válidos. Publicação remota ainda a confirmar.",
+        "Publicação confirmada no GitHub: commit a9e8356 na branch codex/guia-visual-reconstrucao. Apenas o contrato documental está fechado; Auth/onboarding restante e runtime continuam abertos.",
+        "PR #49: corrigidos os erros de lint do JavaScript/semântica HTML da galeria e o achado da revisão independente: apps/mobile existe somente na branch local examinada, não na main-base; sua criação e atualização do teste de escopo são tarefa explícita. Biome da galeria e 75/75 testes de escopo PASS após o reparo.",
+        "PR #49: CI confirmou lint, typecheck e 426 testes unitários PASS; a checagem lexical confundiu a proibição de selo público em um prompt histórico com código do produto. Manifesto documental excluído apenas dessa checagem lexical; verificações de PII e segredos preservadas. Após a correção, gate completo local PASS: lint, typecheck, 426 unitários, 189 de privacidade, 75 de escopo e segredos.",
+        "Antes da incorporação, CI de fb7738d passou até banco/build e falhou no E2E do aplicativo existente; resultado registrado no card MVP-00-E2E-FUNCTIONAL. A revisão automática final encerrou sem análise. Publicação documental não certifica runtime nem aprovação independente final."
+      ],
+      "links": [
+        "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
+        "Arquivos publicados | https://github.com/Juanjfmr/bivaque-community/tree/codex/guia-visual-reconstrucao/docs/design/visual-guide-2026-09-06"
+      ],
+      "updatedAt": "2026-09-07",
+      "sourceRevision": "fb7738dff619c775f0eb3bd14a720fdcc8ed3760",
+      "dependencies": [],
+      "completedAt": "2026-09-06",
+      "completedChecklist": [true, true, true, true]
     }
   ]
 }

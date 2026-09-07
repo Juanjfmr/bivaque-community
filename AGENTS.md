@@ -1,7 +1,31 @@
 # AGENTS.md — Bivaque Community
 
-Private, verification-gated community product for verified federal military, Veterans and military
-pensioners, piloted in Manaus. Server-rendered Next.js on Supabase.
+National, verification-gated community product for federal military, veterans, pensioners and
+families. Next.js web and React Native/Expo mobile, with a shared Supabase backend.
+
+## Current build authority — mandatory, 2026-09-06
+
+**Read [`PROCESSO-DE-CONSTRUCAO.md`](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md)
+before planning, implementing or reviewing this reconstruction.** Then read the
+[visual correction notes](docs/design/visual-guide-2026-09-06/README.md) and inspect the relevant
+images in the [visual guide](docs/design/visual-guide-2026-09-06/index.html).
+
+The owner explicitly authorized this version **independently of conflicting older product
+documentation**. Its product scope, navigation, visual direction and construction sequence
+supersede conflicting older specs, ADR design choices, wave order and scoped agent guidance.
+Do not restore the old product or request approval merely because those documents disagree.
+This authorization does not remove security, privacy, authorization, accessibility or data-integrity
+requirements. Preserve compatible, proven infrastructure.
+
+The target is national; Manaus is an example/pilot, not an access boundary. Primary navigation is
+**Início / Explorar / Comunidades / Perfil**, with explicit Guia and Mercado entry points.
+The approved direction uses light surfaces and deep green. Historical documentation below helps
+locate existing mechanisms; it does not redefine this target.
+
+**Independent verification:** follow section 14 of the construction process. A model's own
+completion report is not independent verification. CI, code review and runtime verification are
+different layers; report which actually ran against the delivered revision. There is no fully
+automated independent reviewer/runtime-verifier chain today. Do not claim there is one.
 
 **This is a deliberate fork of a larger product.** The parent, `Juanjfmr/Bivaque` (private
 GitHub repo), carries 74 sovereign decisions, 19 features and a formal ADR regime — the
@@ -18,12 +42,12 @@ Forja-90 is a legacy codebase: reference patterns only, never copy its files.
 
 ## READ FIRST — before any work in this repository
 
-**Two documents, and you need both.** Read them before touching code, before planning,
-before answering a question about what this product does.
+**Read the current construction process above first.** Also read these two documents to
+understand the starting point before touching code or answering implementation questions.
 
-- **[`docs/BIVAQUE.md`](docs/BIVAQUE.md)** — what the product **must be**: vision, roles,
-  community model, decisions, monetisation, limits, sequencing. This is the source of truth
-  for product questions.
+- **[`docs/BIVAQUE.md`](docs/BIVAQUE.md)** — historical vision, roles, community model and
+  decisions. Use compatible details as context; the current construction process takes
+  precedence for the target product and experience.
 - **[`docs/PRODUCT_STATUS.md`](docs/PRODUCT_STATUS.md)** — what the code **does today**,
   with file:line evidence and the gap to the target.
 
@@ -35,7 +59,7 @@ before answering a question about what this product does.
   change; use `--search <terms>` when no ID is known. For autonomous card-by-card work, use
   `node tools/backend-kanban/src/board.mjs --next` and take exactly one returned card through
   implementation, validation, board update and commit. The board sets execution priority; it never
-  overrides product decisions or runtime evidence in the two documents above. Never edit
+  overrides the current construction authority or actual runtime evidence. Never edit
   `BOARD.md` by hand.
 
 **Never infer one from the other.** `BIVAQUE.md` describes decisions, many of them not yet
@@ -95,7 +119,8 @@ leaks so far.
 
 | Document | Answers |
 |---|---|
-| `docs/BIVAQUE.md` | What the product must be: vision, roles, decisions, monetisation, sequencing |
+| `docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md` | Current version, execution sequence and independent verification |
+| `docs/BIVAQUE.md` | Historical decisions; compatible context for the current version |
 | `docs/PRODUCT_STATUS.md` | What the code does today, the gap to the target, and which wave closes it |
 | `tools/backend-kanban/BOARD.md` | Concise generated MVP path agents read before planning or implementation |
 | `tools/backend-kanban/public/board.json` | Canonical board data, evidence and documentation drift by stable card ID |

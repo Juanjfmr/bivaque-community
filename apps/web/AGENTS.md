@@ -16,6 +16,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Authority and evidence
 
+**Current reconstruction override (2026-09-06):** first read
+[`PROCESSO-DE-CONSTRUCAO.md`](../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md)
+and the visual guide's correction notes. The owner explicitly authorized this version to
+supersede conflicting older product/design decisions and wave ordering. This applies to
+the historical categories and redesign governance below: no fresh design approval is needed
+merely to follow the authorized new direction. Security, authorization, accessibility and
+framework correctness remain required. The existing design system is implementation context,
+not authority to restore the previous appearance.
+
 Do not collapse product invariants, incumbent design decisions, and technical best practices into one precedence list.
 
 Use these categories:
