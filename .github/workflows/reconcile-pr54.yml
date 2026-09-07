@@ -70,6 +70,9 @@ jobs:
       - name: Reconcile lockfile
         run: pnpm install --lockfile-only --ignore-scripts
 
+      - name: Normalize restored formatting
+        run: pnpm exec biome format --write tests/e2e/reports-member-flow.spec.ts
+
       - name: Validate fast gate
         run: pnpm gate
 
