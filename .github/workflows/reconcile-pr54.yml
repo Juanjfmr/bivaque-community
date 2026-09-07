@@ -31,6 +31,8 @@ jobs:
             packages/contracts/package.json \
             apps/web/public/brand \
             apps/web/app/components/bivaque/brand-mark.tsx \
+            apps/web/app/(preauth)/consent/front-matter.ts \
+            apps/web/app/(preauth)/consent/document-render.tsx \
             docs/brand \
             docs/DOMAIN.md \
             docs/agents/HANDOFF-2026-08-22-e2e-triagem.md \
@@ -47,6 +49,7 @@ jobs:
             tests/scope/legal-documents.test.mjs \
             tests/unit/infra/outbox-preferences.test.ts \
             tests/unit/legal/front-matter.test.ts \
+            tests/unit/onboarding/verify-and-provision.test.ts \
             apps/web/app/api/internal/outbox/route.ts \
             apps/web/lib/onboarding/verifyAndProvision.ts \
             apps/web/lib/portal/types.ts \
@@ -54,6 +57,30 @@ jobs:
             tests/unit/portal/verification-copy.test.ts \
             apps/web/app/api/sw/route.ts \
             apps/web/public/sw.js
+
+      - name: Add missing-key observability
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("apps/web/app/api/onboarding/route.ts")
+          source = path.read_text()
+          old = '''      const result = await verifyEligibility(supabase, { userId, cpf, consentVersion })
+      return NextResponse.json(result)
+'''
+          new = '''      const result = await verifyEligibility(supabase, { userId, cpf, consentVersion })
+      if (result.outcome.status === "temporary_error" && result.outcome.errorCode === "INVALID_KEY") {
+        log.error("Portal verification unavailable: API key not configured", {
+          action: "verify-cpf",
+        })
+      }
+      return NextResponse.json(result)
+'''
+          if old not in source:
+              raise SystemExit("expected verify-cpf response block not found")
+          path.write_text(source.replace(old, new, 1))
+          PY
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -71,7 +98,7 @@ jobs:
         run: pnpm install --lockfile-only --ignore-scripts
 
       - name: Normalize restored formatting
-        run: pnpm exec biome format --write tests/e2e/reports-member-flow.spec.ts
+        run: pnpm exec biome format --write tests/e2e/reports-member-flow.spec.ts apps/web/app/api/onboarding/route.ts
 
       - name: Validate fast gate
         run: pnpm gate
