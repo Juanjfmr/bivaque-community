@@ -91,24 +91,34 @@ describe("mobile entry screen", () => {
     )
   })
 
-  // Também substituída em 2026-09-06. A anterior travava a honestidade de um
-  // botão desligado, o que era o contrato certo enquanto o envio não existia.
-  // O envio agora existe e foi exercitado no emulador contra o GoTrue real, e
-  // o que precisa de trava passa a ser o destino do retorno.
-  it("sends through the real provider and returns to the app, not to the web", () => {
-    expect(mobileAccess).toContain("supabase.auth.signInWithOtp")
-    expect(mobileAccess).toContain("Linking.createURL(AUTH_CALLBACK_PATH)")
+  // Substituída duas vezes em dois dias, e as duas por decisão registrada.
+  // Em 06/09 travava um botão desligado, contrato certo enquanto o envio não
+  // existia. Em 07/09 travava o envio de link, que ADR-20260907-login-com-senha
+  // tirou da tela por instrução do responsável: e-mail e senha para todos.
+  // O que a tela faz agora é entrar, e é isso que passa a ser travado.
+  it("entra com e-mail e senha, sem enviar link", () => {
+    expect(mobileAccess).toContain("signInWithPassword")
+    expect(mobileAccess).toContain("supabase.auth.signUp")
+    expect(mobileAccess).not.toContain("signInWithOtp")
     expect(mobileAccess).not.toContain("localhost:3000")
-    expect(mobileAccess).toContain('shouldCreateUser: mode === "criar-conta"')
   })
 
   it("keeps the native send under the same anti-enumeration rule as the web", () => {
-    expect(mobileAccess).toContain("classifyEntrySend")
-    // A tela não pode ramificar copy por causa da resposta do servidor: quem
-    // decide o texto é o classificador, e ele colapsa conta inexistente em
-    // "enviado". Ver src/auth/entry-send.ts.
+    // O classificador mudou de nome junto com o mecanismo; a regra não mudou.
+    // Senha errada e conta inexistente chegam com o mesmo código do GoTrue, e a
+    // tela não pode ramificar copy por causa da resposta do servidor.
+    expect(mobileAccess).toContain("classifySignIn")
     expect(mobileAccess).not.toContain("não encontrado")
     expect(mobileAccess).not.toContain("crie sua conta")
+    expect(mobileAccess).not.toContain("senha incorreta")
+  })
+
+  it("a infraestrutura de deep link continua, porque o Google precisa dela", () => {
+    // Tirar o link mágico da tela não torna o retorno por deep link descartável:
+    // OAuth nativo volta pelo mesmo caminho. Apagar isso junto com o link seria
+    // jogar fora o que a próxima tarefa precisa.
+    expect(mobileCallback).toContain("useAuthCallback")
+    expect(mobileLayout).toContain('<Stack.Screen name="auth-callback"')
   })
 
   it("gives the deep-link return a real route, not a listener at the root", () => {

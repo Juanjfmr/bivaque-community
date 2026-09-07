@@ -1,66 +1,98 @@
 // apps/mobile/app/(auth)/acesso.tsx
-// Passo de e-mail da entrada nativa, no modo escolhido em boas-vindas.
+// Entrar e criar conta com e-mail e senha, no modo escolhido em boas-vindas.
 //
-// O envio é o mesmo mecanismo da web — `signInWithOtp` — mas o retorno é
-// diferente: em vez de uma URL que o navegador abre, o GoTrue redireciona para
-// o scheme do app, e o listener de app/_layout.tsx troca o `code` por sessão.
-// Por isso `emailRedirectTo` aponta para o deep link, e não para localhost.
+// ADR-20260907-login-com-senha: e-mail e senha para todos, simples como nos
+// produtos que o público já usa. O envio de link saiu da tela; o mecanismo
+// continua no servidor.
 //
-// A classificação do resultado segue a mesma regra da web
-// (apps/web/lib/auth/entry-send.ts): a resposta visível não pode depender de o
-// endereço ter conta. Aqui a regra é reimplementada em vez de importada porque
-// web e mobile são builds separados — a mesma razão registrada em
-// src/auth/publish-error.ts.
-import * as Linking from "expo-linking"
-import { useLocalSearchParams } from "expo-router"
+// A classificação do erro é a mesma regra da web (src/auth/password-auth.ts):
+// senha errada e conta inexistente chegam com o mesmo código do GoTrue, e a
+// tela não tem como distinguir — que é justamente o que impede alguém de
+// descobrir quem é membro digitando endereços.
+import { useLocalSearchParams, useRouter } from "expo-router"
 import { useState } from "react"
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native"
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native"
 import { supabase } from "../../src/auth/client"
-import { AUTH_CALLBACK_PATH } from "../../src/auth/deep-link"
 import { entryCopy, isPlausibleEmail, parseEntryMode } from "../../src/auth/entry-mode"
-import { classifyEntrySend, type EntrySendView } from "../../src/auth/entry-send"
+import {
+  classifySignIn,
+  classifySignUp,
+  type PasswordAuthView,
+  passwordProblem,
+} from "../../src/auth/password-auth"
 import { Button } from "../../src/components/ui/Button"
 import { TextField } from "../../src/components/ui/TextField"
 import { bodyLineHeight, theme } from "../../src/theme"
 
 export default function AcessoScreen() {
   const params = useLocalSearchParams()
+  const router = useRouter()
   const mode = parseEntryMode(params["modo"])
+  const criando = mode === "criar-conta"
   const copy = entryCopy(mode)
 
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [touched, setTouched] = useState(false)
-  const [sending, setSending] = useState(false)
-  const [result, setResult] = useState<EntrySendView | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<PasswordAuthView | null>(null)
 
-  const valid = isPlausibleEmail(email)
-  const showError = touched && email.length > 0 && !valid
+  const emailOk = isPlausibleEmail(email)
+  const showEmailError = touched && email.length > 0 && !emailOk
+  const canSubmit = emailOk && password.length > 0 && (!criando || name.trim().length > 0)
 
-  const send = async () => {
+  const submit = async () => {
     setTouched(true)
-    if (!valid || sending) return
-    setSending(true)
-    setResult(null)
+    if (!canSubmit || busy) return
 
-    let caught: unknown = null
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          // Linking.createURL respeita o scheme declarado em app.json e o
-          // formato do Expo Go em desenvolvimento. O caminho tem que bater com
-          // `additional_redirect_urls` no supabase/config.toml.
-          emailRedirectTo: Linking.createURL(AUTH_CALLBACK_PATH),
-          shouldCreateUser: mode === "criar-conta",
-        },
-      })
-      caught = error
-    } catch (thrown) {
-      caught = thrown
+    // A senha só é conferida no cadastro. No login, recusar o formato aqui
+    // contaria que a senha digitada não é a atual.
+    if (criando) {
+      const problem = passwordProblem(password)
+      if (problem) {
+        setResult({ outcome: "weak-password", message: problem, diagnostic: "local" })
+        return
+      }
     }
 
-    setResult(classifyEntrySend(caught))
-    setSending(false)
+    setBusy(true)
+    setResult(null)
+
+    try {
+      const view = criando
+        ? classifySignUp(
+            (
+              await supabase.auth.signUp({
+                email: email.trim(),
+                password,
+                options: { data: { display_name: name.trim() } },
+              })
+            ).error,
+          )
+        : classifySignIn(
+            (await supabase.auth.signInWithPassword({ email: email.trim(), password })).error,
+          )
+
+      if (view.outcome === "ok") {
+        router.replace("/(tabs)/cidade")
+        return
+      }
+      setResult(view)
+    } catch (thrown) {
+      setResult(criando ? classifySignUp(thrown) : classifySignIn(thrown))
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -74,6 +106,20 @@ export default function AcessoScreen() {
           <Text style={styles.lead}>{copy.description}</Text>
         </View>
 
+        {criando && (
+          <TextField
+            label="Como podemos chamar você?"
+            value={name}
+            onChangeText={setName}
+            inputProps={{
+              placeholder: "Seu nome",
+              autoComplete: "name",
+              textContentType: "name",
+              editable: !busy,
+            }}
+          />
+        )}
+
         <TextField
           label={copy.fieldLabel}
           value={email}
@@ -82,7 +128,7 @@ export default function AcessoScreen() {
             setTouched(true)
             setResult(null)
           }}
-          error={showError ? "Confira o endereço: falta o @ ou o domínio." : undefined}
+          error={showEmailError ? "Confira o endereço: falta o @ ou o domínio." : undefined}
           inputProps={{
             placeholder: "nome@exemplo.com",
             keyboardType: "email-address",
@@ -90,35 +136,66 @@ export default function AcessoScreen() {
             autoCorrect: false,
             autoComplete: "email",
             textContentType: "emailAddress",
-            returnKeyType: "send",
-            onSubmitEditing: () => void send(),
-            editable: !sending,
+            editable: !busy,
           }}
         />
 
-        {result && (
-          <View
-            style={[styles.notice, result.outcome === "sent" ? styles.noticeOk : styles.noticeWarn]}
-            accessibilityRole="alert"
-          >
-            <Text style={styles.noticeTitle}>
-              {result.outcome === "sent" ? "Confira seu e-mail" : "Não deu para enviar"}
-            </Text>
+        <TextField
+          label="Sua senha"
+          value={password}
+          onChangeText={(value) => {
+            setPassword(value)
+            setResult(null)
+          }}
+          hint={criando ? "Ao menos 8 caracteres, com letras e números." : undefined}
+          inputProps={{
+            placeholder: criando ? "Ao menos 8 caracteres" : "Sua senha",
+            secureTextEntry: !showPassword,
+            autoCapitalize: "none",
+            autoCorrect: false,
+            autoComplete: criando ? "new-password" : "current-password",
+            textContentType: criando ? "newPassword" : "password",
+            returnKeyType: "go",
+            onSubmitEditing: () => void submit(),
+            editable: !busy,
+          }}
+        />
+
+        {/* Ver a senha digitada é acessibilidade antes de ser conveniência:
+            quem tem dificuldade motora ou visual erra mais em campo mascarado,
+            e este é o público que a decisão de senha quer atender. */}
+        <Pressable
+          onPress={() => setShowPassword((shown) => !shown)}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: showPassword }}
+          accessibilityLabel={showPassword ? "Ocultar senha" : "Mostrar senha"}
+          style={styles.reveal}
+        >
+          <Text style={styles.revealText}>{showPassword ? "Ocultar senha" : "Mostrar senha"}</Text>
+        </Pressable>
+
+        {result && result.outcome !== "ok" && (
+          <View style={styles.notice} accessibilityRole="alert">
             <Text style={styles.noticeText}>{result.message}</Text>
+            {result.suggestSignIn && (
+              <Pressable onPress={() => router.replace("/(auth)/acesso?modo=entrar")}>
+                <Text style={styles.noticeLink}>Entrar com esta conta</Text>
+              </Pressable>
+            )}
           </View>
         )}
 
         <Button
-          label={copy.submit}
-          loading={sending}
-          loadingLabel="Enviando..."
-          disabled={!valid}
-          onPress={() => void send()}
+          label={criando ? "Criar conta" : "Entrar"}
+          loading={busy}
+          loadingLabel={criando ? "Criando..." : "Entrando..."}
+          disabled={!canSubmit}
+          onPress={() => void submit()}
         />
 
-        {result?.outcome === "sent" && (
+        {!criando && (
           <Text style={styles.footnote}>
-            Abra o link neste aparelho para entrar. Ele vale uma vez só.
+            Esqueceu a senha? Abra o Bivaque no navegador para criar uma nova.
           </Text>
         )}
       </ScrollView>
@@ -127,19 +204,14 @@ export default function AcessoScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: theme.color.background,
-  },
+  safe: { flex: 1, backgroundColor: theme.color.background },
   scroll: {
     paddingHorizontal: theme.space[4],
     paddingTop: theme.space[4],
     paddingBottom: theme.space[12],
-    gap: theme.space[6],
+    gap: theme.space[4],
   },
-  heading: {
-    gap: theme.space[2],
-  },
+  heading: { gap: theme.space[2], marginBottom: theme.space[2] },
   title: {
     fontSize: theme.text.xl,
     fontWeight: "700",
@@ -151,29 +223,32 @@ const styles = StyleSheet.create({
     color: theme.color.muted,
     lineHeight: bodyLineHeight(theme.text.base),
   },
-  notice: {
-    borderRadius: theme.radius.base,
-    borderWidth: 1,
-    padding: theme.space[3],
-    gap: theme.space[1],
+  reveal: {
+    minHeight: 44,
+    justifyContent: "center",
   },
-  noticeOk: {
-    backgroundColor: theme.color.accentSoft,
-    borderColor: theme.color.border,
-  },
-  noticeWarn: {
-    backgroundColor: theme.color.surface,
-    borderColor: theme.color.danger,
-  },
-  noticeTitle: {
+  revealText: {
     fontSize: theme.text.sm,
     fontWeight: "600",
-    color: theme.color.foreground,
+    color: theme.color.accent,
+  },
+  notice: {
+    backgroundColor: theme.color.surface,
+    borderRadius: theme.radius.base,
+    borderWidth: 1,
+    borderColor: theme.color.danger,
+    padding: theme.space[3],
+    gap: theme.space[2],
   },
   noticeText: {
     fontSize: theme.text.sm,
     color: theme.color.foreground,
     lineHeight: bodyLineHeight(theme.text.sm),
+  },
+  noticeLink: {
+    fontSize: theme.text.sm,
+    fontWeight: "600",
+    color: theme.color.accent,
   },
   footnote: {
     fontSize: theme.text.xs,

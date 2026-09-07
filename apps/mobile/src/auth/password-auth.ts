@@ -1,26 +1,14 @@
-/**
- * Classificação dos erros de entrada com e-mail e senha.
- *
- * Códigos medidos contra a stack local em 2026-09-07, não presumidos:
- *
- *   login, senha errada        -> 400 invalid_credentials "Invalid login credentials"
- *   login, conta inexistente   -> 400 invalid_credentials "Invalid login credentials"
- *   cadastro, e-mail novo      -> 200
- *   cadastro, e-mail existente -> 422 user_already_exists "User already registered"
- *
- * A primeira dupla é o achado que importa: o GoTrue já responde a mesma coisa
- * para senha errada e para conta que não existe. A mensagem única
- * "E-mail ou senha incorretos" não é rigor acrescentado por nós — é o que o
- * provedor permite dizer. Distinguir os dois exigiria consultar a base à parte,
- * e é justamente o que entregaria a lista de membros a quem digitasse e-mails.
- *
- * No cadastro o provedor distingue, e nós contamos: quem está criando conta
- * digitou o próprio endereço, e esconder isso deixa a pessoa sem saída. É o
- * comportamento de Instagram e Facebook, e está registrado como consequência
- * aceita em ADR-20260907-login-com-senha.
- *
- * Função pura: sem import de runtime, testável sem navegador.
- */
+// apps/mobile/src/auth/password-auth.ts
+// Classificação dos erros de entrada com e-mail e senha, no nativo.
+//
+// Porta de apps/web/lib/auth/password-auth.ts, pela mesma razão já registrada
+// em publish-error.ts: web e mobile são builds separados. O teste espelho em
+// __tests__/password-auth.test.ts impede a cópia de divergir.
+//
+// Códigos medidos contra a stack local em 2026-09-07:
+//   login, senha errada        -> 400 invalid_credentials
+//   login, conta inexistente   -> 400 invalid_credentials  (mesma resposta)
+//   cadastro, e-mail existente -> 422 user_already_exists
 
 export type PasswordAuthOutcome =
   | "ok"
@@ -34,7 +22,6 @@ export type PasswordAuthOutcome =
 export interface PasswordAuthView {
   outcome: PasswordAuthOutcome
   message: string
-  /** Verdadeiro quando o próximo passo da pessoa é entrar, não criar conta. */
   suggestSignIn?: boolean
   diagnostic: string
 }
@@ -77,9 +64,7 @@ const isNetwork = (name: string, message: string): boolean => {
   return NETWORK_NAMES.includes(name) && lower === ""
 }
 
-const describe = (
-  error: unknown,
-): { view: PasswordAuthView | null; probe: Probe; diagnostic: string } => {
+const shared = (error: unknown) => {
   const shape = probe(error)
   const name = text(shape.name)
   const message = text(shape.message)
@@ -90,48 +75,50 @@ const describe = (
   }`
 
   if (isNetwork(name, message)) {
-    return { view: { outcome: "offline", message: OFFLINE, diagnostic }, probe: shape, diagnostic }
+    return {
+      early: { outcome: "offline" as const, message: OFFLINE, diagnostic },
+      code,
+      message,
+      diagnostic,
+    }
   }
 
   if (status === 429 || code.includes("rate_limit") || RETRY_SECONDS.test(message)) {
     const parsed = RETRY_SECONDS.exec(message)
     const seconds = parsed?.[1] ? Number.parseInt(parsed[1], 10) : 0
     return {
-      view: {
-        outcome: "rate-limited",
+      early: {
+        outcome: "rate-limited" as const,
         message:
           seconds > 0
             ? `Muitas tentativas. Aguarde ${seconds}s.`
             : "Muitas tentativas seguidas. Tente de novo em instantes.",
         diagnostic,
       },
-      probe: shape,
+      code,
+      message,
       diagnostic,
     }
   }
 
-  return { view: null, probe: shape, diagnostic }
+  return { early: null, code, message: message.toLowerCase(), diagnostic }
 }
 
 export function classifySignIn(error: unknown): PasswordAuthView {
   if (error === null || error === undefined) {
     return { outcome: "ok", message: "", diagnostic: "ok" }
   }
+  const { early, code, message, diagnostic } = shared(error)
+  if (early) return early
 
-  const { view, probe: shape, diagnostic } = describe(error)
-  if (view) return view
-
-  const code = text(shape.code).toLowerCase()
-  const message = text(shape.message).toLowerCase()
-
-  // Um endereço sem conta e uma senha errada chegam aqui com o MESMO código.
-  // Manter os dois na mesma resposta é o comportamento do provedor, não uma
-  // escolha que possa se perder numa refatoração.
-  if (code === "invalid_credentials" || message.includes("invalid login credentials")) {
-    return { outcome: "invalid-credentials", message: COPY_INVALID_LOGIN, diagnostic }
-  }
-
-  if (code === "email_not_confirmed" || message.includes("email not confirmed")) {
+  // Conta inexistente e senha errada chegam com o MESMO código. Manter os dois
+  // no mesmo ramo é o que impede a tela de distinguir.
+  if (
+    code === "invalid_credentials" ||
+    code === "email_not_confirmed" ||
+    message.includes("invalid login credentials") ||
+    message.includes("email not confirmed")
+  ) {
     return { outcome: "invalid-credentials", message: COPY_INVALID_LOGIN, diagnostic }
   }
 
@@ -142,12 +129,8 @@ export function classifySignUp(error: unknown): PasswordAuthView {
   if (error === null || error === undefined) {
     return { outcome: "ok", message: "", diagnostic: "ok" }
   }
-
-  const { view, probe: shape, diagnostic } = describe(error)
-  if (view) return view
-
-  const code = text(shape.code).toLowerCase()
-  const message = text(shape.message).toLowerCase()
+  const { early, code, message, diagnostic } = shared(error)
+  if (early) return early
 
   if (code === "user_already_exists" || message.includes("already registered")) {
     return { outcome: "email-taken", message: EMAIL_TAKEN, suggestSignIn: true, diagnostic }
@@ -164,11 +147,8 @@ export function classifySignUp(error: unknown): PasswordAuthView {
 export const PASSWORD_MIN_LENGTH = 8
 
 export function passwordProblem(password: string): string | null {
-  if (password.length < PASSWORD_MIN_LENGTH) {
+  if (password.length < PASSWORD_MIN_LENGTH)
     return `Use ao menos ${PASSWORD_MIN_LENGTH} caracteres.`
-  }
-  if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-    return "Misture letras e números."
-  }
+  if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) return "Misture letras e números."
   return null
 }

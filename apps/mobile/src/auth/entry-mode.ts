@@ -30,15 +30,15 @@ interface EntryCopy {
 const COPY: Record<EntryMode, EntryCopy> = {
   entrar: {
     title: "Entre no Bivaque",
-    description: "Use o e-mail com que você já participa. Sem senha para lembrar.",
+    description: "Use o e-mail e a senha da sua conta.",
     fieldLabel: "Seu e-mail",
-    submit: "Receber link para entrar",
+    submit: "Entrar",
   },
   "criar-conta": {
     title: "Comece pelo seu e-mail",
-    description: "Ele será sua forma de entrar. Depois vêm as regras e a sua localidade.",
+    description: "Escolha uma senha para entrar sempre, sem depender do e-mail.",
     fieldLabel: "Seu e-mail",
-    submit: "Criar conta e continuar",
+    submit: "Criar conta",
   },
 }
 
