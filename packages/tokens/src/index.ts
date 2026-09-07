@@ -93,7 +93,11 @@ export const nativeTokens = {
   // Estados da ação primária. O nativo não tem :hover, mas tem pressionado e
   // desabilitado; derivá-los aqui evita que cada tela invente um tom próprio.
   accentPressed: primitive("pine-pressed"),
-  accentDisabled: primitive("pine-disabled"),
+  // Desabilitado não é "o verde mais fraco": é superfície clara opaca com
+  // texto escuro, conforme a nota de correção da prancha 30 do guia visual.
+  // Por isso o par vem junto — quem usa o fundo precisa do texto certo.
+  accentDisabled: primitive("paper-200"),
+  accentDisabledForeground: primitive("ink-700"),
   danger: primitive("rose-700"),
   focus: primitive("petrol-700"),
   focusInner: primitive("paper-0"),

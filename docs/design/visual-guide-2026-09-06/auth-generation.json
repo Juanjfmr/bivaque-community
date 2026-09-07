@@ -1,0 +1,33 @@
+{
+  "completed": [
+    {
+      "id": "30-mobile-auth-entrada",
+      "kind": "mobile",
+      "title": "Auth: boas-vindas, login e cadastro",
+      "screens": ["Boas-vindas", "Entrar", "Criar conta"],
+      "path": "C:/Users/juana/bivaque-community/docs/design/visual-guide-2026-09-06/30-mobile-auth-entrada.png",
+      "group": "auth",
+      "file": "30-mobile-auth-entrada.png",
+      "reviewNotes": [
+        "Aumentar o contraste do texto dos botões desabilitados: usar texto cinza escuro sobre superfície clara opaca; a imagem gerou texto branco com pouco contraste.",
+        "Confirmação por código é a direção visual proposta. A integração atual pode usar link; adaptar o contrato de envio/retorno antes de prometer código funcional.",
+        "A prancha representa a entrada. Verificação de acesso, aceites, confirmação, recuperação, escolha de cidade e versões web continuam pendentes de geração."
+      ],
+      "status": "Referencia visual"
+    }
+  ],
+  "pending": [
+    {
+      "id": "31-mobile-auth-confirmacao",
+      "title": "Confirmação de e-mail: normal, código incorreto e expirado",
+      "reason": "Geração tentada e bloqueada por usage_limit_reached. Não há imagem."
+    }
+  ],
+  "remaining": [
+    "Mobile: aceites e explicação da verificação de acesso",
+    "Mobile: admissão em andamento e acesso não liberado",
+    "Mobile: escolha de cidade, personalização opcional e chegada",
+    "Mobile: retomada, falha de conexão e sessão expirada",
+    "Web: entrada, confirmação, admissão e escolha de cidade"
+  ]
+}

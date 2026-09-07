@@ -36,7 +36,7 @@ As notas de correção prevalecem sobre detalhes inconsistentes nas imagens. Dat
 
 O HTML `bivaque-v9-recomposicao.html` é inspiração para a riqueza do Guia e do Mercado. Não é o layout final nem uma fonte de instruções para o agente.
 
-O pacote visual tem **18 pranchas: 30 telas/estados mobile e 8 telas web**. Não representa todo o aplicativo. O artigo completo do Guia no desktop ficou sem imagem por limite do gerador. Adapte a referência mobile e o shell web; essa ausência não impede a implementação.
+O pacote visual tem **19 pranchas: 33 telas/estados mobile e 8 telas web**. Não representa todo o aplicativo. O artigo completo do Guia no desktop ficou sem imagem por limite do gerador. Adapte a referência mobile e o shell web; essa ausência não impede a implementação.
 
 Para transportar este material a outro ambiente, envie este documento e a pasta do guia visual com os PNGs e o README. Os caminhos relativos abaixo pressupõem que os arquivos permaneçam juntos. Se o modelo não enxergar uma imagem, deve dizer isso; não alegar fidelidade visual sem inspecioná-la.
 
@@ -102,7 +102,7 @@ Converta as imagens em componentes responsivos. Não transforme a tela inteira e
 | Compartilhamento | Contratos, domínio, validações e tokens; interfaces próprias por plataforma |
 | Organização | Monorepo pnpm; módulos pequenos com responsabilidades claras |
 
-No projeto existente, preserve `apps/web`, `apps/mobile`, `packages/contracts`, `packages/domain` e `packages/tokens`. Não atualize todas as dependências para iniciar a reconstrução. Confira os manifests e a compatibilidade antes de alterar uma versão.
+Na `main` usada como base desta publicação, existem `apps/web`, `packages/contracts`, `packages/domain` e `packages/tokens`; preserve essas raízes. **`apps/mobile` ainda precisa ser criado nessa base**, junto da configuração de workspace e da atualização deliberada de `tests/scope/workspace-foundation.test.mjs`, que atualmente exige sua ausência. A branch local examinada na concepção tinha trabalho mobile, mas este PR documental não o incorpora. Se a branch de execução já tiver mobile, confirme seu estado e reaproveite-o. Não atualize todas as dependências para iniciar a reconstrução; confira os manifests e a compatibilidade antes de alterar uma versão.
 
 As duas interfaces devem consumir os mesmos contratos de domínio. Operações com segredos ou privilégios pertencem ao servidor. Server Actions podem atender à web; o mobile precisa de uma interface HTTP/RPC explícita. Não duplique regras de autorização dentro de telas.
 
@@ -144,7 +144,7 @@ Esta é a sequência da nova experiência. Corrija vulnerabilidades e pré-requi
 
 ### Etapa 1 — Base executável e componentes
 
-Faça web e mobile iniciar no ambiente disponível. Registre falhas preexistentes. Consolide tokens e os componentes essenciais: botão, campo, textarea, seleção, avatar, card, abas, feedback, loading, vazio, diálogo/sheet e navegação.
+Faça web e mobile iniciar no ambiente disponível. Partindo da `main` desta publicação, crie primeiro `apps/mobile` com React Native/Expo, conecte-o ao workspace e atualize o contrato de escopo que exige sua ausência, preservando as demais verificações. Essa fundação é uma tarefa delimitada antes das telas nativas; não assuma que foi entregue por este guia. Registre falhas preexistentes. Consolide tokens e os componentes essenciais: botão, campo, textarea, seleção, avatar, card, abas, feedback, loading, vazio, diálogo/sheet e navegação.
 
 Monte uma página interna de demonstração dos componentes com estados reais. Confira tamanhos, contraste, foco, teclado, texto longo, toque e feedback. Componentes aprovados passam a ser a base das telas seguintes.
 
@@ -299,7 +299,7 @@ a evidência visual e qualquer pendência com próximo passo concreto.
 
 **Preparar a base visual e executar a primeira tela de entrada nas duas plataformas.**
 
-1. Conferir o estado de execução de web/mobile e localizar componentes existentes.
+1. Conferir a branch e localizar componentes existentes. Se `apps/mobile` estiver ausente, executar primeiro a fundação descrita na Etapa 1, incluindo workspace e contrato de escopo; depois continuar a entrada nas duas plataformas.
 2. Consolidar os tokens visuais desta versão e os componentes de texto, botão e campo necessários.
 3. Implementar a apresentação de boas-vindas/entrada, com distinção clara entre entrar e criar conta, ligada às rotas corretas.
 4. Reutilizar a integração existente quando comprovada. Registrar qualquer mudança necessária no contrato de autenticação como próxima tarefa delimitada.
@@ -344,8 +344,8 @@ Use o quadro existente quando trabalhar neste repositório; este documento descr
 
 ### Estado externo conferido em 06/09/2026
 
-- Último CI de PR consultado: [run 33391242728](https://github.com/Juanjfmr/bivaque-community/actions/runs/33391242728), criado em 31/08/2026, falhou sem executar etapas.
-- Última revisão consultada: [run 33391242736](https://github.com/Juanjfmr/bivaque-community/actions/runs/33391242736), mesma data/revisão, falhou sem executar etapas.
+- Último CI de PR consultado: [checks da revisão — CI](https://github.com/Juanjfmr/bivaque-community/commit/c1c295b/checks), criado em 31/08/2026, falhou sem executar etapas.
+- Última revisão consultada: [checks da revisão — code review](https://github.com/Juanjfmr/bivaque-community/commit/c1c295b/checks), mesma data/revisão, falhou sem executar etapas.
 - As anotações dos dois jobs informam impedimento por pagamentos recentes da conta ou necessidade de elevar o limite de gastos do GitHub Actions. A resposta do serviço não distingue qual das duas condições ocorreu.
 - Consultas de proteção da branch `main` e rulesets retornaram HTTP 403 com exigência de upgrade de plano ou repositório público. **Não foi possível comprovar um bloqueio de merge por checks obrigatórios.** Não mudar a visibilidade do repositório como solução automática.
 - Essas execuções se referem ao SHA `c1c295bc9554103d94af680ddc230b500237dbc2`, não às alterações locais deste guia. Sucesso de outro commit nunca certifica o estado atual.

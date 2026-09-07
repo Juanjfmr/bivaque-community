@@ -16,7 +16,6 @@
   --primitive-pine-700: #164734;
   --primitive-pine-hover: #113A2A;
   --primitive-pine-pressed: #0C2C20;
-  --primitive-pine-disabled: #3C5A4B;
   --primitive-pine-loading: #1B5540;
   --primitive-petrol-100: #E2F0F7;
   --primitive-petrol-700: #1D5D89;
@@ -184,7 +183,7 @@
   --semantic-control-border: var(--primitive-ink-700);
   --semantic-action-primary-hover: var(--primitive-pine-hover);
   --semantic-action-primary-pressed: var(--primitive-pine-pressed);
-  --semantic-action-primary-disabled: var(--primitive-pine-disabled);
+  --semantic-action-primary-disabled: var(--primitive-paper-200);
   --semantic-action-primary-loading: var(--primitive-pine-loading);
   --semantic-danger-hover: var(--primitive-rose-hover);
   --semantic-danger-pressed: var(--primitive-rose-pressed);
@@ -239,6 +238,7 @@
   --semantic-motion-ease-out: var(--primitive-ease-out);
   --semantic-motion-ease-in: var(--primitive-ease-in);
   --semantic-motion-ease-spring: var(--primitive-ease-out);
+  --semantic-action-primary-disabled-foreground: var(--primitive-ink-700);
 
   /* Component tokens: wrappers bind contracts to semantic roles. */
   --component-button-primary-bg: var(--component-button-primary-bg-default);
@@ -281,6 +281,7 @@
   --component-card-radius: var(--semantic-radius-card);
   --component-nav-active-bg: var(--semantic-selected);
   --component-nav-active-fg: var(--semantic-action-primary);
+  --component-button-primary-fg-disabled: var(--semantic-action-primary-disabled-foreground);
 
   /* Permanent HeroUI theme adapter: library-facing names resolve to Bivaque tokens. */
   --background: var(--semantic-canvas);

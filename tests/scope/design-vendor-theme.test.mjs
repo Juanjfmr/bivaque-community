@@ -211,7 +211,12 @@ test("disabled controls use opaque token pairs with AA-safe text and visible bou
   }
 
   const pairs = [
-    ["component.button-primary-fg", "component.button-primary-bg-disabled", 4.5],
+    // O texto do primário desabilitado deixou de ser o mesmo do ativo em
+    // 2026-09-06: a nota de correção da prancha 30 do guia visual pede cinza
+    // escuro sobre superfície clara opaca, e um único `fg` para os cinco
+    // estados não comporta isso. A exigência de 4,5:1 continua — o que mudou é
+    // qual token é conferido, não o limite.
+    ["component.button-primary-fg-disabled", "component.button-primary-bg-disabled", 4.5],
     ["component.button-danger-fg", "component.button-danger-bg-disabled", 4.5],
     ["semantic.text-primary", "component.field-bg-disabled", 4.5],
     ["component.field-border-disabled", "component.field-bg-disabled", 3],

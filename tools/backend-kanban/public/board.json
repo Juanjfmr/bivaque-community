@@ -1595,6 +1595,35 @@
       "sourceRevision": "afdb30e9b6574919774904b7ca51a2b26a2821a9",
       "blockers": [],
       "dependencies": []
+    },
+    {
+      "id": "DS-006-DISABLED-WEB",
+      "title": "Botao primario desabilitado nao tem estado visual na web",
+      "phase": "Design system",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "O HeroUI nao consome component.button-primary-bg-disabled nem o novo -fg-disabled. Um botao primario desabilitado renderiza identico ao ativo: mesmo fundo #164734, mesmo texto branco, opacity 1 (vendor-disabled-opacity vale 1 de proposito, para o sistema nao derivar tom suave de opacidade). A pessoa nao distingue uma acao indisponivel de uma disponivel, e clicar nao faz nada. O token existe e esta correto no source; falta o adaptador do vendor mapear os estados de disabled, como ja faz para bg/hover/pressed.",
+      "checklist": [
+        "Ler a documentacao do HeroUI v3 instalado para os nomes de alias dos estados desabilitados",
+        "Mapear os aliases em tokens.json web.aliases, sem introduzir opacidade",
+        "Provar no navegador que o botao desabilitado difere do ativo em fundo e texto",
+        "Conferir o mesmo para o botao danger, que tem o proprio par de tokens"
+      ],
+      "proof": [
+        "2026-09-06: medido no dev server. Botao primario com disabled e data-disabled aplicados renderizou bg rgb(22,71,52) e color rgb(255,255,255) — identicos ao estado ativo; heroui_consome=false.",
+        "O mobile ja cumpre a nota de correcao: superficie clara opaca com texto escuro, verificado no emulador. A divergencia e so da web.",
+        "Origem: nota de correcao da prancha 30 do guia visual — \"usar texto cinza escuro sobre superficie clara opaca\" nos botoes desabilitados."
+      ],
+      "tests": ["npx pnpm@11.18.0 test:scope", "inspecao do botao desabilitado no navegador"],
+      "links": [
+        "Prancha e notas | ../../docs/design/visual-guide-2026-09-06/README.md",
+        "Adaptador do vendor | ../../packages/tokens/src/tokens.json"
+      ],
+      "updatedAt": "2026-09-06",
+      "sourceRevision": "3eafed4820fefd06390035b5a9cf4d3af43dec23",
+      "blockers": [],
+      "dependencies": []
     }
   ]
 }

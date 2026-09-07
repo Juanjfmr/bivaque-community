@@ -67,6 +67,7 @@ export function Button({
           style={[
             styles.label,
             variant === "primary" ? styles.primaryLabel : styles.secondaryLabel,
+            disabled && variant === "primary" && styles.primaryLabelDisabled,
           ]}
           numberOfLines={2}
         >
@@ -122,6 +123,10 @@ const styles = StyleSheet.create({
   },
   primaryLabel: {
     color: theme.color.accentForeground,
+  },
+  // O branco do estado ativo não sobrevive à superfície clara do desabilitado.
+  primaryLabelDisabled: {
+    color: theme.color.accentDisabledForeground,
   },
   secondaryLabel: {
     color: theme.color.foreground,

@@ -35,6 +35,7 @@ export const theme = {
     accentForeground: nativeTokens.accentForeground,
     accentPressed: nativeTokens.accentPressed,
     accentDisabled: nativeTokens.accentDisabled,
+    accentDisabledForeground: nativeTokens.accentDisabledForeground,
     accentSoft: nativeTokens.surfaceSubtle,
     danger: nativeTokens.danger,
     focus: nativeTokens.focusOuter,

@@ -12,7 +12,7 @@ encaminham os agentes para este processo.
 
 ## Entrega
 
-18 pranchas, com **30 telas/estados mobile e 8 telas web**. Os seis fluxos aprofundados são conversa, pedido de serviço, imóveis, meus anúncios, meu negócio e referência completa do Guia. As referências anteriores de Início, Explorar, Mercado e Guia estão preservadas.
+19 pranchas, com **33 telas/estados mobile e 8 telas web**. Os seis fluxos aprofundados são conversa, pedido de serviço, imóveis, meus anúncios, meu negócio e referência completa do Guia. As referências anteriores de Início, Explorar, Mercado e Guia estão preservadas.
 
 Cada imagem foi criada pelo **image_gen integrado**. Os arquivos PNG são originais do gerador, sem retoques por scripts. O manifesto contém o prompt completo de cada nova prancha, o arquivo-fonte, a revisão de origem e as observações da inspeção. A home mobile aprovada foi recuperada da geração anterior da mesma conversa; seu prompt original permanece no histórico.
 
@@ -122,6 +122,18 @@ As observações abaixo têm precedência sobre os pequenos detalhes inconsisten
 - Exibição de telefone continua opcional; não a exigir como condição de ficha completa.
 
 ## Pendência de geração
+
+### Auth e onboarding — entrega parcial
+
+A [prancha 30](./30-mobile-auth-entrada.png) contém **boas-vindas, login e criação de conta mobile**.
+O prompt e o registro da tentativa seguinte estão em [auth-generation.json](./auth-generation.json).
+A geração de confirmação de e-mail foi bloqueada pelo limite de uso; aceites, admissão,
+recuperação, escolha de cidade e versões web ainda não foram gerados.
+
+Correções para a implementação: os botões desabilitados da prancha precisam de texto cinza
+escuro sobre fundo claro opaco, pois o gerador produziu pouco contraste. O mecanismo por
+código é uma proposta visual e deve ser reconciliado com o contrato real de envio/retorno.
+Nenhum crédito de reset foi usado e não houve substituição por uma API paga.
 
 A imagem **25-web-guia-referencia** (artigo completo do Guia no desktop) não foi gerada: o serviço retornou `usage_limit_reached` / HTTP 429. Sua versão mobile e a página inicial web do Guia estão no conjunto.
 
