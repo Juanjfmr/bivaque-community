@@ -4,6 +4,14 @@ export type VerificationStatus = "pending" | "verified" | "rejected" | "temporar
 
 export type FamilyInvitationStatus = "pending" | "accepted" | "revoked" | "expired"
 
+export type PortalErrorCode =
+  | "SCHEMA_DRIFT"
+  | "HTTP_ERROR"
+  | "TIMEOUT"
+  | "RATE_LIMITED"
+  | "INVALID_KEY"
+  | "EMPTY_RESPONSE"
+
 export type VerificationResult =
   | {
       status: "verified"
@@ -23,6 +31,7 @@ export type VerificationResult =
   | {
       status: "temporary_error"
       reason: string
+      errorCode?: PortalErrorCode
     }
 
 export type PortalRawRecord = {
