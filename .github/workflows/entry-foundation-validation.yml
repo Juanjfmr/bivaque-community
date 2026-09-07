@@ -24,7 +24,7 @@ jobs:
           cache: pnpm
       - name: Install frozen workspace
         run: pnpm install --frozen-lockfile
-      - name: Reconcile current authority and board
+      - name: Reconcile entry flow, current authority and board
         shell: bash
         run: |
           python - <<'PY'
@@ -34,16 +34,39 @@ jobs:
 
           agents = Path('AGENTS.md')
           text = agents.read_text(encoding='utf-8')
-          old = '- Workspace roots are exactly `apps/web` + `packages/{contracts,domain,tokens}` (no `apps/mobile`).'
-          new = '- Workspace roots are `apps/{web,mobile}` + `packages/{contracts,domain,tokens}`; mobile is React Native/Expo per the 2026-09-06 authority.'
-          if old in text:
-              text = text.replace(old, new, 1)
+          text = text.replace(
+              '- Workspace roots are exactly `apps/web` + `packages/{contracts,domain,tokens}` (no `apps/mobile`).',
+              '- Workspace roots are `apps/{web,mobile}` + `packages/{contracts,domain,tokens}`; mobile is React Native/Expo per the 2026-09-06 authority.',
+              1,
+          )
           text = text.replace(
               '- **HeroUI v3 is the only component library** — no shadcn/Radix/Headless UI imports.',
               '- **HeroUI v3 remains the only web component library** — no shadcn/Radix/Headless UI imports. Mobile uses React Native primitives and shared Bivaque tokens.',
               1,
           )
           agents.write_text(text, encoding='utf-8')
+
+          landing = Path('apps/web/app/landing/landing.tsx')
+          landing_text = landing.read_text(encoding='utf-8')
+          landing_text = landing_text.replace(
+              'href="/login" className={styles["headerAction"]}',
+              'href="/entrada" className={styles["headerAction"]}',
+              1,
+          )
+          landing.write_text(landing_text, encoding='utf-8')
+
+          entry = Path('apps/web/app/(preauth)/entrada/page.tsx')
+          entry_text = entry.read_text(encoding='utf-8')
+          entry_text = entry_text.replace(
+              '<div className={styles.actions} aria-label="Escolha como continuar">',
+              '<nav className={styles.actions} aria-label="Escolha como continuar">',
+              1,
+          ).replace(
+              '          </div>\n\n          <div className={styles.trustNote}>',
+              '          </nav>\n\n          <div className={styles.trustNote}>',
+              1,
+          )
+          entry.write_text(entry_text, encoding='utf-8')
 
           board_path = Path('tools/backend-kanban/public/board.json')
           board = json.loads(board_path.read_text(encoding='utf-8'))
@@ -88,6 +111,13 @@ jobs:
               })
           board_path.write_text(json.dumps(board, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
+          pnpm exec biome check --write \
+            apps/mobile/app/_layout.tsx \
+            apps/mobile/app/index.tsx \
+            apps/mobile/src/ui/primitives.tsx \
+            'apps/web/app/(preauth)/entrada/page.tsx' \
+            apps/web/app/landing/landing.tsx
+          pnpm exec biome format --write tools/backend-kanban/public/board.json
           node tools/backend-kanban/src/board.mjs --write-summary
           node tools/backend-kanban/src/board.mjs --check
       - name: Fast repository gate
@@ -98,15 +128,23 @@ jobs:
         run: pnpm --filter @bivaque/mobile typecheck
       - name: Bundle Android JavaScript
         run: pnpm --filter @bivaque/mobile exec expo export --platform android --output-dir ../../.mobile-dist
-      - name: Commit tracking reconciliation
+      - name: Commit validated reconciliation
         shell: bash
         run: |
-          if git diff --quiet -- AGENTS.md tools/backend-kanban/BOARD.md tools/backend-kanban/public/board.json; then
-            echo "Tracking already reconciled"
+          if git diff --quiet; then
+            echo "Validated tree already current"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add AGENTS.md tools/backend-kanban/BOARD.md tools/backend-kanban/public/board.json
-          git commit -m "chore(reconstruction): track entry foundation"
+          git add \
+            AGENTS.md \
+            apps/mobile/app/_layout.tsx \
+            apps/mobile/app/index.tsx \
+            apps/mobile/src/ui/primitives.tsx \
+            'apps/web/app/(preauth)/entrada/page.tsx' \
+            apps/web/app/landing/landing.tsx \
+            tools/backend-kanban/BOARD.md \
+            tools/backend-kanban/public/board.json
+          git commit -m "fix(entry): connect and validate reconstructed entry"
           git push origin HEAD:codex/visual-entry-foundation-2026-09-06
