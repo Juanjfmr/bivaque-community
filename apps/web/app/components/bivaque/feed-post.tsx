@@ -9,17 +9,20 @@ import {
   ListBox,
   Modal,
   Select,
+  Spinner,
   TextArea,
   useOverlayState,
 } from "@heroui/react"
 import { ExternalLink, Heart, Link2, MessageCircle, MoreHorizontal, Share2 } from "lucide-react"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
+import { classifyPublishError } from "../../../lib/composer/publish-error"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
 import { FeedbackAlert } from "./feedback-alert"
 import { ReportButton } from "./report-button"
+import { showToast } from "./toast"
 
 // FeedPostRow represents a single post shown in any feed. The base shape comes
 // from feed_posts (no community_id, used for the now-removed city feed); when
@@ -277,12 +280,12 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
 
   return (
     <article
-      className="motion-card-enter motion-lift rounded-2xl border border-border bg-[var(--surface)] shadow-[var(--elevation-2)] overflow-hidden"
+      className="motion-card-enter motion-lift rounded-2xl border border-border bg-[var(--semantic-surface)] shadow-[var(--semantic-elevation-raised)] overflow-hidden"
       style={{ animationDelay: `${Math.min(index, 5) * 40}ms` }}
     >
       <div className="flex">
         {/* Left accent rail */}
-        <div className="w-0.5 shrink-0 bg-[var(--accent)] opacity-75 rounded-full my-3 ml-3" />
+        <div className="w-0.5 shrink-0 bg-[var(--semantic-action-primary)] opacity-75 rounded-full my-3 ml-3" />
 
         <div className="flex-1 min-w-0 p-4 pl-3">
           {/* Header row */}
@@ -330,7 +333,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               onClick={() => setExpanded(!expanded)}
               aria-expanded={expanded}
               aria-label={expanded ? "Recolher publicação" : "Expandir publicação"}
-              className="mt-2 inline-flex min-h-11 items-center rounded-full bg-[var(--surface-subtle)] px-3 text-sm font-medium transition-colors duration-[var(--duration-instant)] text-accent hover:bg-[var(--surface-sunken)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="mt-2 inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-selected)] px-3 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] text-accent hover:bg-[var(--semantic-surface-sunken)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               {expanded ? "Ver menos" : "Ver mais"}
             </button>
@@ -338,7 +341,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
 
           {/* Photo placeholder */}
           {post.post_type === "photo" && post.photo_path && (
-            <div className="mt-3 rounded-lg bg-[var(--surface-sunken)] p-4 text-center">
+            <div className="mt-3 rounded-lg bg-[var(--semantic-surface-sunken)] p-4 text-center">
               <div className="flex flex-col items-center gap-2 text-muted">
                 <svg
                   width="32"
@@ -367,7 +370,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               aria-label={`Abrir link: ${linkHostname}`}
               className="mt-3 block min-h-11"
             >
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-[var(--surface-sunken)]/60 p-3 transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)]">
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-[var(--semantic-surface-sunken)]/60 p-3 transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)]">
                 <Link2 className="h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs text-muted">{linkHostname || post.link_url}</p>
@@ -384,7 +387,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               {(post.poll_options as unknown as string[]).map((option, i) => (
                 <div
                   key={option}
-                  className="flex items-center gap-2.5 rounded-lg bg-[var(--surface-sunken)] px-3 py-2.5 text-sm"
+                  className="flex items-center gap-2.5 rounded-lg bg-[var(--semantic-surface-sunken)] px-3 py-2.5 text-sm"
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-xs text-muted">
                     {i + 1}
@@ -402,12 +405,12 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               onClick={handleReaction}
               aria-label={myReaction ? "Descurtir publicação" : "Curtir publicação"}
               aria-pressed={myReaction}
-              className={`flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)] ${myReaction ? "text-[var(--accent)]" : "text-muted"}`}
+              className={`flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--semantic-focus)] ${myReaction ? "text-[var(--semantic-action-primary)]" : "text-muted"}`}
             >
               <Heart
                 size={18}
                 fill={myReaction ? "currentColor" : "none"}
-                className={myReaction ? "text-[var(--accent)]" : ""}
+                className={myReaction ? "text-[var(--semantic-action-primary)]" : ""}
                 aria-hidden="true"
               />
               {reactionCount > 0 && <span>{reactionCount}</span>}
@@ -419,7 +422,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               onClick={handleToggleComments}
               aria-label={showComments ? "Ocultar comentários" : "Ver comentários"}
               aria-expanded={showComments}
-              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]"
+              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--semantic-focus)]"
             >
               <MessageCircle size={18} aria-hidden="true" />
               {post.comment_count > 0 ? post.comment_count : "Comentar"}
@@ -429,7 +432,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
               type="button"
               onClick={handleShare}
               aria-label="Compartilhar publicação"
-              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--focus)]"
+              className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--semantic-focus)]"
             >
               <Share2 size={18} aria-hidden="true" />
               Compartilhar
@@ -453,7 +456,7 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
                   type="button"
                   onClick={handleToggleComments}
                   aria-label={`Ver todos os ${comments.length} comentários`}
-                  className="min-h-11 text-xs text-muted transition-colors duration-[var(--duration-instant)] hover:underline"
+                  className="min-h-11 text-xs text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline"
                 >
                   Ver todos os comentários
                 </button>
@@ -536,6 +539,9 @@ export function CreatePostModal({
   const [piiWarning, setPiiWarning] = useState(false)
   const [communityId, setCommunityId] = useState<string | null>(defaultCommunityId ?? null)
   const [availableCommunities, setAvailableCommunities] = useState<CommunityOption[]>([])
+  const [communitiesLoadAttempt, setCommunitiesLoadAttempt] = useState(0)
+  const [communitiesLoadError, setCommunitiesLoadError] = useState<string | null>(null)
+  const [communitiesLoading, setCommunitiesLoading] = useState(true)
   const dialogContentRef = useRef<HTMLDivElement>(null)
   const supabase = createBrowserClient()
 
@@ -556,42 +562,84 @@ export function CreatePostModal({
     }
   }, [modal.isOpen])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: this effect intentionally reloads only on retry
   useEffect(() => {
     let cancelled = false
+    setCommunitiesLoading(true)
+    setCommunitiesLoadError(null)
     ;(async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (cancelled || !user) return
+      if (cancelled || !user) {
+        if (!cancelled) setCommunitiesLoading(false)
+        return
+      }
 
-      const { data: membershipsData } = await supabase
+      const { data: membershipsData, error: membershipsError } = await supabase
         .from("community_memberships")
         .select("community_id")
         .eq("user_id", user.id)
         .eq("status", "approved")
 
+      if (cancelled) return
+      if (membershipsError) {
+        // Não oferecemos silenciosamente a cidade quando a vila default
+        // ainda está selecionada — o aviso `Só os aprovados desta vila vão
+        // ler` estaria mentindo sobre o que o membro vê. Forçamos a cópia
+        // de cidade para alinhar o aviso com a única opção disponível
+        // quando a lista está vazia (DS-002/DS-014: audiência reflete o
+        // que o membro pode escolher; não pode ser fingida).
+        setCommunitiesLoadError(
+          "Não foi possível carregar suas vilas. O post será publicado para toda a cidade.",
+        )
+        setAvailableCommunities([])
+        setCommunityId(null)
+        setCommunitiesLoading(false)
+        return
+      }
+
       const communityIds = ((membershipsData as { community_id: string }[] | null) ?? []).map(
         (membership) => membership.community_id,
       )
-      if (cancelled || communityIds.length === 0) return
+      if (cancelled) return
+      if (communityIds.length === 0) {
+        setAvailableCommunities([])
+        setCommunitiesLoading(false)
+        return
+      }
 
-      const { data: communitiesData } = await supabase
+      const { data: communitiesData, error: communitiesError } = await supabase
         .from("communities")
         .select("id, name")
         .in("id", communityIds)
 
       if (cancelled) return
+      if (communitiesError) {
+        setCommunitiesLoadError(
+          "Não foi possível carregar suas vilas. Você ainda pode publicar para a cidade inteira.",
+        )
+        setAvailableCommunities([])
+        setCommunitiesLoading(false)
+        return
+      }
+
       setAvailableCommunities(
         ((communitiesData as { id: string; name: string }[] | null) ?? []).map((community) => ({
           id: community.id,
           name: community.name,
         })),
       )
+      setCommunitiesLoading(false)
     })()
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [supabase, communitiesLoadAttempt])
+
+  const retryCommunitiesLoad = useCallback(() => {
+    setCommunitiesLoadAttempt((prev) => prev + 1)
+  }, [])
 
   const resetForm = useCallback(() => {
     setPostType("text")
@@ -663,14 +711,32 @@ export function CreatePostModal({
       .insert({ ...insertData, ...extras } as Database["public"]["Tables"]["posts"]["Insert"])
 
     if (insertError) {
-      setError("Não foi possível criar a publicação")
+      // Anti-enumeração: 42501 (RLS), 23505 (unique) e qualquer outra
+      // resposta do PostgREST compartilham a mesma mensagem. O `kind`
+      // discrimina o que fazer (mostrar feedback inline vs. pedir para
+      // checar a conexão); o texto nunca revela o motivo do servidor.
+      const view = classifyPublishError(insertError)
+      setError(view.message)
+      // `preserveDraft` é sobre o conteúdo do TextArea (não limpamos);
+      // o botão precisa voltar a ficar clicável para a pessoa corrigir
+      // e tentar de novo — manter `submitting` aqui trancaria o caminho
+      // de recuperação.
       setSubmitting(false)
       return
     }
 
     resetForm()
+    const publishedToCity = communityId === null
+    showToast({
+      title: publishedToCity ? "Publicado para toda a cidade" : "Publicado na sua vila",
+      description: publishedToCity
+        ? `Os membros verificados de ${locality.cityName} podem ler agora.`
+        : "Os aprovados desta vila podem ler agora.",
+      variant: "success",
+    })
     onCreated()
     modal.close()
+    setSubmitting(false)
   }, [
     postType,
     content,
@@ -680,6 +746,7 @@ export function CreatePostModal({
     communityId,
     piiWarning,
     localityId,
+    locality.cityName,
     supabase,
     resetForm,
     onCreated,
@@ -764,6 +831,37 @@ export function CreatePostModal({
                 </p>
               </div>
 
+              {communitiesLoading ? (
+                <div
+                  className="mt-3 flex items-center gap-2 text-xs text-muted"
+                  aria-live="polite"
+                  data-testid="communities-loading"
+                >
+                  <Spinner size="sm" aria-label="Carregando suas vilas" />
+                  Carregando suas vilas…
+                </div>
+              ) : null}
+
+              {communitiesLoadError ? (
+                <div className="mt-3" data-testid="communities-error">
+                  <FeedbackAlert
+                    variant="danger"
+                    title="Não foi possível listar suas vilas"
+                    description={communitiesLoadError}
+                    actions={
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onPress={retryCommunitiesLoad}
+                        aria-label="Tentar carregar as vilas novamente"
+                      >
+                        Tentar novamente
+                      </Button>
+                    }
+                  />
+                </div>
+              ) : null}
+
               {postType === "photo" ? (
                 <div className="mt-4 space-y-2">
                   {/* F9 Step 1: real photo upload with EXIF stripping via canvas.
@@ -806,7 +904,7 @@ export function CreatePostModal({
                       }
                       img.src = URL.createObjectURL(file)
                     }}
-                    className="block w-full text-sm text-muted file:mr-4 file:rounded-md file:border-0 file:bg-[var(--surface-subtle)] file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-[var(--surface)]"
+                    className="block w-full text-sm text-muted file:mr-4 file:rounded-md file:border-0 file:bg-[var(--semantic-selected)] file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-[var(--semantic-surface)]"
                   />
                   {photoPath && <p className="text-xs text-muted">Foto carregada: {photoPath}</p>}
                 </div>
@@ -896,15 +994,24 @@ export function CreatePostModal({
               ) : null}
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="tertiary" onPress={handleCancel}>
+              <Button variant="tertiary" onPress={handleCancel} isDisabled={submitting}>
                 Cancelar
               </Button>
               <Button
                 onPress={handleSubmit}
                 isDisabled={submitting || !content.trim()}
                 variant="primary"
+                aria-busy={submitting}
+                data-testid="publish-submit"
               >
-                Publicar
+                {submitting ? (
+                  <>
+                    <Spinner size="sm" aria-label="Publicando" />
+                    Publicando…
+                  </>
+                ) : (
+                  "Publicar"
+                )}
               </Button>
             </Modal.Footer>
           </Modal.Dialog>

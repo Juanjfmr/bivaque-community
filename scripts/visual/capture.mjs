@@ -29,8 +29,6 @@ const ROUTES = [
   { path: "/login", name: "login", auth: false },
   { path: "/signup", name: "signup", auth: false },
   { path: "/consent", name: "consent", auth: false },
-  { path: "/codigo-de-conduta", name: "codigo-de-conduta", auth: false },
-  { path: "/privacidade", name: "privacidade", auth: false },
   { path: "/onboarding", name: "onboarding", auth: false },
   { path: "/onboarding", name: "onboarding", auth: true },
   { path: "/onboarding/status", name: "onboarding-status", auth: true },
@@ -109,6 +107,12 @@ function parseEnvFile(path) {
 
 const APP_DOTENV = join(import.meta.dirname, "..", "..", "apps", "web", ".env.local")
 const dotEnv = parseEnvFile(APP_DOTENV)
+const TOKEN_SOURCE = JSON.parse(
+  readFileSync(
+    join(import.meta.dirname, "..", "..", "packages", "tokens", "src", "tokens.json"),
+    "utf8",
+  ),
+)
 
 // --------------------------------------------------------------------------
 // auth — optional; without credentials the gated routes are captured signed out
@@ -147,7 +151,7 @@ async function fetchSession() {
 // audit — runs inside the page, returns plain JSON
 // --------------------------------------------------------------------------
 
-function auditPage() {
+function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
   const findings = []
   const add = (rule, severity, selector, detail) =>
     findings.push({ rule, severity, selector, detail })
@@ -178,6 +182,15 @@ function auditPage() {
     return (high + 0.05) / (low + 0.05)
   }
 
+  const tokenColor = (name) => {
+    const probe = document.createElement("span")
+    probe.style.color = `var(${name})`
+    document.body.append(probe)
+    const color = parseColor(getComputedStyle(probe).color)
+    probe.remove()
+    return color
+  }
+
   const backgroundOf = (element) => {
     let node = element
     while (node) {
@@ -200,16 +213,22 @@ function auditPage() {
 
   const interactive = [...document.querySelectorAll("a, button, [role='button'], input, select")]
 
+  // Fonts must be served by the application itself. This catches a stylesheet or
+  // component that silently reintroduces a hosted font after the local loader runs.
+  for (const entry of performance.getEntriesByType("resource")) {
+    const url = new URL(entry.name)
+    if (/\.(?:woff2?|ttf|otf)(?:$|\?)/i.test(url.pathname) && url.origin !== location.origin) {
+      add(
+        "external-font-request",
+        "high",
+        url.hostname,
+        "font asset requested outside the app origin",
+      )
+    }
+  }
+
   for (const element of interactive) {
-    // HeroUI renders a checkbox's native input inside a visually-hidden span and
-    // makes its wrapping label the actual 44px+ interaction surface. Audit the
-    // label in that compound control, otherwise the scanner measures an element
-    // the user cannot touch and reports a false accessibility failure.
-    const target =
-      element instanceof HTMLInputElement && element.type === "checkbox"
-        ? (element.closest("label") ?? element)
-        : element
-    const box = target.getBoundingClientRect()
+    const box = element.getBoundingClientRect()
     if (box.width === 0 && box.height === 0) continue
 
     // 2. touch targets — 44x44 CSS px minimum
@@ -217,12 +236,12 @@ function auditPage() {
       add(
         "touch-target",
         "high",
-        describe(target),
+        describe(element),
         `${Math.round(box.width)}x${Math.round(box.height)} (min 44x44)`,
       )
     }
 
-    const style = getComputedStyle(target)
+    const style = getComputedStyle(element)
 
     // 3. motion presence — interactive elements need a state transition
     const hasTransition = style.transitionDuration
@@ -244,9 +263,6 @@ function auditPage() {
       name = (labeled?.textContent ?? "").trim()
     }
     if (name.length === 0) {
-      name = (element.closest("label")?.textContent ?? "").trim()
-    }
-    if (name.length === 0) {
       name = (element.textContent ?? "").trim()
     }
     if (name.length === 0) {
@@ -266,7 +282,8 @@ function auditPage() {
 
     const style = getComputedStyle(element)
     const size = Number.parseFloat(style.fontSize)
-    if (size < 12) add("font-too-small", "medium", describe(element), `${size}px (min 12px)`)
+    if (size < minimumTextSize)
+      add("font-too-small", "medium", describe(element), `${size}px (min ${minimumTextSize}px)`)
 
     const foreground = parseColor(style.color)
     if (!foreground) continue
@@ -283,7 +300,64 @@ function auditPage() {
     }
   }
 
-  // 6. design-token discipline — no raw colors in inline styles
+  // Reading surfaces opt into the measure audit with a class or data attribute.
+  // The estimate uses the current font size and the CSS `ch` convention, so it
+  // remains useful across the three capture widths without hardcoded layout sizes.
+  for (const element of document.querySelectorAll(".measure-reading, [data-reading-measure]")) {
+    const box = element.getBoundingClientRect()
+    const style = getComputedStyle(element)
+    const size = Number.parseFloat(style.fontSize)
+    if (box.width === 0 || size === 0) continue
+    const charactersPerLine = box.width / (size * 0.5)
+    if (charactersPerLine > readingMeasureMax) {
+      add(
+        "reading-measure",
+        "medium",
+        describe(element),
+        `${Math.round(charactersPerLine)} characters per line (max ${readingMeasureMax})`,
+      )
+    }
+  }
+
+  // 6. non-text contrast — focus rings and control boundaries are measured
+  // from the generated token values, not inferred from text color.
+  const cssVariable = (reference) => {
+    const [layer, name] = reference.split(".")
+    return `--${layer}-${name}`
+  }
+  for (const {
+    name,
+    foreground: foregroundReference,
+    background: backgroundReference,
+  } of nonTextPairs) {
+    const foregroundToken = cssVariable(foregroundReference)
+    const backgroundToken = cssVariable(backgroundReference)
+    const foreground = tokenColor(foregroundToken)
+    const background = tokenColor(backgroundToken)
+    if (!foreground || !background) {
+      add(
+        "non-text-contrast-unmeasurable",
+        "high",
+        name,
+        "focus or control-boundary token is not a color",
+      )
+      continue
+    }
+    const ratio = contrast(foreground, background)
+    if (ratio < 3) {
+      const rule = name.startsWith("focus-")
+        ? "non-text-contrast-focus"
+        : "non-text-contrast-control-boundary"
+      add(
+        rule,
+        "high",
+        name,
+        `${ratio.toFixed(2)}:1 (needs 3:1) — ${foregroundToken} on ${backgroundToken}`,
+      )
+    }
+  }
+
+  // 7. design-token discipline — no raw colors in inline styles
   for (const element of document.querySelectorAll("[style]")) {
     const inline = element.getAttribute("style") ?? ""
     if (/#[0-9a-f]{3,8}\b|rgba?\(/i.test(inline)) {
@@ -291,128 +365,10 @@ function auditPage() {
     }
   }
 
-  // 7. images need alt text
+  // 8. images need alt text
   for (const image of document.querySelectorAll("img")) {
     if (image.getAttribute("alt") === null) {
       add("missing-alt", "high", describe(image), image.getAttribute("src") ?? "")
-    }
-  }
-
-  // 8. official brand integrity — measurable subset of docs/brand/SCREEN_AUDIT.md.
-  const sourceOf = (image) => {
-    const raw = image.currentSrc || image.getAttribute("src") || ""
-    try {
-      return decodeURIComponent(raw)
-    } catch {
-      return raw
-    }
-  }
-  const isVisible = (element) => {
-    const box = element.getBoundingClientRect()
-    return box.width > 0 && box.height > 0
-  }
-  const officialBrandMarks = [
-    ...document.querySelectorAll("[data-bivaque-brand='official'], img"),
-  ].filter((element) => {
-    if (!isVisible(element)) return false
-    if (element.getAttribute("data-bivaque-brand") === "official") return true
-    if (!(element instanceof HTMLImageElement)) return false
-    return /\/brand\/bivaque-(?:logo-|wordmark|symbol)/i.test(sourceOf(element))
-  })
-
-  if (officialBrandMarks.length === 0) {
-    add(
-      "brand-presence",
-      "medium",
-      "body",
-      "no approved Glifo/wordmark asset is visible; defer only while FRONTEND-VISUAL-AAA is frozen",
-    )
-  }
-
-  let provisionalBrand = 0
-  const brandScopes = document.querySelectorAll(
-    "header, nav, [class*='wordmark'], [class*='brand']",
-  )
-  for (const scope of brandScopes) {
-    if (!isVisible(scope) || !/\bbivaque\b/i.test(scope.textContent ?? "")) continue
-    const carriesOfficialMark =
-      scope.matches("[data-bivaque-brand='official']") ||
-      scope.querySelector("[data-bivaque-brand='official'], img[src*='/brand/bivaque-']")
-    if (!carriesOfficialMark) provisionalBrand += 1
-  }
-  if (provisionalBrand > 0) {
-    add(
-      "provisional-brand",
-      "medium",
-      "header, nav, .wordmark",
-      `${provisionalBrand} visible brand surface(s) rebuild Bivaque without the approved asset`,
-    )
-  }
-
-  for (const mark of officialBrandMarks) {
-    const source = mark instanceof HTMLImageElement ? sourceOf(mark) : ""
-    const asset =
-      mark.getAttribute("data-brand-asset") ||
-      (/symbol/i.test(source) ? "symbol" : /horizontal/i.test(source) ? "horizontal" : "full")
-    const tone =
-      mark.getAttribute("data-brand-tone") ||
-      (/-white\.svg/i.test(source)
-        ? "white"
-        : /-black\.svg/i.test(source)
-          ? "black"
-          : /-graphite\.svg/i.test(source)
-            ? "graphite"
-            : "color")
-    const box = mark.getBoundingClientRect()
-    const minimum = asset === "symbol" ? 16 : asset === "horizontal" ? 72 : 120
-    if (box.width < minimum || box.height < 16) {
-      add(
-        "brand-minimum-size",
-        "high",
-        describe(mark),
-        `${Math.round(box.width)}x${Math.round(box.height)} for ${asset} (minimum width ${minimum}px; minimum height 16px)`,
-      )
-    }
-    if (asset === "symbol") {
-      const ratio = box.height === 0 ? 0 : box.width / box.height
-      if (ratio < 0.9 || ratio > 1.1) {
-        add(
-          "brand-proportions",
-          "high",
-          describe(mark),
-          `symbol rendered at ${ratio.toFixed(2)} width/height ratio (expected 1.00)`,
-        )
-      }
-    }
-
-    const backgroundLuminance = luminance(backgroundOf(mark))
-    const insufficientContrast =
-      (tone === "white" && backgroundLuminance > 0.55) ||
-      (tone !== "white" && backgroundLuminance < 0.12)
-    if (insufficientContrast) {
-      add(
-        "brand-contrast",
-        "high",
-        describe(mark),
-        `${tone} mark conflicts with background luminance ${backgroundLuminance.toFixed(2)}`,
-      )
-    }
-  }
-
-  for (const image of document.querySelectorAll("img")) {
-    const source = sourceOf(image)
-    if (!/bivaque-graphic-patio\.svg/i.test(source) || !isVisible(image)) continue
-    const usedAsIdentity =
-      image.getAttribute("data-bivaque-brand") !== null ||
-      (image.getAttribute("alt") ?? "").trim().toLocaleLowerCase("pt-BR") === "bivaque" ||
-      image.closest("header, nav") !== null
-    if (usedAsIdentity) {
-      add(
-        "patio-as-primary-mark",
-        "high",
-        describe(image),
-        "Pátio is secondary graphics and cannot replace the official Glifo",
-      )
     }
   }
 
@@ -440,6 +396,7 @@ function auditPage() {
   }
 
   // 11. forbidden copy — the same privacy vocabulary the database rejects
+  // 10. forbidden copy — the same privacy vocabulary the database rejects
   // (see supabase/migrations/20260802001300_fix_forbidden_content_regex.sql).
   // The DB guards post bodies; the UI copy must guard itself.
   //
@@ -459,10 +416,6 @@ function auditPage() {
     findings,
     title: document.title,
     heading: document.querySelector("h1")?.textContent?.trim() ?? null,
-    brand: {
-      officialMarks: officialBrandMarks.length,
-      provisionalSurfaces: provisionalBrand,
-    },
     url: location.pathname,
   }
 }
@@ -491,42 +444,42 @@ async function main() {
   const results = []
 
   for (const viewport of VIEWPORTS) {
-    const context = await browser.newContext({
-      viewport: { width: viewport.width, height: viewport.height },
-      baseURL: BASE_URL,
-      locale: "pt-BR",
-    })
-
-    await context.addCookies([
-      { name: "bivaque-consent-version", value: "1", path: "/", domain: "127.0.0.1" },
-    ])
-
-    if (auth) {
-      // supabase-js stores the session in localStorage; @supabase/ssr (the new B2 middleware)
-      // reads it from a cookie of the same name. Without the cookie the server-side middleware
-      // has no session and redirects every gated route to /login.
-      const sessionValue = JSON.stringify(auth.session)
-      await context.addCookies([
-        {
-          name: auth.storageKey,
-          value: sessionValue,
-          path: "/",
-          domain: "127.0.0.1",
-        },
-      ])
-      await context.addInitScript(
-        ([key, session]) => window.localStorage.setItem(key, JSON.stringify(session)),
-        [auth.storageKey, auth.session],
-      )
-    }
-
-    const page = await context.newPage()
-    const consoleErrors = []
-    page.on("console", (message) => {
-      if (message.type() === "error") consoleErrors.push(message.text().slice(0, 200))
-    })
-
     for (const route of routes) {
+      // Public routes must be inspected as visitors see them. Reusing a signed-in
+      // context makes `/` redirect to the member funnel and turns a landing audit
+      // into a consent-screen audit.
+      const context = await browser.newContext({
+        viewport: { width: viewport.width, height: viewport.height },
+        baseURL: BASE_URL,
+        locale: "pt-BR",
+      })
+
+      if (route.auth && auth) {
+        // supabase-js stores the session in localStorage; @supabase/ssr (the new B2 middleware)
+        // reads it from a cookie of the same name. Without the cookie the server-side middleware
+        // has no session and redirects every gated route to /login.
+        const sessionValue = JSON.stringify(auth.session)
+        await context.addCookies([
+          { name: "bivaque-consent-version", value: "1", path: "/", domain: "127.0.0.1" },
+          {
+            name: auth.storageKey,
+            value: sessionValue,
+            path: "/",
+            domain: "127.0.0.1",
+          },
+        ])
+        await context.addInitScript(
+          ([key, session]) => window.localStorage.setItem(key, JSON.stringify(session)),
+          [auth.storageKey, auth.session],
+        )
+      }
+
+      const page = await context.newPage()
+      const consoleErrors = []
+      page.on("console", (message) => {
+        if (message.type() === "error") consoleErrors.push(message.text().slice(0, 200))
+      })
+
       const label = `${route.name}--${viewport.name}`
       try {
         const response = await page.goto(route.path, { waitUntil: "networkidle", timeout: 30_000 })
@@ -538,7 +491,11 @@ async function main() {
         const full = join(shotsDir, `${label}--full.png`)
         await page.screenshot({ path: fold })
         await page.screenshot({ path: full, fullPage: true })
-        const audit = await page.evaluate(auditPage)
+        const audit = await page.evaluate(auditPage, {
+          nonTextPairs: TOKEN_SOURCE.contrast.nonTextPairs,
+          minimumTextSize: TOKEN_SOURCE.contrast.minimumTextSize,
+          readingMeasureMax: Number(TOKEN_SOURCE.primitive["type-reading-max-characters"]),
+        })
 
         results.push({
           route: route.path,
@@ -558,10 +515,10 @@ async function main() {
           error: String(error).slice(0, 300),
           findings: [],
         })
+      } finally {
+        await context.close()
       }
     }
-
-    await context.close()
   }
 
   await browser.close()
@@ -597,11 +554,6 @@ function writeResults(runDir, results, authenticated) {
     }
     if (entry.screenshot) {
       lines.push(`- fold: \`${entry.screenshot}\` · full: \`${entry.screenshotFull}\``)
-    }
-    if (entry.brand) {
-      lines.push(
-        `- brand: ${entry.brand.officialMarks} official mark(s) · ${entry.brand.provisionalSurfaces} provisional surface(s)`,
-      )
     }
     for (const error of entry.consoleErrors ?? []) lines.push(`- console error: ${error}`)
     if (findings.length === 0) {

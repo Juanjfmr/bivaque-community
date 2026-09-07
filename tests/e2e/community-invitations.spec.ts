@@ -18,11 +18,15 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal, seedSession } from "./helpers/session"
+import {
+  CURRENT_CONSENT,
+  encodeAuthCookieValue,
+  readEnvLocal,
+  seedSession,
+} from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 const COMMUNITY_ID = "71000000-0000-4000-8000-000000000001"
 const OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
 const REJECTED_EMAIL = "rejected@bivaque.example.invalid"

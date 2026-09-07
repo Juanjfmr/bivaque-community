@@ -1,0 +1,128 @@
+.root {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: var(--primitive-space-6) var(--primitive-space-4);
+  color: var(--semantic-text-primary);
+  background: var(--semantic-canvas);
+  font-family: var(--semantic-font-family-interface);
+}
+
+.card {
+  display: grid;
+  gap: var(--primitive-space-4);
+  width: 100%;
+  max-width: 420px;
+  padding: var(--primitive-space-8) var(--primitive-space-6);
+  background: var(--semantic-surface);
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--primitive-radius-14);
+  box-shadow: var(--semantic-elevation-raised);
+}
+
+.card h1 {
+  margin: 0;
+  font-size: var(--semantic-typography-page-title-size);
+  font-weight: var(--semantic-typography-page-title-weight);
+  line-height: var(--semantic-typography-page-title-line-height);
+}
+
+.back {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--primitive-space-2);
+  color: var(--semantic-action-primary);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
+  text-decoration: none;
+}
+
+.back:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.lead {
+  margin: 0;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-body-size);
+  line-height: var(--semantic-typography-body-line-height);
+}
+
+.form {
+  display: grid;
+  gap: var(--primitive-space-4);
+}
+
+.field {
+  display: grid;
+  gap: var(--primitive-space-2);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
+}
+
+.inputShell {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: var(--primitive-space-2);
+  padding: 0 var(--primitive-space-3);
+  background: var(--semantic-surface);
+  border: 1px solid var(--semantic-control-border);
+  border-radius: var(--radius-sm);
+}
+
+.inputShell:focus-within {
+  border-color: var(--semantic-focus-outer);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--semantic-focus-outer) 18%, transparent);
+}
+
+.inputShell svg {
+  width: 19px;
+  height: 19px;
+  color: var(--semantic-text-secondary);
+}
+
+.inputShell input {
+  width: 100%;
+  padding: var(--primitive-space-3) 0;
+  color: var(--semantic-text-primary);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-weight: var(--primitive-font-weight-regular);
+  outline: none;
+}
+
+.revealButton {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  color: var(--semantic-text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.revealButton:hover {
+  color: var(--semantic-text-primary);
+}
+
+.revealButton:focus-visible {
+  outline: 2px solid var(--semantic-focus-outer);
+  outline-offset: 2px;
+}
+
+.primaryButton {
+  width: 100%;
+  min-height: 44px;
+}

@@ -1,5 +1,4 @@
 import type { ReactNode } from "react"
-import { stripFrontMatter } from "./front-matter"
 
 // Renders the markdown legal documents as accessible, styled content. The
 // legal text stays in docs/legal/ (the versioned source); this keeps bullets
@@ -8,7 +7,7 @@ import { stripFrontMatter } from "./front-matter"
 
 export function renderLegalDocument(markdown: string): ReactNode[] {
   const blocks: ReactNode[] = []
-  const lines = stripFrontMatter(markdown).split(/\r?\n/)
+  const lines = markdown.split(/\r?\n/)
   let key = 0
   let list: string[] = []
   const flushList = () => {

@@ -12,11 +12,15 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal, seedSession } from "./helpers/session"
+import {
+  CURRENT_CONSENT,
+  encodeAuthCookieValue,
+  readEnvLocal,
+  seedSession,
+} from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 // Any Manaus member other than the request's author (visual@bivaque.example.
 // invalid). membro-3 (Diego Almeida) has no other role in this file's fixture.
 const REPLIER_EMAIL = "membro-3@bivaque.example.invalid"

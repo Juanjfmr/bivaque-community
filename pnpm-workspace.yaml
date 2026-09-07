@@ -4,7 +4,21 @@ packages:
 
 allowBuilds:
   '@sentry/cli': false
+  esbuild: true
   sharp: true
 
 linkWorkspacePackages: true
 saveWorkspaceProtocol: true
+
+# S6-MOBILE-RUNTIME (2026-09-01): React Native + pnpm + CMake on Windows hits
+# MAX_PATH (~260 chars) inside .pnpm/<pkg>@<ver>_<hash>/node_modules/<pkg>/android/.cxx/.
+# The deep pnpm hashing (sha-256 truncated to 32 chars) plus nested cmake output paths
+# exceeds CMake's CMAKE_OBJECT_PATH_MAX (250 chars), causing 'ninja: error: manifest
+# build.ninja still dirty after 100 tries'. Hoisting to npm-style node_modules/ shortens
+# paths and unblocks native Android builds for apps/mobile. apps/web is unaffected:
+# Next.js reads node_modules either way; only pnpm symlink resolution differs.
+nodeLinker: hoisted
+
+overrides:
+  react: 19.1.0
+  react-dom: 19.1.0

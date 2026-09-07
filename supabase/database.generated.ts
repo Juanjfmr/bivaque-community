@@ -1716,6 +1716,12 @@ export type Database = {
           user_id: string
         }[]
       }
+      list_locality_state_codes: {
+        Args: never
+        Returns: {
+          state_code: string
+        }[]
+      }
       list_locality_arrivals_volume: {
         Args: { p_user_id: string }
         Returns: {
@@ -2313,4 +2319,3 @@ export const Constants = {
     },
   },
 } as const
-

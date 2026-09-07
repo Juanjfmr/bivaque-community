@@ -14,6 +14,6 @@
   },
   "dependencies": {
     "@bivaque/domain": "workspace:*",
-    "zod": "^4.5.4"
+    "zod": "^4.4.3"
   }
 }

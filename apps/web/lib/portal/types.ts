@@ -23,7 +23,6 @@ export type VerificationResult =
   | {
       status: "temporary_error"
       reason: string
-      errorCode?: string
     }
 
 export type PortalRawRecord = {

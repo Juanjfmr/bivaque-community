@@ -1,0 +1,12 @@
+# Vercel deploys the web workspace; these local artifacts are not part of it.
+node_modules/
+**/node_modules/
+**/.next/
+apps/mobile/android/
+.codex-remote-attachments/
+.claude/worktrees/
+.git/
+.visual/
+.omo/
+playwright-report/
+test-results/

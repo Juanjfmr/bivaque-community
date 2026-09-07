@@ -10,7 +10,10 @@ interface SkeletonProps {
 // by the loaded element.
 export function Skeleton({ className = "" }: SkeletonProps) {
   return (
-    <HeroSkeleton animationType="shimmer" className={`bg-[var(--surface-sunken)] ${className}`} />
+    <HeroSkeleton
+      animationType="shimmer"
+      className={`bg-[var(--semantic-surface-sunken)] ${className}`}
+    />
   )
 }
 
@@ -21,7 +24,7 @@ export function FeedCardSkeleton() {
     <div
       role="status"
       aria-label="Carregando publicacoes"
-      className="flex flex-col gap-3 rounded-2xl border border-border bg-[var(--surface-raised)] p-4"
+      className="flex flex-col gap-3 rounded-2xl border border-border bg-[var(--semantic-surface)] p-4"
     >
       <div className="flex items-center gap-3">
         <Skeleton className="h-10 w-10 rounded-full" />

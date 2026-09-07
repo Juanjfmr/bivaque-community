@@ -74,7 +74,7 @@ export function ReportButton({
       } else if (insertError.message.includes("own content")) {
         setError("Voce nao pode denunciar seu proprio conteudo.")
       } else {
-        setError(insertError.message)
+        setError("Nao foi possivel enviar a denuncia agora. Tente novamente em instantes.")
       }
     } else {
       // O feedback fica dentro do modal aberto: fechar aqui escondia a
@@ -133,21 +133,27 @@ export function ReportButton({
                     <p className="text-sm text-muted">
                       Descreva por que este conteudo viola as regras da comunidade.
                     </p>
-                    <p className="mt-2 text-xs text-muted" role="note">
+                    <p id="report-reason-help" className="mt-2 text-xs text-muted" role="note">
                       Nao digite CPF, telefone nem endereco. O motivo fica registrado por dois anos
                       e passa por redacao automatica antes de chegar ao operador.
                     </p>
                     <div className="mt-4">
+                      <label className="mb-1 block text-sm font-medium" htmlFor="report-reason">
+                        Motivo da denuncia
+                      </label>
                       <TextArea
-                        aria-label="Motivo da denuncia"
+                        id="report-reason"
                         placeholder="Descreva o motivo..."
+                        aria-describedby="report-reason-help"
+                        aria-invalid={Boolean(error)}
+                        aria-errormessage={error ? "report-reason-error" : undefined}
                         value={reason}
                         onChange={(e) => setReason((e.target as HTMLTextAreaElement).value)}
                         className="w-full"
                       />
                     </div>
                     {error && (
-                      <div className="mt-2">
+                      <div id="report-reason-error" className="mt-2">
                         <FeedbackAlert variant="danger" description={error} />
                       </div>
                     )}

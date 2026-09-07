@@ -1,0 +1,140 @@
+# Contrato DS-003 — a tipografia do sistema deixa de ser tabela em documento e passa a
+# existir no runtime: familia auto-hospedada, papeis aplicados, escala expressavel.
+#
+# Executar DEPOIS de DS-002. DS-002 reconcilia os nomes de token entre documento e fonte,
+# e este contrato escreve tokens tipograficos novos usando essa nomenclatura ja corrigida.
+
+task_id: DS-003
+
+objective: >
+  A direcao tipografica que o sistema de design declara passa a ser a que o produto
+  realmente renderiza: familia auto-hospedada sem terceiro no caminho critico, sete
+  papeis de texto com tamanho, peso e entrelinha proprios aplicados por padrao, e
+  nenhum valor tipografico no documento que a fonte de tokens nao consiga expressar.
+
+authority:
+  - docs/decisions/ADR-20260901-design-system.md — decisao R2 aceita, foundations e tipografia humana altamente legivel
+  - docs/agents/DESIGN_SYSTEM.md secao 4.3 — escala de sete papeis, medida de linha e minimo de tamanho
+  - docs/agents/DESIGN_SYSTEM.md secao 4.3 — a lacuna do asset e declarada como estado de adocao, nao como conformidade
+  - docs/agents/DESIGN_SYSTEM.md secao 8.2 — medida de leitura entre 45 e 72 caracteres por linha
+  - docs/agents/DESIGN_SYSTEM.md secao 5.1 — todo token declara tipo e intencao; tamanho sem papel e drift
+  - Critica de sistema de design em 2026-09-02, com medicoes reproduzidas no baseline abaixo
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 2026-09-02 na branch task-4-measure-mvp-03. A familia declarada no token
+    nao existe no produto: zero arquivos de fonte rastreados por git em todo o repositorio
+    e zero ocorrencias de carregamento de fonte em apps/web, de modo que o runtime cai na
+    primeira alternativa local da cadeia e a direcao visual escolhida nunca foi vista.
+    A escala do documento tambem nao e expressavel pela fonte de tokens. O documento pede
+    peso 650 em tres papeis e a fonte oferece apenas 400, 500 e 600. O documento pede sete
+    entrelinhas distintas, 48 sobre 40, 34 sobre 28, 28 sobre 20, 24 sobre 16, 26 sobre 16,
+    20 sobre 14 e 18 sobre 13, e a fonte oferece duas, 1.2 e 1.5. O papel Display de 40 px
+    existe como primitivo mas nao tem nome na camada que a aplicacao de fato consome, cujo
+    maior tamanho corresponde a 28 px. Dois tamanhos existem na fonte sem papel declarado
+    no documento, 18 px e 24 px. Nenhum dos sete papeis esta implementado: em
+    apps/web/app/globals.css o corpo recebe entrelinha 1.5, contra a razao de 1.625 que o
+    documento pede para leitura, e os titulos recebem entrelinha 1.2 e espacamento entre
+    letras escritos direto na folha, fora de qualquer token.
+
+allowed_paths:
+  - docs/agents/DESIGN_SYSTEM.md
+  - docs/agents/tasks/DS-003.task.yml
+  - packages/tokens/src/tokens.json
+  - packages/tokens/src/tokens.css
+  - packages/tokens/src/index.ts
+  - apps/web/app/globals.css
+  - apps/web/app/layout.tsx
+  - apps/web/app/fonts/
+  - scripts/visual/capture.mjs
+  - tests/scope/design-tokens.test.mjs
+  - tests/scope/design-system-contract.test.mjs
+  - tests/scope/design-typography.test.mjs
+
+forbidden:
+  - carregar a familia de um servidor de terceiro, em qualquer etapa do caminho critico de render
+  - adicionar uma segunda familia tipografica, ou uma familia com serifa, alem da declarada no documento
+  - alterar paleta, espaco, raio, elevacao, movimento ou qualquer token que nao seja tipografico
+  - redesenhar composicao, hierarquia de tela ou navegacao — a mudanca autorizada e a metrica do texto, nao o arranjo dele
+  - editar componente de produto para aplicar papel: os papeis chegam pelos elementos semanticos e por utilitario, nunca por edicao caso a caso
+  - retematizar landing, entrada ou onboarding, que mantem tipografia local ate suas proprias ondas
+  - empacotar a familia no cliente nativo, que exige pipeline de asset e prova de build proprios
+  - introduzir modo escuro, token de modo ou qualquer superficie de tema
+  - alterar autorizacao, migracao de banco, esquema de confianca, elegibilidade ou regra de visibilidade de conteudo
+  - baixar o limite de um teste existente, ou reduzir o piso de tamanho de texto, para fazer a suite passar
+
+acceptance:
+  - a familia declarada e auto-hospedada no repositorio, carregada localmente com pre-carga e alternativa de metrica ajustada, e o arquivo de licenca acompanha o asset
+  - nenhuma requisicao de fonte para dominio externo ocorre no carregamento de qualquer rota, e um teste de escopo falha se uma referencia externa a familia reaparecer
+  - a familia e empacotada na variante de eixo continuo de peso, e o peso 650 que o documento declara para Display, Page title e Section title e de fato aplicado nesses tres papeis — cortes fixos nao satisfazem este item, e reescrever o documento para um peso menor tambem nao
+  - os sete papeis existem na fonte de tokens com tamanho, peso, entrelinha e espacamento entre letras proprios, e nenhum dos valores fica escrito direto na folha de estilo
+  - os sete papeis sao aplicados por padrao aos elementos semanticos correspondentes e ficam disponiveis como utilitario, sem que nenhum componente de produto seja editado
+  - todo tamanho tipografico presente na fonte tem papel declarado no documento, e todo papel do documento tem nome na camada que a aplicacao consome, incluindo o maior deles
+  - existe um token de medida de leitura, o texto corrido o respeita entre 45 e 72 caracteres por linha, e a auditoria visual emite achado proprio quando uma superficie de leitura o ultrapassa
+  - a auditoria visual em 375, 768 e 1440 nao introduz achado novo de sobreposicao, alvo, contraste ou tamanho minimo em relacao a captura de baseline tirada antes da troca da familia
+  - a jornada de ponta a ponta continua passando com a familia nova, incluindo os pontos em que rotulo longo em portugues muda a quebra de linha
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/DS-003.task.yml
+  - node scripts/tokens/generate.mjs --check
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 build
+  - node scripts/visual/loop.mjs
+  - npx pnpm@11.18.0 test:e2e
+
+depends_on: DS-002
+
+execution_notes: |
+  Ordem. Rode DS-002 antes. Ele reconcilia a nomenclatura entre documento e fonte e
+  instala a matriz de contraste; escrever token tipografico novo antes disso significa
+  escrever com a nomenclatura errada e refazer.
+  Tire a captura de baseline ANTES de trocar a familia. Sem ela nao ha como distinguir
+  achado novo de achado que ja existia, e a troca de familia mexe na metrica de todo
+  texto do produto: quebra de linha, altura de bloco, alvo de toque, transbordo.
+  Esta e a mudanca de maior risco visual do sistema inteiro, e o risco e de regressao
+  silenciosa, nao de gosto.
+  Sobre o peso 650. A decisao ja foi tomada pelo dono em 2026-09-02 e nao esta em aberto:
+  empacote a variante de EIXO CONTINUO de peso e aplique 650 de verdade em Display,
+  Page title e Section title. Nao empacote cortes fixos, e nao reescreva o documento
+  para um peso menor — as duas saidas que o aceite antes permitia foram fechadas. O
+  arquivo fica maior que o de cortes fixos, e esse custo foi aceito em troca dos pesos
+  intermediarios. Declare 650 como token de peso proprio: reaproveitar semibold 600 no
+  lugar dele e o mesmo defeito de estado nominal que ja custou uma reexecucao no DS-002.
+  Se o eixo da familia nao alcancar 650, isso e um achado que PARA a tarefa e volta como
+  decisao humana; nao escolha um vizinho em silencio.
+  Sobre a alternativa de metrica. A familia nova tem metricas diferentes da alternativa
+  de sistema que o produto usa hoje, entao trocar sem ajustar a alternativa produz salto
+  de layout no primeiro render. Use o carregador local do framework, que resolve
+  pre-carga, comportamento de exibicao e ajuste de tamanho da alternativa de uma vez.
+  Sobre licenca. A familia precisa ser distribuida sob licenca que permita
+  auto-hospedagem e redistribuicao junto do produto. Confirme isso na origem oficial
+  antes de trazer o arquivo, e traga o texto da licenca junto — asset sem licenca no
+  repositorio e divida, nao entrega.
+  Sobre subset. Portugues do Brasil precisa do intervalo latino estendido. Um subset que
+  derruba diacritico economiza bytes e quebra a secao 9.2 do documento, que exige
+  diacritico correto.
+  Sobre os dois tamanhos orfaos, 18 px e 24 px. Eles tem consumidores hoje pela camada de
+  alias. Nao os remova: ou ganham papel declarado no documento, ou ficam marcados como
+  transicao com o consumidor nomeado. Remover alias e escopo de outra tarefa.
+  Sobre a medida de leitura. O documento pede 45 a 72 caracteres em texto corrido e nunca
+  houve verificacao. A regra nova na auditoria e o que impede a medida de voltar a
+  crescer sozinha quando alguem alarga um container.
+  O que fica de fora, de proposito. O cliente nativo nao entra: empacotar familia no
+  Expo exige pipeline de asset e build nativo como prova, e isso e unidade propria.
+  Entrada, onboarding e landing mantem tipografia local e continuam inventariados na
+  secao 12.1.1 — depois desta tarefa a divergencia tipografica dessas tres telas fica
+  mais visivel, e isso e informacao correta, nao regressao.
+
+risk: identidade visual, legibilidade e asset tipografico
+risk_level: R2
+adr: docs/decisions/ADR-20260901-design-system.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

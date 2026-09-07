@@ -98,7 +98,7 @@ export function FeedRightRail() {
     <aside className="hidden w-72 shrink-0 lg:block">
       <div className="sticky top-24 space-y-4">
         {/* Proximos eventos */}
-        <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+        <div className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4">
           <h3 className="text-sm font-semibold">Proximos eventos</h3>
           {!loaded ? (
             <div className="mt-3 space-y-2">
@@ -124,7 +124,7 @@ export function FeedRightRail() {
         </div>
 
         {/* Grupos ativos */}
-        <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+        <div className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4">
           <h3 className="text-sm font-semibold">Grupos ativos</h3>
           {!loaded ? (
             <div className="mt-3 space-y-2">
@@ -149,7 +149,7 @@ export function FeedRightRail() {
         </div>
 
         {/* Boas praticas */}
-        <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+        <div className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4">
           <h3 className="text-sm font-semibold">Boas praticas</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted">
             <li>Respeite todos os membros da comunidade</li>

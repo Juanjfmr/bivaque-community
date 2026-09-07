@@ -67,10 +67,10 @@ export function AppShell({ children }: AppShellProperties) {
   }, [])
 
   return (
-    <div className="h-dvh flex flex-col overflow-hidden bg-[var(--background)]">
+    <div className="h-dvh flex flex-col overflow-hidden bg-[var(--semantic-canvas)]">
       {/* ---- Navbar ---- */}
-      <header className="sticky top-0 z-50 border-b border-border bg-[var(--surface)]">
-        <div className="flex h-[var(--nav-height)] items-center justify-between px-4">
+      <header className="sticky top-0 z-50 border-b border-border bg-[var(--semantic-surface)]">
+        <div className="flex h-[var(--semantic-nav-height)] items-center justify-between px-4">
           {/* Left section */}
           <div className="flex items-center gap-3">
             {/* Sidebar toggle visible on desktop */}
@@ -78,7 +78,7 @@ export function AppShell({ children }: AppShellProperties) {
               type="button"
               onClick={toggleSidebar}
               aria-label={isRail ? "Expandir menu lateral" : "Recolher menu lateral"}
-              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               {isRail ? (
                 <PanelLeft size={20} aria-hidden="true" />
@@ -92,7 +92,11 @@ export function AppShell({ children }: AppShellProperties) {
               data-testid="shell-locality-pill"
               className="flex items-center gap-1.5 min-h-11 px-2 rounded-lg"
             >
-              <MapPin size={16} className="text-[var(--accent)]" aria-hidden="true" />
+              <MapPin
+                size={16}
+                className="text-[var(--semantic-action-primary)]"
+                aria-hidden="true"
+              />
               <span className="text-sm font-medium hidden sm:inline">
                 {current.cityName}, {current.stateCode}
               </span>
@@ -113,7 +117,7 @@ export function AppShell({ children }: AppShellProperties) {
             <a
               href="/recommendations"
               aria-label="Indicações"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               <Lightbulb size={20} aria-hidden="true" />
             </a>
@@ -121,7 +125,7 @@ export function AppShell({ children }: AppShellProperties) {
             <button
               type="button"
               aria-label="Notificações"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               <Bell size={20} aria-hidden="true" />
             </button>
@@ -129,12 +133,12 @@ export function AppShell({ children }: AppShellProperties) {
             <a
               href="/profile"
               aria-label="Perfil"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               <MemberAvatar
                 name="C"
                 size="sm"
-                className="ring-2 ring-transparent transition-all duration-[var(--duration-instant)] hover:ring-[var(--accent-soft)]"
+                className="ring-2 ring-transparent transition-all duration-[var(--semantic-motion-duration-instant)] hover:ring-[var(--semantic-selected)]"
               />
             </a>
           </div>
@@ -148,12 +152,12 @@ export function AppShell({ children }: AppShellProperties) {
             accessible name "Navegação principal" would otherwise both be
             exposed. Between md and lg it renders as an icon rail. */}
         <aside
-          className="hidden md:flex flex-col shrink-0 border-r border-border bg-[var(--surface)] transition-[width] duration-[var(--duration-base)] ease-[var(--ease-out)] overflow-hidden"
+          className="hidden md:flex flex-col shrink-0 border-r border-border bg-[var(--semantic-surface)] transition-[width] duration-[var(--semantic-motion-duration-base)] ease-[var(--semantic-motion-ease-out)] overflow-hidden"
           style={{ width: isRail ? "4rem" : "16rem" }}
         >
           {/* Sidebar header */}
           <div
-            className={`flex items-center h-[var(--nav-height)] shrink-0 border-b border-border ${isRail ? "justify-center" : "px-3"}`}
+            className={`flex items-center h-[var(--semantic-nav-height)] shrink-0 border-b border-border ${isRail ? "justify-center" : "px-3"}`}
           >
             {!isRail && (
               <span className="text-base font-semibold tracking-tight truncate flex-1">
@@ -165,7 +169,7 @@ export function AppShell({ children }: AppShellProperties) {
               type="button"
               onClick={toggleSidebar}
               aria-label={isRail ? "Expandir menu lateral" : "Recolher menu lateral"}
-              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               {isRail ? (
                 <PanelLeft size={20} aria-hidden="true" />
@@ -201,19 +205,19 @@ export function AppShell({ children }: AppShellProperties) {
                   key={item.id}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
+                  className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] ${
                     active
-                      ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-                      : "text-muted hover:bg-[var(--surface-subtle)] hover:text-foreground"
+                      ? "bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]"
+                      : "text-muted hover:bg-[var(--semantic-selected)] hover:text-foreground"
                   } ${isRail ? "justify-center px-0" : ""}`}
                 >
                   {/* Icon crossfade: outline ↔ solid */}
                   <span className="relative inline-flex h-5 w-5 shrink-0" aria-hidden="true">
                     <item.Icon
-                      className={`absolute inset-0 h-5 w-5 transition-opacity duration-[var(--duration-fast)] ${active ? "opacity-0" : "opacity-100"}`}
+                      className={`absolute inset-0 h-5 w-5 transition-opacity duration-[var(--semantic-motion-duration-fast)] ${active ? "opacity-0" : "opacity-100"}`}
                     />
                     <item.IconActive
-                      className={`absolute inset-0 h-5 w-5 transition-opacity duration-[var(--duration-fast)] ${active ? "opacity-100" : "opacity-0"}`}
+                      className={`absolute inset-0 h-5 w-5 transition-opacity duration-[var(--semantic-motion-duration-fast)] ${active ? "opacity-100" : "opacity-0"}`}
                     />
                   </span>
                   {/* Kept in the accessibility tree even as a rail: the icon is
@@ -272,7 +276,7 @@ export function AppShell({ children }: AppShellProperties) {
 
       {/* Keyboard shortcut hint */}
       <div className="hidden lg:flex fixed bottom-4 right-4 z-30">
-        <span className="flex items-center gap-1.5 text-xs text-muted bg-[var(--surface)] border border-border rounded-md px-2 py-1 shadow-[var(--elevation-1)]">
+        <span className="flex items-center gap-1.5 text-xs text-muted bg-[var(--semantic-surface)] border border-border rounded-md px-2 py-1 shadow-[var(--semantic-elevation-raised)]">
           <Kbd>Ctrl</Kbd>
           <span>+</span>
           <Kbd>B</Kbd>

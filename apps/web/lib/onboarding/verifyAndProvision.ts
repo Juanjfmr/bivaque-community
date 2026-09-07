@@ -43,15 +43,7 @@ export async function verifyEligibility(
 
   const apiKey = process.env["PORTAL_DADOS_API_KEY"]
   if (!apiKey) {
-    // Keep a missing deployment secret in the same safe UI path as an
-    // unavailable Portal. Never turn configuration drift into a raw 500.
-    return {
-      outcome: {
-        status: "temporary_error",
-        reason: "Portal API key not configured",
-        errorCode: "INVALID_KEY",
-      },
-    }
+    throw new Error("PORTAL_DADOS_API_KEY is required for verification")
   }
 
   const portalGuard = await createPortalVerificationGuard()

@@ -1,23 +1,33 @@
 "use client"
 
 import { Button } from "@heroui/react"
-import { ArrowLeft, ArrowRight, Mail, ShieldCheck, Tent } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  ShieldCheck,
+  Tent,
+  User,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
+import {
+  classifySignIn,
+  classifySignUp,
+  type PasswordAuthView,
+  passwordProblem,
+} from "../../../../lib/auth/password-auth"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
+import { recordConsentAction } from "../../consent/actions"
 import styles from "./bivaque-sign-in.module.css"
 
-const AUTH_CALLBACK_PATH = "/auth/callback?next=/"
-
-function getAuthCallbackUrl(): string {
-  const configuredOrigin = process.env["NEXT_PUBLIC_SITE_URL"]?.replace(/\/+$/, "")
-  return `${configuredOrigin || window.location.origin}${AUTH_CALLBACK_PATH}`
-}
-
 interface BivaqueSignInProps {
-  onMagicLinkSignIn?: (email: string) => Promise<void> | void
   onGoogleSignIn?: () => Promise<void> | void
   mode?: "login" | "signup"
 }
@@ -26,10 +36,9 @@ const entryCopy = {
   login: {
     eyebrow: "Bem-vindo de volta",
     title: "Entre no Bivaque",
-    description: "Receba um link no seu e-mail para continuar. Sem senha para lembrar.",
-    submit: "Receber link para entrar",
+    description: "Use seu e-mail e sua senha para continuar.",
+    submit: "Entrar",
     google: "Continuar com Google",
-    success: "Enviamos o link para",
     alternateLead: "Ainda não faz parte?",
     alternateAction: "Criar conta",
     alternateHref: "/signup",
@@ -42,20 +51,27 @@ const entryCopy = {
   },
   signup: {
     eyebrow: "Primeiro acesso",
-    title: "Comece pelo seu e-mail.",
-    description: "Ele será sua forma de entrar no Bivaque. Sem senha, sem formulário longo.",
-    submit: "Criar conta e continuar",
+    title: "Crie sua conta",
+    description: "Escolha uma senha para entrar sempre que quiser, sem depender do e-mail.",
+    submit: "Criar conta",
     google: "Criar com Google",
-    success: "Criamos sua entrada e enviamos o link para",
     alternateLead: "Já tem uma conta?",
     alternateAction: "Entrar",
     alternateHref: "/login",
-    trust: "Depois do e-mail: regras da comunidade, elegibilidade e escolha da sua localidade.",
+    trust: "Depois da conta: regras da comunidade, elegibilidade e escolha da sua localidade.",
     visualEyebrow: "Há sempre alguém chegando.",
     visualTitle: "Encontre quem já conhece o caminho.",
     visualDescription: "Com o tempo, deixe o que você aprendeu disponível para quem chegar depois.",
   },
 } as const
+
+// As duas entradas são destinos distintos, não abas de um formulário só:
+// a escolha muda a rota, os campos e a operação no provedor. Manter isso como
+// navegação preserva voltar/avançar e link compartilhável.
+const entryModes = [
+  { mode: "login", label: "Entrar", href: "/login" },
+  { mode: "signup", label: "Criar conta", href: "/signup" },
+] as const
 
 function GoogleIcon() {
   return (
@@ -89,68 +105,100 @@ function Wordmark() {
   )
 }
 
-export function BivaqueSignIn({
-  onMagicLinkSignIn,
-  onGoogleSignIn,
-  mode = "login",
-}: BivaqueSignInProps) {
+export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInProps) {
+  const router = useRouter()
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState<"email" | "google" | null>(null)
-  const [sent, setSent] = useState(false)
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [accepted, setAccepted] = useState(false)
+  const [result, setResult] = useState<PasswordAuthView | null>(null)
+  const [loading, setLoading] = useState<"form" | "google" | null>(null)
+
   const copy = entryCopy[mode]
   const titleId = mode === "signup" ? "signup-title" : "login-title"
-  const emailId = mode === "signup" ? "bivaque-signup-email" : "bivaque-signin-email"
+  const prefix = mode === "signup" ? "bivaque-signup" : "bivaque-signin"
 
-  const handleMagicLink = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setError(null)
-    setSent(false)
-    setLoading("email")
+    setResult(null)
+
+    // No cadastro a senha é conferida antes de sair daqui: mandar o servidor
+    // recusar uma senha curta é uma ida e volta que a pessoa não precisa
+    // esperar. No login não se valida formato — a senha antiga pode ter
+    // qualquer forma, e recusá-la aqui contaria que ela não é a atual.
+    if (mode === "signup") {
+      const problem = passwordProblem(password)
+      if (problem) {
+        setResult({ outcome: "weak-password", message: problem, diagnostic: "local" })
+        return
+      }
+    }
+
+    setLoading("form")
+    const supabase = createBrowserClient()
 
     try {
-      if (onMagicLinkSignIn) {
-        await onMagicLinkSignIn(email)
-      } else {
-        const { error: signInError } = await createBrowserClient().auth.signInWithOtp({
-          email,
-          options: {
-            emailRedirectTo: getAuthCallbackUrl(),
-            shouldCreateUser: mode === "signup",
-          },
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { data: { display_name: name.trim() } },
         })
-        if (signInError) throw signInError
+        const view = classifySignUp(error)
+        if (view.outcome === "ok") {
+          // O aceite e' condicao de existir a conta, entao e' gravado antes de
+          // a pessoa seguir. Se a gravacao falhar, ela fica na tela sabendo —
+          // seguir sem registro deixaria um aceite que ninguem pode provar.
+          try {
+            await recordConsentAction()
+          } catch {
+            setResult({
+              outcome: "failed",
+              message: "Conta criada, mas não foi possível registrar o aceite. Tente entrar.",
+              diagnostic: "consent",
+            })
+            return
+          }
+          router.push("/onboarding")
+          return
+        }
+        setResult(view)
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
+        const view = classifySignIn(error)
+        if (view.outcome === "ok") {
+          router.push("/onboarding")
+          return
+        }
+        setResult(view)
       }
-      setSent(true)
-    } catch {
-      setError(
-        mode === "signup"
-          ? "Não foi possível criar sua conta agora. Tente novamente em instantes."
-          : "Não foi possível entrar com este e-mail. Confira o endereço ou crie sua conta.",
-      )
+    } catch (thrown) {
+      setResult(mode === "signup" ? classifySignUp(thrown) : classifySignIn(thrown))
     } finally {
       setLoading(null)
     }
   }
 
   const handleGoogle = async () => {
-    setError(null)
+    setResult(null)
     setLoading("google")
 
     try {
       if (onGoogleSignIn) {
         await onGoogleSignIn()
       } else {
-        const { error: signInError } = await createBrowserClient().auth.signInWithOAuth({
+        const { error } = await createBrowserClient().auth.signInWithOAuth({
           provider: "google",
-          options: {
-            redirectTo: getAuthCallbackUrl(),
-          },
+          options: { redirectTo: `${window.location.origin}/auth/callback?next=/onboarding` },
         })
-        if (signInError) throw signInError
+        if (error) throw error
       }
-    } catch {
-      setError("Não foi possível continuar com o Google agora. Tente novamente em instantes.")
+    } catch (thrown) {
+      setResult(classifySignIn(thrown))
       setLoading(null)
     }
   }
@@ -173,20 +221,51 @@ export function BivaqueSignIn({
         </div>
 
         <div className={styles["formContent"]}>
+          <nav className={styles["modeSwitch"]} aria-label="Escolha como entrar no Bivaque">
+            {entryModes.map((entry) => (
+              <Link
+                key={entry.mode}
+                href={{ pathname: entry.href }}
+                className={styles["modeOption"]}
+                aria-current={entry.mode === mode ? "page" : undefined}
+                data-active={entry.mode === mode ? "true" : undefined}
+              >
+                {entry.label}
+              </Link>
+            ))}
+          </nav>
+
           <div className={styles["heading"]}>
             <p className={styles["eyebrow"]}>{copy.eyebrow}</p>
             <h1 id={titleId}>{copy.title}</h1>
             <p>{copy.description}</p>
           </div>
 
-          <form className={styles["form"]} onSubmit={handleMagicLink}>
-            <label className={styles["field"]} htmlFor={emailId}>
+          <form className={styles["form"]} onSubmit={handleSubmit}>
+            {mode === "signup" && (
+              <label className={styles["field"]} htmlFor={`${prefix}-name`}>
+                <span>Como podemos chamar você?</span>
+                <span className={styles["inputShell"]}>
+                  <User aria-hidden="true" />
+                  <input
+                    id={`${prefix}-name`}
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Seu nome"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    required
+                  />
+                </span>
+              </label>
+            )}
+
+            <label className={styles["field"]} htmlFor={`${prefix}-email`}>
               <span>Seu e-mail</span>
               <span className={styles["inputShell"]}>
                 <Mail aria-hidden="true" />
                 <input
-                  id={emailId}
-                  aria-label="Seu e-mail"
+                  id={`${prefix}-email`}
                   type="email"
                   inputMode="email"
                   autoComplete="email"
@@ -198,14 +277,70 @@ export function BivaqueSignIn({
               </span>
             </label>
 
+            <label className={styles["field"]} htmlFor={`${prefix}-password`}>
+              <span>Sua senha</span>
+              <span className={styles["inputShell"]}>
+                <Lock aria-hidden="true" />
+                <input
+                  id={`${prefix}-password`}
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  placeholder={mode === "signup" ? "Ao menos 8 caracteres" : "Sua senha"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+                {/* Ver a senha digitada é acessibilidade antes de ser conveniência:
+                    quem tem dificuldade motora ou visual erra mais em campo mascarado. */}
+                <button
+                  type="button"
+                  className={styles["revealButton"]}
+                  onClick={() => setShowPassword((shown) => !shown)}
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                </button>
+              </span>
+            </label>
+
+            {mode === "signup" && (
+              <label className={styles["consentRow"]} htmlFor={`${prefix}-consent`}>
+                <input
+                  id={`${prefix}-consent`}
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(event) => setAccepted(event.target.checked)}
+                  required
+                />
+                <span>
+                  Li e aceito a{" "}
+                  <Link href={{ pathname: "/privacidade" }} target="_blank" rel="noreferrer">
+                    Política de privacidade
+                  </Link>{" "}
+                  e o{" "}
+                  <Link href={{ pathname: "/codigo-de-conduta" }} target="_blank" rel="noreferrer">
+                    Código de conduta
+                  </Link>
+                  .
+                </span>
+              </label>
+            )}
+
+            {mode === "login" && (
+              <p className={styles["forgotRow"]}>
+                <Link href={{ pathname: "/recuperar-senha" }}>Esqueci minha senha</Link>
+              </p>
+            )}
+
             <Button
               type="submit"
               variant="primary"
               className={styles["primaryButton"] ?? ""}
-              isDisabled={loading !== null}
+              isDisabled={loading !== null || (mode === "signup" && !accepted)}
             >
-              {loading === "email" ? "Enviando..." : copy.submit}
-              {loading !== "email" && <ArrowRight aria-hidden="true" />}
+              {loading === "form" ? "Entrando..." : copy.submit}
+              {loading !== "form" && <ArrowRight aria-hidden="true" />}
             </Button>
           </form>
 
@@ -223,16 +358,17 @@ export function BivaqueSignIn({
             {loading === "google" ? "Abrindo Google..." : copy.google}
           </Button>
 
-          {error && <FeedbackAlert variant="danger" description={error} />}
-
-          {sent && (
+          {result && result.outcome !== "ok" && (
             <FeedbackAlert
-              variant="success"
-              title="Confira seu e-mail"
+              variant={result.outcome === "offline" ? "warning" : "danger"}
               description={
-                <>
-                  {copy.success} <strong>{email}</strong>. Abra a mensagem para continuar.
-                </>
+                result.suggestSignIn ? (
+                  <>
+                    {result.message} <Link href={{ pathname: "/login" }}>Entrar</Link>
+                  </>
+                ) : (
+                  result.message
+                )
               }
             />
           )}

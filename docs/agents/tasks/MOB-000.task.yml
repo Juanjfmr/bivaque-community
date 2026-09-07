@@ -1,0 +1,71 @@
+# Fundação do cliente nativo React Native + Expo em apps/mobile.
+# Contrato da unidade de execução MOB-000 — implementação da autorização aberta
+# por HRN-003 e ADR-20260831-mobile-native.
+
+task_id: MOB-000
+
+objective: >
+  O repositório passa a ter um segundo cliente executável em apps/mobile sobre
+  Expo e React Native, integrado ao tooling do monorepo sem alterar nenhum
+  contrato travado da raiz, capaz de iniciar como fundação navegável com os
+  quatro containers do produto (Cidade, Minha comunidade, Grupos, Eu) e sem
+  qualquer fetch, WebView, sessão ou chave.
+
+authority:
+  - docs/decisions/ADR-20260831-mobile-native.md
+  - docs/agents/VISUAL_GUIDE.md §0 Navegação
+  - tools/backend-kanban/public/board.json MOBILE-00-ARCHITECTURE
+  - HRN-003 (autorização da fundação já aprovada pelo dono)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    node -e "console.log(require('fs').existsSync('apps/mobile/package.json'))"
+    retorna false; node -e "console.log(require('fs').existsSync('apps/mobile'))"
+    retorna false; apps/ contém apenas apps/web.
+
+allowed_paths:
+  - apps/mobile/**
+  - docs/agents/tasks/MOB-000.task.yml
+  - pnpm-workspace.yaml
+  - README.md # apps/mobile/README.md apenas
+
+forbidden:
+  - instalar autenticação, cliente Supabase, chave anon ou JWT em apps/mobile
+  - criar WebView ou reembarcar a UI do apps/web em apps/mobile
+  - introduzir qualquer chamada de rede, fetch, dado pessoal ou persistência local em apps/mobile
+  - habilitar push, SMS, vídeo, IA, modo escuro ou DM entre membros
+  - tocar scripts, devDependencies ou dependencies do package.json raiz
+  - tocar CI, tests/scope/**, supabase/**, AGENTS.md, docs/BIVAQUE.md, apps/web/**, docs/decisions/**
+  - editar migrations, policies, RLS ou o schema private
+
+acceptance:
+  - apps/mobile existe com package.json de nome mobile, app.json, tsconfig.json e metro.config.js
+  - apps/mobile inicia nativamente como aplicação Expo com os quatro containers como telas-placeholder honestas
+  - npx pnpm@11.18.0 typecheck verde incluindo o workspace mobile
+  - npx pnpm@11.18.0 lint verde incluindo o workspace mobile
+  - npx pnpm@11.18.0 test:scope verde com todos os asserts pré-existentes passando
+  - npx expo export --platform android produz bundle Metro sem erro
+  - npx expo export --platform ios produz bundle Metro sem erro
+  - nenhuma tela em apps/mobile executa fetch de rede ou autenticação
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/MOB-000.task.yml
+  - npx pnpm@11.18.0 typecheck
+  - npx pnpm@11.18.0 lint
+  - npx pnpm@11.18.0 test:scope
+  - npx expo export --platform android
+  - npx expo export --platform ios
+
+risk: fundação de monorepo
+risk_level: R1
+
+adr: docs/decisions/ADR-20260831-mobile-native.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

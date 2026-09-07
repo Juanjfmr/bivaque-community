@@ -1,89 +1,178 @@
-// Bivaque design tokens — DESIGN_SPEC.md §1 is the source of truth.
-// Every value here is mirrored as a CSS custom property in apps/web/app/globals.css;
-// keep the two in sync. Components must read tokens (var(--…) or brandTokens), never
-// raw colors.
-//
-// Palette: Navy Professional — authority + trust for a verified federal-military
-// verification-gated community.
+// Bivaque's single token source is tokens.json. The web stylesheet is generated
+// from it; native consumes nativeTokens below. The public objects preserve the
+// legacy adapter while new code reads semantic/component roles.
+import source from "./tokens.json"
+
+export const primitives = source.primitive
+export const semanticTokens = source.semantic
+export const componentTokens = source.component
+
+// Permanent adapter for the HeroUI stylesheet. Keep these library-facing names stable;
+// product code should prefer semanticTokens/componentTokens for its own visual decisions.
+export const vendorThemeTokens = source.web.aliases
+
+// Typography roles are semantic contracts backed by primitive measurements.
+// Keep this adapter data-only so the web and audit tooling consume the same source.
+export const typographyTokens = {
+  display: {
+    fontSize: source.semantic["typography-display-size"],
+    fontWeight: source.semantic["typography-display-weight"],
+    lineHeight: source.semantic["typography-display-line-height"],
+    letterSpacing: source.semantic["typography-display-letter-spacing"],
+  },
+  pageTitle: {
+    fontSize: source.semantic["typography-page-title-size"],
+    fontWeight: source.semantic["typography-page-title-weight"],
+    lineHeight: source.semantic["typography-page-title-line-height"],
+    letterSpacing: source.semantic["typography-page-title-letter-spacing"],
+  },
+  sectionTitle: {
+    fontSize: source.semantic["typography-section-title-size"],
+    fontWeight: source.semantic["typography-section-title-weight"],
+    lineHeight: source.semantic["typography-section-title-line-height"],
+    letterSpacing: source.semantic["typography-section-title-letter-spacing"],
+  },
+  cardTitle: {
+    fontSize: source.semantic["typography-card-title-size"],
+    fontWeight: source.semantic["typography-card-title-weight"],
+    lineHeight: source.semantic["typography-card-title-line-height"],
+    letterSpacing: source.semantic["typography-card-title-letter-spacing"],
+  },
+  body: {
+    fontSize: source.semantic["typography-body-size"],
+    fontWeight: source.semantic["typography-body-weight"],
+    lineHeight: source.semantic["typography-body-line-height"],
+    letterSpacing: source.semantic["typography-body-letter-spacing"],
+  },
+  label: {
+    fontSize: source.semantic["typography-label-size"],
+    fontWeight: source.semantic["typography-label-weight"],
+    lineHeight: source.semantic["typography-label-line-height"],
+    letterSpacing: source.semantic["typography-label-letter-spacing"],
+  },
+  meta: {
+    fontSize: source.semantic["typography-meta-size"],
+    fontWeight: source.semantic["typography-meta-weight"],
+    lineHeight: source.semantic["typography-meta-line-height"],
+    letterSpacing: source.semantic["typography-meta-letter-spacing"],
+  },
+  readingMeasure: source.semantic["typography-reading-measure"],
+} as const
+
+const primitive = (name: keyof typeof primitives) => primitives[name]
+const semantic = (name: keyof typeof semanticTokens) => semanticTokens[name]
+
+const hexWithAlpha = (hex: string, alpha: number) => {
+  const value = hex.replace("#", "")
+  const channels =
+    value.length === 3
+      ? value
+          .split("")
+          .map((channel) => channel + channel)
+          .join("")
+      : value
+  const rgb = [0, 2, 4].map((index) => Number.parseInt(channels.slice(index, index + 2), 16))
+  return `rgba(${rgb.join(", ")}, ${alpha})`
+}
+
+// React Native consumes resolved primitive/semantic values; CSS syntax never
+// crosses this boundary. Values are derived, not duplicated in a native list.
+export const nativeTokens = {
+  canvas: primitive("paper-50"),
+  surface: primitive("paper-0"),
+  surfaceSunken: primitive("paper-100"),
+  surfaceSubtle: primitive("pine-100"),
+  // CSS may use color-mix; React Native receives the same primitive with its
+  // documented hairline alpha resolved here, without a duplicated color value.
+  border: hexWithAlpha(primitive("ink-900"), 0.14),
+  controlBorder: primitive("ink-700"),
+  foreground: primitive("ink-900"),
+  muted: primitive("ink-700"),
+  accent: primitive("pine-700"),
+  accentForeground: primitive("paper-0"),
+  // Estados da ação primária. O nativo não tem :hover, mas tem pressionado e
+  // desabilitado; derivá-los aqui evita que cada tela invente um tom próprio.
+  accentPressed: primitive("pine-pressed"),
+  // Desabilitado não é "o verde mais fraco": é superfície clara opaca com
+  // texto escuro, conforme a nota de correção da prancha 30 do guia visual.
+  // Por isso o par vem junto — quem usa o fundo precisa do texto certo.
+  accentDisabled: primitive("paper-200"),
+  accentDisabledForeground: primitive("ink-700"),
+  danger: primitive("rose-700"),
+  focus: primitive("petrol-700"),
+  focusInner: primitive("paper-0"),
+  focusOuter: primitive("petrol-700"),
+} as const
+
+// Compatibility adapter for native/metadata consumers. Web visual decisions belong to the
+// semantic/component layers; this object remains public for existing clients.
 export const brandTokens = {
   productName: "Bivaque",
   color: {
-    background: "#F8FAFC", // slate-50 — page background
-    foreground: "#020617", // slate-950 — primary text
-    surface: "#FFFFFF", // white — card surface
-    accent: "#1E3A8A", // blue-900 — primary action / focus / link
-    accentForeground: "#FFFFFF",
-    // Cards above the page background.
-    surfaceRaised: "#FFFFFF",
-    // Inset areas (composer field, empty states).
-    surfaceSunken: "color-mix(in oklch, #F8FAFC 95%, #020617 5%)",
-    // Subtle neutral fills (avatar initials, chips, hover rows).
-    surfaceSubtle: "color-mix(in oklch, #020617 8%, transparent)",
-    // Hairlines; replaces the inlined color-mix borders.
-    border: "color-mix(in oklch, #020617 12%, transparent)",
-    // Secondary text; holds ≥ 4.5:1 on --surface.
-    muted: "#475569", // slate-600
-    // 12% accent tint for selected chips and active nav.
-    accentSoft: "color-mix(in oklch, #1E3A8A 12%, transparent)",
-    danger: "#DC2626", // red-600
-    dangerSoft: "color-mix(in oklch, #DC2626 15%, transparent)",
-    warning: "#D97706", // amber-600
-    success: "#059669", // emerald-600
-    // Floating surface (HeroUI v3 semantics: modal dialog, popovers, menus).
-    overlay: "#FFFFFF",
-    // Modal scrim. DESIGN_SPEC §1 names this role "--overlay", but HeroUI v3 reserves
-    // --overlay for the floating surface, so the scrim lives in --backdrop.
-    backdrop: "color-mix(in oklch, #020617 45%, transparent)",
+    background: nativeTokens.canvas,
+    foreground: nativeTokens.foreground,
+    surface: nativeTokens.surface,
+    accent: nativeTokens.accent,
+    accentForeground: nativeTokens.accentForeground,
+    surfaceRaised: nativeTokens.surface,
+    surfaceSunken: nativeTokens.surfaceSunken,
+    surfaceSubtle: nativeTokens.surfaceSubtle,
+    border: nativeTokens.border,
+    muted: nativeTokens.muted,
+    accentSoft: nativeTokens.surfaceSubtle,
+    danger: nativeTokens.danger,
+    dangerSoft: primitive("rose-100"),
+    warning: primitive("amber-700"),
+    success: primitive("leaf-700"),
+    overlay: nativeTokens.surface,
+    backdrop: semantic("backdrop"),
   },
-  // Shadows mix against the foreground color, never raw black.
   elevation: {
-    0: "none",
-    1: "0 1px 2px color-mix(in oklch, #020617 10%, transparent), 0 1px 3px color-mix(in oklch, #020617 8%, transparent)",
-    2: "0 2px 4px color-mix(in oklch, #020617 10%, transparent), 0 8px 16px color-mix(in oklch, #020617 12%, transparent)",
-    3: "0 4px 8px color-mix(in oklch, #020617 12%, transparent), 0 16px 40px color-mix(in oklch, #020617 18%, transparent)",
+    0: semantic("elevation-flat"),
+    1: semantic("elevation-raised"),
+    2: semantic("elevation-raised"),
+    3: semantic("elevation-overlay"),
   },
-  // 4px scale.
   space: {
-    1: "0.25rem",
-    2: "0.5rem",
-    3: "0.75rem",
-    4: "1rem",
-    6: "1.5rem",
-    8: "2rem",
-    12: "3rem",
+    0: primitive("space-0"),
+    1: primitive("space-1"),
+    2: primitive("space-2"),
+    3: primitive("space-3"),
+    4: primitive("space-4"),
+    5: primitive("space-5"),
+    6: primitive("space-6"),
+    8: primitive("space-8"),
+    10: primitive("space-10"),
+    12: primitive("space-12"),
+    16: primitive("space-16"),
   },
   radius: {
-    sm: "0.5rem",
-    base: "0.75rem",
-    lg: "1rem",
-    full: "9999px",
+    sm: primitive("radius-6"),
+    base: primitive("radius-10"),
+    lg: primitive("radius-14"),
+    full: primitive("radius-full"),
   },
-  // Nothing below 12px; body line-height 1.5+, headings 1.2 (see globals.css).
   text: {
-    xs: "0.75rem",
-    sm: "0.875rem",
-    base: "1rem",
-    lg: "1.125rem",
-    xl: "1.25rem",
-    "2xl": "1.5rem",
-    "3xl": "1.875rem",
+    xs: primitive("text-meta"),
+    sm: primitive("text-label"),
+    base: primitive("text-body"),
+    lg: primitive("text-lg"),
+    xl: primitive("text-section-title"),
+    "2xl": primitive("text-2xl"),
+    "3xl": primitive("text-page-title"),
   },
   motion: {
     duration: {
-      instant: "100ms",
-      fast: "160ms",
-      base: "240ms",
-      slow: "320ms",
+      instant: primitive("motion-fast"),
+      fast: primitive("motion-fast"),
+      base: primitive("motion-base"),
+      slow: primitive("motion-slow"),
     },
     ease: {
-      out: "cubic-bezier(0.16, 1, 0.3, 1)",
-      in: "cubic-bezier(0.7, 0, 0.84, 0)",
-      spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+      out: primitive("ease-out"),
+      in: primitive("ease-in"),
+      spring: primitive("ease-out"),
     },
   },
-  // Secondary blue for hover/highlights and second-tier CTAs (e.g. "Entrar"
-  // on group cards). Surfaces read --accent (blue-900) as the dominant action.
-  secondaryAccent: "#3B82F6", // blue-500
+  secondaryAccent: nativeTokens.focus,
 } as const
-
-export { officialBrandIdentity } from "./official-brand"

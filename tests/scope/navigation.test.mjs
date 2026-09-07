@@ -8,11 +8,11 @@ import test from "node:test"
 // (a) NAV_ITEMS tem exatamente os quatro containers do modelo (§3.1 + §6.3):
 //     cidade, community, groups, me.
 // (b) O número de itens respeita o teto de 5 (iOS HIG / Material).
-// (c) NAV_ITEMS bate com VISUAL_GUIDE.md §0 Navegação.
+// (c) NAV_ITEMS bate com DESIGN_SYSTEM.md §7.1.
 
 const root = join(import.meta.dirname, "..", "..")
 const NAV_PATH = join(root, "apps", "web", "app", "components", "bivaque", "bottom-nav.tsx")
-const GUIDE_PATH = join(root, "docs", "agents", "VISUAL_GUIDE.md")
+const GUIDE_PATH = join(root, "docs", "agents", "DESIGN_SYSTEM.md")
 
 const CEILING = 5
 
@@ -50,7 +50,7 @@ test("no top-level nav tab for events, messages or indications", () => {
   }
 })
 
-test("VISUAL_GUIDE §0 Navegação lists the same containers as NAV_ITEMS", () => {
+test("DESIGN_SYSTEM §7.1 lists the same containers as NAV_ITEMS", () => {
   const ids = navItemIds(navSource)
   for (const id of ids) {
     // the spec marks each container id in backticks (e.g. `cidade`)

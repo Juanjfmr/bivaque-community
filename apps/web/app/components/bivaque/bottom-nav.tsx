@@ -9,15 +9,15 @@ import {
 } from "@heroicons/react/24/solid"
 import { Tabs } from "@heroui/react"
 import { usePathname } from "next/navigation"
-import type { ComponentType, SVGProps } from "react"
+import type { ElementType, SVGProps } from "react"
 
 export interface NavItem {
   id: string
   label: string
   shortLabel?: string
   href: string
-  Icon: ComponentType<SVGProps<SVGSVGElement>>
-  IconActive: ComponentType<SVGProps<SVGSVGElement>>
+  Icon: ElementType<SVGProps<SVGSVGElement>>
+  IconActive: ElementType<SVGProps<SVGSVGElement>>
 }
 
 // ── Os containers de navegação ──────────────────────────────────────────────
@@ -87,11 +87,11 @@ function NavIcon({
   IconActive,
   active,
 }: {
-  Icon: ComponentType<SVGProps<SVGSVGElement>>
-  IconActive: ComponentType<SVGProps<SVGSVGElement>>
+  Icon: ElementType<SVGProps<SVGSVGElement>>
+  IconActive: ElementType<SVGProps<SVGSVGElement>>
   active: boolean
 }) {
-  const fade = "transition-opacity duration-[var(--duration-fast)]"
+  const fade = "transition-opacity duration-[var(--semantic-motion-duration-fast)]"
   return (
     <span className="relative inline-flex h-5 w-5" aria-hidden="true">
       <Icon
@@ -118,7 +118,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--surface)] pb-[env(safe-area-inset-bottom,0px)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--semantic-surface)] pb-[env(safe-area-inset-bottom,0px)] md:hidden"
     >
       <Tabs selectedKey={selectedKey} variant="primary" aria-label="Navegação principal">
         <Tabs.List aria-label="Seções do aplicativo" className="flex justify-around">

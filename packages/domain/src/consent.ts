@@ -10,5 +10,5 @@
 // Change one integer here (and the legal document) when the text changes:
 // never a literal in an app file.
 
-export const CONSENT_VERSION = 1
-export const CODE_OF_CONDUCT_VERSION = 1
+export const CONSENT_VERSION = 2
+export const CODE_OF_CONDUCT_VERSION = 2

@@ -12,7 +12,7 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 
@@ -53,7 +53,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
   }
   await page.context().addCookies([
     { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
-    { name: "bivaque-consent-version", value: "1", ...shared },
+    { name: "bivaque-consent-version", value: CURRENT_CONSENT, ...shared },
   ])
 }
 

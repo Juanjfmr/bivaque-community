@@ -8,7 +8,7 @@ import {
   request,
   test,
 } from "@playwright/test"
-import { encodeAuthCookieValue } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
 // Cinco pessoas sintéticas interagindo (uma janela por vez)
@@ -34,7 +34,6 @@ const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 
 // Identidades do seed (públicas e descartáveis por design), mesmo padrão de
 // group-event-detail-denials.spec.ts. A fórmula de group_memberships do seed
@@ -205,10 +204,17 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
     await withPersona(browser, SECOND_REACTOR_EMAIL, async (page) => {
       await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
       const post = page.locator("article", { hasText: postText })
+      const reactionCreated = page.waitForResponse(
+        (response) =>
+          response.url().includes("/rest/v1/post_reactions") &&
+          response.request().method() === "POST" &&
+          response.status() === 201,
+      )
       await post.getByRole("button", { name: "Curtir publicação" }).click()
       await expect(post.getByRole("button", { name: "Descurtir publicação" })).toBeVisible({
         timeout: 10_000,
       })
+      await reactionCreated
 
       // A reação persiste no servidor (recarregar e ver "Descurtir" de novo),
       // o que garante que a primeira também já commitou.

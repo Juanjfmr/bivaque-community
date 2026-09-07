@@ -2,8 +2,8 @@
 // No external deps — each is a small inline SVG with a sketch-like feel.
 // Strokes use --accent (blue-900); fills use --accent-soft when needed.
 
-const ACCENT = "var(--accent)"
-const ACCENT_SOFT = "var(--accent-soft)"
+const ACCENT = "var(--semantic-action-primary)"
+const ACCENT_SOFT = "var(--semantic-selected)"
 const MUTED = "var(--muted)"
 
 interface IllustrationProps {

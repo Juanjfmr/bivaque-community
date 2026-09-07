@@ -111,6 +111,19 @@ function isSyntheticCpf(matchText) {
   return syntheticCpfPatterns.some((p) => p.test(normalized))
 }
 
+// Um id de run do GitHub Actions tem 11 dígitos e, de vez em quando, dígitos
+// verificadores válidos de CPF por coincidência — foi o caso do primeiro run
+// citado como evidência na seção 14 de PROCESSO-DE-CONSTRUCAO.md, que passou
+// direto pelo escape de CPF sintético acima. O protocolo daquela seção manda
+// citar o run confrontado, então este repositório vai repetir o padrão.
+// A exceção é ancorada na URL do próprio run: um CPF de verdade não aparece
+// depois de `actions/runs/`. Sem a URL na linha, o número volta a ser CPF.
+// (Não repita o id aqui: este arquivo também é varrido.)
+function isActionsRunId(matchText, lineContent) {
+  const digits = matchText.replace(/[.\s-]/g, "")
+  return new RegExp(`actions/runs/${digits}(?!\\d)`).test(lineContent)
+}
+
 // ── known false-positive sources ──
 
 function isPlaceholder(lineContent) {
@@ -189,6 +202,9 @@ for (const file of trackedFiles) {
 
       // Skip known synthetic CPF values used in test fixtures
       if (pattern.name === "CPF numeric" && isSyntheticCpf(match[0])) continue
+
+      // Skip GitHub Actions run ids cited as CI evidence (see isActionsRunId)
+      if (pattern.name === "CPF numeric" && isActionsRunId(match[0], line)) continue
 
       // Skip base64-looking tokens that are inside angle-bracket placeholders
       if (match[0].includes("<") || match[0].includes(">")) continue

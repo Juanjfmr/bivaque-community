@@ -29,7 +29,9 @@ type MembershipRow = {
   joined_at: string
 }
 
-function CloseIcon(props: SVGProps<SVGSVGElement>) {
+function CloseIcon(props: Omit<SVGProps<SVGSVGElement>, "ref">) {
+  const { ref: _ref, ...rest } = props as SVGProps<SVGSVGElement>
+  void _ref
   return (
     <svg
       aria-hidden="true"
@@ -37,7 +39,7 @@ function CloseIcon(props: SVGProps<SVGSVGElement>) {
       stroke="currentColor"
       strokeWidth={2}
       viewBox="0 0 24 24"
-      {...props}
+      {...rest}
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M18 6 6 18M6 6l12 12" />
     </svg>

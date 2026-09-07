@@ -19,7 +19,7 @@ interface MemberAvatarProps {
 // the fallback renders the initial instead. (RUN-022 from RUNTIME_FINDINGS.md.)
 export function MemberAvatar({ name, size = "md", src, className }: MemberAvatarProps) {
   const initial = (name ?? "?").charAt(0).toUpperCase()
-  const classes = `bg-[var(--surface-subtle)] text-[var(--foreground)] ${className ?? ""}`
+  const classes = `bg-[var(--semantic-selected)] text-[var(--semantic-text-primary)] ${className ?? ""}`
   const [imgFailed, setImgFailed] = useState(false)
   const effectiveSrc = src && !imgFailed ? src : null
   return (

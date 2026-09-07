@@ -19,7 +19,7 @@
 //   - 90000000-...: usuarios na fila de admissao (pending/temporary_error/rejected)
 
 import { expect, request, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const OPERATOR_EMAIL = "operador@bivaque.example.invalid"
@@ -82,7 +82,7 @@ async function signInOperator(page: import("@playwright/test").Page): Promise<vo
   }
   await page.context().addCookies([
     { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
-    { name: "bivaque-consent-version", value: "1", ...shared },
+    { name: "bivaque-consent-version", value: CURRENT_CONSENT, ...shared },
   ])
 }
 

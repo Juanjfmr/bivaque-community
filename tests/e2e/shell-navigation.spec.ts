@@ -20,10 +20,11 @@ import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 // shell — found realigning E2E against the real seed/app after onda T/F.
 
 test.describe("BottomNav visibility across viewports", () => {
-  test("shows all 4 navigation items at 375px", async ({ page, context }) => {
+  test("shows all 4 navigation items at 375px", async ({ page, context }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-375", "This assertion uses the mobile project.")
+
     // Given an authenticated member on the mobile-375 viewport
     await seedSession(context)
-    await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the community route
     await page.goto("/community")

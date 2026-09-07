@@ -10,13 +10,23 @@
       "!**/node_modules",
       "!**/pnpm-lock.yaml",
       "!supabase/database.generated.ts",
+      "!packages/tokens/src/tokens.css",
       "!**/playwright-report",
       "!**/test-results",
       "!**/.omo",
       "!**/.visual",
       "!.claude/worktrees",
       "!**/.reasonix",
-      "!**/docs/agents/design-audit/experiments"
+      "!**/docs/agents/design-audit/experiments",
+      "!**/docs/design/visual-guide-2026-09-06",
+      "!**/.vercel",
+      "!**/supabase/.temp",
+      "!**/apps/mobile/dist-android",
+      "!**/apps/mobile/dist-ios",
+      "!**/apps/mobile/.expo",
+      "!**/apps/mobile/android",
+      "!**/apps/mobile/ios",
+      "!**/.pnpm-store"
     ]
   },
   "formatter": {

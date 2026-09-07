@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#2f7654",
+  themeColor: brandTokens.color.accent,
 }
 
 export default function HomePage() {

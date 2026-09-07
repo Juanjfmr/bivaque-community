@@ -49,9 +49,14 @@ enabled = true
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
+# Lista de destinos que o GoTrue aceita depois de verificar o link. É fronteira
+# de segurança: o que entra aqui pode receber um `code` de sessão. Por isso o
+# app nativo entra com caminho fixo, e não com `bivaque://**` — curinga
+# aceitaria qualquer rota do scheme como destino de auth.
 additional_redirect_urls = [
   "http://127.0.0.1:3000",
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "bivaque://auth-callback"
 ]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true

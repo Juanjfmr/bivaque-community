@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import test from "node:test"
 
@@ -7,16 +7,25 @@ const root = join(import.meta.dirname, "..", "..")
 
 const readJson = (path) => JSON.parse(readFileSync(join(root, path), "utf8"))
 
-test("creates only the approved workspace roots", () => {
+test("creates the approved workspace roots", () => {
   // Given the approved workspace layout
   const requiredPaths = ["apps/web", "packages/contracts", "packages/domain", "packages/tokens"]
 
   // When the repository foundation is inspected
   const pathStates = requiredPaths.map((path) => existsSync(join(root, path)))
+  const appRoots = readdirSync(join(root, "apps"), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort()
 
-  // Then every approved path exists and no mobile app is present
+  // Then the existing workspace roots are present. apps/mobile is an approved,
+  // optional React Native + Expo root; no arbitrary third application is allowed.
   assert.deepEqual(pathStates, [true, true, true, true])
-  assert.equal(existsSync(join(root, "apps/mobile")), false)
+  assert.deepEqual(
+    appRoots.filter((appRoot) => !["mobile", "web"].includes(appRoot)),
+    [],
+  )
+  assert.equal(appRoots.includes("web"), true)
 })
 
 test("exposes the minimal root quality commands", () => {

@@ -2,98 +2,7 @@
 
 @import "tailwindcss";
 @import "@heroui/styles";
-
-:root,
-[data-theme="bivaque"] {
-  color-scheme: light;
-
-  /* Color — Navy Professional palette (DESIGN_SPEC.md §1).
-     Authority + trust for a verified federal-military community.
-     Primary blue-900 for action, slate-950 for foreground, slate-50 surface
-     background, white cards. oklch is kept where the value is consumed by
-     color-mix() so the hue shifts naturally with the foreground. */
-  --background: #f8fafc; /* slate-50 — page background */
-  --foreground: #020617; /* slate-950 — primary text */
-  --surface: #ffffff; /* white — card surface */
-  --surface-foreground: var(--foreground);
-  --accent: #1e3a8a; /* blue-900 — primary action / focus / link */
-  --accent-foreground: #ffffff;
-  --focus: var(--accent);
-  --link: var(--accent);
-
-  /* Cards above the page background. */
-  --surface-raised: #ffffff;
-  /* Inset areas (composer field, empty states). */
-  --surface-sunken: color-mix(in oklch, var(--background) 95%, var(--foreground) 5%);
-  /* Subtle neutral fills (avatar initials, chips, hover rows). */
-  --surface-subtle: color-mix(in oklch, var(--foreground) 8%, transparent);
-  /* Hairlines — the single border color; components must not inline color-mix borders. */
-  --border: color-mix(in oklch, var(--foreground) 12%, transparent);
-  /* Secondary text; holds ≥ 4.5:1 on --surface. */
-  --muted: #475569; /* slate-600 — secondary text */
-  /* 12% accent tint for selected chips and active nav. */
-  --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
-  /* Destructive + report affordances, moderation / verification states. */
-  --danger: #dc2626; /* red-600 */
-  --danger-soft: color-mix(in oklch, var(--danger) 15%, transparent);
-  --warning: #d97706; /* amber-600 */
-  --success: #059669; /* emerald-600 */
-  /* Modal scrim. HeroUI v3 reserves --overlay for the floating surface (dialog/
-     popover/menu), so the scrim lives in --backdrop. Mixed against --foreground,
-     never raw black. */
-  --backdrop: color-mix(in oklch, var(--foreground) 45%, transparent);
-
-  /* Elevation — shadows mix against --foreground, never black. */
-  --elevation-0: none;
-  --elevation-1:
-    0 1px 2px color-mix(in oklch, var(--foreground) 10%, transparent),
-    0 1px 3px color-mix(in oklch, var(--foreground) 8%, transparent);
-  --elevation-2:
-    0 2px 4px color-mix(in oklch, var(--foreground) 10%, transparent),
-    0 8px 16px color-mix(in oklch, var(--foreground) 12%, transparent);
-  --elevation-3:
-    0 4px 8px color-mix(in oklch, var(--foreground) 12%, transparent),
-    0 16px 40px color-mix(in oklch, var(--foreground) 18%, transparent);
-
-  /* Spacing — 4px scale. */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-12: 3rem;
-
-  /* Radius. */
-  --radius-sm: 0.5rem;
-  --radius: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-full: 9999px;
-
-  /* Typography — nothing below 12px. */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-
-  /* Motion. */
-  --duration-instant: 100ms;
-  --duration-fast: 160ms;
-  --duration-base: 240ms;
-  --duration-slow: 320ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  /* Interactive controls — DESIGN_SPEC §4: every target is ≥ 44×44 CSS px. */
-  --control-min-height: 2.75rem;
-
-  --nav-height: 3.5rem;
-  --header-height: 3rem;
-}
+@import "../../../packages/tokens/src/tokens.css";
 
 body {
   margin: 0;
@@ -101,20 +10,119 @@ body {
 
 @layer base {
   body {
-    line-height: 1.5;
-    font-family:
-      ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-      sans-serif;
+    font-size: var(--semantic-typography-body-size);
+    font-weight: var(--semantic-typography-body-weight);
+    line-height: var(--semantic-typography-body-line-height);
+    letter-spacing: var(--semantic-typography-body-letter-spacing);
+    font-family: var(--semantic-font-family-interface);
   }
 
-  h1,
-  h2,
+  h1 {
+    font-size: var(--semantic-typography-page-title-size);
+    font-weight: var(--semantic-typography-page-title-weight);
+    line-height: var(--semantic-typography-page-title-line-height);
+    letter-spacing: var(--semantic-typography-page-title-letter-spacing);
+  }
+
+  h2 {
+    font-size: var(--semantic-typography-section-title-size);
+    font-weight: var(--semantic-typography-section-title-weight);
+    line-height: var(--semantic-typography-section-title-line-height);
+    letter-spacing: var(--semantic-typography-section-title-letter-spacing);
+  }
+
   h3,
   h4,
   h5,
   h6 {
-    line-height: 1.2;
-    letter-spacing: -0.011em;
+    font-size: var(--semantic-typography-card-title-size);
+    font-weight: var(--semantic-typography-card-title-weight);
+    line-height: var(--semantic-typography-card-title-line-height);
+    letter-spacing: var(--semantic-typography-card-title-letter-spacing);
+  }
+
+  p,
+  li {
+    font-size: var(--semantic-typography-body-size);
+    font-weight: var(--semantic-typography-body-weight);
+    line-height: var(--semantic-typography-body-line-height);
+    letter-spacing: var(--semantic-typography-body-letter-spacing);
+  }
+
+  label,
+  button,
+  [role="button"] {
+    font-size: var(--semantic-typography-label-size);
+    font-weight: var(--semantic-typography-label-weight);
+    line-height: var(--semantic-typography-label-line-height);
+    letter-spacing: var(--semantic-typography-label-letter-spacing);
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: var(--semantic-typography-body-size);
+    font-weight: var(--semantic-typography-body-weight);
+    line-height: var(--semantic-typography-body-line-height);
+    letter-spacing: var(--semantic-typography-body-letter-spacing);
+  }
+}
+
+@layer utilities {
+  .type-display {
+    font-size: var(--semantic-typography-display-size);
+    font-weight: var(--semantic-typography-display-weight);
+    line-height: var(--semantic-typography-display-line-height);
+    letter-spacing: var(--semantic-typography-display-letter-spacing);
+  }
+
+  .type-page-title {
+    font-size: var(--semantic-typography-page-title-size);
+    font-weight: var(--semantic-typography-page-title-weight);
+    line-height: var(--semantic-typography-page-title-line-height);
+    letter-spacing: var(--semantic-typography-page-title-letter-spacing);
+  }
+
+  .type-section-title {
+    font-size: var(--semantic-typography-section-title-size);
+    font-weight: var(--semantic-typography-section-title-weight);
+    line-height: var(--semantic-typography-section-title-line-height);
+    letter-spacing: var(--semantic-typography-section-title-letter-spacing);
+  }
+
+  .type-card-title {
+    font-size: var(--semantic-typography-card-title-size);
+    font-weight: var(--semantic-typography-card-title-weight);
+    line-height: var(--semantic-typography-card-title-line-height);
+    letter-spacing: var(--semantic-typography-card-title-letter-spacing);
+  }
+
+  .type-body {
+    font-size: var(--semantic-typography-body-size);
+    font-weight: var(--semantic-typography-body-weight);
+    line-height: var(--semantic-typography-body-line-height);
+    letter-spacing: var(--semantic-typography-body-letter-spacing);
+  }
+
+  .type-label {
+    font-size: var(--semantic-typography-label-size);
+    font-weight: var(--semantic-typography-label-weight);
+    line-height: var(--semantic-typography-label-line-height);
+    letter-spacing: var(--semantic-typography-label-letter-spacing);
+  }
+
+  .type-meta,
+  [data-typography="meta"] {
+    font-size: var(--semantic-typography-meta-size);
+    font-weight: var(--semantic-typography-meta-weight);
+    line-height: var(--semantic-typography-meta-line-height);
+    letter-spacing: var(--semantic-typography-meta-letter-spacing);
+  }
+
+  .measure-reading,
+  [data-reading-measure] {
+    inline-size: 100%;
+    max-inline-size: var(--semantic-typography-reading-measure);
   }
 }
 
@@ -124,18 +132,42 @@ body {
   .tabs__tab,
   .search-field__input,
   .select__trigger {
-    min-height: var(--control-min-height);
+    min-height: var(--semantic-control-min-height);
   }
 
   .button {
-    min-width: var(--control-min-height);
+    min-width: var(--semantic-control-min-height);
+  }
+
+  :where(a, button, input, select, textarea, [role="button"], [role="checkbox"]):focus-visible {
+    outline: 2px solid var(--semantic-focus-outer);
+    outline-offset: 2px;
+  }
+
+  /* A double focus ring keeps each edge above 3:1: the clear inner ring
+     separates from solid controls, while the dark outer ring separates from
+     the page surface. */
+  :where(
+    .button[data-variant="primary"],
+    .button[data-variant="danger"],
+    button[data-variant="primary"],
+    button[data-variant="danger"]
+  ):focus-visible {
+    outline: 2px solid var(--component-button-focus-ring-inner);
+    outline-offset: 0;
+    box-shadow: 0 0 0 4px var(--component-button-focus-ring-outer);
+  }
+
+  :where(.input, .select__trigger, .checkbox__control) {
+    background-color: var(--component-field-bg-default);
+    border-color: var(--component-field-border-default);
   }
 
   /* Wrapper do Tooltip do HeroUI no rail retraído: tem role="button" e é o
      elemento que o auditor mede, mas display:block herda a largura do rail
      estreito (39px) sem acompanhar o <a> filho (44px via min-w-11). */
   .tooltip__trigger {
-    min-width: var(--control-min-height);
+    min-width: var(--semantic-control-min-height);
   }
 
   /* HiddenSelect nativo que o react-aria renderiza dentro do Select do HeroUI:
@@ -154,19 +186,21 @@ body {
   /* Motion — DESIGN_SPEC §2. All durations/easings read from tokens; the
      prefers-reduced-motion block below zeroes these for every element. */
   .motion-card-enter {
-    animation: motion-card-enter var(--duration-base) var(--ease-out) both;
+    animation: motion-card-enter var(--semantic-motion-duration-base)
+      var(--semantic-motion-ease-out) both;
   }
 
   .motion-scrim-enter {
-    animation: motion-fade var(--duration-fast) ease-out both;
+    animation: motion-fade var(--semantic-motion-duration-fast) var(--semantic-motion-ease-out) both;
   }
 
   .motion-panel-enter {
-    animation: motion-panel-enter var(--duration-slow) var(--ease-out) both;
+    animation: motion-panel-enter var(--semantic-motion-duration-slow)
+      var(--semantic-motion-ease-out) both;
   }
 
   .motion-press {
-    transition: transform var(--duration-fast) var(--ease-spring);
+    transition: transform var(--semantic-motion-duration-fast) var(--semantic-motion-ease-spring);
   }
 
   .motion-press:active {
@@ -176,12 +210,12 @@ body {
   @media (hover: hover) {
     .motion-lift {
       transition:
-        box-shadow var(--duration-base) var(--ease-out),
-        transform var(--duration-fast) var(--ease-spring);
+        box-shadow var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+        transform var(--semantic-motion-duration-fast) var(--semantic-motion-ease-spring);
     }
 
     .motion-lift:hover {
-      box-shadow: var(--elevation-2);
+      box-shadow: var(--semantic-elevation-raised);
     }
   }
 }
