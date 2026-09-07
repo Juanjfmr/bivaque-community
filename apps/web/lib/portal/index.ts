@@ -1,5 +1,5 @@
 export { classifyPortalResponse } from "./classify"
-export type { PortalErrorCode, VerificationAttempt } from "./client"
+export type { VerificationAttempt } from "./client"
 export { temporaryError, verifyCpf, verifyCpfWithErrorCode } from "./client"
 export type { PortalVerificationGuard } from "./guard"
 export { createPortalVerificationGuard } from "./guard"
@@ -10,6 +10,7 @@ export type {
   EligibilityClass,
   FamilyInvitationStatus,
   PortalApiResponse,
+  PortalErrorCode,
   PortalRawRecord,
   VerificationResult,
   VerificationStatus,
