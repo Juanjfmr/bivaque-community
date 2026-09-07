@@ -1375,14 +1375,15 @@
         "Worktree isolado baseado em origin/main; alterações locais de código e banco excluídas.",
         "Validado no worktree de publicação: 75/75 testes de escopo PASS, scanner de segredos PASS, 19 PNGs íntegros, 41 telas/estados, links locais e sintaxe da galeria válidos. Publicação remota ainda a confirmar.",
         "Publicação confirmada no GitHub: commit a9e8356 na branch codex/guia-visual-reconstrucao. Apenas o contrato documental está fechado; Auth/onboarding restante e runtime continuam abertos.",
-        "PR #49: corrigidos os erros de lint do JavaScript/semântica HTML da galeria e o achado da revisão independente: apps/mobile existe somente na branch local examinada, não na main-base; sua criação e atualização do teste de escopo são tarefa explícita. Biome da galeria e 75/75 testes de escopo PASS após o reparo."
+        "PR #49: corrigidos os erros de lint do JavaScript/semântica HTML da galeria e o achado da revisão independente: apps/mobile existe somente na branch local examinada, não na main-base; sua criação e atualização do teste de escopo são tarefa explícita. Biome da galeria e 75/75 testes de escopo PASS após o reparo.",
+        "PR #49: CI confirmou lint, typecheck e 426 testes unitários PASS; a checagem lexical confundiu a proibição de selo público em um prompt histórico com código do produto. Manifesto documental excluído apenas dessa checagem lexical; verificações de PII e segredos preservadas. Após a correção, gate completo local PASS: lint, typecheck, 426 unitários, 189 de privacidade, 75 de escopo e segredos."
       ],
       "links": [
         "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
         "Arquivos publicados | https://github.com/Juanjfmr/bivaque-community/tree/codex/guia-visual-reconstrucao/docs/design/visual-guide-2026-09-06"
       ],
       "updatedAt": "2026-09-06",
-      "sourceRevision": "3a7c83cbcee45b9e6ab1d50d94aeb7eb9bdec024",
+      "sourceRevision": "49241b2d42d422a891d86a1d1962f5f39b50a745",
       "dependencies": [],
       "completedAt": "2026-09-06",
       "completedChecklist": [true, true, true, true]
