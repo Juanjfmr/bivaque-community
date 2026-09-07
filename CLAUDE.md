@@ -5,6 +5,14 @@
 
 @AGENTS.md
 
+## Versão atual — leitura obrigatória
+
+Leia [o processo de construção de 06/09/2026](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md)
+antes de planejar, implementar ou revisar a reconstrução. A autorização atual do usuário
+substitui decisões antigas conflitantes de produto, aparência, navegação e sequência.
+As regras técnicas e de proteção dos dados continuam aplicáveis. A seção 14 explica o que
+é verificação independente e quais camadas ainda dependem de execução externa à sessão.
+
 ## Regras específicas do Claude Code
 
 - Responda sempre em português brasileiro.
