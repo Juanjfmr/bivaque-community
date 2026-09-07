@@ -68,6 +68,21 @@ jobs:
           )
           entry.write_text(entry_text, encoding='utf-8')
 
+          layout = Path('apps/mobile/app/_layout.tsx')
+          layout_text = layout.read_text(encoding='utf-8').replace(
+              '<StatusBar style="dark" backgroundColor={nativeTokens.color.background} />',
+              '<StatusBar style="dark" />',
+              1,
+          )
+          layout.write_text(layout_text, encoding='utf-8')
+
+          mobile_entry = Path('apps/mobile/app/index.tsx')
+          mobile_text = mobile_entry.read_text(encoding='utf-8').replace(
+              'StyleSheet.absoluteFillObject',
+              'StyleSheet.absoluteFill',
+          )
+          mobile_entry.write_text(mobile_text, encoding='utf-8')
+
           board_path = Path('tools/backend-kanban/public/board.json')
           board = json.loads(board_path.read_text(encoding='utf-8'))
           card_id = 'RECON-ENTRY-01'
