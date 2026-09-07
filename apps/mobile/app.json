@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Bivaque",
+    "slug": "bivaque",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "bivaque",
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "edgeToEdgeEnabled": true
+    }
+  }
+}

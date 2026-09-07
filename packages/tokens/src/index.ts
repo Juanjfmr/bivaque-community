@@ -1,48 +1,37 @@
-// Bivaque design tokens — DESIGN_SPEC.md §1 is the source of truth.
-// Every value here is mirrored as a CSS custom property in apps/web/app/globals.css;
-// keep the two in sync. Components must read tokens (var(--…) or brandTokens), never
-// raw colors.
-//
-// Palette: Navy Professional — authority + trust for a verified federal-military
-// verification-gated community.
+// Bivaque design tokens — current reconstruction authority: 2026-09-06.
+// PROCESSO-DE-CONSTRUCAO.md §4 supersedes older conflicting visual palettes.
+// Every web color below is mirrored as a CSS custom property in apps/web/app/globals.css.
+// Native consumers use nativeTokens so they never depend on CSS-only values.
 export const brandTokens = {
   productName: "Bivaque",
   color: {
-    background: "#F8FAFC", // slate-50 — page background
-    foreground: "#020617", // slate-950 — primary text
-    surface: "#FFFFFF", // white — card surface
-    accent: "#1E3A8A", // blue-900 — primary action / focus / link
+    background: "#FAFBF8",
+    foreground: "#253033",
+    surface: "#FFFFFF",
+    accent: "#164734",
     accentForeground: "#FFFFFF",
-    // Cards above the page background.
     surfaceRaised: "#FFFFFF",
-    // Inset areas (composer field, empty states).
-    surfaceSunken: "color-mix(in oklch, #F8FAFC 95%, #020617 5%)",
-    // Subtle neutral fills (avatar initials, chips, hover rows).
-    surfaceSubtle: "color-mix(in oklch, #020617 8%, transparent)",
-    // Hairlines; replaces the inlined color-mix borders.
-    border: "color-mix(in oklch, #020617 12%, transparent)",
-    // Secondary text; holds ≥ 4.5:1 on --surface.
-    muted: "#475569", // slate-600
-    // 12% accent tint for selected chips and active nav.
-    accentSoft: "color-mix(in oklch, #1E3A8A 12%, transparent)",
-    danger: "#DC2626", // red-600
-    dangerSoft: "color-mix(in oklch, #DC2626 15%, transparent)",
-    warning: "#D97706", // amber-600
-    success: "#059669", // emerald-600
-    // Floating surface (HeroUI v3 semantics: modal dialog, popovers, menus).
+    surfaceSunken: "#EEF1E7",
+    surfaceSubtle: "color-mix(in oklch, #253033 6%, transparent)",
+    border: "color-mix(in oklch, #253033 12%, transparent)",
+    muted: "#5B665F",
+    accentSoft: "#EEF1E7",
+    disabledSurface: "#E1E5DD",
+    disabledForeground: "#48534D",
+    danger: "#B42318",
+    dangerSoft: "color-mix(in oklch, #B42318 12%, transparent)",
+    warning: "#A15C00",
+    success: "#237A57",
     overlay: "#FFFFFF",
-    // Modal scrim. DESIGN_SPEC §1 names this role "--overlay", but HeroUI v3 reserves
-    // --overlay for the floating surface, so the scrim lives in --backdrop.
-    backdrop: "color-mix(in oklch, #020617 45%, transparent)",
+    backdrop: "color-mix(in oklch, #253033 45%, transparent)",
+    accentScrim: "color-mix(in oklch, #164734 76%, transparent)",
   },
-  // Shadows mix against the foreground color, never raw black.
   elevation: {
     0: "none",
-    1: "0 1px 2px color-mix(in oklch, #020617 10%, transparent), 0 1px 3px color-mix(in oklch, #020617 8%, transparent)",
-    2: "0 2px 4px color-mix(in oklch, #020617 10%, transparent), 0 8px 16px color-mix(in oklch, #020617 12%, transparent)",
-    3: "0 4px 8px color-mix(in oklch, #020617 12%, transparent), 0 16px 40px color-mix(in oklch, #020617 18%, transparent)",
+    1: "0 1px 2px color-mix(in oklch, #253033 8%, transparent), 0 1px 3px color-mix(in oklch, #253033 6%, transparent)",
+    2: "0 2px 4px color-mix(in oklch, #253033 8%, transparent), 0 8px 16px color-mix(in oklch, #253033 10%, transparent)",
+    3: "0 4px 8px color-mix(in oklch, #253033 10%, transparent), 0 16px 40px color-mix(in oklch, #253033 16%, transparent)",
   },
-  // 4px scale.
   space: {
     1: "0.25rem",
     2: "0.5rem",
@@ -56,9 +45,9 @@ export const brandTokens = {
     sm: "0.5rem",
     base: "0.75rem",
     lg: "1rem",
+    xl: "1.5rem",
     full: "9999px",
   },
-  // Nothing below 12px; body line-height 1.5+, headings 1.2 (see globals.css).
   text: {
     xs: "0.75rem",
     sm: "0.875rem",
@@ -81,9 +70,51 @@ export const brandTokens = {
       spring: "cubic-bezier(0.34, 1.56, 0.64, 1)",
     },
   },
-  // Secondary blue for hover/highlights and second-tier CTAs (e.g. "Entrar"
-  // on group cards). Surfaces read --accent (blue-900) as the dominant action.
-  secondaryAccent: "#3B82F6", // blue-500
+  secondaryAccent: "#2F7654",
+} as const
+
+export const nativeTokens = {
+  color: {
+    background: "#FAFBF8",
+    foreground: "#253033",
+    surface: "#FFFFFF",
+    accent: "#164734",
+    accentForeground: "#FFFFFF",
+    sage: "#EEF1E7",
+    border: "#D7DDD6",
+    muted: "#5B665F",
+    disabledSurface: "#E1E5DD",
+    disabledForeground: "#48534D",
+    accentScrim: "rgba(22, 71, 52, 0.76)",
+    focus: "#2F7654",
+    danger: "#B42318",
+  },
+  space: {
+    1: 4,
+    2: 8,
+    3: 12,
+    4: 16,
+    6: 24,
+    8: 32,
+    12: 48,
+  },
+  radius: {
+    sm: 8,
+    base: 12,
+    lg: 16,
+    xl: 24,
+    full: 999,
+  },
+  text: {
+    xs: 12,
+    sm: 14,
+    base: 16,
+    lg: 18,
+    xl: 20,
+    "2xl": 24,
+    "3xl": 30,
+  },
+  controlMinHeight: 48,
 } as const
 
 export { officialBrandIdentity } from "./official-brand"

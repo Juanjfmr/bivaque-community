@@ -1,0 +1,29 @@
+name: Mobile lockfile refresh
+
+on:
+  push:
+    branches:
+      - codex/visual-entry-foundation-2026-09-06
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.1
+          cache: pnpm
+      - name: Generate lockfile for the new mobile workspace
+        run: pnpm install --lockfile-only --no-frozen-lockfile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-lockfile
+          path: pnpm-lock.yaml
+          if-no-files-found: error

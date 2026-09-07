@@ -7,55 +7,42 @@
 [data-theme="bivaque"] {
   color-scheme: light;
 
-  /* Color — Navy Professional palette (DESIGN_SPEC.md §1).
-     Authority + trust for a verified federal-military community.
-     Primary blue-900 for action, slate-950 for foreground, slate-50 surface
-     background, white cards. oklch is kept where the value is consumed by
-     color-mix() so the hue shifts naturally with the foreground. */
-  --background: #f8fafc; /* slate-50 — page background */
-  --foreground: #020617; /* slate-950 — primary text */
-  --surface: #ffffff; /* white — card surface */
+  /* Current reconstruction palette — PROCESSO-DE-CONSTRUCAO.md §4 (2026-09-06). */
+  --background: #fafbf8;
+  --foreground: #253033;
+  --surface: #ffffff;
   --surface-foreground: var(--foreground);
-  --accent: #1e3a8a; /* blue-900 — primary action / focus / link */
+  --accent: #164734;
   --accent-foreground: #ffffff;
-  --focus: var(--accent);
+  --focus: #2f7654;
   --link: var(--accent);
 
-  /* Cards above the page background. */
   --surface-raised: #ffffff;
-  /* Inset areas (composer field, empty states). */
-  --surface-sunken: color-mix(in oklch, var(--background) 95%, var(--foreground) 5%);
-  /* Subtle neutral fills (avatar initials, chips, hover rows). */
-  --surface-subtle: color-mix(in oklch, var(--foreground) 8%, transparent);
-  /* Hairlines — the single border color; components must not inline color-mix borders. */
+  --surface-sunken: #eef1e7;
+  --surface-subtle: color-mix(in oklch, var(--foreground) 6%, transparent);
   --border: color-mix(in oklch, var(--foreground) 12%, transparent);
-  /* Secondary text; holds ≥ 4.5:1 on --surface. */
-  --muted: #475569; /* slate-600 — secondary text */
-  /* 12% accent tint for selected chips and active nav. */
-  --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
-  /* Destructive + report affordances, moderation / verification states. */
-  --danger: #dc2626; /* red-600 */
-  --danger-soft: color-mix(in oklch, var(--danger) 15%, transparent);
-  --warning: #d97706; /* amber-600 */
-  --success: #059669; /* emerald-600 */
-  /* Modal scrim. HeroUI v3 reserves --overlay for the floating surface (dialog/
-     popover/menu), so the scrim lives in --backdrop. Mixed against --foreground,
-     never raw black. */
+  --muted: #5b665f;
+  --accent-soft: #eef1e7;
+  --disabled-surface: #e1e5dd;
+  --disabled-foreground: #48534d;
+  --accent-scrim: color-mix(in oklch, var(--accent) 76%, transparent);
+  --danger: #b42318;
+  --danger-soft: color-mix(in oklch, var(--danger) 12%, transparent);
+  --warning: #a15c00;
+  --success: #237a57;
   --backdrop: color-mix(in oklch, var(--foreground) 45%, transparent);
 
-  /* Elevation — shadows mix against --foreground, never black. */
   --elevation-0: none;
   --elevation-1:
-    0 1px 2px color-mix(in oklch, var(--foreground) 10%, transparent),
-    0 1px 3px color-mix(in oklch, var(--foreground) 8%, transparent);
+    0 1px 2px color-mix(in oklch, var(--foreground) 8%, transparent),
+    0 1px 3px color-mix(in oklch, var(--foreground) 6%, transparent);
   --elevation-2:
-    0 2px 4px color-mix(in oklch, var(--foreground) 10%, transparent),
-    0 8px 16px color-mix(in oklch, var(--foreground) 12%, transparent);
+    0 2px 4px color-mix(in oklch, var(--foreground) 8%, transparent),
+    0 8px 16px color-mix(in oklch, var(--foreground) 10%, transparent);
   --elevation-3:
-    0 4px 8px color-mix(in oklch, var(--foreground) 12%, transparent),
-    0 16px 40px color-mix(in oklch, var(--foreground) 18%, transparent);
+    0 4px 8px color-mix(in oklch, var(--foreground) 10%, transparent),
+    0 16px 40px color-mix(in oklch, var(--foreground) 16%, transparent);
 
-  /* Spacing — 4px scale. */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -64,13 +51,12 @@
   --space-8: 2rem;
   --space-12: 3rem;
 
-  /* Radius. */
   --radius-sm: 0.5rem;
   --radius: 0.75rem;
   --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
   --radius-full: 9999px;
 
-  /* Typography — nothing below 12px. */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -79,7 +65,6 @@
   --text-2xl: 1.5rem;
   --text-3xl: 1.875rem;
 
-  /* Motion. */
   --duration-instant: 100ms;
   --duration-fast: 160ms;
   --duration-base: 240ms;
@@ -88,9 +73,7 @@
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Interactive controls — DESIGN_SPEC §4: every target is ≥ 44×44 CSS px. */
   --control-min-height: 2.75rem;
-
   --nav-height: 3.5rem;
   --header-height: 3rem;
 }
@@ -131,18 +114,10 @@ body {
     min-width: var(--control-min-height);
   }
 
-  /* Wrapper do Tooltip do HeroUI no rail retraído: tem role="button" e é o
-     elemento que o auditor mede, mas display:block herda a largura do rail
-     estreito (39px) sem acompanhar o <a> filho (44px via min-w-11). */
   .tooltip__trigger {
     min-width: var(--control-min-height);
   }
 
-  /* HiddenSelect nativo que o react-aria renderiza dentro do Select do HeroUI:
-     nesta versão ele sai sem o style visually-hidden (position static, 26x23
-     visível, title vazio). O Select do produto não usa name — o valor flui via
-     estado React — então escondê-lo do layout não afeta a submissão e zera o
-     box para o auditor (que pula 0x0). */
   select[tabindex="-1"] {
     display: none;
   }
@@ -151,8 +126,6 @@ body {
     animation-duration: 1.4s;
   }
 
-  /* Motion — DESIGN_SPEC §2. All durations/easings read from tokens; the
-     prefers-reduced-motion block below zeroes these for every element. */
   .motion-card-enter {
     animation: motion-card-enter var(--duration-base) var(--ease-out) both;
   }
@@ -217,42 +190,16 @@ body {
   }
 }
 
-/* HeroUI's Checkbox indicator (checkbox__control > checkbox__indicator >
-   svg) has no pointer-events rule of its own, and its checkmark svg sits
-   over the real clickable control — a click lands on the aria-hidden svg
-   instead of toggling the input, so BOTH manual mouse clicks and
-   Playwright's .check() intermittently time out with "element intercepts
-   pointer events" (found running the E2E realignment,
-   community-batch-approval.spec.ts). The indicator is decorative
-   (aria-hidden="true"); it should never be a click target. */
 .checkbox__indicator {
   pointer-events: none;
 }
 
-/* The real, visually-hidden <input type="checkbox"> (the sr-only span
-   wrapping it: clip/clip-path + width/height: 1px, all inline styles) does
-   not actually overlap the visible .checkbox__control it sits next to —
-   confirmed live via getBoundingClientRect on both: they can be 10+px
-   apart. .checkbox__content lays the two out with `display: flex`, and an
-   absolutely-positioned flex child with no offsets falls back to a
-   browser-computed "static position" that does not, in practice, land on
-   top of its sibling. Checkboxes with a visible text label (e.g.
-   notification-preferences-section.tsx) get away with it because the
-   text enlarges the <label>'s own clickable box enough to still contain
-   wherever the real input ends up; icon-only checkboxes (e.g. the
-   community pending-approval list) have no such margin, and clicks landed
-   on whatever sat behind the checkbox entirely — confirmed by directly
-   checking .checked after both a real click and Playwright's forced
-   .check(): it never flipped. Forcing inset: 0 (and overriding the inline
-   width/height, which alone would win over inset) makes the real input's
-   box exactly match its label ancestor — including the visible control —
-   regardless of flex-child count. */
 .checkbox__content > span:has(input[type="checkbox"]) {
   position: absolute;
-  /* biome-ignore lint/complexity/noImportantStyles: overriding an inline style (React's own, set by the library) — nothing short of !important wins that specificity battle from an external stylesheet */
+  /* biome-ignore lint/complexity/noImportantStyles: overriding an inline style emitted by the component library */
   inset: 0 !important;
-  /* biome-ignore lint/complexity/noImportantStyles: same as above — the inline width/height: 1px must lose for inset: 0 to actually stretch the box */
+  /* biome-ignore lint/complexity/noImportantStyles: same library inline style */
   width: auto !important;
-  /* biome-ignore lint/complexity/noImportantStyles: same as above */
+  /* biome-ignore lint/complexity/noImportantStyles: same library inline style */
   height: auto !important;
 }
