@@ -8,11 +8,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+## Owner corrections — 2026-09-07
+
+Read [the six explicit corrections](../../docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md). They require city-wide questions, event information requests, an optional reason for joining, the exact military label, fast CPF verification with identity/AI fallback, and optional self-declared Armed Force/OM with individual visibility controls. These are current product instructions, not delivered runtime. They supersede conflicting older product prohibitions; retain server authorization, privacy and data-integrity requirements.
+
+
 # apps/web — scoped agent instructions
 
 > **DRAFT.** Applies to `apps/web/**`.
 >
 > Keep general framework/design knowledge in version-matched docs or external skills. Keep only Bivaque-specific constraints and routing here.
+
+## Visual coverage — 2026-09-07
+
+Read the [screen map](../../docs/design/visual-guide-2026-09-06/MAPA-DE-TELAS.md) and [guide instructions](../../docs/design/visual-guide-2026-09-06/AGENTS.md). Use desktop compositions and their notes; paired desktop panels are distinct states, not a single layout. Preserve HeroUI wrappers and validate real interactions rather than reproducing static controls.
 
 ## Authority and evidence
 

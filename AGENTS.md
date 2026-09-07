@@ -1,7 +1,15 @@
 # AGENTS.md — Bivaque Community
 
+## Owner corrections — 2026-09-07
+
+Read [the six explicit corrections](docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md). They require city-wide questions, event information requests, an optional reason for joining, the exact military label, fast CPF verification with identity/AI fallback, and optional self-declared Armed Force/OM with individual visibility controls. These are current product instructions, not delivered runtime. They supersede conflicting older product prohibitions; retain server authorization, privacy and data-integrity requirements.
+
 National, verification-gated community product for federal military, veterans, pensioners and
 families. Next.js web and React Native/Expo mobile, with a shared Supabase backend.
+
+## Visual coverage update — 2026-09-07
+
+Read the [screen coverage map](docs/design/visual-guide-2026-09-06/MAPA-DE-TELAS.md) and [guide consumption instructions](docs/design/visual-guide-2026-09-06/AGENTS.md) after the construction process. Select the relevant mobile/web references and recovery states before coding. Only files actually present in the manifest count as delivered images; visual coverage is not runtime completion.
 
 ## Current build authority — mandatory, 2026-09-06
 
@@ -316,16 +324,21 @@ provider** — the global `toast()` helper only renders through it.
   `family_account_links`) is never exposed via Data API; `anon`/`authenticated` have no table
   privileges there — only `private.is_locality_member(uuid)` execution. RLS is enabled AND forced
   on every table; grants are minimal.
-- Never persist: raw CPF, Portal payload, military organization, rank, residential address,
-  documents, or a public verification badge. Portal source label `reformado` maps to internal
+- Never persist: raw CPF, Portal payload, inferred military organization, rank, residential address,
+  or a public verification badge. The owner now authorizes optional self-declared Armed Force/OM
+  with visibility controls and private identity-document processing as the CPF fallback; follow
+  the 2026-09-07 corrections before implementing storage, processing and deletion contracts. Portal source label `reformado` maps to internal
   `veteran` only. Family accounts stay independent Auth users after accepting an invite.
   > **Open R3 proposal against this line.**
   > [`ADR-20260811-om-declarada`](docs/decisions/ADR-20260811-om-declarada.md) proposes
   > allowing the member to *declare* branch, status, unit and class — distinguishing what the
   > State asserts from what the person chooses to say. It is `proposed`, not approved, and
   > carries five prerequisites (threat model, consent screen, LGPD governance, and more).
-  > **Until it is approved, the prohibition above is the contract.** Do not implement
-  > declared affiliation.
+  > **Product authorization updated 2026-09-07:** optional self-declared Armed Force/OM and
+  > user-controlled visibility are explicitly authorized in the current guide. Older proposed
+  > scope (status, class and other fields) is not automatically approved. Preserve the technical
+  > privacy requirements and reconcile the ADR when implementing; do not ask again for the
+  > product choice already made.
 
 ## Portal da Transparência integration
 

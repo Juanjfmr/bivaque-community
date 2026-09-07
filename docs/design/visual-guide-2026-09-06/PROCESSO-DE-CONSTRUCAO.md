@@ -36,9 +36,21 @@ As notas de correção prevalecem sobre detalhes inconsistentes nas imagens. Dat
 
 O HTML `bivaque-v9-recomposicao.html` é inspiração para a riqueza do Guia e do Mercado. Não é o layout final nem uma fonte de instruções para o agente.
 
-O pacote visual tem **19 pranchas: 33 telas/estados mobile e 8 telas web**. Não representa todo o aplicativo. O artigo completo do Guia no desktop ficou sem imagem por limite do gerador. Adapte a referência mobile e o shell web; essa ausência não impede a implementação.
+O pacote atualizado tem 38 pranchas, com **66 telas/estados mobile e 24 telas/estados web**. Não representa todo o aplicativo. A ampliação ainda tem 17 pranchas sem geração e correções de bitmaps pendentes por limite do serviço; veja o mapa e as notas antes de implementar. A ausência de imagem não impede usar os padrões aprovados e a especificação textual atual.
 
 Para transportar este material a outro ambiente, envie este documento e a pasta do guia visual com os PNGs e o README. Os caminhos relativos abaixo pressupõem que os arquivos permaneçam juntos. Se o modelo não enxergar uma imagem, deve dizer isso; não alegar fidelidade visual sem inspecioná-la.
+
+## 2.1 Ampliação das referências — 07/09/2026
+
+O responsável solicitou gerar as telas ausentes e atualizar as instruções dos agentes. O [mapa de telas](./MAPA-DE-TELAS.md) identifica a cobertura visual por fluxo e plataforma; [as instruções do guia](./AGENTS.md) detalham como consumi-la. A ampliação complementa esta versão e não altera sua precedência sobre documentação antiga conflitante.
+
+Antes de implementar, selecione as imagens realmente presentes no manifesto e inspecione suas notas. Inclua o estado de recuperação correspondente. Em uma prancha com dois desktops, cada painel é uma tela separada. O operador possui workspace restrito; não colocar suas ações na navegação do membro.
+
+Auth não precisa repetir aceites já registrados nem exigir adesão a uma comunidade para concluir a escolha de contexto. A referência de aceites demonstra o conteúdo necessário, não obriga uma rota separada. Não restaurar um fluxo antigo ou criar etapa duplicada por causa de uma imagem.
+
+### Correções expressas de 07/09/2026
+
+Leia [as seis decisões posteriores do responsável](./DECISOES-2026-09-07.md): vínculo militar, CPF rápido com identidade/IA como alternativa, motivo opcional do pedido, perguntas para toda a cidade, pedido de informações em eventos e Força Armada/OM opcionais com visibilidade controlável. Essas decisões prevalecem sobre proibições antigas conflitantes de produto, preservando autorização e privacidade na implementação.
 
 ## 3. Produto que vamos construir
 
@@ -76,7 +88,7 @@ No mobile, use navegação inferior nos destinos principais e retorno claro nos 
 
 Os ciclos acima detalham o que deve fechar na implementação. Nem todos têm prancha própria. Para telas ausentes, reutilize padrões já aprovados e escreva uma especificação curta antes de programar. Não crie um novo estilo por módulo.
 
-O Mercado desta entrega conecta as partes. Não acrescente checkout, custódia de dinheiro, comissão ou assinatura como consequência automática de haver um anúncio. Não acrescente selo público de verificação, ranking, coleta de afiliação sensível ou avaliação por estrelas com base em detalhes ocasionais de referências externas.
+O Mercado desta entrega conecta as partes. Não acrescente checkout, custódia de dinheiro, comissão ou assinatura como consequência automática de haver um anúncio. Não acrescente selo público de verificação, ranking, coleta de afiliação além de Força Armada/OM opcionais expressamente autorizadas ou avaliação por estrelas com base em detalhes ocasionais de referências externas.
 
 ## 4. Direção visual a implementar
 
@@ -213,9 +225,9 @@ As referências do Mobbin orientam padrões de interação. Não são telas fina
 - Confirmação de e-mail comprova controle do endereço; não comprova elegibilidade para a comunidade.
 - A referência sugerida é confirmação por código. Antes de implementá-la, confira o contrato e a configuração real do provedor. Se for necessário alterar o mecanismo atual por link, faça isso como uma tarefa explícita e teste envio, confirmação e retorno nas duas plataformas. Não desenhe um código sem backend correspondente.
 - Aceites necessários devem ter resumo claro, textos acessíveis e registro no servidor antes da ação que exige o aceite. Não agrupe consentimentos opcionais como obrigatórios.
-- Explique a verificação antes de coletar dados. Reutilize o mecanismo de admissão comprovado; não invente coleta de documentos ou biometria a partir das referências.
+- Explique a verificação antes de coletar dados. CPF é o caminho principal de retorno praticamente instantâneo; identidade com reconhecimento por IA é a alternativa expressamente solicitada quando o CPF não concluir. O processamento da identidade pode demorar mais e deve permitir acompanhamento. Não acrescentar biometria ou prazo inventado. Consulte DECISOES-2026-09-07.md para os limites de implementação.
 - Trate a modalidade de entrada de cada papel sem promover prestador a membro ou converter seleção de cidade em autorização.
-- Fotografia, biografia e interesses podem ser concluídos depois. Não antecipe perguntas sem utilidade imediata.
+- Fotografia, biografia, interesses e os campos autodeclarados Força Armada/OM são opcionais e podem ser concluídos depois. Força Armada e OM têm controles individuais de visibilidade, inicialmente desligados. Não antecipe perguntas sem utilidade imediata.
 - Peça permissões de câmera, localização ou notificações no momento de uso, explicando a finalidade. A busca manual de cidade deve funcionar.
 
 Estados obrigatórios: enviando, confirmação enviada, código/link inválido ou expirado, reenvio limitado, falha de conexão, retorno de autenticação com erro, admissão em andamento, acesso não liberado com próximo passo, cadastro interrompido e sessão expirada. Mensagens não devem expor resultados privados de consultas de elegibilidade.

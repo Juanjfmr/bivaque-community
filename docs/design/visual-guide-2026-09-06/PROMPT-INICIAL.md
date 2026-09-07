@@ -10,7 +10,7 @@ Você vai reconstruir o Bivaque para web, Android e iOS.
 
 A nova versão é nacional, usa a direção visual clara com verde profundo e possui Início, Explorar, Comunidades e Perfil como destinos principais. Guia, Mercado, serviços, moradia, eventos e gestão do próprio negócio fazem parte da experiência descrita no documento.
 
-Não recupere a paleta, navegação, recorte de cidade ou escopo antigo por causa de um plano anterior. Consulte o código existente para reaproveitar o que funciona. Preserve segurança, autorização e integridade dos dados. Leia as notas de correção antes de copiar detalhes das imagens.
+Não recupere a paleta, navegação, recorte de cidade ou escopo antigo por causa de um plano anterior. Consulte o código existente para reaproveitar o que funciona. Preserve segurança, autorização e integridade dos dados. Leia as notas de correção antes de copiar detalhes das imagens. Consulte também MAPA-DE-TELAS.md e AGENTS.md desta pasta: escolha as referências mobile/web e os estados de falha da tarefa, e registre quais imagens realmente inspecionou.
 
 Trabalhe em tarefas pequenas. Implemente e valide uma mudança observável de cada vez, com carregamento, feedback, falha e recuperação aplicáveis. Uma tela estática não é uma integração; um botão não pode simular sucesso de uma operação inexistente.
 
@@ -21,3 +21,7 @@ Comece pela tarefa da seção 12 do processo: preparar a base visual e executar 
 Resolva escolhas reversíveis seguindo as referências atuais. Não peça aprovação apenas porque a documentação antiga diverge. Quando faltar uma decisão que realmente altera acesso, dados pessoais, pagamento ou compromisso externo, explique a pergunta concreta e continue o que não depende dela.
 
 Entregue o comportamento implementado, os arquivos alterados, as verificações e seus resultados, a evidência visual e o resumo de continuidade. Seja explícito sobre qualquer plataforma ou integração que não conseguiu executar.
+
+## Correções posteriores e uso com modelos menores
+
+Leia DECISOES-2026-09-07.md antes de interpretar as imagens. O texto atual prevalece sobre os bitmaps ainda não corrigidos. Trabalhe uma tela/estado ou transição observável por tarefa, com imagem inspecionada, notas, componentes e contrato correspondente. Gere captura da implementação para comparar; visão por si só não comprova execução. Não invente permissões, backend, dados ou sucesso visual. Declare as verificações realmente executadas e o próximo passo concreto.
