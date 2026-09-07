@@ -1,0 +1,112 @@
+name: Entry foundation validation
+
+on:
+  push:
+    branches:
+      - codex/visual-entry-foundation-2026-09-06
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/visual-entry-foundation-2026-09-06
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.1
+          cache: pnpm
+      - name: Install frozen workspace
+        run: pnpm install --frozen-lockfile
+      - name: Reconcile current authority and board
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import subprocess
+
+          agents = Path('AGENTS.md')
+          text = agents.read_text(encoding='utf-8')
+          old = '- Workspace roots are exactly `apps/web` + `packages/{contracts,domain,tokens}` (no `apps/mobile`).'
+          new = '- Workspace roots are `apps/{web,mobile}` + `packages/{contracts,domain,tokens}`; mobile is React Native/Expo per the 2026-09-06 authority.'
+          if old in text:
+              text = text.replace(old, new, 1)
+          text = text.replace(
+              '- **HeroUI v3 is the only component library** — no shadcn/Radix/Headless UI imports.',
+              '- **HeroUI v3 remains the only web component library** — no shadcn/Radix/Headless UI imports. Mobile uses React Native primitives and shared Bivaque tokens.',
+              1,
+          )
+          agents.write_text(text, encoding='utf-8')
+
+          board_path = Path('tools/backend-kanban/public/board.json')
+          board = json.loads(board_path.read_text(encoding='utf-8'))
+          card_id = 'RECON-ENTRY-01'
+          if not any(card.get('id') == card_id for card in board['cards']):
+              source_revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+              board['cards'].append({
+                  'id': card_id,
+                  'title': 'Base visual e primeira entrada web/mobile',
+                  'phase': 'Reconstrução',
+                  'priority': 'P1',
+                  'category': 'frontend',
+                  'status': 'now',
+                  'description': 'Executar somente a seção 12 do processo de 06/09: fundação Expo, tokens e primitivos atuais, e primeira tela de entrada web/mobile ligada a Entrar/Criar conta. Auth completa permanece fora deste card.',
+                  'checklist': [
+                      'Criar apps/mobile e reconciliar workspace/guardrail',
+                      'Consolidar tokens atuais e primitivos de texto, botão e campo',
+                      'Entregar entrada web ligada a /login e /signup sem reescrever Auth comprovada',
+                      'Entregar entrada mobile ligada às rotas nativas de login e cadastro',
+                      'Validar runtime e aparência nas duas superfícies; inspeção nativa real é requisito de fechamento',
+                  ],
+                  'completedChecklist': [True, True, True, True, False],
+                  'proof': [
+                      'Autoridade atual: docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §12.',
+                      'Implementação isolada a partir do head do PR #49, preservando a integração web Supabase existente.',
+                      'O card permanece aberto até haver inspeção visual/runtime nativa; bundle ou typecheck não substituem essa prova.',
+                  ],
+                  'tests': [
+                      'pnpm install --frozen-lockfile',
+                      'pnpm gate --fast',
+                      'pnpm test:scope',
+                      'pnpm --filter @bivaque/mobile typecheck',
+                      'pnpm --filter @bivaque/mobile exec expo export --platform android',
+                  ],
+                  'links': [
+                      'Processo atual | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md',
+                      'Guia visual | ../../docs/design/visual-guide-2026-09-06/README.md',
+                  ],
+                  'updatedAt': '2026-09-06',
+                  'sourceRevision': source_revision,
+                  'dependencies': [],
+              })
+          board_path.write_text(json.dumps(board, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          node tools/backend-kanban/src/board.mjs --write-summary
+          node tools/backend-kanban/src/board.mjs --check
+      - name: Fast repository gate
+        run: pnpm gate --fast
+      - name: Scope tests
+        run: pnpm test:scope
+      - name: Mobile typecheck
+        run: pnpm --filter @bivaque/mobile typecheck
+      - name: Bundle Android JavaScript
+        run: pnpm --filter @bivaque/mobile exec expo export --platform android --output-dir ../../.mobile-dist
+      - name: Commit tracking reconciliation
+        shell: bash
+        run: |
+          if git diff --quiet -- AGENTS.md tools/backend-kanban/BOARD.md tools/backend-kanban/public/board.json; then
+            echo "Tracking already reconciled"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add AGENTS.md tools/backend-kanban/BOARD.md tools/backend-kanban/public/board.json
+          git commit -m "chore(reconstruction): track entry foundation"
+          git push origin HEAD:codex/visual-entry-foundation-2026-09-06
