@@ -29,6 +29,7 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import re
           from pathlib import Path
           import subprocess
 
@@ -66,6 +67,7 @@ jobs:
               '          </nav>\n\n          <div className={styles.trustNote}>',
               1,
           )
+          entry_text = re.sub(r'styles\.([A-Za-z][A-Za-z0-9_]*)', r'styles["\1"]', entry_text)
           entry.write_text(entry_text, encoding='utf-8')
 
           layout = Path('apps/mobile/app/_layout.tsx')
