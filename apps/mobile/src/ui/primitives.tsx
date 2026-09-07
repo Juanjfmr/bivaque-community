@@ -5,9 +5,9 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
   type TextInputProps,
   type TextProps,
+  View,
 } from "react-native"
 
 type TextVariant = "eyebrow" | "title" | "body" | "label" | "caption"

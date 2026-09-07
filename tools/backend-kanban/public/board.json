@@ -1387,6 +1387,42 @@
       "dependencies": [],
       "completedAt": "2026-09-06",
       "completedChecklist": [true, true, true, true]
+    },
+    {
+      "id": "RECON-ENTRY-01",
+      "title": "Base visual e primeira entrada web/mobile",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "Executar somente a seção 12 do processo de 06/09: fundação Expo, tokens e primitivos atuais, e primeira tela de entrada web/mobile ligada a Entrar/Criar conta. Auth completa permanece fora deste card.",
+      "checklist": [
+        "Criar apps/mobile e reconciliar workspace/guardrail",
+        "Consolidar tokens atuais e primitivos de texto, botão e campo",
+        "Entregar entrada web ligada a /login e /signup sem reescrever Auth comprovada",
+        "Entregar entrada mobile ligada às rotas nativas de login e cadastro",
+        "Validar runtime e aparência nas duas superfícies; inspeção nativa real é requisito de fechamento"
+      ],
+      "completedChecklist": [true, true, true, true, false],
+      "proof": [
+        "Autoridade atual: docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §12.",
+        "Implementação isolada a partir do head do PR #49, preservando a integração web Supabase existente.",
+        "O card permanece aberto até haver inspeção visual/runtime nativa; bundle ou typecheck não substituem essa prova."
+      ],
+      "tests": [
+        "pnpm install --frozen-lockfile",
+        "pnpm gate --fast",
+        "pnpm test:scope",
+        "pnpm --filter @bivaque/mobile typecheck",
+        "pnpm --filter @bivaque/mobile exec expo export --platform android"
+      ],
+      "links": [
+        "Processo atual | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
+        "Guia visual | ../../docs/design/visual-guide-2026-09-06/README.md"
+      ],
+      "updatedAt": "2026-09-06",
+      "sourceRevision": "d5d67f6b75f09af296fa7bed54a9a7271017217a",
+      "dependencies": []
     }
   ]
 }

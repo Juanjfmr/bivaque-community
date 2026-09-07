@@ -42,8 +42,8 @@ export default function EntryScreen() {
           </BivaqueText>
           <BivaqueText variant="title">Um lugar para chegar, perguntar e participar.</BivaqueText>
           <BivaqueText tone="muted">
-            Entre com sua conta ou crie seu primeiro acesso. A admissão acontece depois, no
-            contexto certo.
+            Entre com sua conta ou crie seu primeiro acesso. A admissão acontece depois, no contexto
+            certo.
           </BivaqueText>
         </View>
 
@@ -91,10 +91,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   heroImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   heroScrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: nativeTokens.color.accentScrim,
   },
   heroCopy: {

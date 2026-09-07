@@ -180,7 +180,7 @@ export function LandingPage() {
             </a>
           ))}
         </nav>
-        <Link href="/login" className={styles["headerAction"]}>
+        <Link href="/entrada" className={styles["headerAction"]}>
           Entrar <ArrowRight aria-hidden="true" />
         </Link>
       </header>

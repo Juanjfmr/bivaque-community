@@ -178,9 +178,9 @@ overflow, motion presence, token discipline) into `.visual/<run>/`. The spec it 
 ## Repo contracts enforced by `tests/scope/*.test.mjs` (guardrails)
 
 These tests fail CI if you break them — update them only when a contract deliberately changes:
-- Workspace roots are exactly `apps/web` + `packages/{contracts,domain,tokens}` (no `apps/mobile`).
+- Workspace roots are `apps/{web,mobile}` + `packages/{contracts,domain,tokens}`; mobile is React Native/Expo per the 2026-09-06 authority.
 - Next must stay on the **server runtime** — `output: "export"` is prohibited.
-- **HeroUI v3 is the only component library** — no shadcn/Radix/Headless UI imports.
+- **HeroUI v3 remains the only web component library** — no shadcn/Radix/Headless UI imports. Mobile uses React Native primitives and shared Bivaque tokens.
 - `supabase/config.toml` must use `[inbucket]` — **NOT `[local_smtp]`**: the pinned CLI 2.107.0
   rejects `local_smtp` with `invalid keys` (renamed only in 2.108+). Do not upgrade the pinned CLI
   casually; both pin and section are locked by tests.

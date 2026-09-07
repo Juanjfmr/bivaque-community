@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 46 frentes · 2 agora · 6 bloqueadas · 21 concluídas · 7 drifts
+**Mapa:** 47 frentes · 3 agora · 6 bloqueadas · 21 concluídas · 7 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -16,6 +16,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
 - **MVP-00-E2E-FUNCTIONAL** · P1 · Reconciliar 65 falhas E2E funcionais (app × spec)
+- **RECON-ENTRY-01** · P1 · Base visual e primeira entrada web/mobile
 
 ## Bloqueios
 

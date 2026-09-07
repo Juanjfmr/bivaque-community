@@ -1,11 +1,11 @@
+import { nativeTokens } from "@bivaque/tokens"
 import { Stack } from "expo-router"
 import { StatusBar } from "expo-status-bar"
-import { nativeTokens } from "@bivaque/tokens"
 
 export default function RootLayout() {
   return (
     <>
-      <StatusBar style="dark" backgroundColor={nativeTokens.color.background} />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerShown: false,

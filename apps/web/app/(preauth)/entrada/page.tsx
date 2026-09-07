@@ -11,40 +11,40 @@ export const metadata = {
 
 export default function EntryPage() {
   return (
-    <main className={styles.root}>
-      <section className={styles.contentPanel} aria-labelledby="entry-title">
-        <header className={styles.header}>
-          <Link href="/" className={styles.brandLink} aria-label="Bivaque, voltar ao início">
+    <main className={styles["root"]}>
+      <section className={styles["contentPanel"]} aria-labelledby="entry-title">
+        <header className={styles["header"]}>
+          <Link href="/" className={styles["brandLink"]} aria-label="Bivaque, voltar ao início">
             <BrandMark asset="horizontal" tone="graphite" priority />
           </Link>
         </header>
 
-        <div className={styles.content}>
-          <p className={styles.eyebrow}>Bem-vindo ao Bivaque</p>
+        <div className={styles["content"]}>
+          <p className={styles["eyebrow"]}>Bem-vindo ao Bivaque</p>
           <h1 id="entry-title">Um lugar para chegar, perguntar e participar.</h1>
-          <p className={styles.lead}>
-            Entre com uma conta existente ou crie seu primeiro acesso. A admissão e a escolha da
-            sua localidade acontecem depois, no contexto certo.
+          <p className={styles["lead"]}>
+            Entre com uma conta existente ou crie seu primeiro acesso. A admissão e a escolha da sua
+            localidade acontecem depois, no contexto certo.
           </p>
 
-          <div className={styles.actions} aria-label="Escolha como continuar">
-            <Link href="/login" className={`${styles.action} ${styles.primaryAction}`}>
+          <nav className={styles["actions"]} aria-label="Escolha como continuar">
+            <Link href="/login" className={`${styles["action"]} ${styles["primaryAction"]}`}>
               <span>
                 <strong>Entrar</strong>
                 <small>Já tenho uma conta</small>
               </span>
               <ArrowRight aria-hidden="true" />
             </Link>
-            <Link href="/signup" className={`${styles.action} ${styles.secondaryAction}`}>
+            <Link href="/signup" className={`${styles["action"]} ${styles["secondaryAction"]}`}>
               <span>
                 <strong>Criar conta</strong>
                 <small>É meu primeiro acesso</small>
               </span>
               <ArrowRight aria-hidden="true" />
             </Link>
-          </div>
+          </nav>
 
-          <div className={styles.trustNote}>
+          <div className={styles["trustNote"]}>
             <LockKeyhole aria-hidden="true" />
             <p>
               O acesso é controlado. Documentos e dados usados na admissão não viram informação
@@ -54,7 +54,7 @@ export default function EntryPage() {
         </div>
       </section>
 
-      <section className={styles.visualPanel} aria-label="Pessoas chegando à comunidade Bivaque">
+      <section className={styles["visualPanel"]} aria-label="Pessoas chegando à comunidade Bivaque">
         <Image
           src="/landing/hero-bivaque-arrival.webp"
           alt="Pessoa chegando a um encontro comunitário enquanto outra pessoa oferece uma cadeira"
@@ -63,8 +63,8 @@ export default function EntryPage() {
           unoptimized
           sizes="(max-width: 959px) 100vw, 48vw"
         />
-        <div className={styles.scrim} aria-hidden="true" />
-        <div className={styles.visualCopy}>
+        <div className={styles["scrim"]} aria-hidden="true" />
+        <div className={styles["visualCopy"]}>
           <UsersRound aria-hidden="true" />
           <p>A comunidade vai com você.</p>
           <h2>Chegue sabendo a quem perguntar.</h2>
