@@ -1,8 +1,17 @@
 /**
  * Approved Bivaque identity foundation.
  *
- * These values are canonical brand data, but they are not the active product
- * theme yet. Runtime activation remains gated by FRONTEND-VISUAL-AAA.
+ * These values are canonical brand data AND, desde 2026-08-30, a base do tema
+ * ativo: `packages/tokens/src/index.ts` e `apps/web/app/globals.css` derivam
+ * deles (ADR-20260828-sistema-visual-editorial, emendado). Este arquivo segue
+ * sendo a fonte da identidade; os tokens semânticos ficam no index, porque um
+ * brandbook define identidade e não sistema de UI — daí os derivados
+ * declarados lá (superfície elevada, texto secundário, danger).
+ *
+ * A ativação foi liberada por autoridade explícita do owner, não por decisão de
+ * agente. `activationCard` continua apontando para FRONTEND-VISUAL-AAA, que
+ * ainda carrega os passos 3 e 4 (BrandMark nos wordmarks provisórios; ícones e
+ * manifest).
  */
 export const officialBrandIdentity = {
   name: "Bivaque",
@@ -13,7 +22,7 @@ export const officialBrandIdentity = {
     secondaryGraphic: "Pátio",
   },
   runtime: {
-    activation: "staged",
+    activation: "active",
     activationCard: "FRONTEND-VISUAL-AAA",
     colorScheme: "light",
     darkModeAvailable: false,

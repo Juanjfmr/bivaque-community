@@ -10,13 +10,22 @@ Esta pasta é a fonte operacional da identidade aprovada em 29 de agosto de 2026
 
 ## Estado no produto
 
-Os arquivos e dados da marca estão prontos para uso, mas a migração visual do runtime não faz
-parte desta entrega. O card `FRONTEND-VISUAL-AAA` continua `frozen`; portanto:
+**Atualizado em 2026-08-30: a migração visual do runtime foi feita.** Este parágrafo dizia o
+contrário — que os tokens ativos não mudavam e que o card `FRONTEND-VISUAL-AAA` continuava
+`frozen`. O congelamento caiu por autoridade explícita do owner, não por decisão de agente, e a
+migração é a "entrega visual própria" que a seção Ativação futura pedia
+(`ADR-20260828-sistema-visual-editorial`, emendado). Estado atual:
 
-- os tokens ativos de `packages/tokens/src/index.ts` e `apps/web/app/globals.css` não mudam;
+- os tokens ativos de `packages/tokens/src/index.ts` e `apps/web/app/globals.css` **derivam desta
+  paleta**: Papel no fundo, Grafite no texto, Brasa na ação decisiva, com Noto Serif e Noto Sans
+  auto-hospedadas;
+- os derivados que o brandbook não define — superfície elevada, texto secundário, `danger` — estão
+  declarados como derivados no token, porque um brandbook define identidade e não sistema de UI;
 - o produto continua light-only, conforme D31;
-- nenhuma tela, navegação, composição ou manifest é alterado por esta fundação;
-- a paleta escura do brandbook é referência de compatibilidade, não autorização para dark mode.
+- a paleta escura do brandbook é referência de compatibilidade, não autorização para dark mode;
+- **ainda não migrados**: os wordmarks provisórios continuam no lugar do componente `BrandMark`
+  (passo 3), e o manifest, favicons e ícones PWA continuam os antigos (passo 4). Enquanto isso, a
+  dívida de wordmark provisório do `SCREEN_AUDIT.md` segue valendo.
 
 ## Fontes para agentes
 

@@ -67,7 +67,7 @@ test("ships the small-size and platform icon set", () => {
   assert.deepEqual(missing, [])
 })
 
-test("keeps approved identity data separate from the frozen runtime theme", () => {
+test("keeps approved identity data separate from the active runtime theme", () => {
   const official = readFileSync(
     join(root, "packages", "tokens", "src", "official-brand.ts"),
     "utf8",
