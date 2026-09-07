@@ -43,7 +43,6 @@ vi.mock("@react-native-async-storage/async-storage", () => ({
 vi.mock("expo-file-system", () => ({
   Paths: { document: { uri: "file:///data/user/0/com.bivaque/files/" } },
   Directory: class {
-    constructor(_parent: unknown, _name: string) {}
     get exists() {
       return UPLOADS_DIR_EXISTS
     }

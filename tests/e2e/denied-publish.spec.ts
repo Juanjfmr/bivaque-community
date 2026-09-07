@@ -31,7 +31,6 @@ import { expect, request, test } from "@playwright/test"
 import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
-const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const CONSENT_COOKIE = "bivaque-consent-version"
 
 // Reusamos dono-vila@ (ja validada em publish-golden-slice) e alternamos
@@ -224,7 +223,7 @@ test.describe("denied publish: is_suspended veta INSERT em posts (W1-DENIED)", (
       // de cleanup mas nao mascara erro do teste.
       try {
         await setSuspended(serviceRoleKey, false)
-      } catch (cleanupError) {
+      } catch {
         // best-effort
       }
     }
