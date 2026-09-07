@@ -24,6 +24,7 @@ import {
 } from "../../../../lib/auth/password-auth"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
+import { recordConsentAction } from "../../consent/actions"
 import styles from "./bivaque-sign-in.module.css"
 
 interface BivaqueSignInProps {
@@ -110,6 +111,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [accepted, setAccepted] = useState(false)
   const [result, setResult] = useState<PasswordAuthView | null>(null)
   const [loading, setLoading] = useState<"form" | "google" | null>(null)
 
@@ -145,7 +147,20 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
         })
         const view = classifySignUp(error)
         if (view.outcome === "ok") {
-          router.push("/consent")
+          // O aceite e' condicao de existir a conta, entao e' gravado antes de
+          // a pessoa seguir. Se a gravacao falhar, ela fica na tela sabendo —
+          // seguir sem registro deixaria um aceite que ninguem pode provar.
+          try {
+            await recordConsentAction()
+          } catch {
+            setResult({
+              outcome: "failed",
+              message: "Conta criada, mas não foi possível registrar o aceite. Tente entrar.",
+              diagnostic: "consent",
+            })
+            return
+          }
+          router.push("/onboarding")
           return
         }
         setResult(view)
@@ -156,7 +171,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
         })
         const view = classifySignIn(error)
         if (view.outcome === "ok") {
-          router.push("/consent")
+          router.push("/onboarding")
           return
         }
         setResult(view)
@@ -178,7 +193,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
       } else {
         const { error } = await createBrowserClient().auth.signInWithOAuth({
           provider: "google",
-          options: { redirectTo: `${window.location.origin}/auth/callback?next=/consent` },
+          options: { redirectTo: `${window.location.origin}/auth/callback?next=/onboarding` },
         })
         if (error) throw error
       }
@@ -289,6 +304,29 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
               </span>
             </label>
 
+            {mode === "signup" && (
+              <label className={styles["consentRow"]} htmlFor={`${prefix}-consent`}>
+                <input
+                  id={`${prefix}-consent`}
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(event) => setAccepted(event.target.checked)}
+                  required
+                />
+                <span>
+                  Li e aceito a{" "}
+                  <Link href={{ pathname: "/privacidade" }} target="_blank" rel="noreferrer">
+                    Política de privacidade
+                  </Link>{" "}
+                  e o{" "}
+                  <Link href={{ pathname: "/codigo-de-conduta" }} target="_blank" rel="noreferrer">
+                    Código de conduta
+                  </Link>
+                  .
+                </span>
+              </label>
+            )}
+
             {mode === "login" && (
               <p className={styles["forgotRow"]}>
                 <Link href={{ pathname: "/recuperar-senha" }}>Esqueci minha senha</Link>
@@ -299,7 +337,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
               type="submit"
               variant="primary"
               className={styles["primaryButton"] ?? ""}
-              isDisabled={loading !== null}
+              isDisabled={loading !== null || (mode === "signup" && !accepted)}
             >
               {loading === "form" ? "Entrando..." : copy.submit}
               {loading !== "form" && <ArrowRight aria-hidden="true" />}

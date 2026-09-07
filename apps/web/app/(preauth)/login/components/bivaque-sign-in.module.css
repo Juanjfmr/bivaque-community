@@ -297,6 +297,32 @@
   color: var(--semantic-text-primary);
 }
 
+.consentRow {
+  display: flex;
+  gap: var(--primitive-space-3);
+  align-items: flex-start;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--primitive-font-weight-regular);
+  line-height: var(--semantic-typography-body-line-height);
+  cursor: pointer;
+}
+
+.consentRow input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  flex: none;
+  accent-color: var(--semantic-action-primary);
+}
+
+.consentRow a {
+  color: var(--semantic-action-primary);
+  font-weight: var(--semantic-typography-label-weight);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .forgotRow {
   margin: 0;
   text-align: right;

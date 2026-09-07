@@ -9,6 +9,8 @@
 // senha errada e conta inexistente chegam com o mesmo código do GoTrue, e a
 // tela não tem como distinguir — que é justamente o que impede alguém de
 // descobrir quem é membro digitando endereços.
+
+import * as Linking from "expo-linking"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useState } from "react"
 import {
@@ -43,13 +45,15 @@ export default function AcessoScreen() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [accepted, setAccepted] = useState(false)
   const [touched, setTouched] = useState(false)
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<PasswordAuthView | null>(null)
 
   const emailOk = isPlausibleEmail(email)
   const showEmailError = touched && email.length > 0 && !emailOk
-  const canSubmit = emailOk && password.length > 0 && (!criando || name.trim().length > 0)
+  const canSubmit =
+    emailOk && password.length > 0 && (!criando || (name.trim().length > 0 && accepted))
 
   const submit = async () => {
     setTouched(true)
@@ -84,6 +88,20 @@ export default function AcessoScreen() {
           )
 
       if (view.outcome === "ok") {
+        // O aceite é condição de existir a conta, então é gravado antes de a
+        // pessoa seguir. Server Action não serve o nativo; o contrato é
+        // POST /api/consent, que resolve o autor pelo token.
+        if (criando) {
+          const recorded = await recordConsent()
+          if (!recorded) {
+            setResult({
+              outcome: "failed",
+              message: "Conta criada, mas não foi possível registrar o aceite. Tente entrar.",
+              diagnostic: "consent",
+            })
+            return
+          }
+        }
         router.replace("/(tabs)/cidade")
         return
       }
@@ -174,6 +192,34 @@ export default function AcessoScreen() {
           <Text style={styles.revealText}>{showPassword ? "Ocultar senha" : "Mostrar senha"}</Text>
         </Pressable>
 
+        {criando && (
+          <Pressable
+            onPress={() => setAccepted((value) => !value)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: accepted }}
+            accessibilityLabel="Li e aceito a Política de privacidade e o Código de conduta"
+            style={styles.consentRow}
+          >
+            <View style={[styles.checkbox, accepted && styles.checkboxOn]}>
+              {accepted && <Text style={styles.checkboxMark}>✓</Text>}
+            </View>
+            <Text style={styles.consentText}>
+              Li e aceito a{" "}
+              <Text style={styles.consentLink} onPress={() => void openDocument("privacidade")}>
+                Política de privacidade
+              </Text>{" "}
+              e o{" "}
+              <Text
+                style={styles.consentLink}
+                onPress={() => void openDocument("codigo-de-conduta")}
+              >
+                Código de conduta
+              </Text>
+              .
+            </Text>
+          </Pressable>
+        )}
+
         {result && result.outcome !== "ok" && (
           <View style={styles.notice} accessibilityRole="alert">
             <Text style={styles.noticeText}>{result.message}</Text>
@@ -203,6 +249,29 @@ export default function AcessoScreen() {
   )
 }
 
+// A versão completa abre no navegador do sistema: são documentos longos, e o
+// app não tem (nem deve ter) leitor embutido — MOB-001 proíbe WebView.
+const WEB_ORIGIN = process.env["EXPO_PUBLIC_WEB_ORIGIN"] ?? "https://bivaque.com.br"
+
+async function openDocument(slug: "privacidade" | "codigo-de-conduta") {
+  await Linking.openURL(`${WEB_ORIGIN}/${slug}`)
+}
+
+async function recordConsent(): Promise<boolean> {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  if (!token) return false
+  try {
+    const response = await fetch(`${WEB_ORIGIN}/api/consent`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.color.background },
   scroll: {
@@ -222,6 +291,42 @@ const styles = StyleSheet.create({
     fontSize: theme.text.base,
     color: theme.color.muted,
     lineHeight: bodyLineHeight(theme.text.base),
+  },
+  consentRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: theme.space[3],
+    minHeight: 44,
+    paddingVertical: theme.space[2],
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: theme.radius.sm,
+    borderWidth: 2,
+    borderColor: theme.color.controlBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  checkboxOn: {
+    backgroundColor: theme.color.accent,
+    borderColor: theme.color.accent,
+  },
+  checkboxMark: {
+    color: theme.color.accentForeground,
+    fontSize: theme.text.sm,
+    fontWeight: "700",
+  },
+  consentText: {
+    flex: 1,
+    fontSize: theme.text.sm,
+    color: theme.color.muted,
+    lineHeight: bodyLineHeight(theme.text.sm),
+  },
+  consentLink: {
+    color: theme.color.accent,
+    fontWeight: "600",
   },
   reveal: {
     minHeight: 44,

@@ -94,19 +94,22 @@ export async function proxy(request: NextRequest) {
   if (pathname === "/" || pathname === "") {
     if (user) {
       const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
-      return NextResponse.redirect(new URL(hasConsent ? "/community" : "/consent", request.url))
+      // Sem aceite, a pessoa segue para o onboarding, não para a tela de
+      // consentimento: só contas anteriores a esta mudança chegam aqui sem
+      // aceite, e mandá-las ao portão seria a tela reaparecendo.
+      return NextResponse.redirect(new URL(hasConsent ? "/community" : "/onboarding", request.url))
     }
     return supabaseResponse
   }
 
-  // Protected paths: consent gate first (unchanged from original), then
-  // the session gate (new).
-  const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
-  if (!hasConsent) {
-    const consentUrl = new URL("/consent", request.url)
-    consentUrl.searchParams.set("redirect", pathname)
-    return NextResponse.redirect(consentUrl)
-  }
+  // Protected paths: session gate.
+
+  // O portão de consentimento saiu daqui em 2026-09-07
+  // (ADR-20260907-consentimento-no-cadastro). O aceite passou a ser uma linha do
+  // formulário de cadastro, gravada no servidor na criação da conta. Um portão
+  // que reaparece a cada cookie limpo, expirado ou de versão antiga era o
+  // defeito do RUN-001, e nenhuma das plataformas que este público usa
+  // interrompe quem já aceitou.
 
   if (!user) {
     const loginUrl = new URL("/login", request.url)
