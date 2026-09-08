@@ -1,0 +1,16 @@
+{
+  "date": "2026-09-08",
+  "tool": "image_gen integrado",
+  "artifacts": [
+    {
+      "id": "68-mobile-identidade-recuperacao",
+      "prompt": "Edit this BIVAQUE THREE PHONE board. Owner correction: digital military identity is ONE SINGLE FILE, never front/back separate. Preserve whole middle analysis phone exactly. LEFT heading 'Enviar identidade', introduce 'Envie o arquivo da sua identidade militar digital.' Keep CPF fallback and AI explanation concise. Replace BOTH front/back upload cards by ONE single file upload area labeled 'Identidade militar digital', neutral file icon, 'Escolher arquivo'. No Fotografar buttons, no front/back language, no file extension or size assumption. Helper 'Envie o documento completo em um único arquivo.' Disabled Enviar para análise readable dark gray until file chosen, Voltar à verificação. RIGHT heading 'Precisamos de outro arquivo', alert 'Não foi possível ler o documento enviado.' ONE card 'Identidade militar digital', status 'Arquivo não legível', action 'Substituir arquivo'. Remove second received back card entirely. Helper 'Selecione novamente o arquivo completo.' Disabled Reenviar para análise until replacement, Voltar. Preserve light surfaces, green, crisp text and phones, no invented promises.",
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-4975ec17-a56f-4af8-b5dd-52108e004fb8.png"
+    },
+    {
+      "id": "69-web-identidade-recuperacao",
+      "prompt": "Edit this BIVAQUE two desktop board preserving light progress sidebars, typography, green/white composition. Identity MILITARY DIGITAL is ONE SINGLE FILE. LEFT replace two front/back cards with ONE upload card label 'Identidade militar digital', neutral file icon, button 'Escolher arquivo'. Helper 'Envie o documento completo em um único arquivo.' Keep CPF fallback explanation, recognition by IA, disabled Enviar para análise with legible dark gray text and Voltar à verificação. RIGHT heading 'Precisamos de outro arquivo', alert 'Não foi possível ler o documento enviado.' ONE file card labeled Identidade militar digital, status Arquivo não legível, button Substituir arquivo. Delete second back/received card. Helper Selecione novamente o arquivo completo. Disabled Reenviar para análise until replacement. Preserve Voltar and accompaniment note. Absolutely no Frente, Verso, photographing or splitting document. No file format or size assumption. Match existing style exactly.",
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-ea7b6082-cf00-4e15-bd30-94ac61c36f81.png"
+    }
+  ]
+}
