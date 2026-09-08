@@ -8,7 +8,7 @@ Atualizado em 07/09/2026. Direção aprovada pelo responsável: superfícies cla
 
 ## Entrega efetiva
 
-38 pranchas, com **66 telas/estados mobile e 24 telas/estados web**, das quais **19 pranchas novas** nesta ampliação: Auth/onboarding, comunidades, publicação, eventos e perfil. Cinco pranchas receberam as correções mais recentes. Não equivale a 90 rotas nem comprova implementação.
+55 pranchas, com referências adicionais para estados mobile e web nesta ampliação. As imagens orientam aparência e fluxo; não comprovam implementação.
 
 Os PNGs foram gerados e editados pelo image_gen integrado, sem retoque por scripts. Fontes históricas, prompts executados e correções pendentes estão em [expansion-generation.json](./expansion-generation.json). As imagens são propostas de aparência/interação. Pessoas, fotos, valores, datas e contagens são fictícios; consolidar fixtures coerentes ao implementar.
 
@@ -258,29 +258,11 @@ As notas abaixo prevalecem sobre o bitmap. Não são uma aprovação independent
 - Nome, fotos e bio são exemplos; não expor selo, posto ou dado inferido de elegibilidade.
 - Decisão posterior obrigatória: Adicionar Força Armada e OM opcionais à edição com controles individuais Exibir no perfil OFF. Reduzir avatar e Bio mantendo legibilidade e Salvar alterações visível; nada aparece por padrão no perfil de outro membro.
 
-## Geração interrompida pelo limite
+## Geração e pendências de revisão
 
-Em 07/09/2026, o serviço retornou usage_limit_reached / HTTP 429. **17 pranchas novas ainda não existem**; os prompts estão preservados no registro da ampliação. Não houve uso de reset nem troca para API paga. A ausência visual não impede implementar a especificação com os padrões aprovados, mas não se deve afirmar que a imagem foi entregue.
+As pranchas adicionais foram geradas em 07/09/2026 e copiadas para este diretório. A imagem é uma referência de construção, não prova de implementação ou integração.
 
-- 50-mobile-configuracoes: Configurações; Preferências de notificações; Controles da conta
-- 51-web-perfil: Meu perfil e edição; Perfil de outro membro
-- 52-web-configuracoes: Preferências e notificações; Conta e privacidade
-- 53-mobile-retorno: Notificações; Salvos; Alertas de imóveis
-- 54-web-retorno: Central de notificações; Conteúdos salvos
-- 55-mobile-confianca: Enviar denúncia; Acompanhar denúncia; Bloquear interação
-- 56-web-confianca: Denunciar conteúdo; Acompanhamento e bloqueios
-- 57-web-operacao-admissoes: Fila de admissões; Análise de solicitação
-- 58-web-operacao-moderacao: Fila de denúncias; Analisar e encerrar denúncia
-- 59-mobile-estados: Carregamento; Sem resultados; Erro com rascunho preservado
-- 60-web-estados: Acesso indisponível; Falha de conexão e retomada
-- 61-web-explorar-servicos: Explorar; Resultados de serviços
-- 62-web-prestador-pedido: Ficha do prestador; Descrever necessidade
-- 63-web-mercado-anuncio: Detalhe do produto; Criar anúncio
-- 64-web-mercado-edicao: Editar anúncio; Pausar anúncio
-- 65-web-imoveis-alertas: Buscar imóveis; Gerenciar alertas
-- 25-web-guia-referencia: Ler referência completa e sugerir correção
-
-Também permanecem sete edições de propagação (34, 38, 40, 42, 45, 48, 49), as correções de leitura/público e consistência nas 41/43/47, além dos retoques históricos das 13/14/16/19 registrados acima. Telas específicas de enviar/acompanhamento de pergunta ao organizador e falha/reenvio de identidade ainda precisam de detalhamento visual; seguem os contratos das seis decisões.
+As imagens adicionais estão listadas no manifesto e no mapa de telas. As correções textuais de produto continuam obrigatórias durante a implementação.
 
 ## Verificação e origem
 

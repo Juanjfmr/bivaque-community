@@ -1,6 +1,6 @@
 # Bivaque — mapa de referências visuais
 
-Atualizado em 07/09/2026. 38 pranchas, com **66 telas/estados mobile e 24 telas/estados web**. A ampliação contém 19 de 36 pranchas planejadas. Este mapa descreve cobertura visual; o quadro existente continua acompanhando a implementação.
+Atualizado em 07/09/2026. 55 pranchas de referência visual. Este mapa descreve cobertura visual; o quadro existente continua acompanhando a implementação.
 
 Leia [as decisões posteriores](./DECISOES-2026-09-07.md), [o processo](./PROCESSO-DE-CONSTRUCAO.md), [as instruções para agentes](./AGENTS.md) e as notas no [manifesto](./manifest.json). [Abrir galeria](./index.html). Uma imagem com dois desktops representa duas telas separadas.
 
@@ -102,7 +102,7 @@ Leia [as decisões posteriores](./DECISOES-2026-09-07.md), [o processo](./PROCES
 |---|---|---|
 | [49-mobile-perfil](./49-mobile-perfil.png) | mobile | Meu perfil; Editar perfil; Perfil de outro membro |
 
-## Geração pendente
+## Referências adicionais
 
 - 50-mobile-configuracoes: Configurações; Preferências de notificações; Controles da conta
 - 51-web-perfil: Meu perfil e edição; Perfil de outro membro
@@ -136,4 +136,4 @@ Selecione a referência da plataforma e o estado de recuperação da tarefa. Lei
 - **48-web-eventos**: Adicionar botão Pedir mais informações no detalhe, disponível antes e depois de confirmar presença; pergunta contextual ao organizador Mariana Santos. Preservar cancelamento de presença.
 - **49-mobile-perfil**: Adicionar Força Armada e OM opcionais à edição com controles individuais Exibir no perfil OFF. Reduzir avatar e Bio mantendo legibilidade e Salvar alterações visível; nada aparece por padrão no perfil de outro membro.
 
-O serviço bloqueou essas sete edições por limite em 07/09/2026. As decisões textuais já valem para construção. Também especificar o fluxo da pergunta ao organizador e erro/reenvio de identidade; não constam como pranchas entregues.
+As referências adicionais foram geradas e copiadas para o guia. As decisões textuais continuam prevalecendo sobre qualquer detalhe divergente dos bitmaps.

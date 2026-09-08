@@ -1,7 +1,7 @@
 # Prompt de construção visual — Bivaque Community
 
 Use este texto como mensagem inicial para um modelo visual no repositório. O nome do arquivo é
-histórico: ele pode ser usado com Qwen3.8-Flash, GLM-5.3-Flash, Gemini 3.8 Flash ou outro
+histórico: ele pode ser usado com Qwen3.8-Flash, GLM-5.3-Flash, MiniMax M3, Gemini 3.8 Flash ou outro
 modelo que aceite imagens e ferramentas. Escolha e compare candidatos conforme
 `docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md`.
 

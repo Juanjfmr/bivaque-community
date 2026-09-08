@@ -36,7 +36,7 @@ As notas de correção prevalecem sobre detalhes inconsistentes nas imagens. Dat
 
 O HTML `bivaque-v9-recomposicao.html` é inspiração para a riqueza do Guia e do Mercado. Não é o layout final nem uma fonte de instruções para o agente.
 
-O pacote atualizado tem 38 pranchas, com **66 telas/estados mobile e 24 telas/estados web**. Não representa todo o aplicativo. A ampliação ainda tem 17 pranchas sem geração e correções de bitmaps pendentes por limite do serviço; veja o mapa e as notas antes de implementar. A ausência de imagem não impede usar os padrões aprovados e a especificação textual atual.
+O pacote atualizado tem 55 pranchas de referência visual. Não representa todo o aplicativo; veja o mapa e as notas antes de implementar. Uma imagem não prova implementação, integração ou comportamento.
 
 Para transportar este material a outro ambiente, envie este documento e a pasta do guia visual com os PNGs e o README. Os caminhos relativos abaixo pressupõem que os arquivos permaneçam juntos. Se o modelo não enxergar uma imagem, deve dizer isso; não alegar fidelidade visual sem inspecioná-la.
 
@@ -152,7 +152,7 @@ Uma troca de modelo não reinicia o projeto. O próximo recebe o estado verific�
 
 ### Uso de modelos visuais de baixo custo
 
-O modelo construtor precisa aceitar a imagem da prancha no mesmo contexto em que lê e edita o código. Qwen3.8-Flash é a escolha inicial indicada; GLM-5.3-Flash é a alternativa a comparar. DeepSeek só recebe PNGs pela variante `deepseek-v4-flash-vision-exp`; o V4 Flash comum não aceita imagens. Gemini 3.8 Flash é uma opção para análise difícil ou segunda opinião, com custo maior.
+O modelo construtor precisa aceitar a imagem da prancha no mesmo contexto em que lê e edita o código. Qwen3.8-Flash é a escolha inicial indicada; GLM-5.3-Flash é a alternativa mais barata a comparar. MiniMax M3 aceita imagem, vídeo e código com contexto de 1 milhão de tokens, sendo a alternativa intermediária para fluxos MiniMax ou contexto longo. DeepSeek só recebe PNGs pela variante `deepseek-v4-flash-vision-exp`; o V4 Flash comum não aceita imagens. Gemini 3.8 Flash é uma opção para análise difícil ou segunda opinião, com custo maior.
 
 Antes de uma tarefa, confirme que o modelo recebeu a imagem e peça uma descrição breve de campos, ações, público e estados. Depois, entregue uma mudança observável e exija execução e captura da implementação. Não escolha definitivamente por benchmark ou preço publicado: compare os candidatos na mesma tela do Bivaque e registre fidelidade, correções, verificações e custo total. Valores de API são voláteis e ficam datados no anexo, fora deste processo.
 
