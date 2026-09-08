@@ -138,10 +138,9 @@ async function fetchReportNotifications(
   })
   const api = await request.newContext()
   try {
-    const response = await api.get(
-      `${SUPABASE_URL}/rest/v1/notifications?${query.toString()}`,
-      { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` } },
-    )
+    const response = await api.get(`${SUPABASE_URL}/rest/v1/notifications?${query.toString()}`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
+    })
     if (!response.ok()) {
       throw new Error(`Report notifications query failed with ${response.status()}`)
     }
@@ -151,61 +150,57 @@ async function fetchReportNotifications(
   }
 }
 
-test.describe(
-  "report flow: membro denuncia e recebe retorno",
-  { tag: "@stateful" },
-  () => {
-    test("membro denuncia, operador resolve e notificacao referencia a denuncia", async ({
-      browser,
-    }) => {
-      const reason = `conteudo fora das regras da comunidade ${Date.now().toString(36)}`
-      const { anonKey } = requireCredentials()
-      const reporter = await mintSession(REPORTER_EMAIL)
-      const context = await browser.newContext()
+test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful" }, () => {
+  test("membro denuncia, operador resolve e notificacao referencia a denuncia", async ({
+    browser,
+  }) => {
+    const reason = `conteudo fora das regras da comunidade ${Date.now().toString(36)}`
+    const { anonKey } = requireCredentials()
+    const reporter = await mintSession(REPORTER_EMAIL)
+    const context = await browser.newContext()
 
-      try {
-        const page = await context.newPage()
-        await signInAsCookie(context, REPORTER_EMAIL)
-        await page.goto("/community", { waitUntil: "load" })
-        await expect(page).toHaveURL(/\/community$/)
+    try {
+      const page = await context.newPage()
+      await signInAsCookie(context, REPORTER_EMAIL)
+      await page.goto("/community", { waitUntil: "load" })
+      await expect(page).toHaveURL(/\/community$/)
 
-        // O post municipal fixo pertence ao proprio dono-vila e nao pode ser
-        // denunciado por ele. Este texto vem dos posts gerados por outros
-        // membros e reduz o locator ao artigo correto antes de abrir o menu.
-        const post = page.getByRole("article").filter({ hasText: TARGET_POST_TEXT }).first()
-        await expect(post).toBeVisible({ timeout: 10000 })
-        await post.getByRole("button", { name: "Mais opcoes" }).click()
-        await page.getByRole("menuitem", { name: /Denunciar/i }).click()
-        await page.getByRole("textbox", { name: "Motivo da denuncia" }).fill(reason)
-        await page.getByRole("button", { name: "Enviar denuncia" }).click()
+      // O post municipal fixo pertence ao proprio dono-vila e nao pode ser
+      // denunciado por ele. Este texto vem dos posts gerados por outros
+      // membros e reduz o locator ao artigo correto antes de abrir o menu.
+      const post = page.getByRole("article").filter({ hasText: TARGET_POST_TEXT }).first()
+      await expect(post).toBeVisible({ timeout: 10000 })
+      await post.getByRole("button", { name: "Mais opcoes" }).click()
+      await page.getByRole("menuitem", { name: /Denunciar/i }).click()
+      await page.getByRole("textbox", { name: "Motivo da denuncia" }).fill(reason)
+      await page.getByRole("button", { name: "Enviar denuncia" }).click()
 
-        await expect(page.getByText(/A analise acontece em ate 48 horas/)).toBeVisible({
-          timeout: 5000,
-        })
+      await expect(page.getByText(/A analise acontece em ate 48 horas/)).toBeVisible({
+        timeout: 5000,
+      })
 
-        const created = await fetchOwnReportByReason(anonKey, reporter.access_token, reason)
-        expect(created).toHaveLength(1)
-        const report = created[0]
-        expect(report).toBeDefined()
-        if (!report) throw new Error("Created report was not returned to its reporter")
-        expect(report.status).toBe("open")
-        expect(report.reason).toBe(reason)
+      const created = await fetchOwnReportByReason(anonKey, reporter.access_token, reason)
+      expect(created).toHaveLength(1)
+      const report = created[0]
+      expect(report).toBeDefined()
+      if (!report) throw new Error("Created report was not returned to its reporter")
+      expect(report.status).toBe("open")
+      expect(report.reason).toBe(reason)
 
-        await resolveReport(report.id)
+      await resolveReport(report.id)
 
-        const resolved = await fetchOwnReportByReason(anonKey, reporter.access_token, reason)
-        expect(resolved).toHaveLength(1)
-        expect(resolved[0]?.status).toBe("resolved")
+      const resolved = await fetchOwnReportByReason(anonKey, reporter.access_token, reason)
+      expect(resolved).toHaveLength(1)
+      expect(resolved[0]?.status).toBe("resolved")
 
-        const notifications = await fetchReportNotifications(
-          anonKey,
-          reporter.access_token,
-          report.id,
-        )
-        expect(notifications).toEqual([{ type: "report_resolved", target_id: report.id }])
-      } finally {
-        await context.close()
-      }
-    })
-  },
-)
+      const notifications = await fetchReportNotifications(
+        anonKey,
+        reporter.access_token,
+        report.id,
+      )
+      expect(notifications).toEqual([{ type: "report_resolved", target_id: report.id }])
+    } finally {
+      await context.close()
+    }
+  })
+})

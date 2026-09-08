@@ -1,5 +1,9 @@
 # Bivaque Community — Claude Code
 
+## Visual guide update — 2026-09-08
+
+Read docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md, MAPA-DE-TELAS.md and AGENTS.md after the construction process. The 59 boards are visual references, not delivered runtime. Owner corrections supersede conflicting older product rules: city-wide questions, event information requests, optional joining reason, exact military label, fast CPF with identity/AI fallback, optional self-declared Armed Force/OM with individual visibility. Digital military identity is one complete file, never separate front/back uploads. Preserve authorization, privacy and integrity.
+
 > Fonte de verdade: **AGENTS.md** (na raiz). Este CLAUDE.md é uma ponte fina —
 > leia o AGENTS.md inteiro antes de qualquer trabalho, e siga-o.
 

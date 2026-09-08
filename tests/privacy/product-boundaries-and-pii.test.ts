@@ -88,6 +88,7 @@ describe("product boundaries and PII audit", () => {
         /log-redaction\.test\.ts$/,
         // Historical image prompts prohibit these terms; they are not product source.
         // Keep this exception local to the lexical check, never to PII scans.
+        /docs[\\/]design[\\/]visual-guide-2026-09-06[\\/]completion-generation-2026-09-08\.json$/,
         /docs[\\/]design[\\/]visual-guide-2026-09-06[\\/]manifest\.json$/,
         /PILOT_RUNBOOK\.md$/,
         /GO-NO-GO-REPORT\.md$/,

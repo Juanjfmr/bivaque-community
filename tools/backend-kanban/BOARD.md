@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 46 frentes · 2 agora · 6 bloqueadas · 21 concluídas · 7 drifts
+**Mapa:** 46 frentes · 2 agora · 6 bloqueadas · 20 concluídas · 7 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -39,6 +39,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 ## Triagem prioritária
 
 - **REPO-SECRETS-ROTATION** · P0 · Rotação de chaves Portal e Resend
+- **DOC-20260906-RECONSTRUCAO** · P1 · Publicar e ampliar guia visual e autoridade de construção
 - **DRIFT-STATUS-RECONCILIATION** · P1 · Reconciliar documentação com runtime após cada ciclo
 
 ## Comandos
