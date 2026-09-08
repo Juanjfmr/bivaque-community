@@ -1,8 +1,26 @@
-# G0 — Fundação web (navegação + telas de fundação) Implementation Plan
+# W00 — Fundação web (navegação + shell) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **SUPERSEDIDO EM PARTE — 08/09/2026.** A autoridade passou a ser
+> [`docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md`](../specs/2026-09-08-reconstrucao-visual-web-design.md)
+> (especificação funcional, autoria de outra sessão, adotada pelo responsável).
+> Este plano era o "G0 — grupo funcional" do spec de orquestração anterior; foi
+> renomeado para **W00** porque o spec vigente usa `G0–G6` como **gates de
+> conclusão**, não como grupos, e `W00–W09` como etapas. O que ele descreve
+> pertence à etapa **W00 — Baseline, contratos e fundação**.
 >
-> **Split ownership:** Tasks 1–3 e 8 são do **Claude** (mudança de contrato, roteamento, fechamento). Tasks 4–7 são contratos `RECON-*` executados pelo **qwen3.8-flash via `opencode run`**, com o Claude revisando o diff em loop.
+> **O que continua valendo:** Tasks 1, 2, 3 e 3.5 (executadas e commitadas) e a
+> Task 3.6 (sidebar, contrato `RECON-001`).
+>
+> **O que NÃO vale mais:**
+> - Tasks 4–7 como estavam: entregavam apresentação sem persistência. O spec
+>   vigente exige backend/persistência no escopo e diz que *"UI pronta; backend
+>   pendente"* nunca satisfaz o gate.
+> - O "stub honesto em breve" (`/salvos`) e os placeholders "Conteúdo em
+>   construção" de `/inicio` e `/explorar`: o **gate G1** proíbe explicitamente
+>   placeholder, `href="#"` e handler vazio. São dívida aberta desta etapa.
+> - Fixar provedor/modelo/`--auto` como regra (§9 do spec vigente).
+>
+> **For agentic workers:** Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Trocar a navegação do shell web para Início / Explorar / Comunidades / Perfil e entregar as telas de fundação (`01-web-inicio`, `61-web-explorar-servicos`, `60-web-estados`) mais uma página interna de demonstração de componentes.
 
