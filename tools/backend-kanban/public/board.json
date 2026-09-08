@@ -1812,6 +1812,67 @@
       "dependencies": [],
       "updatedAt": "2026-09-08",
       "sourceRevision": "6d998a7"
+    },
+    {
+      "id": "RECON-W00-FUNDACAO",
+      "title": "W00: baseline, contratos e fundação da reconstrução web",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "Primeira etapa da especificação funcional de 08/09 (docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §7). Entregou: navegação nova (Início/Explorar/Comunidades/Perfil) com destinos reais e contrato travado em tests/scope/navigation.test.mjs; rotas /inicio e /explorar; correção de a11y de /consent que zerou os 12 findings high do loop visual; sidebar do shell com identidade, comunidades e não-lidas reais; correção de uma falha de autorização nas actions de admissão; e os três documentos que o gate exige (inventário de rotas/endpoints/permissões, registro de testes, contratos R3 e ambientes). Fechamento em docs/agents/W00-FECHAMENTO-2026-09-08.md. NÃO fecha no sentido do gate G5: o mesmo agente implementou, revisou e adjudicou a própria evidência — o estado é 'implementado; revisão independente pendente'. A página-demo de componentes não foi construída, e o gate da etapa diz explicitamente que ela não contaria como Início/Explorar prontos.",
+      "checklist": [
+        "Rotas existentes sem regressão — loop visual ITERATION COMPLETE, 0 high",
+        "Navegação nova com destinos reais, travada por teste de escopo",
+        "Inventário de endpoints e permissões escrito",
+        "Registro de rotas e testes escrito",
+        "Contratos técnicos pendentes e decisões R3 nomeados",
+        "Tokens, HeroUI e wrappers validados; drift de documentação registrado",
+        "Cards reconciliados no quadro",
+        "PENDENTE: revisão independente por sessão separada (gate G5)",
+        "PENDENTE: CI verde na revisão entregue (gate G4) — base está vermelha"
+      ],
+      "proof": [
+        "node scripts/visual/loop.mjs → ITERATION COMPLETE, 0 finding high (.visual/2026-09-08T14-07-24-591Z)",
+        "npx pnpm@11.18.0 gate → verde",
+        "node scripts/tokens/generate.mjs --check → exit 0",
+        "node tools/backend-kanban/src/board.mjs --check → válido"
+      ],
+      "tests": [
+        "tests/scope/navigation.test.mjs",
+        "tests/unit/security/admissions-authz.test.ts",
+        "tests/unit/ui/empty-promises.test.ts"
+      ],
+      "links": [
+        "docs/agents/W00-FECHAMENTO-2026-09-08.md",
+        "docs/agents/INVENTARIO-ROTAS-WEB-2026-09-08.md",
+        "docs/agents/REGISTRO-TESTES-2026-09-08.md",
+        "docs/agents/CONTRATOS-PENDENTES-W00-2026-09-08.md",
+        "docs/agents/VISUAL_AUDIT-2026-09-08-G0.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "44c1d4b"
+    },
+    {
+      "id": "DOC-WRAPPERS-DRIFT",
+      "title": "AGENTS.md descreve 6 wrappers; existem 22, e 6 não usam HeroUI",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "governance",
+      "status": "next",
+      "description": "O AGENTS.md da raiz afirma que todo primitivo em apps/web/app/components/bivaque/ é um wrapper fino e token-aware sobre um sub-componente HeroUI v3, e documenta uma tabela de 6. O diretório tem 22 arquivos, e 6 deles não importam HeroUI: empty-state.tsx, feed-right-rail.tsx, illustrations.tsx, page-header.tsx, service-worker-registration.tsx, supabase-auth-provider.tsx. Vários outros não são primitivos, e sim superfícies compostas (app-shell, city-reference, feed-post, chat-thread, recommendation-requests). A afirmação é falsa como escrita e a tabela cobre menos de um terço do diretório — induz a erro quem procura o wrapper existente antes de criar um novo. Levantado na validação de tokens/HeroUI/wrappers da etapa W00.",
+      "checklist": [
+        "Tabela do AGENTS.md reflete o que existe no diretório",
+        "Distinção explícita entre primitivo com wrapper de HeroUI e superfície composta",
+        "Afirmação sobre 'todo primitivo é wrapper de HeroUI' corrigida ou qualificada"
+      ],
+      "proof": ["npx pnpm@11.18.0 test:scope"],
+      "tests": [],
+      "links": ["docs/agents/W00-FECHAMENTO-2026-09-08.md"],
+      "dependencies": [],
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "44c1d4b"
     }
   ]
 }
