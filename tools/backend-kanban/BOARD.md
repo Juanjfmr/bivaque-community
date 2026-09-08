@@ -2,11 +2,11 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 07/09/2026 · entrada web na prancha 36 (RECON-AUTH-ENTRADA-WEB); snapshot da reconstrução
+**Snapshot:** 2026-09-08
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 56 frentes · 5 agora · 8 bloqueadas · 27 concluídas · 0 drifts
+**Mapa:** 56 frentes · 5 agora · 7 bloqueadas · 27 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -27,7 +27,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **BLOCK-RESEND** · BLOCK · Resend e domínio de e-mail transacional — Criar o projeto de deploy do Bivaque e configurar RESEND_API_KEY e RESEND_FROM_EMAIL; Provar uma entrega real pelo outbox em ambiente implantado
 - **BLOCK-WHATSAPP** · BLOCK · Canal WhatsApp do outbox — Chip dedicado; CNPJ para Cloud API futura; Decisão de produto
 - **BLOCK-MOBILE-RUNTIME** · P1 · Runtime Android/iOS em device real — bootstrap ausente — cmdline-tools + system-image + AVD ausentes (Android); Apple Developer Program + EAS credentials ausentes (iOS)
-- **DOC-20260906-RECONSTRUCAO** · P1 · Publicar e ampliar guia visual e autoridade de construção — Serviço image_gen retornou usage_limit_reached / HTTP 429 em 07/09/2026 ao tentar sete edições. Há 17 pranchas novas sem geração. Retomar com prompts preservados quando o limite permitir; sem reset ou API paga não autorizados.
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Decisão R3 humana
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança
 
@@ -38,6 +37,7 @@ Nenhum card.
 ## Triagem prioritária
 
 - **REPO-SECRETS-ROTATION** · P0 · Rotação de chaves Portal e Resend
+- **DOC-20260906-RECONSTRUCAO** · P1 · Publicar e ampliar guia visual e autoridade de construção
 - **DRIFT-STATUS-RECONCILIATION** · P1 · Reconciliar documentação com runtime após cada ciclo
 
 ## Comandos

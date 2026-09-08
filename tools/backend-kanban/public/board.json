@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "07/09/2026 · entrada web na prancha 36 (RECON-AUTH-ENTRADA-WEB); snapshot da reconstrução",
+  "updatedAt": "2026-09-08",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -1598,14 +1598,14 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "repo",
-      "status": "blocked",
+      "status": "repo",
       "description": "Publicação inicial incorporada pelo PR #49. Ampliação autorizada em 07/09: telas restantes web/mobile e seis correções expressas, com instruções obrigatórias aos agentes. Escopo visual/documental; runtime continua fora deste contrato.",
       "checklist": [
         "Guia e imagens geradas disponíveis no repositório",
         "AGENTS e CLAUDE encaminham para processo, mapa e decisões posteriores",
         "Publicar cobertura real, correções pendentes e limitações de verificação",
         "Validar arquivos, links, galeria e contratos antes da publicação",
-        "Concluir 17 pranchas restantes e propagar correções visuais bloqueadas"
+        "Concluir pranchas restantes e propagar sete correções visuais; preservar notas de construção"
       ],
       "proof": [
         "Pedido explícito do usuário em 06/09/2026: publicar os arquivos no GitHub; versão atual prevalece sobre documentação antiga conflitante.",
@@ -1619,7 +1619,9 @@
         "As seis decisões expressas incluem identidade/IA como fallback ao CPF rápido e afiliação autodeclarada opcional com visibilidade; não foram implementadas as integrações ou persistência. Correções textuais atuais prevalecem sobre imagens pendentes.",
         "Validação local desta ampliação: gate PASS (lint, typecheck, 426 testes unitários, 189 de privacidade, 75 de escopo, segredos). Conferidos 38 PNGs únicos e íntegros, cópias iguais às fontes, links relativos e dataset/notas da galeria, sintaxe JavaScript e quadro válido.",
         "Inspeção manual da galeria em navegador: 38 pranchas, busca personalização com filtro web retorna uma; imagem 39 abre ampliada, Escape retorna foco e busca inexistente mostra vazio. Não houve teste de runtime do aplicativo nem revisão independente desta ampliação.",
-        "07/09/2026: o guia passou a registrar seleção de modelos visuais de baixo custo, preços datados e protocolo de comparação; o prompt operacional foi alinhado à versão nacional e às seis decisões atuais. Links locais do guia passaram; o lint do repositório segue bloqueado por quatro avisos preexistentes em testes mobile/E2E, fora deste contrato documental."
+        "07/09/2026: o guia passou a registrar seleção de modelos visuais de baixo custo, preços datados e protocolo de comparação; o prompt operacional foi alinhado à versão nacional e às seis decisões atuais. Links locais do guia passaram; o lint do repositório segue bloqueado por quatro avisos preexistentes em testes mobile/E2E, fora deste contrato documental.",
+        "08/09/2026: reconciliadas 17 imagens já entregues em 2adcda5; sete PNGs substituídos com originais preservados e quatro novas pranchas 66–69. Total 59 pranchas, 84 estados mobile e 53 web. Não há PNG previsto ausente; notas pontuais dos bitmaps continuam obrigatórias ao construtor.",
+        "Validação local em VALIDACAO-2026-09-08.json: 59 PNGs decodificados, 58 fontes disponíveis idênticas, dataset da galeria e sintaxe JavaScript coerentes, links locais válidos, 96/96 testes de escopo PASS. Sem teste de runtime, revisão independente ou publicação desta rodada. Card em repo até publicação/revisão documental."
       ],
       "links": [
         "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
@@ -1628,13 +1630,11 @@
         "Decisões posteriores | ../../docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
         "Modelos para construção | ../../docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-07",
-      "sourceRevision": "9cd22798b54afa0d1a42126148a9ff6d00e6ccfd",
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "f2a0d33ec82e3a65099fe8b8e399157313b0e0d7",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, false],
-      "blockers": [
-        "Serviço image_gen retornou usage_limit_reached / HTTP 429 em 07/09/2026 ao tentar sete edições. Há 17 pranchas novas sem geração. Retomar com prompts preservados quando o limite permitir; sem reset ou API paga não autorizados."
-      ]
+      "completedChecklist": [true, true, true, true, true],
+      "blockers": []
     },
     {
       "id": "RECON-AUTH-ENTRADA-WEB",

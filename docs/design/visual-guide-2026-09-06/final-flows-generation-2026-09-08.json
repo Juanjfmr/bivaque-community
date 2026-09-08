@@ -1,0 +1,85 @@
+{
+  "date": "2026-09-08",
+  "tool": "image_gen integrado",
+  "artifacts": [
+    {
+      "id": "66-mobile-evento-informacoes",
+      "kind": "mobile",
+      "group": "events",
+      "title": "Perguntas ao organizador",
+      "screens": [
+        "Enviar pergunta",
+        "Aguardar resposta",
+        "Falha com texto preservado"
+      ],
+      "reviewNotes": [
+        "Usar Carlos Ribeiro como fixture do autor; Carlos Silva é variação gerada. A conversa permanece vinculada ao evento."
+      ],
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-8aca2a02-a3b9-4c1c-883b-edd6cc545bca.png",
+      "prompt": "Create ONE high resolution BIVAQUE UI reference board, three iPhone screens side by side, complete devices on warm white canvas. Finished native app quality, flat forest green #164734 buttons, white surfaces, charcoal readable Portuguese Inter-like text, consistent 4 tab bar Início Explorar Comunidades Perfil with Explorar selected. No gradients, no public badges. Three sequential states of asking EVENT organizer a question. Each screen has back arrow 'Café entre vizinhos', compact context '12 set · 9h · Jardim das Acácias', organizer Mariana Santos. LEFT heading 'Pedir mais informações', helper 'Sua pergunta será enviada à organizadora deste evento.', textarea label 'Sua pergunta' containing 'Posso levar as crianças? Precisamos levar alguma coisa?', green 'Enviar pergunta', secondary Voltar ao evento. MIDDLE heading 'Sua pergunta', sent bubble from Carlos with same exact question, status 'Enviada · aguardando resposta', helper 'Acompanhe por aqui ou pelas notificações.', Voltar ao evento. No invented response deadline. RIGHT heading 'Pedir mais informações', amber inline alert 'Não foi possível enviar. Seu texto foi mantido.', same filled textarea, green 'Tentar novamente', secondary Voltar ao evento. No confirmation of presence required for asking. No generic unrestricted member chat, no phone numbers or email. Full readable screens, coherent hierarchy and ample touch targets.",
+      "file": "66-mobile-evento-informacoes.png",
+      "path": "docs/design/visual-guide-2026-09-06/66-mobile-evento-informacoes.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-08"
+    },
+    {
+      "id": "67-web-evento-informacoes",
+      "kind": "web",
+      "group": "events",
+      "title": "Informações do evento na web",
+      "screens": [
+        "Reenviar pergunta",
+        "Ler resposta e continuar"
+      ],
+      "reviewNotes": [
+        "Usar o wordmark canônico sem o símbolo de árvore inventado. Garantir contraste do botão desabilitado."
+      ],
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-80e9fc8a-1980-4d4b-a888-e574c34d2d91.png",
+      "prompt": "Create one BIVAQUE reference board with TWO desktop app viewports side by side. White/light ivory, forest green #164734, charcoal crisp Inter text, mature app, no gradients. Each has light sidebar BIVAQUE, Início Explorar(selected) Comunidades Perfil; Salvos Notificações; bottom Carlos Ribeiro and Configurações. Toolbar Buscar no Bivaque, Brasília DF, bell/avatar. LEFT main breadcrumb Eventos / Café entre vizinhos, title Pedir mais informações; compact event context 12 set · 9h · Jardim das Acácias, organizer Mariana Santos. Amber alert 'Não foi possível enviar. Seu texto foi mantido.' field Sua pergunta filled 'Posso levar as crianças? Precisamos levar alguma coisa?' green Tentar novamente, outlined Voltar ao evento. Right contextual rail small photo outdoor community breakfast and helper 'Sua pergunta será enviada à organizadora deste evento.' RIGHT desktop same context, heading Sua pergunta, sent Carlos Ribeiro question same exact text, status Enviada, organizer reply Mariana Santos 'Pode trazer as crianças. Se puder, traga uma fruta para compartilhar.' timestamps Hoje 8:40 / Hoje 8:45, empty responder input 'Responder sobre este evento' and disabled Enviar with legible contrast, Voltar ao evento. Contextual event conversation only, no unrestricted private chat. No response time guarantee, no attendance prerequisite. Whole screens readable and well balanced.",
+      "file": "67-web-evento-informacoes.png",
+      "path": "docs/design/visual-guide-2026-09-06/67-web-evento-informacoes.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-08"
+    },
+    {
+      "id": "68-mobile-identidade-recuperacao",
+      "kind": "mobile",
+      "group": "auth",
+      "title": "Identidade: envio e recuperação",
+      "screens": [
+        "Enviar identidade",
+        "Acompanhar análise",
+        "Substituir imagem ilegível"
+      ],
+      "reviewNotes": [
+        "Botões desabilitados precisam de contraste legível. Frente/verso dependem do documento aceito pelo contrato; não criar exigência de selfie."
+      ],
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-658af628-3f1c-49f2-85a4-23009055dbcf.png",
+      "prompt": "Create ONE BIVAQUE visual construction board THREE complete iPhone screens side by side, white warm canvas, forest green #164734 flat buttons, charcoal legible 16px Inter-like type, premium simple finished app. Brand wordmark BIVAQUE text ONLY no new logo symbol. PRE-ADMISSION identity fallback: NO member bottom navigation. Each screen top back arrow, BIVAQUE, progress E-mail completed / Seu acesso current / Cidade next. LEFT heading Enviar identidade. 'Não conseguimos confirmar pelo CPF. Envie sua identidade para continuar.' 'O reconhecimento por IA pode levar um pouco mais.' two upload slots labeled Frente do documento and Verso do documento, neutral document icons, buttons Fotografar or Escolher arquivo. Small helper 'Confira se a imagem está legível e sem reflexos.' disabled Enviar para análise until attachments complete, secondary Voltar à verificação. MIDDLE heading Identidade em análise. Calm clock icon. 'Estamos analisando sua identidade com reconhecimento por IA. Volte aqui para acompanhar.' Atualizar situação button, Sair text link. RIGHT heading Precisamos de outra imagem. Amber alert 'Não foi possível ler a frente do documento.' Front slot status Imagem ilegível, Trocar imagem; back slot Arquivo recebido with icon only no PII or realistic identity. Reenviar para análise disabled until replacement, Voltar. No invented deadlines, no selfie or facial biometrics, no raw CPF, no public badge, no broad storage guarantees. Three clean coherent states.",
+      "file": "68-mobile-identidade-recuperacao.png",
+      "path": "docs/design/visual-guide-2026-09-06/68-mobile-identidade-recuperacao.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-08"
+    },
+    {
+      "id": "69-web-identidade-recuperacao",
+      "kind": "web",
+      "group": "auth",
+      "title": "Identidade: envio e recuperação web",
+      "screens": [
+        "Enviar identidade",
+        "Substituir imagem ilegível"
+      ],
+      "reviewNotes": [
+        "O acompanhamento web está na prancha 38. Frente/verso seguem o tipo de documento aceito; nenhuma imagem estabelece prazo de retenção."
+      ],
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-c27cc68e-b98f-42b4-9317-2b28199d7d18.png",
+      "prompt": "Create ONE BIVAQUE board TWO complete desktop app viewports side by side, mature white/forest-green #164734 app, crisp Inter readable Portuguese, no decorative logo symbols only BIVAQUE wordmark. Pre-admission shell with left progress rail E-mail Concluído, Seu acesso Em andamento, Cidade Próximo passo. No member navigation or feed. LEFT heading Enviar identidade, text Não conseguimos confirmar pelo CPF. Envie sua identidade para continuar. Explain reconhecimento por IA pode levar um pouco mais. Two upload cards Frente do documento and Verso do documento, neutral document icons, Escolher arquivo buttons. Helper Imagens legíveis e sem reflexos. Disabled Enviar para análise with dark gray legible text, Voltar à verificação. RIGHT same shell heading Precisamos de outra imagem, amber alert Não foi possível ler a frente do documento. Front card Imagem ilegível / Trocar imagem; back card Arquivo recebido. Disabled Reenviar para análise with dark gray text until replacement. Link Voltar. Side note Após o reenvio, acompanhe a análise por aqui. No raw identity details, no CPF numbers, no selfie biometric requirement, no response deadline, no retention promises, no public badge. Roomy composed desktop columns, no device monitors.",
+      "refinement": "Keep ALL layout, text and upload controls exactly as supplied. Change both huge dark-green progress sidebars to WHITE background with thin light-gray right border, BIVAQUE wordmark dark forest green, step labels charcoal, secondary text medium gray, current/completed circles forest green. No gradient anywhere. All other areas unchanged. Match light Bivaque auth shell, understated finished application.",
+      "file": "69-web-identidade-recuperacao.png",
+      "path": "docs/design/visual-guide-2026-09-06/69-web-identidade-recuperacao.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-08"
+    }
+  ]
+}

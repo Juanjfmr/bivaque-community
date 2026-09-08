@@ -36,7 +36,7 @@ As notas de correção prevalecem sobre detalhes inconsistentes nas imagens. Dat
 
 O HTML `bivaque-v9-recomposicao.html` é inspiração para a riqueza do Guia e do Mercado. Não é o layout final nem uma fonte de instruções para o agente.
 
-O pacote atualizado tem 55 pranchas de referência visual. Não representa todo o aplicativo; veja o mapa e as notas antes de implementar. Uma imagem não prova implementação, integração ou comportamento.
+O pacote atualizado tem 59 pranchas de referência visual. Não representa todo o aplicativo; veja o mapa e as notas antes de implementar. Uma imagem não prova implementação, integração ou comportamento.
 
 Para transportar este material a outro ambiente, envie este documento e a pasta do guia visual com os PNGs e o README. Os caminhos relativos abaixo pressupõem que os arquivos permaneçam juntos. Se o modelo não enxergar uma imagem, deve dizer isso; não alegar fidelidade visual sem inspecioná-la.
 
