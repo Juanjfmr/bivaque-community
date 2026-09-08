@@ -1,44 +1,56 @@
 import { expect, test } from "@playwright/test"
 
+// Realinhado em 2026-09-08 com ADR-20260907-consentimento-no-cadastro (approved,
+// R3), que decidiu: "O portão de consentimento sai do proxy" e "/consent
+// continua existindo como rota, sem ser portão".
+//
+// Antes, uma navegação sem o cookie de consentimento era desviada para
+// /consent. Esses testes codificavam esse portão e ficaram vermelhos quando o
+// ADR foi implementado — o realinhamento de 2026-09-07 cobriu o ADR de login e
+// parou antes deste. O contrato de hoje, em apps/web/proxy.ts:114-118, é:
+// sem sessão em rota protegida → /login?redirect=<pathname>.
+//
+// A propriedade de segurança NÃO mudou: continua impossível alcançar uma rota
+// protegida sem sessão. O que mudou é o destino da recusa. E o aceite, que era
+// cobrado no portão, passou a ser cobrado na criação da conta — coberto no fim
+// deste arquivo, porque sem isso o realinhamento seria só apagar prova.
+
+const PROTECTED_ROUTES = ["/community", "/groups", "/events", "/profile"]
+
 test.describe("onboarding: denial paths", () => {
-  test("user without consent is redirected to consent from protected routes", async ({ page }) => {
-    await page.goto("/community")
-    await page.waitForURL(/\/consent/)
-
-    await page.goto("/groups")
-    await page.waitForURL(/\/consent/)
-  })
-
-  test("protected routes redirect to consent when consent is missing", async ({ page }) => {
-    const protectedRoutes = ["/community", "/groups", "/events", "/profile"]
-
-    for (const route of protectedRoutes) {
+  test("protected routes deny an anonymous visitor and send them to login", async ({ page }) => {
+    for (const route of PROTECTED_ROUTES) {
       await page.goto(route)
-      await page.waitForURL(/\/consent/)
+      await page.waitForURL(/\/login/)
+      // O destino pretendido sobrevive à recusa, senão a pessoa perde o caminho
+      expect(page.url()).toContain(`redirect=${encodeURIComponent(route)}`)
     }
   })
 
-  test("direct route to community without consent redirects to consent", async ({ page }) => {
+  test("an anonymous visitor never renders community content", async ({ page }) => {
     await page.goto("/community")
-    const finalUrl = page.url()
+    await page.waitForURL(/\/login/)
 
-    expect(finalUrl.includes("/consent")).toBeTruthy()
+    // A recusa é real: a tela de entrada, não o conteúdo protegido
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
-  test("unverified user cannot bypass to community without consent", async ({ page }) => {
+  test("the consent cookie is not a gate: garbage value changes nothing", async ({ page }) => {
+    // Dado um cookie de consentimento adulterado
+    await page
+      .context()
+      .addCookies([
+        { name: "bivaque-consent-version", value: "garbage", path: "/", domain: "127.0.0.1" },
+      ])
+
+    // Quando o visitante anônimo tenta uma rota protegida
     await page.goto("/community")
 
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Então a recusa é a mesma de sempre — o cookie não concede nem nega nada.
+    // ADR-20260907: o portão saiu do proxy; quem decide é a sessão.
+    await page.waitForURL(/\/login/)
   })
 
-  // Realignado em 2026-09-07 com razão explícita: heading e copy de magic link
-  // pertenciam à tela anterior; ADR-20260907-login-com-senha tirou o link da
-  // tela e a prancha 36-web-auth-entrada deu o título atual. O que continua
-  // travado é o contrato desta tarefa: a página abre sem autenticação e oferece
-  // o formulário de entrada com e-mail e senha.
   test("login page is accessible without auth", async ({ page }) => {
     const response = await page.goto("/login")
     expect(response?.ok()).toBeTruthy()
@@ -49,7 +61,9 @@ test.describe("onboarding: denial paths", () => {
     await expect(page.getByLabel("Senha", { exact: true })).toBeVisible()
   })
 
-  test("consent page is accessible without auth", async ({ page }) => {
+  test("consent page stays reachable as the exception path, not as a gate", async ({ page }) => {
+    // ADR-20260907 manteve /consent como rota: é o caminho de exceção para quem
+    // precisa reler ou registrar o aceite fora do cadastro.
     const response = await page.goto("/consent")
     expect(response?.ok()).toBeTruthy()
 
@@ -58,9 +72,9 @@ test.describe("onboarding: denial paths", () => {
     ).toBeVisible()
   })
 
-  test("onboarding without consent redirects to the consent gate", async ({ page }) => {
+  test("onboarding denies an anonymous visitor", async ({ page }) => {
     await page.goto("/onboarding")
-    await page.waitForURL(/\/consent/)
+    await page.waitForURL(/\/login/)
   })
 
   test("health endpoint is always accessible", async ({ request }) => {
@@ -82,5 +96,58 @@ test.describe("onboarding: denial paths", () => {
       data: {},
     })
     expect(response.status()).toBe(401)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// O aceite depois do ADR: cobrado na criação da conta.
+//
+// Cobertura nova. Antes deste arquivo, /signup não tinha NENHUM teste e2e — o
+// aceite tinha prova unitária (tests/unit/auth/consent-no-cadastro.test.ts) e
+// nenhuma prova de navegador. Retargetar os testes do portão sem acrescentar
+// isto teria removido a única evidência de que o aceite é exigido em algum
+// lugar. Gate G4: contrato substituído por decisão explícita muda expectativa
+// E cobertura do novo comportamento na mesma entrega.
+// ---------------------------------------------------------------------------
+
+test.describe("consent is enforced at account creation", () => {
+  test("the signup form asks for consent and blocks until it is given", async ({ page }) => {
+    await page.goto("/signup")
+
+    await expect(page.getByRole("heading", { name: "Vamos começar." })).toBeVisible()
+
+    const consent = page.getByRole("checkbox", { name: /Li e aceito a/ })
+    await expect(consent).toBeVisible()
+    await expect(consent).not.toBeChecked()
+
+    // Negativa: sem aceite, não se cria conta
+    const submit = page.getByRole("button", { name: "Criar conta" })
+    await expect(submit).toBeDisabled()
+
+    // Positiva: com aceite, o caminho abre
+    await consent.check()
+    await expect(consent).toBeChecked()
+    await expect(submit).toBeEnabled()
+  })
+
+  test("the consent line links to both documents", async ({ page }) => {
+    await page.goto("/signup")
+
+    await expect(page.getByRole("link", { name: "Política de privacidade" })).toHaveAttribute(
+      "href",
+      "/privacidade",
+    )
+    await expect(page.getByRole("link", { name: "Código de conduta" })).toHaveAttribute(
+      "href",
+      "/codigo-de-conduta",
+    )
+  })
+
+  test("entering does not ask for consent again", async ({ page }) => {
+    // ADR-20260907: o aceite não reaparece depois. A tela de entrada não tem
+    // caixa de aceite — quem já aceitou no cadastro não é interrompido.
+    await page.goto("/login")
+
+    await expect(page.getByRole("checkbox", { name: /Li e aceito a/ })).toHaveCount(0)
   })
 })

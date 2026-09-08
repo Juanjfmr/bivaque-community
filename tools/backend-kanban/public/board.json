@@ -1915,6 +1915,50 @@
       "dependencies": ["RECON-W00-FUNDACAO", "BLOCK-RESEND"],
       "updatedAt": "2026-09-08",
       "sourceRevision": "30ab4eb"
+    },
+    {
+      "id": "SHELL-SALVOS-AUSENTE",
+      "title": "Sidebar entrega Notificações mas não Salvos, contra o acceptance do RECON-001",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Levantado pela revisão independente do RECON-001 em 08/09/2026. O acceptance do contrato exigia a seção secundária com Salvos E Notificações (docs/agents/tasks/RECON-001.task.yml). A entrega (apps/web/app/components/bivaque/app-shell.tsx) traz só Notificações, e o comentário no código justificou a omissão citando tests/unit/ui/empty-promises.test.ts. A justificativa é imprecisa: esse teste reprova apenas as strings literais 'de 3 passos' e 'Em breve' — um stub de /salvos sem essas palavras não o falharia. O gate G1 da especificação continua proibindo destino placeholder, e é essa a razão válida para a omissão; mas a decisão foi tomada dentro da entrega, sem card, o que a tornou uma redução de escopo silenciosa. Este card existe para desfazer o silêncio. A tela de conteúdos salvos é a prancha 54-web-retorno e pertence à etapa W03.",
+      "checklist": [
+        "Decisão registrada: Salvos entra junto com a tela real (W03) ou ganha rota própria antes",
+        "Se entrar antes, /salvos tem conteúdo real — não placeholder, não promessa vazia",
+        "Item aparece na sidebar quando o destino existir, com o mesmo tratamento de rail dos demais",
+        "Acceptance do RECON-001 reconciliado ou emendado com o responsável"
+      ],
+      "proof": ["node scripts/visual/loop.mjs", "npx pnpm@11.18.0 gate"],
+      "tests": ["tests/unit/ui/empty-promises.test.ts"],
+      "links": [
+        "docs/agents/tasks/RECON-001.task.yml",
+        "docs/design/visual-guide-2026-09-06/01-web-inicio.png"
+      ],
+      "dependencies": ["RECON-W00-PLACEHOLDERS"],
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "30ab4eb"
+    },
+    {
+      "id": "NAV-EXPLORAR-COLISAO",
+      "title": "'Explorar' nomeia um container de navegação e uma aba de conteúdo na mesma tela",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Descoberto ao realinhar os testes E2E em 08/09/2026. A navegação nova criou o container 'Explorar' (bottom-nav.tsx, role=tab). A tela /recommendations já tinha uma aba 'Explorar' (role=tab) no seu próprio conjunto. Nessa rota, dois elementos com role=tab e o mesmo nome acessível coexistem significando coisas diferentes: um é destino de primeiro nível, o outro é um recorte do conteúdo. O sintoma imediato foi o Playwright entrando em strict mode; a consequência real é de acessibilidade — quem navega por leitor de tela ouve 'Explorar' duas vezes sem distinção. Os testes foram escopados ao <main> para desambiguar, o que resolve o teste, não a colisão.",
+      "checklist": [
+        "Decidir qual dos dois muda de rótulo, ou como distingui-los no nome acessível",
+        "Nenhuma rota expõe dois role=tab com o mesmo nome acessível significando coisas diferentes",
+        "Regra verificável na auditoria visual ou em teste de escopo, para não voltar"
+      ],
+      "proof": ["npx pnpm@11.18.0 test:e2e", "node scripts/visual/loop.mjs"],
+      "tests": ["tests/e2e/manaus-pilot-full-journey.spec.ts"],
+      "links": ["docs/agents/DESIGN_SYSTEM.md"],
+      "dependencies": [],
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "30ab4eb"
     }
   ]
 }

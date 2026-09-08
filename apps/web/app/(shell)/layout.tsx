@@ -130,7 +130,12 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
     throw new Error(`Could not resolve the member profile: ${profileError.message}`)
   }
 
-  const displayName = (profileRow as { display_name: string } | null)?.display_name ?? ""
+  // `profiles` exige uma linha de membership, que o bloco acima já resolveu, então
+  // a ausência de perfil aqui é anomalia, não estado normal. Ainda assim ela não
+  // pode virar nome em branco na sidebar: o avatar renderiza inicial vazia e o
+  // rodapé fica sem identidade nenhuma. Rótulo neutro é melhor que buraco.
+  const displayName =
+    (profileRow as { display_name: string } | null)?.display_name?.trim() || "Membro"
 
   const { data: communityRows, error: communitiesError } = await supabase
     .from("community_memberships")

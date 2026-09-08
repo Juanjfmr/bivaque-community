@@ -37,9 +37,23 @@ async function requireOperatorId(
   serviceClient: ReturnType<typeof createServiceClient>,
 ): Promise<string | null> {
   const callerId = await readOperatorIdFromCookies()
-  const { data: isOperator } = await serviceClient.rpc("is_current_user_operator", {
-    p_user_id: callerId ?? "",
+
+  // Sem caller nao ha o que perguntar ao banco. Mandar "" fazia o RPC receber
+  // um uuid invalido e devolver erro, que a versao anterior descartava — falha
+  // fechado, mas por acidente, e a regra da casa e ler o error de toda consulta.
+  if (callerId === null) return null
+
+  const { data: isOperator, error } = await serviceClient.rpc("is_current_user_operator", {
+    p_user_id: callerId,
   })
+
+  if (error) {
+    // Nao da para afirmar que e operador: nega e registra. Silenciar aqui seria
+    // transformar indisponibilidade do banco em decisao de autorizacao.
+    log.error("operator check failed", { caller_id: callerId, error: error.message })
+    return null
+  }
+
   return canOperateAdmissions({ callerId, callerIsOperator: isOperator === true }) ? callerId : null
 }
 

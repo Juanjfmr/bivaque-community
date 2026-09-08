@@ -1,8 +1,15 @@
-# RECON-001 — sidebar rica do shell web (Task 3.6 do plano G0).
+# RECON-001 — sidebar rica do shell web (Task 3.6 do plano W00).
 # Mapa dos contratos da reconstrução visual web:
 #   RECON-001 sidebar · RECON-002 /inicio (prancha 01) · RECON-003 /explorar
 #   (prancha 61) · RECON-004 estados compartilhados (prancha 60) · RECON-005
 #   página-demo de componentes.
+#
+# CORRECAO DE HONESTIDADE, 2026-09-08, apos revisao independente.
+# O baseline deste contrato era FALSO quando escrito, e a unidade tocou os
+# proprios arquivos que este contrato lista como proibidos. Veredito FAIL e o
+# registro completo do erro estao em:
+#   docs/agents/REVISAO-RECON-001-2026-09-08.md
+# O baseline abaixo NAO foi reescrito para parecer correto, de proposito.
 
 task_id: RECON-001
 
