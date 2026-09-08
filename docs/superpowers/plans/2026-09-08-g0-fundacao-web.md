@@ -29,6 +29,32 @@ Todo task herda estas regras. Valores copiados literalmente do spec e dos `AGENT
 
 ---
 
+## Polimento visual — aplica a toda RECON (Tasks 4–7) e à Task 8
+
+Instrução do responsável (2026-09-08): o polimento visual entra **dentro** do loop de
+refinamento, não vira tarefa separada. A definição de "pronto" de cada tela vai além de
+"gate verde + zero finding high":
+
+- **Findings `medium` e `low`** que afetam a tela são resolvidos no loop, não só os `high`.
+- **Task 7 da auditoria de telas** (itens 1/2/5/6 — hierarquia, ritmo, densidade,
+  responsivo) é satisfeita **dentro do grupo**, não deferida. Cada tela responde por
+  escrito, nos 3 viewports, aos quatro critérios do plano `2026-08-05-auditoria-telas.md`
+  Task 7, e o loop continua até a resposta ser "passa".
+- **O Claude edita direto** para o acabamento de craft que um modelo flash não acerta:
+  ritmo de espaçamento (grades de 4px, gaps 12–16px entre unidades, blocos 24–40px),
+  ritmo tipográfico (escala `semantic.typography-*`, medida de leitura 45–72 caracteres),
+  alinhamento, densidade, uso do right rail / sidebar no 1440 sem margem morta. O qwen
+  faz o grosso da composição; o Claude poli por cima, no mesmo commit da tela.
+- **Só vira tarefa de acompanhamento** o que for genuinamente estrutural (mudança de
+  layout que extravasa `allowed_paths`, componente novo não previsto, decisão de produto).
+  Ajuste de aparência não vira follow-up — resolve-se aqui.
+- Diferenças **intencionais** em relação à prancha continuam válidas, explicadas por
+  escrito no veredito da Task 8.
+
+Custo: mais iterações de qwen por tela e edição manual do Claude. Aceito pelo responsável.
+
+---
+
 ## File Structure
 
 **Criar:**
@@ -974,7 +1000,7 @@ sem dado real, some em producao. Contrato RECON-DEMO-COMPONENTES-WEB."
 
 Garantir que não há dev server na :3000 e nenhum `dev-server.pid` stale (`rm -f dev-server.pid dev-server.log`).
 Run: `node scripts/visual/loop.mjs`
-Expected: exit 0 — todos os gates verdes **e** zero finding de severidade high. Se exit ≠ 0, ler `.visual/<run>/ITERATION.md` e `report.md`, classificar (armadilha conhecida vs. regressão real vs. finding legítimo), corrigir na tela de origem (novo disparo qwen para as telas 01/61/60/demo; edição direta para nav) e repetir.
+Expected: exit 0 — todos os gates verdes **e** zero finding de severidade high. Se exit ≠ 0, ler `.visual/<run>/ITERATION.md` e `report.md`, classificar (armadilha conhecida vs. regressão real vs. finding legítimo), corrigir na tela de origem (novo disparo qwen para as telas 01/61/60/demo; edição direta para nav e para acabamento) e repetir. **Findings `medium` e `low` que afetam as telas do grupo também são resolvidos aqui** (ver seção "Polimento visual"), não só os `high`.
 
 - [ ] **Step 2: Task 7 da auditoria de telas — revisão de julgamento**
 
@@ -984,7 +1010,9 @@ Para `/inicio`, `/explorar`, os estados da prancha 60 e `/dev/componentes`, nos 
 3. lista coesa, sem parede de texto nem objeto solto?
 4. 375 é desenho próprio (não 1440 espremido); 1440 usa a largura sem margem morta?
 
-Mais: quais superfícies, estados e dados foram exercitados; diferenças **intencionais** em relação a cada prancha, explicadas; o que a auditoria mecânica reportou e o que foi feito. Veredito por tela: **passa / não passa**. Cada "não passa" vira tarefa própria (não corrigir dentro desta Task).
+Mais: quais superfícies, estados e dados foram exercitados; diferenças **intencionais** em relação a cada prancha, explicadas; o que a auditoria mecânica reportou e o que foi feito. Veredito por tela: **passa / não passa**.
+
+**Instrução do responsável (2026-09-08):** cada "não passa" é **corrigido dentro do loop** — novo disparo qwen e/ou edição direta do Claude para o acabamento — até virar "passa", no commit da própria tela. Só vira tarefa de acompanhamento o que for estrutural (extravasa `allowed_paths`, componente novo, decisão de produto). O veredito escrito registra o estado final "passa" e as diferenças intencionais.
 
 - [ ] **Step 3: Reconciliar `docs/PRODUCT_STATUS.md`**
 
@@ -1022,7 +1050,7 @@ Card RECON-G0-FUNDACAO-WEB."
 
 - [ ] **Step 7: Relatar o status do grupo**
 
-Reportar ao responsável: o que passou (gate local, auditoria visual local), o que ficou pendente (revisão independente de código, E2E, CI externa), e cada "não passa" da Task 7 como tarefa aberta. G1 só começa depois deste veredito.
+Reportar ao responsável: o que passou (gate local, auditoria visual local, polimento visual das telas do grupo), o que ficou pendente (revisão independente de código, E2E, CI externa), e qualquer item **estrutural** que restou como tarefa aberta. G1 só começa depois deste veredito.
 
 ---
 

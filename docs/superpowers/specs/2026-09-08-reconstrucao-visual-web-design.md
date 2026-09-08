@@ -85,15 +85,21 @@ anterior fecha a auditoria.
 
 Uma tela fecha quando **todas** valem:
 
-1. `node scripts/visual/loop.mjs` do grupo sem finding de severidade **high**.
+1. `node scripts/visual/loop.mjs` do grupo sem finding de severidade **high**, e os
+   findings **medium/low** que afetam a tela também resolvidos.
 2. `npx pnpm@11.18.0 gate` verde (lint → typecheck → test → secrets).
 3. Os estados que a prancha mostra estão presentes: entrada, ação, feedback,
    retorno, falha principal — com rascunho preservado onde a prancha indica.
 4. As correções do dono aplicáveis àquela prancha estão satisfeitas (§4, coluna Notas).
 5. Nenhuma das fronteiras da §3 foi cruzada.
-6. Diferenças intencionais em relação à prancha estão **explicadas por escrito** no
+6. **Polimento visual dentro do loop** (instrução do responsável, 2026-09-08): a
+   Task 7 da auditoria de telas (hierarquia, ritmo, densidade, responsivo) responde
+   "passa" nos 3 viewports; o Claude edita direto o acabamento de craft que o modelo
+   flash não acerta, no mesmo commit da tela. Só vira tarefa de acompanhamento o que
+   for estrutural.
+7. Diferenças intencionais em relação à prancha estão **explicadas por escrito** no
    veredito de auditoria do grupo (o guia não exige paridade de pixel).
-7. `PRODUCT_STATUS.md` e o card do board reconciliados; linha só sai de
+8. `PRODUCT_STATUS.md` e o card do board reconciliados; linha só sai de
    `PRODUCT_STATUS.md` quando o ciclo do usuário fecha de fato.
 
 Telas com amarra R3 (D6) fecham como **"UI pronta; backend R3 pendente"**, com a
@@ -160,7 +166,7 @@ O revisor (Claude) difere do executor (qwen) — `reviewer_must_differ_from_exec
 | Perfil fantasma "Visual Capture" quebra pgTAP | Rodar `db:reset` antes de `test:db` após qualquer captura; não subir dev server entre `db:reset` e `test:db` |
 | Troca de nav (G0) quebra rotas `(shell)` em cascata | Claude faz, com teste positivo/negativo, como primeira unidade isolada; nenhuma tela de conteúdo antes da nav fechar |
 | Saldo/limite do provedor qwen no meio do grupo | `alibaba-token-plan` é a rota ativa; se cair, o loop para e vira `HUMAN_DECISION` — não trocar de modelo no meio sem registrar |
-| Custo em tokens do loop de refinamento | Passo 0 + contrato enxuto + reenviar resumo de continuidade, não histórico inteiro (protocolo `MODELOS-PARA-CONSTRUCAO`) |
+| Custo em tokens do loop de refinamento (ampliado pelo polimento visual dentro do loop, decisão de 2026-09-08) | Passo 0 + contrato enxuto + reenviar resumo de continuidade, não histórico inteiro; o Claude poli direto em vez de mais rodadas de qwen quando a edição manual é mais barata |
 
 ## 9. Fora de escopo
 
