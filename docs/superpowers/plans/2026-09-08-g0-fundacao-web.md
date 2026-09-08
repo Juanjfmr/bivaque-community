@@ -55,6 +55,35 @@ Custo: mais iterações de qwen por tela e edição manual do Claude. Aceito pel
 
 ---
 
+## Ajuste de breakdown — 2026-09-08 (pós-auditoria da Task 1)
+
+A auditoria da Task 1 (veredito em `docs/agents/VISUAL_AUDIT-2026-09-08-G0.md`) e a inspeção
+das pranchas 01/61/60 revelaram trabalho que o breakdown original não previa. Decisões do
+responsável:
+
+- **Task 3.5 — a11y de `/consent` (Claude).** Os 12 findings `high` do loop visual são todos
+  de `/consent` (rota `(preauth)` não tocada): checkbox `input` 13×13 sem nome acessível, dois
+  links inline pequenos. O loop bloqueia em qualquer `high` — trava o gate visual de todo o G0.
+  a11y é Fase 1/2 da auditoria de telas, não espera onda. Correção: rótulo do checkbox em texto
+  puro (links de documento já existem como blocos de 44px acima), `aria-label` no checkbox,
+  área do input ≥ 44×44, transição nos controles. Fechar `/consent` inteiro (high + medium/low).
+- **Task 3.6 — sidebar rica (Claude, `app-shell.tsx`).** As três pranchas mostram uma sidebar
+  mais completa que a atual: primária (4 containers) + secundária (Salvos, Notificações com
+  badge de contagem **real**) + "Minhas comunidades" (lista de **query real**, só na home) +
+  rodapé com nome do membro (**real**) e Configurações. Chrome compartilhado por toda rota
+  `(shell)` — tarefa isolada, sem hardcode. É dependência da Task 4.
+- **Task 5 ampliada** — a prancha 61 tem **duas rotas**: `/explorar` (categorias Guia/Mercado/
+  Serviços/Moradia/Eventos + destaques) e `/explorar/servicos` (resultados de busca com filtros
+  Bairro / Tipo de serviço, "Limpar filtros", cartões de prestador). A Task 3 só criou
+  `/explorar`; a Task 5 passa a cobrir as duas rotas e o contrato `RECON-61-EXPLORAR-WEB` inclui
+  o scaffold de `/explorar/servicos` (Claude cria a rota, qwen preenche).
+- **`scripts/visual/capture.mjs`** já recebeu `/inicio` e `/explorar`; recebe `/explorar/servicos`
+  na Task 5 e `/dev/componentes` na Task 7.
+
+Ordem revisada: 1 ✅ → 2 ✅ → 3 ✅ → **3.5** → **3.6** → 4 → 5 → 6 → 7 → 8.
+
+---
+
 ## File Structure
 
 **Criar:**

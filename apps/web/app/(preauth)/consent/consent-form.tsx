@@ -1,8 +1,6 @@
 "use client"
 
 import { Button, Checkbox } from "@heroui/react"
-import type { Route } from "next"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
@@ -40,33 +38,23 @@ export function ConsentForm({ consentVersion }: { consentVersion: number }) {
     <div className={styles["stack"]}>
       {error && <FeedbackAlert variant="danger" description={error} />}
 
-      <Checkbox isSelected={accepted} onChange={setAccepted} isDisabled={loading}>
+      {/* Rótulo em texto puro: os documentos têm links próprios de 44px acima
+          (page.tsx). Link dentro do rótulo de um checkbox é interativo aninhado
+          — anti-padrão de a11y e o que disparava os findings a.font-medium. */}
+      <Checkbox
+        isSelected={accepted}
+        onChange={setAccepted}
+        isDisabled={loading}
+        aria-label="Li e concordo com a Política de privacidade e o Código de conduta do Alpha fechado"
+        className="[&_input]:min-h-11 [&_input]:min-w-11 [&_input]:transition-opacity [&_input]:duration-[var(--semantic-motion-duration-fast)]"
+      >
         <Checkbox.Content>
           <Checkbox.Control>
             <Checkbox.Indicator />
           </Checkbox.Control>
           <span className="text-sm text-muted">
-            Li e concordo com a{" "}
-            <Link
-              href={"/privacidade" as Route}
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium text-foreground underline underline-offset-4"
-              onClick={(event) => event.stopPropagation()}
-            >
-              Política de privacidade
-            </Link>{" "}
-            e o{" "}
-            <Link
-              href={"/codigo-de-conduta" as Route}
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium text-foreground underline underline-offset-4"
-              onClick={(event) => event.stopPropagation()}
-            >
-              Código de conduta
-            </Link>{" "}
-            do Alpha fechado.
+            Li e concordo com a Política de privacidade e o Código de conduta do Alpha fechado. Os
+            documentos completos estão nos links acima.
           </span>
         </Checkbox.Content>
       </Checkbox>
@@ -80,8 +68,13 @@ export function ConsentForm({ consentVersion }: { consentVersion: number }) {
         {loading ? "Registrando..." : "Concordar e continuar"}
       </Button>
 
+      {/* styles.note é grid "20px 1fr" (ícone + texto). Sem ícone aqui, o texto
+          cairia na coluna de 20px — uma palavra por linha. col-span-full põe o
+          texto nas duas colunas. */}
       <p className={styles["note"]}>
-        <span>Seu aceite fica registrado com as versões dos documentos apresentados.</span>
+        <span className="col-span-full">
+          Seu aceite fica registrado com as versões dos documentos apresentados.
+        </span>
       </p>
     </div>
   )
