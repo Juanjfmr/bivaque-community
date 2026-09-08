@@ -34,14 +34,19 @@ test.describe("onboarding: denial paths", () => {
     ).toBeVisible()
   })
 
+  // Realignado em 2026-09-07 com razão explícita: heading e copy de magic link
+  // pertenciam à tela anterior; ADR-20260907-login-com-senha tirou o link da
+  // tela e a prancha 36-web-auth-entrada deu o título atual. O que continua
+  // travado é o contrato desta tarefa: a página abre sem autenticação e oferece
+  // o formulário de entrada com e-mail e senha.
   test("login page is accessible without auth", async ({ page }) => {
     const response = await page.goto("/login")
     expect(response?.ok()).toBeTruthy()
 
-    await expect(page.getByRole("heading", { name: "Entre no Bivaque" })).toBeVisible()
-    await expect(
-      page.getByText("Receba um link no seu e-mail para continuar. Sem senha para lembrar."),
-    ).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await expect(page.getByLabel("E-mail")).toBeVisible()
+    // exact: o botão "Mostrar senha" também contém "senha" no aria-label.
+    await expect(page.getByLabel("Senha", { exact: true })).toBeVisible()
   })
 
   test("consent page is accessible without auth", async ({ page }) => {

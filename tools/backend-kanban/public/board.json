@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "31/08/2026 · card mobile autorizado; snapshot do worktree",
+  "updatedAt": "07/09/2026 · entrada web na prancha 36 (RECON-AUTH-ENTRADA-WEB); snapshot da reconstrução",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -1635,6 +1635,47 @@
       "blockers": [
         "Serviço image_gen retornou usage_limit_reached / HTTP 429 em 07/09/2026 ao tentar sete edições. Há 17 pranchas novas sem geração. Retomar com prompts preservados quando o limite permitir; sem reset ou API paga não autorizados."
       ]
+    },
+    {
+      "id": "RECON-AUTH-ENTRADA-WEB",
+      "title": "Web: entrada fiel à prancha 36-web-auth-entrada sem tocar o mecanismo",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "Referência: docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png (dois desktops: Entrar e Criar conta). Plataforma: web. Rotas: /login e /signup, mesmo componente BivaqueSignIn. Alinha composição e copy à prancha (foto à esquerda com wordmark BIVAQUE, títulos da referência, divisor ou, Google outline, links de rodapé) preservando o mecanismo de ADR-20260907-login-com-senha: e-mail+senha, Google, recuperação e aceite no cadastro. A prancha mostra fluxo por código sem senha; a decisão do responsável é posterior e prevalece, e a guia proíbe prometer código sem integração. Mobile (prancha 30) é tarefa separada.",
+      "checklist": [
+        "Aparência: foto esquerda + formulário direita em 768/1440, wordmark BIVAQUE branco sobre a foto, títulos Que bom ter você de volta. e Vamos começar., divisor ou, botão verde, Google contornado, links de rodapé por modo",
+        "Aparência: capturas 375/768/1440 de /login e /signup sem findings no loop visual",
+        "Integração: signInWithPassword/signUp+senha, Google OAuth, /recuperar-senha, aceite no cadastro com texto aprovado (Política de privacidade + Código de conduta) e registro via recordConsentAction — nada de mecanismo alterado por inferência da imagem",
+        "Verificação: ação principal e falhas em navegador real — credencial errada com mensagem única anti-enumeração, e-mail duplicado com sugestão de entrar, Criar conta desabilitado sem aceite, login correto leva a /onboarding, navegação Criar conta/Já tenho conta",
+        "Verificação: contrato unitário da entrada atualizado com razão explícita e specs E2E do entry realinhados ao mecanismo aprovado, passando nos três projetos de viewport",
+        "Pendente: regerar a prancha 36 com campo de senha e botão Entrar (o bitmap atual mostra Receber código, anterior à ADR de senha)",
+        "Pendente: revisão independente em sessão separada e CI contra a revisão entregue — o gate local não os substitui"
+      ],
+      "proof": [
+        "Runtime 07/09/2026, servidor de produção local: prova scripted 7/7 PASS (login falho com mensagem única; cadastro sem aceite com botão disabled=true; e-mail duplicado com aviso e link Entrar; login correto redireciona a /onboarding; navegação /login↔/signup). Script .visual/proof-auth-entrada-2026-09-07.mjs.",
+        "Visual 07/09/2026: .visual/2026-09-07T23-55-39-231Z/report.md — /login e /signup clean em mobile-375, tablet-768 e desktop-1440; comparação com a prancha registrou divisão ~46/54 e wordmark correto. Os 12 findings high restantes são de outras rotas (dívida pré-existente no ledger).",
+        "Gate completo verde em 07/09/2026 sobre a árvore rastreada: lint 24s, typecheck 27s, test 51s (unit + 96 escopo), secrets 13s. Ruído local: pedidos.html não-rastreado na raiz quebra lint quando presente; não faz parte do repo nem do CI.",
+        "E2E 07/09/2026: 24/24 nos três projetos para os contratos de entrada (manaus-pilot-full-journey, onboarding-holder-family, onboarding-denials). Unit: 50/50 em tests/unit/auth.",
+        "Drift resolvido: os três specs E2E de entrada apontavam para o botão Receber link para entrar e headings da tela de magic link, removidos da tela em c0bf309 (feat(auth): login com e-mail e senha na web) sem atualização dos specs — verificado como falha pré-existente, não regressão desta mudança.",
+        "Divergências intencionais da prancha, todas por autoridade textual posterior: campo Senha e botão Entrar em vez de Receber código (ADR-20260907-login-com-senha, que registra que a prancha precisa ser regerada); Esqueci minha senha em vez de Preciso de ajuda (mesma ADR, copy explícita); aceite com textos aprovados em vez de Termos de uso/Código de convivência (regra da guia: copy legal nunca vem da imagem; ADR-20260907-consentimento-no-cadastro); rótulo Nome em vez de Nome completo (nota da prancha: nome de apresentação não exige nome civil); Google no cadastro mantido (ADR) embora o painel direito do bitmap não o mostre."
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "node scripts/visual/loop.mjs --fast",
+        "npx playwright test tests/e2e/manaus-pilot-full-journey.spec.ts tests/e2e/onboarding-holder-family.spec.ts tests/e2e/onboarding-denials.spec.ts --grep \"login|password|email and password|reference heading|Google|touch target|horizontal overflow on login|shell chrome on /login\""
+      ],
+      "links": [
+        "Prancha | ../../docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png",
+        "Notas da guia | ../../docs/design/visual-guide-2026-09-06/AGENTS.md",
+        "Mecanismo | ../../docs/decisions/ADR-20260907-login-com-senha.md",
+        "Aceite | ../../docs/decisions/ADR-20260907-consentimento-no-cadastro.md",
+        "Tela | ../../apps/web/app/(preauth)/login/components/bivaque-sign-in.tsx"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-07",
+      "sourceRevision": "2adcda5"
     }
   ]
 }

@@ -21,14 +21,20 @@ test.describe("holder onboarding journey", () => {
     await expect(page.getByText("A comunidade vai com você.")).toBeVisible()
   })
 
-  test("login page renders Google OAuth button and magic link form", async ({ page }) => {
+  // Expectativa trocada em 2026-09-07 com razão explícita, não para ficar
+  // verde: "Receber link para entrar" era o contrato do magic link, que
+  // ADR-20260907-login-com-senha tirou da tela por instrução do responsável.
+  // O spec ficou apontando para um botão que não existe desde c0bf309. A
+  // cobertura continua cobrindo os pontos de entrada: agora e-mail, senha,
+  // submit e Google.
+  test("login page renders the password form and Google OAuth button", async ({ page }) => {
     // Given the production Next server
     // When a user navigates to the login page
     await page.goto("/login")
 
     // Then the auth entry points are rendered
     await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Receber link para entrar" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible()
 
     const emailInput = page.getByLabel("E-mail")
     await expect(emailInput).toBeVisible()
@@ -482,7 +488,7 @@ test.describe("accessibility across journeys", () => {
     await page.goto("/login")
 
     // Then its own primary controls meet the 44px minimum
-    const submit = page.getByRole("button", { name: "Receber link para entrar" })
+    const submit = page.getByRole("button", { name: "Entrar" })
     await expect(submit).toBeVisible()
     const box = await submit.boundingBox()
     expect(box).not.toBeNull()
@@ -533,12 +539,21 @@ test.describe("accessibility across journeys", () => {
 // purpose in its H1. Indicações is a `(shell)` sidebar entry and is covered in
 // shell-navigation.spec.ts.
 test.describe("preauth page headings", () => {
-  test("login page leads with the Bivaque wordmark", async ({ page }) => {
+  // Realignado em 2026-09-07 à prancha 36-web-auth-entrada: o H1 do entrar é a
+  // frase da referência, e a marca passou a ser o wordmark sobre a foto (link
+  // para o início), não texto dentro do título. A cobertura de marca continua:
+  // agora pelo link com aria-label, que é o que a tecnologia assistiva lê.
+  test("login page leads with the reference heading and carries the brand link", async ({
+    page,
+  }) => {
     // Given the login page
     await page.goto("/login")
 
-    // Then its own heading carries the branding
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
+    // Then its own heading states the purpose and the brand links home
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: "Bivaque, voltar ao início" }).first(),
+    ).toBeVisible()
   })
 
   test("consent page leads with the terms heading", async ({ page }) => {

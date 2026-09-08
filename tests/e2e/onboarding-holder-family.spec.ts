@@ -5,11 +5,18 @@ test.describe("onboarding: verified holder and invited family", () => {
   test("verified Manaus holder completes onboarding and reaches community", async ({ page }) => {
     // Given a user who has just logged in and accepted consent
     await page.goto("/login")
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
+    // Contrato atualizado em 2026-09-07 com razão explícita: o heading
+    // "Bivaque" e o botão de magic link pertenciam à tela anterior;
+    // ADR-20260907-login-com-senha tirou o link da tela e a prancha 36 deu o
+    // título atual. Marca segue coberta pelo link de retorno ao início.
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: "Bivaque, voltar ao início" }).first(),
+    ).toBeVisible()
 
-    // The login page renders the Google OAuth button and magic link form
+    // The login page renders the password form and the Google OAuth button
     await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Receber link para entrar" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible()
 
     // Navigate to the consent page
     await page.goto("/consent")
@@ -81,15 +88,23 @@ test.describe("onboarding: verified holder and invited family", () => {
     await expect(page.getByText("A comunidade vai com você.")).toBeVisible()
   })
 
-  test("magic link email input works", async ({ page }) => {
+  // Renomeado e reescrito em 2026-09-07 com razão explícita: o envio por link
+  // saiu da tela (ADR-20260907-login-com-senha). O que este teste ainda prova:
+  // os campos de entrada aceitam texto e o submit do formulário de senha está
+  // presente — a interação fechada da prancha 36.
+  test("email and password inputs work and submit is present", async ({ page }) => {
     await page.goto("/login")
 
     const emailInput = page.getByLabel("E-mail")
     await emailInput.fill("test@example.invalid")
-
     await expect(emailInput).toHaveValue("test@example.invalid")
 
-    const magicLinkButton = page.getByRole("button", { name: "Receber link para entrar" })
-    await expect(magicLinkButton).toBeVisible()
+    // exact: o botão "Mostrar senha" também contém "senha" no aria-label e
+    // casaria em matching parcial.
+    const passwordInput = page.getByLabel("Senha", { exact: true })
+    await passwordInput.fill("senha-de-teste-123")
+    await expect(passwordInput).toHaveValue("senha-de-teste-123")
+
+    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible()
   })
 })
