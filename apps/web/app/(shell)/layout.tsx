@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { LocalityContextProvider, type LocalityCurrent } from "../../lib/locality-context"
+import { type MemberCommunity, MemberContextProvider } from "../../lib/member-context"
 import { AppShell } from "../components/bivaque/app-shell"
 import { ToastProvider } from "../components/bivaque/toast"
 
@@ -102,11 +103,73 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
           readOnly: outboundRow.access === "read_only",
         }
 
+  // G0: identidade do membro + "Minhas comunidades" + badge de não-lidas para a
+  // sidebar rica. Resolvido aqui, no servidor, e distribuído via MemberContext.
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || user === null) {
+    // O middleware garante um usuário autenticado aqui; se sumiu entre o gate e
+    // o render, falhe alto como nos blocos acima.
+    redirect("/login")
+  }
+
+  // A PK de `profiles` é `user_id`, não `id` (migration
+  // 20260802000100_locality_profile_foundation.sql:32). O client SSR aqui é
+  // instanciado sem o genérico <Database>, então o typecheck não confere nome
+  // de coluna — o erro só aparece em runtime, como 500 em toda rota do shell.
+  const { data: profileRow, error: profileError } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (profileError) {
+    throw new Error(`Could not resolve the member profile: ${profileError.message}`)
+  }
+
+  const displayName = (profileRow as { display_name: string } | null)?.display_name ?? ""
+
+  const { data: communityRows, error: communitiesError } = await supabase
+    .from("community_memberships")
+    .select("communities(id, name, is_deleted)")
+    .eq("user_id", user.id)
+    .eq("status", "approved")
+
+  if (communitiesError) {
+    throw new Error(`Could not resolve the member communities: ${communitiesError.message}`)
+  }
+
+  // Comunidade apagada continua com a linha de membership; a sidebar não pode
+  // listá-la (communities.is_deleted, migration 20260805211933:26).
+  type CommunityEmbed = MemberCommunity & { is_deleted: boolean }
+  const communities = ((communityRows as unknown as { communities: CommunityEmbed | null }[]) ?? [])
+    .map((r) => r.communities)
+    .filter((c): c is CommunityEmbed => c !== null && c.is_deleted !== true)
+    .map(({ id, name }) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+
+  const { count: unreadRaw, error: unreadError } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("recipient_user_id", user.id)
+    .is("read_at", null)
+
+  if (unreadError) {
+    throw new Error(`Could not resolve unread notifications: ${unreadError.message}`)
+  }
+
+  const unreadCount = unreadRaw ?? 0
+
   return (
     <LocalityContextProvider value={{ current, outbound }}>
-      <ToastProvider>
-        <AppShell>{children}</AppShell>
-      </ToastProvider>
+      <MemberContextProvider value={{ displayName, communities, unreadCount }}>
+        <ToastProvider>
+          <AppShell>{children}</AppShell>
+        </ToastProvider>
+      </MemberContextProvider>
     </LocalityContextProvider>
   )
 }
