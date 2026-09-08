@@ -1,5 +1,9 @@
 # AGENTS.md — Bivaque Community
 
+## Reconstrução funcional web — revisão de 08/09/2026
+
+Leia `docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md` para a entrega atual, somente web: catálogo de rotas, funcionamento, sequência W00–W09 e gates. Substitui o plano anterior de apresentação sem persistência. UI isolada não conclui fluxo; backend, operação e retorno necessários entram na entrega. Mobile não bloqueia conclusão web. Preservar decisões técnicas R3 e registrar bloqueios reais; não reabrir escolhas de produto já autorizadas.
+
 ## Owner corrections — 2026-09-07
 
 Read [the six explicit corrections](docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md). They require city-wide questions, event information requests, an optional reason for joining, the exact military label, fast CPF verification with identity/AI fallback, and optional self-declared Armed Force/OM with individual visibility controls. These are current product instructions, not delivered runtime. They supersede conflicting older product prohibitions; retain server authorization, privacy and data-integrity requirements.

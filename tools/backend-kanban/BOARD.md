@@ -28,7 +28,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **BLOCK-RESEND** · BLOCK · Resend e domínio de e-mail transacional — Criar o projeto de deploy do Bivaque e configurar RESEND_API_KEY e RESEND_FROM_EMAIL; Provar uma entrega real pelo outbox em ambiente implantado
 - **BLOCK-WHATSAPP** · BLOCK · Canal WhatsApp do outbox — Chip dedicado; CNPJ para Cloud API futura; Decisão de produto
 - **BLOCK-MOBILE-RUNTIME** · P1 · Runtime Android/iOS em device real — bootstrap ausente — cmdline-tools + system-image + AVD ausentes (Android); Apple Developer Program + EAS credentials ausentes (iOS)
-- **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Decisão R3 humana
+- **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Reconciliar ADR técnico com autorização de produto de 07/09; concluir threat model, leitura por campo, remoção e testes positivos/negativos
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança
 
 ## Drift aberto
