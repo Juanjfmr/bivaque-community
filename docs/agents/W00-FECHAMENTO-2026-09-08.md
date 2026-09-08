@@ -106,9 +106,11 @@ W03 e W02) · `SHELL-BELL-DEAD` · `SHELL-SETTINGS-LABEL` · `OUTBOX-INVITE-RECI
 
 ## 5. O que W01 encontra primeiro
 
-1. **Decisão R3 sobre processamento de identidade por IA** — sem ADR. Ou W01 fecha com o caminho
-   manual (CPF → upload → decisão de operador, que já existem) e a IA fica nomeada como pendência,
-   ou W01 fica bloqueada. É decisão do responsável.
+1. **Identidade por IA — decidido em 08/09: fica nomeada como pendência.** W01 não depende dela e
+   não fica bloqueada; entrega o caminho manual (CPF pelo Portal → arquivo único → decisão de
+   operador em `/admissions`), que já existe. **Consequência obrigatória de copy:** as telas de
+   espera das pranchas 33, 38, 68 e 69 não podem afirmar análise por IA nem prometer prazo — a
+   análise é humana nesta entrega. Cards `W01-ADMISSAO-MANUAL` e `BLOCK-LEGAL-AI`.
 2. **Resend não configurado** — sem ele, confirmação de e-mail não tem prova de entrega real.
 3. **CI vermelha** — nenhuma prova externa de W01 vale enquanto a base não estiver verde.
 4. `ADR-20260907-login-com-senha` e `ADR-20260907-consentimento-no-cadastro` estão `approved`:

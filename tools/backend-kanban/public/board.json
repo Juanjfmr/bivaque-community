@@ -416,13 +416,14 @@
       "priority": "BLOCK",
       "category": "governance",
       "status": "blocked",
-      "description": "Antes de conteúdo comunitário sair para provedor externo, definir finalidade, base legal, retenção, redaction, audit trail e opt-out quando aplicável.",
+      "description": "Antes de conteúdo comunitário sair para provedor externo, definir finalidade, base legal, retenção, redaction, audit trail e opt-out quando aplicável. DECISÃO DO RESPONSÁVEL, 08/09/2026: o reconhecimento de identidade por IA fica NOMEADO COMO PENDÊNCIA e não entra na etapa W01. W01 entrega o caminho manual que já existe (CPF pelo Portal como caminho rápido; sem conclusão, envio de arquivo único e decisão de operador em /admissions). A IA não é pré-requisito de W01, e W01 não fica bloqueada por ela. Construir o reconhecimento por IA continua exigindo ADR aprovado com fornecedor, base legal, retenção, descarte e acesso mínimo — nada disso foi decidido aqui.",
       "checklist": [
         "Definir controlador, canal e encarregado",
         "Revisar PRIVACIDADE.md juridicamente",
         "Definir providers e categorias permitidas",
         "Decidir opt-out e retenção",
-        "Publicar governança aprovada"
+        "Publicar governança aprovada",
+        "ADR técnico do reconhecimento de identidade por IA — fornecedor, base legal, retenção, descarte, acesso mínimo (adiado de W01 por decisão de 08/09)"
       ],
       "proof": [
         "BIVAQUE.md declara o texto de privacidade não publicável ainda",
@@ -430,8 +431,8 @@
       ],
       "blockers": ["Revisão jurídica", "Decisões do dono"],
       "links": ["Privacidade | ../../docs/legal/PRIVACIDADE.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "30ab4eb",
       "dependencies": []
     },
     {
@@ -1873,6 +1874,47 @@
       "dependencies": [],
       "updatedAt": "2026-09-08",
       "sourceRevision": "44c1d4b"
+    },
+    {
+      "id": "W01-ADMISSAO-MANUAL",
+      "title": "W01: acesso completo e admissão pelo caminho manual, sem IA",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "Etapa W01 da especificação funcional (§7). Por decisão do responsável em 08/09/2026, W01 fecha com o caminho de admissão que já existe e NÃO depende do reconhecimento de identidade por IA, que fica nomeado como pendência em BLOCK-LEGAL-AI. Caminho entregue: cadastro com e-mail e senha mais Google (ADR-20260907-login-com-senha, approved), aceite versionado integrado ao cadastro (ADR-20260907-consentimento-no-cadastro, approved), confirmação e recuperação, CPF pelo Portal da Transparência como caminho rápido e, sem conclusão por CPF, envio de ARQUIVO ÚNICO com decisão de operador na fila de /admissions. CONSEQUÊNCIA DE COPY, obrigatória: as telas de espera das pranchas 33, 38, 68 e 69 não podem afirmar análise por IA nem prometer prazo — a análise é humana nesta entrega, e a guia proíbe SLA inventado. Estados de envio, processamento, resultado e reenvio de arquivo ilegível continuam valendo, com o operador como ator.",
+      "checklist": [
+        "Entrada, confirmação e recuperação fecham com persistência e contas reais de teste",
+        "CPF pelo Portal como caminho rápido, com indisponibilidade tratada como indisponibilidade e não como inelegibilidade",
+        "Envio de arquivo único; substituição do arquivo quando ilegível, sem perder a conta",
+        "Fila de admissão e decisão do operador fecham o ciclo em duas contas distintas",
+        "Nenhuma tela afirma análise por IA nem promete prazo",
+        "Convite familiar aceito por conta independente",
+        "Nenhum membro entra por bypass; caminho negado testado em cada mutação"
+      ],
+      "proof": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 test:db",
+        "npx pnpm@11.18.0 test:e2e",
+        "node scripts/visual/loop.mjs"
+      ],
+      "tests": [
+        "supabase/tests/admissions-decision.sql",
+        "supabase/tests/operator-authorization.sql",
+        "supabase/tests/verification-documents.sql",
+        "tests/e2e/admissions-operator-flow.spec.ts",
+        "tests/e2e/onboarding-holder-family.spec.ts"
+      ],
+      "links": [
+        "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md",
+        "docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
+        "docs/agents/CONTRATOS-PENDENTES-W00-2026-09-08.md",
+        "docs/decisions/ADR-20260907-login-com-senha.md",
+        "docs/decisions/ADR-20260907-consentimento-no-cadastro.md"
+      ],
+      "dependencies": ["RECON-W00-FUNDACAO", "BLOCK-RESEND"],
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "30ab4eb"
     }
   ]
 }

@@ -35,23 +35,36 @@ o `security-auditor` roda junto do revisor.
 - **Decide:** responsável, em ADR. O agente não decide.
 - **Card:** `BLOCK-AFFILIATION` (HOLD).
 
-### 1.2 Processamento de identidade digital por IA — **sem ADR**
+### 1.2 Processamento de identidade digital por IA — **adiado por decisão de 08/09**
 
 - **Estado:** as correções de 07/09 autorizam o produto (CPF como caminho rápido, envio de
   **arquivo único** com reconhecimento por IA como alternativa). Não há ADR técnico. Não há
   fornecedor escolhido, política de descarte, prazo de retenção, nem definição de processamento
   privado com acesso mínimo.
-- **Trava:** pranchas 33, 38, 68, 69 — etapa **W01**, que é a próxima. O upload de documento e a
-  decisão manual do operador já existem (`onboarding/document-actions.ts`,
-  `decide_verification_document`); o **reconhecimento por IA conectado não existe**.
-- **Destrava:** ADR aprovado com fornecedor, base legal LGPD, retenção, descarte e acesso mínimo;
-  e a decisão de se W01 fecha com decisão manual do operador enquanto a IA não existe.
+- **Já existe:** upload de documento e decisão manual do operador
+  (`onboarding/document-actions.ts`, RPC `decide_verification_document`, fila em `/admissions`).
+  O **reconhecimento por IA conectado não existe**.
+- **Decisão do responsável, 08/09/2026:** a IA **não** entra em W01 e fica nomeada como pendência.
+  W01 entrega o caminho manual e não fica bloqueada.
+- **Destrava (para construir a IA algum dia):** ADR aprovado com fornecedor, base legal LGPD,
+  retenção, descarte e acesso mínimo.
 - **Decide:** responsável + revisão jurídica.
-- **Card:** `BLOCK-LEGAL-AI`.
+- **Cards:** `BLOCK-LEGAL-AI` (a pendência) e `W01-ADMISSAO-MANUAL` (o que W01 entrega).
 
-> **Consequência imediata para W01:** ou a etapa fecha explicitamente com o caminho manual
-> (CPF → upload → decisão de operador) e a IA fica nomeada como pendência, ou W01 fica bloqueada.
-> É decisão sua, e é a primeira que W01 vai encontrar.
+> **DECIDIDO PELO RESPONSÁVEL EM 08/09/2026 — a IA fica nomeada como pendência.**
+>
+> W01 **não depende** do reconhecimento por IA e **não fica bloqueada** por ele. A etapa entrega o
+> caminho que já existe: CPF pelo Portal como caminho rápido; sem conclusão por CPF, envio de
+> **arquivo único** e **decisão de operador** na fila de `/admissions`.
+>
+> **Consequência de implementação, obrigatória.** As telas de espera das pranchas 33, 38, 68 e 69
+> **não podem afirmar análise por IA nem prometer prazo** — nesta entrega a análise é humana, e a
+> guia já proíbe SLA inventado. Os estados de envio, processamento, resultado e reenvio de arquivo
+> ilegível continuam valendo, com o **operador** como ator.
+>
+> Construir o reconhecimento por IA continua exigindo ADR aprovado com fornecedor, base legal,
+> retenção, descarte e acesso mínimo. Nada disso foi decidido aqui — o que se decidiu foi **não
+> construir agora**. Card `W01-ADMISSAO-MANUAL`; a pendência da IA vive em `BLOCK-LEGAL-AI`.
 
 ### 1.3 Textos legais para abertura pública
 
@@ -122,7 +135,8 @@ está **vermelha**.
 
 A próxima etapa é **acesso completo + operação de admissão**. Ela encontra, nesta ordem:
 
-1. **1.2 (identidade por IA)** — decisão sua sobre fechar W01 com o caminho manual ou bloquear.
+1. **Identidade por IA: já decidido (§1.2)** — fora de W01, nomeada como pendência. A etapa entrega
+   o caminho manual. **As telas de espera não podem afirmar análise por IA nem prometer prazo.**
 2. **Resend** — sem ele, confirmação de e-mail não tem prova de entrega real.
 3. **CI vermelha** — nenhuma prova externa de W01 vale enquanto a base não estiver verde.
 4. `ADR-20260907-login-com-senha` e `ADR-20260907-consentimento-no-cadastro` já estão `approved`:
