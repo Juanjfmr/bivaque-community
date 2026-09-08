@@ -2,22 +2,17 @@ import { expect, test } from "@playwright/test"
 import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 
 // The shell chrome only exists under the app's `(shell)` route group, and every
-// route there is behind the session gate. These specs used to open "/" while
-// unauthenticated, which lands on /login — a `(preauth)` route with no layout
-// and therefore no nav at all. They sign in and assert against /community
-// instead.
+// route there is behind the session gate. These specs sign in and assert
+// against /inicio — the home of the new navigation.
 //
-// BottomNav labels come from NavItem.shortLabel when present, so the community
-// tab reads "Comunidade", not "Minha comunidade".
-//
-// ADR-20260816-shells-e-navegacao (see bottom-nav.tsx's own header comment,
-// enforced by tests/scope/navigation.test.mjs) collapsed the nav to exactly
-// four product-model containers — Cidade, Comunidade, Grupos, Eu. Eventos
-// lives inside Cidade, Mensagens inside Eu, and Indicações moved to a header
-// icon reachable at every width (VISUAL_GUIDE.md §0). This spec previously
-// asserted the pre-ADR five-tab model (Comunidade/Grupos/Eventos/Indicações/
-// Mensagens as five siblings) and never actually ran against the shipped
-// shell — found realigning E2E against the real seed/app after onda T/F.
+// PROCESSO-DE-CONSTRUCAO §7 (2026-09-06) replaced the four historical containers
+// of ADR-20260816 (Cidade / Minha comunidade / Grupos / Eu) with
+// Início / Explorar / Comunidades / Perfil. The set is still exactly four
+// (ceiling of five, ADR rule 2 preserved), enforced by
+// tests/scope/navigation.test.mjs. Guia and Mercado are entries inside Explorar;
+// grupos live inside a comunidade; Indicações is a header icon reachable at
+// every width. BottomNav labels come from NavItem.shortLabel, which equals the
+// label for all four new containers.
 
 test.describe("BottomNav visibility across viewports", () => {
   test("shows all 4 navigation items at 375px", async ({ page, context }, testInfo) => {
@@ -26,8 +21,8 @@ test.describe("BottomNav visibility across viewports", () => {
     // Given an authenticated member on the mobile-375 viewport
     await seedSession(context)
 
-    // When they open the community route
-    await page.goto("/community")
+    // When they open the home route
+    await page.goto("/inicio")
 
     // Then all 4 bottom navigation items are visible, in NAV_ITEMS order
     const nav = page.locator(BOTTOM_NAV)
@@ -36,10 +31,10 @@ test.describe("BottomNav visibility across viewports", () => {
     const tabs = nav.getByRole("tab")
     await expect(tabs).toHaveCount(4)
 
-    await expect(tabs.nth(0)).toContainText("Cidade")
-    await expect(tabs.nth(1)).toContainText("Comunidade")
-    await expect(tabs.nth(2)).toContainText("Grupos")
-    await expect(tabs.nth(3)).toContainText("Eu")
+    await expect(tabs.nth(0)).toContainText("Início")
+    await expect(tabs.nth(1)).toContainText("Explorar")
+    await expect(tabs.nth(2)).toContainText("Comunidades")
+    await expect(tabs.nth(3)).toContainText("Perfil")
   })
 
   test("gives way to the icon rail at 768px", async ({ page, context }) => {
@@ -47,8 +42,8 @@ test.describe("BottomNav visibility across viewports", () => {
     await seedSession(context)
     await page.setViewportSize({ width: 768, height: 1024 })
 
-    // When they open the community route
-    await page.goto("/community")
+    // When they open the home route
+    await page.goto("/inicio")
 
     // Then the BottomNav is gone and the sidebar takes over as a 4rem rail.
     // The labels stay in the accessibility tree even though they are not drawn.
@@ -57,7 +52,7 @@ test.describe("BottomNav visibility across viewports", () => {
     const sidebar = page.locator(SIDEBAR)
     await expect(sidebar).toBeVisible()
     expect((await sidebar.boundingBox())?.width).toBe(64)
-    await expect(page.getByRole("link", { name: "Minha comunidade" })).toBeAttached()
+    await expect(page.getByRole("link", { name: "Comunidades" })).toBeAttached()
   })
 
   test("expands the sidebar at 1440px", async ({ page, context }) => {
@@ -65,13 +60,13 @@ test.describe("BottomNav visibility across viewports", () => {
     await seedSession(context)
     await page.setViewportSize({ width: 1440, height: 900 })
 
-    // When they open the community route
-    await page.goto("/community")
+    // When they open the home route
+    await page.goto("/inicio")
 
     // Then the BottomNav is hidden and the sidebar is expanded with labels
     await expect(page.locator(BOTTOM_NAV)).toBeHidden()
     expect((await page.locator(SIDEBAR).boundingBox())?.width).toBe(256)
-    await expect(page.getByRole("link", { name: "Minha comunidade" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Comunidades" })).toBeVisible()
   })
 })
 
@@ -81,8 +76,8 @@ test.describe("Indicações discoverable entry", () => {
     await seedSession(context)
     await page.setViewportSize({ width: 375, height: 812 })
 
-    // When they open the community route
-    await page.goto("/community")
+    // When they open the home route
+    await page.goto("/inicio")
 
     // Then Indicações is a header icon, visible at every width — not a
     // BottomNav tab (the ceiling of four containers has no room for it)
@@ -96,8 +91,8 @@ test.describe("Indicações discoverable entry", () => {
     await seedSession(context)
     await page.setViewportSize({ width: 768, height: 1024 })
 
-    // When they open the community route
-    await page.goto("/community")
+    // When they open the home route
+    await page.goto("/inicio")
 
     // Then the header entry is still named and reachable
     const indications = page.getByRole("link", { name: "Indicações" })
@@ -110,8 +105,8 @@ test.describe("Indicações discoverable entry", () => {
     await seedSession(context)
     await page.setViewportSize({ width: 1440, height: 900 })
 
-    // When they open the community route
-    await page.goto("/community")
+    // When they open the home route
+    await page.goto("/inicio")
 
     // Then Indicações is reachable from the header, where it is a link
     const indications = page.getByRole("link", { name: "Indicações" })
@@ -126,13 +121,13 @@ test.describe("Navigation tab links", () => {
     await seedSession(context)
     await page.setViewportSize({ width: 375, height: 812 })
 
-    // When they open the community route
-    await page.goto("/community")
+    // When they open the home route
+    await page.goto("/inicio")
 
     // Then each tab links to the expected route
     const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
 
-    const expectedHrefs = ["/localidade", "/community", "/groups", "/profile"]
+    const expectedHrefs = ["/inicio", "/explorar", "/communities", "/profile"]
 
     for (let index = 0; index < expectedHrefs.length; index++) {
       const href = await tabs.nth(index).getAttribute("href")
@@ -147,11 +142,12 @@ test.describe("Profile reachable from the header avatar", () => {
     await seedSession(context)
     await page.setViewportSize({ width: 375, height: 812 })
 
-    // When they open the community route
-    await page.goto("/community")
+    // When they open the home route
+    await page.goto("/inicio")
 
-    // Then the header avatar links to /profile — the regression this plan can cause
-    const avatar = page.getByRole("link", { name: "Perfil" })
+    // Then the header avatar links to /profile — the regression this plan can
+    // cause. Scoped to <header> because "Perfil" is now also a nav container.
+    const avatar = page.locator("header").getByRole("link", { name: "Perfil" })
     await expect(avatar).toBeVisible()
     await expect(avatar).toHaveAttribute("href", "/profile")
 

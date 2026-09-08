@@ -90,14 +90,14 @@ export async function proxy(request: NextRequest) {
   // Root redirect — session-aware (new behaviour). The marketing landing
   // lives at "/" and must stay public for acquisition, so an anonymous
   // visitor is served the landing. Only an authenticated member hitting
-  // "/" is routed into the app (community after consent, else consent).
+  // "/" is routed into the app (/inicio after consent, else onboarding).
   if (pathname === "/" || pathname === "") {
     if (user) {
       const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
       // Sem aceite, a pessoa segue para o onboarding, não para a tela de
       // consentimento: só contas anteriores a esta mudança chegam aqui sem
       // aceite, e mandá-las ao portão seria a tela reaparecendo.
-      return NextResponse.redirect(new URL(hasConsent ? "/community" : "/onboarding", request.url))
+      return NextResponse.redirect(new URL(hasConsent ? "/inicio" : "/onboarding", request.url))
     }
     return supabaseResponse
   }
