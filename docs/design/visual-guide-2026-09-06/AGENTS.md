@@ -31,3 +31,7 @@ A ampliação de 07/09/2026 foi solicitada pelo responsável pelo produto. Ela c
 manifest.json e os PNGs presentes identificam as referências entregues. expansion-generation.json guarda pedidos, prompts e proveniência da ampliação; entrada pending/blocked não é arquivo entregue. MAPA-DE-TELAS.md descreve cobertura visual, não é um segundo backlog de implementação.
 
 Ao adicionar ou substituir uma referência: preservar o original histórico, registrar a inspeção e correções, sincronizar manifesto, galeria e mapa e atualizar a evidência do card correspondente. Pendência de runtime continua aberta até prova real; publicar imagens não conclui o módulo.
+
+## Fechamento da geração — 08/09/2026
+
+O manifesto atual contém 59 pranchas. As 34/38/40/42/45/48/49 foram substituídas; use os PNGs canônicos, nunca history. Acrescentadas 66/67 (perguntas ao organizador) e 68/69 (envio e recuperação de identidade). Leia reviewNotes inclusive nas imagens novas: fixtures, limites ilustrativos e variações de marca não são requisitos. Geração concluída não significa runtime concluído.

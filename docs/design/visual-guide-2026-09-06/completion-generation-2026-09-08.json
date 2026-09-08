@@ -1,0 +1,42 @@
+{
+  "date": "2026-09-08",
+  "tool": "image_gen integrado",
+  "artifacts": [
+    {
+      "id": "34-mobile-onboarding-contexto",
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-5c09e2ba-caff-479e-9b8a-cba3f6076df7.png",
+      "prompt": "Edit the supplied BIVAQUE three-phone board preserving phones, style, left city screen and right first-action screen. Middle personalization screen: make avatar compact (40px equivalent), show existing name Ana in short row, add two clearly labeled OPTIONAL fields: 'Força Armada (opcional)' dropdown 'Selecionar', with individual 'Exibir no perfil' switch OFF; 'OM (opcional)' input placeholder 'Organização Militar', with its own 'Exibir no perfil' switch OFF. Keep optional interests compact chips Mudança Cultura Esportes Educação. Both 'Continuar' and 'Pular por enquanto' visible below with safe spacing. Intro short 'Você escolhe o que compartilhar.' Fit everything legibly by reducing decorative whitespace, not font sizes. Right screen Mercado helper exactly 'Produtos e anúncios da comunidade.' Preserve remaining right and all left content. Deep green flat buttons, white background, crisp Portuguese text. No additional fields or badges."
+    },
+    {
+      "id": "38-web-auth-admissao",
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-f8aae896-5d8b-4b65-a4bb-2bb61279115f.png",
+      "prompt": "Edit this BIVAQUE two desktop board preserving white/green crisp professional style. Left use compact radio choices with EXACT labels 'Sou militar das Forças Armadas', 'Sou veterano', 'Sou pensionista', 'Recebi um convite familiar'. First selected. CPF input empty, primary Verificar acesso visibly DISABLED pale gray with readable dark text. Helper 'A verificação por CPF é praticamente instantânea.' Below explain 'Se não conseguirmos confirmar, você poderá enviar sua identidade.' Right heading 'Estamos analisando sua identidade', description 'O reconhecimento por IA pode levar um pouco mais. Volte aqui para acompanhar.' Status 'Identidade em análise', Atualizar situação and Sair. No invented time guarantee. Keep progress rail. No public verification badge, no private CPF example. Fit all labels without truncation. Flat colors."
+    },
+    {
+      "id": "40-mobile-comunidades",
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-ad48e3f2-0553-492a-b98a-0c0c60d40b53.png",
+      "prompt": "Edit supplied three-phone BIVAQUE board preserving finished white/forest green visual system. Left keep Minhas comunidades Jardim das Acácias and Famílias em Brasília, but Seus pedidos rename Vila das Palmeiras. Middle heading 'Comunidades para conhecer', first discovery community Vila das Palmeiras, second 'Vizinhos do Parque'. Right detail Vila das Palmeiras. Reduce right hero height to fit below Como participar a clearly labeled multiline field 'Por que você quer participar? (opcional)' with placeholder 'Conte um pouco sobre seu interesse'. Helper 'Visível apenas para você e os responsáveis pela análise.' Keep 'A participação depende de aprovação.' Then active green 'Solicitar participação' even with reason empty. No rosters or membership counts on discovery. Preserve bottom nav Comunidades selected and excellent legible Portuguese typography. No invented extra features."
+    },
+    {
+      "id": "42-web-comunidades",
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-c955c960-b889-4aa3-b5e4-6dea74f3253e.png",
+      "prompt": "Edit this BIVAQUE two desktop board, retain shell and white/green design. LEFT my communities remain Jardim das Acácias and Famílias em Brasília, replace avatar stacks and 'pessoas vão' with short community descriptions. Pending request Vila das Palmeiras. RIGHT Discover selected list Vila das Palmeiras, Vizinhos do Parque, Famílias em Recife; remove all member avatars/names/counts. Selected detail Vila das Palmeiras. Reduce photo height; under description add label 'Por que você quer participar? (opcional)', empty multiline input 'Conte um pouco sobre seu interesse', helper 'Visível apenas para você e os responsáveis pela análise.' Below active 'Solicitar participação'. State 'A participação depende de aprovação.' No private roster in discovery. Preserve legibility of Portuguese, roomy desktop layout and existing navigation."
+    },
+    {
+      "id": "45-web-publicacao",
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-c020ff8a-0007-4493-bb95-ade876a3e6cc.png",
+      "prompt": "Edit BIVAQUE two desktop board preserving layout and style. Left Nova pergunta: audience label 'Quem pode ver?' show TWO radio options: selected 'Toda a cidade · Brasília, DF' helper 'Membros do Bivaque nesta cidade'; unselected 'Jardim das Acácias'. Preview audience 'Toda a cidade · Brasília, DF' and footer 'Visível para membros do Bivaque em Brasília.' Keep question composer and Publicar. Right Editar publicação original audience 'Jardim das Acácias' READ ONLY text with lock, no dropdown. Dialog 'Sair sem salvar?' safe action 'Continuar editando' solid forest green, destructive 'Descartar alterações' red outline. Remove duplicate Tentar novamente action; retain Salvar alterações. Remove arbitrary upload size and character counters on both. No public internet access. Professional readable Portuguese flat white/green design.",
+      "refinement": "Correct the LEFT desktop only. Replace top form label 'Para qual comunidade você está perguntando?' and community dropdown with label 'Quem pode ver?' and two radio rows: selected 'Toda a cidade · Brasília, DF', unselected 'Jardim das Acácias'. DELETE the radio controls from the right-hand preview rail of this left desktop. Preview rail must only show audience text 'Toda a cidade · Brasília, DF', Carlos, question title and body, then footer 'Visível para membros do Bivaque em Brasília.' There must be ONE audience chooser in form, zero in preview, no stale selected community dropdown. Remove 10MB upload helper. Keep the entire RIGHT desktop unchanged. Crisp text, exact composition."
+    },
+    {
+      "id": "48-web-eventos",
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-622c5702-bb95-4915-b62e-09e4a666be36.png",
+      "prompt": "Edit supplied BIVAQUE event desktops preserving everything except these changes. In right event detail replace organizer Leila Martins with Mariana Santos. Directly under organizer add large outlined button 'Pedir mais informações', helper 'Envie sua dúvida para Mariana sobre este evento.' This button remains independent of presence controls. Keep Você vai, Cancelar presença and safe confirmation Manter presença as original, reduce hero height if needed for all controls to fit. Left event list remains. Exact Portuguese, flat forest green/white design, no other features."
+    },
+    {
+      "id": "49-mobile-perfil",
+      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-4891db7c-e203-4fae-a5b4-0ba860acd775.png",
+      "prompt": "Edit supplied three-phone BIVAQUE profile board. Preserve entire left and right phones. Redesign only middle Editar perfil to fit: compact 48px avatar with camera, Nome Carlos Ribeiro field, compact Bio optional two lines, Força Armada (opcional) dropdown Selecionar with individual Exibir no perfil switch OFF, OM (opcional) input Organização Militar with its own Exibir no perfil switch OFF, helper Você escolhe o que compartilhar. Salvar alterações full green button above bottom navigation. Keep readable 16px-equivalent typography by eliminating decorative whitespace and huge avatar. Profile nav selected. No ranks badges or compulsory fields. Right other member profile does not show hidden branch/OM."
+    }
+  ]
+}
