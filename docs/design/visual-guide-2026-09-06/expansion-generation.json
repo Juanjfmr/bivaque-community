@@ -7,11 +7,7 @@
       "kind": "mobile",
       "group": "auth",
       "title": "Confirmação de e-mail",
-      "screens": [
-        "Confirmar e-mail",
-        "Código incorreto",
-        "Código expirado"
-      ],
+      "screens": ["Confirmar e-mail", "Código incorreto", "Código expirado"],
       "file": "31-mobile-auth-confirmacao.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. AUTH EMAIL CONFIRMATION three states. No member navigation. Compact back arrow and BIVAQUE header. First: headline 'Confira seu e-mail', copy 'Enviamos um código para ana@exemplo.invalid', link 'Alterar e-mail', six empty code boxes, dark gray disabled button 'Confirmar' on opaque pale gray, 'Reenviar em 00:28', short 'Preciso de ajuda'. Second: same layout with filled 6 digits, inline red text 'Código incorreto. Confira e tente novamente.', active green Confirmar, link 'Reenviar código'. Third: same layout with clean subtle amber feedback 'Este código expirou.', helper 'Peça um novo código para continuar.', prominent green 'Enviar novo código', 'Alterar e-mail'. Inputs and errors professionally aligned. No keypad and no people photos here.",
@@ -27,11 +23,7 @@
       "kind": "mobile",
       "group": "auth",
       "title": "Aceites e verificação",
-      "screens": [
-        "Aceites necessários",
-        "Explicação da verificação",
-        "Verificar acesso"
-      ],
+      "screens": ["Aceites necessários", "Explicação da verificação", "Verificar acesso"],
       "file": "32-mobile-auth-acesso.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. No member bottom navigation. Panel1 'Antes de continuar' with compact progress 'Seu acesso', links 'Termos de uso', 'Privacidade', 'Código de convivência', unchecked explicit necessary acceptance checkbox, continue button. No legal prose or promises. Panel2 'Como funciona o acesso' calm simple outline icon, 'Vamos conferir seu acesso à comunidade.' two compact options 'Tenho vínculo próprio' and 'Recebi um convite familiar', primary 'Continuar'. Panel3 'Verificar meu acesso', field CPF EMPTY with label only (no digits), explanation 'Informe seu CPF para esta verificação.', button 'Verificar acesso', link 'Preciso de ajuda'. Do not invent document uploads, biometrics, rankings or public badges. Acceptance may be inline signup in implementation; no repeat if already accepted.",
@@ -78,11 +70,7 @@
       "kind": "mobile",
       "group": "auth",
       "title": "Cidade e primeira chegada",
-      "screens": [
-        "Escolher cidade",
-        "Personalização opcional",
-        "Primeira ação útil"
-      ],
+      "screens": ["Escolher cidade", "Personalização opcional", "Primeira ação útil"],
       "file": "34-mobile-onboarding-contexto.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. No member navigation in first2 panels. First 'Qual cidade você quer explorar?' search 'Buscar cidade', radio results 'Brasília, DF', 'Recife, PE', 'Manaus, AM', Brasília selected, 'Continuar'; manual search clear no permission modal. Second 'Deixe com a sua cara', optional avatar 'Adicionar foto', name Ana, interest chips Mudança, Cultura, Esportes, Educação, helper 'Você pode fazer isso depois.', 'Continuar', 'Pular por enquanto'. Third first signed-in Início screen Brasília DF, 'Por onde vamos começar, Ana?', coherent cards 'Encontrar comunidade', 'Consultar o Guia', 'Explorar serviços', explicit Mercado link, member bottom nav Início active. City selection does not show private posts or imply membership.",
@@ -103,11 +91,7 @@
       "kind": "mobile",
       "group": "auth",
       "title": "Retomada e recuperação",
-      "screens": [
-        "Retomar cadastro",
-        "Falha de conexão",
-        "Sessão expirada"
-      ],
+      "screens": ["Retomar cadastro", "Falha de conexão", "Sessão expirada"],
       "file": "35-mobile-auth-retomada.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Three sparse finished native screens. First 'Vamos continuar?' small progress completed E-mail, next Seu acesso, 'Continue de onde parou.', green 'Retomar cadastro', 'Usar outra conta'. Second 'Não foi possível conectar' unobtrusive offline icon and 'Confira sua conexão e tente novamente.', 'Tentar novamente', keep email ana@exemplo.invalid visible in prior form behind no success claim. Third 'Entre novamente' copy 'Sua sessão expirou. Entre para continuar.', email prefilled ana@exemplo.invalid, 'Receber código', 'Usar outro e-mail', 'Preciso de ajuda'. No password reset in passwordless flow.",
@@ -124,10 +108,7 @@
       "kind": "web",
       "group": "auth",
       "title": "Entrada e cadastro web",
-      "screens": [
-        "Entrar",
-        "Criar conta"
-      ],
+      "screens": ["Entrar", "Criar conta"],
       "file": "36-web-auth-entrada.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Two separate DESKTOP auth pages no signed-in sidebar. Left panel login, 50/50 layout, tasteful civilian community photograph left with BIVAQUE wordmark, right form heading 'Que bom ter você de volta.', labeled e-mail ana@exemplo.invalid, active green 'Receber código', separator ou, outline 'Continuar com Google', Criar conta and Preciso de ajuda links. Right panel signup same layout with 'Vamos começar.', name Ana Ribeiro, e-mail ana@exemplo.invalid, concise checkbox 'Li e aceito os Termos de uso e o Código de convivência', link 'Política de Privacidade', active green 'Criar conta', 'Já tenho conta'. No fake consent claims; no benefits slogans.",
@@ -144,10 +125,7 @@
       "kind": "web",
       "group": "auth",
       "title": "Confirmação e retomada web",
-      "screens": [
-        "Confirmar e-mail",
-        "Confirmação expirada e recuperação"
-      ],
+      "screens": ["Confirmar e-mail", "Confirmação expirada e recuperação"],
       "file": "37-web-auth-confirmacao.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Two desktop AUTH pages no member sidebar, compact 440px central form and restrained branded light left rail. Left 'Confira seu e-mail', 'ana@exemplo.invalid', six code fields, Alterar e-mail, Confirmar, Reenviar em 00:28. Right same form amber inline 'Este código expirou.', 'Enviar novo código', 'Alterar e-mail', 'Preciso de ajuda'. Desktop proportions, no giant illustration. Dark gray disabled text. No real codes or account information.",
@@ -163,10 +141,7 @@
       "kind": "web",
       "group": "auth",
       "title": "Verificação e admissão web",
-      "screens": [
-        "Verificar acesso",
-        "Acompanhar admissão"
-      ],
+      "screens": ["Verificar acesso", "Acompanhar admissão"],
       "file": "38-web-auth-admissao.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Two desktop AUTH viewports. Left small sidebar progress E-mail completed, Seu acesso current, Cidade upcoming, body 'Verificar meu acesso', two ways Tenho vínculo próprio selected, Recebi um convite familiar alternative, empty CPF field, short explanatory copy, Verificar acesso, Preciso de ajuda. No raw CPF example. Right same auth shell 'Estamos verificando seu acesso', restrained status card 'Em andamento', Atualizar situação and Sair. No success badge, result reason or documents. Links Termos / Privacidade footer.",
@@ -188,10 +163,7 @@
       "kind": "web",
       "group": "auth",
       "title": "Contexto e personalização web",
-      "screens": [
-        "Escolher cidade",
-        "Personalização opcional"
-      ],
+      "screens": ["Escolher cidade", "Personalização opcional"],
       "file": "39-web-onboarding-contexto.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Two desktop onboarding views no member sidebar. Left branded progress sidebar and large compact central 'Qual cidade você quer explorar?', search city and results Brasília DF selected / Recife PE / Manaus AM, Continue. Right 'Deixe com a sua cara', optional photo, name Ana Ribeiro, interests Mudança / Educação / Cultura / Esportes, subtle optional helper, 'Concluir', 'Pular por enquanto'. No community access auto granted.",
@@ -212,11 +184,7 @@
       "kind": "mobile",
       "group": "community",
       "title": "Comunidades e descoberta",
-      "screens": [
-        "Minhas comunidades",
-        "Descobrir comunidades",
-        "Apresentação da comunidade"
-      ],
+      "screens": ["Minhas comunidades", "Descobrir comunidades", "Apresentação da comunidade"],
       "file": "40-mobile-comunidades.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Main nav Comunidades active first two. Panel1 title 'Comunidades', tabs Minhas / Descobrir, two distinct photo rows Jardim das Acácias Brasília DF and Famílias em Brasília with last activity, card 'Seus pedidos' one Em análise, search. Panel2 Descobrir tab, city Brasília DF selector, search, public presentation cards 'Jardim das Acácias' and 'Famílias em Brasília' with Conhecer, no private feed snippets or member list. Panel3 detail visitor Jardim das Acácias cover photo trees/courtyard, 'Brasília, DF', short public purpose 'Convivência, informações e apoio no dia a dia.', 'Como participar', 'A participação depende de aprovação.', green 'Solicitar participação', no private member count or posts, back arrow.",
@@ -238,11 +206,7 @@
       "kind": "mobile",
       "group": "community",
       "title": "Participação e grupos",
-      "screens": [
-        "Pedido pendente",
-        "Comunidade de membro e grupos",
-        "Sair da comunidade"
-      ],
+      "screens": ["Pedido pendente", "Comunidade de membro e grupos", "Sair da comunidade"],
       "file": "41-mobile-comunidade-participacao.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Panel1 community public detail Jardim das Acácias status 'Pedido enviado', 'Acompanhe a resposta em Comunidades.', button 'Cancelar pedido', no private content. Panel2 authorized member community detail Jardim das Acácias tabs Conversas / Grupos / Sobre, Grupos active, groups 'Corrida no parque' and 'Trocas de livros' with small actual rows and Participar/Ver grupo, community identity above, nav Comunidades. Panel3 same community dimmed underneath native confirmation bottom sheet 'Sair de Jardim das Acácias?', copy 'Você deixará de acessar o conteúdo desta comunidade.', primary red text or red button Sair da comunidade and Cancelar, no destructive dark full screen.",
@@ -261,10 +225,7 @@
       "kind": "web",
       "group": "community",
       "title": "Comunidades web",
-      "screens": [
-        "Minhas comunidades",
-        "Descoberta e apresentação"
-      ],
+      "screens": ["Minhas comunidades", "Descoberta e apresentação"],
       "file": "42-web-comunidades.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Signed-in DESKTOP shell Comunidades active. Left main Minhas comunidades tab plus Descobrir, two welcoming horizontal community cards Jardim das Acácias and Famílias em Brasília, contextual panel Seus pedidos with Em análise. Right Descobrir active search and city results in left main column, right detail panel public presentation of Jardim das Acácias photo purpose and Solicitar participação. No restricted posts in visitor detail. Comfortable desktop density.",
@@ -286,10 +247,7 @@
       "kind": "web",
       "group": "community",
       "title": "Comunidade, pedidos e grupos web",
-      "screens": [
-        "Comunidade de membro e grupos",
-        "Pedido pendente"
-      ],
+      "screens": ["Comunidade de membro e grupos", "Pedido pendente"],
       "file": "43-web-comunidade-grupos.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Same desktop shell Comunidades active. Left authorized member community Jardim das Acácias, shallow cover image, tabs Conversas / Grupos / Sobre with Grupos active, group grid Corrida no parque, Trocas de livros, small right rail Sobre a comunidade with Sair link. Right visitor presentation same community, status Pedido enviado and Cancelar pedido, explanation 'Acompanhe a resposta por aqui.', no member list, posts or group contents accessible before approval.",
@@ -307,11 +265,7 @@
       "kind": "mobile",
       "group": "community",
       "title": "Criar pergunta e escolher público",
-      "screens": [
-        "Escrever pergunta",
-        "Escolher público",
-        "Publicação enviada"
-      ],
+      "screens": ["Escrever pergunta", "Escolher público", "Publicação enviada"],
       "file": "44-mobile-publicacao.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Three mobile composer flow screens. First back and 'Nova pergunta', user Carlos Ribeiro avatar, explicit audience pill 'Jardim das Acácias', title field 'Indicação de escola na Asa Norte?', body 'Estamos organizando a mudança. Alguém pode compartilhar sua experiência?', attach photo icon optional, primary 'Publicar'. Second same form with audience native bottom sheet 'Quem pode ver?', available radio Jardim das Acácias selected / Famílias em Brasília, short 'Escolha uma comunidade da qual você participa.', Aplicar. Third posted question detail matching exact text Carlos Ribeiro, read-only audience, success toast 'Pergunta publicada', Responder and Acompanhar. No public unrestricted audience or audience editing by readers.",
@@ -332,10 +286,7 @@
       "kind": "web",
       "group": "community",
       "title": "Publicação e rascunho web",
-      "screens": [
-        "Criar publicação",
-        "Editar e recuperar rascunho"
-      ],
+      "screens": ["Criar publicação", "Editar e recuperar rascunho"],
       "file": "45-web-publicacao.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop member shell Início active. Left central composer card Nova pergunta, Carlos Ribeiro, explicit audience Jardim das Acácias dropdown, titled text 'Indicação de escola na Asa Norte?', short body about moving, optional photo, Publicar, right compact preview visible audience. Right Editar publicação same stored text, top amber inline 'Não foi possível salvar. Seu texto continua aqui.', Salvar alterações and Tentar novamente only one primary Save, link Voltar, a small leave confirmation dialog 'Sair sem salvar?' buttons Continuar editando and Descartar alterações. No changing others posts or public audience.",
@@ -357,11 +308,7 @@
       "kind": "mobile",
       "group": "events",
       "title": "Eventos e presença",
-      "screens": [
-        "Descobrir eventos",
-        "Detalhe de evento",
-        "Presença confirmada"
-      ],
+      "screens": ["Descobrir eventos", "Detalhe de evento", "Presença confirmada"],
       "file": "46-mobile-eventos.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. First Explorar active, Eventos heading, Brasília DF, date filter Esta semana, two high-quality cards Café entre vizinhos Sat12set9h and Caminhada no parque Sun13set8h. Second detail Café entre vizinhos photo actual people cafe courtyard, Sábado12set9h, Praça da comunidade, Jardim das Acácias explicit audience, organizer name fictional Mariana Santos, short description, Confirmar presença button. Third same event after RSVP status 'Você vai', actions 'Cancelar presença' and 'Ver participantes' only authorized members, no ticket checkout, no invented price. Consistent same photo/time.",
@@ -382,11 +329,7 @@
       "kind": "mobile",
       "group": "events",
       "title": "Cancelamento de presença e evento",
-      "screens": [
-        "Cancelar presença",
-        "Presença cancelada",
-        "Evento cancelado"
-      ],
+      "screens": ["Cancelar presença", "Presença cancelada", "Evento cancelado"],
       "file": "47-mobile-eventos-cancelamento.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Same Café entre vizinhos event identity in three native screens. First event detail dimmed behind bottom sheet 'Cancelar sua presença?' Confirm Cancelar presença, secondary Manter presença. Second detail neutral feedback 'Presença cancelada', button 'Confirmar presença' again. Third event organizer cancellation state 'Evento cancelado' title Café entre vizinhos, muted event info date12set9h, simple text 'Este encontro foi cancelado.', 'Ver outros eventos'. No promise of refund, automatically exported calendar or invented organizer private explanation.",
@@ -404,10 +347,7 @@
       "kind": "web",
       "group": "events",
       "title": "Eventos web",
-      "screens": [
-        "Lista e filtros",
-        "Detalhe e gestão de presença"
-      ],
+      "screens": ["Lista e filtros", "Detalhe e gestão de presença"],
       "file": "48-web-eventos.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop signed-in shell Explorar active. Left Eventos page with city Brasília DF, Esta semana filter, grid of tasteful real event cards Café entre vizinhos / Caminhada no parque / Troca de livros and compact dates. Right Café entre vizinhos detail wide image, date Sat12set9h, location Praça da comunidade, Jardim das Acácias, description and organizer, right card Você vai with Cancelar presença. Small inline contextual cancellation confirmation panel with Cancelar presença and Manter presença, not a second competing primary. No tickets/payment.",
@@ -429,11 +369,7 @@
       "kind": "mobile",
       "group": "profile",
       "title": "Perfil próprio, edição e outro membro",
-      "screens": [
-        "Meu perfil",
-        "Editar perfil",
-        "Perfil de outro membro"
-      ],
+      "screens": ["Meu perfil", "Editar perfil", "Perfil de outro membro"],
       "file": "49-mobile-perfil.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Three polished mobile screens. First Perfil active Carlos Ribeiro avatar, city Brasília DF, short bio 'Gosto de caminhadas e de trocar dicas sobre a cidade.', Editar perfil, rows Meus anúncios / Meu negócio / Salvos / Configurações; no ranks, badges, follower scores, military organization or account age. Second Editar perfil photo, labeled Nome Carlos Ribeiro, Bio short, optional field helper, Salvar alterações. Third profile Mariana Santos authorized member, different female avatar, bio 'Livros, passeios e boas conversas.', common community Jardim das Acácias, Publicações tab and one question card; no unsolicited unrestricted Mensagem button, ellipsis for applicable reporting.",
@@ -455,11 +391,7 @@
       "kind": "mobile",
       "group": "profile",
       "title": "Preferências e controles da conta",
-      "screens": [
-        "Configurações",
-        "Preferências de notificações",
-        "Controles da conta"
-      ],
+      "screens": ["Configurações", "Preferências de notificações", "Controles da conta"],
       "file": "50-mobile-configuracoes.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Panel1 Configurações back header, grouped calm rows Notificações / Conta / Privacidade / Pessoas bloqueadas / Ajuda, Sair distinct last. Panel2 Notificações preferences toggles Respostas às minhas publicações ON, Atualizações de eventos ON, Novidades do Bivaque OFF, channels No aplicativo / Push with OS permission requested only when enabled, no permission popups now. Panel3 Conta with email carlos@exemplo.invalid, access help link, Excluir conta row opens native bottom sheet 'Excluir sua conta?' short 'Confira as informações antes de continuar.', primary 'Continuar' and Cancelar. No fabricated retention deadlines, deletion instant success, raw sensitive fields.",
@@ -471,10 +403,7 @@
       "kind": "web",
       "group": "profile",
       "title": "Perfis web",
-      "screens": [
-        "Meu perfil e edição",
-        "Perfil de outro membro"
-      ],
+      "screens": ["Meu perfil e edição", "Perfil de outro membro"],
       "file": "51-web-perfil.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop shell Perfil active. Left Carlos Ribeiro own profile, avatar, city Brasília DF, bio, inline edit form Nome / Bio with Salvar alterações, right rail Meus anúncios / Meu negócio / Configurações. Right authorized view Mariana Santos profile with distinct avatar, public-to-authorized community activity question, common community Jardim das Acácias, options menu Denunciar perfil / Bloquear where applicable. No public badges, rank, followers or generic unrestricted chat. Owner correction: add optional Força Armada and OM fields, with independent Exibir no perfil OFF switches in own edit profile. Never infer affiliation or expose hidden values in other profile.",
@@ -486,10 +415,7 @@
       "kind": "web",
       "group": "profile",
       "title": "Configurações e conta web",
-      "screens": [
-        "Preferências e notificações",
-        "Conta e privacidade"
-      ],
+      "screens": ["Preferências e notificações", "Conta e privacidade"],
       "file": "52-web-configuracoes.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop member shell Perfil active. Left Configurações internal vertical subsections Perfil / Notificações / Conta / Privacidade, Notificações selected, clearly labeled toggles replies/events ON and product news OFF, channels row No aplicativo and Push, save feedback calm. Right Conta e privacidade panel with email carlos@exemplo.invalid, Ajuda com acesso, Pessoas bloqueadas manageable row, Sair and Excluir conta, native desktop confirmation modal 'Sair da sua conta?' with Cancelar and Sair. No fake export, retention or instant delete promises.",
@@ -503,11 +429,7 @@
       "kind": "mobile",
       "group": "return",
       "title": "Notificações, salvos e alertas",
-      "screens": [
-        "Notificações",
-        "Salvos",
-        "Alertas de imóveis"
-      ],
+      "screens": ["Notificações", "Salvos", "Alertas de imóveis"],
       "file": "53-mobile-retorno.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Panel1 Notificações header, tabs Todas/Não lidas, grouped Hoje/Ontem, rows Ana respondeu à sua pergunta, Sua participação foi aprovada, Café entre vizinhos foi cancelado, each coherent icon avatar and clickable title no private denial cause. Panel2 Salvos tabs Tudo/Guia/Mercado, editorial guide Como organizar sua mudança and item Mesa de madeira R$650 with thumbnail bookmark, empty saved collection no counts invented. Panel3 Alertas de imóveis title, alert Apartamentos em Águas Claras, filtros Até R$2500 / 2 quartos, active toggle and Editar, Criar alerta, overflow Excluir alerta. No push guarantees. Back navigation logical, no root tab invented.",
@@ -521,10 +443,7 @@
       "kind": "web",
       "group": "return",
       "title": "Notificações e salvos web",
-      "screens": [
-        "Central de notificações",
-        "Conteúdos salvos"
-      ],
+      "screens": ["Central de notificações", "Conteúdos salvos"],
       "file": "54-web-retorno.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop shell secondary Notificações active LEFT main 700px reading column, tabs Todas/Não lidas, grouped rows clear avatars notification titles Ana respondeu à sua pergunta, Participação aprovada, Evento cancelado, right rail preference shortcut. RIGHT Salvos secondary active, tabs Tudo/Guia/Mercado/Imóveis, grid with saved moving guide, Mesa de madeira and apartment, remove bookmark actions, search saved. No read receipts invented, no unrelated dashboard charts.",
@@ -538,11 +457,7 @@
       "kind": "mobile",
       "group": "trust",
       "title": "Denunciar e bloquear",
-      "screens": [
-        "Enviar denúncia",
-        "Acompanhar denúncia",
-        "Bloquear interação"
-      ],
+      "screens": ["Enviar denúncia", "Acompanhar denúncia", "Bloquear interação"],
       "file": "55-mobile-confianca.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Three mobile screens. First Denunciar publicação with tiny context preview Mesa de madeira, radio Motivo options Conteúdo inadequado / Spam / Informação enganosa / Outro, optional textarea Conte mais sem dados pessoais, primary Enviar denúncia. Second 'Denúncia recebida', small protocol illustration not digits, status 'Em análise', 'Acompanhar denúncia', link Voltar, no guaranteed resolution deadline. Third person profile dimmed with native bottom sheet 'Bloquear esta pessoa?', concise 'Revise como o bloqueio afeta suas interações.', link Como funciona, primary Bloquear secondary Cancelar, no promise of universal invisibility. Keep calm non-punitive tone.",
@@ -554,10 +469,7 @@
       "kind": "web",
       "group": "trust",
       "title": "Denúncias e bloqueios web",
-      "screens": [
-        "Denunciar conteúdo",
-        "Acompanhamento e bloqueios"
-      ],
+      "screens": ["Denunciar conteúdo", "Acompanhamento e bloqueios"],
       "file": "56-web-confianca.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop member shell, left content detail beneath focused report dialog 'Denunciar publicação', item context, radio reasons Spam / Conteúdo inadequado / Informação enganosa / Outro, optional explanation, Enviar denúncia and Cancelar. Right account section Confiança e privacidade with tabs Minhas denúncias / Pessoas bloqueadas, one report row status Em análise and small details drawer only member's submitted reason, no moderator private notes, blocked people row optional separate sidebar section Desbloquear. No reporter publicly exposed.",
@@ -571,10 +483,7 @@
       "kind": "web",
       "group": "operations",
       "title": "Operação de admissões",
-      "screens": [
-        "Fila de admissões",
-        "Análise de solicitação"
-      ],
+      "screens": ["Fila de admissões", "Análise de solicitação"],
       "file": "57-web-operacao-admissoes.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Two desktop OPERATOR workspaces same Bivaque visual family but separate sidebar 'Operação' with Admissões, Denúncias, Comunidades, and Voltar ao Bivaque. No member nav. LEFT Fila de admissões tabs Pendentes/Concluídas, search, simple table named fictional profiles Ana Ribeiro/Paulo Lima, date, situation Em análise, Abrir. RIGHT selected Ana case, opaque request reference, email ana@exemplo.invalid, timeline Solicitação recebida / Em análise, minimal evidence summary 'Revisão necessária' WITHOUT CPF, raw portal payload, document photo or eligibility reason. Actions Solicitar informação / Concluir análise, reason field and confirmation as task context; no automatic approval or batch approving unseen cases. Owner correction: queue concerns identity fallback after fast CPF, distinguish Documento recebido / Reconhecimento por IA / Revisão necessária; no invented deadlines or AI-only guaranteed approval. Show optional community-join explanation only to authorized community reviewers in the appropriate separate context.",
@@ -588,10 +497,7 @@
       "kind": "web",
       "group": "operations",
       "title": "Operação de denúncias",
-      "screens": [
-        "Fila de denúncias",
-        "Analisar e encerrar denúncia"
-      ],
+      "screens": ["Fila de denúncias", "Analisar e encerrar denúncia"],
       "file": "58-web-operacao-moderacao.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Two desktop OPERATOR app screens sidebar Operação matching prior Admissões/Denúncias/Comunidades, Denúncias active. LEFT Fila de denúncias table content title/type/status/received time, filters Em análise/Concluídas, no charts. RIGHT report detail fictional post 'Mesa de madeira', scoped community Jardim das Acácias, submitted reason Spam, content preview, activity timeline, actions Manter conteúdo / Ocultar conteúdo and decision rationale textfield, neutral confirmation. Reporter identity withheld from content author, no raw personal or eligibility data. Human decision no model auto-verdict.",
@@ -605,11 +511,7 @@
       "kind": "mobile",
       "group": "states",
       "title": "Estados compartilhados",
-      "screens": [
-        "Carregamento",
-        "Sem resultados",
-        "Erro com rascunho preservado"
-      ],
+      "screens": ["Carregamento", "Sem resultados", "Erro com rascunho preservado"],
       "file": "59-mobile-estados.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Three REAL mobile app screens, not style specimen. First Explorar active loading services search with calm static skeleton rows, accessible text 'Carregando serviços'. Second services search 'marcenaria' Brasília DF, 'Nenhum resultado por aqui', helper 'Tente outro termo ou ajuste os filtros.', buttons Ajustar filtros / Limpar busca. Third native composer Nova pergunta with actual typed school question preserved, inline alert 'Não foi possível publicar.', helper 'Seu texto continua aqui.', Tentar novamente button and back arrow. No fake successful offline submission. Consistent practical patterns.",
@@ -621,10 +523,7 @@
       "kind": "web",
       "group": "states",
       "title": "Estados compartilhados web",
-      "screens": [
-        "Acesso indisponível",
-        "Falha de conexão e retomada"
-      ],
+      "screens": ["Acesso indisponível", "Falha de conexão e retomada"],
       "file": "60-web-estados.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Two desktop member shells. LEFT route community with neutral empty state 'Você ainda não tem acesso a esta comunidade', 'Conhecer comunidade' and 'Voltar', no restricted snippets/counts visible, no enrollment automatically. RIGHT saved draft composer 'Nova pergunta', school question and body preserved, offline banner 'Sem conexão', helper 'Tente publicar quando a conexão voltar.', action Tentar novamente disabled dark-gray text pale-gray surface and Salvar rascunho only if local draft not guarantee. Clear back. Never display internal errors.",
@@ -638,10 +537,7 @@
       "kind": "web",
       "group": "services",
       "title": "Explorar e busca de serviços web",
-      "screens": [
-        "Explorar",
-        "Resultados de serviços"
-      ],
+      "screens": ["Explorar", "Resultados de serviços"],
       "file": "61-web-explorar-servicos.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop shell Explorar active. LEFT Explorar heading Brasília DF, strong useful search 'Do que você precisa?', explicit well-proportioned entry cards Guia / Mercado / Serviços / Moradia / Eventos, lower real editorial cards and distinct prestador photos. RIGHT search 'eletricista', filters bairro/tipo de serviço, realistic service rows André Elétrica and Luz & Casa each distinct photo, specialty/location, 'Ver ficha', no stars/rankings/verified badges. Map not required. Practical desktop density.",
@@ -655,10 +551,7 @@
       "kind": "web",
       "group": "services",
       "title": "Ficha do prestador e novo pedido web",
-      "screens": [
-        "Ficha do prestador",
-        "Descrever necessidade"
-      ],
+      "screens": ["Ficha do prestador", "Descrever necessidade"],
       "file": "62-web-prestador-pedido.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop member shell Explorar active. LEFT provider 'André Elétrica' distinct male professional photo, specialty Instalações e reparos elétricos, Brasília DF, concise description, service list Troca de tomadas / Instalação de luminárias, CTA Pedir serviço, contact optional no ratings or response guarantees. RIGHT form 'Do que você precisa?', destinatário read-only André Elétrica, description 'Preciso instalar duas luminárias.', timing 'A combinar', optional photos, summary and Enviar pedido. No residential address, payments, automatic phone sharing.",
@@ -672,10 +565,7 @@
       "kind": "web",
       "group": "market",
       "title": "Produto e novo anúncio web",
-      "screens": [
-        "Detalhe do produto",
-        "Criar anúncio"
-      ],
+      "screens": ["Detalhe do produto", "Criar anúncio"],
       "file": "63-web-mercado-anuncio.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop shell Explorar active. LEFT Mesa de madeira product detail tasteful coherent photo, R$650, Usado em bom estado, Brasília DF, description dimensions 120x80cm, seller Mariana Santos plain avatar, CTA Tenho interesse and save icon, no public phone, checkout or badges. RIGHT Novo anúncio form title Mesa de madeira, category Casa e móveis, price650, condition Usado, photo grid showing same table, description, explicit allowed audience Jardim das Acácias, Publicar anúncio, Salvar rascunho. Clear concise responsive desktop form.",
@@ -687,10 +577,7 @@
       "kind": "web",
       "group": "market",
       "title": "Editar e pausar anúncio web",
-      "screens": [
-        "Editar anúncio",
-        "Pausar anúncio"
-      ],
+      "screens": ["Editar anúncio", "Pausar anúncio"],
       "file": "64-web-mercado-edicao.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop shell Perfil active because own management. LEFT Meus anúncios / Editar anúncio, Mesa de madeira photo and fields price600, description in edited form, inline error 'Não foi possível salvar. Suas alterações continuam aqui.', primary Salvar alterações. RIGHT own ad dashboard one table row Mesa de madeira R$650 Ativo, contextual dialog 'Pausar este anúncio?' helper 'Ele deixará de aparecer nas buscas enquanto estiver pausado.', Pausar anúncio / Cancelar. Distinguish saved650 from unsaved600, no sales analytics invented.",
@@ -702,10 +589,7 @@
       "kind": "web",
       "group": "housing",
       "title": "Busca de imóveis e alertas web",
-      "screens": [
-        "Buscar imóveis",
-        "Gerenciar alertas"
-      ],
+      "screens": ["Buscar imóveis", "Gerenciar alertas"],
       "file": "65-web-imoveis-alertas.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop shell Explorar active. LEFT Moradia Brasília DF, search neighborhood Águas Claras, filters Aluguel / Até R$2500 / 2 quartos, grid authentic apartment photos with rent and separate condominium values, Salvar busca link Criar alerta. RIGHT Meus alertas listing 'Apartamentos em Águas Claras', active toggle, price/quartos summary, Editar and Excluir, open edit side panel Cidade/Bairro/Valor máximo/Quartos, Salvar alterações. No real market claims, urgency badges, contact autoshares or guarantees.",
@@ -719,9 +603,7 @@
       "kind": "web",
       "group": "guide",
       "title": "Artigo completo do Guia web",
-      "screens": [
-        "Ler referência completa e sugerir correção"
-      ],
+      "screens": ["Ler referência completa e sugerir correção"],
       "file": "25-web-guia-referencia.png",
       "status": "generated",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. OVERRIDE composition: ONE full desktop viewport landscape, same white sidebar Explorar active, 680px reading column and 280px contextual right rail. Breadcrumb Explorar / Guia / Mudança. Title 'Como organizar a mudança para outra cidade', subtitle 'Um roteiro para preparar a saída e a chegada', metadata Revisado em 6 set 2026 · Curadoria Bivaque, bookmark Salvar. Modest horizontal photo of family packing boxes. H2 Antes de contratar with natural short advice about written quotation, H2 Prepare a retirada, H2 Ao chegar. Right index Neste guia, source card 'Origem desta referência', 'Conversa de Jardim das Acácias', 'Você participa desta comunidade', Ver conversa. Lower right 'Algo mudou?' button Sugerir atualização. No legal claims, private source if unauthorized or article fake performance data.",
