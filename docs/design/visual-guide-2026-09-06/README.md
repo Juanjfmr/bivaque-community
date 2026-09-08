@@ -88,8 +88,8 @@ Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.
 | [65-web-imoveis-alertas — Busca de imóveis e alertas web](./65-web-imoveis-alertas.png) | web | Buscar imóveis; Gerenciar alertas |
 | [66-mobile-evento-informacoes — Perguntas ao organizador](./66-mobile-evento-informacoes.png) | mobile | Enviar pergunta; Aguardar resposta; Falha com texto preservado |
 | [67-web-evento-informacoes — Informações do evento na web](./67-web-evento-informacoes.png) | web | Reenviar pergunta; Ler resposta e continuar |
-| [68-mobile-identidade-recuperacao — Identidade: envio e recuperação](./68-mobile-identidade-recuperacao.png) | mobile | Enviar identidade; Acompanhar análise; Substituir imagem ilegível |
-| [69-web-identidade-recuperacao — Identidade: envio e recuperação web](./69-web-identidade-recuperacao.png) | web | Enviar identidade; Substituir imagem ilegível |
+| [68-mobile-identidade-recuperacao — Identidade: envio e recuperação](./68-mobile-identidade-recuperacao.png) | mobile | Enviar identidade; Acompanhar análise; Substituir arquivo ilegível |
+| [69-web-identidade-recuperacao — Identidade: envio e recuperação web](./69-web-identidade-recuperacao.png) | web | Enviar identidade; Substituir arquivo ilegível |
 
 ## Inspeção e correções de implementação
 
@@ -305,11 +305,11 @@ As notas abaixo são obrigatórias para construção; corrigem divergências dos
 
 ### 68-mobile-identidade-recuperacao
 
-- Botões desabilitados precisam de contraste legível. Frente/verso dependem do documento aceito pelo contrato; não criar exigência de selfie.
+- Identidade militar digital é um único arquivo completo. Não exigir frente/verso, fotografias ou divisão em anexos. Na falha de leitura, substituir o arquivo completo. Formatos e limites dependem do contrato técnico; manter contraste legível nos botões desabilitados.
 
 ### 69-web-identidade-recuperacao
 
-- O acompanhamento web está na prancha 38. Frente/verso seguem o tipo de documento aceito; nenhuma imagem estabelece prazo de retenção.
+- Identidade militar digital é um único arquivo completo. Não exigir frente/verso, fotografias ou divisão em anexos. Na falha de leitura, substituir o arquivo completo. Formatos e limites dependem do contrato técnico; manter contraste legível nos botões desabilitados.
 
 ## Geração e pendências de revisão
 

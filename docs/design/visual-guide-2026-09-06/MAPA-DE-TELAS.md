@@ -63,8 +63,8 @@ Atualizado em 08/09/2026. 59 pranchas: 84 telas/estados mobile e 53 web. Cobertu
 | [65-web-imoveis-alertas — Busca de imóveis e alertas web](./65-web-imoveis-alertas.png) | web | Buscar imóveis; Gerenciar alertas |
 | [66-mobile-evento-informacoes — Perguntas ao organizador](./66-mobile-evento-informacoes.png) | mobile | Enviar pergunta; Aguardar resposta; Falha com texto preservado |
 | [67-web-evento-informacoes — Informações do evento na web](./67-web-evento-informacoes.png) | web | Reenviar pergunta; Ler resposta e continuar |
-| [68-mobile-identidade-recuperacao — Identidade: envio e recuperação](./68-mobile-identidade-recuperacao.png) | mobile | Enviar identidade; Acompanhar análise; Substituir imagem ilegível |
-| [69-web-identidade-recuperacao — Identidade: envio e recuperação web](./69-web-identidade-recuperacao.png) | web | Enviar identidade; Substituir imagem ilegível |
+| [68-mobile-identidade-recuperacao — Identidade: envio e recuperação](./68-mobile-identidade-recuperacao.png) | mobile | Enviar identidade; Acompanhar análise; Substituir arquivo ilegível |
+| [69-web-identidade-recuperacao — Identidade: envio e recuperação web](./69-web-identidade-recuperacao.png) | web | Enviar identidade; Substituir arquivo ilegível |
 
 ## Seleção pelos agentes
 
