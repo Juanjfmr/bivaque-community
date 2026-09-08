@@ -3,10 +3,14 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import test from "node:test"
 
-// Onda E Task 10 (containers de navegação) — Step 5.
+// PROCESSO-DE-CONSTRUCAO.md §7 — navegação-alvo da reconstrução 2026-09-06.
+// Substitui os quatro containers históricos (cidade/community/groups/me) do
+// ADR-20260816. Os novos containers derivam do modelo de produto da versão
+// atual: Início (home de quem participa), Explorar (descoberta — inclui Guia
+// e Mercado como entradas), Comunidades (minhas + descoberta), Perfil (o
+// membro: perfil, conta, notificações, mensagens contextuais).
 // Este teste é a task: é a única coisa que impede a divergência entre spec e código voltar.
-// (a) NAV_ITEMS tem exatamente os quatro containers do modelo (§3.1 + §6.3):
-//     cidade, community, groups, me.
+// (a) NAV_ITEMS tem exatamente esses quatro ids.
 // (b) O número de itens respeita o teto de 5 (iOS HIG / Material).
 // (c) NAV_ITEMS bate com DESIGN_SYSTEM.md §7.1.
 
@@ -35,7 +39,7 @@ const guideSource = readFileSync(GUIDE_PATH, "utf8")
 
 test("NAV_ITEMS is exactly the four product-model containers", () => {
   const ids = navItemIds(navSource)
-  assert.deepEqual(ids, ["cidade", "community", "groups", "me"])
+  assert.deepEqual(ids, ["inicio", "explorar", "comunidades", "perfil"])
 })
 
 test("navigation item count respects the declared ceiling of five", () => {
@@ -43,9 +47,11 @@ test("navigation item count respects the declared ceiling of five", () => {
   assert.ok(ids.length <= CEILING, `NAV_ITEMS has ${ids.length} items, ceiling ${CEILING}`)
 })
 
-test("no top-level nav tab for events, messages or indications", () => {
+test("no top-level nav tab for folded destinations", () => {
   const ids = navItemIds(navSource)
-  for (const forbidden of ["events", "messages", "indications"]) {
+  // events/messages/indications never were containers; groups and cidade were
+  // folded into comunidades/inicio by PROCESSO-DE-CONSTRUCAO §7.
+  for (const forbidden of ["events", "messages", "indications", "groups", "cidade"]) {
     assert.ok(!ids.includes(forbidden), `"${forbidden}" must not be a top-level container`)
   }
 })
