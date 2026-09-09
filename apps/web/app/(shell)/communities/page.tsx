@@ -1,14 +1,28 @@
-import { Button } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
-import { requestCommunityMembershipAction } from "./actions"
+import type { CommunityCard, MyMembership } from "./communities-data"
+import { CommunitiesScreen } from "./communities-screen"
 
-type CommunityRow = Database["public"]["Tables"]["communities"]["Row"]
-type MembershipRow = Database["public"]["Tables"]["community_memberships"]["Row"]
+type CommunityRow = Pick<
+  Database["public"]["Tables"]["communities"]["Row"],
+  "id" | "name" | "description" | "locality_id"
+>
+type MembershipRow = Pick<
+  Database["public"]["Tables"]["community_memberships"]["Row"],
+  "community_id" | "status" | "joined_at"
+>
+type LocalityRow = Pick<
+  Database["public"]["Tables"]["localities"]["Row"],
+  "id" | "city_name" | "state_code"
+>
 
-export default async function CommunitiesPage() {
+export default async function CommunitiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ locality?: string | string[] }>
+}) {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
   if (!url || !anonKey) {
@@ -35,111 +49,114 @@ export default async function CommunitiesPage() {
   // P0 Task 7: locality lives in the membership, not the profile — the
   // migration 20260817031237 dropped profiles.locality_id. Mirror the
   // resolution in (shell)/layout.tsx: one membership, ordered by joined_at.
-  const { data: membershipData, error: membershipError } = await supabase
+  const { data: localityRows, error: localityMembershipsError } = await supabase
     .from("locality_memberships")
     .select("locality_id")
     .order("joined_at", { ascending: true })
-    .limit(1)
-    .maybeSingle()
 
-  if (membershipError) {
-    throw new Error(`Falha ao ler a localidade: ${membershipError.message}`)
+  if (localityMembershipsError) {
+    throw new Error(`Falha ao ler as localidades: ${localityMembershipsError.message}`)
   }
+  const myLocalityIds = ((localityRows as { locality_id: string }[] | null) ?? []).map(
+    (row) => row.locality_id,
+  )
 
-  const localityId = (membershipData as { locality_id: string } | null)?.locality_id
+  // Same "?locality" convention the events screen uses for the city switcher:
+  // a param only selects among localities I actually belong to (anything else
+  // falls back to my current city — RLS would return nothing anyway).
+  const params = await searchParams
+  const requested = typeof params.locality === "string" ? params.locality : null
+  const viewingLocalityId =
+    requested && myLocalityIds.includes(requested) ? requested : (myLocalityIds[0] ?? null)
 
-  let communities: CommunityRow[] = []
-  if (localityId) {
-    const { data, error: communitiesError } = await supabase
-      .from("communities")
-      .select("*")
-      .eq("locality_id", localityId)
-      .order("name")
-
-    if (communitiesError) {
-      throw new Error(`Falha ao ler as comunidades: ${communitiesError.message}`)
-    }
-    communities = (data as CommunityRow[] | null) ?? []
-  }
-
-  const { data: membershipsData, error: membershipsError } = await supabase
+  const { data: membershipData, error: membershipsError } = await supabase
     .from("community_memberships")
-    .select("community_id, user_id, role, status, joined_at")
+    .select("community_id, status, joined_at")
     .eq("user_id", user.id)
 
   if (membershipsError) {
     throw new Error(`Falha ao ler as participações: ${membershipsError.message}`)
   }
-
-  const membershipByCommunity = new Map(
-    ((membershipsData as MembershipRow[] | null) ?? []).map((membership) => [
-      membership.community_id,
-      membership,
-    ]),
+  const memberships: MyMembership[] = ((membershipData as MembershipRow[] | null) ?? []).map(
+    (row) => ({
+      communityId: row.community_id,
+      status: row.status,
+      joinedAt: row.joined_at,
+    }),
   )
 
+  let localCommunities: CommunityRow[] = []
+  if (viewingLocalityId) {
+    const { data, error: communitiesError } = await supabase
+      .from("communities")
+      .select("id, name, description, locality_id")
+      .eq("locality_id", viewingLocalityId)
+      .order("name")
+
+    if (communitiesError) {
+      throw new Error(`Falha ao ler as comunidades: ${communitiesError.message}`)
+    }
+    localCommunities = (data as CommunityRow[] | null) ?? []
+  }
+
+  // Pedidos pendentes podem apontar para outra cidade (onda T); o painel
+  // "Seus pedidos" precisa do nome real delas, então busco por id o que
+  // ainda não está na lista local. Linhas que a RLS não deixa ler (vila
+  // excluída, cidade fora do meu alcance) simplesmente não aparecem.
+  const localIds = new Set(localCommunities.map((row) => row.id))
+  const missingIds = memberships
+    .map((m) => m.communityId)
+    .filter((id) => !localIds.has(id))
+    .slice(0, 50)
+
+  let otherCommunities: CommunityRow[] = []
+  if (missingIds.length > 0) {
+    const { data, error: othersError } = await supabase
+      .from("communities")
+      .select("id, name, description, locality_id")
+      .in("id", missingIds)
+
+    if (othersError) {
+      throw new Error(`Falha ao ler as comunidades dos seus pedidos: ${othersError.message}`)
+    }
+    otherCommunities = (data as CommunityRow[] | null) ?? []
+  }
+
+  const allCommunities = [...localCommunities, ...otherCommunities]
+  const localityIds = [...new Set(allCommunities.map((row) => row.locality_id))]
+
+  let cityLabelById = new Map<string, string>()
+  if (localityIds.length > 0) {
+    const { data, error: localitiesError } = await supabase
+      .from("localities")
+      .select("id, city_name, state_code")
+      .in("id", localityIds)
+
+    if (localitiesError) {
+      throw new Error(`Falha ao ler as cidades: ${localitiesError.message}`)
+    }
+    cityLabelById = new Map(
+      ((data as LocalityRow[] | null) ?? []).map((row) => [
+        row.id,
+        `${row.city_name}, ${row.state_code}`,
+      ]),
+    )
+  }
+
+  const toCard = (row: CommunityRow): CommunityCard => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    localityId: row.locality_id,
+    cityLabel: cityLabelById.get(row.locality_id) ?? null,
+  })
+
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
-      <header className="flex flex-col gap-2">
-        <h1 id="communities-heading" className="text-2xl font-semibold tracking-tight">
-          Comunidades
-        </h1>
-        <p className="text-sm text-muted">
-          Vilas e outros círculos por circunstância. Peça entrada para ver o conteúdo.
-        </p>
-      </header>
-
-      {communities.length === 0 ? (
-        <p className="text-sm text-muted">Nenhuma comunidade disponível na sua localidade.</p>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {communities.map((community) => {
-            const membership = membershipByCommunity.get(community.id)
-            return (
-              <li
-                key={community.id}
-                className="flex flex-col gap-3 rounded-lg border border-border p-4"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <h2 className="leading-none">
-                      <a
-                        href={`/communities/${community.id}`}
-                        className="inline-flex min-h-11 items-center transition-colors hover:underline focus-visible:underline"
-                      >
-                        {community.name}
-                      </a>
-                    </h2>
-                    {community.description && (
-                      <p className="mt-1 text-sm text-muted">{community.description}</p>
-                    )}
-                  </div>
-
-                  {membership?.status === "approved" ? (
-                    <a
-                      href={`/communities/${community.id}`}
-                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-surface-subtle"
-                    >
-                      Abrir
-                    </a>
-                  ) : membership?.status === "pending" ? (
-                    <Button size="sm" variant="tertiary" isDisabled>
-                      Aguardando aprovação
-                    </Button>
-                  ) : (
-                    <form action={requestCommunityMembershipAction}>
-                      <input type="hidden" name="communityId" value={community.id} />
-                      <Button type="submit" size="sm" variant="primary">
-                        Pedir entrada
-                      </Button>
-                    </form>
-                  )}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </div>
+    <CommunitiesScreen
+      localCommunities={localCommunities.map(toCard)}
+      memberships={memberships}
+      knownCommunities={allCommunities.map(toCard)}
+      viewingCityLabel={viewingLocalityId ? (cityLabelById.get(viewingLocalityId) ?? null) : null}
+    />
   )
 }

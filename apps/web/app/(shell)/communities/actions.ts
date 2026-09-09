@@ -30,6 +30,15 @@ function requiredString(value: FormDataEntryValue | null): string {
   return value
 }
 
+// RECON-004 (prancha 42, correção do responsável 07/09 §3): o formulário de
+// participação envia junto um "motivo" opcional (campo `motivo` no FormData).
+// O RPC `request_community_membership(uuid)` aceita apenas o id da comunidade
+// e este contrato proíbe criar migration, RPC ou coluna — portanto o texto é
+// coletado na tela mas NÃO é persistido nesta leva. Ele não vira publicação
+// nem biografia em nenhum caminho: é simplesmente descartado na fronteira.
+// Persistência do motivo (coluna + parâmetro no RPC + leitura restrita a quem
+// analisa e ao solicitante) precisa de contrato próprio, com teste positivo e
+// negativo de acesso; registrar como dependência aberta no relatório.
 export async function requestCommunityMembershipAction(formData: FormData) {
   const communityId = requiredString(formData.get("communityId"))
   const supabase = await getAuthClient()

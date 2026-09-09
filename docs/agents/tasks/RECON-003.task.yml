@@ -1,0 +1,64 @@
+task_id: RECON-003
+
+objective: >
+  A rota /explorar deixa de ser scaffold e passa a ser a descoberta da prancha
+  61-web-explorar-servicos: título com a cidade real, as categorias Guia,
+  Mercado, Serviços, Moradia e Eventos, busca acessível e destaques — mais a
+  rota de resultados /explorar/servicos com filtros e fichas de prestador.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/61-web-explorar-servicos.png — dois desktops, duas telas
+  - manifest.json reviewNotes de 61-web-explorar-servicos - Busca precisa ser um campo acessível. Remover promessas comerciais não sustentadas por dados.
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7 — Guia e Mercado são entradas explícitas aqui
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md §5, §9.1
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/explorar/page.tsx renderiza PageHeader mais um parágrafo
+    dizendo "Conteúdo em construção (prancha 61)". Zero leitura, zero escrita. A
+    rota /explorar/servicos, que a prancha mostra no segundo desktop, não existe.
+
+allowed_paths:
+  - apps/web/app/(shell)/explorar/
+  - apps/web/app/components/bivaque/
+  - docs/agents/tasks/RECON-003.task.yml
+
+forbidden:
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - campo de busca só com placeholder — precisa de rótulo ou nome acessível associado
+  - qualquer texto de SLA, garantia de resposta, prazo, ranking, selo ou promessa comercial que dado nenhum sustenta
+  - inventar prestador, artigo ou contagem; sem dado real, estado vazio honesto
+  - linkar categoria para rota que não existe — Guia vai para /guide; Mercado e Moradia ainda não têm rota, então a categoria não navega para lugar nenhum inventado
+  - texto de placeholder, href="#", handler vazio ou toast como única implementação
+  - valor de cor cru em JSX, style inline ou classe utilitária de paleta
+  - importar HeroUI direto onde há wrapper Bivaque
+  - introduzir família tipográfica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - /explorar mostra o título com a cidade real de useLocalityContext e as cinco categorias da prancha
+  - a busca é campo com nome acessível, operável por teclado, e leva a /explorar/servicos com o termo
+  - /explorar/servicos existe, lê o termo da URL, mostra filtros de bairro e tipo, contagem de resultados e as fichas
+  - resultados vêm da busca de prestador que já existe no repositório; sem resultado, estado vazio honesto; em erro, ErrorState com nova tentativa
+  - nenhuma promessa comercial sobrevive em nenhuma das duas telas
+  - categoria sem destino real não finge ter destino
+  - nenhum texto de construção sobrevive em apps/web/app/(shell)/explorar/
+  - exatamente um h1 por tela
+  - contraste ≥ 4,5:1, alvos ≥ 44×44, foco visível
+  - auditoria visual de /explorar e /explorar/servicos em 375/768/1440 sem finding de severidade high
+  - npx pnpm@11.18.0 gate verde
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-003.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: descoberta e busca de prestador
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

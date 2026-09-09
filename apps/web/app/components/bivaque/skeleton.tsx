@@ -120,6 +120,26 @@ export function MessageAreaSkeleton() {
   )
 }
 
+// Mirrors a provider result card (RECON-003): photo block + name + category
+// line + description + "Ver ficha" button.
+export function ProviderCardSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="Carregando prestadores"
+      className="flex flex-col gap-4 rounded-2xl border border-border bg-[var(--semantic-surface)] p-4 sm:flex-row"
+    >
+      <Skeleton className="h-40 w-full shrink-0 rounded-lg sm:h-32 sm:w-44" />
+      <div className="flex flex-1 flex-col gap-2">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-3 w-1/4" />
+        <Skeleton className="h-3 w-5/6" />
+        <Skeleton className="mt-1 h-11 w-24 rounded-md" />
+      </div>
+    </div>
+  )
+}
+
 // Mirrors a notification row: text line + time label.
 export function NotificationItemSkeleton() {
   return (
