@@ -23,7 +23,7 @@ export function SegmentError({ onRetry }: { onRetry?: () => void }) {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
       <ErrorState
-        message="Não foi possível carregar esta página. Tente novamente em instantes."
+        message="Não foi possível carregar esta página."
         {...(onRetry === undefined ? {} : { onRetry })}
       />
     </div>

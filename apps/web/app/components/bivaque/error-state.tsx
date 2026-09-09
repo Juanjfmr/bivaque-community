@@ -29,3 +29,38 @@ export function ErrorState({ message, onRetry, className = "" }: ErrorStateProps
     />
   )
 }
+
+interface ConnectionLostStateProps {
+  description?: string
+  onRetry?: () => void
+  retryLabel?: string
+  className?: string
+}
+
+// Prancha 60 (painel direito): a conexão caiu. Diferente de acesso
+// indisponível — aqui tentar de novo resolve, porque a retomada refaz a
+// consulta. onRetry deve reexecutar a mesma consulta que falhou (refetch ou
+// reload); omiti-lo recarrega a página, que também é retomada real. Limpar a
+// mensagem sem reconsultar não é retomada e não pertence a este estado.
+// variant="warning" faz o FeedbackAlert usar role="alert" (assertivo).
+export function ConnectionLostState({
+  description = "Não foi possível completar esta consulta por falta de conexão. Verifique a internet e tente de novo.",
+  onRetry,
+  retryLabel = "Tentar novamente",
+  className = "",
+}: ConnectionLostStateProps) {
+  const handleRetry = onRetry ?? (() => window.location.reload())
+  return (
+    <FeedbackAlert
+      variant="warning"
+      title="Sem conexão"
+      description={description}
+      className={className}
+      actions={
+        <Button variant="tertiary" size="sm" onPress={handleRetry}>
+          {retryLabel}
+        </Button>
+      }
+    />
+  )
+}

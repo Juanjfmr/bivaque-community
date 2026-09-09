@@ -171,3 +171,33 @@ export function NotificationsIllustration({ className = "" }: IllustrationProps)
     </svg>
   )
 }
+
+/** Closed padlock — acesso indisponível (prancha 60). Badge glyph, quadrado,
+ * para caber no círculo do AccessUnavailableState sem conflito de tamanho. */
+export function LockIllustration({ className = "" }: IllustrationProps) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={`h-8 w-8 ${className}`} aria-hidden="true">
+      {/* shackle */}
+      <path
+        d="M16 22v-5c0-4.5 3.5-8 8-8s8 3.5 8 8v5"
+        stroke={ACCENT}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      {/* body */}
+      <rect
+        x="12"
+        y="22"
+        width="24"
+        height="18"
+        rx="4"
+        stroke={ACCENT}
+        strokeWidth="2.4"
+        strokeLinejoin="round"
+      />
+      {/* keyhole */}
+      <circle cx="24" cy="29" r="2.4" fill={ACCENT} />
+      <path d="M24 31.4v3.6" stroke={ACCENT} strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
+  )
+}
