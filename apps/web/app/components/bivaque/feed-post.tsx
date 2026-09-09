@@ -145,6 +145,35 @@ export interface FeedPostProps {
   onHide?: (postId: string) => void
 }
 
+// Nome da cidade por id, resolvido uma vez por id e por carregamento.
+//
+// Cada cartao com alcance de cidade consultava `localities` por conta
+// propria. Num feed de 378 publicacoes isso vira ~362 requisicoes — quase
+// todas pedindo A MESMA cidade, porque o feed e de uma localidade so.
+//
+// Nome de cidade nao muda durante uma sessao; se mudar, o proximo
+// carregamento resolve.
+const cityNameById = new Map<string, Promise<string>>()
+
+function cityNameOnce(localityId: string): Promise<string> {
+  const cached = cityNameById.get(localityId)
+  if (cached !== undefined) return cached
+  const supabase = createBrowserClient()
+  const pending = Promise.resolve(
+    supabase
+      .from("localities")
+      .select("city_name")
+      .eq("id", localityId)
+      .maybeSingle()
+      .then(
+        ({ data }) => (data as { city_name: string } | null)?.city_name ?? "",
+        () => "",
+      ),
+  )
+  cityNameById.set(localityId, pending)
+  return pending
+}
+
 export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
   // O modal de denuncia do post vive aqui, e nao dentro do menu: o menu fecha
   // ao escolher o item, e um modal montado dentro dele fecharia junto.
@@ -165,22 +194,18 @@ export function FeedPost({ post, index = 0, onHide }: FeedPostProps) {
   // cidade — sem ele, a pessoa responde algo de vizinhança achando que fala
   // para 500 pessoas quando fala para milhares (regra 2 da §12). O nome vem
   // da locality do post, nunca de constante.
+  // Uma consulta por cidade para o feed inteiro: ver cityNameOnce.
   useEffect(() => {
     if (post.community_id !== null) return
     let cancelled = false
     ;(async () => {
-      const { data } = await supabase
-        .from("localities")
-        .select("city_name")
-        .eq("id", post.locality_id)
-        .maybeSingle()
-      if (cancelled) return
-      setLocalityName((data as { city_name: string } | null)?.city_name ?? "")
+      const name = await cityNameOnce(post.locality_id)
+      if (!cancelled) setLocalityName(name)
     })()
     return () => {
       cancelled = true
     }
-  }, [post.locality_id, post.community_id, supabase])
+  }, [post.locality_id, post.community_id])
 
   const bodyLong = (post.content ?? "").length > 280
   const clampedClass = expanded ? "" : "line-clamp-4"
