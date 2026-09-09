@@ -1,11 +1,11 @@
 "use client"
 
 import { scrubReportReason } from "@bivaque/domain"
-import { Button, Modal, TextArea, useOverlayState } from "@heroui/react"
-import { useCallback, useState } from "react"
+import { Button, Modal, Radio, RadioGroup, TextArea, useOverlayState } from "@heroui/react"
+import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { SUPPORT_SLA_HOURS } from "../../../lib/support"
+import { currentUserIdOnce } from "./feed-post-shared"
 import { FeedbackAlert } from "./feedback-alert"
 
 // Os seis alvos de `public.report_target_type`. Os dois de indicacao entraram
@@ -19,6 +19,34 @@ export type ReportTargetType =
   | "recommendation_request"
   | "recommendation_reply"
 
+// Composicao da prancha 56: o modal pergunta POR QUE a denuncia existe, em
+// categorias fechadas, e a explicacao e opcional. O texto do alvo vem do tipo
+// escolhido pelo pai — nada de chumbo.
+const TARGET_PRESENTATION: Record<ReportTargetType, { title: string; question: string }> = {
+  post: { title: "Denunciar publicação", question: "esta publicação" },
+  comment: { title: "Denunciar comentário", question: "este comentário" },
+  group: { title: "Denunciar comunidade", question: "esta comunidade" },
+  message: { title: "Denunciar mensagem", question: "esta mensagem" },
+  recommendation_request: { title: "Denunciar pedido", question: "este pedido" },
+  recommendation_reply: { title: "Denunciar resposta", question: "esta resposta" },
+}
+
+// O `reports.reason` e um texto so (1..1000, 20260802001600) e nao ha coluna de
+// categoria — criar uma e proibida aqui. A categoria escolhida vira o prefixo
+// legivel do motivo: `Conteúdo inadequado: <explicacao>`. O operador le a frase
+// inteira na fila (prancha 58), e a tela de acompanhamento pode separar no ":".
+const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
+  { value: "spam", label: "Spam" },
+  { value: "conteudo-inadequado", label: "Conteúdo inadequado" },
+  { value: "informacao-enganosa", label: "Informação enganosa" },
+  { value: "outro", label: "Outro" },
+]
+
+// Limite da explicacao na prancha 56 (contador "41/300"). O CHECK do banco e de
+// 1000 no total; a redacao de documento (20260821000030) pode expandir ate ~2x
+// um trecho denso de digitos, e 300 + prefixo continuam folgados abaixo disso.
+const EXPLANATION_MAX = 300
+
 interface ReportButtonProps {
   targetType: ReportTargetType
   targetId: string
@@ -31,36 +59,74 @@ interface ReportButtonProps {
    * do componente nao e renderizado.
    */
   externalState?: ReturnType<typeof useOverlayState>
+  /**
+   * Autor do conteudo denunciado, quando o pai o conhece. Preenchido, o estado
+   * de sucesso oferece "Bloquear esta pessoa", ligado ao mecanismo real
+   * `public.dm_blocks` (20260802001500) — o mesmo que a conversa usa. Vazio, a
+   * opcao nao aparece: nao se oferece bloqueio sem saber a quem bloquear.
+   */
+  blockUserId?: string
 }
+
+type BlockState = "idle" | "working" | "done"
 
 export function ReportButton({
   targetType,
   targetId,
   label = "Denunciar",
   externalState,
+  blockUserId,
 }: ReportButtonProps) {
   const ownModal = useOverlayState()
   const modal = externalState ?? ownModal
-  const [reason, setReason] = useState("")
+  const [category, setCategory] = useState<string | null>(null)
+  const [explanation, setExplanation] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [blockState, setBlockState] = useState<BlockState>("idle")
+  const [blockError, setBlockError] = useState("")
+  const [viewerId, setViewerId] = useState<string | null>(null)
   const supabase = createBrowserClient()
+  const presentation = TARGET_PRESENTATION[targetType]
+
+  // O bloqueio so pode ser oferecido entre duas pessoas distintas. Sem sessao
+  // lida, nao se oferece o que nao se pode executar honestamente.
+  // Uma requisicao de identidade para todos os cartoes do feed: este botao e
+  // renderizado por publicacao E por comentario, entao chamar auth.getUser()
+  // aqui multiplicava as requisicoes pelo tamanho do feed.
+  useEffect(() => {
+    let active = true
+    currentUserIdOnce()
+      .then((id) => {
+        if (active) setViewerId(id)
+      })
+      .catch(() => {
+        if (active) setViewerId(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const canOfferBlock = Boolean(blockUserId && viewerId && blockUserId !== viewerId)
 
   const handleSubmit = useCallback(async () => {
-    const trimmed = reason.trim()
-    if (!trimmed) {
-      setError("Descreva o motivo da denuncia.")
+    const chosen = REPORT_CATEGORIES.find((c) => c.value === category)
+    if (!chosen) {
+      setError("Escolha um motivo para a denúncia.")
       return
     }
 
     setSubmitting(true)
     setError("")
 
+    const trimmed = explanation.trim()
     // H-Task 2: aplica a redação de CPF antes do insert. O trigger no banco
-    // (supabase/migrations/<ts>_report_reason_guard.sql) aplica a mesma
-    // redação como cinto de segurança server-side.
-    const safeReason = scrubReportReason(trimmed)
+    // (supabase/migrations/20260821000030_report_reason_guard.sql) aplica a
+    // mesma redação como cinto de segurança server-side. A categoria nao contem
+    // digitos, entao o prefixo passa ileso pela varredura.
+    const safeReason = scrubReportReason(trimmed ? `${chosen.label}: ${trimmed}` : chosen.label)
 
     const { error: insertError } = await supabase.from("reports").insert({
       target_type: targetType,
@@ -69,37 +135,66 @@ export function ReportButton({
     } as Database["public"]["Tables"]["reports"]["Insert"])
 
     if (insertError) {
-      if (insertError.message.includes("duplicate") || insertError.code === "23505") {
-        setError("Voce ja denunciou este conteudo.")
+      // O indice parcial reports_one_open_per_reporter_target_idx so colide com
+      // denuncia ABERTA do mesmo repórter no mesmo alvo — entao "segue na fila"
+      // e fato, nao promessa.
+      if (insertError.code === "23505" || insertError.message.includes("duplicate")) {
+        setError("Você já denunciou este conteúdo. Sua denúncia anterior segue na fila.")
       } else if (insertError.message.includes("own content")) {
-        setError("Voce nao pode denunciar seu proprio conteudo.")
+        setError("Você não pode denunciar o seu próprio conteúdo.")
       } else {
-        setError("Nao foi possivel enviar a denuncia agora. Tente novamente em instantes.")
+        // Falha de envio nunca vira sucesso: o alerta e recuperavel e o
+        // formulario continua preenchido para nova tentativa real.
+        setError("Não foi possível enviar a denúncia agora. Tente novamente.")
       }
     } else {
       // O feedback fica dentro do modal aberto: fechar aqui escondia a
       // confirmacao junto com o dialogo e o membro nunca via o desfecho.
       setSuccess(true)
-      setReason("")
+      setCategory(null)
+      setExplanation("")
     }
 
     setSubmitting(false)
-  }, [reason, targetType, targetId, supabase])
+  }, [category, explanation, targetType, targetId, supabase])
+
+  const handleBlock = useCallback(async () => {
+    if (!blockUserId || !viewerId) return
+    setBlockState("working")
+    setBlockError("")
+
+    const { error: blockInsertError } = await supabase.from("dm_blocks").insert({
+      blocker_user_id: viewerId,
+      blocked_user_id: blockUserId,
+    })
+
+    if (blockInsertError) {
+      if (blockInsertError.code === "23505") {
+        // PK (blocker, blocked) já existe: a pessoa está bloqueada. O desfecho
+        // pedido ja e verdade — encerra como feito, nao como erro.
+        setBlockState("done")
+      } else {
+        setBlockState("idle")
+        setBlockError("Não foi possível bloquear agora. Tente novamente.")
+      }
+    } else {
+      setBlockState("done")
+    }
+  }, [blockUserId, viewerId, supabase])
+
+  const resetForm = useCallback(() => {
+    setCategory(null)
+    setExplanation("")
+    setError("")
+    setSuccess(false)
+    setBlockState("idle")
+    setBlockError("")
+  }, [])
 
   const handleClose = useCallback(() => {
     modal.close()
-    setReason("")
     setError("")
   }, [modal])
-
-  if (success) {
-    return (
-      <span className="text-xs text-accent">
-        Denuncia recebida. A analise acontece em ate {SUPPORT_SLA_HOURS} horas e o resultado chega
-        como notificacao no app.
-      </span>
-    )
-  }
 
   return (
     <>
@@ -107,50 +202,114 @@ export function ReportButton({
         <Button
           variant="tertiary"
           size="sm"
-          onPress={modal.open}
-          aria-label={`${label} ${targetType}`}
+          onPress={() => {
+            resetForm()
+            modal.open()
+          }}
+          aria-label={`${label} ${presentation.question.replace(/^(esta|este) /, "")}`}
         >
           {label}
         </Button>
       )}
 
-      <Modal state={modal}>
+      <Modal state={modal} onOpenChange={(isOpen) => !isOpen && resetForm()}>
         <Modal.Backdrop>
           <Modal.Container size="md">
             <Modal.Dialog>
               <Modal.Header>
-                <Modal.Heading>Denunciar conteudo</Modal.Heading>
+                <Modal.Heading>{presentation.title}</Modal.Heading>
                 <Modal.CloseTrigger />
               </Modal.Header>
               <Modal.Body>
                 {success ? (
-                  <span className="text-sm text-accent">
-                    Denuncia recebida. A analise acontece em ate {SUPPORT_SLA_HOURS} horas e o
-                    resultado chega como notificacao no app.
-                  </span>
+                  <div className="flex flex-col gap-4">
+                    {/* Nenhum contrato garante prazo de analise, resposta ou
+                        punicao — o ADR de suspensao e o resolve_report so
+                        garantem fila e notificacao quando houver decisao. O
+                        texto diz exatamente o que acontece. */}
+                    <FeedbackAlert
+                      variant="success"
+                      title="Denúncia enviada."
+                      description="Ela entra na fila de moderação que a equipe lê. Se houver uma decisão, o retorno chega como notificação no app."
+                    />
+                    {canOfferBlock ? (
+                      <div>
+                        {blockState === "done" ? (
+                          <FeedbackAlert
+                            variant="success"
+                            title="Pessoa bloqueada."
+                            description="As mensagens diretas entre vocês ficam bloqueadas nos dois sentidos."
+                          />
+                        ) : (
+                          <>
+                            <p className="text-sm text-muted">
+                              Prefere não receber mensagens desta pessoa?
+                            </p>
+                            <Button
+                              variant="secondary"
+                              className="mt-2"
+                              onPress={handleBlock}
+                              isDisabled={blockState === "working"}
+                            >
+                              {blockState === "working" ? "Bloqueando…" : "Bloquear esta pessoa"}
+                            </Button>
+                            {blockError ? (
+                              <div className="mt-2">
+                                <FeedbackAlert variant="danger" description={blockError} />
+                              </div>
+                            ) : null}
+                          </>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 ) : (
                   <>
-                    <p className="text-sm text-muted">
-                      Descreva por que este conteudo viola as regras da comunidade.
+                    <p id="report-question" className="text-sm">
+                      Por que você está denunciando {presentation.question}?
                     </p>
-                    <p id="report-reason-help" className="mt-2 text-xs text-muted" role="note">
-                      Nao digite CPF, telefone nem endereco. O motivo fica registrado por dois anos
-                      e passa por redacao automatica antes de chegar ao operador.
-                    </p>
+                    <RadioGroup
+                      aria-labelledby="report-question"
+                      value={category ?? ""}
+                      onChange={(next) => {
+                        setCategory(next)
+                        setError("")
+                      }}
+                      orientation="vertical"
+                      className="mt-3 gap-1"
+                    >
+                      {REPORT_CATEGORIES.map((item) => (
+                        <Radio key={item.value} value={item.value}>
+                          <Radio.Content>
+                            <Radio.Control>
+                              <Radio.Indicator />
+                            </Radio.Control>
+                            {item.label}
+                          </Radio.Content>
+                        </Radio>
+                      ))}
+                    </RadioGroup>
                     <div className="mt-4">
                       <label className="mb-1 block text-sm font-medium" htmlFor="report-reason">
-                        Motivo da denuncia
+                        Explique (opcional)
                       </label>
                       <TextArea
                         id="report-reason"
-                        placeholder="Descreva o motivo..."
+                        maxLength={EXPLANATION_MAX}
                         aria-describedby="report-reason-help"
                         aria-invalid={Boolean(error)}
                         aria-errormessage={error ? "report-reason-error" : undefined}
-                        value={reason}
-                        onChange={(e) => setReason((e.target as HTMLTextAreaElement).value)}
+                        value={explanation}
+                        onChange={(e) => setExplanation((e.target as HTMLTextAreaElement).value)}
                         className="w-full"
                       />
+                      <p className="mt-1 text-right text-xs text-muted">
+                        {explanation.length}/{EXPLANATION_MAX}
+                      </p>
+                      <p id="report-reason-help" className="text-xs text-muted" role="note">
+                        Não digite CPF, telefone nem endereço. O motivo passa por redação automática
+                        antes de chegar ao operador e fica registrado por dois anos.
+                      </p>
                     </div>
                     {error && (
                       <div id="report-reason-error" className="mt-2">
@@ -172,10 +331,10 @@ export function ReportButton({
                     </Button>
                     <Button
                       onPress={handleSubmit}
-                      isDisabled={submitting || !reason.trim()}
+                      isDisabled={submitting || !category}
                       variant="primary"
                     >
-                      {submitting ? "Enviando..." : "Enviar denuncia"}
+                      {submitting ? "Enviando…" : "Enviar denúncia"}
                     </Button>
                   </>
                 )}

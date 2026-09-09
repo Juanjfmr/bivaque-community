@@ -51,20 +51,22 @@
   opacity: 0.78;
 }
 
+/* Wordmark tipográfico da prancha 36: "BIVAQUE" em caixa alta. Sobre a foto é
+   branco; no topo mobile, onde a foto não aparece, assume a cor da ação
+   primária para manter contraste na superfície clara. */
 .wordmark {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--semantic-background-inverse);
   font-family: var(--semantic-font-family-interface);
   font-size: var(--semantic-typography-section-title-size);
-  font-weight: var(--semantic-typography-label-weight);
+  font-weight: var(--semantic-typography-display-weight);
   line-height: var(--primitive-line-height-tight);
+  color: var(--semantic-action-primary);
+  letter-spacing: 0.04em;
 }
 
-.wordmark svg {
-  width: 22px;
-  height: 22px;
+.wordmark[data-photo="true"] {
+  font-size: var(--semantic-typography-display-size);
+  color: var(--semantic-text-on-strong);
+  text-shadow: 0 2px 18px color-mix(in srgb, var(--semantic-text-primary) 55%, transparent);
 }
 
 .backLink {
@@ -126,52 +128,8 @@
   padding-bottom: 28px;
 }
 
-.modeSwitch {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--primitive-space-1);
-  margin-bottom: var(--primitive-space-6);
-  padding: var(--primitive-space-1);
-  background: var(--semantic-surface-sunken);
-  border-radius: var(--primitive-radius-full);
-}
-
-.modeOption {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 var(--primitive-space-4);
-  color: var(--semantic-text-secondary);
-  border-radius: var(--primitive-radius-full);
-  font-size: var(--semantic-typography-label-size);
-  font-weight: var(--semantic-typography-label-weight);
-  text-decoration: none;
-  transition:
-    background var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
-    color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
-}
-
-.modeOption:hover {
-  color: var(--semantic-text-primary);
-}
-
-.modeOption[data-active="true"] {
-  background: var(--semantic-surface);
-  color: var(--semantic-action-primary);
-  box-shadow: var(--semantic-elevation-raised);
-}
-
 .heading {
   margin-bottom: 28px;
-}
-
-.eyebrow {
-  margin: 0 0 10px;
-  color: var(--semantic-action-primary);
-  font-size: var(--semantic-typography-meta-size);
-  font-weight: var(--semantic-typography-label-weight);
-  text-transform: uppercase;
 }
 
 .heading h1 {
@@ -180,14 +138,7 @@
   font-size: var(--semantic-typography-display-size);
   font-weight: var(--semantic-typography-card-title-weight);
   line-height: var(--primitive-line-height-tight);
-}
-
-.heading > p:last-child {
-  max-width: 390px;
-  margin: 14px 0 0;
-  color: var(--semantic-text-secondary);
-  font-size: var(--semantic-typography-body-size);
-  line-height: var(--semantic-typography-body-line-height);
+  text-wrap: balance;
 }
 
 .form {
@@ -205,7 +156,7 @@
 
 .inputShell {
   display: grid;
-  grid-template-columns: 22px 1fr;
+  grid-template-columns: 22px 1fr auto;
   align-items: center;
   gap: 10px;
   min-height: 52px;
@@ -291,6 +242,7 @@
   border: 0;
   border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .revealButton:hover {
@@ -308,39 +260,79 @@
   cursor: pointer;
 }
 
+/* Caixa de aceite: o elemento ocupa 44x44 para o toque mínimo; o visual de
+   20x20 é desenhado em ::before, e o margin negativo devolve os 12px de folga
+   ao fluxo do texto. O anel de foco vai no visual, não na caixa invisível. */
 .consentRow input {
+  position: relative;
+  appearance: none;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  margin: -12px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: outline-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.consentRow input::before {
+  position: absolute;
+  top: 12px;
+  left: 12px;
   width: 20px;
   height: 20px;
-  margin-top: 2px;
-  flex: none;
-  accent-color: var(--semantic-action-primary);
+  content: "";
+  background: var(--semantic-surface);
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--primitive-radius-6);
+  transition:
+    background var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    border-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
+.consentRow input:checked::before {
+  background: var(--semantic-action-primary);
+  border-color: var(--semantic-action-primary);
+}
+
+.consentRow input:checked::after {
+  position: absolute;
+  top: 15px;
+  left: 19px;
+  width: 6px;
+  height: 11px;
+  content: "";
+  border: solid var(--semantic-text-on-strong);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.consentRow input:focus-visible {
+  outline: 0;
+}
+
+.consentRow input:focus-visible::before {
+  outline: 2px solid var(--semantic-focus-outer);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--semantic-focus-inner);
+}
+
+/* Link inline na frase do aceite: o padding alarga a área de toque para 44px
+   sem mover o texto nem quebrar a linha — o margin negativo desfaz o espaço
+   extra no layout. */
 .consentRow a {
+  display: inline-block;
+  padding: 14px 2px;
+  margin: -14px -2px;
   color: var(--semantic-action-primary);
   font-weight: var(--semantic-typography-label-weight);
   text-decoration: underline;
   text-underline-offset: 4px;
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
-.forgotRow {
-  margin: 0;
-  text-align: right;
-  font-size: var(--semantic-typography-label-size);
-}
-
-.forgotRow a {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  color: var(--semantic-action-primary);
-  font-weight: var(--semantic-typography-label-weight);
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--semantic-action-primary) 32%, transparent);
-  text-underline-offset: 4px;
-}
-
-.forgotRow a:hover {
+.consentRow a:hover {
   text-decoration-color: currentcolor;
 }
 
@@ -382,62 +374,41 @@
   height: 20px;
 }
 
-.resend {
+/* Rodapé da prancha: no entrar, "Criar conta" à esquerda e a recuperação à
+   direita; no cadastro, "Já tenho conta" centrado. Links, não texto com link
+   embutido — é o que a referência mostra. */
+.entryLinks {
   display: flex;
   align-items: center;
-  gap: var(--primitive-space-3);
-  margin-top: var(--primitive-space-3);
-  color: var(--semantic-text-secondary);
-  font-size: var(--semantic-typography-meta-size);
+  gap: var(--primitive-space-4);
+  margin: 24px 0 0;
 }
 
-.resendButton {
-  min-height: 44px;
+.entryLinks[data-mode="signup"] {
+  justify-content: center;
 }
 
-.accountPrompt {
-  margin: 20px 0 0;
-  color: var(--semantic-text-secondary);
-  font-size: var(--semantic-typography-label-size);
-  text-align: center;
-}
-
-.accountPrompt a {
+.entryLinks a {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
   padding: 0 2px;
   color: var(--semantic-action-primary);
+  font-size: var(--semantic-typography-label-size);
   font-weight: var(--semantic-typography-label-weight);
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--semantic-action-primary) 32%, transparent);
-  text-underline-offset: 4px;
-  transition:
-    color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
-    text-decoration-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
-.accountPrompt a:hover {
+.entryLinks a:hover {
   color: var(--semantic-action-primary-hover);
-  text-decoration-color: currentcolor;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
-.trustNote {
-  display: grid;
-  grid-template-columns: 20px 1fr;
-  gap: 10px;
-  margin: 20px 0 0;
-  padding-top: 22px;
-  color: var(--semantic-text-secondary);
-  border-top: 1px solid var(--semantic-border);
-  font-size: var(--semantic-typography-meta-size);
-  line-height: var(--semantic-typography-body-line-height);
-}
-
-.trustNote svg {
-  width: 18px;
-  height: 18px;
-  color: var(--semantic-action-primary);
+.entryLinks[data-mode="login"] {
+  justify-content: space-between;
 }
 
 .visualPanel {
@@ -445,7 +416,6 @@
   display: none;
   min-width: 0;
   overflow: hidden;
-  color: var(--semantic-text-on-strong);
   background: var(--semantic-background-inverse);
 }
 
@@ -454,61 +424,58 @@
   object-position: 62% center;
 }
 
+/* Sombra discreta no topo para o wordmark branco manter contraste sobre a foto
+   em qualquer quadro. */
 .visualShade {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    0deg,
-    color-mix(in srgb, var(--semantic-background-inverse) 90%, transparent),
-    color-mix(in srgb, var(--semantic-background-inverse) 4%, transparent) 68%
+    180deg,
+    color-mix(in srgb, var(--semantic-text-primary) 42%, transparent),
+    transparent 38%
   );
 }
 
-.visualCopy {
+.photoBrand {
   position: absolute;
   z-index: 1;
-  right: 54px;
-  bottom: 58px;
-  left: 54px;
-  max-width: 630px;
+  top: 36px;
+  left: 44px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--semantic-text-on-strong);
+  text-decoration: none;
+  transition: opacity var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
-.visualCopy > p {
-  margin: 0 0 16px;
-  color: var(--semantic-warning-soft);
-  font-size: var(--semantic-typography-meta-size);
-  font-weight: var(--semantic-typography-label-weight);
-  text-transform: uppercase;
-}
-
-.visualCopy h2 {
-  margin: 0;
-  font-family: var(--semantic-font-family-interface);
-  font-size: var(--semantic-typography-display-size);
-  font-weight: var(--semantic-typography-card-title-weight);
-  line-height: var(--primitive-line-height-tight);
-  text-wrap: balance;
-}
-
-.visualCopy > span {
-  display: block;
-  max-width: 560px;
-  margin-top: 20px;
-  color: color-mix(in srgb, var(--semantic-text-on-strong) 80%, transparent);
-  font-size: var(--semantic-typography-body-size);
-  line-height: var(--semantic-typography-body-line-height);
+.photoBrand:hover {
+  opacity: 0.85;
 }
 
 @media (min-width: 768px) {
+  /* Prancha 36: foto à esquerda, formulário à direita. A ordem no DOM continua
+     form → foto para que a tecnologia assistiva encontre o formulário primeiro;
+     o espelhamento é feito no grid. */
   .root {
-    grid-template-columns: minmax(420px, 0.9fr) minmax(0, 1.1fr);
+    grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  }
+
+  .visualPanel {
+    grid-column: 1;
+    grid-row: 1;
+    display: block;
+    min-height: 100svh;
   }
 
   .formPanel {
+    grid-column: 2;
+    grid-row: 1;
     min-height: 100svh;
     padding: 28px 42px 38px;
   }
 
+  .topbar,
   .mobileImage {
     display: none;
   }
@@ -520,16 +487,11 @@
     justify-content: center;
     padding: 48px 0 76px;
   }
-
-  .visualPanel {
-    display: block;
-    min-height: 100svh;
-  }
 }
 
 @media (min-width: 1120px) {
   .root {
-    grid-template-columns: minmax(500px, 0.82fr) minmax(0, 1.18fr);
+    grid-template-columns: minmax(0, 0.92fr) minmax(500px, 1.08fr);
   }
 
   .formPanel {
@@ -541,14 +503,9 @@
     font-size: var(--semantic-typography-display-size);
   }
 
-  .visualCopy {
-    right: 72px;
-    bottom: 72px;
-    left: 72px;
-  }
-
-  .visualCopy h2 {
-    font-size: var(--semantic-typography-display-size);
+  .photoBrand {
+    top: 44px;
+    left: 56px;
   }
 }
 
@@ -561,11 +518,6 @@
 
   .heading {
     margin-bottom: 20px;
-  }
-
-  .trustNote {
-    margin-top: 18px;
-    padding-top: 16px;
   }
 }
 

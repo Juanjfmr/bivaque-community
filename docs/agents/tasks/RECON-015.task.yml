@@ -1,0 +1,60 @@
+task_id: RECON-015
+
+objective: >
+  A conversa passa a ser a da prancha 15: ler a linha inteira, responder, e ver o que ja foi enviado sem duvida sobre o que chegou ao outro lado.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/15-web-conversa.png
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    chat-thread.tsx tem 445 linhas e renderiza a linha de mensagens com envio. Nao segue a composicao da prancha 15 e o estado de envio nao distingue enviando, enviado e falhou.
+
+allowed_paths:
+  - apps/web/app/components/bivaque/chat-thread.tsx
+  - docs/agents/tasks/RECON-015.task.yml
+
+forbidden:
+  - executar em paralelo com RECON-014, 015, 016 ou 017 — os quatro dividem components/bivaque/ e a onda 4 e SERIAL, ordem 2 de 4
+  - tocar arquivo de components/bivaque/ fora dos allowed_paths deste contrato
+  - deixar mensagem otimista indistinguivel de mensagem confirmada pelo servidor
+  - engolir erro de envio e apresentar a mensagem como entregue
+  - prometer entrega, leitura ou presenca que o servidor nao confirma
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem ou qualquer dado — tudo vem de contexto ou consulta real
+  - inventar conteudo; sem dado real, estado vazio honesto
+  - linkar rota que nao existe
+  - prometer prazo, aprovacao, entrega ou alcance que o servidor nao garante
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+  - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
+  - introduzir familia tipografica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - a linha e a resposta seguem a composicao da prancha 15
+  - enviando, enviado e falhou sao tres estados distintos e visiveis — mensagem que falhou oferece nova tentativa e NAO some
+  - a mensagem otimista some ou vira falha; nunca fica parecendo enviada quando nao foi
+  - o autor de cada mensagem vem de consulta real; sem nome resolvido, rotulo honesto
+  - conversa vazia e estado vazio honesto, nao lista em branco por falha de consulta
+  - nenhuma consumidora do modulo quebra
+  - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperavel com nova tentativa
+  - nenhum dado inventado sobrevive na tela
+  - contraste >= 4,5:1, alvos >= 44x44, foco visivel
+  - npx pnpm@11.18.0 gate verde
+  - auditoria visual das rotas que consomem conversa e resposta em 375/768/1440 sem finding de severidade high
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-015.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: conversa privada entre membros
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

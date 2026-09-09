@@ -3,6 +3,8 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { LocalityContextProvider, type LocalityCurrent } from "../../lib/locality-context"
+import { log } from "../../lib/logger"
+import { type MemberCommunity, MemberContextProvider } from "../../lib/member-context"
 import { AppShell } from "../components/bivaque/app-shell"
 import { ToastProvider } from "../components/bivaque/toast"
 
@@ -102,11 +104,100 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
           readOnly: outboundRow.access === "read_only",
         }
 
+  // G0: identidade do membro + "Minhas comunidades" + badge de não-lidas para a
+  // sidebar rica. Resolvido aqui, no servidor, e distribuído via MemberContext.
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || user === null) {
+    // O middleware garante um usuário autenticado aqui; se sumiu entre o gate e
+    // o render, falhe alto como nos blocos acima.
+    redirect("/login")
+  }
+
+  // ── Dados da sidebar: falha NÃO derruba o shell ──────────────────────────
+  //
+  // A localidade acima é estrutural: sem ela não há o que renderizar, e por isso
+  // ela lança. Identidade, comunidades e contagem de não-lidas são o conteúdo da
+  // sidebar. Este layout embrulha TODA rota autenticada, então lançar aqui
+  // transformava um soluço na contagem de não-lidas em 500 em todas as páginas
+  // do membro, com stack do Postgres chegando ao navegador — o oposto de
+  // "erro interno nunca chega ao membro" (DESIGN_SYSTEM §6.1).
+  //
+  // Agora cada consulta degrada para um padrão seguro e o erro é registrado. O
+  // erro continua sendo LIDO, que é a regra da casa; o que muda é a resposta a
+  // ele: a sidebar mostra menos, em vez de o aplicativo inteiro cair.
+
+  // A PK de `profiles` é `user_id`, não `id` (migration
+  // 20260802000100_locality_profile_foundation.sql:32). O client SSR aqui é
+  // instanciado sem o genérico <Database>, então o typecheck não confere nome
+  // de coluna — este erro só aparece em runtime.
+  const { data: profileRow, error: profileError } = await supabase
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (profileError) {
+    log.error("shell: could not resolve the member profile", {
+      user_id: user.id,
+      error: profileError.message,
+    })
+  }
+
+  // `profiles` exige uma linha de membership, que o bloco acima já resolveu, então
+  // a ausência de perfil aqui é anomalia, não estado normal. Ainda assim ela não
+  // pode virar nome em branco na sidebar: o avatar renderiza inicial vazia e o
+  // rodapé fica sem identidade nenhuma. Rótulo neutro é melhor que buraco.
+  const displayName =
+    (profileRow as { display_name: string } | null)?.display_name?.trim() || "Membro"
+
+  const { data: communityRows, error: communitiesError } = await supabase
+    .from("community_memberships")
+    .select("communities(id, name, is_deleted)")
+    .eq("user_id", user.id)
+    .eq("status", "approved")
+
+  if (communitiesError) {
+    log.error("shell: could not resolve the member communities", {
+      user_id: user.id,
+      error: communitiesError.message,
+    })
+  }
+
+  // Comunidade apagada continua com a linha de membership; a sidebar não pode
+  // listá-la (communities.is_deleted, migration 20260805211933:26).
+  type CommunityEmbed = MemberCommunity & { is_deleted: boolean }
+  const communities = ((communityRows as unknown as { communities: CommunityEmbed | null }[]) ?? [])
+    .map((r) => r.communities)
+    .filter((c): c is CommunityEmbed => c !== null && c.is_deleted !== true)
+    .map(({ id, name }) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+
+  const { count: unreadRaw, error: unreadError } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("recipient_user_id", user.id)
+    .is("read_at", null)
+
+  if (unreadError) {
+    log.error("shell: could not resolve unread notifications", {
+      user_id: user.id,
+      error: unreadError.message,
+    })
+  }
+
+  const unreadCount = unreadRaw ?? 0
+
   return (
     <LocalityContextProvider value={{ current, outbound }}>
-      <ToastProvider>
-        <AppShell>{children}</AppShell>
-      </ToastProvider>
+      <MemberContextProvider value={{ displayName, communities, unreadCount }}>
+        <ToastProvider>
+          <AppShell>{children}</AppShell>
+        </ToastProvider>
+      </MemberContextProvider>
     </LocalityContextProvider>
   )
 }

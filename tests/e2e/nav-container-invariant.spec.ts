@@ -6,13 +6,12 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 // DS-011 — Conceptual parent is responsive-invariant.
 //
-// RUN-004/Phase 4 evidence: at desktop viewports (≥768), `/messages` and
-// `/notifications` correctly activate the **Eu** nav item (because per the
-// ADR they live inside the "me" container). At mobile (375), the BottomNav
-// has no special fallback and falls through to `community` — so the same
-// route highlights a different primary destination based purely on
-// viewport. The bottom-nav must mirror the sidebar's "me" fallback so the
-// active primary container stays the same across viewport changes.
+// `/messages` and `/notifications` are not nav containers; both navs fall back
+// to the **Perfil** container for them (bottom-nav.tsx and app-shell.tsx share
+// the same fallback: /messages|/notifications -> "perfil", everything else ->
+// "inicio"). The active primary container must stay the same across viewport
+// changes — the bottom-nav mirrors the sidebar fallback.
+// Post PROCESSO-DE-CONSTRUCAO §7: "Eu" -> "Perfil", "Comunidade" -> "Início".
 
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
@@ -92,43 +91,43 @@ async function signInAndVisit(page: Page, url: string) {
 const BOTTOM_NAV = '[data-slot="tabs-list"][aria-label="Seções do aplicativo"]'
 const SIDEBAR_NAV = 'aside nav[aria-label="Navegação principal"]'
 
-test.describe("DS-011 mobile — BottomNav activates 'Eu' for /messages and /notifications", () => {
+test.describe("DS-011 mobile — BottomNav activates 'Perfil' for /messages and /notifications", () => {
   test.use({ viewport: { width: 375, height: 812 } })
 
-  test("/messages activates 'Eu', not 'Comunidade'", async ({ page }) => {
+  test("/messages activates 'Perfil', not 'Início'", async ({ page }) => {
     await signInAndVisit(page, "/messages")
     const tablist = page.locator(BOTTOM_NAV)
     await expect(tablist).toBeVisible({ timeout: 15000 })
 
-    const me = page.getByRole("tab", { name: "Eu", exact: true })
-    const comunidade = page.getByRole("tab", { name: "Comunidade", exact: true })
+    const perfil = page.getByRole("tab", { name: "Perfil", exact: true })
+    const inicio = page.getByRole("tab", { name: "Início", exact: true })
 
-    await expect(me).toHaveAttribute("aria-selected", "true")
-    await expect(comunidade).toHaveAttribute("aria-selected", "false")
+    await expect(perfil).toHaveAttribute("aria-selected", "true")
+    await expect(inicio).toHaveAttribute("aria-selected", "false")
   })
 
-  test("/notifications activates 'Eu', not 'Comunidade'", async ({ page }) => {
+  test("/notifications activates 'Perfil', not 'Início'", async ({ page }) => {
     await signInAndVisit(page, "/notifications")
     const tablist = page.locator(BOTTOM_NAV)
     await expect(tablist).toBeVisible({ timeout: 15000 })
 
-    const me = page.getByRole("tab", { name: "Eu", exact: true })
-    const comunidade = page.getByRole("tab", { name: "Comunidade", exact: true })
+    const perfil = page.getByRole("tab", { name: "Perfil", exact: true })
+    const inicio = page.getByRole("tab", { name: "Início", exact: true })
 
-    await expect(me).toHaveAttribute("aria-selected", "true")
-    await expect(comunidade).toHaveAttribute("aria-selected", "false")
+    await expect(perfil).toHaveAttribute("aria-selected", "true")
+    await expect(inicio).toHaveAttribute("aria-selected", "false")
   })
 })
 
-test.describe("DS-011 desktop — sidebar still activates 'Eu' for /messages (no regression)", () => {
+test.describe("DS-011 desktop — sidebar still activates 'Perfil' for /messages (no regression)", () => {
   test.use({ viewport: { width: 1440, height: 900 } })
 
-  test("/messages activates 'Eu' in the sidebar", async ({ page }) => {
+  test("/messages activates 'Perfil' in the sidebar", async ({ page }) => {
     await signInAndVisit(page, "/messages")
     const sidebarNav = page.locator(SIDEBAR_NAV)
     await expect(sidebarNav).toBeVisible({ timeout: 15000 })
 
-    const me = sidebarNav.getByRole("link", { name: /Eu/ })
-    await expect(me).toHaveAttribute("aria-current", "page")
+    const perfil = sidebarNav.getByRole("link", { name: /Perfil/ })
+    await expect(perfil).toHaveAttribute("aria-current", "page")
   })
 })

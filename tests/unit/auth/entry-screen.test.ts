@@ -34,19 +34,25 @@ const mobileCallback = read("apps", "mobile", "app", "auth-callback.tsx")
 const mobileLayout = read("apps", "mobile", "app", "_layout.tsx")
 
 describe("web entry screen", () => {
+  // Expectativas atualizadas em 2026-09-07 contra a prancha 36-web-auth-entrada,
+  // e não para ficar verde. A anterior travava a troca por abas (modeSwitch +
+  // aria-current); a prancha aprovada não tem abas — cada tela é um destino com
+  // título próprio e a navegação recíproca acontece nos links de rodapé. A
+  // cobertura não caiu: continua exigindo os dois destinos, agora pelos hrefs do
+  // copy de cada modo, e soma o título de cada prancha como asserção.
   it("offers both paths as navigation to their own routes", () => {
-    expect(webEntry).toContain('{ mode: "login", label: "Entrar", href: "/login" }')
-    expect(webEntry).toContain('{ mode: "signup", label: "Criar conta", href: "/signup" }')
+    expect(webEntry).toContain('alternateHref: "/signup"')
+    expect(webEntry).toContain('alternateHref: "/login"')
   })
 
-  it("marks the active path for assistive technology", () => {
-    expect(webEntry).toContain('aria-current={entry.mode === mode ? "page" : undefined}')
-    expect(webEntry).toContain('aria-label="Escolha como entrar no Bivaque"')
+  it("leads each path with the heading from the reference", () => {
+    expect(webEntry).toContain("Que bom ter você de volta.")
+    expect(webEntry).toContain("Vamos começar.")
   })
 
-  it("keeps the switch options at the minimum touch target", () => {
-    const option = webEntryStyles.match(/\.modeOption \{[^}]*\}/)?.[0] ?? ""
-    expect(option).toContain("min-height: 44px")
+  it("keeps the footer links at the minimum touch target", () => {
+    const links = webEntryStyles.match(/\.entryLinks a \{[^}]*\}/)?.[0] ?? ""
+    expect(links).toContain("min-height: 44px")
   })
 
   it("uses the focus tokens for the visible ring, not the action colour", () => {

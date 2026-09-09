@@ -18,6 +18,8 @@ import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { callProfileRpc } from "../../../../lib/profile-rpcs"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
+import { MemberAvatar } from "../../../components/bivaque/avatar"
+import { type AffiliationRow, ARMED_FORCES, affiliationFromRows } from "../affiliation"
 
 interface PageProps {
   params: Promise<{ userId: string }>
@@ -139,6 +141,23 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
     throw new Error(`Falha ao ler o perfil: ${profileError.message}`)
   }
 
+  // Self-declared Armed Force / OM. This read goes through the VIEWER's
+  // session client (authClient), deliberately NOT the service client the
+  // rest of the page uses: service_role bypasses RLS, and bypassing it here
+  // would hand a third party the rows the owner hid (is_visible = false).
+  // Under the viewer's own role, `profile_affiliations_select_own_or_visible`
+  // returns exactly the lines this viewer may see — nothing more. The result
+  // IS the visibility decision; we render what came back and trust it.
+  const { data: affiliationRows, error: affiliationError } = await authClient
+    .from("profile_affiliations")
+    .select("field, value, is_visible")
+    .eq("user_id", userId)
+  if (affiliationError) {
+    throw new Error(`Falha ao ler a afiliação declarada: ${affiliationError.message}`)
+  }
+  const affiliation = affiliationFromRows((affiliationRows ?? []) as AffiliationRow[])
+  const armedForceLabel = ARMED_FORCES.find((force) => force.id === affiliation.armedForce)
+
   // Posts and events: scoped by the RPC (Step 3: server-side visibility).
   const [postsResult, eventsResult] = await Promise.all([
     callProfileRpc(serviceClient, "profile_posts_for", {
@@ -161,27 +180,81 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
   const posts = (postsResult.data as PostRow[] | null) ?? []
   const events = (eventsResult.data as EventRow[] | null) ?? []
 
+  // Prancha 51 (painel direito): identidade no topo e "Atividade recente".
+  // Duas coisas NÃO estão aqui de propósito, e não por esquecimento:
+  //
+  //   - A cidade da pessoa. A prancha mostra "Brasília, DF", mas a única
+  //     garantia real desta página é que existe UMA localidade compartilhada
+  //     (`profile_is_visible_to_viewer`). Ler a localidade do alvo por fora
+  //     das RPCs seria contorno de visibilidade — proibido pelo contrato.
+  //   - O menu "Denunciar perfil / Bloquear usuário" da prancha. Denúncia não
+  //     tem target type "profile" no contrato de `reports`, e bloqueio não tem
+  //     contrato nenhum; o guia manda o menu só "where applicable". Afordância
+  //     sem efeito é proibida (G1), então o menu entra quando o contrato existir.
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 pt-6 pb-8">
-      <header>
-        <h1 className="text-lg font-semibold tracking-tight">{profile.display_name ?? "Membro"}</h1>
-        <p className="mt-1 text-sm text-muted">
-          Apenas conteúdo que você e esta pessoa podem ver pela mesma cidade.
-        </p>
+      <header className="flex items-center gap-4">
+        <MemberAvatar
+          name={profile.display_name}
+          size="lg"
+          src={`/api/avatar/${userId}`}
+          className="h-16 w-16 text-xl"
+        />
+        <div className="min-w-0">
+          <h1 className="text-lg font-semibold tracking-tight">
+            {profile.display_name ?? "Membro"}
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            Apenas conteúdo que você e esta pessoa podem ver pela mesma cidade.
+          </p>
+        </div>
       </header>
 
-      <section aria-labelledby="posts-heading" className="space-y-2">
-        <h2 id="posts-heading" className="text-base font-semibold tracking-tight">
-          Publicações
-        </h2>
-        <PostsSection rows={posts} />
-      </section>
+      {affiliation.armedForce !== "" || affiliation.om !== "" ? (
+        // What the member chose to say, shown exactly as declared: no rank,
+        // no unit inferred by verification, and deliberately no verification
+        // badge on these fields — they are self-declared. Lines the viewer
+        // cannot see never arrived, so an absent field renders no row at all.
+        <section
+          aria-labelledby="affiliation-heading"
+          className="rounded-xl border border-border bg-[var(--surface)] p-4"
+        >
+          <h2 id="affiliation-heading" className="text-sm font-semibold">
+            Afiliação declarada
+          </h2>
+          <dl className="mt-3 space-y-2">
+            {affiliation.armedForce !== "" && armedForceLabel ? (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-sm text-muted">Força Armada</dt>
+                <dd className="text-sm font-medium">{armedForceLabel.label}</dd>
+              </div>
+            ) : null}
+            {affiliation.om !== "" ? (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-sm text-muted">OM</dt>
+                <dd className="min-w-0 text-right text-sm font-medium break-words">
+                  {affiliation.om}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+        </section>
+      ) : null}
 
-      <section aria-labelledby="events-heading" className="space-y-2">
-        <h2 id="events-heading" className="text-base font-semibold tracking-tight">
-          Eventos
+      <section aria-labelledby="activity-heading" className="space-y-4">
+        <h2 id="activity-heading" className="text-base font-semibold tracking-tight">
+          Atividade recente
         </h2>
-        <EventsSection rows={events} />
+
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold">Publicações</h3>
+          <PostsSection rows={posts} />
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold">Eventos</h3>
+          <EventsSection rows={events} />
+        </div>
       </section>
     </div>
   )

@@ -1,0 +1,64 @@
+task_id: RECON-017
+
+objective: >
+  Os estados compartilhados passam a ser os da prancha 60: acesso indisponivel, falha de conexao e retomada, com a distincao entre eles visivel para quem esta na tela.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/60-web-estados.png
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    empty-state.tsx (34 linhas), error-state.tsx (31), skeleton.tsx (155), segment-fallbacks.tsx (50) e illustrations.tsx (173) entregam vazio, erro e carregamento, mas nao distinguem acesso negado de falha de conexao, e nao seguem a composicao da prancha 60.
+
+allowed_paths:
+  - apps/web/app/components/bivaque/empty-state.tsx
+  - apps/web/app/components/bivaque/error-state.tsx
+  - apps/web/app/components/bivaque/skeleton.tsx
+  - apps/web/app/components/bivaque/segment-fallbacks.tsx
+  - apps/web/app/components/bivaque/illustrations.tsx
+  - docs/agents/tasks/RECON-017.task.yml
+
+forbidden:
+  - executar em paralelo com RECON-014, 015, 016 ou 017 — os quatro dividem components/bivaque/ e a onda 4 e SERIAL, ordem 4 de 4
+  - tocar arquivo de components/bivaque/ fora dos allowed_paths deste contrato
+  - apresentar acesso negado como erro de rede, ou o contrario
+  - oferecer nova tentativa em estado que tentar de novo nao resolve
+  - trocar mensagem honesta por texto generico de erro
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem ou qualquer dado — tudo vem de contexto ou consulta real
+  - inventar conteudo; sem dado real, estado vazio honesto
+  - linkar rota que nao existe
+  - prometer prazo, aprovacao, entrega ou alcance que o servidor nao garante
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+  - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
+  - introduzir familia tipografica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - acesso indisponivel e falha de conexao sao estados DISTINTOS — o primeiro nao oferece nova tentativa, porque tentar de novo nao muda permissao
+  - falha de conexao oferece retomada real, e a retomada refaz a consulta em vez de so limpar a mensagem
+  - o skeleton tem a forma do conteudo que vai chegar, nao um bloco generico
+  - nenhum estado culpa o membro por uma falha do servidor
+  - cada estado e anunciado a leitor de tela na urgencia certa: erro assertivo, vazio educado
+  - toda consumidora atual continua funcionando; mudanca de API vem com as consumidoras atualizadas no mesmo diff
+  - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperavel com nova tentativa
+  - nenhum dado inventado sobrevive na tela
+  - contraste >= 4,5:1, alvos >= 44x44, foco visivel
+  - npx pnpm@11.18.0 gate verde
+  - auditoria visual das rotas que consomem estados compartilhados em 375/768/1440 sem finding de severidade high
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-017.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: estados que toda rota consome
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

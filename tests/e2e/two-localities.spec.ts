@@ -243,7 +243,15 @@ test.describe("two localities: each member sees only their own city", () => {
 
     // And a Manaus guide entry is visible — positive proof the guide renders
     // for the member's own locality.
-    await expect(page.getByText(MANAUS_GUIDE_ENTRY)).toBeVisible({ timeout: 15000 })
+    //
+    // Escopado à seção "Referências por assunto": desde a reconstrução da
+    // tela (RECON-008) o nome de cada entrada aparece duas vezes na página,
+    // uma no card da lista e outra em "Atualizados recentemente". Um
+    // getByText de página inteira resolve para dois nós e estoura o strict
+    // mode antes de chegar a asserção. O que este teste prova continua o
+    // mesmo: uma entrada da MINHA cidade é renderizada na listagem.
+    const referencias = page.locator('section[aria-labelledby="guia-referencias-titulo"]')
+    await expect(referencias.getByText(MANAUS_GUIDE_ENTRY)).toBeVisible({ timeout: 15000 })
   })
 
   test("second-locality member does not see Manaus guide entries", async ({ page }) => {

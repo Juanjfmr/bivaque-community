@@ -29,7 +29,7 @@ export default function ConsentPage() {
               href={"/privacidade" as Route}
               target="_blank"
               rel="noreferrer"
-              className="min-h-11 rounded-md border border-border px-3 py-2 underline underline-offset-4"
+              className="min-h-11 rounded-md border border-border px-3 py-2 underline underline-offset-4 transition-colors duration-[var(--semantic-motion-duration-fast)] hover:bg-[var(--semantic-selected)]"
             >
               Ler a Política de privacidade completa
             </Link>
@@ -37,7 +37,7 @@ export default function ConsentPage() {
               href={"/codigo-de-conduta" as Route}
               target="_blank"
               rel="noreferrer"
-              className="min-h-11 rounded-md border border-border px-3 py-2 underline underline-offset-4"
+              className="min-h-11 rounded-md border border-border px-3 py-2 underline underline-offset-4 transition-colors duration-[var(--semantic-motion-duration-fast)] hover:bg-[var(--semantic-selected)]"
             >
               Ler o Código de conduta completo
             </Link>

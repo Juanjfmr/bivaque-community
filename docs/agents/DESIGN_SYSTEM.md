@@ -347,11 +347,13 @@ interação. “Está bonito em uma tela” não é aceite.
 ### 7.1 Shell, escopo e navegação
 
 Navegação primária responde **o que fazer**; escopo responde **onde e com quem**. O membro vê
-containers estáveis para `cidade` (Cidade), `community` (Minha comunidade), `groups` (Grupos) e
-`me` (Eu); cada rota de detalhe mantém seu pai conceitual em todos os tamanhos. Eventos, guia e
-vitrine vivem em Cidade; conta vive em Eu. **Não existe inbox nem DM geral entre membros.**
-Mensagens só surgem como conversa contextual membro↔prestador, no shell e permissões próprios;
-nunca devem ser inferidas por um atalho em Eu. Papéis privilegiados e prestador têm shells próprios.
+containers estáveis para `inicio` (Início), `explorar` (Explorar), `comunidades` (Comunidades) e
+`perfil` (Perfil); cada rota de detalhe mantém seu pai conceitual em todos os tamanhos. Guia e
+vitrine vivem em Explorar; grupos vivem dentro de uma comunidade; conta, notificações e a conversa
+contextual membro↔prestador vivem em Perfil. **Não existe inbox nem DM geral entre membros.**
+Mensagens só surgem como conversa contextual membro↔prestador, no shell e permissões próprios.
+Papéis privilegiados e prestador têm shells próprios. Esta lista substitui os containers históricos
+do `ADR-20260816-shells-e-navegacao` por autorização do PROCESSO-DE-CONSTRUCAO §7 (2026-09-06).
 
 O escopo ativo fica visível onde altera conteúdo, permissão ou audiência. Nunca codifique
 Manaus como rótulo universal; a origem vem do estado real de membership.

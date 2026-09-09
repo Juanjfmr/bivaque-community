@@ -12,6 +12,15 @@ critic_review: Veredito registrado em 2026-08-16 por autorizacao explicita do do
 
 # Papéis são shells; navegação é container; destino novo aterrissa dentro
 
+> **Supersessão parcial — 2026-09-06.** Os quatro containers nomeados neste ADR
+> (`cidade`/`community`/`groups`/`me`) foram substituídos por `inicio`/`explorar`/
+> `comunidades`/`perfil` sob autorização do
+> [`PROCESSO-DE-CONSTRUCAO.md`](../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md) §7.
+> **A regra 2 (destino novo entra num container, nunca vira aba; teto de cinco;
+> regra falsificável) permanece válida e é o motivo de o novo conjunto também
+> ter quatro itens.** A mecânica de shells por papel (membro / prestador /
+> operador) não muda.
+
 ## Problem
 
 A navegação foi decidida por adição, e a adição acabou. São cinco vagas no bottom nav, as cinco

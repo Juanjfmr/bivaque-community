@@ -50,14 +50,14 @@ export function FeedComposer({ onOpenModal }: FeedComposerProps) {
         onClick={() => onOpenModal()}
         className="flex min-h-11 flex-1 cursor-pointer items-center rounded-lg border border-border bg-[var(--semantic-surface-sunken)] px-3 text-sm text-muted text-left transition-colors duration-[var(--semantic-motion-duration-instant)] hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
       >
-        No que voce esta pensando?
+        No que você está pensando?
       </button>
 
       <div className="hidden gap-1.5 sm:flex">
         <Button
           size="sm"
           variant="tertiary"
-          aria-label="Nova publicacao com link"
+          aria-label="Nova publicação com link"
           onPress={() => onOpenModal("link")}
           className="min-h-11 min-w-11"
         >

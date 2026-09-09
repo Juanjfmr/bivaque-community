@@ -1,0 +1,63 @@
+task_id: RECON-007
+
+objective: >
+  A rota /events passa a ser a tela de eventos da prancha 48-web-eventos: lista com
+  filtros, detalhe com gestao de presenca, e o pedido de mais informacoes ao
+  organizador disponivel antes e depois de confirmar presenca.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/48-web-eventos.png
+  - docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md — correcao 5, Pedir mais informacoes
+  - manifest.json reviewNotes de 48-web-eventos - Pedir mais informacoes permanece disponivel antes e depois da presenca
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md §5, §9.1
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/events/page.tsx e client component que le events e
+    event_rsvps e faz RSVP, mas nao segue a composicao da prancha 48 e nao
+    oferece o pedido de mais informacoes ao organizador, que a correcao 5 do
+    responsavel exige nas duas plataformas.
+
+allowed_paths:
+  - apps/web/app/(shell)/events/
+  - docs/agents/tasks/RECON-007.task.yml
+
+forbidden:
+  - tocar apps/web/app/components/bivaque/ — diretorio compartilhado, outra tarefa pode estar nele
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, data, local, contagem de presenca ou organizador
+  - inventar evento; sem dado real, estado vazio honesto
+  - condicionar o pedido de informacoes a ter confirmado presenca
+  - prometer resposta do organizador, prazo ou garantia
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+  - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
+  - importar HeroUI direto onde ha wrapper Bivaque
+  - introduzir familia tipografica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - a lista de eventos segue a composicao da prancha, com filtros funcionando sobre dado real
+  - o detalhe mostra gestao de presenca com o estado real do RSVP do membro
+  - Pedir mais informacoes aparece no detalhe E depois de confirmar presenca, e nao exige presenca
+  - cancelar presenca atualiza a contagem real, e cancelar presenca e diferente de cancelar o evento
+  - se o mecanismo de pergunta ao organizador nao existir no repositorio, NAO invente: entregue a acao desabilitada com motivo honesto e reporte a lacuna
+  - todos os estados fechados: skeleton, vazio honesto, erro recuperavel com nova tentativa
+  - exatamente um h1 por tela
+  - contraste >= 4,5:1, alvos >= 44x44, foco visivel
+  - auditoria visual de /events em 375/768/1440 sem finding de severidade high
+  - npx pnpm@11.18.0 gate verde
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-007.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: eventos e presenca
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

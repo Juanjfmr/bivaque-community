@@ -1,10 +1,16 @@
 import { Button } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
+import { ArrowLeft, Clock, MapPin } from "lucide-react"
+import type { Route } from "next"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
+import { MemberAvatar } from "../../../components/bivaque/avatar"
+import { EventsIllustration } from "../../../components/bivaque/illustrations"
 import { EventInviteFanoutSection } from "../event-invite-fanout-section"
+import { CancelPresenceControl } from "./presence-controls"
 
 type EventRow = Database["public"]["Tables"]["events"]["Row"]
 // F2 added 'not_going' to event_rsvp_status (migration 029). The generated
@@ -104,10 +110,11 @@ async function cancelRsvpAction(formData: FormData) {
   if (eventError) throw new Error(eventError.message)
   const occurrenceDate = (eventRow.starts_at as string).slice(0, 10)
 
-  // event_rsvps has no delete policy for authenticated today (the snapshot
-  // records it). The fix lands in the next commit. Today the action
-  // becomes a visible RLS denial — better than the silent escalation of
-  // yesterday, and the precondition for the policy that follows.
+  // event_rsvps_delete_self (20260819010000) + the DELETE grant to
+  // authenticated (20260821000017) make this a real own-row delete: the
+  // current-occurrence row disappears, so the "Você vai" count and the list
+  // presence line update on revalidation. An older revision of this comment
+  // claimed the policy did not exist yet; it does.
   const { error } = await supabase
     .from("event_rsvps")
     .delete()
@@ -168,6 +175,7 @@ function RsvpButton({
         variant={isCurrent ? "primary" : variant}
         isDisabled={isCurrent}
         aria-pressed={isCurrent}
+        className="min-h-11"
       >
         {isCurrent ? `${label} ✓` : label}
       </Button>
@@ -175,11 +183,48 @@ function RsvpButton({
   )
 }
 
-function formatDateTime(iso: string) {
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+}
+
+// Date badge reused on the hero band (mirrors the listing card so the visual
+// language is consistent across list + detail). Pure: never imports anything
+// outside the rendering path so the server component stays free of client
+// noise.
+function EventDateBadge({ iso }: { iso: string }) {
   const d = new Date(iso)
-  const date = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
-  const time = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-  return `${date} às ${time}`
+  const weekday = d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase()
+  const day = d.getDate()
+  const month = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase()
+  return (
+    <div className="flex w-16 shrink-0 flex-col items-center rounded-lg border border-border bg-[var(--semantic-surface)] px-1.5 py-2 text-center">
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted">{weekday}</span>
+      <span className="mt-0.5 text-xl font-bold leading-none text-[var(--semantic-action-primary)]">
+        {day}
+      </span>
+      <span className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-muted">
+        {month}
+      </span>
+    </div>
+  )
+}
+
+// "Você e mais N pessoas vão" / "Você vai" / "N pessoas vão" / "Ninguém
+// confirmou presença ainda". Contract RECON-007 B.4 dictates the exact
+// branches; this keeps the order explicit so future copy tweaks do not
+// accidentally hide the "Você vai" case when the member is the only one.
+function buildGoingCopy(goingCount: number, myRsvpIsGoing: boolean): string {
+  if (goingCount === 0) return "Ninguém confirmou presença ainda"
+  if (myRsvpIsGoing) {
+    if (goingCount === 1) return "Você vai"
+    const others = goingCount - 1
+    return `Você e mais ${others} ${others === 1 ? "pessoa vai" : "pessoas vão"}`
+  }
+  if (goingCount === 1) return "1 pessoa vai"
+  return `${goingCount} pessoas vão`
 }
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -244,13 +289,32 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const myRsvp: "going" | "interested" | "not_going" | null =
     (rsvpData as EventRsvpRow | null)?.status ?? null
 
+  // EXACT going count for the "Você vai" card. A separate head-only count
+  // query — never derived from the capped limit(20) list of attendees — so
+  // the copy "Você e mais N pessoas vão" stays accurate above 20.
+  const { count: goingCount, error: goingCountError } = await authClient
+    .from("event_rsvps")
+    .select("user_id", { count: "exact", head: true })
+    .eq("event_id", event.id)
+    .eq("status", "going")
+    .eq("occurrence_date", currentOccurrenceDate)
+
+  if (goingCountError) {
+    throw new Error(`failed to count attendees: ${goingCountError.message}`)
+  }
+
+  // Avatar stack: up to 5 going attendees (contract B.4 — extends the names
+  // map that the previous limit(20) attendees list already produced). Same
+  // created_at ordering keeps the avatar order and the underlying name list
+  // aligned.
   const { data: attendeesData, error: attendeesError } = await authClient
     .from("event_rsvps")
     .select("event_id, user_id, status, created_at")
     .eq("event_id", event.id)
     .eq("occurrence_date", currentOccurrenceDate)
     .eq("status", "going")
-    .limit(20)
+    .order("created_at", { ascending: true })
+    .limit(5)
 
   if (attendeesError) throw new Error(`failed to read attendees: ${attendeesError.message}`)
   const attendees = (attendeesData as unknown as AttendeeListRow[] | null) ?? []
@@ -275,111 +339,240 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     )
   }
 
+  // Organizer name follows the same RLS-gated profile read as the attendees.
+  // The R3 privacy boundary forbids any organizer field beyond display_name
+  // here (no email, no rank, no military organization, no raw CPF).
+  const { data: organizerData, error: organizerError } = await authClient
+    .from("profiles")
+    .select("display_name")
+    .eq("user_id", event.organizer_id)
+    .maybeSingle()
+
+  if (organizerError) {
+    throw new Error(`failed to read organizer profile: ${organizerError.message}`)
+  }
+  const organizerName = (organizerData as { display_name: string } | null)?.display_name ?? null
+
   const isOrganizer = event.organizer_id === user.id
   const isCancelled = event.status === "cancelled"
   const isCompleted = event.status === "completed"
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
+        <Link
+          href={"/events" as Route}
+          aria-label="Voltar para Explorar eventos"
+          className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-md px-2 text-sm text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+        >
+          <ArrowLeft size={18} aria-hidden="true" />
+          <span>Explorar eventos</span>
+        </Link>
+
         <article aria-labelledby="event-heading">
-          <header className="flex flex-col gap-2">
+          <header className="flex flex-col gap-3">
             <h1 id="event-heading" className="text-2xl font-semibold tracking-tight">
               {event.title}
             </h1>
-            <p className="text-sm text-muted">
-              {formatDateTime(event.starts_at)}
-              {event.ends_at &&
-                ` - ${new Date(event.ends_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
+
+            {/* Hero band: decorative surface with the EventsIllustration in
+                place of a fake photo (the events table has no image column).
+                The date badge sits on the bottom-left, matching the listing
+                card so the visual language is consistent across both screens.
+                The badge is content (the only date on this screen), so only
+                the illustration is hidden from assistive tech. */}
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-[var(--semantic-surface-sunken)]">
+              <div className="flex h-40 items-center justify-center" aria-hidden="true">
+                <EventsIllustration className="h-16 w-24" />
+              </div>
+              <div className="absolute bottom-3 left-3">
+                <EventDateBadge iso={event.starts_at} />
+              </div>
+            </div>
+
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <Clock size={14} aria-hidden="true" />
+                <span>{formatTime(event.starts_at)}</span>
+              </span>
+              {event.venue ? (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin size={14} aria-hidden="true" />
+                    <span>{event.venue}</span>
+                  </span>
+                </>
+              ) : null}
             </p>
-            {event.venue && <p className="text-sm text-muted">{event.venue}</p>}
-            {isCancelled && (
-              <p className="text-sm font-medium text-danger">Este evento foi cancelado.</p>
-            )}
           </header>
 
-          {event.description && (
-            <p className="mt-4 text-sm whitespace-pre-wrap">{event.description}</p>
-          )}
+          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            <div className="flex flex-col gap-6">
+              <section aria-labelledby="about-heading" className="flex flex-col gap-2">
+                <h2 id="about-heading" className="text-base font-semibold tracking-tight">
+                  Sobre o evento
+                </h2>
+                {isCancelled && (
+                  <p className="text-sm font-medium text-danger">Este evento foi cancelado.</p>
+                )}
+                {isCompleted && (
+                  <p className="text-sm font-medium text-muted">Este evento foi encerrado.</p>
+                )}
+                {event.description ? (
+                  <p className="text-sm whitespace-pre-wrap">{event.description}</p>
+                ) : null}
+              </section>
 
-          {!isCancelled && (
-            <div className="mt-6 flex flex-wrap gap-2">
-              {/* Wave F Task 2 Step 2: three mutually-exclusive states (going,
-                  interested, not_going). The current selection is highlighted;
-                  clicking the same one is a no-op (debouncing on the server
-                  side via UPDATE OF status). "Cancelar" removes the row
-                  entirely — different from "Não vou". */}
-              <RsvpButton
-                eventId={event.id}
-                status="going"
-                label="Vou"
-                isCurrent={myRsvp === "going"}
-              />
-              <RsvpButton
-                eventId={event.id}
-                status="interested"
-                label="Talvez"
-                isCurrent={myRsvp === "interested"}
-                variant="secondary"
-              />
-              <RsvpButton
-                eventId={event.id}
-                status="not_going"
-                label="Não vou"
-                isCurrent={myRsvp === "not_going"}
-                variant="tertiary"
-              />
-              {myRsvp !== null && (
-                <form action={cancelRsvpAction}>
-                  <input type="hidden" name="eventId" value={event.id} />
-                  <Button type="submit" size="sm" variant="tertiary">
-                    Remover meu RSVP
+              <section aria-labelledby="organizer-heading" className="flex flex-col gap-3">
+                <h2 id="organizer-heading" className="text-base font-semibold tracking-tight">
+                  Organizador
+                </h2>
+                <div className="flex items-center gap-3">
+                  <MemberAvatar name={organizerName} />
+                  <div className="flex min-w-0 flex-col">
+                    <p className="text-sm font-semibold">
+                      {organizerName ?? "Organizador do evento"}
+                    </p>
+                    <p className="text-xs text-muted">Membro da comunidade</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Pedir mais informações — orchestrator verdict (RECON-007 B.3):
+                  no organizer-question mechanism exists in the repository.
+                  open_conversation / shared_event requires an RSVP on BOTH
+                  sides; the organizer cannot RSVP to their own event, and
+                  /events/[id]/perguntas is W04 scope. Render for
+                  non-organizers always, before AND after any RSVP change.
+                  Large outlined Button isDisabled + helper copy + honest
+                  reason. No toast, no fake href, no handler. */}
+              {!isOrganizer ? (
+                <section aria-labelledby="ask-organizer-heading" className="flex flex-col gap-2">
+                  <h2 id="ask-organizer-heading" className="text-base font-semibold tracking-tight">
+                    Pergunte ao organizador
+                  </h2>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    isDisabled
+                    fullWidth
+                    className="min-h-11"
+                    aria-disabled="true"
+                  >
+                    Pedir mais informações
                   </Button>
-                </form>
-              )}
-            </div>
-          )}
+                  <p className="text-sm text-muted">
+                    Envie sua dúvida para {organizerName ?? "o organizador"} sobre este evento.
+                  </p>
+                  <p className="text-xs text-muted">
+                    As perguntas ao organizador ainda não estão disponíveis nesta versão.
+                  </p>
+                </section>
+              ) : null}
 
-          {isOrganizer && (
-            <div className="mt-4 flex items-center gap-3">
-              <p className="text-xs text-muted">Você é o organizador deste evento.</p>
-              {!isCancelled && !isCompleted && (
-                <form action={completeEventAction}>
-                  <input type="hidden" name="eventId" value={event.id} />
-                  <Button type="submit" size="sm" variant="tertiary">
-                    Encerrar evento
-                  </Button>
-                </form>
-              )}
-              {isCompleted && (
-                <span className="text-xs font-medium text-muted">Evento encerrado.</span>
-              )}
-            </div>
-          )}
+              {/* Organizer controls — kept untouched per RECON-007 B.5: the
+                  "Encerrar evento" path is distinct from canceling one's
+                  own presence. The organizer cannot RSVP their own event, so
+                  the RSVP block above is hidden from them by the
+                  !isOrganizer guard. */}
+              {isOrganizer && !isCancelled && !isCompleted ? (
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-[var(--semantic-surface-sunken)] p-3">
+                  <p className="text-xs text-muted">Você é o organizador deste evento.</p>
+                  <form action={completeEventAction}>
+                    <input type="hidden" name="eventId" value={event.id} />
+                    <Button type="submit" size="sm" variant="tertiary" className="min-h-11">
+                      Encerrar evento
+                    </Button>
+                  </form>
+                </div>
+              ) : null}
+              {isOrganizer && isCompleted ? (
+                <p className="text-xs font-medium text-muted">Evento encerrado.</p>
+              ) : null}
 
-          {isOrganizer && !isCancelled && !isCompleted && (
-            <div className="mt-5">
-              <EventInviteFanoutSection eventId={event.id} />
+              {isOrganizer && !isCancelled && !isCompleted ? (
+                <div>
+                  <EventInviteFanoutSection eventId={event.id} />
+                </div>
+              ) : null}
             </div>
-          )}
+
+            <aside aria-labelledby="vou-vai-heading" className="lg:sticky lg:top-20 lg:self-start">
+              <div className="flex flex-col gap-4 rounded-2xl border border-border bg-[var(--semantic-surface)] p-4">
+                <h2 id="vou-vai-heading" className="text-base font-semibold tracking-tight">
+                  Você vai
+                </h2>
+
+                {attendees.length > 0 ? (
+                  <div className="flex -space-x-2" aria-hidden="true">
+                    {attendees.map((a) => (
+                      <MemberAvatar
+                        key={a.user_id}
+                        name={attendeeNames.get(a.user_id)}
+                        size="sm"
+                        className="ring-2 ring-[var(--semantic-surface)]"
+                      />
+                    ))}
+                  </div>
+                ) : null}
+
+                <p className="text-sm text-muted">
+                  {buildGoingCopy(goingCount ?? 0, myRsvp === "going")}
+                </p>
+
+                {!isOrganizer && !isCancelled ? (
+                  <div className="flex flex-col gap-3">
+                    {myRsvp === "going" ? (
+                      <CancelPresenceControl
+                        eventId={event.id}
+                        cancelRsvpAction={cancelRsvpAction}
+                      />
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap gap-2">
+                          <RsvpButton
+                            eventId={event.id}
+                            status="going"
+                            label="Vou"
+                            isCurrent={false}
+                          />
+                          <RsvpButton
+                            eventId={event.id}
+                            status="interested"
+                            label="Talvez"
+                            isCurrent={myRsvp === "interested"}
+                            variant="secondary"
+                          />
+                          <RsvpButton
+                            eventId={event.id}
+                            status="not_going"
+                            label="Não vou"
+                            isCurrent={myRsvp === "not_going"}
+                            variant="tertiary"
+                          />
+                        </div>
+                        {myRsvp !== null ? (
+                          <form action={cancelRsvpAction}>
+                            <input type="hidden" name="eventId" value={event.id} />
+                            <Button
+                              type="submit"
+                              size="sm"
+                              variant="tertiary"
+                              className="min-h-11 w-full"
+                            >
+                              Remover meu RSVP
+                            </Button>
+                          </form>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </aside>
+          </div>
         </article>
-
-        <section aria-labelledby="attendees-heading">
-          <h2 id="attendees-heading" className="mb-2 text-sm font-semibold tracking-tight">
-            Quem vai ({attendees.length})
-          </h2>
-          {attendees.length > 0 ? (
-            <ul className="space-y-1">
-              {attendees.map((a) => (
-                <li key={a.user_id} className="text-sm text-muted">
-                  {attendeeNames.get(a.user_id) ?? "Membro"}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted">Ninguém confirmou presença ainda.</p>
-          )}
-        </section>
       </div>
     </div>
   )

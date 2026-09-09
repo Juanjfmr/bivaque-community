@@ -1,17 +1,7 @@
 "use client"
 
 import { Button } from "@heroui/react"
-import {
-  ArrowLeft,
-  ArrowRight,
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  ShieldCheck,
-  Tent,
-  User,
-} from "lucide-react"
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -32,46 +22,31 @@ interface BivaqueSignInProps {
   mode?: "login" | "signup"
 }
 
+// Composição da prancha 36-web-auth-entrada (guia visual de 06/09/2026): dois
+// destinos distintos, cada um com seu título, e a navegação recíproca nos links
+// de rodapé — não abas de um formulário só. O mecanismo é o de ADR-20260907-
+// login-com-senha (instrução posterior à prancha, que precisa ser regerada):
+// e-mail e senha, Google como alternativa, recuperação por link de e-mail. A
+// copy da prancha que descrevia "Receber código" não entra: o provedor não
+// envia código, e a guia proíbe prometer integração inexistente.
 const entryCopy = {
   login: {
-    eyebrow: "Bem-vindo de volta",
-    title: "Entre no Bivaque",
-    description: "Use seu e-mail e sua senha para continuar.",
+    title: "Que bom ter você de volta.",
     submit: "Entrar",
+    loading: "Entrando...",
     google: "Continuar com Google",
-    alternateLead: "Ainda não faz parte?",
-    alternateAction: "Criar conta",
+    alternateLabel: "Criar conta",
     alternateHref: "/signup",
-    trust:
-      "O acesso é controlado. A elegibilidade é conferida de acordo com o papel de cada pessoa.",
-    visualEyebrow: "A comunidade vai com você.",
-    visualTitle: "Chegue sabendo a quem perguntar.",
-    visualDescription:
-      "Encontre referências de quem conhece o lugar e deixe sua experiência disponível para a próxima chegada.",
   },
   signup: {
-    eyebrow: "Primeiro acesso",
-    title: "Crie sua conta",
-    description: "Escolha uma senha para entrar sempre que quiser, sem depender do e-mail.",
+    title: "Vamos começar.",
     submit: "Criar conta",
-    google: "Criar com Google",
-    alternateLead: "Já tem uma conta?",
-    alternateAction: "Entrar",
+    loading: "Criando conta...",
+    google: "Continuar com Google",
+    alternateLabel: "Já tenho conta",
     alternateHref: "/login",
-    trust: "Depois da conta: regras da comunidade, elegibilidade e escolha da sua localidade.",
-    visualEyebrow: "Há sempre alguém chegando.",
-    visualTitle: "Encontre quem já conhece o caminho.",
-    visualDescription: "Com o tempo, deixe o que você aprendeu disponível para quem chegar depois.",
   },
 } as const
-
-// As duas entradas são destinos distintos, não abas de um formulário só:
-// a escolha muda a rota, os campos e a operação no provedor. Manter isso como
-// navegação preserva voltar/avançar e link compartilhável.
-const entryModes = [
-  { mode: "login", label: "Entrar", href: "/login" },
-  { mode: "signup", label: "Criar conta", href: "/signup" },
-] as const
 
 function GoogleIcon() {
   return (
@@ -96,11 +71,13 @@ function GoogleIcon() {
   )
 }
 
-function Wordmark() {
+// A prancha mostra a marca como wordmark tipográfico sobre a foto, sem ícone.
+// No topo mobile, onde a foto não aparece, o mesmo wordmark assume o papel de
+// link para o início.
+function Wordmark({ onPhoto = false }: { onPhoto?: boolean }) {
   return (
-    <span className={styles["wordmark"]}>
-      <Tent aria-hidden="true" strokeWidth={1.8} />
-      <span>Bivaque</span>
+    <span className={styles["wordmark"]} data-photo={onPhoto ? "true" : undefined}>
+      BIVAQUE
     </span>
   )
 }
@@ -221,37 +198,24 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
         </div>
 
         <div className={styles["formContent"]}>
-          <nav className={styles["modeSwitch"]} aria-label="Escolha como entrar no Bivaque">
-            {entryModes.map((entry) => (
-              <Link
-                key={entry.mode}
-                href={{ pathname: entry.href }}
-                className={styles["modeOption"]}
-                aria-current={entry.mode === mode ? "page" : undefined}
-                data-active={entry.mode === mode ? "true" : undefined}
-              >
-                {entry.label}
-              </Link>
-            ))}
-          </nav>
-
           <div className={styles["heading"]}>
-            <p className={styles["eyebrow"]}>{copy.eyebrow}</p>
             <h1 id={titleId}>{copy.title}</h1>
-            <p>{copy.description}</p>
           </div>
 
           <form className={styles["form"]} onSubmit={handleSubmit}>
             {mode === "signup" && (
+              // A nota da prancha 36 é explícita: nome de apresentação, não
+              // nome civil completo. O rótulo simples diz isso sem prometer o
+              // que o campo não exige.
               <label className={styles["field"]} htmlFor={`${prefix}-name`}>
-                <span>Como podemos chamar você?</span>
+                <span>Nome</span>
                 <span className={styles["inputShell"]}>
                   <User aria-hidden="true" />
                   <input
                     id={`${prefix}-name`}
                     type="text"
                     autoComplete="name"
-                    placeholder="Seu nome"
+                    placeholder="Como você quer ser chamado"
                     value={name}
                     onChange={(event) => setName(event.target.value)}
                     required
@@ -261,7 +225,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             )}
 
             <label className={styles["field"]} htmlFor={`${prefix}-email`}>
-              <span>Seu e-mail</span>
+              <span>E-mail</span>
               <span className={styles["inputShell"]}>
                 <Mail aria-hidden="true" />
                 <input
@@ -278,7 +242,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             </label>
 
             <label className={styles["field"]} htmlFor={`${prefix}-password`}>
-              <span>Sua senha</span>
+              <span>Senha</span>
               <span className={styles["inputShell"]}>
                 <Lock aria-hidden="true" />
                 <input
@@ -305,6 +269,10 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             </label>
 
             {mode === "signup" && (
+              // O texto vem da versão aprovada (ADR-20260907-consentimento-no-
+              // cadastro), não da prancha: "Termos de uso" e "Código de
+              // convivência" não têm rota nem texto aprovado, e a guia proíbe
+              // tirar copy legal de imagem.
               <label className={styles["consentRow"]} htmlFor={`${prefix}-consent`}>
                 <input
                   id={`${prefix}-consent`}
@@ -327,25 +295,18 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
               </label>
             )}
 
-            {mode === "login" && (
-              <p className={styles["forgotRow"]}>
-                <Link href={{ pathname: "/recuperar-senha" }}>Esqueci minha senha</Link>
-              </p>
-            )}
-
             <Button
               type="submit"
               variant="primary"
               className={styles["primaryButton"] ?? ""}
               isDisabled={loading !== null || (mode === "signup" && !accepted)}
             >
-              {loading === "form" ? "Entrando..." : copy.submit}
-              {loading !== "form" && <ArrowRight aria-hidden="true" />}
+              {loading === "form" ? copy.loading : copy.submit}
             </Button>
           </form>
 
           <div className={styles["divider"]}>
-            <span>ou continue com</span>
+            <span>ou</span>
           </div>
 
           <Button
@@ -373,33 +334,31 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             />
           )}
 
-          <p className={styles["accountPrompt"]}>
-            {copy.alternateLead}{" "}
-            <Link href={{ pathname: copy.alternateHref }}>{copy.alternateAction}</Link>
-          </p>
-
-          <p className={styles["trustNote"]}>
-            <ShieldCheck aria-hidden="true" />
-            <span>{copy.trust}</span>
+          <p className={styles["entryLinks"]} data-mode={mode}>
+            <Link href={{ pathname: copy.alternateHref }}>{copy.alternateLabel}</Link>
+            {mode === "login" && (
+              <Link href={{ pathname: "/recuperar-senha" }}>Esqueci minha senha</Link>
+            )}
           </p>
         </div>
       </section>
 
-      <section className={styles["visualPanel"]} aria-label="A comunidade Bivaque">
+      {/* Sem aria-hidden: no desktop este é o único link de marca (a topbar é
+          ocultada em CSS), e esconder um elemento focável da tecnologia
+          assistiva é o erro que a regra de acessibilidade proíbe. */}
+      <section className={styles["visualPanel"]}>
         <Image
           src="/landing/hero-bivaque-arrival.webp"
-          alt="Pessoa chegando a um encontro comunitário enquanto uma cadeira é oferecida"
+          alt=""
           fill
           priority
           unoptimized
           sizes="50vw"
         />
         <div className={styles["visualShade"]} aria-hidden="true" />
-        <div className={styles["visualCopy"]}>
-          <p>{copy.visualEyebrow}</p>
-          <h2>{copy.visualTitle}</h2>
-          <span>{copy.visualDescription}</span>
-        </div>
+        <Link href="/" className={styles["photoBrand"]} aria-label="Bivaque, voltar ao início">
+          <Wordmark onPhoto />
+        </Link>
       </section>
     </main>
   )

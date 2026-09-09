@@ -1,7 +1,11 @@
 # Prompt de construção visual — Bivaque Community
 
+## Reconstrução funcional web — revisão de 08/09/2026
+
+Leia `docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md` para a entrega atual, somente web: catálogo de rotas, funcionamento, sequência W00–W09 e gates. Substitui o plano anterior de apresentação sem persistência. UI isolada não conclui fluxo; backend, operação e retorno necessários entram na entrega. Mobile não bloqueia conclusão web. Preservar decisões técnicas R3 e registrar bloqueios reais; não reabrir escolhas de produto já autorizadas.
+
 Use este texto como mensagem inicial para um modelo visual no repositório. O nome do arquivo é
-histórico: ele pode ser usado com Qwen3.8-Flash, GLM-5.3-Flash, Gemini 3.8 Flash ou outro
+histórico: ele pode ser usado com Qwen3.8-Flash, GLM-5.3-Flash, MiniMax M3, Gemini 3.8 Flash ou outro
 modelo que aceite imagens e ferramentas. Escolha e compare candidatos conforme
 `docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md`.
 
