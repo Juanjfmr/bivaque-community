@@ -94,6 +94,38 @@ export interface CurrentUser {
 }
 
 // Autoria vem de consulta real (auth + profiles), nunca de dado chumbado.
+
+// Identidade do visitante, resolvida UMA vez por carregamento de página.
+//
+// `supabase.auth.getUser()` é uma chamada de rede ao GoTrue, não uma leitura
+// de memória. Cada cartão do feed a fazia por conta própria: um feed de 378
+// publicações disparava 378 requisições e levava 23 SEGUNDOS para repintar
+// depois de publicar — a pessoa publicava e olhava para um feed vazio até lá.
+// Medido em 09/09/2026 com o seed de desenvolvimento.
+//
+// A promessa é memoizada, então os N cartões dividem uma requisição. O cache
+// é derrubado em qualquer mudança de sessão para nao servir a identidade
+// antiga depois de trocar de conta ou sair.
+let currentUserIdPromise: Promise<string | null> | null = null
+let authWatcherStarted = false
+
+export function currentUserIdOnce(): Promise<string | null> {
+  if (currentUserIdPromise === null) {
+    const supabase = createBrowserClient()
+    currentUserIdPromise = supabase.auth
+      .getUser()
+      .then(({ data }) => data.user?.id ?? null)
+      .catch(() => null)
+    if (!authWatcherStarted) {
+      authWatcherStarted = true
+      supabase.auth.onAuthStateChange(() => {
+        currentUserIdPromise = null
+      })
+    }
+  }
+  return currentUserIdPromise
+}
+
 export function useCurrentUser(): CurrentUser {
   const [state, setState] = useState<CurrentUser>({ loading: true, user: null })
 

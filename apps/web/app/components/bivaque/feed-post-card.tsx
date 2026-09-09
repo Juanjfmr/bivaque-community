@@ -15,6 +15,7 @@ import { EditPostModal } from "./feed-post-edit"
 import { LeanOverflowMenu } from "./feed-post-menu"
 import {
   type CommentRow,
+  currentUserIdOnce,
   type FeedPostRow,
   formatRelativeTime,
   POST_TYPE_LABELS,
@@ -71,18 +72,17 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
     ? { ...post, content: edited.content, photo_path: edited.photoPath ?? "" }
     : post
 
+  // Uma requisição para todos os cartões: ver currentUserIdOnce.
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!cancelled) setCurrentUserId(user?.id ?? null)
+      const id = await currentUserIdOnce()
+      if (!cancelled) setCurrentUserId(id)
     })()
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [])
 
   // City-reach post (community_id IS NULL) precisa de um chip com o nome da
   // cidade — sem ele, a pessoa responde algo de vizinhança achando que fala
