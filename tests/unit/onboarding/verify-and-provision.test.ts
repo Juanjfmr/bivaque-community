@@ -35,7 +35,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
       verifyEligibility(supabase, {
         userId: "user-1",
         cpf: "12345678901",
-        consentVersion: 1,
+        consentVersion: 2,
       }),
     ).resolves.toEqual({
       outcome: {
@@ -56,7 +56,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
     const result = await verifyEligibility(supabase, {
       userId: "user-1",
       cpf: "12345678901",
-      consentVersion: 1,
+      consentVersion: 2,
     })
 
     expect(result).toEqual({ outcome: { status: "pending" } })
@@ -77,7 +77,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
     await verifyEligibility(supabase, {
       userId: "user-1",
       cpf: "12345678901",
-      consentVersion: 1,
+      consentVersion: 2,
     })
 
     // The negative is the test of the task: verify touches no table.
@@ -99,7 +99,7 @@ describe("provisionMember (P0 Task 4)", () => {
         userId: "user-1",
         localityId: "",
         displayName: "Ana",
-        consentVersion: 1,
+        consentVersion: 2,
       }),
     ).rejects.toThrow("locality is required to provision a member")
   })
