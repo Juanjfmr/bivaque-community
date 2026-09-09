@@ -1613,7 +1613,8 @@
         "Publicar cobertura real, correções pendentes e limitações de verificação",
         "Validar arquivos, links, galeria e contratos antes da publicação",
         "Concluir pranchas restantes e propagar sete correções visuais; preservar notas de construção",
-        "Especificar rotas e ciclos web completos, dependências e gates sem fechar UI desconectada"
+        "Especificar rotas e ciclos web completos, dependências e gates sem fechar UI desconectada",
+        "Simplificar implantação web por lote, contexto mínimo e dependências reais após análise da sessão Claude"
       ],
       "proof": [
         "Pedido explícito do usuário em 06/09/2026: publicar os arquivos no GitHub; versão atual prevalece sobre documentação antiga conflitante.",
@@ -1631,7 +1632,9 @@
         "08/09/2026: reconciliadas 17 imagens já entregues em 2adcda5; sete PNGs substituídos com originais preservados e quatro novas pranchas 66–69. Total 59 pranchas, 84 estados mobile e 53 web. Não há PNG previsto ausente; notas pontuais dos bitmaps continuam obrigatórias ao construtor.",
         "Validação local em VALIDACAO-2026-09-08.json: 59 PNGs decodificados, 58 fontes disponíveis idênticas, dataset da galeria e sintaxe JavaScript coerentes, links locais válidos, 96/96 testes de escopo PASS. Sem teste de runtime, revisão independente ou publicação desta rodada. Card em repo até publicação/revisão documental.",
         "08/09/2026: correção explícita do responsável — identidade militar digital em arquivo único. Pranchas 68/69 editadas e inspecionadas; originais preservados. Manifesto, galeria, mapa, decisões e instruções dos agentes sincronizados. Sem alteração de runtime.",
-        "08/09/2026: especificação web reescrita por solicitação explícita do responsável. Catálogo funcional cobre 31 pranchas web/53 estados, rotas auxiliares, integrações, sequência W00–W09 e gates por rota/fluxo. Entradas dos agentes e G0 encaminham à revisão; escrita do plano não conclui runtime."
+        "08/09/2026: especificação web reescrita por solicitação explícita do responsável. Catálogo funcional cobre 31 pranchas web/53 estados, rotas auxiliares, integrações, sequência W00–W09 e gates por rota/fluxo. Entradas dos agentes e G0 encaminham à revisão; escrita do plano não conclui runtime.",
+        "08/09/2026: pedido posterior para reduzir burocracia. Sessão Claude fb6e648e-fed2-4339-b5a7-670c62518524 analisada até 19:58 UTC: 36 chamadas diretas de gate, 7 de loop visual e 7 AskUserQuestion; contagens não são tempo ativo. Processo §0, catálogo web e entradas dos agentes passam a lotes, dependências reais, contexto mínimo, escritor único por checkout e provas por lote. Preservados requisitos funcionais e segurança. Base confrontada: 1de8d84; árvore contém implementação concorrente, não certificada por esta alteração documental.",
+        "Validação da simplificação: 96/96 testes de escopo PASS; 10 links locais adicionados resolvem; board --check PASS; Biome do board PASS; git diff --check PASS. Somente documentação/quadro alterados nesta tarefa, sem build/E2E do produto, revisão independente, commit ou push."
       ],
       "links": [
         "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
@@ -1641,9 +1644,9 @@
         "Modelos para construção | ../../docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md"
       ],
       "updatedAt": "2026-09-08",
-      "sourceRevision": "4a1bf4b2ff97841b270845fccd46105f6feeb075",
+      "sourceRevision": "1de8d840f3946b22864dccdcf893004454da0c30",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true],
+      "completedChecklist": [true, true, true, true, true, true, true],
       "blockers": []
     },
     {
@@ -1967,6 +1970,65 @@
       "dependencies": [],
       "updatedAt": "2026-09-08",
       "sourceRevision": "30ab4eb"
+    },
+    {
+      "id": "RECON-W00-TELAS",
+      "title": "Quatro telas da reconstrucao web saem do placeholder",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "Lote entregue em 86e24ad: /inicio (prancha 01), /explorar e /explorar/servicos (prancha 61), /communities (prancha 42), /notifications (prancha 54). Implementacao mecanica delegada ao qwen3.8-flash via opencode, um contrato por tela com allowed_paths disjuntos, revisao e fronteira pelo coordenador. Nada chumbado; onde nao ha integracao, estado vazio honesto. Categorias Mercado e Moradia sem link porque a rota nao existe. Corrigidos tres deep-links de notificacao que o inventario da W00 apontou. Gate completo verde; varredura de revisao sem cor crua nem texto de construcao. PENDENTE: prova de runtime (loop visual) e revisao independente por sessao separada.",
+      "checklist": [
+        "/inicio composta contra a prancha 01",
+        "/explorar e /explorar/servicos contra a prancha 61",
+        "/communities com motivo opcional privado",
+        "/notifications com os tres deep-links corrigidos",
+        "Gate completo verde",
+        "PENDENTE: loop visual em 375/768/1440",
+        "PENDENTE: revisao independente (G5)"
+      ],
+      "proof": ["npx pnpm@11.18.0 gate → verde", "git 86e24ad"],
+      "tests": [],
+      "links": [
+        "docs/agents/tasks/RECON-002.task.yml",
+        "docs/agents/tasks/RECON-003.task.yml",
+        "docs/agents/tasks/RECON-004.task.yml",
+        "docs/agents/tasks/RECON-006.task.yml"
+      ],
+      "dependencies": [],
+      "phase": "Reconstrução",
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "86e24ad"
+    },
+    {
+      "id": "RECON-005-BLOQUEADO",
+      "title": "Tela /profile bloqueada por decisao R3 de visibilidade de campo",
+      "priority": "P1",
+      "category": "governance",
+      "status": "blocked",
+      "description": "O contrato RECON-005 (prancha 51-web-perfil) foi RECUSADO pelo validador: elevacao automatica para R3 por tocar visibilidade de dado pessoal, e R3 exige ADR aprovado. A recusa esta certa — decidir onde o dado mora, quem le e como some nao e escolha de agente. ADR-20260908-perfil-campos-opcionais foi escrito com tres decisoes separadas (onde a visibilidade mora, quais campos entram, como o dado some) e esta em proposed. A tela pode ser construida sem retrabalho depois da aprovacao: a composicao visual nao depende do contrato de dados.",
+      "checklist": [
+        "Aprovar ou recusar D1: tabela de visibilidade por campo",
+        "Aprovar ou recusar D2: somente Forca Armada e OM",
+        "Aprovar ou recusar D3: remocao apaga, nao esconde",
+        "Modelo de ameaca e texto de consentimento",
+        "pgTAP positivo e negativo por campo"
+      ],
+      "proof": ["node scripts/agents/task-contract.mjs recusou RECON-005 por elevacao a R3"],
+      "tests": [],
+      "links": [
+        "docs/decisions/ADR-20260908-perfil-campos-opcionais.md",
+        "docs/design/visual-guide-2026-09-06/51-web-perfil.png"
+      ],
+      "dependencies": ["BLOCK-AFFILIATION"],
+      "phase": "Reconstrução",
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "86e24ad",
+      "blockers": [
+        "Aprovacao humana do ADR-20260908-perfil-campos-opcionais",
+        "Modelo de ameaca e texto de consentimento",
+        "Governanca LGPD (BLOCK-LEGAL-AI)"
+      ]
     }
   ]
 }

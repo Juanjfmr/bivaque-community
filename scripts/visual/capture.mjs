@@ -46,9 +46,9 @@ const ROUTES = [
   { path: "/communities", name: "communities", auth: true },
   { path: "/guide", name: "arrival-guide", auth: true },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
-  // /explorar/servicos entra na Task 5; /dev/componentes na Task 7.
   { path: "/inicio", name: "inicio", auth: true },
   { path: "/explorar", name: "explorar", auth: true },
+  { path: "/explorar/servicos", name: "explorar-servicos", auth: true },
   // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
   // pointed here since E10 (406d4f6), but the route did not exist until T4.
   { path: "/localidade", name: "localidade", auth: true },
