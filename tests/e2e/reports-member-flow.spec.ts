@@ -289,9 +289,13 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     // "<categoria>: <explicacao>", montado no cliente e redigido por
     // scrubReportReason antes do insert (o trigger 20260821000030 repete a
     // redacao no banco).
-    await page.getByRole("radio", { name: "Outro" }).click()
-    await page.getByRole("textbox", { name: /Explique/ }).fill(reason)
-    await page.getByRole("button", { name: "Enviar denúncia" }).click()
+    const dialog = page.getByRole("dialog")
+    await expect(dialog).toBeVisible({ timeout: 10000 })
+    // Pelo rotulo visivel: o HeroUI decide como expoe o papel do radio, e o
+    // teste nao deve depender dessa escolha interna.
+    await dialog.getByText("Outro", { exact: true }).click()
+    await dialog.getByLabel(/Explique/).fill(reason)
+    await dialog.getByRole("button", { name: "Enviar denúncia" }).click()
 
     // A tela NAO promete mais prazo de analise.
     //

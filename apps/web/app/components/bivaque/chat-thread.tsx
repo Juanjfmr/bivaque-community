@@ -375,7 +375,12 @@ export function ChatThread({
                       aria-expanded={reportingMessageId === msg.id}
                       aria-controls={`message-report-${msg.id}`}
                     >
-                      {reportingMessageId === msg.id ? "Fechar denúncia" : "Denunciar"}
+                      {/* Nome acessível ESTÁVEL, estado em aria-expanded: é o padrão
+                          de disclosure. Alternar o texto para "Fechar denúncia" fazia o
+                          mesmo seletor re-resolver para o botão de OUTRA mensagem depois
+                          do clique. Dar aria-label fixo com texto variável resolveria o
+                          seletor e criaria violação de Label in Name (WCAG 2.5.3). */}
+                      Denunciar
                     </button>
                   )}
 
