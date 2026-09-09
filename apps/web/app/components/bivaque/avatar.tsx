@@ -1,3 +1,10 @@
+"use client"
+
+// useState mora aqui desde d9f1a9e (fallback quando a URL do avatar 404),
+// mas a diretiva faltava. Nada quebrava enquanto so Client Components
+// importavam este arquivo; a RECON-005 passou a importa-lo de
+// (shell)/profile/[userId]/page.tsx, que e Server Component, e o build parou.
+// O gate nao roda build — foi o E2E que encontrou.
 import { Avatar } from "@heroui/react"
 import { useState } from "react"
 
