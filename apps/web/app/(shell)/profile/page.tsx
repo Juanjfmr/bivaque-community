@@ -351,7 +351,10 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8">
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
-        <main className="min-w-0 space-y-6">
+        {/* <div>, nao <main>: o AppShell ja emite o landmark main da pagina.
+            Dois mains e violacao de landmark e quebrou o DS-010, que le
+            page.locator("main") e encontrava dois elementos. */}
+        <div className="min-w-0 space-y-6">
           <header className="flex flex-col items-center gap-4 rounded-xl border border-border bg-[var(--surface)] p-6 text-center sm:flex-row sm:items-start sm:text-left">
             <MemberAvatar
               name={profile.display_name}
@@ -632,7 +635,7 @@ export default function ProfilePage() {
               Sair da conta
             </Button>
           </section>
-        </main>
+        </div>
 
         {/* Rail da prancha 51: "Meus anúncios" e "Meu negócio" não entram —
             nenhuma rota existe hoje para eles, e link morto é proibição
