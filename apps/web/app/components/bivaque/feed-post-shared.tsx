@@ -126,6 +126,38 @@ export function currentUserIdOnce(): Promise<string | null> {
   return currentUserIdPromise
 }
 
+// Nome da cidade por id, resolvido uma vez por id e por carregamento.
+//
+// Cada cartão de publicação com alcance de cidade consultava `localities`
+// por conta própria. Num feed de 378 publicações isso virava 362 requisições
+// — praticamente todas pedindo A MESMA cidade, porque o feed é de uma
+// localidade só. O cache é por id, então o feed inteiro paga uma consulta.
+//
+// Nome de cidade não muda durante uma sessão; se mudar, o próximo
+// carregamento resolve.
+const cityNameById = new Map<string, Promise<string>>()
+
+export function cityNameOnce(localityId: string): Promise<string> {
+  const cached = cityNameById.get(localityId)
+  if (cached !== undefined) return cached
+  const supabase = createBrowserClient()
+  // Promise.resolve envolve o thenable do PostgREST: o builder do supabase-js
+  // e PromiseLike, nao Promise, e o Map guarda Promise.
+  const pending = Promise.resolve(
+    supabase
+      .from("localities")
+      .select("city_name")
+      .eq("id", localityId)
+      .maybeSingle()
+      .then(
+        ({ data }) => (data as { city_name: string } | null)?.city_name ?? "",
+        () => "",
+      ),
+  )
+  cityNameById.set(localityId, pending)
+  return pending
+}
+
 export function useCurrentUser(): CurrentUser {
   const [state, setState] = useState<CurrentUser>({ loading: true, user: null })
 

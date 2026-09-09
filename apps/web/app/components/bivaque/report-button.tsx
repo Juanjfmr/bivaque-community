@@ -5,6 +5,7 @@ import { Button, Modal, Radio, RadioGroup, TextArea, useOverlayState } from "@he
 import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { currentUserIdOnce } from "./feed-post-shared"
 import { FeedbackAlert } from "./feedback-alert"
 
 // Os seis alvos de `public.report_target_type`. Os dois de indicacao entraram
@@ -91,12 +92,14 @@ export function ReportButton({
 
   // O bloqueio so pode ser oferecido entre duas pessoas distintas. Sem sessao
   // lida, nao se oferece o que nao se pode executar honestamente.
+  // Uma requisicao de identidade para todos os cartoes do feed: este botao e
+  // renderizado por publicacao E por comentario, entao chamar auth.getUser()
+  // aqui multiplicava as requisicoes pelo tamanho do feed.
   useEffect(() => {
     let active = true
-    supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        if (active) setViewerId(data.user?.id ?? null)
+    currentUserIdOnce()
+      .then((id) => {
+        if (active) setViewerId(id)
       })
       .catch(() => {
         if (active) setViewerId(null)
@@ -104,7 +107,7 @@ export function ReportButton({
     return () => {
       active = false
     }
-  }, [supabase])
+  }, [])
 
   const canOfferBlock = Boolean(blockUserId && viewerId && blockUserId !== viewerId)
 

@@ -15,6 +15,7 @@ import { EditPostModal } from "./feed-post-edit"
 import { LeanOverflowMenu } from "./feed-post-menu"
 import {
   type CommentRow,
+  cityNameOnce,
   currentUserIdOnce,
   type FeedPostRow,
   formatRelativeTime,
@@ -89,22 +90,18 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
   // para 500 pessoas quando fala para milhares (regra 2 da §12). O nome vem
   // da locality do post, nunca de constante. Um post de grupo tem alcance
   // ainda menor e também precisa de chip próprio.
+  // Uma consulta por cidade para o feed inteiro: ver cityNameOnce.
   useEffect(() => {
     if (post.community_id !== null || post.group_id) return
     let cancelled = false
     ;(async () => {
-      const { data } = await supabase
-        .from("localities")
-        .select("city_name")
-        .eq("id", post.locality_id)
-        .maybeSingle()
-      if (cancelled) return
-      setLocalityName((data as { city_name: string } | null)?.city_name ?? "")
+      const name = await cityNameOnce(post.locality_id)
+      if (!cancelled) setLocalityName(name)
     })()
     return () => {
       cancelled = true
     }
-  }, [post.locality_id, post.community_id, post.group_id, supabase])
+  }, [post.locality_id, post.community_id, post.group_id])
 
   useEffect(() => {
     if (!post.group_id) return
