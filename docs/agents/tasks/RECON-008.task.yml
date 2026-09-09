@@ -1,0 +1,60 @@
+task_id: RECON-008
+
+objective: >
+  A rota /guide passa a ser o Guia da cidade da prancha 12-web-guia: descoberta
+  editorial por categoria com busca, sobre o diretorio curado que ja existe.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/12-web-guia.png
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7 — Guia e entrada de Explorar
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md §5, §9.1
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/guide/page.tsx e client component que le
+    arrival_guide_entries e renderiza uma lista simples, com estado vazio
+    dizendo que o guia esta em construcao. Nao segue a composicao editorial da
+    prancha 12 e nao oferece busca nem navegacao por categoria.
+
+allowed_paths:
+  - apps/web/app/(shell)/guide/
+  - docs/agents/tasks/RECON-008.task.yml
+
+forbidden:
+  - tocar apps/web/app/components/bivaque/ — diretorio compartilhado
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar artigo, categoria, autor ou data
+  - inventar conteudo editorial; sem entrada aprovada, estado vazio honesto
+  - usar IA para curadoria ou resumo — a curadoria e humana, pela fila do operador
+  - prometer conteudo que nao existe
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+  - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
+  - importar HeroUI direto onde ha wrapper Bivaque
+  - introduzir familia tipografica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - a tela segue a composicao editorial da prancha 12, com categorias derivadas do dado real
+  - a busca filtra as entradas aprovadas e tem nome acessivel, nao so placeholder
+  - somente entradas aprovadas aparecem; nada da fila do operador vaza para o membro
+  - o estado vazio nao promete que o conteudo esta chegando, so diz que nao ha entrada ainda
+  - todos os estados fechados: skeleton, vazio honesto, erro recuperavel com nova tentativa
+  - exatamente um h1 na tela
+  - contraste >= 4,5:1, alvos >= 44x44, foco visivel
+  - auditoria visual de /guide em 375/768/1440 sem finding de severidade high
+  - npx pnpm@11.18.0 gate verde
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-008.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: descoberta editorial do guia
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
