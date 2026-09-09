@@ -1,233 +1,450 @@
-import { createServerClient } from "@supabase/ssr"
-import { revalidatePath } from "next/cache"
-import { cookies } from "next/headers"
+import { scrubReportReason } from "@bivaque/domain"
+import { Chip } from "@heroui/react"
+import type { Route } from "next"
+import Link from "next/link"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 import { SUPPORT_SLA_HOURS } from "../../../lib/support"
+import { EmptyState } from "../../components/bivaque/empty-state"
+import { QueryError } from "../admissions/query-error"
+import {
+  applyFilters,
+  countLabel,
+  formatDate,
+  isOverSla,
+  type Ordem,
+  pageWindow,
+  paginateRows,
+  parseQueueParams,
+  type ReportRow,
+  resolveTargets,
+  SEM_COMUNIDADE,
+  shortLabel,
+  TARGET_LABELS,
+  type Tab,
+  truncateReason,
+} from "./targets"
 
 // The operator panel reads through `service_role` behind `is_current_user_operator`
 // and has no possible static form. Without this, `next build` prerenders it and
 // throws on the missing NEXT_PUBLIC_* credentials before any request exists.
 export const dynamic = "force-dynamic"
 
-const ADMIN_NOTES_THRESHOLD = 1
-const SLA_MS = SUPPORT_SLA_HOURS * 60 * 60 * 1000
-
-async function getAuthedUserId(): Promise<string | null> {
-  const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
-  const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  if (!url || !anonKey) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
-  }
-  const cookieStore = await cookies()
-  const authClient = createServerClient(url, anonKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll()
-      },
-      setAll() {
-        // Read-only: writes happen in Server Actions elsewhere.
-      },
-    },
-  })
-  const {
-    data: { user },
-  } = await authClient.auth.getUser()
-  return user?.id ?? null
+interface QueueHrefParams {
+  tab: Tab
+  tipo: string | null
+  comunidade: string | null
+  motivo: string
+  ordem: Ordem
+  pagina?: number | undefined
 }
 
-async function authorizeOperator(userId: string): Promise<boolean> {
+function queueHref(params: QueueHrefParams): Route {
+  const search = new URLSearchParams()
+  if (params.tab !== "em-analise") search.set("aba", params.tab)
+  if (params.tipo !== null) search.set("tipo", params.tipo)
+  if (params.comunidade !== null) search.set("comunidade", params.comunidade)
+  if (params.motivo.length > 0) search.set("motivo", params.motivo)
+  if (params.ordem !== "antigas") search.set("ordem", params.ordem)
+  if (params.pagina !== undefined && params.pagina > 1) search.set("pagina", String(params.pagina))
+  const qs = search.toString()
+  return (qs.length > 0 ? `/reports?${qs}` : "/reports") as Route
+}
+
+function StatusChip({ status }: { status: ReportRow["status"] }) {
+  return (
+    <Chip size="sm" variant="soft" color={status === "open" ? "warning" : "default"}>
+      {status === "open" ? "Em análise" : "Concluída"}
+    </Chip>
+  )
+}
+
+export default async function AdminReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const filters = parseQueueParams(await searchParams)
   const serviceClient = createServiceClient()
-  const { data } = await serviceClient.rpc("is_current_user_operator", {
-    p_user_id: userId,
-  })
-  return data === true
-}
 
-// H-Task 3: ocultar, registrar e avisar sao um ato so, dentro de
-// public.resolve_report. Esta pagina e a rota de API faziam a mesma coisa de
-// dois jeitos diferentes, e o jeito daqui — que e o que o operador usa de
-// verdade — nunca notificava o denunciante. Enquanto forem dois codigos, um
-// volta a divergir.
-async function callResolveReport(
-  reportId: string,
-  operatorId: string,
-  action: "hide" | "dismiss",
-  note: string | null,
-) {
-  const serviceClient = createServiceClient()
-  // `exactOptionalPropertyTypes` esta ligado: passar `p_note: undefined` nao e
-  // o mesmo que omitir a chave. Sem nota, a chave nao vai.
-  const { error } = await serviceClient.rpc("resolve_report", {
-    p_report_id: reportId,
-    p_operator_user_id: operatorId,
-    p_action: action,
-    ...(note === null ? {} : { p_note: note }),
-  })
-  if (error) throw new Error(error.message)
-}
+  // As duas abas vêm de consulta real: a fila aberta pelo RPC que já existe e
+  // o encerrado pela tabela de denúncias. Contagem de aba é o total SEM filtro.
+  const [{ data: openRows, error: openError }, { data: resolvedRows, error: resolvedError }] =
+    await Promise.all([
+      serviceClient.rpc("list_open_reports"),
+      serviceClient
+        .from("reports")
+        .select(
+          "id, target_type, target_id, reason, created_at, status, operator_note, resolved_at",
+        )
+        .eq("status", "resolved")
+        .order("created_at", { ascending: false }),
+    ])
 
-async function hideReportAction(formData: FormData) {
-  "use server"
-  const userId = await getAuthedUserId()
-  if (!userId) throw new Error("unauthenticated")
-  if (!(await authorizeOperator(userId))) throw new Error("forbidden")
-
-  const reportId = formData.get("reportId")
-  if (typeof reportId !== "string" || reportId.length === 0) {
-    throw new Error("reportId required")
+  // Ler o error de toda consulta: falha de infraestrutura renderizada como
+  // fila vazia faria o operador concluir que não há casos — o bug que a casa
+  // já registrou. O estado de erro tem nova tentativa explícita.
+  if (openError || resolvedError) {
+    return (
+      <section
+        className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12"
+        aria-labelledby="reports-heading"
+      >
+        <h1 id="reports-heading" className="text-2xl font-semibold tracking-tight">
+          Fila de denúncias
+        </h1>
+        <QueryError message="Não foi possível carregar a fila de denúncias agora." />
+      </section>
+    )
   }
 
-  await callResolveReport(reportId, userId, "hide", null)
-  revalidatePath("/reports")
-}
+  const openCount = openRows?.length ?? 0
+  const resolvedCount = resolvedRows?.length ?? 0
 
-async function resolveReportAction(formData: FormData) {
-  "use server"
-  const userId = await getAuthedUserId()
-  if (!userId) throw new Error("unauthenticated")
-  if (!(await authorizeOperator(userId))) throw new Error("forbidden")
+  const openList: ReportRow[] = (openRows ?? []).map((row) => ({
+    id: row.id,
+    target_type: row.target_type,
+    target_id: row.target_id,
+    reason: row.reason,
+    created_at: row.created_at,
+    status: "open",
+    resolved_at: null,
+    operator_note: null,
+    excerpt: row.target_excerpt,
+    authorName: row.target_author_name,
+    communityName: null,
+    contentCreatedAt: null,
+    openReportsOnTarget: row.open_reports_on_target,
+  }))
+  const resolvedList: ReportRow[] = (resolvedRows ?? []).map((row) => ({
+    id: row.id,
+    target_type: row.target_type,
+    target_id: row.target_id,
+    reason: row.reason,
+    created_at: row.created_at,
+    status: "resolved",
+    resolved_at: row.resolved_at,
+    operator_note: row.operator_note,
+    excerpt: null,
+    authorName: null,
+    communityName: null,
+    contentCreatedAt: null,
+    openReportsOnTarget: 0,
+  }))
 
-  const reportId = formData.get("reportId")
-  if (typeof reportId !== "string" || reportId.length === 0) {
-    throw new Error("reportId required")
+  const rows = filters.tab === "em-analise" ? openList : resolvedList
+  const targets = await resolveTargets(
+    serviceClient,
+    rows.map((row) => ({ target_type: row.target_type, target_id: row.target_id })),
+  )
+  for (const row of rows) {
+    const info = targets.get(row.target_id)
+    if (!info) continue
+    row.communityName = info.communityName
+    if (row.status === "resolved") {
+      row.excerpt = info.content
+      row.authorName = info.authorName
+      row.contentCreatedAt = info.contentCreatedAt
+    }
   }
-  const note = formData.get("note")
-  const operatorNote =
-    typeof note === "string" && note.length >= ADMIN_NOTES_THRESHOLD ? note : null
 
-  await callResolveReport(reportId, userId, "dismiss", operatorNote)
-  revalidatePath("/reports")
-}
+  const filtered = applyFilters(rows, filters)
+  const paged = paginateRows(filtered, filters.pagina)
+  const hasFilters =
+    filters.tipo !== null || filters.comunidade !== null || filters.motivo.length > 0
 
-// H-Task 4 (F164): o card mostrava tipo, data absoluta, motivo e um UUID.
-// Sobre um UUID ninguem decide. O RPC monta o caso — trecho, autor e
-// reincidencia no mesmo alvo — porque o PostgREST nao resolve embed onde nao ha
-// foreign key, e `reports.target_id` e polimorfico.
-const TARGET_LABELS: Record<string, string> = {
-  post: "Publicação",
-  comment: "Comentário",
-  group: "Grupo",
-  message: "Mensagem privada",
-  recommendation_request: "Pedido de indicação",
-  recommendation_reply: "Resposta de indicação",
-}
+  // Opções de filtro derivadas dos dados reais da aba: nada de categoria
+  // inventada — o motivo é texto livre, então ele entra como busca, não como
+  // lista fixa.
+  const tipoOptions = [...new Set(rows.map((row) => row.target_type))]
+  const comunidadeNames = [
+    ...new Set(rows.map((row) => row.communityName).filter((n): n is string => n !== null)),
+  ].sort((a, b) => a.localeCompare(b, "pt-BR"))
+  const temSemComunidade = rows.some((row) => row.communityName === null)
 
-// Link so onde existe rota de detalhe. Mensagem e indicacao nao tem: um link
-// que cai em 404 e pior que nenhum (regra 4 da §12).
-function targetHref(targetType: string, targetId: string): string | null {
-  if (targetType === "post") return `/community?post=${targetId}`
-  if (targetType === "group") return `/groups/${targetId}`
-  return null
-}
-
-export default async function AdminReportsPage() {
-  const serviceClient = createServiceClient()
-  const { data: reports, error } = await serviceClient.rpc("list_open_reports")
-
-  // Ler o `error` de toda consulta: descartar e como a lista de membros de
-  // grupo ficou vazia em producao sem ninguem notar (README, licao do E2E).
-  if (error) throw new Error(`fila de denuncias indisponivel: ${error.message}`)
-
-  const queue = reports ?? []
   const now = Date.now()
+  const clearHref = queueHref({
+    tab: filters.tab,
+    tipo: null,
+    comunidade: null,
+    motivo: "",
+    ordem: filters.ordem,
+  })
+  const sortNext: Ordem = filters.ordem === "antigas" ? "recentes" : "antigas"
 
   return (
     <section
-      className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-12"
+      className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-12"
       aria-labelledby="reports-heading"
     >
       <h1 id="reports-heading" className="text-2xl font-semibold tracking-tight">
         Fila de denúncias
       </h1>
 
-      {queue.length === 0 ? (
-        <p className="text-sm text-muted">Nenhuma denúncia aberta.</p>
-      ) : (
-        queue.map((report) => (
-          <article
-            key={report.id}
-            className="flex flex-col gap-3 rounded-md border border-border p-4"
-          >
-            <header className="flex items-baseline justify-between gap-2">
-              <span className="text-xs uppercase tracking-wide text-muted">
-                {TARGET_LABELS[report.target_type] ?? report.target_type}
+      <nav aria-label="Situação das denúncias">
+        <ul className="flex gap-6 border-b border-border text-sm">
+          <li>
+            <Link
+              href={queueHref({ ...filters, tab: "em-analise", pagina: undefined })}
+              aria-current={filters.tab === "em-analise" ? "page" : undefined}
+              className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-1 font-medium ${
+                filters.tab === "em-analise"
+                  ? "border-accent text-foreground"
+                  : "border-transparent text-muted hover:text-foreground"
+              }`}
+            >
+              Em análise
+              <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-xs text-muted">
+                {openCount}
               </span>
-              <div className="flex items-center gap-2">
-                {now - new Date(report.created_at).getTime() > SLA_MS && (
-                  <span className="rounded-sm bg-danger px-1.5 py-0.5 text-xs font-medium text-danger-foreground">
-                    +{SUPPORT_SLA_HOURS}h
-                  </span>
-                )}
-                <time className="text-xs text-muted">
-                  {new Date(report.created_at).toLocaleString("pt-BR")}
-                </time>
-              </div>
-            </header>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={queueHref({ ...filters, tab: "concluidas", pagina: undefined })}
+              aria-current={filters.tab === "concluidas" ? "page" : undefined}
+              className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-1 font-medium ${
+                filters.tab === "concluidas"
+                  ? "border-accent text-foreground"
+                  : "border-transparent text-muted hover:text-foreground"
+              }`}
+            >
+              Concluídas
+              <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-xs text-muted">
+                {resolvedCount}
+              </span>
+            </Link>
+          </li>
+        </ul>
+      </nav>
 
-            <p className="text-sm">{report.reason}</p>
+      <search>
+        <form
+          method="get"
+          action="/reports"
+          aria-label="Filtros da fila de denúncias"
+          className="flex flex-wrap items-end gap-3"
+        >
+          <input type="hidden" name="aba" value={filters.tab} />
+          <input type="hidden" name="ordem" value={filters.ordem} />
+          <div className="flex min-w-40 flex-col gap-1">
+            <label htmlFor="filtro-tipo" className="text-xs text-muted">
+              Tipo
+            </label>
+            <select
+              id="filtro-tipo"
+              name="tipo"
+              defaultValue={filters.tipo ?? ""}
+              className="min-h-11 rounded-lg border border-border bg-surface px-3 text-sm"
+            >
+              <option value="">Todos</option>
+              {tipoOptions.map((type) => (
+                <option key={type} value={type}>
+                  {TARGET_LABELS[type] ?? type}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex min-w-40 flex-col gap-1">
+            <label htmlFor="filtro-comunidade" className="text-xs text-muted">
+              Comunidade
+            </label>
+            <select
+              id="filtro-comunidade"
+              name="comunidade"
+              defaultValue={filters.comunidade ?? ""}
+              className="min-h-11 rounded-lg border border-border bg-surface px-3 text-sm"
+            >
+              <option value="">Todas</option>
+              {comunidadeNames.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+              {temSemComunidade && <option value={SEM_COMUNIDADE}>Sem comunidade</option>}
+            </select>
+          </div>
+          <div className="flex min-w-40 flex-1 flex-col gap-1">
+            <label htmlFor="filtro-motivo" className="text-xs text-muted">
+              Motivo da denúncia
+            </label>
+            <input
+              id="filtro-motivo"
+              type="search"
+              name="motivo"
+              defaultValue={filters.motivo}
+              className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 text-sm"
+            />
+          </div>
+          <button
+            type="submit"
+            className="min-h-11 rounded-lg border border-border bg-surface px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-sunken)]"
+          >
+            Filtrar
+          </button>
+          <Link
+            href={clearHref}
+            className="inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-sunken)]"
+          >
+            Limpar filtros
+          </Link>
+        </form>
+      </search>
 
-            <div className="rounded-md border border-border bg-surface p-3">
-              <p className="text-xs text-muted">
-                {report.target_author_name ?? "autor sem perfil"}
-                {report.open_reports_on_target > 1 && (
-                  <span className="ml-2 font-medium text-danger">
-                    {report.open_reports_on_target} denúncias abertas neste alvo
-                  </span>
-                )}
-              </p>
-              <p className="mt-1 text-sm break-words whitespace-pre-wrap">
-                {report.target_excerpt ?? "conteúdo não encontrado — pode já ter sido removido"}
-              </p>
-            </div>
-
-            <p className="text-xs text-muted">
-              {targetHref(report.target_type, report.target_id) ? (
-                <a
-                  className="inline-flex min-h-11 items-center underline"
-                  href={targetHref(report.target_type, report.target_id) as string}
+      {paged.total === 0 ? (
+        hasFilters ? (
+          <EmptyState
+            title="Nenhum resultado para os filtros"
+            description="Nenhuma denúncia nesta aba corresponde aos filtros aplicados."
+            action={
+              <Link
+                href={clearHref}
+                className="inline-flex min-h-11 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium"
+              >
+                Limpar filtros
+              </Link>
+            }
+          />
+        ) : filters.tab === "em-analise" ? (
+          <EmptyState
+            title="Nenhuma denúncia em análise"
+            description="A fila está limpa. Denúncias enviadas por membros aparecem aqui para decisão."
+          />
+        ) : (
+          <EmptyState
+            title="Nenhuma denúncia concluída"
+            description="Denúncias encerradas por um operador aparecem aqui, com a data de recebimento e o registro da decisão."
+          />
+        )
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">
+              Denúncias {filters.tab === "em-analise" ? "em análise" : "concluídas"}
+            </caption>
+            <thead>
+              <tr className="border-b border-border text-muted">
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Conteúdo
+                </th>
+                <th scope="col" className="hidden px-4 py-3 font-medium md:table-cell">
+                  Tipo
+                </th>
+                <th scope="col" className="hidden px-4 py-3 font-medium md:table-cell">
+                  Motivo da denúncia
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  Situação
+                </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3 font-medium"
+                  aria-sort={filters.ordem === "antigas" ? "ascending" : "descending"}
                 >
-                  abrir o alvo
-                </a>
-              ) : (
-                <span>sem tela de detalhe para este tipo</span>
-              )}
-              <span className="ml-2">id: {report.target_id}</span>
-            </p>
-
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <form action={hideReportAction} className="flex-1">
-                <input type="hidden" name="reportId" value={report.id} />
-                <button
-                  type="submit"
-                  className="w-full min-h-11 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-danger hover:text-danger-foreground"
-                >
-                  Ocultar conteúdo
-                </button>
-              </form>
-
-              <form action={resolveReportAction} className="flex flex-1 gap-2">
-                <input type="hidden" name="reportId" value={report.id} />
-                {/* `placeholder` não é nome acessível: some ao digitar e nem todo
-                    leitor de tela o anuncia. O rótulo visível não cabe no card,
-                    então o nome vem por aria-label. */}
-                <input
-                  type="text"
-                  name="note"
-                  aria-label="Nota do operador sobre esta denúncia (opcional)"
-                  placeholder="Nota (opcional)"
-                  className="min-h-11 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm"
-                />
-                <button
-                  type="submit"
-                  className="min-h-11 min-w-11 rounded-md border border-border bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
-                >
-                  Resolver
-                </button>
-              </form>
-            </div>
-          </article>
-        ))
+                  <Link
+                    href={queueHref({ ...filters, ordem: sortNext, pagina: undefined })}
+                    className="inline-flex min-h-11 items-center gap-1 hover:text-foreground"
+                  >
+                    Recebido em
+                    <span aria-hidden="true">{filters.ordem === "antigas" ? "↑" : "↓"}</span>
+                  </Link>
+                </th>
+                <th scope="col" className="px-4 py-3 font-medium">
+                  <span className="sr-only md:hidden">Ações</span>
+                  <span className="hidden md:inline">Ações</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {paged.rows.map((row) => (
+                <tr key={row.id} className="border-b border-border last:border-b-0">
+                  <td className="max-w-64 px-4 py-3">
+                    <p className="font-medium">
+                      {shortLabel(row.excerpt) ||
+                        "conteúdo não encontrado — pode já ter sido removido"}
+                    </p>
+                    {row.openReportsOnTarget > 1 && (
+                      <p className="mt-0.5 text-xs font-medium text-danger">
+                        {row.openReportsOnTarget} denúncias abertas neste alvo
+                      </p>
+                    )}
+                  </td>
+                  <td className="hidden px-4 py-3 text-muted md:table-cell">
+                    {TARGET_LABELS[row.target_type] ?? row.target_type}
+                  </td>
+                  <td className="hidden px-4 py-3 text-muted md:table-cell">
+                    {/* Varre ANTES de truncar: truncar primeiro pode partir um CPF
+                        ao meio e o detector deixa passar o pedaco. A pagina de
+                        analise faz o mesmo — a fila nao pode ser a porta larga. */}
+                    {truncateReason(scrubReportReason(row.reason))}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col items-start gap-1">
+                      <StatusChip status={row.status} />
+                      {row.status === "open" &&
+                        isOverSla(row.created_at, now, SUPPORT_SLA_HOURS) && (
+                          <span className="rounded-sm bg-danger px-1.5 py-0.5 text-xs font-medium text-danger-foreground">
+                            +{SUPPORT_SLA_HOURS}h
+                          </span>
+                        )}
+                    </div>
+                  </td>
+                  <td className="hidden px-4 py-3 text-muted md:table-cell">
+                    {formatDate(row.created_at)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/reports/${row.id}` as Route}
+                      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-sunken)]"
+                    >
+                      Abrir
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
+      <footer className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted">
+        <p>{countLabel(paged)}</p>
+        {paged.totalPages > 1 && (
+          <nav aria-label="Paginação da fila" className="flex items-center gap-1">
+            {paged.page > 1 && (
+              <Link
+                href={queueHref({ ...filters, pagina: paged.page - 1 })}
+                aria-label="Página anterior"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2"
+              >
+                <span aria-hidden="true">‹</span>
+              </Link>
+            )}
+            {pageWindow(paged.page, paged.totalPages).map((number) => (
+              <Link
+                key={number}
+                href={queueHref({ ...filters, pagina: number })}
+                aria-current={number === paged.page ? "page" : undefined}
+                className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border px-2 ${
+                  number === paged.page
+                    ? "border-accent font-medium text-foreground"
+                    : "border-border bg-surface text-muted hover:text-foreground"
+                }`}
+              >
+                {number}
+              </Link>
+            ))}
+            {paged.page < paged.totalPages && (
+              <Link
+                href={queueHref({ ...filters, pagina: paged.page + 1 })}
+                aria-label="Próxima página"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2"
+              >
+                <span aria-hidden="true">›</span>
+              </Link>
+            )}
+          </nav>
+        )}
+      </footer>
     </section>
   )
 }
