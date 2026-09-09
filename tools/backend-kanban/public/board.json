@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "31/08/2026 · card mobile autorizado; snapshot do worktree",
+  "updatedAt": "29/08/2026 · identidade oficial aprovada e preparada para integração",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -69,7 +69,9 @@
         "E2E community-invitations passou de 3/9 para 6/9 verdes: geração e cópia fecham; as 3 falhas restantes são a perda de ?next no redirect do aceite (tema próprio do MVP-00-E2E-FUNCTIONAL).",
         "Convite familiar (envio e aceite) tinha o mesmo defeito de fio e recebeu o mesmo fix; prova E2E própria segue devendo ao lote com seed (o spec onboarding-holder-family nunca exerceu o aceite — só UI de consentimento).",
         "Reconciliação das linhas §9 Admissões e §2 Convites do PRODUCT_STATUS fica como próximo passo imediato: o arquivo carrega alterações não-commitadas de outro trabalho (landing/signup/onboarding) e commitá-las junto publicaria estado sem código.",
-        "Fechado 2026-08-25: checklist 6/6 com provas registradas; PRODUCT_STATUS (Admissões/Convites/e-mail outbox) reconciliado nesta data; entrega real de e-mail permanece no card BLOCK-RESEND."
+        "Fechado 2026-08-25: checklist 6/6 com provas registradas; PRODUCT_STATUS (Admissões/Convites/e-mail outbox) reconciliado nesta data; entrega real de e-mail permanece no card BLOCK-RESEND.",
+        "Produção reconciliada em 2026-09-01: as 127 migrações versionadas do repositório foram aplicadas no projeto Supabase pjgvnfiscwwfhezbqwxi; read_verification_status, consume_verification_attempt e upsert_verification_outcome confirmados, com RLS ativo nas tabelas expostas.",
+        "Prova de runtime em 2026-09-01: o POST de verificação chegou ao Vercel, mas parou antes da chamada ao Portal porque PORTAL_DADOS_API_KEY estava vazia no ambiente de produção; a rota agora converte essa configuração ausente em temporary_error seguro, e a cópia identifica o Portal sem expor detalhes internos."
       ],
       "tests": [
         "supabase/tests/verification-documents.sql",
@@ -82,8 +84,8 @@
         "Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20",
         "Status: entrada | ../../docs/PRODUCT_STATUS.md"
       ],
-      "updatedAt": "2026-08-25",
-      "sourceRevision": "b1cf3a6",
+      "updatedAt": "2026-09-01",
+      "sourceRevision": "ab3ea10",
       "dependencies": ["BLOCK-RESEND"],
       "completedChecklist": [true, true, true, true, true, true],
       "completedAt": "2026-08-25"
@@ -196,12 +198,15 @@
         "Gerar e revisar database.generated.ts",
         "Eliminar migrations dependentes de estado histórico",
         "Separar lote E2E seed-driven e registrar execução",
+        "Varrer o E2E por asserção de retrato único onde cabe asserção que repete — o mesmo padrão de ds-029:130 aparece em ds-029:110 (containment de foco após abrir o diálogo)",
         "Regularizar impedimento externo de Actions e obter CI e revisão independentes da revisão entregue; confirmar se há proteção efetiva de merge"
       ],
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
         "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento",
+        "2026-08-28, PR #35: duas execuções consecutivas da CI falharam em UM teste cada, e testes DIFERENTES — group-admin-cycle:103 (mobile-375) no head 8ded62c, ds-029-conformance-probes:115 (desktop-1440) no head 51fd42a. Entre os dois commits NENHUMA linha de código mudou: o segundo é só markdown e board.json. Suíte instável, independente do diff",
+        "Causa de ds-029:130 identificada e corrigida no PR #35: a asserção tirava um retrato único de document.activeElement logo após toBeHidden(), mas a restauração de foco pelo overlay do HeroUI é assíncrona. Trocada por expect(trigger).toBeFocused({timeout}), que repete — segue vermelha se o foco realmente não voltar",
         "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar."
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
@@ -210,8 +215,13 @@
         "Evidências externas datadas e links dos runs | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
       "updatedAt": "2026-09-06",
-      "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
-      "dependencies": []
+      "sourceRevision": "157a59294a69b87f22637b538f930e8a2ca34617",
+      "dependencies": [],
+      "drift": {
+        "documented": "O baseline de 2026-08-25 registra pgTAP 1052 asserts PASS e trata a suíte como reproduzível.",
+        "observed": "O lote E2E não é reproduzível: 2 execuções seguidas em 2026-08-28, sem mudança de código entre elas, falharam em testes distintos (group-admin-cycle:103 e ds-029:115). Uma das duas causas era asserção de retrato único e foi corrigida; a outra é o bug RLS R3 já listado em MVP-00-E2E-FUNCTIONAL.",
+        "action": "Após o merge do PR #35, rodar test:e2e serial duas vezes seguidas no mesmo commit e comparar: se as falhas mudarem de teste outra vez, há mais asserção sem repetição a varrer antes de chamar o baseline de reproduzível."
+      }
     },
     {
       "id": "MVP-06-DISCOVERY-INDEX",
@@ -324,15 +334,21 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Marco final de backend: migrations reproduzíveis, segurança comprovada e contratos estáveis sem depender da UI para proteger regras de negócio.",
+      "description": "Marco final de backend: migrations reproduzíveis, segurança comprovada e contratos estáveis sem depender da UI para proteger regra de negócio. Detalhado item a item em 2026-08-28 contra o estado real: dois dos cinco itens já estão satisfeitos pela CI verde e só faltava registrar; um depende de MVP-00-E2E; um depende inteiro de MVP-09; e o quinto é o entregável, que só pode ser escrito por último.",
       "checklist": [
-        "db reset reproduz tudo do zero",
-        "Todos os contratos e callers reais estão testados",
-        "Jobs são idempotentes e observáveis",
-        "Tipos gerados estão sincronizados",
-        "Gerar BACKEND_COMPLETION.md, versão dos contratos e tag de freeze"
+        "[SATISFEITO, falta registrar] db reset reproduz tudo do zero — a CI roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' a cada PR (pull-request-ci.yml:122-129), verdes. Falta só citar a execução como evidência de freeze",
+        "[SATISFEITO, falta registrar] Tipos gerados sincronizados — a CI tem passo de types drift antes do build, verde na mesma execução",
+        "[PARCIAL] Todos os contratos e callers reais testados — MVP-02-AUTHZ fechou a auditoria cruzada service_role x RPCs SECURITY DEFINER (PRODUCT_STATUS §Autorização, 2026-08-22). Falta o lado E2E: MVP-00-E2E-FUNCTIONAL segue aberto, e MVP-05-TEST-BASELINE registra que a suíte não é reprodutível — verde uma vez não é baseline",
+        "[NÃO INICIADO] Jobs idempotentes e observáveis — depende inteiro de MVP-09-OPERABILITY, que está em 'next'. Some-se a isso MVP-RETENTION-PURGE: o contrato publicado promete prazos de retenção que nenhum job aplica hoje",
+        "[ÚLTIMO] Gerar BACKEND_COMPLETION.md, versão dos contratos e tag de freeze — entregável final, só depois dos quatro acima",
+        "DECISÃO DE ESCOPO PENDENTE: as dependências declaradas incluem MVP-06-DISCOVERY-INDEX, MVP-07-KNOWLEDGE e MVP-08-INTELLIGENCE, que são camada de produto (discovery, guia, evals), não endurecimento de backend. Se o freeze é sobre 'contrato consumível por outro frontend', essas três provavelmente não pertencem à dependência — mas remover dependência de marco é decisão do dono, não do agente"
       ],
-      "proof": [],
+      "proof": [
+        "Dependências: 4 de 11 fechadas (MVP-01-ADMISSION, MVP-02-AUTHZ, MVP-03-COMMUNITY, G-TASK-1). Abertas, 7: MVP-05-TEST-BASELINE e MVP-00-E2E-FUNCTIONAL (now), MVP-06-DISCOVERY-INDEX, MVP-07-KNOWLEDGE, MVP-08-INTELLIGENCE, MVP-09-OPERABILITY e MVP-RETENTION-PURGE (next)",
+        "2026-08-28: onda G reconciliada — os cinco cards saem de proof vazia para backend provado por 94 asserts de pgTAP verdes na CI. Nenhum fecha ainda: G-TASK-2, 3, 4 e 5 esperam a auditoria visual do Task 9 Step 2, e G-TASK-6 espera a aresta que declara para G-TASK-3. Uma auditoria fecha os cinco",
+        "CI verde em 7a127aa cobre db:reset --no-seed, test:db, db:lint, build, types drift e test:e2e — o que já satisfaz dois itens deste checklist",
+        "Nenhum BACKEND_COMPLETION.md existe no repositório, e não há tag de freeze"
+      ],
       "tests": [
         "Gate completo",
         "pgTAP completo",
@@ -340,8 +356,8 @@
         "E2E de fronteiras browser-only"
       ],
       "links": ["Critério de fechamento | ../../docs/BIVAQUE.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
       "dependencies": [
         "MVP-01-ADMISSION",
         "MVP-02-AUTHZ",
@@ -351,7 +367,9 @@
         "MVP-06-DISCOVERY-INDEX",
         "MVP-07-KNOWLEDGE",
         "MVP-08-INTELLIGENCE",
-        "MVP-09-OPERABILITY"
+        "MVP-09-OPERABILITY",
+        "MVP-00-E2E-FUNCTIONAL",
+        "MVP-RETENTION-PURGE"
       ]
     },
     {
@@ -367,7 +385,8 @@
         "Verificar domínio",
         "Configurar DKIM e SPF",
         "Inserir secret fora do Git",
-        "Ativar adaptador e prova de entrega"
+        "Ativar adaptador e prova de entrega",
+        "Criar o endereço dedicado de privacidade do titular (decisão do ADR-20260828 §9) — os Termos e PRIVACIDADE.md o declaram como canal do art. 18"
       ],
       "proof": [
         "apps/web/lib/outbox/adapters.ts mantém adaptadores indisponíveis",
@@ -383,7 +402,7 @@
         "Provar uma entrega real pelo outbox em ambiente implantado"
       ],
       "links": ["Status: infraestrutura | ../../docs/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-08-24",
+      "updatedAt": "2026-08-28",
       "sourceRevision": "27922b5",
       "dependencies": [],
       "completedChecklist": [true, true, true, false, false]
@@ -426,44 +445,72 @@
       ],
       "proof": [
         "BIVAQUE.md declara o texto de privacidade não publicável ainda",
-        "PostHog e IA transferem dados para terceiros"
+        "PostHog e IA transferem dados para terceiros",
+        "TERMOS_E_CONDICOES.md §8.4 fixa em contrato que conteúdo comunitário não sai para provedor de IA enquanto esta governança não estiver publicada e aprovada"
       ],
       "blockers": ["Revisão jurídica", "Decisões do dono"],
-      "links": ["Privacidade | ../../docs/legal/PRIVACIDADE.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
+      "links": [
+        "Privacidade | ../../docs/legal/PRIVACIDADE.md",
+        "Termos e condições | ../../docs/legal/TERMOS_E_CONDICOES.md",
+        "ADR dos termos | ../../docs/decisions/ADR-20260828-termos-e-condicoes.md"
+      ],
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "5c13510",
       "dependencies": []
     },
     {
       "id": "BLOCK-LEGAL-ENTRY",
-      "title": "Textos legais da entrada prontos para abertura pública",
+      "title": "Textos legais da entrada prontos para aceite",
       "phase": "Launch blocker",
       "priority": "BLOCK",
       "category": "governance",
       "status": "blocked",
-      "description": "Não bloqueia o Alpha fechado: os documentos foram informados como previamente aprovados pelo dono, identificam Juan Felipe de Melo Reis como controlador e usam juanjfmr1@gmail.com como canal. Continua pendente para a abertura pública a formalização jurídica definitiva e a prova E2E/deploy do aceite.",
+      "description": "As oito decisões de conteúdo foram tomadas pelo dono em 2026-08-28 (ADR-20260828 §8 e §9): idade mínima, licença com sucessão, retenção escalonada, arrependimento do CDC, canal dedicado, encarregado dispensado pela Resolução CD/ANPD 2/2022, foro de Manaus e a hipótese de veículo. Duas das quatro lacunas fecharam. Continuam bloqueando: parecer jurídico profissional e a constituição do veículo, sem a qual não há razão social, CNPJ nem endereço.",
       "checklist": [
-        "✅ Alpha fechado: usar documentos informados como aprovados pelo dono",
-        "✅ Alpha fechado: identificar controlador e canal de contato",
-        "✅ Alpha fechado: remover notas de rascunho dos documentos apresentados",
-        "Abertura pública: formalizar veículo e governança jurídica definitiva",
-        "Abertura pública: provar aceite versionado em E2E e ambiente implantado"
+        "✅ Decidir as cinco posições substantivas do ADR-20260828 §8 (dono, 2026-08-28)",
+        "✅ Decidir encarregado — dispensado nominalmente pela Resolução CD/ANPD 2/2022; canal publicado",
+        "✅ Decidir foro — comarca de Manaus com ressalva ao consumidor",
+        "✅ Decidir a natureza do canal do titular — endereço dedicado de privacidade",
+        "✅ Alinhar a retenção de PRIVACIDADE.md à dos Termos (escalonada por gravidade)",
+        "Constituir o veículo jurídico e preencher controlador (razão social, CNPJ, endereço)",
+        "Definir o endereço concreto do canal de privacidade — depende do domínio (BLOCK-RESEND)",
+        "Parecer jurídico sobre os três documentos — olhar primeiro o cap. 11 contra o CDC",
+        "Reconciliar a tabela de operadores de PRIVACIDADE.md com a dos Termos",
+        "Virar os três documentos para status: published (a guarda exige zero <<DEFINIR>>)",
+        "Migration para record_consent_acceptance receber a versão dos Termos (hoje recebe duas, precisa de três) e TERMS_VERSION em @bivaque/domain",
+        "Incrementar as versões canônicas de consentimento quando o conteúdo aprovado mudar",
+        "Provar novo aceite versionado e rejeição de versão obsoleta"
       ],
       "proof": [
-        "Decisão do dono nesta sessão: a pendência jurídica completa fica para a segunda etapa; não bloqueia o Alpha fechado",
-        "docs/legal/CODIGO_DE_CONDUTA.md e docs/legal/PRIVACIDADE.md versão 2 identificam o controlador e o canal",
-        "consent/page.tsx exige checkbox; /privacidade e /codigo-de-conduta exibem os documentos completos",
-        "tests/scope/consent-version.test.mjs e tests/scope/support-channel.test.mjs verdes em 2026-08-31"
+        "docs/legal/TERMOS_E_CONDICOES.md — contrato com capítulo LGPD (bases legais por tratamento, retenção, operadores, direitos do art. 18, art. 20, art. 33, art. 41, art. 48)",
+        "docs/decisions/ADR-20260828-termos-e-condicoes.md — R3 proposed, lista as decisões que só o dono fecha",
+        "Achado da auditoria onboarding-aaa-v1-2026-08-22 corrigido: o estado editorial dos três documentos vive em front matter YAML e o renderizador de /consent o descarta (apps/web/app/(preauth)/consent/front-matter.ts)",
+        "tests/unit/legal/front-matter.test.ts — 7 asserts, garante que metadado e nota de rascunho não chegam à tela",
+        "tests/scope/legal-documents.test.mjs — 5 asserts: version casa com @bivaque/domain, documento draft aponta card de bloqueio aberto, documento published não carrega <<DEFINIR>>. Falha provada por mutação nas duas primeiras",
+        "Os três documentos seguem status: draft — nenhum é texto vigente para membro nenhum",
+        "Oito decisões registradas no ADR-20260828 §8 e §9 com data e divergências da proposta original explicitadas (sucessão na licença, retenção escalonada, arrependimento do art. 49 do CDC)",
+        "Lacunas do veículo jurídico caíram de 4 para 2: encarregado e foro fechados sem depender da entidade; sobram controlador e o endereço do canal",
+        "<<DEFINIR>> nos Termos: de 4 distintos para 2 (controlador e endereço do canal)",
+        "2026-09-01: o aceite da entrada saiu da tela longa /consent e passou a checkbox obrigatório em /login e /signup; os documentos completos permanecem acessíveis por links e o callback registra as versões no servidor.",
+        "2026-09-01: a migração consent_acceptances foi aplicada no Supabase de produção; tabela e funções de registro/leitura existem, service_role executa a gravação e anon/authenticated não têm acesso direto.",
+        "2026-09-01: aceite removido do login; passa a ser solicitado no onboarding junto à verificação por CPF ou documento e só reaparece quando a versão vigente ainda não foi aceita."
       ],
-      "blockers": ["Abertura pública", "Prova E2E/deploy"],
+      "blockers": ["Revisão jurídica", "Aprovação do dono"],
       "links": [
+        "Termos e condições | ../../docs/legal/TERMOS_E_CONDICOES.md",
+        "ADR dos termos | ../../docs/decisions/ADR-20260828-termos-e-condicoes.md",
         "Código de conduta | ../../docs/legal/CODIGO_DE_CONDUTA.md",
         "Privacidade | ../../docs/legal/PRIVACIDADE.md",
         "Status de consentimento | ../../docs/PRODUCT_STATUS.md"
       ],
-      "updatedAt": "2026-08-31",
-      "sourceRevision": "5c13510",
-      "dependencies": []
+      "updatedAt": "2026-09-01",
+      "sourceRevision": "cd9ce17",
+      "dependencies": ["BLOCK-RESEND"],
+      "drift": {
+        "documented": "PRIVACIDADE.md lista oito terceiros recebendo dado pessoal, entre eles PostHog, Asaas e WhatsApp, sem distinguir o que já opera do que é planejado.",
+        "observed": "Nenhum dos três está integrado — não há dependência em package.json nem variável de ambiente para PostHog, Asaas ou WhatsApp; PRODUCT_STATUS.md registra 'Métrica de produto: não existe'. TERMOS_E_CONDICOES.md §8.4 já separa 'em uso' de 'quando o recurso for ativado'.",
+        "action": "Reconciliar a tabela de operadores de PRIVACIDADE.md com a dos Termos na mesma revisão jurídica, antes de qualquer publicação — dois documentos do mesmo acordo declarando compartilhamentos diferentes é exatamente a contradição que vira sanção."
+      }
     },
     {
       "id": "BLOCK-AFFILIATION",
@@ -686,100 +733,27 @@
       "priority": "HOLD",
       "category": "frontend",
       "status": "frozen",
-      "description": "Design system, tokens, shell, cards e navegação não são escopo deste fechamento. O contrato visual permanece congelado.",
+      "description": "A identidade oficial está aprovada e versionada, mas design system, tokens ativos, shell, cards e navegação permanecem congelados até as dependências do frontend fecharem.",
       "checklist": [
         "Não tocar DESIGN_SPEC.md ou VISUAL_GUIDE.md",
         "Não criar novo layout durante backend-first",
+        "Fundação oficial versionada sem ativação no runtime ✅",
         "Planejar work separado após backend freeze"
       ],
-      "proof": ["Phase 6D declara a implementação atual não elegível para AAA-ready"],
-      "links": ["Design spec | ../../docs/agents/DESIGN_SPEC.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"]
-    },
-    {
-      "id": "DS-001-DESIGN-SYSTEM",
-      "title": "Sistema de design canônico Casa comum",
-      "phase": "Foundation",
-      "priority": "P1",
-      "category": "frontend",
-      "status": "now",
-      "description": "Consolidar identidade, foundations, tokens, componentes, padrões, acessibilidade e governança em uma única fonte de verdade, com adoção de runtime auditável e sem alterar fronteiras de produto.",
-      "checklist": [
-        "Criar DESIGN_SYSTEM.md como fonte canônica e transformar os documentos antigos em redirecionamentos",
-        "Registrar a direção Casa comum, alternativas e autorização R2 na ADR",
-        "Estruturar tokens em primitive → semantic → component mantendo aliases legados",
-        "Proteger contrato, redirecionamentos, tokens e containers por testes de escopo",
-        "Obter três críticas adversariais independentes e resolver cada achado acionável",
-        "Rodar task contract, test:scope, gate e auditoria visual proporcional às superfícies afetadas",
-        "Migrar a paleta em runtime para a direcao autorizada em 06/09/2026 e provar nas superficies de entrada"
-      ],
       "proof": [
-        "Baseline: DESIGN_SPEC e VISUAL_GUIDE tinham autoridade concorrente; EXP-004 não tinha vencedor",
-        "ADR-20260901-design-system registra a decisão R2, alternativas, métricas, condição de reabertura e três pareceres independentes PASS",
-        "2026-09-02: task contract, 69 testes de escopo, geração de tokens e typechecks de web/tokens/mobile passaram; E2E e auditoria visual seguem como prova de runtime antes do fechamento",
-        "Gate global não é evidência limpa enquanto artefatos Android pré-existentes no worktree entram no Biome",
-        "2026-09-06: autorização atual de reconstrução registrada em PROCESSO-DE-CONSTRUCAO.md; AGENTS.md raiz/web, CLAUDE.md e documentos anteriores encaminham para a versão atual. Direção anterior substituída onde conflita; migração visual em runtime continua aberta.",
-        "2026-09-06: paleta autorizada migrada no token source — primitive.terra-* substituida por pine-* (#164734), canvas #FAFBF8, selected #EEF1E7. Provado em runtime no dev server: --semantic-action-primary resolve #164734, --semantic-canvas #fafbf8, --primitive-terra-700 ausente.",
-        "2026-09-06: gate completo verde (lint/typecheck/test/secrets) apos migracao; 101 testes de escopo incluindo o de contraste AA sobre a paleta nova; pnpm build ok; apps/mobile vitest 51/51; expo export android bundlou 1033 modulos.",
-        "2026-09-06: tela de entrada web (/login, /signup) com escolha explicita entrar/criar conta — 375/768/1440 sem overflow horizontal, sem alvo de toque abaixo de 44px, sem texto abaixo de 13px. Auditoria visual do loop nao rodou: exige stack Supabase, que esta fora do ar neste ambiente.",
-        "2026-09-06: PENDENTE — .visualCopy > span usa branco a 80% de opacidade sobre a foto do painel; DESIGN_SYSTEM 4.2 proibe derivar tom suave de opacidade. Falta um papel de texto sobre imagem no sistema.",
-        "2026-09-06: PENDENTE — mobile: boas-vindas e passo de e-mail existem e compilam, mas o envio do link nao esta ligado (client nativo com detectSessionInUrl:false, sem callback de deep link). Runtime nativo NAO verificado: sem emulador/aparelho nesta sessao."
-      ],
-      "tests": [
-        "node scripts/agents/task-contract.mjs docs/agents/tasks/DS-001.task.yml",
-        "npx pnpm@11.18.0 test:scope",
-        "npx pnpm@11.18.0 gate",
-        "node scripts/visual/loop.mjs"
+        "Phase 6D declara a implementação atual não elegível para AAA-ready",
+        "Aprovação do dono em 2026-08-29: Glifo oficial, Pátio secundário e paleta Grafite/Papel/Brasa",
+        "Assets web, ícones, tokens estruturados, componente canônico e diretrizes operacionais versionados sem alterar o tema ativo",
+        "Decisão do dono em 2026-08-29: identidade integrada à auditoria das telas; ausência/provisório é dívida média enquanto o runtime segue frozen, uso incorreto do ativo oficial é high"
       ],
       "links": [
-        "Sistema canônico | ../../docs/agents/DESIGN_SYSTEM.md",
-        "ADR | ../../docs/decisions/ADR-20260901-design-system.md",
-        "Experimento de baseline | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md",
-        "Processo atual autorizado | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
+        "Design spec ativo | ../../docs/agents/DESIGN_SPEC.md",
+        "Fundação da marca | ../../docs/brand/README.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
-      "dependencies": []
-    },
-    {
-      "id": "MOBILE-00-ARCHITECTURE",
-      "title": "App mobile React Native + Expo: fundação nativa",
-      "phase": "Mobile",
-      "priority": "P0",
-      "category": "frontend",
-      "status": "done",
-      "description": "Construir a fundação nativa React Native + Expo para Android e iOS em paralelo ao web desktop, sem WebView, autenticação, dados de produto ou jornada golden. O cliente futuro compartilha domínio, contratos e autorização com o produto existente, mas terá UI, navegação e acessibilidade nativas.",
-      "checklist": [
-        "Criar a fundação Expo em apps/mobile, com Android e iOS como alvos reais de desenvolvimento",
-        "Manter web desktop e mobile como clientes independentes; nenhum WebView ou cópia de componentes web",
-        "Limitar a fundação a navegação e superfícies estáticas nativas; não introduzir sessão, chave, API ou dados pessoais",
-        "Configurar development builds, assinatura, preview, TestFlight e Play Internal Testing sem distribuir uma jornada autenticada",
-        "Registrar que sessão, backend, busca, assets, paridade e golden slice exigem contratos R3 próprios; busca consome MVP-06 e shell/motion aguarda FRONTEND-VISUAL-AAA"
-      ],
-      "proof": [
-        "Direção explícita do dono em 2026-08-31: manter web para desktop e criar app mobile para Android/iOS",
-        "D31 foi emendada em docs/BIVAQUE.md: o app nativo React Native + Expo é frente ativa",
-        "tests/scope/workspace-foundation.test.mjs agora permite apps/mobile",
-        "2026-09-01: fundação Expo SDK 54 + expo-router entregue em apps/mobile, contrato MOB-000 R1 validado, lint/typecheck/scope verdes, expo export --platform android e --platform ios geram bundle Metro 2.52/2.53 MB, sem fetch/session/WebView/secrets/dark mode. Commit 29d9496."
-      ],
-      "tests": [
-        "node scripts/agents/task-contract.mjs <contrato-mobile>",
-        "Android e iOS iniciam a fundação nativa sem WebView e sem acesso a dados de produto",
-        "security-auditor PASS antes de qualquer jornada autenticada"
-      ],
-      "links": [
-        "Decisão D31 | ../../docs/BIVAQUE.md",
-        "Matriz de risco | ../../docs/decisions/RISK_MATRIX.md",
-        "Backend freeze | #MVP-10-BACKEND-FREEZE",
-        "Busca global | #MVP-06-DISCOVERY-INDEX",
-        "Direção visual | #FRONTEND-VISUAL-AAA"
-      ],
-      "updatedAt": "2026-09-01",
-      "sourceRevision": "29d9496",
-      "dependencies": [],
-      "completedAt": "2026-09-01"
+      "updatedAt": "2026-08-29",
+      "sourceRevision": "ed55ddd",
+      "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"],
+      "tests": ["tests/scope/brand-identity.test.mjs", "tests/scope/brand-visual-audit.test.mjs"]
     },
     {
       "id": "REPO-ISSUE-20",
@@ -978,18 +952,22 @@
         "Rever claims após cada migration e caller real",
         "Registrar capability como código feito até o ciclo do usuário fechar",
         "Não remover linha do status sem entrada, ação, feedback, follow-up e sad path",
-        "Anexar prova de teste e commit no card"
+        "Anexar prova de teste e commit no card",
+        "✅ validateBoard recusa card `done` com dependência em now/next/repo (2026-08-28) — depender de blocked/frozen segue permitido, porque é espera por humano e não trabalho"
       ],
       "proof": [
         "Convites, moderação, perfil e eventos tiveram 'fechamentos' que só QA posterior desmentiu",
         "provider_accounts expõe drift atual entre runtime e status",
         "AGENTS.md exige leitura do resumo operacional e atualização somente em transições materiais; test:scope valida schema e sincronização",
         "O agente que descobre trabalho realmente novo cria o card com origem e dependências; fronteiras R3 entram bloqueadas até decisão",
-        "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision"
+        "CLI consulta um card ou busca termos sem carregar o board inteiro; schema exige origem, dependencies, updatedAt e sourceRevision",
+        "2026-08-28: buraco fechado no validador. `selectNextCard` (board-lib.mjs) só libera card quando toda dependência está `done`, mas `validateBoard` conferia só a EXISTÊNCIA da aresta — G-TASK-6 chegou a ficar `done` com G-TASK-3 em `next` e a CI passou verde. Achado por revisão no PR #37, não por teste",
+        "tests/scope/backend-kanban.test.mjs — dois testes: recusa nos três estados executáveis (now/next/repo) e aceita nos dois de espera humana (blocked/frozen). Falha da guarda provada por mutação: neutralizada, o teste negativo fica vermelho",
+        "MVP-01-ADMISSION e MVP-03-COMMUNITY seguem `done` dependendo de BLOCK-RESEND e continuam válidos — a guarda distingue bloqueio humano de trabalho pendente, em vez de proibir os dois"
       ],
       "links": ["Estado runtime | ../../docs/PRODUCT_STATUS.md", "Visão | ../../docs/BIVAQUE.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "e0538c0",
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "cb8b838",
       "dependencies": []
     },
     {
@@ -1008,14 +986,13 @@
       ],
       "proof": [
         "migrations 20260819021416, 20260820000000, 20260820045749 e 20260820051230",
-        "PRODUCT_STATUS marca onda T fechada",
-        "20260901190000_locality_state_codes_rpc: consulta distinta das 27 UFs validada em produção; /api/localities não fica limitada a 1.000 municípios"
+        "PRODUCT_STATUS marca onda T fechada"
       ],
       "tests": ["locality-transfer.sql", "transfer-scope-denials.sql", "transfer-degradation.sql"],
       "completedAt": "2026-08-20",
       "links": ["Status: transferência | ../../docs/PRODUCT_STATUS.md"],
-      "updatedAt": "2026-09-01",
-      "sourceRevision": "d225e03",
+      "updatedAt": "2026-08-22",
+      "sourceRevision": "8713635",
       "dependencies": []
     },
     {
@@ -1129,7 +1106,7 @@
     },
     {
       "id": "G-TASK-1",
-      "title": "Founda��o conta de prestador (T1)",
+      "title": "Fundação conta de prestador (T1)",
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
@@ -1149,7 +1126,7 @@
       ],
       "tests": ["provider-account-boundary.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-08-28",
       "sourceRevision": "8713635",
       "dependencies": ["MVP-02-AUTHZ"],
       "completedAt": "2026-08-22"
@@ -1161,17 +1138,28 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Quem atesta � a comunidade: convite por indica��o com binding de email e outbox worker. Quem confirma o e-mail na entrada do prestador.",
+      "description": "Quem atesta é a comunidade: convite por indicação com binding de e-mail e outbox worker. O aceite confere token e e-mail-alvo na entrada do prestador.",
       "checklist": [
         "create_provider_invitation RPC valida cota e enfileira no outbox",
-        "Aceita convite pelo link confere token + email"
+        "Aceita convite pelo link confere token + email",
+        "PENDENTE E BLOQUEANTE: auditoria visual — o plano da onda G (2026-08-20-onda-g-vitrine.md, Task 9 Step 2) está `[ ]` e diz 'ela bloqueia a onda seguinte'. As telas que ele nomeia incluem as deste card. Rodar `node scripts/visual/loop.mjs`, escrever o veredito em docs/agents/VISUAL_AUDIT-2026-08-<dd>-onda-g.md e rodar `db:reset` limpo depois da captura, antes de qualquer test:db (o perfil fantasma Visual Capture quebra 6 asserts)"
       ],
-      "proof": [],
+      "proof": [
+        "supabase/migrations/20260825181742_provider_invitations.sql — create_provider_invitation, token_digest e invitee_email_digest (bytea, 32 bytes), enfileiramento no outbox",
+        "apps/web/app/(shell)/communities/[id]/indicar-prestador/actions.ts — caller real do RPC",
+        "supabase/tests/provider-invitation.sql — plan(16), 299 linhas",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["provider-invitation.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-1", "BLOCK-RESEND"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-1", "BLOCK-RESEND"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-2 em 'next' com proof vazia e sourceRevision de 2026-08-22, enquanto o código da onda G entrou em 2026-08-25.",
+        "observed": "O card entrega tela (as duas telas de convite), e o Task 9 Step 2 do plano da onda G segue `[ ]`, nomeando essa tela e declarando que a auditoria bloqueia a onda seguinte. Fechar aqui aplicava critério diferente do que segurou G-TASK-3 e G-TASK-4 pelo mesmo motivo. Achado por revisão no PR #37, conferido contra o plano.",
+        "action": "Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência."
+      }
     },
     {
       "id": "G-TASK-3",
@@ -1180,18 +1168,30 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Identidade, cat�logo, portf�lio, alcance por vila/comunidade e revoga��o pelo dono da comunidade. As tr�s colunas que o prestador preenche sozinho no dia um.",
+      "description": "Identidade, catálogo, portfólio, alcance por vila e revogação pelo dono da comunidade. As três colunas que o prestador preenche sozinho.",
       "checklist": [
         "provider_profiles/catalago/portfolio tabelas com RLS",
         "can_see_provider gating visibilidade",
-        "/prestadores/[id] member view"
+        "/prestadores/[id] member view",
+        "PENDENTE E BLOQUEANTE: auditoria visual das telas que este card cria — AGENTS.md exige que a tela criada por uma onda seja auditada dentro dela, e não há registro de auditoria da vitrine em PRODUCT_STATUS.md. Rodar `node scripts/visual/loop.mjs` e registrar o resultado"
       ],
-      "proof": [],
+      "proof": [
+        "supabase/migrations/20260825185327_provider_showcase.sql — tabelas provider_profiles, provider_reach, provider_catalog_items e provider_portfolio_photos com RLS",
+        "private.can_see_provider referenciada em três migrations (showcase, search, dm_provider_context_rpcs)",
+        "apps/web/app/(shell)/prestadores/[id]/ — visão do membro existe",
+        "supabase/tests/provider-showcase-scope.sql — plan(18), 251 linhas",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["provider-showcase-scope.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-1"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-1"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-3 em 'next' com proof vazia e sourceRevision de 2026-08-22.",
+        "observed": "O backend do card está implementado e provado por pgTAP verde na CI de 2026-08-28. O que falta não é código de servidor: é a auditoria visual das telas que o card cria.",
+        "action": "Rodar a auditoria visual da vitrine e registrá-la; só então o card fecha. Nenhuma implementação de backend pendente."
+      }
     },
     {
       "id": "G-TASK-4",
@@ -1200,17 +1200,27 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Dashboard do prestador com ficha, cat�logo, portf�lio edit�veis, an�ncio e m�trica. M�tricas ficam em placeholder honesto at� PostHog (Onda H).",
+      "description": "Painel do prestador com ficha, catálogo e portfólio editáveis. A métrica fica em placeholder honesto até o provedor de métrica ser ativado.",
       "checklist": [
         "Server Actions CRUD profile/catalog/portfolio",
-        "/prestador dashboard com placeholders honestos"
+        "/prestador dashboard com placeholders honestos",
+        "PENDENTE E BLOQUEANTE: auditoria visual das telas que este card cria — AGENTS.md exige que a tela criada por uma onda seja auditada dentro dela, e não há registro de auditoria da vitrine em PRODUCT_STATUS.md. Rodar `node scripts/visual/loop.mjs` e registrar o resultado"
       ],
-      "proof": [],
+      "proof": [
+        "apps/web/app/(provider)/prestador/ — actions.ts (Server Actions CRUD), ficha/, catalogo/, page.tsx",
+        "tests/unit/providers/showcase-form.test.ts — validadores de borda, verde no gate",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["showcase-form.test.ts"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-3"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-3"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-4 em 'next' com proof vazia e sourceRevision de 2026-08-22.",
+        "observed": "O backend do card está implementado e provado por pgTAP verde na CI de 2026-08-28. O que falta não é código de servidor: é a auditoria visual das telas que o card cria.",
+        "action": "Rodar a auditoria visual da vitrine e registrá-la; só então o card fecha. Nenhuma implementação de backend pendente."
+      }
     },
     {
       "id": "G-TASK-5",
@@ -1219,46 +1229,67 @@
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Busca h�brida global: pg_trgm no nome e filtro exato por categoria dentro do alcance (D44). Vitrine em city-reference atualizada.",
+      "description": "Busca híbrida global: pg_trgm no nome e filtro exato por categoria dentro do alcance (D44). Vitrine da city-reference atualizada.",
       "checklist": [
         "search_providers RPC com pg_trgm e filtro de categoria",
-        "city-reference atualiza vitrine em cidade"
+        "city-reference atualiza vitrine em cidade",
+        "PENDENTE E BLOQUEANTE: auditoria visual — o plano da onda G (2026-08-20-onda-g-vitrine.md, Task 9 Step 2) está `[ ]` e diz 'ela bloqueia a onda seguinte'. As telas que ele nomeia incluem as deste card. Rodar `node scripts/visual/loop.mjs`, escrever o veredito em docs/agents/VISUAL_AUDIT-2026-08-<dd>-onda-g.md e rodar `db:reset` limpo depois da captura, antes de qualquer test:db (o perfil fantasma Visual Capture quebra 6 asserts)"
       ],
-      "proof": [],
+      "proof": [
+        "supabase/migrations/20260825203815_provider_search.sql — extensão pg_trgm, índice GIN gin_trgm_ops em display_name, função search_providers com similarity > 0.2",
+        "supabase/tests/provider-search-scope.sql — plan(9), 159 linhas",
+        "ADR-20260820-alcance-pago §4: a cláusula order by não menciona reach_source, e há assert de pgTAP que fica vermelho se alguém 'otimizar' isso",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["provider-search-scope.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-3"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-3"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-5 em 'next' com proof vazia e sourceRevision de 2026-08-22, enquanto o código da onda G entrou em 2026-08-25.",
+        "observed": "O card entrega tela (/localidade — a vitrine da cidade), e o Task 9 Step 2 do plano da onda G segue `[ ]`, nomeando essa tela e declarando que a auditoria bloqueia a onda seguinte. Fechar aqui aplicava critério diferente do que segurou G-TASK-3 e G-TASK-4 pelo mesmo motivo. Achado por revisão no PR #37, conferido contra o plano.",
+        "action": "Rodar a auditoria visual da onda G e registrar o veredito; só então o card fecha. O backend segue provado e sem pendência."
+      }
     },
     {
       "id": "G-TASK-6",
-      "title": "Conversa membro ? prestador (T6)",
+      "title": "Conversa membro ↔ prestador (T6)",
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
       "status": "next",
-      "description": "Corre��o dos 3 defeitos de DM (ordem par UUID, bloqueio bidirecional, contexto conferido) + extens�o provider. S� membro inicia conversa.",
+      "description": "Correção dos três defeitos de DM (ordem do par no servidor, bloqueio bidirecional, contexto conferido) mais a extensão de prestador. Só o membro inicia conversa.",
       "checklist": [
         "open_conversation ordena par no servidor",
-        "dm_blocked_either_way impede bloqueio contorn�vel",
-        "valida contexto compartilhado"
+        "dm_blocked_either_way impede bloqueio contornável",
+        "valida contexto compartilhado",
+        "PENDENTE: este card não toca tela e não entra na auditoria do Task 9 Step 2. O que o segura é a aresta declarada para G-TASK-3, que o modelo do board só considera satisfeita quando o dependente está `done` (selectNextCard exige status === 'done'). Alternativa que o dono pode preferir: remover a aresta, já que a extensão de DM precisa da tabela provider_profiles — artefato de backend do G-TASK-3, implementado e coberto por pgTAP — e não da tela que falta auditar. Remover aresta de dependência é decisão de modelagem, não do agente"
       ],
-      "proof": [],
+      "proof": [
+        "supabase/migrations/20260825205847_dm_provider_context.sql e 20260825212538_dm_provider_context_rpcs.sql — open_conversation ordena o par no servidor, dm_blocked_either_way, validação de contexto compartilhado",
+        "supabase/tests/dm-context-allowed.sql — plan(26), 470 linhas; supabase/tests/dm-context-denials.sql — plan(25), 643 linhas",
+        "CI verde em 2026-08-28, job 'Install, test, and build': o pipeline roda os passos 'Reset local database (no seed)', 'Database tests' e 'Schema lint' (.github/workflows/pull-request-ci.yml:122-129). Os asserts abaixo passaram contra banco reconstruído do zero — evidência de runtime, não leitura de código"
+      ],
       "tests": ["dm-context-allowed.sql", "dm-context-denials.sql"],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
-      "dependencies": ["G-TASK-1", "G-TASK-3"]
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "354f608",
+      "dependencies": ["G-TASK-1", "G-TASK-3"],
+      "drift": {
+        "documented": "O board mantinha G-TASK-6 em 'next' com proof vazia e sourceRevision de 2026-08-22, enquanto o código da onda G entrou em 2026-08-25.",
+        "observed": "O backend está implementado e provado por pgTAP verde na CI. O que segura o card não é código: é a aresta que ele declara para G-TASK-3, que está `next`. `selectNextCard` (board-lib.mjs:164-168) só considera uma dependência satisfeita quando ela está `done`, então fechar este contradiria o modelo. `validateBoard` não checa isso — só a existência da aresta —, então a CI passaria com o estado inconsistente. Achado por revisão no PR #37.",
+        "action": "Fechar G-TASK-3 pela auditoria visual — o que fecha este junto —, ou o dono decide remover a aresta por ela apontar para o backend do G-TASK-3, que já está provado."
+      }
     },
     {
       "id": "MVP-00-E2E-FUNCTIONAL",
-      "title": "Reconciliar 65 falhas E2E funcionais (app × spec)",
+      "title": "Reconciliar falhas E2E funcionais (app × spec)",
       "phase": "MVP-00",
       "priority": "P1",
       "category": "testing",
-      "status": "done",
-      "description": "Após o realinhamento de UUID (MVP-00-E2E-UUID-REALIGN), a suíte serial contra o seed foi reduzida de 65 falhas para uma. Em 2026-08-31, 590 testes passaram e 6 foram ignorados; a falha residual de interação sintética foi diagnosticada como reload cancelando a segunda reação ainda otimista e passou no recorte desktop após aguardar o POST confirmado. O card permanece aberto até uma suíte integral limpa confirmar zero falhas funcionais.",
+      "status": "now",
+      "description": "Após o realinhamento de UUID (MVP-00-E2E-UUID-REALIGN): partimos de 65 falhas (23 testes únicos × 3 viewports). Reduzidas para 9 falhas = 8 testes distintos restantes. Fechados: rotas /admissions + /reports + acento /Denúncias/, middleware preservando ?next=, InviteAcceptPage pré-checa is_verified_holder, batch-approval beforeEach idempotente via service_role upsert, e event-invites apontando para um evento upcoming do seed. Restam 8 R3/decision/blocked. Em 07/09/2026, CI do PR documental #49 registrou 109 falhas, 484 sucessos e 4 skips na revisão fb7738d. Os totais anteriores são históricos; é necessário reconciliar o relatório atual antes de fechar.",
       "checklist": [
         "Tema 1 — Auth/redirect shell: / serve landing pública para anônimo (Edit B aplicado, verde em manaus-pilot)",
         "Tema 2 — OAuth UI: login renderiza 'Continuar com Google' (Edit A aplicado; provider ainda NÃO configurado no Supabase — clique erra, spec só checa visibilidade — BLOQUEADO em config de auth)",
@@ -1268,11 +1299,13 @@
         "✅ community-batch-approval :68 — beforeEach idempotente via service_role upsert (commit 364619e — verificado 3/3)",
         "✅ community-invitations :92 — middleware preserva ?next= + InviteAcceptPage pré-checa is_verified_holder (commit 364619e — verificado 3/3)",
         "✅ event-invites :64 — spec realinhado para evento upcoming do seed (commit d1fb2ab — verificado 6/6 = 2 testes × 3 viewports)",
-        "✅ 2026-08-31 — admissions, community invitations, group-admin-cycle, reports-member-flow e empty-locality passaram na suíte serial com seed limpo.",
-        "✅ synthetic-people :170 desktop — o reload cancelava o POST da segunda reação após o estado otimista; o spec agora aguarda HTTP 201 e o recorte 2/2 passou.",
-        "Rodar suíte E2E serialmente sobre seed limpo após a correção — confirmar 0 falhas funcionais.",
-        "✅ 2026-09-01 — suíte serial com seed após W1 fechou publish-golden-slice 6/6 (mobile-375, tablet-768, desktop-1440); caminho feliz publica na vila e persiste após reload; caminho de erro preserva rascunho e recupera após rota liberada. Spec commit efab5a9.",
-        "Rodar suíte E2E serialmente sobre seed limpo após a correção — confirmar 0 falhas funcionais."
+        "admissions :157/:174 — RPCs list_verification_queue/documents: grant EXECUTE só service_role; operador bearer falha. DECISÃO R3: conceder a operator/authenticated OU mudar spec para fluxo via UI",
+        "community-invitations :72 — sem mismatch estático; rotas/seed/redirect presentes. INVESTIGAR runtime (possível drift de seed/reset)",
+        "group-admin-cycle :103 — DIAGNÓSTICO CORRIGIDO em 2026-08-28: group_memberships_select NÃO é a culpada. A migration 20260825143505 já lhe deu self-visibility (user_id = auth.uid() em qualquer status). Suspeitos restantes: a pré-condição private.is_locality_member(g.locality_id) do group_memberships_insert_self, ou a action de pedido no app — ambas HIPÓTESES não confirmadas, e enfraquecidas por task-3-run-003 ter passado (negação de política não passaria). Confirmar com stack local antes de mexer em política",
+        "reports-member-flow :98 — ReportButton não envia reporter_user_id (obrigatório + policy reporter_user_id=auth.uid()); visual@ sem membership de comunidade → sem feed. BUG app (R3). DECISÃO/correção",
+        "synthetic-people :167 — sem mismatch de label/trigger; suspeita notification_preferences.comments=false suprime notify_comment OU reaction count≠2. DECISÃO: default de preferências de notificação",
+        "empty-locality :129 (×4) — membro-vazia@ existe, mas seed não tem 2ª localidade de baixa densidade (Task 10 Step 3). BLOQUEADO em seed",
+        "Rodar suíte E2E serialmente após cada decisão de produto/R3 — confirmar 0 falhas funcionais"
       ],
       "proof": [
         "Suíte E2E 2026-08-23 (pós-Edits A-E + loop preauth + teste 7 família): 34 failed / 550 passed (serial)",
@@ -1282,315 +1315,48 @@
         "2026-08-24 (commit d1fb2ab): event-invites :64 fechado — spec realinhado de i=1 (completed) para i=5 (upcoming, organizer membro-6); 6/6 (2 testes × 3 viewports). policy UI inalterada",
         "Após 5 correções: ~25 falhas restantes em 8 testes distintos (esperado pós board update). Reverificar em suíte serial",
         "2026-08-26: db:reset com seed + test:e2e executaram 588 testes; 23 failed, 4 skipped e 561 passed. O carregamento das specs de operador passou após fornecer a credencial no ambiente.",
-        "2026-08-31: após db:reset com seed, build de produção e Playwright serial, 590 passaram, 6 skips e 1 falhou. As 15 falhas reproduzidas no início do ciclo (consentimento, seletor de foto, navegação e grupos) passaram nos três viewports; residual único em synthetic-people desktop, linha 170.",
-        "2026-08-31: diagnóstico da falha residual comprovou que a segunda reação não chegava ao banco porque o reload era disparado antes de o POST terminar; esperar a resposta 201 preserva a asserção de persistência. synthetic-people desktop 2/2 passou.",
-        "2026-09-01: W1 (compositor estados completos + publish-golden-slice.spec.ts) 6/6 PASS nos 3 viewports em serial. Residual não coberto: caminho denied (Wave H scope) — registrado em W1-DENIED.",
-        "2026-09-01: suíte serial completa rodada após W1 fechou 594/6/3 (gate fast verde; W1 6/6 nos 3 viewports; pgTAP e lint/typecheck/test/secrets verdes). As 3 falhas restantes são deterministas em tests/e2e/reports-member-flow.spec.ts:194, todos os viewports. Re-rodando apenas o spec (desktop-1440) passa 2/2 — aponta para poluição de estado inter-spec, não regressão do report-button. Card separado aberto para tratar a flakiness do spec (ver W4-E2E-FLAKE-001).",
-        "2026-09-01: suíte serial completa rodada novamente após fix do flake — 597 passed / 6 skipped / 0 failed em 7.2 min. Todos os 40 specs, 3 viewports (mobile-375, tablet-768, desktop-1440). Gate fast + gate full verdes. Card W4-E2E-FLAKE-001 fechado (commit e703023 fixou reports-member-flow.spec.ts; persona denunciante mudou de dono-vila para membro-1 — Bruno Almeida é aprovado da vila mas não posta lá, então a regra de self-target fica intacta e a fix não a fragiliza)."
+        "2026-08-28, PR #35: group-admin-cycle:103 tem DOIS modos de falha e segue intermitente. head 8ded62c falhou só no mobile-375 (insert ok, botão não trocou a tempo — corrida de revalidação); head 51fd42a passou; head f0f2e70 falhou nos três (a linha nunca ficou visível, e 2º e 3º viewport herdaram a ausência porque os três projetos do Playwright dividem o MESMO banco: uma falha no primeiro cascateia). A branch task-3-run-003 passou a suíte inteira às 00:29Z no mesmo dia — logo NÃO é negação determinística de política",
+        "Fixture verificado e íntegro: o grupo 60000000-...-006 existe no seed (índice 6, 'Mães da Cidade'), é visibility='private' e locality Manaus (seed.sql:641,657). A falha não é fixture ausente",
+        "group_memberships_select pós-20260825143505 concede self-visibility incondicional por status — logo a leitura da própria pendência não é o bloqueio. Restam o INSERT (is_locality_member) e o caminho de app",
+        "2026-09-07, PR #49, fb7738d: CI passou lint, typecheck, testes unitários/privacidade/escopo, segredos, build, tipos, pgTAP e db:lint; E2E: 109 failed / 484 passed / 4 skipped. Diff contra main sem alterações em runtime, E2E, dependências, banco ou workflows. Há specs esperando /consent para anônimos enquanto o middleware da mesma base redireciona /login; group-admin-cycle:103 também falhou. Não houve nova reprodução isolada de cada falha; reconciliar as expectativas e investigar a falha de grupo antes de repetir a suíte."
       ],
       "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
       "links": [
         "E2E status | ../../docs/PRODUCT_STATUS.md",
-        "Seed UUIDs | ../../supabase/seed.sql"
+        "Seed UUIDs | ../../supabase/seed.sql",
+        "CI PR #49 | https://github.com/Juanjfmr/bivaque-community/commit/fb7738d/checks"
       ],
-      "updatedAt": "2026-09-01",
-      "sourceRevision": "e703023",
-      "dependencies": [],
-      "completedAt": "2026-09-01"
-    },
-    {
-      "id": "W1-DENIED",
-      "title": "Golden slice: caminho denied (RLS/suspenso) sem prova negativa",
-      "phase": "MVP-W1",
-      "priority": "P1",
-      "category": "testing",
-      "status": "done",
-      "description": "O composer aceita apenas prova positiva (caminho feliz do dono-vila) e prova de erro de transporte (route.fulfill 500). Falta o caminho denied: persona não-membro ou suspensa que tenta publicar e recebe RLS 42501 → copy genérica 'Não foi possível criar a publicação'. Sem este teste, o estado denied não fecha (regra §12.7: todo caminho de permissão precisa de positivo e negativo; product-critic FAIL item 10 em 2026-09-01). A suspensão é flag em profiles (D38) com helper na RLS, mas o Wave H não entregou nem o flag nem o card de suspensão — sem a flag em migrations, o seed de persona suspensa não é possível.",
-      "checklist": [
-        "Migration: adicionar is_suspended em profiles + flag_account_suspended() helper, conforme ADR-20260820-suspensao-de-conta",
-        "Seed: adicionar pelo menos uma persona suspensa para servir de negativo",
-        "Escrever spec E2E `denied-publish.spec.ts` com persona suspensa → tentar publicar → FeedbackAlert danger com copy genérica → post NÃO chegou ao DB",
-        "Escrever spec E2E com persona sem membership aprovada (cross-community) tentando publicar para vila alheia → mesmo caminho",
-        "Verificar anti-enumeração: copy do denied é idêntica ao de falha de servidor",
-        "Atualizar MVP-00 proof com a nova evidência"
-      ],
-      "proof": [
-        "Product-critic verdict 2026-09-01 — item 10 FAIL",
-        "AGENTS.md regra §12.7 (teste positivo + negativo em cada via de permissão)",
-        "Wave H §10 do BIVAQUE.md",
-        "ADR draft ADR-20260901-account-suspension.md commitado em afcde5d cobre o caminho denied: coluna is_suspended em profiles, helper STABLE SECURITY DEFINER public.is_account_suspended(uuid), RLS update nas tabelas de acao (posts/reactions/comments/reports), trilha em suspension_events, persona de seed membro-suspenso@, exemplo de spec E2E (denied-publish.spec.ts). A aplicacao da migration exige aprovacao humana do ADR (R3: privacidade + autorizacao + trilha de auditoria). Antes da aprovacao, o caminho denied nao fecha; o spec reports-member-flow cobre feliz + erro de transporte mas nao cobre negacao por suspension.",
-        "2026-09-01: implementacao completa. Migration 20260901124348_account_suspension (coluna is_suspended + helper STABLE SECURITY DEFINER + RLS updates em posts/comments/post_reactions/reports com AND NOT is_account_suspended(auth.uid())). Migration 20260901124400_member_suspended_seed (personas membro-suspenso@ e membro-suspenso-aprovado@). tests/e2e/denied-publish.spec.ts (toggle de is_suspended=true via service_role; persona dono-vila com membership aprovada tenta publicar; FeedbackAlert danger com copy generica 'Nao foi possivel criar a publicacao'; modal continua aberto; rascunho preservado; post NAO chega ao DB; cleanup sempre via try/finally). Gate full verde (lint/typecheck/test/secrets). denied-publish.spec.ts passou em 11.6s no desktop-1440. Anti-enumeracao §4.3 mantida (copy identica a qualquer outra negacao)."
-      ],
-      "tests": [
-        "tests/e2e/denied-publish.spec.ts (a escrever)",
-        "Blocker: flag is_suspended em profiles (migration) + seed persona suspensa"
-      ],
-      "links": [
-        "Onda H | ../../docs/BIVAQUE.md §10",
-        "ADR-20260820-suspensao-de-conta | ../../docs/decisions/ADR-20260820-suspensao-de-conta.md",
-        "MVP-00 (este card bloqueia) | ./board.json",
-        "ADR draft | ../../docs/decisions/ADR-20260901-account-suspension.md"
-      ],
-      "updatedAt": "2026-09-01",
-      "sourceRevision": "bb6803f",
-      "dependencies": [],
-      "completedAt": "2026-09-01"
-    },
-    {
-      "id": "MOB-001-SESSION",
-      "title": "Mobile: contrato R3 de sessão (PKCE + secure-store + revogação)",
-      "phase": "Mobile",
-      "priority": "P0",
-      "category": "frontend",
-      "status": "now",
-      "description": "Após a fundação (MOBILE-00 done), o próximo passo é portar a sessão Supabase Auth para o cliente nativo. A fundação não pode autenticar; sem auth, não há jornada autenticada, não há golden slice nativa. A escolha de storage (expo-secure-store vs AsyncStorage vs cookie httpOnly), política de purge, exclusão de backup em iCloud/Google Drive, FLAG_SECURE no Android e screen-secure no iOS são decisões R3 irreversíveis depois de publicadas para usuários.",
-      "checklist": [
-        "ADR-20260901-mobile-session.md redigido (5 alternativas, success metric, reversal cost); proponente: orquestrador",
-        "docs/agents/tasks/MOB-001.task.yml valida R3 com task-contract.mjs: ok … R3, retry 3, BLOQUEADO",
-        "Bloqueio atual: aprovação humana explícita do ADR (storage seguro + purge policy são decisão de produto)",
-        "Após aprovação: implementador portará auth (PKCE, secure-store, refresh, signOut, purge) com testes positivos e negativos",
-        "Após implementação: security-auditor PASS sobre o boundary antes de qualquer jornada autenticada",
-        "Ligar o envio do link e o retorno por deep link no app nativo, fechando o criterio de login do contrato MOB-001"
-      ],
-      "proof": [
-        "ADR-20260901-mobile-session.md em docs/decisions/ (status: draft)",
-        "docs/agents/tasks/MOB-001.task.yml em docs/agents/tasks/ (validator: ok R3 BLOQUEADO)",
-        "2026-09-01: implementacao completa (S2). apps/mobile/src/auth/{storage,signOut,refresh,purge}.ts implementados conforme ADR-20260901-mobile-session (commit b7ca57f). expo-secure-store com keychainAccessible=WHEN_UNLOCKED_THIS_DEVICE_ONLY (exclui iCloud Backup no iOS; EncryptedSharedPreferences fora de backup automatico no Android). signOut revoga servidor (/auth/v1/logout) e prossegue para cleanup local independente de status (4xx/5xx/network) — o membro nao consegue mais agir sem token local. 24 testes vitest (positivos + negativos) cobrem a matriz do ADR. Pendente fora desta fatia: instalacao do app em device real para teste de runtime (FLAG_SECURE, iCloud/Google backup exclusion, refresh automatico sob kill+relaunch). Esses estao bloqueados por BLOCK-MOBILE-RUNTIME (HAXM/Hyper-V para Android; Apple Developer Program para iOS).",
-        "2026-09-06 REABERTO: o card estava done com o primeiro criterio de aceite aberto. Evidencia medida em a90370f: nao existe apps/mobile/app/login/**, nenhum import de expo-linking, nenhuma chamada a exchangeCodeForSession em apps/mobile/**, e src/auth/client.ts fixa detectSessionInUrl:false com o comentario \"o fluxo de login do nativo e diferente, por implementar\". Storage, refresh, signOut e purge continuam entregues e testados (51 testes verdes); o que falta e a entrada.",
-        "2026-09-06: ADR-20260901-mobile-session se contradizia — frontmatter approved/approved_at 2026-09-01 com critic_verdict vazio, corpo dizendo \"pendente de aprovacao humana explicita\". Confrontado, o dono confirmou que aprovou; o corpo do ADR foi reconciliado e o blocked_by do contrato removido. O bloqueio restante e de ambiente (aparelho/emulador), nao de decisao.",
-        "2026-09-06: a tela nativa de boas-vindas e o passo de e-mail ja existem (commit 87cf04b) e roteiam o modo escolhido; falta ligar signInWithOtp com emailRedirectTo bivaque://, registrar o scheme em supabase/config.toml additional_redirect_urls e tratar o retorno do deep link."
-      ],
-      "tests": [
-        "node scripts/agents/task-contract.mjs docs/agents/tasks/MOB-001.task.yml (já passa)",
-        "Pendente: implementation + unit/integration tests + security-auditor PASS"
-      ],
-      "links": [
-        "ADR | docs/decisions/ADR-20260901-mobile-session.md",
-        "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md"
-      ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "a90370fbe0f6a242c8cc7e6f26ddd5dcb5f59a1e",
-      "blockers": ["Aprovação humana de ADR-20260901-mobile-session"],
-      "dependencies": [],
-      "completedAt": "2026-09-01"
-    },
-    {
-      "id": "BLOCK-MOBILE-RUNTIME",
-      "title": "Runtime Android/iOS em device real — bootstrap ausente",
-      "phase": "Mobile",
-      "priority": "P1",
-      "category": "infra",
-      "status": "blocked",
-      "description": "A fundação MOB-000 já produz bundles Metro para Android e iOS (2.52/2.53 MB Hermes). A prova de runtime real exige Android emulator rodando o app, e/ou iOS device/TestFlight. No host atual: cmdline-tools ausente em $LOCALAPPDATA/Android/Sdk (sem sdkmanager.bat); nenhuma system-image; nenhum AVD. iOS runtime exige Apple Developer Program (US$ 99/ano) + credenciais EAS + TestFlight, ativos externos que não estão na máquina. Sem proof de runtime, MOB-001 (sessão) e MOB-002 (golden slice nativa) só podem ser validados em bundle estático e lint/typecheck.",
-      "checklist": [
-        "Android — sistema de runtime provado (boot via QEMU TCG arm64)",
-        "Android — ADB fala com o emulador (sys.boot_completed=1)",
-        "Android — shell responde (echo test passa)",
-        "Android — done (caminho 4 provou que runtime funciona; caminhos 1-3 ficam como recomendacoes)",
-        "iOS — pendente de Apple Developer Program + credenciais EAS",
-        "iOS — pendente de TestFlight + Internal Tester"
-      ],
-      "proof": [
-        "Bundle Metro Android: 2.52 MB (commit 29d9496)",
-        "Bundle Metro iOS: 2.53 MB (commit 29d9496)",
-        "Java 17 + Android SDK present, mas toolchain de AVD incompleta",
-        "Sem credenciais Apple/EAS no host",
-        "2026-09-01 tentativa 1 de bootstrap Android falhou: Invoke-WebRequest contra https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip excedeu 360s sem completar o download. cmdline-tools continua ausente; sem cmdline-tools, sem sdkmanager, sem system-image, sem AVD. Próxima tentativa exige rota alternativa: usar curl.exe do Git for Windows (PATH tem C:\\Program Files\\Git\\cmd\\) ou um mirror; ou rodar o download em background com retry.",
-        "2026-09-01 bootstrap Android tentativamente completo: (1) cmdline-tools/latest extraído em C:\\Users\\juana\\AppData\\Local\\Android\\Sdk\\cmdline-tools\\latest\\ (sdkmanager --version = 12.0); (2) licenças aceitas via `yes | sdkmanager --licenses` (saída: 'All SDK package licenses accepted'); (3) system-images;android-34;default;x86_64 instalada; (4) AVD bivaque_ci criado (Pixel, Android 14.0 UpsideDownCake, default/x86_64); (5) emulator 36.6.11 disponível. JDK real localizada: C:\\Program Files\\Java\\jdk-17.0.3.1 (registry HKLM\\SOFTWARE\\JavaSoft\\JDK\\17.0.3.1).",
-        "2026-09-01 tentativa de boot headless falhou: tentativa A com `-accel off -gpu swiftshader_indirect` — emulador morre durante init (processo termina em ~5s, sem banner de boot); tentativa B sem `-accel off` (deixa detectar Hyper-V) — Start-Process trava o shell do bash. WMI reporta HypervisorPresent: True (Hyper-V ativo), mas HAXM NÃO instalado (sem HKLM\\SOFTWARE\\Intel\\HAXM). Diagnóstico: emulador Android x86_64 em Windows sem HAXM cai no qemu; Hyper-V provavelmente ocupado pelo Docker Desktop (WSL2) ou pelo host hypervisor. Próximo passo: usuário instalará HAXM; após instalado, `emulator.exe -avd bivaque_ci -no-window -gpu swiftshader_indirect` deve bootar. iOS device continua bloqueado por Apple Developer Program ausente.",
-        "Re-verificacao 2026-09-01: HAXM continua NAO instalado (sem HKLM\\SOFTWARE\\Intel\\HAXM, sem haxm*.sys em System32, sem arquivos em C:\\Program Files\\Intel\\HAXM). Hyper-V continua ativo (HypervisorPresent: True). AVD bivaque_ci continua presente em ~/.android/avd/. Adendo tecnico do ADR-20260901-mobile-session (commit ff68650) documenta o estado da infra para o implementador que for começar MOB-001.",
-        "2026-09-01 tentativa final Android headless falhou. HAXM arquivos em C:\\Program Files\\Intel\\HAXM\\ (IntelHaxm.sys + checktool.exe) mas SEM registry entry (servico nao carregou) porque Hyper-V ocupa o hypervisor (HypervisorPresent=True). Emulador Android x86_64 headless nao boota sem HAXM ou KVM. Bash do harness trava em Start-Process (handle nao liberado). Recomendacoes honestas para o humano: (a) abrir Android Studio > Tools > Device Manager > Play no AVD bivaque_ci; (b) desabilitar Hyper-V (Pro/Enterprise) + reboot; (c) desinstalar HAXM e reconfigurar com -accel hyper-v; (d) trocar system-image para arm64-v8a (QEMU TCG, lento mas sem hardware accel).",
-        "2026-09-01 caminho 4 (arm64-v8a com QEMU TCG) BOOTOU. sdkmanager instalou system-images;android-34;default;arm64-v8a. avdmanager criou AVD bivaque_ci_arm64 (Pixel, default/arm64-v8a). emulator.exe -avd bivaque_ci_arm64 -no-window -accel off -gpu swiftshader_indirect bootou. Provas: adb devices retornou 'emulator-5554 device'; adb shell getprop sys.boot_completed = 1; adb shell echo 'OK from android' retornou 'OK from android'. Tempo de boot ~60s+ (QEMU TCG ~10x mais lento que HAXM/KVM, mas bootou). AVD x86_64 bivaque_ci original continua travado por HAXM/Hyper-V; nao e mais necessario para o gaunlet. iOS device continua blocked por Apple Developer Program ausente."
-      ],
-      "tests": [
-        "Pendente: emulator boot + install + launch + smoke test (Minha comunidade → feed → compositor)",
-        "Pendente: iOS device smoke (após credenciais)"
-      ],
-      "links": [
-        "Fundação | commit 29d9496 (apps/mobile scaffold)",
-        "Próxima sessão | MOB-001-SESSION (gate antes da jornada autenticada)",
-        "Adendo tecnico infra | docs/decisions/ADR-20260901-mobile-session.md (secao 'Anexo tecnico')"
-      ],
-      "updatedAt": "2026-09-01",
-      "sourceRevision": "9957d7e",
-      "blockers": [
-        "cmdline-tools + system-image + AVD ausentes (Android)",
-        "Apple Developer Program + EAS credentials ausentes (iOS)"
-      ],
+      "updatedAt": "2026-09-07",
+      "sourceRevision": "fb7738dff619c775f0eb3bd14a720fdcc8ed3760",
       "dependencies": []
     },
     {
-      "id": "W4-E2E-FLAKE-001",
-      "title": "reports-member-flow.spec.ts:194 — 3 falhas deterministas em suíte serial, 0 em isolamento",
-      "phase": "MVP-00",
-      "priority": "P1",
-      "category": "testing",
-      "status": "done",
-      "description": "A suíte serial completa (npx playwright test --workers=1) fechou 594 pass / 6 skip / 3 fail em 9.7 min após o W1. As 3 falhas são no mesmo spec, mesma linha (194), nos três viewports (mobile-375, tablet-768, desktop-1440). O spec roda em 2/2 PASS no desktop-1440 quando executado isolado. Conclusão provável: poluição de estado inter-spec — algum spec anterior deixa o estado do DB em uma configuração em que reports-member-flow falha. Não há regressão real em apps/web/app/components/bivaque/report-button.tsx (o texto 'Denuncia recebida. A analise acontece em ate {SUPPORT_SLA_HOURS} horas' bate com o regex do spec). Bloqueia o fechamento de MVP-00 (gate exige 0 falhas funcionais).",
+      "id": "MVP-RETENTION-PURGE",
+      "title": "Expurgo de dados por prazo declarado",
+      "phase": "MVP-06",
+      "priority": "P2",
+      "category": "backend",
+      "status": "next",
+      "description": "Os Termos e PRIVACIDADE.md declaram prazos de retenção que hoje ninguém aplica: documento de verificação 7 dias, exclusão de conta 30 dias, remoção e suspensão grave 2 anos, conversa reservada e conteúdo ocultado 6 meses. A retenção escalonada por gravidade é decisão do dono em 2026-08-28 (ADR-20260828 §8.3) e substitui os 2 anos uniformes, que não passavam no teste de necessidade do art. 6º III. Prometer prazo no contrato e não expurgar é o pior dos dois mundos: cria obrigação sem cumpri-la.",
       "checklist": [
-        "Identificar o spec que polui o estado de reports-member-flow (rodar specs em sequência binária até isolar)",
-        "Decidir entre (a) estabilizar o spec isolando o estado (beforeEach com reset dedicado) ou (b) relaxar o teste para não depender de DB limpo",
-        "Re-rodar suíte serial completa após o fix; confirmar 0 falhas",
-        "Atualizar proof de MVP-00 com a nova execução limpa"
+        "Job pg_cron de expurgo com TTL por tipo de ação de moderação (2 anos / 6 meses)",
+        "Expurgo do documento de verificação em 7 dias após a decisão",
+        "Expurgo da conta em 30 dias após o pedido de exclusão, preservando o conteúdo desvinculado",
+        "pgTAP com teste positivo e negativo por prazo: expurga no vencido, preserva no vigente",
+        "Registro do expurgo sem reintroduzir dado pessoal no próprio log"
       ],
       "proof": [
-        "Saída npx playwright test --workers=1 em 2026-09-01: 594 pass / 6 skip / 3 fail em 9.7 min; todas em tests/e2e/reports-member-flow.spec.ts:194",
-        "Saída npx playwright test reports-member-flow --project=desktop-1440 em 2026-09-01: 2 pass / 0 fail em 50.9s",
-        "Texto em apps/web/app/components/bivaque/report-button.tsx:98 bate com o regex /A analise acontece em ate 48 horas/",
-        "Fix em commit e703023. Causa raiz: reports-member-flow.spec.ts usava page.getByRole('button', { name: 'Mais opcoes' }).first() — quando publish-golden-slice rodava antes no mesmo worker (ordem alfabética do Playwright), o topo do feed ficava dominado por posts da dono-vila, e a regra em apps/web/app/components/bivaque/report-button.tsx:74-75 ('Voce nao pode denunciar seu proprio conteudo') rejeitava POST /rest/v1/reports com HTTP 400. Correção: REPORTER_EMAIL mudou de dono-vila@ para membro-1@ (Bruno Almeida, aprovado da Vila Ajuricaba mas sem posts lá, então vê o feed da vila com posts alheios); helper findOldestNonOwnVilaPostId(accessToken) ancora o seletor num post específico via REST. Suíte serial após fix: 597/6/0."
-      ],
-      "tests": ["npx playwright test --workers=1 (suíte completa após o fix)"],
-      "links": ["Card bloqueado | ./board.json MVP-00-E2E-FUNCTIONAL"],
-      "updatedAt": "2026-09-01",
-      "sourceRevision": "e703023",
-      "blockers": [],
-      "dependencies": ["MVP-00-E2E-FUNCTIONAL"],
-      "completedAt": "2026-09-01"
-    },
-    {
-      "id": "S4-MOBILE-COMPOSER",
-      "title": "Mobile: composer + reações + comentários (S4 do mobile, read-only parcial do S3)",
-      "phase": "Mobile",
-      "priority": "P1",
-      "category": "frontend",
-      "status": "done",
-      "description": "S3 entregou apenas o read-only (feed da Vila Ajuricaba). Falta o caminho de escrita para fechar a golden slice nativa no mobile: composer modal (criar publicacao com tipos texto/foto/link/enquete), selecao de audiencia (vila default, sem outras vilas para o membro aprovado), submit com feedback toast + pending state + copy generica em erro de RLS, e reactions inline (post_reactions insert). Comentarios inline ficam para S5. Sem S4, o membro ve o feed mas nao pode publicar — exatamente o caminho que W1 cobriu na web (golden slice estados completos) mas nao cobre no mobile.",
-      "checklist": [
-        "Mobile composer: app/(tabs)/community.tsx -> botao Publicar abre sheet com tabs Texto/Foto/Link/Enquete",
-        "Mobile composer: seletor de audiencia le communities approved do proprio membro (apenas a dele, sem cross-community)",
-        "Mobile composer: submit -> POST /rest/v1/posts com optimistic update + error feedback generico (anti-enumeracao §4.3, classifica 42501 como 'server' em lib/composer/publish-error.ts — mas no mobile a funcao equivalente precisa existir ou reusar a do web via bundle compartilhado)",
-        "Mobile composer: feedback toast com mesma copy do web ('Publicado na sua vila')",
-        "Mobile reactions: botao de apoio no PostCard; insere em post_reactions; idempotente (PK violation nao derruba o app)",
-        "Gate full verde; tipcheck Expo export android + ios continua produzindo bundle",
-        "Atualizar MOB-001-SESSION proof com o caminho de runtime do composer em device"
-      ],
-      "proof": [
-        "S3 (commit 69a9251) proveu a infra: cliente Supabase singleton com auth persistida no Keychain/Keystore",
-        "ADR-20260901-account-suspension (commit afcde5d + bb6803f) proveu RLS: posts insert veta conta suspensa com copy generica",
-        "2026-09-01: logica pura entregue em commit 6cbfebf. apps/mobile/src/auth/{publish,publish-builder,publish-error,reactions,feed-types}.ts (5 novos modulos, ~250 linhas). Vitest: 6 arquivos / 40 testes em 620ms (16 testes novos: 13 do publish-error + 3 do publish-builder). publishPost(input) retorna PublishResult = ok | err com copy generica anti-enumeracao §4.3 (mesma do web). toggleReaction(postId, userId, currentlyReacted) e' idempotente (23505 -> 'already') e trata 42501/PGRST116 como 'denied' sem distinguir (anti-enumeracao). UI do composer sheet + botao de reacao no PostCard ficou para S5-MOBILE-UI em outro card (escopo desta fatia foi so a logica pura para ser testavel sem mock de supabase-js)."
-      ],
-      "tests": [
-        "apps/mobile vitest: adicionar composer unit tests (publish error classifier portado para mobile, ou reusado)",
-        "E2E no Expo: Maestro ou Detox contra o emulador arm64-v8a (commit d970fb8 provou que adb fala com o emulador)"
+        "docs/legal/TERMOS_E_CONDICOES.md §8.5 e docs/legal/PRIVACIDADE.md declaram os quatro prazos",
+        "ADR-20260828 §8.3 — retenção escalonada aprovada pelo dono em 2026-08-28",
+        "Nenhum job de expurgo existe hoje em supabase/migrations"
       ],
       "links": [
-        "S3 parcial | commit 69a9251",
-        "S2 (sessao) | commit b7ca57f",
-        "W1 (golden slice web, espelho) | commit efab5a9",
-        "BLOCK-MOBILE-RUNTIME Android runtime provado | commit d970fb8"
+        "Termos §8.5 | ../../docs/legal/TERMOS_E_CONDICOES.md",
+        "ADR dos termos | ../../docs/decisions/ADR-20260828-termos-e-condicoes.md"
       ],
-      "updatedAt": "2026-09-01",
-      "sourceRevision": "6cbfebf",
-      "blockers": [],
-      "dependencies": ["MOB-001-SESSION"],
-      "completedAt": "2026-09-01"
-    },
-    {
-      "id": "S5-MOBILE-UI",
-      "title": "Mobile: Composer Sheet + Reactions inline (S5 do mobile)",
-      "phase": "Mobile",
-      "priority": "P1",
-      "category": "frontend",
-      "status": "done",
-      "description": "S4 entregou a logica pura (publishPost, toggleReaction, buildPostInsert). Falta a UI que consome essa logica: Composer modal/sheet no community.tsx (botao Publicar abre sheet com tipos Texto/Foto/Link/Enquete + seletor de vila + submit com feedback pending + toast + copy generica em erro de RLS) e botao de reacao inline no PostCard (optimistic update + INSERT idempotente). Sem S5, o membro ve o feed mas nao pode publicar nem reagir — exatamente o que W1 (golden slice web) cobre mas o mobile nao.",
-      "checklist": [
-        "apps/mobile/app/(tabs)/community.tsx: botao Publicar no header abre Sheet (Modal ou React Native bottom sheet)",
-        "Composer: tabs Texto/Foto/Link/Enquete; apenas Texto nesta fatia (Foto/Link/Enquete ficam para S6)",
-        "Composer: seletor de audiencia mostra apenas a(s) vila(s) aprovada(s) do membro (query community_memberships)",
-        "Composer: submit chama publishPost() (do S4); estado pending mostra Spinner; sucesso mostra toast 'Publicado na sua vila'; erro mostra FeedbackAlert danger com copy do classifyPublishError",
-        "Composer: rascunho preservado em caso de erro de transporte (preserveDraft=true)",
-        "PostCard: botao de apoio chama toggleReaction() (do S4); estado local otimista; rollback em erro de transporte",
-        "Pull-to-refresh ja esta; garantir que o composer NAO feche em caso de erro de transporte",
-        "Gate full verde; tipcheck Expo export android + ios continua produzindo bundle; emulator arm64-v8a recebe build",
-        "Vitest cobre composer.tsx (logica de UI pure) com mocks de expo-secure-store e supabase-js",
-        "RUNTIME PROOF: npx expo run:android --variant debug no emulador arm64-v8a; instalar app; abrir feed; clicar Publicar; criar publicacao; reload; post persiste"
-      ],
-      "proof": [
-        "S4 logica pura (publishPost, toggleReaction) em commit 6cbfebf",
-        "S3 cliente Supabase + feed read-only em commit 69a9251",
-        "BLOCK-MOBILE-RUNTIME Android runtime provado (adb fala com o emulador) em commit d970fb8",
-        "2026-09-01: UI entregue em commit 08621b8. apps/mobile/src/components/{Composer,ReactionButton}.tsx (2 novos componentes, ~370 linhas). Composer: Modal nativo RN (slide animation), header com Cancelar/Publicar, TextInput multiline autoFocus, placeholder pt-BR, estado submitting com Spinner + 'Publicando...', FeedbackAlert danger com copy generica do classificador (anti-enumeracao §4.3 identica ao web). ReactionButton: optimistic update + rollback em erro de transporte/denied, accessibilityState.selected={reacted}, accessibilityHint com contagem. Integração em community.tsx: useState<composerOpen>+currentAuthorId via supabase.auth.getUser(); botao Publicar no FeedHeader que abre o Composer; PostCard renderiza ReactionButton quando authorId existe. Gate full verde: lint 15s + typecheck 19s + test 28s + secrets 12s. Sem RUNTIME PROOF real no emulador nesta thread (emulador arm64-v8a sobe mas app nao foi instalado; bash do harness trava em Start-Process)."
-      ],
-      "tests": [
-        "apps/mobile vitest: composer.test.ts (logica de UI pura, sem RN)",
-        "apps/mobile vitest: reactions-button.test.ts (logica do toggle local)",
-        "E2E no Expo via Maestro ou Detox contra o emulador arm64-v8a"
-      ],
-      "links": [
-        "S4 logica pura | commit 6cbfebf",
-        "S3 cliente Supabase + feed | commit 69a9251",
-        "BLOCK-MOBILE-RUNTIME Android runtime | commit d970fb8"
-      ],
-      "updatedAt": "2026-09-01",
-      "sourceRevision": "08621b8",
-      "blockers": [],
-      "dependencies": ["S4-MOBILE-COMPOSER"],
-      "completedAt": "2026-09-01"
-    },
-    {
-      "id": "S6-MOBILE-RUNTIME",
-      "title": "Mobile: RUNTIME PROOF real no emulador + tipos Foto/Link/Enquete + realtime",
-      "phase": "Mobile",
-      "priority": "P0",
-      "category": "frontend",
-      "status": "now",
-      "description": "S5 entregou a UI (Composer Sheet + ReactionButton). Falta o RUNTIME PROOF real no emulador arm64-v8a: instalar apps/mobile via npx expo run:android, abrir o feed da Vila Ajuricaba, criar uma publicacao pelo Composer, reagir a um post, recarregar o feed. Esta é a unica evidencia de runtime que falta para fechar a golden slice nativa no mobile. Tambem entram: tipos Foto/Link/Enquete no Composer (hoje so Texto), realtime via supabase.channel para novos posts sem reload, e comentarios inline.",
-      "checklist": [
-        "Reiniciar emulador arm64-v8a (bivaque_ci_arm64); esperar sys.boot_completed=1",
-        "npx expo run:android --variant debug no emulador; instalar apps/mobile",
-        "Logar como dono-vila@ (membro aprovado da Vila Ajuricaba)",
-        "Validar que o feed S3 renderiza com 1+ posts do seed",
-        "Clicar Publicar; abrir Composer; escrever texto; submeter; ver feedback de sucesso",
-        "Reagir a um post; verificar que contagem local sobe; recarregar; contagem persiste",
-        "Screenshot do feed + Composer + PostCard com reacao para auditoria visual",
-        "Gate full continua verde"
-      ],
-      "proof": [
-        "S5 UI entregue (commit 08621b8)",
-        "BLOCK-MOBILE-RUNTIME Android runtime provado (commit d970fb8) — emulador boota, adb fala com o sistema",
-        "2026-09-02: causa raiz do crash useFrameSize identificada e corrigida — duas copias de React no bundle Metro (19.1.0 do RN 0.81 + 19.2.8 aninhado em react-dom@19.2.8 da web). Dispatcher module-local fica null na copia nao inicializada pelo renderer. Fix: overrides react/react-dom 19.1.0 em pnpm-workspace.yaml + remocao de react-dom de apps/mobile. Evidencia: scripts/check-react-singleton.cjs passa; bundle expo export contem apenas 19.1.0; web build passa com React 19.1.0.",
-        "2026-09-02: drift corrigido no fix acima — d8764a8 trocou react-native-screens de 4.24.0 para 4.17.1 sem pedido e fora da faixa do SDK 54 (expo install --check pedia ~4.16.0); revertido para ~4.16.0, hoje instalado 4.16.0 e nao mais sinalizado. apps/web declarava react/react-dom ^19.2.8 enquanto o override resolvia 19.1.0 — range nao cobria a versao instalada; reconciliado para 19.1.0 exato. Evidencia: gate verde nos quatro passos, build da web exit 0, check-react-singleton verde.",
-        "2026-09-01: drift do BLOCK-MOBILE-RUNTIME (d970fb8) invalidado — emulator 37.1.11 removeu cross-arch TCG, arm64 nao boota mais em host x86_64. Emulador x86_64 (bivaque_ci) boota normalmente."
-      ],
-      "tests": [
-        "apps/mobile vitest continua passando (40/40)",
-        "E2E runtime: npx expo run:android + abrir manualmente (ou Maestro/Detox)"
-      ],
-      "links": [
-        "S5 UI | commit 08621b8",
-        "S4 logica pura | commit 6cbfebf",
-        "S3 feed | commit 69a9251",
-        "BLOCK-MOBILE-RUNTIME Android | commit d970fb8"
-      ],
-      "updatedAt": "2026-09-02",
-      "sourceRevision": "e1bb839",
-      "blockers": [],
-      "dependencies": ["S5-MOBILE-UI"]
-    },
-    {
-      "id": "RUN-001",
-      "title": "Bug: cookie de consentimento stale redireciona / -> /consent",
-      "phase": "Bugfix",
-      "priority": "P0",
-      "category": "frontend",
-      "status": "done",
-      "description": "Plano de correção substituído pelo commit 23e4295: o aceite agora é registrado no cadastro e não existe mais portão de consentimento no proxy. Manter o teste de cookie stale reintroduziria uma regra de produto removida.",
-      "checklist": [
-        "Registro do aceite permanece no cadastro; o proxy não pode redirecionar alguém de volta para /consent por cookie ausente ou antigo.",
-        "Os contratos e testes que exigiam checkConsent, has_accepted_consent no proxy e regravação de cookie foram removidos porque contradiziam o fluxo atual.",
-        "O gate deve permanecer verde sem ressuscitar um portão de consentimento removido."
-      ],
-      "proof": [
-        "2026-09-07: o gate mostrou que os artefatos locais de RUN-001 exigiam um checkConsent inexistente. A exigência contradizia o commit 23e4295, que removeu o portão de consentimento e integrou o aceite ao cadastro.",
-        "Artefatos não publicados de RUN-001 removidos; o card é encerrado como substituído, sem afirmar nova prova de runtime."
-      ],
-      "tests": ["npx pnpm@11.18.0 gate"],
-      "links": ["Fluxo atual | ../../apps/web/proxy.ts", "Commit que substituiu o plano | 23e4295"],
-      "updatedAt": "2026-09-07",
-      "sourceRevision": "23e4295",
-      "blockers": [],
-      "dependencies": [],
-      "completedAt": "2026-09-07"
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "8ded62c",
+      "dependencies": ["BLOCK-LEGAL-ENTRY"]
     },
     {
       "id": "DOC-20260906-RECONSTRUCAO",
@@ -1598,14 +1364,14 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "repo",
-      "status": "blocked",
+      "status": "repo",
       "description": "Publicação inicial incorporada pelo PR #49. Ampliação autorizada em 07/09: telas restantes web/mobile e seis correções expressas, com instruções obrigatórias aos agentes. Escopo visual/documental; runtime continua fora deste contrato.",
       "checklist": [
         "Guia e imagens geradas disponíveis no repositório",
         "AGENTS e CLAUDE encaminham para processo, mapa e decisões posteriores",
         "Publicar cobertura real, correções pendentes e limitações de verificação",
         "Validar arquivos, links, galeria e contratos antes da publicação",
-        "Concluir 17 pranchas restantes e propagar correções visuais bloqueadas"
+        "Concluir pranchas restantes e propagar sete correções visuais; preservar notas de construção"
       ],
       "proof": [
         "Pedido explícito do usuário em 06/09/2026: publicar os arquivos no GitHub; versão atual prevalece sobre documentação antiga conflitante.",
@@ -1619,7 +1385,11 @@
         "As seis decisões expressas incluem identidade/IA como fallback ao CPF rápido e afiliação autodeclarada opcional com visibilidade; não foram implementadas as integrações ou persistência. Correções textuais atuais prevalecem sobre imagens pendentes.",
         "Validação local desta ampliação: gate PASS (lint, typecheck, 426 testes unitários, 189 de privacidade, 75 de escopo, segredos). Conferidos 38 PNGs únicos e íntegros, cópias iguais às fontes, links relativos e dataset/notas da galeria, sintaxe JavaScript e quadro válido.",
         "Inspeção manual da galeria em navegador: 38 pranchas, busca personalização com filtro web retorna uma; imagem 39 abre ampliada, Escape retorna foco e busca inexistente mostra vazio. Não houve teste de runtime do aplicativo nem revisão independente desta ampliação.",
-        "07/09/2026: o guia passou a registrar seleção de modelos visuais de baixo custo, preços datados e protocolo de comparação; o prompt operacional foi alinhado à versão nacional e às seis decisões atuais. Links locais do guia passaram; o lint do repositório segue bloqueado por quatro avisos preexistentes em testes mobile/E2E, fora deste contrato documental."
+        "07/09/2026: o guia passou a registrar seleção de modelos visuais de baixo custo, preços datados e protocolo de comparação; o prompt operacional foi alinhado à versão nacional e às seis decisões atuais. Links locais do guia passaram; o lint do repositório segue bloqueado por quatro avisos preexistentes em testes mobile/E2E, fora deste contrato documental.",
+        "08/09/2026: reconciliadas 17 imagens já entregues em 2adcda5; sete PNGs substituídos com originais preservados e quatro novas pranchas 66–69. Total 59 pranchas, 84 estados mobile e 53 web. Não há PNG previsto ausente; notas pontuais dos bitmaps continuam obrigatórias ao construtor.",
+        "Validação local em VALIDACAO-2026-09-08.json: 59 PNGs decodificados, 58 fontes disponíveis idênticas, dataset da galeria e sintaxe JavaScript coerentes, links locais válidos, 96/96 testes de escopo PASS. Sem teste de runtime, revisão independente ou publicação desta rodada. Card em repo até publicação/revisão documental.",
+        "08/09/2026: correção explícita do responsável — identidade militar digital em arquivo único. Pranchas 68/69 editadas e inspecionadas; originais preservados. Manifesto, galeria, mapa, decisões e instruções dos agentes sincronizados. Sem alteração de runtime.",
+        "08/09: incorporação isolada preparada sobre main; somente guia, entradas dos agentes e card documental. A publicação anterior foi confirmada em 3e94026."
       ],
       "links": [
         "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
@@ -1628,13 +1398,11 @@
         "Decisões posteriores | ../../docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
         "Modelos para construção | ../../docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-07",
-      "sourceRevision": "9cd22798b54afa0d1a42126148a9ff6d00e6ccfd",
+      "updatedAt": "2026-09-08",
+      "sourceRevision": "d4053a86318ab49031fe5f8bb1ac34c29ad9216a",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, false],
-      "blockers": [
-        "Serviço image_gen retornou usage_limit_reached / HTTP 429 em 07/09/2026 ao tentar sete edições. Há 17 pranchas novas sem geração. Retomar com prompts preservados quando o limite permitir; sem reset ou API paga não autorizados."
-      ]
+      "completedChecklist": [true, true, true, true, true],
+      "blockers": []
     }
   ]
 }

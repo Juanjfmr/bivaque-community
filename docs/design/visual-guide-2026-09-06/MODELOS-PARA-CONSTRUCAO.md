@@ -21,6 +21,12 @@ depuração difícil ou uma segunda opinião. Ele também aceita imagens e ferra
 mais. Ele não é o revisor independente por si só; a independência depende de sessão, contexto e
 papel separados.
 
+**MiniMax M3** também serve para construir o Bivaque. Ele é nativamente multimodal, aceita
+imagem e vídeo, trabalha com código, tem contexto de 1 milhão de tokens e pode operar desktop.
+Use-o como alternativa intermediária quando o fluxo já usar MiniMax Code ou uma API compatível
+com Anthropic, ou quando uma tarefa visual exigir contexto muito longo. Seu custo é maior que
+Qwen e GLM, então não é a primeira escolha para iterações pequenas.
+
 **DeepSeek-V4-Flash-Vision-Exp** aceita imagens; **DeepSeek-V4-Flash** comum não aceita.
 Escolha explicitamente a variante Vision Exp ao enviar PNGs. Ela é experimental, portanto não
 a use como único caminho para um fluxo crítico sem validação no repositório.
@@ -35,11 +41,13 @@ provedor antes de configurar cobrança ou estimar um projeto.
 |---|---:|---:|---|
 | Qwen3.8-Flash | US$ 0,15 | US$ 0,47 | Preço internacional da Model Studio |
 | GLM-5.3-Flash | US$ 0,075 | US$ 0,25 | Promoção indicada pela Z.ai até 09/09/2026 (UTC+8); tabela normal: US$ 0,15 / US$ 0,50 |
+| MiniMax M3 | US$ 0,30 | US$ 1,20 | Até 512 mil tokens; tabela pública indica desconto permanente de 50% |
 | DeepSeek-V4-Flash-Vision-Exp | US$ 0,22–0,44 | US$ 0,66–1,32 | Faixa fora/de pico; imagem é cobrada como entrada |
 | Gemini 3.8 Flash | US$ 0,75 | US$ 3,75 | Preço introdutório indicado pelo Google até 31/12/2026 |
 
 Fontes primárias: [Qwen / Alibaba Cloud](https://docs.modelstudio.console.alibabacloud.com/en/model-studio/qwen3-8-flash),
 [GLM / Z.ai](https://docs.z.ai/guides/overview/pricing),
+[MiniMax M3](https://www.minimax.io/blog/minimax-m3) e [tabela da API MiniMax](https://platform.minimax.io/subscribe/token-plan?tab=api-enterprise),
 [DeepSeek](https://api-docs.deepseek.com/quick_start/pricing/) e
 [Gemini](https://ai.google.dev/gemini-api/docs/pricing).
 
@@ -53,9 +61,10 @@ Fontes primárias: [Qwen / Alibaba Cloud](https://docs.modelstudio.console.aliba
    de desenvolvimento. Reenvie o resumo de continuidade em vez de todo o histórico.
 4. Exija código, execução e captura da implementação. Entender um PNG não prova que a interface
    funciona, que a autorização está correta ou que a versão mobile foi executada.
-5. Antes de adotar um modelo, compare Qwen e GLM na mesma tarefa, com a mesma prancha e os
-   mesmos critérios: fidelidade visual, testes, número de correções e custo total. Escolha pelo
-   resultado do Bivaque, não por benchmark do fornecedor.
+5. Antes de adotar um modelo, compare Qwen, GLM e MiniMax M3 na mesma tarefa, com a mesma
+   prancha e os mesmos critérios: fidelidade visual, testes, número de correções e custo total.
+   Use Gemini em uma tarefa difícil como referência adicional. Escolha pelo resultado do
+   Bivaque, não por benchmark do fornecedor.
 
 Nenhum modelo pode inferir permissões, persistência ou promessas de produto a partir de uma
 imagem. As decisões textuais atuais prevalecem sobre bitmaps e documentação histórica

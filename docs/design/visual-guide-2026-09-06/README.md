@@ -1,6 +1,6 @@
 # Bivaque — guia visual de construção
 
-Atualizado em 07/09/2026. Direção aprovada pelo responsável: superfícies claras, verde profundo, conteúdo humano e interfaces próprias para mobile e desktop. Produto nacional; cidades nas imagens são exemplos.
+Atualizado em 08/09/2026. Direção aprovada pelo responsável: superfícies claras, verde profundo, conteúdo humano e interfaces próprias para mobile e desktop. Produto nacional; cidades nas imagens são exemplos.
 
 [Abrir galeria](./index.html) · [Mapa de telas](./MAPA-DE-TELAS.md) · [Arquitetura](./ARQUITETURA.md) · [Modelos para construção](./MODELOS-PARA-CONSTRUCAO.md) · [Prompts e fontes](./manifest.json)
 
@@ -8,22 +8,15 @@ Atualizado em 07/09/2026. Direção aprovada pelo responsável: superfícies cla
 
 ## Entrega efetiva
 
-38 pranchas, com **66 telas/estados mobile e 24 telas/estados web**, das quais **19 pranchas novas** nesta ampliação: Auth/onboarding, comunidades, publicação, eventos e perfil. Cinco pranchas receberam as correções mais recentes. Não equivale a 90 rotas nem comprova implementação.
+59 pranchas, 84 telas/estados mobile e 53 web. As imagens orientam aparência e fluxo; não comprovam implementação.
 
 Os PNGs foram gerados e editados pelo image_gen integrado, sem retoque por scripts. Fontes históricas, prompts executados e correções pendentes estão em [expansion-generation.json](./expansion-generation.json). As imagens são propostas de aparência/interação. Pessoas, fotos, valores, datas e contagens são fictícios; consolidar fixtures coerentes ao implementar.
 
 ## Correções solicitadas
 
-| Decisão | Situação das imagens |
-|---|---|
-| Sou militar das Forças Armadas | Aplicada na 32; propagar para a 38 web. Manter a opção selecionável e os demais papéis elegíveis. |
-| CPF quase imediato; identidade com reconhecimento por IA como alternativa | Aplicada nas 32/33 mobile; a espera da 33 é da identidade. Propagação web 38 e detalhe adicional do envio/erro ainda pendentes. |
-| Motivo opcional para participar | Decisão e contrato de interação registrados; edição das 40/42 bloqueada pelo limite. Antes de enviar deve haver campo opcional, mesmo que o bitmap ainda não o mostre. |
-| Perguntar para toda a cidade | Aplicada na 44 mobile; propagar para a 45 web. |
-| Pedir mais informações sobre evento | Aplicada na 46 mobile; propagar para a 48 web e detalhes após cancelar presença. |
-| Força Armada e OM opcionais, com escolha de visibilidade | Aplicada na 39 web, com controles individuais inicialmente desligados; propagar para 34/49 mobile e futura 51 web. |
+As sete propagações pendentes foram geradas em 08/09: 34, 38, 40, 42, 45, 48 e 49. O fluxo de perguntas ao organizador está nas 66/67; envio e recuperação de identidade nas 68/69, com acompanhamento web na 38. As seis decisões continuam em [DECISOES-2026-09-07.md](./DECISOES-2026-09-07.md).
 
-A especificação completa está em [DECISOES-2026-09-07.md](./DECISOES-2026-09-07.md). Essas escolhas já foram autorizadas; não pedir nova confirmação somente porque documentação antiga proíbe afiliação declarada ou envio de identidade.
+Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.json) e [novos fluxos](./final-flows-generation-2026-09-08.json). Originais substituídos estão em history/2026-09-08.
 
 ## Como usar com um modelo
 
@@ -56,6 +49,7 @@ A especificação completa está em [DECISOES-2026-09-07.md](./DECISOES-2026-09-
 | [22-mobile-meu-negocio — Meu negócio: operação do prestador](./22-mobile-meu-negocio.png) | mobile | Pedidos do negócio; Edição da ficha; Resposta a pedido |
 | [23-web-meu-negocio — Web: painel do negócio](./23-web-meu-negocio.png) | web | Painel de pedidos do prestador |
 | [24-mobile-guia-referencia — Guia: referência, origem e correção](./24-mobile-guia-referencia.png) | mobile | Referência completa; Conversa de origem; Sugerir atualização |
+| [25-web-guia-referencia — Artigo completo do Guia web](./25-web-guia-referencia.png) | web | Ler referência completa e sugerir correção |
 | [30-mobile-auth-entrada — Auth: boas-vindas, login e cadastro](./30-mobile-auth-entrada.png) | mobile | Boas-vindas; Entrar; Criar conta |
 | [31-mobile-auth-confirmacao — Confirmação de e-mail](./31-mobile-auth-confirmacao.png) | mobile | Confirmar e-mail; Código incorreto; Código expirado |
 | [32-mobile-auth-acesso — Aceites e verificação](./32-mobile-auth-acesso.png) | mobile | Aceites necessários; Explicação da verificação; Verificar acesso |
@@ -76,10 +70,30 @@ A especificação completa está em [DECISOES-2026-09-07.md](./DECISOES-2026-09-
 | [47-mobile-eventos-cancelamento — Cancelamento de presença e evento](./47-mobile-eventos-cancelamento.png) | mobile | Cancelar presença; Presença cancelada; Evento cancelado |
 | [48-web-eventos — Eventos web](./48-web-eventos.png) | web | Lista e filtros; Detalhe e gestão de presença |
 | [49-mobile-perfil — Perfil próprio, edição e outro membro](./49-mobile-perfil.png) | mobile | Meu perfil; Editar perfil; Perfil de outro membro |
+| [50-mobile-configuracoes — Preferências e controles da conta](./50-mobile-configuracoes.png) | mobile | Configurações; Preferências de notificações; Controles da conta |
+| [51-web-perfil — Perfis web](./51-web-perfil.png) | web | Meu perfil e edição; Perfil de outro membro |
+| [52-web-configuracoes — Configurações e conta web](./52-web-configuracoes.png) | web | Preferências e notificações; Conta e privacidade |
+| [53-mobile-retorno — Notificações, salvos e alertas](./53-mobile-retorno.png) | mobile | Notificações; Salvos; Alertas de imóveis |
+| [54-web-retorno — Notificações e salvos web](./54-web-retorno.png) | web | Central de notificações; Conteúdos salvos |
+| [55-mobile-confianca — Denunciar e bloquear](./55-mobile-confianca.png) | mobile | Enviar denúncia; Acompanhar denúncia; Bloquear interação |
+| [56-web-confianca — Denúncias e bloqueios web](./56-web-confianca.png) | web | Denunciar conteúdo; Acompanhamento e bloqueios |
+| [57-web-operacao-admissoes — Operação de admissões](./57-web-operacao-admissoes.png) | web | Fila de admissões; Análise de solicitação |
+| [58-web-operacao-moderacao — Operação de denúncias](./58-web-operacao-moderacao.png) | web | Fila de denúncias; Analisar e encerrar denúncia |
+| [59-mobile-estados — Estados compartilhados](./59-mobile-estados.png) | mobile | Carregamento; Sem resultados; Erro com rascunho preservado |
+| [60-web-estados — Estados compartilhados web](./60-web-estados.png) | web | Acesso indisponível; Falha de conexão e retomada |
+| [61-web-explorar-servicos — Explorar e busca de serviços web](./61-web-explorar-servicos.png) | web | Explorar; Resultados de serviços |
+| [62-web-prestador-pedido — Ficha do prestador e novo pedido web](./62-web-prestador-pedido.png) | web | Ficha do prestador; Descrever necessidade |
+| [63-web-mercado-anuncio — Produto e novo anúncio web](./63-web-mercado-anuncio.png) | web | Detalhe do produto; Criar anúncio |
+| [64-web-mercado-edicao — Editar e pausar anúncio web](./64-web-mercado-edicao.png) | web | Editar anúncio; Pausar anúncio |
+| [65-web-imoveis-alertas — Busca de imóveis e alertas web](./65-web-imoveis-alertas.png) | web | Buscar imóveis; Gerenciar alertas |
+| [66-mobile-evento-informacoes — Perguntas ao organizador](./66-mobile-evento-informacoes.png) | mobile | Enviar pergunta; Aguardar resposta; Falha com texto preservado |
+| [67-web-evento-informacoes — Informações do evento na web](./67-web-evento-informacoes.png) | web | Reenviar pergunta; Ler resposta e continuar |
+| [68-mobile-identidade-recuperacao — Identidade: envio e recuperação](./68-mobile-identidade-recuperacao.png) | mobile | Enviar identidade; Acompanhar análise; Substituir arquivo ilegível |
+| [69-web-identidade-recuperacao — Identidade: envio e recuperação web](./69-web-identidade-recuperacao.png) | web | Enviar identidade; Substituir arquivo ilegível |
 
 ## Inspeção e correções de implementação
 
-As notas abaixo prevalecem sobre o bitmap. Não são uma aprovação independente de runtime.
+As notas abaixo são obrigatórias para construção; corrigem divergências dos bitmaps sem redefinir o produto.
 
 ### 02-mobile-explorar
 
@@ -166,9 +180,7 @@ As notas abaixo prevalecem sobre o bitmap. Não são uma aprovação independent
 
 ### 34-mobile-onboarding-contexto
 
-- Não pedir novamente nome já informado no cadastro. Foto e interesses são opcionais.
-- Substituir a descrição de Mercado por produtos e anúncios; serviços têm entrada própria. Escolha de cidade não concede participação privada.
-- Decisão posterior obrigatória: Adicionar na personalização mobile Força Armada e OM opcionais, cada um com Exibir no perfil OFF; permitir pular. Foto compacta, nome preexistente, interesses opcionais. Mercado descreve produtos/anúncios.
+- Força Armada e OM opcionais, com visibilidade individual desligada. Foto e interesses podem ser pulados.
 
 ### 35-mobile-auth-retomada
 
@@ -187,9 +199,7 @@ As notas abaixo prevalecem sobre o bitmap. Não são uma aprovação independent
 
 ### 38-web-auth-admissao
 
-- Prancha corrigida: retirado shell de membro e corrigido vínculo próprio, sem vínculo de acesso com a cidade.
-- Campo vazio não permite consultar. Desabilitar Verificar acesso com texto de contraste suficiente até entrada válida; oferecer ajuda acessível.
-- Decisão posterior obrigatória: Opção exata Sou militar das Forças Armadas; CPF quase imediato com botão vazio desabilitado. Espera do segundo painel deve dizer Estamos analisando sua identidade e reconhecimento por IA, sem prazo inventado. Explicar alternativa ao CPF.
+- CPF é o caminho rápido; a espera exibida é da identidade. Estados só avançam após confirmação real.
 
 ### 39-web-onboarding-contexto
 
@@ -198,10 +208,7 @@ As notas abaixo prevalecem sobre o bitmap. Não são uma aprovação independent
 
 ### 40-mobile-comunidades
 
-- Renomear Comunidades públicas para Comunidades para conhecer: descoberta não significa conteúdo aberto.
-- Na lista Minhas, o pedido pendente deve pertencer a outra comunidade, como Vila das Palmeiras; não mostrar a mesma participação como ativa e pendente simultaneamente.
-- Decisão posterior obrigatória: Adicionar no painel de apresentação textarea Por que você quer participar? (opcional), antes de Solicitar participação. Campo vazio permite envio. Helper de acesso restrito aos responsáveis. Trocar Comunidades públicas por Comunidades para conhecer e usar Vila das Palmeiras no pedido/discovery, distinguindo de Jardim das Acácias já acessível.
-- O motivo enviado só é lido pelo solicitante e por responsáveis autorizados pela análise; não publicá-lo na comunidade.
+- Motivo opcional privado antes do envio. No primeiro painel, o título do agrupamento deve ser Seus pedidos, não Vila das Palmeiras.
 
 ### 41-mobile-comunidade-participacao
 
@@ -212,10 +219,7 @@ As notas abaixo prevalecem sobre o bitmap. Não são uma aprovação independent
 
 ### 42-web-comunidades
 
-- Remover avatares, nomes e contagens de participantes das apresentações para quem ainda não participa. Substituir pessoas vão por descrição da comunidade: esse texto veio indevidamente do card de evento.
-- Minhas comunidades e descoberta representam momentos/contextos diferentes; solicitar apenas participação ainda inexistente.
-- Decisão posterior obrigatória: Adicionar motivo opcional antes de Solicitar participação no painel desktop. Remover avatar stacks, nomes e contagens privadas na descoberta e substituir textos pessoas vão por descrições de comunidade. Pedido e visitante Vila das Palmeiras, distinta das comunidades já acessíveis.
-- O motivo enviado só é lido pelo solicitante e por responsáveis autorizados pela análise; não publicá-lo na comunidade.
+- Motivo opcional privado antes do envio. Filtrar resultados pela cidade selecionada: Famílias em Recife não pertence ao filtro Brasília mostrado.
 
 ### 43-web-comunidade-grupos
 
@@ -230,10 +234,7 @@ As notas abaixo prevalecem sobre o bitmap. Não são uma aprovação independent
 
 ### 45-web-publicacao
 
-- Remover Tentar novamente duplicado: Salvar alterações já é a ação de nova tentativa.
-- Continuar editando deve ser a ação primária segura no diálogo; Descartar alterações deve ter tratamento destrutivo explícito, não primário verde.
-- Manter o público original somente leitura na edição, salvo existência de fluxo autorizado para alterá-lo. Unificar conteúdo fictício com a versão mobile e usar limites reais de upload.
-- Decisão posterior obrigatória: Composer novo com Quem pode ver? oferece Toda a cidade • Brasília, DF e comunidades autorizadas. Prévia repete alcance. Edição mantém público original somente leitura. Continuar editando é primária no diálogo, Descartar alterações secundária; remover tentativa duplicada.
+- Público selecionável apenas na criação; edição mantém o alcance original. O limite ilustrativo de 10MB deve vir do contrato real.
 
 ### 46-mobile-eventos
 
@@ -248,39 +249,71 @@ As notas abaixo prevalecem sobre o bitmap. Não são uma aprovação independent
 
 ### 48-web-eventos
 
-- Correção de imagem pendente por limite: adicionar Pedir mais informações no detalhe, antes ou depois da confirmação. Usar Mariana Santos como organizadora nas fixtures para corresponder ao mobile.
-- Participantes e suas contagens respeitam o público do evento. Diálogo de cancelar presença deve aparecer somente após a ação correspondente.
-- Decisão posterior obrigatória: Adicionar botão Pedir mais informações no detalhe, disponível antes e depois de confirmar presença; pergunta contextual ao organizador Mariana Santos. Preservar cancelamento de presença.
+- Pedir mais informações permanece disponível antes e depois da presença; envio/retorno nas 66/67.
 
 ### 49-mobile-perfil
 
-- Correção de imagem pendente por limite: na edição, incluir Força Armada e OM opcionais com Exibir no perfil individual, desligado por padrão. Campos removíveis depois; perfil alheio não revela campos ocultos.
-- Nome, fotos e bio são exemplos; não expor selo, posto ou dado inferido de elegibilidade.
-- Decisão posterior obrigatória: Adicionar Força Armada e OM opcionais à edição com controles individuais Exibir no perfil OFF. Reduzir avatar e Bio mantendo legibilidade e Salvar alterações visível; nada aparece por padrão no perfil de outro membro.
+- Campos opcionais com visibilidade individual desligada. Até 2 linhas é artefato da composição, não limite de bio.
 
-## Geração interrompida pelo limite
+### 52-web-configuracoes
 
-Em 07/09/2026, o serviço retornou usage_limit_reached / HTTP 429. **17 pranchas novas ainda não existem**; os prompts estão preservados no registro da ampliação. Não houve uso de reset nem troca para API paga. A ausência visual não impede implementar a especificação com os padrões aprovados, mas não se deve afirmar que a imagem foi entregue.
+- Usar wordmark canônico; método de acesso, exclusão e preferências dependem dos contratos reais, sem prazo inventado.
 
-- 50-mobile-configuracoes: Configurações; Preferências de notificações; Controles da conta
-- 51-web-perfil: Meu perfil e edição; Perfil de outro membro
-- 52-web-configuracoes: Preferências e notificações; Conta e privacidade
-- 53-mobile-retorno: Notificações; Salvos; Alertas de imóveis
-- 54-web-retorno: Central de notificações; Conteúdos salvos
-- 55-mobile-confianca: Enviar denúncia; Acompanhar denúncia; Bloquear interação
-- 56-web-confianca: Denunciar conteúdo; Acompanhamento e bloqueios
-- 57-web-operacao-admissoes: Fila de admissões; Análise de solicitação
-- 58-web-operacao-moderacao: Fila de denúncias; Analisar e encerrar denúncia
-- 59-mobile-estados: Carregamento; Sem resultados; Erro com rascunho preservado
-- 60-web-estados: Acesso indisponível; Falha de conexão e retomada
-- 61-web-explorar-servicos: Explorar; Resultados de serviços
-- 62-web-prestador-pedido: Ficha do prestador; Descrever necessidade
-- 63-web-mercado-anuncio: Detalhe do produto; Criar anúncio
-- 64-web-mercado-edicao: Editar anúncio; Pausar anúncio
-- 65-web-imoveis-alertas: Buscar imóveis; Gerenciar alertas
-- 25-web-guia-referencia: Ler referência completa e sugerir correção
+### 53-mobile-retorno
 
-Também permanecem sete edições de propagação (34, 38, 40, 42, 45, 48, 49), as correções de leitura/público e consistência nas 41/43/47, além dos retoques históricos das 13/14/16/19 registrados acima. Telas específicas de enviar/acompanhamento de pergunta ao organizador e falha/reenvio de identidade ainda precisam de detalhamento visual; seguem os contratos das seis decisões.
+- Usar fixtures únicas de comunidades e selecionar Explorar no contexto de alertas de imóveis.
+
+### 54-web-retorno
+
+- Ícone de conteúdo salvo deve representar o estado persistido; preços vêm da mesma fixture.
+
+### 56-web-confianca
+
+- Minhas denúncias e bloqueios devem respeitar o painel ativo e permissões reais.
+
+### 57-web-operacao-admissoes
+
+- Mostrar somente dados necessários ao operador autorizado, sem documentos ou payload bruto.
+
+### 58-web-operacao-moderacao
+
+- Seleção e justificativa ilustram decisão humana já feita; não pré-selecionar automaticamente o veredito.
+
+### 60-web-estados
+
+- Garantir contraste nos controles desabilitados. Rascunho local só pode ser anunciado se realmente persistido.
+
+### 61-web-explorar-servicos
+
+- Busca precisa ser um campo acessível. Remover promessas comerciais não sustentadas por dados.
+
+### 62-web-prestador-pedido
+
+- Destinatário é somente leitura. Limites de upload e canais de contato vêm dos contratos reais.
+
+### 65-web-imoveis-alertas
+
+- Rotular Aluguel máximo quando o filtro não inclui condomínio; valores e contagens são ilustrativos.
+
+### 66-mobile-evento-informacoes
+
+- Usar Carlos Ribeiro como fixture do autor; Carlos Silva é variação gerada. A conversa permanece vinculada ao evento.
+
+### 67-web-evento-informacoes
+
+- Usar o wordmark canônico sem o símbolo de árvore inventado. Garantir contraste do botão desabilitado.
+
+### 68-mobile-identidade-recuperacao
+
+- Identidade militar digital é um único arquivo completo. Não exigir frente/verso, fotografias ou divisão em anexos. Na falha de leitura, substituir o arquivo completo. Formatos e limites dependem do contrato técnico; manter contraste legível nos botões desabilitados.
+
+### 69-web-identidade-recuperacao
+
+- Identidade militar digital é um único arquivo completo. Não exigir frente/verso, fotografias ou divisão em anexos. Na falha de leitura, substituir o arquivo completo. Formatos e limites dependem do contrato técnico; manter contraste legível nos botões desabilitados.
+
+## Geração e pendências de revisão
+
+Não há prancha prevista sem PNG no manifesto. A geração visual foi concluída; permanecem notas pontuais de implementação acima, incluindo correções em referências históricas. Não interpretar a conclusão de geração como certificação de cada pixel ou conclusão do aplicativo.
 
 ## Verificação e origem
 
