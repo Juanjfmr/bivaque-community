@@ -283,12 +283,28 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     const postMenu = postArticle.getByRole("button", { name: "Mais opções" })
     await postMenu.click()
     await page.getByRole("menuitem", { name: /Denunciar/i }).click()
-    await page.getByRole("textbox", { name: "Motivo da denuncia" }).fill(reason)
-    await page.getByRole("button", { name: "Enviar denuncia" }).click()
 
-    await expect(page.getByText(/A analise acontece em ate 48 horas/)).toBeVisible({
+    // A RECON-016 (prancha 56) trocou o campo unico de texto por categoria
+    // fechada + explicacao opcional. O motivo gravado passa a ser
+    // "<categoria>: <explicacao>", montado no cliente e redigido por
+    // scrubReportReason antes do insert (o trigger 20260821000030 repete a
+    // redacao no banco).
+    await page.getByRole("radio", { name: "Outro" }).click()
+    await page.getByRole("textbox", { name: /Explique/ }).fill(reason)
+    await page.getByRole("button", { name: "Enviar denúncia" }).click()
+
+    // A tela NAO promete mais prazo de analise.
+    //
+    // A versao anterior deste teste exigia "A analise acontece em ate 48
+    // horas". Esse prazo nunca teve contrato por tras: SUPPORT_SLA_HOURS e um
+    // limiar operacional do canal de e-mail de suporte, usado como indicador
+    // de atraso no painel do operador — nao uma garantia dada a quem denuncia.
+    // resolve_report garante fila e notificacao quando houver decisao, e nada
+    // sobre quando. O teste passa a exigir o que a tela pode sustentar.
+    await expect(page.getByText(/entra na fila de moderação/i)).toBeVisible({
       timeout: 5000,
     })
+    await expect(page.getByText(/48 horas/)).toHaveCount(0)
 
     const session = await mintSession(REPORTER_EMAIL)
 
@@ -296,6 +312,9 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     const own = reports.find((r) => r.reason === reason)
     expect(own).toBeTruthy()
     expect(own?.status).toBe("open")
+    // O motivo gravado carrega o prefixo da categoria escolhida, entao a
+    // asercao cobre as duas metades: a categoria fechada e o texto livre.
+    expect(own?.reason).toContain("Outro: ")
     expect(own?.reason).toContain("regra")
   })
 
@@ -328,7 +347,13 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     await signInAsCookie(context, REPORTER_EMAIL)
     await page.goto(`/messages?conversation=${conversationId}`, { waitUntil: "load" })
 
-    await expect(page.getByText(message)).toBeVisible({ timeout: 10000 })
+    // Escopado ao corpo da conversa: desde a RECON-015 a mesma frase aparece
+    // duas vezes na pagina — na previa do item da lista de conversas e no
+    // balao da thread. Um getByText de pagina inteira resolve para dois nos e
+    // estoura o strict mode antes de asserir. O que o teste prova continua o
+    // mesmo: a mensagem esta na conversa aberta.
+    const thread = page.getByRole("paragraph").filter({ hasText: message })
+    await expect(thread.first()).toBeVisible({ timeout: 10000 })
     const trigger = page.getByRole("button", { name: "Denunciar" }).last()
     await trigger.focus()
     await page.keyboard.press("Enter")

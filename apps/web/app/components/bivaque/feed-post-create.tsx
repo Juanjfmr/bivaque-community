@@ -84,6 +84,8 @@ export function CreatePostModal({
     defaultCommunityId ? `community:${defaultCommunityId}` : CITY_AUDIENCE_KEY,
   )
   const [draftRestored, setDraftRestored] = useState(hasDraftContent(initialDraft.current))
+  // Dito quando a audiência cai da vila para a cidade sem a pessoa ter pedido.
+  const [audienceFallback, setAudienceFallback] = useState("")
   const [storageUnavailable, setStorageUnavailable] = useState(false)
   const dialogContentRef = useRef<HTMLDivElement>(null)
   const supabase = createBrowserClient()
@@ -115,13 +117,23 @@ export function CreatePostModal({
   // A audiência default só pode ser uma comunidade real da pessoa. Se a lista
   // carregou e não contém a pré-seleção, o destino volta para a cidade — o
   // aviso de audiência nunca descreve um destino que não estava disponível.
+  //
+  // E a troca é DITA. Cair da vila para a cidade alarga o alcance do que a
+  // pessoa vai escrever; fazer isso em silêncio é o vazamento por desatenção
+  // que a onda E documentou. A versão anterior deste componente avisava neste
+  // caso e a separação da RECON-014 perdeu o aviso — ele volta aqui.
   useEffect(() => {
     if (audience.loading || audience.error) return
     if (selectedKind.kind === "community" && defaultCommunityId) {
       const stillThere = audience.communities.some(
         (d) => d.key === `community:${defaultCommunityId}`,
       )
-      if (!stillThere) setAudienceKey(CITY_AUDIENCE_KEY)
+      if (!stillThere) {
+        setAudienceKey(CITY_AUDIENCE_KEY)
+        setAudienceFallback(
+          "Sua vila não está disponível agora. O destino mudou para toda a cidade — confira antes de publicar.",
+        )
+      }
     }
   }, [
     audience.loading,
@@ -362,6 +374,11 @@ export function CreatePostModal({
                       >
                         {audienceNotice}
                       </p>
+                      {audienceFallback.length > 0 && (
+                        <div className="mt-2">
+                          <FeedbackAlert variant="warning" description={audienceFallback} />
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-4">

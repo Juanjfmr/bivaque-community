@@ -152,8 +152,15 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
     // When they open the events page
     await page.goto(`${APP_URL}/events`, { waitUntil: "load" })
 
-    // Then the events heading is visible
-    await expect(page.getByRole("heading", { name: "Eventos" })).toBeVisible({ timeout: 15000 })
+    // Then the events heading is visible.
+    //
+    // Ancorado no h1 pelo nome exato: a RECON-007 acrescentou a secao "Seus
+    // eventos", e getByRole casa por substring, entao { name: "Eventos" } passou
+    // a resolver DOIS titulos e a estourar o strict mode. O nivel 1 e o titulo
+    // da tela; o h2 e secao dentro dela.
+    await expect(page.getByRole("heading", { level: 1, name: "Explorar eventos" })).toBeVisible({
+      timeout: 15000,
+    })
 
     // And the honest empty state is rendered
     await expect(page.getByText("Você é dos primeiros aqui.")).toBeVisible()
