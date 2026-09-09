@@ -9,6 +9,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { isLocalityStale } from "../../../lib/locality-density"
+import { log } from "../../../lib/logger"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "../../components/bivaque/card"
 import { EmptyState } from "../../components/bivaque/empty-state"
@@ -132,15 +133,27 @@ function GuideContent() {
     const supabase = createBrowserClient()
     ;(async () => {
       try {
-        const { count } = await supabase
+        const { count, error } = await supabase
           .from("locality_memberships")
           .select("*", { count: "exact", head: true })
           .eq("locality_id", viewingLocalityId)
-        if (!cancelled && count !== null) {
+        // A contagem só ajusta a cópia do estado vazio, então a falha não
+        // interrompe a tela. Mas ela precisa aparecer no log: sem isso, um
+        // token expirado e uma cidade genuinamente sem membros produzem
+        // exatamente a mesma tela, e a primeira some sem deixar rastro.
+        if (error) {
+          log.error("guide: could not count the locality members", {
+            locality_id: viewingLocalityId,
+            error: error.message,
+          })
+        } else if (!cancelled && count !== null) {
           setMemberCount(count)
         }
-      } catch {
-        /* silently fail — the empty state falls back to the standard copy */
+      } catch (cause) {
+        log.error("guide: the locality member count request failed", {
+          locality_id: viewingLocalityId,
+          error: cause instanceof Error ? cause.message : String(cause),
+        })
       }
     })()
     return () => {

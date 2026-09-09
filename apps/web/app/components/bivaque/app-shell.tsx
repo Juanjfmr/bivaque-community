@@ -292,11 +292,24 @@ export function AppShell({ children }: AppShellProperties) {
           <div className="flex-1" />
 
           {/* Sidebar member footer (expanded only, as before): real name from
-              useMemberContext, never a hardcoded initial. */}
+              useMemberContext, never a hardcoded initial.
+
+              A cidade volta aqui junto do nome porque a sidebar é a segunda
+              superfície onde o membro confere em que cidade está — o pill do
+              cabeçalho é a primeira. DS-010 (tests/e2e/shell-locality-truth)
+              trava as duas, e por bom motivo: a conta transferida para o Rio
+              tem que ler "Rio de Janeiro" nas duas, nunca o literal do piloto.
+              A fonte é a mesma do pill, useLocalityContext, nunca texto fixo. */}
           {!isRail && (
             <>
               <hr className="mx-3 shrink-0 border-border" />
               <div className="shrink-0 p-3">
+                <div className="flex items-center gap-2 px-3 pb-1 text-muted">
+                  <MapPin size={14} className="shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 truncate text-xs">
+                    {current.cityName}, {current.stateCode}
+                  </span>
+                </div>
                 <div className="flex items-center gap-3 rounded-lg px-3 py-2">
                   <MemberAvatar name={displayName} size="sm" />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{displayName}</span>

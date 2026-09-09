@@ -979,6 +979,30 @@ export type Database = {
           },
         ]
       }
+      profile_affiliations: {
+        Row: {
+          field: string
+          is_visible: boolean
+          updated_at: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          field: string
+          is_visible?: boolean
+          updated_at?: string
+          user_id: string
+          value: string
+        }
+        Update: {
+          field?: string
+          is_visible?: boolean
+          updated_at?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           consent_version: number

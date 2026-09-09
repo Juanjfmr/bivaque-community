@@ -58,3 +58,16 @@ retry_budget: 3
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
+
+# Registrado apos a revisao independente (DeepSeek V4 Pro, 08/09/2026, PASS
+# com 0 HIGH). O revisor apontou, com razao, que a prancha 12 mostra bem mais
+# do que a tela entrega, e que a omissao estava implicita no forbidden em vez
+# de escrita. Fica escrita: os itens abaixo NAO fazem parte desta entrega
+# porque nenhum dado real os sustenta hoje, e inventa-los violaria o contrato.
+# Cada um so entra quando existir a fonte, e ai com contrato proprio.
+deliberate_omissions:
+  - hero com foto e cartoes promocionais editoriais — nao ha campo de imagem nem curadoria de destaque em arrival_guide_entries
+  - secao "Comece por aqui" na barra lateral — nao ha ordenacao curada, so categorias derivadas do dado
+  - banner "Encontrou informacao desatualizada?" e "Sugerir referencia" — o caminho de sugestao entra com RECON-013, junto da rota de artigo
+  - abas Guia/Mercado — Mercado e outra rota, nao um estado desta tela
+  - botao "Salvos" — a tela de salvos nao existe (etapa W03)
