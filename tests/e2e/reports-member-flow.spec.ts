@@ -272,7 +272,7 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     // Selecionar um post da Vila Ajuricaba cujo autor NÃO é o repórter —
     // denúncia de self-target é bloqueada pelo backend (regra de negócio
     // correta em apps/web/app/components/bivaque/report-button.tsx:74-75).
-    // `Mais opcoes .first()` era frágil porque o topo do feed muda com
+    // `Mais opções .first()` era frágil porque o topo do feed muda com
     // posts novos de outros specs (publish-golden-slice, por exemplo).
     // Ancorar no post devolvido por `findOldestNonOwnVilaPostId` torna o
     // seletor determinístico contra o seed real.
@@ -280,7 +280,7 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     const target = await findOldestNonOwnVilaPostId(reporterGrant.access_token)
     const postArticle = page.locator("article").filter({ hasText: target.excerpt }).first()
     await expect(postArticle).toBeVisible({ timeout: 10000 })
-    const postMenu = postArticle.getByRole("button", { name: "Mais opcoes" })
+    const postMenu = postArticle.getByRole("button", { name: "Mais opções" })
     await postMenu.click()
     await page.getByRole("menuitem", { name: /Denunciar/i }).click()
     await page.getByRole("textbox", { name: "Motivo da denuncia" }).fill(reason)
