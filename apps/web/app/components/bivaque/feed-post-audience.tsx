@@ -202,13 +202,18 @@ export function AudiencePicker({
       >
         {destinations.map((destination) => (
           <Radio key={destination.key} value={destination.key}>
-            <div className="flex items-start gap-2">
-              <DestinationIcon kind={destination.kind} className="mt-0.5 text-muted" />
-              <div className="flex flex-col gap-0.5">
-                <span>{destination.name}</span>
-                <span className="text-xs text-muted">{destination.description}</span>
+            <Radio.Content>
+              <Radio.Control>
+                <Radio.Indicator />
+              </Radio.Control>
+              <div className="flex items-start gap-2">
+                <DestinationIcon kind={destination.kind} className="mt-0.5 text-muted" />
+                <div className="flex flex-col gap-0.5">
+                  <span>{destination.name}</span>
+                  <span className="text-xs text-muted">{destination.description}</span>
+                </div>
               </div>
-            </div>
+            </Radio.Content>
           </Radio>
         ))}
         {loading ? (

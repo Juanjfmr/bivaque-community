@@ -280,7 +280,12 @@ export function ReportButton({
                     >
                       {REPORT_CATEGORIES.map((item) => (
                         <Radio key={item.value} value={item.value}>
-                          {item.label}
+                          <Radio.Content>
+                            <Radio.Control>
+                              <Radio.Indicator />
+                            </Radio.Control>
+                            {item.label}
+                          </Radio.Content>
                         </Radio>
                       ))}
                     </RadioGroup>

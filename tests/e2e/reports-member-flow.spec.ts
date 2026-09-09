@@ -293,9 +293,10 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     // um getByRole("dialog") solto resolve para dois enquanto o menu sai de cena.
     const dialog = page.getByRole("dialog", { name: /Denunciar/ })
     await expect(dialog).toBeVisible({ timeout: 10000 })
-    // Pelo rotulo visivel: o HeroUI decide como expoe o papel do radio, e o
-    // teste nao deve depender dessa escolha interna.
-    await dialog.getByText("Outro", { exact: true }).click()
+    // Clica no LABEL, nao no input: o React Aria esconde o <input type="radio">
+    // e o span do controle intercepta o ponteiro. O label e o alvo real, e e
+    // tambem o que uma pessoa clica.
+    await dialog.locator('label[data-slot="radio-content"]').filter({ hasText: "Outro" }).click()
     await dialog.getByLabel(/Explique/).fill(reason)
     await dialog.getByRole("button", { name: "Enviar denúncia" }).click()
 
@@ -315,7 +316,9 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     const session = await mintSession(REPORTER_EMAIL)
 
     const reports = await fetchOwnReports(anonKey, session.access_token)
-    const own = reports.find((r) => r.reason === reason)
+    // O motivo gravado e "<categoria>: <explicacao>", entao a busca e por
+    // conteudo e nao por igualdade exata.
+    const own = reports.find((r) => r.reason.includes(reason))
     expect(own).toBeTruthy()
     expect(own?.status).toBe("open")
     // O motivo gravado carrega o prefixo da categoria escolhida, entao a

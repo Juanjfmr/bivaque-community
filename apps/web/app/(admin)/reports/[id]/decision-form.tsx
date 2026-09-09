@@ -39,18 +39,28 @@ export function DecisionForm({ action }: { action: DecisionAction }) {
         orientation="vertical"
       >
         <Radio value="manter">
-          <div className="flex flex-col gap-0.5">
-            <span>Manter conteúdo</span>
-            <span className="text-xs text-muted">
-              O conteúdo permanece visível para a comunidade.
-            </span>
-          </div>
+          <Radio.Content>
+            <Radio.Control>
+              <Radio.Indicator />
+            </Radio.Control>
+            <div className="flex flex-col gap-0.5">
+              <span>Manter conteúdo</span>
+              <span className="text-xs text-muted">
+                O conteúdo permanece visível para a comunidade.
+              </span>
+            </div>
+          </Radio.Content>
         </Radio>
         <Radio value="ocultar">
-          <div className="flex flex-col gap-0.5">
-            <span>Ocultar conteúdo</span>
-            <span className="text-xs text-muted">O conteúdo será ocultado da comunidade.</span>
-          </div>
+          <Radio.Content>
+            <Radio.Control>
+              <Radio.Indicator />
+            </Radio.Control>
+            <div className="flex flex-col gap-0.5">
+              <span>Ocultar conteúdo</span>
+              <span className="text-xs text-muted">O conteúdo será ocultado da comunidade.</span>
+            </div>
+          </Radio.Content>
         </Radio>
       </RadioGroup>
 
