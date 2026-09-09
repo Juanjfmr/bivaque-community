@@ -125,13 +125,13 @@ export function AppShell({ children }: AppShellProperties) {
               <Lightbulb size={20} aria-hidden="true" />
             </a>
 
-            <button
-              type="button"
+            <a
+              href="/notifications"
               aria-label="Notificações"
               className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               <Bell size={20} aria-hidden="true" />
-            </button>
+            </a>
 
             <a
               href="/profile"

@@ -19,6 +19,12 @@ export type MyMembership = {
   communityId: string
   status: "pending" | "approved"
   joinedAt: string
+  /**
+   * O motivo que o próprio solicitante escreveu ao pedir entrada, quando
+   * escreveu. Chega só para o autor: a RLS de `community_join_reasons` libera
+   * a linha ao autor e a quem modera, e a consulta ainda filtra por user_id.
+   */
+  reason: string | null
 }
 
 export type PendingRequest = {

@@ -100,6 +100,7 @@ export function CommunitiesScreen({
     : discoverFiltered.slice(0, DISCOVER_PREVIEW_COUNT)
   const selected = discover.find((c) => c.id === selectedId) ?? discoverVisible[0] ?? null
   const selectedStatus = selected ? membershipByCommunity.get(selected.id)?.status : undefined
+  const selectedReason = selected ? (membershipByCommunity.get(selected.id)?.reason ?? null) : null
   const selectedRequestedOn = selected
     ? formatRequestedOn(membershipByCommunity.get(selected.id)?.joinedAt ?? "")
     : ""
@@ -356,6 +357,14 @@ export function CommunitiesScreen({
                           A participação depende de aprovação. Você ainda não faz parte desta
                           comunidade.
                         </p>
+                        {selectedReason && (
+                          <div className="flex flex-col gap-1 border-border border-t pt-3">
+                            <p className="font-medium text-xs">O que você escreveu</p>
+                            <p className="whitespace-pre-line text-sm leading-relaxed text-muted">
+                              {selectedReason}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <form

@@ -201,6 +201,35 @@ export type Database = {
           },
         ]
       }
+      community_join_reasons: {
+        Row: {
+          community_id: string
+          created_at: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_join_reasons_community_id_user_id_fkey"
+            columns: ["community_id", "user_id"]
+            isOneToOne: true
+            referencedRelation: "community_memberships"
+            referencedColumns: ["community_id", "user_id"]
+          },
+        ]
+      }
       community_memberships: {
         Row: {
           community_id: string
@@ -956,6 +985,7 @@ export type Database = {
           consented_at: string | null
           created_at: string
           display_name: string
+          is_suspended: boolean
           updated_at: string
           user_id: string
           visibility: Database["public"]["Enums"]["profile_visibility"]
@@ -965,6 +995,7 @@ export type Database = {
           consented_at?: string | null
           created_at?: string
           display_name: string
+          is_suspended?: boolean
           updated_at?: string
           user_id: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]
@@ -974,6 +1005,7 @@ export type Database = {
           consented_at?: string | null
           created_at?: string
           display_name?: string
+          is_suspended?: boolean
           updated_at?: string
           user_id?: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]
@@ -1663,6 +1695,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_account_suspended: { Args: { p_user_id: string }; Returns: boolean }
       is_community_member: {
         Args: { p_community_id: string; p_user_id: string }
         Returns: boolean
@@ -1716,18 +1749,18 @@ export type Database = {
           user_id: string
         }[]
       }
-      list_locality_state_codes: {
-        Args: never
-        Returns: {
-          state_code: string
-        }[]
-      }
       list_locality_arrivals_volume: {
         Args: { p_user_id: string }
         Returns: {
           arrivals_count: number
           city_name: string
           locality_id: string
+        }[]
+      }
+      list_locality_state_codes: {
+        Args: never
+        Returns: {
+          state_code: string
         }[]
       }
       list_open_reports: {
@@ -1949,7 +1982,7 @@ export type Database = {
         Returns: undefined
       }
       request_community_membership: {
-        Args: { p_community_id: string }
+        Args: { p_community_id: string; p_reason?: string }
         Returns: undefined
       }
       resolve_report: {
@@ -2319,3 +2352,4 @@ export const Constants = {
     },
   },
 } as const
+

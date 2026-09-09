@@ -77,11 +77,31 @@ export default async function CommunitiesPage({
   if (membershipsError) {
     throw new Error(`Falha ao ler as participações: ${membershipsError.message}`)
   }
+  // O motivo do próprio pedido volta como resumo de leitura no estado
+  // pendente. A RLS já restringe a tabela ao autor e a quem modera; o filtro
+  // por user_id garante que aqui só entre o texto do próprio solicitante,
+  // mesmo quando ele modera alguma outra comunidade.
+  const { data: reasonData, error: reasonsError } = await supabase
+    .from("community_join_reasons")
+    .select("community_id, reason")
+    .eq("user_id", user.id)
+
+  if (reasonsError) {
+    throw new Error(`Falha ao ler os motivos dos pedidos: ${reasonsError.message}`)
+  }
+  const reasonByCommunity = new Map(
+    ((reasonData as { community_id: string; reason: string }[] | null) ?? []).map((row) => [
+      row.community_id,
+      row.reason,
+    ]),
+  )
+
   const memberships: MyMembership[] = ((membershipData as MembershipRow[] | null) ?? []).map(
     (row) => ({
       communityId: row.community_id,
       status: row.status,
       joinedAt: row.joined_at,
+      reason: reasonByCommunity.get(row.community_id) ?? null,
     }),
   )
 

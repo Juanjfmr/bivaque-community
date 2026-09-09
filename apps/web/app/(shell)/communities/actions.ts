@@ -32,15 +32,15 @@ function requiredString(value: FormDataEntryValue | null): string {
 
 // RECON-004 (prancha 42, correção do responsável 07/09 §3): o formulário de
 // participação envia junto um "motivo" opcional (campo `motivo` no FormData).
-// O RPC `request_community_membership(uuid)` aceita apenas o id da comunidade
-// e este contrato proíbe criar migration, RPC ou coluna — portanto o texto é
-// coletado na tela mas NÃO é persistido nesta leva. Ele não vira publicação
-// nem biografia em nenhum caminho: é simplesmente descartado na fronteira.
-// Persistência do motivo (coluna + parâmetro no RPC + leitura restrita a quem
-// analisa e ao solicitante) precisa de contrato próprio, com teste positivo e
-// negativo de acesso; registrar como dependência aberta no relatório.
+// O texto vai para `public.community_join_reasons` na mesma transação do
+// pedido (migration 20260909014034), em tabela própria porque a política de
+// `community_memberships` entrega a linha a qualquer membro aprovado — e a
+// tela promete leitura só ao autor e a quem analisa. O RPC recebe o texto e a
+// RLS da tabela nova é que faz a promessa valer.
 export async function requestCommunityMembershipAction(formData: FormData) {
   const communityId = requiredString(formData.get("communityId"))
+  const rawReason = formData.get("motivo")
+  const reason = typeof rawReason === "string" ? rawReason.trim().slice(0, 500) : ""
   const supabase = await getAuthClient()
 
   const {
@@ -50,6 +50,7 @@ export async function requestCommunityMembershipAction(formData: FormData) {
 
   const { error } = await supabase.rpc("request_community_membership", {
     p_community_id: communityId,
+    ...(reason.length > 0 ? { p_reason: reason } : {}),
   })
   if (error) throw new Error(error.message)
 
