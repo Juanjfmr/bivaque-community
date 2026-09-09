@@ -1,0 +1,83 @@
+# Contrato DS-001 — consolidacao do sistema de design do Bivaque.
+
+task_id: DS-001
+
+objective: >
+  O Bivaque passa a ter uma fonte canônica, completa e governada para identidade,
+  tokens, componentes, padrões, acessibilidade, qualidade e evolução do design,
+  sem duas especificações concorrentes ou decisões visuais implícitas no código.
+
+authority:
+  - Pedido explícito do dono em 2026-09-01 para um design system completo, padrão de produto de classe mundial, com revisão adversarial por três críticos
+  - docs/BIVAQUE.md §1.2, §3, §4, §6 e §12
+  - docs/decisions/ADR-20260901-design-system.md
+  - docs/agents/design-audit/ADJUDICATION.md §Phase 6 rewrite manifest
+  - docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    docs/agents/DESIGN_SPEC.md §6 deixa EXP-004 sem vencedor, enquanto
+    docs/agents/VISUAL_GUIDE.md §0 fixa palette, medidas e navegação; o próprio
+    design-audit/CONFLICT_MATRIX.md registra as contradições. O teste
+    tests/scope/navigation.test.mjs ainda toma VISUAL_GUIDE.md como fonte da navegação.
+
+allowed_paths:
+  - docs/agents/DESIGN_SYSTEM.md
+  - docs/agents/DESIGN_SPEC.md
+  - docs/agents/VISUAL_GUIDE.md
+  - docs/agents/tasks/DS-001.task.yml
+  - docs/decisions/ADR-20260901-design-system.md
+  - docs/BIVAQUE.md
+  - README.md
+  - AGENTS.md
+  - apps/web/AGENTS.md
+  - apps/web/app/globals.css
+  - apps/web/app/components/bivaque/report-button.tsx
+  - apps/web/app/components/bivaque/chat-thread.tsx
+  - apps/mobile/src/theme.ts
+  - packages/tokens/src/index.ts
+  - packages/tokens/src/tokens.json
+  - packages/tokens/src/tokens.css
+  - scripts/tokens/generate.mjs
+  - tests/scope/design-system-contract.test.mjs
+  - tests/scope/design-tokens.test.mjs
+  - tests/scope/navigation.test.mjs
+  - tests/e2e/reports-member-flow.spec.ts
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - alterar autorizações, RLS, migrations, schema private, verificação, CPF ou qualquer dado pessoal
+  - introduzir modo escuro, push, SMS, vídeo, IA ou DM entre membros
+  - afirmar que telas legadas já atendem ao novo sistema sem evidência visual e de runtime
+  - tratar patente, OM, endereço ou verificação como ornamento de prestígio
+  - adicionar biblioteca de componentes diferente de HeroUI v3
+
+acceptance:
+  - existe um único documento canônico que define autoridade, marca, foundations, tokens de três camadas, componentes, padrões, responsividade, acessibilidade, conteúdo, qualidade e governança
+  - os dois documentos antigos são redirecionamentos explícitos e não mantêm regras concorrentes
+  - a decisão R2 registra alternativas, riscos, métrica, condição de reabertura e aprovação humana explícita
+  - a fonte de tokens separa primitivas, semânticas e contratos de componente sem quebrar os nomes semânticos consumidos no app
+  - testes de escopo protegem o documento canônico, os redirecionamentos e a fronteira de tokens
+  - três pareceres independentes são registrados na ADR e todo achado acionável é resolvido ou recusado com justificativa
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/DS-001.task.yml
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 test:e2e -- tests/e2e/ds-029-conformance-probes.spec.ts tests/e2e/manaus-pilot-full-journey.spec.ts tests/e2e/reports-member-flow.spec.ts
+  - node scripts/visual/loop.mjs
+  - node tools/backend-kanban/src/board.mjs --check
+
+risk: sistema de design, identidade visual e navegacao
+risk_level: R2
+adr: docs/decisions/ADR-20260901-design-system.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -1,0 +1,79 @@
+# RECON-001 — sidebar rica do shell web (Task 3.6 do plano W00).
+# Mapa dos contratos da reconstrução visual web:
+#   RECON-001 sidebar · RECON-002 /inicio (prancha 01) · RECON-003 /explorar
+#   (prancha 61) · RECON-004 estados compartilhados (prancha 60) · RECON-005
+#   página-demo de componentes.
+#
+# CORRECAO DE HONESTIDADE, 2026-09-08, apos revisao independente.
+# O baseline deste contrato era FALSO quando escrito, e a unidade tocou os
+# proprios arquivos que este contrato lista como proibidos. Veredito FAIL e o
+# registro completo do erro estao em:
+#   docs/agents/REVISAO-RECON-001-2026-09-08.md
+# O baseline abaixo NAO foi reescrito para parecer correto, de proposito.
+
+task_id: RECON-001
+
+objective: >
+  A sidebar do shell web passa a ser a das pranchas 01/61/60: navegação primária
+  inalterada, seção secundária (Salvos, Notificações com badge de não-lidas),
+  "Minhas comunidades" e rodapé com o nome real do membro e Configurações — tudo
+  de useMemberContext() e useLocalityContext(), nada chumbado.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/01-web-inicio.png — sidebar de referência (com "Minhas comunidades")
+  - docs/design/visual-guide-2026-09-06/61-web-explorar-servicos.png — mesma sidebar sem "Minhas comunidades"
+  - docs/design/visual-guide-2026-09-06/60-web-estados.png — mesma sidebar
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7 — navegação-alvo
+  - docs/agents/DESIGN_SYSTEM.md §5 (tokens), §7.1 (shell), §9.1 (WCAG 2.2 AA)
+  - docs/agents/VISUAL_AUDIT-2026-09-08-G0.md — diferença intencional registrada: a sidebar ainda é a versão enxuta
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/components/bivaque/app-shell.tsx renderiza uma sidebar com
+    NAV_ITEMS.map (quatro itens) + rodapé "Minha conta" com MemberAvatar name="C"
+    e a cidade, ambos chumbados. Não há seção secundária nem "Minhas
+    comunidades". A auditoria da Task 1 (run .visual/2026-09-08T10-47-53-167Z,
+    veredito docs/agents/VISUAL_AUDIT-2026-09-08-G0.md) registrou a sidebar
+    enxuta como diferença vs. as pranchas. O contexto de dados
+    (apps/web/lib/member-context.tsx: displayName, communities, unreadCount) já
+    existe e é provido em (shell)/layout.tsx.
+
+allowed_paths:
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - docs/agents/tasks/RECON-001.task.yml
+
+forbidden:
+  - tocar NAV_ITEMS ou bottom-nav.tsx (navegação primária e mobile não mudam aqui)
+  - tocar (shell)/layout.tsx, member-context.tsx, locality-context.tsx, proxy.ts, qualquer rota, qualquer arquivo .sql
+  - chumbar nome, contagem, lista de comunidades ou cidade — tudo vem de useMemberContext() e useLocalityContext()
+  - importar HeroUI direto onde há wrapper Bivaque; o avatar do membro usa MemberAvatar
+  - valor de cor cru em JSX, style inline ou classe utilitária de paleta (bg-slate-*, text-green-* etc.)
+  - introduzir família tipográfica, biblioteca de componentes ou modo escuro
+  - inventar rota — "Salvos" leva a /salvos (existe, stub honesto), "Notificações" a /notifications, "Configurações" à rota real de configurações do repo se existir; se não houver rota, o rótulo fica como texto sem link
+  - usar imagem/thumbnail de comunidade (não há dado) — inicial ou ícone placeholder
+  - renderizar "Minhas comunidades" com a lista vazia (a seção inteira some quando communities.length === 0)
+  - renderizar o badge de Notificações quando unreadCount === 0 (sem badge, nunca o número 0)
+  - alterar o comportamento recolher/expandir (isRail), o header, o bottom-nav ou o <main>
+
+acceptance:
+  - a sidebar expandida mostra, de cima pra baixo — navegação primária (NAV_ITEMS, inalterada) → separador → Salvos e Notificações (badge só quando unreadCount > 0) → "Minhas comunidades" (só quando há comunidades; cada item leva a /communities/<id> com inicial/ícone placeholder) → espaçador → separador → rodapé com MemberAvatar (inicial de displayName) + displayName + link Configurações
+  - no estado rail (isRail) os itens novos aparecem como ícone + rótulo em sr-only + Tooltip, como os primários já fazem
+  - nada chumbado — displayName, communities e unreadCount vêm de useMemberContext(); a cidade do rodapé (se mantida) de useLocalityContext()
+  - exatamente um item com aria-current="page" em qualquer rota capturada (regra nav-active da auditoria)
+  - contraste ≥ 4,5:1 em texto, foco visível (anel duplo), alvo ≥ 44×44 em todo link
+  - a auditoria visual de /inicio, /explorar e /communities em 375/768/1440 não introduz finding de severidade high
+  - npx pnpm@11.18.0 gate verde
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-001.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: chrome de navegação compartilhado por toda rota (shell)
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

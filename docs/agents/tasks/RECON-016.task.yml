@@ -1,0 +1,62 @@
+task_id: RECON-016
+
+objective: >
+  A superficie de confianca passa a ser a da prancha 56: denunciar conteudo, acompanhar o que foi denunciado e bloquear, com retorno honesto sobre o que acontece depois.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/56-web-confianca.png
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1
+  - docs/decisions/ADR-20260901-account-suspension.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    report-button.tsx abre o fluxo de denuncia sobre resolve_report/list_open_reports que ja existem. Nao segue a composicao da prancha 56, e o acompanhamento pos-denuncia e o bloqueio nao aparecem para quem denunciou.
+
+allowed_paths:
+  - apps/web/app/components/bivaque/report-button.tsx
+  - apps/web/app/components/bivaque/feedback-alert.tsx
+  - docs/agents/tasks/RECON-016.task.yml
+
+forbidden:
+  - executar em paralelo com RECON-014, 015, 016 ou 017 — os quatro dividem components/bivaque/ e a onda 4 e SERIAL, ordem 3 de 4
+  - tocar arquivo de components/bivaque/ fora dos allowed_paths deste contrato
+  - prometer prazo de analise, resposta ou punicao
+  - expor a identidade de quem denunciou a quem foi denunciado
+  - entregar controle de bloqueio sem mecanismo real por tras
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem ou qualquer dado — tudo vem de contexto ou consulta real
+  - inventar conteudo; sem dado real, estado vazio honesto
+  - linkar rota que nao existe
+  - prometer prazo, aprovacao, entrega ou alcance que o servidor nao garante
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+  - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
+  - introduzir familia tipografica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - denunciar segue a composicao da prancha 56 e usa o mecanismo que ja existe
+  - o retorno a quem denuncia diz o que de fato acontece — sem prazo de analise que contrato nenhum garante
+  - bloquear usa mecanismo real; se nao existir, o controle fica desabilitado com motivo honesto e a lacuna e reportada, nunca um botao que nao faz nada
+  - o motivo escrito pelo denunciante passa pela remocao de dado pessoal que ja existe
+  - denunciar o proprio conteudo, ou denunciar duas vezes, tem caminho tratado e visivel
+  - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperavel com nova tentativa
+  - nenhum dado inventado sobrevive na tela
+  - contraste >= 4,5:1, alvos >= 44x44, foco visivel
+  - npx pnpm@11.18.0 gate verde
+  - auditoria visual das rotas que consomem denuncia e bloqueio em 375/768/1440 sem finding de severidade high
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-016.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: denuncia, bloqueio e identidade de quem denuncia
+risk_level: R3
+adr: docs/decisions/ADR-20260901-account-suspension.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

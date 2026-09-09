@@ -1,0 +1,69 @@
+task_id: RECON-002
+
+objective: >
+  A rota /inicio deixa de ser scaffold e passa a ser a home de quem participa da
+  prancha 01-web-inicio: saudação com o nome e a data reais, contexto de
+  localidade, composer, tira de retorno, seção "Na comunidade" e o rail direito
+  com próximo encontro, atalhos de descoberta e chegada em outra cidade.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/01-web-inicio.png — referência de composição
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7 — /inicio é o container "Início"
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md §5 (tokens), §7.2 (feed e conversa), §9.1 (WCAG 2.2 AA)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/inicio/page.tsx renderiza PageHeader mais um parágrafo
+    dizendo "Conteúdo em construção (prancha 01)". Zero leitura, zero escrita.
+    A rota é destino do redirect da raiz (proxy.ts), primeiro item da navegação e
+    destino da recuperação de segmento, então o placeholder está no caminho de
+    todo membro que entra.
+
+allowed_paths:
+  - apps/web/app/(shell)/inicio/
+  - apps/web/app/components/bivaque/
+  - docs/agents/tasks/RECON-002.task.yml
+  - tests/unit/ui/inicio-recon.test.tsx
+
+forbidden:
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem, evento ou comunidade — tudo vem de contexto ou consulta real
+  - inventar dado de feed; enquanto o escopo de "início" não estiver definido, a seção mostra carregando e depois vazio honesto, nunca conteúdo fabricado
+  - inventar rota — só linkar destino que existe hoje
+  - prometer prazo, entrega, aprovação ou alcance que o servidor não garante
+  - texto de placeholder, href="#", handler vazio ou toast como única implementação
+  - valor de cor cru em JSX, style inline ou classe utilitária de paleta
+  - importar HeroUI direto onde há wrapper Bivaque
+  - introduzir família tipográfica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - coordenação Codex em 08/09/2026; reaproveitar implementação existente e aplicar processo seção 0, sem recomeçar scaffold
+  - não apresentar Acompanhando como lista vazia consultada se não houver integração; manter esse requisito pendente no card até mecanismo real
+  - requisições antigas não sobrescrevem contexto atual; rejeição de rede deixa erro recuperável, não carregamento infinito
+  - a saudação usa o nome real do membro (useMemberContext) e a saudação varia com a hora do dia; a data é a de hoje, formatada em pt-BR
+  - o contexto acima da saudação usa a localidade real (useLocalityContext) e, quando houver, a comunidade do membro
+  - o composer abre o fluxo de publicação que já existe, sem duplicar mecanismo
+  - a seção "Na comunidade" fecha os estados: skeleton no carregamento, vazio honesto quando não há o que mostrar, erro recuperável com nova tentativa
+  - o rail direito só mostra cartão com dado real; cartão sem dado não é renderizado com conteúdo inventado
+  - todo link do rail aponta para rota existente
+  - nenhum texto de construção sobrevive em apps/web/app/(shell)/inicio/
+  - exatamente um h1 na tela
+  - contraste ≥ 4,5:1, alvos ≥ 44×44, foco visível
+  - a auditoria visual de /inicio em 375/768/1440 não introduz finding de severidade high
+  - npx pnpm@11.18.0 gate verde
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-002.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: home autenticada, primeira tela de todo membro
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

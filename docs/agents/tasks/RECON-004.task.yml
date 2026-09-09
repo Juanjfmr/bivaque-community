@@ -1,0 +1,59 @@
+task_id: RECON-004
+
+objective: >
+  A rota /communities passa a ser a tela de comunidades da prancha 42: minhas comunidades, descoberta das disponíveis na cidade e a apresentação de cada uma, com o motivo opcional privado antes de enviar o pedido de participação.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/42-web-comunidades.png
+  - docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md — correção 3, motivo opcional privado
+  - manifest.json reviewNotes de 42-web-comunidades - Motivo opcional privado antes do envio. Filtrar resultados pela cidade selecionada.
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md §5, §9.1
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/communities/page.tsx lê communities e community_memberships e renderiza uma lista mínima com botão Pedir entrada. Não separa minhas comunidades de descoberta, não mostra apresentação, e não oferece o campo de motivo opcional que a correção do responsável de 07/09 exige.
+
+allowed_paths:
+  - apps/web/app/(shell)/communities/
+  - docs/agents/tasks/RECON-004.task.yml
+
+forbidden:
+  - tocar apps/web/app/components/bivaque/ — esta leva roda em paralelo e o diretório é compartilhado; componha a partir dos wrappers existentes
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem ou qualquer dado — tudo vem de contexto ou consulta real
+  - inventar conteúdo; sem dado real, estado vazio honesto
+  - linkar rota que não existe
+  - prometer prazo, aprovação, entrega ou alcance que o servidor não garante
+  - texto de placeholder, href vazio, handler vazio ou toast como única implementação
+  - valor de cor cru em JSX, style inline ou classe utilitária de paleta
+  - importar HeroUI direto onde há wrapper Bivaque
+  - introduzir família tipográfica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - a tela separa 'Minhas comunidades' de 'Descobrir comunidades', e a segunda respeita a cidade selecionada
+  - antes de enviar o pedido, há um campo 'Por que você quer participar? (opcional)' — vazio não bloqueia o envio
+  - o motivo acompanha o pedido para quem analisa; nunca vira publicação nem biografia
+  - no estado pendente o motivo aparece só como resumo de leitura, e nada sugere que a pessoa já é membro
+  - visitante de comunidade privada não vê contagem de membros nem lista de participantes
+  - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperável com nova tentativa
+  - nenhum dado inventado sobrevive na tela
+  - exatamente um h1 na tela
+  - contraste ≥ 4,5:1, alvos ≥ 44×44, foco visível
+  - npx pnpm@11.18.0 gate verde
+  - auditoria visual de /communities em 375/768/1440 sem finding de severidade high
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-004.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: participação em comunidade e privacidade de quem pede entrada
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

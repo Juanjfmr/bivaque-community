@@ -16,7 +16,8 @@
       "!**/.visual",
       "!.claude/worktrees",
       "!**/.reasonix",
-      "!**/docs/agents/design-audit/experiments"
+      "!**/docs/agents/design-audit/experiments",
+      "!**/docs/design/visual-guide-2026-09-06"
     ]
   },
   "formatter": {

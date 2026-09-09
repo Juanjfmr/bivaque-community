@@ -1,0 +1,149 @@
+{
+  "updatedAt": "2026-09-07",
+  "completed": [
+    {
+      "id": "30-mobile-auth-entrada",
+      "kind": "mobile",
+      "title": "Auth: boas-vindas, login e cadastro",
+      "screens": ["Boas-vindas", "Entrar", "Criar conta"],
+      "file": "30-mobile-auth-entrada.png",
+      "reviewNotes": [
+        "Aumentar o contraste do texto dos botões desabilitados: usar texto cinza escuro sobre superfície clara opaca; a imagem gerou texto branco com pouco contraste.",
+        "Confirmação por código é a direção visual proposta. A integração atual pode usar link; adaptar o contrato de envio/retorno antes de prometer código funcional.",
+        "A ampliação de Auth e seus estados está descrita no MAPA-DE-TELAS.md. Aceites podem integrar o cadastro; não repetir quando já registrados."
+      ],
+      "status": "Referencia visual"
+    },
+    {
+      "id": "31-mobile-auth-confirmacao",
+      "kind": "mobile",
+      "title": "Confirmação de e-mail",
+      "screens": ["Confirmar e-mail", "Código incorreto", "Código expirado"],
+      "file": "31-mobile-auth-confirmacao.png",
+      "reviewNotes": [
+        "Usar texto cinza-escuro no botão desabilitado; a geração manteve pouco contraste.",
+        "Código é referência de interação; reconciliar com o mecanismo de autenticação antes de implementar."
+      ],
+      "status": "Referencia visual"
+    },
+    {
+      "id": "32-mobile-auth-acesso",
+      "kind": "mobile",
+      "title": "Aceites e verificação",
+      "screens": ["Aceites necessários", "Explicação da verificação", "Verificar acesso"],
+      "file": "32-mobile-auth-acesso.png",
+      "reviewNotes": [
+        "Correção do dono aplicada: Sou militar das Forças Armadas; CPF de retorno quase imediato e alternativa por identidade. A geração colocou o vínculo no título, mas a implementação deve mantê-lo como opção selecionável, junto dos demais papéis elegíveis e do convite familiar.",
+        "Os aceites vazios e CPF vazio mantêm ações desabilitadas. Não duplicar aceites registrados."
+      ],
+      "status": "Referencia visual"
+    },
+    {
+      "id": "33-mobile-auth-admissao",
+      "kind": "mobile",
+      "title": "Admissão e convite familiar",
+      "screens": [
+        "Identidade em análise por IA",
+        "Enviar identidade como alternativa ao CPF",
+        "Aceitar convite familiar"
+      ],
+      "file": "33-mobile-auth-admissao.png",
+      "reviewNotes": [
+        "Correção aplicada: a espera representa reconhecimento da identidade por IA, não o caminho comum de CPF. O painel central oferece envio de identidade como alternativa.",
+        "A ordem de jornada é CPF → envio de identidade se necessário → processamento → resultado. O layout da prancha mostra estados, não obriga ordem esquerda-direita.",
+        "Upload vazio mantém Enviar para análise desabilitado; falha de reconhecimento precisa permitir novo envio sem perder a conta. Sem SLA inventado."
+      ],
+      "status": "Referencia visual"
+    },
+    {
+      "id": "34-mobile-onboarding-contexto",
+      "kind": "mobile",
+      "title": "Cidade e primeira chegada",
+      "screens": ["Escolher cidade", "Personalização opcional", "Primeira ação útil"],
+      "file": "34-mobile-onboarding-contexto.png",
+      "reviewNotes": [
+        "Não pedir novamente nome já informado no cadastro. Foto e interesses são opcionais.",
+        "Substituir a descrição de Mercado por produtos e anúncios; serviços têm entrada própria. Escolha de cidade não concede participação privada.",
+        "Decisão posterior obrigatória: Adicionar na personalização mobile Força Armada e OM opcionais, cada um com Exibir no perfil OFF; permitir pular. Foto compacta, nome preexistente, interesses opcionais. Mercado descreve produtos/anúncios."
+      ],
+      "status": "Referencia visual"
+    },
+    {
+      "id": "35-mobile-auth-retomada",
+      "kind": "mobile",
+      "title": "Retomada e recuperação",
+      "screens": ["Retomar cadastro", "Falha de conexão", "Sessão expirada"],
+      "file": "35-mobile-auth-retomada.png",
+      "reviewNotes": [
+        "Na retomada autenticada, remover os atalhos redundantes de criar conta e Google acrescentados pelo gerador.",
+        "No erro de conexão, substituir o texto de fundo por Enviaremos um código para seu e-mail. Não declarar envio confirmado após falha.",
+        "Com e-mail válido e sem bloqueio de reenvio, Receber código deve estar habilitado; quando desabilitado, usar texto cinza-escuro."
+      ],
+      "status": "Referencia visual"
+    },
+    {
+      "id": "36-web-auth-entrada",
+      "kind": "web",
+      "title": "Entrada e cadastro web",
+      "screens": ["Entrar", "Criar conta"],
+      "file": "36-web-auth-entrada.png",
+      "reviewNotes": [
+        "Prancha corrigida: removido campo de senha inventado. Manter o fluxo de autenticação por e-mail. Google depende de configuração real.",
+        "Nome de apresentação não exige nome civil completo. Aceites registrados no cadastro não devem reaparecer sem motivo."
+      ],
+      "status": "Referencia visual"
+    },
+    {
+      "id": "37-web-auth-confirmacao",
+      "kind": "web",
+      "title": "Confirmação e retomada web",
+      "screens": ["Confirmar e-mail", "Confirmação expirada e recuperação"],
+      "file": "37-web-auth-confirmacao.png",
+      "reviewNotes": [
+        "Prancha corrigida: código expirado oferece novo envio, sem submeter novamente o código vencido. Replicar o tratamento de código incorreto da prancha mobile 31."
+      ],
+      "status": "Referencia visual"
+    },
+    {
+      "id": "38-web-auth-admissao",
+      "kind": "web",
+      "title": "Verificação e admissão web",
+      "screens": ["Verificar acesso", "Acompanhar admissão"],
+      "file": "38-web-auth-admissao.png",
+      "reviewNotes": [
+        "Prancha corrigida: retirado shell de membro e corrigido vínculo próprio, sem vínculo de acesso com a cidade.",
+        "Campo vazio não permite consultar. Desabilitar Verificar acesso com texto de contraste suficiente até entrada válida; oferecer ajuda acessível.",
+        "Decisão posterior obrigatória: Opção exata Sou militar das Forças Armadas; CPF quase imediato com botão vazio desabilitado. Espera do segundo painel deve dizer Estamos analisando sua identidade e reconhecimento por IA, sem prazo inventado. Explicar alternativa ao CPF."
+      ],
+      "status": "Referencia visual"
+    },
+    {
+      "id": "39-web-onboarding-contexto",
+      "kind": "web",
+      "title": "Contexto e personalização web",
+      "screens": ["Escolher cidade", "Personalização opcional"],
+      "file": "39-web-onboarding-contexto.png",
+      "reviewNotes": [
+        "Correção aplicada: Força Armada e OM opcionais, com controles individuais Exibir no perfil desligados. Dados autodeclarados, separados da verificação.",
+        "Seleção de cidade não concede participação privada. Etapa final Concluir não exige adesão a comunidade."
+      ],
+      "status": "Referencia visual"
+    }
+  ],
+  "pending": [
+    {
+      "id": "34-mobile-onboarding-contexto",
+      "reason": "usage_limit_reached (HTTP 429), 2026-09-07",
+      "instructions": "Edit the supplied BIVAQUE board only as follows, preserve professional style and remaining content: Adicionar na personalização mobile Força Armada e OM opcionais, cada um com Exibir no perfil OFF; permitir pular. Foto compacta, nome preexistente, interesses opcionais. Mercado descreve produtos/anúncios."
+    },
+    {
+      "id": "38-web-auth-admissao",
+      "reason": "usage_limit_reached (HTTP 429), 2026-09-07",
+      "instructions": "Edit the supplied BIVAQUE board only as follows, preserve professional style and remaining content: Opção exata Sou militar das Forças Armadas; CPF quase imediato com botão vazio desabilitado. Espera do segundo painel deve dizer Estamos analisando sua identidade e reconhecimento por IA, sem prazo inventado. Explicar alternativa ao CPF."
+    }
+  ],
+  "remaining": [
+    "Detalhamento web de envio e falha/reenvio de identidade, conforme decisão posterior."
+  ],
+  "provenance": "./expansion-generation.json"
+}

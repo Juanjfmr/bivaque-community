@@ -88,6 +88,14 @@ describe("product boundaries and PII audit", () => {
         /log-redaction\.test\.ts$/,
         /PILOT_RUNBOOK\.md$/,
         /GO-NO-GO-REPORT\.md$/,
+        // Os manifestos do guia visual registram os PROMPTS do gerador de
+        // imagem, e varios deles proibem o termo explicitamente ("no public
+        // verification badge"). Citar a proibicao nao e implementa-la.
+        //
+        // A isencao cobre o manifesto e os registros de geracao, que sao o
+        // mesmo artefato — e NAO o diretorio inteiro, para que documento de
+        // produto ali dentro continue sendo varrido.
+        /visual-guide-2026-09-06[\\/](manifest|[a-z-]*generation[a-z0-9-]*)\.json$/,
         /\.omo[\\/]/,
         /notepad/,
       ],
