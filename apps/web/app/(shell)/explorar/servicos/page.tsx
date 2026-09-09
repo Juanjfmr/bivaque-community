@@ -226,7 +226,7 @@ function ServicosContent() {
         <Link
           href="/explorar"
           aria-label="Voltar"
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground"
         >
           <ArrowLeft size={18} aria-hidden="true" />
         </Link>
@@ -245,7 +245,7 @@ function ServicosContent() {
               id="filtro-bairro"
               value={bairro}
               onChange={(event) => applyParams({ bairro: event.target.value })}
-              className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm"
+              className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
             >
               <option value="">Todos os bairros</option>
               {communities.map((community) => (
@@ -271,7 +271,7 @@ function ServicosContent() {
               id="filtro-tipo"
               value={tipo}
               onChange={(event) => applyParams({ tipo: event.target.value })}
-              className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm"
+              className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
             >
               <option value="">Todos os tipos</option>
               {CATEGORY_OPTIONS.map(([value, label]) => (

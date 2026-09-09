@@ -68,7 +68,10 @@ function CategoryCard({ icon: Icon, title, description, href }: Category) {
   return (
     <li className="h-full">
       {href !== null ? (
-        <Link href={href} className="block h-full">
+        <Link
+          href={href}
+          className="block h-full transition-colors duration-[var(--semantic-motion-duration-instant)]"
+        >
           <Card interactive className="h-full">
             {inner}
           </Card>
@@ -107,12 +110,12 @@ export default function ExplorarPage() {
               name="search"
               type="search"
               placeholder="Buscar no Bivaque"
-              className="min-h-11 w-full bg-transparent text-sm"
+              className="min-h-11 w-full bg-transparent text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
             />
             <button
               type="submit"
               aria-label="Buscar"
-              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-sm font-medium text-[var(--accent)]"
+              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-sm font-medium text-[var(--accent)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)]"
             >
               <Search size={18} aria-hidden="true" />
             </button>
