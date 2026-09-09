@@ -94,8 +94,18 @@ export function CreatePostModal({
   const currentUser = useCurrentUser()
   const city = cityDestination(locality?.cityName ?? "")
   const destinations: AudienceDestination[] = [city, ...audience.communities, ...audience.groups]
+  // `selected` existe para EXIBIR o destino (o nome no seletor). Ele cai para a
+  // cidade quando a chave ainda não está na lista — e a lista chega depois,
+  // porque é uma consulta.
   const selected = destinations.find((d) => d.key === audienceKey) ?? city
-  const selectedKind = parseAudienceKey(selected.key)
+  // O DESTINO REAL vem da chave escolhida, nunca dessa degradação. Derivar o
+  // tipo de `selected` fazia quem abrisse o compositor e publicasse antes da
+  // lista carregar mandar o post para a CIDADE INTEIRA em vez da vila — com o
+  // aviso concordando com o erro. É a corrida de alcance que a onda E chamou
+  // de vazamento por desatenção, e ela entrou na separação da RECON-014: a
+  // versão anterior montava o insert a partir do communityId direto, sem
+  // passar por uma lista que pode estar vazia.
+  const selectedKind = parseAudienceKey(audienceKey)
 
   useEffect(() => {
     if (!modal.isOpen) {
@@ -221,7 +231,9 @@ export function CreatePostModal({
 
     setSubmitting(true)
 
-    const kind = parseAudienceKey(selected.key)
+    // Mesma fonte do aviso: a chave que a pessoa escolheu, não o destino
+    // resolvido para exibição.
+    const kind = parseAudienceKey(audienceKey)
     const insertData = {
       locality_id: localityId,
       post_type: postType,
@@ -294,7 +306,7 @@ export function CreatePostModal({
     linkUrl,
     pollOptions,
     piiWarning,
-    selected.key,
+    audienceKey,
     localityId,
     locality?.cityName,
     supabase,

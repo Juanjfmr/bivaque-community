@@ -289,7 +289,9 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     // "<categoria>: <explicacao>", montado no cliente e redigido por
     // scrubReportReason antes do insert (o trigger 20260821000030 repete a
     // redacao no banco).
-    const dialog = page.getByRole("dialog")
+    // Nomeado: o popover do menu suspenso tambem carrega role="dialog", entao
+    // um getByRole("dialog") solto resolve para dois enquanto o menu sai de cena.
+    const dialog = page.getByRole("dialog", { name: /Denunciar/ })
     await expect(dialog).toBeVisible({ timeout: 10000 })
     // Pelo rotulo visivel: o HeroUI decide como expoe o papel do radio, e o
     // teste nao deve depender dessa escolha interna.
@@ -382,7 +384,13 @@ test.describe("report flow: membro denuncia e recebe retorno", () => {
     await expect(field).toHaveAccessibleDescription(/Nao foi possivel enviar a denuncia agora/)
     await expect(page.getByText("database diagnostic that must stay private")).toHaveCount(0)
 
-    await page.getByRole("button", { name: "Fechar denúncia" }).press("Enter")
+    // Fecha pelo MESMO botao que abriu — que e o ponto do padrao de
+    // disclosure. O gatilho tinha nome variavel ("Denunciar" / "Fechar
+    // denuncia") e isso fazia o seletor re-resolver para outra mensagem depois
+    // do clique. Com o nome estavel, abrir e fechar sao o mesmo elemento e o
+    // teste consegue afirmar que o foco VOLTA para ele.
+    await trigger.press("Enter")
+    await expect(trigger).toHaveAttribute("aria-expanded", "false")
     await expect(trigger).toBeFocused()
   })
 })
