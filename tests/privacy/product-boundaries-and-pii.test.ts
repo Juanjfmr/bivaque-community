@@ -100,7 +100,7 @@ describe("product boundaries and PII audit", () => {
         // O manifesto do guia visual registra os prompts do gerador, e vários
         // deles proíbem o termo explicitamente ("no public verification badge").
         // Citar a proibição não é implementá-la.
-        /visual-guide-2026-09-06[\\/]manifest\.json$/,
+        /visual-guide-2026-09-06[\\/](manifest|[a-z-]*generation[a-z0-9-]*)\.json$/,
         /\.omo[\\/]/,
         /notepad/,
       ],
