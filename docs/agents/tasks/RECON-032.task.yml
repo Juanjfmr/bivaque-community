@@ -1,0 +1,69 @@
+task_id: RECON-032
+
+objective: >
+  O retorno ganha destino real - Salvos com o que foi guardado por tipo, a denuncia com motivo de
+  lista fechada e acompanhamento proprio, a conversa endereçavel por URL e a ajuda com canal de
+  suporte que existe de verdade.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/54-web-retorno.png
+  - docs/design/visual-guide-2026-09-06/56-web-confianca.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 56-web-confianca
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.8 C09 C10 C12 C13
+  - docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md linha sobre Salvos
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Nao existe rota de Salvos na arvore desta branch, embora a barra lateral da prancha a
+    apresente e as tabelas de salvamento existam. Nao existem as rotas de denuncia do membro, o
+    detalhe de conversa por URL nem a ajuda. Medido em 09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(shell)/salvos/
+  - apps/web/app/(shell)/denuncias/
+  - apps/web/app/(shell)/messages/
+  - apps/web/app/(shell)/ajuda/
+  - apps/web/lib/saves/
+  - apps/web/lib/reports/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-032.task.yml
+
+forbidden:
+  - prometer anonimato na denuncia
+  - mostrar ao alvo o resultado interno ou a identidade de quem denunciou
+  - aceitar motivo de denuncia fora da lista fechada
+  - revelar conteudo de item retirado por meio do que ficou salvo
+  - oferecer canal de suporte, endereco ou chamado que nao existe
+  - abrir conversa entre contas sem contexto autorizado
+  - criar migration, policy ou coluna
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - Salvos lista o que foi guardado por tipo, permite abrir e remover, e sincroniza com o botao de salvar das origens
+  - item retirado aparece como indisponivel em Salvos, sem revelar o conteudo antigo
+  - o dialogo de denuncia segue a prancha 56 - pergunta, lista fechada de motivos, explicacao opcional com contador e os dois botoes
+  - o servidor valida alvo, tipo e acesso, e recusa motivo fora da lista inclusive por chamada direta sem interface
+  - o recibo aparece somente depois de persistir, e o acompanhamento mostra situacao, motivo e a propria explicacao ao expandir
+  - a conversa tem URL estavel, e abrir direto reconstroi o estado correto
+  - a ajuda leva a documentos legais reais e ao canal de suporte configurado, sem inventar chamado
+  - o estado de leitura persiste e o contador de nao lidas acompanha, sem entrega duplicada por recarregar
+  - todos os estados fechados - carregando, vazio verdadeiro com acao util, erro recuperavel e sessao expirada
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - as rotas novas estao cadastradas em scripts/visual/capture.mjs com fixture concreta
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-032.task.yml
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e de salvar, denunciar e acompanhar
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: retorno, denuncia e privacidade do denunciante
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

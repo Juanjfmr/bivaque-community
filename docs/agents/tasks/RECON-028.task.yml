@@ -1,0 +1,68 @@
+task_id: RECON-028
+
+objective: >
+  O alerta de moradia passa a existir com o segundo painel da prancha 65 - salvar uma busca,
+  gerenciar a assinatura e receber exatamente um aviso por imovel novo que atende aos criterios,
+  parando de receber quando a pessoa desliga.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/65-web-imoveis-alertas.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 65-web-imoveis-alertas
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.7 R55 e secao 6 Alerta de imovel
+  - docs/agents/tasks/RECON-027.task.yml
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Nao existe rota de alertas nem assinatura de busca. A especificacao e literal - sem job e
+    retorno real, alertas nao estao concluidos. Medido em 09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(shell)/imoveis/
+  - apps/web/app/api/internal/
+  - apps/web/lib/listings/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-028.task.yml
+
+forbidden:
+  - declarar alerta entregue sem job executado e retorno observado
+  - entregar aviso ignorando a preferencia de canal da pessoa
+  - entregar o mesmo imovel duas vezes para o mesmo alerta
+  - entregar imovel que a pessoa nao teria direito de abrir
+  - deixar o job acessivel sem credencial propria ou como link de menu
+  - manter entrega depois de desligar ou excluir a assinatura
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a tela segue o segundo painel da prancha 65 - titulo, apoio, cartao do alerta com nome, criterios, situacao, data de criacao, interruptor, editar e excluir
+  - o painel lateral de edicao traz cidade, bairro, valor maximo e quartos, com salvar e cancelar
+  - salvar busca cria a assinatura com criterios normalizados e abre os resultados correspondentes
+  - o job encontra apenas imoveis novos e autorizados, deduplica por par de alerta e anuncio, e registra a entrega
+  - repetir a execucao do job nao gera segunda entrega para o mesmo par
+  - desligar o interruptor interrompe as entregas seguintes, e excluir remove a assinatura e as entregas pendentes
+  - a entrega respeita a preferencia de canal da pessoa
+  - as tabelas novas e as policies que as leem entram na mesma migration, com caso positivo e negativo em pgTAP
+  - todos os estados fechados - carregando, vazio, erro recuperavel, sessao expirada e conflito
+  - exatamente um h1 na tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - a rota nova esta cadastrada em scripts/visual/capture.mjs com fixture concreta
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-028.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - teste de integracao do job com execucao repetida e assinatura desligada
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: assinatura de busca e entrega de aviso
+risk_level: R3
+adr: docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

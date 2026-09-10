@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-08",
+  "updatedAt": "2026-09-09",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -2029,6 +2029,44 @@
         "Modelo de ameaca e texto de consentimento",
         "Governanca LGPD (BLOCK-LEGAL-AI)"
       ]
+    },
+    {
+      "id": "RECON-PRANCHAS-RESTANTES",
+      "title": "Pranchas web restantes: 17 lotes com o backend junto das telas",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "As 31 pranchas web passam a ter dono mecanico. Criados em 09/09/2026: a leitura elemento a elemento das pranchas restantes feita olhando o PNG (docs/agents/PRANCHAS-WEB-RESTANTES.md), os contratos RECON-018 a RECON-035, o manual de execucao para o OpenCode e a cobertura travada por teste de escopo. Corrige a causa registrada no handoff de 09/09: os contratos anteriores diziam segue a prancha X sem que ninguem abrisse a imagem, e a auditoria visual nao mede fidelidade. Sete ADRs tecnicos aprovados pelo dono em 09/09 e as duas decisoes de produto tomadas no mesmo dia: no pedido pendente o rail Sobre a comunidade aparece com Membros, Criada em e Local (a regra do RECON-009 foi revisada, o roster continua fechado); e da prancha 15 so o marcador da resposta que resolveu entra, pelo RECON-035, com as curtidas fora e a divergencia declarada. Nenhum lote espera decisao: dez rodam sem dependencia e o resto depende de codigo de outro lote. BLOCK-LEGAL-AI bloqueia so a transicao de reconhecimento automatico do RECON-019.",
+      "checklist": [
+        "Leitura das pranchas restantes versionada",
+        "RECON-018 a RECON-035 validos no task-contract",
+        "Cobertura de prancha travada em tests/scope",
+        "Sete ADRs de 09/09 aprovados pelo dono",
+        "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
+        "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs → 45 contratos validos",
+        "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
+        "npx pnpm@11.18.0 gate → verde"
+      ],
+      "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+      "links": [
+        "docs/agents/RECON-WEB-EXECUCAO.md",
+        "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
+        "docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
+        "docs/decisions/ADR-20260909-midia-de-membro.md",
+        "docs/decisions/ADR-20260909-guia-artigo-estruturado.md",
+        "docs/decisions/ADR-20260909-canais-de-notificacao.md",
+        "docs/decisions/ADR-20260909-perfil-bio.md",
+        "docs/decisions/ADR-20260909-resposta-que-resolveu.md"
+      ],
+      "dependencies": ["BLOCK-LEGAL-AI"],
+      "phase": "Reconstrução",
+      "updatedAt": "2026-09-09",
+      "sourceRevision": "2f87f12"
     }
   ]
 }

@@ -1,0 +1,70 @@
+task_id: RECON-024
+
+objective: >
+  O painel do negocio passa a ser o da prancha 23 - o shell proprio do prestador, a fila de
+  pedidos por situacao com a coluna Quando, o pedido selecionado, a completude da ficha calculada
+  sobre campo real, e as rotas de area de atendimento e conta.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/23-web-meu-negocio.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 23-web-meu-negocio
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.6 R45 R46
+  - docs/decisions/ADR-20260820-conta-de-prestador.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    /prestador, /prestador/ficha e /prestador/catalogo existem e nunca foram comparadas com a
+    prancha 23. Nao existem a fila por situacao, o detalhe de pedido do prestador, a area de
+    atendimento nem a conta do negocio. Medido em 09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(provider)/
+  - apps/web/lib/providers/
+  - apps/web/lib/service-requests/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-024.task.yml
+
+forbidden:
+  - rotular como Contato a coluna que contem quando o servico e desejado
+  - exigir telefone como condicao de ficha completa
+  - calcular completude sobre campo que nao existe no banco
+  - deixar um negocio acessar pedido de outro negocio
+  - mover situacao do pedido sem escrita autorizada e transacional
+  - exigir que prestador passe pelo funil de membro para operar a ficha
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a barra lateral segue a prancha 23 - rotulo da secao, cartao do negocio com nome e categoria, e os itens Pedidos, Minha ficha, Catalogo, Area de atendimento e Conta, alem de Salvos, Notificacoes e Configuracoes
+  - o cabecalho usa o campo de busca de pedidos da prancha e nao traz seletor de cidade
+  - a fila segue a prancha - abas Novos, Em conversa e Encerrados com contagem real, e a tabela com Cliente, Servico solicitado, Regiao, Quando, Recebido e o botao de responder
+  - o cartao do pedido selecionado traz nome, local, quando, recebido, titulo, corpo, chip de categoria e o botao que abre a conversa
+  - a primeira resposta move o pedido para Em conversa na mesma transacao que grava a mensagem, e as contagens das abas mudam
+  - o rail segue a prancha - capa do negocio, cartao com nome, categoria, area atendida e Ver minha ficha, e o cartao de completude com a pendencia e o checklist
+  - a completude usa campos reais e o telefone continua opcional
+  - as rotas de area de atendimento e conta existem com efeito real, e salvar altera o que a ficha publica mostra
+  - dois prestadores nao acessam pedidos um do outro, inclusive por chamada direta sem interface
+  - todos os estados fechados - carregando, vazio, erro recuperavel, sessao expirada e conflito
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - as rotas novas estao cadastradas em scripts/visual/capture.mjs com a conta de prestador do seed
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-024.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e do ciclo entre cliente e prestador
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: isolamento entre negocios e situacao do pedido
+risk_level: R3
+adr: docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

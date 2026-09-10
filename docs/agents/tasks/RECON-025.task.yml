@@ -1,0 +1,70 @@
+task_id: RECON-025
+
+objective: >
+  O Mercado passa a existir com as pranchas 13 e 63 - buscar produtos com filtros reais, abrir o
+  detalhe com galeria, preco, anunciante e demonstrar interesse, e publicar um anuncio com fotos
+  e publico permitido que persiste e aparece na busca.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/13-web-mercado.png
+  - docs/design/visual-guide-2026-09-06/63-web-mercado-anuncio.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 13-web-mercado e secao 63-web-mercado-anuncio
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.7 R48 R49 R50
+  - docs/decisions/ADR-20260909-midia-de-membro.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Nao existe rota de Mercado nem tabela de anuncio - o inventario de tabelas de 09/09 confirma
+    a ausencia. A especificacao classifica as tres rotas como novas. Medido em 09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(shell)/mercado/
+  - apps/web/lib/listings/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-025.task.yml
+
+forbidden:
+  - retornar anuncio que nao esta ativo ou cujo publico o leitor nao alcanca
+  - permitir conversar consigo mesmo no proprio anuncio
+  - guardar endereco, numero, complemento ou coordenada do item
+  - preservar metadado de camera na imagem enviada
+  - criar checkout, valor intermediado, cobranca, custodia ou comissao
+  - deixar foto enviada alcancavel por URL sem autorizacao derivada do anuncio
+  - permitir trocar o publico do anuncio depois de publicado
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a busca segue a prancha 13 - trilha, titulo, apoio, botoes de meus anuncios e anunciar, abas, coluna de filtros com categoria, estado, regiao e faixa de preco, segmentado de produtos e servicos, ordenacao e grade de cartoes com botao de salvar, titulo, preco, bairro e tempo relativo
+  - o rodape da lista leva a busca de servicos, conforme a prancha
+  - o detalhe segue a prancha 63 - galeria com miniaturas, titulo, preco em destaque, condicao, localizacao, descricao, bloco do anunciante e os botoes de interesse e de salvar
+  - demonstrar interesse abre ou reencontra a conversa do anuncio de forma idempotente, e nunca cria duas
+  - o formulario de novo anuncio segue a prancha - titulo, categoria, preco, condicao, descricao, publico permitido com o aviso de visibilidade, e a grade de fotos com o limite exibido na tela
+  - publicar grava o anuncio com dono, publico e situacao, e ele aparece na busca de quem alcanca aquele publico
+  - conta fora do publico nao ve o anuncio nem a foto, inclusive por chamada direta sem interface
+  - as tabelas novas, o bucket e as policies que os leem entram na mesma migration, com caso positivo e negativo em pgTAP
+  - filtros, ordenacao e paginacao sobrevivem a recarregar, voltar e abrir em nova aba, e a contagem usa os mesmos filtros da lista
+  - todos os estados fechados - carregando com dimensao estavel, vazio verdadeiro, erro recuperavel que preserva o rascunho, envio em andamento sem duplicar e conflito
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - as rotas novas estao cadastradas em scripts/visual/capture.mjs com fixture concreta
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-025.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e de publicar, encontrar e demonstrar interesse com duas contas
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: anuncio com publico restrito e midia de membro
+risk_level: R3
+adr: docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

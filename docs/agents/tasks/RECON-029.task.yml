@@ -1,0 +1,69 @@
+task_id: RECON-029
+
+objective: >
+  A pergunta ao organizador passa a existir com a prancha 67, e o evento ganha as rotas de criar
+  e editar - perguntar antes ou depois de confirmar presenca, ver a resposta no mesmo fio, e
+  organizar um evento cuja alteracao ou cancelamento chega a quem confirmou.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/67-web-evento-informacoes.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 67-web-evento-informacoes
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.4 R33 R34 R35
+  - docs/agents/tasks/RECON-022.task.yml
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    /events e /events/[id] existem apos RECON-007. Nao existem a rota de perguntas ao organizador
+    nem as rotas de criar e editar evento, e nao ha vinculo de conversa a evento no banco.
+    Medido em 09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(shell)/events/
+  - apps/web/lib/events/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-029.task.yml
+
+forbidden:
+  - exigir presenca confirmada para enviar pergunta
+  - prometer prazo de resposta do organizador
+  - aceitar destinatario da pergunta vindo do corpo da requisicao em vez do evento
+  - deixar terceiro ler a conversa entre autor e organizador
+  - permitir alterar o alcance do evento para contornar acesso
+  - desenhar o simbolo de arvore que a prancha usa no lugar do wordmark canonico
+  - confundir cancelar presenca com cancelar evento
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a tela de pergunta segue a prancha 67 - trilha, titulo, cartao do evento com data, hora, local e organizador com link, campo da pergunta, e o rail com imagem e o aviso de destinatario
+  - a falha de envio mostra o alerta e mantem o texto no campo, com tentar novamente e voltar ao evento
+  - o fio mostra a pergunta enviada com a marca de enviada, a resposta do organizador e o campo de responder com o botao desabilitado enquanto vazio
+  - o destinatario vem do evento e o autor e a sessao, sem selecao arbitraria
+  - autor e organizador recebem atualizacao, e terceiro nao le a conversa nem por chamada direta sem interface
+  - as rotas de criar e editar evento existem, persistem antes de divulgar, e cancelamento ou alteracao relevante gera aviso a quem confirmou, conforme as preferencias
+  - a tabela ou vinculo novo e as policies que os leem entram na mesma migration, com caso positivo e negativo em pgTAP
+  - o wordmark usado e o canonico, e o botao desabilitado tem contraste legivel
+  - todos os estados fechados - carregando, vazio, erro recuperavel que preserva o texto, envio em andamento sem duplicar, sessao expirada e evento cancelado
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - as rotas novas estao cadastradas em scripts/visual/capture.mjs com fixture concreta
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-029.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e do ciclo de pergunta, resposta, presenca e cancelamento
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: conversa vinculada a evento e capacidade de organizador
+risk_level: R3
+adr: docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
