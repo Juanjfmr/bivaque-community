@@ -1,0 +1,98 @@
+task_id: RECON-036
+
+objective: >
+  O shell de operação entregue pelo RECON-033 passa a cumprir o que a prancha promete:
+  a busca do cabeçalho pesquisa o Bivaque e não prestadores, as quatro rotas de operador
+  voltam a ter entrada, o teclado tem para onde pular, a marca existe no mobile, e a prova
+  do shell passa a ser comportamento observado em vez de substring no arquivo-fonte.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/57-web-operacao-admissoes.png
+  - docs/design/visual-guide-2026-09-06/58-web-operacao-moderacao.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md seção "57-web-operacao-admissoes e 58-web-operacao-moderacao — o shell da operação"
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md seção 0, "Fidelidade comprovada"
+  - Revisão independente de 10/09/2026 sobre o commit 4222035, com gate reexecutado e capturas abertas
+  - AGENTS.md — "implementer != reviewer != runtime-verifier" e "existir não é evidência"
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 10/09/2026 na árvore de codex/ajuste-de-auditoria, commit 4222035, com gate
+    reexecutado verde (exit 0) e capturas abertas uma a uma.
+    1) operator-shell.tsx:74 envia a busca rotulada "Buscar no Bivaque" para /explorar/servicos,
+    que lê search/bairro/tipo e pesquisa prestadores; a busca global do produto existe e é
+    /explorar (explorar/page.tsx:104,112, mesmo rótulo).
+    2) OPERATION_ITEMS (operator-shell.tsx:18-22) tem três itens; (admin)/guide-queue e
+    (admin)/arrivals existem como rotas e ficaram sem qualquer entrada de navegação.
+    3) O <main> (operator-shell.tsx:153) não tem id nem tabIndex e não há link de pular conteúdo.
+    4) Abaixo de md a marca desaparece: o header não a contém e a lateral que a carrega é
+    hidden md:flex.
+    5) tests/unit/ui/recon033-fidelity.test.ts:36-50 afirma substring do arquivo-fonte
+    (toContain('label: "Admissões"')); passa com nav quebrado, link morto ou estado ativo ausente.
+    6) operator-shell.tsx:199-362 inlineia 164 linhas de SVG duplicando lucide-react, que é
+    dependência (apps/web/package.json:25) usada em 28 arquivos do app.
+    7) Os relatórios em .visual/ desta branch trazem apenas {runDir, authenticated, total, high,
+    results}: sem valid, sem proof por captura, sem ator, sem revisão/árvore suja. authenticated
+    prova que uma sessão foi criada, não que o ator certo viu a tela certa.
+
+allowed_paths:
+  - apps/web/app/components/shell/operator-shell.tsx
+  - tests/unit/ui/recon033-fidelity.test.ts
+  - tests/scope/
+  - scripts/visual/
+  - docs/agents/tasks/RECON-036.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - decidir a semântica de "Sair da operação" — ver human_decision; preservar o comportamento atual
+  - alterar o gate de operador, as RPCs de decisão ou o escopo de leitura das filas
+  - mudar schema, migration, policy, seed ou estado do banco compartilhado
+  - trocar a busca global por busca de outro domínio com o mesmo rótulo
+  - descartar, reverter ou tocar a branch codex/fidelidade-pranchas e as 33 alterações sujas da árvore
+  - declarar fidelidade por gate verde ou por zero achados na auditoria mecânica
+
+human_decision:
+  - Sair da operação hoje chama supabase.auth.signOut() e vai para /login (operator-shell.tsx:36-41)
+  - A branch irmã codex/fidelidade-pranchas implementou o mesmo rótulo voltando a /inicio com a sessão preservada
+  - A prancha 58 mostra apenas rótulo e ícone de saída e não desempata entre as duas leituras
+  - Errar para "volta ao início" é recuperável; errar para "desloga" perde trabalho não salvo e força reautenticação
+  - NÃO decidir nesta tarefa — preservar o comportamento atual e afirmar na prova exatamente o que o candidato faz
+
+acceptance:
+  - a busca do cabeçalho envia para a busca global do produto, com o rótulo e o destino no mesmo domínio
+  - Admissões, Denúncias, Guia de chegada e Chegadas têm entrada de navegação; nenhuma rota de operador existente fica inalcançável pelo shell
+  - existe link de pular para o conteúdo e o alvo recebe foco de verdade (id e tabIndex no main)
+  - a marca do produto é visível em 375, 768 e 1440
+  - os ícones vêm de lucide-react, como nos outros 28 arquivos do app; nenhum SVG inline novo
+  - o teste do shell afirma comportamento renderizado, não substring do arquivo-fonte
+  - a captura registra ator, destino final, estado e revisão/árvore suja; captura de rota protegida sem sessão, com papel errado ou em fallback não conta como prova
+  - visitante e membro não operador continuam sem o shell e sem os dados de operação
+  - a entrada Comunidades permanece pendência nomeada enquanto apontar para o diretório do membro, e não fecha o requisito da prancha
+  - gate completo verde no candidato estável, com o código de saída lido diretamente
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-036.task.yml
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 test:unit -- tests/unit/ui/recon033-fidelity.test.ts
+  - captura autenticada de /admissions e /reports em 375/768/1440, com o relatório mostrando ator e destino
+  - prova de navegação exercitando as quatro entradas, o salto por teclado, as duas saídas e a negação para membro e visitante
+
+traps:
+  - NÃO canalize o gate por tail ou head — o código de saída passa a ser o do pipe e um gate vermelho aparece como verde; redirecione para arquivo e leia o código na mesma linha
+  - Antes de acreditar em qualquer captura, compare apps/web/.next/BUILD_ID com o mtime dos arquivos editados; um build anterior à edição faz a prova validar o código antigo, o que aconteceu na revisão de 10/09
+  - A ferramenta de captura insere um perfil no banco local — não rode dev server nem captura entre db:reset e test:db, ou seis asserts de perfil quebram com cara de regressão real
+  - scripts/visual/capture-proof.mjs e operation-proof.mjs já existem no commit 7daf492 de codex/fidelidade-pranchas e resolvem o item 7 do baseline; prefira portá-los e adaptar os rótulos deste shell a escrever um terceiro
+  - O nav deste shell tem aria-label "Operação", não "Painel do operador" como o da branch irmã
+
+risk: >
+  Navegação, acessibilidade e destino de busca do shell que dá acesso às filas de operação,
+  preservando o gate de autorização existente e o comportamento de sessão em vigor.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

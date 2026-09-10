@@ -1,13 +1,37 @@
 "use client"
 
-// Shell das telas de operação (pranchas 57 e 58). O handoff de 09/09 registrou
-// a regressão: o operador ficou sem cabeçalho do produto e sem caminho de
-// volta. As pranchas desenham as duas coisas — cabeçalho com busca, cidade,
-// sino e identificação, e coluna lateral rotulada OPERAÇÃO com saída no
-// rodapé. O rodapé é o MESMO nas duas telas: "← Voltar ao Bivaque" devolve ao
-// produto; "Sair da operação" encerra a sessão. Nenhum dos dois é href vazio.
+// Shell das telas de operação (pranchas 57 e 58), conforme medido na revisão
+// independente de 10/09 e corrigido pelo RECON-036:
+//  - a busca do cabeçalho, rotulada "Buscar no Bivaque", vai para a busca
+//    global do produto (/explorar) — não para /explorar/servicos, que é a
+//    busca de prestadores (outro domínio com o mesmo rótulo);
+//  - as quatro rotas de operador existentes têm entrada: Admissões, Denúncias,
+//    Guia de chegada e Chegadas. "Comunidades" aparece como na prancha, mas
+//    aponta para o diretório do membro — pendência nomeada no card RECON-033/
+//    RECON-036 até existir fila operacional de comunidades;
+//  - o cabeçalho carrega a marca em todas as larguras (375/768/1440);
+//  - link "Pular para o conteúdo" com alvo real (id + tabIndex no main);
+//  - ícones vêm de lucide-react, como nos outros arquivos do app.
+// O rodapé é o MESMO nas duas telas: "← Voltar ao Bivaque" devolve ao produto
+// com a sessão preservada; "Sair da operação" encerra a sessão (signOut →
+// /login). A semântica de "Sair da operação" é decisão pendente do dono
+// (human_decision do RECON-036) — o comportamento atual foi preservado e é o
+// que a prova de runtime afirma. Nenhum dos dois é href vazio.
 
 import { brandTokens } from "@bivaque/tokens"
+import {
+  ArrowLeft,
+  Bell,
+  BookOpen,
+  ChevronDown,
+  Flag,
+  LogOut,
+  MapPin,
+  PlaneLanding,
+  Search,
+  UserRound,
+  Users,
+} from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -15,11 +39,19 @@ import type { ReactNode } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "../bivaque/avatar"
 
-const OPERATION_ITEMS = [
-  { href: "/admissions" as Route, label: "Admissões", Icon: AdmissionsIcon },
-  { href: "/reports" as Route, label: "Denúncias", Icon: ReportsIcon },
-  { href: "/communities" as Route, label: "Comunidades", Icon: CommunitiesIcon },
+const OPERATION_ITEMS: { href: Route; label: string; Icon: typeof Flag }[] = [
+  { href: "/admissions", label: "Admissões", Icon: UserRound },
+  { href: "/reports", label: "Denúncias", Icon: Flag },
+  { href: "/guide-queue", label: "Guia de chegada", Icon: BookOpen },
+  { href: "/arrivals", label: "Chegadas", Icon: PlaneLanding },
+  // Pranchas 57/58 desenham "Comunidades" como par de Admissões e Denúncias.
+  // Não existe fila operacional de comunidades; a entrada aponta para o
+  // diretório do membro (/communities) e essa divergência é pendência
+  // nomeada no card, não um requisito da prancha fechado.
+  { href: "/communities", label: "Comunidades", Icon: Users },
 ]
+
+const CONTENT_TARGET = "operacao-conteudo"
 
 export function OperatorShell({
   displayName,
@@ -33,12 +65,17 @@ export function OperatorShell({
   const pathname = usePathname()
   const router = useRouter()
 
+  // Comportamento em vigor, preservado por decisão do contrato: encerra a
+  // sessão. A alternativa ("voltar ao início sem deslogar") existe na branch
+  // irmã e é human_decision pendente — não decidir aqui.
   async function sairDaOperacao() {
     const supabase = createBrowserClient()
     await supabase.auth.signOut()
     router.replace("/login")
     router.refresh()
   }
+
+  const isActive = (href: Route) => pathname === href || pathname.startsWith(`${href}/`)
 
   const footer = (
     <>
@@ -48,7 +85,7 @@ export function OperatorShell({
           href="/inicio"
           className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-[var(--semantic-selected)] hover:text-foreground"
         >
-          <ArrowLeftIcon />
+          <ArrowLeft size={20} aria-hidden="true" className="shrink-0" />
           <span>Voltar ao Bivaque</span>
         </Link>
         <button
@@ -56,7 +93,7 @@ export function OperatorShell({
           onClick={sairDaOperacao}
           className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-[var(--semantic-selected)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus)]"
         >
-          <ExitIcon />
+          <LogOut size={20} aria-hidden="true" className="shrink-0" />
           <span>Sair da operação</span>
         </button>
       </div>
@@ -65,25 +102,40 @@ export function OperatorShell({
 
   return (
     <div className="flex min-h-dvh flex-col bg-[var(--semantic-canvas)]">
+      <a
+        href={`#${CONTENT_TARGET}`}
+        className="fixed left-4 top-4 z-[60] inline-flex min-h-11 -translate-y-32 items-center rounded-lg border border-border bg-[var(--semantic-surface)] px-4 text-sm font-medium shadow-md transition-transform focus:translate-y-0"
+      >
+        Pular para o conteúdo
+      </a>
       <header className="sticky top-0 z-50 border-b border-border bg-[var(--semantic-surface)]">
         <div className="flex h-[var(--semantic-nav-height)] items-center gap-3 px-4">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
+          <Link
+            href="/inicio"
+            aria-label="Bivaque, início"
+            className="flex min-h-11 shrink-0 items-center rounded-lg px-1 transition-colors hover:bg-[var(--semantic-selected)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus)]"
+          >
+            <span className="text-base font-semibold tracking-tight text-[var(--semantic-action-primary)]">
+              {brandTokens.productName}
+            </span>
+          </Link>
+          <div className="flex min-w-0 flex-1 items-center">
             <search className="hidden min-w-0 flex-1 justify-center md:flex">
-              <form
-                method="get"
-                action="/explorar/servicos"
-                className="flex w-full max-w-md items-center"
-              >
+              <form method="get" action="/explorar" className="flex w-full max-w-md items-center">
                 <label htmlFor="operacao-busca" className="sr-only">
                   Buscar no Bivaque
                 </label>
-                <SearchIcon />
+                <Search
+                  size={16}
+                  aria-hidden="true"
+                  className="pointer-events-none ml-3 -mr-8 shrink-0 text-muted"
+                />
                 <input
                   id="operacao-busca"
                   type="search"
                   name="search"
                   placeholder="Buscar no Bivaque"
-                  className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-[var(--semantic-surface)] py-2 pl-9 pr-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--semantic-focus)]"
+                  className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-[var(--semantic-surface)] py-2 pl-8 pr-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--semantic-focus)]"
                 />
               </form>
             </search>
@@ -94,9 +146,13 @@ export function OperatorShell({
                 href="/localidade"
                 className="hidden min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)] sm:inline-flex"
               >
-                <MapIcon />
+                <MapPin
+                  size={16}
+                  aria-hidden="true"
+                  className="text-[var(--semantic-action-primary)]"
+                />
                 {cityLabel}
-                <ChevronDownIcon />
+                <ChevronDown size={16} aria-hidden="true" className="text-muted" />
               </Link>
             )}
             <Link
@@ -104,7 +160,7 @@ export function OperatorShell({
               aria-label="Notificações"
               className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors hover:bg-[var(--semantic-selected)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus)]"
             >
-              <BellIcon />
+              <Bell size={20} aria-hidden="true" />
             </Link>
             <Link
               href="/profile"
@@ -112,7 +168,7 @@ export function OperatorShell({
             >
               <MemberAvatar name={displayName} size="sm" />
               <span className="hidden max-w-36 truncate lg:inline">{displayName}</span>
-              <ChevronDownIcon />
+              <ChevronDown size={16} aria-hidden="true" className="text-muted" />
             </Link>
           </div>
         </div>
@@ -120,15 +176,10 @@ export function OperatorShell({
 
       <div className="flex flex-1">
         <aside className="hidden w-56 shrink-0 flex-col border-r border-border bg-[var(--semantic-surface)] md:flex">
-          <div className="flex h-[var(--semantic-nav-height)] items-center border-b border-border px-4">
-            <span className="text-base font-semibold tracking-tight text-[var(--semantic-action-primary)]">
-              {brandTokens.productName}
-            </span>
-          </div>
           <nav aria-label="Operação" className="flex flex-col gap-1 p-3">
             <p className="px-3 pb-1 text-xs uppercase tracking-wide text-muted">Operação</p>
             {OPERATION_ITEMS.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+              const active = isActive(item.href)
               return (
                 <Link
                   key={item.href}
@@ -140,7 +191,7 @@ export function OperatorShell({
                       : "text-muted hover:bg-[var(--semantic-selected)] hover:text-foreground"
                   }`}
                 >
-                  <item.Icon />
+                  <item.Icon size={20} aria-hidden="true" className="shrink-0" />
                   <span>{item.label}</span>
                 </Link>
               )
@@ -150,17 +201,19 @@ export function OperatorShell({
           {footer}
         </aside>
 
-        <main className="min-w-0 flex-1">{children}</main>
+        <main id={CONTENT_TARGET} tabIndex={-1} className="min-w-0 flex-1">
+          {children}
+        </main>
       </div>
 
-      {/* Abaixo de md a coluna não cabe; as mesmas saídas e seções continuam
+      {/* Abaixo de md a coluna não cabe; as mesmas entradas e saídas continuam
           existindo — o operador nunca fica sem caminho de volta. */}
       <nav
         aria-label="Operação (mobile)"
         className="flex gap-1 overflow-x-auto border-t border-border bg-[var(--semantic-surface)] p-2 md:hidden"
       >
         {OPERATION_ITEMS.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const active = isActive(item.href)
           return (
             <Link
               key={item.href}
@@ -172,6 +225,7 @@ export function OperatorShell({
                   : "text-muted"
               }`}
             >
+              <item.Icon size={20} aria-hidden="true" className="shrink-0" />
               {item.label}
             </Link>
           )
@@ -180,7 +234,7 @@ export function OperatorShell({
           href="/inicio"
           className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted"
         >
-          <ArrowLeftIcon />
+          <ArrowLeft size={20} aria-hidden="true" className="shrink-0" />
           Voltar ao Bivaque
         </Link>
         <button
@@ -188,175 +242,10 @@ export function OperatorShell({
           onClick={sairDaOperacao}
           className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted"
         >
-          <ExitIcon />
+          <LogOut size={20} aria-hidden="true" className="shrink-0" />
           Sair da operação
         </button>
       </nav>
     </div>
-  )
-}
-
-function AdmissionsIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-5 w-5 shrink-0"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M19 8v6" />
-      <path d="M22 11h-6" />
-    </svg>
-  )
-}
-
-function ReportsIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-5 w-5 shrink-0"
-    >
-      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-      <line x1="4" y1="22" x2="4" y2="15" />
-    </svg>
-  )
-}
-
-function CommunitiesIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-5 w-5 shrink-0"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  )
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      aria-hidden="true"
-      className="pointer-events-none ml-3 -mr-9 h-4 w-4 text-muted"
-    >
-      <circle cx="11" cy="11" r="7" />
-      <path d="m20 20-3.5-3.5" />
-    </svg>
-  )
-}
-
-function MapIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-4 w-4 text-[var(--semantic-action-primary)]"
-    >
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  )
-}
-
-function BellIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-5 w-5"
-    >
-      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-    </svg>
-  )
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-4 w-4 text-muted"
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  )
-}
-
-function ArrowLeftIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-5 w-5 shrink-0"
-    >
-      <path d="m12 19-7-7 7-7" />
-      <path d="M19 12H5" />
-    </svg>
-  )
-}
-
-function ExitIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="h-5 w-5 shrink-0"
-    >
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <path d="m16 17 5-5-5-5" />
-      <path d="M21 12H9" />
-    </svg>
   )
 }
