@@ -97,7 +97,14 @@ async function fetchOwnReportByReason(
 ): Promise<ReportRow[]> {
   const query = new URLSearchParams({
     select: "id,target_id,reason,status",
-    reason: `eq.${reason}`,
+    // O app grava "<categoria>: <explicacao>" desde a RECON-016 (prancha 56),
+    // entao igualdade exata contra a explicacao crua nunca casa — e este
+    // mesmo teste afirma logo abaixo que o motivo CONTEM "Outro: ". O sufixo
+    // identifica a denuncia desta execucao: a explicacao carrega Date.now()
+    // em base36. Sem isto, o primeiro viewport cria a denuncia mas nao a
+    // encontra, e os dois seguintes colidem com o indice parcial
+    // reports_one_open_per_reporter_target_idx.
+    reason: `like.*${reason}`,
   })
   const api = await request.newContext()
   try {
