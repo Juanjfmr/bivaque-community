@@ -21,7 +21,10 @@ CREATE OR REPLACE FUNCTION public.is_account_suspended(p_user_id uuid)
   LANGUAGE sql
   STABLE
   SECURITY DEFINER
-  SET search_path = public, pg_temp
+  -- Padrao canonico do repo para SECURITY DEFINER: search_path vazio, e todo
+  -- objeto qualificado no corpo. `public, pg_temp` deixa pg_temp resolvivel e
+  -- e superficie desnecessaria numa funcao que le RLS por baixo.
+  SET search_path = ''
 AS $$
   SELECT COALESCE(
     (SELECT is_suspended FROM public.profiles WHERE user_id = p_user_id),
@@ -29,18 +32,17 @@ AS $$
   );
 $$;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_proc p
-    JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'public' AND p.proname = 'is_account_suspended'
-  ) THEN
-    REVOKE ALL ON FUNCTION public.is_account_suspended(uuid) FROM PUBLIC;
-    GRANT EXECUTE ON FUNCTION public.is_account_suspended(uuid) TO authenticated;
-  END IF;
-END
-$$;
+-- Os grants rodam INCONDICIONALMENTE, e sao idempotentes.
+--
+-- Antes viviam dentro de um `DO ... IF NOT EXISTS (proname =
+-- 'is_account_suspended')`, logo depois do CREATE OR REPLACE acima. A funcao
+-- sempre existe nesse ponto, entao a condicao era sempre falsa e o bloco nunca
+-- executava: a funcao ficava com o grant default do CREATE FUNCTION, que e
+-- EXECUTE para PUBLIC. Como ela e SECURITY DEFINER e le profiles.is_suspended
+-- por baixo da RLS, `anon` conseguia enumerar o status de suspensao de
+-- qualquer conta sem autenticar.
+REVOKE ALL ON FUNCTION public.is_account_suspended(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_account_suspended(uuid) TO authenticated;
 
 -- 3) Policies de INSERT vetam conta suspensa. Recria com a restricao.
 
