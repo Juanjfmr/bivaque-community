@@ -229,7 +229,7 @@ function GuideContent() {
             placeholder="Buscar por nome ou descrição..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="min-h-11 w-full bg-transparent text-sm focus:outline-none"
+            className="min-h-11 w-full bg-transparent text-sm transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none"
           />
         </div>
       </search>

@@ -12,7 +12,6 @@ import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../components/bivaque/skeleton"
 import {
-  AFFILIATION_SEMANTICS_NOTE,
   type AffiliationDraft,
   type AffiliationRow,
   ARMED_FORCE_NONE_ID,
@@ -516,10 +515,6 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              <p role="note" className="text-sm leading-relaxed text-muted">
-                {AFFILIATION_SEMANTICS_NOTE}
-              </p>
-
               {nameFeedback && (
                 <FeedbackAlert
                   variant={nameFeedback.type === "success" ? "success" : "danger"}
@@ -620,7 +615,7 @@ export default function ProfilePage() {
               <div className="mt-3">
                 <a
                   href="/profile/interests"
-                  className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--accent)] hover:underline"
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--accent)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline"
                 >
                   Escolher assuntos de interesse
                 </a>
@@ -645,7 +640,7 @@ export default function ProfilePage() {
           <div className="sticky top-6 space-y-3">
             <a
               href="#configuracoes"
-              className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border bg-[var(--surface)] p-4 hover:bg-[var(--surface-sunken)]"
+              className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border bg-[var(--surface)] p-4 transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--surface-sunken)]"
             >
               <span className="flex min-w-0 items-center gap-3">
                 <Settings aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--muted)]" />

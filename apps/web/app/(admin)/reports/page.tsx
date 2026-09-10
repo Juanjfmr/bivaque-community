@@ -348,10 +348,6 @@ export default async function AdminReportsPage({
                     <span aria-hidden="true">{filters.ordem === "antigas" ? "↑" : "↓"}</span>
                   </Link>
                 </th>
-                <th scope="col" className="px-4 py-3 font-medium">
-                  <span className="sr-only md:hidden">Ações</span>
-                  <span className="hidden md:inline">Ações</span>
-                </th>
               </tr>
             </thead>
             <tbody>
@@ -359,8 +355,13 @@ export default async function AdminReportsPage({
                 <tr key={row.id} className="border-b border-border last:border-b-0">
                   <td className="max-w-64 px-4 py-3">
                     <p className="font-medium">
-                      {shortLabel(row.excerpt) ||
-                        "conteúdo não encontrado — pode já ter sido removido"}
+                      <Link
+                        href={`/reports/${row.id}` as Route}
+                        className="inline-flex min-h-11 items-center text-left transition-colors hover:underline"
+                      >
+                        {shortLabel(row.excerpt) ||
+                          "conteúdo não encontrado — pode já ter sido removido"}
+                      </Link>
                     </p>
                     {row.openReportsOnTarget > 1 && (
                       <p className="mt-0.5 text-xs font-medium text-danger">
@@ -390,14 +391,6 @@ export default async function AdminReportsPage({
                   </td>
                   <td className="hidden px-4 py-3 text-muted md:table-cell">
                     {formatDate(row.created_at)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/reports/${row.id}` as Route}
-                      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-sunken)]"
-                    >
-                      Abrir
-                    </Link>
                   </td>
                 </tr>
               ))}

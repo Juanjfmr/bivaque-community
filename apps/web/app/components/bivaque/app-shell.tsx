@@ -1,16 +1,15 @@
 "use client"
 
 import { brandTokens } from "@bivaque/tokens"
-import { Button, Kbd, Tooltip } from "@heroui/react"
+import { Kbd, Tooltip } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
-import { Bell, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
+import { Bell, ChevronsLeft, MapPin, PanelLeft, Settings } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
 import { MemberAvatar } from "./avatar"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
-import { CreatePostModal } from "./feed-post"
 
 interface AppShellProperties {
   children: ReactNode
@@ -24,7 +23,6 @@ const EXPANDABLE_QUERY = "(min-width: 1024px)"
 export function AppShell({ children }: AppShellProperties) {
   const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [createPostOpen, setCreatePostOpen] = useState(false)
   const { current } = useLocalityContext()
   const { communities, displayName, unreadCount } = useMemberContext()
   // Read synchronously on the first client render so a tablet never paints the
@@ -59,14 +57,6 @@ export function AppShell({ children }: AppShellProperties) {
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [])
-
-  const handlePostCreated = useCallback(() => {
-    setCreatePostOpen(false)
-  }, [])
-
-  const handlePostClose = useCallback(() => {
-    setCreatePostOpen(false)
   }, [])
 
   return (
@@ -108,23 +98,6 @@ export function AppShell({ children }: AppShellProperties) {
 
           {/* Right section */}
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="primary"
-              aria-label="Criar publicação"
-              onPress={() => setCreatePostOpen(true)}
-            >
-              Publicar
-            </Button>
-
-            <a
-              href="/recommendations"
-              aria-label="Indicações"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
-            >
-              <Lightbulb size={20} aria-hidden="true" />
-            </a>
-
             <a
               href="/notifications"
               aria-label="Notificações"
@@ -336,15 +309,6 @@ export function AppShell({ children }: AppShellProperties) {
 
       {/* Bottom nav (mobile) */}
       <BottomNav />
-
-      {/* CreatePostModal */}
-      {createPostOpen && (
-        <CreatePostModal
-          localityId={current.id}
-          onCreated={handlePostCreated}
-          onClose={handlePostClose}
-        />
-      )}
 
       {/* Keyboard shortcut hint */}
       <div className="hidden lg:flex fixed bottom-4 right-4 z-30">

@@ -37,6 +37,20 @@ const ROUTES = [
   { path: "/reports", name: "admin-reports", auth: true },
   { path: "/admissions", name: "admin-admissions", auth: true },
   { path: "/guide-queue", name: "admin-guide-queue", auth: true },
+  // Reconstrucao dos grupos A e D (RECON-009, 012, 013): tres telas entregues
+  // que a captura nao enxergava. Sem elas, "auditoria visual das 10 telas"
+  // auditava sete.
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000001",
+    name: "community-detail",
+    auth: true,
+  },
+  { path: "/configuracoes", name: "configuracoes", auth: true },
+  {
+    path: "/guide/a0000000-0000-4000-8000-000000000001",
+    name: "guide-entry",
+    auth: true,
+  },
   { path: "/groups", name: "groups", auth: true },
   { path: "/groups/70000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
   { path: "/profile", name: "profile", auth: true },
@@ -162,8 +176,18 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
 
   const describe = (element) => {
     const id = element.id ? `#${element.id}` : ""
-    const cls = typeof element.className === "string" ? `.${element.className.split(/\s+/)[0]}` : ""
-    return `${element.tagName.toLowerCase()}${id}${cls}`.slice(0, 80)
+    const cls =
+      typeof element.className === "string" && element.className.trim().length > 0
+        ? `.${element.className.trim().split(/\s+/)[0]}`
+        : ""
+    // Sem contexto, um achado em `input.` nao diz QUAL controle consertar —
+    // foi o que travou a correcao dos achados de /profile em 09/09. O tipo e o
+    // data-slot do ancestral mais proximo identificam o componente sem depender
+    // de classe, que o HeroUI nem sempre poe no elemento interativo.
+    const type = element.getAttribute("type")
+    const slot = element.closest("[data-slot]")?.getAttribute("data-slot") ?? ""
+    const extra = `${type ? `[${type}]` : ""}${slot ? `@${slot}` : ""}`
+    return `${element.tagName.toLowerCase()}${id}${cls}${extra}`.slice(0, 120)
   }
 
   const parseColor = (value) => {
@@ -231,7 +255,27 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     }
   }
 
+  // Controle escondido do React Aria: `Checkbox`, `Switch` e `Radio` renderizam
+  // um <input> real dentro de um wrapper recortado (clip-path: inset(50%),
+  // 1px), e quem recebe o clique, o foco e o nome acessível é o label ao lado.
+  //
+  // Auditar esse input como alvo de toque produz um high por controle — 24 só
+  // na tela de perfil, todos falsos: ninguém toca nele, e ele não deve ter nome
+  // próprio, senão o leitor de tela anuncia o controle duas vezes.
+  const dentroDeWrapperOculto = (element) => {
+    let node = element.parentElement
+    while (node && node !== document.body) {
+      const style = getComputedStyle(node)
+      const recortado = style.clipPath === "inset(50%)" || style.clip === "rect(0px, 0px, 0px, 0px)"
+      const box = node.getBoundingClientRect()
+      const minusculo = box.width <= 1 && box.height <= 1
+      if (recortado || minusculo) return true
+      node = node.parentElement
+    }
+    return false
+  }
   for (const element of interactive) {
+    if (dentroDeWrapperOculto(element)) continue
     const box = element.getBoundingClientRect()
     if (box.width === 0 && box.height === 0) continue
 
@@ -262,6 +306,25 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     // HeroUI lesson — its Input does not forward aria-label). Without this
     // resolution every properly-labeled input is a false positive every wave.
     let name = (element.getAttribute("aria-label") ?? "").trim()
+    // `aria-labelledby` é fonte de nome acessível tão válida quanto
+    // `aria-label` e `label[for]` — e tem PRECEDÊNCIA sobre as duas na ordem
+    // do accname. A regra não a resolvia, então todo controle rotulado por
+    // referência aparecia como high sem nome: a tela de perfil sozinha
+    // produzia 60 achados assim, todos falsos.
+    //
+    // O atributo aceita VÁRIOS ids separados por espaço, e o nome é a
+    // concatenação dos textos na ordem em que aparecem.
+    if (name.length === 0) {
+      const refs = (element.getAttribute("aria-labelledby") ?? "").trim()
+      if (refs.length > 0) {
+        name = refs
+          .split(/\s+/)
+          .map((id) => document.getElementById(id)?.textContent?.trim() ?? "")
+          .filter((part) => part.length > 0)
+          .join(" ")
+          .trim()
+      }
+    }
     if (name.length === 0 && element.id) {
       const labeled = document.querySelector(`label[for="${CSS.escape(element.id)}"]`)
       name = (labeled?.textContent ?? "").trim()
@@ -386,8 +449,11 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     if (nav.offsetWidth === 0 && nav.offsetHeight === 0) continue
     const anchors = nav.querySelectorAll("a")
     if (anchors.length === 0) continue
+    // aria-current vale em QUALQUER elemento, nao so em ancora: numa trilha de
+    // navegacao o item atual e corretamente um nao-link (a pessoa ja esta nele),
+    // e exigir <a> reprovava breadcrumb bem marcado.
     const current = nav.querySelectorAll(
-      'a[aria-current="page"], a[data-active="true"], a[role="tab"][aria-selected="true"]',
+      '[aria-current="page"], a[data-active="true"], a[role="tab"][aria-selected="true"]',
     )
     if (current.length !== 1) {
       add(

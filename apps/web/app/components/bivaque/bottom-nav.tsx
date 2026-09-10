@@ -105,11 +105,37 @@ export function BottomNav() {
 
   const items = NAV_ITEMS
 
-  const fallbackId =
-    pathname.startsWith("/messages") || pathname.startsWith("/notifications") ? "perfil" : "inicio"
-  const selectedKey =
-    items.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
-    fallbackId
+  // Rota secundária acende o container a que ela PERTENCE, não o Início.
+  //
+  // O fallback anterior mandava tudo que não fosse um dos quatro containers
+  // para `inicio`, então quem estava em /configuracoes ou num artigo do guia
+  // via o menu dizer que estava no Início — a navegação mentindo sobre onde a
+  // pessoa está.
+  //
+  // O mapa abaixo vem das próprias pranchas: a 52 (configurações) acende
+  // "Perfil" e a 25 (artigo do guia) acende "Explorar".
+  const CONTAINER_POR_PREFIXO: Array<[string, string]> = [
+    ["/configuracoes", "perfil"],
+    ["/messages", "perfil"],
+    ["/notifications", "perfil"],
+    ["/guide", "explorar"],
+    ["/prestador", "explorar"],
+    ["/prestadores", "explorar"],
+    ["/recommendations", "explorar"],
+    ["/communities", "comunidades"],
+    ["/community", "comunidades"],
+    ["/groups", "comunidades"],
+    ["/events", "inicio"],
+    ["/localidade", "inicio"],
+  ]
+
+  const direto = items.find(
+    (item) => item.href === pathname || pathname.startsWith(`${item.href}/`),
+  )?.id
+  const porPrefixo = CONTAINER_POR_PREFIXO.find(
+    ([prefixo]) => pathname === prefixo || pathname.startsWith(`${prefixo}/`),
+  )?.[1]
+  const selectedKey = direto ?? porPrefixo ?? "inicio"
 
   return (
     <nav
