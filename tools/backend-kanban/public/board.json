@@ -2095,6 +2095,44 @@
       "phase": "Reconstrução",
       "updatedAt": "2026-09-09",
       "sourceRevision": "2f87f12"
+    },
+    {
+      "id": "BLOCK-SUSPENSION-EXPOSURE",
+      "title": "Status de suspensão vaza pela coluna em profiles (na main)",
+      "phase": "Launch blocker",
+      "priority": "BLOCK",
+      "category": "backend",
+      "status": "blocked",
+      "description": "is_suspended vive em public.profiles, cuja policy de SELECT libera a linha inteira a quem compartilha localidade ou comunidade. Qualquer membro autenticado lê o status de suspensão de terceiros pela Data API. Está na main desde o merge do PR #54. Contraria o ADR-20260901 §4.3 anti-enumeração e a decisão de que is_suspended é visível apenas para o próprio dono. Fechar exige tirar a coluna da exposição do Data API — schema e policy sobre dado pessoal, R3.",
+      "checklist": [
+        "Decidir o desenho: tabela própria com RLS owner-only no padrão profile_affiliations, ou view/revoke de coluna",
+        "Definir o que a UI passa a ler — o ADR-20260901 previa o JWT claim app_metadata.is_suspended",
+        "Migration timestamped movendo a coluna e recriando na MESMA migration todas as policies que a leem",
+        "Preservar o veto de publicação: cinco policies INSERT chamam is_account_suspended(auth.uid())",
+        "pgTAP negativo: membro da mesma cidade NÃO lê is_suspended de terceiro — hoje esse teste falharia",
+        "pgTAP positivo: o próprio dono lê o seu status",
+        "function_privs_are sobre public.is_account_suspended: nenhum teste cobre privilégio dessa função"
+      ],
+      "proof": [
+        "Medido em 10/09/2026 no stack local. GET /rest/v1/profiles?select=user_id,is_suspended&user_id=eq.<terceiro> devolve {\"is_suspended\":true} para membro autenticado que compartilha localidade.",
+        "RLS é por linha, não por coluna: profiles_select_visible_in_locality (20260817031237) e profiles_select_community_comember liberam a linha inteira.",
+        "Merjado na main em 15a884d (PR #54, 10/09/2026 16:55 UTC); confirmado por git show origin/main.",
+        "42c055d e 3acaadd fecharam as duas vias de RPC — anon recebe 42501, membro recebe false para terceiro — e NÃO fecham a coluna.",
+        "O veto de publicação continua funcionando: conta suspensa recebe 42501 ao inserir em posts. A correção não pode regredir isso.",
+        "CI verde no 3acaadd e merge limpo não cobrem esta via: nenhum teste exercita leitura de is_suspended por terceiro.",
+        "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR."
+      ],
+      "blockers": [
+        "Decisão R3 do responsável sobre onde a coluna passa a viver e o que a UI lê no lugar"
+      ],
+      "links": [
+        "ADR | ../../docs/decisions/ADR-20260901-account-suspension.md",
+        "PR merjado | https://github.com/Juanjfmr/bivaque-community/pull/54"
+      ],
+      "updatedAt": "2026-09-10",
+      "sourceRevision": "15a884d",
+      "dependencies": [],
+      "completedChecklist": [false, false, false, false, false, false, false]
     }
   ]
 }
