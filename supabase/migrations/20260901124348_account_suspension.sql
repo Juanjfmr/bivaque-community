@@ -26,10 +26,22 @@ CREATE OR REPLACE FUNCTION public.is_account_suspended(p_user_id uuid)
   -- e superficie desnecessaria numa funcao que le RLS por baixo.
   SET search_path = ''
 AS $$
-  SELECT COALESCE(
-    (SELECT is_suspended FROM public.profiles WHERE user_id = p_user_id),
-    false
-  );
+  -- So o proprio dono recebe o status real. Restringir o EXECUTE a
+  -- `authenticated` fecha o anonimo, mas nao o membro: sem esta guarda,
+  -- qualquer conta autenticada chama /rpc/is_account_suspended com o uuid de
+  -- um terceiro (que e publico no perfil) e enumera quem esta suspenso --
+  -- exatamente o que o ADR-20260901 proibe em "Exposicao ao membro"
+  -- (§4.3 anti-enumeracao: outro membro nao pode saber se um terceiro esta
+  -- suspenso). Para terceiros a funcao responde `false`, nunca a verdade.
+  --
+  -- O uso em RLS e preservado: as policies chamam
+  -- `is_account_suspended(auth.uid())`, entao p_user_id = auth.uid() e o veto
+  -- continua valendo para o proprio autor.
+  SELECT p_user_id = (SELECT auth.uid())
+     AND COALESCE(
+       (SELECT is_suspended FROM public.profiles WHERE user_id = p_user_id),
+       false
+     );
 $$;
 
 -- Os grants rodam INCONDICIONALMENTE, e sao idempotentes.
