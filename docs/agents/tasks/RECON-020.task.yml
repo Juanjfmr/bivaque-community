@@ -1,0 +1,69 @@
+task_id: RECON-020
+
+objective: >
+  O contexto e a personalizacao passam a ser os da prancha 39, e a apresentacao curta da prancha
+  51 passa a existir - escolher cidade, preencher foto, nome, interesses, Forca Armada e OM
+  opcionais com visibilidade individual desligada, e uma apresentacao que o perfil mostra.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/39-web-onboarding-contexto.png
+  - docs/design/visual-guide-2026-09-06/51-web-perfil.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 39-web-onboarding-contexto
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.1 R14 R15 R16 e secao 4.8 C02
+  - docs/decisions/ADR-20260908-perfil-campos-opcionais.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    /onboarding/locality e /onboarding/welcome existem, /onboarding/perfil nao existe, e a
+    tabela profiles nao tem coluna de apresentacao curta - o handoff de 09/09 registra a
+    apresentacao como divergencia aberta da prancha 51 que depende de banco. Medido em
+    09/09/2026 na arvore de codex/ajuste-de-auditoria.
+
+allowed_paths:
+  - apps/web/app/(preauth)/onboarding/
+  - apps/web/app/(shell)/profile/
+  - apps/web/lib/profile/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-020.task.yml
+
+forbidden:
+  - inferir Forca Armada ou organizacao militar a partir da verificacao
+  - ligar qualquer controle de exibicao por padrao
+  - chamar de remover um controle que apenas oculta
+  - exigir adesao a comunidade para concluir a etapa
+  - conceder participacao privada ao escolher cidade
+  - persistir apresentacao curta sem limite de tamanho e sem a varredura de conteudo proibido
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a escolha de cidade segue a prancha 39 - stepper de tres passos, busca por cidade, cartoes selecionaveis com nome e UF e o selecionado destacado
+  - a personalizacao segue a prancha 39 - foto opcional, nome, interesses em chips, e as duas colunas com Forca Armada e OM opcionais, cada uma com Exibir no perfil desligado
+  - Pular por enquanto conclui a etapa sem inventar afiliacao
+  - a apresentacao curta grava, aparece no perfil conforme a visibilidade do perfil e respeita o limite de 300 caracteres que o contador da tela mostra
+  - esvaziar a apresentacao apaga o valor, e a leitura por outra conta deixa de retorna-lo
+  - a coluna nova e as policies que a leem entram na mesma migration, com caso positivo e negativo em pgTAP
+  - segunda conta le somente os campos permitidos, e desligar a exibicao afeta consulta e cache
+  - todos os estados fechados - carregando, erro recuperavel que preserva campo nao sensivel, e conflito
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - as rotas tocadas estao cadastradas em scripts/visual/capture.mjs
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-020.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: campo pessoal opcional e visibilidade
+risk_level: R3
+adr: docs/decisions/ADR-20260909-perfil-bio.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

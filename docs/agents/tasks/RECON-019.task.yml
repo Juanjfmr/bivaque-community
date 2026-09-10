@@ -1,0 +1,73 @@
+task_id: RECON-019
+
+objective: >
+  A admissao web passa a ser a das pranchas 38 e 69: escolher como verificar, enviar o CPF pelo
+  caminho rapido, e enviar a identidade militar digital como arquivo unico completo com
+  substituicao integral quando a leitura falhar, com a situacao lida do servidor.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/38-web-auth-admissao.png
+  - docs/design/visual-guide-2026-09-06/69-web-identidade-recuperacao.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 38-web-auth-admissao e secao 69-web-identidade-recuperacao
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.1 R11 R12 R13
+  - docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Existem onboarding, document-actions.ts, /api/onboarding e /api/onboarding/status, e nao
+    existe a rota de envio de documento da prancha 69. O versionamento da submissao e a
+    invalidacao do resultado anterior no reenvio nunca foram comprovados. Medido em 09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(preauth)/onboarding/
+  - apps/web/app/api/onboarding/
+  - apps/web/lib/onboarding/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-019.task.yml
+
+forbidden:
+  - pedir frente e verso, fotografia do documento digital ou divisao em anexos
+  - persistir CPF cru, payload do Portal, organizacao militar inferida, posto ou endereco
+  - ecoar documento, identificador de arquivo ou resultado de provedor em log
+  - apresentar espera como recusa, ou avancar estado sem confirmacao do servidor
+  - substituir reconhecimento automatico por aprovacao manual e declarar entregue
+  - dar ao cliente URL de leitura do documento sem assinatura curta emitida pelo servidor
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a tela de verificacao segue a prancha 38 - cartao Seu progresso com tres passos, quatro radios, campo de CPF, apoio sobre a rapidez e botao desabilitado com campo vazio
+  - a rota de envio de documento existe e segue a prancha 69 - area de upload de arquivo unico, apoio sobre documento completo, botao desabilitado sem arquivo e link de voltar
+  - o estado de arquivo ilegivel mostra o alerta, a miniatura, o rotulo nao legivel e a substituicao integral do arquivo
+  - a submissao e versionada e o reenvio invalida o resultado do arquivo anterior
+  - upload interrompido nao deixa arquivo orfao alcancavel
+  - a situacao lida em /onboarding/status vem do servidor e sobrevive a recarregar e a nova sessao
+  - conta sem direito de leitura recebe negativa ao pedir o documento por chamada direta sem interface
+  - a coluna ou tabela nova e as policies que a leem entram na mesma migration
+  - todos os estados fechados - carregando, erro recuperavel, envio em andamento sem duplicar e conflito de decisao concorrente
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1 inclusive no botao desabilitado, alvos maiores ou iguais a 44x44
+  - as rotas tocadas estao cadastradas em scripts/visual/capture.mjs
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-019.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: admissao e documento de identidade
+risk_level: R3
+adr: docs/decisions/ADR-20260816-forma-da-admissao.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+blocked_by: >
+  BLOCK-LEGAL-AI mantem aberto o reconhecimento automatico do documento - fornecedor e
+  governanca nao decididos. Armazenamento, versionamento, substituicao e situacao fecham nesta
+  entrega; a transicao que depende do reconhecimento fica declarada como pendente.
+closure:
+  requires_runtime_evidence: true

@@ -1,0 +1,68 @@
+task_id: RECON-035
+
+objective: >
+  A conversa passa a registrar qual resposta resolveu a pergunta - a autora marca uma resposta
+  da propria pergunta, a marca aparece na resposta destacada da prancha 15, e some quando a
+  resposta e apagada ou a pergunta e reaberta.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/15-web-conversa.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 15-web-conversa
+  - docs/decisions/ADR-20260909-resposta-que-resolveu.md
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.3 R25
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Conferido em 09/09/2026: recommendation_requests tem is_resolved, resolved_at e resolved_by,
+    e resolved_by referencia auth.users - guarda quem resolveu, nao qual resposta. Nao existe
+    coluna nem tabela marcando a resposta que ajudou, e recommendation_reply_promotions liga
+    reply_id a guide_entry_id, que e a promocao para o Guia e nao esta marca.
+
+allowed_paths:
+  - apps/web/app/(shell)/publicacoes/
+  - apps/web/lib/recommendations/
+  - supabase/migrations/
+  - supabase/tests/
+  - tests/unit/
+  - docs/agents/tasks/RECON-035.task.yml
+
+forbidden:
+  - implementar curtida, voto, contagem ou reputacao em resposta - decisao do dono de 09/09 deixou isso fora
+  - permitir que alguem que nao escreveu a pergunta marque a resposta
+  - marcar resposta que pertence a outra pergunta
+  - deduzir a resposta que resolveu por ordem, data ou qualquer heuristica
+  - agregar a marca no perfil de quem respondeu, ou usa-la em busca, ranking ou recomendacao
+  - apresentar a marca como endosso do produto e nao como fala de quem perguntou
+  - deixar referencia pendurada quando a resposta e apagada
+  - editar migration ja aplicada
+
+acceptance:
+  - a autora da pergunta marca uma resposta da propria pergunta, e a marca persiste apos recarregar
+  - a resposta marcada aparece com o destaque da prancha 15 - barra verde a esquerda e o chip de que ajudou a resolver
+  - a autora troca a resposta marcada e limpa a marca, e as duas operacoes sao idempotentes
+  - reabrir a pergunta limpa o marcador
+  - apagar a resposta marcada nao deixa referencia pendurada nem quebra a leitura da conversa
+  - conta que nao escreveu a pergunta recebe negativa ao marcar, inclusive por chamada direta sem interface
+  - marcar resposta de outra pergunta e recusado pelo servidor
+  - quem alcanca a conversa le a marca; quem nao alcanca nao le nem a marca nem a resposta
+  - a coluna nova e as policies que a leem entram na mesma migration, com caso positivo e negativo em pgTAP
+  - os tipos gerados sao regenerados somente do schema public
+  - contraste maior ou igual a 4,5:1 no chip e no destaque, alvos maiores ou iguais a 44x44 e foco visivel
+  - a marcacao e alcancavel por teclado e anunciada por leitor de tela
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-035.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - node scripts/visual/capture.mjs da rota de conversa em 375 768 e 1440
+
+risk: marca de resolucao em conversa de comunidade
+risk_level: R3
+adr: docs/decisions/ADR-20260909-resposta-que-resolveu.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

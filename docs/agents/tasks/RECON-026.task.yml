@@ -1,0 +1,70 @@
+task_id: RECON-026
+
+objective: >
+  A gestao dos proprios anuncios passa a ser a das pranchas 21 e 64 - listar por situacao com
+  previa, editar com o publico travado, e reservar, vender, pausar, reativar ou encerrar com
+  confirmacao e efeito imediato na busca.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/21-web-meus-anuncios.png
+  - docs/design/visual-guide-2026-09-06/64-web-mercado-edicao.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 21-web-meus-anuncios e 64-web-mercado-edicao
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.7 R50 R51
+  - docs/agents/tasks/RECON-025.task.yml
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Nao existe rota de gestao de anuncios. As situacoes reservado e vendido aparecem na prancha
+    21 e nao estavam na secao 6 da especificacao - o ADR de anuncios as incorpora. Medido em
+    09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(shell)/mercado/
+  - apps/web/app/(shell)/meus-anuncios/
+  - apps/web/lib/listings/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-026.task.yml
+
+forbidden:
+  - permitir que alguem gerencie anuncio que nao e seu
+  - permitir alterar o publico do anuncio na edicao
+  - inventar visualizacao, interessado, venda ou qualquer indicador que o dado nao sustenta
+  - sobrescrever alteracao concorrente sem detectar conflito
+  - perder o texto editado quando o salvamento falha
+  - remover foto do anuncio deixando o arquivo alcancavel
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a lista segue a prancha 21 - trilha, titulo, botao de anunciar, abas com contagem por situacao, busca nos proprios anuncios, e a tabela com item, preco, publico, retirada e as acoes de editar e o menu com reservar, vender e pausar
+  - o rail traz a previa do anuncio selecionado com imagem, chip de situacao, titulo, preco, localizacao, descricao, publico, disponibilidade, retirada e o botao de ver anuncio
+  - a edicao segue a prancha 64 - foto com alterar, titulo, preco, descricao e o campo de comunidade desabilitado com o rotulo de que nao pode ser alterado
+  - a falha ao salvar mostra o alerta e mantem as alteracoes no formulario
+  - pausar pede confirmacao no dialogo da prancha 64 e o anuncio deixa de aparecer na busca enquanto pausado
+  - cada transicao de situacao e autorizada, idempotente e auditavel, e reverte a interface se falhar
+  - as transicoes novas e as policies que as governam entram na mesma migration, com caso positivo e negativo em pgTAP
+  - conta que nao e dona recebe negativa em toda mutacao, inclusive por chamada direta sem interface
+  - todos os estados fechados - carregando, vazio, erro recuperavel, sessao expirada e conflito de edicao concorrente
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - as rotas novas estao cadastradas em scripts/visual/capture.mjs com fixture concreta
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-026.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e de pausar, reativar e encerrar com efeito na busca
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: ciclo de vida do anuncio e autorizacao de escrita
+risk_level: R3
+adr: docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
