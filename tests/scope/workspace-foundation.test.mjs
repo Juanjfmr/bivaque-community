@@ -41,6 +41,13 @@ test("exposes the minimal root quality commands", () => {
   assert.equal(typeof scripts.test, "string")
   assert.equal(typeof scripts["test:unit"], "string")
   assert.equal(typeof scripts["test:scope"], "string")
+
+  // Os testes DOS WORKSPACES entram pelo gate por este passo. Sem ele, as 76
+  // asercoes do apps/mobile e as 19 do apps/web ficavam escritas e nunca
+  // executadas: test:unit so varre tests/unit na raiz. A assercao existe para
+  // o passo nao sumir em silencio numa limpeza de scripts.
+  assert.equal(typeof scripts["test:workspaces"], "string")
+  assert.match(scripts.test, /test:workspaces/)
 })
 
 test("keeps the Next application on the server runtime", () => {
