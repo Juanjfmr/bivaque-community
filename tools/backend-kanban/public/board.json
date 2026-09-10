@@ -1349,7 +1349,7 @@
       "phase": "Mobile",
       "priority": "P0",
       "category": "frontend",
-      "status": "now",
+      "status": "blocked",
       "description": "Após a fundação (MOBILE-00 done), o próximo passo é portar a sessão Supabase Auth para o cliente nativo. A fundação não pode autenticar; sem auth, não há jornada autenticada, não há golden slice nativa. A escolha de storage (expo-secure-store vs AsyncStorage vs cookie httpOnly), política de purge, exclusão de backup em iCloud/Google Drive, FLAG_SECURE no Android e screen-secure no iOS são decisões R3 irreversíveis depois de publicadas para usuários.",
       "checklist": [
         "ADR-20260901-mobile-session.md redigido (5 alternativas, success metric, reversal cost); proponente: orquestrador",
@@ -1365,21 +1365,24 @@
         "2026-09-01: implementacao completa (S2). apps/mobile/src/auth/{storage,signOut,refresh,purge}.ts implementados conforme ADR-20260901-mobile-session (commit b7ca57f). expo-secure-store com keychainAccessible=WHEN_UNLOCKED_THIS_DEVICE_ONLY (exclui iCloud Backup no iOS; EncryptedSharedPreferences fora de backup automatico no Android). signOut revoga servidor (/auth/v1/logout) e prossegue para cleanup local independente de status (4xx/5xx/network) — o membro nao consegue mais agir sem token local. 24 testes vitest (positivos + negativos) cobrem a matriz do ADR. Pendente fora desta fatia: instalacao do app em device real para teste de runtime (FLAG_SECURE, iCloud/Google backup exclusion, refresh automatico sob kill+relaunch). Esses estao bloqueados por BLOCK-MOBILE-RUNTIME (HAXM/Hyper-V para Android; Apple Developer Program para iOS).",
         "2026-09-06 REABERTO: o card estava done com o primeiro criterio de aceite aberto. Evidencia medida em a90370f: nao existe apps/mobile/app/login/**, nenhum import de expo-linking, nenhuma chamada a exchangeCodeForSession em apps/mobile/**, e src/auth/client.ts fixa detectSessionInUrl:false com o comentario \"o fluxo de login do nativo e diferente, por implementar\". Storage, refresh, signOut e purge continuam entregues e testados (51 testes verdes); o que falta e a entrada.",
         "2026-09-06: ADR-20260901-mobile-session se contradizia — frontmatter approved/approved_at 2026-09-01 com critic_verdict vazio, corpo dizendo \"pendente de aprovacao humana explicita\". Confrontado, o dono confirmou que aprovou; o corpo do ADR foi reconciliado e o blocked_by do contrato removido. O bloqueio restante e de ambiente (aparelho/emulador), nao de decisao.",
-        "2026-09-06: a tela nativa de boas-vindas e o passo de e-mail ja existem (commit 87cf04b) e roteiam o modo escolhido; falta ligar signInWithOtp com emailRedirectTo bivaque://, registrar o scheme em supabase/config.toml additional_redirect_urls e tratar o retorno do deep link."
+        "2026-09-06: a tela nativa de boas-vindas e o passo de e-mail ja existem (commit 87cf04b) e roteiam o modo escolhido; falta ligar signInWithOtp com emailRedirectTo bivaque://, registrar o scheme em supabase/config.toml additional_redirect_urls e tratar o retorno do deep link.",
+        "2026-09-10: login nativo implementado — 3eafed4 trata o retorno por deep link (readAuthDeepLink + exchangeCodeForSession em apps/mobile/app/auth-callback.tsx) e 2da804f entrega e-mail/senha no app. A causa da reabertura de 2026-09-06 (ausencia de apps/mobile/app/login/**, sem exchangeCodeForSession, detectSessionInUrl:false) esta resolvida. O card sai de now para blocked porque fechar ainda exige aparelho/emulador (mesmo bloqueio do BLOCK-MOBILE-RUNTIME) e a revisao independente do boundary (security-auditor PASS) nao esta registrada."
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/MOB-001.task.yml (já passa)",
-        "Pendente: implementation + unit/integration tests + security-auditor PASS"
+        "Entregue: implementation + unit tests (apps/mobile/src/auth/**, 3eafed4/2da804f)",
+        "Pendente: security-auditor PASS + prova de runtime em device (BLOCK-MOBILE-RUNTIME)"
       ],
       "links": [
         "ADR | docs/decisions/ADR-20260901-mobile-session.md",
         "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "a90370fbe0f6a242c8cc7e6f26ddd5dcb5f59a1e",
-      "blockers": ["Aprovação humana de ADR-20260901-mobile-session"],
-      "dependencies": [],
-      "completedAt": "2026-09-01"
+      "updatedAt": "2026-09-10",
+      "sourceRevision": "3eafed4",
+      "blockers": [
+        "Runtime em device real (BLOCK-MOBILE-RUNTIME): login PKCE em iOS/Android exige aparelho/emulador"
+      ],
+      "dependencies": ["BLOCK-MOBILE-RUNTIME"]
     },
     {
       "id": "BLOCK-MOBILE-RUNTIME",
