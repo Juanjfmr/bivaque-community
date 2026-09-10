@@ -2031,6 +2031,34 @@
       ]
     },
     {
+      "id": "MVP-RETENTION-PURGE",
+      "title": "Expurgo de dados por prazo declarado",
+      "phase": "MVP-06",
+      "priority": "P2",
+      "category": "backend",
+      "status": "next",
+      "description": "Os Termos e PRIVACIDADE.md declaram prazos de retenção que hoje ninguém aplica: documento de verificação 7 dias, exclusão de conta 30 dias, remoção e suspensão grave 2 anos, conversa reservada e conteúdo ocultado 6 meses. A retenção escalonada por gravidade é decisão do dono em 2026-08-28 (ADR-20260828 §8.3) e substitui os 2 anos uniformes, que não passavam no teste de necessidade do art. 6º III. Prometer prazo no contrato e não expurgar é o pior dos dois mundos: cria obrigação sem cumpri-la.",
+      "checklist": [
+        "Job pg_cron de expurgo com TTL por tipo de ação de moderação (2 anos / 6 meses)",
+        "Expurgo do documento de verificação em 7 dias após a decisão",
+        "Expurgo da conta em 30 dias após o pedido de exclusão, preservando o conteúdo desvinculado",
+        "pgTAP com teste positivo e negativo por prazo: expurga no vencido, preserva no vigente",
+        "Registro do expurgo sem reintroduzir dado pessoal no próprio log"
+      ],
+      "proof": [
+        "docs/legal/TERMOS_E_CONDICOES.md §8.5 e docs/legal/PRIVACIDADE.md declaram os quatro prazos",
+        "ADR-20260828 §8.3 — retenção escalonada aprovada pelo dono em 2026-08-28",
+        "Nenhum job de expurgo existe hoje em supabase/migrations"
+      ],
+      "links": [
+        "Termos §8.5 | ../../docs/legal/TERMOS_E_CONDICOES.md",
+        "ADR dos termos | ../../docs/decisions/ADR-20260828-termos-e-condicoes.md"
+      ],
+      "updatedAt": "2026-08-28",
+      "sourceRevision": "8ded62c",
+      "dependencies": ["BLOCK-LEGAL-ENTRY"]
+    },
+    {
       "id": "RECON-PRANCHAS-RESTANTES",
       "title": "Pranchas web restantes: 17 lotes com o backend junto das telas",
       "priority": "P1",
