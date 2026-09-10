@@ -1,10 +1,9 @@
 import { createServerClient } from "@supabase/ssr"
-import type { Route } from "next"
 import { cookies } from "next/headers"
-import Link from "next/link"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createServerClient as createServiceClient } from "../../lib/supabase/server"
+import { OperatorShell } from "../components/shell/operator-shell"
 
 export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -45,45 +44,31 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
     redirect("/community")
   }
 
+  // O cabeçalho das pranchas 57/58 mostra cidade, sino e identificação — os
+  // mesmos dados do shell do membro, resolvidos por consulta real, nunca por
+  // texto chumbado. Sem linha de localidade, o seletor de cidade simplesmente
+  // não aparece; não se inventa cidade.
+  const [{ data: membership }, { data: profile }] = await Promise.all([
+    authClient
+      .from("locality_memberships")
+      .select("localities(city_name, state_code)")
+      .eq("user_id", user.id)
+      .eq("kind", "current")
+      .maybeSingle(),
+    authClient.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
+  ])
+  const locality = (
+    membership as { localities: { city_name: string; state_code: string } | null } | null
+  )?.localities
+  const displayName =
+    (profile as { display_name: string | null } | null)?.display_name || "Operação"
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <nav aria-label="Painel do operador" className="border-b border-border bg-surface px-6 py-3">
-        <ul className="flex flex-wrap gap-4 text-sm">
-          <li>
-            <Link
-              href="/admissions"
-              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-            >
-              Admissões
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/reports"
-              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-            >
-              Denúncias
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/guide-queue"
-              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-            >
-              Guia de chegada
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={"/arrivals" as Route}
-              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-            >
-              Chegadas
-            </Link>
-          </li>
-        </ul>
-      </nav>
+    <OperatorShell
+      displayName={displayName}
+      cityLabel={locality ? `${locality.city_name}, ${locality.state_code}` : null}
+    >
       {children}
-    </div>
+    </OperatorShell>
   )
 }

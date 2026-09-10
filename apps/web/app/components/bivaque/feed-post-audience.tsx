@@ -6,7 +6,7 @@
 // membro ativo da localidade (a RLS posts_insert_locality_member confirma no
 // servidor; a UI não inventa permissão).
 
-import { Button, Radio, RadioGroup, Spinner } from "@heroui/react"
+import { Button, Spinner } from "@heroui/react"
 import { Building2, Trees, Users } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
@@ -189,40 +189,58 @@ export function AudiencePicker({
   onRetry,
 }: AudiencePickerProps) {
   return (
-    <div>
-      <p className="mb-1 text-sm font-medium" id="audience-heading">
-        Quem pode ver?
-      </p>
-      <RadioGroup
-        aria-labelledby="audience-heading"
-        value={value}
-        onChange={(next) => onChange(next)}
-        orientation="vertical"
-        className="gap-1"
-      >
-        {destinations.map((destination) => (
-          <Radio key={destination.key} value={destination.key}>
-            <Radio.Content>
-              <Radio.Control>
-                <Radio.Indicator />
-              </Radio.Control>
-              <div className="flex items-start gap-2">
+    <fieldset className="min-w-0">
+      <legend className="mb-1 text-sm font-medium">Quem pode ver?</legend>
+      <div className="flex flex-col gap-1">
+        {destinations.map((destination) => {
+          const checked = value === destination.key
+          return (
+            <label
+              key={destination.key}
+              className={`relative flex min-h-11 cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition-colors duration-[var(--semantic-motion-duration-instant)] hover:border-[var(--semantic-action-primary)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[var(--semantic-focus)] ${
+                checked
+                  ? "border-[var(--semantic-action-primary)] bg-[var(--semantic-selected)]"
+                  : "border-border"
+              }`}
+            >
+              <input
+                type="radio"
+                name="quem-pode-ver"
+                value={destination.key}
+                checked={checked}
+                onChange={() => onChange(destination.key)}
+                aria-label={`${destination.name}. ${destination.description}.`}
+                className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
+              />
+              <span
+                aria-hidden="true"
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-[var(--semantic-motion-duration-instant)] ${
+                  checked
+                    ? "border-[var(--semantic-action-primary)]"
+                    : "border-[var(--semantic-border)]"
+                }`}
+              >
+                {checked && (
+                  <span className="h-2.5 w-2.5 rounded-full bg-[var(--semantic-action-primary)]" />
+                )}
+              </span>
+              <span className="flex min-w-0 items-start gap-2">
                 <DestinationIcon kind={destination.kind} className="mt-0.5 text-muted" />
-                <div className="flex flex-col gap-0.5">
-                  <span>{destination.name}</span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-sm font-medium">{destination.name}</span>
                   <span className="text-xs text-muted">{destination.description}</span>
-                </div>
-              </div>
-            </Radio.Content>
-          </Radio>
-        ))}
+                </span>
+              </span>
+            </label>
+          )
+        })}
         {loading ? (
           <div role="status" aria-label="Carregando suas comunidades e grupos">
             <Skeleton className="h-10 w-2/3" />
             <Skeleton className="mt-2 h-10 w-1/2" />
           </div>
         ) : null}
-      </RadioGroup>
+      </div>
 
       {loading ? (
         <div className="mt-2 flex items-center gap-2 text-xs text-muted" aria-live="polite">
@@ -245,7 +263,7 @@ export function AudiencePicker({
           />
         </div>
       ) : null}
-    </div>
+    </fieldset>
   )
 }
 

@@ -2042,14 +2042,16 @@
         "RECON-018 a RECON-035 validos no task-contract",
         "Cobertura de prancha travada em tests/scope",
         "Sete ADRs de 09/09 aprovados pelo dono",
-        "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
+        "Decisao do rail no pedido pendente aplicada ao RECON-009 e executada no RECON-033 (rail presente no pendente; Membros fica \"—\" porque a RLS atual nao libera contagem de aprovados a nao-membro)",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+        "PENDENTE: execucao de 17 dos 18 lotes com prova de runtime por lote (RECON-033 executado em 10/09/2026)",
+        "PENDENTE (divergencias do RECON-033, todas com migration proibida no lote): contagem real de Membros no pedido pendente exige policy nova; Sair e Cancelar pedido da prancha 43 exigem RPC; resposta aninhada da prancha 15 exige coluna de parent; curtidas ficam fora por decisao do dono de 09/09"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-        "npx pnpm@11.18.0 gate → verde"
+        "npx pnpm@11.18.0 gate → verde",
+        "RECON-033 (10/09/2026): task-contract valido; gate completo verde (lint, typecheck, build, test, secrets); e2e 608/4/6 igual o baseline do handoff (as 4 falhas passam isoladas); captura autenticada em 375/768/1440 de /publicacoes/nova, /publicacoes/[id], /publicacoes/[id]/editar, /communities/[id], /recommendations, /admissions e /reports com 0 achados high"
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
@@ -2065,8 +2067,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "updatedAt": "2026-09-10",
+      "sourceRevision": "eeadfaa"
     }
   ]
 }

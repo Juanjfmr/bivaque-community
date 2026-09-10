@@ -67,7 +67,13 @@ describe("parseQueueParams", () => {
     expect(p.pagina).toBe(1)
     expect(p.tipo).toBeNull()
     expect(p.comunidade).toBeNull()
-    expect(p.motivo).toBe("")
+    expect(p.motivo).toBeNull()
+  })
+
+  it("só aceita motivo da lista fechada; texto fora dela não vira filtro", () => {
+    expect(parseQueueParams({ motivo: "Spam" }).motivo).toBe("Spam")
+    expect(parseQueueParams({ motivo: "Propaganda" }).motivo).toBeNull()
+    expect(parseQueueParams({ motivo: "spam" }).motivo).toBeNull()
   })
 
   it("não inventa aba desconhecida", () => {
@@ -140,9 +146,22 @@ describe("applyFilters", () => {
     ).toEqual(["b"])
   })
 
-  it("busca o motivo sem diferenciar maiúscula, sem classificar nada", () => {
-    expect(applyFilters(rows, parseQueueParams({ motivo: "SPAM" })).map((r) => r.id)).toEqual(["a"])
-    expect(applyFilters(rows, parseQueueParams({ motivo: "inexistente" }))).toEqual([])
+  it("filtra o motivo pela lista fechada canônica das duas pontas", () => {
+    const closed = [
+      row({ id: "a", reason: "Spam: vende curso" }),
+      row({ id: "b", reason: "Conteúdo inadequado" }),
+      row({ id: "c", reason: "texto livre legado de antes da lista" }),
+    ]
+    expect(applyFilters(closed, parseQueueParams({ motivo: "Spam" })).map((r) => r.id)).toEqual([
+      "a",
+    ])
+    expect(
+      applyFilters(closed, parseQueueParams({ motivo: "Conteúdo inadequado" })).map((r) => r.id),
+    ).toEqual(["b"])
+    // Linha legada de texto livre não pertence a nenhuma categoria: some
+    // quando um filtro canônico está ativo, aparece sem filtro.
+    expect(applyFilters(closed, parseQueueParams({ motivo: "Outro" }))).toEqual([])
+    expect(applyFilters(closed, parseQueueParams({})).map((r) => r.id)).toEqual(["a", "b", "c"])
   })
 
   it("combina filtros sem mutating a lista original", () => {

@@ -1,12 +1,12 @@
 "use client"
 
-import { scrubReportReason } from "@bivaque/domain"
 import { Button, Modal, Radio, RadioGroup, TextArea, useOverlayState } from "@heroui/react"
 import { useCallback, useEffect, useState } from "react"
-import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { currentUserIdOnce } from "./feed-post-shared"
 import { FeedbackAlert } from "./feedback-alert"
+import { submitReportAction } from "./report-actions"
+import { EXPLANATION_MAX, REPORT_REASONS } from "./report-reasons"
 
 // Os seis alvos de `public.report_target_type`. Os dois de indicacao entraram
 // na H-Task 1 (20260821000031): a onda F transformou a resposta de indicacao no
@@ -20,8 +20,9 @@ export type ReportTargetType =
   | "recommendation_reply"
 
 // Composicao da prancha 56: o modal pergunta POR QUE a denuncia existe, em
-// categorias fechadas, e a explicacao e opcional. O texto do alvo vem do tipo
-// escolhido pelo pai — nada de chumbo.
+// categorias fechadas — a lista canônica vive em report-reasons.ts e é a mesma
+// que a fila da operação filtra —, e a explicacao e opcional. O texto do alvo
+// vem do tipo escolhido pelo pai — nada de chumbo.
 const TARGET_PRESENTATION: Record<ReportTargetType, { title: string; question: string }> = {
   post: { title: "Denunciar publicação", question: "esta publicação" },
   comment: { title: "Denunciar comentário", question: "este comentário" },
@@ -30,22 +31,6 @@ const TARGET_PRESENTATION: Record<ReportTargetType, { title: string; question: s
   recommendation_request: { title: "Denunciar pedido", question: "este pedido" },
   recommendation_reply: { title: "Denunciar resposta", question: "esta resposta" },
 }
-
-// O `reports.reason` e um texto so (1..1000, 20260802001600) e nao ha coluna de
-// categoria — criar uma e proibida aqui. A categoria escolhida vira o prefixo
-// legivel do motivo: `Conteúdo inadequado: <explicacao>`. O operador le a frase
-// inteira na fila (prancha 58), e a tela de acompanhamento pode separar no ":".
-const REPORT_CATEGORIES: Array<{ value: string; label: string }> = [
-  { value: "spam", label: "Spam" },
-  { value: "conteudo-inadequado", label: "Conteúdo inadequado" },
-  { value: "informacao-enganosa", label: "Informação enganosa" },
-  { value: "outro", label: "Outro" },
-]
-
-// Limite da explicacao na prancha 56 (contador "41/300"). O CHECK do banco e de
-// 1000 no total; a redacao de documento (20260821000030) pode expandir ate ~2x
-// um trecho denso de digitos, e 300 + prefixo continuam folgados abaixo disso.
-const EXPLANATION_MAX = 300
 
 interface ReportButtonProps {
   targetType: ReportTargetType
@@ -112,7 +97,7 @@ export function ReportButton({
   const canOfferBlock = Boolean(blockUserId && viewerId && blockUserId !== viewerId)
 
   const handleSubmit = useCallback(async () => {
-    const chosen = REPORT_CATEGORIES.find((c) => c.value === category)
+    const chosen = REPORT_REASONS.find((c) => c.value === category)
     if (!chosen) {
       setError("Escolha um motivo para a denúncia.")
       return
@@ -121,27 +106,27 @@ export function ReportButton({
     setSubmitting(true)
     setError("")
 
-    const trimmed = explanation.trim()
-    // H-Task 2: aplica a redação de CPF antes do insert. O trigger no banco
-    // (supabase/migrations/20260821000030_report_reason_guard.sql) aplica a
-    // mesma redação como cinto de segurança server-side. A categoria nao contem
-    // digitos, entao o prefixo passa ileso pela varredura.
-    const safeReason = scrubReportReason(trimmed ? `${chosen.label}: ${trimmed}` : chosen.label)
+    const payload = new FormData()
+    payload.set("categoria", chosen.value)
+    payload.set("explicacao", explanation.trim())
+    payload.set("targetType", targetType)
+    payload.set("targetId", targetId)
+    // A lista fechada e o tamanho da explicacao sao validados no servidor
+    // (report-actions.ts), que entao grava como o proprio membro — a RLS
+    // continua decidindo alvo, autoria e duplicidade. O trigger de redacao
+    // (20260821000030) fecha o bypass direto pelo PostgREST.
+    const result = await submitReportAction(payload)
 
-    const { error: insertError } = await supabase.from("reports").insert({
-      target_type: targetType,
-      target_id: targetId,
-      reason: safeReason,
-    } as Database["public"]["Tables"]["reports"]["Insert"])
-
-    if (insertError) {
+    if (!result.ok) {
       // O indice parcial reports_one_open_per_reporter_target_idx so colide com
       // denuncia ABERTA do mesmo repórter no mesmo alvo — entao "segue na fila"
       // e fato, nao promessa.
-      if (insertError.code === "23505" || insertError.message.includes("duplicate")) {
+      if (result.error === "duplicate") {
         setError("Você já denunciou este conteúdo. Sua denúncia anterior segue na fila.")
-      } else if (insertError.message.includes("own content")) {
+      } else if (result.error === "own-content") {
         setError("Você não pode denunciar o seu próprio conteúdo.")
+      } else if (result.error === "unauthenticated") {
+        setError("Sua sessão expirou. Entre de novo para denunciar.")
       } else {
         // Falha de envio nunca vira sucesso: o alerta e recuperavel e o
         // formulario continua preenchido para nova tentativa real.
@@ -156,7 +141,7 @@ export function ReportButton({
     }
 
     setSubmitting(false)
-  }, [category, explanation, targetType, targetId, supabase])
+  }, [category, explanation, targetType, targetId])
 
   const handleBlock = useCallback(async () => {
     if (!blockUserId || !viewerId) return
@@ -278,7 +263,7 @@ export function ReportButton({
                       orientation="vertical"
                       className="mt-3 gap-1"
                     >
-                      {REPORT_CATEGORIES.map((item) => (
+                      {REPORT_REASONS.map((item) => (
                         <Radio key={item.value} value={item.value}>
                           <Radio.Content>
                             <Radio.Control>

@@ -72,12 +72,36 @@ const ROUTES = [
     name: "provider-indicar",
     auth: true,
   },
+  // RECON-033 (prancha 43): o detalhe da comunidade — rail "Sobre a comunidade"
+  // no membro e no pedido pendente. Com dono-vila@ é a tela de membro; a
+  // captura do estado pendente exige conta com pedido aberto, que o seed não
+  // autentica (membros sintéticos não têm login) — provado em teste unitário.
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000001",
+    name: "community-detail",
+    auth: true,
+  },
   { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },
   { path: "/recommendations", name: "recommendations", auth: true },
   { path: "/messages", name: "messages", auth: true },
   { path: "/notifications", name: "notifications", auth: true },
   { path: "/profile", name: "profile", auth: true },
+  // RECON-033 (pranchas 45/60/15): as páginas da rota /publicacoes. A conversa
+  // usa o pedido do seed authored por visual@; a edição usa um post do seed
+  // authored por dono-vila@ — capturada com visual@ renderiza o estado honesto
+  // "só o autor edita", e com dono-vila@ a tela real (run dedicada).
+  { path: "/publicacoes/nova", name: "publicacao-nova", auth: true },
+  {
+    path: "/publicacoes/80000000-0000-4000-8000-000000000f00",
+    name: "conversa-detalhe",
+    auth: true,
+  },
+  {
+    path: "/publicacoes/80000000-0000-4000-8000-000000000f01/editar",
+    name: "publicacao-editar",
+    auth: true,
+  },
 ]
 
 // --------------------------------------------------------------------------

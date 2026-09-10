@@ -13,12 +13,17 @@
 
 import { log } from "../../../lib/logger"
 import type { createServerClient } from "../../../lib/supabase/server"
+import { REPORT_REASONS, reasonMatchesCategory } from "../../components/bivaque/report-reasons"
 
 type ServiceClient = ReturnType<typeof createServerClient>
 
 export type Tab = "em-analise" | "concluidas"
 
 export type Ordem = "antigas" | "recentes"
+
+// O filtro Motivo da operação é a mesma lista fechada que o membro usa na
+// prancha 56 — a 58 pode ter filtros a mais, nunca vocabulário paralelo.
+export const MOTIVO_OPTIONS = REPORT_REASONS.map((reason) => reason.label)
 
 export const TARGET_LABELS: Record<string, string> = {
   post: "Publicação",
@@ -35,7 +40,8 @@ export interface QueueFilters {
   tab: Tab
   tipo: string | null
   comunidade: string | null
-  motivo: string
+  /** Rótulo canônico de REPORT_REASONS; valor fora da lista não filtra. */
+  motivo: string | null
   ordem: Ordem
   pagina: number
 }
@@ -71,7 +77,8 @@ export function parseQueueParams(params: {
   const comunidadeRaw = firstParam(params["comunidade"])?.trim()
   const comunidade = comunidadeRaw && comunidadeRaw.length > 0 ? comunidadeRaw.slice(0, 120) : null
 
-  const motivo = (firstParam(params["motivo"]) ?? "").trim().slice(0, 120)
+  const motivoRaw = (firstParam(params["motivo"]) ?? "").trim()
+  const motivo = MOTIVO_OPTIONS.includes(motivoRaw) ? motivoRaw : null
 
   const ordem: Ordem = firstParam(params["ordem"]) === "recentes" ? "recentes" : "antigas"
 
@@ -120,9 +127,9 @@ export function applyFilters(rows: ReportRow[], filters: QueueFilters): ReportRo
         : row.communityName === filters.comunidade,
     )
   }
-  if (filters.motivo.length > 0) {
-    const needle = filters.motivo.toLocaleLowerCase("pt-BR")
-    out = out.filter((row) => row.reason.toLocaleLowerCase("pt-BR").includes(needle))
+  const motivo = filters.motivo
+  if (motivo !== null) {
+    out = out.filter((row) => reasonMatchesCategory(row.reason, motivo))
   }
 
   return [...out].sort((a, b) => {
@@ -176,12 +183,6 @@ export function formatDate(iso: string | null): string {
   return Number.isNaN(date.getTime())
     ? "data indisponível"
     : date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })
-}
-
-export function isOverSla(created_at: string, nowMs: number, slaHours: number): boolean {
-  const at = Date.parse(created_at)
-  if (Number.isNaN(at)) return false
-  return nowMs - at > slaHours * 60 * 60 * 1000
 }
 
 export interface TargetRef {

@@ -102,7 +102,7 @@ export function PhotoField({
 
   return (
     <div>
-      <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-[var(--semantic-surface-sunken)] px-3 py-4 text-center transition-colors duration-[var(--semantic-motion-duration-instant)] hover:border-[var(--semantic-action-primary)] focus-within:ring-2 focus-within:ring-[var(--semantic-focus)]">
+      <label className="relative flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-[var(--semantic-surface-sunken)] px-3 py-4 text-center transition-colors duration-[var(--semantic-motion-duration-instant)] hover:border-[var(--semantic-action-primary)] focus-within:ring-2 focus-within:ring-[var(--semantic-focus)]">
         {uploading ? (
           <span className="flex items-center gap-2 text-sm text-muted">
             <Spinner size="sm" aria-label="Enviando foto" />
@@ -123,7 +123,7 @@ export function PhotoField({
           accept="image/png,image/jpeg"
           aria-label={selectLabel}
           disabled={uploading}
-          className="sr-only"
+          className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
           onChange={(e) => {
             const file = (e.target as HTMLInputElement).files?.[0]
             if (file) void handleFile(file)

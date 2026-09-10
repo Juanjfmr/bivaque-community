@@ -1,6 +1,8 @@
 "use client"
 
 import { Button, Chip, Input, TextArea } from "@heroui/react"
+import type { Route } from "next"
+import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "./card"
@@ -341,6 +343,15 @@ export default function RecommendationRequests() {
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted">As perguntas da sua cidade e dos seus grupos.</p>
+        <Link
+          href={"/publicacoes/nova" as Route}
+          className="inline-flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors hover:bg-[var(--semantic-action-primary-hover)]"
+        >
+          Nova pergunta
+        </Link>
+      </div>
       {feedback && (
         <FeedbackAlert variant="info" description={feedback} onClose={() => setFeedback("")} />
       )}
@@ -433,7 +444,14 @@ export default function RecommendationRequests() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2">
-                      <h3 className="text-sm font-semibold">{request.title}</h3>
+                      <h3 className="text-sm font-semibold">
+                        <Link
+                          href={`/publicacoes/${request.id}` as Route}
+                          className="inline-flex min-h-11 items-center transition-colors hover:underline"
+                        >
+                          {request.title}
+                        </Link>
+                      </h3>
                       <p className="text-sm text-muted">{request.body}</p>
                     </div>
                   )}

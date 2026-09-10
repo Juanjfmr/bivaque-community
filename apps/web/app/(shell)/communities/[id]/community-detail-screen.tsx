@@ -131,6 +131,62 @@ function GroupCardItem({ group }: { group: GroupCard }) {
   )
 }
 
+// Rail "Sobre a comunidade" da prancha 43 — as mesmas três linhas de ícone e
+// valor, membro e pedido pendente. `memberCount` chega só quando a consulta
+// real o devolveu (membro aprovado); para quem tem pedido pendente a RLS de
+// `community_memberships` não libera a contagem de terceiros e criar policy é
+// proibido neste lote — a linha existe na composição da prancha e o valor fica
+// "—", nunca um zero mentiroso nem um número chumbado.
+function CommunityAboutRail({
+  memberCount,
+  createdAt,
+  cityLabel,
+}: {
+  memberCount: number | null
+  createdAt: string
+  cityLabel: string | null
+}) {
+  return (
+    <aside aria-label="Sobre a comunidade" className="lg:sticky lg:top-20 lg:self-start">
+      <Card className="flex flex-col gap-4 p-4">
+        <h2 className="text-base font-semibold tracking-tight">Sobre a comunidade</h2>
+        <ul className="flex flex-col gap-3 text-sm">
+          <li className="flex items-start gap-2.5">
+            <MetaGlyph path={USERS_PATH} />
+            <span>
+              <span className="block font-medium">Membros</span>
+              <span className="block text-muted">
+                {memberCount !== null ? memberCount : "—"}
+                {memberCount === null && (
+                  <span className="sr-only"> — contagem indisponível para o seu pedido</span>
+                )}
+              </span>
+            </span>
+          </li>
+          {formatCreatedOn(createdAt) && (
+            <li className="flex items-start gap-2.5">
+              <MetaGlyph path={CALENDAR_PATH} />
+              <span>
+                <span className="block font-medium">Criada em</span>
+                <span className="block text-muted">{formatCreatedOn(createdAt)}</span>
+              </span>
+            </li>
+          )}
+          {cityLabel && (
+            <li className="flex items-start gap-2.5">
+              <MetaGlyph path={PIN_PATH} />
+              <span>
+                <span className="block font-medium">Local</span>
+                <span className="block text-muted">{cityLabel}</span>
+              </span>
+            </li>
+          )}
+        </ul>
+      </Card>
+    </aside>
+  )
+}
+
 function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }> }) {
   const { presentation, canModerate, membership, transferCandidates } = view
   return (
@@ -240,40 +296,11 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
         </TabPanel>
       </Tabs>
 
-      <aside aria-label="Sobre a comunidade" className="lg:sticky lg:top-20 lg:self-start">
-        <Card className="flex flex-col gap-4 p-4">
-          <h2 className="text-base font-semibold tracking-tight">Sobre a comunidade</h2>
-          <ul className="flex flex-col gap-3 text-sm">
-            <li className="flex items-start gap-2.5">
-              <MetaGlyph path={USERS_PATH} />
-              <span>
-                <span className="block font-medium">Membros</span>
-                <span className="block text-muted">{view.memberCount}</span>
-              </span>
-            </li>
-            {formatCreatedOn(presentation.createdAt) && (
-              <li className="flex items-start gap-2.5">
-                <MetaGlyph path={CALENDAR_PATH} />
-                <span>
-                  <span className="block font-medium">Criada em</span>
-                  <span className="block text-muted">
-                    {formatCreatedOn(presentation.createdAt)}
-                  </span>
-                </span>
-              </li>
-            )}
-            {presentation.cityLabel && (
-              <li className="flex items-start gap-2.5">
-                <MetaGlyph path={PIN_PATH} />
-                <span>
-                  <span className="block font-medium">Local</span>
-                  <span className="block text-muted">{presentation.cityLabel}</span>
-                </span>
-              </li>
-            )}
-          </ul>
-        </Card>
-      </aside>
+      <CommunityAboutRail
+        memberCount={view.memberCount}
+        createdAt={presentation.createdAt}
+        cityLabel={presentation.cityLabel}
+      />
     </div>
   )
 }
@@ -281,29 +308,36 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
 function PendingBody({ view }: { view: Extract<ReadyView, { audience: "pending" }> }) {
   const requestedOn = formatRequestedOn(view.requestedAt)
   return (
-    <Card className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-      <span
-        aria-hidden="true"
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--semantic-surface-sunken)] text-muted"
-      >
-        <MetaGlyph path="M22 2 11 13 M22 2 15 22 11 13 2 9 22 2Z" className="h-6 w-6" />
-      </span>
-      <h2 className="text-xl font-semibold tracking-tight">Pedido enviado</h2>
-      <p className="text-sm text-muted">
-        {requestedOn ? `Enviado em ${requestedOn}. ` : ""}Acompanhe a resposta por aqui.
-      </p>
-      <p className="text-xs text-muted">
-        A participação depende de aprovação de um responsável da comunidade.
-      </p>
-      {view.joinReason !== null && (
-        <div className="mt-3 w-full max-w-md rounded-xl border border-border bg-[var(--semantic-surface-sunken)] p-4 text-left">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted">
-            Seu motivo — visível só para você e para quem analisa
-          </p>
-          <p className="mt-1 text-sm leading-relaxed">{view.joinReason}</p>
-        </div>
-      )}
-    </Card>
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <Card className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+        <span
+          aria-hidden="true"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--semantic-surface-sunken)] text-muted"
+        >
+          <MetaGlyph path="M22 2 11 13 M22 2 15 22 11 13 2 9 22 2Z" className="h-6 w-6" />
+        </span>
+        <h2 className="text-xl font-semibold tracking-tight">Pedido enviado</h2>
+        <p className="text-sm text-muted">
+          {requestedOn ? `Enviado em ${requestedOn}. ` : ""}Acompanhe a resposta por aqui.
+        </p>
+        <p className="text-xs text-muted">
+          A participação depende de aprovação de um responsável da comunidade.
+        </p>
+        {view.joinReason !== null && (
+          <div className="mt-3 w-full max-w-md rounded-xl border border-border bg-[var(--semantic-surface-sunken)] p-4 text-left">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted">
+              Seu motivo — visível só para você e para quem analisa
+            </p>
+            <p className="mt-1 text-sm leading-relaxed">{view.joinReason}</p>
+          </div>
+        )}
+      </Card>
+      <CommunityAboutRail
+        memberCount={null}
+        createdAt={view.presentation.createdAt}
+        cityLabel={view.presentation.cityLabel}
+      />
+    </div>
   )
 }
 

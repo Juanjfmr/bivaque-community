@@ -4,6 +4,7 @@ import Link from "next/link"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 import { MemberAvatar } from "../../../components/bivaque/avatar"
 import { EmptyState } from "../../../components/bivaque/empty-state"
+import { parseReportReason } from "../../../components/bivaque/report-reasons"
 import { QueryError } from "../../admissions/query-error"
 import { resolveReport } from "../actions"
 import { formatDate, resolveTargets, shortLabel, TARGET_LABELS } from "../targets"
@@ -187,9 +188,11 @@ export default async function AdminReportDetailPage({
   }
 
   const contentLabel = shortLabel(target.content)
+  const parsedReason = parseReportReason(scrubReportReason(view.reason))
   const metaParts = [
     TARGET_LABELS[view.targetType] ?? view.targetType,
     target.communityName,
+    parsedReason.categoryLabel ? `Denúncia por ${parsedReason.categoryLabel}` : null,
     `Recebida em ${formatDate(view.receivedAt)}`,
   ].filter((part): part is string => part !== null && part.length > 0)
 
@@ -265,9 +268,18 @@ export default async function AdminReportDetailPage({
               Motivo da denúncia
             </h2>
             <div className="mt-3 flex flex-col gap-3">
-              <p className="text-sm break-words whitespace-pre-wrap">
-                {scrubReportReason(view.reason)}
-              </p>
+              {parsedReason.categoryLabel ? (
+                <>
+                  <p className="text-sm font-medium">{parsedReason.categoryLabel}</p>
+                  {parsedReason.explanation && (
+                    <p className="text-sm break-words whitespace-pre-wrap text-muted">
+                      {parsedReason.explanation}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm break-words whitespace-pre-wrap">{parsedReason.raw}</p>
+              )}
               <div className="flex items-start gap-2 rounded-lg border border-border bg-[var(--semantic-surface-sunken)] p-3 text-xs text-muted">
                 <LockGlyph />
                 <p>

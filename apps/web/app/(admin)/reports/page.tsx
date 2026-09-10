@@ -3,14 +3,14 @@ import { Chip } from "@heroui/react"
 import type { Route } from "next"
 import Link from "next/link"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
-import { SUPPORT_SLA_HOURS } from "../../../lib/support"
 import { EmptyState } from "../../components/bivaque/empty-state"
+import { parseReportReason } from "../../components/bivaque/report-reasons"
 import { QueryError } from "../admissions/query-error"
 import {
   applyFilters,
   countLabel,
   formatDate,
-  isOverSla,
+  MOTIVO_OPTIONS,
   type Ordem,
   pageWindow,
   paginateRows,
@@ -33,7 +33,7 @@ interface QueueHrefParams {
   tab: Tab
   tipo: string | null
   comunidade: string | null
-  motivo: string
+  motivo: string | null
   ordem: Ordem
   pagina?: number | undefined
 }
@@ -43,7 +43,7 @@ function queueHref(params: QueueHrefParams): Route {
   if (params.tab !== "em-analise") search.set("aba", params.tab)
   if (params.tipo !== null) search.set("tipo", params.tipo)
   if (params.comunidade !== null) search.set("comunidade", params.comunidade)
-  if (params.motivo.length > 0) search.set("motivo", params.motivo)
+  if (params.motivo !== null) search.set("motivo", params.motivo)
   if (params.ordem !== "antigas") search.set("ordem", params.ordem)
   if (params.pagina !== undefined && params.pagina > 1) search.set("pagina", String(params.pagina))
   const qs = search.toString()
@@ -52,7 +52,7 @@ function queueHref(params: QueueHrefParams): Route {
 
 function StatusChip({ status }: { status: ReportRow["status"] }) {
   return (
-    <Chip size="sm" variant="soft" color={status === "open" ? "warning" : "default"}>
+    <Chip size="sm" variant="soft" color={status === "open" ? "success" : "default"}>
       {status === "open" ? "Em análise" : "Concluída"}
     </Chip>
   )
@@ -149,8 +149,7 @@ export default async function AdminReportsPage({
 
   const filtered = applyFilters(rows, filters)
   const paged = paginateRows(filtered, filters.pagina)
-  const hasFilters =
-    filters.tipo !== null || filters.comunidade !== null || filters.motivo.length > 0
+  const hasFilters = filters.tipo !== null || filters.comunidade !== null || filters.motivo !== null
 
   // Opções de filtro derivadas dos dados reais da aba: nada de categoria
   // inventada — o motivo é texto livre, então ele entra como busca, não como
@@ -161,12 +160,11 @@ export default async function AdminReportsPage({
   ].sort((a, b) => a.localeCompare(b, "pt-BR"))
   const temSemComunidade = rows.some((row) => row.communityName === null)
 
-  const now = Date.now()
   const clearHref = queueHref({
     tab: filters.tab,
     tipo: null,
     comunidade: null,
-    motivo: "",
+    motivo: null,
     ordem: filters.ordem,
   })
   const sortNext: Ordem = filters.ordem === "antigas" ? "recentes" : "antigas"
@@ -265,15 +263,21 @@ export default async function AdminReportsPage({
           </div>
           <div className="flex min-w-40 flex-1 flex-col gap-1">
             <label htmlFor="filtro-motivo" className="text-xs text-muted">
-              Motivo da denúncia
+              Motivo
             </label>
-            <input
+            <select
               id="filtro-motivo"
-              type="search"
               name="motivo"
-              defaultValue={filters.motivo}
+              defaultValue={filters.motivo ?? ""}
               className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 text-sm"
-            />
+            >
+              <option value="">Todos</option>
+              {MOTIVO_OPTIONS.map((label) => (
+                <option key={label} value={label}>
+                  {label}
+                </option>
+              ))}
+            </select>
           </div>
           <button
             type="submit"
@@ -348,59 +352,46 @@ export default async function AdminReportsPage({
                     <span aria-hidden="true">{filters.ordem === "antigas" ? "↑" : "↓"}</span>
                   </Link>
                 </th>
-                <th scope="col" className="px-4 py-3 font-medium">
-                  <span className="sr-only md:hidden">Ações</span>
-                  <span className="hidden md:inline">Ações</span>
-                </th>
               </tr>
             </thead>
             <tbody>
-              {paged.rows.map((row) => (
-                <tr key={row.id} className="border-b border-border last:border-b-0">
-                  <td className="max-w-64 px-4 py-3">
-                    <p className="font-medium">
-                      {shortLabel(row.excerpt) ||
-                        "conteúdo não encontrado — pode já ter sido removido"}
-                    </p>
-                    {row.openReportsOnTarget > 1 && (
-                      <p className="mt-0.5 text-xs font-medium text-danger">
-                        {row.openReportsOnTarget} denúncias abertas neste alvo
-                      </p>
-                    )}
-                  </td>
-                  <td className="hidden px-4 py-3 text-muted md:table-cell">
-                    {TARGET_LABELS[row.target_type] ?? row.target_type}
-                  </td>
-                  <td className="hidden px-4 py-3 text-muted md:table-cell">
-                    {/* Varre ANTES de truncar: truncar primeiro pode partir um CPF
-                        ao meio e o detector deixa passar o pedaco. A pagina de
-                        analise faz o mesmo — a fila nao pode ser a porta larga. */}
-                    {truncateReason(scrubReportReason(row.reason))}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col items-start gap-1">
+              {paged.rows.map((row) => {
+                // Varre ANTES de truncar: truncar primeiro pode partir um CPF ao
+                // meio e o detector deixa passar o pedaço. Linha canônica mostra
+                // o rótulo da lista fechada; texto livre legado aparece integral.
+                const parsedReason = parseReportReason(scrubReportReason(row.reason))
+                const motivoCell = parsedReason.categoryLabel ?? truncateReason(parsedReason.raw)
+                return (
+                  <tr key={row.id} className="border-b border-border last:border-b-0">
+                    <td className="max-w-64 px-4 py-3">
+                      {/* A prancha 58 não tem coluna "Ações": o conteúdo é o
+                        caminho para a análise. */}
+                      <Link
+                        href={`/reports/${row.id}` as Route}
+                        className="inline-flex min-h-11 items-center font-medium hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus)]"
+                      >
+                        {shortLabel(row.excerpt) ||
+                          "conteúdo não encontrado — pode já ter sido removido"}
+                      </Link>
+                      {row.openReportsOnTarget > 1 && (
+                        <p className="mt-0.5 text-xs font-medium text-danger">
+                          {row.openReportsOnTarget} denúncias abertas neste alvo
+                        </p>
+                      )}
+                    </td>
+                    <td className="hidden px-4 py-3 text-muted md:table-cell">
+                      {TARGET_LABELS[row.target_type] ?? row.target_type}
+                    </td>
+                    <td className="hidden px-4 py-3 text-muted md:table-cell">{motivoCell}</td>
+                    <td className="px-4 py-3">
                       <StatusChip status={row.status} />
-                      {row.status === "open" &&
-                        isOverSla(row.created_at, now, SUPPORT_SLA_HOURS) && (
-                          <span className="rounded-sm bg-danger px-1.5 py-0.5 text-xs font-medium text-danger-foreground">
-                            +{SUPPORT_SLA_HOURS}h
-                          </span>
-                        )}
-                    </div>
-                  </td>
-                  <td className="hidden px-4 py-3 text-muted md:table-cell">
-                    {formatDate(row.created_at)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/reports/${row.id}` as Route}
-                      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border bg-surface px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-sunken)]"
-                    >
-                      Abrir
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="hidden px-4 py-3 text-muted md:table-cell">
+                      {formatDate(row.created_at)}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
