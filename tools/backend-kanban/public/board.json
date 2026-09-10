@@ -2044,14 +2044,17 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e executada no RECON-033 (rail presente no pendente; Membros fica \"—\" porque a RLS atual nao libera contagem de aprovados a nao-membro)",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao de 17 dos 18 lotes com prova de runtime por lote (RECON-033 executado em 10/09/2026)",
+        "PENDENTE: execucao de 17 dos 18 lotes com prova de runtime por lote (RECON-033 executado em 10/09/2026; RECON-036, correcao dos seis defeitos do shell do 033 medidos na revisao de 10/09, executado no mesmo dia com captura autenticada e prova de navegacao)",
+        "RECON-036 (10/09/2026): busca do cabecalho vai para /explorar (busca global do produto), Admissoes/Denuncias/Guia de chegada/Chegadas tem entrada no nav, skip link com alvo focavel (#operacao-conteudo), marca visivel em 375/768/1440, icones do lucide-react e o teste asserta HTML renderizado. Pendencia nomeada: 'Comunidades' no nav da operacao aponta para o diretorio do membro ate existir fila operacional propria",
+        "DECISAO PENDENTE DO DONO (RECON-036 human_decision): 'Sair da operacao' encerra a sessao e vai para /login neste candidato; a irma codex/fidelidade-pranchas volta a /inicio preservando a sessao; a prancha 58 nao desempata. A prova de runtime afirma o comportamento deste candidato, nao a semantica escolhida",
         "PENDENTE (divergencias do RECON-033, todas com migration proibida no lote): contagem real de Membros no pedido pendente exige policy nova; Sair e Cancelar pedido da prancha 43 exigem RPC; resposta aninhada da prancha 15 exige coluna de parent; curtidas ficam fora por decisao do dono de 09/09"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
         "npx pnpm@11.18.0 gate → verde",
-        "RECON-033 (10/09/2026): task-contract valido; gate completo verde (lint, typecheck, build, test, secrets); e2e 608/4/6 igual o baseline do handoff (as 4 falhas passam isoladas); captura autenticada em 375/768/1440 de /publicacoes/nova, /publicacoes/[id], /publicacoes/[id]/editar, /communities/[id], /recommendations, /admissions e /reports com 0 achados high"
+        "RECON-033 (10/09/2026): task-contract valido; gate completo verde (lint, typecheck, build, test, secrets); e2e 608/4/6 igual o baseline do handoff (as 4 falhas passam isoladas); captura autenticada em 375/768/1440 de /publicacoes/nova, /publicacoes/[id], /publicacoes/[id]/editar, /communities/[id], /recommendations, /admissions e /reports com 0 achados high",
+        "RECON-036 (10/09/2026): task-contract valido (R2, retry 3); gate completo reexecutado no candidato estavel com o codigo de saida lido direto (sem pipe); build posterior a todas as edicoes (BUILD_ID 10:31 > mtime 09:02 do shell) antes de qualquer captura; .visual/recon036-admissions e .visual/recon036-reports: capturam /admissions e /reports em 375/768/1440 como ator=operador na sessao do runbook, aterrissagem e h1 batem com o contrato de identidade, 0 capturas invalidas, 0 achados high, relatorio registra runnerRevision 9f9a8bf e arvore suja true; .visual/recon036-operation-proof/report.json valid:true nas 3 larguras mais membro e visitante negados nas duas rotas: quatro entradas do nav, marca em todas as larguras, formulario de busca com action=/explorar e input[name=search], Tab ate o skip link e Enter focando #operacao-conteudo, 'Voltar ao Bivaque' devolve a /inicio com sessao viva e o back reencontra o shell, 'Sair da operacao' encerra a sessao em /login e /admissions passa a ser negado"
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
@@ -2068,7 +2071,7 @@
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
       "updatedAt": "2026-09-10",
-      "sourceRevision": "eeadfaa"
+      "sourceRevision": "9f9a8bf"
     }
   ]
 }
