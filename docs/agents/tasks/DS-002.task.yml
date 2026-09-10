@@ -1,0 +1,141 @@
+# Contrato DS-002 — a fundacao do design system deixa de ser declarativa e passa a ser
+# executavel, verificavel e honesta sobre contraste nao-textual.
+#
+# Este contrato NAO redesenha nada. Ele corrige verdade documental, drift de fonte e
+# falhas de acessibilidade medidas. Composicao, tipografia e navegacao ficam fora.
+
+task_id: DS-002
+
+objective: >
+  O sistema de design do Bivaque passa a nomear tokens que existem, a satisfazer o
+  criterio 1.4.11 de contraste nao-textual no foco e no limite de controle, e a ter
+  testes que falham quando o documento canonico e a fonte de tokens divergem — em vez
+  de testes que passam verificando apenas titulos de secao.
+
+authority:
+  - docs/decisions/ADR-20260901-design-system.md — decisao R2 aceita que fixa foundations, arquitetura de tokens e governanca
+  - docs/agents/DESIGN_SYSTEM.md secao 9.1 — WCAG 2.2 AA declarado como requisito de entrega, nao qualidade futura
+  - docs/agents/DESIGN_SYSTEM.md secao 9.3 — matriz de contraste por par de token, hoje inexistente
+  - docs/agents/DESIGN_SYSTEM.md secao 5.3 — estados sao tokens, nao improvisos
+  - AGENTS.md — acessibilidade nao espera onda nenhuma e pode rodar a qualquer momento, em qualquer tela
+  - Critica de sistema de design em 2026-09-02, com medicoes reproduzidas no baseline abaixo
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 2026-09-02 sobre a revisao de trabalho da branch task-4-measure-mvp-03, com
+    tests/scope/design-tokens.test.mjs e tests/scope/design-system-contract.test.mjs verdes
+    (10 de 10). Quatro medicoes independentes contradizem o documento que esses testes
+    aprovam. Primeira: DESIGN_SYSTEM.md cita 16 nomes de token com namespace por ponto
+    (color.action.primary, space.4, surface.sunken, color.text.on-strong,
+    button.primary.background, field.invalid.border) e nenhum deles existe em
+    packages/tokens/src/tokens.json, cuja nomenclatura e plana com prefixo de camada.
+    Segunda: o token de foco petrol-700 rende 1.04 para 1 sobre o botao primario terra-700
+    e 1.07 para 1 sobre o botao danger rose-700, contra os 3 para 1 exigidos pelo criterio
+    1.4.11, enquanto a secao 9.2 promete foco inequivoco em superficies coloridas.
+    Terceira: o token border rende 1.32 para 1 sobre surface e o preenchimento de campo
+    rende 1.11 para 1 sobre canvas, o que deixa o limite do campo de formulario abaixo do
+    minimo perceptivel exigido. Quarta: scripts/visual/capture.mjs audita apenas contraste
+    de texto, de modo que nenhuma das tres medicoes anteriores e visivel para a automacao.
+    Todos os 21 pares de texto da paleta, ao contrario, passam AA entre 5.54 e 7.05 para 1;
+    a falha e de contraste nao-textual e de verdade documental, nao de paleta de texto.
+
+allowed_paths:
+  - docs/agents/DESIGN_SYSTEM.md
+  - docs/agents/tasks/DS-002.task.yml
+  - packages/tokens/src/tokens.json
+  - packages/tokens/src/tokens.css
+  - packages/tokens/src/index.ts
+  - apps/web/app/globals.css
+  - apps/web/app/page.tsx
+  - apps/mobile/src/theme.ts
+  - scripts/visual/capture.mjs
+  - tests/scope/design-tokens.test.mjs
+  - tests/scope/design-system-contract.test.mjs
+  - tests/scope/design-contrast.test.mjs
+
+forbidden:
+  - redesenhar layout, composicao, hierarquia ou navegacao — a mudanca visual autorizada e a estritamente necessaria para o contraste nao-textual
+  - empacotar, trocar ou subsetar familia tipografica, e alterar tamanho, peso ou entrelinha de qualquer papel de texto — isso e a proxima tarefa, nao esta
+  - migrar consumidores dos aliases legados para a camada semantica, ou remover qualquer alias existente
+  - retematizar landing, entrada ou onboarding, cujas paletas locais continuam inventariadas na secao 12.1.1
+  - criar wrapper de componente novo, ou trocar biblioteca fora do HeroUI v3
+  - introduzir modo escuro, token de modo ou qualquer superficie de tema
+  - alterar autorizacao, migracao de banco, esquema de confianca, elegibilidade ou qualquer regra de visibilidade de conteudo
+  - afirmar que uma tela legada aderiu ao sistema sem evidencia visual e de runtime
+  - baixar o limite de um teste existente para fazer a suite passar
+
+acceptance:
+  - o documento cita cada token pelo nome que a fonte usa: nenhum nome com namespace por ponto sobrevive no corpo do documento, nenhum dicionario de traducao entre documento e fonte e criado, e um teste falha quando um nome citado nao resolve diretamente em packages/tokens/src/tokens.json
+  - existe uma matriz de contraste executavel que calcula, a partir de tokens.json, todo par texto sobre superficie e todo par nao-textual, e falha abaixo de 4.5 para 1 em texto e abaixo de 3 para 1 em foco e limite de controle
+  - o indicador de foco satisfaz 3 para 1 contra as quatro superficies onde ele pousa hoje, incluindo o botao primario e o botao de acao destrutiva, e o documento descreve a anatomia adotada
+  - o limite visual de campo de formulario satisfaz 3 para 1 contra o proprio preenchimento e contra o fundo de pagina, sem engrossar divisorias decorativas que nao identificam controle
+  - os tokens semanticos derivados deixam de repetir o valor literal do primitivo de tinta, e passam a deriva-lo, com o teste que hoje trava a string literal atualizado no mesmo commit
+  - cada estado de botao e de campo resolve para um valor proprio e distinto do repouso, verificado por teste que falha quando dois estados de um mesmo componente resolvem para a mesma cor
+  - o estado desabilitado preserva contraste de texto em 4,5 para 1 ou mais e de limite de controle em 3 para 1 ou mais, sem recorrer a opacidade sobre a cor final
+  - o limite de controle em repouso nao usa a mesma cor do anel de foco, para que receber foco continue legivel como mudanca de estado e nao apenas como espessura
+  - scripts/visual/capture.mjs emite achado proprio para contraste nao-textual de foco e de limite de controle, e seu piso de tamanho de texto passa a refletir o minimo declarado no documento
+  - a cor de tema do documento web deixa de ser um valor fora da paleta e passa a derivar da fonte de tokens
+  - a auditoria visual em 375, 768 e 1440 nao introduz achado novo de sobreposicao, alvo ou contraste em relacao a captura de baseline
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/DS-002.task.yml
+  - node scripts/tokens/generate.mjs --check
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+execution_notes: |
+  Medicoes ja feitas, para nao repetir o trabalho. Todas em razao de contraste WCAG.
+  Foco petrol-700 sobre terra-700 mede 1.04. Foco petrol-700 sobre rose-700 mede 1.07.
+  Token border sobre surface mede 1.32. Preenchimento de campo sobre canvas mede 1.11.
+  Foco petrol-700 sobre canvas mede 6.94 e sobre surface-sunken mede 6.28: o problema
+  aparece apenas onde o foco pousa sobre cor saturada.
+  Anatomia sugerida, ja verificada nos numeros: anel duplo, com anel interno claro sobre
+  o controle e anel externo escuro sobre o fundo. Branco sobre terra-700 mede 6.77 e
+  petrol-700 sobre canvas mede 6.94, entao o par satisfaz 3 para 1 em qualquer das
+  quatro superficies. Um anel unico nao resolve, qualquer que seja a cor escolhida,
+  porque ele precisa contrastar ao mesmo tempo com o botao e com a pagina.
+  Sobre o limite de controle: nao engrossar o token border. Ele e divisoria decorativa e
+  a estetica depende dele ser sutil. O criterio se aplica ao que identifica um controle,
+  entao o caminho e um token proprio de limite de controle, consumido por campo, select e
+  caixa de marcacao, deixando divisorias como estao.
+  Sobre os semanticos derivados: border, backdrop e as tres elevacoes hoje escrevem
+  23, 33, 58 diretamente, que e a decomposicao do primitivo ink-900. Trocar o primitivo
+  hoje nao muda nenhum dos cinco. O teste em tests/scope/design-tokens.test.mjs asserta
+  essa string literal, entao ele faz parte da correcao e nao e dano colateral dela.
+  Sobre o teste de contrato: hoje ele verifica que doze titulos de secao existem e uma
+  expressao regular casa. Ele passaria com o corpo do documento apagado. O aceite pede
+  que ele passe a comparar documento com fonte.
+  Sobre a cor de tema: apps/web/app/page.tsx declara 2f7654, um verde que nao existe na
+  paleta e que e a primeira cor que um membro ve na barra do navegador em Android.
+  Tres aceites foram reescritos em 2026-09-02, depois da primeira tentativa, porque
+  pediam existencia e nao efeito, e existencia e o que a revisao recusou. Um pedia que
+  todo nome citado no documento existisse na fonte, e foi satisfeito criando um
+  dicionario de traducao dentro do tokens.json, com o documento intacto: quem seguir o
+  documento continua escrevendo uma variavel que o CSS nao tem. Outro pedia que
+  existissem tokens de estado, e foi satisfeito com sobrevoo, pressionado, desabilitado
+  e carregando resolvendo todos para a mesma cor do repouso — o mesmo defeito que este
+  contrato acusa na biblioteca de componentes, reproduzido na nossa propria fonte. Nao
+  repita nenhuma das duas saidas: reescreva o documento e de valor proprio a cada estado.
+  O contraste, esse, fechou de verdade na primeira tentativa e foi confirmado por
+  recalculo independente. Nao refaca o anel duplo, e nao mexa nos seis pares
+  nao-textuais ja declarados: eles cobrem os casos certos.
+
+  O que fica de fora, de proposito, e por que: tipografia e o asset da familia dependem
+  de decisao de asset e mudam toda a aparencia, o que exige onda propria com auditoria
+  completa. A migracao dos consumidores para a camada semantica toca dezenas de telas e
+  nao cabe numa unidade verificavel. A paleta paralela de entrada, onboarding e landing
+  ja tem inventario proprio na secao 12.1.1 e auditoria por superficie.
+
+risk: sistema de design, acessibilidade e fonte de tokens
+risk_level: R2
+adr: docs/decisions/ADR-20260901-design-system.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

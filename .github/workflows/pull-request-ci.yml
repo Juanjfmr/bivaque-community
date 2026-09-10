@@ -54,37 +54,6 @@ jobs:
       - name: Start local Supabase
         run: pnpm exec supabase start
 
-      # Supabase CLI pulls these images lazily. Public ECR can answer with
-      # toomanyrequests while the runner is healthy, so fetch the two images
-      # that are needed later with bounded backoff while the failure is still
-      # attributable to the registry pull. Once present, the dependent steps
-      # use Docker's local cache instead of pulling concurrently with tests.
-      - name: Warm Supabase test images
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          pull_with_backoff() {
-            local image="$1"
-            local attempt
-
-            for attempt in 1 2 3 4 5; do
-              if docker pull "$image"; then
-                return 0
-              fi
-
-              if [ "$attempt" -lt 5 ]; then
-                sleep $((attempt * 15))
-              fi
-            done
-
-            echo "Failed to pull $image after 5 attempts" >&2
-            return 1
-          }
-
-          pull_with_backoff public.ecr.aws/supabase/postgres-meta:v0.96.1
-          pull_with_backoff public.ecr.aws/supabase/pg_prove:3.36
-
       # Next inlines NEXT_PUBLIC_* at build time, so the stack has to be up and
       # the env written before `pnpm build` runs — not after it.
       #
@@ -131,20 +100,11 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Reset local database for stateful E2E (with seed)
+      - name: Reset local database (with seed)
         run: pnpm exec supabase db reset --local
 
-      # Stateful flows mutate the shared Postgres database. Run them once,
-      # against a fresh seed, instead of repeating them across three viewport
-      # projects where a failed cleanup can contaminate the next project.
-      - name: Stateful E2E baseline
-        run: pnpm exec playwright test --grep @stateful --project=desktop-1440 --workers=1 --retries=0
-
-      - name: Reset local database for responsive E2E (with seed)
-        run: pnpm exec supabase db reset --local
-
-      - name: Root E2E tests (excluding stateful)
-        run: pnpm exec playwright test --grep-invert @stateful --retries=0
+      - name: Root E2E tests
+        run: pnpm test:e2e
 
       - name: Upload Playwright artifacts
         if: always()

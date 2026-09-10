@@ -6,12 +6,15 @@
 
 import type { BrowserContext } from "@playwright/test"
 import { expect, request, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const APP_BASE = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
+// A versao vem do helper, nunca declarada aqui: o valor local estava travado em
+// "1" enquanto CONSENT_VERSION ja e 2, e era isso que fazia o fluxo cair em
+// "consent version not accepted". tests/scope/consent-version.test.mjs proibe a
+// declaracao local exatamente para esse drift nao voltar.
 const REPORTER_EMAIL = "dono-vila@bivaque.example.invalid"
 const OPERATOR_EMAIL = "operador@bivaque.example.invalid"
 const TARGET_POST_TEXT =
@@ -94,7 +97,14 @@ async function fetchOwnReportByReason(
 ): Promise<ReportRow[]> {
   const query = new URLSearchParams({
     select: "id,target_id,reason,status",
-    reason: `eq.${reason}`,
+    // O app grava "<categoria>: <explicacao>" desde a RECON-016 (prancha 56),
+    // entao igualdade exata contra a explicacao crua nunca casa — e este
+    // mesmo teste afirma logo abaixo que o motivo CONTEM "Outro: ". O sufixo
+    // identifica a denuncia desta execucao: a explicacao carrega Date.now()
+    // em base36. Sem isto, o primeiro viewport cria a denuncia mas nao a
+    // encontra, e os dois seguintes colidem com o indice parcial
+    // reports_one_open_per_reporter_target_idx.
+    reason: `like.*${reason}`,
   })
   const api = await request.newContext()
   try {
@@ -170,14 +180,36 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
       // membros e reduz o locator ao artigo correto antes de abrir o menu.
       const post = page.getByRole("article").filter({ hasText: TARGET_POST_TEXT }).first()
       await expect(post).toBeVisible({ timeout: 10000 })
-      await post.getByRole("button", { name: "Mais opcoes" }).click()
+      await post.getByRole("button", { name: "Mais opções" }).click()
       await page.getByRole("menuitem", { name: /Denunciar/i }).click()
-      await page.getByRole("textbox", { name: "Motivo da denuncia" }).fill(reason)
-      await page.getByRole("button", { name: "Enviar denuncia" }).click()
 
-      await expect(page.getByText(/A analise acontece em ate 48 horas/)).toBeVisible({
+      // A RECON-016 (prancha 56) trocou o campo unico de texto por categoria
+      // fechada + explicacao opcional. O motivo gravado passa a ser
+      // "<categoria>: <explicacao>", redigido por scrubReportReason antes do
+      // insert (o trigger 20260821000030 repete a redacao no banco).
+      //
+      // Nomeado: o popover do menu suspenso tambem carrega role="dialog".
+      const dialog = page.getByRole("dialog", { name: /Denunciar/ })
+      await expect(dialog).toBeVisible({ timeout: 10000 })
+      // Clica no LABEL: o React Aria esconde o <input type="radio"> e o span
+      // do controle intercepta o ponteiro. O label e o alvo real, e e tambem
+      // o que uma pessoa clica.
+      await dialog.locator('label[data-slot="radio-content"]').filter({ hasText: "Outro" }).click()
+      await dialog.getByLabel(/Explique/).fill(reason)
+      await dialog.getByRole("button", { name: "Enviar denúncia" }).click()
+
+      // A tela NAO promete mais prazo de analise.
+      //
+      // A versao anterior deste teste exigia "A analise acontece em ate 48
+      // horas". Esse prazo nunca teve contrato por tras: SUPPORT_SLA_HOURS e um
+      // limiar operacional do canal de suporte, usado como indicador de atraso
+      // no painel do operador — nao uma garantia dada a quem denuncia.
+      // resolve_report garante fila e notificacao quando houver decisao, e nada
+      // sobre quando.
+      await expect(page.getByText(/entra na fila de moderação/i)).toBeVisible({
         timeout: 5000,
       })
+      await expect(page.getByText(/48 horas/)).toHaveCount(0)
 
       const created = await fetchOwnReportByReason(anonKey, reporter.access_token, reason)
       expect(created).toHaveLength(1)
@@ -185,7 +217,10 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
       expect(report).toBeDefined()
       if (!report) throw new Error("Created report was not returned to its reporter")
       expect(report.status).toBe("open")
-      expect(report.reason).toBe(reason)
+      // O motivo gravado e "<categoria>: <explicacao>", entao a comparacao e
+      // por conteudo e cobre as duas metades.
+      expect(report.reason).toContain("Outro: ")
+      expect(report.reason).toContain(reason)
 
       await resolveReport(report.id)
 

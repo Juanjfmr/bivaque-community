@@ -1,0 +1,88 @@
+task_id: MOB-001
+
+objective: >
+  O cliente apps/mobile passa a portar a sessão Supabase Auth do web sem
+  copiar a implementação web, com PKCE no login, secure-store no aparelho,
+  refresh gerenciado pelo supabase-js, signOut que revoga servidor +
+  storage + cache, e screen-secure nas telas autenticadas.
+
+authority:
+  - ADR-20260831-mobile-native (fundação aprovada, R3)
+  - ADR-20260901-mobile-session (aprovada; confirmada pelo dono em 2026-09-06)
+  - docs/BIVAQUE.md §4.3 Privacidade, §7.3 Proibidos, §10 Ondas
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    2026-09-06, remedido em b2bf676..a90370f. Storage, refresh, signOut e purge
+    existem e têm teste (apps/mobile/src/auth/**, 51 testes verdes). O LOGIN não:
+    não há apps/mobile/app/login/**, nenhum import de expo-linking, nenhuma
+    chamada a exchangeCodeForSession, e client.ts fixa detectSessionInUrl:false
+    com o comentário "o fluxo de login do nativo é diferente, por implementar".
+    O card MOB-001-SESSION foi marcado done com este critério de aceite aberto.
+
+allowed_paths:
+  - apps/mobile/src/auth/**
+  - apps/mobile/src/auth/storage.ts
+  - apps/mobile/src/auth/refresh.ts
+  - apps/mobile/src/auth/signOut.ts
+  - apps/mobile/src/auth/purge.ts
+  - apps/mobile/app/login/**
+  - apps/mobile/app/(auth)/**
+  - apps/mobile/src/components/ui/**
+  - supabase/config.toml
+  - apps/mobile/app/_layout.tsx
+  - apps/mobile/app/(tabs)/_layout.tsx
+  - apps/mobile/app.json
+  - apps/mobile/package.json
+  - packages/contracts/**
+  - packages/domain/**
+  - docs/decisions/ADR-20260901-mobile-session.md
+  - docs/agents/tasks/MOB-001.task.yml
+
+forbidden:
+  - incluir service_role, qualquer segredo, ou acesso ao schema private
+  - usar WebView, expo-web-browser, react-native-webview
+  - usar AsyncStorage para tokens de sessão
+  - alterar migrations, RLS, policies ou schema private
+  - reativar push, SMS, modo escuro, IA, DM entre membros ou vídeo
+  - construir uma UI web embutida no nativo
+  - pedir aprovação de produto sem ADR aprovado em docs/decisions
+
+acceptance:
+  - Login com PKCE funciona em iOS e Android; o app recebe code no deep link via expo-linking e troca por token
+  - access_token, refresh_token, expires_at, user_id e locality_id ficam em expo-secure-store; nada em AsyncStorage
+  - refresh automático antes de expires_at; o app sobrevive a kill+relaunch sem pedir re-login
+  - signOut chama POST /auth/v1/logout no servidor, remove tokens do secure-store, limpa rascunhos de AsyncStorage e uploads pendentes em expo-file-system
+  - expo-secure-store configurado para EXCLUIR backup em iCloud e Google Drive (checado por teste)
+  - testes positivos em apps/mobile/src/auth: storage guarda, refresh renova, signOut limpa, purge zera cache
+  - testes negativos em apps/mobile/src/auth: storage corrompido força re-login; token expirado sem refresh devolve erro genérico sem distinguir causa
+  - nenhum dado PII entra em storage seguro (CPF, OM, patente, endereço)
+  - nenhum segredo em variáveis NEXT_PUBLIC, EXPO_PUBLIC ou constantes JSX
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/MOB-001.task.yml
+  - npx pnpm@11.18.0 --filter mobile typecheck
+  - npx pnpm@11.18.0 --filter mobile lint
+  - npx pnpm@11.18.0 test:scope
+  - unit tests em apps/mobile/src/auth (positivos + negativos)
+  - npx expo export --platform android com grep mostrando que secure-store é a única fonte de token
+  - npx expo export --platform ios idem
+
+risk: privacidade, autorização e segurança
+risk_level: R3
+
+adr: docs/decisions/ADR-20260901-mobile-session.md
+
+reviewer_must_differ_from_executor: true
+
+# blocked_by removido em 2026-09-06: o dono confirmou a aprovação da ADR quando
+# confrontado com a contradição entre o frontmatter (approved) e o corpo
+# (pendente). O bloqueio que resta é de ambiente, não de decisão: fechar este
+# contrato exige aparelho ou emulador, que a sessão de 2026-09-06 não tinha.
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

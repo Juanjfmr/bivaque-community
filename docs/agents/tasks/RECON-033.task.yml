@@ -1,0 +1,88 @@
+task_id: RECON-033
+
+objective: >
+  As telas ja entregues passam a corresponder as pranchas que nunca foram conferidas - composicao
+  de pergunta, conversa, confianca e estados compartilhados - e as duas telas de operacao voltam
+  a ter cabecalho e caminho de saida, que hoje nao tem.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/45-web-publicacao.png
+  - docs/design/visual-guide-2026-09-06/15-web-conversa.png
+  - docs/design/visual-guide-2026-09-06/56-web-confianca.png
+  - docs/design/visual-guide-2026-09-06/60-web-estados.png
+  - docs/design/visual-guide-2026-09-06/57-web-operacao-admissoes.png
+  - docs/design/visual-guide-2026-09-06/58-web-operacao-moderacao.png
+  - docs/design/visual-guide-2026-09-06/43-web-comunidade-grupos.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secoes 45 e 60, 15-web-conversa e 56-web-confianca
+  - docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md tabela de divergencias abertas
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O handoff de 09/09 registra que quatro pranchas nunca foram comparadas com a tela entregue -
+    45, 15, 56 e 60 - e lista divergencias ja medidas nas telas de operacao, que ficaram sem
+    cabecalho do produto e sem caminho de volta, com navegacao horizontal onde a prancha tem
+    coluna lateral, e com motivo de denuncia em texto livre onde a prancha tem lista fechada.
+    Medido em 09/09/2026 na arvore de codex/ajuste-de-auditoria.
+
+allowed_paths:
+  - apps/web/app/(shell)/publicacoes/
+  - apps/web/app/(shell)/communities/
+  - apps/web/app/(admin)/
+  - apps/web/app/components/shell/
+  - apps/web/app/components/bivaque/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-033.task.yml
+
+forbidden:
+  - deixar a pessoa operadora sem caminho de volta ao produto ou de saida da operacao
+  - aceitar motivo de denuncia em texto livre onde a prancha tem lista fechada
+  - confundir falha de conexao com ausencia de acesso na mesma tela
+  - inverter a ordem do dialogo de descarte - a acao segura vem primeiro
+  - permitir alterar o publico de uma publicacao ja criada
+  - acender navegacao primaria em rota secundaria
+  - criar migration, policy ou coluna
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a composicao de pergunta segue a prancha 45 - autor, quem pode ver em dois radios com a linha de apoio de cada um, campo da pergunta, detalhes opcionais, foto opcional, publicar e a linha de visibilidade, com a previa lateral espelhando o que sera visto
+  - o composer traz os contadores de caractere e o rascunho da prancha 60, e a faixa de sem conexao com tentar novamente
+  - a edicao trava o publico com o aviso da prancha e o dialogo de sair sem salvar tem continuar editando como acao principal
+  - a conversa segue a prancha 15 - chip de resolvida pela autora, linha de escopo, contagem e ordenacao de respostas, resposta aninhada, o aviso de visibilidade no composer, e o rail com comunidade, guardar para depois e o guia de chegada
+  - o estado de acesso indisponivel da prancha 60 e visivelmente diferente do erro de conexao, e oferece conhecer a comunidade e voltar
+  - as duas telas de operacao voltam a ter o cabecalho do produto das pranchas 57 e 58, com busca, cidade, sino e identificacao
+  - a navegacao da operacao e a coluna lateral rotulada com Admissoes, Denuncias e Comunidades, e nao a barra horizontal atual
+  - o rodape da barra lateral traz voltar ao produto e sair da operacao, iguais nas duas telas
+  - o motivo de denuncia usa uma lista fechada unica nas duas pontas, validada no servidor, reconciliando os vocabularios diferentes das pranchas 56 e 58
+  - nenhuma decisao de moderacao nasce pre-selecionada, ainda que a prancha 58 desenhe assim
+  - a justificativa da decisao e obrigatoria e a identidade de quem denunciou nao aparece ao autor do conteudo
+  - o chip de atraso que nao existe na prancha sai da fila de denuncias
+  - a barra lateral usa o mesmo wordmark canonico do sistema de design em todas as telas, sem inventar simbolo nem descritivo que nenhuma prancha web traz
+  - no estado de pedido pendente de /communities/[id] o rail Sobre a comunidade aparece com Membros, Criada em e Local, todos de consulta real, conforme a prancha 43 e a decisao do dono de 09/09
+  - as curtidas desenhadas na prancha 15 NAO sao implementadas, e a divergencia fica declarada no relatorio do lote - decisao do dono de 09/09
+  - o marcador da resposta que ajudou a resolver nao entra por aqui: ele exige coluna e vem pelo RECON-035
+  - todos os estados fechados nas telas tocadas, e a captura em 375 768 e 1440 registra Authenticated capture com o papel correto
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-033.task.yml
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e das telas de operacao com a conta de operador do seed
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: fidelidade das telas entregues e acesso a operacao
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
+
+revisao:
+  - >
+    09/09/2026 — decisoes do dono sobre dois itens deste lote: o rail Sobre a comunidade passa a
+    aparecer no pedido pendente, revisando a regra do RECON-009; e das duas mecanicas sem lastro
+    da prancha 15, so o marcador da resposta que resolveu entra no produto, pelo RECON-035, e as
+    curtidas ficam de fora com a divergencia registrada.

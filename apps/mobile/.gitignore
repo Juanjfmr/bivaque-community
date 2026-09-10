@@ -1,0 +1,9 @@
+# Expo output and caches — não fazem parte do código-fonte da fundação.
+node_modules/
+.expo/
+.expo-types/
+dist-android/
+dist-ios/
+web-build/
+*.tsbuildinfo
+*.log

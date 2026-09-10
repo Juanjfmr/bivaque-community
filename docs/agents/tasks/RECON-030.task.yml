@@ -1,0 +1,72 @@
+task_id: RECON-030
+
+objective: >
+  O artigo do Guia passa a ser o da prancha 25 - subtitulo, imagem de capa, corpo em secoes com
+  indice lateral, a origem ligando a conversa que gerou a referencia, e a sugestao de correcao
+  que chega a curadoria, e decidida e volta ao solicitante.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/25-web-guia-referencia.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 25-web-guia-referencia
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.5 R37 R38 R39
+  - docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md secao sobre o RECON-013
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    /guide/[id] existe e e um diretorio, nao um artigo - o handoff de 09/09 registra que o
+    contrato anterior foi escrito lendo o esquema da tabela em vez do desenho. Faltam corpo em
+    secoes, subtitulo, imagem, indice e a ligacao de origem, que ja tem coluna e nao e usada.
+    Nao existem as rotas de correcao nem de decisao da curadoria. Medido em 09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(shell)/guide/
+  - apps/web/app/(admin)/guide-queue/
+  - apps/web/lib/guide/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-030.task.yml
+
+forbidden:
+  - gerar texto do artigo por modelo de linguagem a cada exibicao
+  - deixar sugestao publicar alteracao sem decisao autorizada
+  - guardar HTML enviado pela curadoria como corpo do artigo
+  - revelar titulo, autor ou conteudo da conversa de origem a quem nao tem acesso a ela
+  - exibir artigo retirado ou nao aprovado
+  - inventar informacao local ou legal a partir da imagem da prancha
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - o artigo segue a prancha 25 - trilha, titulo editorial, subtitulo, linha de revisao e curadoria, botao de salvar, imagem de capa e o corpo em secoes com titulo e texto
+  - o rail traz o indice das secoes com o item ativo destacado, o cartao de origem da referencia e o cartao de sugestao de atualizacao
+  - o indice e gerado das secoes, e as ancoras funcionam por teclado
+  - a origem aparece quando o dado existe, e leva a conversa quando o leitor tem acesso, sem vazar quando nao tem
+  - a rota de correcao existe, e contextual, preserva o texto no erro e mostra o que foi realmente recebido
+  - a sugestao chega a fila da curadoria, e aplicada ou rejeitada com justificativa, e a versao publicada anterior fica registrada
+  - aplicar a correcao invalida o cache e o artigo passa a mostrar a versao vigente, inclusive para quem salvou
+  - o solicitante recebe retorno com a informacao permitida
+  - as tabelas novas e as policies que as leem entram na mesma migration, com caso positivo e negativo em pgTAP
+  - entrada inexistente ou nao aprovada devolve not-found honesto sem vazar existencia
+  - todos os estados fechados - carregando, vazio honesto, erro recuperavel e sessao expirada
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - as rotas novas estao cadastradas em scripts/visual/capture.mjs com fixture concreta
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-030.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e do ciclo de sugestao, decisao e versao vigente
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: conteudo curado, versao e retorno ao solicitante
+risk_level: R3
+adr: docs/decisions/ADR-20260909-guia-artigo-estruturado.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

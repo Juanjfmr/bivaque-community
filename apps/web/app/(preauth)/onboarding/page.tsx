@@ -11,9 +11,7 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { SUPPORT_EMAIL } from "../../../lib/support"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { showToast } from "../../components/bivaque/toast"
-import { ConsentCheckbox } from "./components/consent-checkbox"
 import { OnboardingShell } from "./components/onboarding-shell"
-import DocumentUpload from "./document-upload"
 import styles from "./onboarding.module.css"
 
 type OnboardingStep = "verify" | "family" | "done" | "loading"
@@ -50,9 +48,6 @@ function OnboardingFlow() {
   const [familyToken, setFamilyToken] = useState("")
   const [familyName, setFamilyName] = useState("")
   const [result, setResult] = useState<string | null>(null)
-  const [hasAcceptedConsent, setHasAcceptedConsent] = useState(false)
-  const [acceptConsent, setAcceptConsent] = useState(false)
-  const [showDocumentFallback, setShowDocumentFallback] = useState(false)
 
   const inviteToken = searchParams.get("invite")
 
@@ -88,10 +83,7 @@ function OnboardingFlow() {
         const data = (await res.json()) as {
           status: "pending" | "verified" | "rejected" | "temporary_error" | null
           localityMember: boolean
-          hasAcceptedConsent: boolean
         }
-
-        setHasAcceptedConsent(data.hasAcceptedConsent)
 
         if (data.localityMember) {
           router.replace("/community")
@@ -119,13 +111,8 @@ function OnboardingFlow() {
 
   const handleVerifyCpf = async () => {
     setError(null)
-    setShowDocumentFallback(false)
     if (!isValidCpf(cpf)) {
       setError("CPF inválido. Confira os 11 dígitos.")
-      return
-    }
-    if (!hasAcceptedConsent && !acceptConsent) {
-      setError("Leia e aceite as regras antes de enviar seu CPF.")
       return
     }
     setLoading(true)
@@ -151,11 +138,7 @@ function OnboardingFlow() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          action: "verify-cpf",
-          cpf: cpf.replace(/\D/g, ""),
-          accept_consent: acceptConsent,
-        }),
+        body: JSON.stringify({ action: "verify-cpf", cpf: cpf.replace(/\D/g, "") }),
       })
 
       const data = (await response.json()) as Record<string, unknown>
@@ -164,8 +147,6 @@ function OnboardingFlow() {
         setError(data["error"] as string)
         return
       }
-
-      setHasAcceptedConsent(true)
 
       if (data["localityMember"]) {
         setResult("Verificação concluída. Sua entrada está pronta.")
@@ -193,7 +174,6 @@ function OnboardingFlow() {
         } else if (outcome["status"] === "temporary_error") {
           const errorCode = typeof outcome["errorCode"] === "string" ? outcome["errorCode"] : ""
           setError(verificationErrorMessage(errorCode, SUPPORT_EMAIL))
-          setShowDocumentFallback(true)
         }
       }
     } catch (err: unknown) {
@@ -207,10 +187,6 @@ function OnboardingFlow() {
     setError(null)
     if (familyName.trim().length < 2) {
       setError("Informe seu nome para aceitar o convite.")
-      return
-    }
-    if (!hasAcceptedConsent && !acceptConsent) {
-      setError("Leia e aceite as regras antes de aceitar o convite.")
       return
     }
     setLoading(true)
@@ -241,7 +217,6 @@ function OnboardingFlow() {
           action: "accept-family-invite",
           token: familyToken,
           display_name: familyName.trim(),
-          accept_consent: acceptConsent,
         }),
       })
 
@@ -341,15 +316,7 @@ function OnboardingFlow() {
                 maxLength={14}
               />
             </div>
-            {!hasAcceptedConsent && (
-              <ConsentCheckbox isSelected={acceptConsent} onChange={setAcceptConsent} />
-            )}
-            <Button
-              type="submit"
-              variant="primary"
-              className={styles["primaryButton"] ?? ""}
-              isDisabled={!hasAcceptedConsent && !acceptConsent}
-            >
+            <Button type="submit" variant="primary" className={styles["primaryButton"] ?? ""}>
               Conferir e continuar
             </Button>
           </Form>
@@ -370,15 +337,11 @@ function OnboardingFlow() {
               />
             </div>
 
-            {!hasAcceptedConsent && (
-              <ConsentCheckbox isSelected={acceptConsent} onChange={setAcceptConsent} />
-            )}
-
             <Button
               variant="primary"
               className={styles["primaryButton"] ?? ""}
               onPress={handleAcceptFamilyInvite}
-              isDisabled={loading || (!hasAcceptedConsent && !acceptConsent)}
+              isDisabled={loading}
             >
               {loading ? "Processando..." : "Aceitar convite"}
             </Button>
@@ -386,8 +349,6 @@ function OnboardingFlow() {
         )}
 
         {error && <FeedbackAlert variant="danger" description={error} />}
-
-        {showDocumentFallback && <DocumentUpload hasAcceptedConsent={hasAcceptedConsent} />}
 
         {step !== "done" && !(step === "verify" && loading) && (
           <p className={styles["note"]}>

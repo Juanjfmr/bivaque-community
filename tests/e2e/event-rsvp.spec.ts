@@ -10,11 +10,15 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal, seedSession } from "./helpers/session"
+import {
+  CURRENT_CONSENT,
+  encodeAuthCookieValue,
+  readEnvLocal,
+  seedSession,
+} from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 
 // "Caminhada matinal no parque", organized by membro-2 (30000000-...-0002).
 const EVENT_ID = "70000000-0000-4000-8000-000000000001"

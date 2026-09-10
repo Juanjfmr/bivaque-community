@@ -1,24 +1,13 @@
 .root {
-  --flow-ink: #17211d;
-  --flow-muted: #59655f;
-  --flow-paper: #f7f4ec;
-  --flow-surface: #fffdf7;
-  --flow-forest: #245b43;
-  --flow-forest-deep: #102f25;
-  --flow-signal: #b4472e;
-  --flow-gold: #d7a44c;
-  --flow-rule: rgba(23, 33, 29, 0.18);
-  --flow-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --flow-sans: Inter, "Segoe UI", Arial, sans-serif;
   display: grid;
   min-height: 100svh;
-  color: var(--flow-ink);
-  background: var(--flow-paper);
-  font-family: var(--flow-sans);
+  color: var(--semantic-text-primary);
+  background: var(--semantic-canvas);
+  font-family: var(--semantic-font-family-interface);
 }
 
 .root :focus-visible {
-  outline: 2px solid var(--flow-signal);
+  outline: 2px solid var(--semantic-action-primary);
   outline-offset: 3px;
 }
 
@@ -43,12 +32,12 @@
   min-height: 44px;
   align-items: center;
   gap: 10px;
-  color: var(--flow-forest-deep);
-  font-family: var(--flow-serif);
-  font-size: 27px;
-  font-weight: 700;
+  color: var(--semantic-background-inverse);
+  font-family: var(--semantic-font-family-interface);
+  font-size: var(--semantic-typography-section-title-size);
+  font-weight: var(--semantic-typography-label-weight);
   text-decoration: none;
-  transition: opacity 180ms ease;
+  transition: opacity var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .brandLink:hover {
@@ -61,9 +50,9 @@
 }
 
 .journeyLabel {
-  color: var(--flow-muted);
-  font-size: 13px;
-  font-weight: 700;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+  font-weight: var(--semantic-typography-label-weight);
 }
 
 .content {
@@ -88,28 +77,28 @@
 .progressItem > span {
   display: block;
   height: 3px;
-  border-radius: 2px;
-  background: var(--flow-rule);
-  transition: background-color 180ms ease;
+  border-radius: var(--radius-sm);
+  background: var(--semantic-border);
+  transition: background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .progressItem small {
   overflow: hidden;
-  color: #7a847e;
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+  font-weight: var(--semantic-typography-label-weight);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .progressItem[data-state="current"] > span,
 .progressItem[data-state="complete"] > span {
-  background: var(--flow-forest);
+  background: var(--semantic-success);
 }
 
 .progressItem[data-state="current"] small,
 .progressItem[data-state="complete"] small {
-  color: var(--flow-forest);
+  color: var(--semantic-success);
 }
 
 .heading {
@@ -118,28 +107,28 @@
 
 .eyebrow {
   margin: 0 0 12px;
-  color: var(--flow-forest);
-  font-size: 12px;
-  font-weight: 800;
+  color: var(--semantic-success);
+  font-size: var(--semantic-typography-meta-size);
+  font-weight: var(--semantic-typography-label-weight);
   text-transform: uppercase;
 }
 
 .heading h1 {
   max-width: 540px;
   margin: 0;
-  font-family: var(--flow-serif);
-  font-size: 39px;
-  font-weight: 600;
-  line-height: 1.04;
+  font-family: var(--semantic-font-family-interface);
+  font-size: var(--semantic-typography-display-size);
+  font-weight: var(--semantic-typography-card-title-weight);
+  line-height: var(--primitive-line-height-tight);
   text-wrap: balance;
 }
 
 .heading > p:last-child:not(.eyebrow) {
   max-width: 520px;
   margin: 16px 0 0;
-  color: var(--flow-muted);
-  font-size: 16px;
-  line-height: 1.65;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-body-size);
+  line-height: var(--semantic-typography-body-line-height);
 }
 
 .body {
@@ -158,20 +147,6 @@
   gap: 16px;
 }
 
-.consentCheckbox {
-  align-items: flex-start;
-  color: var(--flow-muted);
-  font-size: 13px;
-  line-height: 1.55;
-}
-
-.consentCheckbox a {
-  color: var(--flow-forest);
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 .fieldGroup {
   display: flex;
   flex-direction: column;
@@ -180,9 +155,9 @@
 
 .fieldLabel {
   margin: 0;
-  color: var(--flow-ink);
-  font-size: 14px;
-  font-weight: 800;
+  color: var(--semantic-text-primary);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
 }
 
 .control {
@@ -195,43 +170,43 @@
 .textAction {
   width: 100%;
   min-height: 52px;
-  border-radius: 6px;
-  font-size: 15px;
-  font-weight: 800;
+  border-radius: var(--radius-sm);
+  font-size: var(--semantic-typography-body-size);
+  font-weight: var(--semantic-typography-label-weight);
 }
 
 .primaryButton {
-  color: #fffdf7;
-  background: var(--flow-signal);
+  color: var(--semantic-text-on-strong);
+  background: var(--semantic-action-primary);
 }
 
 .primaryButton:hover {
-  background: #9f3d28;
+  background: var(--semantic-action-primary-hover);
 }
 
 .secondaryButton {
-  color: var(--flow-forest-deep);
-  border: 1px solid var(--flow-rule);
-  background: var(--flow-surface);
+  color: var(--semantic-background-inverse);
+  border: 1px solid var(--semantic-border);
+  background: var(--semantic-surface);
 }
 
 .textAction {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--flow-forest);
-  border: 1px solid var(--flow-rule);
+  color: var(--semantic-success);
+  border: 1px solid var(--semantic-border);
   text-decoration: none;
   transition:
-    color 180ms ease,
-    border-color 180ms ease,
-    background-color 180ms ease;
+    color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    border-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .textAction:hover {
-  color: var(--flow-forest-deep);
-  border-color: rgba(36, 91, 67, 0.42);
-  background: var(--flow-surface);
+  color: var(--semantic-background-inverse);
+  border-color: color-mix(in srgb, var(--semantic-success) 42%, transparent);
+  background: var(--semantic-surface);
 }
 
 .primaryLink {
@@ -242,17 +217,17 @@
   justify-content: center;
   gap: 10px;
   padding: 0 20px;
-  color: #fffdf7;
-  border-radius: 6px;
-  background: var(--flow-signal);
-  font-size: 15px;
-  font-weight: 800;
+  color: var(--semantic-text-on-strong);
+  border-radius: var(--radius-sm);
+  background: var(--semantic-action-primary);
+  font-size: var(--semantic-typography-body-size);
+  font-weight: var(--semantic-typography-label-weight);
   text-decoration: none;
-  transition: background-color 180ms ease;
+  transition: background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .primaryLink:hover {
-  background: #9f3d28;
+  background: var(--semantic-action-primary-hover);
 }
 
 .primaryLink svg {
@@ -266,16 +241,16 @@
   gap: 10px;
   margin: 4px 0 0;
   padding-top: 18px;
-  color: var(--flow-muted);
-  border-top: 1px solid var(--flow-rule);
-  font-size: 13px;
-  line-height: 1.55;
+  color: var(--semantic-text-secondary);
+  border-top: 1px solid var(--semantic-border);
+  font-size: var(--semantic-typography-meta-size);
+  line-height: var(--semantic-typography-body-line-height);
 }
 
 .note svg {
   width: 18px;
   height: 18px;
-  color: var(--flow-forest);
+  color: var(--semantic-success);
 }
 
 .loadingState {
@@ -285,7 +260,7 @@
   justify-content: center;
   flex-direction: column;
   gap: 16px;
-  color: var(--flow-muted);
+  color: var(--semantic-text-secondary);
   text-align: center;
 }
 
@@ -296,49 +271,49 @@
 
 .legalSection {
   min-width: 0;
-  border-top: 1px solid var(--flow-rule);
+  border-top: 1px solid var(--semantic-border);
 }
 
 .legalSection h2 {
   margin: 16px 0 10px;
-  font-family: var(--flow-serif);
-  font-size: 20px;
-  font-weight: 600;
+  font-family: var(--semantic-font-family-interface);
+  font-size: var(--semantic-typography-section-title-size);
+  font-weight: var(--semantic-typography-card-title-weight);
 }
 
 .legalDocument {
   max-height: 190px;
   overflow-y: auto;
   padding: 16px;
-  border: 1px solid var(--flow-rule);
-  border-radius: 6px;
-  background: var(--flow-surface);
-  scrollbar-color: rgba(36, 91, 67, 0.45) transparent;
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--radius-sm);
+  background: var(--semantic-surface);
+  scrollbar-color: color-mix(in srgb, var(--semantic-success) 45%, transparent) transparent;
 }
 
 .legalDocument :global(h2),
 .legalDocument :global(h3) {
-  color: var(--flow-ink);
+  color: var(--semantic-text-primary);
 }
 
 .legalDocument :global(p),
 .legalDocument :global(li) {
-  color: var(--flow-muted);
-  line-height: 1.55;
+  color: var(--semantic-text-secondary);
+  line-height: var(--semantic-typography-body-line-height);
 }
 
 .statusLead {
-  color: var(--flow-muted);
-  font-size: 15px;
-  line-height: 1.65;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-body-size);
+  line-height: var(--semantic-typography-body-line-height);
 }
 
 .statusLead a {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
-  color: var(--flow-forest);
-  font-weight: 700;
+  color: var(--semantic-success);
+  font-weight: var(--semantic-typography-label-weight);
   text-underline-offset: 4px;
 }
 
@@ -348,14 +323,14 @@
   gap: 14px;
   margin-top: 4px;
   padding: 18px;
-  border: 1px solid var(--flow-rule);
-  border-radius: 6px;
-  background: var(--flow-surface);
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--radius-sm);
+  background: var(--semantic-surface);
 }
 
 .documentPanel .statusLead {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--semantic-typography-meta-size);
 }
 
 .visuallyHidden {
@@ -369,7 +344,7 @@
   opacity: 0;
   border: 0;
   cursor: pointer;
-  transition: opacity 180ms ease;
+  transition: opacity var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .fileControl {
@@ -387,25 +362,25 @@
   align-items: center;
   gap: 8px;
   padding: 0 14px;
-  color: var(--flow-ink);
-  border: 1px solid var(--flow-rule);
-  border-radius: 5px;
-  background: var(--flow-paper);
-  font-size: 13px;
-  font-weight: 700;
+  color: var(--semantic-text-primary);
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--radius-sm);
+  background: var(--semantic-canvas);
+  font-size: var(--semantic-typography-meta-size);
+  font-weight: var(--semantic-typography-label-weight);
   cursor: pointer;
   transition:
-    border-color 180ms ease,
-    background-color 180ms ease;
+    border-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .filePicker:hover {
-  border-color: rgba(36, 91, 67, 0.42);
-  background: #ffffff;
+  border-color: color-mix(in srgb, var(--semantic-success) 42%, transparent);
+  background: var(--semantic-surface);
 }
 
 .visuallyHidden:focus-visible + .filePicker {
-  outline: 2px solid var(--flow-signal);
+  outline: 2px solid var(--semantic-action-primary);
   outline-offset: 3px;
 }
 
@@ -416,9 +391,9 @@
 
 .fileName {
   min-width: 0;
-  color: var(--flow-muted);
-  font-size: 13px;
-  line-height: 1.35;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+  line-height: var(--semantic-typography-body-line-height);
   overflow-wrap: anywhere;
 }
 
@@ -426,7 +401,7 @@
   display: grid;
   margin: 0;
   padding: 0;
-  border-top: 1px solid var(--flow-rule);
+  border-top: 1px solid var(--semantic-border);
   list-style: none;
 }
 
@@ -437,30 +412,30 @@
   align-items: center;
   gap: 18px;
   padding: 16px 0;
-  color: var(--flow-ink);
-  border-bottom: 1px solid var(--flow-rule);
+  color: var(--semantic-text-primary);
+  border-bottom: 1px solid var(--semantic-border);
   text-decoration: none;
   transition:
-    color 180ms ease,
-    padding-left 180ms ease;
+    color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    padding-left var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .actionItem:hover {
   padding-left: 6px;
-  color: var(--flow-signal);
+  color: var(--semantic-action-primary);
 }
 
 .actionItem strong {
   display: block;
-  font-size: 15px;
+  font-size: var(--semantic-typography-body-size);
 }
 
 .actionItem span {
   display: block;
   margin-top: 4px;
-  color: var(--flow-muted);
-  font-size: 13px;
-  line-height: 1.45;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+  line-height: var(--semantic-typography-body-line-height);
 }
 
 .actionItem svg {
@@ -473,8 +448,8 @@
   display: none;
   min-width: 0;
   overflow: hidden;
-  color: #fffdf7;
-  background: var(--flow-forest-deep);
+  color: var(--semantic-text-on-strong);
+  background: var(--semantic-background-inverse);
 }
 
 .visualPanel > img {
@@ -485,7 +460,11 @@
 .visualShade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(0deg, rgba(7, 16, 13, 0.92), rgba(7, 16, 13, 0.08) 72%);
+  background: linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--semantic-background-inverse) 92%, transparent),
+    color-mix(in srgb, var(--semantic-background-inverse) 8%, transparent) 72%
+  );
 }
 
 .visualCopy {
@@ -499,18 +478,18 @@
 
 .visualCopy > p {
   margin: 0 0 14px;
-  color: #f5c46d;
-  font-size: 12px;
-  font-weight: 800;
+  color: var(--semantic-warning-soft);
+  font-size: var(--semantic-typography-meta-size);
+  font-weight: var(--semantic-typography-label-weight);
   text-transform: uppercase;
 }
 
 .visualCopy h2 {
   margin: 0;
-  font-family: var(--flow-serif);
-  font-size: 48px;
-  font-weight: 600;
-  line-height: 1.02;
+  font-family: var(--semantic-font-family-interface);
+  font-size: var(--semantic-typography-display-size);
+  font-weight: var(--semantic-typography-card-title-weight);
+  line-height: var(--primitive-line-height-tight);
   text-wrap: balance;
 }
 
@@ -518,9 +497,9 @@
   display: block;
   max-width: 530px;
   margin-top: 18px;
-  color: rgba(255, 253, 247, 0.82);
-  font-size: 16px;
-  line-height: 1.65;
+  color: color-mix(in srgb, var(--semantic-text-on-strong) 82%, transparent);
+  font-size: var(--semantic-typography-body-size);
+  line-height: var(--semantic-typography-body-line-height);
 }
 
 @media (min-width: 900px) {
@@ -550,7 +529,7 @@
   }
 
   .heading h1 {
-    font-size: 46px;
+    font-size: var(--semantic-typography-display-size);
   }
 
   .visualCopy {
@@ -560,7 +539,7 @@
   }
 
   .visualCopy h2 {
-    font-size: 58px;
+    font-size: var(--semantic-typography-display-size);
   }
 }
 
@@ -582,8 +561,8 @@
   .root *,
   .root *::before,
   .root *::after {
-    transition-duration: 0.001ms;
-    animation-duration: 0.001ms;
+    transition-duration: var(--primitive-motion-none);
+    animation-duration: var(--primitive-motion-none);
     animation-iteration-count: 1;
   }
 }

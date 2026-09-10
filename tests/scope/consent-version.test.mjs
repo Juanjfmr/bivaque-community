@@ -5,7 +5,7 @@ import test from "node:test"
 
 // D2 Task 3 Step 2: the scope guard that mechanizes the single-source rule for
 // consent and code-of-conduct versions. The versions used to live as literals
-// in five places (middleware, the consent page, the consent action, the
+// in five places (proxy, the consent page, the consent action, the
 // onboarding route and the provision flow). Publishing a version 2 meant
 // editing five files and the failure surfaced only as "consent is required"
 // in production. The guard forbids any local declaration of these constants in
@@ -21,10 +21,9 @@ const FORBIDDEN_LOCAL =
 
 // Files that must import the versions from @bivaque/domain (the single source).
 const MUST_IMPORT = [
-  join(root, "apps", "web", "middleware.ts"),
-  join(root, "apps", "web", "app", "(preauth)", "onboarding", "page.tsx"),
-  join(root, "apps", "web", "app", "(preauth)", "onboarding", "document-actions.ts"),
-  join(root, "apps", "web", "app", "auth", "callback", "route.ts"),
+  join(root, "apps", "web", "proxy.ts"),
+  join(root, "apps", "web", "app", "(preauth)", "consent", "page.tsx"),
+  join(root, "apps", "web", "app", "(preauth)", "consent", "actions.ts"),
   join(root, "apps", "web", "app", "api", "onboarding", "route.ts"),
   join(root, "apps", "web", "lib", "onboarding", "verifyAndProvision.ts"),
 ]
@@ -87,5 +86,43 @@ test("the five consumers import the versions from @bivaque/domain", () => {
       missing.join(", ") +
       ". " +
       "They must use the single source for consent versions (D2 Task 3).",
+  )
+})
+
+// The E2E mirror of the same rule. The middleware gates the consent cookie on
+// strict equality with CONSENT_VERSION, so specs that hand-write the cookie
+// value silently rot on every version bump (found closing MVP-00-E2E-FUNCTIONAL
+// :72 after the v2 bump — 28 specs were redirected to /consent). The helper
+// exports the one allowed test-side value; a spec declaring its own is drift.
+test("no e2e spec declares its own consent cookie value", () => {
+  const specFiles = readdirSync(join(root, "tests", "e2e")).filter((f) => f.endsWith(".spec.ts"))
+  const hits = []
+  for (const file of specFiles) {
+    const code = readFileSync(join(root, "tests", "e2e", file), "utf8")
+    if (/const\s+CURRENT_CONSENT\s*=/.test(code)) {
+      hits.push(`tests/e2e/${file}`)
+    }
+  }
+  assert.deepEqual(
+    hits,
+    [],
+    "consent cookie values declared in: " +
+      hits.join(", ") +
+      ". Import CURRENT_CONSENT from ./helpers/session instead.",
+  )
+})
+
+test("the e2e helper's consent value matches the domain single source", () => {
+  const domain = readFileSync(join(root, "packages", "domain", "src", "consent.ts"), "utf8")
+  const domainVersion = domain.match(/export const CONSENT_VERSION = (\d+)/)?.[1]
+  assert.ok(domainVersion, "CONSENT_VERSION not found in packages/domain/src/consent.ts")
+  const helper = readFileSync(join(root, "tests", "e2e", "helpers", "session.ts"), "utf8")
+  const helperVersion = helper.match(/export const CURRENT_CONSENT = "(\d+)"/)?.[1]
+  assert.equal(
+    helperVersion,
+    domainVersion,
+    "tests/e2e/helpers/session.ts CURRENT_CONSENT drifted from CONSENT_VERSION " +
+      `(@bivaque/domain=${domainVersion}, helper=${helperVersion}). ` +
+      "Update the helper after a version bump.",
   )
 })

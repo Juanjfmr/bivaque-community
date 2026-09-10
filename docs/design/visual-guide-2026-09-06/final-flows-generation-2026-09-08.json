@@ -7,7 +7,11 @@
       "kind": "mobile",
       "group": "events",
       "title": "Perguntas ao organizador",
-      "screens": ["Enviar pergunta", "Aguardar resposta", "Falha com texto preservado"],
+      "screens": [
+        "Enviar pergunta",
+        "Aguardar resposta",
+        "Falha com texto preservado"
+      ],
       "reviewNotes": [
         "Usar Carlos Ribeiro como fixture do autor; Carlos Silva é variação gerada. A conversa permanece vinculada ao evento."
       ],
@@ -23,7 +27,10 @@
       "kind": "web",
       "group": "events",
       "title": "Informações do evento na web",
-      "screens": ["Reenviar pergunta", "Ler resposta e continuar"],
+      "screens": [
+        "Reenviar pergunta",
+        "Ler resposta e continuar"
+      ],
       "reviewNotes": [
         "Usar o wordmark canônico sem o símbolo de árvore inventado. Garantir contraste do botão desabilitado."
       ],
@@ -39,7 +46,11 @@
       "kind": "mobile",
       "group": "auth",
       "title": "Identidade: envio e recuperação",
-      "screens": ["Enviar identidade", "Acompanhar análise", "Substituir arquivo ilegível"],
+      "screens": [
+        "Enviar identidade",
+        "Acompanhar análise",
+        "Substituir arquivo ilegível"
+      ],
       "reviewNotes": [
         "Identidade militar digital é um único arquivo completo. Não exigir frente/verso, fotografias ou divisão em anexos. Na falha de leitura, substituir o arquivo completo. Formatos e limites dependem do contrato técnico; manter contraste legível nos botões desabilitados."
       ],
@@ -62,7 +73,10 @@
       "kind": "web",
       "group": "auth",
       "title": "Identidade: envio e recuperação web",
-      "screens": ["Enviar identidade", "Substituir arquivo ilegível"],
+      "screens": [
+        "Enviar identidade",
+        "Substituir arquivo ilegível"
+      ],
       "reviewNotes": [
         "Identidade militar digital é um único arquivo completo. Não exigir frente/verso, fotografias ou divisão em anexos. Na falha de leitura, substituir o arquivo completo. Formatos e limites dependem do contrato técnico; manter contraste legível nos botões desabilitados."
       ],

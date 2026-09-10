@@ -1,13 +1,10 @@
-import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
 import { log } from "../../../lib/logger"
 import { sanitizeNext } from "../../../lib/security/sanitize-next"
-import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
-const CONSENT_COOKIE = "bivaque-consent-version"
 const COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 400,
   path: "/",
@@ -55,38 +52,8 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/auth/callback-error", request.url))
   }
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    log.error("auth callback failed: authenticated user unavailable")
-    return NextResponse.redirect(new URL("/auth/callback-error", request.url))
-  }
-
-  const serviceClient = createServiceClient()
-  const { data: hasAcceptedConsent, error: consentError } = await serviceClient.rpc(
-    "has_accepted_consent",
-    {
-      p_user_id: user.id,
-      p_consent_version: CONSENT_VERSION,
-      p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION,
-    },
-  )
-
-  if (consentError) {
-    log.error("auth callback failed: consent status unavailable", { error: consentError.message })
-    return NextResponse.redirect(new URL("/auth/callback-error", request.url))
-  }
-
   const redirectUrl = new URL(next, request.url)
   const response = NextResponse.redirect(redirectUrl)
-  if (hasAcceptedConsent) {
-    response.cookies.set(CONSENT_COOKIE, String(CONSENT_VERSION), COOKIE_OPTIONS)
-  } else {
-    response.cookies.set(CONSENT_COOKIE, "", { ...COOKIE_OPTIONS, maxAge: 0 })
-  }
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate")
   return response
 }

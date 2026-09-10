@@ -12,7 +12,7 @@ interface CardProps {
 export function Card({ children, className = "", interactive = false }: CardProps) {
   return (
     <HeroCard
-      className={`bg-[var(--surface-raised)] ${interactive ? "transition-shadow duration-[var(--duration-base)] hover:shadow-[var(--elevation-2)]" : ""} ${className}`}
+      className={`bg-[var(--semantic-surface)] ${interactive ? "transition-shadow duration-[var(--semantic-motion-duration-base)] hover:shadow-[var(--semantic-elevation-raised)]" : ""} ${className}`}
     >
       {children}
     </HeroCard>

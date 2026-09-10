@@ -2,10 +2,12 @@
 
 import { brandTokens } from "@bivaque/tokens"
 import { Button, Kbd, Tooltip } from "@heroui/react"
-import { Bell, ChevronsLeft, Lightbulb, MapPin, PanelLeft } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { Bell, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
+import { useMemberContext } from "../../../lib/member-context"
 import { MemberAvatar } from "./avatar"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
 import { CreatePostModal } from "./feed-post"
@@ -24,6 +26,7 @@ export function AppShell({ children }: AppShellProperties) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [createPostOpen, setCreatePostOpen] = useState(false)
   const { current } = useLocalityContext()
+  const { communities, displayName, unreadCount } = useMemberContext()
   // Read synchronously on the first client render so a tablet never paints the
   // expanded sidebar before snapping to the rail.
   const [canExpand, setCanExpand] = useState(() =>
@@ -67,10 +70,10 @@ export function AppShell({ children }: AppShellProperties) {
   }, [])
 
   return (
-    <div className="h-dvh flex flex-col overflow-hidden bg-[var(--background)]">
+    <div className="h-dvh flex flex-col overflow-hidden bg-[var(--semantic-canvas)]">
       {/* ---- Navbar ---- */}
-      <header className="sticky top-0 z-50 border-b border-border bg-[var(--surface)]">
-        <div className="flex h-[var(--nav-height)] items-center justify-between px-4">
+      <header className="sticky top-0 z-50 border-b border-border bg-[var(--semantic-surface)]">
+        <div className="flex h-[var(--semantic-nav-height)] items-center justify-between px-4">
           {/* Left section */}
           <div className="flex items-center gap-3">
             {/* Sidebar toggle visible on desktop */}
@@ -78,7 +81,7 @@ export function AppShell({ children }: AppShellProperties) {
               type="button"
               onClick={toggleSidebar}
               aria-label={isRail ? "Expandir menu lateral" : "Recolher menu lateral"}
-              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               {isRail ? (
                 <PanelLeft size={20} aria-hidden="true" />
@@ -92,7 +95,11 @@ export function AppShell({ children }: AppShellProperties) {
               data-testid="shell-locality-pill"
               className="flex items-center gap-1.5 min-h-11 px-2 rounded-lg"
             >
-              <MapPin size={16} className="text-[var(--accent)]" aria-hidden="true" />
+              <MapPin
+                size={16}
+                className="text-[var(--semantic-action-primary)]"
+                aria-hidden="true"
+              />
               <span className="text-sm font-medium hidden sm:inline">
                 {current.cityName}, {current.stateCode}
               </span>
@@ -113,28 +120,28 @@ export function AppShell({ children }: AppShellProperties) {
             <a
               href="/recommendations"
               aria-label="Indicações"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               <Lightbulb size={20} aria-hidden="true" />
             </a>
 
-            <button
-              type="button"
+            <a
+              href="/notifications"
               aria-label="Notificações"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               <Bell size={20} aria-hidden="true" />
-            </button>
+            </a>
 
             <a
               href="/profile"
               aria-label="Perfil"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-full transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               <MemberAvatar
-                name="C"
+                name={displayName}
                 size="sm"
-                className="ring-2 ring-transparent transition-all duration-[var(--duration-instant)] hover:ring-[var(--accent-soft)]"
+                className="ring-2 ring-transparent transition-all duration-[var(--semantic-motion-duration-instant)] hover:ring-[var(--semantic-selected)]"
               />
             </a>
           </div>
@@ -148,12 +155,12 @@ export function AppShell({ children }: AppShellProperties) {
             accessible name "Navegação principal" would otherwise both be
             exposed. Between md and lg it renders as an icon rail. */}
         <aside
-          className="hidden md:flex flex-col shrink-0 border-r border-border bg-[var(--surface)] transition-[width] duration-[var(--duration-base)] ease-[var(--ease-out)] overflow-hidden"
+          className="hidden md:flex flex-col shrink-0 border-r border-border bg-[var(--semantic-surface)] transition-[width] duration-[var(--semantic-motion-duration-base)] ease-[var(--semantic-motion-ease-out)] overflow-hidden"
           style={{ width: isRail ? "4rem" : "16rem" }}
         >
           {/* Sidebar header */}
           <div
-            className={`flex items-center h-[var(--nav-height)] shrink-0 border-b border-border ${isRail ? "justify-center" : "px-3"}`}
+            className={`flex items-center h-[var(--semantic-nav-height)] shrink-0 border-b border-border ${isRail ? "justify-center" : "px-3"}`}
           >
             {!isRail && (
               <span className="text-base font-semibold tracking-tight truncate flex-1">
@@ -165,7 +172,7 @@ export function AppShell({ children }: AppShellProperties) {
               type="button"
               onClick={toggleSidebar}
               aria-label={isRail ? "Expandir menu lateral" : "Recolher menu lateral"}
-              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--duration-instant)] hover:bg-[var(--surface-subtle)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               {isRail ? (
                 <PanelLeft size={20} aria-hidden="true" />
@@ -176,21 +183,21 @@ export function AppShell({ children }: AppShellProperties) {
           </div>
 
           {/* Nav items */}
-          <nav aria-label="Navegação principal" className="flex flex-col gap-1 p-3 flex-1">
+          <nav aria-label="Navegação principal" className="flex flex-col gap-1 p-3">
             {NAV_ITEMS.map((item) => {
               // When a route is not one of the four containers (e.g. /messages,
-              // /notifications), fall back so the sidebar never shows no active
-              // item. Destinations that were once top-level now live inside a
-              // container: /messages under "me", /recommendations under the
-              // community cycle. Mirrors bottom-nav's selectedKey fallback so
-              // the two navs stay in sync.
+              // /notifications, and the historical /localidade, /community,
+              // /groups still reachable in W00), fall back so the sidebar never
+              // shows no active item: /messages and /notifications resolve to
+              // "perfil", everything else to "inicio". Mirrors bottom-nav's
+              // selectedKey fallback so the two navs stay in sync.
               const inPrimaryNav = NAV_ITEMS.some(
                 (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
               )
               const fallbackId =
                 pathname.startsWith("/messages") || pathname.startsWith("/notifications")
-                  ? "me"
-                  : "community"
+                  ? "perfil"
+                  : "inicio"
               const active =
                 pathname === item.href ||
                 pathname.startsWith(`${item.href}/`) ||
@@ -201,19 +208,19 @@ export function AppShell({ children }: AppShellProperties) {
                   key={item.id}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-instant)] ${
+                  className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] ${
                     active
-                      ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-                      : "text-muted hover:bg-[var(--surface-subtle)] hover:text-foreground"
+                      ? "bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]"
+                      : "text-muted hover:bg-[var(--semantic-selected)] hover:text-foreground"
                   } ${isRail ? "justify-center px-0" : ""}`}
                 >
                   {/* Icon crossfade: outline ↔ solid */}
                   <span className="relative inline-flex h-5 w-5 shrink-0" aria-hidden="true">
                     <item.Icon
-                      className={`absolute inset-0 h-5 w-5 transition-opacity duration-[var(--duration-fast)] ${active ? "opacity-0" : "opacity-100"}`}
+                      className={`absolute inset-0 h-5 w-5 transition-opacity duration-[var(--semantic-motion-duration-fast)] ${active ? "opacity-0" : "opacity-100"}`}
                     />
                     <item.IconActive
-                      className={`absolute inset-0 h-5 w-5 transition-opacity duration-[var(--duration-fast)] ${active ? "opacity-100" : "opacity-0"}`}
+                      className={`absolute inset-0 h-5 w-5 transition-opacity duration-[var(--semantic-motion-duration-fast)] ${active ? "opacity-100" : "opacity-0"}`}
                     />
                   </span>
                   {/* Kept in the accessibility tree even as a rail: the icon is
@@ -232,22 +239,91 @@ export function AppShell({ children }: AppShellProperties) {
               )
             })}
 
-            {/* Spacer pushes footer down */}
-            <div className="flex-1" />
+            <hr className="my-2 border-border" />
 
-            {/* Sidebar user footer (expanded only) */}
-            {!isRail && (
-              <div className="flex items-center gap-3 rounded-lg px-3 py-2 mt-auto">
-                <MemberAvatar name="C" size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">Minha conta</p>
-                  <p className="text-xs text-muted truncate">
-                    {current.cityName}, {current.stateCode}
-                  </p>
-                </div>
-              </div>
-            )}
+            {/* Salvos e Notificações são destinos secundários, dentro do MESMO
+                landmark de navegação — não um <nav> próprio. A regra nav-active
+                da auditoria exige exatamente um aria-current por <nav> visível,
+                e uma nav utilitária de dois itens não consegue satisfazer isso
+                em todas as rotas. Eles também não recebem aria-current: no
+                modelo do DESIGN_SYSTEM §7.1 conta e notificações vivem sob
+                Perfil, que é quem o fallback primário marca nessas rotas. */}
+            {/* "Salvos" aparece nas pranchas 01/61/60, mas a tela de conteúdos
+                salvos é a prancha 54 e pertence à etapa W03. Um destino
+                placeholder é proibido duas vezes aqui: pelo gate G1 do spec e
+                por tests/unit/ui/empty-promises.test.ts, que reprova promessa
+                vazia em apps/web/app/**. O item entra junto com a tela. */}
+            <SidebarSecondaryItem
+              href="/notifications"
+              label="Notificações"
+              Icon={Bell}
+              badge={unreadCount}
+              isRail={isRail}
+            />
           </nav>
+
+          {/* The whole section — separator included — disappears when the
+              member has no approved communities (never an empty heading). */}
+          {communities.length > 0 && (
+            <>
+              <hr className="mx-3 shrink-0 border-border" />
+              <section
+                aria-label="Minhas comunidades"
+                className="flex min-h-0 flex-col gap-1 overflow-y-auto p-3"
+              >
+                {!isRail && (
+                  <p className="px-3 text-xs uppercase tracking-wide text-muted">
+                    Minhas comunidades
+                  </p>
+                )}
+                {communities.map((community) => (
+                  <SidebarCommunityItem
+                    key={community.id}
+                    id={community.id}
+                    name={community.name}
+                    isRail={isRail}
+                  />
+                ))}
+              </section>
+            </>
+          )}
+
+          {/* Spacer pushes footer down */}
+          <div className="flex-1" />
+
+          {/* Sidebar member footer (expanded only, as before): real name from
+              useMemberContext, never a hardcoded initial.
+
+              A cidade volta aqui junto do nome porque a sidebar é a segunda
+              superfície onde o membro confere em que cidade está — o pill do
+              cabeçalho é a primeira. DS-010 (tests/e2e/shell-locality-truth)
+              trava as duas, e por bom motivo: a conta transferida para o Rio
+              tem que ler "Rio de Janeiro" nas duas, nunca o literal do piloto.
+              A fonte é a mesma do pill, useLocalityContext, nunca texto fixo. */}
+          {!isRail && (
+            <>
+              <hr className="mx-3 shrink-0 border-border" />
+              <div className="shrink-0 p-3">
+                <div className="flex items-center gap-2 px-3 pb-1 text-muted">
+                  <MapPin size={14} className="shrink-0" aria-hidden="true" />
+                  <span className="min-w-0 truncate text-xs">
+                    {current.cityName}, {current.stateCode}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+                  <MemberAvatar name={displayName} size="sm" />
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{displayName}</span>
+                </div>
+                <a
+                  href="/profile"
+                  className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground"
+                >
+                  <Settings size={20} className="shrink-0" aria-hidden="true" />
+                  <span>Configurações</span>
+                </a>
+              </div>
+            </>
+          )}
         </aside>
 
         {/* Main content */}
@@ -272,7 +348,7 @@ export function AppShell({ children }: AppShellProperties) {
 
       {/* Keyboard shortcut hint */}
       <div className="hidden lg:flex fixed bottom-4 right-4 z-30">
-        <span className="flex items-center gap-1.5 text-xs text-muted bg-[var(--surface)] border border-border rounded-md px-2 py-1 shadow-[var(--elevation-1)]">
+        <span className="flex items-center gap-1.5 text-xs text-muted bg-[var(--semantic-surface)] border border-border rounded-md px-2 py-1 shadow-[var(--semantic-elevation-raised)]">
           <Kbd>Ctrl</Kbd>
           <span>+</span>
           <Kbd>B</Kbd>
@@ -280,5 +356,74 @@ export function AppShell({ children }: AppShellProperties) {
         </span>
       </div>
     </div>
+  )
+}
+
+// Rail shape mirrors the primary items exactly — icon + sr-only label +
+// Tooltip — so collapsing behaves the same everywhere in the sidebar. The
+// unread badge only renders expanded and only with a positive count: a "0"
+// badge is forbidden by the visual contract.
+function SidebarSecondaryItem({
+  href,
+  label,
+  Icon,
+  badge,
+  isRail,
+}: {
+  href: string
+  label: string
+  Icon: LucideIcon
+  badge?: number
+  isRail: boolean
+}) {
+  const anchor = (
+    <a
+      href={href}
+      className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground ${isRail ? "justify-center px-0" : ""}`}
+    >
+      <Icon size={20} className="shrink-0" aria-hidden="true" />
+      <span className={isRail ? "sr-only" : undefined}>{label}</span>
+      {!isRail && badge !== undefined && badge > 0 && (
+        <span className="ml-auto rounded-full bg-[var(--semantic-action-primary)] px-1.5 text-xs text-[var(--semantic-text-on-strong)]">
+          {badge}
+        </span>
+      )}
+    </a>
+  )
+  return isRail ? (
+    <Tooltip delay={0}>
+      <Tooltip.Trigger>{anchor}</Tooltip.Trigger>
+      <Tooltip.Content>{label}</Tooltip.Content>
+    </Tooltip>
+  ) : (
+    anchor
+  )
+}
+
+// Community rows carry no thumbnail — there is no such data. The placeholder
+// is the uppercase initial of the name, on the same selected-surface token
+// the active nav item uses.
+function SidebarCommunityItem({ id, name, isRail }: { id: string; name: string; isRail: boolean }) {
+  const anchor = (
+    <a
+      href={`/communities/${id}`}
+      className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground ${isRail ? "justify-center px-0" : ""}`}
+    >
+      <span
+        aria-hidden="true"
+        className="grid h-6 w-6 shrink-0 place-items-center rounded bg-[var(--semantic-selected)] text-xs text-[var(--semantic-action-primary)]"
+      >
+        {name.charAt(0).toUpperCase()}
+      </span>
+      <span className={isRail ? "sr-only" : "min-w-0 truncate"}>{name}</span>
+    </a>
+  )
+  return isRail ? (
+    <Tooltip delay={0}>
+      <Tooltip.Trigger>{anchor}</Tooltip.Trigger>
+      <Tooltip.Content>{name}</Tooltip.Content>
+    </Tooltip>
+  ) : (
+    anchor
   )
 }

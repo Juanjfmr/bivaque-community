@@ -1,0 +1,62 @@
+task_id: RECON-014
+
+objective: >
+  A superficie de publicacao passa a ser a da prancha 45: criar publicacao, escolher audiencia real, e recuperar o rascunho de quem foi interrompido.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/45-web-publicacao.png
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    feed-post.tsx tem 1022 linhas e concentra cartao, modal de criacao, edicao e acoes; feed-composer.tsx tem 69 e so abre o modal. O arquivo passa do limite de 500 linhas do projeto e a composicao nao segue a prancha 45. Nao ha recuperacao de rascunho.
+
+allowed_paths:
+  - apps/web/app/components/bivaque/feed-post.tsx
+  - apps/web/app/components/bivaque/feed-composer.tsx
+  - docs/agents/tasks/RECON-014.task.yml
+
+forbidden:
+  - executar em paralelo com RECON-014, 015, 016 ou 017 — os quatro dividem components/bivaque/ e a onda 4 e SERIAL, ordem 1 de 4
+  - tocar arquivo de components/bivaque/ fora dos allowed_paths deste contrato
+  - quebrar a API publica dos componentes sem atualizar toda consumidora no mesmo diff
+  - mandar rascunho para o servidor ou para qualquer armazenamento compartilhado
+  - publicar automaticamente qualquer coisa que o membro nao confirmou
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem ou qualquer dado — tudo vem de contexto ou consulta real
+  - inventar conteudo; sem dado real, estado vazio honesto
+  - linkar rota que nao existe
+  - prometer prazo, aprovacao, entrega ou alcance que o servidor nao garante
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+  - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
+  - introduzir familia tipografica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - criar publicacao e editar seguem a composicao da prancha 45
+  - a audiencia oferecida e a real do membro — comunidade e grupo vem de consulta, nunca de lista fixa
+  - o rascunho sobrevive a interrupcao pelo armazenamento do proprio navegador do membro; ele NAO vira publicacao, nao sai do dispositivo e nao e enviado ao servidor
+  - descartar rascunho e explicito e reversivel ate confirmar — nao apaga em silencio
+  - feed-post.tsx termina abaixo de 500 linhas; a separacao e por responsabilidade (cartao / criacao / edicao), nao corte arbitrario
+  - nenhuma consumidora do modulo quebra: a mudanca de superficie mantem as props que /inicio, /communities e /explorar ja passam
+  - exatamente um h1 por tela consumidora — o componente NAO introduz h1 proprio
+  - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperavel com nova tentativa
+  - nenhum dado inventado sobrevive na tela
+  - contraste >= 4,5:1, alvos >= 44x44, foco visivel
+  - npx pnpm@11.18.0 gate verde
+  - auditoria visual das rotas que consomem publicacao e rascunho em 375/768/1440 sem finding de severidade high
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-014.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: superficie de escrita compartilhada por varias rotas
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

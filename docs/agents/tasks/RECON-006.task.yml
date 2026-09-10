@@ -1,0 +1,58 @@
+task_id: RECON-006
+
+objective: >
+  A rota /notifications passa a ser a central de retorno da prancha 54: notificações agrupadas, com destino válido para cada tipo e o estado de lida refletindo o servidor.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/54-web-retorno.png
+  - manifest.json reviewNotes de 54-web-retorno - Ícone de conteúdo salvo deve representar o estado persistido.
+  - docs/agents/INVENTARIO-ROTAS-WEB-2026-09-08.md §6 — os três deep-links quebrados
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md §5, §9.1
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/notifications/page.tsx lê notifications e marca lidas, mas três tipos não navegam ou navegam para destino inexistente: invitation_accepted aponta para /profile?user= que ninguém lê, report_resolved cai no default sem destino, e admission_rejected não aparece em nenhuma das funções de classificação.
+
+allowed_paths:
+  - apps/web/app/(shell)/notifications/
+  - docs/agents/tasks/RECON-006.task.yml
+
+forbidden:
+  - tocar apps/web/app/components/bivaque/ — esta leva roda em paralelo e o diretório é compartilhado; componha a partir dos wrappers existentes
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem ou qualquer dado — tudo vem de contexto ou consulta real
+  - inventar conteúdo; sem dado real, estado vazio honesto
+  - linkar rota que não existe
+  - prometer prazo, aprovação, entrega ou alcance que o servidor não garante
+  - texto de placeholder, href vazio, handler vazio ou toast como única implementação
+  - valor de cor cru em JSX, style inline ou classe utilitária de paleta
+  - importar HeroUI direto onde há wrapper Bivaque
+  - introduzir família tipográfica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - a parte de Salvos da prancha NAO e entregue aqui: a tela de conteudos salvos nao existe (card SHELL-SALVOS-AUSENTE) e fingir seria promessa vazia
+  - todo tipo de notificação tem rótulo e destino válido — invitation_accepted vai para /profile/<userId>, e report_resolved e admission_rejected ganham destino
+  - o estado de lida vem do servidor e sobrevive ao recarregamento
+  - a contagem de não lidas bate com a que a sidebar mostra
+  - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperável com nova tentativa
+  - nenhum dado inventado sobrevive na tela
+  - exatamente um h1 na tela
+  - contraste ≥ 4,5:1, alvos ≥ 44×44, foco visível
+  - npx pnpm@11.18.0 gate verde
+  - auditoria visual de /notifications em 375/768/1440 sem finding de severidade high
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-006.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: central de retorno e deep links
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

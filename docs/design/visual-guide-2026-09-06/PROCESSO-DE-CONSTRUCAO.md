@@ -1,5 +1,7 @@
 # Bivaque — processo de construção da nova versão
 
+> Escopo posterior de 08/09/2026: nesta rodada, entregar somente web, com rotas e integrações funcionais. A [especificação funcional web](../../superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md) detalha funcionamento e substitui a sequência genérica para essa entrega. Mobile continua como projeto futuro e não impede conclusão web.
+
 Versão de 6 de setembro de 2026. Documento de execução para ser entregue aos modelos responsáveis pela reconstrução web e mobile.
 
 ## 1. Ordem expressa do responsável pelo produto

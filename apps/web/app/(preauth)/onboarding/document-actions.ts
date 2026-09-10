@@ -8,13 +8,6 @@ import { createServerClient as createServiceClient } from "../../../lib/supabase
 const DOCUMENT_BUCKET = "verification-documents"
 const MAX_BYTES = 10 * 1024 * 1024
 const ALLOWED_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"])
-const CONSENT_COOKIE = "bivaque-consent-version"
-const CONSENT_COOKIE_OPTIONS = {
-  maxAge: 60 * 60 * 24 * 400,
-  path: "/",
-  sameSite: "lax" as const,
-  secure: process.env["NODE_ENV"] === "production",
-}
 
 async function readSessionUserId(): Promise<string | null> {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -47,36 +40,15 @@ export async function uploadVerificationDocumentAction(formData: FormData): Prom
 
   const supabase = createServiceClient()
 
-  const { data: acceptedConsent, error: consentStatusError } = await supabase.rpc(
-    "has_accepted_consent",
-    {
-      p_user_id: userId,
-      p_consent_version: CONSENT_VERSION,
-      p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION,
-    },
-  )
+  const { data: hasAcceptedConsent } = await supabase.rpc("has_accepted_consent", {
+    p_user_id: userId,
+    p_consent_version: CONSENT_VERSION,
+    p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION,
+  })
 
-  if (consentStatusError) {
-    throw new Error("não foi possível confirmar o aceite")
-  }
-
-  if (!acceptedConsent && formData.get("accept_consent") !== "true") {
+  if (!hasAcceptedConsent) {
     throw new Error("consentimento não registrado")
   }
-
-  if (!acceptedConsent) {
-    const { error: recordConsentError } = await supabase.rpc("record_consent_acceptance", {
-      p_user_id: userId,
-      p_consent_version: CONSENT_VERSION,
-      p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION,
-    })
-    if (recordConsentError) {
-      throw new Error("não foi possível registrar o aceite")
-    }
-  }
-
-  const cookieStore = await cookies()
-  cookieStore.set(CONSENT_COOKIE, String(CONSENT_VERSION), CONSENT_COOKIE_OPTIONS)
 
   const { data: membership } = await supabase
     .from("locality_memberships")

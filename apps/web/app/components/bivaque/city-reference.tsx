@@ -166,7 +166,7 @@ export function CityReference({
       {/* Próximos eventos da cidade */}
       <section
         aria-labelledby="city-events-heading"
-        className="rounded-xl border border-border bg-[var(--surface)] p-4"
+        className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4"
       >
         <h2 id="city-events-heading" className="text-base font-semibold tracking-tight">
           Próximos eventos da cidade
@@ -178,7 +178,7 @@ export function CityReference({
             <Skeleton className="h-4 w-1/2 rounded" />
           </div>
         ) : error ? (
-          <p className="mt-3 text-sm text-[var(--danger)]">{error}</p>
+          <p className="mt-3 text-sm text-[var(--semantic-danger)]">{error}</p>
         ) : events.length === 0 ? (
           <p className="mt-3 text-sm text-muted">Nenhum evento próximo na cidade.</p>
         ) : (
@@ -201,7 +201,7 @@ export function CityReference({
         <div className="mt-3">
           <Link
             href={isAlternate ? `/events?locality=${viewing.id}` : "/events"}
-            className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--accent)] transition-colors hover:underline"
+            className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--semantic-action-primary)] transition-colors hover:underline"
           >
             Ver todos os eventos
           </Link>
@@ -211,7 +211,7 @@ export function CityReference({
       {/* Guia de chegada */}
       <section
         aria-labelledby="city-guide-heading"
-        className="rounded-xl border border-border bg-[var(--surface)] p-4"
+        className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4"
       >
         <h2 id="city-guide-heading" className="text-base font-semibold tracking-tight">
           Guia de chegada
@@ -223,7 +223,7 @@ export function CityReference({
         <div className="mt-3">
           <Link
             href={isAlternate ? `/guide?locality=${viewing.id}` : "/guide"}
-            className="inline-flex min-h-11 items-center rounded-full bg-[var(--accent)] px-4 text-sm font-semibold text-[var(--accent-foreground)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
           >
             Abrir o guia de chegada
           </Link>
@@ -233,7 +233,7 @@ export function CityReference({
       {/* Vitrine de prestadores — onda G Task 5 */}
       <section
         aria-labelledby="city-vitrine-heading"
-        className="rounded-xl border border-border bg-[var(--surface)] p-4"
+        className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4"
       >
         <h2 id="city-vitrine-heading" className="text-base font-semibold tracking-tight">
           Vitrine de prestadores
@@ -244,7 +244,7 @@ export function CityReference({
             <Skeleton className="h-4 w-2/3 rounded" />
           </div>
         ) : providersError ? (
-          <p className="mt-3 text-sm text-[var(--danger)]">{providersError}</p>
+          <p className="mt-3 text-sm text-[var(--semantic-danger)]">{providersError}</p>
         ) : providers.length === 0 ? (
           <EmptyState
             title="Ainda não há prestadores cadastrados por aqui."
@@ -322,7 +322,7 @@ export function CityReference({
       {/* Pedir entrada numa vila */}
       <section
         aria-labelledby="city-join-heading"
-        className="rounded-xl border border-border bg-[var(--surface)] p-4"
+        className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4"
       >
         <h2 id="city-join-heading" className="text-base font-semibold tracking-tight">
           Entrar numa vila
@@ -334,7 +334,7 @@ export function CityReference({
         <div className="mt-3">
           <Link
             href="/communities"
-            className="inline-flex min-h-11 items-center rounded-full bg-[var(--accent)] px-4 text-sm font-semibold text-[var(--accent-foreground)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus)] focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
           >
             Ver vilas disponíveis
           </Link>

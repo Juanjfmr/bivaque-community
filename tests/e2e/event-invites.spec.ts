@@ -19,11 +19,10 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 
 // "Piquenique das famílias" — upcoming (i=5 of seed.sql events); organized by
 // membro-6 (30000000-...-(1 + (5 % 12)) = 30000000-...-0006).

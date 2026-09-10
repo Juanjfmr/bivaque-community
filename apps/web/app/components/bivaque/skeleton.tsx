@@ -10,7 +10,10 @@ interface SkeletonProps {
 // by the loaded element.
 export function Skeleton({ className = "" }: SkeletonProps) {
   return (
-    <HeroSkeleton animationType="shimmer" className={`bg-[var(--surface-sunken)] ${className}`} />
+    <HeroSkeleton
+      animationType="shimmer"
+      className={`bg-[var(--semantic-surface-sunken)] ${className}`}
+    />
   )
 }
 
@@ -21,7 +24,7 @@ export function FeedCardSkeleton() {
     <div
       role="status"
       aria-label="Carregando publicacoes"
-      className="flex flex-col gap-3 rounded-2xl border border-border bg-[var(--surface-raised)] p-4"
+      className="flex flex-col gap-3 rounded-2xl border border-border bg-[var(--semantic-surface)] p-4"
     >
       <div className="flex items-center gap-3">
         <Skeleton className="h-10 w-10 rounded-full" />
@@ -113,6 +116,26 @@ export function MessageAreaSkeleton() {
       <Skeleton className="h-8 w-1/2 self-end rounded-lg" />
       <Skeleton className="h-8 w-2/3 self-start rounded-lg" />
       <Skeleton className="h-8 w-1/3 self-end rounded-lg" />
+    </div>
+  )
+}
+
+// Mirrors a provider result card (RECON-003): photo block + name + category
+// line + description + "Ver ficha" button.
+export function ProviderCardSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="Carregando prestadores"
+      className="flex flex-col gap-4 rounded-2xl border border-border bg-[var(--semantic-surface)] p-4 sm:flex-row"
+    >
+      <Skeleton className="h-40 w-full shrink-0 rounded-lg sm:h-32 sm:w-44" />
+      <div className="flex flex-1 flex-col gap-2">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-3 w-1/4" />
+        <Skeleton className="h-3 w-5/6" />
+        <Skeleton className="mt-1 h-11 w-24 rounded-md" />
+      </div>
     </div>
   )
 }

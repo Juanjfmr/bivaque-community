@@ -1,59 +1,50 @@
 "use client"
 
 import { Button } from "@heroui/react"
-import { ArrowLeft, ArrowRight, Mail, ShieldCheck, Tent } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
+import {
+  classifySignIn,
+  classifySignUp,
+  type PasswordAuthView,
+  passwordProblem,
+} from "../../../../lib/auth/password-auth"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
+import { recordConsentAction } from "../../consent/actions"
 import styles from "./bivaque-sign-in.module.css"
 
-const AUTH_CALLBACK_PATH = "/auth/callback?next=/"
-
-function getAuthCallbackUrl(): string {
-  const configuredOrigin = process.env["NEXT_PUBLIC_SITE_URL"]?.replace(/\/+$/, "")
-  return `${configuredOrigin || window.location.origin}${AUTH_CALLBACK_PATH}`
-}
-
 interface BivaqueSignInProps {
-  onMagicLinkSignIn?: (email: string) => Promise<void> | void
   onGoogleSignIn?: () => Promise<void> | void
   mode?: "login" | "signup"
 }
 
+// Composição da prancha 36-web-auth-entrada (guia visual de 06/09/2026): dois
+// destinos distintos, cada um com seu título, e a navegação recíproca nos links
+// de rodapé — não abas de um formulário só. O mecanismo é o de ADR-20260907-
+// login-com-senha (instrução posterior à prancha, que precisa ser regerada):
+// e-mail e senha, Google como alternativa, recuperação por link de e-mail. A
+// copy da prancha que descrevia "Receber código" não entra: o provedor não
+// envia código, e a guia proíbe prometer integração inexistente.
 const entryCopy = {
   login: {
-    eyebrow: "Bem-vindo de volta",
-    title: "Entre no Bivaque",
-    description: "Receba um link no seu e-mail para continuar. Sem senha para lembrar.",
-    submit: "Receber link para entrar",
+    title: "Que bom ter você de volta.",
+    submit: "Entrar",
+    loading: "Entrando...",
     google: "Continuar com Google",
-    success: "Enviamos o link para",
-    alternateLead: "Ainda não faz parte?",
-    alternateAction: "Criar conta",
+    alternateLabel: "Criar conta",
     alternateHref: "/signup",
-    trust:
-      "O acesso é controlado. A elegibilidade é conferida de acordo com o papel de cada pessoa.",
-    visualEyebrow: "A comunidade vai com você.",
-    visualTitle: "Chegue sabendo a quem perguntar.",
-    visualDescription:
-      "Encontre referências de quem conhece o lugar e deixe sua experiência disponível para a próxima chegada.",
   },
   signup: {
-    eyebrow: "Primeiro acesso",
-    title: "Comece pelo seu e-mail.",
-    description: "Ele será sua forma de entrar no Bivaque. Sem senha, sem formulário longo.",
-    submit: "Criar conta e continuar",
-    google: "Criar com Google",
-    success: "Criamos sua entrada e enviamos o link para",
-    alternateLead: "Já tem uma conta?",
-    alternateAction: "Entrar",
+    title: "Vamos começar.",
+    submit: "Criar conta",
+    loading: "Criando conta...",
+    google: "Continuar com Google",
+    alternateLabel: "Já tenho conta",
     alternateHref: "/login",
-    trust: "Depois do e-mail: regras da comunidade, elegibilidade e escolha da sua localidade.",
-    visualEyebrow: "Há sempre alguém chegando.",
-    visualTitle: "Encontre quem já conhece o caminho.",
-    visualDescription: "Com o tempo, deixe o que você aprendeu disponível para quem chegar depois.",
   },
 } as const
 
@@ -80,77 +71,111 @@ function GoogleIcon() {
   )
 }
 
-function Wordmark() {
+// A prancha mostra a marca como wordmark tipográfico sobre a foto, sem ícone.
+// No topo mobile, onde a foto não aparece, o mesmo wordmark assume o papel de
+// link para o início.
+function Wordmark({ onPhoto = false }: { onPhoto?: boolean }) {
   return (
-    <span className={styles["wordmark"]}>
-      <Tent aria-hidden="true" strokeWidth={1.8} />
-      <span>Bivaque</span>
+    <span className={styles["wordmark"]} data-photo={onPhoto ? "true" : undefined}>
+      BIVAQUE
     </span>
   )
 }
 
-export function BivaqueSignIn({
-  onMagicLinkSignIn,
-  onGoogleSignIn,
-  mode = "login",
-}: BivaqueSignInProps) {
+export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInProps) {
+  const router = useRouter()
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState<"email" | "google" | null>(null)
-  const [sent, setSent] = useState(false)
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [accepted, setAccepted] = useState(false)
+  const [result, setResult] = useState<PasswordAuthView | null>(null)
+  const [loading, setLoading] = useState<"form" | "google" | null>(null)
+
   const copy = entryCopy[mode]
   const titleId = mode === "signup" ? "signup-title" : "login-title"
-  const emailId = mode === "signup" ? "bivaque-signup-email" : "bivaque-signin-email"
+  const prefix = mode === "signup" ? "bivaque-signup" : "bivaque-signin"
 
-  const handleMagicLink = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setError(null)
-    setSent(false)
-    setLoading("email")
+    setResult(null)
+
+    // No cadastro a senha é conferida antes de sair daqui: mandar o servidor
+    // recusar uma senha curta é uma ida e volta que a pessoa não precisa
+    // esperar. No login não se valida formato — a senha antiga pode ter
+    // qualquer forma, e recusá-la aqui contaria que ela não é a atual.
+    if (mode === "signup") {
+      const problem = passwordProblem(password)
+      if (problem) {
+        setResult({ outcome: "weak-password", message: problem, diagnostic: "local" })
+        return
+      }
+    }
+
+    setLoading("form")
+    const supabase = createBrowserClient()
 
     try {
-      if (onMagicLinkSignIn) {
-        await onMagicLinkSignIn(email)
-      } else {
-        const { error: signInError } = await createBrowserClient().auth.signInWithOtp({
-          email,
-          options: {
-            emailRedirectTo: getAuthCallbackUrl(),
-            shouldCreateUser: mode === "signup",
-          },
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { data: { display_name: name.trim() } },
         })
-        if (signInError) throw signInError
+        const view = classifySignUp(error)
+        if (view.outcome === "ok") {
+          // O aceite e' condicao de existir a conta, entao e' gravado antes de
+          // a pessoa seguir. Se a gravacao falhar, ela fica na tela sabendo —
+          // seguir sem registro deixaria um aceite que ninguem pode provar.
+          try {
+            await recordConsentAction()
+          } catch {
+            setResult({
+              outcome: "failed",
+              message: "Conta criada, mas não foi possível registrar o aceite. Tente entrar.",
+              diagnostic: "consent",
+            })
+            return
+          }
+          router.push("/onboarding")
+          return
+        }
+        setResult(view)
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
+        const view = classifySignIn(error)
+        if (view.outcome === "ok") {
+          router.push("/onboarding")
+          return
+        }
+        setResult(view)
       }
-      setSent(true)
-    } catch {
-      setError(
-        mode === "signup"
-          ? "Não foi possível criar sua conta agora. Tente novamente em instantes."
-          : "Não foi possível entrar com este e-mail. Confira o endereço ou crie sua conta.",
-      )
+    } catch (thrown) {
+      setResult(mode === "signup" ? classifySignUp(thrown) : classifySignIn(thrown))
     } finally {
       setLoading(null)
     }
   }
 
   const handleGoogle = async () => {
-    setError(null)
+    setResult(null)
     setLoading("google")
 
     try {
       if (onGoogleSignIn) {
         await onGoogleSignIn()
       } else {
-        const { error: signInError } = await createBrowserClient().auth.signInWithOAuth({
+        const { error } = await createBrowserClient().auth.signInWithOAuth({
           provider: "google",
-          options: {
-            redirectTo: getAuthCallbackUrl(),
-          },
+          options: { redirectTo: `${window.location.origin}/auth/callback?next=/onboarding` },
         })
-        if (signInError) throw signInError
+        if (error) throw error
       }
-    } catch {
-      setError("Não foi possível continuar com o Google agora. Tente novamente em instantes.")
+    } catch (thrown) {
+      setResult(classifySignIn(thrown))
       setLoading(null)
     }
   }
@@ -174,19 +199,37 @@ export function BivaqueSignIn({
 
         <div className={styles["formContent"]}>
           <div className={styles["heading"]}>
-            <p className={styles["eyebrow"]}>{copy.eyebrow}</p>
             <h1 id={titleId}>{copy.title}</h1>
-            <p>{copy.description}</p>
           </div>
 
-          <form className={styles["form"]} onSubmit={handleMagicLink}>
-            <label className={styles["field"]} htmlFor={emailId}>
-              <span>Seu e-mail</span>
+          <form className={styles["form"]} onSubmit={handleSubmit}>
+            {mode === "signup" && (
+              // A nota da prancha 36 é explícita: nome de apresentação, não
+              // nome civil completo. O rótulo simples diz isso sem prometer o
+              // que o campo não exige.
+              <label className={styles["field"]} htmlFor={`${prefix}-name`}>
+                <span>Nome</span>
+                <span className={styles["inputShell"]}>
+                  <User aria-hidden="true" />
+                  <input
+                    id={`${prefix}-name`}
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Como você quer ser chamado"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    required
+                  />
+                </span>
+              </label>
+            )}
+
+            <label className={styles["field"]} htmlFor={`${prefix}-email`}>
+              <span>E-mail</span>
               <span className={styles["inputShell"]}>
                 <Mail aria-hidden="true" />
                 <input
-                  id={emailId}
-                  aria-label="Seu e-mail"
+                  id={`${prefix}-email`}
                   type="email"
                   inputMode="email"
                   autoComplete="email"
@@ -198,19 +241,72 @@ export function BivaqueSignIn({
               </span>
             </label>
 
+            <label className={styles["field"]} htmlFor={`${prefix}-password`}>
+              <span>Senha</span>
+              <span className={styles["inputShell"]}>
+                <Lock aria-hidden="true" />
+                <input
+                  id={`${prefix}-password`}
+                  type={showPassword ? "text" : "password"}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  placeholder={mode === "signup" ? "Ao menos 8 caracteres" : "Sua senha"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+                {/* Ver a senha digitada é acessibilidade antes de ser conveniência:
+                    quem tem dificuldade motora ou visual erra mais em campo mascarado. */}
+                <button
+                  type="button"
+                  className={styles["revealButton"]}
+                  onClick={() => setShowPassword((shown) => !shown)}
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                </button>
+              </span>
+            </label>
+
+            {mode === "signup" && (
+              // O texto vem da versão aprovada (ADR-20260907-consentimento-no-
+              // cadastro), não da prancha: "Termos de uso" e "Código de
+              // convivência" não têm rota nem texto aprovado, e a guia proíbe
+              // tirar copy legal de imagem.
+              <label className={styles["consentRow"]} htmlFor={`${prefix}-consent`}>
+                <input
+                  id={`${prefix}-consent`}
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(event) => setAccepted(event.target.checked)}
+                  required
+                />
+                <span>
+                  Li e aceito a{" "}
+                  <Link href={{ pathname: "/privacidade" }} target="_blank" rel="noreferrer">
+                    Política de privacidade
+                  </Link>{" "}
+                  e o{" "}
+                  <Link href={{ pathname: "/codigo-de-conduta" }} target="_blank" rel="noreferrer">
+                    Código de conduta
+                  </Link>
+                  .
+                </span>
+              </label>
+            )}
+
             <Button
               type="submit"
               variant="primary"
               className={styles["primaryButton"] ?? ""}
-              isDisabled={loading !== null}
+              isDisabled={loading !== null || (mode === "signup" && !accepted)}
             >
-              {loading === "email" ? "Enviando..." : copy.submit}
-              {loading !== "email" && <ArrowRight aria-hidden="true" />}
+              {loading === "form" ? copy.loading : copy.submit}
             </Button>
           </form>
 
           <div className={styles["divider"]}>
-            <span>ou continue com</span>
+            <span>ou</span>
           </div>
 
           <Button
@@ -223,47 +319,46 @@ export function BivaqueSignIn({
             {loading === "google" ? "Abrindo Google..." : copy.google}
           </Button>
 
-          {error && <FeedbackAlert variant="danger" description={error} />}
-
-          {sent && (
+          {result && result.outcome !== "ok" && (
             <FeedbackAlert
-              variant="success"
-              title="Confira seu e-mail"
+              variant={result.outcome === "offline" ? "warning" : "danger"}
               description={
-                <>
-                  {copy.success} <strong>{email}</strong>. Abra a mensagem para continuar.
-                </>
+                result.suggestSignIn ? (
+                  <>
+                    {result.message} <Link href={{ pathname: "/login" }}>Entrar</Link>
+                  </>
+                ) : (
+                  result.message
+                )
               }
             />
           )}
 
-          <p className={styles["accountPrompt"]}>
-            {copy.alternateLead}{" "}
-            <Link href={{ pathname: copy.alternateHref }}>{copy.alternateAction}</Link>
-          </p>
-
-          <p className={styles["trustNote"]}>
-            <ShieldCheck aria-hidden="true" />
-            <span>{copy.trust}</span>
+          <p className={styles["entryLinks"]} data-mode={mode}>
+            <Link href={{ pathname: copy.alternateHref }}>{copy.alternateLabel}</Link>
+            {mode === "login" && (
+              <Link href={{ pathname: "/recuperar-senha" }}>Esqueci minha senha</Link>
+            )}
           </p>
         </div>
       </section>
 
-      <section className={styles["visualPanel"]} aria-label="A comunidade Bivaque">
+      {/* Sem aria-hidden: no desktop este é o único link de marca (a topbar é
+          ocultada em CSS), e esconder um elemento focável da tecnologia
+          assistiva é o erro que a regra de acessibilidade proíbe. */}
+      <section className={styles["visualPanel"]}>
         <Image
           src="/landing/hero-bivaque-arrival.webp"
-          alt="Pessoa chegando a um encontro comunitário enquanto uma cadeira é oferecida"
+          alt=""
           fill
           priority
           unoptimized
           sizes="50vw"
         />
         <div className={styles["visualShade"]} aria-hidden="true" />
-        <div className={styles["visualCopy"]}>
-          <p>{copy.visualEyebrow}</p>
-          <h2>{copy.visualTitle}</h2>
-          <span>{copy.visualDescription}</span>
-        </div>
+        <Link href="/" className={styles["photoBrand"]} aria-label="Bivaque, voltar ao início">
+          <Wordmark onPhoto />
+        </Link>
       </section>
     </main>
   )

@@ -1,81 +1,77 @@
 "use client"
 
-import { HomeIcon, MapPinIcon, UserCircleIcon, UserGroupIcon } from "@heroicons/react/24/outline"
+import {
+  HomeIcon,
+  MagnifyingGlassIcon,
+  UserCircleIcon,
+  UserGroupIcon,
+} from "@heroicons/react/24/outline"
 import {
   HomeIcon as HomeSolid,
-  MapPinIcon as MapPinSolid,
+  MagnifyingGlassIcon as MagnifyingGlassSolid,
   UserCircleIcon as UserCircleSolid,
   UserGroupIcon as UserGroupSolid,
 } from "@heroicons/react/24/solid"
 import { Tabs } from "@heroui/react"
 import { usePathname } from "next/navigation"
-import type { ComponentType, SVGProps } from "react"
+import type { ElementType, SVGProps } from "react"
 
 export interface NavItem {
   id: string
   label: string
   shortLabel?: string
   href: string
-  Icon: ComponentType<SVGProps<SVGSVGElement>>
-  IconActive: ComponentType<SVGProps<SVGSVGElement>>
+  Icon: ElementType<SVGProps<SVGSVGElement>>
+  IconActive: ElementType<SVGProps<SVGSVGElement>>
 }
 
 // ── Os containers de navegação ──────────────────────────────────────────────
 //
-// A navegação do shell do membro espelha o MODELO DE PRODUTO, não a lista de
-// features (ADR-20260816-shells-e-navegacao, regra 2). Os containers derivam de
-// BIVAQUE.md §3.1 (três níveis de pertencimento: localidade → comunidade →
-// grupo) e §6.3 (os dois ciclos). São exatamente quatro, e o quarto é o próprio
-// membro ("Eu"), onde moram perfil, conta, mensagens e — quando existir — o
-// convite de membro.
+// A navegação do shell do membro espelha o MODELO DE PRODUTO da versão de
+// 2026-09-06 (docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7),
+// que substitui os quatro containers históricos do ADR-20260816. São quatro:
 //
-//   - "cidade"     → o nível da localidade: eventos da cidade, guia de chegada,
-//                    vitrine e busca de prestador (onda G). O ADR é explícito:
-//                    vitrine e busca de prestador caem AQUI.
-//   - "community"  → o nível da comunidade: a home (feed da vila) e os dois
-//                    ciclos (§6.3: pedir/responder na semana, o encontro mensal).
-//   - "groups"     → o nível do grupo: conversa por interesse (§3.2).
-//   - "me"         → o membro: perfil, conta, mensagens (DM, mantida pela D36)
-//                    e convite de membro (onda E Task 6), que cai em "eu".
+//   - "inicio"      → home de quem participa: a chegada, o que está acontecendo
+//                     na cidade e nas comunidades da pessoa (prancha 01).
+//   - "explorar"    → descoberta: busca de serviços e prestadores, com entradas
+//                     explícitas para Guia e Mercado (prancha 61).
+//   - "comunidades" → minhas comunidades + descoberta + apresentação; grupos
+//                     vivem dentro de uma comunidade, não como aba.
+//   - "perfil"      → o membro: perfil, conta, notificações e a conversa
+//                     contextual membro↔prestador. Não há inbox nem DM geral.
 //
-// Eventos não é aba própria: "eventos da cidade" é uma das quatro coisas que o
-// nível municipal é (§6.2), e eventos de vila pertencem à vila. Ele aterrissa
-// dentro do container "cidade". Indicações e Mensagens também saem da nav de
-// nível superior: Indicações vive no header (spec §0 Navegação) e Mensagens
-// dentro de "eu".
-//
-// REGRA FALSIFICÁVEL (ADR, regra 2): se um destino novo não couber em nenhum
-// container, o destino está confuso — não falta vaga. Nesse caso, pare e
-// reporte; NÃO adicione uma nova aba.
-//
-// O teto continua cinco (iOS HIG / Material). Quatro containers ≤ cinco.
+// REGRA FALSIFICÁVEL (ADR-20260816, regra 2, preservada): se um destino novo
+// não couber em nenhum container, o destino está confuso — pare e reporte;
+// NÃO adicione uma aba. Teto de cinco itens; quatro ≤ cinco.
 export const NAV_ITEMS: NavItem[] = [
   {
-    id: "cidade",
-    label: "Cidade",
-    shortLabel: "Cidade",
-    href: "/localidade",
-    Icon: MapPinIcon,
-    IconActive: MapPinSolid,
-  },
-  {
-    id: "community",
-    label: "Minha comunidade",
-    shortLabel: "Comunidade",
-    href: "/community",
+    id: "inicio",
+    label: "Início",
+    shortLabel: "Início",
+    href: "/inicio",
     Icon: HomeIcon,
     IconActive: HomeSolid,
   },
   {
-    id: "groups",
-    label: "Grupos",
-    href: "/groups",
+    id: "explorar",
+    label: "Explorar",
+    shortLabel: "Explorar",
+    href: "/explorar",
+    Icon: MagnifyingGlassIcon,
+    IconActive: MagnifyingGlassSolid,
+  },
+  {
+    id: "comunidades",
+    label: "Comunidades",
+    shortLabel: "Comunidades",
+    href: "/communities",
     Icon: UserGroupIcon,
     IconActive: UserGroupSolid,
   },
   {
-    id: "me",
-    label: "Eu",
+    id: "perfil",
+    label: "Perfil",
+    shortLabel: "Perfil",
     href: "/profile",
     Icon: UserCircleIcon,
     IconActive: UserCircleSolid,
@@ -87,11 +83,11 @@ function NavIcon({
   IconActive,
   active,
 }: {
-  Icon: ComponentType<SVGProps<SVGSVGElement>>
-  IconActive: ComponentType<SVGProps<SVGSVGElement>>
+  Icon: ElementType<SVGProps<SVGSVGElement>>
+  IconActive: ElementType<SVGProps<SVGSVGElement>>
   active: boolean
 }) {
-  const fade = "transition-opacity duration-[var(--duration-fast)]"
+  const fade = "transition-opacity duration-[var(--semantic-motion-duration-fast)]"
   return (
     <span className="relative inline-flex h-5 w-5" aria-hidden="true">
       <Icon
@@ -110,7 +106,7 @@ export function BottomNav() {
   const items = NAV_ITEMS
 
   const fallbackId =
-    pathname.startsWith("/messages") || pathname.startsWith("/notifications") ? "me" : "community"
+    pathname.startsWith("/messages") || pathname.startsWith("/notifications") ? "perfil" : "inicio"
   const selectedKey =
     items.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
     fallbackId
@@ -118,7 +114,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--surface)] pb-[env(safe-area-inset-bottom,0px)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--semantic-surface)] pb-[env(safe-area-inset-bottom,0px)] md:hidden"
     >
       <Tabs selectedKey={selectedKey} variant="primary" aria-label="Navegação principal">
         <Tabs.List aria-label="Seções do aplicativo" className="flex justify-around">

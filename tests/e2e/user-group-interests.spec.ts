@@ -35,11 +35,14 @@ test.describe("group interests", () => {
     // Given the authenticated member
     await seedSession(page.context())
 
-    // When they open the profile and switch to the settings tab — the link
-    // lives in the "Configurações" tab panel, not the default "Publicações"
-    // one the profile page lands on.
+    // When they open the profile.
+    //
+    // A RECON-005 achatou as abas do perfil em secoes da mesma pagina, entao
+    // nao ha mais um tab "Configuracoes" para clicar: a secao esta sempre
+    // montada e o link e alcancavel direto. O que este teste prova continua
+    // o mesmo — o perfil oferece o caminho para os assuntos de interesse —
+    // e agora prova sem depender de um passo de navegacao a menos.
     await page.goto("/profile")
-    await page.getByRole("tab", { name: "Configurações" }).click()
 
     // Then a link to the interests page is rendered
     await expect(page.getByRole("link", { name: /Escolher assuntos de interesse/ })).toBeVisible()

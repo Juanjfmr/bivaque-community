@@ -1,0 +1,22 @@
+-- TOMBSTONE (2026-09-05): esta migration continha duas personas de teste
+-- suspensas (membro-suspenso@ / membro-suspenso-aprovado@, UUIDs
+-- 20000000-...-0099 / -009a) inseridas diretamente em auth.users/profiles/
+-- community_memberships.
+--
+-- Por que saiu:
+-- 1. Quebrava o reset canônico: o insert em community_memberships referencia a
+--    comunidade 71000000-...-001 (Vila Ajuricaba), que só existe em seed.sql.
+--    `db reset --no-seed` falhava com FK 23503 aqui, e mesmo o reset com seed
+--    falhava, porque migrations rodam ANTES do seed. O estado pgTAP canônico
+--    ficou quebrado desde o commit bb6803f.
+-- 2. Persona de teste não viaja em migration: o workflow deploy-migrations
+--    aplicaria este bloco à produção no primeiro push, plantando um membro
+--    suspenso falso num banco real.
+-- 3. As personas ficaram sem consumidor: tests/e2e/denied-publish.spec.ts
+--    passou a alternar is_suspended em dono-vila@ via service role (ver o
+--    cabeçalho daquele spec), e nenhum pgTAP nunca referenciou os UUIDs.
+--
+-- O schema de suspensão (coluna is_suspended, helper is_account_suspended,
+-- RLS) vive em 20260901124348_account_suspension.sql e permanece intacto.
+-- Se uma persona suspensa voltar a ser necessária para E2E, ela pertence a
+-- supabase/seed.sql (estado com seed), nunca a uma migration.

@@ -1,3 +1,10 @@
+"use client"
+
+// useState mora aqui desde d9f1a9e (fallback quando a URL do avatar 404),
+// mas a diretiva faltava. Nada quebrava enquanto so Client Components
+// importavam este arquivo; a RECON-005 passou a importa-lo de
+// (shell)/profile/[userId]/page.tsx, que e Server Component, e o build parou.
+// O gate nao roda build — foi o E2E que encontrou.
 import { Avatar } from "@heroui/react"
 import { useState } from "react"
 
@@ -19,7 +26,7 @@ interface MemberAvatarProps {
 // the fallback renders the initial instead. (RUN-022 from RUNTIME_FINDINGS.md.)
 export function MemberAvatar({ name, size = "md", src, className }: MemberAvatarProps) {
   const initial = (name ?? "?").charAt(0).toUpperCase()
-  const classes = `bg-[var(--surface-subtle)] text-[var(--foreground)] ${className ?? ""}`
+  const classes = `bg-[var(--semantic-selected)] text-[var(--semantic-text-primary)] ${className ?? ""}`
   const [imgFailed, setImgFailed] = useState(false)
   const effectiveSrc = src && !imgFailed ? src : null
   return (

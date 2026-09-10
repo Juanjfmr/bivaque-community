@@ -24,6 +24,7 @@ export default function CommunityPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [defaultPostType, setDefaultPostType] = useState<string | undefined>(undefined)
   const [memberCount, setMemberCount] = useState<number | null>(null)
+  const [memberCountError, setMemberCountError] = useState(false)
   const [primaryCommunityId, setPrimaryCommunityId] = useState<string | null>(null)
   const [primaryCommunityName, setPrimaryCommunityName] = useState<string | null>(null)
   const [hasResolved, setHasResolved] = useState(false)
@@ -165,17 +166,23 @@ export default function CommunityPage() {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      try {
-        const { count } = await supabase
-          .from("locality_memberships")
-          .select("*", { count: "exact", head: true })
-          .eq("locality_id", current.id)
-        if (!cancelled && count !== null) {
-          setMemberCount(count)
-        }
-      } catch {
-        /* silently fail */
+      // D51: contar apenas memberships correntes e com acesso ativo. Linhas
+      // leaving/read_only inflariam o contador "N membros" e o sinal de
+      // densidade §3.4 (isLocalityStale) sem justificativa.
+      const result = await supabase
+        .from("locality_memberships")
+        .select("*", { count: "exact", head: true })
+        .eq("locality_id", current.id)
+        .eq("kind", "current")
+        .eq("access", "active")
+      if (cancelled) return
+      if (result.error) {
+        // Distinguir erro de leitura de contagem zero: a UI oculta o chip
+        // em vez de sugerir densidade que não conhecemos (DESIGN_SPEC §3.2).
+        setMemberCountError(true)
+        return
       }
+      setMemberCount(result.count ?? 0)
     })()
     return () => {
       cancelled = true
@@ -246,9 +253,14 @@ export default function CommunityPage() {
             <div className="mx-auto flex max-w-[56rem] items-center justify-between">
               <div className="flex items-baseline gap-2">
                 <h1 className="text-lg font-semibold tracking-tight">
-                  {primaryCommunityName ?? "Manaus, AM"}
+                  {primaryCommunityName ??
+                    (current.cityName
+                      ? current.stateCode
+                        ? `${current.cityName}, ${current.stateCode}`
+                        : current.cityName
+                      : "Comunidade")}
                 </h1>
-                {!primaryCommunityName && memberCount !== null && (
+                {!primaryCommunityName && memberCount !== null && !memberCountError && (
                   <span className="text-sm text-muted">
                     {memberCount} {memberCount === 1 ? "membro" : "membros"}
                   </span>

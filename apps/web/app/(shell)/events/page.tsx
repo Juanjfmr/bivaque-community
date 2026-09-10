@@ -14,11 +14,15 @@ import {
   Tabs,
   TextArea,
 } from "@heroui/react"
+import { ChevronDown, Clock, MapPin } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { isLocalityStale } from "../../../lib/locality-density"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { MemberAvatar } from "../../components/bivaque/avatar"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
@@ -28,6 +32,16 @@ import EventInvitesSection from "./event-invites-section"
 
 const WEEKDAY_LABELS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"]
 const ORDINAL_LABELS = ["1ª", "2ª", "3ª", "4ª"]
+
+// RECON-007 (prancha 48): "Esta semana" = próximos 7 dias do momento atual;
+// "Este mês" = resto do mês corrente. Janela calculada sobre o horário real do
+// evento, nunca a data fixa copiada da imagem do quadro.
+const PERIOD_OPTIONS = [
+  { value: "week", label: "Esta semana" },
+  { value: "month", label: "Este mês" },
+  { value: "all", label: "Todos os eventos" },
+] as const
+type PeriodValue = (typeof PERIOD_OPTIONS)[number]["value"]
 
 type EventRow = {
   id: string
@@ -45,7 +59,10 @@ type RsvpRow = {
   user_id: string
   status: string
   occurrence_date: string
+  created_at: string
 }
+
+type GoingAttendee = { userId: string; name: string }
 
 type ViewMode = "list" | "create"
 type SeusTab = "host" | "going" | "interested" | "invited"
@@ -55,7 +72,7 @@ export default function EventsPage() {
     <Suspense
       fallback={
         <div className="flex flex-1 flex-col gap-4 px-6 py-8" aria-busy="true">
-          <h1 className="text-2xl font-semibold tracking-tight">Eventos</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Explorar eventos</h1>
           <EventCardSkeleton />
           <EventCardSkeleton />
           <EventCardSkeleton />
@@ -67,17 +84,23 @@ export default function EventsPage() {
   )
 }
 
-// ── date badge: compact day+month block ──────────────────────────────────────
+// ── date badge: weekday + day + month block (matches the prancha 48 cards) ───
 
-function DateBadge({ iso }: { iso: string }) {
+function EventDateBadge({ iso }: { iso: string }) {
   const d = new Date(iso)
+  const weekday = d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase()
   const day = d.getDate()
-  const month = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")
+  const month = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase()
 
   return (
-    <div className="flex w-14 shrink-0 flex-col items-center rounded-lg border border-border bg-[var(--surface-sunken)] px-1 py-2 text-center">
-      <span className="text-lg font-bold leading-none text-[var(--accent)]">{day}</span>
-      <span className="mt-0.5 text-xs font-medium uppercase tracking-wide text-muted">{month}</span>
+    <div className="flex w-16 shrink-0 flex-col items-center rounded-lg border border-border bg-[var(--semantic-surface)] px-1.5 py-2 text-center">
+      <span className="text-xs font-semibold uppercase tracking-wider text-muted">{weekday}</span>
+      <span className="mt-0.5 text-xl font-bold leading-none text-[var(--semantic-action-primary)]">
+        {day}
+      </span>
+      <span className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-muted">
+        {month}
+      </span>
     </div>
   )
 }
@@ -91,9 +114,119 @@ function formatTime(iso: string) {
   })
 }
 
-// ── Nextdoor-grade event card ────────────────────────────────────────────────
+// ── period filter math (computed against the real current time) ──────────────
 
-function EventCard({
+function periodBounds(period: PeriodValue, now: Date): { from: Date; to: Date } {
+  if (period === "week") {
+    const from = new Date(now)
+    const to = new Date(now)
+    to.setDate(to.getDate() + 7)
+    return { from, to }
+  }
+  if (period === "month") {
+    const from = new Date(now)
+    const to = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    return { from, to }
+  }
+  return { from: new Date(0), to: new Date(now.getFullYear() + 100, 0, 1) }
+}
+
+function inPeriod(startsAt: string, period: PeriodValue, now: Date): boolean {
+  const start = new Date(startsAt)
+  if (Number.isNaN(start.getTime())) return false
+  const { from, to } = periodBounds(period, now)
+  return start >= from && start < to
+}
+
+// ── presence line copy ──────────────────────────────────────────────────────
+// "Leila, Andréa e mais 18 pessoas vão" / "2 pessoas vão" /
+// "1 pessoa vai" / "Ninguém confirmou ainda"
+
+function buildPresenceCopy(goingCount: number, names: string[]): string {
+  if (goingCount === 0) return "Ninguém confirmou ainda"
+  if (goingCount === 1) return "1 pessoa vai"
+  if (goingCount === 2) return "2 pessoas vão"
+  const shown = names.slice(0, 2).filter(Boolean)
+  const more = goingCount - shown.length
+  if (shown.length === 2 && more > 0) {
+    return `${shown[0]}, ${shown[1]} e mais ${more} ${more === 1 ? "pessoa vai" : "pessoas vão"}`
+  }
+  return `${goingCount} pessoas vão`
+}
+
+// ── explorer-style event card (prancha 48) ──────────────────────────────────
+
+function ExplorerEventCard({
+  event,
+  goingCount,
+  goingAttendees,
+  href,
+}: {
+  event: EventRow
+  goingCount: number
+  goingAttendees: GoingAttendee[]
+  href: Route
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-[var(--semantic-surface)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+    >
+      <div className="relative">
+        <div
+          className="flex h-32 items-center justify-center bg-[var(--semantic-surface-sunken)]"
+          aria-hidden="true"
+        >
+          <EventsIllustration className="h-14 w-20" />
+        </div>
+        <div className="absolute bottom-3 left-3">
+          <EventDateBadge iso={event.starts_at} />
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <h2 className="text-base font-semibold tracking-tight">{event.title}</h2>
+
+        <p className="flex items-center gap-1.5 text-xs text-muted">
+          <Clock size={14} aria-hidden="true" />
+          <span>{formatTime(event.starts_at)}</span>
+        </p>
+
+        {event.venue ? (
+          <p className="flex items-center gap-1.5 text-xs text-muted">
+            <MapPin size={14} aria-hidden="true" />
+            <span className="line-clamp-1">{event.venue}</span>
+          </p>
+        ) : null}
+
+        <div className="mt-auto flex items-center gap-2 pt-2">
+          {goingCount > 0 ? (
+            <div className="flex -space-x-2" aria-hidden="true">
+              {goingAttendees.slice(0, 3).map((attendee) => (
+                <MemberAvatar
+                  key={`${event.id}-${attendee.userId}`}
+                  name={attendee.name}
+                  size="sm"
+                  className="ring-2 ring-[var(--semantic-surface)]"
+                />
+              ))}
+            </div>
+          ) : null}
+          <p className="text-xs text-muted">
+            {buildPresenceCopy(
+              goingCount,
+              goingAttendees.map((a) => a.name),
+            )}
+          </p>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+// ── "Seus eventos" tab card (preserves the old card with RSVP + cancel) ─────
+
+function OwnEventCard({
   event,
   interestedCount,
   goingCount,
@@ -114,14 +247,12 @@ function EventCard({
 
   return (
     <div
-      className="rounded-xl border border-border bg-[var(--surface-raised)] transition-opacity"
+      className="rounded-xl border border-border bg-[var(--semantic-surface)] transition-opacity"
       style={{ opacity: cancelled ? 0.55 : 1 }}
     >
       <div className="p-4">
-        {/* top row: date badge + title + venue */}
         <div className="flex gap-3">
-          <DateBadge iso={event.starts_at} />
-
+          <EventDateBadge iso={event.starts_at} />
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <h2 className="truncate text-sm font-semibold">
               {event.title}
@@ -131,23 +262,14 @@ function EventCard({
                 </Chip>
               )}
             </h2>
-
             <p className="text-xs text-muted">
               {formatTime(event.starts_at)}
               {event.ends_at && ` - ${formatTime(event.ends_at)}`}
             </p>
-
             {event.venue && <p className="truncate text-xs text-muted">📍 {event.venue}</p>}
-
-            {event.description && (
-              <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted">
-                {event.description}
-              </p>
-            )}
           </div>
         </div>
 
-        {/* counter row */}
         <div className="mt-3 border-t border-border/50 pt-2.5">
           <p className="text-xs text-muted">
             {interestedCount === 0 && goingCount === 0
@@ -163,7 +285,6 @@ function EventCard({
           </p>
         </div>
 
-        {/* CTA row */}
         {!cancelled && !isOrganizer && (
           <div className="mt-2.5 flex gap-2">
             <Button
@@ -202,7 +323,16 @@ function EventCard({
 function EventsContent() {
   const [events, setEvents] = useState<EventRow[]>([])
   const [rsvps, setRsvps] = useState<RsvpRow[]>([])
+  // goingAttendeesByEvent is the ONE batched profiles lookup per fetch — keyed
+  // by event id, with up to 3 going attendees per event (R3 / privacy
+  // boundary: no email, no raw CPF, only display_name which is already public
+  // through RLS).
+  const [goingAttendeesByEvent, setGoingAttendeesByEvent] = useState<
+    Record<string, GoingAttendee[]>
+  >({})
+  const [viewingCityLabel, setViewingCityLabel] = useState<string | null>(null)
   const [view, setView] = useState<ViewMode>("list")
+  const [period, setPeriod] = useState<PeriodValue>("week")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
@@ -235,6 +365,40 @@ function EventsContent() {
   // switcher (CityReference) ask for the origin's events specifically;
   // absent it, this is always the member's current city.
   const viewingLocalityId = searchParams.get("locality") ?? current.id
+
+  // City label: mirror the viewingCityLabel pattern from
+  // apps/web/app/(shell)/communities/communities-screen.tsx. Common case is
+  // "viewing = current" — fall straight to the locality context (no extra
+  // round trip). For the rarer ?locality override, fetch the locality row.
+  useEffect(() => {
+    let cancelled = false
+    if (viewingLocalityId === current.id) {
+      setViewingCityLabel(
+        current.stateCode ? `${current.cityName}, ${current.stateCode}` : current.cityName,
+      )
+      return () => {
+        cancelled = true
+      }
+    }
+    const supabase = createBrowserClient()
+    ;(async () => {
+      const { data, error: localityError } = await supabase
+        .from("localities")
+        .select("city_name, state_code")
+        .eq("id", viewingLocalityId)
+        .maybeSingle()
+      if (cancelled) return
+      if (localityError || !data) {
+        setViewingCityLabel(null)
+        return
+      }
+      const row = data as { city_name: string; state_code: string }
+      setViewingCityLabel(row.state_code ? `${row.city_name}, ${row.state_code}` : row.city_name)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [viewingLocalityId, current.id, current.cityName, current.stateCode])
 
   // Onda F Task 4 Step 4: "a tela avisa o organizador no momento de
   // publicar a recorrência, e ele decide" — não move a data sozinho, só
@@ -310,13 +474,18 @@ function EventsContent() {
     const events = (eventsData as EventRow[]) ?? []
     setEvents(events)
 
+    // Determinism for the grid + tabs: order by created_at within each event.
+    // Without it, two RSVP rows for the same event in the same occurrence
+    // could swap order between requests and the "Leila, Andréa, João" name
+    // order would flicker. See RECON-007 contract item A.3.
     const { data: rsvpsData } = await supabase
       .from("event_rsvps")
-      .select("event_id, user_id, status, occurrence_date")
+      .select("event_id, user_id, status, occurrence_date, created_at")
       .in(
         "event_id",
         events.map((e) => e.id),
       )
+      .order("created_at", { ascending: true })
 
     // Onda F Task 4: a recurring event accumulates one event_rsvps row per
     // occurrence. Without this filter, "quem vai"/counts on the list mix
@@ -328,6 +497,50 @@ function EventsContent() {
 
     setRsvps(currentRsvps)
     setLoading(false)
+
+    // ONE batched profiles lookup for the going display_names shown on the
+    // grid cards. Top 3 going per event (by created_at) — same order as the
+    // RSVP fetch — so the name list and the avatar stack stay consistent.
+    // Falls back to "Membro" if a profile is missing or the RLS-gated read
+    // returns nothing.
+    const goingByEvent = new Map<string, string[]>()
+    const allGoingUserIds = new Set<string>()
+    for (const r of currentRsvps) {
+      if (r.status !== "going") continue
+      const list = goingByEvent.get(r.event_id) ?? []
+      if (list.length < 3) {
+        list.push(r.user_id)
+        allGoingUserIds.add(r.user_id)
+      }
+      goingByEvent.set(r.event_id, list)
+    }
+
+    if (allGoingUserIds.size > 0) {
+      const { data: namesData, error: namesError } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in("user_id", Array.from(allGoingUserIds))
+
+      if (namesError) {
+        console.error("explorar/eventos: could not load going names", namesError.message)
+        // Fall through: cards render with "Membro" fallbacks.
+      }
+
+      const namesByUser = new Map(
+        ((namesData as { user_id: string; display_name: string }[] | null) ?? []).map((p) => [
+          p.user_id,
+          p.display_name,
+        ]),
+      )
+
+      const result: Record<string, GoingAttendee[]> = {}
+      for (const [eventId, ids] of goingByEvent) {
+        result[eventId] = ids.map((id) => ({ userId: id, name: namesByUser.get(id) ?? "Membro" }))
+      }
+      setGoingAttendeesByEvent(result)
+    } else {
+      setGoingAttendeesByEvent({})
+    }
   }, [viewingLocalityId])
 
   useEffect(() => {
@@ -447,7 +660,40 @@ function EventsContent() {
     return rsvps.find((r) => r.event_id === eventId && r.user_id === userId)?.status ?? null
   }
 
-  // ── derived views for Seus eventos ──────────────────────────────────────────
+  // ── derived views for the "Explorar" grid and "Seus eventos" tabs ────────
+
+  const now = useMemo(() => new Date(), [])
+
+  const activeEvents = useMemo(
+    // Cancelled events never appear in the explorer grid (RECON-007 contract
+    // A.2). They still appear in "Organizando" and "Confirmado" tabs of "Seus
+    // eventos" — that semantic is owned by the existing OwnEventCard.
+    () => events.filter((e) => e.status !== "cancelled"),
+    [events],
+  )
+
+  const filteredEvents = useMemo(
+    () => activeEvents.filter((e) => inPeriod(e.starts_at, period, now)),
+    [activeEvents, period, now],
+  )
+
+  const goingCountByEvent = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const r of rsvps) {
+      if (r.status !== "going") continue
+      map.set(r.event_id, (map.get(r.event_id) ?? 0) + 1)
+    }
+    return map
+  }, [rsvps])
+
+  const interestedCountByEvent = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const r of rsvps) {
+      if (r.status !== "interested") continue
+      map.set(r.event_id, (map.get(r.event_id) ?? 0) + 1)
+    }
+    return map
+  }, [rsvps])
 
   const seusFiltered = useMemo(() => {
     if (!userId) return [] as EventRow[]
@@ -476,7 +722,7 @@ function EventsContent() {
   if (loading) {
     return (
       <div className="flex flex-1 flex-col gap-4 px-6 py-8" aria-busy="true">
-        <h1 className="text-2xl font-semibold tracking-tight">Eventos</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Explorar eventos</h1>
         <EventCardSkeleton />
         <EventCardSkeleton />
         <EventCardSkeleton />
@@ -485,70 +731,126 @@ function EventsContent() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 px-6 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Eventos</h1>
-        <Button
-          variant={view === "list" ? "primary" : "tertiary"}
-          size="sm"
-          onPress={() => setView(view === "list" ? "create" : "list")}
-        >
-          {view === "list" ? "Criar evento" : "Ver eventos"}
-        </Button>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
+      <div className="flex flex-col gap-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Explorar eventos</h1>
+            {viewingCityLabel ? <p className="text-sm text-muted">{viewingCityLabel}</p> : null}
+          </div>
+          <Button
+            variant={view === "list" ? "primary" : "tertiary"}
+            size="sm"
+            className="min-h-11"
+            onPress={() => setView(view === "list" ? "create" : "list")}
+          >
+            {view === "list" ? "Criar evento" : "Ver eventos"}
+          </Button>
+        </div>
       </div>
 
       {error && <ErrorState message={error} onRetry={() => fetchEvents()} />}
 
       {view === "list" && (
-        <div className="flex flex-col gap-4">
-          {/* ── all events ──────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-6">
+          {/* ── period filter (prancha 48 left panel) ────────────────────── */}
 
-          {events.length === 0 && (
+          {activeEvents.length > 0 ? (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="filtro-periodo" className="text-xs font-medium text-muted">
+                Período
+              </label>
+              <div className="relative max-w-xs">
+                <select
+                  id="filtro-periodo"
+                  value={period}
+                  onChange={(event) => setPeriod(event.target.value as PeriodValue)}
+                  className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
+                >
+                  {PERIOD_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={14}
+                  aria-hidden="true"
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {/* ── explorer grid ────────────────────────────────────────────── */}
+
+          {activeEvents.length === 0 ? (
+            error !== null ? null : (
+              <EmptyState
+                title={
+                  isLocalityStale(memberCount)
+                    ? "Você é dos primeiros aqui."
+                    : "Nenhum evento ainda"
+                }
+                description={
+                  isLocalityStale(memberCount)
+                    ? "Esta comunidade está começando. Crie o primeiro evento para abrir caminho para quem chegar depois."
+                    : "Organize encontros e atividades para a sua comunidade."
+                }
+                illustration={<EventsIllustration />}
+                action={
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="min-h-11"
+                    onPress={() => setView("create")}
+                  >
+                    Criar evento
+                  </Button>
+                }
+              />
+            )
+          ) : filteredEvents.length === 0 ? (
             <EmptyState
-              title={
-                isLocalityStale(memberCount) ? "Você é dos primeiros aqui." : "Nenhum evento ainda"
-              }
+              title="Nenhum evento neste período"
               description={
-                isLocalityStale(memberCount)
-                  ? "Esta comunidade está começando. Crie o primeiro evento para abrir caminho para quem chegar depois."
-                  : "Organize encontros e atividades para a sua comunidade."
+                period === "week"
+                  ? "Não há eventos nos próximos 7 dias. Amplie o período para ver mais."
+                  : "Não há eventos até o fim deste mês. Amplie o período para ver mais."
               }
               illustration={<EventsIllustration />}
               action={
-                <Button variant="primary" size="sm" onPress={() => setView("create")}>
-                  Criar evento
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="min-h-11"
+                  onPress={() => setPeriod("all")}
+                >
+                  Ampliar período
                 </Button>
               }
             />
+          ) : (
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredEvents.map((event) => {
+                const goingCount = goingCountByEvent.get(event.id) ?? 0
+                return (
+                  <li key={event.id} className="flex">
+                    <ExplorerEventCard
+                      event={event}
+                      goingCount={goingCount}
+                      goingAttendees={goingAttendeesByEvent[event.id] ?? []}
+                      href={`/events/${event.id}` as Route}
+                    />
+                  </li>
+                )
+              })}
+            </ul>
           )}
-
-          {events.map((event) => {
-            const myRsvp = getRsvpStatus(event.id)
-            const isOrganizer = event.organizer_id === userId
-            const goingCount = rsvps.filter(
-              (r) => r.event_id === event.id && r.status === "going",
-            ).length
-            const interestedCount = rsvps.filter(
-              (r) => r.event_id === event.id && r.status === "interested",
-            ).length
-
-            return (
-              <EventCard
-                key={event.id}
-                event={event}
-                interestedCount={interestedCount}
-                goingCount={goingCount}
-                myRsvp={myRsvp}
-                isOrganizer={isOrganizer}
-                onRsvp={(status) => handleRsvp(event.id, status)}
-                onCancel={() => handleCancelEvent(event.id)}
-              />
-            )
-          })}
 
           {/* ── Seus eventos ────────────────────────────────────────────── */}
 
-          <section className="mt-4">
+          <section className="mt-2">
             <h2 className="mb-3 text-lg font-semibold tracking-tight">Seus eventos</h2>
 
             <Tabs
@@ -570,34 +872,30 @@ function EventsContent() {
                     description="Crie um evento para sua comunidade e ele aparecerá aqui."
                     illustration={<EventsIllustration />}
                     action={
-                      <Button size="sm" variant="primary" onPress={() => setView("create")}>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        className="min-h-11"
+                        onPress={() => setView("create")}
+                      >
                         Criar evento
                       </Button>
                     }
                   />
                 ) : (
                   <div className="flex flex-col gap-3">
-                    {seusFiltered.map((event) => {
-                      const goingCount = rsvps.filter(
-                        (r) => r.event_id === event.id && r.status === "going",
-                      ).length
-                      const interestedCount = rsvps.filter(
-                        (r) => r.event_id === event.id && r.status === "interested",
-                      ).length
-
-                      return (
-                        <EventCard
-                          key={event.id}
-                          event={event}
-                          interestedCount={interestedCount}
-                          goingCount={goingCount}
-                          myRsvp={null}
-                          isOrganizer
-                          onRsvp={() => {}}
-                          onCancel={() => handleCancelEvent(event.id)}
-                        />
-                      )
-                    })}
+                    {seusFiltered.map((event) => (
+                      <OwnEventCard
+                        key={event.id}
+                        event={event}
+                        interestedCount={interestedCountByEvent.get(event.id) ?? 0}
+                        goingCount={goingCountByEvent.get(event.id) ?? 0}
+                        myRsvp={null}
+                        isOrganizer
+                        onRsvp={() => {}}
+                        onCancel={() => handleCancelEvent(event.id)}
+                      />
+                    ))}
                   </div>
                 )}
               </TabPanel>
@@ -612,21 +910,14 @@ function EventsContent() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {seusFiltered.map((event) => {
-                      const goingCount = rsvps.filter(
-                        (r) => r.event_id === event.id && r.status === "going",
-                      ).length
-                      const interestedCount = rsvps.filter(
-                        (r) => r.event_id === event.id && r.status === "interested",
-                      ).length
                       const myRsvp = getRsvpStatus(event.id)
                       const isOrganizer = event.organizer_id === userId
-
                       return (
-                        <EventCard
+                        <OwnEventCard
                           key={event.id}
                           event={event}
-                          interestedCount={interestedCount}
-                          goingCount={goingCount}
+                          interestedCount={interestedCountByEvent.get(event.id) ?? 0}
+                          goingCount={goingCountByEvent.get(event.id) ?? 0}
                           myRsvp={myRsvp}
                           isOrganizer={isOrganizer}
                           onRsvp={(status) => handleRsvp(event.id, status)}
@@ -648,21 +939,14 @@ function EventsContent() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {seusFiltered.map((event) => {
-                      const goingCount = rsvps.filter(
-                        (r) => r.event_id === event.id && r.status === "going",
-                      ).length
-                      const interestedCount = rsvps.filter(
-                        (r) => r.event_id === event.id && r.status === "interested",
-                      ).length
                       const myRsvp = getRsvpStatus(event.id)
                       const isOrganizer = event.organizer_id === userId
-
                       return (
-                        <EventCard
+                        <OwnEventCard
                           key={event.id}
                           event={event}
-                          interestedCount={interestedCount}
-                          goingCount={goingCount}
+                          interestedCount={interestedCountByEvent.get(event.id) ?? 0}
+                          goingCount={goingCountByEvent.get(event.id) ?? 0}
                           myRsvp={myRsvp}
                           isOrganizer={isOrganizer}
                           onRsvp={(status) => handleRsvp(event.id, status)}

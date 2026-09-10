@@ -15,7 +15,6 @@ export const dynamic = "force-dynamic"
 
 interface OnboardingRequestBody {
   action?: string
-  accept_consent?: boolean
   cpf?: string
   token?: string
   email?: string
@@ -23,20 +22,6 @@ interface OnboardingRequestBody {
   state_code?: string
   display_name?: string
   ibge_code?: string
-}
-
-const CONSENT_COOKIE = "bivaque-consent-version"
-const CONSENT_COOKIE_OPTIONS = {
-  maxAge: 60 * 60 * 24 * 400,
-  path: "/",
-  sameSite: "lax" as const,
-  secure: process.env["NODE_ENV"] === "production",
-}
-
-function withConsentCookie(body: unknown, status = 200): NextResponse {
-  const response = NextResponse.json(body, { status })
-  response.cookies.set(CONSENT_COOKIE, String(CONSENT_VERSION), CONSENT_COOKIE_OPTIONS)
-  return response
 }
 
 export async function POST(request: Request) {
@@ -78,32 +63,14 @@ export async function POST(request: Request) {
   const codeOfConductVersion = CODE_OF_CONDUCT_VERSION
 
   try {
-    const { data: acceptedConsent, error: consentStatusError } = await supabase.rpc(
-      "has_accepted_consent",
-      {
-        p_user_id: userId,
-        p_consent_version: consentVersion,
-        p_code_of_conduct_version: codeOfConductVersion,
-      },
-    )
+    const { data: hasAcceptedConsent } = await supabase.rpc("has_accepted_consent", {
+      p_user_id: userId,
+      p_consent_version: consentVersion,
+      p_code_of_conduct_version: codeOfConductVersion,
+    })
 
-    if (consentStatusError) {
-      throw new Error(`Failed to read consent: ${consentStatusError.message}`)
-    }
-
-    if (!acceptedConsent && body.accept_consent !== true) {
+    if (!hasAcceptedConsent) {
       return NextResponse.json({ error: "consent is required" }, { status: 403 })
-    }
-
-    if (!acceptedConsent) {
-      const { error: recordConsentError } = await supabase.rpc("record_consent_acceptance", {
-        p_user_id: userId,
-        p_consent_version: consentVersion,
-        p_code_of_conduct_version: codeOfConductVersion,
-      })
-      if (recordConsentError) {
-        throw new Error(`Failed to record consent: ${recordConsentError.message}`)
-      }
     }
 
     if (action === "verify-cpf") {
@@ -116,7 +83,15 @@ export async function POST(request: Request) {
       }
 
       const result = await verifyEligibility(supabase, { userId, cpf, consentVersion })
-      return withConsentCookie(result)
+      if (
+        result.outcome.status === "temporary_error" &&
+        result.outcome.errorCode === "INVALID_KEY"
+      ) {
+        log.error("Portal verification unavailable: API key not configured", {
+          action: "verify-cpf",
+        })
+      }
+      return NextResponse.json(result)
     }
 
     if (action === "provision") {
@@ -153,7 +128,7 @@ export async function POST(request: Request) {
         displayName: validation.displayName as string,
         consentVersion,
       })
-      return withConsentCookie(result)
+      return NextResponse.json(result)
     }
 
     if (action === "accept-family-invite") {
@@ -173,7 +148,7 @@ export async function POST(request: Request) {
         displayName: displayName.trim(),
         consentVersion,
       })
-      return withConsentCookie(result)
+      return NextResponse.json(result)
     }
 
     if (action === "join-waitlist") {
@@ -194,7 +169,7 @@ export async function POST(request: Request) {
       }
 
       const result = await addToWaitlist(supabase, email, cityName, stateCode)
-      return withConsentCookie(result)
+      return NextResponse.json(result)
     }
 
     return NextResponse.json({ error: "unknown action" }, { status: 400 })

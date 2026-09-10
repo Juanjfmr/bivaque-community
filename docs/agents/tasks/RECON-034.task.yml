@@ -1,0 +1,69 @@
+task_id: RECON-034
+
+objective: >
+  A comunidade ganha as imagens da prancha 43 - a faixa de topo e a miniatura que aparecem na
+  apresentacao, na descoberta, na barra lateral e nos cartoes de referencia - com quem responde
+  pela comunidade podendo enviar e trocar as duas.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/43-web-comunidade-grupos.png
+  - docs/design/visual-guide-2026-09-06/42-web-comunidades.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao Elementos comuns
+  - docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md linha sobre imagens de comunidade
+  - docs/decisions/ADR-20260909-midia-de-membro.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    A tabela communities tem nome, descricao, localidade e responsavel, e nenhuma coluna de
+    imagem. O handoff de 09/09 registra faixa e miniatura como divergencia aberta que depende de
+    banco, e a barra lateral das pranchas 13, 15, 17, 19 e 21 mostra miniatura por comunidade.
+    Medido em 09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(shell)/communities/
+  - apps/web/app/(owner)/communities/
+  - apps/web/app/components/shell/
+  - apps/web/lib/communities/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-034.task.yml
+
+forbidden:
+  - deixar a imagem alcancavel por quem nao alcanca a comunidade
+  - permitir que membro comum troque a imagem da comunidade
+  - preservar metadado de camera na imagem enviada
+  - deixar arquivo orfao quando o envio e interrompido
+  - manter o arquivo alcancavel depois de a imagem ser removida
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a apresentacao da comunidade mostra a faixa de topo e a miniatura da prancha 43, com recorte estavel nos tres viewports
+  - a descoberta e a barra lateral usam a miniatura, e caem para o estado sem imagem sem quebrar o alinhamento
+  - quem responde pela comunidade envia e troca faixa e miniatura, e a alteracao aparece ao voltar
+  - membro comum recebe negativa na escrita, inclusive por chamada direta sem interface
+  - conta que nao alcanca a comunidade recebe negativa ao pedir a imagem por URL direta
+  - remover a imagem torna o arquivo inalcancavel na mesma operacao
+  - as colunas novas e as policies que as leem entram na mesma migration, com caso positivo e negativo em pgTAP
+  - o texto alternativo da imagem descreve a comunidade e nao repete o nome ja lido ao lado
+  - todos os estados fechados - carregando, sem imagem, erro recuperavel e envio em andamento sem duplicar
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-034.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: midia de comunidade e autorizacao de leitura
+risk_level: R3
+adr: docs/decisions/ADR-20260909-midia-de-membro.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

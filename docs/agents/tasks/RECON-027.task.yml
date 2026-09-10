@@ -1,0 +1,71 @@
+task_id: RECON-027
+
+objective: >
+  Moradia passa a existir com as pranchas 65 e 19 - buscar com filtros de tipo, valor e quartos,
+  ler a ficha do imovel com galeria, especificacoes e custos separados, e publicar ou editar um
+  anuncio de moradia pelo mesmo ciclo de vida do Mercado.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/65-web-imoveis-alertas.png
+  - docs/design/visual-guide-2026-09-06/19-web-imoveis.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 65-web-imoveis-alertas e secao 19-web-imoveis
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.7 R52 R53 R54
+  - docs/agents/tasks/RECON-025.task.yml
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Nao existem rotas de moradia nem tabela de anuncio de imovel. As reviewNotes da prancha 19
+    listam cinco promessas inventadas pelo gerador que precisam sair da tela. Medido em
+    09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(shell)/imoveis/
+  - apps/web/lib/listings/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-027.task.yml
+
+forbidden:
+  - somar custo desconhecido como zero ou apresentar valor ausente como valor
+  - confundir aluguel com custo total no rotulo do filtro
+  - prometer prazo de resposta, tempo de associacao do anunciante ou compartilhamento automatico de contato
+  - afirmar que toda conversa ou visita acontece obrigatoriamente dentro do produto
+  - guardar endereco, numero, complemento ou coordenada do imovel
+  - preservar metadado de camera na imagem enviada
+  - desenhar somente o detalhe e deixar o anuncio impossivel de cadastrar
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a busca segue o primeiro painel da prancha 65 - titulo, apoio, filtros em pilulas com local removivel, tipo, valor e quartos, contagem de resultados, salvar busca, criar alerta, e a grade com botao de salvar, valor por mes, condominio, localizacao e as tres especificacoes
+  - o filtro de valor e rotulado como aluguel maximo quando nao inclui condominio
+  - o botao de salvar usa o mesmo marcador do Mercado e do Guia, e nao um coracao
+  - o detalhe segue a prancha 19 - trilha, titulo, localizacao, salvar e compartilhar, galeria com contagem de fotos, faixa de especificacoes, secoes sobre o imovel, disponibilidade e comodidades, faixa de criar alerta, e o rail com custos separados, anunciante e o botao de interesse
+  - as cinco invencoes listadas nas reviewNotes da prancha 19 nao aparecem na tela
+  - custo nao informado aparece como consultar o anunciante e nunca entra em soma
+  - publicar e editar moradia usam a mesma autorizacao e o mesmo ciclo de vida do Mercado, com os campos especificos validados por tipo
+  - conta fora do publico nao ve o anuncio nem as fotos, inclusive por chamada direta sem interface
+  - as tabelas novas e as policies que as leem entram na mesma migration, com caso positivo e negativo em pgTAP
+  - todos os estados fechados - carregando, vazio que nao e erro, erro recuperavel, sessao expirada e conflito
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - as rotas novas estao cadastradas em scripts/visual/capture.mjs com fixture concreta
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-027.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e de publicar imovel, encontrar por filtro e demonstrar interesse
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: anuncio de moradia, custos e localizacao aproximada
+risk_level: R3
+adr: docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

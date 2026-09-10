@@ -21,14 +21,20 @@ test.describe("holder onboarding journey", () => {
     await expect(page.getByText("A comunidade vai com você.")).toBeVisible()
   })
 
-  test("login page renders Google OAuth button and magic link form", async ({ page }) => {
+  // Expectativa trocada em 2026-09-07 com razão explícita, não para ficar
+  // verde: "Receber link para entrar" era o contrato do magic link, que
+  // ADR-20260907-login-com-senha tirou da tela por instrução do responsável.
+  // O spec ficou apontando para um botão que não existe desde c0bf309. A
+  // cobertura continua cobrindo os pontos de entrada: agora e-mail, senha,
+  // submit e Google.
+  test("login page renders the password form and Google OAuth button", async ({ page }) => {
     // Given the production Next server
     // When a user navigates to the login page
     await page.goto("/login")
 
     // Then the auth entry points are rendered
     await expect(page.getByRole("button", { name: "Continuar com Google" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Receber link para entrar" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible()
 
     const emailInput = page.getByLabel("E-mail")
     await expect(emailInput).toBeVisible()
@@ -49,13 +55,15 @@ test.describe("holder onboarding journey", () => {
     await expect(
       page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
     ).toBeVisible()
-    // Scoped to the page's own section heading id: the rendered legal
-    // document body also contains a "Código de conduta" heading of its own,
-    // so a bare role query resolves to two elements (strict-mode violation).
-    await expect(page.locator("#conduct-heading")).toBeVisible()
+    await expect(page.locator("#documents-heading")).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: "Ler a Política de privacidade completa" }),
+    ).toBeVisible()
+    await expect(page.getByRole("link", { name: "Ler o Código de conduta completo" })).toBeVisible()
 
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await expect(acceptButton).toBeVisible()
+    await expect(acceptButton).toBeDisabled()
   })
 
   test("accepting consent navigates to onboarding", async ({ page }) => {
@@ -63,8 +71,14 @@ test.describe("holder onboarding journey", () => {
     await seedSession(page.context())
     await page.goto("/consent")
 
-    // When the user clicks the accept button
+    // When the user explicitly records that they read the legal documents
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
+    await expect(acceptButton).toBeDisabled()
+    const consentCheckbox = page.getByRole("checkbox", { name: /Li e concordo com a/ })
+    await consentCheckbox.focus()
+    await page.keyboard.press("Space")
+    await expect(consentCheckbox).toBeChecked()
+    await expect(acceptButton).toBeEnabled()
     await acceptButton.click()
 
     // Then the user is redirected to the onboarding page. Onboarding is a
@@ -132,16 +146,14 @@ test.describe("family invite journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("community feed", () => {
-  test("feed page redirects unauthenticated user to consent", async ({ page }) => {
+  test("feed page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser without consent
     // When the user navigates directly to /community
     await page.goto("/community")
 
     // Then the middleware redirects to the consent gate
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
   test("feed page with consent cookie renders the community heading", async ({ page, context }) => {
@@ -174,16 +186,16 @@ test.describe("community feed", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("groups journey", () => {
-  test("groups page redirects unauthenticated user to consent", async ({ page }) => {
+  test("groups page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates directly to /groups
     await page.goto("/groups")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
+    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
+    // o destino mudou.
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
   test("groups page with consent cookie renders groups UI", async ({ page, context }) => {
@@ -216,21 +228,24 @@ test.describe("groups journey", () => {
       await expect(nav).toBeVisible()
       const tabs = nav.getByRole("tab")
       await expect(tabs).toHaveCount(4)
-      await expect(tabs.nth(0)).toContainText("Cidade")
-      await expect(tabs.nth(1)).toContainText("Comunidade")
-      await expect(tabs.nth(2)).toContainText("Grupos")
-      await expect(tabs.nth(3)).toContainText("Eu")
+      // Containers de PROCESSO-DE-CONSTRUCAO §7, travados em
+      // tests/scope/navigation.test.mjs:42. Substituíram os quatro do
+      // ADR-20260816 em 2026-09-08.
+      await expect(tabs.nth(0)).toContainText("Início")
+      await expect(tabs.nth(1)).toContainText("Explorar")
+      await expect(tabs.nth(2)).toContainText("Comunidades")
+      await expect(tabs.nth(3)).toContainText("Perfil")
     } else {
-      // Tablet rail / desktop sidebar: BottomNav hidden, sidebar links visible
+      // Tablet rail / desktop sidebar: BottomNav hidden, sidebar links visible.
+      // A sidebar ganhou seções além da primária (secundária, comunidades,
+      // rodapé), então a contagem total de links não é mais 4: ancoramos nos
+      // quatro containers por href, na ordem de NAV_ITEMS.
       await expect(page.locator(BOTTOM_NAV)).toBeHidden()
       const sidebar = page.locator(SIDEBAR)
       await expect(sidebar).toBeVisible()
-      const links = sidebar.getByRole("link")
-      await expect(links).toHaveCount(4)
-      await expect(links.nth(0)).toHaveAttribute("href", "/localidade")
-      await expect(links.nth(1)).toHaveAttribute("href", "/community")
-      await expect(links.nth(2)).toHaveAttribute("href", "/groups")
-      await expect(links.nth(3)).toHaveAttribute("href", "/profile")
+      for (const href of ["/inicio", "/explorar", "/communities", "/profile"]) {
+        await expect(sidebar.locator(`a[href="${href}"]`).first()).toBeVisible()
+      }
     }
   })
 })
@@ -240,16 +255,16 @@ test.describe("groups journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("recommendations journey", () => {
-  test("recommendations page redirects unauthenticated user to consent", async ({ page }) => {
+  test("recommendations page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /recommendations
     await page.goto("/recommendations")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
+    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
+    // o destino mudou.
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
   test("recommendations page with consent cookie renders browse tab", async ({ page, context }) => {
@@ -264,9 +279,9 @@ test.describe("recommendations journey", () => {
     await expect(page.getByText(/Descubra grupos e eventos da sua comunidade/)).toBeVisible()
 
     // The "Explorar" tab is visible with mock recommendation cards
-    await expect(page.getByRole("tab", { name: "Explorar" })).toBeVisible()
-    await expect(page.getByRole("tab", { name: "Pedir indicação" })).toBeVisible()
-    await expect(page.getByRole("tab", { name: "Salvas" })).toBeVisible()
+    await expect(page.locator("main").getByRole("tab", { name: "Explorar" })).toBeVisible()
+    await expect(page.locator("main").getByRole("tab", { name: "Pedir indicação" })).toBeVisible()
+    await expect(page.locator("main").getByRole("tab", { name: "Salvas" })).toBeVisible()
   })
 
   test("recommendations browse tab renders cards and tabs are present", async ({
@@ -280,9 +295,9 @@ test.describe("recommendations journey", () => {
     // Then the three tabs are present
     await expect(page.getByRole("heading", { name: "Indicações" })).toBeVisible()
 
-    const browseTab = page.getByRole("tab", { name: "Explorar" })
-    const requestTab = page.getByRole("tab", { name: "Pedir indicação" })
-    const savedTab = page.getByRole("tab", { name: "Salvas" })
+    const browseTab = page.locator("main").getByRole("tab", { name: "Explorar" })
+    const requestTab = page.locator("main").getByRole("tab", { name: "Pedir indicação" })
+    const savedTab = page.locator("main").getByRole("tab", { name: "Salvas" })
 
     await expect(browseTab).toBeVisible()
     await expect(requestTab).toBeVisible()
@@ -295,16 +310,16 @@ test.describe("recommendations journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("events journey", () => {
-  test("events page redirects unauthenticated user to consent", async ({ page }) => {
+  test("events page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /events
     await page.goto("/events")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
+    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
+    // o destino mudou.
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
   test("events page with consent cookie renders events UI", async ({ page, context }) => {
@@ -333,16 +348,16 @@ test.describe("events journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("notifications journey", () => {
-  test("notifications page redirects unauthenticated user to consent", async ({ page }) => {
+  test("notifications page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /notifications
     await page.goto("/notifications")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
+    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
+    // o destino mudou.
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
   test("notifications page with consent cookie renders notifications UI", async ({
@@ -365,16 +380,16 @@ test.describe("notifications journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("contextual DM and report journey", () => {
-  test("messages page redirects unauthenticated user to consent", async ({ page }) => {
+  test("messages page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /messages
     await page.goto("/messages")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
+    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
+    // o destino mudou.
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
   test("messages page with consent cookie renders messages UI", async ({ page, context }) => {
@@ -474,7 +489,7 @@ test.describe("accessibility across journeys", () => {
     await page.goto("/login")
 
     // Then its own primary controls meet the 44px minimum
-    const submit = page.getByRole("button", { name: "Receber link para entrar" })
+    const submit = page.getByRole("button", { name: "Entrar" })
     await expect(submit).toBeVisible()
     const box = await submit.boundingBox()
     expect(box).not.toBeNull()
@@ -525,12 +540,21 @@ test.describe("accessibility across journeys", () => {
 // purpose in its H1. Indicações is a `(shell)` sidebar entry and is covered in
 // shell-navigation.spec.ts.
 test.describe("preauth page headings", () => {
-  test("login page leads with the Bivaque wordmark", async ({ page }) => {
+  // Realignado em 2026-09-07 à prancha 36-web-auth-entrada: o H1 do entrar é a
+  // frase da referência, e a marca passou a ser o wordmark sobre a foto (link
+  // para o início), não texto dentro do título. A cobertura de marca continua:
+  // agora pelo link com aria-label, que é o que a tecnologia assistiva lê.
+  test("login page leads with the reference heading and carries the brand link", async ({
+    page,
+  }) => {
     // Given the login page
     await page.goto("/login")
 
-    // Then its own heading carries the branding
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
+    // Then its own heading states the purpose and the brand links home
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    await expect(
+      page.getByRole("link", { name: "Bivaque, voltar ao início" }).first(),
+    ).toBeVisible()
   })
 
   test("consent page leads with the terms heading", async ({ page }) => {

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test"
-import { seedSession } from "./helpers/session"
+import { CURRENT_CONSENT, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -10,14 +10,24 @@ async function setConsentCookie(page: import("@playwright/test").Page) {
   // When the consent cookie is set
   await page
     .context()
-    .addCookies([{ name: "bivaque-consent-version", value: "1", path: "/", domain: "127.0.0.1" }])
+    .addCookies([
+      { name: "bivaque-consent-version", value: CURRENT_CONSENT, path: "/", domain: "127.0.0.1" },
+    ])
 }
 
 // ---------------------------------------------------------------------------
-// Denial 1: Unverified user — all protected routes redirect to consent gate
+// Denial 1: anonymous visitor — every protected route refuses and sends to login
+//
+// Realinhado em 2026-09-08 com ADR-20260907-consentimento-no-cadastro (approved,
+// R3): "O portão de consentimento sai do proxy". A recusa continua existindo —
+// nenhuma rota protegida renderiza sem sessão — mas o destino agora é
+// /login?redirect=<pathname> (apps/web/proxy.ts:114-118), não /consent.
+// O aceite passou a ser cobrado na criação da conta; a prova disso está em
+// tests/e2e/onboarding-denials.spec.ts, bloco "consent is enforced at account
+// creation".
 // ---------------------------------------------------------------------------
 
-test.describe("unverified user: protected route denial", () => {
+test.describe("anonymous visitor: protected route denial", () => {
   const PROTECTED_ROUTES = [
     "/community",
     "/groups",
@@ -29,40 +39,34 @@ test.describe("unverified user: protected route denial", () => {
   ]
 
   for (const route of PROTECTED_ROUTES) {
-    test(`${route} redirects to consent when no consent cookie is present`, async ({ page }) => {
-      // Given an unauthenticated browser without a consent cookie
+    test(`${route} refuses an anonymous visitor and sends them to login`, async ({ page }) => {
+      // Given an unauthenticated browser
       // When the user navigates directly to a protected route
       await page.goto(route)
 
-      // Then the middleware redirects to the consent gate
-      await page.waitForURL(/\/consent/)
-      await expect(
-        page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-      ).toBeVisible()
+      // Then the proxy refuses and routes to the entry screen, keeping the
+      // intended destination so the person does not lose their way
+      await page.waitForURL(/\/login/)
+      expect(page.url()).toContain(`redirect=${encodeURIComponent(route)}`)
+      await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
     })
   }
 
-  test("unverified user cannot bypass consent by navigating community -> login -> community", async ({
-    page,
-  }) => {
+  test("an anonymous visitor cannot reach community by way of login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user tries to access /community
     await page.goto("/community")
 
-    // Then they are directed to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then they are refused into the entry screen
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
 
-    // When they try to navigate back to community (skipping consent)
+    // When they try to navigate back to community, passing through the entry
     await page.goto("/community")
 
-    // Then they are redirected again to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the refusal repeats — passar pela tela de entrada não concede sessão
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 })
 
@@ -71,14 +75,15 @@ test.describe("unverified user: protected route denial", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("private group admission: denial paths", () => {
-  test("groups page without auth shows consent redirect", async ({ page }) => {
+  test("groups page without auth is refused into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /groups
     await page.goto("/groups")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    expect(page.url()).toContain("/consent")
+    // Then the proxy refuses into the entry screen (ADR-20260907: o portão de
+    // consentimento saiu; quem decide o acesso é a sessão)
+    await page.waitForURL(/\/login/)
+    expect(page.url()).toContain("/login")
   })
 
   test("groups page with consent but no Supabase auth redirects to /login", async ({ page }) => {
@@ -95,15 +100,14 @@ test.describe("private group admission: denial paths", () => {
     await page.waitForURL(/\/login/, { timeout: 10000 })
   })
 
-  test("user without consent cannot access private group directly", async ({ page }) => {
+  test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to a hypothetical private group URL
     await page.goto("/groups/some-private-group-id")
 
-    // Then the middleware redirects to consent
-    // (Next.js would probably 404 on unknown routes, but middleware still runs)
-    // The redirect to consent should happen before Next handles the route
-    await page.waitForURL(/\/consent/)
+    // Then the proxy refuses antes de o Next tratar a rota — a recusa não
+    // depende de o grupo existir, e por isso não vaza existência
+    await page.waitForURL(/\/login/)
   })
 })
 
@@ -112,16 +116,15 @@ test.describe("private group admission: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("DM without context: denial paths", () => {
-  test("messages page without consent redirects to consent", async ({ page }) => {
+  test("messages page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /messages
     await page.goto("/messages")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses into the entry screen. ADR-20260907: o portão
+    // de consentimento saiu do proxy; a recusa continua, o destino é outro.
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
   test("messages page with consent but no auth redirects to /login", async ({ page }) => {
@@ -251,16 +254,15 @@ test.describe("trust boundary: API denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("events RSVP: denial paths", () => {
-  test("events page without consent redirects to consent", async ({ page }) => {
+  test("events page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /events
     await page.goto("/events")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses into the entry screen. ADR-20260907: o portão
+    // de consentimento saiu do proxy; a recusa continua, o destino é outro.
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 })
 
@@ -269,16 +271,15 @@ test.describe("events RSVP: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("notifications: denial paths", () => {
-  test("notifications page without consent redirects to consent", async ({ page }) => {
+  test("notifications page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /notifications
     await page.goto("/notifications")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses into the entry screen. ADR-20260907: o portão
+    // de consentimento saiu do proxy; a recusa continua, o destino é outro.
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 })
 
@@ -287,16 +288,15 @@ test.describe("notifications: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("recommendations: denial paths", () => {
-  test("recommendations page without consent redirects to consent", async ({ page }) => {
+  test("recommendations page refuses an anonymous visitor into login", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to /recommendations
     await page.goto("/recommendations")
 
-    // Then the middleware redirects to consent
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses into the entry screen. ADR-20260907: o portão
+    // de consentimento saiu do proxy; a recusa continua, o destino é outro.
+    await page.waitForURL(/\/login/)
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 })
 
@@ -304,41 +304,53 @@ test.describe("recommendations: denial paths", () => {
 // Denial 9: Consent cookie tampering
 // ---------------------------------------------------------------------------
 
-test.describe("consent cookie tampering: denial paths", () => {
-  test("protected route redirects to consent when cookie value is wrong version", async ({
-    page,
-  }) => {
-    // Given a browser with an invalid consent cookie version
-    await page
-      .context()
-      .addCookies([{ name: "bivaque-consent-version", value: "0", path: "/", domain: "127.0.0.1" }])
+// O cookie de consentimento deixou de ser portão (ADR-20260907-consentimento-no-
+// cadastro). Estes testes provavam o portão; provar de novo seria provar
+// comportamento removido. O que precisa continuar verdadeiro, e é o que eles
+// verificam agora, é o contrário: **adulterar o cookie não muda nada** — não
+// concede acesso a quem não tem sessão, e não expulsa quem tem. O cookie é
+// atalho de navegação a partir da raiz, nunca autoridade (apps/web/proxy.ts:94-103;
+// a autoridade é has_accepted_consent no servidor).
+test.describe("consent cookie tampering: it is not a gate", () => {
+  for (const [rotulo, valor] of [
+    ["an outdated version", "0"],
+    ["a garbage value", "garbage"],
+  ] as const) {
+    test(`${rotulo} does not grant an anonymous visitor any access`, async ({ page }) => {
+      // Given a browser with a tampered consent cookie
+      await page
+        .context()
+        .addCookies([
+          { name: "bivaque-consent-version", value: valor, path: "/", domain: "127.0.0.1" },
+        ])
 
-    // When the user navigates to a protected route
-    await page.goto("/community")
+      // When the user navigates to a protected route
+      await page.goto("/community")
 
-    // Then the middleware redirects to consent (version 0 is not current)
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
-  })
+      // Then the refusal is exactly the same as without any cookie: the cookie
+      // never granted access, and after the ADR it does not deny it either
+      await page.waitForURL(/\/login/)
+      await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
+    })
+  }
 
-  test("protected route redirects to consent when cookie has garbage value", async ({ page }) => {
-    // Given a browser with a garbage consent cookie value
+  test("a tampered cookie does not lock a real session out of the app", async ({ page }) => {
+    // Given a real seeded session AND a garbage consent cookie
+    await seedSession(page.context())
     await page
       .context()
       .addCookies([
         { name: "bivaque-consent-version", value: "garbage", path: "/", domain: "127.0.0.1" },
       ])
 
-    // When the user navigates to a protected route
+    // When the member opens a protected route
     await page.goto("/community")
 
-    // Then the middleware redirects to consent (garbage != "1")
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then they stay in the app. É o defeito RUN-001 que o ADR foi criado para
+    // matar: cookie limpo, expirado ou de versão antiga devolvia a pessoa ao
+    // portão a cada visita.
+    await expect(page).not.toHaveURL(/\/consent/)
+    await expect(page).not.toHaveURL(/\/login/)
   })
 
   test("consent page is always accessible regardless of cookie state", async ({ page }) => {
@@ -360,20 +372,20 @@ test.describe("consent cookie tampering: denial paths", () => {
     // When the user navigates to /login
     await page.goto("/login")
 
-    // Then the login page renders regardless
-    await expect(page.getByRole("heading", { name: "Bivaque" })).toBeVisible()
+    // Then the login page renders regardless. O título é o da prancha
+    // 36-web-auth-entrada, fixado por ADR-20260907-login-com-senha — o heading
+    // "Bivaque" pertencia à tela anterior.
+    await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
-  test("onboarding redirects to consent when the consent cookie is missing", async ({ page }) => {
-    // Given a browser without the consent cookie
+  test("onboarding refuses an anonymous visitor into login", async ({ page }) => {
+    // Given a browser without a session
     // When the user navigates to /onboarding
     await page.goto("/onboarding")
 
-    // Then the consent gate is applied before the CPF form
-    await page.waitForURL(/\/consent/)
-    await expect(
-      page.getByRole("heading", { name: "Antes de entrar, conheça as regras." }),
-    ).toBeVisible()
+    // Then the proxy refuses before the CPF form. O aceite não é mais cobrado
+    // aqui: ele é condição de criar a conta (ver onboarding-denials.spec.ts).
+    await page.waitForURL(/\/login/)
   })
 
   test("onboarding renders when consent is present", async ({ page }) => {
@@ -398,17 +410,21 @@ test.describe("accessibility on denial pages", () => {
     await page.goto("/consent")
     await page.waitForSelector("button", { timeout: 10000 })
 
-    // Consent is a `(preauth)` route with no shell chrome, so "Aceitar e
-    // continuar" is its only focusable control. Counting focused elements
-    // after two Tabs would therefore read 0 once focus leaves the document —
-    // which is correct behaviour, not a trap. Assert the control can take
-    // focus and that Tab releases it.
-    const accept = page.getByRole("button", { name: "Concordar e continuar" })
-    await accept.focus()
-    await expect(accept).toBeFocused()
+    // Consent requires a deliberate checkbox before the submit control is
+    // enabled. Verify keyboard users can select it and Tab moves focus away;
+    // no control may trap a keyboard user on this pre-auth screen.
+    const checkbox = page.getByRole("checkbox", { name: /Li e concordo com a/ })
+    await checkbox.focus()
+    await expect(checkbox).toBeFocused()
+
+    await page.keyboard.press("Space")
+    await expect(checkbox).toBeChecked()
 
     await page.keyboard.press("Tab")
-    await expect(accept).not.toBeFocused()
+    await expect(checkbox).not.toBeFocused()
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement !== document.body))
+      .toBe(true)
   })
 
   test("no horizontal overflow on consent page at 375px", async ({ page }) => {

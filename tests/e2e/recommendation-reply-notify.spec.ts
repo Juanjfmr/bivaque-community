@@ -12,11 +12,15 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal, seedSession } from "./helpers/session"
+import {
+  CURRENT_CONSENT,
+  encodeAuthCookieValue,
+  readEnvLocal,
+  seedSession,
+} from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
-const CURRENT_CONSENT = "1"
 // Any Manaus member other than the request's author (visual@bivaque.example.
 // invalid). membro-3 (Diego Almeida) has no other role in this file's fixture.
 const REPLIER_EMAIL = "membro-3@bivaque.example.invalid"
@@ -83,10 +87,11 @@ test.describe("recommendation ask-and-answer loop", () => {
     const authorPage = await authorContext.newPage()
     await seedSession(authorContext)
     await authorPage.goto("/notifications")
-    // classifyNotification files "recommendation_reply" under "Minha
-    // atividade" (a personally-directed interaction, alongside comments and
-    // DMs) — the page defaults to the "Vizinhança" tab.
-    await authorPage.getByRole("tab", { name: "Minha atividade" }).click()
+    // A RECON-006 (prancha 54) trocou as abas por tema — Vizinhanca, Minha
+    // atividade, Alertas — pelo filtro de leitura: Todas e Nao lidas. Nao ha
+    // mais aba para clicar, e a pagina abre em "Todas", que inclui esta
+    // notificacao. A assercao seguinte continua sendo a prova: o autor do
+    // pedido ve que responderam.
 
     await expect(authorPage.getByText(/respondeu ao seu pedido de indicação/).first()).toBeVisible({
       timeout: 15000,

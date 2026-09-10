@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Bivaque",
+    "slug": "bivaque-community-mobile",
+    "version": "0.0.0",
+    "scheme": "bivaque",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bivaque.community.mobile"
+    },
+    "android": {
+      "package": "com.bivaque.community.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#F8FAFC"
+      },
+      "usesCleartextTraffic": true
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {}
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "36fd6e02-7985-4093-948f-bf9497027a84"
+      }
+    },
+    "owner": "juanreis"
+  }
+}

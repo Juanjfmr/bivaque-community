@@ -1,0 +1,75 @@
+task_id: RECON-031
+
+objective: >
+  As configuracoes passam a ser as das pranchas 52 e 56 - a coluna vertical de secoes, os canais
+  de entrega gravando por tipo e canal, novidades desligadas por padrao, a conta com recuperacao
+  e solicitacao de exclusao, a familia e a lista de pessoas bloqueadas.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/52-web-configuracoes.png
+  - docs/design/visual-guide-2026-09-06/56-web-confianca.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 56-web-confianca
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.8 C04 C05 C06 C07 C11
+  - docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md tabela de divergencias abertas
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    /configuracoes existe apos RECON-012 e o handoff de 09/09 registra tres divergencias -
+    faltam os canais de entrega e as novidades, a navegacao e horizontal com tres abas onde a
+    prancha tem coluna vertical com quatro, e o titulo esta dentro do cartao. As subrotas de
+    notificacoes, conta, familia e bloqueados nao existem. A tabela de preferencia nao tem canal.
+    Medido em 09/09/2026.
+
+allowed_paths:
+  - apps/web/app/(shell)/configuracoes/
+  - apps/web/lib/notifications/
+  - apps/web/lib/account/
+  - supabase/migrations/
+  - supabase/tests/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-031.task.yml
+
+forbidden:
+  - mostrar controle de canal que nao entrega
+  - ligar novidades do produto por padrao
+  - deixar cada produtor consultar a preferencia por conta propria em vez do despachante unico
+  - prometer descarte imediato de conta ou apagar dados pelo cliente
+  - permitir enumerar familia de outra conta
+  - deixar linha de configuracao sem efeito real
+  - editar migration ja aplicada
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+
+acceptance:
+  - a navegacao de configuracoes e a coluna vertical da prancha com as quatro secoes, e o titulo fica fora do cartao
+  - os canais de entrega gravam por tipo e canal, e desligar um canal faz a proxima entrega daquele tipo nao usar aquele canal e continuar usando os demais
+  - tipo desligado nao entrega por canal nenhum
+  - novidades do produto e um tipo proprio, desligado por padrao para conta existente e nova
+  - a migracao semeia a matriz a partir das preferencias atuais sem alterar quem ja recebe o que
+  - a conta permite alterar dados de acesso conforme o provedor, reautenticando quando exigido, e a solicitacao de exclusao segue politica real e informa a situacao correta
+  - a familia permite criar, copiar e revogar convite, sem token com persistencia publica
+  - a tela de bloqueados segue a prancha 56 - abas de denuncias e pessoas bloqueadas, cartao de denuncia com motivo e explicacao ao expandir, e a lista de bloqueios com data e desbloquear
+  - bloquear e desbloquear tem efeito no envio nos dois sentidos, nao apenas ocultacao local
+  - as tabelas novas e as policies que as leem entram na mesma migration, com caso positivo e negativo em pgTAP
+  - sair limpa sessao, cache privado e assinaturas, e voltar no historico nao recupera informacao privada
+  - todos os estados fechados - carregando, erro recuperavel, sessao expirada e conflito
+  - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
+  - as rotas novas estao cadastradas em scripts/visual/capture.mjs com fixture concreta
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-031.task.yml
+  - npx pnpm@11.18.0 gate
+  - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - npx pnpm@11.18.0 build
+  - teste de integracao do despachante com canal ligado e desligado
+  - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
+
+risk: preferencia de entrega, conta e bloqueio
+risk_level: R3
+adr: docs/decisions/ADR-20260909-canais-de-notificacao.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

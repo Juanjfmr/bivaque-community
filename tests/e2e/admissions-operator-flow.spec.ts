@@ -19,7 +19,7 @@
 //   - 90000000-...: usuarios na fila de admissao (pending/temporary_error/rejected)
 
 import { expect, request, test } from "@playwright/test"
-import { encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const OPERATOR_EMAIL = "operador@bivaque.example.invalid"
@@ -82,7 +82,7 @@ async function signInOperator(page: import("@playwright/test").Page): Promise<vo
   }
   await page.context().addCookies([
     { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
-    { name: "bivaque-consent-version", value: "1", ...shared },
+    { name: "bivaque-consent-version", value: CURRENT_CONSENT, ...shared },
   ])
 }
 
@@ -119,14 +119,30 @@ test.describe("admission flow: operator decide via painel", () => {
     // When ele abre o painel de admissoes (grupo (admin) nao aparece na URL)
     await page.goto("/admissions", { waitUntil: "load" })
 
-    // Then o titulo esta visivel
-    await expect(page.getByRole("heading", { name: "Fila de admissao" })).toBeVisible({
+    // Then o titulo esta visivel, com os diacriticos que o DS-035 exige
+    // (a versao anterior deste teste procurava "Fila de admissao" sem acento,
+    // e a tela agora escreve o portugues certo).
+    await expect(page.getByRole("heading", { name: "Fila de admissões" })).toBeVisible({
       timeout: 5000,
     })
 
-    // And os dois conjuntos (documentos + fila) estao presentes
-    await expect(page.getByRole("heading", { name: /Documentos aguardando/i })).toBeVisible()
-    await expect(page.getByRole("heading", { name: /Fila de verificacao/i })).toBeVisible()
+    // And os dois conjuntos (fila + documentos) chegaram.
+    //
+    // A RECON-010 unificou as duas secoes separadas numa fila so, entao os
+    // titulos "Documentos aguardando" e "Fila de verificacao" deixaram de
+    // existir — eles marcavam secoes que hoje sao uma. O que aquelas
+    // asercoes provavam era que as duas consultas rodaram; isto aqui prova o
+    // mesmo de forma mais direta: a pagina le o error de list_verification_queue
+    // E de list_verification_documents e, se QUALQUER um falhar, troca a fila
+    // inteira por esta copy. A ausencia dela e a prova de que os dois
+    // conjuntos chegaram sem erro.
+    await expect(
+      page.getByText("Não foi possível carregar a fila de admissões agora."),
+    ).toHaveCount(0)
+
+    // And a superficie da fila esta montada (abas de situacao).
+    await expect(page.getByRole("link", { name: "Pendentes" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Concluídas" })).toBeVisible()
   })
 
   test("list_verification_queue nega REST direta do operador (contrato service_role)", async () => {

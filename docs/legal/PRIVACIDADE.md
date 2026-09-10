@@ -1,120 +1,114 @@
----
-id: privacidade
-version: 1
-status: draft
-review_blocker: BLOCK-LEGAL-ENTRY
-updated_at: 2026-08-11
-pending:
-  - controlador (razão social, CNPJ e endereço) — depende do veículo jurídico do BIVAQUE.md §7.6
-  - encarregado pelo tratamento de dados pessoais (LGPD art. 41)
-  - canal oficial de atendimento ao titular
-  - confirmação das bases legais de cada tratamento por assessoria jurídica
-note: >
-  Rascunho. Precisa de revisão jurídica antes de publicar. O conteúdo técnico e o texto para
-  o membro estão escritos; a base legal de cada tratamento precisa de confirmação
-  profissional. O front matter não é renderizado na tela de consentimento: a nota de revisão
-  vive aqui, e não dentro do texto que o membro aceita.
----
+# Política de privacidade
 
-# Privacidade e dados
+**Versão 2 · 31 de agosto de 2026 · Alpha fechado**
 
-Este texto explica o que o Bivaque guarda sobre você, por quanto tempo, quem mais vê, e o que
-você pode exigir. Sem juridiquês onde dá para evitar.
+Esta política explica quais dados o Bivaque usa, para que usa, com quem compartilha e como o
+titular pode pedir informações ou exclusão.
 
-## Quem responde pelos dados
+## 1. Quem é responsável
 
-O controlador é **`<<DEFINIR>>`** — depende da constituição do veículo jurídico. Contato para
-qualquer assunto de dados: **`<<DEFINIR>>`**, um endereço dedicado, separado do suporte comum.
+**Controlador:** Juan Felipe de Melo Reis.
 
-## O que a gente guarda
+**Canal de contato:** juanjfmr1@gmail.com.
 
-**Para deixar você entrar:** seu CPF é enviado ao Portal da Transparência do Governo Federal
-para conferir se você é militar federal, veterano ou pensionista. O CPF **não é guardado em
-texto aberto** em lugar nenhum, e a resposta completa do Portal também não. Fica registrado
-só o resultado — elegível ou não — e a data.
+Esse canal atende suporte, solicitações sobre dados pessoais e comunicação de incidentes.
 
-**Se o Portal não te encontrar** e você mandar um documento pelo caminho de exceção, esse
-arquivo fica em armazenamento privado por **no máximo 7 dias** e é apagado depois da decisão.
-Ninguém além do operador que analisa tem acesso.
+## 2. Dados tratados
 
-**Enquanto você é membro:** nome de exibição, e-mail, localidade, de quais comunidades e
-grupos você participa, e o que você publica — post, comentário, pedido, resposta, presença em
-evento.
+O Bivaque pode tratar:
 
-**Se você quiser:** foto de perfil e afiliação declarada por você (força, situação, unidade,
-turma). Os dois são opcionais e você pode remover quando quiser. Afiliação declarada aparece
-para os outros membros — se você não quer que apareça, não preencha.
+- nome de exibição, e-mail e dados necessários para autenticação;
+- localidade, comunidades, grupos, posts, comentários, pedidos, respostas, eventos e RSVPs;
+- registros de aceite desta política e do Código de conduta;
+- denúncias, ações de moderação e registros necessários para segurança da comunidade;
+- CPF somente durante a consulta de elegibilidade ao Portal da Transparência;
+- resultado, status e datas da verificação, sem guardar o CPF em texto aberto;
+- documento enviado para exceção de verificação, em armazenamento privado;
+- dados de prestador, quando a conta tiver esse papel, para exibição da própria ficha e atendimento
+  das conversas recebidas.
 
-**Se você é prestador:** os dados da sua ficha, que são públicos para os membros por
-definição, e o registro das assinaturas que você contratou.
+O Bivaque não solicita nem publica OM, posto, força ou unidade militar declarada pelo membro.
 
-## O que a gente nunca guarda
+## 3. Finalidades
 
-CPF em texto aberto. A resposta completa do Portal. Seu endereço residencial. Seu posto ou sua
-organização militar vindos do Estado — se aparecerem, é porque **você** escolheu declarar.
-Documento de identificação além dos 7 dias. E não existe selo público dizendo que você foi
-verificado: aqui todo mundo foi, então não faria sentido.
+Usamos os dados para:
 
-## Por que a gente pode guardar
+- criar e proteger a conta;
+- verificar a elegibilidade de entrada;
+- administrar localidade, comunidades e grupos;
+- exibir e proteger o conteúdo publicado dentro do escopo correto;
+- enviar notificações necessárias ao funcionamento do serviço;
+- analisar denúncias, moderar conteúdo e preservar registros de segurança;
+- responder solicitações do titular;
+- cumprir obrigações legais e proteger direitos do Bivaque e de outras pessoas.
 
-- Nome, e-mail, localidade, membership e o que você publica: para o serviço existir. Sem
-  isso não há comunidade.
-- Resultado da verificação: para saber quem pode entrar, que é a razão de o Bivaque existir.
-- Foto e afiliação declarada: porque você consentiu, e o consentimento pode ser retirado.
-- Registro de moderação e denúncia: para manter o lugar seguro e para poder justificar uma
-  decisão contra alguém.
-- Dados de cobrança do prestador: para cumprir o contrato dele.
+## 4. CPF e documento de verificação
 
-## Quem mais vê
+O CPF é enviado pelo servidor ao Portal da Transparência para consultar a elegibilidade. O
+Bivaque não guarda o CPF em texto aberto nem o payload completo da consulta.
 
-O Bivaque roda em serviços de terceiros, e é honesto listar quais:
+Se for necessário enviar documento, o arquivo fica em armazenamento privado, acessível apenas
+ao operador autorizado, por no máximo 7 dias. Depois da decisão ou do vencimento desse prazo,
+ele é apagado conforme o procedimento de retenção do serviço.
 
-| Serviço | O que passa por lá |
-|---|---|
-| Supabase | banco de dados e autenticação — praticamente tudo |
-| Vercel | hospedagem do site e registro de acesso |
-| Resend | seu e-mail e o conteúdo das notificações enviadas |
-| WhatsApp | seu número e o conteúdo da notificação, se você optar por esse canal |
-| Sentry | relatório de erro, com dado pessoal filtrado antes do envio |
-| PostHog | quais telas você usa e quais ações você faz, sem o conteúdo do que você escreve |
-| Asaas | dados de pagamento do prestador. O Bivaque nunca vê cartão |
-| Portal da Transparência | seu CPF, no momento da verificação |
+Não publique CPF, documento, endereço residencial ou dados de outra pessoa no Bivaque.
 
-Nenhum deles recebe seus dados para vender, para treinar modelo ou para anunciar.
+## 5. Compartilhamento
 
-## Por quanto tempo
+No Alpha fechado, os dados podem passar por:
 
-Enquanto você for membro. Se você sair ou pedir exclusão, apagamos em até **30 dias**.
+- **Supabase:** autenticação, banco de dados e armazenamento privado;
+- **Vercel:** hospedagem e execução do site;
+- **Portal da Transparência:** consulta de elegibilidade, com o CPF enviado somente para essa
+  finalidade;
+- **Sentry:** diagnóstico de erros, com filtragem de dados pessoais antes do envio;
+- **Google/Gmail:** operação do canal de contato informado nesta política.
 
-Duas exceções, e é justo você saber antes:
+PostHog, Asaas, WhatsApp automático e serviços de IA não estão ativos no Alpha fechado. Só serão
+ativados depois de decisão própria, revisão da finalidade e atualização desta política.
 
-O que você publicou em conversa com outras pessoas — comentário, resposta a pedido — fica,
-desvinculado do seu nome. Apagar sua metade de uma conversa deixa a outra pessoa falando
-sozinha.
+O Bivaque não vende dados pessoais, não usa conteúdo para publicidade e não autoriza os
+provedores a usar os dados do Bivaque para finalidade própria incompatível com o serviço.
 
-Registro de moderação contra você fica mesmo depois de você sair, mas só pelo tempo que a
-razão de guardar sustenta. Remoção da comunidade e suspensão grave ficam **2 anos** — é o que
-impede alguém removido por perseguição de voltar no dia seguinte com outro cadastro. Conversa
-reservada e conteúdo ocultado ficam **6 meses**: para esses, a razão acaba antes.
+## 6. Retenção e exclusão
 
-## O que você pode exigir
+- Dados da conta e do conteúdo ficam enquanto a conta for necessária ao serviço.
+- Após um pedido de exclusão, a conta é apagada em até 30 dias, salvo registros que precisem ser
+  mantidos por segurança, obrigação legal ou defesa de direitos.
+- Registros de moderação podem ser mantidos por até 2 anos para impedir reincidência e permitir
+  auditoria.
+- Documentos de verificação são mantidos por no máximo 7 dias, conforme a seção 4.
+- Conteúdo publicado em conversa pode ser desvinculado do nome quando a exclusão de conta afetar
+  a continuidade da conversa de outras pessoas.
 
-Você pode pedir uma cópia do que temos sobre você, corrigir o que estiver errado, ou mandar
-apagar tudo. Pode retirar o consentimento da foto e da afiliação declarada sem perder a conta,
-e pode perguntar com quem compartilhamos o quê.
+## 7. Segurança
 
-Se a gente não resolver, você pode reclamar à ANPD — e isso não depende de tentar aqui
-primeiro.
+O Bivaque usa controle de acesso por função e escopo, armazenamento privado para documentos,
+limite de consultas de verificação, filtragem de dados pessoais em erros e registros de
+moderação. Nenhuma medida elimina todo risco; quando houver risco relevante, o acesso é
+restringido e o incidente segue o procedimento interno de resposta já definido para o piloto.
 
-Pede pelo canal de suporte. Resposta em até **15 dias**.
+## 8. Direitos do titular
 
-## Se acontecer vazamento
+Pelo canal juanjfmr1@gmail.com, o titular pode pedir:
 
-Se houver incidente com risco para você, avisamos você e a ANPD. O aviso diz o que vazou,
-quando, o que já foi feito e o que você deve fazer. Não vamos esconder e não vamos esperar
-alguém perguntar.
+- confirmação e acesso aos dados;
+- correção de dados incorretos;
+- informação sobre finalidades e compartilhamentos;
+- eliminação, quando aplicável;
+- informação sobre o tratamento do CPF e do documento;
+- revisão de uma decisão de moderação relacionada à sua conta.
 
-## Quando este texto mudar
+O pedido deve permitir identificar a conta envolvida. Responderemos em até 15 dias, salvo prazo
+legal diferente ou necessidade de confirmar a identidade do solicitante.
 
-Toda alteração ganha versão nova e você é avisado. Mudança que amplie o que a gente coleta ou
-com quem compartilha pede aceite novo — não vale só continuar usando.
+## 9. Incidentes
+
+Um incidente com risco relevante será contido, investigado e tratado conforme o procedimento
+interno do piloto. O controlador avaliará comunicação aos titulares e à ANPD, informando o que
+aconteceu, quais dados foram afetados, as medidas adotadas e as orientações necessárias.
+
+## 10. Alterações
+
+Mudanças relevantes nesta política recebem nova versão e novo aceite quando alterarem dados
+coletados, finalidades, compartilhamentos ou direitos do titular.

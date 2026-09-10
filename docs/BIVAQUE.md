@@ -19,7 +19,7 @@
 | o que o código **faz** hoje | [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md) |
 | decisões R3, com risco e reversão | [`decisions/`](decisions/) e a régua em [`RISK_MATRIX.md`](decisions/RISK_MATRIX.md) |
 | comandos, armadilhas, contratos de teste | [`../AGENTS.md`](../AGENTS.md) |
-| linguagem visual e rubrica | [`agents/DESIGN_SPEC.md`](agents/DESIGN_SPEC.md), [`agents/VISUAL_GUIDE.md`](agents/VISUAL_GUIDE.md) |
+| design system e rubrica visual | [`agents/DESIGN_SYSTEM.md`](agents/DESIGN_SYSTEM.md) |
 | implementação da camada de comunidade | [`superpowers/specs/2026-08-05-comunidade-design.md`](superpowers/specs/2026-08-05-comunidade-design.md) |
 | evidência dos 151 achados | [`red-team/`](red-team/) |
 | textos que o membro aceita | [`legal/CODIGO_DE_CONDUTA.md`](legal/CODIGO_DE_CONDUTA.md), [`legal/PRIVACIDADE.md`](legal/PRIVACIDADE.md) |
@@ -561,7 +561,9 @@ Com os três, a entrada por link aberto é segura.
 
 **Fora por decisão:** publicação anônima, vídeo, alerta por push e SMS.
 
-**Adiado, não proibido:** IA, app nativo, mensagem direta. **Saem da lista no
+**Adiado, não proibido:** IA e mensagem direta. **O app nativo entra como frente ativa:**
+React Native + Expo para Android e iOS, em paridade comportamental com o web e sem WebView.
+**Saem da lista no
 reconciliation da P0:** "escopo nacional" deixa de ser "fora" (o produto é
 multi-localidade desde o cadastro) e "outras cidades" deixa de ser "adiado"
 (ver D31, revisada 2026-08-17).
@@ -612,7 +614,7 @@ aqui, com data e motivo.
 | **D19** | vigente | 2026-08-11 | Resposta de indicação é positiva por construção | elimina difamação e metade da carga de moderação | — |
 | **D20** | vigente | 2026-08-11 | Vitrine entra no piloto | é o comportamento demonstrado da comunidade hoje | — |
 | **D21** | vigente | 2026-08-11 | Filtro de vocabulário no banco removido; aviso de PII na UI | proíbe palavras que a comunidade real usa, inclusive "patente" e "OM" | — |
-| **D22** | vigente | 2026-08-11 | E-mail transacional dentro do piloto; push e SMS fora | sem canal de retorno próprio, o único é o concorrente | push quando houver app nativo |
+| **D22** | vigente | 2026-08-11 | E-mail transacional dentro do piloto; push e SMS fora | sem canal de retorno próprio, o único é o concorrente | decisão/ADR próprio de push; a existência do app nativo não o ativa |
 | **D23** | vigente | 2026-08-11 | Política de nomes: normalização, sem controle e bidi, 2-80 | segurança, não produto | — |
 | **D24** | vigente | 2026-08-11 | Operador age sobre conteúdo **e** pessoa, com motivo e retorno ao denunciante | ação sobre conteúdo não resolve quando o problema é a pessoa | — |
 | **D25** | vigente | 2026-08-11 | Moderação em três camadas, com prazo público | modelo do Nextdoor, sem o erro do voluntário sem regra | — |
@@ -621,7 +623,7 @@ aqui, com data e motivo.
 | **D28** | vigente | 2026-08-11 | Grátis na própria vila; pago para alcançar além | é distribuição, não proteção | — |
 | **D29** | vigente | 2026-08-11 | Proibidos: anúncio no feed, ordenação por dinheiro, consignado, pagar para não ser enterrado | cada um destrói o ativo de confiança | — |
 | **D30** | vigente | 2026-08-11 | O fundador não é a cabeça do produto | Art. 29, e sobrevivência à transferência. Arranjo pendente de parecer (§7.6) | — |
-| **D31** | vigente | 2026-08-11 (revisada 2026-08-17) | **Fora:** anônimo, vídeo, push e SMS, modo escuro. **Adiados:** IA, nativo, DM entre membros. "Nacional" e "outras cidades" saem da lista — a P0 reconciliou o canon: o Bivaque é multi-localidade desde o cadastro, e Manaus é prioridade de rollout, não fronteira de produto. **Reaberto em 2026-08-15 apenas para curadoria do Guia de Chegada** — ver D49 | a IA sai do adiamento num escopo estreito, sem tocar feed, moderação ou DM | quando a curadoria do guia fechar ou o ADR associado for rejeitado |
+| **D31** | vigente | 2026-08-11 (revisada 2026-08-17; emendada 2026-08-31) | **Fora:** anônimo, vídeo, push e SMS, modo escuro. **Adiados:** IA e DM entre membros. **Ativo:** app nativo React Native + Expo para Android e iOS, como cliente par do web; compartilha domínio, contratos e autorização, mas não UI web nem WebView (ADR-20260831-mobile-native). "Nacional" e "outras cidades" saem da lista — a P0 reconciliou o canon: o Bivaque é multi-localidade desde o cadastro, e Manaus é prioridade de rollout, não fronteira de produto. **Reaberto em 2026-08-15 apenas para curadoria do Guia de Chegada** — ver D49 | dois clientes permitem web desktop e experiência nativa de loja sem duplicar regras de produto; IA continua em escopo estreito, sem tocar feed, moderação ou DM | quando a curadoria do guia fechar ou o ADR associado for rejeitado |
 | **D32** | vigente | 2026-08-11 | E-mail transacional por **Resend** | transacional em stack JS; domínio e DNS são trabalho humano | — |
 | **D33** | vigente | 2026-08-11 | **WhatsApp não-oficial** agora, Cloud API quando houver CNPJ (§7.8) | o oficial está bloqueado pelo veículo jurídico; risco assumido com cinco requisitos de sobrevivência | banimento do número, ou CNPJ constituído |
 | **D34** | vigente | 2026-08-11 | **Upstash Redis** para os quatro limites e o circuit breaker | não põe escrita no banco primário a cada requisição; escala a 50 mil sem refazer | — |

@@ -1,15 +1,7 @@
 import { classifyPortalResponse } from "./classify"
-import type { PortalApiResponse, VerificationResult } from "./types"
+import type { PortalApiResponse, PortalErrorCode, VerificationResult } from "./types"
 
 const PORTAL_BASE_URL = "https://api.portaldatransparencia.gov.br"
-
-export type PortalErrorCode =
-  | "SCHEMA_DRIFT"
-  | "HTTP_ERROR"
-  | "TIMEOUT"
-  | "RATE_LIMITED"
-  | "INVALID_KEY"
-  | "EMPTY_RESPONSE"
 
 type PortalErrorResult = Extract<VerificationResult, { status: "temporary_error" }> & {
   errorCode: PortalErrorCode

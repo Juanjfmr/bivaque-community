@@ -1,7 +1,7 @@
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const SW_CONTENT = `const CACHE_NAME = "bivaque-v2"
+const SW_CONTENT = `const CACHE_NAME = "bivaque-v1"
 
 const STATIC_ASSET_EXTENSIONS = new Set([
   ".js",
@@ -48,17 +48,9 @@ function isApiRoute(url) {
   }
 }
 
-function isNextFrameworkAsset(url) {
-  try {
-    return new URL(url).pathname.startsWith("/_next/")
-  } catch {
-    return false
-  }
-}
-
 function shouldSkipCache(request) {
   const url = request.url
-  return isSupabaseRequest(url) || isApiRoute(url) || isNextFrameworkAsset(url)
+  return isSupabaseRequest(url) || isApiRoute(url)
 }
 
 self.addEventListener("install", (event) => {

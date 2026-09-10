@@ -17,17 +17,6 @@ type NotificationPreferencesRow = Pick<
   "user_id" | "comments" | "events" | "messages" | "mentions"
 >
 type OutboxUpdate = Database["public"]["Tables"]["outbox"]["Update"]
-type NotificationPreferenceKey = keyof Pick<
-  NotificationPreferencesRow,
-  "comments" | "events" | "messages" | "mentions"
->
-
-// Decision for the current outbox contract: an unknown notification type is
-// allowed until it receives an explicit preference mapping. This preserves
-// delivery for newly introduced operational types instead of silently
-// dropping them; every user-facing type must be mapped before it can honor a
-// preference, as event_invite is below.
-const UNKNOWN_NOTIFICATION_TYPE_DEFAULT_ALLOWED = true
 
 function secretMatches(provided: string, expected: string): boolean {
   const providedBuffer = Buffer.from(provided)
@@ -50,9 +39,11 @@ function toMessage(row: OutboxRow): OutboxMessage {
   }
 }
 
-function preferenceKey(type: string): NotificationPreferenceKey | null {
+function preferenceKey(
+  type: string,
+): keyof Pick<NotificationPreferencesRow, "comments" | "events" | "messages" | "mentions"> | null {
   if (type === "comment") return "comments"
-  if (type === "event_rsvp" || type === "event_change" || type === "event_invite") return "events"
+  if (type === "event_rsvp" || type === "event_change") return "events"
   if (type === "direct_message") return "messages"
   return null
 }
@@ -171,7 +162,7 @@ export async function POST(request: Request) {
       if (!preference) return true
 
       const key = preferenceKey(message.type)
-      return key === null ? UNKNOWN_NOTIFICATION_TYPE_DEFAULT_ALLOWED : preference[key]
+      return key === null || preference[key]
     },
     optOutAllows: (channel: OutboxChannel, recipient: string) =>
       !optedOut.has(`${channel}:${recipient}`),

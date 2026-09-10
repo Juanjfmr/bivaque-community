@@ -1,4 +1,3 @@
-import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient as createSsrServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import Link from "next/link"
@@ -41,7 +40,7 @@ export default async function OnboardingStatusPage() {
   }
 
   const serviceClient = createServiceClient()
-  const [outcomeResult, membershipResult, consentResult] = await Promise.all([
+  const [outcomeResult, membershipResult] = await Promise.all([
     serviceClient.rpc("read_verification_status", { p_user_id: user.id }),
     serviceClient
       .from("locality_memberships")
@@ -49,14 +48,9 @@ export default async function OnboardingStatusPage() {
       .eq("user_id", user.id)
       .limit(1)
       .maybeSingle(),
-    serviceClient.rpc("has_accepted_consent", {
-      p_user_id: user.id,
-      p_consent_version: CONSENT_VERSION,
-      p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION,
-    }),
   ])
 
-  if (outcomeResult.error || membershipResult.error || consentResult.error) {
+  if (outcomeResult.error || membershipResult.error) {
     throw new Error("Falha ao consultar o estado da verificação. Tente novamente.")
   }
 
@@ -102,7 +96,7 @@ export default async function OnboardingStatusPage() {
         isPending
           ? "Você não precisa repetir seus dados. Assim que a análise terminar, sua entrada continua do ponto em que parou."
           : isTemporaryError
-            ? "O Portal da Transparência não respondeu como esperado. Sua tentativa não foi perdida."
+            ? "A fonte oficial não respondeu como esperado. Sua tentativa não foi perdida."
             : "A consulta automática não encontrou confirmação para um dos papéis aceitos pelo Bivaque."
       }
       asideEyebrow="Cada estado pede uma resposta"
@@ -110,7 +104,7 @@ export default async function OnboardingStatusPage() {
       asideDescription={
         isPending
           ? "Quando houver uma decisão, você retorna ao passo certo sem refazer a jornada."
-          : "Tente outra vez quando o Portal da Transparência estiver disponível ou envie um documento para análise."
+          : "Tente outra vez quando a consulta estiver disponível ou envie um documento para análise."
       }
     >
       <div className={styles["stack"]}>
@@ -144,7 +138,7 @@ export default async function OnboardingStatusPage() {
           </>
         )}
 
-        {!isPending && <DocumentUpload hasAcceptedConsent={consentResult.data === true} />}
+        {!isPending && <DocumentUpload />}
       </div>
     </OnboardingShell>
   )

@@ -29,7 +29,9 @@ type MembershipRow = {
   joined_at: string
 }
 
-function CloseIcon(props: SVGProps<SVGSVGElement>) {
+function CloseIcon(props: Omit<SVGProps<SVGSVGElement>, "ref">) {
+  const { ref: _ref, ...rest } = props as SVGProps<SVGSVGElement>
+  void _ref
   return (
     <svg
       aria-hidden="true"
@@ -37,7 +39,7 @@ function CloseIcon(props: SVGProps<SVGSVGElement>) {
       stroke="currentColor"
       strokeWidth={2}
       viewBox="0 0 24 24"
-      {...props}
+      {...rest}
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="M18 6 6 18M6 6l12 12" />
     </svg>
@@ -571,18 +573,28 @@ export default function GroupsPage() {
             orientation="vertical"
           >
             <Radio value="public">
-              <div className="flex flex-col gap-0.5">
-                <span>Público</span>
-                <span className="text-xs text-muted">
-                  Qualquer membro da comunidade pode entrar.
-                </span>
-              </div>
+              <Radio.Content>
+                <Radio.Control>
+                  <Radio.Indicator />
+                </Radio.Control>
+                <div className="flex flex-col gap-0.5">
+                  <span>Público</span>
+                  <span className="text-xs text-muted">
+                    Qualquer membro da comunidade pode entrar.
+                  </span>
+                </div>
+              </Radio.Content>
             </Radio>
             <Radio value="private">
-              <div className="flex flex-col gap-0.5">
-                <span>Privado</span>
-                <span className="text-xs text-muted">Novos membros precisam de aprovação.</span>
-              </div>
+              <Radio.Content>
+                <Radio.Control>
+                  <Radio.Indicator />
+                </Radio.Control>
+                <div className="flex flex-col gap-0.5">
+                  <span>Privado</span>
+                  <span className="text-xs text-muted">Novos membros precisam de aprovação.</span>
+                </div>
+              </Radio.Content>
             </Radio>
           </RadioGroup>
 
