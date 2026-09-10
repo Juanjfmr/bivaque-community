@@ -43,7 +43,7 @@ function preferenceKey(
   type: string,
 ): keyof Pick<NotificationPreferencesRow, "comments" | "events" | "messages" | "mentions"> | null {
   if (type === "comment") return "comments"
-  if (type === "event_rsvp" || type === "event_change") return "events"
+  if (type === "event_rsvp" || type === "event_change" || type === "event_invite") return "events"
   if (type === "direct_message") return "messages"
   return null
 }
