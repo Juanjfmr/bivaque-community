@@ -9,14 +9,22 @@
 // model cannot read images. Screenshots stay authoritative for taste; the audit is
 // authoritative for the mechanical rules (touch targets, overflow, contrast, motion).
 
+import { execFileSync } from "node:child_process"
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { chromium } from "@playwright/test"
+import {
+  assessCapture,
+  DYNAMIC_HEADING,
+  isCaptureReportPassing,
+  summarizeCaptures,
+} from "./capture-proof.mjs"
 
 const BASE_URL = process.env["BIVAQUE_VISUAL_BASE_URL"] ?? "http://127.0.0.1:3000"
 const OUT_ROOT = process.env["BIVAQUE_VISUAL_OUT"] ?? ".visual"
 const RUN_ID = process.env["BIVAQUE_VISUAL_RUN"] ?? new Date().toISOString().replace(/[:.]/g, "-")
 const ROUTE_PATH = process.env["BIVAQUE_VISUAL_ROUTE"]
+const SCENARIO = process.env["BIVAQUE_VISUAL_SCENARIO"]
 
 const VIEWPORTS = [
   { name: "mobile-375", width: 375, height: 812 },
@@ -24,19 +32,92 @@ const VIEWPORTS = [
   { name: "desktop-1440", width: 1440, height: 900 },
 ]
 
-const ROUTES = [
+// Route identity is explicit, and EVERY route in ROUTES declares it. A route
+// with no declaration stays invalid — that is the contract. But "no static
+// title" is not the same as "no identity": a detail page, a profile or a city
+// names itself from data. Those declare DYNAMIC_HEADING, which still requires a
+// real, non-empty h1 and still refuses a login, a fallback or the wrong actor.
+// Leaving them undeclared reddened the whole loop for reasons unrelated to any
+// screen under work, which is how a fail-closed rule turns into a disabled tool.
+// `tests/scope/visual-capture-proof.test.mjs` fails if the two lists drift.
+export const HEADINGS = {
+  "/": "Bivaque",
+  "/login": "^Que bom ter você de volta\\.$",
+  "/signup": "^Vamos começar\\.$",
+  "/consent": "^Antes de entrar, conheça as regras\\.$",
+  "/onboarding": "Confirme sua elegibilidade|Aceite seu convite|Preparando o próximo passo",
+  // O status é leitura de banco (RPC read_verification_status), não query: com
+  // uma conta pending autenticada a tela renderiza; com visual@ (verified) ela
+  // redireciona — run dedicada com a conta certa, não caminho com query falsa.
+  "/onboarding/status": "^Sua elegibilidade está em análise\\.$",
+  "/onboarding/welcome": "^Você chegou ao Bivaque\\.$",
+  "/onboarding/locality": "Escolha sua localidade|Preparando as localidades",
+  "/admissions": "^Fila de admissões$",
+  "/reports": "^Fila de denúncias$",
+  "/arrivals": "^Chegadas declaradas$",
+  "/guide-queue": "^Curadoria do guia$",
+  "/inicio": "Bom dia|Boa tarde|Boa noite|Olá",
+  "/explorar": "Explorar",
+  "/explorar/servicos": "Serviços|Resultados",
+  "/configuracoes": "^Configurações$",
+  "/groups": "Grupos",
+  "/communities": "Comunidades",
+  "/community": "Comunidade|Manaus",
+  "/guide": "Guia",
+  "/events": "^Explorar eventos$",
+  "/notifications": "^Notificações$",
+  "/messages": "^Mensagens$",
+  "/recommendations": "^Indicações$",
+  "/prestador": "^Painel do prestador$",
+  "/prestador/ficha": "^Minha ficha$",
+  "/prestador/catalogo": "^Catálogo e portfólio$",
+  // RECON-033 (pranchas 45/60/15): a rota /publicacoes. A conversa é nomeada
+  // pelo próprio pedido do seed; a edição tem título fixo mesmo no estado
+  // honesto "só o autor pode editar".
+  "/publicacoes/nova": "^Nova pergunta$",
+  "/publicacoes/80000000-0000-4000-8000-000000000f00": DYNAMIC_HEADING,
+  "/publicacoes/80000000-0000-4000-8000-000000000f01/editar": "^Editar publicação$",
+  // Named by their own data: the community, the guide entry, the group, the
+  // event, the member and the city carry the title. The fixture id pins WHICH
+  // record; the h1 text belongs to the seed, not to this file.
+  "/communities/71000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
+  "/guide/a0000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
+  "/groups/70000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
+  "/events/80000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
+  "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador": DYNAMIC_HEADING,
+  "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
+  "/profile": DYNAMIC_HEADING,
+  "/localidade": DYNAMIC_HEADING,
+}
+
+export const ROUTES = [
   { path: "/", name: "root", auth: false },
   { path: "/login", name: "login", auth: false },
   { path: "/signup", name: "signup", auth: false },
   { path: "/consent", name: "consent", auth: false },
   { path: "/onboarding", name: "onboarding", auth: false },
   { path: "/onboarding", name: "onboarding", auth: true },
+  // In this branch the status comes from the DB (RPC), not the query —see HEADINGS.
   { path: "/onboarding/status", name: "onboarding-status", auth: true },
   { path: "/onboarding/welcome", name: "onboarding-welcome", auth: true },
   { path: "/onboarding/locality", name: "onboarding-locality", auth: true },
   { path: "/reports", name: "admin-reports", auth: true },
   { path: "/admissions", name: "admin-admissions", auth: true },
   { path: "/guide-queue", name: "admin-guide-queue", auth: true },
+  // Reconstrucao dos grupos A e D (RECON-009, 012, 013): tres telas entregues
+  // que a captura nao enxergava. Sem elas, "auditoria visual das 10 telas"
+  // auditava sete.
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000001",
+    name: "community-detail",
+    auth: true,
+  },
+  { path: "/configuracoes", name: "configuracoes", auth: true },
+  {
+    path: "/guide/a0000000-0000-4000-8000-000000000001",
+    name: "guide-entry",
+    auth: true,
+  },
   { path: "/groups", name: "groups", auth: true },
   { path: "/groups/70000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
   { path: "/profile", name: "profile", auth: true },
@@ -52,9 +133,8 @@ const ROUTES = [
   // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
   // pointed here since E10 (406d4f6), but the route did not exist until T4.
   { path: "/localidade", name: "localidade", auth: true },
-  // Onda T Task 5: o console do fundador. Renders empty state honesto para a
-  // conta default do seed (sem operador capturado), que é a tela vazia com
-  // identificação, não uma tela ausente.
+  // Onda T Task 5: o console do fundador. Rota de operador — o ator correto é
+  // resolvido por sessão dede operator abaixo, não pela conta default de membro.
   { path: "/arrivals", name: "admin-arrivals", auth: true },
   // Onda G: a vitrine do prestador. Com a conta default (membro sem vila) a
   // ficha pública renderiza o 404 honesto e o painel o estado sem-permissão —
@@ -70,15 +150,6 @@ const ROUTES = [
   {
     path: "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador",
     name: "provider-indicar",
-    auth: true,
-  },
-  // RECON-033 (prancha 43): o detalhe da comunidade — rail "Sobre a comunidade"
-  // no membro e no pedido pendente. Com dono-vila@ é a tela de membro; a
-  // captura do estado pendente exige conta com pedido aberto, que o seed não
-  // autentica (membros sintéticos não têm login) — provado em teste unitário.
-  {
-    path: "/communities/71000000-0000-4000-8000-000000000001",
-    name: "community-detail",
     auth: true,
   },
   { path: "/groups", name: "groups", auth: true },
@@ -143,10 +214,11 @@ const TOKEN_SOURCE = JSON.parse(
 )
 
 // --------------------------------------------------------------------------
-// auth — optional; without credentials the gated routes are captured signed out
+// Public-only runs need no credentials. Protected runs fail before browsing if
+// sign-in is unavailable; login screenshots cannot certify member/operator UI.
 // --------------------------------------------------------------------------
 
-async function fetchSession() {
+export async function fetchSession({ email, password } = {}) {
   const url =
     process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
     process.env["SUPABASE_URL"] ??
@@ -154,25 +226,45 @@ async function fetchSession() {
     dotEnv["SUPABASE_URL"]
   const anonKey =
     process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  const email = process.env["BIVAQUE_VISUAL_EMAIL"] ?? dotEnv["BIVAQUE_VISUAL_EMAIL"]
-  const password = process.env["BIVAQUE_VISUAL_PASSWORD"] ?? dotEnv["BIVAQUE_VISUAL_PASSWORD"]
+  const resolvedEmail =
+    email ?? process.env["BIVAQUE_VISUAL_EMAIL"] ?? dotEnv["BIVAQUE_VISUAL_EMAIL"]
+  const resolvedPassword =
+    password ?? process.env["BIVAQUE_VISUAL_PASSWORD"] ?? dotEnv["BIVAQUE_VISUAL_PASSWORD"]
 
-  if (!url || !anonKey || !email || !password) return null
+  if (!url || !anonKey || !resolvedEmail || !resolvedPassword) {
+    throw new Error("Protected capture requires Supabase URL/key and BIVAQUE_VISUAL_EMAIL/PASSWORD")
+  }
 
   const response = await fetch(`${url}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { apikey: anonKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email: resolvedEmail, password: resolvedPassword }),
   })
 
   if (!response.ok) {
-    console.warn(`[visual] sign-in failed (${response.status}); capturing signed out`)
-    return null
+    throw new Error(`Visual sign-in failed (HTTP ${response.status})`)
   }
 
   // supabase-js derives its storage key from the first hostname label.
   const ref = new URL(url).hostname.split(".")[0]
   return { storageKey: `sb-${ref}-auth-token`, session: await response.json() }
+}
+
+// Rota de operador capturada com login de membro não é evidência: o layout
+// (admin) expulsa para /community antes de qualquer fila. O ator certo é buscado
+// adiante, com a conta do runbook — a senha é a mesma env que a suíte e2e lê.
+export const OPERATOR_EMAIL =
+  process.env["BIVAQUE_E2E_OPERATOR_EMAIL"] ?? "operador@bivaque.example.invalid"
+
+export async function fetchOperatorSession() {
+  const password =
+    process.env["BIVAQUE_E2E_OPERATOR_PASSWORD"] ?? dotEnv["BIVAQUE_E2E_OPERATOR_PASSWORD"]
+  if (!password) {
+    throw new Error(
+      "Operator capture requires BIVAQUE_E2E_OPERATOR_PASSWORD (env or apps/web/.env.local)",
+    )
+  }
+  return fetchSession({ email: OPERATOR_EMAIL, password })
 }
 
 // --------------------------------------------------------------------------
@@ -186,8 +278,18 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
 
   const describe = (element) => {
     const id = element.id ? `#${element.id}` : ""
-    const cls = typeof element.className === "string" ? `.${element.className.split(/\s+/)[0]}` : ""
-    return `${element.tagName.toLowerCase()}${id}${cls}`.slice(0, 80)
+    const cls =
+      typeof element.className === "string" && element.className.trim().length > 0
+        ? `.${element.className.trim().split(/\s+/)[0]}`
+        : ""
+    // Sem contexto, um achado em `input.` nao diz QUAL controle consertar —
+    // foi o que travou a correcao dos achados de /profile em 09/09. O tipo e o
+    // data-slot do ancestral mais proximo identificam o componente sem depender
+    // de classe, que o HeroUI nem sempre poe no elemento interativo.
+    const type = element.getAttribute("type")
+    const slot = element.closest("[data-slot]")?.getAttribute("data-slot") ?? ""
+    const extra = `${type ? `[${type}]` : ""}${slot ? `@${slot}` : ""}`
+    return `${element.tagName.toLowerCase()}${id}${cls}${extra}`.slice(0, 120)
   }
 
   const parseColor = (value) => {
@@ -255,7 +357,27 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     }
   }
 
+  // Controle escondido do React Aria: `Checkbox`, `Switch` e `Radio` renderizam
+  // um <input> real dentro de um wrapper recortado (clip-path: inset(50%),
+  // 1px), e quem recebe o clique, o foco e o nome acessível é o label ao lado.
+  //
+  // Auditar esse input como alvo de toque produz um high por controle — 24 só
+  // na tela de perfil, todos falsos: ninguém toca nele, e ele não deve ter nome
+  // próprio, senão o leitor de tela anuncia o controle duas vezes.
+  const dentroDeWrapperOculto = (element) => {
+    let node = element.parentElement
+    while (node && node !== document.body) {
+      const style = getComputedStyle(node)
+      const recortado = style.clipPath === "inset(50%)" || style.clip === "rect(0px, 0px, 0px, 0px)"
+      const box = node.getBoundingClientRect()
+      const minusculo = box.width <= 1 && box.height <= 1
+      if (recortado || minusculo) return true
+      node = node.parentElement
+    }
+    return false
+  }
   for (const element of interactive) {
+    if (dentroDeWrapperOculto(element)) continue
     const box = element.getBoundingClientRect()
     if (box.width === 0 && box.height === 0) continue
 
@@ -286,6 +408,25 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     // HeroUI lesson — its Input does not forward aria-label). Without this
     // resolution every properly-labeled input is a false positive every wave.
     let name = (element.getAttribute("aria-label") ?? "").trim()
+    // `aria-labelledby` é fonte de nome acessível tão válida quanto
+    // `aria-label` e `label[for]` — e tem PRECEDÊNCIA sobre as duas na ordem
+    // do accname. A regra não a resolvia, então todo controle rotulado por
+    // referência aparecia como high sem nome: a tela de perfil sozinha
+    // produzia 60 achados assim, todos falsos.
+    //
+    // O atributo aceita VÁRIOS ids separados por espaço, e o nome é a
+    // concatenação dos textos na ordem em que aparecem.
+    if (name.length === 0) {
+      const refs = (element.getAttribute("aria-labelledby") ?? "").trim()
+      if (refs.length > 0) {
+        name = refs
+          .split(/\s+/)
+          .map((id) => document.getElementById(id)?.textContent?.trim() ?? "")
+          .filter((part) => part.length > 0)
+          .join(" ")
+          .trim()
+      }
+    }
     if (name.length === 0 && element.id) {
       const labeled = document.querySelector(`label[for="${CSS.escape(element.id)}"]`)
       name = (labeled?.textContent ?? "").trim()
@@ -410,8 +551,11 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     if (nav.offsetWidth === 0 && nav.offsetHeight === 0) continue
     const anchors = nav.querySelectorAll("a")
     if (anchors.length === 0) continue
+    // aria-current vale em QUALQUER elemento, nao so em ancora: numa trilha de
+    // navegacao o item atual e corretamente um nao-link (a pessoa ja esta nele),
+    // e exigir <a> reprovava breadcrumb bem marcado.
     const current = nav.querySelectorAll(
-      'a[aria-current="page"], a[data-active="true"], a[role="tab"][aria-selected="true"]',
+      '[aria-current="page"], a[data-active="true"], a[role="tab"][aria-selected="true"]',
     )
     if (current.length !== 1) {
       add(
@@ -456,14 +600,56 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
 async function main() {
   const runDir = join(OUT_ROOT, RUN_ID)
   const shotsDir = join(runDir, "shots")
-  const routes = ROUTE_PATH ? ROUTES.filter((route) => route.path === ROUTE_PATH) : ROUTES
+  if (SCENARIO && SCENARIO !== "publish") throw new Error(`Unknown visual scenario: ${SCENARIO}`)
+  if (SCENARIO && ROUTE_PATH && ROUTE_PATH !== "/inicio") {
+    throw new Error("The publish scenario starts at /inicio")
+  }
+  const requested = SCENARIO ? "/inicio" : ROUTE_PATH
+  const selected = requested ? ROUTES.filter((route) => route.path === requested) : ROUTES
+  const routes = [
+    ...new Map(selected.map((route) => [`${route.path}:${route.auth}`, route])).values(),
+  ].map((route) => ({
+    ...route,
+    name: `${route.name}${route.auth ? "--authenticated" : "--visitor"}${SCENARIO ? `--${SCENARIO}` : ""}`,
+    expectedHeading: HEADINGS[route.path],
+    operator: ["/admissions", "/reports", "/guide-queue", "/arrivals"].includes(route.path),
+    dialog: SCENARIO === "publish" ? "Criar publicação" : undefined,
+  }))
   mkdirSync(shotsDir, { recursive: true })
 
   if (routes.length === 0) {
     throw new Error(`No visual route configured for ${ROUTE_PATH}`)
   }
 
-  const auth = await fetchSession()
+  // Dois atores, duas sessões: provar uma rota de operador exige o login de
+  // operador (o layout (admin) expulsa membro para /community — e captura com
+  // papel errado não é evidência). A de membro segue a conta default do env.
+  let memberAuth = null
+  let operatorAuth = null
+  if (routes.some((route) => route.auth)) {
+    try {
+      memberAuth = await fetchSession()
+      if (routes.some((route) => route.operator)) {
+        operatorAuth = await fetchOperatorSession()
+      }
+    } catch (error) {
+      writeResults(
+        runDir,
+        routes.flatMap((route) =>
+          VIEWPORTS.map((viewport) => ({
+            route: route.path,
+            viewport: viewport.name,
+            status: 0,
+            error: error.message,
+            findings: [],
+            proof: { valid: false, failures: [error.message] },
+          })),
+        ),
+        false,
+      )
+      return
+    }
+  }
 
   // Same dev-host escape hatch as playwright.config.ts: point at a system Chrome when
   // the managed browser bundle is not installed.
@@ -482,28 +668,32 @@ async function main() {
         locale: "pt-BR",
       })
 
-      if (route.auth && auth) {
+      const session = route.operator ? operatorAuth : memberAuth
+      if (route.auth && session) {
         // supabase-js stores the session in localStorage; @supabase/ssr (the new B2 middleware)
         // reads it from a cookie of the same name. Without the cookie the server-side middleware
         // has no session and redirects every gated route to /login.
-        const sessionValue = JSON.stringify(auth.session)
+        const sessionValue = `base64-${Buffer.from(JSON.stringify(session.session)).toString("base64url")}`
         await context.addCookies([
-          { name: "bivaque-consent-version", value: "1", path: "/", domain: "127.0.0.1" },
+          { name: "bivaque-consent-version", value: "2", url: BASE_URL },
           {
-            name: auth.storageKey,
+            name: session.storageKey,
             value: sessionValue,
-            path: "/",
-            domain: "127.0.0.1",
+            url: BASE_URL,
           },
         ])
         await context.addInitScript(
-          ([key, session]) => window.localStorage.setItem(key, JSON.stringify(session)),
-          [auth.storageKey, auth.session],
+          ([key, current]) => window.localStorage.setItem(key, JSON.stringify(current)),
+          [session.storageKey, session.session],
         )
       }
 
       const page = await context.newPage()
       const consoleErrors = []
+      let pageErrors = 0
+      page.on("pageerror", () => {
+        pageErrors += 1
+      })
       page.on("console", (message) => {
         if (message.type() === "error") consoleErrors.push(message.text().slice(0, 200))
       })
@@ -512,6 +702,29 @@ async function main() {
       try {
         const response = await page.goto(route.path, { waitUntil: "networkidle", timeout: 30_000 })
         await page.waitForTimeout(400)
+        if (route.expectedHeading) {
+          // A data-named route waits for any h1: matching the sentinel would
+          // just burn the timeout on every viewport and prove nothing.
+          const wanted =
+            route.expectedHeading === DYNAMIC_HEADING
+              ? page.getByRole("heading", { level: 1 })
+              : page.getByRole("heading", {
+                  level: 1,
+                  name: new RegExp(route.expectedHeading, "i"),
+                })
+          await wanted
+            .first()
+            .waitFor({ state: "visible", timeout: 10_000 })
+            .catch(() => {})
+        }
+        if (SCENARIO === "publish") {
+          await page
+            .getByRole("button", { name: "No que você está pensando?", exact: true })
+            .click()
+          await page
+            .getByRole("dialog", { name: route.dialog, exact: true })
+            .waitFor({ state: "visible" })
+        }
 
         // Two shots per route: the fold shot keeps first-impression detail legible for
         // visual review, the full-page shot carries scroll rhythm and the bottom states.
@@ -524,12 +737,47 @@ async function main() {
           minimumTextSize: TOKEN_SOURCE.contrast.minimumTextSize,
           readingMeasureMax: Number(TOKEN_SOURCE.primitive["type-reading-max-characters"]),
         })
+        const observed = {
+          heading: audit.heading,
+          // Este shell marca a superfície do operador pelo par de navs cujo
+          // aria-label começa com "Operação": a lateral (≥md) e a barra mobile
+          // (<md). "Painel do operador" é o rótulo da branch irmã; aqui cada
+          // largura tem exatamente um dos dois visível, e a prova aceita ambos.
+          operator: await page.evaluate(() =>
+            [...document.querySelectorAll('nav[aria-label^="Operação"]')].some(
+              (nav) => nav.offsetWidth > 0 || nav.offsetHeight > 0,
+            ),
+          ),
+          dialog:
+            route.dialog &&
+            (await page.getByRole("dialog", { name: route.dialog, exact: true }).isVisible())
+              ? route.dialog
+              : null,
+          fallback: await page
+            .getByText(
+              /Página não encontrada|Application error|Você ainda não tem acesso|Não foi possível carregar/,
+            )
+            .first()
+            .isVisible(),
+          pageErrors,
+        }
+        const landedOn = new URL(page.url()).pathname + new URL(page.url()).search
+        const proof = assessCapture({
+          route,
+          authenticated: Boolean(session),
+          status: response?.status() ?? 0,
+          landedOn,
+          observed,
+        })
 
         results.push({
           route: route.path,
           viewport: viewport.name,
           status: response?.status() ?? 0,
-          landedOn: page.url().replace(BASE_URL, ""),
+          landedOn,
+          actor: route.operator ? "operator" : route.auth ? "member" : "visitor",
+          state: SCENARIO ?? "route",
+          proof,
           screenshot: fold,
           screenshotFull: full,
           consoleErrors: consoleErrors.splice(0),
@@ -542,6 +790,7 @@ async function main() {
           status: 0,
           error: String(error).slice(0, 300),
           findings: [],
+          proof: { valid: false, failures: ["Capture did not reach its expected state"] },
         })
       } finally {
         await context.close()
@@ -550,25 +799,37 @@ async function main() {
   }
 
   await browser.close()
-  writeResults(runDir, results, Boolean(auth))
+  writeResults(runDir, results, Boolean(memberAuth || operatorAuth))
 }
 
 function writeResults(runDir, results, authenticated) {
-  const total = results.reduce((sum, entry) => sum + (entry.findings?.length ?? 0), 0)
-  const high = results.reduce(
-    (sum, entry) => sum + (entry.findings ?? []).filter((f) => f.severity === "high").length,
-    0,
-  )
+  const summary = summarizeCaptures(results)
+  const { total, high, invalid } = summary
+  // This identifies the runner checkout. A reviewer must also establish that
+  // the server was built/started from this tree; a SHA alone cannot prove that.
+  const runnerRevision = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim()
+  const runnerDirty =
+    execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim().length > 0
+  const report = {
+    runDir,
+    authenticated,
+    ...summary,
+    runnerRevision,
+    runnerDirty,
+    baseURL: BASE_URL,
+    fidelity: "not-assessed",
+    results,
+  }
 
-  writeFileSync(
-    join(runDir, "report.json"),
-    `${JSON.stringify({ runDir, authenticated, total, high, results }, null, 2)}\n`,
-  )
+  writeFileSync(join(runDir, "report.json"), `${JSON.stringify(report, null, 2)}\n`)
 
   const lines = [
     `# Visual audit — ${runDir}`,
     "",
-    `Authenticated capture: **${authenticated ? "yes" : "no (gated routes show the signed-out state)"}**`,
+    `Authenticated capture: **${authenticated ? "yes" : "no"}**`,
+    `Capture identity: **${summary.valid ? "VALID" : "INVALID"}** (${invalid} invalid captures).`,
+    `Runner revision: ${runnerRevision}; dirty: ${runnerDirty}; server: ${BASE_URL}.`,
+    "Reference fidelity: **not assessed** — requires image comparison and independent review.",
     `Findings: **${total}** total, **${high}** high severity.`,
     "",
   ]
@@ -577,6 +838,7 @@ function writeResults(runDir, results, authenticated) {
     const findings = entry.findings ?? []
     lines.push(`## ${entry.route} @ ${entry.viewport} — HTTP ${entry.status}`)
     if (entry.error) lines.push(`- ERROR: ${entry.error}`)
+    for (const failure of entry.proof?.failures ?? []) lines.push(`- INVALID: ${failure}`)
     if (entry.landedOn && entry.landedOn !== entry.route) {
       lines.push(`- redirected to \`${entry.landedOn}\``)
     }
@@ -585,7 +847,11 @@ function writeResults(runDir, results, authenticated) {
     }
     for (const error of entry.consoleErrors ?? []) lines.push(`- console error: ${error}`)
     if (findings.length === 0) {
-      lines.push("- clean")
+      lines.push(
+        entry.proof?.valid
+          ? "- no mechanical findings (fidelity not assessed)"
+          : "- invalid capture; zero findings is not a pass",
+      )
     } else {
       const grouped = new Map()
       for (const finding of findings) {
@@ -605,6 +871,7 @@ function writeResults(runDir, results, authenticated) {
 
   writeFileSync(join(runDir, "report.md"), `${lines.join("\n")}\n`)
   console.log(`[visual] ${total} findings (${high} high) → ${join(runDir, "report.md")}`)
+  if (!isCaptureReportPassing(report)) process.exitCode = 1
 }
 
-await main()
+if (process.argv[1]?.endsWith("capture.mjs")) await main()

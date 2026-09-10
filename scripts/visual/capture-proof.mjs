@@ -1,0 +1,50 @@
+// A screenshot is evidence only of the requested route, actor and state.
+// This validates capture identity; it does not judge reference fidelity.
+
+// A page whose title comes from its own record — a community, a group, an
+// event, a member, a city. It has an identity contract; the contract just is
+// not a literal string. It still has to render a real h1, so a login, an empty
+// shell or a fallback cannot pass as "the detail screen".
+export const DYNAMIC_HEADING = "dynamic"
+
+export function assessCapture({ route, authenticated, status, landedOn, observed, error }) {
+  const failures = []
+  if (error) failures.push(error)
+  if (route.auth && !authenticated) failures.push("Authenticated session required")
+  if (status < 200 || status >= 400) failures.push(`Unexpected HTTP status: ${status}`)
+  const expectedPath = route.expectedPath ?? route.path
+  if (landedOn !== expectedPath) failures.push(`Expected ${expectedPath}; landed on ${landedOn}`)
+  const heading = (observed?.heading ?? "").trim()
+  if (!route.expectedHeading) failures.push("Route has no identity contract")
+  else if (route.expectedHeading === DYNAMIC_HEADING) {
+    if (!heading) failures.push("Data-named route rendered no heading")
+  } else if (!new RegExp(route.expectedHeading, "i").test(heading)) {
+    failures.push("Expected heading not found")
+  }
+  if (route.operator && !observed?.operator) failures.push("Operator surface not reached")
+  if (route.dialog && observed?.dialog !== route.dialog) failures.push("Expected dialog not open")
+  if (observed?.fallback) failures.push("Unexpected error, loading or unavailable state")
+  if (observed?.pageErrors > 0) failures.push("Unhandled browser exception")
+  return { valid: failures.length === 0, failures }
+}
+
+export function summarizeCaptures(results) {
+  const invalid = results.filter((entry) => entry.proof?.valid !== true).length
+  const total = results.reduce((sum, entry) => sum + (entry.findings?.length ?? 0), 0)
+  const high = results.reduce(
+    (sum, entry) => sum + (entry.findings ?? []).filter((f) => f.severity === "high").length,
+    0,
+  )
+  return { valid: results.length > 0 && invalid === 0, invalid, total, high }
+}
+
+export function isCaptureReportPassing(report) {
+  return (
+    report?.valid === true &&
+    report.high === 0 &&
+    Array.isArray(report.results) &&
+    report.results.length > 0 &&
+    summarizeCaptures(report.results).valid &&
+    summarizeCaptures(report.results).high === 0
+  )
+}
