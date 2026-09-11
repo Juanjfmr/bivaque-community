@@ -3,6 +3,13 @@
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import {
+  COMMUNITY_IMAGE_BUCKET,
+  communityImagePath,
+  isCommunityImageKind,
+  validateCommunityImage,
+} from "../../../lib/communities/community-media"
+import { log } from "../../../lib/logger"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda E Task 5: batch approval path. The plan is explicit — iterating in
@@ -258,12 +265,149 @@ async function revokeProviderAccountAction(formData: FormData) {
   revalidatePath(`/communities/${communityId}/admin/providers`)
 }
 
+// RECON-034 — faixa e miniatura da comunidade. O dono envia, troca e remove.
+//
+// O caminho do objeto é determinístico (`<communityId>/<kind>`): trocar
+// SOBRESCREVE o mesmo objeto, então a troca não deixa arquivo antigo. A
+// autorização é decidida aqui (dono) e REVALIDADA na RPC `set_community_image`,
+// que recebe o chamador explícito — service_role é privilégio, não identidade.
+async function requireCommunityOwner(communityId: string, callerId: string) {
+  const service = createServiceClient()
+  const { data, error } = await service
+    .from("communities")
+    .select("id, owner_user_id, banner_path, thumbnail_path")
+    .eq("id", communityId)
+    .eq("is_deleted", false)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  if (!data) throw new Error("comunidade não encontrada")
+  if (data.owner_user_id !== callerId) {
+    throw new Error("só quem responde pela comunidade pode alterar as imagens")
+  }
+  return data
+}
+
+function readImageInput(formData: FormData): {
+  communityId: string
+  kind: "banner" | "thumbnail"
+  file: File
+} {
+  const communityId = formData.get("communityId")
+  const kind = formData.get("kind")
+  const file = formData.get("image")
+
+  if (typeof communityId !== "string" || communityId.length === 0) {
+    throw new Error("communityId required")
+  }
+  if (typeof kind !== "string" || !isCommunityImageKind(kind)) {
+    throw new Error("kind required")
+  }
+  if (!(file instanceof File)) {
+    throw new Error("no file provided")
+  }
+
+  const validation = validateCommunityImage({ mimeType: file.type, sizeBytes: file.size })
+  if (!validation.ok) {
+    throw new Error(
+      validation.reason === "mime"
+        ? "formato não permitido: use PNG, JPG ou WEBP"
+        : "imagem maior que 10MB",
+    )
+  }
+
+  return { communityId, kind, file }
+}
+
+async function setCommunityImageAction(formData: FormData) {
+  const { communityId, kind, file } = readImageInput(formData)
+  const callerId = await requireCallerUserId()
+  const community = await requireCommunityOwner(communityId, callerId)
+
+  const path = communityImagePath(communityId, kind)
+  const service = createServiceClient()
+
+  const { error: uploadError } = await service.storage
+    .from(COMMUNITY_IMAGE_BUCKET)
+    .upload(path, file, { contentType: file.type, upsert: true })
+  if (uploadError) throw new Error(uploadError.message)
+
+  const { error: pointerError } = await service.rpc("set_community_image", {
+    p_community_id: communityId,
+    p_kind: kind,
+    p_path: path,
+    p_caller_user_id: callerId,
+  })
+
+  if (pointerError) {
+    // Primeira imagem: o objeto ainda não é referenciado por ninguém, então
+    // removê-lo evita órfão. Numa troca o ponteiro já aponta para o mesmo
+    // caminho e os bytes novos já estão no ar — apagar destruiria a imagem
+    // anterior sem necessidade.
+    const previous = kind === "banner" ? community.banner_path : community.thumbnail_path
+    if (previous === null) {
+      await service.storage.from(COMMUNITY_IMAGE_BUCKET).remove([path])
+    }
+    throw new Error(pointerError.message)
+  }
+
+  revalidatePath(`/communities/${communityId}`)
+  revalidatePath(`/communities/${communityId}/admin/media`)
+  revalidatePath("/communities")
+}
+
+async function removeCommunityImageAction(formData: FormData) {
+  const communityId = formData.get("communityId")
+  const kind = formData.get("kind")
+  if (typeof communityId !== "string" || communityId.length === 0) {
+    throw new Error("communityId required")
+  }
+  if (typeof kind !== "string" || !isCommunityImageKind(kind)) {
+    throw new Error("kind required")
+  }
+
+  const callerId = await requireCallerUserId()
+  const community = await requireCommunityOwner(communityId, callerId)
+  const previous = kind === "banner" ? community.banner_path : community.thumbnail_path
+  if (previous === null) return
+
+  const service = createServiceClient()
+
+  // Limpar o ponteiro PRIMEIRO torna o objeto inalcançável na mesma operação,
+  // mesmo que a remoção do arquivo falhe logo depois (a policy de leitura só
+  // expõe o que a comunidade referencia).
+  const { error: pointerError } = await service.rpc("set_community_image", {
+    p_community_id: communityId,
+    p_kind: kind,
+    p_path: null,
+    p_caller_user_id: callerId,
+  })
+  if (pointerError) throw new Error(pointerError.message)
+
+  const { error: removeError } = await service.storage
+    .from(COMMUNITY_IMAGE_BUCKET)
+    .remove([previous])
+  if (removeError) {
+    log.error("community-images: pointer cleared but object removal failed", {
+      community_id: communityId,
+      kind,
+      error: removeError.message,
+    })
+  }
+
+  revalidatePath(`/communities/${communityId}`)
+  revalidatePath(`/communities/${communityId}/admin/media`)
+  revalidatePath("/communities")
+}
+
 export {
   addCommunityModeratorAction,
   approveCommunityMemberAction,
   approveCommunityMembersBatchAction,
+  removeCommunityImageAction,
   removeCommunityMemberAction,
   removeCommunityMembersBatchAction,
   removeCommunityModeratorAction,
   revokeProviderAccountAction,
+  setCommunityImageAction,
 }

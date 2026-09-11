@@ -14,6 +14,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { signCommunityImageUrls } from "../../../../lib/communities/community-image-urls"
 import {
   buildGroupCards,
   enterableGroupIds,
@@ -27,7 +28,7 @@ type CommunityDetailClient = SupabaseClient<Database>
 
 type CommunityRow = Pick<
   Database["public"]["Tables"]["communities"]["Row"],
-  "id" | "name" | "description" | "locality_id" | "created_at"
+  "id" | "name" | "description" | "locality_id" | "created_at" | "banner_path" | "thumbnail_path"
 >
 type MyMembershipRow = Pick<
   Database["public"]["Tables"]["community_memberships"]["Row"],
@@ -47,6 +48,10 @@ export type CommunityPresentation = {
   cityLabel: string | null
   /** `communities.created_at` — exibida só onde o público pode ver. */
   createdAt: string
+  /** URL assinada da faixa atual, ou `null` quando não há imagem. */
+  bannerUrl: string | null
+  /** URL assinada da miniatura atual, ou `null` quando não há imagem. */
+  thumbnailUrl: string | null
 }
 
 export type TransferCandidate = {
@@ -93,7 +98,7 @@ export async function loadCommunityDetail(
 ): Promise<CommunityDetailView> {
   const { data: communityData, error: communityError } = await supabase
     .from("communities")
-    .select("id, name, description, locality_id, created_at")
+    .select("id, name, description, locality_id, created_at, banner_path, thumbnail_path")
     .eq("id", communityId)
     .eq("is_deleted", false)
     .maybeSingle()
@@ -132,12 +137,24 @@ export async function loadCommunityDetail(
   }
   const localityRow = locality as LocalityRow | null
 
+  const imageUrls = (
+    await signCommunityImageUrls(supabase, [
+      {
+        communityId: community.id,
+        banner: community.banner_path !== null,
+        thumbnail: community.thumbnail_path !== null,
+      },
+    ])
+  ).get(community.id) ?? { bannerUrl: null, thumbnailUrl: null }
+
   const presentation: CommunityPresentation = {
     id: community.id,
     name: community.name,
     description: community.description,
     cityLabel: localityRow ? `${localityRow.city_name}, ${localityRow.state_code}` : null,
     createdAt: community.created_at,
+    bannerUrl: imageUrls.bannerUrl,
+    thumbnailUrl: imageUrls.thumbnailUrl,
   }
 
   if (audience === "visitor") {

@@ -84,6 +84,14 @@ export default async function CommunityAdminLayout({
             </li>
             <li>
               <Link
+                href={`/communities/${communityId}/admin/media` as Route}
+                className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
+              >
+                Imagens
+              </Link>
+            </li>
+            <li>
+              <Link
                 href={`/communities/${communityId}` as Route}
                 className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
               >

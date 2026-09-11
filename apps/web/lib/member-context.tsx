@@ -15,6 +15,8 @@ import { createContext, type ReactNode, useContext } from "react"
 export type MemberCommunity = {
   id: string
   name: string
+  /** URL assinada da miniatura atual, ou `null` quando a comunidade não tem. */
+  thumbnailUrl: string | null
 }
 
 export type MemberContextValue = {

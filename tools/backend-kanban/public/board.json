@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-09-11",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -2133,6 +2133,46 @@
       "sourceRevision": "15a884d",
       "dependencies": [],
       "completedChecklist": [false, false, false, false, false, false, false]
+    },
+    {
+      "id": "RECON-034",
+      "title": "RECON-034: imagem de comunidade — faixa e miniatura (pranchas 42/43)",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "O lote RECON-034 ganha card próprio (o contrato existia sem card). A comunidade passa a ter faixa de topo e miniatura, enviadas e trocadas por quem responde por ela, com leitura derivada do acesso à comunidade. Bucket privado community-images, colunas banner_path/thumbnail_path e a RPC set_community_image entram na MESMA migration das policies que as leem (ADR-20260909-midia-de-membro). A leitura aparece na apresentação, na descoberta e na barra lateral; a escrita fica no console do dono. IMPLEMENTADO e com gate/build verdes; a prova de runtime (test:db e capturas) está pendente porque este executor não pode migrar o banco local compartilhado com outros worktrees.",
+      "checklist": [
+        "Migration única: bucket privado, colunas banner_path/thumbnail_path, 4 policies de storage e RPC owner-only com chamador explícito",
+        "pgTAP positivo e negativo: leitura derivada da localidade, escrita só do dono (policy e RPC), remoção torna o objeto inalcançável",
+        "Leitura: apresentação (faixa + miniatura sobreposta), descoberta e barra lateral usam a miniatura, com queda para o estado sem imagem",
+        "Console do dono envia, troca e remove, com estados fechados (enviando, sem imagem, erro recuperável, sem duplicar)",
+        "Texto alternativo descreve a comunidade sem repetir o nome ao lado",
+        "task-contract, gate completo e build verdes",
+        "PENDENTE: aplicar a migration em banco dedicado, rodar test:db e capturar 375/768/1440 com ator e destino"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-034.task.yml → 1 contrato válido",
+        "npx pnpm@11.18.0 gate → verde (lint, typecheck, 516 unit, 100 scope, secrets); build pulado sem apps/web/.env.local",
+        "npx pnpm@11.18.0 build → verde; rotas /communities/[id] e /communities/[id]/admin/media presentes",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/communities/community-media.test.ts → 11 testes verdes",
+        "Captura /communities/[id] com dono-vila@ em 375/768/1440 → HTTP 200 com error boundary: banco local compartilhado NÃO migrado ('column communities_1.thumbnail_path does not exist'). A migration é o próximo passo fora deste executor."
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 exec vitest run tests/unit/communities/community-media.test.ts",
+        "npx pnpm@11.18.0 test:db (supabase/tests/community-images.sql) — pendente de banco migrado"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-034.task.yml",
+        "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/decisions/ADR-20260909-midia-de-membro.md",
+        "supabase/migrations/20260911093140_community_images.sql",
+        "supabase/tests/community-images.sql"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94"
     }
   ]
 }

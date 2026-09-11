@@ -2,11 +2,11 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 2026-09-09
+**Snapshot:** 2026-09-11
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 72 frentes · 8 agora · 9 bloqueadas · 27 concluídas · 0 drifts
+**Mapa:** 73 frentes · 9 agora · 9 bloqueadas · 27 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -18,6 +18,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **S6-MOBILE-RUNTIME** · P0 · Mobile: RUNTIME PROOF real no emulador + tipos Foto/Link/Enquete + realtime
 - **DS-001-DESIGN-SYSTEM** · P1 · Sistema de design canônico Casa comum
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
+- **RECON-034** · P1 · RECON-034: imagem de comunidade — faixa e miniatura (pranchas 42/43)
 - **RECON-AUTH-ENTRADA-WEB** · P1 · Web: entrada fiel à prancha 36-web-auth-entrada sem tocar o mecanismo
 - **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas
 - **RECON-W00-FUNDACAO** · P1 · W00: baseline, contratos e fundação da reconstrução web

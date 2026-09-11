@@ -44,6 +44,17 @@ const ROUTES = [
   { path: "/events/80000000-0000-4000-8000-000000000001", name: "event-detail", auth: true },
   { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
+  // RECON-034 — apresentação com faixa/miniatura e o console de imagens do dono.
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000001",
+    name: "community-detail",
+    auth: true,
+  },
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000001/admin/media",
+    name: "community-admin-media",
+    auth: true,
+  },
   { path: "/guide", name: "arrival-guide", auth: true },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
   { path: "/inicio", name: "inicio", auth: true },

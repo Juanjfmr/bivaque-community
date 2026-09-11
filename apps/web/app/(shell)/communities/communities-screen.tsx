@@ -1,8 +1,13 @@
 "use client"
 
 import { Button, Chip, SearchField, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
+import Image from "next/image"
 import Link from "next/link"
 import { type FormEvent, useMemo, useRef, useState } from "react"
+import {
+  type CommunityImageKind,
+  communityImageAltText,
+} from "../../../lib/communities/community-media"
 import { Card } from "../../components/bivaque/card"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
@@ -56,15 +61,47 @@ function PendingChip() {
   )
 }
 
-function CommunityThumbnail({ large = false }: { large?: boolean }) {
+function CommunityThumbnail({
+  url,
+  kind,
+  variant = "square",
+}: {
+  url: string | null
+  kind: CommunityImageKind
+  variant?: "compact" | "square" | "wide"
+}) {
+  const size =
+    variant === "wide"
+      ? "h-32 w-full rounded-xl"
+      : variant === "compact"
+        ? "h-12 w-12 rounded-lg"
+        : "h-24 w-24 rounded-lg"
+  const glyph = variant === "wide" ? "h-10 w-10" : variant === "compact" ? "h-6 w-6" : "h-8 w-8"
+  const dimensions =
+    variant === "wide"
+      ? { width: 1200, height: 384 }
+      : variant === "compact"
+        ? { width: 48, height: 48 }
+        : { width: 96, height: 96 }
+  if (url) {
+    return (
+      <Image
+        src={url}
+        alt={communityImageAltText(kind)}
+        width={dimensions.width}
+        height={dimensions.height}
+        unoptimized
+        loading="lazy"
+        className={`shrink-0 object-cover ${size}`}
+      />
+    )
+  }
   return (
     <div
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-lg bg-[var(--semantic-surface-sunken)] text-muted ${
-        large ? "h-28 w-full rounded-xl" : "h-24 w-24"
-      }`}
+      className={`flex shrink-0 items-center justify-center bg-[var(--semantic-surface-sunken)] text-muted ${size}`}
     >
-      <CommunityGlyph className={large ? "h-10 w-10" : "h-8 w-8"} />
+      <CommunityGlyph className={glyph} />
     </div>
   )
 }
@@ -156,7 +193,7 @@ export function CommunitiesScreen({
                   mine.map((community) => (
                     <Card key={community.id} className="p-4">
                       <div className="flex gap-4">
-                        <CommunityThumbnail />
+                        <CommunityThumbnail url={community.thumbnailUrl} kind="thumbnail" />
                         <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
                           <h2 className="text-base font-semibold tracking-tight">
                             {community.name}
@@ -290,9 +327,11 @@ export function CommunitiesScreen({
                                   : "border-border bg-[var(--semantic-surface)] hover:bg-[var(--semantic-surface-sunken)]"
                               }`}
                             >
-                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--semantic-surface-sunken)] text-muted">
-                                <CommunityGlyph className="h-6 w-6" />
-                              </span>
+                              <CommunityThumbnail
+                                url={community.thumbnailUrl}
+                                kind="thumbnail"
+                                variant="compact"
+                              />
                               <span className="flex min-w-0 flex-col">
                                 <span
                                   className={`truncate text-sm font-medium ${
@@ -333,7 +372,7 @@ export function CommunitiesScreen({
               {selected && (
                 <section aria-label={`Apresentação de ${selected.name}`}>
                   <Card className="flex flex-col gap-4 p-5">
-                    <CommunityThumbnail large />
+                    <CommunityThumbnail url={selected.bannerUrl} kind="banner" variant="wide" />
                     <div className="flex flex-col gap-1">
                       <h2 className="text-xl font-semibold tracking-tight">{selected.name}</h2>
                       {selected.cityLabel && (
