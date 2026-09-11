@@ -2072,7 +2072,7 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote - RECON-024 (branch fix/recon-024-painel-negocio, 11/09): shell do negocio, fila por situacao, pedido do prestador, area de atendimento e conta implementados; migration 20260911032105_service_requests.sql, pgTAP e testes de unidade prontos; gate verde. Runtime da fila NAO verificado: o banco compartilhado nao recebeu a migration (sessao proibida de alterar estado) e RECON-022, dependencia, segue sem codigo na main."
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
@@ -2093,8 +2093,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",

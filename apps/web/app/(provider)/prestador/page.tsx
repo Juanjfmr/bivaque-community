@@ -1,22 +1,56 @@
+import { PROVIDER_CATEGORY_LABELS, type ProviderCategory } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import type { Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
+import { computeFichaCompleteness } from "../../../lib/service-requests/completeness"
+import {
+  formatReceived,
+  QUEUE_TABS,
+  type QueueTabId,
+  requestBody,
+  requestTitle,
+  type ServiceRequestStatus,
+  tabForStatus,
+} from "../../../lib/service-requests/status"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
+import { EmptyState } from "../../components/bivaque/empty-state"
+import { ErrorState } from "../../components/bivaque/error-state"
 
-// Onda G Task 4 — o painel do prestador (D37): anúncio, métrica e caixa de
-// pedidos. Duas das três ainda não existem de fato, e o painel DIZ ISSO em
-// vez de fingir:
-//   * Ficha/catálogo/portfólio: entrega completa desta task.
-//   * Métrica: depende do PostHog (onda H) — estado vazio honesto, nunca
-//     "0 visualizações", que é número inventado com cara de fato.
-//   * Caixa de pedidos: chega na Task 6 — não há caixa vazia antes da hora.
-//   * Alcance: mostra o estado atual (vila própria, grátis); upgrade é Task 7.
+// RECON-024 — painel do negócio (prancha 23). A fila lê a COLUNA `status` de
+// service_requests, nunca a existência de mensagem (ADR-20260909 D1).
 
-export default async function PrestadorHomePage() {
+interface RequestRow {
+  id: string
+  conversation_id: string
+  description: string
+  when_text: string | null
+  region: string | null
+  category: ProviderCategory
+  status: ServiceRequestStatus
+  created_at: string
+}
+
+interface QueueItem extends RequestRow {
+  clientName: string
+}
+
+function parseTab(raw: string | undefined): QueueTabId {
+  const found = QUEUE_TABS.find((tab) => tab.id === raw)
+  return found?.id ?? "novos"
+}
+
+export default async function PrestadorHomePage({
+  searchParams,
+}: Readonly<{
+  searchParams: Promise<{ tab?: string; q?: string; pedido?: string }>
+}>) {
+  const params = await searchParams
+  const tab = parseTab(params.tab)
+  const query = (params.q ?? "").trim().toLowerCase()
+
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-
   if (!url || !anonKey) {
     throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are required")
   }
@@ -36,186 +70,357 @@ export default async function PrestadorHomePage() {
   const {
     data: { user },
   } = await authClient.auth.getUser()
+  if (!user) return null
 
-  if (!user) {
-    return null
-  }
-
-  // service_role is privilege, not caller identity — the provider account
-  // lookup passes the real user id explicitly (apps/web/AGENTS.md trust
-  // boundary). The showcase reads below go through the AUTHENTICATED client:
-  // the owner-only RLS of the showcase migration is what authorizes them.
   const serviceClient = createServiceClient()
-  const { data: row, error: accountError } = await serviceClient
-    .from("provider_accounts")
-    .select("community_id, locality_id, created_at")
-    .eq("auth_user_id", user.id)
-    .is("revoked_at", null)
-    .maybeSingle()
-  if (accountError) throw new Error(`Falha ao carregar a conta: ${accountError.message}`)
-  if (!row) return null
 
-  const { data: community, error: communityError } = await serviceClient
-    .from("communities")
-    .select("name")
-    .eq("id", row.community_id)
-    .maybeSingle()
-  if (communityError) throw new Error(`Falha ao carregar a comunidade: ${communityError.message}`)
-
-  const { data: profile, error: profileError } = await authClient
+  const { data: profileRow, error: profileError } = await authClient
     .from("provider_profiles")
-    .select("id, display_name")
+    .select("id, display_name, category, bio, contact_phone")
     .eq("owner_user_id", user.id)
     .maybeSingle()
   if (profileError) throw new Error(`Falha ao carregar a ficha: ${profileError.message}`)
 
-  const { count: itemCount, error: itemError } = await authClient
+  const profile = (profileRow ?? null) as {
+    id: string
+    display_name: string
+    category: ProviderCategory
+    bio: string | null
+    contact_phone: string | null
+  } | null
+
+  const { data: accountRow } = await serviceClient
+    .from("provider_accounts")
+    .select("locality_id")
+    .eq("auth_user_id", user.id)
+    .is("revoked_at", null)
+    .maybeSingle()
+  const localityId = (accountRow as { locality_id: string | null } | null)?.locality_id ?? null
+
+  let cityLabel = ""
+  if (localityId) {
+    const { data: localityRow } = await serviceClient
+      .from("localities")
+      .select("city_name, state_code")
+      .eq("id", localityId)
+      .maybeSingle()
+    const locality = localityRow as { city_name: string; state_code: string } | null
+    if (locality) cityLabel = `${locality.city_name}, ${locality.state_code}`
+  }
+
+  const providerId = profile?.id ?? ""
+
+  const { count: catalogCount } = await authClient
     .from("provider_catalog_items")
     .select("*", { count: "exact", head: true })
-    .eq("provider_id", profile?.id ?? "")
-  if (itemError) throw new Error(`Falha a contar o catálogo: ${itemError.message}`)
-
-  const { count: photoCount, error: photoError } = await authClient
+    .eq("provider_id", providerId)
+  const { count: portfolioCount } = await authClient
     .from("provider_portfolio_photos")
     .select("*", { count: "exact", head: true })
-    .eq("provider_id", profile?.id ?? "")
-  if (photoError) throw new Error(`Falha a contar o portfólio: ${photoError.message}`)
+    .eq("provider_id", providerId)
+  const { count: reachCount } = await authClient
+    .from("provider_reach")
+    .select("*", { count: "exact", head: true })
+    .eq("provider_id", providerId)
+    .eq("active", true)
 
-  // PRIVACIDADE (D43/D37) — linha que um refactor futuro vai atravessar sem
-  // perceber: o prestador vê APENAS o display_name do membro, e só consegue
-  // lê-lo porque `conversation_counterpart_name` é um RPC estreito dentro de
-  // conversa existente. NÃO troque por select em `profiles`: o prestador não
-  // tem locality_memberships, nenhuma linha de profiles é visível para ele,
-  // e afrouxar essa policy para "consertar" a lista expõe militares a civis.
-  // Não o e-mail, não a vila, não a afiliação. O nome. E nada mais.
-  const { data: ordersData, error: ordersError } = await authClient
-    .from("dm_conversations")
-    .select("id, context_id, created_at")
-    .eq("context_type", "provider")
-    .order("created_at", { ascending: false })
-  if (ordersError) throw new Error(`Falha ao carregar a caixa de pedidos: ${ordersError.message}`)
-  const orders = (ordersData ?? []) as Array<{
-    id: string
-    context_id: string | null
-    created_at: string
-  }>
-  const orderNames = await Promise.all(
-    orders.map(async (order) => {
+  const completeness = computeFichaCompleteness({
+    bio: profile?.bio ?? null,
+    catalogCount: catalogCount ?? 0,
+    reachCount: reachCount ?? 0,
+    portfolioCount: portfolioCount ?? 0,
+    contactPhone: profile?.contact_phone ?? null,
+  })
+
+  // A fila é a única parte que depende da migration nova. Um erro aqui vira um
+  // ESTADO DE ERRO explícito — nunca uma lista vazia que finge sucesso.
+  let queueError: string | null = null
+  let rows: RequestRow[] = []
+  if (providerId) {
+    const { data, error } = await authClient
+      .from("service_requests")
+      .select("id, conversation_id, description, when_text, region, category, status, created_at")
+      .eq("provider_id", providerId)
+      .order("created_at", { ascending: false })
+      .limit(200)
+    if (error) {
+      queueError = "Não foi possível carregar seus pedidos agora."
+    } else {
+      rows = (data ?? []) as RequestRow[]
+    }
+  }
+
+  const counts: Record<QueueTabId, number> = { novos: 0, em_conversa: 0, encerrados: 0 }
+  for (const row of rows) {
+    const rowTab = tabForStatus(row.status)
+    counts[rowTab] += 1
+  }
+
+  const filtered = rows.filter((row) => {
+    if (tabForStatus(row.status) !== tab) return false
+    if (query.length === 0) return true
+    return (
+      row.description.toLowerCase().includes(query) ||
+      (row.region ?? "").toLowerCase().includes(query) ||
+      (row.when_text ?? "").toLowerCase().includes(query)
+    )
+  })
+
+  const visible = filtered.slice(0, 25)
+  const queueItems: QueueItem[] = await Promise.all(
+    visible.map(async (row) => {
       const { data: name } = await authClient.rpc("conversation_counterpart_name", {
-        p_conversation_id: order.id,
+        p_conversation_id: row.conversation_id,
       })
-      return { ...order, counterpart: name ?? "Membro" }
+      return { ...row, clientName: (name as string | null) ?? "Membro" }
     }),
   )
 
+  const selectedId = params.pedido ?? queueItems[0]?.id ?? null
+  const selected = queueItems.find((item) => item.id === selectedId) ?? queueItems[0] ?? null
+
+  const activeTab = QUEUE_TABS.find((candidate) => candidate.id === tab)
+
   return (
-    <main className="mx-auto w-full max-w-2xl space-y-6 px-6 py-10">
-      <header>
-        <h1 className="text-2xl font-semibold">Painel do prestador</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Você foi indicado pela comunidade <strong>{community?.name ?? "desconhecida"}</strong>.
-        </p>
-      </header>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      <h1 className="text-2xl font-semibold">Pedidos para você</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Organize as conversas e mantenha sua ficha atualizada.
+      </p>
 
-      <section aria-label="Ficha" className="rounded-lg border border-border bg-surface p-5">
-        <h2 className="text-lg font-medium">Minha ficha</h2>
-        {profile ? (
-          <>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {profile.display_name} · {itemCount ?? 0} {itemCount === 1 ? "item" : "itens"} no
-              catálogo · {photoCount ?? 0} {photoCount === 1 ? "foto" : "fotos"} no portfólio
-            </p>
-            <div className="mt-3 flex flex-wrap gap-3 text-sm">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-6">
+          {queueError ? (
+            <div className="space-y-3">
+              <ErrorState message={queueError} />
               <Link
-                href={"/prestador/ficha" as Route}
-                className="min-h-11 px-1 leading-[2.75rem] underline"
+                href={"/prestador" as Route}
+                className="inline-flex min-h-11 items-center text-sm underline transition-colors"
               >
-                Editar ficha
-              </Link>
-              <Link
-                href={"/prestador/catalogo" as Route}
-                className="min-h-11 px-1 leading-[2.75rem] underline"
-              >
-                Catálogo e portfólio
-              </Link>
-              {profile.id ? (
-                <Link
-                  href={`/prestadores/${profile.id}` as Route}
-                  className="min-h-11 px-1 leading-[2.75rem] underline"
-                >
-                  Ver como o membro vê
-                </Link>
-              ) : null}
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Sua vitrine ainda não foi criada. Comece pela ficha: nome público, categoria e uma
-              descrição curta do que você faz.
-            </p>
-            <div className="mt-3 text-sm">
-              <Link
-                href={"/prestador/ficha" as Route}
-                className="min-h-11 px-1 leading-[2.75rem] underline"
-              >
-                Criar minha ficha
+                Tentar novamente
               </Link>
             </div>
-          </>
-        )}
-      </section>
-
-      <section aria-label="Alcance" className="rounded-lg border border-border bg-surface p-5">
-        <h2 className="text-lg font-medium">Alcance</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sua vitrine aparece para os membros aprovados de{" "}
-          <strong>{community?.name ?? "sua comunidade"}</strong>. Fazer a ficha aparecer além dela é
-          um passo pago que ainda não existe no produto.
-        </p>
-      </section>
-
-      <section aria-label="Pedidos" className="rounded-lg border border-border bg-surface p-5">
-        <h2 className="text-lg font-medium">Pedidos</h2>
-        {profile ? (
-          orderNames.length === 0 ? (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Nenhuma conversa iniciada por membros ainda.
-            </p>
           ) : (
-            <ul className="mt-3 space-y-2">
-              {orderNames.map((order) => (
-                <li key={order.id} className="flex items-center justify-between gap-3 text-sm">
-                  <span>
-                    {order.counterpart} ·{" "}
-                    <span className="text-xs text-muted">
-                      {new Date(order.created_at).toLocaleDateString("pt-BR")}
+            <>
+              <div
+                role="tablist"
+                aria-label="Situação dos pedidos"
+                className="flex gap-5 border-b border-border"
+              >
+                {QUEUE_TABS.map((candidate) => {
+                  const isActive = candidate.id === tab
+                  const href = `/prestador?tab=${candidate.id}` as Route
+                  return (
+                    <Link
+                      key={candidate.id}
+                      href={href}
+                      role="tab"
+                      aria-selected={isActive}
+                      className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-1 text-sm font-medium ${
+                        isActive
+                          ? "border-[var(--semantic-action-primary)] text-[var(--semantic-action-primary)]"
+                          : "border-transparent text-muted"
+                      }`}
+                    >
+                      {candidate.label} ({counts[candidate.id]})
+                    </Link>
+                  )
+                })}
+              </div>
+
+              {queueItems.length === 0 ? (
+                <EmptyState
+                  title={
+                    query.length > 0
+                      ? "Nenhum pedido encontrado para esta busca."
+                      : `Nenhum pedido em ${activeTab?.label ?? "esta aba"}.`
+                  }
+                  description="Quando um membro pedir um serviço, o pedido aparece aqui."
+                />
+              ) : (
+                <>
+                  <div className="overflow-x-auto rounded-xl border border-border">
+                    <table className="w-full min-w-[40rem] border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted">
+                          <th className="px-4 py-3 font-medium">Cliente</th>
+                          <th className="px-4 py-3 font-medium">Serviço solicitado</th>
+                          <th className="px-4 py-3 font-medium">Região</th>
+                          <th className="px-4 py-3 font-medium">Quando</th>
+                          <th className="px-4 py-3 font-medium">Recebido</th>
+                          <th className="px-4 py-3 font-medium sr-only">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {queueItems.map((item) => (
+                          <tr key={item.id} className="border-b border-border last:border-b-0">
+                            <td className="px-4 py-3">
+                              <span className="flex items-center gap-2">
+                                <span
+                                  aria-hidden="true"
+                                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--semantic-selected)] text-xs font-semibold text-[var(--semantic-action-primary)]"
+                                >
+                                  {item.clientName.charAt(0).toUpperCase()}
+                                </span>
+                                <span className="font-medium">{item.clientName}</span>
+                              </span>
+                            </td>
+                            <td className="max-w-[16rem] px-4 py-3">
+                              {requestTitle(item.description)}
+                            </td>
+                            <td className="px-4 py-3 text-muted">{item.region ?? "—"}</td>
+                            <td className="px-4 py-3 text-muted">
+                              {item.when_text ?? "A combinar"}
+                            </td>
+                            <td className="px-4 py-3 text-muted">
+                              {formatReceived(item.created_at)}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <Link
+                                href={`/prestador/pedidos/${item.id}` as Route}
+                                className="inline-flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors"
+                              >
+                                Responder
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {selected && (
+                    <section
+                      aria-label="Pedido selecionado"
+                      className="rounded-xl border border-border bg-[var(--semantic-surface)] p-5"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <span
+                            aria-hidden="true"
+                            className="grid h-12 w-12 place-items-center rounded-full bg-[var(--semantic-selected)] text-base font-semibold text-[var(--semantic-action-primary)]"
+                          >
+                            {selected.clientName.charAt(0).toUpperCase()}
+                          </span>
+                          <div>
+                            <p className="font-semibold">{selected.clientName}</p>
+                            <p className="text-sm text-muted">
+                              {[selected.region, cityLabel].filter(Boolean).join(" · ") ||
+                                "Local não informado"}
+                            </p>
+                            <p className="text-sm text-muted">
+                              {selected.when_text ?? "A combinar"}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted">
+                          Recebido {formatReceived(selected.created_at)}
+                        </p>
+                      </div>
+
+                      <hr className="my-4 border-border" />
+
+                      <h2 className="text-base font-semibold">
+                        {requestTitle(selected.description)}
+                      </h2>
+                      {requestBody(selected.description) && (
+                        <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+                          {requestBody(selected.description)}
+                        </p>
+                      )}
+
+                      <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-[var(--semantic-selected)] px-3 py-1 text-sm text-[var(--semantic-action-primary)]">
+                        {PROVIDER_CATEGORY_LABELS[selected.category]}
+                      </span>
+
+                      <div className="mt-4">
+                        <Link
+                          href={`/prestador/pedidos/${selected.id}` as Route}
+                          className="inline-flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-5 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors"
+                        >
+                          Ver conversa
+                        </Link>
+                      </div>
+                    </section>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+
+        <aside className="space-y-4">
+          <div
+            aria-hidden="true"
+            className="flex h-32 items-center justify-center rounded-xl bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]"
+          >
+            <span className="text-4xl font-bold opacity-40">
+              {(profile?.display_name ?? "?").charAt(0).toUpperCase()}
+            </span>
+          </div>
+
+          <section className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4">
+            <p className="text-lg font-semibold">{profile?.display_name ?? "Sua ficha"}</p>
+            <p className="text-sm text-muted">
+              {profile ? PROVIDER_CATEGORY_LABELS[profile.category] : "Sem categoria"}
+            </p>
+            <p className="mt-1 text-sm text-muted">
+              {cityLabel ? `Atende ${cityLabel}` : "Área de atendimento não definida"}
+            </p>
+            <Link
+              href={"/prestador/ficha" as Route}
+              className="mt-3 flex min-h-11 w-full items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors"
+            >
+              Ver minha ficha
+            </Link>
+          </section>
+
+          <section className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4">
+            <h2 className="text-base font-semibold">Complete sua ficha</h2>
+            <p className="mt-1 text-sm text-muted">
+              Quanto mais completa, mais confiança e pedidos qualificados você recebe.
+            </p>
+
+            {completeness.pending && (
+              <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-[var(--semantic-selected)] px-3 py-2">
+                <span className="text-sm text-[var(--semantic-action-primary)]">
+                  {completeness.pending.text}
+                </span>
+                <Link
+                  href={completeness.pending.actionHref as Route}
+                  className="inline-flex min-h-11 items-center rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm font-medium transition-colors"
+                >
+                  Editar ficha
+                </Link>
+              </div>
+            )}
+
+            <ul className="mt-3 space-y-1">
+              {completeness.items.map((item) => (
+                <li
+                  key={item.key}
+                  className="flex items-center justify-between gap-3 border-b border-border py-2 text-sm last:border-b-0"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-xs ${
+                        item.done
+                          ? "bg-[var(--semantic-action-primary)] text-[var(--semantic-text-on-strong)]"
+                          : "border border-border text-muted"
+                      }`}
+                    >
+                      {item.done ? "✓" : ""}
                     </span>
+                    <span className="truncate">{item.label}</span>
                   </span>
-                  <Link
-                    href={`/messages?conversation=${order.id}`}
-                    className="min-h-11 px-1 leading-[2.75rem] underline"
-                  >
-                    Abrir conversa
-                  </Link>
+                  <span className="shrink-0 text-right text-xs text-muted">{item.detail}</span>
                 </li>
               ))}
             </ul>
-          )
-        ) : (
-          <p className="mt-1 text-sm text-muted-foreground">
-            Disponível quando sua ficha estiver publicada.
-          </p>
-        )}
-      </section>
-
-      <section aria-label="Métrica" className="rounded-lg border border-border bg-surface p-5">
-        <h2 className="text-lg font-medium">Métrica</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Ainda não medimos visitas à sua ficha — quando a medição chegar, ela aparece aqui com os
-          números reais. Não vamos mostrar zero só para preencher espaço.
-        </p>
-      </section>
-    </main>
+          </section>
+        </aside>
+      </div>
+    </div>
   )
 }
