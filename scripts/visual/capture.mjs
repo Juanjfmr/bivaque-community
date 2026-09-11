@@ -165,6 +165,14 @@ const ROUTES = [
   { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },
   { path: "/recommendations", name: "recommendations", auth: true },
+  // RECON-035: a conversa vive na aba "Pedidos". O foco no pedido semeado
+  // (visual@ é a autora) pré-seleciona a aba para a captura mostrar o ator e
+  // o destino sem depender de clique.
+  {
+    path: "/recommendations?focus=80000000-0000-4000-8000-000000000f00",
+    name: "recommendations-conversa",
+    auth: true,
+  },
   { path: "/messages", name: "messages", auth: true },
   { path: "/notifications", name: "notifications", auth: true },
   { path: "/profile", name: "profile", auth: true },

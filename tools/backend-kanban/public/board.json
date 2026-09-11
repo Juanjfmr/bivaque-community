@@ -2080,14 +2080,26 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
+        "RECON-035 implementado em 11/09: coluna, trigger, RPCs, tela e testes no mesmo diff",
+        "PENDENTE RECON-035: aplicar migration e rodar pgTAP/gen types no stack (bloqueado nesta sessao pelo banco compartilhado)",
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-        "npx pnpm@11.18.0 gate → verde"
+        "npx pnpm@11.18.0 gate → verde",
+        "RECON-035 (11/09, branch fix/recon-035-resposta): node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-035.task.yml valida; npx pnpm@11.18.0 gate termina exit 0 (lint/typecheck/build/test/secrets verdes, lidos direto do exit code)",
+        "RECON-035: supabase/migrations/20260911025357_recon_035_resolved_reply.sql traz a coluna resolved_reply_id, FK on delete set null, trigger de pertencimento e os RPCs mark/clear/reopen com grant so para authenticated; supabase/tests/recommendation-resolved-reply.sql cobre 25 asserts positivos e negativos. Nao aplicados nem executados nesta sessao: o banco local e compartilhado com outros executores e reset/migration estao proibidos",
+        "RECON-035: captura autenticada em .visual/recon035-final (375/768/1440) de /recommendations?focus=80000000-0000-4000-8000-000000000f00. Authenticated capture: yes, aba Pedidos ativa, ator visual@ (Ana Verificada). O painel mostra o erro 400 esperado enquanto a coluna nao existe no banco; o marcador visual so aparece depois de aplicar a migration",
+        "RECON-035: drift encontrado e corrigido — as abas de /recommendations nao tinham id e os paineis nao eram ocultados, entao a conversa era inalcancavel. Corrigido com id nos Tabs.Tab e hidden nos paineis em apps/web/app/(shell)/recommendations/page.tsx, FORA dos allowed_paths do contrato (declarado no relatorio)",
+        "RECON-035: o contrato aponta a rota /publicacoes/[id]; a conversa real e a aba Pedidos de /recommendations. Implementado na superficie real, sem criar rota nova",
+        "RECON-035 PENDENTE: aplicar a migration, db:reset --no-seed + npx pnpm@11.18.0 test:db, regenerar tipos do schema public e recapturar o marcador visivel na resposta destacada"
       ],
-      "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+      "tests": [
+        "node --test tests/scope/prancha-coverage.test.mjs",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/recommendations/resolution-marker.test.ts",
+        "npx pnpm@11.18.0 test:db (pendente: migration nao aplicada)"
+      ],
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
@@ -2101,11 +2113,7 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "drift": {
-        "documented": "O contrato RECON-027 promete Moradia com as pranchas 65 (painel 1) e 19, backend junto das telas, pgTAP positivo/negativo, E2E de publicar/encontrar/interesse e captura em 375/768/1440, e o manual declara os 18 lotes liberados para execução.",
-        "observed": "Neste checkout (branch fix/recon-027-moradia) o lote entregou a migration do domínio de anúncio (listings, property_details, listing_photos, listing_saves, listing_alerts, bucket privado listing-photos, RLS e private.can_read_listing), o pgTAP, a lib de domínio com 20 testes unitários e as rotas /imoveis, /imoveis/[id], /imoveis/novo e /imoveis/[id]/editar; gate e build verdes. Mas RECON-025 (domínio Mercado) e RECON-022 (conversa contextual) não existem no checkout, e o stack local é compartilhado com outros executores, então a migration não foi aplicada e pgTAP, E2E, /imoveis/alertas (RECON-028) e captura não rodaram. O interesse no anúncio ficou indisponível na ficha, com motivo visível, por depender da conversa do RECON-022.",
-        "action": "Executar RECON-025 e RECON-022 primeiro. Num stack exclusivo, aplicar a migration, rodar db:reset --no-seed + test:db + db:lint, test:e2e (publicar, encontrar por filtro, interesse) e a captura 375/768/1440 com ator e destino. Reconciliar a ordem da migration com RECON-025, que também cria public.listings; adicionar a fixture de anúncio ao seed.sql para a captura do detalhe."
-      },
+      "branch": "fix/recon-035-resposta",
       "updatedAt": "2026-09-11",
       "sourceRevision": "0323a94"
     },
@@ -2184,6 +2192,45 @@
       "updatedAt": "2026-09-11",
       "sourceRevision": "0323a94",
       "dependencies": []
+    },
+    {
+      "id": "RECON-031-CONFIGURACOES",
+      "title": "Web: configuracoes e confianca (pranchas 52 e 56) com a matriz de canais",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "As configuracoes passam a ser as das pranchas 52 e 56: coluna vertical de secoes com o H1 fora do cartao, canais de entrega gravando por tipo e canal, novidades desligadas por padrao, conta com recuperacao e solicitacao de exclusao, familia com criar/copiar/revogar convite e confianca com denuncias e bloqueios. A matriz notification_channel_preferences e a coluna product_news entram na mesma migration, com pgTAP de caso positivo e negativo. ADR-20260909-canais-de-notificacao aprovado.",
+      "checklist": [
+        "Coluna vertical de secoes da prancha 52, com o H1 fora do cartao",
+        "Canais de entrega gravados por tipo e canal; tipo desligado nao entrega por canal nenhum",
+        "Novidades do Bivaque como tipo proprio, desligado por padrao para conta existente e nova",
+        "Subrotas /configuracoes/{notificacoes,conta,familia,bloqueados} e lista de bloqueios abaixo das denuncias (prancha 56)",
+        "PENDENTE: reset local sem seed + test:db (pgTAP de 16 asserts) e prova de runtime de /configuracoes/notificacoes. A migration 20260911054812 nao esta aplicada no banco local compartilhado deste worktree e o contrato proibiu reset/migration; a prova cabe ao CI (db:reset --no-seed + test:db)."
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-031.task.yml -> 1 contrato valido",
+        "npx pnpm@11.18.0 gate -> verde (lint, typecheck, build, 513 unit + 189 privacy + 76 mobile + 100 scope, secrets)",
+        "tests/unit/notifications/channel-preferences.test.ts -> 8 passed (regra tipo x canal e despachante com canal ligado e desligado)",
+        "captura autenticada em 375/768/1440 das 5 rotas (.visual/recon031b-*); /configuracoes, /conta, /familia e /bloqueados renderizam; /bloqueados le denuncias e bloqueios reais com o cliente de sessao, porque service_role nao tem SELECT em dm_blocks"
+      ],
+      "tests": [
+        "tests/unit/notifications/channel-preferences.test.ts",
+        "supabase/tests/notification-channel-preferences.sql (16 asserts; escrita, nao executada neste worktree)",
+        "node scripts/visual/capture.mjs"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-031.task.yml",
+        "docs/decisions/ADR-20260909-canais-de-notificacao.md"
+      ],
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94",
+      "dependencies": [],
+      "drift": {
+        "documented": "RECON-031.task.yml (authority) e PRANCHAS-WEB-RESTANTES.md, RECON-WEB-EXECUCAO.md, os ADRs de 09/09 e tests/scope/prancha-coverage.test.mjs citam docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md",
+        "observed": "O arquivo nao existe neste branch; foi adicionado no commit 5143ada, que vive apenas em chore/visual-routes / codex/fidelidade-pranchas e nao e ancestral de main",
+        "action": "Reconciliar a citacao - trazer o handoff do branch de fidelidade para este branch ou trocar as referencias por PRANCHAS-WEB-RESTANTES.md; ate la, a autoridade usada foram o PNG da prancha e a leitura versionada"
+      }
     },
     {
       "id": "RECON-032",

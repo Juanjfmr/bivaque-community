@@ -2,6 +2,7 @@
 
 import { Button, Chip, Input, TextArea } from "@heroui/react"
 import { useCallback, useEffect, useState } from "react"
+import { callResolutionRpc } from "../../../lib/recommendations/resolution-rpcs"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "./card"
 import { EmptyState } from "./empty-state"
@@ -18,6 +19,7 @@ type RequestRow = {
   category: string
   created_at: string
   is_resolved: boolean
+  resolved_reply_id: string | null
 }
 
 type ReplyRow = {
@@ -65,6 +67,7 @@ export default function RecommendationRequests() {
   const [editReplyId, setEditReplyId] = useState<string | null>(null)
   const [editReplyText, setEditReplyText] = useState("")
   const [resolvingId, setResolvingId] = useState<string | null>(null)
+  const [resolutionAction, setResolutionAction] = useState<string | null>(null)
 
   const loadRequests = useCallback(async () => {
     setLoading(true)
@@ -82,7 +85,9 @@ export default function RecommendationRequests() {
 
     const { data: requestData, error: requestError } = await supabase
       .from("recommendation_requests")
-      .select("id, author_id, locality_id, group_id, title, body, category, created_at")
+      .select(
+        "id, author_id, locality_id, group_id, title, body, category, created_at, is_resolved, resolved_reply_id",
+      )
       .order("created_at", { ascending: false })
 
     if (requestError) {
@@ -91,7 +96,7 @@ export default function RecommendationRequests() {
       return
     }
 
-    const nextRequests = (requestData as RequestRow[] | null) ?? []
+    const nextRequests = (requestData as unknown as RequestRow[] | null) ?? []
     setRequests(nextRequests)
 
     const requestIds = nextRequests.map((request) => request.id)
@@ -339,6 +344,51 @@ export default function RecommendationRequests() {
     [supabase, loadRequests],
   )
 
+  // RECON-035 — só a autora marca, limpa ou reabre; o servidor revalida.
+  const runResolutionAction = useCallback(
+    async (actionKey: string, call: () => Promise<{ error: { message: string } | null }>) => {
+      setFeedback("")
+      setResolutionAction(actionKey)
+      const { error: rpcError } = await call()
+      setResolutionAction(null)
+      if (rpcError) {
+        setFeedback(rpcError.message)
+        return
+      }
+      await loadRequests()
+    },
+    [loadRequests],
+  )
+
+  const handleMarkResolvedReply = useCallback(
+    (requestId: string, replyId: string) =>
+      runResolutionAction(`mark:${requestId}:${replyId}`, () =>
+        callResolutionRpc(supabase, "mark_recommendation_reply_resolved", {
+          p_request_id: requestId,
+          p_reply_id: replyId,
+        }),
+      ),
+    [runResolutionAction, supabase],
+  )
+
+  const handleClearResolvedReply = useCallback(
+    (requestId: string) =>
+      runResolutionAction(`clear:${requestId}`, () =>
+        callResolutionRpc(supabase, "clear_recommendation_resolved_reply", {
+          p_request_id: requestId,
+        }),
+      ),
+    [runResolutionAction, supabase],
+  )
+
+  const handleReopenRequest = useCallback(
+    (requestId: string) =>
+      runResolutionAction(`reopen:${requestId}`, () =>
+        callResolutionRpc(supabase, "reopen_recommendation", { p_request_id: requestId }),
+      ),
+    [runResolutionAction, supabase],
+  )
+
   return (
     <div className="flex flex-col gap-4">
       {feedback && (
@@ -382,6 +432,11 @@ export default function RecommendationRequests() {
                           {request.group_id ? "Grupo" : "Manaus"}
                         </Chip>
                         <span className="text-xs text-muted">{formatDate(request.created_at)}</span>
+                        {request.is_resolved && (
+                          <Chip size="sm" variant="soft" color="success">
+                            ✓ Resolvida pela autora
+                          </Chip>
+                        )}
                       </div>
                     </div>
 
@@ -440,70 +495,122 @@ export default function RecommendationRequests() {
 
                   {replies.length > 0 && (
                     <ul className="flex flex-col gap-2 border-t border-border pt-3">
-                      {replies.map((reply) => (
-                        <li
-                          key={reply.id}
-                          className="flex flex-col gap-1 rounded-md border border-border p-2 text-sm"
-                        >
-                          {editReplyId === reply.id ? (
-                            <div className="flex flex-col gap-2">
-                              <TextArea
-                                aria-label="Editar resposta"
-                                rows={2}
-                                value={editReplyText}
-                                onChange={(event) =>
-                                  setEditReplyText((event.target as HTMLTextAreaElement).value)
-                                }
-                              />
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="primary"
-                                  onPress={() => saveEditReply(reply.id)}
-                                >
-                                  Salvar
-                                </Button>
-                                <Button size="sm" variant="tertiary" onPress={cancelEditReply}>
-                                  Cancelar
-                                </Button>
+                      {replies.map((reply) => {
+                        const isMarked = request.resolved_reply_id === reply.id
+                        const isMarking = resolutionAction === `mark:${request.id}:${reply.id}`
+                        const isClearing = resolutionAction === `clear:${request.id}`
+
+                        return (
+                          <li
+                            key={reply.id}
+                            className={`flex flex-col gap-1 rounded-md border border-border p-2 text-sm ${
+                              isMarked
+                                ? "border-l-4 border-l-[var(--semantic-success)] bg-[var(--semantic-success-soft)]"
+                                : ""
+                            }`}
+                          >
+                            {isMarked && (
+                              <div className="flex">
+                                <Chip size="sm" variant="soft" color="success">
+                                  Ajudou a resolver
+                                </Chip>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="text-sm text-muted">{reply.body}</span>
-                              {reply.author_id === currentUserId && (
-                                <div className="flex shrink-0 gap-1.5">
+                            )}
+                            {editReplyId === reply.id ? (
+                              <div className="flex flex-col gap-2">
+                                <TextArea
+                                  aria-label="Editar resposta"
+                                  rows={2}
+                                  value={editReplyText}
+                                  onChange={(event) =>
+                                    setEditReplyText((event.target as HTMLTextAreaElement).value)
+                                  }
+                                />
+                                <div className="flex gap-2">
                                   <Button
                                     size="sm"
-                                    variant="tertiary"
-                                    className="text-xs"
-                                    onPress={() => {
-                                      setEditReplyId(reply.id)
-                                      setEditReplyText(reply.body)
-                                    }}
+                                    variant="primary"
+                                    onPress={() => saveEditReply(reply.id)}
                                   >
-                                    Editar
+                                    Salvar
                                   </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="tertiary"
-                                    className="text-xs"
-                                    onPress={() => handleDeleteReply(reply.id)}
-                                  >
-                                    Excluir
+                                  <Button size="sm" variant="tertiary" onPress={cancelEditReply}>
+                                    Cancelar
                                   </Button>
                                 </div>
-                              )}
-                            </div>
-                          )}
-                        </li>
-                      ))}
+                              </div>
+                            ) : (
+                              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <span className="text-sm text-muted">{reply.body}</span>
+                                <div className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
+                                  {reply.author_id === currentUserId && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="tertiary"
+                                        className="min-h-11 text-xs"
+                                        onPress={() => {
+                                          setEditReplyId(reply.id)
+                                          setEditReplyText(reply.body)
+                                        }}
+                                      >
+                                        Editar
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="tertiary"
+                                        className="min-h-11 text-xs"
+                                        onPress={() => handleDeleteReply(reply.id)}
+                                      >
+                                        Excluir
+                                      </Button>
+                                    </>
+                                  )}
+                                  {isAuthor && !isMarked && (
+                                    <Button
+                                      size="sm"
+                                      variant="tertiary"
+                                      className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                      isDisabled={isMarking}
+                                      onPress={() => handleMarkResolvedReply(request.id, reply.id)}
+                                    >
+                                      {isMarking ? "Marcando..." : "Ajudou a resolver"}
+                                    </Button>
+                                  )}
+                                  {isAuthor && isMarked && (
+                                    <Button
+                                      size="sm"
+                                      variant="tertiary"
+                                      className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                      isDisabled={isClearing}
+                                      onPress={() => handleClearResolvedReply(request.id)}
+                                    >
+                                      {isClearing ? "Removendo..." : "Remover marca"}
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </li>
+                        )
+                      })}
                     </ul>
                   )}
 
                   {request.is_resolved ? (
-                    <div className="flex items-center gap-2 rounded-md bg-[var(--semantic-surface-sunken)] px-3 py-2 text-xs font-medium text-muted">
-                      ✅ Pedido resolvido
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[var(--semantic-surface-sunken)] px-3 py-2">
+                      <span className="text-xs font-medium text-muted">✅ Pedido resolvido</span>
+                      {isAuthor && (
+                        <Button
+                          size="sm"
+                          variant="tertiary"
+                          className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                          isDisabled={resolutionAction === `reopen:${request.id}`}
+                          onPress={() => handleReopenRequest(request.id)}
+                        >
+                          {resolutionAction === `reopen:${request.id}` ? "Reabrindo..." : "Reabrir"}
+                        </Button>
+                      )}
                     </div>
                   ) : isAuthor ? (
                     <div className="flex justify-end border-t border-border pt-3">
