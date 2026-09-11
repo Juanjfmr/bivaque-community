@@ -1003,13 +1003,27 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_suspensions: {
+        Row: {
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           consent_version: number
           consented_at: string | null
           created_at: string
           display_name: string
-          is_suspended: boolean
           updated_at: string
           user_id: string
           visibility: Database["public"]["Enums"]["profile_visibility"]
@@ -1019,7 +1033,6 @@ export type Database = {
           consented_at?: string | null
           created_at?: string
           display_name: string
-          is_suspended?: boolean
           updated_at?: string
           user_id: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]
@@ -1029,7 +1042,6 @@ export type Database = {
           consented_at?: string | null
           created_at?: string
           display_name?: string
-          is_suspended?: boolean
           updated_at?: string
           user_id?: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]

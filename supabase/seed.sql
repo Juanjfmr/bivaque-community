@@ -1218,7 +1218,7 @@ values
 on conflict (id) do nothing;
 
 -- ── Persona suspensa (W1-DENIED) ──────────────────────────────────────────
--- ADR-20260901-account-suspension: membro com flag is_suspended=true,
+-- ADR-20260901-account-suspension + ADR-20260910: membro suspenso,
 -- sem comunidade aprovada. Existe para que tests/e2e/denied-publish.spec.ts
 -- prove que INSERT em posts/comments/reactions/reports retorna 42501
 -- (classificado como 'server' pelo lib/composer/publish-error.ts) e que
@@ -1278,16 +1278,20 @@ insert into public.profiles (
   display_name,
   visibility,
   consent_version,
-  consented_at,
-  is_suspended
+  consented_at
 ) values (
   '20000000-0000-4000-8000-000000000099',
   'Membro Suspenso',
   'locality_members',
   1,
-  now() - interval '40 days',
-  true
+  now() - interval '40 days'
 )
+on conflict (user_id) do nothing;
+
+-- A suspensao vive em public.profile_suspensions (ADR-20260910). Linha presente
+-- = conta suspensa; e de la que o helper is_account_suspended le.
+insert into public.profile_suspensions (user_id)
+values ('20000000-0000-4000-8000-000000000099')
 on conflict (user_id) do nothing;
 
 -- ── Guia de chegada: fila de curadoria pendente (desenvolvimento) ──────────
