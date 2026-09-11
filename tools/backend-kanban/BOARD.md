@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 72 frentes · 8 agora · 9 bloqueadas · 27 concluídas · 0 drifts
+**Mapa:** 72 frentes · 8 agora · 8 bloqueadas · 28 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -28,7 +28,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **BLOCK-LEGAL-AI** · BLOCK · Governança LGPD para IA e terceiros — Revisão jurídica; Decisões do dono
 - **BLOCK-LEGAL-ENTRY** · BLOCK · Textos legais da entrada prontos para abertura pública — Abertura pública; Prova E2E/deploy
 - **BLOCK-RESEND** · BLOCK · Resend e domínio de e-mail transacional — Criar o projeto de deploy do Bivaque e configurar RESEND_API_KEY e RESEND_FROM_EMAIL; Provar uma entrega real pelo outbox em ambiente implantado
-- **BLOCK-SUSPENSION-EXPOSURE** · BLOCK · Status de suspensão vaza pela coluna em profiles (na main) — Decisão R3 do responsável sobre onde a coluna passa a viver e o que a UI lê no lugar
 - **BLOCK-WHATSAPP** · BLOCK · Canal WhatsApp do outbox — Chip dedicado; CNPJ para Cloud API futura; Decisão de produto
 - **BLOCK-MOBILE-RUNTIME** · P1 · Runtime Android/iOS em device real — bootstrap ausente — cmdline-tools + system-image + AVD ausentes (Android); Apple Developer Program + EAS credentials ausentes (iOS)
 - **RECON-005-BLOQUEADO** · P1 · Tela /profile bloqueada por decisao R3 de visibilidade de campo — Aprovacao humana do ADR-20260908-perfil-campos-opcionais; Modelo de ameaca e texto de consentimento; Governanca LGPD (BLOCK-LEGAL-AI)

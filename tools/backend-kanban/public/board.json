@@ -2102,7 +2102,7 @@
       "phase": "Launch blocker",
       "priority": "BLOCK",
       "category": "backend",
-      "status": "blocked",
+      "status": "done",
       "description": "is_suspended vive em public.profiles, cuja policy de SELECT libera a linha inteira a quem compartilha localidade ou comunidade. Qualquer membro autenticado lê o status de suspensão de terceiros pela Data API. Está na main desde o merge do PR #54. Contraria o ADR-20260901 §4.3 anti-enumeração e a decisão de que is_suspended é visível apenas para o próprio dono. Fechar exige tirar a coluna da exposição do Data API — schema e policy sobre dado pessoal, R3.",
       "checklist": [
         "Decidir o desenho: tabela própria com RLS owner-only no padrão profile_affiliations, ou view/revoke de coluna",
@@ -2120,19 +2120,20 @@
         "42c055d e 3acaadd fecharam as duas vias de RPC — anon recebe 42501, membro recebe false para terceiro — e NÃO fecham a coluna.",
         "O veto de publicação continua funcionando: conta suspensa recebe 42501 ao inserir em posts. A correção não pode regredir isso.",
         "CI verde no 3acaadd e merge limpo não cobrem esta via: nenhum teste exercita leitura de is_suspended por terceiro.",
-        "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR."
+        "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR.",
+        "Resolvido em 2026-09-10 no branch fix/r3-suspensao-tabela (commit 08129b9): migration 20260911033327_move_suspension_out_of_profiles move is_suspended para public.profile_suspensions com RLS owner-only (padrao profile_affiliations); a coluna sai de profiles e o helper is_account_suspended le a tabela nova preservando a guarda de autoleitura. Verificacao: db reset --no-seed + test:db (1142 asserts, All tests successful) + db:lint sem erros + gate verde. ADR-20260910-suspensao-fora-da-exposicao.",
+        "Resolvido em 2026-09-10 no branch fix/r3-suspensao-tabela (commit 08129b9): migration 20260911033327_move_suspension_out_of_profiles move is_suspended para public.profile_suspensions com RLS owner-only (padrao profile_affiliations); a coluna sai de profiles e o helper is_account_suspended le a tabela nova preservando a guarda de autoleitura. Verificacao: db reset --no-seed + test:db (1142 asserts, All tests successful) + db:lint sem erros + gate verde. ADR-20260910-suspensao-fora-da-exposicao."
       ],
-      "blockers": [
-        "Decisão R3 do responsável sobre onde a coluna passa a viver e o que a UI lê no lugar"
-      ],
+      "blockers": [],
       "links": [
         "ADR | ../../docs/decisions/ADR-20260901-account-suspension.md",
         "PR merjado | https://github.com/Juanjfmr/bivaque-community/pull/54"
       ],
       "updatedAt": "2026-09-10",
-      "sourceRevision": "15a884d",
+      "sourceRevision": "08129b9",
       "dependencies": [],
-      "completedChecklist": [false, false, false, false, false, false, false]
+      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedAt": "2026-09-10"
     }
   ]
 }
