@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-09-11",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -2072,12 +2072,19 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
+        "RECON-022 executado (prancha 62) com prova de gate e captura; prova de banco pendente por banco compartilhado"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-        "npx pnpm@11.18.0 gate → verde"
+        "npx pnpm@11.18.0 gate → verde",
+        "RECON-022 (prancha 62) executado em 2026-09-11: ficha /prestadores/[id] e /pedidos/novo + migration 20260911032309_service_requests (service_requests, service_request_photos, RLS e RPC create_service_request idempotente) + supabase/tests/service-requests.sql (12 asserts, positivo e negativo).",
+        "RECON-022 provas lidas nesta sessão: task-contract ok; npx pnpm@11.18.0 gate verde (lint, typecheck, build, unit 509, privacy 189, scope 100, secrets); capturas autenticadas 375/768/1440 com membro-1@ (ficha high 0 e 1 médio de reading-measure; pedido 0 achados).",
+        "RECON-022 PENDENTE: prova de banco (reset sem seed + test:db) NÃO executada — proibido alterar o banco local compartilhado; 20260911032309 não está aplicada e há 20260911033327 aplicada fora desta árvore. closure.requires_runtime_evidence segue sem prova.",
+        "RECON-022 divergência ADR-20260909-pedidos: D2 pede tabela conversation_contexts; a implementação reaproveita dm_conversations.context_type/context_id + unique(participant_a,participant_b) e o RPC open_conversation. Material para RECON-025/029 (par único pode forçar uma conversa por par entre contextos listing/event). Decisão do dono/revisor pendente.",
+        "RECON-022 drift reconciliado: tests/e2e/provider-vitrine.spec.ts afirmava heading Catálogo + descrição do item; prancha 62 manda Serviços com ícone+rótulo. Asserção atualizada (fora de allowed_paths, declarado); E2E não executado nesta sessão.",
+        "RECON-022 divergências visuais declaradas: a foto da ficha mostra o estado vazio honesto (seed sem portfolio photo); o shell entregue difere do desenho (sem busca no cabeçalho, com Minhas comunidades) — pré-existente, fora deste lote."
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
@@ -2093,8 +2100,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
