@@ -35,7 +35,12 @@
       ],
       "updatedAt": "2026-09-11",
       "sourceRevision": "0323a94",
-      "dependencies": []
+      "dependencies": [],
+      "drift": {
+        "documented": "RECON-031.task.yml (authority) e PRANCHAS-WEB-RESTANTES.md, RECON-WEB-EXECUCAO.md, os ADRs de 09/09 e tests/scope/prancha-coverage.test.mjs citam docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md",
+        "observed": "O arquivo nao existe neste branch; foi adicionado no commit 5143ada, que vive apenas em chore/visual-routes / codex/fidelidade-pranchas e nao e ancestral de main",
+        "action": "Reconciliar a citacao - trazer o handoff do branch de fidelidade para este branch ou trocar as referencias por PRANCHAS-WEB-RESTANTES.md; ate la, a autoridade usada foram o PNG da prancha e a leitura versionada"
+      }
     },
     {
       "id": "MVP-00-REBASELINE",
