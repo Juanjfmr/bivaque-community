@@ -2072,18 +2072,35 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
+<<<<<<< HEAD
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote — RECON-018 executado em 11/09 (pranchas 36/37), 17 restantes"
+=======
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
+        "RECON-020 (pranchas 39 e 51): /onboarding/locality e /onboarding/perfil e a bio em /profile implementados em fix/recon-020-perfil, com a migration 20260911024732_profile_bio.sql, pgTAP e testes de unidade",
+        "RECON-020 PENDENTE: prova de banco nao executada (banco local compartilhado: sem reset e sem migration) e revisao independente ainda nao feita"
+>>>>>>> fix/recon-020-perfil
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
         "npx pnpm@11.18.0 gate → verde",
+<<<<<<< HEAD
         "RECON-018 (pranchas 36/37) 11/09/2026: node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-018.task.yml → ok (R2, retry 3); npx pnpm@11.18.0 gate → GATE VERDE (lint 16s, typecheck 23s, build 95s, test 67s: 531 unit + 76 mobile + 19 web + 189 privacidade + 100 escopo, secrets 25s). /auth/confirmar-email entra no build como rota estatica.",
         "RECON-018 E2E 11/09/2026: npx playwright test --config tests/e2e/recon-018.config.ts --workers=2 (APP_URL=http://127.0.0.1:3297) → 45/45 pass (15 testes x 3 viewports): controles da prancha 36, mostrar/ocultar, credencial unica anti-enumeracao, duplo submit no mesmo tick sem duplicar token, destino ?redirect= interno honrado e externo barrado, aceite condiciona o cadastro, e-mail duplicado sugere entrar, senha curta barrada no cliente, painel pendente com eco e reenvio, contador persistente, 429 do servidor distinguivel, falha de rede sem promessa e painel expirado.",
         "RECON-018 capturas 11/09/2026: node scripts/visual/capture.mjs em /login, /signup, /recuperar-senha, /nova-senha, /auth/confirmar-email (nada-pendente e pendente) e /auth/confirmar-email?estado=expirado nos tres viewports → status 200, landedOn igual ao path pedido, Authenticated capture: yes, 0 findings (0 high). .visual/recon018-*",
         "RECON-018 pendencia (R06/R04): /auth/confirmar-email nao esta em PUBLIC_PATHS e apps/web/proxy.ts esta fora do allowed_paths do lote; cadastro sem sessao e devolvido a /login, entao o painel da prancha 37 foi provado por sessao de membro. O 429 de reenvio e reproduzido no transporte e o aceite pos-confirmacao e coberto por unidade, porque o GoTrue local tem [auth.email] enable_confirmations=false e additional_redirect_urls sem a porta do executor.",
         "RECON-018 pendencia: revisao independente em sessao separada ainda nao ocorreu (reviewer_must_differ_from_executor=true); o gate local e o e2e acima nao a substituem."
+=======
+        "RECON-020: node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-020.task.yml → 1 contrato valido (R3, retry 3)",
+        "RECON-020: npx pnpm@11.18.0 gate → verde (lint, typecheck, build, test, secrets)",
+        "RECON-020: capture 375/768/1440 de /onboarding/locality (verified-no-membership@), /onboarding/perfil, /onboarding/welcome e /profile (visual@) → 0 achados de alta severidade"
+>>>>>>> fix/recon-020-perfil
       ],
+      "drift": {
+        "documented": "ADR-20260808-perfil-campos-opcionais esta com status proposed e diz que nada autoriza implementar enquanto proposed; o AGENTS.md da raiz repete a proibicao de afiliacao declarada",
+        "observed": "a main ja publica public.profile_affiliations (migration 20260909020733) e a tela de afiliacao, com o comentario da migration afirmando aprovacao; o RECON-020 constroi a personalizacao sobre esse mecanismo, sem criar persistencia nova",
+        "action": "o dono confirma o status do ADR-20260808 e o campo status e reconciliado (approved, ou o registro de por que diverge) antes de o RECON-020 fechar"
+      },
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
@@ -2099,6 +2116,7 @@
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "drift": {
         "documented": "O contrato RECON-027 promete Moradia com as pranchas 65 (painel 1) e 19, backend junto das telas, pgTAP positivo/negativo, E2E de publicar/encontrar/interesse e captura em 375/768/1440, e o manual declara os 18 lotes liberados para execução.",
         "observed": "Neste checkout (branch fix/recon-027-moradia) o lote entregou a migration do domínio de anúncio (listings, property_details, listing_photos, listing_saves, listing_alerts, bucket privado listing-photos, RLS e private.can_read_listing), o pgTAP, a lib de domínio com 20 testes unitários e as rotas /imoveis, /imoveis/[id], /imoveis/novo e /imoveis/[id]/editar; gate e build verdes. Mas RECON-025 (domínio Mercado) e RECON-022 (conversa contextual) não existem no checkout, e o stack local é compartilhado com outros executores, então a migration não foi aplicada e pgTAP, E2E, /imoveis/alertas (RECON-028) e captura não rodaram. O interesse no anúncio ficou indisponível na ficha, com motivo visível, por depender da conversa do RECON-022.",
@@ -2106,6 +2124,8 @@
       },
 =======
 >>>>>>> fix/recon-018-entrada
+=======
+>>>>>>> fix/recon-020-perfil
       "updatedAt": "2026-09-11",
       "sourceRevision": "0323a94"
     },
