@@ -78,6 +78,14 @@ const ROUTES = [
   { path: "/messages", name: "messages", auth: true },
   { path: "/notifications", name: "notifications", auth: true },
   { path: "/profile", name: "profile", auth: true },
+  // RECON-031 — configurações (prancha 52) e confiança (prancha 56). A fixture
+  // é a conta do seed: membro verificado (default), com a coluna vertical de
+  // seções e as subrotas reais.
+  { path: "/configuracoes", name: "configuracoes", auth: true },
+  { path: "/configuracoes/notificacoes", name: "configuracoes-notificacoes", auth: true },
+  { path: "/configuracoes/conta", name: "configuracoes-conta", auth: true },
+  { path: "/configuracoes/familia", name: "configuracoes-familia", auth: true },
+  { path: "/configuracoes/bloqueados", name: "configuracoes-bloqueados", auth: true },
 ]
 
 // --------------------------------------------------------------------------

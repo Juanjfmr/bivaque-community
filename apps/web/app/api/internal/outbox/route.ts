@@ -3,6 +3,10 @@ import { deliverOutboxBatch, type OutboxChannel, type OutboxMessage } from "@biv
 import { NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
 import { log } from "../../../../lib/logger"
+import {
+  type ChannelPreferenceRow,
+  outboxDeliveryAllowed,
+} from "../../../../lib/notifications/channel-preferences"
 import { createChannelAdapters } from "../../../../lib/outbox/adapters"
 import { createServerClient } from "../../../../lib/supabase/server"
 
@@ -14,8 +18,10 @@ const MAX_BATCH = 100
 type OutboxRow = Database["public"]["Tables"]["outbox"]["Row"]
 type NotificationPreferencesRow = Pick<
   Database["public"]["Tables"]["notification_preferences"]["Row"],
-  "user_id" | "comments" | "events" | "messages" | "mentions"
+  "user_id" | "comments" | "events" | "messages" | "mentions" | "product_news"
 >
+type NotificationChannelPreferencesRow =
+  Database["public"]["Tables"]["notification_channel_preferences"]["Row"]
 type OutboxUpdate = Database["public"]["Tables"]["outbox"]["Update"]
 
 function secretMatches(provided: string, expected: string): boolean {
@@ -37,15 +43,6 @@ function toMessage(row: OutboxRow): OutboxMessage {
     attempts: row.attempts,
     updatedAt: Date.parse(row.updated_at),
   }
-}
-
-function preferenceKey(
-  type: string,
-): keyof Pick<NotificationPreferencesRow, "comments" | "events" | "messages" | "mentions"> | null {
-  if (type === "comment") return "comments"
-  if (type === "event_rsvp" || type === "event_change") return "events"
-  if (type === "direct_message") return "messages"
-  return null
 }
 
 function userIdFromPayload(payload: Record<string, unknown>): string | null {
@@ -113,18 +110,35 @@ export async function POST(request: Request) {
   ]
 
   let preferences: NotificationPreferencesRow[] = []
+  let channelPreferences: Array<
+    Pick<NotificationChannelPreferencesRow, "user_id" | "notification_type" | "channel" | "enabled">
+  > = []
   if (userIds.length > 0) {
-    const { data, error: preferencesError } = await supabase
-      .from("notification_preferences")
-      .select("user_id, comments, events, messages, mentions")
-      .in("user_id", userIds)
+    const [preferencesResult, channelPreferencesResult] = await Promise.all([
+      supabase
+        .from("notification_preferences")
+        .select("user_id, comments, events, messages, mentions, product_news")
+        .in("user_id", userIds),
+      supabase
+        .from("notification_channel_preferences")
+        .select("user_id, notification_type, channel, enabled")
+        .in("user_id", userIds),
+    ])
 
-    if (preferencesError) {
+    if (preferencesResult.error) {
       log.error("outbox worker preference lookup failed", {
-        error: preferencesError.message,
+        error: preferencesResult.error.message,
       })
     } else {
-      preferences = data ?? []
+      preferences = preferencesResult.data ?? []
+    }
+
+    if (channelPreferencesResult.error) {
+      log.error("outbox worker channel-preference lookup failed", {
+        error: channelPreferencesResult.error.message,
+      })
+    } else {
+      channelPreferences = channelPreferencesResult.data ?? []
     }
   }
 
@@ -142,6 +156,17 @@ export async function POST(request: Request) {
   const preferencesByUser = new Map<string, NotificationPreferencesRow>(
     preferences.map((preference) => [preference.user_id, preference]),
   )
+
+  const channelPreferencesByUser = new Map<string, ChannelPreferenceRow[]>()
+  for (const row of channelPreferences) {
+    const bucket = channelPreferencesByUser.get(row.user_id) ?? []
+    bucket.push({
+      notification_type: row.notification_type,
+      channel: row.channel,
+      enabled: row.enabled,
+    })
+    channelPreferencesByUser.set(row.user_id, bucket)
+  }
   const optedOut = new Set(
     optOutResults.flatMap((result, index) => {
       const message = messages[index]
@@ -158,11 +183,12 @@ export async function POST(request: Request) {
       const userId = userIdFromPayload(message.payload)
       if (!userId) return true
 
-      const preference = preferencesByUser.get(userId)
-      if (!preference) return true
-
-      const key = preferenceKey(message.type)
-      return key === null || preference[key]
+      return outboxDeliveryAllowed({
+        type: message.type,
+        outboxChannel: message.channel,
+        preference: preferencesByUser.get(userId),
+        matrix: channelPreferencesByUser.get(userId) ?? [],
+      })
     },
     optOutAllows: (channel: OutboxChannel, recipient: string) =>
       !optedOut.has(`${channel}:${recipient}`),

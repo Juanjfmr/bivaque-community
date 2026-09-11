@@ -4,6 +4,40 @@
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
+      "id": "RECON-031-CONFIGURACOES",
+      "title": "Web: configuracoes e confianca (pranchas 52 e 56) com a matriz de canais",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "As configuracoes passam a ser as das pranchas 52 e 56: coluna vertical de secoes com o H1 fora do cartao, canais de entrega gravando por tipo e canal, novidades desligadas por padrao, conta com recuperacao e solicitacao de exclusao, familia com criar/copiar/revogar convite e confianca com denuncias e bloqueios. A matriz notification_channel_preferences e a coluna product_news entram na mesma migration, com pgTAP de caso positivo e negativo. ADR-20260909-canais-de-notificacao aprovado.",
+      "checklist": [
+        "Coluna vertical de secoes da prancha 52, com o H1 fora do cartao",
+        "Canais de entrega gravados por tipo e canal; tipo desligado nao entrega por canal nenhum",
+        "Novidades do Bivaque como tipo proprio, desligado por padrao para conta existente e nova",
+        "Subrotas /configuracoes/{notificacoes,conta,familia,bloqueados} e lista de bloqueios abaixo das denuncias (prancha 56)",
+        "PENDENTE: reset local sem seed + test:db (pgTAP de 16 asserts) e prova de runtime de /configuracoes/notificacoes. A migration 20260911054812 nao esta aplicada no banco local compartilhado deste worktree e o contrato proibiu reset/migration; a prova cabe ao CI (db:reset --no-seed + test:db)."
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-031.task.yml -> 1 contrato valido",
+        "npx pnpm@11.18.0 gate -> verde (lint, typecheck, build, 513 unit + 189 privacy + 76 mobile + 100 scope, secrets)",
+        "tests/unit/notifications/channel-preferences.test.ts -> 8 passed (regra tipo x canal e despachante com canal ligado e desligado)",
+        "captura autenticada em 375/768/1440 das 5 rotas (.visual/recon031b-*); /configuracoes, /conta, /familia e /bloqueados renderizam; /bloqueados le denuncias e bloqueios reais com o cliente de sessao, porque service_role nao tem SELECT em dm_blocks"
+      ],
+      "tests": [
+        "tests/unit/notifications/channel-preferences.test.ts",
+        "supabase/tests/notification-channel-preferences.sql (16 asserts; escrita, nao executada neste worktree)",
+        "node scripts/visual/capture.mjs"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-031.task.yml",
+        "docs/decisions/ADR-20260909-canais-de-notificacao.md"
+      ],
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94",
+      "dependencies": []
+    },
+    {
       "id": "MVP-00-REBASELINE",
       "title": "Rebaseline técnico e contrato de lançamento",
       "phase": "MVP-00",
