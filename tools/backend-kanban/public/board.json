@@ -2075,6 +2075,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote — RECON-018 executado em 11/09 (pranchas 36/37), 17 restantes"
 =======
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
@@ -2089,10 +2090,15 @@
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
         "RECON-022 executado (prancha 62) com prova de gate e captura; prova de banco pendente por banco compartilhado"
 >>>>>>> fix/recon-022-prestador-ficha
+=======
+        "RECON-025 (13/63): dominio listings + bucket privado listing-photos + /mercado, /mercado/[id] e /mercado/novo entregues em codigo; pgTAP, E2E e captura ficam pendentes por banco local compartilhado",
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+>>>>>>> fix/recon-025-mercado
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
+<<<<<<< HEAD
         "npx pnpm@11.18.0 gate → verde",
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -2115,6 +2121,11 @@
         "RECON-022 drift reconciliado: tests/e2e/provider-vitrine.spec.ts afirmava heading Catálogo + descrição do item; prancha 62 manda Serviços com ícone+rótulo. Asserção atualizada (fora de allowed_paths, declarado); E2E não executado nesta sessão.",
         "RECON-022 divergências visuais declaradas: a foto da ficha mostra o estado vazio honesto (seed sem portfolio photo); o shell entregue difere do desenho (sem busca no cabeçalho, com Minhas comunidades) — pré-existente, fora deste lote."
 >>>>>>> fix/recon-022-prestador-ficha
+=======
+        "npx pnpm@11.18.0 gate → verde (2026-09-11)",
+        "RECON-025 (2026-09-11): docs/agents/tasks/RECON-025.task.yml valido; npx pnpm@11.18.0 gate -> verde; npx pnpm@11.18.0 build -> verde com /mercado, /mercado/[id] e /mercado/novo; tests/unit/listings/catalog.test.ts -> 22 passam",
+        "RECON-025 pendente: npx pnpm@11.18.0 test:db (pgTAP positivo/negativo escrito em supabase/tests/listing-market.sql, nao executado), test:e2e e captura 375/768/1440 nao rodaram - a migration nao foi aplicada ao stack local compartilhado; a sessao foi instruida a nao alterar estado compartilhado"
+>>>>>>> fix/recon-025-mercado
       ],
       "drift": {
         "documented": "ADR-20260808-perfil-campos-opcionais esta com status proposed e diz que nada autoriza implementar enquanto proposed; o AGENTS.md da raiz repete a proibicao de afiliacao declarada",
@@ -2160,6 +2171,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "drift": {
         "documented": "O contrato RECON-027 promete Moradia com as pranchas 65 (painel 1) e 19, backend junto das telas, pgTAP positivo/negativo, E2E de publicar/encontrar/interesse e captura em 375/768/1440, e o manual declara os 18 lotes liberados para execução.",
         "observed": "Neste checkout (branch fix/recon-027-moradia) o lote entregou a migration do domínio de anúncio (listings, property_details, listing_photos, listing_saves, listing_alerts, bucket privado listing-photos, RLS e private.can_read_listing), o pgTAP, a lib de domínio com 20 testes unitários e as rotas /imoveis, /imoveis/[id], /imoveis/novo e /imoveis/[id]/editar; gate e build verdes. Mas RECON-025 (domínio Mercado) e RECON-022 (conversa contextual) não existem no checkout, e o stack local é compartilhado com outros executores, então a migration não foi aplicada e pgTAP, E2E, /imoveis/alertas (RECON-028) e captura não rodaram. O interesse no anúncio ficou indisponível na ficha, com motivo visível, por depender da conversa do RECON-022.",
@@ -2179,6 +2191,10 @@
       "updatedAt": "2026-09-11",
       "sourceRevision": "0323a94"
 >>>>>>> fix/recon-022-prestador-ficha
+=======
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "2f87f12"
+>>>>>>> fix/recon-025-mercado
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
