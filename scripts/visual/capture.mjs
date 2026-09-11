@@ -47,6 +47,17 @@ const ROUTES = [
   // capture-a quando a fixture existir.
   { path: "/mercado", name: "mercado", auth: true },
   { path: "/mercado/novo", name: "mercado-novo", auth: true },
+  // RECON-026: a gestão dos próprios anúncios. `/meus-anuncios` é rota fixa. A
+  // edição depende de um anúncio no seed; `supabase/seed.sql` está fora dos
+  // allowed_paths deste lote, então o caminho fica cadastrado com um id
+  // determinístico e a captura cai no estado honesto "indisponível" até existir
+  // a fixture — nunca em 404 silencioso nem em tela de login.
+  { path: "/meus-anuncios", name: "meus-anuncios", auth: true },
+  {
+    path: "/mercado/a0000000-0000-4000-8000-000000000001/editar",
+    name: "mercado-editar",
+    auth: true,
+  },
   { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
   { path: "/guide", name: "arrival-guide", auth: true },
