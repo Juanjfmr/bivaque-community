@@ -90,12 +90,13 @@ export default function FamilyInviteSection() {
       {isVerified ? (
         <form action={handleSend} className="mt-3 flex flex-col gap-2">
           <div className="flex gap-2">
+            <label htmlFor="family-invite-email" className="sr-only">
+              E-mail do familiar
+            </label>
             <Input
+              id="family-invite-email"
               type="email"
               name="email"
-              // placeholder não é nome acessível: some quando a pessoa digita, e
-              // leitor de tela não o anuncia como rótulo do campo.
-              aria-label="E-mail do familiar"
               placeholder="email@familiar.com"
               required
               className="flex-1"
