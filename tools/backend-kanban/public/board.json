@@ -2092,6 +2092,7 @@
 >>>>>>> fix/recon-022-prestador-ficha
 =======
         "RECON-025 (13/63): dominio listings + bucket privado listing-photos + /mercado, /mercado/[id] e /mercado/novo entregues em codigo; pgTAP, E2E e captura ficam pendentes por banco local compartilhado",
+        "RECON-026 (21/64): ciclo de vida do anuncio (public.transition_listing + public.listing_status_events) e as telas /meus-anuncios e /mercado/[id]/editar em codigo; pgTAP, E2E e captura autenticada pendentes pelo banco compartilhado; a captura da edicao precisa de fixture no seed, fora dos allowed_paths do lote",
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
 >>>>>>> fix/recon-025-mercado
       ],
@@ -2124,8 +2125,14 @@
 =======
         "npx pnpm@11.18.0 gate → verde (2026-09-11)",
         "RECON-025 (2026-09-11): docs/agents/tasks/RECON-025.task.yml valido; npx pnpm@11.18.0 gate -> verde; npx pnpm@11.18.0 build -> verde com /mercado, /mercado/[id] e /mercado/novo; tests/unit/listings/catalog.test.ts -> 22 passam",
+<<<<<<< HEAD
         "RECON-025 pendente: npx pnpm@11.18.0 test:db (pgTAP positivo/negativo escrito em supabase/tests/listing-market.sql, nao executado), test:e2e e captura 375/768/1440 nao rodaram - a migration nao foi aplicada ao stack local compartilhado; a sessao foi instruida a nao alterar estado compartilhado"
 >>>>>>> fix/recon-025-mercado
+=======
+        "RECON-025 pendente: npx pnpm@11.18.0 test:db (pgTAP positivo/negativo escrito em supabase/tests/listing-market.sql, nao executado), test:e2e e captura 375/768/1440 nao rodaram - a migration nao foi aplicada ao stack local compartilhado; a sessao foi instruida a nao alterar estado compartilhado",
+        "RECON-026 (2026-09-11): docs/agents/tasks/RECON-026.task.yml valido; npx pnpm@11.18.0 gate --fast -> verde (lint, typecheck); tests/unit/listings/lifecycle.test.ts -> 21 passam",
+        "RECON-026 pendente: npx pnpm@11.18.0 test:db (pgTAP em supabase/tests/listing-lifecycle.sql nao executado), test:e2e e captura 375/768/1440 - a migration 20260911043436_listing_lifecycle.sql nao foi aplicada ao stack compartilhado e o seed nao tem anuncio para a rota de edicao"
+>>>>>>> fix/recon-026-meus-anuncios
       ],
       "drift": {
         "documented": "ADR-20260808-perfil-campos-opcionais esta com status proposed e diz que nada autoriza implementar enquanto proposed; o AGENTS.md da raiz repete a proibicao de afiliacao declarada",
@@ -2193,8 +2200,12 @@
 >>>>>>> fix/recon-022-prestador-ficha
 =======
       "updatedAt": "2026-09-11",
+<<<<<<< HEAD
       "sourceRevision": "2f87f12"
 >>>>>>> fix/recon-025-mercado
+=======
+      "sourceRevision": "d3f6dfa"
+>>>>>>> fix/recon-026-meus-anuncios
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
