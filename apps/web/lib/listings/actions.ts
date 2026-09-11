@@ -344,3 +344,111 @@ export async function toggleListingSaveAction(formData: FormData): Promise<Actio
   revalidatePath(`/imoveis/${listingId}`)
   return { ok: true }
 }
+
+// RECON-028 — gestão da assinatura (prancha 65, painel 2). A RLS de
+// `listing_alerts` é quem garante que só o dono altera; `.select("id")` devolve
+// as linhas realmente afetadas, então uma assinatura que sumiu ou mudou em outra
+// aba vira conflito declarado, não "sucesso" silencioso.
+export async function updateListingAlertAction(formData: FormData): Promise<ActionState> {
+  const userId = await currentUserId()
+  if (userId === null) {
+    return { ok: false, message: "Sessão expirada. Entre novamente para editar o alerta." }
+  }
+
+  const alertId = String(formData.get("alertId") ?? "")
+  if (alertId === "") {
+    return { ok: false, message: "Alerta não identificado." }
+  }
+
+  const filters = parseListingFilters({
+    bairro: String(formData.get("bairro") ?? "") || undefined,
+    tipo_negocio: String(formData.get("tipo_negocio") ?? "") || undefined,
+    valor_max: String(formData.get("valor_max") ?? "") || undefined,
+    quartos: String(formData.get("quartos") ?? "") || undefined,
+  })
+
+  const client = await createListingClient()
+  const { data, error } = await client
+    .from("listing_alerts")
+    .update({
+      locality_id: String(formData.get("localityId") ?? "") || null,
+      neighborhood: filters.neighborhood,
+      deal: filters.deal,
+      max_value_cents: filters.maxValueCents,
+      min_bedrooms: filters.minBedrooms,
+    })
+    .eq("id", alertId)
+    .select("id")
+
+  if (error) {
+    return { ...GENERIC_ERROR, message: error.message }
+  }
+  if (!data || data.length === 0) {
+    return {
+      ok: false,
+      message: "Este alerta não existe mais ou mudou em outra aba. Recarregue e tente de novo.",
+    }
+  }
+
+  revalidatePath("/imoveis/alertas")
+  return { ok: true, message: "Alerta atualizado." }
+}
+
+export async function setListingAlertActiveAction(formData: FormData): Promise<ActionState> {
+  const userId = await currentUserId()
+  if (userId === null) {
+    return { ok: false, message: "Sessão expirada. Entre novamente para mudar o alerta." }
+  }
+
+  const alertId = String(formData.get("alertId") ?? "")
+  if (alertId === "") {
+    return { ok: false, message: "Alerta não identificado." }
+  }
+  const active = String(formData.get("active") ?? "") === "true"
+
+  const client = await createListingClient()
+  const { data, error } = await client
+    .from("listing_alerts")
+    .update({ is_active: active })
+    .eq("id", alertId)
+    .select("id")
+
+  if (error) {
+    return { ...GENERIC_ERROR, message: error.message }
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, message: "Este alerta não existe mais. Recarregue a página." }
+  }
+
+  revalidatePath("/imoveis/alertas")
+  return { ok: true, message: active ? "Alerta ligado." : "Alerta desligado." }
+}
+
+export async function deleteListingAlertAction(formData: FormData): Promise<ActionState> {
+  const userId = await currentUserId()
+  if (userId === null) {
+    return { ok: false, message: "Sessão expirada. Entre novamente para excluir o alerta." }
+  }
+
+  const alertId = String(formData.get("alertId") ?? "")
+  if (alertId === "") {
+    return { ok: false, message: "Alerta não identificado." }
+  }
+
+  const client = await createListingClient()
+  const { data, error } = await client
+    .from("listing_alerts")
+    .delete()
+    .eq("id", alertId)
+    .select("id")
+
+  if (error) {
+    return { ...GENERIC_ERROR, message: error.message }
+  }
+  if (!data || data.length === 0) {
+    return { ok: false, message: "Este alerta não existe mais. Recarregue a página." }
+  }
+
+  revalidatePath("/imoveis/alertas")
+  return { ok: true, message: "Alerta excluído." }
+}

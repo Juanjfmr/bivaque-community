@@ -37,7 +37,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Drift aberto
 
-- **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas — Executar RECON-025 e RECON-022 primeiro. Num stack exclusivo, aplicar a migration, rodar db:reset --no-seed + test:db + db:lint, test:e2e (publicar, encontrar por filtro, interesse) e a captura 375/768/1440 com ator e destino. Reconciliar a ordem da migration com RECON-025, que também cria public.listings; adicionar a fixture de anúncio ao seed.sql para a captura do detalhe.
+- **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas — Num stack exclusivo, aplicar 20260911043053 + 20260911050941 + 20260911051005 e rodar db:reset --no-seed + test:db (listing-alerts.sql) + db:lint; depois db:reset com seed, acrescentar alerta e anuncio de Moradia ao seed.sql e capturar /imoveis/alertas populado em 375/768/1440 com ator e destino. Executar RECON-031 (matriz de canal) antes de fechar RECON-028; o lote fica aberto, nao done.
 
 ## Triagem prioritária
 
