@@ -28,6 +28,25 @@ const ROUTES = [
   { path: "/", name: "root", auth: false },
   { path: "/login", name: "login", auth: false },
   { path: "/signup", name: "signup", auth: false },
+  { path: "/recuperar-senha", name: "recuperar-senha", auth: false },
+  { path: "/nova-senha", name: "nova-senha", auth: false },
+  // RECON-018 (prancha 37): os três painéis do cartão de confirmação. A rota é
+  // alcançável por sessão de membro no proxy; o painel pendente e o expirado
+  // dependem do estado local (sessionStorage) que `pendingEmail` planta, com
+  // um endereço de exemplo — fixture de tela, não dado real.
+  { path: "/auth/confirmar-email", name: "auth-confirmar-email", auth: true },
+  {
+    path: "/auth/confirmar-email",
+    name: "auth-confirmar-email-pendente",
+    auth: true,
+    pendingEmail: "ana@exemplo.invalid",
+  },
+  {
+    path: "/auth/confirmar-email?estado=expirado",
+    name: "auth-confirmar-email-expirado",
+    auth: true,
+    pendingEmail: "ana@exemplo.invalid",
+  },
   { path: "/consent", name: "consent", auth: false },
   { path: "/onboarding", name: "onboarding", auth: false },
   { path: "/onboarding", name: "onboarding", auth: true },
@@ -475,6 +494,19 @@ async function main() {
         await context.addInitScript(
           ([key, session]) => window.localStorage.setItem(key, JSON.stringify(session)),
           [auth.storageKey, auth.session],
+        )
+      }
+
+      // RECON-018: espelha a flag local que o cadastro escreve antes de mandar
+      // para /auth/confirmar-email (chave em
+      // apps/web/app/components/auth/resend-clock.ts — manter em sincronia).
+      // Sem ela a rota captura o painel "nada pendente", que também é estado
+      // válido, mas não é o painel da prancha.
+      if (route.pendingEmail) {
+        await context.addInitScript(
+          ([payload]) =>
+            window.sessionStorage.setItem("bivaque:confirmacao-pendente", JSON.stringify(payload)),
+          [{ email: route.pendingEmail, lastResendAt: null }],
         )
       }
 

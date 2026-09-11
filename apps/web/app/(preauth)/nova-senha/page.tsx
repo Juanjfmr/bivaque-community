@@ -57,7 +57,11 @@ export default function NovaSenhaPage() {
         setError("Não foi possível salvar a senha agora. Peça outro link e tente de novo.")
         return
       }
-      router.push("/consent")
+      // R08: senha salva no provedor e devolvida ao destino autorizado. O
+      // portão de /consent saiu do produto (ADR-20260907-consentimento-no-
+      // cadastro); "/" é resolvido pelo proxy com a sessão da recuperação —
+      // onboarding para quem ainda não concluiu, início para quem já é membro.
+      router.push("/")
     } catch {
       setError("Verifique sua conexão e tente de novo.")
     } finally {
