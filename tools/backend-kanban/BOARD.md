@@ -7,10 +7,14 @@
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 **Mapa:** 72 frentes · 8 agora · 8 bloqueadas · 28 concluídas · 1 drifts
 =======
 **Mapa:** 72 frentes · 8 agora · 9 bloqueadas · 27 concluídas · 1 drifts
 >>>>>>> fix/recon-020-perfil
+=======
+**Mapa:** 72 frentes · 8 agora · 9 bloqueadas · 27 concluídas · 1 drifts
+>>>>>>> fix/recon-021-busca-global
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -41,10 +45,14 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 ## Drift aberto
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 - **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas — Executar RECON-025 e RECON-022 primeiro. Num stack exclusivo, aplicar a migration, rodar db:reset --no-seed + test:db + db:lint, test:e2e (publicar, encontrar por filtro, interesse) e a captura 375/768/1440 com ator e destino. Reconciliar a ordem da migration com RECON-025, que também cria public.listings; adicionar a fixture de anúncio ao seed.sql para a captura do detalhe.
 =======
 - **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas — o dono confirma o status do ADR-20260808 e o campo status e reconciliado (approved, ou o registro de por que diverge) antes de o RECON-020 fechar
 >>>>>>> fix/recon-020-perfil
+=======
+- **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas — O handoff foi lido por git show (read-only) e o campo do shell de membro foi entregue; o destino do campo do shell de operacao para /explorar/busca entra quando codex/ajuste-de-auditoria reconciliar, com a pendencia nomeada acima.
+>>>>>>> fix/recon-021-busca-global
 
 ## Triagem prioritária
 

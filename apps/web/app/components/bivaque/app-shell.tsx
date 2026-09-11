@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
+import { GlobalSearchField } from "../search/global-search-field"
 import { MemberAvatar } from "./avatar"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
 import { CreatePostModal } from "./feed-post"
@@ -73,7 +74,11 @@ export function AppShell({ children }: AppShellProperties) {
     <div className="h-dvh flex flex-col overflow-hidden bg-[var(--semantic-canvas)]">
       {/* ---- Navbar ---- */}
       <header className="sticky top-0 z-50 border-b border-border bg-[var(--semantic-surface)]">
-        <div className="flex h-[var(--semantic-nav-height)] items-center justify-between px-4">
+        {/* RECON-021: o campo do cabeçalho das pranchas de membro. Em <sm ele
+            ocupa a segunda linha (order-last) para manter o alvo de toque de
+            44px sem espremer as ações; de sm para cima fica entre o pill da
+            cidade e as ações, como na prancha 61. */}
+        <div className="flex min-h-[var(--semantic-nav-height)] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2 sm:flex-nowrap sm:py-0">
           {/* Left section */}
           <div className="flex items-center gap-3">
             {/* Sidebar toggle visible on desktop */}
@@ -104,6 +109,11 @@ export function AppShell({ children }: AppShellProperties) {
                 {current.cityName}, {current.stateCode}
               </span>
             </div>
+          </div>
+
+          {/* Search — order-last on mobile, centered on desktop */}
+          <div className="order-last w-full sm:order-none sm:mx-2 sm:w-auto sm:max-w-xl sm:flex-1">
+            <GlobalSearchField />
           </div>
 
           {/* Right section */}

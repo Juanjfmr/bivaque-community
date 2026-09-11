@@ -2073,17 +2073,23 @@
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
 <<<<<<< HEAD
+<<<<<<< HEAD
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote — RECON-018 executado em 11/09 (pranchas 36/37), 17 restantes"
 =======
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
         "RECON-020 (pranchas 39 e 51): /onboarding/locality e /onboarding/perfil e a bio em /profile implementados em fix/recon-020-perfil, com a migration 20260911024732_profile_bio.sql, pgTAP e testes de unidade",
         "RECON-020 PENDENTE: prova de banco nao executada (banco local compartilhado: sem reset e sem migration) e revisao independente ainda nao feita"
 >>>>>>> fix/recon-020-perfil
+=======
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
+        "RECON-021 (busca global, prancha 61) entregue com prova de runtime; revisao independente pendente"
+>>>>>>> fix/recon-021-busca-global
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
         "npx pnpm@11.18.0 gate → verde",
+<<<<<<< HEAD
 <<<<<<< HEAD
         "RECON-018 (pranchas 36/37) 11/09/2026: node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-018.task.yml → ok (R2, retry 3); npx pnpm@11.18.0 gate → GATE VERDE (lint 16s, typecheck 23s, build 95s, test 67s: 531 unit + 76 mobile + 19 web + 189 privacidade + 100 escopo, secrets 25s). /auth/confirmar-email entra no build como rota estatica.",
         "RECON-018 E2E 11/09/2026: npx playwright test --config tests/e2e/recon-018.config.ts --workers=2 (APP_URL=http://127.0.0.1:3297) → 45/45 pass (15 testes x 3 viewports): controles da prancha 36, mostrar/ocultar, credencial unica anti-enumeracao, duplo submit no mesmo tick sem duplicar token, destino ?redirect= interno honrado e externo barrado, aceite condiciona o cadastro, e-mail duplicado sugere entrar, senha curta barrada no cliente, painel pendente com eco e reenvio, contador persistente, 429 do servidor distinguivel, falha de rede sem promessa e painel expirado.",
@@ -2102,9 +2108,30 @@
         "action": "o dono confirma o status do ADR-20260808 e o campo status e reconciliado (approved, ou o registro de por que diverge) antes de o RECON-020 fechar"
       },
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+=======
+        "RECON-021 (11/09/2026): campo Buscar no Bivaque no cabecalho do shell de membro (app-shell.tsx) leva a /explorar/busca?q=, agrupada por Guia/Servicos/Eventos com contagem da lista autorizada; /explorar/servicos passa a ler q canonico com search aceito so na borda, ganha linha de localizacao do provider_reach, paginacao por page na URL e estados carregando/vazio/erro/sessao expirada.",
+        "npx pnpm@11.18.0 gate completo → GATE VERDE em 11/09/2026: lint, typecheck, build, test (unit 529 + privacy 189 + scope) e secrets (log .omo-evidence/gate-retry-1.log, exit 0 lido na mesma linha).",
+        "npx pnpm@11.18.0 exec playwright test tests/e2e/global-search-flow.spec.ts → 10 testes x 3 viewports = 30 passed (workers=1), incluindo negacao sem interface: RPC search_providers devolve [] para o JWT sem direito e o prestador para o JWT com direito.",
+        "Captura visual (scripts/visual/capture.mjs, server 127.0.0.1:3127) em 375/768/1440 com Authenticated capture: yes: /inicio, /explorar, /explorar/busca?q=escola, /guide?q=escola (visual@) e /explorar/servicos?q=climatiza (membro-25@, unico ator que ve o prestador pela RLS). BUILD_ID e0t92uDVwGwnG_E2UWmCd posterior a todas as edicoes de apps/web, conferido por mtime.",
+        "PENDENTE nomeado: operator-shell.tsx (shell de OPERACAO) nao existe na main e974bd0 - o campo rotulado Buscar no Bivaque que envia a /explorar/servicos continua em codex/ajuste-de-auditoria e precisa apontar para /explorar/busca quando aquela base reconciliar; o caminho segue em allowed_paths do RECON-021.",
+        "PENDENTE nomeado: o dominio de eventos nao tem filtro por termo (prancha 48 define so periodo), entao o Ver todos do grupo Eventos cai em /events sem o termo - divergencia declarada, nao link que finge carregar parametro ignorado.",
+        "PENDENTE nomeado: Mercado e Moradia nao entram no agrupado porque ainda nao tem rota - o contrato proibe apresentar modulo nao integrado como resultado."
+      ],
+      "tests": [
+        "node --test tests/scope/prancha-coverage.test.mjs",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/search",
+        "npx pnpm@11.18.0 exec playwright test tests/e2e/global-search-flow.spec.ts"
+      ],
+      "drift": {
+        "documented": "RECON-021 e RECON-WEB-EXECUCAO.md citam docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md e o campo do shell de operacao como existentes na main.",
+        "observed": "Na main e974bd0 nenhum dos dois existe no checkout: o handoff so vive em codex/fidelidade-pranchas (5143ada) e operator-shell.tsx so em codex/ajuste-de-auditoria (81ce1c8).",
+        "action": "O handoff foi lido por git show (read-only) e o campo do shell de membro foi entregue; o destino do campo do shell de operacao para /explorar/busca entra quando codex/ajuste-de-auditoria reconciliar, com a pendencia nomeada acima."
+      },
+>>>>>>> fix/recon-021-busca-global
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/agents/tasks/RECON-021.task.yml",
         "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
         "docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
         "docs/decisions/ADR-20260909-midia-de-membro.md",
@@ -2115,6 +2142,7 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       "drift": {
@@ -2128,6 +2156,10 @@
 >>>>>>> fix/recon-020-perfil
       "updatedAt": "2026-09-11",
       "sourceRevision": "0323a94"
+=======
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "e974bd0"
+>>>>>>> fix/recon-021-busca-global
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
