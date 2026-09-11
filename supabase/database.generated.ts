@@ -904,12 +904,37 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_channel_preferences: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          notification_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled?: boolean
+          notification_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          enabled?: boolean
+          notification_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           comments: boolean
           events: boolean
           mentions: boolean
           messages: boolean
+          product_news: boolean
           updated_at: string
           user_id: string
         }
@@ -918,6 +943,7 @@ export type Database = {
           events?: boolean
           mentions?: boolean
           messages?: boolean
+          product_news?: boolean
           updated_at?: string
           user_id: string
         }
@@ -926,6 +952,7 @@ export type Database = {
           events?: boolean
           mentions?: boolean
           messages?: boolean
+          product_news?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -2375,6 +2402,7 @@ export type Database = {
         | "verification_gated"
       locality_membership_access: "active" | "read_only"
       locality_membership_kind: "current" | "leaving"
+      notification_channel: "in_app" | "email"
       notification_type:
         | "comment"
         | "group_admission"
