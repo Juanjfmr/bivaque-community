@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-11",
+  "updatedAt": "2026-09-09",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -2072,98 +2072,17 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote — RECON-018 executado em 11/09 (pranchas 36/37), 17 restantes"
-=======
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
-        "RECON-020 (pranchas 39 e 51): /onboarding/locality e /onboarding/perfil e a bio em /profile implementados em fix/recon-020-perfil, com a migration 20260911024732_profile_bio.sql, pgTAP e testes de unidade",
-        "RECON-020 PENDENTE: prova de banco nao executada (banco local compartilhado: sem reset e sem migration) e revisao independente ainda nao feita"
->>>>>>> fix/recon-020-perfil
-=======
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
-        "RECON-021 (busca global, prancha 61) entregue com prova de runtime; revisao independente pendente"
->>>>>>> fix/recon-021-busca-global
-=======
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
-        "RECON-022 executado (prancha 62) com prova de gate e captura; prova de banco pendente por banco compartilhado"
->>>>>>> fix/recon-022-prestador-ficha
-=======
-        "RECON-025 (13/63): dominio listings + bucket privado listing-photos + /mercado, /mercado/[id] e /mercado/novo entregues em codigo; pgTAP, E2E e captura ficam pendentes por banco local compartilhado",
-        "RECON-026 (21/64): ciclo de vida do anuncio (public.transition_listing + public.listing_status_events) e as telas /meus-anuncios e /mercado/[id]/editar em codigo; pgTAP, E2E e captura autenticada pendentes pelo banco compartilhado; a captura da edicao precisa de fixture no seed, fora dos allowed_paths do lote",
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
->>>>>>> fix/recon-025-mercado
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-<<<<<<< HEAD
-        "npx pnpm@11.18.0 gate → verde",
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        "RECON-018 (pranchas 36/37) 11/09/2026: node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-018.task.yml → ok (R2, retry 3); npx pnpm@11.18.0 gate → GATE VERDE (lint 16s, typecheck 23s, build 95s, test 67s: 531 unit + 76 mobile + 19 web + 189 privacidade + 100 escopo, secrets 25s). /auth/confirmar-email entra no build como rota estatica.",
-        "RECON-018 E2E 11/09/2026: npx playwright test --config tests/e2e/recon-018.config.ts --workers=2 (APP_URL=http://127.0.0.1:3297) → 45/45 pass (15 testes x 3 viewports): controles da prancha 36, mostrar/ocultar, credencial unica anti-enumeracao, duplo submit no mesmo tick sem duplicar token, destino ?redirect= interno honrado e externo barrado, aceite condiciona o cadastro, e-mail duplicado sugere entrar, senha curta barrada no cliente, painel pendente com eco e reenvio, contador persistente, 429 do servidor distinguivel, falha de rede sem promessa e painel expirado.",
-        "RECON-018 capturas 11/09/2026: node scripts/visual/capture.mjs em /login, /signup, /recuperar-senha, /nova-senha, /auth/confirmar-email (nada-pendente e pendente) e /auth/confirmar-email?estado=expirado nos tres viewports → status 200, landedOn igual ao path pedido, Authenticated capture: yes, 0 findings (0 high). .visual/recon018-*",
-        "RECON-018 pendencia (R06/R04): /auth/confirmar-email nao esta em PUBLIC_PATHS e apps/web/proxy.ts esta fora do allowed_paths do lote; cadastro sem sessao e devolvido a /login, entao o painel da prancha 37 foi provado por sessao de membro. O 429 de reenvio e reproduzido no transporte e o aceite pos-confirmacao e coberto por unidade, porque o GoTrue local tem [auth.email] enable_confirmations=false e additional_redirect_urls sem a porta do executor.",
-        "RECON-018 pendencia: revisao independente em sessao separada ainda nao ocorreu (reviewer_must_differ_from_executor=true); o gate local e o e2e acima nao a substituem."
-=======
-        "RECON-020: node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-020.task.yml → 1 contrato valido (R3, retry 3)",
-        "RECON-020: npx pnpm@11.18.0 gate → verde (lint, typecheck, build, test, secrets)",
-        "RECON-020: capture 375/768/1440 de /onboarding/locality (verified-no-membership@), /onboarding/perfil, /onboarding/welcome e /profile (visual@) → 0 achados de alta severidade"
->>>>>>> fix/recon-020-perfil
-=======
-        "RECON-022 (prancha 62) executado em 2026-09-11: ficha /prestadores/[id] e /pedidos/novo + migration 20260911032309_service_requests (service_requests, service_request_photos, RLS e RPC create_service_request idempotente) + supabase/tests/service-requests.sql (12 asserts, positivo e negativo).",
-        "RECON-022 provas lidas nesta sessão: task-contract ok; npx pnpm@11.18.0 gate verde (lint, typecheck, build, unit 509, privacy 189, scope 100, secrets); capturas autenticadas 375/768/1440 com membro-1@ (ficha high 0 e 1 médio de reading-measure; pedido 0 achados).",
-        "RECON-022 PENDENTE: prova de banco (reset sem seed + test:db) NÃO executada — proibido alterar o banco local compartilhado; 20260911032309 não está aplicada e há 20260911033327 aplicada fora desta árvore. closure.requires_runtime_evidence segue sem prova.",
-        "RECON-022 divergência ADR-20260909-pedidos: D2 pede tabela conversation_contexts; a implementação reaproveita dm_conversations.context_type/context_id + unique(participant_a,participant_b) e o RPC open_conversation. Material para RECON-025/029 (par único pode forçar uma conversa por par entre contextos listing/event). Decisão do dono/revisor pendente.",
-        "RECON-022 drift reconciliado: tests/e2e/provider-vitrine.spec.ts afirmava heading Catálogo + descrição do item; prancha 62 manda Serviços com ícone+rótulo. Asserção atualizada (fora de allowed_paths, declarado); E2E não executado nesta sessão.",
-        "RECON-022 divergências visuais declaradas: a foto da ficha mostra o estado vazio honesto (seed sem portfolio photo); o shell entregue difere do desenho (sem busca no cabeçalho, com Minhas comunidades) — pré-existente, fora deste lote."
->>>>>>> fix/recon-022-prestador-ficha
-=======
-        "npx pnpm@11.18.0 gate → verde (2026-09-11)",
-        "RECON-025 (2026-09-11): docs/agents/tasks/RECON-025.task.yml valido; npx pnpm@11.18.0 gate -> verde; npx pnpm@11.18.0 build -> verde com /mercado, /mercado/[id] e /mercado/novo; tests/unit/listings/catalog.test.ts -> 22 passam",
-<<<<<<< HEAD
-        "RECON-025 pendente: npx pnpm@11.18.0 test:db (pgTAP positivo/negativo escrito em supabase/tests/listing-market.sql, nao executado), test:e2e e captura 375/768/1440 nao rodaram - a migration nao foi aplicada ao stack local compartilhado; a sessao foi instruida a nao alterar estado compartilhado"
->>>>>>> fix/recon-025-mercado
-=======
-        "RECON-025 pendente: npx pnpm@11.18.0 test:db (pgTAP positivo/negativo escrito em supabase/tests/listing-market.sql, nao executado), test:e2e e captura 375/768/1440 nao rodaram - a migration nao foi aplicada ao stack local compartilhado; a sessao foi instruida a nao alterar estado compartilhado",
-        "RECON-026 (2026-09-11): docs/agents/tasks/RECON-026.task.yml valido; npx pnpm@11.18.0 gate --fast -> verde (lint, typecheck); tests/unit/listings/lifecycle.test.ts -> 21 passam",
-        "RECON-026 pendente: npx pnpm@11.18.0 test:db (pgTAP em supabase/tests/listing-lifecycle.sql nao executado), test:e2e e captura 375/768/1440 - a migration 20260911043436_listing_lifecycle.sql nao foi aplicada ao stack compartilhado e o seed nao tem anuncio para a rota de edicao"
->>>>>>> fix/recon-026-meus-anuncios
+        "npx pnpm@11.18.0 gate → verde"
       ],
-      "drift": {
-        "documented": "ADR-20260808-perfil-campos-opcionais esta com status proposed e diz que nada autoriza implementar enquanto proposed; o AGENTS.md da raiz repete a proibicao de afiliacao declarada",
-        "observed": "a main ja publica public.profile_affiliations (migration 20260909020733) e a tela de afiliacao, com o comentario da migration afirmando aprovacao; o RECON-020 constroi a personalizacao sobre esse mecanismo, sem criar persistencia nova",
-        "action": "o dono confirma o status do ADR-20260808 e o campo status e reconciliado (approved, ou o registro de por que diverge) antes de o RECON-020 fechar"
-      },
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
-=======
-        "RECON-021 (11/09/2026): campo Buscar no Bivaque no cabecalho do shell de membro (app-shell.tsx) leva a /explorar/busca?q=, agrupada por Guia/Servicos/Eventos com contagem da lista autorizada; /explorar/servicos passa a ler q canonico com search aceito so na borda, ganha linha de localizacao do provider_reach, paginacao por page na URL e estados carregando/vazio/erro/sessao expirada.",
-        "npx pnpm@11.18.0 gate completo → GATE VERDE em 11/09/2026: lint, typecheck, build, test (unit 529 + privacy 189 + scope) e secrets (log .omo-evidence/gate-retry-1.log, exit 0 lido na mesma linha).",
-        "npx pnpm@11.18.0 exec playwright test tests/e2e/global-search-flow.spec.ts → 10 testes x 3 viewports = 30 passed (workers=1), incluindo negacao sem interface: RPC search_providers devolve [] para o JWT sem direito e o prestador para o JWT com direito.",
-        "Captura visual (scripts/visual/capture.mjs, server 127.0.0.1:3127) em 375/768/1440 com Authenticated capture: yes: /inicio, /explorar, /explorar/busca?q=escola, /guide?q=escola (visual@) e /explorar/servicos?q=climatiza (membro-25@, unico ator que ve o prestador pela RLS). BUILD_ID e0t92uDVwGwnG_E2UWmCd posterior a todas as edicoes de apps/web, conferido por mtime.",
-        "PENDENTE nomeado: operator-shell.tsx (shell de OPERACAO) nao existe na main e974bd0 - o campo rotulado Buscar no Bivaque que envia a /explorar/servicos continua em codex/ajuste-de-auditoria e precisa apontar para /explorar/busca quando aquela base reconciliar; o caminho segue em allowed_paths do RECON-021.",
-        "PENDENTE nomeado: o dominio de eventos nao tem filtro por termo (prancha 48 define so periodo), entao o Ver todos do grupo Eventos cai em /events sem o termo - divergencia declarada, nao link que finge carregar parametro ignorado.",
-        "PENDENTE nomeado: Mercado e Moradia nao entram no agrupado porque ainda nao tem rota - o contrato proibe apresentar modulo nao integrado como resultado."
-      ],
-      "tests": [
-        "node --test tests/scope/prancha-coverage.test.mjs",
-        "npx pnpm@11.18.0 exec vitest run tests/unit/search",
-        "npx pnpm@11.18.0 exec playwright test tests/e2e/global-search-flow.spec.ts"
-      ],
-      "drift": {
-        "documented": "RECON-021 e RECON-WEB-EXECUCAO.md citam docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md e o campo do shell de operacao como existentes na main.",
-        "observed": "Na main e974bd0 nenhum dos dois existe no checkout: o handoff so vive em codex/fidelidade-pranchas (5143ada) e operator-shell.tsx so em codex/ajuste-de-auditoria (81ce1c8).",
-        "action": "O handoff foi lido por git show (read-only) e o campo do shell de membro foi entregue; o destino do campo do shell de operacao para /explorar/busca entra quando codex/ajuste-de-auditoria reconciliar, com a pendencia nomeada acima."
-      },
->>>>>>> fix/recon-021-busca-global
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
-        "docs/agents/tasks/RECON-021.task.yml",
         "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
         "docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
         "docs/decisions/ADR-20260909-midia-de-membro.md",
@@ -2174,38 +2093,13 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
       "drift": {
         "documented": "O contrato RECON-027 promete Moradia com as pranchas 65 (painel 1) e 19, backend junto das telas, pgTAP positivo/negativo, E2E de publicar/encontrar/interesse e captura em 375/768/1440, e o manual declara os 18 lotes liberados para execução.",
         "observed": "Neste checkout (branch fix/recon-027-moradia) o lote entregou a migration do domínio de anúncio (listings, property_details, listing_photos, listing_saves, listing_alerts, bucket privado listing-photos, RLS e private.can_read_listing), o pgTAP, a lib de domínio com 20 testes unitários e as rotas /imoveis, /imoveis/[id], /imoveis/novo e /imoveis/[id]/editar; gate e build verdes. Mas RECON-025 (domínio Mercado) e RECON-022 (conversa contextual) não existem no checkout, e o stack local é compartilhado com outros executores, então a migration não foi aplicada e pgTAP, E2E, /imoveis/alertas (RECON-028) e captura não rodaram. O interesse no anúncio ficou indisponível na ficha, com motivo visível, por depender da conversa do RECON-022.",
         "action": "Executar RECON-025 e RECON-022 primeiro. Num stack exclusivo, aplicar a migration, rodar db:reset --no-seed + test:db + db:lint, test:e2e (publicar, encontrar por filtro, interesse) e a captura 375/768/1440 com ator e destino. Reconciliar a ordem da migration com RECON-025, que também cria public.listings; adicionar a fixture de anúncio ao seed.sql para a captura do detalhe."
       },
-=======
->>>>>>> fix/recon-018-entrada
-=======
->>>>>>> fix/recon-020-perfil
       "updatedAt": "2026-09-11",
       "sourceRevision": "0323a94"
-=======
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "e974bd0"
->>>>>>> fix/recon-021-busca-global
-=======
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "0323a94"
->>>>>>> fix/recon-022-prestador-ficha
-=======
-      "updatedAt": "2026-09-11",
-<<<<<<< HEAD
-      "sourceRevision": "2f87f12"
->>>>>>> fix/recon-025-mercado
-=======
-      "sourceRevision": "d3f6dfa"
->>>>>>> fix/recon-026-meus-anuncios
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
@@ -2213,7 +2107,7 @@
       "phase": "Launch blocker",
       "priority": "BLOCK",
       "category": "backend",
-      "status": "done",
+      "status": "blocked",
       "description": "is_suspended vive em public.profiles, cuja policy de SELECT libera a linha inteira a quem compartilha localidade ou comunidade. Qualquer membro autenticado lê o status de suspensão de terceiros pela Data API. Está na main desde o merge do PR #54. Contraria o ADR-20260901 §4.3 anti-enumeração e a decisão de que is_suspended é visível apenas para o próprio dono. Fechar exige tirar a coluna da exposição do Data API — schema e policy sobre dado pessoal, R3.",
       "checklist": [
         "Decidir o desenho: tabela própria com RLS owner-only no padrão profile_affiliations, ou view/revoke de coluna",
@@ -2231,20 +2125,19 @@
         "42c055d e 3acaadd fecharam as duas vias de RPC — anon recebe 42501, membro recebe false para terceiro — e NÃO fecham a coluna.",
         "O veto de publicação continua funcionando: conta suspensa recebe 42501 ao inserir em posts. A correção não pode regredir isso.",
         "CI verde no 3acaadd e merge limpo não cobrem esta via: nenhum teste exercita leitura de is_suspended por terceiro.",
-        "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR.",
-        "Resolvido em 2026-09-10 no branch fix/r3-suspensao-tabela (commit 08129b9): migration 20260911033327_move_suspension_out_of_profiles move is_suspended para public.profile_suspensions com RLS owner-only (padrao profile_affiliations); a coluna sai de profiles e o helper is_account_suspended le a tabela nova preservando a guarda de autoleitura. Verificacao: db reset --no-seed + test:db (1142 asserts, All tests successful) + db:lint sem erros + gate verde. ADR-20260910-suspensao-fora-da-exposicao.",
-        "Resolvido em 2026-09-10 no branch fix/r3-suspensao-tabela (commit 08129b9): migration 20260911033327_move_suspension_out_of_profiles move is_suspended para public.profile_suspensions com RLS owner-only (padrao profile_affiliations); a coluna sai de profiles e o helper is_account_suspended le a tabela nova preservando a guarda de autoleitura. Verificacao: db reset --no-seed + test:db (1142 asserts, All tests successful) + db:lint sem erros + gate verde. ADR-20260910-suspensao-fora-da-exposicao."
+        "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR."
       ],
-      "blockers": [],
+      "blockers": [
+        "Decisão R3 do responsável sobre onde a coluna passa a viver e o que a UI lê no lugar"
+      ],
       "links": [
         "ADR | ../../docs/decisions/ADR-20260901-account-suspension.md",
         "PR merjado | https://github.com/Juanjfmr/bivaque-community/pull/54"
       ],
       "updatedAt": "2026-09-10",
-      "sourceRevision": "08129b9",
+      "sourceRevision": "15a884d",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true, true],
-      "completedAt": "2026-09-10"
+      "completedChecklist": [false, false, false, false, false, false, false]
     }
   ]
 }
