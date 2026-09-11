@@ -2128,7 +2128,8 @@
         "O veto de publicação continua funcionando: conta suspensa recebe 42501 ao inserir em posts. A correção não pode regredir isso.",
         "CI verde no 3acaadd e merge limpo não cobrem esta via: nenhum teste exercita leitura de is_suspended por terceiro.",
         "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR.",
-        "2026-09-11: correcao pronta em fix/r3-suspensao-tabela (08129b9) sob ADR-20260910-suspensao-fora-da-exposicao (approved, proposto e aprovado por autorizacao do dono). Tabela profile_suspensions com RLS owner-only e forcada, grants minimos, dado existente migrado, coluna retirada de profiles. Revisao de desenho: aprovada. PERMANECE blocked ate existir prova de runtime de que a leitura por terceiro falha (pgTAP profile-suspensions.sql), que exige recriar o banco local."
+        "2026-09-11: correcao pronta em fix/r3-suspensao-tabela (08129b9) sob ADR-20260910-suspensao-fora-da-exposicao (approved, proposto e aprovado por autorizacao do dono). Tabela profile_suspensions com RLS owner-only e forcada, grants minimos, dado existente migrado, coluna retirada de profiles. Revisao de desenho: aprovada. PERMANECE blocked ate existir prova de runtime de que a leitura por terceiro falha (pgTAP profile-suspensions.sql), que exige recriar o banco local.",
+        "2026-09-11: PROVA DE RUNTIME executada contra o stack local com a migration aplicada. Cinco condicoes, todas verificadas: (1) a coluna antiga responde \"column profiles.is_suspended does not exist\"; (2) terceiro consultando profile_suspensions de conta suspensa recebe [] mesmo com a linha existindo no banco; (3) anon recebe 42501 permission denied; (4) o proprio dono le a propria linha; (5) conta suspensa tentando publicar recebe 42501 e HTTP 403 — o veto nao regrediu. O vazamento esta fechado e o comportamento legitimo preservado."
       ],
       "blockers": [
         "Decisão R3 do responsável sobre onde a coluna passa a viver e o que a UI lê no lugar"
@@ -2140,7 +2141,7 @@
       "updatedAt": "2026-09-11",
       "sourceRevision": "15a884d",
       "dependencies": [],
-      "completedChecklist": [false, false, false, false, false, false, false]
+      "completedChecklist": [true, true, true, true, true, false, false]
     }
   ]
 }
