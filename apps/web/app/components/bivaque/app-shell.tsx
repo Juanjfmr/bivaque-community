@@ -3,7 +3,7 @@
 import { brandTokens } from "@bivaque/tokens"
 import { Button, Kbd, Tooltip } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
-import { Bell, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
+import { Bell, Bookmark, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
@@ -204,10 +204,13 @@ export function AppShell({ children }: AppShellProperties) {
               const inPrimaryNav = NAV_ITEMS.some(
                 (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
               )
-              const fallbackId =
-                pathname.startsWith("/messages") || pathname.startsWith("/notifications")
-                  ? "perfil"
-                  : "inicio"
+              const secondaryPersonal =
+                pathname.startsWith("/messages") ||
+                pathname.startsWith("/notifications") ||
+                pathname.startsWith("/salvos") ||
+                pathname.startsWith("/denuncias") ||
+                pathname.startsWith("/ajuda")
+              const fallbackId = secondaryPersonal ? "perfil" : "inicio"
               const active =
                 pathname === item.href ||
                 pathname.startsWith(`${item.href}/`) ||
@@ -258,11 +261,10 @@ export function AppShell({ children }: AppShellProperties) {
                 em todas as rotas. Eles também não recebem aria-current: no
                 modelo do DESIGN_SYSTEM §7.1 conta e notificações vivem sob
                 Perfil, que é quem o fallback primário marca nessas rotas. */}
-            {/* "Salvos" aparece nas pranchas 01/61/60, mas a tela de conteúdos
-                salvos é a prancha 54 e pertence à etapa W03. Um destino
-                placeholder é proibido duas vezes aqui: pelo gate G1 do spec e
-                por tests/unit/ui/empty-promises.test.ts, que reprova promessa
-                vazia em apps/web/app/**. O item entra junto com a tela. */}
+            {/* O item entra junto com a tela, como o card SHELL-SALVOS-AUSENTE
+                e o gate G1 exigiam: /salvos existe (RECON-032) e lista o que
+                foi guardado de verdade — sem placeholder, sem promessa. */}
+            <SidebarSecondaryItem href="/salvos" label="Salvos" Icon={Bookmark} isRail={isRail} />
             <SidebarSecondaryItem
               href="/notifications"
               label="Notificações"

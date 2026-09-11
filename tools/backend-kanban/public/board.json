@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-09-11",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -1933,23 +1933,31 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "Levantado pela revisão independente do RECON-001 em 08/09/2026. O acceptance do contrato exigia a seção secundária com Salvos E Notificações (docs/agents/tasks/RECON-001.task.yml). A entrega (apps/web/app/components/bivaque/app-shell.tsx) traz só Notificações, e o comentário no código justificou a omissão citando tests/unit/ui/empty-promises.test.ts. A justificativa é imprecisa: esse teste reprova apenas as strings literais 'de 3 passos' e 'Em breve' — um stub de /salvos sem essas palavras não o falharia. O gate G1 da especificação continua proibindo destino placeholder, e é essa a razão válida para a omissão; mas a decisão foi tomada dentro da entrega, sem card, o que a tornou uma redução de escopo silenciosa. Este card existe para desfazer o silêncio. A tela de conteúdos salvos é a prancha 54-web-retorno e pertence à etapa W03.",
+      "status": "done",
+      "description": "Levantado pela revisão independente do RECON-001 em 08/09/2026. O acceptance do contrato exigia a seção secundária com Salvos E Notificações (docs/agents/tasks/RECON-001.task.yml). A entrega (apps/web/app/components/bivaque/app-shell.tsx) traz só Notificações, e o comentário no código justificou a omissão citando tests/unit/ui/empty-promises.test.ts. A justificativa é imprecisa: esse teste reprova apenas as strings literais 'de 3 passos' e 'Em breve' — um stub de /salvos sem essas palavras não o falharia. O gate G1 da especificação continua proibindo destino placeholder, e é essa a razão válida para a omissão; mas a decisão foi tomada dentro da entrega, sem card, o que a tornou uma redução de escopo silenciosa. Este card existe para desfazer o silêncio. A tela de conteúdos salvos é a prancha 54-web-retorno e pertence à etapa W03. FECHADO em 11/09/2026 pelo RECON-032: /salvos existe com conteudo real vindo de recommendation_saves (listar por tipo, buscar, abrir, remover, indisponivel sem snapshot), o item Salvos entrou na secao secundaria da sidebar com o mesmo tratamento de rail de Notificacoes, e o fallback de rota ativa (/salvos, /denuncias, /ajuda -> Perfil) foi estendido em app-shell.tsx e bottom-nav.tsx. A dependencia declarada com RECON-W00-PLACEHOLDERS era o gate contra destino placeholder; com a tela real entregue ela nao carrega mais este card, e a remocao fica registrada aqui em vez de sumir em silencio. Evidencia: gate completo verde, 11 testes e2e do lote (tests/e2e/recon-032-*.spec.ts) e capturas autenticadas 375/768/1440 de /salvos com 0 achados (.visual/recon032-salvos).",
       "checklist": [
         "Decisão registrada: Salvos entra junto com a tela real (W03) ou ganha rota própria antes",
         "Se entrar antes, /salvos tem conteúdo real — não placeholder, não promessa vazia",
         "Item aparece na sidebar quando o destino existir, com o mesmo tratamento de rail dos demais",
         "Acceptance do RECON-001 reconciliado ou emendado com o responsável"
       ],
-      "proof": ["node scripts/visual/loop.mjs", "npx pnpm@11.18.0 gate"],
-      "tests": ["tests/unit/ui/empty-promises.test.ts"],
+      "proof": [
+        "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
+        "PLAYWRIGHT_TEST_BASE_URL=http://127.0.0.1:3147 npx playwright test --config tests/e2e/recon-032.playwright.config.ts recon-032-salvos.spec.ts recon-032-denuncias.spec.ts recon-032-messages.spec.ts -> 11 passed",
+        "BIVAQUE_VISUAL_ROUTE=/salvos node scripts/visual/capture.mjs -> Authenticated capture: yes, 0 findings em 375/768/1440"
+      ],
+      "tests": ["tests/unit/ui/empty-promises.test.ts", "tests/e2e/recon-032-salvos.spec.ts"],
       "links": [
         "docs/agents/tasks/RECON-001.task.yml",
-        "docs/design/visual-guide-2026-09-06/01-web-inicio.png"
+        "docs/design/visual-guide-2026-09-06/01-web-inicio.png",
+        "docs/agents/tasks/RECON-032.task.yml",
+        "apps/web/app/(shell)/salvos/page.tsx"
       ],
-      "dependencies": ["RECON-W00-PLACEHOLDERS"],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "30ab4eb"
+      "dependencies": [],
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "e974bd0",
+      "completedAt": "2026-09-11",
+      "completedChecklist": [true, true, true, true]
     },
     {
       "id": "NAV-EXPLORAR-COLISAO",
@@ -2138,6 +2146,48 @@
       "sourceRevision": "15a884d",
       "dependencies": [],
       "completedChecklist": [false, false, false, false, false, false, false]
+    },
+    {
+      "id": "RECON-032",
+      "title": "RECON-032: Salvos, denuncia do membro, conversa por URL e ajuda com canal real",
+      "phase": "Reconstrucao",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "Lote das pranchas 54 (painel direito) e 56 (painel esquerdo). ENTREGUE: /salvos (abas por tipo, busca, abrir, remover, item indisponivel sem revelar conteudo retirado), /denuncias/nova?tipo=&id= com o dialogo da prancha 56 e validacao server-side de tipo, alvo, acesso e motivo de lista fechada (inclusive por chamada direta sem interface), /denuncias e /denuncias/[id] (Minhas denuncias com chip Em analise/Resolvida, motivo e explicacao proprios ao expandir; Pessoas bloqueadas com Desbloquear real), /messages/[id] com URL estavel e refresh sem entrega duplicada (e o picker de conversa corrigido para o RPC open_conversation), /ajuda com documentos legais reais e o canal SUPPORT_EMAIL configurado. Corrigido no caminho: o cabecalho sticky de /messages cobria a thread no desktop (top-12 -> top-0) e o input do radio do HeroUI nao tinha alvo de 44px. PENDENTE nomeado: (a) abas Guia/Mercado/Imoveis de /salvos dependem da tabela de salvamento e do botao de salvar das origens (RECON-030, RECON-025, RECON-027) - migrations sao proibidas neste contrato; (b) estado de leitura e contador de nao lidas da conversa dependem de coluna/tabela de leitura propria (migration, fora da cerca); (c) o dialogo de denuncia dentro da conversa (chat-thread) ainda usa texto livre em vez da lista fechada da prancha 56 - pertence ao RECON-033; (d) comentario desatualizado em notifications/page.tsx diz que a tela de salvos nao existe - fora da cerca, registrado aqui. As capturas e o diff nao provam revisao independente.",
+      "checklist": [
+        "Salvos lista o guardado por tipo, abre, remove e sincroniza com o botao de salvar das origens",
+        "Item retirado aparece como indisponivel sem revelar conteudo antigo",
+        "Dialogo de denuncia da prancha 56 enderecavel e com recibo apos persistencia",
+        "Servidor valida alvo, tipo e acesso e recusa motivo fora da lista (unidade + e2e negativo)",
+        "Acompanhamento mostra situacao, motivo e a propria explicacao ao expandir",
+        "Conversa com URL estavel e reconstrucao por acesso direto, sem entrega duplicada",
+        "Ajuda leva a documentos legais reais e ao canal de suporte configurado, sem chamado inventado",
+        "PENDENTE: abas Guia/Mercado/Imoveis de /salvos (RECON-030/025/027) e leitura/contador da conversa"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-032.task.yml -> ok (R2, retry 3)",
+        "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
+        "PLAYWRIGHT_TEST_BASE_URL=http://127.0.0.1:3147 npx playwright test --config tests/e2e/recon-032.playwright.config.ts recon-032-salvos.spec.ts recon-032-denuncias.spec.ts recon-032-messages.spec.ts -> 11 passed (caminhos de falha e acesso negado inclusos)",
+        "node scripts/visual/capture.mjs para /salvos, /denuncias, /denuncias/nova, /denuncias/<own-report>, /ajuda, /messages e /messages/<thread> -> Authenticated capture: yes, 0 findings em 375/768/1440"
+      ],
+      "tests": [
+        "tests/unit/saves/saved-items.test.ts",
+        "tests/unit/reports/closed-report-flow.test.ts",
+        "tests/e2e/recon-032-salvos.spec.ts",
+        "tests/e2e/recon-032-denuncias.spec.ts",
+        "tests/e2e/recon-032-messages.spec.ts"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-032.task.yml",
+        "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md",
+        "docs/design/visual-guide-2026-09-06/54-web-retorno.png",
+        "docs/design/visual-guide-2026-09-06/56-web-confianca.png"
+      ],
+      "dependencies": ["RECON-PRANCHAS-RESTANTES"],
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "e974bd0"
     }
   ]
 }

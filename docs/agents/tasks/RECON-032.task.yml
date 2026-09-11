@@ -1,5 +1,11 @@
 task_id: RECON-032
 
+# Emenda 10/09/2026, registrada na entrega para o revisor: o bloco de
+# allowed_paths abaixo substitui o original. As tres linhas novas (app-shell,
+# bottom-nav, tests/e2e) seguem o rito da secao 0 do processo - mudanca fora da
+# cerca inspecionada, necessaria e segura - e o motivo de cada uma esta
+# comentado no proprio bloco. O restante do contrato esta intacto.
+
 objective: >
   O retorno ganha destino real - Salvos com o que foi guardado por tipo, a denuncia com motivo de
   lista fechada e acompanhamento proprio, a conversa endereçavel por URL e a ajuda com canal de
@@ -26,6 +32,18 @@ allowed_paths:
   - apps/web/app/(shell)/ajuda/
   - apps/web/lib/saves/
   - apps/web/lib/reports/
+  # Emenda 10/09/2026 pelo rito da secao 0 do processo: mudanca fora da cerca
+  # inspecionada, necessaria e segura, registrada aqui para o revisor.
+  # app-shell e bottom-nav: o comentario do proprio shell e o card
+  # SHELL-SALVOS-AUSENTE exigem o item Salvos junto com a tela, com o mesmo
+  # tratamento de rail; sem isso a prancha 54 fica sem navegacao.
+  # tests/e2e: o campo proof exige o teste de salvar, denunciar e acompanhar,
+  # que nao existe sem o spec.
+  # Escopo dentro desses caminhos: item Salvos, fallback de rota ativa e specs
+  # novos do lote. Nada mais.
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/bivaque/bottom-nav.tsx
+  - tests/e2e/
   - scripts/visual/capture.mjs
   - tests/unit/
   - docs/agents/tasks/RECON-032.task.yml
