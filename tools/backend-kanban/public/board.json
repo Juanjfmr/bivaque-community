@@ -2072,14 +2072,26 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
+        "RECON-035 implementado em 11/09: coluna, trigger, RPCs, tela e testes no mesmo diff",
+        "PENDENTE RECON-035: aplicar migration e rodar pgTAP/gen types no stack (bloqueado nesta sessao pelo banco compartilhado)",
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-        "npx pnpm@11.18.0 gate → verde"
+        "npx pnpm@11.18.0 gate → verde",
+        "RECON-035 (11/09, branch fix/recon-035-resposta): node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-035.task.yml valida; npx pnpm@11.18.0 gate termina exit 0 (lint/typecheck/build/test/secrets verdes, lidos direto do exit code)",
+        "RECON-035: supabase/migrations/20260911025357_recon_035_resolved_reply.sql traz a coluna resolved_reply_id, FK on delete set null, trigger de pertencimento e os RPCs mark/clear/reopen com grant so para authenticated; supabase/tests/recommendation-resolved-reply.sql cobre 25 asserts positivos e negativos. Nao aplicados nem executados nesta sessao: o banco local e compartilhado com outros executores e reset/migration estao proibidos",
+        "RECON-035: captura autenticada em .visual/recon035-final (375/768/1440) de /recommendations?focus=80000000-0000-4000-8000-000000000f00. Authenticated capture: yes, aba Pedidos ativa, ator visual@ (Ana Verificada). O painel mostra o erro 400 esperado enquanto a coluna nao existe no banco; o marcador visual so aparece depois de aplicar a migration",
+        "RECON-035: drift encontrado e corrigido — as abas de /recommendations nao tinham id e os paineis nao eram ocultados, entao a conversa era inalcancavel. Corrigido com id nos Tabs.Tab e hidden nos paineis em apps/web/app/(shell)/recommendations/page.tsx, FORA dos allowed_paths do contrato (declarado no relatorio)",
+        "RECON-035: o contrato aponta a rota /publicacoes/[id]; a conversa real e a aba Pedidos de /recommendations. Implementado na superficie real, sem criar rota nova",
+        "RECON-035 PENDENTE: aplicar a migration, db:reset --no-seed + npx pnpm@11.18.0 test:db, regenerar tipos do schema public e recapturar o marcador visivel na resposta destacada"
       ],
-      "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+      "tests": [
+        "node --test tests/scope/prancha-coverage.test.mjs",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/recommendations/resolution-marker.test.ts",
+        "npx pnpm@11.18.0 test:db (pendente: migration nao aplicada)"
+      ],
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
@@ -2093,8 +2105,9 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "branch": "fix/recon-035-resposta",
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",

@@ -469,14 +469,22 @@ export default function RecommendationsPage() {
         aria-label="Seções de indicações"
       >
         <Tabs.List>
-          <Tabs.Tab key="browse">Explorar</Tabs.Tab>
-          <Tabs.Tab key="request">Pedir indicação</Tabs.Tab>
-          <Tabs.Tab key="requests">Pedidos</Tabs.Tab>
-          <Tabs.Tab key="saved">Salvas</Tabs.Tab>
+          <Tabs.Tab key="browse" id="browse">
+            Explorar
+          </Tabs.Tab>
+          <Tabs.Tab key="request" id="request">
+            Pedir indicação
+          </Tabs.Tab>
+          <Tabs.Tab key="requests" id="requests">
+            Pedidos
+          </Tabs.Tab>
+          <Tabs.Tab key="saved" id="saved">
+            Salvas
+          </Tabs.Tab>
         </Tabs.List>
 
         {/* ═══ Explorar ═══════════════════════════════════════════════════════ */}
-        <div key="browse" role="tabpanel">
+        <div key="browse" role="tabpanel" hidden={selectedTab !== "browse"}>
           {/* feedback banner */}
           {joinFeedback && (
             <div className="mb-4">
@@ -659,7 +667,7 @@ export default function RecommendationsPage() {
         </div>
 
         {/* ═══ Pedir indicação ════════════════════════════════════════════════ */}
-        <div key="request" role="tabpanel">
+        <div key="request" role="tabpanel" hidden={selectedTab !== "request"}>
           {/* feedback banner */}
           {requestFeedback && (
             <div className="mb-4">
@@ -814,12 +822,12 @@ export default function RecommendationsPage() {
         </div>
 
         {/* ═══ Pedidos ═════════════════════════════════════════════════════════ */}
-        <div key="requests" role="tabpanel">
+        <div key="requests" role="tabpanel" hidden={selectedTab !== "requests"}>
           <RecommendationRequests />
         </div>
 
         {/* ═══ Salvas ═════════════════════════════════════════════════════════ */}
-        <div key="saved" role="tabpanel">
+        <div key="saved" role="tabpanel" hidden={selectedTab !== "saved"}>
           {/* error */}
           {savesError && (
             <div className="mb-4">
