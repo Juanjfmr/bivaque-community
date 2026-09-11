@@ -120,9 +120,16 @@ export async function proxy(request: NextRequest) {
   // Onboarding keeps its own screen and is not part of the verified shell.
   // /onboarding/locality is the post-eligibility step (P0 Task 5): an
   // eligible-but-not-yet-provisioned member lands there, not on the feed.
+  // /onboarding/documento (prancha 69) é o caminho de identidade depois que o
+  // CPF não confirma: sem ele na allowlist, o portão de estado redireciona a
+  // própria rota para /onboarding/status — e a tela de status, ao ver o
+  // documento rejeitado, manda de volta para cá, em laço. A página decide o
+  // estado (pendente/verificado/sem direito) sozinha, então liberar o path é
+  // seguro: quem não deve ver o formulário é redirecionado por ela.
   if (
     pathname === "/onboarding" ||
     pathname.startsWith("/onboarding/status") ||
+    pathname.startsWith("/onboarding/documento") ||
     pathname.startsWith("/onboarding/locality")
   ) {
     return supabaseResponse

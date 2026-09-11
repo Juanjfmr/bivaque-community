@@ -2072,17 +2072,28 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
+        "RECON-019 (pranchas 38/69, rotas /onboarding, /onboarding/documento, /onboarding/status): codigo, migration, pgTAP e capturas 375/768/1440 limpas",
+        "RECON-019 PENDENTE: a migration 20260911063333 nao foi aplicada nesta sessao (banco local compartilhado com outros executores e reset/migration proibidos) — os estados runtime de 'arquivo nao legivel' e 'identidade em analise' e o test:db completo ficam pendentes de aplicacao; E2E nao rodou pelo mesmo motivo"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-        "npx pnpm@11.18.0 gate → verde"
+        "npx pnpm@11.18.0 gate → verde",
+        "RECON-019: node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-019.task.yml → valido (R3, bloqueado por BLOCK-LEGAL-AI apenas para a transicao de IA)",
+        "RECON-019: npx pnpm@11.18.0 gate → verde no candidato (lint, typecheck, build, 515 unit + 189 privacy + 100 scope, secrets)",
+        "RECON-019: supabase test db em diretorio isolado (sem reset, somente transacao) → verification-documents.sql 12/12 (versionamento, reenvio invalida o resultado anterior, decisao tardia recusada) e o dry-run transacional da migration 20260911063333 + verification-document-status.sql 7/7 (leitura e negativa 42501), revertido sem deixar funcao no banco",
+        "RECON-019: captura visual 375/768/1440 com ator rejected@bivaque.example.invalid em /onboarding, /onboarding/documento e /onboarding/status e admissao-1@ em /onboarding/status → 0 achados (Authenticated capture: yes)"
       ],
-      "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+      "tests": [
+        "node --test tests/scope/prancha-coverage.test.mjs",
+        "vitest run tests/unit/onboarding/admission-boards.test.ts tests/unit/onboarding/document-status.test.ts",
+        "supabase test db (RECON-019: rodado em diretorio isolado, sem reset)"
+      ],
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/agents/tasks/RECON-019.task.yml",
         "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
         "docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
         "docs/decisions/ADR-20260909-midia-de-membro.md",
@@ -2093,8 +2104,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",

@@ -1,8 +1,7 @@
 "use client"
 
 import { isValidCpf } from "@bivaque/domain"
-import { Button, Form, Input, Spinner } from "@heroui/react"
-import { ShieldCheck } from "lucide-react"
+import { Button, Form, Input, Radio, RadioGroup, Spinner } from "@heroui/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { purgeCpfResidue } from "../../../lib/onboarding/storage"
@@ -11,10 +10,19 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { SUPPORT_EMAIL } from "../../../lib/support"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { showToast } from "../../components/bivaque/toast"
-import { OnboardingShell } from "./components/onboarding-shell"
+import { AdmissionShell } from "./components/admission-shell"
 import styles from "./onboarding.module.css"
 
 type OnboardingStep = "verify" | "family" | "done" | "loading"
+
+type RoleId = "military" | "veteran" | "pensioner" | "family"
+
+const ROLE_OPTIONS: ReadonlyArray<{ id: RoleId; label: string }> = [
+  { id: "military", label: "Sou militar das Forças Armadas" },
+  { id: "veteran", label: "Sou veterano" },
+  { id: "pensioner", label: "Sou pensionista" },
+  { id: "family", label: "Recebi um convite familiar" },
+]
 
 function formatCpf(digits: string): string {
   if (digits.length <= 3) return digits
@@ -42,6 +50,7 @@ function OnboardingFlow() {
   const searchParams = useSearchParams()
 
   const [step, setStep] = useState<OnboardingStep>("loading")
+  const [role, setRole] = useState<RoleId>("military")
   const [cpf, setCpf] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -52,8 +61,6 @@ function OnboardingFlow() {
   const inviteToken = searchParams.get("invite")
 
   useEffect(() => {
-    // A versão anterior do fluxo gravava o CPF aqui; quem já passou por ela
-    // pode ter a chave no navegador. Removemos no boot, sem ler de volta.
     purgeCpfResidue(sessionStorage)
 
     const boot = async () => {
@@ -89,17 +96,11 @@ function OnboardingFlow() {
           router.replace("/community")
           return
         }
-        // P0 Task 4: verified without membership is a real state — the person
-        // must choose a locality at the post-eligibility step, not the feed.
         if (data.status === "verified") {
           router.replace("/onboarding/locality")
           return
         }
         if (data.status === "pending") {
-          router.replace("/onboarding/status")
-          return
-        }
-        if (data.status === "rejected") {
           router.replace("/onboarding/status")
           return
         }
@@ -111,6 +112,15 @@ function OnboardingFlow() {
 
   const handleVerifyCpf = async () => {
     setError(null)
+
+    if (role === "family") {
+      setStep("family")
+      if (familyToken.length === 0) {
+        setError("Abra o link do convite que você recebeu para concluir por aqui.")
+      }
+      return
+    }
+
     if (!isValidCpf(cpf)) {
       setError("CPF inválido. Confira os 11 dígitos.")
       return
@@ -154,9 +164,9 @@ function OnboardingFlow() {
         router.push("/onboarding/welcome")
       } else {
         const outcome = data["outcome"] as Record<string, unknown>
-        // P0 Task 5: o nome que o Portal sugeriu atravessa a fronteira em
-        // memória (D11) e é guardado em sessionStorage descartável para o passo
-        // pós-elegibilidade preencher o campo. Nunca é persistido no banco.
+        // O nome que o Portal sugeriu atravessa a fronteira em memória (D11) e é
+        // guardado em sessionStorage descartável para o passo pós-elegibilidade.
+        // Nunca é persistido no banco.
         if (outcome["status"] === "verified") {
           const suggested =
             typeof outcome["suggestedName"] === "string" ? outcome["suggestedName"] : ""
@@ -165,10 +175,7 @@ function OnboardingFlow() {
           }
           router.push("/onboarding/locality")
         } else if (outcome["status"] === "rejected") {
-          // P0 Task 8: rejection is not geographic. The rejected member goes
-          // to /onboarding/status, where the canonical rejected screen is
-          // rendered without a waitlist detour.
-          router.push("/onboarding/status")
+          router.push("/onboarding/documento")
         } else if (outcome["status"] === "pending") {
           router.push("/onboarding/status")
         } else if (outcome["status"] === "temporary_error") {
@@ -187,6 +194,10 @@ function OnboardingFlow() {
     setError(null)
     if (familyName.trim().length < 2) {
       setError("Informe seu nome para aceitar o convite.")
+      return
+    }
+    if (familyToken.length === 0) {
+      setError("Abra o link do convite que você recebeu para concluir por aqui.")
       return
     }
     setLoading(true)
@@ -241,44 +252,31 @@ function OnboardingFlow() {
 
   if (step === "loading") {
     return (
-      <OnboardingShell
-        stage="eligibility"
+      <AdmissionShell
+        stage="access"
         titleId="onboarding-loading-heading"
-        eyebrow="Sua entrada"
         title="Preparando o próximo passo."
-        asideEyebrow="Uma entrada de cada vez"
-        asideTitle="Você está a poucos passos de chegar."
-        asideDescription="Regras claras, elegibilidade conferida e uma localidade escolhida por você."
       >
         <div className={styles["loadingState"]}>
           <Spinner size="lg" color="accent" />
           <p>Consultando o estado da sua entrada...</p>
         </div>
-      </OnboardingShell>
+      </AdmissionShell>
     )
   }
 
   const isFamily = step === "family"
+  const canSubmit = cpf.replace(/\D/g, "").length > 0
 
   return (
-    <OnboardingShell
-      stage="eligibility"
+    <AdmissionShell
+      stage="access"
       titleId="onboarding-heading"
-      eyebrow={isFamily ? "Convite familiar" : "Segundo passo"}
-      title={isFamily ? "Aceite seu convite." : "Confirme sua elegibilidade."}
+      title={isFamily ? "Aceite seu convite." : "Verificar meu acesso"}
       description={
         isFamily
           ? "Seu convite cria uma conta independente, ligada ao membro que convidou você."
-          : "O Bivaque é para militares federais ativos, veteranos e pensionistas militares. A cidade vem no próximo passo."
-      }
-      asideEyebrow="Uma entrada clara para cada pessoa"
-      asideTitle={
-        isFamily ? "Seu vínculo começa com um convite." : "A comunidade começa com confiança."
-      }
-      asideDescription={
-        isFamily
-          ? "Familiares entram pelo convite recebido e seguem com uma conta própria."
-          : "Uma consulta confirma a elegibilidade sem transformar dados pessoais em perfil público."
+          : "Vamos conferir seu acesso à comunidade."
       }
     >
       <div className={styles["stack"]}>
@@ -299,12 +297,43 @@ function OnboardingFlow() {
             }}
             className={styles["form"] ?? ""}
           >
-            <div className={styles["fieldGroup"]}>
-              <p className={styles["fieldLabel"]}>CPF</p>
+            <div className={styles["verifyBlock"]}>
+              <p className={styles["verifyLegend"]}>Como você deseja verificar seu acesso?</p>
+              <RadioGroup
+                aria-label="Como você deseja verificar seu acesso?"
+                className={styles["radioList"] ?? ""}
+                value={role}
+                onChange={(value) => setRole(value as RoleId)}
+              >
+                {ROLE_OPTIONS.map((option) => (
+                  <Radio
+                    key={option.id}
+                    value={option.id}
+                    aria-label={option.label}
+                    className={styles["radioRow"] ?? ""}
+                  >
+                    <Radio.Content>
+                      <Radio.Control>
+                        <Radio.Indicator />
+                      </Radio.Control>
+                      <span>{option.label}</span>
+                    </Radio.Content>
+                  </Radio>
+                ))}
+              </RadioGroup>
+            </div>
+
+            <div className={styles["cpfField"]}>
+              <label className={styles["fieldLabel"]} htmlFor="onboarding-cpf">
+                Digite seu CPF
+              </label>
               <Input
+                id="onboarding-cpf"
                 className={styles["control"] ?? ""}
                 aria-label="CPF"
                 placeholder="000.000.000-00"
+                inputMode="numeric"
+                autoComplete="off"
                 value={formatCpf(cpf)}
                 onChange={(e) => {
                   const digits = (e.target as HTMLInputElement).value
@@ -315,9 +344,18 @@ function OnboardingFlow() {
                 required
                 maxLength={14}
               />
+              <p className={styles["cpfSupport"]}>
+                A verificação por CPF é praticamente instantânea.
+              </p>
             </div>
-            <Button type="submit" variant="primary" className={styles["primaryButton"] ?? ""}>
-              Conferir e continuar
+
+            <Button
+              type="submit"
+              variant="primary"
+              className={`${styles["primaryButton"]} ${styles["submitButton"]}`}
+              isDisabled={!canSubmit}
+            >
+              Verificar acesso
             </Button>
           </Form>
         )}
@@ -351,16 +389,13 @@ function OnboardingFlow() {
         {error && <FeedbackAlert variant="danger" description={error} />}
 
         {step !== "done" && !(step === "verify" && loading) && (
-          <p className={styles["note"]}>
-            <ShieldCheck aria-hidden="true" />
-            <span>
-              {isFamily
-                ? "O convite é conferido pelo e-mail ao qual foi enviado."
-                : "O CPF é usado nesta consulta e não fica salvo no Bivaque."}
-            </span>
+          <p className={styles["documentFooterNote"]}>
+            {isFamily
+              ? "O convite é conferido pelo e-mail ao qual foi enviado."
+              : "Se não conseguirmos confirmar, você poderá enviar sua identidade."}
           </p>
         )}
       </div>
-    </OnboardingShell>
+    </AdmissionShell>
   )
 }

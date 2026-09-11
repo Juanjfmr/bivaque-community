@@ -566,3 +566,321 @@
     animation-iteration-count: 1;
   }
 }
+
+.admissionRoot {
+  display: grid;
+  min-height: 100svh;
+  color: var(--semantic-text-primary);
+  background: var(--semantic-canvas);
+  font-family: var(--semantic-font-family-interface);
+}
+
+.admissionRoot :focus-visible {
+  outline: 2px solid var(--semantic-action-primary);
+  outline-offset: 3px;
+}
+
+.admissionRoot a {
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.admissionRail {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 20px 36px;
+  border-bottom: 1px solid var(--semantic-border);
+}
+
+.admissionBrand {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--semantic-success);
+  font-size: var(--semantic-typography-section-title-size);
+  font-weight: var(--semantic-typography-card-title-weight);
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.admissionBrand:hover {
+  color: var(--semantic-action-primary-hover);
+}
+
+.progressCard {
+  padding: 18px;
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--radius-card);
+  background: var(--semantic-surface);
+}
+
+.progressTitle {
+  margin: 0 0 16px;
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
+}
+
+.progressList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progressStep {
+  position: relative;
+  display: grid;
+  min-height: 44px;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.progressStep:not(:last-child)::after {
+  position: absolute;
+  top: 40px;
+  bottom: -8px;
+  left: 13px;
+  width: 2px;
+  background: var(--semantic-border);
+  content: "";
+}
+
+.progressMarker {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  color: var(--semantic-text-secondary);
+  border: 2px solid var(--semantic-border);
+  border-radius: 999px;
+  background: var(--semantic-surface);
+  font-size: 0.8125rem;
+  font-weight: var(--semantic-typography-label-weight);
+}
+
+.progressStep[data-state="complete"] .progressMarker {
+  color: var(--semantic-text-on-strong);
+  border-color: var(--semantic-success);
+  background: var(--semantic-success);
+}
+
+.progressStep[data-state="current"] .progressMarker {
+  color: var(--semantic-success);
+  border-color: var(--semantic-success);
+}
+
+.progressStep[data-state="complete"]::after,
+.progressStep[data-state="current"]::after {
+  background: var(--semantic-success);
+}
+
+.progressText {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.progressText strong {
+  font-size: var(--semantic-typography-body-size);
+}
+
+.progressText small {
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+}
+
+.admissionWork {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 8px 20px 56px;
+}
+
+.admissionWork .heading {
+  margin-bottom: 28px;
+}
+
+.verifyBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.verifyLegend {
+  margin: 0;
+  font-size: var(--semantic-typography-section-title-size);
+  font-weight: var(--semantic-typography-label-weight);
+}
+
+.radioList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.radioRow {
+  position: relative;
+  min-height: 44px;
+  padding: 0;
+  font-size: var(--semantic-typography-body-size);
+}
+
+.radioRow [data-slot="radio-content"] {
+  min-height: 44px;
+}
+
+/* Mirrors the checkbox fix in app/globals.css: React Aria inserts an sr-only
+   span with inline position:absolute + 1px box before the real input, so the
+   input's measured box is 1px instead of the row the user taps. */
+.radioRow [data-slot="radio-content"] > span:has(input[type="radio"]) {
+  /* biome-ignore lint/complexity/noImportantStyles: overriding the library's inline position:absolute so .radio__content is the containing block */
+  position: static !important;
+}
+
+.radioRow input[type="radio"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.cpfField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cpfSupport {
+  margin: 0;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+  line-height: var(--semantic-typography-body-line-height);
+}
+
+.submitButton:disabled,
+.submitButton[data-disabled="true"],
+.submitButton[aria-disabled="true"] {
+  color: var(--semantic-action-primary-disabled-foreground);
+  background: var(--semantic-action-primary-disabled);
+}
+
+.documentFooterNote {
+  margin: 0;
+  padding-top: 18px;
+  color: var(--semantic-text-secondary);
+  border-top: 1px solid var(--semantic-border);
+  font-size: var(--semantic-typography-meta-size);
+  line-height: var(--semantic-typography-body-line-height);
+}
+
+.uploadArea {
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  padding: 28px 20px;
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--radius-card);
+  background: var(--semantic-surface);
+  text-align: center;
+}
+
+.uploadIcon {
+  display: inline-grid;
+  width: 64px;
+  height: 64px;
+  place-items: center;
+  color: var(--semantic-text-secondary);
+  border-radius: var(--radius-control);
+  background: var(--semantic-background-secondary);
+}
+
+.uploadTitle {
+  margin: 0;
+  font-size: var(--semantic-typography-section-title-size);
+  font-weight: var(--semantic-typography-label-weight);
+}
+
+.replacementCard {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--radius-card);
+  background: var(--semantic-surface);
+}
+
+.replacementTitle {
+  margin: 0 0 4px;
+  font-size: var(--semantic-typography-body-size);
+  font-weight: var(--semantic-typography-label-weight);
+}
+
+.notLegible {
+  margin: 0 0 12px;
+  color: var(--semantic-danger);
+  font-size: var(--semantic-typography-meta-size);
+  font-weight: var(--semantic-typography-label-weight);
+}
+
+.documentInfo {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
+  margin: 0;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+  line-height: var(--semantic-typography-body-line-height);
+}
+
+.documentInfo svg {
+  width: 18px;
+  height: 18px;
+  color: var(--semantic-success);
+}
+
+.backLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  color: var(--semantic-success);
+  font-size: var(--semantic-typography-body-size);
+  font-weight: var(--semantic-typography-label-weight);
+  text-underline-offset: 4px;
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+@media (min-width: 900px) {
+  .admissionRoot {
+    grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+  }
+
+  .admissionRail {
+    min-height: 100svh;
+    gap: 32px;
+    padding: 32px;
+    border-right: 1px solid var(--semantic-border);
+    border-bottom: 0;
+  }
+
+  .admissionWork {
+    padding: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admissionRoot *,
+  .admissionRoot *::before,
+  .admissionRoot *::after {
+    transition-duration: var(--primitive-motion-none);
+    animation-duration: var(--primitive-motion-none);
+    animation-iteration-count: 1;
+  }
+}
