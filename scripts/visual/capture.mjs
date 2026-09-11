@@ -42,6 +42,29 @@ const ROUTES = [
   { path: "/profile", name: "profile", auth: true },
   { path: "/events", name: "events", auth: true },
   { path: "/events/80000000-0000-4000-8000-000000000001", name: "event-detail", auth: true },
+  // RECON-029: o evento REAL do seed (organizador 30000000-...-001) — o id
+  // acima é um post id, não um evento; esta fixture concreta sustenta a captura
+  // do detalhe e do fio de pergunta.
+  {
+    path: "/events/70000000-0000-4000-8000-000000000005",
+    name: "event-detail-seeded",
+    auth: true,
+  },
+  // RECON-029 (R34/R35): rotas novas. Fixture concreta = evento do seed
+  // (organizador 30000000-...-001) e a conta visual (Ana Verificada), que NÃO
+  // organiza o evento semeado — por isso `perguntas` cai no painel "Pedir mais
+  // informações" e `editar` exige a conta organizadora numa run dedicada.
+  { path: "/events/novo", name: "event-novo", auth: true },
+  {
+    path: "/events/70000000-0000-4000-8000-000000000005/perguntas",
+    name: "event-perguntas",
+    auth: true,
+  },
+  {
+    path: "/events/70000000-0000-4000-8000-000000000005/editar",
+    name: "event-editar",
+    auth: true,
+  },
   { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
   { path: "/guide", name: "arrival-guide", auth: true },

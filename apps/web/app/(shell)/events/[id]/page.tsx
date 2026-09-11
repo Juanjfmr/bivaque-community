@@ -439,34 +439,24 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 </div>
               </section>
 
-              {/* Pedir mais informações — orchestrator verdict (RECON-007 B.3):
-                  no organizer-question mechanism exists in the repository.
-                  open_conversation / shared_event requires an RSVP on BOTH
-                  sides; the organizer cannot RSVP to their own event, and
-                  /events/[id]/perguntas is W04 scope. Render for
-                  non-organizers always, before AND after any RSVP change.
-                  Large outlined Button isDisabled + helper copy + honest
-                  reason. No toast, no fake href, no handler. */}
+              {/* RECON-029 (R33/R34, prancha 67): "Pedir mais informações"
+                  permanece disponível ANTES e DEPOIS de confirmar presença e
+                  não exige RSVP. Leva ao fio da pergunta, cujo destinatário é
+                  derivado do evento e cuja conversa a RLS só abre a quem
+                  participa. */}
               {!isOrganizer ? (
                 <section aria-labelledby="ask-organizer-heading" className="flex flex-col gap-2">
                   <h2 id="ask-organizer-heading" className="text-base font-semibold tracking-tight">
                     Pergunte ao organizador
                   </h2>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    isDisabled
-                    fullWidth
-                    className="min-h-11"
-                    aria-disabled="true"
+                  <Link
+                    href={`/events/${event.id}/perguntas` as Route}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-border bg-[var(--semantic-surface)] px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
                   >
                     Pedir mais informações
-                  </Button>
+                  </Link>
                   <p className="text-sm text-muted">
                     Envie sua dúvida para {organizerName ?? "o organizador"} sobre este evento.
-                  </p>
-                  <p className="text-xs text-muted">
-                    As perguntas ao organizador ainda não estão disponíveis nesta versão.
                   </p>
                 </section>
               ) : null}
@@ -479,6 +469,18 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               {isOrganizer && !isCancelled && !isCompleted ? (
                 <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-[var(--semantic-surface-sunken)] p-3">
                   <p className="text-xs text-muted">Você é o organizador deste evento.</p>
+                  <Link
+                    href={`/events/${event.id}/editar` as Route}
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+                  >
+                    Editar evento
+                  </Link>
+                  <Link
+                    href={`/events/${event.id}/perguntas` as Route}
+                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+                  >
+                    Ver perguntas
+                  </Link>
                   <form action={completeEventAction}>
                     <input type="hidden" name="eventId" value={event.id} />
                     <Button type="submit" size="sm" variant="tertiary" className="min-h-11">

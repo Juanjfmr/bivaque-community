@@ -2133,6 +2133,44 @@
       "sourceRevision": "15a884d",
       "dependencies": [],
       "completedChecklist": [false, false, false, false, false, false, false]
+    },
+    {
+      "id": "RECON-029-EVENTO-PERGUNTA",
+      "title": "Evento: pergunta ao organizador (prancha 67) e rotas de criar/editar",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "RECON-029. A pergunta ao organizador vira conversa contextual vinculada ao evento: dm_context_type ganha 'event_question', public.open_event_question deriva o organizador do PROPRIO evento (nunca do corpo), exige acesso ao evento e nao exige RSVP, e cada mensagem notifica o outro participante como direct_message honrando notification_preferences.messages. O evento ganha /events/novo e /events/[id]/editar, persistindo antes de divulgar e sem tocar no alcance (localidade/comunidade/grupo). Autorizado pelo ADR-20260909-pedidos-e-conversa-contextual (aprovado). ENTREGUE em codigo: migrations 20260911051215/20260911051230, apps/web/lib/events, rotas, pgTAP positivo/negativo, testes de unidade e registro em capture.mjs. PENDENTE e NOMEADO: prova de runtime de banco (test:db/db:lint) e captura do fio de pergunta seguem sem execucao porque o banco local e COMPARTILHADO com outros executores e a instrucao da sessao proibe reset/migration; por isso /events/[id]/perguntas responde HTTP 200 com o boundary de erro honesto ate a migration ser aplicada. A revisao independente tambem nao rodou — o executor nao adjudica a propria evidencia.",
+      "checklist": [
+        "Migration com o valor event_question e a RPC open_event_question (destinatario derivado do evento)",
+        "Notificacao dos dois lados honrando notification_preferences.messages",
+        "pgTAP com caso positivo e negativo (terceiro nao le, sem acesso nao abre, organizador nao pergunta, preferencia desligada suprime)",
+        "Rotas /events/novo e /events/[id]/editar persistindo e preservando o alcance",
+        "Captura 375/768/1440 das rotas novas com ator e destino",
+        "PENDENTE: aplicar a migration no banco local e rodar test:db + db:lint (fora desta sessao)",
+        "PENDENTE: revisor independente e verificador de runtime"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-029.task.yml -> contrato valido (R3, retry 3)",
+        "npx pnpm@11.18.0 gate -> verde (lint, typecheck, build, 522 unit + privacy + 100 scope + secrets)",
+        "captura autenticada em 375/768/1440: /events/novo limpo; /events/70000000-...-005 (Piquenique das familias, organizadora Gabriele Almeida) mostra Organizado por e Pedir mais informacoes como link real; /events/[id]/editar devolve 404 honesto para conta nao-organizadora",
+        "/events/70000000-...-005/perguntas -> HTTP 200 com boundary de erro: a migration ainda nao foi aplicada no banco compartilhado"
+      ],
+      "tests": [
+        "supabase/tests/event-questions.sql (pgTAP; escrito, NAO executado nesta sessao)",
+        "tests/unit/events/question-thread.test.ts",
+        "tests/unit/events/event-form.test.ts"
+      ],
+      "links": [
+        "Contrato | docs/agents/tasks/RECON-029.task.yml",
+        "Leitura da prancha 67 | docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "ADR | docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
+        "Spec 4.4 R33-R35 | docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
+      ],
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94",
+      "dependencies": []
     }
   ]
 }
