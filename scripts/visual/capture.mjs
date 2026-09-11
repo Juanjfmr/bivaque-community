@@ -78,6 +78,40 @@ const ROUTES = [
   { path: "/messages", name: "messages", auth: true },
   { path: "/notifications", name: "notifications", auth: true },
   { path: "/profile", name: "profile", auth: true },
+  // RECON-032 (pranchas 54 e 56). Fixtures concretas, não templates:
+  // - /denuncias/nova: alvo é um post do seed que o visual@ vê pela RLS e
+  //   ainda não denunciou (medido em 10/09/2026 com o token dele via REST);
+  //   mantém o formulário aberto na captura. A spec e2e deste lote denuncia o
+  //   mesmo post e resolve a denúncia que cria, então ele segue apto aqui.
+  // - /denuncias/<own-report>: o id da denúncia do próprio ator é resolvido na
+  //   hora por REST (fixture "own-report"). O seed gera ids aleatórios, então
+  //   id fixo aqui virava fixture morta a cada reset do banco compartilhado.
+  // - /messages/<thread>: a conversa precisa de dois participantes; o
+  //   visual@ não compartilha contexto com ninguém do seed. A rota usa a
+  //   conta própria (account: "thread") e resolve o id do arquivo de fixture
+  //   escrito por tests/e2e/recon-032-messages.spec.ts (open_conversation é
+  //   idempotente pelo par, então o mesmo id vale entre execuções).
+  { path: "/salvos", name: "salvos", auth: true },
+  { path: "/ajuda", name: "ajuda", auth: true },
+  { path: "/denuncias", name: "denuncias", auth: true },
+  {
+    path: "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01",
+    name: "denuncia-nova",
+    auth: true,
+  },
+  {
+    path: "/denuncias/<own-report>",
+    name: "denuncia-detalhe",
+    auth: true,
+    fixture: "own-report",
+  },
+  {
+    path: "/messages/<thread>",
+    name: "message-thread",
+    auth: true,
+    account: "thread",
+    fixture: "message-thread",
+  },
 ]
 
 // --------------------------------------------------------------------------
@@ -122,7 +156,11 @@ const TOKEN_SOURCE = JSON.parse(
 // auth — optional; without credentials the gated routes are captured signed out
 // --------------------------------------------------------------------------
 
-async function fetchSession() {
+// Uma rota pode exigir outra pessoa: a prancha 56 mostra a tela de uma conta
+// com dados, e nem todo ator do seed compartilha todo contexto. `account` na
+// rota lê BIVAQUE_VISUAL_EMAIL__<CONTA>/BIVAQUE_VISUAL_PASSWORD__<CONTA> e cai
+// na conta global quando não definida.
+async function fetchSession(account) {
   const url =
     process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
     process.env["SUPABASE_URL"] ??
@@ -130,8 +168,17 @@ async function fetchSession() {
     dotEnv["SUPABASE_URL"]
   const anonKey =
     process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  const email = process.env["BIVAQUE_VISUAL_EMAIL"] ?? dotEnv["BIVAQUE_VISUAL_EMAIL"]
-  const password = process.env["BIVAQUE_VISUAL_PASSWORD"] ?? dotEnv["BIVAQUE_VISUAL_PASSWORD"]
+  const suffix = account ? `__${account.toUpperCase()}` : ""
+  const email =
+    process.env[`BIVAQUE_VISUAL_EMAIL${suffix}`] ??
+    dotEnv[`BIVAQUE_VISUAL_EMAIL${suffix}`] ??
+    process.env["BIVAQUE_VISUAL_EMAIL"] ??
+    dotEnv["BIVAQUE_VISUAL_EMAIL"]
+  const password =
+    process.env[`BIVAQUE_VISUAL_PASSWORD${suffix}`] ??
+    dotEnv[`BIVAQUE_VISUAL_PASSWORD${suffix}`] ??
+    process.env["BIVAQUE_VISUAL_PASSWORD"] ??
+    dotEnv["BIVAQUE_VISUAL_PASSWORD"]
 
   if (!url || !anonKey || !email || !password) return null
 
@@ -149,6 +196,53 @@ async function fetchSession() {
   // supabase-js derives its storage key from the first hostname label.
   const ref = new URL(url).hostname.split(".")[0]
   return { storageKey: `sb-${ref}-auth-token`, session: await response.json() }
+}
+
+// Fixtures concretas de rotas dinâmicas. Duas fontes, ambas reais:
+// - arquivo (`.visual/fixtures/<nome>.json`), escrito pelo spec e2e que cria a
+//   linha (conversa, cujo id só nasce de open_conversation);
+// - consulta REST com o token do próprio ator (denúncia própria: o seed gera
+//   ids aleatórios, então id fixo morre a cada reset).
+// Sem fixture a captura falha alto — fotografar 404 disfarçado não é evidência.
+async function resolveRoutePath(route, auth) {
+  if (!route.fixture) return route.path
+
+  if (route.fixture === "own-report") {
+    if (!auth?.session?.access_token) {
+      throw new Error(`rota ${route.name}: fixture "own-report" exige sessão autenticada`)
+    }
+    const url =
+      process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
+      process.env["SUPABASE_URL"] ??
+      dotEnv["NEXT_PUBLIC_SUPABASE_URL"] ??
+      dotEnv["SUPABASE_URL"]
+    const anonKey =
+      process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+    const query = new URLSearchParams({ select: "id", order: "created_at.desc", limit: "1" })
+    const response = await fetch(`${url}/rest/v1/reports?${query.toString()}`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${auth.session.access_token}` },
+    })
+    const rows = response.ok ? await response.json() : []
+    const id = Array.isArray(rows) ? rows[0]?.id : null
+    if (typeof id !== "string") {
+      throw new Error(`rota ${route.name}: o ator não tem denúncia própria para a fixture`)
+    }
+    return `/denuncias/${id}`
+  }
+
+  const file = join(OUT_ROOT, "fixtures", `${route.fixture}.json`)
+  try {
+    const { path } = JSON.parse(readFileSync(file, "utf8"))
+    if (typeof path !== "string" || path.length === 0) {
+      throw new Error(`fixture ${route.fixture}: campo "path" ausente`)
+    }
+    return path
+  } catch (error) {
+    throw new Error(
+      `rota ${route.name} exige a fixture "${route.fixture}" (${file}): ${error.message}. ` +
+        "Rode o spec e2e que a cria antes da captura.",
+    )
+  }
 }
 
 // --------------------------------------------------------------------------
@@ -432,15 +526,25 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
 async function main() {
   const runDir = join(OUT_ROOT, RUN_ID)
   const shotsDir = join(runDir, "shots")
-  const routes = ROUTE_PATH ? ROUTES.filter((route) => route.path === ROUTE_PATH) : ROUTES
+  // BIVAQUE_VISUAL_ROUTE casa o caminho exato ou o nome da rota — o nome é a
+  // única forma de pedir uma rota cujo caminho só existe em runtime (fixture).
+  const routes = ROUTE_PATH
+    ? ROUTES.filter((route) => route.path === ROUTE_PATH || route.name === ROUTE_PATH)
+    : ROUTES
   mkdirSync(shotsDir, { recursive: true })
 
   if (routes.length === 0) {
     throw new Error(`No visual route configured for ${ROUTE_PATH}`)
   }
 
-  const auth = await fetchSession()
-
+  const sessions = new Map()
+  async function sessionFor(route) {
+    const key = route.account ?? ""
+    if (!sessions.has(key)) {
+      sessions.set(key, await fetchSession(route.account))
+    }
+    return sessions.get(key)
+  }
   // Same dev-host escape hatch as playwright.config.ts: point at a system Chrome when
   // the managed browser bundle is not installed.
   const executablePath = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"]
@@ -458,6 +562,7 @@ async function main() {
         locale: "pt-BR",
       })
 
+      const auth = await sessionFor(route)
       if (route.auth && auth) {
         // supabase-js stores the session in localStorage; @supabase/ssr (the new B2 middleware)
         // reads it from a cookie of the same name. Without the cookie the server-side middleware
@@ -485,8 +590,10 @@ async function main() {
       })
 
       const label = `${route.name}--${viewport.name}`
+      let targetPath = route.path
       try {
-        const response = await page.goto(route.path, { waitUntil: "networkidle", timeout: 30_000 })
+        targetPath = await resolveRoutePath(route, auth)
+        const response = await page.goto(targetPath, { waitUntil: "networkidle", timeout: 30_000 })
         await page.waitForTimeout(400)
 
         // Two shots per route: the fold shot keeps first-impression detail legible for
@@ -503,6 +610,7 @@ async function main() {
 
         results.push({
           route: route.path,
+          target: targetPath,
           viewport: viewport.name,
           status: response?.status() ?? 0,
           landedOn: page.url().replace(BASE_URL, ""),
@@ -514,6 +622,7 @@ async function main() {
       } catch (error) {
         results.push({
           route: route.path,
+          target: targetPath,
           viewport: viewport.name,
           status: 0,
           error: String(error).slice(0, 300),
@@ -526,7 +635,7 @@ async function main() {
   }
 
   await browser.close()
-  writeResults(runDir, results, Boolean(auth))
+  writeResults(runDir, results, [...sessions.values()].some(Boolean))
 }
 
 function writeResults(runDir, results, authenticated) {
@@ -553,7 +662,8 @@ function writeResults(runDir, results, authenticated) {
     const findings = entry.findings ?? []
     lines.push(`## ${entry.route} @ ${entry.viewport} — HTTP ${entry.status}`)
     if (entry.error) lines.push(`- ERROR: ${entry.error}`)
-    if (entry.landedOn && entry.landedOn !== entry.route) {
+    const expected = entry.target ?? entry.route
+    if (entry.landedOn && entry.landedOn !== expected) {
       lines.push(`- redirected to \`${entry.landedOn}\``)
     }
     if (entry.screenshot) {
