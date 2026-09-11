@@ -2072,17 +2072,35 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
+        "RECON-021 (busca global, prancha 61) entregue com prova de runtime; revisao independente pendente"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-        "npx pnpm@11.18.0 gate → verde"
+        "npx pnpm@11.18.0 gate → verde",
+        "RECON-021 (11/09/2026): campo Buscar no Bivaque no cabecalho do shell de membro (app-shell.tsx) leva a /explorar/busca?q=, agrupada por Guia/Servicos/Eventos com contagem da lista autorizada; /explorar/servicos passa a ler q canonico com search aceito so na borda, ganha linha de localizacao do provider_reach, paginacao por page na URL e estados carregando/vazio/erro/sessao expirada.",
+        "npx pnpm@11.18.0 gate completo → GATE VERDE em 11/09/2026: lint, typecheck, build, test (unit 529 + privacy 189 + scope) e secrets (log .omo-evidence/gate-retry-1.log, exit 0 lido na mesma linha).",
+        "npx pnpm@11.18.0 exec playwright test tests/e2e/global-search-flow.spec.ts → 10 testes x 3 viewports = 30 passed (workers=1), incluindo negacao sem interface: RPC search_providers devolve [] para o JWT sem direito e o prestador para o JWT com direito.",
+        "Captura visual (scripts/visual/capture.mjs, server 127.0.0.1:3127) em 375/768/1440 com Authenticated capture: yes: /inicio, /explorar, /explorar/busca?q=escola, /guide?q=escola (visual@) e /explorar/servicos?q=climatiza (membro-25@, unico ator que ve o prestador pela RLS). BUILD_ID e0t92uDVwGwnG_E2UWmCd posterior a todas as edicoes de apps/web, conferido por mtime.",
+        "PENDENTE nomeado: operator-shell.tsx (shell de OPERACAO) nao existe na main e974bd0 - o campo rotulado Buscar no Bivaque que envia a /explorar/servicos continua em codex/ajuste-de-auditoria e precisa apontar para /explorar/busca quando aquela base reconciliar; o caminho segue em allowed_paths do RECON-021.",
+        "PENDENTE nomeado: o dominio de eventos nao tem filtro por termo (prancha 48 define so periodo), entao o Ver todos do grupo Eventos cai em /events sem o termo - divergencia declarada, nao link que finge carregar parametro ignorado.",
+        "PENDENTE nomeado: Mercado e Moradia nao entram no agrupado porque ainda nao tem rota - o contrato proibe apresentar modulo nao integrado como resultado."
       ],
-      "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+      "tests": [
+        "node --test tests/scope/prancha-coverage.test.mjs",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/search",
+        "npx pnpm@11.18.0 exec playwright test tests/e2e/global-search-flow.spec.ts"
+      ],
+      "drift": {
+        "documented": "RECON-021 e RECON-WEB-EXECUCAO.md citam docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md e o campo do shell de operacao como existentes na main.",
+        "observed": "Na main e974bd0 nenhum dos dois existe no checkout: o handoff so vive em codex/fidelidade-pranchas (5143ada) e operator-shell.tsx so em codex/ajuste-de-auditoria (81ce1c8).",
+        "action": "O handoff foi lido por git show (read-only) e o campo do shell de membro foi entregue; o destino do campo do shell de operacao para /explorar/busca entra quando codex/ajuste-de-auditoria reconciliar, com a pendencia nomeada acima."
+      },
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/agents/tasks/RECON-021.task.yml",
         "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
         "docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
         "docs/decisions/ADR-20260909-midia-de-membro.md",
@@ -2093,8 +2111,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "e974bd0"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
