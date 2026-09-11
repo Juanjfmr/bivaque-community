@@ -109,6 +109,17 @@ const ROUTES = [
   },
   { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
+  // RECON-034 — apresentação com faixa/miniatura e o console de imagens do dono.
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000001",
+    name: "community-detail",
+    auth: true,
+  },
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000001/admin/media",
+    name: "community-admin-media",
+    auth: true,
+  },
   { path: "/guide", name: "arrival-guide", auth: true },
   // RECON-021: prova que o Ver-todos do grupo Guia chega com o filtro `q`
   // preenchido (hunk de uma linha no /guide).

@@ -13,6 +13,10 @@ export type CommunityCard = {
   localityId: string
   /** Rótulo real da cidade ("Manaus, AM"), resolvido da tabela `localities`. */
   cityLabel: string | null
+  /** URL assinada da faixa atual, ou `null` quando não há imagem. */
+  bannerUrl: string | null
+  /** URL assinada da miniatura atual, ou `null` quando não há imagem. */
+  thumbnailUrl: string | null
 }
 
 export type MyMembership = {

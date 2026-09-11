@@ -67,7 +67,7 @@ select isnt_empty(
 );
 
 select is_empty(
-  $$ select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and cmd = 'DELETE' and policyname not in ('avatars_delete_own', 'event_photos_delete_own', 'listing_photos_storage_delete_owner') $$,
+  $$ select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects' and cmd = 'DELETE' and policyname not in ('avatars_delete_own', 'event_photos_delete_own', 'listing_photos_storage_delete_owner', 'community_images_delete_owner') $$,
   'no permissive delete policy exists on storage.objects'
 );
 

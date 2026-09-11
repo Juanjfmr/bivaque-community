@@ -8,9 +8,11 @@
 
 import { Button, Chip, ListBox, Select, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
 import type { Route } from "next"
+import Image from "next/image"
 import Link from "next/link"
 import { type FormEvent, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
+import { communityImageAltText } from "../../../../lib/communities/community-media"
 import { Card } from "../../../components/bivaque/card"
 import { EmptyState } from "../../../components/bivaque/empty-state"
 import { ErrorState } from "../../../components/bivaque/error-state"
@@ -73,19 +75,41 @@ function CommunityHero({ view }: { view: ReadyView }) {
   const { presentation } = view
   return (
     <header className="flex flex-col">
-      <div
-        aria-hidden="true"
-        className="flex h-40 w-full items-end justify-start rounded-2xl bg-[var(--semantic-surface-sunken)] p-4 text-muted sm:h-48"
-      >
-        <CommunityGlyph className="h-12 w-12 opacity-40" />
-      </div>
-      <div className="-mt-12 flex items-end gap-4 px-2">
+      {presentation.bannerUrl ? (
+        <Image
+          src={presentation.bannerUrl}
+          alt={communityImageAltText("banner")}
+          width={1200}
+          height={384}
+          unoptimized
+          className="h-40 w-full rounded-2xl object-cover sm:h-48"
+        />
+      ) : (
         <div
           aria-hidden="true"
-          className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border-4 border-[var(--semantic-canvas)] bg-[var(--semantic-surface-sunken)] text-muted"
+          className="flex h-40 w-full items-end justify-start rounded-2xl bg-[var(--semantic-surface-sunken)] p-4 text-muted sm:h-48"
         >
-          <CommunityGlyph className="h-9 w-9" />
+          <CommunityGlyph className="h-12 w-12 opacity-40" />
         </div>
+      )}
+      <div className="-mt-12 flex items-end gap-4 px-2">
+        {presentation.thumbnailUrl ? (
+          <Image
+            src={presentation.thumbnailUrl}
+            alt={communityImageAltText("thumbnail")}
+            width={80}
+            height={80}
+            unoptimized
+            className="h-20 w-20 shrink-0 rounded-xl border-4 border-[var(--semantic-canvas)] object-cover"
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border-4 border-[var(--semantic-canvas)] bg-[var(--semantic-surface-sunken)] text-muted"
+          >
+            <CommunityGlyph className="h-9 w-9" />
+          </div>
+        )}
         <div className="min-w-0 flex-1 pb-1">
           <h1 className="truncate text-2xl font-semibold tracking-tight">{presentation.name}</h1>
           {presentation.cityLabel && (

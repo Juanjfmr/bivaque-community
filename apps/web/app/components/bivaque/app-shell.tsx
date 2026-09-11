@@ -4,8 +4,10 @@ import { brandTokens } from "@bivaque/tokens"
 import { Button, Kbd, Tooltip } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
 import { Bell, Bookmark, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
+import { communityImageAltText } from "../../../lib/communities/community-media"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
 import { GlobalSearchField } from "../search/global-search-field"
@@ -293,6 +295,7 @@ export function AppShell({ children }: AppShellProperties) {
                     key={community.id}
                     id={community.id}
                     name={community.name}
+                    thumbnailUrl={community.thumbnailUrl}
                     isRail={isRail}
                   />
                 ))}
@@ -412,21 +415,42 @@ function SidebarSecondaryItem({
   )
 }
 
-// Community rows carry no thumbnail — there is no such data. The placeholder
-// is the uppercase initial of the name, on the same selected-surface token
-// the active nav item uses.
-function SidebarCommunityItem({ id, name, isRail }: { id: string; name: string; isRail: boolean }) {
+// Community rows prefer the real thumbnail once the community has one; the
+// uppercase initial stays as the honest fallback when it does not.
+function SidebarCommunityItem({
+  id,
+  name,
+  thumbnailUrl,
+  isRail,
+}: {
+  id: string
+  name: string
+  thumbnailUrl: string | null
+  isRail: boolean
+}) {
   const anchor = (
     <a
       href={`/communities/${id}`}
       className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground ${isRail ? "justify-center px-0" : ""}`}
     >
-      <span
-        aria-hidden="true"
-        className="grid h-6 w-6 shrink-0 place-items-center rounded bg-[var(--semantic-selected)] text-xs text-[var(--semantic-action-primary)]"
-      >
-        {name.charAt(0).toUpperCase()}
-      </span>
+      {thumbnailUrl ? (
+        <Image
+          src={thumbnailUrl}
+          alt={communityImageAltText("thumbnail")}
+          width={24}
+          height={24}
+          unoptimized
+          loading="lazy"
+          className="h-6 w-6 shrink-0 rounded object-cover"
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="grid h-6 w-6 shrink-0 place-items-center rounded bg-[var(--semantic-selected)] text-xs text-[var(--semantic-action-primary)]"
+        >
+          {name.charAt(0).toUpperCase()}
+        </span>
+      )}
       <span className={isRail ? "sr-only" : "min-w-0 truncate"}>{name}</span>
     </a>
   )

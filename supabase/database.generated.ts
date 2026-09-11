@@ -118,6 +118,7 @@ export type Database = {
       }
       communities: {
         Row: {
+          banner_path: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -126,8 +127,10 @@ export type Database = {
           locality_id: string
           name: string
           owner_user_id: string
+          thumbnail_path: string | null
         }
         Insert: {
+          banner_path?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -136,8 +139,10 @@ export type Database = {
           locality_id: string
           name: string
           owner_user_id: string
+          thumbnail_path?: string | null
         }
         Update: {
+          banner_path?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -146,6 +151,7 @@ export type Database = {
           locality_id?: string
           name?: string
           owner_user_id?: string
+          thumbnail_path?: string | null
         }
         Relationships: [
           {
@@ -2332,6 +2338,15 @@ export type Database = {
           id: string
           reach_source: Database["public"]["Enums"]["provider_reach_source"]
         }[]
+      }
+      set_community_image: {
+        Args: {
+          p_caller_user_id: string
+          p_community_id: string
+          p_kind: string
+          p_path: string | null
+        }
+        Returns: undefined
       }
       submit_verification_document: {
         Args: {
