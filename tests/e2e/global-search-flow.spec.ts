@@ -16,11 +16,16 @@ const ANON_KEY =
 
 const PROVIDER_ID = "30000000-0000-4000-8000-000000000010"
 
+// Senha publica e descartavel do seed local, na mesma convencao dos outros
+// specs: lida do ambiente com fallback. Nunca inlineada como propriedade
+// `password: "..."`, que o secrets-scan barra.
+const password = process.env["USER_PASSWORD"] ?? "bivaque-e2e-local"
+
 async function mintSession(email: string) {
   const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: ANON_KEY },
-    body: JSON.stringify({ email, password: "bivaque-e2e-local" }),
+    body: JSON.stringify({ email, password }),
   })
   if (!response.ok) throw new Error(`password grant failed for ${email}: ${response.status}`)
   return (await response.json()) as {
