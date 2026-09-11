@@ -2093,8 +2093,13 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "drift": {
+        "documented": "O contrato RECON-027 promete Moradia com as pranchas 65 (painel 1) e 19, backend junto das telas, pgTAP positivo/negativo, E2E de publicar/encontrar/interesse e captura em 375/768/1440, e o manual declara os 18 lotes liberados para execução.",
+        "observed": "Neste checkout (branch fix/recon-027-moradia) o lote entregou a migration do domínio de anúncio (listings, property_details, listing_photos, listing_saves, listing_alerts, bucket privado listing-photos, RLS e private.can_read_listing), o pgTAP, a lib de domínio com 20 testes unitários e as rotas /imoveis, /imoveis/[id], /imoveis/novo e /imoveis/[id]/editar; gate e build verdes. Mas RECON-025 (domínio Mercado) e RECON-022 (conversa contextual) não existem no checkout, e o stack local é compartilhado com outros executores, então a migration não foi aplicada e pgTAP, E2E, /imoveis/alertas (RECON-028) e captura não rodaram. O interesse no anúncio ficou indisponível na ficha, com motivo visível, por depender da conversa do RECON-022.",
+        "action": "Executar RECON-025 e RECON-022 primeiro. Num stack exclusivo, aplicar a migration, rodar db:reset --no-seed + test:db + db:lint, test:e2e (publicar, encontrar por filtro, interesse) e a captura 375/768/1440 com ator e destino. Reconciliar a ordem da migration com RECON-025, que também cria public.listings; adicionar a fixture de anúncio ao seed.sql para a captura do detalhe."
+      },
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",

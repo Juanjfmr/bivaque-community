@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 72 frentes · 8 agora · 8 bloqueadas · 28 concluídas · 0 drifts
+**Mapa:** 72 frentes · 8 agora · 8 bloqueadas · 28 concluídas · 1 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -16,10 +16,10 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 - **MOB-001-SESSION** · P0 · Mobile: contrato R3 de sessão (PKCE + secure-store + revogação)
 - **S6-MOBILE-RUNTIME** · P0 · Mobile: RUNTIME PROOF real no emulador + tipos Foto/Link/Enquete + realtime
+- **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas
 - **DS-001-DESIGN-SYSTEM** · P1 · Sistema de design canônico Casa comum
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
 - **RECON-AUTH-ENTRADA-WEB** · P1 · Web: entrada fiel à prancha 36-web-auth-entrada sem tocar o mecanismo
-- **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas
 - **RECON-W00-FUNDACAO** · P1 · W00: baseline, contratos e fundação da reconstrução web
 - **RECON-W00-TELAS** · P1 · Quatro telas da reconstrucao web saem do placeholder
 
@@ -36,7 +36,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Drift aberto
 
-Nenhum card.
+- **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas — Executar RECON-025 e RECON-022 primeiro. Num stack exclusivo, aplicar a migration, rodar db:reset --no-seed + test:db + db:lint, test:e2e (publicar, encontrar por filtro, interesse) e a captura 375/768/1440 com ator e destino. Reconciliar a ordem da migration com RECON-025, que também cria public.listings; adicionar a fixture de anúncio ao seed.sql para a captura do detalhe.
 
 ## Triagem prioritária
 

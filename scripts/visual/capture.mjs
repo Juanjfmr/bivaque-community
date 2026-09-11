@@ -18,6 +18,12 @@ const OUT_ROOT = process.env["BIVAQUE_VISUAL_OUT"] ?? ".visual"
 const RUN_ID = process.env["BIVAQUE_VISUAL_RUN"] ?? new Date().toISOString().replace(/[:.]/g, "-")
 const ROUTE_PATH = process.env["BIVAQUE_VISUAL_ROUTE"]
 
+// Fixture de captura de Moradia. Precisa existir em `supabase/seed.sql` (com
+// `property_details` e ao menos uma foto) para a ficha de `/imoveis/[id]`
+// renderizar dado real. Enquanto não existir, a captura do detalhe mostra o
+// não-encontrado — e o relatório precisa dizer isso.
+const IMOVEIS_FIXTURE_ID = "d0000000-0000-4000-8000-000000000001"
+
 const VIEWPORTS = [
   { name: "mobile-375", width: 375, height: 812 },
   { name: "tablet-768", width: 768, height: 1024 },
@@ -52,6 +58,13 @@ const ROUTES = [
   // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
   // pointed here since E10 (406d4f6), but the route did not exist until T4.
   { path: "/localidade", name: "localidade", auth: true },
+  // RECON-027: Moradia. `/imoveis` e `/imoveis/novo` não dependem de fixture.
+  // O detalhe aponta para a fixture de anúncio que `supabase/seed.sql` precisa
+  // criar (fora do allowed_paths deste lote) — sem ela a captura cai no 404
+  // honesto, que NÃO conta como fidelidade comprovada.
+  { path: "/imoveis", name: "imoveis", auth: true },
+  { path: "/imoveis/novo", name: "imoveis-novo", auth: true },
+  { path: `/imoveis/${IMOVEIS_FIXTURE_ID}`, name: "imoveis-detail", auth: true },
   // Onda T Task 5: o console do fundador. Renders empty state honesto para a
   // conta default do seed (sem operador capturado), que é a tela vazia com
   // identificação, não uma tela ausente.
