@@ -16,6 +16,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
+import { callProfileBioRpc } from "../../../../lib/profile/profile-bio-rpcs"
 import { callProfileRpc } from "../../../../lib/profile-rpcs"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 import { MemberAvatar } from "../../../components/bivaque/avatar"
@@ -158,6 +159,18 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
   const affiliation = affiliationFromRows((affiliationRows ?? []) as AffiliationRow[])
   const armedForceLabel = ARMED_FORCES.find((force) => force.id === affiliation.armedForce)
 
+  // A bio segue a visibilidade do perfil (ADR D2): a leitura vai pelo cliente
+  // da SESSÃO, não pelo service client. Sob a role do leitor, a RLS de
+  // `profiles` devolve a bio quando a linha é visível e NULL quando não é — o
+  // resultado É a decisão de visibilidade, e é ele que a tela renderiza.
+  const { data: bioRow, error: bioError } = await callProfileBioRpc(authClient, "get_profile_bio", {
+    p_user_id: userId,
+  })
+  if (bioError) {
+    throw new Error(`Falha ao ler a apresentação: ${bioError.message}`)
+  }
+  const bio = bioRow ?? ""
+
   // Posts and events: scoped by the RPC (Step 3: server-side visibility).
   const [postsResult, eventsResult] = await Promise.all([
     callProfileRpc(serviceClient, "profile_posts_for", {
@@ -193,7 +206,7 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
   //     sem efeito é proibida (G1), então o menu entra quando o contrato existir.
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 pt-6 pb-8">
-      <header className="flex items-center gap-4">
+      <header className="flex items-start gap-4">
         <MemberAvatar
           name={profile.display_name}
           size="lg"
@@ -204,6 +217,9 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
           <h1 className="text-lg font-semibold tracking-tight">
             {profile.display_name ?? "Membro"}
           </h1>
+          {bio.trim().length > 0 ? (
+            <p className="mt-1 text-sm leading-relaxed whitespace-pre-line text-muted">{bio}</p>
+          ) : null}
           <p className="mt-1 text-sm text-muted">
             Apenas conteúdo que você e esta pessoa podem ver pela mesma cidade.
           </p>

@@ -2072,13 +2072,23 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
+        "RECON-020 (pranchas 39 e 51): /onboarding/locality e /onboarding/perfil e a bio em /profile implementados em fix/recon-020-perfil, com a migration 20260911024732_profile_bio.sql, pgTAP e testes de unidade",
+        "RECON-020 PENDENTE: prova de banco nao executada (banco local compartilhado: sem reset e sem migration) e revisao independente ainda nao feita"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-        "npx pnpm@11.18.0 gate → verde"
+        "npx pnpm@11.18.0 gate → verde",
+        "RECON-020: node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-020.task.yml → 1 contrato valido (R3, retry 3)",
+        "RECON-020: npx pnpm@11.18.0 gate → verde (lint, typecheck, build, test, secrets)",
+        "RECON-020: capture 375/768/1440 de /onboarding/locality (verified-no-membership@), /onboarding/perfil, /onboarding/welcome e /profile (visual@) → 0 achados de alta severidade"
       ],
+      "drift": {
+        "documented": "ADR-20260808-perfil-campos-opcionais esta com status proposed e diz que nada autoriza implementar enquanto proposed; o AGENTS.md da raiz repete a proibicao de afiliacao declarada",
+        "observed": "a main ja publica public.profile_affiliations (migration 20260909020733) e a tela de afiliacao, com o comentario da migration afirmando aprovacao; o RECON-020 constroi a personalizacao sobre esse mecanismo, sem criar persistencia nova",
+        "action": "o dono confirma o status do ADR-20260808 e o campo status e reconciliado (approved, ou o registro de por que diverge) antes de o RECON-020 fechar"
+      },
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
@@ -2093,8 +2103,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",

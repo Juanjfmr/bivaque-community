@@ -30,8 +30,21 @@ describe("onboarding experience", () => {
 
   it("keeps eligibility and locality as separate user-visible steps", () => {
     expect(read("page.tsx")).toContain("Confirme sua elegibilidade.")
-    expect(read("locality/page.tsx")).toContain("Escolha sua localidade.")
     expect(read("welcome/page.tsx")).toContain("Você chegou ao Bivaque.")
+  })
+
+  // A versão de 08/09/2026 (especificação §4.1 R14–R16 e prancha 39) substitui
+  // o passo único "Localidade" por um contexto de dois passos visíveis — Cidade
+  // e Perfil — antes de "Concluir". A expectativa antiga deste arquivo
+  // ("Escolha sua localidade.") codificava o desenho superado; a cobertura do
+  // novo contrato é maior, não menor: o esqueleto de três passos, o H1 da
+  // cidade e a existência do passo de personalização passam a ser exigidos.
+  it("apresenta o contexto Cidade → Perfil → Concluir da prancha 39", () => {
+    expect(read("components/context-steps.tsx")).toContain('{ id: "cidade", label: "Cidade" }')
+    expect(read("components/context-steps.tsx")).toContain('{ id: "perfil", label: "Perfil" }')
+    expect(read("components/context-steps.tsx")).toContain('{ id: "concluir", label: "Concluir" }')
+    expect(read("locality/page.tsx")).toContain("Qual cidade você quer explorar?")
+    expect(read("perfil/page.tsx")).toContain("Deixe com a sua cara.")
   })
 
   it("gives the document exception control an explicit accessible name", () => {

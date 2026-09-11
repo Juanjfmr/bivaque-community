@@ -34,6 +34,7 @@ const ROUTES = [
   { path: "/onboarding/status", name: "onboarding-status", auth: true },
   { path: "/onboarding/welcome", name: "onboarding-welcome", auth: true },
   { path: "/onboarding/locality", name: "onboarding-locality", auth: true },
+  { path: "/onboarding/perfil", name: "onboarding-perfil", auth: true },
   { path: "/reports", name: "admin-reports", auth: true },
   { path: "/admissions", name: "admin-admissions", auth: true },
   { path: "/guide-queue", name: "admin-guide-queue", auth: true },

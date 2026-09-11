@@ -49,9 +49,11 @@ export default function NotificationPreferencesSection() {
 
       <form action={updateNotificationPreferencesAction} className="mt-3 flex flex-col gap-2">
         <Checkbox
+          aria-label="Receber alertas de comentários"
           name="comments"
           isSelected={prefs.comments}
           onChange={(v) => setPrefs((prev) => ({ ...prev, comments: v }))}
+          className="[&_input]:min-h-11 [&_input]:min-w-11 [&_input]:opacity-0 [&_input]:transition-opacity"
         >
           <Checkbox.Content>
             <Checkbox.Control>
@@ -61,9 +63,11 @@ export default function NotificationPreferencesSection() {
           </Checkbox.Content>
         </Checkbox>
         <Checkbox
+          aria-label="Receber alertas de eventos"
           name="events"
           isSelected={prefs.events}
           onChange={(v) => setPrefs((prev) => ({ ...prev, events: v }))}
+          className="[&_input]:min-h-11 [&_input]:min-w-11 [&_input]:opacity-0 [&_input]:transition-opacity"
         >
           <Checkbox.Content>
             <Checkbox.Control>

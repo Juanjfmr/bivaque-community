@@ -543,6 +543,370 @@
   }
 }
 
+.contextRoot {
+  min-height: 100svh;
+  color: var(--semantic-text-primary);
+  background: var(--semantic-canvas);
+  font-family: var(--semantic-font-family-interface);
+}
+
+.contextRoot :focus-visible {
+  outline: 2px solid var(--semantic-action-primary);
+  outline-offset: 3px;
+}
+
+.contextLayout {
+  display: grid;
+  min-height: 100svh;
+  grid-template-columns: 1fr;
+}
+
+.contextRail {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--semantic-border);
+}
+
+.contextSteps {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contextStep {
+  position: relative;
+  display: grid;
+  min-height: 48px;
+  grid-template-columns: 34px 1fr;
+  align-items: center;
+  gap: 12px;
+  color: var(--semantic-text-secondary);
+}
+
+.contextStep:not(:last-child)::after {
+  position: absolute;
+  top: 34px;
+  left: 16px;
+  width: 2px;
+  height: calc(100% - 22px);
+  background: var(--semantic-border);
+  content: "";
+}
+
+.contextStep[data-state="complete"]::after,
+.contextStep[data-state="current"]::after {
+  background: color-mix(in srgb, var(--semantic-success) 45%, transparent);
+}
+
+.contextStepMarker {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: var(--semantic-text-secondary);
+  border: 1px solid var(--semantic-border);
+  border-radius: 999px;
+  background: var(--semantic-surface);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
+  transition:
+    color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    border-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.contextStepMarker svg {
+  width: 18px;
+  height: 18px;
+}
+
+.contextStep[data-state="complete"] .contextStepMarker {
+  color: var(--semantic-success-foreground);
+  border-color: var(--semantic-success);
+  background: var(--semantic-success);
+}
+
+.contextStep[data-state="current"] .contextStepMarker {
+  color: var(--semantic-action-primary);
+  border-color: var(--semantic-action-primary);
+}
+
+.contextStepLabel {
+  font-size: var(--semantic-typography-body-size);
+  font-weight: var(--semantic-typography-label-weight);
+}
+
+.contextStep[data-state="complete"] .contextStepLabel {
+  color: var(--semantic-success);
+}
+
+.contextStep[data-state="current"] .contextStepLabel {
+  color: var(--semantic-text-primary);
+}
+
+.contextPanel {
+  min-width: 0;
+  padding: 32px 20px 60px;
+}
+
+.contextHeading {
+  max-width: 640px;
+  margin-bottom: 28px;
+}
+
+.contextHeading h1 {
+  margin: 0;
+  font-size: var(--semantic-typography-display-size);
+  font-weight: var(--semantic-typography-card-title-weight);
+  line-height: var(--primitive-line-height-tight);
+  text-wrap: balance;
+}
+
+.contextHeading > p {
+  margin: 14px 0 0;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-body-size);
+  line-height: var(--semantic-typography-body-line-height);
+}
+
+.contextWidth {
+  width: 100%;
+  max-width: 760px;
+}
+
+.citySearch {
+  width: 100%;
+}
+
+.citySearch input {
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.cityList {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cityCard {
+  display: grid;
+  width: 100%;
+  min-height: 64px;
+  grid-template-columns: 40px minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  color: var(--semantic-text-primary);
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--radius-sm);
+  background: var(--semantic-surface);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.cityCard:hover {
+  border-color: color-mix(in srgb, var(--semantic-success) 42%, transparent);
+}
+
+.cityCard[data-state="selected"] {
+  border-color: var(--semantic-success);
+  background: var(--semantic-selected);
+}
+
+.cityCardIcon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  color: var(--semantic-text-secondary);
+  border-radius: var(--radius-sm);
+  background: var(--semantic-surface-sunken);
+}
+
+.cityCardIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cityCardText {
+  min-width: 0;
+}
+
+.cityCardName {
+  display: block;
+  font-size: var(--semantic-typography-body-size);
+  font-weight: var(--semantic-typography-label-weight);
+}
+
+.cityCardState {
+  display: block;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+}
+
+.cityCardRadio {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 2px solid var(--semantic-control-border);
+  border-radius: 999px;
+  transition: border-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.cityCard[data-state="selected"] .cityCardRadio {
+  border-color: var(--semantic-success);
+}
+
+.cityCardRadio::after {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: transparent;
+  content: "";
+  transition: background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.cityCard[data-state="selected"] .cityCardRadio::after {
+  background: var(--semantic-success);
+}
+
+.cityEmpty {
+  margin: 20px 0 0;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-body-size);
+}
+
+.contextFormGrid {
+  display: grid;
+  gap: 26px;
+}
+
+.contextColumn {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.photoRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.fieldSupport {
+  margin: 0;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+  line-height: var(--semantic-typography-body-line-height);
+}
+
+.chipButton {
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  color: var(--semantic-text-primary);
+  border: 1px solid var(--semantic-border);
+  border-radius: 999px;
+  background: var(--semantic-surface);
+  font-size: var(--semantic-typography-meta-size);
+  font-weight: var(--semantic-typography-label-weight);
+  cursor: pointer;
+  transition:
+    color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    border-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.chipButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.chipButton[data-state="selected"] {
+  border-color: var(--semantic-success);
+  background: var(--semantic-selected);
+}
+
+.contextVisibilityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.contextVisibilityRow input[type="checkbox"] {
+  min-width: 44px;
+  min-height: 44px;
+  opacity: 0;
+  transition: opacity var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.contextFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.contextSkip {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  color: var(--semantic-success);
+  font-size: var(--semantic-typography-body-size);
+  font-weight: var(--semantic-typography-label-weight);
+  text-underline-offset: 4px;
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.contextSkip:hover {
+  color: var(--semantic-action-primary-hover);
+}
+
+@media (min-width: 900px) {
+  .contextLayout {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .contextRail {
+    min-height: 100svh;
+    padding: 32px 32px 40px;
+    border-right: 1px solid var(--semantic-border);
+    border-bottom: 0;
+  }
+
+  .contextPanel {
+    padding: 56px 56px 72px;
+  }
+
+  .contextFormGrid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
 @media (max-height: 760px) and (min-width: 900px) {
   .content {
     margin-top: 28px;
@@ -560,7 +924,10 @@
 @media (prefers-reduced-motion: reduce) {
   .root *,
   .root *::before,
-  .root *::after {
+  .root *::after,
+  .contextRoot *,
+  .contextRoot *::before,
+  .contextRoot *::after {
     transition-duration: var(--primitive-motion-none);
     animation-duration: var(--primitive-motion-none);
     animation-iteration-count: 1;
