@@ -77,8 +77,10 @@ test.describe("vitrine de prestadores", () => {
     await expect(page.getByRole("heading", { name: "Climatiza Manaus" })).toBeVisible({
       timeout: 10000,
     })
-    await expect(page.getByRole("heading", { name: "Catálogo" })).toBeVisible()
-    await expect(page.getByText("Higienização da evaporadora")).toBeVisible()
+    // RECON-022: a ficha segue a prancha 62 — a seção chama "Serviços" e
+    // lista ícone + rótulo do item, sem a descrição do catálogo antigo.
+    await expect(page.getByRole("heading", { name: "Serviços" })).toBeVisible()
+    await expect(page.getByText("Limpeza completa")).toBeVisible()
   })
 
   test("prestador entra e publica um item de catálogo", async ({ page }) => {

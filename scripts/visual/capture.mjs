@@ -111,6 +111,13 @@ const ROUTES = [
     name: "provider-public-ficha",
     auth: true,
   },
+  // RECON-022: o formulário de pedido com destinatário fixo na URL. A fixture
+  // concreta é a ficha semeada da vitrine G (Climatiza Manaus).
+  {
+    path: "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010",
+    name: "pedido-novo",
+    auth: true,
+  },
   {
     path: "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador",
     name: "provider-indicar",

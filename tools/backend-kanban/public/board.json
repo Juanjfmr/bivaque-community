@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-09-11",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -2074,6 +2074,7 @@
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote — RECON-018 executado em 11/09 (pranchas 36/37), 17 restantes"
 =======
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
@@ -2084,11 +2085,16 @@
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
         "RECON-021 (busca global, prancha 61) entregue com prova de runtime; revisao independente pendente"
 >>>>>>> fix/recon-021-busca-global
+=======
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
+        "RECON-022 executado (prancha 62) com prova de gate e captura; prova de banco pendente por banco compartilhado"
+>>>>>>> fix/recon-022-prestador-ficha
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
         "npx pnpm@11.18.0 gate → verde",
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         "RECON-018 (pranchas 36/37) 11/09/2026: node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-018.task.yml → ok (R2, retry 3); npx pnpm@11.18.0 gate → GATE VERDE (lint 16s, typecheck 23s, build 95s, test 67s: 531 unit + 76 mobile + 19 web + 189 privacidade + 100 escopo, secrets 25s). /auth/confirmar-email entra no build como rota estatica.",
@@ -2101,6 +2107,14 @@
         "RECON-020: npx pnpm@11.18.0 gate → verde (lint, typecheck, build, test, secrets)",
         "RECON-020: capture 375/768/1440 de /onboarding/locality (verified-no-membership@), /onboarding/perfil, /onboarding/welcome e /profile (visual@) → 0 achados de alta severidade"
 >>>>>>> fix/recon-020-perfil
+=======
+        "RECON-022 (prancha 62) executado em 2026-09-11: ficha /prestadores/[id] e /pedidos/novo + migration 20260911032309_service_requests (service_requests, service_request_photos, RLS e RPC create_service_request idempotente) + supabase/tests/service-requests.sql (12 asserts, positivo e negativo).",
+        "RECON-022 provas lidas nesta sessão: task-contract ok; npx pnpm@11.18.0 gate verde (lint, typecheck, build, unit 509, privacy 189, scope 100, secrets); capturas autenticadas 375/768/1440 com membro-1@ (ficha high 0 e 1 médio de reading-measure; pedido 0 achados).",
+        "RECON-022 PENDENTE: prova de banco (reset sem seed + test:db) NÃO executada — proibido alterar o banco local compartilhado; 20260911032309 não está aplicada e há 20260911033327 aplicada fora desta árvore. closure.requires_runtime_evidence segue sem prova.",
+        "RECON-022 divergência ADR-20260909-pedidos: D2 pede tabela conversation_contexts; a implementação reaproveita dm_conversations.context_type/context_id + unique(participant_a,participant_b) e o RPC open_conversation. Material para RECON-025/029 (par único pode forçar uma conversa por par entre contextos listing/event). Decisão do dono/revisor pendente.",
+        "RECON-022 drift reconciliado: tests/e2e/provider-vitrine.spec.ts afirmava heading Catálogo + descrição do item; prancha 62 manda Serviços com ícone+rótulo. Asserção atualizada (fora de allowed_paths, declarado); E2E não executado nesta sessão.",
+        "RECON-022 divergências visuais declaradas: a foto da ficha mostra o estado vazio honesto (seed sem portfolio photo); o shell entregue difere do desenho (sem busca no cabeçalho, com Minhas comunidades) — pré-existente, fora deste lote."
+>>>>>>> fix/recon-022-prestador-ficha
       ],
       "drift": {
         "documented": "ADR-20260808-perfil-campos-opcionais esta com status proposed e diz que nada autoriza implementar enquanto proposed; o AGENTS.md da raiz repete a proibicao de afiliacao declarada",
@@ -2145,6 +2159,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "drift": {
         "documented": "O contrato RECON-027 promete Moradia com as pranchas 65 (painel 1) e 19, backend junto das telas, pgTAP positivo/negativo, E2E de publicar/encontrar/interesse e captura em 375/768/1440, e o manual declara os 18 lotes liberados para execução.",
         "observed": "Neste checkout (branch fix/recon-027-moradia) o lote entregou a migration do domínio de anúncio (listings, property_details, listing_photos, listing_saves, listing_alerts, bucket privado listing-photos, RLS e private.can_read_listing), o pgTAP, a lib de domínio com 20 testes unitários e as rotas /imoveis, /imoveis/[id], /imoveis/novo e /imoveis/[id]/editar; gate e build verdes. Mas RECON-025 (domínio Mercado) e RECON-022 (conversa contextual) não existem no checkout, e o stack local é compartilhado com outros executores, então a migration não foi aplicada e pgTAP, E2E, /imoveis/alertas (RECON-028) e captura não rodaram. O interesse no anúncio ficou indisponível na ficha, com motivo visível, por depender da conversa do RECON-022.",
@@ -2160,6 +2175,10 @@
       "updatedAt": "2026-09-11",
       "sourceRevision": "e974bd0"
 >>>>>>> fix/recon-021-busca-global
+=======
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "0323a94"
+>>>>>>> fix/recon-022-prestador-ficha
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
