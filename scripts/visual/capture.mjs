@@ -135,6 +135,11 @@ const ROUTES = [
   { path: "/imoveis", name: "imoveis", auth: true },
   { path: "/imoveis/novo", name: "imoveis-novo", auth: true },
   { path: `/imoveis/${IMOVEIS_FIXTURE_ID}`, name: "imoveis-detail", auth: true },
+  // RECON-028: gestão dos alertas (prancha 65, painel 2). A tela renderiza o
+  // estado vazio honesto enquanto `supabase/seed.sql` não tiver um alerta — o
+  // seed está fora do allowed_paths deste lote, então a captura prova o estado
+  // vazio real, não fidelidade de cartão populado.
+  { path: "/imoveis/alertas", name: "imoveis-alertas", auth: true },
   // Onda T Task 5: o console do fundador. Renders empty state honesto para a
   // conta default do seed (sem operador capturado), que é a tela vazia com
   // identificação, não uma tela ausente.
