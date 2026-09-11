@@ -2073,7 +2073,8 @@
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
-        "RECON-022 executado (prancha 62) com prova de gate e captura; prova de banco pendente por banco compartilhado"
+        "RECON-022 executado (prancha 62) com prova de gate e captura; prova de banco pendente por banco compartilhado",
+        "RECON-023 executado (prancha 17) com gate, unit e captura dos estados; prova de banco e composicao populada pendente por banco compartilhado"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
@@ -2084,7 +2085,11 @@
         "RECON-022 PENDENTE: prova de banco (reset sem seed + test:db) NÃO executada — proibido alterar o banco local compartilhado; 20260911032309 não está aplicada e há 20260911033327 aplicada fora desta árvore. closure.requires_runtime_evidence segue sem prova.",
         "RECON-022 divergência ADR-20260909-pedidos: D2 pede tabela conversation_contexts; a implementação reaproveita dm_conversations.context_type/context_id + unique(participant_a,participant_b) e o RPC open_conversation. Material para RECON-025/029 (par único pode forçar uma conversa por par entre contextos listing/event). Decisão do dono/revisor pendente.",
         "RECON-022 drift reconciliado: tests/e2e/provider-vitrine.spec.ts afirmava heading Catálogo + descrição do item; prancha 62 manda Serviços com ícone+rótulo. Asserção atualizada (fora de allowed_paths, declarado); E2E não executado nesta sessão.",
-        "RECON-022 divergências visuais declaradas: a foto da ficha mostra o estado vazio honesto (seed sem portfolio photo); o shell entregue difere do desenho (sem busca no cabeçalho, com Minhas comunidades) — pré-existente, fora deste lote."
+        "RECON-022 divergências visuais declaradas: a foto da ficha mostra o estado vazio honesto (seed sem portfolio photo); o shell entregue difere do desenho (sem busca no cabeçalho, com Minhas comunidades) — pré-existente, fora deste lote.",
+        "RECON-023 (prancha 17) executado em 2026-09-11: rotas /pedidos (lista própria por situação com última atualização) e /pedidos/[id] (trilha, título, chip, encerrar, linha de metadados e as três colunas com rail) + migration 20260911105119_service_request_tracking (closed_at/closed_by, dm_messages.client_key único, dm_read_states com RLS, RPCs send_conversation_message/close_service_request/update_service_request/mark_conversation_read) + supabase/tests/service-request-tracking.sql (26 asserts, positivo e negativo) + tests/unit/service-requests/tracking.test.ts (16 asserts).",
+        "RECON-023 provas lidas nesta sessão: node scripts/agents/task-contract.mjs ok (R3, retry 3); npx pnpm@11.18.0 gate verde (lint, typecheck, build, test 100 scope + unit, secrets); capturas autenticadas 375/768/1440 de /pedidos e /pedidos/40000000-0000-4000-8000-000000000023 com membro-1@ (0 achados).",
+        "RECON-023 PENDENTE nomeada: a migration 20260911105119 NÃO está aplicada no banco local compartilhado (sessão proibida de alterar estado), então reset sem seed + test:db, o ciclo E2E entre duas contas e a composição populada da prancha 17 ficaram sem prova — as capturas mostram o estado recuperável honesto. Aplicada a migration, regenerar supabase/database.generated.ts (drift de tipos já herdado do RECON-022) e rodar as provas de banco e E2E.",
+        "RECON-023 escrita declarada fora de allowed_paths: supabase/seed.sql ganhou a fixture do pedido 40000000-0000-4000-8000-000000000023 (conversa + duas mensagens) para captura e ciclo E2E; apps/web/.env.local (gitignored) foi escrito localmente para o build e a captura."
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
@@ -2101,7 +2106,7 @@
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
       "updatedAt": "2026-09-11",
-      "sourceRevision": "0323a94"
+      "sourceRevision": "0babbaf"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
