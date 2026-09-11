@@ -614,6 +614,192 @@ export type Database = {
           },
         ]
       }
+      listing_alerts: {
+        Row: {
+          created_at: string
+          deal: Database["public"]["Enums"]["listing_deal"] | null
+          id: string
+          is_active: boolean
+          kind: Database["public"]["Enums"]["listing_kind"]
+          locality_id: string | null
+          max_value_cents: number | null
+          min_bedrooms: number | null
+          name: string
+          neighborhood: string | null
+          owner_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deal?: Database["public"]["Enums"]["listing_deal"] | null
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          max_value_cents?: number | null
+          min_bedrooms?: number | null
+          name: string
+          neighborhood?: string | null
+          owner_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deal?: Database["public"]["Enums"]["listing_deal"] | null
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          max_value_cents?: number | null
+          min_bedrooms?: number | null
+          name?: string
+          neighborhood?: string | null
+          owner_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_alerts_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_photos: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          path: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          path: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          path?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_photos_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_saves: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_saves_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listings: {
+        Row: {
+          category: string | null
+          closed_at: string | null
+          community_id: string | null
+          condition: Database["public"]["Enums"]["listing_condition"] | null
+          created_at: string
+          description: string | null
+          id: string
+          kind: Database["public"]["Enums"]["listing_kind"]
+          locality_id: string | null
+          neighborhood: string | null
+          owner_user_id: string
+          price_cents: number | null
+          published_at: string | null
+          status: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          closed_at?: string | null
+          community_id?: string | null
+          condition?: Database["public"]["Enums"]["listing_condition"] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          neighborhood?: string | null
+          owner_user_id: string
+          price_cents?: number | null
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          closed_at?: string | null
+          community_id?: string | null
+          condition?: Database["public"]["Enums"]["listing_condition"] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          neighborhood?: string | null
+          owner_user_id?: string
+          price_cents?: number | null
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       localities: {
         Row: {
           admission_mode: Database["public"]["Enums"]["locality_admission_mode"]
@@ -1035,6 +1221,62 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["profile_visibility"]
         }
         Relationships: []
+      }
+      property_details: {
+        Row: {
+          amenities: string[]
+          area_m2: number | null
+          available_from: string | null
+          bedrooms: number | null
+          condo_fee_cents: number | null
+          deal: Database["public"]["Enums"]["listing_deal"]
+          iptu_cents: number | null
+          listing_id: string
+          parking_spots: number | null
+          property_type: Database["public"]["Enums"]["property_type"]
+          rent_cents: number | null
+          sale_price_cents: number | null
+          suites: number | null
+        }
+        Insert: {
+          amenities?: string[]
+          area_m2?: number | null
+          available_from?: string | null
+          bedrooms?: number | null
+          condo_fee_cents?: number | null
+          deal: Database["public"]["Enums"]["listing_deal"]
+          iptu_cents?: number | null
+          listing_id: string
+          parking_spots?: number | null
+          property_type: Database["public"]["Enums"]["property_type"]
+          rent_cents?: number | null
+          sale_price_cents?: number | null
+          suites?: number | null
+        }
+        Update: {
+          amenities?: string[]
+          area_m2?: number | null
+          available_from?: string | null
+          bedrooms?: number | null
+          condo_fee_cents?: number | null
+          deal?: Database["public"]["Enums"]["listing_deal"]
+          iptu_cents?: number | null
+          listing_id?: string
+          parking_spots?: number | null
+          property_type?: Database["public"]["Enums"]["property_type"]
+          rent_cents?: number | null
+          sale_price_cents?: number | null
+          suites?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_details_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       provider_accounts: {
         Row: {
@@ -2111,6 +2353,10 @@ export type Database = {
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
       group_visibility: "public" | "private"
+      listing_condition: "new" | "used"
+      listing_deal: "rent" | "sale"
+      listing_kind: "item" | "property"
+      listing_status: "draft" | "active" | "paused" | "reserved" | "sold" | "closed"
       locality_admission_mode:
         | "invite_only"
         | "waitlist_only"
@@ -2147,6 +2393,7 @@ export type Database = {
         | "pets"
       provider_reach_scope: "community" | "locality"
       provider_reach_source: "free" | "paid"
+      property_type: "apartment" | "house" | "studio" | "room" | "land" | "commercial"
       recommendation_category:
         | "servicos_locais"
         | "saude_bem_estar"
