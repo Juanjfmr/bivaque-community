@@ -180,7 +180,7 @@ interface CorrectionRow {
   section_id: string | null
   requester_id: string
   description: string
-  reference: string | null
+  reference_text: string | null
   status: GuideCorrectionStatus
   decision_note: string | null
   decided_at: string | null
@@ -204,7 +204,7 @@ function mapCorrection(row: CorrectionRow): GuideCorrectionRequest {
     sectionId: row.section_id,
     requesterId: row.requester_id,
     description: row.description,
-    reference: row.reference,
+    reference: row.reference_text,
     status: row.status,
     decisionNote: row.decision_note,
     decidedAt: row.decided_at,
@@ -283,7 +283,7 @@ export async function loadOwnCorrectionRequests(
   const result = await client
     .from("guide_correction_requests")
     .select(
-      "id, article_id, section_id, requester_id, description, reference, status, decision_note, decided_at, created_at",
+      "id, article_id, section_id, requester_id, description, reference_text, status, decision_note, decided_at, created_at",
     )
     .eq("article_id", articleId)
     .eq("requester_id", requesterId)
@@ -321,7 +321,7 @@ export async function insertGuideCorrection(
       section_id: draft.sectionId,
       requester_id: draft.requesterId,
       description: draft.description,
-      reference: draft.reference,
+      reference_text: draft.reference,
     })
     .select("id")
     .single()
@@ -342,7 +342,7 @@ export async function loadGuideCorrectionQueue(
   const requestsResult = await client
     .from("guide_correction_requests")
     .select(
-      "id, article_id, section_id, requester_id, description, reference, status, decision_note, decided_at, created_at",
+      "id, article_id, section_id, requester_id, description, reference_text, status, decision_note, decided_at, created_at",
     )
     .in("status", ["received", "in_review"])
     .order("created_at", { ascending: true })

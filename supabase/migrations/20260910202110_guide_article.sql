@@ -86,7 +86,8 @@ create table public.guide_correction_requests (
     references public.guide_article_sections (id) on delete set null,
   requester_id uuid not null references auth.users (id) on delete cascade,
   description text not null check (char_length(description) between 1 and 2000),
-  reference text check (reference is null or char_length(reference) <= 500),
+  reference_text text
+    check (reference_text is null or char_length(reference_text) <= 500),
   status text not null default 'received'
     check (status in ('received', 'in_review', 'applied', 'rejected')),
   decision_note text

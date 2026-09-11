@@ -100,7 +100,7 @@ values
 
 -- Uma sugestao ja existente do member-one, para leitura de retorno.
 insert into public.guide_correction_requests (
-  id, article_id, section_id, requester_id, description, reference
+  id, article_id, section_id, requester_id, description, reference_text
 )
 values (
   'd1000000-0000-4000-8000-000000000001',
