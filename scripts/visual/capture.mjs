@@ -157,6 +157,14 @@ const ROUTES = [
     name: "pedido-novo",
     auth: true,
   },
+  // RECON-023: a lista e o detalhe da prancha 17. A fixture concreta e o
+  // pedido semeado de membro-1@ para a Climatiza Manaus (seed.sql).
+  { path: "/pedidos", name: "pedidos", auth: true },
+  {
+    path: "/pedidos/40000000-0000-4000-8000-000000000023",
+    name: "pedido-detalhe",
+    auth: true,
+  },
   {
     path: "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador",
     name: "provider-indicar",

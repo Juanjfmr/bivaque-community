@@ -1013,6 +1013,67 @@ values (
   'free'
 );
 
+-- RECON-023: pedido semeado da prancha 17, com a conversa de contexto fixo e
+-- duas respostas. membro-1@ e membro aprovado da vila da Climatiza, entao ele
+-- pode ver a ficha e criar o pedido pelo RPC. IDs fixos para a captura visual
+-- e para o ciclo entre duas contas.
+insert into public.dm_conversations (
+  id, participant_a, participant_b, context_type, context_id, created_at
+)
+values (
+  '41000000-0000-4000-8000-000000000023',
+  '20000000-0000-4000-8000-00000000000a',
+  '30000000-0000-4000-8000-000000000001',
+  'provider',
+  '30000000-0000-4000-8000-000000000010',
+  now() - interval '5 days'
+)
+on conflict (id) do nothing;
+
+insert into public.service_requests (
+  id,
+  requester_user_id,
+  provider_id,
+  provider_user_id,
+  description,
+  when_text,
+  status,
+  conversation_id,
+  created_at,
+  updated_at
+)
+values (
+  '40000000-0000-4000-8000-000000000023',
+  '30000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-000000000010',
+  '20000000-0000-4000-8000-00000000000a',
+  'Preciso limpar o ar-condicionado do quarto e conferir a carga de gas.',
+  'Nesta semana',
+  'in_conversation',
+  '41000000-0000-4000-8000-000000000023',
+  now() - interval '5 days',
+  now() - interval '5 days'
+)
+on conflict (id) do nothing;
+
+insert into public.dm_messages (id, conversation_id, sender_id, content, created_at)
+values
+  (
+    '42000000-0000-4000-8000-000000000023',
+    '41000000-0000-4000-8000-000000000023',
+    '30000000-0000-4000-8000-000000000001',
+    'Oi! Consigo atender nesta quinta, de manha. Pode ser?',
+    now() - interval '4 days'
+  ),
+  (
+    '42000000-0000-4000-8000-000000000024',
+    '41000000-0000-4000-8000-000000000023',
+    '20000000-0000-4000-8000-00000000000a',
+    'Pode sim. Chego as 9h.',
+    now() - interval '3 days'
+  )
+on conflict (id) do nothing;
+
 -- Post de alcance municipal (community_id IS NULL), para
 -- vila-home.spec.ts: aparece no feed de qualquer vila, inclusive a Vila
 -- Ajuricaba.
