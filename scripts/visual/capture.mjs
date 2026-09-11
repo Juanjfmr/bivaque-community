@@ -42,6 +42,11 @@ const ROUTES = [
   { path: "/profile", name: "profile", auth: true },
   { path: "/events", name: "events", auth: true },
   { path: "/events/80000000-0000-4000-8000-000000000001", name: "event-detail", auth: true },
+  // RECON-025: o Mercado. A rota de detalhe depende de um anúncio no seed,
+  // que este lote não pode criar (supabase/seed.sql fora dos allowed_paths);
+  // capture-a quando a fixture existir.
+  { path: "/mercado", name: "mercado", auth: true },
+  { path: "/mercado/novo", name: "mercado-novo", auth: true },
   { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
   { path: "/guide", name: "arrival-guide", auth: true },

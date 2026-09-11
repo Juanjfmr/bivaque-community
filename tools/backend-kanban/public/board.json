@@ -2072,12 +2072,15 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
+        "RECON-025 (13/63): dominio listings + bucket privado listing-photos + /mercado, /mercado/[id] e /mercado/novo entregues em codigo; pgTAP, E2E e captura ficam pendentes por banco local compartilhado",
         "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-        "npx pnpm@11.18.0 gate → verde"
+        "npx pnpm@11.18.0 gate → verde (2026-09-11)",
+        "RECON-025 (2026-09-11): docs/agents/tasks/RECON-025.task.yml valido; npx pnpm@11.18.0 gate -> verde; npx pnpm@11.18.0 build -> verde com /mercado, /mercado/[id] e /mercado/novo; tests/unit/listings/catalog.test.ts -> 22 passam",
+        "RECON-025 pendente: npx pnpm@11.18.0 test:db (pgTAP positivo/negativo escrito em supabase/tests/listing-market.sql, nao executado), test:e2e e captura 375/768/1440 nao rodaram - a migration nao foi aplicada ao stack local compartilhado; a sessao foi instruida a nao alterar estado compartilhado"
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
@@ -2093,7 +2096,7 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
+      "updatedAt": "2026-09-11",
       "sourceRevision": "2f87f12"
     },
     {
