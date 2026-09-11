@@ -2093,8 +2093,13 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "updatedAt": "2026-09-10",
+      "sourceRevision": "0323a94",
+      "drift": {
+        "documented": "RECON-WEB-EXECUCAO.md poe o RECON-023 dependente do RECON-022, que cria o objeto service_requests e a conversa de contexto (ADR-20260909-pedidos-e-conversa-contextual). O contrato RECON-023 entrega so o acompanhamento: /pedidos e /pedidos/[id] lendo a situacao da coluna do pedido, nao da contagem de mensagens.",
+        "observed": "Na branch fix/recon-023-acompanhamento-pedido (0323a94, igual a origin/main) e no banco local compartilhado o objeto nao existe: supabase db query devolve service_requests=false e conversation_contexts=false; apps/web/lib/service-requests e (shell)/pedidos nao existem; a branch fix/recon-022-prestador-ficha esta em 0323a94, sem commits. Sem o objeto nao ha de onde ler situacao, respostas nem conversa, e a prova de banco do contrato (reset sem seed + test:db) exigiria resetar/aplicar migration num banco compartilhado, proibido nesta sessao.",
+        "action": "Executar e commitar o RECON-022 (objeto service_requests, conversa contextual e /pedidos/novo) e so entao retomar o RECON-023. Alternativa: decisao humana explicita autorizando o RECON-023 a criar o objeto e rodar a prova de banco em stack isolada."
+      }
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
