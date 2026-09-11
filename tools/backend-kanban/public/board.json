@@ -2081,7 +2081,8 @@
         "npx pnpm@11.18.0 gate → verde",
         "RECON-030: npx pnpm@11.18.0 gate → verde (lint/typecheck/build/514 unit/189 privacy/100 scope/secrets)",
         "RECON-030: capturas 375/768/1440 em .visual/recon030-* (article e correcao high=0, autenticado, destino registrado)",
-        "RECON-030 PENDENTE: npx pnpm@11.18.0 exec supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lint"
+        "RECON-030 PENDENTE: npx pnpm@11.18.0 exec supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lint",
+        "RECON-030 fix a830c1b: reference_text no lugar de reference (REFERENCES e reservada); gate completo verde e capturas refeitas com BUILD_ID SC9TfipQDkZGUcEiluLJW"
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
@@ -2098,7 +2099,7 @@
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
       "updatedAt": "2026-09-10",
-      "sourceRevision": "01748bf"
+      "sourceRevision": "a830c1b"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
