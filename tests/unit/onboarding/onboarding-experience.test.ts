@@ -28,8 +28,9 @@ describe("onboarding experience", () => {
     expect(admissionSource).not.toContain("outras localidades abrirem")
   })
 
-  it("keeps eligibility and locality as separate user-visible steps", () => {
-    expect(read("page.tsx")).toContain("Confirme sua elegibilidade.")
+  it("separates the board-38 access step from the board-39 locality step", () => {
+    expect(read("page.tsx")).toContain("Verificar meu acesso")
+    expect(read("locality/page.tsx")).toContain("Qual cidade você quer explorar?")
     expect(read("welcome/page.tsx")).toContain("Você chegou ao Bivaque.")
   })
 

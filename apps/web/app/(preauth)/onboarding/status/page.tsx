@@ -1,12 +1,16 @@
 import { createServerClient as createSsrServerClient } from "@supabase/ssr"
+import { UserRound } from "lucide-react"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { readDocumentStatus } from "../../../../lib/onboarding/document-status"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
-import { SUPPORT_EMAIL, SUPPORT_SLA_HOURS } from "../../../../lib/support"
-import { OnboardingShell } from "../components/onboarding-shell"
-import DocumentUpload from "../document-upload"
+import { SUPPORT_EMAIL } from "../../../../lib/support"
+import { AdmissionShell } from "../components/admission-shell"
 import styles from "../onboarding.module.css"
+import { StatusActions } from "./status-actions"
+
+export const dynamic = "force-dynamic"
 
 const VALID_STATES = ["pending", "rejected", "temporary_error"] as const
 
@@ -54,15 +58,12 @@ export default async function OnboardingStatusPage() {
     throw new Error("Falha ao consultar o estado da verificação. Tente novamente.")
   }
 
-  const row = (outcomeResult.data as OutcomeRpcRow[] | null)?.[0] ?? null
-  const status = row?.status ?? null
-
-  // P0 Task 4: with the two-phase admission, "verified without membership"
-  // is a real state — the person passed eligibility but has not chosen a
-  // locality yet. That goes to the post-eligibility step, not the feed.
   if (membershipResult.data !== null) {
     redirect("/community")
   }
+
+  const row = (outcomeResult.data as OutcomeRpcRow[] | null)?.[0] ?? null
+  const status = row?.status ?? null
 
   if (status === "verified") {
     redirect("/onboarding/locality")
@@ -72,74 +73,78 @@ export default async function OnboardingStatusPage() {
     redirect("/onboarding")
   }
 
-  const isPending = status === "pending"
+  const document = await readDocumentStatus(serviceClient, user.id)
+
+  if (document.situation === "needs_replacement") {
+    redirect("/onboarding/documento")
+  }
+
+  const isIdentityReview = document.situation === "in_review"
   const isTemporaryError = status === "temporary_error"
-  const title = isPending
-    ? "Sua elegibilidade está em análise."
-    : isTemporaryError
-      ? "Não conseguimos concluir agora."
-      : "Não conseguimos confirmar sua elegibilidade."
+
+  if (isIdentityReview) {
+    return (
+      <AdmissionShell
+        stage="access"
+        titleId="status-heading"
+        title="Estamos analisando sua identidade"
+        description="A conferência do documento pode levar um pouco mais. Volte aqui para acompanhar."
+      >
+        <div className={styles["stack"]}>
+          <div className={styles["replacementCard"]}>
+            <span className={styles["uploadIcon"]} aria-hidden="true">
+              <UserRound />
+            </span>
+            <p className={styles["replacementTitle"]}>Identidade em análise</p>
+          </div>
+          <StatusActions refresh />
+        </div>
+      </AdmissionShell>
+    )
+  }
+
+  const title =
+    status === "pending"
+      ? "Estamos analisando sua identidade"
+      : isTemporaryError
+        ? "Não conseguimos concluir agora."
+        : "Não conseguimos confirmar sua elegibilidade."
+
+  const description =
+    status === "pending"
+      ? "Você não precisa repetir seus dados. Assim que a análise terminar, sua entrada continua do ponto em que parou."
+      : isTemporaryError
+        ? "A fonte oficial não respondeu como esperado. Sua tentativa não foi perdida."
+        : "A consulta automática não encontrou confirmação para um dos papéis aceitos pelo Bivaque."
 
   return (
-    <OnboardingShell
-      stage="eligibility"
-      titleId="status-heading"
-      eyebrow={
-        isPending
-          ? "Consulta recebida"
-          : isTemporaryError
-            ? "Tente novamente"
-            : "Resultado da consulta"
-      }
-      title={title}
-      description={
-        isPending
-          ? "Você não precisa repetir seus dados. Assim que a análise terminar, sua entrada continua do ponto em que parou."
-          : isTemporaryError
-            ? "A fonte oficial não respondeu como esperado. Sua tentativa não foi perdida."
-            : "A consulta automática não encontrou confirmação para um dos papéis aceitos pelo Bivaque."
-      }
-      asideEyebrow="Cada estado pede uma resposta"
-      asideTitle={isPending ? "Agora é com a análise." : "Há um caminho para continuar."}
-      asideDescription={
-        isPending
-          ? "Quando houver uma decisão, você retorna ao passo certo sem refazer a jornada."
-          : "Tente outra vez quando a consulta estiver disponível ou envie um documento para análise."
-      }
-    >
+    <AdmissionShell stage="access" titleId="status-heading" title={title} description={description}>
       <div className={styles["stack"]}>
-        {isPending ? (
+        {status === "pending" ? (
           <p className={styles["statusLead"]}>
-            Sua verificação está em análise. Respondemos em até {SUPPORT_SLA_HOURS} horas úteis. Se
-            passar disso, escreva para <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
+            Em caso de dúvida, escreva para <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
           </p>
-        ) : isTemporaryError ? (
-          <>
-            <p className={styles["statusLead"]}>Tente novamente em alguns minutos.</p>
-            <p className={styles["statusLead"]}>
-              Se o problema persistir, escreva para{" "}
-              <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.
-            </p>
-            <Link href="/onboarding" className={styles["textAction"]}>
-              Tentar novamente
-            </Link>
-          </>
         ) : (
-          <>
-            <p className={styles["statusLead"]}>
-              Você pode refazer a consulta se houver algum dado a conferir. Se acredita que a fonte
-              oficial não refletiu sua situação, envie um documento para análise.
-            </p>
-            <div>
-              <Link href="/onboarding" className={styles["textAction"]}>
-                Tentar novamente
-              </Link>
-            </div>
-          </>
+          <p className={styles["statusLead"]}>
+            Você pode refazer a consulta se houver algum dado a conferir. Se acredita que a fonte
+            oficial não refletiu sua situação, envie sua identidade para análise.
+          </p>
         )}
 
-        {!isPending && <DocumentUpload />}
+        {status !== "pending" && (
+          <Link href="/onboarding" className={styles["textAction"]}>
+            Tentar novamente
+          </Link>
+        )}
+
+        {status !== "pending" && (
+          <Link href="/onboarding/documento" className={styles["textAction"]}>
+            Enviar identidade
+          </Link>
+        )}
+
+        <StatusActions refresh={status === "pending"} />
       </div>
-    </OnboardingShell>
+    </AdmissionShell>
   )
 }

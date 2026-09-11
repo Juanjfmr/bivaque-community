@@ -57,6 +57,7 @@ const ROUTES = [
   { path: "/onboarding", name: "onboarding", auth: false },
   { path: "/onboarding", name: "onboarding", auth: true },
   { path: "/onboarding/status", name: "onboarding-status", auth: true },
+  { path: "/onboarding/documento", name: "onboarding-documento", auth: true },
   { path: "/onboarding/welcome", name: "onboarding-welcome", auth: true },
   { path: "/onboarding/locality", name: "onboarding-locality", auth: true },
   { path: "/onboarding/perfil", name: "onboarding-perfil", auth: true },

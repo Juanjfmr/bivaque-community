@@ -2158,6 +2158,21 @@ export type Database = {
         Returns: undefined
       }
       my_account_kind: { Args: never; Returns: string }
+      my_verification_document: {
+        Args: { p_user_id: string }
+        Returns: {
+          document_id: string
+          needs_replacement: boolean
+          review_status: string
+          uploaded_at: string
+        }[]
+      }
+      my_verification_document_paths: {
+        Args: { p_user_id: string }
+        Returns: {
+          storage_object_path: string
+        }[]
+      }
       my_verification_status: {
         Args: never
         Returns: {
