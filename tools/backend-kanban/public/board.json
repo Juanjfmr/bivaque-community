@@ -2064,7 +2064,7 @@
       "priority": "P1",
       "category": "frontend",
       "status": "now",
-      "description": "As 31 pranchas web passam a ter dono mecanico. Criados em 09/09/2026: a leitura elemento a elemento das pranchas restantes feita olhando o PNG (docs/agents/PRANCHAS-WEB-RESTANTES.md), os contratos RECON-018 a RECON-035, o manual de execucao para o OpenCode e a cobertura travada por teste de escopo. Corrige a causa registrada no handoff de 09/09: os contratos anteriores diziam segue a prancha X sem que ninguem abrisse a imagem, e a auditoria visual nao mede fidelidade. Sete ADRs tecnicos aprovados pelo dono em 09/09 e as duas decisoes de produto tomadas no mesmo dia: no pedido pendente o rail Sobre a comunidade aparece com Membros, Criada em e Local (a regra do RECON-009 foi revisada, o roster continua fechado); e da prancha 15 so o marcador da resposta que resolveu entra, pelo RECON-035, com as curtidas fora e a divergencia declarada. Nenhum lote espera decisao: dez rodam sem dependencia e o resto depende de codigo de outro lote. BLOCK-LEGAL-AI bloqueia so a transicao de reconhecimento automatico do RECON-019.",
+      "description": "As 31 pranchas web passam a ter dono mecanico. Criados em 09/09/2026: a leitura elemento a elemento das pranchas restantes feita olhando o PNG (docs/agents/PRANCHAS-WEB-RESTANTES.md), os contratos RECON-018 a RECON-035, o manual de execucao para o OpenCode e a cobertura travada por teste de escopo. Corrige a causa registrada no handoff de 09/09: os contratos anteriores diziam segue a prancha X sem que ninguem abrisse a imagem, e a auditoria visual nao mede fidelidade. Sete ADRs tecnicos aprovados pelo dono em 09/09 e as duas decisoes de produto tomadas no mesmo dia: no pedido pendente o rail Sobre a comunidade aparece com Membros, Criada em e Local (a regra do RECON-009 foi revisada, o roster continua fechado); e da prancha 15 so o marcador da resposta que resolveu entra, pelo RECON-035, com as curtidas fora e a divergencia declarada. Nenhum lote espera decisao: dez rodam sem dependencia e o resto depende de codigo de outro lote. BLOCK-LEGAL-AI bloqueia so a transicao de reconhecimento automatico do RECON-019. RECON-030 (artigo do Guia, prancha 25) entregue em 01748bf: o artigo ESTENDE a entrada curada em /guide/[id] (subtitulo, capa, corpo em secoes com indice gerado, origem e o ciclo de sugestao que a curadoria decide), com migration de RLS e pgTAP. Gate completo verde e capturas 375/768/1440. PENDENTE: prova de banco (db reset --no-seed + test:db) e E2E do ciclo de sugestao/decisao/versao vigente, ambos bloqueados pelo banco compartilhado em uso.",
       "checklist": [
         "Leitura das pranchas restantes versionada",
         "RECON-018 a RECON-035 validos no task-contract",
@@ -2072,12 +2072,16 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote",
+        "RECON-030: artigo da prancha 25 + migration/pgTAP no diff; PENDENTE prova de banco e E2E"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
-        "npx pnpm@11.18.0 gate → verde"
+        "npx pnpm@11.18.0 gate → verde",
+        "RECON-030: npx pnpm@11.18.0 gate → verde (lint/typecheck/build/514 unit/189 privacy/100 scope/secrets)",
+        "RECON-030: capturas 375/768/1440 em .visual/recon030-* (article e correcao high=0, autenticado, destino registrado)",
+        "RECON-030 PENDENTE: npx pnpm@11.18.0 exec supabase db reset --local --no-seed && npx pnpm@11.18.0 test:db && npx pnpm@11.18.0 db:lint"
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
@@ -2093,8 +2097,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-09",
-      "sourceRevision": "2f87f12"
+      "updatedAt": "2026-09-10",
+      "sourceRevision": "01748bf"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
