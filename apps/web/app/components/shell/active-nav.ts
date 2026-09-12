@@ -57,6 +57,13 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/guide", "explorar"],
   ["/events", "explorar"],
   ["/mercado", "explorar"],
+  // Decisão do dono em 12/09/2026, contra o DESIGN_SYSTEM §7, que manda a
+  // gestão dos próprios anúncios para Perfil. Os cinco caminhos de entrada
+  // desta tela estão todos dentro do Mercado, e Perfil não tem nenhum. O §7
+  // não está errado, está não construído: no dia em que Perfil ganhar uma
+  // entrada para cá, esta linha muda junto com ela. Comparar com /salvos, que
+  // é igualmente "coisa da pessoa" e fica em Perfil — porque tem item próprio
+  // na lateral, isto é, é alcançável de lá.
   ["/meus-anuncios", "explorar"],
   ["/imoveis", "explorar"],
   ["/recommendations", "explorar"],
@@ -73,9 +80,14 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/pedidos", "perfil"],
   ["/denuncias", "perfil"],
   ["/ajuda", "perfil"],
-  // Não existe container "cidade" nesta versão (PROCESSO §7). A localidade é
-  // dado da pessoa, então acompanha Perfil em vez de acender Início.
-  ["/localidade", "perfil"],
+  // Não existe container "cidade" nesta versão (PROCESSO §7), então a pergunta
+  // é de onde se chega aqui. Dentro do shell, os dois únicos links para
+  // /localidade estão em Explorar — `explorar/busca` e `explorar/servicos`. O
+  // terceiro é a tela de boas-vindas do onboarding, que roda fora do shell e
+  // não tem lateral para acender. A lateral responde "onde estou e como volto",
+  // não "de quem é o dado": acender Perfil aqui mandaria a pessoa para um
+  // container que não alcança esta tela.
+  ["/localidade", "explorar"],
 ]
 
 // Rotas que renderizam FORA do shell do membro: funil de entrada, onboarding,
