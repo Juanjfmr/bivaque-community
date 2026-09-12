@@ -8,25 +8,16 @@
 // Uso:
 //   node scripts/visual/flows-gallery.mjs          escreve flows.html
 //   node scripts/visual/flows-gallery.mjs --check   falha se o HTML no disco difere do gerado
+//
+// O HTML é determinístico de propósito: sem data nem revisão embutidas, senão o --check ficaria
+// vermelho a cada dia e a cada commit. A proveniência vive no histórico do Git.
 
-import { execFileSync } from "node:child_process"
 import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { GUIDE_DIR, loadFlowCatalog } from "./flows/catalog.mjs"
 
 const OUT = join(GUIDE_DIR, "flows.html")
 const CHECK = process.argv.includes("--check")
-
-function revision() {
-  try {
-    const head = execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim()
-    const dirty =
-      execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim().length > 0
-    return dirty ? `${head} (árvore suja)` : head
-  } catch {
-    return "desconhecida"
-  }
-}
 
 function withAspect(flows) {
   return flows.map((flow) => ({
@@ -47,8 +38,6 @@ function buildHtml() {
     a[1].localeCompare(b[1], "pt-BR"),
   )
   const payload = {
-    generatedAt: new Date().toISOString().slice(0, 10),
-    revision: revision(),
     flows: withFrames,
   }
   const groupOptions = groups
@@ -121,7 +110,7 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
   <div class="brand">Bivaque</div>
   <h1>Jornadas</h1>
   <p class="lede">Cada prancha do guia visual é um fluxo; cada tela ou estado é um passo, recortado do próprio PNG. Este é um mapa de <strong>referência de aparência e fluxo</strong>.</p>
-  <p class="note">Não é prova de implementação: a prancha orienta, o runtime prova. Gerado em ${payload.generatedAt} a partir de manifest, taxonomia e geometria · revisão ${payload.revision}.</p>
+  <p class="note">Não é prova de implementação: a prancha orienta, o runtime prova. Gerado a partir do manifest, da taxonomia e da geometria das pranchas.</p>
   <div class="controls">
     <input id="q" type="search" placeholder="Buscar fluxo, tela ou tag" aria-label="Buscar fluxo, tela ou tag">
     <div class="seg" role="group" aria-label="Plataforma">
@@ -195,6 +184,7 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
 
   function card(flow, index){
     var article = el("article","card");
+    article.id = flow.id;
     var thumb = el("button","thumb");
     thumb.type = "button";
     thumb.setAttribute("aria-label","Abrir fluxo " + flow.title);
@@ -251,10 +241,13 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
     lastFocus = document.activeElement;
     paint();
     lightbox.classList.add("on");
+    try { history.replaceState(null, "", "#" + flow_id_at(cursor)); } catch (e) {}
     document.getElementById("lbclose").focus();
   }
+  function flow_id_at(index){ return current[index] ? current[index].id : ""; }
   function close(){
     lightbox.classList.remove("on");
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
     if(lastFocus && lastFocus.focus) lastFocus.focus();
   }
   function paint(){
@@ -311,6 +304,12 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
   q.addEventListener("input", render);
   groupSel.addEventListener("change", render);
   render();
+  var deep = decodeURIComponent(location.hash.replace(/^#/, ""));
+  if(deep){
+    var idx = -1;
+    current.forEach(function(f, i){ if(f.id === deep) idx = i; });
+    if(idx >= 0) open(idx);
+  }
 })();
 </script>
 </body>
