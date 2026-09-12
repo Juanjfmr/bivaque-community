@@ -18,6 +18,12 @@ Os PNGs foram gerados e editados pelo image_gen integrado, sem retoque por scrip
 
 São artefatos **derivados — não editar à mão**. Ao substituir uma prancha, regenere com `npx pnpm@11.18.0 flows:gallery`; se a geometria do PNG mudou, rode antes `npx pnpm@11.18.0 flows:frames`. `npx pnpm@11.18.0 flows:check` falha se algum artefato estiver fora de sincronia.
 
+## Pranchas com fonte HTML
+
+A prancha `70-web-evento-organizar` nasce de uma fonte versionada em [`src/70-web-evento-organizar.html`](./src/70-web-evento-organizar.html), renderizada por `npx pnpm@11.18.0 board:render 70-web-evento-organizar`. Diferente das demais, o PNG é render determinístico sobre `packages/tokens`, não geração por `image_gen`.
+
+O renderizador **se recusa a escrever** quando o navegador aplica escala (`devicePixelRatio` diferente de 1) ou quando o quadro não bate com o tamanho pedido. Sem essa guarda, uma janela menor que a prancha faz o Chrome reduzir a página: o PNG sai com o conteúdo espremido no canto, o canvas sobra vazio e o recorte da galeria passa a mostrar dois painéis no lugar de um. `--check` compara sem escrever.
+
 ## Correções solicitadas
 
 As sete propagações pendentes foram geradas em 08/09: 34, 38, 40, 42, 45, 48 e 49. O fluxo de perguntas ao organizador está nas 66/67; envio e recuperação de identidade nas 68/69, com acompanhamento web na 38. As seis decisões continuam em [DECISOES-2026-09-07.md](./DECISOES-2026-09-07.md).

@@ -25,6 +25,7 @@
     "visual:capture": "node scripts/visual/capture.mjs",
     "visual:loop": "node scripts/visual/loop.mjs",
     "flows:frames": "node scripts/visual/flows/detect-frames.mjs",
+    "board:render": "node scripts/visual/render-board.mjs",
     "flows:gallery": "node scripts/visual/flows-gallery.mjs && node scripts/visual/flows-verify.mjs",
     "flows:check": "node scripts/visual/flows-gallery.mjs --check && node scripts/visual/flows-verify.mjs --check"
   },
