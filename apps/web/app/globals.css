@@ -139,6 +139,32 @@ body {
     min-width: var(--semantic-control-min-height);
   }
 
+  /* RECON-045 — a única regra de `.tabs--secondary` do produto. O build fixado
+     do HeroUI não injeta o slot da variante secondary (o comentário em
+     (shell)/salvos/page.tsx registra a verificação em runtime), então as telas
+     que usam o componente de abas aplicam a classe na mão. Sem regra, a fileira
+     estica na largura inteira e nada marca a aba ativa; com ela, /salvos,
+     /recommendations e /events herdam a aparência que /mercado já renderiza:
+     borda inferior de 2px na cor de ação primária, com peso e cor no item
+     selecionado. Um lugar só — as telas não repetem a marcação. */
+  .tabs--secondary > .tabs__list-container .tabs__list {
+    width: max-content;
+    min-width: 0;
+  }
+
+  .tabs--secondary > .tabs__list-container .tabs__tab {
+    width: auto;
+    border-bottom: 2px solid transparent;
+    padding-bottom: 0.5rem;
+    color: var(--semantic-text-secondary);
+  }
+
+  .tabs--secondary > .tabs__list-container .tabs__tab[data-selected="true"] {
+    border-bottom-color: var(--semantic-action-primary);
+    color: var(--semantic-action-primary);
+    font-weight: 600;
+  }
+
   :where(a, button, input, select, textarea, [role="button"], [role="checkbox"]):focus-visible {
     outline: 2px solid var(--semantic-focus-outer);
     outline-offset: 2px;
