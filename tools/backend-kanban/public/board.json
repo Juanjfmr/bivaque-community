@@ -1679,7 +1679,8 @@
         "08/09/2026: especificação web reescrita por solicitação explícita do responsável. Catálogo funcional cobre 31 pranchas web/53 estados, rotas auxiliares, integrações, sequência W00–W09 e gates por rota/fluxo. Entradas dos agentes e G0 encaminham à revisão; escrita do plano não conclui runtime.",
         "08/09/2026: pedido posterior para reduzir burocracia. Sessão Claude fb6e648e-fed2-4339-b5a7-670c62518524 analisada até 19:58 UTC: 36 chamadas diretas de gate, 7 de loop visual e 7 AskUserQuestion; contagens não são tempo ativo. Processo §0, catálogo web e entradas dos agentes passam a lotes, dependências reais, contexto mínimo, escritor único por checkout e provas por lote. Preservados requisitos funcionais e segurança. Base confrontada: 1de8d84; árvore contém implementação concorrente, não certificada por esta alteração documental.",
         "Validação da simplificação: 96/96 testes de escopo PASS; 10 links locais adicionados resolvem; board --check PASS; Biome do board PASS; git diff --check PASS. Somente documentação/quadro alterados nesta tarefa, sem build/E2E do produto, revisão independente, commit ou push.",
-        "Prancha 70-web-evento-organizar criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis 1032 com split em 0.497/0.503). Fecha o buraco do RECON-029, que descrevia criar e editar evento sem imagem de origem. Manifesto passa a 32 pranchas web; leitura registrada em PRANCHAS-WEB-RESTANTES.md; contrato RECON-029 cita a prancha e a leitura; scope test de 31 para 32. Verificado: 111/111 scope tests, 50 testes unitários visuais, flows:check em dia (46 jornadas, 60 pranchas, 134 passos), detect-frames --check 60/0. A jornada web-organizar-um-evento atravessa duas pranchas."
+        "Prancha 70-web-evento-organizar criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis 1032 com split em 0.497/0.503). Fecha o buraco do RECON-029, que descrevia criar e editar evento sem imagem de origem. Manifesto passa a 32 pranchas web; leitura registrada em PRANCHAS-WEB-RESTANTES.md; contrato RECON-029 cita a prancha e a leitura; scope test de 31 para 32. Verificado: 111/111 scope tests, 50 testes unitários visuais, flows:check em dia (46 jornadas, 60 pranchas, 134 passos), detect-frames --check 60/0. A jornada web-organizar-um-evento atravessa duas pranchas.",
+        "Correcao do PNG da prancha 70: a primeira captura saiu com o conteudo comprimido em 1384x505 de um canvas de 2076x757, porque o Chrome reduziu a pagina a 2/3 (devicePixelRatio 0.667) para caber na janela; o recorte de 49,7% da galeria mostrava dois paineis no lugar de um. Refeito por Playwright headless e conferido: as unicas colunas 100% fundo do PNG sao 1032..1043, a calha de 12px. O novo scripts/visual/render-board.mjs (board:render) recusa escrever quando o devicePixelRatio nao e 1 ou o quadro nao bate com o tamanho pedido — a guarda que teria pego o defeito."
       ],
       "links": [
         "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
@@ -1689,7 +1690,7 @@
         "Modelos para construção | ../../docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md"
       ],
       "updatedAt": "2026-09-08",
-      "sourceRevision": "6724613",
+      "sourceRevision": "b9dd61d",
       "dependencies": [],
       "completedChecklist": [true, true, true, true, true, true, true],
       "blockers": []
