@@ -164,12 +164,12 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
         aria-label="Seções da comunidade"
       >
         <TabList aria-label="Seções da comunidade">
-          <Tab key="conversas">Conversas</Tab>
-          <Tab key="grupos">Grupos</Tab>
-          <Tab key="sobre">Sobre</Tab>
+          <Tab id="conversas">Conversas</Tab>
+          <Tab id="grupos">Grupos</Tab>
+          <Tab id="sobre">Sobre</Tab>
         </TabList>
 
-        <TabPanel key="conversas" className="pt-4">
+        <TabPanel id="conversas" className="pt-4">
           {view.feed.length > 0 ? (
             <div className="flex flex-col gap-2">
               {view.feed.map((post, index) => (
@@ -184,7 +184,7 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
           )}
         </TabPanel>
 
-        <TabPanel key="grupos" className="pt-4">
+        <TabPanel id="grupos" className="pt-4">
           <h2 className="mb-3 text-base font-semibold tracking-tight">Grupos da comunidade</h2>
           {view.groups.length > 0 ? (
             <ul className="grid gap-4 sm:grid-cols-2">
@@ -202,7 +202,7 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
           )}
         </TabPanel>
 
-        <TabPanel key="sobre" className="pt-4">
+        <TabPanel id="sobre" className="pt-4">
           <section aria-label="Sobre e administração" className="flex flex-col gap-4">
             <p className="text-sm leading-relaxed text-muted">
               {presentation.description ?? "Esta comunidade ainda não escreveu uma apresentação."}

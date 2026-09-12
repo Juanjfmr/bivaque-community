@@ -171,12 +171,12 @@ export function CommunitiesScreen({
         className="[&_[data-slot=tab]]:min-h-11 [&_[data-slot=tab]]:px-3"
       >
         <TabList aria-label="Seções de comunidades">
-          <Tab key="minhas">Minhas comunidades</Tab>
-          <Tab key="descobrir">Descobrir</Tab>
+          <Tab id="minhas">Minhas comunidades</Tab>
+          <Tab id="descobrir">Descobrir</Tab>
         </TabList>
 
         {tab === "minhas" && (
-          <TabPanel key="minhas" className="pt-4">
+          <TabPanel id="minhas" className="pt-4">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
               <section aria-label="Minhas comunidades" className="flex flex-col gap-4">
                 {mine.length === 0 ? (
@@ -250,7 +250,7 @@ export function CommunitiesScreen({
         )}
 
         {tab === "descobrir" && (
-          <TabPanel key="descobrir" className="pt-4">
+          <TabPanel id="descobrir" className="pt-4">
             <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
               <section aria-label="Descobrir comunidades" className="flex flex-col gap-3">
                 <SearchField
