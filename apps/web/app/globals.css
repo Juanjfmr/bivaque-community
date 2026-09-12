@@ -162,7 +162,7 @@ body {
   .tabs--secondary > .tabs__list-container .tabs__tab[data-selected="true"] {
     border-bottom-color: var(--semantic-action-primary);
     color: var(--semantic-action-primary);
-    font-weight: 600;
+    font-weight: var(--semantic-typography-label-weight);
   }
 
   /* O HeroUI injeta chevrons de 16x16 no scroller quando a fileira transborda
