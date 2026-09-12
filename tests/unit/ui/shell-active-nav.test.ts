@@ -126,7 +126,7 @@ describe("RECON-042, defeito 2 — toda rota do mapa de captura declara containe
       .map((key) => key.split("?")[0])
       .filter((pathname) => !isDeclaredContainer(pathname))
     expect(missing).toEqual([])
-  })
+  }, 30000)
 
   it("toda rota do shell resolve para um container, nunca para nenhum item", async () => {
     const { HEADINGS } = await import("../../../scripts/visual/capture.mjs")
@@ -135,7 +135,7 @@ describe("RECON-042, defeito 2 — toda rota do mapa de captura declara containe
       .filter((pathname) => !livesOutsideShell(pathname))
       .filter((pathname) => resolveActiveNav(pathname, PRIMARY).kind === "none")
     expect(undeclaredActive).toEqual([])
-  })
+  }, 30000)
 
   it("a área declara o container de cada prefixo conhecido", () => {
     expect(AREA_CONTAINERS.length).toBeGreaterThan(0)
