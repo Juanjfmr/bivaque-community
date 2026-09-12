@@ -74,6 +74,10 @@ export const HEADINGS = {
   "/prestador": "^Painel do prestador$",
   "/prestador/ficha": "^Minha ficha$",
   "/prestador/catalogo": "^Catálogo e portfólio$",
+  // RECON-024 trouxe estas duas ao entrar na integração, sem contrato — e o
+  // guard-rail do RECON-040 cobrou na hora. Títulos lidos do h1 de cada página.
+  "/prestador/atendimento": "^Área de atendimento$",
+  "/prestador/conta": "^Conta$",
   // Named by their own data: the community, the guide entry, the group, the
   // event, the member and the city carry the title. The fixture id pins WHICH
   // record; the h1 text belongs to the seed, not to this file.
@@ -286,6 +290,10 @@ export const ROUTES = [
   { path: "/prestador", name: "provider-panel", auth: true },
   { path: "/prestador/ficha", name: "provider-ficha", auth: true },
   { path: "/prestador/catalogo", name: "provider-catalogo", auth: true },
+  // RECON-024 (prancha 23): Área de atendimento e Conta do negócio. Rodar com a
+  // conta de prestador do seed (BIVAQUE_VISUAL_EMAIL=prestador-seed@bivaque.example.invalid).
+  { path: "/prestador/atendimento", name: "provider-atendimento", auth: true },
+  { path: "/prestador/conta", name: "provider-conta", auth: true },
   {
     path: "/prestadores/30000000-0000-4000-8000-000000000010",
     name: "provider-public-ficha",

@@ -2081,9 +2081,7 @@
         "Sete ADRs de 09/09 aprovados pelo dono",
         "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
         "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "RECON-035 implementado em 11/09: coluna, trigger, RPCs, tela e testes no mesmo diff",
-        "PENDENTE RECON-035: aplicar migration e rodar pgTAP/gen types no stack (bloqueado nesta sessao pelo banco compartilhado)",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote - RECON-024 (branch fix/recon-024-painel-negocio, 11/09): shell do negocio, fila por situacao, pedido do prestador, area de atendimento e conta implementados; migration 20260911032105_service_requests.sql, pgTAP e testes de unidade prontos; gate verde. Runtime da fila NAO verificado: o banco compartilhado nao recebeu a migration (sessao proibida de alterar estado) e RECON-022, dependencia, segue sem codigo na main."
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
@@ -2094,7 +2092,13 @@
         "RECON-035: captura autenticada em .visual/recon035-final (375/768/1440) de /recommendations?focus=80000000-0000-4000-8000-000000000f00. Authenticated capture: yes, aba Pedidos ativa, ator visual@ (Ana Verificada). O painel mostra o erro 400 esperado enquanto a coluna nao existe no banco; o marcador visual so aparece depois de aplicar a migration",
         "RECON-035: drift encontrado e corrigido — as abas de /recommendations nao tinham id e os paineis nao eram ocultados, entao a conversa era inalcancavel. Corrigido com id nos Tabs.Tab e hidden nos paineis em apps/web/app/(shell)/recommendations/page.tsx, FORA dos allowed_paths do contrato (declarado no relatorio)",
         "RECON-035: o contrato aponta a rota /publicacoes/[id]; a conversa real e a aba Pedidos de /recommendations. Implementado na superficie real, sem criar rota nova",
-        "RECON-035 PENDENTE: aplicar a migration, db:reset --no-seed + npx pnpm@11.18.0 test:db, regenerar tipos do schema public e recapturar o marcador visivel na resposta destacada"
+        "RECON-035 PENDENTE: aplicar a migration, db:reset --no-seed + npx pnpm@11.18.0 test:db, regenerar tipos do schema public e recapturar o marcador visivel na resposta destacada",
+        "RECON-041 (12/09, branch fix/recon-041-pgtap): merge de fix/recon-024-painel-negocio reconciliado em supabase/tests/service-requests.sql — os dois cenarios preservados (12 asserts de negacao de acesso fora do alcance do RECON-022 + 16 asserts do painel do RECON-024, plan(28)). npx pnpm@11.18.0 exec supabase test db, exit lido direto: exit 1; o arquivo roda 12 de 28 — o cenario do RECON-024 aborta em supabase/tests/service-requests.sql:313 com ERROR: column \"category\" of relation \"service_requests\" does not exist",
+        "RECON-041 BLOCKER: nao e colisao de fixture, e colisao de backend. O banco compartilhado tem o schema do RECON-022/023 (service_requests com provider_user_id/idempotency_key, sem category/region/first_responded_at; RPCs send_conversation_message/close_service_request, sem respond_to_service_request/cancel_service_request). A migration do RECON-024 (20260911032105_service_requests.sql) colide com a aplicada 20260911032309_service_requests.sql (mesmos create type/create table service_requests) e nao replaya. Fazer as provas do painel passarem exige reconciliacao de backend R3, fora dos allowed_paths deste lote",
+        "RECON-044 (12/09, branch fix/recon-044-pedidos): RECON-041 BLOCKER RESOLVIDO — service_requests volta a ser UM dominio. Removido o arquivo conflitante do RECON-024 (20260911032105); a migration nova 20260912063553 soma category, region e first_responded_at sobre a base aplicada 20260911032309, preservando provider_user_id, idempotency_key e a policy que le a primeira. respond_to_service_request nao e recriada (absorvida por send_conversation_message, a unica resposta do prestador); cancel_service_request entra nova (so o solicitante, terminal cancelled); close_service_request e update_service_request aplicadas sobrevivem. O formulario do prestador passa a enviar a conversa do pedido.",
+        "RECON-044: npx pnpm@11.18.0 exec supabase migration up --local --include-all, exit lido direto do $?: 0 (aplica 20260910202110 e 20260912063553 ate o fim).",
+        "RECON-044: npx pnpm@11.18.0 exec supabase test db, exit lido direto do $?: 1. Resultado global contaminado pelo estado do banco (a semente de desenvolvimento esta carregada; o teste de banco exige banco SEM semente) — varias suites alheias reprovam por isso. O arquivo do lote, supabase/tests/service-requests.sql, roda e passa as 31 assercoes que declara (era 12 de 28, abortava em :313); a CLI reporta o arquivo como ok. service-request-tracking.sql reprova 1 de 26 no assert 21 por bug pre-existente de formatacao (jsonb devolve ISO-8601 com T, ::text devolve com espaco), nao tocado por este lote.",
+        "RECON-044: npx pnpm@11.18.0 gate, exit lido direto do $?: 1. lint e typecheck verdes; test vermelho por dois achados pre-existentes e fora dos allowed_paths — prancha-coverage (RECON-042 cita prancha sem a leitura) e visual-capture-proof (rotas /prestador/atendimento e /prestador/conta sem HEADINGS em scripts/visual/capture.mjs). Build pulado localmente por falta de apps/web/.env.local. A regeneracao de tipos foi descartada: com a CLI fixada ela muda a nulabilidade de set_community_image.p_path, quebra typecheck fora do lote e arrasta a migration 20260910202110."
       ],
       "tests": [
         "node --test tests/scope/prancha-coverage.test.mjs",
@@ -2114,9 +2118,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "branch": "fix/recon-035-resposta",
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "0323a94"
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "6499c79"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",

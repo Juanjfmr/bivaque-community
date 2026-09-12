@@ -12,6 +12,7 @@ import {
   validatePriceCents,
   validateTitle,
 } from "../../../lib/providers/showcase"
+import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda G Task 4 — Server Actions do painel do prestador.
 //
@@ -306,4 +307,103 @@ export async function deletePortfolioPhotoAction(formData: FormData): Promise<vo
   if (error) throw new Error(`Falha ao remover a foto: ${error.message}`)
 
   revalidatePath("/prestador/catalogo")
+}
+
+// ── RECON-024: fila de pedidos, área de atendimento e conta ─────────────────
+
+// A resposta usa o RPC canonico `send_conversation_message`, que deriva o
+// remetente da sessao, grava a mensagem e move open -> in_conversation na
+// MESMA transacao (ADR D1). O nome do RECON-024 (`respond_to_service_request`)
+// nao existe mais: foi absorvido por ele na reconciliacao do RECON-044.
+export async function respondToRequestAction(formData: FormData): Promise<void> {
+  const requestId = text(formData, "requestId")
+  const conversationId = text(formData, "conversationId")
+  const content = text(formData, "content") ?? ""
+  if (!requestId) throw new Error("requestId required")
+  if (!conversationId) throw new Error("conversationId required")
+  if (content.trim().length === 0) throw new Error("Escreva uma resposta antes de enviar.")
+
+  const { client } = await requireAuthClient()
+  const { error } = await client.rpc("send_conversation_message", {
+    p_conversation_id: conversationId,
+    p_content: content,
+  })
+  if (error) throw new Error(`Falha ao responder: ${error.message}`)
+
+  revalidatePath("/prestador")
+  revalidatePath(`/prestador/pedidos/${requestId}`)
+}
+
+export async function closeRequestAction(formData: FormData): Promise<void> {
+  const requestId = text(formData, "requestId")
+  if (!requestId) throw new Error("requestId required")
+
+  const { client } = await requireAuthClient()
+  const { error } = await client.rpc("close_service_request", { p_request_id: requestId })
+  if (error) throw new Error(`Falha ao encerrar: ${error.message}`)
+
+  revalidatePath("/prestador")
+  revalidatePath(`/prestador/pedidos/${requestId}`)
+}
+
+// Área de atendimento: liga/desliga o alcance gratuito da comunidade que
+// atestou. Efeito real e verificável — com o alcance desligado,
+// `can_see_provider` deixa de valer e a ficha sai da busca do membro.
+export async function saveAttendanceAction(formData: FormData): Promise<void> {
+  const active = formData.get("active") === "on"
+  const { client, userId } = await requireAuthClient()
+
+  const profileId = await requireOwnProfileId(client, userId)
+
+  const serviceClient = createServiceClient()
+  const { data: accountRow, error: accountError } = await serviceClient
+    .from("provider_accounts")
+    .select("community_id")
+    .eq("auth_user_id", userId)
+    .is("revoked_at", null)
+    .maybeSingle()
+  if (accountError) throw new Error(`Falha ao carregar a conta: ${accountError.message}`)
+  const communityId = (accountRow as { community_id: string } | null)?.community_id
+  if (!communityId) throw new Error("Conta de prestador sem comunidade.")
+
+  const { error } = await client.from("provider_reach").upsert(
+    {
+      provider_id: profileId,
+      scope_type: "community",
+      scope_id: communityId,
+      source: "free",
+      active,
+    },
+    { onConflict: "provider_id,scope_type,scope_id" },
+  )
+  if (error) throw new Error(`Falha ao salvar a área de atendimento: ${error.message}`)
+
+  revalidatePath("/prestador")
+  revalidatePath("/prestador/atendimento")
+}
+
+// Conta: telefone é OPCIONAL e opt-in (ADR-20260820, decisão 6). Salvar aqui
+// altera o que a ficha pública mostra — o efeito é o do R41.
+export async function saveAccountAction(formData: FormData): Promise<void> {
+  const contactPhone = text(formData, "contactPhone")
+  const contactIsPublic = formData.get("contactIsPublic") === "on"
+
+  const phoneCheck = validateContactPhone(contactPhone)
+  if (!phoneCheck.ok) throw new Error(phoneCheck.message)
+
+  const { client, userId } = await requireAuthClient()
+  const profileId = await requireOwnProfileId(client, userId)
+
+  const { error } = await client
+    .from("provider_profiles")
+    .update({
+      contact_phone: contactPhone,
+      contact_is_public: contactIsPublic && contactPhone !== null,
+    })
+    .eq("id", profileId)
+  if (error) throw new Error(`Falha ao salvar a conta: ${error.message}`)
+
+  revalidatePath("/prestador")
+  revalidatePath("/prestador/conta")
+  revalidatePath("/prestador/ficha")
 }
