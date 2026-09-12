@@ -463,25 +463,33 @@ export default function RecommendationsPage() {
         </p>
       </div>
 
+      {/* RECON-043: mesma marcacao de aba que /salvos (variant secondary +
+          a classe que o build fixado aplica) e /mercado. O ListContainer e o
+          ScrollShadow interno que impede a fileira de virar rolagem horizontal
+          da pagina inteira em 375. */}
       <Tabs
+        aria-label="Seções de indicações"
         selectedKey={selectedTab}
         onSelectionChange={(key) => setSelectedTab(key as string)}
-        aria-label="Seções de indicações"
+        variant="secondary"
+        className="tabs--secondary"
       >
-        <Tabs.List>
-          <Tabs.Tab key="browse" id="browse">
-            Explorar
-          </Tabs.Tab>
-          <Tabs.Tab key="request" id="request">
-            Pedir indicação
-          </Tabs.Tab>
-          <Tabs.Tab key="requests" id="requests">
-            Pedidos
-          </Tabs.Tab>
-          <Tabs.Tab key="saved" id="saved">
-            Salvas
-          </Tabs.Tab>
-        </Tabs.List>
+        <Tabs.ListContainer>
+          <Tabs.List>
+            <Tabs.Tab key="browse" id="browse">
+              Explorar
+            </Tabs.Tab>
+            <Tabs.Tab key="request" id="request">
+              Pedir indicação
+            </Tabs.Tab>
+            <Tabs.Tab key="requests" id="requests">
+              Pedidos
+            </Tabs.Tab>
+            <Tabs.Tab key="saved" id="saved">
+              Salvas
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
 
         {/* ═══ Explorar ═══════════════════════════════════════════════════════ */}
         <div key="browse" role="tabpanel" hidden={selectedTab !== "browse"}>
