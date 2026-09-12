@@ -1687,7 +1687,8 @@
         "Concluir pranchas restantes e propagar sete correções visuais; preservar notas de construção",
         "Especificar rotas e ciclos web completos, dependências e gates sem fechar UI desconectada",
         "Simplificar implantação web por lote, contexto mínimo e dependências reais após análise da sessão Claude",
-        "Ampliar o guia com a prancha 70-web-evento-organizar, autoridade visual que faltava ao RECON-029"
+        "Ampliar o guia com a prancha 70-web-evento-organizar, autoridade visual que faltava ao RECON-029",
+        "Ampliar o guia com as demais pranchas que os gates da spec exigem, na mesma forma da 70 e da 71"
       ],
       "proof": [
         "Pedido explícito do usuário em 06/09/2026: publicar os arquivos no GitHub; versão atual prevalece sobre documentação antiga conflitante.",
@@ -1709,7 +1710,8 @@
         "08/09/2026: pedido posterior para reduzir burocracia. Sessão Claude fb6e648e-fed2-4339-b5a7-670c62518524 analisada até 19:58 UTC: 36 chamadas diretas de gate, 7 de loop visual e 7 AskUserQuestion; contagens não são tempo ativo. Processo §0, catálogo web e entradas dos agentes passam a lotes, dependências reais, contexto mínimo, escritor único por checkout e provas por lote. Preservados requisitos funcionais e segurança. Base confrontada: 1de8d84; árvore contém implementação concorrente, não certificada por esta alteração documental.",
         "Validação da simplificação: 96/96 testes de escopo PASS; 10 links locais adicionados resolvem; board --check PASS; Biome do board PASS; git diff --check PASS. Somente documentação/quadro alterados nesta tarefa, sem build/E2E do produto, revisão independente, commit ou push.",
         "Prancha 70-web-evento-organizar criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis 1032 com split em 0.497/0.503). Fecha o buraco do RECON-029, que descrevia criar e editar evento sem imagem de origem. Manifesto passa a 32 pranchas web; leitura registrada em PRANCHAS-WEB-RESTANTES.md; contrato RECON-029 cita a prancha e a leitura; scope test de 31 para 32. Verificado: 111/111 scope tests, 50 testes unitários visuais, flows:check em dia (46 jornadas, 60 pranchas, 134 passos), detect-frames --check 60/0. A jornada web-organizar-um-evento atravessa duas pranchas.",
-        "Correcao do PNG da prancha 70: a primeira captura saiu com o conteudo comprimido em 1384x505 de um canvas de 2076x757, porque o Chrome reduziu a pagina a 2/3 (devicePixelRatio 0.667) para caber na janela; o recorte de 49,7% da galeria mostrava dois paineis no lugar de um. Refeito por Playwright headless e conferido: as unicas colunas 100% fundo do PNG sao 1032..1043, a calha de 12px. O novo scripts/visual/render-board.mjs (board:render) recusa escrever quando o devicePixelRatio nao e 1 ou o quadro nao bate com o tamanho pedido — a guarda que teria pego o defeito."
+        "Correcao do PNG da prancha 70: a primeira captura saiu com o conteudo comprimido em 1384x505 de um canvas de 2076x757, porque o Chrome reduziu a pagina a 2/3 (devicePixelRatio 0.667) para caber na janela; o recorte de 49,7% da galeria mostrava dois paineis no lugar de um. Refeito por Playwright headless e conferido: as unicas colunas 100% fundo do PNG sao 1032..1043, a calha de 12px. O novo scripts/visual/render-board.mjs (board:render) recusa escrever quando o devicePixelRatio nao e 1 ou o quadro nao bate com o tamanho pedido — a guarda que teria pego o defeito.",
+        "Prancha 71-web-auth-recuperacao criada em 12/09/2026 pela mesma linha da 70: fonte HTML versionada, PNG renderizado com a guarda de devicePixelRatio, manifesto em 33 pranchas web, leitura em PRANCHAS-WEB-RESTANTES.md, RECON-018 como autoridade (ja citava R07 e R08 sem imagem de origem), scope test de 32 para 33 e a jornada web-recuperar-o-acesso. Cobre R07 com o retorno neutro exigido como requisito de privacidade. Divergencia declarada com R08: a spec pede campo de confirmacao, a tela implementada usa mostrar/ocultar senha. Verificado: 111/111 scope tests, 50 testes unitarios visuais, flows:check em dia (47 jornadas, 61 pranchas, 136 passos), detect-frames --check 61/0, render-board --check verde."
       ],
       "links": [
         "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
@@ -1718,10 +1720,10 @@
         "Decisões posteriores | ../../docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
         "Modelos para construção | ../../docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "b9dd61d",
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "9eede0d",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedChecklist": [true, true, true, true, true, true, true, false],
       "blockers": []
     },
     {
