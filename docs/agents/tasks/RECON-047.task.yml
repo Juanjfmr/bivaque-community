@@ -1,0 +1,104 @@
+task_id: RECON-047
+
+objective: >
+  Toda fileira de abas do produto se parece com uma fileira de abas. As telas
+  que ficaram de fora do estilo passam a usar o mesmo tratamento das que ja
+  usam, ou declaram por escrito por que sao diferentes, e um teste passa a
+  cobrar isso de qualquer tela nova.
+
+authority:
+  - apps/web/app/globals.css, a regra unica de aba entregue pelo RECON-045
+  - apps/web/app/(shell)/salvos/page.tsx, o uso de referencia
+  - docs/design/visual-guide-2026-09-06/54-web-retorno.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md
+  - Inspeccao visual de 12/09/2026 sobre chore/integracao-r3-next
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O RECON-045 escreveu a regra que faltava e a aplicou a tres telas. Elas
+    ficaram certas: em /recommendations, medido em captura do build da
+    integracao em 127.0.0.1:3202, as abas ficam compactas a esquerda e a
+    selecionada tem sublinhado na cor de acao primaria. O mesmo em /salvos e
+    /events.
+
+    Sete outras telas usam o mesmo componente de abas e NAO usam o estilo.
+    Varredura de 12/09/2026 em apps/web/app: dez arquivos de tela declaram
+    Tabs, e apenas tres carregam a classe do produto.
+
+    Ficaram de fora:
+    (shell)/communities/communities-screen.tsx
+    (shell)/communities/[id]/community-detail-screen.tsx
+    (shell)/configuracoes/bloqueados/page.tsx
+    (shell)/denuncias/trust-privacy-client.tsx
+    (shell)/inicio/community-section.tsx
+    (shell)/localidade/page.tsx
+    (shell)/notifications/page.tsx
+
+    Confirmado na imagem para /communities: as abas Minhas comunidades e
+    Descobrir aparecem espalhadas na largura inteira, sem sublinhado e sem
+    nenhuma marca de qual esta selecionada. E exatamente a aparencia que o
+    RECON-045 acabou de corrigir nas outras tres.
+
+    O componente de navegacao inferior, components/bivaque/bottom-nav.tsx,
+    tambem usa Tabs e esta FORA deste lote de proposito: ele e navegacao
+    primaria em largura pequena, nao uma fileira de abas de conteudo.
+
+    Por que o guard-rail do RECON-045 nao pega isto: ele reprova classe
+    aplicada sem regra. Aqui o caso e o oposto, regra existente sem aplicacao,
+    e nenhum teste cobra isso hoje.
+
+allowed_paths:
+  - apps/web/app/(shell)/communities/
+  - apps/web/app/(shell)/configuracoes/bloqueados/
+  - apps/web/app/(shell)/denuncias/
+  - apps/web/app/(shell)/inicio/
+  - apps/web/app/(shell)/localidade/
+  - apps/web/app/(shell)/notifications/
+  - apps/web/app/globals.css
+  - tests/unit/
+  - docs/agents/tasks/RECON-047.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - criar um segundo estilo de aba; a regra ja existe e e uma so
+  - aplicar a classe numa tela cuja aparencia a prancha desenha diferente, sem antes declarar isso por escrito
+  - mudar o que cada aba filtra, quantas sao ou a ordem delas
+  - alterar a navegacao inferior, que nao e fileira de abas de conteudo
+  - afrouxar, apagar ou pular teste para o gate passar
+  - tocar autorizacao, schema, migration ou estado do banco
+
+acceptance:
+  - cada uma das sete telas ou usa o estilo do produto, ou tem, no proprio arquivo, um comentario dizendo por que difere e o que a prancha pede ali
+  - a aba selecionada fica distinguivel da nao selecionada em todas as telas que adotarem o estilo
+  - existe teste que reprova quando uma tela declara o componente de abas sem o estilo do produto e sem a declaracao escrita de excecao
+  - a lista de excecoes do teste e explicita e curta, e a navegacao inferior esta nela com o motivo
+  - nenhuma fileira de abas vira rolagem horizontal da pagina em 375
+  - gate completo verde, com o codigo de saida lido direto
+  - capturas de /communities, /notifications e /denuncias em 375 e 1440 mostrando a aba ativa marcada
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-047.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE em /communities, /notifications e /denuncias
+
+traps:
+  - Leia o diff do RECON-045 antes de comecar; a regra, o nome da classe e a estrutura que ela espera ja estao decididos
+  - A prancha 54 desenha as abas de Notificacoes com sublinhado; conferir antes de assumir que a tela e excecao
+  - Servir o build para captura exige SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no processo, alem das duas publicas
+  - Exporte MSYS_NO_PATHCONV=1 e MSYS2_ARG_CONV_EXCL antes de passar rota que comeca com barra
+  - Nao canalize o gate por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - Ha UM Supabase local compartilhado nesta maquina; nao apague nem recrie o banco
+
+risk: >
+  Estilo de fileira de abas em sete telas de leitura do shell do membro, sobre
+  uma regra de estilo que ja existe.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true
