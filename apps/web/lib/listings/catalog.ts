@@ -25,10 +25,14 @@ export function categoryLabel(value: string): string {
   return LISTING_CATEGORIES.find((category) => category.value === value)?.label ?? "Outros"
 }
 
+// O domínio canônico (`public.listing_condition`) tem duas faixas. O Mercado
+// original tinha três: "usado em bom estado" e "usado com marcas de uso"
+// desaguam as duas em `used`, porque a distinção não existe no canônico e o ADR
+// registra que o Mercado nasce sem linhas a migrar (nada é descartado em
+// silêncio — a terceira faixa tem destino).
 export const LISTING_CONDITIONS = [
   { value: "new", label: "Novo" },
-  { value: "used_good", label: "Usado em bom estado" },
-  { value: "used_fair", label: "Usado com marcas de uso" },
+  { value: "used", label: "Usado" },
 ] as const
 
 export type ListingCondition = (typeof LISTING_CONDITIONS)[number]["value"]
@@ -39,6 +43,14 @@ export const LISTING_CONDITION_VALUES: readonly ListingCondition[] = LISTING_CON
 
 export function isListingCondition(value: string): value is ListingCondition {
   return (LISTING_CONDITION_VALUES as readonly string[]).includes(value)
+}
+
+// Traduz a faixa legada (três valores) para a canônica (dois) na borda de
+// escrita. `used_good` e `used_fair` são a mesma coisa para o banco.
+export function toCanonicalCondition(value: string): ListingCondition | null {
+  if (value === "new") return "new"
+  if (value === "used" || value === "used_good" || value === "used_fair") return "used"
+  return null
 }
 
 export function conditionLabel(value: string): string {
@@ -285,7 +297,8 @@ export function validateNewListing(draft: NewListingDraft): NewListingValidation
   else if (price === null) errors.price = "Informe o preço do item."
   else if (price > MAX_LISTING_PRICE_CENTS) errors.price = "O valor informado é alto demais."
 
-  if (!isListingCondition(draft.condition)) errors.condition = "Escolha a condição do item."
+  const condition = toCanonicalCondition(draft.condition)
+  if (condition === null) errors.condition = "Escolha a condição do item."
 
   const description = draft.description.trim()
   if (description.length === 0) errors.description = "Descreva o item."
@@ -312,11 +325,7 @@ export function validateNewListing(draft: NewListingDraft): NewListingValidation
   if (Object.keys(errors).length > 0) return { ok: false, errors }
 
   // Os `if` acima garantem os tipos; a checagem estreita o que o TS não vê.
-  if (
-    !isListingCategory(draft.category) ||
-    !isListingCondition(draft.condition) ||
-    typeof price !== "number"
-  ) {
+  if (!isListingCategory(draft.category) || condition === null || typeof price !== "number") {
     return { ok: false, errors: { category: "Confira os campos do anúncio." } }
   }
 
@@ -325,7 +334,7 @@ export function validateNewListing(draft: NewListingDraft): NewListingValidation
     value: {
       title,
       category: draft.category,
-      condition: draft.condition,
+      condition,
       description,
       neighborhood,
       priceCents: price,

@@ -1,13 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../supabase/client"
 
-// O `Database` gerado ainda não carrega as tabelas de anúncio: ele é gerado a
-// partir do stack local, e a migration deste lote não está aplicada ao banco
-// compartilhado (esta sessão não pode alterá-lo). Este shim mantém as consultas
-// do Mercado funcionando e tipadas nas bordas até `pnpm generate:types` rodar
-// depois da migration. Ao regenerar os tipos, troque por createBrowserClient().
-export type ListingsClient = SupabaseClient
+// O domínio `listings` já vive no schema público gerado, então o cliente do
+// Mercado é tipado como o resto da aplicação.
+export type ListingsClient = SupabaseClient<Database>
 
 export function listingsClient(): ListingsClient {
-  return createBrowserClient() as unknown as ListingsClient
+  return createBrowserClient()
 }

@@ -6,9 +6,15 @@ select plan(37);
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
 
--- RECON-025 — Mercado. O anúncio só aparece para quem alcança o público, o dono
--- vê o próprio, a foto herda o acesso do anúncio e o interesse reusa a conversa
--- contextual de forma idempotente. Casos positivos e negativos.
+-- RECON-025 / RECON-039 — Mercado sobre o domínio canônico de `listings`
+-- (migration 20260911043053). O anúncio só aparece para quem alcança o público,
+-- o dono vê o próprio, a foto herda o acesso do anúncio e o interesse reusa a
+-- conversa contextual de forma idempotente. Casos positivos e negativos.
+--
+-- Diferenças do schema: a coluna de dono é `owner_user_id`; o público é derivado
+-- de qual FK está preenchida (`locality_id` exclusivo de `community_id`), sem
+-- `audience_type`; a foto guarda `path`; `condition` tem dois valores; e o
+-- `item` exige categoria, descrição, preço, bairro e condição no banco.
 
 set local role postgres;
 
@@ -19,39 +25,39 @@ set local role postgres;
 --   004 = cidade 1, comunidade A aprovado (não é de B)
 --   005 = sem cidade e sem comunidade
 insert into public.listings (
-  id, owner_id, status, audience_type, locality_id, community_id,
+  id, owner_user_id, kind, status, locality_id, community_id,
   category, title, description, price_cents, condition, neighborhood
 )
 values
   (
     'a0000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
-    'active', 'locality', '00000000-0000-4000-8000-000000000001', null,
-    'casa_moveis', 'Mesa de jantar', 'Mesa usada, sem detalhes.', 65000, 'used_good', 'Centro'
+    'item', 'active', '00000000-0000-4000-8000-000000000001', null,
+    'casa_moveis', 'Mesa de jantar', 'Mesa usada, sem detalhes.', 65000, 'used', 'Centro'
   ),
   (
     'a0000000-0000-4000-8000-000000000002',
     '10000000-0000-4000-8000-000000000001',
-    'draft', 'locality', '00000000-0000-4000-8000-000000000001', null,
-    'eletronicos', 'Rascunho de TV', 'Ainda não publicada.', 90000, 'used_fair', 'Centro'
+    'item', 'draft', '00000000-0000-4000-8000-000000000001', null,
+    'eletronicos', 'Rascunho de TV', 'Ainda não publicada.', 90000, 'used', 'Centro'
   ),
   (
     'a0000000-0000-4000-8000-000000000003',
     '10000000-0000-4000-8000-000000000001',
-    'active', 'community', null, '70000000-0000-4000-8000-000000000001',
-    'esporte', 'Bicicleta aro 29', 'Bicicleta da vila.', 120000, 'used_good', 'Vila'
+    'item', 'active', null, '70000000-0000-4000-8000-000000000001',
+    'esporte', 'Bicicleta aro 29', 'Bicicleta da vila.', 120000, 'new', 'Vila'
   ),
   (
     'a0000000-0000-4000-8000-000000000004',
     '10000000-0000-4000-8000-000000000003',
-    'active', 'locality', '00000000-0000-4000-8000-000000000002', null,
-    'infantil', 'Carrinho de bebê', 'Item da outra cidade.', 40000, 'used_good', 'Bairro X'
+    'item', 'active', '00000000-0000-4000-8000-000000000002', null,
+    'infantil', 'Carrinho de bebê', 'Item da outra cidade.', 40000, 'used', 'Bairro X'
   ),
   (
     'a0000000-0000-4000-8000-000000000005',
-    '10000000-0000-4000-8000-000000000004',
-    'active', 'community', null, '70000000-0000-4000-8000-000000000002',
-    'outros', 'Furadeira', 'Item da comunidade B.', 20000, 'used_good', 'Vila Viz'
+    '10000000-0000-4000-8000-000000000001',
+    'item', 'active', null, '70000000-0000-4000-8000-000000000002',
+    'outros', 'Furadeira', 'Item da comunidade B.', 20000, 'used', 'Vila Viz'
   );
 
 -- ── alcance de leitura: quem alcança o público vê, quem não alcança não vê ────
@@ -165,7 +171,7 @@ select is_empty(
   'o dono não vê o anúncio de terceiro fora do alcance'
 );
 
--- ── escrita: dono e público conferidos no servidor ───────────────────────────
+-- ── escrita: dono conferido no servidor, item exige campos no banco ──────────
 
 set local role authenticated;
 select set_config(
@@ -178,69 +184,69 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok(
   $$
     insert into public.listings (
-      owner_id, status, audience_type, locality_id, category, title, description,
+      owner_user_id, kind, status, locality_id, category, title, description,
       price_cents, condition, neighborhood
     )
     values (
       '10000000-0000-4000-8000-000000000001',
-      'active', 'locality', '00000000-0000-4000-8000-000000000001',
+      'item', 'active', '00000000-0000-4000-8000-000000000001',
       'outros', 'Anúncio forjado', 'Tentativa de postar em nome de outro.', 1000,
-      'used_good', 'Centro'
+      'used', 'Centro'
     )
   $$,
   42501,
   null,
-  'ninguém cria anúncio com owner_id de terceiro'
+  'ninguém cria anúncio com owner_user_id de terceiro'
 );
 
 select throws_ok(
   $$
     insert into public.listings (
-      owner_id, status, audience_type, community_id, category, title, description,
+      owner_user_id, kind, status, locality_id, category, title, description,
       price_cents, condition, neighborhood
     )
     values (
       '10000000-0000-4000-8000-000000000002',
-      'active', 'community', '70000000-0000-4000-8000-000000000001',
-      'outros', 'Anúncio na vila', 'Sem aprovação na comunidade A.', 1000,
-      'used_good', 'Vila'
+      'item', 'active', '00000000-0000-4000-8000-000000000001',
+      null, 'Item sem categoria', 'A obrigatoriedade não pode sumir.', 1000,
+      'used', 'Centro'
     )
   $$,
-  42501,
+  23514,
   null,
-  'pedido pendente não publica na comunidade'
+  'item sem categoria é recusado pelo banco, não só pela tela'
 );
 
 select lives_ok(
   $$
     insert into public.listings (
-      owner_id, status, audience_type, locality_id, category, title, description,
+      owner_user_id, kind, status, locality_id, category, title, description,
       price_cents, condition, neighborhood
     )
     values (
       '10000000-0000-4000-8000-000000000002',
-      'active', 'locality', '00000000-0000-4000-8000-000000000001',
+      'item', 'active', '00000000-0000-4000-8000-000000000001',
       'outros', 'Item do morador', 'Publicado para a própria cidade.', 1000,
-      'used_good', 'Centro'
+      'used', 'Centro'
     )
   $$,
-  'morador publica para a própria cidade'
+  'morador publica item para a própria cidade'
 );
 
 select lives_ok(
   $$
     insert into public.listings (
-      owner_id, status, audience_type, community_id, category, title, description,
+      owner_user_id, kind, status, community_id, category, title, description,
       price_cents, condition, neighborhood
     )
     values (
       '10000000-0000-4000-8000-000000000002',
-      'active', 'community', '70000000-0000-4000-8000-000000000002',
+      'item', 'active', '70000000-0000-4000-8000-000000000002',
       'outros', 'Item da comunidade B', 'Aprovado na comunidade B.', 1000,
-      'used_good', 'Vila Viz'
+      'used', 'Vila Viz'
     )
   $$,
-  'membro aprovado publica na comunidade'
+  'membro aprovado publica item na comunidade'
 );
 
 -- ── edição: público imutável, dono imutável ──────────────────────────────────
@@ -266,8 +272,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok(
   $$
     update public.listings
-       set audience_type = 'community',
-           community_id = '70000000-0000-4000-8000-000000000001',
+       set community_id = '70000000-0000-4000-8000-000000000001',
            locality_id = null
      where id = 'a0000000-0000-4000-8000-000000000001'
   $$,
@@ -297,7 +302,7 @@ select results_eq(
 
 select lives_ok(
   $$
-    insert into public.listing_photos (listing_id, storage_path, position)
+    insert into public.listing_photos (listing_id, path, position)
     values (
       'a0000000-0000-4000-8000-000000000001',
       'a0000000-0000-4000-8000-000000000001/foto-0.jpg',
@@ -307,8 +312,6 @@ select lives_ok(
   'dono adiciona foto ao próprio anúncio'
 );
 
--- 004 não é dono nem alcança a comunidade A? 004 é aprovado na A, mas a foto é
--- da L1 (cidade), e 004 é da cidade 1 — então 004 vê. Use 003 (outra cidade).
 set local role authenticated;
 select set_config(
   'request.jwt.claim.sub',
@@ -319,7 +322,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.listing_photos (listing_id, storage_path, position)
+    insert into public.listing_photos (listing_id, path, position)
     values (
       'a0000000-0000-4000-8000-000000000001',
       'a0000000-0000-4000-8000-000000000001/foto-1.jpg',
@@ -532,7 +535,7 @@ select throws_ok(
   'rascunho não aceita interesse'
 );
 
--- ── pausar: sai da busca de terceiros ────────────────────────────────────────
+-- ── pausar: sai da busca de terceiros (transição é via servidor) ─────────────
 
 set local role authenticated;
 select set_config(
@@ -544,9 +547,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    update public.listings
-       set status = 'paused'
-     where id = 'a0000000-0000-4000-8000-000000000001'
+    select public.transition_listing('a0000000-0000-4000-8000-000000000001', 'pause')
   $$,
   'dono pausa o próprio anúncio'
 );

@@ -61,7 +61,7 @@ export default function NovoAnuncioPage() {
   const [title, setTitle] = useState("")
   const [category, setCategory] = useState("")
   const [price, setPrice] = useState("")
-  const [condition, setCondition] = useState("used_good")
+  const [condition, setCondition] = useState("used")
   const [description, setDescription] = useState("")
   const [neighborhood, setNeighborhood] = useState("")
   const [audienceKey, setAudienceKey] = useState("locality")
@@ -150,10 +150,9 @@ export default function NovoAnuncioPage() {
     const { data: inserted, error: insertError } = await supabase
       .from("listings")
       .insert({
-        owner_id: user.id,
+        owner_user_id: user.id,
         kind: "item",
         status: publish ? "active" : "draft",
-        audience_type: value.audienceType,
         locality_id: value.localityId,
         community_id: value.communityId,
         category: value.category,
@@ -190,7 +189,7 @@ export default function NovoAnuncioPage() {
         const { error: photoError } = await supabase.from("listing_photos").insert(
           uploaded.map((path, index) => ({
             listing_id: listingId,
-            storage_path: path,
+            path,
             position: index,
           })),
         )

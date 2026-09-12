@@ -11,7 +11,7 @@ import { showToast } from "../../components/bivaque/toast"
 
 export interface ListingRow {
   id: string
-  owner_id: string
+  owner_user_id: string
   title: string
   description: string
   category: string
@@ -19,7 +19,6 @@ export interface ListingRow {
   condition: string
   neighborhood: string
   status: string
-  audience_type: "locality" | "community"
   locality_id: string | null
   community_id: string | null
   created_at: string
@@ -27,7 +26,7 @@ export interface ListingRow {
 
 export interface ListingPhotoRow {
   listing_id: string
-  storage_path: string
+  path: string
   position: number
 }
 

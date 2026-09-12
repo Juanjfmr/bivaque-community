@@ -29,31 +29,31 @@ select results_eq(
 );
 
 -- Fixtures de anúncio criadas como superusuário (RLS não se aplica a ele).
-insert into public.listings (id, owner_user_id, kind, status, title, description, locality_id, community_id, neighborhood)
+insert into public.listings (id, owner_user_id, kind, status, title, description, locality_id, community_id, neighborhood, category, price_cents, condition)
 values
   (
     'a0000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
     'property', 'draft', 'Rascunho do dono', null,
-    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras'
+    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras', null, null, null
   ),
   (
     'a0000000-0000-4000-8000-000000000002',
     '10000000-0000-4000-8000-000000000001',
     'property', 'active', 'Apartamento de 2 quartos', 'Sala integrada à varanda.',
-    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras'
+    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras', null, null, null
   ),
   (
     'a0000000-0000-4000-8000-000000000003',
     '10000000-0000-4000-8000-000000000001',
     'property', 'active', 'Casa na vila', 'Quintal amplo.',
-    null, '70000000-0000-4000-8000-000000000001', 'Vila Ajuricaba'
+    null, '70000000-0000-4000-8000-000000000001', 'Vila Ajuricaba', null, null, null
   ),
   (
     'a0000000-0000-4000-8000-000000000004',
     '10000000-0000-4000-8000-000000000001',
-    'item', 'active', 'Item sem imóvel', null,
-    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras'
+    'item', 'active', 'Item sem imóvel', 'Descrição do item.',
+    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras', 'outros', 1000, 'used'
   );
 
 -- D6: IPTU ausente é NULL — nunca 0, nunca somado.
@@ -186,20 +186,19 @@ select throws_ok(
   null,
   'não é possível publicar anúncio em nome de outra conta'
 );
-select throws_ok(
+-- A policy de UPDATE/DELETE é `using`: para quem não é dono nenhuma linha é
+-- alcançada. A negação se prova por zero linhas afetadas, não por exceção.
+select is_empty(
   $$
     update public.listings
        set title = 'Editado por terceiro'
      where id = 'a0000000-0000-4000-8000-000000000002'
+    returning id
   $$,
-  '42501',
-  null,
   'terceiro não edita anúncio alheio'
 );
-select throws_ok(
-  $$ delete from public.listings where id = 'a0000000-0000-4000-8000-000000000002' $$,
-  '42501',
-  null,
+select is_empty(
+  $$ delete from public.listings where id = 'a0000000-0000-4000-8000-000000000002' returning id $$,
   'terceiro não apaga anúncio alheio'
 );
 select throws_ok(

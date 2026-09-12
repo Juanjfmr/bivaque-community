@@ -336,6 +336,7 @@ export type Database = {
       }
       dm_messages: {
         Row: {
+          client_key: string | null
           content: string
           conversation_id: string
           created_at: string
@@ -344,6 +345,7 @@ export type Database = {
           sender_id: string
         }
         Insert: {
+          client_key?: string | null
           content: string
           conversation_id: string
           created_at?: string
@@ -352,6 +354,7 @@ export type Database = {
           sender_id: string
         }
         Update: {
+          client_key?: string | null
           content?: string
           conversation_id?: string
           created_at?: string
@@ -362,6 +365,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dm_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "dm_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_read_states: {
+        Row: {
+          conversation_id: string
+          last_read_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          last_read_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          last_read_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_read_states_conversation_id_fkey"
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "dm_conversations"
@@ -620,6 +652,42 @@ export type Database = {
           },
         ]
       }
+      listing_alert_deliveries: {
+        Row: {
+          alert_id: string
+          created_at: string
+          id: string
+          listing_id: string
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_alert_deliveries_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "listing_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_alert_deliveries_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_alerts: {
         Row: {
           created_at: string
@@ -734,8 +802,44 @@ export type Database = {
           },
         ]
       }
+      listing_status_events: {
+        Row: {
+          actor_id: string
+          created_at: string
+          from_status: Database["public"]["Enums"]["listing_status"]
+          id: number
+          listing_id: string
+          to_status: Database["public"]["Enums"]["listing_status"]
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          from_status: Database["public"]["Enums"]["listing_status"]
+          id?: never
+          listing_id: string
+          to_status: Database["public"]["Enums"]["listing_status"]
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["listing_status"]
+          id?: never
+          listing_id?: string
+          to_status?: Database["public"]["Enums"]["listing_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_status_events_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listings: {
         Row: {
+          available_until: string | null
           category: string | null
           closed_at: string | null
           community_id: string | null
@@ -747,6 +851,7 @@ export type Database = {
           locality_id: string | null
           neighborhood: string | null
           owner_user_id: string
+          pickup_note: string | null
           price_cents: number | null
           published_at: string | null
           status: Database["public"]["Enums"]["listing_status"]
@@ -754,6 +859,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          available_until?: string | null
           category?: string | null
           closed_at?: string | null
           community_id?: string | null
@@ -765,6 +871,7 @@ export type Database = {
           locality_id?: string | null
           neighborhood?: string | null
           owner_user_id: string
+          pickup_note?: string | null
           price_cents?: number | null
           published_at?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
@@ -772,6 +879,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          available_until?: string | null
           category?: string | null
           closed_at?: string | null
           community_id?: string | null
@@ -783,6 +891,7 @@ export type Database = {
           locality_id?: string | null
           neighborhood?: string | null
           owner_user_id?: string
+          pickup_note?: string | null
           price_cents?: number | null
           published_at?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
@@ -892,24 +1001,6 @@ export type Database = {
         }
         Relationships: []
       }
-      notification_opt_outs: {
-        Row: {
-          channel: Database["public"]["Enums"]["outbox_channel"]
-          created_at: string
-          recipient: string
-        }
-        Insert: {
-          channel: Database["public"]["Enums"]["outbox_channel"]
-          created_at?: string
-          recipient: string
-        }
-        Update: {
-          channel?: Database["public"]["Enums"]["outbox_channel"]
-          created_at?: string
-          recipient?: string
-        }
-        Relationships: []
-      }
       notification_channel_preferences: {
         Row: {
           channel: Database["public"]["Enums"]["notification_channel"]
@@ -931,6 +1022,24 @@ export type Database = {
           notification_type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      notification_opt_outs: {
+        Row: {
+          channel: Database["public"]["Enums"]["outbox_channel"]
+          created_at: string
+          recipient: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["outbox_channel"]
+          created_at?: string
+          recipient: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["outbox_channel"]
+          created_at?: string
+          recipient?: string
         }
         Relationships: []
       }
@@ -1239,6 +1348,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          bio: string | null
           consent_version: number
           consented_at: string | null
           created_at: string
@@ -1248,6 +1358,7 @@ export type Database = {
           visibility: Database["public"]["Enums"]["profile_visibility"]
         }
         Insert: {
+          bio?: string | null
           consent_version?: number
           consented_at?: string | null
           created_at?: string
@@ -1257,6 +1368,7 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["profile_visibility"]
         }
         Update: {
+          bio?: string | null
           consent_version?: number
           consented_at?: string | null
           created_at?: string
@@ -1610,6 +1722,7 @@ export type Database = {
           locality_id: string | null
           resolved_at: string | null
           resolved_by: string | null
+          resolved_reply_id: string | null
           title: string
           updated_at: string
         }
@@ -1625,6 +1738,7 @@ export type Database = {
           locality_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          resolved_reply_id?: string | null
           title: string
           updated_at?: string
         }
@@ -1640,6 +1754,7 @@ export type Database = {
           locality_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          resolved_reply_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -1656,6 +1771,13 @@ export type Database = {
             columns: ["locality_id"]
             isOneToOne: false
             referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_requests_resolved_reply_id_fkey"
+            columns: ["resolved_reply_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_replies"
             referencedColumns: ["id"]
           },
         ]
@@ -1724,6 +1846,107 @@ export type Database = {
           target_type?: Database["public"]["Enums"]["report_target_type"]
         }
         Relationships: []
+      }
+      service_request_photos: {
+        Row: {
+          created_at: string
+          id: string
+          photo_path: string
+          position: number
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          photo_path: string
+          position?: number
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          photo_path?: string
+          position?: number
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_request_photos_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_requests: {
+        Row: {
+          cancelled_at: string | null
+          cancelled_by_user_id: string | null
+          closed_at: string | null
+          closed_by_user_id: string | null
+          conversation_id: string | null
+          created_at: string
+          description: string
+          id: string
+          idempotency_key: string | null
+          provider_id: string
+          provider_user_id: string
+          requester_user_id: string
+          status: Database["public"]["Enums"]["service_request_status"]
+          updated_at: string
+          when_text: string | null
+        }
+        Insert: {
+          cancelled_at?: string | null
+          cancelled_by_user_id?: string | null
+          closed_at?: string | null
+          closed_by_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          idempotency_key?: string | null
+          provider_id: string
+          provider_user_id: string
+          requester_user_id: string
+          status?: Database["public"]["Enums"]["service_request_status"]
+          updated_at?: string
+          when_text?: string | null
+        }
+        Update: {
+          cancelled_at?: string | null
+          cancelled_by_user_id?: string | null
+          closed_at?: string | null
+          closed_by_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          idempotency_key?: string | null
+          provider_id?: string
+          provider_user_id?: string
+          requester_user_id?: string
+          status?: Database["public"]["Enums"]["service_request_status"]
+          updated_at?: string
+          when_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "dm_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_group_interests: {
         Row: {
@@ -1843,6 +2066,11 @@ export type Database = {
           is_holiday: boolean
         }[]
       }
+      clear_recommendation_resolved_reply: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
+      close_service_request: { Args: { p_request_id: string }; Returns: Json }
       complete_event: {
         Args: { p_caller_user_id?: string; p_event_id: string }
         Returns: undefined
@@ -1914,6 +2142,15 @@ export type Database = {
           p_community_id: string
           p_display_name: string
           p_email: string
+        }
+        Returns: string
+      }
+      create_service_request: {
+        Args: {
+          p_description: string
+          p_idempotency_key?: string
+          p_provider_id: string
+          p_when_text?: string
         }
         Returns: string
       }
@@ -1998,6 +2235,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_profile_bio: { Args: { p_user_id: string }; Returns: string }
       has_accepted_consent: {
         Args: {
           p_code_of_conduct_version: number
@@ -2153,6 +2391,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      mark_conversation_read: {
+        Args: { p_conversation_id: string; p_seen_at?: string }
+        Returns: undefined
+      }
+      mark_recommendation_reply_resolved: {
+        Args: { p_reply_id: string; p_request_id: string }
+        Returns: undefined
+      }
       mark_recommendation_resolved: {
         Args: { p_request_id: string }
         Returns: undefined
@@ -2200,6 +2446,7 @@ export type Database = {
         }
         Returns: string
       }
+      open_event_question: { Args: { p_event_id: string }; Returns: string }
       profile_events_for: {
         Args: { p_target_user_id: string; p_viewer_user_id: string }
         Returns: {
@@ -2307,6 +2554,10 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      reopen_recommendation: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       request_community_membership: {
         Args: { p_community_id: string; p_reason?: string }
         Returns: undefined
@@ -2354,6 +2605,14 @@ export type Database = {
           reach_source: Database["public"]["Enums"]["provider_reach_source"]
         }[]
       }
+      send_conversation_message: {
+        Args: {
+          p_client_key?: string
+          p_content: string
+          p_conversation_id: string
+        }
+        Returns: Json
+      }
       set_community_image: {
         Args: {
           p_caller_user_id: string
@@ -2363,6 +2622,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      set_profile_bio: { Args: { p_bio: string }; Returns: undefined }
       submit_verification_document: {
         Args: {
           p_mime_type: string
@@ -2387,6 +2647,18 @@ export type Database = {
       transfer_group_ownership: {
         Args: { p_group_id: string; p_new_owner_user_id: string }
         Returns: undefined
+      }
+      transition_listing: {
+        Args: { p_action: string; p_listing_id: string }
+        Returns: Database["public"]["Enums"]["listing_status"]
+      }
+      update_service_request: {
+        Args: {
+          p_description: string
+          p_request_id: string
+          p_when_text?: string
+        }
+        Returns: Json
       }
       upsert_verification_outcome: {
         Args: {
@@ -2416,6 +2688,8 @@ export type Database = {
         | "recommendation_thread"
         | "accepted_family"
         | "provider"
+        | "listing"
+        | "event_question"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
@@ -2425,7 +2699,13 @@ export type Database = {
       listing_condition: "new" | "used"
       listing_deal: "rent" | "sale"
       listing_kind: "item" | "property"
-      listing_status: "draft" | "active" | "paused" | "reserved" | "sold" | "closed"
+      listing_status:
+        | "draft"
+        | "active"
+        | "paused"
+        | "reserved"
+        | "sold"
+        | "closed"
       locality_admission_mode:
         | "invite_only"
         | "waitlist_only"
@@ -2444,10 +2724,18 @@ export type Database = {
         | "event_reminder"
         | "recommendation_reply"
         | "admission_rejected"
+        | "listing_alert"
       outbox_channel: "email" | "whatsapp"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
       profile_visibility: "locality_members"
+      property_type:
+        | "apartment"
+        | "house"
+        | "studio"
+        | "room"
+        | "land"
+        | "commercial"
       provider_category:
         | "alimentacao"
         | "casa_e_reformas"
@@ -2463,7 +2751,6 @@ export type Database = {
         | "pets"
       provider_reach_scope: "community" | "locality"
       provider_reach_source: "free" | "paid"
-      property_type: "apartment" | "house" | "studio" | "room" | "land" | "commercial"
       recommendation_category:
         | "servicos_locais"
         | "saude_bem_estar"
@@ -2482,6 +2769,11 @@ export type Database = {
         | "recommendation_request"
         | "recommendation_reply"
         | "provider_profile"
+      service_request_status:
+        | "open"
+        | "in_conversation"
+        | "closed"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2624,6 +2916,8 @@ export const Constants = {
         "recommendation_thread",
         "accepted_family",
         "provider",
+        "listing",
+        "event_question",
       ],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going", "not_going"],
@@ -2631,6 +2925,17 @@ export const Constants = {
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
       group_visibility: ["public", "private"],
+      listing_condition: ["new", "used"],
+      listing_deal: ["rent", "sale"],
+      listing_kind: ["item", "property"],
+      listing_status: [
+        "draft",
+        "active",
+        "paused",
+        "reserved",
+        "sold",
+        "closed",
+      ],
       locality_admission_mode: [
         "invite_only",
         "waitlist_only",
@@ -2638,6 +2943,7 @@ export const Constants = {
       ],
       locality_membership_access: ["active", "read_only"],
       locality_membership_kind: ["current", "leaving"],
+      notification_channel: ["in_app", "email"],
       notification_type: [
         "comment",
         "group_admission",
@@ -2649,11 +2955,20 @@ export const Constants = {
         "event_reminder",
         "recommendation_reply",
         "admission_rejected",
+        "listing_alert",
       ],
       outbox_channel: ["email", "whatsapp"],
       outbox_status: ["pending", "sent", "failed", "skipped"],
       post_type: ["text", "photo", "link", "poll"],
       profile_visibility: ["locality_members"],
+      property_type: [
+        "apartment",
+        "house",
+        "studio",
+        "room",
+        "land",
+        "commercial",
+      ],
       provider_category: [
         "alimentacao",
         "casa_e_reformas",
@@ -2689,6 +3004,12 @@ export const Constants = {
         "recommendation_request",
         "recommendation_reply",
         "provider_profile",
+      ],
+      service_request_status: [
+        "open",
+        "in_conversation",
+        "closed",
+        "cancelled",
       ],
     },
   },
