@@ -1,0 +1,1537 @@
+{
+  "_note": "Geometria de recorte por prancha, gerada por detect-frames.mjs. x/y/w/h são relativos (0-1). As calhas entre quadros são lacunas intencionais: os quadros não somam 1. Não editar à mão — para corrigir uma prancha cuja detecção erra, registre-a em frames.overrides.json e regenere.",
+  "version": 1,
+  "generatedBy": "scripts/visual/flows/detect-frames.mjs",
+  "boards": {
+    "00-mobile-inicio": {
+      "file": "00-mobile-inicio.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.0293,
+          "y": 0,
+          "w": 0.30013,
+          "h": 1
+        },
+        {
+          "x": 0.3431,
+          "y": 0,
+          "w": 0.30534,
+          "h": 1
+        },
+        {
+          "x": 0.66146,
+          "y": 0,
+          "w": 0.29622,
+          "h": 1
+        }
+      ]
+    },
+    "01-web-inicio": {
+      "file": "01-web-inicio.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 1,
+      "detected": 1,
+      "ok": true,
+      "source": "detect",
+      "note": "quadro único",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 1
+        }
+      ]
+    },
+    "02-mobile-explorar": {
+      "file": "02-mobile-explorar.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02995,
+          "y": 0,
+          "w": 0.29818,
+          "h": 1
+        },
+        {
+          "x": 0.3444,
+          "y": 0,
+          "w": 0.30339,
+          "h": 1
+        },
+        {
+          "x": 0.66211,
+          "y": 0,
+          "w": 0.29622,
+          "h": 1
+        }
+      ]
+    },
+    "10-mobile-guia": {
+      "file": "10-mobile-guia.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.01953,
+          "y": 0,
+          "w": 0.29297,
+          "h": 1
+        },
+        {
+          "x": 0.33854,
+          "y": 0,
+          "w": 0.29883,
+          "h": 1
+        },
+        {
+          "x": 0.66211,
+          "y": 0,
+          "w": 0.29557,
+          "h": 1
+        }
+      ]
+    },
+    "11-mobile-mercado": {
+      "file": "11-mobile-mercado.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02148,
+          "y": 0,
+          "w": 0.30469,
+          "h": 1
+        },
+        {
+          "x": 0.3444,
+          "y": 0,
+          "w": 0.30859,
+          "h": 1
+        },
+        {
+          "x": 0.67122,
+          "y": 0,
+          "w": 0.30534,
+          "h": 1
+        }
+      ]
+    },
+    "12-web-guia": {
+      "file": "12-web-guia.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 1,
+      "detected": 1,
+      "ok": true,
+      "source": "detect",
+      "note": "quadro único",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 1
+        }
+      ]
+    },
+    "13-web-mercado": {
+      "file": "13-web-mercado.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 1,
+      "detected": 1,
+      "ok": true,
+      "source": "detect",
+      "note": "quadro único",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 1
+        }
+      ]
+    },
+    "14-mobile-conversa": {
+      "file": "14-mobile-conversa.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02669,
+          "y": 0,
+          "w": 0.29883,
+          "h": 1
+        },
+        {
+          "x": 0.34831,
+          "y": 0,
+          "w": 0.30404,
+          "h": 1
+        },
+        {
+          "x": 0.67383,
+          "y": 0,
+          "w": 0.29883,
+          "h": 1
+        }
+      ]
+    },
+    "15-web-conversa": {
+      "file": "15-web-conversa.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 1,
+      "detected": 1,
+      "ok": true,
+      "source": "detect",
+      "note": "quadro único",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 1
+        }
+      ]
+    },
+    "16-mobile-pedido-servico": {
+      "file": "16-mobile-pedido-servico.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.0319,
+          "y": 0,
+          "w": 0.29622,
+          "h": 1
+        },
+        {
+          "x": 0.3444,
+          "y": 0,
+          "w": 0.30143,
+          "h": 1
+        },
+        {
+          "x": 0.66211,
+          "y": 0,
+          "w": 0.29492,
+          "h": 1
+        }
+      ]
+    },
+    "17-web-pedido-servico": {
+      "file": "17-web-pedido-servico.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 1,
+      "detected": 1,
+      "ok": true,
+      "source": "detect",
+      "note": "quadro único",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 1
+        }
+      ]
+    },
+    "18-mobile-imoveis": {
+      "file": "18-mobile-imoveis.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02604,
+          "y": 0,
+          "w": 0.30404,
+          "h": 1
+        },
+        {
+          "x": 0.34766,
+          "y": 0,
+          "w": 0.30404,
+          "h": 1
+        },
+        {
+          "x": 0.67057,
+          "y": 0,
+          "w": 0.30404,
+          "h": 1
+        }
+      ]
+    },
+    "19-web-imoveis": {
+      "file": "19-web-imoveis.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 1,
+      "detected": 1,
+      "ok": true,
+      "source": "detect",
+      "note": "quadro único",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 1
+        }
+      ]
+    },
+    "20-mobile-meus-anuncios": {
+      "file": "20-mobile-meus-anuncios.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02604,
+          "y": 0,
+          "w": 0.30599,
+          "h": 1
+        },
+        {
+          "x": 0.34766,
+          "y": 0,
+          "w": 0.30534,
+          "h": 1
+        },
+        {
+          "x": 0.66602,
+          "y": 0,
+          "w": 0.30534,
+          "h": 1
+        }
+      ]
+    },
+    "21-web-meus-anuncios": {
+      "file": "21-web-meus-anuncios.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 1,
+      "detected": 1,
+      "ok": true,
+      "source": "detect",
+      "note": "quadro único",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 1
+        }
+      ]
+    },
+    "22-mobile-meu-negocio": {
+      "file": "22-mobile-meu-negocio.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.03646,
+          "y": 0,
+          "w": 0.28581,
+          "h": 1
+        },
+        {
+          "x": 0.34701,
+          "y": 0,
+          "w": 0.29297,
+          "h": 1
+        },
+        {
+          "x": 0.66602,
+          "y": 0,
+          "w": 0.28776,
+          "h": 1
+        }
+      ]
+    },
+    "23-web-meu-negocio": {
+      "file": "23-web-meu-negocio.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 1,
+      "detected": 1,
+      "ok": true,
+      "source": "detect",
+      "note": "quadro único",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 1
+        }
+      ]
+    },
+    "24-mobile-guia-referencia": {
+      "file": "24-mobile-guia-referencia.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.0306,
+          "y": 0,
+          "w": 0.29622,
+          "h": 1
+        },
+        {
+          "x": 0.34375,
+          "y": 0,
+          "w": 0.30208,
+          "h": 1
+        },
+        {
+          "x": 0.66211,
+          "y": 0,
+          "w": 0.29492,
+          "h": 1
+        }
+      ]
+    },
+    "25-web-guia-referencia": {
+      "file": "25-web-guia-referencia.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 1,
+      "detected": 1,
+      "ok": true,
+      "source": "detect",
+      "note": "quadro único",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 1
+        }
+      ]
+    },
+    "30-mobile-auth-entrada": {
+      "file": "30-mobile-auth-entrada.png",
+      "width": 1685,
+      "height": 933,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02374,
+          "y": 0,
+          "w": 0.28368,
+          "h": 1
+        },
+        {
+          "x": 0.3543,
+          "y": 0,
+          "w": 0.27537,
+          "h": 1
+        },
+        {
+          "x": 0.67893,
+          "y": 0,
+          "w": 0.27537,
+          "h": 1
+        }
+      ]
+    },
+    "31-mobile-auth-confirmacao": {
+      "file": "31-mobile-auth-confirmacao.png",
+      "width": 1685,
+      "height": 934,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02374,
+          "y": 0,
+          "w": 0.28368,
+          "h": 1
+        },
+        {
+          "x": 0.3543,
+          "y": 0,
+          "w": 0.27537,
+          "h": 1
+        },
+        {
+          "x": 0.67893,
+          "y": 0,
+          "w": 0.27537,
+          "h": 1
+        }
+      ]
+    },
+    "32-mobile-auth-acesso": {
+      "file": "32-mobile-auth-acesso.png",
+      "width": 1684,
+      "height": 934,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02197,
+          "y": 0,
+          "w": 0.28207,
+          "h": 1
+        },
+        {
+          "x": 0.3557,
+          "y": 0,
+          "w": 0.28147,
+          "h": 1
+        },
+        {
+          "x": 0.6829,
+          "y": 0,
+          "w": 0.27732,
+          "h": 1
+        }
+      ]
+    },
+    "33-mobile-auth-admissao": {
+      "file": "33-mobile-auth-admissao.png",
+      "width": 1685,
+      "height": 933,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02315,
+          "y": 0,
+          "w": 0.28309,
+          "h": 1
+        },
+        {
+          "x": 0.35193,
+          "y": 0,
+          "w": 0.27537,
+          "h": 1
+        },
+        {
+          "x": 0.67774,
+          "y": 0,
+          "w": 0.27478,
+          "h": 1
+        }
+      ]
+    },
+    "34-mobile-onboarding-contexto": {
+      "file": "34-mobile-onboarding-contexto.png",
+      "width": 1684,
+      "height": 934,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02197,
+          "y": 0,
+          "w": 0.28385,
+          "h": 1
+        },
+        {
+          "x": 0.35214,
+          "y": 0,
+          "w": 0.2791,
+          "h": 1
+        },
+        {
+          "x": 0.68052,
+          "y": 0,
+          "w": 0.28088,
+          "h": 1
+        }
+      ]
+    },
+    "35-mobile-auth-retomada": {
+      "file": "35-mobile-auth-retomada.png",
+      "width": 1685,
+      "height": 933,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02196,
+          "y": 0,
+          "w": 0.28249,
+          "h": 1
+        },
+        {
+          "x": 0.35015,
+          "y": 0,
+          "w": 0.27596,
+          "h": 1
+        },
+        {
+          "x": 0.673,
+          "y": 0,
+          "w": 0.27537,
+          "h": 1
+        }
+      ]
+    },
+    "36-web-auth-entrada": {
+      "file": "36-web-auth-entrada.png",
+      "width": 2078,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "37-web-auth-confirmacao": {
+      "file": "37-web-auth-confirmacao.png",
+      "width": 2075,
+      "height": 758,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49735,
+          "h": 1
+        },
+        {
+          "x": 0.50313,
+          "y": 0,
+          "w": 0.49687,
+          "h": 1
+        }
+      ]
+    },
+    "38-web-auth-admissao": {
+      "file": "38-web-auth-admissao.png",
+      "width": 2073,
+      "height": 758,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49735,
+          "h": 1
+        },
+        {
+          "x": 0.50314,
+          "y": 0,
+          "w": 0.49686,
+          "h": 1
+        }
+      ]
+    },
+    "39-web-onboarding-contexto": {
+      "file": "39-web-onboarding-contexto.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "40-mobile-comunidades": {
+      "file": "40-mobile-comunidades.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.03125,
+          "y": 0,
+          "w": 0.29622,
+          "h": 1
+        },
+        {
+          "x": 0.3444,
+          "y": 0,
+          "w": 0.30143,
+          "h": 1
+        },
+        {
+          "x": 0.66146,
+          "y": 0,
+          "w": 0.29362,
+          "h": 1
+        }
+      ]
+    },
+    "41-mobile-comunidade-participacao": {
+      "file": "41-mobile-comunidade-participacao.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.0306,
+          "y": 0,
+          "w": 0.29753,
+          "h": 1
+        },
+        {
+          "x": 0.3444,
+          "y": 0,
+          "w": 0.30208,
+          "h": 1
+        },
+        {
+          "x": 0.66146,
+          "y": 0,
+          "w": 0.29492,
+          "h": 1
+        }
+      ]
+    },
+    "42-web-comunidades": {
+      "file": "42-web-comunidades.png",
+      "width": 2073,
+      "height": 758,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49735,
+          "h": 1
+        },
+        {
+          "x": 0.50314,
+          "y": 0,
+          "w": 0.49686,
+          "h": 1
+        }
+      ]
+    },
+    "43-web-comunidade-grupos": {
+      "file": "43-web-comunidade-grupos.png",
+      "width": 2079,
+      "height": 756,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49735,
+          "h": 1
+        },
+        {
+          "x": 0.50313,
+          "y": 0,
+          "w": 0.49687,
+          "h": 1
+        }
+      ]
+    },
+    "44-mobile-publicacao": {
+      "file": "44-mobile-publicacao.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.0293,
+          "y": 0,
+          "w": 0.29688,
+          "h": 1
+        },
+        {
+          "x": 0.34375,
+          "y": 0,
+          "w": 0.30208,
+          "h": 1
+        },
+        {
+          "x": 0.66146,
+          "y": 0,
+          "w": 0.29622,
+          "h": 1
+        }
+      ]
+    },
+    "45-web-publicacao": {
+      "file": "45-web-publicacao.png",
+      "width": 2091,
+      "height": 752,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49737,
+          "h": 1
+        },
+        {
+          "x": 0.50311,
+          "y": 0,
+          "w": 0.49689,
+          "h": 1
+        }
+      ]
+    },
+    "46-mobile-eventos": {
+      "file": "46-mobile-eventos.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.02409,
+          "y": 0,
+          "w": 0.29622,
+          "h": 1
+        },
+        {
+          "x": 0.3431,
+          "y": 0,
+          "w": 0.30469,
+          "h": 1
+        },
+        {
+          "x": 0.67188,
+          "y": 0,
+          "w": 0.29427,
+          "h": 1
+        }
+      ]
+    },
+    "47-mobile-eventos-cancelamento": {
+      "file": "47-mobile-eventos-cancelamento.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.0306,
+          "y": 0,
+          "w": 0.29753,
+          "h": 1
+        },
+        {
+          "x": 0.3444,
+          "y": 0,
+          "w": 0.30273,
+          "h": 1
+        },
+        {
+          "x": 0.66211,
+          "y": 0,
+          "w": 0.29492,
+          "h": 1
+        }
+      ]
+    },
+    "48-web-eventos": {
+      "file": "48-web-eventos.png",
+      "width": 2069,
+      "height": 760,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49734,
+          "h": 1
+        },
+        {
+          "x": 0.50314,
+          "y": 0,
+          "w": 0.49686,
+          "h": 1
+        }
+      ]
+    },
+    "49-mobile-perfil": {
+      "file": "49-mobile-perfil.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.0332,
+          "y": 0,
+          "w": 0.29167,
+          "h": 1
+        },
+        {
+          "x": 0.34505,
+          "y": 0,
+          "w": 0.29818,
+          "h": 1
+        },
+        {
+          "x": 0.66276,
+          "y": 0,
+          "w": 0.29427,
+          "h": 1
+        }
+      ]
+    },
+    "50-mobile-configuracoes": {
+      "file": "50-mobile-configuracoes.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.01432,
+          "y": 0,
+          "w": 0.30534,
+          "h": 1
+        },
+        {
+          "x": 0.3444,
+          "y": 0,
+          "w": 0.30599,
+          "h": 1
+        },
+        {
+          "x": 0.67708,
+          "y": 0,
+          "w": 0.30404,
+          "h": 1
+        }
+      ]
+    },
+    "51-web-perfil": {
+      "file": "51-web-perfil.png",
+      "width": 2071,
+      "height": 759,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49734,
+          "h": 1
+        },
+        {
+          "x": 0.50314,
+          "y": 0,
+          "w": 0.49686,
+          "h": 1
+        }
+      ]
+    },
+    "52-web-configuracoes": {
+      "file": "52-web-configuracoes.png",
+      "width": 2076,
+      "height": 758,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "53-mobile-retorno": {
+      "file": "53-mobile-retorno.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.01888,
+          "y": 0,
+          "w": 0.30208,
+          "h": 1
+        },
+        {
+          "x": 0.34831,
+          "y": 0,
+          "w": 0.30208,
+          "h": 1
+        },
+        {
+          "x": 0.67643,
+          "y": 0,
+          "w": 0.30273,
+          "h": 1
+        }
+      ]
+    },
+    "54-web-retorno": {
+      "file": "54-web-retorno.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "55-mobile-confianca": {
+      "file": "55-mobile-confianca.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.00391,
+          "y": 0,
+          "w": 0.30859,
+          "h": 1
+        },
+        {
+          "x": 0.34375,
+          "y": 0,
+          "w": 0.30924,
+          "h": 1
+        },
+        {
+          "x": 0.68294,
+          "y": 0,
+          "w": 0.30924,
+          "h": 1
+        }
+      ]
+    },
+    "56-web-confianca": {
+      "file": "56-web-confianca.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "57-web-operacao-admissoes": {
+      "file": "57-web-operacao-admissoes.png",
+      "width": 2076,
+      "height": 758,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "58-web-operacao-moderacao": {
+      "file": "58-web-operacao-moderacao.png",
+      "width": 2076,
+      "height": 758,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "59-mobile-estados": {
+      "file": "59-mobile-estados.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.31055,
+          "h": 1
+        },
+        {
+          "x": 0.34505,
+          "y": 0,
+          "w": 0.30924,
+          "h": 1
+        },
+        {
+          "x": 0.6901,
+          "y": 0,
+          "w": 0.3099,
+          "h": 1
+        }
+      ]
+    },
+    "60-web-estados": {
+      "file": "60-web-estados.png",
+      "width": 2076,
+      "height": 758,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "61-web-explorar-servicos": {
+      "file": "61-web-explorar-servicos.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "62-web-prestador-pedido": {
+      "file": "62-web-prestador-pedido.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "63-web-mercado-anuncio": {
+      "file": "63-web-mercado-anuncio.png",
+      "width": 2078,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "64-web-mercado-edicao": {
+      "file": "64-web-mercado-edicao.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "65-web-imoveis-alertas": {
+      "file": "65-web-imoveis-alertas.png",
+      "width": 2076,
+      "height": 758,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "66-mobile-evento-informacoes": {
+      "file": "66-mobile-evento-informacoes.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.01823,
+          "y": 0,
+          "w": 0.29557,
+          "h": 1
+        },
+        {
+          "x": 0.34766,
+          "y": 0,
+          "w": 0.29622,
+          "h": 1
+        },
+        {
+          "x": 0.68034,
+          "y": 0,
+          "w": 0.29688,
+          "h": 1
+        }
+      ]
+    },
+    "67-web-evento-informacoes": {
+      "file": "67-web-evento-informacoes.png",
+      "width": 1693,
+      "height": 929,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49734,
+          "h": 1
+        },
+        {
+          "x": 0.50325,
+          "y": 0,
+          "w": 0.49675,
+          "h": 1
+        }
+      ]
+    },
+    "68-mobile-identidade-recuperacao": {
+      "file": "68-mobile-identidade-recuperacao.png",
+      "width": 1536,
+      "height": 1024,
+      "expected": 3,
+      "detected": 3,
+      "ok": true,
+      "source": "detect",
+      "note": "calhas",
+      "frames": [
+        {
+          "x": 0.03711,
+          "y": 0,
+          "w": 0.28971,
+          "h": 1
+        },
+        {
+          "x": 0.35482,
+          "y": 0,
+          "w": 0.28971,
+          "h": 1
+        },
+        {
+          "x": 0.67318,
+          "y": 0,
+          "w": 0.29036,
+          "h": 1
+        }
+      ]
+    },
+    "69-web-identidade-recuperacao": {
+      "file": "69-web-identidade-recuperacao.png",
+      "width": 1692,
+      "height": 930,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49704,
+          "h": 1
+        },
+        {
+          "x": 0.50296,
+          "y": 0,
+          "w": 0.49704,
+          "h": 1
+        }
+      ]
+    }
+  }
+}
