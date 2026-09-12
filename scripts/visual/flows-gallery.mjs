@@ -75,7 +75,7 @@ main{max-width:1360px;margin:0 auto;padding:20px 24px 80px}
 .strip{display:flex;gap:8px;align-items:flex-start;justify-content:center}
 .frame{overflow:hidden;background:#fff;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.12)}
 .thumb .frame{height:150px}
-.frame img{display:block;width:calc(100% / var(--w));max-width:none;transform:translateX(calc(var(--x) * -100%))}
+.frame img{display:block;width:calc(100% / var(--w));height:auto;max-width:none;transform:translateX(calc(var(--x) * -100%))}
 .info{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
 .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .badge{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}

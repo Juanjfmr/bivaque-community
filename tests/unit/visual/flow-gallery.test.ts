@@ -73,6 +73,11 @@ describe("flows.html — artefato gerado", () => {
     expect(serialized).not.toContain("generatedAt")
     expect(serialized).not.toContain("revision")
   })
+
+  it("preserva a proporção da imagem no recorte, com height:auto sobre o atributo", () => {
+    // Sem height:auto o atributo height do <img> vence e a imagem vira 225x1024 na moldura de 150px.
+    expect(html).toMatch(/\.frame img\{[^}]*height:auto/)
+  })
 })
 
 describe("FLOWS.md — índice gerado", () => {
