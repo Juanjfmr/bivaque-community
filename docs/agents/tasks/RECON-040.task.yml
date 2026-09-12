@@ -1,0 +1,74 @@
+task_id: RECON-040
+
+objective: >
+  Toda rota capturada declara qual titulo prova a identidade dela, para que uma
+  captura que aterrisse na tela errada saia invalida em vez de virar evidencia.
+  As trinta e sete rotas sem contrato passam a ter um, tirado do que a tela
+  realmente renderiza, e o teste de escopo fica verde sem ser afrouxado.
+
+authority:
+  - scripts/visual/capture-proof.mjs
+  - tests/scope/visual-capture-proof.test.mjs
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0, Fidelidade comprovada
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 12/09/2026 em chore/integracao-r3-next, commit 6c939fb, rodando
+    node --test tests/scope/visual-capture-proof.test.mjs com o codigo de saida
+    lido direto: EXIT=1, seis testes passam e um falha.
+
+    A falha e "every captured route declares an identity contract, and none is
+    orphaned", e ela lista 37 rotas de um total de 77 que nao tem entrada no
+    mapa HEADINGS de scripts/visual/capture.mjs.
+
+    O efeito e concreto e ja aconteceu: sem contrato de identidade, a captura
+    grava a imagem com o nome da rota pedida mesmo quando a pagina redirecionou
+    para outro lugar. /onboarding/status sem parametro redireciona para
+    /onboarding, e durante semanas a captura chamada onboarding-status era da
+    tela de onboarding. Nenhum gate, teste ou auditoria mecanica percebeu.
+
+    As 37 sao as telas entregues depois que o guard-rail saiu de circulacao,
+    quando o commit 7daf492 ficou parado numa branch lateral. A lista exata sai
+    do proprio teste.
+
+allowed_paths:
+  - scripts/visual/capture.mjs
+  - docs/agents/tasks/RECON-040.task.yml
+
+forbidden:
+  - afrouxar, pular ou reescrever tests/scope/visual-capture-proof.test.mjs para o teste passar
+  - remover rota do mapa ROUTES para ela sair da lista de cobranca
+  - usar o sentinela de titulo dinamico em rota de titulo fixo, so para nao precisar ler a tela
+  - inventar titulo sem abrir o arquivo que renderiza a tela
+  - tocar qualquer coisa fora de scripts/visual/capture.mjs
+
+acceptance:
+  - node --test tests/scope/visual-capture-proof.test.mjs sai com codigo zero
+  - cada uma das 37 rotas tem entrada no mapa, e o valor veio do arquivo que renderiza aquela rota
+  - rota cujo titulo e o proprio dado, como nome de pessoa ou de anuncio, usa o sentinela de titulo dinamico, e nenhuma outra usa
+  - nenhuma entrada orfa, isto e, chave no mapa sem rota correspondente
+  - npx pnpm@11.18.0 lint verde, com o codigo de saida lido direto
+
+proof:
+  - node --test tests/scope/visual-capture-proof.test.mjs
+  - npx pnpm@11.18.0 lint
+
+traps:
+  - O valor e uma expressao regular comparada sem diferenciar maiuscula de minuscula; ponto, parentese e cifrao precisam de escape
+  - Titulo que muda com o dado nao pode virar regex literal; para isso existe o sentinela, que exige titulo nao vazio sem fixar o texto
+  - Rota com parametro de consulta e chave diferente da rota sem ele; as duas podem existir e precisam de entrada propria
+  - Nao canalize os comandos de prova por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - Este lote nao precisa de banco, servidor nem build; se voce achar que precisa, releia o escopo
+
+risk: >
+  Mapa de titulos esperados, lido apenas pela ferramenta de captura visual. A
+  unica superficie tocada e um arquivo de script em scripts/visual.
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true
