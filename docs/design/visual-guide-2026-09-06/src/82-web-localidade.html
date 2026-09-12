@@ -53,25 +53,26 @@
   /* ---------- tipografia ---------- */
   h1{font-size:30px;line-height:38px;font-weight:650;letter-spacing:-.011em;margin:0 0 8px}
   h2.secao{font-size:18px;font-weight:650;margin:24px 0 4px}
-  .lead{font-size:15px;line-height:24px;color:var(--ink700);margin:0 0 18px;max-width:72ch}
+  .lead{font-size:15px;line-height:24px;color:var(--ink700);margin:0 0 12px;max-width:72ch}
   .nota{font-size:13px;line-height:20px;color:var(--ink500);margin:0 0 14px;max-width:72ch}
 
   /* ---------- seletor em pílula (caso outbound declarado) ---------- */
   .pillSel{display:flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--line);background:var(--sunken);width:fit-content}
-  .pillSel .opcao{flex:0 0 auto;min-height:42px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:var(--ink700)}
+  .pillSel .opcao{flex:0 0 auto;min-height:44px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:var(--ink700)}
   .pillSel .opcao.on{background:var(--pine700);color:#fff;font-weight:600}
   .pillSel .opcao .chip{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--amber100);color:var(--amber700)}
   .pillSel .opcao.on .chip{background:rgba(255,255,255,.18);color:#fff}
 
   /* ---------- cartões ---------- */
-  .cartao{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:18px 22px;margin-bottom:16px}
+  .cartao{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:14px 20px;margin-bottom:12px}
   .cartao h2{margin:0 0 4px}
   .cartao .desc{font-size:14px;color:var(--ink700);margin:0 0 12px;line-height:21px}
 
-  .eventos{display:flex;flex-direction:column;gap:6px}
-  .eventos a{display:flex;align-items:center;gap:14px;padding:6px 0;font-size:14px;color:var(--ink900);text-decoration:none;min-height:36px}
+  .eventos{display:flex;flex-direction:column}
+  .eventos a{display:flex;align-items:center;gap:14px;padding:8px 0;font-size:14px;color:var(--ink900);text-decoration:none;min-height:44px}
+  .eventos a + a{border-top:1px solid var(--line)}
   .eventos a:hover{color:var(--pine700)}
-  .eventos .dia{width:54px;font-size:12px;color:var(--ink500);text-align:right;flex:0 0 auto;font-weight:600}
+  .eventos .dia{width:54px;font-size:12px;color:var(--ink500);text-align:right;flex:0 0 auto;font-weight:600;font-variant-numeric:tabular-nums}
   .eventos .titulo{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   .botoes{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -102,7 +103,7 @@
 
   .acoesDeclarar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px}
 
-  .confirmado{background:var(--pine100);border:1px solid var(--pine700);border-radius:var(--radius-card);padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;gap:14px}
+  .confirmado{background:var(--pine100);border:1px solid var(--pine700);border-radius:var(--radius-card);padding:14px 20px;margin-bottom:12px;display:flex;align-items:center;gap:14px}
   .confirmado .icone{width:42px;height:42px;border-radius:999px;background:var(--pine700);color:#fff;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
   .confirmado .texto{flex:1;min-width:0;font-size:14px;line-height:21px;color:var(--pine700)}
   .confirmado .texto b{color:var(--pine700);font-weight:650}
@@ -188,9 +189,8 @@
               <div class="eventos">
                 <a href="#"><span class="dia">18 out</span><span class="titulo">Café entre vizinhos — Jardim das Acácias</span></a>
                 <a href="#"><span class="dia">25 out</span><span class="titulo">Encontro de prestadores da Asa Norte</span></a>
-                <a href="#"><span class="dia">08 nov</span><span class="titulo">Roda de leitura no Parque da Cidade</span></a>
-                <a href="#"><span class="dia">22 nov</span><span class="titulo">Feira de orgânicos da 308 Sul</span></a>
-              </div>
+              <a href="#"><span class="dia">08 nov</span><span class="titulo">Roda de leitura no Parque da Cidade</span></a>
+            </div>
               <p style="margin:14px 0 0"><a href="#" style="font-size:14px;font-weight:600;color:var(--pine700);text-decoration:none">Ver todos os eventos →</a></p>
             </section>
 
