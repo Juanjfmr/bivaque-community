@@ -1253,6 +1253,48 @@
         }
       ],
       "desvios": []
+    },
+    {
+      "id": "web-curar-o-guia",
+      "titulo": "Curar uma sugestao do Guia",
+      "plataforma": "web",
+      "grupo": "guia",
+      "persona": "Curador do Guia, membro da operacao",
+      "comeca": "Fila de sugestoes aguardando revisao humana",
+      "termina": "Correcao aplicada e artigo atualizado para quem le",
+      "acoes": [
+        "Sugerir correcao",
+        "Moderar"
+      ],
+      "etapas": [
+        {
+          "nome": "Fila",
+          "passos": [
+            {
+              "tela": "74-web-guia-curadoria#0",
+              "acao": "aprova e publica o item"
+            }
+          ]
+        },
+        {
+          "nome": "Correcao",
+          "passos": [
+            {
+              "tela": "74-web-guia-curadoria#1",
+              "acao": "a versao revisada entra no artigo"
+            }
+          ]
+        },
+        {
+          "nome": "No ar",
+          "passos": [
+            {
+              "tela": "25-web-guia-referencia#0"
+            }
+          ]
+        }
+      ],
+      "desvios": []
     }
   ]
 }

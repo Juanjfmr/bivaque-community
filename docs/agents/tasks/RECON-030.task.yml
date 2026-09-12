@@ -6,6 +6,8 @@ objective: >
   que chega a curadoria, e decidida e volta ao solicitante.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/74-web-guia-curadoria.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 74-web-guia-curadoria
   - docs/design/visual-guide-2026-09-06/25-web-guia-referencia.png
   - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 25-web-guia-referencia
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.5 R37 R38 R39

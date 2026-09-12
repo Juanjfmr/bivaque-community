@@ -1628,6 +1628,30 @@
           "h": 1
         }
       ]
+    },
+    "74-web-guia-curadoria": {
+      "file": "74-web-guia-curadoria.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
     }
   }
 }

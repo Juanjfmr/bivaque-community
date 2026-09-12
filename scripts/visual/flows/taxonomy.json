@@ -57,6 +57,7 @@
     "Salvos",
     "Solicitar participacao",
     "Solicitar participação",
+    "Sugerir correcao",
     "Sugerir correção",
     "Tenho interesse",
     "Ver ficha",
@@ -128,6 +129,7 @@
     "70-web-evento-organizar": { "actions": ["Criar evento", "Cancelar"] },
     "71-web-auth-recuperacao": { "actions": ["Recuperar acesso", "Entrar"] },
     "72-web-auth-link-invalido": { "actions": ["Recuperar acesso","Entrar"] },
-    "73-web-comunidade-pedidos": { "actions": ["Solicitar participacao","Gerenciar"] }
+    "73-web-comunidade-pedidos": { "actions": ["Solicitar participacao","Gerenciar"] },
+    "74-web-guia-curadoria": { "actions": ["Sugerir correcao","Moderar"] }
   }
 }

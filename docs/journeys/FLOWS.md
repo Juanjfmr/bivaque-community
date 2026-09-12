@@ -2,7 +2,7 @@
 
 > **Gerado** por `scripts/visual/flows-verify.mjs` a partir do guia visual. Não editar à mão.
 > Jornada é uma sequência de telas com início, meio e fim, no molde do Mobbin; a tela vem da prancha.
-> 49 jornadas e 63 pranchas. É mapa de **referência**, não prova de implementação.
+> 50 jornadas e 64 pranchas. É mapa de **referência**, não prova de implementação.
 > Galeria: [flows.html](../design/visual-guide-2026-09-06/flows.html).
 
 ## Jornadas
@@ -62,12 +62,13 @@
 | [Organizar um evento na cidade](../design/visual-guide-2026-09-06/flows.html#web-organizar-um-evento) | Desktop web | Criar → Publicar → No ar | 3 | Formulario de novo evento em branco → Evento publicado e visivel na lista da cidade |
 | [Pedir informacoes e ler a resposta (web)](../design/visual-guide-2026-09-06/flows.html#web-pedir-informacoes-ao-organizador) | Desktop web | Pergunta → Resposta | 2 | Pergunta reenviada → Resposta lida e jornada retomada |
 
-### Guia (4)
+### Guia (5)
 
 | Jornada | Plataforma | Etapas | Telas | Começa → termina |
 |---|---|---|---|---|
 | [Explorar o Guia da cidade](../design/visual-guide-2026-09-06/flows.html#mobile-explorar-o-guia) | Mobile | Descoberta → Categoria → Leitura | 3 | Descoberta editorial da cidade → Artigo de chegada lido |
 | [Sugerir uma correcao no Guia](../design/visual-guide-2026-09-06/flows.html#mobile-sugerir-correcao-no-guia) | Mobile | Referencia → Origem → Sugestao | 3 | Referencia completa aberta → Sugestao enviada ao curador |
+| [Curar uma sugestao do Guia](../design/visual-guide-2026-09-06/flows.html#web-curar-o-guia) | Desktop web | Fila → Correcao → No ar | 3 | Fila de sugestoes aguardando revisao humana → Correcao aplicada e artigo atualizado para quem le |
 | [Explorar o Guia (web)](../design/visual-guide-2026-09-06/flows.html#web-explorar-o-guia) | Desktop web | Descoberta | 1 | Descoberta editorial → Descoberta editorial |
 | [Ler a referencia e sugerir correcao (web)](../design/visual-guide-2026-09-06/flows.html#web-sugerir-correcao-no-guia) | Desktop web | Referencia | 1 | Referencia completa → Correcao sugerida |
 
@@ -201,7 +202,7 @@
 | [Informações do evento na web](../design/visual-guide-2026-09-06/flows.html#67-web-evento-informacoes) | Desktop web | 2 |
 | [Web: organizar um evento](../design/visual-guide-2026-09-06/flows.html#70-web-evento-organizar) | Desktop web | 2 |
 
-### Guia (4)
+### Guia (5)
 
 | Prancha | Plataforma | Telas |
 |---|---|---|
@@ -209,6 +210,7 @@
 | [Web: Guia da cidade](../design/visual-guide-2026-09-06/flows.html#12-web-guia) | Desktop web | 1 |
 | [Guia: referência, origem e correção](../design/visual-guide-2026-09-06/flows.html#24-mobile-guia-referencia) | Mobile | 3 |
 | [Artigo completo do Guia web](../design/visual-guide-2026-09-06/flows.html#25-web-guia-referencia) | Desktop web | 1 |
+| [Web: curar o Guia](../design/visual-guide-2026-09-06/flows.html#74-web-guia-curadoria) | Desktop web | 2 |
 
 ### Início e descoberta (3)
 

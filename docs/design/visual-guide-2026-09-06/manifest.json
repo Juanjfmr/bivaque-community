@@ -1368,6 +1368,28 @@
       "path": "docs/design/visual-guide-2026-09-06/73-web-comunidade-pedidos.png",
       "status": "Referencia visual",
       "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "74-web-guia-curadoria",
+      "kind": "web",
+      "group": "guia",
+      "title": "Web: curar o Guia",
+      "screens": [
+        "Fila do Guia",
+        "Sugestões de correção"
+      ],
+      "reviewNotes": [
+        "Nada é publicado sem revisão humana. A fila não publica sozinha, e a origem da sugestão (IA ou membro) fica visível para quem decide.",
+        "Aplicar uma correção publica a versão revisada e registra quem sugeriu. Não apagar o histórico da versão anterior.",
+        "O horário, o nome do posto e o telefone são ilustrativos; consolidar com dado real ao implementar.",
+        "A nota de origem da sugestão de correção não deve virar promessa de prazo nem prova de verificação."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/74-web-guia-curadoria.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do painel do operador conforme apps/web/app/(admin)/layout.tsx. Painel 1 é a fila com sugestão de IA e sugestão manual, cada uma com aprovar e recusar. Painel 2 é a sugestão de correção com o antes e o depois do trecho do artigo. Copy reconciliada com R39 e com a tela implementada em guide-queue.",
+      "file": "74-web-guia-curadoria.png",
+      "path": "docs/design/visual-guide-2026-09-06/74-web-guia-curadoria.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
     }
   ],
   "pending": [],

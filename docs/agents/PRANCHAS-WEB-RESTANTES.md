@@ -1070,3 +1070,21 @@ Shell do console do dono: navegação de **topo**, não a lateral do membro, com
 ### Estados e limites
 
 O motivo é privado por desenho: o pedido em análise não vira conteúdo público e a lista de pendentes não é o roster da comunidade. **Divergência declarada com R30:** a spec pede decisão conforme capacidade, e a tela implementada não mostra vagas — a prancha desenha o indicador e registra a divergência. Membros, vagas e o ano de criação são ilustrativos.
+
+## 74-web-guia-curadoria — `/guide-queue`
+
+**Etapa:** W05. **Painéis:** a fila de sugestões; as sugestões de correção.
+
+Prancha criada em 12/09/2026, depois do handoff. O Gate W05 exige o ciclo completo — sugestão, fila do curador, publicação e autor acompanhando — e o guia só desenhava a sugestão (pranchas 24 e 25). Esta é a autoridade visual do lado de quem decide.
+
+### Composição
+
+Shell do painel do operador: navegação de **topo** com Admissões, Denúncias, Guia e Chegadas, conforme `apps/web/app/(admin)/layout.tsx`.
+
+**Fila do Guia** — H1; "Sugestões aguardando aprovação. Nada é publicado sem revisão humana."; cartões com o título do item, o selo de origem (`Sugestão IA` ou `Manual`), a descrição curta e a procedência, mais as ações `Recusar` e `Aprovar e publicar`; e a seção "Promover respostas da comunidade", que explica que a resposta vira item depois do nome canônico e da categoria.
+
+**Sugestões de correção** — H1; "Sugestões de atualização dos artigos do guia. Aplicar publica a versão revisada e registra quem sugeriu."; cartão com o título do artigo, quem sugeriu, o bloco de diferença com **como está no guia** e **como o membro propõe**, a nota de origem e as ações `Aplicar correção` e `Recusar`.
+
+### Estados e limites
+
+A fila é explicitamente humana: a origem IA aparece marcada, e nada publica sem revisão. Aplicar correção publica a versão revisada e registra a autoria da sugestão, sem apagar o histórico. Horário, nome do posto e telefone são ilustrativos.
