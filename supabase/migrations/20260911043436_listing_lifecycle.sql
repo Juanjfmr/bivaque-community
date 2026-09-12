@@ -56,7 +56,7 @@ using (
     select 1
     from public.listings l
     where l.id = listing_status_events.listing_id
-      and l.owner_id = (select auth.uid())
+      and l.owner_user_id = (select auth.uid())
   )
 );
 
@@ -114,7 +114,7 @@ begin
     raise exception 'listing not found' using errcode = 'P0002';
   end if;
 
-  if v_listing.owner_id <> v_uid then
+  if v_listing.owner_user_id <> v_uid then
     raise exception 'only the listing owner can change its status' using errcode = '42501';
   end if;
 

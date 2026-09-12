@@ -15,21 +15,21 @@ set local role postgres;
 -- 001 = dono, membro da cidade 1 e da comunidade A (aprovado)
 -- 002 = cidade 1, comunidade A pendente, comunidade B aprovado (não é dono)
 insert into public.listings (
-  id, owner_id, status, audience_type, locality_id, community_id,
+  id, owner_user_id, kind, status, locality_id, community_id,
   category, title, description, price_cents, condition, neighborhood
 )
 values
   (
     'a1000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000001',
-    'active', 'locality', '00000000-0000-4000-8000-000000000001', null,
-    'casa_moveis', 'Mesa de jantar', 'Mesa usada, sem detalhes.', 65000, 'used_good', 'Centro'
+    'item', 'active', '00000000-0000-4000-8000-000000000001', null,
+    'casa_moveis', 'Mesa de jantar', 'Mesa usada, sem detalhes.', 65000, 'used', 'Centro'
   ),
   (
     'a1000000-0000-4000-8000-000000000002',
     '10000000-0000-4000-8000-000000000001',
-    'draft', 'locality', '00000000-0000-4000-8000-000000000001', null,
-    'eletronicos', 'Rascunho de TV', 'Ainda não publicada.', 90000, 'used_fair', 'Centro'
+    'item', 'draft', '00000000-0000-4000-8000-000000000001', null,
+    'eletronicos', 'Rascunho de TV', 'Ainda não publicada.', 90000, 'used', 'Centro'
   );
 
 -- ── grants: só a sessão autenticada executa a transição ──────────────────────
@@ -121,6 +121,7 @@ select throws_ok(
 select throws_ok(
   $$ select public.transition_listing('a1000000-0000-4000-8000-000000000001', 'explode') $$,
   '22023',
+  null,
   'ação desconhecida é recusada'
 );
 
@@ -196,6 +197,7 @@ select is(
 select throws_ok(
   $$ select public.transition_listing('a1000000-0000-4000-8000-000000000001', 'reactivate') $$,
   '22023',
+  null,
   'encerrado é terminal: reativar é recusado'
 );
 
