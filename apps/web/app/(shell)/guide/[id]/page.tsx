@@ -5,38 +5,35 @@ import { cookies } from "next/headers"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import type { Database } from "supabase/database.generated"
+import {
+  buildGuideToc,
+  type GuideArticle,
+  loadGuideArticle,
+} from "../../../../lib/guide/guide-article"
 import { Card } from "../../../components/bivaque/card"
+import { GuideToc } from "./guide-toc"
 
-// RECON-013 — prancha 25-web-guia-referencia: o artigo de uma referência do
-// Guia, sobre o acervo curado que já existe (arrival_guide_entries).
+// RECON-030 — prancha 25-web-guia-referencia: o artigo estruturado ESTENDE a
+// entrada curada que já existe (arrival_guide_entries). A rota continua sendo
+// /guide/[id] com o id da entrada; não há uma segunda superfície de guia.
 //
-// Defesa em profundidade na leitura (regra do contrato): a consulta filtra
+// Defesa em profundidade na leitura: a consulta da entrada filtra
 // status = 'approved' E a RLS arrival_guide_select_approved_locality_member
-// (20260815210000) impõe o mesmo de novo, além da assinatura de localidade.
-// Entrada inexistente, não-aprovada ou de outra cidade cai no mesmo
-// notFound() — a resposta não distingue os casos, então a tela não vaza a
-// existência de uma entrada pendente ou rejeitada.
+// impõe o mesmo, além da assinatura de localidade. A leitura do artigo
+// (guide_articles) passa pela RLS guide_articles_select_published_locality_member,
+// que exige status='published', entrada aprovada e localidade do membro.
+// Entrada inexistente, não-aprovada ou de outra cidade cai no mesmo notFound().
 //
-// Falha de consulta NÃO vira 404: query com erro lança, e o error.tsx do
-// segmento responde "tente de novo". 404 é "não existe"; erro é "tente de
-// novo". São caminhos diferentes aqui de propósito.
+// O artigo é ADITIVO: enquanto a migration 20260910202110_guide_article.sql não
+// estiver aplicada, loadGuideArticle devolve "sem artigo" e a tela renderiza a
+// entrada de diretório como antes — nunca 500 por uma extensão ausente.
 //
-// O que a prancha mostra e nenhum dado real sustenta não é renderizado —
-// mesma regra da listagem (/guide): sem imagem no acervo não há hero; sem
-// seções no texto não há sumário "Neste guia"; sem mecanismo de salvar
-// referência não há botão "Salvar"; sem destino real não há link. A origem
-// é montada só com colunas reais: `source` (sempre tem valor — 'manual' ou
-// 'ai') e `review_note` (só quando existe). A linha de conversa entra a mais
-// quando `source_reply_id` aponta para uma resposta que ESTE membro pode ver
-// pela RLS de recommendation_replies; sem isso, o card fica sem ela — nunca
-// com conversa inventada.
-//
-// "Sugerir atualização": não há caminho de escrita para o membro em
-// arrival_guide_entries (o grant de authenticated é select-only, migration
-// 20260815181708; a promoção para a fila é RPC do operador). O controle é
-// renderizado desabilitado com o motivo honesto visível, e a lacuna é
-// reportada na entrega — nunca um botão que abre nada nem um formulário que
-// descarta o texto.
+// O que a prancha mostra e nenhum dado real sustenta não é renderizado: sem
+// imagem no artigo não há capa; sem seções não há sumário "Neste guia"; sem
+// mecanismo real de salvar referência não há botão "Salvar" (a lacuna é
+// declarada na entrega, não coberta por um controle morto). A origem entra só
+// com colunas reais e a linha de conversa só quando ESTE membro pode ver a
+// resposta pela RLS de recommendation_replies.
 
 type GuideEntryRow = Database["public"]["Tables"]["arrival_guide_entries"]["Row"]
 type GuideCategory = GuideEntryRow["category"]
@@ -128,6 +125,85 @@ async function createAuthedClient() {
   })
 }
 
+function ArticleBody({ article }: { article: GuideArticle }) {
+  return (
+    <div className="mt-6 flex flex-col">
+      {article.coverImageUrl ? (
+        // next/image não tem remotePatterns configurado para URL curada
+        // arbitrária; um <img> com alt mantém a capa honesta e mede só o que
+        // existe, sem abrir um loader remoto.
+        // biome-ignore lint/performance/noImgElement: URL curada de capa; next/image exigiria images.remotePatterns em next.config.ts, fora do allowed_paths do contrato.
+        <img
+          src={article.coverImageUrl}
+          alt={`Imagem de capa do guia: ${article.title}`}
+          className="w-full rounded-2xl object-cover"
+          loading="lazy"
+        />
+      ) : null}
+
+      {article.summary ? (
+        <p className="mt-5 text-base leading-relaxed text-[var(--semantic-text-primary)]">
+          {article.summary}
+        </p>
+      ) : null}
+
+      {article.sections.map((section) => (
+        <section
+          key={section.id}
+          id={section.anchor}
+          tabIndex={-1}
+          aria-labelledby={`secao-${section.anchor}-titulo`}
+          className="mt-8 scroll-mt-24 focus:outline-none"
+        >
+          <h2
+            id={`secao-${section.anchor}-titulo`}
+            className="text-xl font-semibold tracking-tight"
+          >
+            {section.title}
+          </h2>
+          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[var(--semantic-text-primary)]">
+            {section.body}
+          </p>
+        </section>
+      ))}
+    </div>
+  )
+}
+
+function ContactBlock({ entry }: { entry: GuideEntryRow }) {
+  const dialPhone = entry.phone ? entry.phone.replace(/[^\d+]/g, "") : null
+  if (!entry.phone && !entry.website_url) return null
+
+  return (
+    <section aria-labelledby="guia-contato-titulo" className="mt-8 flex flex-col gap-2">
+      <h2 id="guia-contato-titulo" className="text-base font-semibold tracking-tight">
+        Contato
+      </h2>
+      <div className="flex flex-wrap gap-x-6 gap-y-1">
+        {entry.phone && dialPhone ? (
+          <a
+            href={`tel:${dialPhone}`}
+            className="inline-flex min-h-11 items-center text-sm text-[var(--semantic-link)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+          >
+            {entry.phone}
+          </a>
+        ) : null}
+        {entry.website_url ? (
+          <a
+            href={entry.website_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Abrir o site de ${entry.name}`}
+            className="inline-flex min-h-11 items-center text-sm text-[var(--semantic-link)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+          >
+            Ver site
+          </a>
+        ) : null}
+      </div>
+    </section>
+  )
+}
+
 export default async function GuideEntryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: entryId } = await params
   // UUID malformado nunca foi entrada aprovada: mesmo notFound() dos outros
@@ -154,28 +230,33 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
     notFound()
   }
 
-  const origin = await loadVisibleOrigin(supabase, entry)
-  const dialPhone = entry.phone ? entry.phone.replace(/[^\d+]/g, "") : null
+  const [origin, article] = await Promise.all([
+    loadVisibleOrigin(supabase, entry),
+    loadGuideArticle(supabase, entry.id),
+  ])
+  const toc = article ? buildGuideToc(article.sections) : []
+  const heading = article ? article.title : entry.name
+  const reviewedAt = article?.reviewedAt ?? entry.reviewed_at
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:py-8">
       <nav aria-label="Trilha de navegação" className="text-sm text-muted">
         <Link
           href="/explorar"
-          className="inline-flex min-h-11 items-center text-[var(--semantic-link)] transition-colors hover:underline"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center text-[var(--semantic-link)] transition-colors hover:underline"
         >
           Explorar
         </Link>
         <span aria-hidden="true"> / </span>
         <Link
           href="/guide"
-          className="inline-flex min-h-11 items-center text-[var(--semantic-link)] transition-colors hover:underline"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center text-[var(--semantic-link)] transition-colors hover:underline"
         >
           Guia
         </Link>
         <span aria-hidden="true"> / </span>
         <span aria-current="page" className="break-words">
-          {entry.name}
+          {CATEGORY_LABELS[entry.category]}
         </span>
       </nav>
 
@@ -185,54 +266,40 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
             <p className="text-xs font-medium text-[var(--semantic-text-secondary)]">
               {CATEGORY_LABELS[entry.category]}
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{entry.name}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{heading}</h1>
+            {article?.subtitle ? <p className="text-base text-muted">{article.subtitle}</p> : null}
             <p className="text-sm text-muted">
-              {entry.reviewed_at
-                ? `Revisado em ${formatGuideDate(entry.reviewed_at)}`
+              {reviewedAt
+                ? `Revisado em ${formatGuideDate(reviewedAt)}`
                 : `Atualizado em ${formatGuideDate(entry.updated_at)}`}{" "}
               · Curadoria Bivaque
             </p>
           </header>
 
-          {entry.description ? (
-            <section aria-label={`Sobre ${entry.name}`} className="mt-6">
-              <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--semantic-text-primary)]">
-                {entry.description}
-              </p>
-            </section>
-          ) : null}
-
-          {(entry.phone || entry.website_url) && (
-            <section aria-labelledby="guia-contato-titulo" className="mt-8 flex flex-col gap-2">
-              <h2 id="guia-contato-titulo" className="text-base font-semibold tracking-tight">
-                Contato
-              </h2>
-              <div className="flex flex-wrap gap-x-6 gap-y-1">
-                {entry.phone && dialPhone ? (
-                  <a
-                    href={`tel:${dialPhone}`}
-                    className="inline-flex min-h-11 items-center text-sm text-[var(--semantic-link)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                  >
-                    {entry.phone}
-                  </a>
-                ) : null}
-                {entry.website_url ? (
-                  <a
-                    href={entry.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Abrir o site de ${entry.name}`}
-                    className="inline-flex min-h-11 items-center text-sm text-[var(--semantic-link)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                  >
-                    Ver site
-                  </a>
-                ) : null}
-              </div>
-            </section>
+          {article ? (
+            <ArticleBody article={article} />
+          ) : (
+            <>
+              {entry.description ? (
+                <section aria-label={`Sobre ${entry.name}`} className="mt-6">
+                  <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--semantic-text-primary)]">
+                    {entry.description}
+                  </p>
+                </section>
+              ) : null}
+              <ContactBlock entry={entry} />
+            </>
           )}
         </article>
 
         <aside aria-label="Sobre esta referência" className="flex flex-col gap-4">
+          {article && toc.length > 0 ? (
+            <Card className="p-4">
+              <h2 className="text-base font-semibold tracking-tight">Neste guia</h2>
+              <GuideToc items={toc} />
+            </Card>
+          ) : null}
+
           <Card className="p-4">
             <h2 className="text-base font-semibold tracking-tight">Origem desta referência</h2>
             {origin ? (
@@ -271,17 +338,26 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
           <Card className="p-4">
             <h2 className="text-base font-semibold tracking-tight">Algo mudou?</h2>
             <p id="guia-sugestao-motivo" className="mt-2 text-sm leading-relaxed text-muted">
-              Ainda não é possível enviar sugestões de correção desta referência pelo aplicativo. As
-              entradas do guia entram e mudam só pela curadoria da equipe do Bivaque.
+              Conte para a curadoria se alguma informação não estiver mais correta ou se você tiver
+              uma sugestão para melhorar este guia.
             </p>
-            <Button
-              variant="primary"
-              className="mt-3 w-full"
-              isDisabled
-              aria-describedby="guia-sugestao-motivo"
-            >
-              Sugerir atualização
-            </Button>
+            {article ? (
+              <Link
+                href={`/guide/${entry.id}/correcao` as Route}
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+              >
+                Sugerir atualização
+              </Link>
+            ) : (
+              <Button
+                variant="primary"
+                className="mt-3 w-full"
+                isDisabled
+                aria-describedby="guia-sugestao-motivo"
+              >
+                Sugerir atualização
+              </Button>
+            )}
           </Card>
         </aside>
       </div>

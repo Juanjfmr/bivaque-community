@@ -125,6 +125,18 @@ const ROUTES = [
   // RECON-021: prova que o Ver-todos do grupo Guia chega com o filtro `q`
   // preenchido (hunk de uma linha no /guide).
   { path: "/guide?q=escola", name: "arrival-guide-termo", auth: true },
+  // RECON-030: o artigo estruturado (prancha 25) estende a entrada curada.
+  // Fixture concreta do seed: Escola Modelo do Centro (Manaus, aprovada).
+  {
+    path: "/guide/a0000000-0000-4000-8000-000000000001",
+    name: "guide-article",
+    auth: true,
+  },
+  {
+    path: "/guide/a0000000-0000-4000-8000-000000000001/correcao",
+    name: "guide-article-correcao",
+    auth: true,
+  },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
   { path: "/inicio", name: "inicio", auth: true },
   { path: "/explorar", name: "explorar", auth: true },

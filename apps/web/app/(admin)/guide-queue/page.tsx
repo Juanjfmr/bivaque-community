@@ -2,8 +2,10 @@ import { Button, Input } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import { loadGuideCorrectionQueue } from "../../../lib/guide/guide-article"
 import { callGuideCurationRpc } from "../../../lib/guide-curation-rpcs"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
+import { CorrectionDecisionForms } from "./correction-forms"
 
 export const dynamic = "force-dynamic"
 
@@ -270,6 +272,9 @@ export default async function AdminGuidePage() {
   const queue = (pendingResult.data as GuideQueueEntry[] | null) ?? []
   const promotable = (promotableResult.data as PromotableReply[] | null) ?? []
 
+  // RECON-030: devolve [] quando a migration do artigo ainda não está aplicada.
+  const corrections = await loadGuideCorrectionQueue(serviceClient)
+
   return (
     <section
       className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-12"
@@ -443,6 +448,21 @@ export default async function AdminGuidePage() {
               </form>
             </article>
           ))
+        )}
+      </section>
+
+      <section aria-labelledby="guide-corrections-heading" className="mt-6 flex flex-col gap-4">
+        <h2 id="guide-corrections-heading" className="text-base font-semibold tracking-tight">
+          Sugestões de correção
+        </h2>
+        <p className="text-sm text-muted">
+          Sugestões de atualização dos artigos do guia. Aplicar publica a versão revisada e registra
+          a versão anterior; rejeitar exige justificativa.
+        </p>
+        {corrections.length === 0 ? (
+          <p className="text-sm text-muted">Nenhuma sugestão de correção pendente.</p>
+        ) : (
+          corrections.map((item) => <CorrectionDecisionForms key={item.request.id} item={item} />)
         )}
       </section>
     </section>
