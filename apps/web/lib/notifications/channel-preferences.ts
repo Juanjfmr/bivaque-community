@@ -28,6 +28,10 @@ const OUTBOX_TYPE_TO_PREFERENCE_KEY: Record<string, NotificationTypeKey> = {
   event_rsvp: "events",
   event_change: "events",
   event_reminder: "events",
+  // event_invite tem que estar aqui. Ja saiu duas vezes: o filtro devolve
+  // `true` para tipo nao mapeado, entao a ausencia nao quebra nada — ela
+  // entrega convite de evento a quem desligou eventos, em silencio.
+  event_invite: "events",
   direct_message: "messages",
   product_news: "product_news",
 }

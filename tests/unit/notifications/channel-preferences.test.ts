@@ -1,7 +1,10 @@
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import { type ChannelAdapter, deliverOutboxMessage, type OutboxMessage } from "@bivaque/domain"
 import { describe, expect, it } from "vitest"
 import {
   type ChannelPreferenceRow,
+  type NotificationTypeKey,
   notificationChannelAllows,
   outboxDeliveryAllowed,
   preferenceKeyForOutboxType,
@@ -185,5 +188,53 @@ describe("dispatcher honours the channel rule (integration with the delivery cor
 
     expect(result.status).toBe("skipped")
     expect(spy.wasSent()).toBe(false)
+  })
+})
+
+// Este bloco existe porque o mapeamento ja perdeu `event_invite` duas vezes.
+// A perda e invisivel: `preferenceKeyForOutboxType` devolve null para tipo
+// desconhecido e o filtro trata null como "pode entregar". Um tipo novo que
+// ninguem declarar passa a furar a preferencia da pessoa em silencio.
+// Aqui todo tipo que o adaptador sabe montar precisa de uma decisao escrita.
+describe("todo tipo de outbox tem decisao declarada de preferencia", () => {
+  // null = transacional por decisao: a pessoa nao escolhe receber ou nao.
+  const DECISAO: Record<string, NotificationTypeKey | null> = {
+    comment: "comments",
+    event_rsvp: "events",
+    event_change: "events",
+    event_reminder: "events",
+    event_invite: "events",
+    direct_message: "messages",
+    product_news: "product_news",
+    verification_decision: null,
+    verification_resolved: null,
+    recommendation_reply: null,
+    community_invite: null,
+    family_invite: null,
+    provider_invite: null,
+  }
+
+  it("o adaptador nao monta nenhum tipo sem decisao declarada", () => {
+    const fonte = readFileSync(join(process.cwd(), "apps/web/lib/outbox/adapters.ts"), "utf8")
+    const tipos = [...fonte.matchAll(/case "([a-z_]+)":/g)].map((m) => m[1] as string)
+    expect(tipos.length).toBeGreaterThan(0)
+    const semDecisao = tipos.filter((tipo) => !(tipo in DECISAO))
+    expect(semDecisao).toEqual([])
+  })
+
+  it("cada decisao declarada e a que o filtro realmente aplica", () => {
+    for (const [tipo, esperado] of Object.entries(DECISAO)) {
+      expect(preferenceKeyForOutboxType(tipo), tipo).toBe(esperado)
+    }
+  })
+
+  it("convite de evento nao chega a quem desligou eventos", () => {
+    const entregue = outboxDeliveryAllowed({
+      type: "event_invite",
+      outboxChannel: "email",
+      preference: prefs({ events: false }),
+      matrix: [],
+    })
+    expect(entregue).toBe(false)
   })
 })
