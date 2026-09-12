@@ -8,6 +8,7 @@ objective: >
 
 authority:
   - docs/design/visual-guide-2026-09-06/54-web-retorno.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md
   - apps/web/app/(shell)/mercado/page.tsx, a marcacao que renderiza certo hoje
   - docs/agents/DESIGN_SYSTEM.md
   - Inspeccao visual de 12/09/2026 sobre chore/integracao-r3-next
