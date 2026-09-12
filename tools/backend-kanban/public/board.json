@@ -26,7 +26,8 @@
         "Galeria aberta no Chrome: 59 fluxos renderizados; recorte correto no mobile (3 quadros) e no desktop web (2 paineis 559x410, translateX 0 e -565.9px); deep link #36-web-auth-entrada abre o fluxo certo.",
         "flows:check verde (flows.html e FLOWS.md em dia); detect-frames --check verde (59 pranchas, 0 divergentes); 50 testes unitarios verdes em tests/unit/visual.",
         "45 jornadas (23 mobile, 22 web) cobrindo as 137 telas com 0 orfas, em 131 passos; cada transicao tem acao e cada desvio tem ancora e condicao, exigidos pelo verificador.",
-        "Galeria verificada no Chrome: card com a trilha de etapas (Descoberta -> Pedido -> Dentro) e selo de desvios; detalhe com etapa nomeada, acao entre passos e desvio ancorado ('se codigo incorreto, apos o passo 3')."
+        "Galeria verificada no Chrome: card com a trilha de etapas (Descoberta -> Pedido -> Dentro) e selo de desvios; detalhe com etapa nomeada, acao entre passos e desvio ancorado ('se codigo incorreto, apos o passo 3').",
+        "Correcao de leitura da jornada: o detalhe empilhava as etapas e rolava 1579px numa janela de 673, escondendo o proprio percurso. Virou trilha horizontal unica com desvios em bloco expansivel; medido em 1440x900, cinco jornadas testadas cabem sem rolagem vertical, inclusive a maior (8 passos, 4 etapas, 5 desvios)."
       ],
       "tests": [
         "npx pnpm@11.18.0 flows:check",
@@ -42,7 +43,7 @@
       "completedChecklist": [true, true, true, true, true, true, true],
       "completedAt": "2026-09-12",
       "updatedAt": "2026-09-12",
-      "sourceRevision": "b2e5b1f"
+      "sourceRevision": "b70d804"
     },
     {
       "id": "MVP-00-REBASELINE",
