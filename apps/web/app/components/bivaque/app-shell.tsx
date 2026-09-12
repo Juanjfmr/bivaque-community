@@ -309,8 +309,12 @@ export function AppShell({ children }: AppShellProperties) {
                   <MemberAvatar name={displayName} size="sm" />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{displayName}</span>
                 </div>
+                {/* RECON-042, defeito 1: o rótulo promete Configurações, o
+                    clique entrega Configurações. O avatar do cabeçalho (acima)
+                    continua indo para /profile de propósito — só este item,
+                    que nomeia a área, aponta para a área. */}
                 <a
-                  href="/profile"
+                  href="/configuracoes"
                   className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground"
                 >
                   <Settings size={20} className="shrink-0" aria-hidden="true" />
