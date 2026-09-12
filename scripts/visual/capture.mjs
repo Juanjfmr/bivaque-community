@@ -130,11 +130,14 @@ export const HEADINGS = {
   "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01": "^Denunciar publicação$",
   "/denuncias/<own-report>": "^Acompanhar denúncia$",
   "/messages/<thread>": "^Mensagens$",
-  // As subrotas de Configurações herdam o h1 do layout; a página filha usa h2.
-  "/configuracoes/notificacoes": "^Configurações$",
-  "/configuracoes/conta": "^Configurações$",
-  "/configuracoes/familia": "^Configurações$",
-  "/configuracoes/bloqueados": "^Configurações$",
+  // As subrotas de Configurações têm título próprio no H1 da área: a área
+  // continua nomeada ("Configurações") e a subtela entra no mesmo H1. Assim uma
+  // captura que aterrissasse na subtela errada deixa de passar como válida
+  // (RECON-042, defeito 3). As duas pontas — título e mapa — andam juntas.
+  "/configuracoes/notificacoes": "^Configurações · Notificações$",
+  "/configuracoes/conta": "^Configurações · Conta$",
+  "/configuracoes/familia": "^Configurações · Família$",
+  "/configuracoes/bloqueados": "^Configurações · Privacidade$",
 }
 
 export const ROUTES = [

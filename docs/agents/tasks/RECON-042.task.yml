@@ -8,6 +8,7 @@ objective: >
 
 authority:
   - docs/design/visual-guide-2026-09-06/01-web-inicio.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md
   - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0, Fidelidade comprovada
   - scripts/visual/capture.mjs, mapa HEADINGS, entradas de /configuracoes
   - Revisao do RECON-038 e do RECON-040, 12/09/2026
