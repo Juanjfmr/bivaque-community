@@ -8,8 +8,6 @@ import {
   Input,
   ListBox,
   Select,
-  Tab,
-  TabList,
   TabPanel,
   Tabs,
   TextArea,
@@ -28,7 +26,8 @@ import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { EventsIllustration } from "../../components/bivaque/illustrations"
 import { EventCardSkeleton } from "../../components/bivaque/skeleton"
-import EventInvitesSection from "./event-invites-section"
+import { getInvitedEventsAction } from "./event-invites-actions"
+import EventInvitesSection, { type InvitedEventRow } from "./event-invites-section"
 
 const WEEKDAY_LABELS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"]
 const ORDINAL_LABELS = ["1ª", "2ª", "3ª", "4ª"]
@@ -337,6 +336,7 @@ function EventsContent() {
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [seusTab, setSeusTab] = useState<SeusTab>("host")
+  const [invites, setInvites] = useState<InvitedEventRow[] | null>(null)
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -547,6 +547,19 @@ function EventsContent() {
     fetchEvents()
   }, [fetchEvents])
 
+  // RECON-043: "Seus eventos" decide entre as abas e o vazio com o mesmo
+  // conjunto que ela mostra. Convite e um dos quatro estados (a aba Convidado),
+  // entao a leitura precisa subir para a pagina em vez de viver no painel.
+  const loadInvites = useCallback(() => {
+    getInvitedEventsAction()
+      .then((rows) => setInvites(rows))
+      .catch(() => setInvites([]))
+  }, [])
+
+  useEffect(() => {
+    loadInvites()
+  }, [loadInvites])
+
   // P0 Task 9: load the locality member count to branch the empty state on the
   // §3.4 density threshold. The metric is a proxy (membership count, not weekly
   // active) — see comment in lib/locality-density.ts.
@@ -717,6 +730,24 @@ function EventsContent() {
     }
   }, [events, rsvps, userId, seusTab])
 
+  // RECON-043: um convite tambem e um evento proprio (aba Convidado), entao a
+  // decisao de mostrar as abas ou o vazio considera os quatro estados. Enquanto
+  // a leitura de convite nao chegou, a area nao declara vazio: o vazio e
+  // informacao e apareceria cedo demais para quem tem convite.
+  const hasOwnEvents = useMemo(() => {
+    if (!userId) return (invites?.length ?? 0) > 0
+    return (
+      events.some((event) => event.organizer_id === userId) ||
+      rsvps.some(
+        (rsvp) =>
+          rsvp.user_id === userId && (rsvp.status === "going" || rsvp.status === "interested"),
+      ) ||
+      (invites?.length ?? 0) > 0
+    )
+  }, [events, rsvps, userId, invites])
+
+  const ownAreaPending = invites === null && !hasOwnEvents
+
   // ── render ──────────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -853,115 +884,143 @@ function EventsContent() {
           <section className="mt-2">
             <h2 className="mb-3 text-lg font-semibold tracking-tight">Seus eventos</h2>
 
-            <Tabs
-              selectedKey={seusTab}
-              onSelectionChange={(key) => setSeusTab(key as SeusTab)}
-              className="[&_[data-slot=tab]]:text-xs [&_[data-slot=tab]]:font-medium [&_[data-slot=tab]]:px-3 [&_[data-slot=tab]]:py-2"
-            >
-              <TabList aria-label="Seus eventos">
-                <Tab key="host">Organizando</Tab>
-                <Tab key="going">Confirmado</Tab>
-                <Tab key="interested">Interessado</Tab>
-                <Tab key="invited">Convidado</Tab>
-              </TabList>
+            {ownAreaPending ? (
+              <EventCardSkeleton />
+            ) : hasOwnEvents ? (
+              <Tabs
+                aria-label="Seus eventos"
+                selectedKey={seusTab}
+                onSelectionChange={(key) => setSeusTab(key as SeusTab)}
+                variant="secondary"
+                className="tabs--secondary"
+              >
+                <Tabs.ListContainer>
+                  <Tabs.List>
+                    <Tabs.Tab id="host">Organizando</Tabs.Tab>
+                    <Tabs.Tab id="going">Confirmado</Tabs.Tab>
+                    <Tabs.Tab id="interested">Interessado</Tabs.Tab>
+                    <Tabs.Tab id="invited">Convidado</Tabs.Tab>
+                  </Tabs.List>
+                </Tabs.ListContainer>
 
-              <TabPanel key="host" className="pt-3">
-                {seusFiltered.length === 0 ? (
-                  <EmptyState
-                    title="Você não organiza nenhum evento"
-                    description="Crie um evento para sua comunidade e ele aparecerá aqui."
-                    illustration={<EventsIllustration />}
-                    action={
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        className="min-h-11"
-                        onPress={() => setView("create")}
-                      >
-                        Criar evento
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    {seusFiltered.map((event) => (
-                      <OwnEventCard
-                        key={event.id}
-                        event={event}
-                        interestedCount={interestedCountByEvent.get(event.id) ?? 0}
-                        goingCount={goingCountByEvent.get(event.id) ?? 0}
-                        myRsvp={null}
-                        isOrganizer
-                        onRsvp={() => {}}
-                        onCancel={() => handleCancelEvent(event.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabPanel>
-
-              <TabPanel key="going" className="pt-3">
-                {seusFiltered.length === 0 ? (
-                  <EmptyState
-                    title="Nenhum evento confirmado"
-                    description="Confirme presença em eventos da sua comunidade."
-                    illustration={<EventsIllustration />}
-                  />
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    {seusFiltered.map((event) => {
-                      const myRsvp = getRsvpStatus(event.id)
-                      const isOrganizer = event.organizer_id === userId
-                      return (
+                <TabPanel id="host" className="pt-3">
+                  {seusFiltered.length === 0 ? (
+                    <EmptyState
+                      title="Você não organiza nenhum evento"
+                      description="Crie um evento para sua comunidade e ele aparecerá aqui."
+                      illustration={<EventsIllustration />}
+                      action={
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          className="min-h-11"
+                          onPress={() => setView("create")}
+                        >
+                          Criar evento
+                        </Button>
+                      }
+                    />
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {seusFiltered.map((event) => (
                         <OwnEventCard
                           key={event.id}
                           event={event}
                           interestedCount={interestedCountByEvent.get(event.id) ?? 0}
                           goingCount={goingCountByEvent.get(event.id) ?? 0}
-                          myRsvp={myRsvp}
-                          isOrganizer={isOrganizer}
-                          onRsvp={(status) => handleRsvp(event.id, status)}
+                          myRsvp={null}
+                          isOrganizer
+                          onRsvp={() => {}}
                           onCancel={() => handleCancelEvent(event.id)}
                         />
-                      )
-                    })}
-                  </div>
-                )}
-              </TabPanel>
+                      ))}
+                    </div>
+                  )}
+                </TabPanel>
 
-              <TabPanel key="interested" className="pt-3">
-                {seusFiltered.length === 0 ? (
-                  <EmptyState
-                    title="Nenhum evento como interessado"
-                    description="Marque interesse em eventos para acompanhá-los."
-                    illustration={<EventsIllustration />}
+                <TabPanel id="going" className="pt-3">
+                  {seusFiltered.length === 0 ? (
+                    <EmptyState
+                      title="Nenhum evento confirmado"
+                      description="Confirme presença em eventos da sua comunidade."
+                      illustration={<EventsIllustration />}
+                    />
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {seusFiltered.map((event) => {
+                        const myRsvp = getRsvpStatus(event.id)
+                        const isOrganizer = event.organizer_id === userId
+                        return (
+                          <OwnEventCard
+                            key={event.id}
+                            event={event}
+                            interestedCount={interestedCountByEvent.get(event.id) ?? 0}
+                            goingCount={goingCountByEvent.get(event.id) ?? 0}
+                            myRsvp={myRsvp}
+                            isOrganizer={isOrganizer}
+                            onRsvp={(status) => handleRsvp(event.id, status)}
+                            onCancel={() => handleCancelEvent(event.id)}
+                          />
+                        )
+                      })}
+                    </div>
+                  )}
+                </TabPanel>
+
+                <TabPanel id="interested" className="pt-3">
+                  {seusFiltered.length === 0 ? (
+                    <EmptyState
+                      title="Nenhum evento como interessado"
+                      description="Marque interesse em eventos para acompanhá-los."
+                      illustration={<EventsIllustration />}
+                    />
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {seusFiltered.map((event) => {
+                        const myRsvp = getRsvpStatus(event.id)
+                        const isOrganizer = event.organizer_id === userId
+                        return (
+                          <OwnEventCard
+                            key={event.id}
+                            event={event}
+                            interestedCount={interestedCountByEvent.get(event.id) ?? 0}
+                            goingCount={goingCountByEvent.get(event.id) ?? 0}
+                            myRsvp={myRsvp}
+                            isOrganizer={isOrganizer}
+                            onRsvp={(status) => handleRsvp(event.id, status)}
+                            onCancel={() => handleCancelEvent(event.id)}
+                          />
+                        )
+                      })}
+                    </div>
+                  )}
+                </TabPanel>
+
+                <TabPanel id="invited" className="pt-3">
+                  <EventInvitesSection
+                    invites={invites ?? []}
+                    loaded={invites !== null}
+                    onReload={loadInvites}
                   />
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    {seusFiltered.map((event) => {
-                      const myRsvp = getRsvpStatus(event.id)
-                      const isOrganizer = event.organizer_id === userId
-                      return (
-                        <OwnEventCard
-                          key={event.id}
-                          event={event}
-                          interestedCount={interestedCountByEvent.get(event.id) ?? 0}
-                          goingCount={goingCountByEvent.get(event.id) ?? 0}
-                          myRsvp={myRsvp}
-                          isOrganizer={isOrganizer}
-                          onRsvp={(status) => handleRsvp(event.id, status)}
-                          onCancel={() => handleCancelEvent(event.id)}
-                        />
-                      )
-                    })}
-                  </div>
-                )}
-              </TabPanel>
-
-              <TabPanel key="invited" className="pt-3">
-                <EventInvitesSection />
-              </TabPanel>
-            </Tabs>
+                </TabPanel>
+              </Tabs>
+            ) : (
+              <EmptyState
+                title="Nenhum evento seu ainda"
+                description="Quando você organizar, confirmar presença, marcar interesse ou receber um convite, o evento aparece aqui."
+                illustration={<EventsIllustration />}
+                action={
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="min-h-11"
+                    onPress={() => setView("create")}
+                  >
+                    Criar evento
+                  </Button>
+                }
+              />
+            )}
           </section>
         </div>
       )}

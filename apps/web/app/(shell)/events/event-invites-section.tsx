@@ -1,12 +1,15 @@
 "use client"
 
 import { Button } from "@heroui/react"
-import { useEffect, useState } from "react"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { EventsIllustration } from "../../components/bivaque/illustrations"
-import { getInvitedEventsAction, respondInviteAction } from "./event-invites-actions"
+import { respondInviteAction } from "./event-invites-actions"
 
-type InvitedEventRow = {
+// RECON-043: a area "Seus eventos" so pode declarar o vazio depois de saber se
+// a pessoa tem convite — um dos quatro estados que ela mostra. A leitura subiu
+// para a pagina (a mesma fonte alimenta a decisao e esta lista), e este
+// componente ficou de apresentacao. Aceitar/recusar continua aqui.
+export type InvitedEventRow = {
   id: string
   title: string
   starts_at: string
@@ -23,36 +26,15 @@ function formatDate(iso: string): string {
   })
 }
 
-export default function EventInvitesSection() {
-  const [invites, setInvites] = useState<InvitedEventRow[]>([])
-  const [loaded, setLoaded] = useState(false)
-
-  const load = () => {
-    getInvitedEventsAction()
-      .then((rows) => {
-        setInvites(rows)
-        setLoaded(true)
-      })
-      .catch(() => setLoaded(true))
-  }
-
-  useEffect(() => {
-    let cancelled = false
-    getInvitedEventsAction()
-      .then((rows) => {
-        if (cancelled) return
-        setInvites(rows)
-        setLoaded(true)
-      })
-      .catch(() => {
-        if (cancelled) return
-        setLoaded(true)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
+export default function EventInvitesSection({
+  invites,
+  loaded,
+  onReload,
+}: {
+  invites: InvitedEventRow[]
+  loaded: boolean
+  onReload: () => void
+}) {
   if (!loaded) {
     return null
   }
@@ -87,7 +69,7 @@ export default function EventInvitesSection() {
               <form
                 action={async (formData) => {
                   await respondInviteAction(formData)
-                  load()
+                  onReload()
                 }}
               >
                 <input type="hidden" name="eventId" value={invite.id} />
@@ -99,7 +81,7 @@ export default function EventInvitesSection() {
               <form
                 action={async (formData) => {
                   await respondInviteAction(formData)
-                  load()
+                  onReload()
                 }}
               >
                 <input type="hidden" name="eventId" value={invite.id} />
