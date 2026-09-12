@@ -263,7 +263,10 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
   // na tela de perfil, todos falsos: ninguém toca nele, e ele não deve ter nome
   // próprio, senão o leitor de tela anuncia o controle duas vezes.
   const dentroDeWrapperOculto = (element) => {
-    let node = element.parentElement
+    // O próprio input pode carregar clip/clip-path e tamanho 1x1. Começar no
+    // parentElement perde exatamente esse caso e transforma controles React Aria
+    // corretamente escondidos em falsos touch-targets.
+    let node = element
     while (node && node !== document.body) {
       const style = getComputedStyle(node)
       const recortado = style.clipPath === "inset(50%)" || style.clip === "rect(0px, 0px, 0px, 0px)"
