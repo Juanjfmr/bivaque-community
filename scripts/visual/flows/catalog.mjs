@@ -62,8 +62,51 @@ export function loadFlowCatalog() {
   const manifest = readJson(join(GUIDE_DIR, "manifest.json"))
   const taxonomy = readJson(join(here, "taxonomy.json"))
   const frames = readJson(join(here, "frames.json"))
+  const journeys = readJson(join(here, "journeys.json"))
   return {
     taxonomy,
+    frames,
     flows: buildFlows(manifest, taxonomy, frames),
+    journeys: buildJourneys(manifest, taxonomy, frames, journeys),
   }
+}
+
+// Uma jornada e uma sequencia ordenada de telas com inicio, meio e fim. Cada passo cita uma tela
+// por '<prancha>#<indice>'; aqui ele vira um recorte concreto (frame + aspect) e uma fase. A
+// prancha e a fonte da tela, nao a jornada — a mesma tela pode servir a jornadas diferentes.
+export function buildJourneys(manifest, taxonomy, frames, journeysDoc) {
+  const artifacts = new Map(manifest.artifacts.map((a) => [a.id, a]))
+  const groupLabel = new Map(taxonomy.groups.map((g) => [g.id, g.label]))
+
+  const resolve = (ref, fase) => {
+    const [pranchaId, indexRaw] = ref.split("#")
+    const index = Number(indexRaw)
+    const artifact = artifacts.get(pranchaId)
+    if (!artifact) throw new Error(`jornada cita prancha inexistente: ${pranchaId}`)
+    const tela = artifact.screens[index]
+    if (tela === undefined) throw new Error(`jornada cita tela inexistente: ${ref}`)
+    const board = frames.boards[pranchaId]
+    const frame = board?.frames?.[index]
+    if (!frame) throw new Error(`sem geometria para ${ref}`)
+    const aspect = Number(((frame.w * board.width) / (frame.h * board.height)).toFixed(4))
+    return { ref, fase, prancha: pranchaId, tela, arquivo: board.file, frame, aspect }
+  }
+
+  return journeysDoc.journeys.map((journey) => {
+    const total = journey.passos.length
+    return {
+      id: journey.id,
+      titulo: journey.titulo,
+      plataforma: journey.plataforma,
+      grupo: { id: journey.grupo, label: groupLabel.get(journey.grupo) ?? journey.grupo },
+      persona: journey.persona,
+      comeca: journey.comeca,
+      termina: journey.termina,
+      acoes: journey.acoes,
+      passos: journey.passos.map((ref, i) =>
+        resolve(ref, i === 0 ? "início" : i === total - 1 ? "fim" : "meio"),
+      ),
+      variantes: (journey.variantes ?? []).map((ref) => resolve(ref, "variante")),
+    }
+  })
 }

@@ -1,0 +1,631 @@
+{
+  "_note": "Jornadas: sequencias ordenadas de telas com inicio, meio e fim, no formato Mobbin. Uma tela e referenciada por '<id-da-prancha>#<indice>' — o indice e a posicao em manifest.screens. `passos` e a sequencia principal; `variantes` sao estados alternativos da mesma jornada (erro, retomada, outro publico). A prancha e a FONTE da tela, nao a jornada. Documental: montada das pranchas, nao gravada em runtime.",
+  "version": 1,
+  "journeys": [
+    {
+      "id": "mobile-entrar-e-ser-admitido",
+      "titulo": "Entrar no Bivaque e ser admitido",
+      "plataforma": "mobile",
+      "grupo": "auth",
+      "persona": "Quem chega sem conta, com vinculo militar a verificar",
+      "comeca": "Boas-vindas, sem conta",
+      "termina": "Membro verificado, com cidade escolhida, dentro do Inicio",
+      "acoes": ["Criar conta", "Confirmar e-mail", "Verificar vinculo", "Escolher cidade"],
+      "passos": [
+        "30-mobile-auth-entrada#0",
+        "30-mobile-auth-entrada#2",
+        "31-mobile-auth-confirmacao#0",
+        "32-mobile-auth-acesso#0",
+        "32-mobile-auth-acesso#1",
+        "32-mobile-auth-acesso#2",
+        "34-mobile-onboarding-contexto#0",
+        "34-mobile-onboarding-contexto#2"
+      ],
+      "variantes": [
+        "30-mobile-auth-entrada#1",
+        "31-mobile-auth-confirmacao#1",
+        "31-mobile-auth-confirmacao#2",
+        "34-mobile-onboarding-contexto#1",
+        "33-mobile-auth-admissao#2"
+      ]
+    },
+    {
+      "id": "mobile-verificar-por-identidade",
+      "titulo": "Verificar por identidade quando o CPF nao resolve",
+      "plataforma": "mobile",
+      "grupo": "auth",
+      "persona": "Quem precisa do caminho alternativo de verificacao",
+      "comeca": "CPF nao concluiu; a identidade e a alternativa",
+      "termina": "Analise acompanhada e arquivo substituido quando ilegivel",
+      "acoes": ["Enviar identidade"],
+      "passos": [
+        "33-mobile-auth-admissao#1",
+        "68-mobile-identidade-recuperacao#0",
+        "68-mobile-identidade-recuperacao#1",
+        "33-mobile-auth-admissao#0",
+        "68-mobile-identidade-recuperacao#2"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "mobile-retomar-e-recuperar",
+      "titulo": "Retomar o cadastro e recuperar o acesso",
+      "plataforma": "mobile",
+      "grupo": "auth",
+      "persona": "Quem parou no meio ou perdeu a sessao",
+      "comeca": "Cadastro interrompido",
+      "termina": "Pessoa retoma o ponto onde parou",
+      "acoes": ["Recuperar acesso", "Confirmar e-mail"],
+      "passos": [
+        "35-mobile-auth-retomada#0",
+        "35-mobile-auth-retomada#2",
+        "35-mobile-auth-retomada#1"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "mobile-chegar-ao-inicio",
+      "titulo": "Como o Inicio recebe quem chega",
+      "plataforma": "mobile",
+      "grupo": "base",
+      "persona": "Visitante ou membro no primeiro contato com o Inicio",
+      "comeca": "Tres intencoes distintas de chegada",
+      "termina": "A tela certa para cada intencao",
+      "acoes": ["Explorar", "Mudar de cidade"],
+      "passos": ["00-mobile-inicio#0", "00-mobile-inicio#1", "00-mobile-inicio#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-descobrir-e-entrar-numa-comunidade",
+      "titulo": "Descobrir e entrar numa comunidade",
+      "plataforma": "mobile",
+      "grupo": "community",
+      "persona": "Membro verificado sem vila",
+      "comeca": "Descoberta de comunidades da cidade",
+      "termina": "Dentro da comunidade, com os grupos a vista",
+      "acoes": ["Explorar", "Solicitar participacao"],
+      "passos": [
+        "40-mobile-comunidades#1",
+        "40-mobile-comunidades#2",
+        "41-mobile-comunidade-participacao#0",
+        "41-mobile-comunidade-participacao#1"
+      ],
+      "variantes": ["40-mobile-comunidades#0"]
+    },
+    {
+      "id": "mobile-publicar-na-comunidade",
+      "titulo": "Publicar uma pergunta na comunidade",
+      "plataforma": "mobile",
+      "grupo": "community",
+      "persona": "Membro participando da vila",
+      "comeca": "Pergunta em branco",
+      "termina": "Publicacao enviada, com o publico escolhido",
+      "acoes": ["Publicar"],
+      "passos": ["44-mobile-publicacao#0", "44-mobile-publicacao#1", "44-mobile-publicacao#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-sair-da-comunidade",
+      "titulo": "Sair da comunidade",
+      "plataforma": "mobile",
+      "grupo": "community",
+      "persona": "Membro que quer deixar a vila",
+      "comeca": "Dentro da comunidade",
+      "termina": "Vinculo encerrado",
+      "acoes": ["Sair da comunidade"],
+      "passos": ["41-mobile-comunidade-participacao#1", "41-mobile-comunidade-participacao#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-confirmar-presenca-num-evento",
+      "titulo": "Confirmar presenca num evento",
+      "plataforma": "mobile",
+      "grupo": "events",
+      "persona": "Membro explorando eventos da cidade",
+      "comeca": "Lista de eventos",
+      "termina": "Presenca confirmada",
+      "acoes": ["Explorar", "Confirmar presenca"],
+      "passos": ["46-mobile-eventos#0", "46-mobile-eventos#1", "46-mobile-eventos#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-cancelar-presenca-ou-evento",
+      "titulo": "Cancelar a presenca ou o proprio evento",
+      "plataforma": "mobile",
+      "grupo": "events",
+      "persona": "Quem confirmou presenca, ou quem organiza",
+      "comeca": "Presenca confirmada",
+      "termina": "Presenca cancelada ou evento cancelado",
+      "acoes": ["Cancelar"],
+      "passos": [
+        "47-mobile-eventos-cancelamento#0",
+        "47-mobile-eventos-cancelamento#1",
+        "47-mobile-eventos-cancelamento#2"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "mobile-pedir-informacoes-ao-organizador",
+      "titulo": "Pedir informacoes ao organizador do evento",
+      "plataforma": "mobile",
+      "grupo": "events",
+      "persona": "Quem quer saber mais antes de decidir",
+      "comeca": "Detalhe do evento, sem exigir presenca",
+      "termina": "Pergunta enviada e resposta acompanhada",
+      "acoes": ["Pedir informacoes"],
+      "passos": [
+        "66-mobile-evento-informacoes#0",
+        "66-mobile-evento-informacoes#1",
+        "66-mobile-evento-informacoes#2"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "mobile-explorar-o-guia",
+      "titulo": "Explorar o Guia da cidade",
+      "plataforma": "mobile",
+      "grupo": "guia",
+      "persona": "Recem-chegado buscando referencia",
+      "comeca": "Descoberta editorial da cidade",
+      "termina": "Artigo de chegada lido",
+      "acoes": ["Explorar"],
+      "passos": ["10-mobile-guia#0", "10-mobile-guia#2", "10-mobile-guia#1"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-sugerir-correcao-no-guia",
+      "titulo": "Sugerir uma correcao no Guia",
+      "plataforma": "mobile",
+      "grupo": "guia",
+      "persona": "Membro que conhece a referencia e quer corrigi-la",
+      "comeca": "Referencia completa aberta",
+      "termina": "Sugestao enviada ao curador",
+      "acoes": ["Explorar", "Sugerir correcao"],
+      "passos": [
+        "24-mobile-guia-referencia#0",
+        "24-mobile-guia-referencia#1",
+        "24-mobile-guia-referencia#2"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "mobile-ler-responder-e-resolver",
+      "titulo": "Ler, responder e resolver uma conversa",
+      "plataforma": "mobile",
+      "grupo": "conversa",
+      "persona": "Autor da pergunta e quem responde",
+      "comeca": "Conversa com respostas",
+      "termina": "Pergunta marcada como resolvida",
+      "acoes": ["Responder", "Resolver"],
+      "passos": ["14-mobile-conversa#0", "14-mobile-conversa#1", "14-mobile-conversa#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-pedir-um-servico",
+      "titulo": "Encontrar um prestador e pedir um servico",
+      "plataforma": "mobile",
+      "grupo": "pedidos",
+      "persona": "Membro que precisa de um servico",
+      "comeca": "Explorar servicos da cidade",
+      "termina": "Pedido com respostas recebidas",
+      "acoes": ["Explorar", "Buscar", "Ver ficha", "Pedir servico"],
+      "passos": [
+        "02-mobile-explorar#0",
+        "02-mobile-explorar#1",
+        "02-mobile-explorar#2",
+        "16-mobile-pedido-servico#0",
+        "16-mobile-pedido-servico#2",
+        "16-mobile-pedido-servico#1"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "mobile-responder-um-pedido",
+      "titulo": "Responder um pedido como prestador",
+      "plataforma": "mobile",
+      "grupo": "negocio",
+      "persona": "Prestador com pedidos abertos",
+      "comeca": "Painel de pedidos do negocio",
+      "termina": "Pedido respondido, ficha em dia",
+      "acoes": ["Gerenciar", "Responder", "Editar ficha"],
+      "passos": ["22-mobile-meu-negocio#0", "22-mobile-meu-negocio#2", "22-mobile-meu-negocio#1"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-anunciar-um-produto",
+      "titulo": "Anunciar um produto no Mercado",
+      "plataforma": "mobile",
+      "grupo": "mercado",
+      "persona": "Membro com algo para vender",
+      "comeca": "Mercado da cidade",
+      "termina": "Anuncio publicado",
+      "acoes": ["Explorar", "Anunciar", "Ver ficha"],
+      "passos": ["11-mobile-mercado#0", "11-mobile-mercado#1", "11-mobile-mercado#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-gerenciar-e-encerrar-anuncio",
+      "titulo": "Gerenciar e encerrar os proprios anuncios",
+      "plataforma": "mobile",
+      "grupo": "anuncios",
+      "persona": "Quem ja anunciou",
+      "comeca": "Lista dos proprios anuncios por situacao",
+      "termina": "Anuncio encerrado como vendido",
+      "acoes": ["Gerenciar", "Editar", "Encerrar"],
+      "passos": [
+        "20-mobile-meus-anuncios#0",
+        "20-mobile-meus-anuncios#1",
+        "20-mobile-meus-anuncios#2"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "mobile-buscar-imovel-e-criar-alerta",
+      "titulo": "Buscar um imovel e criar um alerta",
+      "plataforma": "mobile",
+      "grupo": "moradia",
+      "persona": "Quem esta de mudanca",
+      "comeca": "Busca de imoveis",
+      "termina": "Alerta criado para o refinamento",
+      "acoes": ["Explorar", "Buscar", "Criar alerta"],
+      "passos": ["18-mobile-imoveis#0", "18-mobile-imoveis#1", "18-mobile-imoveis#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-ver-e-editar-o-perfil",
+      "titulo": "Ver e editar o perfil, e ver outro membro",
+      "plataforma": "mobile",
+      "grupo": "profile",
+      "persona": "Qualquer membro",
+      "comeca": "Meu perfil",
+      "termina": "Exibicao propria e a de outro membro",
+      "acoes": ["Ver perfil", "Editar"],
+      "passos": ["49-mobile-perfil#0", "49-mobile-perfil#1", "49-mobile-perfil#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-ajustar-preferencias-e-conta",
+      "titulo": "Ajustar preferencias e os controles da conta",
+      "plataforma": "mobile",
+      "grupo": "profile",
+      "persona": "Membro cuidando da propria conta",
+      "comeca": "Configuracoes",
+      "termina": "Controles da conta revisados",
+      "acoes": ["Configurar", "Notificacoes"],
+      "passos": [
+        "50-mobile-configuracoes#0",
+        "50-mobile-configuracoes#1",
+        "50-mobile-configuracoes#2"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "mobile-voltar-ao-que-importa",
+      "titulo": "Voltar ao que importa: notificacoes, salvos e alertas",
+      "plataforma": "mobile",
+      "grupo": "return",
+      "persona": "Membro retomando o que ficou pendente",
+      "comeca": "Central de notificacoes",
+      "termina": "Alertas de imoveis a vista",
+      "acoes": ["Notificacoes", "Salvos", "Criar alerta"],
+      "passos": ["53-mobile-retorno#0", "53-mobile-retorno#1", "53-mobile-retorno#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-denunciar-e-acompanhar",
+      "titulo": "Denunciar e acompanhar, e bloquear",
+      "plataforma": "mobile",
+      "grupo": "trust",
+      "persona": "Membro diante de conteudo ou interacao inadequada",
+      "comeca": "Envio da denuncia",
+      "termina": "Denuncia acompanhada e interacao bloqueada",
+      "acoes": ["Denunciar", "Bloquear"],
+      "passos": ["55-mobile-confianca#0", "55-mobile-confianca#1", "55-mobile-confianca#2"],
+      "variantes": []
+    },
+    {
+      "id": "mobile-quando-algo-falha",
+      "titulo": "Quando algo falha: carregar, vazio e erro com rascunho",
+      "plataforma": "mobile",
+      "grupo": "states",
+      "persona": "Qualquer membro numa tela sem dados ou com falha",
+      "comeca": "Tela carregando",
+      "termina": "Erro sem perder o que foi escrito",
+      "acoes": ["Estados do sistema"],
+      "passos": ["59-mobile-estados#0", "59-mobile-estados#1", "59-mobile-estados#2"],
+      "variantes": []
+    },
+    {
+      "id": "web-entrar-e-ser-admitido",
+      "titulo": "Entrar no Bivaque e ser admitido (web)",
+      "plataforma": "web",
+      "grupo": "auth",
+      "persona": "Quem chega pelo desktop",
+      "comeca": "Entrada e cadastro",
+      "termina": "Membro verificado, com contexto escolhido",
+      "acoes": [
+        "Criar conta",
+        "Entrar",
+        "Confirmar e-mail",
+        "Verificar vinculo",
+        "Escolher cidade"
+      ],
+      "passos": [
+        "36-web-auth-entrada#0",
+        "36-web-auth-entrada#1",
+        "37-web-auth-confirmacao#0",
+        "38-web-auth-admissao#0",
+        "39-web-onboarding-contexto#0",
+        "39-web-onboarding-contexto#1"
+      ],
+      "variantes": ["37-web-auth-confirmacao#1"]
+    },
+    {
+      "id": "web-verificar-por-identidade",
+      "titulo": "Verificar por identidade e acompanhar a admissao (web)",
+      "plataforma": "web",
+      "grupo": "auth",
+      "persona": "Quem usa o caminho alternativo de verificacao",
+      "comeca": "Envio da identidade",
+      "termina": "Analise acompanhada, arquivo substituido se preciso",
+      "acoes": ["Enviar identidade"],
+      "passos": [
+        "69-web-identidade-recuperacao#0",
+        "38-web-auth-admissao#1",
+        "69-web-identidade-recuperacao#1"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "web-chegar-ao-inicio",
+      "titulo": "Chegar ao Inicio (web)",
+      "plataforma": "web",
+      "grupo": "base",
+      "persona": "Membro participando pelo desktop",
+      "comeca": "Home de quem participa",
+      "termina": "Home de quem participa",
+      "acoes": ["Explorar"],
+      "passos": ["01-web-inicio#0"],
+      "variantes": []
+    },
+    {
+      "id": "web-descobrir-e-entrar-numa-comunidade",
+      "titulo": "Descobrir e entrar numa comunidade (web)",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Membro verificado sem vila",
+      "comeca": "Minhas comunidades",
+      "termina": "Dentro da comunidade, com os grupos",
+      "acoes": ["Explorar", "Solicitar participacao"],
+      "passos": [
+        "42-web-comunidades#0",
+        "42-web-comunidades#1",
+        "43-web-comunidade-grupos#1",
+        "43-web-comunidade-grupos#0"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "web-publicar",
+      "titulo": "Publicar e recuperar rascunho (web)",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Membro publicando pelo desktop",
+      "comeca": "Publicacao em branco",
+      "termina": "Rascunho recuperado ou publicacao enviada",
+      "acoes": ["Publicar", "Editar"],
+      "passos": ["45-web-publicacao#0", "45-web-publicacao#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-confirmar-presenca-num-evento",
+      "titulo": "Confirmar presenca num evento (web)",
+      "plataforma": "web",
+      "grupo": "events",
+      "persona": "Membro vendo eventos da cidade",
+      "comeca": "Lista e filtros",
+      "termina": "Presenca gerida no detalhe",
+      "acoes": ["Explorar", "Confirmar presenca"],
+      "passos": ["48-web-eventos#0", "48-web-eventos#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-pedir-informacoes-ao-organizador",
+      "titulo": "Pedir informacoes e ler a resposta (web)",
+      "plataforma": "web",
+      "grupo": "events",
+      "persona": "Quem quer saber mais sobre o evento",
+      "comeca": "Pergunta reenviada",
+      "termina": "Resposta lida e jornada retomada",
+      "acoes": ["Pedir informacoes", "Responder"],
+      "passos": ["67-web-evento-informacoes#0", "67-web-evento-informacoes#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-explorar-o-guia",
+      "titulo": "Explorar o Guia (web)",
+      "plataforma": "web",
+      "grupo": "guia",
+      "persona": "Quem busca referencia da cidade",
+      "comeca": "Descoberta editorial",
+      "termina": "Descoberta editorial",
+      "acoes": ["Explorar"],
+      "passos": ["12-web-guia#0"],
+      "variantes": []
+    },
+    {
+      "id": "web-sugerir-correcao-no-guia",
+      "titulo": "Ler a referencia e sugerir correcao (web)",
+      "plataforma": "web",
+      "grupo": "guia",
+      "persona": "Membro que conhece a referencia",
+      "comeca": "Referencia completa",
+      "termina": "Correcao sugerida",
+      "acoes": ["Explorar", "Sugerir correcao"],
+      "passos": ["25-web-guia-referencia#0"],
+      "variantes": []
+    },
+    {
+      "id": "web-ler-e-responder-uma-conversa",
+      "titulo": "Ler e responder uma conversa (web)",
+      "plataforma": "web",
+      "grupo": "conversa",
+      "persona": "Quem participa da conversa",
+      "comeca": "Conversa e resposta",
+      "termina": "Conversa e resposta",
+      "acoes": ["Responder", "Resolver"],
+      "passos": ["15-web-conversa#0"],
+      "variantes": []
+    },
+    {
+      "id": "web-pedir-um-servico",
+      "titulo": "Encontrar um prestador e pedir um servico (web)",
+      "plataforma": "web",
+      "grupo": "pedidos",
+      "persona": "Membro que precisa de um servico",
+      "comeca": "Explorar servicos",
+      "termina": "Pedido e resposta do prestador",
+      "acoes": ["Explorar", "Buscar", "Ver ficha", "Pedir servico"],
+      "passos": [
+        "61-web-explorar-servicos#0",
+        "61-web-explorar-servicos#1",
+        "62-web-prestador-pedido#0",
+        "62-web-prestador-pedido#1",
+        "17-web-pedido-servico#0"
+      ],
+      "variantes": []
+    },
+    {
+      "id": "web-responder-um-pedido",
+      "titulo": "Responder um pedido como prestador (web)",
+      "plataforma": "web",
+      "grupo": "negocio",
+      "persona": "Prestador no painel",
+      "comeca": "Painel de pedidos do prestador",
+      "termina": "Painel de pedidos do prestador",
+      "acoes": ["Gerenciar", "Responder"],
+      "passos": ["23-web-meu-negocio#0"],
+      "variantes": []
+    },
+    {
+      "id": "web-anunciar-um-produto",
+      "titulo": "Anunciar um produto (web)",
+      "plataforma": "web",
+      "grupo": "mercado",
+      "persona": "Membro com algo para vender",
+      "comeca": "Busca de produtos",
+      "termina": "Anuncio criado",
+      "acoes": ["Explorar", "Anunciar", "Ver ficha"],
+      "passos": ["13-web-mercado#0", "63-web-mercado-anuncio#0", "63-web-mercado-anuncio#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-gerenciar-e-encerrar-anuncio",
+      "titulo": "Gerenciar, editar e pausar anuncios (web)",
+      "plataforma": "web",
+      "grupo": "anuncios",
+      "persona": "Quem ja anunciou",
+      "comeca": "Lista dos proprios anuncios",
+      "termina": "Anuncio editado e pausado",
+      "acoes": ["Gerenciar", "Editar", "Encerrar"],
+      "passos": ["21-web-meus-anuncios#0", "64-web-mercado-edicao#0", "64-web-mercado-edicao#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-buscar-imovel-e-criar-alerta",
+      "titulo": "Buscar imovel e gerenciar alertas (web)",
+      "plataforma": "web",
+      "grupo": "moradia",
+      "persona": "Quem esta de mudanca",
+      "comeca": "Busca de imoveis",
+      "termina": "Alertas geridos",
+      "acoes": ["Buscar", "Criar alerta", "Gerenciar"],
+      "passos": ["65-web-imoveis-alertas#0", "19-web-imoveis#0", "65-web-imoveis-alertas#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-ver-e-editar-o-perfil",
+      "titulo": "Ver e editar o perfil, e ver outro membro (web)",
+      "plataforma": "web",
+      "grupo": "profile",
+      "persona": "Qualquer membro",
+      "comeca": "Meu perfil e edicao",
+      "termina": "Perfil de outro membro",
+      "acoes": ["Ver perfil", "Editar"],
+      "passos": ["51-web-perfil#0", "51-web-perfil#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-ajustar-preferencias-e-conta",
+      "titulo": "Ajustar preferencias, conta e privacidade (web)",
+      "plataforma": "web",
+      "grupo": "profile",
+      "persona": "Membro cuidando da conta",
+      "comeca": "Preferencias e notificacoes",
+      "termina": "Conta e privacidade revisadas",
+      "acoes": ["Configurar", "Bloquear"],
+      "passos": ["52-web-configuracoes#0", "52-web-configuracoes#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-voltar-ao-que-importa",
+      "titulo": "Voltar ao que importa: notificacoes e salvos (web)",
+      "plataforma": "web",
+      "grupo": "return",
+      "persona": "Membro retomando o pendente",
+      "comeca": "Central de notificacoes",
+      "termina": "Conteudos salvos",
+      "acoes": ["Notificacoes", "Salvos"],
+      "passos": ["54-web-retorno#0", "54-web-retorno#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-denunciar-e-acompanhar",
+      "titulo": "Denunciar conteudo e acompanhar (web)",
+      "plataforma": "web",
+      "grupo": "trust",
+      "persona": "Membro diante de conteudo inadequado",
+      "comeca": "Denuncia de conteudo",
+      "termina": "Acompanhamento e bloqueios",
+      "acoes": ["Denunciar", "Bloquear"],
+      "passos": ["56-web-confianca#0", "56-web-confianca#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-operar-admissoes",
+      "titulo": "Operar a fila de admissoes",
+      "plataforma": "web",
+      "grupo": "operations",
+      "persona": "Operador autorizado",
+      "comeca": "Fila de admissoes",
+      "termina": "Solicitacao analisada",
+      "acoes": ["Decidir admissao"],
+      "passos": ["57-web-operacao-admissoes#0", "57-web-operacao-admissoes#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-operar-denuncias",
+      "titulo": "Operar a fila de denuncias",
+      "plataforma": "web",
+      "grupo": "operations",
+      "persona": "Operador autorizado",
+      "comeca": "Fila de denuncias",
+      "termina": "Denuncia analisada e encerrada",
+      "acoes": ["Moderar"],
+      "passos": ["58-web-operacao-moderacao#0", "58-web-operacao-moderacao#1"],
+      "variantes": []
+    },
+    {
+      "id": "web-quando-algo-falha",
+      "titulo": "Quando algo falha: sem acesso e retomada (web)",
+      "plataforma": "web",
+      "grupo": "states",
+      "persona": "Qualquer membro sem acesso ou com falha de conexao",
+      "comeca": "Acesso indisponivel",
+      "termina": "Falha de conexao e retomada",
+      "acoes": ["Estados do sistema"],
+      "passos": ["60-web-estados#0", "60-web-estados#1"],
+      "variantes": []
+    }
+  ]
+}

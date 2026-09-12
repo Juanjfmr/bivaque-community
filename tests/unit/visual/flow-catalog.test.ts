@@ -5,8 +5,9 @@ import { describe, expect, it } from "vitest"
 // @ts-expect-error — módulo .mjs sem tipos; o teste é a verificação do contrato.
 import { loadFlowCatalog } from "../../../scripts/visual/flows/catalog.mjs"
 
-// O catálogo é a fusão das três fontes. Este teste garante que a fusão não perde nem inventa:
-// um fluxo por prancha, um passo por tela, e cada passo com o recorte correspondente.
+// O catálogo é a fusão das fontes. Aqui se trava o que a fusão não pode perder nem inventar:
+// um fluxo por prancha, uma jornada com começo e fim, cada passo citando uma tela existente, e
+// nenhuma tela das pranchas fora de qualquer jornada.
 
 const repoRoot = fileURLToPath(new URL("../../../", import.meta.url))
 const manifest = JSON.parse(
@@ -16,73 +17,82 @@ const manifest = JSON.parse(
   ),
 ) as { artifacts: Array<{ id: string; title: string; kind: string; screens: string[] }> }
 
-type Step = { index: number; label: string; frame: { x: number; w: number } }
-type Flow = {
+type Step = { ref: string; fase: string; tela: string; frame: { x: number; w: number } }
+type Journey = {
   id: string
-  title: string
-  platform: string
-  group: { id: string; label: string }
-  actions: string[]
-  steps: Step[]
+  titulo: string
+  plataforma: string
+  grupo: { id: string; label: string }
+  acoes: string[]
+  passos: Step[]
+  variantes: Step[]
 }
+type Flow = { id: string; steps: Array<{ frame: { x: number; w: number } }> }
 
-const { flows } = loadFlowCatalog() as { flows: Flow[] }
+const { flows, journeys } = loadFlowCatalog() as { flows: Flow[]; journeys: Journey[] }
 
-describe("catálogo de fluxos", () => {
+describe("fluxos (pranchas)", () => {
   it("produz um fluxo por prancha, com id único", () => {
     expect(flows.map((f) => f.id).sort()).toEqual(manifest.artifacts.map((a) => a.id).sort())
-    expect(new Set(flows.map((f) => f.id)).size).toBe(flows.length)
+  })
+})
+
+describe("jornadas", () => {
+  it("tem id único, ao menos um passo e tags", () => {
+    const problems: string[] = []
+    const seen = new Set<string>()
+    for (const journey of journeys) {
+      if (seen.has(journey.id)) problems.push(`${journey.id}: duplicada`)
+      seen.add(journey.id)
+      if (!journey.passos.length) problems.push(`${journey.id}: sem passos`)
+      if (!journey.acoes.length) problems.push(`${journey.id}: sem tags`)
+      if (!["mobile", "web"].includes(journey.plataforma)) {
+        problems.push(`${journey.id}: plataforma "${journey.plataforma}"`)
+      }
+    }
+    expect(problems, problems.join("\n")).toEqual([])
   })
 
-  it("dá a cada fluxo um passo por tela da prancha, na ordem", () => {
+  it("começa em início e termina em fim", () => {
     const problems: string[] = []
-    for (const flow of flows) {
-      const artifact = manifest.artifacts.find((a) => a.id === flow.id)
-      if (!artifact) {
-        problems.push(`${flow.id}: sem prancha no manifest`)
-        continue
+    for (const journey of journeys) {
+      const first = journey.passos[0]
+      const last = journey.passos[journey.passos.length - 1]
+      if (first && first.fase !== "início")
+        problems.push(`${journey.id}: primeiro passo não é início`)
+      if (journey.passos.length > 1 && last && last.fase !== "fim") {
+        problems.push(`${journey.id}: último passo não é fim`)
       }
-      if (flow.steps.length !== artifact.screens.length) {
-        problems.push(
-          `${flow.id}: ${flow.steps.length} passos para ${artifact.screens.length} telas`,
-        )
-      }
-      flow.steps.forEach((step, i) => {
-        if (step.index !== i + 1) problems.push(`${flow.id}: passo ${i} com índice ${step.index}`)
-        if (!step.label?.trim()) problems.push(`${flow.id}: passo ${i + 1} sem rótulo`)
-        if (step.label !== artifact.screens[i]) {
-          problems.push(
-            `${flow.id}: passo ${i + 1} não corresponde à tela "${artifact.screens[i]}"`,
-          )
+    }
+    expect(problems, problems.join("\n")).toEqual([])
+  })
+
+  it("cita telas existentes, com o recorte dentro do quadro", () => {
+    const problems: string[] = []
+    for (const journey of journeys) {
+      for (const step of [...journey.passos, ...journey.variantes]) {
+        const { x, w } = step.frame
+        if (!step.tela?.trim()) problems.push(`${journey.id} ${step.ref}: sem tela`)
+        if (x < 0 || w <= 0 || x + w > 1.0001) {
+          problems.push(`${journey.id} ${step.ref}: recorte inválido`)
         }
+      }
+    }
+    expect(problems, problems.join("\n")).toEqual([])
+  })
+
+  it("deixa toda tela das pranchas dentro de alguma jornada", () => {
+    const used = new Set<string>()
+    for (const journey of journeys) {
+      for (const step of [...journey.passos, ...journey.variantes]) used.add(step.ref)
+    }
+    const orphan: string[] = []
+    for (const artifact of manifest.artifacts) {
+      artifact.screens.forEach((_screen, index) => {
+        const ref = `${artifact.id}#${index}`
+        if (!used.has(ref)) orphan.push(ref)
       })
     }
-    expect(problems, problems.join("\n")).toEqual([])
-  })
-
-  it("carrega grupo canônico, plataforma e tags em todo fluxo", () => {
-    const problems: string[] = []
-    for (const flow of flows) {
-      if (!flow.group.id || !flow.group.label) problems.push(`${flow.id}: grupo incompleto`)
-      if (!["mobile", "web"].includes(flow.platform)) {
-        problems.push(`${flow.id}: plataforma "${flow.platform}"`)
-      }
-      if (!flow.actions.length) problems.push(`${flow.id}: sem tags`)
-      if (!flow.title?.trim()) problems.push(`${flow.id}: sem título`)
-    }
-    expect(problems, problems.join("\n")).toEqual([])
-  })
-
-  it("mantém cada recorte dentro dos limites do quadro", () => {
-    const problems: string[] = []
-    for (const flow of flows) {
-      for (const step of flow.steps) {
-        const { x, w } = step.frame
-        if (x < 0 || w <= 0 || x + w > 1.0001) {
-          problems.push(`${flow.id} passo ${step.index}: recorte fora dos limites`)
-        }
-      }
-    }
-    expect(problems, problems.join("\n")).toEqual([])
+    expect(orphan, `telas fora de qualquer jornada: ${orphan.join(", ")}`).toEqual([])
   })
 })

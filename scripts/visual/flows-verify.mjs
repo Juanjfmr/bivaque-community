@@ -1,8 +1,8 @@
 // Verificação do mapeamento de jornadas + geração do índice.
 //
-// Confere o que a galeria afirma contra as fontes: um fluxo por prancha, um passo por tela, o
-// recorte dentro dos limites, o PNG existindo com as dimensões que a geometria declara, e o HTML
-// gerado carregando exatamente os mesmos fluxos. Gera docs/journeys/FLOWS.md.
+// Confere o que a galeria afirma contra as fontes: toda tela citada por uma jornada existe e tem
+// recorte, toda tela das pranchas é alcançada por alguma jornada, os PNGs existem com as dimensões
+// que a geometria declara, e o HTML gerado carrega exatamente os mesmos itens. Gera FLOWS.md.
 //
 // Uso:
 //   node scripts/visual/flows-verify.mjs          verifica e escreve FLOWS.md
@@ -26,91 +26,141 @@ function pngSize(file) {
   return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) }
 }
 
-function htmlFlowIds() {
+function htmlDataset() {
   if (!existsSync(HTML)) return null
   const html = readFileSync(HTML, "utf8")
   const match = html.match(/<script id="dataset" type="application\/json">([\s\S]*?)<\/script>/)
-  if (!match) return null
-  const data = JSON.parse(match[1])
-  return data.flows.map((flow) => flow.id)
+  return match ? JSON.parse(match[1]) : null
 }
 
-function verify(flows) {
+function verify(catalog) {
   const problems = []
-  const seen = new Set()
+  const { flows, journeys, frames } = catalog
 
   for (const flow of flows) {
-    if (seen.has(flow.id)) problems.push(`${flow.id}: fluxo duplicado`)
-    seen.add(flow.id)
-
     const png = join(GUIDE_DIR, flow.prancha.file)
     if (!existsSync(png)) {
       problems.push(`${flow.id}: PNG ausente (${flow.prancha.file})`)
     } else {
       const size = pngSize(flow.prancha.file)
       if (size.width !== flow.prancha.width || size.height !== flow.prancha.height) {
-        problems.push(
-          `${flow.id}: dimensão do PNG ${size.width}x${size.height} != geometria ${flow.prancha.width}x${flow.prancha.height}`,
-        )
+        problems.push(`${flow.id}: dimensão do PNG ${size.width}x${size.height} != geometria`)
       }
     }
-
     flow.steps.forEach((step) => {
       const { x, w } = step.frame
       if (x < 0 || w <= 0 || x + w > 1.0001) {
         problems.push(`${flow.id} passo ${step.index}: recorte fora dos limites`)
       }
-      if (!step.label?.trim()) problems.push(`${flow.id} passo ${step.index}: sem rótulo`)
     })
-
-    if (!flow.actions.length) problems.push(`${flow.id}: sem tags`)
   }
 
-  const ids = htmlFlowIds()
-  if (ids === null) {
+  const journeyIds = new Set()
+  for (const journey of journeys) {
+    if (journeyIds.has(journey.id)) problems.push(`${journey.id}: jornada duplicada`)
+    journeyIds.add(journey.id)
+    if (journey.passos.length === 0) problems.push(`${journey.id}: sem passos`)
+    if (journey.acoes.length === 0) problems.push(`${journey.id}: sem tags`)
+    const first = journey.passos[0]
+    const last = journey.passos[journey.passos.length - 1]
+    if (first && first.fase !== "início")
+      problems.push(`${journey.id}: primeiro passo não é início`)
+    if (last && journey.passos.length > 1 && last.fase !== "fim") {
+      problems.push(`${journey.id}: último passo não é fim`)
+    }
+    for (const step of [...journey.passos, ...journey.variantes]) {
+      const { x, w } = step.frame
+      if (x < 0 || w <= 0 || x + w > 1.0001) {
+        problems.push(`${journey.id} ${step.ref}: recorte fora dos limites`)
+      }
+    }
+  }
+
+  const used = new Set()
+  for (const journey of journeys) {
+    for (const step of [...journey.passos, ...journey.variantes]) used.add(step.ref)
+  }
+  const orphan = []
+  for (const [id, board] of Object.entries(frames.boards)) {
+    for (let i = 0; i < board.expected; i++) {
+      const ref = `${id}#${i}`
+      if (!used.has(ref)) orphan.push(ref)
+    }
+  }
+  if (orphan.length) problems.push(`telas fora de qualquer jornada: ${orphan.join(", ")}`)
+
+  const data = htmlDataset()
+  if (!data) {
     problems.push("flows.html ausente ou sem dataset embutido")
   } else {
-    const missing = flows.filter((flow) => !ids.includes(flow.id)).map((flow) => flow.id)
-    const extra = ids.filter((id) => !flows.some((flow) => flow.id === id))
-    if (missing.length) problems.push(`flows.html não mostra: ${missing.join(", ")}`)
-    if (extra.length) problems.push(`flows.html mostra fluxo inexistente: ${extra.join(", ")}`)
+    const missing = journeys
+      .filter((j) => !data.jornadas.some((d) => d.id === j.id))
+      .map((j) => j.id)
+    if (missing.length) problems.push(`flows.html não mostra a jornada: ${missing.join(", ")}`)
+    const missingFlow = flows
+      .filter((f) => !data.pranchas.some((d) => d.id === f.id))
+      .map((f) => f.id)
+    if (missingFlow.length)
+      problems.push(`flows.html não mostra a prancha: ${missingFlow.join(", ")}`)
   }
 
   return problems
 }
 
-// O índice é determinístico de propósito: sem data nem revisão embutidas, senão o --check
-// ficaria vermelho a cada dia e a cada commit.
-function buildIndex(flows) {
-  const groups = new Map()
-  for (const flow of flows) {
-    if (!groups.has(flow.group.id))
-      groups.set(flow.group.id, { label: flow.group.label, flows: [] })
-    groups.get(flow.group.id).flows.push(flow)
+function groupBy(items) {
+  const map = new Map()
+  for (const item of items) {
+    const group = item.grupo ?? item.group
+    if (!map.has(group.id)) map.set(group.id, { label: group.label, items: [] })
+    map.get(group.id).items.push(item)
   }
-  const ordered = [...groups.values()].sort((a, b) => a.label.localeCompare(b.label, "pt-BR"))
+  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label, "pt-BR"))
+}
 
+function buildIndex(catalog) {
+  const { journeys, flows } = catalog
   const lines = []
-  lines.push("# Jornadas do Bivaque — índice dos fluxos")
+  lines.push("# Jornadas e fluxos do Bivaque")
   lines.push("")
   lines.push(
     "> **Gerado** por `scripts/visual/flows-verify.mjs` a partir do guia visual. Não editar à mão.",
   )
   lines.push(
-    `> ${flows.length} fluxos derivados das pranchas. É mapa de **referência de aparência e fluxo**, não prova de implementação.`,
+    "> Jornada é uma sequência de telas com início, meio e fim, no molde do Mobbin; a tela vem da prancha.",
+  )
+  lines.push(
+    `> ${journeys.length} jornadas e ${flows.length} pranchas. É mapa de **referência**, não prova de implementação.`,
   )
   lines.push("> Galeria: [flows.html](../design/visual-guide-2026-09-06/flows.html).")
   lines.push("")
+  lines.push("## Jornadas")
+  lines.push("")
 
-  for (const group of ordered) {
-    lines.push(`## ${group.label} (${group.flows.length})`)
+  for (const group of groupBy(journeys)) {
+    lines.push(`### ${group.label} (${group.items.length})`)
     lines.push("")
-    lines.push("| Fluxo | Plataforma | Telas/estados | Tags |")
+    lines.push("| Jornada | Plataforma | Telas | Começa → termina |")
     lines.push("|---|---|---|---|")
-    for (const flow of group.flows.sort((a, b) => a.id.localeCompare(b.id))) {
+    for (const journey of group.items.sort((a, b) => a.id.localeCompare(b.id))) {
+      const file = `../design/visual-guide-2026-09-06/flows.html#${journey.id}`
+      lines.push(
+        `| [${journey.titulo}](${file}) | ${PLATFORM_LABEL[journey.plataforma]} | ${journey.passos.length} | ${journey.comeca} → ${journey.termina} |`,
+      )
+    }
+    lines.push("")
+  }
+
+  lines.push("## Pranchas")
+  lines.push("")
+  for (const group of groupBy(flows)) {
+    lines.push(`### ${group.label} (${group.items.length})`)
+    lines.push("")
+    lines.push("| Prancha | Plataforma | Telas |")
+    lines.push("|---|---|---|")
+    for (const flow of group.items.sort((a, b) => a.id.localeCompare(b.id))) {
       const file = `../design/visual-guide-2026-09-06/flows.html#${flow.id}`
       lines.push(
-        `| [${flow.title}](${file}) | ${PLATFORM_LABEL[flow.platform] ?? flow.platform} | ${flow.steps.length} | ${flow.actions.join(" · ")} |`,
+        `| [${flow.title}](${file}) | ${PLATFORM_LABEL[flow.platform]} | ${flow.steps.length} |`,
       )
     }
     lines.push("")
@@ -119,8 +169,8 @@ function buildIndex(flows) {
   return lines.join("\n")
 }
 
-const { flows } = loadFlowCatalog()
-const problems = verify(flows)
+const catalog = loadFlowCatalog()
+const problems = verify(catalog)
 
 if (problems.length) {
   console.error("Verificação falhou:")
@@ -128,10 +178,10 @@ if (problems.length) {
   process.exit(1)
 }
 console.log(
-  `verificação ok: ${flows.length} fluxos, ${flows.reduce((n, f) => n + f.steps.length, 0)} passos`,
+  `verificação ok: ${catalog.journeys.length} jornadas, ${catalog.flows.length} pranchas, ${catalog.journeys.reduce((n, j) => n + j.passos.length, 0)} passos`,
 )
 
-const index = buildIndex(flows)
+const index = buildIndex(catalog)
 if (CHECK) {
   const current = existsSync(OUT_MD) ? readFileSync(OUT_MD, "utf8") : ""
   if (current !== index) {
