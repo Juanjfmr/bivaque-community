@@ -1,0 +1,92 @@
+task_id: RECON-046
+
+objective: >
+  A area de Comunidades volta a mostrar conteudo. Quem abre Comunidades ve as
+  comunidades de que participa e as que pode descobrir; quem entra numa
+  comunidade ve as conversas, os grupos e a descricao dela.
+
+authority:
+  - apps/web/app/(shell)/events/page.tsx, o mesmo defeito ja corrigido pelo RECON-043
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0, Fidelidade comprovada
+  - Inspeccao visual de 12/09/2026 sobre chore/integracao-r3-next
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 12/09/2026 por captura do build da integracao, gate e build verdes
+    com o codigo de saida lido direto, servido em 127.0.0.1:3201, conta
+    dono-vila@, largura 1440.
+
+    Em /communities a pessoa ve o titulo Comunidades e dois rotulos, Minhas
+    comunidades e Descobrir, espalhados na largura. Abaixo deles nao ha NADA:
+    nem lista, nem estado vazio, nem mensagem de erro. E a conta participa de
+    uma comunidade, a Vila Ajuricaba, que aparece na propria lateral da mesma
+    captura. Entao nao e caso de vazio: e painel que nao monta.
+
+    Em /communities/71000000-0000-4000-8000-000000000001 a pessoa ve o cabecalho
+    da comunidade, o nome, a cidade e o painel direito com numero de membros,
+    data de criacao e local. A coluna principal, com os rotulos Conversas,
+    Grupos e Sobre, esta inteiramente vazia.
+
+    A causa e a mesma que o RECON-043 mediu e corrigiu em /events, e esta no
+    codigo: os componentes de aba e de painel recebem apenas `key` e nao
+    recebem `id`. O painel do react-aria so monta quando o id casa com a chave
+    selecionada; sem id, nenhum painel monta nunca.
+
+    Ocorrencias, varridas em 12/09/2026:
+    apps/web/app/(shell)/communities/communities-screen.tsx linhas 174, 175,
+    179 e 253; apps/web/app/(shell)/communities/[id]/community-detail-screen.tsx
+    linhas 167, 168, 169, 172, 187 e 205.
+
+    Gravidade: Comunidades e um dos quatro containers primarios da navegacao.
+    A area inteira nao entrega conteudo, e isso passou por gate, por teste
+    unitario e pela auditoria mecanica sem uma unica reprovacao.
+
+allowed_paths:
+  - apps/web/app/(shell)/communities/
+  - tests/unit/
+  - docs/agents/tasks/RECON-046.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - trocar o componente de abas por marcacao manual para contornar o defeito
+  - esconder a fileira de abas quando o painel estiver vazio
+  - inventar comunidade, conversa ou grupo para a area deixar de parecer vazia
+  - mudar o que cada aba mostra, quantas sao ou a ordem delas
+  - afrouxar, apagar ou pular teste para o gate passar
+  - tocar autorizacao, schema, migration ou estado do banco
+
+acceptance:
+  - em /communities a aba de participacao mostra as comunidades da pessoa, e a conta do seed ve a Vila Ajuricaba
+  - em /communities a aba de descoberta mostra o que ha para descobrir, ou declara vazio com frase e caminho de saida
+  - na tela de uma comunidade as tres abas mostram o conteudo delas, e a de descricao mostra a descricao
+  - quando uma aba nao tem conteudo, ela declara vazio; painel sem conteudo e sem declaracao e reprovacao
+  - existe teste que reprova quando um componente de aba ou de painel e declarado sem identificador, em qualquer tela
+  - gate completo verde, com o codigo de saida lido direto
+  - capturas de /communities e da tela de uma comunidade em 375, 768 e 1440 mostrando conteudo nas abas
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-046.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE em /communities e na tela de uma comunidade
+
+traps:
+  - O RECON-043 ja corrigiu este mesmo defeito em apps/web/app/(shell)/events/page.tsx; leia aquele diff antes de comecar, e nao reinvente a solucao
+  - Servir o build para captura exige SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no processo, alem das duas publicas; sem elas a tela parece quebrada por outro motivo
+  - Exporte MSYS_NO_PATHCONV=1 e MSYS2_ARG_CONV_EXCL antes de passar rota que comeca com barra, senao o shell a transforma em caminho do Windows
+  - Nao canalize o gate por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - Ha UM Supabase local compartilhado nesta maquina; nao apague nem recrie o banco por nenhum meio
+  - Um teste que so confira estas duas telas nao impede a proxima; a cobranca tem que ser sobre o padrao
+
+risk: >
+  Renderizacao de painel de aba em duas telas da area de Comunidades, sem tocar
+  leitura de dados, autorizacao nem schema.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true
