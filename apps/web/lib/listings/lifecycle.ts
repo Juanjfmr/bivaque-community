@@ -9,6 +9,7 @@ import {
   isNeighborhoodLike,
   type ListingCategory,
   type ListingCondition,
+  MAX_LISTING_PRICE_CENTS,
   parsePriceInput,
   toCanonicalCondition,
 } from "./catalog"
@@ -229,6 +230,7 @@ export function validateListingEdit(draft: ListingEditDraft): ListingEditValidat
   const price = parsePriceInput(draft.priceInput)
   if (price === "invalid") errors.price = "Informe um valor como 650 ou 650,00."
   else if (price === null) errors.price = "Informe o preço do item."
+  else if (price > MAX_LISTING_PRICE_CENTS) errors.price = "O valor informado é alto demais."
 
   const condition = toCanonicalCondition(draft.condition)
   if (condition === null) errors.condition = "Escolha a condição do item."

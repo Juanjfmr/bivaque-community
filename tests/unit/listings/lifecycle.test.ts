@@ -173,4 +173,10 @@ describe("validateListingEdit", () => {
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.errors.neighborhood).toBeDefined()
   })
+
+  it("rejects a price above the canonical ceiling", () => {
+    const result = validateListingEdit({ ...validDraft, priceInput: "1000001" })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.price).toBeDefined()
+  })
 })
