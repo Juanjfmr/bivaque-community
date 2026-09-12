@@ -1325,6 +1325,27 @@
       "path": "docs/design/visual-guide-2026-09-06/71-web-auth-recuperacao.png",
       "status": "Referencia visual",
       "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "72-web-auth-link-invalido",
+      "kind": "web",
+      "group": "auth",
+      "title": "Web: link inválido ou expirado",
+      "screens": [
+        "Este link não vale mais",
+        "Não foi possível entrar"
+      ],
+      "reviewNotes": [
+        "As duas telas dizem o que aconteceu e qual é o próximo passo. Não culpar quem chegou, não expor detalhe técnico do provedor, e não prometer prazo de novo envio.",
+        "R06 exige a tela de callback inválido. O caminho de recuperação vencida precisa oferecer pedir outro link, sem devolver a pessoa para o começo.",
+        "A foto da coluna esquerda é bloco ilustrativo; consolidar com o asset real ao implementar."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/72-web-auth-link-invalido.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell conforme a prancha 36-web-auth-entrada. Painel 1 é o estado de link de recuperação vencido de /nova-senha. Painel 2 é /auth/callback-error, exigido por R06. Copy reconciliada com as telas implementadas.",
+      "file": "72-web-auth-link-invalido.png",
+      "path": "docs/design/visual-guide-2026-09-06/72-web-auth-link-invalido.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
     }
   ],
   "pending": [],

@@ -1032,3 +1032,21 @@ registra a divergência para decisão do dono.
 A foto da coluna esquerda é bloco ilustrativo; consolidar com o asset real ao implementar. Os
 estados de link inválido ou expirado não estão nesta prancha — são o lote seguinte,
 `72-web-auth-link-invalido`.
+
+## 72-web-auth-link-invalido — link de recuperação vencido e `/auth/callback-error`
+
+**Etapa:** W01. **Painéis:** o link de recuperação venceu; a entrada pelo link falhou.
+
+Prancha criada em 12/09/2026, depois do handoff. Fecha a lacuna de R06, que o RECON-018 já citava sem imagem de origem, e desenha o estado de link vencido que R08 exige oferecer.
+
+### Composição
+
+Shell idêntico às pranchas 36 e 71: mockup de navegador, coluna esquerda com foto sangrada e o wordmark BIVAQUE em branco, formulário à direita. Cada painel abre com um selo circular em `pine-100`, o título, a explicação e a ação.
+
+**Este link não vale mais** — H1; "Links de recuperação valem uma vez só e expiram. Peça outro para continuar de onde parou."; ação primária `Pedir outro link`; ação secundária `Voltar para entrar`; nota de que, se o link já foi usado, a senha criada continua valendo.
+
+**Não foi possível entrar** — H1; "O link de acesso é inválido ou expirou. Tente entrar novamente."; ação primária `Voltar para o login`; nota sobre link aberto em outro navegador ou depois de muito tempo.
+
+### Estados e limites
+
+Nenhuma das duas telas expõe motivo técnico nem prazo de reenvio. A de link vencido devolve a pessoa ao pedido de outro link, e não ao início do fluxo. O estado já usado tem nota própria porque é o caso mais provável e o mais mal explicado: se a senha foi criada, ela vale.

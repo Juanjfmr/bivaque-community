@@ -125,6 +125,7 @@
     "68-mobile-identidade-recuperacao": { "actions": ["Enviar identidade"] },
     "69-web-identidade-recuperacao": { "actions": ["Enviar identidade"] },
     "70-web-evento-organizar": { "actions": ["Criar evento", "Cancelar"] },
-    "71-web-auth-recuperacao": { "actions": ["Recuperar acesso", "Entrar"] }
+    "71-web-auth-recuperacao": { "actions": ["Recuperar acesso", "Entrar"] },
+    "72-web-auth-link-invalido": { "actions": ["Recuperar acesso","Entrar"] }
   }
 }

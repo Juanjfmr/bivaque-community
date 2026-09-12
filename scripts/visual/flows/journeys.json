@@ -1178,6 +1178,39 @@
         }
       ],
       "desvios": []
+    },
+    {
+      "id": "web-link-de-acesso-invalido",
+      "titulo": "Quando o link de acesso nao vale mais",
+      "plataforma": "web",
+      "grupo": "auth",
+      "persona": "Quem abriu um link velho, ja usado ou quebrado",
+      "comeca": "Link de recuperacao vencido",
+      "termina": "De volta ao caminho de entrada",
+      "acoes": [
+        "Recuperar acesso",
+        "Entrar"
+      ],
+      "etapas": [
+        {
+          "nome": "Link vencido",
+          "passos": [
+            {
+              "tela": "72-web-auth-link-invalido#0",
+              "acao": "pede outro link, sem voltar ao inicio"
+            }
+          ]
+        },
+        {
+          "nome": "Entrada falhou",
+          "passos": [
+            {
+              "tela": "72-web-auth-link-invalido#1"
+            }
+          ]
+        }
+      ],
+      "desvios": []
     }
   ]
 }

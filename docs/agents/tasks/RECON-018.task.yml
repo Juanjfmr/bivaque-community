@@ -6,6 +6,8 @@ objective: >
   o mecanismo de senha que o ADR aprovado determina.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/72-web-auth-link-invalido.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 72-web-auth-link-invalido
   - docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png
   - docs/design/visual-guide-2026-09-06/37-web-auth-confirmacao.png
   - docs/design/visual-guide-2026-09-06/71-web-auth-recuperacao.png
