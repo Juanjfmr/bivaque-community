@@ -1211,6 +1211,48 @@
         }
       ],
       "desvios": []
+    },
+    {
+      "id": "web-decidir-pedido-de-entrada",
+      "titulo": "Decidir quem entra na comunidade",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Quem administra a comunidade",
+      "comeca": "Fila de pedidos aguardando",
+      "termina": "Pedido decidido, e quem entrou aparece na comunidade",
+      "acoes": [
+        "Solicitar participacao",
+        "Gerenciar"
+      ],
+      "etapas": [
+        {
+          "nome": "Fila",
+          "passos": [
+            {
+              "tela": "73-web-comunidade-pedidos#0",
+              "acao": "abre o pedido de quem espera"
+            }
+          ]
+        },
+        {
+          "nome": "Decisao",
+          "passos": [
+            {
+              "tela": "73-web-comunidade-pedidos#1",
+              "acao": "aprova e a pessoa entra na comunidade"
+            }
+          ]
+        },
+        {
+          "nome": "Dentro",
+          "passos": [
+            {
+              "tela": "43-web-comunidade-grupos#0"
+            }
+          ]
+        }
+      ],
+      "desvios": []
     }
   ]
 }

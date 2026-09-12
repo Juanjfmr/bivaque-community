@@ -1346,6 +1346,28 @@
       "path": "docs/design/visual-guide-2026-09-06/72-web-auth-link-invalido.png",
       "status": "Referencia visual",
       "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "73-web-comunidade-pedidos",
+      "kind": "web",
+      "group": "community",
+      "title": "Web: decidir pedidos de entrada",
+      "screens": [
+        "Pedidos de entrada",
+        "Ver o pedido"
+      ],
+      "reviewNotes": [
+        "O motivo do pedido é privado: aparece só para quem administra, e o pedido não entra no feed enquanto estiver pendente. Não expor o motivo a outro membro nem listar participantes a quem não é aprovado.",
+        "R30 pede decisão conforme capacidade. A tela implementada não mostra vagas; a prancha desenha o indicador e registra a divergência para decisão do dono.",
+        "A lista de candidatos não vira roster: nomes de pendentes não são a lista de membros da comunidade.",
+        "Membros, vagas e o ano de criação são ilustrativos; consolidar com consulta real ao implementar."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/73-web-comunidade-pedidos.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do console do dono da comunidade conforme apps/web/app/(owner)/communities/[id]/admin/layout.tsx, que usa navegação de topo e não a lateral do membro. Painel 1 é a fila de pedidos com seleção em massa e ação por linha. Painel 2 é o pedido aberto, com o motivo privado e o rail Sobre a comunidade. Copy reconciliada com R30 e com a tela implementada em admin/pending.",
+      "file": "73-web-comunidade-pedidos.png",
+      "path": "docs/design/visual-guide-2026-09-06/73-web-comunidade-pedidos.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
     }
   ],
   "pending": [],

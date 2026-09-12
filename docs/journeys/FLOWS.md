@@ -2,18 +2,19 @@
 
 > **Gerado** por `scripts/visual/flows-verify.mjs` a partir do guia visual. Não editar à mão.
 > Jornada é uma sequência de telas com início, meio e fim, no molde do Mobbin; a tela vem da prancha.
-> 48 jornadas e 62 pranchas. É mapa de **referência**, não prova de implementação.
+> 49 jornadas e 63 pranchas. É mapa de **referência**, não prova de implementação.
 > Galeria: [flows.html](../design/visual-guide-2026-09-06/flows.html).
 
 ## Jornadas
 
-### Comunidades e publicação (5)
+### Comunidades e publicação (6)
 
 | Jornada | Plataforma | Etapas | Telas | Começa → termina |
 |---|---|---|---|---|
 | [Descobrir e entrar numa comunidade](../design/visual-guide-2026-09-06/flows.html#mobile-descobrir-e-entrar-numa-comunidade) | Mobile | Descoberta → Pedido → Dentro | 4 | Descoberta de comunidades da cidade → Dentro da comunidade, com os grupos a vista |
 | [Publicar uma pergunta na comunidade](../design/visual-guide-2026-09-06/flows.html#mobile-publicar-na-comunidade) | Mobile | Escrita → Alcance → Enviado | 3 | Pergunta em branco → Publicacao enviada, com o publico escolhido |
 | [Sair da comunidade](../design/visual-guide-2026-09-06/flows.html#mobile-sair-da-comunidade) | Mobile | Saida | 2 | Dentro da comunidade → Vinculo encerrado |
+| [Decidir quem entra na comunidade](../design/visual-guide-2026-09-06/flows.html#web-decidir-pedido-de-entrada) | Desktop web | Fila → Decisao → Dentro | 3 | Fila de pedidos aguardando → Pedido decidido, e quem entrou aparece na comunidade |
 | [Descobrir e entrar numa comunidade (web)](../design/visual-guide-2026-09-06/flows.html#web-descobrir-e-entrar-numa-comunidade) | Desktop web | Minhas → Descoberta → Pedido → Dentro | 4 | Minhas comunidades → Dentro da comunidade, com os grupos |
 | [Publicar e recuperar rascunho (web)](../design/visual-guide-2026-09-06/flows.html#web-publicar) | Desktop web | Publicacao → Rascunho | 2 | Publicacao em branco → Rascunho recuperado ou publicacao enviada |
 
@@ -137,7 +138,7 @@
 
 ## Pranchas
 
-### Comunidades e publicação (6)
+### Comunidades e publicação (7)
 
 | Prancha | Plataforma | Telas |
 |---|---|---|
@@ -147,6 +148,7 @@
 | [Comunidade, pedidos e grupos web](../design/visual-guide-2026-09-06/flows.html#43-web-comunidade-grupos) | Desktop web | 2 |
 | [Criar pergunta e escolher público](../design/visual-guide-2026-09-06/flows.html#44-mobile-publicacao) | Mobile | 3 |
 | [Publicação e rascunho web](../design/visual-guide-2026-09-06/flows.html#45-web-publicacao) | Desktop web | 2 |
+| [Web: decidir pedidos de entrada](../design/visual-guide-2026-09-06/flows.html#73-web-comunidade-pedidos) | Desktop web | 2 |
 
 ### Confiança (2)
 

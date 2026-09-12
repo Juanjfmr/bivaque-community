@@ -1050,3 +1050,23 @@ Shell idêntico às pranchas 36 e 71: mockup de navegador, coluna esquerda com f
 ### Estados e limites
 
 Nenhuma das duas telas expõe motivo técnico nem prazo de reenvio. A de link vencido devolve a pessoa ao pedido de outro link, e não ao início do fluxo. O estado já usado tem nota própria porque é o caso mais provável e o mais mal explicado: se a senha foi criada, ela vale.
+
+## 73-web-comunidade-pedidos — `/communities/[id]/admin/pending`
+
+**Etapa:** W03. **Painéis:** a fila de pedidos; o pedido aberto.
+
+Prancha criada em 12/09/2026, depois do handoff. O Gate W03 exige "gestor decide", e o guia só desenhava o lado de quem pede (prancha 41). Esta é a autoridade visual que faltava.
+
+**Lacuna registrada:** nenhum contrato de tarefa possui a rota do console de administração da comunidade. A prancha está ancorada no RECON-009, que é o mesmo contrato de fechamento — quem entra na comunidade — mas o console em si não tem dono no contrato.
+
+### Composição
+
+Shell do console do dono: navegação de **topo**, não a lateral do membro, com "Console — Jardim das Acácias" à esquerda e os links Pedidos de entrada, Imagens e Voltar à comunidade à direita. Vem de `apps/web/app/(owner)/communities/[id]/admin/layout.tsx`.
+
+**Pedidos de entrada** — H1; "Aprovar ou recusar candidatos antes que entrem no feed da comunidade."; barra com `Aprovar selecionados` e `Recusar selecionados` e a contagem de pedidos; lista de candidatos com caixa de seleção, nome, quando pediu e origem, e as ações `Ver pedido` e `Aprovar` por linha.
+
+**Ver o pedido** — H1 com o nome; lead explicando que a decisão é de quem administra e que o pedido não aparece no feed enquanto estiver pendente; cartão "Motivo do pedido" com o campo opcional "Por que você quer participar?" e a nota de que é visível só para quem administra; ações `Aprovar entrada` e `Recusar`. Rail "Sobre a comunidade" com vagas em uso, Membros, Local e Criada em.
+
+### Estados e limites
+
+O motivo é privado por desenho: o pedido em análise não vira conteúdo público e a lista de pendentes não é o roster da comunidade. **Divergência declarada com R30:** a spec pede decisão conforme capacidade, e a tela implementada não mostra vagas — a prancha desenha o indicador e registra a divergência. Membros, vagas e o ano de criação são ilustrativos.

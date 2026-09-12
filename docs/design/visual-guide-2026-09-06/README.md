@@ -105,6 +105,7 @@ Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.
 | [70-web-evento-organizar — Web: organizar um evento](./70-web-evento-organizar.png) | web | Novo evento; Evento publicado |
 | [71-web-auth-recuperacao — Web: recuperar o acesso](./71-web-auth-recuperacao.png) | web | Esqueceu sua senha; Crie uma senha nova |
 | [72-web-auth-link-invalido — Web: link inválido ou expirado](./72-web-auth-link-invalido.png) | web | Este link não vale mais; Não foi possível entrar |
+| [73-web-comunidade-pedidos — Web: decidir pedidos de entrada](./73-web-comunidade-pedidos.png) | web | Pedidos de entrada; Ver o pedido |
 
 ## Inspeção e correções de implementação
 
