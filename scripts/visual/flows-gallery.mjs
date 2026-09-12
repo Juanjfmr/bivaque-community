@@ -147,19 +147,20 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
 .lb-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
 .lb-head h2{margin:0 0 4px;font-size:22px}
 .lb-close{font:inherit;border:1px solid var(--line);background:var(--surface);border-radius:10px;min-width:44px;min-height:44px;cursor:pointer}
-.etapa{margin-top:22px}
-.etapa h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);margin:0 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
-.steps{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 8px;align-items:flex-end}
-.step{flex:0 0 auto;max-width:40vw;margin:0}
-.step .frame{height:48vh;max-height:540px}
-.step figcaption{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
+.trilha{display:flex;gap:24px;overflow-x:auto;padding:6px 2px 10px;align-items:flex-start}
+.etapa{flex:0 0 auto}
+.etapa h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);margin:0 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.etapa-passos{display:flex;gap:12px;align-items:flex-end}
+.step{flex:0 0 auto;max-width:38vw;margin:0}
+.step .frame{height:46vh;max-height:470px}
+.step figcaption{font-size:13px;color:var(--muted);text-align:center;margin-top:8px;max-width:340px}
 .step b{color:var(--green)}
-.seta{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;padding-bottom:80px;max-width:150px}
-.seta-glifo{font-size:22px;color:var(--green);line-height:1}
+.seta{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;padding-bottom:60px;max-width:140px}
+.seta-glifo{font-size:20px;color:var(--green);line-height:1}
 .seta-acao{font-size:12px;color:var(--muted);text-align:center;line-height:1.35}
-.ramos{margin-top:10px;display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;border-left:2px solid var(--sage);padding-left:12px}
-.ramo{flex:0 0 auto;display:flex;gap:8px;align-items:center;max-width:330px}
-.ramo .frame{height:132px}
+.ramos{margin-top:10px;display:flex;gap:14px;overflow-x:auto;padding-bottom:4px}
+.ramo{flex:0 0 auto;display:flex;gap:8px;align-items:center;max-width:320px}
+.ramo .frame{height:130px}
 .ramo-txt{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
 .ramo-txt b{color:var(--ink)}
 .lb-nav{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
@@ -167,6 +168,8 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
 .lb-nav button:disabled{opacity:.45;cursor:default}
 .lb-extra{margin-top:18px}
 .lb-extra h3{font-size:15px;margin:0 0 10px}
+.ramos-box{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+.ramos-box summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--green);min-height:32px;display:flex;align-items:center}
 .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media(max-width:640px){.step{max-width:78vw}.step .frame{height:38vh}.seta{padding-bottom:60px}}
 </style>
@@ -206,7 +209,8 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
       <button class="lb-close" id="lbclose" aria-label="Fechar">Fechar</button>
     </div>
     <div id="lbnarrativa"></div>
-    <div id="lbsteps"></div>
+    <div class="trilha" id="lbsteps"></div>
+    <div class="lb-extra" id="lbdesvios"></div>
     <div class="lb-nav">
       <button id="lbprev">Jornada anterior</button>
       <span id="lbpos" aria-live="polite"></span>
@@ -370,14 +374,14 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
       narrativa.appendChild(p);
     }
 
-    var container = document.getElementById("lbsteps");
-    container.textContent = "";
+    var trilha = document.getElementById("lbsteps");
+    trilha.textContent = "";
     var todos = passosDe(item);
 
     item.etapas.forEach(function(etapa){
       var section = el("section","etapa");
       if(etapa.nome) section.appendChild(el("h3", null, etapa.nome));
-      var row = el("div","steps");
+      var row = el("div","etapa-passos");
       etapa.passos.forEach(function(step){
         var fig = el("figure","step");
         fig.appendChild(frame(step, item.titulo + " — " + step.tela));
@@ -394,27 +398,29 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
         }
       });
       section.appendChild(row);
-
-      var ancorados = item.desvios.filter(function(d){
-        return etapa.passos.some(function(p){ return p.ref === d.apos });
-      });
-      if(ancorados.length){
-        var ramos = el("div","ramos");
-        ancorados.forEach(function(d){
-          var ramo = el("div","ramo");
-          ramo.appendChild(frame(d, d.tela));
-          var txt = el("div","ramo-txt");
-          var origem = null;
-          todos.forEach(function(p){ if(p.ref === d.apos) origem = p; });
-          txt.appendChild(el("b", null, "se " + d.quando));
-          txt.appendChild(el("span", null, "após o passo " + (origem ? origem.posicao : "?") + " — " + d.tela));
-          ramo.appendChild(txt);
-          ramos.appendChild(ramo);
-        });
-        section.appendChild(ramos);
-      }
-      container.appendChild(section);
+      trilha.appendChild(section);
     });
+
+    var desvios = document.getElementById("lbdesvios");
+    desvios.textContent = "";
+    if(item.desvios.length){
+      var box = el("details","ramos-box");
+      box.appendChild(el("summary", null, "Desvios desta jornada (" + item.desvios.length + ")"));
+      var ramos = el("div","ramos");
+      item.desvios.forEach(function(d){
+        var ramo = el("div","ramo");
+        ramo.appendChild(frame(d, d.tela));
+        var txt = el("div","ramo-txt");
+        var origem = null;
+        todos.forEach(function(p){ if(p.ref === d.apos) origem = p; });
+        txt.appendChild(el("b", null, "se " + d.quando));
+        txt.appendChild(el("span", null, "após o passo " + (origem ? origem.posicao : "?") + " — " + d.tela));
+        ramo.appendChild(txt);
+        ramos.appendChild(ramo);
+      });
+      box.appendChild(ramos);
+      desvios.appendChild(box);
+    }
 
     document.getElementById("lbpos").textContent =
       todos.length + " telas · " + item.etapas.length + (item.etapas.length === 1 ? " etapa" : " etapas") +
