@@ -97,7 +97,11 @@ export function CommunitySection({
         <h2 id="na-comunidade-titulo" className="text-lg font-semibold tracking-tight">
           Na comunidade
         </h2>
-        <Tabs aria-label="Conteúdo da comunidade" selectedKey="recentes" className="tabs--secondary">
+        <Tabs
+          aria-label="Conteúdo da comunidade"
+          selectedKey="recentes"
+          className="tabs--secondary"
+        >
           <Tabs.ListContainer>
             <Tabs.List>
               {TABS.map((item) => (
