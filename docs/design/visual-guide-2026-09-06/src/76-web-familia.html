@@ -35,7 +35,7 @@
   .side{width:232px;background:var(--surface);border-right:1px solid var(--line);padding:22px 14px 18px;display:flex;flex-direction:column;flex:0 0 auto}
   .word{color:var(--pine700);font-weight:700;font-size:21px;letter-spacing:.02em;padding:0 10px}
   .nav{margin-top:24px;display:flex;flex-direction:column;gap:2px}
-  .nav a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radius);color:var(--ink700);font-size:15px;text-decoration:none}
+  .nav a{min-height:44px;display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radius);color:var(--ink700);font-size:15px;text-decoration:none}
   .nav a.on{background:var(--pine100);color:var(--pine700);font-weight:600}
   .nav .sub a{padding:8px 12px;font-size:14px;color:var(--ink500)}
   .nav .sub a.on{color:var(--pine700);background:var(--pine100);font-weight:600}
@@ -73,16 +73,16 @@
 
   .field{display:flex;flex-direction:column;gap:6px}
   label{font-size:13px;font-weight:600;letter-spacing:.01em;color:var(--ink900)}
-  .input,.area{width:100%;background:var(--surface);border:1px solid var(--ink700);border-radius:var(--radius);min-height:42px;padding:10px 13px;font-size:14px;color:var(--ink900)}
+  .input,.area{width:100%;background:var(--surface);border:1px solid var(--ink700);border-radius:var(--radius);min-height:44px;padding:10px 13px;font-size:14px;color:var(--ink900)}
   .input.short{width:340px;max-width:100%}
   .select{display:flex;align-items:center;justify-content:space-between}
   .chev{width:7px;height:7px;border-right:1.6px solid var(--ink700);border-bottom:1.6px solid var(--ink700);transform:rotate(45deg)}
 
-  .btn{min-height:42px;border-radius:var(--radius);padding:0 18px;font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+  .btn{min-height:44px;min-height:44px;border-radius:var(--radius);padding:0 18px;font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:7px}
   .btn.primario{background:var(--pine700);color:#fff}
   .btn.secundario{background:var(--surface);color:var(--ink900);border-color:var(--line)}
   .btn.perigo{background:var(--rose100);color:var(--rose700)}
-  .btn.sm{min-height:38px;padding:0 14px;font-size:13px}
+  .btn.sm{min-height:44px;padding:0 14px;font-size:13px}
 
   /* cartao de aviso (link aparece uma unica vez) */
   .linkbox{background:var(--sunken);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:10px}

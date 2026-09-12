@@ -33,7 +33,7 @@
   .side{width:232px;background:var(--surface);border-right:1px solid var(--line);padding:22px 14px 18px;display:flex;flex-direction:column;flex:0 0 auto}
   .word{color:var(--pine700);font-weight:700;font-size:21px;letter-spacing:.02em;padding:0 10px}
   .nav{margin-top:24px;display:flex;flex-direction:column;gap:2px}
-  .nav a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radius);color:var(--ink700);font-size:15px;text-decoration:none}
+  .nav a{min-height:44px;display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radius);color:var(--ink700);font-size:15px;text-decoration:none}
   .nav a.on{background:var(--pine100);color:var(--pine700);font-weight:600}
   .sep{height:1px;background:var(--line);margin:18px 10px}
   .grow{flex:1}
@@ -58,7 +58,7 @@
 
   /* ---------- seletor em pílula (caso outbound declarado) ---------- */
   .pillSel{display:flex;gap:4px;padding:4px;border-radius:999px;border:1px solid var(--line);background:var(--sunken);width:fit-content}
-  .pillSel .opcao{flex:0 0 auto;min-height:44px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:var(--ink700)}
+  .pillSel .opcao{min-height:44px;flex:0 0 auto;min-height:44px;padding:0 18px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:var(--ink700)}
   .pillSel .opcao.on{background:var(--pine700);color:#fff;font-weight:600}
   .pillSel .opcao .chip{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--amber100);color:var(--amber700)}
   .pillSel .opcao.on .chip{background:rgba(255,255,255,.18);color:#fff}
@@ -72,16 +72,17 @@
   .eventos a{display:flex;align-items:center;gap:14px;padding:8px 0;font-size:14px;color:var(--ink900);text-decoration:none;min-height:44px}
   .eventos a + a{border-top:1px solid var(--line)}
   .eventos a:hover{color:var(--pine700)}
+  .eventos a::after{content:"";width:7px;height:7px;border-right:1.6px solid var(--ink500);border-bottom:1.6px solid var(--ink500);transform:rotate(-45deg);flex:0 0 auto;margin-left:2px}
   .eventos .dia{width:54px;font-size:12px;color:var(--ink500);text-align:right;flex:0 0 auto;font-weight:600;font-variant-numeric:tabular-nums}
   .eventos .titulo{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   .botoes{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .btn{min-height:42px;border-radius:var(--radius);padding:0 18px;font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent;display:inline-flex;align-items:center;gap:8px}
+  .btn{min-height:44px;min-height:44px;border-radius:var(--radius);padding:0 18px;font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent;display:inline-flex;align-items:center;gap:8px}
   .btn.primario{background:var(--pine700);color:#fff}
   .btn.secundario{background:var(--surface);color:var(--ink900);border-color:var(--line)}
 
   .vitrine{display:flex;flex-direction:column;gap:6px}
-  .vitrine a{display:flex;flex-direction:column;padding:8px 0;text-decoration:none;color:var(--ink900);font-size:14px;line-height:19px;min-height:42px}
+  .vitrine a{display:flex;flex-direction:column;padding:8px 0;text-decoration:none;color:var(--ink900);font-size:14px;line-height:19px;min-height:44px}
   .vitrine a:hover{color:var(--pine700)}
   .vitrine a:hover .cat{color:var(--pine700)}
   .vitrine a .nome{font-weight:600}
@@ -187,9 +188,9 @@
             <section class="cartao" aria-label="Próximos eventos da cidade">
               <h2>Próximos eventos da cidade</h2>
               <div class="eventos">
-                <a href="#"><span class="dia">18 out</span><span class="titulo">Café entre vizinhos — Jardim das Acácias</span></a>
-                <a href="#"><span class="dia">25 out</span><span class="titulo">Encontro de prestadores da Asa Norte</span></a>
-              <a href="#"><span class="dia">08 nov</span><span class="titulo">Roda de leitura no Parque da Cidade</span></a>
+                <a href="/events/cafe-entre-vizinhos"><span class="dia">18 out</span><span class="titulo">Café entre vizinhos — Jardim das Acácias</span></a>
+                <a href="/events/encontro-de-prestadores-asa-norte"><span class="dia">25 out</span><span class="titulo">Encontro de prestadores da Asa Norte</span></a>
+              <a href="/events/roda-de-leitura-parque-da-cidade"><span class="dia">08 nov</span><span class="titulo">Roda de leitura no Parque da Cidade</span></a>
             </div>
               <p style="margin:14px 0 0"><a href="#" style="font-size:14px;font-weight:600;color:var(--pine700);text-decoration:none">Ver todos os eventos →</a></p>
             </section>
@@ -289,9 +290,9 @@
             <section class="cartao" aria-label="Próximos eventos da cidade">
               <h2>Próximos eventos da cidade</h2>
               <div class="eventos">
-                <a href="#"><span class="dia">18 out</span><span class="titulo">Café entre vizinhos — Jardim das Acácias</span></a>
-                <a href="#"><span class="dia">25 out</span><span class="titulo">Encontro de prestadores da Asa Norte</span></a>
-                <a href="#"><span class="dia">08 nov</span><span class="titulo">Roda de leitura no Parque da Cidade</span></a>
+                <a href="/events/cafe-entre-vizinhos"><span class="dia">18 out</span><span class="titulo">Café entre vizinhos — Jardim das Acácias</span></a>
+                <a href="/events/encontro-de-prestadores-asa-norte"><span class="dia">25 out</span><span class="titulo">Encontro de prestadores da Asa Norte</span></a>
+                <a href="/events/roda-de-leitura-parque-da-cidade"><span class="dia">08 nov</span><span class="titulo">Roda de leitura no Parque da Cidade</span></a>
               </div>
               <p style="margin:14px 0 0"><a href="#" style="font-size:14px;font-weight:600;color:var(--pine700);text-decoration:none">Ver todos os eventos →</a></p>
             </section>

@@ -42,7 +42,7 @@
   .biz strong{display:block;font-size:14px;font-weight:650;color:var(--ink900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .biz small{display:block;font-size:12px;color:var(--ink500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .nav{display:flex;flex-direction:column;gap:2px}
-  .nav a{display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 12px;border-radius:var(--radius);color:var(--ink700);font-size:14px;text-decoration:none}
+  .nav a{min-height:44px;display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 12px;border-radius:var(--radius);color:var(--ink700);font-size:14px;text-decoration:none}
   .nav a.on{background:var(--pine100);color:var(--pine700);font-weight:600}
   .sep{height:1px;background:var(--line);margin:14px 8px}
   .grow{flex:1}
@@ -76,7 +76,7 @@
   .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
   label{font-size:13px;font-weight:600;letter-spacing:.01em;color:var(--ink900)}
   label .opt{font-weight:400;color:var(--ink500);margin-left:4px}
-  .input,.area{width:100%;background:var(--surface);border:1px solid var(--ink700);border-radius:var(--radius);min-height:42px;padding:10px 13px;font-size:14px;color:var(--ink900);font-family:inherit}
+  .input,.area{width:100%;background:var(--surface);border:1px solid var(--ink700);border-radius:var(--radius);min-height:44px;padding:10px 13px;font-size:14px;color:var(--ink900);font-family:inherit}
   .area{min-height:78px;line-height:22px;resize:none}
   .filebox{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--canvas);font-size:14px;color:var(--ink500)}
   .filebox strong{font-size:14px;color:var(--ink900);font-weight:600}
@@ -84,11 +84,11 @@
   .check .box{width:18px;height:18px;border:1.5px solid var(--ink700);border-radius:5px;background:var(--surface);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
   .check.on .box{background:var(--pine700);border-color:var(--pine700);color:#fff}
   .actions{display:flex;gap:10px;align-items:center;margin-top:8px}
-  .btn{min-height:42px;border-radius:var(--radius);padding:0 18px;font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent}
+  .btn{min-height:44px;min-height:44px;border-radius:var(--radius);padding:0 18px;font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent}
   .btn.primary{background:var(--pine700);color:#fff}
   .btn.secondary{background:var(--surface);color:var(--ink900);border-color:var(--line)}
   .btn.ghost{background:transparent;color:var(--ink700)}
-  .btn.small{min-height:36px;font-size:13px;padding:0 12px}
+  .btn.small{min-height:44px;font-size:13px;padding:0 12px}
 
   /* ---------- lista de catalogo ---------- */
   .item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
@@ -114,11 +114,11 @@
   .shot.add{border:1px dashed var(--ink500);background:var(--sunken);align-items:center;justify-content:center;font-weight:600;color:var(--pine700);font-size:13px}
   .bar{height:8px;border-radius:999px;background:var(--sunken);overflow:hidden;margin-top:10px}
   .bar span{display:block;height:100%;background:var(--pine700)}
-  .main{padding:18px 30px 12px}
-  .item{padding:10px 14px}
-  .area{min-height:34px}
-  .hint{line-height:18px}
-  .shot{height:80px}
+  .main{padding:14px 30px 6px}
+  .item{padding:9px 14px}
+  .area{min-height:30px}
+  .hint{line-height:16px}
+  .shot{height:78px}
 </style>
 </head>
 <body>

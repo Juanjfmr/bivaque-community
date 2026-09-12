@@ -38,7 +38,7 @@
   .side{width:232px;background:var(--surface);border-right:1px solid var(--line);padding:22px 14px 18px;display:flex;flex-direction:column;flex:0 0:auto}
   .word{color:var(--pine700);font-weight:700;font-size:21px;letter-spacing:.02em;padding:0 10px}
   .nav{margin-top:24px;display:flex;flex-direction:column;gap:2px}
-  .nav a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radius);color:var(--ink700);font-size:15px;text-decoration:none}
+  .nav a{min-height:44px;display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radius);color:var(--ink700);font-size:15px;text-decoration:none}
   .nav a.on{background:var(--pine100);color:var(--pine700);font-weight:600}
   .sep{height:1px;background:var(--line);margin:18px 10px}
   .grow{flex:1}
@@ -58,11 +58,11 @@
   /* ---------- /messages: header + two-pane ---------- */
   .msg-head{height:58px;flex:0 0:auto;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;gap:14px}
   .msg-head h1{font-size:19px;font-weight:650;margin:0;color:var(--ink900);letter-spacing:-.005em}
-  .btn{min-height:42px;border-radius:var(--radius);padding:0 16px;font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+  .btn{min-height:44px;min-height:44px;border-radius:var(--radius);padding:0 16px;font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:7px}
   .btn.primario{background:var(--pine700);color:#fff}
   .btn.secundario{background:var(--surface);color:var(--ink900);border-color:var(--line)}
   .btn.fantasma{background:transparent;color:var(--ink900);border-color:transparent}
-  .btn.sm{min-height:36px;padding:0 12px;font-size:13px}
+  .btn.sm{min-height:44px;padding:0 12px;font-size:13px}
   .btn[disabled]{opacity:.45;cursor:not-allowed}
 
   .msg-body{flex:1;display:flex;min-height:0;background:var(--canvas)}
