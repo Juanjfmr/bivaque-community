@@ -2098,7 +2098,9 @@
         "RECON-044 (12/09, branch fix/recon-044-pedidos): RECON-041 BLOCKER RESOLVIDO — service_requests volta a ser UM dominio. Removido o arquivo conflitante do RECON-024 (20260911032105); a migration nova 20260912063553 soma category, region e first_responded_at sobre a base aplicada 20260911032309, preservando provider_user_id, idempotency_key e a policy que le a primeira. respond_to_service_request nao e recriada (absorvida por send_conversation_message, a unica resposta do prestador); cancel_service_request entra nova (so o solicitante, terminal cancelled); close_service_request e update_service_request aplicadas sobrevivem. O formulario do prestador passa a enviar a conversa do pedido.",
         "RECON-044: npx pnpm@11.18.0 exec supabase migration up --local --include-all, exit lido direto do $?: 0 (aplica 20260910202110 e 20260912063553 ate o fim).",
         "RECON-044: npx pnpm@11.18.0 exec supabase test db, exit lido direto do $?: 1. Resultado global contaminado pelo estado do banco (a semente de desenvolvimento esta carregada; o teste de banco exige banco SEM semente) — varias suites alheias reprovam por isso. O arquivo do lote, supabase/tests/service-requests.sql, roda e passa as 31 assercoes que declara (era 12 de 28, abortava em :313); a CLI reporta o arquivo como ok. service-request-tracking.sql reprova 1 de 26 no assert 21 por bug pre-existente de formatacao (jsonb devolve ISO-8601 com T, ::text devolve com espaco), nao tocado por este lote.",
-        "RECON-044: npx pnpm@11.18.0 gate, exit lido direto do $?: 1. lint e typecheck verdes; test vermelho por dois achados pre-existentes e fora dos allowed_paths — prancha-coverage (RECON-042 cita prancha sem a leitura) e visual-capture-proof (rotas /prestador/atendimento e /prestador/conta sem HEADINGS em scripts/visual/capture.mjs). Build pulado localmente por falta de apps/web/.env.local. A regeneracao de tipos foi descartada: com a CLI fixada ela muda a nulabilidade de set_community_image.p_path, quebra typecheck fora do lote e arrasta a migration 20260910202110."
+        "RECON-044: npx pnpm@11.18.0 gate, exit lido direto do $?: 1. lint e typecheck verdes; test vermelho por dois achados pre-existentes e fora dos allowed_paths — prancha-coverage (RECON-042 cita prancha sem a leitura) e visual-capture-proof (rotas /prestador/atendimento e /prestador/conta sem HEADINGS em scripts/visual/capture.mjs). Build pulado localmente por falta de apps/web/.env.local. A regeneracao de tipos foi descartada: com a CLI fixada ela muda a nulabilidade de set_community_image.p_path, quebra typecheck fora do lote e arrasta a migration 20260910202110.",
+        "Auditoria de 12/09 contra a linha viva (041823f): 86 page.tsx e todas as 31 pranchas web com rota — mercado, imoveis, meus-anuncios, pedidos, alertas, salvos, denuncias, events/[id]/perguntas, guide/[id]/correcao, onboarding/documento. Contra origin/main a mesma auditoria reprovava telas que ja existem, porque a main esta 107 commits atras (git rev-list --count origin/main..chore/integracao-r3-next = 107; merge-base 0323a94; os 2 commits exclusivos da main sao so board: 32ecfe7, 9779db2).",
+        "Seed da linha viva sem massa de anuncios: git show 041823f:supabase/seed.sql tem service_requests e nao tem listings, property_details nem listing_alerts — a campanha TEST-MASSA-JORNADAS cobre essa lacuna."
       ],
       "tests": [
         "node --test tests/scope/prancha-coverage.test.mjs",
@@ -2118,8 +2120,52 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
+      "drift": {
+        "documented": "Nota de 11/09: 'os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha resta por construir'",
+        "observed": "Verdadeiro como cobertura de contratos e branches; origin/main nao recebeu a integracao (107 commits atras) e o mesmo registro admite que faltam integracao, build, prova de runtime e comparacao visual",
+        "action": "A campanha TEST-MASSA-JORNADAS produz a prova de runtime por lote na linha viva; promover a integracao para a main e decisao do dono"
+      },
       "updatedAt": "2026-09-12",
-      "sourceRevision": "6499c79"
+      "sourceRevision": "041823f"
+    },
+    {
+      "id": "TEST-MASSA-JORNADAS",
+      "title": "Campanha de teste em massa: seed de jornada e execução completa na linha viva",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "testing",
+      "status": "now",
+      "description": "A pedido do dono (12/09): encher o banco com os estados que cada jornada exige e concluir cada jornada na linha viva, registrando com prova o que quebra. Base: branch test/teste-em-massa apontada para 041823f (topo de chore/integracao-r3-next), o topo real do trabalho — origin/main está 107 commits atrás e mede um produto sem Mercado/Moradia/Pedidos. O seed atual não tem listings, property_details nem listing_alerts, então Mercado/Moradia/Alertas ganham dados pela primeira vez. Restrição dura: o Supabase local é compartilhado entre executores; reset e massa exigem janela própria.",
+      "checklist": [
+        "Seed de jornada: listings (item e property), listing_photos, listing_alerts e deliveries, RSVP, respostas e salvos de indicação, DM, notificações, convite pendente, interesses e salvos de post — sem tocar no banco sem-seed do pgTAP",
+        "Escolher o mecanismo do seed (extensão do seed.sql durável vs gerador) e validar que a suíte E2E seed-driven não regride",
+        "Roteiro por ator (visitante, membro, membro sem vila, dono/moderador, prestador, operador, multiusuário) revisado pelo dono antes da execução",
+        "Executar cada jornada com entrada, ação, feedback e follow-up; registrar quebras com prova",
+        "Prova de runtime por lote (fecha o PENDENTE do RECON-PRANCHAS-RESTANTES)",
+        "Cobertura E2E para Mercado, Imóveis e Pedidos (sem spec dedicada hoje)",
+        "Bugs confirmados viram cards com prova; dead ends entram como divergência declarada"
+      ],
+      "proof": [
+        "Auditoria de 12/09 contra 041823f: 86 page.tsx e todas as 31 pranchas web com rota; specs novas na linha viva apenas recon-032-denuncias.spec.ts e recon-032-salvos.spec.ts",
+        "git rev-list --count origin/main..chore/integracao-r3-next = 107; merge-base 0323a94",
+        "git show 041823f:supabase/seed.sql tem service_requests e nao tem listings, property_details nem listing_alerts",
+        "Branch da campanha test/teste-em-massa em 041823f; worktree limpo na abertura"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 db:reset (com seed) em janela própria com o banco compartilhado coordenado",
+        "npx pnpm@11.18.0 test:db (banco sem seed) antes de qualquer captura visual",
+        "node scripts/visual/loop.mjs",
+        "npx pnpm@11.18.0 test:e2e --workers=1"
+      ],
+      "links": [
+        "Execução dos lotes | ../../docs/agents/RECON-WEB-EXECUCAO.md",
+        "Pranchas web | ../../docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "Mapa das telas | ../../docs/design/visual-guide-2026-09-06/MAPA-DE-TELAS.md",
+        "ADR de anúncios | ../../docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "041823f"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
