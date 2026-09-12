@@ -171,7 +171,8 @@ body {
      por teclado traz a aba para a vista, sem rolar a página. */
   .tabs--secondary .tabs__list-container__scroll-prev,
   .tabs--secondary .tabs__list-container__scroll-next {
-    display: none;
+    /* biome-ignore lint/complexity/noImportantStyles: o `inline-flex` que o HeroUI aplica quando o scroller transborda tem especificidade maior; sem !important o chevron de 16x16 volta e reprova a régua de alvo de toque */
+    display: none !important;
   }
 
   :where(a, button, input, select, textarea, [role="button"], [role="checkbox"]):focus-visible {
