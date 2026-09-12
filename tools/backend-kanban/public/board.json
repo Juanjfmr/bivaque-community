@@ -2435,6 +2435,41 @@
       "updatedAt": "2026-09-12",
       "completedAt": "2026-09-12",
       "sourceRevision": "f81534d"
+    },
+    {
+      "id": "RECON-045",
+      "title": "A classe tabs--secondary nao tinha regra e a aba ativa sumia em tres telas",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "As telas /salvos, /recommendations e /events aplicavam a classe tabs--secondary no componente de abas e nenhum arquivo de estilo a definia; o build fixado do HeroUI nao aplica o slot da variante secondary (registrado em (shell)/salvos/page.tsx). Medido: fileira esticada na largura inteira e nenhuma marca na aba ativa. A correcao e uma regra unica em apps/web/app/globals.css que as tres telas herdam: borda inferior de 2px em --semantic-action-primary, peso 600 e cor no item [data-selected=true], a mesma aparencia que /mercado ja renderiza. A fileira passou a ter largura de conteudo e o chevron de rolagem que o HeroUI injeta (16x16, reprova a regua de alvo de toque 44x44 do produto) foi escondido; a pagina nao rola em 375. tests/unit/visual/tab-variant-rule.test.ts reprova qualquer classe modificadora (name--modifier) usada nas telas sem regra em CSS do produto, fechando o mecanismo e nao apenas o caso.",
+      "checklist": [
+        "Regra unica em globals.css marca a aba ativa nas tres telas ✅",
+        "Teste reprova classe modificadora aplicada sem regra, com controle positivo e negativo ✅",
+        "Runtime confirma [role=tab][data-selected=true] com borda de 2px e peso 600 em 375/768/1440 ✅",
+        "Capturas validas de /salvos, /recommendations e /events com 0 achados em 375/768/1440 ✅",
+        "PENDENTE: revisao independente (o contrato RECON-045 exige reviewer_must_differ_from_executor)"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-045.task.yml -> EXIT=0, 1 contrato valido",
+        "Runtime Playwright (dono-vila@; /events com membro-6@): [role=tab][data-selected=true] devolve border-bottom-width 2px, border-bottom-color rgb(22,71,52) (--semantic-action-primary) e font-weight 600; a nao selecionada devolve borda transparente de 2px e peso 500; sem rolagem horizontal de pagina em 375/768/1440",
+        "capture.mjs com BIVAQUE_VISUAL_ROUTE em /salvos, /recommendations e /events -> EXIT=0, captura VALID, 0 achados em 375/768/1440 (runnerRevision 8c29cd2, arvore limpa)",
+        "npx pnpm@11.18.0 gate -> EXIT=0, GATE VERDE (lint, typecheck, build, test: 826 unit + workspaces + 189 privacy/scope, secrets)"
+      ],
+      "tests": [
+        "tests/unit/visual/tab-variant-rule.test.ts",
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-045.task.yml"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-045.task.yml",
+        "apps/web/app/globals.css",
+        "apps/web/app/(shell)/salvos/page.tsx",
+        "apps/web/app/(shell)/mercado/page.tsx"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "f3b37fa"
     }
   ]
 }
