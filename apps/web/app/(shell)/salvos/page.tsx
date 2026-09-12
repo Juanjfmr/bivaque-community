@@ -138,11 +138,17 @@ export default function SalvosPage() {
           <h1 className="text-lg font-semibold tracking-tight">Salvos</h1>
         </div>
 
+        {/* A prancha 54 usa abas sublinhadas, não a pílula larga. O build fixado
+          recebe variant="secondary" mas o tabsVariants embarcado não aplica o
+          slot (verificado no runtime: slots.base() volta "tabs"); a classe
+          tabs--secondary é a MESMA que a variante adicionaria, aplicada aqui
+          para não depender desse desvio do build. */}
         <Tabs
           aria-label="Filtrar salvos por tipo"
           selectedKey={activeTab}
           onSelectionChange={(key) => setActiveTab(key as TabKey)}
-          className="mt-4"
+          variant="secondary"
+          className="tabs--secondary mt-4"
         >
           <Tabs.ListContainer>
             <Tabs.List>
@@ -202,16 +208,16 @@ export default function SalvosPage() {
           <div className="mt-6">
             <EmptyState
               title="Nada salvo ainda"
-              description="Toque no marcador de um pedido de indicação para encontrá-lo aqui depois."
+              description="Quando você guardar um conteúdo, ele fica aqui para você voltar depois."
               action={
                 <Button
                   variant="primary"
                   className="min-h-11"
                   onPress={() => {
-                    router.push("/recommendations")
+                    router.push("/explorar")
                   }}
                 >
-                  Ver pedidos de indicação
+                  Explorar conteúdos
                 </Button>
               }
             />

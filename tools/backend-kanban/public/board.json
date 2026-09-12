@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-09-12",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -2313,6 +2313,52 @@
       "blockers": [],
       "updatedAt": "2026-09-11",
       "sourceRevision": "0323a94"
+    },
+    {
+      "id": "RECON-038",
+      "title": "RECON-038: fidelidade do shell — cabeçalho, lateral ativa e elementos do Início",
+      "phase": "Reconstrucao",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "blocked",
+      "description": "Lote das pranchas 01-web-inicio e 54-web-retorno. ENTREGUE no código: marca BIVAQUE em caixa alta/verde na lateral; seletor de cidade à direita junto ao sino com a busca ao centro; Publicar único (o do compositor) — o duplicado do cabeçalho saiu; item ativo da lateral derivado da rota por apps/web/app/components/shell/active-nav.ts, então /salvos acende Salvos (antes acendia Perfil), com teste que falha se voltar a divergir; terceira entrada Serviços (/explorar/servicos) no rail do Início; abas de /salvos em sublinhado; estado vazio de Salvos sem reduzir a tela a um tipo; card do próximo encontro com avatares e linha de presença lida da RLS (mesma leitura de /events/[id]). PENDÊNCIAS NOMEADAS: (a) #6 Minhas comunidades não renderiza porque o banco compartilhado NÃO tem communities.thumbnail_path — a migration 20260911093140_community_images.sql (RECON-034) não está aplicada; o layout já está correto e o bloco aparece quando a migration rodar (reset/migration proibidos neste contrato). (b) #4 o ícone de lâmpada do cabeçalho a prancha não desenha, mas é a única entrada de /recommendations em 375/768; removê-lo órfã o fluxo e quebra três contratos E2E (shell-navigation, shell-accessibility-denials, manaus-pilot) — precisa de decisão de onde Indicações vive antes de tirá-lo. (c) #7 card \"De mudança?/Explorar destino\" sem fonte de destino real — não inventado. (d) #8 faixa de retorno implementada com fonte real (notifications), não observável porque o seed não tem notificação não lida e não se escreve no banco. (e) #10 avatares/nomes de presença implementados com fonte real, não observáveis porque o seed não tem event_rsvps. (f) #11 abas Guia/Mercado/Imóveis dependem do backend de salvamento (RECON-030/025/027), já pendente no RECON-032. As 3 capturas passaram na auditoria mecânica com 0 achados: auditoria verde NÃO é fidelidade.",
+      "checklist": [
+        "Marca BIVAQUE em caixa alta e verde na lateral, em todas as larguras",
+        "Seletor de cidade à direita junto ao sino, busca ao centro",
+        "Um único Publicar, e o do compositor publica",
+        "Item ativo da lateral derivado da rota em /inicio, /explorar e /salvos",
+        "Teste de unidade falha se /salvos voltar a acender Perfil",
+        "Elementos ausentes do Início entregues com fonte real ou pendência nomeada",
+        "Abas de Salvos correspondem à prancha (sublinhado) ou diferença registrada",
+        "Gate completo verde com o código de saída lido direto",
+        "Capturas de /inicio, /explorar e /salvos em 375/768/1440 confrontadas com as pranchas",
+        "PENDENTE: #4 entrada de Indicações em <lg, #6 migration de imagem de comunidade, #7 destino, #8/#10 fixture do seed, #11 backend de salvamento"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-038.task.yml -> ok (R2, retry 3)",
+        "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
+        "tests/unit/ui/shell-active-nav.test.ts -> 8 passed; tests/unit/ui/inicio-going-line.test.ts -> passed",
+        "capturas de /inicio, /explorar e /salvos em 375/768/1440: Authenticated capture yes, 0 findings — a comparação com a prancha é a prova de fidelidade, não o número de findings"
+      ],
+      "tests": [
+        "tests/unit/ui/shell-active-nav.test.ts",
+        "tests/unit/ui/inicio-going-line.test.ts"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-038.task.yml",
+        "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/design/visual-guide-2026-09-06/01-web-inicio.png",
+        "docs/design/visual-guide-2026-09-06/54-web-retorno.png"
+      ],
+      "dependencies": ["RECON-PRANCHAS-RESTANTES", "RECON-032"],
+      "blockers": [
+        "migration 20260911093140_community_images.sql (RECON-034) nao aplicada no banco compartilhado: communities.thumbnail_path ausente; reset/migration proibidos neste contrato",
+        "decisao de produto sobre a entrada de Indicacoes em <lg antes de remover o icone de lampada (#4)",
+        "seed sem event_rsvps e sem notificacoes: #8 e #10 nao observaveis nesta captura",
+        "abas Guia/Mercado/Imoveis de /salvos dependem de RECON-030/025/027"
+      ],
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "cdd2b57"
     }
   ]
 }

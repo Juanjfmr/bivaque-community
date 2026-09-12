@@ -2,11 +2,11 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 2026-09-09
+**Snapshot:** 2026-09-12
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 76 frentes · 12 agora · 9 bloqueadas · 28 concluídas · 1 drifts
+**Mapa:** 77 frentes · 12 agora · 10 bloqueadas · 28 concluídas · 1 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -36,6 +36,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **BLOCK-WHATSAPP** · BLOCK · Canal WhatsApp do outbox — Chip dedicado; CNPJ para Cloud API futura; Decisão de produto
 - **BLOCK-MOBILE-RUNTIME** · P1 · Runtime Android/iOS em device real — bootstrap ausente — cmdline-tools + system-image + AVD ausentes (Android); Apple Developer Program + EAS credentials ausentes (iOS)
 - **RECON-005-BLOQUEADO** · P1 · Tela /profile bloqueada por decisao R3 de visibilidade de campo — Aprovacao humana do ADR-20260908-perfil-campos-opcionais; Modelo de ameaca e texto de consentimento; Governanca LGPD (BLOCK-LEGAL-AI)
+- **RECON-038** · P1 · RECON-038: fidelidade do shell — cabeçalho, lateral ativa e elementos do Início — migration 20260911093140_community_images.sql (RECON-034) nao aplicada no banco compartilhado: communities.thumbnail_path ausente; reset/migration proibidos neste contrato; decisao de produto sobre a entrada de Indicacoes em <lg antes de remover o icone de lampada (#4); seed sem event_rsvps e sem notificacoes: #8 e #10 nao observaveis nesta captura; abas Guia/Mercado/Imoveis de /salvos dependem de RECON-030/025/027
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Reconciliar ADR técnico com autorização de produto de 07/09; concluir threat model, leitura por campo, remoção e testes positivos/negativos
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança
 

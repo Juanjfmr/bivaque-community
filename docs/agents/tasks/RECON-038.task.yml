@@ -9,6 +9,7 @@ objective: >
 authority:
   - docs/design/visual-guide-2026-09-06/01-web-inicio.png
   - docs/design/visual-guide-2026-09-06/54-web-retorno.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md
   - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md seção 0, "Fidelidade comprovada"
   - Inspeção visual de 12/09/2026 sobre chore/integracao-r3, capturas em .visual/vis-inicio, vis-explorar e vis-salvos
 
