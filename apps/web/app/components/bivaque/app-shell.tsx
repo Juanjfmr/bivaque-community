@@ -9,7 +9,7 @@ import { type ReactNode, useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
 import { MemberAvatar } from "./avatar"
-import { BottomNav, NAV_ITEMS } from "./bottom-nav"
+import { BottomNav, NAV_ITEMS, resolveNavContainer } from "./bottom-nav"
 
 interface AppShellProperties {
   children: ReactNode
@@ -34,6 +34,7 @@ export function AppShell({ children }: AppShellProperties) {
   // Between md and lg the rail is forced, so the user's collapse preference
   // only takes effect once the viewport is wide enough to show labels.
   const isRail = !canExpand || sidebarCollapsed
+  const activeNavContainer = resolveNavContainer(pathname)
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((previous) => !previous)
@@ -158,23 +159,7 @@ export function AppShell({ children }: AppShellProperties) {
           {/* Nav items */}
           <nav aria-label="Navegação principal" className="flex flex-col gap-1 p-3">
             {NAV_ITEMS.map((item) => {
-              // When a route is not one of the four containers (e.g. /messages,
-              // /notifications, and the historical /localidade, /community,
-              // /groups still reachable in W00), fall back so the sidebar never
-              // shows no active item: /messages and /notifications resolve to
-              // "perfil", everything else to "inicio". Mirrors bottom-nav's
-              // selectedKey fallback so the two navs stay in sync.
-              const inPrimaryNav = NAV_ITEMS.some(
-                (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
-              )
-              const fallbackId =
-                pathname.startsWith("/messages") || pathname.startsWith("/notifications")
-                  ? "perfil"
-                  : "inicio"
-              const active =
-                pathname === item.href ||
-                pathname.startsWith(`${item.href}/`) ||
-                (!inPrimaryNav && item.id === fallbackId)
+              const active = item.id === activeNavContainer
 
               const anchor = (
                 <a
