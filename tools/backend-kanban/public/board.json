@@ -1711,7 +1711,8 @@
         "Validação da simplificação: 96/96 testes de escopo PASS; 10 links locais adicionados resolvem; board --check PASS; Biome do board PASS; git diff --check PASS. Somente documentação/quadro alterados nesta tarefa, sem build/E2E do produto, revisão independente, commit ou push.",
         "Prancha 70-web-evento-organizar criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis 1032 com split em 0.497/0.503). Fecha o buraco do RECON-029, que descrevia criar e editar evento sem imagem de origem. Manifesto passa a 32 pranchas web; leitura registrada em PRANCHAS-WEB-RESTANTES.md; contrato RECON-029 cita a prancha e a leitura; scope test de 31 para 32. Verificado: 111/111 scope tests, 50 testes unitários visuais, flows:check em dia (46 jornadas, 60 pranchas, 134 passos), detect-frames --check 60/0. A jornada web-organizar-um-evento atravessa duas pranchas.",
         "Correcao do PNG da prancha 70: a primeira captura saiu com o conteudo comprimido em 1384x505 de um canvas de 2076x757, porque o Chrome reduziu a pagina a 2/3 (devicePixelRatio 0.667) para caber na janela; o recorte de 49,7% da galeria mostrava dois paineis no lugar de um. Refeito por Playwright headless e conferido: as unicas colunas 100% fundo do PNG sao 1032..1043, a calha de 12px. O novo scripts/visual/render-board.mjs (board:render) recusa escrever quando o devicePixelRatio nao e 1 ou o quadro nao bate com o tamanho pedido — a guarda que teria pego o defeito.",
-        "Prancha 71-web-auth-recuperacao criada em 12/09/2026 pela mesma linha da 70: fonte HTML versionada, PNG renderizado com a guarda de devicePixelRatio, manifesto em 33 pranchas web, leitura em PRANCHAS-WEB-RESTANTES.md, RECON-018 como autoridade (ja citava R07 e R08 sem imagem de origem), scope test de 32 para 33 e a jornada web-recuperar-o-acesso. Cobre R07 com o retorno neutro exigido como requisito de privacidade. Divergencia declarada com R08: a spec pede campo de confirmacao, a tela implementada usa mostrar/ocultar senha. Verificado: 111/111 scope tests, 50 testes unitarios visuais, flows:check em dia (47 jornadas, 61 pranchas, 136 passos), detect-frames --check 61/0, render-board --check verde."
+        "Prancha 71-web-auth-recuperacao criada em 12/09/2026 pela mesma linha da 70: fonte HTML versionada, PNG renderizado com a guarda de devicePixelRatio, manifesto em 33 pranchas web, leitura em PRANCHAS-WEB-RESTANTES.md, RECON-018 como autoridade (ja citava R07 e R08 sem imagem de origem), scope test de 32 para 33 e a jornada web-recuperar-o-acesso. Cobre R07 com o retorno neutro exigido como requisito de privacidade. Divergencia declarada com R08: a spec pede campo de confirmacao, a tela implementada usa mostrar/ocultar senha. Verificado: 111/111 scope tests, 50 testes unitarios visuais, flows:check em dia (47 jornadas, 61 pranchas, 136 passos), detect-frames --check 61/0, render-board --check verde.",
+        "Onze pranchas restantes criadas em 12/09/2026, em paralelo por quatro membros e integradas em serie pelo lead: 75 conversas, 76 familia emissor, 77 ajuda, 78 catalogo e conta do prestador, 79 indicar prestador, 80 recomendacoes, 81 administrar a comunidade, 82 mudanca de cidade, 83 landing publica, 84 busca agrupada, 85 chegadas. A producao foi paralela e a integracao serial porque add-board muta arquivos compartilhados — manifesto, taxonomia, jornadas, indice, leitura, contrato, escopo, geometria e galeria. Manifesto em 47 pranchas web e 75 no total; 61 jornadas, 179 passos. Verificado: 111/111 scope, 50 testes unitarios visuais, flows:check em dia, detect-frames --check 75/0, render-board --check verde em todas. Tres lacunas de contrato ficaram registradas nas proprias pranchas: /messages vive dentro do RECON-032, /localidade nao tem contrato nenhum, e o console de administracao de comunidade tambem nao. Uma correcao de schema foi necessaria no caminho: desvio de jornada passou a aceitar estado sem tela propria (texto), porque 'conversa bloqueada' e 'transferencia expirada' sao estados da jornada e forcar cada um a virar tela inventaria imagem que ninguem desenhou."
       ],
       "links": [
         "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
@@ -1720,11 +1721,11 @@
         "Decisões posteriores | ../../docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
         "Modelos para construção | ../../docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "9eede0d",
-      "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true, true, false],
-      "blockers": []
+  "updatedAt": "2026-09-12",
+  "sourceRevision": "93ede1b",
+  "dependencies": [],
+  "completedChecklist": [true, true, true, true, true, true, true, true, true],
+  "blockers": []
     },
     {
       "id": "RECON-AUTH-ENTRADA-WEB",
