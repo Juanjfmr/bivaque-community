@@ -118,7 +118,7 @@ describe("validateListingEdit", () => {
     title: "Mesa de jantar",
     category: "casa_moveis",
     priceInput: "650,00",
-    condition: "used_good",
+    condition: "used",
     description: "Mesa usada, sem detalhes.",
     neighborhood: "Centro",
   }
@@ -154,5 +154,23 @@ describe("validateListingEdit", () => {
     const result = validateListingEdit({ ...validDraft, description: "   " })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.errors.description).toBeDefined()
+  })
+
+  it("rejects an edit without a category", () => {
+    const result = validateListingEdit({ ...validDraft, category: "" })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.category).toBeDefined()
+  })
+
+  it("rejects an edit without a price", () => {
+    const result = validateListingEdit({ ...validDraft, priceInput: "" })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.price).toBeDefined()
+  })
+
+  it("rejects an edit without a neighborhood", () => {
+    const result = validateListingEdit({ ...validDraft, neighborhood: "" })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.neighborhood).toBeDefined()
   })
 })

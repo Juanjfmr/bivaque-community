@@ -6,11 +6,11 @@
 
 import {
   isListingCategory,
-  isListingCondition,
   isNeighborhoodLike,
   type ListingCategory,
   type ListingCondition,
   parsePriceInput,
+  toCanonicalCondition,
 } from "./catalog"
 
 export const LISTING_STATUSES = ["draft", "active", "paused", "reserved", "sold", "closed"] as const
@@ -197,7 +197,7 @@ export type ListingEditValidation =
 // de gestão leem — a lista e a edição importam daqui para não divergir.
 export interface ManagedListingRow {
   id: string
-  owner_id: string
+  owner_user_id: string
   title: string
   description: string
   category: string
@@ -205,7 +205,6 @@ export interface ManagedListingRow {
   condition: string
   neighborhood: string
   status: string
-  audience_type: "locality" | "community"
   locality_id: string | null
   community_id: string | null
   created_at: string
@@ -216,7 +215,7 @@ export interface ManagedListingRow {
 }
 
 export const MANAGED_LISTING_SELECT =
-  "id,owner_id,title,description,category,price_cents,condition,neighborhood,status,audience_type,locality_id,community_id,created_at,published_at,available_until,pickup_note,updated_at"
+  "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,status,locality_id,community_id,created_at,published_at,available_until,pickup_note,updated_at"
 
 export function validateListingEdit(draft: ListingEditDraft): ListingEditValidation {
   const errors: ListingEditErrors = {}
@@ -231,7 +230,8 @@ export function validateListingEdit(draft: ListingEditDraft): ListingEditValidat
   if (price === "invalid") errors.price = "Informe um valor como 650 ou 650,00."
   else if (price === null) errors.price = "Informe o preço do item."
 
-  if (!isListingCondition(draft.condition)) errors.condition = "Escolha a condição do item."
+  const condition = toCanonicalCondition(draft.condition)
+  if (condition === null) errors.condition = "Escolha a condição do item."
 
   const description = draft.description.trim()
   if (description.length === 0) errors.description = "Descreva o item."
@@ -246,11 +246,7 @@ export function validateListingEdit(draft: ListingEditDraft): ListingEditValidat
 
   if (Object.keys(errors).length > 0) return { ok: false, errors }
 
-  if (
-    !isListingCategory(draft.category) ||
-    !isListingCondition(draft.condition) ||
-    typeof price !== "number"
-  ) {
+  if (!isListingCategory(draft.category) || condition === null || typeof price !== "number") {
     return { ok: false, errors: { category: "Confira os campos do anúncio." } }
   }
 
@@ -259,7 +255,7 @@ export function validateListingEdit(draft: ListingEditDraft): ListingEditValidat
     value: {
       title,
       category: draft.category,
-      condition: draft.condition,
+      condition,
       description,
       neighborhood,
       priceCents: price,

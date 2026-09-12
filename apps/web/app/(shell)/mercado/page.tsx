@@ -75,9 +75,11 @@ function orderBy(sort: ListingSort): { column: string; ascending: boolean } {
   return { column: "created_at", ascending: false }
 }
 
+// O público é derivado de qual FK está preenchida (o canônico garante que só
+// uma existe): cidade em `locality_id`, comunidade em `community_id`.
 function audienceFilter(communityIds: string[], localityId: string): string {
   return communityIds.length > 0
-    ? `locality_id.eq.${localityId},and(audience_type.eq.community,community_id.in.(${communityIds.join(",")}))`
+    ? `locality_id.eq.${localityId},community_id.in.(${communityIds.join(",")})`
     : ""
 }
 
@@ -120,7 +122,7 @@ function MercadoContent() {
       let query = supabase
         .from("listings")
         .select(
-          "id,owner_id,title,description,category,price_cents,condition,neighborhood,status,audience_type,locality_id,community_id,created_at",
+          "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,status,locality_id,community_id,created_at",
           { count: "exact" },
         )
         .eq("status", "active")
@@ -159,14 +161,14 @@ function MercadoContent() {
       if (ids.length > 0) {
         const { data: photoRows } = await supabase
           .from("listing_photos")
-          .select("listing_id,storage_path,position")
+          .select("listing_id,path,position")
           .in("listing_id", ids)
           .order("position", { ascending: true })
 
         const firstPathByListing = new Map<string, string>()
         for (const photo of (photoRows ?? []) as ListingPhotoRow[]) {
           if (!firstPathByListing.has(photo.listing_id)) {
-            firstPathByListing.set(photo.listing_id, photo.storage_path)
+            firstPathByListing.set(photo.listing_id, photo.path)
           }
         }
         const paths = Array.from(firstPathByListing.values())

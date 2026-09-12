@@ -90,9 +90,7 @@ export default function MeusAnunciosPage() {
 
   const audienceLabel = useCallback(
     (listing: ManagedListingRow) =>
-      listing.audience_type === "community"
-        ? communityName(listing.community_id)
-        : current.cityName,
+      listing.community_id !== null ? communityName(listing.community_id) : current.cityName,
     [communityName, current.cityName],
   )
 
@@ -110,7 +108,7 @@ export default function MeusAnunciosPage() {
     const { data, error } = await supabase
       .from("listings")
       .select(MANAGED_LISTING_SELECT)
-      .eq("owner_id", user.id)
+      .eq("owner_user_id", user.id)
       .eq("kind", "item")
       .order("created_at", { ascending: false })
 
@@ -126,17 +124,17 @@ export default function MeusAnunciosPage() {
     if (ids.length > 0) {
       const { data: photoRows } = await supabase
         .from("listing_photos")
-        .select("listing_id,storage_path,position")
+        .select("listing_id,path,position")
         .in("listing_id", ids)
         .order("position", { ascending: true })
 
       const firstPath = new Map<string, string>()
       for (const photo of (photoRows ?? []) as {
         listing_id: string
-        storage_path: string
+        path: string
         position: number
       }[]) {
-        if (!firstPath.has(photo.listing_id)) firstPath.set(photo.listing_id, photo.storage_path)
+        if (!firstPath.has(photo.listing_id)) firstPath.set(photo.listing_id, photo.path)
       }
       const paths = Array.from(firstPath.values())
       if (paths.length > 0) {
