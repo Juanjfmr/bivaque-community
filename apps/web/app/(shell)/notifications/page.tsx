@@ -462,7 +462,7 @@ export default function NotificationsPage() {
           aria-label="Filtro de notificações"
           selectedKey={activeTab}
           onSelectionChange={(key) => setActiveTab(key as FilterKey)}
-          className="mx-auto mt-2 w-full max-w-4xl"
+          className="tabs--secondary mx-auto mt-2 w-full max-w-4xl"
         >
           <Tabs.ListContainer>
             <Tabs.List>

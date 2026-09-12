@@ -41,6 +41,12 @@ export default function LocalidadePage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[56rem] flex-col gap-4 px-4 pt-6">
+      {/* RECON-047 — exceção declarada (não recebe `tabs--secondary`):
+          isto não é uma fileira de abas de conteúdo. São as duas cidades do
+          membro (a atual e a de destino) num seletor segmentado em pílula, e é
+          assim que a prancha apresenta cidade — cartões e seletor, nunca abas
+          sublinhadas (pranchas 39 "Escolher cidade" e 61 "Explorar"). Aplicar
+          o sublinhado do produto aqui contradiria a referência visual. */}
       <Tabs
         aria-label="Escolher cidade"
         variant="primary"

@@ -199,23 +199,22 @@ export default function ConfiguracoesBloqueadosPage() {
 
       <Tabs
         aria-label="Denúncias e pessoas bloqueadas"
-        className="mt-4"
+        className="tabs--secondary mt-4"
         selectedKey={tab}
         onSelectionChange={(key) => {
           if (key === "reports" || key === "blocked") setTab(key)
         }}
       >
-        <TabList
-          aria-label="Seções de confiança"
-          className="flex w-full gap-1 border-b border-border"
-        >
-          <Tab id="reports" className="min-h-11 gap-2 px-3 text-sm font-medium">
-            Minhas denúncias
-          </Tab>
-          <Tab id="blocked" className="min-h-11 gap-2 px-3 text-sm font-medium">
-            Pessoas bloqueadas
-          </Tab>
-        </TabList>
+        <Tabs.ListContainer>
+          <TabList aria-label="Seções de confiança">
+            <Tab id="reports" className="min-h-11 gap-2 px-3 text-sm font-medium">
+              Minhas denúncias
+            </Tab>
+            <Tab id="blocked" className="min-h-11 gap-2 px-3 text-sm font-medium">
+              Pessoas bloqueadas
+            </Tab>
+          </TabList>
+        </Tabs.ListContainer>
 
         <TabPanel id="reports" className="pt-4">
           <p className="text-sm text-muted">Acompanhe o andamento das denúncias que você enviou.</p>
