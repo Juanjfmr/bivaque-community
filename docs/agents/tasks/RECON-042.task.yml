@@ -25,12 +25,27 @@ baseline:
     propria, layout, navegacao e quatro subtelas: conta, notificacoes, familia e
     bloqueados. Entao o rotulo promete uma tela e o clique entrega outra.
 
-    2) A lateral acende Inicio quando a pessoa esta em Configuracoes.
-    apps/web/app/components/shell/active-nav.ts resolve o item ativo a partir da
-    rota. /configuracoes nao esta na lista de destinos secundarios que acendem a
-    si mesmos nem na lista de rotas pessoais, entao cai no ultimo recurso e
-    acende Inicio. Confirmado na captura de /configuracoes do build da
-    integracao: a lateral destaca Inicio.
+    2) A lateral acende Inicio em toda rota que nao seja um dos quatro
+    containers primarios nem uma das rotas pessoais listadas. Nao e o caso de
+    uma tela: e o ultimo recurso de
+    apps/web/app/components/shell/active-nav.ts se aplicando a tudo que sobra.
+
+    Medido em capturas do build da integracao servido em 127.0.0.1:3197, conta
+    dono-vila@, em 12/09/2026. Acendem Inicio estando em outro lugar:
+    /guide, cuja propria trilha na tela diz Explorar / Guia; /events;
+    /recommendations; /configuracoes. Pela mesma regra caem no mesmo lugar
+    /mercado, /imoveis, /pedidos, /localidade e /groups, que nao foram
+    capturadas nesta rodada e precisam ser conferidas.
+
+    O que ja esta certo, e precisa continuar certo: /messages e /notifications
+    acendem Perfil, como o contrato DS-011 exige; os quatro containers acendem a
+    si mesmos; e /salvos acende Salvos desde o RECON-038.
+
+    A correcao nao e acrescentar cada rota a uma lista. Uma lista que precisa
+    crescer a cada tela nova volta a divergir na tela seguinte, e foi assim que
+    este defeito chegou aqui. A regra precisa dizer a que container cada area
+    pertence, e o teste precisa reprovar quando uma rota do mapa de captura nao
+    tiver container declarado.
 
     3) As quatro subtelas de Configuracoes nao se distinguem uma da outra.
     Elas herdam o titulo de nivel um do layout da area, e a pagina filha usa
@@ -61,7 +76,9 @@ forbidden:
 acceptance:
   - o item Configuracoes da lateral leva para a area de Configuracoes
   - existe teste que reprova quando o rotulo de um item da lateral deixa de corresponder ao destino dele
-  - a lateral acende o item certo em /configuracoes e em cada uma das quatro subtelas, com teste que reprova a regressao
+  - a lateral acende o item certo em /guide, /events, /recommendations, /configuracoes e nas quatro subtelas de Configuracoes
+  - toda rota declarada no mapa de identidade da captura tem container de lateral declarado, e existe teste que reprova quando uma rota fica sem
+  - o ultimo recurso deixa de eleger Inicio por omissao; rota sem container declarado reprova no teste em vez de acender um vizinho plausivel
   - o comportamento exigido pelo DS-011 continua valendo, provado por teste que ja existia e continua passando
   - cada subtela de Configuracoes tem titulo proprio observavel, e o mapa de identidade da captura passa a declarar um titulo distinto para cada uma
   - o teste de escopo da prova de captura continua verde
