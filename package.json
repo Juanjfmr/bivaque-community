@@ -23,7 +23,10 @@
     "test:scope": "node --test tests/scope/*.test.mjs",
     "test:secrets": "node tests/secrets-scan.mjs",
     "visual:capture": "node scripts/visual/capture.mjs",
-    "visual:loop": "node scripts/visual/loop.mjs"
+    "visual:loop": "node scripts/visual/loop.mjs",
+    "flows:frames": "node scripts/visual/flows/detect-frames.mjs",
+    "flows:gallery": "node scripts/visual/flows-gallery.mjs && node scripts/visual/flows-verify.mjs",
+    "flows:check": "node scripts/visual/flows-gallery.mjs --check && node scripts/visual/flows-verify.mjs --check"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",

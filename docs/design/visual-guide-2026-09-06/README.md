@@ -12,6 +12,12 @@ Atualizado em 08/09/2026. Direção aprovada pelo responsável: superfícies cla
 
 Os PNGs foram gerados e editados pelo image_gen integrado, sem retoque por scripts. Fontes históricas, prompts executados e correções pendentes estão em [expansion-generation.json](./expansion-generation.json). As imagens são propostas de aparência/interação. Pessoas, fotos, valores, datas e contagens são fictícios; consolidar fixtures coerentes ao implementar.
 
+## Jornadas derivadas
+
+[`flows.html`](./flows.html) é uma galeria em **formato Mobbin** gerada das pranchas: cada prancha é um fluxo, cada tela/estado é um passo recortado do próprio PNG. O índice textual é [`docs/journeys/FLOWS.md`](../../journeys/FLOWS.md).
+
+São artefatos **derivados — não editar à mão**. Ao substituir uma prancha, regenere com `npx pnpm@11.18.0 flows:gallery`; se a geometria do PNG mudou, rode antes `npx pnpm@11.18.0 flows:frames`. `npx pnpm@11.18.0 flows:check` falha se algum artefato estiver fora de sincronia.
+
 ## Correções solicitadas
 
 As sete propagações pendentes foram geradas em 08/09: 34, 38, 40, 42, 45, 48 e 49. O fluxo de perguntas ao organizador está nas 66/67; envio e recuperação de identidade nas 68/69, com acompanhamento web na 38. As seis decisões continuam em [DECISOES-2026-09-07.md](./DECISOES-2026-09-07.md).
