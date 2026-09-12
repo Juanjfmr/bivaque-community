@@ -995,3 +995,40 @@ A prancha desenha só o caminho principal: **não há confirmação de cancelame
 nem rascunho**. Esses estados seguem sem referência visual e são o próximo lote. Capa, pessoas,
 perguntas e contagem são ilustrativas. Os limites de upload da capa não estão fixados na tela
 porque dependem do contrato técnico. A lista de participantes mostra apenas quem autoriza aparecer.
+
+## 71-web-auth-recuperacao — `/recuperar-senha` e `/nova-senha`
+
+**Etapa:** W01. **Painéis:** pedir o link; criar a senha nova.
+
+Prancha criada em 12/09/2026, depois do handoff. Preenche a lacuna do RECON-018, que já citava R07 e
+R08 sem imagem de origem. Fonte versionada em
+[`src/71-web-auth-recuperacao.html`](../design/visual-guide-2026-09-06/src/71-web-auth-recuperacao.html)
+— render determinístico de HTML sobre `packages/tokens`, não geração por image_gen.
+
+### Composição
+
+Shell idêntico à prancha 36: mockup de navegador (luzes, barra de endereço), coluna esquerda com
+foto sangrada e o wordmark BIVAQUE em branco, formulário à direita.
+
+**Esqueceu sua senha?** — voltar "Voltar para entrar"; H1 "Esqueceu sua senha?"; lead "Digite seu
+e-mail. Enviamos um link para você criar uma senha nova."; campo "Seu e-mail" com placeholder
+`nome@exemplo.com`; botão primário `Enviar link`; e o retorno **neutro**: "Se este e-mail puder
+entrar no Bivaque, o link para criar uma senha nova já está a caminho."
+
+**Crie uma senha nova** — H1 "Crie uma senha nova"; lead explicando que a pessoa chegou pelo link de
+recuperação; campo "Senha nova" com placeholder "Ao menos 8 caracteres" e controle mostrar/ocultar;
+política em uma linha; botão primário `Salvar senha`; rodapé `Pedir outro link`.
+
+### Estados e limites
+
+O ganho desta prancha é o **retorno neutro**, que é requisito de privacidade de R07: não confirmar
+se o endereço tem conta, e não transformar falha do provedor em "enviado". Não trocar por mensagem
+que revele cadastro.
+
+**Divergência declarada com R08:** a spec pede "senha nova **e confirmação**"; a tela implementada
+usa mostrar/ocultar senha em vez de campo de confirmação. A prancha segue a tela implementada e
+registra a divergência para decisão do dono.
+
+A foto da coluna esquerda é bloco ilustrativo; consolidar com o asset real ao implementar. Os
+estados de link inválido ou expirado não estão nesta prancha — são o lote seguinte,
+`72-web-auth-link-invalido`.

@@ -2,7 +2,7 @@
 
 > **Gerado** por `scripts/visual/flows-verify.mjs` a partir do guia visual. Não editar à mão.
 > Jornada é uma sequência de telas com início, meio e fim, no molde do Mobbin; a tela vem da prancha.
-> 46 jornadas e 60 pranchas. É mapa de **referência**, não prova de implementação.
+> 47 jornadas e 61 pranchas. É mapa de **referência**, não prova de implementação.
 > Galeria: [flows.html](../design/visual-guide-2026-09-06/flows.html).
 
 ## Jornadas
@@ -31,7 +31,7 @@
 | [Ler, responder e resolver uma conversa](../design/visual-guide-2026-09-06/flows.html#mobile-ler-responder-e-resolver) | Mobile | Leitura → Resposta → Resolvido | 3 | Conversa com respostas → Pergunta marcada como resolvida |
 | [Ler e responder uma conversa (web)](../design/visual-guide-2026-09-06/flows.html#web-ler-e-responder-uma-conversa) | Desktop web | Conversa | 1 | Conversa e resposta → Conversa e resposta |
 
-### Entrada e admissão (5)
+### Entrada e admissão (6)
 
 | Jornada | Plataforma | Etapas | Telas | Começa → termina |
 |---|---|---|---|---|
@@ -39,6 +39,7 @@
 | [Retomar o cadastro e recuperar o acesso](../design/visual-guide-2026-09-06/flows.html#mobile-retomar-e-recuperar) | Mobile | Retomada → Falhas | 3 | Cadastro interrompido → Pessoa retoma o ponto onde parou |
 | [Verificar por identidade quando o CPF nao resolve](../design/visual-guide-2026-09-06/flows.html#mobile-verificar-por-identidade) | Mobile | Alternativa → Analise → Correcao | 5 | CPF nao concluiu; a identidade e a alternativa → Analise acompanhada e arquivo substituido quando ilegivel |
 | [Entrar no Bivaque e ser admitido (web)](../design/visual-guide-2026-09-06/flows.html#web-entrar-e-ser-admitido) | Desktop web | Entrada → Confirmacao → Verificacao → Contexto | 6 | Entrada e cadastro → Membro verificado, com contexto escolhido |
+| [Recuperar o acesso quando a senha se perde](../design/visual-guide-2026-09-06/flows.html#web-recuperar-o-acesso) | Desktop web | Pedir o link → Criar a senha | 2 | Pedido do link, com retorno neutro → Senha nova salva e volta para entrar |
 | [Verificar por identidade e acompanhar a admissao (web)](../design/visual-guide-2026-09-06/flows.html#web-verificar-por-identidade) | Desktop web | Envio → Analise → Correcao | 3 | Envio da identidade → Analise acompanhada, arquivo substituido se preciso |
 
 ### Estados compartilhados (2)
@@ -160,7 +161,7 @@
 | [Conversa: ler, responder e resolver](../design/visual-guide-2026-09-06/flows.html#14-mobile-conversa) | Mobile | 3 |
 | [Web: conversa completa](../design/visual-guide-2026-09-06/flows.html#15-web-conversa) | Desktop web | 1 |
 
-### Entrada e admissão (12)
+### Entrada e admissão (13)
 
 | Prancha | Plataforma | Telas |
 |---|---|---|
@@ -176,6 +177,7 @@
 | [Contexto e personalização web](../design/visual-guide-2026-09-06/flows.html#39-web-onboarding-contexto) | Desktop web | 2 |
 | [Identidade: envio e recuperação](../design/visual-guide-2026-09-06/flows.html#68-mobile-identidade-recuperacao) | Mobile | 3 |
 | [Identidade: envio e recuperação web](../design/visual-guide-2026-09-06/flows.html#69-web-identidade-recuperacao) | Desktop web | 2 |
+| [Web: recuperar o acesso](../design/visual-guide-2026-09-06/flows.html#71-web-auth-recuperacao) | Desktop web | 2 |
 
 ### Estados compartilhados (2)
 

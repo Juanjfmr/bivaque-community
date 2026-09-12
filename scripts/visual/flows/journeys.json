@@ -1152,6 +1152,32 @@
         }
       ],
       "desvios": []
+    },
+    {
+      "id": "web-recuperar-o-acesso",
+      "titulo": "Recuperar o acesso quando a senha se perde",
+      "plataforma": "web",
+      "grupo": "auth",
+      "persona": "Quem nao consegue mais entrar",
+      "comeca": "Pedido do link, com retorno neutro",
+      "termina": "Senha nova salva e volta para entrar",
+      "acoes": ["Recuperar acesso", "Entrar"],
+      "etapas": [
+        {
+          "nome": "Pedir o link",
+          "passos": [
+            {
+              "tela": "71-web-auth-recuperacao#0",
+              "acao": "o link chega por e-mail, se a conta existir"
+            }
+          ]
+        },
+        {
+          "nome": "Criar a senha",
+          "passos": [{ "tela": "71-web-auth-recuperacao#1" }]
+        }
+      ],
+      "desvios": []
     }
   ]
 }

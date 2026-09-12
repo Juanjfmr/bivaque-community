@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>71-web-auth-recuperacao — fonte da prancha</title>
+<style>
+  /* Fonte da prancha 71-web-auth-recuperacao.
+     Renderizada na geometria da convenção web do guia: 2076x757, dois painéis de 1032 com
+     gutter de 12. Cada painel é um desktop lógico de 1440x1056 reduzido por scale(0.716667).
+     Cores e tipografia vêm de packages/tokens/src/tokens.css. Shell conforme a prancha
+     36-web-auth-entrada: mockup de navegador, coluna de foto com o wordmark, formulário à
+     direita. A foto é bloco ilustrativo — consolidar com o asset real ao implementar.
+     Copy reconciliada com R07/R08 da spec e com as rotas /recuperar-senha e /nova-senha. */
+  :root{
+    --canvas:#FAFBF8; --surface:#FFFFFF; --sunken:#F1F2EE; --paper200:#E3E5DF;
+    --ink900:#16211C; --ink700:#4A594F; --ink500:#6B7A70;
+    --pine100:#EEF1E7; --pine700:#164734; --petrol700:#1D5D89;
+    --line:color-mix(in srgb, #16211C 14%, transparent);
+    --radius:0.625rem; --radius-card:0.875rem;
+    --font:ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--canvas)}
+  body{width:2076px;height:757px;font-family:var(--font);color:var(--ink900);overflow:hidden}
+  .board{display:flex;gap:12px;width:2076px;height:757px}
+  .panel{width:1032px;height:757px;overflow:hidden;flex:0 0 auto;background:var(--surface)}
+  .scale{width:1440px;height:1056px;transform:scale(.716667);transform-origin:0 0}
+
+  /* ---------- shell de autenticação ---------- */
+  .browser{height:1056px;background:var(--surface);display:flex;flex-direction:column}
+  .chrome{height:52px;flex:0 0 auto;background:var(--sunken);display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--line)}
+  .luzes{display:flex;gap:8px}
+  .luz{width:13px;height:13px;border-radius:999px}
+  .luz.r{background:#E5484D}.luz.a{background:#E8A33D}.luz.v{background:#3E9B57}
+  .urlbar{flex:1;max-width:430px;margin:0 auto;height:30px;border-radius:8px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--ink700)}
+  .cadeado{width:10px;height:8px;border:1.5px solid var(--ink500);border-radius:2px;position:relative}
+  .cadeado::before{content:"";position:absolute;left:1px;top:-5px;width:6px;height:5px;border:1.5px solid var(--ink500);border-bottom:0;border-radius:4px 4px 0 0}
+
+  .split{flex:1;display:flex;min-height:0}
+  .foto{width:632px;flex:0 0 auto;position:relative;background:
+    radial-gradient(circle at 26% 74%, rgba(22,71,52,.22) 0 92px, transparent 93px),
+    radial-gradient(circle at 44% 80%, rgba(22,71,52,.14) 0 62px, transparent 63px),
+    radial-gradient(circle at 70% 68%, rgba(29,93,137,.16) 0 76px, transparent 77px),
+    linear-gradient(160deg,#DCE7DE 0%, #CBDCD2 52%, #E2F0F7 100%)}
+  .foto .word{position:absolute;left:52px;top:150px;color:#fff;font-size:46px;font-weight:700;letter-spacing:.06em;text-shadow:0 2px 12px rgba(0,0,0,.28)}
+
+  .formwrap{flex:1;display:flex;align-items:center;justify-content:center;padding:0 72px}
+  .form{width:100%;max-width:496px;display:flex;flex-direction:column}
+  h1{font-size:46px;line-height:1.16;font-weight:650;letter-spacing:-.015em;margin:0 0 14px}
+  .lead{font-size:17px;line-height:27px;color:var(--ink700);margin:0 0 34px;max-width:46ch}
+  label{display:block;font-size:15px;font-weight:600;margin-bottom:8px}
+  .input{width:100%;height:64px;border:1px solid var(--line);border-radius:12px;background:var(--surface);display:flex;align-items:center;padding:0 20px;font-size:18px}
+  .input.ph{color:var(--ink500)}
+  .campo{margin-bottom:26px}
+  .comolho{display:flex;align-items:center;justify-content:space-between}
+  .olho{display:flex;align-items:center;gap:8px;color:var(--ink700);font-size:15px;font-weight:500}
+  .olho svg{display:block}
+  .btn{height:64px;border-radius:12px;font-size:18px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1px solid transparent;font-family:inherit}
+  .btn.primario{background:var(--pine700);color:#fff;width:100%}
+  .rodape{margin-top:34px;display:flex;align-items:center;justify-content:center}
+  .rodape a{color:var(--petrol700);font-size:16px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+  .neutro{margin-top:26px;background:var(--pine100);border-radius:12px;padding:16px 20px;font-size:15px;line-height:24px;color:var(--ink700)}
+  .neutro b{color:var(--ink900)}
+  .politica{font-size:14px;line-height:22px;color:var(--ink500);margin:14px 0 0}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- ==================== painel 1 — pedir o link ==================== -->
+  <div class="panel" data-screen="Esqueceu sua senha">
+    <div class="scale">
+      <div class="browser">
+        <div class="chrome">
+          <div class="luzes"><span class="luz r"></span><span class="luz a"></span><span class="luz v"></span></div>
+          <div class="urlbar"><span class="cadeado"></span>bivaque.app/recuperar-senha</div>
+        </div>
+        <div class="split">
+          <div class="foto"><div class="word">BIVAQUE</div></div>
+          <div class="formwrap">
+            <form class="form">
+              <h1>Esqueceu sua senha?</h1>
+              <p class="lead">Digite seu e-mail. Enviamos um link para você criar uma senha nova.</p>
+
+              <div class="campo">
+                <label for="email">Seu e-mail</label>
+                <div class="input ph" id="email">nome@exemplo.com</div>
+              </div>
+
+              <div class="btn primario">Enviar link</div>
+
+              <div class="rodape"><a href="#">Voltar para entrar</a></div>
+
+              <div class="neutro">
+                <b>Se este e-mail puder entrar no Bivaque</b>, o link para criar uma senha nova já está a caminho. Confira também a caixa de spam.
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== painel 2 — criar a senha nova ==================== -->
+  <div class="panel" data-screen="Crie uma senha nova">
+    <div class="scale">
+      <div class="browser">
+        <div class="chrome">
+          <div class="luzes"><span class="luz r"></span><span class="luz a"></span><span class="luz v"></span></div>
+          <div class="urlbar"><span class="cadeado"></span>bivaque.app/nova-senha</div>
+        </div>
+        <div class="split">
+          <div class="foto"><div class="word">BIVAQUE</div></div>
+          <div class="formwrap">
+            <form class="form">
+              <h1>Crie uma senha nova</h1>
+              <p class="lead">Você chegou pelo link de recuperação. Escolha a senha que vai usar para entrar.</p>
+
+              <div class="campo">
+                <label for="senha">Senha nova</label>
+                <div class="input comolho" id="senha">
+                  <span class="ph" style="flex:1">Ao menos 8 caracteres</span>
+                  <span class="olho">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
+                    Mostrar
+                  </span>
+                </div>
+              </div>
+
+              <p class="politica">A senha precisa ter ao menos 8 caracteres. Ao salvar, as outras sessões abertas nesta conta são encerradas.</p>
+
+              <div class="btn primario" style="margin-top:22px">Salvar senha</div>
+
+              <div class="rodape"><a href="#">Pedir outro link</a></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

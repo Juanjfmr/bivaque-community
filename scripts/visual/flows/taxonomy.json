@@ -124,6 +124,7 @@
     "67-web-evento-informacoes": { "actions": ["Pedir informações", "Responder"] },
     "68-mobile-identidade-recuperacao": { "actions": ["Enviar identidade"] },
     "69-web-identidade-recuperacao": { "actions": ["Enviar identidade"] },
-    "70-web-evento-organizar": { "actions": ["Criar evento", "Cancelar"] }
+    "70-web-evento-organizar": { "actions": ["Criar evento", "Cancelar"] },
+    "71-web-auth-recuperacao": { "actions": ["Recuperar acesso", "Entrar"] }
   }
 }

@@ -103,6 +103,7 @@ Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.
 | [68-mobile-identidade-recuperacao — Identidade: envio e recuperação](./68-mobile-identidade-recuperacao.png) | mobile | Enviar identidade; Acompanhar análise; Substituir arquivo ilegível |
 | [69-web-identidade-recuperacao — Identidade: envio e recuperação web](./69-web-identidade-recuperacao.png) | web | Enviar identidade; Substituir arquivo ilegível |
 | [70-web-evento-organizar — Web: organizar um evento](./70-web-evento-organizar.png) | web | Novo evento; Evento publicado |
+| [71-web-auth-recuperacao — Web: recuperar o acesso](./71-web-auth-recuperacao.png) | web | Esqueceu sua senha; Crie uma senha nova |
 
 ## Inspeção e correções de implementação
 

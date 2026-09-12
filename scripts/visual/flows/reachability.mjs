@@ -243,7 +243,7 @@ if (JSON_OUT) {
 
 const bloco = (titulo, itens) => {
   console.log(`\n## ${titulo} (${itens.length})`)
-  for (const i of itens) console.log("  " + i)
+  for (const i of itens) console.log(`  ${i}`)
 }
 
 console.log(

@@ -1303,6 +1303,28 @@
       "path": "docs/design/visual-guide-2026-09-06/70-web-evento-organizar.png",
       "status": "Referencia visual",
       "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "71-web-auth-recuperacao",
+      "kind": "web",
+      "group": "auth",
+      "title": "Web: recuperar o acesso",
+      "screens": [
+        "Esqueceu sua senha",
+        "Crie uma senha nova"
+      ],
+      "reviewNotes": [
+        "O retorno do pedido é neutro de propósito: não confirma se o e-mail tem conta. Não trocar por mensagem que revele cadastro, e não transformar falha do provedor em 'enviado'.",
+        "Divergência declarada com R08: a spec pede 'senha nova e confirmação'; a tela implementada usa mostrar/ocultar senha em vez de campo de confirmação. A prancha segue a tela implementada e registra a divergência para decisão do dono.",
+        "A política de senha é a do Auth; o texto não deve fixar número além do que o provedor exige.",
+        "A foto da coluna esquerda é bloco ilustrativo; consolidar com o asset real ao implementar."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/71-web-auth-recuperacao.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell conforme a prancha 36-web-auth-entrada. Painel 1 Esqueceu sua senha? com e-mail, Enviar link e o retorno neutro exigido por R07. Painel 2 Crie uma senha nova com mostrar/ocultar senha e a política. Copy reconciliada com as rotas /recuperar-senha e /nova-senha.",
+      "file": "71-web-auth-recuperacao.png",
+      "path": "docs/design/visual-guide-2026-09-06/71-web-auth-recuperacao.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
     }
   ],
   "pending": [],
