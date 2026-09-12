@@ -11,6 +11,7 @@ import { spawn, spawnSync } from "node:child_process"
 import { createWriteStream, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { consume, DEFAULT_BUDGET, itemKey, readState, reset, writeState } from "./budget.mjs"
+import { isCaptureReportPassing } from "./capture-proof.mjs"
 import { probeFootprint } from "./footprint.mjs"
 import { mergeRun, readLedger, summarize, writeLedger } from "./ledger.mjs"
 
@@ -263,14 +264,17 @@ async function main() {
 
   const auditPath = join(RUN_DIR, "report.json")
   let high = null
+  let validCapture = false
   try {
-    high = JSON.parse(readFileSync(auditPath, "utf8")).high
+    const report = JSON.parse(readFileSync(auditPath, "utf8"))
+    high = report.high
+    validCapture = isCaptureReportPassing(report)
   } catch {
     high = null
   }
 
   const allGates = [...gates, capture]
-  const ok = allGates.every((gate) => gate.passed) && high === 0
+  const ok = allGates.every((gate) => gate.passed) && validCapture
 
   // Ledger atualiza mesmo em falha — o achado que não bloqueou hoje é dívida
   // que não pode evaporar. `ok` (não o resultado do gate) decide + it-só-clean.
@@ -304,11 +308,12 @@ async function main() {
     "| --- | --- |",
     ...allGates.map((gate) => `| ${gate.name} | ${gate.passed ? "pass" : "FAIL"} |`),
     `| high-severity visual findings | ${high ?? "n/a"} |`,
+    `| capture identity and coverage | ${validCapture ? "pass" : "FAIL"} |`,
     budget.active
       ? `| iterations spent on "${process.env["BIVAQUE_LOOP_ITEM"]}" | ${budget.iterations}/${budget.budget} |`
       : null,
     "",
-    `Verdict: **${ok ? "ITERATION COMPLETE" : "KEEP ITERATING"}**`,
+    `Verdict: **${ok ? "MECHANICAL CHECKS PASS — FIDELITY NOT ASSESSED" : "KEEP ITERATING"}**`,
     "",
     "## Debt ledger",
     "",
@@ -330,7 +335,7 @@ async function main() {
     "## Next",
     "",
     ok
-      ? "All gates green. Move to the next screen in the backlog."
+      ? "Compare these captures with the reference images and obtain independent review before closing the visual batch."
       : `Fix the failures above, then re-read \`${join(RUN_DIR, "report.md")}\` and the screenshots in \`${join(RUN_DIR, "shots")}\`.`,
   ]
 
