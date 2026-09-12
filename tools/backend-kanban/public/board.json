@@ -4,6 +4,35 @@
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
+      "id": "NAV-BECOS-SEM-SAIDA",
+      "title": "Web: /arrivals e /profile/[userId] nao tem caminho adiante",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "A analise de chegabilidade (scripts/visual/flows/reachability.mjs, novo) cruza o grafo de navegacao estatica do app com o mapa de jornadas e encontrou duas telas sem saida propria: elas so permitem sair pela navegacao da casca; nenhum link delas leva adiante. /arrivals deixa o operador num beco. /profile/[userId] mostra outro membro e nao oferece caminho para o conteudo dele. Diferente de NOTIF-DEEPLINKS e SHELL-SETTINGS-LABEL, que sao links errados, aqui o link simplesmente nao existe. O backend do perfil alheio esta pronto (DONE-PROFILE-RPCS); a lacuna e de UI.",
+      "checklist": [
+        "/profile/[userId]: oferecer caminho para o conteudo do membro que o leitor pode ver, contra o que C03 permite",
+        "/arrivals: oferecer o caminho operacional de saida, contra O05",
+        "Os dois casos entram como par positivo/negativo no teste da analise de chegabilidade",
+        "Rodar node scripts/visual/flows/reachability.mjs e o resultado cair para zero becos"
+      ],
+      "proof": [
+        "node scripts/visual/flows/reachability.mjs na linha viva: 86 rotas, 471 arestas de pagina, 0 orfas, 0 inalcancaveis, 0 links quebrados, 2 sem saida propria",
+        "apps/web/app/(admin)/arrivals/page.tsx: 94 linhas, 0 ocorrencias de href, router.push ou Link",
+        "apps/web/app/(shell)/profile/[userId]/page.tsx: 278 linhas, 0 ocorrencias de href, router.push ou Link",
+        "Quatro levas de falso-positivo foram eliminadas antes do achado: rotas de API, links de provedor externo, comentario lido como link e handler de rota tratado como pagina"
+      ],
+      "tests": ["node scripts/visual/flows/reachability.mjs"],
+      "links": [
+        "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.6 O05 e secao 4.9 C03",
+        "scripts/visual/flows/reachability.mjs"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "31748ab"
+    },
+    {
       "id": "DOC-20260912-FLUXOS-PRANCHAS",
       "title": "Mapeamento de jornadas em formato Mobbin a partir das pranchas",
       "phase": "Reconstrução",
