@@ -1,0 +1,122 @@
+task_id: RECON-044
+
+objective: >
+  O pedido a prestador volta a ser um dominio so. A ficha do prestador e o
+  painel do negocio passam a ler e escrever a mesma tabela, as migrations
+  aplicam em ordem sobre banco limpo, e a coluna que a politica de leitura usa
+  continua existindo.
+
+authority:
+  - docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md
+  - supabase/migrations/20260911032309_service_requests.sql
+  - supabase/migrations/20260911032105_service_requests.sql
+  - Relatorio do RECON-041, 12/09/2026
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 12/09/2026 na branch fix/recon-041-pgtap, que traz o RECON-024
+    para dentro da integracao. O executor do RECON-041 rodou o teste de banco e
+    leu o codigo de saida direto: EXIT=1. O arquivo
+    supabase/tests/service-requests.sql executa doze das vinte e oito assercoes
+    e aborta na linha 313 com
+
+    ERROR: column "category" of relation "service_requests" does not exist
+
+    Causa: dois lotes criaram, cada um, uma tabela service_requests completa e
+    incompativel, com o mesmo nome e o mesmo tipo de situacao.
+
+    20260911032309_service_requests.sql, do RECON-022, e a que JA ESTA APLICADA
+    no banco local. Ela tem provider_user_id, uma coluna desnormalizada de
+    proposito: o comentario na propria migration explica que a politica de
+    leitura do destinatario nao pode depender de um join que a RLS de
+    provider_profiles pode esconder. Tem tambem idempotency_key com restricao de
+    unicidade por solicitante, para que reenviar o mesmo rascunho devolva o
+    pedido existente em vez de criar outro. conversation_id e anulavel.
+    description aceita de um a quinhentos caracteres.
+
+    20260911032105_service_requests.sql, do RECON-024, tem category, region,
+    first_responded_at, cancelled_at e closed_by_user_id, que o painel do
+    negocio precisa para a fila por situacao da prancha 23. conversation_id e
+    obrigatoria. description aceita de dez a dois mil caracteres. Nao tem
+    provider_user_id nem idempotency_key.
+
+    Nenhuma das duas e superconjunto da outra. E o carimbo de tempo do arquivo
+    do RECON-024 e ANTERIOR ao da aplicada, entao num banco limpo ele cria a
+    tabela primeiro e a do RECON-022 aborta.
+
+    A bifurcacao tambem esta nas funcoes: o banco aplicado tem
+    send_conversation_message, close_service_request e update_service_request; o
+    RECON-024 traz respond_to_service_request e cancel_service_request.
+
+  canonical_choice: >
+    O schema aplicado, do 20260911032309, e a base, por duas razoes que nao sao
+    de gosto. Primeira: ele ja esta aplicado, e migration aplicada nao se edita
+    nem se apaga; o caminho legitimo e uma migration nova para frente. Segunda:
+    provider_user_id e idempotency_key carregam comportamento de seguranca e de
+    integridade que o outro lado simplesmente nao tem, e perder qualquer um dos
+    dois seria regressao, nao simplificacao. O que o RECON-024 precisa entra
+    como colunas e funcoes acrescentadas por migration nova.
+
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/(provider)/
+  - apps/web/app/(shell)/pedidos/
+  - apps/web/app/(shell)/prestadores/
+  - apps/web/lib/service-requests/
+  - tests/unit/
+  - docs/agents/tasks/RECON-044.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - editar ou apagar a migration 20260911032309_service_requests.sql, que ja esta aplicada
+  - remover provider_user_id, a coluna de que a politica de leitura depende
+  - remover idempotency_key ou a restricao de unicidade que evita pedido duplicado
+  - apagar ou recriar o banco local compartilhado por qualquer meio
+  - afrouxar, apagar ou pular teste ou assercao de pgTAP para a contagem fechar
+  - remover RLS, force row level security, revoke ou policy de qualquer tabela do dominio
+  - ampliar o que um membro ou um prestador enxerga; o alcance de leitura no fim tem que ser igual ou menor que o de cada lado antes
+  - tocar public.profiles, is_suspended ou is_account_suspended
+
+acceptance:
+  - existe UMA definicao de service_requests em toda a pasta de migrations
+  - supabase migration up --local --include-all aplica ate o fim, com o codigo de saida lido direto
+  - provider_user_id e idempotency_key continuam existindo, e a politica que le a primeira continua valendo, com teste que reprova se ela sumir
+  - o painel do negocio tem as colunas de que precisa para a fila por situacao, e as telas dele leem o schema canonico
+  - a ficha do prestador e a criacao de pedido continuam funcionando, incluindo o reenvio do mesmo rascunho que nao cria pedido novo
+  - as funcoes dos dois lados convivem sem duas versoes da mesma operacao com nomes diferentes
+  - supabase/tests/service-requests.sql executa todas as assercoes que declara, sem abortar, com o codigo de saida lido direto
+  - pgTAP cobre leitura permitida e leitura negada do pedido para solicitante, prestador destinatario e terceiro
+  - o limite de tamanho da descricao fica declarado e igual no banco e na borda de escrita, com o motivo escrito
+  - gate completo verde, com o codigo de saida lido direto
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-044.task.yml
+  - npx pnpm@11.18.0 exec supabase migration up --local --include-all
+  - npx pnpm@11.18.0 exec supabase test db
+  - npx pnpm@11.18.0 gate
+
+traps:
+  - O carimbo de tempo do arquivo do RECON-024 e anterior ao da aplicada; ordem de arquivo nao e ordem de intencao
+  - Ha UM Supabase local nesta maquina e outros executores podem usa-lo; migration para frente e permitida, apagar o banco nao
+  - Nao canalize gate, migration nem teste de banco por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - As duas faixas de tamanho de descricao sao incompativeis: um a quinhentos contra dez a dois mil; escolher em silencio quebra um dos dois formularios
+  - conversation_id e obrigatoria de um lado e anulavel do outro; torna-la obrigatoria quebra pedido que nasce sem conversa
+  - O teste de banco exige banco SEM a semente de desenvolvimento; falha de listagem de perfil nesse cenario e estado do banco, nao o seu arquivo
+
+risk: >
+  Reconciliacao de schema de dominio com RLS, policies e funcoes de escrita,
+  mais o codigo das telas que leem esse schema. Executa decisao ja aprovada em
+  ADR, citada pelos dois lotes que divergiram.
+risk_level: R3
+adr: docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true
