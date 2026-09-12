@@ -64,10 +64,14 @@ const info = await page.evaluate(() => {
     const main =
       p.querySelector(".main") || p.querySelector("main") || p.querySelector(".scale > *")
     if (!main) return null
+    const casca = p.querySelector(".scale > *")
     return {
       tela: p.dataset.screen ?? "(sem rotulo)",
       conteudo: main.scrollHeight,
       viewport: main.clientHeight,
+      // Uma casca com um filho só costuma significar marcação malformada: um `<a>` ou `<svg>` não
+      // fechado engole o resto da tela e o conteúdo passa a viver dentro da navegação lateral.
+      cascaFilhos: casca ? casca.children.length : 0,
     }
   })
   return {
@@ -92,6 +96,11 @@ for (const painel of info.paineis) {
     continue
   }
   const ocupacao = painel.conteudo / painel.viewport
+  if (painel.cascaFilhos < 2) {
+    problems.push(
+      `painel "${painel.tela}": casca com ${painel.cascaFilhos} filho — marcação malformada aninhou o conteúdo`,
+    )
+  }
   if (painel.conteudo > painel.viewport) {
     problems.push(`painel "${painel.tela}" transborda: ${painel.conteudo} em ${painel.viewport}`)
   } else if (ocupacao < 0.6) {
