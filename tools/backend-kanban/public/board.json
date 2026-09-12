@@ -2362,6 +2362,30 @@
       "sourceRevision": "cdd2b57"
     },
     {
+      "id": "NAV-PEDIDOS-ORFA",
+      "title": "A lista de pedidos do membro nao tem caminho de entrada",
+      "phase": "MVP-06",
+      "priority": "P2",
+      "category": "intelligence",
+      "status": "next",
+      "description": "A tela /pedidos existe, tem titulo Meus pedidos e lista os pedidos da pessoa, mas nada no produto leva ate ela. Varredura de 12/09/2026 em apps/web/app: os unicos links para /pedidos sao autolinks dentro da propria area (a lista e o workspace do pedido). O unico caminho externo do dominio leva a /pedidos/novo, a partir da ficha do prestador. Entao a pessoa consegue criar um pedido e nao consegue reencontrar os pedidos dela, a nao ser pelo link que aparece ao terminar a criacao. O RECON-042 atribuiu /pedidos ao container Perfil pelo DESIGN_SYSTEM 7.1; a atribuicao so vira verdade quando existir uma entrada em Perfil.",
+      "checklist": [
+        "Decidir onde nasce a entrada: Perfil e o lugar que o DESIGN_SYSTEM 7.1 indica",
+        "Criar a entrada e conferir que ela aparece para quem nao tem pedido nenhum",
+        "Teste que reprova quando uma rota do mapa de identidade nao tem nenhum link de entrada fora da propria area",
+        "Reconferir o container de /pedidos depois que a entrada existir"
+      ],
+      "proof": [],
+      "tests": [],
+      "links": [
+        "apps/web/app/(shell)/pedidos/page.tsx",
+        "apps/web/app/components/shell/active-nav.ts"
+      ],
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "64b1c39",
+      "dependencies": []
+    },
+    {
       "id": "RECON-039",
       "title": "RECON-039: um único domínio listings (Mercado + Moradia) e integração que sobe",
       "phase": "Reconstrução",
