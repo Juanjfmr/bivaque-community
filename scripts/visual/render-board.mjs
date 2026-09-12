@@ -61,7 +61,8 @@ const info = await page.evaluate(() => {
   const paineis = [...document.querySelectorAll(".panel")].map((p) => {
     // A casca do membro e a do operador têm .main; a landing pública não tem, então o fallback é
     // o próprio elemento raiz do painel. Sem isso a guarda não mede a prancha e deixa passar.
-    const main = p.querySelector(".main") || p.querySelector("main") || p.querySelector(".scale > *")
+    const main =
+      p.querySelector(".main") || p.querySelector("main") || p.querySelector(".scale > *")
     if (!main) return null
     return {
       tela: p.dataset.screen ?? "(sem rotulo)",

@@ -1721,11 +1721,11 @@
         "Decisões posteriores | ../../docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
         "Modelos para construção | ../../docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md"
       ],
-  "updatedAt": "2026-09-12",
-  "sourceRevision": "93ede1b",
-  "dependencies": [],
-  "completedChecklist": [true, true, true, true, true, true, true, true, true],
-  "blockers": []
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "93ede1b",
+      "dependencies": [],
+      "completedChecklist": [true, true, true, true, true, true, true, true, true],
+      "blockers": []
     },
     {
       "id": "RECON-AUTH-ENTRADA-WEB",
