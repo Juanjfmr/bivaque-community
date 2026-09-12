@@ -85,6 +85,56 @@ export const HEADINGS = {
   "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
   "/profile": DYNAMIC_HEADING,
   "/localidade": DYNAMIC_HEADING,
+  // RECON-040 — as 37 rotas entregues depois que o guard-rail ficou parado na
+  // branch lateral. Cada valor abaixo veio do h1 que o arquivo que renderiza a
+  // rota realmente escreve; a rota cujo título é o próprio dado usa
+  // DYNAMIC_HEADING. Query string é chave própria: /guide e /guide?q=escola são
+  // duas entradas, como /explorar/servicos e a variante com termo.
+  "/recuperar-senha": "^Esqueceu sua senha\\?$",
+  "/nova-senha": "^Crie uma senha nova$",
+  // O mesmo caminho serve dois painéis legítimos: o pendente (sessionStorage)
+  // e o "nada para confirmar". A variante ?estado=expirado é chave própria.
+  "/auth/confirmar-email": "^(Confira seu e-mail|Nada para confirmar)$",
+  "/auth/confirmar-email?estado=expirado": "^Confira seu e-mail$",
+  "/onboarding/documento": "^(Enviar identidade|Precisamos de outro arquivo)$",
+  "/onboarding/perfil": "^Deixe com a sua cara\\.$",
+  "/mercado": "^O que você precisa pode estar por perto$",
+  "/mercado/novo": "^Novo anúncio$",
+  "/meus-anuncios": "^Meus anúncios$",
+  "/mercado/a0000000-0000-4000-8000-000000000001/editar": "^Editar anúncio$",
+  // O h1 do detalhe é o título do próprio evento.
+  "/events/70000000-0000-4000-8000-000000000005": DYNAMIC_HEADING,
+  "/events/novo": "^Novo evento$",
+  "/events/70000000-0000-4000-8000-000000000005/perguntas":
+    "^(Sua pergunta|Perguntas sobre este evento)$",
+  "/events/70000000-0000-4000-8000-000000000005/editar": "^Editar evento$",
+  "/communities/71000000-0000-4000-8000-000000000001/admin/media": "^Imagens da comunidade$",
+  // O h1 é "Seu guia de {cidade}": prefixo fixo, a cidade é dado.
+  "/guide?q=escola": "^Seu guia de ",
+  "/guide/a0000000-0000-4000-8000-000000000001/correcao": "^Sugerir atualização$",
+  "/explorar/servicos?q=climatiza": "^Resultados para “climatiza”$",
+  "/explorar/busca?q=escola": "^Resultados para “escola”$",
+  "/imoveis": "^Explorar moradia$",
+  "/imoveis/novo": "^Novo anúncio de moradia$",
+  // A ficha do imóvel é nomeada pelo título do anúncio.
+  "/imoveis/d0000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
+  "/imoveis/alertas": "^Meus alertas$",
+  "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010": "^Do que você precisa\\?$",
+  "/pedidos": "^Meus pedidos$",
+  // O título do pedido vem da primeira linha da própria descrição do pedido.
+  "/pedidos/40000000-0000-4000-8000-000000000023": DYNAMIC_HEADING,
+  "/recommendations?focus=80000000-0000-4000-8000-000000000f00": "^Indicações$",
+  "/salvos": "^Salvos$",
+  "/ajuda": "^Ajuda$",
+  "/denuncias": "^Confiança e privacidade$",
+  "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01": "^Denunciar publicação$",
+  "/denuncias/<own-report>": "^Acompanhar denúncia$",
+  "/messages/<thread>": "^Mensagens$",
+  // As subrotas de Configurações herdam o h1 do layout; a página filha usa h2.
+  "/configuracoes/notificacoes": "^Configurações$",
+  "/configuracoes/conta": "^Configurações$",
+  "/configuracoes/familia": "^Configurações$",
+  "/configuracoes/bloqueados": "^Configurações$",
 }
 
 export const ROUTES = [
