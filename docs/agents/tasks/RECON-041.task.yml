@@ -1,0 +1,81 @@
+task_id: RECON-041
+
+objective: >
+  O painel do negocio do prestador entra na integracao. As provas de banco dos
+  dois lotes que escrevem no mesmo arquivo pgTAP passam a conviver: cada cenario
+  mantem o ator, a fixture e a assercao que tinha, e a contagem declarada do
+  plano corresponde ao numero de assercoes que o arquivo realmente executa.
+
+authority:
+  - docs/agents/tasks/RECON-024.task.yml
+  - supabase/tests/service-requests.sql
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 12/09/2026 tentando integrar fix/recon-024-painel-negocio em
+    chore/integracao-r3-next, com o codigo de saida lido direto: git merge
+    devolve EXIT=1 e marca conflito em supabase/tests/service-requests.sql e em
+    tools/backend-kanban/public/board.json.
+
+    O conflito do pgTAP e real e nao e de formatacao. Os dois lados escreveram
+    fixtures diferentes para o mesmo arquivo e declaram planos diferentes: um
+    lado declara select plan(12), o outro select plan(16). Sao quatro regioes em
+    conflito, incluindo a linha do plano e os blocos de insercao de prestador.
+
+    O lado que ja esta na integracao cria um prestador alcancavel pela
+    comunidade A, com o par de assercoes negativas de quem esta FORA do alcance:
+    o RPC recusa com 42501 e a leitura nao devolve linha nenhuma. O lado do
+    RECON-024 cria dois prestadores, um por comunidade, mais uma conversa de
+    mensagem direta com contexto de prestador, para provar a fila por situacao
+    da prancha 23.
+
+    Nenhum dos dois conjuntos e descartavel: o primeiro prova negacao de acesso,
+    o segundo prova a tela que o lote entrega. Perder qualquer um deles troca
+    prova por aparencia de prova.
+
+allowed_paths:
+  - supabase/tests/service-requests.sql
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - docs/agents/tasks/RECON-041.task.yml
+
+forbidden:
+  - baixar o numero do plano para esconder assercao que nao roda
+  - apagar assercao de qualquer um dos dois lados para a contagem fechar
+  - trocar identificador de uma fixture pelo de outra para evitar colisao sem conferir o que o cenario provava
+  - apagar ou recriar o banco local compartilhado por qualquer meio
+  - tocar migration, policy ou codigo de aplicacao; este lote so reconcilia prova de banco
+  - marcar card como concluido sem a saida real do teste de banco
+
+acceptance:
+  - as assercoes negativas de acesso fora de alcance continuam no arquivo, com o mesmo ator e a mesma expectativa
+  - as assercoes da fila por situacao do RECON-024 continuam no arquivo
+  - o numero declarado no plano e igual ao numero de assercoes executadas, conferido pela saida do teste e nao por contagem de olho
+  - nenhum identificador de fixture aparece com dois significados diferentes no mesmo arquivo
+  - o teste de banco do arquivo passa, com o codigo de saida lido direto
+  - o card do RECON-024 registra a integracao com a saida real como evidencia
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-041.task.yml
+  - npx pnpm@11.18.0 exec supabase test db
+  - node tools/backend-kanban/src/board.mjs --write-summary
+
+traps:
+  - pgTAP nao reclama de assercao a mais quando o plano e maior; ele reprova no fim, e a mensagem parece falha de cenario
+  - Ha UM banco local nesta maquina e outro executor esta usando; migration para frente e permitida, apagar o banco nao
+  - O teste de banco exige banco SEM a semente de desenvolvimento; se ele reprovar seis assercoes de perfil, o problema e o estado do banco e nao o seu arquivo — registre em vez de perseguir
+  - Nao canalize os comandos de prova por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - Os dois lados usam faixas de identificador proximas; conferir colisao antes de confiar no resultado
+
+risk: >
+  Arquivo de prova de banco de um dominio de pedido a prestador, mais o registro
+  do quadro. A superficie tocada e o proprio arquivo de teste.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true
