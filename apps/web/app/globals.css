@@ -165,6 +165,15 @@ body {
     font-weight: 600;
   }
 
+  /* O HeroUI injeta chevrons de 16x16 no scroller quando a fileira transborda
+     (375 com 4 abas). Eles reprovam a régua de alvo de toque do produto
+     (44x44) e são redundantes: a fileira continua rolável por gesto e o foco
+     por teclado traz a aba para a vista, sem rolar a página. */
+  .tabs--secondary .tabs__list-container__scroll-prev,
+  .tabs--secondary .tabs__list-container__scroll-next {
+    display: none;
+  }
+
   :where(a, button, input, select, textarea, [role="button"], [role="checkbox"]):focus-visible {
     outline: 2px solid var(--semantic-focus-outer);
     outline-offset: 2px;
