@@ -2455,7 +2455,7 @@
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-045.task.yml -> EXIT=0, 1 contrato valido",
         "Runtime Playwright (dono-vila@; /events com membro-6@): [role=tab][data-selected=true] devolve border-bottom-width 2px, border-bottom-color rgb(22,71,52) (--semantic-action-primary) e font-weight 600; a nao selecionada devolve borda transparente de 2px e peso 500; sem rolagem horizontal de pagina em 375/768/1440",
         "capture.mjs com BIVAQUE_VISUAL_ROUTE em /salvos, /recommendations e /events -> EXIT=0, captura VALID, 0 achados em 375/768/1440 (runnerRevision 8c29cd2, arvore limpa)",
-        "npx pnpm@11.18.0 gate -> EXIT lido no fechamento deste lote"
+        "npx pnpm@11.18.0 gate -> EXIT=0, GATE VERDE (lint, typecheck, build, test: 826 unit + workspaces + 189 privacy/scope, secrets)"
       ],
       "tests": [
         "tests/unit/visual/tab-variant-rule.test.ts",
