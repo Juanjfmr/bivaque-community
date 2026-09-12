@@ -1,10 +1,31 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(28);
+select plan(31);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
+
+-- RECON-044 — a reconciliacao nao pode perder a coluna de que a policy de
+-- leitura do destinatario depende nem a chave de idempotencia. Estes asserts
+-- reprovam se qualquer uma sumir, ou se a policy deixar de existir.
+select has_column(
+  'public', 'service_requests', 'provider_user_id',
+  'provider_user_id continua existindo: a policy de leitura depende dela'
+);
+select has_column(
+  'public', 'service_requests', 'idempotency_key',
+  'idempotency_key continua existindo: a unicidade evita pedido duplicado'
+);
+select results_eq(
+  $$ select count(*)::bigint
+       from pg_policies
+      where schemaname = 'public'
+        and tablename = 'service_requests'
+        and policyname = 'service_requests_select_participant' $$,
+  array[1::bigint],
+  'a policy de leitura do solicitante e do prestador destinatario continua valendo'
+);
 
 -- ===========================================================================
 -- Cenário da integração (RECON-022) — negação de acesso fora do alcance.
@@ -157,11 +178,12 @@ select is_empty(
 select throws_ok(
   $$
     insert into public.service_requests (
-      requester_user_id, provider_id, provider_user_id, description
+      requester_user_id, provider_id, provider_user_id, category, description
     ) values (
       '10000000-0000-4000-8000-000000000002',
       '30000000-0000-4000-8000-000000000025',
       '10000000-0000-4000-8000-000000000025',
+      'assistencia_tecnica',
       'Invasão direta sem interface'
     )
   $$,
@@ -290,13 +312,14 @@ values
   );
 
 insert into public.service_requests (
-  id, requester_user_id, provider_id, conversation_id, category, description, status
+  id, requester_user_id, provider_id, provider_user_id, conversation_id, category, description, status
 )
 values
   (
     '50000000-0000-4000-8000-0000000000a1',
     '10000000-0000-4000-8000-000000000001',
     '30000000-0000-4000-8000-000000000020',
+    '10000000-0000-4000-8000-000000000020',
     '40000000-0000-4000-8000-0000000000a1',
     'assistencia_tecnica',
     'Ar-condicionado não resfria',
@@ -306,6 +329,7 @@ values
     '50000000-0000-4000-8000-0000000000b1',
     '10000000-0000-4000-8000-000000000002',
     '30000000-0000-4000-8000-000000000021',
+    '10000000-0000-4000-8000-000000000021',
     '40000000-0000-4000-8000-0000000000b1',
     'alimentacao',
     'Almoço para dez pessoas',
@@ -327,10 +351,11 @@ select is_empty(
 );
 select throws_ok(
   $$ insert into public.service_requests (
-       requester_user_id, provider_id, conversation_id, category, description
+       requester_user_id, provider_id, provider_user_id, conversation_id, category, description
      ) values (
        '10000000-0000-4000-8000-000000000001',
        '30000000-0000-4000-8000-000000000020',
+       '10000000-0000-4000-8000-000000000020',
        '40000000-0000-4000-8000-0000000000a1',
        'assistencia_tecnica',
        'Escrita direta proibida'
@@ -350,12 +375,12 @@ select is_empty(
   'provider does not read the request addressed to another provider'
 );
 select throws_ok(
-  $$ select public.respond_to_service_request(
-       '50000000-0000-4000-8000-0000000000b1', 'tentativa de invasão'
+  $$ select public.send_conversation_message(
+       '40000000-0000-4000-8000-0000000000b1', 'tentativa de invasão', null
      ) $$,
   '42501',
   null,
-  'provider cannot respond to another provider request, by direct call'
+  'prestador não envia mensagem na conversa de um pedido alheio'
 );
 select throws_ok(
   $$ select public.close_service_request('50000000-0000-4000-8000-0000000000b1') $$,
@@ -364,22 +389,22 @@ select throws_ok(
   'provider cannot close another provider request'
 );
 
-select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select throws_ok(
-  $$ select public.respond_to_service_request(
-       '50000000-0000-4000-8000-0000000000a1', 'o membro não responde pelo prestador'
+  $$ select public.send_conversation_message(
+       '40000000-0000-4000-8000-0000000000a1', 'terceiro na conversa do pedido', null
      ) $$,
   '42501',
   null,
-  'requester cannot respond in the provider role'
+  'terceiro não envia mensagem na conversa do pedido'
 );
 
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000020', true);
 select lives_ok(
-  $$ select public.respond_to_service_request(
-       '50000000-0000-4000-8000-0000000000a1', 'Posso passar amanhã às 9h'
+  $$ select public.send_conversation_message(
+       '40000000-0000-4000-8000-0000000000a1', 'Posso passar amanhã às 9h', null
      ) $$,
-  'addressed provider answers the request'
+  'prestador destinatário responde na conversa do pedido'
 );
 
 reset role;
