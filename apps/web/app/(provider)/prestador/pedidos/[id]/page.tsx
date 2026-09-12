@@ -163,6 +163,7 @@ export default async function PrestadorPedidoPage({
         <section aria-label="Responder" className="mt-6 space-y-3">
           <form action={respondToRequestAction} className="space-y-3">
             <input type="hidden" name="requestId" value={request.id} />
+            <input type="hidden" name="conversationId" value={request.conversation_id} />
             <label htmlFor="content" className="block text-sm font-medium">
               Escreva uma mensagem
             </label>

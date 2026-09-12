@@ -311,19 +311,21 @@ export async function deletePortfolioPhotoAction(formData: FormData): Promise<vo
 
 // ── RECON-024: fila de pedidos, área de atendimento e conta ─────────────────
 
-// A resposta NÃO escreve direto em dm_messages: o RPC
-// respond_to_service_request grava a mensagem e move open -> in_conversation na
-// MESMA transação (ADR D1). Escrever a mensagem e depois atualizar o status em
-// duas chamadas abriria a janela em que a aba "Novos" mente.
+// A resposta usa o RPC canonico `send_conversation_message`, que deriva o
+// remetente da sessao, grava a mensagem e move open -> in_conversation na
+// MESMA transacao (ADR D1). O nome do RECON-024 (`respond_to_service_request`)
+// nao existe mais: foi absorvido por ele na reconciliacao do RECON-044.
 export async function respondToRequestAction(formData: FormData): Promise<void> {
   const requestId = text(formData, "requestId")
+  const conversationId = text(formData, "conversationId")
   const content = text(formData, "content") ?? ""
   if (!requestId) throw new Error("requestId required")
+  if (!conversationId) throw new Error("conversationId required")
   if (content.trim().length === 0) throw new Error("Escreva uma resposta antes de enviar.")
 
   const { client } = await requireAuthClient()
-  const { error } = await client.rpc("respond_to_service_request", {
-    p_request_id: requestId,
+  const { error } = await client.rpc("send_conversation_message", {
+    p_conversation_id: conversationId,
     p_content: content,
   })
   if (error) throw new Error(`Falha ao responder: ${error.message}`)
