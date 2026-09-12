@@ -283,6 +283,10 @@ export const ROUTES = [
   { path: "/prestador", name: "provider-panel", auth: true },
   { path: "/prestador/ficha", name: "provider-ficha", auth: true },
   { path: "/prestador/catalogo", name: "provider-catalogo", auth: true },
+  // RECON-024 (prancha 23): Área de atendimento e Conta do negócio. Rodar com a
+  // conta de prestador do seed (BIVAQUE_VISUAL_EMAIL=prestador-seed@bivaque.example.invalid).
+  { path: "/prestador/atendimento", name: "provider-atendimento", auth: true },
+  { path: "/prestador/conta", name: "provider-conta", auth: true },
   {
     path: "/prestadores/30000000-0000-4000-8000-000000000010",
     name: "provider-public-ficha",
