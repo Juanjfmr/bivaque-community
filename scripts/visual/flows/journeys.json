@@ -1,6 +1,6 @@
 {
-  "_note": "Jornadas: sequencias ordenadas de telas com inicio, meio e fim, no formato Mobbin. Uma tela e referenciada por '<id-da-prancha>#<indice>' — o indice e a posicao em manifest.screens. `passos` e a sequencia principal; `variantes` sao estados alternativos da mesma jornada (erro, retomada, outro publico). A prancha e a FONTE da tela, nao a jornada. Documental: montada das pranchas, nao gravada em runtime.",
-  "version": 1,
+  "_note": "Jornadas no molde Mobbin: uma sequencia ordenada de telas com etapas nomeadas (inicio, meio e fim), a acao que move de uma tela para a outra, e os desvios (erro, retomada, outro publico) ancorados ao passo que os origina. Cada tela e citada por '<id-da-prancha>#<indice>'. A prancha e a FONTE da tela, nao a jornada. Documental: montada das pranchas, nao gravada em runtime.",
+  "version": 2,
   "journeys": [
     {
       "id": "mobile-entrar-e-ser-admitido",
@@ -11,22 +11,65 @@
       "comeca": "Boas-vindas, sem conta",
       "termina": "Membro verificado, com cidade escolhida, dentro do Inicio",
       "acoes": ["Criar conta", "Confirmar e-mail", "Verificar vinculo", "Escolher cidade"],
-      "passos": [
-        "30-mobile-auth-entrada#0",
-        "30-mobile-auth-entrada#2",
-        "31-mobile-auth-confirmacao#0",
-        "32-mobile-auth-acesso#0",
-        "32-mobile-auth-acesso#1",
-        "32-mobile-auth-acesso#2",
-        "34-mobile-onboarding-contexto#0",
-        "34-mobile-onboarding-contexto#2"
+      "etapas": [
+        {
+          "nome": "Abertura",
+          "passos": [
+            { "tela": "30-mobile-auth-entrada#0", "acao": "toca em Criar conta" },
+            { "tela": "30-mobile-auth-entrada#2", "acao": "confirma o e-mail e recebe o codigo" }
+          ]
+        },
+        {
+          "nome": "Confirmacao",
+          "passos": [
+            {
+              "tela": "31-mobile-auth-confirmacao#0",
+              "acao": "digita o codigo recebido por e-mail"
+            }
+          ]
+        },
+        {
+          "nome": "Verificacao",
+          "passos": [
+            { "tela": "32-mobile-auth-acesso#0", "acao": "aceita os aceites" },
+            { "tela": "32-mobile-auth-acesso#1", "acao": "entende por que precisa verificar" },
+            { "tela": "32-mobile-auth-acesso#2", "acao": "envia o CPF para conferencia" }
+          ]
+        },
+        {
+          "nome": "Chegada",
+          "passos": [
+            { "tela": "34-mobile-onboarding-contexto#0", "acao": "escolhe a cidade" },
+            { "tela": "34-mobile-onboarding-contexto#2" }
+          ]
+        }
       ],
-      "variantes": [
-        "30-mobile-auth-entrada#1",
-        "31-mobile-auth-confirmacao#1",
-        "31-mobile-auth-confirmacao#2",
-        "34-mobile-onboarding-contexto#1",
-        "33-mobile-auth-admissao#2"
+      "desvios": [
+        {
+          "tela": "30-mobile-auth-entrada#1",
+          "apos": "30-mobile-auth-entrada#0",
+          "quando": "ja tem conta"
+        },
+        {
+          "tela": "31-mobile-auth-confirmacao#1",
+          "apos": "31-mobile-auth-confirmacao#0",
+          "quando": "codigo incorreto"
+        },
+        {
+          "tela": "31-mobile-auth-confirmacao#2",
+          "apos": "31-mobile-auth-confirmacao#0",
+          "quando": "codigo expirado"
+        },
+        {
+          "tela": "34-mobile-onboarding-contexto#1",
+          "apos": "34-mobile-onboarding-contexto#0",
+          "quando": "pula a personalizacao"
+        },
+        {
+          "tela": "33-mobile-auth-admissao#2",
+          "apos": "34-mobile-onboarding-contexto#0",
+          "quando": "entra por convite familiar"
+        }
       ]
     },
     {
@@ -38,14 +81,33 @@
       "comeca": "CPF nao concluiu; a identidade e a alternativa",
       "termina": "Analise acompanhada e arquivo substituido quando ilegivel",
       "acoes": ["Enviar identidade"],
-      "passos": [
-        "33-mobile-auth-admissao#1",
-        "68-mobile-identidade-recuperacao#0",
-        "68-mobile-identidade-recuperacao#1",
-        "33-mobile-auth-admissao#0",
-        "68-mobile-identidade-recuperacao#2"
+      "etapas": [
+        {
+          "nome": "Alternativa",
+          "passos": [
+            {
+              "tela": "33-mobile-auth-admissao#1",
+              "acao": "envia a identidade militar em um arquivo unico"
+            }
+          ]
+        },
+        {
+          "nome": "Analise",
+          "passos": [
+            { "tela": "68-mobile-identidade-recuperacao#0", "acao": "acompanha a analise" },
+            { "tela": "68-mobile-identidade-recuperacao#1", "acao": "ve o resultado" },
+            {
+              "tela": "33-mobile-auth-admissao#0",
+              "acao": "o reconhecimento falha e pede um arquivo novo"
+            }
+          ]
+        },
+        {
+          "nome": "Correcao",
+          "passos": [{ "tela": "68-mobile-identidade-recuperacao#2" }]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "mobile-retomar-e-recuperar",
@@ -56,12 +118,22 @@
       "comeca": "Cadastro interrompido",
       "termina": "Pessoa retoma o ponto onde parou",
       "acoes": ["Recuperar acesso", "Confirmar e-mail"],
-      "passos": [
-        "35-mobile-auth-retomada#0",
-        "35-mobile-auth-retomada#2",
-        "35-mobile-auth-retomada#1"
+      "etapas": [
+        {
+          "nome": "Retomada",
+          "passos": [
+            { "tela": "35-mobile-auth-retomada#0", "acao": "a sessao expira antes de concluir" }
+          ]
+        },
+        {
+          "nome": "Falhas",
+          "passos": [
+            { "tela": "35-mobile-auth-retomada#2", "acao": "pede um codigo novo" },
+            { "tela": "35-mobile-auth-retomada#1" }
+          ]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "mobile-chegar-ao-inicio",
@@ -72,8 +144,17 @@
       "comeca": "Tres intencoes distintas de chegada",
       "termina": "A tela certa para cada intencao",
       "acoes": ["Explorar", "Mudar de cidade"],
-      "passos": ["00-mobile-inicio#0", "00-mobile-inicio#1", "00-mobile-inicio#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Tres chegadas",
+          "passos": [
+            { "tela": "00-mobile-inicio#0", "acao": "cheguei agora: quero explorar" },
+            { "tela": "00-mobile-inicio#1", "acao": "faco parte: quero minha vila" },
+            { "tela": "00-mobile-inicio#2" }
+          ]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-descobrir-e-entrar-numa-comunidade",
@@ -84,13 +165,32 @@
       "comeca": "Descoberta de comunidades da cidade",
       "termina": "Dentro da comunidade, com os grupos a vista",
       "acoes": ["Explorar", "Solicitar participacao"],
-      "passos": [
-        "40-mobile-comunidades#1",
-        "40-mobile-comunidades#2",
-        "41-mobile-comunidade-participacao#0",
-        "41-mobile-comunidade-participacao#1"
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [
+            { "tela": "40-mobile-comunidades#1", "acao": "abre a apresentacao da comunidade" }
+          ]
+        },
+        {
+          "nome": "Pedido",
+          "passos": [
+            { "tela": "40-mobile-comunidades#2", "acao": "pede para participar" },
+            { "tela": "41-mobile-comunidade-participacao#0", "acao": "o pedido e aprovado" }
+          ]
+        },
+        {
+          "nome": "Dentro",
+          "passos": [{ "tela": "41-mobile-comunidade-participacao#1" }]
+        }
       ],
-      "variantes": ["40-mobile-comunidades#0"]
+      "desvios": [
+        {
+          "tela": "40-mobile-comunidades#0",
+          "apos": "40-mobile-comunidades#1",
+          "quando": "ja participa de alguma"
+        }
+      ]
     },
     {
       "id": "mobile-publicar-na-comunidade",
@@ -101,8 +201,21 @@
       "comeca": "Pergunta em branco",
       "termina": "Publicacao enviada, com o publico escolhido",
       "acoes": ["Publicar"],
-      "passos": ["44-mobile-publicacao#0", "44-mobile-publicacao#1", "44-mobile-publicacao#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Escrita",
+          "passos": [{ "tela": "44-mobile-publicacao#0", "acao": "escolhe o publico" }]
+        },
+        {
+          "nome": "Alcance",
+          "passos": [{ "tela": "44-mobile-publicacao#1", "acao": "publica" }]
+        },
+        {
+          "nome": "Enviado",
+          "passos": [{ "tela": "44-mobile-publicacao#2" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-sair-da-comunidade",
@@ -113,8 +226,16 @@
       "comeca": "Dentro da comunidade",
       "termina": "Vinculo encerrado",
       "acoes": ["Sair da comunidade"],
-      "passos": ["41-mobile-comunidade-participacao#1", "41-mobile-comunidade-participacao#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Saida",
+          "passos": [
+            { "tela": "41-mobile-comunidade-participacao#1", "acao": "confirma a saida" },
+            { "tela": "41-mobile-comunidade-participacao#2" }
+          ]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-confirmar-presenca-num-evento",
@@ -125,8 +246,21 @@
       "comeca": "Lista de eventos",
       "termina": "Presenca confirmada",
       "acoes": ["Explorar", "Confirmar presenca"],
-      "passos": ["46-mobile-eventos#0", "46-mobile-eventos#1", "46-mobile-eventos#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [{ "tela": "46-mobile-eventos#0", "acao": "abre o detalhe" }]
+        },
+        {
+          "nome": "Detalhe",
+          "passos": [{ "tela": "46-mobile-eventos#1", "acao": "confirma presenca" }]
+        },
+        {
+          "nome": "Confirmado",
+          "passos": [{ "tela": "46-mobile-eventos#2" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-cancelar-presenca-ou-evento",
@@ -137,12 +271,20 @@
       "comeca": "Presenca confirmada",
       "termina": "Presenca cancelada ou evento cancelado",
       "acoes": ["Cancelar"],
-      "passos": [
-        "47-mobile-eventos-cancelamento#0",
-        "47-mobile-eventos-cancelamento#1",
-        "47-mobile-eventos-cancelamento#2"
+      "etapas": [
+        {
+          "nome": "Cancelamento",
+          "passos": [
+            {
+              "tela": "47-mobile-eventos-cancelamento#0",
+              "acao": "confirma o cancelamento da presenca"
+            },
+            { "tela": "47-mobile-eventos-cancelamento#1", "acao": "ou cancela o evento inteiro" },
+            { "tela": "47-mobile-eventos-cancelamento#2" }
+          ]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "mobile-pedir-informacoes-ao-organizador",
@@ -153,12 +295,26 @@
       "comeca": "Detalhe do evento, sem exigir presenca",
       "termina": "Pergunta enviada e resposta acompanhada",
       "acoes": ["Pedir informacoes"],
-      "passos": [
-        "66-mobile-evento-informacoes#0",
-        "66-mobile-evento-informacoes#1",
-        "66-mobile-evento-informacoes#2"
+      "etapas": [
+        {
+          "nome": "Pergunta",
+          "passos": [
+            {
+              "tela": "66-mobile-evento-informacoes#0",
+              "acao": "aguarda a resposta do organizador"
+            }
+          ]
+        },
+        {
+          "nome": "Espera",
+          "passos": [{ "tela": "66-mobile-evento-informacoes#1", "acao": "falha o envio" }]
+        },
+        {
+          "nome": "Falha",
+          "passos": [{ "tela": "66-mobile-evento-informacoes#2" }]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "mobile-explorar-o-guia",
@@ -169,8 +325,21 @@
       "comeca": "Descoberta editorial da cidade",
       "termina": "Artigo de chegada lido",
       "acoes": ["Explorar"],
-      "passos": ["10-mobile-guia#0", "10-mobile-guia#2", "10-mobile-guia#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [{ "tela": "10-mobile-guia#0", "acao": "abre uma categoria" }]
+        },
+        {
+          "nome": "Categoria",
+          "passos": [{ "tela": "10-mobile-guia#2", "acao": "le o artigo de chegada" }]
+        },
+        {
+          "nome": "Leitura",
+          "passos": [{ "tela": "10-mobile-guia#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-sugerir-correcao-no-guia",
@@ -181,12 +350,21 @@
       "comeca": "Referencia completa aberta",
       "termina": "Sugestao enviada ao curador",
       "acoes": ["Explorar", "Sugerir correcao"],
-      "passos": [
-        "24-mobile-guia-referencia#0",
-        "24-mobile-guia-referencia#1",
-        "24-mobile-guia-referencia#2"
+      "etapas": [
+        {
+          "nome": "Referencia",
+          "passos": [{ "tela": "24-mobile-guia-referencia#0", "acao": "ve a conversa de origem" }]
+        },
+        {
+          "nome": "Origem",
+          "passos": [{ "tela": "24-mobile-guia-referencia#1", "acao": "sugere a atualizacao" }]
+        },
+        {
+          "nome": "Sugestao",
+          "passos": [{ "tela": "24-mobile-guia-referencia#2" }]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "mobile-ler-responder-e-resolver",
@@ -197,8 +375,21 @@
       "comeca": "Conversa com respostas",
       "termina": "Pergunta marcada como resolvida",
       "acoes": ["Responder", "Resolver"],
-      "passos": ["14-mobile-conversa#0", "14-mobile-conversa#1", "14-mobile-conversa#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Leitura",
+          "passos": [{ "tela": "14-mobile-conversa#0", "acao": "escreve a resposta" }]
+        },
+        {
+          "nome": "Resposta",
+          "passos": [{ "tela": "14-mobile-conversa#1", "acao": "marca como resolvida" }]
+        },
+        {
+          "nome": "Resolvido",
+          "passos": [{ "tela": "14-mobile-conversa#2" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-pedir-um-servico",
@@ -209,15 +400,28 @@
       "comeca": "Explorar servicos da cidade",
       "termina": "Pedido com respostas recebidas",
       "acoes": ["Explorar", "Buscar", "Ver ficha", "Pedir servico"],
-      "passos": [
-        "02-mobile-explorar#0",
-        "02-mobile-explorar#1",
-        "02-mobile-explorar#2",
-        "16-mobile-pedido-servico#0",
-        "16-mobile-pedido-servico#2",
-        "16-mobile-pedido-servico#1"
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [
+            { "tela": "02-mobile-explorar#0", "acao": "busca servicos" },
+            { "tela": "02-mobile-explorar#1", "acao": "abre a ficha do prestador" }
+          ]
+        },
+        {
+          "nome": "Prestador",
+          "passos": [{ "tela": "02-mobile-explorar#2", "acao": "descreve a necessidade" }]
+        },
+        {
+          "nome": "Pedido",
+          "passos": [
+            { "tela": "16-mobile-pedido-servico#0", "acao": "envia o pedido" },
+            { "tela": "16-mobile-pedido-servico#2", "acao": "recebe respostas" },
+            { "tela": "16-mobile-pedido-servico#1" }
+          ]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "mobile-responder-um-pedido",
@@ -228,8 +432,21 @@
       "comeca": "Painel de pedidos do negocio",
       "termina": "Pedido respondido, ficha em dia",
       "acoes": ["Gerenciar", "Responder", "Editar ficha"],
-      "passos": ["22-mobile-meu-negocio#0", "22-mobile-meu-negocio#2", "22-mobile-meu-negocio#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Painel",
+          "passos": [{ "tela": "22-mobile-meu-negocio#0", "acao": "abre o pedido" }]
+        },
+        {
+          "nome": "Resposta",
+          "passos": [{ "tela": "22-mobile-meu-negocio#2", "acao": "atualiza a ficha" }]
+        },
+        {
+          "nome": "Ficha",
+          "passos": [{ "tela": "22-mobile-meu-negocio#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-anunciar-um-produto",
@@ -240,8 +457,21 @@
       "comeca": "Mercado da cidade",
       "termina": "Anuncio publicado",
       "acoes": ["Explorar", "Anunciar", "Ver ficha"],
-      "passos": ["11-mobile-mercado#0", "11-mobile-mercado#1", "11-mobile-mercado#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Mercado",
+          "passos": [{ "tela": "11-mobile-mercado#0", "acao": "abre o item" }]
+        },
+        {
+          "nome": "Item",
+          "passos": [{ "tela": "11-mobile-mercado#1", "acao": "cria o anuncio" }]
+        },
+        {
+          "nome": "Anuncio",
+          "passos": [{ "tela": "11-mobile-mercado#2" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-gerenciar-e-encerrar-anuncio",
@@ -252,12 +482,21 @@
       "comeca": "Lista dos proprios anuncios por situacao",
       "termina": "Anuncio encerrado como vendido",
       "acoes": ["Gerenciar", "Editar", "Encerrar"],
-      "passos": [
-        "20-mobile-meus-anuncios#0",
-        "20-mobile-meus-anuncios#1",
-        "20-mobile-meus-anuncios#2"
+      "etapas": [
+        {
+          "nome": "Situacao",
+          "passos": [{ "tela": "20-mobile-meus-anuncios#0", "acao": "edita o anuncio" }]
+        },
+        {
+          "nome": "Edicao",
+          "passos": [{ "tela": "20-mobile-meus-anuncios#1", "acao": "confirma a venda" }]
+        },
+        {
+          "nome": "Encerrado",
+          "passos": [{ "tela": "20-mobile-meus-anuncios#2" }]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "mobile-buscar-imovel-e-criar-alerta",
@@ -268,8 +507,21 @@
       "comeca": "Busca de imoveis",
       "termina": "Alerta criado para o refinamento",
       "acoes": ["Explorar", "Buscar", "Criar alerta"],
-      "passos": ["18-mobile-imoveis#0", "18-mobile-imoveis#1", "18-mobile-imoveis#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Busca",
+          "passos": [{ "tela": "18-mobile-imoveis#0", "acao": "abre o imovel" }]
+        },
+        {
+          "nome": "Imovel",
+          "passos": [{ "tela": "18-mobile-imoveis#1", "acao": "cria o alerta" }]
+        },
+        {
+          "nome": "Alerta",
+          "passos": [{ "tela": "18-mobile-imoveis#2" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-ver-e-editar-o-perfil",
@@ -280,8 +532,21 @@
       "comeca": "Meu perfil",
       "termina": "Exibicao propria e a de outro membro",
       "acoes": ["Ver perfil", "Editar"],
-      "passos": ["49-mobile-perfil#0", "49-mobile-perfil#1", "49-mobile-perfil#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Meu perfil",
+          "passos": [{ "tela": "49-mobile-perfil#0", "acao": "edita" }]
+        },
+        {
+          "nome": "Edicao",
+          "passos": [{ "tela": "49-mobile-perfil#1", "acao": "abre outro membro" }]
+        },
+        {
+          "nome": "Outro",
+          "passos": [{ "tela": "49-mobile-perfil#2" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-ajustar-preferencias-e-conta",
@@ -292,12 +557,21 @@
       "comeca": "Configuracoes",
       "termina": "Controles da conta revisados",
       "acoes": ["Configurar", "Notificacoes"],
-      "passos": [
-        "50-mobile-configuracoes#0",
-        "50-mobile-configuracoes#1",
-        "50-mobile-configuracoes#2"
+      "etapas": [
+        {
+          "nome": "Configuracoes",
+          "passos": [{ "tela": "50-mobile-configuracoes#0", "acao": "ajusta as notificacoes" }]
+        },
+        {
+          "nome": "Notificacoes",
+          "passos": [{ "tela": "50-mobile-configuracoes#1", "acao": "revisa os controles" }]
+        },
+        {
+          "nome": "Conta",
+          "passos": [{ "tela": "50-mobile-configuracoes#2" }]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "mobile-voltar-ao-que-importa",
@@ -308,8 +582,21 @@
       "comeca": "Central de notificacoes",
       "termina": "Alertas de imoveis a vista",
       "acoes": ["Notificacoes", "Salvos", "Criar alerta"],
-      "passos": ["53-mobile-retorno#0", "53-mobile-retorno#1", "53-mobile-retorno#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Notificacoes",
+          "passos": [{ "tela": "53-mobile-retorno#0", "acao": "abre os salvos" }]
+        },
+        {
+          "nome": "Salvos",
+          "passos": [{ "tela": "53-mobile-retorno#1", "acao": "ve os alertas" }]
+        },
+        {
+          "nome": "Alertas",
+          "passos": [{ "tela": "53-mobile-retorno#2" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-denunciar-e-acompanhar",
@@ -320,8 +607,21 @@
       "comeca": "Envio da denuncia",
       "termina": "Denuncia acompanhada e interacao bloqueada",
       "acoes": ["Denunciar", "Bloquear"],
-      "passos": ["55-mobile-confianca#0", "55-mobile-confianca#1", "55-mobile-confianca#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Denuncia",
+          "passos": [{ "tela": "55-mobile-confianca#0", "acao": "acompanha" }]
+        },
+        {
+          "nome": "Acompanhamento",
+          "passos": [{ "tela": "55-mobile-confianca#1", "acao": "bloqueia a interacao" }]
+        },
+        {
+          "nome": "Bloqueio",
+          "passos": [{ "tela": "55-mobile-confianca#2" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "mobile-quando-algo-falha",
@@ -332,8 +632,21 @@
       "comeca": "Tela carregando",
       "termina": "Erro sem perder o que foi escrito",
       "acoes": ["Estados do sistema"],
-      "passos": ["59-mobile-estados#0", "59-mobile-estados#1", "59-mobile-estados#2"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Carregando",
+          "passos": [{ "tela": "59-mobile-estados#0", "acao": "nao ha resultados" }]
+        },
+        {
+          "nome": "Vazio",
+          "passos": [{ "tela": "59-mobile-estados#1", "acao": "o envio falha" }]
+        },
+        {
+          "nome": "Erro",
+          "passos": [{ "tela": "59-mobile-estados#2" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-entrar-e-ser-admitido",
@@ -350,15 +663,37 @@
         "Verificar vinculo",
         "Escolher cidade"
       ],
-      "passos": [
-        "36-web-auth-entrada#0",
-        "36-web-auth-entrada#1",
-        "37-web-auth-confirmacao#0",
-        "38-web-auth-admissao#0",
-        "39-web-onboarding-contexto#0",
-        "39-web-onboarding-contexto#1"
+      "etapas": [
+        {
+          "nome": "Entrada",
+          "passos": [
+            { "tela": "36-web-auth-entrada#0", "acao": "cria a conta" },
+            { "tela": "36-web-auth-entrada#1", "acao": "confirma o e-mail" }
+          ]
+        },
+        {
+          "nome": "Confirmacao",
+          "passos": [{ "tela": "37-web-auth-confirmacao#0", "acao": "verifica o acesso" }]
+        },
+        {
+          "nome": "Verificacao",
+          "passos": [{ "tela": "38-web-auth-admissao#0", "acao": "escolhe a cidade" }]
+        },
+        {
+          "nome": "Contexto",
+          "passos": [
+            { "tela": "39-web-onboarding-contexto#0", "acao": "personaliza" },
+            { "tela": "39-web-onboarding-contexto#1" }
+          ]
+        }
       ],
-      "variantes": ["37-web-auth-confirmacao#1"]
+      "desvios": [
+        {
+          "tela": "37-web-auth-confirmacao#1",
+          "apos": "37-web-auth-confirmacao#0",
+          "quando": "confirmacao expirada"
+        }
+      ]
     },
     {
       "id": "web-verificar-por-identidade",
@@ -369,12 +704,21 @@
       "comeca": "Envio da identidade",
       "termina": "Analise acompanhada, arquivo substituido se preciso",
       "acoes": ["Enviar identidade"],
-      "passos": [
-        "69-web-identidade-recuperacao#0",
-        "38-web-auth-admissao#1",
-        "69-web-identidade-recuperacao#1"
+      "etapas": [
+        {
+          "nome": "Envio",
+          "passos": [{ "tela": "69-web-identidade-recuperacao#0", "acao": "acompanha a admissao" }]
+        },
+        {
+          "nome": "Analise",
+          "passos": [{ "tela": "38-web-auth-admissao#1", "acao": "o arquivo esta ilegivel" }]
+        },
+        {
+          "nome": "Correcao",
+          "passos": [{ "tela": "69-web-identidade-recuperacao#1" }]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "web-chegar-ao-inicio",
@@ -385,8 +729,8 @@
       "comeca": "Home de quem participa",
       "termina": "Home de quem participa",
       "acoes": ["Explorar"],
-      "passos": ["01-web-inicio#0"],
-      "variantes": []
+      "etapas": [{ "nome": "Home", "passos": [{ "tela": "01-web-inicio#0" }] }],
+      "desvios": []
     },
     {
       "id": "web-descobrir-e-entrar-numa-comunidade",
@@ -397,13 +741,25 @@
       "comeca": "Minhas comunidades",
       "termina": "Dentro da comunidade, com os grupos",
       "acoes": ["Explorar", "Solicitar participacao"],
-      "passos": [
-        "42-web-comunidades#0",
-        "42-web-comunidades#1",
-        "43-web-comunidade-grupos#1",
-        "43-web-comunidade-grupos#0"
+      "etapas": [
+        {
+          "nome": "Minhas",
+          "passos": [{ "tela": "42-web-comunidades#0", "acao": "descobre outras" }]
+        },
+        {
+          "nome": "Descoberta",
+          "passos": [{ "tela": "42-web-comunidades#1", "acao": "pede para participar" }]
+        },
+        {
+          "nome": "Pedido",
+          "passos": [{ "tela": "43-web-comunidade-grupos#1", "acao": "o pedido e aprovado" }]
+        },
+        {
+          "nome": "Dentro",
+          "passos": [{ "tela": "43-web-comunidade-grupos#0" }]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "web-publicar",
@@ -414,8 +770,17 @@
       "comeca": "Publicacao em branco",
       "termina": "Rascunho recuperado ou publicacao enviada",
       "acoes": ["Publicar", "Editar"],
-      "passos": ["45-web-publicacao#0", "45-web-publicacao#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Publicacao",
+          "passos": [{ "tela": "45-web-publicacao#0", "acao": "recupera o rascunho" }]
+        },
+        {
+          "nome": "Rascunho",
+          "passos": [{ "tela": "45-web-publicacao#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-confirmar-presenca-num-evento",
@@ -426,8 +791,17 @@
       "comeca": "Lista e filtros",
       "termina": "Presenca gerida no detalhe",
       "acoes": ["Explorar", "Confirmar presenca"],
-      "passos": ["48-web-eventos#0", "48-web-eventos#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Lista",
+          "passos": [{ "tela": "48-web-eventos#0", "acao": "abre o detalhe" }]
+        },
+        {
+          "nome": "Detalhe",
+          "passos": [{ "tela": "48-web-eventos#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-pedir-informacoes-ao-organizador",
@@ -438,8 +812,17 @@
       "comeca": "Pergunta reenviada",
       "termina": "Resposta lida e jornada retomada",
       "acoes": ["Pedir informacoes", "Responder"],
-      "passos": ["67-web-evento-informacoes#0", "67-web-evento-informacoes#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Pergunta",
+          "passos": [{ "tela": "67-web-evento-informacoes#0", "acao": "le a resposta" }]
+        },
+        {
+          "nome": "Resposta",
+          "passos": [{ "tela": "67-web-evento-informacoes#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-explorar-o-guia",
@@ -450,8 +833,8 @@
       "comeca": "Descoberta editorial",
       "termina": "Descoberta editorial",
       "acoes": ["Explorar"],
-      "passos": ["12-web-guia#0"],
-      "variantes": []
+      "etapas": [{ "nome": "Descoberta", "passos": [{ "tela": "12-web-guia#0" }] }],
+      "desvios": []
     },
     {
       "id": "web-sugerir-correcao-no-guia",
@@ -462,8 +845,8 @@
       "comeca": "Referencia completa",
       "termina": "Correcao sugerida",
       "acoes": ["Explorar", "Sugerir correcao"],
-      "passos": ["25-web-guia-referencia#0"],
-      "variantes": []
+      "etapas": [{ "nome": "Referencia", "passos": [{ "tela": "25-web-guia-referencia#0" }] }],
+      "desvios": []
     },
     {
       "id": "web-ler-e-responder-uma-conversa",
@@ -474,8 +857,8 @@
       "comeca": "Conversa e resposta",
       "termina": "Conversa e resposta",
       "acoes": ["Responder", "Resolver"],
-      "passos": ["15-web-conversa#0"],
-      "variantes": []
+      "etapas": [{ "nome": "Conversa", "passos": [{ "tela": "15-web-conversa#0" }] }],
+      "desvios": []
     },
     {
       "id": "web-pedir-um-servico",
@@ -486,14 +869,28 @@
       "comeca": "Explorar servicos",
       "termina": "Pedido e resposta do prestador",
       "acoes": ["Explorar", "Buscar", "Ver ficha", "Pedir servico"],
-      "passos": [
-        "61-web-explorar-servicos#0",
-        "61-web-explorar-servicos#1",
-        "62-web-prestador-pedido#0",
-        "62-web-prestador-pedido#1",
-        "17-web-pedido-servico#0"
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [
+            { "tela": "61-web-explorar-servicos#0", "acao": "busca servicos" },
+            { "tela": "61-web-explorar-servicos#1", "acao": "abre a ficha" }
+          ]
+        },
+        {
+          "nome": "Prestador",
+          "passos": [{ "tela": "62-web-prestador-pedido#0", "acao": "descreve a necessidade" }]
+        },
+        {
+          "nome": "Pedido",
+          "passos": [{ "tela": "62-web-prestador-pedido#1", "acao": "acompanha a resposta" }]
+        },
+        {
+          "nome": "Resposta",
+          "passos": [{ "tela": "17-web-pedido-servico#0" }]
+        }
       ],
-      "variantes": []
+      "desvios": []
     },
     {
       "id": "web-responder-um-pedido",
@@ -504,8 +901,8 @@
       "comeca": "Painel de pedidos do prestador",
       "termina": "Painel de pedidos do prestador",
       "acoes": ["Gerenciar", "Responder"],
-      "passos": ["23-web-meu-negocio#0"],
-      "variantes": []
+      "etapas": [{ "nome": "Painel", "passos": [{ "tela": "23-web-meu-negocio#0" }] }],
+      "desvios": []
     },
     {
       "id": "web-anunciar-um-produto",
@@ -516,8 +913,21 @@
       "comeca": "Busca de produtos",
       "termina": "Anuncio criado",
       "acoes": ["Explorar", "Anunciar", "Ver ficha"],
-      "passos": ["13-web-mercado#0", "63-web-mercado-anuncio#0", "63-web-mercado-anuncio#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Busca",
+          "passos": [{ "tela": "13-web-mercado#0", "acao": "abre o produto" }]
+        },
+        {
+          "nome": "Produto",
+          "passos": [{ "tela": "63-web-mercado-anuncio#0", "acao": "cria o anuncio" }]
+        },
+        {
+          "nome": "Anuncio",
+          "passos": [{ "tela": "63-web-mercado-anuncio#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-gerenciar-e-encerrar-anuncio",
@@ -528,8 +938,21 @@
       "comeca": "Lista dos proprios anuncios",
       "termina": "Anuncio editado e pausado",
       "acoes": ["Gerenciar", "Editar", "Encerrar"],
-      "passos": ["21-web-meus-anuncios#0", "64-web-mercado-edicao#0", "64-web-mercado-edicao#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Lista",
+          "passos": [{ "tela": "21-web-meus-anuncios#0", "acao": "edita" }]
+        },
+        {
+          "nome": "Edicao",
+          "passos": [{ "tela": "64-web-mercado-edicao#0", "acao": "pausa" }]
+        },
+        {
+          "nome": "Pausa",
+          "passos": [{ "tela": "64-web-mercado-edicao#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-buscar-imovel-e-criar-alerta",
@@ -540,8 +963,21 @@
       "comeca": "Busca de imoveis",
       "termina": "Alertas geridos",
       "acoes": ["Buscar", "Criar alerta", "Gerenciar"],
-      "passos": ["65-web-imoveis-alertas#0", "19-web-imoveis#0", "65-web-imoveis-alertas#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Busca",
+          "passos": [{ "tela": "65-web-imoveis-alertas#0", "acao": "abre o imovel" }]
+        },
+        {
+          "nome": "Imovel",
+          "passos": [{ "tela": "19-web-imoveis#0", "acao": "gerencia o alerta" }]
+        },
+        {
+          "nome": "Alerta",
+          "passos": [{ "tela": "65-web-imoveis-alertas#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-ver-e-editar-o-perfil",
@@ -552,8 +988,17 @@
       "comeca": "Meu perfil e edicao",
       "termina": "Perfil de outro membro",
       "acoes": ["Ver perfil", "Editar"],
-      "passos": ["51-web-perfil#0", "51-web-perfil#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Meu perfil",
+          "passos": [{ "tela": "51-web-perfil#0", "acao": "abre outro membro" }]
+        },
+        {
+          "nome": "Outro",
+          "passos": [{ "tela": "51-web-perfil#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-ajustar-preferencias-e-conta",
@@ -564,8 +1009,17 @@
       "comeca": "Preferencias e notificacoes",
       "termina": "Conta e privacidade revisadas",
       "acoes": ["Configurar", "Bloquear"],
-      "passos": ["52-web-configuracoes#0", "52-web-configuracoes#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Preferencias",
+          "passos": [{ "tela": "52-web-configuracoes#0", "acao": "revisa a conta" }]
+        },
+        {
+          "nome": "Conta",
+          "passos": [{ "tela": "52-web-configuracoes#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-voltar-ao-que-importa",
@@ -576,8 +1030,17 @@
       "comeca": "Central de notificacoes",
       "termina": "Conteudos salvos",
       "acoes": ["Notificacoes", "Salvos"],
-      "passos": ["54-web-retorno#0", "54-web-retorno#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Notificacoes",
+          "passos": [{ "tela": "54-web-retorno#0", "acao": "abre os salvos" }]
+        },
+        {
+          "nome": "Salvos",
+          "passos": [{ "tela": "54-web-retorno#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-denunciar-e-acompanhar",
@@ -588,8 +1051,17 @@
       "comeca": "Denuncia de conteudo",
       "termina": "Acompanhamento e bloqueios",
       "acoes": ["Denunciar", "Bloquear"],
-      "passos": ["56-web-confianca#0", "56-web-confianca#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Denuncia",
+          "passos": [{ "tela": "56-web-confianca#0", "acao": "acompanha" }]
+        },
+        {
+          "nome": "Acompanhamento",
+          "passos": [{ "tela": "56-web-confianca#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-operar-admissoes",
@@ -600,8 +1072,17 @@
       "comeca": "Fila de admissoes",
       "termina": "Solicitacao analisada",
       "acoes": ["Decidir admissao"],
-      "passos": ["57-web-operacao-admissoes#0", "57-web-operacao-admissoes#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Fila",
+          "passos": [{ "tela": "57-web-operacao-admissoes#0", "acao": "abre a solicitacao" }]
+        },
+        {
+          "nome": "Analise",
+          "passos": [{ "tela": "57-web-operacao-admissoes#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-operar-denuncias",
@@ -612,8 +1093,17 @@
       "comeca": "Fila de denuncias",
       "termina": "Denuncia analisada e encerrada",
       "acoes": ["Moderar"],
-      "passos": ["58-web-operacao-moderacao#0", "58-web-operacao-moderacao#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Fila",
+          "passos": [{ "tela": "58-web-operacao-moderacao#0", "acao": "abre o caso" }]
+        },
+        {
+          "nome": "Analise",
+          "passos": [{ "tela": "58-web-operacao-moderacao#1" }]
+        }
+      ],
+      "desvios": []
     },
     {
       "id": "web-quando-algo-falha",
@@ -624,8 +1114,17 @@
       "comeca": "Acesso indisponivel",
       "termina": "Falha de conexao e retomada",
       "acoes": ["Estados do sistema"],
-      "passos": ["60-web-estados#0", "60-web-estados#1"],
-      "variantes": []
+      "etapas": [
+        {
+          "nome": "Sem acesso",
+          "passos": [{ "tela": "60-web-estados#0", "acao": "tenta de novo" }]
+        },
+        {
+          "nome": "Retomada",
+          "passos": [{ "tela": "60-web-estados#1" }]
+        }
+      ],
+      "desvios": []
     }
   ]
 }

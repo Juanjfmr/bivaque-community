@@ -14,14 +14,16 @@ const flowsMdPath = join(repoRoot, "docs", "journeys", "FLOWS.md")
 
 type Step = {
   tela: string
-  fase?: string
+  acao?: string
+  posicao?: number
   arquivo: string
   frame: { x: number; y: number; w: number; h: number }
 }
-type Item = { id: string; titulo: string; passos: Step[]; variantes?: Step[] }
+type Etapa = { nome: string; passos: Step[] }
+type Item = { id: string; titulo: string; etapas: Etapa[]; desvios: Step[] }
 
 const manifest = JSON.parse(readFileSync(join(guideDir, "manifest.json"), "utf8")) as {
-  artifacts: Array<{ id: string; title: string; screens: string[] }>
+  artifacts: Array<{ id: string; title: string }>
 }
 
 const html = readFileSync(join(guideDir, "flows.html"), "utf8")
@@ -29,6 +31,7 @@ const match = html.match(/<script id="dataset" type="application\/json">([\s\S]*
 if (!match) throw new Error("flows.html sem o dataset embutido")
 const data = JSON.parse(match[1]) as { jornadas: Item[]; pranchas: Item[] }
 
+const passosDe = (item: Item) => item.etapas.flatMap((etapa) => etapa.passos)
 const inBounds = (step: Step) => {
   const { x, y, w, h } = step.frame
   return x >= 0 && y >= 0 && w > 0 && h > 0 && x + w <= 1.0001 && y + h <= 1.0001
@@ -44,15 +47,30 @@ describe("flows.html — artefato gerado", () => {
     )
   })
 
-  it("ordena toda jornada de início a fim", () => {
+  it("nomeia cada etapa e ordena a jornada de início a fim", () => {
     const problems: string[] = []
     for (const journey of data.jornadas) {
-      const first = journey.passos[0]
-      const last = journey.passos[journey.passos.length - 1]
-      if (first && first.fase !== "início") problems.push(`${journey.id}: primeiro não é início`)
-      if (journey.passos.length > 1 && last && last.fase !== "fim") {
-        problems.push(`${journey.id}: último não é fim`)
+      const todos = passosDe(journey)
+      if (!todos.length) problems.push(`${journey.id}: sem passos`)
+      for (const etapa of journey.etapas) {
+        if (!etapa.nome?.trim()) problems.push(`${journey.id}: etapa sem nome`)
+        if (!etapa.passos.length) problems.push(`${journey.id}/${etapa.nome}: etapa sem passos`)
       }
+      const posicoes = todos.map((p) => p.posicao)
+      if (posicoes.join(",") !== todos.map((_p, i) => i + 1).join(",")) {
+        problems.push(`${journey.id}: numeração de passos fora de ordem`)
+      }
+    }
+    expect(problems, problems.join("\n")).toEqual([])
+  })
+
+  it("mostra a ação de cada transição, exceto a última", () => {
+    const problems: string[] = []
+    for (const journey of data.jornadas) {
+      const todos = passosDe(journey)
+      todos.slice(0, -1).forEach((passo) => {
+        if (!passo.acao?.trim()) problems.push(`${journey.id}: passo ${passo.posicao} sem ação`)
+      })
     }
     expect(problems, problems.join("\n")).toEqual([])
   })
@@ -60,7 +78,7 @@ describe("flows.html — artefato gerado", () => {
   it("mantém todo recorte dentro do quadro e aponta para um PNG existente", () => {
     const problems: string[] = []
     for (const item of [...data.jornadas, ...data.pranchas]) {
-      for (const step of [...item.passos, ...(item.variantes ?? [])]) {
+      for (const step of [...passosDe(item), ...item.desvios]) {
         if (!inBounds(step)) problems.push(`${item.id} ${step.tela}: recorte fora dos limites`)
         if (!existsSync(join(guideDir, step.arquivo))) {
           problems.push(`${item.id} ${step.tela}: PNG ausente (${step.arquivo})`)
@@ -87,12 +105,16 @@ describe("FLOWS.md — índice gerado", () => {
     expect(existsSync(flowsMdPath), `FLOWS.md ausente em ${flowsMdPath}`).toBe(true)
   })
 
-  it("lista cada jornada e linka a galeria", () => {
+  it("lista cada jornada com as etapas e linka a galeria", () => {
     const content = readFileSync(flowsMdPath, "utf8")
     const missing = data.jornadas
       .filter((journey) => !content.includes(journey.titulo))
       .map((journey) => journey.id)
     expect(missing, `jornada ausente no índice: ${missing.join(", ")}`).toEqual([])
+    const missingEtapa = data.jornadas
+      .filter((journey) => !content.includes(journey.etapas.map((e) => e.nome).join(" → ")))
+      .map((journey) => journey.id)
+    expect(missingEtapa, `etapas ausentes no índice: ${missingEtapa.join(", ")}`).toEqual([])
     expect(content).toContain("../design/visual-guide-2026-09-06/flows.html")
   })
 })

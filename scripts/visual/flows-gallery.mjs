@@ -1,8 +1,9 @@
 // Gerador da galeria de jornadas — formato Mobbin, a partir das pranchas.
 //
-// A visão principal é a JORNADA: uma sequência ordenada de telas com início, meio e fim, no
-// molde do Mobbin. Cada tela vem de uma prancha; a prancha é a fonte, não a unidade. Uma visão
-// secundária mostra as pranchas inteiras, para quem quer ver o quadro de origem.
+// A visão principal é a JORNADA: etapas nomeadas, telas em ordem, a AÇÃO que move de uma tela
+// para a outra, e os DESVIOS (erro, retomada, outro público) ancorados ao passo que os origina.
+// Cada tela vem de uma prancha; a prancha é a fonte, não a unidade. Uma visão secundária mostra
+// as pranchas inteiras.
 //
 // Recorte por CSS sobre o PNG original: nenhum PNG derivado. Documental por decisão — o selo é
 // "referência visual", nunca "pronto".
@@ -21,9 +22,15 @@ import { GUIDE_DIR, loadFlowCatalog } from "./flows/catalog.mjs"
 const OUT = join(GUIDE_DIR, "flows.html")
 const CHECK = process.argv.includes("--check")
 
-const withAspect = (frame, board) => ({
-  frame,
-  aspect: Number(((frame.w * board.width) / (frame.h * board.height)).toFixed(4)),
+const tela = (step) => ({
+  ref: step.ref,
+  tela: step.tela,
+  prancha: step.prancha,
+  arquivo: step.arquivo,
+  frame: step.frame,
+  aspect: step.aspect,
+  acao: step.acao ?? "",
+  posicao: step.posicao ?? 0,
 })
 
 function normalize(catalog) {
@@ -36,21 +43,8 @@ function normalize(catalog) {
     comeca: j.comeca,
     termina: j.termina,
     acoes: j.acoes,
-    passos: j.passos.map((p) => ({
-      tela: p.tela,
-      fase: p.fase,
-      prancha: p.prancha,
-      arquivo: p.arquivo,
-      frame: p.frame,
-      aspect: p.aspect,
-    })),
-    variantes: j.variantes.map((p) => ({
-      tela: p.tela,
-      prancha: p.prancha,
-      arquivo: p.arquivo,
-      frame: p.frame,
-      aspect: p.aspect,
-    })),
+    etapas: j.etapas.map((etapa) => ({ nome: etapa.nome, passos: etapa.passos.map(tela) })),
+    desvios: j.desvios.map((d) => ({ ...tela(d), quando: d.quando, apos: d.apos })),
   }))
 
   const pranchas = catalog.flows.map((f) => ({
@@ -61,15 +55,24 @@ function normalize(catalog) {
     acoes: f.actions,
     status: f.status,
     reviewNotes: f.reviewNotes,
-    passos: f.steps.map((s) => {
-      const board = catalog.frames.boards[f.id]
-      return {
-        tela: s.label,
-        arquivo: f.prancha.file,
-        frame: s.frame,
-        aspect: withAspect(s.frame, board).aspect,
-      }
-    }),
+    etapas: [
+      {
+        nome: "",
+        passos: f.steps.map((s) => ({
+          ref: `${f.id}#${s.index - 1}`,
+          tela: s.label,
+          prancha: f.id,
+          arquivo: f.prancha.file,
+          frame: s.frame,
+          aspect: Number(
+            ((s.frame.w * f.prancha.width) / (s.frame.h * f.prancha.height)).toFixed(4),
+          ),
+          acao: "",
+          posicao: s.index,
+        })),
+      },
+    ],
+    desvios: [],
   }))
 
   return { jornadas, pranchas }
@@ -129,8 +132,10 @@ main{max-width:1360px;margin:0 auto;padding:20px 24px 80px}
 .badge.grupo{background:var(--sage);border-color:transparent;color:var(--green);font-weight:600}
 .info h2{font-size:19px;margin:0;letter-spacing:-.01em}
 .tags{font-size:13px;color:var(--green);margin:0}
+.persona{font-size:13px;color:var(--muted);margin:0;font-style:italic}
 .narrativa{font-size:13px;color:var(--muted);margin:0}
 .narrativa b{color:var(--ink);font-weight:600}
+.breadcrumb{font-size:12px;color:var(--green);margin:0;letter-spacing:.01em}
 .screens{font-size:13px;color:var(--muted);margin:0}
 .status{font-size:12px;color:var(--muted);margin-top:auto}
 details summary{cursor:pointer;font-size:13px;color:var(--green);min-height:32px;display:flex;align-items:center}
@@ -138,34 +143,39 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
 .empty{text-align:center;color:var(--muted);padding:60px 20px;grid-column:1/-1}
 #lightbox{position:fixed;inset:0;background:rgba(20,26,22,.72);display:none;align-items:center;justify-content:center;padding:24px;z-index:50}
 #lightbox.on{display:flex}
-.lb{background:var(--canvas);border-radius:18px;max-width:1220px;width:100%;max-height:92vh;overflow:auto;padding:22px}
+.lb{background:var(--canvas);border-radius:18px;max-width:1240px;width:100%;max-height:92vh;overflow:auto;padding:22px}
 .lb-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
 .lb-head h2{margin:0 0 4px;font-size:22px}
 .lb-close{font:inherit;border:1px solid var(--line);background:var(--surface);border-radius:10px;min-width:44px;min-height:44px;cursor:pointer}
-.steps{display:flex;gap:16px;overflow-x:auto;padding:18px 4px;scroll-snap-type:x proximity}
-.step{scroll-snap-align:start;flex:0 0 auto;max-width:46vw;margin:0}
-.step .frame{height:54vh;max-height:600px}
+.etapa{margin-top:22px}
+.etapa h3{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);margin:0 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.steps{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 8px;align-items:flex-end}
+.step{flex:0 0 auto;max-width:40vw;margin:0}
+.step .frame{height:48vh;max-height:540px}
 .step figcaption{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
 .step b{color:var(--green)}
-.step .fase{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-top:2px}
-.lb-nav{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:6px}
+.seta{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;padding-bottom:80px;max-width:150px}
+.seta-glifo{font-size:22px;color:var(--green);line-height:1}
+.seta-acao{font-size:12px;color:var(--muted);text-align:center;line-height:1.35}
+.ramos{margin-top:10px;display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;border-left:2px solid var(--sage);padding-left:12px}
+.ramo{flex:0 0 auto;display:flex;gap:8px;align-items:center;max-width:330px}
+.ramo .frame{height:132px}
+.ramo-txt{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.ramo-txt b{color:var(--ink)}
+.lb-nav{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
 .lb-nav button{font:inherit;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:0 16px;min-height:44px;cursor:pointer}
 .lb-nav button:disabled{opacity:.45;cursor:default}
-.lb-extra{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.lb-extra{margin-top:18px}
 .lb-extra h3{font-size:15px;margin:0 0 10px}
-.variantes{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}
-.variantes .frame{height:190px}
-.variantes figure{margin:0;flex:0 0 auto}
-.variantes figcaption{font-size:12px;color:var(--muted);text-align:center;margin-top:6px;max-width:150px}
 .visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-@media(max-width:640px){.step{max-width:84vw}.step .frame{height:42vh}}
+@media(max-width:640px){.step{max-width:78vw}.step .frame{height:38vh}.seta{padding-bottom:60px}}
 </style>
 </head>
 <body>
 <header>
   <div class="brand">Bivaque</div>
   <h1>Jornadas</h1>
-  <p class="lede">Cada jornada é uma sequência de telas com <strong>início, meio e fim</strong> — no molde do Mobbin. As telas vêm das pranchas do guia visual; a prancha é a fonte, a jornada é a história.</p>
+  <p class="lede">Cada jornada é uma sequência de telas em <strong>etapas nomeadas</strong> — começo, meio e fim — com a <strong>ação</strong> que move de uma tela para a outra e os <strong>desvios</strong> ancorados ao passo que os origina.</p>
   <p class="note">Referência de aparência e fluxo, não prova de implementação: a prancha orienta, o runtime prova. Jornadas montadas das pranchas, não gravadas em runtime.</p>
   <div class="controls">
     <div class="seg" role="group" aria-label="Visão">
@@ -196,13 +206,12 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
       <button class="lb-close" id="lbclose" aria-label="Fechar">Fechar</button>
     </div>
     <div id="lbnarrativa"></div>
-    <div class="steps" id="lbsteps"></div>
+    <div id="lbsteps"></div>
     <div class="lb-nav">
-      <button id="lbprev">Anterior</button>
+      <button id="lbprev">Jornada anterior</button>
       <span id="lbpos" aria-live="polite"></span>
-      <button id="lbnext">Próximo</button>
+      <button id="lbnext">Próxima jornada</button>
     </div>
-    <div class="lb-extra" id="lbvariantes"></div>
     <div class="lb-extra" id="lbnotes"></div>
   </div>
 </div>
@@ -224,6 +233,7 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
 
   function el(tag, cls, text){ var e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; }
   function normalize(s){ return s.normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase(); }
+  function passosDe(item){ var out = []; item.etapas.forEach(function(e){ e.passos.forEach(function(p){ out.push(p) }) }); return out; }
 
   function frame(step, label){
     var wrap = el("div","frame");
@@ -236,37 +246,34 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
     return wrap;
   }
 
-  function source(){
-    return view === "jornadas" ? DATA.jornadas : DATA.pranchas;
-  }
+  function source(){ return view === "jornadas" ? DATA.jornadas : DATA.pranchas; }
 
   function matches(item, term){
     if(platform !== "all" && item.plataforma !== platform) return false;
     if(groupSel.value !== "all" && item.grupo.id !== groupSel.value) return false;
     if(!term) return true;
-    var hay = normalize([item.titulo, item.grupo.label, item.acoes.join(" "), item.passos.map(function(s){return s.tela}).join(" ")].join(" "));
-    return hay.indexOf(term) >= 0;
-  }
-
-  function mark(step, index){
-    var box = el("div","stepmark");
-    box.appendChild(frame(step, view === "jornadas" ? step.tela : step.tela));
-    box.appendChild(el("small", null, view === "jornadas" ? "passo " + (index + 1) : String(index + 1)));
-    return box;
+    var partes = [item.titulo, item.grupo.label, item.acoes.join(" "), item.persona || ""];
+    item.etapas.forEach(function(e){ partes.push(e.nome); e.passos.forEach(function(p){ partes.push(p.tela, p.acao || "") }) });
+    item.desvios.forEach(function(d){ partes.push(d.tela, d.quando || "") });
+    return normalize(partes.join(" ")).indexOf(term) >= 0;
   }
 
   function card(item){
     var article = el("article","card");
     article.id = item.id;
+    var todos = passosDe(item);
     var thumb = el("button","thumb");
     thumb.type = "button";
     thumb.setAttribute("aria-label","Abrir " + item.titulo);
     var strip = el("div","strip");
-    var shown = item.passos.slice(0, 4);
-    shown.forEach(function(step, i){ strip.appendChild(mark(step, i)); });
-    if(item.passos.length > shown.length){
-      strip.appendChild(el("span","more","+" + (item.passos.length - shown.length)));
-    }
+    var shown = todos.slice(0, 4);
+    shown.forEach(function(step){
+      var box = el("div","stepmark");
+      box.appendChild(frame(step, item.titulo + " — " + step.tela));
+      box.appendChild(el("small", null, "passo " + step.posicao));
+      strip.appendChild(box);
+    });
+    if(todos.length > shown.length) strip.appendChild(el("span","more","+" + (todos.length - shown.length)));
     thumb.appendChild(strip);
     thumb.addEventListener("click", function(){ open(item.id); });
 
@@ -274,30 +281,34 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
     var meta = el("div","meta");
     meta.appendChild(el("span","badge", PLATFORM_LABEL[item.plataforma] || item.plataforma));
     meta.appendChild(el("span","badge grupo", item.grupo.label));
-    meta.appendChild(el("span","badge", item.passos.length + (item.passos.length === 1 ? " tela" : " telas")));
+    meta.appendChild(el("span","badge", todos.length + (todos.length === 1 ? " tela" : " telas")));
+    if(item.desvios.length) meta.appendChild(el("span","badge", item.desvios.length + (item.desvios.length === 1 ? " desvio" : " desvios")));
     info.appendChild(meta);
     info.appendChild(el("h2", null, item.titulo));
-    info.appendChild(el("p","tags", item.acoes.join(" · ")));
     if(view === "jornadas"){
+      info.appendChild(el("p","persona", item.persona));
+      info.appendChild(el("p","tags", item.acoes.join(" · ")));
+      info.appendChild(el("p","breadcrumb", item.etapas.map(function(e){return e.nome}).join("  →  ")));
       var narr = el("p","narrativa");
-      var b1 = el("b", null, "Começa ");
-      narr.appendChild(b1);
+      narr.appendChild(el("b", null, "Começa "));
       narr.appendChild(document.createTextNode(item.comeca));
       narr.appendChild(el("br"));
-      var b2 = el("b", null, "Termina ");
-      narr.appendChild(b2);
+      narr.appendChild(el("b", null, "Termina "));
       narr.appendChild(document.createTextNode(item.termina));
       info.appendChild(narr);
-    } else if(item.reviewNotes.length){
-      var details = el("details");
-      details.appendChild(el("summary", null, "Ajustes de construção (" + item.reviewNotes.length + ")"));
-      var ul = el("ul");
-      item.reviewNotes.forEach(function(n){ ul.appendChild(el("li", null, n)); });
-      details.appendChild(ul);
-      info.appendChild(details);
+    } else {
+      info.appendChild(el("p","tags", item.acoes.join(" · ")));
+      if(item.reviewNotes.length){
+        var details = el("details");
+        details.appendChild(el("summary", null, "Ajustes de construção (" + item.reviewNotes.length + ")"));
+        var ul = el("ul");
+        item.reviewNotes.forEach(function(n){ ul.appendChild(el("li", null, n)); });
+        details.appendChild(ul);
+        info.appendChild(details);
+      }
+      info.appendChild(el("p","screens", todos.map(function(s){return s.tela}).join(" · ")));
+      info.appendChild(el("p","status", item.status));
     }
-    info.appendChild(el("p","screens", item.passos.map(function(s){return s.tela}).join(" · ")));
-    if(view === "pranchas") info.appendChild(el("p","status", item.status));
     article.appendChild(thumb);
     article.appendChild(info);
     return article;
@@ -346,49 +357,70 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
     meta.textContent = "";
     meta.appendChild(el("span","badge", PLATFORM_LABEL[item.plataforma] || item.plataforma));
     meta.appendChild(el("span","badge grupo", item.grupo.label));
-    meta.appendChild(el("span","badge", view === "jornadas" ? "jornada" : item.status));
+    if(view === "jornadas" && item.persona) meta.appendChild(el("span","badge", item.persona));
 
     var narrativa = document.getElementById("lbnarrativa");
     narrativa.textContent = "";
     if(view === "jornadas"){
       var p = el("p","narrativa");
       p.appendChild(el("b", null, "Começa "));
-      p.appendChild(document.createTextNode(item.comeca + "  ·  "));
+      p.appendChild(document.createTextNode(item.comeca + "   ·   "));
       p.appendChild(el("b", null, "Termina "));
       p.appendChild(document.createTextNode(item.termina));
       narrativa.appendChild(p);
     }
 
-    var steps = document.getElementById("lbsteps");
-    steps.textContent = "";
-    item.passos.forEach(function(step, i){
-      var fig = el("figure","step");
-      fig.appendChild(frame(step, item.titulo + " — " + step.tela));
-      var cap = el("figcaption");
-      cap.appendChild(el("b", null, "Passo " + (i + 1) + ". "));
-      cap.appendChild(document.createTextNode(step.tela));
-      if(step.fase) cap.appendChild(el("span","fase", step.fase));
-      if(view === "jornadas") cap.appendChild(el("span","fase", step.prancha));
-      fig.appendChild(cap);
-      steps.appendChild(fig);
+    var container = document.getElementById("lbsteps");
+    container.textContent = "";
+    var todos = passosDe(item);
+
+    item.etapas.forEach(function(etapa){
+      var section = el("section","etapa");
+      if(etapa.nome) section.appendChild(el("h3", null, etapa.nome));
+      var row = el("div","steps");
+      etapa.passos.forEach(function(step){
+        var fig = el("figure","step");
+        fig.appendChild(frame(step, item.titulo + " — " + step.tela));
+        var cap = el("figcaption");
+        cap.appendChild(el("b", null, "Passo " + step.posicao + ". "));
+        cap.appendChild(document.createTextNode(step.tela));
+        fig.appendChild(cap);
+        row.appendChild(fig);
+        if(step.acao && step.posicao < todos.length){
+          var seta = el("div","seta");
+          seta.appendChild(el("span","seta-glifo","→"));
+          seta.appendChild(el("span","seta-acao", step.acao));
+          row.appendChild(seta);
+        }
+      });
+      section.appendChild(row);
+
+      var ancorados = item.desvios.filter(function(d){
+        return etapa.passos.some(function(p){ return p.ref === d.apos });
+      });
+      if(ancorados.length){
+        var ramos = el("div","ramos");
+        ancorados.forEach(function(d){
+          var ramo = el("div","ramo");
+          ramo.appendChild(frame(d, d.tela));
+          var txt = el("div","ramo-txt");
+          var origem = null;
+          todos.forEach(function(p){ if(p.ref === d.apos) origem = p; });
+          txt.appendChild(el("b", null, "se " + d.quando));
+          txt.appendChild(el("span", null, "após o passo " + (origem ? origem.posicao : "?") + " — " + d.tela));
+          ramo.appendChild(txt);
+          ramos.appendChild(ramo);
+        });
+        section.appendChild(ramos);
+      }
+      container.appendChild(section);
     });
-    document.getElementById("lbpos").textContent = item.passos.length + " telas";
+
+    document.getElementById("lbpos").textContent =
+      todos.length + " telas · " + item.etapas.length + (item.etapas.length === 1 ? " etapa" : " etapas") +
+      (item.desvios.length ? " · " + item.desvios.length + " desvios" : "");
     document.getElementById("lbprev").disabled = cursor === 0;
     document.getElementById("lbnext").disabled = cursor === current.length - 1;
-
-    var variantes = document.getElementById("lbvariantes");
-    variantes.textContent = "";
-    if(item.variantes && item.variantes.length){
-      variantes.appendChild(el("h3", null, "Estados alternativos desta jornada"));
-      var row = el("div","variantes");
-      item.variantes.forEach(function(step){
-        var fig = el("figure");
-        fig.appendChild(frame(step, step.tela));
-        fig.appendChild(el("figcaption", null, step.tela));
-        row.appendChild(fig);
-      });
-      variantes.appendChild(row);
-    }
 
     var notes = document.getElementById("lbnotes");
     notes.textContent = "";

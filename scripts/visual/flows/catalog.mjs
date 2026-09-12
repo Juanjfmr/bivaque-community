@@ -78,7 +78,7 @@ export function buildJourneys(manifest, taxonomy, frames, journeysDoc) {
   const artifacts = new Map(manifest.artifacts.map((a) => [a.id, a]))
   const groupLabel = new Map(taxonomy.groups.map((g) => [g.id, g.label]))
 
-  const resolve = (ref, fase) => {
+  const resolve = (ref) => {
     const [pranchaId, indexRaw] = ref.split("#")
     const index = Number(indexRaw)
     const artifact = artifacts.get(pranchaId)
@@ -89,11 +89,26 @@ export function buildJourneys(manifest, taxonomy, frames, journeysDoc) {
     const frame = board?.frames?.[index]
     if (!frame) throw new Error(`sem geometria para ${ref}`)
     const aspect = Number(((frame.w * board.width) / (frame.h * board.height)).toFixed(4))
-    return { ref, fase, prancha: pranchaId, tela, arquivo: board.file, frame, aspect }
+    return { ref, prancha: pranchaId, tela, arquivo: board.file, frame, aspect }
   }
 
   return journeysDoc.journeys.map((journey) => {
-    const total = journey.passos.length
+    const total = journey.etapas.reduce((n, etapa) => n + etapa.passos.length, 0)
+    let atendidos = 0
+    const etapas = journey.etapas.map((etapa) => ({
+      nome: etapa.nome,
+      passos: etapa.passos.map((passo) => {
+        atendidos += 1
+        return {
+          ...resolve(passo.tela),
+          acao: passo.acao ?? "",
+          etapa: etapa.nome,
+          posicao: atendidos,
+          fase: atendidos === 1 ? "início" : atendidos === total ? "fim" : "meio",
+        }
+      }),
+    }))
+
     return {
       id: journey.id,
       titulo: journey.titulo,
@@ -103,10 +118,13 @@ export function buildJourneys(manifest, taxonomy, frames, journeysDoc) {
       comeca: journey.comeca,
       termina: journey.termina,
       acoes: journey.acoes,
-      passos: journey.passos.map((ref, i) =>
-        resolve(ref, i === 0 ? "início" : i === total - 1 ? "fim" : "meio"),
-      ),
-      variantes: (journey.variantes ?? []).map((ref) => resolve(ref, "variante")),
+      etapas,
+      passos: etapas.flatMap((etapa) => etapa.passos),
+      desvios: (journey.desvios ?? []).map((desvio) => ({
+        ...resolve(desvio.tela),
+        quando: desvio.quando,
+        apos: desvio.apos,
+      })),
     }
   })
 }

@@ -9,128 +9,128 @@
 
 ### Comunidades e publicação (5)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Descobrir e entrar numa comunidade](../design/visual-guide-2026-09-06/flows.html#mobile-descobrir-e-entrar-numa-comunidade) | Mobile | 4 | Descoberta de comunidades da cidade → Dentro da comunidade, com os grupos a vista |
-| [Publicar uma pergunta na comunidade](../design/visual-guide-2026-09-06/flows.html#mobile-publicar-na-comunidade) | Mobile | 3 | Pergunta em branco → Publicacao enviada, com o publico escolhido |
-| [Sair da comunidade](../design/visual-guide-2026-09-06/flows.html#mobile-sair-da-comunidade) | Mobile | 2 | Dentro da comunidade → Vinculo encerrado |
-| [Descobrir e entrar numa comunidade (web)](../design/visual-guide-2026-09-06/flows.html#web-descobrir-e-entrar-numa-comunidade) | Desktop web | 4 | Minhas comunidades → Dentro da comunidade, com os grupos |
-| [Publicar e recuperar rascunho (web)](../design/visual-guide-2026-09-06/flows.html#web-publicar) | Desktop web | 2 | Publicacao em branco → Rascunho recuperado ou publicacao enviada |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Descobrir e entrar numa comunidade](../design/visual-guide-2026-09-06/flows.html#mobile-descobrir-e-entrar-numa-comunidade) | Mobile | Descoberta → Pedido → Dentro | 4 | Descoberta de comunidades da cidade → Dentro da comunidade, com os grupos a vista |
+| [Publicar uma pergunta na comunidade](../design/visual-guide-2026-09-06/flows.html#mobile-publicar-na-comunidade) | Mobile | Escrita → Alcance → Enviado | 3 | Pergunta em branco → Publicacao enviada, com o publico escolhido |
+| [Sair da comunidade](../design/visual-guide-2026-09-06/flows.html#mobile-sair-da-comunidade) | Mobile | Saida | 2 | Dentro da comunidade → Vinculo encerrado |
+| [Descobrir e entrar numa comunidade (web)](../design/visual-guide-2026-09-06/flows.html#web-descobrir-e-entrar-numa-comunidade) | Desktop web | Minhas → Descoberta → Pedido → Dentro | 4 | Minhas comunidades → Dentro da comunidade, com os grupos |
+| [Publicar e recuperar rascunho (web)](../design/visual-guide-2026-09-06/flows.html#web-publicar) | Desktop web | Publicacao → Rascunho | 2 | Publicacao em branco → Rascunho recuperado ou publicacao enviada |
 
 ### Confiança (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Denunciar e acompanhar, e bloquear](../design/visual-guide-2026-09-06/flows.html#mobile-denunciar-e-acompanhar) | Mobile | 3 | Envio da denuncia → Denuncia acompanhada e interacao bloqueada |
-| [Denunciar conteudo e acompanhar (web)](../design/visual-guide-2026-09-06/flows.html#web-denunciar-e-acompanhar) | Desktop web | 2 | Denuncia de conteudo → Acompanhamento e bloqueios |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Denunciar e acompanhar, e bloquear](../design/visual-guide-2026-09-06/flows.html#mobile-denunciar-e-acompanhar) | Mobile | Denuncia → Acompanhamento → Bloqueio | 3 | Envio da denuncia → Denuncia acompanhada e interacao bloqueada |
+| [Denunciar conteudo e acompanhar (web)](../design/visual-guide-2026-09-06/flows.html#web-denunciar-e-acompanhar) | Desktop web | Denuncia → Acompanhamento | 2 | Denuncia de conteudo → Acompanhamento e bloqueios |
 
 ### Conversa (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Ler, responder e resolver uma conversa](../design/visual-guide-2026-09-06/flows.html#mobile-ler-responder-e-resolver) | Mobile | 3 | Conversa com respostas → Pergunta marcada como resolvida |
-| [Ler e responder uma conversa (web)](../design/visual-guide-2026-09-06/flows.html#web-ler-e-responder-uma-conversa) | Desktop web | 1 | Conversa e resposta → Conversa e resposta |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Ler, responder e resolver uma conversa](../design/visual-guide-2026-09-06/flows.html#mobile-ler-responder-e-resolver) | Mobile | Leitura → Resposta → Resolvido | 3 | Conversa com respostas → Pergunta marcada como resolvida |
+| [Ler e responder uma conversa (web)](../design/visual-guide-2026-09-06/flows.html#web-ler-e-responder-uma-conversa) | Desktop web | Conversa | 1 | Conversa e resposta → Conversa e resposta |
 
 ### Entrada e admissão (5)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Entrar no Bivaque e ser admitido](../design/visual-guide-2026-09-06/flows.html#mobile-entrar-e-ser-admitido) | Mobile | 8 | Boas-vindas, sem conta → Membro verificado, com cidade escolhida, dentro do Inicio |
-| [Retomar o cadastro e recuperar o acesso](../design/visual-guide-2026-09-06/flows.html#mobile-retomar-e-recuperar) | Mobile | 3 | Cadastro interrompido → Pessoa retoma o ponto onde parou |
-| [Verificar por identidade quando o CPF nao resolve](../design/visual-guide-2026-09-06/flows.html#mobile-verificar-por-identidade) | Mobile | 5 | CPF nao concluiu; a identidade e a alternativa → Analise acompanhada e arquivo substituido quando ilegivel |
-| [Entrar no Bivaque e ser admitido (web)](../design/visual-guide-2026-09-06/flows.html#web-entrar-e-ser-admitido) | Desktop web | 6 | Entrada e cadastro → Membro verificado, com contexto escolhido |
-| [Verificar por identidade e acompanhar a admissao (web)](../design/visual-guide-2026-09-06/flows.html#web-verificar-por-identidade) | Desktop web | 3 | Envio da identidade → Analise acompanhada, arquivo substituido se preciso |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Entrar no Bivaque e ser admitido](../design/visual-guide-2026-09-06/flows.html#mobile-entrar-e-ser-admitido) | Mobile | Abertura → Confirmacao → Verificacao → Chegada | 8 | Boas-vindas, sem conta → Membro verificado, com cidade escolhida, dentro do Inicio |
+| [Retomar o cadastro e recuperar o acesso](../design/visual-guide-2026-09-06/flows.html#mobile-retomar-e-recuperar) | Mobile | Retomada → Falhas | 3 | Cadastro interrompido → Pessoa retoma o ponto onde parou |
+| [Verificar por identidade quando o CPF nao resolve](../design/visual-guide-2026-09-06/flows.html#mobile-verificar-por-identidade) | Mobile | Alternativa → Analise → Correcao | 5 | CPF nao concluiu; a identidade e a alternativa → Analise acompanhada e arquivo substituido quando ilegivel |
+| [Entrar no Bivaque e ser admitido (web)](../design/visual-guide-2026-09-06/flows.html#web-entrar-e-ser-admitido) | Desktop web | Entrada → Confirmacao → Verificacao → Contexto | 6 | Entrada e cadastro → Membro verificado, com contexto escolhido |
+| [Verificar por identidade e acompanhar a admissao (web)](../design/visual-guide-2026-09-06/flows.html#web-verificar-por-identidade) | Desktop web | Envio → Analise → Correcao | 3 | Envio da identidade → Analise acompanhada, arquivo substituido se preciso |
 
 ### Estados compartilhados (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Quando algo falha: carregar, vazio e erro com rascunho](../design/visual-guide-2026-09-06/flows.html#mobile-quando-algo-falha) | Mobile | 3 | Tela carregando → Erro sem perder o que foi escrito |
-| [Quando algo falha: sem acesso e retomada (web)](../design/visual-guide-2026-09-06/flows.html#web-quando-algo-falha) | Desktop web | 2 | Acesso indisponivel → Falha de conexao e retomada |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Quando algo falha: carregar, vazio e erro com rascunho](../design/visual-guide-2026-09-06/flows.html#mobile-quando-algo-falha) | Mobile | Carregando → Vazio → Erro | 3 | Tela carregando → Erro sem perder o que foi escrito |
+| [Quando algo falha: sem acesso e retomada (web)](../design/visual-guide-2026-09-06/flows.html#web-quando-algo-falha) | Desktop web | Sem acesso → Retomada | 2 | Acesso indisponivel → Falha de conexao e retomada |
 
 ### Eventos (5)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Cancelar a presenca ou o proprio evento](../design/visual-guide-2026-09-06/flows.html#mobile-cancelar-presenca-ou-evento) | Mobile | 3 | Presenca confirmada → Presenca cancelada ou evento cancelado |
-| [Confirmar presenca num evento](../design/visual-guide-2026-09-06/flows.html#mobile-confirmar-presenca-num-evento) | Mobile | 3 | Lista de eventos → Presenca confirmada |
-| [Pedir informacoes ao organizador do evento](../design/visual-guide-2026-09-06/flows.html#mobile-pedir-informacoes-ao-organizador) | Mobile | 3 | Detalhe do evento, sem exigir presenca → Pergunta enviada e resposta acompanhada |
-| [Confirmar presenca num evento (web)](../design/visual-guide-2026-09-06/flows.html#web-confirmar-presenca-num-evento) | Desktop web | 2 | Lista e filtros → Presenca gerida no detalhe |
-| [Pedir informacoes e ler a resposta (web)](../design/visual-guide-2026-09-06/flows.html#web-pedir-informacoes-ao-organizador) | Desktop web | 2 | Pergunta reenviada → Resposta lida e jornada retomada |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Cancelar a presenca ou o proprio evento](../design/visual-guide-2026-09-06/flows.html#mobile-cancelar-presenca-ou-evento) | Mobile | Cancelamento | 3 | Presenca confirmada → Presenca cancelada ou evento cancelado |
+| [Confirmar presenca num evento](../design/visual-guide-2026-09-06/flows.html#mobile-confirmar-presenca-num-evento) | Mobile | Descoberta → Detalhe → Confirmado | 3 | Lista de eventos → Presenca confirmada |
+| [Pedir informacoes ao organizador do evento](../design/visual-guide-2026-09-06/flows.html#mobile-pedir-informacoes-ao-organizador) | Mobile | Pergunta → Espera → Falha | 3 | Detalhe do evento, sem exigir presenca → Pergunta enviada e resposta acompanhada |
+| [Confirmar presenca num evento (web)](../design/visual-guide-2026-09-06/flows.html#web-confirmar-presenca-num-evento) | Desktop web | Lista → Detalhe | 2 | Lista e filtros → Presenca gerida no detalhe |
+| [Pedir informacoes e ler a resposta (web)](../design/visual-guide-2026-09-06/flows.html#web-pedir-informacoes-ao-organizador) | Desktop web | Pergunta → Resposta | 2 | Pergunta reenviada → Resposta lida e jornada retomada |
 
 ### Guia (4)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Explorar o Guia da cidade](../design/visual-guide-2026-09-06/flows.html#mobile-explorar-o-guia) | Mobile | 3 | Descoberta editorial da cidade → Artigo de chegada lido |
-| [Sugerir uma correcao no Guia](../design/visual-guide-2026-09-06/flows.html#mobile-sugerir-correcao-no-guia) | Mobile | 3 | Referencia completa aberta → Sugestao enviada ao curador |
-| [Explorar o Guia (web)](../design/visual-guide-2026-09-06/flows.html#web-explorar-o-guia) | Desktop web | 1 | Descoberta editorial → Descoberta editorial |
-| [Ler a referencia e sugerir correcao (web)](../design/visual-guide-2026-09-06/flows.html#web-sugerir-correcao-no-guia) | Desktop web | 1 | Referencia completa → Correcao sugerida |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Explorar o Guia da cidade](../design/visual-guide-2026-09-06/flows.html#mobile-explorar-o-guia) | Mobile | Descoberta → Categoria → Leitura | 3 | Descoberta editorial da cidade → Artigo de chegada lido |
+| [Sugerir uma correcao no Guia](../design/visual-guide-2026-09-06/flows.html#mobile-sugerir-correcao-no-guia) | Mobile | Referencia → Origem → Sugestao | 3 | Referencia completa aberta → Sugestao enviada ao curador |
+| [Explorar o Guia (web)](../design/visual-guide-2026-09-06/flows.html#web-explorar-o-guia) | Desktop web | Descoberta | 1 | Descoberta editorial → Descoberta editorial |
+| [Ler a referencia e sugerir correcao (web)](../design/visual-guide-2026-09-06/flows.html#web-sugerir-correcao-no-guia) | Desktop web | Referencia | 1 | Referencia completa → Correcao sugerida |
 
 ### Início e descoberta (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Como o Inicio recebe quem chega](../design/visual-guide-2026-09-06/flows.html#mobile-chegar-ao-inicio) | Mobile | 3 | Tres intencoes distintas de chegada → A tela certa para cada intencao |
-| [Chegar ao Inicio (web)](../design/visual-guide-2026-09-06/flows.html#web-chegar-ao-inicio) | Desktop web | 1 | Home de quem participa → Home de quem participa |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Como o Inicio recebe quem chega](../design/visual-guide-2026-09-06/flows.html#mobile-chegar-ao-inicio) | Mobile | Tres chegadas | 3 | Tres intencoes distintas de chegada → A tela certa para cada intencao |
+| [Chegar ao Inicio (web)](../design/visual-guide-2026-09-06/flows.html#web-chegar-ao-inicio) | Desktop web | Home | 1 | Home de quem participa → Home de quem participa |
 
 ### Mercado (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Anunciar um produto no Mercado](../design/visual-guide-2026-09-06/flows.html#mobile-anunciar-um-produto) | Mobile | 3 | Mercado da cidade → Anuncio publicado |
-| [Anunciar um produto (web)](../design/visual-guide-2026-09-06/flows.html#web-anunciar-um-produto) | Desktop web | 3 | Busca de produtos → Anuncio criado |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Anunciar um produto no Mercado](../design/visual-guide-2026-09-06/flows.html#mobile-anunciar-um-produto) | Mobile | Mercado → Item → Anuncio | 3 | Mercado da cidade → Anuncio publicado |
+| [Anunciar um produto (web)](../design/visual-guide-2026-09-06/flows.html#web-anunciar-um-produto) | Desktop web | Busca → Produto → Anuncio | 3 | Busca de produtos → Anuncio criado |
 
 ### Meu negócio (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Responder um pedido como prestador](../design/visual-guide-2026-09-06/flows.html#mobile-responder-um-pedido) | Mobile | 3 | Painel de pedidos do negocio → Pedido respondido, ficha em dia |
-| [Responder um pedido como prestador (web)](../design/visual-guide-2026-09-06/flows.html#web-responder-um-pedido) | Desktop web | 1 | Painel de pedidos do prestador → Painel de pedidos do prestador |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Responder um pedido como prestador](../design/visual-guide-2026-09-06/flows.html#mobile-responder-um-pedido) | Mobile | Painel → Resposta → Ficha | 3 | Painel de pedidos do negocio → Pedido respondido, ficha em dia |
+| [Responder um pedido como prestador (web)](../design/visual-guide-2026-09-06/flows.html#web-responder-um-pedido) | Desktop web | Painel | 1 | Painel de pedidos do prestador → Painel de pedidos do prestador |
 
 ### Meus anúncios (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Gerenciar e encerrar os proprios anuncios](../design/visual-guide-2026-09-06/flows.html#mobile-gerenciar-e-encerrar-anuncio) | Mobile | 3 | Lista dos proprios anuncios por situacao → Anuncio encerrado como vendido |
-| [Gerenciar, editar e pausar anuncios (web)](../design/visual-guide-2026-09-06/flows.html#web-gerenciar-e-encerrar-anuncio) | Desktop web | 3 | Lista dos proprios anuncios → Anuncio editado e pausado |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Gerenciar e encerrar os proprios anuncios](../design/visual-guide-2026-09-06/flows.html#mobile-gerenciar-e-encerrar-anuncio) | Mobile | Situacao → Edicao → Encerrado | 3 | Lista dos proprios anuncios por situacao → Anuncio encerrado como vendido |
+| [Gerenciar, editar e pausar anuncios (web)](../design/visual-guide-2026-09-06/flows.html#web-gerenciar-e-encerrar-anuncio) | Desktop web | Lista → Edicao → Pausa | 3 | Lista dos proprios anuncios → Anuncio editado e pausado |
 
 ### Moradia (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Buscar um imovel e criar um alerta](../design/visual-guide-2026-09-06/flows.html#mobile-buscar-imovel-e-criar-alerta) | Mobile | 3 | Busca de imoveis → Alerta criado para o refinamento |
-| [Buscar imovel e gerenciar alertas (web)](../design/visual-guide-2026-09-06/flows.html#web-buscar-imovel-e-criar-alerta) | Desktop web | 3 | Busca de imoveis → Alertas geridos |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Buscar um imovel e criar um alerta](../design/visual-guide-2026-09-06/flows.html#mobile-buscar-imovel-e-criar-alerta) | Mobile | Busca → Imovel → Alerta | 3 | Busca de imoveis → Alerta criado para o refinamento |
+| [Buscar imovel e gerenciar alertas (web)](../design/visual-guide-2026-09-06/flows.html#web-buscar-imovel-e-criar-alerta) | Desktop web | Busca → Imovel → Alerta | 3 | Busca de imoveis → Alertas geridos |
 
 ### Operação (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Operar a fila de admissoes](../design/visual-guide-2026-09-06/flows.html#web-operar-admissoes) | Desktop web | 2 | Fila de admissoes → Solicitacao analisada |
-| [Operar a fila de denuncias](../design/visual-guide-2026-09-06/flows.html#web-operar-denuncias) | Desktop web | 2 | Fila de denuncias → Denuncia analisada e encerrada |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Operar a fila de admissoes](../design/visual-guide-2026-09-06/flows.html#web-operar-admissoes) | Desktop web | Fila → Analise | 2 | Fila de admissoes → Solicitacao analisada |
+| [Operar a fila de denuncias](../design/visual-guide-2026-09-06/flows.html#web-operar-denuncias) | Desktop web | Fila → Analise | 2 | Fila de denuncias → Denuncia analisada e encerrada |
 
 ### Pedidos de serviço (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Encontrar um prestador e pedir um servico](../design/visual-guide-2026-09-06/flows.html#mobile-pedir-um-servico) | Mobile | 6 | Explorar servicos da cidade → Pedido com respostas recebidas |
-| [Encontrar um prestador e pedir um servico (web)](../design/visual-guide-2026-09-06/flows.html#web-pedir-um-servico) | Desktop web | 5 | Explorar servicos → Pedido e resposta do prestador |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Encontrar um prestador e pedir um servico](../design/visual-guide-2026-09-06/flows.html#mobile-pedir-um-servico) | Mobile | Descoberta → Prestador → Pedido | 6 | Explorar servicos da cidade → Pedido com respostas recebidas |
+| [Encontrar um prestador e pedir um servico (web)](../design/visual-guide-2026-09-06/flows.html#web-pedir-um-servico) | Desktop web | Descoberta → Prestador → Pedido → Resposta | 5 | Explorar servicos → Pedido e resposta do prestador |
 
 ### Perfil e configurações (4)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Ajustar preferencias e os controles da conta](../design/visual-guide-2026-09-06/flows.html#mobile-ajustar-preferencias-e-conta) | Mobile | 3 | Configuracoes → Controles da conta revisados |
-| [Ver e editar o perfil, e ver outro membro](../design/visual-guide-2026-09-06/flows.html#mobile-ver-e-editar-o-perfil) | Mobile | 3 | Meu perfil → Exibicao propria e a de outro membro |
-| [Ajustar preferencias, conta e privacidade (web)](../design/visual-guide-2026-09-06/flows.html#web-ajustar-preferencias-e-conta) | Desktop web | 2 | Preferencias e notificacoes → Conta e privacidade revisadas |
-| [Ver e editar o perfil, e ver outro membro (web)](../design/visual-guide-2026-09-06/flows.html#web-ver-e-editar-o-perfil) | Desktop web | 2 | Meu perfil e edicao → Perfil de outro membro |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Ajustar preferencias e os controles da conta](../design/visual-guide-2026-09-06/flows.html#mobile-ajustar-preferencias-e-conta) | Mobile | Configuracoes → Notificacoes → Conta | 3 | Configuracoes → Controles da conta revisados |
+| [Ver e editar o perfil, e ver outro membro](../design/visual-guide-2026-09-06/flows.html#mobile-ver-e-editar-o-perfil) | Mobile | Meu perfil → Edicao → Outro | 3 | Meu perfil → Exibicao propria e a de outro membro |
+| [Ajustar preferencias, conta e privacidade (web)](../design/visual-guide-2026-09-06/flows.html#web-ajustar-preferencias-e-conta) | Desktop web | Preferencias → Conta | 2 | Preferencias e notificacoes → Conta e privacidade revisadas |
+| [Ver e editar o perfil, e ver outro membro (web)](../design/visual-guide-2026-09-06/flows.html#web-ver-e-editar-o-perfil) | Desktop web | Meu perfil → Outro | 2 | Meu perfil e edicao → Perfil de outro membro |
 
 ### Retorno (2)
 
-| Jornada | Plataforma | Telas | Começa → termina |
-|---|---|---|---|
-| [Voltar ao que importa: notificacoes, salvos e alertas](../design/visual-guide-2026-09-06/flows.html#mobile-voltar-ao-que-importa) | Mobile | 3 | Central de notificacoes → Alertas de imoveis a vista |
-| [Voltar ao que importa: notificacoes e salvos (web)](../design/visual-guide-2026-09-06/flows.html#web-voltar-ao-que-importa) | Desktop web | 2 | Central de notificacoes → Conteudos salvos |
+| Jornada | Plataforma | Etapas | Telas | Começa → termina |
+|---|---|---|---|---|
+| [Voltar ao que importa: notificacoes, salvos e alertas](../design/visual-guide-2026-09-06/flows.html#mobile-voltar-ao-que-importa) | Mobile | Notificacoes → Salvos → Alertas | 3 | Central de notificacoes → Alertas de imoveis a vista |
+| [Voltar ao que importa: notificacoes e salvos (web)](../design/visual-guide-2026-09-06/flows.html#web-voltar-ao-que-importa) | Desktop web | Notificacoes → Salvos | 2 | Central de notificacoes → Conteudos salvos |
 
 ## Pranchas
 

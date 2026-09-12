@@ -59,8 +59,17 @@ function verify(catalog) {
   for (const journey of journeys) {
     if (journeyIds.has(journey.id)) problems.push(`${journey.id}: jornada duplicada`)
     journeyIds.add(journey.id)
-    if (journey.passos.length === 0) problems.push(`${journey.id}: sem passos`)
     if (journey.acoes.length === 0) problems.push(`${journey.id}: sem tags`)
+    if (!journey.persona?.trim()) problems.push(`${journey.id}: sem persona`)
+    if (journey.etapas.length === 0) problems.push(`${journey.id}: sem etapas`)
+
+    const refs = new Set()
+    for (const etapa of journey.etapas) {
+      if (!etapa.nome?.trim()) problems.push(`${journey.id}: etapa sem nome`)
+      if (etapa.passos.length === 0) problems.push(`${journey.id}/${etapa.nome}: etapa sem passos`)
+      for (const passo of etapa.passos) refs.add(passo.ref)
+    }
+
     const first = journey.passos[0]
     const last = journey.passos[journey.passos.length - 1]
     if (first && first.fase !== "início")
@@ -68,7 +77,23 @@ function verify(catalog) {
     if (last && journey.passos.length > 1 && last.fase !== "fim") {
       problems.push(`${journey.id}: último passo não é fim`)
     }
-    for (const step of [...journey.passos, ...journey.variantes]) {
+
+    const semAcao = journey.passos
+      .slice(0, -1)
+      .filter((passo) => !passo.acao?.trim())
+      .map((passo) => passo.posicao)
+    if (semAcao.length) {
+      problems.push(`${journey.id}: passo sem ação de transição: ${semAcao.join(", ")}`)
+    }
+
+    for (const desvio of journey.desvios) {
+      if (!desvio.quando?.trim()) problems.push(`${journey.id}: desvio sem "quando"`)
+      if (!refs.has(desvio.apos)) {
+        problems.push(`${journey.id}: desvio de ${desvio.ref} aponta para passo inexistente`)
+      }
+    }
+
+    for (const step of [...journey.passos, ...journey.desvios]) {
       const { x, w } = step.frame
       if (x < 0 || w <= 0 || x + w > 1.0001) {
         problems.push(`${journey.id} ${step.ref}: recorte fora dos limites`)
@@ -78,7 +103,7 @@ function verify(catalog) {
 
   const used = new Set()
   for (const journey of journeys) {
-    for (const step of [...journey.passos, ...journey.variantes]) used.add(step.ref)
+    for (const step of [...journey.passos, ...journey.desvios]) used.add(step.ref)
   }
   const orphan = []
   for (const [id, board] of Object.entries(frames.boards)) {
@@ -139,12 +164,13 @@ function buildIndex(catalog) {
   for (const group of groupBy(journeys)) {
     lines.push(`### ${group.label} (${group.items.length})`)
     lines.push("")
-    lines.push("| Jornada | Plataforma | Telas | Começa → termina |")
-    lines.push("|---|---|---|---|")
+    lines.push("| Jornada | Plataforma | Etapas | Telas | Começa → termina |")
+    lines.push("|---|---|---|---|---|")
     for (const journey of group.items.sort((a, b) => a.id.localeCompare(b.id))) {
       const file = `../design/visual-guide-2026-09-06/flows.html#${journey.id}`
+      const etapas = journey.etapas.map((etapa) => etapa.nome).join(" → ")
       lines.push(
-        `| [${journey.titulo}](${file}) | ${PLATFORM_LABEL[journey.plataforma]} | ${journey.passos.length} | ${journey.comeca} → ${journey.termina} |`,
+        `| [${journey.titulo}](${file}) | ${PLATFORM_LABEL[journey.plataforma]} | ${etapas} | ${journey.passos.length} | ${journey.comeca} → ${journey.termina} |`,
       )
     }
     lines.push("")
