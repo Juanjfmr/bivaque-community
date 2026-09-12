@@ -10,20 +10,22 @@
       "priority": "P2",
       "category": "repo",
       "status": "done",
-      "description": "A pedido do dono (12/09): mapear cada jornada do Bivaque a partir das 59 pranchas do guia visual, no formato Mobbin. Cada prancha e um fluxo; cada tela/estado e um passo recortado do proprio PNG. Artefato documental de referencia: nao prova implementacao e nao le runtime. Complementa, sem substituir, a campanha TEST-MASSA-JORNADAS, que prova jornada em runtime.",
+      "description": "A pedido do dono (12/09): mapear cada jornada do Bivaque a partir das 59 pranchas do guia visual, no formato Mobbin. A jornada E o fluxo: uma sequencia ordenada de telas com inicio, meio e fim; cada tela e recortada do PNG da prancha que a originou — a prancha e a fonte, a jornada e a historia. Artefato documental de referencia: nao prova implementacao e nao le runtime. Complementa, sem substituir, a campanha TEST-MASSA-JORNADAS, que prova jornada em runtime.",
       "checklist": [
         "Taxonomia canonica: reconciliar os 20 grupos crus do manifest em 17 fluxos, com vocabulario controlado de tags",
         "Geometria de recorte por prancha (1 tela = largura inteira; 2 = split central; 3+ = calhas detectadas), sem dependencia nova",
         "Catalogo unico fundindo manifest, taxonomia e geometria, com um passo por tela",
         "Galeria flows.html em formato Mobbin: filtros, busca, carrossel de passos, notas de construcao e deep link por fluxo",
         "Verificacao e indice docs/journeys/FLOWS.md, com --check contra artefato fora de sincronia",
-        "Integracao: scripts flows:frames, flows:gallery e flows:check; notas nos READMEs"
+        "Integracao: scripts flows:frames, flows:gallery e flows:check; notas nos READMEs",
+        "Camada de jornada: sequencia ordenada com inicio, meio e fim, cada tela citada por '<prancha>#<indice>', com cobertura total das telas"
       ],
       "proof": [
         "59 pranchas (28 mobile, 31 web, 137 telas/estados): um fluxo por prancha, um passo por tela.",
         "Geometria conferida contra inspecao visual das tres geometrias de PNG (1536x1024, ~1685x933, ~2076x757); o split web fica em 0.499-0.500 e o detector de calha cortava a margem dos desktops, por isso a regra virou split central fixo para 2 paineis.",
         "Galeria aberta no Chrome: 59 fluxos renderizados; recorte correto no mobile (3 quadros) e no desktop web (2 paineis 559x410, translateX 0 e -565.9px); deep link #36-web-auth-entrada abre o fluxo certo.",
-        "flows:check verde (flows.html e FLOWS.md em dia); detect-frames --check verde (59 pranchas, 0 divergentes); 46 testes unitarios verdes em tests/unit/visual."
+        "flows:check verde (flows.html e FLOWS.md em dia); detect-frames --check verde (59 pranchas, 0 divergentes); 47 testes unitarios verdes em tests/unit/visual.",
+        "45 jornadas (23 mobile, 22 web) cobrindo as 137 telas com 0 orfas; galeria verificada no Chrome com a visao Jornadas (passos ordenados, comeca/termina, variantes) e a visao Pranchas."
       ],
       "tests": [
         "npx pnpm@11.18.0 flows:check",
@@ -36,10 +38,10 @@
         "Indice: docs/journeys/FLOWS.md"
       ],
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true],
+      "completedChecklist": [true, true, true, true, true, true, true],
       "completedAt": "2026-09-12",
       "updatedAt": "2026-09-12",
-      "sourceRevision": "35d381e"
+      "sourceRevision": "d4f917b"
     },
     {
       "id": "MVP-00-REBASELINE",
