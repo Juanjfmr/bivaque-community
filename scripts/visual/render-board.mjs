@@ -56,9 +56,23 @@ await page.waitForLoadState("load")
 const info = await page.evaluate(() => {
   const board = document.querySelector(".board")
   const rect = board ? board.getBoundingClientRect() : null
+  // Mede o transbordo de cada painel no espaço lógico (o transform é visual, não muda o layout).
+  // Foi assim que uma prancha saiu com o painel 1 estourando 456px e o 2 com metade vazia.
+  const paineis = [...document.querySelectorAll(".panel")].map((p) => {
+    // A casca do membro e a do operador têm .main; a landing pública não tem, então o fallback é
+    // o próprio elemento raiz do painel. Sem isso a guarda não mede a prancha e deixa passar.
+    const main = p.querySelector(".main") || p.querySelector("main") || p.querySelector(".scale > *")
+    if (!main) return null
+    return {
+      tela: p.dataset.screen ?? "(sem rotulo)",
+      conteudo: main.scrollHeight,
+      viewport: main.clientHeight,
+    }
+  })
   return {
     dpr: window.devicePixelRatio,
     board: rect ? { w: Math.round(rect.width), h: Math.round(rect.height) } : null,
+    paineis,
   }
 })
 
@@ -70,6 +84,20 @@ if (!info.board) {
   problems.push("não encontrei o elemento .board na fonte")
 } else if (info.board.w !== width || info.board.h !== height) {
   problems.push(`.board mede ${info.board.w}x${info.board.h}, esperado ${width}x${height}`)
+}
+for (const painel of info.paineis) {
+  if (!painel) {
+    problems.push("painel sem área de conteúdo (.main ou main)")
+    continue
+  }
+  const ocupacao = painel.conteudo / painel.viewport
+  if (painel.conteudo > painel.viewport) {
+    problems.push(`painel "${painel.tela}" transborda: ${painel.conteudo} em ${painel.viewport}`)
+  } else if (ocupacao < 0.6) {
+    problems.push(
+      `painel "${painel.tela}" vazio demais: ${painel.conteudo} de ${painel.viewport} (${Math.round(ocupacao * 100)}%)`,
+    )
+  }
 }
 
 if (problems.length) {

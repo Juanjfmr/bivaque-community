@@ -1615,7 +1615,8 @@
         "Imagens da hero, da seção de mudança e do mock do produto são blocos ilustrativos; consolidar com o asset real ao implementar (não usar fotografia como dado).",
         "Força Armada e OM não aparecem no perfil: destaque explícito no card 'Seu perfil é para convivência' da seção Confiança.",
         "Não há promessa de prazo, de compartilhamento automático de contato, nem de verificação pública; o selo 'BIVAQUE' é o wordmark canônico.",
-        "Não mostra lista de membros nem avatares individuais; o mock apresenta perguntas e respostas sem expor rostes."
+        "Não mostra lista de membros nem avatares individuais; o mock apresenta perguntas e respostas sem expor rostes.",
+        "A seção de meio de página (o relato de uma dúvida resolvida) não está nesta prancha: com o hero em altura de composição, ela não caberia em 1056px sem esmagar as outras. Fica registrada como não desenhada, e o hero foi corrigido de 1056px para 600px porque o flex o estava reduzindo a 58px."
       ],
       "source": "docs/design/visual-guide-2026-09-06/src/83-web-landing.html",
       "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell público conforme apps/web/app/landing/landing.tsx: topbar com BIVAQUE, âncoras Por dentro / Pertencimento / Confiança, botão Entrar à direita. Painel 1 = hero + manifesto + 'Por dentro do Bivaque' com mock do produto. Painel 2 = camadas de pertencimento (cidade, comunidade, grupo), três cartões de confiança e CTA de fechamento. Copy reconciliada com a tela implementada.",

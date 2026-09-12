@@ -109,6 +109,16 @@
   .pill.amber{background:var(--amber100);color:var(--amber700)}
   .info{background:var(--canvas);border:1px solid var(--line);border-radius:var(--radius);padding:11px 13px;font-size:13px;color:var(--ink700);line-height:20px;margin-top:10px}
   .info b{color:var(--ink900);font-weight:600}
+  .gallery{display:flex;gap:10px;margin-top:10px}
+  .shot{flex:1 1 0;height:92px;border-radius:var(--radius);background:linear-gradient(135deg,var(--pine100),#E2F0F7);display:flex;align-items:flex-end;padding:8px 10px;font-size:12px;color:var(--ink700)}
+  .shot.add{border:1px dashed var(--ink500);background:var(--sunken);align-items:center;justify-content:center;font-weight:600;color:var(--pine700);font-size:13px}
+  .bar{height:8px;border-radius:999px;background:var(--sunken);overflow:hidden;margin-top:10px}
+  .bar span{display:block;height:100%;background:var(--pine700)}
+  .main{padding:18px 30px 12px}
+  .item{padding:10px 14px}
+  .area{min-height:34px}
+  .hint{line-height:18px}
+  .shot{height:80px}
 </style>
 </head>
 <body>
@@ -210,44 +220,13 @@
                   <strong>Manutenção preventiva</strong>
                   <span class="pill amber">Hoje: sob orçamento</span>
                 </div>
-                <div class="field" style="margin-bottom:6px">
-                  <label>Título</label>
-                  <div class="input">Manutenção preventiva</div>
-                </div>
-                <div class="field" style="margin-bottom:6px">
-                  <label>Descrição</label>
-                  <div class="area" style="min-height:46px">Check-up antes do verão: corrige ruído, gotejamento e queda de rendimento.</div>
-                </div>
-                <div class="field" style="margin-bottom:6px">
-                  <label>Preço em centavos</label>
-                  <div class="input" style="width:180px" placeholder="Vazio é sob orçamento"></div>
-                </div>
+                <p class="hint" style="margin:6px 0 10px">Check-up antes do verão: corrige ruído, gotejamento e queda de rendimento.</p>
                 <div class="actions">
-                  <button class="btn primary small">Salvar</button>
-                  <button class="btn ghost small">Remover</button>
+                  <button class="btn ghost small">Editar</button>
                   <button class="btn ghost small">↑ Subir</button>
                   <button class="btn ghost small">↓ Descer</button>
                 </div>
               </div>
-            </section>
-
-            <section style="margin-top:14px" class="card" aria-label="Adicionar foto ao portfolio">
-              <p class="ttl">Adicionar foto ao portfólio</p>
-              <div class="field" style="margin-bottom:6px">
-                <label>Escolher imagem <span class="opt">(JPEG, PNG ou WebP até 5 MB)</span></label>
-                <div class="filebox">
-                  <span>nenhum arquivo selecionado</span>
-                  <strong>Selecionar arquivo</strong>
-                </div>
-              </div>
-              <div class="field" style="margin-bottom:6px">
-                <label>Legenda <span class="opt">(opcional)</span></label>
-                <div class="area" style="min-height:46px">Instalação concluída em apartamento de 18 m².</div>
-              </div>
-              <div class="actions">
-                <button class="btn primary">Publicar foto</button>
-              </div>
-              <p class="hint" style="margin-top:8px">As fotos são armazenadas em bucket privado e mostradas na ficha por URL assinada de curta duração.</p>
             </section>
           </main>
         </div>
@@ -342,6 +321,31 @@
                 </div>
               </section>
             </div>
+
+            <section style="margin-top:14px" class="card" aria-label="Portfolio">
+              <p class="ttl">Portfólio da ficha</p>
+              <div class="gallery">
+                <div class="shot"><span>Instalação concluída</span></div>
+                <div class="shot"><span>Limpeza de evaporadora</span></div>
+                <div class="shot add"><span>Adicionar foto</span></div>
+              </div>
+              <div class="field" style="margin:12px 0 6px">
+                <label>Legenda da nova foto <span class="opt">(opcional)</span></label>
+                <div class="area" style="min-height:44px">Instalação concluída em apartamento de 18 m².</div>
+              </div>
+              <div class="actions">
+                <button class="btn primary">Publicar foto</button>
+                <button class="btn ghost small">Remover selecionada</button>
+              </div>
+              <p class="hint" style="margin-top:8px">As fotos são armazenadas em bucket privado e mostradas na ficha por URL assinada de curta duração.</p>
+            </section>
+
+            <section style="margin-top:14px" class="card" aria-label="Completude da vitrine">
+              <p class="ttl">Completude da vitrine</p>
+              <div class="meta-row">Descrição, serviços e região preenchidos. Falta publicar ao menos uma foto.</div>
+              <div class="bar"><span style="width:75%"></span></div>
+              <p class="hint" style="margin-top:8px">A completude orienta o que falta para a ficha aparecer melhor na busca. Não é condição de publicação.</p>
+            </section>
 
             <p class="hint" style="margin-top:14px">O telefone de contato não é condição de ficha completa: a completude da vitrine é calculada sobre descrição, serviços, regiões e fotos — não sobre este número.</p>
           </main>
