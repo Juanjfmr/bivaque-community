@@ -57,7 +57,7 @@ export default function ListingDetailPage() {
     const { data, error } = await supabase
       .from("listings")
       .select(
-        "id,owner_id,title,description,category,price_cents,condition,neighborhood,status,audience_type,locality_id,community_id,created_at",
+        "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,status,locality_id,community_id,created_at",
       )
       .eq("id", listingId)
       .maybeSingle()
@@ -72,15 +72,15 @@ export default function ListingDetailPage() {
     }
 
     const listing = data as ListingRow
-    const isOwner = user !== null && user.id === listing.owner_id
+    const isOwner = user !== null && user.id === listing.owner_user_id
 
     const { data: photoRows } = await supabase
       .from("listing_photos")
-      .select("listing_id,storage_path,position")
+      .select("listing_id,path,position")
       .eq("listing_id", listing.id)
       .order("position", { ascending: true })
 
-    const orderedPaths = ((photoRows ?? []) as ListingPhotoRow[]).map((photo) => photo.storage_path)
+    const orderedPaths = ((photoRows ?? []) as ListingPhotoRow[]).map((photo) => photo.path)
     let photos: { path: string; url: string }[] = []
     if (orderedPaths.length > 0) {
       const { data: signed } = await supabase.storage
@@ -101,14 +101,14 @@ export default function ListingDetailPage() {
     const { data: profile } = await supabase
       .from("profiles")
       .select("display_name")
-      .eq("user_id", listing.owner_id)
+      .eq("user_id", listing.owner_user_id)
       .maybeSingle()
     if (profile !== null) {
       advertiser = { displayName: (profile as { display_name: string }).display_name }
     }
 
     let communityName: string | null = null
-    if (listing.audience_type === "community" && listing.community_id !== null) {
+    if (listing.community_id !== null) {
       const { data: community } = await supabase
         .from("communities")
         .select("name")
@@ -148,7 +148,7 @@ export default function ListingDetailPage() {
     setOpening(true)
     const supabase = listingsClient()
     const { data, error } = await supabase.rpc("open_conversation", {
-      p_other_user_id: state.listing.owner_id,
+      p_other_user_id: state.listing.owner_user_id,
       p_context_type: "listing",
       p_context_id: state.listing.id,
     })

@@ -11,6 +11,7 @@ import {
   parsePriceInput,
   relativeTime,
   serializeListingSearch,
+  toCanonicalCondition,
   validateNewListing,
 } from "../../../apps/web/lib/listings/catalog"
 
@@ -65,7 +66,7 @@ describe("parseListingSearch / serializeListingSearch", () => {
 
   it("round-trips a non-empty filter state", () => {
     const params = new URLSearchParams(
-      "categoria=esporte&categoria=infantil&condicao=used_good&regiao=Centro&preco_min=1000&preco_max=9000&ordem=price_desc&pagina=2",
+      "categoria=esporte&categoria=infantil&condicao=used&regiao=Centro&preco_min=1000&preco_max=9000&ordem=price_desc&pagina=2",
     )
     const state = parseListingSearch(params)
     const roundTripped = parseListingSearch(new URLSearchParams(serializeListingSearch(state)))
@@ -97,7 +98,7 @@ describe("validateNewListing", () => {
     title: "Mesa de jantar",
     category: "casa_moveis",
     priceInput: "650,00",
-    condition: "used_good",
+    condition: "used",
     description: "Mesa usada, sem detalhes.",
     neighborhood: "Centro",
     audienceType: "locality" as const,
@@ -149,13 +150,56 @@ describe("validateNewListing", () => {
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.errors.price).toBeDefined()
   })
+
+  // A obrigatoriedade que o Mercado tinha e o canônico tornou anulável precisa
+  // continuar valendo na borda de escrita. Cada campo tem seu teste que falha
+  // se a validação sumir.
+  it("rejects an item without a category", () => {
+    const result = validateNewListing({ ...validDraft, category: "" })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.category).toBeDefined()
+  })
+
+  it("rejects an item without a description", () => {
+    const result = validateNewListing({ ...validDraft, description: "   " })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.description).toBeDefined()
+  })
+
+  it("rejects an item without a price", () => {
+    const result = validateNewListing({ ...validDraft, priceInput: "" })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.price).toBeDefined()
+  })
+
+  it("rejects an item without a neighborhood", () => {
+    const result = validateNewListing({ ...validDraft, neighborhood: "" })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.neighborhood).toBeDefined()
+  })
+})
+
+describe("toCanonicalCondition", () => {
+  it("maps the canonical values unchanged", () => {
+    expect(toCanonicalCondition("new")).toBe("new")
+    expect(toCanonicalCondition("used")).toBe("used")
+  })
+
+  it("folds both legacy used tiers into used", () => {
+    expect(toCanonicalCondition("used_good")).toBe("used")
+    expect(toCanonicalCondition("used_fair")).toBe("used")
+  })
+
+  it("rejects an unknown condition", () => {
+    expect(toCanonicalCondition("exploded")).toBeNull()
+  })
 })
 
 describe("labels and photo path", () => {
   it("resolves known labels and falls back safely", () => {
     expect(categoryLabel("eletronicos")).toBe("Eletrônicos")
     expect(categoryLabel("unknown")).toBe("Outros")
-    expect(conditionLabel("used_good")).toBe("Usado em bom estado")
+    expect(conditionLabel("used")).toBe("Usado")
   })
 
   it("builds a path rooted at the listing id", () => {

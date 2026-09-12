@@ -73,7 +73,7 @@ export default function EditarAnuncioPage() {
   const [title, setTitle] = useState("")
   const [category, setCategory] = useState("")
   const [price, setPrice] = useState("")
-  const [condition, setCondition] = useState("used_good")
+  const [condition, setCondition] = useState("used")
   const [description, setDescription] = useState("")
   const [neighborhood, setNeighborhood] = useState("")
   const [errors, setErrors] = useState<ListingEditErrors>({})
@@ -112,7 +112,7 @@ export default function EditarAnuncioPage() {
     }
 
     const listing = data as unknown as ManagedListingRow
-    if (listing.owner_id !== user.id) {
+    if (listing.owner_user_id !== user.id) {
       setState({ status: "unavailable", listing: null, photoPath: null, photoUrl: null })
       return
     }
@@ -132,16 +132,16 @@ export default function EditarAnuncioPage() {
     let photoUrl: string | null = null
     const { data: photoRows } = await supabase
       .from("listing_photos")
-      .select("storage_path,position")
+      .select("path,position")
       .eq("listing_id", listing.id)
       .order("position", { ascending: true })
       .limit(1)
-    const first = (photoRows ?? [])[0] as { storage_path: string } | undefined
+    const first = (photoRows ?? [])[0] as { path: string } | undefined
     if (first !== undefined) {
-      photoPath = first.storage_path
+      photoPath = first.path
       const { data: signed } = await supabase.storage
         .from("listing-photos")
-        .createSignedUrl(first.storage_path, 3600)
+        .createSignedUrl(first.path, 3600)
       photoUrl = signed?.signedUrl ?? null
     }
 
@@ -153,12 +153,10 @@ export default function EditarAnuncioPage() {
   }, [load])
 
   const audienceValue =
-    state.listing === null
+    state.listing === null || state.listing.community_id === null
       ? current.cityName
-      : state.listing.audience_type === "community"
-        ? (communities.find((community) => community.id === state.listing?.community_id)?.name ??
-          "Comunidade")
-        : current.cityName
+      : (communities.find((community) => community.id === state.listing?.community_id)?.name ??
+        "Comunidade")
 
   async function save() {
     if (state.listing === null || saving) return
@@ -234,12 +232,17 @@ export default function EditarAnuncioPage() {
         .upload(newPath, blob, { contentType: blob.type, upsert: false })
       if (uploadError) throw new Error(uploadError.message)
 
+      // O canônico não tem índice único em (listing_id, position): substituir a
+      // foto é apagar as linhas do anúncio e gravar a nova, não `upsert`.
+      const { error: clearError } = await supabase
+        .from("listing_photos")
+        .delete()
+        .eq("listing_id", state.listing.id)
+      if (clearError) throw new Error(clearError.message)
+
       const { error: photoError } = await supabase
         .from("listing_photos")
-        .upsert(
-          { listing_id: state.listing.id, storage_path: newPath, position: 0 },
-          { onConflict: "listing_id,position" },
-        )
+        .insert({ listing_id: state.listing.id, path: newPath, position: 0 })
       if (photoError) throw new Error(photoError.message)
 
       if (previousPath !== null && previousPath !== newPath) {

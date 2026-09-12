@@ -21,37 +21,37 @@ select plan(38);
 -- Localidade 001 é a Manaus do baseline; member-one (001) tem membership nela.
 insert into public.listings (
   id, owner_user_id, kind, status, title, description, locality_id, community_id,
-  neighborhood, published_at
+  neighborhood, published_at, category, price_cents, condition
 )
 values
   ('a0000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000002',
    'property', 'active', 'Apartamento novo em Águas Claras', null,
    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras',
-   '2026-09-02 12:00:00+00'),
+   '2026-09-02 12:00:00+00', null, null, null),
   ('a0000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000002',
    'property', 'active', 'Imóvel de outra cidade', null,
    '00000000-0000-4000-8000-000000000002', null, 'Centro',
-   '2026-09-02 12:00:00+00'),
+   '2026-09-02 12:00:00+00', null, null, null),
   ('a0000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000002',
    'property', 'active', 'Imóvel antigo', null,
    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras',
-   '2026-08-01 12:00:00+00'),
+   '2026-08-01 12:00:00+00', null, null, null),
   ('a0000000-0000-4000-8000-000000000004', '10000000-0000-4000-8000-000000000002',
    'property', 'active', 'Venda em cidade alheia', null,
    '00000000-0000-4000-8000-000000000002', null, 'Centro',
-   '2026-09-02 12:00:00+00'),
+   '2026-09-02 12:00:00+00', null, null, null),
   ('a0000000-0000-4000-8000-000000000005', '10000000-0000-4000-8000-000000000002',
    'property', 'active', 'Venda na mesma cidade', null,
    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras',
-   '2026-09-02 12:00:00+00'),
+   '2026-09-02 12:00:00+00', null, null, null),
   ('a0000000-0000-4000-8000-000000000007', '10000000-0000-4000-8000-000000000002',
-   'item', 'active', 'Produto qualquer', null,
+   'item', 'active', 'Produto qualquer', 'Produto de teste.', 
    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras',
-   '2026-09-02 12:00:00+00'),
+   '2026-09-02 12:00:00+00', 'outros', 1000, 'used'),
   ('a0000000-0000-4000-8000-000000000008', '10000000-0000-4000-8000-000000000002',
    'property', 'paused', 'Anúncio pausado', null,
    '00000000-0000-4000-8000-000000000001', null, 'Águas Claras',
-   '2026-09-02 12:00:00+00');
+   '2026-09-02 12:00:00+00', null, null, null);
 
 insert into public.property_details (
   listing_id, deal, property_type, rent_cents, condo_fee_cents, sale_price_cents, bedrooms

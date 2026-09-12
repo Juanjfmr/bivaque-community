@@ -57,7 +57,22 @@ create table public.listings (
   constraint listings_audience_exclusive check ((locality_id is null) <> (community_id is null)),
   -- D5: o grão de localização é cidade + bairro. Endereço, número,
   -- complemento e coordenada não têm coluna.
-  constraint listings_condition_item_only check (kind = 'item' or condition is null)
+  constraint listings_condition_item_only check (kind = 'item' or condition is null),
+  -- RECON-039: `category`, `description`, `price_cents` e `neighborhood` nasceram
+  -- NOT NULL no lado do Mercado e ficaram anuláveis no canônico porque o anúncio
+  -- de Moradia legitimamente não os tem (`condition` idem, item-only). A
+  -- obrigatoriedade não pode simplesmente sumir para o `item`: ela é garantida
+  -- aqui, na borda de escrita do banco, e não só na validação da tela.
+  constraint listings_item_required_fields check (
+    kind <> 'item'
+    or (
+      category is not null
+      and description is not null
+      and price_cents is not null
+      and neighborhood is not null
+      and condition is not null
+    )
+  )
 );
 
 create index listings_search_idx
@@ -506,3 +521,91 @@ using (
        and l.owner_user_id = (select auth.uid())
   )
 );
+
+-- ---------------------------------------------------------------------------
+-- Interesse: o contexto `listing` do open_conversation
+-- ---------------------------------------------------------------------------
+-- O ramo `listing` nasceu no lote do Mercado, que lia `l.owner_id` e
+-- `l.audience_type` — colunas que não existem no canônico. Aqui ele é reescrito
+-- sobre a coluna de dono canônica e a única porta de leitura
+-- (`private.can_read_listing`). Só o interessado abre, o dono é o OUTRO
+-- participante, o anúncio está ativo e o interessado alcança o público.
+-- Conversar consigo mesmo continua impossível: `l.owner_user_id <> auth.uid()`.
+
+create or replace function private.dm_context_valid(
+  p_a uuid,
+  p_b uuid,
+  p_type public.dm_context_type,
+  p_context_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select case p_type
+    when 'shared_group' then exists (
+      select 1
+        from public.group_memberships gm
+       where gm.group_id = p_context_id
+         and gm.user_id in (p_a, p_b)
+         and gm.status = 'approved'
+       having count(distinct gm.user_id) = 2
+    )
+    when 'shared_event' then exists (
+      select 1
+        from public.event_rsvps e
+       where e.event_id = p_context_id
+         and e.user_id in (p_a, p_b)
+       having count(distinct e.user_id) = 2
+    )
+    when 'recommendation_thread' then (
+      exists (
+        select 1 from public.recommendation_requests r
+         where r.id = p_context_id and r.author_id in (p_a, p_b)
+      )
+      and exists (
+        select 1 from public.recommendation_replies rep
+         where rep.request_id = p_context_id and rep.author_id in (p_a, p_b)
+      )
+    )
+    when 'accepted_family' then exists (
+      select 1 from private.family_account_links l
+       where l.holder_user_id in (p_a, p_b)
+         and l.family_user_id in (p_a, p_b)
+         and l.holder_user_id <> l.family_user_id
+    )
+    when 'provider' then (
+      p_context_id is not null
+      and exists (
+        select 1 from public.provider_profiles pp
+         where pp.id = p_context_id
+           and pp.owner_user_id in (p_a, p_b)
+           and pp.owner_user_id <> (select auth.uid())
+      )
+      and private.can_see_provider(p_context_id)
+    )
+    when 'listing' then (
+      p_context_id is not null
+      and exists (
+        select 1 from public.listings l
+         where l.id = p_context_id
+           and l.status = 'active'
+           and l.owner_user_id in (p_a, p_b)
+           and l.owner_user_id <> (select auth.uid())
+      )
+      and exists (
+        select 1 from public.listings l
+         where l.id = p_context_id
+           and private.can_read_listing(l.id)
+      )
+    )
+    else false
+  end;
+$$;
+
+revoke all on function private.dm_context_valid(uuid, uuid, public.dm_context_type, uuid)
+  from public, anon;
+grant execute on function private.dm_context_valid(uuid, uuid, public.dm_context_type, uuid)
+  to authenticated;

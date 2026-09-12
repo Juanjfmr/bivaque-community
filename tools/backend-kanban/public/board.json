@@ -2359,6 +2359,54 @@
       ],
       "updatedAt": "2026-09-12",
       "sourceRevision": "cdd2b57"
+    },
+    {
+      "id": "RECON-039",
+      "title": "RECON-039: um único domínio listings (Mercado + Moradia) e integração que sobe",
+      "phase": "Reconstrução",
+      "priority": "P0",
+      "category": "backend",
+      "status": "done",
+      "description": "Dois lotes criaram, cada um, um domínio `listings` completo e incompatível na mesma pasta de migrations, e nenhum banco limpo da integração subia: `supabase migration up --local` parava em `type \"listing_kind\" already exists` (42710). O lote mantém o schema canônico do 20260911043053 (superconjunto: property_details e listing_alerts, D3/D5, imutabilidade de público e kind, cadeia de alerta do RECON-028), remove a definição duplicada do Mercado e adapta o que falava com ela: lifecycle lê `owner_user_id`, o código de Mercado e meus-anúncios deriva o público da FK preenchida (locality_id/community_id) em vez de `audience_type`, a foto usa `path` e a condição cai para os dois valores do enum canônico. Os campos que o Mercado exigia e o canônico tornou anuláveis voltam a ser obrigatórios na borda de escrita, com teste que reprova se a obrigação sumir.",
+      "checklist": [
+        "Existe UMA definição de listings, listing_photos e listing_saves na pasta de migrations ✅",
+        "migration up --local --include-all aplica até o fim, com EXIT lido direto ✅",
+        "Migrations posteriores que liam owner_id passam a ler owner_user_id, sem coluna órfã ✅",
+        "Telas de Mercado (listar, abrir, publicar, editar) e meus-anúncios contra o schema canônico ✅",
+        "Moradia preserva property_details e listing_alerts ✅",
+        "Obrigatoriedade de categoria/descrição/preço/bairro garantida na borda (banco + validação) com teste que falha se ela sumir ✅",
+        "pgTAP cobre leitura permitida e negada para dono, membro da mesma cidade e terceiro ✅",
+        "database.generated.ts regenerado somente do schema public ✅ (uma anotação de nulidade preservada — ver proof)",
+        "PENDENTE: prova completa de test:db em banco SEM seed; o banco local é compartilhado e este executor não pode resetá-lo"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-039.task.yml → EXIT=0, 1 contrato válido",
+        "npx pnpm@11.18.0 exec supabase migration up --local --include-all → EXIT=0, 'Local database is up to date' (aplicou 20260911040000, 20260911043053, 20260911043436, 20260911051005 e demais pendentes)",
+        "npx pnpm@11.18.0 gate → EXIT=0 verde (lint, typecheck, build, test:unit/workspaces/privacy/scope, secrets)",
+        "npx pnpm@11.18.0 exec supabase db lint --local --level error → EXIT=0, no schema errors",
+        "npx pnpm@11.18.0 exec supabase test db → EXIT=1 por estado do banco: 109 arquivos, com seed de desenvolvimento visível (ex.: authz vê 'Ana Almeida' onde a fixture espera 'Hidden Member', users_pkey duplicado). Os 4 arquivos do domínio passam: listing-market, listing-lifecycle, listings-moradia e listing-alerts — inclui negativa do banco para item sem categoria (23514) e alcance dono/cidade/terceiro",
+        "Banco limpo não pôde ser provado: há UM Supabase local compartilhado com outros executores e apagar/recriar é proibido pelo contrato; a prova limpa depende de um reset de outro dono",
+        "database.generated.ts veio de `supabase gen types --local --schema public`; a anotação `p_path: string | null` de set_community_image foi preservada porque a RPC aceita NULL e o app do RECON-034 passa NULL — regenerar exige corrigir apps/web/app/(owner)/communities/actions.ts, fora dos caminhos permitidos deste contrato"
+      ],
+      "tests": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-039.task.yml",
+        "npx pnpm@11.18.0 exec supabase migration up --local --include-all",
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 exec supabase test db (supabase/tests/listing-market.sql, listing-lifecycle.sql, listings-moradia.sql, listing-alerts.sql)",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/listings"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-039.task.yml",
+        "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
+        "supabase/migrations/20260911043053_listings_market_and_homes.sql",
+        "supabase/migrations/20260911040000_drop_legacy_market_listings.sql",
+        "supabase/migrations/20260912055212_listing_transition_guard_reset.sql"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "updatedAt": "2026-09-12",
+      "completedAt": "2026-09-12",
+      "sourceRevision": "f81534d"
     }
   ]
 }
