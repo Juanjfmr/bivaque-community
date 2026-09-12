@@ -87,6 +87,11 @@ function verify(catalog) {
     }
 
     for (const desvio of journey.desvios) {
+      // Desvio sem tela própria: só exige texto. Desvio com tela: exige condição e âncora real.
+      if (desvio.texto !== undefined) {
+        if (!String(desvio.texto).trim()) problems.push(`${journey.id}: desvio de texto vazio`)
+        continue
+      }
       if (!desvio.quando?.trim()) problems.push(`${journey.id}: desvio sem "quando"`)
       if (!refs.has(desvio.apos)) {
         problems.push(`${journey.id}: desvio de ${desvio.ref} aponta para passo inexistente`)
@@ -94,6 +99,7 @@ function verify(catalog) {
     }
 
     for (const step of [...journey.passos, ...journey.desvios]) {
+      if (step.texto !== undefined) continue
       const { x, w } = step.frame
       if (x < 0 || w <= 0 || x + w > 1.0001) {
         problems.push(`${journey.id} ${step.ref}: recorte fora dos limites`)

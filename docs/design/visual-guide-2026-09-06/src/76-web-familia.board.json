@@ -1,0 +1,44 @@
+{
+  "id": "76-web-familia",
+  "kind": "web",
+  "group": "profile",
+  "title": "Web: convidar a família",
+  "screens": ["Convidar um familiar", "Convite pendente"],
+  "reviewNotes": [
+    "Apenas titulares verificados criam convite — o código mostra nota restritiva quando a conta ainda não passou pela verificação de vínculo. A prancha desenha o caminho verificado, que é o estado em que a ação fica disponível.",
+    "A conta do familiar é independente: o convite não concede participação em comunidade privada nem acesso a dados do titular. Texto da prancha segue o código.",
+    "O link aparece uma única vez. O servidor guarda só o digest do token (migration 20260815130000); o link cru nunca é persistido nem devolvido depois de sair da tela. A prancha mostra esse contrato — não inventar histórico do link.",
+    "Os e-mails mascarados (m***, r***, a***) são ilustrativos; o servidor guarda só o digest SHA-256 do e-mail normalizado, nunca o endereço completo. Pendentes são exemplos; os 5 ativos e o limite de 7 dias vêm do contrato real.",
+    "Não há promessa de prazo de retorno do familiar nem de tempo que o convite fica visível além dos 7 dias. Cancelar e reenviar são as ações permitidas: revogar invalida o token, criar novo convite é a forma de reenviar.",
+    "Lacuna registrada: nenhum contrato de tarefa possui isoladamente a rota /configuracoes/familia. A prancha está ancorada em RECON-031, que cobre o conjunto de configurações (incluindo família) — não existe um card só desta tela."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do membro conforme apps/web/app/components/bivaque/app-shell.tsx e subshell de Configurações (cabeçalho + coluna vertical de seções) conforme apps/web/app/(shell)/configuracoes/layout.tsx e configuracoes-nav.tsx, com a subrota família marcada como ativa em Privacidade. Painel 1 é o convite novo com o formulário de e-mail e a lista de pendentes com revogar por linha. Painel 2 é o convite pronto após criar: o link único aparece com o aviso de uma única vez, o botão copiar e revogar, e o convite na lista com reenviar e cancelar. Copy reconciliada com C07 e com a tela implementada em apps/web/app/(shell)/configuracoes/familia e em profile/family-invite-section-actions.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-031",
+  "journey": {
+    "id": "web-convidar-a-familia",
+    "titulo": "Convidar um familiar para criar a propria conta",
+    "plataforma": "web",
+    "grupo": "profile",
+    "persona": "Membro titular verificado querendo trazer um familiar",
+    "comeca": "Tela de Configuracoes, secao Familia",
+    "termina": "Familiar aceita o link e cria a propria conta independente",
+    "acoes": ["Configurar"],
+    "etapas": [
+      {
+        "nome": "Convidar",
+        "passos": [{ "tela": "76-web-familia#0", "acao": "informa o e-mail do familiar e cria o convite" }]
+      },
+      {
+        "nome": "Link pronto",
+        "passos": [{ "tela": "76-web-familia#1", "acao": "copia o link e envia ao familiar antes de sair da tela" }]
+      },
+      {
+        "nome": "Entrada",
+        "passos": [{ "tela": "76-web-familia#1", "acao": "o familiar abre o link em ate 7 dias e cria a propria conta independente" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 76-web-familia — `/configuracoes/familia`\n\n**Etapa:** W02/W08. **Painéis:** o convite novo com a lista de pendentes; o convite pronto para enviar com o link único e as ações de reenviar/cancelar.\n\nPrancha criada em 12/09/2026, depois do handoff. O Gate W08 fecha preferências, família, conta e exclusão, e o guia só desenhava a coluna de Configurações (prancha 52) sem detalhar a tela de família. Esta é a autoridade visual do convite familiar — o lado do titular que cria.\n\n### Composição\n\nShell do membro (lateral com Início, Explorar, Comunidades e Perfil, mais Salvos e Notificações; barra superior com busca, cidade e perfil) conforme `apps/web/app/components/bivaque/app-shell.tsx`. Configurações marcada como ativa na lateral inferior. Dentro do conteúdo, o subshell de Configurações: cabeçalho \"Configurações · Família\" e coluna vertical de seções (Perfil, Notificações, Conta, Privacidade) com Privacidade marcada como ativa — a subrota família vive sob Privacidade, conforme `configuracoes-nav.tsx`.\n\n**Convidar um familiar** — H2 \"Família\" com o lead \"Convide até 5 familiares por vez. Cada convite expira em 7 dias e mantém a conta do familiar independente.\"; cartão \"Convidar um familiar\" com campo \"E-mail do familiar\", botão \"Criar convite\" e o aviso \"O link aparece uma única vez; envie ao familiar antes de fechar esta tela\"; cartão \"Convites pendentes\" com dois convites ativos (e-mails mascarados, datas ilustrativas) e botão \"Revogar\" por linha; rail lateral \"Como funciona a entrada\" com três pontos — o familiar cria conta própria, as contas são independentes e a entrada na família não libera comunidade privada.\n\n**Convite pendente** — mesmo shell e mesmo H2 \"Família\"; cartão \"Convite pronto para enviar\" com o aviso em destaque \"O link aparece uma única vez\" e o token truncado `bivaque.app/onboarding?invite=7f3a…c2d1`, mais os botões \"Copiar\" e \"Revogar\", e o lembrete \"Quem abrir entra direto como conta independente\"; cartão \"Convite pendente\" com o convite recém-criado (e-mail mascarado, enviado agora, expira em 19/09/2026), selo \"Pronto para enviar\" e os botões \"Reenviar\" e \"Cancelar\"; rail \"Se o familiar não abrir a tempo\" explicando que o convite expira em 7 dias e que reenviar é criar novo convite.\n\n### Estados e limites\n\nA prancha assume titular verificado: o formulário aparece habilitado e o rail explica o fluxo. O estado \"Apenas titulares verificados podem enviar convites\" do código não está desenhado aqui — está coberto pela nota restritiva que aparece no lugar do formulário quando a verificação ainda não foi feita. O limite de 5 convites ativos é o teto do contrato; a prancha mostra 2 pendentes e 1 recém-criado, todos fictícios. Não há promessa de prazo: nem do familiar abrir nem de quanto tempo o convite fica visível além dos 7 dias. **Lacuna registrada:** a rota vive dentro de RECON-031 (Configurações), sem card isolado para esta tela."
+}

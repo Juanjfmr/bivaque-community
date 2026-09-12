@@ -1187,10 +1187,7 @@
       "persona": "Quem abriu um link velho, ja usado ou quebrado",
       "comeca": "Link de recuperacao vencido",
       "termina": "De volta ao caminho de entrada",
-      "acoes": [
-        "Recuperar acesso",
-        "Entrar"
-      ],
+      "acoes": ["Recuperar acesso", "Entrar"],
       "etapas": [
         {
           "nome": "Link vencido",
@@ -1220,10 +1217,7 @@
       "persona": "Quem administra a comunidade",
       "comeca": "Fila de pedidos aguardando",
       "termina": "Pedido decidido, e quem entrou aparece na comunidade",
-      "acoes": [
-        "Solicitar participacao",
-        "Gerenciar"
-      ],
+      "acoes": ["Solicitar participacao", "Gerenciar"],
       "etapas": [
         {
           "nome": "Fila",
@@ -1262,10 +1256,7 @@
       "persona": "Curador do Guia, membro da operacao",
       "comeca": "Fila de sugestoes aguardando revisao humana",
       "termina": "Correcao aplicada e artigo atualizado para quem le",
-      "acoes": [
-        "Sugerir correcao",
-        "Moderar"
-      ],
+      "acoes": ["Sugerir correcao", "Moderar"],
       "etapas": [
         {
           "nome": "Fila",
@@ -1290,6 +1281,442 @@
           "passos": [
             {
               "tela": "25-web-guia-referencia#0"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-central-de-conversas",
+      "titulo": "Central de conversas — inbox e thread",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Membro com conversas ativas (grupo, evento, recomendação, família)",
+      "comeca": "Mensagens vazia ou com inbox populada",
+      "termina": "Mensagem entregue, falhada com retry, ou conversa bloqueada",
+      "acoes": ["Conversar", "Denunciar", "Bloquear"],
+      "etapas": [
+        {
+          "nome": "Caixa de entrada",
+          "passos": [
+            {
+              "tela": "75-web-conversas#0",
+              "acao": "abre a inbox e escolhe uma conversa"
+            }
+          ]
+        },
+        {
+          "nome": "Conversa aberta",
+          "passos": [
+            {
+              "tela": "75-web-conversas#1",
+              "acao": "lê as mensagens"
+            },
+            {
+              "tela": "75-web-conversas#1",
+              "acao": "tenta enviar e o servidor falha; tenta de novo"
+            }
+          ]
+        },
+        {
+          "nome": "Bloqueio",
+          "passos": [
+            {
+              "tela": "75-web-conversas#1",
+              "acao": "bloqueia o outro participante pelo header do thread"
+            }
+          ]
+        },
+        {
+          "nome": "Denúncia",
+          "passos": [
+            {
+              "tela": "75-web-conversas#1",
+              "acao": "denuncia mensagem do outro com motivo de pelo menos 10 caracteres"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-convidar-a-familia",
+      "titulo": "Convidar um familiar para criar a propria conta",
+      "plataforma": "web",
+      "grupo": "profile",
+      "persona": "Membro titular verificado querendo trazer um familiar",
+      "comeca": "Tela de Configuracoes, secao Familia",
+      "termina": "Familiar aceita o link e cria a propria conta independente",
+      "acoes": ["Configurar"],
+      "etapas": [
+        {
+          "nome": "Convidar",
+          "passos": [
+            {
+              "tela": "76-web-familia#0",
+              "acao": "informa o e-mail do familiar e cria o convite"
+            }
+          ]
+        },
+        {
+          "nome": "Link pronto",
+          "passos": [
+            {
+              "tela": "76-web-familia#1",
+              "acao": "copia o link e envia ao familiar antes de sair da tela"
+            }
+          ]
+        },
+        {
+          "nome": "Entrada",
+          "passos": [
+            {
+              "tela": "76-web-familia#1",
+              "acao": "o familiar abre o link em ate 7 dias e cria a propria conta independente"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-pedir-ajuda-com-canal-real",
+      "titulo": "Encontrar ajuda no Bivaque",
+      "plataforma": "web",
+      "grupo": "profile",
+      "persona": "Membro que precisa entender uma area do produto ou falar com a equipe",
+      "comeca": "Topo da pagina /ajuda",
+      "termina": "Documento legal aberto ou e-mail enviado ao suporte",
+      "acoes": ["Configurar"],
+      "etapas": [
+        {
+          "nome": "Topo",
+          "passos": [
+            {
+              "tela": "77-web-ajuda#0",
+              "acao": "le as secoes de Acesso e conta e Usar o Bivaque com os destinos"
+            }
+          ]
+        },
+        {
+          "nome": "Regras e suporte",
+          "passos": [
+            {
+              "tela": "77-web-ajuda#1",
+              "acao": "abre um documento legal ou escreve para o suporte pelo mailto"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-prestador-catalogo-conta",
+      "titulo": "Operar catálogo, conta e área de atendimento do negócio",
+      "plataforma": "web",
+      "grupo": "negocio",
+      "persona": "Responsável pelo negócio (prestador verificado)",
+      "comeca": "Painel do prestador autenticado",
+      "termina": "Catálogo publicado, conta configurada e área de atendimento ligada à comunidade autorizada",
+      "acoes": ["Editar catalogo", "Configurar conta", "Editar negocio"],
+      "etapas": [
+        {
+          "nome": "Catalogo",
+          "passos": [
+            {
+              "tela": "78-web-prestador-operacao#0",
+              "acao": "publica e mantém itens do catálogo e fotos do portfólio"
+            }
+          ]
+        },
+        {
+          "nome": "Conta e atendimento",
+          "passos": [
+            {
+              "tela": "78-web-prestador-operacao#1",
+              "acao": "define telefone público opcional e liga o alcance pela comunidade"
+            }
+          ]
+        },
+        {
+          "nome": "Visibilidade publica",
+          "passos": [
+            {
+              "tela": "62-web-prestador-pedido#0",
+              "acao": "verifica como a ficha aparece para a comunidade autorizada"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-indicar-prestador",
+      "titulo": "Indicar e aceitar prestador na comunidade",
+      "plataforma": "web",
+      "grupo": "negocio",
+      "persona": "Membro aprovado da comunidade (quem indica) e prestador civil (quem aceita)",
+      "comeca": "Membro da comunidade abre a página de indicação",
+      "termina": "Prestador convidado confirma o e-mail e aceita; cai no painel próprio do prestador",
+      "acoes": ["Indicar prestador", "Aceitar convite"],
+      "etapas": [
+        {
+          "nome": "Indicacao",
+          "passos": [
+            {
+              "tela": "79-web-indicar-prestador#0",
+              "acao": "preenche nome e e-mail e envia o convite"
+            }
+          ]
+        },
+        {
+          "nome": "Aceite do prestador",
+          "passos": [
+            {
+              "tela": "79-web-indicar-prestador#1",
+              "acao": "confirma o e-mail do convite pelo link e aceita"
+            }
+          ]
+        },
+        {
+          "nome": "Painel do prestador",
+          "passos": [
+            {
+              "tela": "78-web-prestador-operacao#0",
+              "acao": "publica catálogo e configura conta"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-recomendacoes",
+      "titulo": "Pedir, responder e marcar como resolvida uma indicação",
+      "plataforma": "web",
+      "grupo": "guia",
+      "persona": "Membro da comunidade",
+      "comeca": "Aba Pedidos da página /recommendations",
+      "termina": "Pedido marcado como resolvido pela autora, ou resposta em edição dentro do mesmo pedido",
+      "acoes": ["Pedir indicacao", "Marcar como resolvido"],
+      "etapas": [
+        {
+          "nome": "Lista",
+          "passos": [
+            {
+              "tela": "80-web-recomendacoes#0",
+              "acao": "vê pedidos de indicação recebidos com respostas e marcador"
+            }
+          ]
+        },
+        {
+          "nome": "Detalhe",
+          "passos": [
+            {
+              "tela": "80-web-recomendacoes#1",
+              "acao": "abre um pedido e responde; autora pode marcar a resposta que resolveu"
+            }
+          ]
+        },
+        {
+          "nome": "Resolvido",
+          "passos": [
+            {
+              "tela": "80-web-recomendacoes#1",
+              "acao": "faixa Pedido resolvido aparece; Reabrir volta o pedido ao estado normal"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-administrar-comunidade",
+      "titulo": "Administração da comunidade — moderadores, prestadores e imagens",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Dono da comunidade que responde por ela",
+      "comeca": "Console da comunidade aberto",
+      "termina": "Moderador promovido, prestador revogado, ou imagem trocada",
+      "acoes": ["Administrar comunidade", "Trocar imagem"],
+      "etapas": [
+        {
+          "nome": "Administração",
+          "passos": [
+            {
+              "tela": "81-web-comunidade-admin#0",
+              "acao": "despromove um moderador"
+            },
+            {
+              "tela": "81-web-comunidade-admin#0",
+              "acao": "promove um membro aprovado a moderador"
+            },
+            {
+              "tela": "81-web-comunidade-admin#0",
+              "acao": "revoga a ficha de um prestador com motivo"
+            }
+          ]
+        },
+        {
+          "nome": "Imagens",
+          "passos": [
+            {
+              "tela": "81-web-comunidade-admin#1",
+              "acao": "troca a faixa de topo e confirma o aviso de sucesso"
+            },
+            {
+              "tela": "81-web-comunidade-admin#1",
+              "acao": "remove a miniatura"
+            }
+          ]
+        },
+        {
+          "nome": "Sem permissão",
+          "passos": [
+            {
+              "tela": "81-web-comunidade-admin#1",
+              "acao": "tenta enviar imagem sem ser dono; recebe a mensagem em rose700"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-declarar-mudanca-de-cidade",
+      "titulo": "Declarar mudança de cidade",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Membro que vai trocar de cidade e precisa avisar",
+      "comeca": "Página /localidade com a cidade atual",
+      "termina": "Transferência declarada com data e destino",
+      "acoes": ["Mudar de cidade"],
+      "etapas": [
+        {
+          "nome": "Declarar",
+          "passos": [
+            {
+              "tela": "82-web-localidade#0",
+              "acao": "escolhe a cidade de destino e confirma a data de saída"
+            }
+          ]
+        },
+        {
+          "nome": "Confirmado",
+          "passos": [
+            {
+              "tela": "82-web-localidade#1",
+              "acao": "vê o cartão de confirmação em pine100"
+            },
+            {
+              "tela": "82-web-localidade#1",
+              "acao": "alterna para a aba da cidade de origem e vê o aviso de saída"
+            }
+          ]
+        },
+        {
+          "nome": "Cancelar",
+          "passos": [
+            {
+              "tela": "82-web-localidade#1",
+              "acao": "cancela a transferência pela área de gestão da conta"
+            }
+          ]
+        }
+      ],
+      "desvios": [
+        "Sem declaração — /localidade renderiza apenas CityReference com a cidade atual; o bloco 'Estou de mudança' aparece como formulário à parte (painel 1).",
+        "Transferência expirada (readOnly = true) — a aba da cidade de origem mostra 'Você só lê aqui — a transferência já aconteceu. Para publicar, use {atual}.'"
+      ]
+    },
+    {
+      "id": "web-primeiro-contato-publico",
+      "titulo": "Primeiro contato do visitante com o Bivaque",
+      "plataforma": "web",
+      "grupo": "base",
+      "persona": "Visitante que ainda nao tem cadastro",
+      "comeca": "Aterrissagem em /",
+      "termina": "Decisao de entrar ou criar conta",
+      "acoes": ["Ler manifesto", "Conhecer camadas de pertencimento", "Entrar ou criar conta"],
+      "etapas": [
+        {
+          "nome": "Hero e manifesto",
+          "passos": [
+            {
+              "tela": "83-web-landing#0",
+              "acao": "le a chamada principal e o manifesto"
+            }
+          ]
+        },
+        {
+          "nome": "Camadas e confianca",
+          "passos": [
+            {
+              "tela": "83-web-landing#1",
+              "acao": "percorre pertencimento, confianca e CTA final"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-busca-agrupada",
+      "titulo": "Buscar conteudo por termo dentro da cidade atual",
+      "plataforma": "web",
+      "grupo": "base",
+      "persona": "Membro que quer achar guia, servico ou evento sem sair da cidade ativa",
+      "comeca": "Termo digitado no campo de busca da topbar",
+      "termina": "Card aberto no destino real ou saida honesta do vazio",
+      "acoes": ["Buscar", "Abrir um resultado", "Limpar busca", "Trocar cidade"],
+      "etapas": [
+        {
+          "nome": "Resultados",
+          "passos": [
+            {
+              "tela": "84-web-busca#0",
+              "acao": "term 'escola transferencia' em q=, grupos Guia / Servicos / Eventos"
+            }
+          ]
+        },
+        {
+          "nome": "Sem resultados",
+          "passos": [
+            {
+              "tela": "84-web-busca#1",
+              "acao": "term nao casa com nenhuma consulta; cidade aparece no destaque, acoes de saida"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-chegadas-e-transferencias",
+      "titulo": "Operador acompanha chegadas declaradas e transferencias ainda ativas",
+      "plataforma": "web",
+      "grupo": "operations",
+      "persona": "Operador autorizado do painel BIVAQUE Operacao",
+      "comeca": "Operador clica em Chegadas na topbar do painel",
+      "termina": "Vê o volume por cidade ou o estado vazio e, se quiser, atualiza a leitura",
+      "acoes": ["Ler volume por cidade", "Atualizar leitura"],
+      "etapas": [
+        {
+          "nome": "Volume por cidade",
+          "passos": [
+            {
+              "tela": "85-web-arrivals#0",
+              "acao": "lista cidade e contagem lidas da RPC; coluna de acao ainda nao existe"
+            }
+          ]
+        },
+        {
+          "nome": "Sem chegadas",
+          "passos": [
+            {
+              "tela": "85-web-arrivals#1",
+              "acao": "estado vazio honesto com caminhos reais do shell do operador"
             }
           ]
         }

@@ -44,7 +44,9 @@ function normalize(catalog) {
     termina: j.termina,
     acoes: j.acoes,
     etapas: j.etapas.map((etapa) => ({ nome: etapa.nome, passos: etapa.passos.map(tela) })),
-    desvios: j.desvios.map((d) => ({ ...tela(d), quando: d.quando, apos: d.apos })),
+    desvios: j.desvios.map((d) =>
+      d.texto !== undefined ? { texto: d.texto } : { ...tela(d), quando: d.quando, apos: d.apos },
+    ),
   }))
 
   const pranchas = catalog.flows.map((f) => ({
@@ -409,13 +411,20 @@ details ul{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
       var ramos = el("div","ramos");
       item.desvios.forEach(function(d){
         var ramo = el("div","ramo");
-        ramo.appendChild(frame(d, d.tela));
-        var txt = el("div","ramo-txt");
-        var origem = null;
-        todos.forEach(function(p){ if(p.ref === d.apos) origem = p; });
-        txt.appendChild(el("b", null, "se " + d.quando));
-        txt.appendChild(el("span", null, "após o passo " + (origem ? origem.posicao : "?") + " — " + d.tela));
-        ramo.appendChild(txt);
+        if(d.texto){
+          var soTexto = el("div","ramo-txt");
+          soTexto.appendChild(el("b", null, "estado"));
+          soTexto.appendChild(el("span", null, d.texto));
+          ramo.appendChild(soTexto);
+        } else {
+          ramo.appendChild(frame(d, d.tela));
+          var txt = el("div","ramo-txt");
+          var origem = null;
+          todos.forEach(function(p){ if(p.ref === d.apos) origem = p; });
+          txt.appendChild(el("b", null, "se " + d.quando));
+          txt.appendChild(el("span", null, "após o passo " + (origem ? origem.posicao : "?") + " — " + d.tela));
+          ramo.appendChild(txt);
+        }
         ramos.appendChild(ramo);
       });
       box.appendChild(ramos);

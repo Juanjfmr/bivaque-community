@@ -1,0 +1,46 @@
+{
+  "id": "80-web-recomendacoes",
+  "kind": "web",
+  "group": "guia",
+  "title": "Web: indicações e referências",
+  "screens": ["Pedidos de indicação recebidos", "Responder uma indicação"],
+  "reviewNotes": [
+    "A rota /recommendations é do segmento de membro e o utilizador é o próprio membro pedindo ou respondendo a pedidos. A casca é a lateral padrão do membro (apps/web/app/(shell)/layout.tsx), não a do prestador. O briefing atribui a tarefa ao teammate 'prestador', mas a tela não é do prestador — é do membro. A prancha segue a autoridade real do código.",
+    "Pedidos de indicação NÃO são marketplace: a própria tela traz o aviso 'Este é um espaço de utilidade comunitária, não um marketplace'. Não inventar estrelas, selos, ranking, promessa comercial, SLA ou pagamento. O texto de ajuda da caixa 'Pedir indicação' pede para evitar termos comerciais como preço, pagamento, anúncio ou contato comercial — manter o mesmo aviso.",
+    "Marcador 'Ajudou a resolver': só a autora marca a resposta que resolveu, e a marca fica visível para todos com borda esquerda verde e chip 'Ajudou a resolver'. A resposta marcada define o status 'Pedido resolvido' do pedido, exibido em faixa abaixo da lista de respostas. 'Reabrir' volta o pedido ao estado normal e remove a marca — usado só pela autora.",
+    "Não desenhar curtidas: o sistema não tem like/curtida em pedido de indicação. Os únicos controles por resposta são Editar/Excluir (próprio autor) e Ajudou a resolver / Remover marca (autora do pedido).",
+    "Alcance: o pedido nasce com escopo locality (a cidade) ou group (um grupo do qual o autor participa). Quando a categoria é 'Saúde & bem-estar' o escopo locality é escondido — a tela obriga a escolher um grupo. A etiqueta do alcance aparece como chip Manaus / Grupo ao lado da categoria.",
+    "Confirmação de publicação: o toast atual diz 'Pedido publicado!'. A prancha mostra o estado pós-publicação (lista atualizada com o novo pedido) e não afirma sucesso de envio antes da persistência. Falha de envio preserva o texto da caixa (não há reset automático) e exibe mensagem de erro sem expor motivo técnico privado.",
+    "Detecção de CPF/CEP: a caixa do pedido detecta números de CPF/CEP e pede confirmação explícita antes de publicar. A prancha não pinta estado de aviso — é comportamento do formulário, não um cartão visual fixo. Não exibir dado sensível nem sugerir armazenamento local.",
+    "Manaus é fixture do seed; cidade de exemplo, não barreira de acesso. As categorias, nomes de autores e datas são fictícios; consolidar fixtures coerentes ao implementar."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Casca do membro conforme apps/web/app/(shell)/layout.tsx. Painel 1 mostra o conteúdo da aba Pedidos com a lista de pedidos de indicação recebidos: cards com chips de categoria e alcance, título, corpo, respostas existentes, caixa de resposta e o botão Salvar. Painel 2 abre um pedido específico para demonstrar o marcador 'Ajudou a resolver' (borda esquerda verde + chip), a faixa 'Pedido resolvido' e o botão Reabrir; o botão Responder fica desabilitado após a resolução. Copy reconciliada com a tela implementada em apps/web/app/(shell)/recommendations/page.tsx e o componente app/components/bivaque/recommendation-requests.tsx.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-043",
+  "journey": {
+    "id": "web-recomendacoes",
+    "titulo": "Pedir, responder e marcar como resolvida uma indicação",
+    "plataforma": "web",
+    "grupo": "guia",
+    "persona": "Membro da comunidade",
+    "comeca": "Aba Pedidos da página /recommendations",
+    "termina": "Pedido marcado como resolvido pela autora, ou resposta em edição dentro do mesmo pedido",
+    "acoes": ["Pedir indicacao", "Marcar como resolvido"],
+    "etapas": [
+      {
+        "nome": "Lista",
+        "passos": [{ "tela": "80-web-recomendacoes#0", "acao": "vê pedidos de indicação recebidos com respostas e marcador" }]
+      },
+      {
+        "nome": "Detalhe",
+        "passos": [{ "tela": "80-web-recomendacoes#1", "acao": "abre um pedido e responde; autora pode marcar a resposta que resolveu" }]
+      },
+      {
+        "nome": "Resolvido",
+        "passos": [{ "tela": "80-web-recomendacoes#1", "acao": "faixa Pedido resolvido aparece; Reabrir volta o pedido ao estado normal" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 80-web-recomendacoes — `/recommendations`\n\n**Etapa:** W05. **Painéis:** pedidos de indicação recebidos; responder uma indicação com marcador.\n\nPrancha criada em 12/09/2026, depois do handoff. A 25-web-guia-referencia cobre o artigo do Guia e a Sugerir correção; as referências e indicações da comunidade têm contrato próprio (O07) e tela dedicada em `/recommendations`. Esta é a autoridade visual que faltava para o ciclo pedir → responder → marcar como resolvido.\n\n**Lacuna registrada:** nenhuma prancha canônica anterior desenhou a aba Pedidos com o marcador 'Ajudou a resolver' nem a faixa 'Pedido resolvido'. Esta prancha ocupa esse vazio, ancorada no RECON-043.\n\n### Composição\n\n**Shell do membro** — sidebar BIVAQUE com Início, Explorar ativo, Comunidades, Perfil, Salvos, Notificações e Configurações; cabeçalho com busca, cidade Brasília/DF e avatar Carlos Ribeiro. Mesmo padrão usado em 70.\n\n**Painel 1 — Pedidos de indicação recebidos** — H1 `Indicações`; lead com o aviso de utilidade comunitária; abas `Explorar | Pedir indicação | Pedidos (2) ativo | Salvas`; cartão do pedido 1 (Serviços locais / Manaus, Renata M., há 3 dias) com uma resposta de João Silva e a caixa de resposta aberta com `Agradeço. Vou chamar pelo app mesmo.` e os botões `Responder` e `Salvar`; cartão do pedido 2 (Educação / Manaus, Ana Cláudia, há 1 semana) já marcado com chip `✓ Resolvida pela autora` em verde, duas respostas (a primeira com marcador verde `Ajudou a resolver`, a segunda sem marcador) e a faixa inferior `✅ Pedido resolvido — a autora marcou uma resposta como solução`.\n\n**Painel 2 — Responder uma indicação (com marcador)** — mesmo shell, mesmo H1/lead/abas (Pedidos (1) ativo); cartão de um pedido de Saúde & bem-estar no grupo Asa Norte, Lúcia P. há 2 dias; três respostas: Ana Beatriz (sem marcador, com Editar/Excluir), Carlos Ribeiro (com marcador `Ajudou a resolver` + botão `Remover marca`), Patrícia A. (sem marcador); faixa `✅ Pedido resolvido — você marcou a resposta de Carlos Ribeiro como solução · Reabrir`; caixa de resposta `Obrigada a todos. Fechamos com o Dr. Eduardo.` com `Responder` desabilitado (estado pós-resolução) e `Salvo` confirmado.\n\n### Estados e limites\n\nO marcador `Ajudou a resolver` só é aplicado pela autora do pedido; o botão aparece só para ela. A resposta marcada define o status `Pedido resolvido`, exibido na faixa verde do cartão. `Reabrir` volta o pedido ao estado normal e remove a marca — uso restrito à autora. Não há like/curtida: os controles por resposta são Editar/Excluir (próprio autor) e Ajudou a resolver / Remover marca (autora do pedido).\n\nA página é explicitamente de utilidade comunitária, não de marketplace: o lead da tela traz a frase 'Este é um espaço de utilidade comunitária, não um marketplace'. Sem estrelas, selos, ranking, pagamento ou SLA. O escopo do pedido é cidade ou grupo; quando a categoria é Saúde & bem-estar, o alcance locality é escondido e a autora precisa escolher um grupo. Manaus é fixture; categorias, nomes e datas são fictícios."
+}

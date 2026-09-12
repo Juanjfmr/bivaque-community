@@ -6,6 +6,8 @@ objective: >
   comunidade ve as conversas, os grupos e a descricao dela.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/85-web-arrivals.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 85-web-arrivals
   - apps/web/app/(shell)/events/page.tsx, o mesmo defeito ja corrigido pelo RECON-043
   - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0, Fidelidade comprovada
   - Inspeccao visual de 12/09/2026 sobre chore/integracao-r3-next

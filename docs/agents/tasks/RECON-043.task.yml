@@ -7,6 +7,8 @@ objective: >
   parecer abas, com a mesma marcacao que o resto do produto usa.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/80-web-recomendacoes.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 80-web-recomendacoes
   - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0, Fidelidade comprovada
   - apps/web/app/(shell)/messages, estado vazio de referencia ja entregue
   - apps/web/app/(shell)/salvos, abas em sublinhado entregues pelo RECON-038

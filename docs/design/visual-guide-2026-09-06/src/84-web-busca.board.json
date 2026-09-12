@@ -1,0 +1,44 @@
+{
+  "id": "84-web-busca",
+  "kind": "web",
+  "group": "base",
+  "title": "Web: busca agrupada",
+  "screens": ["Resultados da busca", "Nenhum resultado"],
+  "reviewNotes": [
+    "Rota /explorar/busca (R20, prancha 61). Resultados agrupados por tipo já implementado: Guia, Serviços, Eventos. Mercado e Moradia ainda não entram na busca — a coluna lateral do painel 2 registra esse limite de implementação, sem prometer prazo.",
+    "Termo canônico no URL é q=; search= é só alias de borda. Trocar a cidade em /localidade refaz as três consultas; nenhum resultado mistura cidades sem indicação.",
+    "A busca do cabeçalho funciona como um único campo; ela respeita a cidade ativa do contexto, não cria nova permissão nem abre conteúdo privado.",
+    "Falha de uma das três (providers/guide/events) vira estado de erro na página inteira, não lista vazia disfarçada; o componente ErrorState preserva o termo em q= para refazer.",
+    "Nada de promessa comercial (selo, ranking, avaliação). Os resultados de Serviços não exibem estrelas nem notas inventadas.",
+    "Resultados são fictícios (escolas, profissionais e evento ilustrativos) — consolidar fixtures únicas de pessoas e eventos ao implementar."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell de membro conforme a prancha 70-web-evento-organizar. Painel 1 = busca agrupada com termo 'escola transferência' e três grupos (Guia da cidade, Serviços, Eventos). Painel 2 = busca vazia para 'translado de mobília pesada' com ações Limpar e Trocar de cidade, mais coluna lateral com variações e nota sobre Mercado/Moradia. Copy reconciliada com apps/web/app/(shell)/explorar/busca/page.tsx.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-021",
+  "journey": {
+    "id": "web-busca-agrupada",
+    "titulo": "Buscar conteudo por termo dentro da cidade atual",
+    "plataforma": "web",
+    "grupo": "base",
+    "persona": "Membro que quer achar guia, servico ou evento sem sair da cidade ativa",
+    "comeca": "Termo digitado no campo de busca da topbar",
+    "termina": "Card aberto no destino real ou saida honesta do vazio",
+    "acoes": ["Buscar", "Abrir um resultado", "Limpar busca", "Trocar cidade"],
+    "etapas": [
+      {
+        "nome": "Resultados",
+        "passos": [
+          { "tela": "84-web-busca#0", "acao": "term 'escola transferencia' em q=, grupos Guia / Servicos / Eventos" }
+        ]
+      },
+      {
+        "nome": "Sem resultados",
+        "passos": [
+          { "tela": "84-web-busca#1", "acao": "term nao casa com nenhuma consulta; cidade aparece no destaque, acoes de saida" }
+        ]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 84-web-busca — busca agrupada no Bivaque web\n\n**Etapa:** W02/W06. **Painéis:** resultados agrupados por tipo; nenhum resultado com saída honesta.\n\nPrancha criada em 12/09/2026, depois do handoff. Fecha a R20 (prancha 61) sem inventar o que ainda não existe: a busca devolve Guia, Serviços e Eventos porque esses são os módulos já integrados. Mercado e Moradia ainda não entram aqui — o estado é declarado em reviewNotes e em uma anotação lateral no painel 2.\n\n### Composição\n\nShell de membro em ambos os painéis. Topbar com a busca da própria página aberta (campo destacado em pine-700 porque o termo é o foco), seletor de cidade Brasília, DF, sino com badge, avatar Carlos Ribeiro. Sidebar com Início, Explorar ativo, Comunidades, Perfil; secundária Salvos, Notificações; Configurações abaixo.\n\n**Painel 1 — Resultados da busca.** Migalha Explorar. H1 'Resultados para \"escola transferência\"'. Subtítulo com a cidade em destaque. Coluna principal com três grupos, cada um com label, contagem e link Ver todos:\n\n- **Guia da cidade** (2 resultados): 'Como matricular no meio do ano' e 'Escolas que aceitam transferência' — curadoria real do Guia, não inventada.\n- **Serviços** (3 resultados): 'Marisa Aguiar — Assessoria escolar', 'Colégio Pi — Secretaria' e 'Renata Prado — Tradutora de documentos'. Cada item mostra cidade ou bairro do prestador; nenhum traz avaliação, ranking ou selo.\n- **Eventos** (1 resultado): 'Roda de conversa — Volta às aulas em nova cidade' em 15/10 às 19:00, com pin de local.\n\nColuna lateral com três cartões: explicação de que o termo fica em `q=` e que trocar cidade refaz as três buscas, lista de buscas recentes como chips (clínica veterinária, mudança 308 Sul, aula de reforço, creche Jardim) e nota explícita de que Mercado/Moradia ainda não aparecem aqui.\n\n**Painel 2 — Nenhum resultado.** Mesmo shell, termo 'translado de mobília pesada'. Bloco central com ícone de lupa, H2 'Nenhum resultado para esse termo', parágrafo que repete a cidade e sugere encurtar o termo. Duas ações claras: Limpar busca (secundária) e Trocar de cidade (primária). Coluna lateral com variações de busca ('mudança apartamento', 'frete residencial', 'carro forte Brasília', 'transportadora pequenas cargas'), lembrete de que a cidade pode ser trocada em Localidade, e a mesma nota honesta sobre Mercado e Moradia.\n\n### Estados e limites\n\nNenhum dos dois painéis promete prazo, compartilhamento automático de contato nem ranking. As contagens vêm da resposta real das três consultas; se uma falhar, a página entra em erro recuperável com o termo preservado, nunca em lista vazia disfarçada. A busca do cabeçalho é o único ponto de entrada; ela não cria nova permissão nem abre conteúdo privado fora da cidade ativa. O 'nenhum resultado' ensina caminhos de saída sem pressionar o membro a continuar: limpar, refinar ou trocar de cidade.\n"
+}

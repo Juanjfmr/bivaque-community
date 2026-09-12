@@ -6,6 +6,8 @@ objective: >
   e solicitacao de exclusao, a familia e a lista de pessoas bloqueadas.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/76-web-familia.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 76-web-familia
   - docs/design/visual-guide-2026-09-06/52-web-configuracoes.png
   - docs/design/visual-guide-2026-09-06/56-web-confianca.png
   - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 56-web-confianca

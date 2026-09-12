@@ -107,6 +107,17 @@ Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.
 | [72-web-auth-link-invalido — Web: link inválido ou expirado](./72-web-auth-link-invalido.png) | web | Este link não vale mais; Não foi possível entrar |
 | [73-web-comunidade-pedidos — Web: decidir pedidos de entrada](./73-web-comunidade-pedidos.png) | web | Pedidos de entrada; Ver o pedido |
 | [74-web-guia-curadoria — Web: curar o Guia](./74-web-guia-curadoria.png) | web | Fila do Guia; Sugestões de correção |
+| [75-web-conversas — Web: central de conversas](./75-web-conversas.png) | web | Caixa de entrada; Conversa aberta |
+| [76-web-familia — Web: convidar a família](./76-web-familia.png) | web | Convidar um familiar; Convite pendente |
+| [77-web-ajuda — Web: pedir ajuda com canal real](./77-web-ajuda.png) | web | Acesso e uso; Regras e suporte |
+| [78-web-prestador-operacao — Web: catálogo e conta do prestador](./78-web-prestador-operacao.png) | web | Catálogo e portfólio; Conta e área de atendimento |
+| [79-web-indicar-prestador — Web: indicar e aceitar prestador](./79-web-indicar-prestador.png) | web | Indicar prestador; Aceitar o convite |
+| [80-web-recomendacoes — Web: indicações e referências](./80-web-recomendacoes.png) | web | Pedidos de indicação recebidos; Responder uma indicação |
+| [81-web-comunidade-admin — Web: administrar a comunidade](./81-web-comunidade-admin.png) | web | Administração da comunidade; Imagens da comunidade |
+| [82-web-localidade — Web: declarar mudança de cidade](./82-web-localidade.png) | web | Declarar mudança de cidade; Transferência declarada |
+| [83-web-landing — Web: primeiro contato público](./83-web-landing.png) | web | Primeiro contato; Como entrar e o que esperar |
+| [84-web-busca — Web: busca agrupada](./84-web-busca.png) | web | Resultados da busca; Nenhum resultado |
+| [85-web-arrivals — Web: operar chegadas e transferências](./85-web-arrivals.png) | web | Chegadas declaradas; Nenhuma transferência declarada |
 
 ## Inspeção e correções de implementação
 

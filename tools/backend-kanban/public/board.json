@@ -2200,10 +2200,10 @@
       "drift": {
         "documented": "Nota de 11/09: 'os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha resta por construir'",
         "observed": "Verdadeiro como cobertura de contratos e branches; origin/main nao recebeu a integracao (107 commits atras) e o mesmo registro admite que faltam integracao, build, prova de runtime e comparacao visual",
-    "action": "A campanha TEST-MASSA-JORNADAS produz a prova de runtime por lote na linha viva; promover a integracao para a main e decisao do dono"
-  },
-  "updatedAt": "2026-09-12",
-  "sourceRevision": "16a6590"
+        "action": "A campanha TEST-MASSA-JORNADAS produz a prova de runtime por lote na linha viva; promover a integracao para a main e decisao do dono"
+      },
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "16a6590"
     },
     {
       "id": "TEST-MASSA-JORNADAS",

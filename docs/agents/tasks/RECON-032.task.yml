@@ -12,6 +12,10 @@ objective: >
   suporte que existe de verdade.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/77-web-ajuda.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 77-web-ajuda
+  - docs/design/visual-guide-2026-09-06/75-web-conversas.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 75-web-conversas
   - docs/design/visual-guide-2026-09-06/54-web-retorno.png
   - docs/design/visual-guide-2026-09-06/56-web-confianca.png
   - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 56-web-confianca

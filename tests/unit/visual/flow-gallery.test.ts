@@ -20,7 +20,12 @@ type Step = {
   frame: { x: number; y: number; w: number; h: number }
 }
 type Etapa = { nome: string; passos: Step[] }
-type Item = { id: string; titulo: string; etapas: Etapa[]; desvios: Step[] }
+type Item = {
+  id: string
+  titulo: string
+  etapas: Etapa[]
+  desvios: Array<Step | { texto: string }>
+}
 
 const manifest = JSON.parse(readFileSync(join(guideDir, "manifest.json"), "utf8")) as {
   artifacts: Array<{ id: string; title: string }>
@@ -79,6 +84,7 @@ describe("flows.html — artefato gerado", () => {
     const problems: string[] = []
     for (const item of [...data.jornadas, ...data.pranchas]) {
       for (const step of [...passosDe(item), ...item.desvios]) {
+        if ("texto" in step) continue
         if (!inBounds(step)) problems.push(`${item.id} ${step.tela}: recorte fora dos limites`)
         if (!existsSync(join(guideDir, step.arquivo))) {
           problems.push(`${item.id} ${step.tela}: PNG ausente (${step.arquivo})`)

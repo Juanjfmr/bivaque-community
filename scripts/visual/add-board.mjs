@@ -11,8 +11,8 @@
 //   node scripts/visual/add-board.mjs <board-id>          integra e regenera os derivados
 //   node scripts/visual/add-board.mjs <board-id> --check   só confere se já está integrada
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { execFileSync } from "node:child_process"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -30,14 +30,15 @@ if (!id) {
 const specPath = join(SRC, `${id}.board.json`)
 if (!existsSync(specPath)) {
   console.error(`spec ausente: ${specPath.replace(repoRoot, "")}`)
-  console.error("o spec carrega o que é editorial: grupo, título, telas, reviewNotes, leitura, contrato e jornada.")
+  console.error(
+    "o spec carrega o que é editorial: grupo, título, telas, reviewNotes, leitura, contrato e jornada.",
+  )
   process.exit(2)
 }
 const spec = JSON.parse(readFileSync(specPath, "utf8"))
 
 const ler = (p) => readFileSync(p, "utf8")
 const gravar = (p, t) => writeFileSync(p, t, "utf8")
-const semBom = (t) => t.replace(/^\uFEFF/, "")
 
 const mexer = (relativo, transformar, descricao) => {
   const caminho = join(repoRoot, relativo)
@@ -75,7 +76,7 @@ resultados.push(
         .split("\n")
         .map((l) => `    ${l}`)
         .join("\n")
-      return t.replace(/\n  \],\n  "pending": \[\]/, `,\n${bloco}\n  ],\n  "pending": []`)
+      return t.replace(/\n {2}\],\n {2}"pending": \[\]/, `,\n${bloco}\n  ],\n  "pending": []`)
     },
     "manifesto",
   ),
@@ -95,13 +96,13 @@ resultados.push(
         )
         const bloco = termos.map((termo) => `    "${termo}"`).join(",\n")
         saida = saida.replace(
-          /"actionVocabulary": \[[\s\S]*?\n  \]/,
+          /"actionVocabulary": \[[\s\S]*?\n {2}\]/,
           `"actionVocabulary": [\n${bloco}\n  ]`,
         )
       }
       if (saida.includes(`"${id}": {`)) return saida
       const linha = `    "${id}": { "actions": ${JSON.stringify(spec.journey?.acoes ?? [])} }`
-      return saida.replace(/\n  \}\n\}\s*$/, `,\n${linha}\n  }\n}\n`)
+      return saida.replace(/\n {2}\}\n\}\s*$/, `,\n${linha}\n  }\n}\n`)
     },
     "taxonomia",
   ),
@@ -117,7 +118,7 @@ resultados.push(
         .split("\n")
         .map((l) => `    ${l}`)
         .join("\n")
-      return t.replace(/\n  \]\n\}\s*$/, `,\n${j}\n  ]\n}\n`)
+      return t.replace(/\n {2}\]\n\}\s*$/, `,\n${j}\n  ]\n}\n`)
     },
     "jornada",
   ),
@@ -178,7 +179,7 @@ resultados.push(
     (t) => {
       let saida = t
       if (!saida.includes(`"${id}"`)) {
-        saida = saida.replace(/(\n    "\d+-web-[a-z0-9-]+",)(\n  \])/, `$1\n    "${id}",$2`)
+        saida = saida.replace(/(\n {4}"\d+-web-[a-z0-9-]+",)(\n {2}\])/, `$1\n    "${id}",$2`)
       }
       const m = saida.match(/assert\.equal\(readWebBoards\(\)\.length, (\d+)\)/)
       const atual = Number(m[1])
@@ -231,7 +232,9 @@ for (const r of resultados) console.log(`  ${r}`)
 if (CHECK) {
   const pendentes = resultados.filter((r) => r.includes("PENDENTE"))
   if (pendentes.length) {
-    console.error(`\n${id} não está integrada em: ${pendentes.map((p) => p.split(":")[0]).join(", ")}`)
+    console.error(
+      `\n${id} não está integrada em: ${pendentes.map((p) => p.split(":")[0]).join(", ")}`,
+    )
     process.exit(1)
   }
   console.log(`\n${id} está integrada`)

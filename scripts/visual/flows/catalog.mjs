@@ -120,11 +120,14 @@ export function buildJourneys(manifest, taxonomy, frames, journeysDoc) {
       acoes: journey.acoes,
       etapas,
       passos: etapas.flatMap((etapa) => etapa.passos),
-      desvios: (journey.desvios ?? []).map((desvio) => ({
-        ...resolve(desvio.tela),
-        quando: desvio.quando,
-        apos: desvio.apos,
-      })),
+      // Desvio pode ser um estado sem tela própria (texto) ou um ramo com tela. O primeiro é
+      // editorialmente legítimo: "conversa bloqueada" ou "transferência expirada" são estados da
+      // jornada, não telas do board, e forçá-los a virar tela inventaria imagem que ninguém desenhou.
+      desvios: (journey.desvios ?? []).map((desvio) =>
+        typeof desvio === "string"
+          ? { texto: desvio }
+          : { ...resolve(desvio.tela), quando: desvio.quando, apos: desvio.apos },
+      ),
     }
   })
 }

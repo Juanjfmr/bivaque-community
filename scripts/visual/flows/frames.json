@@ -1652,6 +1652,270 @@
           "h": 1
         }
       ]
+    },
+    "75-web-conversas": {
+      "file": "75-web-conversas.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "76-web-familia": {
+      "file": "76-web-familia.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "77-web-ajuda": {
+      "file": "77-web-ajuda.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "78-web-prestador-operacao": {
+      "file": "78-web-prestador-operacao.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "79-web-indicar-prestador": {
+      "file": "79-web-indicar-prestador.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "80-web-recomendacoes": {
+      "file": "80-web-recomendacoes.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "81-web-comunidade-admin": {
+      "file": "81-web-comunidade-admin.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "82-web-localidade": {
+      "file": "82-web-localidade.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "83-web-landing": {
+      "file": "83-web-landing.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "84-web-busca": {
+      "file": "84-web-busca.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
+    },
+    "85-web-arrivals": {
+      "file": "85-web-arrivals.png",
+      "width": 2076,
+      "height": 757,
+      "expected": 2,
+      "detected": 2,
+      "ok": true,
+      "source": "detect",
+      "note": "split central (dois desktops iguais)",
+      "frames": [
+        {
+          "x": 0,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        },
+        {
+          "x": 0.50289,
+          "y": 0,
+          "w": 0.49711,
+          "h": 1
+        }
+      ]
     }
   }
 }

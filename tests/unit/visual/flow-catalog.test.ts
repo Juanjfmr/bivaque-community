@@ -26,7 +26,7 @@ type Step = {
   frame: { x: number; w: number }
 }
 type Etapa = { nome: string; passos: Step[] }
-type Desvio = Step & { quando: string; apos: string }
+type Desvio = (Step & { quando: string; apos: string }) | { texto: string }
 type Journey = {
   id: string
   titulo: string
@@ -98,6 +98,11 @@ describe("jornadas", () => {
     for (const journey of journeys) {
       const refs = new Set(journey.passos.map((p) => p.ref))
       for (const desvio of journey.desvios) {
+        // Desvio sem tela própria carrega só texto: não tem âncora nem condição.
+        if ("texto" in desvio) {
+          if (!String(desvio.texto).trim()) problems.push(`${journey.id}: desvio de texto vazio`)
+          continue
+        }
         if (!desvio.quando?.trim())
           problems.push(`${journey.id} ${desvio.ref}: desvio sem "quando"`)
         if (!refs.has(desvio.apos)) {
@@ -112,6 +117,7 @@ describe("jornadas", () => {
     const problems: string[] = []
     for (const journey of journeys) {
       for (const step of [...journey.passos, ...journey.desvios]) {
+        if ("texto" in step) continue
         const { x, w } = step.frame
         if (!step.tela?.trim()) problems.push(`${journey.id} ${step.ref}: sem tela`)
         if (x < 0 || w <= 0 || x + w > 1.0001) {
@@ -125,7 +131,9 @@ describe("jornadas", () => {
   it("deixa toda tela das pranchas dentro de alguma jornada", () => {
     const used = new Set<string>()
     for (const journey of journeys) {
-      for (const step of [...journey.passos, ...journey.desvios]) used.add(step.ref)
+      for (const step of [...journey.passos, ...journey.desvios]) {
+        if (!("texto" in step)) used.add(step.ref)
+      }
     }
     const orphan: string[] = []
     for (const artifact of manifest.artifacts) {

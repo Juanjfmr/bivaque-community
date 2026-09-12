@@ -6,6 +6,8 @@ objective: >
   com filtros de bairro e tipo, contagem real e ficha alcancavel.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/84-web-busca.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 84-web-busca
   - docs/design/visual-guide-2026-09-06/61-web-explorar-servicos.png
   - docs/agents/PRANCHAS-WEB-RESTANTES.md secao Elementos comuns e secao 61-web-explorar-servicos
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.2 R19 R20 e secao 4.6 R40
