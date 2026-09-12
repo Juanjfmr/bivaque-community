@@ -57,7 +57,7 @@ export function TrustPrivacyClient({
         aria-label="Gestão de confiança"
         selectedKey={activeTab}
         onSelectionChange={(key) => setActiveTab(key as TabKey)}
-        className="mt-4"
+        className="tabs--secondary mt-4"
       >
         <Tabs.ListContainer>
           <Tabs.List>

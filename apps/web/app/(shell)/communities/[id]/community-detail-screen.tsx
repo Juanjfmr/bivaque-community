@@ -160,14 +160,16 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <Tabs
-        className="[&_[data-slot=tab]]:min-h-11 [&_[data-slot=tab]]:px-3"
+        className="tabs--secondary [&_[data-slot=tab]]:min-h-11 [&_[data-slot=tab]]:px-3"
         aria-label="Seções da comunidade"
       >
-        <TabList aria-label="Seções da comunidade">
-          <Tab id="conversas">Conversas</Tab>
-          <Tab id="grupos">Grupos</Tab>
-          <Tab id="sobre">Sobre</Tab>
-        </TabList>
+        <Tabs.ListContainer>
+          <TabList aria-label="Seções da comunidade">
+            <Tab id="conversas">Conversas</Tab>
+            <Tab id="grupos">Grupos</Tab>
+            <Tab id="sobre">Sobre</Tab>
+          </TabList>
+        </Tabs.ListContainer>
 
         <TabPanel id="conversas" className="pt-4">
           {view.feed.length > 0 ? (

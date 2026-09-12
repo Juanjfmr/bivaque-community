@@ -168,12 +168,14 @@ export function CommunitiesScreen({
           setTab(String(key))
           setSubmitError("")
         }}
-        className="[&_[data-slot=tab]]:min-h-11 [&_[data-slot=tab]]:px-3"
+        className="tabs--secondary [&_[data-slot=tab]]:min-h-11 [&_[data-slot=tab]]:px-3"
       >
-        <TabList aria-label="Seções de comunidades">
-          <Tab id="minhas">Minhas comunidades</Tab>
-          <Tab id="descobrir">Descobrir</Tab>
-        </TabList>
+        <Tabs.ListContainer>
+          <TabList aria-label="Seções de comunidades">
+            <Tab id="minhas">Minhas comunidades</Tab>
+            <Tab id="descobrir">Descobrir</Tab>
+          </TabList>
+        </Tabs.ListContainer>
 
         {tab === "minhas" && (
           <TabPanel id="minhas" className="pt-4">
