@@ -33,6 +33,26 @@ export type NextEvent = {
   startsAt: string
   venue: string | null
   goingCount: number | null
+  // Quem confirmou presença (até 4), lido pela RLS do próprio membro — a
+  // mesma leitura do "Você vai" de /events/[id]. Sem perfil legível o nome não
+  // entra; a contagem continua verdadeira.
+  goingAttendees: Array<{ userId: string; name: string }>
+}
+
+// Copy de presença da prancha ("Leila, Andréa e mais 18 pessoas vão"). Pura e
+// exportada para ter teste próprio: quando não há nome legível ela degrada para
+// a contagem, nunca inventa quem vai.
+export function buildGoingLine(names: string[], goingCount: number): string | null {
+  if (goingCount <= 0) return null
+  const clean = names.map((name) => name.trim()).filter((name) => name.length > 0)
+  if (clean.length === 0) return goingCount === 1 ? "1 pessoa vai" : `${goingCount} pessoas vão`
+  if (goingCount === 1) return `${clean[0]} vai`
+  if (clean.length === 1) {
+    const others = goingCount - 1
+    return `${clean[0]} e mais ${others} ${others === 1 ? "pessoa vai" : "pessoas vão"}`
+  }
+  if (goingCount === 2) return `${clean[0]} e ${clean[1]} vão`
+  return `${clean[0]}, ${clean[1]} e mais ${goingCount - 2} pessoas vão`
 }
 
 type EventRow = {
@@ -149,13 +169,37 @@ export async function loadNextEvent(
       .eq("event_id", row.id)
       .eq("status", "going")
       .eq("occurrence_date", occurrenceDate)
+      .order("created_at", { ascending: true })
+
+    const going = (goingRows as { user_id: string }[] | null) ?? []
+
+    let goingAttendees: Array<{ userId: string; name: string }> = []
+    if (!countError && going.length > 0) {
+      const { data: profileRows } = await supabase
+        .from("profiles")
+        .select("user_id, display_name")
+        .in(
+          "user_id",
+          going.slice(0, 4).map((row) => row.user_id),
+        )
+      const byId = new Map(
+        ((profileRows as { user_id: string; display_name: string }[] | null) ?? [])
+          .filter((profile) => profile.display_name.trim().length > 0)
+          .map((profile) => [profile.user_id, profile.display_name]),
+      )
+      goingAttendees = going
+        .slice(0, 4)
+        .map((row) => ({ userId: row.user_id, name: byId.get(row.user_id) ?? "" }))
+        .filter((attendee) => attendee.name.length > 0)
+    }
 
     return {
       id: row.id,
       title: row.title,
       startsAt: row.starts_at,
       venue: row.venue ?? null,
-      goingCount: countError ? null : ((goingRows as { user_id: string }[] | null) ?? []).length,
+      goingCount: countError ? null : going.length,
+      goingAttendees: countError ? [] : goingAttendees,
     }
   } catch {
     // Sem evento confirmado — inclusive quando a consulta rejeitou — o card

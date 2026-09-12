@@ -1,7 +1,7 @@
 "use client"
 
 import { brandTokens } from "@bivaque/tokens"
-import { Button, Kbd, Tooltip } from "@heroui/react"
+import { Kbd, Tooltip } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
 import { Bell, Bookmark, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
 import Image from "next/image"
@@ -11,9 +11,9 @@ import { communityImageAltText } from "../../../lib/communities/community-media"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
 import { GlobalSearchField } from "../search/global-search-field"
+import { resolveActiveNav } from "../shell/active-nav"
 import { MemberAvatar } from "./avatar"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
-import { CreatePostModal } from "./feed-post"
 
 interface AppShellProperties {
   children: ReactNode
@@ -26,8 +26,8 @@ const EXPANDABLE_QUERY = "(min-width: 1024px)"
 
 export function AppShell({ children }: AppShellProperties) {
   const pathname = usePathname()
+  const activeNav = resolveActiveNav(pathname, NAV_ITEMS)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [createPostOpen, setCreatePostOpen] = useState(false)
   const { current } = useLocalityContext()
   const { communities, displayName, unreadCount } = useMemberContext()
   // Read synchronously on the first client render so a tablet never paints the
@@ -64,14 +64,6 @@ export function AppShell({ children }: AppShellProperties) {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
-  const handlePostCreated = useCallback(() => {
-    setCreatePostOpen(false)
-  }, [])
-
-  const handlePostClose = useCallback(() => {
-    setCreatePostOpen(false)
-  }, [])
-
   return (
     <div className="h-dvh flex flex-col overflow-hidden bg-[var(--semantic-canvas)]">
       {/* ---- Navbar ---- */}
@@ -81,7 +73,8 @@ export function AppShell({ children }: AppShellProperties) {
             44px sem espremer as ações; de sm para cima fica entre o pill da
             cidade e as ações, como na prancha 61. */}
         <div className="flex min-h-[var(--semantic-nav-height)] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2 sm:flex-nowrap sm:py-0">
-          {/* Left section */}
+          {/* Left section — só o toggle de largura da lateral. A cidade foi
+              para a direita, junto do sino, como a prancha desenha. */}
           <div className="flex items-center gap-3">
             {/* Sidebar toggle visible on desktop */}
             <button
@@ -96,8 +89,15 @@ export function AppShell({ children }: AppShellProperties) {
                 <ChevronsLeft size={20} aria-hidden="true" />
               )}
             </button>
+          </div>
 
-            {/* Locality context */}
+          {/* Search — order-last on mobile, centered on desktop */}
+          <div className="order-last w-full sm:order-none sm:mx-2 sm:w-auto sm:max-w-xl sm:flex-1">
+            <GlobalSearchField />
+          </div>
+
+          {/* Right section — cidade, notificações e perfil, na ordem da prancha */}
+          <div className="flex items-center gap-2">
             <div
               data-testid="shell-locality-pill"
               className="flex items-center gap-1.5 min-h-11 px-2 rounded-lg"
@@ -111,24 +111,12 @@ export function AppShell({ children }: AppShellProperties) {
                 {current.cityName}, {current.stateCode}
               </span>
             </div>
-          </div>
 
-          {/* Search — order-last on mobile, centered on desktop */}
-          <div className="order-last w-full sm:order-none sm:mx-2 sm:w-auto sm:max-w-xl sm:flex-1">
-            <GlobalSearchField />
-          </div>
-
-          {/* Right section */}
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="primary"
-              aria-label="Criar publicação"
-              onPress={() => setCreatePostOpen(true)}
-            >
-              Publicar
-            </Button>
-
+            {/* Pendência nomeada RECON-038 (#4): a prancha 01 não desenha este
+                ícone, mas ele é a única entrada de /recommendations visível em
+                375/768. Removê-lo órfã o fluxo e quebra três contratos E2E
+                (shell-navigation, shell-accessibility-denials, manaus-pilot).
+                Decidir onde Indicações vive antes de tirá-lo. */}
             <a
               href="/recommendations"
               aria-label="Indicações"
@@ -175,8 +163,8 @@ export function AppShell({ children }: AppShellProperties) {
             className={`flex items-center h-[var(--semantic-nav-height)] shrink-0 border-b border-border ${isRail ? "justify-center" : "px-3"}`}
           >
             {!isRail && (
-              <span className="text-base font-semibold tracking-tight truncate flex-1">
-                {brandTokens.productName}
+              <span className="text-base font-bold uppercase tracking-[0.04em] text-[var(--semantic-action-primary)] truncate flex-1">
+                {brandTokens.productName.toUpperCase()}
               </span>
             )}
             {/* Only offered where expanding is possible; below lg the rail is fixed. */}
@@ -197,26 +185,12 @@ export function AppShell({ children }: AppShellProperties) {
           {/* Nav items */}
           <nav aria-label="Navegação principal" className="flex flex-col gap-1 p-3">
             {NAV_ITEMS.map((item) => {
-              // When a route is not one of the four containers (e.g. /messages,
-              // /notifications, and the historical /localidade, /community,
-              // /groups still reachable in W00), fall back so the sidebar never
-              // shows no active item: /messages and /notifications resolve to
-              // "perfil", everything else to "inicio". Mirrors bottom-nav's
-              // selectedKey fallback so the two navs stay in sync.
-              const inPrimaryNav = NAV_ITEMS.some(
-                (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
-              )
-              const secondaryPersonal =
-                pathname.startsWith("/messages") ||
-                pathname.startsWith("/notifications") ||
-                pathname.startsWith("/salvos") ||
-                pathname.startsWith("/denuncias") ||
-                pathname.startsWith("/ajuda")
-              const fallbackId = secondaryPersonal ? "perfil" : "inicio"
-              const active =
-                pathname === item.href ||
-                pathname.startsWith(`${item.href}/`) ||
-                (!inPrimaryNav && item.id === fallbackId)
+              // O item ativo vem da ROTA (resolveActiveNav), nunca de um
+              // fallback por vizinhança. Em /salvos a lateral acende "Salvos",
+              // não "Perfil" — o defeito de navegação que o RECON-038 corrige.
+              // O fallback restante (mensagens/notificações → Perfil) preserva
+              // o contrato DS-011.
+              const active = activeNav.kind === "primary" && activeNav.id === item.id
 
               const anchor = (
                 <a
@@ -266,7 +240,13 @@ export function AppShell({ children }: AppShellProperties) {
             {/* O item entra junto com a tela, como o card SHELL-SALVOS-AUSENTE
                 e o gate G1 exigiam: /salvos existe (RECON-032) e lista o que
                 foi guardado de verdade — sem placeholder, sem promessa. */}
-            <SidebarSecondaryItem href="/salvos" label="Salvos" Icon={Bookmark} isRail={isRail} />
+            <SidebarSecondaryItem
+              href="/salvos"
+              label="Salvos"
+              Icon={Bookmark}
+              isRail={isRail}
+              active={activeNav.kind === "secondary" && activeNav.href === "/salvos"}
+            />
             <SidebarSecondaryItem
               href="/notifications"
               label="Notificações"
@@ -352,15 +332,6 @@ export function AppShell({ children }: AppShellProperties) {
       {/* Bottom nav (mobile) */}
       <BottomNav />
 
-      {/* CreatePostModal */}
-      {createPostOpen && (
-        <CreatePostModal
-          localityId={current.id}
-          onCreated={handlePostCreated}
-          onClose={handlePostClose}
-        />
-      )}
-
       {/* Keyboard shortcut hint */}
       <div className="hidden lg:flex fixed bottom-4 right-4 z-30">
         <span className="flex items-center gap-1.5 text-xs text-muted bg-[var(--semantic-surface)] border border-border rounded-md px-2 py-1 shadow-[var(--semantic-elevation-raised)]">
@@ -384,17 +355,24 @@ function SidebarSecondaryItem({
   Icon,
   badge,
   isRail,
+  active = false,
 }: {
   href: string
   label: string
   Icon: LucideIcon
   badge?: number
   isRail: boolean
+  active?: boolean
 }) {
   const anchor = (
     <a
       href={href}
-      className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground ${isRail ? "justify-center px-0" : ""}`}
+      aria-current={active ? "page" : undefined}
+      className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] ${
+        active
+          ? "bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]"
+          : "text-muted hover:bg-[var(--semantic-selected)] hover:text-foreground"
+      } ${isRail ? "justify-center px-0" : ""}`}
     >
       <Icon size={20} className="shrink-0" aria-hidden="true" />
       <span className={isRail ? "sr-only" : undefined}>{label}</span>

@@ -1,14 +1,15 @@
 "use client"
 
-import { BookOpen, ChevronRight, Users } from "lucide-react"
+import { BookOpen, ChevronRight, Users, Wrench } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { MemberAvatar } from "../../components/bivaque/avatar"
 import { Card } from "../../components/bivaque/card"
 import { eventDateChip, formatEventTimePtBr } from "./formatters"
-import { createRequestGuard, loadNextEvent, type NextEvent } from "./home-loaders"
+import { buildGoingLine, createRequestGuard, loadNextEvent, type NextEvent } from "./home-loaders"
 
 // RECON-002 (prancha 01): rail direito em telas largas.
 //
@@ -23,8 +24,8 @@ import { createRequestGuard, loadNextEvent, type NextEvent } from "./home-loader
 // contagem, então erro na contagem omite a linha.
 //
 // Os atalhos apontam apenas para rotas com conteúdo real hoje: Guia da cidade
-// (/guide) e Pedir ajuda (/recommendations). /explorar é estrutura inicial e
-// não recebe atalho daqui.
+// (/guide), Pedir ajuda (/recommendations) e Serviços (/explorar/servicos),
+// a terceira entrada que a prancha 01 desenha e o runtime não mostrava.
 
 type ShortcutRow = {
   href: string
@@ -45,6 +46,12 @@ const SHORTCUTS: ShortcutRow[] = [
     icon: Users,
     title: "Pedir ajuda",
     description: "Tire dúvidas com a comunidade",
+  },
+  {
+    href: "/explorar/servicos",
+    icon: Wrench,
+    title: "Serviços",
+    description: "Encontre quem faz o serviço perto de você",
   },
 ]
 
@@ -98,12 +105,11 @@ export function InicioRightRail() {
 function NextMeetingCard({ event }: { event: NextEvent }) {
   const chip = eventDateChip(event.startsAt)
   const time = formatEventTimePtBr(event.startsAt)
-  const peopleLine =
-    event.goingCount === null || event.goingCount === 0
-      ? null
-      : event.goingCount === 1
-        ? "1 pessoa vai"
-        : `${event.goingCount} pessoas vão`
+  const goingAttendees = event.goingAttendees.slice(0, 4)
+  const peopleLine = buildGoingLine(
+    goingAttendees.map((attendee) => attendee.name),
+    event.goingCount ?? 0,
+  )
 
   return (
     <Card className="p-4">
@@ -118,9 +124,21 @@ function NextMeetingCard({ event }: { event: NextEvent }) {
           <p className="mt-0.5 text-xs text-muted">
             {event.venue ? `${time} · ${event.venue}` : time}
           </p>
-          {peopleLine && <p className="mt-0.5 text-xs text-muted">{peopleLine}</p>}
         </div>
       </div>
+      {goingAttendees.length > 0 && (
+        <div className="mt-3 flex -space-x-2" aria-hidden="true">
+          {goingAttendees.map((attendee) => (
+            <MemberAvatar
+              key={attendee.userId}
+              name={attendee.name}
+              size="sm"
+              className="ring-2 ring-[var(--semantic-surface)]"
+            />
+          ))}
+        </div>
+      )}
+      {peopleLine && <p className="mt-2 text-xs text-muted">{peopleLine}</p>}
       <Link
         href={`/events/${event.id}` as Route}
         className="mt-3 flex min-h-11 items-center justify-center rounded-lg border border-border text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"

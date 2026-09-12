@@ -98,7 +98,7 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
-    const trigger = page.getByRole("button", { name: "Criar publicação" })
+    const trigger = page.getByRole("button", { name: "No que você está pensando?" })
     await expect(trigger).toBeVisible({ timeout: 15000 })
     await trigger.click()
 
@@ -116,7 +116,7 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
-    const trigger = page.getByRole("button", { name: "Criar publicação" })
+    const trigger = page.getByRole("button", { name: "No que você está pensando?" })
     await trigger.click()
 
     const dialog = page.getByRole("dialog")

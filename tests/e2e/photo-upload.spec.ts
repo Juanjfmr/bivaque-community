@@ -11,7 +11,7 @@ test.describe("photo upload", () => {
     await seedSession(page.context())
     // When they open the community page and open the shell composer
     await page.goto("/community")
-    await page.getByRole("button", { name: "Criar publicação" }).click()
+    await page.getByRole("button", { name: "No que você está pensando?" }).click()
 
     // And select Photo type
     const dialog = page.getByRole("dialog", { name: "Criar publicação" })
