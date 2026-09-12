@@ -27,10 +27,11 @@ test("toda prancha web tem pelo menos um contrato que a cita", () => {
   )
 })
 
-test("o manifesto continua descrevendo as 31 pranchas web", () => {
+test("o manifesto continua descrevendo as 32 pranchas web", () => {
   // Se o número mudar, alguém acrescentou ou removeu referência visual: o inventário e a fila de
-  // execução precisam mudar junto, e não em silêncio.
-  assert.equal(readWebBoards().length, 31)
+  // execução precisam mudar junto, e não em silêncio. A 32ª entrou em 12/09/2026
+  // (70-web-evento-organizar), autoridade visual que faltava ao RECON-029.
+  assert.equal(readWebBoards().length, 32)
 })
 
 test("a leitura das pranchas restantes existe e cobre as que ainda serão construídas", () => {
@@ -57,6 +58,7 @@ test("a leitura das pranchas restantes existe e cobre as que ainda serão constr
     "65-web-imoveis-alertas",
     "67-web-evento-informacoes",
     "69-web-identidade-recuperacao",
+    "70-web-evento-organizar",
   ]
 
   for (const board of mustBeRead) {

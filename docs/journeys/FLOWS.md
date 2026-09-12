@@ -2,7 +2,7 @@
 
 > **Gerado** por `scripts/visual/flows-verify.mjs` a partir do guia visual. Não editar à mão.
 > Jornada é uma sequência de telas com início, meio e fim, no molde do Mobbin; a tela vem da prancha.
-> 45 jornadas e 59 pranchas. É mapa de **referência**, não prova de implementação.
+> 46 jornadas e 60 pranchas. É mapa de **referência**, não prova de implementação.
 > Galeria: [flows.html](../design/visual-guide-2026-09-06/flows.html).
 
 ## Jornadas
@@ -48,7 +48,7 @@
 | [Quando algo falha: carregar, vazio e erro com rascunho](../design/visual-guide-2026-09-06/flows.html#mobile-quando-algo-falha) | Mobile | Carregando → Vazio → Erro | 3 | Tela carregando → Erro sem perder o que foi escrito |
 | [Quando algo falha: sem acesso e retomada (web)](../design/visual-guide-2026-09-06/flows.html#web-quando-algo-falha) | Desktop web | Sem acesso → Retomada | 2 | Acesso indisponivel → Falha de conexao e retomada |
 
-### Eventos (5)
+### Eventos (6)
 
 | Jornada | Plataforma | Etapas | Telas | Começa → termina |
 |---|---|---|---|---|
@@ -56,6 +56,7 @@
 | [Confirmar presenca num evento](../design/visual-guide-2026-09-06/flows.html#mobile-confirmar-presenca-num-evento) | Mobile | Descoberta → Detalhe → Confirmado | 3 | Lista de eventos → Presenca confirmada |
 | [Pedir informacoes ao organizador do evento](../design/visual-guide-2026-09-06/flows.html#mobile-pedir-informacoes-ao-organizador) | Mobile | Pergunta → Espera → Falha | 3 | Detalhe do evento, sem exigir presenca → Pergunta enviada e resposta acompanhada |
 | [Confirmar presenca num evento (web)](../design/visual-guide-2026-09-06/flows.html#web-confirmar-presenca-num-evento) | Desktop web | Lista → Detalhe | 2 | Lista e filtros → Presenca gerida no detalhe |
+| [Organizar um evento na cidade](../design/visual-guide-2026-09-06/flows.html#web-organizar-um-evento) | Desktop web | Criar → Publicar → No ar | 3 | Formulario de novo evento em branco → Evento publicado e visivel na lista da cidade |
 | [Pedir informacoes e ler a resposta (web)](../design/visual-guide-2026-09-06/flows.html#web-pedir-informacoes-ao-organizador) | Desktop web | Pergunta → Resposta | 2 | Pergunta reenviada → Resposta lida e jornada retomada |
 
 ### Guia (4)
@@ -183,7 +184,7 @@
 | [Estados compartilhados](../design/visual-guide-2026-09-06/flows.html#59-mobile-estados) | Mobile | 3 |
 | [Estados compartilhados web](../design/visual-guide-2026-09-06/flows.html#60-web-estados) | Desktop web | 2 |
 
-### Eventos (5)
+### Eventos (6)
 
 | Prancha | Plataforma | Telas |
 |---|---|---|
@@ -192,6 +193,7 @@
 | [Eventos web](../design/visual-guide-2026-09-06/flows.html#48-web-eventos) | Desktop web | 2 |
 | [Perguntas ao organizador](../design/visual-guide-2026-09-06/flows.html#66-mobile-evento-informacoes) | Mobile | 3 |
 | [Informações do evento na web](../design/visual-guide-2026-09-06/flows.html#67-web-evento-informacoes) | Desktop web | 2 |
+| [Web: organizar um evento](../design/visual-guide-2026-09-06/flows.html#70-web-evento-organizar) | Desktop web | 2 |
 
 ### Guia (4)
 

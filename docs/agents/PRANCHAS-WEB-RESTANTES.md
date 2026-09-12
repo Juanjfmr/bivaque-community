@@ -959,3 +959,39 @@ anúncios, pedidos e conversa contextual, artigo do Guia, canais de notificaçã
 a resposta que resolveu. Estão listados em [`RECON-WEB-EXECUCAO.md`](RECON-WEB-EXECUCAO.md), e
 nenhum lote espera decisão técnica. Aprovação não é revisão: o diff que implementa cada decisão
 continua exigindo revisor independente.
+
+## 70-web-evento-organizar — `/events/novo` e `/events/[id]/editar`
+
+**Etapa:** W04. **Painéis:** novo evento; evento publicado na visão de quem organiza.
+
+Prancha criada em 12/09/2026, depois do handoff. É a autoridade visual que faltava ao RECON-029:
+o contrato já descrevia "as rotas de criar e editar" sem nenhuma imagem de origem. Fonte versionada
+em [`src/70-web-evento-organizar.html`](../design/visual-guide-2026-09-06/src/70-web-evento-organizar.html)
+— render determinístico de HTML sobre `packages/tokens/src/tokens.css`, não geração por image_gen.
+
+### Composição
+
+Shell idêntico à prancha 48: barra superior com busca "Buscar no Bivaque", seletor de cidade,
+sino com marcador e avatar; lateral branca com wordmark, navegação Início/Explorar/Comunidades/
+Perfil, separador, Salvos e Notificações, e o cartão do usuário ancorado no rodapé com
+Configurações.
+
+**Novo evento** — voltar "Eventos"; H1 "Novo evento"; subtítulo explicando que o evento é salvo
+antes de ser divulgado. Formulário em coluna: Título do evento; Descrição; Início; Local;
+**Capa do evento** (área tracejada com "Escolher imagem de capa"); **Quem pode ver**
+("Toda a cidade · Brasília, DF"); nota de que quem organiza edita ou cancela; `Publicar evento`
+primário e `Cancelar` secundário. Coluna direita com o cartão "Quem pode participar" e, abaixo, a
+faixa "O que acontece depois de publicar" em três passos numerados.
+
+**Evento publicado** — mesma shell; capa ilustrativa; H1 "Café entre vizinhos"; linha de metadados
+(data, local, confirmados); faixa verde com "Você organiza este evento" e as ações
+`Editar evento` e `Cancelar evento`; "Sobre o encontro"; "Perguntas" com duas respondidas e uma
+aguardando; coluna direita com "Quem vai" (quatro nomes e "mais 8 confirmados"), "Organizador" e
+"Alcance".
+
+### Estados e limites
+
+A prancha desenha só o caminho principal: **não há confirmação de cancelamento, erro de publicação
+nem rascunho**. Esses estados seguem sem referência visual e são o próximo lote. Capa, pessoas,
+perguntas e contagem são ilustrativas. Os limites de upload da capa não estão fixados na tela
+porque dependem do contrato técnico. A lista de participantes mostra apenas quem autoriza aparecer.

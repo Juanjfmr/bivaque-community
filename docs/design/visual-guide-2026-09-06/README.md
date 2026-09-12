@@ -96,6 +96,7 @@ Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.
 | [67-web-evento-informacoes — Informações do evento na web](./67-web-evento-informacoes.png) | web | Reenviar pergunta; Ler resposta e continuar |
 | [68-mobile-identidade-recuperacao — Identidade: envio e recuperação](./68-mobile-identidade-recuperacao.png) | mobile | Enviar identidade; Acompanhar análise; Substituir arquivo ilegível |
 | [69-web-identidade-recuperacao — Identidade: envio e recuperação web](./69-web-identidade-recuperacao.png) | web | Enviar identidade; Substituir arquivo ilegível |
+| [70-web-evento-organizar — Web: organizar um evento](./70-web-evento-organizar.png) | web | Novo evento; Evento publicado |
 
 ## Inspeção e correções de implementação
 

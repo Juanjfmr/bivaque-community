@@ -1125,6 +1125,33 @@
         }
       ],
       "desvios": []
+    },
+    {
+      "id": "web-organizar-um-evento",
+      "titulo": "Organizar um evento na cidade",
+      "plataforma": "web",
+      "grupo": "events",
+      "persona": "Membro verificado que quer reunir a vizinhanca",
+      "comeca": "Formulario de novo evento em branco",
+      "termina": "Evento publicado e visivel na lista da cidade",
+      "acoes": ["Criar evento", "Cancelar"],
+      "etapas": [
+        {
+          "nome": "Criar",
+          "passos": [{ "tela": "70-web-evento-organizar#0", "acao": "revisa e publica" }]
+        },
+        {
+          "nome": "Publicar",
+          "passos": [
+            { "tela": "70-web-evento-organizar#1", "acao": "o evento entra na lista da cidade" }
+          ]
+        },
+        {
+          "nome": "No ar",
+          "passos": [{ "tela": "48-web-eventos#0" }]
+        }
+      ],
+      "desvios": []
     }
   ]
 }

@@ -2,7 +2,7 @@
   "title": "Bivaque — Guia visual de construção",
   "date": "2026-09-06",
   "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
-  "generationTool": "image_gen integrado",
+  "generationTool": "image_gen integrado; a prancha 70 é render determinístico de HTML sobre os tokens reais",
   "scope": "Conceitos mobile e web autorizados nesta conversa. Referências de aparência e fluxo; não comprovam disponibilidade no aplicativo.",
   "artifacts": [
     {
@@ -1282,6 +1282,27 @@
           "prompt": "Create ONE BIVAQUE board TWO complete desktop app viewports side by side, mature white/forest-green #164734 app, crisp Inter readable Portuguese, no decorative logo symbols only BIVAQUE wordmark. Pre-admission shell with left progress rail E-mail Concluído, Seu acesso Em andamento, Cidade Próximo passo. No member navigation or feed. LEFT heading Enviar identidade, text Não conseguimos confirmar pelo CPF. Envie sua identidade para continuar. Explain reconhecimento por IA pode levar um pouco mais. Two upload cards Frente do documento and Verso do documento, neutral document icons, Escolher arquivo buttons. Helper Imagens legíveis e sem reflexos. Disabled Enviar para análise with dark gray legible text, Voltar à verificação. RIGHT same shell heading Precisamos de outra imagem, amber alert Não foi possível ler a frente do documento. Front card Imagem ilegível / Trocar imagem; back card Arquivo recebido. Disabled Reenviar para análise with dark gray text until replacement. Link Voltar. Side note Após o reenvio, acompanhe a análise por aqui. No raw identity details, no CPF numbers, no selfie biometric requirement, no response deadline, no retention promises, no public badge. Roomy composed desktop columns, no device monitors."
         }
       ]
+    },
+    {
+      "id": "70-web-evento-organizar",
+      "kind": "web",
+      "group": "events",
+      "title": "Web: organizar um evento",
+      "screens": [
+        "Novo evento",
+        "Evento publicado"
+      ],
+      "reviewNotes": [
+        "Capa, pessoas, perguntas e contagem de confirmados são ilustrativos; consolidar fixtures únicas ao implementar. O evento é persistido antes de ser divulgado e quem organiza edita ou cancela depois.",
+        "Os limites de upload da capa dependem do contrato técnico; não fixar formato ou tamanho na tela.",
+        "A lista de participantes segue autorização: mostra apenas quem permite aparecer."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/70-web-evento-organizar.html",
+      "prompt": "Prancha criada em 12/09/2026 por render de HTML sobre os tokens reais (packages/tokens/src/tokens.css), na geometria da convenção web do guia: 2076x757, dois desktops lógicos de 1440x1056 reduzidos por scale 0.716667. Painel 1 Novo evento com Título, Descrição, Início, Local, Capa do evento e Quem pode ver, derivados de apps/web/app/(shell)/events/event-form.tsx. Painel 2 evento publicado na visão de quem organiza, com Editar evento e Cancelar evento, participantes e perguntas. Shell conforme a prancha 48-web-eventos. Diferente das demais pranchas, o PNG é render determinístico de HTML, não geração por image_gen.",
+      "file": "70-web-evento-organizar.png",
+      "path": "docs/design/visual-guide-2026-09-06/70-web-evento-organizar.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
     }
   ],
   "pending": [],

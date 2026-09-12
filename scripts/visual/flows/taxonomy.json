@@ -32,6 +32,7 @@
     "Configurar",
     "Criar alerta",
     "Criar conta",
+    "Criar evento",
     "Decidir admissão",
     "Denunciar",
     "Editar",
@@ -122,6 +123,7 @@
     "66-mobile-evento-informacoes": { "actions": ["Pedir informações"] },
     "67-web-evento-informacoes": { "actions": ["Pedir informações", "Responder"] },
     "68-mobile-identidade-recuperacao": { "actions": ["Enviar identidade"] },
-    "69-web-identidade-recuperacao": { "actions": ["Enviar identidade"] }
+    "69-web-identidade-recuperacao": { "actions": ["Enviar identidade"] },
+    "70-web-evento-organizar": { "actions": ["Criar evento", "Cancelar"] }
   }
 }
