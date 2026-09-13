@@ -77,12 +77,29 @@ for (const [prancha, rotas] of pranchaRota) {
   for (const r of rotas) if (!pranchaDaRota.has(r)) pranchaDaRota.set(r, prancha)
 }
 
+// A captura não guarda o padrão, guarda a rota concreta (`/communities/71000.../admin/media`
+// depois de substituir o `[id]` máscara e adicionar query real). Sem casar concreto com o padrão,
+// toda prancha de rota dinâmica parecia "sem captura" quando na verdade estava no disco.
+function achadosPara(padrao, mapa) {
+  const out = []
+  const pSegs = padrao.split("/").filter(Boolean)
+  for (const [concreta, dado] of mapa) {
+    const limpa = concreta.split("?")[0]
+    const segs = limpa.split("/").filter(Boolean)
+    if (pSegs.length !== segs.length) continue
+    if (pSegs.every((s, i) => s.startsWith("[") || s === segs[i])) {
+      out.push({ rota: concreta, dado })
+    }
+  }
+  return out
+}
+
 // ---------------------------------------------------------------- pareamento
 
 const pares = [] // prancha com captura
 const pranchaSemCaptura = []
 for (const [prancha, rotas] of [...pranchaRota.entries()].sort()) {
-  const capturas = rotas.map((r) => ({ rota: r, dado: ultimaPorRota.get(r) })).filter((c) => c.dado)
+  const capturas = rotas.flatMap((r) => achadosPara(r, ultimaPorRota)).filter((c) => c.dado)
   if (capturas.length) pares.push({ prancha, rotas, capturas })
   else pranchaSemCaptura.push(prancha)
 }

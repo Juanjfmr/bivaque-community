@@ -113,6 +113,8 @@ export const HEADINGS = {
     "^(Sua pergunta|Perguntas sobre este evento)$",
   "/events/70000000-0000-4000-8000-000000000005/editar": "^Editar evento$",
   "/communities/71000000-0000-4000-8000-000000000001/admin/media": "^Imagens da comunidade$",
+  "/communities/71000000-0000-4000-8000-000000000001/admin/pending": "^Pedidos de entrada$",
+  "/auth/callback-error": "^Não foi possível entrar$",
   // O h1 é "Seu guia de {cidade}": prefixo fixo, a cidade é dado.
   "/guide?q=escola": "^Seu guia de ",
   "/guide/a0000000-0000-4000-8000-000000000001/correcao": "^Sugerir atualização$",
@@ -236,6 +238,16 @@ export const ROUTES = [
     path: "/communities/71000000-0000-4000-8000-000000000001/admin/media",
     name: "community-admin-media",
     auth: true,
+  },
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000001/admin/pending",
+    name: "community-admin-pending",
+    auth: true,
+  },
+  {
+    path: "/auth/callback-error",
+    name: "auth-callback-error",
+    auth: false,
   },
   { path: "/guide", name: "arrival-guide", auth: true },
   // RECON-021: prova que o Ver-todos do grupo Guia chega com o filtro `q`

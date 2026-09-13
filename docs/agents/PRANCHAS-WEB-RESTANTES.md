@@ -1217,7 +1217,7 @@ O marcador `Ajudou a resolver` só é aplicado pela autora do pedido; o botão a
 
 A página é explicitamente de utilidade comunitária, não de marketplace: o lead da tela traz a frase 'Este é um espaço de utilidade comunitária, não um marketplace'. Sem estrelas, selos, ranking, pagamento ou SLA. O escopo do pedido é cidade ou grupo; quando a categoria é Saúde & bem-estar, o alcance locality é escondido e a autora precisa escolher um grupo. Manaus é fixture; categorias, nomes e datas são fictícios.
 
-## 81-web-comunidade-admin — `/communities/[id]/admin`, `/admin/moderators`, `/admin/providers`, `/admin/media`
+## 81-web-comunidade-admin — `/communities/[id]/admin`, `/communities/[id]/admin/moderators`, `/communities/[id]/admin/providers`, `/communities/[id]/admin/media`
 
 **Etapa:** W03. **Painéis:** administração (moderadores + prestadores); imagens (faixa + miniatura).
 
