@@ -1039,6 +1039,7 @@ insert into public.service_requests (
   when_text,
   status,
   conversation_id,
+  category,
   created_at,
   updated_at
 )
@@ -1051,6 +1052,7 @@ values (
   'Nesta semana',
   'in_conversation',
   '41000000-0000-4000-8000-000000000023',
+  'assistencia_tecnica',
   now() - interval '5 days',
   now() - interval '5 days'
 )

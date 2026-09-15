@@ -139,6 +139,21 @@ export async function loadCommunityFeed(
   }
 }
 
+// A aba "Acompanhando" (prancha 01) lê o mesmo canal dos outros feeds:
+// o RPC feed_following revalida a matriz de visibilidade no servidor — seguir
+// um post nunca concede leitura que a pessoa já não teria.
+export async function loadFollowedFeed(supabase: InicioClient): Promise<FeedOutcome> {
+  try {
+    const { data, error } = await supabase.rpc("feed_following")
+    if (error) {
+      return { status: "error", message: FEED_ERROR_MESSAGE }
+    }
+    return { status: "ok", posts: (data as unknown[] | null) ?? [] }
+  } catch {
+    return { status: "error", message: FEED_ERROR_MESSAGE }
+  }
+}
+
 export async function loadNextEvent(
   supabase: InicioClient,
   localityId: string,

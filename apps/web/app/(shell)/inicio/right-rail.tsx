@@ -1,15 +1,12 @@
 "use client"
 
-import { BookOpen, ChevronRight, Users, Wrench } from "lucide-react"
+import { BookOpen, ChevronRight, Luggage, Users, Wrench } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
-import { useLocalityContext } from "../../../lib/locality-context"
-import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "../../components/bivaque/avatar"
 import { Card } from "../../components/bivaque/card"
 import { eventDateChip, formatEventTimePtBr } from "./formatters"
-import { buildGoingLine, createRequestGuard, loadNextEvent, type NextEvent } from "./home-loaders"
+import { buildGoingLine, type NextEvent } from "./home-loaders"
 
 // RECON-002 (prancha 01): rail direito em telas largas.
 //
@@ -36,6 +33,12 @@ type ShortcutRow = {
 
 const SHORTCUTS: ShortcutRow[] = [
   {
+    href: "/explorar/servicos",
+    icon: Wrench,
+    title: "Serviços",
+    description: "Encontre quem faz o serviço perto de você",
+  },
+  {
     href: "/guide",
     icon: BookOpen,
     title: "Guia da cidade",
@@ -47,28 +50,9 @@ const SHORTCUTS: ShortcutRow[] = [
     title: "Pedir ajuda",
     description: "Tire dúvidas com a comunidade",
   },
-  {
-    href: "/explorar/servicos",
-    icon: Wrench,
-    title: "Serviços",
-    description: "Encontre quem faz o serviço perto de você",
-  },
 ]
 
-export function InicioRightRail() {
-  const [event, setEvent] = useState<NextEvent | null>(null)
-  const { current } = useLocalityContext()
-  const supabase = createBrowserClient()
-  const guardRef = useRef(createRequestGuard())
-
-  useEffect(() => {
-    const isCurrent = guardRef.current.begin()
-    setEvent(null)
-    void loadNextEvent(supabase, current.id).then((next) => {
-      if (isCurrent()) setEvent(next)
-    })
-  }, [supabase, current.id])
-
+export function InicioRightRail({ event }: { event: NextEvent | null }) {
   return (
     <aside className="hidden w-72 shrink-0 lg:block" aria-label="Atalhos da home">
       <div className="sticky top-24 space-y-4">
@@ -96,6 +80,30 @@ export function InicioRightRail() {
               </li>
             ))}
           </ul>
+        </Card>
+
+        {/* Prancha 01, módulo inferior do rail: "De mudança?" leva ao fluxo de
+            transferência de localidade (/localidade, RECON-082) — a rota real
+            do declare_locality_transfer, nunca uma promessa de destino. */}
+        <Card className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--semantic-selected)] text-accent">
+              <Luggage size={20} aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-sm font-semibold">De mudança?</h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted">
+                Prepare sua chegada em outra cidade.
+              </p>
+              <Link
+                href="/localidade"
+                className="mt-2 inline-flex min-h-11 items-center gap-1 rounded-lg text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+              >
+                Explorar destino
+                <ChevronRight size={16} aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
         </Card>
       </div>
     </aside>
