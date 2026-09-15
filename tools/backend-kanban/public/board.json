@@ -2084,11 +2084,13 @@
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
         "npx pnpm@11.18.0 gate → verde",
-        "2026-09-11: os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha resta por construir. Falta integracao (quatro branches orfas em conflito), build, prova de runtime por lote e comparacao visual. Os sete ADRs de 09/09 estao todos approved — o item de checklist que os lista como pendentes era drift."
+        "2026-09-11: os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha resta por construir. Falta integracao (quatro branches orfas em conflito), build, prova de runtime por lote e comparacao visual. Os sete ADRs de 09/09 estao todos approved — o item de checklist que os lista como pendentes era drift.",
+        "2026-09-15: por decisao do dono, a promocao deixa de ser monolitica e passa a ser por PRs RECON ordenadas. docs/agents/RECON-LOTES-20260915.md registra a ordem, as dependencias e as duas excecoes de schema. O rebase experimental de test/teste-em-massa sobre origin/main foi abortado sem persistir resolucao: conflitos repetidos em board.json/BOARD.md confirmam que a linha acumulada nao e uma PR revisavel."
       ],
       "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
+        "docs/agents/RECON-LOTES-20260915.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
         "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
         "docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
@@ -2100,8 +2102,8 @@
       ],
       "dependencies": ["BLOCK-LEGAL-AI"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "2f87f12"
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "32ecfe7"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
