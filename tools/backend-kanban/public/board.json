@@ -2602,8 +2602,8 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
-      "description": "Implementar os itens [componente] ainda abertos em .visual/compare/julgamento.md, exceto os adjudicados (que ficam registrados sem código).",
+      "status": "blocked",
+      "description": "Os itens [componente], [backend] e [dado] da auditoria visual web foram fechados em nove lotes (M a V) entre 15/09 e 16/09: contratos de captura (0 INVALID no app inteiro), painel do operador, régua de movimento, formulários, convite de prestador, Salvos e Sugerir referência do guia, Reenviar do convite familiar e os estados vazios. Resta UM item, e ele não é escolha de agente: o ramo de acesso negado em /communities/[id] (prancha 60) depende de decidir o que é uma comunidade não apresentável.",
       "checklist": [
         "01: faixa de atividade, aba Acompanhando, card De mudança?, avatares de presença, card de evento no feed ✅ 15/09 (aba Acompanhando: post_follows + feed_following + botão no cartão; De mudança? → /localidade; card de evento no feed; faixa/avatares verificados, dependem de fixture [dado])",
         "12: bloco editorial do guia (hero, cards com foto, referências por assunto, atualizados recentemente) e rail Comece por aqui/Ajude a melhorar ✅ 15/09 (fotos seguem [dado]; captura recon049-guia-final2: 0 findings)",
@@ -2644,10 +2644,13 @@
         "recaptura por rota (scripts/visual/capture.mjs) com prova válida"
       ],
       "links": [".visual/compare/julgamento.md", "docs/agents/PRANCHAS-WEB-RESTANTES.md"],
-      "updatedAt": "2026-09-15",
-      "sourceRevision": "6394c9f",
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "f46ca35",
       "dependencies": [],
-      "completedAt": null
+      "completedAt": null,
+      "blockers": [
+        "Decisão do dono: o que é uma comunidade não apresentável — e portanto qual ramo de acesso negado /communities/[id] deve ter (o componente AccessUnavailableState já existe e é usado em 7 telas)"
+      ]
     },
     {
       "id": "RECON-050",
