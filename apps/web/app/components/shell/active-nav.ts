@@ -109,6 +109,11 @@ export const OUTSIDE_SHELL_PREFIXES = [
   "/arrivals",
   "/guide-queue",
   "/prestador",
+  // O convite de prestador é pré-autenticação (prancha 79, painel 2). O prefixo
+  // é próprio porque `/prestador` não casa com ele: `matches` compara o caminho
+  // inteiro ou o prefixo seguido de "/", e "prestador-convite" não é
+  // "prestador/…".
+  "/prestador-convite",
 ] as const
 
 function matches(pathname: string, href: string): boolean {

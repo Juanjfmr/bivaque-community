@@ -1547,3 +1547,31 @@ on conflict (listing_id) do nothing;
 
 
 commit;
+
+-- RECON-049 (prancha 79, painel 2) — convite de prestador PENDENTE e
+-- determinístico, para que /prestador-convite/<token> tenha captura.
+-- O token em claro é público e descartável, como as demais credenciais do seed:
+-- a tabela guarda só o digest, e é o digest que o seed escreve a partir dele.
+-- Sem esta linha a tela do convite não é capturável em nenhum estado (o token
+-- real só existe no payload do outbox, no momento da emissão).
+insert into private.provider_invitations (
+  inviter_user_id,
+  community_id,
+  locality_id,
+  display_name,
+  token_digest,
+  invitee_email_digest,
+  status,
+  expires_at
+)
+values (
+  '20000000-0000-4000-8000-000000000008',
+  '71000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001',
+  'Eletricista do Bairro',
+  extensions.digest(decode(repeat('ab', 32), 'hex'), 'sha256'),
+  extensions.digest('convite-prestador@bivaque.example.invalid', 'sha256'),
+  'pending',
+  now() + interval '7 days'
+)
+on conflict (token_digest) do nothing;

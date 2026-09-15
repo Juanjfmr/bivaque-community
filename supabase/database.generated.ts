@@ -2793,6 +2793,14 @@ export type Database = {
         Args: { p_contact_email: string; p_user_id: string }
         Returns: number
       }
+      read_provider_invitation: {
+        Args: { p_token: string }
+        Returns: {
+          community_id: string
+          community_name: string
+          status: string
+        }[]
+      }
       read_verification_document_path: {
         Args: { p_document_id: string }
         Returns: {

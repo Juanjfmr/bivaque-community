@@ -32,6 +32,12 @@ const SCENARIO = process.env["BIVAQUE_VISUAL_SCENARIO"]
 // seed — a ficha caía no não-encontrado e a captura declarava "sem h1".
 const IMOVEIS_FIXTURE_ID = "b2000000-0000-4000-8000-000000000001"
 
+// Token do convite de prestador semeado (seed.sql, bloco RECON-049): o token em
+// claro é descartável e o banco guarda só o digest dele. Sem esta fixture a tela
+// do convite não tem captura em estado nenhum — o token real existe apenas no
+// payload do outbox, no instante da emissão.
+const PROVIDER_INVITE_TOKEN = "ab".repeat(32)
+
 // Conta do seed por trás de `account:` de uma rota. O e-mail é dado público do
 // seed local (a senha vem de BIVAQUE_VISUAL_PASSWORD, como na conta global), e
 // vive aqui — não no `.env.local` — para que a captura seja reproduzível por
@@ -179,6 +185,8 @@ export const HEADINGS = {
   "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/imoveis/alertas": "^Meus alertas$",
   "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010": "^Do que você precisa\\?$",
+  // Prancha 79, painel 2: o H1 da tela que o prestador convidado abre.
+  [`/prestador-convite/${PROVIDER_INVITE_TOKEN}`]: "^Ofereça seus serviços no Bivaque$",
   "/pedidos": "^Meus pedidos$",
   // O título do pedido vem da primeira linha da própria descrição do pedido.
   "/pedidos/40000000-0000-4000-8000-000000000023": DYNAMIC_HEADING,
@@ -329,6 +337,14 @@ export const ROUTES = [
   {
     path: "/auth/callback-error",
     name: "auth-callback-error",
+    auth: false,
+  },
+  // Prancha 79, painel 2: o convite de prestador é pré-autenticação — quem abre
+  // o link ainda não tem conta, e a tela lê o próprio token para nomear a
+  // comunidade que indicou.
+  {
+    path: `/prestador-convite/${PROVIDER_INVITE_TOKEN}`,
+    name: "provider-invite",
     auth: false,
   },
   { path: "/guide", name: "arrival-guide", auth: true },
