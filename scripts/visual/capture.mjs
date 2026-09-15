@@ -659,6 +659,19 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     const box = sizeEl.getBoundingClientRect()
     if (box.width === 0 && box.height === 0) continue
 
+    // Artefato de framework: o botão de descarte do react-aria é 1x1, com
+    // tabindex="-1" — não é alvo de ponteiro nem de teclado, e a régua de
+    // toque/movimento não se aplica a ele. Um alvo real é focável ou visível.
+    if (
+      !hiddenControl &&
+      box.width <= 4 &&
+      box.height <= 4 &&
+      element.tabIndex < 0 &&
+      element.getAttribute("aria-hidden") !== "false"
+    ) {
+      continue
+    }
+
     // 2. touch targets — 44x44 CSS px minimum
     if (box.width < 44 || box.height < 44) {
       add(
@@ -686,9 +699,29 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     // HeroUI lesson — its Input does not forward aria-label). Without this
     // resolution every properly-labeled input is a false positive every wave.
     let name = (element.getAttribute("aria-label") ?? "").trim()
+    // aria-labelledby é a associação do react-aria para radio/checkbox: sem
+    // resolvê-la, um controle corretamente rotulado vira "sem nome".
+    if (name.length === 0) {
+      const ids = (element.getAttribute("aria-labelledby") ?? "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+      const partes = ids
+        .map((id) => document.getElementById(id)?.textContent ?? "")
+        .join(" ")
+        .trim()
+      if (partes.length > 0) name = partes
+    }
     if (name.length === 0 && element.id) {
       const labeled = document.querySelector(`label[for="${CSS.escape(element.id)}"]`)
       name = (labeled?.textContent ?? "").trim()
+    }
+    // O <label> que ENVOLVE o controle também dá o nome acessível — é o caso do
+    // radio/checkbox do react-aria, cujo input vive dentro do label. Sem esta
+    // resolução, todo radio do produto virava "input sem nome": o mesmo tipo de
+    // falso positivo que a régua de alvo de toque tinha.
+    if (name.length === 0) {
+      name = (element.closest("label")?.textContent ?? "").trim()
     }
     if (name.length === 0) {
       name = (element.textContent ?? "").trim()
