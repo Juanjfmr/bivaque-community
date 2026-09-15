@@ -1313,4 +1313,200 @@ values
   )
 on conflict (id) do nothing;
 
+-- ── RECON-051: fixtures de estado para os itens [dado]/[captura] ───────────
+-- A conta de captura (visual@, 20000000-…0001) era, por desenho, um membro
+-- verificado SEM publicação, SEM grupo, SEM comunidade, SEM conversa e SEM
+-- notificação. Pranchas inteiras ficavam no estado vazio do runtime: a faixa de
+-- atividade do /inicio (01), Minhas denúncias e bloqueados (56), Indicações com
+-- resposta marcada (80), Meus anúncios (21), Mercado (13) e Mensagens (75).
+--
+-- Tudo abaixo pende dela. Os terceiros usados (membro-26@, membro-27@) não são
+-- citados por nenhum spec de tests/e2e — trocar por membro-1..6@ mexeria em
+-- asserções de contagem que já existem.
+
+-- 1) Publicação do titular + resposta de terceiro. A notificação não-lida que
+--    faz a faixa de atividade aparecer nasce do trigger notify_comment, não de
+--    um INSERT à mão: o shape tem de ser o do produto.
+insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+values (
+  'b0000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000001',
+  'text',
+  'Chegamos em Manaus no mês passado. Alguma dica de escola perto do Centro?',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
+insert into public.comments (post_id, user_id, content, created_at)
+values (
+  'b0000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-00000000001a',
+  'A Escola Municipal do Centro recebe bem as famílias novas. Vale a visita.',
+  now() - interval '1 day'
+);
+
+-- 2) Conversa direta do titular com o prestador, dentro de um pedido real —
+--    contexto 'provider' autêntico (não um chip de "grupo em comum" sem grupo).
+insert into public.dm_conversations (id, participant_a, participant_b, context_type, context_id, created_at)
+values (
+  '41000000-0000-4000-8000-000000000051',
+  '20000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-00000000000a',
+  'provider',
+  '30000000-0000-4000-8000-000000000010',
+  now() - interval '3 days'
+)
+on conflict (id) do nothing;
+
+insert into public.service_requests (
+  id, requester_user_id, provider_id, provider_user_id, description, when_text,
+  status, conversation_id, category, created_at, updated_at
+)
+values (
+  '40000000-0000-4000-8000-000000000051',
+  '20000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-000000000010',
+  '20000000-0000-4000-8000-00000000000a',
+  'Preciso de limpeza em dois aparelhos antes da mudança.',
+  'Semana que vem',
+  'in_conversation',
+  '41000000-0000-4000-8000-000000000051',
+  'assistencia_tecnica',
+  now() - interval '3 days',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
+insert into public.dm_messages (id, conversation_id, sender_id, content, created_at)
+values
+  ('42000000-0000-4000-8000-000000000051', '41000000-0000-4000-8000-000000000051',
+   '20000000-0000-4000-8000-000000000001', 'Bom dia! Vocês atendem no Centro?', now() - interval '3 days'),
+  ('42000000-0000-4000-8000-000000000052', '41000000-0000-4000-8000-000000000051',
+   '20000000-0000-4000-8000-00000000000a', 'Atendemos sim. Consigo na quinta pela manhã.', now() - interval '2 days'),
+  ('42000000-0000-4000-8000-000000000053', '41000000-0000-4000-8000-000000000051',
+   '20000000-0000-4000-8000-000000000001', 'Fechado. Pode confirmar 9h?', now() - interval '1 day'),
+  ('42000000-0000-4000-8000-000000000054', '41000000-0000-4000-8000-000000000051',
+   '20000000-0000-4000-8000-00000000000a', 'Confirmado, 9h. Levo o equipamento de higienização.', now() - interval '20 hours')
+on conflict (id) do nothing;
+
+-- 3) Indicações: respostas no pedido do titular e uma marcada como solução.
+--    O trigger notify_recommendation_reply cria as notificações do autor.
+insert into public.recommendation_replies (id, request_id, author_id, body, created_at)
+values
+  ('d0000000-0000-4000-8000-000000000001', '80000000-0000-4000-8000-000000000f00',
+   '30000000-0000-4000-8000-00000000001a',
+   'O Seu Antônio atendeu aqui em casa e resolveu rápido. Posso passar o contato.',
+   now() - interval '2 days'),
+  ('d0000000-0000-4000-8000-000000000002', '80000000-0000-4000-8000-000000000f00',
+   '30000000-0000-4000-8000-00000000001b',
+   'Também indico a equipe do Bairro da Paz: cobraram justo e explicaram tudo.',
+   now() - interval '1 day')
+on conflict (id) do nothing;
+
+update public.recommendation_requests
+   set is_resolved = true,
+       resolved_reply_id = 'd0000000-0000-4000-8000-000000000001'
+ where id = '80000000-0000-4000-8000-000000000f00';
+
+-- 4) Denúncia do membro conectado (contra conteúdo de terceiro: denunciar o
+--    próprio conteúdo é recusado pelo produto) e uma pessoa bloqueada.
+insert into public.reports (reporter_user_id, target_type, target_id, reason, status, created_at)
+select
+  '20000000-0000-4000-8000-000000000001',
+  'post'::report_target_type,
+  p.id,
+  'Anúncio repetido no mesmo dia, fora do assunto da comunidade.',
+  'open'::report_status,
+  now() - interval '3 days'
+from public.posts p
+where p.user_id <> '20000000-0000-4000-8000-000000000001'
+  and p.locality_id = '00000000-0000-4000-8000-000000000001'
+  -- as 15 denúncias acima já saem desta mesma conta: o alvo aqui não pode
+  -- repetir (reports_one_open_per_reporter_target_idx é único por par aberto)
+  and not exists (
+    select 1 from public.reports r
+    where r.reporter_user_id = '20000000-0000-4000-8000-000000000001'
+      and r.target_id = p.id
+  )
+order by p.created_at
+limit 1;
+
+insert into public.dm_blocks (blocker_user_id, blocked_user_id, created_at)
+values (
+  '20000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-00000000001a',
+  now() - interval '2 days'
+)
+on conflict do nothing;
+
+-- 5) Mercado e Moradia: anúncios do titular (ativo, pausado e reservado, para
+--    as três abas de /meus-anuncios) e de terceiros (para a grade de /mercado).
+--    Fotos exigem upload real no bucket e ficam fora do seed — ver RECON-051.
+insert into public.listings (
+  id, owner_user_id, kind, status, title, description, category, condition,
+  price_cents, locality_id, neighborhood, published_at, created_at, updated_at
+)
+values
+  ('b1000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001',
+   'item', 'active', 'Mesa de jantar com 6 cadeiras',
+   'Mesa de madeira maciça, usada por dois anos, sem riscos na tampa.',
+   'casa_moveis', 'used', 45000, '00000000-0000-4000-8000-000000000001', 'Centro',
+   now() - interval '6 days', now() - interval '8 days', now() - interval '6 days'),
+  ('b1000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001',
+   'item', 'paused', 'Bicicleta aro 29 com câmbio',
+   'Pouco rodada, revisada no mês passado.',
+   'esporte', 'used', 120000, '00000000-0000-4000-8000-000000000001', 'Adrianópolis',
+   now() - interval '12 days', now() - interval '14 days', now() - interval '4 days'),
+  ('b1000000-0000-4000-8000-000000000003', '20000000-0000-4000-8000-000000000001',
+   'item', 'reserved', 'Furadeira de impacto com maleta',
+   'Nova, ainda na caixa. Reservada para retirada no fim de semana.',
+   'casa_moveis', 'new', 32000, '00000000-0000-4000-8000-000000000001', 'Centro',
+   now() - interval '3 days', now() - interval '5 days', now() - interval '1 day'),
+  ('b1000000-0000-4000-8000-000000000004', '30000000-0000-4000-8000-00000000001a',
+   'item', 'active', 'Berço portátil desmontável',
+   'Usado por um ano, colchão incluso.',
+   'infantil', 'used', 25000, '00000000-0000-4000-8000-000000000001', 'Flores',
+   now() - interval '2 days', now() - interval '4 days', now() - interval '2 days'),
+  ('b1000000-0000-4000-8000-000000000005', '30000000-0000-4000-8000-00000000001b',
+   'item', 'active', 'Notebook 14 polegadas, 8 GB',
+   'Bateria segura o dia todo. Com carregador original.',
+   'eletronicos', 'used', 180000, '00000000-0000-4000-8000-000000000001', 'Chapada',
+   now() - interval '1 day', now() - interval '3 days', now() - interval '1 day'),
+  ('b1000000-0000-4000-8000-000000000006', '30000000-0000-4000-8000-00000000001a',
+   'item', 'active', 'Ar-condicionado 9.000 BTUs',
+   'Instalado há um ano, funcionando perfeitamente.',
+   'eletronicos', 'used', 150000, '00000000-0000-4000-8000-000000000001', 'Ponta Negra',
+   now(), now() - interval '2 days', now())
+on conflict (id) do nothing;
+
+insert into public.listings (
+  id, owner_user_id, kind, status, title, description, locality_id,
+  neighborhood, published_at, created_at, updated_at
+)
+values
+  ('b2000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-00000000001b',
+   'property', 'active', 'Apartamento 2 quartos no Centro',
+   'Próximo ao comércio, com vaga na garagem.',
+   '00000000-0000-4000-8000-000000000001', 'Centro',
+   now() - interval '5 days', now() - interval '7 days', now() - interval '5 days'),
+  ('b2000000-0000-4000-8000-000000000002', '30000000-0000-4000-8000-00000000001a',
+   'property', 'active', 'Casa 3 quartos com quintal',
+   'Rua tranquila, quintal com árvore frutífera.',
+   '00000000-0000-4000-8000-000000000001', 'Flores',
+   now() - interval '2 days', now() - interval '4 days', now() - interval '2 days')
+on conflict (id) do nothing;
+
+insert into public.property_details (
+  listing_id, deal, property_type, rent_cents, sale_price_cents, condo_fee_cents,
+  bedrooms, suites, parking_spots, area_m2, amenities, available_from
+)
+values
+  ('b2000000-0000-4000-8000-000000000001', 'rent', 'apartment', 180000, null, 35000,
+   2, 1, 1, 62, array['Portaria 24h', 'Elevador'], current_date),
+  ('b2000000-0000-4000-8000-000000000002', 'sale', 'house', null, 45000000, null,
+   3, 1, 2, 120, array['Quintal', 'Área de serviço'], current_date)
+on conflict (listing_id) do nothing;
+
+
 commit;

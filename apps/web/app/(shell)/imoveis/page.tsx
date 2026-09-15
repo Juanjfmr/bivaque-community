@@ -231,7 +231,14 @@ export default async function ImoveisPage({
               <li key={row.id}>
                 <Card className="h-full overflow-hidden">
                   <div className="relative">
-                    <Link href={`/imoveis/${row.id}` as Route} className="block">
+                    {/* O link embrulha só a foto: sem nome próprio ele fica sem
+                        rótulo (e "Sem foto" não diz qual imóvel é). O alt da
+                        imagem continua descrevendo a foto. */}
+                    <Link
+                      href={`/imoveis/${row.id}` as Route}
+                      aria-label={`Ver ${row.title}`}
+                      className="block transition-opacity duration-[var(--semantic-motion-duration-fast)] hover:opacity-90"
+                    >
                       {coverUrl ? (
                         // biome-ignore lint/performance/noImgElement: URL assinada de bucket privado expira em 1h.
                         <img

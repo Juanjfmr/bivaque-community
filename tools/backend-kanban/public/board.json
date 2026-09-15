@@ -2684,27 +2684,34 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "testing",
-      "status": "next",
-      "description": "Completar supabase/seed.sql para que os estados desenhados existam em runtime e possam ser capturados: pedidos e respostas, DMs e thread, recomendações respondidas/marcadas, denúncias e bloqueios do membro conectado, chegadas/transferência declarada, categorias editoriais do guia, fotos de prestador.",
+      "status": "done",
+      "description": "Completar supabase/seed.sql para que os estados desenhados existam em runtime e possam ser capturados: pedidos e respostas, DMs e thread, recomendações respondidas/marcadas, denúncias e bloqueios do membro conectado, chegadas/transferência declarada, categorias editoriais do guia, fotos de prestador. Executado em 15/09 — a conta de captura, que era um membro sem post, sem grupo, sem conversa e sem notificação, passou a ter os estados que as pranchas desenham.",
       "checklist": [
-        "Pedido de serviço com respostas + conversa para o ator de captura",
-        "Conversa direta + thread aberta",
-        "Recomendação com resposta marcada como resolvida",
-        "Denúncia do membro conectado + pessoa bloqueada",
-        "Chegadas declaradas (e variante vazia) para a operação",
-        "Prestador com foto/portfólio/catálogo",
-        "Rodar db:reset local (aprovação do operador) e recapturar as rotas afetadas"
+        "Pedido de serviço com respostas + conversa para o ator de captura ✅ 15/09 (pedido do titular ao prestador semeado, contexto 'provider' autêntico, com 4 mensagens na thread)",
+        "Conversa direta + thread aberta ✅ 15/09 (dm_conversations + dm_messages; /messages com 0 findings)",
+        "Recomendação com resposta marcada como resolvida ✅ 15/09 (duas respostas no pedido do titular e uma marcada: resolved_reply_id + is_resolved; /recommendations com 0 findings)",
+        "Denúncia do membro conectado + pessoa bloqueada ✅ 15/09 (a conta de captura JÁ era denunciante das 15 denúncias semeadas — o item do julgamento dizia 'vazio' e estava desatualizado; a captura de /denuncias agora prova a lista, e o bloqueio entrou em /configuracoes/bloqueados)",
+        "Chegadas declaradas (e variante vazia) para a operação — a declarada já existia (conta com transferência); a variante vazia não coexiste com a populada no mesmo banco: provar exige captura no banco sem seed",
+        "Prestador com foto/portfólio/catálogo — catálogo e ficha já semeados; FOTO segue aberta: exige bytes reais no bucket e o seed é SQL puro (o Storage não serve arquivo a partir de INSERT em storage.objects)",
+        "Rodar db:reset local e recapturar as rotas afetadas ✅ 15/09 (reset aplicado; capturas recon051 e recon051-imoveis)",
+        "Bônus do mesmo lote: o seed de mercado/moradia (6 anúncios + 2 imóveis) fecha os itens [dado] de 13/21/64, e a captura de /imoveis expôs um defeito real — o card era um link só com a foto, sem nome acessível (2 achados high) — corrigido com aria-label do título"
       ],
-      "proof": ["julgamento.md — itens [dado] e [captura] por par"],
+      "proof": [
+        "julgamento.md — itens [dado] e [captura] por par",
+        "supabase/seed.sql (bloco RECON-051 ao fim): publicação do titular + comentário (a notificação não-lida nasce do trigger notify_comment, não de INSERT à mão), conversa + pedido + 4 mensagens, 2 respostas de recomendação com marca de solução, denúncia e bloqueio, 6 anúncios (3 do titular: ativo/pausado/reservado) e 2 imóveis com property_details",
+        "Medido depois do reset: 3 notificações não-lidas para a conta de captura, 1 conversa, 3 anúncios do titular, 4 anúncios ativos de terceiros, 2 imóveis, 16 denúncias, 1 bloqueio, 2 respostas e is_resolved = true",
+        "Capturas recon051 (9 rotas, 3 viewports): /meus-anuncios, /recommendations, /messages, /notifications, /denuncias, /configuracoes/bloqueados e /inicio com 0 findings; /mercado com 0 high (restam 17 no-transition do indicador de Checkbox — item 13/6c, aberto); /imoveis com 2 high ANTES e 0 findings depois da correção do nome acessível (recon051-imoveis)",
+        "Aberto com medição: fotos de anúncio, de prestador e de evento continuam sem fixture porque exigem upload real no bucket — o caminho é um script de mídia (como os .visual/prova-*.mjs) que sobe PNGs de exemplo pelo Storage API antes da captura"
+      ],
       "tests": [
         "npx pnpm@11.18.0 exec supabase db reset (local)",
         "scripts/visual/capture.mjs por rota"
       ],
       "links": ["supabase/seed.sql", ".visual/compare/julgamento.md"],
       "updatedAt": "2026-09-15",
-      "sourceRevision": "c50db98",
+      "sourceRevision": "294d11a",
       "dependencies": [],
-      "completedAt": null
+      "completedAt": "2026-09-15"
     },
     {
       "id": "RECON-052",
