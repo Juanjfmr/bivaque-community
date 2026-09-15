@@ -58,3 +58,69 @@ export async function requestJoinWithReasonAction(formData: FormData): Promise<v
   revalidatePath(`/communities/${communityId}`)
   revalidatePath("/communities")
 }
+
+// RECON-050 (ADR-20260914-saida-de-comunidade): o titular sai quando quiser.
+// O RPC apaga a própria linha aprovada; o trigger D7 cuida do resto (grupos do
+// saído passam ao dono, acessos caem) e recusa a saída do dono até que a
+// administração seja transferida — por isso a mensagem específica abaixo.
+export async function leaveCommunityAction(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const communityId = formData.get("communityId")
+  if (typeof communityId !== "string" || communityId.length === 0) {
+    return { ok: false, message: "comunidade inválida" }
+  }
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { ok: false, message: "não autenticado" }
+  }
+
+  const { error } = await supabase.rpc("leave_community", { p_community_id: communityId })
+  if (error) {
+    if (error.message.includes("transfer community ownership")) {
+      return {
+        ok: false,
+        message: "Você é o dono desta comunidade. Transfira a administração antes de sair.",
+      }
+    }
+    return { ok: false, message: "Não foi possível sair agora. Tente novamente." }
+  }
+
+  revalidatePath(`/communities/${communityId}`)
+  revalidatePath("/communities")
+  return { ok: true }
+}
+
+// RECON-050: cancelar o próprio pedido pendente. Sem pendência, é no-op —
+// a associação aprovada nunca é tocada por esta porta.
+export async function cancelCommunityRequestAction(
+  formData: FormData,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const communityId = formData.get("communityId")
+  if (typeof communityId !== "string" || communityId.length === 0) {
+    return { ok: false, message: "comunidade inválida" }
+  }
+
+  const supabase = await getAuthClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { ok: false, message: "não autenticado" }
+  }
+
+  const { error } = await supabase.rpc("cancel_community_request", {
+    p_community_id: communityId,
+  })
+  if (error) {
+    return { ok: false, message: "Não foi possível cancelar agora. Tente novamente." }
+  }
+
+  revalidatePath(`/communities/${communityId}`)
+  revalidatePath("/communities")
+  return { ok: true }
+}

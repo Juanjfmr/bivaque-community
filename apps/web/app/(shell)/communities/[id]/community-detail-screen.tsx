@@ -6,7 +6,18 @@
 // visitante não têm aba nem rail de estatísticas — esses dados não chegam a
 // existir na prop.
 
-import { Button, Chip, ListBox, Select, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
+import {
+  Button,
+  Chip,
+  ListBox,
+  Modal,
+  Select,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+  useOverlayState,
+} from "@heroui/react"
 import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
@@ -18,7 +29,11 @@ import { EmptyState } from "../../../components/bivaque/empty-state"
 import { ErrorState } from "../../../components/bivaque/error-state"
 import { FeedPost } from "../../../components/bivaque/feed-post"
 import { transferCommunityOwnershipAction } from "../actions"
-import { requestJoinWithReasonAction } from "./actions"
+import {
+  cancelCommunityRequestAction,
+  leaveCommunityAction,
+  requestJoinWithReasonAction,
+} from "./actions"
 import { formatCreatedOn, formatRequestedOn, type GroupCard } from "./community-detail-data"
 import type { CommunityDetailView } from "./community-detail-loaders"
 
@@ -73,51 +88,107 @@ const PIN_PATH =
 
 function CommunityHero({ view }: { view: ReadyView }) {
   const { presentation } = view
+  const leaveModal = useOverlayState()
+  const [leaveError, setLeaveError] = useState("")
+  const [leaving, setLeaving] = useState(false)
+
+  async function handleLeave() {
+    setLeaveError("")
+    setLeaving(true)
+    const formData = new FormData()
+    formData.set("communityId", presentation.id)
+    const result = await leaveCommunityAction(formData)
+    setLeaving(false)
+    if (!result.ok) {
+      setLeaveError(result.message)
+      return
+    }
+    leaveModal.close()
+  }
+
   return (
-    <header className="flex flex-col">
-      {presentation.bannerUrl ? (
-        <Image
-          src={presentation.bannerUrl}
-          alt={communityImageAltText("banner")}
-          width={1200}
-          height={384}
-          unoptimized
-          className="h-40 w-full rounded-2xl object-cover sm:h-48"
-        />
-      ) : (
-        <div
-          aria-hidden="true"
-          className="flex h-40 w-full items-end justify-start rounded-2xl bg-[var(--semantic-surface-sunken)] p-4 text-muted sm:h-48"
-        >
-          <CommunityGlyph className="h-12 w-12 opacity-40" />
-        </div>
-      )}
-      <div className="-mt-12 flex items-end gap-4 px-2">
-        {presentation.thumbnailUrl ? (
+    <>
+      <header className="flex flex-col">
+        {presentation.bannerUrl ? (
           <Image
-            src={presentation.thumbnailUrl}
-            alt={communityImageAltText("thumbnail")}
-            width={80}
-            height={80}
+            src={presentation.bannerUrl}
+            alt={communityImageAltText("banner")}
+            width={1200}
+            height={384}
             unoptimized
-            className="h-20 w-20 shrink-0 rounded-xl border-4 border-[var(--semantic-canvas)] object-cover"
+            className="h-40 w-full rounded-2xl object-cover sm:h-48"
           />
         ) : (
           <div
             aria-hidden="true"
-            className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border-4 border-[var(--semantic-canvas)] bg-[var(--semantic-surface-sunken)] text-muted"
+            className="flex h-40 w-full items-end justify-start rounded-2xl bg-[var(--semantic-surface-sunken)] p-4 text-muted sm:h-48"
           >
-            <CommunityGlyph className="h-9 w-9" />
+            <CommunityGlyph className="h-12 w-12 opacity-40" />
           </div>
         )}
-        <div className="min-w-0 flex-1 pb-1">
-          <h1 className="truncate text-2xl font-semibold tracking-tight">{presentation.name}</h1>
-          {presentation.cityLabel && (
-            <p className="mt-0.5 text-sm text-muted">{presentation.cityLabel}</p>
+        <div className="-mt-12 flex items-end gap-4 px-2">
+          {presentation.thumbnailUrl ? (
+            <Image
+              src={presentation.thumbnailUrl}
+              alt={communityImageAltText("thumbnail")}
+              width={80}
+              height={80}
+              unoptimized
+              className="h-20 w-20 shrink-0 rounded-xl border-4 border-[var(--semantic-canvas)] object-cover"
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border-4 border-[var(--semantic-canvas)] bg-[var(--semantic-surface-sunken)] text-muted"
+            >
+              <CommunityGlyph className="h-9 w-9" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1 pb-1">
+            <h1 className="truncate text-2xl font-semibold tracking-tight">{presentation.name}</h1>
+            {presentation.cityLabel && (
+              <p className="mt-0.5 text-sm text-muted">{presentation.cityLabel}</p>
+            )}
+          </div>
+          {view.audience === "member" && (
+            <Button variant="secondary" className="mb-1 min-h-11" onPress={leaveModal.open}>
+              Sair
+            </Button>
           )}
         </div>
-      </div>
-    </header>
+      </header>
+      <Modal state={leaveModal}>
+        <Modal.Backdrop>
+          <Modal.Container size="sm">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>Sair da comunidade?</Modal.Heading>
+                <Modal.CloseTrigger />
+              </Modal.Header>
+              <Modal.Body>
+                <p className="text-sm text-muted">
+                  Você deixa de ver as conversas e os grupos desta comunidade. O que você publicou
+                  permanece. Para voltar, será preciso pedir entrada de novo.
+                </p>
+                {leaveError && (
+                  <div className="mt-2">
+                    <ErrorState message={leaveError} onRetry={handleLeave} />
+                  </div>
+                )}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="tertiary" onPress={leaveModal.close}>
+                  Continuar participando
+                </Button>
+                <Button variant="danger" onPress={handleLeave} isDisabled={leaving}>
+                  {leaving ? "Saindo..." : "Sair"}
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
+    </>
   )
 }
 
@@ -306,6 +377,21 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
 
 function PendingBody({ view }: { view: Extract<ReadyView, { audience: "pending" }> }) {
   const requestedOn = formatRequestedOn(view.requestedAt)
+  const [cancelError, setCancelError] = useState("")
+  const [cancelling, setCancelling] = useState(false)
+
+  async function handleCancel() {
+    setCancelError("")
+    setCancelling(true)
+    const formData = new FormData()
+    formData.set("communityId", view.presentation.id)
+    const result = await cancelCommunityRequestAction(formData)
+    setCancelling(false)
+    if (!result.ok) {
+      setCancelError(result.message)
+    }
+  }
+
   return (
     <Card className="flex flex-col items-center gap-2 px-6 py-10 text-center">
       <span
@@ -329,6 +415,15 @@ function PendingBody({ view }: { view: Extract<ReadyView, { audience: "pending" 
           <p className="mt-1 text-sm leading-relaxed">{view.joinReason}</p>
         </div>
       )}
+      <Button
+        variant="tertiary"
+        className="mt-4 min-h-11"
+        onPress={handleCancel}
+        isDisabled={cancelling}
+      >
+        {cancelling ? "Cancelando..." : "Cancelar pedido"}
+      </Button>
+      {cancelError && <ErrorState message={cancelError} onRetry={handleCancel} />}
     </Card>
   )
 }

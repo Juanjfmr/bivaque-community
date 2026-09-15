@@ -1185,6 +1185,32 @@ export type Database = {
         }
         Relationships: []
       }
+      post_follows: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_follows_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_reactions: {
         Row: {
           created_at: string
@@ -2083,6 +2109,10 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: string
       }
+      cancel_community_request: {
+        Args: { p_community_id: string }
+        Returns: undefined
+      }
       create_community: {
         Args: {
           p_description: string
@@ -2189,6 +2219,28 @@ export type Database = {
           id: string
           link_url: string
           locality_id: string
+          my_follow: boolean
+          my_reaction: boolean
+          photo_path: string
+          poll_options: Json
+          post_type: Database["public"]["Enums"]["post_type"]
+          reaction_count: number
+          user_id: string
+        }[]
+      }
+      feed_following: {
+        Args: never
+        Returns: {
+          comment_count: number
+          community_id: string
+          content: string
+          created_at: string
+          display_name: string
+          group_id: string
+          id: string
+          link_url: string
+          locality_id: string
+          my_follow: boolean
           my_reaction: boolean
           photo_path: string
           poll_options: Json
@@ -2208,6 +2260,7 @@ export type Database = {
           id: string
           link_url: string
           locality_id: string
+          my_follow: boolean
           my_reaction: boolean
           photo_path: string
           poll_options: Json
@@ -2227,6 +2280,7 @@ export type Database = {
           id: string
           link_url: string
           locality_id: string
+          my_follow: boolean
           my_reaction: boolean
           photo_path: string
           poll_options: Json
@@ -2297,6 +2351,10 @@ export type Database = {
           is_already_invited: boolean
           user_id: string
         }[]
+      }
+      leave_community: {
+        Args: { p_community_id: string }
+        Returns: undefined
       }
       list_locality_arrivals_volume: {
         Args: { p_user_id: string }
