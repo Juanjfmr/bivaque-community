@@ -71,9 +71,9 @@ export const HEADINGS = {
   "/notifications": "^Notificações$",
   "/messages": "^Mensagens$",
   "/recommendations": "^Indicações$",
-  "/prestador": "^Painel do prestador$",
+  "/prestador": "^Pedidos para você$",
   "/prestador/ficha": "^Minha ficha$",
-  "/prestador/catalogo": "^Catálogo e portfólio$",
+  "/prestador/catalogo": "^Publicar item$",
   // RECON-024 trouxe estas duas ao entrar na integração, sem contrato — e o
   // guard-rail do RECON-040 cobrou na hora. Títulos lidos do h1 de cada página.
   "/prestador/atendimento": "^Área de atendimento$",
@@ -95,7 +95,7 @@ export const HEADINGS = {
   // DYNAMIC_HEADING. Query string é chave própria: /guide e /guide?q=escola são
   // duas entradas, como /explorar/servicos e a variante com termo.
   "/recuperar-senha": "^Esqueceu sua senha\\?$",
-  "/nova-senha": "^Crie uma senha nova$",
+  "/nova-senha": "^Este link não vale mais$",
   // O mesmo caminho serve dois painéis legítimos: o pendente (sessionStorage)
   // e o "nada para confirmar". A variante ?estado=expirado é chave própria.
   "/auth/confirmar-email": "^(Confira seu e-mail|Nada para confirmar)$",
@@ -120,6 +120,14 @@ export const HEADINGS = {
   "/guide/a0000000-0000-4000-8000-000000000001/correcao": "^Sugerir atualização$",
   "/explorar/servicos?q=climatiza": "^Resultados para “climatiza”$",
   "/explorar/busca?q=escola": "^Resultados para “escola”$",
+  // Prancha 84 painel 2: o estado vazio da busca agrupada. Termo que não casa
+  // com nada no seed — a captura prova o estado real, não um card inventado.
+  "/explorar/busca?q=translado": "^Resultados para “translado”$",
+  // RECON-049 (par 84): o termo que casa com um PRESTADOR e com o evento
+  // semeado prova as seções "Serviços" e "Eventos" do agrupamento — sem ele, a
+  // captura só mostrava o Guia e a ausência das outras seções parecia defeito.
+  "/explorar/busca?q=manaus": "^Resultados para “manaus”$",
+  "/explorar/busca?q=piquenique": "^Resultados para “piquenique”$",
   "/imoveis": "^Explorar moradia$",
   "/imoveis/novo": "^Novo anúncio de moradia$",
   // A ficha do imóvel é nomeada pelo título do anúncio.
@@ -277,6 +285,9 @@ export const ROUTES = [
   // entrada aprovada "Escola Modelo do Centro" e NÃO pode casar com a
   // pendente "Escola de Acolhimento Militar" (status pending, RLS).
   { path: "/explorar/busca?q=escola", name: "explorar-busca", auth: true },
+  { path: "/explorar/busca?q=translado", name: "explorar-busca-vazio", auth: true },
+  { path: "/explorar/busca?q=manaus", name: "explorar-busca-servico", auth: true },
+  { path: "/explorar/busca?q=piquenique", name: "explorar-busca-evento", auth: true },
   // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
   // pointed here since E10 (406d4f6), but the route did not exist until T4.
   { path: "/localidade", name: "localidade", auth: true },
@@ -610,8 +621,42 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     }
   }
 
+  // Um controle visualmente oculto (padrão do react-aria: o <input> com
+  // clip-path inset(50%) dentro do <label>) não é o alvo de toque — quem
+  // recebe o toque é o label que o envolve, e o desenho que anima é o
+  // controle visível. Medir o input acusa 13x13 num alvo que ninguém mira.
+  const visuallyHidden = (node) => {
+    for (let current = node; current; current = current.parentElement) {
+      const style = getComputedStyle(current)
+      if (style.clipPath === "inset(50%)" || style.clip === "rect(0px, 0px, 0px, 0px)") return true
+      const rect = current.getBoundingClientRect()
+      if (rect.width <= 1 && rect.height <= 1 && style.overflow === "hidden") return true
+    }
+    return false
+  }
+
+  // O desenho que anima é o primeiro filho visível do label (o controle
+  // pintado); o label em si é só a área de toque.
+  const drawnControl = (label) => {
+    for (const child of label.querySelectorAll("*")) {
+      const rect = child.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0 && !visuallyHidden(child)) return child
+    }
+    return label
+  }
+
+  const hiddenControlTarget = (element) => {
+    if (!["INPUT", "SELECT", "TEXTAREA"].includes(element.tagName)) return null
+    const label = element.closest("label")
+    if (!label || !visuallyHidden(element)) return null
+    return { sizeEl: label, motionEl: drawnControl(label) }
+  }
+
   for (const element of interactive) {
-    const box = element.getBoundingClientRect()
+    const hiddenControl = hiddenControlTarget(element)
+    const sizeEl = hiddenControl ? hiddenControl.sizeEl : element
+    const motionEl = hiddenControl ? hiddenControl.motionEl : element
+    const box = sizeEl.getBoundingClientRect()
     if (box.width === 0 && box.height === 0) continue
 
     // 2. touch targets — 44x44 CSS px minimum
@@ -619,12 +664,12 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
       add(
         "touch-target",
         "high",
-        describe(element),
+        describe(sizeEl),
         `${Math.round(box.width)}x${Math.round(box.height)} (min 44x44)`,
       )
     }
 
-    const style = getComputedStyle(element)
+    const style = getComputedStyle(motionEl)
 
     // 3. motion presence — interactive elements need a state transition
     const hasTransition = style.transitionDuration
@@ -632,7 +677,7 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
       .some((duration) => Number.parseFloat(duration) > 0)
     const hasAnimation = Number.parseFloat(style.animationDuration) > 0
     if (!hasTransition && !hasAnimation) {
-      add("no-transition", "medium", describe(element), "no transition/animation on interactive")
+      add("no-transition", "medium", describe(motionEl), "no transition/animation on interactive")
     }
 
     // 4. accessible name
@@ -817,9 +862,16 @@ async function main() {
   }
   // BIVAQUE_VISUAL_ROUTE casa o caminho exato ou o nome da rota — o nome é a
   // única forma de pedir uma rota cujo caminho só existe em runtime (fixture).
-  const requested = SCENARIO ? "/inicio" : ROUTE_PATH
-  const selected = requested
-    ? ROUTES.filter((route) => route.path === requested || route.name === requested)
+  // Lista separada por vírgula roda várias rotas num único processo, para que o
+  // report.json da run carregue a prova de todas elas de uma vez.
+  const requestedList = (SCENARIO ? "/inicio" : (ROUTE_PATH ?? ""))
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+  const selected = requestedList.length
+    ? ROUTES.filter(
+        (route) => requestedList.includes(route.path) || requestedList.includes(route.name),
+      )
     : ROUTES
   const routes = [
     ...new Map(selected.map((route) => [`${route.path}:${route.auth}`, route])).values(),
@@ -955,7 +1007,11 @@ async function main() {
         }
         if (SCENARIO === "publish") {
           await page
-            .getByRole("button", { name: "No que você está pensando?", exact: true })
+            // O composer real escreve "O que você quer compartilhar?" desde a
+            // RECON-002; o seletor antigo ("No que você está pensando?") deixava
+            // o cenário publish morrer em timeout e a composição da prancha 45
+            // sem captura nenhuma.
+            .getByRole("button", { name: "O que você quer compartilhar?", exact: true })
             .click()
           await page
             .getByRole("dialog", { name: route.dialog, exact: true })
@@ -985,7 +1041,7 @@ async function main() {
               : null,
           fallback: await page
             .getByText(
-              /Página não encontrada|Application error|Você ainda não tem acesso|Não foi possível carregar/,
+              /Página não encontrada|Application error|Você ainda não tem acesso|Não foi possível carregar|Algo deu errado/,
             )
             .first()
             .isVisible(),
