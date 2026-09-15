@@ -3,9 +3,9 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { createServerClient as createServiceClient } from "../../../../../../lib/supabase/server"
 import {
-  approveCommunityMemberAction,
+  approveCommunityMemberByIdAction,
   approveCommunityMembersBatchAction,
-  removeCommunityMemberAction,
+  removeCommunityMemberByIdAction,
   removeCommunityMembersBatchAction,
 } from "../../../actions"
 
@@ -19,25 +19,36 @@ type ArrivalRow = {
 
 // Onda E Task 5:
 //   - Step 1: checkboxes por linha + "selecionar todos" + duas ações de lote.
-//   - Step 2: o limit(30) original — virou limit(50) — sai. A vila que chega
-//     inteira tem centenas de pedidos; paginação com total count visível é
-//     trabalho de UI desta task. Aqui o cap sobe para 500 e o total real é
-//     exibido no cabeçalho; paginação numérica fica como follow-up.
+//   - Step 2: o limit(30) original — virou limit(50) — sai. Aqui o cap sobe
+//     para 500 e o total real é exibido no cabeçalho; paginação numérica fica
+//     como follow-up.
 //   - Step 4: a fila mostra só nome + data do pedido. SEM afiliação (força,
 //     OM, posto, turma) — o ADR-20260811-om-declarada segue "proposed" e a
-//     proibição é o contrato. Se alguém ler §5.2 daqui a três meses e achar
-//     que falta implementar afiliação, este comentário é a primeira coisa
-//     que deve aparecer.
+//     proibição é o contrato.
 //
-// Onda T Task 5: list_community_pending_arrivals (20260820051230) substitui
-// a leitura direta de community_memberships + profiles por uma RPC que já
-// junta o sinal de transferência declarada — "chegando de <cidade> em
-// <data>" quando o requerente tem uma linha kind='leaving'. Continua sendo
-// SÓ nome, datas e a cidade de origem: nada de força/OM/posto/turma, e o
-// pgTAP em supabase/tests/declared-arrivals.sql prova isso lendo a própria
-// assinatura da função.
+// RECON-049 (par 73, prancha 43): "Ver pedido" abre o detalhe na própria fila
+// — nome, "Pediu há N dias", o motivo opcional (community_join_reasons, lido
+// só por autor e moderador/dono) e as ações "Aprovar entrada"/"Recusar". O
+// rail "Sobre a comunidade" mostra o que a moderação real pode ler: nome,
+// cidade, criada em e contagem de membros — sem vagas (não há coluna de
+// limite no schema; a prancha desenha exemplo) e sem afiliação.
 
 const QUEUE_FETCH_LIMIT = 500
+
+function requestedRelative(requestedAt: string): string {
+  const days = Math.floor((Date.now() - new Date(requestedAt).getTime()) / 86_400_000)
+  if (days <= 0) return "Pediu hoje"
+  return days === 1 ? "Pediu há 1 dia" : `Pediu há ${days} dias`
+}
+
+function formatCreatedAt(iso: string | null): string | null {
+  if (!iso) return null
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+}
 
 export default async function CommunityPendingPage({
   params,
@@ -95,16 +106,64 @@ export default async function CommunityPendingPage({
 
   const pending = (arrivalsData as ArrivalRow[] | null) ?? []
   const memberNames = new Map<string, string>()
+  const pendingIds: string[] = []
   for (const row of pending) {
     memberNames.set(row.user_id, row.display_name ?? "Membro")
+    pendingIds.push(row.user_id)
+  }
+
+  // Motivo opcional do pedido — só autor e quem modera podem ler (policy
+  // própria); o dono da página sempre pode. Sem linha, o pedido não tem motivo.
+  const reasonByUser = new Map<string, string>()
+  if (pendingIds.length > 0) {
+    const { data: reasons, error: reasonsError } = await serviceClient
+      .from("community_join_reasons")
+      .select("user_id, reason")
+      .eq("community_id", communityId)
+      .in("user_id", pendingIds)
+    if (!reasonsError) {
+      for (const row of (reasons as { user_id: string; reason: string }[] | null) ?? []) {
+        reasonByUser.set(row.user_id, row.reason)
+      }
+    }
+  }
+
+  // Rail "Sobre a comunidade": o que a moderação pode ler com lastro.
+  const [{ data: community }, { count: memberCount }] = await Promise.all([
+    serviceClient
+      .from("communities")
+      .select("name, locality_id, created_at")
+      .eq("id", communityId)
+      .maybeSingle(),
+    serviceClient
+      .from("community_memberships")
+      .select("*", { count: "exact", head: true })
+      .eq("community_id", communityId)
+      .eq("status", "approved"),
+  ])
+  const communityRow = community as {
+    name: string
+    locality_id: string
+    created_at: string
+  } | null
+  let localityName: string | null = null
+  if (communityRow) {
+    const { data: locality } = await serviceClient
+      .from("localities")
+      .select("name")
+      .eq("id", communityRow.locality_id)
+      .maybeSingle()
+    localityName = (locality as { name: string } | null)?.name ?? null
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4 px-4 pt-6 pb-8">
+    <div className="mx-auto w-full max-w-5xl space-y-4 px-4 pt-6 pb-8">
       <header>
         <h1 className="text-lg font-semibold tracking-tight">Pedidos de entrada</h1>
         <p className="mt-1 text-sm text-muted">
-          Aprovar ou recusar candidatos antes que entrem no feed da comunidade.
+          {totalPending !== null
+            ? `${totalPending} ${totalPending === 1 ? "pedido aguardando" : "pedidos aguardando"}.`
+            : "Aprovar ou recusar candidatos antes que entrem no feed da comunidade."}
           {totalPending !== null && totalPending > pending.length ? (
             <>
               {" "}
@@ -117,117 +176,134 @@ export default async function CommunityPendingPage({
       {pending.length === 0 ? (
         <p className="text-sm text-muted">Nenhum pedido pendente.</p>
       ) : (
-        // Uma única <form> envolve toda a fila — batch e por-linha. Os
-        // checkboxes "userIds" viviam FORA da <form> de lote (dois blocos
-        // JSX irmãos, form fechando antes da <ul> abrir): marcar linhas e
-        // clicar "Aprovar selecionados" sempre enviava um FormData sem
-        // nenhum userIds, e approveCommunityMembersBatchAction faz no-op
-        // silencioso nesse caso (linha 87-90 de actions.ts) — o recurso
-        // nunca funcionou. As ações de linha única usam `userId` (singular),
-        // as de lote usam `userIds` (plural, getAll) — nomes distintos, então
-        // fundir tudo numa form não faz um botão "Aprovar" de linha também
-        // aprovar o que estiver marcado nos checkboxes. Botões de linha viram
-        // formAction em vez de <form> aninhada (HTML não permite form dentro
-        // de form) — encontrado ao investigar o gap de seed que impedia o
-        // /communities/:id/admin/pending de renderizar durante a onda de
-        // realinhamento de E2E.
-        <form action={approveCommunityMembersBatchAction} className="space-y-4">
-          <input type="hidden" name="communityId" value={communityId} />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="submit" size="sm" variant="primary">
-              Aprovar selecionados
-            </Button>
-            <Button
-              type="submit"
-              size="sm"
-              variant="tertiary"
-              formAction={removeCommunityMembersBatchAction}
-            >
-              Recusar selecionados
-            </Button>
-          </div>
-
-          <ul className="space-y-2">
-            {pending.map((member) => (
-              <li
-                key={member.user_id}
-                className="flex items-center justify-between gap-3 rounded-md border border-border p-3 text-sm"
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
+          <form action={approveCommunityMembersBatchAction} className="space-y-4">
+            <input type="hidden" name="communityId" value={communityId} />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="submit" size="sm" variant="primary">
+                Aprovar selecionados
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                variant="tertiary"
+                formAction={removeCommunityMembersBatchAction}
               >
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    name="userIds"
-                    value={member.user_id}
-                    aria-label={`Selecionar ${memberNames.get(member.user_id) ?? "membro"}`}
+                Recusar selecionados
+              </Button>
+            </div>
+
+            <ul className="space-y-2">
+              {pending.map((member) => {
+                const reason = reasonByUser.get(member.user_id)
+                return (
+                  <details
+                    key={member.user_id}
+                    className="group rounded-md border border-border p-3 text-sm open:bg-[var(--semantic-surface-sunken)]"
                   >
-                    {/* min-h-11 min-w-11: this checkbox has no visible text
-                        sibling (only aria-label), so its label's hit box
-                        would otherwise be exactly the 16x16 control icon.
-                        The real, visually-hidden <input> that carries the
-                        actual click target is positioned ~10px off from the
-                        visible control (confirmed live: getBoundingClientRect
-                        on both, a HeroUI/react-aria-components layout quirk
-                        present on every Checkbox in this codebase) — the
-                        other, working usages (e.g. notification-preferences-
-                        section.tsx) tolerate the same offset only because
-                        their label's hit box is enlarged by the visible text
-                        next to the icon. Without that text, clicks miss the
-                        label entirely and land on the <li> behind it —
-                        found investigating why this list's batch-approve
-                        checkboxes could not be checked by any method,
-                        including a real browser click. This also happens to
-                        be the accessible 44x44 touch-target minimum. */}
-                    <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
-                      <Checkbox.Control>
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
-                    </Checkbox.Content>
-                  </Checkbox>
-                  <div>
-                    <div>{memberNames.get(member.user_id) ?? "Membro"}</div>
-                    <div className="text-xs text-muted">
-                      Pedido em {new Date(member.requested_at).toLocaleDateString("pt-BR")}
-                    </div>
-                    {member.arriving_from_locality_name && member.arriving_at && (
-                      <div className="text-xs text-[var(--accent)]">
-                        Transferência declarada de {member.arriving_from_locality_name} — chegando
-                        em {new Date(`${member.arriving_at}T00:00:00`).toLocaleDateString("pt-BR")}
+                    <summary className="flex items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Checkbox
+                          name="userIds"
+                          value={member.user_id}
+                          aria-label={`Selecionar ${memberNames.get(member.user_id) ?? "membro"}`}
+                          className="[&_input]:transition-colors"
+                        >
+                          <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
+                            <Checkbox.Control>
+                              <Checkbox.Indicator />
+                            </Checkbox.Control>
+                          </Checkbox.Content>
+                        </Checkbox>
+                        <div className="min-w-0">
+                          <div>{memberNames.get(member.user_id) ?? "Membro"}</div>
+                          <div className="text-xs text-muted">
+                            {requestedRelative(member.requested_at)}
+                          </div>
+                          {member.arriving_from_locality_name && member.arriving_at && (
+                            <div className="text-xs text-[var(--accent)]">
+                              Transferência declarada de {member.arriving_from_locality_name} —
+                              chegando em{" "}
+                              {new Date(`${member.arriving_at}T00:00:00`).toLocaleDateString(
+                                "pt-BR",
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {/* name+value on the button itself, not a shared hidden
-                      input: every row's userId now lives in the same outer
-                      form, so a hidden input named "userId" would submit
-                      the FIRST row's value no matter which row's button was
-                      clicked. Only the activated submit button's name/value
-                      pair is included in FormData — the correct per-row
-                      identity. */}
-                  <Button
-                    type="submit"
-                    name="userId"
-                    value={member.user_id}
-                    size="sm"
-                    variant="primary"
-                    formAction={approveCommunityMemberAction}
-                  >
-                    Aprovar
-                  </Button>
-                  <Button
-                    type="submit"
-                    name="userId"
-                    value={member.user_id}
-                    size="sm"
-                    variant="tertiary"
-                    formAction={removeCommunityMemberAction}
-                  >
-                    Recusar
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </form>
+                      <span className="ml-auto shrink-0 select-none text-xs font-medium text-accent group-open:hidden">
+                        Ver pedido
+                      </span>
+                      <span className="ml-auto shrink-0 select-none text-xs font-medium text-muted hidden group-open:inline">
+                        Recolher
+                      </span>
+                    </summary>
+                    <div className="mt-3 space-y-3 border-t border-border pt-3">
+                      <div>
+                        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+                          Motivo do pedido
+                        </h2>
+                        <p className="mt-1 text-sm leading-relaxed">
+                          {reason ?? "Sem motivo informado."}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="primary"
+                          formAction={approveCommunityMemberByIdAction.bind(null, member.user_id)}
+                        >
+                          Aprovar entrada
+                        </Button>
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="tertiary"
+                          formAction={removeCommunityMemberByIdAction.bind(null, member.user_id)}
+                        >
+                          Recusar
+                        </Button>
+                      </div>
+                    </div>
+                  </details>
+                )
+              })}
+            </ul>
+          </form>
+
+          <aside aria-label="Sobre a comunidade" className="lg:sticky lg:top-20 lg:self-start">
+            <div className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4">
+              <h2 className="text-base font-semibold tracking-tight">Sobre a comunidade</h2>
+              <dl className="mt-3 flex flex-col gap-2 text-sm">
+                {communityRow ? (
+                  <>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted">Nome</dt>
+                      <dd className="font-medium">{communityRow.name}</dd>
+                    </div>
+                    {localityName ? (
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-muted">Local</dt>
+                        <dd className="font-medium">{localityName}</dd>
+                      </div>
+                    ) : null}
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted">Membros</dt>
+                      <dd className="font-medium">{memberCount ?? 0}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-muted">Criada em</dt>
+                      <dd className="font-medium">
+                        {formatCreatedAt(communityRow.created_at) ?? "—"}
+                      </dd>
+                    </div>
+                  </>
+                ) : null}
+              </dl>
+            </div>
+          </aside>
+        </div>
       )}
     </div>
   )

@@ -1,8 +1,10 @@
 "use client"
 
-import { Button, Chip, SearchField, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
+import { Button, Chip, Dropdown, SearchField, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
+import { MoreHorizontal } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { type FormEvent, useMemo, useRef, useState } from "react"
 import {
   type CommunityImageKind,
@@ -11,6 +13,7 @@ import {
 import { Card } from "../../components/bivaque/card"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
+import { cancelCommunityRequestAction } from "./[id]/actions"
 import { requestCommunityMembershipAction } from "./actions"
 import {
   type CommunityCard,
@@ -50,6 +53,50 @@ function CommunityGlyph({ className = "" }: { className?: string }) {
       <path d="M5 21V8l4-3v4l4-3v4l4-3v10" />
       <path d="M9 21v-3h2v3" />
     </svg>
+  )
+}
+
+// Prancha 42: overflow "…" nos cards de comunidade e no rail "Seus pedidos".
+// Só ações com rota real entram; nada de item morto no menu.
+function CommunityCardMenu({ communityId }: { communityId: string }) {
+  const items: { key: string; label: string; href: string }[] = [
+    { key: "view", label: "Ver comunidade", href: "/communities/" + communityId },
+    { key: "invite", label: "Convidar", href: "/communities/" + communityId + "/invite" },
+    {
+      key: "provider",
+      label: "Indicar prestador",
+      href: "/communities/" + communityId + "/indicar-prestador",
+    },
+  ]
+  return (
+    <Dropdown>
+      <Dropdown.Trigger aria-label="Abrir menu da comunidade">
+        <Button
+          isIconOnly
+          variant="tertiary"
+          size="sm"
+          aria-label="Mais opções"
+          className="rounded-full min-h-11 min-w-11"
+        >
+          <MoreHorizontal size={18} aria-hidden="true" />
+        </Button>
+      </Dropdown.Trigger>
+      <Dropdown.Popover placement="bottom end">
+        <Dropdown.Menu
+          aria-label="Ações da comunidade"
+          onAction={(key) => {
+            const item = items.find((i) => i.key === key)
+            if (item) window.location.assign(item.href)
+          }}
+        >
+          {items.map((item) => (
+            <Dropdown.Item key={item.key} id={item.key}>
+              {item.label}
+            </Dropdown.Item>
+          ))}
+        </Dropdown.Menu>
+      </Dropdown.Popover>
+    </Dropdown>
   )
 }
 
@@ -119,6 +166,29 @@ export function CommunitiesScreen({
   const [submitError, setSubmitError] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  const router = useRouter()
+
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState("")
+
+  async function handleCancelRequest(communityId: string) {
+    setCancelling(true)
+    setCancelError("")
+    const formData = new FormData()
+    formData.set("communityId", communityId)
+    try {
+      const outcome = await cancelCommunityRequestAction(formData)
+      if (!outcome.ok) {
+        setCancelError(outcome.message)
+      } else {
+        router.refresh()
+      }
+    } catch {
+      setCancelError("Não foi possível cancelar agora. Tente novamente.")
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   const { mine, pending, discover } = useMemo(() => {
     const knownById = new Map(knownCommunities.map((c) => [c.id, c]))
@@ -194,7 +264,7 @@ export function CommunitiesScreen({
                 ) : (
                   mine.map((community) => (
                     <Card key={community.id} className="p-4">
-                      <div className="flex gap-4">
+                      <div className="flex items-start gap-4">
                         <CommunityThumbnail url={community.thumbnailUrl} kind="thumbnail" />
                         <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
                           <h2 className="text-base font-semibold tracking-tight">
@@ -215,6 +285,9 @@ export function CommunitiesScreen({
                             Ver comunidade
                           </Link>
                         </div>
+                        <div className="shrink-0">
+                          <CommunityCardMenu communityId={community.id} />
+                        </div>
                       </div>
                     </Card>
                   ))
@@ -228,7 +301,35 @@ export function CommunitiesScreen({
                     <ul className="mt-3 flex flex-col gap-4">
                       {pending.map((request) => (
                         <li key={request.communityId} className="flex flex-col gap-1">
-                          <PendingChip />
+                          <div className="flex items-center justify-between gap-2">
+                            <PendingChip />
+                            <Dropdown>
+                              <Dropdown.Trigger
+                                aria-label={`Abrir menu do pedido de ${request.name}`}
+                              >
+                                <Button
+                                  isIconOnly
+                                  variant="tertiary"
+                                  size="sm"
+                                  aria-label="Mais opções do pedido"
+                                  isDisabled={cancelling}
+                                  className="rounded-full min-h-11 min-w-11"
+                                >
+                                  <MoreHorizontal size={18} aria-hidden="true" />
+                                </Button>
+                              </Dropdown.Trigger>
+                              <Dropdown.Popover placement="bottom end">
+                                <Dropdown.Menu
+                                  aria-label="Ações do pedido"
+                                  onAction={() => handleCancelRequest(request.communityId)}
+                                >
+                                  <Dropdown.Item key="cancel" id="cancel">
+                                    Cancelar pedido
+                                  </Dropdown.Item>
+                                </Dropdown.Menu>
+                              </Dropdown.Popover>
+                            </Dropdown>
+                          </div>
                           <span className="text-sm font-medium">{request.name}</span>
                           {request.cityLabel && (
                             <span className="text-sm text-muted">{request.cityLabel}</span>
@@ -240,6 +341,13 @@ export function CommunitiesScreen({
                           )}
                         </li>
                       ))}
+                      {cancelError && (
+                        <li>
+                          <p className="text-xs text-[var(--semantic-danger-foreground)]">
+                            {cancelError}
+                          </p>
+                        </li>
+                      )}
                     </ul>
                     <p className="mt-3 text-xs leading-relaxed text-muted">
                       Estes pedidos ainda estão em análise — você ainda não faz parte delas.

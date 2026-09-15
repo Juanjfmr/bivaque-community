@@ -2,7 +2,7 @@
 
 import { Button } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
-import { Bus, FileText, GraduationCap, Hospital, Search } from "lucide-react"
+import { ArrowRight, Bus, FileText, GraduationCap, Hospital, Search } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
@@ -206,7 +206,13 @@ function GuideContent() {
           Explorar
         </Link>
         <span aria-hidden="true"> / </span>
-        <span aria-current="page">Guia</span>
+        <Link
+          href="/guide"
+          aria-current="page"
+          className="inline-flex min-h-11 items-center rounded-lg px-2 text-[var(--semantic-text-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)]"
+        >
+          Guia
+        </Link>
       </nav>
 
       <header className="mt-1 flex flex-col gap-1">
@@ -219,7 +225,83 @@ function GuideContent() {
         </p>
       </header>
 
-      <search className="mt-5 block">
+      {/* Abas do topo (prancha 12): Guia (aqui) e Mercado (rota real). */}
+      <div
+        role="tablist"
+        aria-label="Seções do conteúdo da cidade"
+        className="mt-5 inline-flex rounded-full border border-border bg-[var(--semantic-surface)] p-1"
+      >
+        <span
+          role="tab"
+          aria-selected="true"
+          tabIndex={0}
+          className="inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-white"
+        >
+          Guia
+        </span>
+        <Link
+          role="tab"
+          aria-selected="false"
+          href="/mercado"
+          className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium text-[var(--semantic-text-secondary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+        >
+          Mercado
+        </Link>
+      </div>
+
+      {/* Bloco editorial (prancha 12) — só com entradas aprovadas reais. As
+          fotos da prancha dependem de fixtures [dado] (RECON-051); os cards de
+          assunto saem das categorias presentes, com contagem verdadeira. */}
+      {!loading && !error && entries.length > 0 && (
+        <section aria-labelledby="guia-editorial-titulo" className="mt-6">
+          <div className="flex flex-col gap-4 rounded-2xl bg-[var(--semantic-action-primary)] px-6 py-8 text-white sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-xl">
+              <h2
+                id="guia-editorial-titulo"
+                className="text-xl font-semibold tracking-tight sm:text-2xl"
+              >
+                Seus primeiros dias em {current.cityName}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-white/85">
+                Referências aprovadas por quem já mora aqui — escolas, saúde, transporte e
+                utilidades para chegar e se organizar.
+              </p>
+            </div>
+            <Link
+              href="#guia-referencias"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-white px-4 text-sm font-medium text-[var(--semantic-action-primary)] transition-transform duration-[var(--semantic-motion-duration-instant)] hover:translate-x-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              Ler guia
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {categories.map((item) => {
+              const Icon = CATEGORY_ICONS[item]
+              const count = entries.filter((entry) => entry.category === item).length
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setCategory(item)}
+                  className="flex min-h-24 items-center gap-3 rounded-2xl border border-border bg-[var(--semantic-surface)] px-4 py-4 text-left transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                >
+                  <Icon size={20} aria-hidden="true" className="shrink-0 text-accent" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">{CATEGORY_LABELS[item]}</span>
+                    <span className="block text-xs text-muted">
+                      {count} {count === 1 ? "referência" : "referências"}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      <search className="mt-6 block">
         <label htmlFor="guia-busca" className="block text-sm font-medium">
           Buscar no guia
         </label>
@@ -231,7 +313,7 @@ function GuideContent() {
             placeholder="Buscar por nome ou descrição..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="min-h-11 w-full bg-transparent text-sm focus:outline-none"
+            className="min-h-11 w-full bg-transparent text-sm transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none"
           />
         </div>
       </search>
@@ -265,7 +347,11 @@ function GuideContent() {
         </nav>
 
         <div className="flex min-w-0 flex-col gap-8 lg:col-start-2 lg:row-start-1">
-          <section aria-labelledby="guia-referencias-titulo" className="flex flex-col gap-3">
+          <section
+            id="guia-referencias"
+            aria-labelledby="guia-referencias-titulo"
+            className="scroll-mt-24 flex flex-col gap-3"
+          >
             <h2 id="guia-referencias-titulo" className="text-base font-semibold tracking-tight">
               Guia de chegada
             </h2>
@@ -357,13 +443,54 @@ function GuideContent() {
             className="lg:col-start-2 xl:col-start-3 xl:row-start-1"
           >
             <Card className="p-4">
+              <h2 className="text-base font-semibold tracking-tight">Comece por aqui</h2>
+              <ul className="mt-2">
+                {categories.map((item) => {
+                  const Icon = CATEGORY_ICONS[item]
+                  const count = entries.filter((entry) => entry.category === item).length
+                  return (
+                    <li key={item}>
+                      <button
+                        type="button"
+                        onClick={() => setCategory(item)}
+                        aria-pressed={category === item}
+                        className="flex min-h-11 w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                      >
+                        <Icon size={16} aria-hidden="true" className="shrink-0 text-muted" />
+                        <span className="min-w-0 flex-1 truncate font-medium">
+                          {CATEGORY_LABELS[item]}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted">{count}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+
+            <Card className="p-4">
               <h2 id="guia-sobre-titulo" className="text-base font-semibold tracking-tight">
                 Sobre o guia
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                Todas as referências deste guia são revisadas por uma pessoa da equipe do Bivaque
-                antes de serem publicadas. Nada entra aqui de forma automática.
+                Conteúdo curado por famílias, veteranos e pensionistas que moram na cidade. Nada
+                entra aqui de forma automática.
               </p>
+            </Card>
+
+            <Card className="p-4">
+              <h2 className="text-base font-semibold tracking-tight">Ajude a melhorar o guia</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Achou uma referência desatualizada ou conhece um serviço que faltou? O canal de
+                contato do produto é o mesmo dos avisos transacionais.
+              </p>
+              <Link
+                href="/ajuda"
+                className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+              >
+                Falar com a equipe
+                <ArrowRight size={16} aria-hidden="true" />
+              </Link>
             </Card>
           </aside>
         )}

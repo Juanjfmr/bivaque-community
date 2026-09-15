@@ -1,10 +1,9 @@
 import { createServerClient } from "@supabase/ssr"
-import type { Route } from "next"
 import { cookies } from "next/headers"
-import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import type { ReactNode } from "react"
 import { createServerClient as createServiceClient } from "../../../../../lib/supabase/server"
+import { OwnerConsoleNav } from "./owner-console-nav"
 
 export default async function CommunityAdminLayout({
   children,
@@ -34,7 +33,7 @@ export default async function CommunityAdminLayout({
     data: { user },
   } = await authClient.auth.getUser()
   if (!user) {
-    redirect(`/login?return=/communities/${communityId}/admin` as Route)
+    redirect(`/login?return=/communities/${communityId}/admin`)
   }
 
   const serviceClient = createServiceClient()
@@ -62,7 +61,7 @@ export default async function CommunityAdminLayout({
   })
 
   if (!isModerator) {
-    redirect(`/communities/${communityId}` as Route)
+    redirect(`/communities/${communityId}`)
   }
 
   return (
@@ -72,33 +71,8 @@ export default async function CommunityAdminLayout({
         className="border-b border-border bg-surface px-6 py-3"
       >
         <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
-          <span className="text-muted">Console — {community.name}</span>
-          <ul className="flex flex-wrap gap-4">
-            <li>
-              <Link
-                href={`/communities/${communityId}/admin/pending` as Route}
-                className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-              >
-                Pedidos de entrada
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={`/communities/${communityId}/admin/media` as Route}
-                className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-              >
-                Imagens
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={`/communities/${communityId}` as Route}
-                className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-              >
-                Voltar à comunidade
-              </Link>
-            </li>
-          </ul>
+          <span className="text-muted">Console · {community.name}</span>
+          <OwnerConsoleNav communityId={communityId} />
         </div>
       </nav>
       {children}

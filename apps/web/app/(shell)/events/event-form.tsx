@@ -10,6 +10,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
+import { Card } from "../../components/bivaque/card"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { cancelEventAction, createEventAction, updateEventAction } from "./event-actions"
 
@@ -86,6 +87,8 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
         {isEdit ? "Editar evento" : "Novo evento"}
       </h1>
 
+      {!isEdit && <p className="text-sm text-muted">O evento é salvo antes de ser divulgado.</p>}
+
       {cancelled ? (
         <FeedbackAlert
           variant="warning"
@@ -158,10 +161,18 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
         </div>
 
         {!isEdit ? (
-          <p className="text-xs text-muted">
-            O evento será publicado em {current.cityName}
-            {current.stateCode ? `, ${current.stateCode}` : ""}. A cidade é fixada na criação.
-          </p>
+          // "Quem pode ver" da prancha 70: o alcance é a cidade, decidido na
+          // criação e imutável depois (o evento não tem público selecionável).
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Quem pode ver</span>
+            <div className="rounded-lg border border-border bg-[var(--semantic-surface-sunken)] px-3 py-2.5 text-sm">
+              Toda a cidade — {current.cityName}
+              {current.stateCode ? `, ${current.stateCode}` : ""}
+            </div>
+            <p className="text-xs text-muted">
+              O alcance é a cidade em que o evento é criado; a edição não o altera.
+            </p>
+          </div>
         ) : (
           <p className="text-xs text-muted">
             Alterações relevantes (título, descrição, data, local) avisam quem confirmou presença.
@@ -180,6 +191,44 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
           </Link>
         </div>
       </form>
+
+      {!isEdit ? (
+        <div className="flex flex-col gap-3">
+          <Card className="p-4">
+            <h2 className="text-sm font-semibold">Quem pode participar</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted">
+              Membros verificados de {current.cityName} podem confirmar presença. O evento aparece
+              para toda a cidade; confirmar é uma ação de cada pessoa.
+            </p>
+          </Card>
+
+          <Card className="p-4">
+            <h2 className="text-sm font-semibold">O que acontece depois de publicar</h2>
+            <ol className="mt-2 flex flex-col gap-2 text-sm text-muted">
+              <li className="flex gap-2">
+                <span className="font-semibold text-[var(--semantic-action-primary)]">1.</span>
+                <span>
+                  O evento é salvo antes de ser divulgado — nada aparece sem estar gravado.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-[var(--semantic-action-primary)]">2.</span>
+                <span>
+                  Ele entra em Explorar eventos para {current.cityName} e pode ser encontrado por
+                  quem procura o que fazer na cidade.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-[var(--semantic-action-primary)]">3.</span>
+                <span>
+                  Quem confirmar presença aparece na lista de participantes; mudanças relevantes
+                  avisam essas pessoas.
+                </span>
+              </li>
+            </ol>
+          </Card>
+        </div>
+      ) : null}
 
       {isEdit && !cancelled ? (
         <div className="mt-2 flex flex-col gap-2 rounded-xl border border-border bg-[var(--semantic-surface-sunken)] p-3">

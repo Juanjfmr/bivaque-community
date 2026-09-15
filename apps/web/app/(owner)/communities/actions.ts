@@ -147,6 +147,21 @@ async function approveCommunityMembersBatchAction(formData: FormData) {
   revalidatePath("/communities")
 }
 
+// Variantes por linha com o id ligado (RECON-049, par 73): o React 19
+// rejeita name/value em botão cujo formAction é função ("will get
+// overridden"), então o userId viaja como primeiro argumento do bind —
+// formAction={fn.bind(null, member.user_id)}. O comportamento é o mesmo da
+// ação original; nada de authz nova aqui.
+export async function approveCommunityMemberByIdAction(userId: string, formData: FormData) {
+  formData.set("userId", userId)
+  await approveCommunityMemberAction(formData)
+}
+
+export async function removeCommunityMemberByIdAction(userId: string, formData: FormData) {
+  formData.set("userId", userId)
+  await removeCommunityMemberAction(formData)
+}
+
 async function removeCommunityMembersBatchAction(formData: FormData) {
   const communityId = formData.get("communityId")
   if (typeof communityId !== "string" || communityId.length === 0) {
