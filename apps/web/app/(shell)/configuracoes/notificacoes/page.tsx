@@ -167,7 +167,7 @@ export default function ConfiguracoesNotificacoesPage() {
                 setFeedback(null)
               }}
             >
-              <Switch.Content className="gap-0">
+              <Switch.Content className="min-h-11 min-w-11 items-center gap-0">
                 <Switch.Control>
                   <Switch.Thumb />
                 </Switch.Control>
@@ -189,7 +189,7 @@ export default function ConfiguracoesNotificacoesPage() {
                 setFeedback(null)
               }}
             >
-              <Switch.Content className="gap-0">
+              <Switch.Content className="min-h-11 min-w-11 items-center gap-0">
                 <Switch.Control>
                   <Switch.Thumb />
                 </Switch.Control>
@@ -211,7 +211,7 @@ export default function ConfiguracoesNotificacoesPage() {
                 setFeedback(null)
               }}
             >
-              <Switch.Content className="gap-0">
+              <Switch.Content className="min-h-11 min-w-11 items-center gap-0">
                 <Switch.Control>
                   <Switch.Thumb />
                 </Switch.Control>
@@ -257,7 +257,7 @@ export default function ConfiguracoesNotificacoesPage() {
                     setChannels((prev) => setChannel(prev, "comments", "in_app", isSelected))
                   }
                 >
-                  <Checkbox.Content>
+                  <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
                     <Checkbox.Control>
                       <Checkbox.Indicator />
                     </Checkbox.Control>
@@ -273,7 +273,7 @@ export default function ConfiguracoesNotificacoesPage() {
                     setChannels((prev) => setChannel(prev, "events", "in_app", isSelected))
                   }
                 >
-                  <Checkbox.Content>
+                  <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
                     <Checkbox.Control>
                       <Checkbox.Indicator />
                     </Checkbox.Control>
@@ -297,7 +297,7 @@ export default function ConfiguracoesNotificacoesPage() {
                     setChannels((prev) => setChannel(prev, "comments", "email", isSelected))
                   }
                 >
-                  <Checkbox.Content>
+                  <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
                     <Checkbox.Control>
                       <Checkbox.Indicator />
                     </Checkbox.Control>
@@ -313,7 +313,7 @@ export default function ConfiguracoesNotificacoesPage() {
                     setChannels((prev) => setChannel(prev, "events", "email", isSelected))
                   }
                 >
-                  <Checkbox.Content>
+                  <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
                     <Checkbox.Control>
                       <Checkbox.Indicator />
                     </Checkbox.Control>

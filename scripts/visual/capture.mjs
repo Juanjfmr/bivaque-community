@@ -959,7 +959,21 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     const style = getComputedStyle(element)
     const size = Number.parseFloat(style.fontSize)
     if (box.width === 0 || size === 0) continue
-    const charactersPerLine = box.width / (size * 0.5)
+    // Caracteres por linha é o que o texto REALMENTE tem por linha, não a
+    // largura da caixa dividida por meio em. Medido em /prestadores/<id>: a
+    // bio tem 42 caracteres e cabe em UMA linha, mas o parágrafo é um bloco de
+    // 616px dentro de uma coluna larga — a conta pela caixa dava 88 e reprovava
+    // uma linha que não existe. O número de linhas vem da altura dividida pela
+    // entrelinha; um parágrafo longo continua reprovando se suas linhas passarem
+    // do limite.
+    const lineHeight = Number.parseFloat(style.lineHeight)
+    const lines =
+      Number.isFinite(lineHeight) && lineHeight > 0
+        ? Math.max(1, Math.round(box.height / lineHeight))
+        : 1
+    const text = (element.textContent ?? "").trim()
+    if (text.length === 0) continue
+    const charactersPerLine = text.length / lines
     if (charactersPerLine > readingMeasureMax) {
       add(
         "reading-measure",

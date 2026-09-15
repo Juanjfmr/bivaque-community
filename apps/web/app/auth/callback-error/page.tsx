@@ -12,7 +12,7 @@ export default function AuthCallbackErrorPage() {
         </p>
         <Link
           href="/login"
-          className="rounded-md border border-border bg-accent px-4 py-2 text-center text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-accent px-4 text-center text-sm font-medium text-accent-foreground transition-colors duration-[var(--semantic-motion-duration-fast)] hover:bg-accent/90"
         >
           Voltar para o login
         </Link>
