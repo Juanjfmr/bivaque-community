@@ -163,7 +163,7 @@ function CommunityHero({ view }: { view: ReadyView }) {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>Sair da comunidade?</Modal.Heading>
-                <Modal.CloseTrigger />
+                <Modal.CloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-muted">

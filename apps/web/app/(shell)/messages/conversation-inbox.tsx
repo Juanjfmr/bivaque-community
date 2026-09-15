@@ -610,7 +610,7 @@ export function ConversationInbox({
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading className="text-base font-semibold">Nova conversa</Modal.Heading>
-                <Modal.CloseTrigger />
+                <Modal.CloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-muted">

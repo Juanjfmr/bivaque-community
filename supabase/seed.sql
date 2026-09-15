@@ -1346,6 +1346,20 @@ values (
   now() - interval '1 day'
 );
 
+-- Publicação da CONTA DE CAPTURA (dono-vila@). O item "Editar publicação" só
+-- aparece para o próprio autor, então o cenário BIVAQUE_VISUAL_SCENARIO=edit
+-- precisa de um post dela — a fixture acima é do outro membro.
+insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+values (
+  'b0000000-0000-4000-8000-000000000002',
+  '00000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000008',
+  'text',
+  'Abrimos a horta comunitária da vila neste sábado. Quem quiser ajudar, chegue às 8h.',
+  now() - interval '6 hours'
+)
+on conflict (id) do nothing;
+
 -- 2) Conversa direta do titular com o prestador, dentro de um pedido real —
 --    contexto 'provider' autêntico (não um chip de "grupo em comum" sem grupo).
 insert into public.dm_conversations (id, participant_a, participant_b, context_type, context_id, created_at)

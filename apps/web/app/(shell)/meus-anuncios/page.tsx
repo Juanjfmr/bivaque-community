@@ -571,7 +571,7 @@ export default function MeusAnunciosPage() {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>{pendingCopy?.title ?? "Confirmar"}</Modal.Heading>
-                <Modal.CloseTrigger />
+                <Modal.CloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 {pendingCopy === null ? null : <p className="text-sm">{pendingCopy.body}</p>}

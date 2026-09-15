@@ -399,7 +399,7 @@ export default function ConfiguracoesContaPage() {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>Sair da sua conta?</Modal.Heading>
-                <Modal.CloseTrigger />
+                <Modal.CloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-muted">
@@ -430,7 +430,7 @@ export default function ConfiguracoesContaPage() {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>Solicitar exclusão da conta?</Modal.Heading>
-                <Modal.CloseTrigger />
+                <Modal.CloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm font-medium">

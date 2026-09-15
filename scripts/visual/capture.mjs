@@ -65,7 +65,11 @@ export const HEADINGS = {
   "/configuracoes": "^Configurações$",
   "/groups": "Grupos",
   "/communities": "Comunidades",
-  "/community": "Comunidade|Manaus",
+  // O h1 desta rota é o NOME da comunidade principal de quem lê ("Vila
+  // Ajuricaba" para a conta de captura), caindo para "Cidade, UF" só quando não
+  // há vila — dado, não contrato. Com "Comunidade|Manaus" fixo a captura saía
+  // INVALID em três viewports mesmo com a tela certa na frente.
+  "/community": DYNAMIC_HEADING,
   "/guide": "Guia",
   "/events": "^Explorar eventos$",
   "/notifications": "^Notificações$",
@@ -900,9 +904,11 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
 async function main() {
   const runDir = join(OUT_ROOT, RUN_ID)
   const shotsDir = join(runDir, "shots")
-  if (SCENARIO && SCENARIO !== "publish") throw new Error(`Unknown visual scenario: ${SCENARIO}`)
+  if (SCENARIO && !["publish", "edit"].includes(SCENARIO)) {
+    throw new Error(`Unknown visual scenario: ${SCENARIO}`)
+  }
   if (SCENARIO && ROUTE_PATH && ROUTE_PATH !== "/inicio") {
-    throw new Error("The publish scenario starts at /inicio")
+    throw new Error(`The ${SCENARIO} scenario starts at /inicio`)
   }
   // BIVAQUE_VISUAL_ROUTE casa o caminho exato ou o nome da rota — o nome é a
   // única forma de pedir uma rota cujo caminho só existe em runtime (fixture).
@@ -924,7 +930,12 @@ async function main() {
     name: `${route.name}${route.auth ? "--authenticated" : "--visitor"}${SCENARIO ? `--${SCENARIO}` : ""}`,
     expectedHeading: HEADINGS[route.path],
     operator: ["/admissions", "/reports", "/guide-queue", "/arrivals"].includes(route.path),
-    dialog: SCENARIO === "publish" ? "Criar publicação" : undefined,
+    dialog:
+      SCENARIO === "publish"
+        ? "Criar publicação"
+        : SCENARIO === "edit"
+          ? "Editar publicação"
+          : undefined,
   }))
   mkdirSync(shotsDir, { recursive: true })
 
@@ -1060,6 +1071,21 @@ async function main() {
           await page
             .getByRole("dialog", { name: route.dialog, exact: true })
             .waitFor({ state: "visible" })
+        }
+
+        if (SCENARIO === "edit") {
+          // Prancha 45 painel 3 (edição): o item "Editar publicação" só existe
+          // no menu do PRÓPRIO autor (a autoria é conferida no servidor), e o
+          // post do autor vem da fixture RECON-051.
+          const card = page
+            .locator("article")
+            .filter({ hasText: "horta comunitária da vila" })
+            .first()
+          await card.getByRole("button", { name: "Mais opções" }).first().click()
+          await page.getByRole("menuitem", { name: "Editar publicação" }).click()
+          await page
+            .getByRole("dialog", { name: route.dialog, exact: true })
+            .waitFor({ state: "visible", timeout: 15_000 })
         }
 
         // Two shots per route: the fold shot keeps first-impression detail legible for
