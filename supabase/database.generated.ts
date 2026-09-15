@@ -55,6 +55,7 @@ export type Database = {
           source: string
           source_reply_id: string | null
           status: string
+          submitted_by: string | null
           updated_at: string
           website_url: string | null
         }
@@ -73,6 +74,7 @@ export type Database = {
           source?: string
           source_reply_id?: string | null
           status?: string
+          submitted_by?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -91,6 +93,7 @@ export type Database = {
           source?: string
           source_reply_id?: string | null
           status?: string
+          submitted_by?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -2962,11 +2965,7 @@ export type Database = {
           p_caller_user_id: string
           p_community_id: string
           p_kind: string
-          // À MÃO: a função aceita NULL para limpar o ponteiro da imagem
-          // ("if p_path is not null and split_part(...)"). O gerador não
-          // expressa nulabilidade de argumento, então esta linha é ajustada
-          // depois do generate:types — preservar em toda regeneração.
-          p_path: string | null
+          p_path: string
         }
         Returns: undefined
       }
@@ -2987,6 +2986,16 @@ export type Database = {
           name: string
           visibility: Database["public"]["Enums"]["group_visibility"]
         }[]
+      }
+      suggest_guide_entry: {
+        Args: {
+          p_category: Database["public"]["Enums"]["arrival_guide_category"]
+          p_description: string
+          p_name: string
+          p_phone?: string
+          p_website_url?: string
+        }
+        Returns: string
       }
       transfer_community_ownership: {
         Args: { p_community_id: string; p_new_owner_user_id: string }

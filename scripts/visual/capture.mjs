@@ -196,6 +196,9 @@ export const HEADINGS = {
   // A aba chega pela URL: o atalho "Salvos" do topo do guia manda para cá com o
   // tipo escolhido, então a variante é chave própria de contrato.
   "/salvos?aba=guia": "^Salvos$",
+  // Prancha 12/61: a rota de sugestão de referência nova (a correção de artigo
+  // existente já tem contrato em /guide/[id]/correcao).
+  "/guide/sugerir": "^Sugerir referência$",
   "/ajuda": "^Ajuda$",
   "/denuncias": "^Confiança e privacidade$",
   "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01": "^Denunciar publicação$",
@@ -474,6 +477,7 @@ export const ROUTES = [
   // Prancha 12/61: a aba Guia da tela de salvos, populada pela referência que o
   // seed grava para a conta de captura.
   { path: "/salvos?aba=guia", name: "salvos-guia", auth: true },
+  { path: "/guide/sugerir", name: "guide-sugerir", auth: true },
   { path: "/ajuda", name: "ajuda", auth: true },
   { path: "/denuncias", name: "denuncias", auth: true },
   {

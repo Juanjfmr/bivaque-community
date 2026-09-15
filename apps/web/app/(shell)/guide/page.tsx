@@ -2,7 +2,16 @@
 
 import { Button } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
-import { ArrowRight, Bookmark, Bus, FileText, GraduationCap, Hospital, Search } from "lucide-react"
+import {
+  ArrowRight,
+  Bookmark,
+  Bus,
+  FileText,
+  GraduationCap,
+  Hospital,
+  Lightbulb,
+  Search,
+} from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
@@ -313,14 +322,22 @@ function GuideContent() {
 
       {/* O marcador do cartão grava; este atalho leva ao que já foi gravado, com
           a aba do guia escolhida — sem isso o topo prometeria um destino que
-          abre em "Tudo". */}
-      <div className="mt-3">
+          abre em "Tudo". Ao lado, o caminho de quem conhece uma referência que
+          o guia ainda não tem (prancha 12/61). */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1">
         <Link
           href="/salvos?aba=guia"
           className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
         >
           <Bookmark size={16} aria-hidden="true" />
           Salvos
+        </Link>
+        <Link
+          href="/guide/sugerir"
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+        >
+          <Lightbulb size={16} aria-hidden="true" />
+          Sugerir referência
         </Link>
       </div>
 
