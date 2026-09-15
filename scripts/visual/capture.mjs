@@ -637,19 +637,24 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
 
   // O desenho que anima é o primeiro filho visível do label (o controle
   // pintado); o label em si é só a área de toque.
-  const drawnControl = (label) => {
+  const drawnControl = (label, control) => {
     for (const child of label.querySelectorAll("*")) {
+      if (child === control) continue
       const rect = child.getBoundingClientRect()
       if (rect.width > 0 && rect.height > 0 && !visuallyHidden(child)) return child
     }
     return label
   }
 
+  // O alvo de ponteiro de um controle dentro de <label> é o label inteiro —
+  // clicar nele aciona o controle. Vale para o input visualmente oculto do
+  // react-aria E para o checkbox desenhado de 20x20 cujo label tem 44px de
+  // altura: medir o quadradinho reprovava um alvo que está certo.
   const hiddenControlTarget = (element) => {
     if (!["INPUT", "SELECT", "TEXTAREA"].includes(element.tagName)) return null
     const label = element.closest("label")
-    if (!label || !visuallyHidden(element)) return null
-    return { sizeEl: label, motionEl: drawnControl(label) }
+    if (!label) return null
+    return { sizeEl: label, motionEl: drawnControl(label, element) }
   }
 
   for (const element of interactive) {
@@ -838,13 +843,19 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
   if (h1Count !== 1) add("heading-structure", "medium", "h1", `${h1Count} h1 elements (expected 1)`)
 
   // 10. active navigation — each visible nav has exactly one current item (rubrica item 4).
-  // Anchors use aria-current="page"; tab role anchors use aria-selected="true" (ARIA Tabs pattern).
+  // O item corrente pode ser um link (aria-current="page"), um <span> na trilha
+  // — a página atual de um breadcrumb NÃO é link para si mesma — ou uma aba
+  // (aria-selected="true"). A régua exigia <a>, e por isso reprovava toda
+  // trilha correta: /mercado já marcava a página atual com
+  // <span aria-current="page"> e ainda assim aparecia como "0 active nav items".
+  // Corrigido aqui, na régua, e não no markup — virar link para a própria
+  // página para agradar o medidor seria o defeito.
   for (const nav of document.querySelectorAll("nav")) {
     if (nav.offsetWidth === 0 && nav.offsetHeight === 0) continue
     const anchors = nav.querySelectorAll("a")
     if (anchors.length === 0) continue
     const current = nav.querySelectorAll(
-      'a[aria-current="page"], a[data-active="true"], a[role="tab"][aria-selected="true"]',
+      '[aria-current="page"], a[data-active="true"], a[role="tab"][aria-selected="true"]',
     )
     if (current.length !== 1) {
       add(

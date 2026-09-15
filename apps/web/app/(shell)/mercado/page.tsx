@@ -277,8 +277,13 @@ function MercadoContent() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
-      <nav aria-label="Trilha" className="flex items-center gap-2 text-xs text-muted">
-        <Link href={"/explorar" as Route} className="hover:underline">
+      {/* A régua mede o link inteiro: destino de trilha é alvo de 44px, com
+          transição de estado — a página atual continua um <span> marcado. */}
+      <nav aria-label="Trilha" className="flex flex-wrap items-center gap-2 text-xs text-muted">
+        <Link
+          href={"/explorar" as Route}
+          className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline"
+        >
           Explorar
         </Link>
         <span aria-hidden="true">/</span>
@@ -318,13 +323,13 @@ function MercadoContent() {
       >
         <Link
           href={"/guide" as Route}
-          className="pb-2 text-sm font-medium text-muted hover:text-[var(--semantic-text-primary)]"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center px-2 pb-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-fast)] hover:text-[var(--semantic-text-primary)]"
         >
           Guia
         </Link>
         <span
           aria-current="page"
-          className="border-b-2 border-[var(--semantic-action-primary)] pb-2 text-sm font-semibold text-[var(--semantic-action-primary)]"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center border-b-2 border-[var(--semantic-action-primary)] px-2 pb-2 text-sm font-semibold text-[var(--semantic-action-primary)]"
         >
           Mercado
         </span>
@@ -572,7 +577,7 @@ function MercadoContent() {
           <div className="border-t border-border pt-4 text-center">
             <Link
               href={"/explorar/servicos" as Route}
-              className="text-sm font-medium text-[var(--semantic-action-primary)] hover:underline"
+              className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline"
             >
               Procurando um profissional? Ver serviços ›
             </Link>

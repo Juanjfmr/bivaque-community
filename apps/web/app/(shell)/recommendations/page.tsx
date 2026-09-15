@@ -140,6 +140,10 @@ export default function RecommendationsPage() {
 
   // saved tab
   const [savedRequests, setSavedRequests] = useState<SavedRequestRow[]>([])
+  // Prancha 80: a aba "Pedidos (2)" conta os pedidos visíveis para quem lê —
+  // a mesma RLS que o painel usa. null enquanto não se sabe: "(0)" seria mentira
+  // durante o carregamento.
+  const [requestsCount, setRequestsCount] = useState<number | null>(null)
   const [savesLoading, setSavesLoading] = useState(false)
   const [savesError, setSavesError] = useState("")
   const [unsavingId, setUnsavingId] = useState<string | null>(null)
@@ -227,6 +231,12 @@ export default function RecommendationsPage() {
       // 6. groups I haven't joined — limit 6
       const unjoined = allGroups.filter((g) => !myGroupIds.has(g.id)).slice(0, 6)
       setDiscoverGroups(unjoined)
+
+      // 6b. quantos pedidos de indicação esta pessoa vê (prancha 80)
+      const { count: requestsTotal } = await supabase
+        .from("recommendation_requests")
+        .select("*", { count: "exact", head: true })
+      setRequestsCount(requestsTotal ?? 0)
 
       // 7. member counts for public unjoined groups
       const counts: Record<string, number> = {}
@@ -483,7 +493,7 @@ export default function RecommendationsPage() {
               Pedir indicação
             </Tabs.Tab>
             <Tabs.Tab key="requests" id="requests">
-              Pedidos
+              {requestsCount === null ? "Pedidos" : `Pedidos (${requestsCount})`}
             </Tabs.Tab>
             <Tabs.Tab key="saved" id="saved">
               Salvas

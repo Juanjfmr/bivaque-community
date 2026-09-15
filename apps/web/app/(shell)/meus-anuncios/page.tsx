@@ -266,14 +266,25 @@ export default function MeusAnunciosPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8">
-      <nav aria-label="Trilha" className="flex items-center gap-2 text-xs text-muted">
-        <Link href={"/explorar" as Route} className="hover:underline">
+      {/* Mesma trilha do /mercado: alvo de 44px nos destinos (a régua mede o
+          link inteiro), transição no hover e a página atual marcada com
+          aria-current="page" — sem ela o nav fica sem item corrente. */}
+      <nav aria-label="Trilha" className="flex flex-wrap items-center gap-2 text-xs text-muted">
+        <Link
+          href={"/explorar" as Route}
+          className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline"
+        >
           Explorar
         </Link>
         <span aria-hidden="true">›</span>
-        <Link href={"/mercado" as Route} className="hover:underline">
+        <Link
+          href={"/mercado" as Route}
+          className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline"
+        >
           Mercado
         </Link>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Meus anúncios</span>
       </nav>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -322,7 +333,7 @@ export default function MeusAnunciosPage() {
           placeholder="Buscar nos meus anúncios"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] pl-9 pr-3 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus-outer)]"
+          className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] pl-9 pr-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus-outer)]"
         />
       </div>
 
@@ -446,16 +457,11 @@ export default function MeusAnunciosPage() {
                             </Button>
                             {actions.length > 0 ? (
                               <Dropdown>
-                                <Dropdown.Trigger aria-label={`Mais ações para ${listing.title}`}>
-                                  <Button
-                                    isIconOnly
-                                    variant="tertiary"
-                                    size="sm"
-                                    aria-label="Mais ações"
-                                    className="h-11 w-11 min-h-11 min-w-11 rounded-full"
-                                  >
-                                    <MoreHorizontal size={18} aria-hidden="true" />
-                                  </Button>
+                                <Dropdown.Trigger
+                                  aria-label={`Mais ações para ${listing.title}`}
+                                  className="h-11 w-11 min-h-11 min-w-11 rounded-full"
+                                >
+                                  <MoreHorizontal size={18} aria-hidden="true" />
                                 </Dropdown.Trigger>
                                 <Dropdown.Popover placement="bottom end">
                                   <Dropdown.Menu

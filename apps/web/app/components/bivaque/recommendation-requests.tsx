@@ -54,6 +54,10 @@ export default function RecommendationRequests() {
   const [requests, setRequests] = useState<RequestRow[]>([])
   const [repliesByRequest, setRepliesByRequest] = useState<Record<string, ReplyRow[]>>({})
   const [savedRequestIds, setSavedRequestIds] = useState<Set<string>>(new Set())
+  // Prancha 80: o meta do card traz a autora ("há 3 dias · Renata M.") e cada
+  // resposta traz quem respondeu. O nome sai de profiles, pela mesma RLS que já
+  // deixa ler o pedido — sem função nova e sem duplicar nome no payload.
+  const [authorNames, setAuthorNames] = useState<Record<string, string>>({})
   const [currentUserId, setCurrentUserId] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -129,9 +133,36 @@ export default function RecommendationRequests() {
       setSavedRequestIds(
         new Set((savesData as { request_id: string }[] | null)?.map((save) => save.request_id)),
       )
+
+      const authorIds = [
+        ...new Set([
+          ...nextRequests.map((request) => request.author_id),
+          ...Object.values(nextReplies)
+            .flat()
+            .map((reply) => reply.author_id),
+        ]),
+      ]
+      if (authorIds.length > 0) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .in("user_id", authorIds)
+
+        // Nome é enfeite do card: falhar aqui não pode esconder o pedido.
+        if (!profileError) {
+          setAuthorNames(
+            Object.fromEntries(
+              ((profileData as { user_id: string; display_name: string }[] | null) ?? []).map(
+                (profile) => [profile.user_id, profile.display_name],
+              ),
+            ),
+          )
+        }
+      }
     } else {
       setRepliesByRequest({})
       setSavedRequestIds(new Set())
+      setAuthorNames({})
     }
 
     setLoading(false)
@@ -431,7 +462,12 @@ export default function RecommendationRequests() {
                         <Chip size="sm" variant="soft">
                           {request.group_id ? "Grupo" : "Manaus"}
                         </Chip>
-                        <span className="text-xs text-muted">{formatDate(request.created_at)}</span>
+                        <span className="text-xs text-muted">
+                          {formatDate(request.created_at)}
+                          {authorNames[request.author_id]
+                            ? ` · ${authorNames[request.author_id]}`
+                            : ""}
+                        </span>
                         {request.is_resolved && (
                           <Chip size="sm" variant="soft" color="success">
                             ✓ Resolvida pela autora
@@ -541,7 +577,14 @@ export default function RecommendationRequests() {
                               </div>
                             ) : (
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                <span className="text-sm text-muted">{reply.body}</span>
+                                <span className="flex flex-col gap-1 text-sm text-muted">
+                                  {authorNames[reply.author_id] && (
+                                    <span className="text-xs font-medium text-foreground">
+                                      {authorNames[reply.author_id]}
+                                    </span>
+                                  )}
+                                  {reply.body}
+                                </span>
                                 <div className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
                                   {reply.author_id === currentUserId && (
                                     <>

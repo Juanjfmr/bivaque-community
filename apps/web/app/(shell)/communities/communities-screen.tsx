@@ -70,16 +70,9 @@ function CommunityCardMenu({ communityId }: { communityId: string }) {
   ]
   return (
     <Dropdown>
-      <Dropdown.Trigger aria-label="Abrir menu da comunidade">
-        <Button
-          isIconOnly
-          variant="tertiary"
-          size="sm"
-          aria-label="Mais opções"
-          className="rounded-full min-h-11 min-w-11"
-        >
-          <MoreHorizontal size={18} aria-hidden="true" />
-        </Button>
+      {/* Trigger é o próprio botão — ver feed-post-menu.tsx. */}
+      <Dropdown.Trigger aria-label="Mais opções" className="rounded-full min-h-11 min-w-11">
+        <MoreHorizontal size={18} aria-hidden="true" />
       </Dropdown.Trigger>
       <Dropdown.Popover placement="bottom end">
         <Dropdown.Menu
@@ -305,18 +298,11 @@ export function CommunitiesScreen({
                             <PendingChip />
                             <Dropdown>
                               <Dropdown.Trigger
-                                aria-label={`Abrir menu do pedido de ${request.name}`}
+                                aria-label={`Mais opções do pedido de ${request.name}`}
+                                isDisabled={cancelling}
+                                className="rounded-full min-h-11 min-w-11"
                               >
-                                <Button
-                                  isIconOnly
-                                  variant="tertiary"
-                                  size="sm"
-                                  aria-label="Mais opções do pedido"
-                                  isDisabled={cancelling}
-                                  className="rounded-full min-h-11 min-w-11"
-                                >
-                                  <MoreHorizontal size={18} aria-hidden="true" />
-                                </Button>
+                                <MoreHorizontal size={18} aria-hidden="true" />
                               </Dropdown.Trigger>
                               <Dropdown.Popover placement="bottom end">
                                 <Dropdown.Menu
