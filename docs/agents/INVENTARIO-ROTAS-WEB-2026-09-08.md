@@ -107,6 +107,7 @@ defende sozinho.
 | `/api/admin/reports/[id]` | Bearer + operador | `401`, `403`, `400`, `404`, `500` |
 | `/api/internal/outbox` | **segredo de worker** (`x-outbox-secret`), sem identidade de usuário | `503 not_configured`, `401`, `400`, `500` |
 | `/api/internal/verification-reconcile` | **segredo de worker** (`RECONCILE_WORKER_SECRET`) | `503`, `401`, `400` |
+| `/api/internal/account-deletion` | **segredo de worker** (`x-account-deletion-secret` / `ACCOUNT_DELETION_WORKER_SECRET`), sem identidade de usuário; pré-checagem do vencimento antes de qualquer passo destrutivo | `503 not_configured`, `401`, `400`; por conta: `not_found`, `not_due`, `already_purged`, `media_failed`, `auth_failed`, `finalize_failed` |
 | `/auth/callback` | nenhuma; troca `code` por sessão | redireciona para `/auth/callback-error` |
 
 ---

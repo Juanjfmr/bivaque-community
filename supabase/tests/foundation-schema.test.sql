@@ -19,6 +19,7 @@ select columns_are(
     'visibility',
     'consent_version',
     'consented_at',
+    'bio',
     'created_at',
     'updated_at'
   ],

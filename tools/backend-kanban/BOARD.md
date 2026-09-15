@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 87 frentes · 14 agora · 11 bloqueadas · 29 concluídas · 2 drifts
+**Mapa:** 89 frentes · 14 agora · 12 bloqueadas · 31 concluídas · 2 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -42,6 +42,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **S4-MOBILE-COMPOSER** · P1 · Mobile: composer + reações + comentários (S4 do mobile, read-only parcial do S3) — MOB-001-SESSION esta em now: o contrato R3 de sessao do mobile (PKCE, secure-store, revogacao) nao existe. Sem ele o composer escreve sem sessao provada, entao o done era sobre a UI, nao sobre o fluxo.
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Reconciliar ADR técnico com autorização de produto de 07/09; concluir threat model, leitura por campo, remoção e testes positivos/negativos
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança
+- **RECON-052-FOLLOWUP** · P2 · Exclusão de conta: o que a purga não pode decidir sozinha (posse e superfície operacional) — Decisão do dono: destino da comunidade/grupo cujo dono pediu exclusão; Decisão do dono: vitrine de prestador e anúncios ativos de conta purgada; Decisão do dono: pedido de serviço aberto com a conta purgada
 
 ## Drift aberto
 

@@ -1,20 +1,23 @@
 "use client"
 
-import { Button, Input, Link, Modal, useOverlayState } from "@heroui/react"
-import { ChevronRight, LogOut } from "lucide-react"
+import { Button, Checkbox, Input, Link, Modal, useOverlayState } from "@heroui/react"
+import { ChevronRight, LogOut, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../../components/bivaque/skeleton"
 
-// Prancha 52, painel "Conta e privacidade": dados de acesso, recuperação e a
-// saída. O método de acesso é o do ADR-20260907-login-com-senha: e-mail e
-// senha. Alterar e-mail é o fluxo real do Auth (confirmação nos dois
-// endereços); a troca de senha usa a recuperação existente. A exclusão NÃO é
-// prometida como imediata: não existe job de exclusão aprovado, então a tela
-// informa a política real e aponta o canal — nada de botão que apaga a conta
-// pelo cliente.
+// Prancha 52, painel "Conta e privacidade": dados de acesso, recuperação, a
+// saída e a exclusão. O método de acesso é o do ADR-20260907-login-com-senha:
+// e-mail e senha. Alterar e-mail é o fluxo real do Auth (confirmação nos dois
+// endereços); a troca de senha usa a recuperação existente.
+//
+// A exclusão é a do ADR-20260914-exclusao-de-conta (RECON-052): o titular pede
+// em request_account_deletion(), a conta fica indisponível na hora e a purga
+// acontece no prazo da tabela jurídica aprovada. O aviso desta tela declara
+// exatamente o que sai, o que fica e por quê — nenhum prazo fora daquela tabela
+// aparece aqui, e nada de "apagamos tudo na hora".
 
 export default function ConfiguracoesContaPage() {
   const router = useRouter()
@@ -36,12 +39,24 @@ export default function ConfiguracoesContaPage() {
   const [signOutError, setSignOutError] = useState("")
 
   const deleteModal = useOverlayState()
+  const [deletionPending, setDeletionPending] = useState(false)
+  const [deletionDueAt, setDeletionDueAt] = useState<string | null>(null)
+  const [deletionConfirmed, setDeletionConfirmed] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
 
   const load = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser()
     setEmail(user?.email ?? null)
+
+    // Estado do próprio pedido, sem parâmetro: a função não aceita perguntar
+    // por outra pessoa. Serve para a tela não oferecer "Excluir conta" a quem
+    // já pediu — inclusive quando a resposta do pedido se perdeu no caminho.
+    const { data: pending } = await supabase.rpc("is_account_deletion_pending")
+    setDeletionPending(pending === true)
+
     setLoading(false)
   }, [supabase])
 
@@ -102,6 +117,63 @@ export default function ConfiguracoesContaPage() {
     router.refresh()
   }
 
+  const handleRequestDeletion = async () => {
+    setDeleting(true)
+    setDeleteError("")
+
+    const { data, error } = await supabase.rpc("request_account_deletion")
+    if (error) {
+      setDeleting(false)
+      setDeleteError(
+        "Não foi possível registrar o pedido agora. Tente novamente em instantes; se persistir, use o canal em Ajuda.",
+      )
+      return
+    }
+
+    const dueAt = (data as { due_at?: string } | null)?.due_at ?? null
+
+    // A sessão já foi apagada no servidor pelo próprio pedido — sair aqui
+    // limpa cookies e cache locais, não é o que revoga o acesso.
+    try {
+      await supabase.auth.signOut()
+    } catch {
+      // sessão já revogada: nada a fazer
+    }
+    try {
+      window.localStorage.clear()
+      window.sessionStorage.clear()
+    } catch {
+      // armazenamento indisponível não desfaz o pedido
+    }
+
+    setDeleting(false)
+    setDeletionDueAt(dueAt)
+    setDeletionPending(true)
+    deleteModal.close()
+  }
+
+  // Saída depois do pedido: a sessão já está revogada no servidor, então o
+  // signOut do cliente pode falhar — e falhar aqui não pode prender a pessoa
+  // numa tela de conta que ela acabou de pedir para excluir. Por isso este
+  // caminho limpa o que dá e SEMPRE volta para o login.
+  const handleLeaveAfterDeletion = async () => {
+    setSigningOut(true)
+    try {
+      await supabase.auth.signOut()
+    } catch {
+      // sessão já revogada: nada a fazer
+    }
+    try {
+      window.localStorage.clear()
+      window.sessionStorage.clear()
+    } catch {
+      // armazenamento indisponível não impede a saída
+    }
+    setSigningOut(false)
+    router.replace("/login")
+    router.refresh()
+  }
+
   if (loading) {
     return (
       <div role="status" aria-label="Carregando conta" className="space-y-3">
@@ -109,6 +181,49 @@ export default function ConfiguracoesContaPage() {
         <Skeleton className="h-16 w-full rounded-xl" />
         <Skeleton className="h-16 w-full rounded-xl" />
       </div>
+    )
+  }
+
+  if (deletionPending) {
+    const deadline = deletionDueAt
+      ? new Date(deletionDueAt).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+      : null
+
+    return (
+      <section aria-labelledby="conta-heading" className="space-y-4">
+        <div>
+          <h2 id="conta-heading" className="text-lg font-semibold tracking-tight">
+            Conta e privacidade
+          </h2>
+        </div>
+
+        <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+          <h3 className="text-sm font-medium">Exclusão solicitada</h3>
+          <p className="mt-1 text-sm text-muted">
+            Sua conta está indisponível: a sessão foi encerrada e não é mais possível entrar com
+            ela. Até{" "}
+            {deadline ? `${deadline} (15 dias contados do pedido)` : "15 dias contados do pedido"},
+            a conta, o perfil, as fotos de perfil e as preferências são apagados.
+          </p>
+          <p className="mt-2 text-sm text-muted">
+            Permanecem os registros de moderação — com seus dados anonimizados — e os logs de
+            acesso, guardados por 6 meses por obrigação legal (MCI, art. 15).
+          </p>
+          <Button
+            type="button"
+            variant="tertiary"
+            className="mt-3 min-h-11"
+            onPress={handleLeaveAfterDeletion}
+            isDisabled={signingOut}
+          >
+            {signingOut ? "Saindo..." : "Sair desta tela"}
+          </Button>
+        </div>
+      </section>
     )
   }
 
@@ -264,20 +379,18 @@ export default function ConfiguracoesContaPage() {
       </button>
 
       <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
-        <h3 className="text-sm font-medium text-[var(--danger)]">Excluir conta</h3>
-        <p className="mt-1 text-sm text-muted">
-          Não existe exclusão automática por esta tela. O pedido segue a Política de Privacidade,
-          que descreve o que é apagado, o que precisa ser mantido e em quanto tempo. Nada é apagado
-          por este botão.
-        </p>
-        <Button
+        <button
           type="button"
-          variant="tertiary"
-          className="mt-2 min-h-11"
-          onPress={deleteModal.open}
+          onClick={deleteModal.open}
+          className="flex min-h-11 w-full items-center gap-3 text-left text-sm font-medium text-[var(--danger)] transition-colors hover:text-[var(--danger)]"
         >
-          Sobre a exclusão de conta
-        </Button>
+          <Trash2 aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <span>Excluir conta</span>
+        </button>
+        <p className="mt-1 text-xs text-muted">
+          A exclusão é permanente e não pode ser desfeita. O que sai e o que permanece está no aviso
+          antes de confirmar.
+        </p>
       </div>
 
       <Modal state={signOutModal}>
@@ -313,29 +426,86 @@ export default function ConfiguracoesContaPage() {
 
       <Modal state={deleteModal}>
         <Modal.Backdrop>
-          <Modal.Container size="sm">
+          <Modal.Container size="md">
             <Modal.Dialog>
               <Modal.Header>
-                <Modal.Heading>Excluir conta</Modal.Heading>
+                <Modal.Heading>Solicitar exclusão da conta?</Modal.Heading>
                 <Modal.CloseTrigger />
               </Modal.Header>
               <Modal.Body>
-                <p className="text-sm text-muted">
-                  A exclusão é permanente e não pode ser desfeita. Enquanto não houver um job de
-                  exclusão aprovado, o pedido é feito pelo canal indicado na Política de Privacidade
-                  — o prazo e o que é mantido por obrigação legal estão lá, não nesta tela.
+                <p className="text-sm font-medium">
+                  A exclusão é permanente e não pode ser desfeita.
                 </p>
+
+                <p className="mt-3 text-sm text-muted">Ao confirmar, agora:</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
+                  <li>sua sessão é encerrada e você não consegue mais entrar nesta conta;</li>
+                  <li>seu perfil deixa de aparecer para outras pessoas;</li>
+                  <li>o que você publicou continua visível, atribuído ao seu nome de exibição.</li>
+                </ul>
+
+                <p className="mt-3 text-sm text-muted">Em até 15 dias, contados do pedido:</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
+                  <li>apagamos a conta, as credenciais, o perfil e suas fotos de perfil;</li>
+                  <li>apagamos suas preferências e seus vínculos de participação;</li>
+                  <li>
+                    os convites familiares pendentes são encerrados; a outra conta fica intacta.
+                  </li>
+                </ul>
+
+                <p className="mt-3 text-sm text-muted">O que permanece, e por quê:</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted">
+                  <li>
+                    registros de moderação (denúncias e decisões), com seus dados anonimizados —
+                    sustentam a segurança de outras pessoas;
+                  </li>
+                  <li>logs de acesso, guardados por 6 meses por obrigação legal (MCI, art. 15).</li>
+                </ul>
+
+                <p className="mt-3 text-sm text-muted">
+                  Para exercer seus direitos depois disso, use o canal em{" "}
+                  <Link href="/ajuda" className="underline">
+                    Ajuda
+                  </Link>
+                  . A resposta sai em até 15 dias.
+                </p>
+
+                <div className="mt-3">
+                  <Checkbox
+                    isSelected={deletionConfirmed}
+                    onChange={setDeletionConfirmed}
+                    isDisabled={deleting}
+                    aria-label="Entendi que a exclusão da conta é permanente e não pode ser desfeita"
+                    className="[&_input]:min-h-11 [&_input]:min-w-11"
+                  >
+                    <Checkbox.Content>
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                      <span className="text-sm">
+                        Entendi que a exclusão é permanente e não pode ser desfeita.
+                      </span>
+                    </Checkbox.Content>
+                  </Checkbox>
+                </div>
+
+                {deleteError && (
+                  <div className="mt-3">
+                    <FeedbackAlert variant="danger" description={deleteError} />
+                  </div>
+                )}
               </Modal.Body>
               <Modal.Footer>
-                <Button variant="tertiary" onPress={deleteModal.close}>
-                  Fechar
+                <Button variant="tertiary" onPress={deleteModal.close} isDisabled={deleting}>
+                  Cancelar
                 </Button>
-                <Link
-                  href="/privacidade"
-                  className="inline-flex min-h-11 items-center rounded-lg bg-[var(--semantic-primary)] px-4 text-sm font-medium text-white"
+                <Button
+                  variant="danger"
+                  onPress={handleRequestDeletion}
+                  isDisabled={!deletionConfirmed || deleting}
                 >
-                  Abrir Política de Privacidade
-                </Link>
+                  {deleting ? "Registrando..." : "Solicitar exclusão"}
+                </Button>
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>

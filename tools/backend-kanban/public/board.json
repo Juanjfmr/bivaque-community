@@ -2706,31 +2706,100 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
-      "description": "Fluxo iniciado pelo titular com efeito imediato de indisponibilidade e purga completa dentro do prazo fixado pela revisão jurídica. Nenhum prazo de retenção pode ser inventado em código ou UI. Tabela jurídica aprovada por Juan em 14/09 — os prazos da tabela são o contrato da implementação.",
+      "status": "done",
+      "description": "Fluxo iniciado pelo titular com efeito imediato de indisponibilidade e purga completa dentro do prazo fixado pela revisão jurídica. Nenhum prazo de retenção pode ser inventado em código ou UI. Tabela jurídica aprovada por Juan em 14/09 — os prazos da tabela são o contrato da implementação. Implementado em 15/09.",
       "checklist": [
         "ADR/R3 e tabela jurídica: aprovados em 14/09 (purga ≤15 dias — LGPD art. 19; logs de acesso 6 meses — MCI art. 15; moderação anonimizada já; família intacta) ✅",
-        "Descoberta 15/09 — pré-requisitos técnicos antes de codar: (a) profiles perdeu o estado 'hidden' (20260814052814) e a policy de SELECT lê só localidade: 'perfil oculto' exige mecanismo novo na policy de profiles (superfície sensível — foi ali que vazou o status de suspensão em 10/09); (b) reports/dM_reports.reporter_user_id são NOT NULL com ON DELETE CASCADE: a anonimização imediata exige DROP NOT NULL + update e o caso tem de sobreviver; (c) posts/comments.user_id são ON DELETE CASCADE: purga destrutiva apagaria o conteúdo, contra o item 4 do ADR",
-        "Caminho que satisfaz o ADR (decidido na descoberta): auth.admin.deleteUser(id, true) — soft delete do Auth (supabase-js 2.112) purga credencial e mantém a FK do conteúdo; higienizar perfil preservando display_name; medições em bucket privado",
-        "Migration: account_deletion_requests (vencimento = pedido + 15 dias, auditoria sem conteúdo pessoal) + request_account_deletion() + is_account_deletion_pending() + finalize_account_deletion() service_role",
-        "Job de purga (script/rota de operação) chamando o soft delete + finalize, com evento operacional por execução",
-        "UI em Configurações → Controles da conta com o aviso aprovado (o que sai, o que fica e por quê, canal de suporte, resposta em até 15 dias)",
-        "pgTAP: pedido idempotente; família intacta; denúncia contra terceiro sobrevive anonimizada; finalize só após o vencimento",
-        "E2E: pedido revoga a sessão imediatamente; purga no prazo"
+        "Descoberta 15/09 — pré-requisitos técnicos antes de codar: (a) profiles perdeu o estado 'hidden' (20260814052814) e a policy de SELECT lê só localidade: 'perfil oculto' exige mecanismo novo na policy de profiles (superfície sensível — foi ali que vazou o status de suspensão em 10/09); (b) reports/dM_reports.reporter_user_id são NOT NULL com ON DELETE CASCADE: a anonimização imediata exige DROP NOT NULL + update e o caso tem de sobreviver; (c) posts/comments.user_id são ON DELETE CASCADE: purga destrutiva apagaria o conteúdo, contra o item 4 do ADR ✅",
+        "Caminho que satisfaz o ADR (decidido na descoberta): auth.admin.deleteUser(id, true) — soft delete do Auth (supabase-js 2.112) purga credencial e mantém a FK do conteúdo; higienizar perfil preservando display_name; medições em bucket privado ✅",
+        "Migration: account_deletion_requests (vencimento = pedido + 15 dias, auditoria sem conteúdo pessoal) + request_account_deletion() + is_account_deletion_pending() + finalize_account_deletion() service_role ✅ 20260915101543_account_deletion.sql",
+        "Job de purga (script/rota de operação) chamando o soft delete + finalize, com evento operacional por execução ✅ private.account_deletion_dispatch_due() no pg_cron (04:00) -> /api/internal/account-deletion (segredo de worker); ordem por conta: vencimento -> endereço de contato -> mídia -> soft delete -> finalize, com pré-checagem do vencimento antes de qualquer passo destrutivo e retentativa sem desistência (backoff com teto de 1 dia)",
+        "UI em Configurações → Controles da conta com o aviso aprovado (o que sai, o que fica e por quê, canal de suporte, resposta em até 15 dias) ✅ linha destrutiva 'Excluir conta', modal com confirmação explícita e painel de 'Exclusão solicitada' com a data-limite",
+        "pgTAP: pedido idempotente; família intacta; denúncia contra terceiro sobrevive anonimizada; finalize só após o vencimento ✅ supabase/tests/account-deletion.sql 31/31",
+        "E2E: pedido revoga a sessão imediatamente; purga no prazo ✅ provado em runtime por .visual/prova-exclusao.mjs (31/31), com conta descartável: sessão 403, login user_banned, perfil fora do Data API, interação 403, saída da tela levando ao login com a sessão já revogada, purga recusada antes do vencimento e executada depois. O contrato de UI fica em tests/e2e/account-deletion-ui.spec.ts (3 viewports, não destrutivo: nunca confirma o pedido, porque confirmar bane a conta do seed)"
       ],
       "proof": [
-        ".visual/compare/julgamento.md — 52: fluxo ausente por falta de job aprovado",
-        "15/09: pré-requisitos técnicos levantados contra o schema real (ver checklist); nenhum prazo fora da tabela aprovada entra em código ou UI"
+        "Revisão adversarial independente (15/09, subagente isolado): veredito FAIL com 11 achados MEDIDOS. Dois bloqueadores foram corrigidos e provados: (1) a guarda de perfil oculto estava no overload de UM argumento, que a página não usa — a página chama profile_is_visible_to_viewer(target, viewer) (apps/web/lib/profile-rpcs.ts) e o overload de dois argumentos não tinha guarda; agora tem, e o de um argumento segue dropado como 20260821000023 mandou (pgTAP 41/41); (2) o PostgREST confia no JWT e não consulta auth.sessions nem banned_until — medido: com o pedido feito e o token antigo, GET /auth/v1/user = 403 mas POST /rest/v1/comments = 201, janela de jwt_expiry (3600s). Fechado com o mesmo veto de publicação que a suspensão usa (posts, comentários, reações, anúncios, denúncias) mais salvos, acompanhar e conversa nova — a conta que sai não publica. Também corrigidos: e-mail de contato virou precondition e a limpeza por endereço roda ANTES do soft delete (novo purge_account_contact_data); mídia paginada (100/página, falha em vez de finalizar com resíduo); convites familiares dos dois lados saem na purga; retentativa sem desistência; p_error só depois de finalized_at; lote deduplicado. Registrados como decisão do dono no card RECON-052-FOLLOWUP: DMs do titular, purga dos logs de acesso após 6 meses e as superfícies de escrita ainda abertas na janela do JWT.",
+        "15/09: pré-requisitos técnicos levantados contra o schema real (ver checklist); nenhum prazo fora da tabela aprovada entra em código ou UI",
+        "pgTAP supabase/tests/account-deletion.sql: 41/41 no banco sem seed (db reset --no-seed + test:db), incluindo o negativo do overload certo da página, o veto de publicação da própria conta que sai, a limpeza de contato e o agendamento do job",
+        "Runtime .visual/prova-exclusao.mjs: 31/31 — controle positivo (visual@ lê o perfil) e negativo (deixa de ler) pela Data API, GET /auth/v1/user 403 com o token antigo, password grant user_banned, comentário 403, denúncia do titular contra terceiro sobrevive anonimizada, soft delete preserva auth.users (conteúdo não cascateia), display_name preservado, avatar removido do bucket, preferência e participação apagadas, vínculo familiar encerrado com o outro lado intacto, purga idempotente",
+        "Medições do mecanismo contra o stack local (GoTrue v2.190.0), registradas no cabeçalho da migration: apagar auth.sessions revoga a sessão na hora (403); banned_until bloqueia login e refresh (user_banned); access token pré-banimento só morre com o par banimento+sessão; soft delete troca o e-mail por cadeia aleatória — por isso o endereço de contato é capturado na rota antes do deleteUser",
+        "Testes: pgTAP 41/41; unit da rota 15/15; E2E de UI 3/3 (3 viewports, não destrutivo); runtime 31/31; suíte pgTAP inteira PASS (113 arquivos, 1506 testes) em db reset --no-seed + db:lint sem erro de schema. Unit tests/unit/infra/account-deletion-route.test.ts: 15/15 (503/401/400, not_due sem tocar em nada, not_found/already_purged, ordem contato->mídia->soft delete->finalize por invocationCallOrder, falha de contato ou de mídia não apaga credencial, paginação com offset, lote deduplicado, e-mail nunca vai para log)",
+        "Efeito colateral do mesmo commit: guard-rails de colunas de profiles (foundation-schema.test.sql, rls-or-column-regression.test.sql) reconheciam 'bio' como coluna não autorizada desde 20260911024732_profile_bio.sql — lista atualizada; e a asserção de idempotência de close_service_request comparava dois formatos do mesmo instante (card DRIFT-SERVICE-REQUESTS-CLOSE-AT)"
       ],
-      "tests": ["supabase test db", "npx pnpm@11.18.0 gate"],
+      "tests": ["supabase test db", "npx pnpm@11.18.0 gate", "node .visual/prova-exclusao.mjs"],
       "links": [
         "docs/decisions/ADR-20260914-exclusao-de-conta.md",
+        "supabase/migrations/20260915101543_account_deletion.sql",
+        "supabase/tests/account-deletion.sql",
+        "apps/web/app/api/internal/account-deletion/route.ts",
+        ".visual/prova-exclusao.mjs",
         ".visual/compare/julgamento.md"
       ],
-      "updatedAt": "2026-09-14",
-      "sourceRevision": "167ac0a",
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "cd001a6",
       "dependencies": [],
+      "completedAt": "2026-09-15"
+    },
+    {
+      "id": "RECON-052-FOLLOWUP",
+      "title": "Exclusão de conta: o que a purga não pode decidir sozinha (posse e superfície operacional)",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "backend",
+      "status": "blocked",
+      "description": "A purga da RECON-052 apaga dado pessoal, preferência e participação. Ela NÃO dissolve posse nem encerra superfície operacional, porque isso é decisão de produto que o ADR-20260914 não tomou — e resolvê-lo apagando conteúdo de terceiro contradiria o item 4 do mesmo ADR. Três casos ficam abertos depois que a conta some: (a) communities.owner_user_id e groups.owner_user_id continuam apontando para a conta purgada — a comunidade/grupo fica sem quem administre (o produto já tem a regra 'transfer community ownership before removing the owner', disparada pelo trigger, mas não há para quem transferir); (b) provider_accounts e listings ativos seguem no ar; (c) service_requests abertos com a conta como parte seguem abertos. A purga deliberadamente pula a linha do dono em vez de passar por cima do trigger.",
+      "checklist": [
+        "Decisão do dono: para quem transfere comunidade/grupo quando o dono pede exclusão (operador? co-admin? dissolver?)",
+        "Decisão do dono: vitrine de prestador e anúncios ativos de conta purgada — encerrar, pausar ou permanecer",
+        "Decisão do dono: pedido de serviço aberto com a conta purgada — cancelar por operação ou permanecer",
+        "Depois da decisão: migration aplicando cada regra + pgTAP positivo/negativo por caso",
+        "Reabrir e reconciliar o rodapé de 20260915101543_account_deletion.sql, que hoje só registra a lacuna"
+      ],
+      "blockers": [
+        "Decisão do dono: destino da comunidade/grupo cujo dono pediu exclusão",
+        "Decisão do dono: vitrine de prestador e anúncios ativos de conta purgada",
+        "Decisão do dono: pedido de serviço aberto com a conta purgada"
+      ],
+      "proof": [
+        "supabase/migrations/20260915101543_account_deletion.sql: o DELETE de community_memberships/group_memberships exclui de propósito a linha do dono (o trigger cascade_community_membership_loss recusa removê-la)",
+        "private.cascade_community_membership_loss(): 'transfer community ownership before removing the owner' — a regra existe e a purga não passa por cima dela",
+        "Rodapé da migration: os três casos listados como pergunta ao dono do produto, não como pendência técnica"
+      ],
+      "tests": ["supabase test db"],
+      "links": [
+        "docs/decisions/ADR-20260914-exclusao-de-conta.md (item 4 e tabela jurídica)",
+        "supabase/migrations/20260915101543_account_deletion.sql (rodapé)"
+      ],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "cd001a6",
+      "dependencies": ["RECON-052"],
       "completedAt": null
+    },
+    {
+      "id": "DRIFT-SERVICE-REQUESTS-CLOSE-AT",
+      "title": "pgTAP de close_service_request comparava o instante em dois formatos diferentes",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "repo",
+      "status": "done",
+      "description": "Encontrado na verificação canônica da RECON-052 (db reset --no-seed + test:db): service-request-tracking.sql falhava em 'encerrar de novo nao reescreve o instante do primeiro encerramento'. O RPC está correto — close_service_request só atualiza quando o status não é 'closed'. A asserção é que estava errada: comparava (to_jsonb(row) ->> 'closed_at') com closed_at::text, e o jsonb serializa o MESMO instante como 2026-09-15T10:54:47.939896+00:00 enquanto o ::text devolve 2026-09-15 10:54:47.939896+00. Medido no stack local: equal=false com o comportamento certo do RPC. Corrigido comparando instantes (::timestamptz dos dois lados), que é o que o teste quer provar.",
+      "checklist": [
+        "Medir a serialização nos dois lados (jsonb e ::text) no stack local ✅ equal=false",
+        "Confirmar que o RPC é idempotente por construção (if v_req.status <> 'closed') ✅",
+        "Trocar a comparação textual por comparação de instantes ✅",
+        "Rodar a suíte canônica e confirmar o verde ✅"
+      ],
+      "proof": [
+        "Medição: select (to_jsonb(t) ->> 'closed_at') = t.closed_at::text from (select now() as closed_at) t -> false; json=2026-09-15T10:54:47.939896+00:00, text=2026-09-15 10:54:47.939896+00",
+        "supabase/migrations/*: close_service_request só faz update quando v_req.status <> 'closed'"
+      ],
+      "tests": ["supabase test db"],
+      "links": ["supabase/tests/service-request-tracking.sql"],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "cd001a6",
+      "dependencies": [],
+      "completedAt": "2026-09-15"
     }
   ]
 }

@@ -258,6 +258,11 @@ select results_eq(
 
 -- So agora `closed_at` existe: o segundo encerramento tem de devolver o MESMO
 -- instante gravado pelo primeiro.
+--
+-- A comparação é entre INSTANTES, não entre textos: o jsonb devolve
+-- 2026-09-15T10:54:47.939896+00:00 e o ::text devolve
+-- 2026-09-15 10:54:47.939896+00 — a mesma hora em duas grafias, e a comparação
+-- textual dava falso com o comportamento correto do RPC (medido em 15/09).
 select set_config(
   'app.r023_closed_at',
   (select closed_at::text from public.service_requests where idempotency_key = 'k-1'),
@@ -266,9 +271,9 @@ select set_config(
 
 select results_eq(
   $$
-    select public.close_service_request(
+    select (public.close_service_request(
       (select id from public.service_requests where idempotency_key = 'k-1')
-    ) ->> 'closed_at' = current_setting('app.r023_closed_at')
+    ) ->> 'closed_at')::timestamptz = current_setting('app.r023_closed_at')::timestamptz
   $$,
   array[true],
   'encerrar de novo nao reescreve o instante do primeiro encerramento'

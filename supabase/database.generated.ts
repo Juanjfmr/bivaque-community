@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          due_at: string
+          finalized_at: string | null
+          purge_attempted_at: string | null
+          purge_attempts: number
+          purge_last_error: string | null
+          requested_at: string
+          user_id: string
+        }
+        Insert: {
+          due_at: string
+          finalized_at?: string | null
+          purge_attempted_at?: string | null
+          purge_attempts?: number
+          purge_last_error?: string | null
+          requested_at?: string
+          user_id: string
+        }
+        Update: {
+          due_at?: string
+          finalized_at?: string | null
+          purge_attempted_at?: string | null
+          purge_attempts?: number
+          purge_last_error?: string | null
+          requested_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       arrival_guide_entries: {
         Row: {
           category: Database["public"]["Enums"]["arrival_guide_category"]
@@ -648,6 +678,189 @@ export type Database = {
             columns: ["locality_id"]
             isOneToOne: false
             referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guide_article_revisions: {
+        Row: {
+          article_id: string
+          id: string
+          revised_at: string
+          revised_by: string | null
+          snapshot: Json
+        }
+        Insert: {
+          article_id: string
+          id?: string
+          revised_at?: string
+          revised_by?: string | null
+          snapshot: Json
+        }
+        Update: {
+          article_id?: string
+          id?: string
+          revised_at?: string
+          revised_by?: string | null
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_article_revisions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "guide_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guide_article_sections: {
+        Row: {
+          anchor: string
+          article_id: string
+          body: string
+          created_at: string
+          id: string
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          anchor: string
+          article_id: string
+          body: string
+          created_at?: string
+          id?: string
+          position: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          anchor?: string
+          article_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_article_sections_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "guide_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guide_articles: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          curated_by: string | null
+          entry_id: string
+          id: string
+          reviewed_at: string | null
+          status: string
+          subtitle: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          curated_by?: string | null
+          entry_id: string
+          id?: string
+          reviewed_at?: string | null
+          status?: string
+          subtitle?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          curated_by?: string | null
+          entry_id?: string
+          id?: string
+          reviewed_at?: string | null
+          status?: string
+          subtitle?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_articles_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: true
+            referencedRelation: "arrival_guide_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guide_correction_requests: {
+        Row: {
+          article_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          description: string
+          id: string
+          reference_text: string | null
+          requester_id: string
+          section_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          description: string
+          id?: string
+          reference_text?: string | null
+          requester_id: string
+          section_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          description?: string
+          id?: string
+          reference_text?: string | null
+          requester_id?: string
+          section_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_correction_requests_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "guide_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_correction_requests_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "guide_article_sections"
             referencedColumns: ["id"]
           },
         ]
@@ -1840,7 +2053,7 @@ export type Database = {
           id: string
           operator_note: string | null
           reason: string
-          reporter_user_id: string
+          reporter_user_id: string | null
           resolved_at: string | null
           resolved_by: string | null
           status: Database["public"]["Enums"]["report_status"]
@@ -1852,7 +2065,7 @@ export type Database = {
           id?: string
           operator_note?: string | null
           reason: string
-          reporter_user_id?: string
+          reporter_user_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           status?: Database["public"]["Enums"]["report_status"]
@@ -1864,7 +2077,7 @@ export type Database = {
           id?: string
           operator_note?: string | null
           reason?: string
-          reporter_user_id?: string
+          reporter_user_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           status?: Database["public"]["Enums"]["report_status"]
@@ -1909,15 +2122,18 @@ export type Database = {
         Row: {
           cancelled_at: string | null
           cancelled_by_user_id: string | null
+          category: Database["public"]["Enums"]["provider_category"]
           closed_at: string | null
           closed_by_user_id: string | null
           conversation_id: string | null
           created_at: string
           description: string
+          first_responded_at: string | null
           id: string
           idempotency_key: string | null
           provider_id: string
           provider_user_id: string
+          region: string | null
           requester_user_id: string
           status: Database["public"]["Enums"]["service_request_status"]
           updated_at: string
@@ -1926,15 +2142,18 @@ export type Database = {
         Insert: {
           cancelled_at?: string | null
           cancelled_by_user_id?: string | null
+          category: Database["public"]["Enums"]["provider_category"]
           closed_at?: string | null
           closed_by_user_id?: string | null
           conversation_id?: string | null
           created_at?: string
           description: string
+          first_responded_at?: string | null
           id?: string
           idempotency_key?: string | null
           provider_id: string
           provider_user_id: string
+          region?: string | null
           requester_user_id: string
           status?: Database["public"]["Enums"]["service_request_status"]
           updated_at?: string
@@ -1943,15 +2162,18 @@ export type Database = {
         Update: {
           cancelled_at?: string | null
           cancelled_by_user_id?: string | null
+          category?: Database["public"]["Enums"]["provider_category"]
           closed_at?: string | null
           closed_by_user_id?: string | null
           conversation_id?: string | null
           created_at?: string
           description?: string
+          first_responded_at?: string | null
           id?: string
           idempotency_key?: string | null
           provider_id?: string
           provider_user_id?: string
+          region?: string | null
           requester_user_id?: string
           status?: Database["public"]["Enums"]["service_request_status"]
           updated_at?: string
@@ -2069,6 +2291,17 @@ export type Database = {
         Returns: undefined
       }
       advance_recurring_events: { Args: never; Returns: number }
+      apply_guide_correction: {
+        Args: {
+          p_note: string
+          p_operator_user_id: string
+          p_request_id: string
+          p_section_body: string
+          p_section_title: string
+          p_summary: string
+        }
+        Returns: undefined
+      }
       approve_community_member: {
         Args: {
           p_caller_user_id: string
@@ -2085,6 +2318,11 @@ export type Database = {
         Args: { p_event_id: string; p_user_id: string }
         Returns: boolean
       }
+      cancel_community_request: {
+        Args: { p_community_id: string }
+        Returns: undefined
+      }
+      cancel_service_request: { Args: { p_request_id: string }; Returns: Json }
       check_recurrence_holiday: {
         Args: { p_date: string }
         Returns: {
@@ -2108,10 +2346,6 @@ export type Database = {
       conversation_counterpart_name: {
         Args: { p_conversation_id: string }
         Returns: string
-      }
-      cancel_community_request: {
-        Args: { p_community_id: string }
-        Returns: undefined
       }
       create_community: {
         Args: {
@@ -2289,6 +2523,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      finalize_account_deletion: {
+        Args: { p_error?: string; p_user_id: string }
+        Returns: string
+      }
       get_profile_bio: { Args: { p_user_id: string }; Returns: string }
       has_accepted_consent: {
         Args: {
@@ -2298,6 +2536,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_account_deletion_pending: { Args: never; Returns: boolean }
       is_account_suspended: { Args: { p_user_id: string }; Returns: boolean }
       is_community_member: {
         Args: { p_community_id: string; p_user_id: string }
@@ -2314,6 +2553,7 @@ export type Database = {
       is_provider_account: { Args: { p_user_id: string }; Returns: boolean }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
+      leave_community: { Args: { p_community_id: string }; Returns: undefined }
       list_available_groups_for_interests: {
         Args: { p_locality_id: string; p_user_id: string }
         Returns: {
@@ -2351,10 +2591,6 @@ export type Database = {
           is_already_invited: boolean
           user_id: string
         }[]
-      }
-      leave_community: {
-        Args: { p_community_id: string }
-        Returns: undefined
       }
       list_locality_arrivals_volume: {
         Args: { p_user_id: string }
@@ -2550,6 +2786,10 @@ export type Database = {
         Args: { p_locality_id: string; p_user_id: string }
         Returns: undefined
       }
+      purge_account_contact_data: {
+        Args: { p_contact_email: string; p_user_id: string }
+        Returns: number
+      }
       read_verification_document_path: {
         Args: { p_document_id: string }
         Returns: {
@@ -2581,6 +2821,14 @@ export type Database = {
           p_group_ids: string[]
           p_locality_id: string
           p_user_id: string
+        }
+        Returns: undefined
+      }
+      reject_guide_correction: {
+        Args: {
+          p_note: string
+          p_operator_user_id: string
+          p_request_id: string
         }
         Returns: undefined
       }
@@ -2616,6 +2864,7 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      request_account_deletion: { Args: never; Returns: Json }
       request_community_membership: {
         Args: { p_community_id: string; p_reason?: string }
         Returns: undefined
@@ -2676,6 +2925,10 @@ export type Database = {
           p_caller_user_id: string
           p_community_id: string
           p_kind: string
+          // À MÃO: a função aceita NULL para limpar o ponteiro da imagem
+          // ("if p_path is not null and split_part(...)"). O gerador não
+          // expressa nulabilidade de argumento, então esta linha é ajustada
+          // depois do generate:types — preservar em toda regeneração.
           p_path: string | null
         }
         Returns: undefined
