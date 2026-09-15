@@ -13,6 +13,9 @@ export type EventFormInput = {
   description: string
   startsAt: string
   venue: string
+  /** Caminho no bucket privado event-photos, na pasta de quem organiza. Vazio
+   *  vira null: evento sem capa é um estado legítimo, não um caminho em branco. */
+  coverPath: string
 }
 
 export type EventPayload = {
@@ -20,6 +23,7 @@ export type EventPayload = {
   description: string | null
   starts_at: string
   venue: string | null
+  cover_path: string | null
 }
 
 /** Devolve a mensagem de erro, ou null quando o formulário está válido. */
@@ -47,6 +51,10 @@ export function buildEventPayload(input: EventFormInput): EventPayload {
     description: input.description.trim() ? input.description.trim() : null,
     starts_at: new Date(input.startsAt).toISOString(),
     venue: input.venue.trim() ? input.venue.trim() : null,
+    // A troca de capa também é edição: o organizador pode pôr, trocar ou tirar.
+    // O trigger do banco confere que o caminho vive na pasta dele — aqui só se
+    // normaliza vazio para null.
+    cover_path: (input.coverPath ?? "").trim() ? (input.coverPath ?? "").trim() : null,
   }
 }
 

@@ -44,6 +44,7 @@ function readInput(formData: FormData): EventFormInput {
     description: String(formData.get("description") ?? ""),
     startsAt: String(formData.get("startsAt") ?? ""),
     venue: String(formData.get("venue") ?? ""),
+    coverPath: String(formData.get("coverPath") ?? ""),
   }
 }
 

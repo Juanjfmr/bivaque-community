@@ -51,6 +51,7 @@ type EventRow = {
   venue: string | null
   status: string
   organizer_id: string
+  cover_path: string | null
 }
 
 type RsvpRow = {
@@ -160,11 +161,13 @@ function ExplorerEventCard({
   goingCount,
   goingAttendees,
   href,
+  coverUrl,
 }: {
   event: EventRow
   goingCount: number
   goingAttendees: GoingAttendee[]
   href: Route
+  coverUrl?: string | undefined
 }) {
   return (
     <Link
@@ -172,12 +175,17 @@ function ExplorerEventCard({
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-[var(--semantic-surface)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
     >
       <div className="relative">
-        <div
-          className="flex h-32 items-center justify-center bg-[var(--semantic-surface-sunken)]"
-          aria-hidden="true"
-        >
-          <EventsIllustration className="h-14 w-20" />
-        </div>
+        {coverUrl ? (
+          // biome-ignore lint/performance/noImgElement: URL assinada de bucket privado expira em 1h.
+          <img src={coverUrl} alt="" className="h-32 w-full object-cover" />
+        ) : (
+          <div
+            className="flex h-32 items-center justify-center bg-[var(--semantic-surface-sunken)]"
+            aria-hidden="true"
+          >
+            <EventsIllustration className="h-14 w-20" />
+          </div>
+        )}
         <div className="absolute bottom-3 left-3">
           <EventDateBadge iso={event.starts_at} />
         </div>
@@ -321,6 +329,9 @@ function OwnEventCard({
 
 function EventsContent() {
   const [events, setEvents] = useState<EventRow[]>([])
+  // Capa do evento (prancha 70): o bucket é privado, então a lista assina as
+  // URLs de uma vez, como o mercado faz com as fotos de anúncio.
+  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({})
   const [rsvps, setRsvps] = useState<RsvpRow[]>([])
   // goingAttendeesByEvent is the ONE batched profiles lookup per fetch — keyed
   // by event id, with up to 3 going attendees per event (R3 / privacy
@@ -461,7 +472,7 @@ function EventsContent() {
 
     const { data: eventsData, error: eventsError } = await supabase
       .from("events")
-      .select("id, title, description, starts_at, ends_at, venue, status, organizer_id")
+      .select("id, title, description, starts_at, ends_at, venue, status, organizer_id, cover_path")
       .eq("locality_id", viewingLocalityId)
       .order("starts_at", { ascending: true })
 
@@ -473,6 +484,22 @@ function EventsContent() {
 
     const events = (eventsData as EventRow[]) ?? []
     setEvents(events)
+
+    const coverPaths = events
+      .map((event) => event.cover_path)
+      .filter((path): path is string => typeof path === "string" && path.length > 0)
+    if (coverPaths.length > 0) {
+      const { data: signed } = await supabase.storage
+        .from("event-photos")
+        .createSignedUrls(coverPaths, 3600)
+      const next: Record<string, string> = {}
+      for (const entry of signed ?? []) {
+        if (entry.signedUrl && entry.path) next[entry.path] = entry.signedUrl
+      }
+      setCoverUrls(next)
+    } else {
+      setCoverUrls({})
+    }
 
     // Determinism for the grid + tabs: order by created_at within each event.
     // Without it, two RSVP rows for the same event in the same occurrence
@@ -867,6 +894,7 @@ function EventsContent() {
                       goingCount={goingCount}
                       goingAttendees={goingAttendeesByEvent[event.id] ?? []}
                       href={`/events/${event.id}` as Route}
+                      coverUrl={event.cover_path ? coverUrls[event.cover_path] : undefined}
                     />
                   </li>
                 )

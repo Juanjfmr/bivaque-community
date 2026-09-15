@@ -13,6 +13,7 @@ import { useLocalityContext } from "../../../lib/locality-context"
 import { Card } from "../../components/bivaque/card"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { cancelEventAction, createEventAction, updateEventAction } from "./event-actions"
+import { uploadPostPhotoAction } from "./upload-photo-action"
 
 export type EventFormValues = {
   id?: string
@@ -20,6 +21,7 @@ export type EventFormValues = {
   description: string
   startsAt: string
   venue: string
+  coverPath?: string | null
 }
 
 interface EventFormProps {
@@ -35,12 +37,34 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
   const [description, setDescription] = useState(initial.description)
   const [startsAt, setStartsAt] = useState(initial.startsAt)
   const [venue, setVenue] = useState(initial.venue)
+  const [coverPath, setCoverPath] = useState(initial.coverPath ?? "")
+  const [coverBusy, setCoverBusy] = useState(false)
+  const [coverError, setCoverError] = useState<string | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [confirmingCancel, setConfirmingCancel] = useState(false)
 
   const isEdit = mode === "edit"
   const backHref = isEdit && initial.id ? `/events/${initial.id}` : "/events"
+
+  // Prancha 70, painel 1: "Capa do evento" (JPG/PNG). O upload reusa a server
+  // action que já existe para a foto de publicação — mesmo bucket privado, mesmo
+  // limite e mesma validação de tipo no servidor; o caminho cai na pasta de quem
+  // organiza, que é o que o trigger do banco confere.
+  async function handleCoverChange(file: File | null) {
+    if (!file) return
+    setCoverBusy(true)
+    setCoverError(null)
+    const formData = new FormData()
+    formData.set("photo", file)
+    try {
+      const { photoPath } = await uploadPostPhotoAction(formData)
+      setCoverPath(photoPath)
+    } catch (error) {
+      setCoverError(error instanceof Error ? error.message : "Não foi possível enviar a imagem.")
+    }
+    setCoverBusy(false)
+  }
 
   async function handleSubmit() {
     if (submitting) return
@@ -52,6 +76,7 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
     formData.set("description", description)
     formData.set("startsAt", startsAt)
     formData.set("venue", venue)
+    formData.set("coverPath", coverPath)
     if (isEdit && initial.id) formData.set("eventId", initial.id)
     if (!isEdit) formData.set("localityId", current.id)
 
@@ -105,6 +130,39 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
           void handleSubmit()
         }}
       >
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="event-cover" className="text-sm font-medium">
+            Capa do evento
+          </label>
+          <input
+            id="event-cover"
+            type="file"
+            accept="image/png,image/jpeg"
+            disabled={coverBusy}
+            onChange={(event) => void handleCoverChange(event.target.files?.[0] ?? null)}
+            className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 py-2 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--semantic-selected)] file:px-3 file:py-1.5 file:text-sm file:font-medium"
+          />
+          <p className="text-xs text-muted">
+            JPG ou PNG até 5MB. Sem capa, o evento aparece com o ícone de calendário.
+          </p>
+          {coverBusy ? <p className="text-xs text-muted">Enviando a imagem…</p> : null}
+          {coverError ? <FeedbackAlert variant="danger" description={coverError} /> : null}
+          {coverPath && !coverBusy ? (
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted">Capa enviada.</p>
+              <Button
+                type="button"
+                variant="tertiary"
+                size="sm"
+                className="min-h-11"
+                onPress={() => setCoverPath("")}
+              >
+                Remover capa
+              </Button>
+            </div>
+          ) : null}
+        </div>
+
         <div className="flex flex-col gap-1.5">
           <label htmlFor="event-title" className="text-sm font-medium">
             Título

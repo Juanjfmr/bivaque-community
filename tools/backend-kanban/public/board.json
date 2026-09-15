@@ -2680,6 +2680,36 @@
       "completedAt": null
     },
     {
+      "id": "CAPTURA-CONTRATOS-INVALIDOS",
+      "title": "Contratos de captura: 73 rotas inválidas por título, ator ou estado",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "repo",
+      "status": "next",
+      "description": "A captura completa das ~90 rotas (run .visual/recon051-completo) fechou com 73 capturas INVALID e 254 achados. Medido, o grosso é CONTRATO da ferramenta, não defeito de tela: 54 'Expected heading not found' (o h1 real é dado — nome da comunidade, título do evento, nome do prestador — e o HEADINGS tem regex fixa), 12 'Data-named route rendered no heading' (a rota existe e renderiza, mas sem h1), 12 'Unexpected error, loading or unavailable state', 11 'Operator surface not reached' (a rota de operação exige o ator operador@) e 9 'landed on /community' (rotas do prestador e /arrivals, que redirecionam para quem não é o ator certo). Cada um é a mesma classe de defeito já corrigida em /community (título fixo × dado) e em /prestador (ator). Enquanto isso, 73 rotas não têm prova de runtime — e captura inválida não é dispensa.",
+      "checklist": [
+        "Trocar por DYNAMIC_HEADING (ou pelo h1 real) cada uma das 54 rotas cujo título é dado — uma a uma, conferindo o h1 que a rota escreve",
+        "Dar ator próprio às 11 rotas de operação (operador@) e às 9 do prestador (prestador-seed@), como /prestador já faz",
+        "Tratar as 12 rotas sem h1: ou a tela deveria ter um (defeito de acessibilidade), ou a rota não é capturável por título",
+        "Investigar as 12 'Unexpected error, loading or unavailable state' — podem ser defeito real de tela",
+        "Re-rodar a captura completa e comparar: o número de INVALID tem de cair a zero ou virar defeito registrado"
+      ],
+      "proof": [
+        "Medição da captura completa de 15/09 (.visual/recon051-completo/report.md): 73 INVALID, 254 achados (77 high), com a quebra por motivo acima",
+        "Casos já fechados do mesmo tipo: /community (h1 é o nome da comunidade, não 'Comunidade|Manaus') e /events/[id]/editar (exige ser o organizador — evento da conta de captura semeado na RECON-051)"
+      ],
+      "tests": ["BIVAQUE_VISUAL_RUN=... node scripts/visual/capture.mjs"],
+      "links": [
+        ".visual/recon051-completo/report.md",
+        "scripts/visual/capture.mjs (HEADINGS e ROUTES)",
+        ".visual/compare/julgamento.md"
+      ],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "7121153",
+      "dependencies": [],
+      "completedAt": null
+    },
+    {
       "id": "RECON-051",
       "title": "Fixtures de seed para provar os estados [dado]/[captura]",
       "phase": "Reconstrução",

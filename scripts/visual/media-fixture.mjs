@@ -203,4 +203,23 @@ for (const community of communities ?? []) {
 }
 report("imagens de comunidade", `${communityImages} ponteiros (faixa e miniatura)`)
 
+// ── 5. Capa do evento (prancha 70) ────────────────────────────────────────
+// O caminho tem de viver na pasta do organizador: é o que o trigger
+// validate_event_cover_path_trigger confere na própria linha.
+const { data: events, error: eventError } = await supabase
+  .from("events")
+  .select("id, organizer_id, cover_path")
+  .eq("status", "upcoming")
+if (eventError) throw new Error(eventError.message)
+
+let eventCovers = 0
+for (const [index, event] of (events ?? []).entries()) {
+  const path = `${event.organizer_id}/seed-cover-${event.id}.png`
+  await upload("event-photos", path, makePng(960, 360, [196 + (index % 3) * 8, 208, 186]))
+  const { error } = await supabase.from("events").update({ cover_path: path }).eq("id", event.id)
+  if (error) throw new Error(`cover do evento ${event.id}: ${error.message}`)
+  eventCovers += 1
+}
+report("capas de evento", `${eventCovers} eventos futuros com capa no bucket event-photos`)
+
 console.log(`\n${results.length} grupos de mídia aplicados`)

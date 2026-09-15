@@ -271,6 +271,16 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     notFound()
   }
 
+  // Capa do evento: bucket privado, URL assinada no servidor (1h). Sem capa,
+  // coverUrl fica null e o hero mostra a ilustração.
+  let coverUrl: string | null = null
+  if (event.cover_path) {
+    const { data: signed } = await authClient.storage
+      .from("event-photos")
+      .createSignedUrl(event.cover_path, 3600)
+    coverUrl = signed?.signedUrl ?? null
+  }
+
   // Onda F Task 4: event_rsvps accumulates one row per occurrence for a
   // recurring event — filtering to the event's current starts_at is what
   // keeps "who's going" and "my RSVP" about THIS occurrence, not a mix of
@@ -375,16 +385,26 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               {event.title}
             </h1>
 
-            {/* Hero band: decorative surface with the EventsIllustration in
-                place of a fake photo (the events table has no image column).
-                The date badge sits on the bottom-left, matching the listing
-                card so the visual language is consistent across both screens.
-                The badge is content (the only date on this screen), so only
-                the illustration is hidden from assistive tech. */}
+            {/* Hero band: a capa do evento quando existe (bucket privado, URL
+                assinada no servidor); sem capa, a ilustração — que é o estado
+                legítimo de quem publicou sem imagem, não um retrato falso. O
+                badge de data fica no canto inferior esquerdo, como no cartão do
+                anúncio, para a linguagem ser a mesma nas duas telas; o badge é
+                conteúdo (a única data desta tela), então só a ilustração é
+                escondida de tecnologia assistiva. */}
             <div className="relative overflow-hidden rounded-2xl border border-border bg-[var(--semantic-surface-sunken)]">
-              <div className="flex h-40 items-center justify-center" aria-hidden="true">
-                <EventsIllustration className="h-16 w-24" />
-              </div>
+              {coverUrl ? (
+                // biome-ignore lint/performance/noImgElement: URL assinada de bucket privado expira em 1h.
+                <img
+                  src={coverUrl}
+                  alt={`Capa do evento ${event.title}`}
+                  className="h-40 w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-40 items-center justify-center" aria-hidden="true">
+                  <EventsIllustration className="h-16 w-24" />
+                </div>
+              )}
               <div className="absolute bottom-3 left-3">
                 <EventDateBadge iso={event.starts_at} />
               </div>

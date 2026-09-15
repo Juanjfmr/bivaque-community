@@ -15,6 +15,7 @@ describe("validateEventForm", () => {
     description: "Encontro aberto.",
     startsAt: "2026-09-12T09:00",
     venue: "Jardim das Acácias",
+    coverPath: "",
   }
 
   it("aceita o formulário completo", () => {
@@ -41,24 +42,47 @@ describe("buildEventPayload (edição)", () => {
       description: "  ",
       startsAt: "2026-09-12T09:00",
       venue: "  ",
+      coverPath: "",
     })
     expect(payload).toEqual({
       title: "Café",
       description: null,
       starts_at: new Date("2026-09-12T09:00").toISOString(),
       venue: null,
+      cover_path: null,
     })
     expect(Object.keys(payload)).not.toContain("locality_id")
     expect(Object.keys(payload)).not.toContain("community_id")
     expect(Object.keys(payload)).not.toContain("group_id")
     expect(Object.keys(payload)).not.toContain("status")
   })
+
+  it("a capa é conteúdo, não alcance: entra na edição e vazio vira nulo", () => {
+    const comCapa = buildEventPayload({
+      title: "Café",
+      description: "",
+      startsAt: "2026-09-12T09:00",
+      venue: "",
+      coverPath: "user-1/capa.png",
+    })
+    expect(comCapa.cover_path).toBe("user-1/capa.png")
+
+    // Quem publicou sem imagem continua sem imagem: string vazia não é caminho.
+    const semCapa = buildEventPayload({
+      title: "Café",
+      description: "",
+      startsAt: "2026-09-12T09:00",
+      venue: "",
+      coverPath: "   ",
+    })
+    expect(semCapa.cover_path).toBeNull()
+  })
 })
 
 describe("buildEventCreatePayload", () => {
   it("fixa organizador da sessão e cidade do contexto", () => {
     const payload = buildEventCreatePayload(
-      { title: "Feira", description: "", startsAt: "2026-09-12T09:00", venue: "" },
+      { title: "Feira", description: "", startsAt: "2026-09-12T09:00", venue: "", coverPath: "" },
       { organizerId: "user-1", localityId: "loc-1" },
     )
     expect(payload.organizer_id).toBe("user-1")

@@ -507,6 +507,7 @@ export type Database = {
       events: {
         Row: {
           community_id: string | null
+          cover_path: string | null
           created_at: string
           description: string | null
           ends_at: string | null
@@ -527,6 +528,7 @@ export type Database = {
         }
         Insert: {
           community_id?: string | null
+          cover_path?: string | null
           created_at?: string
           description?: string | null
           ends_at?: string | null
@@ -547,6 +549,7 @@ export type Database = {
         }
         Update: {
           community_id?: string | null
+          cover_path?: string | null
           created_at?: string
           description?: string | null
           ends_at?: string | null

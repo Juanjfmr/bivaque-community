@@ -1201,6 +1201,29 @@ select
 from generate_series(1, 10) as i
 on conflict (id) do nothing;
 
+-- ── Evento da CONTA DE CAPTURA ────────────────────────────────────────────
+-- A rota /events/[id]/editar exige ser o ORGANIZADOR, e nenhum dos 10 eventos
+-- do volume pertence à conta de captura: a tela caía em estado de erro e a
+-- captura saía INVALID. Mesmo motivo do post da horta (RECON-051).
+insert into public.events (
+  id, organizer_id, locality_id, title, description, starts_at, ends_at,
+  venue, status, created_at
+)
+values (
+  -- id fora da faixa do volume (…0001..0010), que já ocupa os primeiros dez
+  '70000000-0000-4000-8000-0000000000a1',
+  '20000000-0000-4000-8000-000000000008',
+  '00000000-0000-4000-8000-000000000001',
+  'Mutirão da horta comunitária',
+  'Levar luva e chapéu. Ferramentas ficam no galpão da vila.',
+  now() + interval '5 days',
+  now() + interval '5 days' + interval '3 hours',
+  'Espaço da vila',
+  'upcoming',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
 -- ── ~15 denúncias abertas ─────────────────────────────────────────────────
 -- Um operador único olhando 15 denúncias abertas é um teste de usabilidade
 -- diferente de olhar 2. O autor nunca é o denunciante: reports_block_self

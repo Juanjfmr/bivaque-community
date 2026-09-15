@@ -225,9 +225,7 @@ export default async function ProviderShowcasePage({
               utilidade vencia a classe do design system e a linha passava do
               limite (medido: 88 caracteres por linha, máximo 72). */}
           {profile.bio ? (
-            <p className="measure-reading text-sm leading-relaxed text-muted">
-              {profile.bio}
-            </p>
+            <p className="measure-reading text-sm leading-relaxed text-muted">{profile.bio}</p>
           ) : null}
 
           <section aria-labelledby="servicos-titulo" className="flex flex-col gap-3">

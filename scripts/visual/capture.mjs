@@ -88,7 +88,6 @@ export const HEADINGS = {
   "/communities/71000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/guide/a0000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/groups/70000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  "/events/80000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador": DYNAMIC_HEADING,
   "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
   "/profile": DYNAMIC_HEADING,
@@ -112,10 +111,12 @@ export const HEADINGS = {
   "/mercado/a0000000-0000-4000-8000-000000000001/editar": "^Editar anúncio$",
   // O h1 do detalhe é o título do próprio evento.
   "/events/70000000-0000-4000-8000-000000000005": DYNAMIC_HEADING,
+  // Evento da conta de captura (RECON-051): a única rota de EDIÇÃO de evento
+  // que o ator pode abrir — editar exige ser o organizador.
+  "/events/70000000-0000-4000-8000-0000000000a1/editar": "^Editar evento$",
   "/events/novo": "^Novo evento$",
   "/events/70000000-0000-4000-8000-000000000005/perguntas":
     "^(Sua pergunta|Perguntas sobre este evento)$",
-  "/events/70000000-0000-4000-8000-000000000005/editar": "^Editar evento$",
   "/communities/71000000-0000-4000-8000-000000000001/admin/media": "^Imagens da comunidade$",
   "/communities/71000000-0000-4000-8000-000000000001/admin/pending": "^Pedidos de entrada$",
   "/auth/callback-error": "^Não foi possível entrar$",
@@ -198,7 +199,9 @@ export const ROUTES = [
   { path: "/groups/70000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
   { path: "/profile", name: "profile", auth: true },
   { path: "/events", name: "events", auth: true },
-  { path: "/events/80000000-0000-4000-8000-000000000001", name: "event-detail", auth: true },
+  // O id antigo (80000000-…) é de POST no seed, não de evento: a rota de detalhe
+  // capturava o 404 honesto há runs. Eventos são 70000000-… no seed.
+  { path: "/events/70000000-0000-4000-8000-000000000005", name: "event-detail", auth: true },
   // RECON-025: o Mercado. A rota de detalhe depende de um anúncio no seed,
   // que este lote não pode criar (supabase/seed.sql fora dos allowed_paths);
   // capture-a quando a fixture existir.
@@ -234,7 +237,9 @@ export const ROUTES = [
     auth: true,
   },
   {
-    path: "/events/70000000-0000-4000-8000-000000000005/editar",
+    // Editar exige ser o organizador: o evento é o da CONTA DE CAPTURA
+    // (70000000-…0009, semeado para isso), não um evento de terceiro.
+    path: "/events/70000000-0000-4000-8000-0000000000a1/editar",
     name: "event-editar",
     auth: true,
   },
