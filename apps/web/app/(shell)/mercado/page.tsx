@@ -348,7 +348,7 @@ function MercadoContent() {
                   return (
                     <label
                       key={category.value}
-                      className="flex min-h-11 items-center gap-2 text-sm"
+                      className="flex min-h-11 items-center gap-2 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
                     >
                       <input
                         type="checkbox"
@@ -361,7 +361,10 @@ function MercadoContent() {
                           apply({ categories: next })
                         }}
                       />
-                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--semantic-action-primary)] text-[var(--semantic-text-on-strong)]">
+                      {/* O indicador desenhado é quem dá o retorno visual do
+                          clique: sem transição, o produto parece não responder —
+                          e a régua mede o desenho, não o input de 20px. */}
+                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--semantic-action-primary)] text-[var(--semantic-text-on-strong)] transition-colors duration-[var(--semantic-motion-duration-fast)]">
                         <Icon size={13} aria-hidden="true" />
                       </span>
                       {category.label}
@@ -375,7 +378,10 @@ function MercadoContent() {
               <legend className="mb-2 text-xs font-medium text-muted">Estado</legend>
               <div className="flex flex-col gap-2">
                 {LISTING_CONDITIONS.map((condition) => (
-                  <label key={condition.value} className="flex min-h-11 items-center gap-2 text-sm">
+                  <label
+                    key={condition.value}
+                    className="flex min-h-11 items-center gap-2 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
+                  >
                     <input
                       type="checkbox"
                       className="h-5 w-5"
@@ -401,7 +407,7 @@ function MercadoContent() {
                 id="mercado-regiao"
                 value={search.neighborhood ?? ""}
                 onChange={(event) => apply({ neighborhood: event.target.value || null })}
-                className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+                className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
               >
                 <option value="">Todas</option>
                 {state.regions.map((region) => (
@@ -425,7 +431,7 @@ function MercadoContent() {
                   onKeyDown={(event) => {
                     if (event.key === "Enter") applyPrice()
                   }}
-                  className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+                  className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
                 />
                 <input
                   aria-label="Preço máximo"
@@ -437,7 +443,7 @@ function MercadoContent() {
                   onKeyDown={(event) => {
                     if (event.key === "Enter") applyPrice()
                   }}
-                  className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+                  className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
                 />
               </div>
             </div>
@@ -458,7 +464,7 @@ function MercadoContent() {
               </span>
               <Link
                 href={"/explorar/servicos" as Route}
-                className="min-h-11 rounded-md px-3 py-2.5 text-sm text-muted hover:text-[var(--semantic-text-primary)]"
+                className="min-h-11 rounded-md px-3 py-2.5 text-sm text-muted transition-colors duration-[var(--semantic-motion-duration-fast)] hover:text-[var(--semantic-text-primary)]"
               >
                 Serviços
               </Link>
@@ -473,7 +479,7 @@ function MercadoContent() {
                 id="mercado-ordem"
                 value={search.sort}
                 onChange={(event) => apply({ sort: event.target.value as ListingSort })}
-                className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+                className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
               >
                 {LISTING_SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>

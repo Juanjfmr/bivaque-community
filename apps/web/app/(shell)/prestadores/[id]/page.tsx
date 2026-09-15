@@ -221,8 +221,11 @@ export default async function ProviderShowcasePage({
             ) : null}
           </header>
 
+          {/* Só a medida de leitura do token: com max-w-prose junto, a
+              utilidade vencia a classe do design system e a linha passava do
+              limite (medido: 88 caracteres por linha, máximo 72). */}
           {profile.bio ? (
-            <p className="measure-reading max-w-prose text-sm leading-relaxed text-muted">
+            <p className="measure-reading text-sm leading-relaxed text-muted">
               {profile.bio}
             </p>
           ) : null}

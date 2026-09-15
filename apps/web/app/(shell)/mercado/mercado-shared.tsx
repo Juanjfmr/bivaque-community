@@ -114,7 +114,7 @@ export function ListingCard({
     <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-[var(--semantic-surface)] transition-shadow duration-[var(--semantic-motion-duration-base)] hover:shadow-[var(--semantic-elevation-raised)]">
       <Link
         href={`/mercado/${listing.id}` as Route}
-        className="flex h-full flex-col focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+        className="flex h-full flex-col transition-colors duration-[var(--semantic-motion-duration-fast)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
       >
         <div className="h-40 w-full overflow-hidden">
           {photoUrl === null ? (
