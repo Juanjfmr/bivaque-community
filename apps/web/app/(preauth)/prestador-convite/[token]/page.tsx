@@ -41,7 +41,16 @@ export default async function ProviderInvitationAcceptPage({
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { data } = await supabase.rpc("read_provider_invitation", { p_token: token })
+  // Falha de backend NÃO é convite inexistente: se a leitura quebrar, a tela
+  // precisa dizer que não foi possível verificar (e o erro sobe para a
+  // fronteira da rota). Antes, qualquer erro da RPC caía no mesmo texto de token
+  // desconhecido — o defeito que o revisor independente mediu.
+  const { data, error: readError } = await supabase.rpc("read_provider_invitation", {
+    p_token: token,
+  })
+  if (readError) {
+    throw new Error(`Falha ao ler o convite de prestador: ${readError.message}`)
+  }
   const invitation = Array.isArray(data) ? data[0] : undefined
   const open = invitation !== undefined && invitation.status === "pending"
 

@@ -75,22 +75,31 @@ export default async function ImovelDetailPage({ params }: { params: Promise<{ i
     <div className="mx-auto w-full max-w-6xl px-4 py-6">
       {/* Mesma trilha de /meus-anuncios e /mercado: destino de 44px e transição
           (a régua mede o link inteiro; os dois destinos tinham 16px de altura). */}
-      <nav aria-label="Trilha" className="flex flex-wrap items-center gap-2 text-xs text-muted">
-        <Link
-          href="/explorar"
-          className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline"
-        >
-          Mercado
-        </Link>
-        <span aria-hidden="true">›</span>
-        <Link
-          href="/imoveis"
-          className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline"
-        >
-          Imóveis
-        </Link>
-        <span aria-hidden="true">›</span>
-        <span aria-current="page">{property.title}</span>
+      <nav aria-label="Trilha" className="text-xs text-muted">
+        {/* A trilha é uma lista ordenada (o caminho tem ordem): o <ol> some
+            quando só os links e os separadores ficam no nav, e leitor de tela
+            perde a contagem. Os alvos continuam de 44px. */}
+        <ol className="flex flex-wrap items-center gap-2">
+          <li>
+            <Link
+              href="/explorar"
+              className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline"
+            >
+              Mercado
+            </Link>
+            <span aria-hidden="true">›</span>
+          </li>
+          <li>
+            <Link
+              href="/imoveis"
+              className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline"
+            >
+              Imóveis
+            </Link>
+            <span aria-hidden="true">›</span>
+          </li>
+          <li aria-current="page">{property.title}</li>
+        </ol>
       </nav>
 
       <header className="mt-2 flex flex-wrap items-start justify-between gap-3">

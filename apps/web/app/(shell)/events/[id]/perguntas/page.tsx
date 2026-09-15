@@ -200,22 +200,30 @@ export default async function EventQuestionsPage({
       {/* Mesma trilha de /meus-anuncios: destino de 44px, transição e a página
           atual marcada — sem aria-current o nav fica sem item corrente e a
           auditoria visual acusa '0 active nav items'. */}
-      <nav aria-label="Trilha" className="flex flex-wrap items-center gap-2 text-sm text-muted">
-        <Link
-          href={"/events" as Route}
-          className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
-        >
-          Eventos
-        </Link>
-        <span aria-hidden="true">›</span>
-        <Link
-          href={backToEvent as Route}
-          className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
-        >
-          {event.title}
-        </Link>
-        <span aria-hidden="true">›</span>
-        <span aria-current="page">Perguntas</span>
+      <nav aria-label="Trilha" className="text-sm text-muted">
+        {/* Lista ordenada: o caminho tem ordem, e sem <ol>/<li> o leitor de tela
+            perde a contagem dos passos. Alvos seguem de 44px. */}
+        <ol className="flex flex-wrap items-center gap-2">
+          <li>
+            <Link
+              href={"/events" as Route}
+              className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+            >
+              Eventos
+            </Link>
+            <span aria-hidden="true">›</span>
+          </li>
+          <li>
+            <Link
+              href={backToEvent as Route}
+              className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+            >
+              {event.title}
+            </Link>
+            <span aria-hidden="true">›</span>
+          </li>
+          <li aria-current="page">Perguntas</li>
+        </ol>
       </nav>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">

@@ -10,6 +10,7 @@
 // authoritative for the mechanical rules (touch targets, overflow, contrast, motion).
 
 import { execFileSync } from "node:child_process"
+import { createHash } from "node:crypto"
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { chromium } from "@playwright/test"
@@ -719,7 +720,10 @@ async function resolveRoutePath(route, auth) {
 // audit — runs inside the page, returns plain JSON
 // --------------------------------------------------------------------------
 
-function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
+// Exportada para que uma sonda possa rodar a MESMA régua contra um DOM
+// mutado de propósito (controle negativo): provar que a regra ainda pega o
+// defeito que ela existe para pegar não pode depender de uma cópia da régua.
+export function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
   const findings = []
   const add = (rule, severity, selector, detail) =>
     findings.push({ rule, severity, selector, detail })
@@ -835,41 +839,30 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     const hiddenControl = hiddenControlTarget(element)
     const sizeEl = hiddenControl ? hiddenControl.sizeEl : element
     const motionEl = hiddenControl ? hiddenControl.motionEl : element
-    // O alvo de um controle rotulado é a UNIÃO entre o label e o próprio
-    // controle. Medido em /signup: a caixa de aceite ocupa 44x44 e o label tem
-    // 26px de altura porque o margin: -12px do desenho devolve a folga ao fluxo
-    // do texto — medir só o label reprovava um alvo que é 44x44 de verdade, e
-    // medir só o controle reprovaria o checkbox de 20px cujo label de 222x44 é
-    // a área clicável. A união é o que o dedo alcança.
-    // Um elemento escondido (display:none) mede 0x0 na origem: entrar na união
-    // com esse retângulo inflava o alvo para a página inteira. Só retângulos
-    // com área entram.
+    // Um elemento escondido (display:none) mede 0x0: sem área, não é alvo.
     const rectOf = (node) => {
       const rect = node.getBoundingClientRect()
       return rect.width === 0 && rect.height === 0 ? null : rect
     }
-    const box = (() => {
-      const outer = rectOf(sizeEl)
-      const inner = rectOf(element)
-      if (!hiddenControl) return inner ?? outer ?? { width: 0, height: 0 }
-      if (!outer) return inner ?? { width: 0, height: 0 }
-      if (!inner) return outer
-      const left = Math.min(outer.left, inner.left)
-      const top = Math.min(outer.top, inner.top)
-      const right = Math.max(outer.right, inner.right)
-      const bottom = Math.max(outer.bottom, inner.bottom)
-      return { width: right - left, height: bottom - top }
-    })()
-    if (box.width === 0 && box.height === 0) continue
+    // O alvo de um controle rotulado passa se QUALQUER das duas caixas fechar
+    // 44x44: o label (clicar nele aciona o controle) ou o próprio controle.
+    // A versão anterior media a UNIÃO das caixas, que soma também o vão entre
+    // elas — área que não é clicável. Medido nos dois casos que a união existia
+    // para resolver: a caixa de aceite de /signup tem controle de 44x44 (fecha
+    // sozinho) e o checkbox de /mercado tem label de 222x44 (fecha sozinho).
+    const boxes = [rectOf(sizeEl), hiddenControl ? rectOf(element) : null].filter(Boolean)
+    if (boxes.length === 0) continue
+    const closes = (rect) => rect.width >= 44 && rect.height >= 44
+    const targetBox = boxes.reduce((largest, rect) =>
+      rect.width * rect.height > largest.width * largest.height ? rect : largest,
+    )
 
     // Artefato de framework: o <select> oculto que o react-aria renderiza para
     // um Select/ListBox é 1x1, com tabindex="-1" e sem nome acessível — não é
-    // alvo de ponteiro nem de teclado. A isenção vale com ou sem label em volta;
-    // o que NÃO pode passar é controle pequeno dentro de label grande (o
-    // checkbox desenhado de 20px), e é por isso que a medida é a do alvo todo.
+    // alvo de ponteiro nem de teclado. A isenção exige que NENHUMA das caixas
+    // tenha área: controle pequeno dentro de label grande continua medido.
     if (
-      box.width <= 4 &&
-      box.height <= 4 &&
+      boxes.every((rect) => rect.width <= 4 && rect.height <= 4) &&
       element.tabIndex < 0 &&
       element.getAttribute("aria-hidden") !== "false"
     ) {
@@ -877,29 +870,44 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     }
 
     // 2. touch targets — 44x44 CSS px minimum
-    if (box.width < 44 || box.height < 44) {
+    if (!boxes.some(closes)) {
       add(
         "touch-target",
         "high",
         describe(sizeEl),
-        `${Math.round(box.width)}x${Math.round(box.height)} (min 44x44)`,
+        `${Math.round(targetBox.width)}x${Math.round(targetBox.height)} (min 44x44)`,
       )
     }
-
     // 3. motion presence — interactive elements need a state transition
+    // Uma declaração só conta quando anima de verdade: `animation-duration: 1s`
+    // sem keyframes (animation-name: none) e uma transição com propriedade
+    // `none` não produzem retorno de estado nenhum. Sem esta checagem, um
+    // <span aria-hidden style="animation-duration:1s"> qualquer dentro do
+    // label absolvia o controle — medido pelo revisor independente.
     const animates = (node) => {
       const style = getComputedStyle(node)
-      if (style.transitionDuration.split(",").some((d) => Number.parseFloat(d) > 0)) return true
-      return Number.parseFloat(style.animationDuration) > 0
+      const durations = style.transitionDuration.split(",").map((value) => Number.parseFloat(value))
+      const properties = style.transitionProperty.split(",").map((value) => value.trim())
+      const realTransition = durations.some(
+        (duration, index) =>
+          duration > 0 && (properties[index % properties.length] ?? "all") !== "none",
+      )
+      if (realTransition) return true
+      return style.animationName !== "none" && Number.parseFloat(style.animationDuration) > 0
     }
-    // Controle dentro de <label>: quem anima é a ESTRUTURA pintada do controle,
-    // não um filho escolhido a dedo. Medido em /denuncias/nova (radio do
-    // react-aria): o primeiro filho visível do label é o wrapper que guarda o
-    // input (62x44, sem transição) e o desenho que anima é o irmão
-    // `radio__control` (16x16, 0.2s). Medir só o primeiro filho reprovava o
-    // controle certo. Sem label, o alvo continua sendo o próprio elemento.
+    // Controle dentro de <label>: o retorno de estado que o usuário vê é o do
+    // desenho do controle. Em /denuncias/nova (radio do react-aria) o primeiro
+    // filho visível do label é o wrapper que guarda o input (62x44, sem
+    // transição) e quem anima é o irmão `radio__control` (16x16, 0.2s).
+    // Sem label, o alvo continua sendo o próprio elemento.
+    // O label também vale: ele É o elemento interativo (clicar nele aciona o
+    // controle), então transição nele é retorno de estado de verdade — caso
+    // medido em /imoveis/novo, onde a zona de foto anima o fundo no hover e o
+    // primeiro filho visível é só o ícone. O que NÃO vale é descendente
+    // arbitrário que não anima nada (a declaração falsa que o revisor usou para
+    // furar a versão anterior).
     const hasMotion = hiddenControl
-      ? [element, sizeEl, ...sizeEl.querySelectorAll("*")].some(animates)
+      ? animates(element) || animates(motionEl) || animates(sizeEl)
       : animates(motionEl)
     if (!hasMotion) {
       add("no-transition", "medium", describe(motionEl), "no transition/animation on interactive")
@@ -985,13 +993,19 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     // largura da caixa dividida por meio em. Medido em /prestadores/<id>: a
     // bio tem 42 caracteres e cabe em UMA linha, mas o parágrafo é um bloco de
     // 616px dentro de uma coluna larga — a conta pela caixa dava 88 e reprovava
-    // uma linha que não existe. O número de linhas vem da altura dividida pela
-    // entrelinha; um parágrafo longo continua reprovando se suas linhas passarem
-    // do limite.
+    // uma linha que não existe.
+    //
+    // As linhas saem da ALTURA DE CONTEÚDO: `getBoundingClientRect` inclui
+    // padding e borda, e com `py-4` a mesma bio de 250 caracteres (3 linhas
+    // reais, 83 por linha) era contada como 4 e passava — falso negativo medido
+    // pelo revisor independente. `clientHeight` já exclui borda, então o
+    // padding sai dele.
     const lineHeight = Number.parseFloat(style.lineHeight)
+    const padding = Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom)
+    const contentHeight = element.clientHeight - (Number.isFinite(padding) ? padding : 0)
     const lines =
       Number.isFinite(lineHeight) && lineHeight > 0
-        ? Math.max(1, Math.round(box.height / lineHeight))
+        ? Math.max(1, Math.round(contentHeight / lineHeight))
         : 1
     const text = (element.textContent ?? "").trim()
     if (text.length === 0) continue
@@ -1415,12 +1429,26 @@ function writeResults(runDir, results, authenticated) {
   const runnerRevision = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim()
   const runnerDirty =
     execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" }).trim().length > 0
+  // O SHA do runner não identifica A RÉGUA: as regras moram em dois arquivos que
+  // podem estar modificados sem commit (foi o caso em todas as rodadas de 15/09 —
+  // `runnerRevision` apontava para o commit ANTERIOR ao trabalho medido). O hash
+  // do conteúdo dos dois arquivos é o que permite atribuir os números à régua que
+  // os produziu.
+  const rulerHash = (name) =>
+    createHash("sha256")
+      .update(readFileSync(join(import.meta.dirname, name)))
+      .digest("hex")
+      .slice(0, 16)
   const report = {
     runDir,
     authenticated,
     ...summary,
     runnerRevision,
     runnerDirty,
+    rulers: {
+      capture: rulerHash("capture.mjs"),
+      proof: rulerHash("capture-proof.mjs"),
+    },
     baseURL: BASE_URL,
     fidelity: "not-assessed",
     results,
@@ -1433,7 +1461,7 @@ function writeResults(runDir, results, authenticated) {
     "",
     `Authenticated capture: **${authenticated ? "yes" : "no"}**`,
     `Capture identity: **${summary.valid ? "VALID" : "INVALID"}** (${invalid} invalid captures).`,
-    `Runner revision: ${runnerRevision}; dirty: ${runnerDirty}; server: ${BASE_URL}.`,
+    `Runner revision: ${runnerRevision}; dirty: ${runnerDirty}; rulers: capture ${report.rulers.capture}, proof ${report.rulers.proof}; server: ${BASE_URL}.`,
     "Reference fidelity: **not assessed** — requires image comparison and independent review.",
     `Findings: **${total}** total, **${high}** high severity.`,
     "",

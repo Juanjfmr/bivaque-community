@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(15);
 
 -- Leitura do convite pelo próprio token (prancha 79, painel 2).
 --
@@ -13,6 +13,11 @@ select plan(11);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
+
+-- Quem aceita o convite no caso "accepted" (o CHECK exige que não seja o
+-- convidante, e a FK exige um usuário real).
+insert into auth.users (id, email)
+values ('10000000-0000-4000-8000-000000000020', 'read-invite-accepted@example.invalid');
 
 set local role authenticated;
 select set_config(
@@ -139,6 +144,55 @@ select ok(
     'EXECUTE'
   ),
   'anon não aceita convite: aceitar exige sessão'
+);
+
+-- Casos que o revisor independente mediu e o teste não cobria: token em
+-- maiúsculas (o digest é do texto em caixa baixa), token vazio, convite ACEITO
+-- e comunidade apagada.
+select is(
+  (
+    select community_name
+      from public.read_provider_invitation(upper((select token from convite)))
+  ),
+  'Vila Ajuricaba'::text,
+  'token em maiúsculas resolve o mesmo convite'
+);
+
+select is(
+  (select count(*)::integer from public.read_provider_invitation('')),
+  0,
+  'token vazio não devolve linha'
+);
+
+update private.provider_invitations
+   set status = 'accepted',
+       accepted_by_user_id = '10000000-0000-4000-8000-000000000020',
+       accepted_at = now()
+ where token_digest = extensions.digest(
+   decode((select token from convite), 'hex'),
+   'sha256'
+ );
+
+select is(
+  (
+    select status
+      from public.read_provider_invitation((select token from convite))
+  ),
+  'accepted'::text,
+  'convite aceito é lido como aceito: o link continua explicando o que houve'
+);
+
+update public.communities
+   set is_deleted = true
+ where id = '70000000-0000-4000-8000-000000000001';
+
+// Contrato: a leitura devolve zero linhas para token ausente, malformado,
+// desconhecido OU de comunidade apagada — sempre indistinguíveis, para não virar
+// oráculo de existência de convite nem de comunidade.
+select is(
+  (select count(*)::integer from public.read_provider_invitation((select token from convite))),
+  0,
+  'comunidade apagada devolve zero linhas, como token desconhecido'
 );
 
 select * from finish();
