@@ -1,7 +1,16 @@
 "use client"
 
 import { Button } from "@heroui/react"
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
+import {
+  Baby,
+  Car,
+  ChevronLeft,
+  ChevronRight,
+  Dumbbell,
+  Home,
+  Monitor,
+  Package,
+} from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -58,6 +67,15 @@ interface FetchState {
   saved: Set<string>
   total: number
   regions: string[]
+}
+
+const CATEGORY_ICONS: Record<string, typeof Home> = {
+  casa_moveis: Home,
+  eletronicos: Monitor,
+  esporte: Dumbbell,
+  infantil: Baby,
+  veiculos: Car,
+  outros: Package,
 }
 
 const INITIAL_STATE: FetchState = {
@@ -278,7 +296,7 @@ function MercadoContent() {
           <Button
             variant="tertiary"
             size="sm"
-            className="min-h-11"
+            className="min-h-11 border border-border bg-transparent"
             onPress={() => router.push("/meus-anuncios" as Route)}
           >
             Meus anúncios
@@ -315,30 +333,36 @@ function MercadoContent() {
       <div className="flex flex-col gap-6 lg:flex-row">
         <aside className="w-full shrink-0 lg:w-64">
           <div className="rounded-2xl border border-border bg-[var(--semantic-surface)] p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <SlidersHorizontal size={16} aria-hidden="true" />
-              <h2 className="text-sm font-semibold">Filtros</h2>
-            </div>
+            <h2 className="mb-3 text-sm font-semibold">Filtros</h2>
 
             <fieldset className="mb-4">
               <legend className="mb-2 text-xs font-medium text-muted">Categoria</legend>
               <div className="flex flex-col gap-2">
-                {LISTING_CATEGORIES.map((category) => (
-                  <label key={category.value} className="flex min-h-11 items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="h-5 w-5"
-                      checked={search.categories.includes(category.value)}
-                      onChange={(event) => {
-                        const next = event.target.checked
-                          ? [...search.categories, category.value]
-                          : search.categories.filter((value) => value !== category.value)
-                        apply({ categories: next })
-                      }}
-                    />
-                    {category.label}
-                  </label>
-                ))}
+                {LISTING_CATEGORIES.map((category) => {
+                  const Icon = CATEGORY_ICONS[category.value] ?? Package
+                  return (
+                    <label
+                      key={category.value}
+                      className="flex min-h-11 items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-5 w-5"
+                        checked={search.categories.includes(category.value)}
+                        onChange={(event) => {
+                          const next = event.target.checked
+                            ? [...search.categories, category.value]
+                            : search.categories.filter((value) => value !== category.value)
+                          apply({ categories: next })
+                        }}
+                      />
+                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--semantic-action-primary)] text-[var(--semantic-text-on-strong)]">
+                        <Icon size={13} aria-hidden="true" />
+                      </span>
+                      {category.label}
+                    </label>
+                  )
+                })}
               </div>
             </fieldset>
 

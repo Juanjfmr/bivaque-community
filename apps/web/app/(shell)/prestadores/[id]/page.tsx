@@ -187,23 +187,26 @@ export default async function ProviderShowcasePage({
       </Link>
 
       <div className="mt-4 grid gap-6 md:grid-cols-[minmax(0,22rem)_1fr] md:items-start">
-        <div className="overflow-hidden rounded-2xl border border-border bg-[var(--semantic-surface-sunken)]">
-          {photoUrl ? (
-            // biome-ignore lint/performance/noImgElement: URL assinada de bucket privado expira em 1h; o otimizador de imagem colocaria link volátil em cache permanente.
-            <img
-              src={photoUrl}
-              alt={firstPhoto?.caption ?? `Foto do trabalho de ${profile.display_name}`}
-              className="aspect-[4/5] w-full object-cover"
-            />
-          ) : (
-            <div
-              role="img"
-              aria-label="Este prestador ainda não publicou foto"
-              className="flex aspect-[4/5] w-full items-center justify-center text-muted"
-            >
-              <ImageOff size={40} aria-hidden="true" />
-            </div>
-          )}
+        <div className="flex flex-col gap-4">
+          <div className="overflow-hidden rounded-2xl border border-border bg-[var(--semantic-surface-sunken)]">
+            {photoUrl ? (
+              // biome-ignore lint/performance/noImgElement: URL assinada de bucket privado expira em 1h; o otimizador de imagem colocaria link volátil em cache permanente.
+              <img
+                src={photoUrl}
+                alt={firstPhoto?.caption ?? `Foto do trabalho de ${profile.display_name}`}
+                className="aspect-[4/5] w-full object-cover"
+              />
+            ) : (
+              <div
+                role="img"
+                aria-label="Este prestador ainda não publicou foto"
+                className="flex aspect-[4/5] w-full items-center justify-center text-muted"
+              >
+                <ImageOff size={40} aria-hidden="true" />
+              </div>
+            )}
+          </div>
+          <ProviderActions providerId={profile.id} providerUserId={profile.owner_user_id} />
         </div>
 
         <div className="flex flex-col gap-4">
@@ -247,8 +250,6 @@ export default async function ProviderShowcasePage({
               </ul>
             )}
           </section>
-
-          <ProviderActions providerId={profile.id} providerUserId={profile.owner_user_id} />
         </div>
       </div>
     </div>

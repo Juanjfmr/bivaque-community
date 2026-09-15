@@ -208,116 +208,118 @@ export function CityReference({
         </div>
       </section>
 
-      {/* Guia de chegada */}
-      <section
-        aria-labelledby="city-guide-heading"
-        className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4"
-      >
-        <h2 id="city-guide-heading" className="text-base font-semibold tracking-tight">
-          Guia de chegada
-        </h2>
-        <p className="mt-2 text-sm text-muted">
-          Colégio, hospital, transportadora, despachante — referência curada para quem chega ou
-          precisa de informação permanente sobre a cidade.
-        </p>
-        <div className="mt-3">
-          <Link
-            href={isAlternate ? `/guide?locality=${viewing.id}` : "/guide"}
-            className="inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
-          >
-            Abrir o guia de chegada
-          </Link>
-        </div>
-      </section>
-
-      {/* Vitrine de prestadores — onda G Task 5 */}
-      <section
-        aria-labelledby="city-vitrine-heading"
-        className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4"
-      >
-        <h2 id="city-vitrine-heading" className="text-base font-semibold tracking-tight">
-          Vitrine de prestadores
-        </h2>
-        {!providersLoaded ? (
-          <div className="mt-3 space-y-2" aria-busy="true">
-            <Skeleton className="h-4 w-full rounded" />
-            <Skeleton className="h-4 w-2/3 rounded" />
-          </div>
-        ) : providersError ? (
-          <p className="mt-3 text-sm text-[var(--semantic-danger)]">{providersError}</p>
-        ) : providers.length === 0 ? (
-          <EmptyState
-            title="Ainda não há prestadores cadastrados por aqui."
-            description="Quando membros das vilas indicarem prestadores de confiança, eles aparecem nesta vitrine."
-          />
-        ) : (
-          <>
-            <form
-              className="mt-3 flex flex-wrap items-end gap-2"
-              onSubmit={(event) => {
-                event.preventDefault()
-                void loadProviders(providerQuery, providerCategory)
-              }}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Guia de chegada */}
+        <section
+          aria-labelledby="city-guide-heading"
+          className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4"
+        >
+          <h2 id="city-guide-heading" className="text-base font-semibold tracking-tight">
+            Guia de chegada
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            Colégio, hospital, transportadora, despachante — referência curada para quem chega ou
+            precisa de informação permanente sobre a cidade.
+          </p>
+          <div className="mt-3">
+            <Link
+              href={isAlternate ? `/guide?locality=${viewing.id}` : "/guide"}
+              className="inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
-              <label className="text-xs text-muted" htmlFor="provider-search">
-                Buscar por nome
-              </label>
-              <input
-                id="provider-search"
-                value={providerQuery}
-                onChange={(event) => setProviderQuery(event.target.value)}
-                placeholder="Ex.: climatiza"
-                className="min-h-11 flex-1 rounded-md border border-border bg-transparent px-3 text-sm"
-              />
-              <label className="sr-only" htmlFor="provider-category">
-                Categoria
-              </label>
-              <select
-                id="provider-category"
-                value={providerCategory}
-                onChange={(event) => {
-                  const next = event.target.value as "" | ProviderCategory
-                  setProviderCategory(next)
-                  void loadProviders(providerQuery, next)
-                }}
-                className="min-h-11 rounded-md border border-border bg-transparent px-2 text-sm"
-              >
-                <option value="">Todas as categorias</option>
-                {PROVIDER_CATEGORIES.map((value) => (
-                  <option key={value} value={value}>
-                    {PROVIDER_CATEGORY_LABELS[value]}
-                  </option>
-                ))}
-              </select>
-              <Button type="submit" size="sm" variant="secondary">
-                Buscar
-              </Button>
-            </form>
+              Abrir o guia de chegada
+            </Link>
+          </div>
+        </section>
 
-            {providers.length === 0 ? (
-              <p className="mt-3 text-sm text-muted">
-                Nenhum prestador encontrado com esses filtros.
-              </p>
-            ) : (
-              <ul className="mt-3 space-y-1">
-                {providers.map((provider) => (
-                  <li key={provider.id}>
-                    <Link
-                      href={`/prestadores/${provider.id}` as Route}
-                      className="flex min-h-11 flex-col justify-center rounded-md px-1 transition-colors hover:underline focus:outline-none focus-visible:underline"
-                    >
-                      <span className="text-sm font-medium">{provider.display_name}</span>
-                      <span className="text-xs text-muted">
-                        {PROVIDER_CATEGORY_LABELS[provider.category] ?? provider.category}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
-        )}
-      </section>
+        {/* Vitrine de prestadores — onda G Task 5 */}
+        <section
+          aria-labelledby="city-vitrine-heading"
+          className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4"
+        >
+          <h2 id="city-vitrine-heading" className="text-base font-semibold tracking-tight">
+            Vitrine de prestadores
+          </h2>
+          {!providersLoaded ? (
+            <div className="mt-3 space-y-2" aria-busy="true">
+              <Skeleton className="h-4 w-full rounded" />
+              <Skeleton className="h-4 w-2/3 rounded" />
+            </div>
+          ) : providersError ? (
+            <p className="mt-3 text-sm text-[var(--semantic-danger)]">{providersError}</p>
+          ) : providers.length === 0 ? (
+            <EmptyState
+              title="Ainda não há prestadores cadastrados por aqui."
+              description="Quando membros das vilas indicarem prestadores de confiança, eles aparecem nesta vitrine."
+            />
+          ) : (
+            <>
+              <form
+                className="mt-3 flex flex-wrap items-end gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  void loadProviders(providerQuery, providerCategory)
+                }}
+              >
+                <label className="text-xs text-muted" htmlFor="provider-search">
+                  Buscar por nome
+                </label>
+                <input
+                  id="provider-search"
+                  value={providerQuery}
+                  onChange={(event) => setProviderQuery(event.target.value)}
+                  placeholder="Ex.: climatiza"
+                  className="min-h-11 flex-1 rounded-md border border-border bg-transparent px-3 text-sm"
+                />
+                <label className="sr-only" htmlFor="provider-category">
+                  Categoria
+                </label>
+                <select
+                  id="provider-category"
+                  value={providerCategory}
+                  onChange={(event) => {
+                    const next = event.target.value as "" | ProviderCategory
+                    setProviderCategory(next)
+                    void loadProviders(providerQuery, next)
+                  }}
+                  className="min-h-11 rounded-md border border-border bg-transparent px-2 text-sm"
+                >
+                  <option value="">Todas as categorias</option>
+                  {PROVIDER_CATEGORIES.map((value) => (
+                    <option key={value} value={value}>
+                      {PROVIDER_CATEGORY_LABELS[value]}
+                    </option>
+                  ))}
+                </select>
+                <Button type="submit" size="sm" variant="secondary">
+                  Buscar
+                </Button>
+              </form>
+
+              {providers.length === 0 ? (
+                <p className="mt-3 text-sm text-muted">
+                  Nenhum prestador encontrado com esses filtros.
+                </p>
+              ) : (
+                <ul className="mt-3 space-y-1">
+                  {providers.map((provider) => (
+                    <li key={provider.id}>
+                      <Link
+                        href={`/prestadores/${provider.id}` as Route}
+                        className="flex min-h-11 flex-col justify-center rounded-md px-1 transition-colors hover:underline focus:outline-none focus-visible:underline"
+                      >
+                        <span className="text-sm font-medium">{provider.display_name}</span>
+                        <span className="text-xs text-muted">
+                          {PROVIDER_CATEGORY_LABELS[provider.category] ?? provider.category}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </section>
+      </div>
 
       {/* Pedir entrada numa vila */}
       <section

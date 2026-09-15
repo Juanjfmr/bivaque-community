@@ -48,40 +48,49 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
   return (
     <div className="flex min-h-screen flex-col">
       <nav aria-label="Painel do operador" className="border-b border-border bg-surface px-6 py-3">
-        <ul className="flex flex-wrap gap-4 text-sm">
-          <li>
-            <Link
-              href="/admissions"
-              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-            >
-              Admissões
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/reports"
-              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-            >
-              Denúncias
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/guide-queue"
-              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-            >
-              Guia de chegada
-            </Link>
-          </li>
-          <li>
-            <Link
-              href={"/arrivals" as Route}
-              className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
-            >
-              Chegadas
-            </Link>
-          </li>
-        </ul>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <span className="text-sm font-semibold tracking-tight">BIVAQUE · Operação</span>
+          <ul className="flex flex-wrap gap-4 text-sm">
+            <li>
+              <Link
+                href="/admissions"
+                className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
+              >
+                Admissões
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/reports"
+                className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
+              >
+                Denúncias
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/guide-queue"
+                className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
+              >
+                Guia
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={"/arrivals" as Route}
+                className="inline-flex min-h-11 items-center rounded-md px-3 text-muted hover:text-foreground"
+              >
+                Chegadas
+              </Link>
+            </li>
+          </ul>
+          <Link
+            href="/inicio"
+            className="ml-auto inline-flex min-h-11 items-center rounded-md px-3 text-sm text-muted hover:text-foreground"
+          >
+            Sair da operação
+          </Link>
+        </div>
       </nav>
       {children}
     </div>

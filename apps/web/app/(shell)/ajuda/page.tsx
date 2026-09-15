@@ -1,4 +1,4 @@
-import { Mail } from "lucide-react"
+import { ChevronRight, Mail } from "lucide-react"
 import { SUPPORT_EMAIL } from "../../../lib/support"
 
 // Spec C13: orientacoes de acesso/uso, documentos legais reais e o canal de
@@ -37,6 +37,7 @@ function DestinationList({ links }: { links: Array<{ href: string; label: string
             className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)]"
           >
             {link.label}
+            <ChevronRight aria-hidden="true" className="ml-auto h-4 w-4" />
           </a>
         </li>
       ))}
@@ -100,6 +101,9 @@ export default function AjudaPage() {
           <Mail size={16} aria-hidden="true" />
           {SUPPORT_EMAIL}
         </a>
+        <p className="mt-2 text-sm text-muted">
+          Este é o mesmo canal usado nos avisos transacionais do produto.
+        </p>
       </section>
     </div>
   )

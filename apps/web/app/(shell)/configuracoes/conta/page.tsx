@@ -1,7 +1,7 @@
 "use client"
 
 import { Button, Input, Link, Modal, useOverlayState } from "@heroui/react"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
@@ -254,14 +254,14 @@ export default function ConfiguracoesContaPage() {
         </Link>
       </div>
 
-      <Button
+      <button
         type="button"
-        variant="danger"
-        className="w-full min-h-11"
-        onPress={signOutModal.open}
+        onClick={signOutModal.open}
+        className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-border bg-[var(--surface)] px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)]"
       >
-        Sair da conta
-      </Button>
+        <LogOut aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--danger)]" />
+        <span>Sair da conta</span>
+      </button>
 
       <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
         <h3 className="text-sm font-medium text-[var(--danger)]">Excluir conta</h3>

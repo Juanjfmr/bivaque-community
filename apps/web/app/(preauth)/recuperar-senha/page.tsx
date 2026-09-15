@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@heroui/react"
-import { ArrowLeft, Mail } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { classifyEntrySend } from "../../../lib/auth/entry-send"
@@ -91,69 +91,73 @@ export default function RecuperarSenhaPage() {
 
   return (
     <main className={styles["root"]}>
-      <section className={styles["card"]} aria-labelledby="recuperar-title">
-        <Link href={{ pathname: "/login" }} className={styles["back"]}>
-          <ArrowLeft aria-hidden="true" />
-          <span>Voltar para entrar</span>
-        </Link>
+      <div className={styles["panel"]} aria-hidden="true">
+        <span className={styles["panelWordmark"]}>BIVAQUE</span>
+      </div>
+      <div className={styles["formPane"]}>
+        <section className={styles["card"]} aria-labelledby="recuperar-title">
+          <h1 id="recuperar-title">Esqueceu sua senha?</h1>
+          <p className={styles["lead"]}>
+            Digite seu e-mail. Enviamos um link para você criar uma senha nova.
+          </p>
 
-        <h1 id="recuperar-title">Esqueceu sua senha?</h1>
-        <p className={styles["lead"]}>
-          Digite seu e-mail. Enviamos um link para você criar uma senha nova.
-        </p>
+          <form className={styles["form"]} onSubmit={handleSubmit}>
+            <label className={styles["field"]} htmlFor="recuperar-email">
+              <span>Seu e-mail</span>
+              <span className={styles["inputShell"]}>
+                <input
+                  id="recuperar-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  placeholder="nome@exemplo.com"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </span>
+            </label>
 
-        <form className={styles["form"]} onSubmit={handleSubmit}>
-          <label className={styles["field"]} htmlFor="recuperar-email">
-            <span>Seu e-mail</span>
-            <span className={styles["inputShell"]}>
-              <Mail aria-hidden="true" />
-              <input
-                id="recuperar-email"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                placeholder="nome@exemplo.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </span>
-          </label>
+            <Button
+              type="submit"
+              variant="primary"
+              className={styles["primaryButton"] ?? ""}
+              isDisabled={loading || cooldown > 0}
+            >
+              {loading
+                ? "Enviando..."
+                : cooldown > 0
+                  ? `Aguarde ${formatCountdown(cooldown)}`
+                  : "Enviar link"}
+            </Button>
+          </form>
 
-          <Button
-            type="submit"
-            variant="primary"
-            className={styles["primaryButton"] ?? ""}
-            isDisabled={loading || cooldown > 0}
-          >
-            {loading
-              ? "Enviando..."
-              : cooldown > 0
-                ? `Aguarde ${formatCountdown(cooldown)}`
-                : "Enviar link"}
-          </Button>
-        </form>
+          <Link href={{ pathname: "/login" }} className={styles["back"]}>
+            <ArrowLeft aria-hidden="true" />
+            <span>Voltar para entrar</span>
+          </Link>
 
-        {offline && (
-          <FeedbackAlert
-            variant="warning"
-            title="Sem conexão"
-            description="Verifique sua conexão e tente de novo."
-          />
-        )}
+          {offline && (
+            <FeedbackAlert
+              variant="warning"
+              title="Sem conexão"
+              description="Verifique sua conexão e tente de novo."
+            />
+          )}
 
-        {limite && <FeedbackAlert variant="warning" description={limite} />}
+          {limite && <FeedbackAlert variant="warning" description={limite} />}
 
-        {falha && <FeedbackAlert variant="danger" description={falha} />}
+          {falha && <FeedbackAlert variant="danger" description={falha} />}
 
-        {sent && (
-          <FeedbackAlert
-            variant="success"
-            title="Confira seu e-mail"
-            description={`Se ${email} puder entrar no Bivaque, o link para criar uma senha nova já está a caminho. Confira também o spam.`}
-          />
-        )}
-      </section>
+          {sent && (
+            <FeedbackAlert
+              variant="success"
+              title="Confira seu e-mail"
+              description={`Se ${email} puder entrar no Bivaque, o link para criar uma senha nova já está a caminho. Confira também o spam.`}
+            />
+          )}
+        </section>
+      </div>
     </main>
   )
 }

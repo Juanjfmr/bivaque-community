@@ -55,7 +55,7 @@ export function ProviderActions({
         variant="secondary"
         onPress={openConversation}
         isDisabled={opening}
-        className="min-h-11 flex-1 transition-colors"
+        className="min-h-11 flex-1 border border-border bg-transparent text-[var(--semantic-text-primary)] transition-colors"
       >
         <Mail size={18} aria-hidden="true" />
         {opening ? "Abrindo…" : "Entrar em contato"}

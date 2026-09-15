@@ -210,6 +210,13 @@ reproduces from a clean state before attributing it to code.**
   which is deterministic and cleans up after itself.
 - **Stale `dev-server.pid` / `dev-server.log`.** A pid file left behind from a killed run makes
   the visual loop attach to a server that is not there. Both are gitignored; delete and retry.
+- **Stale `apps/web/tsconfig.tsbuildinfo` + `.next/types`.** `typecheck` vermelho em
+  `provider-shell.tsx` com TS2769/TS2820 sobre `/prestador/conta` (ou rota aggiunta recente)
+  enquanto `next build` passa NÃO é defeito do código: é o cache incremental do tsc segurando
+  os tipos de rota gerados antes da rota existir. O dev server escreve tipos em
+  `.next/dev/types`, mas o `tsc --noEmit` lê `.next/types` (regenerado só pelo build).
+  **Fix: deletar `apps/web/tsconfig.tsbuildinfo` e rodar `npx pnpm@11.18.0 build` uma vez.**
+  Um dev server zumbi segurando a porta 3000 impede a regeneração — mate-o antes.
 - **Product decisions live outside the repo.** `C:\Users\juana\Forja-90\.omo\…` is unreachable
   from a workspace-scoped session. Do not block on it — see the header of this file.
 

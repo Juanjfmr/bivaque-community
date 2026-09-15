@@ -12,7 +12,7 @@ import {
   Tabs,
   TextArea,
 } from "@heroui/react"
-import { ChevronDown, Clock, MapPin } from "lucide-react"
+import { CalendarDays, Clock, MapPin } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
@@ -787,30 +787,25 @@ function EventsContent() {
           {/* ── period filter (prancha 48 left panel) ────────────────────── */}
 
           {activeEvents.length > 0 ? (
-            <div className="flex flex-col gap-1">
-              <label htmlFor="filtro-periodo" className="text-xs font-medium text-muted">
-                Período
-              </label>
-              <div className="relative max-w-xs">
-                <select
-                  id="filtro-periodo"
-                  value={period}
-                  onChange={(event) => setPeriod(event.target.value as PeriodValue)}
-                  className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
+            <fieldset className="flex flex-wrap gap-2">
+              <legend className="sr-only">Período</legend>
+              {PERIOD_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={period === option.value}
+                  onClick={() => setPeriod(option.value)}
+                  className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm transition-colors ${
+                    period === option.value
+                      ? "border-[var(--semantic-action-primary)] bg-[var(--semantic-selected)] font-medium text-[var(--semantic-text-primary)]"
+                      : "border-border text-muted hover:text-[var(--semantic-text-primary)]"
+                  }`}
                 >
-                  {PERIOD_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={14}
-                  aria-hidden="true"
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"
-                />
-              </div>
-            </div>
+                  {option.value === "week" && <CalendarDays size={14} aria-hidden="true" />}
+                  {option.label}
+                </button>
+              ))}
+            </fieldset>
           ) : null}
 
           {/* ── explorer grid ────────────────────────────────────────────── */}

@@ -125,10 +125,25 @@ export default async function AdminAdmissionsPage({
   let rows = entries.filter((entry) =>
     tab === "pendentes" ? PENDING_STATUSES.has(entry.status) : entry.status === "rejected",
   )
+  const emailById = new Map<string, string>()
   if (query.length > 0) {
+    // A prancha promete busca por nome ou e-mail. O e-mail não vem do RPC da
+    // fila: com busca ativa, resolve-se pela API de admin para as linhas
+    // filtradas antes de paginar; sem busca, continua só a página visível.
     const needle = query.toLocaleLowerCase("pt-BR")
-    rows = rows.filter((entry) =>
-      (entry.display_name ?? "").toLocaleLowerCase("pt-BR").includes(needle),
+    for (let pageIdx = 1; ; pageIdx += 1) {
+      const { data, error } = await serviceClient.auth.admin.listUsers({
+        page: pageIdx,
+        perPage: 200,
+      })
+      if (error || !data?.users?.length) break
+      for (const user of data.users) emailById.set(user.id, user.email ?? "")
+      if (data.users.length < 200) break
+    }
+    rows = rows.filter(
+      (entry) =>
+        (entry.display_name ?? "").toLocaleLowerCase("pt-BR").includes(needle) ||
+        (emailById.get(entry.user_id) ?? "").toLocaleLowerCase("pt-BR").includes(needle),
     )
   }
 
@@ -138,10 +153,12 @@ export default async function AdminAdmissionsPage({
   const visible = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   // O e-mail não vem do RPC da fila (ele só entrega id, nome, status e data).
-  // Resolve-se pela API de admin, do servidor, somente para as linhas da
-  // página visível — nunca para a tabela inteira.
+  // Sem busca, resolve-se pela API de admin somente para as linhas da página
+  // visível — nunca para a tabela inteira; com busca, o mapa acima já cobre.
   const emails = await Promise.all(
     visible.map(async (entry) => {
+      const cached = emailById.get(entry.user_id)
+      if (cached !== undefined) return cached
       const { data, error } = await serviceClient.auth.admin.getUserById(entry.user_id)
       return error ? null : (data.user?.email ?? null)
     }),
@@ -201,14 +218,14 @@ export default async function AdminAdmissionsPage({
         <form method="get" action="/admissions" className="flex items-center gap-2">
           <input type="hidden" name="tab" value={tab} />
           <label className="sr-only" htmlFor="admissions-search">
-            Buscar por nome
+            Buscar por nome ou e-mail
           </label>
           <input
             id="admissions-search"
             type="search"
             name="q"
             defaultValue={query}
-            placeholder="Buscar por nome"
+            placeholder="Buscar por nome ou e-mail"
             className="min-h-11 w-full min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 text-sm"
           />
           <button

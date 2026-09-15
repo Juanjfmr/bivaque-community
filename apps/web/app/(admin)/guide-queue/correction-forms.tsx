@@ -124,7 +124,7 @@ export function CorrectionDecisionForms({ item }: { item: GuideCorrectionQueueIt
 
         <div>
           <Button type="submit" size="sm" variant="primary" isDisabled={applyPending}>
-            {applyPending ? "Aplicando…" : "Aplicar e publicar"}
+            {applyPending ? "Aplicando…" : "Aplicar correção"}
           </Button>
         </div>
       </form>
@@ -149,7 +149,7 @@ export function CorrectionDecisionForms({ item }: { item: GuideCorrectionQueueIt
 
         <div>
           <Button type="submit" size="sm" variant="tertiary" isDisabled={rejectPending}>
-            {rejectPending ? "Rejeitando…" : "Rejeitar com justificativa"}
+            {rejectPending ? "Recusando…" : "Recusar"}
           </Button>
         </div>
       </form>

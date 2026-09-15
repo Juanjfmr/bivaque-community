@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@heroui/react"
-import { Eye, EyeOff, Lock } from "lucide-react"
+import { Eye, EyeOff, Info, Lock } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -71,71 +71,84 @@ export default function NovaSenhaPage() {
 
   return (
     <main className={styles["root"]}>
-      <section className={styles["card"]} aria-labelledby="nova-senha-title">
-        <h1 id="nova-senha-title">Crie uma senha nova</h1>
+      <div className={styles["panel"]} aria-hidden="true">
+        <span className={styles["panelWordmark"]}>BIVAQUE</span>
+      </div>
+      <div className={styles["formPane"]}>
+        <section className={styles["card"]} aria-labelledby="nova-senha-title">
+          <h1 id="nova-senha-title">
+            {session === "missing" ? "Este link não vale mais" : "Crie uma senha nova"}
+          </h1>
 
-        {session === "checking" && <p className={styles["lead"]}>Conferindo seu link...</p>}
+          {session === "checking" && <p className={styles["lead"]}>Conferindo seu link...</p>}
 
-        {session === "missing" && (
-          <>
-            <FeedbackAlert
-              variant="danger"
-              title="Este link não vale mais"
-              description="Links de recuperação valem uma vez só e expiram. Peça outro para continuar."
-            />
-            <Link href={{ pathname: "/recuperar-senha" }} className={styles["back"]}>
-              <span>Pedir outro link</span>
-            </Link>
-          </>
-        )}
+          {session === "missing" && (
+            <>
+              <Info aria-hidden="true" className={styles["stateIcon"]} />
+              <p className={styles["lead"]}>
+                Links de recuperação valem uma vez só e expiram. Peça outro para continuar de onde
+                parou. Se o link já foi usado, a senha que você criou continua valendo — basta
+                entrar com ela.
+              </p>
+              <div className={styles["actions"]}>
+                <Link href={{ pathname: "/recuperar-senha" }} className={styles["primaryLink"]}>
+                  Pedir outro link
+                </Link>
+                <Link href={{ pathname: "/login" }} className={styles["outlineLink"]}>
+                  Voltar para entrar
+                </Link>
+              </div>
+            </>
+          )}
 
-        {session === "ready" && (
-          <>
-            <p className={styles["lead"]}>
-              Use ao menos 8 caracteres, misturando letras e números. Uma frase que só você lembra
-              funciona melhor do que uma palavra curta e complicada.
-            </p>
+          {session === "ready" && (
+            <>
+              <p className={styles["lead"]}>
+                Use ao menos 8 caracteres, misturando letras e números. Uma frase que só você lembra
+                funciona melhor do que uma palavra curta e complicada.
+              </p>
 
-            <form className={styles["form"]} onSubmit={handleSubmit}>
-              <label className={styles["field"]} htmlFor="nova-senha">
-                <span>Senha nova</span>
-                <span className={styles["inputShell"]}>
-                  <Lock aria-hidden="true" />
-                  <input
-                    id="nova-senha"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    placeholder="Ao menos 8 caracteres"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    required
-                  />
-                  <button
-                    type="button"
-                    className={styles["revealButton"]}
-                    onClick={() => setShowPassword((shown) => !shown)}
-                    aria-pressed={showPassword}
-                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                  >
-                    {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
-                  </button>
-                </span>
-              </label>
+              <form className={styles["form"]} onSubmit={handleSubmit}>
+                <label className={styles["field"]} htmlFor="nova-senha">
+                  <span>Senha nova</span>
+                  <span className={styles["inputShell"]}>
+                    <Lock aria-hidden="true" />
+                    <input
+                      id="nova-senha"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      placeholder="Ao menos 8 caracteres"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className={styles["revealButton"]}
+                      onClick={() => setShowPassword((shown) => !shown)}
+                      aria-pressed={showPassword}
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    >
+                      {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
+                    </button>
+                  </span>
+                </label>
 
-              <Button
-                type="submit"
-                variant="primary"
-                className={styles["primaryButton"] ?? ""}
-                isDisabled={loading}
-              >
-                {loading ? "Salvando..." : "Salvar senha"}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className={styles["primaryButton"] ?? ""}
+                  isDisabled={loading}
+                >
+                  {loading ? "Salvando..." : "Salvar senha"}
+                </Button>
+              </form>
 
-            {error && <FeedbackAlert variant="danger" description={error} />}
-          </>
-        )}
-      </section>
+              {error && <FeedbackAlert variant="danger" description={error} />}
+            </>
+          )}
+        </section>
+      </div>
     </main>
   )
 }
