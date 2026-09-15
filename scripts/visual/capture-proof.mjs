@@ -12,8 +12,16 @@ export function assessCapture({ route, authenticated, status, landedOn, observed
   if (error) failures.push(error)
   if (route.auth && !authenticated) failures.push("Authenticated session required")
   if (status < 200 || status >= 400) failures.push(`Unexpected HTTP status: ${status}`)
-  const expectedPath = route.expectedPath ?? route.path
-  if (landedOn !== expectedPath) failures.push(`Expected ${expectedPath}; landed on ${landedOn}`)
+  // `expectedPath` pode ser uma lista de destinos aceitos, e um item terminado
+  // em "*" casa por prefixo — é assim que uma rota de fronteira declara o
+  // destino honesto quando a query do redirecionamento é do servidor
+  // (/login?redirect=…), sem afrouxar a comparação exata das demais rotas.
+  const declared = route.expectedPath ?? route.path
+  const expected = Array.isArray(declared) ? declared : [declared]
+  const landed = expected.some((path) =>
+    path.endsWith("*") ? landedOn.startsWith(path.slice(0, -1)) : landedOn === path,
+  )
+  if (!landed) failures.push(`Expected ${expected.join(" or ")}; landed on ${landedOn}`)
   const heading = (observed?.heading ?? "").trim()
   if (!route.expectedHeading) failures.push("Route has no identity contract")
   else if (route.expectedHeading === DYNAMIC_HEADING) {

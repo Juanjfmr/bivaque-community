@@ -26,11 +26,36 @@ const RUN_ID = process.env["BIVAQUE_VISUAL_RUN"] ?? new Date().toISOString().rep
 const ROUTE_PATH = process.env["BIVAQUE_VISUAL_ROUTE"]
 const SCENARIO = process.env["BIVAQUE_VISUAL_SCENARIO"]
 
-// Fixture de captura de Moradia. Precisa existir em `supabase/seed.sql` (com
-// `property_details` e ao menos uma foto) para a ficha de `/imoveis/[id]`
-// renderizar dado real. Enquanto não existir, a captura do detalhe mostra o
-// não-encontrado — e o relatório precisa dizer isso.
-const IMOVEIS_FIXTURE_ID = "d0000000-0000-4000-8000-000000000001"
+// Fixture de captura de Moradia: o anúncio REAL de `supabase/seed.sql`
+// (`b2000000-…0001`, "Apartamento 2 quartos", ativo, com `property_details` e
+// foto da fixture de mídia). O id anterior (`d0000000-…0001`) nunca existiu no
+// seed — a ficha caía no não-encontrado e a captura declarava "sem h1".
+const IMOVEIS_FIXTURE_ID = "b2000000-0000-4000-8000-000000000001"
+
+// Conta do seed por trás de `account:` de uma rota. O e-mail é dado público do
+// seed local (a senha vem de BIVAQUE_VISUAL_PASSWORD, como na conta global), e
+// vive aqui — não no `.env.local` — para que a captura seja reproduzível por
+// quem clonar o repositório. BIVAQUE_VISUAL_EMAIL__<CONTA> continua vencendo.
+export const SEED_ACCOUNTS = {
+  // operador@ é o único ator com linha em `operators`.
+  operador: "operador@bivaque.example.invalid",
+  // prestador-seed@ tem `provider_accounts` — as telas de vitrine exigem isso.
+  prestador: "prestador-seed@bivaque.example.invalid",
+  // verified-no-membership@ é verificado e não tem localidade: /onboarding o
+  // manda para o passo de localidade, que é a tela real.
+  novato: "verified-no-membership@bivaque.example.invalid",
+  // rejected@ tem outcome "rejected": o funil NÃO redireciona e ele vê o passo
+  // de verificação; /onboarding/documento mostra "Precisamos de outro arquivo".
+  rejeitado: "rejected@bivaque.example.invalid",
+  // admissao-1@ tem outcome "pending" — a tela "/onboarding/status".
+  pendente: "admissao-1@bivaque.example.invalid",
+  // membro-1@ é quem pediu o serviço 40000000-…0023 (o prestador é o outro
+  // lado): o detalhe só existe para quem participa.
+  membro1: "membro-1@bivaque.example.invalid",
+  // visual@ é o ator com denúncias próprias e conversa DM semeadas (RECON-051).
+  // Sem ele, `fixture: "own-report"` não tem o que resolver.
+  visual: "visual@bivaque.example.invalid",
+}
 
 const VIEWPORTS = [
   { name: "mobile-375", width: 375, height: 812 },
@@ -51,18 +76,31 @@ export const HEADINGS = {
   "/login": "^Que bom ter você de volta\\.$",
   "/signup": "^Vamos começar\\.$",
   "/consent": "^Antes de entrar, conheça as regras\\.$",
-  "/onboarding": "Confirme sua elegibilidade|Aceite seu convite|Preparando o próximo passo",
-  "/onboarding/status?status=pending": "^Sua elegibilidade está em análise\\.$",
+  // Os títulos que o funil escreve de verdade (onboarding/page.tsx:258, 275): o
+  // contrato anterior citava copy que não existe em nenhum arquivo do
+  // repositório — foi escrita de memória, nunca medida, e a tela real não podia
+  // passar. Com o ator certo (rejeitado@) o passo de verificação aparece.
+  "/onboarding": "^(Verificar meu acesso|Aceite seu convite\\.|Preparando o próximo passo\\.)$",
+  // status/page.tsx:90.
+  "/onboarding/status?status=pending": "^Estamos analisando sua identidade$",
   "/onboarding/welcome": "^Você chegou ao Bivaque\\.$",
-  "/onboarding/locality": "Escolha sua localidade|Preparando as localidades",
+  // O h1 real do passo (locality/page.tsx:117) é a pergunta, não o rótulo do
+  // passo no guia: o contrato antigo veio da prancha e nunca foi medido — com
+  // o ator certo (verificado sem localidade) a tela aparece e o título é este.
+  "/onboarding/locality": "^Qual cidade você quer explorar\\?$",
   "/admissions": "^Fila de admissões$",
   "/reports": "^Fila de denúncias$",
   "/arrivals": "^Chegadas declaradas$",
   "/guide-queue": "Guia|Referências",
   "/inicio": "Bom dia|Boa tarde|Boa noite|Olá",
   "/explorar": "Explorar",
-  "/explorar/servicos": "Serviços|Resultados",
-  "/configuracoes": "^Configurações$",
+  // h1 medido no arquivo que renderiza a rota (servicos/page.tsx:520): sem
+  // termo a tela é "Prestadores de serviço"; com termo, "Resultados para …" —
+  // e a variante com termo é chave própria logo abaixo.
+  "/explorar/servicos": "^Prestadores de serviço$",
+  // /configuracoes/page.tsx:6 redireciona para a subrota de notificações, e é
+  // isso que a captura registra; a rota declara expectedPath para o destino.
+  "/configuracoes": "^Configurações · Notificações$",
   "/groups": "Grupos",
   "/communities": "Comunidades",
   // O h1 desta rota é o NOME da comunidade principal de quem lê ("Vila
@@ -87,7 +125,9 @@ export const HEADINGS = {
   // record; the h1 text belongs to the seed, not to this file.
   "/communities/71000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/guide/a0000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  "/groups/70000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
+  // Grupos vivem em 60000000-… no seed; 70000000-… é a faixa dos EVENTOS, então
+  // o id antigo capturava o não-encontrado e a rota declarava "sem h1".
+  "/groups/60000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador": DYNAMIC_HEADING,
   "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
   "/profile": DYNAMIC_HEADING,
@@ -136,7 +176,7 @@ export const HEADINGS = {
   "/imoveis": "^Explorar moradia$",
   "/imoveis/novo": "^Novo anúncio de moradia$",
   // A ficha do imóvel é nomeada pelo título do anúncio.
-  "/imoveis/d0000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
+  "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/imoveis/alertas": "^Meus alertas$",
   "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010": "^Do que você precisa\\?$",
   "/pedidos": "^Meus pedidos$",
@@ -183,20 +223,45 @@ export const ROUTES = [
     pendingEmail: "ana@exemplo.invalid",
   },
   { path: "/consent", name: "consent", auth: false },
-  { path: "/onboarding", name: "onboarding", auth: false },
-  { path: "/onboarding", name: "onboarding", auth: true },
+  // Sem sessão o funil não abre: o visitante é mandado ao login. Isso é a
+  // prova do PORTÃO, não da tela — por isso a rota declara o destino e o h1 da
+  // tela de login em vez do contrato de /onboarding (que fica para a variante
+  // autenticada, onde a tela aparece de verdade).
+  {
+    path: "/onboarding",
+    name: "onboarding",
+    auth: false,
+    expectedPath: "/login*",
+    heading: "^Que bom ter você de volta\\.$",
+  },
+  // Com sessão o funil decide o passo pelo outcome do ator: verificado sem
+  // localidade cai na localidade, pendente na situação, e "rejected" é o único
+  // que permanece no passo de verificação. A conta global (verificada, com
+  // localidade) era mandada para /community e a captura chamava isso de defeito.
+  { path: "/onboarding", name: "onboarding", auth: true, account: "rejeitado" },
   // Sem `status` a pagina redireciona para /onboarding, entao o caminho nu nunca
   // poderia ser evidencia da tela de situacao: ele aterrissa em outro lugar por desenho.
-  { path: "/onboarding/status?status=pending", name: "onboarding-status", auth: true },
-  { path: "/onboarding/documento", name: "onboarding-documento", auth: true },
+  {
+    path: "/onboarding/status?status=pending",
+    name: "onboarding-status",
+    auth: true,
+    account: "pendente",
+  },
+  // "Precisamos de outro arquivo" só aparece para outcome "rejected".
+  { path: "/onboarding/documento", name: "onboarding-documento", auth: true, account: "rejeitado" },
   { path: "/onboarding/welcome", name: "onboarding-welcome", auth: true },
-  { path: "/onboarding/locality", name: "onboarding-locality", auth: true },
+  // Verificado e sem localidade: é este ator que para na escolha de localidade.
+  { path: "/onboarding/locality", name: "onboarding-locality", auth: true, account: "novato" },
   { path: "/onboarding/perfil", name: "onboarding-perfil", auth: true },
-  { path: "/reports", name: "admin-reports", auth: true },
-  { path: "/admissions", name: "admin-admissions", auth: true },
-  { path: "/guide-queue", name: "admin-guide-queue", auth: true },
+  // As quatro telas do operador exigem a linha em `operators` (seed:
+  // operador@). Com a conta global elas caíam em /community e a captura
+  // declarava "Operator surface not reached".
+  { path: "/reports", name: "admin-reports", auth: true, account: "operador" },
+  { path: "/admissions", name: "admin-admissions", auth: true, account: "operador" },
+  { path: "/guide-queue", name: "admin-guide-queue", auth: true, account: "operador" },
   { path: "/groups", name: "groups", auth: true },
-  { path: "/groups/70000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
+  // Grupos do seed são 60000000-… (70000000-… é a faixa dos eventos).
+  { path: "/groups/60000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
   { path: "/profile", name: "profile", auth: true },
   { path: "/events", name: "events", auth: true },
   // O id antigo (80000000-…) é de POST no seed, não de evento: a rota de detalhe
@@ -312,20 +377,24 @@ export const ROUTES = [
   // seed está fora do allowed_paths deste lote, então a captura prova o estado
   // vazio real, não fidelidade de cartão populado.
   { path: "/imoveis/alertas", name: "imoveis-alertas", auth: true },
-  // Onda T Task 5: o console do fundador. Renders empty state honesto para a
-  // conta default do seed (sem operador capturado), que é a tela vazia com
-  // identificação, não uma tela ausente.
-  { path: "/arrivals", name: "admin-arrivals", auth: true },
-  // Onda G: a vitrine do prestador. Com a conta default (membro sem vila) a
+  // Onda T Task 5: o console do fundador. Com a conta global (sem operador) ele
+  // rende o estado vazio honesto; a captura da tela real usa operador@.
+  { path: "/arrivals", name: "admin-arrivals", auth: true, account: "operador" },
+  // Onda G: a vitrine do prestador. Com a conta global (membro sem vila) a
   // ficha pública renderiza o 404 honesto e o painel o estado sem-permissão —
-  // telas do CRUD real usam runs dedicadas com prestador-seed@ (ver VISUAL_AUDIT G).
-  { path: "/prestador", name: "provider-panel", auth: true },
-  { path: "/prestador/ficha", name: "provider-ficha", auth: true },
-  { path: "/prestador/catalogo", name: "provider-catalogo", auth: true },
-  // RECON-024 (prancha 23): Área de atendimento e Conta do negócio. Rodar com a
-  // conta de prestador do seed (BIVAQUE_VISUAL_EMAIL=prestador-seed@bivaque.example.invalid).
-  { path: "/prestador/atendimento", name: "provider-atendimento", auth: true },
-  { path: "/prestador/conta", name: "provider-conta", auth: true },
+  // as telas do CRUD são do prestador do seed, e agora a rota diz isso em vez
+  // de depender de alguém lembrar de rodar com a variável trocada.
+  { path: "/prestador", name: "provider-panel", auth: true, account: "prestador" },
+  { path: "/prestador/ficha", name: "provider-ficha", auth: true, account: "prestador" },
+  { path: "/prestador/catalogo", name: "provider-catalogo", auth: true, account: "prestador" },
+  // RECON-024 (prancha 23): Área de atendimento e Conta do negócio.
+  {
+    path: "/prestador/atendimento",
+    name: "provider-atendimento",
+    auth: true,
+    account: "prestador",
+  },
+  { path: "/prestador/conta", name: "provider-conta", auth: true, account: "prestador" },
   {
     path: "/prestadores/30000000-0000-4000-8000-000000000010",
     name: "provider-public-ficha",
@@ -339,12 +408,15 @@ export const ROUTES = [
     auth: true,
   },
   // RECON-023: a lista e o detalhe da prancha 17. A fixture concreta e o
-  // pedido semeado de membro-1@ para a Climatiza Manaus (seed.sql).
+  // pedido semeado de membro-1@ para a Climatiza Manaus (seed.sql) — e o
+  // detalhe só existe para quem participa: sem `account`, o ator global
+  // (dono-vila@) não é parte e a rota capturava o não-encontrado.
   { path: "/pedidos", name: "pedidos", auth: true },
   {
     path: "/pedidos/40000000-0000-4000-8000-000000000023",
     name: "pedido-detalhe",
     auth: true,
+    account: "membro1",
   },
   {
     path: "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador",
@@ -373,11 +445,11 @@ export const ROUTES = [
   // - /denuncias/<own-report>: o id da denúncia do próprio ator é resolvido na
   //   hora por REST (fixture "own-report"). O seed gera ids aleatórios, então
   //   id fixo aqui virava fixture morta a cada reset do banco compartilhado.
-  // - /messages/<thread>: a conversa precisa de dois participantes; o
-  //   visual@ não compartilha contexto com ninguém do seed. A rota usa a
-  //   conta própria (account: "thread") e resolve o id do arquivo de fixture
-  //   escrito por tests/e2e/recon-032-messages.spec.ts (open_conversation é
-  //   idempotente pelo par, então o mesmo id vale entre execuções).
+  // - /messages/<thread>: idem, por REST (fixture "own-thread"): a conversa
+  //   do ator é lida com o token dele. Antes o id vinha de um arquivo escrito
+  //   por tests/e2e/recon-032-messages.spec.ts, e a captura só passava depois
+  //   de rodar a suíte e2e inteira — quem capturava primeiro via defeito.
+  //   As duas usam a conta do seed que TEM denúncia e conversa (visual@).
   { path: "/salvos", name: "salvos", auth: true },
   { path: "/ajuda", name: "ajuda", auth: true },
   { path: "/denuncias", name: "denuncias", auth: true },
@@ -390,19 +462,27 @@ export const ROUTES = [
     path: "/denuncias/<own-report>",
     name: "denuncia-detalhe",
     auth: true,
+    account: "visual",
     fixture: "own-report",
   },
   {
     path: "/messages/<thread>",
     name: "message-thread",
     auth: true,
-    account: "thread",
-    fixture: "message-thread",
+    account: "visual",
+    fixture: "own-thread",
   },
   // RECON-031 — configurações (prancha 52) e confiança (prancha 56). A fixture
   // é a conta do seed: membro verificado (default), com a coluna vertical de
   // seções e as subrotas reais.
-  { path: "/configuracoes", name: "configuracoes", auth: true },
+  // /configuracoes redireciona para a subrota de notificações: o destino é
+  // contrato declarado, não surpresa (a tela é a mesma, o caminho muda).
+  {
+    path: "/configuracoes",
+    name: "configuracoes",
+    auth: true,
+    expectedPath: "/configuracoes/notificacoes",
+  },
   { path: "/configuracoes/notificacoes", name: "configuracoes-notificacoes", auth: true },
   { path: "/configuracoes/conta", name: "configuracoes-conta", auth: true },
   { path: "/configuracoes/familia", name: "configuracoes-familia", auth: true },
@@ -472,10 +552,25 @@ export async function fetchSession(input) {
   const anonKey =
     process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
   const suffix = account ? `__${account.toUpperCase()}` : ""
+  // Conta nomeada cai na conta GLOBAL quando não existe variável — e foi assim
+  // que a captura do operador, do prestador e do novato saiu com o ator errado
+  // por semanas, sem falhar. Conta nomeada sem mapa é erro, não fallback.
+  const mapped = account ? SEED_ACCOUNTS[account] : undefined
+  if (account && !emailOverride && !mapped) {
+    const declared =
+      process.env[`BIVAQUE_VISUAL_EMAIL${suffix}`] ?? dotEnv[`BIVAQUE_VISUAL_EMAIL${suffix}`]
+    if (!declared) {
+      throw new Error(
+        `Conta de captura desconhecida: "${account}". Declare em SEED_ACCOUNTS (capture.mjs) ` +
+          `ou defina BIVAQUE_VISUAL_EMAIL${suffix}.`,
+      )
+    }
+  }
   const email =
     emailOverride ??
     process.env[`BIVAQUE_VISUAL_EMAIL${suffix}`] ??
     dotEnv[`BIVAQUE_VISUAL_EMAIL${suffix}`] ??
+    mapped ??
     process.env["BIVAQUE_VISUAL_EMAIL"] ??
     dotEnv["BIVAQUE_VISUAL_EMAIL"]
   const password =
@@ -500,39 +595,87 @@ export async function fetchSession(input) {
 
   // supabase-js derives its storage key from the first hostname label.
   const ref = new URL(url).hostname.split(".")[0]
-  return { storageKey: `sb-${ref}-auth-token`, session: await response.json() }
+  const session = await response.json()
+  // expires_at é epoch em segundos. A corrida completa passa de uma hora, então
+  // guardá-lo é o que permite trocar o token antes de ele vencer.
+  return {
+    storageKey: `sb-${ref}-auth-token`,
+    session,
+    expiresAt:
+      typeof session?.expires_at === "number"
+        ? session.expires_at
+        : Math.floor(Date.now() / 1000) + (session?.expires_in ?? 3600),
+  }
 }
 
 // Fixtures concretas de rotas dinâmicas. Duas fontes, ambas reais:
 // - arquivo (`.visual/fixtures/<nome>.json`), escrito pelo spec e2e que cria a
-//   linha (conversa, cujo id só nasce de open_conversation);
-// - consulta REST com o token do próprio ator (denúncia própria: o seed gera
-//   ids aleatórios, então id fixo morre a cada reset).
+//   linha;
+// - consulta REST com o token do próprio ator (denúncia própria e conversa: o
+//   seed gera ids aleatórios, então id fixo morre a cada reset). É a forma
+//   preferida: não depende de outro spec ter rodado antes.
 // Sem fixture a captura falha alto — fotografar 404 disfarçado não é evidência.
+
+// A linha do PRÓPRIO ator, lida com o token dele — a RLS decide o que existe.
+async function actorRow(route, auth, path, params) {
+  if (!auth?.session?.access_token) {
+    throw new Error(`rota ${route.name}: fixture "${route.fixture}" exige sessão autenticada`)
+  }
+  const url =
+    process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
+    process.env["SUPABASE_URL"] ??
+    dotEnv["NEXT_PUBLIC_SUPABASE_URL"] ??
+    dotEnv["SUPABASE_URL"]
+  const anonKey =
+    process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  const query = new URLSearchParams(params)
+  const response = await fetch(`${url}/rest/v1/${path}?${query.toString()}`, {
+    headers: { apikey: anonKey, Authorization: `Bearer ${auth.session.access_token}` },
+  })
+  const rows = response.ok ? await response.json() : []
+  return Array.isArray(rows) ? rows[0] : undefined
+}
+
+// O `sub` do JWT é o id do ator: a conversa é filtrada por participante.
+function actorId(auth) {
+  const token = auth?.session?.access_token
+  if (typeof token !== "string") return null
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"))
+    return typeof payload?.sub === "string" ? payload.sub : null
+  } catch {
+    return null
+  }
+}
+
 async function resolveRoutePath(route, auth) {
   if (!route.fixture) return route.path
 
   if (route.fixture === "own-report") {
-    if (!auth?.session?.access_token) {
-      throw new Error(`rota ${route.name}: fixture "own-report" exige sessão autenticada`)
-    }
-    const url =
-      process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
-      process.env["SUPABASE_URL"] ??
-      dotEnv["NEXT_PUBLIC_SUPABASE_URL"] ??
-      dotEnv["SUPABASE_URL"]
-    const anonKey =
-      process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-    const query = new URLSearchParams({ select: "id", order: "created_at.desc", limit: "1" })
-    const response = await fetch(`${url}/rest/v1/reports?${query.toString()}`, {
-      headers: { apikey: anonKey, Authorization: `Bearer ${auth.session.access_token}` },
+    const row = await actorRow(route, auth, "reports", {
+      select: "id",
+      order: "created_at.desc",
+      limit: "1",
     })
-    const rows = response.ok ? await response.json() : []
-    const id = Array.isArray(rows) ? rows[0]?.id : null
-    if (typeof id !== "string") {
+    if (typeof row?.id !== "string") {
       throw new Error(`rota ${route.name}: o ator não tem denúncia própria para a fixture`)
     }
-    return `/denuncias/${id}`
+    return `/denuncias/${row.id}`
+  }
+
+  if (route.fixture === "own-thread") {
+    const me = actorId(auth)
+    if (!me) throw new Error(`rota ${route.name}: sessão sem id de ator para a conversa`)
+    const row = await actorRow(route, auth, "dm_conversations", {
+      select: "id",
+      or: `(participant_a.eq.${me},participant_b.eq.${me})`,
+      order: "created_at.desc",
+      limit: "1",
+    })
+    if (typeof row?.id !== "string") {
+      throw new Error(`rota ${route.name}: o ator não participa de nenhuma conversa`)
+    }
+    return `/messages/${row.id}`
   }
 
   const file = join(OUT_ROOT, "fixtures", `${route.fixture}.json`)
@@ -933,7 +1076,10 @@ async function main() {
   ].map((route) => ({
     ...route,
     name: `${route.name}${route.auth ? "--authenticated" : "--visitor"}${SCENARIO ? `--${SCENARIO}` : ""}`,
-    expectedHeading: HEADINGS[route.path],
+    // A rota pode declarar o próprio contrato de h1: uma rota de fronteira (o
+    // funil sem sessão, por exemplo) não aterrissa na própria tela, e o título
+    // honesto é o da tela onde ela aterrissa.
+    expectedHeading: route.heading ?? HEADINGS[route.path],
     operator: ["/admissions", "/reports", "/guide-queue", "/arrivals"].includes(route.path),
     dialog:
       SCENARIO === "publish"
@@ -948,10 +1094,55 @@ async function main() {
     throw new Error(`No visual route configured for ${ROUTE_PATH}`)
   }
 
+  // supabase-js stores the session in localStorage; @supabase/ssr (the new B2
+  // middleware) reads it from a cookie of the same name. Without the cookie the
+  // server-side middleware has no session and redirects every gated route to
+  // /login. Os dois são reaplicados quando o token é renovado no meio da corrida.
+  async function applySession(context, route, auth) {
+    if (!route.auth || !auth) return
+    const sessionValue = `base64-${Buffer.from(JSON.stringify(auth.session)).toString("base64url")}`
+    await context.addCookies([
+      { name: "bivaque-consent-version", value: "2", url: BASE_URL },
+      { name: auth.storageKey, value: sessionValue, url: BASE_URL },
+    ])
+    await context.addInitScript(
+      ([key, session]) => window.localStorage.setItem(key, JSON.stringify(session)),
+      [auth.storageKey, auth.session],
+    )
+  }
+
+  // Navegação e espera de h1 ficam em funções próprias porque a captura pode
+  // precisar repetir as duas depois de renovar o token.
+  async function openRoute(page, targetPath) {
+    const response = await page.goto(targetPath, { waitUntil: "networkidle", timeout: 30_000 })
+    await page.waitForTimeout(400)
+    return response
+  }
+
+  async function waitForHeading(page, route) {
+    if (!route.expectedHeading) return
+    // A data-named route waits for any h1: matching the sentinel would just
+    // burn the timeout on every viewport and prove nothing.
+    const wanted =
+      route.expectedHeading === DYNAMIC_HEADING
+        ? page.getByRole("heading", { level: 1 })
+        : page.getByRole("heading", { level: 1, name: new RegExp(route.expectedHeading, "i") })
+    await wanted
+      .first()
+      .waitFor({ state: "visible", timeout: 10_000 })
+      .catch(() => {})
+  }
+
   const sessions = new Map()
-  async function sessionFor(route) {
+  // A corrida completa passa de uma hora e o access token vale exatamente uma:
+  // sem trocar o token, as últimas rotas aterrissam em /login e o relatório
+  // declara defeito de tela onde houve token vencido.
+  const RENEW_MARGIN_SECONDS = 300
+  async function sessionFor(route, options = {}) {
     const key = route.account ?? ""
-    if (!sessions.has(key)) {
+    const cached = sessions.get(key)
+    const stale = cached && cached.expiresAt - RENEW_MARGIN_SECONDS <= Math.floor(Date.now() / 1000)
+    if (!cached || stale || options.force) {
       sessions.set(key, await fetchSession(route.account))
     }
     return sessions.get(key)
@@ -1001,25 +1192,8 @@ async function main() {
         locale: "pt-BR",
       })
 
-      const auth = await sessionFor(route)
-      if (route.auth && auth) {
-        // supabase-js stores the session in localStorage; @supabase/ssr (the new B2 middleware)
-        // reads it from a cookie of the same name. Without the cookie the server-side middleware
-        // has no session and redirects every gated route to /login.
-        const sessionValue = `base64-${Buffer.from(JSON.stringify(auth.session)).toString("base64url")}`
-        await context.addCookies([
-          { name: "bivaque-consent-version", value: "2", url: BASE_URL },
-          {
-            name: auth.storageKey,
-            value: sessionValue,
-            url: BASE_URL,
-          },
-        ])
-        await context.addInitScript(
-          ([key, session]) => window.localStorage.setItem(key, JSON.stringify(session)),
-          [auth.storageKey, auth.session],
-        )
-      }
+      let auth = await sessionFor(route)
+      await applySession(context, route, auth)
 
       // RECON-018: espelha a flag local que o cadastro escreve antes de mandar
       // para /auth/confirmar-email (chave em
@@ -1048,23 +1222,20 @@ async function main() {
       let targetPath = route.path
       try {
         targetPath = await resolveRoutePath(route, auth)
-        const response = await page.goto(targetPath, { waitUntil: "networkidle", timeout: 30_000 })
-        await page.waitForTimeout(400)
-        if (route.expectedHeading) {
-          // A data-named route waits for any h1: matching the sentinel would
-          // just burn the timeout on every viewport and prove nothing.
-          const wanted =
-            route.expectedHeading === DYNAMIC_HEADING
-              ? page.getByRole("heading", { level: 1 })
-              : page.getByRole("heading", {
-                  level: 1,
-                  name: new RegExp(route.expectedHeading, "i"),
-                })
-          await wanted
-            .first()
-            .waitFor({ state: "visible", timeout: 10_000 })
-            .catch(() => {})
+        let response = await openRoute(page, targetPath)
+        // Um destino /login numa rota autenticada que não o espera é token
+        // vencido, não defeito de tela: reabre a sessão e navega de novo, uma
+        // vez. Se ainda assim aterrissar em /login, o veredito fica como está.
+        if (
+          route.auth &&
+          route.expectedPath !== "/login*" &&
+          new URL(page.url()).pathname === "/login"
+        ) {
+          auth = await sessionFor(route, { force: true })
+          await applySession(context, route, auth)
+          response = await openRoute(page, targetPath)
         }
+        await waitForHeading(page, route)
         if (SCENARIO === "publish") {
           await page
             // O composer real escreve "O que você quer compartilhar?" desde a
@@ -1124,7 +1295,9 @@ async function main() {
         }
         const landedOn = new URL(page.url()).pathname + new URL(page.url()).search
         const proof = assessCapture({
-          route,
+          // Rota com fixture tem identidade no caminho RESOLVIDO: o sentinela
+          // (/denuncias/<own-report>) é o alvo pedido, não o destino real.
+          route: route.expectedPath ? route : { ...route, expectedPath: targetPath },
           authenticated: Boolean(auth),
           status: response?.status() ?? 0,
           landedOn,

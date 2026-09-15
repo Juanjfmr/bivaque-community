@@ -2635,15 +2635,17 @@
         "Lote J fechou o contrato de captura de /community: o defeito não era o ator (a conta de captura JÁ tem vila), era o título fixo 'Comunidade|Manaus' — o h1 da rota é o NOME da comunidade ('Vila Ajuricaba'), dado e não contrato. Virou DYNAMIC_HEADING e a rota captura VALID com 0 findings (recon049-comunidade)",
         "Correção sistêmica do lote J: todos os <Modal.CloseTrigger /> do produto passaram a ter alvo de 44px (8 diálogos em 6 arquivos) — o defeito foi achado na primeira captura do diálogo de EDIÇÃO, que nunca tinha sido aberto por captura nenhuma",
         "Lote F fechado em 15/09: /explorar/busca ganhou o rail dos três estados (0 findings nas capturas recon049-busca, recon049-busca-vazio, recon049-busca-servico e recon049-busca-evento); a ausência das seções Serviços/Eventos era artefato do termo, provado com termos que casam",
-        "BUG de runtime corrigido no lote E: o convite familiar nunca era criado — sendFamilyInviteAction enviava o digest do e-mail sem o prefixo \\x exigido pelo PostgREST, violando o CHECK octet_length = 32 (23514). Corrigido com byteaDigestParam e coberto por guard-rail estático tests/scope/invite-digest-serialization.test.mjs (com controle positivo e negativo)"
+        "BUG de runtime corrigido no lote E: o convite familiar nunca era criado — sendFamilyInviteAction enviava o digest do e-mail sem o prefixo \\x exigido pelo PostgREST, violando o CHECK octet_length = 32 (23514). Corrigido com byteaDigestParam e coberto por guard-rail estático tests/scope/invite-digest-serialization.test.mjs (com controle positivo e negativo)",
+        "Fila nova, revelada pelo lote M (captura completa .visual/recon-loteM-completo, 0 INVALID pela primeira vez — as telas abaixo não tinham captura nenhuma antes): /guide-queue 27 touch-target + 6 missing-accessible-name (2 por viewport), /configuracoes e /configuracoes/notificacoes 21 touch-target cada, /profile 15, /events/<id>/perguntas 9, /onboarding/perfil, /mercado/novo e /imoveis/<id> 6 cada, 15 nav-active e 1 reading-measure",
+        "[backend] ainda abertos nesta frente: Salvos e Sugerir referência do guia (mecanismo de salvar + rota de sugestão); read_provider_invitation(p_token) para o convite de prestador mostrar o nome da comunidade e o caminho de volta; Reenviar do convite familiar (hoje só Revogar, porque o token aparece uma única vez)"
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
         "recaptura por rota (scripts/visual/capture.mjs) com prova válida"
       ],
       "links": [".visual/compare/julgamento.md", "docs/agents/PRANCHAS-WEB-RESTANTES.md"],
-      "updatedAt": "2026-09-14",
-      "sourceRevision": "167ac0a",
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "6394c9f",
       "dependencies": [],
       "completedAt": null
     },
@@ -2681,33 +2683,40 @@
     },
     {
       "id": "CAPTURA-CONTRATOS-INVALIDOS",
-      "title": "Contratos de captura: 73 rotas inválidas por título, ator ou estado",
+      "title": "Contratos de captura: as 73 capturas inválidas viram 0",
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "repo",
-      "status": "next",
-      "description": "A captura completa das ~90 rotas (run .visual/recon051-completo) fechou com 73 capturas INVALID e 254 achados. Medido, o grosso é CONTRATO da ferramenta, não defeito de tela: 54 'Expected heading not found' (o h1 real é dado — nome da comunidade, título do evento, nome do prestador — e o HEADINGS tem regex fixa), 12 'Data-named route rendered no heading' (a rota existe e renderiza, mas sem h1), 12 'Unexpected error, loading or unavailable state', 11 'Operator surface not reached' (a rota de operação exige o ator operador@) e 9 'landed on /community' (rotas do prestador e /arrivals, que redirecionam para quem não é o ator certo). Cada um é a mesma classe de defeito já corrigida em /community (título fixo × dado) e em /prestador (ator). Enquanto isso, 73 rotas não têm prova de runtime — e captura inválida não é dispensa.",
+      "status": "done",
+      "description": "A captura completa das ~90 rotas (run .visual/recon051-completo) fechou com 73 capturas INVALID. Fechado em 15/09 (lote M): a captura completa de 79 rotas × 3 viewports (run .visual/recon-loteM-completo, 237 capturas) fecha VALID com 0 INVALID. A medição corrigiu o diagnóstico do card: NÃO eram 54 títulos com regex fixa onde o h1 é dado — lida contra a revisão anterior do capture.mjs, a lista real de rotas inválidas era 26, e a causa dominante era id de fixture morto (/groups/70000000-…0001, /imoveis/d0000000-…0001 e /events/80000000-…0001 não existem no seed), ator errado e fixture inexistente; o único título fixo errado era /explorar/servicos. As '12 sem h1' eram as fixtures mortas; as '12 em erro/carregando' eram duas causas — /denuncias/<own-report> e /messages/<thread> sem fixture resolvível, e quatro subrotas de /configuracoes aterrissando em /login porque o token de uma hora vencia no meio da corrida. As '11 de operação' e as '9 do prestador' estavam certas: eram contrato de ator.",
       "checklist": [
-        "Trocar por DYNAMIC_HEADING (ou pelo h1 real) cada uma das 54 rotas cujo título é dado — uma a uma, conferindo o h1 que a rota escreve",
-        "Dar ator próprio às 11 rotas de operação (operador@) e às 9 do prestador (prestador-seed@), como /prestador já faz",
-        "Tratar as 12 rotas sem h1: ou a tela deveria ter um (defeito de acessibilidade), ou a rota não é capturável por título",
-        "Investigar as 12 'Unexpected error, loading or unavailable state' — podem ser defeito real de tela",
-        "Re-rodar a captura completa e comparar: o número de INVALID tem de cair a zero ou virar defeito registrado"
+        "Trocar por DYNAMIC_HEADING (ou pelo h1 real) cada rota cujo título é dado — medido: era UMA (/explorar/servicos, 'Serviços|Resultados' × h1 real 'Prestadores de serviço'); o resto da lista eram contratos de outra natureza. Os contratos de copy inventada (/onboarding, /onboarding/locality, /onboarding/status) foram corrigidos contra o h1 que cada arquivo escreve ✅ 15/09",
+        "Dar ator próprio às 11 rotas de operação (operador@) e às 9 do prestador (prestador-seed@) ✅ 15/09 (account: na rota + mapa SEED_ACCOUNTS no capture.mjs; conta nomeada sem mapa agora é erro alto, em vez de cair na conta global)",
+        "Tratar as 12 rotas sem h1 ✅ 15/09 (não era falta de h1: eram ids de fixture mortos — /groups/70000000-…0001, /imoveis/d0000000-…0001, /events/80000000-…0001 e o detalhe de pedido sem o ator participante; ids reais no lugar)",
+        "Investigar as 12 'Unexpected error, loading or unavailable state' ✅ 15/09 (duas causas: fixtures não resolvíveis — agora resolvidas por REST com o token do ator, own-report e own-thread — e token vencido no meio da corrida, agora renovado com margem de 5 min e uma repetição da navegação)",
+        "Re-rodar a captura completa e comparar ✅ 15/09 (.visual/recon-loteM-completo: 237 capturas, 0 INVALID, valid true)"
       ],
       "proof": [
-        "Medição da captura completa de 15/09 (.visual/recon051-completo/report.md): 73 INVALID, 254 achados (77 high), com a quebra por motivo acima",
-        "Casos já fechados do mesmo tipo: /community (h1 é o nome da comunidade, não 'Comunidade|Manaus') e /events/[id]/editar (exige ser o organizador — evento da conta de captura semeado na RECON-051)"
+        "Antes: .visual/recon051-completo/report.md — 73 INVALID de ~240 capturas. Depois: .visual/recon-loteM-completo/report.md — 0 INVALID de 237 capturas (79 rotas × 3 viewports), com as telas de operação, de prestador e do funil provadas pela primeira vez",
+        "scripts/visual/capture.mjs: SEED_ACCOUNTS (conta do seed por trás de cada account:), renovação de sessão por expires_at, repetição única quando uma rota autenticada cai em /login, fixture own-thread por REST e expectedPath com prefixo/lista",
+        "scripts/visual/capture-proof.mjs: expectedPath aceita lista e '*' de prefixo — a rota de fronteira declara o destino honesto (/login?redirect=…) sem afrouxar a comparação exata das demais",
+        "Achados de régua revelados ao chegar nessas telas (não são de identidade, e são a próxima fila): /guide-queue 27 touch-target + 6 missing-accessible-name, /configuracoes e /configuracoes/notificacoes 21 touch-target cada, /profile 15, /events/<id>/perguntas 9, /onboarding/perfil, /mercado/novo e /imoveis/<id> 6 cada"
       ],
-      "tests": ["BIVAQUE_VISUAL_RUN=... node scripts/visual/capture.mjs"],
+      "tests": [
+        "BIVAQUE_VISUAL_RUN=... node scripts/visual/capture.mjs",
+        "BIVAQUE_VISUAL_ROUTE=<nomes separados por vírgula> node scripts/visual/capture.mjs (recorte por rota, um processo)"
+      ],
       "links": [
+        ".visual/recon-loteM-completo/report.md",
         ".visual/recon051-completo/report.md",
-        "scripts/visual/capture.mjs (HEADINGS e ROUTES)",
-        ".visual/compare/julgamento.md"
+        "scripts/visual/capture.mjs (HEADINGS, ROUTES, SEED_ACCOUNTS e sessão)",
+        "scripts/visual/capture-proof.mjs",
+        ".visual/compare/julgamento.md (lote M)"
       ],
       "updatedAt": "2026-09-15",
-      "sourceRevision": "7121153",
+      "sourceRevision": "6394c9f",
       "dependencies": [],
-      "completedAt": null
+      "completedAt": "2026-09-15"
     },
     {
       "id": "RECON-051",
