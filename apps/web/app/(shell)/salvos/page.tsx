@@ -2,8 +2,8 @@
 
 import { Button, Tabs } from "@heroui/react"
 import { Bookmark, Search, Trash2 } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   filterSavedItems,
   loadSavedItems,
@@ -29,7 +29,14 @@ import { showToast } from "../../components/bivaque/toast"
 const TYPE_TABS = [
   { key: "tudo", label: "Tudo" },
   { key: "indicacao", label: SAVED_KIND_LABELS.indicacao },
+  { key: "guia", label: SAVED_KIND_LABELS.guia },
 ] as const
+
+// A aba pode chegar na URL (`?aba=guia`): o topo do guia manda para cá com o
+// tipo já escolhido, em vez de prometer um destino que abre em "Tudo".
+function initialTab(value: string | null): TabKey {
+  return TYPE_TABS.some((tab) => tab.key === value) ? (value as TabKey) : "tudo"
+}
 
 type TabKey = (typeof TYPE_TABS)[number]["key"]
 
@@ -52,14 +59,35 @@ const CATEGORY_LABELS: Record<string, string> = {
   outros: "Outros",
 }
 
+// `useSearchParams` exige fronteira de Suspense (a mesma forma do /guide): a
+// aba pode chegar pela URL, e o build estático não pode quebrar por isso.
 export default function SalvosPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto w-full max-w-5xl px-4 py-6" aria-busy="true">
+          <h1 className="text-lg font-semibold tracking-tight">Salvos</h1>
+          <div className="mt-6 flex flex-col gap-3">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </div>
+      }
+    >
+      <SalvosContent />
+    </Suspense>
+  )
+}
+
+function SalvosContent() {
+  const searchParams = useSearchParams()
   const supabase = useMemo(() => createBrowserClient(), [])
   const router = useRouter()
   const [items, setItems] = useState<SavedItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sessionExpired, setSessionExpired] = useState(false)
-  const [activeTab, setActiveTab] = useState<TabKey>("tudo")
+  const [activeTab, setActiveTab] = useState<TabKey>(() => initialTab(searchParams.get("aba")))
   const [query, setQuery] = useState("")
   const [removingId, setRemovingId] = useState<string | null>(null)
   const initialLoadDone = useRef(false)
@@ -95,7 +123,7 @@ export default function SalvosPage() {
   const handleRemove = useCallback(
     async (item: SavedItem) => {
       setRemovingId(item.id)
-      const removed = await removeSavedItem(supabase, item.id)
+      const removed = await removeSavedItem(supabase, item.kind, item.id)
       setRemovingId(null)
       if (removed) {
         setItems((prev) => prev.filter((i) => i.id !== item.id))
@@ -146,7 +174,13 @@ export default function SalvosPage() {
         <Tabs
           aria-label="Filtrar salvos por tipo"
           selectedKey={activeTab}
-          onSelectionChange={(key) => setActiveTab(key as TabKey)}
+          onSelectionChange={(key) => {
+            const next = key as TabKey
+            setActiveTab(next)
+            // A URL acompanha a aba: sair e voltar (ou compartilhar o link)
+            // devolve a mesma lista, e a aba Guia continua alcançável do guia.
+            router.replace(next === "tudo" ? "/salvos" : `/salvos?aba=${next}`, { scroll: false })
+          }}
           variant="secondary"
           className="tabs--secondary mt-4"
         >

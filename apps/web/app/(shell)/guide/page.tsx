@@ -2,7 +2,7 @@
 
 import { Button } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
-import { ArrowRight, Bus, FileText, GraduationCap, Hospital, Search } from "lucide-react"
+import { ArrowRight, Bookmark, Bus, FileText, GraduationCap, Hospital, Search } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
@@ -86,6 +86,11 @@ function GuideContent() {
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
   const [category, setCategory] = useState<"all" | GuideCategory>("all")
   const [memberCount, setMemberCount] = useState<number | null>(null)
+  // Marcador por referência (prancha 12/61): o cartão grava, a aba Guia de
+  // /salvos lê. O estado vive aqui para o cartão não fazer uma consulta por
+  // referência.
+  const [savedEntryIds, setSavedEntryIds] = useState<Set<string>>(new Set())
+  const [savingEntryId, setSavingEntryId] = useState<string | null>(null)
   // Onda T Task 4: same fix as /events — ?locality lets the city switcher
   // ask for the origin's guide specifically; absent it, defaults to current.
   const viewingLocalityId = searchParams.get("locality") ?? current.id
@@ -120,12 +125,69 @@ function GuideContent() {
     }
 
     setEntries((data as GuideEntry[] | null) ?? [])
+
+    // Falha ao ler os próprios salvamentos não derruba o guia: o marcador cai
+    // para "não salvo" e a ação continua disponível.
+    const { data: saves, error: savesError } = await supabase
+      .from("guide_entry_saves")
+      .select("entry_id")
+    if (savesError) {
+      log.error("guide: could not read the saved entries", {
+        error: savesError.message,
+      })
+    } else {
+      setSavedEntryIds(
+        new Set(((saves ?? []) as Array<{ entry_id: string }>).map((row) => row.entry_id)),
+      )
+    }
+
     setLoading(false)
   }, [supabase, viewingLocalityId])
 
   useEffect(() => {
     loadEntries()
   }, [loadEntries])
+
+  // Marcador: grava e desgrava na mesma tabela que a aba Guia de /salvos lê
+  // (guide_entry_saves, 20260915190000). A policy de INSERT exige referência
+  // aprovada da própria localidade — o servidor é quem decide, não a tela.
+  const toggleSaveEntry = useCallback(
+    async (entryId: string) => {
+      setSavingEntryId(entryId)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setSavingEntryId(null)
+        return
+      }
+
+      if (savedEntryIds.has(entryId)) {
+        const { error: deleteError } = await supabase
+          .from("guide_entry_saves")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("entry_id", entryId)
+        if (!deleteError) {
+          setSavedEntryIds((previous) => {
+            const next = new Set(previous)
+            next.delete(entryId)
+            return next
+          })
+        }
+      } else {
+        const { error: insertError } = await supabase.from("guide_entry_saves").insert({
+          user_id: user.id,
+          entry_id: entryId,
+        })
+        if (!insertError) {
+          setSavedEntryIds((previous) => new Set(previous).add(entryId))
+        }
+      }
+      setSavingEntryId(null)
+    },
+    [supabase, savedEntryIds],
+  )
 
   // P0 Task 9: load the locality member count to branch the empty state on the
   // §3.4 density threshold. The metric is a proxy (membership count, not weekly
@@ -246,6 +308,19 @@ function GuideContent() {
           className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium text-[var(--semantic-text-secondary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
         >
           Mercado
+        </Link>
+      </div>
+
+      {/* O marcador do cartão grava; este atalho leva ao que já foi gravado, com
+          a aba do guia escolhida — sem isso o topo prometeria um destino que
+          abre em "Tudo". */}
+      <div className="mt-3">
+        <Link
+          href="/salvos?aba=guia"
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+        >
+          <Bookmark size={16} aria-hidden="true" />
+          Salvos
         </Link>
       </div>
 
@@ -399,7 +474,13 @@ function GuideContent() {
             {!loading && !error && filteredEntries.length > 0 && (
               <ul className="flex flex-col gap-3">
                 {filteredEntries.map((entry) => (
-                  <GuideEntryCard key={entry.id} entry={entry} />
+                  <GuideEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    saved={savedEntryIds.has(entry.id)}
+                    saving={savingEntryId === entry.id}
+                    onToggleSave={toggleSaveEntry}
+                  />
                 ))}
               </ul>
             )}
@@ -524,7 +605,17 @@ function CategoryButton({
   )
 }
 
-function GuideEntryCard({ entry }: { entry: GuideEntry }) {
+function GuideEntryCard({
+  entry,
+  saved,
+  saving,
+  onToggleSave,
+}: {
+  entry: GuideEntry
+  saved: boolean
+  saving: boolean
+  onToggleSave: (entryId: string) => void
+}) {
   const Icon = CATEGORY_ICONS[entry.category]
   const dialPhone = entry.phone ? entry.phone.replace(/[^\d+]/g, "") : null
 
@@ -536,9 +627,27 @@ function GuideEntryCard({ entry }: { entry: GuideEntry }) {
             <Icon size={20} aria-hidden="true" className="text-[var(--semantic-action-primary)]" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-[var(--semantic-text-secondary)]">
-              {CATEGORY_LABELS[entry.category]}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-xs font-medium text-[var(--semantic-text-secondary)]">
+                {CATEGORY_LABELS[entry.category]}
+              </p>
+              {/* Marcador — o mesmo vocabulário de salvar do produto (prancha
+                  54): um só gesto, um só destino (/salvos, aba Guia). */}
+              <button
+                type="button"
+                onClick={() => onToggleSave(entry.id)}
+                aria-pressed={saved}
+                aria-label={saved ? `Remover ${entry.name} dos salvos` : `Salvar ${entry.name}`}
+                disabled={saving}
+                className={`inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] disabled:opacity-60 ${
+                  saved
+                    ? "text-[var(--semantic-action-primary)] hover:bg-[var(--semantic-selected)]"
+                    : "text-[var(--semantic-text-secondary)] hover:bg-[var(--semantic-surface-hover)]"
+                }`}
+              >
+                <Bookmark size={18} aria-hidden="true" fill={saved ? "currentColor" : "none"} />
+              </button>
+            </div>
             <h3 className="mt-0.5 text-base font-semibold">{entry.name}</h3>
             {entry.description && (
               <p className="mt-1 text-sm leading-relaxed text-muted">{entry.description}</p>

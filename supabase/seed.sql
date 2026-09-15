@@ -1575,3 +1575,14 @@ values (
   now() + interval '7 days'
 )
 on conflict (token_digest) do nothing;
+
+-- RECON-049 (prancha 12/61) — o marcador do guia com produtor real: a conta de
+-- captura já salvou a referência aprovada de Manaus, para que a aba Guia de
+-- /salvos seja capturada no estado populado, e não só no vazio.
+insert into public.guide_entry_saves (user_id, entry_id, saved_at)
+values (
+  '20000000-0000-4000-8000-000000000008',
+  'a0000000-0000-4000-8000-000000000001',
+  now() - interval '2 days'
+)
+on conflict (user_id, entry_id) do nothing;

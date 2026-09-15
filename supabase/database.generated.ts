@@ -868,6 +868,32 @@ export type Database = {
           },
         ]
       }
+      guide_entry_saves: {
+        Row: {
+          entry_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          entry_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          entry_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_entry_saves_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "arrival_guide_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_alert_deliveries: {
         Row: {
           alert_id: string

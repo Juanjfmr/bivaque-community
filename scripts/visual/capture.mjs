@@ -192,6 +192,9 @@ export const HEADINGS = {
   "/pedidos/40000000-0000-4000-8000-000000000023": DYNAMIC_HEADING,
   "/recommendations?focus=80000000-0000-4000-8000-000000000f00": "^Indicações$",
   "/salvos": "^Salvos$",
+  // A aba chega pela URL: o atalho "Salvos" do topo do guia manda para cá com o
+  // tipo escolhido, então a variante é chave própria de contrato.
+  "/salvos?aba=guia": "^Salvos$",
   "/ajuda": "^Ajuda$",
   "/denuncias": "^Confiança e privacidade$",
   "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01": "^Denunciar publicação$",
@@ -467,6 +470,9 @@ export const ROUTES = [
   //   de rodar a suíte e2e inteira — quem capturava primeiro via defeito.
   //   As duas usam a conta do seed que TEM denúncia e conversa (visual@).
   { path: "/salvos", name: "salvos", auth: true },
+  // Prancha 12/61: a aba Guia da tela de salvos, populada pela referência que o
+  // seed grava para a conta de captura.
+  { path: "/salvos?aba=guia", name: "salvos-guia", auth: true },
   { path: "/ajuda", name: "ajuda", auth: true },
   { path: "/denuncias", name: "denuncias", auth: true },
   {
