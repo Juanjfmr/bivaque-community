@@ -813,14 +813,39 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     const hiddenControl = hiddenControlTarget(element)
     const sizeEl = hiddenControl ? hiddenControl.sizeEl : element
     const motionEl = hiddenControl ? hiddenControl.motionEl : element
-    const box = sizeEl.getBoundingClientRect()
+    // O alvo de um controle rotulado é a UNIÃO entre o label e o próprio
+    // controle. Medido em /signup: a caixa de aceite ocupa 44x44 e o label tem
+    // 26px de altura porque o margin: -12px do desenho devolve a folga ao fluxo
+    // do texto — medir só o label reprovava um alvo que é 44x44 de verdade, e
+    // medir só o controle reprovaria o checkbox de 20px cujo label de 222x44 é
+    // a área clicável. A união é o que o dedo alcança.
+    // Um elemento escondido (display:none) mede 0x0 na origem: entrar na união
+    // com esse retângulo inflava o alvo para a página inteira. Só retângulos
+    // com área entram.
+    const rectOf = (node) => {
+      const rect = node.getBoundingClientRect()
+      return rect.width === 0 && rect.height === 0 ? null : rect
+    }
+    const box = (() => {
+      const outer = rectOf(sizeEl)
+      const inner = rectOf(element)
+      if (!hiddenControl) return inner ?? outer ?? { width: 0, height: 0 }
+      if (!outer) return inner ?? { width: 0, height: 0 }
+      if (!inner) return outer
+      const left = Math.min(outer.left, inner.left)
+      const top = Math.min(outer.top, inner.top)
+      const right = Math.max(outer.right, inner.right)
+      const bottom = Math.max(outer.bottom, inner.bottom)
+      return { width: right - left, height: bottom - top }
+    })()
     if (box.width === 0 && box.height === 0) continue
 
-    // Artefato de framework: o botão de descarte do react-aria é 1x1, com
-    // tabindex="-1" — não é alvo de ponteiro nem de teclado, e a régua de
-    // toque/movimento não se aplica a ele. Um alvo real é focável ou visível.
+    // Artefato de framework: o <select> oculto que o react-aria renderiza para
+    // um Select/ListBox é 1x1, com tabindex="-1" e sem nome acessível — não é
+    // alvo de ponteiro nem de teclado. A isenção vale com ou sem label em volta;
+    // o que NÃO pode passar é controle pequeno dentro de label grande (o
+    // checkbox desenhado de 20px), e é por isso que a medida é a do alvo todo.
     if (
-      !hiddenControl &&
       box.width <= 4 &&
       box.height <= 4 &&
       element.tabIndex < 0 &&
@@ -839,14 +864,22 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
       )
     }
 
-    const style = getComputedStyle(motionEl)
-
     // 3. motion presence — interactive elements need a state transition
-    const hasTransition = style.transitionDuration
-      .split(",")
-      .some((duration) => Number.parseFloat(duration) > 0)
-    const hasAnimation = Number.parseFloat(style.animationDuration) > 0
-    if (!hasTransition && !hasAnimation) {
+    const animates = (node) => {
+      const style = getComputedStyle(node)
+      if (style.transitionDuration.split(",").some((d) => Number.parseFloat(d) > 0)) return true
+      return Number.parseFloat(style.animationDuration) > 0
+    }
+    // Controle dentro de <label>: quem anima é a ESTRUTURA pintada do controle,
+    // não um filho escolhido a dedo. Medido em /denuncias/nova (radio do
+    // react-aria): o primeiro filho visível do label é o wrapper que guarda o
+    // input (62x44, sem transição) e o desenho que anima é o irmão
+    // `radio__control` (16x16, 0.2s). Medir só o primeiro filho reprovava o
+    // controle certo. Sem label, o alvo continua sendo o próprio elemento.
+    const hasMotion = hiddenControl
+      ? [element, sizeEl, ...sizeEl.querySelectorAll("*")].some(animates)
+      : animates(motionEl)
+    if (!hasMotion) {
       add("no-transition", "medium", describe(motionEl), "no transition/animation on interactive")
     }
 

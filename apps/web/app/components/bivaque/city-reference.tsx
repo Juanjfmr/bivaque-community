@@ -268,7 +268,7 @@ export function CityReference({
                   value={providerQuery}
                   onChange={(event) => setProviderQuery(event.target.value)}
                   placeholder="Ex.: climatiza"
-                  className="min-h-11 flex-1 rounded-md border border-border bg-transparent px-3 text-sm"
+                  className="min-h-11 flex-1 rounded-md border border-border bg-transparent px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
                 />
                 <label className="sr-only" htmlFor="provider-category">
                   Categoria
@@ -281,7 +281,7 @@ export function CityReference({
                     setProviderCategory(next)
                     void loadProviders(providerQuery, next)
                   }}
-                  className="min-h-11 rounded-md border border-border bg-transparent px-2 text-sm"
+                  className="min-h-11 rounded-md border border-border bg-transparent px-2 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
                 >
                   <option value="">Todas as categorias</option>
                   {PROVIDER_CATEGORIES.map((value) => (

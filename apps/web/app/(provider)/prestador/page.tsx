@@ -216,7 +216,7 @@ export default async function PrestadorHomePage({
                       href={href}
                       role="tab"
                       aria-selected={isActive}
-                      className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-1 text-sm font-medium ${
+                      className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-1 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-fast)] ${
                         isActive
                           ? "border-[var(--semantic-action-primary)] text-[var(--semantic-action-primary)]"
                           : "border-transparent text-muted"

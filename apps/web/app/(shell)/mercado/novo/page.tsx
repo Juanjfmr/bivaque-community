@@ -219,7 +219,7 @@ export default function NovoAnuncioPage() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
       <Link
         href={"/mercado" as Route}
-        className="flex w-fit items-center gap-1.5 text-sm text-muted hover:text-[var(--semantic-text-primary)]"
+        className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm text-muted transition-colors duration-[var(--semantic-motion-duration-fast)] hover:text-[var(--semantic-text-primary)]"
       >
         <ArrowLeft size={16} aria-hidden="true" />
         Voltar
@@ -240,7 +240,7 @@ export default function NovoAnuncioPage() {
               value={title}
               maxLength={120}
               onChange={(event) => setTitle(event.target.value)}
-              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
             />
             {fieldError("title")}
           </div>
@@ -254,7 +254,7 @@ export default function NovoAnuncioPage() {
                 id="anuncio-categoria"
                 value={category}
                 onChange={(event) => setCategory(event.target.value)}
-                className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+                className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
               >
                 <option value="">Escolha</option>
                 {LISTING_CATEGORIES.map((option) => (
@@ -276,7 +276,7 @@ export default function NovoAnuncioPage() {
                 inputMode="decimal"
                 placeholder="650,00"
                 onChange={(event) => setPrice(event.target.value)}
-                className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+                className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
               />
               {fieldError("price")}
             </div>
@@ -290,7 +290,7 @@ export default function NovoAnuncioPage() {
               id="anuncio-condicao"
               value={condition}
               onChange={(event) => setCondition(event.target.value)}
-              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
             >
               {LISTING_CONDITIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -311,7 +311,7 @@ export default function NovoAnuncioPage() {
               rows={3}
               maxLength={2000}
               onChange={(event) => setDescription(event.target.value)}
-              className="rounded-lg border border-border bg-[var(--semantic-surface)] px-3 py-2 text-sm"
+              className="rounded-lg border border-border bg-[var(--semantic-surface)] px-3 py-2 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
             />
             {fieldError("description")}
           </div>
@@ -325,7 +325,7 @@ export default function NovoAnuncioPage() {
               value={neighborhood}
               maxLength={80}
               onChange={(event) => setNeighborhood(event.target.value)}
-              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
             />
             <p className="text-xs text-muted">
               Só o bairro. Endereço, número ou complemento não entram.
@@ -341,7 +341,7 @@ export default function NovoAnuncioPage() {
               id="anuncio-publico"
               value={audienceKey}
               onChange={(event) => setAudienceKey(event.target.value)}
-              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm"
+              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
             >
               {audienceOptions.map((option) => (
                 <option key={option.key} value={option.key}>
@@ -383,7 +383,7 @@ export default function NovoAnuncioPage() {
                       type="button"
                       aria-label={`Remover foto ${index + 1}`}
                       onClick={() => removePhoto(index)}
-                      className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--semantic-surface)] text-[var(--semantic-text-primary)]"
+                      className="absolute right-0 top-0 flex min-h-11 min-w-11 items-center justify-center rounded-full bg-[var(--semantic-surface)] text-[var(--semantic-text-primary)] transition-colors duration-[var(--semantic-motion-duration-fast)]"
                     >
                       <X size={14} aria-hidden="true" />
                     </button>
@@ -395,7 +395,7 @@ export default function NovoAnuncioPage() {
                   <button
                     type="button"
                     onClick={() => fileInput.current?.click()}
-                    className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs text-muted"
+                    className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs text-muted transition-colors duration-[var(--semantic-motion-duration-fast)] hover:border-[var(--semantic-border-strong)]"
                   >
                     <Camera size={18} aria-hidden="true" />
                     Adicionar foto
@@ -405,13 +405,19 @@ export default function NovoAnuncioPage() {
             })}
           </ul>
 
+          {/* O seletor de arquivo é detalhe de implementação: quem oferece a
+              ação é o botão "Adicionar foto" (focável, com nome). Sem tirar o
+              input da árvore de acessibilidade e da ordem de foco, o mesmo
+              seletor aparecia duas vezes para leitor de tela e a régua media
+              um alvo de 1x1. */}
           <input
             ref={fileInput}
             type="file"
             accept={ALLOWED_TYPES.join(",")}
             multiple
+            tabIndex={-1}
+            aria-hidden="true"
             className="sr-only"
-            aria-label="Adicionar fotos"
             onChange={(event) => {
               void addFiles(event.target.files)
               event.target.value = ""
