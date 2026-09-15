@@ -346,7 +346,7 @@ export function CreatePostModal({
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>Criar publicação</Modal.Heading>
-                <Modal.CloseTrigger />
+                <Modal.CloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <div className="gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]">

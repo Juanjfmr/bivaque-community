@@ -68,7 +68,7 @@ export function DraftDiscardDialog({ open, onOpenChange, onDiscard }: DraftDisca
           <Modal.Dialog>
             <Modal.Header>
               <Modal.Heading>Descartar rascunho?</Modal.Heading>
-              <Modal.CloseTrigger />
+              <Modal.CloseTrigger className="min-h-11 min-w-11" />
             </Modal.Header>
             <Modal.Body>
               <p className="text-sm">
