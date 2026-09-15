@@ -540,13 +540,14 @@ export default function RecommendationsPage() {
               title="Nada por aqui ainda"
               description="Quando houver grupos ou eventos na sua comunidade, eles aparecerão aqui. Que tal explorar os grupos?"
               action={
+                // O Button DENTRO do Link é conteúdo interativo aninhado (HTML
+                // inválido) e a régua mede o <a>: 97x19 de alvo. O link assume o
+                // papel de botão, como no /auth/callback-error.
                 <Link
                   href="/groups"
-                  className="transition-colors duration-[var(--duration-instant)]"
+                  className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-white transition-colors duration-[var(--duration-instant)] hover:bg-[var(--semantic-action-primary-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                 >
-                  <Button variant="primary" size="sm">
-                    Ver grupos
-                  </Button>
+                  Ver grupos
                 </Link>
               }
             />
