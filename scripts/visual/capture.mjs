@@ -45,10 +45,21 @@ const ROUTES = [
   { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
   { path: "/guide", name: "arrival-guide", auth: true },
+  // RECON-021: prova que o Ver-todos do grupo Guia chega com o filtro `q`
+  // preenchido (hunk de uma linha no /guide).
+  { path: "/guide?q=escola", name: "arrival-guide-termo", auth: true },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
   { path: "/inicio", name: "inicio", auth: true },
   { path: "/explorar", name: "explorar", auth: true },
   { path: "/explorar/servicos", name: "explorar-servicos", auth: true },
+  // RECON-021: painel direito da prancha 61 com o fixture real do seed —
+  // capturar com BIVAQUE_VISUAL_EMAIL=membro-25@ (unico ator que ve o
+  // prestador pela RLS).
+  { path: "/explorar/servicos?q=climatiza", name: "explorar-servicos-termo", auth: true },
+  // RECON-021: fixture concreta do seed de Manaus — "escola" casa com a
+  // entrada aprovada "Escola Modelo do Centro" e NÃO pode casar com a
+  // pendente "Escola de Acolhimento Militar" (status pending, RLS).
+  { path: "/explorar/busca?q=escola", name: "explorar-busca", auth: true },
   // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
   // pointed here since E10 (406d4f6), but the route did not exist until T4.
   { path: "/localidade", name: "localidade", auth: true },
