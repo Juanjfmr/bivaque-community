@@ -3,8 +3,10 @@
 import { Button } from "@heroui/react"
 import { ArrowLeft, Mail } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { classifyEntrySend } from "../../../lib/auth/entry-send"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { computeResendCooldown, formatCountdown } from "../../components/auth/resend-clock"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import styles from "./recuperar-senha.module.css"
 
@@ -16,26 +18,71 @@ import styles from "./recuperar-senha.module.css"
  * recuperação de um e-mail sem conta receberia um erro distinto, e isso
  * entregaria a lista de membros a quem digitasse endereços. Ver
  * ADR-20260907-login-com-senha.
+ *
+ * O que NÃO pode virar "enviado": limite de reenvio e falha de rede. São
+ * distinguíveis da resposta neutra (R07) porque não falam sobre a conta — o
+ * classificador compartilhado de entry-send decide, com o cooldown real do
+ * servidor em precedência sobre a janela padrão.
  */
 export default function RecuperarSenhaPage() {
   const [email, setEmail] = useState("")
   const [sent, setSent] = useState(false)
   const [offline, setOffline] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+  const [limite, setLimite] = useState<string | null>(null)
+  const [falha, setFalha] = useState<string | null>(null)
+
+  const counting = cooldown > 0
+  useEffect(() => {
+    if (!counting) return
+    const timer = setInterval(() => {
+      setCooldown((seconds) => (seconds <= 1 ? 0 : seconds - 1))
+    }, 1000)
+    return () => {
+      clearInterval(timer)
+    }
+  }, [counting])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (loading || cooldown > 0) return
     setLoading(true)
     setOffline(false)
+    setLimite(null)
+    setFalha(null)
 
     try {
-      await createBrowserClient().auth.resetPasswordForEmail(email.trim(), {
+      const { error } = await createBrowserClient().auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/auth/callback?next=/nova-senha`,
       })
-      setSent(true)
+      const view = classifyEntrySend(error)
+      if (view.outcome === "sent") {
+        // Neutro: "sent" cobre conta existente, inexistente e erro que fala da
+        // conta sem distinguir. O cooldown ecoa a janela do provedor.
+        setSent(true)
+        setCooldown(computeResendCooldown({ lastResendAt: Date.now(), now: Date.now() }))
+      } else if (view.outcome === "rate-limited") {
+        // O número veio do servidor (429/Retry-After) quando havia; senão, a
+        // janela padrão. Nos dois casos é o limite do provedor, não contagem
+        // de enfeite.
+        setLimite(view.message)
+        setCooldown(
+          computeResendCooldown({
+            lastResendAt: null,
+            serverSeconds: view.retryAfterSeconds ?? null,
+            now: Date.now(),
+          }),
+        )
+      } else if (view.outcome === "offline") {
+        setOffline(true)
+      } else {
+        setFalha(view.message)
+      }
     } catch {
       // Só falha de transporte chega aqui; erro do provedor vem no `error` e é
-      // deliberadamente ignorado, para a resposta não depender da conta existir.
+      // deliberadamente neutralizado pelo classificador, para a resposta não
+      // depender da conta existir.
       setOffline(true)
     } finally {
       setLoading(false)
@@ -77,9 +124,13 @@ export default function RecuperarSenhaPage() {
             type="submit"
             variant="primary"
             className={styles["primaryButton"] ?? ""}
-            isDisabled={loading}
+            isDisabled={loading || cooldown > 0}
           >
-            {loading ? "Enviando..." : "Enviar link"}
+            {loading
+              ? "Enviando..."
+              : cooldown > 0
+                ? `Aguarde ${formatCountdown(cooldown)}`
+                : "Enviar link"}
           </Button>
         </form>
 
@@ -90,6 +141,10 @@ export default function RecuperarSenhaPage() {
             description="Verifique sua conexão e tente de novo."
           />
         )}
+
+        {limite && <FeedbackAlert variant="warning" description={limite} />}
+
+        {falha && <FeedbackAlert variant="danger" description={falha} />}
 
         {sent && (
           <FeedbackAlert

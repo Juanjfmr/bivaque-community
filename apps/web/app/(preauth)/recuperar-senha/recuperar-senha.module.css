@@ -36,6 +36,7 @@
   font-size: var(--semantic-typography-label-size);
   font-weight: var(--semantic-typography-label-weight);
   text-decoration: none;
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .back:hover {
@@ -98,6 +99,9 @@
   font: inherit;
   font-weight: var(--primitive-font-weight-regular);
   outline: none;
+  transition:
+    color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .revealButton {
