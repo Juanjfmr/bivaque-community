@@ -189,7 +189,7 @@ export default async function AdminAdmissionsPage({
             <Link
               href={queueHref({ tab: "pendentes", q: query })}
               aria-current={tab === "pendentes" ? "page" : undefined}
-              className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-1 font-medium ${
+              className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-1 font-medium transition-colors ${
                 tab === "pendentes"
                   ? "border-accent text-foreground"
                   : "border-transparent text-muted hover:text-foreground"
@@ -202,7 +202,7 @@ export default async function AdminAdmissionsPage({
             <Link
               href={queueHref({ tab: "concluidas", q: query })}
               aria-current={tab === "concluidas" ? "page" : undefined}
-              className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-1 font-medium ${
+              className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-1 font-medium transition-colors ${
                 tab === "concluidas"
                   ? "border-accent text-foreground"
                   : "border-transparent text-muted hover:text-foreground"
@@ -226,7 +226,7 @@ export default async function AdminAdmissionsPage({
             name="q"
             defaultValue={query}
             placeholder="Buscar por nome ou e-mail"
-            className="min-h-11 w-full min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 text-sm"
+            className="min-h-11 w-full min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 text-sm transition-colors"
           />
           <button
             type="submit"
@@ -334,7 +334,7 @@ export default async function AdminAdmissionsPage({
               <Link
                 href={queueHref({ tab, q: query, page: page - 1 })}
                 aria-label="Página anterior"
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2 transition-colors"
               >
                 <span aria-hidden="true">‹</span>
               </Link>
@@ -344,7 +344,7 @@ export default async function AdminAdmissionsPage({
                 key={number}
                 href={queueHref({ tab, q: query, page: number })}
                 aria-current={number === page ? "page" : undefined}
-                className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border px-2 ${
+                className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border px-2 transition-colors ${
                   number === page
                     ? "border-accent font-medium text-foreground"
                     : "border-border bg-surface text-muted hover:text-foreground"
@@ -357,7 +357,7 @@ export default async function AdminAdmissionsPage({
               <Link
                 href={queueHref({ tab, q: query, page: page + 1 })}
                 aria-label="Próxima página"
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2 transition-colors"
               >
                 <span aria-hidden="true">›</span>
               </Link>

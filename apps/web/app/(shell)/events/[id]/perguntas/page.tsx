@@ -197,20 +197,25 @@ export default async function EventQuestionsPage({
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
-      <nav aria-label="Trilha" className="text-sm text-muted">
+      {/* Mesma trilha de /meus-anuncios: destino de 44px, transição e a página
+          atual marcada — sem aria-current o nav fica sem item corrente e a
+          auditoria visual acusa '0 active nav items'. */}
+      <nav aria-label="Trilha" className="flex flex-wrap items-center gap-2 text-sm text-muted">
         <Link
           href={"/events" as Route}
-          className="rounded px-1 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+          className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
         >
           Eventos
         </Link>
-        <span aria-hidden="true"> / </span>
+        <span aria-hidden="true">›</span>
         <Link
           href={backToEvent as Route}
-          className="rounded px-1 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+          className="inline-flex min-h-11 items-center transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
         >
           {event.title}
         </Link>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">Perguntas</span>
       </nav>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -234,7 +239,7 @@ export default async function EventQuestionsPage({
                 Organizado por{" "}
                 <Link
                   href={organizerProfileHref}
-                  className="font-medium text-[var(--semantic-action-primary)] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+                  className="inline-flex min-h-11 items-center font-medium text-[var(--semantic-action-primary)] underline-offset-4 transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
                 >
                   {organizerName ?? "quem organiza"}
                 </Link>

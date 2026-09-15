@@ -323,7 +323,7 @@ export default async function AdminGuidePage() {
                   href={entry.website_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-accent hover:underline"
+                  className="inline-flex min-h-11 items-center text-sm text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline"
                 >
                   {entry.website_url}
                 </a>
@@ -335,7 +335,7 @@ export default async function AdminGuidePage() {
                 <input type="hidden" name="entryId" value={entry.id} />
                 <button
                   type="submit"
-                  className="w-full rounded-md border border-border bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+                  className="min-h-11 w-full rounded-md border border-border bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-accent/90"
                 >
                   Aprovar e publicar
                 </button>
@@ -346,12 +346,13 @@ export default async function AdminGuidePage() {
                 <input
                   type="text"
                   name="note"
+                  aria-label="Motivo da rejeição"
                   placeholder="Motivo da rejeição"
-                  className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                  className="min-h-11 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
                 />
                 <button
                   type="submit"
-                  className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-danger hover:text-danger-foreground"
+                  className="min-h-11 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-danger hover:text-danger-foreground"
                 >
                   Recusar
                 </button>
@@ -400,7 +401,7 @@ export default async function AdminGuidePage() {
                       name="category"
                       required
                       aria-label="Categoria do guia"
-                      className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                      className="min-h-11 rounded-md border border-border bg-surface px-3 py-2 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
                     >
                       {GUIDE_CATEGORIES.map((cat) => (
                         <option key={cat} value={cat}>
