@@ -85,7 +85,12 @@ export async function sendFamilyInviteAction(
   const { error } = await supabase.rpc("create_family_invitation", {
     p_inviter_user_id: userId,
     p_token_digest: byteaDigestParam(tokenDigest),
-    p_invitee_email_digest: emailDigest,
+    // O digest do e-mail precisa da MESMA serialização do token: sem o
+    // prefixo \x o PostgREST entrega 64 bytes (hex nu) e o CHECK
+    // octet_length = 32 derruba o insert com 23514 — provado em runtime em
+    // 15/09/2026 (o convite familiar nunca criava convite). Ver
+    // lib/invites-bytea.ts.
+    p_invitee_email_digest: byteaDigestParam(emailDigest),
     p_invitee_email_hint: emailHint(email),
   })
 

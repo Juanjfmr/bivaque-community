@@ -1,6 +1,8 @@
 "use client"
 
-import { Button, Input } from "@heroui/react"
+import { Button, Chip, Input } from "@heroui/react"
+import { ArrowLeft } from "lucide-react"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../../components/bivaque/skeleton"
@@ -40,6 +42,10 @@ export default function ConfiguracoesFamiliaPage() {
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [inviteLink, setInviteLink] = useState<string | null>(null)
+  // Convite que gerou o link exibido: é ele que o "Revogar" ao lado do
+  // "Copiar" apaga (prancha 76, painel 2). O token só existe nesta tela; o
+  // banco guarda o digest.
+  const [linkInviteId, setLinkInviteId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,7 +84,12 @@ export default function ConfiguracoesFamiliaPage() {
       const result = await sendFamilyInviteAction(formData)
       if (result?.token) {
         setInviteLink(`/onboarding?invite=${result.token}`)
-        setData(await getFamilyInviteDataAction())
+        const fresh = await getFamilyInviteDataAction()
+        setData(fresh)
+        const newest = [...(fresh?.pending ?? [])].sort(
+          (a, b) => Date.parse(b.created_at) - Date.parse(a.created_at),
+        )[0]
+        setLinkInviteId(newest?.id ?? null)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao enviar convite. Tente novamente.")
@@ -109,6 +120,13 @@ export default function ConfiguracoesFamiliaPage() {
 
   return (
     <section aria-labelledby="familia-heading" className="space-y-4">
+      <Link
+        href="/configuracoes"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg px-1 text-sm font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:underline"
+      >
+        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+        Privacidade
+      </Link>
       <div>
         <h2 id="familia-heading" className="text-lg font-semibold tracking-tight">
           Família
@@ -150,14 +168,14 @@ export default function ConfiguracoesFamiliaPage() {
             <Button type="submit" variant="primary" className="min-h-11 self-start">
               Criar convite
             </Button>
+            <p className="text-xs text-muted">
+              O link aparece uma única vez. Envie ao familiar antes de fechar esta tela.
+            </p>
 
             {inviteLink && (
               <div className="rounded-lg border border-border bg-[var(--surface-sunken)] p-3">
-                <p className="text-xs text-muted">
-                  O link aparece uma única vez. Envie ao familiar antes de sair desta tela.
-                </p>
-                <p className="mt-2 flex items-center gap-2 text-sm">
-                  <span className="truncate" title={inviteLink}>
+                <p className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="min-w-0 flex-1 truncate" title={inviteLink}>
                     {inviteLink}
                   </span>
                   <Button
@@ -169,6 +187,36 @@ export default function ConfiguracoesFamiliaPage() {
                   >
                     {copied ? "Copiado!" : "Copiar"}
                   </Button>
+                  {linkInviteId ? (
+                    // Sem <form> aqui: este bloco vive DENTRO do form de criar
+                    // convite, e form aninhado é inválido em HTML — o botão
+                    // virava submit do form externo. A ação roda direto.
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="tertiary"
+                      className="min-h-11 shrink-0"
+                      onPress={async () => {
+                        const formData = new FormData()
+                        formData.set("invitationId", linkInviteId)
+                        try {
+                          await revokeFamilyInviteAction(formData)
+                        } catch (err) {
+                          setError(
+                            err instanceof Error
+                              ? err.message
+                              : "Não foi possível revogar o convite.",
+                          )
+                          return
+                        }
+                        setInviteLink(null)
+                        setLinkInviteId(null)
+                        setData(await getFamilyInviteDataAction())
+                      }}
+                    >
+                      Revogar
+                    </Button>
+                  ) : null}
                 </p>
               </div>
             )}
@@ -183,7 +231,22 @@ export default function ConfiguracoesFamiliaPage() {
       </div>
 
       <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
-        <h3 className="text-sm font-medium">Convites pendentes</h3>
+        <h3 className="text-sm font-semibold">Como funciona a entrada</h3>
+        <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted">
+          <li>O familiar cria a própria conta e passa pela verificação como qualquer membro.</li>
+          <li>
+            A conta dele é independente da sua: nada de perfil, conteúdo ou participação é
+            compartilhado automaticamente.
+          </li>
+          <li>
+            O vínculo familiar aparece para as duas partes; o convite vale uma vez e expira em 7
+            dias.
+          </li>
+        </ul>
+      </div>
+
+      <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+        <h3 className="text-sm font-medium">Convites pendentes ({pending.length} de 5)</h3>
         {pending.length === 0 ? (
           <p className="mt-2 text-sm text-muted">Nenhum convite pendente.</p>
         ) : (
@@ -193,7 +256,10 @@ export default function ConfiguracoesFamiliaPage() {
                 key={invite.id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-[var(--surface-sunken)] p-3 text-sm"
               >
-                <span className="min-w-0 text-muted">
+                <span className="flex min-w-0 flex-wrap items-center gap-2 text-muted">
+                  <Chip size="sm" variant="soft" color="warning">
+                    Aguardando aceitação
+                  </Chip>
                   {invite.invitee_email_hint ?? "Convite"} — enviado em{" "}
                   {formatDate(invite.created_at)}, expira em {formatDate(invite.expires_at)}
                 </span>
@@ -207,6 +273,17 @@ export default function ConfiguracoesFamiliaPage() {
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+        <h3 className="text-sm font-semibold">Se o familiar não abrir a tempo</h3>
+        <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted">
+          <li>O link expira em 7 dias e só pode ser usado uma vez.</li>
+          <li>
+            Se expirar, crie um convite novo: o anterior deixa de valer e não é recuperado — o banco
+            guarda apenas o digest do token.
+          </li>
+        </ul>
       </div>
     </section>
   )
