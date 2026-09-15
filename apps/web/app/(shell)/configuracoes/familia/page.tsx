@@ -8,6 +8,7 @@ import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../../components/bivaque/skeleton"
 import {
   getFamilyInviteDataAction,
+  resendFamilyInviteAction,
   revokeFamilyInviteAction,
   sendFamilyInviteAction,
 } from "../../profile/family-invite-section-actions"
@@ -76,6 +77,37 @@ export default function ConfiguracoesFamiliaPage() {
       cancelled = true
     }
   }, [])
+
+  // Reenviar exige o e-mail de novo (o banco não guarda o endereço): o botão
+  // abre o campo, e a ação só aceita se o digest bater com o do convite.
+  const [resendingId, setResendingId] = useState<string | null>(null)
+  const [resendEmail, setResendEmail] = useState("")
+
+  const handleResend = async (invitationId: string) => {
+    setError(null)
+    setCopied(false)
+    try {
+      // FormData não aceita atribuição de propriedade: `Object.assign` deixaria
+      // as chaves fora da lista de entradas e a ação receberia vazio.
+      const formData = new FormData()
+      formData.set("invitationId", invitationId)
+      formData.set("email", resendEmail)
+      const result = await resendFamilyInviteAction(formData)
+      if (result?.token) {
+        setInviteLink(`/onboarding?invite=${result.token}`)
+        setLinkInviteId(invitationId)
+        setResendingId(null)
+        setResendEmail("")
+        setData(await getFamilyInviteDataAction())
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível reenviar o convite. Tente novamente.",
+      )
+    }
+  }
 
   const handleSend = async (formData: FormData) => {
     setError(null)
@@ -263,12 +295,56 @@ export default function ConfiguracoesFamiliaPage() {
                   {invite.invitee_email_hint ?? "Convite"} — enviado em{" "}
                   {formatDate(invite.created_at)}, expira em {formatDate(invite.expires_at)}
                 </span>
-                <form action={revokeFamilyInviteAction}>
-                  <input type="hidden" name="invitationId" value={invite.id} />
-                  <Button type="submit" size="sm" variant="tertiary" className="min-h-11">
-                    Revogar
-                  </Button>
-                </form>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Reenviar reemite: o link antigo deixa de valer no mesmo
+                        instante (o banco guarda só o digest). */}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="tertiary"
+                      className="min-h-11"
+                      onPress={() => {
+                        setResendingId(resendingId === invite.id ? null : invite.id)
+                        setResendEmail("")
+                        setError(null)
+                      }}
+                    >
+                      Reenviar
+                    </Button>
+                    <form action={revokeFamilyInviteAction}>
+                      <input type="hidden" name="invitationId" value={invite.id} />
+                      <Button type="submit" size="sm" variant="tertiary" className="min-h-11">
+                        Revogar
+                      </Button>
+                    </form>
+                  </div>
+                  {resendingId === invite.id ? (
+                    <div className="flex w-full flex-wrap items-end justify-end gap-2">
+                      <div className="flex min-w-56 flex-1 flex-col gap-1">
+                        <label htmlFor={`reenviar-${invite.id}`} className="text-xs text-muted">
+                          Confirme o e-mail do convite
+                        </label>
+                        <Input
+                          id={`reenviar-${invite.id}`}
+                          aria-label="E-mail do convite"
+                          type="email"
+                          value={resendEmail}
+                          onChange={(event) => setResendEmail(event.target.value)}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        className="min-h-11"
+                        onPress={() => handleResend(invite.id)}
+                      >
+                        Enviar de novo
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>
@@ -280,8 +356,8 @@ export default function ConfiguracoesFamiliaPage() {
         <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted">
           <li>O link expira em 7 dias e só pode ser usado uma vez.</li>
           <li>
-            Se expirar, crie um convite novo: o anterior deixa de valer e não é recuperado — o banco
-            guarda apenas o digest do token.
+            Se expirar, use Reenviar: o link antigo deixa de valer e o novo vale outros 7 dias. O
+            banco guarda apenas o digest do token, então o endereço é confirmado de novo.
           </li>
         </ul>
       </div>

@@ -2909,6 +2909,15 @@ export type Database = {
         Args: { p_community_id: string; p_reason?: string }
         Returns: undefined
       }
+      resend_family_invitation: {
+        Args: {
+          p_invitation_id: string
+          p_invitee_email_digest: string
+          p_inviter_user_id: string
+          p_token_digest: string
+        }
+        Returns: string
+      }
       resolve_report: {
         Args: {
           p_action: string
@@ -2965,7 +2974,11 @@ export type Database = {
           p_caller_user_id: string
           p_community_id: string
           p_kind: string
-          p_path: string
+          // À MÃO: a função aceita NULL para limpar o ponteiro da imagem
+          // ("if p_path is not null and split_part(...)"). O gerador não
+          // expressa nulabilidade de argumento, então esta linha é ajustada
+          // depois do generate:types — preservar em toda regeneração.
+          p_path: string | null
         }
         Returns: undefined
       }
