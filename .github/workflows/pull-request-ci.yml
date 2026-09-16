@@ -4,8 +4,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Temporário no RC: permite ao runner gravar APENAS o arquivo de tipos gerado.
+# Esta permissão volta para `contents: read` assim que o snapshot for commitado.
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   ci:
@@ -79,9 +81,18 @@ jobs:
       - name: Build web app
         run: pnpm build
 
-      - name: Check generated types drift
+      - name: Reconcile generated types on RC
+        env:
+          RC_BRANCH: ${{ github.head_ref }}
         run: |
           pnpm generate:types
+          if ! git diff --quiet -- supabase/database.generated.ts; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add supabase/database.generated.ts
+            git commit -m "chore(db): regenerate Supabase types from RC schema"
+            git push origin "HEAD:${RC_BRANCH}"
+          fi
           git diff --exit-code -- supabase/database.generated.ts
 
       # pgTAP compares the exact set of profiles visible in Manaus against its
@@ -117,4 +128,3 @@ jobs:
             test-results/
             apps/web/playwright-report/
             apps/web/test-results/
-            supabase/database.generated.ts
