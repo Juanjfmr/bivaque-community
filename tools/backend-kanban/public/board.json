@@ -1428,7 +1428,8 @@
         "Bloqueio atual: aprovação humana explícita do ADR (storage seguro + purge policy são decisão de produto)",
         "Após aprovação: implementador portará auth (PKCE, secure-store, refresh, signOut, purge) com testes positivos e negativos",
         "Após implementação: security-auditor PASS sobre o boundary antes de qualquer jornada autenticada",
-        "Ligar o envio do link e o retorno por deep link no app nativo, fechando o criterio de login do contrato MOB-001"
+        "Ligar o envio do link e o retorno por deep link no app nativo ✅ 16/09 (reconciliado): o retorno existe e é guardado por teste — app/auth-callback.tsx + src/auth/useAuthDeepLink.ts + src/auth/deep-link.ts (8 testes) + tests/scope/auth-deep-link.test.mjs, que falha se rota, AUTH_CALLBACK_PATH e additional_redirect_urls divergirem. O ENVIO do link saiu da tela por ADR-20260907-login-com-senha (aprovado 07/09, R2): a entrada nativa é e-mail e senha (src/auth/password-auth.ts, 11 testes) e o mecanismo de link continua no servidor",
+        "Rodar o app no emulador Android e medir o que só o runtime mede: FLAG_SECURE, exclusão de backup, refresh sob kill+relaunch e o POST /api/consent do cadastro ✅ possível desde 16/09 — o emulador existe e sobe (ver BLOCK-MOBILE-RUNTIME); falta o passo de build/install, que não tem prebuild versionado"
       ],
       "proof": [
         "ADR-20260901-mobile-session.md em docs/decisions/ (status: draft)",
@@ -1436,21 +1437,26 @@
         "2026-09-01: implementacao completa (S2). apps/mobile/src/auth/{storage,signOut,refresh,purge}.ts implementados conforme ADR-20260901-mobile-session (commit b7ca57f). expo-secure-store com keychainAccessible=WHEN_UNLOCKED_THIS_DEVICE_ONLY (exclui iCloud Backup no iOS; EncryptedSharedPreferences fora de backup automatico no Android). signOut revoga servidor (/auth/v1/logout) e prossegue para cleanup local independente de status (4xx/5xx/network) — o membro nao consegue mais agir sem token local. 24 testes vitest (positivos + negativos) cobrem a matriz do ADR. Pendente fora desta fatia: instalacao do app em device real para teste de runtime (FLAG_SECURE, iCloud/Google backup exclusion, refresh automatico sob kill+relaunch). Esses estao bloqueados por BLOCK-MOBILE-RUNTIME (HAXM/Hyper-V para Android; Apple Developer Program para iOS).",
         "2026-09-06 REABERTO: o card estava done com o primeiro criterio de aceite aberto. Evidencia medida em a90370f: nao existe apps/mobile/app/login/**, nenhum import de expo-linking, nenhuma chamada a exchangeCodeForSession em apps/mobile/**, e src/auth/client.ts fixa detectSessionInUrl:false com o comentario \"o fluxo de login do nativo e diferente, por implementar\". Storage, refresh, signOut e purge continuam entregues e testados (51 testes verdes); o que falta e a entrada.",
         "2026-09-06: ADR-20260901-mobile-session se contradizia — frontmatter approved/approved_at 2026-09-01 com critic_verdict vazio, corpo dizendo \"pendente de aprovacao humana explicita\". Confrontado, o dono confirmou que aprovou; o corpo do ADR foi reconciliado e o blocked_by do contrato removido. O bloqueio restante e de ambiente (aparelho/emulador), nao de decisao.",
+        "2026-09-16: estado medido no host (não presumido) — suite nativa `npx vitest run` em apps/mobile: 12 arquivos, 76 testes PASS, incluindo storage (8), refresh (7), signOut (6), purge (3), password-auth (11), deep-link (8), entry-send (6). O scheme `bivaque` está em app.json e `bivaque://auth-callback` em additional_redirect_urls. O avatar do cartão envelheceu: desde ADR-20260907 a entrada nativa é senha, não link",
         "2026-09-06: a tela nativa de boas-vindas e o passo de e-mail ja existem (commit 87cf04b) e roteiam o modo escolhido; falta ligar signInWithOtp com emailRedirectTo bivaque://, registrar o scheme em supabase/config.toml additional_redirect_urls e tratar o retorno do deep link."
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/MOB-001.task.yml (já passa)",
-        "Pendente: implementation + unit/integration tests + security-auditor PASS"
+        "cd apps/mobile; npx vitest run (12 arquivos, 76 testes)",
+        "Pendente: security-auditor PASS sobre o boundary e runtime no emulador"
       ],
       "links": [
         "ADR | docs/decisions/ADR-20260901-mobile-session.md",
-        "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md"
+        "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md",
+        "ADR da entrada | docs/decisions/ADR-20260907-login-com-senha.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "a90370fbe0f6a242c8cc7e6f26ddd5dcb5f59a1e",
-      "blockers": ["Aprovação humana de ADR-20260901-mobile-session"],
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "690327e",
+      "blockers": [
+        "Runtime Android depende do passo de build/install no emulador (o toolchain existe desde 16/09; não há prebuild versionado). iOS segue em BLOCK-MOBILE-RUNTIME"
+      ],
       "dependencies": [],
-      "completedAt": "2026-09-01"
+      "completedAt": null
     },
     {
       "id": "BLOCK-MOBILE-RUNTIME",
@@ -1459,7 +1465,7 @@
       "priority": "P1",
       "category": "infra",
       "status": "blocked",
-      "description": "A fundação MOB-000 já produz bundles Metro para Android e iOS (2.52/2.53 MB Hermes). A prova de runtime real exige Android emulator rodando o app, e/ou iOS device/TestFlight. No host atual: cmdline-tools ausente em $LOCALAPPDATA/Android/Sdk (sem sdkmanager.bat); nenhuma system-image; nenhum AVD. iOS runtime exige Apple Developer Program (US$ 99/ano) + credenciais EAS + TestFlight, ativos externos que não estão na máquina. Sem proof de runtime, MOB-001 (sessão) e MOB-002 (golden slice nativa) só podem ser validados em bundle estático e lint/typecheck.",
+      "description": "A fundação MOB-000 já produz bundles Metro para Android e iOS (2.52/2.53 MB Hermes). RE-MEDIDO em 16/09/2026, o host mudou: o toolchain Android existe (cmdline-tools/latest/bin/sdkmanager.bat e avdmanager.bat, emulator/emulator.exe, platform-tools/adb.exe, system-images/android-34/default, platforms android-36/36.1, Java 17) e o AVD bivaque_ci sobe — headless, emulator-5554 online, Android 14, x86_64. O que falta para a prova de runtime Android não é mais ambiente: é o passo de build/install do app (não há apps/mobile/android versionado; exige expo prebuild + Gradle). iOS segue externo: Apple Developer Program (US$ 99/ano) + credenciais EAS + TestFlight.",
       "checklist": [
         "Android — sistema de runtime provado (boot via QEMU TCG arm64)",
         "Android — ADB fala com o emulador (sys.boot_completed=1)",
@@ -1472,6 +1478,7 @@
         "Bundle Metro Android: 2.52 MB (commit 29d9496)",
         "Bundle Metro iOS: 2.53 MB (commit 29d9496)",
         "Java 17 + Android SDK present, mas toolchain de AVD incompleta",
+        "2026-09-16 RE-MEDIDO no host: sdkmanager.bat, avdmanager.bat, emulator.exe e adb.exe presentes; system-images/android-34/default e platforms android-36/36.1 instalados; Java 17.0.3.1; AVDs bivaque_ci (x86_64, 1536 MB, GPU off) e bivaque_ci_arm64. Boot headless do bivaque_ci: emulator-5554 responde a adb (ro.build.version.release=14, ro.product.cpu.abi=x86_64). A linha 'toolchain de AVD incompleta' está superada; o que falta é build/install do app",
         "Sem credenciais Apple/EAS no host",
         "2026-09-01 tentativa 1 de bootstrap Android falhou: Invoke-WebRequest contra https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip excedeu 360s sem completar o download. cmdline-tools continua ausente; sem cmdline-tools, sem sdkmanager, sem system-image, sem AVD. Próxima tentativa exige rota alternativa: usar curl.exe do Git for Windows (PATH tem C:\\Program Files\\Git\\cmd\\) ou um mirror; ou rodar o download em background com retry.",
         "2026-09-01 bootstrap Android tentativamente completo: (1) cmdline-tools/latest extraído em C:\\Users\\juana\\AppData\\Local\\Android\\Sdk\\cmdline-tools\\latest\\ (sdkmanager --version = 12.0); (2) licenças aceitas via `yes | sdkmanager --licenses` (saída: 'All SDK package licenses accepted'); (3) system-images;android-34;default;x86_64 instalada; (4) AVD bivaque_ci criado (Pixel, Android 14.0 UpsideDownCake, default/x86_64); (5) emulator 36.6.11 disponível. JDK real localizada: C:\\Program Files\\Java\\jdk-17.0.3.1 (registry HKLM\\SOFTWARE\\JavaSoft\\JDK\\17.0.3.1).",
