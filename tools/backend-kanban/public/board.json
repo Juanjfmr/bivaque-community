@@ -1432,6 +1432,7 @@
         "Rodar o app no emulador Android e medir o que só o runtime mede: FLAG_SECURE, exclusão de backup, refresh sob kill+relaunch e o POST /api/consent do cadastro ✅ possível desde 16/09 — o emulador existe e sobe (ver BLOCK-MOBILE-RUNTIME); falta o passo de build/install, que não tem prebuild versionado"
       ],
       "proof": [
+        "2026-09-16 RUNTIME ANDROID PROVADO no emulador (primeira vez): build debug via Gradle com ANDROID_HOME definido (o gradlew.bat falha neste shell com 'Error: -classpath requires class path specification'; a invocação direta java -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain assembleDebug funciona), APK instalado no AVD bivaque_ci, Metro em 8081 e Supabase local em 55321 alcançados pelo aparelho via adb reverse. Medido com captura de tela a cada passo: o app abre na apresentação ('A comunidade vai com você.'); 'Já tenho conta' leva à tela de senha do ADR-20260907; login com conta do seed entra nas abas autenticadas (Cidade/Minha comunidade/Grupos/Eu); force-stop + relaunch volta JÁ AUTENTICADO, que é o item 'refresh sob kill+relaunch' do ADR. Observação honesta: a restauração de sessão no cold start levou dezenas de segundos neste emulador sob carga, com a tela de carregamento do app/index.tsx visível antes de resolver",
         "ADR-20260901-mobile-session.md em docs/decisions/ (status: draft)",
         "docs/agents/tasks/MOB-001.task.yml em docs/agents/tasks/ (validator: ok R3 BLOQUEADO)",
         "2026-09-01: implementacao completa (S2). apps/mobile/src/auth/{storage,signOut,refresh,purge}.ts implementados conforme ADR-20260901-mobile-session (commit b7ca57f). expo-secure-store com keychainAccessible=WHEN_UNLOCKED_THIS_DEVICE_ONLY (exclui iCloud Backup no iOS; EncryptedSharedPreferences fora de backup automatico no Android). signOut revoga servidor (/auth/v1/logout) e prossegue para cleanup local independente de status (4xx/5xx/network) — o membro nao consegue mais agir sem token local. 24 testes vitest (positivos + negativos) cobrem a matriz do ADR. Pendente fora desta fatia: instalacao do app em device real para teste de runtime (FLAG_SECURE, iCloud/Google backup exclusion, refresh automatico sob kill+relaunch). Esses estao bloqueados por BLOCK-MOBILE-RUNTIME (HAXM/Hyper-V para Android; Apple Developer Program para iOS).",
@@ -1460,7 +1461,7 @@
     },
     {
       "id": "BLOCK-MOBILE-RUNTIME",
-      "title": "Runtime Android/iOS em device real — bootstrap ausente",
+      "title": "Runtime iOS em device real — Android já provado no emulador",
       "phase": "Mobile",
       "priority": "P1",
       "category": "infra",
@@ -1471,6 +1472,7 @@
         "Android — ADB fala com o emulador (sys.boot_completed=1)",
         "Android — shell responde (echo test passa)",
         "Android — done (caminho 4 provou que runtime funciona; caminhos 1-3 ficam como recomendacoes)",
+        "Android — app REAL em runtime ✅ 16/09: APK debug compilado (Gradle 8.14.3 + NDK 27.1.12297006), instalado no AVD bivaque_ci, apresentação → tela de senha → login do seed → abas autenticadas → force-stop + relaunch mantendo a sessão (o item do ADR). Falta o que o ADR lista como teste de aparelho: FLAG_SECURE ativo (exige wrapping manual via preventScreenCaptureAsync; o ADR o trata como condição de reabertura, não requisito atual) e exclusão de backup (o ADR manda NÃO sobrescrever o padrão do expo-secure-store)",
         "iOS — pendente de Apple Developer Program + credenciais EAS",
         "iOS — pendente de TestFlight + Internal Tester"
       ],
