@@ -26,7 +26,7 @@ um branch `fix/recon-*`: vários deles já acumulam RECONs anteriores.
 | --- | --- | --- | --- |
 | 1 | RECON-018 — entrada | nenhuma | candidato isolado; 1 commit, sem migration |
 | 1 | RECON-021 — busca global | nenhuma | candidato isolado; 1 commit, sem migration |
-| 1 | RECON-033 — fidelidade de publicação/operação | nenhuma | candidato isolado; commit `4222035` |
+| 1 | RECON-033 — fidelidade de publicação/operação | nenhuma | requer reconciliação manual antes de abrir PR; o commit `4222035` conflita com a main atual |
 | 2 | RECON-019 — admissão | nenhuma; revisão R3 obrigatória | 1 migration; o bloqueio legal alcança somente reconhecimento automático por IA |
 | 2 | RECON-020 — perfil | nenhuma; revisão R3 obrigatória | 1 migration; conferir autorização/visibilidade de afiliação antes de PR |
 | 2 | RECON-029 — pergunta em evento | nenhuma | 2 migrations, domínio de evento isolado |
@@ -88,3 +88,13 @@ PR própria e passa pelo mesmo ciclo de revisão e runtime. Os lotes R3 de
 admissão, perfil, pedidos e anúncios não avançam para merge apenas por terem
 interface pronta: exigem a prova de banco e a revisão independente previstas
 nos contratos.
+
+## Descoberta durante a extração
+
+Em 16/09, aplicar o commit de origem do `RECON-033` (`4222035`) sobre a main
+atual abriu conflitos reais em `apps/web/app/(admin)/layout.tsx`, no detalhe de
+comunidade, no seletor de público da publicação, em `scripts/visual/capture.mjs`
+e no quadro canônico. Portanto ele deixa de ser candidato de cherry-pick puro:
+o próximo executor deve comparar o comportamento dos dois lados, reconstruir a
+composição no branch novo e provar as telas de operação. Não foi escolhido
+automaticamente nenhum lado do conflito e o worktree de tentativa ficou limpo.
