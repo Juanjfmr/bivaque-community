@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 90 frentes · 14 agora · 13 bloqueadas · 33 concluídas · 2 drifts
+**Mapa:** 90 frentes · 14 agora · 12 bloqueadas · 33 concluídas · 2 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -39,7 +39,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **BLOCK-MOBILE-RUNTIME** · P1 · Runtime iOS em device real — Android já provado no emulador — cmdline-tools + system-image + AVD ausentes (Android); Apple Developer Program + EAS credentials ausentes (iOS)
 - **RECON-005-BLOQUEADO** · P1 · Tela /profile bloqueada por decisao R3 de visibilidade de campo — Aprovacao humana do ADR-20260908-perfil-campos-opcionais; Modelo de ameaca e texto de consentimento; Governanca LGPD (BLOCK-LEGAL-AI)
 - **RECON-038** · P1 · RECON-038: fidelidade do shell — cabeçalho, lateral ativa e elementos do Início — migration 20260911093140_community_images.sql (RECON-034) nao aplicada no banco compartilhado: communities.thumbnail_path ausente; reset/migration proibidos neste contrato; decisao de produto sobre a entrada de Indicacoes em <lg antes de remover o icone de lampada (#4); seed sem event_rsvps e sem notificacoes: #8 e #10 nao observaveis nesta captura; abas Guia/Mercado/Imoveis de /salvos dependem de RECON-030/025/027
-- **RECON-049** · P1 · Fechar os itens [componente] restantes da auditoria visual web — Decisão do dono: o que é uma comunidade não apresentável — e portanto qual ramo de acesso negado /communities/[id] deve ter (o componente AccessUnavailableState já existe e é usado em 7 telas)
 - **S4-MOBILE-COMPOSER** · P1 · Mobile: composer + reações + comentários (S4 do mobile, read-only parcial do S3) — MOB-001-SESSION esta em now: o contrato R3 de sessao do mobile (PKCE, secure-store, revogacao) nao existe. Sem ele o composer escreve sem sessao provada, entao o done era sobre a UI, nao sobre o fluxo.
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Reconciliar ADR técnico com autorização de produto de 07/09; concluir threat model, leitura por campo, remoção e testes positivos/negativos
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança

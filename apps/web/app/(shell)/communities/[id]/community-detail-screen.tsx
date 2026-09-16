@@ -18,14 +18,16 @@ import {
   Tabs,
   useOverlayState,
 } from "@heroui/react"
+import { Lock } from "lucide-react"
 import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { type FormEvent, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { communityImageAltText } from "../../../../lib/communities/community-media"
 import { Card } from "../../../components/bivaque/card"
-import { EmptyState } from "../../../components/bivaque/empty-state"
+import { AccessUnavailableState, EmptyState } from "../../../components/bivaque/empty-state"
 import { ErrorState } from "../../../components/bivaque/error-state"
 import { FeedPost } from "../../../components/bivaque/feed-post"
 import { transferCommunityOwnershipAction } from "../actions"
@@ -497,6 +499,39 @@ export function CommunityDetailScreen({ view }: { view: ReadyView }) {
       {view.audience === "member" && <MemberBody view={view} />}
       {view.audience === "pending" && <PendingBody view={view} />}
       {view.audience === "visitor" && <VisitorBody view={view} />}
+      {view.audience === "outsider" && <OutsiderBody view={view} />}
     </div>
+  )
+}
+
+// Prancha 60, painel 1 — agora com instância real. Quem não é da cidade vê que a
+// comunidade existe (nome, cidade, apresentação: decisão do dono de 15/09/2026)
+// e o que falta para participar, sem formulário: pedir entrada exige ser membro
+// da cidade, e o RPC recusa. "Conhecer comunidade" leva à lista, que é o caminho
+// legítimo de quem quer entender o que existe por aqui.
+function OutsiderBody({ view }: { view: Extract<ReadyView, { audience: "outsider" }> }) {
+  const router = useRouter()
+
+  return (
+    <AccessUnavailableState
+      icon={<Lock aria-hidden="true" size={26} />}
+      title="Você ainda não tem acesso a esta comunidade."
+      description={`${view.presentation.name} fica em ${
+        view.presentation.cityLabel ?? "outra cidade"
+      }. A participação é de quem mora lá: entre na cidade para poder pedir entrada.`}
+      primaryAction={
+        <Button variant="primary" onPress={() => router.push("/communities")}>
+          Conhecer comunidade
+        </Button>
+      }
+      secondaryAction={
+        <Link
+          href="/localidade"
+          className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-[var(--semantic-action-primary)] transition-colors hover:bg-[var(--semantic-selected)]"
+        >
+          Trocar de cidade
+        </Link>
+      }
+    />
   )
 }

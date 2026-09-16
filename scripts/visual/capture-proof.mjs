@@ -31,7 +31,17 @@ export function assessCapture({ route, authenticated, status, landedOn, observed
   }
   if (route.operator && !observed?.operator) failures.push("Operator surface not reached")
   if (route.dialog && observed?.dialog !== route.dialog) failures.push("Expected dialog not open")
-  if (observed?.fallback) failures.push("Unexpected error, loading or unavailable state")
+  // Uma rota pode ter estado de indisponibilidade PRÓPRIO (a prancha 60 desenha
+  // "Você ainda não tem acesso a esta comunidade"). A tolerância é nominal: a
+  // rota declara a cópia aceita, e qualquer outra — página não encontrada,
+  // Application error — continua reprovando.
+  const declaredFallback = route.expectedFallback
+  if (observed?.fallback) {
+    const tolerated =
+      typeof declaredFallback === "string" &&
+      new RegExp(declaredFallback, "i").test(observed.fallback)
+    if (!tolerated) failures.push(`Unexpected unavailable state: "${observed.fallback}"`)
+  }
   if (observed?.pageErrors > 0) failures.push("Unhandled browser exception")
   return { valid: failures.length === 0, failures }
 }

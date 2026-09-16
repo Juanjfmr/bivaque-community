@@ -24,7 +24,7 @@ describe("family invite email hint mask (D2 Task 4)", () => {
   // um domínio de dois níveis saía como 'bi***.example.invalid' e o CHECK da
   // tabela recusava o convite — o familiar nunca recebia nada.
   it("usa o último ponto do domínio: o CHECK da tabela recusa o resto", () => {
-    const mask = (value: string) => /^[^@\s]{1,2}\*{3}@[^@\s]{1,2}\*{3}\.[a-z]{2,}$/
+    const mask = () => /^[^@\s]{1,2}\*{3}@[^@\s]{1,2}\*{3}\.[a-z]{2,}$/
     expect(emailHint("familiar@bivaque.example.invalid")).toBe("fa***@bi***.invalid")
     expect(emailHint("familiar@bivaque.example.invalid")).toMatch(mask())
     expect(emailHint("ana@exemplo.com.br")).toBe("an***@ex***.br")

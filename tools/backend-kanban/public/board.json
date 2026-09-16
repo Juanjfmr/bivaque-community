@@ -2611,7 +2611,7 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "blocked",
+      "status": "next",
       "description": "Os itens [componente], [backend] e [dado] da auditoria visual web foram fechados em nove lotes (M a V) entre 15/09 e 16/09: contratos de captura (0 INVALID no app inteiro), painel do operador, régua de movimento, formulários, convite de prestador, Salvos e Sugerir referência do guia, Reenviar do convite familiar e os estados vazios. Resta UM item, e ele não é escolha de agente: o ramo de acesso negado em /communities/[id] (prancha 60) depende de decidir o que é uma comunidade não apresentável.",
       "checklist": [
         "01: faixa de atividade, aba Acompanhando, card De mudança?, avatares de presença, card de evento no feed ✅ 15/09 (aba Acompanhando: post_follows + feed_following + botão no cartão; De mudança? → /localidade; card de evento no feed; faixa/avatares verificados, dependem de fixture [dado])",
@@ -2629,7 +2629,8 @@
         "79: título Convidar prestador e Cancelar ✅ 15/09; nota de conta separada já coberta pelo cabeçalho; Voltar para a comunidade e nome da comunidade no convite ✅ 15/09 (lote Q: read_provider_invitation(p_token), migration 20260915180000 — o token é o segredo e o portador legítimo lê para onde foi convidado; zero linhas para token ausente/malformado/desconhecido, status derivado para expirado/revogado/aceito, sem expor o digest do e-mail; /prestador-convite/<token> capturado em VALID com 0 achados e 11 asserções pgTAP novas)",
         "81: chips das linhas de moderador, motivo da revogação na ficha (pendentes), item Administração no nav ✅ 15/09 (nav client com 4 itens e aria-current)",
         "84: rail direito ✅ 15/09 (estados com resultado, vazio e sem termo; buscas recentes no localStorage) e seções Serviços/Eventos ✅ verificadas com termos que casam (rotas explorar-busca-servico e explorar-busca-evento no capture)",
-        "60: estado de acesso negado — componente AccessUnavailableState existe (empty-state.tsx) e é usado em 7 telas; falta a instância em /communities/[id], que tem três corpos (membro, pendente, visitante) e nenhum ramo de acesso negado — próximo passo depende de decidir o ramo de comunidade não apresentável (registrado no julgamento)",
+        "60 item 1: estado de acesso negado ✅ 16/09 (lote X) — decisão do dono: nome e estado da comunidade não são sigilosos. A policy communities_select_locality_member deu lugar a communities_select_authenticated (is_deleted = false), então a linha da comunidade é legível por qualquer pessoa autenticada; o público `outsider` entrou no loader e a tela renderiza AccessUnavailableState com o nome e o caminho de volta. PARTICIPAR continua fechado: request_community_membership já exigia ser da cidade, e roster/grupos/feed têm policies próprias. 8 asserções pgTAP (community-presentation-access.sql: lê a apresentação; NÃO vê roster; NÃO vê grupos; NÃO pede entrada; apagada invisível; anon sem privilégio; soft delete preserva a linha). captura .visual/recon-loteX-outsider VALID com 0 achados nas três larguras; re-captura completa .visual/recon-loteX-final com 249 capturas, 0 INVALID, 0 achados, 0 high; pgTAP canônico 119 arquivos / 1568 testes PASS)",
+        "60 item 2: [captura] estado offline da composição continua aberto — a copy existe em error-state.tsx e o rascunho local só pode ser anunciado se for real; não depende de decisão do dono",
         "45: composição verificada e provada em 15/09 — vive no diálogo Criar publicação (abas, radios Quem pode ver? com cidade + comunidade e sub-rótulos, rail Como sua publicação será vista, caixa de foto, Publicar/Cancelar); cenário publish do capture consertado e captura .visual/recon049-publicacao5 com 0 findings; a11y do diálogo corrigida (radio 44px, fechar 44px). EDIÇÃO ✅ 15/09 (lote J): cenário BIVAQUE_VISUAL_SCENARIO=edit abre o menu do próprio autor e entra em Editar publicação — .visual/recon049-edicao3, VALID e 0 findings, depois de corrigir o botão de fechar de 24x24 que a primeira captura do diálogo expôs (o defeito foi sistêmico: todos os <Modal.CloseTrigger /> do produto ganharam min-h-11 min-w-11)"
       ],
       "proof": [
@@ -2654,12 +2655,9 @@
       ],
       "links": [".visual/compare/julgamento.md", "docs/agents/PRANCHAS-WEB-RESTANTES.md"],
       "updatedAt": "2026-09-16",
-      "sourceRevision": "f46ca35",
+      "sourceRevision": "4a79cfb",
       "dependencies": [],
-      "completedAt": null,
-      "blockers": [
-        "Decisão do dono: o que é uma comunidade não apresentável — e portanto qual ramo de acesso negado /communities/[id] deve ter (o componente AccessUnavailableState já existe e é usado em 7 telas)"
-      ]
+      "completedAt": null
     },
     {
       "id": "RECON-050",

@@ -131,6 +131,10 @@ export const HEADINGS = {
   // event, the member and the city carry the title. The fixture id pins WHICH
   // record; the h1 text belongs to the seed, not to this file.
   "/communities/71000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
+  // Comunidade de OUTRA cidade vista por quem não é da cidade: é a instância da
+  // prancha 60 (estado de acesso negado). O título continua sendo o nome da
+  // comunidade — o h1 é o dado.
+  "/communities/71000000-0000-4000-8000-000000000002": DYNAMIC_HEADING,
   "/guide/a0000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   // Grupos vivem em 60000000-… no seed; 70000000-… é a faixa dos EVENTOS, então
   // o id antigo capturava o não-encontrado e a rota declarava "sem h1".
@@ -330,6 +334,16 @@ export const ROUTES = [
     path: "/communities/71000000-0000-4000-8000-000000000001",
     name: "community-detail",
     auth: true,
+  },
+  // Prancha 60, painel 1: a comunidade de OUTRA cidade (Vila Petrópolis, Rio)
+  // aberta pela conta de captura (Manaus). A pessoa vê a apresentação e o estado
+  // de acesso negado — a cópia é declarada aqui, e só ela é tolerada; qualquer
+  // outra indisponibilidade (404, Application error) continua reprovando.
+  {
+    path: "/communities/71000000-0000-4000-8000-000000000002",
+    name: "community-outsider",
+    auth: true,
+    expectedFallback: "^Você ainda não tem acesso",
   },
   {
     path: "/communities/71000000-0000-4000-8000-000000000001/admin/media",
@@ -1372,12 +1386,15 @@ async function main() {
             (await page.getByRole("dialog", { name: route.dialog, exact: true }).isVisible())
               ? route.dialog
               : null,
-          fallback: await page
-            .getByText(
-              /Página não encontrada|Application error|Você ainda não tem acesso|Não foi possível carregar|Algo deu errado/,
-            )
-            .first()
-            .isVisible(),
+          // A cópia encontrada, não um booleano: uma rota pode ter um estado
+          // de indisponibilidade LEGÍTIMO (prancha 60) e declarar qual é, sem
+          // que isso absolva "Application error" ou página não encontrada.
+          fallback: await page.evaluate(() => {
+            const pattern =
+              /Página não encontrada|Application error|Você ainda não tem acesso|Não foi possível carregar|Algo deu errado/
+            const match = pattern.exec(document.body.innerText || "")
+            return match ? match[0] : null
+          }),
           pageErrors,
         }
         const landedOn = new URL(page.url()).pathname + new URL(page.url()).search

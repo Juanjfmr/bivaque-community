@@ -6,7 +6,10 @@
 // acesso a cada grupo vem da visibilidade real + da própria linha de
 // participação consultada — nunca de um número exibido em tela.
 
-export type CommunityAudience = "member" | "pending" | "visitor"
+// `outsider` entrou com a decisão do dono de 15/09/2026 (nome e estado da
+// comunidade não são sigilosos): é quem vê a apresentação sem ser da cidade e,
+// por isso, não recebe o corpo de pedido de entrada.
+export type CommunityAudience = "member" | "pending" | "visitor" | "outsider"
 
 export type MembershipLite = {
   role: "member" | "moderator" | "owner"
