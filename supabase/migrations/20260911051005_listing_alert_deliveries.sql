@@ -20,7 +20,6 @@ create table public.listing_alert_deliveries (
   alert_id uuid not null references public.listing_alerts (id) on delete cascade,
   listing_id uuid not null references public.listings (id) on delete cascade,
   created_at timestamptz not null default now(),
-  -- A chave da promessa "uma entrega por imóvel novo": repetir o job não duplica.
   unique (alert_id, listing_id)
 );
 
@@ -30,10 +29,7 @@ create index listing_alert_deliveries_alert_idx
 alter table public.listing_alert_deliveries enable row level security;
 alter table public.listing_alert_deliveries force row level security;
 
--- Sem privilégio de escrita para o cliente: quem grava é o job. A leitura é do
--- dono do alerta, para que a tela possa mostrar situação e histórico.
 revoke all on table public.listing_alert_deliveries from anon, authenticated;
-
 grant select on table public.listing_alert_deliveries to authenticated;
 grant all on table public.listing_alert_deliveries to service_role;
 
@@ -44,9 +40,9 @@ to authenticated
 using (
   exists (
     select 1
-      from public.listing_alerts a
-     where a.id = alert_id
-       and a.owner_user_id = (select auth.uid())
+    from public.listing_alerts a
+    where a.id = alert_id
+      and a.owner_user_id = (select auth.uid())
   )
 );
 
@@ -54,9 +50,6 @@ using (
 -- Autorização explícita por dono (o job não tem JWT; `auth.uid()` é nulo lá)
 -- ---------------------------------------------------------------------------
 
--- Espelha `private.can_read_listing`, mas com o usuário explícito. O job roda
--- como definer e não carrega sessão: sem esta variante, `auth.uid()` seria nulo e
--- nenhum anúncio seria considerado autorizado.
 create function private.can_user_read_listing(
   p_user_id uuid,
   p_listing_id uuid
@@ -69,35 +62,35 @@ set search_path = ''
 as $$
   select exists (
     select 1
-      from public.listings l
-     where l.id = p_listing_id
-       and (
-         l.owner_user_id = p_user_id
-         or (
-           l.status = 'active'
-           and (
-             (
-               l.community_id is not null
-               and exists (
-                 select 1
-                   from public.community_memberships cm
-                  where cm.community_id = l.community_id
-                    and cm.user_id = p_user_id
-                    and cm.status = 'approved'
-               )
-             )
-             or (
-               l.locality_id is not null
-               and exists (
-                 select 1
-                   from public.locality_memberships lm
-                  where lm.locality_id = l.locality_id
-                    and lm.user_id = p_user_id
-               )
-             )
-           )
-         )
-       )
+    from public.listings l
+    where l.id = p_listing_id
+      and (
+        l.owner_id = p_user_id
+        or (
+          l.status = 'active'
+          and (
+            (
+              l.community_id is not null
+              and exists (
+                select 1
+                from public.community_memberships cm
+                where cm.community_id = l.community_id
+                  and cm.user_id = p_user_id
+                  and cm.status = 'approved'
+              )
+            )
+            or (
+              l.locality_id is not null
+              and exists (
+                select 1
+                from public.locality_memberships lm
+                where lm.locality_id = l.locality_id
+                  and lm.user_id = p_user_id
+              )
+            )
+          )
+        )
+      )
   );
 $$;
 
@@ -108,10 +101,6 @@ grant execute on function private.can_user_read_listing(uuid, uuid) to authentic
 -- O job de entrega
 -- ---------------------------------------------------------------------------
 
--- Encontra apenas anúncio de Moradia ATIVO, publicado depois da assinatura
--- ("novo"), alcançável pelo dono do alerta ("autorizado") e que casa com os
--- critérios normalizados. Grava a entrega com `on conflict do nothing` (dedup
--- por par) e só então enfileira o aviso. Retorna quantas entregas criou.
 create function private.dispatch_listing_alerts(p_limit integer default 200)
 returns integer
 language plpgsql
@@ -149,9 +138,9 @@ begin
          and private.can_user_read_listing(a.owner_user_id, l.id)
          and not exists (
            select 1
-             from public.listing_alert_deliveries d
-            where d.alert_id = a.id
-              and d.listing_id = l.id
+           from public.listing_alert_deliveries d
+           where d.alert_id = a.id
+             and d.listing_id = l.id
          )
        order by l.published_at
        limit greatest(p_limit, 0)
@@ -159,7 +148,7 @@ begin
     inserted as (
       insert into public.listing_alert_deliveries (alert_id, listing_id)
       select c.alert_id, c.listing_id
-        from candidates c
+      from candidates c
       on conflict (alert_id, listing_id) do nothing
       returning alert_id, listing_id
     )
@@ -172,14 +161,11 @@ begin
       join public.listing_alerts a on a.id = i.alert_id
       join public.listings l on l.id = i.listing_id
   loop
-    -- Aviso in-app.
     insert into public.notifications
       (recipient_user_id, actor_user_id, type, action, target_type, target_id)
     values
       (v_row.owner_user_id, null, 'listing_alert', 'created', 'listing', v_row.listing_id);
 
-    -- Aviso por e-mail pelo outbox existente. O despachante é quem checa
-    -- opt-out e preferência — o produtor não duplica essa decisão.
     insert into public.outbox (recipient, channel, type, payload)
     select u.email,
            'email',
@@ -208,9 +194,6 @@ revoke all on function private.dispatch_listing_alerts(integer) from public, ano
 -- Excluir a assinatura remove as entregas pendentes
 -- ---------------------------------------------------------------------------
 
--- As entregas já registradas caem pelo `on delete cascade` da FK. As que ainda
--- estão na fila do outbox precisam ser removidas explicitamente, senão o aviso
--- de um alerta que não existe mais seria entregue.
 create function private.listing_alert_cleanup()
 returns trigger
 language plpgsql
@@ -237,9 +220,6 @@ for each row execute function private.listing_alert_cleanup();
 -- Agendamento
 -- ---------------------------------------------------------------------------
 
--- O job é privado (sem grant ao Data API): não existe link de menu nem rota que
--- o exponha. O pg_cron é o único invocador em produção. Mesmo horário do worker
--- do outbox, que entrega o que este job enfileira.
 select cron.schedule(
   'bivaque-listing-alerts',
   '*/5 * * * *',
