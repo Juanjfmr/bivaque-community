@@ -10,9 +10,8 @@ import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 // Início / Explorar / Comunidades / Perfil. The set is still exactly four
 // (ceiling of five, ADR rule 2 preserved), enforced by
 // tests/scope/navigation.test.mjs. Guia and Mercado are entries inside Explorar;
-// grupos live inside a comunidade; Indicações is a header icon reachable at
-// every width. BottomNav labels come from NavItem.shortLabel, which equals the
-// label for all four new containers.
+// grupos live inside a comunidade. Secondary product actions stay inside their
+// owning surfaces instead of becoming global shell shortcuts.
 
 test.describe("BottomNav visibility across viewports", () => {
   test("shows all 4 navigation items at 375px", async ({ page, context }, testInfo) => {
@@ -70,48 +69,17 @@ test.describe("BottomNav visibility across viewports", () => {
   })
 })
 
-test.describe("Indicações discoverable entry", () => {
-  test("is reachable from the header at 375px", async ({ page, context }) => {
-    // Given an authenticated member on the mobile-375 viewport
+test.describe("Shell shortcuts follow the reference boards", () => {
+  test("does not expose removed global Indicações or publication shortcuts", async ({
+    page,
+    context,
+  }) => {
     await seedSession(context)
-    await page.setViewportSize({ width: 375, height: 812 })
-
-    // When they open the home route
     await page.goto("/inicio")
 
-    // Then Indicações is a header icon, visible at every width — not a
-    // BottomNav tab (the ceiling of four containers has no room for it)
-    const indications = page.getByRole("link", { name: "Indicações" })
-    await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/recommendations")
-  })
-
-  test("keeps its accessible name in the 768px icon rail", async ({ page, context }) => {
-    // Given an authenticated member on the tablet-768 viewport
-    await seedSession(context)
-    await page.setViewportSize({ width: 768, height: 1024 })
-
-    // When they open the home route
-    await page.goto("/inicio")
-
-    // Then the header entry is still named and reachable
-    const indications = page.getByRole("link", { name: "Indicações" })
-    await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/recommendations")
-  })
-
-  test("is reachable from the header at 1440px", async ({ page, context }) => {
-    // Given an authenticated member on the desktop-1440 viewport
-    await seedSession(context)
-    await page.setViewportSize({ width: 1440, height: 900 })
-
-    // When they open the home route
-    await page.goto("/inicio")
-
-    // Then Indicações is reachable from the header, where it is a link
-    const indications = page.getByRole("link", { name: "Indicações" })
-    await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/recommendations")
+    const header = page.locator("header")
+    await expect(header.getByRole("link", { name: "Indicações" })).toHaveCount(0)
+    await expect(header.getByRole("button", { name: "Criar publicação" })).toHaveCount(0)
   })
 })
 

@@ -2,6 +2,15 @@ import type { ReactNode } from "react"
 
 interface EmptyStateProps {
   title: string
+  /**
+   * Elemento do título. O padrão é `p`, porque o uso normal é DENTRO de uma
+   * página que já tem o seu h1 — e um segundo h1 quebraria a estrutura.
+   *
+   * Quando o estado vazio É a página inteira (not-found de segmento, por
+   * exemplo), passe "h1": sem isso a tela fica com zero cabeçalho de nível 1
+   * e quem navega por cabeçalhos não encontra onde o conteúdo começa.
+   */
+  titleAs?: "p" | "h1" | "h2"
   description?: string
   illustration?: ReactNode
   action?: ReactNode
@@ -18,6 +27,7 @@ interface EmptyStateProps {
 // never this component with a swallowed error.
 export function EmptyState({
   title,
+  titleAs: TitleTag = "p",
   description,
   illustration,
   action,
@@ -30,7 +40,7 @@ export function EmptyState({
     >
       <div className="mx-auto flex max-w-sm flex-col items-center gap-3">
         {illustration && <div className="mb-1 opacity-80">{illustration}</div>}
-        <p className="text-sm font-semibold">{title}</p>
+        <TitleTag className="text-sm font-semibold">{title}</TitleTag>
         {description && <p className="text-sm leading-relaxed text-muted">{description}</p>}
         {action && <div className="mt-1">{action}</div>}
       </div>

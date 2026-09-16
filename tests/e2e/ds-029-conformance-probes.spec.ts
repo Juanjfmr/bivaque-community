@@ -19,9 +19,10 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 //   6. prefers-reduced-motion contract (DS-025).
 //
 // Each describe block corresponds to one Phase 6 "After remediation" check.
-// Tests use the seeded `visual@bivaque.example.invalid` account so the
-// shell, composer modal, and groups page are all reachable with real
-// data. The reduced-motion probe emulates the media feature via
+// Tests use seeded accounts so the shell, page-level composer modal, and groups
+// page are reachable with real data. Publication is intentionally opened from
+// the /inicio composer: the global shell trigger was removed to match the web
+// reference boards. The reduced-motion probe emulates the media feature via
 // Playwright; the others read computed styles or geometry.
 
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
@@ -95,10 +96,10 @@ async function signInAs(page: Page, email: string): Promise<void> {
 test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
   test("opening the composer moves focus into the dialog", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
-    const trigger = page.getByRole("button", { name: "Criar publicação" })
+    const trigger = page.getByRole("button", { name: "O que você quer compartilhar?" })
     await expect(trigger).toBeVisible({ timeout: 15000 })
     await trigger.click()
 
@@ -113,10 +114,11 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
 
   test("Escape closes the modal and focus returns to the trigger", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
-    const trigger = page.getByRole("button", { name: "Criar publicação" })
+    const trigger = page.getByRole("button", { name: "O que você quer compartilhar?" })
+    await expect(trigger).toBeVisible({ timeout: 15000 })
     await trigger.click()
 
     const dialog = page.getByRole("dialog")

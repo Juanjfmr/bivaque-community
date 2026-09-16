@@ -129,7 +129,12 @@ export default async function PrestadorFichaPage() {
         </div>
 
         <Checkbox name="contactIsPublic" defaultSelected={current?.contact_is_public ?? false}>
-          Mostrar meu telefone na ficha pública
+          <Checkbox.Content>
+            <Checkbox.Control>
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            Mostrar meu telefone na ficha pública
+          </Checkbox.Content>
         </Checkbox>
 
         <Button type="submit" variant="primary" size="md">

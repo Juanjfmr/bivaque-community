@@ -92,18 +92,17 @@ test.describe("Touch target minimum size", () => {
     }
   })
 
-  test("Indicações entry has a touch target of at least 44px", async ({ page, context }) => {
-    // Given an authenticated member on the mobile-375 viewport, where
-    // Indicações is a header icon (ADR-20260816-shells-e-navegacao — it does
-    // not fit inside the four-container BottomNav ceiling)
+  test("Notifications entry has a touch target of at least 44px", async ({ page, context }) => {
+    // Given an authenticated member on the mobile viewport, where notifications
+    // remains a real global shell action.
     await seedSession(context)
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When the header is rendered
     await page.goto("/community")
 
-    // Then the Indicações entry has a minimum touch target of 44px
-    const entry = page.getByRole("link", { name: "Indicações" })
+    // Then the remaining header action has a minimum touch target of 44px
+    const entry = page.locator("header").getByRole("link", { name: "Notificações" })
     const box = await entry.boundingBox()
     expect(box).not.toBeNull()
 

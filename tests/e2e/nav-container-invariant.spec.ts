@@ -6,12 +6,9 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 // DS-011 — Conceptual parent is responsive-invariant.
 //
-// `/messages` and `/notifications` are not nav containers; both navs fall back
-// to the **Perfil** container for them (bottom-nav.tsx and app-shell.tsx share
-// the same fallback: /messages|/notifications -> "perfil", everything else ->
-// "inicio"). The active primary container must stay the same across viewport
-// changes — the bottom-nav mirrors the sidebar fallback.
-// Post PROCESSO-DE-CONSTRUCAO §7: "Eu" -> "Perfil", "Comunidade" -> "Início".
+// Rotas secundárias pertencem a um dos quatro containers primários e DEVEM
+// acender o mesmo container no BottomNav e na sidebar. A resolução vive em
+// resolveNavContainer(), compartilhada pelas duas superfícies.
 
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
@@ -90,44 +87,41 @@ async function signInAndVisit(page: Page, url: string) {
 
 const BOTTOM_NAV = '[data-slot="tabs-list"][aria-label="Seções do aplicativo"]'
 const SIDEBAR_NAV = 'aside nav[aria-label="Navegação principal"]'
+const GUIDE_ENTRY = "/guide/a0000000-0000-4000-8000-000000000001"
 
-test.describe("DS-011 mobile — BottomNav activates 'Perfil' for /messages and /notifications", () => {
+const SECONDARY_ROUTES = [
+  { path: "/messages", container: "Perfil" },
+  { path: "/notifications", container: "Perfil" },
+  { path: "/configuracoes", container: "Perfil" },
+  { path: GUIDE_ENTRY, container: "Explorar" },
+] as const
+
+test.describe("DS-011 mobile — secondary routes activate their conceptual container", () => {
   test.use({ viewport: { width: 375, height: 812 } })
 
-  test("/messages activates 'Perfil', not 'Início'", async ({ page }) => {
-    await signInAndVisit(page, "/messages")
-    const tablist = page.locator(BOTTOM_NAV)
-    await expect(tablist).toBeVisible({ timeout: 15000 })
+  for (const { path, container } of SECONDARY_ROUTES) {
+    test(`${path} activates '${container}' in BottomNav`, async ({ page }) => {
+      await signInAndVisit(page, path)
+      const tablist = page.locator(BOTTOM_NAV)
+      await expect(tablist).toBeVisible({ timeout: 15000 })
 
-    const perfil = page.getByRole("tab", { name: "Perfil", exact: true })
-    const inicio = page.getByRole("tab", { name: "Início", exact: true })
-
-    await expect(perfil).toHaveAttribute("aria-selected", "true")
-    await expect(inicio).toHaveAttribute("aria-selected", "false")
-  })
-
-  test("/notifications activates 'Perfil', not 'Início'", async ({ page }) => {
-    await signInAndVisit(page, "/notifications")
-    const tablist = page.locator(BOTTOM_NAV)
-    await expect(tablist).toBeVisible({ timeout: 15000 })
-
-    const perfil = page.getByRole("tab", { name: "Perfil", exact: true })
-    const inicio = page.getByRole("tab", { name: "Início", exact: true })
-
-    await expect(perfil).toHaveAttribute("aria-selected", "true")
-    await expect(inicio).toHaveAttribute("aria-selected", "false")
-  })
+      const active = page.getByRole("tab", { name: container, exact: true })
+      await expect(active).toHaveAttribute("aria-selected", "true")
+    })
+  }
 })
 
-test.describe("DS-011 desktop — sidebar still activates 'Perfil' for /messages (no regression)", () => {
+test.describe("DS-011 desktop — sidebar matches the same conceptual container", () => {
   test.use({ viewport: { width: 1440, height: 900 } })
 
-  test("/messages activates 'Perfil' in the sidebar", async ({ page }) => {
-    await signInAndVisit(page, "/messages")
-    const sidebarNav = page.locator(SIDEBAR_NAV)
-    await expect(sidebarNav).toBeVisible({ timeout: 15000 })
+  for (const { path, container } of SECONDARY_ROUTES) {
+    test(`${path} activates '${container}' in the sidebar`, async ({ page }) => {
+      await signInAndVisit(page, path)
+      const sidebarNav = page.locator(SIDEBAR_NAV)
+      await expect(sidebarNav).toBeVisible({ timeout: 15000 })
 
-    const perfil = sidebarNav.getByRole("link", { name: /Perfil/ })
-    await expect(perfil).toHaveAttribute("aria-current", "page")
-  })
+      const active = sidebarNav.getByRole("link", { name: new RegExp(container) })
+      await expect(active).toHaveAttribute("aria-current", "page")
+    })
+  }
 })

@@ -162,14 +162,14 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
       <nav aria-label="Trilha de navegação" className="text-sm text-muted">
         <Link
           href="/explorar"
-          className="inline-flex min-h-11 items-center text-[var(--semantic-link)] transition-colors hover:underline"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center px-1 text-[var(--semantic-link)] transition-colors hover:underline"
         >
           Explorar
         </Link>
         <span aria-hidden="true"> / </span>
         <Link
           href="/guide"
-          className="inline-flex min-h-11 items-center text-[var(--semantic-link)] transition-colors hover:underline"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center px-1 text-[var(--semantic-link)] transition-colors hover:underline"
         >
           Guia
         </Link>

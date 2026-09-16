@@ -33,7 +33,11 @@ export function SegmentError({ onRetry }: { onRetry?: () => void }) {
 export function SegmentNotFound() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
+      {/* Esta tela E a pagina inteira, entao o titulo dela e o h1. Sem isso a
+          rota fica com zero cabecalho de nivel 1 e quem navega por cabecalhos
+          nao encontra onde o conteudo comeca. */}
       <EmptyState
+        titleAs="h1"
         title="Página não encontrada"
         description="O endereço que você acessou não existe."
         action={
