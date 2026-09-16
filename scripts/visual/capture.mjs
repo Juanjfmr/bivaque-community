@@ -18,12 +18,6 @@ const OUT_ROOT = process.env["BIVAQUE_VISUAL_OUT"] ?? ".visual"
 const RUN_ID = process.env["BIVAQUE_VISUAL_RUN"] ?? new Date().toISOString().replace(/[:.]/g, "-")
 const ROUTE_PATH = process.env["BIVAQUE_VISUAL_ROUTE"]
 
-// Fixture de captura de Moradia. Precisa existir em `supabase/seed.sql` (com
-// `property_details` e ao menos uma foto) para a ficha de `/imoveis/[id]`
-// renderizar dado real. Enquanto não existir, a captura do detalhe mostra o
-// não-encontrado — e o relatório precisa dizer isso.
-const IMOVEIS_FIXTURE_ID = "d0000000-0000-4000-8000-000000000001"
-
 const VIEWPORTS = [
   { name: "mobile-375", width: 375, height: 812 },
   { name: "tablet-768", width: 768, height: 1024 },
@@ -34,124 +28,44 @@ const ROUTES = [
   { path: "/", name: "root", auth: false },
   { path: "/login", name: "login", auth: false },
   { path: "/signup", name: "signup", auth: false },
-  { path: "/recuperar-senha", name: "recuperar-senha", auth: false },
-  { path: "/nova-senha", name: "nova-senha", auth: false },
-  // RECON-018 (prancha 37): os três painéis do cartão de confirmação. A rota é
-  // alcançável por sessão de membro no proxy; o painel pendente e o expirado
-  // dependem do estado local (sessionStorage) que `pendingEmail` planta, com
-  // um endereço de exemplo — fixture de tela, não dado real.
-  { path: "/auth/confirmar-email", name: "auth-confirmar-email", auth: true },
-  {
-    path: "/auth/confirmar-email",
-    name: "auth-confirmar-email-pendente",
-    auth: true,
-    pendingEmail: "ana@exemplo.invalid",
-  },
-  {
-    path: "/auth/confirmar-email?estado=expirado",
-    name: "auth-confirmar-email-expirado",
-    auth: true,
-    pendingEmail: "ana@exemplo.invalid",
-  },
   { path: "/consent", name: "consent", auth: false },
   { path: "/onboarding", name: "onboarding", auth: false },
   { path: "/onboarding", name: "onboarding", auth: true },
   { path: "/onboarding/status", name: "onboarding-status", auth: true },
-  { path: "/onboarding/documento", name: "onboarding-documento", auth: true },
   { path: "/onboarding/welcome", name: "onboarding-welcome", auth: true },
   { path: "/onboarding/locality", name: "onboarding-locality", auth: true },
-  { path: "/onboarding/perfil", name: "onboarding-perfil", auth: true },
   { path: "/reports", name: "admin-reports", auth: true },
   { path: "/admissions", name: "admin-admissions", auth: true },
   { path: "/guide-queue", name: "admin-guide-queue", auth: true },
-  { path: "/groups", name: "groups", auth: true },
-  { path: "/groups/70000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
-  { path: "/profile", name: "profile", auth: true },
-  { path: "/events", name: "events", auth: true },
-  { path: "/events/80000000-0000-4000-8000-000000000001", name: "event-detail", auth: true },
-  // RECON-025: o Mercado. A rota de detalhe depende de um anúncio no seed,
-  // que este lote não pode criar (supabase/seed.sql fora dos allowed_paths);
-  // capture-a quando a fixture existir.
-  { path: "/mercado", name: "mercado", auth: true },
-  { path: "/mercado/novo", name: "mercado-novo", auth: true },
-  // RECON-026: a gestão dos próprios anúncios. `/meus-anuncios` é rota fixa. A
-  // edição depende de um anúncio no seed; `supabase/seed.sql` está fora dos
-  // allowed_paths deste lote, então o caminho fica cadastrado com um id
-  // determinístico e a captura cai no estado honesto "indisponível" até existir
-  // a fixture — nunca em 404 silencioso nem em tela de login.
-  { path: "/meus-anuncios", name: "meus-anuncios", auth: true },
-  {
-    path: "/mercado/a0000000-0000-4000-8000-000000000001/editar",
-    name: "mercado-editar",
-    auth: true,
-  },
-  // RECON-029: o evento REAL do seed (organizador 30000000-...-001) — o id
-  // acima é um post id, não um evento; esta fixture concreta sustenta a captura
-  // do detalhe e do fio de pergunta.
-  {
-    path: "/events/70000000-0000-4000-8000-000000000005",
-    name: "event-detail-seeded",
-    auth: true,
-  },
-  // RECON-029 (R34/R35): rotas novas. Fixture concreta = evento do seed
-  // (organizador 30000000-...-001) e a conta visual (Ana Verificada), que NÃO
-  // organiza o evento semeado — por isso `perguntas` cai no painel "Pedir mais
-  // informações" e `editar` exige a conta organizadora numa run dedicada.
-  { path: "/events/novo", name: "event-novo", auth: true },
-  {
-    path: "/events/70000000-0000-4000-8000-000000000005/perguntas",
-    name: "event-perguntas",
-    auth: true,
-  },
-  {
-    path: "/events/70000000-0000-4000-8000-000000000005/editar",
-    name: "event-editar",
-    auth: true,
-  },
-  { path: "/community", name: "community", auth: true },
-  { path: "/communities", name: "communities", auth: true },
-  // RECON-034 — apresentação com faixa/miniatura e o console de imagens do dono.
+  // Reconstrucao dos grupos A e D (RECON-009, 012, 013): tres telas entregues
+  // que a captura nao enxergava. Sem elas, "auditoria visual das 10 telas"
+  // auditava sete.
   {
     path: "/communities/71000000-0000-4000-8000-000000000001",
     name: "community-detail",
     auth: true,
   },
+  { path: "/configuracoes", name: "configuracoes", auth: true },
   {
-    path: "/communities/71000000-0000-4000-8000-000000000001/admin/media",
-    name: "community-admin-media",
+    path: "/guide/a0000000-0000-4000-8000-000000000001",
+    name: "guide-entry",
     auth: true,
   },
+  { path: "/groups", name: "groups", auth: true },
+  { path: "/groups/70000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
+  { path: "/profile", name: "profile", auth: true },
+  { path: "/events", name: "events", auth: true },
+  { path: "/events/80000000-0000-4000-8000-000000000001", name: "event-detail", auth: true },
+  { path: "/community", name: "community", auth: true },
+  { path: "/communities", name: "communities", auth: true },
   { path: "/guide", name: "arrival-guide", auth: true },
-  // RECON-021: prova que o Ver-todos do grupo Guia chega com o filtro `q`
-  // preenchido (hunk de uma linha no /guide).
-  { path: "/guide?q=escola", name: "arrival-guide-termo", auth: true },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
   { path: "/inicio", name: "inicio", auth: true },
   { path: "/explorar", name: "explorar", auth: true },
   { path: "/explorar/servicos", name: "explorar-servicos", auth: true },
-  // RECON-021: painel direito da prancha 61 com o fixture real do seed —
-  // capturar com BIVAQUE_VISUAL_EMAIL=membro-25@ (unico ator que ve o
-  // prestador pela RLS).
-  { path: "/explorar/servicos?q=climatiza", name: "explorar-servicos-termo", auth: true },
-  // RECON-021: fixture concreta do seed de Manaus — "escola" casa com a
-  // entrada aprovada "Escola Modelo do Centro" e NÃO pode casar com a
-  // pendente "Escola de Acolhimento Militar" (status pending, RLS).
-  { path: "/explorar/busca?q=escola", name: "explorar-busca", auth: true },
   // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
   // pointed here since E10 (406d4f6), but the route did not exist until T4.
   { path: "/localidade", name: "localidade", auth: true },
-  // RECON-027: Moradia. `/imoveis` e `/imoveis/novo` não dependem de fixture.
-  // O detalhe aponta para a fixture de anúncio que `supabase/seed.sql` precisa
-  // criar (fora do allowed_paths deste lote) — sem ela a captura cai no 404
-  // honesto, que NÃO conta como fidelidade comprovada.
-  { path: "/imoveis", name: "imoveis", auth: true },
-  { path: "/imoveis/novo", name: "imoveis-novo", auth: true },
-  { path: `/imoveis/${IMOVEIS_FIXTURE_ID}`, name: "imoveis-detail", auth: true },
-  // RECON-028: gestão dos alertas (prancha 65, painel 2). A tela renderiza o
-  // estado vazio honesto enquanto `supabase/seed.sql` não tiver um alerta — o
-  // seed está fora do allowed_paths deste lote, então a captura prova o estado
-  // vazio real, não fidelidade de cartão populado.
-  { path: "/imoveis/alertas", name: "imoveis-alertas", auth: true },
   // Onda T Task 5: o console do fundador. Renders empty state honesto para a
   // conta default do seed (sem operador capturado), que é a tela vazia com
   // identificação, não uma tela ausente.
@@ -167,21 +81,6 @@ const ROUTES = [
     name: "provider-public-ficha",
     auth: true,
   },
-  // RECON-022: o formulário de pedido com destinatário fixo na URL. A fixture
-  // concreta é a ficha semeada da vitrine G (Climatiza Manaus).
-  {
-    path: "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010",
-    name: "pedido-novo",
-    auth: true,
-  },
-  // RECON-023: a lista e o detalhe da prancha 17. A fixture concreta e o
-  // pedido semeado de membro-1@ para a Climatiza Manaus (seed.sql).
-  { path: "/pedidos", name: "pedidos", auth: true },
-  {
-    path: "/pedidos/40000000-0000-4000-8000-000000000023",
-    name: "pedido-detalhe",
-    auth: true,
-  },
   {
     path: "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador",
     name: "provider-indicar",
@@ -190,59 +89,9 @@ const ROUTES = [
   { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },
   { path: "/recommendations", name: "recommendations", auth: true },
-  // RECON-035: a conversa vive na aba "Pedidos". O foco no pedido semeado
-  // (visual@ é a autora) pré-seleciona a aba para a captura mostrar o ator e
-  // o destino sem depender de clique.
-  {
-    path: "/recommendations?focus=80000000-0000-4000-8000-000000000f00",
-    name: "recommendations-conversa",
-    auth: true,
-  },
   { path: "/messages", name: "messages", auth: true },
   { path: "/notifications", name: "notifications", auth: true },
   { path: "/profile", name: "profile", auth: true },
-  // RECON-032 (pranchas 54 e 56). Fixtures concretas, não templates:
-  // - /denuncias/nova: alvo é um post do seed que o visual@ vê pela RLS e
-  //   ainda não denunciou (medido em 10/09/2026 com o token dele via REST);
-  //   mantém o formulário aberto na captura. A spec e2e deste lote denuncia o
-  //   mesmo post e resolve a denúncia que cria, então ele segue apto aqui.
-  // - /denuncias/<own-report>: o id da denúncia do próprio ator é resolvido na
-  //   hora por REST (fixture "own-report"). O seed gera ids aleatórios, então
-  //   id fixo aqui virava fixture morta a cada reset do banco compartilhado.
-  // - /messages/<thread>: a conversa precisa de dois participantes; o
-  //   visual@ não compartilha contexto com ninguém do seed. A rota usa a
-  //   conta própria (account: "thread") e resolve o id do arquivo de fixture
-  //   escrito por tests/e2e/recon-032-messages.spec.ts (open_conversation é
-  //   idempotente pelo par, então o mesmo id vale entre execuções).
-  { path: "/salvos", name: "salvos", auth: true },
-  { path: "/ajuda", name: "ajuda", auth: true },
-  { path: "/denuncias", name: "denuncias", auth: true },
-  {
-    path: "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01",
-    name: "denuncia-nova",
-    auth: true,
-  },
-  {
-    path: "/denuncias/<own-report>",
-    name: "denuncia-detalhe",
-    auth: true,
-    fixture: "own-report",
-  },
-  {
-    path: "/messages/<thread>",
-    name: "message-thread",
-    auth: true,
-    account: "thread",
-    fixture: "message-thread",
-  },
-  // RECON-031 — configurações (prancha 52) e confiança (prancha 56). A fixture
-  // é a conta do seed: membro verificado (default), com a coluna vertical de
-  // seções e as subrotas reais.
-  { path: "/configuracoes", name: "configuracoes", auth: true },
-  { path: "/configuracoes/notificacoes", name: "configuracoes-notificacoes", auth: true },
-  { path: "/configuracoes/conta", name: "configuracoes-conta", auth: true },
-  { path: "/configuracoes/familia", name: "configuracoes-familia", auth: true },
-  { path: "/configuracoes/bloqueados", name: "configuracoes-bloqueados", auth: true },
 ]
 
 // --------------------------------------------------------------------------
@@ -287,11 +136,7 @@ const TOKEN_SOURCE = JSON.parse(
 // auth — optional; without credentials the gated routes are captured signed out
 // --------------------------------------------------------------------------
 
-// Uma rota pode exigir outra pessoa: a prancha 56 mostra a tela de uma conta
-// com dados, e nem todo ator do seed compartilha todo contexto. `account` na
-// rota lê BIVAQUE_VISUAL_EMAIL__<CONTA>/BIVAQUE_VISUAL_PASSWORD__<CONTA> e cai
-// na conta global quando não definida.
-async function fetchSession(account) {
+async function fetchSession() {
   const url =
     process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
     process.env["SUPABASE_URL"] ??
@@ -299,17 +144,8 @@ async function fetchSession(account) {
     dotEnv["SUPABASE_URL"]
   const anonKey =
     process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  const suffix = account ? `__${account.toUpperCase()}` : ""
-  const email =
-    process.env[`BIVAQUE_VISUAL_EMAIL${suffix}`] ??
-    dotEnv[`BIVAQUE_VISUAL_EMAIL${suffix}`] ??
-    process.env["BIVAQUE_VISUAL_EMAIL"] ??
-    dotEnv["BIVAQUE_VISUAL_EMAIL"]
-  const password =
-    process.env[`BIVAQUE_VISUAL_PASSWORD${suffix}`] ??
-    dotEnv[`BIVAQUE_VISUAL_PASSWORD${suffix}`] ??
-    process.env["BIVAQUE_VISUAL_PASSWORD"] ??
-    dotEnv["BIVAQUE_VISUAL_PASSWORD"]
+  const email = process.env["BIVAQUE_VISUAL_EMAIL"] ?? dotEnv["BIVAQUE_VISUAL_EMAIL"]
+  const password = process.env["BIVAQUE_VISUAL_PASSWORD"] ?? dotEnv["BIVAQUE_VISUAL_PASSWORD"]
 
   if (!url || !anonKey || !email || !password) return null
 
@@ -329,53 +165,6 @@ async function fetchSession(account) {
   return { storageKey: `sb-${ref}-auth-token`, session: await response.json() }
 }
 
-// Fixtures concretas de rotas dinâmicas. Duas fontes, ambas reais:
-// - arquivo (`.visual/fixtures/<nome>.json`), escrito pelo spec e2e que cria a
-//   linha (conversa, cujo id só nasce de open_conversation);
-// - consulta REST com o token do próprio ator (denúncia própria: o seed gera
-//   ids aleatórios, então id fixo morre a cada reset).
-// Sem fixture a captura falha alto — fotografar 404 disfarçado não é evidência.
-async function resolveRoutePath(route, auth) {
-  if (!route.fixture) return route.path
-
-  if (route.fixture === "own-report") {
-    if (!auth?.session?.access_token) {
-      throw new Error(`rota ${route.name}: fixture "own-report" exige sessão autenticada`)
-    }
-    const url =
-      process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
-      process.env["SUPABASE_URL"] ??
-      dotEnv["NEXT_PUBLIC_SUPABASE_URL"] ??
-      dotEnv["SUPABASE_URL"]
-    const anonKey =
-      process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-    const query = new URLSearchParams({ select: "id", order: "created_at.desc", limit: "1" })
-    const response = await fetch(`${url}/rest/v1/reports?${query.toString()}`, {
-      headers: { apikey: anonKey, Authorization: `Bearer ${auth.session.access_token}` },
-    })
-    const rows = response.ok ? await response.json() : []
-    const id = Array.isArray(rows) ? rows[0]?.id : null
-    if (typeof id !== "string") {
-      throw new Error(`rota ${route.name}: o ator não tem denúncia própria para a fixture`)
-    }
-    return `/denuncias/${id}`
-  }
-
-  const file = join(OUT_ROOT, "fixtures", `${route.fixture}.json`)
-  try {
-    const { path } = JSON.parse(readFileSync(file, "utf8"))
-    if (typeof path !== "string" || path.length === 0) {
-      throw new Error(`fixture ${route.fixture}: campo "path" ausente`)
-    }
-    return path
-  } catch (error) {
-    throw new Error(
-      `rota ${route.name} exige a fixture "${route.fixture}" (${file}): ${error.message}. ` +
-        "Rode o spec e2e que a cria antes da captura.",
-    )
-  }
-}
-
 // --------------------------------------------------------------------------
 // audit — runs inside the page, returns plain JSON
 // --------------------------------------------------------------------------
@@ -387,8 +176,18 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
 
   const describe = (element) => {
     const id = element.id ? `#${element.id}` : ""
-    const cls = typeof element.className === "string" ? `.${element.className.split(/\s+/)[0]}` : ""
-    return `${element.tagName.toLowerCase()}${id}${cls}`.slice(0, 80)
+    const cls =
+      typeof element.className === "string" && element.className.trim().length > 0
+        ? `.${element.className.trim().split(/\s+/)[0]}`
+        : ""
+    // Sem contexto, um achado em `input.` nao diz QUAL controle consertar —
+    // foi o que travou a correcao dos achados de /profile em 09/09. O tipo e o
+    // data-slot do ancestral mais proximo identificam o componente sem depender
+    // de classe, que o HeroUI nem sempre poe no elemento interativo.
+    const type = element.getAttribute("type")
+    const slot = element.closest("[data-slot]")?.getAttribute("data-slot") ?? ""
+    const extra = `${type ? `[${type}]` : ""}${slot ? `@${slot}` : ""}`
+    return `${element.tagName.toLowerCase()}${id}${cls}${extra}`.slice(0, 120)
   }
 
   const parseColor = (value) => {
@@ -456,7 +255,30 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     }
   }
 
+  // Controle escondido do React Aria: `Checkbox`, `Switch` e `Radio` renderizam
+  // um <input> real dentro de um wrapper recortado (clip-path: inset(50%),
+  // 1px), e quem recebe o clique, o foco e o nome acessível é o label ao lado.
+  //
+  // Auditar esse input como alvo de toque produz um high por controle — 24 só
+  // na tela de perfil, todos falsos: ninguém toca nele, e ele não deve ter nome
+  // próprio, senão o leitor de tela anuncia o controle duas vezes.
+  const dentroDeWrapperOculto = (element) => {
+    // O próprio input pode carregar clip/clip-path e tamanho 1x1. Começar no
+    // parentElement perde exatamente esse caso e transforma controles React Aria
+    // corretamente escondidos em falsos touch-targets.
+    let node = element
+    while (node && node !== document.body) {
+      const style = getComputedStyle(node)
+      const recortado = style.clipPath === "inset(50%)" || style.clip === "rect(0px, 0px, 0px, 0px)"
+      const box = node.getBoundingClientRect()
+      const minusculo = box.width <= 1 && box.height <= 1
+      if (recortado || minusculo) return true
+      node = node.parentElement
+    }
+    return false
+  }
   for (const element of interactive) {
+    if (dentroDeWrapperOculto(element)) continue
     const box = element.getBoundingClientRect()
     if (box.width === 0 && box.height === 0) continue
 
@@ -487,6 +309,25 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     // HeroUI lesson — its Input does not forward aria-label). Without this
     // resolution every properly-labeled input is a false positive every wave.
     let name = (element.getAttribute("aria-label") ?? "").trim()
+    // `aria-labelledby` é fonte de nome acessível tão válida quanto
+    // `aria-label` e `label[for]` — e tem PRECEDÊNCIA sobre as duas na ordem
+    // do accname. A regra não a resolvia, então todo controle rotulado por
+    // referência aparecia como high sem nome: a tela de perfil sozinha
+    // produzia 60 achados assim, todos falsos.
+    //
+    // O atributo aceita VÁRIOS ids separados por espaço, e o nome é a
+    // concatenação dos textos na ordem em que aparecem.
+    if (name.length === 0) {
+      const refs = (element.getAttribute("aria-labelledby") ?? "").trim()
+      if (refs.length > 0) {
+        name = refs
+          .split(/\s+/)
+          .map((id) => document.getElementById(id)?.textContent?.trim() ?? "")
+          .filter((part) => part.length > 0)
+          .join(" ")
+          .trim()
+      }
+    }
     if (name.length === 0 && element.id) {
       const labeled = document.querySelector(`label[for="${CSS.escape(element.id)}"]`)
       name = (labeled?.textContent ?? "").trim()
@@ -611,8 +452,11 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
     if (nav.offsetWidth === 0 && nav.offsetHeight === 0) continue
     const anchors = nav.querySelectorAll("a")
     if (anchors.length === 0) continue
+    // aria-current vale em QUALQUER elemento, nao so em ancora: numa trilha de
+    // navegacao o item atual e corretamente um nao-link (a pessoa ja esta nele),
+    // e exigir <a> reprovava breadcrumb bem marcado.
     const current = nav.querySelectorAll(
-      'a[aria-current="page"], a[data-active="true"], a[role="tab"][aria-selected="true"]',
+      '[aria-current="page"], a[data-active="true"], a[role="tab"][aria-selected="true"]',
     )
     if (current.length !== 1) {
       add(
@@ -657,25 +501,15 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
 async function main() {
   const runDir = join(OUT_ROOT, RUN_ID)
   const shotsDir = join(runDir, "shots")
-  // BIVAQUE_VISUAL_ROUTE casa o caminho exato ou o nome da rota — o nome é a
-  // única forma de pedir uma rota cujo caminho só existe em runtime (fixture).
-  const routes = ROUTE_PATH
-    ? ROUTES.filter((route) => route.path === ROUTE_PATH || route.name === ROUTE_PATH)
-    : ROUTES
+  const routes = ROUTE_PATH ? ROUTES.filter((route) => route.path === ROUTE_PATH) : ROUTES
   mkdirSync(shotsDir, { recursive: true })
 
   if (routes.length === 0) {
     throw new Error(`No visual route configured for ${ROUTE_PATH}`)
   }
 
-  const sessions = new Map()
-  async function sessionFor(route) {
-    const key = route.account ?? ""
-    if (!sessions.has(key)) {
-      sessions.set(key, await fetchSession(route.account))
-    }
-    return sessions.get(key)
-  }
+  const auth = await fetchSession()
+
   // Same dev-host escape hatch as playwright.config.ts: point at a system Chrome when
   // the managed browser bundle is not installed.
   const executablePath = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"]
@@ -693,7 +527,6 @@ async function main() {
         locale: "pt-BR",
       })
 
-      const auth = await sessionFor(route)
       if (route.auth && auth) {
         // supabase-js stores the session in localStorage; @supabase/ssr (the new B2 middleware)
         // reads it from a cookie of the same name. Without the cookie the server-side middleware
@@ -714,19 +547,6 @@ async function main() {
         )
       }
 
-      // RECON-018: espelha a flag local que o cadastro escreve antes de mandar
-      // para /auth/confirmar-email (chave em
-      // apps/web/app/components/auth/resend-clock.ts — manter em sincronia).
-      // Sem ela a rota captura o painel "nada pendente", que também é estado
-      // válido, mas não é o painel da prancha.
-      if (route.pendingEmail) {
-        await context.addInitScript(
-          ([payload]) =>
-            window.sessionStorage.setItem("bivaque:confirmacao-pendente", JSON.stringify(payload)),
-          [{ email: route.pendingEmail, lastResendAt: null }],
-        )
-      }
-
       const page = await context.newPage()
       const consoleErrors = []
       page.on("console", (message) => {
@@ -734,10 +554,8 @@ async function main() {
       })
 
       const label = `${route.name}--${viewport.name}`
-      let targetPath = route.path
       try {
-        targetPath = await resolveRoutePath(route, auth)
-        const response = await page.goto(targetPath, { waitUntil: "networkidle", timeout: 30_000 })
+        const response = await page.goto(route.path, { waitUntil: "networkidle", timeout: 30_000 })
         await page.waitForTimeout(400)
 
         // Two shots per route: the fold shot keeps first-impression detail legible for
@@ -754,7 +572,6 @@ async function main() {
 
         results.push({
           route: route.path,
-          target: targetPath,
           viewport: viewport.name,
           status: response?.status() ?? 0,
           landedOn: page.url().replace(BASE_URL, ""),
@@ -766,7 +583,6 @@ async function main() {
       } catch (error) {
         results.push({
           route: route.path,
-          target: targetPath,
           viewport: viewport.name,
           status: 0,
           error: String(error).slice(0, 300),
@@ -779,7 +595,7 @@ async function main() {
   }
 
   await browser.close()
-  writeResults(runDir, results, [...sessions.values()].some(Boolean))
+  writeResults(runDir, results, Boolean(auth))
 }
 
 function writeResults(runDir, results, authenticated) {
@@ -806,8 +622,7 @@ function writeResults(runDir, results, authenticated) {
     const findings = entry.findings ?? []
     lines.push(`## ${entry.route} @ ${entry.viewport} — HTTP ${entry.status}`)
     if (entry.error) lines.push(`- ERROR: ${entry.error}`)
-    const expected = entry.target ?? entry.route
-    if (entry.landedOn && entry.landedOn !== expected) {
+    if (entry.landedOn && entry.landedOn !== entry.route) {
       lines.push(`- redirected to \`${entry.landedOn}\``)
     }
     if (entry.screenshot) {

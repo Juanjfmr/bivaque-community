@@ -1,28 +1,17 @@
 "use client"
 
-import {
-  Button,
-  Input,
-  ListBox,
-  Modal,
-  Select,
-  Switch,
-  TextArea,
-  useOverlayState,
-} from "@heroui/react"
+import { Button, Input, ListBox, Modal, Select, Switch, useOverlayState } from "@heroui/react"
 import { ChevronRight, MapPin, Settings } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
-import { BIO_FIELD_LABEL, BIO_MAX_LENGTH, bioFromRow, validateBio } from "../../../lib/profile/bio"
-import { callProfileBioRpc } from "../../../lib/profile/profile-bio-rpcs"
+import { callProfileRpc } from "../../../lib/profile-rpcs"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "../../components/bivaque/avatar"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../components/bivaque/skeleton"
 import {
-  AFFILIATION_SEMANTICS_NOTE,
   type AffiliationDraft,
   type AffiliationRow,
   ARMED_FORCE_NONE_ID,
@@ -39,7 +28,6 @@ import {
 } from "./affiliation"
 import { saveAffiliationAction } from "./affiliation-actions"
 import AvatarSection from "./avatar-section"
-import { saveBioAction } from "./bio-actions"
 import FamilyInviteSection from "./family-invite-section"
 import NotificationPreferencesSection from "./notification-preferences-section"
 
@@ -64,6 +52,20 @@ interface MembershipRow {
   localities: { city_name: string; state_code: string } | null
 }
 
+interface PostRow {
+  id: string
+  content: string | null
+  post_type: string
+  created_at: string
+}
+
+interface EventRow {
+  id: string
+  title: string
+  starts_at: string
+  locality_id: string
+}
+
 const MONTHS = [
   "janeiro",
   "fevereiro",
@@ -84,22 +86,26 @@ function formatJoinedMonthYear(iso: string): string {
   return `${MONTHS[d.getMonth()]} de ${d.getFullYear()}`
 }
 
+function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  })
+}
+
 export default function ProfilePage() {
   const router = useRouter()
   const { current } = useLocalityContext()
   const supabase = createBrowserClient()
   const [profile, setProfile] = useState<ProfileRow | null>(null)
   const [membership, setMembership] = useState<MembershipRow | null>(null)
+  const [posts, setPosts] = useState<PostRow[]>([])
+  const [events, setEvents] = useState<EventRow[]>([])
+  const [activityError, setActivityError] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   const [displayName, setDisplayName] = useState("")
-  const [bio, setBio] = useState("")
-  const [serverBio, setServerBio] = useState("")
-  const [bioFeedback, setBioFeedback] = useState<{
-    type: "success" | "error"
-    message: string
-  } | null>(null)
   const [affiliation, setAffiliation] = useState<AffiliationDraft>(EMPTY_AFFILIATION)
   // Último estado confirmado no banco (carregado ou salvo). "Cancelar" volta
   // para aqui, não para um vazio inventado.
@@ -122,6 +128,7 @@ export default function ProfilePage() {
   const loadProfile = useCallback(async () => {
     setLoading(true)
     setError("")
+    setActivityError("")
 
     const {
       data: { user },
@@ -133,34 +140,44 @@ export default function ProfilePage() {
       return
     }
 
-    const [profileResult, affiliationResult, bioResult, membershipResult] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("user_id, display_name")
-        .eq("user_id", user.id)
-        .maybeSingle(),
-      // Dono lê as duas linhas sempre, visíveis ou não — é ele quem está
-      // editando a própria declaração. A consulta é a fonte do estado.
-      supabase
-        .from("profile_affiliations")
-        .select("field, value, is_visible")
-        .eq("user_id", user.id),
-      // A bio vem pela RPC SECURITY INVOKER: a RLS de `profiles` decide o que
-      // volta, e para o dono a própria linha sempre volta.
-      callProfileBioRpc(supabase, "get_profile_bio", { p_user_id: user.id }),
-      supabase
-        .from("locality_memberships")
-        .select("joined_at, localities(city_name, state_code)")
-        .eq("user_id", user.id)
-        .eq("kind", "current")
-        .maybeSingle(),
-    ])
+    const [profileResult, affiliationResult, membershipResult, postsResult, eventsResult] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        // Dono lê as duas linhas sempre, visíveis ou não — é ele quem está
+        // editando a própria declaração. A consulta é a fonte do estado.
+        supabase
+          .from("profile_affiliations")
+          .select("field, value, is_visible")
+          .eq("user_id", user.id),
+        supabase
+          .from("locality_memberships")
+          .select("joined_at, localities(city_name, state_code)")
+          .eq("user_id", user.id)
+          .eq("kind", "current")
+          .maybeSingle(),
+        // Onda E Task 7: posts AND events scoped to the viewer (the same RPC
+        // used by the other-member profile). For the self-profile, the viewer
+        // IS the target — the query returns "posts the user posted in
+        // containers they can see". feed_posts(PILOT_LOCALITY_ID) used to leak
+        // cross-user content; the RPC replaces it server-side.
+        callProfileRpc(supabase, "profile_posts_for", {
+          p_target_user_id: user.id,
+          p_viewer_user_id: user.id,
+        }),
+        callProfileRpc(supabase, "profile_events_for", {
+          p_target_user_id: user.id,
+          p_viewer_user_id: user.id,
+        }),
+      ])
 
-    // Falha na leitura da afiliação entra no erro da tela inteira, com a nova
-    // tentativa que já existe: renderizar o formulário vazio sobre uma consulta
-    // que falhou seria estado falso. A bio é diferente — ela é um campo só, e a
-    // falha dela vira erro recuperável no próprio campo, sem derrubar nome,
-    // afiliação e o resto do perfil que carregaram bem.
+    // Falha na leitura da afiliação entra no erro da tela inteira, com a
+    // nova tentativa que já existe: renderizar o formulário vazio sobre uma
+    // consulta que falhou seria estado falso — e "Salvar" em cima dele
+    // apagaria linhas que a pessoa só não conseguiu ver.
     if (profileResult.error || affiliationResult.error) {
       setError("Não foi possível carregar seu perfil. Tente novamente.")
       setLoading(false)
@@ -169,24 +186,24 @@ export default function ProfilePage() {
 
     if (profileResult.data) {
       const row = profileResult.data as ProfileRow
-      const loadedBio = bioResult.error ? "" : bioFromRow(bioResult.data)
       setProfile(row)
       setDisplayName(row.display_name ?? "")
-      setBio(loadedBio)
-      setServerBio(loadedBio)
-      if (bioResult.error) {
-        setBioFeedback({
-          type: "error",
-          message:
-            "Não foi possível carregar sua apresentação. Recarregue a página e tente de novo.",
-        })
-      }
       const loaded = affiliationFromRows((affiliationResult.data ?? []) as AffiliationRow[])
       setAffiliation(loaded)
       setServerAffiliation(loaded)
       if (membershipResult.data) setMembership(membershipResult.data as MembershipRow)
     } else {
       setError("Não foi possível encontrar seu perfil.")
+    }
+
+    // Falha de atividade é erro, não lista vazia (DESIGN_SYSTEM §3.4): o
+    // estado aparece separado e com nova tentativa própria.
+    if (postsResult.error || eventsResult.error) {
+      setActivityError("Não foi possível carregar sua atividade. Tente novamente.")
+    } else {
+      const allPosts = (postsResult.data ?? []) as unknown as PostRow[]
+      setPosts(allPosts.slice(0, 20))
+      setEvents((eventsResult.data ?? []) as EventRow[])
     }
 
     setLoading(false)
@@ -200,17 +217,10 @@ export default function ProfilePage() {
     const trimmed = displayName.trim()
     setNameFeedback(null)
     setAffiliationFeedback(null)
-    setBioFeedback(null)
     setOmError(null)
 
     if (trimmed.length < 2 || trimmed.length > 80) {
       setNameFeedback({ type: "error", message: "O nome deve ter entre 2 e 80 caracteres." })
-      return
-    }
-
-    const bioIssue = validateBio(bio)
-    if (bioIssue) {
-      setBioFeedback({ type: "error", message: bioIssue })
       return
     }
 
@@ -240,24 +250,6 @@ export default function ProfilePage() {
     setProfile((prev) => (prev ? { ...prev, display_name: trimmed } : prev))
     setNameFeedback({ type: "success", message: "Nome atualizado." })
 
-    // A bio é apagável: esvaziar grava NULL (D3). A action revalida no
-    // servidor; o erro é recuperável e o texto da pessoa continua no formulário.
-    try {
-      await saveBioAction(bio)
-      setServerBio(bio)
-      if (bio.trim().length > 0) {
-        setBioFeedback({ type: "success", message: "Apresentação atualizada." })
-      }
-    } catch (err) {
-      setBioFeedback({
-        type: "error",
-        message:
-          err instanceof Error && err.message
-            ? err.message
-            : "Não foi possível salvar a apresentação. Tente novamente.",
-      })
-    }
-
     // D3: limpar o campo é o apagar de verdade (DELETE da linha); desligar o
     // toggle é ocultar (linha preservada com is_visible = false). Normalizado
     // o estado, a action decide qual das duas operações cada campo recebe.
@@ -285,11 +277,9 @@ export default function ProfilePage() {
 
   const handleCancel = () => {
     setDisplayName(profile?.display_name ?? "")
-    setBio(serverBio)
     setAffiliation(serverAffiliation)
     setOmError(null)
     setNameFeedback(null)
-    setBioFeedback(null)
     setAffiliationFeedback(null)
   }
 
@@ -385,11 +375,6 @@ export default function ProfilePage() {
                   </>
                 ) : null}
               </p>
-              {serverBio.trim().length > 0 ? (
-                <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-muted">
-                  {serverBio}
-                </p>
-              ) : null}
             </div>
           </header>
 
@@ -403,11 +388,11 @@ export default function ProfilePage() {
 
             <div className="mt-4 space-y-6">
               <div>
-                <label className="mb-1 block text-sm font-medium" htmlFor="profile-name">
+                <p className="mb-1 text-sm font-medium" id="profile-name-label">
                   Nome
-                </label>
+                </p>
                 <Input
-                  id="profile-name"
+                  aria-labelledby="profile-name-label"
                   value={displayName}
                   onChange={(e) => {
                     setDisplayName((e.target as HTMLInputElement).value)
@@ -416,25 +401,6 @@ export default function ProfilePage() {
                   maxLength={80}
                   className="w-full sm:max-w-md"
                 />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium" htmlFor="profile-bio">
-                  {BIO_FIELD_LABEL}
-                </label>
-                <TextArea
-                  id="profile-bio"
-                  value={bio}
-                  onChange={(event) => {
-                    setBio((event.target as HTMLTextAreaElement).value)
-                    setBioFeedback(null)
-                  }}
-                  maxLength={BIO_MAX_LENGTH}
-                  className="w-full sm:max-w-lg"
-                />
-                <p className="mt-1 text-right text-sm text-muted">
-                  {bio.length}/{BIO_MAX_LENGTH}
-                </p>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -473,16 +439,15 @@ export default function ProfilePage() {
                     </Select.Popover>
                   </Select>
                 </div>
-                <div className="flex items-center gap-3 [&_input]:min-h-11 [&_input]:min-w-11 [&_input]:opacity-0 [&_input]:transition-opacity sm:pb-2">
+                <div className="flex items-center gap-3 sm:pb-2">
                   <Switch
-                    aria-label="Exibir Força Armada no perfil"
                     isSelected={affiliation.armedForceVisible}
                     onChange={(isSelected) => {
                       setAffiliation((prev) => ({ ...prev, armedForceVisible: isSelected }))
                       setAffiliationFeedback(null)
                     }}
                   >
-                    <Switch.Content>
+                    <Switch.Content aria-label="Exibir Força Armada no perfil">
                       <Switch.Control>
                         <Switch.Thumb />
                       </Switch.Control>
@@ -499,11 +464,11 @@ export default function ProfilePage() {
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div className="min-w-0 sm:max-w-xs sm:flex-1">
-                  <label className="mb-1 block text-sm font-medium" htmlFor="profile-om">
+                  <p className="mb-1 text-sm font-medium" id="om-label">
                     OM (opcional)
-                  </label>
+                  </p>
                   <Input
-                    id="profile-om"
+                    aria-labelledby="om-label"
                     placeholder="Digite sua OM"
                     value={affiliation.om}
                     onChange={(e) => {
@@ -521,16 +486,15 @@ export default function ProfilePage() {
                     {affiliation.om.length}/{OM_MAX_LENGTH}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 [&_input]:min-h-11 [&_input]:min-w-11 [&_input]:opacity-0 [&_input]:transition-opacity sm:pb-8">
+                <div className="flex items-center gap-3 sm:pb-8">
                   <Switch
-                    aria-label="Exibir OM no perfil"
                     isSelected={affiliation.omVisible}
                     onChange={(isSelected) => {
                       setAffiliation((prev) => ({ ...prev, omVisible: isSelected }))
                       setAffiliationFeedback(null)
                     }}
                   >
-                    <Switch.Content>
+                    <Switch.Content aria-label="Exibir OM no perfil">
                       <Switch.Control>
                         <Switch.Thumb />
                       </Switch.Control>
@@ -551,20 +515,10 @@ export default function ProfilePage() {
                 </div>
               )}
 
-              <p role="note" className="text-sm leading-relaxed text-muted">
-                {AFFILIATION_SEMANTICS_NOTE}
-              </p>
-
               {nameFeedback && (
                 <FeedbackAlert
                   variant={nameFeedback.type === "success" ? "success" : "danger"}
                   description={nameFeedback.message}
-                />
-              )}
-              {bioFeedback && (
-                <FeedbackAlert
-                  variant={bioFeedback.type === "success" ? "success" : "danger"}
-                  description={bioFeedback.message}
                 />
               )}
               {affiliationFeedback && (
@@ -590,6 +544,58 @@ export default function ProfilePage() {
             </div>
           </section>
 
+          <section aria-labelledby="activity-heading" className="space-y-3">
+            <h2 id="activity-heading" className="text-lg font-semibold tracking-tight">
+              Sua atividade
+            </h2>
+            {activityError ? (
+              <ErrorState message={activityError} onRetry={loadProfile} />
+            ) : (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+                  <h3 className="text-sm font-medium">Publicações</h3>
+                  {posts.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted">Você ainda não publicou nada.</p>
+                  ) : (
+                    <ul className="mt-3 space-y-3">
+                      {posts.map((p) => (
+                        <li
+                          key={p.id}
+                          className="rounded-xl border border-border bg-[var(--surface)] p-4"
+                        >
+                          <p className="text-sm break-words whitespace-pre-wrap">
+                            {p.content ?? ""}
+                          </p>
+                          <div className="mt-2 flex items-center gap-3 text-xs text-muted">
+                            <span>{formatShortDate(p.created_at)}</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
+                  <h3 className="text-sm font-medium">Eventos</h3>
+                  {events.length === 0 ? (
+                    <p className="mt-2 text-sm text-muted">Nenhum evento cadastrado.</p>
+                  ) : (
+                    <ul className="mt-3 space-y-2">
+                      {events.map((e) => (
+                        <li
+                          key={e.id}
+                          className="flex items-center justify-between rounded-xl border border-border bg-[var(--surface)] px-4 py-3"
+                        >
+                          <span className="text-sm font-medium">{e.title}</span>
+                          <span className="text-xs text-muted">{formatShortDate(e.starts_at)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+
           <section
             id="configuracoes"
             aria-labelledby="settings-heading"
@@ -609,7 +615,7 @@ export default function ProfilePage() {
               <div className="mt-3">
                 <a
                   href="/profile/interests"
-                  className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--accent)] transition-colors hover:underline"
+                  className="inline-flex min-h-11 items-center text-sm font-medium text-[var(--accent)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline"
                 >
                   Escolher assuntos de interesse
                 </a>
@@ -634,7 +640,7 @@ export default function ProfilePage() {
           <div className="sticky top-6 space-y-3">
             <a
               href="#configuracoes"
-              className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border bg-[var(--surface)] p-4 transition-colors hover:bg-[var(--surface-sunken)]"
+              className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border bg-[var(--surface)] p-4 transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--surface-sunken)]"
             >
               <span className="flex min-w-0 items-center gap-3">
                 <Settings aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--muted)]" />

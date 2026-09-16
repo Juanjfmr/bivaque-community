@@ -76,16 +76,14 @@ export default function GuidePage() {
 }
 
 function GuideContent() {
-  const { current } = useLocalityContext()
-  const searchParams = useSearchParams()
   const [entries, setEntries] = useState<GuideEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  // RECON-021: o "Ver todos" de /explorar/busca chega com o termo em `q` —
-  // o filtro local já existe, só nasce preenchido.
-  const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
+  const [query, setQuery] = useState("")
   const [category, setCategory] = useState<"all" | GuideCategory>("all")
   const [memberCount, setMemberCount] = useState<number | null>(null)
+  const { current } = useLocalityContext()
+  const searchParams = useSearchParams()
   // Onda T Task 4: same fix as /events — ?locality lets the city switcher
   // ask for the origin's guide specifically; absent it, defaults to current.
   const viewingLocalityId = searchParams.get("locality") ?? current.id
@@ -231,7 +229,7 @@ function GuideContent() {
             placeholder="Buscar por nome ou descrição..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="min-h-11 w-full bg-transparent text-sm focus:outline-none"
+            className="min-h-11 w-full bg-transparent text-sm transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none"
           />
         </div>
       </search>

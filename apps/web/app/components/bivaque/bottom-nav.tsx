@@ -78,6 +78,37 @@ export const NAV_ITEMS: NavItem[] = [
   },
 ]
 
+const CONTAINER_POR_PREFIXO: Array<[string, string]> = [
+  ["/configuracoes", "perfil"],
+  ["/messages", "perfil"],
+  ["/notifications", "perfil"],
+  ["/guide", "explorar"],
+  ["/prestador", "explorar"],
+  ["/prestadores", "explorar"],
+  ["/recommendations", "explorar"],
+  ["/communities", "comunidades"],
+  ["/community", "comunidades"],
+  ["/groups", "comunidades"],
+  ["/events", "inicio"],
+  ["/localidade", "inicio"],
+]
+
+// Uma única resolução para as duas superfícies responsivas. Se mobile e desktop
+// calcularem o container separadamente, uma rota secundária pode acender destinos
+// diferentes — exatamente a regressão que DS-011 existe para impedir.
+export function resolveNavContainer(pathname: string): string {
+  const direto = NAV_ITEMS.find(
+    (item) => item.href === pathname || pathname.startsWith(`${item.href}/`),
+  )?.id
+  if (direto) return direto
+
+  const porPrefixo = CONTAINER_POR_PREFIXO.find(
+    ([prefixo]) => pathname === prefixo || pathname.startsWith(`${prefixo}/`),
+  )?.[1]
+
+  return porPrefixo ?? "inicio"
+}
+
 function NavIcon({
   Icon,
   IconActive,
@@ -102,19 +133,8 @@ function NavIcon({
 
 export function BottomNav() {
   const pathname = usePathname()
-
   const items = NAV_ITEMS
-
-  const secondaryPersonal =
-    pathname.startsWith("/messages") ||
-    pathname.startsWith("/notifications") ||
-    pathname.startsWith("/salvos") ||
-    pathname.startsWith("/denuncias") ||
-    pathname.startsWith("/ajuda")
-  const fallbackId = secondaryPersonal ? "perfil" : "inicio"
-  const selectedKey =
-    items.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
-    fallbackId
+  const selectedKey = resolveNavContainer(pathname)
 
   return (
     <nav

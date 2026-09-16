@@ -90,10 +90,13 @@ export default function FamilyInviteSection() {
       {isVerified ? (
         <form action={handleSend} className="mt-3 flex flex-col gap-2">
           <div className="flex gap-2">
+            <label htmlFor="family-invite-email" className="sr-only">
+              E-mail do familiar
+            </label>
             <Input
+              id="family-invite-email"
               type="email"
               name="email"
-              aria-label="E-mail do familiar convidado"
               placeholder="email@familiar.com"
               required
               className="flex-1"
