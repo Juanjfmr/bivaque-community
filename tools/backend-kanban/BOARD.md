@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 91 frentes · 13 agora · 12 bloqueadas · 35 concluídas · 2 drifts
+**Mapa:** 91 frentes · 12 agora · 12 bloqueadas · 36 concluídas · 1 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -16,7 +16,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 - **MOB-001-SESSION** · P0 · Mobile: contrato R3 de sessão (PKCE + secure-store + revogação)
 - **S6-MOBILE-RUNTIME** · P0 · Mobile: RUNTIME PROOF real no emulador + tipos Foto/Link/Enquete + realtime
-- **RECON-031-CONFIGURACOES** · P1 · Web: configuracoes e confianca (pranchas 52 e 56) com a matriz de canais
 - **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas
 - **DS-001-DESIGN-SYSTEM** · P1 · Sistema de design canônico Casa comum
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
@@ -45,7 +44,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Drift aberto
 
-- **RECON-031-CONFIGURACOES** · P1 · Web: configuracoes e confianca (pranchas 52 e 56) com a matriz de canais — Reconciliar a citacao - trazer o handoff do branch de fidelidade para este branch ou trocar as referencias por PRANCHAS-WEB-RESTANTES.md; ate la, a autoridade usada foram o PNG da prancha e a leitura versionada
 - **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas — A campanha TEST-MASSA-JORNADAS produz a prova de runtime por lote na linha viva; promover a integracao para a main e decisao do dono
 
 ## Triagem prioritária
