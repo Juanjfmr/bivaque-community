@@ -2933,8 +2933,10 @@
       "priority": "BLOCK",
       "category": "infra",
       "status": "blocked",
-      "description": "O workflow deploy-migrations.yml dispara em TODO push para a main e tem dois jobs: Gate e Push migrations to production. O Gate passa; o segundo morre no passo Link production project porque os tres secrets do environment production chegam vazios. Consequencia medida: o passo supabase db push nunca executa, entao nenhuma migration da campanha chega a producao, mesmo com a main contendo o trabalho.",
+      "description": "O workflow deploy-migrations.yml dispara em TODO push para a main e tem dois jobs: Gate e Push migrations to production. O Gate passa; o segundo morre no passo Link production project porque os tres secrets do environment production chegam vazios. Consequencia medida: o passo supabase db push nunca executa, entao nenhuma migration da campanha chega a producao, mesmo com a main contendo o trabalho. O HISTORICO ja foi reconciliado em 17/09/2026 (autorizado pelo dono): a producao nomeava os 128 registros como migration_<versao>_<nome>, entao nenhuma versao do repositorio casava e o db push veria 162 pendentes. Agora 128 casam e restam 34.",
       "checklist": [
+        "Reconciliar o historico de migrations da producao (nomes migration_* de 01/09 contra as versoes do repositorio)",
+        "Rodar o db push a partir do clone que tem os 162 arquivos (main), nunca do clone 29 atras",
         "Configurar SUPABASE_ACCESS_TOKEN no environment production",
         "Configurar SUPABASE_PROJECT_ID no environment production",
         "Configurar SUPABASE_DB_PASSWORD no environment production",
@@ -2946,7 +2948,10 @@
         "O proprio log do passo imprime SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD e SUPABASE_PROJECT_ID vazios — nao e token invalido, e secret ausente",
         "Ja falhava antes deste merge: run 35153968162 (push de 579e4b2, 16/09) falhou no mesmo passo, tambem com o Gate verde. Nao e regressao do merge; e o estado da main desde pelo menos 16/09",
         "Efeito medido: nenhuma migration foi aplicada em producao; o passo Push migrations fica skipped. As 29 migrations novas em relacao a main anterior seguem apenas em ambiente local/CI",
-        "O ambiente production NAO exige aprovacao manual: o job migrate comeca a executar direto e falha no link, o que significa que a unica barreira entre a main e o banco de producao e o secret ausente"
+        "O ambiente production NAO exige aprovacao manual: o job migrate comeca a executar direto e falha no link, o que significa que a unica barreira entre a main e o banco de producao e o secret ausente",
+        "Reparo de historico executado em 17/09/2026 com autorizacao explicita do dono, em etapas verificadas. ANTES (leitura read-only de producao): 133 locais / 128 remotos / 0 casadas; os 128 nomes remotos batem EXATAMENTE com a lista do passo 1 (todos em 20260901*, de 17:08:24 a 23:28:42). Passo 1 marcou os 128 como reverted; conferencia intermediaria: 0 remotos. Passo 2 marcou os 128 equivalentes como applied. DEPOIS (a partir da main, 162 arquivos): 128 casadas, 0 remoto orfao, 34 pendentes de 20260901124348 a 20260915235000",
+        "ARMADILHA MEDIDA: o clone C:\\Users\\juana\\bivaque-community esta 29 migrations atras da main (133 arquivos contra 162). Com o historico ja reparado, um db push DAQUELE clone aplicaria apenas 5 das 34 pendentes e pularia 29 EM SILENCIO — inclusive guia (saves, sugestao e artigo), capa de evento, imagens de comunidade, exclusao de conta, convite de familia e a leitura de apresentacao da comunidade. O db push tem de rodar do clone na main; o caminho do CI faz checkout da main e por isso esta correto",
+        "Auditoria previa das 34 pendentes: 5 contem operacao destrutiva e todas sao seguras contra os dados existentes — drop_legacy_market_listings e no-op guardado (o tipo legado nunca existiu na producao), move_suspension_out_of_profiles copia is_suspended=true para a tabela nova ANTES de derrubar a coluna, e os tres DELETE FROM vivem dentro de funcoes (despachante, sair-da-comunidade, expurgo por e-mail), nao no corpo da migration. member_suspended_seed e tombstone: so comentario desde 05/09, nada de persona falsa em producao"
       ],
       "blockers": [
         "Adicionar os tres secrets no environment production do repositorio (GitHub > Settings > Environments > production)",
@@ -2954,9 +2959,9 @@
       ],
       "links": [],
       "updatedAt": "2026-09-17",
-      "sourceRevision": "88a5420",
+      "sourceRevision": "37a3352",
       "dependencies": [],
-      "completedChecklist": [false, false, false, false, false]
+      "completedChecklist": [true, false, false, false, false, false, false]
     }
   ]
 }
