@@ -1762,7 +1762,8 @@
         "Gate completo verde em 07/09/2026 sobre a árvore rastreada: lint 24s, typecheck 27s, test 51s (unit + 96 escopo), secrets 13s. Ruído local: pedidos.html não-rastreado na raiz quebra lint quando presente; não faz parte do repo nem do CI.",
         "E2E 07/09/2026: 24/24 nos três projetos para os contratos de entrada (manaus-pilot-full-journey, onboarding-holder-family, onboarding-denials). Unit: 50/50 em tests/unit/auth.",
         "Drift resolvido: os três specs E2E de entrada apontavam para o botão Receber link para entrar e headings da tela de magic link, removidos da tela em c0bf309 (feat(auth): login com e-mail e senha na web) sem atualização dos specs — verificado como falha pré-existente, não regressão desta mudança.",
-        "Divergências intencionais da prancha, todas por autoridade textual posterior: campo Senha e botão Entrar em vez de Receber código (ADR-20260907-login-com-senha, que registra que a prancha precisa ser regerada); Esqueci minha senha em vez de Preciso de ajuda (mesma ADR, copy explícita); aceite com textos aprovados em vez de Termos de uso/Código de convivência (regra da guia: copy legal nunca vem da imagem; ADR-20260907-consentimento-no-cadastro); rótulo Nome em vez de Nome completo (nota da prancha: nome de apresentação não exige nome civil); Google no cadastro mantido (ADR) embora o painel direito do bitmap não o mostre."
+        "Divergências intencionais da prancha, todas por autoridade textual posterior: campo Senha e botão Entrar em vez de Receber código (ADR-20260907-login-com-senha, que registra que a prancha precisa ser regerada); Esqueci minha senha em vez de Preciso de ajuda (mesma ADR, copy explícita); aceite com textos aprovados em vez de Termos de uso/Código de convivência (regra da guia: copy legal nunca vem da imagem; ADR-20260907-consentimento-no-cadastro); rótulo Nome em vez de Nome completo (nota da prancha: nome de apresentação não exige nome civil); Google no cadastro mantido (ADR) embora o painel direito do bitmap não o mostre.",
+        "2026-09-11: DRIFT RESOLVIDO — a prancha 36 foi entregue pelo RECON-018 (2cbdccc), junto com a 37. Este card descrevia trabalho que outro lote fez; nao ha entrada web separada a construir. Falta a mesma prova que falta ao RECON-018."
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
@@ -1777,7 +1778,7 @@
         "Tela | ../../apps/web/app/(preauth)/login/components/bivaque-sign-in.tsx"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-07",
+      "updatedAt": "2026-09-11",
       "sourceRevision": "2adcda5"
     },
     {
@@ -1797,7 +1798,8 @@
       "proof": [
         "node scripts/visual/loop.mjs",
         "npx pnpm@11.18.0 gate",
-        "grep -r 'em construção' apps/web/app/ retorna vazio"
+        "grep -r 'em construção' apps/web/app/ retorna vazio",
+        "2026-09-11: DRIFT — mesmo trabalho do RECON-W00-TELAS. Os dois cards descrevem a mesma entrega e precisam ser fundidos ou um fechado."
       ],
       "tests": ["tests/unit/ui/empty-promises.test.ts"],
       "links": [
@@ -1806,7 +1808,7 @@
         "docs/design/visual-guide-2026-09-06/61-web-explorar-servicos.png"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-08",
+      "updatedAt": "2026-09-11",
       "sourceRevision": "6d998a7"
     },
     {
@@ -2085,7 +2087,11 @@
         "PENDENTE: loop visual em 375/768/1440",
         "PENDENTE: revisao independente (G5)"
       ],
-      "proof": ["npx pnpm@11.18.0 gate → verde", "git 86e24ad"],
+      "proof": [
+        "npx pnpm@11.18.0 gate → verde",
+        "git 86e24ad",
+        "2026-09-11: DRIFT — /inicio e /explorar nao contem mais Conteudo em construcao em chore/integracao-r3. Ausencia de placeholder nao prova fidelidade; confrontar com a prancha antes de fechar."
+      ],
       "tests": [],
       "links": [
         "docs/agents/tasks/RECON-002.task.yml",
@@ -2095,7 +2101,7 @@
       ],
       "dependencies": [],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-08",
+      "updatedAt": "2026-09-11",
       "sourceRevision": "86e24ad"
     },
     {
@@ -2191,7 +2197,8 @@
         "Auditoria de 12/09 contra a linha viva (041823f): 86 page.tsx e todas as 31 pranchas web com rota — mercado, imoveis, meus-anuncios, pedidos, alertas, salvos, denuncias, events/[id]/perguntas, guide/[id]/correcao, onboarding/documento. Contra origin/main a mesma auditoria reprovava telas que ja existem, porque a main esta 107 commits atras (git rev-list --count origin/main..chore/integracao-r3-next = 107; merge-base 0323a94; os 2 commits exclusivos da main sao so board: 32ecfe7, 9779db2).",
         "Seed da linha viva sem massa de anuncios: git show 041823f:supabase/seed.sql tem service_requests e nao tem listings, property_details nem listing_alerts — a campanha TEST-MASSA-JORNADAS cobre essa lacuna.",
         "Ferramentas de auditoria da prova por lote (12/09): scripts/visual/flows/reachability.mjs monta o grafo rota->rotas da navegacao estatica e responde orfa, sem saida propria, inalcancavel e link quebrado — na linha viva, 86 rotas, 0 orfas, 0 inalcancaveis, 0 links quebrados e 2 becos reais. scripts/visual/compare.mjs pareia prancha x runtime por rota e mede a cobertura em vez de esconder: 4 pranchas com captura, 15 sem, 14 rotas capturadas sem prancha. Saida em .visual/compare/index.html, gitignored como o resto do .visual. As duas ferramentas sao heuristicas declaradas: so leem literal estatico, entao achado e candidato e se confirma andando no app.",
-        "Conferecia de 12/09: captura de runtime completa (74 rotas, 3 viewports) contra o dev server; compare.mjs agora casa rotas concretas com padroes dinamicos e o pareamento cobre 30 de 31 pranchas web. Unica sem captura: 15-web-conversa, cujo padrao /publicacoes/[id] nao existe como pagina no app web. Duas rotas novas entraram na superficie de captura com HEADINGS: admin/pending e /auth/callback-error. Artefato local em .visual/compare/index.html (gitignored)."
+        "Conferecia de 12/09: captura de runtime completa (74 rotas, 3 viewports) contra o dev server; compare.mjs agora casa rotas concretas com padroes dinamicos e o pareamento cobre 30 de 31 pranchas web. Unica sem captura: 15-web-conversa, cujo padrao /publicacoes/[id] nao existe como pagina no app web. Duas rotas novas entraram na superficie de captura com HEADINGS: admin/pending e /auth/callback-error. Artefato local em .visual/compare/index.html (gitignored).",
+        "2026-09-11: os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha resta por construir. Falta integracao (quatro branches orfas em conflito), build, prova de runtime por lote e comparacao visual. Os sete ADRs de 09/09 estao todos approved — o item de checklist que os lista como pendentes era drift."
       ],
       "tests": [
         "node --test tests/scope/prancha-coverage.test.mjs",
@@ -2284,7 +2291,9 @@
         "42c055d e 3acaadd fecharam as duas vias de RPC — anon recebe 42501, membro recebe false para terceiro — e NÃO fecham a coluna.",
         "O veto de publicação continua funcionando: conta suspensa recebe 42501 ao inserir em posts. A correção não pode regredir isso.",
         "CI verde no 3acaadd e merge limpo não cobrem esta via: nenhum teste exercita leitura de is_suspended por terceiro.",
-        "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR."
+        "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR.",
+        "2026-09-11: correcao pronta em fix/r3-suspensao-tabela (08129b9) sob ADR-20260910-suspensao-fora-da-exposicao (approved, proposto e aprovado por autorizacao do dono). Tabela profile_suspensions com RLS owner-only e forcada, grants minimos, dado existente migrado, coluna retirada de profiles. Revisao de desenho: aprovada. PERMANECE blocked ate existir prova de runtime de que a leitura por terceiro falha (pgTAP profile-suspensions.sql), que exige recriar o banco local.",
+        "2026-09-11: PROVA DE RUNTIME executada contra o stack local com a migration aplicada. Cinco condicoes, todas verificadas: (1) a coluna antiga responde \"column profiles.is_suspended does not exist\"; (2) terceiro consultando profile_suspensions de conta suspensa recebe [] mesmo com a linha existindo no banco; (3) anon recebe 42501 permission denied; (4) o proprio dono le a propria linha; (5) conta suspensa tentando publicar recebe 42501 e HTTP 403 — o veto nao regrediu. O vazamento esta fechado e o comportamento legitimo preservado."
       ],
       "blockers": [
         "Decisão R3 do responsável sobre onde a coluna passa a viver e o que a UI lê no lugar"
@@ -2293,10 +2302,10 @@
         "ADR | ../../docs/decisions/ADR-20260901-account-suspension.md",
         "PR merjado | https://github.com/Juanjfmr/bivaque-community/pull/54"
       ],
-      "updatedAt": "2026-09-10",
+      "updatedAt": "2026-09-11",
       "sourceRevision": "15a884d",
       "dependencies": [],
-      "completedChecklist": [false, false, false, false, false, false, false]
+      "completedChecklist": [true, true, true, true, true, false, false]
     },
     {
       "id": "RECON-029-EVENTO-PERGUNTA",
