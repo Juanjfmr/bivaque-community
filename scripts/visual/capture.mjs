@@ -1153,7 +1153,7 @@ export function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) 
 async function main() {
   const runDir = join(OUT_ROOT, RUN_ID)
   const shotsDir = join(runDir, "shots")
-  if (SCENARIO && !["publish", "edit"].includes(SCENARIO)) {
+  if (SCENARIO && !["publish", "edit", "offline"].includes(SCENARIO)) {
     throw new Error(`Unknown visual scenario: ${SCENARIO}`)
   }
   if (SCENARIO && ROUTE_PATH && ROUTE_PATH !== "/inicio") {
@@ -1183,11 +1183,15 @@ async function main() {
     expectedHeading: route.heading ?? HEADINGS[route.path],
     operator: ["/admissions", "/reports", "/guide-queue", "/arrivals"].includes(route.path),
     dialog:
-      SCENARIO === "publish"
+      SCENARIO === "publish" || SCENARIO === "offline"
         ? "Criar publicação"
         : SCENARIO === "edit"
           ? "Editar publicação"
           : undefined,
+    // A rota continua com o contrato estrito; só a corrida declarada como
+    // offline tolera a cópia "Sem conexão" — que é o ESTADO da prancha 60, não
+    // uma tela ausente.
+    expectedFallback: SCENARIO === "offline" ? "^Sem conexão$" : route.expectedFallback,
   }))
   mkdirSync(shotsDir, { recursive: true })
 
@@ -1337,7 +1341,7 @@ async function main() {
           response = await openRoute(page, targetPath)
         }
         await waitForHeading(page, route)
-        if (SCENARIO === "publish") {
+        if (SCENARIO === "publish" || SCENARIO === "offline") {
           await page
             // O composer real escreve "O que você quer compartilhar?" desde a
             // RECON-002; o seletor antigo ("No que você está pensando?") deixava
@@ -1348,6 +1352,22 @@ async function main() {
           await page
             .getByRole("dialog", { name: route.dialog, exact: true })
             .waitFor({ state: "visible" })
+        }
+
+        if (SCENARIO === "offline") {
+          // Prancha 60, painel direito: a conexão cai com o texto já escrito. O
+          // cenário escreve, CORTA a rede do contexto e tenta publicar — o que
+          // se captura é o estado real que a pessoa vê, com o rascunho no lugar.
+          await page
+            .getByRole("dialog", { name: route.dialog, exact: true })
+            .getByRole("textbox")
+            .first()
+            .fill("Teste de conexão do compositor.")
+          await context.setOffline(true)
+          await page.getByTestId("publish-submit").click()
+          await page
+            .getByText("Sem conexão", { exact: true })
+            .waitFor({ state: "visible", timeout: 20_000 })
         }
 
         if (SCENARIO === "edit") {
@@ -1391,7 +1411,7 @@ async function main() {
           // que isso absolva "Application error" ou página não encontrada.
           fallback: await page.evaluate(() => {
             const pattern =
-              /Página não encontrada|Application error|Você ainda não tem acesso|Não foi possível carregar|Algo deu errado/
+              /Página não encontrada|Application error|Você ainda não tem acesso|Não foi possível carregar|Algo deu errado|Sem conexão/
             const match = pattern.exec(document.body.innerText || "")
             return match ? match[0] : null
           }),
