@@ -200,6 +200,11 @@ export const HEADINGS = {
   // A aba chega pela URL: o atalho "Salvos" do topo do guia manda para cá com o
   // tipo escolhido, então a variante é chave própria de contrato.
   "/salvos?aba=guia": "^Salvos$",
+  // As abas Mercado e Imóveis (RECON-032): cada uma passou a ter produtor real
+  // (`listing_saves`) e conteúdo semeado, então viram contrato próprio em vez
+  // de aparecerem só no "Tudo".
+  "/salvos?aba=mercado": "^Salvos$",
+  "/salvos?aba=imoveis": "^Salvos$",
   // Prancha 12/61: a rota de sugestão de referência nova (a correção de artigo
   // existente já tem contrato em /guide/[id]/correcao).
   "/guide/sugerir": "^Sugerir referência$",
@@ -491,6 +496,8 @@ export const ROUTES = [
   // Prancha 12/61: a aba Guia da tela de salvos, populada pela referência que o
   // seed grava para a conta de captura.
   { path: "/salvos?aba=guia", name: "salvos-guia", auth: true },
+  { path: "/salvos?aba=mercado", name: "salvos-mercado", auth: true },
+  { path: "/salvos?aba=imoveis", name: "salvos-imoveis", auth: true },
   { path: "/guide/sugerir", name: "guide-sugerir", auth: true },
   { path: "/ajuda", name: "ajuda", auth: true },
   { path: "/denuncias", name: "denuncias", auth: true },

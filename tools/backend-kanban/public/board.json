@@ -2402,13 +2402,15 @@
         "Acompanhamento mostra situacao, motivo e a propria explicacao ao expandir",
         "Conversa com URL estavel e reconstrucao por acesso direto, sem entrega duplicada",
         "Ajuda leva a documentos legais reais e ao canal de suporte configurado, sem chamado inventado",
-        "PENDENTE: abas Guia/Mercado/Imoveis de /salvos (RECON-030/025/027) e leitura/contador da conversa"
+        "Abas Guia/Mercado/Imóveis de /salvos ✅ 17/09 (lote AI): os produtores passaram a existir — `listing_saves` é gravada pelo marcador de `mercado-shared.tsx` e de `imoveis/save-listing-button.tsx` — e a tela ganhou as duas abas. O `kind` do anúncio decide a vertical (item -> Mercado, property -> Imóveis); anúncio que a RLS já não devolve fica indisponível como \"Anúncio\" (sem vertical inventada) e continua removível. Prova de runtime .visual/recon-loteAI-salvos-abas: as três rotas em 375/768/1440, 0 achados, com a Mesa de jantar na aba Mercado e o Apartamento 2 quartos na aba Imóveis",
+        "PENDENTE: leitura/contador da conversa (o contador de não-lidas na lista de conversas)"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-032.task.yml -> ok (R2, retry 3)",
         "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
         "PLAYWRIGHT_TEST_BASE_URL=http://127.0.0.1:3147 npx playwright test --config tests/e2e/recon-032.playwright.config.ts recon-032-salvos.spec.ts recon-032-denuncias.spec.ts recon-032-messages.spec.ts -> 11 passed (caminhos de falha e acesso negado inclusos)",
-        "node scripts/visual/capture.mjs para /salvos, /denuncias, /denuncias/nova, /denuncias/<own-report>, /ajuda, /messages e /messages/<thread> -> Authenticated capture: yes, 0 findings em 375/768/1440"
+        "node scripts/visual/capture.mjs para /salvos, /denuncias, /denuncias/nova, /denuncias/<own-report>, /ajuda, /messages e /messages/<thread> -> Authenticated capture: yes, 0 findings em 375/768/1440",
+        "Lote AI 17/09/2026: abas Mercado e Imóveis de /salvos implementadas. lib/saves/saved-items.ts ganhou buildListingSavedItems (kind do anúncio decide a vertical; href real /mercado/[id] ou /imoveis/[id]; anúncio sem linha legível vira kind 'anuncio' indisponível, em Tudo e em nenhuma aba vertical) e o loader passou a consultar listing_saves; removeSavedItem cobre as duas verticais. A tela ganhou TYPE_TABS com as duas abas e as rotas ?aba=mercado e ?aba=imoveis foram declaradas no capture.mjs. Testes: tests/unit/saves/saved-items.test.ts 22 verdes (7 novos). Fixture nova no seed (dois listing_saves para a dona da Vila), no precedente do event_rsvps do lote Z — sem ela a aba abriria vazia e a captura não provaria nada"
       ],
       "tests": [
         "tests/unit/saves/saved-items.test.ts",
@@ -2425,8 +2427,8 @@
         "docs/design/visual-guide-2026-09-06/56-web-confianca.png"
       ],
       "dependencies": ["RECON-PRANCHAS-RESTANTES"],
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "e974bd0"
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "878a774"
     },
     {
       "id": "RECON-034",

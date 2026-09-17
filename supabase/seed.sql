@@ -1545,6 +1545,17 @@ values
    3, 1, 2, 120, array['Quintal', 'Área de serviço'], current_date)
 on conflict (listing_id) do nothing;
 
+-- Salvos de anúncio (prancha 54, abas Mercado e Imóveis de /salvos; card
+-- RECON-032). Sem linha aqui a aba abre vazia e a captura nao prova nada alem
+-- do estado vazio — foi o que aconteceu com os avatares de presenca no lote Z.
+-- A dona da Vila (20000000-...0008) e o ator da captura: guarda um item ativo e
+-- um imovel ativo, ambos de Manaus, para as duas abas terem conteudo real.
+insert into public.listing_saves (listing_id, user_id, created_at)
+values
+  ('b1000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000008', now() - interval '3 hours'),
+  ('b2000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000008', now() - interval '1 hour')
+on conflict (listing_id, user_id) do nothing;
+
 
 commit;
 

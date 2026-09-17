@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import {
   buildGuideSavedItems,
+  buildListingSavedItems,
   buildSavedItems,
   filterSavedItems,
   loadSavedItems,
@@ -100,9 +101,13 @@ describe("filterSavedItems", () => {
 function makeSupabase(handlers: Record<string, unknown>) {
   const table = (name: string) => ({
     select: () => {
+      // Handler ausente = tabela vazia: assim um teste que só exercita uma
+      // origem não precisa declarar as outras (o loader consulta três tabelas
+      // de salvamento mais os conteúdos alvo).
+      const empty = { data: [], error: null }
       const builder: Record<string, unknown> = {
-        order: () => handlers[name],
-        in: () => handlers[name],
+        order: () => handlers[name] ?? empty,
+        in: () => handlers[name] ?? empty,
       }
       return builder
     },
@@ -192,5 +197,73 @@ describe("removeSavedItem", () => {
     }
     expect(await removeSavedItem(failing as never, "indicacao", "r-1")).toBe(false)
     expect(await removeSavedItem(failing as never, "guia", "g-1")).toBe(false)
+  })
+})
+
+const LISTING_ID = "l-1"
+const listingSaves = [{ listing_id: LISTING_ID, created_at: "2026-09-03T10:00:00Z" }]
+const liveListing = {
+  id: LISTING_ID,
+  kind: "item",
+  title: "Bicicleta aro 29",
+  description: "Pouco uso, revisada.",
+  category: "esporte_lazer",
+}
+
+describe("buildListingSavedItems", () => {
+  it("anúncio de item entra em Mercado e aponta para a rota real", () => {
+    const [item] = buildListingSavedItems(listingSaves, [liveListing])
+    expect(item).toMatchObject({
+      kind: "mercado",
+      available: true,
+      title: "Bicicleta aro 29",
+      category: "esporte_lazer",
+      href: `/mercado/${LISTING_ID}`,
+    })
+  })
+
+  it("anúncio de imóvel entra em Imóveis, e não em Mercado", () => {
+    const [item] = buildListingSavedItems(listingSaves, [
+      { ...liveListing, kind: "property", category: "moradia" },
+    ])
+    expect(item).toMatchObject({ kind: "imoveis", href: `/imoveis/${LISTING_ID}` })
+  })
+
+  it("anúncio que a RLS já não devolve fica indisponível e sem vertical", () => {
+    const [item] = buildListingSavedItems(listingSaves, [])
+    expect(item).toMatchObject({
+      kind: "anuncio",
+      available: false,
+      title: null,
+      excerpt: null,
+      href: null,
+    })
+  })
+})
+
+describe("anúncios salvos no carregamento e na remoção", () => {
+  it("mescla o anúncio salvo com os outros tipos", async () => {
+    const supabase = makeSupabase({
+      listing_saves: { data: listingSaves, error: null },
+      listings: { data: [liveListing], error: null },
+    })
+    const items = await loadSavedItems(supabase)
+    expect(items).toHaveLength(1)
+    expect(items[0]?.kind).toBe("mercado")
+  })
+
+  it("falha de leitura dos anúncios salvos nao vira lista vazia", async () => {
+    const supabase = makeSupabase({
+      listing_saves: { data: null, error: { message: "boom" } },
+    })
+    await expect(loadSavedItems(supabase)).rejects.toThrow("listing-saves-query-failed")
+  })
+
+  it("remover anúncio salvo usa listing_saves, com ou sem vertical conhecida", async () => {
+    const from = vi.fn(() => ({ delete: () => ({ eq: () => ({ error: null }) }) }))
+    expect(await removeSavedItem({ from } as never, "mercado", LISTING_ID)).toBe(true)
+    expect(from).toHaveBeenCalledWith("listing_saves")
+    expect(await removeSavedItem({ from } as never, "imoveis", LISTING_ID)).toBe(true)
+    expect(await removeSavedItem({ from } as never, "anuncio", LISTING_ID)).toBe(true)
   })
 })

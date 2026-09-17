@@ -20,16 +20,16 @@ import { showToast } from "../../components/bivaque/toast"
 
 // Prancha 54-web-retorno, painel direito: H1 "Salvos", abas por tipo, campo
 // "Buscar nos salvos" e grade de cartões com marcador, chip de tipo e Remover.
-// As abas Guia/Mercado/Imóveis da prancha esperam o backend de salvamento de
-// cada origem (card RECON-032); uma aba sem produtor seria destino vazio — o
-// gate G1 do spec e tests/unit/ui/empty-promises.test.ts vedam isso. A aba
-// "Indicações" existe porque `recommendation_saves` existe e o botão Salvar da
-// origem grava nela.
-
+// Toda aba da prancha tem produtor real hoje: o gate G1 do spec e
+// tests/unit/ui/empty-promises.test.ts vedam aba sem backend, e por isso
+// Mercado e Imóveis só entraram quando `listing_saves` passou a ser gravada
+// pelo marcador das telas de origem (fecha o pendente do RECON-032).
 const TYPE_TABS = [
   { key: "tudo", label: "Tudo" },
   { key: "indicacao", label: SAVED_KIND_LABELS.indicacao },
   { key: "guia", label: SAVED_KIND_LABELS.guia },
+  { key: "mercado", label: SAVED_KIND_LABELS.mercado },
+  { key: "imoveis", label: SAVED_KIND_LABELS.imoveis },
 ] as const
 
 // A aba pode chegar na URL (`?aba=guia`): o topo do guia manda para cá com o
