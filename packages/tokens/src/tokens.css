@@ -175,6 +175,7 @@
   --semantic-action-context: var(--primitive-petrol-700);
   --semantic-action-on-strong: var(--primitive-paper-0);
   --semantic-text-on-strong: var(--semantic-action-on-strong);
+  --semantic-text-on-image-soft: color-mix(in srgb, var(--primitive-paper-0) 84%, var(--primitive-ink-900));
   --semantic-selected: var(--primitive-pine-100);
   --semantic-focus: var(--primitive-petrol-700);
   --semantic-focus-inner: var(--primitive-paper-0);

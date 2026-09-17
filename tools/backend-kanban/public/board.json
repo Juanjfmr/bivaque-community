@@ -785,13 +785,14 @@
       "status": "now",
       "description": "Consolidar identidade, foundations, tokens, componentes, padrões, acessibilidade e governança em uma única fonte de verdade, com adoção de runtime auditável e sem alterar fronteiras de produto.",
       "checklist": [
-        "Criar DESIGN_SYSTEM.md como fonte canônica e transformar os documentos antigos em redirecionamentos",
-        "Registrar a direção Casa comum, alternativas e autorização R2 na ADR",
-        "Estruturar tokens em primitive → semantic → component mantendo aliases legados",
-        "Proteger contrato, redirecionamentos, tokens e containers por testes de escopo",
-        "Obter três críticas adversariais independentes e resolver cada achado acionável",
-        "Rodar task contract, test:scope, gate e auditoria visual proporcional às superfícies afetadas",
-        "Migrar a paleta em runtime para a direcao autorizada em 06/09/2026 e provar nas superficies de entrada"
+        "Criar DESIGN_SYSTEM.md como fonte canônica e transformar os documentos antigos em redirecionamentos ✅ (docs/agents/DESIGN_SYSTEM.md é a fonte; os antigos encaminham)",
+        "Registrar a direção Casa comum, alternativas e autorização R2 na ADR ✅ (ADR-20260901-design-system)",
+        "Estruturar tokens em primitive → semantic → component mantendo aliases legados ✅ (packages/tokens/src/tokens.json é a fonte; tokens.css é gerado por scripts/tokens/generate.mjs e o teste de contrato compara)",
+        "Proteger contrato, redirecionamentos, tokens e containers por testes de escopo ✅ (tests/scope/design-*.test.mjs, 114 escopo verdes)",
+        "Obter três críticas adversariais independentes e resolver cada achado acionável ✅ (três PASS no ADR)",
+        "Rodar task contract, test:scope, gate e auditoria visual proporcional às superfícies afetadas ✅",
+        "Migrar a paleta em runtime para a direcao autorizada em 06/09/2026 e provar nas superficies de entrada ✅ (token source migrado; capturas de entrada em 375/768/1440)",
+        "Fechar a violação registrada no próprio proof: o parágrafo sobre a foto no shell público escrevia com 82% de opacidade, contra a regra 4.2 (tons suaves derivam de mistura opaca, nunca de reduzir a opacidade do texto) ✅ 16/09 (lote AD): criado o papel semantic.text-on-image-soft (mistura opaca de paper-0 com ink-900) em tokens.json, regenerado, aplicado no shell público (onboarding.module.css), documentado em DESIGN_SYSTEM 4.2 e travado em tests/scope/design-tokens.test.mjs; captura .visual/recon-loteAD-token-imagem de /consent e /onboarding, 0 achados"
       ],
       "proof": [
         "Baseline: DESIGN_SPEC e VISUAL_GUIDE tinham autoridade concorrente; EXP-004 não tinha vencedor",
@@ -803,7 +804,9 @@
         "2026-09-06: gate completo verde (lint/typecheck/test/secrets) apos migracao; 101 testes de escopo incluindo o de contraste AA sobre a paleta nova; pnpm build ok; apps/mobile vitest 51/51; expo export android bundlou 1033 modulos.",
         "2026-09-06: tela de entrada web (/login, /signup) com escolha explicita entrar/criar conta — 375/768/1440 sem overflow horizontal, sem alvo de toque abaixo de 44px, sem texto abaixo de 13px. Auditoria visual do loop nao rodou: exige stack Supabase, que esta fora do ar neste ambiente.",
         "2026-09-06: PENDENTE — .visualCopy > span usa branco a 80% de opacidade sobre a foto do painel; DESIGN_SYSTEM 4.2 proibe derivar tom suave de opacidade. Falta um papel de texto sobre imagem no sistema.",
-        "2026-09-06: PENDENTE — mobile: boas-vindas e passo de e-mail existem e compilam, mas o envio do link nao esta ligado (client nativo com detectSessionInUrl:false, sem callback de deep link). Runtime nativo NAO verificado: sem emulador/aparelho nesta sessao."
+        "2026-09-06: PENDENTE — mobile: boas-vindas e passo de e-mail existem e compilam, mas o envio do link nao esta ligado (client nativo com detectSessionInUrl:false, sem callback de deep link). Runtime nativo NAO verificado: sem emulador/aparelho nesta sessao.",
+        "Lote AD 16/09/2026: a lacuna de papel de texto sobre imagem foi fechada. O token é derivado de mistura OPACA (--semantic-text-on-image-soft = color-mix(paper-0 84%, ink-900)), não de opacidade arbitrária; o teste de escopo passou a exigir o nome no conjunto canônico. Prova de runtime: .visual/recon-loteAD-token-imagem cobre /consent (painel sobre a foto, com o parágrafo do shell) e /onboarding (a entrada da prancha 36) em 375/768/1440, 0 achados, rev 7c1ff93. GATE VERDE exit 0 (log .visual/gate-loteAD.log)",
+        "Fora do escopo desta sessão por instrução do dono (16/09): o item mobile do DS-001 (boas-vindas e passo de e-mail compilam mas o envio do link não está ligado no cliente nativo) permanece aberto, junto com a prova de runtime nativo"
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/DS-001.task.yml",
@@ -817,8 +820,8 @@
         "Experimento de baseline | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md",
         "Processo atual autorizado | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "7c1ff93",
       "dependencies": []
     },
     {
@@ -2587,15 +2590,15 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
       "description": "As telas /salvos, /recommendations e /events aplicavam a classe tabs--secondary no componente de abas e nenhum arquivo de estilo a definia; o build fixado do HeroUI nao aplica o slot da variante secondary (registrado em (shell)/salvos/page.tsx). Medido: fileira esticada na largura inteira e nenhuma marca na aba ativa. A correcao e uma regra unica em apps/web/app/globals.css que as tres telas herdam: borda inferior de 2px em --semantic-action-primary, peso 600 e cor no item [data-selected=true], a mesma aparencia que /mercado ja renderiza. A fileira passou a ter largura de conteudo e o chevron de rolagem que o HeroUI injeta (16x16, reprova a regua de alvo de toque 44x44 do produto) foi escondido; a pagina nao rola em 375. tests/unit/visual/tab-variant-rule.test.ts reprova qualquer classe modificadora (name--modifier) usada nas telas sem regra em CSS do produto, fechando o mecanismo e nao apenas o caso.",
       "checklist": [
         "Regra unica em globals.css marca a aba ativa nas tres telas ✅",
         "Teste reprova classe modificadora aplicada sem regra, com controle positivo e negativo ✅",
         "Runtime confirma [role=tab][data-selected=true] com borda de 2px e peso 600 em 375/768/1440 ✅ 16/09 (lote AC): medido nas TRÊS telas pela sonda .visual/recon-loteAC-tabs/probe-membro1.json (2px, rgb(22,71,52), peso 600, sem overflow). Duas medições erradas foram descartadas no caminho: a primeira pegou o [role=tab] da navegação primária em /events, e a segunda usou o ator visual@, que não tem evento próprio — o grupo de abas de participação não renderiza nesse caso (hasOwnEvents, events/page.tsx:912). Com membro1 a aba ativa é 'Organizando' e mede 2px/600",
         "Capturas validas de /salvos, /recommendations e /events com 0 achados em 375/768/1440 ✅ 16/09 (lote AC): .visual/recon-loteAC-final, runnerRevision d2012429, runnerDirty=FALSE (o único untracked saiu do caminho durante a corrida), 3/3 válidas por rota, 0 achados e 0 failedRequests. A citação anterior (runnerRevision 8c29cd2, árvore limpa) era irrecuperável — nenhum dos 153 report.json de .visual a continha (achado da revisão independente)",
-        "Gate completo verde ✅ 16/09 (lote AC): GATE VERDE exit 0 (lint 9s, typecheck 20s, build 126s, test 42s, secrets 7s). Contagens reais medidas, não estimadas: 887 unit + 189 privacy/scope + 114 scope (apps/mobile 76, apps/web 19). O número '826 unit' que constava aqui estava obsoleto",
-        "Revisao independente (o contrato RECON-045 exige reviewer_must_differ_from_executor) — executada em 16/09 com veredito FAIL por citação irrecuperável: o card apontava uma captura em runnerRevision 8c29cd2 com árvore limpa que não existia em nenhum report.json de .visual, e a sonda de estilo não tinha artefato. O lote AC produziu os dois (run limpo em d201242 e probe.json) e devolveu o material ao mesmo revisor para novo veredito"
+        "Gate completo verde ✅ 16/09 (lote AC): GATE VERDE exit 0 com log inteiro em .visual/gate-loteAC.log — lint 8s, typecheck 21s, build 107s, test 39s, secrets 8s. Contagens reais medidas nesse log: 887 unit + 189 privacy/scope + 114 scope (apps/mobile 76, apps/web 19). O número '826 unit' que constava aqui estava obsoleto",
+        "Revisao independente (reviewer_must_differ_from_executor) ✅ 16/09: três rodadas com o mesmo revisor, em sessão separada. A primeira deu FAIL por citação irrecuperável; a segunda manteve FAIL por três pontos estreitos (/events sem ator com evento próprio, gate sem log, linhas desmentidas anexadas em vez de retratadas); a terceira deu PASS em (a) regra única, (b) teste com controle positivo e negativo, (c) capturas e aba ativa nas três telas em 375/768/1440, (d) gate completo com log. Ressalva já tratada: o probe passou a medir também aria-selected (true nas nove medições)"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-045.task.yml -> EXIT=0, 1 contrato valido",
@@ -2603,7 +2606,8 @@
         "RETRATADA em 16/09 (lote AC): a citação anterior (runnerRevision 8c29cd2, arvore limpa) era irrecuperável — nenhum dos 153 report.json de .visual a continha, e todos tinham runnerDirty=true (achado da re-revisão independente). Prova viva: capture.mjs em /salvos, /recommendations e /events -> .visual/recon-loteAC-final, runnerRevision d2012429, runnerDirty=FALSE, 3/3 válidas por rota, 0 achados e 0 failedRequests em 375/768/1440",
         "RETRATADA em 16/09 (lote AC): o número '826 unit' que constava aqui estava obsoleto. npx pnpm@11.18.0 gate -> EXIT=0, GATE VERDE (lint 8s, typecheck 21s, build 107s, test 39s, secrets 8s), log completo em .visual/gate-loteAC.log; contagens reais medidas: 887 unit + 189 privacy/scope + 114 scope (apps/mobile 76, apps/web 19)",
         "Lote AC 16/09/2026: .visual/recon-loteAC-final (runnerRevision d2012429, runnerDirty=false, valid=true, invalid=0, high=0) cobre /salvos, /recommendations, /events, /communities, /communities/[id], /communities/[id]/admin/media, /events/novo, /events/[id]/perguntas e as cinco rotas de /configuracoes em 375/768/1440",
-        "Sonda de estilo em scripts/visual/probe-tab-style.mjs (artefato .visual/recon-loteAC-tabs/probe-membro1.json): /salvos e /recommendations com borda de 2px e peso 600 nas três larguras; /events idem quando o ator tem evento próprio (membro1)"
+        "Sonda de estilo em scripts/visual/probe-tab-style.mjs (artefato .visual/recon-loteAC-tabs/probe-membro1.json): /salvos e /recommendations com borda de 2px e peso 600 nas três larguras; /events idem quando o ator tem evento próprio (membro1)",
+        "Fechamento 16/09/2026 (lote AD): re-revisão independente final deu PASS nos quatro itens. O probe grava também aria-selected=true no elemento ativo, nas três telas e nas três larguras — o item do contrato sobre o anúncio para leitor de tela deixou de ser o único sem medição (artefato .visual/recon-loteAC-tabs/probe-membro1.json)"
       ],
       "tests": [
         "tests/unit/visual/tab-variant-rule.test.ts",
@@ -2617,7 +2621,8 @@
       ],
       "dependencies": [],
       "updatedAt": "2026-09-16",
-      "sourceRevision": "d201242"
+      "sourceRevision": "7c1ff93",
+      "completedAt": "2026-09-16"
     },
     {
       "id": "RECON-030-GUIA-FOTOS",

@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 91 frentes · 14 agora · 12 bloqueadas · 34 concluídas · 2 drifts
+**Mapa:** 91 frentes · 13 agora · 12 bloqueadas · 35 concluídas · 2 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -23,7 +23,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **RECON-029-EVENTO-PERGUNTA** · P1 · Evento: pergunta ao organizador (prancha 67) e rotas de criar/editar
 - **RECON-032** · P1 · RECON-032: Salvos, denuncia do membro, conversa por URL e ajuda com canal real
 - **RECON-034** · P1 · RECON-034: imagem de comunidade — faixa e miniatura (pranchas 42/43)
-- **RECON-045** · P1 · A classe tabs--secondary nao tinha regra e a aba ativa sumia em tres telas
 - **RECON-AUTH-ENTRADA-WEB** · P1 · Web: entrada fiel à prancha 36-web-auth-entrada sem tocar o mecanismo
 - **RECON-W00-FUNDACAO** · P1 · W00: baseline, contratos e fundação da reconstrução web
 - **RECON-W00-TELAS** · P1 · Quatro telas da reconstrucao web saem do placeholder

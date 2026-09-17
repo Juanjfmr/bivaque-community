@@ -497,7 +497,7 @@
   display: block;
   max-width: 530px;
   margin-top: 18px;
-  color: color-mix(in srgb, var(--semantic-text-on-strong) 82%, transparent);
+  color: var(--semantic-text-on-image-soft);
   font-size: var(--semantic-typography-body-size);
   line-height: var(--semantic-typography-body-line-height);
 }

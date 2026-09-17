@@ -66,6 +66,11 @@ for (const viewport of VIEWPORTS) {
           0,
         ),
         activeLabel: active ? (active.textContent ?? "").trim().slice(0, 30) : null,
+        // O contrato do RECON-045 tambem exige que o anuncio da aba selecionada
+        // para leitor de tela continue correto. O probe media so o marcador
+        // visual (data-selected); a ressalva da revisao independente foi que
+        // aria-selected nao tinha medicao propria.
+        ariaSelected: active ? active.getAttribute("aria-selected") : null,
         firstActiveLabel: anyActive ? (anyActive.textContent ?? "").trim().slice(0, 30) : null,
         borderBottomWidth: style ? style.borderBottomWidth : null,
         borderBottomColor: style ? style.borderBottomColor : null,
