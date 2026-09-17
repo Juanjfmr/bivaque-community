@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(16);
+select plan(17);
 
 \ir fixtures/foundation.inc
 
@@ -124,6 +124,20 @@ select is(
   ),
   false,
   'type off delivers by no channel'
+);
+
+-- A revisao independente de 16/09/2026 mediu que a assercao acima so cobria
+-- in_app: o rotulo prometia "nenhum canal" e o email nao era exercitado. O
+-- mesmo tipo desligado precisa ser negado no email tambem — e o caminho que o
+-- despachante do outbox usa (outbox_delivery_allowed le esta funcao por canal).
+select is(
+  private.notification_channel_allows(
+    'event_rsvp',
+    'email',
+    '10000000-0000-4000-8000-000000000001'
+  ),
+  false,
+  'type off also delivers by no email, not only in_app'
 );
 
 select is(

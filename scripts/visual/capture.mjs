@@ -1315,9 +1315,21 @@ async function main() {
 
       const page = await context.newPage()
       const consoleErrors = []
+      // "0 achados" e a auditoria MECANICA (alvo de toque, contraste, overflow):
+      // ela nao ve um 404 de imagem. Sem gravar QUAL recurso falhou, o objeto
+      // ausente fica invisivel no relatorio — foi assim que 84 erros de console
+      // em /communities/[id] passaram como "0 achados" ate a revisao independente
+      // do RECON-034 (16/09/2026) medir a fixture contra o caminho que o app
+      // assina. O status entra ao LADO da mensagem, sem mudar o veredito do proof.
+      const failedRequests = []
       let pageErrors = 0
       page.on("pageerror", () => {
         pageErrors += 1
+      })
+      page.on("response", (failed) => {
+        if (failed.status() >= 400) {
+          failedRequests.push(`${failed.status()} ${failed.url()}`.slice(0, 220))
+        }
       })
       page.on("console", (message) => {
         if (message.type() === "error") consoleErrors.push(message.text().slice(0, 200))
@@ -1440,6 +1452,7 @@ async function main() {
           screenshot: fold,
           screenshotFull: full,
           consoleErrors: consoleErrors.splice(0),
+          failedRequests: failedRequests.splice(0),
           ...audit,
         })
       } catch (error) {
@@ -1521,6 +1534,7 @@ function writeResults(runDir, results, authenticated) {
       lines.push(`- fold: \`${entry.screenshot}\` · full: \`${entry.screenshotFull}\``)
     }
     for (const error of entry.consoleErrors ?? []) lines.push(`- console error: ${error}`)
+    for (const failed of entry.failedRequests ?? []) lines.push(`- failed request: ${failed}`)
     if (findings.length === 0) {
       lines.push(
         entry.proof?.valid

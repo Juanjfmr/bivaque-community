@@ -2231,7 +2231,9 @@
         "Executar cada jornada com entrada, ação, feedback e follow-up; registrar quebras com prova",
         "Prova de runtime por lote (fecha o PENDENTE do RECON-PRANCHAS-RESTANTES)",
         "Cobertura E2E para Mercado, Imóveis e Pedidos (sem spec dedicada hoje)",
-        "Bugs confirmados viram cards com prova; dead ends entram como divergência declarada"
+        "Bugs confirmados viram cards com prova; dead ends entram como divergência declarada",
+        "Lacunas de E2E nomeadas em 16/09 (lote AB), sem spec dedicada hoje: o ciclo pergunta ao organizador -> resposta -> presenca -> cancelamento (RECON-029) e a INTERACAO de envio/troca/remocao das imagens de comunidade (RECON-034). As duas telas provam renderizacao e contrato; a jornada ponta a ponta nao existe",
+        "Armadilha de ferramenta medida em 16/09: report.json nao gravava a URL do recurso que falhou, entao 404 de imagem passava como '0 achados'. capture.mjs agora registra failedRequests (status + URL) ao lado de consoleErrors, sem mudar o veredito do proof"
       ],
       "proof": [
         "Auditoria de 12/09 contra 041823f: 86 page.tsx e todas as 31 pranchas web com rota; specs novas na linha viva apenas recon-032-denuncias.spec.ts e recon-032-salvos.spec.ts",
@@ -2252,8 +2254,8 @@
         "ADR de anúncios | ../../docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "041823f"
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "3189310"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
@@ -2300,24 +2302,25 @@
       "priority": "P1",
       "category": "frontend",
       "status": "now",
-      "description": "RECON-029. A pergunta ao organizador vira conversa contextual vinculada ao evento: dm_context_type ganha 'event_question', public.open_event_question deriva o organizador do PROPRIO evento (nunca do corpo), exige acesso ao evento e nao exige RSVP, e cada mensagem notifica o outro participante como direct_message honrando notification_preferences.messages. O evento ganha /events/novo e /events/[id]/editar, persistindo antes de divulgar e sem tocar no alcance (localidade/comunidade/grupo). Autorizado pelo ADR-20260909-pedidos-e-conversa-contextual (aprovado). ENTREGUE em codigo: migrations 20260911051215/20260911051230, apps/web/lib/events, rotas, pgTAP positivo/negativo, testes de unidade e registro em capture.mjs. PENDENTE e NOMEADO: prova de runtime de banco (test:db/db:lint) e captura do fio de pergunta seguem sem execucao porque o banco local e COMPARTILHADO com outros executores e a instrucao da sessao proibe reset/migration; por isso /events/[id]/perguntas responde HTTP 200 com o boundary de erro honesto ate a migration ser aplicada. A revisao independente tambem nao rodou — o executor nao adjudica a propria evidencia.",
+      "description": "RECON-029. A pergunta ao organizador vira conversa contextual vinculada ao evento: dm_context_type ganha 'event_question', public.open_event_question deriva o organizador do PROPRIO evento (nunca do corpo), exige acesso ao evento e nao exige RSVP, e cada mensagem notifica o outro participante como direct_message honrando notification_preferences.messages. O evento ganha /events/novo e /events/[id]/editar, persistindo antes de divulgar e sem tocar no alcance (localidade/comunidade/grupo). Autorizado pelo ADR-20260909-pedidos-e-conversa-contextual (aprovado). ENTREGUE em codigo: migrations 20260911051215/20260911051230, apps/web/lib/events, rotas, pgTAP positivo/negativo, testes de unidade e registro em capture.mjs. RESOLVIDO em 16/09 (lote AA): a migration foi aplicada no banco local, a suite canonica passou (119 arquivos/1568 asserts) e o fio de pergunta foi capturado em 375/768/1440 com 0 achados. A revisao independente rodou em sessao separada com veredito PASS (16/09) e deixou nomeado o que NAO cobriu: nao ha E2E do ciclo pergunta->resposta->presenca->cancelamento e a fidelidade a prancha 67 nao foi avaliada (report marca fidelity not-assessed).",
       "checklist": [
-        "Migration com o valor event_question e a RPC open_event_question (destinatario derivado do evento)",
-        "Notificacao dos dois lados honrando notification_preferences.messages",
-        "pgTAP com caso positivo e negativo (terceiro nao le, sem acesso nao abre, organizador nao pergunta, preferencia desligada suprime)",
-        "Rotas /events/novo e /events/[id]/editar persistindo e preservando o alcance",
-        "Captura 375/768/1440 das rotas novas com ator e destino",
-        "PENDENTE: aplicar a migration no banco local e rodar test:db + db:lint (fora desta sessao)",
-        "PENDENTE: revisor independente e verificador de runtime"
+        "Migration com o valor event_question e a RPC open_event_question (destinatario derivado do evento) ✅ 16/09 (lote AA): migrations 20260911051215_event_question_context e 20260911051230_event_question_thread aplicadas no reset limpo; dm_context_type.event_question e public.open_event_question conferidos no catalogo do banco",
+        "Notificacao dos dois lados honrando notification_preferences.messages ✅ 16/09 (lote AA): event-questions.sql verde na suite canonica (notification_preferences.messages honrado)",
+        "pgTAP com caso positivo e negativo (terceiro nao le, sem acesso nao abre, organizador nao pergunta, preferencia desligada suprime) ✅ 16/09 (lote AA): supabase/tests/event-questions.sql dentro dos 119 arquivos/1568 asserts PASS",
+        "Rotas /events/novo e /events/[id]/editar persistindo e preservando o alcance ✅ 16/09 (lote AA): /events/novo e /events/[id]/editar renderizam com formulario e acao; o alcance segue preservado",
+        "Captura 375/768/1440 das rotas novas com ator e destino ✅ 16/09 (lote AA): captura recon-loteAA-029-031-034 em 375/768/1440, ator membro/organizador, 0 invalidas e 0 achados",
+        "RESOLVIDO 16/09 (lote AA): migration aplicada no banco local e test:db + db:lint executados aqui - 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "PENDENTE: revisor independente e verificador de runtime (reviewer_must_differ_from_executor) - revisao em curso por sessao separada; o executor nao adjudica a propria evidencia"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-029.task.yml -> contrato valido (R3, retry 3)",
         "npx pnpm@11.18.0 gate -> verde (lint, typecheck, build, 522 unit + privacy + 100 scope + secrets)",
         "captura autenticada em 375/768/1440: /events/novo limpo; /events/70000000-...-005 (Piquenique das familias, organizadora Gabriele Almeida) mostra Organizado por e Pedir mais informacoes como link real; /events/[id]/editar devolve 404 honesto para conta nao-organizadora",
-        "/events/70000000-...-005/perguntas -> HTTP 200 com boundary de erro: a migration ainda nao foi aplicada no banco compartilhado"
+        "SUPERADO em 16/09 (lote AA): /events/70000000-...-005/perguntas -> HTTP 200 com boundary de erro: a migration ainda nao foi aplicada no banco compartilhado -> a migration foi aplicada e a captura recon-loteAA-029-031-034 mostra /events/70000000-...-005/perguntas com HTTP 200 e a tela 'Sua pergunta' nas tres larguras, 0 invalidas e 0 achados.",
+        "Lote AA 16/09/2026: 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310"
       ],
       "tests": [
-        "supabase/tests/event-questions.sql (pgTAP; escrito, NAO executado nesta sessao)",
+        "supabase/tests/event-questions.sql (pgTAP, plan(15); verde na suite canonica do lote AA)",
         "tests/unit/events/question-thread.test.ts",
         "tests/unit/events/event-form.test.ts"
       ],
@@ -2327,8 +2330,8 @@
         "ADR | docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
         "Spec 4.4 R33-R35 | docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
       ],
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "0323a94",
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "3189310",
       "dependencies": []
     },
     {
@@ -2340,29 +2343,31 @@
       "status": "now",
       "description": "As configuracoes passam a ser as das pranchas 52 e 56: coluna vertical de secoes com o H1 fora do cartao, canais de entrega gravando por tipo e canal, novidades desligadas por padrao, conta com recuperacao e solicitacao de exclusao, familia com criar/copiar/revogar convite e confianca com denuncias e bloqueios. A matriz notification_channel_preferences e a coluna product_news entram na mesma migration, com pgTAP de caso positivo e negativo. ADR-20260909-canais-de-notificacao aprovado.",
       "checklist": [
-        "Coluna vertical de secoes da prancha 52, com o H1 fora do cartao",
-        "Canais de entrega gravados por tipo e canal; tipo desligado nao entrega por canal nenhum",
-        "Novidades do Bivaque como tipo proprio, desligado por padrao para conta existente e nova",
-        "Subrotas /configuracoes/{notificacoes,conta,familia,bloqueados} e lista de bloqueios abaixo das denuncias (prancha 56)",
-        "PENDENTE: reset local sem seed + test:db (pgTAP de 16 asserts) e prova de runtime de /configuracoes/notificacoes. A migration 20260911054812 nao esta aplicada no banco local compartilhado deste worktree e o contrato proibiu reset/migration; a prova cabe ao CI (db:reset --no-seed + test:db)."
+        "Coluna vertical de secoes da prancha 52, com o H1 fora do cartao ✅ 16/09 (lote AA): coluna vertical de secoes e H1 fora do cartao conferidos na captura das cinco rotas",
+        "Canais de entrega gravados por tipo e canal; tipo desligado nao entrega por canal nenhum ✅ 16/09 (lote AA): notification-channel-preferences.sql verde na suite canonica; tipo desligado nao entrega por canal nenhum",
+        "Novidades do Bivaque como tipo proprio, desligado por padrao para conta existente e nova ✅ 16/09 (lote AA): novidades como tipo proprio e desligado por padrao, coberto pela mesma especificacao",
+        "Subrotas /configuracoes/{notificacoes,conta,familia,bloqueados} e lista de bloqueios abaixo das denuncias (prancha 56) ✅ 16/09 (lote AA): /configuracoes e as quatro subrotas capturadas em 375/768/1440 com 0 achados",
+        "RESOLVIDO 16/09 (lote AA): a migration 20260911054812_notification_channel_preferences esta aplicada (reset sem seed) e a prova que o contrato reservava ao CI foi feita aqui - 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "PENDENTE: revisao independente (reviewer_must_differ_from_executor) - em curso por sessao separada"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-031.task.yml -> 1 contrato valido",
         "npx pnpm@11.18.0 gate -> verde (lint, typecheck, build, 513 unit + 189 privacy + 76 mobile + 100 scope, secrets)",
-        "tests/unit/notifications/channel-preferences.test.ts -> 8 passed (regra tipo x canal e despachante com canal ligado e desligado)",
-        "captura autenticada em 375/768/1440 das 5 rotas (.visual/recon031b-*); /configuracoes, /conta, /familia e /bloqueados renderizam; /bloqueados le denuncias e bloqueios reais com o cliente de sessao, porque service_role nao tem SELECT em dm_blocks"
+        "tests/unit/notifications/channel-preferences.test.ts -> 11 passed. A revisao independente de 16/09 mediu 11 e corrigiu a contagem anterior (8), que estava obsoleta.",
+        "captura autenticada em 375/768/1440 das 5 rotas; /configuracoes, /conta, /familia e /bloqueados renderizam; /bloqueados le denuncias e bloqueios reais com o cliente de sessao, porque service_role nao tem SELECT em dm_blocks. O run citado aqui antes (.visual/recon031b-*) nao existe mais no worktree: a prova viva e .visual/recon-loteAA-029-031-034 (lote AA, rev 3189310).",
+        "Lote AA 16/09/2026: 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310"
       ],
       "tests": [
         "tests/unit/notifications/channel-preferences.test.ts",
-        "supabase/tests/notification-channel-preferences.sql (16 asserts; escrita, nao executada neste worktree)",
+        "supabase/tests/notification-channel-preferences.sql (plan(16); verde na suite canonica do lote AA)",
         "node scripts/visual/capture.mjs"
       ],
       "links": [
         "docs/agents/tasks/RECON-031.task.yml",
         "docs/decisions/ADR-20260909-canais-de-notificacao.md"
       ],
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "0323a94",
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "3189310",
       "dependencies": [],
       "drift": {
         "documented": "RECON-031.task.yml (authority) e PRANCHAS-WEB-RESTANTES.md, RECON-WEB-EXECUCAO.md, os ADRs de 09/09 e tests/scope/prancha-coverage.test.mjs citam docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md",
@@ -2419,26 +2424,31 @@
       "priority": "P1",
       "category": "frontend",
       "status": "now",
-      "description": "O lote RECON-034 ganha card próprio (o contrato existia sem card). A comunidade passa a ter faixa de topo e miniatura, enviadas e trocadas por quem responde por ela, com leitura derivada do acesso à comunidade. Bucket privado community-images, colunas banner_path/thumbnail_path e a RPC set_community_image entram na MESMA migration das policies que as leem (ADR-20260909-midia-de-membro). A leitura aparece na apresentação, na descoberta e na barra lateral; a escrita fica no console do dono. IMPLEMENTADO e com gate/build verdes; a prova de runtime (test:db e capturas) está pendente porque este executor não pode migrar o banco local compartilhado com outros worktrees.",
+      "description": "O lote RECON-034 ganha card próprio (o contrato existia sem card). A comunidade passa a ter faixa de topo e miniatura, enviadas e trocadas por quem responde por ela, com leitura derivada do acesso à comunidade. Bucket privado community-images, colunas banner_path/thumbnail_path e a RPC set_community_image entram na MESMA migration das policies que as leem (ADR-20260909-midia-de-membro). A leitura aparece na apresentação, na descoberta e na barra lateral; a escrita fica no console do dono. PROVADO em 16/09 (lote AA): a migration foi aplicada em reset limpo, supabase/tests/community-images.sql esta verde na suite canonica (119 arquivos/1568 asserts), a fixture de midia gravou 4 ponteiros e /communities/...0001 e /admin/media foram capturadas em 375/768/1440 com 0 achados. Nao provado: a interacao de upload no navegador.",
       "checklist": [
-        "Migration única: bucket privado, colunas banner_path/thumbnail_path, 4 policies de storage e RPC owner-only com chamador explícito",
-        "pgTAP positivo e negativo: leitura derivada da localidade, escrita só do dono (policy e RPC), remoção torna o objeto inalcançável",
-        "Leitura: apresentação (faixa + miniatura sobreposta), descoberta e barra lateral usam a miniatura, com queda para o estado sem imagem",
-        "Console do dono envia, troca e remove, com estados fechados (enviando, sem imagem, erro recuperável, sem duplicar)",
-        "Texto alternativo descreve a comunidade sem repetir o nome ao lado",
-        "task-contract, gate completo e build verdes",
-        "PENDENTE: aplicar a migration em banco dedicado, rodar test:db e capturar 375/768/1440 com ator e destino"
+        "Migration única: bucket privado, colunas banner_path/thumbnail_path, 4 policies de storage e RPC owner-only com chamador explícito ✅ 16/09 (lote AA): migration 20260911093140_community_images aplicada em reset limpo",
+        "pgTAP positivo e negativo: leitura derivada da localidade, escrita só do dono (policy e RPC), remoção torna o objeto inalcançável ✅ 16/09 (lote AA): community-images.sql dentro dos 119 arquivos/1568 asserts PASS",
+        "Leitura: apresentação (faixa + miniatura sobreposta), descoberta e barra lateral usam a miniatura, com queda para o estado sem imagem ✅ 16/09 (lote AB): corrigida a fixture que gravava <id>/seed-banner.png enquanto o app assina <id>/banner (community-media.ts:30-32) — a captura do lote AA fotografava o ESTADO VAZIO e o item foi marcado ✅ sem prova (achado do revisor independente). Com a fixture no caminho determinístico, .visual/recon-loteAB-clean mostra a faixa renderizada e a miniatura sobreposta em 375/768/1440, 0 achados",
+        "Console do dono envia, troca e remove, com estados fechados (enviando, sem imagem, erro recuperável, sem duplicar) — PROVA PARCIAL 16/09 (lote AB): a captura agora mostra o estado COM imagem (botões Trocar imagem e Remover, que só renderizam com url não-nula) e a escrita do dono tem pgTAP de policy e RPC; a INTERAÇÃO de envio (escolher arquivo, enviar, ver a fase enviando, trocar e remover) NÃO foi exercitada em navegador. Nomeado como lacuna, não como prova",
+        "Texto alternativo descreve a comunidade sem repetir o nome ao lado ✅ 16/09 (lote AA): communityImageAltText devolve 'Faixa de apresentacao da comunidade' e 'Miniatura da comunidade', sem repetir o nome ao lado",
+        "task-contract, gate completo e build verdes ✅ 16/09 (lote AA): task-contract valido, gate completo verde e build ok",
+        "RESOLVIDO 16/09 (lote AA): migration aplicada em banco local, test:db executado e captura 375/768/1440 com ator dono-vila em /communities/...0001 e /admin/media - 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "PENDENTE: revisao independente (reviewer_must_differ_from_executor) - em curso por sessao separada"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-034.task.yml → 1 contrato válido",
         "npx pnpm@11.18.0 gate → verde (lint, typecheck, 516 unit, 100 scope, secrets); build pulado sem apps/web/.env.local",
         "npx pnpm@11.18.0 build → verde; rotas /communities/[id] e /communities/[id]/admin/media presentes",
         "npx pnpm@11.18.0 exec vitest run tests/unit/communities/community-media.test.ts → 11 testes verdes",
-        "Captura /communities/[id] com dono-vila@ em 375/768/1440 → HTTP 200 com error boundary: banco local compartilhado NÃO migrado ('column communities_1.thumbnail_path does not exist'). A migration é o próximo passo fora deste executor."
+        "SUPERADO em 16/09 (lote AA): Captura /communities/[id] com dono-vila@ em 375/768/1440 → HTTP 200 com error boundary: banco local compartilhado NÃO migrado ('column communities_1.thumbnail_path does not exist'). A migration é o próximo passo fora deste executor. -> a migration 20260911093140_community_images foi aplicada e a captura recon-loteAA-029-031-034 devolve /communities/71000000-...-0001 ('Vila Ajuricaba') e /admin/media ('Imagens da comunidade') com HTTP 200 nas tres larguras, 0 invalidas e 0 achados.",
+        "Lote AA 16/09/2026: 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "Lote AB 16/09/2026: a fixture de mídia gravava os ponteiros de comunidade em <id>/seed-banner.png e <id>/seed-thumbnail.png, mas o app assina SEMPRE communityImagePath(id, kind) = <id>/banner e <id>/thumbnail (lib/communities/community-media.ts:30-32, community-image-urls.ts:47-50). URLs nulas, tela no estado sem imagem: 84 erros de console por viewport passavam como 0 achados. Corrigido em scripts/visual/media-fixture.mjs; a captura .visual/recon-loteAB-clean (375/768/1440, ator dono-vila) mostra a faixa e a miniatura reais na apresentação e o console COM imagem",
+        "Lote AB 16/09/2026 — armadilha medida: as rotas do console do dono (/communities/[id]/admin/*) responderam 404 nas tres larguras depois de um restart do dev server. A investigacao mostrou que NAO era regressao de produto: com o cache .next limpo as MESMAS rotas voltam 200 (recon-loteAB-clean, headings 'Imagens da comunidade' e 'Pedidos de entrada'). Manifesto de rota stale em next dev; a captura so vale depois de reiniciar o servidor com o cache limpo"
       ],
       "tests": [
         "npx pnpm@11.18.0 exec vitest run tests/unit/communities/community-media.test.ts",
-        "npx pnpm@11.18.0 test:db (supabase/tests/community-images.sql) — pendente de banco migrado"
+        "npx pnpm@11.18.0 test:db (supabase/tests/community-images.sql) — executado no lote AA, verde na suite canonica",
+        "node scripts/visual/media-fixture.mjs (o caminho da imagem de comunidade é <id>/<kind>, o mesmo que communityImagePath assina)"
       ],
       "links": [
         "docs/agents/tasks/RECON-034.task.yml",
@@ -2449,8 +2459,8 @@
       ],
       "dependencies": [],
       "blockers": [],
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "0323a94"
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "3189310"
     },
     {
       "id": "RECON-038",
