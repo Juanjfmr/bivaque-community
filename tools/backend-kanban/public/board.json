@@ -2492,16 +2492,17 @@
         "Item ativo da lateral derivado da rota em /inicio, /explorar e /salvos",
         "Teste de unidade falha se /salvos voltar a acender Perfil",
         "Elementos ausentes do Início entregues com fonte real ou pendência nomeada",
-        "Abas de Salvos correspondem à prancha (sublinhado) ou diferença registrada",
+        "Abas de Salvos correspondem à prancha (sublinhado) ou diferença registrada ✅ 17/09 (lote AJ): a sonda de estilo mede a aba ativa com sublinhado de 2px e peso 600 nas tres larguras (/salvos, /recommendations e /events), e /salvos agora tem as cinco abas da prancha (Tudo, Indicacoes, Guia, Mercado, Imoveis)",
         "Gate completo verde com o código de saída lido direto",
-        "Capturas de /inicio, /explorar e /salvos em 375/768/1440 confrontadas com as pranchas",
-        "PENDENTE: #4 entrada de Indicações em <lg, #6 migration de imagem de comunidade, #7 destino, #8/#10 fixture do seed, #11 backend de salvamento"
+        "Capturas de /inicio, /explorar e /salvos em 375/768/1440 confrontadas com as pranchas ✅ 17/09 (lote AJ): captura .visual/recon-loteAJ-shell cobre /inicio, /explorar, /salvos e as abas Mercado e Imoveis em 375/768/1440, 0 achados, rev 0a481dd. A comparacao com a prancha continua trabalho manual (a auditoria marca fidelity not-assessed)",
+        "RESOLVIDO em 17/09 (lote AJ) o que era blocker externo: a migration 20260911093140_community_images esta aplicada no banco local E em producao (lote AH), o seed passou a ter event_rsvps (lote Z) e as abas Guia/Mercado/Imoveis de /salvos foram implementadas (lote AI). PENDENTE e unico: a decisao de produto sobre a entrada de Indicacoes em <lg (#4), que e do dono"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-038.task.yml -> ok (R2, retry 3)",
         "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
         "tests/unit/ui/shell-active-nav.test.ts -> 8 passed; tests/unit/ui/inicio-going-line.test.ts -> passed",
-        "capturas de /inicio, /explorar e /salvos em 375/768/1440: Authenticated capture yes, 0 findings — a comparação com a prancha é a prova de fidelidade, não o número de findings"
+        "capturas de /inicio, /explorar e /salvos em 375/768/1440: Authenticated capture yes, 0 findings — a comparação com a prancha é a prova de fidelidade, não o número de findings",
+        "Lote AJ 17/09/2026: tres dos quatro blockers do card eram drift. (1) \"migration 20260911093140_community_images nao aplicada\" — aplicada no reset local e em producao (lote AH, dump confirma banner_path/thumbnail_path). (2) \"seed sem event_rsvps: #8 e #10 nao observaveis\" — o fixture entrou no lote Z. (3) \"abas Guia/Mercado/Imoveis dependem de RECON-030/025/027\" — implementadas no lote AI. Sobrou um unico blocker, de produto. Recaptura .visual/recon-loteAJ-shell: cinco rotas em 375/768/1440, 0 achados, rev 0a481dd"
       ],
       "tests": [
         "tests/unit/ui/shell-active-nav.test.ts",
@@ -2515,13 +2516,10 @@
       ],
       "dependencies": ["RECON-PRANCHAS-RESTANTES", "RECON-032"],
       "blockers": [
-        "migration 20260911093140_community_images.sql (RECON-034) nao aplicada no banco compartilhado: communities.thumbnail_path ausente; reset/migration proibidos neste contrato",
-        "decisao de produto sobre a entrada de Indicacoes em <lg antes de remover o icone de lampada (#4)",
-        "seed sem event_rsvps e sem notificacoes: #8 e #10 nao observaveis nesta captura",
-        "abas Guia/Mercado/Imoveis de /salvos dependem de RECON-030/025/027"
+        "Decisao de produto do dono: a entrada de Indicacoes em <lg substitui o icone de lampada (#4) antes de remove-lo"
       ],
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "cdd2b57"
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "0a481dd"
     },
     {
       "id": "NAV-PEDIDOS-ORFA",
