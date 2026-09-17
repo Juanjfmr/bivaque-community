@@ -2273,7 +2273,7 @@
       "phase": "Launch blocker",
       "priority": "BLOCK",
       "category": "backend",
-      "status": "blocked",
+      "status": "done",
       "description": "is_suspended vive em public.profiles, cuja policy de SELECT libera a linha inteira a quem compartilha localidade ou comunidade. Qualquer membro autenticado lê o status de suspensão de terceiros pela Data API. Está na main desde o merge do PR #54. Contraria o ADR-20260901 §4.3 anti-enumeração e a decisão de que is_suspended é visível apenas para o próprio dono. Fechar exige tirar a coluna da exposição do Data API — schema e policy sobre dado pessoal, R3.",
       "checklist": [
         "Decidir o desenho: tabela própria com RLS owner-only no padrão profile_affiliations, ou view/revoke de coluna",
@@ -2293,19 +2293,19 @@
         "CI verde no 3acaadd e merge limpo não cobrem esta via: nenhum teste exercita leitura de is_suspended por terceiro.",
         "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR.",
         "2026-09-11: correcao pronta em fix/r3-suspensao-tabela (08129b9) sob ADR-20260910-suspensao-fora-da-exposicao (approved, proposto e aprovado por autorizacao do dono). Tabela profile_suspensions com RLS owner-only e forcada, grants minimos, dado existente migrado, coluna retirada de profiles. Revisao de desenho: aprovada. PERMANECE blocked ate existir prova de runtime de que a leitura por terceiro falha (pgTAP profile-suspensions.sql), que exige recriar o banco local.",
-        "2026-09-11: PROVA DE RUNTIME executada contra o stack local com a migration aplicada. Cinco condicoes, todas verificadas: (1) a coluna antiga responde \"column profiles.is_suspended does not exist\"; (2) terceiro consultando profile_suspensions de conta suspensa recebe [] mesmo com a linha existindo no banco; (3) anon recebe 42501 permission denied; (4) o proprio dono le a propria linha; (5) conta suspensa tentando publicar recebe 42501 e HTTP 403 — o veto nao regrediu. O vazamento esta fechado e o comportamento legitimo preservado."
-      ],
-      "blockers": [
-        "Decisão R3 do responsável sobre onde a coluna passa a viver e o que a UI lê no lugar"
+        "2026-09-11: PROVA DE RUNTIME executada contra o stack local com a migration aplicada. Cinco condicoes, todas verificadas: (1) a coluna antiga responde \"column profiles.is_suspended does not exist\"; (2) terceiro consultando profile_suspensions de conta suspensa recebe [] mesmo com a linha existindo no banco; (3) anon recebe 42501 permission denied; (4) o proprio dono le a propria linha; (5) conta suspensa tentando publicar recebe 42501 e HTTP 403 — o veto nao regrediu. O vazamento esta fechado e o comportamento legitimo preservado.",
+        "Fechamento 17/09/2026 (lote AH): a decisao R3 que constava como blocker existe — docs/decisions/ADR-20260910-suspensao-fora-da-exposicao.md esta status approved, aprovada por autorizacao do dono em 10/09. Os DOIS itens de pgTAP que apareciam em aberto JA estavam implementados em supabase/tests/profile-suspensions.sql: o positivo do dono (linhas 38-51: le a propria linha e o helper devolve true) e o function_privs_are sobre public.is_account_suspended (linhas 98-105: anon sem EXECUTE, authenticated com EXECUTE). O arquivo tem plan(11) e esta dentro dos 119 arquivos / 1569 asserts PASS. Os itens 5 e 6 do checklist eram drift, nao trabalho aberto",
+        "PRODUCAO 17/09/2026: a migration 20260911033327_move_suspension_out_of_profiles foi aplicada no banco real pelo db push --include-all. Conferido por dump do schema publico: public.profile_suspensions existe, a string is_suspended sumiu do schema (a coluna saiu de profiles), e o db lint remoto --level error passa limpo. O vazamento nao existe no banco de producao"
       ],
       "links": [
         "ADR | ../../docs/decisions/ADR-20260901-account-suspension.md",
         "PR merjado | https://github.com/Juanjfmr/bivaque-community/pull/54"
       ],
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "15a884d",
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "cabe1d5",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, false, false]
+      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedAt": "2026-09-17"
     },
     {
       "id": "RECON-029-EVENTO-PERGUNTA",
@@ -2928,12 +2928,12 @@
     },
     {
       "id": "BLOCK-PROD-DEPLOY-SECRETS",
-      "title": "Push de migrations para producao nao chega ao banco",
+      "title": "Deploy automatico de migrations segue inoperante (secrets ausentes)",
       "phase": "Launch blocker",
       "priority": "BLOCK",
       "category": "infra",
       "status": "blocked",
-      "description": "O workflow deploy-migrations.yml dispara em TODO push para a main e tem dois jobs: Gate e Push migrations to production. O Gate passa; o segundo morre no passo Link production project porque os tres secrets do environment production chegam vazios. Consequencia medida: o passo supabase db push nunca executa, entao nenhuma migration da campanha chega a producao, mesmo com a main contendo o trabalho. O HISTORICO ja foi reconciliado em 17/09/2026 (autorizado pelo dono): a producao nomeava os 128 registros como migration_<versao>_<nome>, entao nenhuma versao do repositorio casava e o db push veria 162 pendentes. Agora 128 casam e restam 34.",
+      "description": "O workflow deploy-migrations.yml dispara em TODO push para a main. O job Gate passa; o job Push migrations to production morre no passo Link production project porque os tres secrets do environment production chegam vazios. Nenhum push pelo CI aplica migration. O HISTORICO foi reconciliado em 17/09/2026 e as 34 migrations pendentes foram aplicadas A MAO no mesmo dia (db push --include-all do clone da main), entao o banco de producao esta em dia; o que falta e o caminho automatico, para que o proximo push na main volte a ser suficiente.",
       "checklist": [
         "Reconciliar o historico de migrations da producao (nomes migration_* de 01/09 contra as versoes do repositorio)",
         "Rodar o db push a partir do clone que tem os 162 arquivos (main), nunca do clone 29 atras",
@@ -2951,7 +2951,10 @@
         "O ambiente production NAO exige aprovacao manual: o job migrate comeca a executar direto e falha no link, o que significa que a unica barreira entre a main e o banco de producao e o secret ausente",
         "Reparo de historico executado em 17/09/2026 com autorizacao explicita do dono, em etapas verificadas. ANTES (leitura read-only de producao): 133 locais / 128 remotos / 0 casadas; os 128 nomes remotos batem EXATAMENTE com a lista do passo 1 (todos em 20260901*, de 17:08:24 a 23:28:42). Passo 1 marcou os 128 como reverted; conferencia intermediaria: 0 remotos. Passo 2 marcou os 128 equivalentes como applied. DEPOIS (a partir da main, 162 arquivos): 128 casadas, 0 remoto orfao, 34 pendentes de 20260901124348 a 20260915235000",
         "ARMADILHA MEDIDA: o clone C:\\Users\\juana\\bivaque-community esta 29 migrations atras da main (133 arquivos contra 162). Com o historico ja reparado, um db push DAQUELE clone aplicaria apenas 5 das 34 pendentes e pularia 29 EM SILENCIO — inclusive guia (saves, sugestao e artigo), capa de evento, imagens de comunidade, exclusao de conta, convite de familia e a leitura de apresentacao da comunidade. O db push tem de rodar do clone na main; o caminho do CI faz checkout da main e por isso esta correto",
-        "Auditoria previa das 34 pendentes: 5 contem operacao destrutiva e todas sao seguras contra os dados existentes — drop_legacy_market_listings e no-op guardado (o tipo legado nunca existiu na producao), move_suspension_out_of_profiles copia is_suspended=true para a tabela nova ANTES de derrubar a coluna, e os tres DELETE FROM vivem dentro de funcoes (despachante, sair-da-comunidade, expurgo por e-mail), nao no corpo da migration. member_suspended_seed e tombstone: so comentario desde 05/09, nada de persona falsa em producao"
+        "Auditoria previa das 34 pendentes: 5 contem operacao destrutiva e todas sao seguras contra os dados existentes — drop_legacy_market_listings e no-op guardado (o tipo legado nunca existiu na producao), move_suspension_out_of_profiles copia is_suspended=true para a tabela nova ANTES de derrubar a coluna, e os tres DELETE FROM vivem dentro de funcoes (despachante, sair-da-comunidade, expurgo por e-mail), nao no corpo da migration. member_suspended_seed e tombstone: so comentario desde 05/09, nada de persona falsa em producao",
+        "APLICACAO EM PRODUCAO 17/09/2026 (autorizada pelo dono): db push --linked --include-all do clone da main aplicou as 34 pendentes. O dry-run SEM --include-all recusou de proposito, apontando 20260901124348_account_suspension e 20260901124400_member_suspended_seed como anteriores a ultima migration remota (20260901190000_locality_state_codes_rpc, aplicada fora de ordem em 01/09) — foi preciso --include-all. Snapshot do schema anterior em .visual/prod-schema-antes.sql",
+        "VERIFICACAO DA APLICACAO: migration list --linked = 162 casadas, 0 pendentes, 0 remotas orfas. Dump do schema publico: 38 -> 59 tabelas (21 novas: account_deletion_requests, community_join_reasons, dm_read_states, guide_article_revisions, guide_article_sections, guide_articles, guide_correction_requests, guide_entry_saves, listing_alert_deliveries, listing_alerts, listing_photos, listing_saves, listing_status_events, listings, notification_channel_preferences, post_follows, profile_affiliations, profile_suspensions, property_details, service_request_photos, service_requests). Colunas banner_path, thumbnail_path e cover_path presentes. db lint remoto --level error passou limpo",
+        "O que continua faltando e SO o automatismo: os tres secrets do environment production. Sem eles, cada push na main roda o Gate (que passa) e falha no link — o deploy manual pelo CLI e funcional e foi o caminho usado"
       ],
       "blockers": [
         "Adicionar os tres secrets no environment production do repositorio (GitHub > Settings > Environments > production)",
@@ -2961,7 +2964,7 @@
       "updatedAt": "2026-09-17",
       "sourceRevision": "37a3352",
       "dependencies": [],
-      "completedChecklist": [true, false, false, false, false, false, false]
+      "completedChecklist": [true, true, false, false, false, false, false]
     }
   ]
 }
