@@ -2925,6 +2925,38 @@
       "sourceRevision": "cd001a6",
       "dependencies": [],
       "completedAt": "2026-09-15"
+    },
+    {
+      "id": "BLOCK-PROD-DEPLOY-SECRETS",
+      "title": "Push de migrations para producao nao chega ao banco",
+      "phase": "Launch blocker",
+      "priority": "BLOCK",
+      "category": "infra",
+      "status": "blocked",
+      "description": "O workflow deploy-migrations.yml dispara em TODO push para a main e tem dois jobs: Gate e Push migrations to production. O Gate passa; o segundo morre no passo Link production project porque os tres secrets do environment production chegam vazios. Consequencia medida: o passo supabase db push nunca executa, entao nenhuma migration da campanha chega a producao, mesmo com a main contendo o trabalho.",
+      "checklist": [
+        "Configurar SUPABASE_ACCESS_TOKEN no environment production",
+        "Configurar SUPABASE_PROJECT_ID no environment production",
+        "Configurar SUPABASE_DB_PASSWORD no environment production",
+        "Reexecutar o workflow e confirmar o passo supabase db push executando",
+        "Registrar o run verde como prova de que as migrations pendentes foram aplicadas"
+      ],
+      "proof": [
+        "Run 35178620605 (push de 88a5420, merge do trabalho da campanha na main): job Gate PASS em 1m37s; job Push migrations to production FAIL em 51s no passo Link production project, com a mensagem 'Access token not provided. Supply an access token by running supabase login or setting the SUPABASE_ACCESS_TOKEN environment variable.'",
+        "O proprio log do passo imprime SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD e SUPABASE_PROJECT_ID vazios — nao e token invalido, e secret ausente",
+        "Ja falhava antes deste merge: run 35153968162 (push de 579e4b2, 16/09) falhou no mesmo passo, tambem com o Gate verde. Nao e regressao do merge; e o estado da main desde pelo menos 16/09",
+        "Efeito medido: nenhuma migration foi aplicada em producao; o passo Push migrations fica skipped. As 29 migrations novas em relacao a main anterior seguem apenas em ambiente local/CI",
+        "O ambiente production NAO exige aprovacao manual: o job migrate comeca a executar direto e falha no link, o que significa que a unica barreira entre a main e o banco de producao e o secret ausente"
+      ],
+      "blockers": [
+        "Adicionar os tres secrets no environment production do repositorio (GitHub > Settings > Environments > production)",
+        "Reexecutar o workflow de deploy e confirmar a aplicacao das migrations pendentes"
+      ],
+      "links": [],
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "88a5420",
+      "dependencies": [],
+      "completedChecklist": [false, false, false, false, false]
     }
   ]
 }
