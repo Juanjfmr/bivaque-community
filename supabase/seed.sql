@@ -1586,3 +1586,47 @@ values (
   now() - interval '2 days'
 )
 on conflict (user_id, entry_id) do nothing;
+
+-- RECON-049 (prancha 01, card "Seu próximo encontro"): presença verificável.
+-- O seed tinha 7 eventos futuros e ZERO linhas em event_rsvps, então a copy da
+-- prancha ("Leila, Andréa e mais 18 pessoas vão") não tinha de onde sair — a
+-- lacuna estava registrada como [dado] desde a auditoria e é isto que a fecha.
+-- Cinco membros de Manaus confirmam presença no próximo evento da cidade
+-- (Piquenique das famílias). A `occurrence_date` é 2026-09-20, e não 19/09 como a
+-- tela mostra: o app a deriva de `starts_at.slice(0, 10)`, o mesmo recorte que a
+-- trigger de INSERT usa e que `home-loaders` usa para LER. O evento começa
+-- 20:36 de 19/09 em Manaus = 00:36 de 20/09 UTC — semear a data local deixava a
+-- presença invisível, que foi exatamente o defeito medido em 16/09/2026.
+insert into public.event_rsvps (event_id, user_id, status, occurrence_date)
+values
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '30000000-0000-4000-8000-000000000001',
+    'going',
+    '2026-09-20'
+  ),
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '30000000-0000-4000-8000-000000000002',
+    'going',
+    '2026-09-20'
+  ),
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '30000000-0000-4000-8000-000000000003',
+    'going',
+    '2026-09-20'
+  ),
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '30000000-0000-4000-8000-000000000004',
+    'going',
+    '2026-09-20'
+  ),
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '20000000-0000-4000-8000-000000000008',
+    'going',
+    '2026-09-20'
+  )
+on conflict (event_id, user_id, occurrence_date) do nothing;

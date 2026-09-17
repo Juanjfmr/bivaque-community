@@ -2606,26 +2606,58 @@
       "sourceRevision": "f3b37fa"
     },
     {
+      "id": "RECON-030-GUIA-FOTOS",
+      "title": "Guia: foto por referência (a prancha desenha cards com foto)",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "backend",
+      "status": "next",
+      "description": "A prancha 12 desenha os cards do guia com foto e o runtime não tem de onde tirá-la: medido em 16/09/2026, `arrival_guide_entries` não tem coluna de imagem (photo/image/banner = 0 linhas) e nenhuma tela do guia usa imagem. O item estava registrado como [dado], mas não é fixture: é coluna, caminho de upload na curadoria (/guide-queue é quem aprova) e exibição no card. Fecha junto o par da prancha 12 no julgamento.",
+      "checklist": [
+        "Migration: coluna de imagem em arrival_guide_entries + CHECK de caminho (mesmo desenho da capa de evento, 20260915160000) — o arquivo mora no bucket, a linha guarda o ponteiro",
+        "Upload na curadoria: o operador anexa a foto ao promover/aprovar a referência, com o mesmo contrato de mime e tamanho do bucket",
+        "Card do guia exibe a foto assinada (createSignedUrls em lote, como /events e /communities já fazem), com alt que não repete o nome",
+        "Fixture de mídia no scripts/visual/media-fixture.mjs para a referência semeada, e captura da rota do guia com a foto",
+        "pgTAP positivo/negativo: caminho fora da pasta, mime inválido e membro sem papel de curadoria"
+      ],
+      "proof": [
+        "Médido em 16/09/2026: select column_name from information_schema.columns where table_name = 'arrival_guide_entries' and column_name ~ 'photo|image|banner' → 0 linhas; grep de imagem em app/(shell)/guide → 0 usos",
+        "Precedente do mesmo lote de trabalho: capa de evento (20260915160000) e imagens de comunidade — mesmo desenho de coluna + trigger + assinatura em lote"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 test:db (pgTAP da coluna e do caminho)",
+        "node scripts/visual/capture.mjs com a rota do guia"
+      ],
+      "links": [
+        ".visual/compare/julgamento.md (prancha 12)",
+        "supabase/migrations/20260915160000_event_cover.sql"
+      ],
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "285059d",
+      "dependencies": [],
+      "completedAt": null
+    },
+    {
       "id": "RECON-049",
       "title": "Fechar os itens [componente] restantes da auditoria visual web",
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Os itens [componente], [backend] e [dado] da auditoria visual web foram fechados em nove lotes (M a V) entre 15/09 e 16/09: contratos de captura (0 INVALID no app inteiro), painel do operador, régua de movimento, formulários, convite de prestador, Salvos e Sugerir referência do guia, Reenviar do convite familiar e os estados vazios. Resta UM item, e ele não é escolha de agente: o ramo de acesso negado em /communities/[id] (prancha 60) depende de decidir o que é uma comunidade não apresentável.",
       "checklist": [
-        "01: faixa de atividade, aba Acompanhando, card De mudança?, avatares de presença, card de evento no feed ✅ 15/09 (aba Acompanhando: post_follows + feed_following + botão no cartão; De mudança? → /localidade; card de evento no feed; faixa/avatares verificados, dependem de fixture [dado])",
-        "12: bloco editorial do guia (hero, cards com foto, referências por assunto, atualizados recentemente) e rail Comece por aqui/Ajude a melhorar ✅ 15/09 (fotos seguem [dado]; captura recon049-guia-final2: 0 findings)",
-        "01/61: topo do guia com Salvos + Sugerir referência e abas Guia|Mercado; banner Encontrou informação desatualizada? — abas ✅ 15/09; Salvos e Sugerir referência reclassificados [backend] (mecanismo de salvar + rota de sugestão)",
+        "01: faixa de atividade, aba Acompanhando, card De mudança?, avatares de presença, card de evento no feed ✅ 15/09 (aba Acompanhando: post_follows + feed_following + botão no cartão; De mudança? → /localidade; card de evento no feed; faixa verificada). Avatares de presença ✅ 16/09 (lote Z: o seed não tinha NENHUMA linha em event_rsvps — a copy da prancha não tinha de onde sair. Cinco membros de Manaus confirmam no próximo evento, e o rail e o cartão do feed renderizam 4 avatares + \"Dono da Vila, Bruno Almeida e mais 3 pessoas vão\"; captura recon-loteZ-inicio: 0 achados). Pegadinha medida: a `occurrence_date` é a data UTC (`starts_at.slice(0,10)`), não a data que a tela mostra — semear 19/09 local deixava a presença invisível",
+        "12: bloco editorial do guia (hero, cards com foto, referências por assunto, atualizados recentemente) e rail Comece por aqui/Ajude a melhorar ✅ 15/09 (captura recon049-guia-final2: 0 findings). As FOTOS do guia não são [dado]: medido em 16/09, `arrival_guide_entries` não tem coluna de imagem (photo/image/banner = 0 linhas) e nenhuma tela do guia usa imagem — é [backend] e virou o card RECON-030-GUIA-FOTOS",
+        "01/61: topo do guia com Salvos + Sugerir referência e abas Guia|Mercado; banner Encontrou informação desatualizada? — abas ✅ 15/09; Salvos ✅ 15/09 (lote R: guide_entry_saves + marcador no cartão + aba Guia em /salvos) e Sugerir referência ✅ 15/09 (lote T: suggest_guide_entry grava pending na fila que /guide-queue já revisa, com cidade derivada da associação, submitted_by e cota)",
         "42: menu … nos cards de comunidade ✅ 15/09 (menu real nos cards + Cancelar pedido no rail de pedidos)",
         "43: botões Sair e Cancelar pedido (ver RECON-050 para o recorte R3) e Ver pedido no detalhe ✅ 15/09 (Sair/Cancelar na RECON-050; Ver pedido abre o detalhe com motivo e ações; captura recon049-pending-5: 0 findings)",
         "56: modal de denúncia sobre o conteúdo — ADJUDICADO em 13/09 e reconciliado em 15/09 (página de denúncia isolada mantida: o payload carrega o contexto e a superfície é alcançável; a adjudicação já estava registrada no julgamento, o card é que seguia com a linha aberta)",
-        "70: capa do evento [backend] (events não tem coluna), Quem pode ver ✅, card Quem pode participar ✅, seção O que acontece depois de publicar ✅ — os três fechados em 15/09 com captura recon049-evento-novo: 0 findings",
+        "70: capa do evento ✅ 15/09 (lote L: a coluna existe em `events.cover_path`, com trigger de validação de pasta e captura recon-loteM-completo), Quem pode ver ✅, card Quem pode participar ✅, seção O que acontece depois de publicar ✅ — os três fechados em 15/09 com captura recon049-evento-novo: 0 findings",
         "75: contagem nas abas e autora no meta do card ✅ 15/09 (é a prancha 80: autora no meta do card e no cabeçalho de cada resposta + aba 'Pedidos (N)' com contagem por RLS; capturas recon049-loteH e recon049-loteH3, 0 findings). Estado zero com coluna de inbox ✅ 15/09 (lote V: corrida dedicada com membro-rio@ — cidade sem pedidos — mostra 'Pedidos (0)' e o vazio honesto; a corrida vazia expôs e fechou um defeito que o estado populado escondia: um <Button> dentro de um <Link> no EmptyState, alvo de 97x19 e HTML inválido)",
         "21: trilha de /meus-anuncios com destinos de 44px, transição e página atual marcada ✅ 15/09 (captura recon049-loteH3: 0 findings)",
         "13: trilha, navegação de seções e CTA do rail de /mercado como alvos de 44px ✅ 15/09 (captura recon049-loteH4) e item 6c ✅ lote K (o indicador do checkbox desta tela é um <span> local, não componente do HeroUI: transição nele, nos labels, nos campos de preço, nos dois selects e nos links das cartas). /mercado fecha em 0 findings nos três viewports (recon049-loteK4), junto com a medida de leitura da bio do prestador (max-w-prose vencia a classe .measure-reading; /prestadores/[id] em 0)",
         "BUG de runtime corrigido em 15/09: Dropdown.Trigger já é um Button, e as quatro telas que punham um <Button> dentro dele renderizavam <button> dentro de <button> — HTML inválido e erro de hidratação (medido no console antes e depois: 0). Telas: feed-post-menu, communities-screen (card e pedido) e meus-anuncios",
-        "76: cards Como funciona a entrada e Se o familiar não abrir a tempo ✅ 15/09; Revogar ao lado do Copiar ✅; Reenviar adjudicado [backend] (token só aparece uma vez) e Cancelar = Revogar existente",
+        "76: cards Como funciona a entrada e Se o familiar não abrir a tempo ✅ 15/09; Revogar ao lado do Copiar ✅; Reenviar ✅ 15/09 (lote U: resend_family_invitation reemite — gira o digest, devolve 7 dias e enfileira mensagem nova, com o endereço confirmado de novo porque o banco não guarda e-mail) e Cancelar = Revogar existente",
         "79: título Convidar prestador e Cancelar ✅ 15/09; nota de conta separada já coberta pelo cabeçalho; Voltar para a comunidade e nome da comunidade no convite ✅ 15/09 (lote Q: read_provider_invitation(p_token), migration 20260915180000 — o token é o segredo e o portador legítimo lê para onde foi convidado; zero linhas para token ausente/malformado/desconhecido, status derivado para expirado/revogado/aceito, sem expor o digest do e-mail; /prestador-convite/<token> capturado em VALID com 0 achados e 11 asserções pgTAP novas)",
         "81: chips das linhas de moderador, motivo da revogação na ficha (pendentes), item Administração no nav ✅ 15/09 (nav client com 4 itens e aria-current)",
         "84: rail direito ✅ 15/09 (estados com resultado, vazio e sem termo; buscas recentes no localStorage) e seções Serviços/Eventos ✅ verificadas com termos que casam (rotas explorar-busca-servico e explorar-busca-evento no capture)",
@@ -2635,6 +2667,7 @@
       ],
       "proof": [
         ".visual/compare/julgamento.md — itens [componente] por par; adjudicados registrados na fase [forma]",
+        "FECHAMENTO AUDITADO em 16/09 (lote Z): as 18 linhas do checklist foram lidas uma a uma — 17 com ✅/adjudicação e a restante é o registro do BUG do Dropdown.Trigger, corrigido. Quatro linhas carregavam ressalva ANTERIOR ao próprio fechamento (avatares de presença \"[dado]\", capa do evento, Reenviar do convite familiar, Salvos/Sugerir referência) e foram reconciliadas com os lotes que as fecharam. A única lacuna real que a auditoria encontrou — foto por referência no guia — NÃO é [componente] nem [dado]: é backend, e saiu para o card RECON-030-GUIA-FOTOS",
         "Lote A (01) fechado em 15/09: migração 20260915013344_post_follows (pgTAP 15/15), captura válida .visual/recon049-inicio-final, prova de interação .visual/prova-follow3.mjs (seguir→aba, desfazer→vazio, banco limpo), gate completo verde",
         "Lotes B/C fechados em 15/09: /guide (abas, bloco editorial, rail) 0 findings; /communities (menu …) 0 findings; /admin/pending (Ver pedido com motivo, contador, rail Sobre a comunidade) 0 findings — gate completo verde nos três",
         "Ferramenta: a regra de alvo de toque do audit passou a medir o label do controle visualmente oculto (react-aria) — o 13x13 do input era falso positivo em todo Checkbox do produto",
@@ -2655,9 +2688,9 @@
       ],
       "links": [".visual/compare/julgamento.md", "docs/agents/PRANCHAS-WEB-RESTANTES.md"],
       "updatedAt": "2026-09-16",
-      "sourceRevision": "4a79cfb",
+      "sourceRevision": "285059d",
       "dependencies": [],
-      "completedAt": null
+      "completedAt": "2026-09-16"
     },
     {
       "id": "RECON-050",
