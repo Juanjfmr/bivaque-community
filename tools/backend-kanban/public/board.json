@@ -2428,7 +2428,7 @@
       "checklist": [
         "Migration única: bucket privado, colunas banner_path/thumbnail_path, 4 policies de storage e RPC owner-only com chamador explícito ✅ 16/09 (lote AA): migration 20260911093140_community_images aplicada em reset limpo",
         "pgTAP positivo e negativo: leitura derivada da localidade, escrita só do dono (policy e RPC), remoção torna o objeto inalcançável ✅ 16/09 (lote AA): community-images.sql dentro dos 119 arquivos/1568 asserts PASS",
-        "Leitura: apresentação (faixa + miniatura sobreposta), descoberta e barra lateral usam a miniatura, com queda para o estado sem imagem ✅ 16/09 (lote AB): corrigida a fixture que gravava <id>/seed-banner.png enquanto o app assina <id>/banner (community-media.ts:30-32) — a captura do lote AA fotografava o ESTADO VAZIO e o item foi marcado ✅ sem prova (achado do revisor independente). Com a fixture no caminho determinístico, .visual/recon-loteAB-clean mostra a faixa renderizada e a miniatura sobreposta em 375/768/1440, 0 achados",
+        "Leitura: apresentação (faixa + miniatura sobreposta), descoberta e barra lateral usam a miniatura, com queda para o estado sem imagem ✅ 16/09 (lotes AB/AC): fixture corrigida para o caminho determinístico <id>/<kind>; .visual/recon-loteAB-clean prova apresentação e console COM imagem (3 viewports) e .visual/recon-loteAC-final cobre a descoberta /communities (heading 'Comunidades', 3/3 válidas, 0 failedRequests). Re-verificação independente em 16/09 deu PASS neste item",
         "Console do dono envia, troca e remove, com estados fechados (enviando, sem imagem, erro recuperável, sem duplicar) — PROVA PARCIAL 16/09 (lote AB): a captura agora mostra o estado COM imagem (botões Trocar imagem e Remover, que só renderizam com url não-nula) e a escrita do dono tem pgTAP de policy e RPC; a INTERAÇÃO de envio (escolher arquivo, enviar, ver a fase enviando, trocar e remover) NÃO foi exercitada em navegador. Nomeado como lacuna, não como prova",
         "Texto alternativo descreve a comunidade sem repetir o nome ao lado ✅ 16/09 (lote AA): communityImageAltText devolve 'Faixa de apresentacao da comunidade' e 'Miniatura da comunidade', sem repetir o nome ao lado",
         "task-contract, gate completo e build verdes ✅ 16/09 (lote AA): task-contract valido, gate completo verde e build ok",
@@ -2443,7 +2443,8 @@
         "SUPERADO em 16/09 (lote AA): Captura /communities/[id] com dono-vila@ em 375/768/1440 → HTTP 200 com error boundary: banco local compartilhado NÃO migrado ('column communities_1.thumbnail_path does not exist'). A migration é o próximo passo fora deste executor. -> a migration 20260911093140_community_images foi aplicada e a captura recon-loteAA-029-031-034 devolve /communities/71000000-...-0001 ('Vila Ajuricaba') e /admin/media ('Imagens da comunidade') com HTTP 200 nas tres larguras, 0 invalidas e 0 achados.",
         "Lote AA 16/09/2026: 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
         "Lote AB 16/09/2026: a fixture de mídia gravava os ponteiros de comunidade em <id>/seed-banner.png e <id>/seed-thumbnail.png, mas o app assina SEMPRE communityImagePath(id, kind) = <id>/banner e <id>/thumbnail (lib/communities/community-media.ts:30-32, community-image-urls.ts:47-50). URLs nulas, tela no estado sem imagem: 84 erros de console por viewport passavam como 0 achados. Corrigido em scripts/visual/media-fixture.mjs; a captura .visual/recon-loteAB-clean (375/768/1440, ator dono-vila) mostra a faixa e a miniatura reais na apresentação e o console COM imagem",
-        "Lote AB 16/09/2026 — armadilha medida: as rotas do console do dono (/communities/[id]/admin/*) responderam 404 nas tres larguras depois de um restart do dev server. A investigacao mostrou que NAO era regressao de produto: com o cache .next limpo as MESMAS rotas voltam 200 (recon-loteAB-clean, headings 'Imagens da comunidade' e 'Pedidos de entrada'). Manifesto de rota stale em next dev; a captura so vale depois de reiniciar o servidor com o cache limpo"
+        "Lote AB 16/09/2026 — armadilha medida: as rotas do console do dono (/communities/[id]/admin/*) responderam 404 nas tres larguras depois de um restart do dev server. A investigacao mostrou que NAO era regressao de produto: com o cache .next limpo as MESMAS rotas voltam 200 (recon-loteAB-clean, headings 'Imagens da comunidade' e 'Pedidos de entrada'). Manifesto de rota stale em next dev; a captura so vale depois de reiniciar o servidor com o cache limpo",
+        "Re-verificação independente 16/09/2026 (após d201242): item de leitura PASS — o revisor inspecionou os PNGs (faixa renderizada com a miniatura sobreposta, miniatura na barra lateral MINHAS COMUNIDADES) e confirmou no banco vivo os 4 objetos e os ponteiros <id>/banner e <id>/thumbnail. O item do console ficou PROVA PARCIAL por concordância: a interação não foi exercitada. O commit d201242 não toca nenhum arquivo de app"
       ],
       "tests": [
         "npx pnpm@11.18.0 exec vitest run tests/unit/communities/community-media.test.ts",
@@ -2460,7 +2461,7 @@
       "dependencies": [],
       "blockers": [],
       "updatedAt": "2026-09-16",
-      "sourceRevision": "3189310"
+      "sourceRevision": "d201242"
     },
     {
       "id": "RECON-038",
@@ -2591,15 +2592,18 @@
       "checklist": [
         "Regra unica em globals.css marca a aba ativa nas tres telas ✅",
         "Teste reprova classe modificadora aplicada sem regra, com controle positivo e negativo ✅",
-        "Runtime confirma [role=tab][data-selected=true] com borda de 2px e peso 600 em 375/768/1440 ✅",
-        "Capturas validas de /salvos, /recommendations e /events com 0 achados em 375/768/1440 ✅",
-        "PENDENTE: revisao independente (o contrato RECON-045 exige reviewer_must_differ_from_executor)"
+        "Runtime confirma [role=tab][data-selected=true] com borda de 2px e peso 600 em 375/768/1440 ✅ 16/09 (lote AC): medido nas TRÊS telas pela sonda .visual/recon-loteAC-tabs/probe-membro1.json (2px, rgb(22,71,52), peso 600, sem overflow). Duas medições erradas foram descartadas no caminho: a primeira pegou o [role=tab] da navegação primária em /events, e a segunda usou o ator visual@, que não tem evento próprio — o grupo de abas de participação não renderiza nesse caso (hasOwnEvents, events/page.tsx:912). Com membro1 a aba ativa é 'Organizando' e mede 2px/600",
+        "Capturas validas de /salvos, /recommendations e /events com 0 achados em 375/768/1440 ✅ 16/09 (lote AC): .visual/recon-loteAC-final, runnerRevision d2012429, runnerDirty=FALSE (o único untracked saiu do caminho durante a corrida), 3/3 válidas por rota, 0 achados e 0 failedRequests. A citação anterior (runnerRevision 8c29cd2, árvore limpa) era irrecuperável — nenhum dos 153 report.json de .visual a continha (achado da revisão independente)",
+        "Gate completo verde ✅ 16/09 (lote AC): GATE VERDE exit 0 (lint 9s, typecheck 20s, build 126s, test 42s, secrets 7s). Contagens reais medidas, não estimadas: 887 unit + 189 privacy/scope + 114 scope (apps/mobile 76, apps/web 19). O número '826 unit' que constava aqui estava obsoleto",
+        "Revisao independente (o contrato RECON-045 exige reviewer_must_differ_from_executor) — executada em 16/09 com veredito FAIL por citação irrecuperável: o card apontava uma captura em runnerRevision 8c29cd2 com árvore limpa que não existia em nenhum report.json de .visual, e a sonda de estilo não tinha artefato. O lote AC produziu os dois (run limpo em d201242 e probe.json) e devolveu o material ao mesmo revisor para novo veredito"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-045.task.yml -> EXIT=0, 1 contrato valido",
-        "Runtime Playwright (dono-vila@; /events com membro-6@): [role=tab][data-selected=true] devolve border-bottom-width 2px, border-bottom-color rgb(22,71,52) (--semantic-action-primary) e font-weight 600; a nao selecionada devolve borda transparente de 2px e peso 500; sem rolagem horizontal de pagina em 375/768/1440",
-        "capture.mjs com BIVAQUE_VISUAL_ROUTE em /salvos, /recommendations e /events -> EXIT=0, captura VALID, 0 achados em 375/768/1440 (runnerRevision 8c29cd2, arvore limpa)",
-        "npx pnpm@11.18.0 gate -> EXIT=0, GATE VERDE (lint, typecheck, build, test: 826 unit + workspaces + 189 privacy/scope, secrets)"
+        "Sonda de estilo computado versionada: scripts/visual/probe-tab-style.mjs, artefato .visual/recon-loteAC-tabs/probe-membro1.json. [role=tab][data-selected=true] devolve border-bottom-width 2px, border-bottom-color rgb(22,71,52) (--semantic-action-primary) e font-weight 600 nas TRÊS telas e nas três larguras, sem rolagem horizontal de página. O ATOR é o que decide em /events: o grupo .tabs--secondary só renderiza quando a pessoa tem evento próprio (hasOwnEvents, events/page.tsx:912) — com visual@ são 0 containers; com membro1 a aba ativa é 'Organizando' e mede 2px/600",
+        "RETRATADA em 16/09 (lote AC): a citação anterior (runnerRevision 8c29cd2, arvore limpa) era irrecuperável — nenhum dos 153 report.json de .visual a continha, e todos tinham runnerDirty=true (achado da re-revisão independente). Prova viva: capture.mjs em /salvos, /recommendations e /events -> .visual/recon-loteAC-final, runnerRevision d2012429, runnerDirty=FALSE, 3/3 válidas por rota, 0 achados e 0 failedRequests em 375/768/1440",
+        "RETRATADA em 16/09 (lote AC): o número '826 unit' que constava aqui estava obsoleto. npx pnpm@11.18.0 gate -> EXIT=0, GATE VERDE (lint 8s, typecheck 21s, build 107s, test 39s, secrets 8s), log completo em .visual/gate-loteAC.log; contagens reais medidas: 887 unit + 189 privacy/scope + 114 scope (apps/mobile 76, apps/web 19)",
+        "Lote AC 16/09/2026: .visual/recon-loteAC-final (runnerRevision d2012429, runnerDirty=false, valid=true, invalid=0, high=0) cobre /salvos, /recommendations, /events, /communities, /communities/[id], /communities/[id]/admin/media, /events/novo, /events/[id]/perguntas e as cinco rotas de /configuracoes em 375/768/1440",
+        "Sonda de estilo em scripts/visual/probe-tab-style.mjs (artefato .visual/recon-loteAC-tabs/probe-membro1.json): /salvos e /recommendations com borda de 2px e peso 600 nas três larguras; /events idem quando o ator tem evento próprio (membro1)"
       ],
       "tests": [
         "tests/unit/visual/tab-variant-rule.test.ts",
@@ -2612,8 +2616,8 @@
         "apps/web/app/(shell)/mercado/page.tsx"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "f3b37fa"
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "d201242"
     },
     {
       "id": "RECON-030-GUIA-FOTOS",
