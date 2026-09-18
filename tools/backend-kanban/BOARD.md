@@ -38,7 +38,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **S4-MOBILE-COMPOSER** · P1 · Mobile: composer + reações + comentários (S4 do mobile, read-only parcial do S3) — MOB-001-SESSION esta em now: o contrato R3 de sessao do mobile (PKCE, secure-store, revogacao) nao existe. Sem ele o composer escreve sem sessao provada, entao o done era sobre a UI, nao sobre o fluxo.
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo, agora com o tecnico resolvido
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança
-- **RECON-052-FOLLOWUP** · P2 · Exclusão de conta: o que a purga não pode decidir sozinha (posse e superfície operacional) — Decisão do dono: destino da comunidade/grupo cujo dono pediu exclusão; Decisão do dono: vitrine de prestador e anúncios ativos de conta purgada; Decisão do dono: pedido de serviço aberto com a conta purgada
+- **RECON-052-FOLLOWUP** · P2 · Exclusão de conta: o que a purga não pode decidir sozinha (posse e superfície operacional) — Decisao do dono: pedido de servico aberto com a conta purgada — cancelar por operacao ou permanecer
 
 ## Drift aberto
 

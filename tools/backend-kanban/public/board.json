@@ -2880,28 +2880,28 @@
       "status": "blocked",
       "description": "A purga da RECON-052 apaga dado pessoal, preferência e participação. Ela NÃO dissolve posse nem encerra superfície operacional, porque isso é decisão de produto que o ADR-20260914 não tomou — e resolvê-lo apagando conteúdo de terceiro contradiria o item 4 do mesmo ADR. Três casos ficam abertos depois que a conta some: (a) communities.owner_user_id e groups.owner_user_id continuam apontando para a conta purgada — a comunidade/grupo fica sem quem administre (o produto já tem a regra 'transfer community ownership before removing the owner', disparada pelo trigger, mas não há para quem transferir); (b) provider_accounts e listings ativos seguem no ar; (c) service_requests abertos com a conta como parte seguem abertos. A purga deliberadamente pula a linha do dono em vez de passar por cima do trigger.",
       "checklist": [
-        "Decisão do dono: para quem transfere comunidade/grupo quando o dono pede exclusão (operador? co-admin? dissolver?)",
-        "Decisão do dono: vitrine de prestador e anúncios ativos de conta purgada — encerrar, pausar ou permanecer",
+        "DECIDIDO 18/09/2026 pelo responsavel: quando o dono de comunidade/grupo pede exclusao, a posse passa para um MODERADOR/co-administrador existente; se nao houver ninguem, a posse passa para a OPERACAO (a plataforma administra e pode devolver a quem reivindicar). Dissolver esta descartado: apagaria conteudo de terceiros, contra o item 4 do ADR-20260914. Deixar sem dono esta descartado: comunidade sem administracao apodrece",
+        "DECIDIDO 18/09/2026 pelo responsavel: ENCERRAR tudo da conta purgada — anuncios vao para 'closed' e a conta de prestador sai do ar. Nada de morto publicado: quem salvou ve indisponivel (ja implementado), quem procura nao encontra. Pausar (preservar para restauracao) foi descartado",
         "Decisão do dono: pedido de serviço aberto com a conta purgada — cancelar por operação ou permanecer",
         "Depois da decisão: migration aplicando cada regra + pgTAP positivo/negativo por caso",
         "Reabrir e reconciliar o rodapé de 20260915101543_account_deletion.sql, que hoje só registra a lacuna"
       ],
       "blockers": [
-        "Decisão do dono: destino da comunidade/grupo cujo dono pediu exclusão",
-        "Decisão do dono: vitrine de prestador e anúncios ativos de conta purgada",
-        "Decisão do dono: pedido de serviço aberto com a conta purgada"
+        "Decisao do dono: pedido de servico aberto com a conta purgada — cancelar por operacao ou permanecer"
       ],
       "proof": [
         "supabase/migrations/20260915101543_account_deletion.sql: o DELETE de community_memberships/group_memberships exclui de propósito a linha do dono (o trigger cascade_community_membership_loss recusa removê-la)",
         "private.cascade_community_membership_loss(): 'transfer community ownership before removing the owner' — a regra existe e a purga não passa por cima dela",
-        "Rodapé da migration: os três casos listados como pergunta ao dono do produto, não como pendência técnica"
+        "Rodapé da migration: os três casos listados como pergunta ao dono do produto, não como pendência técnica",
+        "18/09/2026 — decisao 1 de 3: posse de comunidade/grupo de conta purgada vai para moderador existente; sem moderador, para a operacao. Escolhida pelo responsavel com a consequencia na mesa: dissolver apagaria conteudo de terceiros (item 4 do ADR). Implementacao entra depois das tres decisoes, numa migration com pgTAP por caso",
+        "18/09/2026 — decisao 2 de 3: vitrine e anuncios da conta purgada ENCERRAM (listings closed, conta de prestador fora do ar). Registrado com o motivo: anuncio sem dono e telefone que nao existe"
       ],
       "tests": ["supabase test db"],
       "links": [
         "docs/decisions/ADR-20260914-exclusao-de-conta.md (item 4 e tabela jurídica)",
         "supabase/migrations/20260915101543_account_deletion.sql (rodapé)"
       ],
-      "updatedAt": "2026-09-15",
+      "updatedAt": "2026-09-18",
       "sourceRevision": "cd001a6",
       "dependencies": ["RECON-052"],
       "completedAt": null
