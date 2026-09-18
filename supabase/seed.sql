@@ -1437,6 +1437,52 @@ values
    '20000000-0000-4000-8000-00000000000a', 'Confirmado, 9h. Levo o equipamento de higienização.', now() - interval '20 hours')
 on conflict (id) do nothing;
 
+-- Contador de não lidas (pendência do RECON-032). A conta de captura
+-- (dono-vila, 20000000-...0008) precisa de conversa PRÓPRIA com mensagem de
+-- terceiro, senão a captura de /messages prova só a lista vazia — a mesma lição
+-- dos avatares de presença (lote Z), dos anúncios salvos (lote AI) e da
+-- Força Armada (lote AM). DUAS conversas de propósito: uma sem estado de leitura
+-- (o contador aparece) e uma com last_read_at depois da última mensagem (o
+-- contador NÃO aparece). Sem o par, um contador que sempre mostra 1 passaria.
+insert into public.dm_conversations (id, participant_a, participant_b, context_type, context_id, created_at)
+values
+  (
+    '41000000-0000-4000-8000-0000000000c1',
+    '20000000-0000-4000-8000-000000000001',
+    '20000000-0000-4000-8000-000000000008',
+    'provider',
+    '30000000-0000-4000-8000-000000000010',
+    now() - interval '6 hours'
+  ),
+  (
+    '41000000-0000-4000-8000-0000000000c2',
+    '20000000-0000-4000-8000-000000000008',
+    '30000000-0000-4000-8000-000000000001',
+    'provider',
+    '30000000-0000-4000-8000-000000000010',
+    now() - interval '3 days'
+  )
+on conflict (id) do nothing;
+
+insert into public.dm_messages (id, conversation_id, sender_id, content, created_at)
+values
+  ('42000000-0000-4000-8000-0000000000c1', '41000000-0000-4000-8000-0000000000c1',
+   '20000000-0000-4000-8000-000000000001', 'Oi! Ainda dá tempo de encaixar hoje?', now() - interval '5 hours'),
+  ('42000000-0000-4000-8000-0000000000c2', '41000000-0000-4000-8000-0000000000c1',
+   '20000000-0000-4000-8000-000000000001', 'Consigo passar às 15h, se servir.', now() - interval '4 hours'),
+  ('42000000-0000-4000-8000-0000000000c3', '41000000-0000-4000-8000-0000000000c2',
+   '30000000-0000-4000-8000-000000000001', 'Já resolvi, obrigado!', now() - interval '2 days')
+on conflict (id) do nothing;
+
+-- A conversa c2 está LIDA: last_read_at depois da última mensagem.
+insert into public.dm_read_states (conversation_id, user_id, last_read_at)
+values (
+  '41000000-0000-4000-8000-0000000000c2',
+  '20000000-0000-4000-8000-000000000008',
+  now() - interval '1 day'
+)
+on conflict (conversation_id, user_id) do nothing;
+
 -- 3) Indicações: respostas no pedido do titular e uma marcada como solução.
 --    O trigger notify_recommendation_reply cria as notificações do autor.
 insert into public.recommendation_replies (id, request_id, author_id, body, created_at)

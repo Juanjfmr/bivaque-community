@@ -76,6 +76,10 @@ export function ConversationInbox({
   const [conversations, setConversations] = useState<ConversationRow[]>([])
   const [profiles, setProfiles] = useState<Map<string, ProfileRow>>(new Map())
   const [lastMessages, setLastMessages] = useState<Map<string, LastMsgRow>>(new Map())
+  // Contador de não lidas por conversa (pendência do RECON-032). Vem de
+  // dm_messages de TERCEIROS depois do last_read_at do próprio membro — a mesma
+  // fonte que /pedidos/[id] usa, sem inventar "não lida" no cliente.
+  const [unreadByConversation, setUnreadByConversation] = useState<Map<string, number>>(new Map())
   const [blockedIds, setBlockedIds] = useState<Set<string>>(new Set())
   const [blockedByOthers, setBlockedByOthers] = useState<Set<string>>(new Set())
 
@@ -185,6 +189,37 @@ export function ConversationInbox({
       if (msg) lastMsgMap.set(msg.conversation_id, msg)
     }
     setLastMessages(lastMsgMap)
+
+    // Não lidas: o last_read_at do membro nesta conversa (RLS: só o próprio) e,
+    // a partir dele, as mensagens de terceiros ainda não lidas.
+    const { data: readData } = await supabase
+      .from("dm_read_states")
+      .select("conversation_id, last_read_at")
+      .eq("user_id", userId)
+
+    const lastReadByConv = new Map<string, string>()
+    for (const row of (readData ?? []) as { conversation_id: string; last_read_at: string }[]) {
+      lastReadByConv.set(row.conversation_id, row.last_read_at)
+    }
+
+    const unreadMap = new Map<string, number>()
+    await Promise.all(
+      convIds.map(async (cid) => {
+        const lastRead = lastReadByConv.get(cid)
+        // Sem estado de leitura gravado, a conversa inteira é não lida — é o
+        // caso de quem nunca abriu a thread.
+        let query = supabase
+          .from("dm_messages")
+          .select("id")
+          .eq("conversation_id", cid)
+          .neq("sender_id", userId)
+        if (lastRead) query = query.gt("created_at", lastRead)
+        const { data: unreadRows } = await query
+        const unreadCount = (unreadRows ?? []).length
+        if (unreadCount > 0) unreadMap.set(cid, unreadCount)
+      }),
+    )
+    setUnreadByConversation(unreadMap)
 
     // load blocks
     const { data: blockData } = await supabase
@@ -436,6 +471,33 @@ export function ConversationInbox({
     [userId, creatingConversation, supabase, loadConversations, pickerState.close, router],
   )
 
+  // Abrir a conversa a marca como lida — no servidor, pelo RPC que reconfere a
+  // participação, e não só no cliente. Vale para o clique e para quem abre a URL
+  // direta. O contador local zera junto para a lista não piscar o número velho.
+  useEffect(() => {
+    if (!activeConversationId || !userId) return
+    let cancelled = false
+    void (async () => {
+      const { error } = await supabase.rpc("mark_conversation_read", {
+        p_conversation_id: activeConversationId,
+      })
+      if (error) {
+        // Falha de marcação não derruba a tela: o contador só não zera agora.
+        return
+      }
+      if (cancelled) return
+      setUnreadByConversation((previous) => {
+        if (!previous.has(activeConversationId)) return previous
+        const next = new Map(previous)
+        next.delete(activeConversationId)
+        return next
+      })
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [activeConversationId, userId, supabase])
+
   // ── render ───────────────────────────────────────────────────────────────
   const selectedConv = conversations.find((c) => c.id === activeConversationId)
   const selectedOtherId = selectedConv ? otherUserId(selectedConv) : null
@@ -541,28 +603,43 @@ export function ConversationInbox({
                   const preview = formatLastMessagePreview(lastMsg, userId ?? "")
                   const blocked = blockedIds.has(oid)
                   const blockedBy = blockedByOthers.has(oid)
+                  const unread = unreadByConversation.get(conv.id) ?? 0
 
                   return (
                     <ListBox.Item key={conv.id} id={conv.id} textValue={name}>
                       <div className="flex items-start justify-between gap-2">
                         <span className="truncate text-sm font-medium">{name}</span>
+                        {unread > 0 && (
+                          <span
+                            className="shrink-0 rounded-full bg-[var(--semantic-action-primary)] px-1.5 text-[0.8125rem] font-semibold text-[var(--semantic-text-on-strong)]"
+                            title={
+                              unread === 1 ? "1 mensagem não lida" : `${unread} mensagens não lidas`
+                            }
+                          >
+                            {unread > 99 ? "99+" : unread}
+                          </span>
+                        )}
                         {lastMsg && (
                           <span className="shrink-0 text-[0.8125rem] text-muted">
                             {formatRelativeTime(lastMsg.created_at)}
                           </span>
                         )}
                       </div>
+                      {/* min-w-0 no preview: sem ele o truncate ocupa a linha
+                          inteira no flex e o contador é empurrado para fora do
+                          clip do item — o elemento tinha caixa e cor, e o pixel
+                          medido era o do fundo. Medido no pixel, não no olho. */}
                       <div className="mt-0.5 flex items-center gap-1.5">
                         {preview ? (
-                          <span className="truncate text-xs text-muted">{preview}</span>
+                          <span className="min-w-0 truncate text-xs text-muted">{preview}</span>
                         ) : (
-                          <span className="text-xs text-muted">
+                          <span className="min-w-0 truncate text-xs text-muted">
                             {CONTEXT_LABELS[conv.context_type] ?? conv.context_type}
                           </span>
                         )}
                       </div>
                       {(blocked || blockedBy) && (
-                        <span className="text-[0.65rem] text-[var(--danger)]">
+                        <span className="text-[0.8125rem] text-[var(--danger)]">
                           {blockedBy ? "Bloqueado(a)" : "Você bloqueou"}
                         </span>
                       )}
