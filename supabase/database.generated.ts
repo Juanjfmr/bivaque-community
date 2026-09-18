@@ -2773,6 +2773,14 @@ export type Database = {
         Returns: string
       }
       open_event_question: { Args: { p_event_id: string }; Returns: string }
+      profile_affiliations_for: {
+        Args: { p_target_user_id: string }
+        Returns: {
+          field: string
+          is_visible: boolean
+          value: string
+        }[]
+      }
       profile_events_for: {
         Args: { p_target_user_id: string; p_viewer_user_id: string }
         Returns: {

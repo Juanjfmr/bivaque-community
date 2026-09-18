@@ -142,6 +142,11 @@ export const HEADINGS = {
   "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador": DYNAMIC_HEADING,
   "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
   "/profile": DYNAMIC_HEADING,
+  // Perfil de TERCEIRO (prancha 51): a visão que lê a afiliação declarada. Nunca
+  // foi capturada, e é justamente a tela que a leitura por alvo serve — depois
+  // do achado de enumeração em lote, quem lê deixa de ser a tabela (não
+  // listável) e passa a ser public.profile_affiliations_for().
+  "/profile/20000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/localidade": DYNAMIC_HEADING,
   // RECON-040 — as 37 rotas entregues depois que o guard-rail ficou parado na
   // branch lateral. Cada valor abaixo veio do h1 que o arquivo que renderiza a
@@ -287,6 +292,9 @@ export const ROUTES = [
   // Grupos do seed são 60000000-… (70000000-… é a faixa dos eventos).
   { path: "/groups/60000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
   { path: "/profile", name: "profile", auth: true },
+  // Perfil de terceiro (prancha 51): a visão que consome a leitura por alvo.
+  // O alvo tem Força Armada declarada e visível no seed.
+  { path: "/profile/20000000-0000-4000-8000-000000000001", name: "profile-member", auth: true },
   { path: "/events", name: "events", auth: true },
   // O id antigo (80000000-…) é de POST no seed, não de evento: a rota de detalhe
   // capturava o 404 honesto há runs. Eventos são 70000000-… no seed.

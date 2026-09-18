@@ -146,13 +146,18 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
   // session client (authClient), deliberately NOT the service client the
   // rest of the page uses: service_role bypasses RLS, and bypassing it here
   // would hand a third party the rows the owner hid (is_visible = false).
-  // Under the viewer's own role, `profile_affiliations_select_own_or_visible`
-  // returns exactly the lines this viewer may see — nothing more. The result
-  // IS the visibility decision; we render what came back and trust it.
-  const { data: affiliationRows, error: affiliationError } = await authClient
-    .from("profile_affiliations")
-    .select("field, value, is_visible")
-    .eq("user_id", userId)
+  //
+  // Desde 17/09/2026 a leitura é a RPC POR ALVO, não a tabela. A policy
+  // antiga filtrava linha mas deixava a LISTAGEM: com SELECT para
+  // authenticated, um único request a /rest/v1/profile_affiliations devolvia
+  // todas as declarações visíveis da cidade — enumeração em lote, achado HIGH
+  // do crítico adversarial. A RPC aplica visibilidade por campo, veto de
+  // conta suspensa no leitor e guarda de exclusão pendente no alvo; o que ela
+  // devolve É a decisão de visibilidade, e é o que a tela renderiza.
+  const { data: affiliationRows, error: affiliationError } = await authClient.rpc(
+    "profile_affiliations_for",
+    { p_target_user_id: userId },
+  )
   if (affiliationError) {
     throw new Error(`Falha ao ler a afiliação declarada: ${affiliationError.message}`)
   }

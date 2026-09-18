@@ -137,32 +137,30 @@ VERIFICADO em 17/09/2026 pelo crítico adversarial, não com o estado desejado:*
 6. O valor não entra em log de aplicação nem em payload de notificação — ✅
    verdadeiro (a action não loga valor; não há trigger de notificação).
 
-**Defeitos verificados em 17/09/2026 (crítico adversarial, veredito FAIL).** Além
-das regras 3 e 5 acima, ficaram abertos:
+**Defeitos verificados em 17/09/2026 (crítico adversarial, veredito FAIL) — e
+CORRIGIDOS no mesmo dia** pela migration
+`20260918011938_profile_affiliations_no_bulk_read.sql`, com o escopo escolhido
+pelo responsável (opção 1: revogar a listagem e servir por RPC por-alvo):
 
-- **Veto de suspensão não corta leitura.** `is_account_suspended` só aparece em
-  `WITH CHECK` de INSERT; nenhuma policy de SELECT o consulta. Um suspenso com
-  JWT válido (1 hora) continua lendo e enumerando.
-- **Titular com exclusão pendente segue exposto.** `profiles` ganhou a guarda de
-  `account_deletion_requests`; a policy de `profile_affiliations` **não**.
-- **OM é texto livre** (1..80 caracteres): nada impede gravar posto, patente ou
-  endereço no campo — dado que a D2 mantém explicitamente fora. A bio tem
-  constraint de termos proibidos; a afiliação não tem.
-- **Guardas genéricas não cobrem a tabela nova**: a regressão que proíbe coluna
-  `om` no schema `public` não vê o EAV, onde a OM mora em `value`.
+| Defeito | Correção | Prova |
+|---|---|---|
+| Enumeração em lote (a tabela era listável) | a policy de SELECT volta a ser **só do dono**; a leitura de terceiro passa por `public.profile_affiliations_for(p_target_user_id)` | T1 no pgTAP: `count(distinct user_id)` de terceiros = 0 |
+| Veto de suspensão não corta leitura | a RPC recusa quando `is_account_suspended(auth.uid())` | T4 |
+| Titular com exclusão pendente exposto | a RPC recusa quando há `account_deletion_requests` não finalizado para o alvo | T5 |
+| OM aceitava posto, patente e endereço | constraint `profile_affiliations_om_no_rank_or_address` (paridade com a bio), declarada `NOT VALID` para não invalidar a migration sobre dado existente | assert de recusa no pgTAP |
+| "leitura passa pela RPC" era falso | agora é literalmente o mecanismo: a tela de terceiro consome a RPC | captura `.visual/recon-loteAM-perfil6` mostra "Força Armada: Exército" lida por alvo, 0 achados |
+| regra 5 (service_role) | a regra foi **corrigida no texto**, não no código: o grant a `service_role` existe e é operacional. Manter a promessa falsa era o defeito, não o grant | — |
 
-**Testes negativos que faltam** (o arquivo tem 9 asserts; nenhum destes):
-T1 não-enumeração em lote (`count(distinct user_id) = 0` sem filtro de alvo);
-T2 oculto indistinguível de não-declarado; T3 `anon` sem SELECT e sem EXECUTE;
-T4 suspenso com token antigo lê 0; T5 exclusão pendente lê 0; T6 remoção apaga
-para o dono **e** para o terceiro.
+**Os seis testes negativos que faltavam agora existem** (T1 não-enumeração em
+lote; T2 oculto indistinguível de não-declarado; T3 `anon` sem SELECT e sem
+EXECUTE; T4 suspenso com token válido lê 0; T5 exclusão pendente lê 0; T6 remoção
+apaga para o dono **e** para o terceiro). A suíte canônica foi de 1569 para
+**1581 asserts PASS**, com `profile-affiliations.sql` em `plan(20)`.
 
-**Consequência para o status:** a **decisão** D1–D3 está aprovada e permanece
-aprovada; a **implementação não satisfaz o modelo**. Enquanto os defeitos acima
-estiverem abertos, o campo não pode ser considerado seguro para exposição
-pública, e a correção mínima é revogar `SELECT` de `authenticated` e servir a
-leitura por RPC por-alvo (validando visibilidade + suspensão + exclusão pendente)
-— ou rever formalmente o modelo de listagem, o que é decisão de produto.
+**O que segue aberto, e é de outra natureza:** a governança LGPD de terceiros
+(pré-requisito 4, card `BLOCK-LEGAL-AI`) e o **fundamento jurídico** da
+exposição — não é trabalho técnico, e é o portão que o responsável mantém. Os
+outros quatro pré-requisitos estão satisfeitos.
 
 **Risco residual, declarado e não maquiado:** quem tem o direito de ver pode
 guardar o que viu. O produto mitiga por consentimento informado, não por

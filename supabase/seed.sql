@@ -105,6 +105,16 @@ values
   )
 on conflict (user_id, locality_id) do nothing;
 
+-- Força Armada autodeclarada e VISÍVEL (prancha 51; ADR-20260908 aprovada em
+-- 17/09/2026). Sem linha aqui a tela de perfil de terceiro não tem o que
+-- mostrar e a captura prova só o estado vazio — a mesma lição dos avatares de
+-- presença (lote Z) e dos anúncios salvos (lote AI). A leitura de terceiro sai
+-- por public.profile_affiliations_for(), e não pela tabela.
+insert into public.profile_affiliations (user_id, field, value, is_visible)
+values
+  ('20000000-0000-4000-8000-000000000001', 'armed_force', 'exercito', true)
+on conflict (user_id, field) do nothing;
+
 -- display_name legível: a auditoria visual julga o header do perfil, e
 -- "Novo membro" não permite julgar nada.
 insert into public.profiles (

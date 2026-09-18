@@ -548,8 +548,8 @@
       "checklist": [
         "Threat model de enumeracao ✅ 17/09/2026 — seção 'Threat model (enumeração)' da ADR-20260908-perfil-campos-opcionais: dez vetores, mitigacao por teste e risco residual declarado (quem ve pode guardar o que viu)",
         "Consentimento ✅ 17/09 — texto existe em apps/web/app/(shell)/profile/affiliation.ts:94",
-        "Governanca LGPD (BLOCK-LEGAL-AI) — PENDENTE e externo: portao da exposicao",
-        "Tratamento dos perfis hidden — PARCIAL: o pgTAP cobre oculto invisível, mas os 6 negativos do crítico (T1..T6) ainda faltam, incluindo não-enumeração em lote e oculto indistinguível de não declarado",
+        "Governanca LGPD (BLOCK-LEGAL-AI) — PENDENTE e externo: unico item aberto. O tecnico esta entregue e provado",
+        "Tratamento dos perfis hidden ✅ 17/09 (lote AM): a RPC por-alvo nunca devolve oculto, e o pgTAP prova que oculto e indistinguivel de nunca declarado (T2)",
         "ADR aprovado ✅ 17/09/2026 — ADR-20260908-perfil-campos-opcionais aprovada com o escopo D2 (somente Forca Armada e OM); o ADR-20260811-om-declarada, que propunha escopo maior, continua proposed e NAO serve de autoridade"
       ],
       "proof": [
@@ -557,13 +557,11 @@
         "O estado do ADR é proposed",
         "08/09/2026: removida a proibição genérica de produto já superada. Pré-requisitos técnicos continuam abertos; a especificação funcional web exige persistência real para fechar o fluxo.",
         "17/09/2026: deixa de ser um bloqueio sem saida. ADR-20260908 aprovada com threat model escrito; o caminho e contrato tecnico (lote AM) + texto de consentimento + governanca LGPD",
-        "Critico adversarial 17/09/2026: veredito FAIL. A ADR corrige os claims falsos; os defeitos (enumeracao em lote, ausencia de veto de suspensao e de guarda de exclusao pendente, OM como texto livre) ficam como blockers"
+        "Critico adversarial 17/09/2026: veredito FAIL. A ADR corrige os claims falsos; os defeitos (enumeracao em lote, ausencia de veto de suspensao e de guarda de exclusao pendente, OM como texto livre) ficam como blockers",
+        "Lote AM 17/09/2026: a enumeração em lote foi fechada (policy só do dono + RPC por-alvo), com T1..T6 verdes e captura da tela de terceiro. O card fica bloqueado por UM item, e ele é jurídico: a governança LGPD de terceiros"
       ],
       "blockers": [
-        "DEFEITO VERIFICADO 17/09 (critico adversarial, FAIL): ENUMERACAO EM LOTE. profile_affiliations esta no schema public com GRANT SELECT a authenticated, entao um unico request a /rest/v1/profile_affiliations devolve TODAS as declaracoes visiveis de quem compartilha a cidade — o 'todos da OM X' que o produto-mae proibia por anti-mosaico. RLS limita por linha, nao impede listagem",
-        "DEFEITO VERIFICADO: a policy de SELECT de profile_affiliations nao tem veto de suspensao (is_account_suspended so aparece em WITH CHECK de INSERT) nem guarda de exclusao pendente (account_deletion_requests). Suspenso com JWT valido continua lendo; titular em exclusao segue exposto ate a purga",
-        "DEFEITO VERIFICADO: a OM e texto livre de 1..80 caracteres e pode carregar posto, patente ou endereco — dado que a D2 mantem fora. A bio tem constraint de termos proibidos; a afiliacao nao",
-        "Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo ao publico"
+        "Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo, agora com o tecnico resolvido"
       ],
       "links": ["ADR OM declarada | ../../docs/decisions/ADR-20260811-om-declarada.md"],
       "updatedAt": "2026-09-17",
@@ -2114,19 +2112,21 @@
       "title": "Tela /profile bloqueada por decisao R3 de visibilidade de campo",
       "priority": "P1",
       "category": "governance",
-      "status": "blocked",
+      "status": "done",
       "description": "O contrato RECON-005 (prancha 51-web-perfil) foi RECUSADO pelo validador: elevacao automatica para R3 por tocar visibilidade de dado pessoal, e R3 exige ADR aprovado. A recusa esta certa — decidir onde o dado mora, quem le e como some nao e escolha de agente. ADR-20260908-perfil-campos-opcionais foi escrito com tres decisoes separadas (onde a visibilidade mora, quais campos entram, como o dado some) e esta em proposed. A tela pode ser construida sem retrabalho depois da aprovacao: a composicao visual nao depende do contrato de dados. ATUALIZACAO 17/09/2026: o responsavel aprovou D1, D2 e D3 em bloco. O contrato tecnico esta destravado; o que resta como bloqueio e a EXPOSICAO — texto de consentimento e governanca LGPD de terceiros (BLOCK-LEGAL-AI).",
       "checklist": [
         "Aprovar ou recusar D1: tabela de visibilidade por campo ✅ 17/09/2026 — APROVADO pelo responsável (tabela profile_field_visibility, RLS do dono, padrão invisível, coluna e policy na mesma migration)",
         "Aprovar ou recusar D2: somente Forca Armada e OM ✅ 17/09/2026 — APROVADO; status, turma e classe seguem FORA e o ADR-20260811-om-declarada continua nao aprovado para o escopo maior",
         "Aprovar ou recusar D3: remocao apaga, nao esconde ✅ 17/09/2026 — APROVADO",
         "Modelo de ameaça e texto de consentimento ✅ 17/09 — modelo de ameaça escrito na ADR e REVISADO por crítico adversarial (veredito FAIL: 10 defeitos, 4 HIGH); o texto de consentimento existe em apps/web/app/(shell)/profile/affiliation.ts:94 ('desligar oculta, sem desfazer o que já foi visto')",
-        "pgTAP positivo e negativo por campo — 9 asserts verdes em supabase/tests/profile-affiliations.sql (dono lê os dois, vizinho lê o visível, vizinho NÃO lê o oculto, outra cidade não lê nada, terceiro não escreve, campo fora da D2 recusado, FA fora do enum recusada, remoção some para o terceiro). FALTAM os 6 negativos que o crítico exigiu (T1..T6)"
+        "pgTAP positivo e negativo por campo — 9 asserts verdes em supabase/tests/profile-affiliations.sql (dono lê os dois, vizinho lê o visível, vizinho NÃO lê o oculto, outra cidade não lê nada, terceiro não escreve, campo fora da D2 recusado, FA fora do enum recusada, remoção some para o terceiro). FALTAM os 6 negativos que o crítico exigiu (T1..T6)",
+        "Enumeração em lote fechada ✅ 17/09: a policy de SELECT voltou a ser só do dono e a leitura de terceiro passa por public.profile_affiliations_for(p_target_user_id), que aplica visibilidade por campo, veto de conta suspensa no leitor e guarda de exclusão pendente no alvo. pgTAP plan(20) e captura .visual/recon-loteAM-perfil6 provando a tela de terceiro"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs recusou RECON-005 por elevacao a R3",
         "Aprovacao 17/09/2026: D1/D2/D3 aprovadas; modelo de ameaca escrito na propria ADR (pre-requisito 2 satisfeito); pre-requisitos 3 e 4 nomeados como portao de exposicao, nao de contrato",
-        "Critico adversarial 17/09/2026 (sessao separada): veredito FAIL com 10 achados (4 HIGH). Os claims do modelo de ameaca que eu havia escrito foram corrigidos na propria ADR — regras 3 e 5 eram FALSAS no codigo. Os defeitos entraram como blockers deste card"
+        "Critico adversarial 17/09/2026 (sessao separada): veredito FAIL com 10 achados (4 HIGH). Os claims do modelo de ameaca que eu havia escrito foram corrigidos na propria ADR — regras 3 e 5 eram FALSAS no codigo. Os defeitos entraram como blockers deste card",
+        "Lote AM 17/09/2026: os defeitos do crítico adversarial foram corrigidos. Migration 20260918011938: policy só do dono, RPC por-alvo com os três vetos, constraint da OM contra posto/patente/endereço, tudo com comentário do porquê. pgTAP reescrito com plan(20) cobrindo T1..T6 — 119 arquivos / 1581 asserts PASS. A tela profile/[userId] passou a consumir a RPC; captura recon-loteAM-perfil6 (375/768/1440, 0 achados) mostra 'Força Armada: Exército' lida por alvo. O que resta é jurídico, não técnico: BLOCK-LEGAL-AI"
       ],
       "tests": [],
       "links": [
@@ -2136,13 +2136,8 @@
       "dependencies": ["BLOCK-AFFILIATION"],
       "phase": "Reconstrução",
       "updatedAt": "2026-09-17",
-      "sourceRevision": "20ade43",
-      "blockers": [
-        "DEFEITO VERIFICADO 17/09 (critico adversarial, FAIL): ENUMERACAO EM LOTE. profile_affiliations esta no schema public com GRANT SELECT a authenticated, entao um unico request a /rest/v1/profile_affiliations devolve TODAS as declaracoes visiveis de quem compartilha a cidade — o 'todos da OM X' que o produto-mae proibia por anti-mosaico. RLS limita por linha, nao impede listagem",
-        "DEFEITO VERIFICADO: a policy de SELECT de profile_affiliations nao tem veto de suspensao (is_account_suspended so aparece em WITH CHECK de INSERT) nem guarda de exclusao pendente (account_deletion_requests). Suspenso com JWT valido continua lendo; titular em exclusao segue exposto ate a purga",
-        "DEFEITO VERIFICADO: a OM e texto livre de 1..80 caracteres e pode carregar posto, patente ou endereco — dado que a D2 mantem fora. A bio tem constraint de termos proibidos; a afiliacao nao",
-        "Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo ao publico"
-      ]
+      "sourceRevision": "07e1d2f",
+      "completedAt": "2026-09-17"
     },
     {
       "id": "MVP-RETENTION-PURGE",
@@ -2974,6 +2969,28 @@
       "dependencies": [],
       "completedChecklist": [true, true, true, true, true, true, true],
       "completedAt": "2026-09-17"
+    },
+    {
+      "id": "CI-TYPES-DRIFT-HAND-EDIT",
+      "title": "Check de drift de tipos contradiz a edicao a mao documentada",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "repo",
+      "status": "repo",
+      "description": "O pull-request-ci.yml regenera supabase/database.generated.ts e exige git diff --exit-code. Mas o arquivo carrega uma edicao A MAO documentada em set_community_image (p_path: string | null, com comentario 'preservar em toda regeneracao'), porque o gerador nao expressa nulabilidade de argumento e o codigo passa NULL para limpar o ponteiro da imagem. Regenerar remove a linha e o check acusa drift; preservar a linha e o check acusa drift de qualquer forma. Ou seja: o check esta vermelho por construcao neste ponto, independentemente de quem mexer.",
+      "checklist": [
+        "Dar a set_community_image um valor padrao no argumento (p_path text default null) para o gerador emitir a nulabilidade e a edicao a mao deixar de ser necessaria",
+        "Regenerar os tipos e remover o comentario de edicao manual",
+        "Confirmar o passo 'Check generated types drift' verde"
+      ],
+      "proof": [
+        "Medido em 17/09/2026 (lote AM): ao regenerar os tipos para expor public.profile_affiliations_for, a linha ajustada a mao foi removida e apps/web/app/(owner)/communities/actions.ts:397 passou a falhar no typecheck ('Type null is not assignable to type string'). A linha foi restaurada com o comentario original para o gate voltar ao verde",
+        "O comentario no proprio arquivo ja nomeava o problema: 'o gerador nao expressa nulabilidade de argumento'"
+      ],
+      "dependencies": [],
+      "completedChecklist": [false, false, false],
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "07e1d2f"
     }
   ]
 }
