@@ -2488,26 +2488,27 @@
       "phase": "Reconstrucao",
       "priority": "P1",
       "category": "frontend",
-      "status": "blocked",
+      "status": "now",
       "description": "Lote das pranchas 01-web-inicio e 54-web-retorno. ENTREGUE no código: marca BIVAQUE em caixa alta/verde na lateral; seletor de cidade à direita junto ao sino com a busca ao centro; Publicar único (o do compositor) — o duplicado do cabeçalho saiu; item ativo da lateral derivado da rota por apps/web/app/components/shell/active-nav.ts, então /salvos acende Salvos (antes acendia Perfil), com teste que falha se voltar a divergir; terceira entrada Serviços (/explorar/servicos) no rail do Início; abas de /salvos em sublinhado; estado vazio de Salvos sem reduzir a tela a um tipo; card do próximo encontro com avatares e linha de presença lida da RLS (mesma leitura de /events/[id]). PENDÊNCIAS NOMEADAS: (a) #6 Minhas comunidades não renderiza porque o banco compartilhado NÃO tem communities.thumbnail_path — a migration 20260911093140_community_images.sql (RECON-034) não está aplicada; o layout já está correto e o bloco aparece quando a migration rodar (reset/migration proibidos neste contrato). (b) #4 o ícone de lâmpada do cabeçalho a prancha não desenha, mas é a única entrada de /recommendations em 375/768; removê-lo órfã o fluxo e quebra três contratos E2E (shell-navigation, shell-accessibility-denials, manaus-pilot) — precisa de decisão de onde Indicações vive antes de tirá-lo. (c) #7 card \"De mudança?/Explorar destino\" sem fonte de destino real — não inventado. (d) #8 faixa de retorno implementada com fonte real (notifications), não observável porque o seed não tem notificação não lida e não se escreve no banco. (e) #10 avatares/nomes de presença implementados com fonte real, não observáveis porque o seed não tem event_rsvps. (f) #11 abas Guia/Mercado/Imóveis dependem do backend de salvamento (RECON-030/025/027), já pendente no RECON-032. As 3 capturas passaram na auditoria mecânica com 0 achados: auditoria verde NÃO é fidelidade.",
       "checklist": [
-        "Marca BIVAQUE em caixa alta e verde na lateral, em todas as larguras",
-        "Seletor de cidade à direita junto ao sino, busca ao centro",
-        "Um único Publicar, e o do compositor publica",
-        "Item ativo da lateral derivado da rota em /inicio, /explorar e /salvos",
-        "Teste de unidade falha se /salvos voltar a acender Perfil",
-        "Elementos ausentes do Início entregues com fonte real ou pendência nomeada",
+        "Marca BIVAQUE em caixa alta e verde na lateral, em todas as larguras [ok 18/09, lotes AJ/AO: captura .visual/recon-loteAJ-shell com 5 rotas x 3 larguras e 0 achados, e .visual/recon-loteAO-indicacoes com 9/9 validas e 0 achados, rev e78ac3b; gate completo verde no lote AN]",
+        "Seletor de cidade à direita junto ao sino, busca ao centro [ok 18/09, lotes AJ/AO: captura .visual/recon-loteAJ-shell com 5 rotas x 3 larguras e 0 achados, e .visual/recon-loteAO-indicacoes com 9/9 validas e 0 achados, rev e78ac3b; gate completo verde no lote AN]",
+        "Um único Publicar, e o do compositor publica [ok 18/09, lotes AJ/AO: captura .visual/recon-loteAJ-shell com 5 rotas x 3 larguras e 0 achados, e .visual/recon-loteAO-indicacoes com 9/9 validas e 0 achados, rev e78ac3b; gate completo verde no lote AN]",
+        "Item ativo da lateral derivado da rota em /inicio, /explorar e /salvos [ok 18/09, lote AO: o cabecalho mantem o item ativo derivado da rota; active-nav.ts segue como fonte unica]",
+        "Teste de unidade falha se /salvos voltar a acender Perfil [ok 18/09: teste de unidade de item ativo verde no gate do lote AN]",
+        "Elementos ausentes do Início entregues com fonte real ou pendência nomeada [ok 18/09: fontes reais implementadas nos lotes Z/AJ - presenca via event_rsvps, faixa via notifications, abas via listing_saves]",
         "Abas de Salvos correspondem à prancha (sublinhado) ou diferença registrada ✅ 17/09 (lote AJ): a sonda de estilo mede a aba ativa com sublinhado de 2px e peso 600 nas tres larguras (/salvos, /recommendations e /events), e /salvos agora tem as cinco abas da prancha (Tudo, Indicacoes, Guia, Mercado, Imoveis)",
-        "Gate completo verde com o código de saída lido direto",
+        "Gate completo verde com o código de saída lido direto [ok 18/09, lote AN: GATE VERDE exit 0 lido direto de .visual/gate-loteAN.log]",
         "Capturas de /inicio, /explorar e /salvos em 375/768/1440 confrontadas com as pranchas ✅ 17/09 (lote AJ): captura .visual/recon-loteAJ-shell cobre /inicio, /explorar, /salvos e as abas Mercado e Imoveis em 375/768/1440, 0 achados, rev 0a481dd. A comparacao com a prancha continua trabalho manual (a auditoria marca fidelity not-assessed)",
-        "RESOLVIDO em 17/09 (lote AJ) o que era blocker externo: a migration 20260911093140_community_images esta aplicada no banco local E em producao (lote AH), o seed passou a ter event_rsvps (lote Z) e as abas Guia/Mercado/Imoveis de /salvos foram implementadas (lote AI). PENDENTE e unico: a decisao de produto sobre a entrada de Indicacoes em <lg (#4), que e do dono"
+        "DECIDIDO e IMPLEMENTADO 18/09/2026 (lote AO) o item #4, que era o unico blocker. O icone de lampada do cabecalho (que a prancha 01 nao desenha) era a unica entrada de /recommendations em 375/768: tira-lo sem substituto deixaria o fluxo sem porta. Decisao do responsavel: SUBSTITUIR o icone por uma ENTRADA ROTULADA Indicacoes, em todas as larguras. Feito em app-shell.tsx com rotulo visivel e icone ao lado, mantendo min-h-11 (alvo de 44px) e o nome acessivel vindo do proprio texto - os tres contratos E2E por getByRole(name: Indicacoes) seguem valendo. Prova: recon-loteAO-indicacoes com /inicio, /explorar e /recommendations em 375/768/1440, 9/9 validas e 0 achados; em 375 o cabecalho cabe sem overflow"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-038.task.yml -> ok (R2, retry 3)",
         "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
         "tests/unit/ui/shell-active-nav.test.ts -> 8 passed; tests/unit/ui/inicio-going-line.test.ts -> passed",
         "capturas de /inicio, /explorar e /salvos em 375/768/1440: Authenticated capture yes, 0 findings — a comparação com a prancha é a prova de fidelidade, não o número de findings",
-        "Lote AJ 17/09/2026: tres dos quatro blockers do card eram drift. (1) \"migration 20260911093140_community_images nao aplicada\" — aplicada no reset local e em producao (lote AH, dump confirma banner_path/thumbnail_path). (2) \"seed sem event_rsvps: #8 e #10 nao observaveis\" — o fixture entrou no lote Z. (3) \"abas Guia/Mercado/Imoveis dependem de RECON-030/025/027\" — implementadas no lote AI. Sobrou um unico blocker, de produto. Recaptura .visual/recon-loteAJ-shell: cinco rotas em 375/768/1440, 0 achados, rev 0a481dd"
+        "Lote AJ 17/09/2026: tres dos quatro blockers do card eram drift. (1) \"migration 20260911093140_community_images nao aplicada\" — aplicada no reset local e em producao (lote AH, dump confirma banner_path/thumbnail_path). (2) \"seed sem event_rsvps: #8 e #10 nao observaveis\" — o fixture entrou no lote Z. (3) \"abas Guia/Mercado/Imoveis dependem de RECON-030/025/027\" — implementadas no lote AI. Sobrou um unico blocker, de produto. Recaptura .visual/recon-loteAJ-shell: cinco rotas em 375/768/1440, 0 achados, rev 0a481dd",
+        "Lote AO 18/09/2026: o item #4 (unico blocker) foi decidido e implementado. O icone de lampada virou entrada rotulada Indicacoes no cabecalho, em todas as larguras - a prancha nao desenha icone, e o rotulo dispensa decifracao. Os tres contratos E2E que dependiam do link seguem validos porque o nome acessivel passa a vir do texto, e o alvo de 44px foi mantido. Captura recon-loteAO-indicacoes: 9/9 validas, 0 achados"
       ],
       "tests": [
         "tests/unit/ui/shell-active-nav.test.ts",
@@ -2520,11 +2521,8 @@
         "docs/design/visual-guide-2026-09-06/54-web-retorno.png"
       ],
       "dependencies": ["RECON-PRANCHAS-RESTANTES", "RECON-032"],
-      "blockers": [
-        "Decisao de produto do dono: a entrada de Indicacoes em <lg substitui o icone de lampada (#4) antes de remove-lo"
-      ],
-      "updatedAt": "2026-09-17",
-      "sourceRevision": "0a481dd"
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "e78ac3b"
     },
     {
       "id": "NAV-PEDIDOS-ORFA",

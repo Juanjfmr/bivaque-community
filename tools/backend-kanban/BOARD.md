@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 94 frentes · 12 agora · 9 bloqueadas · 40 concluídas · 1 drifts
+**Mapa:** 94 frentes · 13 agora · 8 bloqueadas · 40 concluídas · 1 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -22,6 +22,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **RECON-029-EVENTO-PERGUNTA** · P1 · Evento: pergunta ao organizador (prancha 67) e rotas de criar/editar
 - **RECON-032** · P1 · RECON-032: Salvos, denuncia do membro, conversa por URL e ajuda com canal real
 - **RECON-034** · P1 · RECON-034: imagem de comunidade — faixa e miniatura (pranchas 42/43)
+- **RECON-038** · P1 · RECON-038: fidelidade do shell — cabeçalho, lateral ativa e elementos do Início
 - **RECON-AUTH-ENTRADA-WEB** · P1 · Web: entrada fiel à prancha 36-web-auth-entrada sem tocar o mecanismo
 - **RECON-W00-FUNDACAO** · P1 · W00: baseline, contratos e fundação da reconstrução web
 - **RECON-W00-TELAS** · P1 · Quatro telas da reconstrucao web saem do placeholder
@@ -34,7 +35,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **BLOCK-RESEND** · BLOCK · Resend e domínio de e-mail transacional — Criar o projeto de deploy do Bivaque e configurar RESEND_API_KEY e RESEND_FROM_EMAIL; Provar uma entrega real pelo outbox em ambiente implantado
 - **BLOCK-WHATSAPP** · BLOCK · Canal WhatsApp do outbox — Chip dedicado; CNPJ para Cloud API futura; Decisão de produto
 - **BLOCK-MOBILE-RUNTIME** · P1 · Runtime iOS em device real — Android já provado no emulador — cmdline-tools + system-image + AVD ausentes (Android); Apple Developer Program + EAS credentials ausentes (iOS)
-- **RECON-038** · P1 · RECON-038: fidelidade do shell — cabeçalho, lateral ativa e elementos do Início — Decisao de produto do dono: a entrada de Indicacoes em <lg substitui o icone de lampada (#4) antes de remove-lo
 - **S4-MOBILE-COMPOSER** · P1 · Mobile: composer + reações + comentários (S4 do mobile, read-only parcial do S3) — MOB-001-SESSION esta em now: o contrato R3 de sessao do mobile (PKCE, secure-store, revogacao) nao existe. Sem ele o composer escreve sem sessao provada, entao o done era sobre a UI, nao sobre o fluxo.
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo, agora com o tecnico resolvido
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança

@@ -112,17 +112,17 @@ export function AppShell({ children }: AppShellProperties) {
               </span>
             </div>
 
-            {/* Pendência nomeada RECON-038 (#4): a prancha 01 não desenha este
-                ícone, mas ele é a única entrada de /recommendations visível em
-                375/768. Removê-lo órfã o fluxo e quebra três contratos E2E
-                (shell-navigation, shell-accessibility-denials, manaus-pilot).
-                Decidir onde Indicações vive antes de tirá-lo. */}
+            {/* Decidido em 18/09/2026 (RECON-038 #4): a prancha 01 não desenha o
+                ícone de lâmpada, e ele era a única entrada de /recommendations
+                em 375/768 — removê-lo sem substituto órfãva o fluxo. A entrada
+                passa a ser rotulada, como o resto da navegação: o ícone sozinho
+                não dizia para onde ia, e um rótulo dispensa decifração. */}
             <a
               href="/recommendations"
-              aria-label="Indicações"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+              className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
-              <Lightbulb size={20} aria-hidden="true" />
+              <Lightbulb size={18} aria-hidden="true" />
+              Indicações
             </a>
 
             <a
