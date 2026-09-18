@@ -71,9 +71,13 @@ beforeEach(() => {
   mockRemove.mockResolvedValue({ error: null })
   contactResult = { data: 2, error: null }
   finalizeResult = { data: "purged", error: null }
-  mockRpc.mockImplementation((name: string) =>
-    Promise.resolve(name === "purge_account_contact_data" ? contactResult : finalizeResult),
-  )
+  // settle_account_possessions roda ANTES do deleteUser: e a ordem que impede a
+  // credencial sumir com posse pendurada (RECON-052-FOLLOWUP).
+  mockRpc.mockImplementation((name: string) => {
+    if (name === "purge_account_contact_data") return Promise.resolve(contactResult)
+    if (name === "settle_account_possessions") return Promise.resolve({ data: null, error: null })
+    return Promise.resolve(finalizeResult)
+  })
 })
 
 afterEach(() => {
@@ -210,10 +214,17 @@ describe("POST /api/internal/account-deletion (RECON-052)", () => {
     })
     expect(mockRpc).toHaveBeenCalledWith("finalize_account_deletion", { p_user_id: USER_ID })
 
+    // A posse e resolvida ANTES de a credencial sumir: comunidade sem dono,
+    // anuncio de telefone que nao existe e pedido com uma ponta muda nascem
+    // exatamente de apagar primeiro (RECON-052-FOLLOWUP).
+    expect(mockRpc).toHaveBeenCalledWith("settle_account_possessions", { p_user_id: USER_ID })
+
     const contactOrder = mockRpc.mock.invocationCallOrder[0] ?? 0
+    const settleOrder = mockRpc.mock.invocationCallOrder[1] ?? 0
     const deleteOrder = mockDeleteUser.mock.invocationCallOrder[0] ?? 0
-    const finalizeOrder = mockRpc.mock.invocationCallOrder[1] ?? 0
-    expect(contactOrder).toBeLessThan(deleteOrder)
+    const finalizeOrder = mockRpc.mock.invocationCallOrder[2] ?? 0
+    expect(contactOrder).toBeLessThan(settleOrder)
+    expect(settleOrder).toBeLessThan(deleteOrder)
     expect(deleteOrder).toBeLessThan(finalizeOrder)
   })
 
@@ -254,6 +265,7 @@ describe("POST /api/internal/account-deletion (RECON-052)", () => {
     let failureRecorded: unknown = null
     mockRpc.mockImplementation((name: string, args: Record<string, unknown>) => {
       if (name === "purge_account_contact_data") return Promise.resolve(contactResult)
+      if (name === "settle_account_possessions") return Promise.resolve({ data: null, error: null })
       if (args["p_error"]) {
         failureRecorded = args
         return Promise.resolve({ data: "failed", error: null })

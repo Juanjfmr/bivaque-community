@@ -2877,14 +2877,14 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "backend",
-      "status": "now",
+      "status": "done",
       "description": "A purga da RECON-052 apaga dado pessoal, preferência e participação. Ela NÃO dissolve posse nem encerra superfície operacional, porque isso é decisão de produto que o ADR-20260914 não tomou — e resolvê-lo apagando conteúdo de terceiro contradiria o item 4 do mesmo ADR. Três casos ficam abertos depois que a conta some: (a) communities.owner_user_id e groups.owner_user_id continuam apontando para a conta purgada — a comunidade/grupo fica sem quem administre (o produto já tem a regra 'transfer community ownership before removing the owner', disparada pelo trigger, mas não há para quem transferir); (b) provider_accounts e listings ativos seguem no ar; (c) service_requests abertos com a conta como parte seguem abertos. A purga deliberadamente pula a linha do dono em vez de passar por cima do trigger.",
       "checklist": [
         "DECIDIDO 18/09/2026 pelo responsavel: quando o dono de comunidade/grupo pede exclusao, a posse passa para um MODERADOR/co-administrador existente; se nao houver ninguem, a posse passa para a OPERACAO (a plataforma administra e pode devolver a quem reivindicar). Dissolver esta descartado: apagaria conteudo de terceiros, contra o item 4 do ADR-20260914. Deixar sem dono esta descartado: comunidade sem administracao apodrece",
         "DECIDIDO 18/09/2026 pelo responsavel: ENCERRAR tudo da conta purgada — anuncios vao para 'closed' e a conta de prestador sai do ar. Nada de morto publicado: quem salvou ve indisponivel (ja implementado), quem procura nao encontra. Pausar (preservar para restauracao) foi descartado",
         "DECIDIDO 18/09/2026 pelo responsavel: pedido de servico aberto com a conta purgada e CANCELADO (status cancelled), com AVISO NEUTRO ao outro lado. Verificado que o pedido realmente sobrevive hoje: a purga usa admin.deleteUser(id, true) — soft delete — entao o CASCADE de auth.users nao dispara e o pedido fica aberto com uma parte que nao pode responder. O AVISO fica nomeado como pendente: exige tipo novo em notification_type + copy + deep-link, e o repositorio tem card proprio (NOTIF-DEEPLINKS) dizendo que tipo mal ligado e defeito; cancelar primeiro, avisar quando a superficie existir",
-        "Depois da decisao: migration aplicando cada regra + pgTAP positivo/negativo por caso — EM ANDAMENTO (lote AN). O rascunho da migration esta escrito (settle_account_possessions: posse para moderador/operacao, anuncios encerram, vitrine revolvida, pedidos cancelam) e NAO foi verificado: o Docker Desktop caiu no meio do lote e sem ele nao ha db reset, pgTAP nem geracao de tipos. Migration nao verificada nao entra no repositorio — esta em .visual/draft-settle_account_possessions.sql",
-        "Reabrir e reconciliar o rodape de 20260915101543_account_deletion.sql — o rodape NAO e editado (migration aplicada nao se edita, nem comentario); a reconciliacao vai no cabecalho da migration nova, que fecha as tres lacunas e diz onde"
+        "Depois da decisao: migration aplicando cada regra + pgTAP positivo/negativo por caso ✅ 18/09 (lote AN): supabase/migrations/20260918114238_settle_account_possessions.sql aplica as tres regras; supabase/tests/account-deletion-possession.sql cobre 11 asserts (comunidade com moderador, comunidade sem moderador -> operacao, comunidade alheia intacta, grupo com moderador, anuncio purgado fecha e o alheio permanece, vitrine revogada e a alheia permanece, pedido cancela e o de controle permanece, e conta sem posse nao falha). Test:db 120 arquivos / 1592 asserts PASS; db:lint limpo. A rota de purga chama a regra ANTES do soft delete, com teste de ordem no unit da rota",
+        "Reabrir e reconciliar o rodape de 20260915101543_account_deletion.sql ✅ 18/09 (lote AN): o rodape NAO foi editado (migration aplicada nao se edita, nem comentario) — a reconciliacao vive no cabecalho da migration nova, que fecha as tres lacunas e diz onde. Decisao de metodo registrada: reescrever historia para parecer que sempre esteve certo e o oposto do que este repositorio exige"
       ],
       "proof": [
         "supabase/migrations/20260915101543_account_deletion.sql: o DELETE de community_memberships/group_memberships exclui de propósito a linha do dono (o trigger cascade_community_membership_loss recusa removê-la)",
@@ -2893,7 +2893,8 @@
         "18/09/2026 — decisao 1 de 3: posse de comunidade/grupo de conta purgada vai para moderador existente; sem moderador, para a operacao. Escolhida pelo responsavel com a consequencia na mesa: dissolver apagaria conteudo de terceiros (item 4 do ADR). Implementacao entra depois das tres decisoes, numa migration com pgTAP por caso",
         "18/09/2026 — decisao 2 de 3: vitrine e anuncios da conta purgada ENCERRAM (listings closed, conta de prestador fora do ar). Registrado com o motivo: anuncio sem dono e telefone que nao existe",
         "18/09/2026 — decisao 3 de 3: pedido aberto CANCELA, com aviso neutro ao outro lado (aviso nomeado como pendente por exigir tipo novo de notificacao + copy + deep-link). Com as tres decisoes, o card sai de blocked: o que falta agora e implementacao verificada, nao decisao",
-        "Estado da implementacao (lote AN, interrompido): migration escrita e nao verificada, guardada como rascunho fora do repositorio porque o Docker Desktop caiu. Retomar quando o Docker estiver de pe: aplicar, rodar pgTAP com positivo e negativo por caso, regenerar tipos, ligar a chamada na rota de purga e capturar"
+        "Estado da implementacao (lote AN, interrompido): migration escrita e nao verificada, guardada como rascunho fora do repositorio porque o Docker Desktop caiu. Retomar quando o Docker estiver de pe: aplicar, rodar pgTAP com positivo e negativo por caso, regenerar tipos, ligar a chamada na rota de purga e capturar",
+        "Lote AN 18/09/2026: as tres decisoes estao implementadas e verificadas. Migration 20260918114238_settle_account_possessions aplica posse -> moderador/operacao, anuncios closed + vitrine revogada, pedidos cancelados; chamada pela rota ANTES do soft delete, com teste de ordem. pgTAP novo com 11 asserts (120 arquivos / 1592 PASS). Um defeito real apareceu no caminho e foi corrigido: o update direto de listings violava a guarda de transicao de status — a migration passou a abrir a guarda com o mesmo GUC que transition_listing usa, e a fecha em seguida. O aviso neutro saiu para o card proprio NOTIF-PEDIDO-CANCELADO"
       ],
       "tests": ["supabase test db"],
       "links": [
@@ -2901,9 +2902,9 @@
         "supabase/migrations/20260915101543_account_deletion.sql (rodapé)"
       ],
       "updatedAt": "2026-09-18",
-      "sourceRevision": "d939659",
+      "sourceRevision": "e9f458f",
       "dependencies": ["RECON-052"],
-      "completedAt": null
+      "completedAt": "2026-09-18"
     },
     {
       "id": "DRIFT-SERVICE-REQUESTS-CLOSE-AT",
@@ -2990,6 +2991,30 @@
       "completedChecklist": [false, false, false],
       "updatedAt": "2026-09-17",
       "sourceRevision": "07e1d2f"
+    },
+    {
+      "id": "NOTIF-PEDIDO-CANCELADO",
+      "title": "Aviso neutro ao outro lado do pedido cancelado pela purga",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "A decisao 3 do RECON-052-FOLLOWUP (18/09/2026) cancelou o pedido de servico aberto quando a conta purgada e parte dele, MAS o aviso neutro ao outro lado ficou de fora de proposito: ele exige um valor novo em public.notification_type, copy propria e deep-link. O repositorio tem card proprio (NOTIF-DEEPLINKS) dizendo que tipo de notificacao mal ligado e defeito — inserir uma notificacao orfa repetiria exatamente o defeito que aquele card existe para corrigir. O texto precisa ser neutro: dizer que o pedido foi encerrado porque a outra parte nao esta mais na plataforma, sem revelar que houve exclusao de conta (isso e dado pessoal de quem saiu).",
+      "checklist": [
+        "Adicionar o valor novo em public.notification_type (migration timestamped) e a policy de leitura que o acompanha",
+        "Copy neutra no app: pedido encerrado porque a outra parte nao esta mais na plataforma, sem revelar exclusao",
+        "Deep-link do tipo novo em apps/web/app/(shell)/notifications/deep-links.ts, sem virar destino inexistente",
+        "Inserir a notificacao dentro de settle_account_possessions para o lado que permanece",
+        "Teste de unidade da copy + pgTAP de que a notificacao so vai para o lado que fica",
+        "Captura da tela de notificacoes com o tipo novo renderizado"
+      ],
+      "proof": [
+        "Registrado em 18/09/2026 ao implementar o lote AN: a alternativa seria inserir a notificacao com um tipo existente (direct_message, por exemplo), o que seria mentira no dado — o tipo diz o que a notificacao e. O card NOTIF-DEEPLINKS existe justamente porque tipos mal ligados nao navegam"
+      ],
+      "dependencies": [],
+      "completedChecklist": [false, false, false, false, false, false],
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "e9f458f"
     }
   ]
 }

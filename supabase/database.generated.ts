@@ -2991,6 +2991,10 @@ export type Database = {
         Returns: undefined
       }
       set_profile_bio: { Args: { p_bio: string }; Returns: undefined }
+      settle_account_possessions: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       submit_verification_document: {
         Args: {
           p_mime_type: string

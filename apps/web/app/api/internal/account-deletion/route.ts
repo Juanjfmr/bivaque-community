@@ -206,6 +206,27 @@ export async function POST(request: Request) {
       continue
     }
 
+    // Antes de apagar a credencial: resolver o que a purga deixaria pendurado
+    // (decisões de 18/09/2026, RECON-052-FOLLOWUP). Posse de comunidade/grupo
+    // passa a um moderador aprovado e, sem moderador, à operação; vitrine e
+    // anúncios encerram; pedidos de serviço abertos com a conta entre as partes
+    // cancelam. Sem isto, sobra comunidade sem dono, anúncio de telefone que não
+    // existe e pedido aberto com uma ponta que nunca responde.
+    const { error: settleError } = await supabase.rpc("settle_account_possessions", {
+      p_user_id: id,
+    })
+    if (settleError) {
+      // Antes de qualquer coisa destrutiva: a linha do pedido segue pendente e a
+      // tentativa seguinte repete. Apagar a credencial com posse pendurada
+      // deixaria o estrago sem quem responder por ele.
+      log.error("account deletion possession settlement failed", {
+        user_id: id,
+        error: settleError.message,
+      })
+      outcomes[id] = "settle_failed"
+      continue
+    }
+
     // shouldSoftDelete = true. O hard delete levaria junto posts, comentários,
     // comunidades e vínculos de terceiros por CASCADE — contra o item 4 do ADR.
     const { error: authError } = await supabase.auth.admin.deleteUser(id, true)
