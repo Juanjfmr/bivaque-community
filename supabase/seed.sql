@@ -1483,6 +1483,46 @@ values (
 )
 on conflict (conversation_id, user_id) do nothing;
 
+-- Aviso neutro de pedido cancelado (NOTIF-PEDIDO-CANCELADO, lote AU). O seed nao
+-- tinha NENHUMA notificacao — elas nascem de triggers nas jornadas — entao nem
+-- esta linha nem a faixa de retorno do RECON-038 eram observaveis na captura.
+-- Fixture honesta: um pedido realmente cancelado, com a conta de captura de um
+-- lado e outro membro do outro, e a notificacao que o lote AU passou aemitir
+-- nesse caso. O ator e NULO de proposito: o aviso e neutro e nao nomeia quem
+-- saiu (o motivo da saida e dado pessoal de terceiro).
+insert into public.service_requests (
+  id, requester_user_id, provider_id, provider_user_id, description, when_text,
+  status, category, created_at, updated_at
+)
+values (
+  '40000000-0000-4000-8000-0000000000c9',
+  '20000000-0000-4000-8000-000000000008',
+  '30000000-0000-4000-8000-000000000010',
+  '30000000-0000-4000-8000-000000000001',
+  'Pedido encerrado porque a outra parte saiu da plataforma.',
+  'Sem data',
+  'cancelled',
+  'assistencia_tecnica',
+  now() - interval '9 days',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
+insert into public.notifications (
+  id, recipient_user_id, actor_user_id, type, action, target_type, target_id, created_at
+)
+values (
+  '50000000-0000-4000-8000-0000000000ca',
+  '20000000-0000-4000-8000-000000000008',
+  null,
+  'service_request',
+  'cancelled_counterpart_left',
+  'service_request',
+  '40000000-0000-4000-8000-0000000000c9',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
 -- 3) Indicações: respostas no pedido do titular e uma marcada como solução.
 --    O trigger notify_recommendation_reply cria as notificações do autor.
 insert into public.recommendation_replies (id, request_id, author_id, body, created_at)

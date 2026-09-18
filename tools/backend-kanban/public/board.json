@@ -3012,23 +3012,26 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "A decisao 3 do RECON-052-FOLLOWUP (18/09/2026) cancelou o pedido de servico aberto quando a conta purgada e parte dele, MAS o aviso neutro ao outro lado ficou de fora de proposito: ele exige um valor novo em public.notification_type, copy propria e deep-link. O repositorio tem card proprio (NOTIF-DEEPLINKS) dizendo que tipo de notificacao mal ligado e defeito — inserir uma notificacao orfa repetiria exatamente o defeito que aquele card existe para corrigir. O texto precisa ser neutro: dizer que o pedido foi encerrado porque a outra parte nao esta mais na plataforma, sem revelar que houve exclusao de conta (isso e dado pessoal de quem saiu).",
       "checklist": [
-        "Adicionar o valor novo em public.notification_type (migration timestamped) e a policy de leitura que o acompanha",
-        "Copy neutra no app: pedido encerrado porque a outra parte nao esta mais na plataforma, sem revelar exclusao",
-        "Deep-link do tipo novo em apps/web/app/(shell)/notifications/deep-links.ts, sem virar destino inexistente",
-        "Inserir a notificacao dentro de settle_account_possessions para o lado que permanece",
-        "Teste de unidade da copy + pgTAP de que a notificacao so vai para o lado que fica",
-        "Captura da tela de notificacoes com o tipo novo renderizado"
+        "Valor novo em public.notification_type ✅ 18/09 (lote AU): migration 20260918214735 adiciona 'service_request' com ADD VALUE em statement separado (o Postgres proibe usar valor de enum recem-adicionado na mesma transacao que o criou)",
+        "Copy neutra no app ✅ 18/09 (lote AU): deep-links.ts devolve 'O pedido em que você estava foi encerrado'. Nao diz que houve exclusao: o motivo da saida e dado pessoal de quem saiu, e a LGPD nao autoriza contar a terceiro",
+        "Deep-link do tipo novo ✅ 18/09 (lote AU): /pedidos/<target_id>, rota real do acompanhamento. Tipo fica FORA de rendersWithActor de proposito (ator nulo) e o comentario diz para nao 'consertar' adicionando o case",
+        "Inserir a notificacao em settle_account_possessions ✅ 18/09 (lote AU): nasce das linhas realmente canceladas (CTE com RETURNING) e o destinatario e quem NAO foi purgado; o CASE cobre pedinte e prestador",
+        "Teste de unidade da copy + pgTAP ✅ 18/09 (lote AU): supabase/tests/service-request-cancelled-notice.sql com 8 asserts — cancela nos dois papeis, avisa a outra ponta nos dois, nenhum aviso nomeia quem saiu, tipo e alvo proprios, pedido sem a conta purgada nao cancela nem avisa, e pedido ja cancelado nao gera aviso novo. test:db 121 arquivos / 1600 asserts PASS",
+        "Captura da tela de notificacoes com o tipo novo renderizado ✅ 18/09 (lote AV): fixture no seed (um pedido realmente cancelado com a conta de captura de um lado, e a notificacao com ator NULO) — o seed nao tinha nenhuma notificacao DESTE tipo, e sem fixture a tela nao provava nada. Captura .visual/recon-loteAV-notif: 0 achados em 375/768/1440, com 'O pedido em que você estava foi encerrado' renderizado, sem ator e sem revelar exclusao. Efeito colateral bom: o badge de nao-lidas da sidebar apareceu (a faixa de retorno do RECON-038 tambem dependia de notificacao real no seed)"
       ],
       "proof": [
-        "Registrado em 18/09/2026 ao implementar o lote AN: a alternativa seria inserir a notificacao com um tipo existente (direct_message, por exemplo), o que seria mentira no dado — o tipo diz o que a notificacao e. O card NOTIF-DEEPLINKS existe justamente porque tipos mal ligados nao navegam"
+        "Registrado em 18/09/2026 ao implementar o lote AN: a alternativa seria inserir a notificacao com um tipo existente (direct_message, por exemplo), o que seria mentira no dado — o tipo diz o que a notificacao e. O card NOTIF-DEEPLINKS existe justamente porque tipos mal ligados nao navegam",
+        "Lote AU 18/09/2026: o aviso existe de ponta a ponta no dado e no app — tipo proprio, copy neutra, deep-link e destinatario correto, com pgTAP de 8 asserts nos dois papeis. O unico item aberto e a captura da tela renderizada, que exige uma notificacao real do tipo novo no banco",
+        "Lote AV 18/09/2026: o card fecha de ponta a ponta — dado (tipo proprio, destinatario correto, ator nulo), app (copy neutra e deep-link) e tela (captura com o texto renderizado e 0 achados). A fixture entrou no seed porque o tipo nao existia em nenhuma jornada do seed, e sem ela a prova visual seria vazia"
       ],
       "dependencies": [],
-      "completedChecklist": [false, false, false, false, false, false],
+      "completedChecklist": [true, true, true, true, true, true],
       "updatedAt": "2026-09-18",
-      "sourceRevision": "e9f458f"
+      "sourceRevision": "fe5887e",
+      "completedAt": "2026-09-18"
     }
   ]
 }
