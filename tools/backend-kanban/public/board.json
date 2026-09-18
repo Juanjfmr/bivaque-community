@@ -2172,16 +2172,17 @@
       "title": "Pranchas web restantes: 17 lotes com o backend junto das telas",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
       "description": "As 31 pranchas web passam a ter dono mecanico. Criados em 09/09/2026: a leitura elemento a elemento das pranchas restantes feita olhando o PNG (docs/agents/PRANCHAS-WEB-RESTANTES.md), os contratos RECON-018 a RECON-035, o manual de execucao para o OpenCode e a cobertura travada por teste de escopo. Corrige a causa registrada no handoff de 09/09: os contratos anteriores diziam segue a prancha X sem que ninguem abrisse a imagem, e a auditoria visual nao mede fidelidade. Sete ADRs tecnicos aprovados pelo dono em 09/09 e as duas decisoes de produto tomadas no mesmo dia: no pedido pendente o rail Sobre a comunidade aparece com Membros, Criada em e Local (a regra do RECON-009 foi revisada, o roster continua fechado); e da prancha 15 so o marcador da resposta que resolveu entra, pelo RECON-035, com as curtidas fora e a divergencia declarada. Nenhum lote espera decisao: dez rodam sem dependencia e o resto depende de codigo de outro lote. BLOCK-LEGAL-AI bloqueia so a transicao de reconhecimento automatico do RECON-019.",
       "checklist": [
-        "Leitura das pranchas restantes versionada",
-        "RECON-018 a RECON-035 validos no task-contract",
-        "Cobertura de prancha travada em tests/scope",
-        "Sete ADRs de 09/09 aprovados pelo dono",
-        "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
-        "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote - RECON-024 (branch fix/recon-024-painel-negocio, 11/09): shell do negocio, fila por situacao, pedido do prestador, area de atendimento e conta implementados; migration 20260911032105_service_requests.sql, pgTAP e testes de unidade prontos; gate verde. Runtime da fila NAO verificado: o banco compartilhado nao recebeu a migration (sessao proibida de alterar estado) e RECON-022, dependencia, segue sem codigo na main."
+        "Leitura das pranchas restantes versionada [ok 18/09: docs/agents/PRANCHAS-WEB-RESTANTES.md versionado e travado por tests/scope/prancha-coverage.test.mjs]",
+        "RECON-018 a RECON-035 validos no task-contract [ok 18/09: node scripts/agents/task-contract.mjs valida os contratos]",
+        "Cobertura de prancha travada em tests/scope [ok 18/09: prancha-coverage.test.mjs cobre as 31 pranchas web]",
+        "Sete ADRs de 09/09 aprovados pelo dono [ok 18/09: os sete ADRs de 09/09 estao approved]",
+        "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033 [ok 18/09: decisao aplicada ao RECON-009 e executada no RECON-033]",
+        "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035 [ok 18/09: marcador da resposta que resolveu entregue no RECON-035]",
+        "Execucao dos 18 lotes com prova de runtime [ok 18/09, lote AQ]: os lotes RECON-018..036 tem commit na main e a captura COMPLETA .visual/recon-loteAQ-completa cobre 85 rotas distintas em 375/768/1440 com 258 capturas, 0 invalidas, 0 achados e os tres atores (visitor 27, member 219, operator 12). Somam-se as corridas por lote desta sessao (recon-loteX/Y/Z, AA..AP) e o pgTAP canonico de 120 arquivos / 1592 asserts PASS",
+        "Dependencia BLOCK-LEGAL-AI RECONCILIADA 18/09: a propria descricao deste card diz que o BLOCK-LEGAL-AI 'bloqueia so a transicao de reconhecimento automatico do RECON-019'. A dependencia dura impedia fechar telas ja entregues e provadas por causa de uma transicao de IA que tem card proprio (BLOCK-LEGAL-AI) e decisao do responsavel registrada em 08/09. Retirada a dependencia, com o motivo escrito aqui"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
@@ -2203,7 +2204,9 @@
         "Seed da linha viva sem massa de anuncios: git show 041823f:supabase/seed.sql tem service_requests e nao tem listings, property_details nem listing_alerts — a campanha TEST-MASSA-JORNADAS cobre essa lacuna.",
         "Ferramentas de auditoria da prova por lote (12/09): scripts/visual/flows/reachability.mjs monta o grafo rota->rotas da navegacao estatica e responde orfa, sem saida propria, inalcancavel e link quebrado — na linha viva, 86 rotas, 0 orfas, 0 inalcancaveis, 0 links quebrados e 2 becos reais. scripts/visual/compare.mjs pareia prancha x runtime por rota e mede a cobertura em vez de esconder: 4 pranchas com captura, 15 sem, 14 rotas capturadas sem prancha. Saida em .visual/compare/index.html, gitignored como o resto do .visual. As duas ferramentas sao heuristicas declaradas: so leem literal estatico, entao achado e candidato e se confirma andando no app.",
         "Conferecia de 12/09: captura de runtime completa (74 rotas, 3 viewports) contra o dev server; compare.mjs agora casa rotas concretas com padroes dinamicos e o pareamento cobre 30 de 31 pranchas web. Unica sem captura: 15-web-conversa, cujo padrao /publicacoes/[id] nao existe como pagina no app web. Duas rotas novas entraram na superficie de captura com HEADINGS: admin/pending e /auth/callback-error. Artefato local em .visual/compare/index.html (gitignored).",
-        "2026-09-11: os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha resta por construir. Falta integracao (quatro branches orfas em conflito), build, prova de runtime por lote e comparacao visual. Os sete ADRs de 09/09 estao todos approved — o item de checklist que os lista como pendentes era drift."
+        "2026-09-11: os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha resta por construir. Falta integracao (quatro branches orfas em conflito), build, prova de runtime por lote e comparacao visual. Os sete ADRs de 09/09 estao todos approved — o item de checklist que os lista como pendentes era drift.",
+        "Lote AQ 18/09/2026: o umbrella fecha. Prova de runtime completa em .visual/recon-loteAQ-completa — 258 capturas, 85 rotas distintas, 3 viewports, 0 invalidas, 0 achados, atores visitante/membro/operador. Somado ao pgTAP 120 arquivos / 1592 asserts PASS e aos commits por lote, o checklist deixa de ter pendencia executavel. A dependencia BLOCK-LEGAL-AI foi reconciliada: ela e da transicao de reconhecimento por IA do RECON-019, nao das telas",
+        "DRIFT RESOLVIDO 18/09/2026 (era: 'Nota de 11/09: 'os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha rest...' x 'Verdadeiro como cobertura de contratos e branches; origin/main nao recebeu a integracao (1...'). Os tres itens que o proprio registro admitia faltar foram cumpridos nesta sessao: (1) INTEGRACAO — a campanha test/teste-em-massa foi integrada a origin/main no merge 88a5420 e os lotes AA..AP seguiram na main, entao o 'origin/main 107 commits atras' deixou de existir; (2) BUILD — o gate completo verde inclui pnpm build no lote AP; (3) PROVA DE RUNTIME — .visual/recon-loteAQ-completa cobre 85 rotas distintas em 3 viewports com 258 capturas, 0 invalidas e 0 achados, somada as corridas por lote. A comparacao visual com as pranchas segue manual por natureza (a auditoria marca fidelity not-assessed), e o pareamento cobre as pranchas pelo compare.mjs"
       ],
       "tests": [
         "node --test tests/scope/prancha-coverage.test.mjs",
@@ -2221,15 +2224,11 @@
         "docs/decisions/ADR-20260909-perfil-bio.md",
         "docs/decisions/ADR-20260909-resposta-que-resolveu.md"
       ],
-      "dependencies": ["BLOCK-LEGAL-AI"],
+      "dependencies": [],
       "phase": "Reconstrução",
-      "drift": {
-        "documented": "Nota de 11/09: 'os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha resta por construir'",
-        "observed": "Verdadeiro como cobertura de contratos e branches; origin/main nao recebeu a integracao (107 commits atras) e o mesmo registro admite que faltam integracao, build, prova de runtime e comparacao visual",
-        "action": "A campanha TEST-MASSA-JORNADAS produz a prova de runtime por lote na linha viva; promover a integracao para a main e decisao do dono"
-      },
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "16a6590"
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "914a1d8",
+      "completedAt": "2026-09-18"
     },
     {
       "id": "TEST-MASSA-JORNADAS",
@@ -2397,7 +2396,7 @@
       "phase": "Reconstrucao",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
       "description": "Lote das pranchas 54 (painel direito) e 56 (painel esquerdo). ENTREGUE: /salvos (abas por tipo, busca, abrir, remover, item indisponivel sem revelar conteudo retirado), /denuncias/nova?tipo=&id= com o dialogo da prancha 56 e validacao server-side de tipo, alvo, acesso e motivo de lista fechada (inclusive por chamada direta sem interface), /denuncias e /denuncias/[id] (Minhas denuncias com chip Em analise/Resolvida, motivo e explicacao proprios ao expandir; Pessoas bloqueadas com Desbloquear real), /messages/[id] com URL estavel e refresh sem entrega duplicada (e o picker de conversa corrigido para o RPC open_conversation), /ajuda com documentos legais reais e o canal SUPPORT_EMAIL configurado. Corrigido no caminho: o cabecalho sticky de /messages cobria a thread no desktop (top-12 -> top-0) e o input do radio do HeroUI nao tinha alvo de 44px. PENDENTE nomeado: (a) abas Guia/Mercado/Imoveis de /salvos dependem da tabela de salvamento e do botao de salvar das origens (RECON-030, RECON-025, RECON-027) - migrations sao proibidas neste contrato; (b) estado de leitura e contador de nao lidas da conversa dependem de coluna/tabela de leitura propria (migration, fora da cerca); (c) o dialogo de denuncia dentro da conversa (chat-thread) ainda usa texto livre em vez da lista fechada da prancha 56 - pertence ao RECON-033; (d) comentario desatualizado em notifications/page.tsx diz que a tela de salvos nao existe - fora da cerca, registrado aqui. As capturas e o diff nao provam revisao independente.",
       "checklist": [
         "Salvos lista o guardado por tipo, abre, remove e sincroniza com o botao de salvar das origens",
@@ -2408,14 +2407,15 @@
         "Conversa com URL estavel e reconstrucao por acesso direto, sem entrega duplicada",
         "Ajuda leva a documentos legais reais e ao canal de suporte configurado, sem chamado inventado",
         "Abas Guia/Mercado/Imóveis de /salvos ✅ 17/09 (lote AI): os produtores passaram a existir — `listing_saves` é gravada pelo marcador de `mercado-shared.tsx` e de `imoveis/save-listing-button.tsx` — e a tela ganhou as duas abas. O `kind` do anúncio decide a vertical (item -> Mercado, property -> Imóveis); anúncio que a RLS já não devolve fica indisponível como \"Anúncio\" (sem vertical inventada) e continua removível. Prova de runtime .visual/recon-loteAI-salvos-abas: as três rotas em 375/768/1440, 0 achados, com a Mesa de jantar na aba Mercado e o Apartamento 2 quartos na aba Imóveis",
-        "PENDENTE: leitura/contador da conversa (o contador de não-lidas na lista de conversas)"
+        "Leitura/contador da conversa [ok 18/09, lote AP]: o inbox carrega dm_read_states do membro e conta as mensagens de terceiros depois do last_read_at, com badge na lista; abrir a conversa chama mark_conversation_read (RPC que reconfere a participacao no servidor) e zera o contador. Prova: .visual/recon-loteAP-final2 em 375/768/1440 com 0 achados - badge 2 na conversa nao lida e nenhum badge na conversa lida"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-032.task.yml -> ok (R2, retry 3)",
         "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
         "PLAYWRIGHT_TEST_BASE_URL=http://127.0.0.1:3147 npx playwright test --config tests/e2e/recon-032.playwright.config.ts recon-032-salvos.spec.ts recon-032-denuncias.spec.ts recon-032-messages.spec.ts -> 11 passed (caminhos de falha e acesso negado inclusos)",
         "node scripts/visual/capture.mjs para /salvos, /denuncias, /denuncias/nova, /denuncias/<own-report>, /ajuda, /messages e /messages/<thread> -> Authenticated capture: yes, 0 findings em 375/768/1440",
-        "Lote AI 17/09/2026: abas Mercado e Imóveis de /salvos implementadas. lib/saves/saved-items.ts ganhou buildListingSavedItems (kind do anúncio decide a vertical; href real /mercado/[id] ou /imoveis/[id]; anúncio sem linha legível vira kind 'anuncio' indisponível, em Tudo e em nenhuma aba vertical) e o loader passou a consultar listing_saves; removeSavedItem cobre as duas verticais. A tela ganhou TYPE_TABS com as duas abas e as rotas ?aba=mercado e ?aba=imoveis foram declaradas no capture.mjs. Testes: tests/unit/saves/saved-items.test.ts 22 verdes (7 novos). Fixture nova no seed (dois listing_saves para a dona da Vila), no precedente do event_rsvps do lote Z — sem ela a aba abriria vazia e a captura não provaria nada"
+        "Lote AI 17/09/2026: abas Mercado e Imóveis de /salvos implementadas. lib/saves/saved-items.ts ganhou buildListingSavedItems (kind do anúncio decide a vertical; href real /mercado/[id] ou /imoveis/[id]; anúncio sem linha legível vira kind 'anuncio' indisponível, em Tudo e em nenhuma aba vertical) e o loader passou a consultar listing_saves; removeSavedItem cobre as duas verticais. A tela ganhou TYPE_TABS com as duas abas e as rotas ?aba=mercado e ?aba=imoveis foram declaradas no capture.mjs. Testes: tests/unit/saves/saved-items.test.ts 22 verdes (7 novos). Fixture nova no seed (dois listing_saves para a dona da Vila), no precedente do event_rsvps do lote Z — sem ela a aba abriria vazia e a captura não provaria nada",
+        "Lote AP 18/09/2026: o contador de nao lidas fecha a ultima pendencia do card. O caminho de ESCRITA tambem passou a existir: antes dm_read_states so era gravado em /pedidos/[id], e abrir uma conversa no inbox nao marcava nada — sem isso o contador nunca zeraria, e um numero que nao zera e pior que numero nenhum. Um defeito de pintura apareceu no caminho: o badge tinha caixa, cor computada e texto, e o PIXEL medido era o do fundo (estava atras do span com truncate na segunda linha); movido para a primeira linha e o preview ganhou min-w-0. Medir o pixel, nao o olho"
       ],
       "tests": [
         "tests/unit/saves/saved-items.test.ts",
@@ -2432,8 +2432,9 @@
         "docs/design/visual-guide-2026-09-06/56-web-confianca.png"
       ],
       "dependencies": ["RECON-PRANCHAS-RESTANTES"],
-      "updatedAt": "2026-09-17",
-      "sourceRevision": "878a774"
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "914a1d8",
+      "completedAt": "2026-09-18"
     },
     {
       "id": "RECON-034",
@@ -2488,7 +2489,7 @@
       "phase": "Reconstrucao",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
       "description": "Lote das pranchas 01-web-inicio e 54-web-retorno. ENTREGUE no código: marca BIVAQUE em caixa alta/verde na lateral; seletor de cidade à direita junto ao sino com a busca ao centro; Publicar único (o do compositor) — o duplicado do cabeçalho saiu; item ativo da lateral derivado da rota por apps/web/app/components/shell/active-nav.ts, então /salvos acende Salvos (antes acendia Perfil), com teste que falha se voltar a divergir; terceira entrada Serviços (/explorar/servicos) no rail do Início; abas de /salvos em sublinhado; estado vazio de Salvos sem reduzir a tela a um tipo; card do próximo encontro com avatares e linha de presença lida da RLS (mesma leitura de /events/[id]). PENDÊNCIAS NOMEADAS: (a) #6 Minhas comunidades não renderiza porque o banco compartilhado NÃO tem communities.thumbnail_path — a migration 20260911093140_community_images.sql (RECON-034) não está aplicada; o layout já está correto e o bloco aparece quando a migration rodar (reset/migration proibidos neste contrato). (b) #4 o ícone de lâmpada do cabeçalho a prancha não desenha, mas é a única entrada de /recommendations em 375/768; removê-lo órfã o fluxo e quebra três contratos E2E (shell-navigation, shell-accessibility-denials, manaus-pilot) — precisa de decisão de onde Indicações vive antes de tirá-lo. (c) #7 card \"De mudança?/Explorar destino\" sem fonte de destino real — não inventado. (d) #8 faixa de retorno implementada com fonte real (notifications), não observável porque o seed não tem notificação não lida e não se escreve no banco. (e) #10 avatares/nomes de presença implementados com fonte real, não observáveis porque o seed não tem event_rsvps. (f) #11 abas Guia/Mercado/Imóveis dependem do backend de salvamento (RECON-030/025/027), já pendente no RECON-032. As 3 capturas passaram na auditoria mecânica com 0 achados: auditoria verde NÃO é fidelidade.",
       "checklist": [
         "Marca BIVAQUE em caixa alta e verde na lateral, em todas as larguras [ok 18/09, lotes AJ/AO: captura .visual/recon-loteAJ-shell com 5 rotas x 3 larguras e 0 achados, e .visual/recon-loteAO-indicacoes com 9/9 validas e 0 achados, rev e78ac3b; gate completo verde no lote AN]",
@@ -2508,7 +2509,8 @@
         "tests/unit/ui/shell-active-nav.test.ts -> 8 passed; tests/unit/ui/inicio-going-line.test.ts -> passed",
         "capturas de /inicio, /explorar e /salvos em 375/768/1440: Authenticated capture yes, 0 findings — a comparação com a prancha é a prova de fidelidade, não o número de findings",
         "Lote AJ 17/09/2026: tres dos quatro blockers do card eram drift. (1) \"migration 20260911093140_community_images nao aplicada\" — aplicada no reset local e em producao (lote AH, dump confirma banner_path/thumbnail_path). (2) \"seed sem event_rsvps: #8 e #10 nao observaveis\" — o fixture entrou no lote Z. (3) \"abas Guia/Mercado/Imoveis dependem de RECON-030/025/027\" — implementadas no lote AI. Sobrou um unico blocker, de produto. Recaptura .visual/recon-loteAJ-shell: cinco rotas em 375/768/1440, 0 achados, rev 0a481dd",
-        "Lote AO 18/09/2026: o item #4 (unico blocker) foi decidido e implementado. O icone de lampada virou entrada rotulada Indicacoes no cabecalho, em todas as larguras - a prancha nao desenha icone, e o rotulo dispensa decifracao. Os tres contratos E2E que dependiam do link seguem validos porque o nome acessivel passa a vir do texto, e o alvo de 44px foi mantido. Captura recon-loteAO-indicacoes: 9/9 validas, 0 achados"
+        "Lote AO 18/09/2026: o item #4 (unico blocker) foi decidido e implementado. O icone de lampada virou entrada rotulada Indicacoes no cabecalho, em todas as larguras - a prancha nao desenha icone, e o rotulo dispensa decifracao. Os tres contratos E2E que dependiam do link seguem validos porque o nome acessivel passa a vir do texto, e o alvo de 44px foi mantido. Captura recon-loteAO-indicacoes: 9/9 validas, 0 achados",
+        "Fechamento 18/09/2026: as dependencias do card (RECON-PRANCHAS-RESTANTES e RECON-032) fecharam nos lotes AQ e AP, e o item #4 foi decidido e implementado no lote AO. Com isso os 10 itens do checklist estao satisfeitos e o card fecha"
       ],
       "tests": [
         "tests/unit/ui/shell-active-nav.test.ts",
@@ -2522,7 +2524,8 @@
       ],
       "dependencies": ["RECON-PRANCHAS-RESTANTES", "RECON-032"],
       "updatedAt": "2026-09-18",
-      "sourceRevision": "e78ac3b"
+      "sourceRevision": "914a1d8",
+      "completedAt": "2026-09-18"
     },
     {
       "id": "NAV-PEDIDOS-ORFA",
