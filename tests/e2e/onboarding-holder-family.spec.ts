@@ -62,8 +62,8 @@ test.describe("onboarding: verified holder and invited family", () => {
 
     // Onboarding is a `(preauth)` route with no shell header, so its own H1 is
     // the landmark rather than the Bivaque wordmark.
-    await expect(page.getByRole("heading", { name: "Confirme sua elegibilidade." })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Conferir e continuar" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Verificar acesso" })).toBeVisible()
 
     const cpfInput = page.getByLabel("CPF")
     await expect(cpfInput).toBeVisible()

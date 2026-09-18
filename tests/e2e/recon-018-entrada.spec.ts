@@ -124,6 +124,11 @@ test.describe("prancha 36 — entrar", () => {
     await page.goto("/login?redirect=/profile")
     await signInThroughForm(page)
     await page.waitForURL("**/profile", { timeout: 15_000 })
+    // O waitForURL resolve no início da navegação; recarregar naquele instante
+    // aborta o navigation em curso (ERR_ABORTED / frame detached). Esperar o
+    // load estabiliza antes do reload — o que o teste quer provar é a sessão
+    // sobrevivendo ao reload, não a corrida.
+    await page.waitForLoadState("load")
     await page.reload()
     await expect(page).toHaveURL(/\/profile/)
     await expect(page.getByRole("link", { name: "Entrar" })).toHaveCount(0)
@@ -132,7 +137,11 @@ test.describe("prancha 36 — entrar", () => {
   test("destino externo não sai do app", async ({ page }) => {
     await page.goto("/login?redirect=https://exemplo-inimigo.invalid/pescar")
     await signInThroughForm(page)
-    await page.waitForLoadState("networkidle")
+    // Espera o destino interno em vez de "networkidle": a rota pós-entrada
+    // (/onboarding) mantém atividade de rede e a ociosidade nunca chegava — o
+    // teste morria por timeout ANTES de provar o que importa, e o timeout podia
+    // ser lido como "saiu do app". A asserção do host é a prova real.
+    await page.waitForURL((url) => url.hostname === "127.0.0.1", { timeout: 15_000 })
     await expect(page).not.toHaveURL(/exemplo-inimigo/)
     expect(new URL(page.url()).hostname).toBe("127.0.0.1")
   })

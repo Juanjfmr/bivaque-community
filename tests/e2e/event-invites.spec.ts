@@ -88,8 +88,14 @@ test.describe("event invitation fan-out", () => {
     await signInAs(page, ORGANIZER_EMAIL)
     await page.goto(`/events/${EVENT_ID}`)
 
-    // Then there is no search box (D43 forbids people search in the pilot)
-    const search = page.locator('input[type="search"]')
-    await expect(search).toHaveCount(0)
+    // Then there is no people-search box in the invite SECTION (D43 forbids
+    // people search in the pilot). Escopado à seção de propósito: o cabeçalho
+    // tem um campo de busca GLOBAL de conteúdo (RECON-021), e contá-lo fazia o
+    // teste medir o elemento errado — a asserção dizia "sem busca de pessoas" e
+    // media "sem nenhum input de busca na página inteira".
+    const inviteSection = page
+      .locator("section")
+      .filter({ has: page.getByRole("heading", { name: /Convidar para este evento/ }) })
+    await expect(inviteSection.locator('input[type="search"]')).toHaveCount(0)
   })
 })

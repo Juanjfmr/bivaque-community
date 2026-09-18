@@ -396,7 +396,7 @@ test.describe("consent cookie tampering: it is not a gate", () => {
     await page.goto("/onboarding")
 
     // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Confirme sua elegibilidade." })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
   })
 })
 

@@ -77,9 +77,11 @@ test.describe("guide manual curation from replies", () => {
     await page.goto("/guide-queue")
 
     // Then both section headings are visible
-    await expect(page.getByRole("heading", { name: "Curadoria do guia" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Fila do Guia" })).toBeVisible()
+    // O heading foi renomeado na reconstrução: o texto atual é "Promover
+    // respostas da comunidade" (guide-queue/page.tsx:368).
     await expect(
-      page.getByRole("heading", { name: /Promover resposta de indicação/ }),
+      page.getByRole("heading", { name: /Promover respostas da comunidade/ }),
     ).toBeVisible()
   })
 

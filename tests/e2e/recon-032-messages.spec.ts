@@ -188,7 +188,10 @@ test.describe("leitura de notificacoes persiste (prancha 54)", () => {
       content: `Comentário do ciclo RECON-032 ${stamp}`,
     })
 
-    const context = await browser.newContext()
+    // Viewport de desktop de propósito: o contador vive na sidebar larga, e em
+    // 375 a sidebar é rail/drawer — o badge não tem onde ser desenhado. O
+    // contexto sem viewport herdava a do projeto e o teste falhava nos três.
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     await seedAs(context, MEMBRO_1_EMAIL)
     const page = await context.newPage()
 

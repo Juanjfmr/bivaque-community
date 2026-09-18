@@ -31,7 +31,11 @@ test.describe("salvos: origem, destino e remoção", () => {
     }
 
     // ── salvar na origem ─────────────────────────────────────────────────────
+    // A tela ganhou abas na reconstrução (Explorar / Pedir indicação / Pedidos /
+    // Salvas) e o card do pedido vive na aba Pedidos — a default é Explorar, e
+    // sem o clique o título existe no DOM com altura 0 (hidden, não ausente).
     await page.goto("/recommendations")
+    await page.getByRole("tab", { name: /^Pedidos/ }).click()
     await expect(page.getByText(REQUEST_TITLE, { exact: true })).toBeVisible({
       timeout: 15_000,
     })
@@ -79,7 +83,11 @@ test.describe("salvos: origem, destino e remoção", () => {
     await expect(page.getByText("Nada salvo ainda")).toBeVisible({ timeout: 10_000 })
     await expect(page.getByText(REQUEST_TITLE, { exact: true })).toHaveCount(0)
 
+    // Volta para a origem na aba certa: o botão do pedido só existe na aba
+    // Pedidos (a default é Explorar). Antes este trecho abria /recommendations
+    // sem ?focus e procurava o botão na aba errada.
     await page.goto("/recommendations")
+    await page.getByRole("tab", { name: /^Pedidos/ }).click()
     await expect(page.getByRole("button", { name: "Salvar", exact: true })).toBeVisible({
       timeout: 10_000,
     })

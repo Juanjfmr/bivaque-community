@@ -104,9 +104,12 @@ test.describe("home is the vila feed; without a vila, the city reference", () =>
   test("member with no approved community sees the city reference, not a feed", async ({
     page,
   }) => {
-    // Given an authenticated session whose user has no approved community
-    // membership (the visual-capture user from .env.local, by construction)
-    await seedSession(page.context())
+    // Given an authenticated member with NO approved community. O seed reserva
+    // DUAS contas justamente para estes dois testes (seed.sql:688-697): a
+    // dono-vila@ é a dona da Vila Ajuricaba (o teste anterior) e a visual@
+    // "permanece sem comunidade" — este. O seedSession() do ambiente aponta para
+    // dono-vila@, então os dois testes caíam na mesma conta e este quebrava.
+    await signInAs(page, "visual@bivaque.example.invalid")
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When the member opens the home

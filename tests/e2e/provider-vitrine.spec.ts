@@ -70,7 +70,14 @@ test.describe("vitrine de prestadores", () => {
     const busca = page.getByLabel("Buscar por nome")
     await expect(busca).toBeVisible({ timeout: 20000 })
     await busca.fill("climatiza")
-    await page.getByRole("button", { name: "Buscar" }).click()
+    // Desambiguado pelo formulário: a página tem mais de um botão "Buscar" (o
+    // do shell, por exemplo) e o locator global caía em strict mode violation.
+    // O campo "Buscar por nome" pertence ao form da vitrine; o submit é dele.
+    await page
+      .locator("form")
+      .filter({ hasText: "Buscar por nome" })
+      .getByRole("button", { name: "Buscar" })
+      .click()
 
     await page.getByRole("link", { name: /Climatiza Manaus/ }).click()
 
