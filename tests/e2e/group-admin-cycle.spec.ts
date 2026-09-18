@@ -119,7 +119,17 @@ test.describe("group admin cycle", () => {
     // caminhos.
     const pedir = page.getByRole("button", { name: "Pedir entrada" })
     if (await pedir.isVisible().catch(() => false)) {
+      // "Pedir entrada" é um form action: o clique dispara um POST que revalida
+      // a rota. Esperar a RESPOSTA antes de asserir evita correr contra a
+      // navegação — medido em sonda, o POST 200 leva alguns segundos e só então
+      // o botão vira "Cancelar pedido". Sem esta espera o teste falhava nos três
+      // viewports, inclusive em modo serial.
+      const requested = page.waitForResponse(
+        (r) => r.request().method() === "POST" && r.url().includes(`/groups/${PRIVATE_GROUP_ID}`),
+        { timeout: 15_000 },
+      )
       await pedir.click()
+      await requested
     }
 
     // Then the cancel button is visible, replacing the request button

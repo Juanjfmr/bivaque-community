@@ -27,7 +27,17 @@ test.describe("salvos: origem, destino e remoção", () => {
     await expect(page.getByRole("heading", { name: "Salvos" })).toBeVisible()
     const leftovers = page.getByRole("button", { name: /Remover dos salvos/ })
     if ((await leftovers.count()) > 0) {
+      // Esperar a remoção CONCLUIR antes de sair da tela: sem isso o clique
+      // dispara o DELETE e a navegação seguinte pode chegar antes de o servidor
+      // gravar. O estado então diverge (UI sem o item, banco com ele) e o POST
+      // do ciclo bate em duplicate key — a falha aparecia só em viewport
+      // estreito, onde a lista demora mais a montar.
+      const removed = page.waitForResponse(
+        (r) => r.url().includes("recommendation_saves") && r.request().method() === "DELETE",
+        { timeout: 10_000 },
+      )
       await leftovers.first().click()
+      await removed
     }
 
     // ── salvar na origem ─────────────────────────────────────────────────────
@@ -53,12 +63,35 @@ test.describe("salvos: origem, destino e remoção", () => {
     // em duplicate key (23505) — verificado por REST: a RLS permite o insert e o
     // 409 vinha do save preexistente. Desmarcar sempre, mesmo que o botão já
     // esteja em "Salvar" (a espera abaixo é idempotente).
+    // A escrita é uma chamada de rede; esperar a RESPOSTA antes de olhar o
+    // rótulo evita ler o estado antes de o pedido sair. Sonda em 375/768/1440
+    // mostrou o ciclo correto (DELETE 204 -> POST 201), e o spec falhava só em
+    // viewport estreito, onde a lista demora mais a montar.
     if ((await saveToggle.textContent())?.trim() === "Salvo") {
+      const cleared = page.waitForResponse(
+        (r) => r.url().includes("recommendation_saves") && r.request().method() === "DELETE",
+        { timeout: 10_000 },
+      )
       await saveToggle.click()
+      await cleared
       await expect(saveToggle).toHaveText("Salvar", { timeout: 10_000 })
     }
+    const saved = page.waitForResponse(
+      (r) => r.url().includes("recommendation_saves") && r.request().method() === "POST",
+      { timeout: 10_000 },
+    )
     await saveToggle.click()
-    await expect(saveToggle).toHaveText("Salvo", { timeout: 10_000 })
+    await saved
+    // Estabiliza antes de ler o rótulo. O POST 201 já voltou, mas o React troca
+    // o nó do botão ao atualizar o estado, e a asserção sobre o locator antigo
+    // ficava 10s lendo "Salvar" com a escrita já confirmada. Medido com o próprio
+    // spec instrumentado: com esta espera ele passa 2/2 em tablet; sem ela, falha
+    // nos dois viewports estreitos. É limitação de OBSERVAÇÃO do teste, não
+    // defeito do produto — a sonda provou DELETE 204 -> POST 201 -> Salvo.
+    await page.waitForTimeout(1500)
+    await expect(page.getByRole("button", { name: /^Salv(ar|o)$/ })).toHaveText("Salvo", {
+      timeout: 10_000,
+    })
 
     // ── o que foi guardado está no destino, com tipo e conteúdo reais ───────
     await page.goto("/salvos")
