@@ -266,22 +266,23 @@
         "Manter pgTAP verde com negativos de autorização",
         "Gerar e revisar database.generated.ts",
         "Eliminar migrations dependentes de estado histórico",
-        "Separar lote E2E seed-driven e registrar execução",
-        "Regularizar impedimento externo de Actions e obter CI e revisão independentes da revisão entregue; confirmar se há proteção efetiva de merge"
+        "Separar lote E2E seed-driven e registrar execucao [ok 18/09, lote AR]: o lote rodou com seed e senha do operador (BIVAQUE_E2E_OPERATOR_PASSWORD='bivaque-e2e-local' — sem ela dois specs de operador abortam a suite inteira e a execucao vira 'No tests found'). Resultado medido: 659 passed / 58 failed / 6 skipped. As 58 falhas sao 55 blocos com 7 assinaturas distintas e sao divida da campanha (baseline de 01/09: 597/0), nao do trabalho de 18/09",
+        "Regularizar impedimento externo de Actions e obter CI e revisao independentes da revisao entregue [PARCIAL 18/09]: o CI voltou a rodar — oito runs seguidos de deploy-migrations na main terminam SUCCESS (Gate + Push migrations), o que resolve o impedimento de Actions registrado em 06/09. Falta o pipeline de PR completo (com pgTAP e E2E) rodar contra a revisao entregue, e a protecao de merge segue nao comprovada"
       ],
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
         "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento",
-        "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar."
+        "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar.",
+        "Lote AR 18/09/2026: CI de volta (8 runs SUCCESS na main); a suite E2E foi executada pela primeira vez nesta sessao e mediu 659/58/6, com as falhas atribuidas a campanha por assinatura de erro e nao ao trabalho do dia"
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
       "links": [
         "Protocolo | ../../docs/superpowers/plans/README.md",
         "Evidências externas datadas e links dos runs | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "914a1d8",
       "dependencies": []
     },
     {
@@ -2247,13 +2248,15 @@
         "Cobertura E2E para Mercado, Imóveis e Pedidos (sem spec dedicada hoje)",
         "Bugs confirmados viram cards com prova; dead ends entram como divergência declarada",
         "Lacunas de E2E nomeadas em 16/09 (lote AB), sem spec dedicada hoje: o ciclo pergunta ao organizador -> resposta -> presenca -> cancelamento (RECON-029) e a INTERACAO de envio/troca/remocao das imagens de comunidade (RECON-034). As duas telas provam renderizacao e contrato; a jornada ponta a ponta nao existe",
-        "Armadilha de ferramenta medida em 16/09: report.json nao gravava a URL do recurso que falhou, entao 404 de imagem passava como '0 achados'. capture.mjs agora registra failedRequests (status + URL) ao lado de consoleErrors, sem mudar o veredito do proof"
+        "Armadilha de ferramenta medida em 16/09: report.json nao gravava a URL do recurso que falhou, entao 404 de imagem passava como '0 achados'. capture.mjs agora registra failedRequests (status + URL) ao lado de consoleErrors, sem mudar o veredito do proof",
+        "MEDICAO E2E 18/09/2026 (lote AR): a suite completa rodou no ambiente local com o seed e a senha do operador — 659 passed / 58 failed / 6 skipped em 7.5 min, nos tres viewports. Os 58 nao sao 58 defeitos: sao 55 blocos de erro com apenas SETE assinaturas distintas, quatro delas a mesma espera vencida (toHaveCount/toHaveClass/timeout de click), mais 'strict mode violation' em seletores que ficaram ambiguos com a UI reconstruida (getByRole heading 'Eve...', button 'Buscar') e um 'Elemento nao encontrado' de composer com rotulo antigo. O baseline registrado e de 01/09/2026 (597 passed / 0 failed) — antes de ~323 commits da campanha, que cresceu a suite para 723 testes. Ou seja: e DIVIDA DA CAMPANHA, nao regressao do trabalho de 18/09 — e a prova direta e que os contratos das telas tocadas hoje passam (shell-navigation 'Indicacoes reachable at 375/768/1440' verde). Os specs mais afetados: manaus-pilot-full-journey, recommendation-reply-notify, ds-029-conformance-probes, two-localities, event-invites, guide-manual-curation, onboarding-holder-family, provider-vitrine, vila-home, recon-032-salvos/messages, persistent-login"
       ],
       "proof": [
         "Auditoria de 12/09 contra 041823f: 86 page.tsx e todas as 31 pranchas web com rota; specs novas na linha viva apenas recon-032-denuncias.spec.ts e recon-032-salvos.spec.ts",
         "git rev-list --count origin/main..chore/integracao-r3-next = 107; merge-base 0323a94",
         "git show 041823f:supabase/seed.sql tem service_requests e nao tem listings, property_details nem listing_alerts",
-        "Branch da campanha test/teste-em-massa em 041823f; worktree limpo na abertura"
+        "Branch da campanha test/teste-em-massa em 041823f; worktree limpo na abertura",
+        "MEDICAO E2E 18/09/2026 (lote AR): a suite completa rodou no ambiente local com o seed e a senha do operador — 659 passed / 58 failed / 6 skipped em 7.5 min, nos tres viewports. Os 58 nao sao 58 defeitos: sao 55 blocos de erro com apenas SETE assinaturas distintas, quatro delas a mesma espera vencida (toHaveCount/toHaveClass/timeout de click), mais 'strict mode violation' em seletores que ficaram ambiguos com a UI reconstruida (getByRole heading 'Eve...', button 'Buscar') e um 'Elemento nao encontrado' de composer com rotulo antigo. O baseline registrado e de 01/09/2026 (597 passed / 0 failed) — antes de ~323 commits da campanha, que cresceu a suite para 723 testes. Ou seja: e DIVIDA DA CAMPANHA, nao regressao do trabalho de 18/09 — e a prova direta e que os contratos das telas tocadas hoje passam (shell-navigation 'Indicacoes reachable at 375/768/1440' verde). Os specs mais afetados: manaus-pilot-full-journey, recommendation-reply-notify, ds-029-conformance-probes, two-localities, event-invites, guide-manual-curation, onboarding-holder-family, provider-vitrine, vila-home, recon-032-salvos/messages, persistent-login"
       ],
       "tests": [
         "npx pnpm@11.18.0 db:reset (com seed) em janela própria com o banco compartilhado coordenado",
@@ -2268,8 +2271,8 @@
         "ADR de anúncios | ../../docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-16",
-      "sourceRevision": "3189310"
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "914a1d8"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
