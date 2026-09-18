@@ -8,7 +8,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(9);
 
 \ir fixtures/foundation.inc
 
@@ -112,6 +112,34 @@ select throws_ok(
   null,
   null,
   'Forca Armada fora do enum e recusada pelo banco'
+);
+
+-- ── D3: APAGAR remove a linha, e o valor deixa de ser alcancavel pelo terceiro.
+-- O ADR exige este teste explicitamente ("o teste de remocao e parte da mesma
+-- entrega, com prova de que a leitura por terceiro deixa de retornar o valor").
+-- Oito asserts provavam ocultar; nenhum provava apagar.
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+delete from public.profile_affiliations
+ where user_id = '10000000-0000-4000-8000-000000000001'
+   and field = 'armed_force';
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select is(
+  (
+    select count(*)::int from public.profile_affiliations
+    where user_id = '10000000-0000-4000-8000-000000000001'
+      and field = 'armed_force'
+  ),
+  0,
+  'apagar o campo (DELETE da linha) torna o valor inalcancavel para o terceiro'
 );
 
 select * from finish();
