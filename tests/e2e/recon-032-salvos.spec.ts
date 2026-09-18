@@ -42,9 +42,18 @@ test.describe("salvos: origem, destino e remoção", () => {
     // O estado do toggle vem do servidor; se sobrou um salvamento de execucao
     // anterior, ele abre como "Salvo" e precisa voltar a "Salvar" antes do
     // ciclo deste spec.
-    const saveToggle = page.getByRole("button", { name: /^Salv/ })
+    // O seletor anterior era /^Salv/, que casa "Salvar", "Salvo" E qualquer
+    // outro rótulo começando com "Salv" — resolvia para 2 elementos e falhava
+    // por ambiguidade, não por defeito. Exato resolve o toggle sem depender de
+    // estrutura de card.
+    const saveToggle = page.getByRole("button", { name: /^Salv(ar|o)$/ })
     await expect(saveToggle).toHaveCount(1, { timeout: 10_000 })
-    if ((await saveToggle.textContent())?.trim().startsWith("Salvo")) {
+    // Estado inicial EXPLÍCITO: o ciclo deste spec grava e o próprio teste não
+    // limpa, então a rodada seguinte abre com "Salvo" e o insert do ciclo bate
+    // em duplicate key (23505) — verificado por REST: a RLS permite o insert e o
+    // 409 vinha do save preexistente. Desmarcar sempre, mesmo que o botão já
+    // esteja em "Salvar" (a espera abaixo é idempotente).
+    if ((await saveToggle.textContent())?.trim() === "Salvo") {
       await saveToggle.click()
       await expect(saveToggle).toHaveText("Salvar", { timeout: 10_000 })
     }
