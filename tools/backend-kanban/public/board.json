@@ -266,7 +266,7 @@
         "Manter pgTAP verde com negativos de autorização",
         "Gerar e revisar database.generated.ts",
         "Eliminar migrations dependentes de estado histórico",
-        "Separar lote E2E seed-driven e registrar execucao [ok 18/09, lote AR]: o lote rodou com seed e senha do operador (BIVAQUE_E2E_OPERATOR_PASSWORD='bivaque-e2e-local' — sem ela dois specs de operador abortam a suite inteira e a execucao vira 'No tests found'). Resultado medido: 659 passed / 58 failed / 6 skipped. As 58 falhas sao 55 blocos com 7 assinaturas distintas e sao divida da campanha (baseline de 01/09: 597/0), nao do trabalho de 18/09",
+        "Separar lote E2E seed-driven e registrar execucao [ok 18/09, lote AR]: o lote rodou com seed e senha do operador (a variavel BIVAQUE_E2E_OPERATOR_PASSWORD precisa estar definida (a senha e a mesma conta publica e descartavel do seed) — sem ela dois specs de operador abortam a suite inteira e a execucao vira 'No tests found'). Resultado medido: 659 passed / 58 failed / 6 skipped. As 58 falhas sao 55 blocos com 7 assinaturas distintas e sao divida da campanha (baseline de 01/09: 597/0), nao do trabalho de 18/09",
         "Regularizar impedimento externo de Actions e obter CI e revisao independentes da revisao entregue [PARCIAL 18/09]: o CI voltou a rodar — oito runs seguidos de deploy-migrations na main terminam SUCCESS (Gate + Push migrations), o que resolve o impedimento de Actions registrado em 06/09. Falta o pipeline de PR completo (com pgTAP e E2E) rodar contra a revisao entregue, e a protecao de merge segue nao comprovada"
       ],
       "proof": [
