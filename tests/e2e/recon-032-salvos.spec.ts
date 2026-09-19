@@ -17,7 +17,7 @@ import { REQUEST_ID, REQUEST_TITLE, VISUAL_EMAIL } from "./helpers/recon032-fixt
 // conveniência). O estado inicial continua sendo limpo pela UI, que é o fluxo
 // autorizado, com a espera de rede que o próprio teste já faz.
 
-test.describe("salvos: origem, destino e remoção", () => {
+test.describe("salvos: origem, destino e remoção", { tag: "@stateful" }, () => {
   test("anonimo nao ve a tela de salvos", async ({ page }) => {
     await page.goto("/salvos")
     await page.waitForURL(/\/login/)

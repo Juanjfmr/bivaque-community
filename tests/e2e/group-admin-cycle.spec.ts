@@ -31,10 +31,15 @@ const CONSENT_COOKIE = "bivaque-consent-version"
 const GROUP_OWNER_EMAIL = "membro-1@bivaque.example.invalid"
 const GROUP_ID = "60000000-0000-4000-8000-000000000001"
 const GROUP_NAME = "Caminhada no Mindu"
-// Group 6 "Mães da Cidade" is private, so joining lands as 'pending' —
-// used to exercise the real request/cancel flow instead of pre-seeding a
-// fake pending row (the seed never inserts non-approved memberships).
-const PRIVATE_GROUP_ID = "60000000-0000-4000-8000-000000000006"
+// Grupo privado EXCLUSIVO deste spec para o fluxo de pedido/cancelamento.
+// Antes usava "Mães da Cidade" (60000000-...-0006), que TAMBÉM é usada por
+// synthetic-people-interaction e group-event-detail-denials: o pedido pendente
+// que este spec cria ficava visível para os outros (e o cancelamento deste
+// apagava o estado que eles esperavam). Rodando em paralelo, isso aparecia como
+// falha intermitente de "Cancelar pedido" — e passava quando o spec rodava
+// sozinho. "Pesca e Trilha" (60000000-...-0008) é privada, não tem outro spec
+// usando e por isso é o mesmo cenário sem a disputa.
+const PRIVATE_GROUP_ID = "60000000-0000-4000-8000-000000000008"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
@@ -77,7 +82,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("group admin cycle", () => {
+test.describe("group admin cycle", { tag: "@stateful" }, () => {
   test("the owner sees delete and transfer options", async ({ page }) => {
     // Given a session of the group's actual owner
     await signInAs(page, GROUP_OWNER_EMAIL)

@@ -72,7 +72,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("recommendation ask-and-answer loop", () => {
+test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => {
   test("replying to a request notifies its author (F5 Step 5)", async ({ page, browser }) => {
     // Given a second member replies to the seeded request authored by
     // visual@bivaque.example.invalid (seed.sql's "Alguém conhece um bom
