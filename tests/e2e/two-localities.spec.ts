@@ -210,7 +210,9 @@ test.describe("two localities: each member sees only their own city", () => {
     await page.goto(`${APP_URL}/events`, { waitUntil: "load" })
 
     // Then the events heading is visible
-    await expect(page.getByRole("heading", { name: "Eventos" })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole("heading", { name: "Explorar eventos", exact: true })).toBeVisible({
+      timeout: 15000,
+    })
   })
 
   test("second-locality member does not see Manaus event titles", async ({ page }) => {
@@ -221,7 +223,9 @@ test.describe("two localities: each member sees only their own city", () => {
     await page.goto(`${APP_URL}/events`, { waitUntil: "load" })
 
     // Then the events heading is visible for their own locality
-    await expect(page.getByRole("heading", { name: "Eventos" })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole("heading", { name: "Explorar eventos", exact: true })).toBeVisible({
+      timeout: 15000,
+    })
 
     // And a Manaus-specific event title is not on the page. The events page
     // must scope to the member's locality; a Manaus event surfacing for a

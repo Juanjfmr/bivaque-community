@@ -11,6 +11,12 @@ import { expect, test } from "@playwright/test"
 import { seedAs } from "./helpers/recon032"
 import { REQUEST_ID, REQUEST_TITLE, VISUAL_EMAIL } from "./helpers/recon032-fixtures"
 
+// NOTA de tentativa revertida: limpar recommendation_saves via service role NÃO é
+// possível — service_role não tem grant de DELETE nesta tabela (o grant é mínimo
+// por desenho, e afrouxá-lo para o teste passar seria trocar segurança por
+// conveniência). O estado inicial continua sendo limpo pela UI, que é o fluxo
+// autorizado, com a espera de rede que o próprio teste já faz.
+
 test.describe("salvos: origem, destino e remoção", () => {
   test("anonimo nao ve a tela de salvos", async ({ page }) => {
     await page.goto("/salvos")

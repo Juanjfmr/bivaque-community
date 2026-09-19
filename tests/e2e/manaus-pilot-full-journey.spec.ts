@@ -330,7 +330,7 @@ test.describe("events journey", () => {
     await page.goto("/events")
 
     // Then the events page renders its UI
-    await expect(page.getByRole("heading", { name: "Eventos" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Explorar eventos", exact: true })).toBeVisible()
   })
 
   test("events page shows create event toggle", async ({ page, context }) => {

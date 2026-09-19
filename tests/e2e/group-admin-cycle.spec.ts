@@ -19,6 +19,14 @@ import {
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
 
+// NOTA de tentativa revertida: restaurar a pré-condição com DELETE via service
+// role NÃO é possível — service_role não tem grant de DELETE em
+// group_memberships (o grant é mínimo por desenho), e afrouxar o grant para
+// conveniência de teste seria piorar a postura de segurança para o teste passar.
+// O caminho é o teste ser idempotente por si (ele já declara o pedido pendente
+// como estado válido) e o before/after limpar pela própria UI, que é o fluxo
+// autorizado.
+
 // Group 1 "Caminhada no Mindu" is owned by membro-1 (30000000-...-0001).
 const GROUP_OWNER_EMAIL = "membro-1@bivaque.example.invalid"
 const GROUP_ID = "60000000-0000-4000-8000-000000000001"
