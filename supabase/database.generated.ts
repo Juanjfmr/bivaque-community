@@ -1386,8 +1386,6 @@ export type Database = {
           attempts: number
           channel: Database["public"]["Enums"]["outbox_channel"]
           created_at: string
-          fallback_channel: Database["public"]["Enums"]["outbox_channel"] | null
-          fallback_reason: string | null
           id: string
           last_error: string | null
           payload: Json
@@ -1400,10 +1398,6 @@ export type Database = {
           attempts?: number
           channel: Database["public"]["Enums"]["outbox_channel"]
           created_at?: string
-          fallback_channel?:
-            | Database["public"]["Enums"]["outbox_channel"]
-            | null
-          fallback_reason?: string | null
           id?: string
           last_error?: string | null
           payload?: Json
@@ -1416,10 +1410,6 @@ export type Database = {
           attempts?: number
           channel?: Database["public"]["Enums"]["outbox_channel"]
           created_at?: string
-          fallback_channel?:
-            | Database["public"]["Enums"]["outbox_channel"]
-            | null
-          fallback_reason?: string | null
           id?: string
           last_error?: string | null
           payload?: Json
@@ -3108,7 +3098,7 @@ export type Database = {
         | "admission_rejected"
         | "listing_alert"
         | "service_request"
-      outbox_channel: "email" | "whatsapp"
+      outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
       profile_visibility: "locality_members"
@@ -3341,7 +3331,7 @@ export const Constants = {
         "listing_alert",
         "service_request",
       ],
-      outbox_channel: ["email", "whatsapp"],
+      outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],
       post_type: ["text", "photo", "link", "poll"],
       profile_visibility: ["locality_members"],

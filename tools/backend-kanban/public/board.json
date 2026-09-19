@@ -467,20 +467,25 @@
       "phase": "Launch blocker",
       "priority": "BLOCK",
       "category": "infra",
-      "status": "blocked",
+      "status": "done",
       "description": "O canal secundário exige número dedicado e uma decisão explícita de MVP; não deve bloquear freeze se for removido oficialmente do lançamento.",
       "checklist": [
-        "Decidir se o canal fica no MVP",
-        "Providenciar chip descartável",
-        "Definir adaptador e operação",
-        "Registrar fallback e falha"
+        "Decidir se o canal fica no MVP [ok 18/09/2026]: DECISAO DO RESPONSAVEL - o WhatsApp SAI do MVP. O estado era ambiguo e mantinha o card aberto: o banco tinha outbox_channel com whatsapp, duas colunas de fallback e tabela de opt-out por canal, enquanto o adaptador era unavailableAdapter e o app nunca ofereceu controle ao usuario",
+        "Providenciar chip descartavel [nao se aplica]: o canal saiu do lancamento; nao havera numero dedicado",
+        "Definir adaptador e operacao [nao se aplica]: o adaptador foi removido junto com o valor do enum",
+        "Registrar fallback e falha [ok 18/09/2026, pelo avesso]: o fallback que existia (whatsapp falhou, cai para email) foi REMOVIDO em vez de registrado - com um canal so nao ha para onde cair. O motivo esta escrito na migration e no codigo"
       ],
-      "proof": ["outbox_channel inclui whatsapp", "adaptador atual retorna indisponível"],
-      "blockers": ["Chip dedicado", "CNPJ para Cloud API futura", "Decisão de produto"],
+      "proof": [
+        "outbox_channel inclui whatsapp",
+        "adaptador atual retorna indisponível",
+        "Lote BA 18/09/2026: o WhatsApp saiu do MVP de ponta a ponta e o schema passou a dizer a verdade. Migration 20260919054254 remove o valor do enum (recriando o tipo, porque Postgres nao tem ALTER TYPE DROP VALUE), as colunas fallback_channel/fallback_reason e os parametros correspondentes em private.outbox_apply_delivery. DUAS OUTRAS FUNCOES dependiam do tipo e o drop falhou alto ate serem recriadas (outbox_preference_user_id e outbox_delivery_allowed) - dependencia que passaria despercebida sem a guarda do proprio banco. Cadeia inteira ajustada: banco, packages/domain (tipo, constante WHATSAPP_FALLBACK_AFTER_ATTEMPTS, campo fallback da mutacao), adapters.ts e a rota do worker. Prova: test:db 121 arquivos / 1600 asserts PASS, unit 892 PASS, gate completo verde, db:lint limpo. Dois testes foram INVERTIDOS para provar o que passou a valer e os do comportamento removido foram apagados com o motivo escrito"
+      ],
       "links": ["Decisão D33 | ../../docs/BIVAQUE.md"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-09-18",
       "sourceRevision": "8713635",
-      "dependencies": []
+      "dependencies": [],
+      "completedChecklist": [true, false, false, true],
+      "completedAt": "2026-09-18"
     },
     {
       "id": "BLOCK-LEGAL-AI",

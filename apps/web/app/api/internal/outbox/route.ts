@@ -207,11 +207,8 @@ export async function POST(request: Request) {
       updated_at: new Date(mutation.updatedAt).toISOString(),
     }
 
-    if (mutation.fallback) {
-      patch["fallback_channel"] = mutation.fallback.channel
-      patch["fallback_reason"] = mutation.fallback.reason
-    }
-
+    // O patch de fallback saiu com o canal WhatsApp: o banco nao tem mais
+    // fallback_channel/fallback_reason e o dominio nao produz mais o campo.
     const { error: updateError } = await supabase.from("outbox").update(patch).eq("id", mutation.id)
 
     if (updateError) {

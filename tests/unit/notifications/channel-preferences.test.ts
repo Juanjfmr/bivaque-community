@@ -128,15 +128,19 @@ describe("notification channel preference rule (RECON-031)", () => {
     ).toBe(false)
   })
 
-  it("does not gate the whatsapp outbox channel by the matrix (no UI control)", () => {
+  it("has exactly one outbox channel, and the matrix gates it", () => {
+    // Este teste provava que o WhatsApp NÃO era barrado pela matriz, porque o app
+    // não oferecia controle para ele. O canal saiu do MVP em 18/09/2026, então o
+    // que importa garantir agora é o inverso: com um canal só, a matriz MANDA —
+    // nao existe caminho de entrega que escape da preferência da pessoa.
     expect(
       outboxDeliveryAllowed({
         type: "comment",
-        outboxChannel: "whatsapp",
+        outboxChannel: "email",
         preference: prefs(),
         matrix: matrix([{ channel: "email", enabled: false }]),
       }),
-    ).toBe(true)
+    ).toBe(false)
   })
 })
 
@@ -155,7 +159,7 @@ describe("dispatcher honours the channel rule (integration with the delivery cor
   it("sends when the channel is on", async () => {
     const spy = adapterSpy()
     const result = await deliverOutboxMessage(message(), {
-      adapters: { email: spy.adapter, whatsapp: spy.adapter },
+      adapters: { email: spy.adapter },
       now: 2000,
       baseRetryMs: 0,
       preferenceAllows: (row) =>
@@ -174,7 +178,7 @@ describe("dispatcher honours the channel rule (integration with the delivery cor
   it("skips when the channel is off, without sending", async () => {
     const spy = adapterSpy()
     const result = await deliverOutboxMessage(message(), {
-      adapters: { email: spy.adapter, whatsapp: spy.adapter },
+      adapters: { email: spy.adapter },
       now: 2000,
       baseRetryMs: 0,
       preferenceAllows: (row) =>

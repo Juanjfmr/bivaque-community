@@ -25,7 +25,6 @@ vi.mock("web/lib/supabase/server", () => ({
 vi.mock("web/lib/outbox/adapters", () => ({
   createChannelAdapters: vi.fn(() => ({
     email: { send },
-    whatsapp: { send },
   })),
 }))
 

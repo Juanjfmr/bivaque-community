@@ -17,12 +17,13 @@ select columns_are(
     'status',
     'attempts',
     'last_error',
-    'fallback_channel',
-    'fallback_reason',
     'created_at',
     'updated_at'
   ],
-  'outbox has the delivery columns'
+  -- columns_are compara o CONJUNTO exato: as colunas de fallback saíram com o
+  -- canal WhatsApp (18/09/2026) e este teste passa a impedir que voltem por
+  -- engano, o que é mais forte do que a lista frouxa que existia antes.
+  'outbox has the delivery columns, without the retired fallback pair'
 );
 
 select results_eq(

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(17);
+select plan(18);
 
 \ir fixtures/foundation.inc
 
@@ -163,15 +163,28 @@ select is(
   'e-mail delivery of a type with the email channel off is not allowed'
 );
 
+-- O canal whatsapp saiu do MVP em 18/09/2026 (decisao do responsavel): o valor
+-- deixou de existir em public.outbox_channel. O teste que provava "whatsapp nao e
+-- barrado pela matriz" perdeu objeto — com UM canal, nao existe caminho de
+-- entrega que escape da preferencia da pessoa. O que se prova agora e o inverso:
+-- o unico canal existente e email, e ele E governado pela matriz.
+select is(
+  (select count(*)::int from pg_enum e
+    join pg_type t on t.oid = e.enumtypid
+   where t.typname = 'outbox_channel'),
+  1,
+  'outbox_channel tem um valor so — o whatsapp saiu do schema'
+);
+
 select is(
   private.outbox_delivery_allowed(
-    'whatsapp',
+    'email',
     'member-one@example.invalid',
     'comment',
     jsonb_build_object('user_id', '10000000-0000-4000-8000-000000000001')
   ),
-  true,
-  'whatsapp is not a matrix channel — the type rule still allows it'
+  false,
+  'o unico canal existente e barrado quando a matriz o desliga'
 );
 
 select * from finish();
