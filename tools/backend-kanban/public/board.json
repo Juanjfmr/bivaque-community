@@ -1,8 +1,46 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-12",
+  "updatedAt": "2026-09-19",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
+    {
+      "id": "PROD-INICIO-UX-20260919",
+      "title": "Web: corrigir achados da auditoria de produção do Início",
+      "phase": "Reconstrução",
+      "priority": "P0",
+      "category": "frontend",
+      "status": "next",
+      "description": "Auditoria read-only de https://www.bivaque.app/inicio em 19/09/2026, sem comparação com as pranchas. O bloqueador principal é o compositor em viewport móvel curta: em 375x667, o diálogo termina em y=796 com overflow-y: clip e deixa Publicar fora da área visível. A home sem comunidade também ignora escopos já disponíveis à conta: o compositor oferece Toda a cidade · Brasília e o grupo Corrida, enquanto o retorno principal só manda entrar em comunidade. Atalhos úteis do desktop desaparecem em 375/768. O relatório registra evidência, impacto e recomendações; este card mantém a correção aberta sem reabrir decisões de produto fechadas.",
+      "checklist": [
+        "Compositor funciona em 375x568, 375x667 e 375x812, com corpo rolável, ações alcançáveis, safe area e teclado virtual",
+        "Foco fica dentro do diálogo, nunca encoberto, e retorna ao acionador ao fechar; nome acessível usa Fechar em português",
+        "Home sem comunidade representa cidade e grupos realmente disponíveis, sem contradizer a política de feed municipal",
+        "Atalhos Serviços, Guia, Pedir ajuda e Explorar destino continuam alcançáveis em 375 e 768",
+        "Recentes e Acompanhando têm estados vazios distintos ou a segmentação só aparece quando passa a ter função",
+        "Cidade permanece identificável no cabeçalho compacto; título e abas de Na comunidade não competem na mesma linha",
+        "Desktop expõe um único controle inequívoco para recolher a lateral",
+        "Prova direcionada em produção controlada e em 375/768/1440, com revisão independente e sem publicar conteúdo real de auditoria"
+      ],
+      "proof": [
+        "docs/agents/AUDIT-PRODUCAO-2026-09-19-INICIO.md",
+        "Produção 19/09/2026: diálogo Criar publicação em 375x667 — y=93, altura=703, bottom=796, viewport=667, overflow-y=clip; ação Publicar fora da área visível",
+        "Produção 19/09/2026: home mostra ausência de comunidade; compositor oferece Toda a cidade · Brasília e Corrida",
+        "Produção 19/09/2026: atalhos do right rail presentes em 1440 e ausentes em 768/375; sem overflow horizontal em 375; controles essenciais medidos com 44px de altura",
+        "Console de produção sem erros ou warnings durante os caminhos exercitados"
+      ],
+      "tests": [
+        "Teste de navegador do compositor em viewport curta com ação principal visível e alcançável",
+        "Teste responsivo de preservação dos atalhos em 375/768/1440",
+        "Teste de estado sem comunidade com grupo/cidade disponíveis e estados distintos das abas"
+      ],
+      "links": [
+        "docs/agents/AUDIT-PRODUCAO-2026-09-19-INICIO.md",
+        "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-19",
+      "sourceRevision": "65fc81f"
+    },
     {
       "id": "NAV-BECOS-SEM-SAIDA",
       "title": "Web: /arrivals e /profile/[userId] nao tem caminho adiante",
