@@ -349,7 +349,10 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
             <img
               src={photoUrl}
               alt=""
-              className="mt-3 w-full rounded-lg border border-border object-cover"
+              // Teto de altura: sem ele uma foto retrato empurra o resto do feed
+              // para fora da tela, e uma imagem minuscula estica ate virar
+              // mancha. object-contain preserva o enquadramento de quem publicou.
+              className="mt-3 max-h-[32rem] w-full rounded-lg border border-border bg-[var(--semantic-surface-sunken)] object-contain"
               loading="lazy"
             />
           )}
