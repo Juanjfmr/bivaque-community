@@ -3044,6 +3044,32 @@
       "updatedAt": "2026-09-18",
       "sourceRevision": "fe5887e",
       "completedAt": "2026-09-18"
+    },
+    {
+      "id": "OPS-CONCORRENCIA-LANCAMENTO",
+      "title": "Teto de concorrencia antes do lancamento: login e pool da API",
+      "phase": "Operacao",
+      "priority": "P1",
+      "category": "infra",
+      "status": "next",
+      "description": "Medicao sob concorrencia com 3.971 usuarios de carga em 19 cidades. O banco tem folga enorme (108.000 tps diretos com 50 clientes, 0,44ms). O LOGIN e o recurso mais apertado: GoTrue com bcrypt e CPU puro, teto de ~100-120 req/s, e p95 de 633ms a 50 simultaneos (x8.8 sobre o p95 de 1). A LEITURA pelo caminho real do app (RPC feed_community) entrega ~1000 req/s com p95 de 99ms a 50 simultaneos e ZERO falhas. O ponto de atencao antes de abrir: num pico de 500 pessoas entrando juntas, a fila do login e de ~4s no ambiente local; o que escala auth e CPU para o GoTrue, nao ajuste de banco.",
+      "checklist": [
+        "Medir login sob concorrencia (feito): teto ~100-120 req/s, p95 633ms a 50 simultaneos, 0 falhas na medicao final",
+        "Medir leitura pelo caminho real do app (feito): ~1000 req/s, p95 99ms, 0 falhas",
+        "Medir o banco direto para separar camada (feito): 108.000 tps com pgbench, o banco nao e o gargalo",
+        "Antes do lancamento: dimensionar CPU do GoTrue para o pico de entradas simultaneas esperado",
+        "Antes do lancamento: decidir o pool do PostgREST (PGRST_DB_POOL nao esta definido, entao vale o padrao de 10) para o ambiente implantado",
+        "Reavaliar depois do primeiro ambiente implantado, porque os ABSOLUTOS daqui sao de container unico local e nao transferem"
+      ],
+      "completedChecklist": [true, true, true, false, false, false],
+      "proof": [
+        "Lote BC 19/09/2026: medicao sob concorrencia entregue em scripts/load/concurrency.mjs, com duas fases separadas (login = CPU do GoTrue; leitura = RPC do caminho real). Resultado final, com 0 falhas nas duas fases: login de 19/s a 1 simultaneo para ~100-117/s com p95 de 633ms a 50; leitura de 137/s a 1002/s com p95 de 99ms a 50. Referencia do banco medida no mesmo ambiente com pgbench: 108.000 tps e 0,44ms com 50 clientes, o que prova que o teto esta na camada de API e nao no banco.",
+        "DOIS ERROS DE MEDICAO meus, corrigidos e registrados no proprio script: (1) a primeira versao media /rest/v1/posts?order=created_at.desc sem filtro de escopo, que NAO e o caminho do produto e nao tem indice — 40ms no banco contra 0,2ms da forma indexada; reportaria 88 req/s com p95 de 1,4s quando o caminho real faz ~1000 req/s com p95 de 99ms, ou seja 12x melhor; (2) a fase de leitura pegava os tokens DEPOIS de a fase de login martelar o auth, e quando vinham vazios ela media 'Bearer undefined' — 100% de erro em 1ms, rejeicao instantanea e nao leitura. Agora as sessoes vem antes e o script ABORTA se faltarem.",
+        "Os erros HTTP 500 de login vistos na primeira rodada (dial error do GoTrue para o banco, 'cannot assign requested address') NAO se repetiram nas rodadas seguintes: 0 falhas. Ficaram caracterizados como limitacao de rede do Docker local sob rajada, nao como capacidade da aplicacao — e por isso nao entraram como achado de produto."
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-19",
+      "sourceRevision": "90e4c94"
     }
   ]
 }

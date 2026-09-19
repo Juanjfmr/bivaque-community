@@ -1,4 +1,3 @@
-
 // TESTE OBSERVAVEL DA CARGA — 3.971 usuarios, 209 por cidade, 19 cidades, 7 estados.
 //
 // Mede a plataforma pelo MESMO caminho que a UI usa (REST com a sessao do
@@ -79,7 +78,10 @@ async function densidadePorCidade(idsPorCidade) {
   for (const [chave, localityId] of idsPorCidade) {
     if (!localityId) continue
     const r = await fetch(
-      URL + "/rest/v1/locality_memberships?select=user_id&locality_id=eq." + localityId + "&limit=1",
+      URL +
+        "/rest/v1/locality_memberships?select=user_id&locality_id=eq." +
+        localityId +
+        "&limit=1",
       { headers: { ...h, Prefer: "count=exact" } },
     )
     const faixa = r.headers.get("content-range") ?? ""
@@ -101,7 +103,10 @@ console.log("")
 const idsPorCidade = []
 for (const [uf, cidade, conta] of CIDADES) {
   const s = await entrar(conta + "@bivaque.example.invalid")
-  if (!s) { idsPorCidade.push([cidade + "/" + uf, null]); continue }
+  if (!s) {
+    idsPorCidade.push([cidade + "/" + uf, null])
+    continue
+  }
   const r = await fetch(URL + "/rest/v1/locality_memberships?select=locality_id", {
     headers: { apikey: ANON, Authorization: "Bearer " + s.access_token },
   })
@@ -119,7 +124,11 @@ let falhasLogin = 0
 for (const [uf, cidade, conta] of CIDADES) {
   const email = conta + "@bivaque.example.invalid"
   const s = await entrar(email)
-  if (!s) { falhasLogin++; console.log("  " + (cidade + "/" + uf).padEnd(26) + " FALHA DE LOGIN"); continue }
+  if (!s) {
+    falhasLogin++
+    console.log("  " + (cidade + "/" + uf).padEnd(26) + " FALHA DE LOGIN")
+    continue
+  }
   const h = { apikey: ANON, Authorization: "Bearer " + s.access_token }
 
   const meuVinculo = await buscar(URL + "/rest/v1/locality_memberships?select=locality_id", h)
@@ -134,7 +143,10 @@ for (const [uf, cidade, conta] of CIDADES) {
 
   let vazou = false
   if (meuId) {
-    const tentativa = await buscar(URL + "/rest/v1/posts?select=id&locality_id=neq." + meuId + "&limit=5", h)
+    const tentativa = await buscar(
+      URL + "/rest/v1/posts?select=id&locality_id=neq." + meuId + "&limit=5",
+      h,
+    )
     vazou = tentativa.corpo.length > 0
   }
   if (vazou || outras.length > 0) vazamentos++
@@ -143,13 +155,15 @@ for (const [uf, cidade, conta] of CIDADES) {
   resultados.push({ cidade: cidade + "/" + uf, minhas: minhas.length, ms: feed.ms })
 
   console.log(
-    "  " + (cidade + "/" + uf).padEnd(26) +
-    String(naCidade).padStart(8) +
-    String(minhas.length).padStart(7) +
-    String(eventos.corpo.length).padStart(6) +
-    String(comunidades.corpo.length).padStart(6) +
-    (feed.ms + "ms").padStart(11) +
-    "   " + (vazou ? "VAZOU" : outras.length === 0 ? "ok" : outras.length + " de outra"),
+    "  " +
+      (cidade + "/" + uf).padEnd(26) +
+      String(naCidade).padStart(8) +
+      String(minhas.length).padStart(7) +
+      String(eventos.corpo.length).padStart(6) +
+      String(comunidades.corpo.length).padStart(6) +
+      (feed.ms + "ms").padStart(11) +
+      "   " +
+      (vazou ? "VAZOU" : outras.length === 0 ? "ok" : outras.length + " de outra"),
   )
 }
 
@@ -158,17 +172,34 @@ console.log("=".repeat(88))
 console.log("  LEITURA")
 console.log("=".repeat(88))
 const ms = resultados.map((r) => r.ms)
-const dens = [...densidade.entries()].filter(([k]) => CIDADES.some(([uf, c]) => c + "/" + uf === k)).map(([, v]) => v)
+const dens = [...densidade.entries()]
+  .filter(([k]) => CIDADES.some(([uf, c]) => c + "/" + uf === k))
+  .map(([, v]) => v)
 console.log("  cidades testadas .......... " + resultados.length + " de 19")
 console.log("  falhas de login ........... " + falhasLogin)
-console.log("  densidade por cidade ...... min " + Math.min(...dens) + " / max " + Math.max(...dens) +
-  (SERVICE ? "" : "  (informe SUPABASE_SERVICE_ROLE_KEY para medir)"))
+console.log(
+  "  densidade por cidade ...... min " +
+    Math.min(...dens) +
+    " / max " +
+    Math.max(...dens) +
+    (SERVICE ? "" : "  (informe SUPABASE_SERVICE_ROLE_KEY para medir)"),
+)
 console.log("  posts proprios (soma) ..... " + resultados.reduce((a, r) => a + r.minhas, 0))
-console.log("  tempo de consulta ......... min " + Math.min(...ms) + "ms / medio " +
-  Math.round(ms.reduce((a, b) => a + b, 0) / ms.length) + "ms / max " + Math.max(...ms) + "ms")
-console.log("  VAZAMENTO entre cidades ... " + (vazamentos === 0
-  ? "nenhum — cada cidade so enxerga o proprio conteudo"
-  : vazamentos + " cidade(s) viram conteudo de outra"))
+console.log(
+  "  tempo de consulta ......... min " +
+    Math.min(...ms) +
+    "ms / medio " +
+    Math.round(ms.reduce((a, b) => a + b, 0) / ms.length) +
+    "ms / max " +
+    Math.max(...ms) +
+    "ms",
+)
+console.log(
+  "  VAZAMENTO entre cidades ... " +
+    (vazamentos === 0
+      ? "nenhum — cada cidade so enxerga o proprio conteudo"
+      : vazamentos + " cidade(s) viram conteudo de outra"),
+)
 console.log("")
 console.log("  Nota: a densidade vem da camada administrativa. Pela sessao do usuario a")
 console.log("  leitura de locality_memberships devolve SO a propria linha — e isso e a")
