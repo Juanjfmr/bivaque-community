@@ -78,6 +78,44 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
     ? { ...post, content: edited.content, photo_path: edited.photoPath ?? "" }
     : post
 
+  // RUN-005: a foto do post e um objeto privado no bucket `event-photos`; a
+  // leitura ja e autorizada pela policy `event_photos_select_scoped`, que casa
+  // o caminho com a publicacao e exige membro da localidade dela. O cartao
+  // mostrava o CAMINHO como texto — o arquivo subia, a policy permitia, e
+  // ninguem via a imagem. Aqui ele pede a URL assinada e desenha a foto.
+  //
+  // Falha de assinatura NAO vira imagem quebrada nem sucesso fingido: cai no
+  // mesmo aviso discreto de antes, porque quem nao pode ler aquele objeto
+  // recebe erro da policy e essa recusa e legitima.
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [photoUnavailable, setPhotoUnavailable] = useState(false)
+  const photoPath = shown.post_type === "photo" ? (shown.photo_path ?? "") : ""
+
+  useEffect(() => {
+    if (!photoPath) {
+      setPhotoUrl(null)
+      setPhotoUnavailable(false)
+      return
+    }
+    let cancelled = false
+    setPhotoUnavailable(false)
+    void supabase.storage
+      .from("event-photos")
+      .createSignedUrl(photoPath, 3600)
+      .then(({ data, error }) => {
+        if (cancelled) return
+        if (error || !data?.signedUrl) {
+          setPhotoUrl(null)
+          setPhotoUnavailable(true)
+          return
+        }
+        setPhotoUrl(data.signedUrl)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [photoPath, supabase])
+
   // Uma requisição para todos os cartões: ver currentUserIdOnce.
   useEffect(() => {
     let cancelled = false
@@ -306,24 +344,25 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
           )}
 
           {/* Photo */}
-          {shown.post_type === "photo" && shown.photo_path && (
-            <div className="mt-3 rounded-lg bg-[var(--semantic-surface-sunken)] p-4 text-center">
-              <div className="flex flex-col items-center gap-2 text-muted">
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  aria-hidden="true"
-                >
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <polyline points="21 15 16 10 5 21" />
-                </svg>
-                <span className="text-xs">Foto: {shown.photo_path}</span>
-              </div>
+          {photoPath && photoUrl && (
+            // biome-ignore lint/performance/noImgElement: URL assinada expira; next/image otimizaria um endereco de vida curta
+            <img
+              src={photoUrl}
+              alt=""
+              className="mt-3 w-full rounded-lg border border-border object-cover"
+              loading="lazy"
+            />
+          )}
+          {photoPath && !photoUrl && (
+            <div
+              className="mt-3 rounded-lg bg-[var(--semantic-surface-sunken)] p-4 text-center"
+              aria-live="polite"
+            >
+              <p className="text-xs text-muted">
+                {photoUnavailable
+                  ? "A foto desta publicação não está disponível para você."
+                  : "Carregando a foto…"}
+              </p>
             </div>
           )}
 
