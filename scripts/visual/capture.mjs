@@ -114,7 +114,9 @@ export const HEADINGS = {
   // Ajuricaba" para a conta de captura), caindo para "Cidade, UF" só quando não
   // há vila — dado, não contrato. Com "Comunidade|Manaus" fixo a captura saía
   // INVALID em três viewports mesmo com a tela certa na frente.
-  "/community": DYNAMIC_HEADING,
+  // RUN-004 (O06): /community deixou de ser tela — encaminha para /inicio ou
+  // para /inicio?post=<id>. Rota que nao renderiza nao tem contrato de captura;
+  // o encaminhamento e provado em tests/e2e/legacy-community-route.spec.ts.
   "/guide": "Guia",
   "/events": "^Explorar eventos$",
   "/notifications": "^Notificações$",
@@ -340,7 +342,6 @@ export const ROUTES = [
     name: "event-editar",
     auth: true,
   },
-  { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
   // RECON-034 — apresentação com faixa/miniatura e o console de imagens do dono.
   {

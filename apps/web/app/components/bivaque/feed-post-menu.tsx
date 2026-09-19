@@ -8,6 +8,7 @@
 import { Dropdown } from "@heroui/react"
 import { MoreHorizontal } from "lucide-react"
 import { useCallback } from "react"
+import { postFocusHref } from "../../(shell)/community/legacy-target"
 
 interface LeanOverflowMenuProps {
   postId: string
@@ -20,7 +21,7 @@ interface LeanOverflowMenuProps {
 
 export function LeanOverflowMenu({ postId, onHide, onReport, onEdit }: LeanOverflowMenuProps) {
   const handleShare = useCallback(async () => {
-    const url = `${window.location.origin}/community?post=${postId}`
+    const url = `${window.location.origin}${postFocusHref(postId)}`
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
         await navigator.share({ title: "Bivaque", url })

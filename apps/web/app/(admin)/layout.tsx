@@ -42,7 +42,7 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
   })
 
   if (!isOperator) {
-    redirect("/community")
+    redirect("/inicio")
   }
 
   return (

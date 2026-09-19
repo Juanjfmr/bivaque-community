@@ -176,7 +176,7 @@ test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)",
       const page = await context.newPage()
       await seedVilaOwnerSession(context)
       await page.setViewportSize({ width: 1280, height: 800 })
-      await page.goto("/community", { waitUntil: "load" })
+      await page.goto("/inicio", { waitUntil: "load" })
 
       // Persona eh a dona da Vila Ajuricaba (mesma do publish-golden-slice).
       // Como ela esta suspensa, o RLS veto no POST /rest/v1/posts

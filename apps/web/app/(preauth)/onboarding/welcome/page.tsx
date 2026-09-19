@@ -12,7 +12,7 @@ export default function OnboardingWelcomePage() {
       description="Sua conta, elegibilidade e localidade estão prontas. Agora escolha por onde quer começar."
     >
       <div className={styles["stack"]}>
-        <Link href="/community" className={styles["primaryLink"]}>
+        <Link href="/inicio" className={styles["primaryLink"]}>
           Entrar na comunidade <ArrowRight aria-hidden="true" />
         </Link>
 

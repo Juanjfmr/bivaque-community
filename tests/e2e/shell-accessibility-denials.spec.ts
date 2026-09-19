@@ -45,7 +45,7 @@ test.describe("Keyboard focus visibility", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When the first bottom nav tab receives keyboard focus
-    await page.goto("/community")
+    await page.goto("/inicio")
     const firstTab = page.locator(BOTTOM_NAV).getByRole("tab").first()
     await firstTab.focus()
 
@@ -68,7 +68,7 @@ test.describe("Touch target minimum size", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When the bottom nav is rendered
-    await page.goto("/community")
+    await page.goto("/inicio")
 
     // Then each visible tab has a minimum touch target of 44px both dimensions
     const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
@@ -100,7 +100,7 @@ test.describe("Touch target minimum size", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When the header is rendered
-    await page.goto("/community")
+    await page.goto("/inicio")
 
     // Then the Indicações entry has a minimum touch target of 44px
     const entry = page.getByRole("link", { name: "Indicações" })

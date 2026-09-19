@@ -128,7 +128,7 @@ async function seedVilaOwnerSession(context: BrowserContext): Promise<void> {
 }
 
 async function openComposer(page: Page): Promise<void> {
-  await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+  await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
   // O shell pode estar hidratando quando o Next respondeu. Esperar o h1
   // da vila aparecer antes de tentar abrir o compositor — sem isso, o
   // primeiro clique pode cair fora do handler de React e o modal nunca

@@ -168,7 +168,7 @@ test.describe("two localities: each member sees only their own city", () => {
     await signInAs(page, VILA_OWNER_EMAIL)
 
     // When they open the community feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
     // Then the page is interactive (load control — without it the negative
     // assertions in the sibling test could pass vacuously on an error page)
@@ -187,7 +187,7 @@ test.describe("two localities: each member sees only their own city", () => {
     await signInAs(page, SECOND_LOCALITY_EMAIL)
 
     // When they open the community feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
     // Then the page is interactive for them too
     await expect(page.getByRole("button", { name: "Publicar" })).toBeVisible({

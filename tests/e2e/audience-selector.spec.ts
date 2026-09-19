@@ -70,7 +70,7 @@ test.describe("audience selector and reach chip", () => {
     await page.setViewportSize({ width: 1280, height: 800 })
 
     // When the composer opens
-    await page.goto("/community")
+    await page.goto("/inicio")
     await page
       .getByRole("button", { name: /Publicar/ })
       .first()
@@ -86,7 +86,7 @@ test.describe("audience selector and reach chip", () => {
     await signInAs(page, VILA_OWNER_EMAIL)
 
     // When the member opens the home feed
-    await page.goto("/community")
+    await page.goto("/inicio")
 
     // Then a city-reach chip is visible on the city-wide post. The chip
     // (feed-post.tsx:289) is a static HeroUI Chip, not an interactive

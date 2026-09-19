@@ -95,7 +95,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
 test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
   test("opening the composer moves focus into the dialog", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     const trigger = page
@@ -115,7 +115,7 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
 
   test("Escape closes the modal and focus returns to the trigger", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     const trigger = page
@@ -138,7 +138,7 @@ test.describe("DS-029 reflow at 320 CSS-px", () => {
 
   test("/community does not produce horizontal scroll at 320px", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     const overflow = await page.evaluate(() => {
@@ -155,7 +155,7 @@ test.describe("DS-029 reflow at 320 CSS-px", () => {
 test.describe("DS-029 target-size 24×24 minimum on representative controls", () => {
   test("interactive controls on /community meet the 24×24 floor", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     const sizes = await page.evaluate(() => {
@@ -189,7 +189,7 @@ test.describe("DS-029 target-size 24×24 minimum on representative controls", ()
 test.describe("DS-029 visible focus on non-tablist controls", () => {
   test("Tab from the shell puts a real focus ring on the next control", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     await page.locator("header").first().click()
@@ -235,7 +235,7 @@ test.describe("DS-029 non-color state cues", () => {
         }),
       }),
     )
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     const alert = page.getByRole("alert").filter({ hasText: "Algo deu errado" })
@@ -252,7 +252,7 @@ test.describe("DS-029 prefers-reduced-motion contract", () => {
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     const durations = await page.evaluate(() => {

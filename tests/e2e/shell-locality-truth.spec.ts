@@ -105,7 +105,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
 
 async function loadShell(page: Page) {
   await signInAs(page, TRANSFERRING_EMAIL)
-  await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+  await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
   await expect(page.locator("header").first()).toBeVisible({ timeout: 15000 })
 }
 

@@ -4,8 +4,10 @@ import { Button, Tabs } from "@heroui/react"
 import { Clock, MapPin } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useLocalityContext } from "../../../lib/locality-context"
+import { isLocalityStale } from "../../../lib/locality-density"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "../../components/bivaque/avatar"
 import { EmptyState } from "../../components/bivaque/empty-state"
@@ -87,6 +89,43 @@ export function CommunitySection({
   const guardRef = useRef(createRequestGuard())
   const followGuardRef = useRef(createRequestGuard())
 
+  // RUN-004 / O06: permalink de publicacao. /community?post=<id> encaminha para
+  // ca com o parametro preservado, e o comportamento e o mesmo que a rota antiga
+  // tinha — rolar ate o card e destaca-lo por um instante. Id que este feed nao
+  // contem nao foca e nao informa nada: quem nao pode ver o post nao descobre
+  // por aqui que ele existe.
+  const searchParams = useSearchParams()
+  const targetPostId = searchParams.get("post")
+  const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null)
+  const postRefs = useRef<Map<string, HTMLElement | null>>(new Map())
+  const hasScrolledToDeepLink = useRef(false)
+
+  // §3.4: abaixo do limiar de densidade o vazio diz "voce e dos primeiros", nao
+  // "nenhuma publicacao ainda". A segunda frase descreve uma sala silenciosa; a
+  // primeira descreve um comeco. A regra vivia na rota /community, que saiu —
+  // sem este trecho a retirada teria levado junto o estado honesto da cidade
+  // que esta nascendo.
+  const { current: currentLocality } = useLocalityContext()
+  const [memberCount, setMemberCount] = useState<number | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const localityId = currentLocality.id
+    if (!localityId) return
+    void supabase
+      .from("locality_memberships")
+      .select("*", { count: "exact", head: true })
+      .eq("locality_id", localityId)
+      .then(({ count }) => {
+        // Contagem indisponivel permanece null: isLocalityStale trata null como
+        // "ainda nao sei" e mantem o texto padrao, sem piscar de um para o outro.
+        if (!cancelled && typeof count === "number") setMemberCount(count)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [currentLocality.id, supabase])
+
   const loadFeed = useCallback(() => {
     if (primary.status !== "ready") {
       // Comunidade ainda não resolvida: aposenta em voo qualquer resposta da
@@ -149,6 +188,27 @@ export function CommunitySection({
     setTab(key as FeedTabKey)
   }, [])
 
+  useEffect(() => {
+    if (hasScrolledToDeepLink.current) return
+    if (!targetPostId) return
+    if (posts.length === 0) return
+    if (!posts.some((post) => post.id === targetPostId)) return
+
+    hasScrolledToDeepLink.current = true
+
+    const raf = requestAnimationFrame(() => {
+      postRefs.current.get(targetPostId)?.scrollIntoView({ behavior: "smooth", block: "center" })
+    })
+
+    setHighlightedPostId(targetPostId)
+    const timer = setTimeout(() => setHighlightedPostId(null), 2500)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      clearTimeout(timer)
+    }
+  }, [posts, targetPostId])
+
   const followingListView =
     followPhase !== "done" ? (
       <div className="space-y-2" aria-busy="true">
@@ -178,8 +238,14 @@ export function CommunitySection({
       </div>
     ) : posts.length === 0 ? (
       <EmptyState
-        title="Nenhuma publicação ainda"
-        description="Seja o primeiro a compartilhar algo com a sua comunidade."
+        title={
+          isLocalityStale(memberCount) ? "Você é dos primeiros aqui." : "Nenhuma publicação ainda"
+        }
+        description={
+          isLocalityStale(memberCount)
+            ? "Esta comunidade está começando. Publique algo para abrir caminho para quem chegar depois."
+            : "Seja o primeiro a compartilhar algo com a sua comunidade."
+        }
         action={
           <Button size="sm" variant="primary" className="min-h-11" onPress={onPublish}>
             Publicar
@@ -195,7 +261,20 @@ export function CommunitySection({
           // feed segue só com posts — nunca um card com dado pendurado.
           const showEvent = index === 0 && event !== null
           const cards: React.ReactNode[] = [
-            <FeedPost key={post.id} post={post} index={index} onHide={handleHidePost} />,
+            <div
+              key={post.id}
+              ref={(el) => {
+                if (el) postRefs.current.set(post.id, el)
+                else postRefs.current.delete(post.id)
+              }}
+              className={
+                highlightedPostId === post.id
+                  ? "rounded-lg ring-2 ring-accent transition-all duration-300"
+                  : undefined
+              }
+            >
+              <FeedPost post={post} index={index} onHide={handleHidePost} />
+            </div>,
           ]
           if (showEvent) {
             cards.push(<FeedEventCard key="feed-event-card" event={event} />)

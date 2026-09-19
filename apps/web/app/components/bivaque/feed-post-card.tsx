@@ -10,6 +10,7 @@ import { Bookmark, ExternalLink, Heart, Link2, MessageCircle, Share2 } from "luc
 import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { postFocusHref } from "../../(shell)/community/legacy-target"
 import { MemberAvatar } from "./avatar"
 import { EditPostModal } from "./feed-post-edit"
 import { LeanOverflowMenu } from "./feed-post-menu"
@@ -208,7 +209,7 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
 
   const handleShare = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/community?post=${post.id}`)
+      await navigator.clipboard.writeText(`${window.location.origin}${postFocusHref(post.id)}`)
       setShareFeedback("Link copiado")
       setTimeout(() => setShareFeedback(""), 2000)
     } catch {

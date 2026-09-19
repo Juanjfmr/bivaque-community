@@ -9,9 +9,10 @@ test.describe("photo upload", () => {
   test("the composer has a file picker for photos", async ({ page }) => {
     // Given a session of a member
     await seedSession(page.context())
-    // When they open the community page and open the shell composer
-    await page.goto("/community")
-    await page.getByRole("button", { name: "No que você está pensando?" }).click()
+    // When they open the home and open the composer. O rotulo mudou junto com a
+    // rota: o compositor de /inicio pergunta "O que voce quer compartilhar?".
+    await page.goto("/inicio")
+    await page.getByRole("button", { name: "O que você quer compartilhar?" }).click()
 
     // And select Photo type
     const dialog = page.getByRole("dialog", { name: "Criar publicação" })

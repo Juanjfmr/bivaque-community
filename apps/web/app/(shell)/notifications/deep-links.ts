@@ -11,6 +11,8 @@
 // (ator apagado, denúncia sem alvo legível), a linha marca como lida e não
 // navega — nunca se inventa um href.
 
+import { postFocusHref } from "../community/legacy-target"
+
 export type NotificationRow = {
   id: string
   recipient_user_id: string
@@ -107,7 +109,9 @@ export function resolveNotificationHref(
 ): string | null {
   switch (notification.type) {
     case "comment":
-      return `/community?post=${notification.target_id}`
+      // RUN-004: posts nao tem rota de detalhe; o destino real do id e o feed de
+      // /inicio, com foco. Ver legacy-target.ts para o drift registrado.
+      return postFocusHref(notification.target_id)
     case "group_admission":
       return `/groups/${notification.target_id}`
     case "invitation_accepted":
@@ -146,7 +150,7 @@ export function resolveReportTargetHref(target: ReportTarget | null): string | n
   if (!target) return null
   switch (target.target_type) {
     case "post":
-      return `/community?post=${target.target_id}`
+      return postFocusHref(target.target_id)
     case "group":
       return `/groups/${target.target_id}`
     case "message":

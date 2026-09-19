@@ -161,20 +161,22 @@ test.describe("community feed", () => {
     await seedSession(context)
 
     // When the user navigates to the community page
-    await page.goto("/community")
+    await page.goto("/inicio")
 
-    // Then the community page renders (middleware passes, Supabase may show error or empty)
-    await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible()
+    // Then the home renders. O "Manaus, AM" era o h1 da rota legada; em /inicio
+    // o unico h1 e a saudacao (prancha 01) e a secao do feed traz o proprio
+    // titulo, que e o sinal estavel de que a pagina montou.
+    await expect(page.getByRole("heading", { name: "Na comunidade" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
   })
 
   test("feed page is reachable at all three viewport widths", async ({ page, context }) => {
     // Given the consent cookie and the mobile-375 viewport
     await seedSession(context)
-    await page.goto("/community")
+    await page.goto("/inicio")
 
-    // Then the community page renders without horizontal overflow
-    await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible()
+    // Then the home renders without horizontal overflow
+    await expect(page.getByRole("heading", { name: "Na comunidade" })).toBeVisible()
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
     const viewportWidth = await page.evaluate(() => window.innerWidth)
     expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)
@@ -470,7 +472,7 @@ test.describe("accessibility across journeys", () => {
     // Given the consent cookie
     await seedSession(context)
     // When the browser opens /community
-    await page.goto("/community")
+    await page.goto("/inicio")
 
     // Then there is no horizontal overflow
     await page.waitForSelector("body")

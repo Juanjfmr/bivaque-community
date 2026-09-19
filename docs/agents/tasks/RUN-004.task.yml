@@ -1,0 +1,85 @@
+# RUN-004 — achado de execução: coerência de rota e acesso direto nas pranchas 42/43.
+#
+# Reproduzido no runtime desta revisão, não inferido de documento:
+#   - /community sem query ainda renderiza o feed legado (client) e o contrato O06
+#     manda encaminhar ao início;
+#   - /community?post=<id> só rola e destaca o card do feed antigo
+#     (apps/web/app/(shell)/community/page.tsx:39-42,200-224);
+#   - em /communities o card de descoberta só troca o preview inline, sem caminho
+#     para a rota estável /communities/[id]
+#     (apps/web/app/(shell)/communities/communities-screen.tsx:279-331);
+#   - /communities/[id] chama notFound() sem not-found.tsx no segmento, então o
+#     inexistente cai na página padrão do Next, fora do shell
+#     (apps/web/app/(shell)/communities/[id]/page.tsx:39-41).
+task_id: RUN-004
+
+objective: >
+  A rota de compatibilidade /community deixa de renderizar o feed legado e passa a
+  encaminhar para o destino canônico: sem parâmetro vai ao início; com um id de
+  publicação válido vai ao feed de /inicio com foco naquele cartão. O detalhe estável
+  citado no O06 não existe para posts — /publicacoes/[id] lê recommendation_requests,
+  outra entidade — e esse drift fica registrado em legacy-target.ts em vez de
+  disfarçado num encaminhamento que renderizaria "sem acesso" para o próprio dono. Em /communities, a apresentação da descoberta ganha caminho
+  estável e focável para a tela da comunidade, e o inexistente dessa tela responde
+  dentro do shell em vez da página padrão da estrutura.
+
+authority:
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §4.9 O06
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §4.3 R22/R23
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §3.2 (URL estável de detalhe)
+  - docs/agents/RECON-WEB-EXECUCAO.md (laço por lote, migrar produtores de link)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Leitura e execução nesta revisão de 11/09/2026 sobre b9faf50:
+    apps/web/app/(shell)/community/page.tsx é client e renderiza o feed legado
+    (CityReference/FeedPost) lendo ?post= apenas para rolar; o contrato O06 pede
+    encaminhamento. apps/web/app/(shell)/communities/communities-screen.tsx:279-331
+    só marca o card selecionado, sem link para /communities/[id].
+    apps/web/app/(shell)/communities/[id]/page.tsx:39-41 chama notFound() e não
+    existe not-found.tsx em (shell), (shell)/communities nem (shell)/communities/[id].
+    scripts/visual/capture.mjs:65,126 ainda lista /community como tela capturável.
+
+allowed_paths:
+  - apps/web/app/(shell)/community
+  - apps/web/app/(shell)/communities
+  - tests/unit/community
+  - tests/e2e
+  - scripts/visual/capture.mjs
+
+forbidden:
+  - criar rota nova de detalhe de publicação ou mexer na modelagem de posts
+  - alterar supabase/migrations, policies ou schema
+  - polir ou redesenhar o feed legado, R22 ou R23
+  - migrar a suíte E2E legada que navega para /community (fica como pendência nomeada)
+  - mexer no fluxo de login ou de retorno pós-login
+
+acceptance:
+  - /community sem parâmetro responde com encaminhamento para /inicio e não renderiza feed
+  - /community?post=<uuid válido> encaminha para /inicio?post=<uuid>, o feed que renderiza aquele registro
+  - o foco do permalink em /inicio rola até o cartão e o destaca, como a rota antiga fazia
+  - id que o feed não contém não foca nem informa que a publicação existe
+  - notificação comment, alvo de denúncia post e copiar-link do cartão já apontam para o permalink novo
+  - parâmetro ausente, vazio, repetido ou malformado termina em /inicio, sem exibir feed de terceiros
+  - /communities oferece link estável e alcançável por teclado para /communities/[id]
+  - /communities/[id] inexistente responde com estado de não encontrado dentro do shell, com caminho de volta
+  - falha de leitura em /communities/[id] lança para o boundary de erro em vez de virar lista vazia
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-004.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/community
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 gate
+
+risk: rotas e acessibilidade
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
