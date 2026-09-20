@@ -162,7 +162,7 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
               {results.map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex items-start gap-3 rounded-xl border border-border bg-[var(--semantic-surface)] p-4"
+                  className="flex flex-col gap-3 rounded-xl border border-border bg-[var(--semantic-surface)] p-4 sm:flex-row sm:items-start"
                 >
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]">
                     <MapPin size={20} aria-hidden="true" />
@@ -179,7 +179,9 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
                       <p className="mt-1 text-sm leading-relaxed text-muted">{entry.description}</p>
                     ) : null}
                   </div>
-                  <div className="flex shrink-0 flex-col gap-2">
+                  {/* Em telas estreitas o texto não é espremido por uma coluna de
+                      ações: os dois botões descem para baixo do resultado. */}
+                  <div className="flex shrink-0 flex-row gap-2 sm:flex-col">
                     <Link
                       href={`/guide/${entry.id}` as Route}
                       className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--semantic-action-primary)] px-3 text-sm font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
