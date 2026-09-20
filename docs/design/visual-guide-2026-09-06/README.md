@@ -273,9 +273,10 @@ As notas abaixo são obrigatórias para construção; corrigem divergências dos
 
 ### 80-web-recomendacoes
 
-- `Responder` abre a contribuição. O polegar, quando existir, é feedback posterior sobre uma resposta.
+- `Responder` abre a contribuição. O MVP não usa polegar, curtida ou `Isso ajudou?` nesse fluxo.
 - Com referência ausente, mostrar `Ainda não está no Guia`, publicar a resposta e enviar a candidata à revisão humana.
 - A autora pode marcar `Resolveu meu pedido` antes da decisão de curadoria; denúncia continua no overflow.
+- No MVP, remover também `Isso ajudou?`: `Resolveu meu pedido` é o único sinal de fechamento.
 
 ### 46-mobile-eventos
 

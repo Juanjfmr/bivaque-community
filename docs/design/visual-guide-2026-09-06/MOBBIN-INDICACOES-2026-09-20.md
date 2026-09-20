@@ -16,7 +16,7 @@ Este registro substitui a proposta exploratória de usar um polegar com o rótul
 - Sem correspondência, a resposta é publicada imediatamente como `Ainda não está no Guia` e a
   referência candidata segue para curadoria humana.
 - Aprovação ou mesclagem posterior liga retroativamente a resposta ao item canônico do Guia.
-- `Isso ajudou?`, quando usado, é feedback posterior sobre uma resposta ou resultado.
+- O MVP não introduz `Isso ajudou?`, curtida ou polegar. `Resolveu meu pedido`, disponível à autora, é o único sinal de fechamento.
 - `Denunciar` permanece no menu de overflow.
 - A autora do pedido pode marcar `Resolveu meu pedido` sem depender da curadoria.
 
@@ -28,4 +28,14 @@ Este registro substitui a proposta exploratória de usar um polegar com o rótul
 - `74-web-guia-curadoria.png`: origem, deduplicação e aprovação humana.
 - `80-web-recomendacoes.png`: resposta vinculada ou candidata, publicação imediata e revisão.
 
-As versões anteriores foram preservadas em `history/2026-09-20-mobbin-indicacoes/`.
+As versões anteriores foram preservadas em `history/2026-09-20-mobbin-indicacoes/`. A versão da
+Home anterior ao ajuste de densidade e a prancha 80 anterior à remoção do feedback foram
+preservadas em `history/2026-09-20-home-compacta/`.
+
+## Ajuste de implementação
+
+- Na Home de membro ativo, retorno relevante vem antes do lançador compacto de intenções.
+- As duas ações não formam um hero permanente nem deslocam o feed para fora da dobra.
+- Estado novo ou vazio pode usar explicações maiores.
+- HeroUI fornece comportamento acessível; não define hierarquia, densidade ou aparência da tela.
+- A implementação não está aceita sem operação real e comparação visual em 375, 768 e 1440.

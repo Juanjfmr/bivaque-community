@@ -380,6 +380,11 @@ A direção aprovada para o Bivaque é:
    referência candidata segue para curadoria;
 5. aprovação ou mesclagem posterior religa a resposta ao item canônico;
 6. a autora pode marcar `Resolveu meu pedido` sem esperar a curadoria;
-7. `Denunciar` continua no overflow, e `Isso ajudou?` é feedback posterior opcional.
+7. `Denunciar` continua no overflow; não há `Isso ajudou?`, curtida ou polegar no MVP.
+
+Na Home de membro ativo, retornos relevantes precedem um lançador compacto de intenções. Cartões
+grandes podem existir no estado novo ou vazio, mas não permanecem como hero em todas as visitas.
+HeroUI continua sendo a biblioteca de componentes permitida; seus primitivos não podem substituir
+a hierarquia, densidade e composição das pranchas.
 
 Referências e rastreabilidade: `docs/design/visual-guide-2026-09-06/MOBBIN-INDICACOES-2026-09-20.md`.
