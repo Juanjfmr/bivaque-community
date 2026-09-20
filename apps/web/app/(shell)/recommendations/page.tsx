@@ -803,7 +803,14 @@ export default function RecommendationsPage() {
                   <Select
                     aria-label="Categoria"
                     aria-labelledby="pedido-categoria-label"
-                    aria-invalid={requestFieldError?.field === "category"}
+                    // A3a: `aria-invalid` cru NÃO chega ao DOM do Select — o
+                    // componente do HeroUI ignora o atributo arbitrário e usa a
+                    // própria API de invalidez. Como o CSS da biblioteca pinta a
+                    // borda de perigo por `.select[data-invalid="true"]`
+                    // (ou `[aria-invalid="true"]`), passar o atributo na mão
+                    // deixava o campo infrator sem borda nenhuma. `isInvalid` é o
+                    // caminho previsto: a marcação chega e o próprio CSS desenha.
+                    isInvalid={requestFieldError?.field === "category"}
                     {...(requestFieldError?.field === "category"
                       ? { "aria-describedby": "pedido-categoria-erro" }
                       : {})}
