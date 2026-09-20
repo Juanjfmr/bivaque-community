@@ -7,6 +7,7 @@ import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { callResolutionRpc } from "../../../lib/recommendations/resolution-rpcs"
+import { localityScopeLabel } from "../../../lib/recommendations/scope-label"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "./card"
 import { EmptyState } from "./empty-state"
@@ -67,9 +68,22 @@ function formatDate(iso: string): string {
 
 export default function RecommendationRequests() {
   const supabase = createBrowserClient()
-  // DS-006: o alcance do pedido mostra o nome real da localidade do membro;
-  // "Manaus" chumbado mentia para quem está em outra cidade.
-  const { current } = useLocalityContext()
+  // DS-006: o chip de alcance fala do PEDIDO, não de quem lê. A localidade do
+  // pedido já vem no próprio SELECT (`locality_id`); usar a cidade da sessão
+  // rotulava um pedido de outra cidade com a cidade errada.
+  const { current, outbound } = useLocalityContext()
+
+  const localityLabelFor = useCallback(
+    (request: Pick<RequestRow, "group_id" | "locality_id">): string =>
+      localityScopeLabel({
+        groupId: request.group_id,
+        localityId: request.locality_id,
+        currentId: current.id,
+        currentCityName: current.cityName,
+        outbound,
+      }),
+    [current.id, current.cityName, outbound],
+  )
 
   const [requests, setRequests] = useState<RequestRow[]>([])
   const [repliesByRequest, setRepliesByRequest] = useState<Record<string, ReplyRow[]>>({})
@@ -567,7 +581,7 @@ export default function RecommendationRequests() {
                             {CATEGORY_LABELS[request.category] ?? request.category}
                           </Chip>
                           <Chip size="sm" variant="soft">
-                            {request.group_id ? "Grupo" : current.cityName}
+                            {localityLabelFor(request)}
                           </Chip>
                           <span className="text-xs text-muted">
                             {formatDate(request.created_at)}
