@@ -815,111 +815,124 @@ export default function RecommendationsPage() {
                   browser ("Please fill out this field.") — nada do produto
                   aparecia e a pessoa não sabia qual campo revisar. */}
                 <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmitRequest}>
-                  <div className="flex flex-col gap-1.5">
-                    <span id="pedido-categoria-label" className="text-sm font-medium">
-                      Categoria
-                    </span>
-                    <Select
-                      aria-label="Categoria"
-                      aria-labelledby="pedido-categoria-label"
-                      // A3a: `aria-invalid` cru NÃO chega ao DOM do Select — o
-                      // componente do HeroUI ignora o atributo arbitrário e usa a
-                      // própria API de invalidez. Como o CSS da biblioteca pinta a
-                      // borda de perigo por `.select[data-invalid="true"]`
-                      // (ou `[aria-invalid="true"]`), passar o atributo na mão
-                      // deixava o campo infrator sem borda nenhuma. `isInvalid` é o
-                      // caminho previsto: a marcação chega e o próprio CSS desenha.
-                      isInvalid={requestFieldError?.field === "category"}
-                      {...(requestFieldError?.field === "category"
-                        ? { "aria-describedby": "pedido-categoria-erro" }
-                        : {})}
-                      selectedKey={requestCategory || null}
-                      onSelectionChange={(key) => {
-                        if (typeof key === "string") {
-                          setRequestCategory(key as RecommendationCategory)
-                          setRequestError("")
-                          setRequestFieldError(null)
-                          // F7 Step 2: when Saúde is picked, force scope to a group
-                          // (the locality option is hidden, so the user must pick a
-                          // group; auto-select the first group to keep the form valid).
-                          if (key === "saude_bem_estar" && requestScope === "locality") {
-                            const firstGroup = myGroups[0]
-                            if (firstGroup) setRequestScope(firstGroup.id)
+                  {/* A4 (parecer R2): o formulário não tinha grade — dois Selects
+                      de 320 px flutuavam ao lado de campos de 552 px. Categoria e
+                      alcance são decisões irmãs: ficam lado a lado, dividindo a
+                      largura de leitura. Abaixo de `sm` elas empilham, na ordem
+                      rótulo-controle-mensagem.
+                      `grid-rows-subgrid` nas duas células é o que mantém rótulo,
+                      controle e mensagem na MESMA linha da grade: sem isso o
+                      rótulo longo do alcance quebra em duas linhas e empurra o
+                      Select 15 px abaixo do irmão — dois controles irmãos em
+                      alturas diferentes. */}
+                  <div className="grid gap-4 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto] sm:gap-x-4 sm:gap-y-1.5">
+                    <div className="flex flex-col gap-1.5 sm:row-span-3 sm:grid sm:grid-rows-subgrid sm:gap-y-1.5">
+                      <span id="pedido-categoria-label" className="text-sm font-medium">
+                        Categoria
+                      </span>
+                      <Select
+                        aria-label="Categoria"
+                        aria-labelledby="pedido-categoria-label"
+                        // A3a: `aria-invalid` cru NÃO chega ao DOM do Select — o
+                        // componente do HeroUI ignora o atributo arbitrário e usa a
+                        // própria API de invalidez. Como o CSS da biblioteca pinta a
+                        // borda de perigo por `.select[data-invalid="true"]`
+                        // (ou `[aria-invalid="true"]`), passar o atributo na mão
+                        // deixava o campo infrator sem borda nenhuma. `isInvalid` é o
+                        // caminho previsto: a marcação chega e o próprio CSS desenha.
+                        isInvalid={requestFieldError?.field === "category"}
+                        {...(requestFieldError?.field === "category"
+                          ? { "aria-describedby": "pedido-categoria-erro" }
+                          : {})}
+                        selectedKey={requestCategory || null}
+                        onSelectionChange={(key) => {
+                          if (typeof key === "string") {
+                            setRequestCategory(key as RecommendationCategory)
+                            setRequestError("")
+                            setRequestFieldError(null)
+                            // F7 Step 2: when Saúde is picked, force scope to a group
+                            // (the locality option is hidden, so the user must pick a
+                            // group; auto-select the first group to keep the form valid).
+                            if (key === "saude_bem_estar" && requestScope === "locality") {
+                              const firstGroup = myGroups[0]
+                              if (firstGroup) setRequestScope(firstGroup.id)
+                            }
                           }
-                        }
-                      }}
-                      isRequired
-                      className="max-w-xs"
-                    >
-                      <Select.Trigger>
-                        <Select.Value>Selecione uma categoria</Select.Value>
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover>
-                        <ListBox>
-                          {CATEGORIES.map((cat) => (
-                            <ListBox.Item key={cat.id} id={cat.id}>
-                              {cat.label}
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
-                    {requestFieldError?.field === "category" ? (
-                      <p
-                        id="pedido-categoria-erro"
-                        role="alert"
-                        className="text-xs font-medium text-[var(--semantic-danger)]"
+                        }}
+                        isRequired
+                        className="w-full"
                       >
-                        {requestFieldError.message}
-                      </p>
-                    ) : null}
-                  </div>
+                        <Select.Trigger>
+                          <Select.Value>Selecione uma categoria</Select.Value>
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox>
+                            {CATEGORIES.map((cat) => (
+                              <ListBox.Item key={cat.id} id={cat.id}>
+                                {cat.label}
+                              </ListBox.Item>
+                            ))}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                      {requestFieldError?.field === "category" ? (
+                        <p
+                          id="pedido-categoria-erro"
+                          role="alert"
+                          className="text-xs font-medium text-[var(--semantic-danger)]"
+                        >
+                          {requestFieldError.message}
+                        </p>
+                      ) : null}
+                    </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <span id="pedido-alcance-label" className="text-sm font-medium">
-                      Para qual comunidade você está perguntando?
-                    </span>
-                    <Select
-                      aria-label="Alcance"
-                      aria-labelledby="pedido-alcance-label"
-                      selectedKey={requestScope}
-                      onSelectionChange={(key) => {
-                        if (typeof key === "string") {
-                          setRequestScope(key)
-                          setRequestError("")
-                        }
-                      }}
-                      isRequired
-                      className="max-w-xs"
-                    >
-                      <Select.Trigger>
-                        <Select.Value>Escolha o alcance</Select.Value>
-                        <Select.Indicator />
-                      </Select.Trigger>
-                      <Select.Popover>
-                        <ListBox>
-                          {/* F7 Step 2: Saúde começa em grupo. The locality option is
+                    <div className="flex flex-col gap-1.5 sm:row-span-3 sm:grid sm:grid-rows-subgrid sm:gap-y-1.5">
+                      <span id="pedido-alcance-label" className="text-sm font-medium">
+                        Para qual comunidade você está perguntando?
+                      </span>
+                      <Select
+                        aria-label="Alcance"
+                        aria-labelledby="pedido-alcance-label"
+                        selectedKey={requestScope}
+                        onSelectionChange={(key) => {
+                          if (typeof key === "string") {
+                            setRequestScope(key)
+                            setRequestError("")
+                          }
+                        }}
+                        isRequired
+                        className="w-full"
+                      >
+                        <Select.Trigger>
+                          <Select.Value>Escolha o alcance</Select.Value>
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox>
+                            {/* F7 Step 2: Saúde começa em grupo. The locality option is
                       hidden when the category is health, with an explanatory
                       line above the select. */}
-                          {requestCategory !== "saude_bem_estar" ? (
-                            <ListBox.Item key="locality" id="locality">
-                              {current.cityName}
-                            </ListBox.Item>
-                          ) : null}
-                          {myGroups.map((group) => (
-                            <ListBox.Item key={group.id} id={group.id}>
-                              {group.name}
-                            </ListBox.Item>
-                          ))}
-                        </ListBox>
-                      </Select.Popover>
-                    </Select>
-                    {requestCategory === "saude_bem_estar" ? (
-                      <p className="text-xs text-muted">
-                        Pedidos de Saúde começam em grupo — escolha um dos seus grupos como alcance.
-                      </p>
-                    ) : null}
+                            {requestCategory !== "saude_bem_estar" ? (
+                              <ListBox.Item key="locality" id="locality">
+                                {current.cityName}
+                              </ListBox.Item>
+                            ) : null}
+                            {myGroups.map((group) => (
+                              <ListBox.Item key={group.id} id={group.id}>
+                                {group.name}
+                              </ListBox.Item>
+                            ))}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                      {requestCategory === "saude_bem_estar" ? (
+                        <p className="text-xs text-muted">
+                          Pedidos de Saúde começam em grupo — escolha um dos seus grupos como
+                          alcance.
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
@@ -1023,7 +1036,10 @@ export default function RecommendationsPage() {
                     type="submit"
                     variant="primary"
                     size="sm"
-                    className="self-start"
+                    // A4: a prancha 45 fecha o formulário com o primário na ponta
+                    // direita da linha, não sozinho na esquerda de uma linha
+                    // larga com ~1000 px vazios à direita.
+                    className="self-end"
                     isDisabled={requestSubmitting}
                   >
                     {requestSubmitting ? "Publicando..." : "Publicar pedido"}
