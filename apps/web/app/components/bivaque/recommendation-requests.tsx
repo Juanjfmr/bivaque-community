@@ -574,28 +574,14 @@ export default function RecommendationRequests() {
               <div key={request.id} id={`req-${request.id}`} className="scroll-mt-24">
                 <Card className="p-4">
                   <div className="flex flex-col gap-3">
+                    {/* Prancha 80: o pedido abre pelo TÍTULO, como título da
+                        conversa — não por um h3 de 14px depois dos chips. O h1
+                        da rota continua "Indicações": a captura visual e o e2e
+                        dependem dele. */}
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 flex-col gap-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Chip size="sm" variant="soft">
-                            {CATEGORY_LABELS[request.category] ?? request.category}
-                          </Chip>
-                          <Chip size="sm" variant="soft">
-                            {localityLabelFor(request)}
-                          </Chip>
-                          <span className="text-xs text-muted">
-                            {formatDate(request.created_at)}
-                            {authorNames[request.author_id]
-                              ? ` · ${authorNames[request.author_id]}`
-                              : ""}
-                          </span>
-                          {request.is_resolved && (
-                            <Chip size="sm" variant="soft" color="success">
-                              ✓ Resolvida pela autora
-                            </Chip>
-                          )}
-                        </div>
-                      </div>
+                      <h2 className="min-w-0 text-2xl font-semibold tracking-tight sm:text-3xl">
+                        {request.title}
+                      </h2>
 
                       {/* Ações raras e de moderação vivem no overflow (prancha 80).
                         `Denunciar` nunca é ação primária. */}
@@ -610,15 +596,39 @@ export default function RecommendationRequests() {
                             hide: "Ocultar pedido",
                             share: "Compartilhar pedido",
                             report: "Denunciar pedido",
+                            reopen: "Reabrir pedido",
                           }}
                           onEdit={isAuthor && !isEditing ? () => startEdit(request) : undefined}
                           onDelete={isAuthor ? () => deleteRequest(request.id) : undefined}
                           onHide={handleHideRequest}
+                          // Reabrir fica no overflow quando o fechamento já está
+                          // dito pela resposta marcada: assim o pedido não repete
+                          // o mesmo aviso em dois lugares.
+                          onReopen={
+                            isAuthor && request.is_resolved
+                              ? () => handleReopenRequest(request.id)
+                              : undefined
+                          }
                           onReport={() =>
                             openReport("recommendation_request", request.id, request.author_id)
                           }
                         />
                       </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Chip size="sm" variant="soft">
+                        {CATEGORY_LABELS[request.category] ?? request.category}
+                      </Chip>
+                      <Chip size="sm" variant="soft">
+                        {localityLabelFor(request)}
+                      </Chip>
+                      <span className="text-xs text-muted">
+                        {formatDate(request.created_at)}
+                        {authorNames[request.author_id]
+                          ? ` · ${authorNames[request.author_id]}`
+                          : ""}
+                      </span>
                     </div>
 
                     {isEditing ? (
@@ -648,11 +658,67 @@ export default function RecommendationRequests() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-2">
-                        <h3 className="text-sm font-semibold">{request.title}</h3>
-                        <p className="text-sm text-muted">{request.body}</p>
-                      </div>
+                      <p className="text-sm text-muted">{request.body}</p>
                     )}
+
+                    {/* DS-006 (prancha 80): `Responder` fica logo sob o corpo do
+                        pedido, antes das respostas — não depois de toda a
+                        conversa. Ele abre e fecha a composição deste pedido. */}
+                    <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+                      <Button
+                        size="sm"
+                        variant={openReplyId === request.id ? "secondary" : "primary"}
+                        aria-expanded={openReplyId === request.id}
+                        aria-controls={`reply-composer-${request.id}`}
+                        onPress={() => toggleReplyComposer(request.id)}
+                      >
+                        Responder
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={isSaved ? "secondary" : "tertiary"}
+                        isDisabled={savingId === request.id}
+                        onPress={() => toggleSave(request.id)}
+                      >
+                        {savingId === request.id ? "Salvando..." : isSaved ? "Salvo" : "Salvar"}
+                      </Button>
+                    </div>
+
+                    {openReplyId === request.id ? (
+                      <div id={`reply-composer-${request.id}`} className="flex flex-col gap-2">
+                        <TextArea
+                          aria-label={`Responder a ${request.title}`}
+                          placeholder="Responder com uma indicação..."
+                          rows={2}
+                          autoFocus
+                          value={replyDrafts[request.id] ?? ""}
+                          onChange={(event) =>
+                            setReplyDraft(request.id, (event.target as HTMLTextAreaElement).value)
+                          }
+                          // Escape fecha a composição sem publicar nada — o
+                          // gesto de sair de um campo de resposta.
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape") closeReplyComposer()
+                          }}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            isDisabled={
+                              replyingId === request.id ||
+                              (replyDrafts[request.id] ?? "").trim().length < 5
+                            }
+                            onPress={() => handleReply(request.id)}
+                          >
+                            {replyingId === request.id ? "Enviando..." : "Enviar resposta"}
+                          </Button>
+                          <Button size="sm" variant="tertiary" onPress={closeReplyComposer}>
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
 
                     {replies.length > 0 && (
                       <ul className="flex flex-col gap-2 border-t border-border pt-3">
@@ -797,9 +863,18 @@ export default function RecommendationRequests() {
                       </ul>
                     )}
 
-                    {request.is_resolved ? (
+                    {/* UM sinal de fechamento por estado (DS-006, prancha 80):
+                        com resposta marcada, o chip `Ajudou a resolver` naquela
+                        resposta já diz o que aconteceu, e `Reabrir` vive no
+                        overflow; sem resposta marcada, esta faixa é o único
+                        lugar que diz que a autora resolveu — e o único com
+                        `Reabrir`. Antes os dois apareciam juntos, somando três
+                        avisos para o mesmo fato. */}
+                    {request.is_resolved && request.resolved_reply_id === null ? (
                       <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[var(--semantic-surface-sunken)] px-3 py-2">
-                        <span className="text-xs font-medium text-muted">✅ Pedido resolvido</span>
+                        <span className="text-xs font-medium text-muted">
+                          Resolvida pela autora
+                        </span>
                         {isAuthor && (
                           <Button
                             size="sm"
@@ -814,7 +889,7 @@ export default function RecommendationRequests() {
                           </Button>
                         )}
                       </div>
-                    ) : isAuthor ? (
+                    ) : !request.is_resolved && isAuthor ? (
                       <div className="flex justify-end border-t border-border pt-3">
                         <Button
                           size="sm"
@@ -827,68 +902,6 @@ export default function RecommendationRequests() {
                         </Button>
                       </div>
                     ) : null}
-
-                    {/* DS-006 (prancha 80): `Responder` abre e fecha a composição
-                      DESTE pedido. Nenhum textarea fica sempre visível e não há
-                      um segundo formulário: o mesmo botão abre, o mesmo botão
-                      fecha, e `Escape` também fecha. */}
-                    <div className="flex flex-col gap-2 border-t border-border pt-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          variant={openReplyId === request.id ? "secondary" : "primary"}
-                          aria-expanded={openReplyId === request.id}
-                          aria-controls={`reply-composer-${request.id}`}
-                          onPress={() => toggleReplyComposer(request.id)}
-                        >
-                          Responder
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant={isSaved ? "secondary" : "tertiary"}
-                          isDisabled={savingId === request.id}
-                          onPress={() => toggleSave(request.id)}
-                        >
-                          {savingId === request.id ? "Salvando..." : isSaved ? "Salvo" : "Salvar"}
-                        </Button>
-                      </div>
-
-                      {openReplyId === request.id ? (
-                        <div id={`reply-composer-${request.id}`} className="flex flex-col gap-2">
-                          <TextArea
-                            aria-label={`Responder a ${request.title}`}
-                            placeholder="Responder com uma indicação..."
-                            rows={2}
-                            autoFocus
-                            value={replyDrafts[request.id] ?? ""}
-                            onChange={(event) =>
-                              setReplyDraft(request.id, (event.target as HTMLTextAreaElement).value)
-                            }
-                            // Escape fecha a composição sem publicar nada — o
-                            // gesto de sair de um campo de resposta.
-                            onKeyDown={(event) => {
-                              if (event.key === "Escape") closeReplyComposer()
-                            }}
-                          />
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="primary"
-                              isDisabled={
-                                replyingId === request.id ||
-                                (replyDrafts[request.id] ?? "").trim().length < 5
-                              }
-                              onPress={() => handleReply(request.id)}
-                            >
-                              {replyingId === request.id ? "Enviando..." : "Enviar resposta"}
-                            </Button>
-                            <Button size="sm" variant="tertiary" onPress={closeReplyComposer}>
-                              Cancelar
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
                   </div>
                 </Card>
               </div>

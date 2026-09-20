@@ -30,6 +30,8 @@ interface LeanOverflowMenuProps {
    *  resposta de indicação usam, para a ação destrutiva não virar botão
    *  visível ao lado da ação primária. */
   onDelete?: (() => void) | undefined
+  /** Reabertura do pedido resolvido (só a autora). */
+  onReopen?: (() => void) | undefined
   /** Nomes dos itens quando o alvo é um pedido ou uma resposta de indicação. */
   labels?: {
     edit?: string
@@ -37,6 +39,7 @@ interface LeanOverflowMenuProps {
     hide?: string
     share?: string
     report?: string
+    reopen?: string
   }
   /** Caminho a compartilhar quando não é uma publicação (ex.: /recommendations). */
   sharePath?: string
@@ -53,6 +56,7 @@ export function LeanOverflowMenu({
   onReport,
   onEdit,
   onDelete,
+  onReopen,
   labels,
   sharePath,
   menuLabel = "Ações da publicação",
@@ -91,9 +95,11 @@ export function LeanOverflowMenu({
         onEdit?.()
       } else if (key === "delete") {
         onDelete?.()
+      } else if (key === "reopen") {
+        onReopen?.()
       }
     },
-    [postId, onHide, onReport, onEdit, onDelete, handleShare],
+    [postId, onHide, onReport, onEdit, onDelete, onReopen, handleShare],
   )
 
   return (
@@ -117,6 +123,11 @@ export function LeanOverflowMenu({
           {onDelete ? (
             <Dropdown.Item key="delete" id="delete" className={ITEM_CLASS}>
               {labels?.delete ?? "Excluir publicação"}
+            </Dropdown.Item>
+          ) : null}
+          {onReopen ? (
+            <Dropdown.Item key="reopen" id="reopen" className={ITEM_CLASS}>
+              {labels?.reopen ?? "Reabrir"}
             </Dropdown.Item>
           ) : null}
           <Dropdown.Item key="hide" id="hide" className={ITEM_CLASS}>
