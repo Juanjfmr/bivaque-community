@@ -14,6 +14,11 @@ import { Dropdown } from "@heroui/react"
 import { MoreHorizontal } from "lucide-react"
 import { useCallback } from "react"
 
+// Alvo mínimo dos itens do menu: 44px, a régua que a auditoria pediu para o menu
+// contextual. O componente é compartilhado, então o feed e o fluxo de indicação
+// passam a cumprir juntos — a mudança é deliberada, não efeito colateral.
+const ITEM_CLASS = "min-h-11"
+
 interface LeanOverflowMenuProps {
   postId: string
   onHide?: ((postId: string) => void) | undefined
@@ -105,26 +110,26 @@ export function LeanOverflowMenu({
       <Dropdown.Popover placement="bottom end">
         <Dropdown.Menu aria-label={menuLabel} onAction={handleAction}>
           {onEdit ? (
-            <Dropdown.Item key="edit" id="edit">
+            <Dropdown.Item key="edit" id="edit" className={ITEM_CLASS}>
               {labels?.edit ?? "Editar publicação"}
             </Dropdown.Item>
           ) : null}
           {onDelete ? (
-            <Dropdown.Item key="delete" id="delete">
+            <Dropdown.Item key="delete" id="delete" className={ITEM_CLASS}>
               {labels?.delete ?? "Excluir publicação"}
             </Dropdown.Item>
           ) : null}
-          <Dropdown.Item key="hide" id="hide">
+          <Dropdown.Item key="hide" id="hide" className={ITEM_CLASS}>
             {labels?.hide ?? "Ocultar publicação"}
           </Dropdown.Item>
-          <Dropdown.Item key="share" id="share">
+          <Dropdown.Item key="share" id="share" className={ITEM_CLASS}>
             {labels?.share ?? "Compartilhar"}
           </Dropdown.Item>
           {/* F160: o post e o alvo central do fluxo de moderacao e era o unico
               sem acao de denuncia — o comentario tinha, o post nao. O menu e o
               lugar certo: um "Denunciar" visivel em cada card do feed convida
               ao uso e polui a leitura. */}
-          <Dropdown.Item key="report" id="report">
+          <Dropdown.Item key="report" id="report" className={ITEM_CLASS}>
             {labels?.report ?? "Denunciar publicação"}
           </Dropdown.Item>
         </Dropdown.Menu>
