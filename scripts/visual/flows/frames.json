@@ -647,7 +647,7 @@
     },
     "36-web-auth-entrada": {
       "file": "36-web-auth-entrada.png",
-      "width": 2078,
+      "width": 2076,
       "height": 757,
       "expected": 2,
       "detected": 2,
@@ -851,8 +851,8 @@
     },
     "44-mobile-publicacao": {
       "file": "44-mobile-publicacao.png",
-      "width": 1536,
-      "height": 1024,
+      "width": 1474,
+      "height": 1067,
       "expected": 3,
       "detected": 3,
       "ok": true,
@@ -860,21 +860,21 @@
       "note": "calhas",
       "frames": [
         {
-          "x": 0.0293,
+          "x": 0.01221,
           "y": 0,
-          "w": 0.29688,
+          "w": 0.31479,
           "h": 1
         },
         {
-          "x": 0.34375,
+          "x": 0.34057,
           "y": 0,
-          "w": 0.30208,
+          "w": 0.3175,
           "h": 1
         },
         {
-          "x": 0.66146,
+          "x": 0.67164,
           "y": 0,
-          "w": 0.29622,
+          "w": 0.31615,
           "h": 1
         }
       ]
@@ -1631,7 +1631,7 @@
     },
     "74-web-guia-curadoria": {
       "file": "74-web-guia-curadoria.png",
-      "width": 2076,
+      "width": 2078,
       "height": 757,
       "expected": 2,
       "detected": 2,
@@ -1775,8 +1775,8 @@
     },
     "80-web-recomendacoes": {
       "file": "80-web-recomendacoes.png",
-      "width": 2076,
-      "height": 757,
+      "width": 2092,
+      "height": 752,
       "expected": 2,
       "detected": 2,
       "ok": true,
@@ -1786,13 +1786,13 @@
         {
           "x": 0,
           "y": 0,
-          "w": 0.49711,
+          "w": 0.49713,
           "h": 1
         },
         {
-          "x": 0.50289,
+          "x": 0.50287,
           "y": 0,
-          "w": 0.49711,
+          "w": 0.49713,
           "h": 1
         }
       ]

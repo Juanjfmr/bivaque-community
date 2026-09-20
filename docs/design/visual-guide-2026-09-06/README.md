@@ -1,6 +1,6 @@
 # Bivaque — guia visual de construção
 
-Atualizado em 08/09/2026. Direção aprovada pelo responsável: superfícies claras, verde profundo, conteúdo humano e interfaces próprias para mobile e desktop. Produto nacional; cidades nas imagens são exemplos.
+Atualizado em 20/09/2026. Direção aprovada pelo responsável: superfícies claras, verde profundo, conteúdo humano e interfaces próprias para mobile e desktop. Produto nacional; cidades nas imagens são exemplos.
 
 [Abrir galeria](./index.html) · [Mapa de telas](./MAPA-DE-TELAS.md) · [Arquitetura](./ARQUITETURA.md) · [Modelos para construção](./MODELOS-PARA-CONSTRUCAO.md) · [Prompts e fontes](./manifest.json)
 
@@ -8,7 +8,7 @@ Atualizado em 08/09/2026. Direção aprovada pelo responsável: superfícies cla
 
 ## Entrega efetiva
 
-59 pranchas, 84 telas/estados mobile e 53 web. As imagens orientam aparência e fluxo; não comprovam implementação.
+75 pranchas, 84 telas/estados mobile e 85 web. As imagens orientam aparência e fluxo; não comprovam implementação.
 
 Os PNGs foram gerados e editados pelo image_gen integrado, sem retoque por scripts. Fontes históricas, prompts executados e correções pendentes estão em [expansion-generation.json](./expansion-generation.json). As imagens são propostas de aparência/interação. Pessoas, fotos, valores, datas e contagens são fictícios; consolidar fixtures coerentes ao implementar.
 
@@ -44,7 +44,7 @@ Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.
 | Prancha | Plataforma | Telas/estados |
 |---|---|---|
 | [00-mobile-inicio — Início: chegada, participação e mudança](./00-mobile-inicio.png) | mobile | Cheguei agora; Faço parte; Estou de mudança |
-| [01-web-inicio — Web: início](./01-web-inicio.png) | web | Home de quem participa |
+| [01-web-inicio — Web: início com intenções claras](./01-web-inicio.png) | web | Home com intenções e pedido vinculado ao Guia |
 | [02-mobile-explorar — Explorar e serviços](./02-mobile-explorar.png) | mobile | Explorar; Resultados de serviços; Ficha do prestador |
 | [10-mobile-guia — Guia: descoberta e categorias](./10-mobile-guia.png) | mobile | Guia da cidade; Artigo de chegada; Categoria Educação |
 | [11-mobile-mercado — Mercado: descobrir e anunciar](./11-mobile-mercado.png) | mobile | Produtos; Detalhe do item; Novo anúncio |
@@ -76,8 +76,8 @@ Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.
 | [41-mobile-comunidade-participacao — Participação e grupos](./41-mobile-comunidade-participacao.png) | mobile | Pedido pendente; Comunidade de membro e grupos; Sair da comunidade |
 | [42-web-comunidades — Comunidades web](./42-web-comunidades.png) | web | Minhas comunidades; Descoberta e apresentação |
 | [43-web-comunidade-grupos — Comunidade, pedidos e grupos web](./43-web-comunidade-grupos.png) | web | Comunidade de membro e grupos; Pedido pendente |
-| [44-mobile-publicacao — Criar pergunta e escolher público](./44-mobile-publicacao.png) | mobile | Escrever pergunta; Escolher público; Publicação enviada |
-| [45-web-publicacao — Publicação e rascunho web](./45-web-publicacao.png) | web | Criar publicação; Editar e recuperar rascunho |
+| [44-mobile-publicacao — Perguntar ou pedir indicação](./44-mobile-publicacao.png) | mobile | Escolher intenção; Consultar o Guia; Sugerir referência fora do Guia |
+| [45-web-publicacao — Guia antes do pedido web](./45-web-publicacao.png) | web | Buscar no Guia; Perguntar à comunidade quando não encontrar |
 | [46-mobile-eventos — Eventos e presença](./46-mobile-eventos.png) | mobile | Descobrir eventos; Detalhe de evento; Presença confirmada |
 | [47-mobile-eventos-cancelamento — Cancelamento de presença e evento](./47-mobile-eventos-cancelamento.png) | mobile | Cancelar presença; Presença cancelada; Evento cancelado |
 | [48-web-eventos — Eventos web](./48-web-eventos.png) | web | Lista e filtros; Detalhe e gestão de presença |
@@ -106,13 +106,13 @@ Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.
 | [71-web-auth-recuperacao — Web: recuperar o acesso](./71-web-auth-recuperacao.png) | web | Esqueceu sua senha; Crie uma senha nova |
 | [72-web-auth-link-invalido — Web: link inválido ou expirado](./72-web-auth-link-invalido.png) | web | Este link não vale mais; Não foi possível entrar |
 | [73-web-comunidade-pedidos — Web: decidir pedidos de entrada](./73-web-comunidade-pedidos.png) | web | Pedidos de entrada; Ver o pedido |
-| [74-web-guia-curadoria — Web: curar o Guia](./74-web-guia-curadoria.png) | web | Fila do Guia; Sugestões de correção |
+| [74-web-guia-curadoria — Web: curar referências da comunidade](./74-web-guia-curadoria.png) | web | Candidata e possível duplicidade; Revisão humana e publicação |
 | [75-web-conversas — Web: central de conversas](./75-web-conversas.png) | web | Caixa de entrada; Conversa aberta |
 | [76-web-familia — Web: convidar a família](./76-web-familia.png) | web | Convidar um familiar; Convite pendente |
 | [77-web-ajuda — Web: pedir ajuda com canal real](./77-web-ajuda.png) | web | Acesso e uso; Regras e suporte |
 | [78-web-prestador-operacao — Web: catálogo e conta do prestador](./78-web-prestador-operacao.png) | web | Catálogo e portfólio; Conta e área de atendimento |
 | [79-web-indicar-prestador — Web: indicar e aceitar prestador](./79-web-indicar-prestador.png) | web | Indicar prestador; Aceitar o convite |
-| [80-web-recomendacoes — Web: indicações e referências](./80-web-recomendacoes.png) | web | Pedidos de indicação recebidos; Responder uma indicação |
+| [80-web-recomendacoes — Web: responder e sugerir referências](./80-web-recomendacoes.png) | web | Resposta vinculada ou ainda fora do Guia; Publicar resposta e enviar candidata à revisão |
 | [81-web-comunidade-admin — Web: administrar a comunidade](./81-web-comunidade-admin.png) | web | Administração da comunidade; Imagens da comunidade |
 | [82-web-localidade — Web: declarar mudança de cidade](./82-web-localidade.png) | web | Declarar mudança de cidade; Transferência declarada |
 | [83-web-landing — Web: primeiro contato público](./83-web-landing.png) | web | Primeiro contato; Como entrar e o que esperar |
@@ -257,12 +257,25 @@ As notas abaixo são obrigatórias para construção; corrigem divergências dos
 
 ### 44-mobile-publicacao
 
-- Correção aplicada: Toda a cidade • Brasília, DF é uma escolha de público, além de comunidades autorizadas. Destino aparece antes e depois da publicação.
-- Cidade significa alcance local no Bivaque, não publicação anônima na internet. Respostas herdam o público. O contador de caracteres é ilustrativo.
+- A entrada separa `Fazer uma pergunta` de `Pedir uma indicação` e consulta o Guia antes da comunidade.
+- Sem correspondência, a resposta é publicada na hora como `Ainda não está no Guia`; só a referência candidata aguarda revisão.
+- Não usar polegar ou o rótulo `Indicar` como comando de contribuição.
 
 ### 45-web-publicacao
 
-- Público selecionável apenas na criação; edição mantém o alcance original. O limite ilustrativo de 10MB deve vir do contrato real.
+- O caminho web procura referências existentes antes de abrir o formulário comunitário.
+- O fallback preserva o rascunho e o alcance explícito; não cria nota, ranking ou curtida.
+
+### 74-web-guia-curadoria
+
+- A resposta comunitária não espera curadoria. O operador decide apenas sobre a referência candidata.
+- Mesclar ou aprovar deve preservar origem e religar a resposta ao item canônico do Guia.
+
+### 80-web-recomendacoes
+
+- `Responder` abre a contribuição. O polegar, quando existir, é feedback posterior sobre uma resposta.
+- Com referência ausente, mostrar `Ainda não está no Guia`, publicar a resposta e enviar a candidata à revisão humana.
+- A autora pode marcar `Resolveu meu pedido` antes da decisão de curadoria; denúncia continua no overflow.
 
 ### 46-mobile-eventos
 

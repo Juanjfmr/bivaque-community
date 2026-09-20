@@ -1,0 +1,93 @@
+task_id: DS-006
+
+objective: >
+  A Home e o fluxo web de indicacoes deixam claro se a pessoa quer fazer uma
+  pergunta ou pedir uma indicacao; pedidos consultam o Guia antes de abrir o
+  formulario comunitario e respostas usam Responder, nunca um polegar com o
+  rotulo Indicar.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/01-web-inicio.png
+  - docs/design/visual-guide-2026-09-06/45-web-publicacao.png
+  - docs/design/visual-guide-2026-09-06/74-web-guia-curadoria.png
+  - docs/design/visual-guide-2026-09-06/80-web-recomendacoes.png
+  - docs/design/visual-guide-2026-09-06/MOBBIN-INDICACOES-2026-09-20.md
+  - docs/agents/AUDIT-PRODUCAO-2026-09-19-INICIO.md, correcao de 20/09/2026
+  - instrucao explicita do responsavel em 20/09/2026
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/inicio/composer.tsx oferece uma unica entrada generica;
+    apps/web/app/components/bivaque/recommendation-requests.tsx deixa o textarea
+    Responder com uma indicacao sempre aberto e nao consulta o Guia antes do
+    pedido. recommendation_replies persiste apenas body/request/author, portanto
+    nao existe hoje verdade de servidor para afirmar que uma resposta esta
+    vinculada a um item do Guia. As pranchas substituidas em 20/09/2026 registram
+    a experiencia alvo e o sad path Ainda nao esta no Guia.
+
+allowed_paths:
+  - apps/web/app/(shell)/inicio/
+  - apps/web/app/(shell)/recommendations/
+  - apps/web/app/components/bivaque/recommendation-requests.tsx
+  - apps/web/app/components/bivaque/feed-composer.tsx
+  - apps/web/app/components/bivaque/feed-composer-modal.tsx
+  - apps/web/app/components/bivaque/feed-post-menu.tsx
+  - apps/web/lib/recommendations/
+  - tests/unit/recommendations/
+  - tests/unit/ui/
+  - tests/e2e/recommendations-health-scope.spec.ts
+  - tests/e2e/recommendation-reply-notify.spec.ts
+  - tests/e2e/publish-golden-slice.spec.ts
+  - docs/agents/tasks/DS-006.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - criar ou alterar migration, schema, RLS, RPC, auth ou tipos gerados
+  - fingir que uma resposta esta ligada ao Guia quando nao ha verdade persistida
+  - rotular uma resposta como Ainda nao esta no Guia sem dado verificavel
+  - publicar automaticamente uma referencia no Guia
+  - transformar indicacoes em marketplace, nota, ranking, estrela ou promessa comercial
+  - usar polegar ou botao Indicar como comando para enviar resposta
+  - deixar Denunciar como acao primaria ou fora do menu contextual
+  - trocar HeroUI v3 ou os wrappers Bivaque por outra biblioteca
+  - descartar alteracoes de outras sessoes ou afrouxar testes para obter verde
+
+acceptance:
+  - a Home mostra duas entradas distintas, Fazer uma pergunta e Pedir uma indicacao
+  - Fazer uma pergunta abre o compositor existente e Pedir uma indicacao chega ao painel correto de /recommendations
+  - o painel de pedir indicacao oferece consulta ao Guia antes de revelar o formulario comunitario
+  - resultados do Guia abrem a referencia existente; o fallback explicito permite seguir para a comunidade
+  - cada pedido usa Responder para abrir e fechar o formulario de resposta, sem textarea duplicado sempre visivel
+  - nao existe acao de polegar rotulada Indicar; feedback posterior nao compete com Responder
+  - Denunciar, Ocultar e Silenciar, quando aplicaveis, permanecem no overflow
+  - o fluxo nao exibe vinculo, status de curadoria ou aprovacao que o servidor nao consiga provar
+  - foco, teclado e alvos funcionam em 375, 768 e 1440 sem esconder a acao primaria
+  - falha de busca ou envio preserva a entrada e oferece recuperacao em portugues
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/DS-006.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/recommendations tests/unit/ui
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 build
+  - node scripts/visual/loop.mjs --fast com capturas de /inicio e /recommendations em 375/768/1440
+
+traps:
+  - A tabela recommendation_replies nao possui guide_entry_id; nao inferir o vinculo pelo texto.
+  - suggest_guide_entry cria candidata pending, mas nao e atomica com a resposta e nao a religa depois.
+  - O caminho completo de candidata mais resposta e religacao posterior exige contrato funcional separado se os contratos atuais nao bastarem.
+  - A cidade e o grupo sao escopos reais; nao fixar Manaus nem usar cidade como permissao inventada.
+  - O implementador nao aprova a propria evidencia visual.
+
+risk: >
+  Reestruturacao visual e de interacao em Home e Indicacoes, preservando os
+  contratos atuais de persistencia, autorizacao e curadoria.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

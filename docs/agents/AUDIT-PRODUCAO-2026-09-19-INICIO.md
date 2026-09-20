@@ -360,3 +360,26 @@ Em particular, a proporção visual exata entre `Denunciar` e `Curtir` foi regis
 fornecida pelo proprietário, não como medição independente desta conta. A correção precisa começar
 pela identificação da revisão de produção e por capturas de cada variante de card populado. O
 benchmark do Mobbin sustenta a recomendação de hierarquia, mas não substitui essa reconciliação.
+
+## Correção posterior — indicações orientadas pelo Guia (20/09/2026)
+
+Esta seção substitui, para pedidos de indicação, a proposta exploratória acima de `Pergunta` e
+`Atualização` e qualquer desenho que use polegar com o rótulo `Indicar`.
+
+O fluxo `Posting a recommendation` do Nextdoor no Mobbin ancora a contribuição em um negócio ou
+lugar e usa uma composição conversacional. O fluxo `Asking AI for local favorites` reserva o
+polegar para avaliar a resposta recebida. Em ambos os casos, o gesto não representa enviar uma
+indicação.
+
+A direção aprovada para o Bivaque é:
+
+1. a Home separa `Fazer uma pergunta` de `Pedir uma indicação`;
+2. a indicação consulta o Guia antes de abrir um pedido à comunidade;
+3. `Responder` abre a contribuição e tenta vinculá-la a uma referência do Guia;
+4. sem correspondência, a resposta aparece imediatamente como `Ainda não está no Guia` e a
+   referência candidata segue para curadoria;
+5. aprovação ou mesclagem posterior religa a resposta ao item canônico;
+6. a autora pode marcar `Resolveu meu pedido` sem esperar a curadoria;
+7. `Denunciar` continua no overflow, e `Isso ajudou?` é feedback posterior opcional.
+
+Referências e rastreabilidade: `docs/design/visual-guide-2026-09-06/MOBBIN-INDICACOES-2026-09-20.md`.
