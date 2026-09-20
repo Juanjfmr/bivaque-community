@@ -2,12 +2,15 @@
 
 import { detectCep, detectCpf } from "@bivaque/domain"
 import { Button, Chip, Input, ListBox, Select, Tabs, TextArea } from "@heroui/react"
+import { Info, MessageCircle } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
+import { useMemberContext } from "../../../lib/member-context"
 import { resolveRecommendationTab } from "../../../lib/recommendations/request-tab"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { MemberAvatar } from "../../components/bivaque/avatar"
 import { Card } from "../../components/bivaque/card"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
@@ -763,260 +766,280 @@ export default function RecommendationsPage() {
           {requestStage === "guide" ? (
             <GuideFirstRequest initialTerm={guideTerm} onAskCommunity={handleAskCommunity} />
           ) : (
-            <div className="flex flex-col gap-4">
-              {/* Prancha 45 painel 3: o formulário comunitário sabe de onde veio
+            // A1 + A2 (parecer R2, prancha 45 painéis 2 e 3): o formulário
+            // comunitário compõe DUAS colunas a 1440 — a coluna de leitura do
+            // formulário e o trilho "Como seu pedido será publicado". A grade só
+            // existe a partir de `lg`: abaixo disso o trilho desce e a coluna
+            // usa a largura inteira, sem espremer campo nenhum. O trilho é a
+            // metade direita do painel 2 da prancha, não um terceiro painel.
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+              <div className="flex min-w-0 flex-col gap-4">
+                {/* Prancha 45 painel 3: o formulário comunitário sabe de onde veio
                   e devolve a pessoa aos resultados do Guia com o termo dela. */}
-              <button
-                type="button"
-                onClick={() => setRequestStage("guide")}
-                className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-              >
-                ← Voltar aos resultados do Guia
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setRequestStage("guide")}
+                  className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                >
+                  ← Voltar aos resultados do Guia
+                </button>
 
-              {/* Título e promessa da tela (prancha 45 painel 3). O h1 da rota
+                {/* Título e promessa da tela (prancha 45 painel 3). O h1 da rota
                   continua "Indicações"; este é o título da etapa. */}
-              <div className="flex flex-col gap-1">
-                <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
-                  Perguntar à comunidade
-                </h2>
-                <p className="text-sm text-muted">
-                  Não encontrou o que procurava? Pergunte aos seus vizinhos.
-                </p>
-              </div>
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                    Perguntar à comunidade
+                  </h2>
+                  <p className="measure-reading text-sm text-muted">
+                    Não encontrou o que procurava? Pergunte aos seus vizinhos.
+                  </p>
+                </div>
 
-              {/* feedback banner */}
-              {requestFeedback && <FeedbackAlert variant="success" description={requestFeedback} />}
+                {/* feedback banner */}
+                {requestFeedback && (
+                  <FeedbackAlert variant="success" description={requestFeedback} />
+                )}
 
-              {/* error banner */}
-              {requestError && (
-                <FeedbackAlert
-                  variant="danger"
-                  title="Não foi possível publicar"
-                  description={requestError}
-                />
-              )}
+                {/* error banner */}
+                {requestError && (
+                  <FeedbackAlert
+                    variant="danger"
+                    title="Não foi possível publicar"
+                    description={requestError}
+                  />
+                )}
 
-              {/* `noValidate`: a validação é do produto, em português, com
+                {/* `noValidate`: a validação é do produto, em português, com
                   mensagem inline no campo em destaque. Sem isso o navegador
                   bloqueia o envio com a bolha nativa e o texto sai no idioma do
                   browser ("Please fill out this field.") — nada do produto
                   aparecia e a pessoa não sabia qual campo revisar. */}
-              <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmitRequest}>
-                <div className="flex flex-col gap-1.5">
-                  <span id="pedido-categoria-label" className="text-sm font-medium">
-                    Categoria
-                  </span>
-                  <Select
-                    aria-label="Categoria"
-                    aria-labelledby="pedido-categoria-label"
-                    // A3a: `aria-invalid` cru NÃO chega ao DOM do Select — o
-                    // componente do HeroUI ignora o atributo arbitrário e usa a
-                    // própria API de invalidez. Como o CSS da biblioteca pinta a
-                    // borda de perigo por `.select[data-invalid="true"]`
-                    // (ou `[aria-invalid="true"]`), passar o atributo na mão
-                    // deixava o campo infrator sem borda nenhuma. `isInvalid` é o
-                    // caminho previsto: a marcação chega e o próprio CSS desenha.
-                    isInvalid={requestFieldError?.field === "category"}
-                    {...(requestFieldError?.field === "category"
-                      ? { "aria-describedby": "pedido-categoria-erro" }
-                      : {})}
-                    selectedKey={requestCategory || null}
-                    onSelectionChange={(key) => {
-                      if (typeof key === "string") {
-                        setRequestCategory(key as RecommendationCategory)
-                        setRequestError("")
-                        setRequestFieldError(null)
-                        // F7 Step 2: when Saúde is picked, force scope to a group
-                        // (the locality option is hidden, so the user must pick a
-                        // group; auto-select the first group to keep the form valid).
-                        if (key === "saude_bem_estar" && requestScope === "locality") {
-                          const firstGroup = myGroups[0]
-                          if (firstGroup) setRequestScope(firstGroup.id)
+                <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmitRequest}>
+                  <div className="flex flex-col gap-1.5">
+                    <span id="pedido-categoria-label" className="text-sm font-medium">
+                      Categoria
+                    </span>
+                    <Select
+                      aria-label="Categoria"
+                      aria-labelledby="pedido-categoria-label"
+                      // A3a: `aria-invalid` cru NÃO chega ao DOM do Select — o
+                      // componente do HeroUI ignora o atributo arbitrário e usa a
+                      // própria API de invalidez. Como o CSS da biblioteca pinta a
+                      // borda de perigo por `.select[data-invalid="true"]`
+                      // (ou `[aria-invalid="true"]`), passar o atributo na mão
+                      // deixava o campo infrator sem borda nenhuma. `isInvalid` é o
+                      // caminho previsto: a marcação chega e o próprio CSS desenha.
+                      isInvalid={requestFieldError?.field === "category"}
+                      {...(requestFieldError?.field === "category"
+                        ? { "aria-describedby": "pedido-categoria-erro" }
+                        : {})}
+                      selectedKey={requestCategory || null}
+                      onSelectionChange={(key) => {
+                        if (typeof key === "string") {
+                          setRequestCategory(key as RecommendationCategory)
+                          setRequestError("")
+                          setRequestFieldError(null)
+                          // F7 Step 2: when Saúde is picked, force scope to a group
+                          // (the locality option is hidden, so the user must pick a
+                          // group; auto-select the first group to keep the form valid).
+                          if (key === "saude_bem_estar" && requestScope === "locality") {
+                            const firstGroup = myGroups[0]
+                            if (firstGroup) setRequestScope(firstGroup.id)
+                          }
                         }
-                      }
-                    }}
-                    isRequired
-                    className="max-w-xs"
-                  >
-                    <Select.Trigger>
-                      <Select.Value>Selecione uma categoria</Select.Value>
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox>
-                        {CATEGORIES.map((cat) => (
-                          <ListBox.Item key={cat.id} id={cat.id}>
-                            {cat.label}
-                          </ListBox.Item>
-                        ))}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                  {requestFieldError?.field === "category" ? (
-                    <p
-                      id="pedido-categoria-erro"
-                      role="alert"
-                      className="text-xs font-medium text-[var(--semantic-danger)]"
+                      }}
+                      isRequired
+                      className="max-w-xs"
                     >
-                      {requestFieldError.message}
-                    </p>
-                  ) : null}
-                </div>
+                      <Select.Trigger>
+                        <Select.Value>Selecione uma categoria</Select.Value>
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          {CATEGORIES.map((cat) => (
+                            <ListBox.Item key={cat.id} id={cat.id}>
+                              {cat.label}
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                    {requestFieldError?.field === "category" ? (
+                      <p
+                        id="pedido-categoria-erro"
+                        role="alert"
+                        className="text-xs font-medium text-[var(--semantic-danger)]"
+                      >
+                        {requestFieldError.message}
+                      </p>
+                    ) : null}
+                  </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <span id="pedido-alcance-label" className="text-sm font-medium">
-                    Para qual comunidade você está perguntando?
-                  </span>
-                  <Select
-                    aria-label="Alcance"
-                    aria-labelledby="pedido-alcance-label"
-                    selectedKey={requestScope}
-                    onSelectionChange={(key) => {
-                      if (typeof key === "string") {
-                        setRequestScope(key)
-                        setRequestError("")
-                      }
-                    }}
-                    isRequired
-                    className="max-w-xs"
-                  >
-                    <Select.Trigger>
-                      <Select.Value>Escolha o alcance</Select.Value>
-                      <Select.Indicator />
-                    </Select.Trigger>
-                    <Select.Popover>
-                      <ListBox>
-                        {/* F7 Step 2: Saúde começa em grupo. The locality option is
+                  <div className="flex flex-col gap-1.5">
+                    <span id="pedido-alcance-label" className="text-sm font-medium">
+                      Para qual comunidade você está perguntando?
+                    </span>
+                    <Select
+                      aria-label="Alcance"
+                      aria-labelledby="pedido-alcance-label"
+                      selectedKey={requestScope}
+                      onSelectionChange={(key) => {
+                        if (typeof key === "string") {
+                          setRequestScope(key)
+                          setRequestError("")
+                        }
+                      }}
+                      isRequired
+                      className="max-w-xs"
+                    >
+                      <Select.Trigger>
+                        <Select.Value>Escolha o alcance</Select.Value>
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          {/* F7 Step 2: Saúde começa em grupo. The locality option is
                       hidden when the category is health, with an explanatory
                       line above the select. */}
-                        {requestCategory !== "saude_bem_estar" ? (
-                          <ListBox.Item key="locality" id="locality">
-                            {current.cityName}
-                          </ListBox.Item>
-                        ) : null}
-                        {myGroups.map((group) => (
-                          <ListBox.Item key={group.id} id={group.id}>
-                            {group.name}
-                          </ListBox.Item>
-                        ))}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                  {requestCategory === "saude_bem_estar" ? (
-                    <p className="text-xs text-muted">
-                      Pedidos de Saúde começam em grupo — escolha um dos seus grupos como alcance.
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="pedido-titulo" className="text-sm font-medium">
-                    O que você procura?
-                  </label>
-                  <Input
-                    id="pedido-titulo"
-                    required
-                    aria-label="Título"
-                    aria-invalid={requestFieldError?.field === "title"}
-                    {...(requestFieldError?.field === "title"
-                      ? { "aria-describedby": "pedido-titulo-erro" }
-                      : {})}
-                    placeholder="Ex.: transportadora cuidadosa para mudança"
-                    value={requestTitle}
-                    onChange={(e) => {
-                      setRequestTitle((e.target as HTMLInputElement).value)
-                      setRequestError("")
-                      setRequestFieldError(null)
-                      setPiiWarning(false)
-                    }}
-                  />
-                  {requestFieldError?.field === "title" ? (
-                    <p
-                      id="pedido-titulo-erro"
-                      role="alert"
-                      className="text-xs font-medium text-[var(--semantic-danger)]"
-                    >
-                      {requestFieldError.message}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="pedido-descricao" className="text-sm font-medium">
-                    Conte mais sobre sua dúvida (opcional para quem responde)
-                  </label>
-                  <TextArea
-                    id="pedido-descricao"
-                    required
-                    aria-label="Descrição"
-                    aria-invalid={requestFieldError?.field === "description"}
-                    {...(requestFieldError?.field === "description"
-                      ? { "aria-describedby": "pedido-descricao-erro" }
-                      : {})}
-                    placeholder="Descreva o que você está procurando. Evite termos comerciais como preço, pagamento, anúncio ou contato comercial."
-                    rows={3}
-                    value={requestDescription}
-                    onChange={(e) => {
-                      setRequestDescription((e.target as HTMLTextAreaElement).value)
-                      setRequestError("")
-                      setRequestFieldError(null)
-                      setPiiWarning(false)
-                    }}
-                  />
-                  {requestFieldError?.field === "description" ? (
-                    <p
-                      id="pedido-descricao-erro"
-                      role="alert"
-                      className="text-xs font-medium text-[var(--semantic-danger)]"
-                    >
-                      {requestFieldError.message}
-                    </p>
-                  ) : null}
-                </div>
-
-                <p className="text-xs text-muted">
-                  Seu pedido será publicado apenas para membros do Bivaque em {current.cityName} ou
-                  no grupo que você escolher.
-                </p>
-
-                {piiWarning ? (
-                  <div className="rounded-lg border border-border bg-[var(--surface)] p-3">
-                    <FeedbackAlert
-                      variant="warning"
-                      description="Isso parece um CPF ou CEP. Quer mesmo publicar?"
-                    />
-                    <div className="mt-2 flex gap-2">
-                      <Button
-                        type="submit"
-                        size="sm"
-                        variant="primary"
-                        isDisabled={requestSubmitting}
-                      >
-                        Publicar mesmo
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="tertiary"
-                        onPress={() => setPiiWarning(false)}
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
+                          {requestCategory !== "saude_bem_estar" ? (
+                            <ListBox.Item key="locality" id="locality">
+                              {current.cityName}
+                            </ListBox.Item>
+                          ) : null}
+                          {myGroups.map((group) => (
+                            <ListBox.Item key={group.id} id={group.id}>
+                              {group.name}
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                    {requestCategory === "saude_bem_estar" ? (
+                      <p className="text-xs text-muted">
+                        Pedidos de Saúde começam em grupo — escolha um dos seus grupos como alcance.
+                      </p>
+                    ) : null}
                   </div>
-                ) : null}
 
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  className="self-start"
-                  isDisabled={requestSubmitting}
-                >
-                  {requestSubmitting ? "Publicando..." : "Publicar pedido"}
-                </Button>
-              </form>
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="pedido-titulo" className="text-sm font-medium">
+                      O que você procura?
+                    </label>
+                    <Input
+                      id="pedido-titulo"
+                      required
+                      aria-label="Título"
+                      aria-invalid={requestFieldError?.field === "title"}
+                      {...(requestFieldError?.field === "title"
+                        ? { "aria-describedby": "pedido-titulo-erro" }
+                        : {})}
+                      placeholder="Ex.: transportadora cuidadosa para mudança"
+                      value={requestTitle}
+                      onChange={(e) => {
+                        setRequestTitle((e.target as HTMLInputElement).value)
+                        setRequestError("")
+                        setRequestFieldError(null)
+                        setPiiWarning(false)
+                      }}
+                    />
+                    {requestFieldError?.field === "title" ? (
+                      <p
+                        id="pedido-titulo-erro"
+                        role="alert"
+                        className="text-xs font-medium text-[var(--semantic-danger)]"
+                      >
+                        {requestFieldError.message}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="pedido-descricao" className="text-sm font-medium">
+                      Conte mais sobre sua dúvida (opcional para quem responde)
+                    </label>
+                    <TextArea
+                      id="pedido-descricao"
+                      required
+                      aria-label="Descrição"
+                      aria-invalid={requestFieldError?.field === "description"}
+                      {...(requestFieldError?.field === "description"
+                        ? { "aria-describedby": "pedido-descricao-erro" }
+                        : {})}
+                      placeholder="Descreva o que você está procurando. Evite termos comerciais como preço, pagamento, anúncio ou contato comercial."
+                      rows={3}
+                      value={requestDescription}
+                      onChange={(e) => {
+                        setRequestDescription((e.target as HTMLTextAreaElement).value)
+                        setRequestError("")
+                        setRequestFieldError(null)
+                        setPiiWarning(false)
+                      }}
+                    />
+                    {requestFieldError?.field === "description" ? (
+                      <p
+                        id="pedido-descricao-erro"
+                        role="alert"
+                        className="text-xs font-medium text-[var(--semantic-danger)]"
+                      >
+                        {requestFieldError.message}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <p className="text-xs text-muted">
+                    Seu pedido será publicado apenas para membros do Bivaque em {current.cityName}{" "}
+                    ou no grupo que você escolher.
+                  </p>
+
+                  {piiWarning ? (
+                    <div className="rounded-lg border border-border bg-[var(--surface)] p-3">
+                      <FeedbackAlert
+                        variant="warning"
+                        description="Isso parece um CPF ou CEP. Quer mesmo publicar?"
+                      />
+                      <div className="mt-2 flex gap-2">
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="primary"
+                          isDisabled={requestSubmitting}
+                        >
+                          Publicar mesmo
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="tertiary"
+                          onPress={() => setPiiWarning(false)}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    className="self-start"
+                    isDisabled={requestSubmitting}
+                  >
+                    {requestSubmitting ? "Publicando..." : "Publicar pedido"}
+                  </Button>
+                </form>
+              </div>
+
+              {/* Painel 3 da prancha 45. O trilho só existe nesta etapa: é a
+                  prévia do que a pessoa acabou de escrever. Nas outras abas ele
+                  não aparece — DESIGN_SYSTEM §8.2: o rail é conteúdo acionável
+                  ou não existe, nunca espuma visual. */}
+              <PublicationPreview
+                category={requestCategory}
+                title={requestTitle}
+                description={requestDescription}
+              />
             </div>
           )}
         </div>
@@ -1106,5 +1129,86 @@ export default function RecommendationsPage() {
         </div>
       </Tabs>
     </div>
+  )
+}
+
+// ── A2 (parecer R2, prancha 45 painel 3) ────────────────────────────────────
+//
+// "Como seu pedido será publicado" não existia em lugar nenhum do produto — a
+// metade direita do painel 2 da prancha estava ausente. Este é um trilho de
+// PRÉVIA, não um terceiro painel: ele mostra o pedido com os dados que a pessoa
+// acabou de digitar (título, descrição), com a identificação real de quem está
+// publicando (nome do contexto do membro, cidade da localidade) e com o chip da
+// categoria escolhida. Nada aqui é conteúdo fictício: com o campo vazio, o
+// trilho diz o que vai aparecer em vez de inventar um exemplo; nenhum controle
+// sem operação é desenhado.
+function PublicationPreview({
+  category,
+  title,
+  description,
+}: Readonly<{
+  category: RecommendationCategory | ""
+  title: string
+  description: string
+}>) {
+  const { displayName } = useMemberContext()
+  const { current } = useLocalityContext()
+  const cleanTitle = title.trim()
+  const cleanDescription = description.trim()
+  const categoryLabel = CATEGORIES.find((entry) => entry.id === category)?.label
+
+  return (
+    <aside className="hidden lg:block" aria-label="Como seu pedido será publicado">
+      <Card className="p-4">
+        <h2 className="text-sm font-semibold">Como seu pedido será publicado</h2>
+        <p className="measure-reading mt-1 flex gap-1.5 text-xs text-muted">
+          <Info size={14} aria-hidden="true" className="mt-0.5 shrink-0" />
+          Esta é uma prévia de como sua publicação aparecerá para a comunidade.
+        </p>
+
+        <div className="mt-3 rounded-xl border border-border p-3">
+          {/* Ícone de conversa: o pedido é uma pergunta à comunidade, não um
+              anúncio. Decorativo — quem tem a informação é o texto ao lado. */}
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]">
+            <MessageCircle size={20} aria-hidden="true" />
+          </span>
+
+          <h3 className="mt-2 text-sm font-semibold">
+            {cleanTitle.length > 0 ? (
+              cleanTitle
+            ) : (
+              <span className="font-normal text-muted">O título do seu pedido aparece aqui.</span>
+            )}
+          </h3>
+
+          <div className="mt-2 flex items-center gap-2">
+            <MemberAvatar name={displayName} size="sm" />
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-sm font-medium">{displayName}</span>
+              <span className="truncate text-xs text-muted">
+                {current.cityName}
+                {current.stateCode ? `, ${current.stateCode}` : ""}
+              </span>
+            </span>
+          </div>
+
+          <p className="measure-reading mt-2 text-sm leading-relaxed text-muted">
+            {cleanDescription.length > 0
+              ? cleanDescription
+              : "O que você escrever na descrição aparece aqui."}
+          </p>
+
+          <div className="mt-3">
+            {categoryLabel ? (
+              <Chip size="sm" variant="soft">
+                {categoryLabel}
+              </Chip>
+            ) : (
+              <span className="text-xs text-muted">A categoria escolhida aparece aqui.</span>
+            )}
+          </div>
+        </div>
+      </Card>
+    </aside>
   )
 }
