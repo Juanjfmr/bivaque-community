@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { CreatePostModal } from "../../components/bivaque/feed-post"
+import { IntentLauncher } from "../../components/bivaque/intent-launcher"
 import { CommunitySection, type PrimaryCommunity } from "./community-section"
-import { InicioComposer } from "./composer"
 import { InicioGreeting } from "./greeting"
 import {
   createRequestGuard,
@@ -75,8 +75,18 @@ export default function InicioPage() {
       <div className="mx-auto flex w-full max-w-[56rem] flex-1 gap-6 px-4 pt-4 pb-8">
         <div className="min-w-0 flex-1 space-y-4">
           <InicioGreeting communityName={primary.status === "ready" ? primary.name : null} />
-          <InicioComposer onOpen={handleOpenModal} />
+          {/* DS-006 (prancha 01, ajuste de 20/09): o retorno relevante vem
+              ANTES do lançador de intenções. A faixa só existe com notificação
+              não-lida real (devolve null sem linha legível), então a Home de
+              quem não tem retorno nenhum não ganha um bloco vazio no lugar. */}
           <ReturnStrip />
+          {/* `explain` só no estado novo/sem comunidade aprovada: ali explicar as
+              duas intenções vale o espaço. Membro ativo recebe a faixa compacta,
+              que não empurra o primeiro item do feed para fora da dobra. */}
+          <IntentLauncher
+            variant={primary.status === "none" ? "explain" : "compact"}
+            onAskQuestion={() => handleOpenModal("text")}
+          />
           <CommunitySection
             primary={primary}
             onRetryPrimary={loadPrimary}
