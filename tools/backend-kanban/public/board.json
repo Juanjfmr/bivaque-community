@@ -3125,6 +3125,52 @@
       "dependencies": [],
       "updatedAt": "2026-09-19",
       "sourceRevision": "90e4c94"
+    },
+    {
+      "id": "GUIA-RESPOSTA-CANDIDATA",
+      "title": "Guia: ligar resposta de indicação à referência e à candidata em curadoria",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "blocked",
+      "description": "A direção aprovada em 20/09/2026 exige que uma resposta de indicação possa apontar para um item do Guia, que a referência inexistente seja publicada imediatamente como candidata em curadoria, e que a aprovação posterior religue a resposta ao item canônico. Nenhuma das três é verdade de servidor hoje. O DS-006 entregou apenas a parte sustentada pelos contratos atuais: busca no Guia antes do formulário comunitário e exibição do vínculo canônico somente quando arrival_guide_entries.source_reply_id o prova. Esta pendência impede PASS global do DS-006.",
+      "checklist": [
+        "Decidir a forma (coluna de vínculo na resposta, relação resposta↔candidata, ou aceitar a divergência da prancha 80)",
+        "Garantir atomicidade entre a inserção da resposta e o envio da candidata, com recuperação quando uma falhar",
+        "Definir o estado visível quando a curadoria rejeita ou mescla a candidata em item já existente",
+        "Definir se a candidata vinda de resposta consome a cota de 5 pendentes de suggest_guide_entry",
+        "Entregar migration com RLS habilitada e forçada, policies e grants mínimos, com pgTAP positivo e negativo",
+        "Provar em navegador: vínculo lido do servidor, rótulo Ainda não está no Guia apenas com dado verificável, religação após aprovação"
+      ],
+      "proof": [
+        "recommendation_replies tem id, request_id, author_id, body, created_at, is_deleted — nenhuma coluna liga a resposta ao Guia (20260802001100_recommendations.sql:55-64; único alter table add column posterior é is_deleted em 20260821000033:26)",
+        "suggest_guide_entry(p_category,p_name,p_description,p_website_url,p_phone) não recebe id de resposta e não escreve source_reply_id (20260915210000_guide_entry_suggestion.sql:23-126)",
+        "Inserção da resposta e envio da candidata são duas idas ao servidor, sem transação, sem retry e sem reconciliação",
+        "A religação retroativa existe mas só na direção do operador: promote_reply_to_guide_entry cria item approved com source_reply_id e a linha em recommendation_reply_promotions (20260821000006:43-103), service_role apenas",
+        "Não existe caminho de mesclagem de candidata em item canônico já existente",
+        "arrival_guide_entries.source_reply_id e a policy arrival_guide_select_approved_locality_member permitem ao membro ler o vínculo canônico já promovido — é o que o DS-006 usa",
+        "Contrato funcional separado: docs/superpowers/specs/2026-09-20-resposta-candidata-guia-design.md"
+      ],
+      "tests": [
+        "pgTAP positivo e negativo para leitura do vínculo por localidade e por autor",
+        "Teste de atomicidade: falha no envio da candidata não deixa resposta publicada sem registro nem candidata órfã",
+        "Teste de que a candidata não aparece como item do Guia para outros membros antes da aprovação",
+        "Teste de navegador da religação: após aprovação, a mesma resposta passa a exibir o item canônico sem novo POST"
+      ],
+      "links": [
+        "docs/superpowers/specs/2026-09-20-resposta-candidata-guia-design.md",
+        "docs/agents/tasks/DS-006.task.yml",
+        "docs/design/visual-guide-2026-09-06/MOBBIN-INDICACOES-2026-09-20.md",
+        "docs/design/visual-guide-2026-09-06/80-web-recomendacoes.png"
+      ],
+      "dependencies": ["PROD-INICIO-UX-20260919"],
+      "updatedAt": "2026-09-20",
+      "sourceRevision": "cc1eb05",
+      "blockers": [
+        "Decisão técnica R3 sobre a forma do vínculo (coluna, relação ou divergência aceita) — não pode ser tomada por agente",
+        "Migration com schema, RLS e policies, hoje proibida no escopo do DS-006"
+      ],
+      "completedChecklist": [false, false, false, false, false, false]
     }
   ]
 }
