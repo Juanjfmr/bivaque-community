@@ -1,12 +1,18 @@
 "use client"
 
-import { Button, Chip, Input, TextArea } from "@heroui/react"
+import { Button, Chip, Input, TextArea, useOverlayState } from "@heroui/react"
+import { ExternalLink, MapPin } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { callResolutionRpc } from "../../../lib/recommendations/resolution-rpcs"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "./card"
 import { EmptyState } from "./empty-state"
+import { LeanOverflowMenu } from "./feed-post-menu"
 import { FeedbackAlert } from "./feedback-alert"
+import { ReportButton, type ReportTargetType } from "./report-button"
 import { Skeleton } from "./skeleton"
 
 type RequestRow = {
@@ -30,6 +36,17 @@ type ReplyRow = {
   created_at: string
 }
 
+// DS-006: o ÚNICO vínculo resposta↔Guia que o servidor prova. `source_reply_id`
+// é preenchido por `promote_reply_to_guide` (operador) quando a resposta vira
+// item canônico. `recommendation_replies` não tem coluna de vínculo na escrita
+// e `recommendation_reply_promotions` é service_role — um membro não lê nenhuma
+// das duas. Sem linha aqui, a tela não mostra vínculo nenhum.
+type GuideLinkRow = {
+  id: string
+  name: string
+  source_reply_id: string | null
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
   servicos_locais: "Serviços locais",
   saude_bem_estar: "Saúde & bem-estar",
@@ -50,6 +67,9 @@ function formatDate(iso: string): string {
 
 export default function RecommendationRequests() {
   const supabase = createBrowserClient()
+  // DS-006: o alcance do pedido mostra o nome real da localidade do membro;
+  // "Manaus" chumbado mentia para quem está em outra cidade.
+  const { current } = useLocalityContext()
 
   const [requests, setRequests] = useState<RequestRow[]>([])
   const [repliesByRequest, setRepliesByRequest] = useState<Record<string, ReplyRow[]>>({})
@@ -62,7 +82,11 @@ export default function RecommendationRequests() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [feedback, setFeedback] = useState("")
-  const [replyText, setReplyText] = useState("")
+  // DS-006 (prancha 80): `Responder` abre e fecha UMA composição por pedido. O
+  // rascunho é POR PEDIDO — antes havia um único `replyText` para todos, e
+  // digitar em um pedido apagava o texto dos outros.
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
+  const [openReplyId, setOpenReplyId] = useState<string | null>(null)
   const [replyingId, setReplyingId] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -72,6 +96,19 @@ export default function RecommendationRequests() {
   const [editReplyText, setEditReplyText] = useState("")
   const [resolvingId, setResolvingId] = useState<string | null>(null)
   const [resolutionAction, setResolutionAction] = useState<string | null>(null)
+  // Moderação e ações raras ficam no overflow (prancha 80): ocultar é gesto
+  // local desta lista, denunciar abre o modal real de /reports.
+  const [hiddenRequestIds, setHiddenRequestIds] = useState<Set<string>>(new Set())
+  const [hiddenReplyIds, setHiddenReplyIds] = useState<Set<string>>(new Set())
+  const [guideLinksByReplyId, setGuideLinksByReplyId] = useState<
+    Record<string, { id: string; name: string }>
+  >({})
+  const [reportTarget, setReportTarget] = useState<{
+    type: ReportTargetType
+    id: string
+    authorId: string | null
+  } | null>(null)
+  const reportModal = useOverlayState()
 
   const loadRequests = useCallback(async () => {
     setLoading(true)
@@ -134,6 +171,29 @@ export default function RecommendationRequests() {
         new Set((savesData as { request_id: string }[] | null)?.map((save) => save.request_id)),
       )
 
+      // Vínculo real com o Guia (prancha 80: "Transmuda Recife" + "Ver no Guia").
+      // Só leitura de dado aprovado da própria localidade, pela RLS existente.
+      // Falha aqui não derruba a conversa: sem o dado, nenhum vínculo aparece.
+      const replyIds = Object.values(nextReplies)
+        .flat()
+        .map((reply) => reply.id)
+      const nextGuideLinks: Record<string, { id: string; name: string }> = {}
+      if (replyIds.length > 0) {
+        const { data: linkData, error: linkError } = await supabase
+          .from("arrival_guide_entries")
+          .select("id, name, source_reply_id")
+          .in("source_reply_id", replyIds)
+          .eq("status", "approved")
+        if (!linkError) {
+          for (const row of (linkData as unknown as GuideLinkRow[] | null) ?? []) {
+            if (row.source_reply_id) {
+              nextGuideLinks[row.source_reply_id] = { id: row.id, name: row.name }
+            }
+          }
+        }
+      }
+      setGuideLinksByReplyId(nextGuideLinks)
+
       const authorIds = [
         ...new Set([
           ...nextRequests.map((request) => request.author_id),
@@ -163,6 +223,7 @@ export default function RecommendationRequests() {
       setRepliesByRequest({})
       setSavedRequestIds(new Set())
       setAuthorNames({})
+      setGuideLinksByReplyId({})
     }
 
     setLoading(false)
@@ -177,7 +238,7 @@ export default function RecommendationRequests() {
       setReplyingId(requestId)
       setFeedback("")
 
-      const body = replyText.trim()
+      const body = (replyDrafts[requestId] ?? "").trim()
       if (body.length < 5) {
         setFeedback("Escreva uma resposta com pelo menos 5 caracteres.")
         setReplyingId(null)
@@ -196,11 +257,13 @@ export default function RecommendationRequests() {
         return
       }
 
-      setReplyText("")
+      // A composição daquele pedido fecha e o rascunho dele é o único limpo.
+      setReplyDrafts((previous) => ({ ...previous, [requestId]: "" }))
+      setOpenReplyId((previous) => (previous === requestId ? null : previous))
       setReplyingId(null)
       await loadRequests()
     },
-    [supabase, currentUserId, replyText, loadRequests],
+    [supabase, currentUserId, replyDrafts, loadRequests],
   )
 
   const toggleSave = useCallback(
@@ -420,6 +483,44 @@ export default function RecommendationRequests() {
     [runResolutionAction, supabase],
   )
 
+  // ─ DS-006: composição de resposta, ocultar e denunciar ────────────────────
+
+  const setReplyDraft = useCallback((requestId: string, value: string) => {
+    // Estado POR PEDIDO (ver o comentário do useState): cada composição guarda
+    // o próprio texto e fechar uma não apaga o rascunho da outra.
+    setReplyDrafts((previous) => ({ ...previous, [requestId]: value }))
+  }, [])
+
+  // `Responder` é abre/fecha, não envio. Um único formulário por pedido: o
+  // textarea só existe montado quando aquele pedido está aberto, e o botão que
+  // o abriu é o mesmo que o fecha.
+  const toggleReplyComposer = useCallback((requestId: string) => {
+    setFeedback("")
+    setOpenReplyId((previous) => (previous === requestId ? null : requestId))
+  }, [])
+
+  const closeReplyComposer = useCallback(() => setOpenReplyId(null), [])
+
+  const openReport = useCallback(
+    (type: ReportTargetType, id: string, authorId: string | null) => {
+      setReportTarget({ type, id, authorId })
+      reportModal.open()
+    },
+    [reportModal],
+  )
+
+  const handleHideRequest = useCallback((requestId: string) => {
+    setHiddenRequestIds((previous) => new Set(previous).add(requestId))
+  }, [])
+
+  const handleHideReply = useCallback((replyId: string) => {
+    setHiddenReplyIds((previous) => new Set(previous).add(replyId))
+  }, [])
+
+  // Ocultar é gesto local da lista (nada é apagado no servidor): o pedido some
+  // desta leitura e volta no próximo carregamento da página.
+  const visibleRequests = requests.filter((request) => !hiddenRequestIds.has(request.id))
+
   return (
     <div className="flex flex-col gap-4">
       {feedback && (
@@ -435,276 +536,368 @@ export default function RecommendationRequests() {
         </div>
       )}
 
-      {!loading && !error && requests.length === 0 && (
+      {!loading && !error && visibleRequests.length === 0 && (
         <EmptyState
           title="Nenhum pedido por aqui"
           description="Quando alguém pedir uma indicação, ela aparecerá nesta lista com as respostas."
         />
       )}
 
-      {!loading && !error && requests.length > 0 && (
+      {!loading && !error && visibleRequests.length > 0 && (
         <div className="flex flex-col gap-4">
-          {requests.map((request) => {
-            const replies = repliesByRequest[request.id] ?? []
+          {visibleRequests.map((request) => {
+            const replies = (repliesByRequest[request.id] ?? []).filter(
+              (reply) => !hiddenReplyIds.has(reply.id),
+            )
             const isEditing = editingId === request.id
             const isSaved = savedRequestIds.has(request.id)
             const isAuthor = request.author_id === currentUserId
 
             return (
-              <Card key={request.id} className="p-4">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Chip size="sm" variant="soft">
-                          {CATEGORY_LABELS[request.category] ?? request.category}
-                        </Chip>
-                        <Chip size="sm" variant="soft">
-                          {request.group_id ? "Grupo" : "Manaus"}
-                        </Chip>
-                        <span className="text-xs text-muted">
-                          {formatDate(request.created_at)}
-                          {authorNames[request.author_id]
-                            ? ` · ${authorNames[request.author_id]}`
-                            : ""}
-                        </span>
-                        {request.is_resolved && (
-                          <Chip size="sm" variant="soft" color="success">
-                            ✓ Resolvida pela autora
+              // A âncora `#req-<id>` que /salvos, /notifications e o Guia já
+              // emitem precisa existir: o wrapper Card não repassa `id`, então
+              // o alvo do hash fica no elemento que esta tela controla.
+              <div key={request.id} id={`req-${request.id}`} className="scroll-mt-24">
+                <Card className="p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Chip size="sm" variant="soft">
+                            {CATEGORY_LABELS[request.category] ?? request.category}
                           </Chip>
-                        )}
+                          <Chip size="sm" variant="soft">
+                            {request.group_id ? "Grupo" : current.cityName}
+                          </Chip>
+                          <span className="text-xs text-muted">
+                            {formatDate(request.created_at)}
+                            {authorNames[request.author_id]
+                              ? ` · ${authorNames[request.author_id]}`
+                              : ""}
+                          </span>
+                          {request.is_resolved && (
+                            <Chip size="sm" variant="soft" color="success">
+                              ✓ Resolvida pela autora
+                            </Chip>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Ações raras e de moderação vivem no overflow (prancha 80).
+                        `Denunciar` nunca é ação primária. */}
+                      <div className="shrink-0">
+                        <LeanOverflowMenu
+                          postId={request.id}
+                          sharePath={`/recommendations?focus=${request.id}#req-${request.id}`}
+                          menuLabel="Ações do pedido"
+                          labels={{
+                            edit: "Editar pedido",
+                            delete: "Excluir pedido",
+                            hide: "Ocultar pedido",
+                            share: "Compartilhar pedido",
+                            report: "Denunciar pedido",
+                          }}
+                          onEdit={isAuthor && !isEditing ? () => startEdit(request) : undefined}
+                          onDelete={isAuthor ? () => deleteRequest(request.id) : undefined}
+                          onHide={handleHideRequest}
+                          onReport={() =>
+                            openReport("recommendation_request", request.id, request.author_id)
+                          }
+                        />
                       </div>
                     </div>
 
-                    {isAuthor && !isEditing && (
-                      <div className="flex shrink-0 gap-2">
-                        <Button
-                          size="sm"
-                          variant="tertiary"
-                          className="text-xs"
-                          onPress={() => startEdit(request)}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="tertiary"
-                          className="text-xs"
-                          onPress={() => deleteRequest(request.id)}
-                        >
-                          Excluir
-                        </Button>
+                    {isEditing ? (
+                      <div className="flex flex-col gap-3">
+                        <Input
+                          aria-label="Título"
+                          value={editTitle}
+                          onChange={(event) =>
+                            setEditTitle((event.target as HTMLInputElement).value)
+                          }
+                        />
+                        <TextArea
+                          aria-label="Descrição"
+                          rows={3}
+                          value={editBody}
+                          onChange={(event) =>
+                            setEditBody((event.target as HTMLTextAreaElement).value)
+                          }
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="primary" onPress={() => saveEdit(request.id)}>
+                            Salvar
+                          </Button>
+                          <Button size="sm" variant="tertiary" onPress={cancelEdit}>
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        <h3 className="text-sm font-semibold">{request.title}</h3>
+                        <p className="text-sm text-muted">{request.body}</p>
                       </div>
                     )}
-                  </div>
 
-                  {isEditing ? (
-                    <div className="flex flex-col gap-3">
-                      <Input
-                        aria-label="Título"
-                        value={editTitle}
-                        onChange={(event) => setEditTitle((event.target as HTMLInputElement).value)}
-                      />
-                      <TextArea
-                        aria-label="Descrição"
-                        rows={3}
-                        value={editBody}
-                        onChange={(event) =>
-                          setEditBody((event.target as HTMLTextAreaElement).value)
-                        }
-                      />
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="primary" onPress={() => saveEdit(request.id)}>
-                          Salvar
-                        </Button>
-                        <Button size="sm" variant="tertiary" onPress={cancelEdit}>
-                          Cancelar
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      <h3 className="text-sm font-semibold">{request.title}</h3>
-                      <p className="text-sm text-muted">{request.body}</p>
-                    </div>
-                  )}
+                    {replies.length > 0 && (
+                      <ul className="flex flex-col gap-2 border-t border-border pt-3">
+                        {replies.map((reply) => {
+                          const isMarked = request.resolved_reply_id === reply.id
+                          const isMarking = resolutionAction === `mark:${request.id}:${reply.id}`
+                          const isClearing = resolutionAction === `clear:${request.id}`
+                          // Vínculo com o Guia SÓ quando o servidor tem a linha
+                          // (item canônico promovido a partir desta resposta). Sem
+                          // ela, nenhuma etiqueta de curadoria é desenhada.
+                          const guideLink = guideLinksByReplyId[reply.id]
 
-                  {replies.length > 0 && (
-                    <ul className="flex flex-col gap-2 border-t border-border pt-3">
-                      {replies.map((reply) => {
-                        const isMarked = request.resolved_reply_id === reply.id
-                        const isMarking = resolutionAction === `mark:${request.id}:${reply.id}`
-                        const isClearing = resolutionAction === `clear:${request.id}`
-
-                        return (
-                          <li
-                            key={reply.id}
-                            className={`flex flex-col gap-1 rounded-md border border-border p-2 text-sm ${
-                              isMarked
-                                ? "border-l-4 border-l-[var(--semantic-success)] bg-[var(--semantic-success-soft)]"
-                                : ""
-                            }`}
-                          >
-                            {isMarked && (
-                              <div className="flex">
-                                <Chip size="sm" variant="soft" color="success">
-                                  Ajudou a resolver
-                                </Chip>
-                              </div>
-                            )}
-                            {editReplyId === reply.id ? (
-                              <div className="flex flex-col gap-2">
-                                <TextArea
-                                  aria-label="Editar resposta"
-                                  rows={2}
-                                  value={editReplyText}
-                                  onChange={(event) =>
-                                    setEditReplyText((event.target as HTMLTextAreaElement).value)
-                                  }
-                                />
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="primary"
-                                    onPress={() => saveEditReply(reply.id)}
+                          return (
+                            <li
+                              key={reply.id}
+                              className={`flex flex-col gap-1 rounded-md border border-border p-2 text-sm ${
+                                isMarked
+                                  ? "border-l-4 border-l-[var(--semantic-success)] bg-[var(--semantic-success-soft)]"
+                                  : ""
+                              }`}
+                            >
+                              {isMarked && (
+                                <div className="flex">
+                                  <Chip size="sm" variant="soft" color="success">
+                                    Ajudou a resolver
+                                  </Chip>
+                                </div>
+                              )}
+                              {guideLink ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="flex items-center gap-1.5 text-xs font-medium text-muted">
+                                    <MapPin size={12} aria-hidden="true" />
+                                    {guideLink.name}
+                                  </span>
+                                  <Link
+                                    href={`/guide/${guideLink.id}` as Route}
+                                    className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--semantic-action-primary)] px-2 text-xs font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                                   >
-                                    Salvar
-                                  </Button>
-                                  <Button size="sm" variant="tertiary" onPress={cancelEditReply}>
-                                    Cancelar
-                                  </Button>
+                                    Ver no Guia
+                                    <ExternalLink size={12} aria-hidden="true" />
+                                  </Link>
                                 </div>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                <span className="flex flex-col gap-1 text-sm text-muted">
-                                  {authorNames[reply.author_id] && (
-                                    <span className="text-xs font-medium text-foreground">
-                                      {authorNames[reply.author_id]}
-                                    </span>
-                                  )}
-                                  {reply.body}
-                                </span>
-                                <div className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
-                                  {reply.author_id === currentUserId && (
-                                    <>
+                              ) : null}
+                              {editReplyId === reply.id ? (
+                                <div className="flex flex-col gap-2">
+                                  <TextArea
+                                    aria-label="Editar resposta"
+                                    rows={2}
+                                    value={editReplyText}
+                                    onChange={(event) =>
+                                      setEditReplyText((event.target as HTMLTextAreaElement).value)
+                                    }
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="primary"
+                                      onPress={() => saveEditReply(reply.id)}
+                                    >
+                                      Salvar
+                                    </Button>
+                                    <Button size="sm" variant="tertiary" onPress={cancelEditReply}>
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                  <span className="flex flex-col gap-1 text-sm text-muted">
+                                    {authorNames[reply.author_id] && (
+                                      <span className="text-xs font-medium text-foreground">
+                                        {authorNames[reply.author_id]}
+                                      </span>
+                                    )}
+                                    {reply.body}
+                                  </span>
+                                  <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:justify-end">
+                                    {isAuthor && !isMarked && (
                                       <Button
                                         size="sm"
                                         variant="tertiary"
-                                        className="min-h-11 text-xs"
-                                        onPress={() => {
-                                          setEditReplyId(reply.id)
-                                          setEditReplyText(reply.body)
-                                        }}
+                                        className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                        isDisabled={isMarking}
+                                        onPress={() =>
+                                          handleMarkResolvedReply(request.id, reply.id)
+                                        }
                                       >
-                                        Editar
+                                        {isMarking ? "Marcando..." : "Ajudou a resolver"}
                                       </Button>
+                                    )}
+                                    {isAuthor && isMarked && (
                                       <Button
                                         size="sm"
                                         variant="tertiary"
-                                        className="min-h-11 text-xs"
-                                        onPress={() => handleDeleteReply(reply.id)}
+                                        className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                        isDisabled={isClearing}
+                                        onPress={() => handleClearResolvedReply(request.id)}
                                       >
-                                        Excluir
+                                        {isClearing ? "Removendo..." : "Remover marca"}
                                       </Button>
-                                    </>
-                                  )}
-                                  {isAuthor && !isMarked && (
-                                    <Button
-                                      size="sm"
-                                      variant="tertiary"
-                                      className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                                      isDisabled={isMarking}
-                                      onPress={() => handleMarkResolvedReply(request.id, reply.id)}
-                                    >
-                                      {isMarking ? "Marcando..." : "Ajudou a resolver"}
-                                    </Button>
-                                  )}
-                                  {isAuthor && isMarked && (
-                                    <Button
-                                      size="sm"
-                                      variant="tertiary"
-                                      className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                                      isDisabled={isClearing}
-                                      onPress={() => handleClearResolvedReply(request.id)}
-                                    >
-                                      {isClearing ? "Removendo..." : "Remover marca"}
-                                    </Button>
-                                  )}
+                                    )}
+                                    {/* Editar, excluir, ocultar e denunciar são
+                                      ações raras: ficam no overflow, nunca ao
+                                      lado do fechamento do ciclo. */}
+                                    <LeanOverflowMenu
+                                      postId={reply.id}
+                                      menuLabel="Ações da resposta"
+                                      labels={{
+                                        edit: "Editar resposta",
+                                        delete: "Excluir resposta",
+                                        hide: "Ocultar resposta",
+                                        report: "Denunciar resposta",
+                                      }}
+                                      onEdit={
+                                        reply.author_id === currentUserId
+                                          ? () => {
+                                              setEditReplyId(reply.id)
+                                              setEditReplyText(reply.body)
+                                            }
+                                          : undefined
+                                      }
+                                      onDelete={
+                                        reply.author_id === currentUserId
+                                          ? () => handleDeleteReply(reply.id)
+                                          : undefined
+                                      }
+                                      onHide={handleHideReply}
+                                      onReport={() =>
+                                        openReport(
+                                          "recommendation_reply",
+                                          reply.id,
+                                          reply.author_id,
+                                        )
+                                      }
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  )}
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
 
-                  {request.is_resolved ? (
-                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[var(--semantic-surface-sunken)] px-3 py-2">
-                      <span className="text-xs font-medium text-muted">✅ Pedido resolvido</span>
-                      {isAuthor && (
+                    {request.is_resolved ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[var(--semantic-surface-sunken)] px-3 py-2">
+                        <span className="text-xs font-medium text-muted">✅ Pedido resolvido</span>
+                        {isAuthor && (
+                          <Button
+                            size="sm"
+                            variant="tertiary"
+                            className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                            isDisabled={resolutionAction === `reopen:${request.id}`}
+                            onPress={() => handleReopenRequest(request.id)}
+                          >
+                            {resolutionAction === `reopen:${request.id}`
+                              ? "Reabrindo..."
+                              : "Reabrir"}
+                          </Button>
+                        )}
+                      </div>
+                    ) : isAuthor ? (
+                      <div className="flex justify-end border-t border-border pt-3">
                         <Button
                           size="sm"
                           variant="tertiary"
-                          className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                          isDisabled={resolutionAction === `reopen:${request.id}`}
-                          onPress={() => handleReopenRequest(request.id)}
+                          className="text-xs"
+                          isDisabled={resolvingId === request.id}
+                          onPress={() => handleMarkResolved(request.id)}
                         >
-                          {resolutionAction === `reopen:${request.id}` ? "Reabrindo..." : "Reabrir"}
+                          Marcar como resolvido
                         </Button>
-                      )}
-                    </div>
-                  ) : isAuthor ? (
-                    <div className="flex justify-end border-t border-border pt-3">
-                      <Button
-                        size="sm"
-                        variant="tertiary"
-                        className="text-xs"
-                        isDisabled={resolvingId === request.id}
-                        onPress={() => handleMarkResolved(request.id)}
-                      >
-                        Marcar como resolvido
-                      </Button>
-                    </div>
-                  ) : null}
+                      </div>
+                    ) : null}
 
-                  <div className="flex flex-col gap-2 border-t border-border pt-3">
-                    <TextArea
-                      aria-label={`Responder a ${request.title}`}
-                      placeholder="Responder com uma indicação..."
-                      rows={2}
-                      value={replyingId === request.id ? replyText : ""}
-                      onChange={(event) => {
-                        setReplyingId(request.id)
-                        setReplyText((event.target as HTMLTextAreaElement).value)
-                      }}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        isDisabled={replyingId === request.id && replyText.trim().length < 5}
-                        onPress={() => handleReply(request.id)}
-                      >
-                        Responder
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={isSaved ? "secondary" : "tertiary"}
-                        isDisabled={savingId === request.id}
-                        onPress={() => toggleSave(request.id)}
-                      >
-                        {savingId === request.id ? "Salvando..." : isSaved ? "Salvo" : "Salvar"}
-                      </Button>
+                    {/* DS-006 (prancha 80): `Responder` abre e fecha a composição
+                      DESTE pedido. Nenhum textarea fica sempre visível e não há
+                      um segundo formulário: o mesmo botão abre, o mesmo botão
+                      fecha, e `Escape` também fecha. */}
+                    <div className="flex flex-col gap-2 border-t border-border pt-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant={openReplyId === request.id ? "secondary" : "primary"}
+                          aria-expanded={openReplyId === request.id}
+                          aria-controls={`reply-composer-${request.id}`}
+                          onPress={() => toggleReplyComposer(request.id)}
+                        >
+                          Responder
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={isSaved ? "secondary" : "tertiary"}
+                          isDisabled={savingId === request.id}
+                          onPress={() => toggleSave(request.id)}
+                        >
+                          {savingId === request.id ? "Salvando..." : isSaved ? "Salvo" : "Salvar"}
+                        </Button>
+                      </div>
+
+                      {openReplyId === request.id ? (
+                        <div id={`reply-composer-${request.id}`} className="flex flex-col gap-2">
+                          <TextArea
+                            aria-label={`Responder a ${request.title}`}
+                            placeholder="Responder com uma indicação..."
+                            rows={2}
+                            autoFocus
+                            value={replyDrafts[request.id] ?? ""}
+                            onChange={(event) =>
+                              setReplyDraft(request.id, (event.target as HTMLTextAreaElement).value)
+                            }
+                            // Escape fecha a composição sem publicar nada — o
+                            // gesto de sair de um campo de resposta.
+                            onKeyDown={(event) => {
+                              if (event.key === "Escape") closeReplyComposer()
+                            }}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              isDisabled={
+                                replyingId === request.id ||
+                                (replyDrafts[request.id] ?? "").trim().length < 5
+                              }
+                              onPress={() => handleReply(request.id)}
+                            >
+                              {replyingId === request.id ? "Enviando..." : "Enviar resposta"}
+                            </Button>
+                            <Button size="sm" variant="tertiary" onPress={closeReplyComposer}>
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </div>
             )
           })}
         </div>
       )}
+
+      {/* Um único modal de denúncia para a lista inteira, reiniciado pelo
+          `key`: o alvo vem do overflow que o abriu (pedido ou resposta), e o
+          ReportButton continua sendo o mecanismo real de /reports.
+          `blockUserId` só entra quando há autor conhecido — `exactOptionalPropertyTypes`
+          não aceita `undefined` explícito, e bloqueio sem saber a quem bloquear
+          não é oferecido. */}
+      {reportTarget ? (
+        <ReportButton
+          key={`${reportTarget.type}:${reportTarget.id}`}
+          targetType={reportTarget.type}
+          targetId={reportTarget.id}
+          {...(reportTarget.authorId ? { blockUserId: reportTarget.authorId } : {})}
+          externalState={reportModal}
+        />
+      ) : null}
     </div>
   )
 }
