@@ -90,14 +90,14 @@ function GroupCardSkeleton() {
     <div
       role="status"
       aria-label="Carregando grupos"
-      className="flex flex-col gap-3 rounded-2xl border border-border bg-[var(--surface-raised)] p-4"
+      className="flex flex-col gap-3 rounded-[var(--semantic-radius-card)] border border-border bg-[var(--surface-raised)] p-4"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-1 flex-col gap-2">
           <Skeleton className="h-4 w-1/2" />
           <Skeleton className="h-3 w-3/4" />
         </div>
-        <Skeleton className="h-8 w-20 rounded-md" />
+        <Skeleton className="h-8 w-20 rounded-[var(--semantic-radius-control)]" />
       </div>
       <Skeleton className="h-3 w-1/3" />
     </div>
@@ -109,7 +109,7 @@ function EventCardSkeleton() {
     <div
       role="status"
       aria-label="Carregando eventos"
-      className="flex flex-col gap-2 rounded-2xl border border-border bg-[var(--surface-raised)] p-4"
+      className="flex flex-col gap-2 rounded-[var(--semantic-radius-card)] border border-border bg-[var(--surface-raised)] p-4"
     >
       <Skeleton className="h-4 w-2/3" />
       <Skeleton className="h-3 w-1/2" />
@@ -540,7 +540,7 @@ export default function RecommendationsPage() {
     // lado do trilho de 288 px quando o formulário comunitário compõe duas
     // colunas. DESIGN_SYSTEM §8.2: leitura longa entre 45 e 72 caracteres por
     // linha e formulário com largura limitada, nunca esticado para preencher.
-    <div className="mx-auto flex w-full max-w-[56rem] flex-1 flex-col gap-6 px-4 py-6">
+    <div className="mx-auto flex w-full max-w-[56rem] flex-1 flex-col gap-6 px-4 py-6 [--field-radius:var(--semantic-radius-control)]">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">Indicações</h1>
         <p className="measure-reading text-sm text-muted">
@@ -621,7 +621,7 @@ export default function RecommendationsPage() {
                 // papel de botão, como no /auth/callback-error.
                 <Link
                   href="/groups"
-                  className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-white transition-colors duration-[var(--duration-instant)] hover:bg-[var(--semantic-action-primary-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--semantic-radius-control)] bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-white transition-colors duration-[var(--duration-instant)] hover:bg-[var(--semantic-action-primary-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                 >
                   Ver grupos
                 </Link>
@@ -643,7 +643,11 @@ export default function RecommendationsPage() {
                       href="/groups"
                       className="transition-colors duration-[var(--duration-instant)]"
                     >
-                      <Button variant="tertiary" size="sm" className="text-xs">
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        className="rounded-[var(--semantic-radius-control)] text-xs"
+                      >
                         Ver todos
                       </Button>
                     </Link>
@@ -690,7 +694,7 @@ export default function RecommendationsPage() {
                             <Button
                               variant={group.visibility === "public" ? "secondary" : "tertiary"}
                               size="sm"
-                              className="shrink-0"
+                              className="rounded-[var(--semantic-radius-control)] shrink-0"
                               onPress={() => handleJoin(group.id)}
                               isDisabled={isJoining}
                             >
@@ -719,7 +723,11 @@ export default function RecommendationsPage() {
                       href="/events"
                       className="transition-colors duration-[var(--duration-instant)]"
                     >
-                      <Button variant="tertiary" size="sm" className="text-xs">
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        className="rounded-[var(--semantic-radius-control)] text-xs"
+                      >
                         Ver todos
                       </Button>
                     </Link>
@@ -779,7 +787,7 @@ export default function RecommendationsPage() {
                 <button
                   type="button"
                   onClick={() => setRequestStage("guide")}
-                  className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                  className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-[var(--semantic-radius-control)] text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                 >
                   ← Voltar aos resultados do Guia
                 </button>
@@ -1006,7 +1014,7 @@ export default function RecommendationsPage() {
                   </p>
 
                   {piiWarning ? (
-                    <div className="rounded-lg border border-border bg-[var(--surface)] p-3">
+                    <div className="rounded-[var(--semantic-radius-card)] border border-border bg-[var(--surface)] p-3">
                       <FeedbackAlert
                         variant="warning"
                         description="Isso parece um CPF ou CEP. Quer mesmo publicar?"
@@ -1016,6 +1024,7 @@ export default function RecommendationsPage() {
                           type="submit"
                           size="sm"
                           variant="primary"
+                          className="rounded-[var(--semantic-radius-control)]"
                           isDisabled={requestSubmitting}
                         >
                           Publicar mesmo
@@ -1024,6 +1033,7 @@ export default function RecommendationsPage() {
                           type="button"
                           size="sm"
                           variant="tertiary"
+                          className="rounded-[var(--semantic-radius-control)]"
                           onPress={() => setPiiWarning(false)}
                         >
                           Cancelar
@@ -1039,7 +1049,7 @@ export default function RecommendationsPage() {
                     // A4: a prancha 45 fecha o formulário com o primário na ponta
                     // direita da linha, não sozinho na esquerda de uma linha
                     // larga com ~1000 px vazios à direita.
-                    className="self-end"
+                    className="rounded-[var(--semantic-radius-control)] self-end"
                     isDisabled={requestSubmitting}
                   >
                     {requestSubmitting ? "Publicando..." : "Publicar pedido"}
@@ -1128,7 +1138,7 @@ export default function RecommendationsPage() {
                         <Button
                           variant="tertiary"
                           size="sm"
-                          className="shrink-0 text-xs"
+                          className="rounded-[var(--semantic-radius-control)] shrink-0 text-xs"
                           onPress={() => handleUnsave(req.id)}
                           isDisabled={isUnsaving}
                         >
@@ -1182,10 +1192,10 @@ function PublicationPreview({
           Esta é uma prévia de como sua publicação aparecerá para a comunidade.
         </p>
 
-        <div className="mt-3 rounded-xl border border-border p-3">
+        <div className="mt-3 rounded-[var(--semantic-radius-card)] border border-border p-3">
           {/* Ícone de conversa: o pedido é uma pergunta à comunidade, não um
               anúncio. Decorativo — quem tem a informação é o texto ao lado. */}
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]">
+          <span className="flex h-10 w-10 items-center justify-center rounded-[var(--semantic-radius-control)] bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]">
             <MessageCircle size={20} aria-hidden="true" />
           </span>
 

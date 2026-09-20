@@ -107,7 +107,7 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
         <label htmlFor="pedido-guia-busca" className="sr-only">
           Buscar no Guia
         </label>
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-[var(--semantic-surface)] px-3 focus-within:border-accent">
+        <div className="flex items-center gap-2 rounded-[var(--semantic-radius-control)] border border-border bg-[var(--semantic-surface)] px-3 focus-within:border-accent">
           <Search size={18} aria-hidden="true" className="shrink-0 text-muted" />
           <input
             id="pedido-guia-busca"
@@ -126,7 +126,7 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
               type="button"
               aria-label="Limpar busca do Guia"
               onClick={() => setTerm("")}
-              className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+              className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-[var(--semantic-radius-control)] text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
             >
               <X size={18} aria-hidden="true" />
             </button>
@@ -154,7 +154,7 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
           )}
 
           {hasTerm && results.length === 0 ? (
-            <p className="measure-reading rounded-xl border border-dashed border-border bg-[var(--semantic-surface-sunken)] px-4 py-6 text-sm text-muted">
+            <p className="measure-reading rounded-[var(--semantic-radius-card)] border border-dashed border-border bg-[var(--semantic-surface-sunken)] px-4 py-6 text-sm text-muted">
               Nenhuma referência aprovada no Guia corresponde a “{term.trim()}”. Pergunte à
               comunidade — quem mora perto pode conhecer.
             </p>
@@ -165,9 +165,9 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
               {results.map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex flex-col gap-3 rounded-xl border border-border bg-[var(--semantic-surface)] p-4 sm:flex-row sm:items-start"
+                  className="flex flex-col gap-3 rounded-[var(--semantic-radius-card)] border border-border bg-[var(--semantic-surface)] p-4 sm:flex-row sm:items-start"
                 >
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--semantic-radius-control)] bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]">
                     <MapPin size={20} aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -189,7 +189,7 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
                   <div className="flex shrink-0 flex-row gap-2 sm:flex-col">
                     <Link
                       href={`/guide/${entry.id}` as Route}
-                      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--semantic-action-primary)] px-3 text-sm font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                      className="inline-flex min-h-11 items-center justify-center rounded-[var(--semantic-radius-control)] border border-[var(--semantic-action-primary)] px-3 text-sm font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                     >
                       Ver no Guia
                     </Link>
@@ -197,7 +197,7 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
                       type="button"
                       aria-label={`Descartar ${entry.name} desta busca`}
                       onClick={() => setDismissedIds((previous) => new Set(previous).add(entry.id))}
-                      className="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-surface-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                      className="inline-flex min-h-11 items-center justify-center rounded-[var(--semantic-radius-control)] px-3 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-surface-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                     >
                       Não é isso
                     </button>
@@ -217,7 +217,7 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
               <Button
                 size="sm"
                 variant="tertiary"
-                className="min-h-11 text-xs"
+                className="rounded-[var(--semantic-radius-control)] min-h-11 text-xs"
                 onPress={() => setDismissedIds(new Set())}
               >
                 Mostrar de novo
@@ -232,7 +232,7 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
       <div className="flex flex-col items-center gap-2 border-t border-border pt-4">
         <Button
           variant="tertiary"
-          className="min-h-11 gap-2 font-semibold text-[var(--semantic-action-primary)]"
+          className="rounded-[var(--semantic-radius-control)] min-h-11 gap-2 font-semibold text-[var(--semantic-action-primary)]"
           onPress={() => onAskCommunity(term.trim())}
         >
           <MessageCircle size={18} aria-hidden="true" />

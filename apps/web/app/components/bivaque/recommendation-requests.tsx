@@ -649,10 +649,20 @@ export default function RecommendationRequests() {
                           }
                         />
                         <div className="flex gap-2">
-                          <Button size="sm" variant="primary" onPress={() => saveEdit(request.id)}>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            className="rounded-[var(--semantic-radius-control)]"
+                            onPress={() => saveEdit(request.id)}
+                          >
                             Salvar
                           </Button>
-                          <Button size="sm" variant="tertiary" onPress={cancelEdit}>
+                          <Button
+                            size="sm"
+                            variant="tertiary"
+                            className="rounded-[var(--semantic-radius-control)]"
+                            onPress={cancelEdit}
+                          >
                             Cancelar
                           </Button>
                         </div>
@@ -672,6 +682,7 @@ export default function RecommendationRequests() {
                       <Button
                         size="sm"
                         variant={openReplyId === request.id ? "secondary" : "primary"}
+                        className="rounded-[var(--semantic-radius-control)]"
                         aria-expanded={openReplyId === request.id}
                         aria-controls={`reply-composer-${request.id}`}
                         onPress={() => toggleReplyComposer(request.id)}
@@ -681,6 +692,7 @@ export default function RecommendationRequests() {
                       <Button
                         size="sm"
                         variant={isSaved ? "secondary" : "tertiary"}
+                        className="rounded-[var(--semantic-radius-control)]"
                         isDisabled={savingId === request.id}
                         onPress={() => toggleSave(request.id)}
                       >
@@ -709,6 +721,7 @@ export default function RecommendationRequests() {
                           <Button
                             size="sm"
                             variant="primary"
+                            className="rounded-[var(--semantic-radius-control)]"
                             isDisabled={
                               replyingId === request.id ||
                               (replyDrafts[request.id] ?? "").trim().length < 5
@@ -717,7 +730,12 @@ export default function RecommendationRequests() {
                           >
                             {replyingId === request.id ? "Enviando..." : "Enviar resposta"}
                           </Button>
-                          <Button size="sm" variant="tertiary" onPress={closeReplyComposer}>
+                          <Button
+                            size="sm"
+                            variant="tertiary"
+                            className="rounded-[var(--semantic-radius-control)]"
+                            onPress={closeReplyComposer}
+                          >
                             Cancelar
                           </Button>
                         </div>
@@ -738,7 +756,7 @@ export default function RecommendationRequests() {
                           return (
                             <li
                               key={reply.id}
-                              className={`flex flex-col gap-1 rounded-md border border-border p-2 text-sm ${
+                              className={`flex flex-col gap-1 rounded-[var(--semantic-radius-card)] border border-border p-2 text-sm ${
                                 isMarked
                                   ? "border-l-4 border-l-[var(--semantic-success)] bg-[var(--semantic-success-soft)]"
                                   : ""
@@ -759,7 +777,7 @@ export default function RecommendationRequests() {
                                   </span>
                                   <Link
                                     href={`/guide/${guideLink.id}` as Route}
-                                    className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--semantic-action-primary)] px-2 text-xs font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                    className="inline-flex min-h-11 items-center gap-1 rounded-[var(--semantic-radius-control)] border border-[var(--semantic-action-primary)] px-2 text-xs font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                                   >
                                     Ver no Guia
                                     <ExternalLink size={12} aria-hidden="true" />
@@ -780,11 +798,17 @@ export default function RecommendationRequests() {
                                     <Button
                                       size="sm"
                                       variant="primary"
+                                      className="rounded-[var(--semantic-radius-control)]"
                                       onPress={() => saveEditReply(reply.id)}
                                     >
                                       Salvar
                                     </Button>
-                                    <Button size="sm" variant="tertiary" onPress={cancelEditReply}>
+                                    <Button
+                                      size="sm"
+                                      variant="tertiary"
+                                      className="rounded-[var(--semantic-radius-control)]"
+                                      onPress={cancelEditReply}
+                                    >
                                       Cancelar
                                     </Button>
                                   </div>
@@ -807,7 +831,7 @@ export default function RecommendationRequests() {
                                       <Button
                                         size="sm"
                                         variant="tertiary"
-                                        className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                        className="rounded-[var(--semantic-radius-control)] min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                                         isDisabled={isMarking}
                                         onPress={() =>
                                           handleMarkResolvedReply(request.id, reply.id)
@@ -820,7 +844,7 @@ export default function RecommendationRequests() {
                                       <Button
                                         size="sm"
                                         variant="tertiary"
-                                        className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                        className="rounded-[var(--semantic-radius-control)] min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                                         isDisabled={isClearing}
                                         onPress={() => handleClearResolvedReply(request.id)}
                                       >
@@ -878,7 +902,7 @@ export default function RecommendationRequests() {
                         `Reabrir`. Antes os dois apareciam juntos, somando três
                         avisos para o mesmo fato. */}
                     {request.is_resolved && request.resolved_reply_id === null ? (
-                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[var(--semantic-surface-sunken)] px-3 py-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--semantic-radius-card)] bg-[var(--semantic-surface-sunken)] px-3 py-2">
                         <span className="text-xs font-medium text-muted">
                           Resolvida pela autora
                         </span>
@@ -886,7 +910,7 @@ export default function RecommendationRequests() {
                           <Button
                             size="sm"
                             variant="tertiary"
-                            className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                            className="rounded-[var(--semantic-radius-control)] min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                             isDisabled={resolutionAction === `reopen:${request.id}`}
                             onPress={() => handleReopenRequest(request.id)}
                           >
@@ -901,7 +925,7 @@ export default function RecommendationRequests() {
                         <Button
                           size="sm"
                           variant="tertiary"
-                          className="text-xs"
+                          className="rounded-[var(--semantic-radius-control)] text-xs"
                           isDisabled={resolvingId === request.id}
                           onPress={() => handleMarkResolved(request.id)}
                         >
