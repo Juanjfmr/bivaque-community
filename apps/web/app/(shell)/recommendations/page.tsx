@@ -141,6 +141,13 @@ export default function RecommendationsPage() {
   const [requestDescription, setRequestDescription] = useState("")
   const [requestFeedback, setRequestFeedback] = useState("")
   const [requestError, setRequestError] = useState("")
+  // Prancha 45 painel 3: além do alerta, o campo em destaque tem mensagem
+  // inline própria. Guarda o PRIMEIRO campo inválido — destacar todos ao mesmo
+  // tempo transforma o formulário num muro de vermelho.
+  const [requestFieldError, setRequestFieldError] = useState<{
+    field: "category" | "title" | "description"
+    message: string
+  } | null>(null)
   const [requestSubmitting, setRequestSubmitting] = useState(false)
   const [piiWarning, setPiiWarning] = useState(false)
   const [myGroups, setMyGroups] = useState<GroupRow[]>([])
@@ -348,10 +355,31 @@ export default function RecommendationsPage() {
       setRequestFeedback("")
       setRequestError("")
 
-      if (!requestCategory || !requestTitle.trim() || !requestDescription.trim()) {
-        setRequestError("Preencha todos os campos obrigatórios.")
+      // Validação do produto, em português e campo a campo. O `<form>` tem
+      // `noValidate` justamente para esta mensagem existir: sem ela o navegador
+      // barrava o envio com a bolha nativa e nada do produto aparecia.
+      if (!requestCategory) {
+        setRequestFieldError({ field: "category", message: "Escolha uma categoria." })
+        setRequestError(
+          "Revise os campos em destaque para publicar seu pedido. Seus dados foram mantidos.",
+        )
         return
       }
+      if (!requestTitle.trim()) {
+        setRequestFieldError({ field: "title", message: "Informe o que você procura." })
+        setRequestError(
+          "Revise os campos em destaque para publicar seu pedido. Seus dados foram mantidos.",
+        )
+        return
+      }
+      if (!requestDescription.trim()) {
+        setRequestFieldError({ field: "description", message: "Conte o que você precisa." })
+        setRequestError(
+          "Revise os campos em destaque para publicar seu pedido. Seus dados foram mantidos.",
+        )
+        return
+      }
+      setRequestFieldError(null)
 
       const piiText = `${requestTitle.trim()} ${requestDescription.trim()}`
       if (!piiWarning && (detectCpf(piiText) || detectCep(piiText))) {
@@ -404,6 +432,7 @@ export default function RecommendationsPage() {
         setRequestTitle("")
         setRequestDescription("")
         setPiiWarning(false)
+        setRequestFieldError(null)
         setRequestFeedback("Pedido publicado!")
         setRequestSubmitting(false)
 
@@ -735,118 +764,206 @@ export default function RecommendationsPage() {
                 onClick={() => setRequestStage("guide")}
                 className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
               >
-                ← Voltar aos resultados de Guia
+                ← Voltar aos resultados do Guia
               </button>
+
+              {/* Título e promessa da tela (prancha 45 painel 3). O h1 da rota
+                  continua "Indicações"; este é o título da etapa. */}
+              <div className="flex flex-col gap-1">
+                <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                  Perguntar à comunidade
+                </h2>
+                <p className="text-sm text-muted">
+                  Não encontrou o que procurava? Pergunte aos seus vizinhos.
+                </p>
+              </div>
 
               {/* feedback banner */}
               {requestFeedback && <FeedbackAlert variant="success" description={requestFeedback} />}
 
               {/* error banner */}
-              {requestError && <FeedbackAlert variant="danger" description={requestError} />}
+              {requestError && (
+                <FeedbackAlert
+                  variant="danger"
+                  title="Não foi possível publicar"
+                  description={requestError}
+                />
+              )}
 
-              <form className="flex flex-col gap-4" onSubmit={handleSubmitRequest}>
-                <Select
-                  aria-label="Categoria"
-                  selectedKey={requestCategory || null}
-                  onSelectionChange={(key) => {
-                    if (typeof key === "string") {
-                      setRequestCategory(key as RecommendationCategory)
-                      setRequestError("")
-                      // F7 Step 2: when Saúde is picked, force scope to a group
-                      // (the locality option is hidden, so the user must pick a
-                      // group; auto-select the first group to keep the form valid).
-                      if (key === "saude_bem_estar" && requestScope === "locality") {
-                        const firstGroup = myGroups[0]
-                        if (firstGroup) setRequestScope(firstGroup.id)
+              {/* `noValidate`: a validação é do produto, em português, com
+                  mensagem inline no campo em destaque. Sem isso o navegador
+                  bloqueia o envio com a bolha nativa e o texto sai no idioma do
+                  browser ("Please fill out this field.") — nada do produto
+                  aparecia e a pessoa não sabia qual campo revisar. */}
+              <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmitRequest}>
+                <div className="flex flex-col gap-1.5">
+                  <span id="pedido-categoria-label" className="text-sm font-medium">
+                    Categoria
+                  </span>
+                  <Select
+                    aria-label="Categoria"
+                    aria-labelledby="pedido-categoria-label"
+                    aria-invalid={requestFieldError?.field === "category"}
+                    {...(requestFieldError?.field === "category"
+                      ? { "aria-describedby": "pedido-categoria-erro" }
+                      : {})}
+                    selectedKey={requestCategory || null}
+                    onSelectionChange={(key) => {
+                      if (typeof key === "string") {
+                        setRequestCategory(key as RecommendationCategory)
+                        setRequestError("")
+                        setRequestFieldError(null)
+                        // F7 Step 2: when Saúde is picked, force scope to a group
+                        // (the locality option is hidden, so the user must pick a
+                        // group; auto-select the first group to keep the form valid).
+                        if (key === "saude_bem_estar" && requestScope === "locality") {
+                          const firstGroup = myGroups[0]
+                          if (firstGroup) setRequestScope(firstGroup.id)
+                        }
                       }
-                    }
-                  }}
-                  isRequired
-                  className="max-w-xs"
-                >
-                  <Select.Trigger>
-                    <Select.Value>Selecione uma categoria</Select.Value>
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {CATEGORIES.map((cat) => (
-                        <ListBox.Item key={cat.id} id={cat.id}>
-                          {cat.label}
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
+                    }}
+                    isRequired
+                    className="max-w-xs"
+                  >
+                    <Select.Trigger>
+                      <Select.Value>Selecione uma categoria</Select.Value>
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {CATEGORIES.map((cat) => (
+                          <ListBox.Item key={cat.id} id={cat.id}>
+                            {cat.label}
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                  {requestFieldError?.field === "category" ? (
+                    <p
+                      id="pedido-categoria-erro"
+                      role="alert"
+                      className="text-xs font-medium text-[var(--semantic-danger)]"
+                    >
+                      {requestFieldError.message}
+                    </p>
+                  ) : null}
+                </div>
 
-                <Select
-                  aria-label="Alcance"
-                  selectedKey={requestScope}
-                  onSelectionChange={(key) => {
-                    if (typeof key === "string") {
-                      setRequestScope(key)
-                      setRequestError("")
-                    }
-                  }}
-                  isRequired
-                  className="max-w-xs"
-                >
-                  <Select.Trigger>
-                    <Select.Value>Escolha o alcance</Select.Value>
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {/* F7 Step 2: Saúde começa em grupo. The locality option is
+                <div className="flex flex-col gap-1.5">
+                  <span id="pedido-alcance-label" className="text-sm font-medium">
+                    Para qual comunidade você está perguntando?
+                  </span>
+                  <Select
+                    aria-label="Alcance"
+                    aria-labelledby="pedido-alcance-label"
+                    selectedKey={requestScope}
+                    onSelectionChange={(key) => {
+                      if (typeof key === "string") {
+                        setRequestScope(key)
+                        setRequestError("")
+                      }
+                    }}
+                    isRequired
+                    className="max-w-xs"
+                  >
+                    <Select.Trigger>
+                      <Select.Value>Escolha o alcance</Select.Value>
+                      <Select.Indicator />
+                    </Select.Trigger>
+                    <Select.Popover>
+                      <ListBox>
+                        {/* F7 Step 2: Saúde começa em grupo. The locality option is
                       hidden when the category is health, with an explanatory
                       line above the select. */}
-                      {requestCategory !== "saude_bem_estar" ? (
-                        <ListBox.Item key="locality" id="locality">
-                          {current.cityName}
-                        </ListBox.Item>
-                      ) : null}
-                      {myGroups.map((group) => (
-                        <ListBox.Item key={group.id} id={group.id}>
-                          {group.name}
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-                {requestCategory === "saude_bem_estar" ? (
-                  <p className="text-xs text-muted">
-                    Pedidos de Saúde começam em grupo — escolha um dos seus grupos como alcance.
-                  </p>
-                ) : null}
+                        {requestCategory !== "saude_bem_estar" ? (
+                          <ListBox.Item key="locality" id="locality">
+                            {current.cityName}
+                          </ListBox.Item>
+                        ) : null}
+                        {myGroups.map((group) => (
+                          <ListBox.Item key={group.id} id={group.id}>
+                            {group.name}
+                          </ListBox.Item>
+                        ))}
+                      </ListBox>
+                    </Select.Popover>
+                  </Select>
+                  {requestCategory === "saude_bem_estar" ? (
+                    <p className="text-xs text-muted">
+                      Pedidos de Saúde começam em grupo — escolha um dos seus grupos como alcance.
+                    </p>
+                  ) : null}
+                </div>
 
-                <Input
-                  required
-                  aria-label="Título"
-                  placeholder="Título da sua indicação"
-                  value={requestTitle}
-                  onChange={(e) => {
-                    setRequestTitle((e.target as HTMLInputElement).value)
-                    setRequestError("")
-                    setPiiWarning(false)
-                  }}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="pedido-titulo" className="text-sm font-medium">
+                    O que você procura?
+                  </label>
+                  <Input
+                    id="pedido-titulo"
+                    required
+                    aria-label="Título"
+                    aria-invalid={requestFieldError?.field === "title"}
+                    {...(requestFieldError?.field === "title"
+                      ? { "aria-describedby": "pedido-titulo-erro" }
+                      : {})}
+                    placeholder="Ex.: transportadora cuidadosa para mudança"
+                    value={requestTitle}
+                    onChange={(e) => {
+                      setRequestTitle((e.target as HTMLInputElement).value)
+                      setRequestError("")
+                      setRequestFieldError(null)
+                      setPiiWarning(false)
+                    }}
+                  />
+                  {requestFieldError?.field === "title" ? (
+                    <p
+                      id="pedido-titulo-erro"
+                      role="alert"
+                      className="text-xs font-medium text-[var(--semantic-danger)]"
+                    >
+                      {requestFieldError.message}
+                    </p>
+                  ) : null}
+                </div>
 
-                <TextArea
-                  required
-                  aria-label="Descrição"
-                  placeholder="Descreva o que você está procurando. Evite termos comerciais como preço, pagamento, anúncio ou contato comercial."
-                  rows={3}
-                  value={requestDescription}
-                  onChange={(e) => {
-                    setRequestDescription((e.target as HTMLTextAreaElement).value)
-                    setRequestError("")
-                    setPiiWarning(false)
-                  }}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="pedido-descricao" className="text-sm font-medium">
+                    Conte mais sobre sua dúvida (opcional para quem responde)
+                  </label>
+                  <TextArea
+                    id="pedido-descricao"
+                    required
+                    aria-label="Descrição"
+                    aria-invalid={requestFieldError?.field === "description"}
+                    {...(requestFieldError?.field === "description"
+                      ? { "aria-describedby": "pedido-descricao-erro" }
+                      : {})}
+                    placeholder="Descreva o que você está procurando. Evite termos comerciais como preço, pagamento, anúncio ou contato comercial."
+                    rows={3}
+                    value={requestDescription}
+                    onChange={(e) => {
+                      setRequestDescription((e.target as HTMLTextAreaElement).value)
+                      setRequestError("")
+                      setRequestFieldError(null)
+                      setPiiWarning(false)
+                    }}
+                  />
+                  {requestFieldError?.field === "description" ? (
+                    <p
+                      id="pedido-descricao-erro"
+                      role="alert"
+                      className="text-xs font-medium text-[var(--semantic-danger)]"
+                    >
+                      {requestFieldError.message}
+                    </p>
+                  ) : null}
+                </div>
 
                 <p className="text-xs text-muted">
-                  Sua indicação será visível apenas para o alcance escolhido: {current.cityName} ou
-                  um grupo do qual você participa.
+                  Seu pedido será publicado apenas para membros do Bivaque em {current.cityName} ou
+                  no grupo que você escolher.
                 </p>
 
                 {piiWarning ? (
