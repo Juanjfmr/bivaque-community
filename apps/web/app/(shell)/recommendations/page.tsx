@@ -1,14 +1,18 @@
 "use client"
 
 import { detectCep, detectCpf } from "@bivaque/domain"
-import { Button, Card, Chip, Input, ListBox, Select, Tabs, TextArea } from "@heroui/react"
+import { Button, Chip, Input, ListBox, Select, Tabs, TextArea } from "@heroui/react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
+import { useLocalityContext } from "../../../lib/locality-context"
+import { resolveRecommendationTab } from "../../../lib/recommendations/request-tab"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { Card } from "../../components/bivaque/card"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
+import { GuideFirstRequest } from "../../components/bivaque/guide-first-request"
 import RecommendationRequests from "../../components/bivaque/recommendation-requests"
 import { Skeleton } from "../../components/bivaque/skeleton"
 
@@ -115,6 +119,9 @@ function EventCardSkeleton() {
 
 export default function RecommendationsPage() {
   const supabase = createBrowserClient()
+  // DS-006: o alcance "cidade" do pedido mostra o nome real da localidade do
+  // membro. "Manaus" chumbado mentia para quem está em outra cidade.
+  const { current } = useLocalityContext()
 
   // data
   const [discoverGroups, setDiscoverGroups] = useState<GroupRow[]>([])
@@ -153,7 +160,17 @@ export default function RecommendationsPage() {
   const searchParams = useSearchParams()
 
   // tabs
-  const [selectedTab, setSelectedTab] = useState("browse")
+  // DS-006: a aba também chega pela URL (`?aba=request`), como em /salvos
+  // (`?aba=guia`). É o destino real da intenção `Pedir uma indicação` da Home:
+  // sem isso o link prometeria o painel do Guia e aterrissaria em "Explorar".
+  const [selectedTab, setSelectedTab] = useState(() =>
+    resolveRecommendationTab(searchParams.get("aba")),
+  )
+
+  // DS-006 (prancha 45): o pedido de indicação começa no Guia. O formulário
+  // comunitário é a saída declarada do fallback, não a primeira coisa da tela.
+  const [requestStage, setRequestStage] = useState<"guide" | "community">("guide")
+  const [guideTerm, setGuideTerm] = useState("")
 
   // ── data loading ──────────────────────────────────────────────────────────
 
@@ -270,6 +287,26 @@ export default function RecommendationsPage() {
       setSelectedTab("requests")
     }
   }, [searchParams])
+
+  // DS-006: o parâmetro `aba` também vale quando a navegação acontece com a
+  // página já montada — clicar em "Pedir uma indicação" na Home não pode
+  // aterrissar em "Explorar".
+  useEffect(() => {
+    const aba = searchParams.get("aba")
+    if (aba) setSelectedTab(resolveRecommendationTab(aba))
+  }, [searchParams])
+
+  // O fallback da prancha 45 leva ao formulário comunitário levando o texto
+  // digitado junto: o título nasce com o que a pessoa procurou (a menos que ela
+  // já tenha escrito um título próprio).
+  const handleAskCommunity = useCallback((term: string) => {
+    setGuideTerm(term)
+    if (term) {
+      setRequestTitle((previous) => (previous.trim().length > 0 ? previous : term))
+    }
+    setRequestError("")
+    setRequestStage("community")
+  }, [])
 
   // ── join group ────────────────────────────────────────────────────────────
 
@@ -480,7 +517,7 @@ export default function RecommendationsPage() {
       <Tabs
         aria-label="Seções de indicações"
         selectedKey={selectedTab}
-        onSelectionChange={(key) => setSelectedTab(key as string)}
+        onSelectionChange={(key) => setSelectedTab(resolveRecommendationTab(String(key)))}
         variant="secondary"
         className="tabs--secondary"
       >
@@ -687,157 +724,170 @@ export default function RecommendationsPage() {
 
         {/* ═══ Pedir indicação ════════════════════════════════════════════════ */}
         <div key="request" role="tabpanel" hidden={selectedTab !== "request"}>
-          {/* feedback banner */}
-          {requestFeedback && (
-            <div className="mb-4">
-              <FeedbackAlert variant="success" description={requestFeedback} />
-            </div>
-          )}
+          {requestStage === "guide" ? (
+            <GuideFirstRequest initialTerm={guideTerm} onAskCommunity={handleAskCommunity} />
+          ) : (
+            <div className="flex flex-col gap-4">
+              {/* Prancha 45 painel 3: o formulário comunitário sabe de onde veio
+                  e devolve a pessoa aos resultados do Guia com o termo dela. */}
+              <button
+                type="button"
+                onClick={() => setRequestStage("guide")}
+                className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-lg text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+              >
+                ← Voltar aos resultados de Guia
+              </button>
 
-          {/* error banner */}
-          {requestError && (
-            <div className="mb-4">
-              <FeedbackAlert variant="danger" description={requestError} />
-            </div>
-          )}
+              {/* feedback banner */}
+              {requestFeedback && <FeedbackAlert variant="success" description={requestFeedback} />}
 
-          <form className="flex flex-col gap-4" onSubmit={handleSubmitRequest}>
-            <Select
-              aria-label="Categoria"
-              selectedKey={requestCategory || null}
-              onSelectionChange={(key) => {
-                if (typeof key === "string") {
-                  setRequestCategory(key as RecommendationCategory)
-                  setRequestError("")
-                  // F7 Step 2: when Saúde is picked, force scope to a group
-                  // (the locality option is hidden, so the user must pick a
-                  // group; auto-select the first group to keep the form valid).
-                  if (key === "saude_bem_estar" && requestScope === "locality") {
-                    const firstGroup = myGroups[0]
-                    if (firstGroup) setRequestScope(firstGroup.id)
-                  }
-                }
-              }}
-              isRequired
-              className="max-w-xs"
-            >
-              <Select.Trigger>
-                <Select.Value>Selecione uma categoria</Select.Value>
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox>
-                  {CATEGORIES.map((cat) => (
-                    <ListBox.Item key={cat.id} id={cat.id}>
-                      {cat.label}
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
+              {/* error banner */}
+              {requestError && <FeedbackAlert variant="danger" description={requestError} />}
 
-            <Select
-              aria-label="Alcance"
-              selectedKey={requestScope}
-              onSelectionChange={(key) => {
-                if (typeof key === "string") {
-                  setRequestScope(key)
-                  setRequestError("")
-                }
-              }}
-              isRequired
-              className="max-w-xs"
-            >
-              <Select.Trigger>
-                <Select.Value>Escolha o alcance</Select.Value>
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox>
-                  {/* F7 Step 2: Saúde começa em grupo. The locality option is
+              <form className="flex flex-col gap-4" onSubmit={handleSubmitRequest}>
+                <Select
+                  aria-label="Categoria"
+                  selectedKey={requestCategory || null}
+                  onSelectionChange={(key) => {
+                    if (typeof key === "string") {
+                      setRequestCategory(key as RecommendationCategory)
+                      setRequestError("")
+                      // F7 Step 2: when Saúde is picked, force scope to a group
+                      // (the locality option is hidden, so the user must pick a
+                      // group; auto-select the first group to keep the form valid).
+                      if (key === "saude_bem_estar" && requestScope === "locality") {
+                        const firstGroup = myGroups[0]
+                        if (firstGroup) setRequestScope(firstGroup.id)
+                      }
+                    }
+                  }}
+                  isRequired
+                  className="max-w-xs"
+                >
+                  <Select.Trigger>
+                    <Select.Value>Selecione uma categoria</Select.Value>
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {CATEGORIES.map((cat) => (
+                        <ListBox.Item key={cat.id} id={cat.id}>
+                          {cat.label}
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+
+                <Select
+                  aria-label="Alcance"
+                  selectedKey={requestScope}
+                  onSelectionChange={(key) => {
+                    if (typeof key === "string") {
+                      setRequestScope(key)
+                      setRequestError("")
+                    }
+                  }}
+                  isRequired
+                  className="max-w-xs"
+                >
+                  <Select.Trigger>
+                    <Select.Value>Escolha o alcance</Select.Value>
+                    <Select.Indicator />
+                  </Select.Trigger>
+                  <Select.Popover>
+                    <ListBox>
+                      {/* F7 Step 2: Saúde começa em grupo. The locality option is
                       hidden when the category is health, with an explanatory
                       line above the select. */}
-                  {requestCategory !== "saude_bem_estar" ? (
-                    <ListBox.Item key="locality" id="locality">
-                      Manaus
-                    </ListBox.Item>
-                  ) : null}
-                  {myGroups.map((group) => (
-                    <ListBox.Item key={group.id} id={group.id}>
-                      {group.name}
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
-            {requestCategory === "saude_bem_estar" ? (
-              <p className="text-xs text-muted">
-                Pedidos de Saúde começam em grupo — escolha um dos seus grupos como alcance.
-              </p>
-            ) : null}
+                      {requestCategory !== "saude_bem_estar" ? (
+                        <ListBox.Item key="locality" id="locality">
+                          {current.cityName}
+                        </ListBox.Item>
+                      ) : null}
+                      {myGroups.map((group) => (
+                        <ListBox.Item key={group.id} id={group.id}>
+                          {group.name}
+                        </ListBox.Item>
+                      ))}
+                    </ListBox>
+                  </Select.Popover>
+                </Select>
+                {requestCategory === "saude_bem_estar" ? (
+                  <p className="text-xs text-muted">
+                    Pedidos de Saúde começam em grupo — escolha um dos seus grupos como alcance.
+                  </p>
+                ) : null}
 
-            <Input
-              required
-              aria-label="Título"
-              placeholder="Título da sua indicação"
-              value={requestTitle}
-              onChange={(e) => {
-                setRequestTitle((e.target as HTMLInputElement).value)
-                setRequestError("")
-                setPiiWarning(false)
-              }}
-            />
-
-            <TextArea
-              required
-              aria-label="Descrição"
-              placeholder="Descreva o que você está procurando. Evite termos comerciais como preço, pagamento, anúncio ou contato comercial."
-              rows={3}
-              value={requestDescription}
-              onChange={(e) => {
-                setRequestDescription((e.target as HTMLTextAreaElement).value)
-                setRequestError("")
-                setPiiWarning(false)
-              }}
-            />
-
-            <p className="text-xs text-muted">
-              Sua indicação será visível apenas para o alcance escolhido: Manaus ou um grupo do qual
-              você participa.
-            </p>
-
-            {piiWarning ? (
-              <div className="rounded-lg border border-border bg-[var(--surface)] p-3">
-                <FeedbackAlert
-                  variant="warning"
-                  description="Isso parece um CPF ou CEP. Quer mesmo publicar?"
+                <Input
+                  required
+                  aria-label="Título"
+                  placeholder="Título da sua indicação"
+                  value={requestTitle}
+                  onChange={(e) => {
+                    setRequestTitle((e.target as HTMLInputElement).value)
+                    setRequestError("")
+                    setPiiWarning(false)
+                  }}
                 />
-                <div className="mt-2 flex gap-2">
-                  <Button type="submit" size="sm" variant="primary" isDisabled={requestSubmitting}>
-                    Publicar mesmo
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="tertiary"
-                    onPress={() => setPiiWarning(false)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            ) : null}
 
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              className="self-start"
-              isDisabled={requestSubmitting}
-            >
-              {requestSubmitting ? "Publicando..." : "Publicar pedido"}
-            </Button>
-          </form>
+                <TextArea
+                  required
+                  aria-label="Descrição"
+                  placeholder="Descreva o que você está procurando. Evite termos comerciais como preço, pagamento, anúncio ou contato comercial."
+                  rows={3}
+                  value={requestDescription}
+                  onChange={(e) => {
+                    setRequestDescription((e.target as HTMLTextAreaElement).value)
+                    setRequestError("")
+                    setPiiWarning(false)
+                  }}
+                />
+
+                <p className="text-xs text-muted">
+                  Sua indicação será visível apenas para o alcance escolhido: {current.cityName} ou
+                  um grupo do qual você participa.
+                </p>
+
+                {piiWarning ? (
+                  <div className="rounded-lg border border-border bg-[var(--surface)] p-3">
+                    <FeedbackAlert
+                      variant="warning"
+                      description="Isso parece um CPF ou CEP. Quer mesmo publicar?"
+                    />
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        type="submit"
+                        size="sm"
+                        variant="primary"
+                        isDisabled={requestSubmitting}
+                      >
+                        Publicar mesmo
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="tertiary"
+                        onPress={() => setPiiWarning(false)}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  className="self-start"
+                  isDisabled={requestSubmitting}
+                >
+                  {requestSubmitting ? "Publicando..." : "Publicar pedido"}
+                </Button>
+              </form>
+            </div>
+          )}
         </div>
 
         {/* ═══ Pedidos ═════════════════════════════════════════════════════════ */}
