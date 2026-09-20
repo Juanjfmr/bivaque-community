@@ -40,7 +40,19 @@
         "Pranchas substituídas: 01-web-inicio, 44-mobile-publicacao, 45-web-publicacao, 74-web-guia-curadoria e 80-web-recomendacoes",
         "Contrato de implementação visual: docs/agents/tasks/DS-006.task.yml",
         "Branch-base em 0ae5059: intenção de denúncia já está no overflow, indicando possível drift da revisão implantada ou variante de card ainda não inventariada",
-        "Console de produção sem erros ou warnings durante os caminhos exercitados"
+        "Console de produção sem erros ou warnings durante os caminhos exercitados",
+        "DS-006 (branch audit/producao-inicio-2026-09-19, HEAD 3d8c008): Home reordenada por medicao — retorno em top=179/204 antes do lancador em 278/306, primeiro article na dobra em 768 (436<1024) e 1440 (436<900), zero overflow horizontal nos tres viewports",
+        "DS-006: lancador compacto com destinos distintos e reais — 'Fazer uma pergunta' e BUTTON que abre o CreatePostModal existente; 'Pedir uma indicacao' e link para /recommendations?aba=request, que abre o painel do Guia com temFormularioComunitario=false (a consulta precede o formulario)",
+        "DS-006: busca no Guia le arrival_guide_entries com status='approved' e a localidade do membro (sem RPC nova); 'transportadora' devolve 'Transportadora Ajuricaba' e 'Ver no Guia' abre /guide/a0000000-...0003 com o nome correto",
+        "DS-006: fallback explicito leva o termo digitado ao formulario comunitario (titulo preenchido = termo) e o voltar devolve o termo a busca",
+        "DS-006: 'Responder' abre e fecha uma composicao por pedido (textarea 0->1->0, aria-expanded, Escape fecha, rascunho por pedido), sem textarea permanente",
+        "DS-006: publicacao de pedido persiste apos reload (POST em recommendation_requests + card com titulo e autor)",
+        "DS-006: proibicao central respeitada e medida — resposta sem vinculo nao exibe 'Ver no Guia', nem link de Guia, nem etiqueta de curadoria (temTextoVerNoGuia=false, linksDeGuia=[], temEtiquetaCuradoria=false)",
+        "DS-006: moderação permanece no overflow nas duas superficies ('Ocultar/Compartilhar/Denunciar pedido' e '...publicacao'), nenhum 'Denunciar' como acao primaria; itens do menu com 44px de alvo",
+        "DS-006: autorizacao verificada no servidor — membro de Manaus le 4 itens aprovados, membro do Rio le 0 (sem vazamento entre cidades), fila pending invisivel, promote_reply_to_guide_entry e INSERT direto no Guia negados com 403/42501",
+        "DS-006 gates: pnpm gate --fast VERDE; vitest tests/unit/recommendations + tests/unit/ui 187/187 em 29 arquivos, sem nenhum teste pre-existente alterado; pnpm build concluido (BUILD_ID emitido)",
+        "DS-006 e2e reais do repositorio executados contra o dev server dedicado :3210 (a porta 3000 pertence a outra sessao e reuseExistingServer mediria outro checkout): 4/4, incluindo a prova de que a autora recebe 'respondeu ao seu pedido de indicacao' com a sequencia nova",
+        "DS-006 verificacao independente: FAIL na camada de codigo por tests/e2e/recommendations-health-scope.spec.ts nao atualizado (corrigido em 44247e7 e provado por execucao) e FAIL na camada visual (Hierarquia/Densidade/Tipografia/Acabamento em 3 de 5), com reparo 2 em curso"
       ],
       "tests": [
         "Teste de navegador do compositor em viewport curta com ação principal visível e alcançável",
@@ -56,7 +68,11 @@
       ],
       "dependencies": [],
       "updatedAt": "2026-09-20",
-      "sourceRevision": "0ae5059"
+      "sourceRevision": "3d8c008",
+      "blockers": [
+        "Pendencia funcional de backend: nao existe coluna que ligue a resposta ao Guia no momento da escrita, e suggest_guide_entry nao e atomica com a resposta — ver GUIA-RESPOSTA-CANDIDATA e docs/superpowers/specs/2026-09-20-resposta-candidata-guia-design.md",
+        "Revisao visual em FAIL: quatro das sete dimensoes abaixo de 4, com reparo 2 em andamento e remedicao pendente"
+      ]
     },
     {
       "id": "NAV-BECOS-SEM-SAIDA",
