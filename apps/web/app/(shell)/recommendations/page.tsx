@@ -530,10 +530,17 @@ export default function RecommendationsPage() {
   const hasContent = hasGroups || hasEvents
 
   return (
-    <div className="flex flex-1 flex-col gap-6 px-4 py-6">
+    // A1 (parecer R2): a rota era uma coluna única de 1152 px a 1440 — busca de
+    // 1100, textarea de 1120 e parágrafos de 1152 a 14 px (~130 caracteres por
+    // linha). Aqui a tela passa a ter UMA medida, a mesma que a Home já usa
+    // (`max-w-[56rem]` = 896 px): é ela que dá 552 px de coluna de leitura ao
+    // lado do trilho de 288 px quando o formulário comunitário compõe duas
+    // colunas. DESIGN_SYSTEM §8.2: leitura longa entre 45 e 72 caracteres por
+    // linha e formulário com largura limitada, nunca esticado para preencher.
+    <div className="mx-auto flex w-full max-w-[56rem] flex-1 flex-col gap-6 px-4 py-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">Indicações</h1>
-        <p className="text-sm text-muted">
+        <p className="measure-reading text-sm text-muted">
           Descubra grupos e eventos da sua comunidade. Este é um espaço de utilidade comunitária,
           não um marketplace.
         </p>

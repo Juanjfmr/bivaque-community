@@ -95,7 +95,10 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
         <h2 className="text-lg font-semibold tracking-tight">
           Antes de perguntar, consulte o Guia
         </h2>
-        <p className="text-sm text-muted">
+        {/* A1 (parecer R2): a lista pode ser larga para comparação, o texto
+            corrido não. `measure-reading` é o utilitário do produto que aplica
+            `semantic.typography-reading-measure` (72ch) — DESIGN_SYSTEM §8.2. */}
+        <p className="measure-reading text-sm text-muted">
           Muitas respostas já estão no Guia da cidade, curado por quem mora aqui.
         </p>
       </div>
@@ -145,13 +148,13 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
               {guideResultCountLabel(results.length)}
             </p>
           ) : (
-            <p className="text-sm text-muted">
+            <p className="measure-reading text-sm text-muted">
               Digite o que você precisa para ver se já existe referência aprovada no Guia.
             </p>
           )}
 
           {hasTerm && results.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border bg-[var(--semantic-surface-sunken)] px-4 py-6 text-sm text-muted">
+            <p className="measure-reading rounded-xl border border-dashed border-border bg-[var(--semantic-surface-sunken)] px-4 py-6 text-sm text-muted">
               Nenhuma referência aprovada no Guia corresponde a “{term.trim()}”. Pergunte à
               comunidade — quem mora perto pode conhecer.
             </p>
@@ -176,7 +179,9 @@ export function GuideFirstRequest({ onAskCommunity, initialTerm = "" }: GuideFir
                       {GUIDE_CATEGORY_LABELS[entry.category] ?? entry.category}
                     </p>
                     {entry.description ? (
-                      <p className="mt-1 text-sm leading-relaxed text-muted">{entry.description}</p>
+                      <p className="measure-reading mt-1 text-sm leading-relaxed text-muted">
+                        {entry.description}
+                      </p>
                     ) : null}
                   </div>
                   {/* Em telas estreitas o texto não é espremido por uma coluna de

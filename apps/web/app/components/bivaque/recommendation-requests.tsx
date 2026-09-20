@@ -658,7 +658,11 @@ export default function RecommendationRequests() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-muted">{request.body}</p>
+                      // A1 (parecer R2): o corpo do pedido é leitura longa —
+                      // medido a 1120 px e ~132 caracteres por linha antes do
+                      // reparo. `measure-reading` aplica o limite do produto
+                      // (semantic.typography-reading-measure, 72ch).
+                      <p className="measure-reading text-sm text-muted">{request.body}</p>
                     )}
 
                     {/* DS-006 (prancha 80): `Responder` fica logo sob o corpo do
@@ -787,7 +791,10 @@ export default function RecommendationRequests() {
                                 </div>
                               ) : (
                                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                  <span className="flex flex-col gap-1 text-sm text-muted">
+                                  {/* A1: mesma medida de leitura do corpo do
+                                      pedido — a resposta é texto corrido, não
+                                      lista de comparação (DESIGN_SYSTEM §8.2). */}
+                                  <span className="measure-reading flex flex-col gap-1 text-sm text-muted">
                                     {authorNames[reply.author_id] && (
                                       <span className="text-xs font-medium text-foreground">
                                         {authorNames[reply.author_id]}
