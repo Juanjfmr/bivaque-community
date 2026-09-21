@@ -8,6 +8,10 @@ import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { callResolutionRpc } from "../../../lib/recommendations/resolution-rpcs"
 import { localityScopeLabel } from "../../../lib/recommendations/scope-label"
+import {
+  resolutionOperation,
+  writeFailure,
+} from "../../../lib/recommendations/write-failure-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "./card"
 import { EmptyState } from "./empty-state"
@@ -266,7 +270,8 @@ export default function RecommendationRequests() {
       })
 
       if (replyError) {
-        setFeedback(replyError.message)
+        // ITEM 9: frase de produto na tela, causa crua no log.
+        setFeedback(writeFailure("responder_pedido", replyError.message))
         setReplyingId(null)
         return
       }
@@ -293,7 +298,7 @@ export default function RecommendationRequests() {
           .eq("request_id", requestId)
 
         if (deleteError) {
-          setFeedback(deleteError.message)
+          setFeedback(writeFailure("remover_pedido_salvo", deleteError.message))
           setSavingId(null)
           return
         }
@@ -310,7 +315,7 @@ export default function RecommendationRequests() {
         })
 
         if (insertError) {
-          setFeedback(insertError.message)
+          setFeedback(writeFailure("salvar_pedido", insertError.message))
           setSavingId(null)
           return
         }
@@ -351,7 +356,7 @@ export default function RecommendationRequests() {
         .eq("author_id", currentUserId)
 
       if (updateError) {
-        setFeedback(updateError.message)
+        setFeedback(writeFailure("editar_pedido", updateError.message))
         return
       }
 
@@ -371,7 +376,7 @@ export default function RecommendationRequests() {
         .eq("author_id", currentUserId)
 
       if (deleteError) {
-        setFeedback(deleteError.message)
+        setFeedback(writeFailure("excluir_pedido", deleteError.message))
         return
       }
 
@@ -391,7 +396,7 @@ export default function RecommendationRequests() {
         .eq("author_id", currentUserId)
 
       if (deleteError) {
-        setFeedback(deleteError.message)
+        setFeedback(writeFailure("excluir_resposta", deleteError.message))
         return
       }
       await loadRequests()
@@ -418,7 +423,7 @@ export default function RecommendationRequests() {
         .eq("author_id", currentUserId)
 
       if (updateError) {
-        setFeedback(updateError.message)
+        setFeedback(writeFailure("editar_resposta", updateError.message))
         return
       }
       cancelEditReply()
@@ -444,7 +449,7 @@ export default function RecommendationRequests() {
       })
       setResolvingId(null)
       if (rpcError) {
-        setFeedback(rpcError.message)
+        setFeedback(writeFailure("resolver_pedido", rpcError.message))
         return
       }
       await loadRequests()
@@ -460,7 +465,8 @@ export default function RecommendationRequests() {
       const { error: rpcError } = await call()
       setResolutionAction(null)
       if (rpcError) {
-        setFeedback(rpcError.message)
+        // A chave diz QUAL das três ações falhou (marcar, limpar ou reabrir).
+        setFeedback(writeFailure(resolutionOperation(actionKey), rpcError.message))
         return
       }
       await loadRequests()
