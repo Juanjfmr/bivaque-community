@@ -3144,48 +3144,53 @@
     },
     {
       "id": "GUIA-RESPOSTA-CANDIDATA",
-      "title": "Guia: ligar resposta de indicação à referência e à candidata em curadoria",
+      "title": "Guia: job de curadoria assistida por IA prepara a fila do operador",
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "backend",
-      "status": "blocked",
-      "description": "A direção aprovada em 20/09/2026 exige que uma resposta de indicação possa apontar para um item do Guia, que a referência inexistente seja publicada imediatamente como candidata em curadoria, e que a aprovação posterior religue a resposta ao item canônico. Nenhuma das três é verdade de servidor hoje. O DS-006 entregou apenas a parte sustentada pelos contratos atuais: busca no Guia antes do formulário comunitário e exibição do vínculo canônico somente quando arrival_guide_entries.source_reply_id o prova. Esta pendência impede PASS global do DS-006.",
+      "status": "next",
+      "description": "Reenquadrado por ADR-20260921-curadoria-assistida-do-guia. O fluxo voltado ao membro (etiqueta Ainda nao esta no Guia, candidata vinculada a resposta, atomicidade, religacao pela mao de quem respondeu) foi DESCARTADO por decisao do dono: para o membro, um pergunta, o outro responde e acabou. A alimentacao do Guia passa a ser trabalho de sistema, invisivel ao membro: um job agendado le respostas com sinal de qualidade, extrai nome e categoria, deduplica contra o Guia da localidade e grava pending com source=ai, confidence e source_reply_id. Como source_reply_id ja move o Ver no Guia, a aprovacao pelo operador religa a resposta sozinha. Isto NAO bloqueia mais o DS-006.",
       "checklist": [
-        "Decidir a forma (coluna de vínculo na resposta, relação resposta↔candidata, ou aceitar a divergência da prancha 80)",
-        "Garantir atomicidade entre a inserção da resposta e o envio da candidata, com recuperação quando uma falhar",
-        "Definir o estado visível quando a curadoria rejeita ou mescla a candidata em item já existente",
-        "Definir se a candidata vinda de resposta consome a cota de 5 pendentes de suggest_guide_entry",
-        "Entregar migration com RLS habilitada e forçada, policies e grants mínimos, com pgTAP positivo e negativo",
-        "Provar em navegador: vínculo lido do servidor, rótulo Ainda não está no Guia apenas com dado verificável, religação após aprovação"
+        "Job agendado no padrao ja estabelecido: pg_cron manda, banco prepara as linhas devidas, entrega ao endpoint interno do Next por pg_net (quinto job, igual ao outbox)",
+        "Selecao por sinal de qualidade, comecando por recommendation_requests.resolved_reply_id",
+        "Deduplicacao contra o Guia da localidade ANTES de escrever na fila, nao dentro dela",
+        "Gravar pending com source=ai, confidence e source_reply_id apontando para a resposta de origem",
+        "Migration com o agendamento e um indice unico parcial em source_reply_id (hoje nao existe, apesar do comentario em 20260821000006:16-17 afirmar que existe)",
+        "Enviar ao modelo apenas o corpo da resposta; nunca author_id",
+        "Teto por localidade por execucao e piso de confidence abaixo do qual nada entra na fila",
+        "Tela do operador: texto original da resposta ao lado da candidata, recusar tao barato quanto aprovar, e amostragem de itens ruins conhecidos para medir atencao",
+        "Corrigir o comentario de 20260821000006:16-17, que afirma um indice unico inexistente",
+        "Registrar a divergencia da prancha 80 painel 2 e da nota de 20/09 no guia visual"
       ],
       "proof": [
-        "recommendation_replies tem id, request_id, author_id, body, created_at, is_deleted — nenhuma coluna liga a resposta ao Guia (20260802001100_recommendations.sql:55-64; único alter table add column posterior é is_deleted em 20260821000033:26)",
-        "suggest_guide_entry(p_category,p_name,p_description,p_website_url,p_phone) não recebe id de resposta e não escreve source_reply_id (20260915210000_guide_entry_suggestion.sql:23-126)",
-        "Inserção da resposta e envio da candidata são duas idas ao servidor, sem transação, sem retry e sem reconciliação",
-        "A religação retroativa existe mas só na direção do operador: promote_reply_to_guide_entry cria item approved com source_reply_id e a linha em recommendation_reply_promotions (20260821000006:43-103), service_role apenas",
-        "Não existe caminho de mesclagem de candidata em item canônico já existente",
-        "arrival_guide_entries.source_reply_id e a policy arrival_guide_select_approved_locality_member permitem ao membro ler o vínculo canônico já promovido — é o que o DS-006 usa",
-        "Contrato funcional separado: docs/superpowers/specs/2026-09-20-resposta-candidata-guia-design.md"
+        "ADR-20260921-curadoria-assistida-do-guia: decisao aprovada pelo dono em 21/09/2026, risco R3 pela regra operavel da RISK_MATRIX (toca supabase/migrations), nao por sensibilidade do dado",
+        "A unica policy de leitura para membro e arrival_guide_select_approved_locality_member (status=approved + is_locality_member); a permissiva anterior foi derrubada em 20260815210000_arrival_guide_curation.sql:24 — por isso o membro nao pode ler a propria candidata pendente",
+        "public.operators nao tem locality_id (20260806040949_operator_authorization.sql:22): operador e papel global, entao a carga de curadoria cresce com cidades x usuarios",
+        "arrival_guide_entries.source aceita manual e ai, e existe confidence smallint 0-100 (20260815210000:9-14); o seed ja traz uma entrada pending com source=ai",
+        "pg_cron habilitado em 20260814074813; padrao de worker em 20260814174705_outbox_worker.sql; quatro jobs ja agendados",
+        "promote_reply_to_guide_entry cria o item approved com source_reply_id e a linha em recommendation_reply_promotions (20260821000006:43-103), service_role apenas",
+        "Caminho positivo provado em runtime no DS-006: entrada 224b9819 Eletricista Nivaldo, approved, source_reply_id=7de625a3, com Ver no Guia lido pelo membro apos recarga",
+        "Nao existe indice unico em source_reply_id — verificado em pg_indexes no banco local",
+        "/guide/sugerir ja construida e chamando suggest_guide_entry; nenhuma tela consulta submitted_by"
       ],
       "tests": [
-        "pgTAP positivo e negativo para leitura do vínculo por localidade e por autor",
-        "Teste de atomicidade: falha no envio da candidata não deixa resposta publicada sem registro nem candidata órfã",
-        "Teste de que a candidata não aparece como item do Guia para outros membros antes da aprovação",
-        "Teste de navegador da religação: após aprovação, a mesma resposta passa a exibir o item canônico sem novo POST"
+        "pgTAP: o indice unico parcial impede duas entradas com o mesmo source_reply_id",
+        "pgTAP negativo: a candidata pending nao e legivel por membro comum antes da aprovacao",
+        "Teste do job: deduplicacao evita segunda candidata para lugar ja presente no Guia da localidade",
+        "Teste do job: teto por localidade e piso de confidence sao respeitados numa execucao",
+        "Teste de navegador: apos o operador aprovar uma candidata com source_reply_id, a resposta de origem passa a exibir Ver no Guia sem acao do membro",
+        "Teste de que nenhuma superficie do membro exibe estado de curadoria"
       ],
       "links": [
+        "docs/decisions/ADR-20260921-curadoria-assistida-do-guia.md",
         "docs/superpowers/specs/2026-09-20-resposta-candidata-guia-design.md",
         "docs/agents/tasks/DS-006.task.yml",
-        "docs/design/visual-guide-2026-09-06/MOBBIN-INDICACOES-2026-09-20.md",
         "docs/design/visual-guide-2026-09-06/80-web-recomendacoes.png"
       ],
       "dependencies": ["PROD-INICIO-UX-20260919"],
-      "updatedAt": "2026-09-20",
-      "sourceRevision": "cc1eb05",
-      "blockers": [
-        "Decisão técnica R3 sobre a forma do vínculo (coluna, relação ou divergência aceita) — não pode ser tomada por agente",
-        "Migration com schema, RLS e policies, hoje proibida no escopo do DS-006"
-      ],
+      "updatedAt": "2026-09-21",
+      "sourceRevision": "db75718",
+      "blockers": [],
       "completedChecklist": [false, false, false, false, false, false]
     }
   ]
