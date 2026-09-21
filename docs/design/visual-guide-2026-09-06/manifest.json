@@ -1,7 +1,7 @@
 {
   "title": "Bivaque — Guia visual de construção",
   "date": "2026-09-06",
-  "sourceRevision": "4396358",
+  "sourceRevision": "b4f0d1b",
   "generationTool": "image_gen integrado; a prancha 70 é render determinístico de HTML sobre os tokens reais",
   "scope": "Conceitos mobile e web autorizados nesta conversa. Referências de aparência e fluxo; não comprovam disponibilidade no aplicativo.",
   "artifacts": [
@@ -751,7 +751,7 @@
       "executedPrompt": "Edit target: supplied BIVAQUE three-phone composer board. Preserve exact style, people, question content, navigation and phones. Replace 'Para qual comunidade?' with 'Quem pode ver?'. Left selected audience 'Toda a cidade' with subtitle 'Brasília, DF'. Middle audience sheet three radio options: 'Toda a cidade' / 'Brasília, DF' selected first; 'Jardim das Acácias' / 'Comunidade'; 'Famílias em Brasília' / 'Comunidade'. Helper 'Pergunte para a cidade ou para uma comunidade da qual participa.' Keep Aplicar. Third published state must reflect city audience: author metadata 'Há 1 min • Brasília, DF', audience block city icon 'Toda a cidade' / 'Brasília, DF'. No claim visible publicly outside Bivaque, no community-only audience helper. All remaining content unchanged.",
       "reviewNotes": [
         "A indicação consulta o Guia antes de perguntar à comunidade; a busca reduz duplicidade sem bloquear o pedido.",
-        "Quando a referência não existe, a resposta é publicada imediatamente com Ainda não está no Guia e a candidata segue para revisão humana.",
+        "~~Quando a referência não existe, a resposta é publicada imediatamente com Ainda não está no Guia e a candidata segue para revisão humana.~~ **Divergência de 21/09/2026 (ADR-20260921, aprovado, R3):** este fluxo foi **descartado** e não será construído. A única policy de leitura de `arrival_guide_entries` exige `status='approved'`, então o membro não leria a própria candidata e a etiqueta afirmaria o que o servidor não sabe. Para o membro: pergunta, resposta, fim. A alimentação do Guia passa a ser um **job agendado**. O painel 3 desta prancha (\"Sugerir referência fora do Guia\") não tem contraparte a construir.",
         "Não usar polegar ou botão Indicar como ação de resposta."
       ],
       "revisionPrompt": "Três telas mobile: escolher Pergunta ou Indicação, consultar o Guia e sugerir nova referência; a resposta publica agora e somente a candidata aguarda revisão humana.",
@@ -1392,9 +1392,9 @@
         "Revisão humana e publicação"
       ],
       "reviewNotes": [
-        "A resposta da comunidade é publicada antes da curadoria; somente a referência candidata espera revisão.",
+        "A resposta da comunidade é publicada antes da curadoria; somente a referência candidata espera revisão. **Divergência de 21/09/2026 (ADR-20260921, aprovado, R3):** a curadoria continua humana e nada entra no Guia automaticamente, mas a candidata **deixou de nascer da resposta do membro**: ela passa a ser preparada por um job agendado (dedup contra o Guia da localidade antes de escrever, `source='ai'`, `confidence`, `source_reply_id`). A leitura \"a resposta do membro gera a candidata\" está superada; a fila do operador permanece.",
         "Nada entra no Guia automaticamente. O operador deduplica, aprova, solicita ajuste ou rejeita e a origem permanece registrada.",
-        "A aprovação ou mesclagem deve religar a resposta ao item canônico do Guia."
+        "A aprovação ou mesclagem deve religar a resposta ao item canônico do Guia. **Divergência de 21/09/2026 (ADR-20260921, aprovado, R3):** a religação continua e agora é automática: `arrival_guide_entries.source_reply_id` já é o que move o `Ver no Guia`, então aprovar a candidata liga a resposta sozinha, sem interface nova e sem ação do membro."
       ],
       "revisionPrompt": "Dois estados de operação: candidata derivada da resposta com possível duplicidade e revisão humana com origem e trilha de decisão preservadas.",
       "source": "~/.codex/generated_images/01a0bbdb-28c9-7471-9f2f-0697128accb1/exec-15f6d886-1150-44db-8474-75104607161c.png",
@@ -1543,7 +1543,7 @@
       ],
       "reviewNotes": [
         "Mobbin/Nextdoor: Responder abre a contribuição; o MVP não usa polegar, curtida ou Isso ajudou nesse fluxo.",
-        "Com correspondência, a resposta aponta para o item do Guia. Sem correspondência, aparece imediatamente como Ainda não está no Guia e envia uma candidata à curadoria.",
+        "~~Com correspondência, a resposta aponta para o item do Guia. Sem correspondência, aparece imediatamente como Ainda não está no Guia e envia uma candidata à curadoria.~~ **Divergência de 21/09/2026 (ADR-20260921, aprovado, R3):** ver a nota de divergência abaixo. Esta afirmação descrevia o fluxo do membro, que foi descartado; a religação continua existindo, mas pelo operador (via `source_reply_id`), não por ação de quem respondeu.",
         "A autora pode marcar Resolveu meu pedido independentemente da aprovação no Guia; Denunciar permanece no overflow.",
         "Não inventar estrelas, selos, ranking, promessa comercial, SLA ou pagamento.",
         "Divergencia registrada em 21/09/2026 (ADR-20260921, aprovado, R3): o painel 2 desta prancha NAO sera construido. O fluxo de referencia candidata voltado ao membro foi descartado porque a unica policy de leitura de arrival_guide_entries exige status='approved' — o membro nao leria a propria candidata e a etiqueta afirmaria o que o servidor nao sabe. Para o membro: pergunta, resposta, fim. A alimentacao do Guia passa a ser trabalho de sistema: job agendado le respostas com sinal de qualidade, deduplica contra o Guia da localidade antes de escrever e grava pending com source='ai', confidence e source_reply_id. A religacao continua existindo pelo operador, via source_reply_id."
@@ -1698,6 +1698,18 @@
       "id": "80-web-recomendacoes-painel-2",
       "reason": "ADR-20260921-curadoria-assistida-do-guia (aprovado, R3) — fluxo descartado por decisao do dono",
       "instructions": "Nada a construir. O painel 2 da prancha 80 (referencia candidata, chip Ainda nao esta no Guia, Publicar resposta e enviar candidata a revisao) foi descartado e a nota de 20/09 em MOBBIN-INDICACOES-2026-09-20.md descreve esse fluxo. A divergencia esta registrada no README (secao 80-web-recomendacoes) e na secao Divergencia registrada em 21/09/2026 daquela nota. Nao redesenhar nem regerar a imagem: ela segue como referencia de composicao do que existir.",
+      "registeredAt": "2026-09-21"
+    },
+    {
+      "id": "44-mobile-publicacao-painel-3",
+      "reason": "ADR-20260921-curadoria-assistida-do-guia (aprovado, R3) — fluxo descartado por decisao do dono",
+      "instructions": "Nada a construir. O painel 3 da prancha 44 (Sugerir referencia fora do Guia) e a nota de 20/09 descrevem o fluxo de referencia candidata voltado ao membro, descartado pelo ADR. A divergencia esta registrada no README (secao 44-mobile-publicacao), na reviewNote desta prancha e na secao Divergencia registrada em 21/09/2026 de MOBBIN-INDICACOES-2026-09-20.md. NAO redesenhar nem regerar a imagem: ela segue como referencia historica valida de composicao; o que muda e a nota que prometia construir.",
+      "registeredAt": "2026-09-21"
+    },
+    {
+      "id": "74-web-guia-curadoria-origem-da-candidata",
+      "reason": "ADR-20260921 — a fila do operador permanece, mas a candidata deixou de nascer da resposta do membro",
+      "instructions": "A tela do operador continua sendo construida (P3c). O que muda e a origem da candidata: ela passa a ser preparada por job agendado, com dedup contra o Guia da localidade antes de escrever. A leitura 'a resposta do membro gera a candidata' esta superada. A religacao resposta<->item canonico continua e agora e automatica via source_reply_id.",
       "registeredAt": "2026-09-21"
     }
   ],

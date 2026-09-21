@@ -258,7 +258,7 @@ As notas abaixo são obrigatórias para construção; corrigem divergências dos
 ### 44-mobile-publicacao
 
 - A entrada separa `Fazer uma pergunta` de `Pedir uma indicação` e consulta o Guia antes da comunidade.
-- Sem correspondência, a resposta é publicada na hora como `Ainda não está no Guia`; só a referência candidata aguarda revisão.
+- **Divergência registrada em 21/09/2026:** o `ADR-20260921-curadoria-assistida-do-guia` (aprovado, R3) **descarta o fluxo de referência candidata** e o **painel 3 desta prancha ("Sugerir referência fora do Guia") não será construído**. A única policy de leitura de `arrival_guide_entries` exige `status='approved'`, então o membro não leria a própria candidata e a etiqueta `Ainda não está no Guia` afirmaria o que o servidor não sabe. Para o membro: pergunta, resposta, fim. A alimentação do Guia passa a ser um **job agendado**.
 - Não usar polegar ou o rótulo `Indicar` como comando de contribuição.
 
 ### 45-web-publicacao
@@ -268,8 +268,8 @@ As notas abaixo são obrigatórias para construção; corrigem divergências dos
 
 ### 74-web-guia-curadoria
 
-- A resposta comunitária não espera curadoria. O operador decide apenas sobre a referência candidata.
-- Mesclar ou aprovar deve preservar origem e religar a resposta ao item canônico do Guia.
+- A resposta comunitária não espera curadoria. O operador decide apenas sobre a referência candidata. **Divergência de 21/09/2026 (ADR-20260921):** a curadoria continua humana e nada entra no Guia automaticamente, mas a candidata **deixou de nascer da resposta do membro** — ela passa a ser preparada por um job agendado, com deduplicação contra o Guia da localidade antes de escrever. A fila do operador permanece; a leitura "a resposta do membro gera a candidata" está superada.
+- Mesclar ou aprovar deve preservar origem e religar a resposta ao item canônico do Guia. **A religação agora é automática:** `arrival_guide_entries.source_reply_id` já é o que move o `Ver no Guia`, então aprovar a candidata liga a resposta sozinha, sem interface nova e sem ação do membro.
 
 ### 80-web-recomendacoes
 

@@ -23,10 +23,10 @@ Este registro substitui a proposta exploratória de usar um polegar com o rótul
 ## Pranchas substituídas
 
 - `01-web-inicio.png`: intenções explícitas e pedido com ação `Responder`.
-- `44-mobile-publicacao.png`: escolha de intenção, busca no Guia e candidato fora do Guia.
+- `44-mobile-publicacao.png`: escolha de intenção, busca no Guia e ~~candidato fora do Guia~~ — **o painel 3 ("Sugerir referência fora do Guia") não será construído** (ver a seção "Divergência registrada em 21/09/2026" abaixo). A escolha de intenção e a consulta ao Guia continuam válidas.
 - `45-web-publicacao.png`: busca no Guia antes do pedido e fallback para a comunidade.
-- `74-web-guia-curadoria.png`: origem, deduplicação e aprovação humana.
-- `80-web-recomendacoes.png`: resposta vinculada ou candidata, publicação imediata e revisão.
+- `74-web-guia-curadoria.png`: origem, deduplicação e aprovação humana. A fila do operador permanece, mas a candidata passou a ser preparada por job agendado em vez de nascer da resposta do membro.
+- `80-web-recomendacoes.png`: ~~resposta vinculada ou candidata, publicação imediata e revisão~~ — **o painel 2 não será construído**; a resposta vinculada a um item existente do Guia continua válida.
 
 As versões anteriores foram preservadas em `history/2026-09-20-mobbin-indicacoes/`. A versão da
 Home anterior ao ajuste de densidade e a prancha 80 anterior à remoção do feedback foram
