@@ -39,3 +39,37 @@ preservadas em `history/2026-09-20-home-compacta/`.
 - Estado novo ou vazio pode usar explicações maiores.
 - HeroUI fornece comportamento acessível; não define hierarquia, densidade ou aparência da tela.
 - A implementação não está aceita sem operação real e comparação visual em 375, 768 e 1440.
+
+## Divergência registrada em 21/09/2026 — leia antes de implementar a prancha 80
+
+O `ADR-20260921-curadoria-assistida-do-guia` (aprovado, R3) **descarta o fluxo voltado ao membro**
+que a seção "Decisão de interação" acima descreve. O texto original fica neste arquivo como registro
+histórico da decisão de 20/09, **não** como entrega pendente.
+
+**Não será construído**, e a prancha 80 **painel 2** (referência candidata, chip `Ainda não está no
+Guia`, "Publicar resposta e enviar candidata à revisão") **não será implementada**:
+
+| Item de 20/09 | Situação após o ADR-20260921 |
+|---|---|
+| "A resposta procura e vincula uma referência do Guia antes de ser enviada" | **descartado** — a resposta é uma resposta; quem cura é o sistema |
+| "Sem correspondência, a resposta é publicada imediatamente como `Ainda não está no Guia`" | **descartado** — a policy de leitura só expõe `status='approved'`, então o membro não leria a própria candidata; a etiqueta afirmaria o que o servidor não sabe |
+| "Aprovação ou mesclagem posterior liga retroativamente a resposta ao item canônico" | **descartado como fluxo do membro** — a religação continua existindo, mas pelo operador (`source_reply_id`), não por ação de quem respondeu |
+| "A autora do pedido pode marcar `Resolveu meu pedido` sem depender da curadoria" | **mantido em substância**; a redação do rótulo é decisão em aberto (ver abaixo) |
+
+**Permanecem válidos** desta nota: `Responder` abre a contribuição; o MVP não introduz polegar,
+curtida nem `Isso ajudou?`; `Denunciar` fica no menu de overflow; e a implementação não está aceita
+sem operação real e comparação em 375, 768 e 1440.
+
+A alimentação do Guia passa a ser trabalho de sistema, invisível ao membro: um job agendado lê
+respostas com sinal de qualidade, extrai nome e categoria, deduplica contra o Guia da localidade
+**antes** de escrever e grava `pending` com `source='ai'`, `confidence` e `source_reply_id`. Quando o
+operador aprova, a resposta que originou a candidata passa a exibir o vínculo sozinha. Os dois
+caminhos que já existiam — sugestão deliberada em `/guide/sugerir` e promoção pelo operador —
+continuam sendo os caminhos de entrada do Guia.
+
+**Continuam fora do escopo desta nota, e não são resolvidos aqui:**
+
+- o conflito de redação entre `Ajudou a resolver` (`ADR-20260909`, aprovado, R3) e `Resolveu meu
+  pedido` (pranchas de 20/09) é **decisão separada do dono**;
+- o painel 3 da prancha 45 e o painel 2 da 80 seguem sendo referência de composição para o que
+  existir, mas o painel 2 da 80 não tem contraparte a construir.

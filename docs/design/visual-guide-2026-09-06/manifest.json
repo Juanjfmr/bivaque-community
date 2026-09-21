@@ -1,7 +1,7 @@
 {
   "title": "Bivaque — Guia visual de construção",
   "date": "2026-09-06",
-  "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
+  "sourceRevision": "4396358",
   "generationTool": "image_gen integrado; a prancha 70 é render determinístico de HTML sobre os tokens reais",
   "scope": "Conceitos mobile e web autorizados nesta conversa. Referências de aparência e fluxo; não comprovam disponibilidade no aplicativo.",
   "artifacts": [
@@ -1545,7 +1545,8 @@
         "Mobbin/Nextdoor: Responder abre a contribuição; o MVP não usa polegar, curtida ou Isso ajudou nesse fluxo.",
         "Com correspondência, a resposta aponta para o item do Guia. Sem correspondência, aparece imediatamente como Ainda não está no Guia e envia uma candidata à curadoria.",
         "A autora pode marcar Resolveu meu pedido independentemente da aprovação no Guia; Denunciar permanece no overflow.",
-        "Não inventar estrelas, selos, ranking, promessa comercial, SLA ou pagamento."
+        "Não inventar estrelas, selos, ranking, promessa comercial, SLA ou pagamento.",
+        "Divergencia registrada em 21/09/2026 (ADR-20260921, aprovado, R3): o painel 2 desta prancha NAO sera construido. O fluxo de referencia candidata voltado ao membro foi descartado porque a unica policy de leitura de arrival_guide_entries exige status='approved' — o membro nao leria a propria candidata e a etiqueta afirmaria o que o servidor nao sabe. Para o membro: pergunta, resposta, fim. A alimentacao do Guia passa a ser trabalho de sistema: job agendado le respostas com sinal de qualidade, deduplica contra o Guia da localidade antes de escrever e grava pending com source='ai', confidence e source_reply_id. A religacao continua existindo pelo operador, via source_reply_id."
       ],
       "revisionPrompt": "Dois estados web: resposta vinculada com Ver no Guia e Resolveu meu pedido; referência ausente publicada como Ainda não está no Guia e enviada à revisão. Sem polegar, curtida ou Isso ajudou.",
       "source": "~/.codex/generated_images/01a0bbdb-28c9-7471-9f2f-0697128accb1/exec-ea7fd820-9d34-45a6-82c2-578c6201f1ca.png",
@@ -1690,9 +1691,16 @@
     "status": "partial",
     "details": "auth-generation.json"
   },
-  "updatedAt": "2026-09-20",
+  "updatedAt": "2026-09-21",
   "expansionProvenance": "./expansion-generation.json",
-  "pendingCorrections": [],
+  "pendingCorrections": [
+    {
+      "id": "80-web-recomendacoes-painel-2",
+      "reason": "ADR-20260921-curadoria-assistida-do-guia (aprovado, R3) — fluxo descartado por decisao do dono",
+      "instructions": "Nada a construir. O painel 2 da prancha 80 (referencia candidata, chip Ainda nao esta no Guia, Publicar resposta e enviar candidata a revisao) foi descartado e a nota de 20/09 em MOBBIN-INDICACOES-2026-09-20.md descreve esse fluxo. A divergencia esta registrada no README (secao 80-web-recomendacoes) e na secao Divergencia registrada em 21/09/2026 daquela nota. Nao redesenhar nem regerar a imagem: ela segue como referencia de composicao do que existir.",
+      "registeredAt": "2026-09-21"
+    }
+  ],
   "resolvedCorrections": [
     {
       "id": "34-mobile-onboarding-contexto",

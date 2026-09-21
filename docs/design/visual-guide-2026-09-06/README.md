@@ -274,9 +274,11 @@ As notas abaixo são obrigatórias para construção; corrigem divergências dos
 ### 80-web-recomendacoes
 
 - `Responder` abre a contribuição. O MVP não usa polegar, curtida ou `Isso ajudou?` nesse fluxo.
-- Com referência ausente, mostrar `Ainda não está no Guia`, publicar a resposta e enviar a candidata à revisão humana.
+- **Divergência registrada em 21/09/2026:** o `ADR-20260921-curadoria-assistida-do-guia` (aprovado, R3) **descarta o fluxo de referência candidata** e o **painel 2 desta prancha não será construído**. A policy de leitura de `arrival_guide_entries` só expõe `status='approved'`, então o membro não leria a própria candidata e a etiqueta `Ainda não está no Guia` afirmaria o que o servidor não sabe. Para o membro: pergunta, resposta, fim.
 - A autora pode marcar `Resolveu meu pedido` antes da decisão de curadoria; denúncia continua no overflow.
 - No MVP, remover também `Isso ajudou?`: `Resolveu meu pedido` é o único sinal de fechamento.
+- O Guia passa a ser alimentado por um **job agendado** (quinto job do padrão `pg_cron` + `pg_net`), que lê respostas com sinal de qualidade, deduplica contra o Guia da localidade **antes** de escrever e grava `pending` com `source='ai'`, `confidence` e `source_reply_id`. Os caminhos de entrada do Guia continuam sendo `/guide/sugerir` e a promoção pelo operador.
+- Detalhamento: [`MOBBIN-INDICACOES-2026-09-20.md`](./MOBBIN-INDICACOES-2026-09-20.md), seção "Divergência registrada em 21/09/2026".
 
 ### 46-mobile-eventos
 
