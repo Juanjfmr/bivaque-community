@@ -12,7 +12,11 @@ import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedComposer } from "../../components/bivaque/feed-composer"
 import { CreatePostModal, FeedPost } from "../../components/bivaque/feed-post"
-import { FeedRightRail } from "../../components/bivaque/feed-right-rail"
+import {
+  FeedRailDisclosure,
+  FeedRightRail,
+  useFeedRailData,
+} from "../../components/bivaque/feed-right-rail"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
@@ -44,6 +48,10 @@ export default function CommunityPage() {
   const hasScrolledToDeepLink = useRef(false)
 
   const supabase = createBrowserClient()
+
+  // O trilho só existe no ramo do feed (sem comunidade aprovada a rota desenha
+  // CityReference, que não tem trilho); `enabled` evita a consulta órfã.
+  const railData = useFeedRailData(hasResolved && primaryCommunityId !== null)
 
   const loadFeed = useCallback(
     async (order: "recent" | "relevant" = sortOrder) => {
@@ -311,6 +319,13 @@ export default function CommunityPage() {
                 </ToggleButton>
               </ButtonGroup>
 
+              {/* Abaixo de 1024px o trilho não existe: o que ele carrega (eventos,
+                  grupos e as regras) não aparece em nenhum outro lugar desta rota,
+                  então desce fechado para a coluna do feed. Fechado porque o feed
+                  não tem limite de itens — aberto por padrão, empurraria as
+                  publicações para baixo de uma lista de contexto. */}
+              <FeedRailDisclosure data={railData} />
+
               {/* error state */}
               {error && <ErrorState message={error} onRetry={() => loadFeed(sortOrder)} />}
 
@@ -387,7 +402,7 @@ export default function CommunityPage() {
             </div>
 
             {/* right rail */}
-            <FeedRightRail />
+            <FeedRightRail data={railData} />
           </div>
 
           {showCreateModal && (
