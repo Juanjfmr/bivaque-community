@@ -44,7 +44,7 @@ de curadoria e colocar maquinaria operacional dentro de uma conversa.
 `/guide/sugerir` (prancha 12/61, ja construida, chama `suggest_guide_entry`), e promocao de uma
 resposta boa pelo operador via `promote_reply_to_guide_entry`.
 
-**3. Entra um job agendado que prepara a fila.** E o quinto job do padrao ja estabelecido no
+**3. Entra um job agendado que prepara a fila.** E o **nono** job do padrao ja estabelecido no
 repositorio — `pg_cron` manda, o banco prepara as linhas devidas e entrega ao endpoint interno
 do Next por `pg_net`, a aplicacao e dona do adaptador. O job:
 
@@ -115,8 +115,12 @@ Fica em aberto, e **nao e decidido aqui**, o conflito de redacao entre `Ajudou a
 - `arrival_guide_entries.source` aceita `'manual'` e `'ai'`, e existe `confidence smallint 0-100`
   (`20260815210000:9-14`). O seed ja traz uma entrada `pending` com `source = 'ai'`.
 - `pg_cron` habilitado em `20260814074813`; padrao de worker em `20260814174705_outbox_worker.sql`;
-  quatro jobs ja agendados (outbox, reconciliacao de verificacao, decisao de documento, eventos
-  recorrentes).
+  **oito jobs ja agendados** em `cron.job` (`bivaque-account-deletion-purge`,
+  `bivaque-advance-recurring-events`, `bivaque-heartbeat`, `bivaque-listing-alerts`,
+  `bivaque-outbox-worker`, `bivaque-recurring-event-reminders`,
+  `bivaque-verification-document-ttl-purge`, `bivaque-verification-reconcile`) — verificado por
+  consulta ao banco local em 21/09/2026. Uma revisao anterior desta secao dizia "quatro"; a
+  contagem estava errada e o job desta decisao e o **nono**, nao o quinto.
 - `promote_reply_to_guide_entry` cria o item `approved` com `source_reply_id` e a linha em
   `recommendation_reply_promotions` (`20260821000006:43-103`), service_role apenas.
 - Caminho positivo provado em runtime no ciclo DS-006: entrada `224b9819` "Eletricista Nivaldo",
