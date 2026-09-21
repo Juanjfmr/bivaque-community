@@ -73,23 +73,18 @@ export function AppShell({ children }: AppShellProperties) {
             44px sem espremer as ações; de sm para cima fica entre o pill da
             cidade e as ações, como na prancha 61. */}
         <div className="flex min-h-[var(--semantic-nav-height)] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2 sm:flex-nowrap sm:py-0">
-          {/* Left section — só o toggle de largura da lateral. A cidade foi
-              para a direita, junto do sino, como a prancha desenha. */}
-          <div className="flex items-center gap-3">
-            {/* Sidebar toggle visible on desktop */}
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              aria-label={isRail ? "Expandir menu lateral" : "Recolher menu lateral"}
-              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
-            >
-              {isRail ? (
-                <PanelLeft size={20} aria-hidden="true" />
-              ) : (
-                <ChevronsLeft size={20} aria-hidden="true" />
-              )}
-            </button>
-          </div>
+          {/* Âncora da primeira linha do cabeçalho — vazia de propósito. Abaixo
+              de sm o campo de busca desce para a segunda linha (`order-last`);
+              sem este irmão, o `justify-between` empurraria as ações (cidade,
+              Indicações, sino, perfil) para a borda esquerda. A cidade fica à
+              direita, junto do sino, como a prancha desenha.
+
+              O acionador de largura da lateral não mora aqui: a prancha desenha
+              este cabeçalho como busca + cidade + ações, sem controle na borda
+              esquerda, e recolher/expandir pertence ao cabeçalho da própria
+              lateral, junto do nome. Foi este o controle duplicado do achado P2
+              da auditoria de 19/09/2026. */}
+          <div className="flex items-center gap-3" />
 
           {/* Search — order-last on mobile, centered on desktop */}
           <div className="order-last w-full sm:order-none sm:mx-2 sm:w-auto sm:max-w-xl sm:flex-1">
