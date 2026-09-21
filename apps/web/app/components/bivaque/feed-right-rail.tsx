@@ -48,10 +48,14 @@ export interface FeedRailData {
 // do telefone (<1024px) são duas montagens do MESMO dado, e duas instâncias
 // buscando por conta própria dobrariam as consultas sem necessidade.
 //
-// `enabled` existe porque /community só monta o trilho no ramo do feed: sem
-// comunidade aprovada a rota desenha CityReference, e ali a consulta de eventos
-// e grupos do trilho não tem quem a consuma.
-export function useFeedRailData(enabled: boolean): FeedRailData {
+// A consulta dispara na MONTAGEM, sem portão. Um `enabled` derivado de
+// `hasResolved && primaryCommunityId` parecia econômico — evita a consulta
+// quando a rota cai em CityReference — mas serializava a leitura do trilho
+// atrás da resolução de membership da página. Medido a 1440 e 375, tempo até o
+// dado do trilho aparecer: 2.360 ms antes, ~4.700 ms com o portão, 2.264/2.370
+// ms sem ele. Latência no caminho principal custa mais caro do que duas
+// consultas ociosas no estado de exceção (membro sem comunidade aprovada).
+export function useFeedRailData(): FeedRailData {
   const [events, setEvents] = useState<EventItem[]>([])
   const [groups, setGroups] = useState<GroupItem[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -59,9 +63,6 @@ export function useFeedRailData(enabled: boolean): FeedRailData {
   const supabase = createBrowserClient()
 
   useEffect(() => {
-    // Desabilitado = sem trilho na árvore: não gasta consulta nem marca loaded.
-    if (!enabled) return
-
     let cancelled = false
 
     async function load() {
@@ -109,7 +110,7 @@ export function useFeedRailData(enabled: boolean): FeedRailData {
     return () => {
       cancelled = true
     }
-  }, [enabled, supabase, current.id])
+  }, [supabase, current.id])
 
   return { events, groups, loaded }
 }

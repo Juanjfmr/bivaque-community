@@ -49,9 +49,9 @@ export default function CommunityPage() {
 
   const supabase = createBrowserClient()
 
-  // O trilho só existe no ramo do feed (sem comunidade aprovada a rota desenha
-  // CityReference, que não tem trilho); `enabled` evita a consulta órfã.
-  const railData = useFeedRailData(hasResolved && primaryCommunityId !== null)
+  // Uma leitura só serve as duas montagens do trilho (a de >=1024px e o
+  // disclosure do telefone). Ver useFeedRailData para por que ela não é portão.
+  const railData = useFeedRailData()
 
   const loadFeed = useCallback(
     async (order: "recent" | "relevant" = sortOrder) => {
