@@ -3151,7 +3151,7 @@
       "status": "next",
       "description": "Reenquadrado por ADR-20260921-curadoria-assistida-do-guia. O fluxo voltado ao membro (etiqueta Ainda nao esta no Guia, candidata vinculada a resposta, atomicidade, religacao pela mao de quem respondeu) foi DESCARTADO por decisao do dono: para o membro, um pergunta, o outro responde e acabou. A alimentacao do Guia passa a ser trabalho de sistema, invisivel ao membro: um job agendado le respostas com sinal de qualidade, extrai nome e categoria, deduplica contra o Guia da localidade e grava pending com source=ai, confidence e source_reply_id. Como source_reply_id ja move o Ver no Guia, a aprovacao pelo operador religa a resposta sozinha. Isto NAO bloqueia mais o DS-006.",
       "checklist": [
-        "Job agendado no padrao ja estabelecido: pg_cron manda, banco prepara as linhas devidas, entrega ao endpoint interno do Next por pg_net (quinto job, igual ao outbox)",
+        "Job agendado no padrao ja estabelecido: pg_cron manda, banco prepara as linhas devidas, entrega ao endpoint interno do Next por pg_net (nono job, igual ao outbox)",
         "Selecao por sinal de qualidade, comecando por recommendation_requests.resolved_reply_id",
         "Deduplicacao contra o Guia da localidade ANTES de escrever na fila, nao dentro dela",
         "Gravar pending com source=ai, confidence e source_reply_id apontando para a resposta de origem",
@@ -3171,7 +3171,23 @@
         "promote_reply_to_guide_entry cria o item approved com source_reply_id e a linha em recommendation_reply_promotions (20260821000006:43-103), service_role apenas",
         "Caminho positivo provado em runtime no DS-006: entrada 224b9819 Eletricista Nivaldo, approved, source_reply_id=7de625a3, com Ver no Guia lido pelo membro apos recarga",
         "Nao existe indice unico em source_reply_id — verificado em pg_indexes no banco local",
-        "/guide/sugerir ja construida e chamando suggest_guide_entry; nenhuma tela consulta submitted_by"
+        "/guide/sugerir ja construida e chamando suggest_guide_entry; nenhuma tela consulta submitted_by",
+        "P3a (frente de banco, HEAD babf8ea; commits 1f1a958 e babf8ea, ambos SEM BOM com controle positivo em 960f9db): migration 20260921134129_guide_candidate_queue.sql aplicada por supabase migration up --local, sem db:reset e sem recarga de seed",
+        "P3a: indice unico PARCIAL criado — pg_indexes mostra arrival_guide_entries_source_reply_id_key ON public.arrival_guide_entries (source_reply_id) WHERE (source_reply_id IS NOT NULL); indisunique=t, indisvalid=t, indpred nao nulo; nao existia antes (git grep em 20a8771 vazio)",
+        "P3a: private.guide_candidate_select_due seleciona por recommendation_requests.resolved_reply_id, SEM author_id no retorno, e o TETO E POR LOCALIDADE — provado com 3 cidades: cap=1 devolve 3 linhas (1 por cidade), nao 1",
+        "P3a: private.guide_candidate_prepare devolve jsonb com exatamente 3 chaves por item (body, reply_id, locality_id) e items_with_author_id=0; sem devidas devolve []",
+        "P3a: deduplicacao ANTES da escrita, pelo NOME normalizado e nao pela resposta — provado nos dois lados: mesma resposta + nome existente = NULL; mesma resposta + nome novo = gravou; outra resposta + nome ja existente = NULL; outra resposta + nome novo = gravou",
+        "P3a: gravacao pending com source='ai', confidence=90 e source_reply_id apontando a resposta, submitted_by NULL (a maquina nao e membro)",
+        "P3a: piso de confidence medido em 60 — 59 devolve NULL, 60 grava, NULL devolve NULL",
+        "P3a: NEGATIVO exigido — segunda entrada para o mesmo source_reply_id falha com 23505 unique_violation na constraint arrival_guide_entries_source_reply_id_key; pela funcao a segunda chamada devolve NULL idempotente (curto-circuita antes do indice)",
+        "P3a: NEGATIVO exigido com CONTROLE POSITIVO — a candidata pending nao e legivel por membro comum, e a invisibilidade e a POLICY (arrival_guide_select_approved_locality_member, status='approved'), nao ausencia de dado: como service_role as linhas aparecem, e virando apenas o status a MESMA linha fica visivel ao MESMO membro",
+        "P3a: authenticated recebe 42501 nas 7 funcoes do schema private; anon recebe 42501 no schema private",
+        "P3a: cron.job tem 9 linhas; jobid 9 = bivaque-guide-candidate-prepare, '0 5 * * *', select private.guide_candidate_prepare(), active=t, nomes duplicados=0, e SEM net.http_post no comando (fronteira do despacho respeitada)",
+        "P3a: nenhuma linha foi criada pela migration — 16 instrucoes aplicadas de topo, 0 de DML; a unica mencao textual a insert into public.arrival_guide_entries esta dentro do corpo do create function",
+        "P3a: correcao do comentario de 20260821000006 e SOMENTE de comentario — prova independente: codigo com comentarios removidos identico nos dois lados (116 linhas, SHA256 48e6553434aeb17ffa4d1880552a46a9fabb1ad40f514581912f3d63ee4c7112)",
+        "P3a: pgTAP proprio (supabase/tests/guide-candidate-queue.sql) com 33 assercoes, ok, incluindo as duas negativas exigidas com seus controles positivos; suite total 1628 testes, arquivo novo ausente dos 19 vermelhos pre-existentes por residuo/seed (nenhum deles referencia source_reply_id ou guide_candidate)",
+        "P3a: pnpm gate completo exit 0 (lint, typecheck, build, test, secrets). A camada visual nao e afetada: git diff --name-only 20a8771 babf8ea = 3 arquivos, todos .sql, zero apps/web",
+        "P3a NAO cobre, e segue aberto: extracao por IA (prova com extracao sintetica, sem chave de provedor), despacho por pg_net, leitura do Vault, endpoint interno (P3b) e tela do operador (P3c)"
       ],
       "tests": [
         "pgTAP: o indice unico parcial impede duas entradas com o mesmo source_reply_id",
@@ -3189,9 +3205,13 @@
       ],
       "dependencies": ["PROD-INICIO-UX-20260919"],
       "updatedAt": "2026-09-21",
-      "sourceRevision": "db75718",
-      "blockers": [],
-      "completedChecklist": [false, false, false, false, false, false]
+      "sourceRevision": "babf8ea",
+      "blockers": [
+        "P3b pendente: endpoint interno, leitura de Vault, despacho por pg_net e ligacao dos modulos de IA (deepseek-disconnected.test.ts e do P3b e nao foi tocada)",
+        "P3c pendente: tela do operador com o texto original da resposta ao lado da candidata",
+        "Decisao do dono pendente: resposta cujo lugar ja esta no Guia fica 'devida' para sempre e o P3b reenviaria o mesmo corpo a cada execucao — o marcador de 'ja tentado, nada produzido' e estado novo"
+      ],
+      "completedChecklist": [false, true, true, true, true, false, true, false, true, true]
     }
   ]
 }
