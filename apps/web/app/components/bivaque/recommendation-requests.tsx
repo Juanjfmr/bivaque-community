@@ -9,7 +9,11 @@ import { useLocalityContext } from "../../../lib/locality-context"
 import { callResolutionRpc } from "../../../lib/recommendations/resolution-rpcs"
 import { localityScopeLabel } from "../../../lib/recommendations/scope-label"
 import { overflowTriggerLabel } from "../../../lib/recommendations/trigger-label"
-import { resolutionOperation, writeFailure } from "../../../lib/recommendations/write-failure-copy"
+import {
+  readFailure,
+  resolutionOperation,
+  writeFailure,
+} from "../../../lib/recommendations/write-failure-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "./card"
 import { EmptyState } from "./empty-state"
@@ -148,7 +152,9 @@ export default function RecommendationRequests() {
       .order("created_at", { ascending: false })
 
     if (requestError) {
-      setError("Não foi possível carregar os pedidos de indicação.")
+      // A frase já era de produto; o que faltava era a causa. `readFailure`
+      // registra e devolve o MESMO texto que já estava na tela.
+      setError(readFailure("carregar_pedidos", requestError.message))
       setLoading(false)
       return
     }
@@ -172,8 +178,9 @@ export default function RecommendationRequests() {
             .in("request_id", requestIds),
         ])
 
-      if (repliesError || savesError) {
-        setError("Não foi possível carregar respostas e salvos.")
+      const falhaDaCarga = repliesError ?? savesError
+      if (falhaDaCarga) {
+        setError(readFailure("carregar_respostas_e_salvos", falhaDaCarga.message))
         setLoading(false)
         return
       }

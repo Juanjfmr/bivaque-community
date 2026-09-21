@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
 import { resolveRecommendationTab } from "../../../lib/recommendations/request-tab"
+import { readFailure, writeFailure } from "../../../lib/recommendations/write-failure-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "../../components/bivaque/avatar"
 import { Card } from "../../components/bivaque/card"
@@ -136,6 +137,11 @@ export default function RecommendationsPage() {
   const [error, setError] = useState("")
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null)
   const [joinFeedback, setJoinFeedback] = useState("")
+  // F1: entrar no grupo falhava mostrando a mensagem crua do servidor dentro do
+  // alerta VERDE de sucesso — dois defeitos no mesmo estado. Sucesso e falha
+  // ficam em estados separados porque o FeedbackAlert muda de papel com o
+  // variant (`status` polido × `alert` assertivo), não só de cor.
+  const [joinError, setJoinError] = useState("")
 
   // request form
   const [requestCategory, setRequestCategory] = useState<RecommendationCategory | "">("")
@@ -188,6 +194,7 @@ export default function RecommendationsPage() {
     setLoading(true)
     setError("")
     setJoinFeedback("")
+    setJoinError("")
 
     try {
       // 1. auth
@@ -278,7 +285,11 @@ export default function RecommendationsPage() {
       }
       setGroupMemberCounts(counts)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar recomendações.")
+      // ErrorState proíbe explicitamente texto cru do servidor: a causa vai para
+      // o log do projeto, a tela recebe a frase de produto.
+      setError(
+        readFailure("carregar_recomendacoes", err instanceof Error ? err.message : String(err)),
+      )
     } finally {
       setLoading(false)
     }
@@ -324,6 +335,7 @@ export default function RecommendationsPage() {
     async (groupId: string) => {
       setJoiningGroupId(groupId)
       setJoinFeedback("")
+      setJoinError("")
       setError("")
 
       const { error: rpcError } = await supabase.rpc("join_group", {
@@ -331,7 +343,7 @@ export default function RecommendationsPage() {
       })
 
       if (rpcError) {
-        setJoinFeedback(rpcError.message)
+        setJoinError(writeFailure("entrar_no_grupo", rpcError.message))
         setJoiningGroupId(null)
         return
       }
@@ -441,8 +453,12 @@ export default function RecommendationsPage() {
 
         setTimeout(() => setRequestFeedback(""), 4000)
       } catch (err) {
+        // F1 (auditoria de produção): o alerta de perigo mostrava o texto cru do
+        // PostgREST — `column "x_interno_auditoria" does not exist` — e nada era
+        // registrado. Aqui a tela recebe a frase de produto e o log do projeto
+        // recebe a operação e a mensagem do servidor.
         setRequestError(
-          err instanceof Error ? err.message : "Erro ao publicar pedido. Tente novamente.",
+          writeFailure("publicar_pedido", err instanceof Error ? err.message : String(err)),
         )
         setRequestSubmitting(false)
       }
@@ -494,7 +510,9 @@ export default function RecommendationsPage() {
 
       setSavedRequests((requestsData as SavedRequestRow[] | null) ?? [])
     } catch (err) {
-      setSavesError(err instanceof Error ? err.message : "Erro ao carregar indicações salvas.")
+      setSavesError(
+        readFailure("carregar_salvos", err instanceof Error ? err.message : String(err)),
+      )
     } finally {
       setSavesLoading(false)
     }
@@ -511,7 +529,7 @@ export default function RecommendationsPage() {
         .eq("request_id", requestId)
 
       if (error) {
-        setSavesError(error.message)
+        setSavesError(writeFailure("remover_pedido_salvo", error.message))
         setUnsavingId(null)
         return
       }
@@ -583,6 +601,14 @@ export default function RecommendationsPage() {
           {joinFeedback && (
             <div className="mb-4">
               <FeedbackAlert variant="success" description={joinFeedback} />
+            </div>
+          )}
+
+          {/* falha ao entrar no grupo: alerta de perigo próprio, não o verde de
+              sucesso — a mensagem crua do servidor aparecia num alerta verde */}
+          {joinError && (
+            <div className="mb-4">
+              <FeedbackAlert variant="danger" description={joinError} />
             </div>
           )}
 
