@@ -22,7 +22,9 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [defaultPostType, setDefaultPostType] = useState<string | undefined>(undefined)
+  // Dica da ENTRADA (o botão "Link" do compositor), não formato escolhido: o
+  // `post_type` é derivado do anexo real dentro do CreatePostModal.
+  const [entryAttachment, setEntryAttachment] = useState<string | undefined>(undefined)
   const [memberCount, setMemberCount] = useState<number | null>(null)
   const [memberCountError, setMemberCountError] = useState(false)
   const [primaryCommunityId, setPrimaryCommunityId] = useState<string | null>(null)
@@ -145,8 +147,8 @@ export default function CommunityPage() {
     [sortOrder, loadFeed],
   )
 
-  const handleOpenModal = useCallback((postType?: string) => {
-    setDefaultPostType(postType)
+  const handleOpenModal = useCallback((attachment?: string) => {
+    setEntryAttachment(attachment)
     setShowCreateModal(true)
   }, [])
 
@@ -237,11 +239,11 @@ export default function CommunityPage() {
           {showCreateModal && (
             <CreatePostModal
               localityId={current.id}
-              defaultPostType={defaultPostType}
+              initialAttachment={entryAttachment}
               onCreated={handleCreated}
               onClose={() => {
                 setShowCreateModal(false)
-                setDefaultPostType(undefined)
+                setEntryAttachment(undefined)
               }}
             />
           )}
@@ -391,12 +393,12 @@ export default function CommunityPage() {
           {showCreateModal && (
             <CreatePostModal
               localityId={current.id}
-              defaultPostType={defaultPostType}
+              initialAttachment={entryAttachment}
               defaultCommunityId={primaryCommunityId ?? undefined}
               onCreated={handleCreated}
               onClose={() => {
                 setShowCreateModal(false)
-                setDefaultPostType(undefined)
+                setEntryAttachment(undefined)
               }}
             />
           )}

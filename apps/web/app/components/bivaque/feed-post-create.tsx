@@ -1,8 +1,14 @@
 "use client"
 
-// Criação de publicação (prancha 45, painel esquerdo). Composição: destino
-// real ("Quem pode ver?"), texto, detalhes opcionais, foto opcional e a
-// prévia "Como sua publicação será vista" repetindo o público escolhido.
+// Criação de publicação (prancha 44 painel 1 + prancha 45). Composição: a
+// PERGUNTA primeiro, depois destino real ("Quem pode ver?"), detalhes
+// opcionais, anexo opcional e a prévia "Como sua publicação será vista".
+//
+// A intenção já foi escolhida na tela anterior ("Fazer uma pergunta" /
+// "Pedir uma indicação"), então este modal NÃO pergunta o formato de novo:
+// não existe seletor de Texto/Foto/Link/Enquete antes do conteúdo. Anexar foto
+// ou link é opção SOBRE a pergunta e começa vazia; é o ANEXO REAL que deriva o
+// `post_type` gravado (ver `derived`). Não há enquete — nem editor, nem estado.
 //
 // Rascunho (RECON-014): o texto fica no armazenamento do PRÓPRIO navegador
 // (feed-post-draft), nunca no servidor; quem foi interrompido recupera o que
@@ -12,6 +18,7 @@
 
 import { detectCep, detectCpf } from "@bivaque/domain"
 import { Button, Input, Modal, Spinner, TextArea, useOverlayState } from "@heroui/react"
+import { ImagePlus, Link2 } from "lucide-react"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { classifyPublishError } from "../../../lib/composer/publish-error"
@@ -35,14 +42,11 @@ import {
 import { DraftDiscardDialog, DraftNotices } from "./feed-post-draft-ui"
 import { PhotoField } from "./feed-post-photo"
 import { PostPiiWarning } from "./feed-post-pii-warning"
-import { PollEditor } from "./feed-post-poll-editor"
 import { PostPreview } from "./feed-post-preview"
 import {
   type AudienceKey,
   CITY_AUDIENCE_KEY,
   composePostContent,
-  POST_TYPE_LABELS,
-  POST_TYPE_ORDER,
   parseAudienceKey,
   useCurrentUser,
 } from "./feed-post-shared"
@@ -51,7 +55,10 @@ import { showToast } from "./toast"
 
 interface CreatePostModalProps {
   localityId: string
-  defaultPostType?: string | undefined
+  /** Dica da TELA DE ENTRADA: qual anexo já vem oferecido ao abrir. Nunca
+   *  escolhe o formato — o `post_type` sai do anexo real (`derived`), então
+   *  abrir por aqui e não anexar nada publica uma pergunta de texto. */
+  initialAttachment?: string | undefined
   defaultCommunityId?: string | undefined
   onCreated: () => void
   onClose: () => void
@@ -59,9 +66,18 @@ interface CreatePostModalProps {
 
 const AUTOSAVE_DELAY_MS = 400
 
+/** Anexo é um só: `public.posts` guarda `photo_path` OU `link_url` sob CHECKs
+ *  que exigem o `post_type` correspondente, então dois anexos ao mesmo tempo
+ *  são um estado que o banco não sabe representar. */
+type Attachment = "photo" | "link" | null
+
+function normalizeAttachment(value: string | undefined): Attachment {
+  return value === "photo" || value === "link" ? value : null
+}
+
 export function CreatePostModal({
   localityId,
-  defaultPostType,
+  initialAttachment,
   defaultCommunityId,
   onCreated,
   onClose,
@@ -69,14 +85,16 @@ export function CreatePostModal({
   const modal = useOverlayState({ defaultOpen: true, onOpenChange: (open) => !open && onClose() })
   const { current: locality } = useLocalityContext()
   const initialDraft = useRef(loadPostDraft())
-  const [postType, setPostType] = useState(
-    initialDraft.current?.postType ?? defaultPostType ?? "text",
-  )
+  const [attachment, setAttachment] = useState<Attachment>(() => {
+    const draft = initialDraft.current
+    if (draft?.photoPath.trim()) return "photo"
+    if (draft?.linkUrl.trim()) return "link"
+    return normalizeAttachment(initialAttachment)
+  })
   const [content, setContent] = useState(initialDraft.current?.content ?? "")
   const [details, setDetails] = useState(initialDraft.current?.details ?? "")
   const [photoPath, setPhotoPath] = useState(initialDraft.current?.photoPath ?? "")
   const [linkUrl, setLinkUrl] = useState(initialDraft.current?.linkUrl ?? "")
-  const [pollOptions, setPollOptions] = useState<string[]>(initialDraft.current?.pollOptions ?? [])
   const [submitting, setSubmitting] = useState(false)
   // O `kind` do classificador decide a SUPERFÍCIE do erro: falha de transporte
   // (offline, DNS, timeout) é o estado "Sem conexão" da prancha 60, com retomada
@@ -158,6 +176,43 @@ export function CreatePostModal({
     selectedKind.kind,
   ])
 
+  // Trocar de anexo LIMPA o outro. É o que mantém o estado representável no
+  // banco: `photo_path` e `link_url` não coexistem sob as CHECKs de
+  // `public.posts`, e um campo escondido mas preenchido publicaria um anexo que
+  // ninguém vê.
+  const selectAttachment = useCallback(
+    (next: Attachment) => {
+      const chosen = attachment === next ? null : next
+      if (chosen !== "photo") setPhotoPath("")
+      if (chosen !== "link") setLinkUrl("")
+      setAttachment(chosen)
+    },
+    [attachment],
+  )
+
+  // O ANEXO DERIVA O FORMATO — este objeto é a ÚNICA fonte do `post_type` e das
+  // colunas extras, e é por isso que as quatro CHECKs de `public.posts` valem
+  // por construção, nos três casos:
+  //   sem anexo → text   (nem photo_path, nem link_url)
+  //   com foto  → photo  (só photo_path)      → post_photo_requires_photo_type
+  //   com link  → link   (só link_url)        → post_link_requires_link_type
+  //                                           → post_link_type_requires_url
+  //   poll_options NUNCA é gravado — não há caminho que o produza
+  //                                           → post_poll_requires_poll_type
+  // Derivar o tipo num lugar e montar as extras noutro é exatamente como uma
+  // coluna extra entra sem o tipo que a CHECK exige.
+  const derived = useMemo(() => {
+    const photo = photoPath.trim()
+    const link = linkUrl.trim()
+    if (attachment === "photo" && photo) {
+      return { postType: "photo" as const, extras: { photo_path: photo } }
+    }
+    if (attachment === "link" && link) {
+      return { postType: "link" as const, extras: { link_url: link } }
+    }
+    return { postType: "text" as const, extras: {} }
+  }, [attachment, photoPath, linkUrl])
+
   // Autosave do rascunho — melhor esforço, nunca quebra a tela. Campos todos
   // vazios removem o rascunho (a pessoa esvaziou de propósito); publicar ou
   // descartar confirmado são os outros dois caminhos de limpeza.
@@ -171,8 +226,8 @@ export function CreatePostModal({
   }, [])
 
   const draftFields = useMemo<PostDraftFields>(
-    () => ({ postType, content, details, linkUrl, pollOptions, photoPath }),
-    [postType, content, details, linkUrl, pollOptions, photoPath],
+    () => ({ content, details, linkUrl, photoPath }),
+    [content, details, linkUrl, photoPath],
   )
 
   useEffect(() => {
@@ -188,12 +243,11 @@ export function CreatePostModal({
   useEffect(() => () => persistDraft(latestFields.current), [persistDraft])
 
   const resetForm = useCallback(() => {
-    setPostType("text")
+    setAttachment(null)
     setContent("")
     setDetails("")
     setPhotoPath("")
     setLinkUrl("")
-    setPollOptions([])
     setError("")
     setErrorKind(null)
     setPhotoError("")
@@ -217,18 +271,9 @@ export function CreatePostModal({
       setError("A publicação precisa de texto.")
       return
     }
-    if (postType === "photo" && !photoPath.trim()) {
-      setError("Foto requer uma imagem anexada")
-      return
-    }
-    if (postType === "link" && !linkUrl.trim()) {
-      setError("Link requer uma URL")
-      return
-    }
-    if (postType === "poll" && pollOptions.length < 2) {
-      setError("Enquete requer pelo menos 2 opções")
-      return
-    }
+    // Não há mais validação por formato: "foto sem imagem" e "link sem URL"
+    // deixaram de ser estados representáveis porque o formato vem do anexo
+    // real (`derived`). Sem anexo, a publicação é uma pergunta de texto.
 
     const composed = composePostContent(content, details)
     if (!piiWarning && (detectCpf(composed) || detectCep(composed))) {
@@ -243,26 +288,18 @@ export function CreatePostModal({
     const kind = parseAudienceKey(audienceKey)
     const insertData = {
       locality_id: localityId,
-      post_type: postType,
+      post_type: derived.postType,
       content: composed,
       community_id: kind.kind === "community" ? kind.id : null,
       group_id: kind.kind === "group" ? kind.id : null,
     } as const
 
-    const extras: { photo_path?: string; link_url?: string; poll_options?: string[] } = {}
-    if (postType === "photo" && photoPath.trim()) {
-      extras.photo_path = photoPath.trim()
-    }
-    if (postType === "link" && linkUrl.trim()) {
-      extras.link_url = linkUrl.trim()
-    }
-    if (postType === "poll" && pollOptions.length >= 2) {
-      extras.poll_options = pollOptions
-    }
-
-    const { error: insertError } = await supabase
-      .from("posts")
-      .insert({ ...insertData, ...extras } as Database["public"]["Tables"]["posts"]["Insert"])
+    // Tipo e extras saem do MESMO objeto `derived`: a coluna extra nunca entra
+    // sem o `post_type` que a CHECK correspondente exige.
+    const { error: insertError } = await supabase.from("posts").insert({
+      ...insertData,
+      ...derived.extras,
+    } as Database["public"]["Tables"]["posts"]["Insert"])
 
     if (insertError) {
       // Anti-enumeração: 42501 (RLS), 23505 (unique) e qualquer outra
@@ -309,10 +346,7 @@ export function CreatePostModal({
   }, [
     content,
     details,
-    postType,
-    photoPath,
-    linkUrl,
-    pollOptions,
+    derived,
     piiWarning,
     audienceKey,
     localityId,
@@ -327,10 +361,10 @@ export function CreatePostModal({
 
   const discardDraft = useCallback(() => {
     clearPostDraft()
+    setAttachment(null)
     setContent("")
     setDetails("")
     setLinkUrl("")
-    setPollOptions([])
     setPhotoPath("")
     setDraftRestored(false)
     setStorageUnavailable(false)
@@ -366,19 +400,6 @@ export function CreatePostModal({
               <Modal.Body>
                 <div className="gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]">
                   <div ref={dialogContentRef}>
-                    <div className="flex gap-2 overflow-x-auto">
-                      {POST_TYPE_ORDER.map((type) => (
-                        <Button
-                          key={type}
-                          size="sm"
-                          variant={postType === type ? "primary" : "tertiary"}
-                          onPress={() => setPostType(type)}
-                        >
-                          {POST_TYPE_LABELS[type]}
-                        </Button>
-                      ))}
-                    </div>
-
                     <DraftNotices
                       draftRestored={draftRestored}
                       storageUnavailable={storageUnavailable}
@@ -410,19 +431,15 @@ export function CreatePostModal({
 
                     <div className="mt-4">
                       <label htmlFor="post-conteudo" className="mb-1 block text-sm font-medium">
-                        Conteúdo <span aria-hidden="true">*</span>
+                        Pergunta <span aria-hidden="true">*</span>
                         <span className="sr-only"> (obrigatório)</span>
                       </label>
                       <TextArea
                         id="post-conteudo"
-                        aria-label="Conteúdo"
+                        aria-label="Pergunta"
                         required
                         aria-required="true"
-                        placeholder={
-                          postType === "poll"
-                            ? "Pergunta da enquete..."
-                            : "O que você quer compartilhar?"
-                        }
+                        placeholder="O que você quer perguntar?"
                         value={content}
                         onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
                       />
@@ -441,38 +458,69 @@ export function CreatePostModal({
                       />
                     </div>
 
-                    {postType === "photo" ? (
-                      <div className="mt-4">
-                        <p className="mb-1 text-sm font-medium">Adicionar foto (opcional)</p>
-                        <PhotoField
-                          value={photoPath}
-                          onChange={setPhotoPath}
-                          onError={setPhotoError}
-                        />
-                        {photoError ? (
-                          <p
-                            aria-live="polite"
-                            className="mt-1 text-xs text-[var(--semantic-danger)]"
-                          >
-                            {photoError}
-                          </p>
-                        ) : null}
+                    {/* Anexo é opção SOBRE a pergunta, nunca passo anterior: vem DEPOIS do texto,
+                        começa vazio (nenhum anexo é o default) e não decide o formato
+                        sozinho — quem decide é o anexo real, em `derived`. O
+                        `min-w-0` neutraliza o `min-inline-size: min-content` padrão do
+                        fieldset, que estouraria a coluna do formulário em 375px. */}
+                    <fieldset className="mt-4 min-w-0">
+                      <legend className="mb-1 block text-sm font-medium">
+                        Anexar à pergunta (opcional)
+                      </legend>
+                      <p className="mb-2 text-xs text-muted">
+                        Uma pergunta pode levar uma foto ou um link.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant={attachment === "photo" ? "primary" : "tertiary"}
+                          aria-pressed={attachment === "photo"}
+                          onPress={() => selectAttachment("photo")}
+                          className="min-h-11"
+                        >
+                          <ImagePlus size={16} aria-hidden="true" />
+                          Foto
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={attachment === "link" ? "primary" : "tertiary"}
+                          aria-pressed={attachment === "link"}
+                          onPress={() => selectAttachment("link")}
+                          className="min-h-11"
+                        >
+                          <Link2 size={16} aria-hidden="true" />
+                          Link
+                        </Button>
                       </div>
-                    ) : null}
 
-                    {postType === "link" ? (
-                      <Input
-                        aria-label="URL"
-                        placeholder="URL (https://...)"
-                        value={linkUrl}
-                        onChange={(e) => setLinkUrl((e.target as HTMLInputElement).value)}
-                        className="mt-4"
-                      />
-                    ) : null}
+                      {attachment === "photo" ? (
+                        <div className="mt-3">
+                          <PhotoField
+                            value={photoPath}
+                            onChange={setPhotoPath}
+                            onError={setPhotoError}
+                          />
+                          {photoError ? (
+                            <p
+                              aria-live="polite"
+                              className="mt-1 text-xs text-[var(--semantic-danger)]"
+                            >
+                              {photoError}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
 
-                    {postType === "poll" ? (
-                      <PollEditor options={pollOptions} onOptionsChange={setPollOptions} />
-                    ) : null}
+                      {attachment === "link" ? (
+                        <Input
+                          aria-label="URL"
+                          placeholder="URL (https://...)"
+                          value={linkUrl}
+                          onChange={(e) => setLinkUrl((e.target as HTMLInputElement).value)}
+                          className="mt-3"
+                        />
+                      ) : null}
+                    </fieldset>
 
                     {error ? (
                       <div className="mt-4" data-testid="publish-error">

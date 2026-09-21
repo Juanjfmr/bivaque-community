@@ -29,7 +29,10 @@ export default function InicioPage() {
   const { current } = useLocalityContext()
   const [primary, setPrimary] = useState<PrimaryCommunity>({ status: "loading" })
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [defaultPostType, setDefaultPostType] = useState<string | undefined>(undefined)
+  // Dica da ENTRADA, não formato escolhido: "Fazer uma pergunta" abre sem
+  // anexo (o lançador passa "text") e o `post_type` é derivado do anexo real no
+  // compositor. Nada aqui decide o formato por conta própria.
+  const [entryAttachment, setEntryAttachment] = useState<string | undefined>(undefined)
   const [refreshKey, setRefreshKey] = useState(0)
   // O evento próximo é resolvido UMA vez aqui e servido ao rail "Seu próximo
   // encontro" e ao card do feed (prancha 01) — os dois mostram o mesmo evento,
@@ -60,8 +63,10 @@ export default function InicioPage() {
     })
   }, [supabase, current.id])
 
-  const handleOpenModal = useCallback((postType?: string) => {
-    setDefaultPostType(postType)
+  // `handleOpenModal` mantém o nome: tests/unit/ui/intent-launcher.test.ts
+  // afirma a chamada `handleOpenModal("text")` do lançador verbatim.
+  const handleOpenModal = useCallback((attachment?: string) => {
+    setEntryAttachment(attachment)
     setShowCreateModal(true)
   }, [])
 
@@ -102,12 +107,12 @@ export default function InicioPage() {
       {showCreateModal && (
         <CreatePostModal
           localityId={current.id}
-          defaultPostType={defaultPostType}
+          initialAttachment={entryAttachment}
           defaultCommunityId={primary.status === "ready" ? primary.id : undefined}
           onCreated={handleCreated}
           onClose={() => {
             setShowCreateModal(false)
-            setDefaultPostType(undefined)
+            setEntryAttachment(undefined)
           }}
         />
       )}
