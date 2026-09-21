@@ -102,8 +102,11 @@ Nenhuma divergencia material do baseline externo. A divergencia e das nossas pro
 `MOBBIN-INDICACOES-2026-09-20.md` descreve um fluxo que este ADR decide nao fazer. As duas
 precisam registrar a divergencia em vez de continuar prometendo.
 
-Fica em aberto, e **nao e decidido aqui**, o conflito de redacao entre `Ajudou a resolver`
-(ADR-20260909, aprovado, R3) e `Resolveu meu pedido` (pranchas de 20/09). E decisao separada.
+Registrado em 21/09/2026: **foi verificado e nao havia conflito.** Uma revisao anterior desta
+secao dizia ficar em aberto um "conflito de redacao" entre `Ajudou a resolver` (ADR-20260909,
+aprovado, R3) e `Resolveu meu pedido`. Medicao: `Ajudou a resolver` e o rotulo do produto e esta
+implementado; `Resolveu meu pedido` nao ocorre em nenhuma imagem nem em nenhum codigo — e
+parafrase descritiva do MESMO marcador, nunca rotulo concorrente. Nao ha pendencia.
 
 ## Evidence and sources
 

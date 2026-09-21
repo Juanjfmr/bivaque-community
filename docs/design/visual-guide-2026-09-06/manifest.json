@@ -1,7 +1,7 @@
 {
   "title": "Bivaque — Guia visual de construção",
   "date": "2026-09-06",
-  "sourceRevision": "b4f0d1b",
+  "sourceRevision": "9581313",
   "generationTool": "image_gen integrado; a prancha 70 é render determinístico de HTML sobre os tokens reais",
   "scope": "Conceitos mobile e web autorizados nesta conversa. Referências de aparência e fluxo; não comprovam disponibilidade no aplicativo.",
   "artifacts": [
@@ -1544,7 +1544,7 @@
       "reviewNotes": [
         "Mobbin/Nextdoor: Responder abre a contribuição; o MVP não usa polegar, curtida ou Isso ajudou nesse fluxo.",
         "~~Com correspondência, a resposta aponta para o item do Guia. Sem correspondência, aparece imediatamente como Ainda não está no Guia e envia uma candidata à curadoria.~~ **Divergência de 21/09/2026 (ADR-20260921, aprovado, R3):** ver a nota de divergência abaixo. Esta afirmação descrevia o fluxo do membro, que foi descartado; a religação continua existindo, mas pelo operador (via `source_reply_id`), não por ação de quem respondeu.",
-        "A autora pode marcar Resolveu meu pedido independentemente da aprovação no Guia; Denunciar permanece no overflow.",
+        "A autora pode marcar `Ajudou a resolver` (rótulo do produto, ADR-20260909) independentemente da aprovação no Guia; Denunciar permanece no overflow.",
         "Não inventar estrelas, selos, ranking, promessa comercial, SLA ou pagamento.",
         "Divergencia registrada em 21/09/2026 (ADR-20260921, aprovado, R3): o painel 2 desta prancha NAO sera construido. O fluxo de referencia candidata voltado ao membro foi descartado porque a unica policy de leitura de arrival_guide_entries exige status='approved' — o membro nao leria a propria candidata e a etiqueta afirmaria o que o servidor nao sabe. Para o membro: pergunta, resposta, fim. A alimentacao do Guia passa a ser trabalho de sistema: job agendado le respostas com sinal de qualidade, deduplica contra o Guia da localidade antes de escrever e grava pending com source='ai', confidence e source_reply_id. A religacao continua existindo pelo operador, via source_reply_id."
       ],

@@ -379,7 +379,7 @@ A direção aprovada para o Bivaque é:
 4. sem correspondência, a resposta aparece imediatamente como `Ainda não está no Guia` e a
    referência candidata segue para curadoria;
 5. aprovação ou mesclagem posterior religa a resposta ao item canônico;
-6. a autora pode marcar `Resolveu meu pedido` sem esperar a curadoria;
+6. a autora pode marcar `Ajudou a resolver` (o rótulo do produto) sem esperar a curadoria;
 7. `Denunciar` continua no overflow; não há `Isso ajudou?`, curtida ou polegar no MVP.
 
 Na Home de membro ativo, retornos relevantes precedem um lançador compacto de intenções. Cartões

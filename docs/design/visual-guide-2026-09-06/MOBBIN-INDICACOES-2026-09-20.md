@@ -16,9 +16,9 @@ Este registro substitui a proposta exploratória de usar um polegar com o rótul
 - Sem correspondência, a resposta é publicada imediatamente como `Ainda não está no Guia` e a
   referência candidata segue para curadoria humana.
 - Aprovação ou mesclagem posterior liga retroativamente a resposta ao item canônico do Guia.
-- O MVP não introduz `Isso ajudou?`, curtida ou polegar. `Resolveu meu pedido`, disponível à autora, é o único sinal de fechamento.
+- O MVP não introduz `Isso ajudou?`, curtida ou polegar. `Ajudou a resolver` (o rótulo do produto, `ADR-20260909`), disponível à autora, é o único sinal de fechamento.
 - `Denunciar` permanece no menu de overflow.
-- A autora do pedido pode marcar `Resolveu meu pedido` sem depender da curadoria.
+- A autora do pedido pode marcar `Ajudou a resolver` sem depender da curadoria.
 
 ## Pranchas substituídas
 
@@ -54,7 +54,7 @@ Guia`, "Publicar resposta e enviar candidata à revisão") **não será implemen
 | "A resposta procura e vincula uma referência do Guia antes de ser enviada" | **descartado** — a resposta é uma resposta; quem cura é o sistema |
 | "Sem correspondência, a resposta é publicada imediatamente como `Ainda não está no Guia`" | **descartado** — a policy de leitura só expõe `status='approved'`, então o membro não leria a própria candidata; a etiqueta afirmaria o que o servidor não sabe |
 | "Aprovação ou mesclagem posterior liga retroativamente a resposta ao item canônico" | **descartado como fluxo do membro** — a religação continua existindo, mas pelo operador (`source_reply_id`), não por ação de quem respondeu |
-| "A autora do pedido pode marcar `Resolveu meu pedido` sem depender da curadoria" | **mantido em substância**; a redação do rótulo é decisão em aberto (ver abaixo) |
+| "A autora do pedido pode marcar `Resolveu meu pedido` sem depender da curadoria" | **mantido**, com a redação corrigida para `Ajudou a resolver` — o rótulo do produto |
 
 **Permanecem válidos** desta nota: `Responder` abre a contribuição; o MVP não introduz polegar,
 curtida nem `Isso ajudou?`; `Denunciar` fica no menu de overflow; e a implementação não está aceita
@@ -69,7 +69,6 @@ continuam sendo os caminhos de entrada do Guia.
 
 **Continuam fora do escopo desta nota, e não são resolvidos aqui:**
 
-- o conflito de redação entre `Ajudou a resolver` (`ADR-20260909`, aprovado, R3) e `Resolveu meu
-  pedido` (pranchas de 20/09) é **decisão separada do dono**;
+- ~~o conflito de redação entre `Ajudou a resolver` e `Resolveu meu pedido`~~ — **Verificado em 21/09/2026: não há conflito.** `Ajudou a resolver` é o rótulo do produto — fixado pelo `ADR-20260909` (aprovado, R3, na palavra do próprio dono) e implementado em `recommendation-requests.tsx`. `Resolveu meu pedido` **nunca foi rótulo concorrente**: era paráfrase descritiva do MESMO marcador (mesma autora, mesma resposta, mesmo efeito), sem ocorrência em imagem ou em código. A pendência está fechada.
 - o painel 3 da prancha 45 e o painel 2 da 80 seguem sendo referência de composição para o que
   existir, mas o painel 2 da 80 não tem contraparte a construir.
