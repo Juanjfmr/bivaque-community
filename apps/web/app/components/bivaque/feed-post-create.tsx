@@ -21,6 +21,12 @@ import { Button, Input, Modal, Spinner, TextArea, useOverlayState } from "@herou
 import { ImagePlus, Link2 } from "lucide-react"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
+import {
+  attachmentPublishBlocker,
+  derivePostType,
+  normalizeAttachment,
+  type PostAttachment,
+} from "../../../lib/composer/post-attachment"
 import { classifyPublishError } from "../../../lib/composer/publish-error"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -66,15 +72,6 @@ interface CreatePostModalProps {
 
 const AUTOSAVE_DELAY_MS = 400
 
-/** Anexo é um só: `public.posts` guarda `photo_path` OU `link_url` sob CHECKs
- *  que exigem o `post_type` correspondente, então dois anexos ao mesmo tempo
- *  são um estado que o banco não sabe representar. */
-type Attachment = "photo" | "link" | null
-
-function normalizeAttachment(value: string | undefined): Attachment {
-  return value === "photo" || value === "link" ? value : null
-}
-
 export function CreatePostModal({
   localityId,
   initialAttachment,
@@ -85,7 +82,7 @@ export function CreatePostModal({
   const modal = useOverlayState({ defaultOpen: true, onOpenChange: (open) => !open && onClose() })
   const { current: locality } = useLocalityContext()
   const initialDraft = useRef(loadPostDraft())
-  const [attachment, setAttachment] = useState<Attachment>(() => {
+  const [attachment, setAttachment] = useState<PostAttachment>(() => {
     const draft = initialDraft.current
     if (draft?.photoPath.trim()) return "photo"
     if (draft?.linkUrl.trim()) return "link"
@@ -181,7 +178,7 @@ export function CreatePostModal({
   // `public.posts`, e um campo escondido mas preenchido publicaria um anexo que
   // ninguém vê.
   const selectAttachment = useCallback(
-    (next: Attachment) => {
+    (next: PostAttachment) => {
       const chosen = attachment === next ? null : next
       if (chosen !== "photo") setPhotoPath("")
       if (chosen !== "link") setLinkUrl("")
@@ -190,28 +187,16 @@ export function CreatePostModal({
     [attachment],
   )
 
-  // O ANEXO DERIVA O FORMATO — este objeto é a ÚNICA fonte do `post_type` e das
-  // colunas extras, e é por isso que as quatro CHECKs de `public.posts` valem
-  // por construção, nos três casos:
-  //   sem anexo → text   (nem photo_path, nem link_url)
-  //   com foto  → photo  (só photo_path)      → post_photo_requires_photo_type
-  //   com link  → link   (só link_url)        → post_link_requires_link_type
-  //                                           → post_link_type_requires_url
-  //   poll_options NUNCA é gravado — não há caminho que o produza
-  //                                           → post_poll_requires_poll_type
-  // Derivar o tipo num lugar e montar as extras noutro é exatamente como uma
-  // coluna extra entra sem o tipo que a CHECK exige.
-  const derived = useMemo(() => {
-    const photo = photoPath.trim()
-    const link = linkUrl.trim()
-    if (attachment === "photo" && photo) {
-      return { postType: "photo" as const, extras: { photo_path: photo } }
-    }
-    if (attachment === "link" && link) {
-      return { postType: "link" as const, extras: { link_url: link } }
-    }
-    return { postType: "text" as const, extras: {} }
-  }, [attachment, photoPath, linkUrl])
+  // O ANEXO DERIVA O FORMATO. O objeto que monta o `post_type` e as colunas
+  // extras mora em `lib/composer/post-attachment`, junto com a trava do anexo
+  // ligado-e-vazio: derivar o tipo num lugar e montar as extras noutro é
+  // exatamente como uma coluna extra entra sem o tipo que a CHECK exige.
+  // Anexo ligado e vazio cai no ramo `text` — quem impede que isso publique em
+  // silêncio é `attachmentPublishBlocker`, no handleSubmit.
+  const derived = useMemo(
+    () => derivePostType(attachment, photoPath, linkUrl),
+    [attachment, photoPath, linkUrl],
+  )
 
   // Autosave do rascunho — melhor esforço, nunca quebra a tela. Campos todos
   // vazios removem o rascunho (a pessoa esvaziou de propósito); publicar ou
@@ -277,12 +262,9 @@ export function CreatePostModal({
     // pergunta de TEXTO: o `derived` estaria certo, mas a pessoa perderia uma
     // ação que ela tomou, sem aviso. Não é validação de formato — é não deixar
     // anexo visível virar anexo nenhum em silêncio.
-    if (attachment === "photo" && !photoPath.trim()) {
-      setError("Anexe a foto ou desligue o anexo de foto para publicar.")
-      return
-    }
-    if (attachment === "link" && !linkUrl.trim()) {
-      setError("Informe o endereço do link ou desligue o anexo de link para publicar.")
+    const blocked = attachmentPublishBlocker(attachment, photoPath, linkUrl)
+    if (blocked) {
+      setError(blocked)
       return
     }
 
