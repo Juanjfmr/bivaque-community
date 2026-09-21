@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, ChevronRight, Luggage, Users, Wrench } from "lucide-react"
+import { BookOpen, ChevronDown, ChevronRight, Luggage, Users, Wrench } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { MemberAvatar } from "../../components/bivaque/avatar"
@@ -58,55 +58,93 @@ export function InicioRightRail({ event }: { event: NextEvent | null }) {
       <div className="sticky top-24 space-y-4">
         {event && <NextMeetingCard event={event} />}
 
-        <Card className="p-4">
-          <h2 className="text-sm font-semibold">Precisa de uma indicação?</h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted">
-            Encontre guias e peça ajuda para quem entende do assunto.
-          </p>
-          <ul className="mt-3">
-            {SHORTCUTS.map((row) => (
-              <li key={row.href}>
-                <Link
-                  href={row.href as Route}
-                  className="flex min-h-11 items-center gap-3 rounded-lg px-2 py-2 transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                >
-                  <row.icon size={20} className="shrink-0 text-accent" aria-hidden="true" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium">{row.title}</span>
-                    <span className="block text-xs text-muted">{row.description}</span>
-                  </span>
-                  <ChevronRight size={16} className="shrink-0 text-muted" aria-hidden="true" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        {/* Prancha 01, módulo inferior do rail: "De mudança?" leva ao fluxo de
-            transferência de localidade (/localidade, RECON-082) — a rota real
-            do declare_locality_transfer, nunca uma promessa de destino. */}
-        <Card className="p-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--semantic-selected)] text-accent">
-              <Luggage size={20} aria-hidden="true" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-sm font-semibold">De mudança?</h2>
-              <p className="mt-1 text-sm leading-relaxed text-muted">
-                Prepare sua chegada em outra cidade.
-              </p>
-              <Link
-                href="/localidade"
-                className="mt-2 inline-flex min-h-11 items-center gap-1 rounded-lg text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-              >
-                Explorar destino
-                <ChevronRight size={16} aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-        </Card>
+        <HomeShortcutCards />
       </div>
     </aside>
+  )
+}
+
+// Abaixo de 1024px a prancha não desenha rail (`hidden lg:block`): o trilho some
+// inteiro, e sumir com o que é complemento é decisão de densidade legítima. O
+// que NÃO pode sumir é o que só existe ali — os três atalhos e "De mudança?"
+// não têm contraparte visível em nenhum outro lugar de /inicio nessa largura
+// (medido: os hrefs visíveis da rota a 375/768 são /recommendations,
+// /recommendations?aba=request, /events/<id>, /inicio, /explorar, /communities —
+// /guide, /explorar/servicos e /localidade não estão entre eles).
+//
+// O disclosure fechado desce para a coluna principal logo depois do lançador de
+// intenções: um toque abre, o primeiro item do feed continua dentro da dobra
+// (a razão de o lançador compacto existir, DS-006) e a composição de ≥1024px
+// não muda em nada — o trilho continua sendo o mesmo <aside>.
+export function InicioRailDisclosure() {
+  return (
+    <details data-p2="home-atalhos" className="lg:hidden">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-xl border border-border bg-[var(--semantic-surface)] px-4 py-2 text-sm font-medium">
+        Atalhos da home
+        <ChevronDown size={18} className="shrink-0 text-muted" aria-hidden="true" />
+      </summary>
+      <div className="mt-3 space-y-4">
+        <HomeShortcutCards />
+      </div>
+    </details>
+  )
+}
+
+// Os dois cards de atalho, uma única fonte para o trilho (≥1024px) e para o
+// disclosure (<1024px). O card "Seu próximo encontro" fica de fora de propósito:
+// o mesmo evento, do mesmo loader, já é desenhado no feed como FeedEventCard
+// (community-section.tsx), então repeti-lo no telefone seria só ruído.
+function HomeShortcutCards() {
+  return (
+    <>
+      <Card className="p-4">
+        <h2 className="text-sm font-semibold">Precisa de uma indicação?</h2>
+        <p className="mt-1 text-sm leading-relaxed text-muted">
+          Encontre guias e peça ajuda para quem entende do assunto.
+        </p>
+        <ul className="mt-3">
+          {SHORTCUTS.map((row) => (
+            <li key={row.href}>
+              <Link
+                href={row.href as Route}
+                className="flex min-h-11 items-center gap-3 rounded-lg px-2 py-2 transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+              >
+                <row.icon size={20} className="shrink-0 text-accent" aria-hidden="true" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium">{row.title}</span>
+                  <span className="block text-xs text-muted">{row.description}</span>
+                </span>
+                <ChevronRight size={16} className="shrink-0 text-muted" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Card>
+
+      {/* Prancha 01, módulo inferior do rail: "De mudança?" leva ao fluxo de
+          transferência de localidade (/localidade, RECON-082) — a rota real
+          do declare_locality_transfer, nunca uma promessa de destino. */}
+      <Card className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--semantic-selected)] text-accent">
+            <Luggage size={20} aria-hidden="true" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold">De mudança?</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted">
+              Prepare sua chegada em outra cidade.
+            </p>
+            <Link
+              href="/localidade"
+              className="mt-2 inline-flex min-h-11 items-center gap-1 rounded-lg text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+            >
+              Explorar destino
+              <ChevronRight size={16} aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </Card>
+    </>
   )
 }
 

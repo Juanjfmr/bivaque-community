@@ -14,7 +14,7 @@ import {
   type NextEvent,
 } from "./home-loaders"
 import { ReturnStrip } from "./return-strip"
-import { InicioRightRail } from "./right-rail"
+import { InicioRailDisclosure, InicioRightRail } from "./right-rail"
 
 // RECON-002 (prancha 01-web-inicio): home de quem participa.
 //
@@ -92,6 +92,11 @@ export default function InicioPage() {
             variant={primary.status === "none" ? "explain" : "compact"}
             onAskQuestion={() => handleOpenModal("text")}
           />
+          {/* O trilho da prancha 01 não existe abaixo de 1024px. O conteúdo que
+              só existe nele (os atalhos e "De mudança?") desce para cá fechado:
+              continua alcançável sem inventar um rail que a prancha não desenha
+              e sem empurrar o primeiro item do feed para fora da dobra. */}
+          <InicioRailDisclosure />
           <CommunitySection
             primary={primary}
             onRetryPrimary={loadPrimary}
