@@ -8,10 +8,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import {
-  WRITE_FAILURE_COPY,
   resolutionOperation,
-  writeFailure,
+  WRITE_FAILURE_COPY,
   type WriteOperation,
+  writeFailure,
 } from "web/lib/recommendations/write-failure-copy"
 
 const root = join(import.meta.dirname, "..", "..", "..")

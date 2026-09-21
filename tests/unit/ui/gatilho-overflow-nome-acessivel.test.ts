@@ -54,7 +54,9 @@ describe("nome acessivel do gatilho de overflow", () => {
     expect(sufixo.length).toBeLessThanOrEqual(48)
     expect(sufixo).toBe("a".repeat(30))
     expect(sufixo).not.toContain("…")
-    expect(overflowTriggerLabel("do pedido", longo).startsWith("Mais opções do pedido: ")).toBe(true)
+    expect(overflowTriggerLabel("do pedido", longo).startsWith("Mais opções do pedido: ")).toBe(
+      true,
+    )
   })
 
   it("item sem texto identificador nao vira rotulo vazio nem generico sem alvo", () => {
@@ -70,9 +72,9 @@ describe("fiacao do chamador", () => {
   it("pedido e resposta passam triggerLabel especifico (era o que faltava)", () => {
     const rotulos = [...fonte.matchAll(/triggerLabel=\{([^}]*)\}/g)].map((m) => m[1] ?? "")
     expect(rotulos.length).toBe(2)
-    expect(rotulos.some((r) => r.includes('overflowTriggerLabel("do pedido", request.title)'))).toBe(
-      true,
-    )
+    expect(
+      rotulos.some((r) => r.includes('overflowTriggerLabel("do pedido", request.title)')),
+    ).toBe(true)
     expect(rotulos.some((r) => r.includes('overflowTriggerLabel("da resposta", reply.body)'))).toBe(
       true,
     )

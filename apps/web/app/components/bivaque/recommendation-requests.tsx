@@ -9,10 +9,7 @@ import { useLocalityContext } from "../../../lib/locality-context"
 import { callResolutionRpc } from "../../../lib/recommendations/resolution-rpcs"
 import { localityScopeLabel } from "../../../lib/recommendations/scope-label"
 import { overflowTriggerLabel } from "../../../lib/recommendations/trigger-label"
-import {
-  resolutionOperation,
-  writeFailure,
-} from "../../../lib/recommendations/write-failure-copy"
+import { resolutionOperation, writeFailure } from "../../../lib/recommendations/write-failure-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "./card"
 import { EmptyState } from "./empty-state"
