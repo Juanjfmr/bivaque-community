@@ -271,9 +271,20 @@ export function CreatePostModal({
       setError("A publicação precisa de texto.")
       return
     }
-    // Não há mais validação por formato: "foto sem imagem" e "link sem URL"
-    // deixaram de ser estados representáveis porque o formato vem do anexo
-    // real (`derived`). Sem anexo, a publicação é uma pergunta de texto.
+    // O anexo escolhido e o anexo publicado têm de ser o mesmo. Sem esta
+    // trava, quem liga "Foto", escolhe o arquivo e publica ENQUANTO o envio
+    // acontece (ou quem abre o seletor e não escolhe nada) viajaria como
+    // pergunta de TEXTO: o `derived` estaria certo, mas a pessoa perderia uma
+    // ação que ela tomou, sem aviso. Não é validação de formato — é não deixar
+    // anexo visível virar anexo nenhum em silêncio.
+    if (attachment === "photo" && !photoPath.trim()) {
+      setError("Anexe a foto ou desligue o anexo de foto para publicar.")
+      return
+    }
+    if (attachment === "link" && !linkUrl.trim()) {
+      setError("Informe o endereço do link ou desligue o anexo de link para publicar.")
+      return
+    }
 
     const composed = composePostContent(content, details)
     if (!piiWarning && (detectCpf(composed) || detectCep(composed))) {
@@ -347,6 +358,9 @@ export function CreatePostModal({
     content,
     details,
     derived,
+    attachment,
+    photoPath,
+    linkUrl,
     piiWarning,
     audienceKey,
     localityId,
