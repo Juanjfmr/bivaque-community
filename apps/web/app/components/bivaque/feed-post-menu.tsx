@@ -6,9 +6,10 @@
 // só renderiza o que recebeu.
 //
 // DS-006: o mesmo menu serve o pedido e a resposta de indicação. Os rótulos
-// mudam (o alvo não é uma publicação) e o link de compartilhar é o do pedido;
-// o comportamento e o nome acessível do gatilho — "Mais opções", que
-// tests/e2e/reports-member-flow.spec.ts clica — continuam os do feed.
+// mudam (o alvo não é uma publicação) e o link de compartilhar é o do pedido.
+// O nome acessível do gatilho fica no default "Mais opções" — que
+// tests/e2e/reports-member-flow.spec.ts clica — e o chamador que tem contexto
+// passa um `triggerLabel` específico, sempre prefixado por "Mais opções".
 
 import { Dropdown } from "@heroui/react"
 import { MoreHorizontal } from "lucide-react"
@@ -45,8 +46,11 @@ interface LeanOverflowMenuProps {
   sharePath?: string
   /** Nome acessível do menu; o padrão é o da publicação. */
   menuLabel?: string
-  /** Nome acessível do gatilho. Mantido "Mais opções" por padrão: o e2e do
-   *  fluxo de denúncia clica exatamente por ele. */
+  /** Nome acessível do gatilho. O default "Mais opções" permanece porque o e2e
+   *  do fluxo de denúncia clica exatamente por ele e porque o feed — 346
+   *  gatilhos em feed-post-card.tsx, fora de allowed_paths — ainda depende dele.
+   *  Quem tem contexto (o pedido e a resposta de indicação) passa o seu,
+   *  sempre começando por "Mais opções". */
   triggerLabel?: string
 }
 

@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { callResolutionRpc } from "../../../lib/recommendations/resolution-rpcs"
 import { localityScopeLabel } from "../../../lib/recommendations/scope-label"
+import { overflowTriggerLabel } from "../../../lib/recommendations/trigger-label"
 import {
   resolutionOperation,
   writeFailure,
@@ -596,6 +597,12 @@ export default function RecommendationRequests() {
                           postId={request.id}
                           sharePath={`/recommendations?focus=${request.id}#req-${request.id}`}
                           menuLabel="Ações do pedido"
+                          // GATILHO SEM ROTULO: o nome do gatilho diz QUAL pedido
+                          // este botao abre; sem ele todos os gatilhos da lista
+                          // ficam no default generico "Mais opções". O prefixo
+                          // "Mais opções" e preservado de proposito — o e2e
+                          // clica por ele sem `exact`.
+                          triggerLabel={overflowTriggerLabel("do pedido", request.title)}
                           labels={{
                             edit: "Editar pedido",
                             delete: "Excluir pedido",
@@ -863,6 +870,10 @@ export default function RecommendationRequests() {
                                     <LeanOverflowMenu
                                       postId={reply.id}
                                       menuLabel="Ações da resposta"
+                                      // Mesma causa do gatilho do pedido: a
+                                      // resposta nao tem titulo, entao o nome
+                                      // acessivel identifica pelo proprio texto.
+                                      triggerLabel={overflowTriggerLabel("da resposta", reply.body)}
                                       labels={{
                                         edit: "Editar resposta",
                                         delete: "Excluir resposta",
