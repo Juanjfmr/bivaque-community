@@ -155,10 +155,9 @@ Funcional, provado por interação real de navegador e por pgTAP:
 - Publicar automaticamente qualquer referência no Guia.
 - Introduzir curtida, polegar ou `Isso ajudou?` no fluxo — ver `ADR-20260909`, D4.
 - Reabrir a redação do marcador de fechamento. O ADR aprovado fixa `Ajudou a resolver`
-  (`ADR-20260909:142-143`), e é o rótulo implementado. **Verificado em 21/09/2026: não havia
-  divergência a decidir** — `Resolveu meu pedido` era paráfrase descritiva do mesmo marcador,
-  sem ocorrência em imagem ou código. A pendência está fechada; este item segue como
-  não-objetivo apenas no sentido de que a string do código não se troca.
+  (`ADR-20260909:142-143`), e é o rótulo implementado. **Verificado em 21/09/2026: não havia divergência a
+  decidir.** **A prancha 80 desenha `Resolveu meu pedido`** ao lado de `Ver no Guia`, e o **código usa `Ajudou a resolver`**. É uma **divergência registrada entre prancha e implementação, resolvida em favor do ADR** — não uma decisão em aberto. Este item segue como não-objetivo apenas no sentido de que a string
+  do código não se troca.
 
 ## 7. Rastreabilidade
 

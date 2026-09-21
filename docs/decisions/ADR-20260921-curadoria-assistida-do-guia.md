@@ -104,9 +104,11 @@ precisam registrar a divergencia em vez de continuar prometendo.
 
 Registrado em 21/09/2026: **foi verificado e nao havia conflito.** Uma revisao anterior desta
 secao dizia ficar em aberto um "conflito de redacao" entre `Ajudou a resolver` (ADR-20260909,
-aprovado, R3) e `Resolveu meu pedido`. Medicao: `Ajudou a resolver` e o rotulo do produto e esta
-implementado; `Resolveu meu pedido` nao ocorre em nenhuma imagem nem em nenhum codigo — e
-parafrase descritiva do MESMO marcador, nunca rotulo concorrente. Nao ha pendencia.
+aprovado, R3) e `Resolveu meu pedido`. Medicao: `Ajudou a resolver` e o rotulo do produto e esta implementado em
+`recommendation-requests.tsx`. `Resolveu meu pedido` nao ocorre em nenhum codigo — mas
+**a prancha 80 o DESENHA**, ao lado de `Ver no Guia`. Nao ha rotulo concorrente e nao ha
+pendencia a decidir: o que existe e uma **divergencia registrada entre prancha e
+implementacao, resolvida em favor deste ADR**. Causa do erro corrigido aqui: a afirmação de que não havia ocorrência "em imagem" veio de `grep` sobre arquivos de TEXTO, e **grep não lê PNG** — a prancha nunca foi olhada antes de a frase ser escrita.
 
 ## Evidence and sources
 
