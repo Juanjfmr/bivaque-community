@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import { test } from "node:test"
 import { normalizeGeneratedTypes } from "../../scripts/normalize-generated-types.mjs"
 
@@ -27,4 +28,11 @@ test("fails when the expected RPC signature changes", () => {
     () => normalizeGeneratedTypes(`${raw}\n${raw}`),
     /Expected exactly one raw or normalized set_community_image signature/,
   )
+})
+
+test("leaves the committed generated file unchanged", () => {
+  const path = new URL("../../supabase/database.generated.ts", import.meta.url)
+  const generated = readFileSync(path, "utf8")
+  assert.equal(normalizeGeneratedTypes(generated), generated)
+  assert.match(generated, /[^\n]\n$/)
 })
