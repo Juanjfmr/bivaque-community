@@ -14,8 +14,9 @@ const raw = `      set_community_image: {
       }`
 
 test("normalizes the nullable RPC argument and stays idempotent", () => {
-  const normalized = normalizeGeneratedTypes(raw)
+  const normalized = normalizeGeneratedTypes(`${raw}\n\n`)
   assert.match(normalized, /p_path: string \| null/)
+  assert.match(normalized, /[^\n]\n$/)
   assert.equal(normalizeGeneratedTypes(normalized), normalized)
 })
 
@@ -34,5 +35,6 @@ test("leaves the committed generated file unchanged", () => {
   const path = new URL("../../supabase/database.generated.ts", import.meta.url)
   const generated = readFileSync(path, "utf8")
   assert.equal(normalizeGeneratedTypes(generated), generated)
+  // The committed form omits the blank line emitted by Supabase CLI 2.107.0.
   assert.match(generated, /[^\n]\n$/)
 })

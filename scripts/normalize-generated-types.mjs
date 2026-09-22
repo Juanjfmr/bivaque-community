@@ -17,10 +17,12 @@ const nullablePath = [
 
 export function normalizeGeneratedTypes(generated) {
   const matches = [...generated.matchAll(signature)]
-  if (matches.length === 1) return generated.replace(signature, `$1${nullablePath}$3`)
+  if (matches.length === 1) {
+    return generated.replace(signature, `$1${nullablePath}$3`).replace(/\r?\n\r?\n$/, "\n")
+  }
 
   if (matches.length === 0 && [...generated.matchAll(normalizedSignature)].length === 1) {
-    return generated
+    return generated.replace(/\r?\n\r?\n$/, "\n")
   }
 
   throw new Error("Expected exactly one raw or normalized set_community_image signature")
