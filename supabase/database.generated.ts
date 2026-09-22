@@ -3062,6 +3062,7 @@ export type Database = {
         | "provider"
         | "listing"
         | "event_question"
+        | "service_request"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
@@ -3291,6 +3292,7 @@ export const Constants = {
         "provider",
         "listing",
         "event_question",
+        "service_request",
       ],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going", "not_going"],
