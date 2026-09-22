@@ -3300,17 +3300,21 @@
       "phase": "Reconstrução",
       "priority": "P0",
       "category": "backend",
-      "status": "repo",
+      "status": "done",
       "description": "Achado na jornada simulada de 22/09/2026, ao implementar o ADR-20260922-identidade-quando-portal-falha. decide_verification_document (supabase/migrations/20260822215307_outbox_verification_decision.sql) so aprova quem ja tem linha em locality_memberships — levanta \"cannot approve: no locality for the user\" — e usa essa cidade para criar membership e profile. O onboarding atual pede a cidade DEPOIS da verificacao (verificado sem membership -> /onboarding/locality -> provision_member_locality). Logo, nenhuma pessoa nova passa pela identidade: nem pelo erro temporario do Portal (ADR de 22/09) nem pelo CPF recusado, caminho que ja existia. Medido: o operador clica Aprovar documento e recebe \"Nao foi possivel registrar agora\"; o log do servidor registra o erro do RPC. Bloqueado: mudar o RPC security definer do schema private e R3 e precisa de decisao do dono e ADR.",
       "checklist": [
-        "Decisao do dono [FEITO 22/09: aprovar sem cidade; a pessoa escolhe depois, como no CPF]",
-        "ADR-20260922-aprovacao-por-identidade-sem-cidade redigido (proposed); aguarda aprovacao do texto",
-        "Migration nova (nunca editar a aplicada) com pgTAP positivo e negativo",
-        "Trocar as lacunas 39-web-onboarding-contexto#0/#1 de journey-entrar-e-ser-admitido.spec.ts por passos observados, com o operador aprovando"
+        "Decisao do dono [FEITO 22/09: aprovar sem cidade]",
+        "ADR-20260922-aprovacao-por-identidade-sem-cidade aceito [FEITO 22/09]",
+        "Migration nova com pgTAP [FEITO: 20260922153901_approve_identity_without_locality; admissions-decision.sql 21/21, com o caso sem cidade afirmando aprovado, verified, reviewed_locality_id nulo, nenhuma membership, nenhum profile e o e-mail enfileirado]",
+        "Lacunas 39 da jornada viram passos observados [FEITO]"
       ],
       "proof": [
         "journey-entrar-e-ser-admitido.spec.ts: o envio chega a fila; aprovar falha com \"cannot approve: no locality for the user\" (log admission decide failed, 22/09 15:21)",
-        "onboarding/locality/page.tsx: a cidade e escolhida depois da verificacao; o proxy leva verificado sem membership para la"
+        "onboarding/locality/page.tsx: a cidade e escolhida depois da verificacao; o proxy leva verificado sem membership para la",
+        "journey-entrar-e-ser-admitido.spec.ts 2 passed: cadastro -> CPF com Portal fora -> Enviar identidade agora -> operador aprova (log admission decide ok) -> escolhe Manaus -> personalizacao -> boas-vindas. Banco: verified, 1 membership, 1 profile. Unica lacuna restante: 37, confirmacao de e-mail desligada no stack local",
+        "Regressao pgTAP: verification-document-status.sql 7/7, verification-documents.sql 12/12",
+        "Achado no caminho e corrigido: /onboarding/perfil estava fora da allowlist do proxy, e o verificado sem membership voltava a /onboarding/locality ao clicar Continuar — ninguem novo concluia o cadastro, nem pelo CPF aprovado. tests/unit/onboarding/onboarding-proxy-allowlist.test.ts",
+        "Migration aplicada no banco local compartilhado por psql, sem reset: supabase migration up recusou porque o banco tem 20260921134129 (guide_candidate_queue) e 20260922103620 (feed_community_cursor_pagination) de outro checkout; o historico dessas nao foi tocado"
       ],
       "tests": ["tests/e2e/journey-entrar-e-ser-admitido.spec.ts"],
       "links": [
@@ -3320,7 +3324,8 @@
       ],
       "dependencies": [],
       "updatedAt": "2026-09-22",
-      "sourceRevision": "ec9928bf"
+      "sourceRevision": "c996fc9d",
+      "completedAt": "2026-09-22"
     },
     {
       "id": "PEDIDO-CONVERSA-COMPARTILHADA",

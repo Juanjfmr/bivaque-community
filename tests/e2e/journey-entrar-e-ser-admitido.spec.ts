@@ -14,8 +14,8 @@ import { signInAs } from "./helpers/session"
 //     erro temporário — o mesmo caminho seguro de um Portal fora do ar.
 //   * Identidade: desde o ADR-20260922-identidade-quando-portal-falha, o erro temporário oferece
 //     "Enviar identidade agora", e a pessoa envia o arquivo. Antes, com o Portal fora, ninguém seguia.
-//   * 39 (cidade e personalização): lacuna. A aprovação do documento exige cidade que o fluxo só
-//     pede depois — ONB-IDENTIDADE-SEM-CIDADE.
+//   * 39 (cidade e personalização): observadas desde o ADR-20260922-aprovacao-por-identidade-sem-
+//     cidade. O operador aprova sem cidade, e a pessoa escolhe a cidade depois, como no CPF.
 //
 // O segundo teste: o operador analisa uma solicitação semeada sem decidir, porque decidir
 // mudaria a fila que outros specs leem. A aprovação do primeiro teste é sobre a conta nova dele.
@@ -33,7 +33,10 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
   test.skip(({ viewport }) => (viewport?.width ?? 0) < 1440, "jornada das pranchas web")
   test.setTimeout(180_000)
 
-  test("visitante entra e, com o Portal fora, envia a identidade", async ({ page }, testInfo) => {
+  test("visitante entra, é admitida por identidade e escolhe a cidade", async ({
+    page,
+    browser,
+  }, testInfo) => {
     const email = `jornada-${Date.now().toString(36)}@bivaque.example.invalid`
     const entrar = simulateJourney(testInfo, "web-entrar-e-ser-admitido")
 
@@ -113,15 +116,74 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
       timeout: 20_000,
     })
 
-    // Aprovar o documento ainda não fecha o ciclo: decide_verification_document só aprova quem
-    // já tem cidade, e o onboarding só pede a cidade depois da verificação. Defeito anterior ao
-    // ADR, registrado em ONB-IDENTIDADE-SEM-CIDADE — não afirmado aqui, para não travá-lo.
-    const IDENTITY_APPROVAL_BLOCKED =
-      "aprovar o documento exige cidade já escolhida (decide_verification_document: 'cannot " +
-      "approve: no locality for the user'), mas o onboarding só pede a cidade depois da " +
-      "verificação; ninguém admitido por identidade chega aqui — ONB-IDENTIDADE-SEM-CIDADE"
-    entrar.lacuna("39-web-onboarding-contexto#0", IDENTITY_APPROVAL_BLOCKED)
-    entrar.lacuna("39-web-onboarding-contexto#1", IDENTITY_APPROVAL_BLOCKED)
+    // O operador encontra a pessoa na fila e aprova o documento. Conta nova deste spec:
+    // decidir não muda nenhuma fila que outro spec lê. Desde o
+    // ADR-20260922-aprovacao-por-identidade-sem-cidade, aprovar não exige cidade.
+    const operatorContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    await signInAs(operatorContext, OPERATOR)
+    const operator = await operatorContext.newPage()
+    try {
+      await operator.goto(`/admissions?q=${encodeURIComponent(email)}`)
+      await operator
+        .getByRole("row")
+        .filter({ hasText: email })
+        .getByRole("link", { name: "Abrir" })
+        .click()
+      await expect(operator.getByRole("region", { name: "Resumo da verificação" })).toContainText(
+        "Documento de identidade",
+        { timeout: 20_000 },
+      )
+      await operator.getByRole("button", { name: "Aprovar documento" }).click()
+      // Decidido, o caso não oferece mais a aprovação.
+      await expect(operator.getByRole("button", { name: "Aprovar documento" })).toHaveCount(0, {
+        timeout: 20_000,
+      })
+    } finally {
+      await operatorContext.close()
+    }
+
+    await entrar.passo(
+      "39-web-onboarding-contexto#0",
+      page,
+      async () => {
+        // Admitida, a pessoa volta pela porta de sempre e o proxy a leva à cidade.
+        await expect(async () => {
+          await page.goto("/onboarding")
+          await expect(page).toHaveURL(/\/onboarding\/locality$/, { timeout: 3_000 })
+        }).toPass({ timeout: 30_000 })
+        await page.getByRole("searchbox", { name: "Buscar cidade" }).fill("Manaus")
+        // A busca espera a digitação parar; a pessoa clica na cidade que procurou.
+        const city = page
+          .getByRole("list", { name: "Cidades disponíveis" })
+          .getByRole("button", { name: /Manaus/ })
+          .first()
+        await expect(city).toBeVisible({ timeout: 20_000 })
+        await city.click()
+        await expect(city).toHaveAttribute("aria-pressed", "true")
+      },
+      { persona: "visitante admitida por identidade" },
+    )
+
+    await entrar.passo(
+      "39-web-onboarding-contexto#1",
+      page,
+      async () => {
+        await page.getByRole("button", { name: "Continuar" }).click()
+        await expect(page).toHaveURL(/\/onboarding\/perfil$/, { timeout: 20_000 })
+        // Força Armada e OM são opcionais e nascem com "Exibir no perfil" desligado.
+        await expect(
+          page.getByRole("switch", { name: "Exibir Força Armada no perfil" }),
+        ).not.toBeChecked()
+        await expect(page.getByRole("switch", { name: "Exibir OM no perfil" })).not.toBeChecked()
+      },
+      { persona: "visitante admitida por identidade" },
+    )
+
+    // Concluir sem personalizar: a etapa final não exige adesão a comunidade.
+    await page.getByRole("button", { name: "Pular por enquanto" }).click()
+    await expect(page).toHaveURL(/\/onboarding\/welcome$/, { timeout: 20_000 })
+    await expect(page.getByRole("link", { name: /Entrar na comunidade/ })).toBeVisible()
+
     entrar.concluir()
   })
 

@@ -1,13 +1,13 @@
 ---
 id: ADR-20260922-conversa-por-pedido
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
+approved_at: 2026-09-22
 expires_at:
 linked_plan: tools/backend-kanban/public/board.json#PEDIDO-CONVERSA-COMPARTILHADA
-critic_verdict: pending
-critic_review:
+critic_verdict: pass
+critic_review: Veredito registrado por aprovação explícita do dono (Juan) em 22/09/2026 nesta sessão ("aprovo"), seguindo o precedente do ADR-20260914-saida-de-comunidade. Não houve revisor independente — este campo não afirma revisão independente, e sim que o dono aceitou o texto como contrato vigente.
 ---
 
 # Cada pedido de serviço tem a sua conversa
@@ -121,4 +121,4 @@ pedidos numa visão só.
 ## Approval
 
 Decisão de produto dada pelo dono (Juan) em 22/09/2026 nesta sessão, entre três opções, escolhendo
-"Conversa por pedido". **Este texto ainda precisa de aprovação** antes de `status: accepted`.
+"Conversa por pedido". Texto aprovado pelo dono em 22/09/2026 ("aprovo"), nesta sessão.
