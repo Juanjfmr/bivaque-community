@@ -544,29 +544,14 @@ export function CreatePostModal({
                       />
                     ) : null}
 
-                    <div className="mt-4 flex flex-col items-end gap-1">
-                      <Button
-                        onPress={handleSubmit}
-                        isDisabled={submitting || !content.trim()}
-                        variant="primary"
-                        aria-busy={submitting}
-                        data-testid="publish-submit"
-                      >
-                        {submitting ? (
-                          <>
-                            <Spinner size="sm" aria-label="Publicando" />
-                            Publicando…
-                          </>
-                        ) : (
-                          "Publicar"
-                        )}
-                      </Button>
-                      <p className="text-xs text-[var(--semantic-action-primary)]">
-                        {placeName
-                          ? `Visível para membros do Bivaque em ${placeName}.`
-                          : "Escolha quem pode ver."}
-                      </p>
-                    </div>
+                    {/* O aviso de alcance FECHA o formulário; a ação que ele
+                        descreve mora na barra de ações do rodapé, fora da área
+                        que rola. O porquê está medido no comentário do rodapé. */}
+                    <p className="mt-4 text-xs text-[var(--semantic-action-primary)]">
+                      {placeName
+                        ? `Visível para membros do Bivaque em ${placeName}.`
+                        : "Escolha quem pode ver."}
+                    </p>
                   </div>
 
                   <div className="hidden lg:block">
@@ -581,9 +566,40 @@ export function CreatePostModal({
                   </div>
                 </div>
               </Modal.Body>
+              {/* A AÇÃO PRIMÁRIA VIVE NA BARRA DE AÇÕES, NÃO NO FIM DO
+                  CONTEÚDO. `Modal.Body` é `overflow-y-auto` num diálogo com
+                  `max-h-full`: com o primário como último filho do corpo, o
+                  centro dele cai FORA da caixa visível do corpo e o
+                  `document.elementFromPoint` do centro resolve para o que está
+                  pintado ali — medido em 19/09/2026 no `dono-vila`: a 375x568 o
+                  centro caía sobre o "Cancelar" (`button--tertiary`) do rodapé
+                  em `scrollTop` 123..184, e a 1440 o `modal__dialog--scroll-inside`
+                  recortava o botão. Rolagem interna exigida só para ALCANÇAR o
+                  primário: 204 px a 375x568 e 105 px a 375x667 (diferença entre o
+                  pé do botão e o pé do corpo), e a 375x812 — a altura do projeto
+                  e2e — o defeito não aparecia, que é como ele passou dois ciclos.
+                  Com a barra de ações fora da área que rola, o primário está
+                  sempre inteiro na tela e o hit-test do centro resolve para ele
+                  nos cinco tamanhos medidos, sem rolagem nenhuma. */}
               <Modal.Footer>
                 <Button variant="tertiary" onPress={modal.close} isDisabled={submitting}>
                   Cancelar
+                </Button>
+                <Button
+                  onPress={handleSubmit}
+                  isDisabled={submitting || !content.trim()}
+                  variant="primary"
+                  aria-busy={submitting}
+                  data-testid="publish-submit"
+                >
+                  {submitting ? (
+                    <>
+                      <Spinner size="sm" aria-label="Publicando" />
+                      Publicando…
+                    </>
+                  ) : (
+                    "Publicar"
+                  )}
                 </Button>
               </Modal.Footer>
             </Modal.Dialog>
