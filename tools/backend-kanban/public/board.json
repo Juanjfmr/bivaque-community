@@ -3269,6 +3269,69 @@
         "Decisao do dono pendente: resposta cujo lugar ja esta no Guia fica 'devida' para sempre e o P3b reenviaria o mesmo corpo a cada execucao — o marcador de 'ja tentado, nada produzido' e estado novo"
       ],
       "completedChecklist": [false, true, true, true, true, false, true, false, true, true]
+    },
+    {
+      "id": "FEED-PAGINACAO-CURSOR",
+      "title": "Feed: Recentes paginado por cursor e Relevantes como lista limitada",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "next",
+      "risk": "R3",
+      "description": "A Home carrega 372 cartoes e produz main.scrollHeight de 129.980px a 1440 (achado A1 da adjudicacao visual r6). public.feed_community recebe so p_community_id e p_order — sem limit, offset ou cursor —, roda quatro subconsultas laterais por post ANTES de ordenar, e e chamada sem limite em tres lugares: (shell)/inicio/home-loaders.ts:125, (shell)/community/page.tsx:121 e (shell)/communities/[id]/community-detail-loaders.ts:231. Nao existe carregar mais em componente nenhum do feed. Decisao registrada em docs/decisions/ADR-20260922-feed-paginado-por-cursor.md: Recentes vira fluxo paginado por cursor (par created_at + id, porque os ids sao gen_random_uuid e aleatorios) e Relevantes vira LISTA LIMITADA sem rolagem infinita. R3 por tocar supabase/migrations. A autorizacao atual e preservada integralmente — muda quanto se le, nunca quem pode ler.",
+      "checklist": [
+        "Nova assinatura com p_before_created_at, p_before_id e p_limit default 20, com o SERVIDOR impondo teto de 50",
+        "A assinatura antiga de dois argumentos e APAGADA na mesma migration (no Postgres acrescentar parametros cria sobrecarga, e a versao sem limite continuaria chamavel)",
+        "As tres origens viram tres ramos em UNION ALL, cada um com seu cursor e seu limite pelo proprio indice, juntando e cortando no fim",
+        "Indices: os tres de posts ganham id; hoje existem (community_id, created_at desc) e (locality_id, created_at desc) sem id, e falta group_id + created_at",
+        "Em Recentes as quatro laterais rodam DEPOIS do corte, sobre os 20 escolhidos; em Relevantes a contagem de comentarios e o criterio de ordem e roda sobre a janela",
+        "Autorizacao preservada integralmente: security definer, search_path vazio, checagem am_member, visibilidade de grupo privado, mesmos revoke/grant",
+        "Janela de 7 dias, limite de 20 posts e piso de 1 comentario como funcoes SQL em private, no padrao de guide_candidate_max_per_locality, provadas por pgTAP",
+        "pgTAP positivo E negativo na mesma migration: pagina 2 nao repete nem pula; post publicado entre requisicoes nao duplica; dois posts no mesmo instante aparecem os dois; teto de 50 vale; Relevantes respeita janela, piso e limite",
+        "pgTAP negativo de autorizacao: quem nao e membro recebe ZERO linhas EM TODAS AS PAGINAS, e post de grupo privado nao vaza em pagina nenhuma",
+        "database.generated.ts regenerado SO do schema public",
+        "Intencao dos 24 pgTAP e dos 2 e2e preservada: paginar ate o post ou ajustar a fixture, NUNCA trocar contagem exata por maior que zero",
+        "Os tres chamadores carregam a primeira pagina no servidor e as seguintes sob demanda com botao Carregar mais, NAO rolagem infinita automatica",
+        "Estados reais: falha na pagina seguinte MANTEM o que esta na tela e oferece tentar de novo; trocar de aba recomeca do zero; fim do feed diz que acabou; Relevantes vazio explica e leva para Recentes",
+        "Logica do cursor como funcao pura com teste unitario; e2e prova 20 cartoes, depois 40, sem id repetido",
+        "Descobrir POR QUE o e2e da r6 rodou 35 minutos contra :3210 e foi morto — hipotese a medir: o proprio feed sem limite. Se for, o tempo antes e depois vira prova",
+        "Gate completo por frente, verificador independente que RODE pgTAP e e2e, congelamento declarado e adjudicacao visual das superficies tocadas"
+      ],
+      "completedChecklist": [],
+      "proof": [
+        "Achado A1 da adjudicacao visual r6 (adjudicada contra a revisao congelada 82fb64a): feed da Home sem paginacao — main.scrollHeight de 129.980px a 1440, 372 cartoes e 372 campos de comentario. Classificado como ALTA e FORA do escopo declarado daquela rodada, e e por isso que a Densidade alcancou 4 sem tocar fora",
+        "Medicao do dono: public.feed_community (ultima definicao em 20260915013344_post_follows.sql:79) recebe apenas p_community_id e p_order; roda QUATRO subconsultas laterais por post (contagem de comentarios, contagem de reacoes, my_reaction, my_follow) ANTES de ordenar; e e chamada sem limite em tres lugares",
+        "Medicao do dono: o e2e da rodada r6 rodou 35 minutos contra o :3210 com 4 specs abrindo a Home e foi morto — nao ha e2e verde medido desde 82fb64a. Hipotese a MEDIR, nao a aceitar: e o proprio feed sem limite",
+        "Medicao do dono: 24 chamadas a feed_community em QUATRO arquivos pgTAP (community-feed-locality-reach.sql, community-feeds.sql, post-follows.sql, transfer-scope-denials.sql) e dois e2e que dependem do feed (inicio-phone-typography.spec.ts, two-localities.spec.ts)",
+        "Indices existentes hoje, medidos: posts (community_id, created_at desc) e posts (locality_id, created_at desc), ambos SEM id; falta group_id + created_at",
+        "Decisao e autoria registradas em docs/decisions/ADR-20260922-feed-paginado-por-cursor.md: o dono decidiu a FORMA (Recentes por cursor; Relevantes como lista limitada, sem rolagem infinita) e REJEITOU os 30 dias propostos pelo coordenador por ser feed local; os numeros — 7 dias, 20 posts, minimo 1 comentario — sao do coordenador, dentro da forma escolhida, e sao parametros reversiveis"
+      ],
+      "tests": [
+        "pgTAP: pagina 2 nao repete nem pula nada da pagina 1",
+        "pgTAP: post publicado entre duas requisicoes nao gera duplicata na pagina seguinte",
+        "pgTAP: dois posts gravados no mesmo instante aparecem os dois (o id desempata o cursor)",
+        "pgTAP: o teto de 50 e imposto pelo servidor",
+        "pgTAP: Relevantes respeita a janela de 7 dias, o piso de 1 comentario e o limite de 20",
+        "pgTAP negativo: quem nao e membro recebe ZERO linhas EM TODAS AS PAGINAS, nao so na primeira",
+        "pgTAP negativo: post de grupo privado nao vaza em pagina nenhuma",
+        "Unitario: a logica do cursor e funcao pura e tem teste proprio",
+        "e2e: Carregar mais leva de 20 para 40 cartoes sem nenhum id repetido",
+        "e2e: falha na pagina seguinte mantem o feed na tela e oferece tentar de novo",
+        "e2e: trocar entre Recentes e Relevantes recomeca do zero"
+      ],
+      "links": [
+        "docs/decisions/ADR-20260922-feed-paginado-por-cursor.md",
+        "supabase/migrations/20260915013344_post_follows.sql",
+        "apps/web/app/(shell)/inicio/home-loaders.ts",
+        "apps/web/app/(shell)/community/page.tsx",
+        "apps/web/app/(shell)/communities/[id]/community-detail-loaders.ts"
+      ],
+      "dependencies": [
+        "Nenhuma bloqueante. Nao entra no card PROD-INICIO-UX-20260919: e trabalho novo, com card proprio."
+      ],
+      "blockers": [],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "f4df3b0"
     }
   ]
 }
