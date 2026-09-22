@@ -8,6 +8,7 @@ import {
   provisionMember,
   verifyEligibility,
 } from "../../../lib/onboarding/verifyAndProvision"
+import { withoutReason } from "../../../lib/portal/browser-outcome"
 import { createServerClient } from "../../../lib/supabase/server"
 
 export const runtime = "nodejs"
@@ -91,7 +92,10 @@ export async function POST(request: Request) {
           action: "verify-cpf",
         })
       }
-      return NextResponse.json(result)
+      // O motivo técnico fica no log do servidor, nunca no navegador
+      // (ADR-20260922-identidade-quando-portal-falha): a tela decide pelo status e
+      // pelo errorCode, e "Portal API key not configured" é detalhe de configuração.
+      return NextResponse.json({ outcome: withoutReason(result.outcome) })
     }
 
     if (action === "provision") {

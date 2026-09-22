@@ -6,7 +6,7 @@
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 102 frentes · 10 agora · 7 bloqueadas · 49 concluídas · 0 drifts
+**Mapa:** 103 frentes · 10 agora · 8 bloqueadas · 50 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -27,6 +27,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Bloqueios
 
+- **ONB-IDENTIDADE-SEM-CIDADE** · P0 · Ninguem novo consegue ser aprovado por identidade: a aprovacao exige cidade que o fluxo so pede depois — Decisao do dono: aprovar por identidade sem cidade marcando verificado e deixando a cidade para depois, ou pedir a cidade antes do envio do documento, ou outra
 - **BLOCK-LEGAL-AI** · BLOCK · Governança LGPD para IA e terceiros — Revisão jurídica; Decisões do dono
 - **BLOCK-LEGAL-ENTRY** · BLOCK · Textos legais da entrada prontos para abertura pública — Abertura pública; Prova E2E/deploy
 - **BLOCK-RESEND** · BLOCK · Resend e domínio de e-mail transacional — Criar o projeto de deploy do Bivaque e configurar RESEND_API_KEY e RESEND_FROM_EMAIL; Provar uma entrega real pelo outbox em ambiente implantado
@@ -45,7 +46,6 @@ Nenhum card.
 - **DOC-20260906-RECONSTRUCAO** · P1 · Publicar e ampliar guia visual e autoridade de construção
 - **DRIFT-STATUS-RECONCILIATION** · P1 · Reconciliar documentação com runtime após cada ciclo
 - **NOTIF-PEDIDO-RESPOSTA** · P1 · A membra nao e avisada quando o prestador responde o pedido
-- **ONB-CPF-SEM-SAIDA** · P1 · Com o Portal fora, a verificacao por CPF nao oferece a identidade como alternativa
 - **PROXY-SURFACE-RISK** · P1 · Superfície de escape do gate de rota documentada e reduzida
 
 ## Comandos

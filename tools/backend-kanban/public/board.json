@@ -3128,25 +3128,28 @@
       ],
       "dependencies": [],
       "updatedAt": "2026-09-22",
-      "sourceRevision": "65fc81f",
+      "sourceRevision": "ec9928bf",
       "id": "ONB-CPF-SEM-SAIDA",
       "title": "Com o Portal fora, a verificacao por CPF nao oferece a identidade como alternativa",
       "priority": "P1",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
       "description": "Observado na simulacao de 22/09/2026 (HRN-004): a tela /onboarding promete 'Se nao conseguirmos confirmar, voce podera enviar sua identidade', e o DECISOES-2026-09-07 define CPF rapido com fallback por identidade. No resultado temporary_error (Portal indisponivel ou chave ausente) a pagina so mostra 'Estamos com uma instabilidade... tente mais tarde' e nao oferece a identidade; /onboarding/documento devolve para /onboarding. So o resultado rejected leva ao envio (onboarding/page.tsx). Com o Portal fora, quem chega fica sem caminho. Na mesma execucao, a tentativa com chave ausente nao apareceu na fila do operador. Entra em repo: liberar identidade no erro temporario toca verificacao e CPF (R3) e precisa da decisao do dono DECISAO DO DONO 22/09/2026: no erro temporario, oferecer o envio de identidade na hora — a mensagem de instabilidade fica, e \"Enviar identidade agora\" libera /onboarding/documento. Segue em repo ate o ADR que registra a decisao, por tocar verificacao de identidade (R3).",
       "checklist": [
-        "Decidir se erro temporario libera o envio de identidade [FEITO 22/09: libera na hora, sem esperar tentativas]",
-        "Se liberar: oferecer a saida na tela e abrir /onboarding/documento para esse estado",
-        "Conferir se a tentativa com erro temporario deve aparecer na fila do operador",
-        "Trocar as lacunas 39-web-onboarding-contexto#0/#1 em journey-entrar-e-ser-admitido.spec.ts por passos observados",
-        "ADR-20260922-identidade-quando-portal-falha redigido em 22/09 (proposed); aguarda aprovacao do texto pelo dono"
+        "Decidir se erro temporario libera o envio de identidade [FEITO 22/09: libera na hora]",
+        "Oferecer a saida na tela e abrir /onboarding/documento para esse estado [FEITO: \"Enviar identidade agora\"; o ramo de chave ausente passa a gravar temporary_error]",
+        "Conferir se a tentativa com erro temporario aparece na fila do operador [FEITO: depois do envio, \"Em analise · Documento para decidir\" em /admissions]",
+        "ADR-20260922-identidade-quando-portal-falha aceito [FEITO 22/09]",
+        "Trocar as lacunas 39 da jornada por passos observados [MOVIDO para ONB-IDENTIDADE-SEM-CIDADE: a aprovacao do documento esta quebrada antes deste ADR]"
       ],
       "proof": [
         "tests/e2e/journey-entrar-e-ser-admitido.spec.ts: CPF -> alerta de instabilidade, permanece em /onboarding; goto /onboarding/documento volta para /onboarding",
-        "apps/web/app/(preauth)/onboarding/page.tsx: rejected -> /onboarding/documento; temporary_error -> so setError"
+        "apps/web/app/(preauth)/onboarding/page.tsx: rejected -> /onboarding/documento; temporary_error -> so setError",
+        "journey-entrar-e-ser-admitido.spec.ts 2 passed: CPF -> instabilidade -> \"Enviar identidade agora\" -> envio do arquivo -> \"Documento enviado\". Banco: verification_outcomes pending, 1 documento; /admissions?q=<email> mostra \"Em analise · Documento para decidir\"",
+        "Unidade: verify-and-provision.test.ts (sem chave grava temporary_error por upsert_verification_outcome sem consumir tentativa; falha de gravacao sobe) e browser-outcome.test.ts (o reason tecnico nao chega ao navegador)"
       ],
-      "tests": ["tests/e2e/journey-entrar-e-ser-admitido.spec.ts"]
+      "tests": ["tests/e2e/journey-entrar-e-ser-admitido.spec.ts"],
+      "completedAt": "2026-09-22"
     },
     {
       "phase": "Reconstrução",
@@ -3287,6 +3290,36 @@
         "Remover ou redirecionar, ajustando os specs",
         "Tirar /consent de PORTAS_FORA_DO_LINK em link-crawl.spec.ts"
       ]
+    },
+    {
+      "id": "ONB-IDENTIDADE-SEM-CIDADE",
+      "title": "Ninguem novo consegue ser aprovado por identidade: a aprovacao exige cidade que o fluxo so pede depois",
+      "phase": "Reconstrução",
+      "priority": "P0",
+      "category": "backend",
+      "status": "blocked",
+      "description": "Achado na jornada simulada de 22/09/2026, ao implementar o ADR-20260922-identidade-quando-portal-falha. decide_verification_document (supabase/migrations/20260822215307_outbox_verification_decision.sql) so aprova quem ja tem linha em locality_memberships — levanta \"cannot approve: no locality for the user\" — e usa essa cidade para criar membership e profile. O onboarding atual pede a cidade DEPOIS da verificacao (verificado sem membership -> /onboarding/locality -> provision_member_locality). Logo, nenhuma pessoa nova passa pela identidade: nem pelo erro temporario do Portal (ADR de 22/09) nem pelo CPF recusado, caminho que ja existia. Medido: o operador clica Aprovar documento e recebe \"Nao foi possivel registrar agora\"; o log do servidor registra o erro do RPC. Bloqueado: mudar o RPC security definer do schema private e R3 e precisa de decisao do dono e ADR.",
+      "checklist": [
+        "Decisao do dono sobre como a aprovacao por identidade trata quem ainda nao escolheu cidade",
+        "ADR da mudanca no RPC",
+        "Migration nova (nunca editar a aplicada) com pgTAP positivo e negativo",
+        "Trocar as lacunas 39-web-onboarding-contexto#0/#1 de journey-entrar-e-ser-admitido.spec.ts por passos observados, com o operador aprovando"
+      ],
+      "proof": [
+        "journey-entrar-e-ser-admitido.spec.ts: o envio chega a fila; aprovar falha com \"cannot approve: no locality for the user\" (log admission decide failed, 22/09 15:21)",
+        "onboarding/locality/page.tsx: a cidade e escolhida depois da verificacao; o proxy leva verificado sem membership para la"
+      ],
+      "tests": ["tests/e2e/journey-entrar-e-ser-admitido.spec.ts"],
+      "links": [
+        "supabase/migrations/20260822215307_outbox_verification_decision.sql",
+        "docs/decisions/ADR-20260922-identidade-quando-portal-falha.md"
+      ],
+      "dependencies": [],
+      "blockers": [
+        "Decisao do dono: aprovar por identidade sem cidade marcando verificado e deixando a cidade para depois, ou pedir a cidade antes do envio do documento, ou outra"
+      ],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "ec9928bf"
     }
   ]
 }

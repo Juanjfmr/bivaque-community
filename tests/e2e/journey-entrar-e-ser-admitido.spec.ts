@@ -12,25 +12,28 @@ import { signInAs } from "./helpers/session"
 //     entra direto e a tela de confirmação não aparece. Lacuna do ambiente, não do app.
 //   * 38#0 (verificar acesso): observada. Sem PORTAL_DADOS_API_KEY a verificação por CPF cai no
 //     erro temporário — o mesmo caminho seguro de um Portal fora do ar.
-//   * 39 (cidade e personalização): lacuna. Com erro temporário a tela só pede para tentar mais
-//     tarde: a alternativa por identidade que o texto promete não aparece, e /onboarding/documento
-//     devolve para /onboarding. Ou seja, com o Portal fora a pessoa não tem como seguir.
+//   * Identidade: desde o ADR-20260922-identidade-quando-portal-falha, o erro temporário oferece
+//     "Enviar identidade agora", e a pessoa envia o arquivo. Antes, com o Portal fora, ninguém seguia.
+//   * 39 (cidade e personalização): lacuna. A aprovação do documento exige cidade que o fluxo só
+//     pede depois — ONB-IDENTIDADE-SEM-CIDADE.
 //
-// O operador analisa uma solicitação semeada da fila sem decidir: a jornada termina em
-// "solicitação analisada", e decidir mudaria a fila que outros specs leem.
+// O segundo teste: o operador analisa uma solicitação semeada sem decidir, porque decidir
+// mudaria a fila que outros specs leem. A aprovação do primeiro teste é sobre a conta nova dele.
 //
 // @stateful: cria uma conta no Auth local.
 
 const OPERATOR = "operador@bivaque.example.invalid"
-const PORTAL_UNAVAILABLE =
-  "a verificação não conclui neste ambiente: sem chave do Portal o CPF cai no erro temporário, " +
-  "e com erro temporário a alternativa por identidade não aparece nem abre pela URL"
+// PNG 1x1 válido: basta para a checagem de tipo e tamanho do envio de identidade.
+const IDENTITY_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+)
 
 test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, () => {
   test.skip(({ viewport }) => (viewport?.width ?? 0) < 1440, "jornada das pranchas web")
   test.setTimeout(180_000)
 
-  test("visitante cria a conta e chega à verificação de acesso", async ({ page }, testInfo) => {
+  test("visitante entra e, com o Portal fora, envia a identidade", async ({ page }, testInfo) => {
     const email = `jornada-${Date.now().toString(36)}@bivaque.example.invalid`
     const entrar = simulateJourney(testInfo, "web-entrar-e-ser-admitido")
 
@@ -96,12 +99,29 @@ test.describe("jornada simulada: entrar e ser admitido", { tag: "@stateful" }, (
       { persona: "visitante" },
     )
 
-    // A alternativa prometida ("você poderá enviar sua identidade") não abre neste estado.
-    await page.goto("/onboarding/documento")
-    await expect(page).toHaveURL(/\/onboarding$/)
+    // ADR-20260922-identidade-quando-portal-falha: com o Portal fora, a identidade é
+    // oferecida na hora. A pessoa envia um arquivo único e completo, e segue.
+    await page.getByRole("link", { name: "Enviar identidade agora" }).click()
+    await expect(page).toHaveURL(/\/onboarding\/documento$/)
+    await page.getByLabel("Documento para análise").setInputFiles({
+      name: "identidade.png",
+      mimeType: "image/png",
+      buffer: IDENTITY_PNG,
+    })
+    await page.getByRole("button", { name: "Enviar para análise" }).click()
+    await expect(page.getByRole("status").filter({ hasText: "Documento enviado" })).toBeVisible({
+      timeout: 20_000,
+    })
 
-    entrar.lacuna("39-web-onboarding-contexto#0", PORTAL_UNAVAILABLE)
-    entrar.lacuna("39-web-onboarding-contexto#1", PORTAL_UNAVAILABLE)
+    // Aprovar o documento ainda não fecha o ciclo: decide_verification_document só aprova quem
+    // já tem cidade, e o onboarding só pede a cidade depois da verificação. Defeito anterior ao
+    // ADR, registrado em ONB-IDENTIDADE-SEM-CIDADE — não afirmado aqui, para não travá-lo.
+    const IDENTITY_APPROVAL_BLOCKED =
+      "aprovar o documento exige cidade já escolhida (decide_verification_document: 'cannot " +
+      "approve: no locality for the user'), mas o onboarding só pede a cidade depois da " +
+      "verificação; ninguém admitido por identidade chega aqui — ONB-IDENTIDADE-SEM-CIDADE"
+    entrar.lacuna("39-web-onboarding-contexto#0", IDENTITY_APPROVAL_BLOCKED)
+    entrar.lacuna("39-web-onboarding-contexto#1", IDENTITY_APPROVAL_BLOCKED)
     entrar.concluir()
   })
 

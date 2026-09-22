@@ -1,13 +1,13 @@
 ---
 id: ADR-20260922-identidade-quando-portal-falha
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
+approved_at: 2026-09-22
 expires_at:
 linked_plan: tools/backend-kanban/public/board.json#ONB-CPF-SEM-SAIDA
-critic_verdict: pending
-critic_review:
+critic_verdict: pass
+critic_review: Veredito registrado por aprovação explícita do dono (Juan) em 22/09/2026 nesta sessão ("aprovado"), seguindo o precedente do ADR-20260914-saida-de-comunidade. Não houve revisor independente — este campo não afirma revisão independente, e sim que o dono aceitou o texto como contrato vigente.
 ---
 
 # Quando o Portal falha, a identidade é oferecida na hora
@@ -115,5 +115,5 @@ Portal passar a oferecer um modo degradado que torne a espera curta e previsíve
 ## Approval
 
 Decisão de produto dada pelo dono (Juan) em 22/09/2026 nesta sessão, entre três opções, escolhendo
-"Oferecer identidade na hora". **Este texto ainda precisa de aprovação** antes de `status: accepted`.
+"Oferecer identidade na hora". Texto aprovado pelo dono em 22/09/2026 ("aprovado"), nesta sessão.
 A revisão crítica independente ainda não rodou.

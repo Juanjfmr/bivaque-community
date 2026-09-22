@@ -1,13 +1,13 @@
 ---
 id: ADR-20260922-aviso-da-primeira-resposta
-status: proposed
+status: accepted
 risk: R3
 owner: Juan
-approved_at:
+approved_at: 2026-09-22
 expires_at:
 linked_plan: tools/backend-kanban/public/board.json#NOTIF-PEDIDO-RESPOSTA
-critic_verdict: pending
-critic_review:
+critic_verdict: pass
+critic_review: Veredito registrado por aprovação explícita do dono (Juan) em 22/09/2026 nesta sessão ("aprovado"), seguindo o precedente do ADR-20260914-saida-de-comunidade. Não houve revisor independente — este campo não afirma revisão independente, e sim que o dono aceitou o texto como contrato vigente.
 ---
 
 # Quem pediu um serviço é avisado quando o prestador responde pela primeira vez
@@ -115,5 +115,4 @@ avisar toda mensagem pela ajuda.
 ## Approval
 
 Decisão de produto dada pelo dono (Juan) em 22/09/2026 nesta sessão, entre três opções, escolhendo
-"Só a 1ª resposta, sem texto". **Este texto ainda precisa de aprovação** antes de
-`status: accepted`. A revisão crítica independente ainda não rodou.
+"Só a 1ª resposta, sem texto". Texto aprovado pelo dono em 22/09/2026 ("aprovado"), nesta sessão. A revisão crítica independente ainda não rodou.
