@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { simulateJourney } from "./helpers/journey"
 import { signInAs } from "./helpers/session"
 
@@ -7,8 +7,8 @@ import { signInAs } from "./helpers/session"
 // Duas personas do seed, cada uma no seu contexto de navegador: a membra da vila pede um serviço
 // ao prestador semeado, o prestador recebe no painel e responde, e a membra encontra a resposta.
 // O ciclo só fecha quando o que um escreve aparece para o outro — tela bonita sem persistência não
-// passa. Cada passo é andado por clique a partir da tela anterior; onde o app não tem porta, o
-// passo é alcançado pela URL e registrado como ATALHO, para o relatório mostrar a porta que falta.
+// passa. Cada passo é andado por clique a partir da tela anterior. O passo 17 foi ATALHO até
+// NAV-PEDIDOS-ORFA: o sucesso do envio não levava ao acompanhamento e nada levava a /pedidos.
 //
 // @stateful: cria um pedido e uma mensagem que outros specs leem. Só desktop-1440, porque as
 // pranchas destas jornadas são web e o ciclo de duas personas por viewport triplicaria as linhas.
@@ -37,7 +37,6 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
 
     const pedir = simulateJourney(testInfo, "web-pedir-um-servico")
     const responder = simulateJourney(testInfo, "web-responder-um-pedido")
-    let requestPath = ""
 
     try {
       await pedir.passo(
@@ -130,23 +129,30 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
       await expect(provider.getByRole("region", { name: "Conversa" }).getByText(reply)).toBeVisible(
         { timeout: 20_000 },
       )
-      requestPath = await findRequestFor(member, marker)
 
       await pedir.passo(
         "17-web-pedido-servico#0",
         member,
         async () => {
-          await member.goto(requestPath)
+          // A porta nasce no sucesso do envio: a membra acompanha sem digitar URL.
+          await member.getByRole("link", { name: "Acompanhar pedido" }).click()
+          await expect(member).toHaveURL(/\/pedidos\/[0-9a-f-]+$/)
           await expect(member.getByText(marker).first()).toBeVisible({ timeout: 20_000 })
           await expect(member.getByText(reply).first()).toBeVisible()
         },
-        {
-          persona: "membra",
-          atalho:
-            "depois de 'Pedido enviado' a tela só oferece 'Voltar ao perfil', e nenhum link do " +
-            "app leva a /pedidos (NAV-PEDIDOS-ORFA); a membra só reencontra o pedido pela URL",
-        },
+        { persona: "membra" },
       )
+
+      // E reencontra depois, pelo Perfil: a lista de pedidos tem entrada própria.
+      await member.goto("/profile")
+      await member
+        .getByRole("navigation", { name: "Atalhos do perfil" })
+        .getByRole("link", { name: /Meus pedidos/ })
+        .click()
+      await expect(member.getByRole("heading", { level: 1, name: "Meus pedidos" })).toBeVisible({
+        timeout: 20_000,
+      })
+      await expect(member.getByRole("link").filter({ hasText: marker })).toBeVisible()
 
       pedir.concluir()
       responder.concluir()
@@ -156,16 +162,3 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
     }
   })
 })
-
-/**
- * Acha, na lista da própria membra, o pedido que ela acabou de criar. A lista é lida pela
- * URL porque não há link para ela; o que se prova aqui é que o pedido persistiu para a autora.
- */
-async function findRequestFor(page: Page, marker: string): Promise<string> {
-  await page.goto("/pedidos")
-  const item = page.getByRole("link").filter({ hasText: marker })
-  await expect(item).toBeVisible({ timeout: 20_000 })
-  const href = await item.getAttribute("href")
-  if (!href) throw new Error("o pedido criado aparece na lista sem link para o acompanhamento")
-  return href
-}

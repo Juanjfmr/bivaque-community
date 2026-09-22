@@ -43,8 +43,9 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
             .getByRole("status")
             .filter({ hasText: "Você ainda não tem acesso a esta comunidade." })
           await expect(state).toBeVisible({ timeout: 20_000 })
-          // O caminho legítimo existe. (Achado de 22/09: o texto diz "fica em outra cidade" em
-          // vez de nomear a cidade — o rótulo chega vazio; registrado no board, não afirmado.)
+          // Diz onde a comunidade fica (COMM-CIDADE-ROTULO) e o caminho legítimo.
+          await expect(state).toContainText("fica em Rio de Janeiro, RJ")
+          await expect(state).not.toContainText("outra cidade")
           await expect(state.getByRole("link", { name: "Trocar de cidade" })).toBeVisible()
           await expect(state.getByRole("button", { name: /Tentar/ })).toHaveCount(0)
         },

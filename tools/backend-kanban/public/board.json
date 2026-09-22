@@ -2258,7 +2258,8 @@
         "Armadilha de ferramenta medida em 16/09: report.json nao gravava a URL do recurso que falhou, entao 404 de imagem passava como '0 achados'. capture.mjs agora registra failedRequests (status + URL) ao lado de consoleErrors, sem mudar o veredito do proof",
         "MEDICAO E2E 18/09/2026 (lote AR): a suite completa rodou no ambiente local com o seed e a senha do operador — 659 passed / 58 failed / 6 skipped em 7.5 min, nos tres viewports. Os 58 nao sao 58 defeitos: sao 55 blocos de erro com apenas SETE assinaturas distintas, quatro delas a mesma espera vencida (toHaveCount/toHaveClass/timeout de click), mais 'strict mode violation' em seletores que ficaram ambiguos com a UI reconstruida (getByRole heading 'Eve...', button 'Buscar') e um 'Elemento nao encontrado' de composer com rotulo antigo. O baseline registrado e de 01/09/2026 (597 passed / 0 failed) — antes de ~323 commits da campanha, que cresceu a suite para 723 testes. Ou seja: e DIVIDA DA CAMPANHA, nao regressao do trabalho de 18/09 — e a prova direta e que os contratos das telas tocadas hoje passam (shell-navigation 'Indicacoes reachable at 375/768/1440' verde). Os specs mais afetados: manaus-pilot-full-journey, recommendation-reply-notify, ds-029-conformance-probes, two-localities, event-invites, guide-manual-curation, onboarding-holder-family, provider-vitrine, vila-home, recon-032-salvos/messages, persistent-login",
         "Separar o lote E2E stateful do paralelo e dar consumidor a tag [FEITO 18/09, lote AX]: test:e2e --grep-invert @stateful (paralelo), test:e2e:stateful --workers=1, test:e2e:all encadeando, CI rodando os DOIS passos, e o contrato de escopo fixando os tres comandos. Oito specs marcados (quem escreve em linha que outros leem). Contencao removida na raiz: group-admin-cycle deixou de disputar o grupo privado com synthetic-people-interaction e group-event-detail-denials — passou a usar um grupo privado proprio, 29 passed nos tres viewports",
-        "Piloto de jornada simulada [FEITO 22/09, HRN-004]: tests/e2e/helpers/journey.ts abre uma jornada de journeys.json pelo id e registra cada passo observado, com captura; o registro recusa passo fora da jornada e conclusao com passo faltando, e separa observado, ATALHO (so pela URL) e LACUNA (ambiente nao entrega). scripts/visual/journey-report.mjs poe prancha e tela real lado a lado. Proximo passo: estender as 33 jornadas web restantes no mesmo molde"
+        "Piloto de jornada simulada [FEITO 22/09, HRN-004]: tests/e2e/helpers/journey.ts abre uma jornada de journeys.json pelo id e registra cada passo observado, com captura; o registro recusa passo fora da jornada e conclusao com passo faltando, e separa observado, ATALHO (so pela URL) e LACUNA (ambiente nao entrega). scripts/visual/journey-report.mjs poe prancha e tela real lado a lado. Proximo passo: estender as 33 jornadas web restantes no mesmo molde",
+        "Transformar scripts/visual/flows/reachability.mjs em teste de CI que reprova rota orfa (herdado de NAV-PEDIDOS-ORFA em 22/09); hoje a analise roda a mao e reporta 0 orfas"
       ],
       "proof": [
         "Auditoria de 12/09 contra 041823f: 86 page.tsx e todas as 31 pranchas web com rota; specs novas na linha viva apenas recon-032-denuncias.spec.ts e recon-032-salvos.spec.ts",
@@ -2281,7 +2282,8 @@
         "ACHADO DE AMBIENTE 18/09/2026, medido e nao suposto: a MESMA suite que deu 711 passed / 6 failed em 6.2 min passou a dar 685 / 32 em 17.1 min sem nenhuma mudanca de produto entre as duas execucoes. A causa foi memoria: a maquina tem 15.7 GB e estava com 3 GB livres, com um dev server Next meu consumindo 1.4 GB. Com workers=2 a execucao chegou a crashar o Node (Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), libuv/Windows) e marcou 214 falhas — que nao sao 214 defeitos, e o runner morrendo. CONCLUSAO: medicao de E2E nesta maquina exige ambiente limpo (dev server parado, memoria livre) e a comparacao so vale entre execucoes nas mesmas condicoes. Numeros de E2E medidos sob pressao de memoria nao devem ser usados para decidir.",
         "MEDICAO FINAL 18/09/2026 com a maquina descarregada: lote normal 655 passed / 5 failed em 6.2 min + lote stateful 57 passed em 4.4 min. As 5 do lote normal sao timeout de INFRAESTRUTURA (browserContext.newPage estourando 30s, ERR_ABORTED, click timeout) em avatar-denials, event-invites e recon-018-entrada — os tres passam 57/57 quando rodados isolados, o que fecha a atribuicao: nao sao defeito de produto nem colisao de dados, e a maquina sob carga (eu rodei dois lotes completos com build em sequencia). O caminho de isolamento esta entregue e com contrato; o que falta nao e mecanismo, e ambiente com folga para a suite inteira",
         "HRN-004 22/09/2026 contra o build de 65fc81f servido na :3211 (a :3000 era de outro checkout): cinco jornadas web concluidas — web-pedir-um-servico (5 passos, 1 atalho), web-responder-um-pedido (1), web-entrar-e-ser-admitido (6, 3 lacunas de ambiente), web-operar-admissoes (2), web-quando-algo-falha (2). Primeira cobertura E2E de Pedidos: a membra pede, o prestador ve no painel e responde, a membra le a resposta. Relatorio: 29 imagens, 0 quebradas",
-        "Achados da simulacao 22/09 (HRN-004): (1) sem notificacao para a membra quando o prestador responde o pedido — NOTIF-PEDIDO-RESPOSTA; (2) com erro temporario do Portal a alternativa por identidade nao aparece nem abre pela URL — ONB-CPF-SEM-SAIDA; (3) o estado de acesso indisponivel diz 'fica em outra cidade' em vez de nomear a cidade — COMM-CIDADE-ROTULO; (4) depois de 'Pedido enviado' nao ha caminho para acompanhar o pedido — prova em NAV-PEDIDOS-ORFA; (5) o Explorar real nao tem 'Conteudos em destaque' nem 'Profissionais em destaque' da prancha 61 — ja coberto por RECON-W00-PLACEHOLDERS"
+        "Achados da simulacao 22/09 (HRN-004): (1) sem notificacao para a membra quando o prestador responde o pedido — NOTIF-PEDIDO-RESPOSTA; (2) com erro temporario do Portal a alternativa por identidade nao aparece nem abre pela URL — ONB-CPF-SEM-SAIDA; (3) o estado de acesso indisponivel diz 'fica em outra cidade' em vez de nomear a cidade — COMM-CIDADE-ROTULO; (4) depois de 'Pedido enviado' nao ha caminho para acompanhar o pedido — prova em NAV-PEDIDOS-ORFA; (5) o Explorar real nao tem 'Conteudos em destaque' nem 'Profissionais em destaque' da prancha 61 — ja coberto por RECON-W00-PLACEHOLDERS",
+        "22/09/2026, lote seguinte ao HRN-004: dois achados da simulacao corrigidos e fechados com a propria jornada como prova — NAV-PEDIDOS-ORFA (atalho do passo 17 virou clique) e COMM-CIDADE-ROTULO (estado de acesso indisponivel nomeia a cidade). Jornadas: 4 passed, 0 atalhos"
       ],
       "tests": [
         "npx pnpm@11.18.0 db:reset (com seed) em janela própria com o banco compartilhado coordenado",
@@ -2298,7 +2300,7 @@
       ],
       "dependencies": [],
       "updatedAt": "2026-09-22",
-      "sourceRevision": "65fc81f"
+      "sourceRevision": "037f610"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
@@ -2562,25 +2564,35 @@
       "phase": "MVP-06",
       "priority": "P2",
       "category": "intelligence",
-      "status": "next",
+      "status": "done",
       "description": "A tela /pedidos existe, tem titulo Meus pedidos e lista os pedidos da pessoa, mas nada no produto leva ate ela. Varredura de 12/09/2026 em apps/web/app: os unicos links para /pedidos sao autolinks dentro da propria area (a lista e o workspace do pedido). O unico caminho externo do dominio leva a /pedidos/novo, a partir da ficha do prestador. Entao a pessoa consegue criar um pedido e nao consegue reencontrar os pedidos dela, a nao ser pelo link que aparece ao terminar a criacao. O RECON-042 atribuiu /pedidos ao container Perfil pelo DESIGN_SYSTEM 7.1; a atribuicao so vira verdade quando existir uma entrada em Perfil.",
       "checklist": [
-        "Decidir onde nasce a entrada: Perfil e o lugar que o DESIGN_SYSTEM 7.1 indica",
-        "Criar a entrada e conferir que ela aparece para quem nao tem pedido nenhum",
-        "Teste que reprova quando uma rota do mapa de identidade nao tem nenhum link de entrada fora da propria area",
-        "Reconferir o container de /pedidos depois que a entrada existir"
+        "Decidir onde nasce a entrada: Perfil e o lugar que o DESIGN_SYSTEM 7.1 indica [FEITO 22/09: atalhos do perfil com Meus pedidos, Meus anuncios e Configuracoes, rail da prancha 51]",
+        "Criar a entrada e conferir que ela aparece para quem nao tem pedido nenhum [FEITO 22/09: a entrada e estatica, nao depende de haver pedido; visivel em 375 e 1440 — abaixo de lg logo apos o cartao de identidade]",
+        "Porta no momento em que o pedido nasce [FEITO 22/09: o sucesso de /pedidos/novo ganhou 'Acompanhar pedido' para /pedidos/<id>]",
+        "Teste que reprova quando uma rota do mapa de identidade nao tem nenhum link de entrada fora da propria area [PARCIAL 22/09: journey-pedir-servico.spec.ts reprova se a entrada do Perfil ou o link do sucesso sumirem, e scripts/visual/flows/reachability.mjs reporta 0 orfas; transformar a analise de alcance em teste de CI ficou como item do TEST-MASSA-JORNADAS]",
+        "Reconferir o container de /pedidos depois que a entrada existir [FEITO 22/09: active-nav mapeia /pedidos para perfil, e a entrada agora vive no Perfil]"
       ],
       "proof": [
-        "Simulacao de 22/09/2026 (HRN-004, tests/e2e/journey-pedir-servico.spec.ts): a descricao acima diz que o link aparece 'ao terminar a criacao', e o app real nao o tem — o sucesso de /pedidos/novo mostra 'Pedido enviado' com um unico link, 'Voltar ao perfil', para a ficha do prestador. A membra so reencontra o pedido pela URL; o passo 17-web-pedido-servico#0 fica registrado como ATALHO por isso"
+        "Simulacao de 22/09/2026 (HRN-004, tests/e2e/journey-pedir-servico.spec.ts): a descricao acima diz que o link aparece 'ao terminar a criacao', e o app real nao o tem — o sucesso de /pedidos/novo mostra 'Pedido enviado' com um unico link, 'Voltar ao perfil', para a ficha do prestador. A membra so reencontra o pedido pela URL; o passo 17-web-pedido-servico#0 fica registrado como ATALHO por isso",
+        "22/09/2026, build desta arvore na :3211: journey-pedir-servico.spec.ts passa com o passo 17-web-pedido-servico#0 alcancado por clique em 'Acompanhar pedido' (0 atalhos, antes 1) e a membra reencontra o pedido por Perfil > Meus pedidos. Regressao: member-profile-denials e shell-navigation 28 passed / 2 skipped nos tres viewports. reachability.mjs: 0 orfas"
       ],
-      "tests": ["tests/e2e/journey-pedir-servico.spec.ts (o atalho some quando a entrada existir)"],
+      "tests": [
+        "tests/e2e/journey-pedir-servico.spec.ts",
+        "tests/e2e/member-profile-denials.spec.ts",
+        "tests/e2e/shell-navigation.spec.ts",
+        "node scripts/visual/flows/reachability.mjs"
+      ],
       "links": [
         "apps/web/app/(shell)/pedidos/page.tsx",
-        "apps/web/app/components/shell/active-nav.ts"
+        "apps/web/app/components/shell/active-nav.ts",
+        "apps/web/app/(shell)/profile/page.tsx",
+        "apps/web/app/(shell)/pedidos/novo/request-form.tsx"
       ],
       "updatedAt": "2026-09-22",
-      "sourceRevision": "65fc81f",
-      "dependencies": []
+      "sourceRevision": "037f610",
+      "dependencies": [],
+      "completedAt": "2026-09-22"
     },
     {
       "id": "RECON-039",
@@ -3133,23 +3145,34 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["apps/web/app/(shell)/communities/[id]/community-detail-screen.tsx"],
+      "links": [
+        "apps/web/app/(shell)/communities/[id]/community-detail-screen.tsx",
+        "apps/web/app/(shell)/communities/[id]/community-detail-loaders.ts"
+      ],
       "dependencies": [],
       "updatedAt": "2026-09-22",
-      "sourceRevision": "65fc81f",
+      "sourceRevision": "037f610",
       "id": "COMM-CIDADE-ROTULO",
       "title": "Acesso indisponivel diz 'fica em outra cidade' sem nomear a cidade",
       "priority": "P3",
       "category": "frontend",
-      "status": "next",
-      "description": "Observado na simulacao de 22/09/2026 (HRN-004, journey-quando-algo-falha): membro-1 (Manaus) abre a Vila Petropolis (Rio) e le 'Vila Petropolis fica em outra cidade'. O texto foi escrito para nomear a cidade (community-detail-screen.tsx usa cityLabel ?? 'outra cidade'), entao o rotulo chega vazio para quem nao e da cidade. Causa nao investigada: pode ser a leitura da localidade barrada para nao-membro; se for, a correcao nao pode abrir dado da localidade alem do nome",
+      "status": "done",
+      "description": "Observado na simulacao de 22/09/2026 (HRN-004, journey-quando-algo-falha): membro-1 (Manaus) abre a Vila Petropolis (Rio) e le 'Vila Petropolis fica em outra cidade'. O texto foi escrito para nomear a cidade (community-detail-screen.tsx usa cityLabel ?? 'outra cidade'), entao o rotulo chega vazio para quem nao e da cidade. Causa nao investigada: pode ser a leitura da localidade barrada para nao-membro; se for, a correcao nao pode abrir dado da localidade alem do nome. CAUSA medida em 22/09: a policy localities_select_same_membership so abre a propria cidade. CORRECAO sem tocar RLS nem migration: resolveCityLabel le com a sessao e, se vier vazio, le so city_name e state_code desta localidade pelo cliente de servidor — o mesmo catalogo IBGE que /api/localities/[uf] ja serve a qualquer pessoa",
       "checklist": [
-        "Achar por que cityLabel chega nulo para membro de outra cidade",
-        "Nomear a cidade sem abrir mais que o nome",
-        "Afirmar o nome da cidade em journey-quando-algo-falha.spec.ts"
+        "Achar por que cityLabel chega nulo para membro de outra cidade [FEITO: RLS de localities restrita a propria cidade]",
+        "Nomear a cidade sem abrir mais que o nome [FEITO: recurso ao catalogo le so city_name e state_code, so do locality_id da comunidade que a pessoa ja le]",
+        "Afirmar o nome da cidade em journey-quando-algo-falha.spec.ts [FEITO: 'fica em Rio de Janeiro, RJ' e ausencia de 'outra cidade']"
       ],
-      "proof": ["tests/e2e/journey-quando-algo-falha.spec.ts, passo 60-web-estados#0"],
-      "tests": ["tests/e2e/journey-quando-algo-falha.spec.ts"]
+      "proof": [
+        "tests/e2e/journey-quando-algo-falha.spec.ts, passo 60-web-estados#0",
+        "tests/unit/communities/community-city-label.test.ts: sessao que ja le nao toca o catalogo; de fora le so nome e UF desta localidade; sem catalogo fica nulo; falha de leitura lanca",
+        "22/09/2026, build desta arvore na :3211: journey-quando-algo-falha.spec.ts passa afirmando 'fica em Rio de Janeiro, RJ'"
+      ],
+      "tests": [
+        "tests/e2e/journey-quando-algo-falha.spec.ts",
+        "tests/unit/communities/community-city-label.test.ts"
+      ],
+      "completedAt": "2026-09-22"
     }
   ]
 }

@@ -99,10 +99,37 @@ export type CommunityDetailView =
       transferCandidates: TransferCandidate[]
     }
 
+/**
+ * Nome da cidade da comunidade. A sessão lê primeiro (a RLS de `localities` só abre a
+ * cidade de quem é de lá). Para quem é de fora a leitura volta vazia, e a tela de acesso
+ * indisponível dizia "fica em outra cidade" (COMM-CIDADE-ROTULO). O nome e a UF são o
+ * catálogo IBGE que /api/localities já serve a qualquer pessoa; o recurso lê SÓ essas duas
+ * colunas, só desta localidade, e não abre nada da vida da cidade.
+ */
+export async function resolveCityLabel(
+  supabase: CommunityDetailClient,
+  catalog: CommunityDetailClient | null,
+  localityId: string,
+): Promise<string | null> {
+  const read = async (client: CommunityDetailClient) => {
+    const { data, error } = await client
+      .from("localities")
+      .select("city_name, state_code")
+      .eq("id", localityId)
+      .maybeSingle()
+    if (error) throw new Error("Falha ao ler a cidade da comunidade.")
+    return data as LocalityRow | null
+  }
+
+  const row = (await read(supabase)) ?? (catalog ? await read(catalog) : null)
+  return row ? `${row.city_name}, ${row.state_code}` : null
+}
+
 export async function loadCommunityDetail(
   supabase: CommunityDetailClient,
   communityId: string,
   userId: string,
+  catalog: CommunityDetailClient | null = null,
 ): Promise<CommunityDetailView> {
   const { data: communityData, error: communityError } = await supabase
     .from("communities")
@@ -152,16 +179,7 @@ export async function loadCommunityDetail(
     ? resolveAudience(mine ? { role: mine.role, status: mine.status } : null)
     : ("outsider" as const)
 
-  const { data: locality, error: localityError } = await supabase
-    .from("localities")
-    .select("city_name, state_code")
-    .eq("id", community.locality_id)
-    .maybeSingle()
-
-  if (localityError) {
-    throw new Error("Falha ao ler a cidade da comunidade.")
-  }
-  const localityRow = locality as LocalityRow | null
+  const cityLabel = await resolveCityLabel(supabase, catalog, community.locality_id)
 
   const imageUrls = (
     await signCommunityImageUrls(supabase, [
@@ -177,7 +195,7 @@ export async function loadCommunityDetail(
     id: community.id,
     name: community.name,
     description: community.description,
-    cityLabel: localityRow ? `${localityRow.city_name}, ${localityRow.state_code}` : null,
+    cityLabel,
     createdAt: community.created_at,
     bannerUrl: imageUrls.bannerUrl,
     thumbnailUrl: imageUrls.thumbnailUrl,
