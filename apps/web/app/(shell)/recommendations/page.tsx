@@ -849,6 +849,49 @@ export default function RecommendationsPage() {
                   browser ("Please fill out this field.") — nada do produto
                   aparecia e a pessoa não sabia qual campo revisar. */}
                 <form className="flex flex-col gap-4" noValidate onSubmit={handleSubmitRequest}>
+                  {/* A PERGUNTA ABRE O FORMULÁRIO (prancha 45 painel 2). A
+                      prancha desenha "O que você procura?" como primeiro campo,
+                      com "Categoria" e "Para qual comunidade você está
+                      perguntando?" descendo para DEPOIS dele, na mesma linha.
+                      O código fazia o inverso: liderava por Categoria e Alcance
+                      — dois Selects de decisão SOBRE o pedido — antes de a
+                      pessoa ter dito o que procura. Ordem medida a 375 em
+                      19/09/2026: "Categoria", "Para qual comunidade você está
+                      perguntando?", e só então "O que você procura?".
+                      Categoria e alcance continuam irmãos dividindo uma linha de
+                      grade (A4 do parecer R2); o que muda é a POSIÇÃO do par. */}
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="pedido-titulo" className="text-sm font-medium">
+                      O que você procura?
+                    </label>
+                    <Input
+                      id="pedido-titulo"
+                      required
+                      aria-label="Título"
+                      aria-invalid={requestFieldError?.field === "title"}
+                      {...(requestFieldError?.field === "title"
+                        ? { "aria-describedby": "pedido-titulo-erro" }
+                        : {})}
+                      placeholder="Ex.: transportadora cuidadosa para mudança"
+                      value={requestTitle}
+                      onChange={(e) => {
+                        setRequestTitle((e.target as HTMLInputElement).value)
+                        setRequestError("")
+                        setRequestFieldError(null)
+                        setPiiWarning(false)
+                      }}
+                    />
+                    {requestFieldError?.field === "title" ? (
+                      <p
+                        id="pedido-titulo-erro"
+                        role="alert"
+                        className="text-xs font-medium text-[var(--semantic-danger)]"
+                      >
+                        {requestFieldError.message}
+                      </p>
+                    ) : null}
+                  </div>
+
                   {/* A4 (parecer R2): o formulário não tinha grade — dois Selects
                       de 320 px flutuavam ao lado de campos de 552 px. Categoria e
                       alcance são decisões irmãs: ficam lado a lado, dividindo a
@@ -967,38 +1010,6 @@ export default function RecommendationsPage() {
                         </p>
                       ) : null}
                     </div>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label htmlFor="pedido-titulo" className="text-sm font-medium">
-                      O que você procura?
-                    </label>
-                    <Input
-                      id="pedido-titulo"
-                      required
-                      aria-label="Título"
-                      aria-invalid={requestFieldError?.field === "title"}
-                      {...(requestFieldError?.field === "title"
-                        ? { "aria-describedby": "pedido-titulo-erro" }
-                        : {})}
-                      placeholder="Ex.: transportadora cuidadosa para mudança"
-                      value={requestTitle}
-                      onChange={(e) => {
-                        setRequestTitle((e.target as HTMLInputElement).value)
-                        setRequestError("")
-                        setRequestFieldError(null)
-                        setPiiWarning(false)
-                      }}
-                    />
-                    {requestFieldError?.field === "title" ? (
-                      <p
-                        id="pedido-titulo-erro"
-                        role="alert"
-                        className="text-xs font-medium text-[var(--semantic-danger)]"
-                      >
-                        {requestFieldError.message}
-                      </p>
-                    ) : null}
                   </div>
 
                   <div className="flex flex-col gap-1.5">

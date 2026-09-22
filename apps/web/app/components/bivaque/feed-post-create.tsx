@@ -402,6 +402,37 @@ export function CreatePostModal({
                       onRequestDiscard={discardConfirm.open}
                     />
 
+                    {/* A PERGUNTA VEM PRIMEIRO — é a ordem que o cabeçalho deste
+                        arquivo declara ("a PERGUNTA primeiro, depois destino
+                        real") e que o código não cumpria: o seletor de público
+                        renderizava ANTES do campo da pergunta. Ordem medida em
+                        19/09/2026 no `dono-vila`: o primeiro campo da tela era o
+                        grupo "Quem pode ver?" com "Toda a cidade · Manaus" e
+                        "Vila Ajuricaba", e só depois vinha "Pergunta *". O
+                        commit 0023e0d tirou o seletor de FORMATO da frente do
+                        conteúdo e escreveu essa frase no cabeçalho, mas o
+                        seletor de PÚBLICO continuou na frente.
+                        Destino é decisão SOBRE a pergunta — quem vai ler o que
+                        já foi escrito —, não um passo que a antecede. É a mesma
+                        classe que a prancha 45 painel 2 desenha ao contrário,
+                        com a pergunta abrindo o formulário e categoria/alcance
+                        descendo para depois dela. */}
+                    <div className="mt-4">
+                      <label htmlFor="post-conteudo" className="mb-1 block text-sm font-medium">
+                        Pergunta <span aria-hidden="true">*</span>
+                        <span className="sr-only"> (obrigatório)</span>
+                      </label>
+                      <TextArea
+                        id="post-conteudo"
+                        aria-label="Pergunta"
+                        required
+                        aria-required="true"
+                        placeholder="O que você quer perguntar?"
+                        value={content}
+                        onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
+                      />
+                    </div>
+
                     <div className="mt-4">
                       <AudiencePicker
                         value={selected.key}
@@ -423,22 +454,6 @@ export function CreatePostModal({
                           <FeedbackAlert variant="warning" description={audienceFallback} />
                         </div>
                       )}
-                    </div>
-
-                    <div className="mt-4">
-                      <label htmlFor="post-conteudo" className="mb-1 block text-sm font-medium">
-                        Pergunta <span aria-hidden="true">*</span>
-                        <span className="sr-only"> (obrigatório)</span>
-                      </label>
-                      <TextArea
-                        id="post-conteudo"
-                        aria-label="Pergunta"
-                        required
-                        aria-required="true"
-                        placeholder="O que você quer perguntar?"
-                        value={content}
-                        onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
-                      />
                     </div>
 
                     <div className="mt-4">
