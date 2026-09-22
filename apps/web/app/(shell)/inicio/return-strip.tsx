@@ -158,7 +158,10 @@ export function ReturnStrip() {
   if (strip === null) return null
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-[var(--accent-soft)] p-3">
+    <div
+      data-testid="return-strip"
+      className="flex items-center gap-3 rounded-xl border border-border bg-[var(--accent-soft)] p-3"
+    >
       {strip.actorId ? (
         <MemberAvatar
           name={strip.actorName}
@@ -172,11 +175,20 @@ export function ReturnStrip() {
         </p>
         {strip.subject && <p className="mt-0.5 truncate text-sm text-muted">{strip.subject}</p>}
       </div>
+      {/* A 375 a faixa tem de continuar sendo UMA linha de título mais UMA de
+          apoio — é isso que a prancha 00 painel 2 desenha, e é o que 768 e 1440
+          medem (h=70). O rótulo do CTA ocupava 127 px das 343 px da faixa e
+          espremia a coluna de texto para 126 px: o título "Ana respondeu ao seu
+          pedido" caía em QUATRO linhas e a faixa ia a h=125. A prancha resolve
+          o mesmo aperto desenhando só o chevron no telefone — o texto do CTA
+          não aparece lá. O rótulo continua no DOM (sr-only abaixo de `sm`),
+          então o nome acessível não muda em nenhuma largura; `min-w-11` mantém
+          o alvo em 44 px, que a régua do produto exige. */}
       <Link
         href={strip.href as Route}
-        className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-3 text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+        className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-lg px-3 text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
       >
-        {strip.cta}
+        <span className="sr-only sm:not-sr-only">{strip.cta}</span>
         <ChevronRight size={16} aria-hidden="true" />
       </Link>
     </div>
