@@ -43,7 +43,9 @@ describe("rótulo da cidade da comunidade", () => {
     const session = fakeClient({ city_name: "Manaus", state_code: "AM" })
     const catalog = fakeClient({ city_name: "Outra", state_code: "XX" })
 
-    expect(await resolveCityLabel(session.client, catalog.client, LOCALITY)).toBe("Manaus, AM")
+    expect(await resolveCityLabel(session.client, () => catalog.client, LOCALITY)).toBe(
+      "Manaus, AM",
+    )
     expect(catalog.calls).toHaveLength(0)
   })
 
@@ -51,7 +53,7 @@ describe("rótulo da cidade da comunidade", () => {
     const session = fakeClient(null)
     const catalog = fakeClient({ city_name: "Rio de Janeiro", state_code: "RJ" })
 
-    expect(await resolveCityLabel(session.client, catalog.client, LOCALITY)).toBe(
+    expect(await resolveCityLabel(session.client, () => catalog.client, LOCALITY)).toBe(
       "Rio de Janeiro, RJ",
     )
     expect(catalog.calls).toEqual([
@@ -71,7 +73,20 @@ describe("rótulo da cidade da comunidade", () => {
     )
     const catalogFails = fakeClient(null, { message: "boom" })
     await expect(
-      resolveCityLabel(fakeClient(null).client, catalogFails.client, LOCALITY),
+      resolveCityLabel(fakeClient(null).client, () => catalogFails.client, LOCALITY),
     ).rejects.toThrow("Falha ao ler a cidade da comunidade.")
+  })
+
+  it("falha da sessão nunca é mascarada pelo catálogo", async () => {
+    const session = fakeClient(null, { message: "boom" })
+    const catalog = fakeClient({ city_name: "Rio de Janeiro", state_code: "RJ" })
+    let created = 0
+    const factory = () => {
+      created += 1
+      return catalog.client
+    }
+    await expect(resolveCityLabel(session.client, factory, LOCALITY)).rejects.toThrow()
+    expect(created).toBe(0)
+    expect(catalog.calls).toHaveLength(0)
   })
 })

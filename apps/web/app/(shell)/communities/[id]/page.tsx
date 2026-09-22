@@ -37,7 +37,7 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
   }
 
   // O catálogo de cidades só nomeia a cidade para quem é de fora; ver resolveCityLabel.
-  const view = await loadCommunityDetail(supabase, communityId, user.id, createCatalogClient())
+  const view = await loadCommunityDetail(supabase, communityId, user.id, createCatalogClient)
   if (view.status === "not-found") {
     notFound()
   }

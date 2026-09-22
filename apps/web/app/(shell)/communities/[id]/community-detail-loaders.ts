@@ -108,7 +108,7 @@ export type CommunityDetailView =
  */
 export async function resolveCityLabel(
   supabase: CommunityDetailClient,
-  catalog: CommunityDetailClient | null,
+  catalog: (() => CommunityDetailClient) | null,
   localityId: string,
 ): Promise<string | null> {
   const read = async (client: CommunityDetailClient) => {
@@ -121,7 +121,8 @@ export async function resolveCityLabel(
     return data as LocalityRow | null
   }
 
-  const row = (await read(supabase)) ?? (catalog ? await read(catalog) : null)
+  // O cliente do catálogo só nasce para quem é de fora: membro nunca o cria.
+  const row = (await read(supabase)) ?? (catalog ? await read(catalog()) : null)
   return row ? `${row.city_name}, ${row.state_code}` : null
 }
 
@@ -129,7 +130,7 @@ export async function loadCommunityDetail(
   supabase: CommunityDetailClient,
   communityId: string,
   userId: string,
-  catalog: CommunityDetailClient | null = null,
+  catalog: (() => CommunityDetailClient) | null = null,
 ): Promise<CommunityDetailView> {
   const { data: communityData, error: communityError } = await supabase
     .from("communities")
