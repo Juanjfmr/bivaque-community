@@ -133,8 +133,8 @@ leaks so far.
 | `tools/backend-kanban/BOARD.md` | Concise generated MVP path agents read before planning or implementation |
 | `tools/backend-kanban/public/board.json` | Canonical board data, evidence and documentation drift by stable card ID |
 | `docs/decisions/` | R3 decisions as ADRs, and `RISK_MATRIX.md` — what an agent may decide alone |
-| `docs/agents/DESIGN_SPEC.md` | The visual language, and the source of truth for tokens |
-| `docs/agents/VISUAL_GUIDE.md` §9 | The audit rubric — how well a screen must be made |
+| `docs/agents/DESIGN_SYSTEM.md` | The visual language, and the source of truth for tokens (`DESIGN_SPEC.md` and `VISUAL_GUIDE.md` only redirect here) |
+| `docs/agents/DESIGN_SYSTEM.md` §11 | The audit rubric — how well a screen must be made |
 | `docs/brand/README.md` | Approved identity assets, machine-readable values and the frozen-runtime activation contract |
 | `docs/superpowers/specs/` | Approved designs, with dated conflicts recorded rather than hidden |
 | `docs/superpowers/plans/` | Executable plans derived from those specs |
@@ -180,7 +180,7 @@ node scripts/visual/loop.mjs --fast   # capture only, against an already-running
 
 Screenshots every route at 375/768/1440 plus a deterministic audit (touch targets, contrast,
 overflow, motion presence, token discipline) into `.visual/<run>/`. The spec it judges against is
-`docs/agents/DESIGN_SPEC.md`; the driving prompt is `docs/agents/QWEN_BUILD_PROMPT.md`. Set
+`docs/agents/DESIGN_SYSTEM.md`; the driving prompt is `docs/agents/QWEN_BUILD_PROMPT.md`. Set
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` when the managed browser bundle is not installed.
 
 ## Repo contracts enforced by `tests/scope/*.test.mjs` (guardrails)
@@ -354,7 +354,7 @@ provider** — the global `toast()` helper only renders through it.
   `http://127.0.0.1:3000`. Smoke spec asserts the home heading "Bivaque" and
   `/api/health` → `{"status":"ok"}` — changing either breaks E2E.
 - `playwright-report/` and `test-results/` need no cleanup before linting. They are in
-  `.gitignore` (lines 6-7) **and** excluded in `biome.json` (lines 13-14), so a local `test:e2e`
+  `.gitignore` (lines 6-7) **and** excluded in `biome.json` (lines 14-15), so a local `test:e2e`
   run cannot fail `pnpm lint` or reach a commit. Earlier revisions of this file said the opposite
   and told you to delete them by hand; that is obsolete.
 - CI installs browsers normally. The optional `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` override in
