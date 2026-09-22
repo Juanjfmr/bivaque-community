@@ -20,6 +20,10 @@ test("exposes the local root command surface", () => {
   assert.equal(scripts["test:db"], "supabase test db")
   assert.equal(scripts["db:test"], undefined)
   assert.equal(scripts["db:lint"], "supabase db lint --local --level error")
+  assert.equal(
+    scripts["generate:types"],
+    "supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts && node scripts/normalize-generated-types.mjs",
+  )
   // O lote normal EXCLUI os specs marcados @stateful, e o lote stateful roda em
   // serial. Antes disso a suíte inteira rodava num processo só e specs que
   // escrevem nas mesmas linhas (grupo privado, save da mesma conta, pedidos

@@ -120,7 +120,7 @@ npx pnpm@11.18.0 exec supabase migration new <nome>
 npx pnpm@11.18.0 db:reset          # sem seed, sem dev server, sem captura rodando
 npx pnpm@11.18.0 test:db
 npx pnpm@11.18.0 db:lint
-npx supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts
+npx pnpm@11.18.0 generate:types
 ```
 
 Nunca `--linked`. Nunca editar migration aplicada. **Nunca rodar dev server ou captura visual
