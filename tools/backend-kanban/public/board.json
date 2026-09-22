@@ -3003,20 +3003,21 @@
       "priority": "P2",
       "category": "repo",
       "status": "repo",
-      "description": "O pull-request-ci.yml regenera supabase/database.generated.ts e exige git diff --exit-code. Mas o arquivo carrega uma edicao A MAO documentada em set_community_image (p_path: string | null, com comentario 'preservar em toda regeneracao'), porque o gerador nao expressa nulabilidade de argumento e o codigo passa NULL para limpar o ponteiro da imagem. Regenerar remove a linha e o check acusa drift; preservar a linha e o check acusa drift de qualquer forma. Ou seja: o check esta vermelho por construcao neste ponto, independentemente de quem mexer.",
+      "description": "O pull-request-ci.yml regenera supabase/database.generated.ts e exige git diff --exit-code. A RPC set_community_image aceita NULL para limpar o ponteiro, mas o gerador emite p_path: string. O comando canonico de geracao agora normaliza apenas essa assinatura e falha se ela mudar. Falta confirmar o CI da revisao entregue.",
       "checklist": [
-        "Dar a set_community_image um valor padrao no argumento (p_path text default null) para o gerador emitir a nulabilidade e a edicao a mao deixar de ser necessaria",
-        "Regenerar os tipos e remover o comentario de edicao manual",
+        "Normalizar de forma deterministica a assinatura nullable de set_community_image no comando generate:types [ok 22/09: script valida uma unica assinatura antes de ajustar p_path]",
+        "Manter database.generated.ts sincronizado com o comando canonico e documentar a excecao [ok 22/09: ajuste aplicado ao arquivo e orientacoes de geracao atualizadas]",
         "Confirmar o passo 'Check generated types drift' verde"
       ],
       "proof": [
         "Medido em 17/09/2026 (lote AM): ao regenerar os tipos para expor public.profile_affiliations_for, a linha ajustada a mao foi removida e apps/web/app/(owner)/communities/actions.ts:397 passou a falhar no typecheck ('Type null is not assignable to type string'). A linha foi restaurada com o comentario original para o gate voltar ao verde",
-        "O comentario no proprio arquivo ja nomeava o problema: 'o gerador nao expressa nulabilidade de argumento'"
+        "O comentario no proprio arquivo ja nomeava o problema: 'o gerador nao expressa nulabilidade de argumento'",
+        "22/09/2026: a proposta anterior de default null nao cabe na assinatura atual sem dar default tambem ao p_caller_user_id obrigatorio: PostgreSQL exige default em todos os argumentos seguintes. A normalizacao do tipo preserva a assinatura e os grants da RPC; node scripts/normalize-generated-types.mjs reproduziu o tipo esperado a partir da saida bruta do gerador e o typecheck local passou. O CI ainda precisa confirmar a geracao real."
       ],
       "dependencies": [],
-      "completedChecklist": [false, false, false],
-      "updatedAt": "2026-09-17",
-      "sourceRevision": "07e1d2f"
+      "completedChecklist": [true, true, false],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "65fc81f"
     },
     {
       "id": "NOTIF-PEDIDO-CANCELADO",

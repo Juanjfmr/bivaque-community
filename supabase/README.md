@@ -76,15 +76,14 @@ npx supabase db reset --local
 npx supabase test db
 ```
 
-## Generated types command stub
+## Generated types
 
-Workspace scripts are owned by the parallel workspace bootstrap and are outside
-this directory's change boundary. Until that bootstrap wires its root command,
-the database types can be generated directly with:
+Generate client types from the local database with the root command:
 
 ```sh
-npx supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts
+pnpm generate:types
 ```
 
-Only the `public` schema is generated for clients. Never generate the private
-trust schema into client-facing types.
+The command generates only the `public` schema and restores the nullable
+`set_community_image.p_path` argument that the generator cannot express. Never
+generate the private trust schema into client-facing types.
