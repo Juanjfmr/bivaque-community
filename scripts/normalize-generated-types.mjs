@@ -4,9 +4,9 @@ import { pathToFileURL } from "node:url"
 
 const path = new URL("../supabase/database.generated.ts", import.meta.url)
 const signature =
-  /( {6}set_community_image: \{\r?\n {8}Args: \{[\s\S]*?)( {10}p_path: string)(\r?\n {8}\}\r?\n {8}Returns: undefined)/g
+  /( {6}set_community_image: \{\r?\n {8}Args: \{\r?\n(?: {10}[^\r\n]*\r?\n)*?)( {10}p_path: string)(\r?\n {8}\}\r?\n {8}Returns: undefined)/g
 const normalizedSignature =
-  / {6}set_community_image: \{\r?\n {8}Args: \{[\s\S]*? {10}p_path: string \| null\r?\n {8}\}\r?\n {8}Returns: undefined/g
+  / {6}set_community_image: \{\r?\n {8}Args: \{\r?\n(?: {10}[^\r\n]*\r?\n)*? {10}p_path: string \| null\r?\n {8}\}\r?\n {8}Returns: undefined/g
 
 const nullablePath = [
   "          // The RPC accepts NULL to clear the image pointer; the type generator",

@@ -23,4 +23,8 @@ test("fails when the expected RPC signature changes", () => {
     () => normalizeGeneratedTypes(raw.replace("p_path: string", "p_path: number")),
     /Expected exactly one raw or normalized set_community_image signature/,
   )
+  assert.throws(
+    () => normalizeGeneratedTypes(`${raw}\n${raw}`),
+    /Expected exactly one raw or normalized set_community_image signature/,
+  )
 })
