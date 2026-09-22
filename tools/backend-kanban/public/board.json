@@ -3002,20 +3002,21 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "repo",
-      "status": "repo",
-      "description": "O pull-request-ci.yml regenera supabase/database.generated.ts e exige git diff --exit-code. A RPC set_community_image aceita NULL para limpar o ponteiro, mas o gerador emite p_path: string. O comando canonico de geracao agora normaliza apenas essa assinatura e falha se ela mudar. Falta confirmar o CI da revisao entregue.",
+      "status": "done",
+      "description": "O pull-request-ci.yml regenera supabase/database.generated.ts e exige git diff --exit-code. A RPC set_community_image aceita NULL para limpar o ponteiro, mas o gerador emite p_path: string. O comando canonico de geracao normaliza apenas essa assinatura e falha se ela mudar. O CI do PR #77 confirmou o drift check verde.",
       "checklist": [
         "Normalizar de forma deterministica a assinatura nullable de set_community_image no comando generate:types [ok 22/09: script valida uma unica assinatura antes de ajustar p_path]",
         "Manter database.generated.ts sincronizado com o comando canonico e documentar a excecao [ok 22/09: ajuste aplicado ao arquivo e orientacoes de geracao atualizadas]",
-        "Confirmar o passo 'Check generated types drift' verde"
+        "Confirmar o passo 'Check generated types drift' verde [ok 22/09: CI do PR #77 completo verde]"
       ],
       "proof": [
         "Medido em 17/09/2026 (lote AM): ao regenerar os tipos para expor public.profile_affiliations_for, a linha ajustada a mao foi removida e apps/web/app/(owner)/communities/actions.ts:397 passou a falhar no typecheck ('Type null is not assignable to type string'). A linha foi restaurada com o comentario original para o gate voltar ao verde",
         "O comentario no proprio arquivo ja nomeava o problema: 'o gerador nao expressa nulabilidade de argumento'",
-        "22/09/2026: a proposta anterior de default null nao cabe na assinatura atual sem dar default tambem ao p_caller_user_id obrigatorio: PostgreSQL exige default em todos os argumentos seguintes. A normalizacao do tipo preserva a assinatura e os grants da RPC; node scripts/normalize-generated-types.mjs reproduziu o tipo esperado a partir da saida bruta do gerador e o typecheck local passou. O CI ainda precisa confirmar a geracao real."
+        "22/09/2026: a proposta anterior de default null nao cabe na assinatura atual sem dar default tambem ao p_caller_user_id obrigatorio: PostgreSQL exige default em todos os argumentos seguintes. A normalizacao do tipo preserva a assinatura e os grants da RPC; node scripts/normalize-generated-types.mjs reproduziu o tipo esperado a partir da saida bruta do gerador e o typecheck local passou. GitHub Actions do PR #77 concluiu com sucesso, incluindo Check generated types drift, banco e E2E."
       ],
       "dependencies": [],
-      "completedChecklist": [true, true, false],
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-09-22",
       "updatedAt": "2026-09-22",
       "sourceRevision": "65fc81f"
     },

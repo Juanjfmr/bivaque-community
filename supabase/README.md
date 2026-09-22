@@ -81,7 +81,7 @@ npx supabase test db
 Generate client types from the local database with the root command:
 
 ```sh
-pnpm generate:types
+npx pnpm@11.18.0 generate:types
 ```
 
 The command generates only the `public` schema and restores the nullable
