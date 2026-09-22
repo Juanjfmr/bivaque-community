@@ -16,6 +16,12 @@ select plan(6);
 -- community the test reads), one in the other locality. Both have
 -- community_id and group_id NULL, which is exactly the shape the composer
 -- produces when the audience selector picks "city-wide reach".
+--
+-- Instantes ancorados em `now()` pelo mesmo motivo de fixtures/communities.inc:
+-- `feed_community` devolve UMA PÁGINA desde 20260922103620, e a base local tem
+-- resíduo do seed mais novo que qualquer data fixa de fixture. Com data fixa, o
+-- post 004 cairia fora da página 1 e "E1+: post de alcance da cidade aparece no
+-- feed da vila" mediria o seed, não o produto. As asserções não mudaram.
 insert into public.posts (
   id, locality_id, user_id, community_id, group_id, post_type, content, created_at
 )
@@ -28,7 +34,7 @@ values
     null,
     'text',
     'Aviso da cidade para todas as vilas',
-    '2026-08-04 12:00:00+00'
+    now() - interval '30 seconds'
   ),
   (
     '90000000-0000-4000-8000-000000000005',
@@ -38,7 +44,7 @@ values
     null,
     'text',
     'Aviso de outra cidade nao deve vazar',
-    '2026-08-04 13:00:00+00'
+    now() - interval '40 seconds'
   ),
   -- A post of Vila Vizinha (community -002) in the same locality. If the
   -- new locality-reach branch stopped filtering by community, this post
@@ -52,7 +58,7 @@ values
     null,
     'text',
     'Post da vila vizinha',
-    '2026-08-04 14:00:00+00'
+    now() - interval '50 seconds'
   );
 
 -- ── POSITIVE ───────────────────────────────────────────────────────────────

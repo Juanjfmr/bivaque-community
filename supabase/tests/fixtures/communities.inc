@@ -87,6 +87,16 @@ values
   ('80000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001', 'owner', 'approved'),
   ('80000000-0000-4000-8000-000000000003', '10000000-0000-4000-8000-000000000004', 'owner', 'approved');
 
+-- Os instantes destes três posts são ancorados em `now()`, e não numa data fixa
+-- de agosto. Motivo medido: `feed_community` passou a devolver UMA PÁGINA
+-- (20260922103620_feed_community_cursor_pagination.sql), e a base local de
+-- desenvolvimento carrega resíduo do seed — centenas de posts de alcance da
+-- cidade, MAIS NOVOS que qualquer data fixa de fixture. Com data fixa, os três
+-- caíam fora da primeira página e as asserções que provam "este post é visível
+-- no feed da vila" (community-feeds, community-feed-locality-reach,
+-- post-follows) mediriam o seed em vez do produto. Ancorados em `now()`, eles
+-- são os mais novos em QUALQUER ambiente — com seed, com resíduo de e2e ou no
+-- banco sem seed do CI —, e a ordem relativa entre eles é preservada.
 insert into public.posts (
   id, locality_id, user_id, community_id, post_type, content, created_at
 )
@@ -97,7 +107,7 @@ values (
   '70000000-0000-4000-8000-000000000001',
   'text',
   'Caiu a agua na quadra 3',
-  '2026-08-04 09:00:00+00'
+  now() - interval '3 seconds'
 );
 
 insert into public.posts (
@@ -111,7 +121,7 @@ values
     '80000000-0000-4000-8000-000000000001',
     'text',
     'Passo a geladeira em marco',
-    '2026-08-04 10:00:00+00'
+    now() - interval '2 seconds'
   ),
   (
     '90000000-0000-4000-8000-000000000003',
@@ -120,5 +130,5 @@ values
     '80000000-0000-4000-8000-000000000002',
     'text',
     'Reuniao de coordenacao quinta',
-    '2026-08-04 11:00:00+00'
+    now() - interval '1 second'
   );
