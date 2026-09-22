@@ -325,7 +325,7 @@ provider** — the global `toast()` helper only renders through it.
   `confirmation_token` and its siblings as Go `string`; a NULL makes the password grant fail with
   HTTP 500 (`converting NULL to string is unsupported`), not the 400 you would expect from a bad
   password hash.
-- Client types: `npx supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts`
+- Client types: `pnpm generate:types` (public schema, with the nullable `set_community_image.p_path` adjustment)
   — generate ONLY the `public` schema, never the `private` trust schema.
 - Privacy boundary: `private` schema (`verification_outcomes`, `family_invitations`,
   `family_account_links`) is never exposed via Data API; `anon`/`authenticated` have no table
