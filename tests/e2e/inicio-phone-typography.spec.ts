@@ -112,10 +112,21 @@ test.describe("tipografia da Home no telefone", () => {
     await expect(faixa).toBeVisible({ timeout: 20000 })
 
     // Then — o título ocupa no máximo DUAS linhas. Era o sintoma: quatro linhas
-    // numa coluna de 126 px. Uma linha é impossível a 375 com este conteúdo: o
-    // título mede 309 px de largura natural e a faixa tem 343 px, dos quais 24
-    // são padding, 40 o avatar e 44 o alvo do CTA — sobram 211. Duas linhas é o
-    // piso físico, e é o que se cobra aqui.
+    // numa coluna de 126 px.
+    //
+    // Duas linhas NÃO é piso físico da faixa. A justificativa anterior dizia que
+    // empilhando o CTA a coluna ficaria com 267 px, e que por isso duas linhas
+    // seriam o limite físico — a conta estava errada em 50 px. Medido: com a
+    // faixa em `flex-direction: column` a coluna vai a 317 px, e o título, que
+    // mede 309,44 px de largura natural, caberia em UMA linha. Duas linhas é o
+    // piso do arranjo EM LINHA escolhido: com o CTA na mesma linha, a faixa de
+    // 343 px gasta 24 de padding, 40 do avatar, 44 do alvo do CTA e 24 de dois
+    // vãos de 12 px, sobrando 209 px medidos — e 309,44 px não cabem em 209.
+    //
+    // O arranjo empilhado não é a saída: ele leva a faixa a 175,25 px de altura,
+    // contra os 86,5 px entregues (87 px arredondados). Os 87 px se defendem
+    // porque a alternativa é PIOR — não porque duas linhas sejam um limite
+    // físico. O que se cobra aqui é o piso do arranjo entregue.
     const linhasDoTitulo = await page.evaluate(() => {
       const faixaEl = document.querySelector('[data-testid="return-strip"]')
       if (!faixaEl) throw new Error("faixa ausente")

@@ -8,7 +8,7 @@ import { stripComments } from "./source-scan"
 //
 // O comportamento (o default chegar ao DOM e virar nome acessível) é provado por
 // e2e em tests/e2e/close-label-ptbr.spec.ts. O que falta lá é a resposta para
-// "nenhum ponto ficou de fora?": abrir os 12 modais e as 3 buscas num spec seria
+// "nenhum ponto ficou de fora?": abrir os 11 modais e as 3 buscas num spec seria
 // caro e dependente de estado, e um spec assim envelhece. Aqui a varredura é
 // exaustiva e barata — e falha no dia em que alguém reintroduzir o primitivo do
 // fornecedor num arquivo novo.
@@ -19,11 +19,13 @@ import { stripComments } from "./source-scan"
 // Não é o chamador que escreve "Close" — nenhum arquivo deste app contém a
 // string. Todo componente do HeroUI que monta um `CloseButton` sem rótulo
 // próprio herda o inglês: modal, alert-dialog, drawer, search-field, tag, toast.
-// O app usa modal (12 pontos), search-field (3 pontos) e o toast; `Tag` passa o
-// próprio "Remove tag" e alert-dialog/drawer não são usados.
+// O app usa modal (11 pontos), search-field (3 pontos) e o toast; `Tag` passa o
+// próprio "Remove tag" e alert-dialog/drawer não são usados. Além desses, um
+// ponto monta o `CloseButton` puro e passa rótulo próprio:
+// `components/bivaque/feedback-alert.tsx` (`aria-label="Fechar aviso"`).
 //
 // LIMITE DESTA PROVA: é leitura de fonte, não comportamento — ela não abre modal
-// nenhum. Quem ler depois não deve supor que aqui houve 12 comportamentos
+// nenhum. Quem ler depois não deve supor que aqui houve 11 comportamentos
 // observados: quem observa é o e2e.
 //
 // PENDÊNCIA DECLARADA, e não escondida: o gatilho de fechar do TOAST continua
@@ -65,6 +67,36 @@ describe("o rótulo de fechar não volta a ser herdado em inglês", () => {
     expect(
       offenders.map((file) => file.slice(root.length + 1)),
       "use o wrapper da casa em components/bivaque/close-button.tsx",
+    ).toEqual([])
+  })
+
+  it("nenhum CloseButton do fornecedor é montado sem rótulo", () => {
+    // A lacuna que esta asserção fecha: as outras miram `Modal.CloseTrigger` e
+    // `SearchField.ClearButton`, mas o `CloseButton` PURO do fornecedor também
+    // herda `aria-label="Close"` — um arquivo novo que o montasse sem rótulo
+    // passava por todas as asserções anteriores. Não é hipótese: o app já monta
+    // esse primitivo num ponto legítimo (feedback-alert.tsx, com
+    // `aria-label="Fechar aviso"`), então proibi-lo de todo não é o caminho —
+    // o que se cobra é o rótulo.
+    const offenders = files.filter((file) => {
+      const code = stripComments(readFileSync(file, "utf8"))
+      let at = code.indexOf("<CloseButton")
+      while (at !== -1) {
+        // A janela é a TAG de abertura: de `<CloseButton` até o próximo `<`, que
+        // em JSX só pode ser filho ou elemento seguinte — o `>` que fecha a tag
+        // vem antes. Fatiar por `<` dispensa contar chaves e casar `=>`, que é
+        // exatamente onde uma regex de tag JSX costuma quebrar (e um teste que
+        // quebra em código legítimo é pior que a lacuna que ele fecha).
+        const next = code.indexOf("<", at + 1)
+        const tag = code.slice(at, next === -1 ? undefined : next)
+        if (!/aria-label/.test(tag)) return true
+        at = code.indexOf("<CloseButton", at + 1)
+      }
+      return false
+    })
+    expect(
+      offenders.map((file) => file.slice(root.length + 1)),
+      "um CloseButton do fornecedor sem aria-label herda o inglês; passe o rótulo pt-BR",
     ).toEqual([])
   })
 

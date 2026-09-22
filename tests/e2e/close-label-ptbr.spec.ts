@@ -13,7 +13,7 @@
 // `aria-label` do chamador vence.
 //
 // A correção é no WRAPPER DA CASA (components/bivaque/close-button.tsx), que põe
-// "Fechar" como default em 15 pontos de uma vez (12 modais + 3 buscas). Este
+// "Fechar" como default em 14 pontos de uma vez (11 modais + 3 buscas). Este
 // spec prova o COMPORTAMENTO: que o default chega ao DOM e vira o nome
 // acessível. A garantia de que nenhum ponto ficou de fora é asserção de fonte,
 // em tests/unit/ui/nome-acessivel-de-fechar.test.ts — divisão de camadas da casa.

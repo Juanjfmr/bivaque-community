@@ -15,7 +15,7 @@ import type { ComponentProps } from "react"
 // Quem monta `CloseButton` na v3.2.3 (varredura em
 // node_modules/@heroui/react/dist/components/*): modal, alert-dialog, drawer,
 // search-field, tag, toast, além do próprio close-button. Destes, o app usa
-// modal (12 pontos), search-field (3 pontos) e o toast. `tag` passa o próprio
+// modal (11 pontos), search-field (3 pontos) e o toast. `tag` passa o próprio
 // rótulo ("Remove tag", também em inglês) e alert-dialog/drawer não são usados.
 //
 // O QUE ESTE MÓDULO RESOLVE: como o rótulo mora no wrapper do fornecedor e o
