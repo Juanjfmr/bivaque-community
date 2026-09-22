@@ -2259,7 +2259,7 @@
         "MEDICAO E2E 18/09/2026 (lote AR): a suite completa rodou no ambiente local com o seed e a senha do operador — 659 passed / 58 failed / 6 skipped em 7.5 min, nos tres viewports. Os 58 nao sao 58 defeitos: sao 55 blocos de erro com apenas SETE assinaturas distintas, quatro delas a mesma espera vencida (toHaveCount/toHaveClass/timeout de click), mais 'strict mode violation' em seletores que ficaram ambiguos com a UI reconstruida (getByRole heading 'Eve...', button 'Buscar') e um 'Elemento nao encontrado' de composer com rotulo antigo. O baseline registrado e de 01/09/2026 (597 passed / 0 failed) — antes de ~323 commits da campanha, que cresceu a suite para 723 testes. Ou seja: e DIVIDA DA CAMPANHA, nao regressao do trabalho de 18/09 — e a prova direta e que os contratos das telas tocadas hoje passam (shell-navigation 'Indicacoes reachable at 375/768/1440' verde). Os specs mais afetados: manaus-pilot-full-journey, recommendation-reply-notify, ds-029-conformance-probes, two-localities, event-invites, guide-manual-curation, onboarding-holder-family, provider-vitrine, vila-home, recon-032-salvos/messages, persistent-login",
         "Separar o lote E2E stateful do paralelo e dar consumidor a tag [FEITO 18/09, lote AX]: test:e2e --grep-invert @stateful (paralelo), test:e2e:stateful --workers=1, test:e2e:all encadeando, CI rodando os DOIS passos, e o contrato de escopo fixando os tres comandos. Oito specs marcados (quem escreve em linha que outros leem). Contencao removida na raiz: group-admin-cycle deixou de disputar o grupo privado com synthetic-people-interaction e group-event-detail-denials — passou a usar um grupo privado proprio, 29 passed nos tres viewports",
         "Piloto de jornada simulada [FEITO 22/09, HRN-004]: tests/e2e/helpers/journey.ts abre uma jornada de journeys.json pelo id e registra cada passo observado, com captura; o registro recusa passo fora da jornada e conclusao com passo faltando, e separa observado, ATALHO (so pela URL) e LACUNA (ambiente nao entrega). scripts/visual/journey-report.mjs poe prancha e tela real lado a lado. Proximo passo: estender as 33 jornadas web restantes no mesmo molde",
-        "Transformar scripts/visual/flows/reachability.mjs em teste de CI que reprova rota orfa (herdado de NAV-PEDIDOS-ORFA em 22/09); hoje a analise roda a mao e reporta 0 orfas"
+        "Transformar scripts/visual/flows/reachability.mjs em teste de CI que reprova rota orfa (herdado de NAV-PEDIDOS-ORFA em 22/09); hoje a analise roda a mao e reporta 0 orfas [FEITO 22/09 de outro jeito: tests/e2e/link-crawl.spec.ts mede em runtime e reprova rota sem porta; a analise estatica ficou como pista — NAV-ROTAS-SEM-PORTA]"
       ],
       "proof": [
         "Auditoria de 12/09 contra 041823f: 86 page.tsx e todas as 31 pranchas web com rota; specs novas na linha viva apenas recon-032-denuncias.spec.ts e recon-032-salvos.spec.ts",
@@ -2283,7 +2283,8 @@
         "MEDICAO FINAL 18/09/2026 com a maquina descarregada: lote normal 655 passed / 5 failed em 6.2 min + lote stateful 57 passed em 4.4 min. As 5 do lote normal sao timeout de INFRAESTRUTURA (browserContext.newPage estourando 30s, ERR_ABORTED, click timeout) em avatar-denials, event-invites e recon-018-entrada — os tres passam 57/57 quando rodados isolados, o que fecha a atribuicao: nao sao defeito de produto nem colisao de dados, e a maquina sob carga (eu rodei dois lotes completos com build em sequencia). O caminho de isolamento esta entregue e com contrato; o que falta nao e mecanismo, e ambiente com folga para a suite inteira",
         "HRN-004 22/09/2026 contra o build de 65fc81f servido na :3211 (a :3000 era de outro checkout): cinco jornadas web concluidas — web-pedir-um-servico (5 passos, 1 atalho), web-responder-um-pedido (1), web-entrar-e-ser-admitido (6, 3 lacunas de ambiente), web-operar-admissoes (2), web-quando-algo-falha (2). Primeira cobertura E2E de Pedidos: a membra pede, o prestador ve no painel e responde, a membra le a resposta. Relatorio: 29 imagens, 0 quebradas",
         "Achados da simulacao 22/09 (HRN-004): (1) sem notificacao para a membra quando o prestador responde o pedido — NOTIF-PEDIDO-RESPOSTA; (2) com erro temporario do Portal a alternativa por identidade nao aparece nem abre pela URL — ONB-CPF-SEM-SAIDA; (3) o estado de acesso indisponivel diz 'fica em outra cidade' em vez de nomear a cidade — COMM-CIDADE-ROTULO; (4) depois de 'Pedido enviado' nao ha caminho para acompanhar o pedido — prova em NAV-PEDIDOS-ORFA; (5) o Explorar real nao tem 'Conteudos em destaque' nem 'Profissionais em destaque' da prancha 61 — ja coberto por RECON-W00-PLACEHOLDERS",
-        "22/09/2026, lote seguinte ao HRN-004: dois achados da simulacao corrigidos e fechados com a propria jornada como prova — NAV-PEDIDOS-ORFA (atalho do passo 17 virou clique) e COMM-CIDADE-ROTULO (estado de acesso indisponivel nomeia a cidade). Jornadas: 4 passed, 0 atalhos"
+        "22/09/2026, lote seguinte ao HRN-004: dois achados da simulacao corrigidos e fechados com a propria jornada como prova — NAV-PEDIDOS-ORFA (atalho do passo 17 virou clique) e COMM-CIDADE-ROTULO (estado de acesso indisponivel nomeia a cidade). Jornadas: 4 passed, 0 atalhos",
+        "22/09/2026 (HRN-005): rastreador de links em runtime verde — 0 links quebrados, 0 rotas sem porta; cinco orfas ganharam porta e tres viraram card (EVENTOS-CRIACAO-DUPLICADA, MSG-SEM-ENTRADA, ROTA-CONSENT-LEGADA)"
       ],
       "tests": [
         "npx pnpm@11.18.0 db:reset (com seed) em janela própria com o banco compartilhado coordenado",
@@ -2300,7 +2301,7 @@
       ],
       "dependencies": [],
       "updatedAt": "2026-09-22",
-      "sourceRevision": "037f610"
+      "sourceRevision": "8632239"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
@@ -3173,6 +3174,111 @@
         "tests/unit/communities/community-city-label.test.ts"
       ],
       "completedAt": "2026-09-22"
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["docs/agents/tasks/HRN-005.task.yml"],
+      "dependencies": [],
+      "proof": [
+        "Baseline 22/09 (build 8632239, personas em serie): 0 quebrados, 33 rotas sem link, 8 orfas verdadeiras + /guide/[id]/correcao travada",
+        "Depois (build desta arvore na :3211): link-crawl.spec.ts 1 passed — 57 de 87 rotas alcancadas por link, 30 com porta declarada e justificada, 0 quebrados, 0 sem porta, 0 portas velhas",
+        "portas-de-entrada.spec.ts 4 passed: dono edita o imovel pelo detalhe; outra conta nao ve o link e a URL direta cai em 'Imovel nao encontrado'; Imoveis leva a anunciar e a alertas; o cartao do Guia abre a referencia",
+        "Medida invalidada e refeita: com as personas em paralelo o Supabase local deixou de responder my_account_kind, o proxy falhou fechado em /onboarding e o operador foi medido como quem nao tem conta. O rastreador roda em serie e reprova persona que nao entrou onde devia"
+      ],
+      "tests": [
+        "tests/e2e/link-crawl.spec.ts",
+        "tests/e2e/portas-de-entrada.spec.ts",
+        "tests/unit/visual/crawl-model.test.ts"
+      ],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "8632239",
+      "id": "NAV-ROTAS-SEM-PORTA",
+      "title": "Nenhum link leva a lugar nenhum e nenhuma tela so abre pela URL",
+      "priority": "P1",
+      "category": "testing",
+      "status": "done",
+      "completedAt": "2026-09-22",
+      "description": "Pedido do dono em 22/09/2026: chegar a um local apenas com o link e severidade alta. tests/e2e/link-crawl.spec.ts anda como seis personas, segue todo <a href> renderizado e reprova link para rota inexistente, 404 (inclusive o 200 com tela de nao encontrado do streaming) e tela de erro, rota de pagina sem link e sem porta declarada, e porta declarada que ficou velha. Contrato HRN-005. A analise estatica reachability.mjs ficou como pista: acusava dois falsos 'links quebrados' (concatenacao) e nao via nenhuma orfa real.",
+      "checklist": [
+        "Rastreador em runtime com prova de entrada por persona [FEITO]",
+        "Triagem rota a rota das 33 sem link: FLUXO, EXTERNO, BOTAO, CONDICIONAL, DIVIDA ou ORFA [FEITO]",
+        "Porta para /guide/[id] (nome do item no cartao e em Atualizados recentemente) [FEITO]",
+        "Portas para /imoveis/novo e /imoveis/alertas no cabecalho de /imoveis [FEITO]",
+        "'Editar anuncio' no detalhe do imovel, so para o dono, com negativo [FEITO]",
+        "'Prestadores atestados' no hub do console do dono [FEITO]",
+        "Dividas com card: EVENTOS-CRIACAO-DUPLICADA, MSG-SEM-ENTRADA, ROTA-CONSENT-LEGADA [FEITO]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": [
+        "apps/web/app/(shell)/events/page.tsx",
+        "apps/web/app/(shell)/events/novo/page.tsx"
+      ],
+      "dependencies": [],
+      "proof": [],
+      "tests": ["tests/e2e/link-crawl.spec.ts"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "8632239",
+      "id": "EVENTOS-CRIACAO-DUPLICADA",
+      "title": "Criar evento existe duas vezes e a rota dedicada nao tem porta",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Achado do rastreador de 22/09/2026 (HRN-005). /events cria evento por um formulario embutido (setView('create'), events/page.tsx) e /events/novo (RECON-029, prancha 70) cria pela rota dedicada com EventForm, a mesma de /events/[id]/editar. Nenhum link leva a /events/novo. A funcao nao esta bloqueada, mas ha dois caminhos de criacao que podem divergir. Consolidar num so: os botoes 'Criar evento' levam a /events/novo e o formulario embutido sai.",
+      "checklist": [
+        "Conferir que /events/novo cobre tudo o que o formulario embutido faz (alcance, grupo, comunidade)",
+        "Trocar os botoes 'Criar evento' de /events por link para /events/novo",
+        "Remover o formulario embutido e o estado que so ele usa",
+        "Ajustar manaus-pilot-full-journey e empty-locality, que esperam botao 'Criar evento'",
+        "Tirar /events/novo de PORTAS_FORA_DO_LINK em link-crawl.spec.ts"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": [
+        "docs/design/visual-guide-2026-09-06/75-web-conversas.png",
+        "apps/web/app/(shell)/messages/conversation-inbox.tsx"
+      ],
+      "dependencies": [],
+      "proof": [],
+      "tests": ["tests/e2e/link-crawl.spec.ts"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "8632239",
+      "id": "MSG-SEM-ENTRADA",
+      "title": "A caixa de conversas nao tem entrada na navegacao",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "blocked",
+      "description": "Achado do rastreador de 22/09/2026 (HRN-005). /messages so abre por 'Entrar em contato' na ficha do prestador, 'Tenho interesse' no anuncio ou por notificacao. Quem ja tem conversas nao tem como abrir a caixa quando quer. A prancha 75 tambem nao desenha a entrada (lateral com Inicio, Explorar, Comunidades, Perfil, Salvos e Notificacoes). Bloqueado em decisao do dono: onde a entrada nasce — item na lateral, icone no cabecalho ao lado do sino, ou atalho no Perfil.",
+      "checklist": [
+        "Decisao do dono sobre o lugar da entrada",
+        "Criar a entrada e provar em 375 e 1440",
+        "Tirar /messages de PORTAS_FORA_DO_LINK em link-crawl.spec.ts"
+      ],
+      "blockers": [
+        "Decisao do dono: onde nasce a entrada da caixa de conversas (lateral, cabecalho ao lado do sino, ou Perfil), ja que a prancha 75 nao a desenha"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["apps/web/app/(preauth)/consent/page.tsx"],
+      "dependencies": [],
+      "proof": [],
+      "tests": ["tests/e2e/link-crawl.spec.ts", "tests/e2e/manaus-pilot-denials.spec.ts"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "8632239",
+      "id": "ROTA-CONSENT-LEGADA",
+      "title": "/consent continua servida depois que o portao saiu do produto",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "description": "Achado do rastreador de 22/09/2026 (HRN-005). O ADR-20260907-consentimento-no-cadastro tirou o portao de /consent (o aceite vive no cadastro), mas a rota segue servida e nada leva ate ela. manaus-pilot-denials.spec.ts ainda a visita. Decidir entre remover a rota (com redirect para quem tem link antigo) ou mante-la como destino legado declarado.",
+      "checklist": [
+        "Conferir quem ainda depende de /consent (proxy.ts, active-nav.ts, specs de negacao)",
+        "Remover ou redirecionar, ajustando os specs",
+        "Tirar /consent de PORTAS_FORA_DO_LINK em link-crawl.spec.ts"
+      ]
     }
   ]
 }

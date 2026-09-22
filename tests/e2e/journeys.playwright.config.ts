@@ -14,7 +14,7 @@ const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
 
 export default defineConfig({
   testDir: ".",
-  testMatch: /journey-.*\.spec\.ts$/,
+  testMatch: /(journey-.*|link-crawl)\.spec\.ts$/,
   outputDir: "../../test-results/journeys",
   reporter: [["list"]],
   fullyParallel: false,
