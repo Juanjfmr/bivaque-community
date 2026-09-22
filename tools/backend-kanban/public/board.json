@@ -3104,9 +3104,9 @@
       "priority": "P1",
       "category": "backend",
       "status": "repo",
-      "description": "Observado na simulacao de 22/09/2026 (HRN-004): o prestador responde o pedido pelo painel, a mensagem aparece em /pedidos/[id] para a membra, mas nenhuma notificacao chega a ela — /notifications de membro-1 so lista comentarios antigos. O tipo service_request e o deep-link /pedidos/[id] ja existem (deep-links.ts), mas hoje so o aviso de pedido cancelado pela purga os usa. Sem aviso e sem entrada para /pedidos (NAV-PEDIDOS-ORFA), a resposta do prestador nao tem como chegar a quem pediu. Entra em repo porque o conserto e um gatilho de notificacao em migration, e o conteudo do aviso e decisao de produto",
+      "description": "Observado na simulacao de 22/09/2026 (HRN-004): o prestador responde o pedido pelo painel, a mensagem aparece em /pedidos/[id] para a membra, mas nenhuma notificacao chega a ela — /notifications de membro-1 so lista comentarios antigos. O tipo service_request e o deep-link /pedidos/[id] ja existem (deep-links.ts), mas hoje so o aviso de pedido cancelado pela purga os usa. Sem aviso e sem entrada para /pedidos (NAV-PEDIDOS-ORFA), a resposta do prestador nao tem como chegar a quem pediu. Entra em repo porque o conserto e um gatilho de notificacao em migration, e o conteudo do aviso e decisao de produto DECISAO DO DONO 22/09/2026: avisar so a primeira resposta do prestador (quando o pedido passa a Em conversa), sem o texto da mensagem — por exemplo \"Climatiza Manaus respondeu seu pedido\" —, levando a /pedidos/[id]. Segue em repo ate o ADR, por exigir migration.",
       "checklist": [
-        "Decidir o que avisa: primeira resposta, toda mensagem, mudanca de situacao",
+        "Decidir o que avisa [FEITO 22/09: so a primeira resposta, sem o texto]",
         "Gatilho no banco com o tipo service_request existente, sem expor o texto da mensagem no aviso",
         "pgTAP: o aviso chega so para a outra ponta do pedido, nunca para terceiros",
         "Trocar o atalho de 17-web-pedido-servico#0 em journey-pedir-servico.spec.ts pelo clique no aviso"
@@ -3131,9 +3131,9 @@
       "priority": "P1",
       "category": "frontend",
       "status": "repo",
-      "description": "Observado na simulacao de 22/09/2026 (HRN-004): a tela /onboarding promete 'Se nao conseguirmos confirmar, voce podera enviar sua identidade', e o DECISOES-2026-09-07 define CPF rapido com fallback por identidade. No resultado temporary_error (Portal indisponivel ou chave ausente) a pagina so mostra 'Estamos com uma instabilidade... tente mais tarde' e nao oferece a identidade; /onboarding/documento devolve para /onboarding. So o resultado rejected leva ao envio (onboarding/page.tsx). Com o Portal fora, quem chega fica sem caminho. Na mesma execucao, a tentativa com chave ausente nao apareceu na fila do operador. Entra em repo: liberar identidade no erro temporario toca verificacao e CPF (R3) e precisa da decisao do dono",
+      "description": "Observado na simulacao de 22/09/2026 (HRN-004): a tela /onboarding promete 'Se nao conseguirmos confirmar, voce podera enviar sua identidade', e o DECISOES-2026-09-07 define CPF rapido com fallback por identidade. No resultado temporary_error (Portal indisponivel ou chave ausente) a pagina so mostra 'Estamos com uma instabilidade... tente mais tarde' e nao oferece a identidade; /onboarding/documento devolve para /onboarding. So o resultado rejected leva ao envio (onboarding/page.tsx). Com o Portal fora, quem chega fica sem caminho. Na mesma execucao, a tentativa com chave ausente nao apareceu na fila do operador. Entra em repo: liberar identidade no erro temporario toca verificacao e CPF (R3) e precisa da decisao do dono DECISAO DO DONO 22/09/2026: no erro temporario, oferecer o envio de identidade na hora — a mensagem de instabilidade fica, e \"Enviar identidade agora\" libera /onboarding/documento. Segue em repo ate o ADR que registra a decisao, por tocar verificacao de identidade (R3).",
       "checklist": [
-        "Decidir se erro temporario libera o envio de identidade, e apos quantas tentativas",
+        "Decidir se erro temporario libera o envio de identidade [FEITO 22/09: libera na hora, sem esperar tentativas]",
         "Se liberar: oferecer a saida na tela e abrir /onboarding/documento para esse estado",
         "Conferir se a tentativa com erro temporario deve aparecer na fila do operador",
         "Trocar as lacunas 39-web-onboarding-contexto#0/#1 em journey-entrar-e-ser-admitido.spec.ts por passos observados"
@@ -3249,15 +3249,12 @@
       "title": "A caixa de conversas nao tem entrada na navegacao",
       "priority": "P1",
       "category": "frontend",
-      "status": "blocked",
-      "description": "Achado do rastreador de 22/09/2026 (HRN-005). /messages so abre por 'Entrar em contato' na ficha do prestador, 'Tenho interesse' no anuncio ou por notificacao. Quem ja tem conversas nao tem como abrir a caixa quando quer. A prancha 75 tambem nao desenha a entrada (lateral com Inicio, Explorar, Comunidades, Perfil, Salvos e Notificacoes). Bloqueado em decisao do dono: onde a entrada nasce — item na lateral, icone no cabecalho ao lado do sino, ou atalho no Perfil.",
+      "status": "next",
+      "description": "Achado do rastreador de 22/09/2026 (HRN-005). /messages so abre por 'Entrar em contato' na ficha do prestador, 'Tenho interesse' no anuncio ou por notificacao. Quem ja tem conversas nao tem como abrir a caixa quando quer. A prancha 75 tambem nao desenha a entrada (lateral com Inicio, Explorar, Comunidades, Perfil, Salvos e Notificacoes). Bloqueado em decisao do dono: onde a entrada nasce — item na lateral, icone no cabecalho ao lado do sino, ou atalho no Perfil. DECISAO DO DONO 22/09/2026: icone de conversas no cabecalho, ao lado do sino, com contador de nao lidas; a navegacao primaria nao muda.",
       "checklist": [
-        "Decisao do dono sobre o lugar da entrada",
+        "Decisao do dono sobre o lugar da entrada [FEITO 22/09: icone no cabecalho ao lado do sino, com contador de nao lidas]",
         "Criar a entrada e provar em 375 e 1440",
         "Tirar /messages de PORTAS_FORA_DO_LINK em link-crawl.spec.ts"
-      ],
-      "blockers": [
-        "Decisao do dono: onde nasce a entrada da caixa de conversas (lateral, cabecalho ao lado do sino, ou Perfil), ja que a prancha 75 nao a desenha"
       ]
     },
     {
