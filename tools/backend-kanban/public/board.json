@@ -3300,11 +3300,14 @@
       "completedChecklist": [],
       "proof": [
         "Achado A1 da adjudicacao visual r6 (adjudicada contra a revisao congelada 82fb64a): feed da Home sem paginacao — main.scrollHeight de 129.980px a 1440, 372 cartoes e 372 campos de comentario. Classificado como ALTA e FORA do escopo declarado daquela rodada, e e por isso que a Densidade alcancou 4 sem tocar fora",
-        "Medicao do dono: public.feed_community (ultima definicao em 20260915013344_post_follows.sql:79) recebe apenas p_community_id e p_order; roda QUATRO subconsultas laterais por post (contagem de comentarios, contagem de reacoes, my_reaction, my_follow) ANTES de ordenar; e e chamada sem limite em tres lugares",
-        "Medicao do dono: o e2e da rodada r6 rodou 35 minutos contra o :3210 com 4 specs abrindo a Home e foi morto — nao ha e2e verde medido desde 82fb64a. Hipotese a MEDIR, nao a aceitar: e o proprio feed sem limite",
-        "Medicao do dono: 24 chamadas a feed_community em QUATRO arquivos pgTAP (community-feed-locality-reach.sql, community-feeds.sql, post-follows.sql, transfer-scope-denials.sql) e dois e2e que dependem do feed (inicio-phone-typography.spec.ts, two-localities.spec.ts)",
+        "Medicao do coordenador: public.feed_community (ultima definicao em 20260915013344_post_follows.sql:79) recebe apenas p_community_id e p_order; roda QUATRO subconsultas laterais por post (contagem de comentarios, contagem de reacoes, my_reaction, my_follow) ANTES de ordenar; e e chamada sem limite em tres lugares",
+        "Medicao do coordenador: o e2e da rodada r6 rodou 35 minutos contra o :3210 com 4 specs abrindo a Home e foi morto — nao ha e2e verde medido desde 82fb64a. Hipotese a MEDIR, nao a aceitar: e o proprio feed sem limite",
+        "Medicao do coordenador: 24 chamadas a feed_community em QUATRO arquivos pgTAP (community-feed-locality-reach.sql, community-feeds.sql, post-follows.sql, transfer-scope-denials.sql) e dois e2e que dependem do feed (inicio-phone-typography.spec.ts, two-localities.spec.ts)",
         "Indices existentes hoje, medidos: posts (community_id, created_at desc) e posts (locality_id, created_at desc), ambos SEM id; falta group_id + created_at",
-        "Decisao e autoria registradas em docs/decisions/ADR-20260922-feed-paginado-por-cursor.md: o dono decidiu a FORMA (Recentes por cursor; Relevantes como lista limitada, sem rolagem infinita) e REJEITOU os 30 dias propostos pelo coordenador por ser feed local; os numeros — 7 dias, 20 posts, minimo 1 comentario — sao do coordenador, dentro da forma escolhida, e sao parametros reversiveis"
+        "Decisao e autoria registradas em docs/decisions/ADR-20260922-feed-paginado-por-cursor.md: o dono decidiu a FORMA (Recentes por cursor; Relevantes como lista limitada, sem rolagem infinita) e REJEITOU os 30 dias propostos pelo coordenador por ser feed local; os numeros — 7 dias, 20 posts, minimo 1 comentario — sao do coordenador, dentro da forma escolhida, e sao parametros reversiveis",
+        "Rodada 1 (banco) commitada em 1bfbf612 (migration 20260922103620_feed_community_cursor_pagination.sql + supabase/tests/feed-community-pagination.sql), 9a56d5ef (fixtures ancoradas em now()) e f4ef54e4 (tipos). Conferido pelo coordenador LENDO o SQL, nao por verificador independente: assinatura (p_community_id, p_order, p_before_created_at, p_before_id, p_limit default 20); teto aplicado como least(greatest(coalesce(p_limit,20),1), private.feed_community_max_limit()) com maximo 50; drop da assinatura antiga (uuid, text) na linha 148; security definer, am_member nos ramos, revoke de public/anon/authenticated e grant execute so a authenticated",
+        "Rodada 1, medido pelo coordenador: pgTAP completo depois da migration tem 19 arquivos vermelhos, CONJUNTO IDENTICO arquivo a arquivo e contagem a contagem a linha de base medida no P3a (residuo do banco local compartilhado). Os quatro arquivos que chamam feed_community e o pgTAP novo da paginacao estao verdes. database.generated.ts sem schema private (diff de 7 linhas)",
+        "Rodada 2 (tela) NAO VERIFICADA: o implementador falhou duas vezes sem terminar nem relatar; o trabalho sobrevivente (15 arquivos) foi preservado no commit wip 6e463b75, que so prova que compila. Alegacoes do implementador (e2e 6/6 em 34,1s) nao foram reproduzidas. Leitura do coordenador: two-localities.spec.ts preserva a intencao (pagina ate o marcador, toBeVisible final intacto, 19 expect antes e depois); tests/e2e/feed-pagination.playwright.config.ts e residuo de execucao local e deve sair antes do fechamento. Proximos passos em docs/agents/HANDOFF-2026-09-22-feed-paginacao.md"
       ],
       "tests": [
         "pgTAP: pagina 2 nao repete nem pula nada da pagina 1",
@@ -3329,7 +3332,7 @@
       "dependencies": [],
       "blockers": [],
       "updatedAt": "2026-09-22",
-      "sourceRevision": "f4df3b0"
+      "sourceRevision": "6e463b75"
     }
   ]
 }
