@@ -99,6 +99,25 @@ export async function POST(request: Request) {
     }
 
     if (action === "provision") {
+      // Só quem foi VERIFICADO vira membro. Esta rota conferia apenas o
+      // consentimento, e qualquer conta logada — nunca verificada, pendente,
+      // recusada ou prestador — ganhava membership e perfil chamando
+      // `provision` direto (achado CRITICAL da auditoria de 22/09/2026,
+      // reproduzido). A situação vem do banco, pelo usuário do token; o corpo
+      // não diz nada sobre ela. Resposta genérica: não conta em que estado a
+      // pessoa está. O convite familiar provisiona por outro ramo.
+      const { data: statusRows, error: statusError } = await supabase.rpc(
+        "read_verification_status",
+        { p_user_id: userId },
+      )
+      if (statusError) {
+        throw new Error(`Failed to read verification status: ${statusError.message}`)
+      }
+      const verificationStatus = (statusRows as { status: string }[] | null)?.[0]?.status ?? null
+      if (verificationStatus !== "verified") {
+        return NextResponse.json({ error: "verification is required" }, { status: 403 })
+      }
+
       // P0 Task 5: o passo pós-elegibilidade. A localidade é validada contra o
       // catálogo canônico ANTES de provisionar — nunca texto livre de cidade,
       // e nunca um código de formato certo mas ausente do catálogo.

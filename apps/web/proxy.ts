@@ -130,8 +130,10 @@ export async function proxy(request: NextRequest) {
   // fora da allowlist, o verificado sem membership era devolvido a
   // /onboarding/locality ao clicar Continuar, e NINGUÉM novo concluía o
   // cadastro — achado da jornada simulada de 22/09/2026. A página decide o
-  // estado sozinha (sem cidade guardada e sem vínculo, volta para a cidade), e o
-  // provisionamento é reconferido no servidor por /api/onboarding.
+  // estado sozinha (sem cidade guardada e sem vínculo, volta para a cidade). A
+  // autorização NÃO é desta allowlist: /api/onboarding `provision` exige
+  // verificação `verified`, lida no servidor pelo usuário do token, e recusa o
+  // resto com 403 (tests/unit/onboarding/provision-requires-verification.test.ts).
   if (
     pathname === "/onboarding" ||
     pathname.startsWith("/onboarding/status") ||

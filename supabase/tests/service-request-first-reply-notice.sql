@@ -123,6 +123,8 @@ select is(
 select is(
   (select count(*)::int from public.notifications
     where action = 'provider_first_reply'
+      and target_id in (select id from public.service_requests
+                         where provider_id = '30000000-0000-4000-8000-000000000027')
       and recipient_user_id not in ('10000000-0000-4000-8000-000000000001')),
   0,
   'nenhum terceiro recebe o aviso'

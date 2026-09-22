@@ -3363,6 +3363,115 @@
       "updatedAt": "2026-09-22",
       "sourceRevision": "ae4f833a",
       "completedAt": "2026-09-22"
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["apps/web/app/api/onboarding/route.ts", "apps/web/proxy.ts"],
+      "dependencies": [],
+      "proof": [
+        "Depois da correcao, a mesma chamada: provision 403 verification is required, 0 membership, 0 perfil",
+        "tests/unit/onboarding/provision-requires-verification.test.ts 7 casos; jornada de entrada (verificada) segue passando"
+      ],
+      "tests": [
+        "tests/unit/onboarding/provision-requires-verification.test.ts",
+        "tests/e2e/journey-entrar-e-ser-admitido.spec.ts"
+      ],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "de05e856",
+      "id": "SEC-PROVISION-SEM-VERIFICACAO",
+      "title": "Qualquer conta logada virava membro sem verificacao",
+      "priority": "P0",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-09-22",
+      "description": "Achado CRITICAL da auditoria independente (security-auditor) de 22/09/2026 sobre ae4f833a, f300b62d e de05e856. /api/onboarding action provision conferia so o consentimento: conta nunca verificada, pendente, recusada ou prestador ganhava locality_membership e perfil, e com isso leitura da cidade (is_locality_member nao consulta verificacao). A causa e de 17/08 (9ebea59c); o ae4f833a, ao liberar /onboarding/perfil no proxy, transformou a chamada manual num caminho de cliques na interface, e o comentario do proxy afirmava uma reconferencia que nao existia.",
+      "checklist": [
+        "Reproduzir [FEITO: conta nova nunca verificada -> provision 200, 1 membership, 1 perfil]",
+        "provision exige read_verification_status = verified, lido pelo usuario do token; 403 generico caso contrario [FEITO]",
+        "Testes negativos para nunca verificou, pendente, erro temporario, recusada; situacao vinda do corpo ignorada; falha de leitura nao libera [FEITO]",
+        "Comentario falso do proxy corrigido [FEITO]",
+        "Artefato da reproducao removido do banco local (membership e perfil de repro-mucwb9e0) [FEITO]",
+        "Defesa em profundidade: provision_member_locality recusar quem nao e verified nem familia aceita [PENDENTE: R3, fica como proximo passo]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["apps/web/app/(preauth)/onboarding/perfil/perfil-actions.ts"],
+      "dependencies": [],
+      "proof": [
+        "tests/unit/onboarding/interest-options-require-verification.test.ts 6/6; a lista nem e consultada sem verified"
+      ],
+      "tests": ["tests/unit/onboarding/interest-options-require-verification.test.ts"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "de05e856",
+      "id": "SEC-INTERESSES-SEM-VERIFICACAO",
+      "title": "Personalizacao listava grupos de qualquer cidade para conta nao verificada",
+      "priority": "P2",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-09-22",
+      "description": "Achado MEDIUM da auditoria de 22/09/2026. loadInterestOptionsAction (onboarding/perfil) lia list_available_groups_for_interests com service_role e p_locality_id do cliente, conferindo so a sessao. Agora exige verificacao verified pelo usuario da sessao antes de listar.",
+      "checklist": [
+        "Exigir verified antes de listar [FEITO]",
+        "Teste negativo por situacao e falha de leitura [FEITO]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["supabase/migrations/20260922162000_service_request_block_checks.sql"],
+      "dependencies": [],
+      "proof": [
+        "pgTAP: bloqueado pelo prestador e quem bloqueou recebem 42501 blocked; pedido sem bloqueio segue criando"
+      ],
+      "tests": ["supabase/tests/service-request-conversation-per-request.sql"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "de05e856",
+      "id": "SEC-PEDIDO-SEM-BLOQUEIO",
+      "title": "Pedido de servico ignorava bloqueio e exclusao de conta",
+      "priority": "P2",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-09-22",
+      "description": "Achado MEDIUM da auditoria de 22/09/2026 sobre a conversa por pedido. create_service_request nao conferia dm_blocks nem account_deletion_requested (pre-existente), e agora cada pedido abre uma conversa nova — quem foi bloqueado seguia mandando pedidos. O ADR-20260922-conversa-por-pedido ja dizia que bloqueios valem para as duas conversas. Migration 20260922162000 aplica as mesmas regras de open_conversation.",
+      "checklist": [
+        "Conferir bloqueio nos dois sentidos e exclusao de conta [FEITO]",
+        "pgTAP [FEITO: service-request-conversation-per-request.sql 13/13]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["supabase/migrations/20260922160100_conversation_per_request.sql"],
+      "dependencies": [],
+      "proof": [],
+      "tests": [],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "de05e856",
+      "id": "PEDIDO-TETO-POR-PAR",
+      "title": "Nao ha teto de pedidos abertos entre a mesma pessoa e o mesmo prestador",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "Achado MEDIUM (parte 2) da auditoria de 22/09/2026. Com uma conversa por pedido, uma pessoa pode abrir quantos pedidos quiser para o mesmo prestador; a chave de idempotencia e do chamador e nao limita volume. Decidir o teto (ex.: pedidos abertos por par, ou por janela de tempo) e decisao de produto; a regra antiabuso de uma conversa por par existia para isso.",
+      "checklist": ["Decisao do dono sobre o teto", "ADR e migration com pgTAP"]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["supabase/migrations/20260911051230_event_question_thread.sql"],
+      "dependencies": [],
+      "proof": [],
+      "tests": [],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "de05e856",
+      "id": "EVENTO-PERGUNTA-SELECT-INTO",
+      "title": "open_event_question pode recusar sem motivo quando o par tem conversas de pedido",
+      "priority": "P3",
+      "category": "backend",
+      "status": "next",
+      "description": "Achado LOW da auditoria de 22/09/2026. open_event_question (20260911051230_event_question_thread.sql:73-84) faz select ... into pela dupla esperando uma linha; com conversas de pedido, o par pode ter varias, e o Postgres escolhe uma arbitraria — pode recusar (\"another context\") mesmo com a conversa de pergunta existindo. Falha fechada, sem acesso indevido.",
+      "checklist": [
+        "Filtrar por context_type <> service_request na busca da conversa do par",
+        "pgTAP com par que tem conversa de pedido e de pergunta"
+      ]
     }
   ]
 }

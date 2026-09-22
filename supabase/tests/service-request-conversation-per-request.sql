@@ -9,12 +9,14 @@
 --   3. open_conversation nunca abre conversa de pedido (negativo), e a conversa
 --      do par continua existindo para o contato geral;
 --   4. no legado (pedidos que ja dividiam a conversa do par), a resposta muda o
---      pedido aberto mais recente, nao um qualquer.
+--      pedido aberto mais recente, nao um qualquer;
+--   5. bloqueio entre as duas pessoas impede novo pedido, nos dois sentidos
+--      (auditoria de 22/09/2026, 20260922162000).
 
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(13);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -209,6 +211,47 @@ select results_eq(
   $$,
   array['open', 'in_conversation'],
   'no legado, a resposta muda o pedido aberto mais recente'
+);
+
+-- ── 5. bloqueio impede novo pedido, nos dois sentidos ───────────────────────
+
+insert into public.dm_blocks (blocker_user_id, blocked_user_id)
+values ('10000000-0000-4000-8000-000000000026', '10000000-0000-4000-8000-000000000001');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.create_service_request(
+      '30000000-0000-4000-8000-000000000026', 'Pedido depois do bloqueio', null, 'k-pp-bloq'
+    )
+  $$,
+  '42501',
+  'blocked',
+  'quem foi bloqueado pelo prestador nao abre novo pedido'
+);
+
+set local role postgres;
+delete from public.dm_blocks
+ where blocker_user_id = '10000000-0000-4000-8000-000000000026';
+insert into public.dm_blocks (blocker_user_id, blocked_user_id)
+values ('10000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000026');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.create_service_request(
+      '30000000-0000-4000-8000-000000000026', 'Pedido a quem eu bloqueei', null, 'k-pp-bloq-2'
+    )
+  $$,
+  '42501',
+  'blocked',
+  'quem bloqueou o prestador tambem nao abre pedido para ele'
 );
 
 select * from finish();
