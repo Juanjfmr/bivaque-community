@@ -1,0 +1,229 @@
+/* Composição da prancha 37-web-auth-confirmacao: fundo cinza-claro, coluna
+   estreita à esquerda com o wordmark verde e a tagline, cartão branco centrado
+   (~440px) com borda sutil. Todos os valores vêm de tokens — o contrato proíbe
+   cor crua em JSX, style inline ou classe de paleta. */
+
+.root {
+  display: grid;
+  min-height: 100svh;
+  grid-template-columns: 1fr;
+  color: var(--semantic-text-primary);
+  background: var(--semantic-canvas);
+  font-family: var(--semantic-font-family-interface);
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+  letter-spacing: 0;
+}
+
+.root :where(a, button, input):focus-visible {
+  outline: 2px solid var(--semantic-focus-outer);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--semantic-focus-inner);
+}
+
+.rail {
+  display: none;
+  flex-direction: column;
+  gap: var(--primitive-space-6);
+  padding: 44px 32px;
+  background: color-mix(in srgb, var(--semantic-action-primary) 8%, var(--semantic-surface));
+}
+
+.wordmark {
+  font-size: var(--semantic-typography-section-title-size);
+  font-weight: var(--semantic-typography-display-weight);
+  line-height: var(--primitive-line-height-tight);
+  color: var(--semantic-action-primary);
+  letter-spacing: 0.04em;
+}
+
+.railTagline {
+  margin: 0;
+  font-size: var(--semantic-typography-body-size);
+  line-height: var(--semantic-typography-body-line-height);
+  color: var(--semantic-text-primary);
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 28px 20px 48px;
+}
+
+.card {
+  display: flex;
+  width: 100%;
+  max-width: 440px;
+  flex-direction: column;
+  gap: var(--primitive-space-5);
+  padding: 40px 32px 32px;
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--semantic-radius-card);
+  background: var(--semantic-surface);
+  text-align: center;
+}
+
+.iconCircle {
+  display: inline-flex;
+  width: 64px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  color: var(--semantic-action-primary);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--semantic-action-primary) 14%, var(--semantic-surface));
+}
+
+.iconCircle svg {
+  width: 28px;
+  height: 28px;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--semantic-typography-section-title-size);
+  font-weight: var(--semantic-typography-card-title-weight);
+  line-height: var(--primitive-line-height-tight);
+  text-wrap: balance;
+}
+
+.support {
+  margin: 0;
+  font-size: var(--semantic-typography-body-size);
+  line-height: var(--semantic-typography-body-line-height);
+  color: var(--semantic-text-secondary);
+}
+
+.emailEcho {
+  color: var(--semantic-text-primary);
+  font-weight: var(--primitive-font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--semantic-typography-label-size);
+  line-height: var(--semantic-typography-body-line-height);
+  color: var(--semantic-text-secondary);
+}
+
+.actionLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  padding: 0 8px;
+  color: var(--semantic-action-primary);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.actionLink:hover {
+  color: var(--semantic-action-primary-hover);
+}
+
+.primaryButton {
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--radius-sm);
+  font-size: var(--semantic-typography-body-size);
+  font-weight: var(--semantic-typography-label-weight);
+  color: var(--semantic-text-on-strong);
+  background: var(--semantic-action-primary);
+}
+
+.primaryButton:hover {
+  background: var(--semantic-action-primary-hover);
+}
+
+/* Botão em cooldown: a nota da prancha manda texto cinza-escuro sobre
+   superfície clara opaca — nunca branco sobre branco. */
+.primaryButton[data-disabled="true"] {
+  color: var(--semantic-text-secondary);
+  background: color-mix(in srgb, var(--semantic-text-primary) 10%, var(--semantic-surface));
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--semantic-border);
+}
+
+/* O alerta âmbar de largura total é a marca do painel expirado na prancha.
+   O status default do HeroUI não herda a paleta do tema; os tokens semantic-
+   warning* são a fonte, nunca cor crua. */
+.expiredAlert {
+  width: 100%;
+  color: var(--semantic-warning-soft-foreground);
+  border: 1px solid color-mix(in srgb, var(--semantic-warning) 45%, transparent);
+  background: var(--semantic-warning-soft);
+}
+
+.expiredAlert svg {
+  color: var(--semantic-warning);
+}
+
+.ghostLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  padding: 0 8px;
+  color: var(--semantic-action-primary);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.ghostLink:hover {
+  color: var(--semantic-action-primary-hover);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (min-width: 768px) {
+  .root {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  .rail {
+    display: flex;
+    min-height: 100svh;
+  }
+
+  .stage {
+    min-height: 100svh;
+    padding: 48px 32px;
+  }
+}
+
+@media (min-width: 1120px) {
+  .root {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root *,
+  .root *::before,
+  .root *::after {
+    transition-duration: var(--primitive-motion-none);
+    animation-duration: var(--primitive-motion-none);
+    animation-iteration-count: 1;
+  }
+}

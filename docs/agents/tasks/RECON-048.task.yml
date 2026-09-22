@@ -1,0 +1,107 @@
+task_id: RECON-048
+
+objective: >
+  Duas telas param de mostrar o que nao deviam. O perfil mostra a inicial da
+  pessoa quando ela nao tem foto, em vez de um vazio, e no formato redondo que o
+  resto do produto usa. Notificacoes deixa de ter uma faixa de cabecalho que
+  nenhuma outra tela tem, alinhando-se ao padrao das demais.
+
+authority:
+  - apps/web/app/components/bivaque/avatar.tsx, o comentario que descreve o recuo esperado
+  - apps/web/app/(shell)/denuncias, a tela que ja segue o padrao de cabecalho
+  - docs/design/visual-guide-2026-09-06/54-web-retorno.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md
+  - Inspeccao visual de 12/09/2026 sobre chore/integracao-r3-next
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 12/09/2026 por captura do build da integracao, gate e build verdes
+    com o codigo de saida lido direto, servido em 127.0.0.1:3203, conta
+    dono-vila@.
+
+    DEFEITO 1, o avatar do perfil. Em /profile, nas larguras 1440 e 375, a peca
+    grande do cabecalho do perfil aparece VAZIA: uma forma clara sem nenhuma
+    letra. Na mesma captura, o avatar do canto superior direito e o da lateral
+    mostram a inicial D. Entao nao e falta de dado, e a peca grande que nao
+    recua.
+
+    O proprio arquivo apps/web/app/components/bivaque/avatar.tsx descreve o
+    comportamento esperado, e explica por que ele existe: a origem da imagem
+    responde 404 quando a pessoa nao tem foto, e o componente da biblioteca so
+    mostra o recuo quando a origem e nula, entao o wrapper limpa a origem no
+    erro para a inicial aparecer. O comentario cita RUN-022 como o achado que
+    motivou isso.
+
+    O relatorio da captura autenticada registra exatamente um erro de console
+    em /profile, nas duas corridas: falha ao carregar recurso com status 404.
+    Ou seja, o caso que o recuo deveria tratar acontece, e o recuo nao aparece.
+
+    Ha ainda uma diferenca de forma: a peca grande aparece como quadrado de
+    cantos arredondados, enquanto as pequenas aparecem redondas.
+
+    DEFEITO 2, a faixa de cabecalho de Notificacoes. Em /notifications o titulo e
+    as abas ficam dentro de uma faixa branca que: comeca depois de uma tira
+    estreita de fundo no topo; termina antes da borda direita da area de
+    conteudo, deixando uma coluna de fundo a direita; e encosta no conteudo
+    abaixo sem respiro, de modo que o cartao de estado vazio aparece cortado no
+    topo.
+
+    Nenhuma outra tela do produto tem essa faixa. Conferido na mesma rodada:
+    /denuncias, /communities, /events, /mercado, /inicio e /salvos colocam o
+    titulo sobre o fundo da pagina, sem faixa. /denuncias e a comparacao mais
+    justa, porque tambem tem titulo mais abas mais estado vazio, e ela esta
+    correta.
+
+allowed_paths:
+  - apps/web/app/components/bivaque/avatar.tsx
+  - apps/web/app/(shell)/profile/
+  - apps/web/app/(shell)/notifications/
+  - apps/web/app/api/avatar/
+  - tests/unit/
+  - docs/agents/tasks/RECON-048.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - fazer a origem da imagem responder algo diferente de 404 so para o recuo parar de ser exercitado
+  - remover o avatar grande do perfil em vez de faze-lo recuar
+  - persistir ou transmitir foto real de membro; a inicial e o recuo, nao um dado novo
+  - mudar o cabecalho das outras telas para ficarem iguais ao de Notificacoes; o padrao e o das outras
+  - mudar o que as abas de Notificacoes filtram ou quantas sao
+  - afrouxar, apagar ou pular teste para o gate passar
+  - tocar autorizacao, schema, migration ou estado do banco
+
+acceptance:
+  - em /profile, sem foto, a peca grande mostra a inicial da pessoa, em 375 e em 1440
+  - a peca grande tem a mesma forma redonda das pequenas
+  - existe teste que reprova quando a origem da imagem falha e a inicial nao aparece, exercitando o caminho de erro de verdade e nao apenas a origem nula
+  - em /notifications o titulo e as abas ficam sobre o fundo da pagina, como em /denuncias, sem faixa propria e sem coluna sobrando a direita
+  - o conteudo abaixo das abas tem respiro, e nenhum cartao aparece cortado
+  - gate completo verde, com o codigo de saida lido direto
+  - capturas de /profile e /notifications em 375 e 1440 mostrando os dois consertos
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-048.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE em /profile e /notifications
+
+traps:
+  - O recuo do avatar ja foi dado como resolvido uma vez, com comentario no codigo citando RUN-022; confirme em runtime que ele aparece, nao que o codigo parece certo
+  - O componente da biblioteca pode nao repassar o evento de erro da imagem; se for o caso, o conserto e no wrapper e precisa de prova de runtime
+  - Servir o build para captura exige SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no processo, alem das duas publicas
+  - Exporte MSYS_NO_PATHCONV=1 e MSYS2_ARG_CONV_EXCL antes de passar rota que comeca com barra
+  - Nao canalize o gate por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - Ha UM Supabase local compartilhado nesta maquina; nao apague nem recrie o banco
+
+risk: >
+  Recuo visual de avatar de membro e cabecalho de uma tela de leitura, sem tocar
+  leitura de dados, autorizacao nem schema.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

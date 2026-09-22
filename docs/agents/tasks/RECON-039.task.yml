@@ -1,0 +1,123 @@
+task_id: RECON-039
+
+objective: >
+  O dominio de anuncios volta a ser um so. Mercado e Moradia passam a ler e escrever
+  a mesma tabela listings, as migrations aplicam em ordem sobre banco limpo, e as
+  telas das duas areas continuam entregando o que a prancha promete.
+
+authority:
+  - docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md
+  - docs/decisions/ADR-20260909-midia-de-membro.md
+  - supabase/migrations/20260911043053_listings_market_and_homes.sql
+  - supabase/migrations/20260911034950_market_listings.sql
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 12/09/2026 em chore/integracao-r3 (f81534d) rodando
+    supabase migration up --local --include-all contra o stack local.
+    A aplicacao PARA com erro real, lido direto do comando:
+
+    ERROR: type "listing_kind" already exists (SQLSTATE 42710)
+    ao aplicar 20260911043053_listings_market_and_homes.sql
+
+    Causa: dois lotes criaram, cada um, um dominio listings completo e
+    incompativel, e as duas migrations estao na integracao.
+
+    20260911034950_market_listings.sql (RECON-025, Mercado) cria
+    listing_kind, listing_status, listing_audience, listings, listing_photos,
+    listing_saves. A coluna de dono chama owner_id. Ha uma coluna
+    audience_type explicita. category, description, price_cents e neighborhood
+    sao NOT NULL. condition e text com check de tres valores. price_cents e bigint.
+
+    20260911043053_listings_market_and_homes.sql (RECON-027, Moradia) cria
+    listing_kind, listing_status, listing_deal, property_type,
+    listing_condition, listings, property_details, listing_photos,
+    listing_alerts, listing_saves. A coluna de dono chama owner_user_id.
+    Nao ha audience_type: o publico e derivado de qual FK esta preenchida.
+    description, category, condition, price_cents e neighborhood sao anulaveis.
+    condition e enum de dois valores. price_cents e integer com teto. Ha trigger
+    de imutabilidade de publico e kind, e coluna closed_at.
+
+    A bifurcacao continua nas migrations seguintes:
+    20260911043436_listing_lifecycle.sql le l.owner_id, ou seja assume o schema
+    do RECON-025. 20260911051005_listing_alert_deliveries.sql le
+    a.owner_user_id e l.owner_user_id, ou seja assume o schema do RECON-027.
+
+    E continua no codigo: apps/web/app/(shell)/mercado/ e
+    apps/web/app/(shell)/meus-anuncios/ consultam owner_id; a area de
+    moradia e o alerta consultam owner_user_id.
+
+    Consequencia medida: nenhum banco limpo desta integracao sobe. Nenhuma tela
+    de Mercado ou de Moradia pode ser verificada em runtime hoje.
+  canonical_choice: >
+    O schema do 20260911043053 e o canonico, por tres razoes verificaveis e nao
+    por preferencia: e superconjunto, porque tem property_details e
+    listing_alerts que o outro nao tem; carrega as restricoes que o
+    ADR-20260909 nomeia como D3 e D5, publico exclusivo, imutabilidade de
+    publico e kind, grao cidade mais bairro; e a cadeia de entrega de alerta do
+    RECON-028 ja foi construida sobre ele. Adaptar o menor ao maior perde menos
+    comportamento provado.
+
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/database.generated.ts
+  - apps/web/app/(shell)/mercado/
+  - apps/web/app/(shell)/meus-anuncios/
+  - apps/web/app/(shell)/imoveis/
+  - apps/web/lib/listings/
+  - tests/unit/
+  - docs/agents/tasks/RECON-039.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - apagar ou recriar o banco local compartilhado por qualquer meio
+  - editar migration ja aplicada no banco local; conferir com supabase migration list --local antes de tocar em qualquer arquivo
+  - afrouxar, apagar ou pular teste para o gate passar
+  - remover RLS, force row level security, revoke ou policy de qualquer tabela do dominio
+  - ampliar o que um membro enxerga; o alcance de leitura no fim tem que ser igual ou menor que o de cada lado antes
+  - inventar coluna de endereco, numero, complemento ou coordenada; o ADR proibe
+  - tocar public.profiles, is_suspended ou is_account_suspended
+  - deixar as duas definicoes convivendo com renomeacao de tipo para desviar do conflito
+
+acceptance:
+  - existe UMA definicao de listings, listing_photos e listing_saves em toda a pasta de migrations
+  - supabase migration up --local --include-all aplica ate o fim, com o codigo de saida lido direto
+  - as migrations posteriores que liam owner_id passam a ler a coluna canonica, sem coluna orfa
+  - as telas de Mercado listam, abrem, publicam e editam anuncio contra o schema canonico
+  - meus-anuncios lista os anuncios do dono contra o schema canonico
+  - as telas de Moradia continuam funcionando, sem perda de property_details nem de listing_alerts
+  - todo campo que era obrigatorio no lado do Mercado e virou anulavel tem a obrigatoriedade garantida na borda de escrita, com teste que falha se ela sumir
+  - pgTAP cobre leitura permitida e leitura negada do anuncio para dono, membro da mesma cidade e terceiro
+  - supabase/database.generated.ts regenerado somente do schema public
+  - gate completo verde, com o codigo de saida lido direto
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-039.task.yml
+  - npx pnpm@11.18.0 exec supabase migration up --local --include-all
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 exec supabase test db
+
+traps:
+  - Ha UM Supabase local e outros executores usam o mesmo banco; migration up e aditivo e permitido, apagar o banco nao
+  - Nao canalize gate nem migration por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - listing_lifecycle e listing_alert_deliveries estao em lados opostos da bifurcacao; conferir os dois
+  - audience_type existe so no lado do Mercado; o canonico deriva publico da FK preenchida, entao a leitura do publico muda de forma, nao so de nome
+  - price_cents muda de bigint para integer e ganha teto de cem milhoes; conferir se alguma tela grava acima disso
+  - condition vira enum com dois valores e o lado do Mercado usava tres; a terceira faixa precisa de destino declarado, nao de descarte silencioso
+
+risk: >
+  Reconciliacao de schema de dominio com RLS, policies e storage privado, mais o
+  codigo de duas areas de tela que leem esse schema. Nao altera fronteira de
+  privacidade nem dado pessoal, e executa decisao ja aprovada em ADR.
+risk_level: R3
+adr: docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

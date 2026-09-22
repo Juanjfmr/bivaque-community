@@ -5,7 +5,6 @@ import {
   isOutboxDue,
   OUTBOX_MAX_ATTEMPTS,
   type OutboxMessage,
-  WHATSAPP_FALLBACK_AFTER_ATTEMPTS,
 } from "@bivaque/domain"
 import { describe, expect, it } from "vitest"
 
@@ -39,12 +38,11 @@ function failingAdapter(error: string): ChannelAdapter {
 }
 
 const email = okAdapter()
-const whatsapp = okAdapter()
 
 describe("outbox delivery worker core (D1 Task 3)", () => {
   it("sends a due message and marks it sent", async () => {
     const result = await deliverOutboxMessage(message(), {
-      adapters: { email, whatsapp },
+      adapters: { email },
       now: 2000,
       baseRetryMs: 0,
     })
@@ -62,7 +60,7 @@ describe("outbox delivery worker core (D1 Task 3)", () => {
     }
 
     const result = await deliverOutboxMessage(message({ type: "comment" }), {
-      adapters: { email: adapter, whatsapp },
+      adapters: { email: adapter },
       now: 2000,
       baseRetryMs: 0,
       preferenceAllows: (row) => row.type !== "comment",
@@ -82,7 +80,7 @@ describe("outbox delivery worker core (D1 Task 3)", () => {
     }
 
     const result = await deliverOutboxMessage(message(), {
-      adapters: { email: adapter, whatsapp },
+      adapters: { email: adapter },
       now: 2000,
       baseRetryMs: 0,
       optOutAllows: (channel) => channel !== "email",
@@ -94,7 +92,7 @@ describe("outbox delivery worker core (D1 Task 3)", () => {
 
   it("keeps a not-yet-due message pending", async () => {
     const result = await deliverOutboxMessage(message({ attempts: 1, updatedAt: 1000 }), {
-      adapters: { email, whatsapp },
+      adapters: { email },
       now: 1100,
       baseRetryMs: 60_000,
     })
@@ -105,7 +103,7 @@ describe("outbox delivery worker core (D1 Task 3)", () => {
 
   it("retries a failed message with exponential backoff and keeps it pending", async () => {
     const result = await deliverOutboxMessage(message(), {
-      adapters: { email: failingAdapter("provider down"), whatsapp },
+      adapters: { email: failingAdapter("provider down") },
       now: 2000,
       baseRetryMs: 0,
     })
@@ -117,7 +115,7 @@ describe("outbox delivery worker core (D1 Task 3)", () => {
 
   it("marks a message failed after the retry ceiling", async () => {
     const result = await deliverOutboxMessage(message({ attempts: OUTBOX_MAX_ATTEMPTS - 1 }), {
-      adapters: { email: failingAdapter("still down"), whatsapp },
+      adapters: { email: failingAdapter("still down") },
       now: 2000,
       baseRetryMs: 0,
     })
@@ -126,32 +124,12 @@ describe("outbox delivery worker core (D1 Task 3)", () => {
     expect(result.attempts).toBe(OUTBOX_MAX_ATTEMPTS)
   })
 
-  it("falls back WhatsApp to email after persistent delivery failures", async () => {
-    const result = await deliverOutboxMessage(
-      message({
-        channel: "whatsapp",
-        attempts: WHATSAPP_FALLBACK_AFTER_ATTEMPTS - 1,
-      }),
-      {
-        adapters: { email, whatsapp: failingAdapter("session banned") },
-        now: 2000,
-        baseRetryMs: 0,
-      },
-    )
-
-    expect(result.status).toBe("pending")
-    expect(result.fallback).toEqual({
-      channel: "email",
-      reason: "session banned",
-    })
-  })
-
   it("processes a batch and leaves not-due rows untouched", async () => {
     const due = message({ id: "due", updatedAt: 0 })
     const notDue = message({ id: "not-due", attempts: 1, updatedAt: 20_000 })
 
     const results = await deliverOutboxBatch([due, notDue], {
-      adapters: { email, whatsapp },
+      adapters: { email },
       now: 10_000,
       baseRetryMs: 0,
     })

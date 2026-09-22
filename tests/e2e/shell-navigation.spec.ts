@@ -79,14 +79,16 @@ test.describe("Indicações discoverable entry", () => {
     // When they open the home route
     await page.goto("/inicio")
 
-    // Then Indicações is a header icon, visible at every width — not a
-    // BottomNav tab (the ceiling of four containers has no room for it)
+    // Then Indicações is a labelled header entry, visible at every width — not
+    // a BottomNav tab (the ceiling of four containers has no room for it).
+    // Era ícone de lâmpada até 18/09/2026; virou entrada rotulada por decisão
+    // do RECON-038 #4, e o nome acessível passou a vir do próprio texto.
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
     await expect(indications).toHaveAttribute("href", "/recommendations")
   })
 
-  test("keeps its accessible name in the 768px icon rail", async ({ page, context }) => {
+  test("keeps its accessible name in the 768px rail", async ({ page, context }) => {
     // Given an authenticated member on the tablet-768 viewport
     await seedSession(context)
     await page.setViewportSize({ width: 768, height: 1024 })

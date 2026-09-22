@@ -6,6 +6,10 @@ objective: >
   sobre campo real, e as rotas de area de atendimento e conta.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/79-web-indicar-prestador.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 79-web-indicar-prestador
+  - docs/design/visual-guide-2026-09-06/78-web-prestador-operacao.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 78-web-prestador-operacao
   - docs/design/visual-guide-2026-09-06/23-web-meu-negocio.png
   - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 23-web-meu-negocio
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.6 R45 R46

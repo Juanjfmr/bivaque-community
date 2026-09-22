@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>73-web-comunidade-pedidos — fonte da prancha</title>
+<style>
+  /* Fonte da prancha 73-web-comunidade-pedidos.
+     Geometria da convenção web: 2076x757, dois painéis de 1032 com gutter de 12; cada painel é um
+     desktop lógico de 1440x1056 reduzido por scale(0.716667). Tokens de packages/tokens.
+     Shell do console do dono da comunidade conforme apps/web/app/(owner)/.../admin/layout.tsx:
+     navegação de topo, não a lateral do membro. Copy reconciliada com R30 e com a tela
+     implementada em apps/web/app/(owner)/communities/[id]/admin/pending/page.tsx. */
+  :root{
+    --canvas:#FAFBF8; --surface:#FFFFFF; --sunken:#F1F2EE; --paper200:#E3E5DF;
+    --ink900:#16211C; --ink700:#4A594F; --ink500:#6B7A70;
+    --pine100:#EEF1E7; --pine700:#164734; --petrol700:#1D5D89;
+    --rose100:#FDE8E7; --rose700:#B42318;
+    --line:color-mix(in srgb, #16211C 14%, transparent);
+    --radius:0.625rem; --radius-card:0.875rem;
+    --font:ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--canvas)}
+  body{width:2076px;height:757px;font-family:var(--font);color:var(--ink900);overflow:hidden}
+  .board{display:flex;gap:12px;width:2076px;height:757px}
+  .panel{width:1032px;height:757px;overflow:hidden;flex:0 0 auto;background:var(--canvas)}
+  .scale{width:1440px;height:1056px;transform:scale(.716667);transform-origin:0 0}
+
+  .console{height:1056px;display:flex;flex-direction:column;background:var(--canvas)}
+  .topnav{height:58px;flex:0 0 auto;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+  .console-nome{font-size:15px;color:var(--ink700)}
+  .console-nome b{color:var(--ink900);font-weight:600}
+  .toplinks{display:flex;gap:6px}
+  .toplinks a{min-height:44px;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:var(--radius);font-size:15px;color:var(--ink700);text-decoration:none}
+  .toplinks a.on{background:var(--pine100);color:var(--pine700);font-weight:600}
+
+  .main{flex:1;padding:30px 40px;min-height:0}
+  h1{font-size:30px;line-height:38px;font-weight:650;letter-spacing:-.011em;margin:0 0 8px}
+  .lead{font-size:16px;line-height:25px;color:var(--ink700);margin:0 0 24px;max-width:66ch}
+  .barra{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .btn{min-height:44px;min-height:44px;border-radius:var(--radius);padding:0 18px;font-size:15px;font-weight:600;font-family:inherit;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center}
+  .btn.primario{background:var(--pine700);color:#fff}
+  .btn.secundario{background:var(--surface);color:var(--ink900);border-color:var(--line)}
+  .btn.perigo{background:var(--rose100);color:var(--rose700)}
+  .btn.pequeno{min-height:44px;padding:0 14px;font-size:14px}
+
+  .lista{display:flex;flex-direction:column;gap:10px}
+  .linha{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:14px 18px;display:flex;align-items:center;gap:16px}
+  .cx{width:20px;height:20px;border:1.8px solid var(--ink700);border-radius:5px;flex:0 0 auto}
+  .cx.marcado{background:var(--pine700);border-color:var(--pine700);position:relative}
+  .cx.marcado::after{content:"";position:absolute;left:5px;top:2px;width:6px;height:11px;border-right:2.2px solid #fff;border-bottom:2.2px solid #fff;transform:rotate(42deg)}
+  .quem{flex:1;min-width:0}
+  .quem .nome{font-size:16px;font-weight:600}
+  .quem .quando{font-size:13px;color:var(--ink500);margin-top:2px}
+  .acoes{display:flex;gap:8px;flex:0 0 auto}
+
+  .detalhe{display:flex;gap:26px;align-items:flex-start}
+  .cartao{flex:1 1 auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:20px 24px}
+  .cartao h2{font-size:18px;font-weight:650;margin:0 0 4px}
+  .cartao .meta{font-size:13px;color:var(--ink500);margin:0 0 18px}
+  .motivo{background:var(--sunken);border-radius:var(--radius);padding:14px 16px;font-size:15px;line-height:24px;color:var(--ink700)}
+  .motivo b{display:block;color:var(--ink900);font-size:13px;font-weight:600;margin-bottom:6px}
+  .rail{flex:0 0 280px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:18px 20px}
+  .rail h3{font-size:14px;font-weight:650;margin:0 0 12px}
+  .rail dl{margin:0;font-size:14px;line-height:26px;color:var(--ink700)}
+  .rail dt{font-size:13px;color:var(--ink500);margin-top:10px}
+  .rail dd{margin:0;color:var(--ink900);font-weight:600}
+  .vagas{background:var(--pine100);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:14px;color:var(--pine700);font-weight:600}
+  .privado{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink500);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- ============ painel 1 — a fila ============ -->
+  <div class="panel" data-screen="Pedidos de entrada">
+    <div class="scale">
+      <div class="console">
+        <nav class="topnav">
+          <span class="console-nome">Console — <b>Jardim das Acácias</b></span>
+          <div class="toplinks">
+            <a class="on" href="#">Pedidos de entrada</a>
+            <a href="#">Imagens</a>
+            <a href="#">Voltar à comunidade</a>
+          </div>
+        </nav>
+        <main class="main">
+          <h1>Pedidos de entrada</h1>
+          <p class="lead">Aprovar ou recusar candidatos antes que entrem no feed da comunidade.</p>
+
+          <div class="barra">
+            <button class="btn primario pequeno">Aprovar selecionados</button>
+            <button class="btn secundario pequeno">Recusar selecionados</button>
+            <span style="font-size:14px;color:var(--ink500);margin-left:6px">3 pedidos aguardando</span>
+          </div>
+
+          <div class="lista">
+            <div class="linha">
+              <span class="cx marcado"></span>
+              <div class="quem">
+                <div class="nome">Renata Menezes</div>
+                <div class="quando">Pediu há 2 dias · militar da ativa</div>
+              </div>
+              <div class="acoes">
+                <button class="btn secundario pequeno">Ver pedido</button>
+                <button class="btn primario pequeno">Aprovar</button>
+              </div>
+            </div>
+
+            <div class="linha">
+              <span class="cx"></span>
+              <div class="quem">
+                <div class="nome">João Sarmento</div>
+                <div class="quando">Pediu há 4 dias · reformado</div>
+              </div>
+              <div class="acoes">
+                <button class="btn secundario pequeno">Ver pedido</button>
+                <button class="btn primario pequeno">Aprovar</button>
+              </div>
+            </div>
+
+            <div class="linha">
+              <span class="cx"></span>
+              <div class="quem">
+                <div class="nome">Lúcia Prado</div>
+                <div class="quando">Pediu há 6 dias · pensionista</div>
+              </div>
+              <div class="acoes">
+                <button class="btn secundario pequeno">Ver pedido</button>
+                <button class="btn primario pequeno">Aprovar</button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ painel 2 — o pedido aberto ============ -->
+  <div class="panel" data-screen="Ver o pedido">
+    <div class="scale">
+      <div class="console">
+        <nav class="topnav">
+          <span class="console-nome">Console — <b>Jardim das Acácias</b></span>
+          <div class="toplinks">
+            <a class="on" href="#">Pedidos de entrada</a>
+            <a href="#">Imagens</a>
+            <a href="#">Voltar à comunidade</a>
+          </div>
+        </nav>
+        <main class="main">
+          <h1>Renata Menezes</h1>
+          <p class="lead">Pediu para entrar há 2 dias. A decisão é sua; o pedido não aparece no feed enquanto estiver pendente.</p>
+
+          <div class="detalhe">
+            <div class="cartao">
+              <h2>Motivo do pedido</h2>
+              <p class="meta">Campo opcional, escrito por quem pediu.</p>
+              <div class="motivo">
+                <b>“Por que você quer participar?”</b>
+                Moro no Jardim das Acácias desde 2023 e queria acompanhar o que acontece na vila.
+              </div>
+              <div class="privado">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>
+                Visível apenas para quem administra a comunidade.
+              </div>
+
+              <div style="display:flex;gap:10px;margin-top:22px">
+                <button class="btn primario">Aprovar entrada</button>
+                <button class="btn perigo">Recusar</button>
+              </div>
+            </div>
+
+            <aside class="rail">
+              <h3>Sobre a comunidade</h3>
+              <div class="vagas">12 de 20 vagas em uso</div>
+              <dl>
+                <dt>Membros</dt><dd>12</dd>
+                <dt>Local</dt><dd>Jardim das Acácias, Brasília, DF</dd>
+                <dt>Criada em</dt><dd>2026</dd>
+              </dl>
+            </aside>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

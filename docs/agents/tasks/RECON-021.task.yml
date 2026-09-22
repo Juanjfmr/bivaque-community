@@ -6,6 +6,8 @@ objective: >
   com filtros de bairro e tipo, contagem real e ficha alcancavel.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/84-web-busca.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 84-web-busca
   - docs/design/visual-guide-2026-09-06/61-web-explorar-servicos.png
   - docs/agents/PRANCHAS-WEB-RESTANTES.md secao Elementos comuns e secao 61-web-explorar-servicos
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.2 R19 R20 e secao 4.6 R40
@@ -18,6 +20,14 @@ baseline:
     /explorar/servicos existe e nunca foi comparada com o segundo painel da prancha 61. Nao
     existe rota de resultados agrupados. Medido em 09/09/2026.
 
+# Emenda 10/09 (executor RECON-021, medida na main e974bd0). As quatro linhas
+# finais entram porque: o acceptance exige o campo no cabecalho do shell de
+# membro, e o shell vive em app-shell.tsx; o ver-todos do grupo Guia precisa
+# que /guide leia q (hunk de uma linha); a prova pede test:e2e do fluxo; e a
+# transicao material do card vai no mesmo commit (AGENTS.md raiz). O caminho
+# components/shell/ (operator-shell.tsx) NAO existe na main - so vive em
+# codex/ajuste-de-auditoria, onde corrige o destino quando aquela base
+# reconciliar; fica listado para nao perder a pendencia.
 allowed_paths:
   - apps/web/app/(shell)/explorar/
   - apps/web/app/components/shell/
@@ -26,6 +36,10 @@ allowed_paths:
   - scripts/visual/capture.mjs
   - tests/unit/
   - docs/agents/tasks/RECON-021.task.yml
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/(shell)/guide/page.tsx
+  - tests/e2e/
+  - tools/backend-kanban/
 
 forbidden:
   - retornar em resultado qualquer item que o leitor nao teria direito de abrir, inclusive trecho e contagem

@@ -2,19 +2,26 @@
 
 import { PROVIDER_CATEGORY_LABELS, type ProviderCategory } from "@bivaque/domain"
 import { Button } from "@heroui/react"
-import { ArrowLeft, ChevronDown } from "lucide-react"
+import { ArrowLeft, ChevronDown, MapPin } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useLocalityContext } from "../../../../lib/locality-context"
+import {
+  isSessionExpiredError,
+  paginate,
+  resolvePage,
+  resolveTerm,
+} from "../../../../lib/search/params"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { Card } from "../../../components/bivaque/card"
-import { EmptyState } from "../../../components/bivaque/empty-state"
+import { AccessUnavailableState, EmptyState } from "../../../components/bivaque/empty-state"
 import { ErrorState } from "../../../components/bivaque/error-state"
 import { ProviderCardSkeleton } from "../../../components/bivaque/skeleton"
 
-// Prancha 61-web-explorar-servicos, desktop da direita (RECON-003).
+// Prancha 61-web-explorar-servicos, desktop da direita (RECON-003, busca
+// fechada por RECON-021).
 //
 // A busca é o RPC public.search_providers que já existe (onda G Task 5):
 // ele devolve id, display_name, category, bio e reach_source, e a RLS de
@@ -23,10 +30,15 @@ import { ProviderCardSkeleton } from "../../../components/bivaque/skeleton"
 // free/paid seria um sinal de promoção que nenhum dado da prancha sustenta.
 //
 // O filtro "Bairro" mapeia ao p_community_id do RPC: a comunidade é o
-// agrupamento local real que existe no banco. Não há coluna de bairro em
-// provider_profiles, e derivar uma localidade do alcance de visibilidade
-// seria inventar dado — por isso a ficha mostra nome, categoria, bio e a
-// primeira foto de portfólio quando ela existe, nada além disso.
+// agrupamento local real que existe no banco. A linha de localização do
+// cartão vem do mesmo provider_reach que autoriza a visibilidade (nome da
+// comunidade de alcance, ou cidade quando o alcance é a localidade) — nunca
+// de um endereço residencial, que o contrato de privacidade proíbe guardar.
+//
+// `q` é o parâmetro canônico do termo (spec §3.2); `search` é aceito só na
+// borda, por link antigo, e é normalizado para `q` ao abrir a página.
+
+const PAGE_SIZE = 10
 
 type ProviderRow = {
   id: string
@@ -51,9 +63,25 @@ type ProviderPhoto = {
   caption: string | null
 }
 
+type ReachRow = {
+  provider_id: string
+  scope_type: "community" | "locality"
+  scope_id: string
+}
+
+type SearchStatus = "loading" | "ok" | "error" | "expired"
+
 const CATEGORY_OPTIONS = Object.entries(PROVIDER_CATEGORY_LABELS) as [ProviderCategory, string][]
 
-function ProviderCard({ provider, photo }: { provider: ProviderRow; photo: ProviderPhoto | null }) {
+function ProviderCard({
+  provider,
+  photo,
+  location,
+}: {
+  provider: ProviderRow
+  photo: ProviderPhoto | null
+  location: string | null
+}) {
   const router = useRouter()
 
   return (
@@ -72,6 +100,12 @@ function ProviderCard({ provider, photo }: { provider: ProviderRow; photo: Provi
           <p className="text-xs font-medium text-[var(--accent)]">
             {PROVIDER_CATEGORY_LABELS[provider.category]}
           </p>
+          {location !== null && (
+            <p className="flex items-center gap-1 text-xs text-muted">
+              <MapPin size={12} aria-hidden="true" className="shrink-0" />
+              {location}
+            </p>
+          )}
           {provider.bio !== null && provider.bio !== "" ? (
             <p className="line-clamp-2 text-xs leading-relaxed text-muted">{provider.bio}</p>
           ) : null}
@@ -94,18 +128,31 @@ function ServicosContent() {
   const { current } = useLocalityContext()
   const supabase = createBrowserClient()
 
-  const term = searchParams.get("search")?.trim() ?? ""
+  const term = resolveTerm((key) => searchParams.get(key))
   const bairro = searchParams.get("bairro") ?? ""
   const tipo = searchParams.get("tipo") ?? ""
+  const page = resolvePage(searchParams.get("page"))
   const hasFilters = bairro !== "" || tipo !== ""
 
   const [providers, setProviders] = useState<ProviderRow[]>([])
   const [photos, setPhotos] = useState<Record<string, ProviderPhoto>>({})
+  const [locations, setLocations] = useState<Record<string, string>>({})
   const [communities, setCommunities] = useState<CommunityRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<SearchStatus>("loading")
   // Respostas fora de ordem: só a busca mais recente pode escrever no estado.
   const searchSeq = useRef(0)
+
+  // Borda: um link antigo ?search=… passa a viver como ?q=… imediatamente,
+  // para que recarregar/voltar/abrir em nova aba nunca dependa do alias.
+  useEffect(() => {
+    if (searchParams.get("search") === null || searchParams.get("q") !== null) return
+    const params = new URLSearchParams(searchParams.toString())
+    const aliasValue = params.get("search")
+    params.delete("search")
+    if (aliasValue !== null && params.get("q") === null) params.set("q", aliasValue)
+    const query = params.toString()
+    router.replace(`/explorar/servicos${query === "" ? "" : `?${query}`}` as Route)
+  }, [searchParams, router])
 
   // Bairros (comunidades da localidade atual) alimentam o filtro. Consulta
   // auxiliar: a RLS já expõe o metadado a membros da localidade; erro aqui
@@ -133,14 +180,15 @@ function ServicosContent() {
   }, [supabase, current.id])
 
   // Caminho crítico: a busca em si. Erro do RPC NUNCA vira lista vazia —
-  // vira ErrorState com nova tentativa, que chama esta mesma função.
+  // vira ErrorState com nova tentativa, que chama esta mesma função. Erro de
+  // sessão é estado próprio: retry sem login não recupera nada.
   const runSearch = useCallback(async () => {
     const seq = searchSeq.current + 1
     searchSeq.current = seq
 
-    setLoading(true)
-    setError(null)
+    setStatus("loading")
     setPhotos({})
+    setLocations({})
 
     const { data, error: searchError } = await supabase.rpc("search_providers", {
       ...(term === "" ? {} : { p_query: term }),
@@ -152,17 +200,62 @@ function ServicosContent() {
 
     if (searchError) {
       console.error("explorar/servicos: provider search failed", searchError.message)
-      setError("search")
+      setStatus(isSessionExpiredError(searchError) ? "expired" : "error")
       setProviders([])
-      setLoading(false)
       return
     }
 
     const rows = (data ?? []) as unknown as ProviderRow[]
     setProviders(rows)
-    setLoading(false)
+    setStatus("ok")
 
     if (rows.length === 0) return
+
+    // Linha de localização (prancha: pino + bairro/cidade). Vem do
+    // provider_reach do próprio prestador — tabela que a RLS já abre só para
+    // quem pode ver a ficha. Falha aqui degrada para "sem linha", nunca
+    // inventa bairro.
+    const { data: reachData, error: reachError } = await supabase
+      .from("provider_reach")
+      .select("provider_id, scope_type, scope_id")
+      .in(
+        "provider_id",
+        rows.map((row) => row.id),
+      )
+      .eq("active", true)
+      .order("scope_id")
+
+    if (seq !== searchSeq.current) return
+    if (!reachError && reachData) {
+      const reachRows = reachData as unknown as ReachRow[]
+      const communityIds = [
+        ...new Set(reachRows.filter((r) => r.scope_type === "community").map((r) => r.scope_id)),
+      ]
+      let namesById: Record<string, string> = {}
+      if (communityIds.length > 0) {
+        const { data: communityRows, error: communityError } = await supabase
+          .from("communities")
+          .select("id, name")
+          .in("id", communityIds)
+        if (seq !== searchSeq.current) return
+        if (!communityError && communityRows) {
+          namesById = Object.fromEntries(
+            (communityRows as CommunityRow[]).map((c) => [c.id, c.name]),
+          )
+        }
+      }
+      const nextLocations: Record<string, string> = {}
+      for (const row of reachRows) {
+        if (nextLocations[row.provider_id] !== undefined) continue
+        if (row.scope_type === "community") {
+          const name = namesById[row.scope_id]
+          if (name) nextLocations[row.provider_id] = `${name}, ${current.cityName}`
+        } else {
+          nextLocations[row.provider_id] = `${current.cityName}, ${current.stateCode}`
+        }
+      }
+      setLocations(nextLocations)
+    }
 
     // Fotos são enriquecimento opcional: primeira por prestador, URL
     // assinada curta do bucket privado, mesmo padrão da ficha do
@@ -204,20 +297,42 @@ function ServicosContent() {
 
     if (seq !== searchSeq.current) return
     setPhotos(Object.fromEntries(entries.filter((entry) => entry !== null)))
-  }, [supabase, term, bairro, tipo])
+  }, [supabase, term, bairro, tipo, current.cityName, current.stateCode])
 
   useEffect(() => {
     void runSearch()
   }, [runSearch])
 
+  // A janela visível é derivada da lista autorizada inteira: a contagem
+  // exibida usa os mesmos filtros e a mesma autorização da lista, e o `page`
+  // vive na URL para sobreviver a recarregar, voltar e abrir em nova aba.
+  const windowed = useMemo(() => paginate(providers, page, PAGE_SIZE), [providers, page])
+
   function applyParams(next: Record<string, string>) {
     const params = new URLSearchParams(searchParams.toString())
+    // O termo canônico é sempre reescrito como `q`; o alias antigo não
+    // sobrevive a uma interação. Filtrar é um resultado novo: a página volta
+    // para 1, senão o filtro ficaria selecionado sobre uma janela vazia.
+    params.delete("search")
+    if (term !== "" && params.get("q") === null) params.set("q", term)
+    params.delete("page")
     for (const [key, value] of Object.entries(next)) {
       if (value === "") params.delete(key)
       else params.set(key, value)
     }
     const query = params.toString()
-    router.replace(`/explorar/servicos${query === "" ? "" : `?${query}`}` as Route)
+    // push (não replace): voltar/avançar percorre os estados de filtro.
+    router.push(`/explorar/servicos${query === "" ? "" : `?${query}`}` as Route)
+  }
+
+  function goToPage(target: number) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("search")
+    if (term !== "" && params.get("q") === null) params.set("q", term)
+    if (target <= 1) params.delete("page")
+    else params.set("page", String(target))
+    const query = params.toString()
+    router.push(`/explorar/servicos${query === "" ? "" : `?${query}`}` as Route)
   }
 
   return (
@@ -225,13 +340,13 @@ function ServicosContent() {
       <div className="flex items-center gap-2">
         <Link
           href="/explorar"
-          aria-label="Voltar"
-          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground"
+          aria-label="Voltar para Explorar"
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
         >
           <ArrowLeft size={18} aria-hidden="true" />
         </Link>
         <h1 className="text-xl font-semibold tracking-tight">
-          {term === "" ? "Prestadores de serviço" : `Resultados para "${term}"`}
+          {term === "" ? "Prestadores de serviço" : `Resultados para “${term}”`}
         </h1>
       </div>
 
@@ -245,7 +360,7 @@ function ServicosContent() {
               id="filtro-bairro"
               value={bairro}
               onChange={(event) => applyParams({ bairro: event.target.value })}
-              className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
+              className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               <option value="">Todos os bairros</option>
               {communities.map((community) => (
@@ -271,7 +386,7 @@ function ServicosContent() {
               id="filtro-tipo"
               value={tipo}
               onChange={(event) => applyParams({ tipo: event.target.value })}
-              className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
+              className="min-h-11 w-full appearance-none rounded-lg border border-border bg-[var(--semantic-surface)] px-3 pr-9 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
               <option value="">Todos os tipos</option>
               {CATEGORY_OPTIONS.map(([value, label]) => (
@@ -298,52 +413,98 @@ function ServicosContent() {
       </div>
 
       <div className="mt-6">
-        {loading ? (
+        {status === "loading" ? (
           <div className="flex flex-col gap-3" aria-busy="true">
             <ProviderCardSkeleton />
             <ProviderCardSkeleton />
             <ProviderCardSkeleton />
           </div>
-        ) : error !== null ? (
+        ) : status === "expired" ? (
+          <AccessUnavailableState
+            title="Sua sessão expirou"
+            description="Entre de novo para buscar prestadores. O termo e os filtros continuam na página anterior."
+            primaryAction={
+              <Link
+                href={`/login?redirect=${encodeURIComponent(`/explorar/servicos?q=${term}`)}`}
+                className="flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-opacity duration-[var(--semantic-motion-duration-instant)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+              >
+                Entrar novamente
+              </Link>
+            }
+          />
+        ) : status === "error" ? (
           <ErrorState
             message="Não foi possível buscar os prestadores agora."
             onRetry={() => void runSearch()}
           />
-        ) : providers.length === 0 ? (
+        ) : windowed.total === 0 ? (
           <EmptyState
             title="Nenhum prestador encontrado"
             description={
               term === ""
                 ? "Nenhum prestador corresponde aos filtros atuais."
-                : `Nenhum prestador corresponde a "${term}" com os filtros atuais.`
+                : `Nenhum prestador corresponde a “${term}” com os filtros atuais.`
             }
-            {...(hasFilters
-              ? {
-                  action: (
-                    <Button
-                      variant="tertiary"
-                      className="min-h-11"
-                      onPress={() => applyParams({ bairro: "", tipo: "" })}
-                    >
-                      Limpar filtros
-                    </Button>
-                  ),
-                }
-              : {})}
+            action={
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {hasFilters && (
+                  <Button
+                    variant="tertiary"
+                    className="min-h-11"
+                    onPress={() => applyParams({ bairro: "", tipo: "" })}
+                  >
+                    Limpar filtros
+                  </Button>
+                )}
+                <Link
+                  href="/localidade"
+                  className="flex min-h-11 items-center rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+                >
+                  Trocar de cidade
+                </Link>
+              </div>
+            }
           />
         ) : (
           <>
             <p className="text-sm text-muted">
-              {providers.length} resultado{providers.length === 1 ? "" : "s"} encontrado
-              {providers.length === 1 ? "" : "s"}
+              {windowed.total} resultado{windowed.total === 1 ? "" : "s"} encontrado
+              {windowed.total === 1 ? "" : "s"}
             </p>
             <ul className="mt-3 flex flex-col gap-3">
-              {providers.map((provider) => (
+              {windowed.items.map((provider) => (
                 <li key={provider.id}>
-                  <ProviderCard provider={provider} photo={photos[provider.id] ?? null} />
+                  <ProviderCard
+                    provider={provider}
+                    photo={photos[provider.id] ?? null}
+                    location={locations[provider.id] ?? null}
+                  />
                 </li>
               ))}
             </ul>
+            {windowed.pageCount > 1 && (
+              <nav aria-label="Paginação de resultados" className="mt-4 flex items-center gap-2">
+                <Button
+                  variant="tertiary"
+                  className="min-h-11"
+                  isDisabled={windowed.page <= 1}
+                  onPress={() => goToPage(windowed.page - 1)}
+                >
+                  Anterior
+                </Button>
+                <span className="text-sm text-muted">
+                  Página {windowed.page} de {windowed.pageCount}
+                </span>
+                <Button
+                  variant="tertiary"
+                  className="min-h-11"
+                  isDisabled={windowed.page >= windowed.pageCount}
+                  onPress={() => goToPage(windowed.page + 1)}
+                >
+                  Próxima
+                </Button>
+              </nav>
+            )}
           </>
         )}
       </div>

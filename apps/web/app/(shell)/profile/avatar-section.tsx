@@ -53,7 +53,7 @@ export default function AvatarSection() {
           }}
           className="flex items-center gap-2"
         >
-          <label className="cursor-pointer text-sm text-accent underline">
+          <label className="inline-flex min-h-11 cursor-pointer items-center text-sm text-accent underline transition-colors duration-[var(--semantic-motion-duration-fast)]">
             {src ? "Trocar foto" : "Adicionar foto"}
             <input
               type="file"

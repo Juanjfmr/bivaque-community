@@ -20,7 +20,15 @@ test("exposes the local root command surface", () => {
   assert.equal(scripts["test:db"], "supabase test db")
   assert.equal(scripts["db:test"], undefined)
   assert.equal(scripts["db:lint"], "supabase db lint --local --level error")
-  assert.equal(scripts["test:e2e"], "playwright test")
+  // O lote normal EXCLUI os specs marcados @stateful, e o lote stateful roda em
+  // serial. Antes disso a suíte inteira rodava num processo só e specs que
+  // escrevem nas mesmas linhas (grupo privado, save da mesma conta, pedidos
+  // pendentes da vila) colidiam entre si — falha intermitente que passava quando
+  // o spec rodava sozinho. A tag existia num spec e não tinha consumidor; agora
+  // tem, e este contrato impede que ela seja removida sem que o CI perceba.
+  assert.equal(scripts["test:e2e"], "playwright test --grep-invert @stateful")
+  assert.equal(scripts["test:e2e:stateful"], "playwright test --grep @stateful --workers=1")
+  assert.equal(scripts["test:e2e:all"], "pnpm test:e2e && pnpm test:e2e:stateful")
 })
 
 test("pins Playwright and the local Supabase CLI", () => {

@@ -1,0 +1,110 @@
+task_id: RECON-042
+
+objective: >
+  Quem clica em Configuracoes chega em Configuracoes. A lateral acende o item
+  certo quando a pessoa esta em qualquer tela de Configuracoes, e cada subtela
+  dessa area diz na propria pagina qual delas e, para que uma captura da subtela
+  errada deixe de passar por certa.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/01-web-inicio.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0, Fidelidade comprovada
+  - scripts/visual/capture.mjs, mapa HEADINGS, entradas de /configuracoes
+  - Revisao do RECON-038 e do RECON-040, 12/09/2026
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Tres defeitos medidos em 12/09/2026 na branch chore/integracao-r3-next,
+    lendo o codigo e as capturas do build da integracao.
+
+    1) O item da lateral rotulado Configuracoes aponta para /profile.
+    Em apps/web/app/components/bivaque/app-shell.tsx, na linha 313 do estado
+    medido, o link do rodape da lateral tem o rotulo Configuracoes e o destino
+    /profile. A rota /configuracoes existe e tem secao inteira, com pagina
+    propria, layout, navegacao e quatro subtelas: conta, notificacoes, familia e
+    bloqueados. Entao o rotulo promete uma tela e o clique entrega outra.
+
+    2) A lateral acende Inicio em toda rota que nao seja um dos quatro
+    containers primarios nem uma das rotas pessoais listadas. Nao e o caso de
+    uma tela: e o ultimo recurso de
+    apps/web/app/components/shell/active-nav.ts se aplicando a tudo que sobra.
+
+    Medido em capturas do build da integracao servido em 127.0.0.1:3197, conta
+    dono-vila@, em 12/09/2026. Acendem Inicio estando em outro lugar:
+    /guide, cuja propria trilha na tela diz Explorar / Guia; /events;
+    /recommendations; /configuracoes. Pela mesma regra caem no mesmo lugar
+    /mercado, /imoveis, /pedidos, /localidade e /groups, que nao foram
+    capturadas nesta rodada e precisam ser conferidas.
+
+    O que ja esta certo, e precisa continuar certo: /messages e /notifications
+    acendem Perfil, como o contrato DS-011 exige; os quatro containers acendem a
+    si mesmos; e /salvos acende Salvos desde o RECON-038.
+
+    A correcao nao e acrescentar cada rota a uma lista. Uma lista que precisa
+    crescer a cada tela nova volta a divergir na tela seguinte, e foi assim que
+    este defeito chegou aqui. A regra precisa dizer a que container cada area
+    pertence, e o teste precisa reprovar quando uma rota do mapa de captura nao
+    tiver container declarado.
+
+    3) As quatro subtelas de Configuracoes nao se distinguem uma da outra.
+    Elas herdam o titulo de nivel um do layout da area, e a pagina filha usa
+    titulo de nivel dois. O contrato de identidade da captura, entregue pelo
+    RECON-040, teve que declarar o mesmo titulo esperado para as quatro. O
+    efeito: uma captura que aterrisse em conta quando pediu familia passa como
+    valida. O contrato ficou tao forte quanto a pagina permite, e a pagina
+    permite pouco.
+
+allowed_paths:
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/(shell)/configuracoes/
+  - scripts/visual/capture.mjs
+  - tests/unit/
+  - docs/agents/tasks/RECON-042.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - mudar o destino do avatar do cabecalho, que aponta para o perfil de proposito
+  - quebrar o comportamento que o contrato DS-011 exige, em que mensagens e notificacoes caem em Perfil
+  - afrouxar, apagar ou pular teste para o gate passar
+  - trocar o titulo de nivel um do layout por um titulo por subtela sem conferir que a area continua nomeada
+  - tocar autorizacao, schema, migration ou estado do banco
+  - renomear rota existente
+
+acceptance:
+  - o item Configuracoes da lateral leva para a area de Configuracoes
+  - existe teste que reprova quando o rotulo de um item da lateral deixa de corresponder ao destino dele
+  - a lateral acende o item certo em /guide, /events, /recommendations, /configuracoes e nas quatro subtelas de Configuracoes
+  - toda rota declarada no mapa de identidade da captura tem container de lateral declarado, e existe teste que reprova quando uma rota fica sem
+  - o ultimo recurso deixa de eleger Inicio por omissao; rota sem container declarado reprova no teste em vez de acender um vizinho plausivel
+  - o comportamento exigido pelo DS-011 continua valendo, provado por teste que ja existia e continua passando
+  - cada subtela de Configuracoes tem titulo proprio observavel, e o mapa de identidade da captura passa a declarar um titulo distinto para cada uma
+  - o teste de escopo da prova de captura continua verde
+  - gate completo verde, com o codigo de saida lido direto
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-042.task.yml
+  - node --test tests/scope/visual-capture-proof.test.mjs
+  - npx pnpm@11.18.0 gate
+
+traps:
+  - active-nav.ts tem duas listas com papeis diferentes; acrescentar na lista errada muda o comportamento que o DS-011 exige e reprova E2E
+  - O mapa de identidade compara por expressao regular sem diferenciar maiuscula; ponto e interrogacao precisam de escape
+  - Se voce der titulo proprio a subtela, o mapa de identidade tem que mudar junto, senao o teste de escopo reprova sem que nada esteja errado
+  - Nao canalize o gate por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - app-shell.tsx foi alterado por tres lotes fora do escopo deles; confira o que existe antes de reescrever
+
+risk: >
+  Rotulo, destino e destaque de item de navegacao no shell do membro, mais o
+  titulo das subtelas de Configuracoes e o mapa usado pela captura visual.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

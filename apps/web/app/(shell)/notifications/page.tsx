@@ -432,52 +432,50 @@ export default function NotificationsPage() {
   // ── render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-1 flex-col">
-      {/* ── sticky header: título + badge (contagem do servidor) + marcar todas ── */}
-      <div className="sticky top-12 z-30 border-b border-border bg-[var(--surface)] px-4 pt-3">
-        <div className="mx-auto flex w-full max-w-4xl items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold tracking-tight">Notificações</h1>
-            {unreadCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1.5 text-xs font-medium text-[var(--accent-foreground)]">
-                {unreadCount}
-              </span>
-            )}
-          </div>
+    <div className="mx-auto w-full max-w-4xl px-4 py-8">
+      {/* ── título + badge (contagem do servidor) + marcar todas ── */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="text-lg font-semibold tracking-tight">Notificações</h1>
           {unreadCount > 0 && (
-            <Button
-              size="sm"
-              variant="tertiary"
-              onPress={markAllAsRead}
-              isDisabled={markingRead.size > 0}
-              className="min-h-11"
-            >
-              Marcar todas como lidas
-            </Button>
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1.5 text-xs font-medium text-[var(--accent-foreground)]">
+              {unreadCount}
+            </span>
           )}
         </div>
-
-        {/* ── abas Todas / Não lidas (prancha 54) ── */}
-        <Tabs
-          aria-label="Filtro de notificações"
-          selectedKey={activeTab}
-          onSelectionChange={(key) => setActiveTab(key as FilterKey)}
-          className="mx-auto mt-2 w-full max-w-4xl"
-        >
-          <Tabs.ListContainer>
-            <Tabs.List>
-              {FILTER_TABS.map((tab) => (
-                <Tabs.Tab key={tab.key} id={tab.key}>
-                  {tab.label}
-                </Tabs.Tab>
-              ))}
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
+        {unreadCount > 0 && (
+          <Button
+            size="sm"
+            variant="tertiary"
+            onPress={markAllAsRead}
+            isDisabled={markingRead.size > 0}
+            className="min-h-11"
+          >
+            Marcar todas como lidas
+          </Button>
+        )}
       </div>
 
+      {/* ── abas Todas / Não lidas (prancha 54) ── */}
+      <Tabs
+        aria-label="Filtro de notificações"
+        selectedKey={activeTab}
+        onSelectionChange={(key) => setActiveTab(key as FilterKey)}
+        className="tabs--secondary mt-4"
+      >
+        <Tabs.ListContainer>
+          <Tabs.List>
+            {FILTER_TABS.map((tab) => (
+              <Tabs.Tab key={tab.key} id={tab.key}>
+                {tab.label}
+              </Tabs.Tab>
+            ))}
+          </Tabs.List>
+        </Tabs.ListContainer>
+      </Tabs>
+
       {/* ── content: coluna de leitura + trilho de Preferências ── */}
-      <div className="mx-auto flex w-full max-w-4xl gap-6 px-4 py-4">
+      <div className="mt-6 flex gap-6">
         <div className="min-w-0 flex-1">
           {error && <ErrorState message={error} onRetry={() => loadNotifications()} />}
 

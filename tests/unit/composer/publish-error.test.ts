@@ -131,6 +131,26 @@ describe("classifyPublishError", () => {
       expect(rls.kind).not.toBe("network")
       expect(rls.kind).toBe("server")
     })
+
+    it("erro de fetch embrulhado em forma de PostgREST continua sendo transporte", () => {
+      // Medido no navegador em 16/09/2026, publicando com o contexto offline:
+      // o cliente devolve `{ message: "TypeError: Failed to fetch", details: …,
+      // hint: "", code: "" }`. Com o envelope checado primeiro, isso virava
+      // "Não foi possível criar a publicação" (cópia de servidor) e a prancha 60
+      // nunca aparecia. Assinatura de transporte vence envelope fraco.
+      const offlineEnvelope = classifyPublishError({
+        message: "TypeError: Failed to fetch",
+        details: "TypeError: Failed to fetch",
+        hint: "",
+        code: "",
+      })
+      expect(offlineEnvelope.kind).toBe("network")
+      expect(offlineEnvelope.preserveDraft).toBe(true)
+
+      // A negativa que a ordem nova precisa preservar: envelope FORTE (SQLSTATE)
+      // vence mesmo quando o texto parece transporte.
+      expect(classifyPublishError({ code: "42501", message: "aborted" }).kind).toBe("server")
+    })
   })
 
   describe("diagnostic payload", () => {

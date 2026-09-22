@@ -5,8 +5,11 @@
  * Quem já está dentro da plataforma é atendido pela própria plataforma
  * (Task 11), não por canal externo.
  *
- * O valor pode ser sobrescrito pelo ambiente de produção, mas o canal aprovado
- * do Alpha também fica como fallback para não operar com endereço indefinido.
+ * O endereço é uma caixa de função definida por NEXT_PUBLIC_SUPPORT_EMAIL no
+ * ambiente. Nunca há endereço pessoal hardcoded: sem a variável, o valor é o
+ * sentinela `<<DEFINIR>>`, que o gate de escopo recusa em produção. O prefixo
+ * NEXT_PUBLIC_ é intencional — a tela exibe o endereço ao membro, então ele é
+ * público por natureza; o que não pode existir é uma caixa pessoal no bundle.
  */
-export const SUPPORT_EMAIL = process.env["NEXT_PUBLIC_SUPPORT_EMAIL"] ?? "juanjfmr1@gmail.com"
+export const SUPPORT_EMAIL = process.env["NEXT_PUBLIC_SUPPORT_EMAIL"] ?? "<<DEFINIR>>"
 export const SUPPORT_SLA_HOURS = 48

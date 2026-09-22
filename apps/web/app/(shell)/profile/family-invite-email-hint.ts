@@ -15,7 +15,12 @@ export function emailHint(email: string): string {
   const local = trimmed.slice(0, at)
   const domain = trimmed.slice(at + 1)
   const visibleLocal = local.length <= 2 ? local.slice(0, 1) : local.slice(0, 2)
-  const dot = domain.indexOf(".")
+  // O ÚLTIMO ponto, não o primeiro: com `indexOf` o rótulo de
+  // 'familiar@bivaque.example.invalid' virava 'bi***.example.invalid' e o CHECK
+  // da tabela (`^[^@\s]{1,2}\*{3}@[^@\s]{1,2}\*{3}\.[a-z]{2,}$`) recusava o
+  // convite — medido em runtime em 15/09/2026, e valia para qualquer domínio de
+  // dois níveis ('@exemplo.com.br').
+  const dot = domain.lastIndexOf(".")
   const visibleDomain = domain.length <= 2 ? domain.slice(0, 1) : domain.slice(0, 2)
   const tld = dot > 2 ? domain.slice(dot) : ""
   return `${visibleLocal}***@${visibleDomain}***${tld}`

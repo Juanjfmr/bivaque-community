@@ -1,127 +1,39 @@
 "use client"
 
-import { Button, Form, Input, ListBox, Select, Spinner } from "@heroui/react"
-import { MapPinned } from "lucide-react"
+import { Button, SearchField, Spinner } from "@heroui/react"
+import { Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
-import { OnboardingShell } from "../components/onboarding-shell"
+import { readStoredCity, type StoredCity, writeStoredCity } from "../city-storage"
+import { ContextSteps } from "../components/context-steps"
 import styles from "../onboarding.module.css"
+import { type CityOption, searchCitiesAction } from "./city-actions"
 
-// P0 Task 5: o passo pós-elegibilidade. Acontece uma vez, com a pessoa
-// presente, depois de saber que passou. Ela informa o que só ela sabe: a
-// localidade (obrigatória, validada no servidor contra o catálogo canônico)
-// e confirma o nome. Nada além disso entra aqui — nem interesses (onda E),
-// nem pedido de vila (§5.2 separa os atestadores).
-
-type Municipality = { id: string; cityName: string; ibgeCode: string }
+// Prancha 39 (painel esquerdo) — o passo Cidade do contexto. A pessoa busca
+// por nome, escolhe um cartão com cidade e UF, e continua. Persistir a
+// localidade é o passo seguinte; escolher cidade NÃO concede participação em
+// comunidade privada nenhuma.
+//
+// O vínculo de localidade é criado no fim da personalização (R15), quando o
+// nome já foi confirmado; aqui só se guarda a escolha. O catálogo vem do banco
+// (Server Action) e falha de catálogo é erro recuperável, nunca lista vazia.
 
 export default function OnboardingLocalityPage() {
   const router = useRouter()
-  const supabase = createBrowserClient()
+  const supabase = useMemo(() => createBrowserClient(), [])
 
-  const [ufs, setUfs] = useState<string[]>([])
-  const [uf, setUf] = useState<string>("")
-  const [municipalities, setMunicipalities] = useState<Municipality[]>([])
-  const [municipality, setMunicipality] = useState<string>("")
-  const [displayName, setDisplayName] = useState("")
+  const [cities, setCities] = useState<CityOption[]>([])
+  const [query, setQuery] = useState("")
+  const [selected, setSelected] = useState<StoredCity | null>(null)
   const [loading, setLoading] = useState(true)
-  const [municipalityLoading, setMunicipalityLoading] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+  const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const boot = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        if (!session) {
-          router.replace("/login?return=/onboarding/locality")
-          return
-        }
-
-        const ufsRes = await fetch("/api/localities", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-
-        if (!ufsRes.ok) {
-          setError("Não foi possível carregar as localidades. Tente novamente.")
-          return
-        }
-
-        const ufsData = (await ufsRes.json()) as { ufs: string[] }
-        setUfs(ufsData.ufs ?? [])
-
-        // O nome que o Portal sugeriu atravessou a fronteira em memória (D11):
-        // o verify-cpf o devolveu na resposta e o onboarding page o guardou em
-        // sessionStorage descartável. Lemos e descartamos aqui.
-        const suggested = window.sessionStorage.getItem("onboarding:suggestedName")
-        if (typeof suggested === "string" && suggested.length > 0) {
-          setDisplayName(suggested)
-        }
-        window.sessionStorage.removeItem("onboarding:suggestedName")
-      } catch {
-        setError("Não foi possível carregar seus dados. Tente novamente.")
-      } finally {
-        setLoading(false)
-      }
-    }
-    boot()
-  }, [router, supabase])
-
-  useEffect(() => {
-    if (uf.length === 0) return
-    setMunicipalityLoading(true)
-    setMunicipality("")
-    setError(null)
-
-    const load = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        if (!session) return
-
-        const res = await fetch(`/api/localities/${uf}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-        if (!res.ok) {
-          setError("Não foi possível carregar os municípios desta UF.")
-          return
-        }
-        const data = (await res.json()) as { municipalities: Municipality[] }
-        setMunicipalities(data.municipalities ?? [])
-      } catch {
-        setError("Não foi possível carregar os municípios.")
-      } finally {
-        setMunicipalityLoading(false)
-      }
-    }
-    load()
-  }, [uf, supabase])
-
-  const handleSubmit = async () => {
-    setError(null)
-    if (uf.length === 0 || municipality.length === 0) {
-      setError("Escolha o estado e a sua cidade.")
-      return
-    }
-    if (displayName.trim().length < 2) {
-      setError("Informe o seu nome.")
-      return
-    }
-
-    const selected = municipalities.find((m) => m.id === municipality)
-    if (!selected) {
-      setError("Cidade inválida. Escolha uma opção da lista.")
-      return
-    }
-
-    setSubmitting(true)
-    try {
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -130,176 +42,164 @@ export default function OnboardingLocalityPage() {
         return
       }
 
-      const res = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          action: "provision",
-          ibge_code: selected.ibgeCode,
-          display_name: displayName.trim(),
-        }),
-      })
+      setSelected(readStoredCity(window.sessionStorage))
 
-      const data = (await res.json()) as Record<string, unknown>
-      if (typeof data["error"] === "string") {
-        setError(data["error"] as string)
-        return
+      try {
+        const statusRes = await fetch("/api/onboarding/status", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        })
+        if (statusRes.ok) {
+          const status = (await statusRes.json()) as { localityMember?: boolean }
+          if (status.localityMember) {
+            router.replace("/community")
+            return
+          }
+        }
+      } catch {
+        // Falha ao ler o estado não impede escolher a cidade; o servidor
+        // continua sendo quem decide o vínculo.
       }
 
-      setSuccess(true)
-      router.replace("/onboarding/welcome")
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao concluir o cadastro")
-    } finally {
+      try {
+        const results = await searchCitiesAction("")
+        setCities(results)
+      } catch {
+        setError("Não foi possível carregar as cidades. Tente novamente.")
+      } finally {
+        setLoading(false)
+      }
+    }
+    boot()
+  }, [router, supabase])
+
+  useEffect(() => {
+    if (loading) return
+    let cancelled = false
+    const handle = window.setTimeout(async () => {
+      setSearching(true)
+      setError(null)
+      try {
+        const results = await searchCitiesAction(query)
+        if (!cancelled) setCities(results)
+      } catch {
+        if (!cancelled) setError("Não foi possível buscar cidades. Tente novamente.")
+      } finally {
+        if (!cancelled) setSearching(false)
+      }
+    }, 250)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(handle)
+    }
+  }, [query, loading])
+
+  const handleContinue = () => {
+    setError(null)
+    if (!selected) {
+      setError("Escolha uma cidade para continuar.")
+      return
+    }
+    setSubmitting(true)
+    try {
+      writeStoredCity(window.sessionStorage, selected)
+      router.push("/onboarding/perfil")
+    } catch {
+      setError("Não foi possível guardar sua escolha. Tente novamente.")
       setSubmitting(false)
     }
   }
 
-  if (loading) {
-    return (
-      <OnboardingShell
-        stage="locality"
-        titleId="locality-loading-heading"
-        eyebrow="Último passo"
-        title="Preparando as localidades."
-        asideEyebrow="A comunidade começa perto"
-        asideTitle="Sua cidade é o primeiro ponto de encontro."
-        asideDescription="É a partir dela que o Bivaque organiza referências, conversas e chegadas."
-      >
-        <div className={styles["loadingState"]}>
-          <Spinner size="lg" color="accent" />
-          <p>Carregando estados e cidades...</p>
-        </div>
-      </OnboardingShell>
-    )
-  }
-
   return (
-    <OnboardingShell
-      stage="locality"
+    <ContextSteps
+      current="cidade"
       titleId="locality-heading"
-      eyebrow="Último passo"
-      title="Escolha sua localidade."
-      description="Sua cidade organiza o que você encontra primeiro no Bivaque. Você poderá participar de outras localidades quando tiver vínculo com elas."
-      asideEyebrow="A comunidade começa perto"
-      asideTitle="Sua cidade é o primeiro ponto de encontro."
-      asideDescription="É a partir dela que o Bivaque organiza referências, conversas e chegadas."
+      title="Qual cidade você quer explorar?"
+      description="Encontre comunidades, eventos e serviços na sua região."
     >
-      <div className={styles["stack"]}>
-        {success ? (
-          <FeedbackAlert variant="success" description="Sua localidade foi registrada." />
+      <div className={styles["contextWidth"]}>
+        <SearchField
+          aria-label="Buscar cidade"
+          className={styles["citySearch"] ?? ""}
+          value={query}
+          onChange={setQuery}
+          onClear={() => setQuery("")}
+        >
+          <SearchField.Group>
+            <SearchField.SearchIcon />
+            <SearchField.Input placeholder="Buscar cidade" />
+            {query ? <SearchField.ClearButton /> : null}
+          </SearchField.Group>
+        </SearchField>
+
+        {loading ? (
+          <div className={styles["loadingState"]}>
+            <Spinner size="lg" color="accent" />
+            <p>Carregando cidades...</p>
+          </div>
         ) : (
           <>
-            <Form
-              onSubmit={(e) => {
-                e.preventDefault()
-                handleSubmit()
-              }}
-              className={styles["form"] ?? ""}
-            >
-              <div className={styles["fieldGroup"]}>
-                <p className={styles["fieldLabel"]}>Estado</p>
-                <Select
-                  className={styles["control"] ?? ""}
-                  aria-label="Estado"
-                  selectedKey={uf || null}
-                  onSelectionChange={(key) => {
-                    if (typeof key === "string") {
-                      setUf(key)
-                      setError(null)
-                    }
-                  }}
-                  isRequired
-                >
-                  <Select.Trigger>
-                    <Select.Value>Selecione o estado</Select.Value>
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {ufs.map((code) => (
-                        <ListBox.Item key={code} id={code}>
-                          {code}
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              </div>
+            {cities.length === 0 ? (
+              <p className={styles["cityEmpty"]}>
+                Nenhuma cidade encontrada para “{query.trim()}”. Tente outro nome.
+              </p>
+            ) : (
+              <ul className={styles["cityList"]} aria-label="Cidades disponíveis">
+                {cities.map((city) => {
+                  const isSelected = selected?.ibgeCode === city.ibgeCode
+                  return (
+                    <li key={city.ibgeCode}>
+                      <button
+                        type="button"
+                        className={styles["cityCard"]}
+                        data-state={isSelected ? "selected" : "idle"}
+                        aria-pressed={isSelected}
+                        onClick={() => {
+                          setSelected(city)
+                          setError(null)
+                        }}
+                      >
+                        <span className={styles["cityCardIcon"]}>
+                          <Building2 aria-hidden="true" />
+                        </span>
+                        <span className={styles["cityCardText"]}>
+                          <span className={styles["cityCardName"]}>{city.cityName}</span>
+                          <span className={styles["cityCardState"]}>{city.stateCode}</span>
+                        </span>
+                        <span className={styles["cityCardRadio"]} aria-hidden="true" />
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
 
-              <div className={styles["fieldGroup"]}>
-                <p className={styles["fieldLabel"]}>Cidade</p>
-                <Select
-                  className={styles["control"] ?? ""}
-                  aria-label="Cidade"
-                  selectedKey={municipality || null}
-                  onSelectionChange={(key) => {
-                    if (typeof key === "string") {
-                      setMunicipality(key)
-                      setError(null)
-                    }
-                  }}
-                  isRequired
-                >
-                  <Select.Trigger>
-                    <Select.Value>
-                      {municipalityLoading
-                        ? "Carregando..."
-                        : municipalities.length === 0
-                          ? "Selecione o estado primeiro"
-                          : "Selecione a cidade"}
-                    </Select.Value>
-                    <Select.Indicator />
-                  </Select.Trigger>
-                  <Select.Popover>
-                    <ListBox>
-                      {municipalities.map((m) => (
-                        <ListBox.Item key={m.id} id={m.id}>
-                          {m.cityName}
-                        </ListBox.Item>
-                      ))}
-                    </ListBox>
-                  </Select.Popover>
-                </Select>
-              </div>
+            {searching ? (
+              <p className={styles["cityEmpty"]} role="status">
+                Buscando...
+              </p>
+            ) : null}
 
-              <div className={styles["fieldGroup"]}>
-                <p className={styles["fieldLabel"]}>Como você quer ser chamado</p>
-                <Input
-                  className={styles["control"] ?? ""}
-                  aria-label="Seu nome"
-                  placeholder="Seu nome"
-                  value={displayName}
-                  onChange={(e) => setDisplayName((e.target as HTMLInputElement).value)}
-                  required
-                  maxLength={80}
-                />
+            {error ? (
+              <div className={styles["stack"]}>
+                <FeedbackAlert variant="danger" description={error} />
               </div>
+            ) : null}
 
+            <div className={styles["contextFooter"]}>
               <Button
-                type="submit"
+                type="button"
                 variant="primary"
-                className={styles["primaryButton"] ?? ""}
-                isDisabled={submitting}
+                className="min-h-11 px-8"
+                isDisabled={submitting || selected === null}
+                onPress={handleContinue}
               >
-                {submitting ? "Concluindo..." : "Concluir minha entrada"}
+                {submitting ? "Continuando..." : "Continuar"}
               </Button>
-            </Form>
-
-            {error && <FeedbackAlert variant="danger" description={error} />}
-
-            <p className={styles["note"]}>
-              <MapPinned aria-hidden="true" />
-              <span>
-                Escolha a cidade onde sua participação começa. Isso não publica seu endereço.
-              </span>
-            </p>
+            </div>
           </>
         )}
       </div>
-    </OnboardingShell>
+    </ContextSteps>
   )
 }

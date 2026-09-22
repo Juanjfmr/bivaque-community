@@ -142,7 +142,7 @@ function buildSessionCookie(grant: Awaited<ReturnType<typeof getSessionViaPasswo
   }
 }
 
-test.describe("Login persistente Instagram-style", () => {
+test.describe("Login persistente Instagram-style", { tag: "@stateful" }, () => {
   test("Cenario 1: cookie de sessao com Max-Age=400d + /community=200", async () => {
     const grant = await getSessionViaPasswordGrant()
     const cookie = buildSessionCookie(grant)

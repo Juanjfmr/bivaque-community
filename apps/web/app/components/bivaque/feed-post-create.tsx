@@ -17,6 +17,7 @@ import type { Database } from "supabase/database.generated"
 import { classifyPublishError } from "../../../lib/composer/publish-error"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { ConnectionLostState } from "./error-state"
 import {
   type AudienceDestination,
   AudiencePicker,
@@ -77,7 +78,11 @@ export function CreatePostModal({
   const [linkUrl, setLinkUrl] = useState(initialDraft.current?.linkUrl ?? "")
   const [pollOptions, setPollOptions] = useState<string[]>(initialDraft.current?.pollOptions ?? [])
   const [submitting, setSubmitting] = useState(false)
+  // O `kind` do classificador decide a SUPERFÍCIE do erro: falha de transporte
+  // (offline, DNS, timeout) é o estado "Sem conexão" da prancha 60, com retomada
+  // real; rejeição do servidor continua no alerta genérico (anti-enumeração).
   const [error, setError] = useState("")
+  const [errorKind, setErrorKind] = useState<"network" | "server" | null>(null)
   const [photoError, setPhotoError] = useState("")
   const [piiWarning, setPiiWarning] = useState(false)
   const [audienceKey, setAudienceKey] = useState<AudienceKey>(
@@ -190,6 +195,7 @@ export function CreatePostModal({
     setLinkUrl("")
     setPollOptions([])
     setError("")
+    setErrorKind(null)
     setPhotoError("")
     setPiiWarning(false)
     setDraftRestored(false)
@@ -204,6 +210,7 @@ export function CreatePostModal({
 
   const handleSubmit = useCallback(async () => {
     setError("")
+    setErrorKind(null)
     setPhotoError("")
 
     if (!content.trim()) {
@@ -263,6 +270,7 @@ export function CreatePostModal({
       // discrimina o que fazer (mostrar feedback inline vs. pedir para
       // checar a conexão); o texto nunca revela o motivo do servidor.
       const view = classifyPublishError(insertError)
+      setErrorKind(view.kind)
       setError(view.message)
       // `preserveDraft` é sobre o conteúdo (não limpamos; o rascunho no
       // navegador também sobrevive); o botão volta a ficar clicável para a
@@ -342,11 +350,18 @@ export function CreatePostModal({
     <>
       <Modal state={modal}>
         <Modal.Backdrop>
+          {/* O compositor é de duas colunas (formulário + "Como sua publicação
+              será vista"), como a prancha 45 desenha. O prefixo `lg:` do grid
+              responde à LARGURA DA JANELA, não à do diálogo: num monitor de
+              1440px o `size="lg"` (512px) abria as duas colunas e sobravam 120px
+              para o formulário — medido no navegador em 16/09/2026 (coluna do
+              formulário e alerta de erro em 120px de largura). A largura do
+              diálogo acompanha o conteúdo. */}
           <Modal.Container size="lg">
-            <Modal.Dialog>
+            <Modal.Dialog className="max-w-4xl">
               <Modal.Header>
                 <Modal.Heading>Criar publicação</Modal.Heading>
-                <Modal.CloseTrigger />
+                <Modal.CloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <div className="gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -461,7 +476,21 @@ export function CreatePostModal({
 
                     {error ? (
                       <div className="mt-4" data-testid="publish-error">
-                        <FeedbackAlert variant="danger" description={error} />
+                        {/* Prancha 60, painel direito: falha de TRANSPORTE é o
+                            estado "Sem conexão" — a ação nunca chegou ao servidor,
+                            então a retomada é real (republicar) e o rascunho fica.
+                            Rejeição do servidor segue no alerta genérico, que é o
+                            anti-enumeração do lib/composer/publish-error. */}
+                        {errorKind === "network" ? (
+                          <ConnectionLostState
+                            description={error}
+                            onRetry={() => {
+                              void handleSubmit()
+                            }}
+                          />
+                        ) : (
+                          <FeedbackAlert variant="danger" description={error} />
+                        )}
                       </div>
                     ) : null}
                     {piiWarning ? (

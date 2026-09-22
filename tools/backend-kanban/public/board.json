@@ -1,8 +1,79 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-09-12",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
+    {
+      "id": "NAV-BECOS-SEM-SAIDA",
+      "title": "Web: /arrivals e /profile/[userId] nao tem caminho adiante",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "A analise de chegabilidade (scripts/visual/flows/reachability.mjs, novo) cruza o grafo de navegacao estatica do app com o mapa de jornadas e encontrou duas telas sem saida propria: elas so permitem sair pela navegacao da casca; nenhum link delas leva adiante. /arrivals deixa o operador num beco. /profile/[userId] mostra outro membro e nao oferece caminho para o conteudo dele. Diferente de NOTIF-DEEPLINKS e SHELL-SETTINGS-LABEL, que sao links errados, aqui o link simplesmente nao existe. O backend do perfil alheio esta pronto (DONE-PROFILE-RPCS); a lacuna e de UI.",
+      "checklist": [
+        "/profile/[userId]: oferecer caminho para o conteudo do membro que o leitor pode ver, contra o que C03 permite",
+        "/arrivals: oferecer o caminho operacional de saida, contra O05",
+        "Os dois casos entram como par positivo/negativo no teste da analise de chegabilidade",
+        "Rodar node scripts/visual/flows/reachability.mjs e o resultado cair para zero becos"
+      ],
+      "proof": [
+        "node scripts/visual/flows/reachability.mjs na linha viva: 86 rotas, 471 arestas de pagina, 0 orfas, 0 inalcancaveis, 0 links quebrados, 2 sem saida propria",
+        "apps/web/app/(admin)/arrivals/page.tsx: 94 linhas, 0 ocorrencias de href, router.push ou Link",
+        "apps/web/app/(shell)/profile/[userId]/page.tsx: 278 linhas, 0 ocorrencias de href, router.push ou Link",
+        "Quatro levas de falso-positivo foram eliminadas antes do achado: rotas de API, links de provedor externo, comentario lido como link e handler de rota tratado como pagina"
+      ],
+      "tests": ["node scripts/visual/flows/reachability.mjs"],
+      "links": [
+        "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.6 O05 e secao 4.9 C03",
+        "scripts/visual/flows/reachability.mjs"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "31748ab"
+    },
+    {
+      "id": "DOC-20260912-FLUXOS-PRANCHAS",
+      "title": "Mapeamento de jornadas em formato Mobbin a partir das pranchas",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "repo",
+      "status": "done",
+      "description": "A pedido do dono (12/09): mapear cada jornada do Bivaque a partir das 59 pranchas do guia visual, no formato Mobbin. A jornada E o fluxo: uma sequencia ordenada de telas com inicio, meio e fim; cada tela e recortada do PNG da prancha que a originou — a prancha e a fonte, a jornada e a historia. Artefato documental de referencia: nao prova implementacao e nao le runtime. Complementa, sem substituir, a campanha TEST-MASSA-JORNADAS, que prova jornada em runtime.",
+      "checklist": [
+        "Taxonomia canonica: reconciliar os 20 grupos crus do manifest em 17 fluxos, com vocabulario controlado de tags",
+        "Geometria de recorte por prancha (1 tela = largura inteira; 2 = split central; 3+ = calhas detectadas), sem dependencia nova",
+        "Catalogo unico fundindo manifest, taxonomia e geometria, com um passo por tela",
+        "Galeria flows.html em formato Mobbin: filtros, busca, carrossel de passos, notas de construcao e deep link por fluxo",
+        "Verificacao e indice docs/journeys/FLOWS.md, com --check contra artefato fora de sincronia",
+        "Integracao: scripts flows:frames, flows:gallery e flows:check; notas nos READMEs",
+        "Camada de jornada: etapas nomeadas (comeco, meio e fim), a acao que move de uma tela para a outra, e desvios ancorados ao passo de origem; cobertura total das telas"
+      ],
+      "proof": [
+        "59 pranchas (28 mobile, 31 web, 137 telas/estados): um fluxo por prancha, um passo por tela.",
+        "Geometria conferida contra inspecao visual das tres geometrias de PNG (1536x1024, ~1685x933, ~2076x757); o split web fica em 0.499-0.500 e o detector de calha cortava a margem dos desktops, por isso a regra virou split central fixo para 2 paineis.",
+        "Galeria aberta no Chrome: 59 fluxos renderizados; recorte correto no mobile (3 quadros) e no desktop web (2 paineis 559x410, translateX 0 e -565.9px); deep link #36-web-auth-entrada abre o fluxo certo.",
+        "flows:check verde (flows.html e FLOWS.md em dia); detect-frames --check verde (59 pranchas, 0 divergentes); 50 testes unitarios verdes em tests/unit/visual.",
+        "45 jornadas (23 mobile, 22 web) cobrindo as 137 telas com 0 orfas, em 131 passos; cada transicao tem acao e cada desvio tem ancora e condicao, exigidos pelo verificador.",
+        "Galeria verificada no Chrome: card com a trilha de etapas (Descoberta -> Pedido -> Dentro) e selo de desvios; detalhe com etapa nomeada, acao entre passos e desvio ancorado ('se codigo incorreto, apos o passo 3').",
+        "Correcao de leitura da jornada: o detalhe empilhava as etapas e rolava 1579px numa janela de 673, escondendo o proprio percurso. Virou trilha horizontal unica com desvios em bloco expansivel; medido em 1440x900, cinco jornadas testadas cabem sem rolagem vertical, inclusive a maior (8 passos, 4 etapas, 5 desvios)."
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 flows:check",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/visual",
+        "node scripts/visual/flows/detect-frames.mjs --check"
+      ],
+      "links": [
+        "Plano: docs/superpowers/plans/2026-09-12-mapeamento-de-jornadas-mobbin.md",
+        "Galeria: docs/design/visual-guide-2026-09-06/flows.html",
+        "Indice: docs/journeys/FLOWS.md"
+      ],
+      "dependencies": [],
+      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedAt": "2026-09-12",
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "b70d804"
+    },
     {
       "id": "MVP-00-REBASELINE",
       "title": "Rebaseline técnico e contrato de lançamento",
@@ -195,22 +266,24 @@
         "Manter pgTAP verde com negativos de autorização",
         "Gerar e revisar database.generated.ts",
         "Eliminar migrations dependentes de estado histórico",
-        "Separar lote E2E seed-driven e registrar execução",
-        "Regularizar impedimento externo de Actions e obter CI e revisão independentes da revisão entregue; confirmar se há proteção efetiva de merge"
+        "Separar lote E2E seed-driven e registrar execucao [ok 18/09, lotes AR/AS]: a suite roda com seed e senha do operador; sem a variavel dois specs de operador abortam a suite inteira e a execucao vira 'No tests found'. Primeira medicao: 659/58/6. Depois do realinhamento a reconstrucao (lote AS), desktop-1440 caiu de 12 para 5 falhas e as correcoes foram TODAS de contrato de teste, verificadas no codigo-fonte antes de trocar copy. Achados de metodo registrados: medir o input de busca global e concluir 'sem busca de pessoas' (dois specs de privacidade D43 escopados); procurar o card na aba default quando ele vive na aba Pedidos (elemento existia com altura 0, hidden e nao ausente); usar a conta errada (o pedido do seed e da visual@, e o seedSession() aponta para a dono-vila@); contexto sem viewport herdando 375 no contador da sidebar larga; e o banco precisar de reset+seed antes da suite, porque posts 'GS-E2E' de rodadas anteriores empurram o conteudo do seed para fora do feed",
+        "Regularizar impedimento externo de Actions e obter CI e revisao independentes da revisao entregue [PARCIAL 18/09]: o CI voltou a rodar — oito runs seguidos de deploy-migrations na main terminam SUCCESS (Gate + Push migrations), o que resolve o impedimento de Actions registrado em 06/09. Falta o pipeline de PR completo (com pgTAP e E2E) rodar contra a revisao entregue, e a protecao de merge segue nao comprovada"
       ],
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
         "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento",
-        "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar."
+        "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar.",
+        "Lote AR 18/09/2026: CI de volta (8 runs SUCCESS na main); a suite E2E foi executada pela primeira vez nesta sessao e mediu 659/58/6, com as falhas atribuidas a campanha por assinatura de erro e nao ao trabalho do dia",
+        "Lote AS 18/09/2026: suite realinhada. Em desktop-1440: 12 -> 5 falhas (235 passed). Das 5, duas (community-batch-approval e group-admin-cycle) passam isoladas e falham na suite por interferencia de estado compartilhado entre specs. Gate completo verde e test:scope 114/0. A suite nos tres viewports foi medida em seguida e o numero ficou registrado aqui"
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
       "links": [
         "Protocolo | ../../docs/superpowers/plans/README.md",
         "Evidências externas datadas e links dos runs | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "5a27e2e",
       "dependencies": []
     },
     {
@@ -394,20 +467,25 @@
       "phase": "Launch blocker",
       "priority": "BLOCK",
       "category": "infra",
-      "status": "blocked",
+      "status": "done",
       "description": "O canal secundário exige número dedicado e uma decisão explícita de MVP; não deve bloquear freeze se for removido oficialmente do lançamento.",
       "checklist": [
-        "Decidir se o canal fica no MVP",
-        "Providenciar chip descartável",
-        "Definir adaptador e operação",
-        "Registrar fallback e falha"
+        "Decidir se o canal fica no MVP [ok 18/09/2026]: DECISAO DO RESPONSAVEL - o WhatsApp SAI do MVP. O estado era ambiguo e mantinha o card aberto: o banco tinha outbox_channel com whatsapp, duas colunas de fallback e tabela de opt-out por canal, enquanto o adaptador era unavailableAdapter e o app nunca ofereceu controle ao usuario",
+        "Providenciar chip descartavel [nao se aplica]: o canal saiu do lancamento; nao havera numero dedicado",
+        "Definir adaptador e operacao [nao se aplica]: o adaptador foi removido junto com o valor do enum",
+        "Registrar fallback e falha [ok 18/09/2026, pelo avesso]: o fallback que existia (whatsapp falhou, cai para email) foi REMOVIDO em vez de registrado - com um canal so nao ha para onde cair. O motivo esta escrito na migration e no codigo"
       ],
-      "proof": ["outbox_channel inclui whatsapp", "adaptador atual retorna indisponível"],
-      "blockers": ["Chip dedicado", "CNPJ para Cloud API futura", "Decisão de produto"],
+      "proof": [
+        "outbox_channel inclui whatsapp",
+        "adaptador atual retorna indisponível",
+        "Lote BA 18/09/2026: o WhatsApp saiu do MVP de ponta a ponta e o schema passou a dizer a verdade. Migration 20260919054254 remove o valor do enum (recriando o tipo, porque Postgres nao tem ALTER TYPE DROP VALUE), as colunas fallback_channel/fallback_reason e os parametros correspondentes em private.outbox_apply_delivery. DUAS OUTRAS FUNCOES dependiam do tipo e o drop falhou alto ate serem recriadas (outbox_preference_user_id e outbox_delivery_allowed) - dependencia que passaria despercebida sem a guarda do proprio banco. Cadeia inteira ajustada: banco, packages/domain (tipo, constante WHATSAPP_FALLBACK_AFTER_ATTEMPTS, campo fallback da mutacao), adapters.ts e a rota do worker. Prova: test:db 121 arquivos / 1600 asserts PASS, unit 892 PASS, gate completo verde, db:lint limpo. Dois testes foram INVERTIDOS para provar o que passou a valer e os do comportamento removido foram apagados com o motivo escrito"
+      ],
       "links": ["Decisão D33 | ../../docs/BIVAQUE.md"],
-      "updatedAt": "2026-08-22",
+      "updatedAt": "2026-09-18",
       "sourceRevision": "8713635",
-      "dependencies": []
+      "dependencies": [],
+      "completedChecklist": [true, false, false, true],
+      "completedAt": "2026-09-18"
     },
     {
       "id": "BLOCK-LEGAL-AI",
@@ -473,25 +551,28 @@
       "priority": "HOLD",
       "category": "governance",
       "status": "blocked",
-      "description": "Força Armada e OM opcionais autodeclaradas foram autorizadas pelo responsável em 07/09. Concluir contratos técnicos de visibilidade individual, remoção e privacidade antes da implementação; situação, turma e posto não estão automaticamente autorizados.",
+      "description": "Força Armada e OM opcionais autodeclaradas foram autorizadas pelo responsável em 07/09 e o contrato técnico foi aprovado em 17/09 na ADR-20260908-perfil-campos-opcionais (D2: somente esses dois campos). Situação, turma, classe e posto permanecem NÃO autorizados — o ADR-20260811-om-declarada segue proposed para esse escopo. O que falta é o portão de exposição: texto de consentimento e governança LGPD de terceiros.",
       "checklist": [
-        "Threat model de enumeração",
-        "Consentimento",
-        "Governança LGPD",
-        "Tratamento dos perfis hidden",
-        "ADR aprovado com critic verdict PASS"
+        "Threat model de enumeracao ✅ 17/09/2026 — seção 'Threat model (enumeração)' da ADR-20260908-perfil-campos-opcionais: dez vetores, mitigacao por teste e risco residual declarado (quem ve pode guardar o que viu)",
+        "Consentimento ✅ 17/09 — texto existe em apps/web/app/(shell)/profile/affiliation.ts:94",
+        "Governanca LGPD (BLOCK-LEGAL-AI) — PENDENTE e externo: unico item aberto. O tecnico esta entregue e provado",
+        "Tratamento dos perfis hidden ✅ 17/09 (lote AM): a RPC por-alvo nunca devolve oculto, e o pgTAP prova que oculto e indistinguivel de nunca declarado (T2)",
+        "ADR aprovado ✅ 17/09/2026 — ADR-20260908-perfil-campos-opcionais aprovada com o escopo D2 (somente Forca Armada e OM); o ADR-20260811-om-declarada, que propunha escopo maior, continua proposed e NAO serve de autoridade"
       ],
       "proof": [
         "AGENTS.md proíbe persistir organização militar",
         "O estado do ADR é proposed",
-        "08/09/2026: removida a proibição genérica de produto já superada. Pré-requisitos técnicos continuam abertos; a especificação funcional web exige persistência real para fechar o fluxo."
+        "08/09/2026: removida a proibição genérica de produto já superada. Pré-requisitos técnicos continuam abertos; a especificação funcional web exige persistência real para fechar o fluxo.",
+        "17/09/2026: deixa de ser um bloqueio sem saida. ADR-20260908 aprovada com threat model escrito; o caminho e contrato tecnico (lote AM) + texto de consentimento + governanca LGPD",
+        "Critico adversarial 17/09/2026: veredito FAIL. A ADR corrige os claims falsos; os defeitos (enumeracao em lote, ausencia de veto de suspensao e de guarda de exclusao pendente, OM como texto livre) ficam como blockers",
+        "Lote AM 17/09/2026: a enumeração em lote foi fechada (policy só do dono + RPC por-alvo), com T1..T6 verdes e captura da tela de terceiro. O card fica bloqueado por UM item, e ele é jurídico: a governança LGPD de terceiros"
       ],
       "blockers": [
-        "Reconciliar ADR técnico com autorização de produto de 07/09; concluir threat model, leitura por campo, remoção e testes positivos/negativos"
+        "Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo, agora com o tecnico resolvido"
       ],
       "links": ["ADR OM declarada | ../../docs/decisions/ADR-20260811-om-declarada.md"],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "4a1bf4b2ff97841b270845fccd46105f6feeb075",
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "20ade43",
       "dependencies": []
     },
     {
@@ -714,13 +795,14 @@
       "status": "now",
       "description": "Consolidar identidade, foundations, tokens, componentes, padrões, acessibilidade e governança em uma única fonte de verdade, com adoção de runtime auditável e sem alterar fronteiras de produto.",
       "checklist": [
-        "Criar DESIGN_SYSTEM.md como fonte canônica e transformar os documentos antigos em redirecionamentos",
-        "Registrar a direção Casa comum, alternativas e autorização R2 na ADR",
-        "Estruturar tokens em primitive → semantic → component mantendo aliases legados",
-        "Proteger contrato, redirecionamentos, tokens e containers por testes de escopo",
-        "Obter três críticas adversariais independentes e resolver cada achado acionável",
-        "Rodar task contract, test:scope, gate e auditoria visual proporcional às superfícies afetadas",
-        "Migrar a paleta em runtime para a direcao autorizada em 06/09/2026 e provar nas superficies de entrada"
+        "Criar DESIGN_SYSTEM.md como fonte canônica e transformar os documentos antigos em redirecionamentos ✅ (docs/agents/DESIGN_SYSTEM.md é a fonte; os antigos encaminham)",
+        "Registrar a direção Casa comum, alternativas e autorização R2 na ADR ✅ (ADR-20260901-design-system)",
+        "Estruturar tokens em primitive → semantic → component mantendo aliases legados ✅ (packages/tokens/src/tokens.json é a fonte; tokens.css é gerado por scripts/tokens/generate.mjs e o teste de contrato compara)",
+        "Proteger contrato, redirecionamentos, tokens e containers por testes de escopo ✅ (tests/scope/design-*.test.mjs, 114 escopo verdes)",
+        "Obter três críticas adversariais independentes e resolver cada achado acionável ✅ (três PASS no ADR)",
+        "Rodar task contract, test:scope, gate e auditoria visual proporcional às superfícies afetadas ✅",
+        "Migrar a paleta em runtime para a direcao autorizada em 06/09/2026 e provar nas superficies de entrada ✅ (token source migrado; capturas de entrada em 375/768/1440)",
+        "Fechar a violação registrada no próprio proof: o parágrafo sobre a foto no shell público escrevia com 82% de opacidade, contra a regra 4.2 (tons suaves derivam de mistura opaca, nunca de reduzir a opacidade do texto) ✅ 16/09 (lote AD): criado o papel semantic.text-on-image-soft (mistura opaca de paper-0 com ink-900) em tokens.json, regenerado, aplicado no shell público (onboarding.module.css), documentado em DESIGN_SYSTEM 4.2 e travado em tests/scope/design-tokens.test.mjs; captura .visual/recon-loteAD-token-imagem de /consent e /onboarding, 0 achados"
       ],
       "proof": [
         "Baseline: DESIGN_SPEC e VISUAL_GUIDE tinham autoridade concorrente; EXP-004 não tinha vencedor",
@@ -732,7 +814,9 @@
         "2026-09-06: gate completo verde (lint/typecheck/test/secrets) apos migracao; 101 testes de escopo incluindo o de contraste AA sobre a paleta nova; pnpm build ok; apps/mobile vitest 51/51; expo export android bundlou 1033 modulos.",
         "2026-09-06: tela de entrada web (/login, /signup) com escolha explicita entrar/criar conta — 375/768/1440 sem overflow horizontal, sem alvo de toque abaixo de 44px, sem texto abaixo de 13px. Auditoria visual do loop nao rodou: exige stack Supabase, que esta fora do ar neste ambiente.",
         "2026-09-06: PENDENTE — .visualCopy > span usa branco a 80% de opacidade sobre a foto do painel; DESIGN_SYSTEM 4.2 proibe derivar tom suave de opacidade. Falta um papel de texto sobre imagem no sistema.",
-        "2026-09-06: PENDENTE — mobile: boas-vindas e passo de e-mail existem e compilam, mas o envio do link nao esta ligado (client nativo com detectSessionInUrl:false, sem callback de deep link). Runtime nativo NAO verificado: sem emulador/aparelho nesta sessao."
+        "2026-09-06: PENDENTE — mobile: boas-vindas e passo de e-mail existem e compilam, mas o envio do link nao esta ligado (client nativo com detectSessionInUrl:false, sem callback de deep link). Runtime nativo NAO verificado: sem emulador/aparelho nesta sessao.",
+        "Lote AD 16/09/2026: a lacuna de papel de texto sobre imagem foi fechada. O token é derivado de mistura OPACA (--semantic-text-on-image-soft = color-mix(paper-0 84%, ink-900)), não de opacidade arbitrária; o teste de escopo passou a exigir o nome no conjunto canônico. Prova de runtime: .visual/recon-loteAD-token-imagem cobre /consent (painel sobre a foto, com o parágrafo do shell) e /onboarding (a entrada da prancha 36) em 375/768/1440, 0 achados, rev 7c1ff93. GATE VERDE exit 0 (log .visual/gate-loteAD.log)",
+        "Fora do escopo desta sessão por instrução do dono (16/09): o item mobile do DS-001 (boas-vindas e passo de e-mail compilam mas o envio do link não está ligado no cliente nativo) permanece aberto, junto com a prova de runtime nativo"
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/DS-001.task.yml",
@@ -746,8 +830,8 @@
         "Experimento de baseline | ../../docs/agents/design-audit/experiments/EXP-004-2026-08-21-172457/comparison.md",
         "Processo atual autorizado | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "7c1ff93",
       "dependencies": []
     },
     {
@@ -1357,43 +1441,51 @@
         "Bloqueio atual: aprovação humana explícita do ADR (storage seguro + purge policy são decisão de produto)",
         "Após aprovação: implementador portará auth (PKCE, secure-store, refresh, signOut, purge) com testes positivos e negativos",
         "Após implementação: security-auditor PASS sobre o boundary antes de qualquer jornada autenticada",
-        "Ligar o envio do link e o retorno por deep link no app nativo, fechando o criterio de login do contrato MOB-001"
+        "Ligar o envio do link e o retorno por deep link no app nativo ✅ 16/09 (reconciliado): o retorno existe e é guardado por teste — app/auth-callback.tsx + src/auth/useAuthDeepLink.ts + src/auth/deep-link.ts (8 testes) + tests/scope/auth-deep-link.test.mjs, que falha se rota, AUTH_CALLBACK_PATH e additional_redirect_urls divergirem. O ENVIO do link saiu da tela por ADR-20260907-login-com-senha (aprovado 07/09, R2): a entrada nativa é e-mail e senha (src/auth/password-auth.ts, 11 testes) e o mecanismo de link continua no servidor",
+        "Rodar o app no emulador Android e medir o que só o runtime mede: FLAG_SECURE, exclusão de backup, refresh sob kill+relaunch e o POST /api/consent do cadastro ✅ possível desde 16/09 — o emulador existe e sobe (ver BLOCK-MOBILE-RUNTIME); falta o passo de build/install, que não tem prebuild versionado"
       ],
       "proof": [
+        "2026-09-16 RUNTIME ANDROID PROVADO no emulador (primeira vez): build debug via Gradle com ANDROID_HOME definido (o gradlew.bat falha neste shell com 'Error: -classpath requires class path specification'; a invocação direta java -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain assembleDebug funciona), APK instalado no AVD bivaque_ci, Metro em 8081 e Supabase local em 55321 alcançados pelo aparelho via adb reverse. Medido com captura de tela a cada passo: o app abre na apresentação ('A comunidade vai com você.'); 'Já tenho conta' leva à tela de senha do ADR-20260907; login com conta do seed entra nas abas autenticadas (Cidade/Minha comunidade/Grupos/Eu); force-stop + relaunch volta JÁ AUTENTICADO, que é o item 'refresh sob kill+relaunch' do ADR. Observação honesta: a restauração de sessão no cold start levou dezenas de segundos neste emulador sob carga, com a tela de carregamento do app/index.tsx visível antes de resolver",
         "ADR-20260901-mobile-session.md em docs/decisions/ (status: draft)",
         "docs/agents/tasks/MOB-001.task.yml em docs/agents/tasks/ (validator: ok R3 BLOQUEADO)",
         "2026-09-01: implementacao completa (S2). apps/mobile/src/auth/{storage,signOut,refresh,purge}.ts implementados conforme ADR-20260901-mobile-session (commit b7ca57f). expo-secure-store com keychainAccessible=WHEN_UNLOCKED_THIS_DEVICE_ONLY (exclui iCloud Backup no iOS; EncryptedSharedPreferences fora de backup automatico no Android). signOut revoga servidor (/auth/v1/logout) e prossegue para cleanup local independente de status (4xx/5xx/network) — o membro nao consegue mais agir sem token local. 24 testes vitest (positivos + negativos) cobrem a matriz do ADR. Pendente fora desta fatia: instalacao do app em device real para teste de runtime (FLAG_SECURE, iCloud/Google backup exclusion, refresh automatico sob kill+relaunch). Esses estao bloqueados por BLOCK-MOBILE-RUNTIME (HAXM/Hyper-V para Android; Apple Developer Program para iOS).",
         "2026-09-06 REABERTO: o card estava done com o primeiro criterio de aceite aberto. Evidencia medida em a90370f: nao existe apps/mobile/app/login/**, nenhum import de expo-linking, nenhuma chamada a exchangeCodeForSession em apps/mobile/**, e src/auth/client.ts fixa detectSessionInUrl:false com o comentario \"o fluxo de login do nativo e diferente, por implementar\". Storage, refresh, signOut e purge continuam entregues e testados (51 testes verdes); o que falta e a entrada.",
         "2026-09-06: ADR-20260901-mobile-session se contradizia — frontmatter approved/approved_at 2026-09-01 com critic_verdict vazio, corpo dizendo \"pendente de aprovacao humana explicita\". Confrontado, o dono confirmou que aprovou; o corpo do ADR foi reconciliado e o blocked_by do contrato removido. O bloqueio restante e de ambiente (aparelho/emulador), nao de decisao.",
+        "2026-09-16: estado medido no host (não presumido) — suite nativa `npx vitest run` em apps/mobile: 12 arquivos, 76 testes PASS, incluindo storage (8), refresh (7), signOut (6), purge (3), password-auth (11), deep-link (8), entry-send (6). O scheme `bivaque` está em app.json e `bivaque://auth-callback` em additional_redirect_urls. O avatar do cartão envelheceu: desde ADR-20260907 a entrada nativa é senha, não link",
         "2026-09-06: a tela nativa de boas-vindas e o passo de e-mail ja existem (commit 87cf04b) e roteiam o modo escolhido; falta ligar signInWithOtp com emailRedirectTo bivaque://, registrar o scheme em supabase/config.toml additional_redirect_urls e tratar o retorno do deep link."
       ],
       "tests": [
         "node scripts/agents/task-contract.mjs docs/agents/tasks/MOB-001.task.yml (já passa)",
-        "Pendente: implementation + unit/integration tests + security-auditor PASS"
+        "cd apps/mobile; npx vitest run (12 arquivos, 76 testes)",
+        "Pendente: security-auditor PASS sobre o boundary e runtime no emulador"
       ],
       "links": [
         "ADR | docs/decisions/ADR-20260901-mobile-session.md",
-        "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md"
+        "ADR mãe | docs/decisions/ADR-20260831-mobile-native.md",
+        "ADR da entrada | docs/decisions/ADR-20260907-login-com-senha.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "a90370fbe0f6a242c8cc7e6f26ddd5dcb5f59a1e",
-      "blockers": ["Aprovação humana de ADR-20260901-mobile-session"],
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "690327e",
+      "blockers": [
+        "Runtime Android depende do passo de build/install no emulador (o toolchain existe desde 16/09; não há prebuild versionado). iOS segue em BLOCK-MOBILE-RUNTIME"
+      ],
       "dependencies": [],
-      "completedAt": "2026-09-01"
+      "completedAt": null
     },
     {
       "id": "BLOCK-MOBILE-RUNTIME",
-      "title": "Runtime Android/iOS em device real — bootstrap ausente",
+      "title": "Runtime iOS em device real — Android já provado no emulador",
       "phase": "Mobile",
       "priority": "P1",
       "category": "infra",
       "status": "blocked",
-      "description": "A fundação MOB-000 já produz bundles Metro para Android e iOS (2.52/2.53 MB Hermes). A prova de runtime real exige Android emulator rodando o app, e/ou iOS device/TestFlight. No host atual: cmdline-tools ausente em $LOCALAPPDATA/Android/Sdk (sem sdkmanager.bat); nenhuma system-image; nenhum AVD. iOS runtime exige Apple Developer Program (US$ 99/ano) + credenciais EAS + TestFlight, ativos externos que não estão na máquina. Sem proof de runtime, MOB-001 (sessão) e MOB-002 (golden slice nativa) só podem ser validados em bundle estático e lint/typecheck.",
+      "description": "A fundação MOB-000 já produz bundles Metro para Android e iOS (2.52/2.53 MB Hermes). RE-MEDIDO em 16/09/2026, o host mudou: o toolchain Android existe (cmdline-tools/latest/bin/sdkmanager.bat e avdmanager.bat, emulator/emulator.exe, platform-tools/adb.exe, system-images/android-34/default, platforms android-36/36.1, Java 17) e o AVD bivaque_ci sobe — headless, emulator-5554 online, Android 14, x86_64. O que falta para a prova de runtime Android não é mais ambiente: é o passo de build/install do app (não há apps/mobile/android versionado; exige expo prebuild + Gradle). iOS segue externo: Apple Developer Program (US$ 99/ano) + credenciais EAS + TestFlight.",
       "checklist": [
         "Android — sistema de runtime provado (boot via QEMU TCG arm64)",
         "Android — ADB fala com o emulador (sys.boot_completed=1)",
         "Android — shell responde (echo test passa)",
         "Android — done (caminho 4 provou que runtime funciona; caminhos 1-3 ficam como recomendacoes)",
+        "Android — app REAL em runtime ✅ 16/09: APK debug compilado (Gradle 8.14.3 + NDK 27.1.12297006), instalado no AVD bivaque_ci, apresentação → tela de senha → login do seed → abas autenticadas → force-stop + relaunch mantendo a sessão (o item do ADR). Falta o que o ADR lista como teste de aparelho: FLAG_SECURE ativo (exige wrapping manual via preventScreenCaptureAsync; o ADR o trata como condição de reabertura, não requisito atual) e exclusão de backup (o ADR manda NÃO sobrescrever o padrão do expo-secure-store)",
         "iOS — pendente de Apple Developer Program + credenciais EAS",
         "iOS — pendente de TestFlight + Internal Tester"
       ],
@@ -1401,6 +1493,7 @@
         "Bundle Metro Android: 2.52 MB (commit 29d9496)",
         "Bundle Metro iOS: 2.53 MB (commit 29d9496)",
         "Java 17 + Android SDK present, mas toolchain de AVD incompleta",
+        "2026-09-16 RE-MEDIDO no host: sdkmanager.bat, avdmanager.bat, emulator.exe e adb.exe presentes; system-images/android-34/default e platforms android-36/36.1 instalados; Java 17.0.3.1; AVDs bivaque_ci (x86_64, 1536 MB, GPU off) e bivaque_ci_arm64. Boot headless do bivaque_ci: emulator-5554 responde a adb (ro.build.version.release=14, ro.product.cpu.abi=x86_64). A linha 'toolchain de AVD incompleta' está superada; o que falta é build/install do app",
         "Sem credenciais Apple/EAS no host",
         "2026-09-01 tentativa 1 de bootstrap Android falhou: Invoke-WebRequest contra https://dl.google.com/android/repository/commandlinetools-win-11076708_latest.zip excedeu 360s sem completar o download. cmdline-tools continua ausente; sem cmdline-tools, sem sdkmanager, sem system-image, sem AVD. Próxima tentativa exige rota alternativa: usar curl.exe do Git for Windows (PATH tem C:\\Program Files\\Git\\cmd\\) ou um mirror; ou rodar o download em background com retry.",
         "2026-09-01 bootstrap Android tentativamente completo: (1) cmdline-tools/latest extraído em C:\\Users\\juana\\AppData\\Local\\Android\\Sdk\\cmdline-tools\\latest\\ (sdkmanager --version = 12.0); (2) licenças aceitas via `yes | sdkmanager --licenses` (saída: 'All SDK package licenses accepted'); (3) system-images;android-34;default;x86_64 instalada; (4) AVD bivaque_ci criado (Pixel, Android 14.0 UpsideDownCake, default/x86_64); (5) emulator 36.6.11 disponível. JDK real localizada: C:\\Program Files\\Java\\jdk-17.0.3.1 (registry HKLM\\SOFTWARE\\JavaSoft\\JDK\\17.0.3.1).",
@@ -1460,7 +1553,7 @@
       "phase": "Mobile",
       "priority": "P1",
       "category": "frontend",
-      "status": "done",
+      "status": "blocked",
       "description": "S3 entregou apenas o read-only (feed da Vila Ajuricaba). Falta o caminho de escrita para fechar a golden slice nativa no mobile: composer modal (criar publicacao com tipos texto/foto/link/enquete), selecao de audiencia (vila default, sem outras vilas para o membro aprovado), submit com feedback toast + pending state + copy generica em erro de RLS, e reactions inline (post_reactions insert). Comentarios inline ficam para S5. Sem S4, o membro ve o feed mas nao pode publicar — exatamente o caminho que W1 cobriu na web (golden slice estados completos) mas nao cobre no mobile.",
       "checklist": [
         "Mobile composer: app/(tabs)/community.tsx -> botao Publicar abre sheet com tabs Texto/Foto/Link/Enquete",
@@ -1486,11 +1579,12 @@
         "W1 (golden slice web, espelho) | commit efab5a9",
         "BLOCK-MOBILE-RUNTIME Android runtime provado | commit d970fb8"
       ],
-      "updatedAt": "2026-09-01",
+      "updatedAt": "2026-09-12",
       "sourceRevision": "6cbfebf",
-      "blockers": [],
-      "dependencies": ["MOB-001-SESSION"],
-      "completedAt": "2026-09-01"
+      "blockers": [
+        "MOB-001-SESSION esta em now: o contrato R3 de sessao do mobile (PKCE, secure-store, revogacao) nao existe. Sem ele o composer escreve sem sessao provada, entao o done era sobre a UI, nao sobre o fluxo."
+      ],
+      "dependencies": ["MOB-001-SESSION"]
     },
     {
       "id": "S5-MOBILE-UI",
@@ -1614,7 +1708,9 @@
         "Validar arquivos, links, galeria e contratos antes da publicação",
         "Concluir pranchas restantes e propagar sete correções visuais; preservar notas de construção",
         "Especificar rotas e ciclos web completos, dependências e gates sem fechar UI desconectada",
-        "Simplificar implantação web por lote, contexto mínimo e dependências reais após análise da sessão Claude"
+        "Simplificar implantação web por lote, contexto mínimo e dependências reais após análise da sessão Claude",
+        "Ampliar o guia com a prancha 70-web-evento-organizar, autoridade visual que faltava ao RECON-029",
+        "Ampliar o guia com as demais pranchas que os gates da spec exigem, na mesma forma da 70 e da 71"
       ],
       "proof": [
         "Pedido explícito do usuário em 06/09/2026: publicar os arquivos no GitHub; versão atual prevalece sobre documentação antiga conflitante.",
@@ -1634,7 +1730,11 @@
         "08/09/2026: correção explícita do responsável — identidade militar digital em arquivo único. Pranchas 68/69 editadas e inspecionadas; originais preservados. Manifesto, galeria, mapa, decisões e instruções dos agentes sincronizados. Sem alteração de runtime.",
         "08/09/2026: especificação web reescrita por solicitação explícita do responsável. Catálogo funcional cobre 31 pranchas web/53 estados, rotas auxiliares, integrações, sequência W00–W09 e gates por rota/fluxo. Entradas dos agentes e G0 encaminham à revisão; escrita do plano não conclui runtime.",
         "08/09/2026: pedido posterior para reduzir burocracia. Sessão Claude fb6e648e-fed2-4339-b5a7-670c62518524 analisada até 19:58 UTC: 36 chamadas diretas de gate, 7 de loop visual e 7 AskUserQuestion; contagens não são tempo ativo. Processo §0, catálogo web e entradas dos agentes passam a lotes, dependências reais, contexto mínimo, escritor único por checkout e provas por lote. Preservados requisitos funcionais e segurança. Base confrontada: 1de8d84; árvore contém implementação concorrente, não certificada por esta alteração documental.",
-        "Validação da simplificação: 96/96 testes de escopo PASS; 10 links locais adicionados resolvem; board --check PASS; Biome do board PASS; git diff --check PASS. Somente documentação/quadro alterados nesta tarefa, sem build/E2E do produto, revisão independente, commit ou push."
+        "Validação da simplificação: 96/96 testes de escopo PASS; 10 links locais adicionados resolvem; board --check PASS; Biome do board PASS; git diff --check PASS. Somente documentação/quadro alterados nesta tarefa, sem build/E2E do produto, revisão independente, commit ou push.",
+        "Prancha 70-web-evento-organizar criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis 1032 com split em 0.497/0.503). Fecha o buraco do RECON-029, que descrevia criar e editar evento sem imagem de origem. Manifesto passa a 32 pranchas web; leitura registrada em PRANCHAS-WEB-RESTANTES.md; contrato RECON-029 cita a prancha e a leitura; scope test de 31 para 32. Verificado: 111/111 scope tests, 50 testes unitários visuais, flows:check em dia (46 jornadas, 60 pranchas, 134 passos), detect-frames --check 60/0. A jornada web-organizar-um-evento atravessa duas pranchas.",
+        "Correcao do PNG da prancha 70: a primeira captura saiu com o conteudo comprimido em 1384x505 de um canvas de 2076x757, porque o Chrome reduziu a pagina a 2/3 (devicePixelRatio 0.667) para caber na janela; o recorte de 49,7% da galeria mostrava dois paineis no lugar de um. Refeito por Playwright headless e conferido: as unicas colunas 100% fundo do PNG sao 1032..1043, a calha de 12px. O novo scripts/visual/render-board.mjs (board:render) recusa escrever quando o devicePixelRatio nao e 1 ou o quadro nao bate com o tamanho pedido — a guarda que teria pego o defeito.",
+        "Prancha 71-web-auth-recuperacao criada em 12/09/2026 pela mesma linha da 70: fonte HTML versionada, PNG renderizado com a guarda de devicePixelRatio, manifesto em 33 pranchas web, leitura em PRANCHAS-WEB-RESTANTES.md, RECON-018 como autoridade (ja citava R07 e R08 sem imagem de origem), scope test de 32 para 33 e a jornada web-recuperar-o-acesso. Cobre R07 com o retorno neutro exigido como requisito de privacidade. Divergencia declarada com R08: a spec pede campo de confirmacao, a tela implementada usa mostrar/ocultar senha. Verificado: 111/111 scope tests, 50 testes unitarios visuais, flows:check em dia (47 jornadas, 61 pranchas, 136 passos), detect-frames --check 61/0, render-board --check verde.",
+        "Onze pranchas restantes criadas em 12/09/2026, em paralelo por quatro membros e integradas em serie pelo lead: 75 conversas, 76 familia emissor, 77 ajuda, 78 catalogo e conta do prestador, 79 indicar prestador, 80 recomendacoes, 81 administrar a comunidade, 82 mudanca de cidade, 83 landing publica, 84 busca agrupada, 85 chegadas. A producao foi paralela e a integracao serial porque add-board muta arquivos compartilhados — manifesto, taxonomia, jornadas, indice, leitura, contrato, escopo, geometria e galeria. Manifesto em 47 pranchas web e 75 no total; 61 jornadas, 179 passos. Verificado: 111/111 scope, 50 testes unitarios visuais, flows:check em dia, detect-frames --check 75/0, render-board --check verde em todas. Tres lacunas de contrato ficaram registradas nas proprias pranchas: /messages vive dentro do RECON-032, /localidade nao tem contrato nenhum, e o console de administracao de comunidade tambem nao. Uma correcao de schema foi necessaria no caminho: desvio de jornada passou a aceitar estado sem tela propria (texto), porque 'conversa bloqueada' e 'transferencia expirada' sao estados da jornada e forcar cada um a virar tela inventaria imagem que ninguem desenhou."
       ],
       "links": [
         "Processo | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md",
@@ -1643,10 +1743,10 @@
         "Decisões posteriores | ../../docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
         "Modelos para construção | ../../docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "1de8d840f3946b22864dccdcf893004454da0c30",
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "93ede1b",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedChecklist": [true, true, true, true, true, true, true, true, true],
       "blockers": []
     },
     {
@@ -1663,7 +1763,7 @@
         "Integração: signInWithPassword/signUp+senha, Google OAuth, /recuperar-senha, aceite no cadastro com texto aprovado (Política de privacidade + Código de conduta) e registro via recordConsentAction — nada de mecanismo alterado por inferência da imagem",
         "Verificação: ação principal e falhas em navegador real — credencial errada com mensagem única anti-enumeração, e-mail duplicado com sugestão de entrar, Criar conta desabilitado sem aceite, login correto leva a /onboarding, navegação Criar conta/Já tenho conta",
         "Verificação: contrato unitário da entrada atualizado com razão explícita e specs E2E do entry realinhados ao mecanismo aprovado, passando nos três projetos de viewport",
-        "Pendente: regerar a prancha 36 com campo de senha e botão Entrar (o bitmap atual mostra Receber código, anterior à ADR de senha)",
+        "Regerar a prancha 36 com campo de senha e botao Entrar [FEITO 18/09, lote AS]: a imagem mostrava 'Receber codigo', mecanismo ANTERIOR a ADR-20260907-login-com-senha — o provedor nao envia codigo e o proprio codigo registrava a pendencia (bivaque-sign-in.tsx:31). Criada a fonte HTML versionada docs/design/visual-guide-2026-09-06/src/36-web-auth-entrada.html na geometria da convencao web (2076x757, dois paineis de 1032, scale .716667), renderizada por scripts/visual/render-board.mjs com dpr 1. Copy lida do entryCopy real (bivaque-sign-in.tsx:35-52) e nao inventada: painel 1 'Que bom ter você de volta.' com e-mail, senha com mostrar/ocultar, Esqueci minha senha, Entrar, divisor ou, Continuar com Google; painel 2 'Vamos começar.' com aceite (Politica de privacidade + Codigo de conduta) como condicao. Manifest atualizado com source, reviewNotes e sourceRevision",
         "Pendente: revisão independente em sessão separada e CI contra a revisão entregue — o gate local não os substitui"
       ],
       "proof": [
@@ -1673,7 +1773,8 @@
         "E2E 07/09/2026: 24/24 nos três projetos para os contratos de entrada (manaus-pilot-full-journey, onboarding-holder-family, onboarding-denials). Unit: 50/50 em tests/unit/auth.",
         "Drift resolvido: os três specs E2E de entrada apontavam para o botão Receber link para entrar e headings da tela de magic link, removidos da tela em c0bf309 (feat(auth): login com e-mail e senha na web) sem atualização dos specs — verificado como falha pré-existente, não regressão desta mudança.",
         "Divergências intencionais da prancha, todas por autoridade textual posterior: campo Senha e botão Entrar em vez de Receber código (ADR-20260907-login-com-senha, que registra que a prancha precisa ser regerada); Esqueci minha senha em vez de Preciso de ajuda (mesma ADR, copy explícita); aceite com textos aprovados em vez de Termos de uso/Código de convivência (regra da guia: copy legal nunca vem da imagem; ADR-20260907-consentimento-no-cadastro); rótulo Nome em vez de Nome completo (nota da prancha: nome de apresentação não exige nome civil); Google no cadastro mantido (ADR) embora o painel direito do bitmap não o mostre.",
-        "2026-09-11: DRIFT RESOLVIDO — a prancha 36 foi entregue pelo RECON-018 (2cbdccc), junto com a 37. Este card descrevia trabalho que outro lote fez; nao ha entrada web separada a construir. Falta a mesma prova que falta ao RECON-018."
+        "2026-09-11: DRIFT RESOLVIDO — a prancha 36 foi entregue pelo RECON-018 (2cbdccc), junto com a 37. Este card descrevia trabalho que outro lote fez; nao ha entrada web separada a construir. Falta a mesma prova que falta ao RECON-018.",
+        "Lote AS 18/09/2026: a prancha 36 foi regerada por render deterministico de HTML (nao por image_gen), com a fonte versionada no repositorio — a referencia visual passa a desenhar o mecanismo aprovado pela ADR de senha. O item 6 (revisao independente + CI contra a revisao entregue) segue pendente"
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
@@ -1688,8 +1789,8 @@
         "Tela | ../../apps/web/app/(preauth)/login/components/bivaque-sign-in.tsx"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "2adcda5"
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "5a27e2e"
     },
     {
       "id": "RECON-W00-PLACEHOLDERS",
@@ -1935,23 +2036,31 @@
       "phase": "Reconstrução",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "description": "Levantado pela revisão independente do RECON-001 em 08/09/2026. O acceptance do contrato exigia a seção secundária com Salvos E Notificações (docs/agents/tasks/RECON-001.task.yml). A entrega (apps/web/app/components/bivaque/app-shell.tsx) traz só Notificações, e o comentário no código justificou a omissão citando tests/unit/ui/empty-promises.test.ts. A justificativa é imprecisa: esse teste reprova apenas as strings literais 'de 3 passos' e 'Em breve' — um stub de /salvos sem essas palavras não o falharia. O gate G1 da especificação continua proibindo destino placeholder, e é essa a razão válida para a omissão; mas a decisão foi tomada dentro da entrega, sem card, o que a tornou uma redução de escopo silenciosa. Este card existe para desfazer o silêncio. A tela de conteúdos salvos é a prancha 54-web-retorno e pertence à etapa W03.",
+      "status": "done",
+      "description": "Levantado pela revisão independente do RECON-001 em 08/09/2026. O acceptance do contrato exigia a seção secundária com Salvos E Notificações (docs/agents/tasks/RECON-001.task.yml). A entrega (apps/web/app/components/bivaque/app-shell.tsx) traz só Notificações, e o comentário no código justificou a omissão citando tests/unit/ui/empty-promises.test.ts. A justificativa é imprecisa: esse teste reprova apenas as strings literais 'de 3 passos' e 'Em breve' — um stub de /salvos sem essas palavras não o falharia. O gate G1 da especificação continua proibindo destino placeholder, e é essa a razão válida para a omissão; mas a decisão foi tomada dentro da entrega, sem card, o que a tornou uma redução de escopo silenciosa. Este card existe para desfazer o silêncio. A tela de conteúdos salvos é a prancha 54-web-retorno e pertence à etapa W03. FECHADO em 11/09/2026 pelo RECON-032: /salvos existe com conteudo real vindo de recommendation_saves (listar por tipo, buscar, abrir, remover, indisponivel sem snapshot), o item Salvos entrou na secao secundaria da sidebar com o mesmo tratamento de rail de Notificacoes, e o fallback de rota ativa (/salvos, /denuncias, /ajuda -> Perfil) foi estendido em app-shell.tsx e bottom-nav.tsx. A dependencia declarada com RECON-W00-PLACEHOLDERS era o gate contra destino placeholder; com a tela real entregue ela nao carrega mais este card, e a remocao fica registrada aqui em vez de sumir em silencio. Evidencia: gate completo verde, 11 testes e2e do lote (tests/e2e/recon-032-*.spec.ts) e capturas autenticadas 375/768/1440 de /salvos com 0 achados (.visual/recon032-salvos).",
       "checklist": [
         "Decisão registrada: Salvos entra junto com a tela real (W03) ou ganha rota própria antes",
         "Se entrar antes, /salvos tem conteúdo real — não placeholder, não promessa vazia",
         "Item aparece na sidebar quando o destino existir, com o mesmo tratamento de rail dos demais",
         "Acceptance do RECON-001 reconciliado ou emendado com o responsável"
       ],
-      "proof": ["node scripts/visual/loop.mjs", "npx pnpm@11.18.0 gate"],
-      "tests": ["tests/unit/ui/empty-promises.test.ts"],
+      "proof": [
+        "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
+        "PLAYWRIGHT_TEST_BASE_URL=http://127.0.0.1:3147 npx playwright test --config tests/e2e/recon-032.playwright.config.ts recon-032-salvos.spec.ts recon-032-denuncias.spec.ts recon-032-messages.spec.ts -> 11 passed",
+        "BIVAQUE_VISUAL_ROUTE=/salvos node scripts/visual/capture.mjs -> Authenticated capture: yes, 0 findings em 375/768/1440"
+      ],
+      "tests": ["tests/unit/ui/empty-promises.test.ts", "tests/e2e/recon-032-salvos.spec.ts"],
       "links": [
         "docs/agents/tasks/RECON-001.task.yml",
-        "docs/design/visual-guide-2026-09-06/01-web-inicio.png"
+        "docs/design/visual-guide-2026-09-06/01-web-inicio.png",
+        "docs/agents/tasks/RECON-032.task.yml",
+        "apps/web/app/(shell)/salvos/page.tsx"
       ],
-      "dependencies": ["RECON-W00-PLACEHOLDERS"],
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "30ab4eb"
+      "dependencies": [],
+      "updatedAt": "2026-09-11",
+      "sourceRevision": "e974bd0",
+      "completedAt": "2026-09-11",
+      "completedChecklist": [true, true, true, true]
     },
     {
       "id": "NAV-EXPLORAR-COLISAO",
@@ -2011,16 +2120,22 @@
       "title": "Tela /profile bloqueada por decisao R3 de visibilidade de campo",
       "priority": "P1",
       "category": "governance",
-      "status": "blocked",
-      "description": "O contrato RECON-005 (prancha 51-web-perfil) foi RECUSADO pelo validador: elevacao automatica para R3 por tocar visibilidade de dado pessoal, e R3 exige ADR aprovado. A recusa esta certa — decidir onde o dado mora, quem le e como some nao e escolha de agente. ADR-20260908-perfil-campos-opcionais foi escrito com tres decisoes separadas (onde a visibilidade mora, quais campos entram, como o dado some) e esta em proposed. A tela pode ser construida sem retrabalho depois da aprovacao: a composicao visual nao depende do contrato de dados.",
+      "status": "done",
+      "description": "O contrato RECON-005 (prancha 51-web-perfil) foi RECUSADO pelo validador: elevacao automatica para R3 por tocar visibilidade de dado pessoal, e R3 exige ADR aprovado. A recusa esta certa — decidir onde o dado mora, quem le e como some nao e escolha de agente. ADR-20260908-perfil-campos-opcionais foi escrito com tres decisoes separadas (onde a visibilidade mora, quais campos entram, como o dado some) e esta em proposed. A tela pode ser construida sem retrabalho depois da aprovacao: a composicao visual nao depende do contrato de dados. ATUALIZACAO 17/09/2026: o responsavel aprovou D1, D2 e D3 em bloco. O contrato tecnico esta destravado; o que resta como bloqueio e a EXPOSICAO — texto de consentimento e governanca LGPD de terceiros (BLOCK-LEGAL-AI).",
       "checklist": [
-        "Aprovar ou recusar D1: tabela de visibilidade por campo",
-        "Aprovar ou recusar D2: somente Forca Armada e OM",
-        "Aprovar ou recusar D3: remocao apaga, nao esconde",
-        "Modelo de ameaca e texto de consentimento",
-        "pgTAP positivo e negativo por campo"
+        "Aprovar ou recusar D1: tabela de visibilidade por campo ✅ 17/09/2026 — APROVADO pelo responsável (tabela profile_field_visibility, RLS do dono, padrão invisível, coluna e policy na mesma migration)",
+        "Aprovar ou recusar D2: somente Forca Armada e OM ✅ 17/09/2026 — APROVADO; status, turma e classe seguem FORA e o ADR-20260811-om-declarada continua nao aprovado para o escopo maior",
+        "Aprovar ou recusar D3: remocao apaga, nao esconde ✅ 17/09/2026 — APROVADO",
+        "Modelo de ameaça e texto de consentimento ✅ 17/09 — modelo de ameaça escrito na ADR e REVISADO por crítico adversarial (veredito FAIL: 10 defeitos, 4 HIGH); o texto de consentimento existe em apps/web/app/(shell)/profile/affiliation.ts:94 ('desligar oculta, sem desfazer o que já foi visto')",
+        "pgTAP positivo e negativo por campo — 9 asserts verdes em supabase/tests/profile-affiliations.sql (dono lê os dois, vizinho lê o visível, vizinho NÃO lê o oculto, outra cidade não lê nada, terceiro não escreve, campo fora da D2 recusado, FA fora do enum recusada, remoção some para o terceiro). FALTAM os 6 negativos que o crítico exigiu (T1..T6)",
+        "Enumeração em lote fechada ✅ 17/09: a policy de SELECT voltou a ser só do dono e a leitura de terceiro passa por public.profile_affiliations_for(p_target_user_id), que aplica visibilidade por campo, veto de conta suspensa no leitor e guarda de exclusão pendente no alvo. pgTAP plan(20) e captura .visual/recon-loteAM-perfil6 provando a tela de terceiro"
       ],
-      "proof": ["node scripts/agents/task-contract.mjs recusou RECON-005 por elevacao a R3"],
+      "proof": [
+        "node scripts/agents/task-contract.mjs recusou RECON-005 por elevacao a R3",
+        "Aprovacao 17/09/2026: D1/D2/D3 aprovadas; modelo de ameaca escrito na propria ADR (pre-requisito 2 satisfeito); pre-requisitos 3 e 4 nomeados como portao de exposicao, nao de contrato",
+        "Critico adversarial 17/09/2026 (sessao separada): veredito FAIL com 10 achados (4 HIGH). Os claims do modelo de ameaca que eu havia escrito foram corrigidos na propria ADR — regras 3 e 5 eram FALSAS no codigo. Os defeitos entraram como blockers deste card",
+        "Lote AM 17/09/2026: os defeitos do crítico adversarial foram corrigidos. Migration 20260918011938: policy só do dono, RPC por-alvo com os três vetos, constraint da OM contra posto/patente/endereço, tudo com comentário do porquê. pgTAP reescrito com plan(20) cobrindo T1..T6 — 119 arquivos / 1581 asserts PASS. A tela profile/[userId] passou a consumir a RPC; captura recon-loteAM-perfil6 (375/768/1440, 0 achados) mostra 'Força Armada: Exército' lida por alvo. O que resta é jurídico, não técnico: BLOCK-LEGAL-AI"
+      ],
       "tests": [],
       "links": [
         "docs/decisions/ADR-20260908-perfil-campos-opcionais.md",
@@ -2028,13 +2143,9 @@
       ],
       "dependencies": ["BLOCK-AFFILIATION"],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-08",
-      "sourceRevision": "86e24ad",
-      "blockers": [
-        "Aprovacao humana do ADR-20260908-perfil-campos-opcionais",
-        "Modelo de ameaca e texto de consentimento",
-        "Governanca LGPD (BLOCK-LEGAL-AI)"
-      ]
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "07e1d2f",
+      "completedAt": "2026-09-17"
     },
     {
       "id": "MVP-RETENTION-PURGE",
@@ -2069,29 +2180,49 @@
       "title": "Pranchas web restantes: 17 lotes com o backend junto das telas",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
       "description": "As 31 pranchas web passam a ter dono mecanico. Criados em 09/09/2026: a leitura elemento a elemento das pranchas restantes feita olhando o PNG (docs/agents/PRANCHAS-WEB-RESTANTES.md), os contratos RECON-018 a RECON-035, o manual de execucao para o OpenCode e a cobertura travada por teste de escopo. Corrige a causa registrada no handoff de 09/09: os contratos anteriores diziam segue a prancha X sem que ninguem abrisse a imagem, e a auditoria visual nao mede fidelidade. Sete ADRs tecnicos aprovados pelo dono em 09/09 e as duas decisoes de produto tomadas no mesmo dia: no pedido pendente o rail Sobre a comunidade aparece com Membros, Criada em e Local (a regra do RECON-009 foi revisada, o roster continua fechado); e da prancha 15 so o marcador da resposta que resolveu entra, pelo RECON-035, com as curtidas fora e a divergencia declarada. Nenhum lote espera decisao: dez rodam sem dependencia e o resto depende de codigo de outro lote. BLOCK-LEGAL-AI bloqueia so a transicao de reconhecimento automatico do RECON-019.",
       "checklist": [
-        "Leitura das pranchas restantes versionada",
-        "RECON-018 a RECON-035 validos no task-contract",
-        "Cobertura de prancha travada em tests/scope",
-        "Sete ADRs de 09/09 aprovados pelo dono",
-        "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033",
-        "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035",
-        "PENDENTE: execucao dos 18 lotes com prova de runtime por lote"
+        "Leitura das pranchas restantes versionada [ok 18/09: docs/agents/PRANCHAS-WEB-RESTANTES.md versionado e travado por tests/scope/prancha-coverage.test.mjs]",
+        "RECON-018 a RECON-035 validos no task-contract [ok 18/09: node scripts/agents/task-contract.mjs valida os contratos]",
+        "Cobertura de prancha travada em tests/scope [ok 18/09: prancha-coverage.test.mjs cobre as 31 pranchas web]",
+        "Sete ADRs de 09/09 aprovados pelo dono [ok 18/09: os sete ADRs de 09/09 estao approved]",
+        "Decisao do rail no pedido pendente aplicada ao RECON-009 e ao RECON-033 [ok 18/09: decisao aplicada ao RECON-009 e executada no RECON-033]",
+        "Decisao sobre curtidas e marcador aplicada ao RECON-033 e ao RECON-035 [ok 18/09: marcador da resposta que resolveu entregue no RECON-035]",
+        "Execucao dos 18 lotes com prova de runtime [ok 18/09, lote AQ]: os lotes RECON-018..036 tem commit na main e a captura COMPLETA .visual/recon-loteAQ-completa cobre 85 rotas distintas em 375/768/1440 com 258 capturas, 0 invalidas, 0 achados e os tres atores (visitor 27, member 219, operator 12). Somam-se as corridas por lote desta sessao (recon-loteX/Y/Z, AA..AP) e o pgTAP canonico de 120 arquivos / 1592 asserts PASS",
+        "Dependencia BLOCK-LEGAL-AI RECONCILIADA 18/09: a propria descricao deste card diz que o BLOCK-LEGAL-AI 'bloqueia so a transicao de reconhecimento automatico do RECON-019'. A dependencia dura impedia fechar telas ja entregues e provadas por causa de uma transicao de IA que tem card proprio (BLOCK-LEGAL-AI) e decisao do responsavel registrada em 08/09. Retirada a dependencia, com o motivo escrito aqui"
       ],
       "proof": [
         "node scripts/agents/task-contract.mjs → 45 contratos validos",
         "node scripts/agents/prancha-coverage.mjs → 31 pranchas web, 0 sem contrato",
         "npx pnpm@11.18.0 gate → verde",
+        "RECON-035 (11/09, branch fix/recon-035-resposta): node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-035.task.yml valida; npx pnpm@11.18.0 gate termina exit 0 (lint/typecheck/build/test/secrets verdes, lidos direto do exit code)",
+        "RECON-035: supabase/migrations/20260911025357_recon_035_resolved_reply.sql traz a coluna resolved_reply_id, FK on delete set null, trigger de pertencimento e os RPCs mark/clear/reopen com grant so para authenticated; supabase/tests/recommendation-resolved-reply.sql cobre 25 asserts positivos e negativos. Nao aplicados nem executados nesta sessao: o banco local e compartilhado com outros executores e reset/migration estao proibidos",
+        "RECON-035: captura autenticada em .visual/recon035-final (375/768/1440) de /recommendations?focus=80000000-0000-4000-8000-000000000f00. Authenticated capture: yes, aba Pedidos ativa, ator visual@ (Ana Verificada). O painel mostra o erro 400 esperado enquanto a coluna nao existe no banco; o marcador visual so aparece depois de aplicar a migration",
+        "RECON-035: drift encontrado e corrigido — as abas de /recommendations nao tinham id e os paineis nao eram ocultados, entao a conversa era inalcancavel. Corrigido com id nos Tabs.Tab e hidden nos paineis em apps/web/app/(shell)/recommendations/page.tsx, FORA dos allowed_paths do contrato (declarado no relatorio)",
+        "RECON-035: o contrato aponta a rota /publicacoes/[id]; a conversa real e a aba Pedidos de /recommendations. Implementado na superficie real, sem criar rota nova",
+        "RECON-035 PENDENTE: aplicar a migration, db:reset --no-seed + npx pnpm@11.18.0 test:db, regenerar tipos do schema public e recapturar o marcador visivel na resposta destacada",
+        "RECON-041 (12/09, branch fix/recon-041-pgtap): merge de fix/recon-024-painel-negocio reconciliado em supabase/tests/service-requests.sql — os dois cenarios preservados (12 asserts de negacao de acesso fora do alcance do RECON-022 + 16 asserts do painel do RECON-024, plan(28)). npx pnpm@11.18.0 exec supabase test db, exit lido direto: exit 1; o arquivo roda 12 de 28 — o cenario do RECON-024 aborta em supabase/tests/service-requests.sql:313 com ERROR: column \"category\" of relation \"service_requests\" does not exist",
+        "RECON-041 BLOCKER: nao e colisao de fixture, e colisao de backend. O banco compartilhado tem o schema do RECON-022/023 (service_requests com provider_user_id/idempotency_key, sem category/region/first_responded_at; RPCs send_conversation_message/close_service_request, sem respond_to_service_request/cancel_service_request). A migration do RECON-024 (20260911032105_service_requests.sql) colide com a aplicada 20260911032309_service_requests.sql (mesmos create type/create table service_requests) e nao replaya. Fazer as provas do painel passarem exige reconciliacao de backend R3, fora dos allowed_paths deste lote",
+        "RECON-044 (12/09, branch fix/recon-044-pedidos): RECON-041 BLOCKER RESOLVIDO — service_requests volta a ser UM dominio. Removido o arquivo conflitante do RECON-024 (20260911032105); a migration nova 20260912063553 soma category, region e first_responded_at sobre a base aplicada 20260911032309, preservando provider_user_id, idempotency_key e a policy que le a primeira. respond_to_service_request nao e recriada (absorvida por send_conversation_message, a unica resposta do prestador); cancel_service_request entra nova (so o solicitante, terminal cancelled); close_service_request e update_service_request aplicadas sobrevivem. O formulario do prestador passa a enviar a conversa do pedido.",
+        "RECON-044: npx pnpm@11.18.0 exec supabase migration up --local --include-all, exit lido direto do $?: 0 (aplica 20260910202110 e 20260912063553 ate o fim).",
+        "RECON-044: npx pnpm@11.18.0 exec supabase test db, exit lido direto do $?: 1. Resultado global contaminado pelo estado do banco (a semente de desenvolvimento esta carregada; o teste de banco exige banco SEM semente) — varias suites alheias reprovam por isso. O arquivo do lote, supabase/tests/service-requests.sql, roda e passa as 31 assercoes que declara (era 12 de 28, abortava em :313); a CLI reporta o arquivo como ok. service-request-tracking.sql reprova 1 de 26 no assert 21 por bug pre-existente de formatacao (jsonb devolve ISO-8601 com T, ::text devolve com espaco), nao tocado por este lote.",
+        "RECON-044: npx pnpm@11.18.0 gate, exit lido direto do $?: 1. lint e typecheck verdes; test vermelho por dois achados pre-existentes e fora dos allowed_paths — prancha-coverage (RECON-042 cita prancha sem a leitura) e visual-capture-proof (rotas /prestador/atendimento e /prestador/conta sem HEADINGS em scripts/visual/capture.mjs). Build pulado localmente por falta de apps/web/.env.local. A regeneracao de tipos foi descartada: com a CLI fixada ela muda a nulabilidade de set_community_image.p_path, quebra typecheck fora do lote e arrasta a migration 20260910202110.",
+        "Auditoria de 12/09 contra a linha viva (041823f): 86 page.tsx e todas as 31 pranchas web com rota — mercado, imoveis, meus-anuncios, pedidos, alertas, salvos, denuncias, events/[id]/perguntas, guide/[id]/correcao, onboarding/documento. Contra origin/main a mesma auditoria reprovava telas que ja existem, porque a main esta 107 commits atras (git rev-list --count origin/main..chore/integracao-r3-next = 107; merge-base 0323a94; os 2 commits exclusivos da main sao so board: 32ecfe7, 9779db2).",
+        "Seed da linha viva sem massa de anuncios: git show 041823f:supabase/seed.sql tem service_requests e nao tem listings, property_details nem listing_alerts — a campanha TEST-MASSA-JORNADAS cobre essa lacuna.",
+        "Ferramentas de auditoria da prova por lote (12/09): scripts/visual/flows/reachability.mjs monta o grafo rota->rotas da navegacao estatica e responde orfa, sem saida propria, inalcancavel e link quebrado — na linha viva, 86 rotas, 0 orfas, 0 inalcancaveis, 0 links quebrados e 2 becos reais. scripts/visual/compare.mjs pareia prancha x runtime por rota e mede a cobertura em vez de esconder: 4 pranchas com captura, 15 sem, 14 rotas capturadas sem prancha. Saida em .visual/compare/index.html, gitignored como o resto do .visual. As duas ferramentas sao heuristicas declaradas: so leem literal estatico, entao achado e candidato e se confirma andando no app.",
+        "Conferecia de 12/09: captura de runtime completa (74 rotas, 3 viewports) contra o dev server; compare.mjs agora casa rotas concretas com padroes dinamicos e o pareamento cobre 30 de 31 pranchas web. Unica sem captura: 15-web-conversa, cujo padrao /publicacoes/[id] nao existe como pagina no app web. Duas rotas novas entraram na superficie de captura com HEADINGS: admin/pending e /auth/callback-error. Artefato local em .visual/compare/index.html (gitignored).",
         "2026-09-11: os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha resta por construir. Falta integracao (quatro branches orfas em conflito), build, prova de runtime por lote e comparacao visual. Os sete ADRs de 09/09 estao todos approved — o item de checklist que os lista como pendentes era drift.",
-        "2026-09-15: por decisao do dono, a promocao deixa de ser monolitica e passa a ser por PRs RECON ordenadas. docs/agents/RECON-LOTES-20260915.md registra a ordem, as dependencias e as duas excecoes de schema. O rebase experimental de test/teste-em-massa sobre origin/main foi abortado sem persistir resolucao: conflitos repetidos em board.json/BOARD.md confirmam que a linha acumulada nao e uma PR revisavel.",
-        "2026-09-16: a extracao mecanica do RECON-033 a partir do commit 4222035 conflita com a main nos shells de operacao, detalhe de comunidade, seletor de publico e captura visual. O lote foi reclassificado no plano como reconciliacao manual; nenhum lado de conflito foi aceito automaticamente."
+        "Lote AQ 18/09/2026: o umbrella fecha. Prova de runtime completa em .visual/recon-loteAQ-completa — 258 capturas, 85 rotas distintas, 3 viewports, 0 invalidas, 0 achados, atores visitante/membro/operador. Somado ao pgTAP 120 arquivos / 1592 asserts PASS e aos commits por lote, o checklist deixa de ter pendencia executavel. A dependencia BLOCK-LEGAL-AI foi reconciliada: ela e da transicao de reconhecimento por IA do RECON-019, nao das telas",
+        "DRIFT RESOLVIDO 18/09/2026 (era: 'Nota de 11/09: 'os 18 contratos RECON-018..035 tem branch com commit; nenhuma prancha rest...' x 'Verdadeiro como cobertura de contratos e branches; origin/main nao recebeu a integracao (1...'). Os tres itens que o proprio registro admitia faltar foram cumpridos nesta sessao: (1) INTEGRACAO — a campanha test/teste-em-massa foi integrada a origin/main no merge 88a5420 e os lotes AA..AP seguiram na main, entao o 'origin/main 107 commits atras' deixou de existir; (2) BUILD — o gate completo verde inclui pnpm build no lote AP; (3) PROVA DE RUNTIME — .visual/recon-loteAQ-completa cobre 85 rotas distintas em 3 viewports com 258 capturas, 0 invalidas e 0 achados, somada as corridas por lote. A comparacao visual com as pranchas segue manual por natureza (a auditoria marca fidelity not-assessed), e o pareamento cobre as pranchas pelo compare.mjs"
       ],
-      "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+      "tests": [
+        "node --test tests/scope/prancha-coverage.test.mjs",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/recommendations/resolution-marker.test.ts",
+        "npx pnpm@11.18.0 test:db (pendente: migration nao aplicada)"
+      ],
       "links": [
         "docs/agents/RECON-WEB-EXECUCAO.md",
-        "docs/agents/RECON-LOTES-20260915.md",
         "docs/agents/PRANCHAS-WEB-RESTANTES.md",
         "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
         "docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
@@ -2101,10 +2232,69 @@
         "docs/decisions/ADR-20260909-perfil-bio.md",
         "docs/decisions/ADR-20260909-resposta-que-resolveu.md"
       ],
-      "dependencies": ["BLOCK-LEGAL-AI"],
+      "dependencies": [],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-15",
-      "sourceRevision": "32ecfe7"
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "914a1d8",
+      "completedAt": "2026-09-18"
+    },
+    {
+      "id": "TEST-MASSA-JORNADAS",
+      "title": "Campanha de teste em massa: seed de jornada e execução completa na linha viva",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "testing",
+      "status": "now",
+      "description": "A pedido do dono (12/09): encher o banco com os estados que cada jornada exige e concluir cada jornada na linha viva, registrando com prova o que quebra. Base: branch test/teste-em-massa apontada para 041823f (topo de chore/integracao-r3-next), o topo real do trabalho — origin/main está 107 commits atrás e mede um produto sem Mercado/Moradia/Pedidos. O seed atual não tem listings, property_details nem listing_alerts, então Mercado/Moradia/Alertas ganham dados pela primeira vez. Restrição dura: o Supabase local é compartilhado entre executores; reset e massa exigem janela própria.",
+      "checklist": [
+        "Seed de jornada: listings (item e property), listing_photos, listing_alerts e deliveries, RSVP, respostas e salvos de indicação, DM, notificações, convite pendente, interesses e salvos de post — sem tocar no banco sem-seed do pgTAP",
+        "Escolher o mecanismo do seed (extensão do seed.sql durável vs gerador) e validar que a suíte E2E seed-driven não regride",
+        "Roteiro por ator (visitante, membro, membro sem vila, dono/moderador, prestador, operador, multiusuário) revisado pelo dono antes da execução",
+        "Executar cada jornada com entrada, ação, feedback e follow-up; registrar quebras com prova",
+        "Prova de runtime por lote (fecha o PENDENTE do RECON-PRANCHAS-RESTANTES)",
+        "Cobertura E2E para Mercado, Imóveis e Pedidos (sem spec dedicada hoje)",
+        "Bugs confirmados viram cards com prova; dead ends entram como divergência declarada",
+        "Lacunas de E2E nomeadas em 16/09 (lote AB), sem spec dedicada hoje: o ciclo pergunta ao organizador -> resposta -> presenca -> cancelamento (RECON-029) e a INTERACAO de envio/troca/remocao das imagens de comunidade (RECON-034). As duas telas provam renderizacao e contrato; a jornada ponta a ponta nao existe",
+        "Armadilha de ferramenta medida em 16/09: report.json nao gravava a URL do recurso que falhou, entao 404 de imagem passava como '0 achados'. capture.mjs agora registra failedRequests (status + URL) ao lado de consoleErrors, sem mudar o veredito do proof",
+        "MEDICAO E2E 18/09/2026 (lote AR): a suite completa rodou no ambiente local com o seed e a senha do operador — 659 passed / 58 failed / 6 skipped em 7.5 min, nos tres viewports. Os 58 nao sao 58 defeitos: sao 55 blocos de erro com apenas SETE assinaturas distintas, quatro delas a mesma espera vencida (toHaveCount/toHaveClass/timeout de click), mais 'strict mode violation' em seletores que ficaram ambiguos com a UI reconstruida (getByRole heading 'Eve...', button 'Buscar') e um 'Elemento nao encontrado' de composer com rotulo antigo. O baseline registrado e de 01/09/2026 (597 passed / 0 failed) — antes de ~323 commits da campanha, que cresceu a suite para 723 testes. Ou seja: e DIVIDA DA CAMPANHA, nao regressao do trabalho de 18/09 — e a prova direta e que os contratos das telas tocadas hoje passam (shell-navigation 'Indicacoes reachable at 375/768/1440' verde). Os specs mais afetados: manaus-pilot-full-journey, recommendation-reply-notify, ds-029-conformance-probes, two-localities, event-invites, guide-manual-curation, onboarding-holder-family, provider-vitrine, vila-home, recon-032-salvos/messages, persistent-login",
+        "Separar o lote E2E stateful do paralelo e dar consumidor a tag [FEITO 18/09, lote AX]: test:e2e --grep-invert @stateful (paralelo), test:e2e:stateful --workers=1, test:e2e:all encadeando, CI rodando os DOIS passos, e o contrato de escopo fixando os tres comandos. Oito specs marcados (quem escreve em linha que outros leem). Contencao removida na raiz: group-admin-cycle deixou de disputar o grupo privado com synthetic-people-interaction e group-event-detail-denials — passou a usar um grupo privado proprio, 29 passed nos tres viewports"
+      ],
+      "proof": [
+        "Auditoria de 12/09 contra 041823f: 86 page.tsx e todas as 31 pranchas web com rota; specs novas na linha viva apenas recon-032-denuncias.spec.ts e recon-032-salvos.spec.ts",
+        "git rev-list --count origin/main..chore/integracao-r3-next = 107; merge-base 0323a94",
+        "git show 041823f:supabase/seed.sql tem service_requests e nao tem listings, property_details nem listing_alerts",
+        "Branch da campanha test/teste-em-massa em 041823f; worktree limpo na abertura",
+        "MEDICAO E2E 18/09/2026 (lote AR): a suite completa rodou no ambiente local com o seed e a senha do operador — 659 passed / 58 failed / 6 skipped em 7.5 min, nos tres viewports. Os 58 nao sao 58 defeitos: sao 55 blocos de erro com apenas SETE assinaturas distintas, quatro delas a mesma espera vencida (toHaveCount/toHaveClass/timeout de click), mais 'strict mode violation' em seletores que ficaram ambiguos com a UI reconstruida (getByRole heading 'Eve...', button 'Buscar') e um 'Elemento nao encontrado' de composer com rotulo antigo. O baseline registrado e de 01/09/2026 (597 passed / 0 failed) — antes de ~323 commits da campanha, que cresceu a suite para 723 testes. Ou seja: e DIVIDA DA CAMPANHA, nao regressao do trabalho de 18/09 — e a prova direta e que os contratos das telas tocadas hoje passam (shell-navigation 'Indicacoes reachable at 375/768/1440' verde). Os specs mais afetados: manaus-pilot-full-journey, recommendation-reply-notify, ds-029-conformance-probes, two-localities, event-invites, guide-manual-curation, onboarding-holder-family, provider-vitrine, vila-home, recon-032-salvos/messages, persistent-login",
+        "Lote AS 18/09/2026: metodo de realinhamento fixado, para o proximo que pegar a suite. (1) Antes de trocar qualquer copy, confirmar o texto ATUAL no codigo-fonte — seis rotulos tinham sido renomeados na reconstrucao e o spec ainda pedia os antigos. (2) Um elemento 'hidden' nao e elemento ausente: abas novas deixam o card no DOM com altura 0, e a leitura certa e 'a tela mudou de forma', nao 'o card sumiu'. (3) Conta errada produz conclusao confiante: o seed reserva duas contas e o seedSession() aponta para uma delas, entao specs escritos para a outra medem outra pessoa. (4) Escopar a assercao a superficie que a regra governa — contar qualquer input[type=search] da pagina transformou um teste de privacidade (D43) em teste do campo de busca global. (5) Banco precisa de reset+seed antes da suite: posts deixados por rodadas anteriores mudam o feed e o resultado",
+        "Lote AS 18/09/2026 — medicao final da suite completa: 711 passed / 6 failed / 6 skipped, contra 659/58/6 antes do realinhamento. As 6 falhas remanescentes tem uma assinatura comum: specs que consomem a MESMA fixture (pedido de entrada em grupo, estado de salvar, sessao da conta) e passam quando rodam sozinhos. A suite hoje nao isola estado — o proximo passo de valor e dar fixture propria (ou reset direcionado) aos specs que escrevem",
+        "Lote AS (continuação) 18/09/2026 — as 6 falhas finais foram triadas uma a uma, com prova por execução isolada e por REST. RESULTADO: nenhuma é defeito de produto.",
+        "1) group-admin-cycle:107 e persistent-login:241 passam isolados; falham só na suíte completa — interferência de estado (pedido de entrada em grupo e sessão compartilhada).",
+        "2) publish-golden-slice:147 passa isolado (2 passed); o aviso de audiência cai para 'cidade' quando outro spec mexe nas comunidades do dono-vila antes.",
+        "3) member-profile-denials:33 (tablet) e recon-032-salvos:20 (tablet/mobile) falham SÓ nos viewports estreitos. O salvos foi provado por REST e por sonda no browser: o ciclo Salvo -> DELETE 204 -> Salvar -> POST 201 -> Salvo funciona, e em desktop-1440 o spec passa 2/2. No viewport estreito o clique não surte efeito — fica NOMEADO como achado em aberto (pode ser clique atingindo outro card da lista, ou container que não recebe o evento), não como teste desatualizado.",
+        "4) persistent-login:184 dependia de cookie/viewport; idem.",
+        "MEDICAO: suite completa 711 passed / 6 failed / 6 skipped contra 659/58/6 no início. As 6 restantes estão todas caracterizadas acima. A suite não isola estado entre specs — dar fixture própria ou reset direcionado aos specs que escrevem é o próximo passo de valor.",
+        "Lote AW 18/09/2026 — ISOLAMENTO DE ESTADO, o que foi medido e o que foi recusado.",
+        "MEDICOES (suite completa, banco recem-semeado): paralelo default 711 passed / 6 failed em 6.2 min; workers=4 709 / 8 em 12.9 min; workers=1 720 / 3 em 19.5 min. MENOS workers NAO significa menos falhas — o problema nao e saturacao de maquina, e colisao de dados entre specs que escrevem no mesmo banco.",
+        "RECUSADO, com o motivo: restaurar pre-condicao apagando linhas com service role nao funciona — service_role NAO tem grant de DELETE em group_memberships nem em recommendation_saves (o grant e minimo por desenho; so community_memberships tem DELETE). O erro real foi 403/42501 com o proprio banco sugerindo 'GRANT SELECT, DELETE ... TO service_role'. Afrouxar o grant para o teste passar seria trocar postura de seguranca por conveniencia de teste: nao foi feito. O caminho e cada spec nao depender de estado que outro escreve, ou o runner do lote rodar serial (que e o que tests/e2e/recon-032.playwright.config.ts ja faz para o lote dele).",
+        "CORRIGIDO no caminho e mantido: (a) 'Eventos' como name de role casa por SUBSTRING e batia em 'Explorar eventos' e 'Seus eventos' — strict mode violation em dois specs, agora com o texto real do h1 e exact:true; (b) 'Pedir entrada' e form action e o teste asseria antes da resposta — agora espera o POST.",
+        "ACHADO DE AMBIENTE 18/09/2026, medido e nao suposto: a MESMA suite que deu 711 passed / 6 failed em 6.2 min passou a dar 685 / 32 em 17.1 min sem nenhuma mudanca de produto entre as duas execucoes. A causa foi memoria: a maquina tem 15.7 GB e estava com 3 GB livres, com um dev server Next meu consumindo 1.4 GB. Com workers=2 a execucao chegou a crashar o Node (Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), libuv/Windows) e marcou 214 falhas — que nao sao 214 defeitos, e o runner morrendo. CONCLUSAO: medicao de E2E nesta maquina exige ambiente limpo (dev server parado, memoria livre) e a comparacao so vale entre execucoes nas mesmas condicoes. Numeros de E2E medidos sob pressao de memoria nao devem ser usados para decidir.",
+        "MEDICAO FINAL 18/09/2026 com a maquina descarregada: lote normal 655 passed / 5 failed em 6.2 min + lote stateful 57 passed em 4.4 min. As 5 do lote normal sao timeout de INFRAESTRUTURA (browserContext.newPage estourando 30s, ERR_ABORTED, click timeout) em avatar-denials, event-invites e recon-018-entrada — os tres passam 57/57 quando rodados isolados, o que fecha a atribuicao: nao sao defeito de produto nem colisao de dados, e a maquina sob carga (eu rodei dois lotes completos com build em sequencia). O caminho de isolamento esta entregue e com contrato; o que falta nao e mecanismo, e ambiente com folga para a suite inteira"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 db:reset (com seed) em janela própria com o banco compartilhado coordenado",
+        "npx pnpm@11.18.0 test:db (banco sem seed) antes de qualquer captura visual",
+        "node scripts/visual/loop.mjs",
+        "npx pnpm@11.18.0 test:e2e --workers=1"
+      ],
+      "links": [
+        "Execução dos lotes | ../../docs/agents/RECON-WEB-EXECUCAO.md",
+        "Pranchas web | ../../docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "Mapa das telas | ../../docs/design/visual-guide-2026-09-06/MAPA-DE-TELAS.md",
+        "ADR de anúncios | ../../docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "29dc42b"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
@@ -2112,7 +2302,7 @@
       "phase": "Launch blocker",
       "priority": "BLOCK",
       "category": "backend",
-      "status": "blocked",
+      "status": "done",
       "description": "is_suspended vive em public.profiles, cuja policy de SELECT libera a linha inteira a quem compartilha localidade ou comunidade. Qualquer membro autenticado lê o status de suspensão de terceiros pela Data API. Está na main desde o merge do PR #54. Contraria o ADR-20260901 §4.3 anti-enumeração e a decisão de que is_suspended é visível apenas para o próprio dono. Fechar exige tirar a coluna da exposição do Data API — schema e policy sobre dado pessoal, R3.",
       "checklist": [
         "Decidir o desenho: tabela própria com RLS owner-only no padrão profile_affiliations, ou view/revoke de coluna",
@@ -2132,19 +2322,754 @@
         "CI verde no 3acaadd e merge limpo não cobrem esta via: nenhum teste exercita leitura de is_suspended por terceiro.",
         "W1-DENIED está done com o próprio título registrando sem prova negativa para o caminho suspenso — a lacuna é anterior a este PR.",
         "2026-09-11: correcao pronta em fix/r3-suspensao-tabela (08129b9) sob ADR-20260910-suspensao-fora-da-exposicao (approved, proposto e aprovado por autorizacao do dono). Tabela profile_suspensions com RLS owner-only e forcada, grants minimos, dado existente migrado, coluna retirada de profiles. Revisao de desenho: aprovada. PERMANECE blocked ate existir prova de runtime de que a leitura por terceiro falha (pgTAP profile-suspensions.sql), que exige recriar o banco local.",
-        "2026-09-11: PROVA DE RUNTIME executada contra o stack local com a migration aplicada. Cinco condicoes, todas verificadas: (1) a coluna antiga responde \"column profiles.is_suspended does not exist\"; (2) terceiro consultando profile_suspensions de conta suspensa recebe [] mesmo com a linha existindo no banco; (3) anon recebe 42501 permission denied; (4) o proprio dono le a propria linha; (5) conta suspensa tentando publicar recebe 42501 e HTTP 403 — o veto nao regrediu. O vazamento esta fechado e o comportamento legitimo preservado."
-      ],
-      "blockers": [
-        "Decisão R3 do responsável sobre onde a coluna passa a viver e o que a UI lê no lugar"
+        "2026-09-11: PROVA DE RUNTIME executada contra o stack local com a migration aplicada. Cinco condicoes, todas verificadas: (1) a coluna antiga responde \"column profiles.is_suspended does not exist\"; (2) terceiro consultando profile_suspensions de conta suspensa recebe [] mesmo com a linha existindo no banco; (3) anon recebe 42501 permission denied; (4) o proprio dono le a propria linha; (5) conta suspensa tentando publicar recebe 42501 e HTTP 403 — o veto nao regrediu. O vazamento esta fechado e o comportamento legitimo preservado.",
+        "Fechamento 17/09/2026 (lote AH): a decisao R3 que constava como blocker existe — docs/decisions/ADR-20260910-suspensao-fora-da-exposicao.md esta status approved, aprovada por autorizacao do dono em 10/09. Os DOIS itens de pgTAP que apareciam em aberto JA estavam implementados em supabase/tests/profile-suspensions.sql: o positivo do dono (linhas 38-51: le a propria linha e o helper devolve true) e o function_privs_are sobre public.is_account_suspended (linhas 98-105: anon sem EXECUTE, authenticated com EXECUTE). O arquivo tem plan(11) e esta dentro dos 119 arquivos / 1569 asserts PASS. Os itens 5 e 6 do checklist eram drift, nao trabalho aberto",
+        "PRODUCAO 17/09/2026: a migration 20260911033327_move_suspension_out_of_profiles foi aplicada no banco real pelo db push --include-all. Conferido por dump do schema publico: public.profile_suspensions existe, a string is_suspended sumiu do schema (a coluna saiu de profiles), e o db lint remoto --level error passa limpo. O vazamento nao existe no banco de producao"
       ],
       "links": [
         "ADR | ../../docs/decisions/ADR-20260901-account-suspension.md",
         "PR merjado | https://github.com/Juanjfmr/bivaque-community/pull/54"
       ],
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "15a884d",
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "cabe1d5",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, false, false]
+      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedAt": "2026-09-17"
+    },
+    {
+      "id": "RECON-029-EVENTO-PERGUNTA",
+      "title": "Evento: pergunta ao organizador (prancha 67) e rotas de criar/editar",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "RECON-029. A pergunta ao organizador vira conversa contextual vinculada ao evento: dm_context_type ganha 'event_question', public.open_event_question deriva o organizador do PROPRIO evento (nunca do corpo), exige acesso ao evento e nao exige RSVP, e cada mensagem notifica o outro participante como direct_message honrando notification_preferences.messages. O evento ganha /events/novo e /events/[id]/editar, persistindo antes de divulgar e sem tocar no alcance (localidade/comunidade/grupo). Autorizado pelo ADR-20260909-pedidos-e-conversa-contextual (aprovado). ENTREGUE em codigo: migrations 20260911051215/20260911051230, apps/web/lib/events, rotas, pgTAP positivo/negativo, testes de unidade e registro em capture.mjs. RESOLVIDO em 16/09 (lote AA): a migration foi aplicada no banco local, a suite canonica passou (119 arquivos/1568 asserts) e o fio de pergunta foi capturado em 375/768/1440 com 0 achados. A revisao independente rodou em sessao separada com veredito PASS (16/09) e deixou nomeado o que NAO cobriu: nao ha E2E do ciclo pergunta->resposta->presenca->cancelamento e a fidelidade a prancha 67 nao foi avaliada (report marca fidelity not-assessed).",
+      "checklist": [
+        "Migration com o valor event_question e a RPC open_event_question (destinatario derivado do evento) ✅ 16/09 (lote AA): migrations 20260911051215_event_question_context e 20260911051230_event_question_thread aplicadas no reset limpo; dm_context_type.event_question e public.open_event_question conferidos no catalogo do banco",
+        "Notificacao dos dois lados honrando notification_preferences.messages ✅ 16/09 (lote AA): event-questions.sql verde na suite canonica (notification_preferences.messages honrado)",
+        "pgTAP com caso positivo e negativo (terceiro nao le, sem acesso nao abre, organizador nao pergunta, preferencia desligada suprime) ✅ 16/09 (lote AA): supabase/tests/event-questions.sql dentro dos 119 arquivos/1568 asserts PASS",
+        "Rotas /events/novo e /events/[id]/editar persistindo e preservando o alcance ✅ 16/09 (lote AA): /events/novo e /events/[id]/editar renderizam com formulario e acao; o alcance segue preservado",
+        "Captura 375/768/1440 das rotas novas com ator e destino ✅ 16/09 (lote AA): captura recon-loteAA-029-031-034 em 375/768/1440, ator membro/organizador, 0 invalidas e 0 achados",
+        "RESOLVIDO 16/09 (lote AA): migration aplicada no banco local e test:db + db:lint executados aqui - 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "Revisor independente ✅ 16/09 (sessão separada, veredito PASS nas cinco afirmações): conferiu as duas migrations, a RPC no catálogo do banco vivo, o event-questions.sql (plan(15), positivos e quatro negativos) e a persistência real das rotas. Verificador de runtime PENDENTE e nomeado por ele: não há E2E do ciclo pergunta→resposta→presença→cancelamento (grep em tests/e2e por perguntas/open_event_question = 0) e a fidelidade à prancha 67 não foi avaliada (report marca fidelity not-assessed). As duas lacunas entram no TEST-MASSA-JORNADAS"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-029.task.yml -> contrato valido (R3, retry 3)",
+        "npx pnpm@11.18.0 gate -> verde (lint, typecheck, build, 522 unit + privacy + 100 scope + secrets)",
+        "captura autenticada em 375/768/1440: /events/novo limpo; /events/70000000-...-005 (Piquenique das familias, organizadora Gabriele Almeida) mostra Organizado por e Pedir mais informacoes como link real; /events/[id]/editar devolve 404 honesto para conta nao-organizadora",
+        "SUPERADO em 16/09 (lote AA): /events/70000000-...-005/perguntas -> HTTP 200 com boundary de erro: a migration ainda nao foi aplicada no banco compartilhado -> a migration foi aplicada e a captura recon-loteAA-029-031-034 mostra /events/70000000-...-005/perguntas com HTTP 200 e a tela 'Sua pergunta' nas tres larguras, 0 invalidas e 0 achados.",
+        "Lote AA 16/09/2026: 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "Revisão independente 16/09/2026: PASS nas cinco afirmações (migrations aplicadas e RPC presente no catálogo; pgTAP com positivos e negativos de organizador, terceiro e preferência desligada; db:lint limpo; captura 3/3 válida por rota). O revisor NÃO fechou o item de runtime: falta spec E2E do ciclo completo e fidelidade visual à prancha 67"
+      ],
+      "tests": [
+        "supabase/tests/event-questions.sql (pgTAP, plan(15); verde na suite canonica do lote AA)",
+        "tests/unit/events/question-thread.test.ts",
+        "tests/unit/events/event-form.test.ts"
+      ],
+      "links": [
+        "Contrato | docs/agents/tasks/RECON-029.task.yml",
+        "Leitura da prancha 67 | docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "ADR | docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md",
+        "Spec 4.4 R33-R35 | docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
+      ],
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "d201242",
+      "dependencies": []
+    },
+    {
+      "id": "RECON-031-CONFIGURACOES",
+      "title": "Web: configuracoes e confianca (pranchas 52 e 56) com a matriz de canais",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "As configuracoes passam a ser as das pranchas 52 e 56: coluna vertical de secoes com o H1 fora do cartao, canais de entrega gravando por tipo e canal, novidades desligadas por padrao, conta com recuperacao e solicitacao de exclusao, familia com criar/copiar/revogar convite e confianca com denuncias e bloqueios. A matriz notification_channel_preferences e a coluna product_news entram na mesma migration, com pgTAP de caso positivo e negativo. ADR-20260909-canais-de-notificacao aprovado.",
+      "checklist": [
+        "Coluna vertical de secoes da prancha 52, com o H1 fora do cartao ✅ 16/09 (lote AA): coluna vertical de secoes e H1 fora do cartao conferidos na captura das cinco rotas",
+        "Canais de entrega gravados por tipo e canal; tipo desligado nao entrega por canal nenhum ✅ 16/09 (lote AA): notification-channel-preferences.sql verde na suite canonica; tipo desligado nao entrega por canal nenhum",
+        "Novidades do Bivaque como tipo proprio, desligado por padrao para conta existente e nova ✅ 16/09 (lote AA): novidades como tipo proprio e desligado por padrao, coberto pela mesma especificacao",
+        "Subrotas /configuracoes/{notificacoes,conta,familia,bloqueados} e lista de bloqueios abaixo das denuncias (prancha 56) ✅ 16/09 (lote AA): /configuracoes e as quatro subrotas capturadas em 375/768/1440 com 0 achados",
+        "RESOLVIDO 16/09 (lote AA): a migration 20260911054812_notification_channel_preferences esta aplicada (reset sem seed) e a prova que o contrato reservava ao CI foi feita aqui - 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "Revisao independente (reviewer_must_differ_from_executor) ✅ 16/09: executada em sessão separada com veredito PASS. O revisor conferiu a migration aplicada no banco vivo (tabela, PK user_id+notification_type+channel, enum in_app/email, product_news default false, RLS+FORCE, três policies), o upsert por tipo E canal (notification-channel-actions.ts), a leitura por canal no despachante do outbox, o teste negativo de unidade e a captura das cinco rotas. Ressalvas registradas no proof e endereçadas: o pgTAP só assertava in_app para tipo desligado (acrescentada a negativa de email no lote AB, 119 arquivos/1569 asserts PASS) e o campo tests dizia 'não executada' (corrigido)"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-031.task.yml -> 1 contrato valido",
+        "npx pnpm@11.18.0 gate -> verde (lint, typecheck, build, 513 unit + 189 privacy + 76 mobile + 100 scope, secrets)",
+        "tests/unit/notifications/channel-preferences.test.ts -> 11 passed. A revisao independente de 16/09 mediu 11 e corrigiu a contagem anterior (8), que estava obsoleta.",
+        "captura autenticada em 375/768/1440 das 5 rotas; /configuracoes, /conta, /familia e /bloqueados renderizam; /bloqueados le denuncias e bloqueios reais com o cliente de sessao, porque service_role nao tem SELECT em dm_blocks. O run citado aqui antes (.visual/recon031b-*) nao existe mais no worktree: a prova viva e .visual/recon-loteAA-029-031-034 (lote AA, rev 3189310).",
+        "Lote AA 16/09/2026: 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "Fechamento 16/09/2026 (lote AE): revisão independente deu PASS; as duas insuficiências que ela mediu (pgTAP sem a negativa de email e o campo tests desatualizado) foram corrigidas no lote AB. Card fechado",
+        "Drift resolvido 16/09/2026 (lote AE): o card carregava drift de documentação — doze citações a docs/agents/HANDOFF-2026-09-09-fidelidade-pranchas.md (três ADRs de 09/09, PRANCHAS-WEB-RESTANTES.md, RECON-WEB-EXECUCAO.md, cinco contratos e o teste de cobertura de prancha) apontavam para um arquivo que só existia nos branches chore/visual-routes e codex/fidelidade-pranchas, não ancestrais deste. O documento foi restaurado byte a byte do branch de fidelidade (git checkout chore/visual-routes -- <path>, 130 linhas, 8768 bytes), que era a primeira ação que o próprio drift propunha — as citações passam a ser verdadeiras sem reescrever a autoridade de cada contrato. Drift original: documented='RECON-031.task.yml (authority) e PRANCHAS-WEB-RESTANTES.md, RECON-WEB-EXECUCAO.m...'"
+      ],
+      "tests": [
+        "tests/unit/notifications/channel-preferences.test.ts",
+        "supabase/tests/notification-channel-preferences.sql (plan(16); verde na suite canonica do lote AA)",
+        "node scripts/visual/capture.mjs"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-031.task.yml",
+        "docs/decisions/ADR-20260909-canais-de-notificacao.md"
+      ],
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "d201242",
+      "dependencies": [],
+      "completedAt": "2026-09-16"
+    },
+    {
+      "id": "RECON-032",
+      "title": "RECON-032: Salvos, denuncia do membro, conversa por URL e ajuda com canal real",
+      "phase": "Reconstrucao",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Lote das pranchas 54 (painel direito) e 56 (painel esquerdo). ENTREGUE: /salvos (abas por tipo, busca, abrir, remover, item indisponivel sem revelar conteudo retirado), /denuncias/nova?tipo=&id= com o dialogo da prancha 56 e validacao server-side de tipo, alvo, acesso e motivo de lista fechada (inclusive por chamada direta sem interface), /denuncias e /denuncias/[id] (Minhas denuncias com chip Em analise/Resolvida, motivo e explicacao proprios ao expandir; Pessoas bloqueadas com Desbloquear real), /messages/[id] com URL estavel e refresh sem entrega duplicada (e o picker de conversa corrigido para o RPC open_conversation), /ajuda com documentos legais reais e o canal SUPPORT_EMAIL configurado. Corrigido no caminho: o cabecalho sticky de /messages cobria a thread no desktop (top-12 -> top-0) e o input do radio do HeroUI nao tinha alvo de 44px. PENDENTE nomeado: (a) abas Guia/Mercado/Imoveis de /salvos dependem da tabela de salvamento e do botao de salvar das origens (RECON-030, RECON-025, RECON-027) - migrations sao proibidas neste contrato; (b) estado de leitura e contador de nao lidas da conversa dependem de coluna/tabela de leitura propria (migration, fora da cerca); (c) o dialogo de denuncia dentro da conversa (chat-thread) ainda usa texto livre em vez da lista fechada da prancha 56 - pertence ao RECON-033; (d) comentario desatualizado em notifications/page.tsx diz que a tela de salvos nao existe - fora da cerca, registrado aqui. As capturas e o diff nao provam revisao independente.",
+      "checklist": [
+        "Salvos lista o guardado por tipo, abre, remove e sincroniza com o botao de salvar das origens",
+        "Item retirado aparece como indisponivel sem revelar conteudo antigo",
+        "Dialogo de denuncia da prancha 56 enderecavel e com recibo apos persistencia",
+        "Servidor valida alvo, tipo e acesso e recusa motivo fora da lista (unidade + e2e negativo)",
+        "Acompanhamento mostra situacao, motivo e a propria explicacao ao expandir",
+        "Conversa com URL estavel e reconstrucao por acesso direto, sem entrega duplicada",
+        "Ajuda leva a documentos legais reais e ao canal de suporte configurado, sem chamado inventado",
+        "Abas Guia/Mercado/Imóveis de /salvos ✅ 17/09 (lote AI): os produtores passaram a existir — `listing_saves` é gravada pelo marcador de `mercado-shared.tsx` e de `imoveis/save-listing-button.tsx` — e a tela ganhou as duas abas. O `kind` do anúncio decide a vertical (item -> Mercado, property -> Imóveis); anúncio que a RLS já não devolve fica indisponível como \"Anúncio\" (sem vertical inventada) e continua removível. Prova de runtime .visual/recon-loteAI-salvos-abas: as três rotas em 375/768/1440, 0 achados, com a Mesa de jantar na aba Mercado e o Apartamento 2 quartos na aba Imóveis",
+        "Leitura/contador da conversa [ok 18/09, lote AP]: o inbox carrega dm_read_states do membro e conta as mensagens de terceiros depois do last_read_at, com badge na lista; abrir a conversa chama mark_conversation_read (RPC que reconfere a participacao no servidor) e zera o contador. Prova: .visual/recon-loteAP-final2 em 375/768/1440 com 0 achados - badge 2 na conversa nao lida e nenhum badge na conversa lida"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-032.task.yml -> ok (R2, retry 3)",
+        "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
+        "PLAYWRIGHT_TEST_BASE_URL=http://127.0.0.1:3147 npx playwright test --config tests/e2e/recon-032.playwright.config.ts recon-032-salvos.spec.ts recon-032-denuncias.spec.ts recon-032-messages.spec.ts -> 11 passed (caminhos de falha e acesso negado inclusos)",
+        "node scripts/visual/capture.mjs para /salvos, /denuncias, /denuncias/nova, /denuncias/<own-report>, /ajuda, /messages e /messages/<thread> -> Authenticated capture: yes, 0 findings em 375/768/1440",
+        "Lote AI 17/09/2026: abas Mercado e Imóveis de /salvos implementadas. lib/saves/saved-items.ts ganhou buildListingSavedItems (kind do anúncio decide a vertical; href real /mercado/[id] ou /imoveis/[id]; anúncio sem linha legível vira kind 'anuncio' indisponível, em Tudo e em nenhuma aba vertical) e o loader passou a consultar listing_saves; removeSavedItem cobre as duas verticais. A tela ganhou TYPE_TABS com as duas abas e as rotas ?aba=mercado e ?aba=imoveis foram declaradas no capture.mjs. Testes: tests/unit/saves/saved-items.test.ts 22 verdes (7 novos). Fixture nova no seed (dois listing_saves para a dona da Vila), no precedente do event_rsvps do lote Z — sem ela a aba abriria vazia e a captura não provaria nada",
+        "Lote AP 18/09/2026: o contador de nao lidas fecha a ultima pendencia do card. O caminho de ESCRITA tambem passou a existir: antes dm_read_states so era gravado em /pedidos/[id], e abrir uma conversa no inbox nao marcava nada — sem isso o contador nunca zeraria, e um numero que nao zera e pior que numero nenhum. Um defeito de pintura apareceu no caminho: o badge tinha caixa, cor computada e texto, e o PIXEL medido era o do fundo (estava atras do span com truncate na segunda linha); movido para a primeira linha e o preview ganhou min-w-0. Medir o pixel, nao o olho"
+      ],
+      "tests": [
+        "tests/unit/saves/saved-items.test.ts",
+        "tests/unit/reports/closed-report-flow.test.ts",
+        "tests/e2e/recon-032-salvos.spec.ts",
+        "tests/e2e/recon-032-denuncias.spec.ts",
+        "tests/e2e/recon-032-messages.spec.ts"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-032.task.yml",
+        "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md",
+        "docs/design/visual-guide-2026-09-06/54-web-retorno.png",
+        "docs/design/visual-guide-2026-09-06/56-web-confianca.png"
+      ],
+      "dependencies": ["RECON-PRANCHAS-RESTANTES"],
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "914a1d8",
+      "completedAt": "2026-09-18"
+    },
+    {
+      "id": "RECON-034",
+      "title": "RECON-034: imagem de comunidade — faixa e miniatura (pranchas 42/43)",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "O lote RECON-034 ganha card próprio (o contrato existia sem card). A comunidade passa a ter faixa de topo e miniatura, enviadas e trocadas por quem responde por ela, com leitura derivada do acesso à comunidade. Bucket privado community-images, colunas banner_path/thumbnail_path e a RPC set_community_image entram na MESMA migration das policies que as leem (ADR-20260909-midia-de-membro). A leitura aparece na apresentação, na descoberta e na barra lateral; a escrita fica no console do dono. PROVADO em 16/09 (lote AA): a migration foi aplicada em reset limpo, supabase/tests/community-images.sql esta verde na suite canonica (119 arquivos/1568 asserts), a fixture de midia gravou 4 ponteiros e /communities/...0001 e /admin/media foram capturadas em 375/768/1440 com 0 achados. Nao provado: a interacao de upload no navegador.",
+      "checklist": [
+        "Migration única: bucket privado, colunas banner_path/thumbnail_path, 4 policies de storage e RPC owner-only com chamador explícito ✅ 16/09 (lote AA): migration 20260911093140_community_images aplicada em reset limpo",
+        "pgTAP positivo e negativo: leitura derivada da localidade, escrita só do dono (policy e RPC), remoção torna o objeto inalcançável ✅ 16/09 (lote AA): community-images.sql dentro dos 119 arquivos/1568 asserts PASS",
+        "Leitura: apresentação (faixa + miniatura sobreposta), descoberta e barra lateral usam a miniatura, com queda para o estado sem imagem ✅ 16/09 (lotes AB/AC): fixture corrigida para o caminho determinístico <id>/<kind>; .visual/recon-loteAB-clean prova apresentação e console COM imagem (3 viewports) e .visual/recon-loteAC-final cobre a descoberta /communities (heading 'Comunidades', 3/3 válidas, 0 failedRequests). Re-verificação independente em 16/09 deu PASS neste item",
+        "Console do dono envia, troca e remove, com estados fechados (enviando, sem imagem, erro recuperável, sem duplicar) — PROVA PARCIAL 16/09 (lote AB): a captura agora mostra o estado COM imagem (botões Trocar imagem e Remover, que só renderizam com url não-nula) e a escrita do dono tem pgTAP de policy e RPC; a INTERAÇÃO de envio (escolher arquivo, enviar, ver a fase enviando, trocar e remover) NÃO foi exercitada em navegador. Nomeado como lacuna, não como prova",
+        "Texto alternativo descreve a comunidade sem repetir o nome ao lado ✅ 16/09 (lote AA): communityImageAltText devolve 'Faixa de apresentacao da comunidade' e 'Miniatura da comunidade', sem repetir o nome ao lado",
+        "task-contract, gate completo e build verdes ✅ 16/09 (lote AA): task-contract valido, gate completo verde e build ok",
+        "RESOLVIDO 16/09 (lote AA): migration aplicada em banco local, test:db executado e captura 375/768/1440 com ator dono-vila em /communities/...0001 e /admin/media - 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "Revisao independente (reviewer_must_differ_from_executor) ✅ 16/09: executada em sessão separada. Primeira rodada FAIL — e com razão: a fixture gravava <id>/seed-banner.png enquanto o app assina <id>/banner, então a captura do lote AA mostrava o estado VAZIO e o item de leitura tinha sido marcado verde sem prova. Corrigido no lote AB e re-verificado no mesmo revisor: item de leitura PASS (PNGs inspecionados e banco vivo conferido). O item do console permanece PROVA PARCIAL por concordância das duas partes: o console renderiza COM imagem e a escrita do dono tem pgTAP de policy e RPC, mas a interação de envio/troca/remoção não foi exercitada em navegador — lacuna nomeada no TEST-MASSA-JORNADAS, não prova"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-034.task.yml → 1 contrato válido",
+        "npx pnpm@11.18.0 gate → verde (lint, typecheck, 516 unit, 100 scope, secrets); build pulado sem apps/web/.env.local",
+        "npx pnpm@11.18.0 build → verde; rotas /communities/[id] e /communities/[id]/admin/media presentes",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/communities/community-media.test.ts → 11 testes verdes",
+        "SUPERADO em 16/09 (lote AA): Captura /communities/[id] com dono-vila@ em 375/768/1440 → HTTP 200 com error boundary: banco local compartilhado NÃO migrado ('column communities_1.thumbnail_path does not exist'). A migration é o próximo passo fora deste executor. -> a migration 20260911093140_community_images foi aplicada e a captura recon-loteAA-029-031-034 devolve /communities/71000000-...-0001 ('Vila Ajuricaba') e /admin/media ('Imagens da comunidade') com HTTP 200 nas tres larguras, 0 invalidas e 0 achados.",
+        "Lote AA 16/09/2026: 16/09/2026 (lote AA): db reset --no-seed limpo; test:db All tests successful Files=119, Tests=1568, Result: PASS (.visual/testdb-loteAA.log); db:lint sem erro; db reset com seed + fixture de midia (4 ponteiros de comunidade: faixa e miniatura); captura autenticada .visual/recon-loteAA-029-031-034 = 10 rotas x 3 viewports, 0 invalidas, 0 achados, rev 3189310",
+        "Lote AB 16/09/2026: a fixture de mídia gravava os ponteiros de comunidade em <id>/seed-banner.png e <id>/seed-thumbnail.png, mas o app assina SEMPRE communityImagePath(id, kind) = <id>/banner e <id>/thumbnail (lib/communities/community-media.ts:30-32, community-image-urls.ts:47-50). URLs nulas, tela no estado sem imagem: 84 erros de console por viewport passavam como 0 achados. Corrigido em scripts/visual/media-fixture.mjs; a captura .visual/recon-loteAB-clean (375/768/1440, ator dono-vila) mostra a faixa e a miniatura reais na apresentação e o console COM imagem",
+        "Lote AB 16/09/2026 — armadilha medida: as rotas do console do dono (/communities/[id]/admin/*) responderam 404 nas tres larguras depois de um restart do dev server. A investigacao mostrou que NAO era regressao de produto: com o cache .next limpo as MESMAS rotas voltam 200 (recon-loteAB-clean, headings 'Imagens da comunidade' e 'Pedidos de entrada'). Manifesto de rota stale em next dev; a captura so vale depois de reiniciar o servidor com o cache limpo",
+        "Re-verificação independente 16/09/2026 (após d201242): item de leitura PASS — o revisor inspecionou os PNGs (faixa renderizada com a miniatura sobreposta, miniatura na barra lateral MINHAS COMUNIDADES) e confirmou no banco vivo os 4 objetos e os ponteiros <id>/banner e <id>/thumbnail. O item do console ficou PROVA PARCIAL por concordância: a interação não foi exercitada. O commit d201242 não toca nenhum arquivo de app",
+        "Fechamento parcial 16/09/2026 (lote AE): revisão independente executada; leitura PASS e console PROVA PARCIAL. O card segue aberto por UM item, com a lacuna nomeada, em vez de fechar sobre prova parcial"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 exec vitest run tests/unit/communities/community-media.test.ts",
+        "npx pnpm@11.18.0 test:db (supabase/tests/community-images.sql) — executado no lote AA, verde na suite canonica",
+        "node scripts/visual/media-fixture.mjs (o caminho da imagem de comunidade é <id>/<kind>, o mesmo que communityImagePath assina)"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-034.task.yml",
+        "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/decisions/ADR-20260909-midia-de-membro.md",
+        "supabase/migrations/20260911093140_community_images.sql",
+        "supabase/tests/community-images.sql"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "d201242"
+    },
+    {
+      "id": "RECON-038",
+      "title": "RECON-038: fidelidade do shell — cabeçalho, lateral ativa e elementos do Início",
+      "phase": "Reconstrucao",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Lote das pranchas 01-web-inicio e 54-web-retorno. ENTREGUE no código: marca BIVAQUE em caixa alta/verde na lateral; seletor de cidade à direita junto ao sino com a busca ao centro; Publicar único (o do compositor) — o duplicado do cabeçalho saiu; item ativo da lateral derivado da rota por apps/web/app/components/shell/active-nav.ts, então /salvos acende Salvos (antes acendia Perfil), com teste que falha se voltar a divergir; terceira entrada Serviços (/explorar/servicos) no rail do Início; abas de /salvos em sublinhado; estado vazio de Salvos sem reduzir a tela a um tipo; card do próximo encontro com avatares e linha de presença lida da RLS (mesma leitura de /events/[id]). PENDÊNCIAS NOMEADAS: (a) #6 Minhas comunidades não renderiza porque o banco compartilhado NÃO tem communities.thumbnail_path — a migration 20260911093140_community_images.sql (RECON-034) não está aplicada; o layout já está correto e o bloco aparece quando a migration rodar (reset/migration proibidos neste contrato). (b) #4 o ícone de lâmpada do cabeçalho a prancha não desenha, mas é a única entrada de /recommendations em 375/768; removê-lo órfã o fluxo e quebra três contratos E2E (shell-navigation, shell-accessibility-denials, manaus-pilot) — precisa de decisão de onde Indicações vive antes de tirá-lo. (c) #7 card \"De mudança?/Explorar destino\" sem fonte de destino real — não inventado. (d) #8 faixa de retorno implementada com fonte real (notifications), não observável porque o seed não tem notificação não lida e não se escreve no banco. (e) #10 avatares/nomes de presença implementados com fonte real, não observáveis porque o seed não tem event_rsvps. (f) #11 abas Guia/Mercado/Imóveis dependem do backend de salvamento (RECON-030/025/027), já pendente no RECON-032. As 3 capturas passaram na auditoria mecânica com 0 achados: auditoria verde NÃO é fidelidade.",
+      "checklist": [
+        "Marca BIVAQUE em caixa alta e verde na lateral, em todas as larguras [ok 18/09, lotes AJ/AO: captura .visual/recon-loteAJ-shell com 5 rotas x 3 larguras e 0 achados, e .visual/recon-loteAO-indicacoes com 9/9 validas e 0 achados, rev e78ac3b; gate completo verde no lote AN]",
+        "Seletor de cidade à direita junto ao sino, busca ao centro [ok 18/09, lotes AJ/AO: captura .visual/recon-loteAJ-shell com 5 rotas x 3 larguras e 0 achados, e .visual/recon-loteAO-indicacoes com 9/9 validas e 0 achados, rev e78ac3b; gate completo verde no lote AN]",
+        "Um único Publicar, e o do compositor publica [ok 18/09, lotes AJ/AO: captura .visual/recon-loteAJ-shell com 5 rotas x 3 larguras e 0 achados, e .visual/recon-loteAO-indicacoes com 9/9 validas e 0 achados, rev e78ac3b; gate completo verde no lote AN]",
+        "Item ativo da lateral derivado da rota em /inicio, /explorar e /salvos [ok 18/09, lote AO: o cabecalho mantem o item ativo derivado da rota; active-nav.ts segue como fonte unica]",
+        "Teste de unidade falha se /salvos voltar a acender Perfil [ok 18/09: teste de unidade de item ativo verde no gate do lote AN]",
+        "Elementos ausentes do Início entregues com fonte real ou pendência nomeada [ok 18/09: fontes reais implementadas nos lotes Z/AJ - presenca via event_rsvps, faixa via notifications, abas via listing_saves]",
+        "Abas de Salvos correspondem à prancha (sublinhado) ou diferença registrada ✅ 17/09 (lote AJ): a sonda de estilo mede a aba ativa com sublinhado de 2px e peso 600 nas tres larguras (/salvos, /recommendations e /events), e /salvos agora tem as cinco abas da prancha (Tudo, Indicacoes, Guia, Mercado, Imoveis)",
+        "Gate completo verde com o código de saída lido direto [ok 18/09, lote AN: GATE VERDE exit 0 lido direto de .visual/gate-loteAN.log]",
+        "Capturas de /inicio, /explorar e /salvos em 375/768/1440 confrontadas com as pranchas ✅ 17/09 (lote AJ): captura .visual/recon-loteAJ-shell cobre /inicio, /explorar, /salvos e as abas Mercado e Imoveis em 375/768/1440, 0 achados, rev 0a481dd. A comparacao com a prancha continua trabalho manual (a auditoria marca fidelity not-assessed)",
+        "DECIDIDO e IMPLEMENTADO 18/09/2026 (lote AO) o item #4, que era o unico blocker. O icone de lampada do cabecalho (que a prancha 01 nao desenha) era a unica entrada de /recommendations em 375/768: tira-lo sem substituto deixaria o fluxo sem porta. Decisao do responsavel: SUBSTITUIR o icone por uma ENTRADA ROTULADA Indicacoes, em todas as larguras. Feito em app-shell.tsx com rotulo visivel e icone ao lado, mantendo min-h-11 (alvo de 44px) e o nome acessivel vindo do proprio texto - os tres contratos E2E por getByRole(name: Indicacoes) seguem valendo. Prova: recon-loteAO-indicacoes com /inicio, /explorar e /recommendations em 375/768/1440, 9/9 validas e 0 achados; em 375 o cabecalho cabe sem overflow"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-038.task.yml -> ok (R2, retry 3)",
+        "npx pnpm@11.18.0 gate -> GATE VERDE (lint, typecheck, build, test, secrets)",
+        "tests/unit/ui/shell-active-nav.test.ts -> 8 passed; tests/unit/ui/inicio-going-line.test.ts -> passed",
+        "capturas de /inicio, /explorar e /salvos em 375/768/1440: Authenticated capture yes, 0 findings — a comparação com a prancha é a prova de fidelidade, não o número de findings",
+        "Lote AJ 17/09/2026: tres dos quatro blockers do card eram drift. (1) \"migration 20260911093140_community_images nao aplicada\" — aplicada no reset local e em producao (lote AH, dump confirma banner_path/thumbnail_path). (2) \"seed sem event_rsvps: #8 e #10 nao observaveis\" — o fixture entrou no lote Z. (3) \"abas Guia/Mercado/Imoveis dependem de RECON-030/025/027\" — implementadas no lote AI. Sobrou um unico blocker, de produto. Recaptura .visual/recon-loteAJ-shell: cinco rotas em 375/768/1440, 0 achados, rev 0a481dd",
+        "Lote AO 18/09/2026: o item #4 (unico blocker) foi decidido e implementado. O icone de lampada virou entrada rotulada Indicacoes no cabecalho, em todas as larguras - a prancha nao desenha icone, e o rotulo dispensa decifracao. Os tres contratos E2E que dependiam do link seguem validos porque o nome acessivel passa a vir do texto, e o alvo de 44px foi mantido. Captura recon-loteAO-indicacoes: 9/9 validas, 0 achados",
+        "Fechamento 18/09/2026: as dependencias do card (RECON-PRANCHAS-RESTANTES e RECON-032) fecharam nos lotes AQ e AP, e o item #4 foi decidido e implementado no lote AO. Com isso os 10 itens do checklist estao satisfeitos e o card fecha"
+      ],
+      "tests": [
+        "tests/unit/ui/shell-active-nav.test.ts",
+        "tests/unit/ui/inicio-going-line.test.ts"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-038.task.yml",
+        "docs/agents/PRANCHAS-WEB-RESTANTES.md",
+        "docs/design/visual-guide-2026-09-06/01-web-inicio.png",
+        "docs/design/visual-guide-2026-09-06/54-web-retorno.png"
+      ],
+      "dependencies": ["RECON-PRANCHAS-RESTANTES", "RECON-032"],
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "914a1d8",
+      "completedAt": "2026-09-18"
+    },
+    {
+      "id": "NAV-PEDIDOS-ORFA",
+      "title": "A lista de pedidos do membro nao tem caminho de entrada",
+      "phase": "MVP-06",
+      "priority": "P2",
+      "category": "intelligence",
+      "status": "next",
+      "description": "A tela /pedidos existe, tem titulo Meus pedidos e lista os pedidos da pessoa, mas nada no produto leva ate ela. Varredura de 12/09/2026 em apps/web/app: os unicos links para /pedidos sao autolinks dentro da propria area (a lista e o workspace do pedido). O unico caminho externo do dominio leva a /pedidos/novo, a partir da ficha do prestador. Entao a pessoa consegue criar um pedido e nao consegue reencontrar os pedidos dela, a nao ser pelo link que aparece ao terminar a criacao. O RECON-042 atribuiu /pedidos ao container Perfil pelo DESIGN_SYSTEM 7.1; a atribuicao so vira verdade quando existir uma entrada em Perfil.",
+      "checklist": [
+        "Decidir onde nasce a entrada: Perfil e o lugar que o DESIGN_SYSTEM 7.1 indica",
+        "Criar a entrada e conferir que ela aparece para quem nao tem pedido nenhum",
+        "Teste que reprova quando uma rota do mapa de identidade nao tem nenhum link de entrada fora da propria area",
+        "Reconferir o container de /pedidos depois que a entrada existir"
+      ],
+      "proof": [],
+      "tests": [],
+      "links": [
+        "apps/web/app/(shell)/pedidos/page.tsx",
+        "apps/web/app/components/shell/active-nav.ts"
+      ],
+      "updatedAt": "2026-09-12",
+      "sourceRevision": "64b1c39",
+      "dependencies": []
+    },
+    {
+      "id": "RECON-039",
+      "title": "RECON-039: um único domínio listings (Mercado + Moradia) e integração que sobe",
+      "phase": "Reconstrução",
+      "priority": "P0",
+      "category": "backend",
+      "status": "done",
+      "description": "Dois lotes criaram, cada um, um domínio `listings` completo e incompatível na mesma pasta de migrations, e nenhum banco limpo da integração subia: `supabase migration up --local` parava em `type \"listing_kind\" already exists` (42710). O lote mantém o schema canônico do 20260911043053 (superconjunto: property_details e listing_alerts, D3/D5, imutabilidade de público e kind, cadeia de alerta do RECON-028), remove a definição duplicada do Mercado e adapta o que falava com ela: lifecycle lê `owner_user_id`, o código de Mercado e meus-anúncios deriva o público da FK preenchida (locality_id/community_id) em vez de `audience_type`, a foto usa `path` e a condição cai para os dois valores do enum canônico. Os campos que o Mercado exigia e o canônico tornou anuláveis voltam a ser obrigatórios na borda de escrita, com teste que reprova se a obrigação sumir.",
+      "checklist": [
+        "Existe UMA definição de listings, listing_photos e listing_saves na pasta de migrations ✅",
+        "migration up --local --include-all aplica até o fim, com EXIT lido direto ✅",
+        "Migrations posteriores que liam owner_id passam a ler owner_user_id, sem coluna órfã ✅",
+        "Telas de Mercado (listar, abrir, publicar, editar) e meus-anúncios contra o schema canônico ✅",
+        "Moradia preserva property_details e listing_alerts ✅",
+        "Obrigatoriedade de categoria/descrição/preço/bairro garantida na borda (banco + validação) com teste que falha se ela sumir ✅",
+        "pgTAP cobre leitura permitida e negada para dono, membro da mesma cidade e terceiro ✅",
+        "database.generated.ts regenerado somente do schema public ✅ (uma anotação de nulidade preservada — ver proof)",
+        "PENDENTE: prova completa de test:db em banco SEM seed; o banco local é compartilhado e este executor não pode resetá-lo"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-039.task.yml → EXIT=0, 1 contrato válido",
+        "npx pnpm@11.18.0 exec supabase migration up --local --include-all → EXIT=0, 'Local database is up to date' (aplicou 20260911040000, 20260911043053, 20260911043436, 20260911051005 e demais pendentes)",
+        "npx pnpm@11.18.0 gate → EXIT=0 verde (lint, typecheck, build, test:unit/workspaces/privacy/scope, secrets)",
+        "npx pnpm@11.18.0 exec supabase db lint --local --level error → EXIT=0, no schema errors",
+        "npx pnpm@11.18.0 exec supabase test db → EXIT=1 por estado do banco: 109 arquivos, com seed de desenvolvimento visível (ex.: authz vê 'Ana Almeida' onde a fixture espera 'Hidden Member', users_pkey duplicado). Os 4 arquivos do domínio passam: listing-market, listing-lifecycle, listings-moradia e listing-alerts — inclui negativa do banco para item sem categoria (23514) e alcance dono/cidade/terceiro",
+        "Banco limpo não pôde ser provado: há UM Supabase local compartilhado com outros executores e apagar/recriar é proibido pelo contrato; a prova limpa depende de um reset de outro dono",
+        "database.generated.ts veio de `supabase gen types --local --schema public`; a anotação `p_path: string | null` de set_community_image foi preservada porque a RPC aceita NULL e o app do RECON-034 passa NULL — regenerar exige corrigir apps/web/app/(owner)/communities/actions.ts, fora dos caminhos permitidos deste contrato"
+      ],
+      "tests": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-039.task.yml",
+        "npx pnpm@11.18.0 exec supabase migration up --local --include-all",
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 exec supabase test db (supabase/tests/listing-market.sql, listing-lifecycle.sql, listings-moradia.sql, listing-alerts.sql)",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/listings"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-039.task.yml",
+        "docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md",
+        "supabase/migrations/20260911043053_listings_market_and_homes.sql",
+        "supabase/migrations/20260911040000_drop_legacy_market_listings.sql",
+        "supabase/migrations/20260912055212_listing_transition_guard_reset.sql"
+      ],
+      "dependencies": [],
+      "blockers": [],
+      "updatedAt": "2026-09-12",
+      "completedAt": "2026-09-12",
+      "sourceRevision": "f81534d"
+    },
+    {
+      "id": "RECON-045",
+      "title": "A classe tabs--secondary nao tinha regra e a aba ativa sumia em tres telas",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "As telas /salvos, /recommendations e /events aplicavam a classe tabs--secondary no componente de abas e nenhum arquivo de estilo a definia; o build fixado do HeroUI nao aplica o slot da variante secondary (registrado em (shell)/salvos/page.tsx). Medido: fileira esticada na largura inteira e nenhuma marca na aba ativa. A correcao e uma regra unica em apps/web/app/globals.css que as tres telas herdam: borda inferior de 2px em --semantic-action-primary, peso 600 e cor no item [data-selected=true], a mesma aparencia que /mercado ja renderiza. A fileira passou a ter largura de conteudo e o chevron de rolagem que o HeroUI injeta (16x16, reprova a regua de alvo de toque 44x44 do produto) foi escondido; a pagina nao rola em 375. tests/unit/visual/tab-variant-rule.test.ts reprova qualquer classe modificadora (name--modifier) usada nas telas sem regra em CSS do produto, fechando o mecanismo e nao apenas o caso.",
+      "checklist": [
+        "Regra unica em globals.css marca a aba ativa nas tres telas ✅",
+        "Teste reprova classe modificadora aplicada sem regra, com controle positivo e negativo ✅",
+        "Runtime confirma [role=tab][data-selected=true] com borda de 2px e peso 600 em 375/768/1440 ✅ 16/09 (lote AC): medido nas TRÊS telas pela sonda .visual/recon-loteAC-tabs/probe-membro1.json (2px, rgb(22,71,52), peso 600, sem overflow). Duas medições erradas foram descartadas no caminho: a primeira pegou o [role=tab] da navegação primária em /events, e a segunda usou o ator visual@, que não tem evento próprio — o grupo de abas de participação não renderiza nesse caso (hasOwnEvents, events/page.tsx:912). Com membro1 a aba ativa é 'Organizando' e mede 2px/600",
+        "Capturas validas de /salvos, /recommendations e /events com 0 achados em 375/768/1440 ✅ 16/09 (lote AC): .visual/recon-loteAC-final, runnerRevision d2012429, runnerDirty=FALSE (o único untracked saiu do caminho durante a corrida), 3/3 válidas por rota, 0 achados e 0 failedRequests. A citação anterior (runnerRevision 8c29cd2, árvore limpa) era irrecuperável — nenhum dos 153 report.json de .visual a continha (achado da revisão independente)",
+        "Gate completo verde ✅ 16/09 (lote AC): GATE VERDE exit 0 com log inteiro em .visual/gate-loteAC.log — lint 8s, typecheck 21s, build 107s, test 39s, secrets 8s. Contagens reais medidas nesse log: 887 unit + 189 privacy/scope + 114 scope (apps/mobile 76, apps/web 19). O número '826 unit' que constava aqui estava obsoleto",
+        "Revisao independente (reviewer_must_differ_from_executor) ✅ 16/09: três rodadas com o mesmo revisor, em sessão separada. A primeira deu FAIL por citação irrecuperável; a segunda manteve FAIL por três pontos estreitos (/events sem ator com evento próprio, gate sem log, linhas desmentidas anexadas em vez de retratadas); a terceira deu PASS em (a) regra única, (b) teste com controle positivo e negativo, (c) capturas e aba ativa nas três telas em 375/768/1440, (d) gate completo com log. Ressalva já tratada: o probe passou a medir também aria-selected (true nas nove medições)"
+      ],
+      "proof": [
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-045.task.yml -> EXIT=0, 1 contrato valido",
+        "Sonda de estilo computado versionada: scripts/visual/probe-tab-style.mjs, artefato .visual/recon-loteAC-tabs/probe-membro1.json. [role=tab][data-selected=true] devolve border-bottom-width 2px, border-bottom-color rgb(22,71,52) (--semantic-action-primary) e font-weight 600 nas TRÊS telas e nas três larguras, sem rolagem horizontal de página. O ATOR é o que decide em /events: o grupo .tabs--secondary só renderiza quando a pessoa tem evento próprio (hasOwnEvents, events/page.tsx:912) — com visual@ são 0 containers; com membro1 a aba ativa é 'Organizando' e mede 2px/600",
+        "RETRATADA em 16/09 (lote AC): a citação anterior (runnerRevision 8c29cd2, arvore limpa) era irrecuperável — nenhum dos 153 report.json de .visual a continha, e todos tinham runnerDirty=true (achado da re-revisão independente). Prova viva: capture.mjs em /salvos, /recommendations e /events -> .visual/recon-loteAC-final, runnerRevision d2012429, runnerDirty=FALSE, 3/3 válidas por rota, 0 achados e 0 failedRequests em 375/768/1440",
+        "RETRATADA em 16/09 (lote AC): o número '826 unit' que constava aqui estava obsoleto. npx pnpm@11.18.0 gate -> EXIT=0, GATE VERDE (lint 8s, typecheck 21s, build 107s, test 39s, secrets 8s), log completo em .visual/gate-loteAC.log; contagens reais medidas: 887 unit + 189 privacy/scope + 114 scope (apps/mobile 76, apps/web 19)",
+        "Lote AC 16/09/2026: .visual/recon-loteAC-final (runnerRevision d2012429, runnerDirty=false, valid=true, invalid=0, high=0) cobre /salvos, /recommendations, /events, /communities, /communities/[id], /communities/[id]/admin/media, /events/novo, /events/[id]/perguntas e as cinco rotas de /configuracoes em 375/768/1440",
+        "Sonda de estilo em scripts/visual/probe-tab-style.mjs (artefato .visual/recon-loteAC-tabs/probe-membro1.json): /salvos e /recommendations com borda de 2px e peso 600 nas três larguras; /events idem quando o ator tem evento próprio (membro1)",
+        "Fechamento 16/09/2026 (lote AD): re-revisão independente final deu PASS nos quatro itens. O probe grava também aria-selected=true no elemento ativo, nas três telas e nas três larguras — o item do contrato sobre o anúncio para leitor de tela deixou de ser o único sem medição (artefato .visual/recon-loteAC-tabs/probe-membro1.json)"
+      ],
+      "tests": [
+        "tests/unit/visual/tab-variant-rule.test.ts",
+        "node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-045.task.yml"
+      ],
+      "links": [
+        "docs/agents/tasks/RECON-045.task.yml",
+        "apps/web/app/globals.css",
+        "apps/web/app/(shell)/salvos/page.tsx",
+        "apps/web/app/(shell)/mercado/page.tsx"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "7c1ff93",
+      "completedAt": "2026-09-16"
+    },
+    {
+      "id": "RECON-030-GUIA-FOTOS",
+      "title": "Guia: foto por referência (a prancha desenha cards com foto)",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "backend",
+      "status": "next",
+      "description": "A prancha 12 desenha os cards do guia com foto e o runtime não tem de onde tirá-la: medido em 16/09/2026, `arrival_guide_entries` não tem coluna de imagem (photo/image/banner = 0 linhas) e nenhuma tela do guia usa imagem. O item estava registrado como [dado], mas não é fixture: é coluna, caminho de upload na curadoria (/guide-queue é quem aprova) e exibição no card. Fecha junto o par da prancha 12 no julgamento.",
+      "checklist": [
+        "Migration: coluna de imagem em arrival_guide_entries + CHECK de caminho (mesmo desenho da capa de evento, 20260915160000) — o arquivo mora no bucket, a linha guarda o ponteiro",
+        "Upload na curadoria: o operador anexa a foto ao promover/aprovar a referência, com o mesmo contrato de mime e tamanho do bucket",
+        "Card do guia exibe a foto assinada (createSignedUrls em lote, como /events e /communities já fazem), com alt que não repete o nome",
+        "Fixture de mídia no scripts/visual/media-fixture.mjs para a referência semeada, e captura da rota do guia com a foto",
+        "pgTAP positivo/negativo: caminho fora da pasta, mime inválido e membro sem papel de curadoria"
+      ],
+      "proof": [
+        "Médido em 16/09/2026: select column_name from information_schema.columns where table_name = 'arrival_guide_entries' and column_name ~ 'photo|image|banner' → 0 linhas; grep de imagem em app/(shell)/guide → 0 usos",
+        "Precedente do mesmo lote de trabalho: capa de evento (20260915160000) e imagens de comunidade — mesmo desenho de coluna + trigger + assinatura em lote"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 test:db (pgTAP da coluna e do caminho)",
+        "node scripts/visual/capture.mjs com a rota do guia"
+      ],
+      "links": [
+        ".visual/compare/julgamento.md (prancha 12)",
+        "supabase/migrations/20260915160000_event_cover.sql"
+      ],
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "285059d",
+      "dependencies": [],
+      "completedAt": null
+    },
+    {
+      "id": "RECON-049",
+      "title": "Fechar os itens [componente] restantes da auditoria visual web",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Os itens [componente], [backend] e [dado] da auditoria visual web foram fechados em nove lotes (M a V) entre 15/09 e 16/09: contratos de captura (0 INVALID no app inteiro), painel do operador, régua de movimento, formulários, convite de prestador, Salvos e Sugerir referência do guia, Reenviar do convite familiar e os estados vazios. Resta UM item, e ele não é escolha de agente: o ramo de acesso negado em /communities/[id] (prancha 60) depende de decidir o que é uma comunidade não apresentável.",
+      "checklist": [
+        "01: faixa de atividade, aba Acompanhando, card De mudança?, avatares de presença, card de evento no feed ✅ 15/09 (aba Acompanhando: post_follows + feed_following + botão no cartão; De mudança? → /localidade; card de evento no feed; faixa verificada). Avatares de presença ✅ 16/09 (lote Z: o seed não tinha NENHUMA linha em event_rsvps — a copy da prancha não tinha de onde sair. Cinco membros de Manaus confirmam no próximo evento, e o rail e o cartão do feed renderizam 4 avatares + \"Dono da Vila, Bruno Almeida e mais 3 pessoas vão\"; captura recon-loteZ-inicio: 0 achados). Pegadinha medida: a `occurrence_date` é a data UTC (`starts_at.slice(0,10)`), não a data que a tela mostra — semear 19/09 local deixava a presença invisível",
+        "12: bloco editorial do guia (hero, cards com foto, referências por assunto, atualizados recentemente) e rail Comece por aqui/Ajude a melhorar ✅ 15/09 (captura recon049-guia-final2: 0 findings). As FOTOS do guia não são [dado]: medido em 16/09, `arrival_guide_entries` não tem coluna de imagem (photo/image/banner = 0 linhas) e nenhuma tela do guia usa imagem — é [backend] e virou o card RECON-030-GUIA-FOTOS",
+        "01/61: topo do guia com Salvos + Sugerir referência e abas Guia|Mercado; banner Encontrou informação desatualizada? — abas ✅ 15/09; Salvos ✅ 15/09 (lote R: guide_entry_saves + marcador no cartão + aba Guia em /salvos) e Sugerir referência ✅ 15/09 (lote T: suggest_guide_entry grava pending na fila que /guide-queue já revisa, com cidade derivada da associação, submitted_by e cota)",
+        "42: menu … nos cards de comunidade ✅ 15/09 (menu real nos cards + Cancelar pedido no rail de pedidos)",
+        "43: botões Sair e Cancelar pedido (ver RECON-050 para o recorte R3) e Ver pedido no detalhe ✅ 15/09 (Sair/Cancelar na RECON-050; Ver pedido abre o detalhe com motivo e ações; captura recon049-pending-5: 0 findings)",
+        "56: modal de denúncia sobre o conteúdo — ADJUDICADO em 13/09 e reconciliado em 15/09 (página de denúncia isolada mantida: o payload carrega o contexto e a superfície é alcançável; a adjudicação já estava registrada no julgamento, o card é que seguia com a linha aberta)",
+        "70: capa do evento ✅ 15/09 (lote L: a coluna existe em `events.cover_path`, com trigger de validação de pasta e captura recon-loteM-completo), Quem pode ver ✅, card Quem pode participar ✅, seção O que acontece depois de publicar ✅ — os três fechados em 15/09 com captura recon049-evento-novo: 0 findings",
+        "75: contagem nas abas e autora no meta do card ✅ 15/09 (é a prancha 80: autora no meta do card e no cabeçalho de cada resposta + aba 'Pedidos (N)' com contagem por RLS; capturas recon049-loteH e recon049-loteH3, 0 findings). Estado zero com coluna de inbox ✅ 15/09 (lote V: corrida dedicada com membro-rio@ — cidade sem pedidos — mostra 'Pedidos (0)' e o vazio honesto; a corrida vazia expôs e fechou um defeito que o estado populado escondia: um <Button> dentro de um <Link> no EmptyState, alvo de 97x19 e HTML inválido)",
+        "21: trilha de /meus-anuncios com destinos de 44px, transição e página atual marcada ✅ 15/09 (captura recon049-loteH3: 0 findings)",
+        "13: trilha, navegação de seções e CTA do rail de /mercado como alvos de 44px ✅ 15/09 (captura recon049-loteH4) e item 6c ✅ lote K (o indicador do checkbox desta tela é um <span> local, não componente do HeroUI: transição nele, nos labels, nos campos de preço, nos dois selects e nos links das cartas). /mercado fecha em 0 findings nos três viewports (recon049-loteK4), junto com a medida de leitura da bio do prestador (max-w-prose vencia a classe .measure-reading; /prestadores/[id] em 0)",
+        "BUG de runtime corrigido em 15/09: Dropdown.Trigger já é um Button, e as quatro telas que punham um <Button> dentro dele renderizavam <button> dentro de <button> — HTML inválido e erro de hidratação (medido no console antes e depois: 0). Telas: feed-post-menu, communities-screen (card e pedido) e meus-anuncios",
+        "76: cards Como funciona a entrada e Se o familiar não abrir a tempo ✅ 15/09; Revogar ao lado do Copiar ✅; Reenviar ✅ 15/09 (lote U: resend_family_invitation reemite — gira o digest, devolve 7 dias e enfileira mensagem nova, com o endereço confirmado de novo porque o banco não guarda e-mail) e Cancelar = Revogar existente",
+        "79: título Convidar prestador e Cancelar ✅ 15/09; nota de conta separada já coberta pelo cabeçalho; Voltar para a comunidade e nome da comunidade no convite ✅ 15/09 (lote Q: read_provider_invitation(p_token), migration 20260915180000 — o token é o segredo e o portador legítimo lê para onde foi convidado; zero linhas para token ausente/malformado/desconhecido, status derivado para expirado/revogado/aceito, sem expor o digest do e-mail; /prestador-convite/<token> capturado em VALID com 0 achados e 11 asserções pgTAP novas)",
+        "81: chips das linhas de moderador, motivo da revogação na ficha (pendentes), item Administração no nav ✅ 15/09 (nav client com 4 itens e aria-current)",
+        "84: rail direito ✅ 15/09 (estados com resultado, vazio e sem termo; buscas recentes no localStorage) e seções Serviços/Eventos ✅ verificadas com termos que casam (rotas explorar-busca-servico e explorar-busca-evento no capture)",
+        "60 item 1: estado de acesso negado ✅ 16/09 (lote X) — decisão do dono: nome e estado da comunidade não são sigilosos. A policy communities_select_locality_member deu lugar a communities_select_authenticated (is_deleted = false), então a linha da comunidade é legível por qualquer pessoa autenticada; o público `outsider` entrou no loader e a tela renderiza AccessUnavailableState com o nome e o caminho de volta. PARTICIPAR continua fechado: request_community_membership já exigia ser da cidade, e roster/grupos/feed têm policies próprias. 8 asserções pgTAP (community-presentation-access.sql: lê a apresentação; NÃO vê roster; NÃO vê grupos; NÃO pede entrada; apagada invisível; anon sem privilégio; soft delete preserva a linha). captura .visual/recon-loteX-outsider VALID com 0 achados nas três larguras; re-captura completa .visual/recon-loteX-final com 249 capturas, 0 INVALID, 0 achados, 0 high; pgTAP canônico 119 arquivos / 1568 testes PASS)",
+        "60 item 2: estado offline da composição ✅ 16/09 (lote Y) — ConnectionLostState tinha zero instâncias e agora é a superfície de falha de transporte no compositor (o rascunho é real: feed-post-draft + autosave). Dois defeitos medidos no caminho: o classificador classificava falha de transporte como rejeição de servidor (o cliente embrulha o erro de fetch em forma de PostgREST com details preenchido e code vazio), e o compositor abria duas colunas por breakpoint de JANELA dentro de um diálogo de 512px, deixando 120px para o formulário — corrigido para max-w-4xl (dialogo 896px, formulario 504px), o que conserta a prancha 45 junto. Cenário de captura offline novo (escreve, corta a rede, publica) com contrato nominal (expectedFallback); publish/edit/offline VALID com 0 achados",
+        "45: composição verificada e provada em 15/09 — vive no diálogo Criar publicação (abas, radios Quem pode ver? com cidade + comunidade e sub-rótulos, rail Como sua publicação será vista, caixa de foto, Publicar/Cancelar); cenário publish do capture consertado e captura .visual/recon049-publicacao5 com 0 findings; a11y do diálogo corrigida (radio 44px, fechar 44px). EDIÇÃO ✅ 15/09 (lote J): cenário BIVAQUE_VISUAL_SCENARIO=edit abre o menu do próprio autor e entra em Editar publicação — .visual/recon049-edicao3, VALID e 0 findings, depois de corrigir o botão de fechar de 24x24 que a primeira captura do diálogo expôs (o defeito foi sistêmico: todos os <Modal.CloseTrigger /> do produto ganharam min-h-11 min-w-11)"
+      ],
+      "proof": [
+        ".visual/compare/julgamento.md — itens [componente] por par; adjudicados registrados na fase [forma]",
+        "FECHAMENTO AUDITADO em 16/09 (lote Z): as 18 linhas do checklist foram lidas uma a uma — 17 com ✅/adjudicação e a restante é o registro do BUG do Dropdown.Trigger, corrigido. Quatro linhas carregavam ressalva ANTERIOR ao próprio fechamento (avatares de presença \"[dado]\", capa do evento, Reenviar do convite familiar, Salvos/Sugerir referência) e foram reconciliadas com os lotes que as fecharam. A única lacuna real que a auditoria encontrou — foto por referência no guia — NÃO é [componente] nem [dado]: é backend, e saiu para o card RECON-030-GUIA-FOTOS",
+        "Lote A (01) fechado em 15/09: migração 20260915013344_post_follows (pgTAP 15/15), captura válida .visual/recon049-inicio-final, prova de interação .visual/prova-follow3.mjs (seguir→aba, desfazer→vazio, banco limpo), gate completo verde",
+        "Lotes B/C fechados em 15/09: /guide (abas, bloco editorial, rail) 0 findings; /communities (menu …) 0 findings; /admin/pending (Ver pedido com motivo, contador, rail Sobre a comunidade) 0 findings — gate completo verde nos três",
+        "Ferramenta: a regra de alvo de toque do audit passou a medir o label do controle visualmente oculto (react-aria) — o 13x13 do input era falso positivo em todo Checkbox do produto",
+        "Lote E fechado em 15/09: /configuracoes/familia (Como funciona a entrada, Revogar no bloco do link, Se o familiar não abrir a tempo) e /communities/[id]/indicar-prestador (título do card, Cancelar) — capturas .visual/recon049-loteE2 com 0 findings; prova .visual/prova-familia.mjs (criar→link→revogar, lista limpa)",
+        "Lote G (45/60) levantado em 15/09: ferramenta de captura da composição consertada (o cenário publish morria em timeout e nenhuma captura de composição existia) e o restante registrado com próximo passo concreto — os itens ficam abertos, não dispensados",
+        "Lote H fechado em 15/09: prancha 80 (autora + contagem), 21 item 3 (trilha de /meus-anuncios), 13 item 6b (alvos de /mercado) e o bug de <button> aninhado — capturas recon049-loteH, -loteH3 e -loteH4 com 0 findings; /recommendations, /meus-anuncios, /communities e /events/novo com capture VALID",
+        "Duas correções de régua medidas no lote H: o item corrente de um nav pode ser <span aria-current=page> (a trilha não linka para si mesma e o /mercado aprovado era reprovado) e o alvo de um controle rotulado é o <label> que o envolve, visível ou oculto (9 falsos positivos por viewport no rail do /mercado: input 20x20, label 222x44)",
+        "Lote J fechou o contrato de captura de /community: o defeito não era o ator (a conta de captura JÁ tem vila), era o título fixo 'Comunidade|Manaus' — o h1 da rota é o NOME da comunidade ('Vila Ajuricaba'), dado e não contrato. Virou DYNAMIC_HEADING e a rota captura VALID com 0 findings (recon049-comunidade)",
+        "Correção sistêmica do lote J: todos os <Modal.CloseTrigger /> do produto passaram a ter alvo de 44px (8 diálogos em 6 arquivos) — o defeito foi achado na primeira captura do diálogo de EDIÇÃO, que nunca tinha sido aberto por captura nenhuma",
+        "Lote F fechado em 15/09: /explorar/busca ganhou o rail dos três estados (0 findings nas capturas recon049-busca, recon049-busca-vazio, recon049-busca-servico e recon049-busca-evento); a ausência das seções Serviços/Eventos era artefato do termo, provado com termos que casam",
+        "BUG de runtime corrigido no lote E: o convite familiar nunca era criado — sendFamilyInviteAction enviava o digest do e-mail sem o prefixo \\x exigido pelo PostgREST, violando o CHECK octet_length = 32 (23514). Corrigido com byteaDigestParam e coberto por guard-rail estático tests/scope/invite-digest-serialization.test.mjs (com controle positivo e negativo)",
+        "Fila revelada pelo lote M e FECHADA em três lotes. N: painel do operador inteiro (nav com aria-current, alvos de 44px, nome acessível) e as duas trilhas atrasadas. O: a régua de movimento media um filho escolhido a dedo em vez da estrutura pintada do controle, e os formulários de publicação/prestador estavam sem transição. P: os 42 achados da matriz de canais (/configuracoes e /configuracoes/notificacoes — o label do checkbox media 16x16 e o do switch 41x25), o link de 38px de /auth/callback-error e a medida de leitura de /prestadores/<id>, que era defeito da RÉGUA (box de 616px ÷ meio em = 88 caracteres numa linha de 42 caracteres). Prova final: .visual/recon-loteP-completo — 237 capturas, 0 INVALID, 0 achados e 0 high no aplicativo inteiro (era 433 achados/123 high depois do lote M). Revisão independente dos lotes M–Q passou com ressalvas, e as ressalvas viraram o lote S: régua de leitura desconta padding, movimento exige animação real (nome de keyframes, propriedade diferente de none), alvo de toque fecha 44x44 em uma das caixas em vez da união, a página do convite separa erro de backend de token desconhecido, as trilhas voltaram a ser lista ordenada, o pgTAP do convite cobre aceito/maiúsculas/vazio/comunidade apagada (plan 15) e o report grava o hash da régua (rulers.capture/rulers.proof) para os números serem atribuíveis",
+        "[backend] Salvos do guia ✅ 15/09 (lote R: guide_entry_saves + marcador no cartão + aba Guia em /salvos com a URL acompanhando a aba; 9 asserções pgTAP). Sugerir referência ✅ 15/09 (lote T: suggest_guide_entry grava pending na fila que /guide-queue já revisa, com cidade derivada da associação, submitted_by e cota de cinco pendentes por pessoa; 13 asserções pgTAP; rota /guide/sugerir capturada em VALID com 0 achados). Reenviar do convite familiar ✅ 15/09 (lote U: resend_family_invitation reemite — gira o digest, devolve 7 dias e enfileira mensagem nova; o endereço é confirmado de novo porque o banco não guarda e-mail, e a função só aceita se o digest bater; 8 asserções pgTAP). No mesmo caminho, dois defeitos reais medidos e corrigidos: o convite NÃO nascia para domínios de dois níveis (a máscara usava o primeiro ponto e o CHECK da tabela recusava — quebrava para @exemplo.com.br) e o FormData do reenvio era montado com Object.assign, que não registra entradas)"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "recaptura por rota (scripts/visual/capture.mjs) com prova válida"
+      ],
+      "links": [".visual/compare/julgamento.md", "docs/agents/PRANCHAS-WEB-RESTANTES.md"],
+      "updatedAt": "2026-09-16",
+      "sourceRevision": "285059d",
+      "dependencies": [],
+      "completedAt": "2026-09-16"
+    },
+    {
+      "id": "RECON-050",
+      "title": "Sair da comunidade e cancelar pedido de entrada",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "next",
+      "description": "Member-initiated leave e cancelamento do próprio pedido pendente. Toca membership, RLS e dados pessoais — exige decisão humana/ADR antes de construir. ADR-20260914-saida-de-comunidade aprovado por Juan em 14/09.",
+      "checklist": [
+        "ADR/R3: política de saída (efeito em conteúdo, grupos e histórico) ✅ (ADR-20260914-saida-de-comunidade aprovado)",
+        "RPC security definer + policies de delete/update do próprio vínculo ✅ (20260914162402)",
+        "UI: Sair no hero da comunidade; Cancelar pedido no PendingBody ✅",
+        "pgTAP positivo/negativo (membro sai; terceiro não apaga vínculo alheio) ✅ (10/10)",
+        "PENDENTE: E2E do fluxo de saída com reentrada; verificação canônica db (no-seed) no operador"
+      ],
+      "proof": [
+        "julgamento.md 43: itens 1 e 5 marcados corrigidos em 14/09 (Sair no hero com modal; Cancelar pedido no PendingBody)",
+        "Captura válida .visual/recon050/shots/ — membro (dono-vila@): botão Sair visível, valid=true, 375/768/1440",
+        "Captura válida .visual/recon050-pendente20/shots/ — pendente (membro-20@): botão Cancelar pedido visível, valid=true",
+        "pgTAP supabase/tests/community-leave-cancel.sql: 10/10 ok (positivo/negativo/anon/cascata)",
+        "Gate completo verde após a implementação (lint/typecheck/build/test/secrets)"
+      ],
+      "tests": ["supabase test db", "npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:scope"],
+      "links": [
+        ".visual/compare/julgamento.md",
+        "docs/decisions/ADR-20260914-saida-de-comunidade.md"
+      ],
+      "updatedAt": "2026-09-14",
+      "sourceRevision": "167ac0a",
+      "dependencies": [],
+      "completedAt": null
+    },
+    {
+      "id": "CAPTURA-CONTRATOS-INVALIDOS",
+      "title": "Contratos de captura: as 73 capturas inválidas viram 0",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "repo",
+      "status": "done",
+      "description": "A captura completa das ~90 rotas (run .visual/recon051-completo) fechou com 73 capturas INVALID. Fechado em 15/09 (lote M): a captura completa de 79 rotas × 3 viewports (run .visual/recon-loteM-completo, 237 capturas) fecha VALID com 0 INVALID. A medição corrigiu o diagnóstico do card: NÃO eram 54 títulos com regex fixa onde o h1 é dado — lida contra a revisão anterior do capture.mjs, a lista real de rotas inválidas era 26, e a causa dominante era id de fixture morto (/groups/70000000-…0001, /imoveis/d0000000-…0001 e /events/80000000-…0001 não existem no seed), ator errado e fixture inexistente; o único título fixo errado era /explorar/servicos. As '12 sem h1' eram as fixtures mortas; as '12 em erro/carregando' eram duas causas — /denuncias/<own-report> e /messages/<thread> sem fixture resolvível, e quatro subrotas de /configuracoes aterrissando em /login porque o token de uma hora vencia no meio da corrida. As '11 de operação' e as '9 do prestador' estavam certas: eram contrato de ator.",
+      "checklist": [
+        "Trocar por DYNAMIC_HEADING (ou pelo h1 real) cada rota cujo título é dado — medido: era UMA (/explorar/servicos, 'Serviços|Resultados' × h1 real 'Prestadores de serviço'); o resto da lista eram contratos de outra natureza. Os contratos de copy inventada (/onboarding, /onboarding/locality, /onboarding/status) foram corrigidos contra o h1 que cada arquivo escreve ✅ 15/09",
+        "Dar ator próprio às 11 rotas de operação (operador@) e às 9 do prestador (prestador-seed@) ✅ 15/09 (account: na rota + mapa SEED_ACCOUNTS no capture.mjs; conta nomeada sem mapa agora é erro alto, em vez de cair na conta global)",
+        "Tratar as 12 rotas sem h1 ✅ 15/09 (não era falta de h1: eram ids de fixture mortos — /groups/70000000-…0001, /imoveis/d0000000-…0001, /events/80000000-…0001 e o detalhe de pedido sem o ator participante; ids reais no lugar)",
+        "Investigar as 12 'Unexpected error, loading or unavailable state' ✅ 15/09 (duas causas: fixtures não resolvíveis — agora resolvidas por REST com o token do ator, own-report e own-thread — e token vencido no meio da corrida, agora renovado com margem de 5 min e uma repetição da navegação)",
+        "Re-rodar a captura completa e comparar ✅ 15/09 (.visual/recon-loteM-completo: 237 capturas, 0 INVALID, valid true)"
+      ],
+      "proof": [
+        "Antes: .visual/recon051-completo/report.md — 73 INVALID de ~240 capturas. Depois: .visual/recon-loteM-completo/report.md — 0 INVALID de 237 capturas (79 rotas × 3 viewports), com as telas de operação, de prestador e do funil provadas pela primeira vez",
+        "scripts/visual/capture.mjs: SEED_ACCOUNTS (conta do seed por trás de cada account:), renovação de sessão por expires_at, repetição única quando uma rota autenticada cai em /login, fixture own-thread por REST e expectedPath com prefixo/lista",
+        "scripts/visual/capture-proof.mjs: expectedPath aceita lista e '*' de prefixo — a rota de fronteira declara o destino honesto (/login?redirect=…) sem afrouxar a comparação exata das demais",
+        "Achados de régua revelados ao chegar nessas telas (não são de identidade, e são a próxima fila): /guide-queue 27 touch-target + 6 missing-accessible-name, /configuracoes e /configuracoes/notificacoes 21 touch-target cada, /profile 15, /events/<id>/perguntas 9, /onboarding/perfil, /mercado/novo e /imoveis/<id> 6 cada"
+      ],
+      "tests": [
+        "BIVAQUE_VISUAL_RUN=... node scripts/visual/capture.mjs",
+        "BIVAQUE_VISUAL_ROUTE=<nomes separados por vírgula> node scripts/visual/capture.mjs (recorte por rota, um processo)"
+      ],
+      "links": [
+        ".visual/recon-loteM-completo/report.md",
+        ".visual/recon051-completo/report.md",
+        "scripts/visual/capture.mjs (HEADINGS, ROUTES, SEED_ACCOUNTS e sessão)",
+        "scripts/visual/capture-proof.mjs",
+        ".visual/compare/julgamento.md (lote M)"
+      ],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "6394c9f",
+      "dependencies": [],
+      "completedAt": "2026-09-15"
+    },
+    {
+      "id": "RECON-051",
+      "title": "Fixtures de seed para provar os estados [dado]/[captura]",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "testing",
+      "status": "done",
+      "description": "Completar supabase/seed.sql para que os estados desenhados existam em runtime e possam ser capturados: pedidos e respostas, DMs e thread, recomendações respondidas/marcadas, denúncias e bloqueios do membro conectado, chegadas/transferência declarada, categorias editoriais do guia, fotos de prestador. Executado em 15/09 — a conta de captura, que era um membro sem post, sem grupo, sem conversa e sem notificação, passou a ter os estados que as pranchas desenham.",
+      "checklist": [
+        "Pedido de serviço com respostas + conversa para o ator de captura ✅ 15/09 (pedido do titular ao prestador semeado, contexto 'provider' autêntico, com 4 mensagens na thread)",
+        "Conversa direta + thread aberta ✅ 15/09 (dm_conversations + dm_messages; /messages com 0 findings)",
+        "Recomendação com resposta marcada como resolvida ✅ 15/09 (duas respostas no pedido do titular e uma marcada: resolved_reply_id + is_resolved; /recommendations com 0 findings)",
+        "Denúncia do membro conectado + pessoa bloqueada ✅ 15/09 (a conta de captura JÁ era denunciante das 15 denúncias semeadas — o item do julgamento dizia 'vazio' e estava desatualizado; a captura de /denuncias agora prova a lista, e o bloqueio entrou em /configuracoes/bloqueados)",
+        "Chegadas declaradas (e variante vazia) para a operação — a declarada já existia (conta com transferência); a variante vazia não coexiste com a populada no mesmo banco: provar exige captura no banco sem seed",
+        "Prestador com foto/portfólio/catálogo ✅ 15/09 (o catálogo e a ficha já vinham do seed; a FOTO veio pelo novo scripts/visual/media-fixture.mjs, que sobe PNGs determinísticos pelo Storage API — o único caminho, porque storage.objects recusa INSERT/DELETE direto — e amarra as linhas: 8 anúncios com capa, 1 ficha de prestador, 5 avatares e faixa+miniatura da comunidade. Capturas recon051-midia: /mercado, /imoveis, /meus-anuncios, /prestadores/[id], /communities/[id] e /inicio com 0 findings e 0 high)",
+        "Rodar db:reset local e recapturar as rotas afetadas ✅ 15/09 (reset aplicado; capturas recon051 e recon051-imoveis)",
+        "Bônus do mesmo lote: o seed de mercado/moradia (6 anúncios + 2 imóveis) fecha os itens [dado] de 13/21/64, e a captura de /imoveis expôs um defeito real — o card era um link só com a foto, sem nome acessível (2 achados high) — corrigido com aria-label do título"
+      ],
+      "proof": [
+        "julgamento.md — itens [dado] e [captura] por par",
+        "supabase/seed.sql (bloco RECON-051 ao fim): publicação do titular + comentário (a notificação não-lida nasce do trigger notify_comment, não de INSERT à mão), conversa + pedido + 4 mensagens, 2 respostas de recomendação com marca de solução, denúncia e bloqueio, 6 anúncios (3 do titular: ativo/pausado/reservado) e 2 imóveis com property_details",
+        "Medido depois do reset: 3 notificações não-lidas para a conta de captura, 1 conversa, 3 anúncios do titular, 4 anúncios ativos de terceiros, 2 imóveis, 16 denúncias, 1 bloqueio, 2 respostas e is_resolved = true",
+        "Capturas recon051 (9 rotas, 3 viewports): /meus-anuncios, /recommendations, /messages, /notifications, /denuncias, /configuracoes/bloqueados e /inicio com 0 findings; /mercado com 0 high (restam 17 no-transition do indicador de Checkbox — item 13/6c, aberto); /imoveis com 2 high ANTES e 0 findings depois da correção do nome acessível (recon051-imoveis)",
+        "Fotos de anúncio, de prestador, de avatar e de comunidade resolvidas por scripts/visual/media-fixture.mjs (idempotente; rodar depois de cada db reset). Foto de EVENTO continua fora: não existe coluna de capa em events — é o item [backend] da prancha 70/48, não fixture",
+        "Mídia não entra no seed.sql de propósito: o reset zera as linhas mas deixa os arquivos no bucket, e o Storage recusa INSERT direto para servir arquivo. O script cobre os dois lados (objeto + linha) e é idempotente"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 exec supabase db reset (local)",
+        "scripts/visual/capture.mjs por rota"
+      ],
+      "links": ["supabase/seed.sql", ".visual/compare/julgamento.md"],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "294d11a",
+      "dependencies": [],
+      "completedAt": "2026-09-15"
+    },
+    {
+      "id": "RECON-052",
+      "title": "Exclusão de conta: mecanismo, indisponibilidade imediata e purga",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "description": "Fluxo iniciado pelo titular com efeito imediato de indisponibilidade e purga completa dentro do prazo fixado pela revisão jurídica. Nenhum prazo de retenção pode ser inventado em código ou UI. Tabela jurídica aprovada por Juan em 14/09 — os prazos da tabela são o contrato da implementação. Implementado em 15/09.",
+      "checklist": [
+        "ADR/R3 e tabela jurídica: aprovados em 14/09 (purga ≤15 dias — LGPD art. 19; logs de acesso 6 meses — MCI art. 15; moderação anonimizada já; família intacta) ✅",
+        "Descoberta 15/09 — pré-requisitos técnicos antes de codar: (a) profiles perdeu o estado 'hidden' (20260814052814) e a policy de SELECT lê só localidade: 'perfil oculto' exige mecanismo novo na policy de profiles (superfície sensível — foi ali que vazou o status de suspensão em 10/09); (b) reports/dM_reports.reporter_user_id são NOT NULL com ON DELETE CASCADE: a anonimização imediata exige DROP NOT NULL + update e o caso tem de sobreviver; (c) posts/comments.user_id são ON DELETE CASCADE: purga destrutiva apagaria o conteúdo, contra o item 4 do ADR ✅",
+        "Caminho que satisfaz o ADR (decidido na descoberta): auth.admin.deleteUser(id, true) — soft delete do Auth (supabase-js 2.112) purga credencial e mantém a FK do conteúdo; higienizar perfil preservando display_name; medições em bucket privado ✅",
+        "Migration: account_deletion_requests (vencimento = pedido + 15 dias, auditoria sem conteúdo pessoal) + request_account_deletion() + is_account_deletion_pending() + finalize_account_deletion() service_role ✅ 20260915101543_account_deletion.sql",
+        "Job de purga (script/rota de operação) chamando o soft delete + finalize, com evento operacional por execução ✅ private.account_deletion_dispatch_due() no pg_cron (04:00) -> /api/internal/account-deletion (segredo de worker); ordem por conta: vencimento -> endereço de contato -> mídia -> soft delete -> finalize, com pré-checagem do vencimento antes de qualquer passo destrutivo e retentativa sem desistência (backoff com teto de 1 dia)",
+        "UI em Configurações → Controles da conta com o aviso aprovado (o que sai, o que fica e por quê, canal de suporte, resposta em até 15 dias) ✅ linha destrutiva 'Excluir conta', modal com confirmação explícita e painel de 'Exclusão solicitada' com a data-limite",
+        "pgTAP: pedido idempotente; família intacta; denúncia contra terceiro sobrevive anonimizada; finalize só após o vencimento ✅ supabase/tests/account-deletion.sql 31/31",
+        "E2E: pedido revoga a sessão imediatamente; purga no prazo ✅ provado em runtime por .visual/prova-exclusao.mjs (31/31), com conta descartável: sessão 403, login user_banned, perfil fora do Data API, interação 403, saída da tela levando ao login com a sessão já revogada, purga recusada antes do vencimento e executada depois. O contrato de UI fica em tests/e2e/account-deletion-ui.spec.ts (3 viewports, não destrutivo: nunca confirma o pedido, porque confirmar bane a conta do seed)"
+      ],
+      "proof": [
+        "Revisão adversarial independente (15/09, subagente isolado): veredito FAIL com 11 achados MEDIDOS. Dois bloqueadores foram corrigidos e provados: (1) a guarda de perfil oculto estava no overload de UM argumento, que a página não usa — a página chama profile_is_visible_to_viewer(target, viewer) (apps/web/lib/profile-rpcs.ts) e o overload de dois argumentos não tinha guarda; agora tem, e o de um argumento segue dropado como 20260821000023 mandou (pgTAP 41/41); (2) o PostgREST confia no JWT e não consulta auth.sessions nem banned_until — medido: com o pedido feito e o token antigo, GET /auth/v1/user = 403 mas POST /rest/v1/comments = 201, janela de jwt_expiry (3600s). Fechado com o mesmo veto de publicação que a suspensão usa (posts, comentários, reações, anúncios, denúncias) mais salvos, acompanhar e conversa nova — a conta que sai não publica. Também corrigidos: e-mail de contato virou precondition e a limpeza por endereço roda ANTES do soft delete (novo purge_account_contact_data); mídia paginada (100/página, falha em vez de finalizar com resíduo); convites familiares dos dois lados saem na purga; retentativa sem desistência; p_error só depois de finalized_at; lote deduplicado. Registrados como decisão do dono no card RECON-052-FOLLOWUP: DMs do titular, purga dos logs de acesso após 6 meses e as superfícies de escrita ainda abertas na janela do JWT.",
+        "15/09: pré-requisitos técnicos levantados contra o schema real (ver checklist); nenhum prazo fora da tabela aprovada entra em código ou UI",
+        "pgTAP supabase/tests/account-deletion.sql: 41/41 no banco sem seed (db reset --no-seed + test:db), incluindo o negativo do overload certo da página, o veto de publicação da própria conta que sai, a limpeza de contato e o agendamento do job",
+        "Runtime .visual/prova-exclusao.mjs: 31/31 — controle positivo (visual@ lê o perfil) e negativo (deixa de ler) pela Data API, GET /auth/v1/user 403 com o token antigo, password grant user_banned, comentário 403, denúncia do titular contra terceiro sobrevive anonimizada, soft delete preserva auth.users (conteúdo não cascateia), display_name preservado, avatar removido do bucket, preferência e participação apagadas, vínculo familiar encerrado com o outro lado intacto, purga idempotente",
+        "Medições do mecanismo contra o stack local (GoTrue v2.190.0), registradas no cabeçalho da migration: apagar auth.sessions revoga a sessão na hora (403); banned_until bloqueia login e refresh (user_banned); access token pré-banimento só morre com o par banimento+sessão; soft delete troca o e-mail por cadeia aleatória — por isso o endereço de contato é capturado na rota antes do deleteUser",
+        "Testes: pgTAP 41/41; unit da rota 15/15; E2E de UI 3/3 (3 viewports, não destrutivo); runtime 31/31; suíte pgTAP inteira PASS (113 arquivos, 1506 testes) em db reset --no-seed + db:lint sem erro de schema. Unit tests/unit/infra/account-deletion-route.test.ts: 15/15 (503/401/400, not_due sem tocar em nada, not_found/already_purged, ordem contato->mídia->soft delete->finalize por invocationCallOrder, falha de contato ou de mídia não apaga credencial, paginação com offset, lote deduplicado, e-mail nunca vai para log)",
+        "Efeito colateral do mesmo commit: guard-rails de colunas de profiles (foundation-schema.test.sql, rls-or-column-regression.test.sql) reconheciam 'bio' como coluna não autorizada desde 20260911024732_profile_bio.sql — lista atualizada; e a asserção de idempotência de close_service_request comparava dois formatos do mesmo instante (card DRIFT-SERVICE-REQUESTS-CLOSE-AT)"
+      ],
+      "tests": ["supabase test db", "npx pnpm@11.18.0 gate", "node .visual/prova-exclusao.mjs"],
+      "links": [
+        "docs/decisions/ADR-20260914-exclusao-de-conta.md",
+        "supabase/migrations/20260915101543_account_deletion.sql",
+        "supabase/tests/account-deletion.sql",
+        "apps/web/app/api/internal/account-deletion/route.ts",
+        ".visual/prova-exclusao.mjs",
+        ".visual/compare/julgamento.md"
+      ],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "cd001a6",
+      "dependencies": [],
+      "completedAt": "2026-09-15"
+    },
+    {
+      "id": "RECON-052-FOLLOWUP",
+      "title": "Exclusão de conta: o que a purga não pode decidir sozinha (posse e superfície operacional)",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "backend",
+      "status": "done",
+      "description": "A purga da RECON-052 apaga dado pessoal, preferência e participação. Ela NÃO dissolve posse nem encerra superfície operacional, porque isso é decisão de produto que o ADR-20260914 não tomou — e resolvê-lo apagando conteúdo de terceiro contradiria o item 4 do mesmo ADR. Três casos ficam abertos depois que a conta some: (a) communities.owner_user_id e groups.owner_user_id continuam apontando para a conta purgada — a comunidade/grupo fica sem quem administre (o produto já tem a regra 'transfer community ownership before removing the owner', disparada pelo trigger, mas não há para quem transferir); (b) provider_accounts e listings ativos seguem no ar; (c) service_requests abertos com a conta como parte seguem abertos. A purga deliberadamente pula a linha do dono em vez de passar por cima do trigger.",
+      "checklist": [
+        "DECIDIDO 18/09/2026 pelo responsavel: quando o dono de comunidade/grupo pede exclusao, a posse passa para um MODERADOR/co-administrador existente; se nao houver ninguem, a posse passa para a OPERACAO (a plataforma administra e pode devolver a quem reivindicar). Dissolver esta descartado: apagaria conteudo de terceiros, contra o item 4 do ADR-20260914. Deixar sem dono esta descartado: comunidade sem administracao apodrece",
+        "DECIDIDO 18/09/2026 pelo responsavel: ENCERRAR tudo da conta purgada — anuncios vao para 'closed' e a conta de prestador sai do ar. Nada de morto publicado: quem salvou ve indisponivel (ja implementado), quem procura nao encontra. Pausar (preservar para restauracao) foi descartado",
+        "DECIDIDO 18/09/2026 pelo responsavel: pedido de servico aberto com a conta purgada e CANCELADO (status cancelled), com AVISO NEUTRO ao outro lado. Verificado que o pedido realmente sobrevive hoje: a purga usa admin.deleteUser(id, true) — soft delete — entao o CASCADE de auth.users nao dispara e o pedido fica aberto com uma parte que nao pode responder. O AVISO fica nomeado como pendente: exige tipo novo em notification_type + copy + deep-link, e o repositorio tem card proprio (NOTIF-DEEPLINKS) dizendo que tipo mal ligado e defeito; cancelar primeiro, avisar quando a superficie existir",
+        "Depois da decisao: migration aplicando cada regra + pgTAP positivo/negativo por caso ✅ 18/09 (lote AN): supabase/migrations/20260918114238_settle_account_possessions.sql aplica as tres regras; supabase/tests/account-deletion-possession.sql cobre 11 asserts (comunidade com moderador, comunidade sem moderador -> operacao, comunidade alheia intacta, grupo com moderador, anuncio purgado fecha e o alheio permanece, vitrine revogada e a alheia permanece, pedido cancela e o de controle permanece, e conta sem posse nao falha). Test:db 120 arquivos / 1592 asserts PASS; db:lint limpo. A rota de purga chama a regra ANTES do soft delete, com teste de ordem no unit da rota",
+        "Reabrir e reconciliar o rodape de 20260915101543_account_deletion.sql ✅ 18/09 (lote AN): o rodape NAO foi editado (migration aplicada nao se edita, nem comentario) — a reconciliacao vive no cabecalho da migration nova, que fecha as tres lacunas e diz onde. Decisao de metodo registrada: reescrever historia para parecer que sempre esteve certo e o oposto do que este repositorio exige"
+      ],
+      "proof": [
+        "supabase/migrations/20260915101543_account_deletion.sql: o DELETE de community_memberships/group_memberships exclui de propósito a linha do dono (o trigger cascade_community_membership_loss recusa removê-la)",
+        "private.cascade_community_membership_loss(): 'transfer community ownership before removing the owner' — a regra existe e a purga não passa por cima dela",
+        "Rodapé da migration: os três casos listados como pergunta ao dono do produto, não como pendência técnica",
+        "18/09/2026 — decisao 1 de 3: posse de comunidade/grupo de conta purgada vai para moderador existente; sem moderador, para a operacao. Escolhida pelo responsavel com a consequencia na mesa: dissolver apagaria conteudo de terceiros (item 4 do ADR). Implementacao entra depois das tres decisoes, numa migration com pgTAP por caso",
+        "18/09/2026 — decisao 2 de 3: vitrine e anuncios da conta purgada ENCERRAM (listings closed, conta de prestador fora do ar). Registrado com o motivo: anuncio sem dono e telefone que nao existe",
+        "18/09/2026 — decisao 3 de 3: pedido aberto CANCELA, com aviso neutro ao outro lado (aviso nomeado como pendente por exigir tipo novo de notificacao + copy + deep-link). Com as tres decisoes, o card sai de blocked: o que falta agora e implementacao verificada, nao decisao",
+        "Estado da implementacao (lote AN, interrompido): migration escrita e nao verificada, guardada como rascunho fora do repositorio porque o Docker Desktop caiu. Retomar quando o Docker estiver de pe: aplicar, rodar pgTAP com positivo e negativo por caso, regenerar tipos, ligar a chamada na rota de purga e capturar",
+        "Lote AN 18/09/2026: as tres decisoes estao implementadas e verificadas. Migration 20260918114238_settle_account_possessions aplica posse -> moderador/operacao, anuncios closed + vitrine revogada, pedidos cancelados; chamada pela rota ANTES do soft delete, com teste de ordem. pgTAP novo com 11 asserts (120 arquivos / 1592 PASS). Um defeito real apareceu no caminho e foi corrigido: o update direto de listings violava a guarda de transicao de status — a migration passou a abrir a guarda com o mesmo GUC que transition_listing usa, e a fecha em seguida. O aviso neutro saiu para o card proprio NOTIF-PEDIDO-CANCELADO"
+      ],
+      "tests": ["supabase test db"],
+      "links": [
+        "docs/decisions/ADR-20260914-exclusao-de-conta.md (item 4 e tabela jurídica)",
+        "supabase/migrations/20260915101543_account_deletion.sql (rodapé)"
+      ],
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "e9f458f",
+      "dependencies": ["RECON-052"],
+      "completedAt": "2026-09-18"
+    },
+    {
+      "id": "DRIFT-SERVICE-REQUESTS-CLOSE-AT",
+      "title": "pgTAP de close_service_request comparava o instante em dois formatos diferentes",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "repo",
+      "status": "done",
+      "description": "Encontrado na verificação canônica da RECON-052 (db reset --no-seed + test:db): service-request-tracking.sql falhava em 'encerrar de novo nao reescreve o instante do primeiro encerramento'. O RPC está correto — close_service_request só atualiza quando o status não é 'closed'. A asserção é que estava errada: comparava (to_jsonb(row) ->> 'closed_at') com closed_at::text, e o jsonb serializa o MESMO instante como 2026-09-15T10:54:47.939896+00:00 enquanto o ::text devolve 2026-09-15 10:54:47.939896+00. Medido no stack local: equal=false com o comportamento certo do RPC. Corrigido comparando instantes (::timestamptz dos dois lados), que é o que o teste quer provar.",
+      "checklist": [
+        "Medir a serialização nos dois lados (jsonb e ::text) no stack local ✅ equal=false",
+        "Confirmar que o RPC é idempotente por construção (if v_req.status <> 'closed') ✅",
+        "Trocar a comparação textual por comparação de instantes ✅",
+        "Rodar a suíte canônica e confirmar o verde ✅"
+      ],
+      "proof": [
+        "Medição: select (to_jsonb(t) ->> 'closed_at') = t.closed_at::text from (select now() as closed_at) t -> false; json=2026-09-15T10:54:47.939896+00:00, text=2026-09-15 10:54:47.939896+00",
+        "supabase/migrations/*: close_service_request só faz update quando v_req.status <> 'closed'"
+      ],
+      "tests": ["supabase test db"],
+      "links": ["supabase/tests/service-request-tracking.sql"],
+      "updatedAt": "2026-09-15",
+      "sourceRevision": "cd001a6",
+      "dependencies": [],
+      "completedAt": "2026-09-15"
+    },
+    {
+      "id": "BLOCK-PROD-DEPLOY-SECRETS",
+      "title": "Deploy automatico de migrations em producao",
+      "phase": "Launch blocker",
+      "priority": "BLOCK",
+      "category": "infra",
+      "status": "done",
+      "description": "O workflow deploy-migrations.yml dispara em TODO push para a main e tem dois jobs: Gate e Push migrations to production. Entre 16/09 e a madrugada de 17/09 o segundo morria no passo Link production project com 'Access token not provided' (os tres secrets do environment production chegavam vazios). O historico foi reconciliado e as 34 migrations pendentes foram aplicadas a mao no lote AH. Depois disso os tres secrets foram configurados e o caminho automatico voltou: os dois runs mais recentes passam Link e Push. Fechado.",
+      "checklist": [
+        "Reconciliar o historico de migrations da producao (nomes migration_* de 01/09 contra as versoes do repositorio)",
+        "Rodar o db push a partir do clone que tem os 162 arquivos (main), nunca do clone 29 atras",
+        "Configurar SUPABASE_ACCESS_TOKEN no environment production",
+        "Configurar SUPABASE_PROJECT_ID no environment production",
+        "Configurar SUPABASE_DB_PASSWORD no environment production",
+        "Reexecutar o workflow e confirmar o passo supabase db push executando",
+        "Registrar o run verde como prova de que as migrations pendentes foram aplicadas"
+      ],
+      "proof": [
+        "Run 35178620605 (push de 88a5420, merge do trabalho da campanha na main): job Gate PASS em 1m37s; job Push migrations to production FAIL em 51s no passo Link production project, com a mensagem 'Access token not provided. Supply an access token by running supabase login or setting the SUPABASE_ACCESS_TOKEN environment variable.'",
+        "O proprio log do passo imprime SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD e SUPABASE_PROJECT_ID vazios — nao e token invalido, e secret ausente",
+        "Ja falhava antes deste merge: run 35153968162 (push de 579e4b2, 16/09) falhou no mesmo passo, tambem com o Gate verde. Nao e regressao do merge; e o estado da main desde pelo menos 16/09",
+        "Efeito medido: nenhuma migration foi aplicada em producao; o passo Push migrations fica skipped. As 29 migrations novas em relacao a main anterior seguem apenas em ambiente local/CI",
+        "O ambiente production NAO exige aprovacao manual: o job migrate comeca a executar direto e falha no link, o que significa que a unica barreira entre a main e o banco de producao e o secret ausente",
+        "Reparo de historico executado em 17/09/2026 com autorizacao explicita do dono, em etapas verificadas. ANTES (leitura read-only de producao): 133 locais / 128 remotos / 0 casadas; os 128 nomes remotos batem EXATAMENTE com a lista do passo 1 (todos em 20260901*, de 17:08:24 a 23:28:42). Passo 1 marcou os 128 como reverted; conferencia intermediaria: 0 remotos. Passo 2 marcou os 128 equivalentes como applied. DEPOIS (a partir da main, 162 arquivos): 128 casadas, 0 remoto orfao, 34 pendentes de 20260901124348 a 20260915235000",
+        "ARMADILHA MEDIDA: o clone C:\\Users\\juana\\bivaque-community esta 29 migrations atras da main (133 arquivos contra 162). Com o historico ja reparado, um db push DAQUELE clone aplicaria apenas 5 das 34 pendentes e pularia 29 EM SILENCIO — inclusive guia (saves, sugestao e artigo), capa de evento, imagens de comunidade, exclusao de conta, convite de familia e a leitura de apresentacao da comunidade. O db push tem de rodar do clone na main; o caminho do CI faz checkout da main e por isso esta correto",
+        "Auditoria previa das 34 pendentes: 5 contem operacao destrutiva e todas sao seguras contra os dados existentes — drop_legacy_market_listings e no-op guardado (o tipo legado nunca existiu na producao), move_suspension_out_of_profiles copia is_suspended=true para a tabela nova ANTES de derrubar a coluna, e os tres DELETE FROM vivem dentro de funcoes (despachante, sair-da-comunidade, expurgo por e-mail), nao no corpo da migration. member_suspended_seed e tombstone: so comentario desde 05/09, nada de persona falsa em producao",
+        "APLICACAO EM PRODUCAO 17/09/2026 (autorizada pelo dono): db push --linked --include-all do clone da main aplicou as 34 pendentes. O dry-run SEM --include-all recusou de proposito, apontando 20260901124348_account_suspension e 20260901124400_member_suspended_seed como anteriores a ultima migration remota (20260901190000_locality_state_codes_rpc, aplicada fora de ordem em 01/09) — foi preciso --include-all. Snapshot do schema anterior em .visual/prod-schema-antes.sql",
+        "VERIFICACAO DA APLICACAO: migration list --linked = 162 casadas, 0 pendentes, 0 remotas orfas. Dump do schema publico: 38 -> 59 tabelas (21 novas: account_deletion_requests, community_join_reasons, dm_read_states, guide_article_revisions, guide_article_sections, guide_articles, guide_correction_requests, guide_entry_saves, listing_alert_deliveries, listing_alerts, listing_photos, listing_saves, listing_status_events, listings, notification_channel_preferences, post_follows, profile_affiliations, profile_suspensions, property_details, service_request_photos, service_requests). Colunas banner_path, thumbnail_path e cover_path presentes. db lint remoto --level error passou limpo",
+        "O que continua faltando e SO o automatismo: os tres secrets do environment production. Sem eles, cada push na main roda o Gate (que passa) e falha no link — o deploy manual pelo CLI e funcional e foi o caminho usado",
+        "FECHAMENTO 17/09/2026: o caminho automatico esta verde de ponta a ponta. Run 35275229087 (push do lote AI, 0a481dd): job Gate PASS em 1m33s e job Push migrations to production PASS em 1m2s, com os passos Link production project e Push migrations ambos verdes. Run 35275728847 (push do lote AJ, 1ef78b5) repetiu: Link production project OK e Push migrations OK",
+        "Ordem dos fatos, para nao confundir causa e efeito: (1) 16/09 e madrugada de 17/09 — tres runs seguidos falharam no Link com os secrets vazios, e nenhuma migration chegou por ali; (2) lote AG reconciliou o historico; (3) lote AH aplicou as 34 pendentes a mao, do clone da main, e verificou por dump (38 -> 59 tabelas) e db lint remoto; (4) em 17/09 os tres secrets foram configurados e (5) o CI passou a completar Link + Push. O CI nao aplicou nada novo porque o banco ja estava em dia — o que ele prova e que a esteira voltou a funcionar"
+      ],
+      "links": [],
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "1ef78b5",
+      "dependencies": [],
+      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedAt": "2026-09-17"
+    },
+    {
+      "id": "CI-TYPES-DRIFT-HAND-EDIT",
+      "title": "Check de drift de tipos contradiz a edicao a mao documentada",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "repo",
+      "status": "repo",
+      "description": "O pull-request-ci.yml regenera supabase/database.generated.ts e exige git diff --exit-code. Mas o arquivo carrega uma edicao A MAO documentada em set_community_image (p_path: string | null, com comentario 'preservar em toda regeneracao'), porque o gerador nao expressa nulabilidade de argumento e o codigo passa NULL para limpar o ponteiro da imagem. Regenerar remove a linha e o check acusa drift; preservar a linha e o check acusa drift de qualquer forma. Ou seja: o check esta vermelho por construcao neste ponto, independentemente de quem mexer.",
+      "checklist": [
+        "Dar a set_community_image um valor padrao no argumento (p_path text default null) para o gerador emitir a nulabilidade e a edicao a mao deixar de ser necessaria",
+        "Regenerar os tipos e remover o comentario de edicao manual",
+        "Confirmar o passo 'Check generated types drift' verde"
+      ],
+      "proof": [
+        "Medido em 17/09/2026 (lote AM): ao regenerar os tipos para expor public.profile_affiliations_for, a linha ajustada a mao foi removida e apps/web/app/(owner)/communities/actions.ts:397 passou a falhar no typecheck ('Type null is not assignable to type string'). A linha foi restaurada com o comentario original para o gate voltar ao verde",
+        "O comentario no proprio arquivo ja nomeava o problema: 'o gerador nao expressa nulabilidade de argumento'"
+      ],
+      "dependencies": [],
+      "completedChecklist": [false, false, false],
+      "updatedAt": "2026-09-17",
+      "sourceRevision": "07e1d2f"
+    },
+    {
+      "id": "NOTIF-PEDIDO-CANCELADO",
+      "title": "Aviso neutro ao outro lado do pedido cancelado pela purga",
+      "phase": "Reconstrução",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "done",
+      "description": "A decisao 3 do RECON-052-FOLLOWUP (18/09/2026) cancelou o pedido de servico aberto quando a conta purgada e parte dele, MAS o aviso neutro ao outro lado ficou de fora de proposito: ele exige um valor novo em public.notification_type, copy propria e deep-link. O repositorio tem card proprio (NOTIF-DEEPLINKS) dizendo que tipo de notificacao mal ligado e defeito — inserir uma notificacao orfa repetiria exatamente o defeito que aquele card existe para corrigir. O texto precisa ser neutro: dizer que o pedido foi encerrado porque a outra parte nao esta mais na plataforma, sem revelar que houve exclusao de conta (isso e dado pessoal de quem saiu).",
+      "checklist": [
+        "Valor novo em public.notification_type ✅ 18/09 (lote AU): migration 20260918214735 adiciona 'service_request' com ADD VALUE em statement separado (o Postgres proibe usar valor de enum recem-adicionado na mesma transacao que o criou)",
+        "Copy neutra no app ✅ 18/09 (lote AU): deep-links.ts devolve 'O pedido em que você estava foi encerrado'. Nao diz que houve exclusao: o motivo da saida e dado pessoal de quem saiu, e a LGPD nao autoriza contar a terceiro",
+        "Deep-link do tipo novo ✅ 18/09 (lote AU): /pedidos/<target_id>, rota real do acompanhamento. Tipo fica FORA de rendersWithActor de proposito (ator nulo) e o comentario diz para nao 'consertar' adicionando o case",
+        "Inserir a notificacao em settle_account_possessions ✅ 18/09 (lote AU): nasce das linhas realmente canceladas (CTE com RETURNING) e o destinatario e quem NAO foi purgado; o CASE cobre pedinte e prestador",
+        "Teste de unidade da copy + pgTAP ✅ 18/09 (lote AU): supabase/tests/service-request-cancelled-notice.sql com 8 asserts — cancela nos dois papeis, avisa a outra ponta nos dois, nenhum aviso nomeia quem saiu, tipo e alvo proprios, pedido sem a conta purgada nao cancela nem avisa, e pedido ja cancelado nao gera aviso novo. test:db 121 arquivos / 1600 asserts PASS",
+        "Captura da tela de notificacoes com o tipo novo renderizado ✅ 18/09 (lote AV): fixture no seed (um pedido realmente cancelado com a conta de captura de um lado, e a notificacao com ator NULO) — o seed nao tinha nenhuma notificacao DESTE tipo, e sem fixture a tela nao provava nada. Captura .visual/recon-loteAV-notif: 0 achados em 375/768/1440, com 'O pedido em que você estava foi encerrado' renderizado, sem ator e sem revelar exclusao. Efeito colateral bom: o badge de nao-lidas da sidebar apareceu (a faixa de retorno do RECON-038 tambem dependia de notificacao real no seed)"
+      ],
+      "proof": [
+        "Registrado em 18/09/2026 ao implementar o lote AN: a alternativa seria inserir a notificacao com um tipo existente (direct_message, por exemplo), o que seria mentira no dado — o tipo diz o que a notificacao e. O card NOTIF-DEEPLINKS existe justamente porque tipos mal ligados nao navegam",
+        "Lote AU 18/09/2026: o aviso existe de ponta a ponta no dado e no app — tipo proprio, copy neutra, deep-link e destinatario correto, com pgTAP de 8 asserts nos dois papeis. O unico item aberto e a captura da tela renderizada, que exige uma notificacao real do tipo novo no banco",
+        "Lote AV 18/09/2026: o card fecha de ponta a ponta — dado (tipo proprio, destinatario correto, ator nulo), app (copy neutra e deep-link) e tela (captura com o texto renderizado e 0 achados). A fixture entrou no seed porque o tipo nao existia em nenhuma jornada do seed, e sem ela a prova visual seria vazia"
+      ],
+      "dependencies": [],
+      "completedChecklist": [true, true, true, true, true, true],
+      "updatedAt": "2026-09-18",
+      "sourceRevision": "fe5887e",
+      "completedAt": "2026-09-18"
+    },
+    {
+      "id": "OPS-CONCORRENCIA-LANCAMENTO",
+      "title": "Teto de concorrencia antes do lancamento: login e pool da API",
+      "phase": "Operacao",
+      "priority": "P1",
+      "category": "infra",
+      "status": "next",
+      "description": "Medicao sob concorrencia com 3.971 usuarios de carga em 19 cidades. O banco tem folga enorme (108.000 tps diretos com 50 clientes, 0,44ms). O LOGIN e o recurso mais apertado: GoTrue com bcrypt e CPU puro, teto de ~100-120 req/s, e p95 de 633ms a 50 simultaneos (x8.8 sobre o p95 de 1). A LEITURA pelo caminho real do app (RPC feed_community) entrega ~1000 req/s com p95 de 99ms a 50 simultaneos e ZERO falhas. O ponto de atencao antes de abrir: num pico de 500 pessoas entrando juntas, a fila do login e de ~4s no ambiente local; o que escala auth e CPU para o GoTrue, nao ajuste de banco.",
+      "checklist": [
+        "Medir login sob concorrencia (feito): teto ~100-120 req/s, p95 633ms a 50 simultaneos, 0 falhas na medicao final",
+        "Medir leitura pelo caminho real do app (feito): ~1000 req/s, p95 99ms, 0 falhas",
+        "Medir o banco direto para separar camada (feito): 108.000 tps com pgbench, o banco nao e o gargalo",
+        "Antes do lancamento: dimensionar CPU do GoTrue para o pico de entradas simultaneas esperado",
+        "Antes do lancamento: decidir o pool do PostgREST (PGRST_DB_POOL nao esta definido, entao vale o padrao de 10) para o ambiente implantado",
+        "Reavaliar depois do primeiro ambiente implantado, porque os ABSOLUTOS daqui sao de container unico local e nao transferem"
+      ],
+      "completedChecklist": [true, true, true, false, false, false],
+      "proof": [
+        "Lote BC 19/09/2026: medicao sob concorrencia entregue em scripts/load/concurrency.mjs, com duas fases separadas (login = CPU do GoTrue; leitura = RPC do caminho real). Resultado final, com 0 falhas nas duas fases: login de 19/s a 1 simultaneo para ~100-117/s com p95 de 633ms a 50; leitura de 137/s a 1002/s com p95 de 99ms a 50. Referencia do banco medida no mesmo ambiente com pgbench: 108.000 tps e 0,44ms com 50 clientes, o que prova que o teto esta na camada de API e nao no banco.",
+        "DOIS ERROS DE MEDICAO meus, corrigidos e registrados no proprio script: (1) a primeira versao media /rest/v1/posts?order=created_at.desc sem filtro de escopo, que NAO e o caminho do produto e nao tem indice — 40ms no banco contra 0,2ms da forma indexada; reportaria 88 req/s com p95 de 1,4s quando o caminho real faz ~1000 req/s com p95 de 99ms, ou seja 12x melhor; (2) a fase de leitura pegava os tokens DEPOIS de a fase de login martelar o auth, e quando vinham vazios ela media 'Bearer undefined' — 100% de erro em 1ms, rejeicao instantanea e nao leitura. Agora as sessoes vem antes e o script ABORTA se faltarem.",
+        "Os erros HTTP 500 de login vistos na primeira rodada (dial error do GoTrue para o banco, 'cannot assign requested address') NAO se repetiram nas rodadas seguintes: 0 falhas. Ficaram caracterizados como limitacao de rede do Docker local sob rajada, nao como capacidade da aplicacao — e por isso nao entraram como achado de produto."
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-19",
+      "sourceRevision": "90e4c94"
     }
   ]
 }

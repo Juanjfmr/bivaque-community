@@ -1,0 +1,54 @@
+{
+  "id": "81-web-comunidade-admin",
+  "kind": "web",
+  "group": "community",
+  "title": "Web: administrar a comunidade",
+  "screens": ["Administração da comunidade", "Imagens da comunidade"],
+  "reviewNotes": [
+    "R31 lista três subrotas: /admin (geral com links), /admin/moderators, /admin/providers. A prancha une as duas primeiras em uma só tela (Administração da comunidade) porque a navegação interna é uma lista de blocos — não um índice de links — e isso é mais coerente com a spec §4.3 'gestão já existente: configurações, responsáveis/moderadores e prestadores autorizados'. A página /admin raiz não foi desenhada: a tela concreta da subrota não tem conteúdo útil sem os blocos.",
+    "Só o dono promove e despromove moderadores. A migration 023 corrigiu a RPC para exigir owner_user_id; despromover moderador é também do dono e a RPC já fazia isso. A tela implementada em admin/moderators usa dois Server Actions separados (addCommunityModeratorAction e removeCommunityModeratorAction). A linha do próprio dono aparece com selo Dono e sem botão — não há como se despromover.",
+    "Dono da vila não precisa aparecer na lista de 'Promover membro aprovado'. O filtro da page.tsx é `role=member, status=approved`, então o próprio dono (role=owner) fica de fora. A lista de 'Moderadores atuais' mostra moderador+owner com ordenação por role (owner primeiro) — Renata e João como moderadores, Carlos como dono.",
+    "Prestadores atestados (admin/providers) passam pela RPC list_community_providers, que reconfere a posse no banco com caller explícito. Revogar não apaga: marca data/motivo e desliga o alcance; o estado revogado continua visível aqui para auditoria. A prancha mostra uma ficha ativa com campo de motivo e botão Revogar ficha (perigo), e uma ficha revogada (Rosana) com selo rose e data de revogação — sem campo de motivo, sem botão.",
+    "Imagens da comunidade (admin/media) usa MediaField duas vezes (Faixa de topo e Miniatura), com aviso de erro e aviso de sucesso por papel (erro: rose100 com borda rose700; sucesso: pine100 com pine700). A página mostra 'Faixa atualizada.' como confirmação recente, depois o upload e o Remover. Os limites (10MB, PNG/JPG/WEBP) vêm de COMMUNITY_IMAGE_MAX_BYTES e COMMUNITY_IMAGE_MIME_TYPES em lib/communities/community-media.ts.",
+    "Só quem responde pela comunidade pode enviar, trocar e remover as imagens. A checagem é canManage = community.owner_user_id === user.id — não inclui moderadores. A prancha desenha o caso positivo (Carlos é o dono). O caso negativo aparece como parágrafo em rose700/Sunken dizendo 'Só quem responde pela {nome} pode enviar, trocar ou remover as imagens.'",
+    "Imagens são reescritas pelo navegador antes de subir para remover EXIF — o canvas reencoda em JPEG q=0.92 conforme media-form.tsx linha 38-56. A URL servida vem de signCommunityImageUrls, que retorna URLs assinadas válidas por 24h. Esse detalhe de segurança aparece como nota privada em rose100 ao fim da tela 2.",
+    "Lacuna registrada: nenhum contrato RECON-* possui a rota do console de administração. A prancha está ancorada no RECON-009 (mesmo contrato da 73-web-comunidade-pedidos — quem entra na comunidade), e o console em si não tem dono no contrato. RECON-024 cobre o painel do prestador (R45/R46), não a gestão da comunidade.",
+    "A navegação do console do dono é o que está implementado em admin/layout.tsx: 'Console — {nome}' à esquerda e os links Pedidos de entrada, Imagens, Voltar à comunidade à direita. A prancha adiciona um link Administração para refletir o índice de /admin (admin/page.tsx) sem alterar o layout.tsx; quem reproduzir a tela deve confirmar a versão real do layout."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do console do dono copiado de src/73-web-comunidade-pedidos.html, com o link Administração adicionado ao lado de Imagens para refletir admin/page.tsx (o layout.tsx atual tem só Pedidos de entrada, Imagens e Voltar à comunidade — divergência registrada). Painel 1 une admin/moderators e admin/providers em uma só tela de Administração da comunidade: Moderadores atuais (Carlos Ribeiro como dono com selo Dono, Renata Menezes e João Sarmento como moderadores com botão Despromover), Promover membro aprovado (Lúcia Prado e Ana Cláudia como membros aprovados com botão Promover), e Prestadores atestados (Marcelo Silveira ativo com campo de motivo e Revogar ficha; Rosana Borges revogada em 03/09/2026). Painel 2 é admin/media com o aviso de sucesso 'Faixa atualizada.', o bloco Faixa de topo (imagem larga 168px com legenda alternativa) e o bloco Miniatura (imagem quadrada 148px), cada um com upload dashed-border e botão Remover.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-009",
+  "journey": {
+    "id": "web-administrar-comunidade",
+    "titulo": "Administração da comunidade — moderadores, prestadores e imagens",
+    "plataforma": "web",
+    "grupo": "community",
+    "persona": "Dono da comunidade que responde por ela",
+    "comeca": "Console da comunidade aberto",
+    "termina": "Moderador promovido, prestador revogado, ou imagem trocada",
+    "acoes": ["Administrar comunidade", "Trocar imagem"],
+    "etapas": [
+      {
+        "nome": "Administração",
+        "passos": [
+          { "tela": "81-web-comunidade-admin#0", "acao": "despromove um moderador" },
+          { "tela": "81-web-comunidade-admin#0", "acao": "promove um membro aprovado a moderador" },
+          { "tela": "81-web-comunidade-admin#0", "acao": "revoga a ficha de um prestador com motivo" }
+        ]
+      },
+      {
+        "nome": "Imagens",
+        "passos": [
+          { "tela": "81-web-comunidade-admin#1", "acao": "troca a faixa de topo e confirma o aviso de sucesso" },
+          { "tela": "81-web-comunidade-admin#1", "acao": "remove a miniatura" }
+        ]
+      },
+      {
+        "nome": "Sem permissão",
+        "passos": [{ "tela": "81-web-comunidade-admin#1", "acao": "tenta enviar imagem sem ser dono; recebe a mensagem em rose700" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 81-web-comunidade-admin — `/communities/[id]/admin`, `/admin/moderators`, `/admin/providers`, `/admin/media`\n\n**Etapa:** W03. **Painéis:** administração (moderadores + prestadores); imagens (faixa + miniatura).\n\nPrancha criada em 12/09/2026, depois do handoff. R31 já existia como spec, mas o guia só tinha pranchas dos fluxos de quem pede (41) e de quem decide entrada (73). Faltava a autoridade visual da gestão. Esta é ela.\n\n**Lacuna registrada:** nenhum contrato RECON-* cobre a rota do console de administração. A prancha está ancorada no RECON-009 — mesmo contrato da 73-web-comunidade-pedidos — e o console em si não tem dono no contrato. RECON-024 cobre o painel do prestador (R45/R46), não a gestão da comunidade.\n\n### Composição\n\nShell do console do dono copiado de src/73-web-comunidade-pedidos.html. Topnav com \"Console — Jardim das Acácias\" à esquerda e os links à direita (Painel 1: Pedidos de entrada, Imagens, Administração ativa, Voltar à comunidade; Painel 2: Pedidos de entrada, Imagens ativa, Administração, Voltar à comunidade). A divergência entre o desenho e o layout.tsx atual está registrada — o índice admin/page.tsx tem os três links; o layout ainda não inclui Administração.\n\n**Administração** — H1; lead explicando que só o dono promove e revoga. Três blocos:\n\n- **Moderadores** — Carlos Ribeiro como dono (selo pine100 com pine700, texto \"Promove e revoga\", sem botão); Renata Menezes e João Sarmento como moderadores (selo igual, texto \"Aprova pedidos e remove membros\") com botão Despromover em secondary.\n- **Promover membro aprovado** — Lúcia Prado e Ana Cláudia como membros aprovados (selo sunken com ink700) com botão Promover a moderadora em primary.\n- **Prestadores atestados** — Marcelo Silveira como Eletricista com selo pine100 ativo, campo de motivo e botão Revogar ficha em rose100/rose700; Rosana Borges como Pediatra revogada em 03/09/2026, motivo \"mudou de cidade\", sem campo nem botão.\n\nNota privada em rose100 com ícone de cadeado explicando que o motivo de revogação é registrado na auditoria da comunidade.\n\n**Imagens** — H1; lead explicando que a faixa aparece no topo da apresentação e a miniatura nos cartões. Aviso de sucesso `Faixa atualizada.` em pine100 com ícone de check. Dois blocos MediaField:\n\n- **Faixa de topo** — bloco surface com borda color-mix; caixa de 168px de altura com gradiente pine100/E8EFEA/E2F0F7 e legenda alternativa visível; upload dashed-border com ícone de imagem e texto \"Trocar imagem\"; botão Remover em secondary com ícone de lixeira.\n- **Miniatura** — bloco surface com borda color-mix; caixa quadrada de 148px com legenda alternativa; mesmas ações de upload e remover.\n\nNota privada em rose100 explicando que as imagens são reescritas pelo navegador antes de subir para remover EXIF, e que os endereços servidos são assinados válidos por 24h.\n\n### Estados e limites\n\nA RPC is_current_user_community_moderator é a porta de entrada do layout; sem dono ou moderador, o redirect cai para /communities/[id] sem página de erro. Promover e despromover são ações idempotentes — repetir a chamada não duplica nem corrompe a linha de community_memberships. Revogar prestador não apaga a ficha nem a conta: marca data e motivo, e a vitrine da comunidade deixa de exibir. A página /admin/providers mostra fichas revogadas com a data, sem campo de motivo (motivo aparece em auditoria, não na lista operacional).\n\nO upload reescreve a imagem em JPEG q=0.92 antes de subir para descartar EXIF (coordenadas, dispositivo, hora). A URL assinada é obtida por signCommunityImageUrls e dura 24h. Quem não é dono vê a mensagem em rose700/Sunken 'Só quem responde pela {nome} pode enviar, trocar ou remover as imagens.' — sem formulário de upload.\n\nNomes, fotos e motivos são ilustrativos: consolidar com perfis únicos na implementação."
+}

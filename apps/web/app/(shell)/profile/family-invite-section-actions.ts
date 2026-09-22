@@ -85,7 +85,12 @@ export async function sendFamilyInviteAction(
   const { error } = await supabase.rpc("create_family_invitation", {
     p_inviter_user_id: userId,
     p_token_digest: byteaDigestParam(tokenDigest),
-    p_invitee_email_digest: emailDigest,
+    // O digest do e-mail precisa da MESMA serialização do token: sem o
+    // prefixo \x o PostgREST entrega 64 bytes (hex nu) e o CHECK
+    // octet_length = 32 derruba o insert com 23514 — provado em runtime em
+    // 15/09/2026 (o convite familiar nunca criava convite). Ver
+    // lib/invites-bytea.ts.
+    p_invitee_email_digest: byteaDigestParam(emailDigest),
     p_invitee_email_hint: emailHint(email),
   })
 
@@ -140,4 +145,63 @@ export async function revokeFamilyInviteAction(formData: FormData) {
   }
 
   revalidatePath("/profile")
+  revalidatePath("/configuracoes/familia")
+}
+// Reenviar (prancha 76): o token em claro existe uma vez só, então reenviar é
+// REEMITIR. O banco não guarda o e-mail — quem reenvia informa o endereço de
+// novo e a função só aceita se o digest bater com o do convite. O link antigo
+// deixa de valer no mesmo instante.
+export async function resendFamilyInviteAction(
+  formData: FormData,
+): Promise<{ token: string } | undefined> {
+  const invitationId = formData.get("invitationId")
+  const email = formData.get("email")
+  if (typeof invitationId !== "string" || invitationId.length === 0) {
+    throw new Error("Convite não identificado.")
+  }
+  if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("Informe o mesmo e-mail que recebeu o convite.")
+  }
+
+  const userId = await readSessionUserId()
+  if (!userId) throw new Error("não autenticado")
+
+  const { createHash, randomBytes } = await import("node:crypto")
+  const token = randomBytes(32)
+  const tokenDigest = createHash("sha256").update(token).digest("hex")
+  const normalizedEmail = email.trim().toLowerCase()
+  const emailDigest = createHash("sha256").update(normalizedEmail).digest("hex")
+
+  const supabase = createServiceClient()
+  const { error } = await supabase.rpc("resend_family_invitation", {
+    p_invitation_id: invitationId,
+    p_inviter_user_id: userId,
+    p_token_digest: byteaDigestParam(tokenDigest),
+    p_invitee_email_digest: byteaDigestParam(emailDigest),
+  })
+
+  if (error) {
+    if (error.message.includes("not found or not resendable")) {
+      throw new Error("Confira se este é o mesmo e-mail do convite e se ele ainda está pendente.")
+    }
+    throw new Error(error.message)
+  }
+
+  // O endereço cru só vive na coluna recipient do outbox, como no envio.
+  const { error: outboxError } = await supabase.from("outbox").insert({
+    recipient: normalizedEmail,
+    channel: "email",
+    type: "family_invite",
+    payload: { user_id: userId, resent: true },
+  })
+
+  if (outboxError) {
+    throw new Error(`Falha ao enfileirar o reenvio: ${outboxError.message}`)
+  }
+
+  revalidatePath("/profile")
+  revalidatePath("/configuracoes/familia")
+
+  // Mesma regra do envio: o token aparece uma vez, aqui.
+  return { token: token.toString("hex") }
 }

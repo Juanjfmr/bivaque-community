@@ -155,6 +155,13 @@ sobre botão sólido, usam `semantic.text-on-strong` branco somente após contra
 Tons suaves derivam de mistura opaca com canvas, nunca de reduzir arbitrariamente a opacidade do
 texto.
 
+Texto **sobre imagem** usa o papel próprio `semantic.text-on-image-soft`
+(`--semantic-text-on-image-soft`): também é mistura opaca (papel `paper-0` com `ink-900`), porque a
+foto não é canvas e a opacidade arbitrária produzia contraste que ninguém media. O papel existe
+porque o shell público (`OnboardingShell`, usado em /privacidade, /codigo-de-conduta, /consent e no
+onboarding) escrevia o parágrafo com 82% de opacidade — a violação que a auditoria do DS-001
+registrou em 06/09/2026 e que ficou aberta até o lote AD.
+
 ### 4.3 Tipografia
 
 O sistema adota **Public Sans** para interface e leitura. A variante de eixo contínuo de peso está

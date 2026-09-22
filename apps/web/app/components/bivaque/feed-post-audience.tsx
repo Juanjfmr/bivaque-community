@@ -202,7 +202,9 @@ export function AudiencePicker({
       >
         {destinations.map((destination) => (
           <Radio key={destination.key} value={destination.key}>
-            <Radio.Content>
+            {/* min-h-11: o rótulo do radio é o alvo de toque (a régua do
+                produto pede 44px); a altura vinha de 39px e reprovava. */}
+            <Radio.Content className="min-h-11">
               <Radio.Control>
                 <Radio.Indicator />
               </Radio.Control>

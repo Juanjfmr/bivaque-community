@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
 import { Card } from "../../../../components/bivaque/card"
@@ -54,11 +55,18 @@ export default async function ProviderInvitationPage({
       <FeedbackAlert
         variant="info"
         title="Acesso restrito do prestador"
-        description="Ele verá somente a própria ficha e as conversas que membros iniciarem. Não verá feed, perfis, grupos, eventos, comunidades nem listas de membros. Dentro da conversa, verá apenas o nome de exibição de quem falou com ele."
+        description="Ele vê somente a própria ficha e as conversas que membros iniciarem. Não vê feed, perfis, grupos, eventos, comunidades nem listas de membros. Dentro da conversa, verá apenas o nome de exibição de quem falou com ele."
       />
 
-      <Card className="p-5">
+      <Card className="flex flex-col gap-4 p-5">
+        <h2 className="text-base font-semibold tracking-tight">Convidar prestador</h2>
         <ProviderInvitationForm communityId={communityId} />
+        <Link
+          href={`/communities/${communityId}`}
+          className="inline-flex min-h-11 w-fit items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+        >
+          Cancelar
+        </Link>
       </Card>
     </div>
   )

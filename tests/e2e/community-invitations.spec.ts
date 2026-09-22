@@ -72,7 +72,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("community member invite", () => {
+test.describe("community member invite", { tag: "@stateful" }, () => {
   test("verified inviter sees the invite section and can generate a link", async ({ page }) => {
     // Given a verified approved member of Vila Ajuricaba
     await signInAs(page, OWNER_EMAIL)

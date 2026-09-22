@@ -43,8 +43,6 @@
 }
 
 .header {
-  position: absolute;
-  inset: 0 0 auto;
   z-index: 20;
   display: grid;
   grid-template-columns: 1fr auto;
@@ -52,9 +50,9 @@
   gap: 24px;
   min-height: 76px;
   padding: 0 var(--gutter);
-  color: var(--semantic-text-on-strong);
-  background: var(--semantic-background-inverse);
-  border-bottom: 1px solid color-mix(in srgb, var(--semantic-text-on-strong) 20%, transparent);
+  color: var(--semantic-text-primary);
+  background: var(--semantic-canvas);
+  border-bottom: 1px solid var(--semantic-border);
 }
 
 .brandLink,
@@ -85,7 +83,7 @@
 
 .nav a {
   padding: 12px 0;
-  color: color-mix(in srgb, var(--semantic-text-on-strong) 82%, transparent);
+  color: var(--semantic-text-secondary);
   border-bottom: 1px solid transparent;
   transition:
     color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
@@ -93,12 +91,12 @@
 }
 
 .nav a:hover {
-  color: var(--semantic-text-on-strong);
-  border-color: var(--semantic-text-on-strong);
+  color: var(--semantic-text-primary);
+  border-color: var(--semantic-text-primary);
 }
 
 .nav a[aria-current="page"] {
-  color: var(--semantic-text-on-strong);
+  color: var(--semantic-text-primary);
   border-color: var(--semantic-warning-soft);
 }
 
@@ -126,7 +124,7 @@
   justify-self: end;
   min-height: 44px;
   padding: 0 14px;
-  border: 1px solid color-mix(in srgb, var(--semantic-text-on-strong) 45%, transparent);
+  border: 1px solid var(--semantic-border);
 }
 
 .headerAction svg,
@@ -531,17 +529,20 @@
 
 .belongingLayers {
   display: grid;
-  border-top: 1px solid var(--semantic-border);
+  gap: 16px;
+  grid-template-columns: 1fr;
+  align-content: start;
 }
 
 .belongingLayer {
   display: grid;
   grid-template-columns: 38px 40px 1fr;
+  grid-template-rows: auto auto;
   align-items: center;
-  gap: 14px;
-  min-height: 132px;
-  padding: 26px 0;
-  border-bottom: 1px solid var(--semantic-border);
+  gap: 8px 14px;
+  padding: 26px;
+  border: 1px solid var(--semantic-border);
+  border-radius: var(--radius-sm);
 }
 
 .belongingLayer > span {
@@ -571,8 +572,8 @@
 }
 
 .belongingLayer p {
-  grid-column: 3;
-  margin: -16px 0 0;
+  grid-column: 1 / -1;
+  margin: 0;
   color: var(--semantic-text-secondary);
   font-size: var(--semantic-typography-body-size);
   line-height: var(--semantic-typography-body-line-height);

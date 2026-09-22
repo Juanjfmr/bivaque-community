@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>36-web-auth-entrada — fonte da prancha</title>
+<style>
+  /* Fonte da prancha 36-web-auth-entrada, REGERADA em 18/09/2026.
+     Motivo registrado no proprio codigo (bivaque-sign-in.tsx:31): a imagem
+     anterior mostrava "Receber codigo", mecanismo ANTERIOR a ADR-20260907-
+     login-com-senha. O provedor nao envia codigo, e o guia proibe prometer
+     integracao inexistente. Esta prancha desenha o mecanismo aprovado: e-mail
+     e senha, Google como alternativa, recuperacao por link.
+     Geometria identica a convencao web do guia (2076x757, dois paineis de 1032
+     com gutter de 12; cada painel e um desktop logico de 1440x1056 reduzido por
+     scale(0.716667)). Tokens de packages/tokens/src/tokens.css. Copy lida do
+     entryCopy real em app/(preauth)/login/components/bivaque-sign-in.tsx:35-52.
+     A foto da coluna esquerda e bloco ilustrativo, como nas demais pranchas. */
+  :root{
+    --canvas:#FAFBF8; --surface:#FFFFFF; --sunken:#F1F2EE; --paper200:#E3E5DF;
+    --ink900:#16211C; --ink700:#4A594F; --ink500:#6B7A70;
+    --pine100:#EEF1E7; --pine700:#164734; --petrol700:#1D5D89;
+    --line:color-mix(in srgb, #16211C 14%, transparent);
+    --radius:0.625rem; --radius-card:0.875rem;
+    --font:ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--canvas)}
+  body{width:2076px;height:757px;font-family:var(--font);color:var(--ink900);overflow:hidden}
+  .board{display:flex;gap:12px;width:2076px;height:757px}
+  .panel{width:1032px;height:757px;overflow:hidden;flex:0 0 auto;background:var(--surface)}
+  .scale{width:1440px;height:1056px;transform:scale(.716667);transform-origin:0 0}
+  .browser{height:1056px;background:var(--surface);display:flex;flex-direction:column}
+  .chrome{height:52px;flex:0 0 auto;background:var(--sunken);display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--line)}
+  .luzes{display:flex;gap:8px}
+  .luz{width:13px;height:13px;border-radius:999px}
+  .luz.r{background:#E5484D}.luz.a{background:#E8A33D}.luz.v{background:#3E9B57}
+  .urlbar{flex:1;max-width:430px;margin:0 auto;height:30px;border-radius:8px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;color:var(--ink700)}
+  .cadeado{width:10px;height:8px;border:1.5px solid var(--ink500);border-radius:2px;position:relative}
+  .cadeado::before{content:"";position:absolute;left:1px;top:-5px;width:6px;height:5px;border:1.5px solid var(--ink500);border-bottom:0;border-radius:4px 4px 0 0}
+  .split{flex:1;display:flex;min-height:0}
+  .foto{width:632px;flex:0 0 auto;position:relative;background:
+    radial-gradient(circle at 26% 74%, rgba(22,71,52,.22) 0 92px, transparent 93px),
+    radial-gradient(circle at 44% 80%, rgba(22,71,52,.14) 0 62px, transparent 63px),
+    radial-gradient(circle at 70% 68%, rgba(29,93,137,.16) 0 76px, transparent 77px),
+    linear-gradient(160deg,#DCE7DE 0%, #CBDCD2 52%, #E2F0F7 100%)}
+  .foto .word{position:absolute;left:52px;top:150px;color:#fff;font-size:46px;font-weight:700;letter-spacing:.06em;text-shadow:0 2px 12px rgba(0,0,0,.28)}
+  .formwrap{flex:1;display:flex;align-items:center;justify-content:center;padding:0 72px}
+  .form{width:100%;max-width:496px;display:flex;flex-direction:column}
+  h1{font-size:46px;line-height:1.16;font-weight:650;letter-spacing:-.015em;margin:0 0 14px}
+  .lead{font-size:17px;line-height:27px;color:var(--ink700);margin:0 0 30px;max-width:46ch}
+  label{display:block;font-size:15px;font-weight:600;margin-bottom:8px}
+  .input{width:100%;height:64px;border:1px solid var(--line);border-radius:12px;background:var(--surface);display:flex;align-items:center;padding:0 20px;font-size:18px}
+  .input.ph{color:var(--ink500)}
+  .campo{margin-bottom:24px}
+  .comolho{display:flex;align-items:center;justify-content:space-between}
+  .olho{display:flex;align-items:center;gap:8px;color:var(--ink700);font-size:15px;font-weight:500}
+  .olho svg{display:block}
+  .btn{min-height:44px;height:64px;border-radius:12px;font-size:18px;font-weight:600;display:flex;align-items:center;justify-content:center;border:1px solid transparent;font-family:inherit}
+  .btn.primario{background:var(--pine700);color:#fff;width:100%}
+  .divisor{display:flex;align-items:center;gap:14px;margin:24px 0;color:var(--ink500);font-size:15px}
+  .divisor::before,.divisor::after{content:"";flex:1;height:1px;background:var(--line)}
+  .btn.google{background:var(--surface);border-color:var(--line);color:var(--ink900);width:100%;gap:12px;font-weight:600}
+  .gicon{width:22px;height:22px;flex:0 0 auto}
+  .rodape{margin-top:30px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;color:var(--ink700)}
+  .rodape a{color:var(--petrol700);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+  .aceite{display:flex;align-items:flex-start;gap:12px;margin:6px 0 22px}
+  .caixa{width:22px;height:22px;flex:0 0 auto;border:1.6px solid var(--ink500);border-radius:6px;margin-top:2px}
+  .aceite .txt{font-size:15px;line-height:24px;color:var(--ink700)}
+  .aceite .txt a{color:var(--petrol700);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+  .esqueci{display:flex;justify-content:flex-end;margin:-12px 0 22px}
+  .esqueci a{color:var(--petrol700);font-size:15px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- ==================== painel 1 — entrar ==================== -->
+  <div class="panel" data-screen="Entrar">
+    <div class="scale">
+      <div class="browser">
+        <div class="chrome">
+          <div class="luzes"><span class="luz r"></span><span class="luz a"></span><span class="luz v"></span></div>
+          <div class="urlbar"><span class="cadeado"></span>bivaque.app/login</div>
+        </div>
+        <div class="split">
+          <div class="foto"><div class="word">BIVAQUE</div></div>
+          <div class="formwrap">
+            <form class="form">
+              <h1>Que bom ter você de volta.</h1>
+              <p class="lead">Entre com o e-mail e a senha da sua conta.</p>
+
+              <div class="campo">
+                <label for="login-email">Seu e-mail</label>
+                <div class="input ph" id="login-email">nome@exemplo.com</div>
+              </div>
+
+              <div class="campo">
+                <label for="login-senha">Sua senha</label>
+                <div class="input comolho" id="login-senha">
+                  <span class="ph" style="flex:1">Sua senha</span>
+                  <span class="olho">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
+                    Mostrar
+                  </span>
+                </div>
+              </div>
+
+              <div class="esqueci"><a href="#">Esqueci minha senha</a></div>
+
+              <div class="btn primario">Entrar</div>
+
+              <div class="divisor">ou</div>
+
+              <div class="btn google">
+                <svg class="gicon" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-2.641-.21-5.236-.611-7.743z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-2.641-.21-5.236-.611-7.743z"/></svg>
+                Continuar com Google
+              </div>
+
+              <div class="rodape">Ainda não tem conta? <a href="#">Criar conta</a></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== painel 2 — criar conta ==================== -->
+  <div class="panel" data-screen="Criar conta">
+    <div class="scale">
+      <div class="browser">
+        <div class="chrome">
+          <div class="luzes"><span class="luz r"></span><span class="luz a"></span><span class="luz v"></span></div>
+          <div class="urlbar"><span class="cadeado"></span>bivaque.app/signup</div>
+        </div>
+        <div class="split">
+          <div class="foto"><div class="word">BIVAQUE</div></div>
+          <div class="formwrap">
+            <form class="form">
+              <h1>Vamos começar.</h1>
+              <p class="lead">Crie sua conta com e-mail e senha. Depois você confirma a elegibilidade e escolhe sua cidade.</p>
+
+              <div class="campo">
+                <label for="signup-email">Seu e-mail</label>
+                <div class="input ph" id="signup-email">nome@exemplo.com</div>
+              </div>
+
+              <div class="campo">
+                <label for="signup-senha">Crie uma senha</label>
+                <div class="input comolho" id="signup-senha">
+                  <span class="ph" style="flex:1">Ao menos 8 caracteres</span>
+                  <span class="olho">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>
+                    Mostrar
+                  </span>
+                </div>
+              </div>
+
+              <div class="aceite">
+                <span class="caixa"></span>
+                <span class="txt">Li e concordo com a <a href="#">Política de privacidade</a> e o <a href="#">Código de conduta</a> do Alpha fechado.</span>
+              </div>
+
+              <div class="btn primario">Criar conta</div>
+
+              <div class="divisor">ou</div>
+
+              <div class="btn google">
+                <svg class="gicon" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-2.641-.21-5.236-.611-7.743z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-2.641-.21-5.236-.611-7.743z"/></svg>
+                Continuar com Google
+              </div>
+
+              <div class="rodape">Já tenho conta. <a href="#">Entrar</a></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

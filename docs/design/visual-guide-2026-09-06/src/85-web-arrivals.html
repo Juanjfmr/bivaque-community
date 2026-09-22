@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>85-web-arrivals — fonte da prancha</title>
+<style>
+  /* Fonte da prancha 85-web-arrivals.
+     Geometria da convenção web: 2076x757, dois painéis de 1032 com gutter de 12; cada painel
+     é um desktop lógico de 1440x1056 reduzido por scale(0.716667). Tokens de packages/tokens.
+     Shell do painel do operador conforme apps/web/app/(admin)/layout.tsx: nav de topo com
+     Admissões, Denúncias, Guia de chegada e Chegadas. Rota /arrivals (O05). Página implementada
+     em apps/web/app/(admin)/arrivals/page.tsx é uma única lista por cidade com a RPC
+     list_locality_arrivals_volume — não há ação nem detalhe por linha. Ver reviewNotes sobre a
+     lacuna de chegabilidade. */
+  :root{
+    --canvas:#FAFBF8; --surface:#FFFFFF; --sunken:#F1F2EE; --paper200:#E3E5DF;
+    --ink900:#16211C; --ink700:#4A594F; --ink500:#6B7A70;
+    --pine100:#EEF1E7; --pine700:#164734; --petrol700:#1D5D89;
+    --amber100:#FFF0D5; --amber700:#8A4B00;
+    --rose100:#FDE8E7; --rose700:#B42318;
+    --line:color-mix(in srgb, #16211C 14%, transparent);
+    --radius:0.625rem; --radius-card:0.875rem;
+    --font:ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--canvas)}
+  body{width:2076px;height:757px;font-family:var(--font);color:var(--ink900);overflow:hidden}
+  .board{display:flex;gap:12px;width:2076px;height:757px}
+  .panel{width:1032px;height:757px;overflow:hidden;flex:0 0 auto;background:var(--canvas)}
+  .scale{width:1440px;height:1056px;transform:scale(.716667);transform-origin:0 0}
+
+  .painel{height:1056px;display:flex;flex-direction:column;background:var(--canvas)}
+  .topnav{height:58px;flex:0 0 auto;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 28px}
+  .marca{font-size:15px;font-weight:650;color:var(--pine700);margin-right:18px}
+  .topnav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:var(--radius);font-size:15px;color:var(--ink700);text-decoration:none}
+  .topnav a.on{background:var(--pine100);color:var(--pine700);font-weight:600}
+
+  .main{flex:1;padding:30px 40px;min-height:0}
+  h1{font-size:30px;line-height:38px;font-weight:650;letter-spacing:-.011em;margin:0 0 8px}
+  .lead{font-size:16px;line-height:25px;color:var(--ink700);margin:0 0 22px;max-width:68ch}
+
+  .row{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+  .chip{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line);font-size:13px;color:var(--ink700)}
+  .chip .dot{width:8px;height:8px;border-radius:999px;background:var(--pine700)}
+  .chip strong{color:var(--ink900);font-weight:650}
+  .spacer{flex:1}
+  .btn{min-height:44px;min-height:44px;border-radius:var(--radius);padding:0 18px;font-size:15px;font-weight:600;font-family:inherit;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;gap:8px}
+  .btn.secundario{background:var(--surface);color:var(--ink900);border-color:var(--line)}
+
+  .tabela{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);overflow:hidden}
+  .tabela .head{display:grid;grid-template-columns:1fr 132px 132px;padding:13px 22px;background:var(--sunken);border-bottom:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink700)}
+  .tabela .linha{display:grid;grid-template-columns:1fr 132px 132px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);font-size:14px}
+  .tabela .linha:last-child{border-bottom:none}
+  .tabela .linha .cidade{font-weight:650;color:var(--ink900);display:flex;align-items:center;gap:10px}
+  .tabela .linha .cidade .num{width:30px;height:30px;border-radius:999px;background:var(--pine100);color:var(--pine700);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .tabela .linha .valor{color:var(--ink700);font-variant-numeric:tabular-nums}
+  .tabela .linha .acao{color:var(--ink500);font-size:13px}
+
+  .vazio{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:48px 32px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+  .vazio .ico{width:48px;height:48px;border-radius:999px;background:var(--pine100);color:var(--pine700);display:flex;align-items:center;justify-content:center}
+  .vazio h2{margin:0;font-size:22px;line-height:30px;font-weight:650;letter-spacing:-.008em}
+  .vazio p{margin:0;font-size:15px;line-height:24px;color:var(--ink700);max-width:560px}
+  .vazioActions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+  .btn.primario{background:var(--pine700);color:#fff}
+
+  .rodape{margin-top:24px;font-size:13px;color:var(--ink500);max-width:760px;line-height:20px}
+  .rodape b{color:var(--ink900)}
+  .alerta{margin-top:18px;background:var(--amber100);border:1px solid color-mix(in srgb, var(--amber700) 22%, transparent);border-radius:var(--radius-card);padding:14px 18px;display:flex;gap:12px;font-size:13px;line-height:20px;color:var(--ink700)}
+  .alerta .ico{color:var(--amber700);flex:0 0 auto}
+  .alerta b{color:var(--ink900)}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- ======================= painel 1 — chegadas com volume ======================= -->
+  <div class="panel" data-screen="Chegadas declaradas">
+    <div class="scale">
+      <div class="painel">
+        <nav class="topnav">
+          <span class="marca">BIVAQUE · Operação</span>
+          <a href="#">Admissões</a>
+          <a href="#">Denúncias</a>
+          <a href="#">Guia de chegada</a>
+          <a class="on" href="#">Chegadas</a>
+        </nav>
+        <main class="main">
+          <h1>Chegadas declaradas</h1>
+          <p class="lead">Transferências declaradas e ainda ativas, por cidade de destino — quem está a caminho, não quem já mora lá.</p>
+
+          <div class="row">
+            <span class="chip"><span class="dot"></span><strong>Janela:</strong> chegadas ativas neste momento</span>
+            <span class="chip"><strong>Origem dos dados:</strong> list_locality_arrivals_volume</span>
+            <div class="spacer"></div>
+            <button class="btn secundario">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 0 1 11.7-5.2M17 4v3h-3"/><path d="M17 10a7 7 0 0 1-11.7 5.2M3 16v-3h3"/></svg>
+              Atualizar
+            </button>
+          </div>
+
+          <div class="tabela" role="table" aria-label="Chegadas por cidade">
+            <div class="head" role="row">
+              <div role="columnheader">Cidade de destino</div>
+              <div role="columnheader">Chegadas</div>
+              <div role="columnheader">Próximo passo</div>
+            </div>
+            <div class="linha" role="row">
+              <div class="cidade" role="cell"><span class="num">01</span>Brasília, DF</div>
+              <div class="valor" role="cell">14 chegadas</div>
+              <div class="acao" role="cell">sem ação por linha hoje</div>
+            </div>
+            <div class="linha" role="row">
+              <div class="cidade" role="cell"><span class="num">02</span>Manaus, AM</div>
+              <div class="valor" role="cell">9 chegadas</div>
+              <div class="acao" role="cell">sem ação por linha hoje</div>
+            </div>
+            <div class="linha" role="row">
+              <div class="cidade" role="cell"><span class="num">03</span>Recife, PE</div>
+              <div class="valor" role="cell">6 chegadas</div>
+              <div class="acao" role="cell">sem ação por linha hoje</div>
+            </div>
+            <div class="linha" role="row">
+              <div class="cidade" role="cell"><span class="num">04</span>Salvador, BA</div>
+              <div class="valor" role="cell">4 chegadas</div>
+              <div class="acao" role="cell">sem ação por linha hoje</div>
+            </div>
+            <div class="linha" role="row">
+              <div class="cidade" role="cell"><span class="num">05</span>Porto Alegre, RS</div>
+              <div class="valor" role="cell">2 chegadas</div>
+              <div class="acao" role="cell">sem ação por linha hoje</div>
+            </div>
+          </div>
+
+          <div class="alerta">
+            <svg class="ico" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v5"/><path d="M10 14h.01"/></svg>
+            <div><b>Lacuna encontrada pela análise de chegabilidade.</b> A página atual é apenas leitura: mostra volume por cidade, mas não abre a chegada, não filtra por janela nem permite ações operacionais por linha. Quando a página ganhar destino próprio, ele aparece aqui — não declarar prazo de entrega.</div>
+          </div>
+
+          <p class="rodape">A RPC é operator-only e não expõe nomes, contatos nem endereços. O que aparece é cidade e contagem, decidido pela política RLS do painel do operador.</p>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= painel 2 — chegadas sem pendência ======================= -->
+  <div class="panel" data-screen="Nenhuma transferência declarada">
+    <div class="scale">
+      <div class="painel">
+        <nav class="topnav">
+          <span class="marca">BIVAQUE · Operação</span>
+          <a href="#">Admissões</a>
+          <a href="#">Denúncias</a>
+          <a href="#">Guia de chegada</a>
+          <a class="on" href="#">Chegadas</a>
+        </nav>
+        <main class="main">
+          <h1>Chegadas declaradas</h1>
+          <p class="lead">Transferências declaradas e ainda ativas, por cidade de destino — quem está a caminho, não quem já mora lá.</p>
+
+          <div class="row">
+            <span class="chip"><span class="dot"></span><strong>Janela:</strong> chegadas ativas neste momento</span>
+            <span class="chip"><strong>Origem dos dados:</strong> list_locality_arrivals_volume</span>
+            <div class="spacer"></div>
+            <button class="btn secundario">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 0 1 11.7-5.2M17 4v3h-3"/><path d="M17 10a7 7 0 0 1-11.7 5.2M3 16v-3h3"/></svg>
+              Atualizar
+            </button>
+          </div>
+
+          <div class="vazio" aria-live="polite">
+            <div class="ico">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 19 5"/><path d="M19 19 5 5"/></svg>
+            </div>
+            <h2>Nenhuma transferência declarada no momento</h2>
+            <p>A RPC <b>list_locality_arrivals_volume</b> devolveu uma lista vazia. Sem chegadas ativas em nenhuma cidade, este painel não tem o que mostrar — e isso não é erro, é o estado real.</p>
+            <div class="vazioActions">
+              <button class="btn secundario">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 0 1 11.7-5.2M17 4v3h-3"/><path d="M17 10a7 7 0 0 1-11.7 5.2M3 16v-3h3"/></svg>
+                Atualizar agora
+              </button>
+              <a class="btn secundario" href="#">Voltar para Admissões</a>
+              <a class="btn primario" href="#">Abrir Admissões</a>
+            </div>
+          </div>
+
+          <div class="alerta">
+            <svg class="ico" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v5"/><path d="M10 14h.01"/></svg>
+            <div><b>Estado vazio honesto.</b> A tela não inventa volume para preencher colunas nem promete ação por linha que ainda não existe. Quando chegar o destino de cada chegada (abrir pedido, mudar janela, ver histórico), a prancha é refeita — sem prazo declarado.</div>
+          </div>
+
+          <p class="rodape">A página inteira é read-only. O RPC é operator-only e respeita a RLS do painel do operador; nenhum dado pessoal cru sai daqui.</p>
+        </main>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

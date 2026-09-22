@@ -1,0 +1,42 @@
+{
+  "id": "74-web-guia-curadoria",
+  "kind": "web",
+  "group": "guia",
+  "title": "Web: curar o Guia",
+  "screens": ["Fila do Guia", "Sugestões de correção"],
+  "reviewNotes": [
+    "Nada é publicado sem revisão humana. A fila não publica sozinha, e a origem da sugestão (IA ou membro) fica visível para quem decide.",
+    "Aplicar uma correção publica a versão revisada e registra quem sugeriu. Não apagar o histórico da versão anterior.",
+    "O horário, o nome do posto e o telefone são ilustrativos; consolidar com dado real ao implementar.",
+    "A nota de origem da sugestão de correção não deve virar promessa de prazo nem prova de verificação."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do painel do operador conforme apps/web/app/(admin)/layout.tsx. Painel 1 é a fila com sugestão de IA e sugestão manual, cada uma com aprovar e recusar. Painel 2 é a sugestão de correção com o antes e o depois do trecho do artigo. Copy reconciliada com R39 e com a tela implementada em guide-queue.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-030",
+  "journey": {
+    "id": "web-curar-o-guia",
+    "titulo": "Curar uma sugestao do Guia",
+    "plataforma": "web",
+    "grupo": "guia",
+    "persona": "Curador do Guia, membro da operacao",
+    "comeca": "Fila de sugestoes aguardando revisao humana",
+    "termina": "Correcao aplicada e artigo atualizado para quem le",
+    "acoes": ["Sugerir correcao", "Moderar"],
+    "etapas": [
+      {
+        "nome": "Fila",
+        "passos": [{ "tela": "74-web-guia-curadoria#0", "acao": "aprova e publica o item" }]
+      },
+      {
+        "nome": "Correcao",
+        "passos": [{ "tela": "74-web-guia-curadoria#1", "acao": "a versao revisada entra no artigo" }]
+      },
+      {
+        "nome": "No ar",
+        "passos": [{ "tela": "25-web-guia-referencia#0" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 74-web-guia-curadoria — `/guide-queue`\n\n**Etapa:** W05. **Painéis:** a fila de sugestões; as sugestões de correção.\n\nPrancha criada em 12/09/2026, depois do handoff. O Gate W05 exige o ciclo completo — sugestão, fila do curador, publicação e autor acompanhando — e o guia só desenhava a sugestão (pranchas 24 e 25). Esta é a autoridade visual do lado de quem decide.\n\n### Composição\n\nShell do painel do operador: navegação de **topo** com Admissões, Denúncias, Guia e Chegadas, conforme `apps/web/app/(admin)/layout.tsx`.\n\n**Fila do Guia** — H1; \"Sugestões aguardando aprovação. Nada é publicado sem revisão humana.\"; cartões com o título do item, o selo de origem (`Sugestão IA` ou `Manual`), a descrição curta e a procedência, mais as ações `Recusar` e `Aprovar e publicar`; e a seção \"Promover respostas da comunidade\", que explica que a resposta vira item depois do nome canônico e da categoria.\n\n**Sugestões de correção** — H1; \"Sugestões de atualização dos artigos do guia. Aplicar publica a versão revisada e registra quem sugeriu.\"; cartão com o título do artigo, quem sugeriu, o bloco de diferença com **como está no guia** e **como o membro propõe**, a nota de origem e as ações `Aplicar correção` e `Recusar`.\n\n### Estados e limites\n\nA fila é explicitamente humana: a origem IA aparece marcada, e nada publica sem revisão. Aplicar correção publica a versão revisada e registra a autoria da sugestão, sem apagar o histórico. Horário, nome do posto e telefone são ilustrativos.\n"
+}

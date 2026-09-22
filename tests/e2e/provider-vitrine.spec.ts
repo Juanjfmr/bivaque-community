@@ -70,15 +70,24 @@ test.describe("vitrine de prestadores", () => {
     const busca = page.getByLabel("Buscar por nome")
     await expect(busca).toBeVisible({ timeout: 20000 })
     await busca.fill("climatiza")
-    await page.getByRole("button", { name: "Buscar" }).click()
+    // Desambiguado pelo formulário: a página tem mais de um botão "Buscar" (o
+    // do shell, por exemplo) e o locator global caía em strict mode violation.
+    // O campo "Buscar por nome" pertence ao form da vitrine; o submit é dele.
+    await page
+      .locator("form")
+      .filter({ hasText: "Buscar por nome" })
+      .getByRole("button", { name: "Buscar" })
+      .click()
 
     await page.getByRole("link", { name: /Climatiza Manaus/ }).click()
 
     await expect(page.getByRole("heading", { name: "Climatiza Manaus" })).toBeVisible({
       timeout: 10000,
     })
-    await expect(page.getByRole("heading", { name: "Catálogo" })).toBeVisible()
-    await expect(page.getByText("Higienização da evaporadora")).toBeVisible()
+    // RECON-022: a ficha segue a prancha 62 — a seção chama "Serviços" e
+    // lista ícone + rótulo do item, sem a descrição do catálogo antigo.
+    await expect(page.getByRole("heading", { name: "Serviços" })).toBeVisible()
+    await expect(page.getByText("Limpeza completa")).toBeVisible()
   })
 
   test("prestador entra e publica um item de catálogo", async ({ page }) => {

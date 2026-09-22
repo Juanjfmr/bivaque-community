@@ -1,0 +1,40 @@
+{
+  "id": "77-web-ajuda",
+  "kind": "web",
+  "group": "profile",
+  "title": "Web: pedir ajuda com canal real",
+  "screens": ["Acesso e uso", "Regras e suporte"],
+  "reviewNotes": [
+    "O canal de suporte é o mesmo endereço configurado em NEXT_PUBLIC_SUPPORT_EMAIL (apps/web/lib/support.ts). Sem a variável, o valor é o sentinela '<<DEFINIR>>', que o gate de escopo recusa em produção. O endereço da prancha (suporte@bivaque.app) é ilustrativo e deve ser consolidado com a variável real no deploy.",
+    "Não há promessa de prazo de resposta nem chat, telefone ou sistema de chamados. O código é explícito nisso e a prancha mantém o mesmo limite: o botão leva a um mailto, não a um sistema de atendimento.",
+    "Os documentos legais vêm das rotas /privacidade e /codigo-de-conduta (C04/C13). A prancha não copia texto legal — o link aponta para a versão usada no registro, conforme ADR-20260907-consentimento-no-cadastro.",
+    "A seção 'Quando você entra em contato' é uma orientação geral de uso, não uma promessa de SLA. O suporte não publica tempo máximo nem mínimo de resposta.",
+    "A seção 'Usar o Bivaque' reforça a regra de cidade como filtro de descoberta, não como autorização de comunidade — coerente com a regra de que escolher cidade não concede participação privada.",
+    "Lacuna registrada: o botão Entrar do bloco 'Acesso e conta' aponta para /login, que existe, mas o link de destino fora do shell não foi validado nesta prancha. A spec §4.1 R02 é a referência."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do membro conforme apps/web/app/components/bivaque/app-shell.tsx. /ajuda não tem subshell — o conteúdo vive no main da shell, max-w-2xl centralizado, conforme apps/web/app/(shell)/ajuda/page.tsx. Painel 1 mostra o topo da página com H1 'Ajuda', lead, e as seções 'Acesso e conta' e 'Usar o Bivaque' com listas de destinos reais. Painel 2 continua com 'Documentos e regras' (dois cartões com seta para as rotas legais) e 'Falar com a equipe' com o botão mailto e a nota explícita de que não há chat nem sistema de chamados. Copy reconciliada com C13 e com a tela implementada em ajuda/page.tsx e apps/web/lib/support.ts.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-032",
+  "journey": {
+    "id": "web-pedir-ajuda-com-canal-real",
+    "titulo": "Encontrar ajuda no Bivaque",
+    "plataforma": "web",
+    "grupo": "profile",
+    "persona": "Membro que precisa entender uma area do produto ou falar com a equipe",
+    "comeca": "Topo da pagina /ajuda",
+    "termina": "Documento legal aberto ou e-mail enviado ao suporte",
+    "acoes": ["Configurar"],
+    "etapas": [
+      {
+        "nome": "Topo",
+        "passos": [{ "tela": "77-web-ajuda#0", "acao": "le as secoes de Acesso e conta e Usar o Bivaque com os destinos" }]
+      },
+      {
+        "nome": "Regras e suporte",
+        "passos": [{ "tela": "77-web-ajuda#1", "acao": "abre um documento legal ou escreve para o suporte pelo mailto" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 77-web-ajuda — `/ajuda`\n\n**Etapa:** W08. **Painéis:** o topo da página, com Acesso e conta e Usar o Bivaque; a base, com Documentos e regras e Falar com a equipe.\n\nPrancha criada em 12/09/2026, depois do handoff. C13 exige que a ajuda leve a documentos legais reais e ao canal de suporte configurado, sem inventar chat ou telefone. A rota foi especificada, mas a prancha 67 tratava só das perguntas ao organizador — esta prancha fecha o lado genérico da Ajuda.\n\n### Composição\n\nShell do membro (lateral com Início, Explorar, Comunidades e Perfil, mais Salvos e Notificações; barra superior com busca, cidade e perfil) conforme `apps/web/app/components/bivaque/app-shell.tsx`. /ajuda não tem subshell — o conteúdo entra direto no main da shell, com largura máxima de 760px, conforme `apps/web/app/(shell)/ajuda/page.tsx`.\n\n**Acesso e uso** — H1 \"Ajuda\"; lead \"Como funciona o Bivaque, o que você pode fazer com a sua conta e onde encontrar as regras.\"; seção \"Acesso e conta\" explicando que entrar é por link no e-mail e que sessão expirada pede novo login, com a lista de destinos reais `Entrar` e `Configurações`; seção \"Usar o Bivaque\" explicando que Explorar reúne Guia, Mercado, serviços, moradia e eventos, que cidade é filtro de descoberta e que denúncia fica no menu da publicação, com a lista de destinos `Explorar`, `Salvos`, `Notificações` e `Minhas denúncias`.\n\n**Regras e suporte** — mesmo H1 e lead continuando; seção \"Documentos e regras\" com os dois cartões `Política de Privacidade` e `Código de Conduta` apontando para as rotas legais; seção \"Falar com a equipe\" com a explicação \"Não há chat, telefone ou sistema de chamados: escreva para cá e a equipe responde pelo mesmo e-mail\", o botão mailto `suporte@bivaque.app` e a nota \"Este é o mesmo canal usado nos avisos transacionais\"; seção final \"Quando você entra em contato\" com orientação de uso, sem promessa de SLA.\n\n### Estados e limites\n\nO canal de suporte é o mesmo do produto: a variável `NEXT_PUBLIC_SUPPORT_EMAIL` (apps/web/lib/support.ts) define o endereço exibido. Sem a variável, o valor é o sentinela `<<DEFINIR>>`, que o gate de escopo recusa em produção. O endereço da prancha é ilustrativo. Não há chat, telefone nem sistema de chamados — a prancha não promete prazo de resposta nem apresenta canal que não exista. Os documentos legais vêm das rotas `/privacidade` e `/codigo-de-conduta` e seguem o texto aprovado, não a imagem. **Lacuna registrada:** o link Entrar do bloco Acesso e conta aponta para `/login` (existe, conforme R02), mas o destino fora do shell não foi validado nesta prancha."
+}

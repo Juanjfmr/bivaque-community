@@ -96,8 +96,7 @@ export default async function CommunityModeratorsPage({
       <header>
         <h1 className="text-lg font-semibold tracking-tight">Moderadores</h1>
         <p className="mt-1 text-sm text-muted">
-          O dono promove membros aprovados para moderadores. Moderadores aprovam pedidos e removem
-          membros; só o dono promove ou despromove.
+          Só o dono promove e despromove moderadores. Moderadores aprovam pedidos e removem membros.
         </p>
       </header>
 

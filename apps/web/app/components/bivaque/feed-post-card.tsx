@@ -6,7 +6,7 @@
 // idem. Este componente não emite h1 — a tela consumidora tem o dela.
 
 import { Button, Chip, Input, useOverlayState } from "@heroui/react"
-import { ExternalLink, Heart, Link2, MessageCircle, Share2 } from "lucide-react"
+import { Bookmark, ExternalLink, Heart, Link2, MessageCircle, Share2 } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -59,6 +59,10 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
   const [expanded, setExpanded] = useState(false)
   const [reactionCount, setReactionCount] = useState(Number(post.reaction_count ?? 0))
   const [myReaction, setMyReaction] = useState(Boolean(post.my_reaction))
+  // "Acompanhar" (prancha 01): o estado vem do próprio feed (my_follow,
+  // revalidado no servidor) e alterna direto na tabela post_follows — mesma
+  // mecânica da reação; erro reverte o estado otimista.
+  const [following, setFollowing] = useState(Boolean(post.my_follow))
   const [shareFeedback, setShareFeedback] = useState("")
   const [localityName, setLocalityName] = useState<string>("")
   const [groupName, setGroupName] = useState<string>("")
@@ -190,6 +194,17 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
       }
     }
   }, [myReaction, reactionCount, post.id, supabase])
+
+  const handleFollow = useCallback(async () => {
+    const next = !following
+    setFollowing(next)
+    const { error } = next
+      ? await supabase.from("post_follows").insert({
+          post_id: post.id,
+        } as Database["public"]["Tables"]["post_follows"]["Insert"])
+      : await supabase.from("post_follows").delete().eq("post_id", post.id)
+    if (error) setFollowing(!next)
+  }, [following, post.id, supabase])
 
   const handleShare = useCallback(async () => {
     try {
@@ -347,6 +362,35 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
               ))}
             </div>
           )}
+
+          {/* Rodapé de conversa da prancha 01: a contagem de respostas à
+              esquerda e "Acompanhar" à direita, acima da barra de engajamento
+              (mantida por adjudicação). O estado do follow vem do feed
+              (my_follow) e reverte em erro. */}
+          <div className="mt-3 flex items-center justify-between gap-3 text-xs">
+            <button
+              type="button"
+              onClick={handleToggleComments}
+              aria-label={showComments ? "Ocultar respostas" : "Ver respostas"}
+              aria-expanded={showComments}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+            >
+              <MessageCircle size={16} aria-hidden="true" />
+              {Number(shown.comment_count ?? 0) > 0
+                ? `${shown.comment_count} ${Number(shown.comment_count) === 1 ? "resposta" : "respostas"}`
+                : "Sem respostas"}
+            </button>
+            <button
+              type="button"
+              onClick={handleFollow}
+              aria-pressed={following}
+              aria-label={following ? "Deixar de acompanhar publicação" : "Acompanhar publicação"}
+              className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] ${following ? "text-[var(--semantic-action-primary)]" : "text-muted"}`}
+            >
+              <Bookmark size={16} fill={following ? "currentColor" : "none"} aria-hidden="true" />
+              {following ? "Acompanhando" : "Acompanhar"}
+            </button>
+          </div>
 
           {/* Reaction row — three-zone footer with dividers */}
           <div className="mt-4 flex items-stretch divide-x divide-border border-t border-border">

@@ -84,7 +84,7 @@ test.describe("holder onboarding journey", () => {
     // Then the user is redirected to the onboarding page. Onboarding is a
     // `(preauth)` route with no shell header, so its own H1 is the landmark.
     await page.waitForURL(/\/onboarding/)
-    await expect(page.getByRole("heading", { name: "Confirme sua elegibilidade." })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
   })
 
   test("onboarding page renders verify eligibility flow", async ({ page }) => {
@@ -94,7 +94,7 @@ test.describe("holder onboarding journey", () => {
     await page.goto("/onboarding")
 
     // Then the verify eligibility UI is rendered
-    const verifyButton = page.getByRole("button", { name: "Conferir e continuar" })
+    const verifyButton = page.getByRole("button", { name: "Verificar acesso" })
     await expect(verifyButton).toBeVisible()
 
     const cpfInput = page.getByLabel("CPF")
@@ -330,7 +330,7 @@ test.describe("events journey", () => {
     await page.goto("/events")
 
     // Then the events page renders its UI
-    await expect(page.getByRole("heading", { name: "Eventos" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Explorar eventos", exact: true })).toBeVisible()
   })
 
   test("events page shows create event toggle", async ({ page, context }) => {
@@ -573,7 +573,7 @@ test.describe("preauth page headings", () => {
     await page.goto("/onboarding")
 
     // Then the eligibility heading is visible
-    await expect(page.getByRole("heading", { name: "Confirme sua elegibilidade." })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Verificar meu acesso" })).toBeVisible()
   })
 })
 

@@ -1,0 +1,45 @@
+{
+  "id": "78-web-prestador-operacao",
+  "kind": "web",
+  "group": "negocio",
+  "title": "Web: catálogo e conta do prestador",
+  "screens": ["Catálogo e portfólio", "Conta e área de atendimento"],
+  "reviewNotes": [
+    "Shell divergente declarado: o briefing pediu a casca do membro (src/70-web-evento-organizar), mas as rotas /prestador/* vivem em apps/web/app/(provider)/layout.tsx, que monta o ProviderShell próprio — sidebar com wordmark, rótulo de seção 'MEU NEGÓCIO', cartão do negócio (Clima Certo / Assistência técnica), itens Pedidos / Minha ficha / Catálogo / Área de atendimento / Conta, sem Salvos/Notificações/seletor de cidade. A prancha segue o shell real, que é a autoridade visual do prestador.",
+    "Rótulo da coluna de pedidos da prancha 23 é 'Quando' (contém 'Nesta semana' e 'A combinar'); não se chama 'Contato'. Esta prancha não toca a fila — a correção permanece registrada na 23 e vale para qualquer evolução futura.",
+    "Pessoa conectada no painel é a responsável pelo negócio (Clima Certo), não o cliente. Avatares e iniciais seguem a mesma identidade em sidebar e cabeçalho.",
+    "Exibição de telefone permanece opcional; não bloquear a ficha completa por ausência de número. A completude da vitrine é calculada sobre descrição, serviços cadastrados, regiões e fotos — não sobre contato.",
+    "Não exibir posto, OM autodeclarada, selo de verificação ou dados privados de elegibilidade na ficha pública. As fotos vêm do bucket privado por URL assinada de curta duração; a UI não mostra chave nem caminho.",
+    "Itens, preços, descrição, telefone e região atendida são fictícios; consolidar fixtures coerentes ao implementar. O limite de 5 MB e o allowed_mime_types (JPEG/PNG/WebP) vêm do contrato técnico — a prancha apenas ecoa o que está implementado.",
+    "A região 'Brasília, DF' e a comunidade 'Jardim das Acácias' são fixtures de seed e não definem privilégio automático de escrita nem adesão."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do prestador conforme apps/web/app/(provider)/provider-shell.tsx, não a casca do membro. Painel 1 é o catálogo (/prestador/catalogo): formulário 'Publicar item' (título, descrição opcional, preço em centavos com vazio = sob orçamento), lista 'Meu catálogo' com reordenação e remoção, e o formulário 'Adicionar foto ao portfólio'. Painel 2 combina Conta e Área de atendimento (/prestador/conta + /prestador/atendimento): Conta traz o e-mail de acesso gerenciado pelo suporte, telefone opcional e o checkbox de telefone público; Área de atendimento mostra a região atual atendida e o toggle de comunidade. Copy reconciliada com RECON-024, ADR-20260820-conta-de-prestador e o guia do prestador.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-024",
+  "journey": {
+    "id": "web-prestador-catalogo-conta",
+    "titulo": "Operar catálogo, conta e área de atendimento do negócio",
+    "plataforma": "web",
+    "grupo": "negocio",
+    "persona": "Responsável pelo negócio (prestador verificado)",
+    "comeca": "Painel do prestador autenticado",
+    "termina": "Catálogo publicado, conta configurada e área de atendimento ligada à comunidade autorizada",
+    "acoes": ["Editar catalogo", "Configurar conta", "Editar negocio"],
+    "etapas": [
+      {
+        "nome": "Catalogo",
+        "passos": [{ "tela": "78-web-prestador-operacao#0", "acao": "publica e mantém itens do catálogo e fotos do portfólio" }]
+      },
+      {
+        "nome": "Conta e atendimento",
+        "passos": [{ "tela": "78-web-prestador-operacao#1", "acao": "define telefone público opcional e liga o alcance pela comunidade" }]
+      },
+      {
+        "nome": "Visibilidade publica",
+        "passos": [{ "tela": "62-web-prestador-pedido#0", "acao": "verifica como a ficha aparece para a comunidade autorizada" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 78-web-prestador-operacao — `/prestador/catalogo`, `/prestador/conta` e `/prestador/atendimento`\n\n**Etapa:** W06. **Painéis:** catálogo e portfólio; conta e área de atendimento.\n\nPrancha criada em 12/09/2026, depois do handoff. O RECON-024 fecha o shell próprio do prestador, a fila de pedidos por situação, e as rotas ficha/catálogo/atendimento/conta. A prancha 23 já cobre o painel com a fila; esta é a autoridade visual que faltava para as rotas de operação do próprio negócio.\n\n**Lacuna registrada:** nenhuma prancha canônica anterior desenhou `/prestador/catalogo` com publicação + reordenação, nem o par `/prestador/conta` + `/prestador/atendimento` lado a lado. Esta prancha ocupa esse vazio, ancorada no RECON-024.\n\n### Composição\n\n**Shell do prestador** — sidebar com wordmark BIVAQUE em maiúsculas e verde profundo; rótulo de seção `MEU NEGÓCIO`; cartão do negócio com ícone, nome (Clima Certo), categoria (Assistência técnica) e chevron; navegação `Pedidos`, `Minha ficha`, `Catálogo`, `Área de atendimento`, `Conta`; rodapé com avatar inicial e nome do negócio. Cabeçalho com campo de busca `Buscar nos pedidos` (sem seletor de cidade), sino com ponto verde, avatar inicial. Vem de `apps/web/app/(provider)/provider-shell.tsx`. **Divergência declarada com o briefing:** o lead pediu a casca do membro; o código real usa casca própria, e a prancha segue o código.\n\n**Painel 1 — Catálogo e portfólio** — H1 `Catálogo e portfólio`; lead `Publique os serviços do negócio e mantenha as fotos que aparecem na sua ficha para a comunidade.`; cartão `Publicar item` com `Título do item` (Instalação de ar-condicionado split), `Descrição (opcional)` (Inclui suporte, dreno e passagem de tubulação. Atendo Asa Norte e redondezas.) e `Preço em centavos (vazio é sob orçamento)` (18000) — ações `Publicar` e `Limpar`; seção `Meu catálogo (2)` com cartões editáveis de `Limpeza de ar-condicionado` (Hoje: R$ 120,00) e `Manutenção preventiva` (Hoje: sob orçamento), cada cartão com campos Título, Descrição, Preço e ações `Salvar`, `Remover`, `↑ Subir`, `↓ Descer`; cartão `Adicionar foto ao portfólio` com `Escolher imagem (JPEG, PNG ou WebP até 5 MB)`, `Legenda (opcional)` e `Publicar foto`, mais o aviso de bucket privado e URL assinada de curta duração.\n\n**Painel 2 — Conta e área de atendimento** — H1 `Conta e área de atendimento`; lead `Dados de acesso do negócio, formas de contato da ficha pública e a região atualmente atendida.`; duas colunas. Coluna esquerda, cartão `Conta`: `Acesso` com o e-mail gerenciado pelo suporte (prestador.clima.certo@exemplo.invalid) e nota de que a alteração de senha fica em Configurações do membro vinculado; `Telefone de contato (opcional)` (92 99999 0000); checkbox marcado `Mostrar meu telefone na ficha pública`; ações `Salvar conta` e `Descartar`. Coluna direita, cartão `Área de atendimento`: linha `Região atendida hoje: Brasília, DF`; checkbox marcado `Atender membros de Jardim das Acácias`; nota explicando que o alcance ligado mantém a ficha visível para a comunidade e que desligar tira a ficha da busca sem apagar pedidos já recebidos; ações `Salvar área de atendimento` e `Descartar`. Rodapé: `O telefone de contato não é condição de ficha completa: a completude da vitrine é calculada sobre descrição, serviços, regiões e fotos — não sobre este número.`\n\n### Estados e limites\n\nO telefone continua opcional, conforme a correção obrigatória do guia (23-web-meu-negocio): não exigir telefone como condição de ficha completa. A completude usa campos reais do banco, calculada em `lib/service-requests/completeness.ts`. Não há promessa de prazo, compartilhamento automático de contato nem SLA inventado — só o toggle de alcance por comunidade autorizada.\n\nLimites e formatos (5 MB, JPEG/PNG/WebP) vêm do contrato técnico do bucket privado — não são requisitos novos desta prancha. O acesso do prestador é gerenciado pelo suporte; a tela não promete edição de e-mail ou de senha, e remete o caminho correto. Itens, preços, descrição, telefone e região atendida são fictícios; implementar com fixtures coerentes."
+}

@@ -5,7 +5,7 @@
 // denunciar, editar) — o cartão decide SE oferece editar (autoria), o menu
 // só renderiza o que recebeu.
 
-import { Button, Dropdown } from "@heroui/react"
+import { Dropdown } from "@heroui/react"
 import { MoreHorizontal } from "lucide-react"
 import { useCallback } from "react"
 
@@ -57,16 +57,14 @@ export function LeanOverflowMenu({ postId, onHide, onReport, onEdit }: LeanOverf
 
   return (
     <Dropdown>
-      <Dropdown.Trigger aria-label="Abrir menu da publicação">
-        <Button
-          isIconOnly
-          variant="tertiary"
-          size="sm"
-          aria-label="Mais opções"
-          className="rounded-full min-h-11 min-w-11"
-        >
-          <MoreHorizontal size={18} aria-hidden="true" />
-        </Button>
+      {/* O Trigger JÁ é um Button (DropdownTriggerProps extends
+          ComponentPropsWithRef<typeof Button>): envolver outro botão aqui
+          produzia <button> dentro de <button> — HTML inválido e erro de
+          hidratação no console de toda tela com cartão de publicação. As props
+          do botão vão no próprio Trigger. O nome acessível segue "Mais opções"
+          porque tests/e2e/reports-member-flow.spec.ts clica por ele. */}
+      <Dropdown.Trigger aria-label="Mais opções" className="rounded-full min-h-11 min-w-11">
+        <MoreHorizontal size={18} aria-hidden="true" />
       </Dropdown.Trigger>
       <Dropdown.Popover placement="bottom end">
         <Dropdown.Menu aria-label="Ações da publicação" onAction={handleAction}>

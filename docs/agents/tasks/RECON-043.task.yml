@@ -1,0 +1,90 @@
+task_id: RECON-043
+
+objective: >
+  Duas telas param de mostrar estrutura sem conteudo. Em Eventos, a area dos
+  proprios eventos diz o que dizer quando a pessoa nao tem nenhum, em vez de
+  exibir quatro rotulos de coluna soltos. Em Indicacoes, as abas voltam a
+  parecer abas, com a mesma marcacao que o resto do produto usa.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/80-web-recomendacoes.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 80-web-recomendacoes
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0, Fidelidade comprovada
+  - apps/web/app/(shell)/messages, estado vazio de referencia ja entregue
+  - apps/web/app/(shell)/salvos, abas em sublinhado entregues pelo RECON-038
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 12/09/2026 por inspecao de capturas do build da integracao
+    (chore/integracao-r3-next, gate e build verdes com o codigo de saida lido
+    direto) servido em 127.0.0.1:3197, conta dono-vila@, largura 1440.
+
+    EVENTOS, rota /events. Abaixo da lista de eventos da cidade ha o titulo
+    Seus eventos e, sob ele, quatro rotulos de coluna lado a lado, espalhados na
+    largura inteira: Organizando, Confirmado, Interessado, Convidado. Nao ha
+    conteudo sob nenhum deles e nao ha texto de estado vazio. O que a pessoa ve
+    e uma fileira de palavras flutuando em area branca, sem dizer que ela nao
+    tem evento nenhum nem o que fazer a respeito.
+
+    A conta usada organiza e participa de nada nesta semente, entao o estado
+    vazio e o estado normal dela, e mesmo assim a tela nao o trata.
+
+    O produto ja sabe fazer isso: /messages na mesma captura mostra icone,
+    a frase Nenhuma conversa ainda, uma linha explicando com quem se conversa e
+    um botao Iniciar conversa. A referencia esta dentro do proprio repositorio.
+
+    INDICACOES, rota /recommendations. As quatro abas Explorar, Pedir indicacao,
+    Pedidos e Salvas aparecem como texto solto distribuido na largura inteira,
+    sem sublinhado, sem fundo, sem borda e sem nenhuma marca de qual esta ativa.
+    Nao ha como saber, olhando, que aquilo e um seletor nem onde a pessoa esta.
+
+    O RECON-038 ja levou as abas de Salvos para sublinhado com estado ativo
+    visivel, que e a marcacao da prancha. Esta tela ficou para tras.
+
+allowed_paths:
+  - apps/web/app/(shell)/events/
+  - apps/web/app/(shell)/recommendations/
+  - tests/unit/
+  - docs/agents/tasks/RECON-043.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - inventar evento, pedido ou indicacao para a area deixar de parecer vazia
+  - esconder a area dos proprios eventos quando ela estiver vazia; vazio declarado e informacao, area sumida e outra coisa
+  - criar um terceiro estilo de aba; usar o mesmo que o produto ja usa
+  - mudar o que as abas filtram, quantas sao ou o que cada uma mostra
+  - tocar autorizacao, schema, migration ou estado do banco
+  - afrouxar, apagar ou pular teste para o gate passar
+
+acceptance:
+  - com a conta sem eventos proprios, a area Seus eventos mostra estado vazio com frase e caminho de saida, no lugar dos rotulos soltos
+  - com a conta tendo evento em ao menos uma das quatro situacoes, a area mostra o evento na situacao certa
+  - as abas de Indicacoes tem a mesma marcacao de aba do resto do produto, com a ativa distinguivel da inativa
+  - existe teste que reprova quando a area dos proprios eventos renderiza rotulo de situacao sem conteudo e sem estado vazio
+  - gate completo verde, com o codigo de saida lido direto
+  - capturas de /events e /recommendations em 375, 768 e 1440 confrontadas com as pranchas, e as diferencas restantes listadas
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-043.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE em /events e /recommendations
+
+traps:
+  - A conta padrao da captura nao tem evento proprio; para provar o caso cheio e preciso um ator que tenha, ou declarar que nao foi possivel observar
+  - Nao canalize o gate por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - Ha UM Supabase local compartilhado nesta maquina e outros executores usando; nao apague nem recrie o banco por nenhum meio
+  - Em largura pequena a fileira de abas nao pode virar rolagem horizontal da pagina inteira
+  - O estado vazio de /messages e referencia de padrao, nao de texto; escreva a frase desta tela
+
+risk: >
+  Estado vazio e marcacao de aba em duas telas de leitura do shell do membro.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

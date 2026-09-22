@@ -14,7 +14,9 @@
     "generate:types": "supabase gen types --lang typescript --local --schema public > supabase/database.generated.ts",
     "lint": "biome check .",
     "test:db": "supabase test db",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --grep-invert @stateful",
+    "test:e2e:stateful": "playwright test --grep @stateful --workers=1",
+    "test:e2e:all": "pnpm test:e2e && pnpm test:e2e:stateful",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm test:unit && pnpm test:workspaces && pnpm test:privacy && pnpm test:scope",
     "test:unit": "vitest run tests/unit",
@@ -23,7 +25,11 @@
     "test:scope": "node --test tests/scope/*.test.mjs",
     "test:secrets": "node tests/secrets-scan.mjs",
     "visual:capture": "node scripts/visual/capture.mjs",
-    "visual:loop": "node scripts/visual/loop.mjs"
+    "visual:loop": "node scripts/visual/loop.mjs",
+    "flows:frames": "node scripts/visual/flows/detect-frames.mjs",
+    "board:render": "node scripts/visual/render-board.mjs",
+    "flows:gallery": "node scripts/visual/flows-gallery.mjs && node scripts/visual/flows-verify.mjs",
+    "flows:check": "node scripts/visual/flows-gallery.mjs --check && node scripts/visual/flows-verify.mjs --check"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",

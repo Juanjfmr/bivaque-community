@@ -7,7 +7,12 @@ import { CreatePostModal } from "../../components/bivaque/feed-post"
 import { CommunitySection, type PrimaryCommunity } from "./community-section"
 import { InicioComposer } from "./composer"
 import { InicioGreeting } from "./greeting"
-import { createRequestGuard, loadPrimaryCommunity } from "./home-loaders"
+import {
+  createRequestGuard,
+  loadNextEvent,
+  loadPrimaryCommunity,
+  type NextEvent,
+} from "./home-loaders"
 import { ReturnStrip } from "./return-strip"
 import { InicioRightRail } from "./right-rail"
 
@@ -26,8 +31,13 @@ export default function InicioPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [defaultPostType, setDefaultPostType] = useState<string | undefined>(undefined)
   const [refreshKey, setRefreshKey] = useState(0)
+  // O evento próximo é resolvido UMA vez aqui e servido ao rail "Seu próximo
+  // encontro" e ao card do feed (prancha 01) — os dois mostram o mesmo evento,
+  // do mesmo loader, sem consulta duplicada.
+  const [nextEvent, setNextEvent] = useState<NextEvent | null>(null)
   const supabase = createBrowserClient()
   const guardRef = useRef(createRequestGuard())
+  const eventGuardRef = useRef(createRequestGuard())
 
   const loadPrimary = useCallback(() => {
     const isCurrent = guardRef.current.begin()
@@ -41,6 +51,14 @@ export default function InicioPage() {
   useEffect(() => {
     loadPrimary()
   }, [loadPrimary])
+
+  useEffect(() => {
+    const isCurrent = eventGuardRef.current.begin()
+    setNextEvent(null)
+    void loadNextEvent(supabase, current.id).then((next) => {
+      if (isCurrent()) setNextEvent(next)
+    })
+  }, [supabase, current.id])
 
   const handleOpenModal = useCallback((postType?: string) => {
     setDefaultPostType(postType)
@@ -64,10 +82,11 @@ export default function InicioPage() {
             onRetryPrimary={loadPrimary}
             onPublish={() => handleOpenModal()}
             refreshKey={refreshKey}
+            event={nextEvent}
           />
         </div>
 
-        <InicioRightRail />
+        <InicioRightRail event={nextEvent} />
       </div>
 
       {showCreateModal && (

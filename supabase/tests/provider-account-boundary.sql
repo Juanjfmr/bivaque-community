@@ -87,9 +87,14 @@ select is_empty(
   'provider sees no groups'
 );
 
-select is_empty(
-  'select 1 from public.communities',
-  'provider sees no communities'
+-- DECISÃO DO DONO (15/09/2026): a apresentação da comunidade (nome, cidade,
+-- descrição) não é sigilosa, e o prestador é conta autenticada — ele lê a LINHA.
+-- O que a fronteira dele continua vedando é o conteúdo: perfis (acima), grupos
+-- (acima), eventos e escrita (abaixo).
+select isnt_empty(
+  $$ select 1 from public.communities
+     where id = '50000000-0000-4000-8000-000000000001' $$,
+  'provider reads the community presentation, not its content'
 );
 
 select is_empty(

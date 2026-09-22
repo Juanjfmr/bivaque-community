@@ -52,7 +52,7 @@ const STORY_STEPS = [
 ]
 
 const BELONGING = [
-  { icon: MapPin, name: "Localidade", copy: "A cidade onde você está ou para onde vai." },
+  { icon: MapPin, name: "Cidade", copy: "A cidade onde você está ou para onde vai." },
   {
     icon: Tent,
     name: "Comunidade",
@@ -167,7 +167,7 @@ export function LandingPage() {
     <div ref={rootRef} className={styles["root"]}>
       <header className={styles["header"]}>
         <Link href="/" className={styles["brandLink"]} aria-label="Bivaque, início">
-          <Wordmark inverse />
+          <Wordmark />
         </Link>
         <nav className={styles["nav"]} aria-label="Navegação principal">
           {NAV_LINKS.map((item, index) => (

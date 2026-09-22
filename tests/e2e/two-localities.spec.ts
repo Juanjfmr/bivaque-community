@@ -210,7 +210,9 @@ test.describe("two localities: each member sees only their own city", () => {
     await page.goto(`${APP_URL}/events`, { waitUntil: "load" })
 
     // Then the events heading is visible
-    await expect(page.getByRole("heading", { name: "Eventos" })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole("heading", { name: "Explorar eventos", exact: true })).toBeVisible({
+      timeout: 15000,
+    })
   })
 
   test("second-locality member does not see Manaus event titles", async ({ page }) => {
@@ -221,7 +223,9 @@ test.describe("two localities: each member sees only their own city", () => {
     await page.goto(`${APP_URL}/events`, { waitUntil: "load" })
 
     // Then the events heading is visible for their own locality
-    await expect(page.getByRole("heading", { name: "Eventos" })).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole("heading", { name: "Explorar eventos", exact: true })).toBeVisible({
+      timeout: 15000,
+    })
 
     // And a Manaus-specific event title is not on the page. The events page
     // must scope to the member's locality; a Manaus event surfacing for a
@@ -296,7 +300,9 @@ test.describe("eligible second-locality onboarding: no geographic waitlist", () 
     await page.waitForURL(/\/onboarding\/locality/, { timeout: 10000 })
 
     // And the locality chooser is rendered
-    await expect(page.getByRole("heading", { name: "Escolha sua localidade." })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Qual cidade você quer explorar?" }),
+    ).toBeVisible()
 
     // And the geographic waitlist form is NOT rendered on the eligible path
     await expect(page.getByRole("button", { name: "Entrar na lista de espera" })).toHaveCount(0)
@@ -311,23 +317,21 @@ test.describe("eligible second-locality onboarding: no geographic waitlist", () 
     await page.goto(`${APP_URL}/onboarding/locality`, { waitUntil: "load" })
 
     // Then the locality chooser heading is visible
-    await expect(page.getByRole("heading", { name: "Escolha sua localidade." })).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: "Qual cidade você quer explorar?" }),
+    ).toBeVisible({
       timeout: 15000,
     })
 
-    // And the catalog-backed UF selector is present (the page fetches
-    // /api/localities and renders a Select for the 27 UFs). The trigger's
-    // accessible name is the React Aria Select composition: SelectValue
-    // placeholder text ("Selecione o estado") + the aria-label ("Estado") =
-    // "Selecione o estado Estado" — verified by aria-snapshot dump on the
-    // running DOM. The city trigger's accname is "Selecione o estado
-    // primeiro Cidade" (placeholder "Selecione o estado primeiro" + aria-label
-    // "Cidade"), so exact match on the full UF accname disambiguates without
-    // regex/DOM traversal. getByLabel("Estado") previously failed in strict
-    // mode because "estado" is a substring of both placeholders.
-    await expect(
-      page.getByRole("button", { name: "Selecione o estado Estado", exact: true }),
-    ).toBeVisible({ timeout: 15000 })
+    // A tela foi redesenhada na reconstrução: saíram os dois Select (UF e
+    // cidade) e entrou um SearchField que filtra a lista de cidades do catálogo,
+    // com a lista rotulada "Cidades disponíveis". O spec continuava procurando
+    // o accname composto do Select antigo ("Selecione o estado Estado"), que
+    // não existe mais — por isso falhava com "element not found".
+    await expect(page.getByLabel("Buscar cidade")).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole("list", { name: "Cidades disponíveis" })).toBeVisible({
+      timeout: 15000,
+    })
 
     // And the waitlist entry point is not on this page — the eligible path
     // never offers the geographic waitlist.

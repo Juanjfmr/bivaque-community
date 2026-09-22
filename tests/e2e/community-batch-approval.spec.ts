@@ -114,7 +114,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("community batch approval and delegation", () => {
+test.describe("community batch approval and delegation", { tag: "@stateful" }, () => {
   test("approving 3 of 5 selected leaves exactly 2 pending", async ({ page }) => {
     // Given an authenticated session whose seed membership is the owner of a
     // vila with at least 5 pending entries (the dev seed sets this up).

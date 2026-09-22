@@ -50,9 +50,16 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000005', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select is_empty(
-  'select 1 from public.communities',
-  'nao-membro da localidade nao descobre comunidade alguma'
+-- DECISÃO DO DONO (15/09/2026): nome e estado da comunidade não são sigilosos.
+-- A linha da comunidade passa a ser legível por qualquer pessoa autenticada — é
+-- isso que permite a tela de acesso negado da prancha 60. O que continua
+-- fechado é o CONTEÚDO: a asserção seguinte (membership) e as de grupos, feed e
+-- pedido de entrada. O contrato completo mora em
+-- supabase/tests/community-presentation-access.sql.
+select isnt_empty(
+  $$ select 1 from public.communities
+     where id = '70000000-0000-4000-8000-000000000001' $$,
+  'nao-membro da localidade le a APRESENTACAO da comunidade'
 );
 
 select is_empty(

@@ -1,9 +1,15 @@
 # Fatiamento da integração por RECON — 15/09/2026
 
+> Registro histórico do plano de 15/09. Em 22/09, a `main` já contém os lotes
+> promovidos pela campanha `test/teste-em-massa` e trabalhos posteriores. Os PRs
+> #71, #74 e #75 ainda estão abertos; suas bases, conflitos e provas devem ser
+> verificados no GitHub atual antes de qualquer promoção. Este documento não é
+> mais a fonte operacional do estado de integração.
+
 ## Decisão e base
 
-O dono pediu que a integração seja promovida por lotes RECON, em vez de uma
-única PR de integração. Esta é a fonte operacional desse fatiamento.
+O dono pediu que a integração fosse promovida por lotes RECON, em vez de uma
+única PR de integração. A sequência abaixo registra a decisão naquele momento.
 
 - Base de cada lote: a `origin/main` no momento de abrir a PR, mais somente as
   PRs predecessoras já aprovadas e merjadas.

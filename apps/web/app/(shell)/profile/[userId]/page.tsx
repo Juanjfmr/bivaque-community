@@ -16,6 +16,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
+import { callProfileBioRpc } from "../../../../lib/profile/profile-bio-rpcs"
 import { callProfileRpc } from "../../../../lib/profile-rpcs"
 import { createServerClient as createServiceClient } from "../../../../lib/supabase/server"
 import { MemberAvatar } from "../../../components/bivaque/avatar"
@@ -145,18 +146,35 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
   // session client (authClient), deliberately NOT the service client the
   // rest of the page uses: service_role bypasses RLS, and bypassing it here
   // would hand a third party the rows the owner hid (is_visible = false).
-  // Under the viewer's own role, `profile_affiliations_select_own_or_visible`
-  // returns exactly the lines this viewer may see — nothing more. The result
-  // IS the visibility decision; we render what came back and trust it.
-  const { data: affiliationRows, error: affiliationError } = await authClient
-    .from("profile_affiliations")
-    .select("field, value, is_visible")
-    .eq("user_id", userId)
+  //
+  // Desde 17/09/2026 a leitura é a RPC POR ALVO, não a tabela. A policy
+  // antiga filtrava linha mas deixava a LISTAGEM: com SELECT para
+  // authenticated, um único request a /rest/v1/profile_affiliations devolvia
+  // todas as declarações visíveis da cidade — enumeração em lote, achado HIGH
+  // do crítico adversarial. A RPC aplica visibilidade por campo, veto de
+  // conta suspensa no leitor e guarda de exclusão pendente no alvo; o que ela
+  // devolve É a decisão de visibilidade, e é o que a tela renderiza.
+  const { data: affiliationRows, error: affiliationError } = await authClient.rpc(
+    "profile_affiliations_for",
+    { p_target_user_id: userId },
+  )
   if (affiliationError) {
     throw new Error(`Falha ao ler a afiliação declarada: ${affiliationError.message}`)
   }
   const affiliation = affiliationFromRows((affiliationRows ?? []) as AffiliationRow[])
   const armedForceLabel = ARMED_FORCES.find((force) => force.id === affiliation.armedForce)
+
+  // A bio segue a visibilidade do perfil (ADR D2): a leitura vai pelo cliente
+  // da SESSÃO, não pelo service client. Sob a role do leitor, a RLS de
+  // `profiles` devolve a bio quando a linha é visível e NULL quando não é — o
+  // resultado É a decisão de visibilidade, e é ele que a tela renderiza.
+  const { data: bioRow, error: bioError } = await callProfileBioRpc(authClient, "get_profile_bio", {
+    p_user_id: userId,
+  })
+  if (bioError) {
+    throw new Error(`Falha ao ler a apresentação: ${bioError.message}`)
+  }
+  const bio = bioRow ?? ""
 
   // Posts and events: scoped by the RPC (Step 3: server-side visibility).
   const [postsResult, eventsResult] = await Promise.all([
@@ -193,7 +211,7 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
   //     sem efeito é proibida (G1), então o menu entra quando o contrato existir.
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 px-4 pt-6 pb-8">
-      <header className="flex items-center gap-4">
+      <header className="flex items-start gap-4">
         <MemberAvatar
           name={profile.display_name}
           size="lg"
@@ -204,6 +222,9 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
           <h1 className="text-lg font-semibold tracking-tight">
             {profile.display_name ?? "Membro"}
           </h1>
+          {bio.trim().length > 0 ? (
+            <p className="mt-1 text-sm leading-relaxed whitespace-pre-line text-muted">{bio}</p>
+          ) : null}
           <p className="mt-1 text-sm text-muted">
             Apenas conteúdo que você e esta pessoa podem ver pela mesma cidade.
           </p>

@@ -1,0 +1,42 @@
+{
+  "id": "75-web-conversas",
+  "kind": "web",
+  "group": "conversa",
+  "title": "Web: central de conversas",
+  "screens": ["Caixa de entrada", "Conversa aberta"],
+  "reviewNotes": [
+    "A URL da conversa é estavel por id: abrir /messages/<id> direto reconstroi o estado, e conversa de outra pessoa ou inexistente responde 404 sem enumerar ids. A pagina de lista em /messages redireciona ?conversation=<id> para o endereco canonico.",
+    "A conversa tem contexto imutavel — grupo em comum, evento em comum, recomendação ou família — e os participantes sao derivados desse contexto no servidor. O botao Nova conversa lista só quem voce ja encontra no app (grupo, evento, recomendação ou vinculo familiar aceito).",
+    "O botao Denunciar abre uma área de motivo por mensagem (minimo 10 caracteres, redação automática de CPF, telefone e endereço). O destinatário não vê o resultado interno nem a identidade de quem denunciou, e a auto-denúncia é bloqueada.",
+    "Bloquear e Desbloquear tem efeito no envio nos dois sentidos (não apenas ocultação local). O rótulo 'Você foi bloqueado' ou 'Você bloqueou' aparece na lista quando há bloqueio.",
+    "Os estados de entrega são Enviando / Enviado / Não enviado — sem tique de leitura inventado. Em falha, o texto fica na tela e Tentar novamente reusa o mesmo id.",
+    "Nomes, avatares e contagens são ilustrativos e vêm de fixtures únicas; mensagens não exibem contador de visualização, contagem de membros ou score — conversa é só mensagem, autor e hora.",
+    "A versão antiga sem id (/messages com selecao local) foi substituida pela URL estavel; o redirect ?conversation=<id> trata os deep links que ainda existem em deep-links.ts e no botão Conversar do prestador.",
+    "Lacuna registrada: nenhum card RECON-NNN possui isoladamente a rota /messages; ela vive dentro de RECON-032, que cobre o conjunto Salvos + Denúncias + Conversa + Ajuda."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do membro conforme apps/web/app/components/bivaque/app-shell.tsx. Cabeçalho da página ('Mensagens' + botão Nova conversa) e o corpo de duas colunas (lista + thread) vêm de apps/web/app/(shell)/messages/conversation-inbox.tsx. O thread (avatar + autor + hora + bolha, botão Denunciar por mensagem do outro, composer + Enviar + nota de privacidade, botão Bloquear/Desbloquear) vem de apps/web/app/components/bivaque/chat-thread.tsx. URL estavel por conversa vem de apps/web/app/(shell)/messages/[id]/page.tsx, que valida UUID e devolve 404 sem enumerar. Painel 1 mostra a caixa de entrada com cinco conversas (uma com badge 'Você bloqueou', duas mostrando o rótulo de contexto em vez do preview porque ainda não há mensagem), header 'Mensagens' e thread vazio com a instrução de selecionar um item. Painel 2 mostra a conversa aberta com Renata M. (Evento em comum) — quatro mensagens com bolhas alternadas, autor e hora, um botão Denunciar por mensagem do outro, o composer preenchido e a nota 'Somente os participantes desta conversa veem as mensagens.' Copy reconciliada com C12 e com os CONTEXT_LABELS do chat-thread (shared_group, shared_event, recommendation_thread, accepted_family).",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-032",
+  "journey": {
+    "id": "web-central-de-conversas",
+    "titulo": "Responder uma conversa por contexto",
+    "plataforma": "web",
+    "grupo": "conversa",
+    "persona": "Membro que quer falar com alguem do grupo, do evento ou da familia",
+    "comeca": "Caixa de entrada /messages",
+    "termina": "Mensagem entregue e atualizada no destino",
+    "acoes": ["Responder"],
+    "etapas": [
+      {
+        "nome": "Caixa de entrada",
+        "passos": [{ "tela": "75-web-conversas#0", "acao": "abre a conversa que importa ou inicia uma nova a partir de um contato valido" }]
+      },
+      {
+        "nome": "Conversa aberta",
+        "passos": [{ "tela": "75-web-conversas#1", "acao": "le as mensagens e envia a resposta" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 75-web-conversas — `/messages` e `/messages/[id]`\n\n**Etapa:** W03/W04/W06/W07/W08. **Painéis:** a caixa de entrada com a lista e a thread à direita; a conversa aberta com o histórico e o composer.\n\nPrancha criada em 12/09/2026, depois do handoff. C12 pede URL estável por conversa (R25/R44/R45/R49/C12) e o guia só desenhava a versão antiga com seleção local (prancha 15). Esta é a autoridade visual do fluxo de mensagens depois da migração para rota estável e contexto imutável.\n\n### Composição\n\nShell do membro (lateral com Início, Explorar, Comunidades e Perfil, mais Salvos e Notificações; barra superior com busca, cidade e perfil) conforme `apps/web/app/components/bivaque/app-shell.tsx`. Cabeçalho da página com H1 \"Mensagens\" e botão \"Nova conversa\" conforme `conversation-inbox.tsx`.\n\n**Caixa de entrada** — lista à esquerda com cinco conversas (Renata M. ativa, Lúcia Prado, João Silva, Ana Cláudia com badge \"Você bloqueou\", Roberto P. mostrando o rótulo de contexto porque ainda não há mensagem); à direita, o thread da conversa ativa com avatar + nome + contexto (\"Evento em comum · Café entre vizinhos\") + botão \"Bloquear\" e o estado vazio com a instrução de selecionar um item. Sem tique de leitura e sem contagem de membros.\n\n**Conversa aberta** — mesma lista à esquerda (mesma conversa ativa); thread à direita com o histórico: Renata M. pergunta às 09:14 se pode aparecer às 10h, Você responde às 09:21 que sim e pede cadeira de dobrar, Renata M. pergunta às 09:23 sobre restrição alimentar, e a última mensagem de Você às 09:26 aparece em estado \"Enviando…\" (estado intermediário do insert otimista). Botão \"Denunciar\" por mensagem do outro, composer preenchido com a próxima resposta (\"O João é celíaco, mas o resto do grupo come de tudo.\") + botão \"Enviar\" + nota \"Somente os participantes desta conversa veem as mensagens.\" Estado \"Enviando\" visível apenas nas mensagens próprias.\n\n### Estados e limites\n\nA conversa é só duas pessoas e tem contexto imutável — o botão \"Nova conversa\" lista só quem você já encontra no app. Bloquear interrompe o envio nos dois sentidos e mostra \"Você bloqueou\" / \"Você foi bloqueado\" na lista. Denunciar abre uma área de motivo por mensagem com redação automática de CPF, telefone e endereço. Não há tique de leitura: a entrega é Enviando / Enviado / Não enviado, e em falha o texto permanece na tela com \"Tentar novamente\". O redirecionamento `?conversation=<id>` em `/messages` trata os deep links legados do sino de notificação e do botão Conversar do prestador. **Lacuna registrada:** a rota `/messages` vive dentro de RECON-032 (junto com Salvos, Denúncias e Ajuda), sem card dedicado."
+}

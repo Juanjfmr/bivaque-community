@@ -1,11 +1,19 @@
 "use client"
 
-import { Button, Chip, SearchField, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
+import { Button, Chip, Dropdown, SearchField, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
+import { MoreHorizontal } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { type FormEvent, useMemo, useRef, useState } from "react"
+import {
+  type CommunityImageKind,
+  communityImageAltText,
+} from "../../../lib/communities/community-media"
 import { Card } from "../../components/bivaque/card"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
+import { cancelCommunityRequestAction } from "./[id]/actions"
 import { requestCommunityMembershipAction } from "./actions"
 import {
   type CommunityCard,
@@ -48,6 +56,43 @@ function CommunityGlyph({ className = "" }: { className?: string }) {
   )
 }
 
+// Prancha 42: overflow "…" nos cards de comunidade e no rail "Seus pedidos".
+// Só ações com rota real entram; nada de item morto no menu.
+function CommunityCardMenu({ communityId }: { communityId: string }) {
+  const items: { key: string; label: string; href: string }[] = [
+    { key: "view", label: "Ver comunidade", href: "/communities/" + communityId },
+    { key: "invite", label: "Convidar", href: "/communities/" + communityId + "/invite" },
+    {
+      key: "provider",
+      label: "Indicar prestador",
+      href: "/communities/" + communityId + "/indicar-prestador",
+    },
+  ]
+  return (
+    <Dropdown>
+      {/* Trigger é o próprio botão — ver feed-post-menu.tsx. */}
+      <Dropdown.Trigger aria-label="Mais opções" className="rounded-full min-h-11 min-w-11">
+        <MoreHorizontal size={18} aria-hidden="true" />
+      </Dropdown.Trigger>
+      <Dropdown.Popover placement="bottom end">
+        <Dropdown.Menu
+          aria-label="Ações da comunidade"
+          onAction={(key) => {
+            const item = items.find((i) => i.key === key)
+            if (item) window.location.assign(item.href)
+          }}
+        >
+          {items.map((item) => (
+            <Dropdown.Item key={item.key} id={item.key}>
+              {item.label}
+            </Dropdown.Item>
+          ))}
+        </Dropdown.Menu>
+      </Dropdown.Popover>
+    </Dropdown>
+  )
+}
+
 function PendingChip() {
   return (
     <Chip size="sm" color="warning" variant="soft">
@@ -56,15 +101,47 @@ function PendingChip() {
   )
 }
 
-function CommunityThumbnail({ large = false }: { large?: boolean }) {
+function CommunityThumbnail({
+  url,
+  kind,
+  variant = "square",
+}: {
+  url: string | null
+  kind: CommunityImageKind
+  variant?: "compact" | "square" | "wide"
+}) {
+  const size =
+    variant === "wide"
+      ? "h-32 w-full rounded-xl"
+      : variant === "compact"
+        ? "h-12 w-12 rounded-lg"
+        : "h-24 w-24 rounded-lg"
+  const glyph = variant === "wide" ? "h-10 w-10" : variant === "compact" ? "h-6 w-6" : "h-8 w-8"
+  const dimensions =
+    variant === "wide"
+      ? { width: 1200, height: 384 }
+      : variant === "compact"
+        ? { width: 48, height: 48 }
+        : { width: 96, height: 96 }
+  if (url) {
+    return (
+      <Image
+        src={url}
+        alt={communityImageAltText(kind)}
+        width={dimensions.width}
+        height={dimensions.height}
+        unoptimized
+        loading="lazy"
+        className={`shrink-0 object-cover ${size}`}
+      />
+    )
+  }
   return (
     <div
       aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center rounded-lg bg-[var(--semantic-surface-sunken)] text-muted ${
-        large ? "h-28 w-full rounded-xl" : "h-24 w-24"
-      }`}
+      className={`flex shrink-0 items-center justify-center bg-[var(--semantic-surface-sunken)] text-muted ${size}`}
     >
-      <CommunityGlyph className={large ? "h-10 w-10" : "h-8 w-8"} />
+      <CommunityGlyph className={glyph} />
     </div>
   )
 }
@@ -82,6 +159,29 @@ export function CommunitiesScreen({
   const [submitError, setSubmitError] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  const router = useRouter()
+
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState("")
+
+  async function handleCancelRequest(communityId: string) {
+    setCancelling(true)
+    setCancelError("")
+    const formData = new FormData()
+    formData.set("communityId", communityId)
+    try {
+      const outcome = await cancelCommunityRequestAction(formData)
+      if (!outcome.ok) {
+        setCancelError(outcome.message)
+      } else {
+        router.refresh()
+      }
+    } catch {
+      setCancelError("Não foi possível cancelar agora. Tente novamente.")
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   const { mine, pending, discover } = useMemo(() => {
     const knownById = new Map(knownCommunities.map((c) => [c.id, c]))
@@ -131,15 +231,17 @@ export function CommunitiesScreen({
           setTab(String(key))
           setSubmitError("")
         }}
-        className="[&_[data-slot=tab]]:min-h-11 [&_[data-slot=tab]]:px-3"
+        className="tabs--secondary [&_[data-slot=tab]]:min-h-11 [&_[data-slot=tab]]:px-3"
       >
-        <TabList aria-label="Seções de comunidades">
-          <Tab key="minhas">Minhas comunidades</Tab>
-          <Tab key="descobrir">Descobrir</Tab>
-        </TabList>
+        <Tabs.ListContainer>
+          <TabList aria-label="Seções de comunidades">
+            <Tab id="minhas">Minhas comunidades</Tab>
+            <Tab id="descobrir">Descobrir</Tab>
+          </TabList>
+        </Tabs.ListContainer>
 
         {tab === "minhas" && (
-          <TabPanel key="minhas" className="pt-4">
+          <TabPanel id="minhas" className="pt-4">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
               <section aria-label="Minhas comunidades" className="flex flex-col gap-4">
                 {mine.length === 0 ? (
@@ -155,8 +257,8 @@ export function CommunitiesScreen({
                 ) : (
                   mine.map((community) => (
                     <Card key={community.id} className="p-4">
-                      <div className="flex gap-4">
-                        <CommunityThumbnail />
+                      <div className="flex items-start gap-4">
+                        <CommunityThumbnail url={community.thumbnailUrl} kind="thumbnail" />
                         <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
                           <h2 className="text-base font-semibold tracking-tight">
                             {community.name}
@@ -176,6 +278,9 @@ export function CommunitiesScreen({
                             Ver comunidade
                           </Link>
                         </div>
+                        <div className="shrink-0">
+                          <CommunityCardMenu communityId={community.id} />
+                        </div>
                       </div>
                     </Card>
                   ))
@@ -189,7 +294,28 @@ export function CommunitiesScreen({
                     <ul className="mt-3 flex flex-col gap-4">
                       {pending.map((request) => (
                         <li key={request.communityId} className="flex flex-col gap-1">
-                          <PendingChip />
+                          <div className="flex items-center justify-between gap-2">
+                            <PendingChip />
+                            <Dropdown>
+                              <Dropdown.Trigger
+                                aria-label={`Mais opções do pedido de ${request.name}`}
+                                isDisabled={cancelling}
+                                className="rounded-full min-h-11 min-w-11"
+                              >
+                                <MoreHorizontal size={18} aria-hidden="true" />
+                              </Dropdown.Trigger>
+                              <Dropdown.Popover placement="bottom end">
+                                <Dropdown.Menu
+                                  aria-label="Ações do pedido"
+                                  onAction={() => handleCancelRequest(request.communityId)}
+                                >
+                                  <Dropdown.Item key="cancel" id="cancel">
+                                    Cancelar pedido
+                                  </Dropdown.Item>
+                                </Dropdown.Menu>
+                              </Dropdown.Popover>
+                            </Dropdown>
+                          </div>
                           <span className="text-sm font-medium">{request.name}</span>
                           {request.cityLabel && (
                             <span className="text-sm text-muted">{request.cityLabel}</span>
@@ -201,6 +327,13 @@ export function CommunitiesScreen({
                           )}
                         </li>
                       ))}
+                      {cancelError && (
+                        <li>
+                          <p className="text-xs text-[var(--semantic-danger-foreground)]">
+                            {cancelError}
+                          </p>
+                        </li>
+                      )}
                     </ul>
                     <p className="mt-3 text-xs leading-relaxed text-muted">
                       Estes pedidos ainda estão em análise — você ainda não faz parte delas.
@@ -213,7 +346,7 @@ export function CommunitiesScreen({
         )}
 
         {tab === "descobrir" && (
-          <TabPanel key="descobrir" className="pt-4">
+          <TabPanel id="descobrir" className="pt-4">
             <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
               <section aria-label="Descobrir comunidades" className="flex flex-col gap-3">
                 <SearchField
@@ -290,9 +423,11 @@ export function CommunitiesScreen({
                                   : "border-border bg-[var(--semantic-surface)] hover:bg-[var(--semantic-surface-sunken)]"
                               }`}
                             >
-                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[var(--semantic-surface-sunken)] text-muted">
-                                <CommunityGlyph className="h-6 w-6" />
-                              </span>
+                              <CommunityThumbnail
+                                url={community.thumbnailUrl}
+                                kind="thumbnail"
+                                variant="compact"
+                              />
                               <span className="flex min-w-0 flex-col">
                                 <span
                                   className={`truncate text-sm font-medium ${
@@ -333,7 +468,7 @@ export function CommunitiesScreen({
               {selected && (
                 <section aria-label={`Apresentação de ${selected.name}`}>
                   <Card className="flex flex-col gap-4 p-5">
-                    <CommunityThumbnail large />
+                    <CommunityThumbnail url={selected.bannerUrl} kind="banner" variant="wide" />
                     <div className="flex flex-col gap-1">
                       <h2 className="text-xl font-semibold tracking-tight">{selected.name}</h2>
                       {selected.cityLabel && (

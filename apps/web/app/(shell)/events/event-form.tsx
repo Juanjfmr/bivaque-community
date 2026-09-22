@@ -1,0 +1,329 @@
+"use client"
+
+// RECON-029 (R35): formulário de criar e editar evento. Persiste antes de
+// divulgar; a falha preserva os campos. O escopo (cidade) é fixado na criação e
+// não aparece na edição — editar não contorna acesso.
+
+import { Button, Input, TextArea } from "@heroui/react"
+import type { Route } from "next"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { useLocalityContext } from "../../../lib/locality-context"
+import { Card } from "../../components/bivaque/card"
+import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
+import { cancelEventAction, createEventAction, updateEventAction } from "./event-actions"
+import { uploadPostPhotoAction } from "./upload-photo-action"
+
+export type EventFormValues = {
+  id?: string
+  title: string
+  description: string
+  startsAt: string
+  venue: string
+  coverPath?: string | null
+}
+
+interface EventFormProps {
+  mode: "create" | "edit"
+  initial: EventFormValues
+  cancelled?: boolean
+}
+
+export function EventForm({ mode, initial, cancelled = false }: EventFormProps) {
+  const router = useRouter()
+  const { current } = useLocalityContext()
+  const [title, setTitle] = useState(initial.title)
+  const [description, setDescription] = useState(initial.description)
+  const [startsAt, setStartsAt] = useState(initial.startsAt)
+  const [venue, setVenue] = useState(initial.venue)
+  const [coverPath, setCoverPath] = useState(initial.coverPath ?? "")
+  const [coverBusy, setCoverBusy] = useState(false)
+  const [coverError, setCoverError] = useState<string | null>(null)
+  const [failure, setFailure] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
+
+  const isEdit = mode === "edit"
+  const backHref = isEdit && initial.id ? `/events/${initial.id}` : "/events"
+
+  // Prancha 70, painel 1: "Capa do evento" (JPG/PNG). O upload reusa a server
+  // action que já existe para a foto de publicação — mesmo bucket privado, mesmo
+  // limite e mesma validação de tipo no servidor; o caminho cai na pasta de quem
+  // organiza, que é o que o trigger do banco confere.
+  async function handleCoverChange(file: File | null) {
+    if (!file) return
+    setCoverBusy(true)
+    setCoverError(null)
+    const formData = new FormData()
+    formData.set("photo", file)
+    try {
+      const { photoPath } = await uploadPostPhotoAction(formData)
+      setCoverPath(photoPath)
+    } catch (error) {
+      setCoverError(error instanceof Error ? error.message : "Não foi possível enviar a imagem.")
+    }
+    setCoverBusy(false)
+  }
+
+  async function handleSubmit() {
+    if (submitting) return
+    setSubmitting(true)
+    setFailure(null)
+
+    const formData = new FormData()
+    formData.set("title", title)
+    formData.set("description", description)
+    formData.set("startsAt", startsAt)
+    formData.set("venue", venue)
+    formData.set("coverPath", coverPath)
+    if (isEdit && initial.id) formData.set("eventId", initial.id)
+    if (!isEdit) formData.set("localityId", current.id)
+
+    const result = isEdit ? await updateEventAction(formData) : await createEventAction(formData)
+    if (result.ok) {
+      router.push(`/events/${result.eventId}` as Route)
+      router.refresh()
+      return
+    }
+    setFailure(result.message)
+    setSubmitting(false)
+  }
+
+  async function handleCancelEvent() {
+    if (!initial.id || submitting) return
+    setSubmitting(true)
+    setFailure(null)
+    const formData = new FormData()
+    formData.set("eventId", initial.id)
+    const result = await cancelEventAction(formData)
+    if (result.ok) {
+      router.push(`/events/${result.eventId}` as Route)
+      router.refresh()
+      return
+    }
+    setFailure(result.message)
+    setSubmitting(false)
+  }
+
+  return (
+    <section className="flex w-full max-w-xl flex-col gap-4">
+      <h1 className="text-2xl font-semibold tracking-tight">
+        {isEdit ? "Editar evento" : "Novo evento"}
+      </h1>
+
+      {!isEdit && <p className="text-sm text-muted">O evento é salvo antes de ser divulgado.</p>}
+
+      {cancelled ? (
+        <FeedbackAlert
+          variant="warning"
+          description="Este evento está cancelado. Editar os dados não o reabre."
+        />
+      ) : null}
+
+      {failure ? <FeedbackAlert variant="danger" description={failure} /> : null}
+
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(event) => {
+          event.preventDefault()
+          void handleSubmit()
+        }}
+      >
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="event-cover" className="text-sm font-medium">
+            Capa do evento
+          </label>
+          <input
+            id="event-cover"
+            type="file"
+            accept="image/png,image/jpeg"
+            disabled={coverBusy}
+            onChange={(event) => void handleCoverChange(event.target.files?.[0] ?? null)}
+            className="min-h-11 w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 py-2 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--semantic-selected)] file:px-3 file:py-1.5 file:text-sm file:font-medium"
+          />
+          <p className="text-xs text-muted">
+            JPG ou PNG até 5MB. Sem capa, o evento aparece com o ícone de calendário.
+          </p>
+          {coverBusy ? <p className="text-xs text-muted">Enviando a imagem…</p> : null}
+          {coverError ? <FeedbackAlert variant="danger" description={coverError} /> : null}
+          {coverPath && !coverBusy ? (
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted">Capa enviada.</p>
+              <Button
+                type="button"
+                variant="tertiary"
+                size="sm"
+                className="min-h-11"
+                onPress={() => setCoverPath("")}
+              >
+                Remover capa
+              </Button>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="event-title" className="text-sm font-medium">
+            Título
+          </label>
+          <Input
+            id="event-title"
+            value={title}
+            onChange={(event) => setTitle((event.target as HTMLInputElement).value)}
+            required
+            minLength={2}
+            maxLength={200}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="event-description" className="text-sm font-medium">
+            Descrição
+          </label>
+          <TextArea
+            id="event-description"
+            value={description}
+            onChange={(event) => setDescription((event.target as HTMLTextAreaElement).value)}
+            maxLength={2000}
+            rows={4}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="event-starts-at" className="text-sm font-medium">
+            Data e hora
+          </label>
+          <Input
+            id="event-starts-at"
+            type="datetime-local"
+            value={startsAt}
+            onChange={(event) => setStartsAt((event.target as HTMLInputElement).value)}
+            required
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="event-venue" className="text-sm font-medium">
+            Local
+          </label>
+          <Input
+            id="event-venue"
+            value={venue}
+            onChange={(event) => setVenue((event.target as HTMLInputElement).value)}
+            maxLength={200}
+          />
+          <p className="text-xs text-muted">
+            O local deve ser um espaço público. Endereços pessoais ou militares não são permitidos.
+          </p>
+        </div>
+
+        {!isEdit ? (
+          // "Quem pode ver" da prancha 70: o alcance é a cidade, decidido na
+          // criação e imutável depois (o evento não tem público selecionável).
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium">Quem pode ver</span>
+            <div className="rounded-lg border border-border bg-[var(--semantic-surface-sunken)] px-3 py-2.5 text-sm">
+              Toda a cidade — {current.cityName}
+              {current.stateCode ? `, ${current.stateCode}` : ""}
+            </div>
+            <p className="text-xs text-muted">
+              O alcance é a cidade em que o evento é criado; a edição não o altera.
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-muted">
+            Alterações relevantes (título, descrição, data, local) avisam quem confirmou presença.
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="submit" variant="primary" className="min-h-11" isDisabled={submitting}>
+            {submitting ? "Salvando…" : isEdit ? "Salvar alterações" : "Criar evento"}
+          </Button>
+          <Link
+            href={backHref as Route}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+          >
+            {isEdit ? "Voltar ao evento" : "Cancelar"}
+          </Link>
+        </div>
+      </form>
+
+      {!isEdit ? (
+        <div className="flex flex-col gap-3">
+          <Card className="p-4">
+            <h2 className="text-sm font-semibold">Quem pode participar</h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted">
+              Membros verificados de {current.cityName} podem confirmar presença. O evento aparece
+              para toda a cidade; confirmar é uma ação de cada pessoa.
+            </p>
+          </Card>
+
+          <Card className="p-4">
+            <h2 className="text-sm font-semibold">O que acontece depois de publicar</h2>
+            <ol className="mt-2 flex flex-col gap-2 text-sm text-muted">
+              <li className="flex gap-2">
+                <span className="font-semibold text-[var(--semantic-action-primary)]">1.</span>
+                <span>
+                  O evento é salvo antes de ser divulgado — nada aparece sem estar gravado.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-[var(--semantic-action-primary)]">2.</span>
+                <span>
+                  Ele entra em Explorar eventos para {current.cityName} e pode ser encontrado por
+                  quem procura o que fazer na cidade.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-[var(--semantic-action-primary)]">3.</span>
+                <span>
+                  Quem confirmar presença aparece na lista de participantes; mudanças relevantes
+                  avisam essas pessoas.
+                </span>
+              </li>
+            </ol>
+          </Card>
+        </div>
+      ) : null}
+
+      {isEdit && !cancelled ? (
+        <div className="mt-2 flex flex-col gap-2 rounded-xl border border-border bg-[var(--semantic-surface-sunken)] p-3">
+          <p className="text-sm font-medium">Cancelar evento</p>
+          <p className="text-xs text-muted">
+            Cancelar o evento avisa quem confirmou presença. É diferente de cancelar a própria
+            presença.
+          </p>
+          {confirmingCancel ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="danger"
+                className="min-h-11"
+                isDisabled={submitting}
+                onPress={() => void handleCancelEvent()}
+              >
+                Confirmar cancelamento
+              </Button>
+              <Button
+                variant="tertiary"
+                className="min-h-11"
+                onPress={() => setConfirmingCancel(false)}
+              >
+                Manter evento
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="tertiary"
+              className="min-h-11 w-fit"
+              onPress={() => setConfirmingCancel(true)}
+            >
+              Cancelar evento
+            </Button>
+          )}
+        </div>
+      ) : null}
+    </section>
+  )
+}

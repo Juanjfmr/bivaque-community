@@ -1,15 +1,15 @@
 "use client"
 
 import type { LucideIcon } from "lucide-react"
-import { ArrowRight, CalendarDays, Compass, Home, Search, ShoppingBag, Wrench } from "lucide-react"
+import { ArrowRight, CalendarDays, Compass, Home, ShoppingBag, Wrench } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { Card } from "../../components/bivaque/card"
 
 // Prancha 61-web-explorar-servicos, desktop da esquerda (RECON-003).
-// As categorias com destino real navegam; Mercado e Moradia ainda não têm
-// rota e por isso são cartões sem link, sem seta e sem promessa de destino.
+// As categorias com destino real navegam; Mercado passou a navegar para
+// /mercado no RECON-025. Moradia navega para /imoveis desde o RECON-027.
 // Os destaques da prancha não são renderizados: nenhum dado real os sustenta
 // ainda, e seção vazia inventada é exatamente o que o contrato proíbe.
 
@@ -31,7 +31,7 @@ const CATEGORIES: Category[] = [
     icon: ShoppingBag,
     title: "Mercado",
     description: "Comércios, produtos e muito mais.",
-    href: null,
+    href: "/mercado",
   },
   {
     icon: Wrench,
@@ -43,7 +43,7 @@ const CATEGORIES: Category[] = [
     icon: Home,
     title: "Moradia",
     description: "Aluguel, repúblicas e quartos.",
-    href: null,
+    href: "/imoveis",
   },
   {
     icon: CalendarDays,
@@ -98,32 +98,12 @@ export default function ExplorarPage() {
         Encontre guias, serviços, comércios, moradia e eventos na sua cidade.
       </p>
 
-      <search className="mt-5 block">
-        <form action="/explorar/servicos" method="get">
-          <label htmlFor="explorar-busca" className="sr-only">
-            Buscar no Bivaque
-          </label>
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-[var(--semantic-surface)] px-3">
-            <Search size={18} aria-hidden="true" className="shrink-0 text-muted" />
-            <input
-              id="explorar-busca"
-              name="search"
-              type="search"
-              placeholder="Buscar no Bivaque"
-              className="min-h-11 w-full bg-transparent text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
-            />
-            <button
-              type="submit"
-              aria-label="Buscar"
-              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-sm font-medium text-[var(--accent)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)]"
-            >
-              <Search size={18} aria-hidden="true" />
-            </button>
-          </div>
-        </form>
-      </search>
-
-      <section aria-labelledby="do-que-precisa-titulo" className="mt-8">
+      {/* RECON-021: o campo "Buscar no Bivaque" desta tela vivia aqui e ia
+          para /explorar/servicos — buscava PRESTADORES sob o rótulo do
+          produto inteiro, a substituição de domínio que o processo proíbe. O
+          campo do cabeçalho (GlobalSearchField) é o da prancha e leva a
+          /explorar/busca; um rótulo, um destino. */}
+      <section aria-labelledby="do-que-precisa-titulo" className="mt-5">
         <h2 id="do-que-precisa-titulo" className="text-base font-semibold tracking-tight">
           Do que você precisa?
         </h2>

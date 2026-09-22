@@ -1,18 +1,21 @@
 "use client"
 
+import { CONSENT_VERSION } from "@bivaque/domain"
 import { Button } from "@heroui/react"
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useRef, useState } from "react"
 import {
   classifySignIn,
   classifySignUp,
   type PasswordAuthView,
   passwordProblem,
 } from "../../../../lib/auth/password-auth"
+import { sanitizeNext } from "../../../../lib/security/sanitize-next"
 import { createBrowserClient } from "../../../../lib/supabase/client"
+import { writePendingConfirmation } from "../../../components/auth/resend-clock"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import { recordConsentAction } from "../../consent/actions"
 import styles from "./bivaque-sign-in.module.css"
@@ -84,6 +87,7 @@ function Wordmark({ onPhoto = false }: { onPhoto?: boolean }) {
 
 export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -91,13 +95,32 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
   const [accepted, setAccepted] = useState(false)
   const [result, setResult] = useState<PasswordAuthView | null>(null)
   const [loading, setLoading] = useState<"form" | "google" | null>(null)
+  // Dois cliques dentro do mesmo tick lêem o mesmo `loading` (estado do React
+  // atualiza depois); o ref muda na hora e é o que segura a segunda request.
+  const submittingRef = useRef(false)
 
   const copy = entryCopy[mode]
   const titleId = mode === "signup" ? "signup-title" : "login-title"
   const prefix = mode === "signup" ? "bivaque-signup" : "bivaque-signin"
 
+  // Destino pós-entrada: o proxy anota ?redirect= quando devolve alguém para cá.
+  // Aceita só rota interna — sanitize-next rejeita absoluta, //host e
+  // javascript: — e na ausência cai no funil de onboarding, que é o caminho
+  // atual. Sem isso, o destino seria sempre /onboarding mesmo quando a pessoa
+  // foi expulsa de uma rota específica para a tela de entrar.
+  const destination = (): string | null => {
+    const raw = searchParams.get("redirect")
+    if (raw === null || raw === "") return null
+    const clean = sanitizeNext(raw)
+    return clean === "/" ? null : clean
+  }
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    // Envio em andamento não duplica: teclar Enter com o request voando já
+    // contou duas vezes contra o provedor em outras telas desta base.
+    if (submittingRef.current) return
+    submittingRef.current = true
     setResult(null)
 
     // No cadastro a senha é conferida antes de sair daqui: mandar o servidor
@@ -117,13 +140,29 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
 
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          options: { data: { display_name: name.trim() } },
+          options: {
+            data: { display_name: name.trim() },
+            // Quando o provedor exige confirmação, o link nasce daqui e volta
+            // pelo callback com o marcador do aceite. O endereço viaja dentro
+            // do link assinado pelo servidor, nunca em query da nossa tela.
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&consent=${encodeURIComponent(String(CONSENT_VERSION))}`,
+          },
         })
         const view = classifySignUp(error)
         if (view.outcome === "ok") {
+          if (!data.session) {
+            // R03 → R04: conta criada mas o provedor quer o e-mail confirmado
+            // antes de existir sessão. Sem sessão não há como gravar o aceite
+            // agora — ele é registrado pelo callback, no link acima. A flag
+            // local só ecoa o endereço para a tela de confirmação; não é
+            // prova nem promessa de envio: quem manda o e-mail é o servidor.
+            writePendingConfirmation({ email: email.trim(), lastResendAt: null })
+            router.push("/auth/confirmar-email")
+            return
+          }
           // O aceite e' condicao de existir a conta, entao e' gravado antes de
           // a pessoa seguir. Se a gravacao falhar, ela fica na tela sabendo —
           // seguir sem registro deixaria um aceite que ninguem pode provar.
@@ -137,6 +176,14 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             })
             return
           }
+          const destinoCadastro = destination()
+          if (destinoCadastro !== null) {
+            // Navegação completa, não push client-side: o destino pode ser uma
+            // rota protegida, e o cookie de sessão que o client escreve só é
+            // garantido no próximo request do documento.
+            window.location.assign(destinoCadastro)
+            return
+          }
           router.push("/onboarding")
           return
         }
@@ -148,6 +195,11 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
         })
         const view = classifySignIn(error)
         if (view.outcome === "ok") {
+          const destinoLogin = destination()
+          if (destinoLogin !== null) {
+            window.location.assign(destinoLogin)
+            return
+          }
           router.push("/onboarding")
           return
         }
@@ -156,11 +208,13 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
     } catch (thrown) {
       setResult(mode === "signup" ? classifySignUp(thrown) : classifySignIn(thrown))
     } finally {
+      submittingRef.current = false
       setLoading(null)
     }
   }
 
   const handleGoogle = async () => {
+    if (loading !== null) return
     setResult(null)
     setLoading("google")
 
@@ -170,7 +224,9 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
       } else {
         const { error } = await createBrowserClient().auth.signInWithOAuth({
           provider: "google",
-          options: { redirectTo: `${window.location.origin}/auth/callback?next=/onboarding` },
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destination() ?? "/onboarding")}`,
+          },
         })
         if (error) throw error
       }

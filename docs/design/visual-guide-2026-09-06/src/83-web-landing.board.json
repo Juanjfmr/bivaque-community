@@ -1,0 +1,59 @@
+{
+  "id": "83-web-landing",
+  "kind": "web",
+  "group": "base",
+  "title": "Web: primeiro contato público",
+  "screens": [
+    "Primeiro contato",
+    "Como entrar e o que esperar"
+  ],
+  "reviewNotes": [
+    "Landing pública para visitante (R01). Antes da admissão não há navegação funcional de membro nem conteúdo privado — a prancha inteira é o shell público.",
+    "Copy reconciliada com apps/web/app/landing/landing.tsx. Hero reproduz o headline 'A comunidade vai com você' e os três passos da seção 'Por dentro do Bivaque'.",
+    "Cidade 'Brasília, DF' usada apenas como exemplo dentro do mock do produto; o seletor real depende da entrada do visitante.",
+    "Imagens da hero, da seção de mudança e do mock do produto são blocos ilustrativos; consolidar com o asset real ao implementar (não usar fotografia como dado).",
+    "Força Armada e OM não aparecem no perfil: destaque explícito no card 'Seu perfil é para convivência' da seção Confiança.",
+    "Não há promessa de prazo, de compartilhamento automático de contato, nem de verificação pública; o selo 'BIVAQUE' é o wordmark canônico.",
+    "Não mostra lista de membros nem avatares individuais; o mock apresenta perguntas e respostas sem expor rostes.",
+    "A seção de meio de página (o relato de uma dúvida resolvida) não está nesta prancha: com o hero em altura de composição, ela não caberia em 1056px sem esmagar as outras. Fica registrada como não desenhada, e o hero foi corrigido de 1056px para 600px porque o flex o estava reduzindo a 58px."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell público conforme apps/web/app/landing/landing.tsx: topbar com BIVAQUE, âncoras Por dentro / Pertencimento / Confiança, botão Entrar à direita. Painel 1 = hero + manifesto + 'Por dentro do Bivaque' com mock do produto. Painel 2 = camadas de pertencimento (cidade, comunidade, grupo), três cartões de confiança e CTA de fechamento. Copy reconciliada com a tela implementada.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-001",
+  "journey": {
+    "id": "web-primeiro-contato-publico",
+    "titulo": "Primeiro contato do visitante com o Bivaque",
+    "plataforma": "web",
+    "grupo": "base",
+    "persona": "Visitante que ainda nao tem cadastro",
+    "comeca": "Aterrissagem em /",
+    "termina": "Decisao de entrar ou criar conta",
+    "acoes": [
+      "Ler manifesto",
+      "Conhecer camadas de pertencimento",
+      "Entrar ou criar conta"
+    ],
+    "etapas": [
+      {
+        "nome": "Hero e manifesto",
+        "passos": [
+          {
+            "tela": "83-web-landing#0",
+            "acao": "le a chamada principal e o manifesto"
+          }
+        ]
+      },
+      {
+        "nome": "Camadas e confianca",
+        "passos": [
+          {
+            "tela": "83-web-landing#1",
+            "acao": "percorre pertencimento, confianca e CTA final"
+          }
+        ]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 83-web-landing — landing pública do Bivaque\n\n**Etapa:** W01. **Painéis:** primeiro contato do visitante; camadas de pertencimento, confiança e fechamento.\n\nPrancha criada em 12/09/2026, depois do handoff. Desenha a página pública exigida por R01 sem antecipar admissão: o visitante lê o que o Bivaque é, decide se faz sentido, e só então vê os atalhos para Entrar ou Criar conta.\n\n### Composição\n\nShell público em ambos os painéis. Topbar fixa com o wordmark BIVAQUE à esquerda, âncoras Por dentro / Pertencimento / Confiança, e botão Entrar à direita. Nenhum sidebar de membro, nenhum link para feed privado, nenhum conteúdo de comunidade.\n\n**Painel 1 — Primeiro contato.** Hero com foto sangrada e overlay escuro para legibilidade, eyebrow 'Para pessoas com vínculo militar federal, veteranos, pensionistas e dependentes', H1 'Bivaque. A comunidade vai com você.' em duas linhas, parágrafo de abertura, ações 'Quero fazer parte' (primário) e 'Ver como funciona' (âncora para a próxima seção). Abaixo, o manifesto curto: 'Quem chega tem perguntas. Quem já está conhece os caminhos.' Em seguida, a seção Por dentro do Bivaque: três passos numerados — Pergunte / Resolva / Preserve — e, à direita, um mock do produto dentro de uma casca de desktop com barra BIVAQUE · 'Brasília, DF' e três cartões (Nova pergunta, 3 respostas úteis, Pedido resolvido) que mostram como uma conversa vira referência arquivada.\n\n**Painel 2 — Como entrar e o que esperar.** Pertencimento em três camadas numeradas: Cidade, Comunidade e Grupo. Seção Confiança em três cartões com ícone: 'Entrada coerente com cada papel' (escudo), 'Seu perfil é para convivência' (cadeado — destaque de que CPF, patente, OM, endereço e documentos não aparecem no perfil) e 'Encontros pelo que importa' (lupa). Fechamento com o wordmark, H2 'Você pode chegar com uma pergunta. Logo terá algo para compartilhar.', parágrafo, CTA 'Quero fazer parte' e rodapé de duas linhas: 'Bivaque é uma iniciativa comunitária independente.' / 'Sem vínculo oficial com as Forças Armadas.'\n\n### Estados e limites\n\nVisitante não vê feed, lista de membros nem qualquer conteúdo privado. A palavra 'Brasília' aparece só dentro do mock de produto como exemplo de cidade; o seletor real depende da entrada do visitante. As fotos da hero e do mock são blocos ilustrativos, não pessoas reais. A promessa de que 'CPF, patente, OM, endereço e documentos não aparecem no perfil' é a única promessa de privacidade visual — não há promessa de prazo, de compartilhamento de contato ou de verificação pública. O CTA de criação é o mesmo dos dois painéis; nenhum dos dois mostra login realizado.\n"
+}

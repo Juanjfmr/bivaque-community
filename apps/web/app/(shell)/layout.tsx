@@ -2,9 +2,10 @@ import { createServerClient as createSsrServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
+import { signCommunityImageUrls } from "../../lib/communities/community-image-urls"
 import { LocalityContextProvider, type LocalityCurrent } from "../../lib/locality-context"
 import { log } from "../../lib/logger"
-import { type MemberCommunity, MemberContextProvider } from "../../lib/member-context"
+import { MemberContextProvider } from "../../lib/member-context"
 import { AppShell } from "../components/bivaque/app-shell"
 import { ToastProvider } from "../components/bivaque/toast"
 
@@ -156,7 +157,7 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
 
   const { data: communityRows, error: communitiesError } = await supabase
     .from("community_memberships")
-    .select("communities(id, name, is_deleted)")
+    .select("communities(id, name, is_deleted, thumbnail_path)")
     .eq("user_id", user.id)
     .eq("status", "approved")
 
@@ -169,12 +170,36 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
 
   // Comunidade apagada continua com a linha de membership; a sidebar não pode
   // listá-la (communities.is_deleted, migration 20260805211933:26).
-  type CommunityEmbed = MemberCommunity & { is_deleted: boolean }
-  const communities = ((communityRows as unknown as { communities: CommunityEmbed | null }[]) ?? [])
+  type CommunityEmbed = {
+    id: string
+    name: string
+    is_deleted: boolean
+    thumbnail_path: string | null
+  }
+  const communityRowsFiltered = (
+    (communityRows as unknown as { communities: CommunityEmbed | null }[]) ?? []
+  )
     .map((r) => r.communities)
     .filter((c): c is CommunityEmbed => c !== null && c.is_deleted !== true)
-    .map(({ id, name }) => ({ id, name }))
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+
+  // URL assinada da miniatura de cada comunidade: o client autenticado assina,
+  // então a policy de leitura de storage decide de novo se o membro alcança a
+  // comunidade. Sem imagem, o item cai para a inicial do nome.
+  const communityImageUrls = await signCommunityImageUrls(
+    supabase,
+    communityRowsFiltered.map((c) => ({
+      communityId: c.id,
+      banner: false,
+      thumbnail: c.thumbnail_path !== null,
+    })),
+  )
+
+  const communities = communityRowsFiltered.map((c) => ({
+    id: c.id,
+    name: c.name,
+    thumbnailUrl: communityImageUrls.get(c.id)?.thumbnailUrl ?? null,
+  }))
 
   const { count: unreadRaw, error: unreadError } = await supabase
     .from("notifications")

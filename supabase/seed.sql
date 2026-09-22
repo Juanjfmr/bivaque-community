@@ -105,6 +105,16 @@ values
   )
 on conflict (user_id, locality_id) do nothing;
 
+-- Força Armada autodeclarada e VISÍVEL (prancha 51; ADR-20260908 aprovada em
+-- 17/09/2026). Sem linha aqui a tela de perfil de terceiro não tem o que
+-- mostrar e a captura prova só o estado vazio — a mesma lição dos avatares de
+-- presença (lote Z) e dos anúncios salvos (lote AI). A leitura de terceiro sai
+-- por public.profile_affiliations_for(), e não pela tabela.
+insert into public.profile_affiliations (user_id, field, value, is_visible)
+values
+  ('20000000-0000-4000-8000-000000000001', 'armed_force', 'exercito', true)
+on conflict (user_id, field) do nothing;
+
 -- display_name legível: a auditoria visual julga o header do perfil, e
 -- "Novo membro" não permite julgar nada.
 insert into public.profiles (
@@ -1013,6 +1023,69 @@ values (
   'free'
 );
 
+-- RECON-023: pedido semeado da prancha 17, com a conversa de contexto fixo e
+-- duas respostas. membro-1@ e membro aprovado da vila da Climatiza, entao ele
+-- pode ver a ficha e criar o pedido pelo RPC. IDs fixos para a captura visual
+-- e para o ciclo entre duas contas.
+insert into public.dm_conversations (
+  id, participant_a, participant_b, context_type, context_id, created_at
+)
+values (
+  '41000000-0000-4000-8000-000000000023',
+  '20000000-0000-4000-8000-00000000000a',
+  '30000000-0000-4000-8000-000000000001',
+  'provider',
+  '30000000-0000-4000-8000-000000000010',
+  now() - interval '5 days'
+)
+on conflict (id) do nothing;
+
+insert into public.service_requests (
+  id,
+  requester_user_id,
+  provider_id,
+  provider_user_id,
+  description,
+  when_text,
+  status,
+  conversation_id,
+  category,
+  created_at,
+  updated_at
+)
+values (
+  '40000000-0000-4000-8000-000000000023',
+  '30000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-000000000010',
+  '20000000-0000-4000-8000-00000000000a',
+  'Preciso limpar o ar-condicionado do quarto e conferir a carga de gas.',
+  'Nesta semana',
+  'in_conversation',
+  '41000000-0000-4000-8000-000000000023',
+  'assistencia_tecnica',
+  now() - interval '5 days',
+  now() - interval '5 days'
+)
+on conflict (id) do nothing;
+
+insert into public.dm_messages (id, conversation_id, sender_id, content, created_at)
+values
+  (
+    '42000000-0000-4000-8000-000000000023',
+    '41000000-0000-4000-8000-000000000023',
+    '30000000-0000-4000-8000-000000000001',
+    'Oi! Consigo atender nesta quinta, de manha. Pode ser?',
+    now() - interval '4 days'
+  ),
+  (
+    '42000000-0000-4000-8000-000000000024',
+    '41000000-0000-4000-8000-000000000023',
+    '20000000-0000-4000-8000-00000000000a',
+    'Pode sim. Chego as 9h.',
+    now() - interval '3 days'
+  )
+on conflict (id) do nothing;
+
 -- Post de alcance municipal (community_id IS NULL), para
 -- vila-home.spec.ts: aparece no feed de qualquer vila, inclusive a Vila
 -- Ajuricaba.
@@ -1138,6 +1211,29 @@ select
 from generate_series(1, 10) as i
 on conflict (id) do nothing;
 
+-- ── Evento da CONTA DE CAPTURA ────────────────────────────────────────────
+-- A rota /events/[id]/editar exige ser o ORGANIZADOR, e nenhum dos 10 eventos
+-- do volume pertence à conta de captura: a tela caía em estado de erro e a
+-- captura saía INVALID. Mesmo motivo do post da horta (RECON-051).
+insert into public.events (
+  id, organizer_id, locality_id, title, description, starts_at, ends_at,
+  venue, status, created_at
+)
+values (
+  -- id fora da faixa do volume (…0001..0010), que já ocupa os primeiros dez
+  '70000000-0000-4000-8000-0000000000a1',
+  '20000000-0000-4000-8000-000000000008',
+  '00000000-0000-4000-8000-000000000001',
+  'Mutirão da horta comunitária',
+  'Levar luva e chapéu. Ferramentas ficam no galpão da vila.',
+  now() + interval '5 days',
+  now() + interval '5 days' + interval '3 hours',
+  'Espaço da vila',
+  'upcoming',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
 -- ── ~15 denúncias abertas ─────────────────────────────────────────────────
 -- Um operador único olhando 15 denúncias abertas é um teste de usabilidade
 -- diferente de olhar 2. O autor nunca é o denunciante: reports_block_self
@@ -1217,79 +1313,6 @@ values
   )
 on conflict (id) do nothing;
 
--- ── Persona suspensa (W1-DENIED) ──────────────────────────────────────────
--- ADR-20260901-account-suspension: membro com flag is_suspended=true,
--- sem comunidade aprovada. Existe para que tests/e2e/denied-publish.spec.ts
--- prove que INSERT em posts/comments/reactions/reports retorna 42501
--- (classificado como 'server' pelo lib/composer/publish-error.ts) e que
--- a UI mostra copy generica identica a qualquer outra negacao
--- (anti-enumeracao §4.3).
---
--- UUID na faixa 20000000-... (mesma do dono da vila) para garantir que
--- o nome do arquivo seed continue deterministico. Sem comunidade
--- aprovada: qualquer tentativa de postar em qualquer vila falha
--- pela falta de membership; em city-reach, o 42501 vem do
--- is_account_suspended() no WITH CHECK das policies de INSERT.
-insert into auth.users (
-  instance_id,
-  id,
-  aud,
-  role,
-  email,
-  encrypted_password,
-  email_confirmed_at,
-  raw_app_meta_data,
-  raw_user_meta_data,
-  confirmation_token,
-  recovery_token,
-  email_change_token_new,
-  email_change,
-  email_change_token_current,
-  phone_change,
-  phone_change_token,
-  reauthentication_token,
-  created_at,
-  updated_at
-) values (
-  '00000000-0000-0000-0000-000000000000',
-  '20000000-0000-4000-8000-000000000099',
-  'authenticated',
-  'authenticated',
-  'membro-suspenso@bivaque.example.invalid',
-  crypt('bivaque-e2e-local', gen_salt('bf', 10)),
-  now(),
-  '{"provider":"email","providers":["email"]}',
-  '{}',
-  '',
-  '',
-  '',
-  '',
-  '',
-  '',
-  '',
-  '',
-  now(),
-  now()
-)
-on conflict (id) do nothing;
-
-insert into public.profiles (
-  user_id,
-  display_name,
-  visibility,
-  consent_version,
-  consented_at,
-  is_suspended
-) values (
-  '20000000-0000-4000-8000-000000000099',
-  'Membro Suspenso',
-  'locality_members',
-  1,
-  now() - interval '40 days',
-  true
-)
-on conflict (user_id) do nothing;
-
 -- ── Guia de chegada: fila de curadoria pendente (desenvolvimento) ──────────
 -- A leitura pública enxerga apenas status = approved; estes dois itens
 -- exercitam a fila do operador sem aparecer para membros.
@@ -1323,4 +1346,394 @@ values
   )
 on conflict (id) do nothing;
 
+-- ── RECON-051: fixtures de estado para os itens [dado]/[captura] ───────────
+-- A conta de captura (visual@, 20000000-…0001) era, por desenho, um membro
+-- verificado SEM publicação, SEM grupo, SEM comunidade, SEM conversa e SEM
+-- notificação. Pranchas inteiras ficavam no estado vazio do runtime: a faixa de
+-- atividade do /inicio (01), Minhas denúncias e bloqueados (56), Indicações com
+-- resposta marcada (80), Meus anúncios (21), Mercado (13) e Mensagens (75).
+--
+-- Tudo abaixo pende dela. Os terceiros usados (membro-26@, membro-27@) não são
+-- citados por nenhum spec de tests/e2e — trocar por membro-1..6@ mexeria em
+-- asserções de contagem que já existem.
+
+-- 1) Publicação do titular + resposta de terceiro. A notificação não-lida que
+--    faz a faixa de atividade aparecer nasce do trigger notify_comment, não de
+--    um INSERT à mão: o shape tem de ser o do produto.
+insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+values (
+  'b0000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000001',
+  'text',
+  'Chegamos em Manaus no mês passado. Alguma dica de escola perto do Centro?',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
+insert into public.comments (post_id, user_id, content, created_at)
+values (
+  'b0000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-00000000001a',
+  'A Escola Municipal do Centro recebe bem as famílias novas. Vale a visita.',
+  now() - interval '1 day'
+);
+
+-- Publicação da CONTA DE CAPTURA (dono-vila@). O item "Editar publicação" só
+-- aparece para o próprio autor, então o cenário BIVAQUE_VISUAL_SCENARIO=edit
+-- precisa de um post dela — a fixture acima é do outro membro.
+insert into public.posts (id, locality_id, user_id, post_type, content, created_at)
+values (
+  'b0000000-0000-4000-8000-000000000002',
+  '00000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-000000000008',
+  'text',
+  'Abrimos a horta comunitária da vila neste sábado. Quem quiser ajudar, chegue às 8h.',
+  now() - interval '6 hours'
+)
+on conflict (id) do nothing;
+
+-- 2) Conversa direta do titular com o prestador, dentro de um pedido real —
+--    contexto 'provider' autêntico (não um chip de "grupo em comum" sem grupo).
+insert into public.dm_conversations (id, participant_a, participant_b, context_type, context_id, created_at)
+values (
+  '41000000-0000-4000-8000-000000000051',
+  '20000000-0000-4000-8000-000000000001',
+  '20000000-0000-4000-8000-00000000000a',
+  'provider',
+  '30000000-0000-4000-8000-000000000010',
+  now() - interval '3 days'
+)
+on conflict (id) do nothing;
+
+insert into public.service_requests (
+  id, requester_user_id, provider_id, provider_user_id, description, when_text,
+  status, conversation_id, category, created_at, updated_at
+)
+values (
+  '40000000-0000-4000-8000-000000000051',
+  '20000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-000000000010',
+  '20000000-0000-4000-8000-00000000000a',
+  'Preciso de limpeza em dois aparelhos antes da mudança.',
+  'Semana que vem',
+  'in_conversation',
+  '41000000-0000-4000-8000-000000000051',
+  'assistencia_tecnica',
+  now() - interval '3 days',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
+insert into public.dm_messages (id, conversation_id, sender_id, content, created_at)
+values
+  ('42000000-0000-4000-8000-000000000051', '41000000-0000-4000-8000-000000000051',
+   '20000000-0000-4000-8000-000000000001', 'Bom dia! Vocês atendem no Centro?', now() - interval '3 days'),
+  ('42000000-0000-4000-8000-000000000052', '41000000-0000-4000-8000-000000000051',
+   '20000000-0000-4000-8000-00000000000a', 'Atendemos sim. Consigo na quinta pela manhã.', now() - interval '2 days'),
+  ('42000000-0000-4000-8000-000000000053', '41000000-0000-4000-8000-000000000051',
+   '20000000-0000-4000-8000-000000000001', 'Fechado. Pode confirmar 9h?', now() - interval '1 day'),
+  ('42000000-0000-4000-8000-000000000054', '41000000-0000-4000-8000-000000000051',
+   '20000000-0000-4000-8000-00000000000a', 'Confirmado, 9h. Levo o equipamento de higienização.', now() - interval '20 hours')
+on conflict (id) do nothing;
+
+-- Contador de não lidas (pendência do RECON-032). A conta de captura
+-- (dono-vila, 20000000-...0008) precisa de conversa PRÓPRIA com mensagem de
+-- terceiro, senão a captura de /messages prova só a lista vazia — a mesma lição
+-- dos avatares de presença (lote Z), dos anúncios salvos (lote AI) e da
+-- Força Armada (lote AM). DUAS conversas de propósito: uma sem estado de leitura
+-- (o contador aparece) e uma com last_read_at depois da última mensagem (o
+-- contador NÃO aparece). Sem o par, um contador que sempre mostra 1 passaria.
+insert into public.dm_conversations (id, participant_a, participant_b, context_type, context_id, created_at)
+values
+  (
+    '41000000-0000-4000-8000-0000000000c1',
+    '20000000-0000-4000-8000-000000000001',
+    '20000000-0000-4000-8000-000000000008',
+    'provider',
+    '30000000-0000-4000-8000-000000000010',
+    now() - interval '6 hours'
+  ),
+  (
+    '41000000-0000-4000-8000-0000000000c2',
+    '20000000-0000-4000-8000-000000000008',
+    '30000000-0000-4000-8000-000000000001',
+    'provider',
+    '30000000-0000-4000-8000-000000000010',
+    now() - interval '3 days'
+  )
+on conflict (id) do nothing;
+
+insert into public.dm_messages (id, conversation_id, sender_id, content, created_at)
+values
+  ('42000000-0000-4000-8000-0000000000c1', '41000000-0000-4000-8000-0000000000c1',
+   '20000000-0000-4000-8000-000000000001', 'Oi! Ainda dá tempo de encaixar hoje?', now() - interval '5 hours'),
+  ('42000000-0000-4000-8000-0000000000c2', '41000000-0000-4000-8000-0000000000c1',
+   '20000000-0000-4000-8000-000000000001', 'Consigo passar às 15h, se servir.', now() - interval '4 hours'),
+  ('42000000-0000-4000-8000-0000000000c3', '41000000-0000-4000-8000-0000000000c2',
+   '30000000-0000-4000-8000-000000000001', 'Já resolvi, obrigado!', now() - interval '2 days')
+on conflict (id) do nothing;
+
+-- A conversa c2 está LIDA: last_read_at depois da última mensagem.
+insert into public.dm_read_states (conversation_id, user_id, last_read_at)
+values (
+  '41000000-0000-4000-8000-0000000000c2',
+  '20000000-0000-4000-8000-000000000008',
+  now() - interval '1 day'
+)
+on conflict (conversation_id, user_id) do nothing;
+
+-- Aviso neutro de pedido cancelado (NOTIF-PEDIDO-CANCELADO, lote AU). O seed nao
+-- tinha NENHUMA notificacao — elas nascem de triggers nas jornadas — entao nem
+-- esta linha nem a faixa de retorno do RECON-038 eram observaveis na captura.
+-- Fixture honesta: um pedido realmente cancelado, com a conta de captura de um
+-- lado e outro membro do outro, e a notificacao que o lote AU passou aemitir
+-- nesse caso. O ator e NULO de proposito: o aviso e neutro e nao nomeia quem
+-- saiu (o motivo da saida e dado pessoal de terceiro).
+insert into public.service_requests (
+  id, requester_user_id, provider_id, provider_user_id, description, when_text,
+  status, category, created_at, updated_at
+)
+values (
+  '40000000-0000-4000-8000-0000000000c9',
+  '20000000-0000-4000-8000-000000000008',
+  '30000000-0000-4000-8000-000000000010',
+  '30000000-0000-4000-8000-000000000001',
+  'Pedido encerrado porque a outra parte saiu da plataforma.',
+  'Sem data',
+  'cancelled',
+  'assistencia_tecnica',
+  now() - interval '9 days',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
+insert into public.notifications (
+  id, recipient_user_id, actor_user_id, type, action, target_type, target_id, created_at
+)
+values (
+  '50000000-0000-4000-8000-0000000000ca',
+  '20000000-0000-4000-8000-000000000008',
+  null,
+  'service_request',
+  'cancelled_counterpart_left',
+  'service_request',
+  '40000000-0000-4000-8000-0000000000c9',
+  now() - interval '2 days'
+)
+on conflict (id) do nothing;
+
+-- 3) Indicações: respostas no pedido do titular e uma marcada como solução.
+--    O trigger notify_recommendation_reply cria as notificações do autor.
+insert into public.recommendation_replies (id, request_id, author_id, body, created_at)
+values
+  ('d0000000-0000-4000-8000-000000000001', '80000000-0000-4000-8000-000000000f00',
+   '30000000-0000-4000-8000-00000000001a',
+   'O Seu Antônio atendeu aqui em casa e resolveu rápido. Posso passar o contato.',
+   now() - interval '2 days'),
+  ('d0000000-0000-4000-8000-000000000002', '80000000-0000-4000-8000-000000000f00',
+   '30000000-0000-4000-8000-00000000001b',
+   'Também indico a equipe do Bairro da Paz: cobraram justo e explicaram tudo.',
+   now() - interval '1 day')
+on conflict (id) do nothing;
+
+update public.recommendation_requests
+   set is_resolved = true,
+       resolved_reply_id = 'd0000000-0000-4000-8000-000000000001'
+ where id = '80000000-0000-4000-8000-000000000f00';
+
+-- 4) Denúncia do membro conectado (contra conteúdo de terceiro: denunciar o
+--    próprio conteúdo é recusado pelo produto) e uma pessoa bloqueada.
+insert into public.reports (reporter_user_id, target_type, target_id, reason, status, created_at)
+select
+  '20000000-0000-4000-8000-000000000001',
+  'post'::report_target_type,
+  p.id,
+  'Anúncio repetido no mesmo dia, fora do assunto da comunidade.',
+  'open'::report_status,
+  now() - interval '3 days'
+from public.posts p
+where p.user_id <> '20000000-0000-4000-8000-000000000001'
+  and p.locality_id = '00000000-0000-4000-8000-000000000001'
+  -- as 15 denúncias acima já saem desta mesma conta: o alvo aqui não pode
+  -- repetir (reports_one_open_per_reporter_target_idx é único por par aberto)
+  and not exists (
+    select 1 from public.reports r
+    where r.reporter_user_id = '20000000-0000-4000-8000-000000000001'
+      and r.target_id = p.id
+  )
+order by p.created_at
+limit 1;
+
+insert into public.dm_blocks (blocker_user_id, blocked_user_id, created_at)
+values (
+  '20000000-0000-4000-8000-000000000001',
+  '30000000-0000-4000-8000-00000000001a',
+  now() - interval '2 days'
+)
+on conflict do nothing;
+
+-- 5) Mercado e Moradia: anúncios do titular (ativo, pausado e reservado, para
+--    as três abas de /meus-anuncios) e de terceiros (para a grade de /mercado).
+--    Fotos exigem upload real no bucket e ficam fora do seed — ver RECON-051.
+insert into public.listings (
+  id, owner_user_id, kind, status, title, description, category, condition,
+  price_cents, locality_id, neighborhood, published_at, created_at, updated_at
+)
+values
+  ('b1000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000001',
+   'item', 'active', 'Mesa de jantar com 6 cadeiras',
+   'Mesa de madeira maciça, usada por dois anos, sem riscos na tampa.',
+   'casa_moveis', 'used', 45000, '00000000-0000-4000-8000-000000000001', 'Centro',
+   now() - interval '6 days', now() - interval '8 days', now() - interval '6 days'),
+  ('b1000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000001',
+   'item', 'paused', 'Bicicleta aro 29 com câmbio',
+   'Pouco rodada, revisada no mês passado.',
+   'esporte', 'used', 120000, '00000000-0000-4000-8000-000000000001', 'Adrianópolis',
+   now() - interval '12 days', now() - interval '14 days', now() - interval '4 days'),
+  ('b1000000-0000-4000-8000-000000000003', '20000000-0000-4000-8000-000000000001',
+   'item', 'reserved', 'Furadeira de impacto com maleta',
+   'Nova, ainda na caixa. Reservada para retirada no fim de semana.',
+   'casa_moveis', 'new', 32000, '00000000-0000-4000-8000-000000000001', 'Centro',
+   now() - interval '3 days', now() - interval '5 days', now() - interval '1 day'),
+  ('b1000000-0000-4000-8000-000000000004', '30000000-0000-4000-8000-00000000001a',
+   'item', 'active', 'Berço portátil desmontável',
+   'Usado por um ano, colchão incluso.',
+   'infantil', 'used', 25000, '00000000-0000-4000-8000-000000000001', 'Flores',
+   now() - interval '2 days', now() - interval '4 days', now() - interval '2 days'),
+  ('b1000000-0000-4000-8000-000000000005', '30000000-0000-4000-8000-00000000001b',
+   'item', 'active', 'Notebook 14 polegadas, 8 GB',
+   'Bateria segura o dia todo. Com carregador original.',
+   'eletronicos', 'used', 180000, '00000000-0000-4000-8000-000000000001', 'Chapada',
+   now() - interval '1 day', now() - interval '3 days', now() - interval '1 day'),
+  ('b1000000-0000-4000-8000-000000000006', '30000000-0000-4000-8000-00000000001a',
+   'item', 'active', 'Ar-condicionado 9.000 BTUs',
+   'Instalado há um ano, funcionando perfeitamente.',
+   'eletronicos', 'used', 150000, '00000000-0000-4000-8000-000000000001', 'Ponta Negra',
+   now(), now() - interval '2 days', now())
+on conflict (id) do nothing;
+
+insert into public.listings (
+  id, owner_user_id, kind, status, title, description, locality_id,
+  neighborhood, published_at, created_at, updated_at
+)
+values
+  ('b2000000-0000-4000-8000-000000000001', '30000000-0000-4000-8000-00000000001b',
+   'property', 'active', 'Apartamento 2 quartos no Centro',
+   'Próximo ao comércio, com vaga na garagem.',
+   '00000000-0000-4000-8000-000000000001', 'Centro',
+   now() - interval '5 days', now() - interval '7 days', now() - interval '5 days'),
+  ('b2000000-0000-4000-8000-000000000002', '30000000-0000-4000-8000-00000000001a',
+   'property', 'active', 'Casa 3 quartos com quintal',
+   'Rua tranquila, quintal com árvore frutífera.',
+   '00000000-0000-4000-8000-000000000001', 'Flores',
+   now() - interval '2 days', now() - interval '4 days', now() - interval '2 days')
+on conflict (id) do nothing;
+
+insert into public.property_details (
+  listing_id, deal, property_type, rent_cents, sale_price_cents, condo_fee_cents,
+  bedrooms, suites, parking_spots, area_m2, amenities, available_from
+)
+values
+  ('b2000000-0000-4000-8000-000000000001', 'rent', 'apartment', 180000, null, 35000,
+   2, 1, 1, 62, array['Portaria 24h', 'Elevador'], current_date),
+  ('b2000000-0000-4000-8000-000000000002', 'sale', 'house', null, 45000000, null,
+   3, 1, 2, 120, array['Quintal', 'Área de serviço'], current_date)
+on conflict (listing_id) do nothing;
+
+-- Salvos de anúncio (prancha 54, abas Mercado e Imóveis de /salvos; card
+-- RECON-032). Sem linha aqui a aba abre vazia e a captura nao prova nada alem
+-- do estado vazio — foi o que aconteceu com os avatares de presenca no lote Z.
+-- A dona da Vila (20000000-...0008) e o ator da captura: guarda um item ativo e
+-- um imovel ativo, ambos de Manaus, para as duas abas terem conteudo real.
+insert into public.listing_saves (listing_id, user_id, created_at)
+values
+  ('b1000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000008', now() - interval '3 hours'),
+  ('b2000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000008', now() - interval '1 hour')
+on conflict (listing_id, user_id) do nothing;
+
+
 commit;
+
+-- RECON-049 (prancha 79, painel 2) — convite de prestador PENDENTE e
+-- determinístico, para que /prestador-convite/<token> tenha captura.
+-- O token em claro é público e descartável, como as demais credenciais do seed:
+-- a tabela guarda só o digest, e é o digest que o seed escreve a partir dele.
+-- Sem esta linha a tela do convite não é capturável em nenhum estado (o token
+-- real só existe no payload do outbox, no momento da emissão).
+insert into private.provider_invitations (
+  inviter_user_id,
+  community_id,
+  locality_id,
+  display_name,
+  token_digest,
+  invitee_email_digest,
+  status,
+  expires_at
+)
+values (
+  '20000000-0000-4000-8000-000000000008',
+  '71000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001',
+  'Eletricista do Bairro',
+  extensions.digest(decode(repeat('ab', 32), 'hex'), 'sha256'),
+  extensions.digest('convite-prestador@bivaque.example.invalid', 'sha256'),
+  'pending',
+  now() + interval '7 days'
+)
+on conflict (token_digest) do nothing;
+
+-- RECON-049 (prancha 12/61) — o marcador do guia com produtor real: a conta de
+-- captura já salvou a referência aprovada de Manaus, para que a aba Guia de
+-- /salvos seja capturada no estado populado, e não só no vazio.
+insert into public.guide_entry_saves (user_id, entry_id, saved_at)
+values (
+  '20000000-0000-4000-8000-000000000008',
+  'a0000000-0000-4000-8000-000000000001',
+  now() - interval '2 days'
+)
+on conflict (user_id, entry_id) do nothing;
+
+-- RECON-049 (prancha 01, card "Seu próximo encontro"): presença verificável.
+-- O seed tinha 7 eventos futuros e ZERO linhas em event_rsvps, então a copy da
+-- prancha ("Leila, Andréa e mais 18 pessoas vão") não tinha de onde sair — a
+-- lacuna estava registrada como [dado] desde a auditoria e é isto que a fecha.
+-- Cinco membros de Manaus confirmam presença no próximo evento da cidade
+-- (Piquenique das famílias). A `occurrence_date` é 2026-09-20, e não 19/09 como a
+-- tela mostra: o app a deriva de `starts_at.slice(0, 10)`, o mesmo recorte que a
+-- trigger de INSERT usa e que `home-loaders` usa para LER. O evento começa
+-- 20:36 de 19/09 em Manaus = 00:36 de 20/09 UTC — semear a data local deixava a
+-- presença invisível, que foi exatamente o defeito medido em 16/09/2026.
+insert into public.event_rsvps (event_id, user_id, status, occurrence_date)
+values
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '30000000-0000-4000-8000-000000000001',
+    'going',
+    '2026-09-20'
+  ),
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '30000000-0000-4000-8000-000000000002',
+    'going',
+    '2026-09-20'
+  ),
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '30000000-0000-4000-8000-000000000003',
+    'going',
+    '2026-09-20'
+  ),
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '30000000-0000-4000-8000-000000000004',
+    'going',
+    '2026-09-20'
+  ),
+  (
+    '70000000-0000-4000-8000-000000000005',
+    '20000000-0000-4000-8000-000000000008',
+    'going',
+    '2026-09-20'
+  )
+on conflict (event_id, user_id, occurrence_date) do nothing;

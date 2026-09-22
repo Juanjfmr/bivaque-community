@@ -218,7 +218,7 @@ export function ReportButton({
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>{presentation.title}</Modal.Heading>
-                <Modal.CloseTrigger />
+                <Modal.CloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 {success ? (

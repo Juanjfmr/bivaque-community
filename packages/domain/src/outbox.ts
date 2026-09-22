@@ -2,7 +2,10 @@
 // Concrete channel adapters live in apps/web and are wired later; this module
 // only decides whether a row should be sent, retried, skipped, or failed.
 
-export type OutboxChannel = "email" | "whatsapp"
+// Um canal so desde 18/09/2026: o WhatsApp saiu do MVP por decisao do
+// responsavel (o adaptador ja era unavailableAdapter e o app nunca ofereceu o
+// controle). O tipo diz a verdade em vez de guardar um canal que ninguem entrega.
+export type OutboxChannel = "email"
 export type OutboxStatus = "pending" | "sent" | "failed" | "skipped"
 
 export interface OutboxMessage {
@@ -34,15 +37,10 @@ export interface OutboxMutation {
   attempts: number
   lastError?: string
   updatedAt: number
-  fallback?: {
-    channel: OutboxChannel
-    reason: string
-  }
 }
 
 export const OUTBOX_MAX_ATTEMPTS = 5
 export const OUTBOX_BASE_RETRY_MS = 60_000
-export const WHATSAPP_FALLBACK_AFTER_ATTEMPTS = 2
 
 export function isOutboxDue(
   message: OutboxMessage,
@@ -113,19 +111,17 @@ export async function deliverOutboxMessage(
 
   const attempts = message.attempts + 1
   const terminal = attempts >= maxAttempts
-  const mutation: OutboxMutation = {
+
+  // O fallback saiu junto com o WhatsApp: ele era 'whatsapp falhou, cai para
+  // email'. Com um canal so nao ha para onde cair, e a mutacao deixa de carregar
+  // um campo que o banco tambem nao tem mais.
+  return {
     id: message.id,
     status: terminal ? "failed" : "pending",
     attempts,
     lastError: result.error,
     updatedAt: now,
   }
-
-  if (message.channel === "whatsapp" && attempts >= WHATSAPP_FALLBACK_AFTER_ATTEMPTS) {
-    mutation.fallback = { channel: "email", reason: result.error }
-  }
-
-  return mutation
 }
 
 export async function deliverOutboxBatch(

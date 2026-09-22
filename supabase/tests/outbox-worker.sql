@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(10);
+select plan(9);
 
 \ir fixtures/foundation.inc
 
@@ -97,8 +97,6 @@ select private.outbox_apply_delivery(
   'sent'::public.outbox_status,
   0,
   null,
-  null,
-  null,
   now()
 );
 
@@ -114,8 +112,6 @@ select private.outbox_apply_delivery(
   'failed'::public.outbox_status,
   5,
   'provider down',
-  null,
-  null,
   now()
 );
 
@@ -131,22 +127,11 @@ select is(
   'apply records the last error'
 );
 
--- 8. WhatsApp fallback is recorded on the row.
-select private.outbox_apply_delivery(
-  '50000000-0000-4000-8000-000000000002',
-  'pending'::public.outbox_status,
-  2,
-  'session banned',
-  'email'::public.outbox_channel,
-  'whatsapp breaker open',
-  now()
-);
-
-select is(
-  (select fallback_channel::text from public.outbox where id = '50000000-0000-4000-8000-000000000002'),
-  'email',
-  'apply records the fallback channel'
-);
+-- O teste 8 provava que o fallback por canal era registrado na linha. O fallback
+-- saiu junto com o canal WhatsApp em 18/09/2026 (decisao do responsavel): o
+-- banco nao tem mais fallback_channel, o dominio nao produz o campo e o teste
+-- perdeu objeto. Ele NAO foi substituido por um teste do mesmo comportamento
+-- com um canal so, porque com um canal so nao ha fallback a registrar.
 
 select * from finish();
 rollback;
