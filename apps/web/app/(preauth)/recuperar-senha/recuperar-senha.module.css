@@ -1,11 +1,66 @@
 .root {
   display: grid;
   min-height: 100svh;
-  place-items: center;
-  padding: var(--primitive-space-6) var(--primitive-space-4);
+  grid-template-columns: minmax(0, 1fr);
   color: var(--semantic-text-primary);
   background: var(--semantic-canvas);
   font-family: var(--semantic-font-family-interface);
+}
+
+.formPane {
+  display: grid;
+  place-items: center;
+  padding: var(--primitive-space-6) var(--primitive-space-4);
+}
+
+.panel {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  padding: 48px var(--primitive-space-8);
+  color: var(--semantic-text-on-strong);
+  background: var(--semantic-background-inverse);
+}
+
+.panel::before,
+.panel::after {
+  content: "";
+  position: absolute;
+  border: 1px solid color-mix(in srgb, var(--semantic-text-on-strong) 22%, transparent);
+  border-radius: 999px;
+}
+
+.panel::before {
+  width: 420px;
+  height: 420px;
+  left: -150px;
+  bottom: -140px;
+}
+
+.panel::after {
+  width: 260px;
+  height: 260px;
+  right: -80px;
+  top: 18%;
+}
+
+.panelWordmark {
+  position: relative;
+  z-index: 1;
+  font-size: var(--semantic-typography-section-title-size);
+  font-weight: var(--semantic-typography-label-weight);
+  letter-spacing: 0.02em;
+}
+
+@media (min-width: 960px) {
+  .root {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
+  .panel {
+    display: grid;
+    align-content: start;
+  }
 }
 
 .card {
@@ -27,6 +82,50 @@
   line-height: var(--semantic-typography-page-title-line-height);
 }
 
+.actions {
+  display: grid;
+  gap: var(--primitive-space-3);
+}
+
+.primaryLink,
+.outlineLink {
+  display: inline-flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
+  text-decoration: none;
+}
+
+.primaryLink {
+  color: var(--semantic-text-on-strong);
+  background: var(--semantic-action-primary);
+  transition: background var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.primaryLink:hover {
+  background: var(--semantic-action-primary-hover);
+}
+
+.outlineLink {
+  color: var(--semantic-text-primary);
+  border: 1px solid var(--semantic-border);
+  transition: background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
+}
+
+.outlineLink:hover {
+  background: var(--semantic-selected);
+}
+
+.stateIcon {
+  width: 28px;
+  height: 28px;
+  color: var(--semantic-action-primary);
+}
+
 .back {
   display: inline-flex;
   min-height: 44px;
@@ -36,6 +135,7 @@
   font-size: var(--semantic-typography-label-size);
   font-weight: var(--semantic-typography-label-weight);
   text-decoration: none;
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .back:hover {
@@ -98,6 +198,9 @@
   font: inherit;
   font-weight: var(--primitive-font-weight-regular);
   outline: none;
+  transition:
+    color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out),
+    background-color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .revealButton {

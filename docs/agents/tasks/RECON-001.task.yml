@@ -20,6 +20,8 @@ objective: >
   de useMemberContext() e useLocalityContext(), nada chumbado.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/83-web-landing.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 83-web-landing
   - docs/design/visual-guide-2026-09-06/01-web-inicio.png — sidebar de referência (com "Minhas comunidades")
   - docs/design/visual-guide-2026-09-06/61-web-explorar-servicos.png — mesma sidebar sem "Minhas comunidades"
   - docs/design/visual-guide-2026-09-06/60-web-estados.png — mesma sidebar

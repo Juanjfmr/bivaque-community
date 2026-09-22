@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>78-web-prestador-operacao — fonte da prancha</title>
+<style>
+  /* Fonte da prancha 78-web-prestador-operacao.
+     Renderizada na geometria da convenção web do guia: 2076x757, dois painéis de 1032 com
+     gutter de 12. Cada painel é um desktop lógico de 1440x1056 reduzido por scale(0.716667).
+     Cores e tipografia vêm de packages/tokens/src/tokens.css — nenhum valor inventado.
+     Shell: o painel do prestador usa casca PRÓPRIA (ProviderShell), não a lateral do membro,
+     conforme apps/web/app/(provider)/provider-shell.tsx. As páginas aqui desenhadas são
+     /prestador/catalogo, /prestador/conta e /prestador/atendimento — todas no RECON-024.
+     Conteúdo, nomes de itens e preços são fictícios; consolidar fixtures coerentes ao
+     implementar. */
+  :root{
+    --canvas:#FAFBF8; --surface:#FFFFFF; --sunken:#F1F2EE; --paper200:#E3E5DF;
+    --ink900:#16211C; --ink700:#4A594F; --ink500:#6B7A70;
+    --pine100:#EEF1E7; --pine700:#164734; --petrol700:#1D5D89;
+    --rose100:#FDE8E7; --rose700:#B42318;
+    --amber100:#FFF0D5; --amber700:#8A4B00;
+    --line:color-mix(in srgb, #16211C 14%, transparent);
+    --radius:0.625rem; --radius-card:0.875rem;
+    --font:ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--canvas)}
+  body{width:2076px;height:757px;font-family:var(--font);color:var(--ink900);overflow:hidden}
+  .board{display:flex;gap:12px;width:2076px;height:757px}
+  .panel{width:1032px;height:757px;overflow:hidden;flex:0 0 auto;background:var(--canvas)}
+  .scale{width:1440px;height:1056px;transform:scale(.716667);transform-origin:0 0}
+  svg{display:block}
+
+  /* ---------- shell do prestador ---------- */
+  .shell{display:flex;width:1440px;height:1056px;background:var(--canvas)}
+  .side{width:256px;background:var(--surface);border-right:1px solid var(--line);padding:18px 14px 16px;display:flex;flex-direction:column;flex:0 0 auto}
+  .word{color:var(--pine700);font-weight:700;font-size:21px;letter-spacing:.04em;text-transform:uppercase;padding:6px 10px 0}
+  .sec{font-size:11px;font-weight:650;letter-spacing:.08em;color:var(--ink500);text-transform:uppercase;padding:18px 12px 8px}
+  .biz{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);margin:0 2px 14px}
+  .biz .ico{width:36px;height:36px;border-radius:8px;background:var(--pine100);color:var(--pine700);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .biz .meta{flex:1 1 auto;min-width:0}
+  .biz strong{display:block;font-size:14px;font-weight:650;color:var(--ink900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .biz small{display:block;font-size:12px;color:var(--ink500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nav{display:flex;flex-direction:column;gap:2px}
+  .nav a{min-height:44px;display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 12px;border-radius:var(--radius);color:var(--ink700);font-size:14px;text-decoration:none}
+  .nav a.on{background:var(--pine100);color:var(--pine700);font-weight:600}
+  .sep{height:1px;background:var(--line);margin:14px 8px}
+  .grow{flex:1}
+  .me{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius)}
+  .me .nm{font-size:14px;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .avatar{border-radius:999px;background:var(--pine700);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600}
+
+  .wrap{flex:1;display:flex;flex-direction:column;min-width:0}
+  .top{height:64px;flex:0 0 auto;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:0 26px}
+  .search{flex:1 1 auto;max-width:420px;height:42px;border:1px solid var(--line);border-radius:var(--radius);background:var(--canvas);display:flex;align-items:center;gap:10px;padding:0 13px;color:var(--ink500);font-size:14px}
+  .spacer{flex:1}
+  .bell{position:relative;color:var(--ink700);width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius)}
+  .bell::after{content:"";position:absolute;right:8px;top:8px;width:7px;height:7px;border-radius:999px;background:var(--pine700);border:2px solid var(--surface)}
+  .top .avatar{width:36px;height:36px;font-size:13px}
+  .main{flex:1;padding:22px 30px 22px;min-height:0;overflow:hidden}
+
+  /* ---------- tipografia ---------- */
+  h1{font-size:24px;line-height:30px;font-weight:650;letter-spacing:-.011em;margin:0 0 6px}
+  h2{font-size:17px;line-height:24px;font-weight:650;letter-spacing:-.006em;margin:0 0 10px}
+  .sub{font-size:14px;line-height:22px;color:var(--ink700);margin:0 0 16px;max-width:72ch}
+  .hint{font-size:13px;line-height:18px;color:var(--ink500);margin:0}
+  .count{font-size:13px;color:var(--ink700)}
+
+  /* ---------- cartao ---------- */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:14px 18px}
+  .card + .card{margin-top:12px}
+  .card .ttl{font-size:14px;font-weight:650;margin:0 0 10px}
+  .card .row + .row{margin-top:8px}
+
+  /* ---------- campos / formulario ---------- */
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+  label{font-size:13px;font-weight:600;letter-spacing:.01em;color:var(--ink900)}
+  label .opt{font-weight:400;color:var(--ink500);margin-left:4px}
+  .input,.area{width:100%;background:var(--surface);border:1px solid var(--ink700);border-radius:var(--radius);min-height:44px;padding:10px 13px;font-size:14px;color:var(--ink900);font-family:inherit}
+  .area{min-height:78px;line-height:22px;resize:none}
+  .filebox{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--canvas);font-size:14px;color:var(--ink500)}
+  .filebox strong{font-size:14px;color:var(--ink900);font-weight:600}
+  .check{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--ink900);line-height:20px;padding:10px 0}
+  .check .box{width:18px;height:18px;border:1.5px solid var(--ink700);border-radius:5px;background:var(--surface);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;margin-top:1px}
+  .check.on .box{background:var(--pine700);border-color:var(--pine700);color:#fff}
+  .actions{display:flex;gap:10px;align-items:center;margin-top:8px}
+  .btn{min-height:44px;min-height:44px;border-radius:var(--radius);padding:0 18px;font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent}
+  .btn.primary{background:var(--pine700);color:#fff}
+  .btn.secondary{background:var(--surface);color:var(--ink900);border-color:var(--line)}
+  .btn.ghost{background:transparent;color:var(--ink700)}
+  .btn.small{min-height:44px;font-size:13px;padding:0 12px}
+
+  /* ---------- lista de catalogo ---------- */
+  .item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+  .item + .item{margin-top:10px}
+  .item .head{display:flex;align-items:center;gap:10px;justify-content:space-between}
+  .item .head strong{font-size:15px;font-weight:650;color:var(--ink900)}
+  .item .head .pill{font-size:12px;color:var(--ink500)}
+  .item .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius-card);padding:18px 16px;text-align:center;color:var(--ink500);font-size:14px}
+
+  /* ---------- conta + atendimento (painel 2) ---------- */
+  .acct{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .acct .card{margin-top:0}
+  .meta-row{font-size:14px;color:var(--ink700);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .meta-row b{color:var(--ink900);font-weight:600}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600}
+  .pill.pine{background:var(--pine100);color:var(--pine700)}
+  .pill.amber{background:var(--amber100);color:var(--amber700)}
+  .info{background:var(--canvas);border:1px solid var(--line);border-radius:var(--radius);padding:11px 13px;font-size:13px;color:var(--ink700);line-height:20px;margin-top:10px}
+  .info b{color:var(--ink900);font-weight:600}
+  .gallery{display:flex;gap:10px;margin-top:10px}
+  .shot{flex:1 1 0;height:92px;border-radius:var(--radius);background:linear-gradient(135deg,var(--pine100),#E2F0F7);display:flex;align-items:flex-end;padding:8px 10px;font-size:12px;color:var(--ink700)}
+  .shot.add{border:1px dashed var(--ink500);background:var(--sunken);align-items:center;justify-content:center;font-weight:600;color:var(--pine700);font-size:13px}
+  .bar{height:8px;border-radius:999px;background:var(--sunken);overflow:hidden;margin-top:10px}
+  .bar span{display:block;height:100%;background:var(--pine700)}
+  .main{padding:14px 30px 6px}
+  .item{padding:9px 14px}
+  .area{min-height:30px}
+  .hint{line-height:16px}
+  .shot{height:78px}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- ======================== painel 1 — Catalogo e portfolio ======================== -->
+  <div class="panel" data-screen="Catalogo e portfolio">
+    <div class="scale">
+      <div class="shell">
+        <aside class="side">
+          <div class="word">BIVAQUE</div>
+          <p class="sec">Meu negócio</p>
+          <div class="biz">
+            <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l7-4 7 4v10H3z"/><path d="M7 17v-6h6v6"/></svg></div>
+            <div class="meta">
+              <strong>Clima Certo</strong>
+              <small>Assistência técnica</small>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--ink500)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 5 5-5 5"/></svg>
+          </div>
+          <nav class="nav">
+            <a href="#"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h14M5 8v9h10V8M8 8V5a2 2 0 0 1 4 0v3"/></svg>Pedidos</a>
+            <a href="#"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l7-4 7 4v10H3z"/><path d="M7 17v-6h6v6"/></svg>Minha ficha</a>
+            <a href="#" class="on"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 11h14M11 3v14"/></svg>Catálogo</a>
+            <a href="#"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3M12 4a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3"/></svg>Área de atendimento</a>
+            <a href="#"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.2"/><path d="M4.4 16.4c.6-2.9 2.9-4.5 5.6-4.5s5 1.6 5.6 4.5"/></svg>Conta</a>
+          </nav>
+          <div class="grow"></div>
+          <div class="me">
+            <div class="avatar" style="width:32px;height:32px;font-size:12px">C</div>
+            <span class="nm">Clima Certo</span>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--ink500)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 5 5-5 5"/></svg>
+          </div>
+        </aside>
+
+        <div class="wrap">
+          <div class="top">
+            <div class="search">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="9" cy="9" r="5.4"/><path d="m13.2 13.2 3.3 3.3"/></svg>
+              Buscar nos pedidos
+            </div>
+            <div class="spacer"></div>
+            <span class="bell"><svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.2a4 4 0 0 1 8 0c0 3.2 1.2 4.3 1.2 4.3H4.8S6 11.4 6 8.2z"/><path d="M8.5 15.2a1.7 1.7 0 0 0 3 0"/></svg></span>
+            <div class="avatar">C</div>
+          </div>
+
+          <main class="main">
+            <h1>Catálogo e portfólio</h1>
+            <p class="sub">Publique os serviços do negócio e mantenha as fotos que aparecem na sua ficha para a comunidade.</p>
+
+            <section class="card" aria-label="Publicar item">
+              <p class="ttl">Publicar item</p>
+              <div class="field">
+                <label>Título do item</label>
+                <div class="input">Instalação de ar-condicionado split</div>
+              </div>
+              <div class="field">
+                <label>Descrição <span class="opt">(opcional)</span></label>
+                <div class="area">Inclui suporte, dreno e passagem de tubulação. Atendo Asa Norte e redondezas.</div>
+              </div>
+              <div class="field">
+                <label>Preço em centavos <span class="opt">(vazio é sob orçamento)</span></label>
+                <div class="input" style="width:180px">18000</div>
+              </div>
+              <div class="actions">
+                <button class="btn primary">Publicar</button>
+                <button class="btn ghost small">Limpar</button>
+              </div>
+            </section>
+
+            <section style="margin-top:14px" aria-label="Meu catalogo">
+              <h2>Meu catálogo <span class="count">(2)</span></h2>
+              <div class="item">
+                <div class="head">
+                  <strong>Limpeza de ar-condicionado</strong>
+                  <span class="pill pine">Hoje: R$ 120,00</span>
+                </div>
+                <div class="field" style="margin-bottom:6px">
+                  <label>Título</label>
+                  <div class="input">Limpeza de ar-condicionado</div>
+                </div>
+                <div class="field" style="margin-bottom:6px">
+                  <label>Descrição</label>
+                  <div class="area" style="min-height:46px">Higienização completa, troca de filtro e checagem de gás.</div>
+                </div>
+                <div class="field" style="margin-bottom:6px">
+                  <label>Preço em centavos</label>
+                  <div class="input" style="width:180px">12000</div>
+                </div>
+                <div class="actions">
+                  <button class="btn primary small">Salvar</button>
+                  <button class="btn ghost small">Remover</button>
+                  <button class="btn ghost small">↑ Subir</button>
+                  <button class="btn ghost small">↓ Descer</button>
+                </div>
+              </div>
+              <div class="item">
+                <div class="head">
+                  <strong>Manutenção preventiva</strong>
+                  <span class="pill amber">Hoje: sob orçamento</span>
+                </div>
+                <p class="hint" style="margin:6px 0 10px">Check-up antes do verão: corrige ruído, gotejamento e queda de rendimento.</p>
+                <div class="actions">
+                  <button class="btn ghost small">Editar</button>
+                  <button class="btn ghost small">↑ Subir</button>
+                  <button class="btn ghost small">↓ Descer</button>
+                </div>
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= painel 2 — Conta e area de atendimento ======================= -->
+  <div class="panel" data-screen="Conta e area de atendimento">
+    <div class="scale">
+      <div class="shell">
+        <aside class="side">
+          <div class="word">BIVAQUE</div>
+          <p class="sec">Meu negócio</p>
+          <div class="biz">
+            <div class="ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l7-4 7 4v10H3z"/><path d="M7 17v-6h6v6"/></svg></div>
+            <div class="meta">
+              <strong>Clima Certo</strong>
+              <small>Assistência técnica</small>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 5 5-5 5"/></svg>
+          </div>
+          <nav class="nav">
+            <a href="#"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h14M5 8v9h10V8M8 8V5a2 2 0 0 1 4 0v3"/></svg>Pedidos</a>
+            <a href="#"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l7-4 7 4v10H3z"/><path d="M7 17v-6h6v6"/></svg>Minha ficha</a>
+            <a href="#"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 11h14M11 3v14"/></svg>Catálogo</a>
+            <a href="#"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4a3 3 0 0 0-3 3v6a3 3 0 0 0 3 3M12 4a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3"/></svg>Área de atendimento</a>
+            <a href="#" class="on"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.2"/><path d="M4.4 16.4c.6-2.9 2.9-4.5 5.6-4.5s5 1.6 5.6 4.5"/></svg>Conta</a>
+          </nav>
+          <div class="grow"></div>
+          <div class="me">
+            <div class="avatar" style="width:32px;height:32px;font-size:12px">C</div>
+            <span class="nm">Clima Certo</span>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--ink500)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m8 5 5 5-5 5"/></svg>
+          </div>
+        </aside>
+
+        <div class="wrap">
+          <div class="top">
+            <div class="search">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="9" cy="9" r="5.4"/><path d="m13.2 13.2 3.3 3.3"/></svg>
+              Buscar nos pedidos
+            </div>
+            <div class="spacer"></div>
+            <span class="bell"><svg width="21" height="21" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.2a4 4 0 0 1 8 0c0 3.2 1.2 4.3 1.2 4.3H4.8S6 11.4 6 8.2z"/><path d="M8.5 15.2a1.7 1.7 0 0 0 3 0"/></svg></span>
+            <div class="avatar">C</div>
+          </div>
+
+          <main class="main">
+            <h1>Conta e área de atendimento</h1>
+            <p class="sub">Dados de acesso do negócio, formas de contato da ficha pública e a região atualmente atendida.</p>
+
+            <div class="acct">
+              <!-- Conta -->
+              <section class="card" aria-label="Conta do negocio">
+                <p class="ttl">Conta</p>
+                <div class="field" style="margin-bottom:6px">
+                  <label>Acesso</label>
+                  <div class="input">prestador.clima.certo@exemplo.invalid</div>
+                </div>
+                <p class="hint" style="margin-bottom:10px">O e-mail de acesso é gerenciado pelo suporte. A alteração de senha fica em Configurações da conta do membro vinculado.</p>
+
+                <div class="field" style="margin-bottom:6px">
+                  <label>Telefone de contato <span class="opt">(opcional)</span></label>
+                  <div class="input">92 99999 0000</div>
+                </div>
+                <div class="check on">
+                  <span class="box"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 3.5 3.5L13 5"/></svg></span>
+                  <span>Mostrar meu telefone na ficha pública</span>
+                </div>
+                <p class="hint" style="margin-top:6px">Sem telefone, a ficha continua completa. Quando publicado, o número aparece para os membros que alcançam a ficha.</p>
+                <div class="actions">
+                  <button class="btn primary">Salvar conta</button>
+                  <button class="btn ghost small">Descartar</button>
+                </div>
+              </section>
+
+              <!-- Area de atendimento -->
+              <section class="card" aria-label="Area de atendimento">
+                <p class="ttl">Área de atendimento</p>
+                <div class="meta-row">
+                  Região atendida hoje: <b>Brasília, DF</b>
+                </div>
+                <div class="check on" style="margin-top:8px">
+                  <span class="box"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 3.5 3.5L13 5"/></svg></span>
+                  <span>Atender membros de <b style="margin-left:4px">Jardim das Acácias</b></span>
+                </div>
+                <div class="info">Com o alcance ligado, a ficha aparece para os membros aprovados desta comunidade. Com o alcance desligado, a ficha sai da busca — os pedidos já recebidos continuam no histórico.</div>
+                <div class="actions">
+                  <button class="btn primary">Salvar área de atendimento</button>
+                  <button class="btn ghost small">Descartar</button>
+                </div>
+              </section>
+            </div>
+
+            <section style="margin-top:14px" class="card" aria-label="Portfolio">
+              <p class="ttl">Portfólio da ficha</p>
+              <div class="gallery">
+                <div class="shot"><span>Instalação concluída</span></div>
+                <div class="shot"><span>Limpeza de evaporadora</span></div>
+                <div class="shot add"><span>Adicionar foto</span></div>
+              </div>
+              <div class="field" style="margin:12px 0 6px">
+                <label>Legenda da nova foto <span class="opt">(opcional)</span></label>
+                <div class="area" style="min-height:44px">Instalação concluída em apartamento de 18 m².</div>
+              </div>
+              <div class="actions">
+                <button class="btn primary">Publicar foto</button>
+                <button class="btn ghost small">Remover selecionada</button>
+              </div>
+              <p class="hint" style="margin-top:8px">As fotos são armazenadas em bucket privado e mostradas na ficha por URL assinada de curta duração.</p>
+            </section>
+
+            <section style="margin-top:14px" class="card" aria-label="Completude da vitrine">
+              <p class="ttl">Completude da vitrine</p>
+              <div class="meta-row">Descrição, serviços e região preenchidos. Falta publicar ao menos uma foto.</div>
+              <div class="bar"><span style="width:75%"></span></div>
+              <p class="hint" style="margin-top:8px">A completude orienta o que falta para a ficha aparecer melhor na busca. Não é condição de publicação.</p>
+            </section>
+
+            <p class="hint" style="margin-top:14px">O telefone de contato não é condição de ficha completa: a completude da vitrine é calculada sobre descrição, serviços, regiões e fotos — não sobre este número.</p>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

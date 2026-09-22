@@ -1,0 +1,47 @@
+{
+  "id": "79-web-indicar-prestador",
+  "kind": "web",
+  "group": "negocio",
+  "title": "Web: indicar e aceitar prestador",
+  "screens": ["Indicar prestador", "Aceitar o convite"],
+  "reviewNotes": [
+    "Casca divergente do briefing declarado: a tela de indicação /communities/[id]/indicar-prestador vive em apps/web/app/(shell)/layout.tsx (casca do membro), e não no console do dono (src/73). A indicação é feita por um membro aprovado da comunidade. A prancha segue o código real — a casca do membro.",
+    "Casca de pré-autenticação declarada para o aceite: /prestador-convite/[token] mora em apps/web/app/(preauth), não em (shell). O convite pode ser aberto por alguém sem sessão autenticada — o fluxo usa o mesmo mockup de navegador e a mesma foto ilustrativa da prancha 71 (src/71-web-auth-recuperacao).",
+    "Convite de prestador NÃO é convite familiar. A aceitação cria conta civil de prestador, separada dos membros: a tela explicita que ela não dá acesso a feed, perfis, grupos, eventos ou listas da comunidade. Convite familiar tem outra rota e outro contrato (R17).",
+    "Confirmação por e-mail, não por código: o mecanismo real configurado em apps/web/app/(preauth)/prestador-convite/[token]/acceptance.tsx usa createBrowserClient().auth.signInWithOtp com emailRedirectTo=/auth/callback. Não pintar caixas de OTP nem inventar contador — o caminho é link no e-mail.",
+    "A frase 'O convite expira em sete dias' vem da tela implementada (apps/web/app/(shell)/communities/[id]/indicar-prestador/page.tsx). A prancha reproduz o que está em produção; o prazo é responsabilidade da implementação, não da autoridade visual.",
+    "Convite é enfileirado, não entregue: o toast atual de sucesso diz 'O prestador receberá o link quando o canal de e-mail estiver disponível.' A prancha mostra o botão Enviar convite ativo, mas não afirma envio confirmado.",
+    "Acesso restrito do prestador está declarado na tela de indicação em cartão azul-petróleo: a) vê somente a própria ficha e conversas iniciadas por membros; b) não vê feed, perfis, grupos, eventos, comunidades nem listas de membros; c) na conversa, vê apenas o nome de exibição de quem falou. Esse contrato precisa ser preservado na implementação.",
+    "Não exibir posto, OM autodeclarada, selo de verificação ou dados privados de elegibilidade na ficha pública. Os campos opcionais auto-declarados (Força Armada, OM) ficam desligados por padrão.",
+    "A comunidade indicada é 'Jardim das Acácias' (fixture); o e-mail convidado usa domínio example.invalid para evitar dado real. Implementar com fixtures coerentes."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Painel 1 é a tela de indicação (/communities/[id]/indicar-prestador) com casca do membro, breadcrumb da comunidade, cartão azul-petróleo 'Acesso restrito do prestador' e formulário com Nome do prestador ou negócio + E-mail do prestador. Painel 2 é a tela de aceite (/prestador-convite/[token]) com casca de pré-autenticação, mesma foto ilustrativa da prancha 71, e o caminho de confirmação por link no e-mail (signInWithOtp → emailRedirectTo=/auth/callback). Copy reconciliada com R47, ADR-20260820-conta-de-prestador e as telas implementadas.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-024",
+  "journey": {
+    "id": "web-indicar-prestador",
+    "titulo": "Indicar e aceitar prestador na comunidade",
+    "plataforma": "web",
+    "grupo": "negocio",
+    "persona": "Membro aprovado da comunidade (quem indica) e prestador civil (quem aceita)",
+    "comeca": "Membro da comunidade abre a página de indicação",
+    "termina": "Prestador convidado confirma o e-mail e aceita; cai no painel próprio do prestador",
+    "acoes": ["Indicar prestador", "Aceitar convite"],
+    "etapas": [
+      {
+        "nome": "Indicacao",
+        "passos": [{ "tela": "79-web-indicar-prestador#0", "acao": "preenche nome e e-mail e envia o convite" }]
+      },
+      {
+        "nome": "Aceite do prestador",
+        "passos": [{ "tela": "79-web-indicar-prestador#1", "acao": "confirma o e-mail do convite pelo link e aceita" }]
+      },
+      {
+        "nome": "Painel do prestador",
+        "passos": [{ "tela": "78-web-prestador-operacao#0", "acao": "publica catálogo e configura conta" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 79-web-indicar-prestador — `/communities/[id]/indicar-prestador` e `/prestador-convite/[token]`\n\n**Etapa:** W06. **Painéis:** indicar prestador a partir da comunidade; aceitar o convite.\n\nPrancha criada em 12/09/2026, depois do handoff. O RECON-024 fecha o painel do prestador; a R47 fecha a indicação e o aceite. Esta é a autoridade visual que faltava para o ciclo convidar → aceitar → operar.\n\n**Lacuna registrada:** nenhuma prancha canônica anterior desenhou a indicação a partir do segmento de membro nem o aceite pré-autenticação do prestador. Esta prancha ocupa esse vazio, ancorada no RECON-024 e no ADR-20260820-conta-de-prestador.\n\n### Composição\n\n**Painel 1 — Indicar prestador** — casca do membro (apps/web/app/(shell)/layout.tsx): sidebar BIVAQUE com Início, Explorar, Comunidades ativo, Perfil, Salvos, Notificações e Configurações; cabeçalho com busca, cidade Brasília/DF e avatar Carlos Ribeiro. Conteúdo: breadcrumb `← Jardim das Acácias`; pílula `Jardim das Acácias`; H1 `Indicar prestador`; lead `Indique alguém em quem a comunidade pode confiar. O convite expira em sete dias.`; cartão azul-petróleo `Acesso restrito do prestador` com o bloco de contrato que descreve o que o prestador convidado enxerga; cartão `Convidar prestador` com `Nome do prestador ou negócio` (Marcos Oliveira), `E-mail do prestador` (marcos.eletricista@exemplo.invalid) e botões `Enviar convite` e `Cancelar`.\n\n**Painel 2 — Aceitar o convite** — casca de pré-autenticação (mockup de navegador com foto ilustrativa BIVAQUE à esquerda, conforme a prancha 71). Conteúdo: pílula `Convite de prestador`; H1 `Ofereça seus serviços no Bivaque`; parágrafo com nome da comunidade indicadora; parágrafo sobre a confirmação de e-mail; campo `E-mail convidado` (pré-preenchido) e botão `Confirmar meu e-mail`; link `Voltar para a comunidade`; cartão verde-pinho explicando que esta é uma conta separada e que a aceitação só vale para o endereço indicado.\n\n### Estados e limites\n\nA confirmação é por link no e-mail (signInWithOtp → emailRedirectTo=/auth/callback), não por código OTP. A prancha não pinta caixas de dígitos nem contador regressivo. O convite é enfileirado: a tela de sucesso atual diz que o prestador receberá o link quando o canal de e-mail estiver disponível; a prancha não afirma envio confirmado. O prazo de sete dias é texto da tela implementada, não regra visual.\n\nConvite de prestador é distinto de convite familiar (R17) e não concede participação na comunidade. O cartão azul-petróleo documenta o acesso restrito: o prestador civil fica fora do feed, dos perfis, dos grupos, dos eventos e das listas; nas conversas que membros iniciarem, vê apenas o nome de exibição. Esse contrato precisa sobreviver à implementação.\n\nForça Armada e OM autodeclaradas são opcionais, com visibilidade individual desligada por padrão. Não exibir posto, OM ou selo de verificação na ficha pública. Comunidade indicada e e-mail convidado são fictícios; consolidar fixtures coerentes ao implementar."
+}

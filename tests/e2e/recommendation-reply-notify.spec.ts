@@ -5,7 +5,7 @@
 // gaps found running the E2E realignment: (1) the seed had zero rows in
 // recommendation_requests at all — seed.sql now seeds one authored by the
 // default seedSession() account (visual@bivaque.example.invalid); (2) the
-// "Marcar como resolvido" button lives inside the "Pedidos" tab
+// "Ajudou a resolver" button lives inside the "Pedidos" tab
 // (recommendation-requests.tsx, rendered under Tabs key="requests"), not
 // the default "Explorar" tab /recommendations lands on — the spec never
 // switched tabs.
@@ -24,6 +24,11 @@ const CONSENT_COOKIE = "bivaque-consent-version"
 // Any Manaus member other than the request's author (visual@bivaque.example.
 // invalid). membro-3 (Diego Almeida) has no other role in this file's fixture.
 const REPLIER_EMAIL = "membro-3@bivaque.example.invalid"
+// O autor do pedido semeado. NÃO usar seedSession() aqui: ele autentica a
+// dono-vila@ (ver apps/web/.env.local), enquanto o pedido do seed pertence à
+// visual@ — sem esta conta o teste procura o botão de resolver na tela de quem
+// não é autor, e a notificação de resposta nunca chega a quem a escreveu.
+const AUTHOR_EMAIL = "visual@bivaque.example.invalid"
 const REQUEST_TITLE = "Alguém conhece um bom encanador?"
 
 async function signInAs(page: Page, email: string): Promise<void> {
@@ -67,7 +72,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("recommendation ask-and-answer loop", () => {
+test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => {
   test("replying to a request notifies its author (F5 Step 5)", async ({ page, browser }) => {
     // Given a second member replies to the seeded request authored by
     // visual@bivaque.example.invalid (seed.sql's "Alguém conhece um bom
@@ -85,7 +90,9 @@ test.describe("recommendation ask-and-answer loop", () => {
     // two accounts never share cookies/state
     const authorContext = await browser.newContext()
     const authorPage = await authorContext.newPage()
-    await seedSession(authorContext)
+    // O autor do pedido do seed é a visual@; o seedSession() aponta para a
+    // dono-vila@, que não receberia notificação nenhuma deste pedido.
+    await signInAs(authorPage, AUTHOR_EMAIL)
     await authorPage.goto("/notifications")
     // A RECON-006 (prancha 54) trocou as abas por tema — Vizinhanca, Minha
     // atividade, Alertas — pelo filtro de leitura: Todas e Nao lidas. Nao ha
@@ -101,16 +108,19 @@ test.describe("recommendation ask-and-answer loop", () => {
   })
 
   test("an author can mark their request resolved", async ({ page }) => {
-    // Given a session of a member who authored a request
-    await seedSession(page.context())
+    // Given a session of the member who AUTHORED the seeded request. A conta
+    // importa: o pedido do seed ("Alguém conhece um bom encanador?") é da
+    // visual@, e o seedSession() do ambiente autentica a dono-vila@ — que não é
+    // autora e por isso nunca via o botão "Ajudou a resolver".
+    await signInAs(page, AUTHOR_EMAIL)
     await page.setViewportSize({ width: 1280, height: 800 })
 
     // When they open the recommendations page and switch to their requests
     await page.goto("/recommendations")
     await page.getByRole("tab", { name: "Pedidos" }).click()
 
-    // Then the "Marcar como resolvido" action is reachable for a request
-    await expect(page.getByRole("button", { name: /Marcar como resolvido/ }).first()).toBeVisible()
+    // Then the "Ajudou a resolver" action is reachable for a request
+    await expect(page.getByRole("button", { name: /Ajudou a resolver/ }).first()).toBeVisible()
   })
 
   test("the invite surface has no people search (D43)", async ({ page }) => {
@@ -118,8 +128,10 @@ test.describe("recommendation ask-and-answer loop", () => {
     await seedSession(page.context())
     await page.goto("/recommendations")
 
-    // Then no search input is present on the recommendation surface
-    const search = page.locator('input[type="search"]')
-    await expect(search).toHaveCount(0)
+    // Then no people-search input is present on the recommendation surface.
+    // Escopado ao conteúdo da página: o cabeçalho tem busca global de conteúdo
+    // (RECON-021) e o locator global contava esse campo, medindo outra coisa.
+    const surface = page.locator('[role="tabpanel"]:not([hidden])')
+    await expect(surface.locator('input[type="search"]')).toHaveCount(0)
   })
 })

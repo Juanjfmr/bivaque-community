@@ -85,7 +85,7 @@ export default async function PrestadorFichaPage() {
             name="category"
             defaultValue={current?.category ?? ""}
             required
-            className="mt-1 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm"
+            className="mt-1 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
           >
             <option value="" disabled>
               Escolha a categoria…

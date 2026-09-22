@@ -140,6 +140,10 @@ export default function RecommendationsPage() {
 
   // saved tab
   const [savedRequests, setSavedRequests] = useState<SavedRequestRow[]>([])
+  // Prancha 80: a aba "Pedidos (2)" conta os pedidos visíveis para quem lê —
+  // a mesma RLS que o painel usa. null enquanto não se sabe: "(0)" seria mentira
+  // durante o carregamento.
+  const [requestsCount, setRequestsCount] = useState<number | null>(null)
   const [savesLoading, setSavesLoading] = useState(false)
   const [savesError, setSavesError] = useState("")
   const [unsavingId, setUnsavingId] = useState<string | null>(null)
@@ -227,6 +231,12 @@ export default function RecommendationsPage() {
       // 6. groups I haven't joined — limit 6
       const unjoined = allGroups.filter((g) => !myGroupIds.has(g.id)).slice(0, 6)
       setDiscoverGroups(unjoined)
+
+      // 6b. quantos pedidos de indicação esta pessoa vê (prancha 80)
+      const { count: requestsTotal } = await supabase
+        .from("recommendation_requests")
+        .select("*", { count: "exact", head: true })
+      setRequestsCount(requestsTotal ?? 0)
 
       // 7. member counts for public unjoined groups
       const counts: Record<string, number> = {}
@@ -463,20 +473,36 @@ export default function RecommendationsPage() {
         </p>
       </div>
 
+      {/* RECON-043: mesma marcacao de aba que /salvos (variant secondary +
+          a classe que o build fixado aplica) e /mercado. O ListContainer e o
+          ScrollShadow interno que impede a fileira de virar rolagem horizontal
+          da pagina inteira em 375. */}
       <Tabs
+        aria-label="Seções de indicações"
         selectedKey={selectedTab}
         onSelectionChange={(key) => setSelectedTab(key as string)}
-        aria-label="Seções de indicações"
+        variant="secondary"
+        className="tabs--secondary"
       >
-        <Tabs.List>
-          <Tabs.Tab key="browse">Explorar</Tabs.Tab>
-          <Tabs.Tab key="request">Pedir indicação</Tabs.Tab>
-          <Tabs.Tab key="requests">Pedidos</Tabs.Tab>
-          <Tabs.Tab key="saved">Salvas</Tabs.Tab>
-        </Tabs.List>
+        <Tabs.ListContainer>
+          <Tabs.List>
+            <Tabs.Tab key="browse" id="browse">
+              Explorar
+            </Tabs.Tab>
+            <Tabs.Tab key="request" id="request">
+              Pedir indicação
+            </Tabs.Tab>
+            <Tabs.Tab key="requests" id="requests">
+              {requestsCount === null ? "Pedidos" : `Pedidos (${requestsCount})`}
+            </Tabs.Tab>
+            <Tabs.Tab key="saved" id="saved">
+              Salvas
+            </Tabs.Tab>
+          </Tabs.List>
+        </Tabs.ListContainer>
 
         {/* ═══ Explorar ═══════════════════════════════════════════════════════ */}
-        <div key="browse" role="tabpanel">
+        <div key="browse" role="tabpanel" hidden={selectedTab !== "browse"}>
           {/* feedback banner */}
           {joinFeedback && (
             <div className="mb-4">
@@ -514,13 +540,14 @@ export default function RecommendationsPage() {
               title="Nada por aqui ainda"
               description="Quando houver grupos ou eventos na sua comunidade, eles aparecerão aqui. Que tal explorar os grupos?"
               action={
+                // O Button DENTRO do Link é conteúdo interativo aninhado (HTML
+                // inválido) e a régua mede o <a>: 97x19 de alvo. O link assume o
+                // papel de botão, como no /auth/callback-error.
                 <Link
                   href="/groups"
-                  className="transition-colors duration-[var(--duration-instant)]"
+                  className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-white transition-colors duration-[var(--duration-instant)] hover:bg-[var(--semantic-action-primary-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                 >
-                  <Button variant="primary" size="sm">
-                    Ver grupos
-                  </Button>
+                  Ver grupos
                 </Link>
               }
             />
@@ -659,7 +686,7 @@ export default function RecommendationsPage() {
         </div>
 
         {/* ═══ Pedir indicação ════════════════════════════════════════════════ */}
-        <div key="request" role="tabpanel">
+        <div key="request" role="tabpanel" hidden={selectedTab !== "request"}>
           {/* feedback banner */}
           {requestFeedback && (
             <div className="mb-4">
@@ -814,12 +841,12 @@ export default function RecommendationsPage() {
         </div>
 
         {/* ═══ Pedidos ═════════════════════════════════════════════════════════ */}
-        <div key="requests" role="tabpanel">
+        <div key="requests" role="tabpanel" hidden={selectedTab !== "requests"}>
           <RecommendationRequests />
         </div>
 
         {/* ═══ Salvas ═════════════════════════════════════════════════════════ */}
-        <div key="saved" role="tabpanel">
+        <div key="saved" role="tabpanel" hidden={selectedTab !== "saved"}>
           {/* error */}
           {savesError && (
             <div className="mb-4">

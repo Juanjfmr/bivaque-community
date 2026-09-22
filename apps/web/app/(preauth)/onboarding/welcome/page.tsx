@@ -1,19 +1,15 @@
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
-import { OnboardingShell } from "../components/onboarding-shell"
+import { ContextSteps } from "../components/context-steps"
 import styles from "../onboarding.module.css"
 
 export default function OnboardingWelcomePage() {
   return (
-    <OnboardingShell
-      stage="complete"
+    <ContextSteps
+      current="concluir"
       titleId="welcome-heading"
-      eyebrow="Entrada concluída"
       title="Você chegou ao Bivaque."
       description="Sua conta, elegibilidade e localidade estão prontas. Agora escolha por onde quer começar."
-      asideEyebrow="Agora você também faz parte do caminho"
-      asideTitle="Chegue, participe e deixe referências."
-      asideDescription="O que você aprende hoje pode facilitar a próxima chegada."
     >
       <div className={styles["stack"]}>
         <Link href="/community" className={styles["primaryLink"]}>
@@ -52,6 +48,6 @@ export default function OnboardingWelcomePage() {
           </li>
         </ul>
       </div>
-    </OnboardingShell>
+    </ContextSteps>
   )
 }

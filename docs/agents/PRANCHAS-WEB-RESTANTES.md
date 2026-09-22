@@ -959,3 +959,381 @@ anúncios, pedidos e conversa contextual, artigo do Guia, canais de notificaçã
 a resposta que resolveu. Estão listados em [`RECON-WEB-EXECUCAO.md`](RECON-WEB-EXECUCAO.md), e
 nenhum lote espera decisão técnica. Aprovação não é revisão: o diff que implementa cada decisão
 continua exigindo revisor independente.
+
+## 70-web-evento-organizar — `/events/novo` e `/events/[id]/editar`
+
+**Etapa:** W04. **Painéis:** novo evento; evento publicado na visão de quem organiza.
+
+Prancha criada em 12/09/2026, depois do handoff. É a autoridade visual que faltava ao RECON-029:
+o contrato já descrevia "as rotas de criar e editar" sem nenhuma imagem de origem. Fonte versionada
+em [`src/70-web-evento-organizar.html`](../design/visual-guide-2026-09-06/src/70-web-evento-organizar.html)
+— render determinístico de HTML sobre `packages/tokens/src/tokens.css`, não geração por image_gen.
+
+### Composição
+
+Shell idêntico à prancha 48: barra superior com busca "Buscar no Bivaque", seletor de cidade,
+sino com marcador e avatar; lateral branca com wordmark, navegação Início/Explorar/Comunidades/
+Perfil, separador, Salvos e Notificações, e o cartão do usuário ancorado no rodapé com
+Configurações.
+
+**Novo evento** — voltar "Eventos"; H1 "Novo evento"; subtítulo explicando que o evento é salvo
+antes de ser divulgado. Formulário em coluna: Título do evento; Descrição; Início; Local;
+**Capa do evento** (área tracejada com "Escolher imagem de capa"); **Quem pode ver**
+("Toda a cidade · Brasília, DF"); nota de que quem organiza edita ou cancela; `Publicar evento`
+primário e `Cancelar` secundário. Coluna direita com o cartão "Quem pode participar" e, abaixo, a
+faixa "O que acontece depois de publicar" em três passos numerados.
+
+**Evento publicado** — mesma shell; capa ilustrativa; H1 "Café entre vizinhos"; linha de metadados
+(data, local, confirmados); faixa verde com "Você organiza este evento" e as ações
+`Editar evento` e `Cancelar evento`; "Sobre o encontro"; "Perguntas" com duas respondidas e uma
+aguardando; coluna direita com "Quem vai" (quatro nomes e "mais 8 confirmados"), "Organizador" e
+"Alcance".
+
+### Estados e limites
+
+A prancha desenha só o caminho principal: **não há confirmação de cancelamento, erro de publicação
+nem rascunho**. Esses estados seguem sem referência visual e são o próximo lote. Capa, pessoas,
+perguntas e contagem são ilustrativas. Os limites de upload da capa não estão fixados na tela
+porque dependem do contrato técnico. A lista de participantes mostra apenas quem autoriza aparecer.
+
+## 71-web-auth-recuperacao — `/recuperar-senha` e `/nova-senha`
+
+**Etapa:** W01. **Painéis:** pedir o link; criar a senha nova.
+
+Prancha criada em 12/09/2026, depois do handoff. Preenche a lacuna do RECON-018, que já citava R07 e
+R08 sem imagem de origem. Fonte versionada em
+[`src/71-web-auth-recuperacao.html`](../design/visual-guide-2026-09-06/src/71-web-auth-recuperacao.html)
+— render determinístico de HTML sobre `packages/tokens`, não geração por image_gen.
+
+### Composição
+
+Shell idêntico à prancha 36: mockup de navegador (luzes, barra de endereço), coluna esquerda com
+foto sangrada e o wordmark BIVAQUE em branco, formulário à direita.
+
+**Esqueceu sua senha?** — voltar "Voltar para entrar"; H1 "Esqueceu sua senha?"; lead "Digite seu
+e-mail. Enviamos um link para você criar uma senha nova."; campo "Seu e-mail" com placeholder
+`nome@exemplo.com`; botão primário `Enviar link`; e o retorno **neutro**: "Se este e-mail puder
+entrar no Bivaque, o link para criar uma senha nova já está a caminho."
+
+**Crie uma senha nova** — H1 "Crie uma senha nova"; lead explicando que a pessoa chegou pelo link de
+recuperação; campo "Senha nova" com placeholder "Ao menos 8 caracteres" e controle mostrar/ocultar;
+política em uma linha; botão primário `Salvar senha`; rodapé `Pedir outro link`.
+
+### Estados e limites
+
+O ganho desta prancha é o **retorno neutro**, que é requisito de privacidade de R07: não confirmar
+se o endereço tem conta, e não transformar falha do provedor em "enviado". Não trocar por mensagem
+que revele cadastro.
+
+**Divergência declarada com R08:** a spec pede "senha nova **e confirmação**"; a tela implementada
+usa mostrar/ocultar senha em vez de campo de confirmação. A prancha segue a tela implementada e
+registra a divergência para decisão do dono.
+
+A foto da coluna esquerda é bloco ilustrativo; consolidar com o asset real ao implementar. Os
+estados de link inválido ou expirado não estão nesta prancha — são o lote seguinte,
+`72-web-auth-link-invalido`.
+
+## 72-web-auth-link-invalido — link de recuperação vencido e `/auth/callback-error`
+
+**Etapa:** W01. **Painéis:** o link de recuperação venceu; a entrada pelo link falhou.
+
+Prancha criada em 12/09/2026, depois do handoff. Fecha a lacuna de R06, que o RECON-018 já citava sem imagem de origem, e desenha o estado de link vencido que R08 exige oferecer.
+
+### Composição
+
+Shell idêntico às pranchas 36 e 71: mockup de navegador, coluna esquerda com foto sangrada e o wordmark BIVAQUE em branco, formulário à direita. Cada painel abre com um selo circular em `pine-100`, o título, a explicação e a ação.
+
+**Este link não vale mais** — H1; "Links de recuperação valem uma vez só e expiram. Peça outro para continuar de onde parou."; ação primária `Pedir outro link`; ação secundária `Voltar para entrar`; nota de que, se o link já foi usado, a senha criada continua valendo.
+
+**Não foi possível entrar** — H1; "O link de acesso é inválido ou expirou. Tente entrar novamente."; ação primária `Voltar para o login`; nota sobre link aberto em outro navegador ou depois de muito tempo.
+
+### Estados e limites
+
+Nenhuma das duas telas expõe motivo técnico nem prazo de reenvio. A de link vencido devolve a pessoa ao pedido de outro link, e não ao início do fluxo. O estado já usado tem nota própria porque é o caso mais provável e o mais mal explicado: se a senha foi criada, ela vale.
+
+## 73-web-comunidade-pedidos — `/communities/[id]/admin/pending`
+
+**Etapa:** W03. **Painéis:** a fila de pedidos; o pedido aberto.
+
+Prancha criada em 12/09/2026, depois do handoff. O Gate W03 exige "gestor decide", e o guia só desenhava o lado de quem pede (prancha 41). Esta é a autoridade visual que faltava.
+
+**Lacuna registrada:** nenhum contrato de tarefa possui a rota do console de administração da comunidade. A prancha está ancorada no RECON-009, que é o mesmo contrato de fechamento — quem entra na comunidade — mas o console em si não tem dono no contrato.
+
+### Composição
+
+Shell do console do dono: navegação de **topo**, não a lateral do membro, com "Console — Jardim das Acácias" à esquerda e os links Pedidos de entrada, Imagens e Voltar à comunidade à direita. Vem de `apps/web/app/(owner)/communities/[id]/admin/layout.tsx`.
+
+**Pedidos de entrada** — H1; "Aprovar ou recusar candidatos antes que entrem no feed da comunidade."; barra com `Aprovar selecionados` e `Recusar selecionados` e a contagem de pedidos; lista de candidatos com caixa de seleção, nome, quando pediu e origem, e as ações `Ver pedido` e `Aprovar` por linha.
+
+**Ver o pedido** — H1 com o nome; lead explicando que a decisão é de quem administra e que o pedido não aparece no feed enquanto estiver pendente; cartão "Motivo do pedido" com o campo opcional "Por que você quer participar?" e a nota de que é visível só para quem administra; ações `Aprovar entrada` e `Recusar`. Rail "Sobre a comunidade" com vagas em uso, Membros, Local e Criada em.
+
+### Estados e limites
+
+O motivo é privado por desenho: o pedido em análise não vira conteúdo público e a lista de pendentes não é o roster da comunidade. **Divergência declarada com R30:** a spec pede decisão conforme capacidade, e a tela implementada não mostra vagas — a prancha desenha o indicador e registra a divergência. Membros, vagas e o ano de criação são ilustrativos.
+
+## 74-web-guia-curadoria — `/guide-queue`
+
+**Etapa:** W05. **Painéis:** a fila de sugestões; as sugestões de correção.
+
+Prancha criada em 12/09/2026, depois do handoff. O Gate W05 exige o ciclo completo — sugestão, fila do curador, publicação e autor acompanhando — e o guia só desenhava a sugestão (pranchas 24 e 25). Esta é a autoridade visual do lado de quem decide.
+
+### Composição
+
+Shell do painel do operador: navegação de **topo** com Admissões, Denúncias, Guia e Chegadas, conforme `apps/web/app/(admin)/layout.tsx`.
+
+**Fila do Guia** — H1; "Sugestões aguardando aprovação. Nada é publicado sem revisão humana."; cartões com o título do item, o selo de origem (`Sugestão IA` ou `Manual`), a descrição curta e a procedência, mais as ações `Recusar` e `Aprovar e publicar`; e a seção "Promover respostas da comunidade", que explica que a resposta vira item depois do nome canônico e da categoria.
+
+**Sugestões de correção** — H1; "Sugestões de atualização dos artigos do guia. Aplicar publica a versão revisada e registra quem sugeriu."; cartão com o título do artigo, quem sugeriu, o bloco de diferença com **como está no guia** e **como o membro propõe**, a nota de origem e as ações `Aplicar correção` e `Recusar`.
+
+### Estados e limites
+
+A fila é explicitamente humana: a origem IA aparece marcada, e nada publica sem revisão. Aplicar correção publica a versão revisada e registra a autoria da sugestão, sem apagar o histórico. Horário, nome do posto e telefone são ilustrativos.
+
+## 75-web-conversas — `/messages` e `/messages/[id]`
+
+**Etapa:** W03/W04/W06/W07. **Painéis:** caixa de entrada com cinco conversas; thread aberto com mensagens, estados de entrega e denúncia.
+
+Prancha criada em 12/09/2026, depois do handoff. A central de conversas é o destino compartilhado de pedidos (R43/R44), perguntas sobre eventos (R34), e interesses em anúncio/imovel (R49/R53). O guia só tinha pranchas dos fluxos de origem (16, 17, 23, 66/67, 67); faltava a autoridade visual do destino. Esta é ela.
+
+**Lacuna registrada:** o RECON-032 cobre C09/C10/C12/C13 (retorno, denúncia, conversa, ajuda) — não existe contrato isolado de C12. A prancha está ancorada no RECON-032, que é o contrato de fechamento do retorno.
+
+### Composição
+
+Shell do membro copiado de src/70-web-evento-organizar.html (lateral + barra superior). Cabeçalho da página com `Mensagens` e o botão `Nova conversa` à direita, ambos sobre surface com borda color-mix.
+
+**Caixa de entrada** — coluna de 340px à esquerda com campo de busca por nome/grupo, e a lista de conversas. Cada linha tem avatar colorido (iniciais), nome em ink900, hora relativa à direita, selo de contexto (pine100 com pine700), preview da última mensagem limitado a uma linha, e a sinalização de bloqueio quando você bloqueou a outra conta. A linha selecionada fica em pine100.
+
+**Thread** — área central com cabeçalho (avatar, nome, selo de contexto, botão Bloquear), área rolável de mensagens com divisor de dia, e composer fixo. Mensagem do outro vem com avatar à esquerda, nome/hora acima do balão surface com canto superior-left arredondado em 6px, e o botão Denunciar abaixo. Mensagem própria vem espelhada com balão pine700 e canto superior-right em 6px; embaixo do balão o estado: Enviando… durante o insert otimista, Enviado depois do servidor confirmar, Não enviado — tentar novamente em rose700 quando o insert falha. Composer tem textarea com placeholder, contador de caracteres restantes (rose700 quando ≤200) e botão Enviar; abaixo, a nota de privacidade "Somente os participantes desta conversa veem as mensagens".
+
+### Estados e limites
+
+O motivo da denúncia vai para `reports` (não mais para `dm_reports` descontinuada), com status e bloqueio de auto-denúncia já no servidor. Mensagem denunciada fica fora da conversa de quem denunciou; o resultado da análise aparece só no acompanhamento em /denuncias. A linha bloqueada mostra `Você bloqueou` no preview e o thread, ao ser aberto, troca o botão Bloquear por Desbloquear e remove o input — não há como enviar mensagem para quem você bloqueou. A conversa de Lúcia Prado não mostra o nome civil real da mãe: a origem é um convite familiar já aceito, e a exibição mostra apenas o display_name de profiles.
+
+A separação por público da conversa não se aplica ao DM: a conversa sempre é privada entre os dois participantes e o servidor só mostra a linha para quem é `participant_a` ou `participant_b`. Nenhuma conversa DM publica para a cidade ou para uma comunidade.
+
+O painel 1 desenha o estado de 'nenhuma conversa selecionada' à direita da inbox com ícone, frase e caminho de saída; o painel 2 abre a primeira conversa. Quem tem só conversas pendentes com a cidade ou comunidade ainda não vê nada aqui — `dm_conversations` é exclusivo de DMs com contexto autorizado, e a inbox só lista o que existe.
+
+Nomes, cores de avatar e contadores são ilustrativos: consolidar com perfis únicos na implementação. O preview da mensagem é fictício e não inclui CPF, telefone, endereço ou conteúdo privado.
+
+## 76-web-familia — `/configuracoes/familia`
+
+**Etapa:** W02/W08. **Painéis:** o convite novo com a lista de pendentes; o convite pronto para enviar com o link único e as ações de reenviar/cancelar.
+
+Prancha criada em 12/09/2026, depois do handoff. O Gate W08 fecha preferências, família, conta e exclusão, e o guia só desenhava a coluna de Configurações (prancha 52) sem detalhar a tela de família. Esta é a autoridade visual do convite familiar — o lado do titular que cria.
+
+### Composição
+
+Shell do membro (lateral com Início, Explorar, Comunidades e Perfil, mais Salvos e Notificações; barra superior com busca, cidade e perfil) conforme `apps/web/app/components/bivaque/app-shell.tsx`. Configurações marcada como ativa na lateral inferior. Dentro do conteúdo, o subshell de Configurações: cabeçalho "Configurações · Família" e coluna vertical de seções (Perfil, Notificações, Conta, Privacidade) com Privacidade marcada como ativa — a subrota família vive sob Privacidade, conforme `configuracoes-nav.tsx`.
+
+**Convidar um familiar** — H2 "Família" com o lead "Convide até 5 familiares por vez. Cada convite expira em 7 dias e mantém a conta do familiar independente."; cartão "Convidar um familiar" com campo "E-mail do familiar", botão "Criar convite" e o aviso "O link aparece uma única vez; envie ao familiar antes de fechar esta tela"; cartão "Convites pendentes" com dois convites ativos (e-mails mascarados, datas ilustrativas) e botão "Revogar" por linha; rail lateral "Como funciona a entrada" com três pontos — o familiar cria conta própria, as contas são independentes e a entrada na família não libera comunidade privada.
+
+**Convite pendente** — mesmo shell e mesmo H2 "Família"; cartão "Convite pronto para enviar" com o aviso em destaque "O link aparece uma única vez" e o token truncado `bivaque.app/onboarding?invite=7f3a…c2d1`, mais os botões "Copiar" e "Revogar", e o lembrete "Quem abrir entra direto como conta independente"; cartão "Convite pendente" com o convite recém-criado (e-mail mascarado, enviado agora, expira em 19/09/2026), selo "Pronto para enviar" e os botões "Reenviar" e "Cancelar"; rail "Se o familiar não abrir a tempo" explicando que o convite expira em 7 dias e que reenviar é criar novo convite.
+
+### Estados e limites
+
+A prancha assume titular verificado: o formulário aparece habilitado e o rail explica o fluxo. O estado "Apenas titulares verificados podem enviar convites" do código não está desenhado aqui — está coberto pela nota restritiva que aparece no lugar do formulário quando a verificação ainda não foi feita. O limite de 5 convites ativos é o teto do contrato; a prancha mostra 2 pendentes e 1 recém-criado, todos fictícios. Não há promessa de prazo: nem do familiar abrir nem de quanto tempo o convite fica visível além dos 7 dias. **Lacuna registrada:** a rota vive dentro de RECON-031 (Configurações), sem card isolado para esta tela.
+
+## 77-web-ajuda — `/ajuda`
+
+**Etapa:** W08. **Painéis:** o topo da página, com Acesso e conta e Usar o Bivaque; a base, com Documentos e regras e Falar com a equipe.
+
+Prancha criada em 12/09/2026, depois do handoff. C13 exige que a ajuda leve a documentos legais reais e ao canal de suporte configurado, sem inventar chat ou telefone. A rota foi especificada, mas a prancha 67 tratava só das perguntas ao organizador — esta prancha fecha o lado genérico da Ajuda.
+
+### Composição
+
+Shell do membro (lateral com Início, Explorar, Comunidades e Perfil, mais Salvos e Notificações; barra superior com busca, cidade e perfil) conforme `apps/web/app/components/bivaque/app-shell.tsx`. /ajuda não tem subshell — o conteúdo entra direto no main da shell, com largura máxima de 760px, conforme `apps/web/app/(shell)/ajuda/page.tsx`.
+
+**Acesso e uso** — H1 "Ajuda"; lead "Como funciona o Bivaque, o que você pode fazer com a sua conta e onde encontrar as regras."; seção "Acesso e conta" explicando que entrar é por link no e-mail e que sessão expirada pede novo login, com a lista de destinos reais `Entrar` e `Configurações`; seção "Usar o Bivaque" explicando que Explorar reúne Guia, Mercado, serviços, moradia e eventos, que cidade é filtro de descoberta e que denúncia fica no menu da publicação, com a lista de destinos `Explorar`, `Salvos`, `Notificações` e `Minhas denúncias`.
+
+**Regras e suporte** — mesmo H1 e lead continuando; seção "Documentos e regras" com os dois cartões `Política de Privacidade` e `Código de Conduta` apontando para as rotas legais; seção "Falar com a equipe" com a explicação "Não há chat, telefone ou sistema de chamados: escreva para cá e a equipe responde pelo mesmo e-mail", o botão mailto `suporte@bivaque.app` e a nota "Este é o mesmo canal usado nos avisos transacionais"; seção final "Quando você entra em contato" com orientação de uso, sem promessa de SLA.
+
+### Estados e limites
+
+O canal de suporte é o mesmo do produto: a variável `NEXT_PUBLIC_SUPPORT_EMAIL` (apps/web/lib/support.ts) define o endereço exibido. Sem a variável, o valor é o sentinela `<<DEFINIR>>`, que o gate de escopo recusa em produção. O endereço da prancha é ilustrativo. Não há chat, telefone nem sistema de chamados — a prancha não promete prazo de resposta nem apresenta canal que não exista. Os documentos legais vêm das rotas `/privacidade` e `/codigo-de-conduta` e seguem o texto aprovado, não a imagem. **Lacuna registrada:** o link Entrar do bloco Acesso e conta aponta para `/login` (existe, conforme R02), mas o destino fora do shell não foi validado nesta prancha.
+
+## 78-web-prestador-operacao — `/prestador/catalogo`, `/prestador/conta` e `/prestador/atendimento`
+
+**Etapa:** W06. **Painéis:** catálogo e portfólio; conta e área de atendimento.
+
+Prancha criada em 12/09/2026, depois do handoff. O RECON-024 fecha o shell próprio do prestador, a fila de pedidos por situação, e as rotas ficha/catálogo/atendimento/conta. A prancha 23 já cobre o painel com a fila; esta é a autoridade visual que faltava para as rotas de operação do próprio negócio.
+
+**Lacuna registrada:** nenhuma prancha canônica anterior desenhou `/prestador/catalogo` com publicação + reordenação, nem o par `/prestador/conta` + `/prestador/atendimento` lado a lado. Esta prancha ocupa esse vazio, ancorada no RECON-024.
+
+### Composição
+
+**Shell do prestador** — sidebar com wordmark BIVAQUE em maiúsculas e verde profundo; rótulo de seção `MEU NEGÓCIO`; cartão do negócio com ícone, nome (Clima Certo), categoria (Assistência técnica) e chevron; navegação `Pedidos`, `Minha ficha`, `Catálogo`, `Área de atendimento`, `Conta`; rodapé com avatar inicial e nome do negócio. Cabeçalho com campo de busca `Buscar nos pedidos` (sem seletor de cidade), sino com ponto verde, avatar inicial. Vem de `apps/web/app/(provider)/provider-shell.tsx`. **Divergência declarada com o briefing:** o lead pediu a casca do membro; o código real usa casca própria, e a prancha segue o código.
+
+**Painel 1 — Catálogo e portfólio** — H1 `Catálogo e portfólio`; lead `Publique os serviços do negócio e mantenha as fotos que aparecem na sua ficha para a comunidade.`; cartão `Publicar item` com `Título do item` (Instalação de ar-condicionado split), `Descrição (opcional)` (Inclui suporte, dreno e passagem de tubulação. Atendo Asa Norte e redondezas.) e `Preço em centavos (vazio é sob orçamento)` (18000) — ações `Publicar` e `Limpar`; seção `Meu catálogo (2)` com cartões editáveis de `Limpeza de ar-condicionado` (Hoje: R$ 120,00) e `Manutenção preventiva` (Hoje: sob orçamento), cada cartão com campos Título, Descrição, Preço e ações `Salvar`, `Remover`, `↑ Subir`, `↓ Descer`; cartão `Adicionar foto ao portfólio` com `Escolher imagem (JPEG, PNG ou WebP até 5 MB)`, `Legenda (opcional)` e `Publicar foto`, mais o aviso de bucket privado e URL assinada de curta duração.
+
+**Painel 2 — Conta e área de atendimento** — H1 `Conta e área de atendimento`; lead `Dados de acesso do negócio, formas de contato da ficha pública e a região atualmente atendida.`; duas colunas. Coluna esquerda, cartão `Conta`: `Acesso` com o e-mail gerenciado pelo suporte (prestador.clima.certo@exemplo.invalid) e nota de que a alteração de senha fica em Configurações do membro vinculado; `Telefone de contato (opcional)` (92 99999 0000); checkbox marcado `Mostrar meu telefone na ficha pública`; ações `Salvar conta` e `Descartar`. Coluna direita, cartão `Área de atendimento`: linha `Região atendida hoje: Brasília, DF`; checkbox marcado `Atender membros de Jardim das Acácias`; nota explicando que o alcance ligado mantém a ficha visível para a comunidade e que desligar tira a ficha da busca sem apagar pedidos já recebidos; ações `Salvar área de atendimento` e `Descartar`. Rodapé: `O telefone de contato não é condição de ficha completa: a completude da vitrine é calculada sobre descrição, serviços, regiões e fotos — não sobre este número.`
+
+### Estados e limites
+
+O telefone continua opcional, conforme a correção obrigatória do guia (23-web-meu-negocio): não exigir telefone como condição de ficha completa. A completude usa campos reais do banco, calculada em `lib/service-requests/completeness.ts`. Não há promessa de prazo, compartilhamento automático de contato nem SLA inventado — só o toggle de alcance por comunidade autorizada.
+
+Limites e formatos (5 MB, JPEG/PNG/WebP) vêm do contrato técnico do bucket privado — não são requisitos novos desta prancha. O acesso do prestador é gerenciado pelo suporte; a tela não promete edição de e-mail ou de senha, e remete o caminho correto. Itens, preços, descrição, telefone e região atendida são fictícios; implementar com fixtures coerentes.
+
+## 79-web-indicar-prestador — `/communities/[id]/indicar-prestador` e `/prestador-convite/[token]`
+
+**Etapa:** W06. **Painéis:** indicar prestador a partir da comunidade; aceitar o convite.
+
+Prancha criada em 12/09/2026, depois do handoff. O RECON-024 fecha o painel do prestador; a R47 fecha a indicação e o aceite. Esta é a autoridade visual que faltava para o ciclo convidar → aceitar → operar.
+
+**Lacuna registrada:** nenhuma prancha canônica anterior desenhou a indicação a partir do segmento de membro nem o aceite pré-autenticação do prestador. Esta prancha ocupa esse vazio, ancorada no RECON-024 e no ADR-20260820-conta-de-prestador.
+
+### Composição
+
+**Painel 1 — Indicar prestador** — casca do membro (apps/web/app/(shell)/layout.tsx): sidebar BIVAQUE com Início, Explorar, Comunidades ativo, Perfil, Salvos, Notificações e Configurações; cabeçalho com busca, cidade Brasília/DF e avatar Carlos Ribeiro. Conteúdo: breadcrumb `← Jardim das Acácias`; pílula `Jardim das Acácias`; H1 `Indicar prestador`; lead `Indique alguém em quem a comunidade pode confiar. O convite expira em sete dias.`; cartão azul-petróleo `Acesso restrito do prestador` com o bloco de contrato que descreve o que o prestador convidado enxerga; cartão `Convidar prestador` com `Nome do prestador ou negócio` (Marcos Oliveira), `E-mail do prestador` (marcos.eletricista@exemplo.invalid) e botões `Enviar convite` e `Cancelar`.
+
+**Painel 2 — Aceitar o convite** — casca de pré-autenticação (mockup de navegador com foto ilustrativa BIVAQUE à esquerda, conforme a prancha 71). Conteúdo: pílula `Convite de prestador`; H1 `Ofereça seus serviços no Bivaque`; parágrafo com nome da comunidade indicadora; parágrafo sobre a confirmação de e-mail; campo `E-mail convidado` (pré-preenchido) e botão `Confirmar meu e-mail`; link `Voltar para a comunidade`; cartão verde-pinho explicando que esta é uma conta separada e que a aceitação só vale para o endereço indicado.
+
+### Estados e limites
+
+A confirmação é por link no e-mail (signInWithOtp → emailRedirectTo=/auth/callback), não por código OTP. A prancha não pinta caixas de dígitos nem contador regressivo. O convite é enfileirado: a tela de sucesso atual diz que o prestador receberá o link quando o canal de e-mail estiver disponível; a prancha não afirma envio confirmado. O prazo de sete dias é texto da tela implementada, não regra visual.
+
+Convite de prestador é distinto de convite familiar (R17) e não concede participação na comunidade. O cartão azul-petróleo documenta o acesso restrito: o prestador civil fica fora do feed, dos perfis, dos grupos, dos eventos e das listas; nas conversas que membros iniciarem, vê apenas o nome de exibição. Esse contrato precisa sobreviver à implementação.
+
+Força Armada e OM autodeclaradas são opcionais, com visibilidade individual desligada por padrão. Não exibir posto, OM ou selo de verificação na ficha pública. Comunidade indicada e e-mail convidado são fictícios; consolidar fixtures coerentes ao implementar.
+
+## 80-web-recomendacoes — `/recommendations`
+
+**Etapa:** W05. **Painéis:** pedidos de indicação recebidos; responder uma indicação com marcador.
+
+Prancha criada em 12/09/2026, depois do handoff. A 25-web-guia-referencia cobre o artigo do Guia e a Sugerir correção; as referências e indicações da comunidade têm contrato próprio (O07) e tela dedicada em `/recommendations`. Esta é a autoridade visual que faltava para o ciclo pedir → responder → marcar como resolvido.
+
+**Lacuna registrada:** nenhuma prancha canônica anterior desenhou a aba Pedidos com o marcador 'Ajudou a resolver' nem a faixa 'Pedido resolvido'. Esta prancha ocupa esse vazio, ancorada no RECON-043.
+
+### Composição
+
+**Shell do membro** — sidebar BIVAQUE com Início, Explorar ativo, Comunidades, Perfil, Salvos, Notificações e Configurações; cabeçalho com busca, cidade Brasília/DF e avatar Carlos Ribeiro. Mesmo padrão usado em 70.
+
+**Painel 1 — Pedidos de indicação recebidos** — H1 `Indicações`; lead com o aviso de utilidade comunitária; abas `Explorar | Pedir indicação | Pedidos (2) ativo | Salvas`; cartão do pedido 1 (Serviços locais / Manaus, Renata M., há 3 dias) com uma resposta de João Silva e a caixa de resposta aberta com `Agradeço. Vou chamar pelo app mesmo.` e os botões `Responder` e `Salvar`; cartão do pedido 2 (Educação / Manaus, Ana Cláudia, há 1 semana) já marcado com chip `✓ Resolvida pela autora` em verde, duas respostas (a primeira com marcador verde `Ajudou a resolver`, a segunda sem marcador) e a faixa inferior `✅ Pedido resolvido — a autora marcou uma resposta como solução`.
+
+**Painel 2 — Responder uma indicação (com marcador)** — mesmo shell, mesmo H1/lead/abas (Pedidos (1) ativo); cartão de um pedido de Saúde & bem-estar no grupo Asa Norte, Lúcia P. há 2 dias; três respostas: Ana Beatriz (sem marcador, com Editar/Excluir), Carlos Ribeiro (com marcador `Ajudou a resolver` + botão `Remover marca`), Patrícia A. (sem marcador); faixa `✅ Pedido resolvido — você marcou a resposta de Carlos Ribeiro como solução · Reabrir`; caixa de resposta `Obrigada a todos. Fechamos com o Dr. Eduardo.` com `Responder` desabilitado (estado pós-resolução) e `Salvo` confirmado.
+
+### Estados e limites
+
+O marcador `Ajudou a resolver` só é aplicado pela autora do pedido; o botão aparece só para ela. A resposta marcada define o status `Pedido resolvido`, exibido na faixa verde do cartão. `Reabrir` volta o pedido ao estado normal e remove a marca — uso restrito à autora. Não há like/curtida: os controles por resposta são Editar/Excluir (próprio autor) e Ajudou a resolver / Remover marca (autora do pedido).
+
+A página é explicitamente de utilidade comunitária, não de marketplace: o lead da tela traz a frase 'Este é um espaço de utilidade comunitária, não um marketplace'. Sem estrelas, selos, ranking, pagamento ou SLA. O escopo do pedido é cidade ou grupo; quando a categoria é Saúde & bem-estar, o alcance locality é escondido e a autora precisa escolher um grupo. Manaus é fixture; categorias, nomes e datas são fictícios.
+
+## 81-web-comunidade-admin — `/communities/[id]/admin`, `/communities/[id]/admin/moderators`, `/communities/[id]/admin/providers`, `/communities/[id]/admin/media`
+
+**Etapa:** W03. **Painéis:** administração (moderadores + prestadores); imagens (faixa + miniatura).
+
+Prancha criada em 12/09/2026, depois do handoff. R31 já existia como spec, mas o guia só tinha pranchas dos fluxos de quem pede (41) e de quem decide entrada (73). Faltava a autoridade visual da gestão. Esta é ela.
+
+**Lacuna registrada:** nenhum contrato RECON-* cobre a rota do console de administração. A prancha está ancorada no RECON-009 — mesmo contrato da 73-web-comunidade-pedidos — e o console em si não tem dono no contrato. RECON-024 cobre o painel do prestador (R45/R46), não a gestão da comunidade.
+
+### Composição
+
+Shell do console do dono copiado de src/73-web-comunidade-pedidos.html. Topnav com "Console — Jardim das Acácias" à esquerda e os links à direita (Painel 1: Pedidos de entrada, Imagens, Administração ativa, Voltar à comunidade; Painel 2: Pedidos de entrada, Imagens ativa, Administração, Voltar à comunidade). A divergência entre o desenho e o layout.tsx atual está registrada — o índice admin/page.tsx tem os três links; o layout ainda não inclui Administração.
+
+**Administração** — H1; lead explicando que só o dono promove e revoga. Três blocos:
+
+- **Moderadores** — Carlos Ribeiro como dono (selo pine100 com pine700, texto "Promove e revoga", sem botão); Renata Menezes e João Sarmento como moderadores (selo igual, texto "Aprova pedidos e remove membros") com botão Despromover em secondary.
+- **Promover membro aprovado** — Lúcia Prado e Ana Cláudia como membros aprovados (selo sunken com ink700) com botão Promover a moderadora em primary.
+- **Prestadores atestados** — Marcelo Silveira como Eletricista com selo pine100 ativo, campo de motivo e botão Revogar ficha em rose100/rose700; Rosana Borges como Pediatra revogada em 03/09/2026, motivo "mudou de cidade", sem campo nem botão.
+
+Nota privada em rose100 com ícone de cadeado explicando que o motivo de revogação é registrado na auditoria da comunidade.
+
+**Imagens** — H1; lead explicando que a faixa aparece no topo da apresentação e a miniatura nos cartões. Aviso de sucesso `Faixa atualizada.` em pine100 com ícone de check. Dois blocos MediaField:
+
+- **Faixa de topo** — bloco surface com borda color-mix; caixa de 168px de altura com gradiente pine100/E8EFEA/E2F0F7 e legenda alternativa visível; upload dashed-border com ícone de imagem e texto "Trocar imagem"; botão Remover em secondary com ícone de lixeira.
+- **Miniatura** — bloco surface com borda color-mix; caixa quadrada de 148px com legenda alternativa; mesmas ações de upload e remover.
+
+Nota privada em rose100 explicando que as imagens são reescritas pelo navegador antes de subir para remover EXIF, e que os endereços servidos são assinados válidos por 24h.
+
+### Estados e limites
+
+A RPC is_current_user_community_moderator é a porta de entrada do layout; sem dono ou moderador, o redirect cai para /communities/[id] sem página de erro. Promover e despromover são ações idempotentes — repetir a chamada não duplica nem corrompe a linha de community_memberships. Revogar prestador não apaga a ficha nem a conta: marca data e motivo, e a vitrine da comunidade deixa de exibir. A página /admin/providers mostra fichas revogadas com a data, sem campo de motivo (motivo aparece em auditoria, não na lista operacional).
+
+O upload reescreve a imagem em JPEG q=0.92 antes de subir para descartar EXIF (coordenadas, dispositivo, hora). A URL assinada é obtida por signCommunityImageUrls e dura 24h. Quem não é dono vê a mensagem em rose700/Sunken 'Só quem responde pela {nome} pode enviar, trocar ou remover as imagens.' — sem formulário de upload.
+
+Nomes, fotos e motivos são ilustrativos: consolidar com perfis únicos na implementação.
+
+## 82-web-localidade — `/localidade`
+
+**Etapa:** W02/W03. **Painéis:** declarar mudança de cidade; transferência declarada.
+
+Prancha criada em 12/09/2026, depois do handoff. R21 tem duas responsabilidades misturadas: explorar destino e declarar mudança. A primeira é o seletor do shell (CityReference já cumpre). A segunda é um caminho explícito, com formulário e estado declarado. Esta é a autoridade visual dessa segunda parte.
+
+**Lacuna registrada:** nenhum contrato RECON-* cobre /localidade (R21). A prancha está ancorada na spec §4.2 R21 e na própria page.tsx; não há contrato isolado. RECON-014/RECON-016 cobrem /onboarding/locality (R14) — escolha inicial de cidade na primeira chegada — que é caminho separado.
+
+### Composição
+
+Shell do membro copiado de src/70-web-evento-organizar.html. Topnav não desenhada (a rota /localidade não está nos itens de navegação de membro — entra pelo link Cidade na barra superior ou via Perfil). Main com padding 24/40/22 e overflow-y para rolar a página.
+
+**Declarar mudança (painel 1)** — cabeçalho com `Brasília, DF` e lead explicando que esta é a referência da cidade. Seção `Estou de mudança` com descrição, campo de cidade de destino (placeholder 'Buscar por UF ou cidade', valor prevenido 'Boa Vista, RR'), data `1º de dezembro de 2026`, e ações `Declarar saída` (primary) e `Cancelar` (secondary). Depois, três cartões em sequência: `Próximos eventos da cidade` com 4 eventos fictícios e link Ver todos os eventos; `Guia de chegada` com botão primário Abrir o guia; `Vitrine de prestadores` com 3 nomes fictícios (Marcelo Silveira, Fernanda Lopes, Diego Almeida) cada um com a categoria e a região.
+
+**Transferência declarada (painel 2)** — seletor em pílula com duas opções: `Brasília, DF` ativa em pine700 sólido com texto branco e ícone de pino; `Boa Vista, RR` inativa com chip `saindo` em amber100 com amber700 (quando o chip está dentro da opção ativa, fica em branco translúcido sobre o pine700). Cabeçalho `Brasília, DF` (a aba ativa é Brasília, mesmo após a declaração). Cartão de confirmação em pine100 com ícone circular de check em pine700 sólido e a frase `Transferência declarada.` mais data e destino. Depois, os mesmos blocos de cidade. Rodapé com nota privada explicando que vilas da cidade atual continuam até a pessoa pedir entrada em Boa Vista ou cancelar.
+
+### Estados e limites
+
+A transferência NÃO migra comunidades automaticamente. Quem é membro de vilas de Brasília continua membro até a data marcada; depois, para publicar em Boa Vista, é preciso pedir entrada em vilas lá — e isso é um caminho separado, não uma continuação. A frase aparece antes que a pessoa pergunte, e o formulário não promete SLA, prazo de processamento nem reversão automática.
+
+Trocar a aba no seletor mostra a referência da cidade de origem: se a transferência ainda não expirou (readOnly = false), o aviso é `Você está saindo de {origem} em {data}. Até lá, continua podendo publicar aqui normalmente.`; se já expirou (readOnly = true), o aviso vira `Você só lê aqui — a transferência já aconteceu. Para publicar, use {atual}.`. A prancha painel 2 não troca de aba — Brasília fica ativa porque ainda é a cidade atual; o aviso de saída só aparece se a pessoa clicar em `Boa Vista, RR`.
+
+Os cards de cidade usam o componente CityReference da implementação atual: a vitrine carrega via RPC `search_providers` com filtros p_query e p_category; os eventos vêm de `events` filtrados por locality_id. O estado vazio da vitrine é honesto: 'Ainda não há prestadores cadastrados por aqui.' A prancha não desenha explicitamente o estado vazio porque tem prestadores fictícios; consolidar com fixtures únicas na implementação.
+
+Cidades e datas são ilustrativas: consolidar com o catálogo /api/localities/[uf] e com o contrato declare_locality_transfer.
+
+## 83-web-landing — landing pública do Bivaque
+
+**Etapa:** W01. **Painéis:** primeiro contato do visitante; camadas de pertencimento, confiança e fechamento.
+
+Prancha criada em 12/09/2026, depois do handoff. Desenha a página pública exigida por R01 sem antecipar admissão: o visitante lê o que o Bivaque é, decide se faz sentido, e só então vê os atalhos para Entrar ou Criar conta.
+
+### Composição
+
+Shell público em ambos os painéis. Topbar fixa com o wordmark BIVAQUE à esquerda, âncoras Por dentro / Pertencimento / Confiança, e botão Entrar à direita. Nenhum sidebar de membro, nenhum link para feed privado, nenhum conteúdo de comunidade.
+
+**Painel 1 — Primeiro contato.** Hero com foto sangrada e overlay escuro para legibilidade, eyebrow 'Para pessoas com vínculo militar federal, veteranos, pensionistas e dependentes', H1 'Bivaque. A comunidade vai com você.' em duas linhas, parágrafo de abertura, ações 'Quero fazer parte' (primário) e 'Ver como funciona' (âncora para a próxima seção). Abaixo, o manifesto curto: 'Quem chega tem perguntas. Quem já está conhece os caminhos.' Em seguida, a seção Por dentro do Bivaque: três passos numerados — Pergunte / Resolva / Preserve — e, à direita, um mock do produto dentro de uma casca de desktop com barra BIVAQUE · 'Brasília, DF' e três cartões (Nova pergunta, 3 respostas úteis, Pedido resolvido) que mostram como uma conversa vira referência arquivada.
+
+**Painel 2 — Como entrar e o que esperar.** Pertencimento em três camadas numeradas: Cidade, Comunidade e Grupo. Seção Confiança em três cartões com ícone: 'Entrada coerente com cada papel' (escudo), 'Seu perfil é para convivência' (cadeado — destaque de que CPF, patente, OM, endereço e documentos não aparecem no perfil) e 'Encontros pelo que importa' (lupa). Fechamento com o wordmark, H2 'Você pode chegar com uma pergunta. Logo terá algo para compartilhar.', parágrafo, CTA 'Quero fazer parte' e rodapé de duas linhas: 'Bivaque é uma iniciativa comunitária independente.' / 'Sem vínculo oficial com as Forças Armadas.'
+
+### Estados e limites
+
+Visitante não vê feed, lista de membros nem qualquer conteúdo privado. A palavra 'Brasília' aparece só dentro do mock de produto como exemplo de cidade; o seletor real depende da entrada do visitante. As fotos da hero e do mock são blocos ilustrativos, não pessoas reais. A promessa de que 'CPF, patente, OM, endereço e documentos não aparecem no perfil' é a única promessa de privacidade visual — não há promessa de prazo, de compartilhamento de contato ou de verificação pública. O CTA de criação é o mesmo dos dois painéis; nenhum dos dois mostra login realizado.
+
+## 84-web-busca — busca agrupada no Bivaque web
+
+**Etapa:** W02/W06. **Painéis:** resultados agrupados por tipo; nenhum resultado com saída honesta.
+
+Prancha criada em 12/09/2026, depois do handoff. Fecha a R20 (prancha 61) sem inventar o que ainda não existe: a busca devolve Guia, Serviços e Eventos porque esses são os módulos já integrados. Mercado e Moradia ainda não entram aqui — o estado é declarado em reviewNotes e em uma anotação lateral no painel 2.
+
+### Composição
+
+Shell de membro em ambos os painéis. Topbar com a busca da própria página aberta (campo destacado em pine-700 porque o termo é o foco), seletor de cidade Brasília, DF, sino com badge, avatar Carlos Ribeiro. Sidebar com Início, Explorar ativo, Comunidades, Perfil; secundária Salvos, Notificações; Configurações abaixo.
+
+**Painel 1 — Resultados da busca.** Migalha Explorar. H1 'Resultados para "escola transferência"'. Subtítulo com a cidade em destaque. Coluna principal com três grupos, cada um com label, contagem e link Ver todos:
+
+- **Guia da cidade** (2 resultados): 'Como matricular no meio do ano' e 'Escolas que aceitam transferência' — curadoria real do Guia, não inventada.
+- **Serviços** (3 resultados): 'Marisa Aguiar — Assessoria escolar', 'Colégio Pi — Secretaria' e 'Renata Prado — Tradutora de documentos'. Cada item mostra cidade ou bairro do prestador; nenhum traz avaliação, ranking ou selo.
+- **Eventos** (1 resultado): 'Roda de conversa — Volta às aulas em nova cidade' em 15/10 às 19:00, com pin de local.
+
+Coluna lateral com três cartões: explicação de que o termo fica em `q=` e que trocar cidade refaz as três buscas, lista de buscas recentes como chips (clínica veterinária, mudança 308 Sul, aula de reforço, creche Jardim) e nota explícita de que Mercado/Moradia ainda não aparecem aqui.
+
+**Painel 2 — Nenhum resultado.** Mesmo shell, termo 'translado de mobília pesada'. Bloco central com ícone de lupa, H2 'Nenhum resultado para esse termo', parágrafo que repete a cidade e sugere encurtar o termo. Duas ações claras: Limpar busca (secundária) e Trocar de cidade (primária). Coluna lateral com variações de busca ('mudança apartamento', 'frete residencial', 'carro forte Brasília', 'transportadora pequenas cargas'), lembrete de que a cidade pode ser trocada em Localidade, e a mesma nota honesta sobre Mercado e Moradia.
+
+### Estados e limites
+
+Nenhum dos dois painéis promete prazo, compartilhamento automático de contato nem ranking. As contagens vêm da resposta real das três consultas; se uma falhar, a página entra em erro recuperável com o termo preservado, nunca em lista vazia disfarçada. A busca do cabeçalho é o único ponto de entrada; ela não cria nova permissão nem abre conteúdo privado fora da cidade ativa. O 'nenhum resultado' ensina caminhos de saída sem pressionar o membro a continuar: limpar, refinar ou trocar de cidade.
+
+## 85-web-arrivals — chegadas declaradas e transferências ativas
+
+**Etapa:** O05. **Painéis:** chegadas declaradas com volume por cidade; estado vazio honesto.
+
+Prancha criada em 12/09/2026, depois do handoff. Desenha o que a página `/arrivals` faz hoje — uma única lista por cidade alimentada pela RPC `list_locality_arrivals_volume` — e registra, em vez de esconder, a lacuna de chegabilidade que a análise da rota revelou: a tela é read-only, sem filtro por janela, sem ação por linha e sem destino próprio para abrir uma chegada.
+
+### Composição
+
+Shell do operador nos dois painéis, com a topbar de `apps/web/app/(admin)/layout.tsx`: wordmark `BIVAQUE · Operação` à esquerda e nav de Admissões / Denúncias / Guia de chegada / Chegadas. Chegadas ativo em ambos os painéis.
+
+**Painel 1 — Chegadas declaradas.** H1 'Chegadas declaradas'. Parágrafo que distingue 'quem está a caminho' de 'quem já mora lá'. Linha de chips com janela (chegadas ativas neste momento) e origem dos dados (`list_locality_arrivals_volume`); à direita, botão Atualizar. Tabela com três colunas (Cidade de destino, Chegadas, Próximo passo) e cinco linhas fictícias — Brasília 14, Manaus 9, Recife 6, Salvador 4, Porto Alegre 2. A coluna 'Próximo passo' está deliberadamente em branco com o rótulo 'sem ação por linha hoje'. Abaixo, cartão amber que nomeia explicitamente a lacuna encontrada pela análise de chegabilidade: a página não abre a chegada, não filtra por janela nem tem ação por linha; quando ganhar destino, a prancha é refeita. Rodapé reforçando que a RPC é operator-only e respeita a RLS — cidade e contagem são os únicos campos expostos.
+
+**Painel 2 — Nenhuma transferência declarada.** Mesmo shell e mesma linha de chips/botão. O conteúdo central é um cartão de estado vazio com ícone pine-100, H2 'Nenhuma transferência declarada no momento', parágrafo explicando que a RPC devolveu lista vazia — não é erro, é o estado real. Três ações oferecidas, todas honestas: Atualizar agora (refaz a leitura), Voltar para Admissões, Abrir Admissões. Cartão amber registra que o estado vazio é proposital e que a página não inventa volume para preencher colunas. Rodapé repete a regra de privacidade.
+
+### Estados e limites
+
+A prancha inteira é só leitura. Nenhuma promessa de prazo de entrega da próxima versão da página; nenhum nome de operador, cidade de origem ou contagem pessoal. As cidades são ilustrativas; ao implementar, consolidar fixtures únicas. Quando a tela ganhar destino próprio (abrir uma chegada, mudar a janela, ver histórico), a prancha é refeita com a nova evidência — não prometer antes.

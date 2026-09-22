@@ -1,17 +1,19 @@
 "use client"
 
 import { brandTokens } from "@bivaque/tokens"
-import { Button, Kbd, Tooltip } from "@heroui/react"
+import { Kbd, Tooltip } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
-import { Bell, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
+import { Bell, Bookmark, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
+import { communityImageAltText } from "../../../lib/communities/community-media"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
 import { GlobalSearchField } from "../search/global-search-field"
+import { resolveActiveNav } from "../shell/active-nav"
 import { MemberAvatar } from "./avatar"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
-import { CreatePostModal } from "./feed-post"
 
 interface AppShellProperties {
   children: ReactNode
@@ -24,8 +26,8 @@ const EXPANDABLE_QUERY = "(min-width: 1024px)"
 
 export function AppShell({ children }: AppShellProperties) {
   const pathname = usePathname()
+  const activeNav = resolveActiveNav(pathname, NAV_ITEMS)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [createPostOpen, setCreatePostOpen] = useState(false)
   const { current } = useLocalityContext()
   const { communities, displayName, unreadCount } = useMemberContext()
   // Read synchronously on the first client render so a tablet never paints the
@@ -62,14 +64,6 @@ export function AppShell({ children }: AppShellProperties) {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
-  const handlePostCreated = useCallback(() => {
-    setCreatePostOpen(false)
-  }, [])
-
-  const handlePostClose = useCallback(() => {
-    setCreatePostOpen(false)
-  }, [])
-
   return (
     <div className="h-dvh flex flex-col overflow-hidden bg-[var(--semantic-canvas)]">
       {/* ---- Navbar ---- */}
@@ -79,7 +73,8 @@ export function AppShell({ children }: AppShellProperties) {
             44px sem espremer as ações; de sm para cima fica entre o pill da
             cidade e as ações, como na prancha 61. */}
         <div className="flex min-h-[var(--semantic-nav-height)] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2 sm:flex-nowrap sm:py-0">
-          {/* Left section */}
+          {/* Left section — só o toggle de largura da lateral. A cidade foi
+              para a direita, junto do sino, como a prancha desenha. */}
           <div className="flex items-center gap-3">
             {/* Sidebar toggle visible on desktop */}
             <button
@@ -94,8 +89,15 @@ export function AppShell({ children }: AppShellProperties) {
                 <ChevronsLeft size={20} aria-hidden="true" />
               )}
             </button>
+          </div>
 
-            {/* Locality context */}
+          {/* Search — order-last on mobile, centered on desktop */}
+          <div className="order-last w-full sm:order-none sm:mx-2 sm:w-auto sm:max-w-xl sm:flex-1">
+            <GlobalSearchField />
+          </div>
+
+          {/* Right section — cidade, notificações e perfil, na ordem da prancha */}
+          <div className="flex items-center gap-2">
             <div
               data-testid="shell-locality-pill"
               className="flex items-center gap-1.5 min-h-11 px-2 rounded-lg"
@@ -109,30 +111,18 @@ export function AppShell({ children }: AppShellProperties) {
                 {current.cityName}, {current.stateCode}
               </span>
             </div>
-          </div>
 
-          {/* Search — order-last on mobile, centered on desktop */}
-          <div className="order-last w-full sm:order-none sm:mx-2 sm:w-auto sm:max-w-xl sm:flex-1">
-            <GlobalSearchField />
-          </div>
-
-          {/* Right section */}
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="primary"
-              aria-label="Criar publicação"
-              onPress={() => setCreatePostOpen(true)}
-            >
-              Publicar
-            </Button>
-
+            {/* Decidido em 18/09/2026 (RECON-038 #4): a prancha 01 não desenha o
+                ícone de lâmpada, e ele era a única entrada de /recommendations
+                em 375/768 — removê-lo sem substituto órfãva o fluxo. A entrada
+                passa a ser rotulada, como o resto da navegação: o ícone sozinho
+                não dizia para onde ia, e um rótulo dispensa decifração. */}
             <a
               href="/recommendations"
-              aria-label="Indicações"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+              className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
             >
-              <Lightbulb size={20} aria-hidden="true" />
+              <Lightbulb size={18} aria-hidden="true" />
+              Indicações
             </a>
 
             <a
@@ -173,8 +163,8 @@ export function AppShell({ children }: AppShellProperties) {
             className={`flex items-center h-[var(--semantic-nav-height)] shrink-0 border-b border-border ${isRail ? "justify-center" : "px-3"}`}
           >
             {!isRail && (
-              <span className="text-base font-semibold tracking-tight truncate flex-1">
-                {brandTokens.productName}
+              <span className="text-base font-bold uppercase tracking-[0.04em] text-[var(--semantic-action-primary)] truncate flex-1">
+                {brandTokens.productName.toUpperCase()}
               </span>
             )}
             {/* Only offered where expanding is possible; below lg the rail is fixed. */}
@@ -195,23 +185,12 @@ export function AppShell({ children }: AppShellProperties) {
           {/* Nav items */}
           <nav aria-label="Navegação principal" className="flex flex-col gap-1 p-3">
             {NAV_ITEMS.map((item) => {
-              // When a route is not one of the four containers (e.g. /messages,
-              // /notifications, and the historical /localidade, /community,
-              // /groups still reachable in W00), fall back so the sidebar never
-              // shows no active item: /messages and /notifications resolve to
-              // "perfil", everything else to "inicio". Mirrors bottom-nav's
-              // selectedKey fallback so the two navs stay in sync.
-              const inPrimaryNav = NAV_ITEMS.some(
-                (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
-              )
-              const fallbackId =
-                pathname.startsWith("/messages") || pathname.startsWith("/notifications")
-                  ? "perfil"
-                  : "inicio"
-              const active =
-                pathname === item.href ||
-                pathname.startsWith(`${item.href}/`) ||
-                (!inPrimaryNav && item.id === fallbackId)
+              // O item ativo vem da ROTA (resolveActiveNav), nunca de um
+              // fallback por vizinhança. Em /salvos a lateral acende "Salvos",
+              // não "Perfil" — o defeito de navegação que o RECON-038 corrige.
+              // O fallback restante (mensagens/notificações → Perfil) preserva
+              // o contrato DS-011.
+              const active = activeNav.kind === "primary" && activeNav.id === item.id
 
               const anchor = (
                 <a
@@ -258,11 +237,16 @@ export function AppShell({ children }: AppShellProperties) {
                 em todas as rotas. Eles também não recebem aria-current: no
                 modelo do DESIGN_SYSTEM §7.1 conta e notificações vivem sob
                 Perfil, que é quem o fallback primário marca nessas rotas. */}
-            {/* "Salvos" aparece nas pranchas 01/61/60, mas a tela de conteúdos
-                salvos é a prancha 54 e pertence à etapa W03. Um destino
-                placeholder é proibido duas vezes aqui: pelo gate G1 do spec e
-                por tests/unit/ui/empty-promises.test.ts, que reprova promessa
-                vazia em apps/web/app/**. O item entra junto com a tela. */}
+            {/* O item entra junto com a tela, como o card SHELL-SALVOS-AUSENTE
+                e o gate G1 exigiam: /salvos existe (RECON-032) e lista o que
+                foi guardado de verdade — sem placeholder, sem promessa. */}
+            <SidebarSecondaryItem
+              href="/salvos"
+              label="Salvos"
+              Icon={Bookmark}
+              isRail={isRail}
+              active={activeNav.kind === "secondary" && activeNav.href === "/salvos"}
+            />
             <SidebarSecondaryItem
               href="/notifications"
               label="Notificações"
@@ -291,6 +275,7 @@ export function AppShell({ children }: AppShellProperties) {
                     key={community.id}
                     id={community.id}
                     name={community.name}
+                    thumbnailUrl={community.thumbnailUrl}
                     isRail={isRail}
                   />
                 ))}
@@ -324,8 +309,12 @@ export function AppShell({ children }: AppShellProperties) {
                   <MemberAvatar name={displayName} size="sm" />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{displayName}</span>
                 </div>
+                {/* RECON-042, defeito 1: o rótulo promete Configurações, o
+                    clique entrega Configurações. O avatar do cabeçalho (acima)
+                    continua indo para /profile de propósito — só este item,
+                    que nomeia a área, aponta para a área. */}
                 <a
-                  href="/profile"
+                  href="/configuracoes"
                   className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground"
                 >
                   <Settings size={20} className="shrink-0" aria-hidden="true" />
@@ -346,15 +335,6 @@ export function AppShell({ children }: AppShellProperties) {
 
       {/* Bottom nav (mobile) */}
       <BottomNav />
-
-      {/* CreatePostModal */}
-      {createPostOpen && (
-        <CreatePostModal
-          localityId={current.id}
-          onCreated={handlePostCreated}
-          onClose={handlePostClose}
-        />
-      )}
 
       {/* Keyboard shortcut hint */}
       <div className="hidden lg:flex fixed bottom-4 right-4 z-30">
@@ -379,17 +359,24 @@ function SidebarSecondaryItem({
   Icon,
   badge,
   isRail,
+  active = false,
 }: {
   href: string
   label: string
   Icon: LucideIcon
   badge?: number
   isRail: boolean
+  active?: boolean
 }) {
   const anchor = (
     <a
       href={href}
-      className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground ${isRail ? "justify-center px-0" : ""}`}
+      aria-current={active ? "page" : undefined}
+      className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] ${
+        active
+          ? "bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]"
+          : "text-muted hover:bg-[var(--semantic-selected)] hover:text-foreground"
+      } ${isRail ? "justify-center px-0" : ""}`}
     >
       <Icon size={20} className="shrink-0" aria-hidden="true" />
       <span className={isRail ? "sr-only" : undefined}>{label}</span>
@@ -410,21 +397,42 @@ function SidebarSecondaryItem({
   )
 }
 
-// Community rows carry no thumbnail — there is no such data. The placeholder
-// is the uppercase initial of the name, on the same selected-surface token
-// the active nav item uses.
-function SidebarCommunityItem({ id, name, isRail }: { id: string; name: string; isRail: boolean }) {
+// Community rows prefer the real thumbnail once the community has one; the
+// uppercase initial stays as the honest fallback when it does not.
+function SidebarCommunityItem({
+  id,
+  name,
+  thumbnailUrl,
+  isRail,
+}: {
+  id: string
+  name: string
+  thumbnailUrl: string | null
+  isRail: boolean
+}) {
   const anchor = (
     <a
       href={`/communities/${id}`}
       className={`flex min-h-11 min-w-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground ${isRail ? "justify-center px-0" : ""}`}
     >
-      <span
-        aria-hidden="true"
-        className="grid h-6 w-6 shrink-0 place-items-center rounded bg-[var(--semantic-selected)] text-xs text-[var(--semantic-action-primary)]"
-      >
-        {name.charAt(0).toUpperCase()}
-      </span>
+      {thumbnailUrl ? (
+        <Image
+          src={thumbnailUrl}
+          alt={communityImageAltText("thumbnail")}
+          width={24}
+          height={24}
+          unoptimized
+          loading="lazy"
+          className="h-6 w-6 shrink-0 rounded object-cover"
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="grid h-6 w-6 shrink-0 place-items-center rounded bg-[var(--semantic-selected)] text-xs text-[var(--semantic-action-primary)]"
+        >
+          {name.charAt(0).toUpperCase()}
+        </span>
+      )}
       <span className={isRail ? "sr-only" : "min-w-0 truncate"}>{name}</span>
     </a>
   )

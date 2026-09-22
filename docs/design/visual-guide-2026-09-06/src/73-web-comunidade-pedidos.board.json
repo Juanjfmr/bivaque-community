@@ -1,0 +1,42 @@
+{
+  "id": "73-web-comunidade-pedidos",
+  "kind": "web",
+  "group": "community",
+  "title": "Web: decidir pedidos de entrada",
+  "screens": ["Pedidos de entrada", "Ver o pedido"],
+  "reviewNotes": [
+    "O motivo do pedido é privado: aparece só para quem administra, e o pedido não entra no feed enquanto estiver pendente. Não expor o motivo a outro membro nem listar participantes a quem não é aprovado.",
+    "R30 pede decisão conforme capacidade. A tela implementada não mostra vagas; a prancha desenha o indicador e registra a divergência para decisão do dono.",
+    "A lista de candidatos não vira roster: nomes de pendentes não são a lista de membros da comunidade.",
+    "Membros, vagas e o ano de criação são ilustrativos; consolidar com consulta real ao implementar."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do console do dono da comunidade conforme apps/web/app/(owner)/communities/[id]/admin/layout.tsx, que usa navegação de topo e não a lateral do membro. Painel 1 é a fila de pedidos com seleção em massa e ação por linha. Painel 2 é o pedido aberto, com o motivo privado e o rail Sobre a comunidade. Copy reconciliada com R30 e com a tela implementada em admin/pending.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-009",
+  "journey": {
+    "id": "web-decidir-pedido-de-entrada",
+    "titulo": "Decidir quem entra na comunidade",
+    "plataforma": "web",
+    "grupo": "community",
+    "persona": "Quem administra a comunidade",
+    "comeca": "Fila de pedidos aguardando",
+    "termina": "Pedido decidido, e quem entrou aparece na comunidade",
+    "acoes": ["Solicitar participacao", "Gerenciar"],
+    "etapas": [
+      {
+        "nome": "Fila",
+        "passos": [{ "tela": "73-web-comunidade-pedidos#0", "acao": "abre o pedido de quem espera" }]
+      },
+      {
+        "nome": "Decisao",
+        "passos": [{ "tela": "73-web-comunidade-pedidos#1", "acao": "aprova e a pessoa entra na comunidade" }]
+      },
+      {
+        "nome": "Dentro",
+        "passos": [{ "tela": "43-web-comunidade-grupos#0" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 73-web-comunidade-pedidos — `/communities/[id]/admin/pending`\n\n**Etapa:** W03. **Painéis:** a fila de pedidos; o pedido aberto.\n\nPrancha criada em 12/09/2026, depois do handoff. O Gate W03 exige \"gestor decide\", e o guia só desenhava o lado de quem pede (prancha 41). Esta é a autoridade visual que faltava.\n\n**Lacuna registrada:** nenhum contrato de tarefa possui a rota do console de administração da comunidade. A prancha está ancorada no RECON-009, que é o mesmo contrato de fechamento — quem entra na comunidade — mas o console em si não tem dono no contrato.\n\n### Composição\n\nShell do console do dono: navegação de **topo**, não a lateral do membro, com \"Console — Jardim das Acácias\" à esquerda e os links Pedidos de entrada, Imagens e Voltar à comunidade à direita. Vem de `apps/web/app/(owner)/communities/[id]/admin/layout.tsx`.\n\n**Pedidos de entrada** — H1; \"Aprovar ou recusar candidatos antes que entrem no feed da comunidade.\"; barra com `Aprovar selecionados` e `Recusar selecionados` e a contagem de pedidos; lista de candidatos com caixa de seleção, nome, quando pediu e origem, e as ações `Ver pedido` e `Aprovar` por linha.\n\n**Ver o pedido** — H1 com o nome; lead explicando que a decisão é de quem administra e que o pedido não aparece no feed enquanto estiver pendente; cartão \"Motivo do pedido\" com o campo opcional \"Por que você quer participar?\" e a nota de que é visível só para quem administra; ações `Aprovar entrada` e `Recusar`. Rail \"Sobre a comunidade\" com vagas em uso, Membros, Local e Criada em.\n\n### Estados e limites\n\nO motivo é privado por desenho: o pedido em análise não vira conteúdo público e a lista de pendentes não é o roster da comunidade. **Divergência declarada com R30:** a spec pede decisão conforme capacidade, e a tela implementada não mostra vagas — a prancha desenha o indicador e registra a divergência. Membros, vagas e o ano de criação são ilustrativos.\n"
+}

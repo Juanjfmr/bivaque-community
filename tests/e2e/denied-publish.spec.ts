@@ -1,17 +1,18 @@
 // E2E denied-publish: prova negativa do caminho "denied" do compositor.
 //
 // ADR-20260901-account-suspension (aprovado em 2026-09-01, commit 7532aea):
-// uma flag is_suspended em profiles + helper public.is_account_suspended()
+// uma tabela profile_suspensions + helper public.is_account_suspended()
 // + RLS update em posts/comments/post_reactions/reports. INSERT em posts
-// retorna 42501 quando o caller esta com is_suspended=true; o cliente
+// retorna 42501 quando o caller esta suspenso; o cliente
 // classifica como 'server' em lib/composer/publish-error.ts e exibe copy
 // generica identica a qualquer outra negacao (anti-enumeracao §4.3).
 //
-// Persona: membro-suspenso@bivaque.example.invalid (seed em
-// supabase/migrations/20260901124400_member_suspended_seed.sql). Sem
-// comunidade aprovada, portanto /community renderiza CityReference (a
-// cidade inteira como referencia, nao uma vila) e o composer abre no
-// modo city-reach (public.locality_id null).
+// Persona: dono-vila@bivaque.example.invalid (dona da Vila Ajuricaba, ja
+// semeada em supabase/seed.sql, UUID 20000000-...-008). Nao existe persona
+// dedicada de suspensao: o teste alterna is_suspended=false -> true via
+// service_role antes do cenario e restaura no cleanup. O seed ja teve uma
+// persona membro-suspenso@, mas ela saiu — a fixture vivia numa migration
+// (que iria a producao) e nenhum teste a consumia.
 //
 // Cenarios cobertos:
 //   - caminho try/catch do submit: POST /rest/v1/posts retorna 42501
@@ -34,7 +35,7 @@ const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
 
 // Reusamos dono-vila@ (ja validada em publish-golden-slice) e alternamos
-// is_suspended=true antes do teste / false no cleanup. Isso evita a
+// suspensa antes do teste / reabilitada no cleanup. Isso evita a
 // complexidade de seedar uma persona suspensa que precisa navegar o
 // proxy.ts sem cair em /onboarding (proxy.ts: kind===null).
 const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
@@ -72,7 +73,7 @@ function requireCredentials(): { anonKey: string; password: string; serviceRoleK
   if (!password) throw new Error("USER_PASSWORD is required")
   if (!serviceRoleKey) {
     throw new Error(
-      "SUPABASE_SERVICE_ROLE_KEY is required (to toggle is_suspended from outside RLS). " +
+      "SUPABASE_SERVICE_ROLE_KEY is required (to toggle the suspension row from outside RLS). " +
         "Set it in env or apps/web/.env.local.",
     )
   }
@@ -127,26 +128,30 @@ async function seedVilaOwnerSession(context: BrowserContext): Promise<void> {
   ])
 }
 
-// Toggle is_suspended=true|false via service_role (bypassa RLS; é a unica
-// forma de mudar profiles.is_suspended de fora, ja que a policy de UPDATE
-// de profiles nao permite self-suspend). Cleanup garante que a persona
-// volta ao estado normal apos o teste — mesmo em falha — porque workers=1
-// torna o estado compartilhado entre specs.
+// Toggle suspensao via service_role: insere/remove a linha em
+// public.profile_suspensions (ADR-20260910). So service_role escreve essa
+// tabela; a policy de UPDATE de profiles nao permite self-suspend. Cleanup
+// garante que a persona volta ao estado normal apos o teste, mesmo em falha,
+// porque workers=1 torna o estado compartilhado entre specs.
 async function setSuspended(serviceRoleKey: string, suspended: boolean): Promise<void> {
   const api = await request.newContext()
   try {
-    const response = await api.patch(
-      `${SUPABASE_URL}/rest/v1/profiles?user_id=eq.${VILA_OWNER_USER_ID}`,
-      {
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-          "Content-Type": "application/json",
-          Prefer: "return=minimal",
-        },
-        data: { is_suspended: suspended },
-      },
-    )
+    const headers = {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    }
+    // Linha presente em profile_suspensions = conta suspensa (ADR-20260910).
+    const response = suspended
+      ? await api.post(`${SUPABASE_URL}/rest/v1/profile_suspensions`, {
+          headers,
+          data: { user_id: VILA_OWNER_USER_ID },
+        })
+      : await api.delete(
+          `${SUPABASE_URL}/rest/v1/profile_suspensions?user_id=eq.${VILA_OWNER_USER_ID}`,
+          { headers },
+        )
     if (!response.ok()) {
       throw new Error(
         `setSuspended(${suspended}) failed: ${response.status()} ${await response.text()}`,
@@ -157,7 +162,7 @@ async function setSuspended(serviceRoleKey: string, suspended: boolean): Promise
   }
 }
 
-test.describe("denied publish: is_suspended veta INSERT em posts (W1-DENIED)", () => {
+test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)", () => {
   test("compositor bloqueia o insert com copy generica; post nao chega ao DB", async ({
     browser,
   }) => {
@@ -174,7 +179,7 @@ test.describe("denied publish: is_suspended veta INSERT em posts (W1-DENIED)", (
       await page.goto("/community", { waitUntil: "load" })
 
       // Persona eh a dona da Vila Ajuricaba (mesma do publish-golden-slice).
-      // Como ela esta com is_suspended=true, o RLS veto no POST /rest/v1/posts
+      // Como ela esta suspensa, o RLS veto no POST /rest/v1/posts
       // (policy posts_insert_locality_member tem AND NOT is_account_suspended(auth.uid())).
       const publishButton = page.getByRole("button", { name: "Publicar" }).first()
       await expect(publishButton).toBeVisible({ timeout: 15000 })

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(68);
+select plan(69);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- GUARD 1: anon/authenticated have ZERO privileges on private.* tables
@@ -64,15 +64,14 @@ select columns_are(
     'visibility',
     'consent_version',
     'consented_at',
-    -- is_suspended: moderation state, não identidade — autorizada pelo
-    -- ADR-20260901-account-suspension (R3, aprovado em 2026-09-01).
-    'is_suspended',
+    'bio',
     'created_at',
     'updated_at'
   ],
   'GUARD: profiles exposes only coarse social + consent columns (locality lives in the membership, P0 Task 3)'
 );
 
+select hasnt_column('public', 'profiles', 'is_suspended', 'GUARD: moderation flag left profiles (R3-1)');
 select hasnt_column('public', 'profiles', 'cpf', 'GUARD: profiles has no cpf column');
 select hasnt_column('public', 'profiles', 'rank', 'GUARD: profiles has no rank column');
 select hasnt_column('public', 'profiles', 'address', 'GUARD: profiles has no address column');

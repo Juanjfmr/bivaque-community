@@ -1,0 +1,1727 @@
+{
+  "_note": "Jornadas no molde Mobbin: uma sequencia ordenada de telas com etapas nomeadas (inicio, meio e fim), a acao que move de uma tela para a outra, e os desvios (erro, retomada, outro publico) ancorados ao passo que os origina. Cada tela e citada por '<id-da-prancha>#<indice>'. A prancha e a FONTE da tela, nao a jornada. Documental: montada das pranchas, nao gravada em runtime.",
+  "version": 2,
+  "journeys": [
+    {
+      "id": "mobile-entrar-e-ser-admitido",
+      "titulo": "Entrar no Bivaque e ser admitido",
+      "plataforma": "mobile",
+      "grupo": "auth",
+      "persona": "Quem chega sem conta, com vinculo militar a verificar",
+      "comeca": "Boas-vindas, sem conta",
+      "termina": "Membro verificado, com cidade escolhida, dentro do Inicio",
+      "acoes": ["Criar conta", "Confirmar e-mail", "Verificar vinculo", "Escolher cidade"],
+      "etapas": [
+        {
+          "nome": "Abertura",
+          "passos": [
+            { "tela": "30-mobile-auth-entrada#0", "acao": "toca em Criar conta" },
+            { "tela": "30-mobile-auth-entrada#2", "acao": "confirma o e-mail e recebe o codigo" }
+          ]
+        },
+        {
+          "nome": "Confirmacao",
+          "passos": [
+            {
+              "tela": "31-mobile-auth-confirmacao#0",
+              "acao": "digita o codigo recebido por e-mail"
+            }
+          ]
+        },
+        {
+          "nome": "Verificacao",
+          "passos": [
+            { "tela": "32-mobile-auth-acesso#0", "acao": "aceita os aceites" },
+            { "tela": "32-mobile-auth-acesso#1", "acao": "entende por que precisa verificar" },
+            { "tela": "32-mobile-auth-acesso#2", "acao": "envia o CPF para conferencia" }
+          ]
+        },
+        {
+          "nome": "Chegada",
+          "passos": [
+            { "tela": "34-mobile-onboarding-contexto#0", "acao": "escolhe a cidade" },
+            { "tela": "34-mobile-onboarding-contexto#2" }
+          ]
+        }
+      ],
+      "desvios": [
+        {
+          "tela": "30-mobile-auth-entrada#1",
+          "apos": "30-mobile-auth-entrada#0",
+          "quando": "ja tem conta"
+        },
+        {
+          "tela": "31-mobile-auth-confirmacao#1",
+          "apos": "31-mobile-auth-confirmacao#0",
+          "quando": "codigo incorreto"
+        },
+        {
+          "tela": "31-mobile-auth-confirmacao#2",
+          "apos": "31-mobile-auth-confirmacao#0",
+          "quando": "codigo expirado"
+        },
+        {
+          "tela": "34-mobile-onboarding-contexto#1",
+          "apos": "34-mobile-onboarding-contexto#0",
+          "quando": "pula a personalizacao"
+        },
+        {
+          "tela": "33-mobile-auth-admissao#2",
+          "apos": "34-mobile-onboarding-contexto#0",
+          "quando": "entra por convite familiar"
+        }
+      ]
+    },
+    {
+      "id": "mobile-verificar-por-identidade",
+      "titulo": "Verificar por identidade quando o CPF nao resolve",
+      "plataforma": "mobile",
+      "grupo": "auth",
+      "persona": "Quem precisa do caminho alternativo de verificacao",
+      "comeca": "CPF nao concluiu; a identidade e a alternativa",
+      "termina": "Analise acompanhada e arquivo substituido quando ilegivel",
+      "acoes": ["Enviar identidade"],
+      "etapas": [
+        {
+          "nome": "Alternativa",
+          "passos": [
+            {
+              "tela": "33-mobile-auth-admissao#1",
+              "acao": "envia a identidade militar em um arquivo unico"
+            }
+          ]
+        },
+        {
+          "nome": "Analise",
+          "passos": [
+            { "tela": "68-mobile-identidade-recuperacao#0", "acao": "acompanha a analise" },
+            { "tela": "68-mobile-identidade-recuperacao#1", "acao": "ve o resultado" },
+            {
+              "tela": "33-mobile-auth-admissao#0",
+              "acao": "o reconhecimento falha e pede um arquivo novo"
+            }
+          ]
+        },
+        {
+          "nome": "Correcao",
+          "passos": [{ "tela": "68-mobile-identidade-recuperacao#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-retomar-e-recuperar",
+      "titulo": "Retomar o cadastro e recuperar o acesso",
+      "plataforma": "mobile",
+      "grupo": "auth",
+      "persona": "Quem parou no meio ou perdeu a sessao",
+      "comeca": "Cadastro interrompido",
+      "termina": "Pessoa retoma o ponto onde parou",
+      "acoes": ["Recuperar acesso", "Confirmar e-mail"],
+      "etapas": [
+        {
+          "nome": "Retomada",
+          "passos": [
+            { "tela": "35-mobile-auth-retomada#0", "acao": "a sessao expira antes de concluir" }
+          ]
+        },
+        {
+          "nome": "Falhas",
+          "passos": [
+            { "tela": "35-mobile-auth-retomada#2", "acao": "pede um codigo novo" },
+            { "tela": "35-mobile-auth-retomada#1" }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-chegar-ao-inicio",
+      "titulo": "Como o Inicio recebe quem chega",
+      "plataforma": "mobile",
+      "grupo": "base",
+      "persona": "Visitante ou membro no primeiro contato com o Inicio",
+      "comeca": "Tres intencoes distintas de chegada",
+      "termina": "A tela certa para cada intencao",
+      "acoes": ["Explorar", "Mudar de cidade"],
+      "etapas": [
+        {
+          "nome": "Tres chegadas",
+          "passos": [
+            { "tela": "00-mobile-inicio#0", "acao": "cheguei agora: quero explorar" },
+            { "tela": "00-mobile-inicio#1", "acao": "faco parte: quero minha vila" },
+            { "tela": "00-mobile-inicio#2" }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-descobrir-e-entrar-numa-comunidade",
+      "titulo": "Descobrir e entrar numa comunidade",
+      "plataforma": "mobile",
+      "grupo": "community",
+      "persona": "Membro verificado sem vila",
+      "comeca": "Descoberta de comunidades da cidade",
+      "termina": "Dentro da comunidade, com os grupos a vista",
+      "acoes": ["Explorar", "Solicitar participacao"],
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [
+            { "tela": "40-mobile-comunidades#1", "acao": "abre a apresentacao da comunidade" }
+          ]
+        },
+        {
+          "nome": "Pedido",
+          "passos": [
+            { "tela": "40-mobile-comunidades#2", "acao": "pede para participar" },
+            { "tela": "41-mobile-comunidade-participacao#0", "acao": "o pedido e aprovado" }
+          ]
+        },
+        {
+          "nome": "Dentro",
+          "passos": [{ "tela": "41-mobile-comunidade-participacao#1" }]
+        }
+      ],
+      "desvios": [
+        {
+          "tela": "40-mobile-comunidades#0",
+          "apos": "40-mobile-comunidades#1",
+          "quando": "ja participa de alguma"
+        }
+      ]
+    },
+    {
+      "id": "mobile-publicar-na-comunidade",
+      "titulo": "Publicar uma pergunta na comunidade",
+      "plataforma": "mobile",
+      "grupo": "community",
+      "persona": "Membro participando da vila",
+      "comeca": "Pergunta em branco",
+      "termina": "Publicacao enviada, com o publico escolhido",
+      "acoes": ["Publicar"],
+      "etapas": [
+        {
+          "nome": "Escrita",
+          "passos": [{ "tela": "44-mobile-publicacao#0", "acao": "escolhe o publico" }]
+        },
+        {
+          "nome": "Alcance",
+          "passos": [{ "tela": "44-mobile-publicacao#1", "acao": "publica" }]
+        },
+        {
+          "nome": "Enviado",
+          "passos": [{ "tela": "44-mobile-publicacao#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-sair-da-comunidade",
+      "titulo": "Sair da comunidade",
+      "plataforma": "mobile",
+      "grupo": "community",
+      "persona": "Membro que quer deixar a vila",
+      "comeca": "Dentro da comunidade",
+      "termina": "Vinculo encerrado",
+      "acoes": ["Sair da comunidade"],
+      "etapas": [
+        {
+          "nome": "Saida",
+          "passos": [
+            { "tela": "41-mobile-comunidade-participacao#1", "acao": "confirma a saida" },
+            { "tela": "41-mobile-comunidade-participacao#2" }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-confirmar-presenca-num-evento",
+      "titulo": "Confirmar presenca num evento",
+      "plataforma": "mobile",
+      "grupo": "events",
+      "persona": "Membro explorando eventos da cidade",
+      "comeca": "Lista de eventos",
+      "termina": "Presenca confirmada",
+      "acoes": ["Explorar", "Confirmar presenca"],
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [{ "tela": "46-mobile-eventos#0", "acao": "abre o detalhe" }]
+        },
+        {
+          "nome": "Detalhe",
+          "passos": [{ "tela": "46-mobile-eventos#1", "acao": "confirma presenca" }]
+        },
+        {
+          "nome": "Confirmado",
+          "passos": [{ "tela": "46-mobile-eventos#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-cancelar-presenca-ou-evento",
+      "titulo": "Cancelar a presenca ou o proprio evento",
+      "plataforma": "mobile",
+      "grupo": "events",
+      "persona": "Quem confirmou presenca, ou quem organiza",
+      "comeca": "Presenca confirmada",
+      "termina": "Presenca cancelada ou evento cancelado",
+      "acoes": ["Cancelar"],
+      "etapas": [
+        {
+          "nome": "Cancelamento",
+          "passos": [
+            {
+              "tela": "47-mobile-eventos-cancelamento#0",
+              "acao": "confirma o cancelamento da presenca"
+            },
+            { "tela": "47-mobile-eventos-cancelamento#1", "acao": "ou cancela o evento inteiro" },
+            { "tela": "47-mobile-eventos-cancelamento#2" }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-pedir-informacoes-ao-organizador",
+      "titulo": "Pedir informacoes ao organizador do evento",
+      "plataforma": "mobile",
+      "grupo": "events",
+      "persona": "Quem quer saber mais antes de decidir",
+      "comeca": "Detalhe do evento, sem exigir presenca",
+      "termina": "Pergunta enviada e resposta acompanhada",
+      "acoes": ["Pedir informacoes"],
+      "etapas": [
+        {
+          "nome": "Pergunta",
+          "passos": [
+            {
+              "tela": "66-mobile-evento-informacoes#0",
+              "acao": "aguarda a resposta do organizador"
+            }
+          ]
+        },
+        {
+          "nome": "Espera",
+          "passos": [{ "tela": "66-mobile-evento-informacoes#1", "acao": "falha o envio" }]
+        },
+        {
+          "nome": "Falha",
+          "passos": [{ "tela": "66-mobile-evento-informacoes#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-explorar-o-guia",
+      "titulo": "Explorar o Guia da cidade",
+      "plataforma": "mobile",
+      "grupo": "guia",
+      "persona": "Recem-chegado buscando referencia",
+      "comeca": "Descoberta editorial da cidade",
+      "termina": "Artigo de chegada lido",
+      "acoes": ["Explorar"],
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [{ "tela": "10-mobile-guia#0", "acao": "abre uma categoria" }]
+        },
+        {
+          "nome": "Categoria",
+          "passos": [{ "tela": "10-mobile-guia#2", "acao": "le o artigo de chegada" }]
+        },
+        {
+          "nome": "Leitura",
+          "passos": [{ "tela": "10-mobile-guia#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-sugerir-correcao-no-guia",
+      "titulo": "Sugerir uma correcao no Guia",
+      "plataforma": "mobile",
+      "grupo": "guia",
+      "persona": "Membro que conhece a referencia e quer corrigi-la",
+      "comeca": "Referencia completa aberta",
+      "termina": "Sugestao enviada ao curador",
+      "acoes": ["Explorar", "Sugerir correcao"],
+      "etapas": [
+        {
+          "nome": "Referencia",
+          "passos": [{ "tela": "24-mobile-guia-referencia#0", "acao": "ve a conversa de origem" }]
+        },
+        {
+          "nome": "Origem",
+          "passos": [{ "tela": "24-mobile-guia-referencia#1", "acao": "sugere a atualizacao" }]
+        },
+        {
+          "nome": "Sugestao",
+          "passos": [{ "tela": "24-mobile-guia-referencia#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-ler-responder-e-resolver",
+      "titulo": "Ler, responder e resolver uma conversa",
+      "plataforma": "mobile",
+      "grupo": "conversa",
+      "persona": "Autor da pergunta e quem responde",
+      "comeca": "Conversa com respostas",
+      "termina": "Pergunta marcada como resolvida",
+      "acoes": ["Responder", "Resolver"],
+      "etapas": [
+        {
+          "nome": "Leitura",
+          "passos": [{ "tela": "14-mobile-conversa#0", "acao": "escreve a resposta" }]
+        },
+        {
+          "nome": "Resposta",
+          "passos": [{ "tela": "14-mobile-conversa#1", "acao": "marca como resolvida" }]
+        },
+        {
+          "nome": "Resolvido",
+          "passos": [{ "tela": "14-mobile-conversa#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-pedir-um-servico",
+      "titulo": "Encontrar um prestador e pedir um servico",
+      "plataforma": "mobile",
+      "grupo": "pedidos",
+      "persona": "Membro que precisa de um servico",
+      "comeca": "Explorar servicos da cidade",
+      "termina": "Pedido com respostas recebidas",
+      "acoes": ["Explorar", "Buscar", "Ver ficha", "Pedir servico"],
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [
+            { "tela": "02-mobile-explorar#0", "acao": "busca servicos" },
+            { "tela": "02-mobile-explorar#1", "acao": "abre a ficha do prestador" }
+          ]
+        },
+        {
+          "nome": "Prestador",
+          "passos": [{ "tela": "02-mobile-explorar#2", "acao": "descreve a necessidade" }]
+        },
+        {
+          "nome": "Pedido",
+          "passos": [
+            { "tela": "16-mobile-pedido-servico#0", "acao": "envia o pedido" },
+            { "tela": "16-mobile-pedido-servico#2", "acao": "recebe respostas" },
+            { "tela": "16-mobile-pedido-servico#1" }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-responder-um-pedido",
+      "titulo": "Responder um pedido como prestador",
+      "plataforma": "mobile",
+      "grupo": "negocio",
+      "persona": "Prestador com pedidos abertos",
+      "comeca": "Painel de pedidos do negocio",
+      "termina": "Pedido respondido, ficha em dia",
+      "acoes": ["Gerenciar", "Responder", "Editar ficha"],
+      "etapas": [
+        {
+          "nome": "Painel",
+          "passos": [{ "tela": "22-mobile-meu-negocio#0", "acao": "abre o pedido" }]
+        },
+        {
+          "nome": "Resposta",
+          "passos": [{ "tela": "22-mobile-meu-negocio#2", "acao": "atualiza a ficha" }]
+        },
+        {
+          "nome": "Ficha",
+          "passos": [{ "tela": "22-mobile-meu-negocio#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-anunciar-um-produto",
+      "titulo": "Anunciar um produto no Mercado",
+      "plataforma": "mobile",
+      "grupo": "mercado",
+      "persona": "Membro com algo para vender",
+      "comeca": "Mercado da cidade",
+      "termina": "Anuncio publicado",
+      "acoes": ["Explorar", "Anunciar", "Ver ficha"],
+      "etapas": [
+        {
+          "nome": "Mercado",
+          "passos": [{ "tela": "11-mobile-mercado#0", "acao": "abre o item" }]
+        },
+        {
+          "nome": "Item",
+          "passos": [{ "tela": "11-mobile-mercado#1", "acao": "cria o anuncio" }]
+        },
+        {
+          "nome": "Anuncio",
+          "passos": [{ "tela": "11-mobile-mercado#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-gerenciar-e-encerrar-anuncio",
+      "titulo": "Gerenciar e encerrar os proprios anuncios",
+      "plataforma": "mobile",
+      "grupo": "anuncios",
+      "persona": "Quem ja anunciou",
+      "comeca": "Lista dos proprios anuncios por situacao",
+      "termina": "Anuncio encerrado como vendido",
+      "acoes": ["Gerenciar", "Editar", "Encerrar"],
+      "etapas": [
+        {
+          "nome": "Situacao",
+          "passos": [{ "tela": "20-mobile-meus-anuncios#0", "acao": "edita o anuncio" }]
+        },
+        {
+          "nome": "Edicao",
+          "passos": [{ "tela": "20-mobile-meus-anuncios#1", "acao": "confirma a venda" }]
+        },
+        {
+          "nome": "Encerrado",
+          "passos": [{ "tela": "20-mobile-meus-anuncios#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-buscar-imovel-e-criar-alerta",
+      "titulo": "Buscar um imovel e criar um alerta",
+      "plataforma": "mobile",
+      "grupo": "moradia",
+      "persona": "Quem esta de mudanca",
+      "comeca": "Busca de imoveis",
+      "termina": "Alerta criado para o refinamento",
+      "acoes": ["Explorar", "Buscar", "Criar alerta"],
+      "etapas": [
+        {
+          "nome": "Busca",
+          "passos": [{ "tela": "18-mobile-imoveis#0", "acao": "abre o imovel" }]
+        },
+        {
+          "nome": "Imovel",
+          "passos": [{ "tela": "18-mobile-imoveis#1", "acao": "cria o alerta" }]
+        },
+        {
+          "nome": "Alerta",
+          "passos": [{ "tela": "18-mobile-imoveis#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-ver-e-editar-o-perfil",
+      "titulo": "Ver e editar o perfil, e ver outro membro",
+      "plataforma": "mobile",
+      "grupo": "profile",
+      "persona": "Qualquer membro",
+      "comeca": "Meu perfil",
+      "termina": "Exibicao propria e a de outro membro",
+      "acoes": ["Ver perfil", "Editar"],
+      "etapas": [
+        {
+          "nome": "Meu perfil",
+          "passos": [{ "tela": "49-mobile-perfil#0", "acao": "edita" }]
+        },
+        {
+          "nome": "Edicao",
+          "passos": [{ "tela": "49-mobile-perfil#1", "acao": "abre outro membro" }]
+        },
+        {
+          "nome": "Outro",
+          "passos": [{ "tela": "49-mobile-perfil#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-ajustar-preferencias-e-conta",
+      "titulo": "Ajustar preferencias e os controles da conta",
+      "plataforma": "mobile",
+      "grupo": "profile",
+      "persona": "Membro cuidando da propria conta",
+      "comeca": "Configuracoes",
+      "termina": "Controles da conta revisados",
+      "acoes": ["Configurar", "Notificacoes"],
+      "etapas": [
+        {
+          "nome": "Configuracoes",
+          "passos": [{ "tela": "50-mobile-configuracoes#0", "acao": "ajusta as notificacoes" }]
+        },
+        {
+          "nome": "Notificacoes",
+          "passos": [{ "tela": "50-mobile-configuracoes#1", "acao": "revisa os controles" }]
+        },
+        {
+          "nome": "Conta",
+          "passos": [{ "tela": "50-mobile-configuracoes#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-voltar-ao-que-importa",
+      "titulo": "Voltar ao que importa: notificacoes, salvos e alertas",
+      "plataforma": "mobile",
+      "grupo": "return",
+      "persona": "Membro retomando o que ficou pendente",
+      "comeca": "Central de notificacoes",
+      "termina": "Alertas de imoveis a vista",
+      "acoes": ["Notificacoes", "Salvos", "Criar alerta"],
+      "etapas": [
+        {
+          "nome": "Notificacoes",
+          "passos": [{ "tela": "53-mobile-retorno#0", "acao": "abre os salvos" }]
+        },
+        {
+          "nome": "Salvos",
+          "passos": [{ "tela": "53-mobile-retorno#1", "acao": "ve os alertas" }]
+        },
+        {
+          "nome": "Alertas",
+          "passos": [{ "tela": "53-mobile-retorno#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-denunciar-e-acompanhar",
+      "titulo": "Denunciar e acompanhar, e bloquear",
+      "plataforma": "mobile",
+      "grupo": "trust",
+      "persona": "Membro diante de conteudo ou interacao inadequada",
+      "comeca": "Envio da denuncia",
+      "termina": "Denuncia acompanhada e interacao bloqueada",
+      "acoes": ["Denunciar", "Bloquear"],
+      "etapas": [
+        {
+          "nome": "Denuncia",
+          "passos": [{ "tela": "55-mobile-confianca#0", "acao": "acompanha" }]
+        },
+        {
+          "nome": "Acompanhamento",
+          "passos": [{ "tela": "55-mobile-confianca#1", "acao": "bloqueia a interacao" }]
+        },
+        {
+          "nome": "Bloqueio",
+          "passos": [{ "tela": "55-mobile-confianca#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "mobile-quando-algo-falha",
+      "titulo": "Quando algo falha: carregar, vazio e erro com rascunho",
+      "plataforma": "mobile",
+      "grupo": "states",
+      "persona": "Qualquer membro numa tela sem dados ou com falha",
+      "comeca": "Tela carregando",
+      "termina": "Erro sem perder o que foi escrito",
+      "acoes": ["Estados do sistema"],
+      "etapas": [
+        {
+          "nome": "Carregando",
+          "passos": [{ "tela": "59-mobile-estados#0", "acao": "nao ha resultados" }]
+        },
+        {
+          "nome": "Vazio",
+          "passos": [{ "tela": "59-mobile-estados#1", "acao": "o envio falha" }]
+        },
+        {
+          "nome": "Erro",
+          "passos": [{ "tela": "59-mobile-estados#2" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-entrar-e-ser-admitido",
+      "titulo": "Entrar no Bivaque e ser admitido (web)",
+      "plataforma": "web",
+      "grupo": "auth",
+      "persona": "Quem chega pelo desktop",
+      "comeca": "Entrada e cadastro",
+      "termina": "Membro verificado, com contexto escolhido",
+      "acoes": [
+        "Criar conta",
+        "Entrar",
+        "Confirmar e-mail",
+        "Verificar vinculo",
+        "Escolher cidade"
+      ],
+      "etapas": [
+        {
+          "nome": "Entrada",
+          "passos": [
+            { "tela": "36-web-auth-entrada#0", "acao": "cria a conta" },
+            { "tela": "36-web-auth-entrada#1", "acao": "confirma o e-mail" }
+          ]
+        },
+        {
+          "nome": "Confirmacao",
+          "passos": [{ "tela": "37-web-auth-confirmacao#0", "acao": "verifica o acesso" }]
+        },
+        {
+          "nome": "Verificacao",
+          "passos": [{ "tela": "38-web-auth-admissao#0", "acao": "escolhe a cidade" }]
+        },
+        {
+          "nome": "Contexto",
+          "passos": [
+            { "tela": "39-web-onboarding-contexto#0", "acao": "personaliza" },
+            { "tela": "39-web-onboarding-contexto#1" }
+          ]
+        }
+      ],
+      "desvios": [
+        {
+          "tela": "37-web-auth-confirmacao#1",
+          "apos": "37-web-auth-confirmacao#0",
+          "quando": "confirmacao expirada"
+        }
+      ]
+    },
+    {
+      "id": "web-verificar-por-identidade",
+      "titulo": "Verificar por identidade e acompanhar a admissao (web)",
+      "plataforma": "web",
+      "grupo": "auth",
+      "persona": "Quem usa o caminho alternativo de verificacao",
+      "comeca": "Envio da identidade",
+      "termina": "Analise acompanhada, arquivo substituido se preciso",
+      "acoes": ["Enviar identidade"],
+      "etapas": [
+        {
+          "nome": "Envio",
+          "passos": [{ "tela": "69-web-identidade-recuperacao#0", "acao": "acompanha a admissao" }]
+        },
+        {
+          "nome": "Analise",
+          "passos": [{ "tela": "38-web-auth-admissao#1", "acao": "o arquivo esta ilegivel" }]
+        },
+        {
+          "nome": "Correcao",
+          "passos": [{ "tela": "69-web-identidade-recuperacao#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-chegar-ao-inicio",
+      "titulo": "Chegar ao Inicio (web)",
+      "plataforma": "web",
+      "grupo": "base",
+      "persona": "Membro participando pelo desktop",
+      "comeca": "Home de quem participa",
+      "termina": "Home de quem participa",
+      "acoes": ["Explorar"],
+      "etapas": [{ "nome": "Home", "passos": [{ "tela": "01-web-inicio#0" }] }],
+      "desvios": []
+    },
+    {
+      "id": "web-descobrir-e-entrar-numa-comunidade",
+      "titulo": "Descobrir e entrar numa comunidade (web)",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Membro verificado sem vila",
+      "comeca": "Minhas comunidades",
+      "termina": "Dentro da comunidade, com os grupos",
+      "acoes": ["Explorar", "Solicitar participacao"],
+      "etapas": [
+        {
+          "nome": "Minhas",
+          "passos": [{ "tela": "42-web-comunidades#0", "acao": "descobre outras" }]
+        },
+        {
+          "nome": "Descoberta",
+          "passos": [{ "tela": "42-web-comunidades#1", "acao": "pede para participar" }]
+        },
+        {
+          "nome": "Pedido",
+          "passos": [{ "tela": "43-web-comunidade-grupos#1", "acao": "o pedido e aprovado" }]
+        },
+        {
+          "nome": "Dentro",
+          "passos": [{ "tela": "43-web-comunidade-grupos#0" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-publicar",
+      "titulo": "Publicar e recuperar rascunho (web)",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Membro publicando pelo desktop",
+      "comeca": "Publicacao em branco",
+      "termina": "Rascunho recuperado ou publicacao enviada",
+      "acoes": ["Publicar", "Editar"],
+      "etapas": [
+        {
+          "nome": "Publicacao",
+          "passos": [{ "tela": "45-web-publicacao#0", "acao": "recupera o rascunho" }]
+        },
+        {
+          "nome": "Rascunho",
+          "passos": [{ "tela": "45-web-publicacao#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-confirmar-presenca-num-evento",
+      "titulo": "Confirmar presenca num evento (web)",
+      "plataforma": "web",
+      "grupo": "events",
+      "persona": "Membro vendo eventos da cidade",
+      "comeca": "Lista e filtros",
+      "termina": "Presenca gerida no detalhe",
+      "acoes": ["Explorar", "Confirmar presenca"],
+      "etapas": [
+        {
+          "nome": "Lista",
+          "passos": [{ "tela": "48-web-eventos#0", "acao": "abre o detalhe" }]
+        },
+        {
+          "nome": "Detalhe",
+          "passos": [{ "tela": "48-web-eventos#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-pedir-informacoes-ao-organizador",
+      "titulo": "Pedir informacoes e ler a resposta (web)",
+      "plataforma": "web",
+      "grupo": "events",
+      "persona": "Quem quer saber mais sobre o evento",
+      "comeca": "Pergunta reenviada",
+      "termina": "Resposta lida e jornada retomada",
+      "acoes": ["Pedir informacoes", "Responder"],
+      "etapas": [
+        {
+          "nome": "Pergunta",
+          "passos": [{ "tela": "67-web-evento-informacoes#0", "acao": "le a resposta" }]
+        },
+        {
+          "nome": "Resposta",
+          "passos": [{ "tela": "67-web-evento-informacoes#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-explorar-o-guia",
+      "titulo": "Explorar o Guia (web)",
+      "plataforma": "web",
+      "grupo": "guia",
+      "persona": "Quem busca referencia da cidade",
+      "comeca": "Descoberta editorial",
+      "termina": "Descoberta editorial",
+      "acoes": ["Explorar"],
+      "etapas": [{ "nome": "Descoberta", "passos": [{ "tela": "12-web-guia#0" }] }],
+      "desvios": []
+    },
+    {
+      "id": "web-sugerir-correcao-no-guia",
+      "titulo": "Ler a referencia e sugerir correcao (web)",
+      "plataforma": "web",
+      "grupo": "guia",
+      "persona": "Membro que conhece a referencia",
+      "comeca": "Referencia completa",
+      "termina": "Correcao sugerida",
+      "acoes": ["Explorar", "Sugerir correcao"],
+      "etapas": [{ "nome": "Referencia", "passos": [{ "tela": "25-web-guia-referencia#0" }] }],
+      "desvios": []
+    },
+    {
+      "id": "web-ler-e-responder-uma-conversa",
+      "titulo": "Ler e responder uma conversa (web)",
+      "plataforma": "web",
+      "grupo": "conversa",
+      "persona": "Quem participa da conversa",
+      "comeca": "Conversa e resposta",
+      "termina": "Conversa e resposta",
+      "acoes": ["Responder", "Resolver"],
+      "etapas": [{ "nome": "Conversa", "passos": [{ "tela": "15-web-conversa#0" }] }],
+      "desvios": []
+    },
+    {
+      "id": "web-pedir-um-servico",
+      "titulo": "Encontrar um prestador e pedir um servico (web)",
+      "plataforma": "web",
+      "grupo": "pedidos",
+      "persona": "Membro que precisa de um servico",
+      "comeca": "Explorar servicos",
+      "termina": "Pedido e resposta do prestador",
+      "acoes": ["Explorar", "Buscar", "Ver ficha", "Pedir servico"],
+      "etapas": [
+        {
+          "nome": "Descoberta",
+          "passos": [
+            { "tela": "61-web-explorar-servicos#0", "acao": "busca servicos" },
+            { "tela": "61-web-explorar-servicos#1", "acao": "abre a ficha" }
+          ]
+        },
+        {
+          "nome": "Prestador",
+          "passos": [{ "tela": "62-web-prestador-pedido#0", "acao": "descreve a necessidade" }]
+        },
+        {
+          "nome": "Pedido",
+          "passos": [{ "tela": "62-web-prestador-pedido#1", "acao": "acompanha a resposta" }]
+        },
+        {
+          "nome": "Resposta",
+          "passos": [{ "tela": "17-web-pedido-servico#0" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-responder-um-pedido",
+      "titulo": "Responder um pedido como prestador (web)",
+      "plataforma": "web",
+      "grupo": "negocio",
+      "persona": "Prestador no painel",
+      "comeca": "Painel de pedidos do prestador",
+      "termina": "Painel de pedidos do prestador",
+      "acoes": ["Gerenciar", "Responder"],
+      "etapas": [{ "nome": "Painel", "passos": [{ "tela": "23-web-meu-negocio#0" }] }],
+      "desvios": []
+    },
+    {
+      "id": "web-anunciar-um-produto",
+      "titulo": "Anunciar um produto (web)",
+      "plataforma": "web",
+      "grupo": "mercado",
+      "persona": "Membro com algo para vender",
+      "comeca": "Busca de produtos",
+      "termina": "Anuncio criado",
+      "acoes": ["Explorar", "Anunciar", "Ver ficha"],
+      "etapas": [
+        {
+          "nome": "Busca",
+          "passos": [{ "tela": "13-web-mercado#0", "acao": "abre o produto" }]
+        },
+        {
+          "nome": "Produto",
+          "passos": [{ "tela": "63-web-mercado-anuncio#0", "acao": "cria o anuncio" }]
+        },
+        {
+          "nome": "Anuncio",
+          "passos": [{ "tela": "63-web-mercado-anuncio#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-gerenciar-e-encerrar-anuncio",
+      "titulo": "Gerenciar, editar e pausar anuncios (web)",
+      "plataforma": "web",
+      "grupo": "anuncios",
+      "persona": "Quem ja anunciou",
+      "comeca": "Lista dos proprios anuncios",
+      "termina": "Anuncio editado e pausado",
+      "acoes": ["Gerenciar", "Editar", "Encerrar"],
+      "etapas": [
+        {
+          "nome": "Lista",
+          "passos": [{ "tela": "21-web-meus-anuncios#0", "acao": "edita" }]
+        },
+        {
+          "nome": "Edicao",
+          "passos": [{ "tela": "64-web-mercado-edicao#0", "acao": "pausa" }]
+        },
+        {
+          "nome": "Pausa",
+          "passos": [{ "tela": "64-web-mercado-edicao#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-buscar-imovel-e-criar-alerta",
+      "titulo": "Buscar imovel e gerenciar alertas (web)",
+      "plataforma": "web",
+      "grupo": "moradia",
+      "persona": "Quem esta de mudanca",
+      "comeca": "Busca de imoveis",
+      "termina": "Alertas geridos",
+      "acoes": ["Buscar", "Criar alerta", "Gerenciar"],
+      "etapas": [
+        {
+          "nome": "Busca",
+          "passos": [{ "tela": "65-web-imoveis-alertas#0", "acao": "abre o imovel" }]
+        },
+        {
+          "nome": "Imovel",
+          "passos": [{ "tela": "19-web-imoveis#0", "acao": "gerencia o alerta" }]
+        },
+        {
+          "nome": "Alerta",
+          "passos": [{ "tela": "65-web-imoveis-alertas#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-ver-e-editar-o-perfil",
+      "titulo": "Ver e editar o perfil, e ver outro membro (web)",
+      "plataforma": "web",
+      "grupo": "profile",
+      "persona": "Qualquer membro",
+      "comeca": "Meu perfil e edicao",
+      "termina": "Perfil de outro membro",
+      "acoes": ["Ver perfil", "Editar"],
+      "etapas": [
+        {
+          "nome": "Meu perfil",
+          "passos": [{ "tela": "51-web-perfil#0", "acao": "abre outro membro" }]
+        },
+        {
+          "nome": "Outro",
+          "passos": [{ "tela": "51-web-perfil#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-ajustar-preferencias-e-conta",
+      "titulo": "Ajustar preferencias, conta e privacidade (web)",
+      "plataforma": "web",
+      "grupo": "profile",
+      "persona": "Membro cuidando da conta",
+      "comeca": "Preferencias e notificacoes",
+      "termina": "Conta e privacidade revisadas",
+      "acoes": ["Configurar", "Bloquear"],
+      "etapas": [
+        {
+          "nome": "Preferencias",
+          "passos": [{ "tela": "52-web-configuracoes#0", "acao": "revisa a conta" }]
+        },
+        {
+          "nome": "Conta",
+          "passos": [{ "tela": "52-web-configuracoes#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-voltar-ao-que-importa",
+      "titulo": "Voltar ao que importa: notificacoes e salvos (web)",
+      "plataforma": "web",
+      "grupo": "return",
+      "persona": "Membro retomando o pendente",
+      "comeca": "Central de notificacoes",
+      "termina": "Conteudos salvos",
+      "acoes": ["Notificacoes", "Salvos"],
+      "etapas": [
+        {
+          "nome": "Notificacoes",
+          "passos": [{ "tela": "54-web-retorno#0", "acao": "abre os salvos" }]
+        },
+        {
+          "nome": "Salvos",
+          "passos": [{ "tela": "54-web-retorno#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-denunciar-e-acompanhar",
+      "titulo": "Denunciar conteudo e acompanhar (web)",
+      "plataforma": "web",
+      "grupo": "trust",
+      "persona": "Membro diante de conteudo inadequado",
+      "comeca": "Denuncia de conteudo",
+      "termina": "Acompanhamento e bloqueios",
+      "acoes": ["Denunciar", "Bloquear"],
+      "etapas": [
+        {
+          "nome": "Denuncia",
+          "passos": [{ "tela": "56-web-confianca#0", "acao": "acompanha" }]
+        },
+        {
+          "nome": "Acompanhamento",
+          "passos": [{ "tela": "56-web-confianca#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-operar-admissoes",
+      "titulo": "Operar a fila de admissoes",
+      "plataforma": "web",
+      "grupo": "operations",
+      "persona": "Operador autorizado",
+      "comeca": "Fila de admissoes",
+      "termina": "Solicitacao analisada",
+      "acoes": ["Decidir admissao"],
+      "etapas": [
+        {
+          "nome": "Fila",
+          "passos": [{ "tela": "57-web-operacao-admissoes#0", "acao": "abre a solicitacao" }]
+        },
+        {
+          "nome": "Analise",
+          "passos": [{ "tela": "57-web-operacao-admissoes#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-operar-denuncias",
+      "titulo": "Operar a fila de denuncias",
+      "plataforma": "web",
+      "grupo": "operations",
+      "persona": "Operador autorizado",
+      "comeca": "Fila de denuncias",
+      "termina": "Denuncia analisada e encerrada",
+      "acoes": ["Moderar"],
+      "etapas": [
+        {
+          "nome": "Fila",
+          "passos": [{ "tela": "58-web-operacao-moderacao#0", "acao": "abre o caso" }]
+        },
+        {
+          "nome": "Analise",
+          "passos": [{ "tela": "58-web-operacao-moderacao#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-quando-algo-falha",
+      "titulo": "Quando algo falha: sem acesso e retomada (web)",
+      "plataforma": "web",
+      "grupo": "states",
+      "persona": "Qualquer membro sem acesso ou com falha de conexao",
+      "comeca": "Acesso indisponivel",
+      "termina": "Falha de conexao e retomada",
+      "acoes": ["Estados do sistema"],
+      "etapas": [
+        {
+          "nome": "Sem acesso",
+          "passos": [{ "tela": "60-web-estados#0", "acao": "tenta de novo" }]
+        },
+        {
+          "nome": "Retomada",
+          "passos": [{ "tela": "60-web-estados#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-organizar-um-evento",
+      "titulo": "Organizar um evento na cidade",
+      "plataforma": "web",
+      "grupo": "events",
+      "persona": "Membro verificado que quer reunir a vizinhanca",
+      "comeca": "Formulario de novo evento em branco",
+      "termina": "Evento publicado e visivel na lista da cidade",
+      "acoes": ["Criar evento", "Cancelar"],
+      "etapas": [
+        {
+          "nome": "Criar",
+          "passos": [{ "tela": "70-web-evento-organizar#0", "acao": "revisa e publica" }]
+        },
+        {
+          "nome": "Publicar",
+          "passos": [
+            { "tela": "70-web-evento-organizar#1", "acao": "o evento entra na lista da cidade" }
+          ]
+        },
+        {
+          "nome": "No ar",
+          "passos": [{ "tela": "48-web-eventos#0" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-recuperar-o-acesso",
+      "titulo": "Recuperar o acesso quando a senha se perde",
+      "plataforma": "web",
+      "grupo": "auth",
+      "persona": "Quem nao consegue mais entrar",
+      "comeca": "Pedido do link, com retorno neutro",
+      "termina": "Senha nova salva e volta para entrar",
+      "acoes": ["Recuperar acesso", "Entrar"],
+      "etapas": [
+        {
+          "nome": "Pedir o link",
+          "passos": [
+            {
+              "tela": "71-web-auth-recuperacao#0",
+              "acao": "o link chega por e-mail, se a conta existir"
+            }
+          ]
+        },
+        {
+          "nome": "Criar a senha",
+          "passos": [{ "tela": "71-web-auth-recuperacao#1" }]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-link-de-acesso-invalido",
+      "titulo": "Quando o link de acesso nao vale mais",
+      "plataforma": "web",
+      "grupo": "auth",
+      "persona": "Quem abriu um link velho, ja usado ou quebrado",
+      "comeca": "Link de recuperacao vencido",
+      "termina": "De volta ao caminho de entrada",
+      "acoes": ["Recuperar acesso", "Entrar"],
+      "etapas": [
+        {
+          "nome": "Link vencido",
+          "passos": [
+            {
+              "tela": "72-web-auth-link-invalido#0",
+              "acao": "pede outro link, sem voltar ao inicio"
+            }
+          ]
+        },
+        {
+          "nome": "Entrada falhou",
+          "passos": [
+            {
+              "tela": "72-web-auth-link-invalido#1"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-decidir-pedido-de-entrada",
+      "titulo": "Decidir quem entra na comunidade",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Quem administra a comunidade",
+      "comeca": "Fila de pedidos aguardando",
+      "termina": "Pedido decidido, e quem entrou aparece na comunidade",
+      "acoes": ["Solicitar participacao", "Gerenciar"],
+      "etapas": [
+        {
+          "nome": "Fila",
+          "passos": [
+            {
+              "tela": "73-web-comunidade-pedidos#0",
+              "acao": "abre o pedido de quem espera"
+            }
+          ]
+        },
+        {
+          "nome": "Decisao",
+          "passos": [
+            {
+              "tela": "73-web-comunidade-pedidos#1",
+              "acao": "aprova e a pessoa entra na comunidade"
+            }
+          ]
+        },
+        {
+          "nome": "Dentro",
+          "passos": [
+            {
+              "tela": "43-web-comunidade-grupos#0"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-curar-o-guia",
+      "titulo": "Curar uma sugestao do Guia",
+      "plataforma": "web",
+      "grupo": "guia",
+      "persona": "Curador do Guia, membro da operacao",
+      "comeca": "Fila de sugestoes aguardando revisao humana",
+      "termina": "Correcao aplicada e artigo atualizado para quem le",
+      "acoes": ["Sugerir correcao", "Moderar"],
+      "etapas": [
+        {
+          "nome": "Fila",
+          "passos": [
+            {
+              "tela": "74-web-guia-curadoria#0",
+              "acao": "aprova e publica o item"
+            }
+          ]
+        },
+        {
+          "nome": "Correcao",
+          "passos": [
+            {
+              "tela": "74-web-guia-curadoria#1",
+              "acao": "a versao revisada entra no artigo"
+            }
+          ]
+        },
+        {
+          "nome": "No ar",
+          "passos": [
+            {
+              "tela": "25-web-guia-referencia#0"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-central-de-conversas",
+      "titulo": "Central de conversas — inbox e thread",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Membro com conversas ativas (grupo, evento, recomendação, família)",
+      "comeca": "Mensagens vazia ou com inbox populada",
+      "termina": "Mensagem entregue, falhada com retry, ou conversa bloqueada",
+      "acoes": ["Conversar", "Denunciar", "Bloquear"],
+      "etapas": [
+        {
+          "nome": "Caixa de entrada",
+          "passos": [
+            {
+              "tela": "75-web-conversas#0",
+              "acao": "abre a inbox e escolhe uma conversa"
+            }
+          ]
+        },
+        {
+          "nome": "Conversa aberta",
+          "passos": [
+            {
+              "tela": "75-web-conversas#1",
+              "acao": "lê as mensagens"
+            },
+            {
+              "tela": "75-web-conversas#1",
+              "acao": "tenta enviar e o servidor falha; tenta de novo"
+            }
+          ]
+        },
+        {
+          "nome": "Bloqueio",
+          "passos": [
+            {
+              "tela": "75-web-conversas#1",
+              "acao": "bloqueia o outro participante pelo header do thread"
+            }
+          ]
+        },
+        {
+          "nome": "Denúncia",
+          "passos": [
+            {
+              "tela": "75-web-conversas#1",
+              "acao": "denuncia mensagem do outro com motivo de pelo menos 10 caracteres"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-convidar-a-familia",
+      "titulo": "Convidar um familiar para criar a propria conta",
+      "plataforma": "web",
+      "grupo": "profile",
+      "persona": "Membro titular verificado querendo trazer um familiar",
+      "comeca": "Tela de Configuracoes, secao Familia",
+      "termina": "Familiar aceita o link e cria a propria conta independente",
+      "acoes": ["Configurar"],
+      "etapas": [
+        {
+          "nome": "Convidar",
+          "passos": [
+            {
+              "tela": "76-web-familia#0",
+              "acao": "informa o e-mail do familiar e cria o convite"
+            }
+          ]
+        },
+        {
+          "nome": "Link pronto",
+          "passos": [
+            {
+              "tela": "76-web-familia#1",
+              "acao": "copia o link e envia ao familiar antes de sair da tela"
+            }
+          ]
+        },
+        {
+          "nome": "Entrada",
+          "passos": [
+            {
+              "tela": "76-web-familia#1",
+              "acao": "o familiar abre o link em ate 7 dias e cria a propria conta independente"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-pedir-ajuda-com-canal-real",
+      "titulo": "Encontrar ajuda no Bivaque",
+      "plataforma": "web",
+      "grupo": "profile",
+      "persona": "Membro que precisa entender uma area do produto ou falar com a equipe",
+      "comeca": "Topo da pagina /ajuda",
+      "termina": "Documento legal aberto ou e-mail enviado ao suporte",
+      "acoes": ["Configurar"],
+      "etapas": [
+        {
+          "nome": "Topo",
+          "passos": [
+            {
+              "tela": "77-web-ajuda#0",
+              "acao": "le as secoes de Acesso e conta e Usar o Bivaque com os destinos"
+            }
+          ]
+        },
+        {
+          "nome": "Regras e suporte",
+          "passos": [
+            {
+              "tela": "77-web-ajuda#1",
+              "acao": "abre um documento legal ou escreve para o suporte pelo mailto"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-prestador-catalogo-conta",
+      "titulo": "Operar catálogo, conta e área de atendimento do negócio",
+      "plataforma": "web",
+      "grupo": "negocio",
+      "persona": "Responsável pelo negócio (prestador verificado)",
+      "comeca": "Painel do prestador autenticado",
+      "termina": "Catálogo publicado, conta configurada e área de atendimento ligada à comunidade autorizada",
+      "acoes": ["Editar catalogo", "Configurar conta", "Editar negocio"],
+      "etapas": [
+        {
+          "nome": "Catalogo",
+          "passos": [
+            {
+              "tela": "78-web-prestador-operacao#0",
+              "acao": "publica e mantém itens do catálogo e fotos do portfólio"
+            }
+          ]
+        },
+        {
+          "nome": "Conta e atendimento",
+          "passos": [
+            {
+              "tela": "78-web-prestador-operacao#1",
+              "acao": "define telefone público opcional e liga o alcance pela comunidade"
+            }
+          ]
+        },
+        {
+          "nome": "Visibilidade publica",
+          "passos": [
+            {
+              "tela": "62-web-prestador-pedido#0",
+              "acao": "verifica como a ficha aparece para a comunidade autorizada"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-indicar-prestador",
+      "titulo": "Indicar e aceitar prestador na comunidade",
+      "plataforma": "web",
+      "grupo": "negocio",
+      "persona": "Membro aprovado da comunidade (quem indica) e prestador civil (quem aceita)",
+      "comeca": "Membro da comunidade abre a página de indicação",
+      "termina": "Prestador convidado confirma o e-mail e aceita; cai no painel próprio do prestador",
+      "acoes": ["Indicar prestador", "Aceitar convite"],
+      "etapas": [
+        {
+          "nome": "Indicacao",
+          "passos": [
+            {
+              "tela": "79-web-indicar-prestador#0",
+              "acao": "preenche nome e e-mail e envia o convite"
+            }
+          ]
+        },
+        {
+          "nome": "Aceite do prestador",
+          "passos": [
+            {
+              "tela": "79-web-indicar-prestador#1",
+              "acao": "confirma o e-mail do convite pelo link e aceita"
+            }
+          ]
+        },
+        {
+          "nome": "Painel do prestador",
+          "passos": [
+            {
+              "tela": "78-web-prestador-operacao#0",
+              "acao": "publica catálogo e configura conta"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-recomendacoes",
+      "titulo": "Pedir, responder e marcar como resolvida uma indicação",
+      "plataforma": "web",
+      "grupo": "guia",
+      "persona": "Membro da comunidade",
+      "comeca": "Aba Pedidos da página /recommendations",
+      "termina": "Pedido marcado como resolvido pela autora, ou resposta em edição dentro do mesmo pedido",
+      "acoes": ["Pedir indicacao", "Marcar como resolvido"],
+      "etapas": [
+        {
+          "nome": "Lista",
+          "passos": [
+            {
+              "tela": "80-web-recomendacoes#0",
+              "acao": "vê pedidos de indicação recebidos com respostas e marcador"
+            }
+          ]
+        },
+        {
+          "nome": "Detalhe",
+          "passos": [
+            {
+              "tela": "80-web-recomendacoes#1",
+              "acao": "abre um pedido e responde; autora pode marcar a resposta que resolveu"
+            }
+          ]
+        },
+        {
+          "nome": "Resolvido",
+          "passos": [
+            {
+              "tela": "80-web-recomendacoes#1",
+              "acao": "faixa Pedido resolvido aparece; Reabrir volta o pedido ao estado normal"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-administrar-comunidade",
+      "titulo": "Administração da comunidade — moderadores, prestadores e imagens",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Dono da comunidade que responde por ela",
+      "comeca": "Console da comunidade aberto",
+      "termina": "Moderador promovido, prestador revogado, ou imagem trocada",
+      "acoes": ["Administrar comunidade", "Trocar imagem"],
+      "etapas": [
+        {
+          "nome": "Administração",
+          "passos": [
+            {
+              "tela": "81-web-comunidade-admin#0",
+              "acao": "despromove um moderador"
+            },
+            {
+              "tela": "81-web-comunidade-admin#0",
+              "acao": "promove um membro aprovado a moderador"
+            },
+            {
+              "tela": "81-web-comunidade-admin#0",
+              "acao": "revoga a ficha de um prestador com motivo"
+            }
+          ]
+        },
+        {
+          "nome": "Imagens",
+          "passos": [
+            {
+              "tela": "81-web-comunidade-admin#1",
+              "acao": "troca a faixa de topo e confirma o aviso de sucesso"
+            },
+            {
+              "tela": "81-web-comunidade-admin#1",
+              "acao": "remove a miniatura"
+            }
+          ]
+        },
+        {
+          "nome": "Sem permissão",
+          "passos": [
+            {
+              "tela": "81-web-comunidade-admin#1",
+              "acao": "tenta enviar imagem sem ser dono; recebe a mensagem em rose700"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-declarar-mudanca-de-cidade",
+      "titulo": "Declarar mudança de cidade",
+      "plataforma": "web",
+      "grupo": "community",
+      "persona": "Membro que vai trocar de cidade e precisa avisar",
+      "comeca": "Página /localidade com a cidade atual",
+      "termina": "Transferência declarada com data e destino",
+      "acoes": ["Mudar de cidade"],
+      "etapas": [
+        {
+          "nome": "Declarar",
+          "passos": [
+            {
+              "tela": "82-web-localidade#0",
+              "acao": "escolhe a cidade de destino e confirma a data de saída"
+            }
+          ]
+        },
+        {
+          "nome": "Confirmado",
+          "passos": [
+            {
+              "tela": "82-web-localidade#1",
+              "acao": "vê o cartão de confirmação em pine100"
+            },
+            {
+              "tela": "82-web-localidade#1",
+              "acao": "alterna para a aba da cidade de origem e vê o aviso de saída"
+            }
+          ]
+        },
+        {
+          "nome": "Cancelar",
+          "passos": [
+            {
+              "tela": "82-web-localidade#1",
+              "acao": "cancela a transferência pela área de gestão da conta"
+            }
+          ]
+        }
+      ],
+      "desvios": [
+        "Sem declaração — /localidade renderiza apenas CityReference com a cidade atual; o bloco 'Estou de mudança' aparece como formulário à parte (painel 1).",
+        "Transferência expirada (readOnly = true) — a aba da cidade de origem mostra 'Você só lê aqui — a transferência já aconteceu. Para publicar, use {atual}.'"
+      ]
+    },
+    {
+      "id": "web-primeiro-contato-publico",
+      "titulo": "Primeiro contato do visitante com o Bivaque",
+      "plataforma": "web",
+      "grupo": "base",
+      "persona": "Visitante que ainda nao tem cadastro",
+      "comeca": "Aterrissagem em /",
+      "termina": "Decisao de entrar ou criar conta",
+      "acoes": ["Ler manifesto", "Conhecer camadas de pertencimento", "Entrar ou criar conta"],
+      "etapas": [
+        {
+          "nome": "Hero e manifesto",
+          "passos": [
+            {
+              "tela": "83-web-landing#0",
+              "acao": "le a chamada principal e o manifesto"
+            }
+          ]
+        },
+        {
+          "nome": "Camadas e confianca",
+          "passos": [
+            {
+              "tela": "83-web-landing#1",
+              "acao": "percorre pertencimento, confianca e CTA final"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-busca-agrupada",
+      "titulo": "Buscar conteudo por termo dentro da cidade atual",
+      "plataforma": "web",
+      "grupo": "base",
+      "persona": "Membro que quer achar guia, servico ou evento sem sair da cidade ativa",
+      "comeca": "Termo digitado no campo de busca da topbar",
+      "termina": "Card aberto no destino real ou saida honesta do vazio",
+      "acoes": ["Buscar", "Abrir um resultado", "Limpar busca", "Trocar cidade"],
+      "etapas": [
+        {
+          "nome": "Resultados",
+          "passos": [
+            {
+              "tela": "84-web-busca#0",
+              "acao": "term 'escola transferencia' em q=, grupos Guia / Servicos / Eventos"
+            }
+          ]
+        },
+        {
+          "nome": "Sem resultados",
+          "passos": [
+            {
+              "tela": "84-web-busca#1",
+              "acao": "term nao casa com nenhuma consulta; cidade aparece no destaque, acoes de saida"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    },
+    {
+      "id": "web-chegadas-e-transferencias",
+      "titulo": "Operador acompanha chegadas declaradas e transferencias ainda ativas",
+      "plataforma": "web",
+      "grupo": "operations",
+      "persona": "Operador autorizado do painel BIVAQUE Operacao",
+      "comeca": "Operador clica em Chegadas na topbar do painel",
+      "termina": "Vê o volume por cidade ou o estado vazio e, se quiser, atualiza a leitura",
+      "acoes": ["Ler volume por cidade", "Atualizar leitura"],
+      "etapas": [
+        {
+          "nome": "Volume por cidade",
+          "passos": [
+            {
+              "tela": "85-web-arrivals#0",
+              "acao": "lista cidade e contagem lidas da RPC; coluna de acao ainda nao existe"
+            }
+          ]
+        },
+        {
+          "nome": "Sem chegadas",
+          "passos": [
+            {
+              "tela": "85-web-arrivals#1",
+              "acao": "estado vazio honesto com caminhos reais do shell do operador"
+            }
+          ]
+        }
+      ],
+      "desvios": []
+    }
+  ]
+}

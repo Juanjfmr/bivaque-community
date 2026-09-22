@@ -186,7 +186,7 @@ export default async function AdminReportsPage({
             <Link
               href={queueHref({ ...filters, tab: "em-analise", pagina: undefined })}
               aria-current={filters.tab === "em-analise" ? "page" : undefined}
-              className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-1 font-medium ${
+              className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-1 font-medium transition-colors ${
                 filters.tab === "em-analise"
                   ? "border-accent text-foreground"
                   : "border-transparent text-muted hover:text-foreground"
@@ -202,7 +202,7 @@ export default async function AdminReportsPage({
             <Link
               href={queueHref({ ...filters, tab: "concluidas", pagina: undefined })}
               aria-current={filters.tab === "concluidas" ? "page" : undefined}
-              className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-1 font-medium ${
+              className={`-mb-px inline-flex min-h-11 items-center gap-2 border-b-2 px-1 font-medium transition-colors ${
                 filters.tab === "concluidas"
                   ? "border-accent text-foreground"
                   : "border-transparent text-muted hover:text-foreground"
@@ -234,7 +234,7 @@ export default async function AdminReportsPage({
               id="filtro-tipo"
               name="tipo"
               defaultValue={filters.tipo ?? ""}
-              className="min-h-11 rounded-lg border border-border bg-surface px-3 text-sm"
+              className="min-h-11 rounded-lg border border-border bg-surface px-3 text-sm transition-colors"
             >
               <option value="">Todos</option>
               {tipoOptions.map((type) => (
@@ -252,7 +252,7 @@ export default async function AdminReportsPage({
               id="filtro-comunidade"
               name="comunidade"
               defaultValue={filters.comunidade ?? ""}
-              className="min-h-11 rounded-lg border border-border bg-surface px-3 text-sm"
+              className="min-h-11 rounded-lg border border-border bg-surface px-3 text-sm transition-colors"
             >
               <option value="">Todas</option>
               {comunidadeNames.map((name) => (
@@ -272,7 +272,7 @@ export default async function AdminReportsPage({
               type="search"
               name="motivo"
               defaultValue={filters.motivo}
-              className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 text-sm"
+              className="min-h-11 w-full min-w-0 rounded-lg border border-border bg-surface px-3 text-sm transition-colors"
             />
           </div>
           <button
@@ -342,7 +342,7 @@ export default async function AdminReportsPage({
                 >
                   <Link
                     href={queueHref({ ...filters, ordem: sortNext, pagina: undefined })}
-                    className="inline-flex min-h-11 items-center gap-1 hover:text-foreground"
+                    className="inline-flex min-h-11 items-center gap-1 transition-colors hover:text-foreground"
                   >
                     Recebido em
                     <span aria-hidden="true">{filters.ordem === "antigas" ? "↑" : "↓"}</span>
@@ -414,7 +414,7 @@ export default async function AdminReportsPage({
               <Link
                 href={queueHref({ ...filters, pagina: paged.page - 1 })}
                 aria-label="Página anterior"
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2 transition-colors"
               >
                 <span aria-hidden="true">‹</span>
               </Link>
@@ -424,7 +424,7 @@ export default async function AdminReportsPage({
                 key={number}
                 href={queueHref({ ...filters, pagina: number })}
                 aria-current={number === paged.page ? "page" : undefined}
-                className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border px-2 ${
+                className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border px-2 transition-colors ${
                   number === paged.page
                     ? "border-accent font-medium text-foreground"
                     : "border-border bg-surface text-muted hover:text-foreground"
@@ -437,7 +437,7 @@ export default async function AdminReportsPage({
               <Link
                 href={queueHref({ ...filters, pagina: paged.page + 1 })}
                 aria-label="Próxima página"
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-surface px-2 transition-colors"
               >
                 <span aria-hidden="true">›</span>
               </Link>

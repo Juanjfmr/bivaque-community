@@ -115,7 +115,7 @@ describe("snippet", () => {
   })
 
   it("cuts long text at a word boundary with an ellipsis", () => {
-    const long = "a".repeat(80) + " " + "b".repeat(80)
+    const long = `${"a".repeat(80)} ${"b".repeat(80)}`
     const result = snippet(long, 100)
     expect(result?.endsWith("…")).toBe(true)
     expect(result?.length).toBeLessThanOrEqual(101)

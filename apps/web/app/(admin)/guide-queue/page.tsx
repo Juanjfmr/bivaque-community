@@ -2,8 +2,10 @@ import { Button, Input } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import { loadGuideCorrectionQueue } from "../../../lib/guide/guide-article"
 import { callGuideCurationRpc } from "../../../lib/guide-curation-rpcs"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
+import { CorrectionDecisionForms } from "./correction-forms"
 
 export const dynamic = "force-dynamic"
 
@@ -234,7 +236,7 @@ export default async function AdminGuidePage() {
         aria-labelledby="guide-queue-heading"
       >
         <h1 id="guide-queue-heading" className="text-2xl font-semibold tracking-tight">
-          Curadoria do guia
+          Fila do Guia
         </h1>
         <p className="text-sm text-muted">Apenas operadores podem revisar o guia.</p>
       </section>
@@ -270,6 +272,9 @@ export default async function AdminGuidePage() {
   const queue = (pendingResult.data as GuideQueueEntry[] | null) ?? []
   const promotable = (promotableResult.data as PromotableReply[] | null) ?? []
 
+  // RECON-030: devolve [] quando a migration do artigo ainda não está aplicada.
+  const corrections = await loadGuideCorrectionQueue(serviceClient)
+
   return (
     <section
       className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-12"
@@ -277,7 +282,7 @@ export default async function AdminGuidePage() {
     >
       <div className="flex flex-col gap-2">
         <h1 id="guide-queue-heading" className="text-2xl font-semibold tracking-tight">
-          Curadoria do guia
+          Fila do Guia
         </h1>
         <p className="text-sm text-muted">
           Sugestões aguardando aprovação. Nada é publicado sem revisão humana.
@@ -318,7 +323,7 @@ export default async function AdminGuidePage() {
                   href={entry.website_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-accent hover:underline"
+                  className="inline-flex min-h-11 items-center text-sm text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline"
                 >
                   {entry.website_url}
                 </a>
@@ -330,7 +335,7 @@ export default async function AdminGuidePage() {
                 <input type="hidden" name="entryId" value={entry.id} />
                 <button
                   type="submit"
-                  className="w-full rounded-md border border-border bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90"
+                  className="min-h-11 w-full rounded-md border border-border bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-accent/90"
                 >
                   Aprovar e publicar
                 </button>
@@ -341,14 +346,15 @@ export default async function AdminGuidePage() {
                 <input
                   type="text"
                   name="note"
+                  aria-label="Motivo da rejeição"
                   placeholder="Motivo da rejeição"
-                  className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                  className="min-h-11 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
                 />
                 <button
                   type="submit"
-                  className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors hover:bg-danger hover:text-danger-foreground"
+                  className="min-h-11 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-danger hover:text-danger-foreground"
                 >
-                  Rejeitar
+                  Recusar
                 </button>
               </form>
             </div>
@@ -359,12 +365,11 @@ export default async function AdminGuidePage() {
       {/* Wave E Task 8 — manual curation from recommendation replies. */}
       <section aria-labelledby="guide-promote-heading" className="mt-6 flex flex-col gap-4">
         <h2 id="guide-promote-heading" className="text-base font-semibold tracking-tight">
-          Promover resposta de indicação
+          Promover respostas da comunidade
         </h2>
         <p className="text-sm text-muted">
           Respostas da comunidade viram itens do guia depois que você escreve o nome canônico e a
-          descrição. Cada resposta pode ser promovida uma vez — o caminho manual existe enquanto a
-          curadoria por IA segue desligada por governança (D49).
+          categoria.
         </p>
 
         {promotable.length === 0 ? (
@@ -396,7 +401,7 @@ export default async function AdminGuidePage() {
                       name="category"
                       required
                       aria-label="Categoria do guia"
-                      className="rounded-md border border-border bg-surface px-3 py-2 text-sm"
+                      className="min-h-11 rounded-md border border-border bg-surface px-3 py-2 text-sm transition-colors duration-[var(--semantic-motion-duration-instant)]"
                     >
                       {GUIDE_CATEGORIES.map((cat) => (
                         <option key={cat} value={cat}>
@@ -443,6 +448,21 @@ export default async function AdminGuidePage() {
               </form>
             </article>
           ))
+        )}
+      </section>
+
+      <section aria-labelledby="guide-corrections-heading" className="mt-6 flex flex-col gap-4">
+        <h2 id="guide-corrections-heading" className="text-base font-semibold tracking-tight">
+          Sugestões de correção
+        </h2>
+        <p className="text-sm text-muted">
+          Sugestões de atualização dos artigos do guia. Aplicar publica a versão revisada e registra
+          quem sugeriu.
+        </p>
+        {corrections.length === 0 ? (
+          <p className="text-sm text-muted">Nenhuma sugestão de correção pendente.</p>
+        ) : (
+          corrections.map((item) => <CorrectionDecisionForms key={item.request.id} item={item} />)
         )}
       </section>
     </section>

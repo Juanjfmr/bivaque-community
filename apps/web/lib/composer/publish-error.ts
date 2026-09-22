@@ -98,14 +98,46 @@ export function classifyPublishError(error: unknown): PublishErrorView {
   const name = typeof probe.name === "string" ? probe.name : ""
   const message = typeof probe.message === "string" ? probe.message : ""
 
-  // `code` é SQLSTATE Postgres; `status` é HTTP; `details`/`hint` só
-  // aparecem em erros do PostgREST. Qualquer um é prova de que a request
-  // chegou ao servidor — user-facing copy não distingue entre eles.
-  const looksLikeServerError =
+  const isNetworkByName = NETWORK_NAME_PATTERNS.some((pattern) =>
+    name.toLowerCase().includes(pattern.toLowerCase()),
+  )
+  const isNetworkByMessage = NETWORK_MESSAGE_PATTERNS.some((pattern) =>
+    message.toLowerCase().includes(pattern.toLowerCase()),
+  )
+
+  // Ordem importa, e foi medida no navegador em 16/09/2026 (contexto offline,
+  // publicação pelo compositor): o cliente devolve o erro de fetch EMBRULHADO
+  // em forma de PostgREST — com `details` preenchido e `code` vazio —, então
+  // checar o envelope antes da assinatura classificava falha de transporte como
+  // rejeição do servidor, e a tela mostrava "Não foi possível criar a
+  // publicação" em vez do estado "Sem conexão" da prancha 60.
+  //
+  //   1. SQLSTATE/HTTP de verdade (`code` com 5 caracteres, `status` numérico)
+  //      é prova de que a request CHEGOU: servidor, sempre — um erro de RLS
+  //      cujo texto contenha "aborted" não vira transporte.
+  //   2. Sem isso, uma assinatura de transporte explícita (`Failed to fetch`)
+  //      vence: a request nunca chegou.
+  //   3. Envelope fraco (`details`/`hint` sozinhos) é servidor.
+  //   4. Forma desconhecida é transporte, conservador.
+  const isServerByCodeOrStatus =
     (typeof probe.code === "string" && /^[0-9A-Z]{5}$/.test(probe.code)) ||
-    typeof probe.status === "number" ||
-    probe.details !== undefined ||
-    probe.hint !== undefined
+    typeof probe.status === "number"
+
+  if (!isServerByCodeOrStatus && (isNetworkByName || isNetworkByMessage)) {
+    return {
+      kind: "network",
+      message: NETWORK_MESSAGE,
+      preserveDraft: true,
+      diagnostic: `publish-insert: transport (name=${JSON.stringify(name)} message=${JSON.stringify(
+        message,
+      )})`,
+    }
+  }
+
+  // `details`/`hint` só aparecem em erros do PostgREST — envelope mais fraco,
+  // mas ainda prova de que a resposta veio do servidor.
+  const looksLikeServerError =
+    isServerByCodeOrStatus || probe.details !== undefined || probe.hint !== undefined
 
   if (looksLikeServerError) {
     return {
@@ -117,24 +149,6 @@ export function classifyPublishError(error: unknown): PublishErrorView {
       diagnostic: `publish-insert: server error code=${String(probe.code ?? "-")} status=${String(
         probe.status ?? "-",
       )} message=${JSON.stringify(message)}`,
-    }
-  }
-
-  const isNetworkByName = NETWORK_NAME_PATTERNS.some((pattern) =>
-    name.toLowerCase().includes(pattern.toLowerCase()),
-  )
-  const isNetworkByMessage = NETWORK_MESSAGE_PATTERNS.some((pattern) =>
-    message.toLowerCase().includes(pattern.toLowerCase()),
-  )
-
-  if (isNetworkByName || isNetworkByMessage) {
-    return {
-      kind: "network",
-      message: NETWORK_MESSAGE,
-      preserveDraft: true,
-      diagnostic: `publish-insert: transport (name=${JSON.stringify(name)} message=${JSON.stringify(
-        message,
-      )})`,
     }
   }
 

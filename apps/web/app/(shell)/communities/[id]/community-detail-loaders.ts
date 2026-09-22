@@ -14,6 +14,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { signCommunityImageUrls } from "../../../../lib/communities/community-image-urls"
 import {
   buildGroupCards,
   enterableGroupIds,
@@ -27,7 +28,7 @@ type CommunityDetailClient = SupabaseClient<Database>
 
 type CommunityRow = Pick<
   Database["public"]["Tables"]["communities"]["Row"],
-  "id" | "name" | "description" | "locality_id" | "created_at"
+  "id" | "name" | "description" | "locality_id" | "created_at" | "banner_path" | "thumbnail_path"
 >
 type MyMembershipRow = Pick<
   Database["public"]["Tables"]["community_memberships"]["Row"],
@@ -47,6 +48,10 @@ export type CommunityPresentation = {
   cityLabel: string | null
   /** `communities.created_at` — exibida só onde o público pode ver. */
   createdAt: string
+  /** URL assinada da faixa atual, ou `null` quando não há imagem. */
+  bannerUrl: string | null
+  /** URL assinada da miniatura atual, ou `null` quando não há imagem. */
+  thumbnailUrl: string | null
 }
 
 export type TransferCandidate = {
@@ -61,6 +66,14 @@ export type CommunityDetailView =
   | {
       status: "ready"
       audience: "visitor"
+      presentation: CommunityPresentation
+    }
+  // Quem NÃO é membro da cidade vê a apresentação (o dono decidiu em 15/09/2026
+  // que nome e estado da comunidade não são sigilosos) mas não vê o corpo de
+  // participação: pedir entrada exige ser da cidade, e é o RPC que barra.
+  | {
+      status: "ready"
+      audience: "outsider"
       presentation: CommunityPresentation
     }
   | {
@@ -93,7 +106,7 @@ export async function loadCommunityDetail(
 ): Promise<CommunityDetailView> {
   const { data: communityData, error: communityError } = await supabase
     .from("communities")
-    .select("id, name, description, locality_id, created_at")
+    .select("id, name, description, locality_id, created_at, banner_path, thumbnail_path")
     .eq("id", communityId)
     .eq("is_deleted", false)
     .maybeSingle()
@@ -119,7 +132,25 @@ export async function loadCommunityDetail(
     throw new Error("Falha ao ler a sua participação.")
   }
   const mine = myData as MyMembershipRow | null
-  const audience = resolveAudience(mine ? { role: mine.role, status: mine.status } : null)
+
+  // Ser da cidade é o que separa "posso pedir entrada" de "só posso ver que
+  // existe". A leitura é da PRÓPRIA linha de localidade (RLS `user_id =
+  // auth.uid()`), então não depende de nada que o cliente informe.
+  const { data: localityMembership, error: localityMembershipError } = await supabase
+    .from("locality_memberships")
+    .select("locality_id")
+    .eq("user_id", userId)
+    .eq("locality_id", community.locality_id)
+    .eq("kind", "current")
+    .maybeSingle()
+
+  if (localityMembershipError) {
+    throw new Error("Falha ao ler a sua localidade.")
+  }
+
+  const audience = localityMembership
+    ? resolveAudience(mine ? { role: mine.role, status: mine.status } : null)
+    : ("outsider" as const)
 
   const { data: locality, error: localityError } = await supabase
     .from("localities")
@@ -132,17 +163,30 @@ export async function loadCommunityDetail(
   }
   const localityRow = locality as LocalityRow | null
 
+  const imageUrls = (
+    await signCommunityImageUrls(supabase, [
+      {
+        communityId: community.id,
+        banner: community.banner_path !== null,
+        thumbnail: community.thumbnail_path !== null,
+      },
+    ])
+  ).get(community.id) ?? { bannerUrl: null, thumbnailUrl: null }
+
   const presentation: CommunityPresentation = {
     id: community.id,
     name: community.name,
     description: community.description,
     cityLabel: localityRow ? `${localityRow.city_name}, ${localityRow.state_code}` : null,
     createdAt: community.created_at,
+    bannerUrl: imageUrls.bannerUrl,
+    thumbnailUrl: imageUrls.thumbnailUrl,
   }
 
-  if (audience === "visitor") {
-    // Visitante: só a apresentação autorizada. Nada de grupos, contagem, feed
-    // ou motivo — essas consultas não chegam a ser emitidas.
+  if (audience === "visitor" || audience === "outsider") {
+    // Visitante (da cidade, sem participação) e quem não é da cidade: só a
+    // apresentação. Nada de grupos, contagem, feed ou motivo — essas consultas
+    // não chegam a ser emitidas.
     return { status: "ready", audience, presentation }
   }
 

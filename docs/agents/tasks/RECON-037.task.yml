@@ -1,0 +1,91 @@
+task_id: RECON-037
+
+objective: >
+  Os três guard-rails que o PR #54 removeu voltam a existir: convite de evento volta a
+  respeitar a preferência do membro, o validador do board volta a recusar card done que
+  depende de card com trabalho aberto, e a persona morta do seed deixa de mentir sobre
+  quem a consome. Cada um volta com o teste que o prende.
+
+authority:
+  - docs/decisions/ADR-20260909-canais-de-notificacao.md decisão D1
+  - AGENTS.md, "the validator now refuses it" e "A done card may not depend on a card that still has work"
+  - Revisão automática do PR #54 em 10/09/2026, três achados verificados na main
+  - AGENTS.md, "Resolve cards; do not stop at drift" e "toda via de permissão precisa de teste positivo e negativo"
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 10/09/2026 na main (merge 15a884d do PR #54), por contagem direta.
+    1) event_invite aparece 0 vezes em apps/web/app/api/internal/outbox/route.ts. Como
+    preferenceKey devolve null e a linha 165 faz `return key === null || preference[key]`,
+    o convite de evento é entregue mesmo com o membro tendo desligado eventos — contra a
+    hierarquia D1 do ADR-20260909, "tipo desligado não entrega por canal nenhum".
+    2) tests/unit/infra/outbox-preferences.test.ts não existe mais; era ele que prendia o
+    positivo e o negativo de event_invite. outbox-delivery.test.ts mocka preferenceAllows
+    e não exercita preferenceKey, então nada substitui a cobertura.
+    3) A frase "dependency still has work" aparece 0 vezes em tests/scope/backend-kanban.test.mjs
+    e validateBoard não checa mais dependência de card done. O AGENTS.md continua afirmando
+    que o validador recusa. E o board viola a regra removida: S4-MOBILE-COMPOSER está done
+    dependendo de MOB-001-SESSION, que está now.
+    4) supabase/seed.sql cria a persona membro-suspenso@ dizendo existir para
+    tests/e2e/denied-publish.spec.ts provar 42501, mas aquele spec usa dono-vila@ e alterna
+    is_suspended por service_role. Nenhum teste consome a persona, e o cabeçalho do spec
+    aponta para 20260901124400_member_suspended_seed.sql, que virou tombstone.
+
+allowed_paths:
+  - apps/web/app/api/internal/outbox/route.ts
+  - tests/unit/infra/
+  - tools/backend-kanban/src/board-lib.mjs
+  - tests/scope/backend-kanban.test.mjs
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - supabase/seed.sql
+  - tests/e2e/denied-publish.spec.ts
+  - docs/agents/tasks/RECON-037.task.yml
+
+forbidden:
+  - tocar public.profiles, a coluna is_suspended, suas policies ou is_account_suspended — é R3 e vive no card BLOCK-SUSPENSION-EXPOSURE
+  - tocar apps/web/.env.example ou apps/web/lib/support.ts — o endereço de suporte é decisão pendente do dono
+  - apagar, afrouxar ou pular teste para deixar dado passar; é exatamente o defeito que esta tarefa repara
+  - mudar schema, migration aplicada, policy ou estado do banco compartilhado
+  - reabrir PNG de prancha; esta tarefa não tem parte visual
+  - marcar card done sem a Definition of Done aplicável
+
+human_decision:
+  - Se reconciliar S4-MOBILE-COMPOSER exigir reabrir o card em vez de fechar a dependência, registrar e parar — reabrir trabalho de outra pessoa não é decisão do executor
+
+acceptance:
+  - event_invite volta ao mapeamento de preferências e um membro com eventos desligado não recebe convite de evento
+  - teste positivo E negativo para event_invite, exercitando preferenceKey de verdade e não um mock de preferenceAllows
+  - validateBoard volta a recusar card done que depende de card com trabalho aberto, com o teste de escopo que prende a regra
+  - o board deixa de violar a regra restaurada — S4-MOBILE-COMPOSER e MOB-001-SESSION reconciliados, e o resumo regenerado
+  - a persona membro-suspenso@ ou passa a ser consumida por denied-publish.spec.ts, ou sai do seed junto com o comentário que a justifica
+  - o cabeçalho de denied-publish.spec.ts deixa de apontar para migration que virou tombstone
+  - AGENTS.md e o comportamento do validador voltam a dizer a mesma coisa
+  - gate completo verde no candidato estável, com o código de saída lido diretamente
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-037.task.yml
+  - npx pnpm@11.18.0 gate
+  - node --test tests/scope/backend-kanban.test.mjs
+  - npx pnpm@11.18.0 test:unit
+  - node tools/backend-kanban/src/board.mjs --write-summary
+
+traps:
+  - NÃO canalize o gate por tail ou head — o código de saída passa a ser o do pipe e vermelho vira verde; redirecione para arquivo e leia o código na mesma linha
+  - Ao editar board.json por script, rode npx pnpm@11.18.0 exec biome format --write nele depois; JSON.stringify reformata o arquivo inteiro e enterra a mudança real em centenas de linhas de ruído
+  - A branch base é origin/main; o repositório principal está em outra branch com alterações de outras sessões que não são suas
+  - Restaurar o guard-rail vai fazer o validador recusar o board atual; isso é o teste funcionando, não uma regressão — reconcilie o dado
+
+risk: >
+  Restauração de guard-rails de entrega de notificação e de consistência do board, mais
+  limpeza de fixture do seed, sem tocar em autorização, schema ou dado pessoal.
+risk_level: R3
+adr: docs/decisions/ADR-20260909-canais-de-notificacao.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

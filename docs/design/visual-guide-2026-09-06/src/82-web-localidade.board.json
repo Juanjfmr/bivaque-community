@@ -1,0 +1,53 @@
+{
+  "id": "82-web-localidade",
+  "kind": "web",
+  "group": "community",
+  "title": "Web: declarar mudança de cidade",
+  "screens": ["Declarar mudança de cidade", "Transferência declarada"],
+  "reviewNotes": [
+    "R21 separa explorar destino de declarar mudança. O seletor de cidade no topo do shell (CityReference já cumpre isso) é a primeira ação; declarar mudança é um caminho explícito, não a exploração no Explorar. A prancha painel 1 desenha o formulário de declaração — cidade de destino e data de saída — antes que a pessoa tente publicar e descubra sozinha que o alcance mudou.",
+    "A transferência NÃO migra comunidades automaticamente. As participações em vilas da cidade atual continuam até a data marcada; depois disso a pessoa precisa pedir entrada em vilas da cidade nova. Esta é a frase que o ADR-20260816-shells-e-navegacao lista como risco de pergunta de suporte.",
+    "Switcher no painel 2 é em pílula, não em abas sublinhadas. RECON-047 já registrou a exceção: as duas cidades do membro são um seletor segmentado, e isso é como a prancha apresenta cidade (pranchas 39 e 61) — cartões e seletor, nunca abas. O tab visivelmente ativo ganha pine700 sólido com texto branco e o chip 'saindo' na opção da cidade de destino.",
+    "A aba 'Brasília, DF' fica ativa por padrão mesmo após a declaração. Trocar para a aba da cidade de origem mostra o aviso 'Você só lê aqui — a transferência já aconteceu. Para publicar, use {cidade atual}.' (readOnly = true) ou 'Você está saindo de {cidade de origem} em {data}. Até lá, continua podendo publicar aqui normalmente.' (readOnly = false). A prancha painel 2 não troca de aba — Brasília fica ativa porque ainda é a cidade atual; ler Boa Vista exige clicar no seletor.",
+    "Quem está declarado como saindo vê um cartão de confirmação em pine100 com ícone de check em pine700 sólido e a frase 'Transferência declarada.' mais a data e o destino. Esse cartão é o que diferencia declarar mudança (painel 1) de transferência declarada (painel 2) — o formulário some, o estado atual entra.",
+    "A declaração usa declare_locality_transfer e o cancelamento usa reverse_locality_transfer (citados em page.tsx linhas 13-14). Esses são os contratos de banco; o que o usuário vê é o formulário (painel 1) e o estado resultante (painel 2). Não há promessa de SLA, prazo de processamento ou mudança automática — só a data escolhida pelo membro.",
+    "Não há migration automática de participações: vilas de Brasília onde a pessoa é membro continuam até ela pedir entrada em Boa Vista ou cancelar a transferência. A nota privada no rodapé do painel 2 reforça isso; é a mesma frase que o ADR lista como risco de pergunta de suporte, e merece aparecer antes que ela aconteça.",
+    "Lacuna registrada: nenhum contrato RECON-* cobre a tela /localidade (R21). A prancha está ancorada na spec §4.2 R21 e na própria page.tsx; não há contrato isolado. RECON-014/RECON-016 cobrem /onboarding/locality (R14) — escolher cidade na primeira chegada — que é diferente de declarar mudança posterior.",
+    "Cidades exibidas (Brasília, Boa Vista) são ilustrativas: a implementação lê de /api/localities/[uf]. Datas de saída são ilustrativas; consolidar com o contrato do banco no declare_locality_transfer."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do membro copiado de src/70-web-evento-organizar.html. Painel 1 é o estado sem outbound declarado (CityReference): cabeçalho 'Brasília, DF', seção 'Estou de mudança' com campo de cidade de destino (Boa Vista, RR), data '1º de dezembro de 2026' e botões Declarar saída + Cancelar; depois cartões de Próximos eventos da cidade, Guia de chegada e Vitrine de prestadores. Painel 2 é o estado pós-declaração: seletor em pílula com 'Brasília, DF' ativa e 'Boa Vista, RR (saindo)' com chip amber, cabeçalho de Brasília, cartão de confirmação em pine100 com ícone de check em pine700 sólido, e os mesmos blocos de cidade; nota privada no rodapé reforça que vilas não migram.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-009",
+  "journey": {
+    "id": "web-declarar-mudanca-de-cidade",
+    "titulo": "Declarar mudança de cidade",
+    "plataforma": "web",
+    "grupo": "community",
+    "persona": "Membro que vai trocar de cidade e precisa avisar",
+    "comeca": "Página /localidade com a cidade atual",
+    "termina": "Transferência declarada com data e destino",
+    "acoes": ["Mudar de cidade"],
+    "etapas": [
+      {
+        "nome": "Declarar",
+        "passos": [{ "tela": "82-web-localidade#0", "acao": "escolhe a cidade de destino e confirma a data de saída" }]
+      },
+      {
+        "nome": "Confirmado",
+        "passos": [
+          { "tela": "82-web-localidade#1", "acao": "vê o cartão de confirmação em pine100" },
+          { "tela": "82-web-localidade#1", "acao": "alterna para a aba da cidade de origem e vê o aviso de saída" }
+        ]
+      },
+      {
+        "nome": "Cancelar",
+        "passos": [{ "tela": "82-web-localidade#1", "acao": "cancela a transferência pela área de gestão da conta" }]
+      }
+    ],
+    "desvios": [
+      "Sem declaração — /localidade renderiza apenas CityReference com a cidade atual; o bloco 'Estou de mudança' aparece como formulário à parte (painel 1).",
+      "Transferência expirada (readOnly = true) — a aba da cidade de origem mostra 'Você só lê aqui — a transferência já aconteceu. Para publicar, use {atual}.'"
+    ]
+  },
+  "leitura": "## 82-web-localidade — `/localidade`\n\n**Etapa:** W02/W03. **Painéis:** declarar mudança de cidade; transferência declarada.\n\nPrancha criada em 12/09/2026, depois do handoff. R21 tem duas responsabilidades misturadas: explorar destino e declarar mudança. A primeira é o seletor do shell (CityReference já cumpre). A segunda é um caminho explícito, com formulário e estado declarado. Esta é a autoridade visual dessa segunda parte.\n\n**Lacuna registrada:** nenhum contrato RECON-* cobre /localidade (R21). A prancha está ancorada na spec §4.2 R21 e na própria page.tsx; não há contrato isolado. RECON-014/RECON-016 cobrem /onboarding/locality (R14) — escolha inicial de cidade na primeira chegada — que é caminho separado.\n\n### Composição\n\nShell do membro copiado de src/70-web-evento-organizar.html. Topnav não desenhada (a rota /localidade não está nos itens de navegação de membro — entra pelo link Cidade na barra superior ou via Perfil). Main com padding 24/40/22 e overflow-y para rolar a página.\n\n**Declarar mudança (painel 1)** — cabeçalho com `Brasília, DF` e lead explicando que esta é a referência da cidade. Seção `Estou de mudança` com descrição, campo de cidade de destino (placeholder 'Buscar por UF ou cidade', valor prevenido 'Boa Vista, RR'), data `1º de dezembro de 2026`, e ações `Declarar saída` (primary) e `Cancelar` (secondary). Depois, três cartões em sequência: `Próximos eventos da cidade` com 4 eventos fictícios e link Ver todos os eventos; `Guia de chegada` com botão primário Abrir o guia; `Vitrine de prestadores` com 3 nomes fictícios (Marcelo Silveira, Fernanda Lopes, Diego Almeida) cada um com a categoria e a região.\n\n**Transferência declarada (painel 2)** — seletor em pílula com duas opções: `Brasília, DF` ativa em pine700 sólido com texto branco e ícone de pino; `Boa Vista, RR` inativa com chip `saindo` em amber100 com amber700 (quando o chip está dentro da opção ativa, fica em branco translúcido sobre o pine700). Cabeçalho `Brasília, DF` (a aba ativa é Brasília, mesmo após a declaração). Cartão de confirmação em pine100 com ícone circular de check em pine700 sólido e a frase `Transferência declarada.` mais data e destino. Depois, os mesmos blocos de cidade. Rodapé com nota privada explicando que vilas da cidade atual continuam até a pessoa pedir entrada em Boa Vista ou cancelar.\n\n### Estados e limites\n\nA transferência NÃO migra comunidades automaticamente. Quem é membro de vilas de Brasília continua membro até a data marcada; depois, para publicar em Boa Vista, é preciso pedir entrada em vilas lá — e isso é um caminho separado, não uma continuação. A frase aparece antes que a pessoa pergunte, e o formulário não promete SLA, prazo de processamento nem reversão automática.\n\nTrocar a aba no seletor mostra a referência da cidade de origem: se a transferência ainda não expirou (readOnly = false), o aviso é `Você está saindo de {origem} em {data}. Até lá, continua podendo publicar aqui normalmente.`; se já expirou (readOnly = true), o aviso vira `Você só lê aqui — a transferência já aconteceu. Para publicar, use {atual}.`. A prancha painel 2 não troca de aba — Brasília fica ativa porque ainda é a cidade atual; o aviso de saída só aparece se a pessoa clicar em `Boa Vista, RR`.\n\nOs cards de cidade usam o componente CityReference da implementação atual: a vitrine carrega via RPC `search_providers` com filtros p_query e p_category; os eventos vêm de `events` filtrados por locality_id. O estado vazio da vitrine é honesto: 'Ainda não há prestadores cadastrados por aqui.' A prancha não desenha explicitamente o estado vazio porque tem prestadores fictícios; consolidar com fixtures únicas na implementação.\n\nCidades e datas são ilustrativas: consolidar com o catálogo /api/localities/[uf] e com o contrato declare_locality_transfer."
+}

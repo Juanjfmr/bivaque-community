@@ -67,7 +67,7 @@ export default async function CommunityProvidersPage({
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4 px-4 pt-6 pb-8">
       <header>
-        <h1 className="text-lg font-semibold tracking-tight">Prestadores da comunidade</h1>
+        <h1 className="text-lg font-semibold tracking-tight">Prestadores atestados</h1>
         <p className="mt-1 text-sm text-muted">
           Fichas atestadas por esta comunidade. Revogar desliga a vitrine em todas as vilas e fica
           registrado com motivo — não apaga a conta nem a ficha.
@@ -108,7 +108,7 @@ export default async function CommunityProvidersPage({
                   <TextArea
                     aria-label={`Motivo da revogação de ${provider.display_name}`}
                     name="reason"
-                    placeholder="Motivo registrado na auditoria da revogação"
+                    placeholder="Motivo da revogação"
                     className="w-full"
                   />
                   <Button type="submit" size="sm" variant="tertiary">

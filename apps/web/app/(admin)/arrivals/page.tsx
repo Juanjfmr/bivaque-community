@@ -1,5 +1,9 @@
 import { createServerClient } from "@supabase/ssr"
+import { RefreshCw, X } from "lucide-react"
+import type { Route } from "next"
 import { cookies } from "next/headers"
+import Link from "next/link"
+import { FeedbackAlert } from "../../../app/components/bivaque/feedback-alert"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda T Task 5, Step 2 — o console do fundador enxerga.
@@ -71,23 +75,117 @@ export default async function AdminArrivalsPage() {
         quem já mora lá.
       </p>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1 text-xs text-muted">
+          <span
+            aria-hidden="true"
+            className="h-2 w-2 rounded-full bg-[var(--semantic-action-primary)]"
+          />
+          Janela: chegadas ativas neste momento
+        </span>
+        <span className="inline-flex items-center rounded-md border border-border px-3 py-1 text-xs text-muted">
+          Origem dos dados: list_locality_arrivals_volume
+        </span>
+        <Link
+          href={"/arrivals" as Route}
+          className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)]"
+        >
+          <RefreshCw size={16} aria-hidden="true" />
+          Atualizar
+        </Link>
+      </div>
+
       {volume.length === 0 ? (
-        <p className="text-sm text-muted">Nenhuma transferência declarada no momento.</p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {volume.map((row) => (
-            <li
-              key={row.locality_id}
-              className="flex items-center justify-between rounded-md border border-border p-4 text-sm"
+        <>
+          <div className="flex flex-col items-center gap-4 rounded-md border border-border p-10 text-center">
+            <span
+              aria-hidden="true"
+              className="grid h-12 w-12 place-items-center rounded-full bg-[var(--semantic-selected)]"
             >
-              <span className="font-medium">{row.city_name}</span>
-              <span className="text-muted">
-                {row.arrivals_count} {row.arrivals_count === 1 ? "chegada" : "chegadas"}
-              </span>
-            </li>
-          ))}
-        </ul>
+              <X size={20} className="text-muted" />
+            </span>
+            <h2 className="text-lg font-semibold tracking-tight">
+              Nenhuma transferência declarada no momento
+            </h2>
+            <p className="max-w-md text-sm text-muted">
+              A RPC list_locality_arrivals_volume devolveu uma lista vazia. Sem chegadas ativas em
+              nenhuma cidade, este painel não tem o que mostrar — e isso não é erro, é o estado
+              real.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Link
+                href={"/arrivals" as Route}
+                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)]"
+              >
+                <RefreshCw size={16} aria-hidden="true" />
+                Atualizar agora
+              </Link>
+              <Link
+                href="/admissions"
+                className="inline-flex min-h-11 items-center rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)]"
+              >
+                Voltar para Admissões
+              </Link>
+              <Link
+                href="/admissions"
+                className="inline-flex min-h-11 items-center rounded-md bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors hover:bg-[var(--semantic-action-primary-hover)]"
+              >
+                Abrir Admissões
+              </Link>
+            </div>
+          </div>
+          <FeedbackAlert
+            variant="warning"
+            title="Estado vazio honesto."
+            description="A tela não inventa volume para preencher colunas nem promete ação por linha que ainda não existe. Quando chegar o destino de cada chegada (abrir pedido, mudar janela, ver histórico), a prancha é refeita — sem prazo declarado."
+          />
+        </>
+      ) : (
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-border bg-[var(--semantic-selected)] text-left text-xs text-muted">
+              <th scope="col" className="px-4 py-3 font-medium">
+                Cidade de destino
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium">
+                Chegadas
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium">
+                Próximo passo
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {volume.map((row, index) => (
+              <tr key={row.locality_id} className="border-b border-border">
+                <td className="px-4 py-3">
+                  <span className="mr-3 text-xs text-muted">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="font-medium">{row.city_name}</span>
+                </td>
+                <td className="px-4 py-3 text-muted">
+                  {row.arrivals_count} {row.arrivals_count === 1 ? "chegada" : "chegadas"}
+                </td>
+                <td className="px-4 py-3 text-xs text-muted">sem ação por linha hoje</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
+
+      {volume.length > 0 && (
+        <FeedbackAlert
+          variant="warning"
+          title="Lacuna encontrada pela análise de chegabilidade."
+          description="A página atual é apenas leitura: mostra volume por cidade, mas não abre a chegada, não filtra por janela nem permite ações operacionais por linha. Quando a página ganhar destino próprio, ele aparece aqui — NÃO declarar prazo de entrega."
+        />
+      )}
+
+      <p className="text-xs text-muted">
+        A página inteira é read-only. O RPC é operator-only e respeita a RLS do painel do operador:
+        nenhum dado pessoal cru sai daqui.
+      </p>
     </section>
   )
 }

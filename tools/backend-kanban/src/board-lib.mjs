@@ -9,6 +9,8 @@ const categories = new Set([
   "testing",
 ])
 const statuses = new Set(["now", "next", "blocked", "frozen", "repo", "done"])
+// Estados em que ainda há trabalho a fazer — o oposto de espera por humano.
+const pendingWork = new Set(["now", "next", "repo"])
 
 const priorityOrder = new Map([
   ["P0", 0],
@@ -129,6 +131,7 @@ export function validateBoard(board) {
     }
   }
 
+  const cardsById = new Map(board.cards.map((card) => [card.id, card]))
   for (const card of board.cards) {
     if (!Array.isArray(card?.dependencies)) continue
     const dependencies = new Set()
@@ -138,6 +141,32 @@ export function validateBoard(board) {
       if (dependencies.has(dependency))
         errors.push(`${card.id}: dependência duplicada ${dependency}`)
       dependencies.add(dependency)
+    }
+  }
+
+  // Card `done` não pode depender de card que ainda tem trabalho.
+  //
+  // `selectNextCard` só libera um card quando TODAS as dependências estão
+  // `done`. Fechar um card cuja dependência segue executável contradiz esse
+  // modelo, e nada nesta função pegava: a checagem acima confere que a aresta
+  // existe, não o estado de quem ela aponta. Achado por revisão no PR #37, onde
+  // G-TASK-6 foi marcado `done` com G-TASK-3 em `next` e a CI passou verde.
+  //
+  // `blocked` e `frozen` NÃO entram: significam espera por decisão humana, não
+  // trabalho pendente. MVP-01-ADMISSION e MVP-03-COMMUNITY estão `done`
+  // dependendo de BLOCK-RESEND, e "feito, com o canal de entrega travado numa
+  // decisão do dono" é estado legítimo — não é o defeito que esta guarda caça.
+  for (const card of board.cards) {
+    if (card.status !== "done" || !Array.isArray(card.dependencies)) continue
+    for (const dependencyId of card.dependencies) {
+      const dependency = cardsById.get(dependencyId)
+      if (!dependency) continue
+      if (pendingWork.has(dependency.status)) {
+        errors.push(
+          `${card.id}: card done depende de ${dependencyId}, que está '${dependency.status}'` +
+            " — selectNextCard só considera dependência satisfeita quando ela está done",
+        )
+      }
     }
   }
   return errors

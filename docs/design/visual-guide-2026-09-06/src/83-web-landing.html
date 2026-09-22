@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>83-web-landing — fonte da prancha</title>
+<style>
+  /* Fonte da prancha 83-web-landing.
+     Geometria da convenção web: 2076x757, dois painéis de 1032 com gutter de 12; cada painel
+     é um desktop lógico de 1440x1056 reduzido por scale(0.716667). Tokens de packages/tokens.
+     Shell público (visitante): nenhum sidebar de membro, nenhum conteúdo privado, nenhuma
+     navegação funcional. Conforme apps/web/app/landing/landing.tsx (R01). Imagens são
+     blocos ilustrativos — consolidar com o asset real ao implementar. */
+  :root{
+    --canvas:#FAFBF8; --surface:#FFFFFF; --sunken:#F1F2EE; --paper200:#E3E5DF;
+    --ink900:#16211C; --ink700:#4A594F; --ink500:#6B7A70;
+    --pine100:#EEF1E7; --pine700:#164734; --petrol700:#1D5D89;
+    --rose100:#FDE8E7; --rose700:#B42318;
+    --line:color-mix(in srgb, #16211C 14%, transparent);
+    --radius:0.625rem; --radius-card:0.875rem;
+    --font:ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--canvas)}
+  body{width:2076px;height:757px;font-family:var(--font);color:var(--ink900);overflow:hidden}
+  .board{display:flex;gap:12px;width:2076px;height:757px}
+  .panel{width:1032px;height:757px;overflow:hidden;flex:0 0 auto;background:var(--canvas)}
+  .scale{width:1440px;height:1056px;transform:scale(.716667);transform-origin:0 0}
+  svg{display:block}
+
+  /* ---------- shell público ---------- */
+  .public{width:1440px;height:1056px;background:var(--canvas);display:flex;flex-direction:column;color:var(--ink900)}
+  .topbar{height:74px;flex:0 0 auto;background:var(--canvas);display:flex;align-items:center;gap:32px;padding:0 64px;border-bottom:1px solid transparent}
+  .brand{display:inline-flex;align-items:center;gap:9px;color:var(--pine700);font-weight:700;font-size:20px;letter-spacing:.02em;text-decoration:none}
+  .brand svg{display:block}
+  .topnav{display:flex;gap:6px;margin-left:18px}
+  .topnav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:var(--radius);font-size:15px;color:var(--ink700);text-decoration:none}
+  .topnav a.on{color:var(--pine700);font-weight:600}
+  .topbar .spacer{flex:1}
+  .entrar{height:48px;border-radius:var(--radius);padding:0 22px;display:inline-flex;align-items:center;gap:9px;background:transparent;color:var(--pine700);font-size:15px;font-weight:600;border:1px solid color-mix(in srgb, var(--pine700) 22%, transparent);text-decoration:none}
+
+  /* ---------- hero ---------- */
+  .hero{flex:0 0 auto;height:600px;position:relative;overflow:hidden;background:var(--canvas)}
+  .heroImg{position:absolute;inset:0;background:
+    radial-gradient(circle at 24% 76%, rgba(22,71,52,.20) 0 92px, transparent 93px),
+    radial-gradient(circle at 42% 82%, rgba(22,71,52,.12) 0 62px, transparent 63px),
+    radial-gradient(circle at 70% 70%, rgba(29,93,137,.16) 0 76px, transparent 77px),
+    radial-gradient(circle at 86% 78%, rgba(255,240,213,.42) 0 48px, transparent 49px),
+    linear-gradient(160deg,#DCE7DE 0%, #CBDCD2 48%, #E2F0F7 100%);z-index:0}
+  .heroShade{position:absolute;inset:0;background:linear-gradient(180deg, rgba(22,33,28,.06) 0%, rgba(22,33,28,.42) 100%);z-index:1}
+  .heroContent{position:relative;z-index:2;padding:120px 96px 0;max-width:760px;display:flex;flex-direction:column;gap:18px}
+  .eyebrow{font-size:14px;letter-spacing:.04em;color:#fff;opacity:.88;margin:0}
+  h1{font-size:62px;line-height:1.08;letter-spacing:-.018em;font-weight:650;margin:0;color:#fff}
+  h1 span{display:block}
+  .lead{font-size:19px;line-height:30px;color:#fff;opacity:.94;margin:6px 0 18px;max-width:560px}
+  .heroActions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .primary{height:56px;border-radius:var(--radius);padding:0 26px;display:inline-flex;align-items:center;gap:10px;background:var(--pine700);color:#fff;font-size:16px;font-weight:600;text-decoration:none;border:1px solid transparent}
+  .secondary{height:56px;border-radius:var(--radius);padding:0 22px;display:inline-flex;align-items:center;gap:8px;background:transparent;color:#fff;font-size:16px;font-weight:600;text-decoration:none;border:1px solid color-mix(in srgb, #fff 56%, transparent)}
+  .scrollCue{position:absolute;left:50%;bottom:36px;transform:translateX(-50%);width:38px;height:38px;border-radius:999px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:#fff;z-index:3;text-decoration:none}
+
+  /* ---------- manifesto ---------- */
+  .manifesto{padding:64px 96px 24px;background:var(--canvas)}
+  .kicker{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--pine700);font-weight:700;margin:0 0 12px}
+  h2{font-size:34px;line-height:42px;font-weight:650;letter-spacing:-.014em;margin:0 0 14px;max-width:760px}
+  .manifesto p{font-size:17px;line-height:28px;color:var(--ink700);margin:0;max-width:780px}
+
+  /* ---------- story / por dentro ---------- */
+  .story{padding:24px 96px 36px;background:var(--canvas)}
+  .storyHead{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;max-width:680px}
+  .storyLayout{display:flex;gap:34px;align-items:flex-start}
+  .steps{flex:1 1 460px;display:flex;flex-direction:column;gap:14px}
+  .step{display:grid;grid-template-columns:46px 1fr;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:16px 18px}
+  .step[data-active="true"]{background:var(--pine100);border-color:color-mix(in srgb, var(--pine700) 18%, transparent)}
+  .step .num{width:36px;height:36px;border-radius:999px;background:var(--pine100);color:var(--pine700);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .step[data-active="true"] .num{background:var(--pine700);color:#fff}
+  .step .body{display:flex;flex-direction:column;gap:3px}
+  .step .lbl{font-size:13px;font-weight:600;color:var(--pine700);letter-spacing:.04em;text-transform:uppercase}
+  .step .ttl{font-size:16px;line-height:24px;font-weight:650;color:var(--ink900);margin:0}
+  .step .copy{font-size:14px;line-height:22px;color:var(--ink700);margin:0}
+
+  /* mock do produto */
+  .stage{flex:0 0 432px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);overflow:hidden}
+  .stageTop{height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+  .stageTop .b{display:inline-flex;align-items:center;gap:7px;color:var(--pine700);font-weight:700;font-size:14px;letter-spacing:.02em}
+  .stageTop .city{font-size:12px;color:var(--ink500)}
+  .stageBody{padding:14px 16px;display:flex;flex-direction:column;gap:12px;background:var(--sunken)}
+  .panel2{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+  .panel2 .lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink500);font-weight:600;display:block;margin-bottom:4px}
+  .panel2 p{margin:0;font-size:14px;line-height:22px;color:var(--ink900)}
+  .panel2 .meta{display:flex;gap:8px;margin-top:8px;font-size:12px;color:var(--ink500)}
+  .panel2 .meta span{padding:3px 9px;border-radius:999px;background:var(--pine100);color:var(--pine700);font-weight:600}
+  .checkline{display:flex;align-items:center;gap:7px;color:var(--pine700);font-size:13px;font-weight:600}
+
+  /* ---------- pertencimento ---------- */
+  .belong{padding:14px 96px 14px;background:var(--canvas)}
+  .belongHead{max-width:760px;margin-bottom:12px}
+  .belongHead p{font-size:17px;line-height:28px;color:var(--ink700);margin:8px 0 0}
+  .layers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:6px}
+  .layer{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+  .layer .top{display:flex;align-items:center;gap:10px}
+  .layer .num{width:30px;height:30px;border-radius:999px;background:var(--pine100);color:var(--pine700);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .layer h3{margin:0;font-size:18px;font-weight:650;letter-spacing:-.006em}
+  .layer p{margin:0;font-size:14px;line-height:22px;color:var(--ink700)}
+
+  /* ---------- confiança ---------- */
+  .trust{padding:16px 96px 16px;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .trustHead{margin-bottom:10px;max-width:780px}
+  .trustList{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .trustItem{background:var(--canvas);border:1px solid var(--line);border-radius:var(--radius-card);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+  .trustItem svg{color:var(--pine700)}
+  .trustItem h3{margin:0;font-size:16px;font-weight:650}
+  .trustItem p{margin:0;font-size:14px;line-height:20px;color:var(--ink700)}
+
+  /* ---------- closing ---------- */
+  .closing{padding:20px 96px 10px;background:var(--canvas)}
+  .closingInner{display:flex;flex-direction:column;gap:10px;max-width:780px}
+  .closingInner .brand{align-self:flex-start}
+  .closingInner h2{font-size:26px;line-height:32px}
+  .closingInner p{font-size:16px;line-height:26px;color:var(--ink700);margin:0}
+  .foot{display:flex;flex-direction:column;gap:2px;margin-top:18px;font-size:12px;color:var(--ink500);max-width:760px}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- ======================= painel 1 — primeiro contato (hero + manifesto + por dentro) ======================= -->
+  <div class="panel" data-screen="Primeiro contato">
+    <div class="scale">
+      <div class="public">
+        <header class="topbar">
+          <a class="brand" href="#" aria-label="Bivaque, início">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 12 4l9 15z"/><path d="M3 19h18"/><path d="M9 19v-5h6v5"/></svg>
+            BIVAQUE
+          </a>
+          <nav class="topnav" aria-label="Navegação principal">
+            <a href="#por-dentro" class="on">Por dentro</a>
+            <a href="#pertencimento">Pertencimento</a>
+            <a href="#confianca">Confiança</a>
+          </nav>
+          <div class="spacer"></div>
+          <a class="entrar" href="#">Entrar <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </header>
+
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="heroImg" aria-hidden="true"></div>
+          <div class="heroShade" aria-hidden="true"></div>
+          <div class="heroContent">
+            <p class="eyebrow">Para militares federais, veteranos, pensionistas e dependentes</p>
+            <h1 id="hero-title">
+              <span>Bivaque.</span>
+              <span>A comunidade vai com você.</span>
+            </h1>
+            <p class="lead">Encontre quem conhece o lugar, a rotina e as perguntas que chegam com cada mudança. Compartilhe o que aprendeu e facilite o caminho de quem vier depois.</p>
+            <div class="heroActions">
+              <a class="primary" href="#">Quero fazer parte <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+              <a class="secondary" href="#por-dentro">Ver como funciona</a>
+            </div>
+          </div>
+          <a class="scrollCue" href="#manifesto" aria-label="Ir para o conteúdo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </a>
+        </section>
+
+        <section id="manifesto" class="manifesto">
+          <p class="kicker">Para cada chegada</p>
+          <h2>Quem chega tem perguntas. Quem já está conhece os caminhos.</h2>
+          <p>Qual escola recebe matrícula no meio do ano? Que serviço conhece a rotina militar? Como funciona a cidade para quem acabou de chegar? No Bivaque, essas respostas vêm de pessoas que já passaram por isso.</p>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= painel 2 — pertencimento, confiança e fechamento ======================= -->
+  <div class="panel" data-screen="Como entrar e o que esperar">
+    <div class="scale">
+      <div class="public">
+        <header class="topbar">
+          <a class="brand" href="#" aria-label="Bivaque, início">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 12 4l9 15z"/><path d="M3 19h18"/><path d="M9 19v-5h6v5"/></svg>
+            BIVAQUE
+          </a>
+          <nav class="topnav" aria-label="Navegação principal">
+            <a href="#por-dentro">Por dentro</a>
+            <a href="#pertencimento" class="on">Pertencimento</a>
+            <a href="#confianca">Confiança</a>
+          </nav>
+          <div class="spacer"></div>
+          <a class="entrar" href="#">Entrar <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </header>
+
+          <section id="pertencimento" class="belong" style="padding-top:16px">
+          <div class="belongHead">
+            <p class="kicker">Onde você participa</p>
+            <h2>Sua cidade, suas comunidades e os grupos que fazem parte da sua vida.</h2>
+            <p>Você participa da cidade, das comunidades e dos grupos que fazem sentido para a sua rotina. Cada conversa chega às pessoas certas.</p>
+          </div>
+          <div class="layers">
+            <article class="layer">
+              <div class="top">
+                <span class="num">01</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--pine700)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-7-7-12a7 7 0 0 1 14 0c0 5-7 12-7 12z"/><circle cx="12" cy="9" r="2.6"/></svg>
+              </div>
+              <h3>Cidade</h3>
+              <p>A cidade onde você está ou para onde vai.</p>
+            </article>
+            <article class="layer">
+              <div class="top">
+                <span class="num">02</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--pine700)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 12 4l9 15z"/><path d="M3 19h18"/></svg>
+              </div>
+              <h3>Comunidade</h3>
+              <p>As pessoas com quem você divide uma referência, uma fase ou uma história.</p>
+            </article>
+            <article class="layer">
+              <div class="top">
+                <span class="num">03</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--pine700)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m16 8-6 4-4 6M16 8l-2 8"/></svg>
+              </div>
+              <h3>Grupo</h3>
+              <p>Conversas sobre um assunto específico.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="confianca" class="trust">
+          <div class="trustHead">
+            <p class="kicker">Confiança</p>
+            <h2>Uma comunidade feita para conversas que pedem contexto.</h2>
+          </div>
+          <div class="trustList">
+            <article class="trustItem">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+              <h3>Entrada coerente com cada papel</h3>
+              <p>A elegibilidade é conferida de acordo com o papel de cada pessoa.</p>
+            </article>
+            <article class="trustItem">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+              <h3>Seu perfil é para convivência</h3>
+              <p>CPF, patente, organização militar, endereço e documentos não aparecem no perfil.</p>
+            </article>
+            <article class="trustItem">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></svg>
+              <h3>Encontros pelo que importa</h3>
+              <p>Você encontra pessoas pelas conversas, pelos interesses e pelas comunidades em comum.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="closing">
+          <div class="closingInner">
+            <span class="brand">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19 12 4l9 15z"/><path d="M3 19h18"/></svg>
+              BIVAQUE
+            </span>
+            <h2>Você pode chegar com uma pergunta. Logo terá algo para compartilhar.</h2>
+            <p>Entre para conhecer o lugar, resolver dúvidas e deixar a sua experiência disponível para quem chegar depois.</p>
+            <a class="primary" href="#" style="align-self:flex-start">Quero fazer parte <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          </div>
+          <footer class="foot">
+            <span>Bivaque é uma iniciativa comunitária independente.</span>
+            <span>Sem vínculo oficial com as Forças Armadas.</span>
+          </footer>
+        </section>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

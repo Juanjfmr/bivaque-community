@@ -2,7 +2,16 @@
 
 import { Button } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
-import { Bus, FileText, GraduationCap, Hospital, Search } from "lucide-react"
+import {
+  ArrowRight,
+  Bookmark,
+  Bus,
+  FileText,
+  GraduationCap,
+  Hospital,
+  Lightbulb,
+  Search,
+} from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
@@ -86,6 +95,11 @@ function GuideContent() {
   const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
   const [category, setCategory] = useState<"all" | GuideCategory>("all")
   const [memberCount, setMemberCount] = useState<number | null>(null)
+  // Marcador por referência (prancha 12/61): o cartão grava, a aba Guia de
+  // /salvos lê. O estado vive aqui para o cartão não fazer uma consulta por
+  // referência.
+  const [savedEntryIds, setSavedEntryIds] = useState<Set<string>>(new Set())
+  const [savingEntryId, setSavingEntryId] = useState<string | null>(null)
   // Onda T Task 4: same fix as /events — ?locality lets the city switcher
   // ask for the origin's guide specifically; absent it, defaults to current.
   const viewingLocalityId = searchParams.get("locality") ?? current.id
@@ -120,12 +134,69 @@ function GuideContent() {
     }
 
     setEntries((data as GuideEntry[] | null) ?? [])
+
+    // Falha ao ler os próprios salvamentos não derruba o guia: o marcador cai
+    // para "não salvo" e a ação continua disponível.
+    const { data: saves, error: savesError } = await supabase
+      .from("guide_entry_saves")
+      .select("entry_id")
+    if (savesError) {
+      log.error("guide: could not read the saved entries", {
+        error: savesError.message,
+      })
+    } else {
+      setSavedEntryIds(
+        new Set(((saves ?? []) as Array<{ entry_id: string }>).map((row) => row.entry_id)),
+      )
+    }
+
     setLoading(false)
   }, [supabase, viewingLocalityId])
 
   useEffect(() => {
     loadEntries()
   }, [loadEntries])
+
+  // Marcador: grava e desgrava na mesma tabela que a aba Guia de /salvos lê
+  // (guide_entry_saves, 20260915190000). A policy de INSERT exige referência
+  // aprovada da própria localidade — o servidor é quem decide, não a tela.
+  const toggleSaveEntry = useCallback(
+    async (entryId: string) => {
+      setSavingEntryId(entryId)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setSavingEntryId(null)
+        return
+      }
+
+      if (savedEntryIds.has(entryId)) {
+        const { error: deleteError } = await supabase
+          .from("guide_entry_saves")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("entry_id", entryId)
+        if (!deleteError) {
+          setSavedEntryIds((previous) => {
+            const next = new Set(previous)
+            next.delete(entryId)
+            return next
+          })
+        }
+      } else {
+        const { error: insertError } = await supabase.from("guide_entry_saves").insert({
+          user_id: user.id,
+          entry_id: entryId,
+        })
+        if (!insertError) {
+          setSavedEntryIds((previous) => new Set(previous).add(entryId))
+        }
+      }
+      setSavingEntryId(null)
+    },
+    [supabase, savedEntryIds],
+  )
 
   // P0 Task 9: load the locality member count to branch the empty state on the
   // §3.4 density threshold. The metric is a proxy (membership count, not weekly
@@ -206,7 +277,13 @@ function GuideContent() {
           Explorar
         </Link>
         <span aria-hidden="true"> / </span>
-        <span aria-current="page">Guia</span>
+        <Link
+          href="/guide"
+          aria-current="page"
+          className="inline-flex min-h-11 items-center rounded-lg px-2 text-[var(--semantic-text-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)]"
+        >
+          Guia
+        </Link>
       </nav>
 
       <header className="mt-1 flex flex-col gap-1">
@@ -219,7 +296,104 @@ function GuideContent() {
         </p>
       </header>
 
-      <search className="mt-5 block">
+      {/* Abas do topo (prancha 12): Guia (aqui) e Mercado (rota real). */}
+      <div
+        role="tablist"
+        aria-label="Seções do conteúdo da cidade"
+        className="mt-5 inline-flex rounded-full border border-border bg-[var(--semantic-surface)] p-1"
+      >
+        <span
+          role="tab"
+          aria-selected="true"
+          tabIndex={0}
+          className="inline-flex min-h-11 items-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-white"
+        >
+          Guia
+        </span>
+        <Link
+          role="tab"
+          aria-selected="false"
+          href="/mercado"
+          className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium text-[var(--semantic-text-secondary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+        >
+          Mercado
+        </Link>
+      </div>
+
+      {/* O marcador do cartão grava; este atalho leva ao que já foi gravado, com
+          a aba do guia escolhida — sem isso o topo prometeria um destino que
+          abre em "Tudo". Ao lado, o caminho de quem conhece uma referência que
+          o guia ainda não tem (prancha 12/61). */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1">
+        <Link
+          href="/salvos?aba=guia"
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+        >
+          <Bookmark size={16} aria-hidden="true" />
+          Salvos
+        </Link>
+        <Link
+          href="/guide/sugerir"
+          className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-[var(--semantic-link)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+        >
+          <Lightbulb size={16} aria-hidden="true" />
+          Sugerir referência
+        </Link>
+      </div>
+
+      {/* Bloco editorial (prancha 12) — só com entradas aprovadas reais. As
+          fotos da prancha dependem de fixtures [dado] (RECON-051); os cards de
+          assunto saem das categorias presentes, com contagem verdadeira. */}
+      {!loading && !error && entries.length > 0 && (
+        <section aria-labelledby="guia-editorial-titulo" className="mt-6">
+          <div className="flex flex-col gap-4 rounded-2xl bg-[var(--semantic-action-primary)] px-6 py-8 text-white sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-xl">
+              <h2
+                id="guia-editorial-titulo"
+                className="text-xl font-semibold tracking-tight sm:text-2xl"
+              >
+                Seus primeiros dias em {current.cityName}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-white/85">
+                Referências aprovadas por quem já mora aqui — escolas, saúde, transporte e
+                utilidades para chegar e se organizar.
+              </p>
+            </div>
+            <Link
+              href="#guia-referencias"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-white px-4 text-sm font-medium text-[var(--semantic-action-primary)] transition-transform duration-[var(--semantic-motion-duration-instant)] hover:translate-x-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              Ler guia
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {categories.map((item) => {
+              const Icon = CATEGORY_ICONS[item]
+              const count = entries.filter((entry) => entry.category === item).length
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setCategory(item)}
+                  className="flex min-h-24 items-center gap-3 rounded-2xl border border-border bg-[var(--semantic-surface)] px-4 py-4 text-left transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                >
+                  <Icon size={20} aria-hidden="true" className="shrink-0 text-accent" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">{CATEGORY_LABELS[item]}</span>
+                    <span className="block text-xs text-muted">
+                      {count} {count === 1 ? "referência" : "referências"}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      <search className="mt-6 block">
         <label htmlFor="guia-busca" className="block text-sm font-medium">
           Buscar no guia
         </label>
@@ -231,7 +405,7 @@ function GuideContent() {
             placeholder="Buscar por nome ou descrição..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="min-h-11 w-full bg-transparent text-sm focus:outline-none"
+            className="min-h-11 w-full bg-transparent text-sm transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none"
           />
         </div>
       </search>
@@ -265,7 +439,11 @@ function GuideContent() {
         </nav>
 
         <div className="flex min-w-0 flex-col gap-8 lg:col-start-2 lg:row-start-1">
-          <section aria-labelledby="guia-referencias-titulo" className="flex flex-col gap-3">
+          <section
+            id="guia-referencias"
+            aria-labelledby="guia-referencias-titulo"
+            className="scroll-mt-24 flex flex-col gap-3"
+          >
             <h2 id="guia-referencias-titulo" className="text-base font-semibold tracking-tight">
               Guia de chegada
             </h2>
@@ -313,7 +491,13 @@ function GuideContent() {
             {!loading && !error && filteredEntries.length > 0 && (
               <ul className="flex flex-col gap-3">
                 {filteredEntries.map((entry) => (
-                  <GuideEntryCard key={entry.id} entry={entry} />
+                  <GuideEntryCard
+                    key={entry.id}
+                    entry={entry}
+                    saved={savedEntryIds.has(entry.id)}
+                    saving={savingEntryId === entry.id}
+                    onToggleSave={toggleSaveEntry}
+                  />
                 ))}
               </ul>
             )}
@@ -357,13 +541,54 @@ function GuideContent() {
             className="lg:col-start-2 xl:col-start-3 xl:row-start-1"
           >
             <Card className="p-4">
+              <h2 className="text-base font-semibold tracking-tight">Comece por aqui</h2>
+              <ul className="mt-2">
+                {categories.map((item) => {
+                  const Icon = CATEGORY_ICONS[item]
+                  const count = entries.filter((entry) => entry.category === item).length
+                  return (
+                    <li key={item}>
+                      <button
+                        type="button"
+                        onClick={() => setCategory(item)}
+                        aria-pressed={category === item}
+                        className="flex min-h-11 w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                      >
+                        <Icon size={16} aria-hidden="true" className="shrink-0 text-muted" />
+                        <span className="min-w-0 flex-1 truncate font-medium">
+                          {CATEGORY_LABELS[item]}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted">{count}</span>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+
+            <Card className="p-4">
               <h2 id="guia-sobre-titulo" className="text-base font-semibold tracking-tight">
                 Sobre o guia
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                Todas as referências deste guia são revisadas por uma pessoa da equipe do Bivaque
-                antes de serem publicadas. Nada entra aqui de forma automática.
+                Conteúdo curado por famílias, veteranos e pensionistas que moram na cidade. Nada
+                entra aqui de forma automática.
               </p>
+            </Card>
+
+            <Card className="p-4">
+              <h2 className="text-base font-semibold tracking-tight">Ajude a melhorar o guia</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted">
+                Achou uma referência desatualizada ou conhece um serviço que faltou? O canal de
+                contato do produto é o mesmo dos avisos transacionais.
+              </p>
+              <Link
+                href="/ajuda"
+                className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+              >
+                Falar com a equipe
+                <ArrowRight size={16} aria-hidden="true" />
+              </Link>
             </Card>
           </aside>
         )}
@@ -397,7 +622,17 @@ function CategoryButton({
   )
 }
 
-function GuideEntryCard({ entry }: { entry: GuideEntry }) {
+function GuideEntryCard({
+  entry,
+  saved,
+  saving,
+  onToggleSave,
+}: {
+  entry: GuideEntry
+  saved: boolean
+  saving: boolean
+  onToggleSave: (entryId: string) => void
+}) {
   const Icon = CATEGORY_ICONS[entry.category]
   const dialPhone = entry.phone ? entry.phone.replace(/[^\d+]/g, "") : null
 
@@ -409,9 +644,27 @@ function GuideEntryCard({ entry }: { entry: GuideEntry }) {
             <Icon size={20} aria-hidden="true" className="text-[var(--semantic-action-primary)]" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-[var(--semantic-text-secondary)]">
-              {CATEGORY_LABELS[entry.category]}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-xs font-medium text-[var(--semantic-text-secondary)]">
+                {CATEGORY_LABELS[entry.category]}
+              </p>
+              {/* Marcador — o mesmo vocabulário de salvar do produto (prancha
+                  54): um só gesto, um só destino (/salvos, aba Guia). */}
+              <button
+                type="button"
+                onClick={() => onToggleSave(entry.id)}
+                aria-pressed={saved}
+                aria-label={saved ? `Remover ${entry.name} dos salvos` : `Salvar ${entry.name}`}
+                disabled={saving}
+                className={`inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] disabled:opacity-60 ${
+                  saved
+                    ? "text-[var(--semantic-action-primary)] hover:bg-[var(--semantic-selected)]"
+                    : "text-[var(--semantic-text-secondary)] hover:bg-[var(--semantic-surface-hover)]"
+                }`}
+              >
+                <Bookmark size={18} aria-hidden="true" fill={saved ? "currentColor" : "none"} />
+              </button>
+            </div>
             <h3 className="mt-0.5 text-base font-semibold">{entry.name}</h3>
             {entry.description && (
               <p className="mt-1 text-sm leading-relaxed text-muted">{entry.description}</p>

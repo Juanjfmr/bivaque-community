@@ -1,0 +1,41 @@
+{
+  "id": "85-web-arrivals",
+  "kind": "web",
+  "group": "operations",
+  "title": "Web: operar chegadas e transferências",
+  "screens": ["Chegadas declaradas", "Nenhuma transferência declarada"],
+  "reviewNotes": [
+    "Rota /arrivals (O05). Painel do operador com nav de topo Admissões / Denúncias / Guia de chegada / Chegadas. Página implementada em apps/web/app/(admin)/arrivals/page.tsx.",
+    "Lacuna encontrada pela análise de chegabilidade: a página é apenas leitura. Mostra volume por cidade, mas não abre a chegada, não filtra por janela, não tem ação por linha. O painel 1 registra isso num cartão amber para que o revisor não ache que a lacuna foi fechada pela prancha.",
+    "A coluna 'Próximo passo' do painel 1 está propositalmente vazia com o rótulo ' sem ação por linha hoje' — não inventar atalho que o código ainda não tem.",
+    "A RPC list_locality_arrivals_volume é operator-only e respeita a RLS do painel do operador. Cidade e contagem são os únicos campos expostos; nomes, contatos e endereços nunca aparecem aqui.",
+    "Painel 2 mostra o estado vazio honesto: a RPC devolveu lista vazia, então a tela não inventa volume. Ações oferecidas são Atualizar, Voltar para Admissões e Abrir Admissões — destinos que já existem no shell do operador.",
+    "Sem promessa de prazo de entrega da próxima versão da página. Quando a tela ganhar destino próprio (abrir chegada, mudar janela, histórico), a prancha é refeita com a nova evidência.",
+    "Brasília, Manaus, Recife, Salvador e Porto Alegre são cidades ilustrativas para preencher a tabela do painel 1; consolidar fixtures únicas de cidades e contagens ao implementar."
+  ],
+  "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do operador conforme apps/web/app/(admin)/layout.tsx: topbar com BIVAQUE · Operação e nav Admissões / Denúncias / Guia de chegada / Chegadas. Painel 1 = chegadas declaradas com cinco cidades fictícias, chips de janela e origem, e cartão amber registrando a lacuna de chegabilidade. Painel 2 = estado vazio honesto quando a RPC devolve lista vazia, com ações Atualizar / Voltar / Abrir Admissões. Copy reconciliada com apps/web/app/(admin)/arrivals/page.tsx.",
+  "reviewedAt": "2026-09-12",
+  "contract": "RECON-046",
+  "journey": {
+    "id": "web-chegadas-e-transferencias",
+    "titulo": "Operador acompanha chegadas declaradas e transferencias ainda ativas",
+    "plataforma": "web",
+    "grupo": "operations",
+    "persona": "Operador autorizado do painel BIVAQUE Operacao",
+    "comeca": "Operador clica em Chegadas na topbar do painel",
+    "termina": "Vê o volume por cidade ou o estado vazio e, se quiser, atualiza a leitura",
+    "acoes": ["Ler volume por cidade", "Atualizar leitura"],
+    "etapas": [
+      {
+        "nome": "Volume por cidade",
+        "passos": [{ "tela": "85-web-arrivals#0", "acao": "lista cidade e contagem lidas da RPC; coluna de acao ainda nao existe" }]
+      },
+      {
+        "nome": "Sem chegadas",
+        "passos": [{ "tela": "85-web-arrivals#1", "acao": "estado vazio honesto com caminhos reais do shell do operador" }]
+      }
+    ],
+    "desvios": []
+  },
+  "leitura": "## 85-web-arrivals — chegadas declaradas e transferências ativas\n\n**Etapa:** O05. **Painéis:** chegadas declaradas com volume por cidade; estado vazio honesto.\n\nPrancha criada em 12/09/2026, depois do handoff. Desenha o que a página `/arrivals` faz hoje — uma única lista por cidade alimentada pela RPC `list_locality_arrivals_volume` — e registra, em vez de esconder, a lacuna de chegabilidade que a análise da rota revelou: a tela é read-only, sem filtro por janela, sem ação por linha e sem destino próprio para abrir uma chegada.\n\n### Composição\n\nShell do operador nos dois painéis, com a topbar de `apps/web/app/(admin)/layout.tsx`: wordmark `BIVAQUE · Operação` à esquerda e nav de Admissões / Denúncias / Guia de chegada / Chegadas. Chegadas ativo em ambos os painéis.\n\n**Painel 1 — Chegadas declaradas.** H1 'Chegadas declaradas'. Parágrafo que distingue 'quem está a caminho' de 'quem já mora lá'. Linha de chips com janela (chegadas ativas neste momento) e origem dos dados (`list_locality_arrivals_volume`); à direita, botão Atualizar. Tabela com três colunas (Cidade de destino, Chegadas, Próximo passo) e cinco linhas fictícias — Brasília 14, Manaus 9, Recife 6, Salvador 4, Porto Alegre 2. A coluna 'Próximo passo' está deliberadamente em branco com o rótulo 'sem ação por linha hoje'. Abaixo, cartão amber que nomeia explicitamente a lacuna encontrada pela análise de chegabilidade: a página não abre a chegada, não filtra por janela nem tem ação por linha; quando ganhar destino, a prancha é refeita. Rodapé reforçando que a RPC é operator-only e respeita a RLS — cidade e contagem são os únicos campos expostos.\n\n**Painel 2 — Nenhuma transferência declarada.** Mesmo shell e mesma linha de chips/botão. O conteúdo central é um cartão de estado vazio com ícone pine-100, H2 'Nenhuma transferência declarada no momento', parágrafo explicando que a RPC devolveu lista vazia — não é erro, é o estado real. Três ações oferecidas, todas honestas: Atualizar agora (refaz a leitura), Voltar para Admissões, Abrir Admissões. Cartão amber registra que o estado vazio é proposital e que a página não inventa volume para preencher colunas. Rodapé repete a regra de privacidade.\n\n### Estados e limites\n\nA prancha inteira é só leitura. Nenhuma promessa de prazo de entrega da próxima versão da página; nenhum nome de operador, cidade de origem ou contagem pessoal. As cidades são ilustrativas; ao implementar, consolidar fixtures únicas. Quando a tela ganhar destino próprio (abrir uma chegada, mudar a janela, ver histórico), a prancha é refeita com a nova evidência — não prometer antes.\n"
+}

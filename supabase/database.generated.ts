@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          due_at: string
+          finalized_at: string | null
+          purge_attempted_at: string | null
+          purge_attempts: number
+          purge_last_error: string | null
+          requested_at: string
+          user_id: string
+        }
+        Insert: {
+          due_at: string
+          finalized_at?: string | null
+          purge_attempted_at?: string | null
+          purge_attempts?: number
+          purge_last_error?: string | null
+          requested_at?: string
+          user_id: string
+        }
+        Update: {
+          due_at?: string
+          finalized_at?: string | null
+          purge_attempted_at?: string | null
+          purge_attempts?: number
+          purge_last_error?: string | null
+          requested_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       arrival_guide_entries: {
         Row: {
           category: Database["public"]["Enums"]["arrival_guide_category"]
@@ -25,6 +55,7 @@ export type Database = {
           source: string
           source_reply_id: string | null
           status: string
+          submitted_by: string | null
           updated_at: string
           website_url: string | null
         }
@@ -43,6 +74,7 @@ export type Database = {
           source?: string
           source_reply_id?: string | null
           status?: string
+          submitted_by?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -61,6 +93,7 @@ export type Database = {
           source?: string
           source_reply_id?: string | null
           status?: string
+          submitted_by?: string | null
           updated_at?: string
           website_url?: string | null
         }
@@ -118,6 +151,7 @@ export type Database = {
       }
       communities: {
         Row: {
+          banner_path: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -126,8 +160,10 @@ export type Database = {
           locality_id: string
           name: string
           owner_user_id: string
+          thumbnail_path: string | null
         }
         Insert: {
+          banner_path?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -136,8 +172,10 @@ export type Database = {
           locality_id: string
           name: string
           owner_user_id: string
+          thumbnail_path?: string | null
         }
         Update: {
+          banner_path?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -146,6 +184,7 @@ export type Database = {
           locality_id?: string
           name?: string
           owner_user_id?: string
+          thumbnail_path?: string | null
         }
         Relationships: [
           {
@@ -330,6 +369,7 @@ export type Database = {
       }
       dm_messages: {
         Row: {
+          client_key: string | null
           content: string
           conversation_id: string
           created_at: string
@@ -338,6 +378,7 @@ export type Database = {
           sender_id: string
         }
         Insert: {
+          client_key?: string | null
           content: string
           conversation_id: string
           created_at?: string
@@ -346,6 +387,7 @@ export type Database = {
           sender_id: string
         }
         Update: {
+          client_key?: string | null
           content?: string
           conversation_id?: string
           created_at?: string
@@ -356,6 +398,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "dm_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "dm_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_read_states: {
+        Row: {
+          conversation_id: string
+          last_read_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          last_read_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          last_read_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_read_states_conversation_id_fkey"
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "dm_conversations"
@@ -439,6 +510,7 @@ export type Database = {
       events: {
         Row: {
           community_id: string | null
+          cover_path: string | null
           created_at: string
           description: string | null
           ends_at: string | null
@@ -459,6 +531,7 @@ export type Database = {
         }
         Insert: {
           community_id?: string | null
+          cover_path?: string | null
           created_at?: string
           description?: string | null
           ends_at?: string | null
@@ -479,6 +552,7 @@ export type Database = {
         }
         Update: {
           community_id?: string | null
+          cover_path?: string | null
           created_at?: string
           description?: string | null
           ends_at?: string | null
@@ -614,6 +688,478 @@ export type Database = {
           },
         ]
       }
+      guide_article_revisions: {
+        Row: {
+          article_id: string
+          id: string
+          revised_at: string
+          revised_by: string | null
+          snapshot: Json
+        }
+        Insert: {
+          article_id: string
+          id?: string
+          revised_at?: string
+          revised_by?: string | null
+          snapshot: Json
+        }
+        Update: {
+          article_id?: string
+          id?: string
+          revised_at?: string
+          revised_by?: string | null
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_article_revisions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "guide_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guide_article_sections: {
+        Row: {
+          anchor: string
+          article_id: string
+          body: string
+          created_at: string
+          id: string
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          anchor: string
+          article_id: string
+          body: string
+          created_at?: string
+          id?: string
+          position: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          anchor?: string
+          article_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_article_sections_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "guide_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guide_articles: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          curated_by: string | null
+          entry_id: string
+          id: string
+          reviewed_at: string | null
+          status: string
+          subtitle: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          curated_by?: string | null
+          entry_id: string
+          id?: string
+          reviewed_at?: string | null
+          status?: string
+          subtitle?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          curated_by?: string | null
+          entry_id?: string
+          id?: string
+          reviewed_at?: string | null
+          status?: string
+          subtitle?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_articles_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: true
+            referencedRelation: "arrival_guide_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guide_correction_requests: {
+        Row: {
+          article_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          description: string
+          id: string
+          reference_text: string | null
+          requester_id: string
+          section_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          description: string
+          id?: string
+          reference_text?: string | null
+          requester_id: string
+          section_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          description?: string
+          id?: string
+          reference_text?: string | null
+          requester_id?: string
+          section_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_correction_requests_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "guide_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guide_correction_requests_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "guide_article_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guide_entry_saves: {
+        Row: {
+          entry_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          entry_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          entry_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guide_entry_saves_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "arrival_guide_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_alert_deliveries: {
+        Row: {
+          alert_id: string
+          created_at: string
+          id: string
+          listing_id: string
+        }
+        Insert: {
+          alert_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+        }
+        Update: {
+          alert_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_alert_deliveries_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "listing_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_alert_deliveries_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_alerts: {
+        Row: {
+          created_at: string
+          deal: Database["public"]["Enums"]["listing_deal"] | null
+          id: string
+          is_active: boolean
+          kind: Database["public"]["Enums"]["listing_kind"]
+          locality_id: string | null
+          max_value_cents: number | null
+          min_bedrooms: number | null
+          name: string
+          neighborhood: string | null
+          owner_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deal?: Database["public"]["Enums"]["listing_deal"] | null
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          max_value_cents?: number | null
+          min_bedrooms?: number | null
+          name: string
+          neighborhood?: string | null
+          owner_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deal?: Database["public"]["Enums"]["listing_deal"] | null
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          max_value_cents?: number | null
+          min_bedrooms?: number | null
+          name?: string
+          neighborhood?: string | null
+          owner_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_alerts_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_photos: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          path: string
+          position: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          path: string
+          position?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          path?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_photos_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_saves: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_saves_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_status_events: {
+        Row: {
+          actor_id: string
+          created_at: string
+          from_status: Database["public"]["Enums"]["listing_status"]
+          id: number
+          listing_id: string
+          to_status: Database["public"]["Enums"]["listing_status"]
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          from_status: Database["public"]["Enums"]["listing_status"]
+          id?: never
+          listing_id: string
+          to_status: Database["public"]["Enums"]["listing_status"]
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["listing_status"]
+          id?: never
+          listing_id?: string
+          to_status?: Database["public"]["Enums"]["listing_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_status_events_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listings: {
+        Row: {
+          available_until: string | null
+          category: string | null
+          closed_at: string | null
+          community_id: string | null
+          condition: Database["public"]["Enums"]["listing_condition"] | null
+          created_at: string
+          description: string | null
+          id: string
+          kind: Database["public"]["Enums"]["listing_kind"]
+          locality_id: string | null
+          neighborhood: string | null
+          owner_user_id: string
+          pickup_note: string | null
+          price_cents: number | null
+          published_at: string | null
+          status: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          available_until?: string | null
+          category?: string | null
+          closed_at?: string | null
+          community_id?: string | null
+          condition?: Database["public"]["Enums"]["listing_condition"] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          neighborhood?: string | null
+          owner_user_id: string
+          pickup_note?: string | null
+          price_cents?: number | null
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          available_until?: string | null
+          category?: string | null
+          closed_at?: string | null
+          community_id?: string | null
+          condition?: Database["public"]["Enums"]["listing_condition"] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          neighborhood?: string | null
+          owner_user_id?: string
+          pickup_note?: string | null
+          price_cents?: number | null
+          published_at?: string | null
+          status?: Database["public"]["Enums"]["listing_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       localities: {
         Row: {
           admission_mode: Database["public"]["Enums"]["locality_admission_mode"]
@@ -700,6 +1246,30 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_channel_preferences: {
+        Row: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled: boolean
+          notification_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel: Database["public"]["Enums"]["notification_channel"]
+          enabled?: boolean
+          notification_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["notification_channel"]
+          enabled?: boolean
+          notification_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_opt_outs: {
         Row: {
           channel: Database["public"]["Enums"]["outbox_channel"]
@@ -724,6 +1294,7 @@ export type Database = {
           events: boolean
           mentions: boolean
           messages: boolean
+          product_news: boolean
           updated_at: string
           user_id: string
         }
@@ -732,6 +1303,7 @@ export type Database = {
           events?: boolean
           mentions?: boolean
           messages?: boolean
+          product_news?: boolean
           updated_at?: string
           user_id: string
         }
@@ -740,6 +1312,7 @@ export type Database = {
           events?: boolean
           mentions?: boolean
           messages?: boolean
+          product_news?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -813,8 +1386,6 @@ export type Database = {
           attempts: number
           channel: Database["public"]["Enums"]["outbox_channel"]
           created_at: string
-          fallback_channel: Database["public"]["Enums"]["outbox_channel"] | null
-          fallback_reason: string | null
           id: string
           last_error: string | null
           payload: Json
@@ -827,10 +1398,6 @@ export type Database = {
           attempts?: number
           channel: Database["public"]["Enums"]["outbox_channel"]
           created_at?: string
-          fallback_channel?:
-            | Database["public"]["Enums"]["outbox_channel"]
-            | null
-          fallback_reason?: string | null
           id?: string
           last_error?: string | null
           payload?: Json
@@ -843,10 +1410,6 @@ export type Database = {
           attempts?: number
           channel?: Database["public"]["Enums"]["outbox_channel"]
           created_at?: string
-          fallback_channel?:
-            | Database["public"]["Enums"]["outbox_channel"]
-            | null
-          fallback_reason?: string | null
           id?: string
           last_error?: string | null
           payload?: Json
@@ -856,6 +1419,32 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      post_follows: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_follows_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_reactions: {
         Row: {
@@ -1003,38 +1592,109 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_suspensions: {
+        Row: {
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          bio: string | null
           consent_version: number
           consented_at: string | null
           created_at: string
           display_name: string
-          is_suspended: boolean
           updated_at: string
           user_id: string
           visibility: Database["public"]["Enums"]["profile_visibility"]
         }
         Insert: {
+          bio?: string | null
           consent_version?: number
           consented_at?: string | null
           created_at?: string
           display_name: string
-          is_suspended?: boolean
           updated_at?: string
           user_id: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]
         }
         Update: {
+          bio?: string | null
           consent_version?: number
           consented_at?: string | null
           created_at?: string
           display_name?: string
-          is_suspended?: boolean
           updated_at?: string
           user_id?: string
           visibility?: Database["public"]["Enums"]["profile_visibility"]
         }
         Relationships: []
+      }
+      property_details: {
+        Row: {
+          amenities: string[]
+          area_m2: number | null
+          available_from: string | null
+          bedrooms: number | null
+          condo_fee_cents: number | null
+          deal: Database["public"]["Enums"]["listing_deal"]
+          iptu_cents: number | null
+          listing_id: string
+          parking_spots: number | null
+          property_type: Database["public"]["Enums"]["property_type"]
+          rent_cents: number | null
+          sale_price_cents: number | null
+          suites: number | null
+        }
+        Insert: {
+          amenities?: string[]
+          area_m2?: number | null
+          available_from?: string | null
+          bedrooms?: number | null
+          condo_fee_cents?: number | null
+          deal: Database["public"]["Enums"]["listing_deal"]
+          iptu_cents?: number | null
+          listing_id: string
+          parking_spots?: number | null
+          property_type: Database["public"]["Enums"]["property_type"]
+          rent_cents?: number | null
+          sale_price_cents?: number | null
+          suites?: number | null
+        }
+        Update: {
+          amenities?: string[]
+          area_m2?: number | null
+          available_from?: string | null
+          bedrooms?: number | null
+          condo_fee_cents?: number | null
+          deal?: Database["public"]["Enums"]["listing_deal"]
+          iptu_cents?: number | null
+          listing_id?: string
+          parking_spots?: number | null
+          property_type?: Database["public"]["Enums"]["property_type"]
+          rent_cents?: number | null
+          sale_price_cents?: number | null
+          suites?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_details_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       provider_accounts: {
         Row: {
@@ -1323,6 +1983,7 @@ export type Database = {
           locality_id: string | null
           resolved_at: string | null
           resolved_by: string | null
+          resolved_reply_id: string | null
           title: string
           updated_at: string
         }
@@ -1338,6 +1999,7 @@ export type Database = {
           locality_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          resolved_reply_id?: string | null
           title: string
           updated_at?: string
         }
@@ -1353,6 +2015,7 @@ export type Database = {
           locality_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
+          resolved_reply_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -1369,6 +2032,13 @@ export type Database = {
             columns: ["locality_id"]
             isOneToOne: false
             referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_requests_resolved_reply_id_fkey"
+            columns: ["resolved_reply_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_replies"
             referencedColumns: ["id"]
           },
         ]
@@ -1405,7 +2075,7 @@ export type Database = {
           id: string
           operator_note: string | null
           reason: string
-          reporter_user_id: string
+          reporter_user_id: string | null
           resolved_at: string | null
           resolved_by: string | null
           status: Database["public"]["Enums"]["report_status"]
@@ -1417,7 +2087,7 @@ export type Database = {
           id?: string
           operator_note?: string | null
           reason: string
-          reporter_user_id?: string
+          reporter_user_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           status?: Database["public"]["Enums"]["report_status"]
@@ -1429,7 +2099,7 @@ export type Database = {
           id?: string
           operator_note?: string | null
           reason?: string
-          reporter_user_id?: string
+          reporter_user_id?: string | null
           resolved_at?: string | null
           resolved_by?: string | null
           status?: Database["public"]["Enums"]["report_status"]
@@ -1437,6 +2107,116 @@ export type Database = {
           target_type?: Database["public"]["Enums"]["report_target_type"]
         }
         Relationships: []
+      }
+      service_request_photos: {
+        Row: {
+          created_at: string
+          id: string
+          photo_path: string
+          position: number
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          photo_path: string
+          position?: number
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          photo_path?: string
+          position?: number
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_request_photos_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_requests: {
+        Row: {
+          cancelled_at: string | null
+          cancelled_by_user_id: string | null
+          category: Database["public"]["Enums"]["provider_category"]
+          closed_at: string | null
+          closed_by_user_id: string | null
+          conversation_id: string | null
+          created_at: string
+          description: string
+          first_responded_at: string | null
+          id: string
+          idempotency_key: string | null
+          provider_id: string
+          provider_user_id: string
+          region: string | null
+          requester_user_id: string
+          status: Database["public"]["Enums"]["service_request_status"]
+          updated_at: string
+          when_text: string | null
+        }
+        Insert: {
+          cancelled_at?: string | null
+          cancelled_by_user_id?: string | null
+          category: Database["public"]["Enums"]["provider_category"]
+          closed_at?: string | null
+          closed_by_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          description: string
+          first_responded_at?: string | null
+          id?: string
+          idempotency_key?: string | null
+          provider_id: string
+          provider_user_id: string
+          region?: string | null
+          requester_user_id: string
+          status?: Database["public"]["Enums"]["service_request_status"]
+          updated_at?: string
+          when_text?: string | null
+        }
+        Update: {
+          cancelled_at?: string | null
+          cancelled_by_user_id?: string | null
+          category?: Database["public"]["Enums"]["provider_category"]
+          closed_at?: string | null
+          closed_by_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          description?: string
+          first_responded_at?: string | null
+          id?: string
+          idempotency_key?: string | null
+          provider_id?: string
+          provider_user_id?: string
+          region?: string | null
+          requester_user_id?: string
+          status?: Database["public"]["Enums"]["service_request_status"]
+          updated_at?: string
+          when_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "dm_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_requests_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_group_interests: {
         Row: {
@@ -1533,6 +2313,17 @@ export type Database = {
         Returns: undefined
       }
       advance_recurring_events: { Args: never; Returns: number }
+      apply_guide_correction: {
+        Args: {
+          p_note: string
+          p_operator_user_id: string
+          p_request_id: string
+          p_section_body: string
+          p_section_title: string
+          p_summary: string
+        }
+        Returns: undefined
+      }
       approve_community_member: {
         Args: {
           p_caller_user_id: string
@@ -1549,6 +2340,11 @@ export type Database = {
         Args: { p_event_id: string; p_user_id: string }
         Returns: boolean
       }
+      cancel_community_request: {
+        Args: { p_community_id: string }
+        Returns: undefined
+      }
+      cancel_service_request: { Args: { p_request_id: string }; Returns: Json }
       check_recurrence_holiday: {
         Args: { p_date: string }
         Returns: {
@@ -1556,6 +2352,11 @@ export type Database = {
           is_holiday: boolean
         }[]
       }
+      clear_recommendation_resolved_reply: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
+      close_service_request: { Args: { p_request_id: string }; Returns: Json }
       complete_event: {
         Args: { p_caller_user_id?: string; p_event_id: string }
         Returns: undefined
@@ -1630,6 +2431,15 @@ export type Database = {
         }
         Returns: string
       }
+      create_service_request: {
+        Args: {
+          p_description: string
+          p_idempotency_key?: string
+          p_provider_id: string
+          p_when_text?: string
+        }
+        Returns: string
+      }
       decide_verification_document: {
         Args: {
           p_decision: string
@@ -1665,6 +2475,28 @@ export type Database = {
           id: string
           link_url: string
           locality_id: string
+          my_follow: boolean
+          my_reaction: boolean
+          photo_path: string
+          poll_options: Json
+          post_type: Database["public"]["Enums"]["post_type"]
+          reaction_count: number
+          user_id: string
+        }[]
+      }
+      feed_following: {
+        Args: never
+        Returns: {
+          comment_count: number
+          community_id: string
+          content: string
+          created_at: string
+          display_name: string
+          group_id: string
+          id: string
+          link_url: string
+          locality_id: string
+          my_follow: boolean
           my_reaction: boolean
           photo_path: string
           poll_options: Json
@@ -1684,6 +2516,7 @@ export type Database = {
           id: string
           link_url: string
           locality_id: string
+          my_follow: boolean
           my_reaction: boolean
           photo_path: string
           poll_options: Json
@@ -1703,6 +2536,7 @@ export type Database = {
           id: string
           link_url: string
           locality_id: string
+          my_follow: boolean
           my_reaction: boolean
           photo_path: string
           poll_options: Json
@@ -1711,6 +2545,11 @@ export type Database = {
           user_id: string
         }[]
       }
+      finalize_account_deletion: {
+        Args: { p_error?: string; p_user_id: string }
+        Returns: string
+      }
+      get_profile_bio: { Args: { p_user_id: string }; Returns: string }
       has_accepted_consent: {
         Args: {
           p_code_of_conduct_version: number
@@ -1719,6 +2558,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_account_deletion_pending: { Args: never; Returns: boolean }
       is_account_suspended: { Args: { p_user_id: string }; Returns: boolean }
       is_community_member: {
         Args: { p_community_id: string; p_user_id: string }
@@ -1735,6 +2575,7 @@ export type Database = {
       is_provider_account: { Args: { p_user_id: string }; Returns: boolean }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
+      leave_community: { Args: { p_community_id: string }; Returns: undefined }
       list_available_groups_for_interests: {
         Args: { p_locality_id: string; p_user_id: string }
         Returns: {
@@ -1866,11 +2707,34 @@ export type Database = {
           user_id: string
         }[]
       }
+      mark_conversation_read: {
+        Args: { p_conversation_id: string; p_seen_at?: string }
+        Returns: undefined
+      }
+      mark_recommendation_reply_resolved: {
+        Args: { p_reply_id: string; p_request_id: string }
+        Returns: undefined
+      }
       mark_recommendation_resolved: {
         Args: { p_request_id: string }
         Returns: undefined
       }
       my_account_kind: { Args: never; Returns: string }
+      my_verification_document: {
+        Args: { p_user_id: string }
+        Returns: {
+          document_id: string
+          needs_replacement: boolean
+          review_status: string
+          uploaded_at: string
+        }[]
+      }
+      my_verification_document_paths: {
+        Args: { p_user_id: string }
+        Returns: {
+          storage_object_path: string
+        }[]
+      }
       my_verification_status: {
         Args: never
         Returns: {
@@ -1897,6 +2761,15 @@ export type Database = {
           p_other_user_id: string
         }
         Returns: string
+      }
+      open_event_question: { Args: { p_event_id: string }; Returns: string }
+      profile_affiliations_for: {
+        Args: { p_target_user_id: string }
+        Returns: {
+          field: string
+          is_visible: boolean
+          value: string
+        }[]
       }
       profile_events_for: {
         Args: { p_target_user_id: string; p_viewer_user_id: string }
@@ -1943,6 +2816,18 @@ export type Database = {
         Args: { p_locality_id: string; p_user_id: string }
         Returns: undefined
       }
+      purge_account_contact_data: {
+        Args: { p_contact_email: string; p_user_id: string }
+        Returns: number
+      }
+      read_provider_invitation: {
+        Args: { p_token: string }
+        Returns: {
+          community_id: string
+          community_name: string
+          status: string
+        }[]
+      }
       read_verification_document_path: {
         Args: { p_document_id: string }
         Returns: {
@@ -1977,6 +2862,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      reject_guide_correction: {
+        Args: {
+          p_note: string
+          p_operator_user_id: string
+          p_request_id: string
+        }
+        Returns: undefined
+      }
       reject_pending_user: {
         Args: {
           p_operator_user_id: string
@@ -2005,9 +2898,23 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      reopen_recommendation: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
+      request_account_deletion: { Args: never; Returns: Json }
       request_community_membership: {
         Args: { p_community_id: string; p_reason?: string }
         Returns: undefined
+      }
+      resend_family_invitation: {
+        Args: {
+          p_invitation_id: string
+          p_invitee_email_digest: string
+          p_inviter_user_id: string
+          p_token_digest: string
+        }
+        Returns: string
       }
       resolve_report: {
         Args: {
@@ -2052,6 +2959,32 @@ export type Database = {
           reach_source: Database["public"]["Enums"]["provider_reach_source"]
         }[]
       }
+      send_conversation_message: {
+        Args: {
+          p_client_key?: string
+          p_content: string
+          p_conversation_id: string
+        }
+        Returns: Json
+      }
+      set_community_image: {
+        Args: {
+          p_caller_user_id: string
+          p_community_id: string
+          p_kind: string
+          // À MÃO: a função aceita NULL para limpar o ponteiro da imagem
+          // ("if p_path is not null and split_part(...)"). O gerador não
+          // expressa nulabilidade de argumento, então esta linha é ajustada
+          // depois do generate:types — preservar em toda regeneração.
+          p_path: string | null
+        }
+        Returns: undefined
+      }
+      set_profile_bio: { Args: { p_bio: string }; Returns: undefined }
+      settle_account_possessions: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       submit_verification_document: {
         Args: {
           p_mime_type: string
@@ -2069,6 +3002,16 @@ export type Database = {
           visibility: Database["public"]["Enums"]["group_visibility"]
         }[]
       }
+      suggest_guide_entry: {
+        Args: {
+          p_category: Database["public"]["Enums"]["arrival_guide_category"]
+          p_description: string
+          p_name: string
+          p_phone?: string
+          p_website_url?: string
+        }
+        Returns: string
+      }
       transfer_community_ownership: {
         Args: { p_community_id: string; p_new_owner_user_id: string }
         Returns: undefined
@@ -2076,6 +3019,18 @@ export type Database = {
       transfer_group_ownership: {
         Args: { p_group_id: string; p_new_owner_user_id: string }
         Returns: undefined
+      }
+      transition_listing: {
+        Args: { p_action: string; p_listing_id: string }
+        Returns: Database["public"]["Enums"]["listing_status"]
+      }
+      update_service_request: {
+        Args: {
+          p_description: string
+          p_request_id: string
+          p_when_text?: string
+        }
+        Returns: Json
       }
       upsert_verification_outcome: {
         Args: {
@@ -2105,18 +3060,31 @@ export type Database = {
         | "recommendation_thread"
         | "accepted_family"
         | "provider"
+        | "listing"
+        | "event_question"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
       group_visibility: "public" | "private"
+      listing_condition: "new" | "used"
+      listing_deal: "rent" | "sale"
+      listing_kind: "item" | "property"
+      listing_status:
+        | "draft"
+        | "active"
+        | "paused"
+        | "reserved"
+        | "sold"
+        | "closed"
       locality_admission_mode:
         | "invite_only"
         | "waitlist_only"
         | "verification_gated"
       locality_membership_access: "active" | "read_only"
       locality_membership_kind: "current" | "leaving"
+      notification_channel: "in_app" | "email"
       notification_type:
         | "comment"
         | "group_admission"
@@ -2128,10 +3096,19 @@ export type Database = {
         | "event_reminder"
         | "recommendation_reply"
         | "admission_rejected"
-      outbox_channel: "email" | "whatsapp"
+        | "listing_alert"
+        | "service_request"
+      outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
       profile_visibility: "locality_members"
+      property_type:
+        | "apartment"
+        | "house"
+        | "studio"
+        | "room"
+        | "land"
+        | "commercial"
       provider_category:
         | "alimentacao"
         | "casa_e_reformas"
@@ -2165,6 +3142,11 @@ export type Database = {
         | "recommendation_request"
         | "recommendation_reply"
         | "provider_profile"
+      service_request_status:
+        | "open"
+        | "in_conversation"
+        | "closed"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2307,6 +3289,8 @@ export const Constants = {
         "recommendation_thread",
         "accepted_family",
         "provider",
+        "listing",
+        "event_question",
       ],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going", "not_going"],
@@ -2314,6 +3298,17 @@ export const Constants = {
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
       group_visibility: ["public", "private"],
+      listing_condition: ["new", "used"],
+      listing_deal: ["rent", "sale"],
+      listing_kind: ["item", "property"],
+      listing_status: [
+        "draft",
+        "active",
+        "paused",
+        "reserved",
+        "sold",
+        "closed",
+      ],
       locality_admission_mode: [
         "invite_only",
         "waitlist_only",
@@ -2321,6 +3316,7 @@ export const Constants = {
       ],
       locality_membership_access: ["active", "read_only"],
       locality_membership_kind: ["current", "leaving"],
+      notification_channel: ["in_app", "email"],
       notification_type: [
         "comment",
         "group_admission",
@@ -2332,11 +3328,21 @@ export const Constants = {
         "event_reminder",
         "recommendation_reply",
         "admission_rejected",
+        "listing_alert",
+        "service_request",
       ],
-      outbox_channel: ["email", "whatsapp"],
+      outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],
       post_type: ["text", "photo", "link", "poll"],
       profile_visibility: ["locality_members"],
+      property_type: [
+        "apartment",
+        "house",
+        "studio",
+        "room",
+        "land",
+        "commercial",
+      ],
       provider_category: [
         "alimentacao",
         "casa_e_reformas",
@@ -2372,6 +3378,12 @@ export const Constants = {
         "recommendation_request",
         "recommendation_reply",
         "provider_profile",
+      ],
+      service_request_status: [
+        "open",
+        "in_conversation",
+        "closed",
+        "cancelled",
       ],
     },
   },

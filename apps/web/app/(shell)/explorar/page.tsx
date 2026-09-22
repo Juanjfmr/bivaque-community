@@ -8,8 +8,8 @@ import { useLocalityContext } from "../../../lib/locality-context"
 import { Card } from "../../components/bivaque/card"
 
 // Prancha 61-web-explorar-servicos, desktop da esquerda (RECON-003).
-// As categorias com destino real navegam; Mercado e Moradia ainda não têm
-// rota e por isso são cartões sem link, sem seta e sem promessa de destino.
+// As categorias com destino real navegam; Mercado passou a navegar para
+// /mercado no RECON-025. Moradia navega para /imoveis desde o RECON-027.
 // Os destaques da prancha não são renderizados: nenhum dado real os sustenta
 // ainda, e seção vazia inventada é exatamente o que o contrato proíbe.
 
@@ -31,7 +31,7 @@ const CATEGORIES: Category[] = [
     icon: ShoppingBag,
     title: "Mercado",
     description: "Comércios, produtos e muito mais.",
-    href: null,
+    href: "/mercado",
   },
   {
     icon: Wrench,
@@ -43,7 +43,7 @@ const CATEGORIES: Category[] = [
     icon: Home,
     title: "Moradia",
     description: "Aluguel, repúblicas e quartos.",
-    href: null,
+    href: "/imoveis",
   },
   {
     icon: CalendarDays,

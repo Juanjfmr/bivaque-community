@@ -143,7 +143,9 @@ async function openComposer(page: Page): Promise<void> {
 
 test.setTimeout(180_000)
 
-test.describe("golden slice: publicar → feedback → reload → persistência", () => {
+test.describe("golden slice: publicar → feedback → reload → persistência", {
+  tag: "@stateful",
+}, () => {
   test("caminho feliz publica na vila e o post persiste após reload", async ({ page }) => {
     // Given — sessão da owner aprovada da Vila Ajuricaba
     await seedVilaOwnerSession(page.context())

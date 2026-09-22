@@ -93,6 +93,7 @@ export default function FamilyInviteSection() {
             <Input
               type="email"
               name="email"
+              aria-label="E-mail do familiar convidado"
               placeholder="email@familiar.com"
               required
               className="flex-1"

@@ -1,0 +1,102 @@
+task_id: RECON-038
+
+objective: >
+  As três telas do caminho principal passam a corresponder às pranchas: o cabeçalho volta
+  à composição desenhada, a lateral destaca a rota em que a pessoa está, e os elementos
+  que a prancha desenha e o runtime não mostra são entregues ou registrados como pendência
+  com a fonte do dado.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/01-web-inicio.png
+  - docs/design/visual-guide-2026-09-06/54-web-retorno.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md seção 0, "Fidelidade comprovada"
+  - Inspeção visual de 12/09/2026 sobre chore/integracao-r3, capturas em .visual/vis-inicio, vis-explorar e vis-salvos
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 12/09/2026 comparando capturas do runtime (build da integração, servidor
+    próprio na 3187, conta dono-vila@) com as pranchas 01 e 54. As três capturas passaram
+    na auditoria mecânica com ZERO achados — nenhuma destas divergências aparece em gate,
+    teste ou auditoria automática. Só a comparação com a imagem as encontra.
+
+    CABEÇALHO E LATERAL, em todas as telas (app-shell.tsx):
+    1) A marca aparece como "Bivaque" pequeno e cinza no topo da coluna lateral. A prancha
+    tem BIVAQUE em caixa alta, verde, com peso — é a âncora de identidade da tela.
+    2) O seletor de cidade foi para o canto superior ESQUERDO. Na prancha ele fica à
+    direita, ao lado do sino, e a busca ocupa o centro.
+    3) Existem DOIS botões Publicar: um no cabeçalho e outro no compositor. A prancha tem
+    apenas o do compositor.
+    4) Há um ícone de lâmpada ao lado do sino que a prancha não desenha.
+    5) Em /salvos a lateral destaca "Perfil" como item atual. A rota é /salvos e a prancha
+    destaca Salvos. É defeito de navegação, não de estilo.
+
+    INÍCIO (prancha 01):
+    6) O bloco "Minhas comunidades" da lateral, com miniaturas das comunidades, não existe.
+    7) O card "De mudança?" da coluna direita, com imagem e "Explorar destino", não existe.
+    8) A faixa de retorno logo abaixo do compositor ("Ana respondeu à sua pergunta", com
+    "Ver resposta") não existe.
+    9) "Precisa de uma indicação?" tem duas entradas; a prancha tem três — falta Serviços.
+    10) O card do próximo encontro não mostra os avatares nem "Leila, Andréa e mais 18
+    pessoas vão". A prancha mostra quem vai.
+
+    SALVOS (prancha 54, painel direito):
+    11) As abas são "Tudo | Indicações". A prancha tem "Tudo | Guia | Mercado | Imóveis".
+    12) As abas são uma pílula larga de largura total; a prancha usa sublinhado, como as
+    abas de Notificações no painel esquerdo da mesma prancha.
+    13) O estado vazio fala apenas em pedido de indicação, reduzindo Salvos a um tipo só.
+
+allowed_paths:
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/shell/
+  - apps/web/app/(shell)/inicio/
+  - apps/web/app/(shell)/salvos/
+  - apps/web/lib/saves/
+  - tests/unit/
+  - docs/agents/tasks/RECON-038.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - inventar dado para preencher bloco da prancha; sem fonte real, o elemento vira pendência nomeada no card
+  - apagar, afrouxar ou pular teste para deixar o gate passar
+  - tocar public.profiles, is_suspended ou is_account_suspended
+  - mudar schema, migration aplicada, policy ou estado do banco compartilhado
+  - remover o segundo Publicar sem conferir que o do compositor continua publicando
+  - trocar um fluxo por outro parecido com o mesmo rótulo
+
+acceptance:
+  - a marca aparece como a prancha desenha, em todas as larguras
+  - o seletor de cidade e a busca ocupam as posições da prancha
+  - existe um único Publicar, e ele publica
+  - a lateral destaca a rota atual em /inicio, /explorar e /salvos
+  - o item de lateral ativo é derivado da rota, com teste que falha se voltar a divergir
+  - as abas de Salvos correspondem à prancha, ou a diferença fica registrada com o motivo
+  - cada elemento ausente do Início é entregue com fonte de dado real, ou nomeado como pendência no card com a razão
+  - gate completo verde, com o código de saída lido diretamente
+  - capturas de /inicio, /explorar e /salvos em 375/768/1440 confrontadas com as pranchas, e as diferenças restantes listadas
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-038.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE=/inicio, /explorar e /salvos
+
+traps:
+  - As três capturas atuais deram ZERO achados na auditoria mecânica e mesmo assim têm treze divergências; auditoria verde não é fidelidade
+  - Nao canalize o gate por tail ou head — o codigo de saida vira o do pipe e vermelho vira verde
+  - Antes de confiar em captura, compare apps/web/.next/BUILD_ID com o mtime dos arquivos editados
+  - O build precisa das variaveis NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no ambiente; o stack local responde em 127.0.0.1:55321
+  - app-shell.tsx ja foi alterado por RECON-021 e RECON-032 fora do escopo deles; confira o que existe antes de reescrever
+
+risk: >
+  Composição do cabeçalho e da lateral compartilhados por todas as telas do shell do membro,
+  mais elementos ausentes do Início e das abas de Salvos, sem tocar autorização nem schema.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

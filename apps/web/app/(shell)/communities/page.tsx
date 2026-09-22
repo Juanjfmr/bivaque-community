@@ -2,12 +2,13 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
+import { signCommunityImageUrls } from "../../../lib/communities/community-image-urls"
 import type { CommunityCard, MyMembership } from "./communities-data"
 import { CommunitiesScreen } from "./communities-screen"
 
 type CommunityRow = Pick<
   Database["public"]["Tables"]["communities"]["Row"],
-  "id" | "name" | "description" | "locality_id"
+  "id" | "name" | "description" | "locality_id" | "banner_path" | "thumbnail_path"
 >
 type MembershipRow = Pick<
   Database["public"]["Tables"]["community_memberships"]["Row"],
@@ -109,7 +110,7 @@ export default async function CommunitiesPage({
   if (viewingLocalityId) {
     const { data, error: communitiesError } = await supabase
       .from("communities")
-      .select("id, name, description, locality_id")
+      .select("id, name, description, locality_id, banner_path, thumbnail_path")
       .eq("locality_id", viewingLocalityId)
       .order("name")
 
@@ -133,7 +134,7 @@ export default async function CommunitiesPage({
   if (missingIds.length > 0) {
     const { data, error: othersError } = await supabase
       .from("communities")
-      .select("id, name, description, locality_id")
+      .select("id, name, description, locality_id, banner_path, thumbnail_path")
       .in("id", missingIds)
 
     if (othersError) {
@@ -163,12 +164,23 @@ export default async function CommunitiesPage({
     )
   }
 
+  const imageUrlsByCommunity = await signCommunityImageUrls(
+    supabase,
+    allCommunities.map((row) => ({
+      communityId: row.id,
+      banner: row.banner_path !== null,
+      thumbnail: row.thumbnail_path !== null,
+    })),
+  )
+
   const toCard = (row: CommunityRow): CommunityCard => ({
     id: row.id,
     name: row.name,
     description: row.description,
     localityId: row.locality_id,
     cityLabel: cityLabelById.get(row.locality_id) ?? null,
+    bannerUrl: imageUrlsByCommunity.get(row.id)?.bannerUrl ?? null,
+    thumbnailUrl: imageUrlsByCommunity.get(row.id)?.thumbnailUrl ?? null,
   })
 
   return (

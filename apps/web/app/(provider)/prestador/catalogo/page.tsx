@@ -1,4 +1,4 @@
-﻿import { Button, Input, TextArea } from "@heroui/react"
+import { Button, Input, TextArea } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import type { Route } from "next"
 import { cookies } from "next/headers"
@@ -288,7 +288,7 @@ export default async function PrestadorCatalogoPage() {
               name="file"
               accept="image/jpeg,image/png,image/webp"
               required
-              className="mt-1 block min-h-11 w-full cursor-pointer text-sm"
+              className="mt-1 block min-h-11 w-full cursor-pointer text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
             />
           </div>
           <TextArea

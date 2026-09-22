@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(11);
 
 \ir fixtures/foundation.inc
 
@@ -50,12 +50,49 @@ select matches(
   'the stored hint always keeps the masked format'
 );
 
--- 4. The hint list read carries the hint for the UI.
+-- 3b. Regressão medida em runtime em 15/09/2026: a máscara usava o PRIMEIRO ponto
+-- do domínio, então 'familiar@bivaque.example.invalid' virava
+-- 'fa***@bi***.example.invalid' — dois pontos, e o CHECK da tabela recusava o
+-- convite. Valia para qualquer domínio de dois níveis, inclusive '@exemplo.com.br'.
+select is(
+  private.family_invite_email_hint('familiar@bivaque.example.invalid'),
+  'fa***@bi***.invalid',
+  'a three-label domain keeps only the TLD'
+);
+
+select is(
+  private.family_invite_email_hint('ana@exemplo.com.br'),
+  'an***@ex***.br',
+  'a two-level Brazilian domain keeps only the TLD'
+);
+
+-- 4. The hint list read carries the hint for the UI — medido ANTES do convite
+-- de domínio de dois níveis, para a leitura continuar com exatamente uma linha.
 select results_eq(
   $$ select invitee_email_hint::text from public.list_pending_invites_with_hint('10000000-0000-4000-8000-000000000001')
      where invitee_email_hint is not null $$,
   $$ values ('jo***@gm***.com'::text) $$,
   'the pending-invite read carries the hint'
+);
+
+select lives_ok(
+  $$
+    insert into private.family_invitations (
+      inviter_user_id,
+      token_digest,
+      invitee_email_digest,
+      invitee_email_hint,
+      expires_at
+    )
+    values (
+      '10000000-0000-4000-8000-000000000001',
+      extensions.digest(decode(repeat('66', 32), 'hex'), 'sha256'),
+      extensions.digest('familiar@bivaque.example.invalid', 'sha256'),
+      private.family_invite_email_hint('familiar@bivaque.example.invalid'),
+      now() + interval '7 days'
+    )
+  $$,
+  'an invite for a two-level domain is accepted by the table CHECK'
 );
 
 -- 5. authenticated cannot read the private table directly (negative).

@@ -66,6 +66,9 @@ test("defines the canonical design-system token set from the generated web style
     "--primitive-pine-700",
     "--semantic-canvas",
     "--semantic-action-primary",
+    // Texto sobre imagem tem papel próprio: derivar de opacidade foi a violação
+    // que ficou aberta do DS-001 até o lote AD (ver DESIGN_SYSTEM 4.2).
+    "--semantic-text-on-image-soft",
     "--component-button-primary-bg",
     "--component-card-bg",
   ]

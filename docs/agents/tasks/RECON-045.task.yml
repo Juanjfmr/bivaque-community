@@ -1,0 +1,99 @@
+task_id: RECON-045
+
+objective: >
+  A aba selecionada fica visivelmente selecionada. As tres telas que ja usam o
+  componente de abas do produto passam a mostrar qual esta ativa e a agrupar as
+  abas como a prancha desenha, em vez de espalha-las na largura inteira sem
+  marca nenhuma.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/54-web-retorno.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md
+  - apps/web/app/(shell)/mercado/page.tsx, a marcacao que renderiza certo hoje
+  - docs/agents/DESIGN_SYSTEM.md
+  - Inspeccao visual de 12/09/2026 sobre chore/integracao-r3-next
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 12/09/2026 por captura do build da integracao, gate e build verdes
+    com o codigo de saida lido direto, servido em 127.0.0.1:3201, conta
+    dono-vila@, largura 1440.
+
+    Em /salvos as abas Tudo e Indicacoes aparecem espalhadas na largura inteira,
+    com uma linha divisoria embaixo e NENHUMA marca de qual esta selecionada. Em
+    /recommendations as quatro abas aparecem do mesmo jeito. Em /events as abas
+    de Seus eventos usam o mesmo componente. As tres telas ficam iguais entre si
+    e diferentes da prancha.
+
+    A causa esta escrita no proprio codigo, em
+    apps/web/app/(shell)/salvos/page.tsx, num comentario que diagnostica certo e
+    para no meio do caminho. Ele diz que o build fixado do HeroUI recebe
+    variant secondary mas o tabsVariants embarcado nao aplica o slot, o que foi
+    verificado em runtime, e que por isso a classe tabs--secondary foi aplicada
+    para nao depender desse desvio.
+
+    A classe nunca recebeu regra. Varredura em apps/web: tabs--secondary aparece
+    em tres telas e em nenhum arquivo de estilo. Ela nao estiliza nada. Entao a
+    intencao estava certa, a implementacao parou antes da metade, e o defeito se
+    espalhou para cada tela que copiou a referencia acreditando que ela
+    funcionava.
+
+    O que renderiza CERTO hoje e a marcacao propria de
+    apps/web/app/(shell)/mercado/page.tsx: uma borda inferior de dois pixels na
+    cor de acao primaria, com peso e cor no item atual. Ela nao usa o componente
+    de abas, e por isso escapou do defeito.
+
+allowed_paths:
+  - apps/web/app/globals.css
+  - apps/web/app/(shell)/salvos/
+  - apps/web/app/(shell)/recommendations/
+  - apps/web/app/(shell)/events/
+  - apps/web/app/components/bivaque/
+  - tests/unit/
+  - docs/agents/tasks/RECON-045.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - deixar a classe aplicada sem regra em qualquer tela; ou ela estiliza, ou ela sai
+  - criar um quarto estilo de aba; o alvo visual e o que /mercado ja renderiza
+  - trocar o componente de abas por marcacao manual em cada tela, espalhando a mesma correcao por tres lugares
+  - mudar o que as abas filtram, quantas sao ou o que cada uma mostra
+  - importar biblioteca de componente que nao seja a ja adotada para web
+  - afrouxar, apagar ou pular teste para o gate passar
+  - tocar autorizacao, schema, migration ou estado do banco
+
+acceptance:
+  - a aba selecionada e distinguivel da nao selecionada nas tres telas, por borda inferior e por peso, como /mercado ja faz
+  - a regra que produz isso existe em um lugar so, e as tres telas a herdam
+  - nenhuma classe aplicada no codigo fica sem regra correspondente
+  - existe teste que reprova quando uma classe de estilo usada nas telas nao tem regra definida em nenhum arquivo de estilo
+  - a fileira de abas nao vira rolagem horizontal da pagina em 375
+  - o atributo que anuncia a aba selecionada para leitor de tela continua correto
+  - gate completo verde, com o codigo de saida lido direto
+  - capturas de /salvos, /recommendations e /events em 375, 768 e 1440 mostrando a aba ativa marcada
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-045.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE em /salvos, /recommendations e /events
+
+traps:
+  - O comentario em salvos/page.tsx explica por que a variante do componente nao funciona; ele esta certo e nao deve ser descartado, so completado
+  - Confirme em runtime que a regra nova realmente chega ao elemento; o mesmo erro de acreditar que chega ja aconteceu uma vez aqui
+  - Nao canalize o gate por tail ou head; o codigo de saida vira o do pipe e vermelho vira verde
+  - Servir o build para captura exige tambem SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no processo, alem das duas publicas; sem elas as telas com cliente de servidor parecem quebradas
+  - Ha UM Supabase local compartilhado nesta maquina; nao apague nem recrie o banco por nenhum meio
+
+risk: >
+  Estilo de aba compartilhado por tres telas de leitura do shell do membro, mais
+  uma regra em folha de estilo global.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

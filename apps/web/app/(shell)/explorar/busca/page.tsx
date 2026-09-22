@@ -99,6 +99,23 @@ function BuscaContent() {
   const [status, setStatus] = useState<Status>("idle")
   const [groups, setGroups] = useState<SearchGroup[]>([])
   const searchSeq = useRef(0)
+  // "Buscas recentes" da prancha 84: ficam no navegador (localStorage), nunca
+  // no servidor — busca é comportamento da pessoa, não dado a guardar.
+  const [recentes, setRecentes] = useState<string[]>([])
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("bivaque:buscas-recentes")
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          setRecentes(parsed.filter((item): item is string => typeof item === "string").slice(0, 4))
+        }
+      }
+    } catch {
+      // Storage indisponível ou JSON corrompido: a lista simplesmente não aparece.
+    }
+  }, [])
 
   const runSearch = useCallback(async () => {
     const seq = searchSeq.current + 1
@@ -149,6 +166,19 @@ function BuscaContent() {
       }),
     )
     setStatus("ok")
+
+    setRecentes((prev) => {
+      const next = [
+        term,
+        ...prev.filter((item) => item.toLowerCase() !== term.toLowerCase()),
+      ].slice(0, 4)
+      try {
+        window.localStorage.setItem("bivaque:buscas-recentes", JSON.stringify(next))
+      } catch {
+        // Sem storage a busca continua; só a lista de recentes não persiste.
+      }
+      return next
+    })
   }, [term, current.id])
 
   useEffect(() => {
@@ -163,75 +193,192 @@ function BuscaContent() {
         {term === "" ? "Buscar no Bivaque" : `Resultados para “${term}”`}
       </h1>
       <p className="mt-1 text-sm text-muted">
-        {current.cityName}, {current.stateCode} — guia, serviços e eventos.
+        {current.cityName}, {current.stateCode} — guia, serviços e eventos. A busca usa sua cidade
+        atual; trocar a cidade refaz as três consultas.
       </p>
 
-      <div className="mt-6">
-        {status === "loading" ? (
-          <div className="flex flex-col gap-8" aria-busy="true">
-            <GroupSkeleton />
-            <GroupSkeleton />
-          </div>
-        ) : status === "expired" ? (
-          <AccessUnavailableState
-            title="Sua sessão expirou"
-            description="Entre de novo para buscar. Seus filtros e o termo continuam na página anterior."
-            primaryAction={
-              <Link
-                href={buscaExpira as Route}
-                className="flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
-              >
-                Entrar novamente
-              </Link>
-            }
-          />
-        ) : status === "error" ? (
-          <ErrorState
-            message="Não foi possível buscar agora. Tente novamente."
-            onRetry={() => void runSearch()}
-          />
-        ) : status === "idle" ? (
-          <EmptyState
-            title="Digite o que você procura"
-            description="A busca do cabeçalho encontra guias, profissionais e eventos na sua cidade."
-            action={
-              <Link
-                href="/explorar"
-                className="flex min-h-11 items-center rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
-              >
-                Explorar categorias
-              </Link>
-            }
-          />
-        ) : groups.length === 0 ? (
-          <EmptyState
-            title={`Nenhum resultado para “${term}”`}
-            description={`Nada no guia, nos serviços ou nos eventos de ${current.cityName} corresponde a esse termo.`}
-            action={
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => router.push("/explorar/busca")}
+      <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start lg:gap-8">
+        <div className="min-w-0">
+          {status === "loading" ? (
+            <div className="flex flex-col gap-8" aria-busy="true">
+              <GroupSkeleton />
+              <GroupSkeleton />
+            </div>
+          ) : status === "expired" ? (
+            <AccessUnavailableState
+              title="Sua sessão expirou"
+              description="Entre de novo para buscar. Seus filtros e o termo continuam na página anterior."
+              primaryAction={
+                <Link
+                  href={buscaExpira as Route}
+                  className="flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+                >
+                  Entrar novamente
+                </Link>
+              }
+            />
+          ) : status === "error" ? (
+            <ErrorState
+              message="Não foi possível buscar agora. Tente novamente."
+              onRetry={() => void runSearch()}
+            />
+          ) : status === "idle" ? (
+            <EmptyState
+              title="Digite o que você procura"
+              description="A busca do cabeçalho encontra guias, profissionais e eventos na sua cidade."
+              action={
+                <Link
+                  href="/explorar"
                   className="flex min-h-11 items-center rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
                 >
-                  Limpar busca
-                </button>
+                  Explorar categorias
+                </Link>
+              }
+            />
+          ) : groups.length === 0 ? (
+            <EmptyState
+              title={`Nenhum resultado para “${term}”`}
+              description={`Nada no guia, nos serviços ou nos eventos de ${current.cityName} corresponde a esse termo.`}
+              action={
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/explorar/busca")}
+                    className="flex min-h-11 items-center rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+                  >
+                    Limpar busca
+                  </button>
+                  <Link
+                    href="/localidade"
+                    className="flex min-h-11 items-center rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+                  >
+                    Trocar de cidade
+                  </Link>
+                </div>
+              }
+            />
+          ) : (
+            <div className="flex flex-col gap-8">
+              {groups.map((group) => (
+                <GroupSection key={group.key} group={group} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Rail da prancha 84: muda com o estado da busca. */}
+        <aside aria-label="Sobre esta busca" className="mt-8 flex flex-col gap-3 lg:mt-0">
+          {status === "ok" && groups.length > 0 ? (
+            <>
+              <Card className="p-4">
+                <h2 className="text-sm font-semibold">Termo e cidade</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  O termo fica na URL como <span className="font-medium">?q=</span>. Trocar de
+                  cidade em Localidade refaz as três buscas.
+                </p>
+              </Card>
+              <Card className="p-4">
+                <h2 className="text-sm font-semibold">Buscas recentes</h2>
+                {recentes.length === 0 ? (
+                  <p className="mt-1 text-sm leading-relaxed text-muted">
+                    As buscas que você fizer aqui aparecem nesta lista, só neste navegador.
+                  </p>
+                ) : (
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {recentes.map((item) => (
+                      <li key={item}>
+                        <Link
+                          href={`/explorar/busca?q=${encodeURIComponent(item)}` as Route}
+                          className="inline-flex min-h-11 items-center rounded-full border border-border px-3 text-xs font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                        >
+                          {item}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+              <Card className="p-4">
+                <h2 className="text-sm font-semibold">Quando nada aparece</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  Troque palavras-chave, limpe o termo ou experimente outra cidade vizinha. Mercado
+                  e Moradia ainda não entram aqui.
+                </p>
+              </Card>
+            </>
+          ) : null}
+
+          {status === "ok" && groups.length === 0 ? (
+            <>
+              <Card className="p-4">
+                <h2 className="text-sm font-semibold">Tente variações</h2>
+                <ul className="mt-1 flex flex-col gap-1 text-sm leading-relaxed text-muted">
+                  <li>Use menos palavras e o termo mais específico.</li>
+                  <li>Confira a grafia: a busca não corrige acento nem plural.</li>
+                  <li>Procure o nome próprio do lugar ou do serviço.</li>
+                </ul>
+              </Card>
+              <Card className="p-4">
+                <h2 className="text-sm font-semibold">Buscar em outra cidade</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  Se o termo faz sentido em outra cidade, troque a cidade atual em Localidade: a
+                  busca refaz as três consultas.
+                </p>
                 <Link
                   href="/localidade"
-                  className="flex min-h-11 items-center rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+                  className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                 >
                   Trocar de cidade
+                  <ArrowRight size={14} aria-hidden="true" />
                 </Link>
-              </div>
-            }
-          />
-        ) : (
-          <div className="flex flex-col gap-8">
-            {groups.map((group) => (
-              <GroupSection key={group.key} group={group} />
-            ))}
-          </div>
-        )}
+              </Card>
+              <Card className="p-4">
+                <h2 className="text-sm font-semibold">Mercado e Moradia</h2>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  Esses dois ainda não entram na busca — cada um tem a própria lista.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Link
+                    href="/mercado"
+                    className="inline-flex min-h-11 items-center rounded-lg border border-border px-3 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                  >
+                    Mercado
+                  </Link>
+                  <Link
+                    href="/imoveis"
+                    className="inline-flex min-h-11 items-center rounded-lg border border-border px-3 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                  >
+                    Moradia
+                  </Link>
+                </div>
+              </Card>
+            </>
+          ) : null}
+
+          {status === "idle" ? (
+            <Card className="p-4">
+              <h2 className="text-sm font-semibold">Buscas recentes</h2>
+              {recentes.length === 0 ? (
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  As buscas que você fizer aqui aparecem nesta lista, só neste navegador.
+                </p>
+              ) : (
+                <ul className="mt-2 flex flex-wrap gap-2">
+                  {recentes.map((item) => (
+                    <li key={item}>
+                      <Link
+                        href={`/explorar/busca?q=${encodeURIComponent(item)}` as Route}
+                        className="inline-flex min-h-11 items-center rounded-full border border-border px-3 text-xs font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                      >
+                        {item}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          ) : null}
+        </aside>
       </div>
     </div>
   )

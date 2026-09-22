@@ -12,6 +12,18 @@ Atualizado em 08/09/2026. Direção aprovada pelo responsável: superfícies cla
 
 Os PNGs foram gerados e editados pelo image_gen integrado, sem retoque por scripts. Fontes históricas, prompts executados e correções pendentes estão em [expansion-generation.json](./expansion-generation.json). As imagens são propostas de aparência/interação. Pessoas, fotos, valores, datas e contagens são fictícios; consolidar fixtures coerentes ao implementar.
 
+## Jornadas derivadas
+
+[`flows.html`](./flows.html) é uma galeria em **formato Mobbin** gerada das pranchas: cada prancha é um fluxo, cada tela/estado é um passo recortado do próprio PNG. O índice textual é [`docs/journeys/FLOWS.md`](../../journeys/FLOWS.md).
+
+São artefatos **derivados — não editar à mão**. Ao substituir uma prancha, regenere com `npx pnpm@11.18.0 flows:gallery`; se a geometria do PNG mudou, rode antes `npx pnpm@11.18.0 flows:frames`. `npx pnpm@11.18.0 flows:check` falha se algum artefato estiver fora de sincronia.
+
+## Pranchas com fonte HTML
+
+A prancha `70-web-evento-organizar` nasce de uma fonte versionada em [`src/70-web-evento-organizar.html`](./src/70-web-evento-organizar.html), renderizada por `npx pnpm@11.18.0 board:render 70-web-evento-organizar`. Diferente das demais, o PNG é render determinístico sobre `packages/tokens`, não geração por `image_gen`.
+
+O renderizador **se recusa a escrever** quando o navegador aplica escala (`devicePixelRatio` diferente de 1) ou quando o quadro não bate com o tamanho pedido. Sem essa guarda, uma janela menor que a prancha faz o Chrome reduzir a página: o PNG sai com o conteúdo espremido no canto, o canvas sobra vazio e o recorte da galeria passa a mostrar dois painéis no lugar de um. `--check` compara sem escrever.
+
 ## Correções solicitadas
 
 As sete propagações pendentes foram geradas em 08/09: 34, 38, 40, 42, 45, 48 e 49. O fluxo de perguntas ao organizador está nas 66/67; envio e recuperação de identidade nas 68/69, com acompanhamento web na 38. As seis decisões continuam em [DECISOES-2026-09-07.md](./DECISOES-2026-09-07.md).
@@ -90,6 +102,22 @@ Prompts e fontes desta rodada: [correções](./completion-generation-2026-09-08.
 | [67-web-evento-informacoes — Informações do evento na web](./67-web-evento-informacoes.png) | web | Reenviar pergunta; Ler resposta e continuar |
 | [68-mobile-identidade-recuperacao — Identidade: envio e recuperação](./68-mobile-identidade-recuperacao.png) | mobile | Enviar identidade; Acompanhar análise; Substituir arquivo ilegível |
 | [69-web-identidade-recuperacao — Identidade: envio e recuperação web](./69-web-identidade-recuperacao.png) | web | Enviar identidade; Substituir arquivo ilegível |
+| [70-web-evento-organizar — Web: organizar um evento](./70-web-evento-organizar.png) | web | Novo evento; Evento publicado |
+| [71-web-auth-recuperacao — Web: recuperar o acesso](./71-web-auth-recuperacao.png) | web | Esqueceu sua senha; Crie uma senha nova |
+| [72-web-auth-link-invalido — Web: link inválido ou expirado](./72-web-auth-link-invalido.png) | web | Este link não vale mais; Não foi possível entrar |
+| [73-web-comunidade-pedidos — Web: decidir pedidos de entrada](./73-web-comunidade-pedidos.png) | web | Pedidos de entrada; Ver o pedido |
+| [74-web-guia-curadoria — Web: curar o Guia](./74-web-guia-curadoria.png) | web | Fila do Guia; Sugestões de correção |
+| [75-web-conversas — Web: central de conversas](./75-web-conversas.png) | web | Caixa de entrada; Conversa aberta |
+| [76-web-familia — Web: convidar a família](./76-web-familia.png) | web | Convidar um familiar; Convite pendente |
+| [77-web-ajuda — Web: pedir ajuda com canal real](./77-web-ajuda.png) | web | Acesso e uso; Regras e suporte |
+| [78-web-prestador-operacao — Web: catálogo e conta do prestador](./78-web-prestador-operacao.png) | web | Catálogo e portfólio; Conta e área de atendimento |
+| [79-web-indicar-prestador — Web: indicar e aceitar prestador](./79-web-indicar-prestador.png) | web | Indicar prestador; Aceitar o convite |
+| [80-web-recomendacoes — Web: indicações e referências](./80-web-recomendacoes.png) | web | Pedidos de indicação recebidos; Responder uma indicação |
+| [81-web-comunidade-admin — Web: administrar a comunidade](./81-web-comunidade-admin.png) | web | Administração da comunidade; Imagens da comunidade |
+| [82-web-localidade — Web: declarar mudança de cidade](./82-web-localidade.png) | web | Declarar mudança de cidade; Transferência declarada |
+| [83-web-landing — Web: primeiro contato público](./83-web-landing.png) | web | Primeiro contato; Como entrar e o que esperar |
+| [84-web-busca — Web: busca agrupada](./84-web-busca.png) | web | Resultados da busca; Nenhum resultado |
+| [85-web-arrivals — Web: operar chegadas e transferências](./85-web-arrivals.png) | web | Chegadas declaradas; Nenhuma transferência declarada |
 
 ## Inspeção e correções de implementação
 

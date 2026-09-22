@@ -4,7 +4,7 @@ import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/
 // RECON-021 — fluxo da busca global: campo do cabecalho -> /explorar/busca
 // agrupada -> /explorar/servicos com filtros, contagem e ficha alcancavel.
 //
-// Contas do seed (mesma senha publica bivaque-e2e-local):
+// Contas do seed (mesma senha configurada no ambiente de teste):
 //   visual@    — membro de Manaus, NAO e da Vila Ajuricaba (nao ve prestador)
 //   membro-25@ — membro aprovado da Vila Ajuricaba (ve "Climatiza Manaus")
 // A negacao tambem e provada sem interface, por chamada direta ao RPC com o
@@ -13,21 +13,21 @@ import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const ANON_KEY =
   process.env["SUPABASE_ANON_KEY"] ?? readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ?? ""
-const USER_PASSWORD = process.env["USER_PASSWORD"] ?? readEnvLocal("BIVAQUE_VISUAL_PASSWORD")
 
 const PROVIDER_ID = "30000000-0000-4000-8000-000000000010"
 
-if (!USER_PASSWORD) {
+const password = process.env["USER_PASSWORD"] ?? readEnvLocal("BIVAQUE_VISUAL_PASSWORD")
+
+if (!password) {
   throw new Error(
     "USER_PASSWORD is required. Set it in the environment or as BIVAQUE_VISUAL_PASSWORD in apps/web/.env.local.",
   )
-}
 
 async function mintSession(email: string) {
   const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: ANON_KEY },
-    body: JSON.stringify({ email, password: USER_PASSWORD }),
+    body: JSON.stringify({ email, password }),
   })
   if (!response.ok) throw new Error(`password grant failed for ${email}: ${response.status}`)
   return (await response.json()) as {

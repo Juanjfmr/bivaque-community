@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>74-web-guia-curadoria — fonte da prancha</title>
+<style>
+  /* Fonte da prancha 74-web-guia-curadoria.
+     Geometria da convenção web: 2076x757, dois painéis de 1032 com gutter de 12; cada painel é um
+     desktop lógico de 1440x1056 reduzido por scale(0.716667). Tokens de packages/tokens.
+     Shell do painel do operador conforme apps/web/app/(admin)/layout.tsx: navegação de topo com
+     Admissões, Denúncias, Guia e Chegadas. Copy reconciliada com R39 e com a tela implementada em
+     apps/web/app/(admin)/guide-queue/page.tsx. */
+  :root{
+    --canvas:#FAFBF8; --surface:#FFFFFF; --sunken:#F1F2EE; --paper200:#E3E5DF;
+    --ink900:#16211C; --ink700:#4A594F; --ink500:#6B7A70;
+    --pine100:#EEF1E7; --pine700:#164734; --petrol700:#1D5D89; --petrol100:#E2F0F7;
+    --amber100:#FFF0D5; --amber700:#8A4B00;
+    --rose100:#FDE8E7; --rose700:#B42318;
+    --line:color-mix(in srgb, #16211C 14%, transparent);
+    --radius:0.625rem; --radius-card:0.875rem;
+    --font:ui-sans-serif, -apple-system, "Segoe UI", Inter, Roboto, system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--canvas)}
+  body{width:2076px;height:757px;font-family:var(--font);color:var(--ink900);overflow:hidden}
+  .board{display:flex;gap:12px;width:2076px;height:757px}
+  .panel{width:1032px;height:757px;overflow:hidden;flex:0 0 auto;background:var(--canvas)}
+  .scale{width:1440px;height:1056px;transform:scale(.716667);transform-origin:0 0}
+
+  .painel{height:1056px;display:flex;flex-direction:column;background:var(--canvas)}
+  .topnav{height:58px;flex:0 0 auto;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 28px}
+  .marca{font-size:15px;font-weight:650;color:var(--pine700);margin-right:18px}
+  .topnav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:var(--radius);font-size:15px;color:var(--ink700);text-decoration:none}
+  .topnav a.on{background:var(--pine100);color:var(--pine700);font-weight:600}
+
+  .main{flex:1;padding:30px 40px;min-height:0}
+  h1{font-size:30px;line-height:38px;font-weight:650;letter-spacing:-.011em;margin:0 0 8px}
+  .lead{font-size:16px;line-height:25px;color:var(--ink700);margin:0 0 22px;max-width:68ch}
+  h2.secao{font-size:17px;font-weight:650;margin:26px 0 4px}
+  .secao-nota{font-size:14px;line-height:22px;color:var(--ink500);margin:0 0 14px;max-width:68ch}
+
+  .btn{min-height:44px;min-height:44px;border-radius:var(--radius);padding:0 18px;font-size:15px;font-weight:600;font-family:inherit;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center}
+  .btn.primario{background:var(--pine700);color:#fff}
+  .btn.secundario{background:var(--surface);color:var(--ink900);border-color:var(--line)}
+
+  .sug{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;gap:18px}
+  .sug .corpo{flex:1;min-width:0}
+  .sug .topo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .sug h3{font-size:16px;font-weight:650;margin:0}
+  .selo{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px}
+  .selo.ia{background:var(--petrol100);color:var(--petrol700)}
+  .selo.manual{background:var(--sunken);color:var(--ink700)}
+  .sug p{margin:0;font-size:14px;line-height:22px;color:var(--ink700)}
+  .sug .origem{font-size:13px;color:var(--ink500);margin-top:4px}
+  .sug .acoes{display:flex;gap:8px;flex:0 0 auto}
+
+  .diff{background:var(--sunken);border-radius:var(--radius);padding:14px 16px;margin-top:10px;font-size:14px;line-height:23px}
+  .diff .antes{color:var(--rose700);text-decoration:line-through}
+  .diff .depois{color:var(--pine700);font-weight:600}
+  .diff .rot{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink500);display:block;margin-bottom:2px}
+  .diff hr{border:0;border-top:1px solid var(--line);margin:10px 0}
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- ============ painel 1 — fila de sugestões ============ -->
+  <div class="panel" data-screen="Fila do Guia">
+    <div class="scale">
+      <div class="painel">
+        <nav class="topnav">
+          <span class="marca">BIVAQUE · Operação</span>
+          <a href="#">Admissões</a>
+          <a href="#">Denúncias</a>
+          <a class="on" href="#">Guia</a>
+          <a href="#">Chegadas</a>
+        </nav>
+        <main class="main">
+          <h1>Fila do Guia</h1>
+          <p class="lead">Sugestões aguardando aprovação. Nada é publicado sem revisão humana.</p>
+
+          <div class="sug">
+            <div class="corpo">
+              <div class="topo">
+                <h3>Feira de orgânicos da 308 Sul</h3>
+                <span class="selo ia">Sugestão IA</span>
+              </div>
+              <p>Domingo, 7h às 12h — Bloco C da 308 Sul</p>
+              <p class="origem">A partir de 3 respostas da comunidade em “Onde comprar direto do produtor”</p>
+            </div>
+            <div class="acoes">
+              <button class="btn secundario">Recusar</button>
+              <button class="btn primario">Aprovar e publicar</button>
+            </div>
+          </div>
+
+          <div class="sug">
+            <div class="corpo">
+              <div class="topo">
+                <h3>Clínica odontológica da Asa Norte</h3>
+                <span class="selo manual">Manual</span>
+              </div>
+              <p>Atende emergência aos sábados, com agendamento por telefone</p>
+              <p class="origem">Enviado por um membro da comunidade</p>
+            </div>
+            <div class="acoes">
+              <button class="btn secundario">Recusar</button>
+              <button class="btn primario">Aprovar e publicar</button>
+            </div>
+          </div>
+
+          <h2 class="secao">Promover respostas da comunidade</h2>
+          <p class="secao-nota">Respostas da comunidade viram itens do guia depois que você escreve o nome canônico e a categoria.</p>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ painel 2 — sugestões de correção ============ -->
+  <div class="panel" data-screen="Sugestões de correção">
+    <div class="scale">
+      <div class="painel">
+        <nav class="topnav">
+          <span class="marca">BIVAQUE · Operação</span>
+          <a href="#">Admissões</a>
+          <a href="#">Denúncias</a>
+          <a class="on" href="#">Guia</a>
+          <a href="#">Chegadas</a>
+        </nav>
+        <main class="main">
+          <h1>Sugestões de correção</h1>
+          <p class="lead">Sugestões de atualização dos artigos do guia. Aplicar publica a versão revisada e registra quem sugeriu.</p>
+
+          <div class="sug" style="display:block">
+            <div class="topo">
+              <h3>Horário do posto de saúde do Jardim das Acácias</h3>
+              <span class="selo manual">Sugerida por Lúcia Prado</span>
+            </div>
+            <div class="diff">
+              <span class="rot">Como está no guia</span>
+              <span class="antes">Atendimento de segunda a sexta, das 7h às 17h.</span>
+              <hr>
+              <span class="rot">Como o membro propõe</span>
+              <span class="depois">Atendimento de segunda a sexta, das 7h às 19h; vacinação até as 16h.</span>
+            </div>
+            <p class="origem" style="margin-top:10px">Ligou para o posto em 10/09 e confirmou o horário novo no balcão.</p>
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn primario">Aplicar correção</button>
+              <button class="btn secundario">Recusar</button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

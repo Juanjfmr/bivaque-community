@@ -7,6 +7,7 @@
 // O gate nao roda build — foi o E2E que encontrou.
 import { Avatar } from "@heroui/react"
 import { useState } from "react"
+import { type AvatarImageStatus, avatarFallbackVisible } from "../../api/avatar/avatar-fallback"
 
 interface MemberAvatarProps {
   name: string | null | undefined
@@ -15,31 +16,36 @@ interface MemberAvatarProps {
   className?: string
 }
 
-// Member avatar for verified community members (DESIGN_SPEC §3). Privacy
-// boundary: never persist or transmit real photos — fallback always renders
-// the initial so a missing photo degrades to "F." rather than a broken image.
+// Privacidade: nunca persistir nem transmitir foto real — o recuo sempre
+// renderiza a inicial, entao a ausencia de foto vira "D.", nao um buraco.
 //
-// The src comes from /api/avatar/[userId] which returns 404 when the
-// member has no uploaded photo. The HeroUI <Avatar.Image> only shows the
-// <Avatar.Fallback> when src is null/undefined — a 404 image leaves the
-// placeholder visible but broken (alt text only). We clear src on error so
-// the fallback renders the initial instead. (RUN-022 from RUNTIME_FINDINGS.md.)
+// A origem vem de /api/avatar/[userId], que responde 404 quando a pessoa nao
+// tem foto. O <Avatar.Image> do HeroUI v3 e o Radix por baixo: o Radix NAO
+// renderiza o <img> enquanto o proprio pre-carregamento nao reporta "loaded".
+// Num 404 o status vai direto para "error" e nenhum <img> chega ao DOM — por
+// isso um onError nativo no <Avatar.Image> NUNCA dispara. O wrapper anterior
+// limpava a origem nesse onError (RUN-022) e era codigo morto: a peca grande do
+// perfil nao mostrava nem foto nem inicial (RECON-048, medido no DOM).
+//
+// O recuo, entao, nao depende de evento de erro nenhum: e montado sempre que a
+// biblioteca nao confirmou o carregamento da foto. <Avatar.Image> e
+// <Avatar.Fallback> como irmaos deixam o Radix revelar a inicial em "error" e
+// esconde-la em "loaded". A forma redonda e a mesma das pecas pequenas — a base
+// do HeroUI usa rounded-3xl, que so *parece* circulo quando o avatar e pequeno.
 export function MemberAvatar({ name, size = "md", src, className }: MemberAvatarProps) {
   const initial = (name ?? "?").charAt(0).toUpperCase()
-  const classes = `bg-[var(--semantic-selected)] text-[var(--semantic-text-primary)] ${className ?? ""}`
-  const [imgFailed, setImgFailed] = useState(false)
-  const effectiveSrc = src && !imgFailed ? src : null
+  const [status, setStatus] = useState<AvatarImageStatus>("idle")
+  const classes = `rounded-full bg-[var(--semantic-selected)] text-[var(--semantic-text-primary)] ${className ?? ""}`
   return (
     <Avatar className={classes} size={size}>
-      {effectiveSrc ? (
+      {src ? (
         <Avatar.Image
-          src={effectiveSrc}
+          src={src}
           alt={`Foto de ${name ?? "membro"}`}
-          onError={() => setImgFailed(true)}
+          onLoadingStatusChange={setStatus}
         />
-      ) : (
-        <Avatar.Fallback>{initial}</Avatar.Fallback>
-      )}
+      ) : null}
+      {avatarFallbackVisible(status) ? <Avatar.Fallback>{initial}</Avatar.Fallback> : null}
     </Avatar>
   )
 }

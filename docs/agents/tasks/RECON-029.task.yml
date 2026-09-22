@@ -8,6 +8,8 @@ objective: >
 authority:
   - docs/design/visual-guide-2026-09-06/67-web-evento-informacoes.png
   - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 67-web-evento-informacoes
+  - docs/design/visual-guide-2026-09-06/70-web-evento-organizar.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 70-web-evento-organizar
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.4 R33 R34 R35
   - docs/agents/tasks/RECON-022.task.yml
 

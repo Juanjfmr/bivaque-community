@@ -36,7 +36,10 @@ export type ReportTarget = {
 // report_resolved e admission_rejected ficam de fora de propósito — o ator é o
 // operador da moderação, e a identidade de quem modera não vaza para quem
 // denunciou ou foi recusado (runbook §6). event_reminder também: é lembrete do
-// sistema, não mensagem de uma pessoa.
+// sistema, não mensagem de uma pessoa. service_request idem: a notificação diz
+// que o pedido foi encerrado porque a outra parte saiu, e nomear quem saiu
+// revelaria a exclusão — por isso o ator é nulo no banco e o tipo fica fora
+// daqui de propósito. Não "consertar" adicionando o case.
 export function rendersWithActor(notification: NotificationRow): boolean {
   switch (notification.type) {
     case "comment":
@@ -82,6 +85,14 @@ export function formatNotificationLabel(notification: NotificationRow): string {
       // A recusa mostra orientação permitida, nunca motivo técnico privado
       // (spec R13). O estado completo fica em /onboarding/status.
       return "Sua participação não foi liberada"
+    case "service_request":
+      // Aviso NEUTRO: o pedido foi encerrado porque a outra parte não está mais
+      // na plataforma. Não dizer que houve exclusão de conta — o motivo da saída
+      // é dado pessoal de quem saiu, e contá-lo a terceiro é o que a LGPD veda.
+      // A frase é impessoal de propósito: o ator é nulo (a conta não existe mais
+      // como identidade navegável), e nomear quem saiu seria o mesmo vazamento
+      // por outro caminho.
+      return "O pedido em que você estava foi encerrado"
     default:
       return "nova notificação"
   }
@@ -119,6 +130,9 @@ export function resolveNotificationHref(
       // reject_pending_user (20260821000041): a pessoa vê o estado do pedido em
       // /onboarding/status — rota existente, construída na D2.
       return "/onboarding/status"
+    case "service_request":
+      // target_id é o pedido; /pedidos/[id] é a rota real do acompanhamento.
+      return `/pedidos/${notification.target_id}`
     default:
       return null
   }

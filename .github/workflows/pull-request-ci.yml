@@ -103,8 +103,16 @@ jobs:
       - name: Reset local database (with seed)
         run: pnpm exec supabase db reset --local
 
-      - name: Root E2E tests
+      # Dois lotes de propósito: o normal roda em paralelo e EXCLUI os specs
+      # marcados @stateful; esses rodam em serial depois, porque escrevem nas
+      # mesmas linhas (grupo privado, save da mesma conta, pendentes da vila) e
+      # colidiam entre si quando tudo rodava junto. Ver o contrato em
+      # tests/scope/local-command-surface.test.mjs.
+      - name: Root E2E tests (parallel, excluding @stateful)
         run: pnpm test:e2e
+
+      - name: Root E2E tests (stateful, serial)
+        run: pnpm test:e2e:stateful
 
       - name: Upload Playwright artifacts
         if: always()

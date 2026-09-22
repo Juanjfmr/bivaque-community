@@ -4,6 +4,12 @@ objective: >
   A rota /communities/[id] passa a ser a comunidade da prancha 43: apresentacao, grupos e o estado de pedido pendente, com o que o visitante pode ver separado do que o membro ve.
 
 authority:
+  - docs/design/visual-guide-2026-09-06/82-web-localidade.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 82-web-localidade
+  - docs/design/visual-guide-2026-09-06/81-web-comunidade-admin.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 81-web-comunidade-admin
+  - docs/design/visual-guide-2026-09-06/73-web-comunidade-pedidos.png
+  - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 73-web-comunidade-pedidos
   - docs/design/visual-guide-2026-09-06/43-web-comunidade-grupos.png
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
   - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1

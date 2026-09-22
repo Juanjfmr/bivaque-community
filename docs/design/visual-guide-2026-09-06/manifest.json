@@ -2,7 +2,7 @@
   "title": "Bivaque — Guia visual de construção",
   "date": "2026-09-06",
   "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
-  "generationTool": "image_gen integrado",
+  "generationTool": "image_gen integrado; a prancha 70 é render determinístico de HTML sobre os tokens reais",
   "scope": "Conceitos mobile e web autorizados nesta conversa. Referências de aparência e fluxo; não comprovam disponibilidade no aplicativo.",
   "artifacts": [
     {
@@ -514,16 +514,18 @@
       ],
       "file": "36-web-auth-entrada.png",
       "status": "Referencia visual",
-      "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Two separate DESKTOP auth pages no signed-in sidebar. Left panel login, 50/50 layout, tasteful civilian community photograph left with BIVAQUE wordmark, right form heading 'Que bom ter você de volta.', labeled e-mail ana@exemplo.invalid, active green 'Receber código', separator ou, outline 'Continuar com Google', Criar conta and Preciso de ajuda links. Right panel signup same layout with 'Vamos começar.', name Ana Ribeiro, e-mail ana@exemplo.invalid, concise checkbox 'Li e aceito os Termos de uso e o Código de convivência', link 'Política de Privacidade', active green 'Criar conta', 'Já tenho conta'. No fake consent claims; no benefits slogans.",
-      "source": "C:\\Users\\juana\\.codex\\generated_images\\01a07740-ae93-78c2-b2d4-c77857b1def5\\exec-ccea867b-1218-4e3e-a0a0-46cecac2d51a.png",
-      "executedPrompt": "Edit ONLY the supplied pair of Bivaque desktop auth pages. On RIGHT signup page REMOVE the password label 'Senha', its field, dots, and eye icon entirely. Move acceptance checkbox, privacy link and Create account button upward so the form has only Nome completo and E-mail. This is passwordless signup. Preserve every other detail, typography, photos, left login page, and buttons. Do not add any other field or copy.",
+      "prompt": "Prancha REGERADA em 18/09/2026 por render deterministico de HTML sobre os tokens reais, na geometria da convencao web (2076x757, dois paineis de 1032, gutter 12). Substitui a imagem anterior, que desenhava 'Receber codigo' — mecanismo ANTERIOR a ADR-20260907-login-com-senha. O provedor nao envia codigo e o guia proibe prometer integracao inexistente; o proprio codigo registrava a pendencia (bivaque-sign-in.tsx:31, 'instrucao posterior a prancha, que precisa ser regerada'). Painel 1 Entrar com e-mail e senha, mostrar/ocultar, Esqueci minha senha, divisor ou, Continuar com Google. Painel 2 Criar conta com aceite (Politica de privacidade + Codigo de conduta) como condicao. Copy lida do entryCopy real (bivaque-sign-in.tsx:35-52), nao inventada. Sem sidebar de membro, como as demais pranchas de auth.",
+      "source": "docs/design/visual-guide-2026-09-06/src/36-web-auth-entrada.html",
+      "executedPrompt": "Prancha REGERADA em 18/09/2026 por render deterministico de HTML sobre os tokens reais, na geometria da convencao web (2076x757, dois paineis de 1032, gutter 12). Substitui a imagem anterior, que desenhava 'Receber codigo' — mecanismo ANTERIOR a ADR-20260907-login-com-senha. O provedor nao envia codigo e o guia proibe prometer integracao inexistente; o proprio codigo registrava a pendencia (bivaque-sign-in.tsx:31, 'instrucao posterior a prancha, que precisa ser regerada'). Painel 1 Entrar com e-mail e senha, mostrar/ocultar, Esqueci minha senha, divisor ou, Continuar com Google. Painel 2 Criar conta com aceite (Politica de privacidade + Codigo de conduta) como condicao. Copy lida do entryCopy real (bivaque-sign-in.tsx:35-52), nao inventada. Sem sidebar de membro, como as demais pranchas de auth.",
       "reviewNotes": [
-        "Prancha corrigida: removido campo de senha inventado. Manter o fluxo de autenticação por e-mail. Google depende de configuração real.",
-        "Nome de apresentação não exige nome civil completo. Aceites registrados no cadastro não devem reaparecer sem motivo."
+        "REGERADA 18/09/2026: a nota anterior dizia 'Prancha corrigida: removido campo de senha inventado' — correta para o mecanismo de codigo da epoca. A ADR-20260907-login-com-senha inverteu o mecanismo aprovado, e esta versao desenha e-mail e senha.",
+        "Google depende de configuracao real do provedor; a borda existe na tela e o comportamento e o do provedor.",
+        "Nome de apresentacao nao exige nome civil completo. Aceites registrados no cadastro nao devem reaparecer sem motivo."
       ],
-      "reviewState": "Inspecionada; observar notas e correções pendentes",
+      "reviewState": "Regerada por render deterministico; revisar contra a tela implementada",
       "path": "docs/design/visual-guide-2026-09-06/36-web-auth-entrada.png",
-      "sourceRevision": "9cd22798b54afa0d1a42126148a9ff6d00e6ccfd"
+      "sourceRevision": "914a1d8",
+      "reviewedAt": "2026-09-18"
     },
     {
       "id": "37-web-auth-confirmacao",
@@ -1282,6 +1284,397 @@
           "prompt": "Create ONE BIVAQUE board TWO complete desktop app viewports side by side, mature white/forest-green #164734 app, crisp Inter readable Portuguese, no decorative logo symbols only BIVAQUE wordmark. Pre-admission shell with left progress rail E-mail Concluído, Seu acesso Em andamento, Cidade Próximo passo. No member navigation or feed. LEFT heading Enviar identidade, text Não conseguimos confirmar pelo CPF. Envie sua identidade para continuar. Explain reconhecimento por IA pode levar um pouco mais. Two upload cards Frente do documento and Verso do documento, neutral document icons, Escolher arquivo buttons. Helper Imagens legíveis e sem reflexos. Disabled Enviar para análise with dark gray legible text, Voltar à verificação. RIGHT same shell heading Precisamos de outra imagem, amber alert Não foi possível ler a frente do documento. Front card Imagem ilegível / Trocar imagem; back card Arquivo recebido. Disabled Reenviar para análise with dark gray text until replacement. Link Voltar. Side note Após o reenvio, acompanhe a análise por aqui. No raw identity details, no CPF numbers, no selfie biometric requirement, no response deadline, no retention promises, no public badge. Roomy composed desktop columns, no device monitors."
         }
       ]
+    },
+    {
+      "id": "70-web-evento-organizar",
+      "kind": "web",
+      "group": "events",
+      "title": "Web: organizar um evento",
+      "screens": [
+        "Novo evento",
+        "Evento publicado"
+      ],
+      "reviewNotes": [
+        "Capa, pessoas, perguntas e contagem de confirmados são ilustrativos; consolidar fixtures únicas ao implementar. O evento é persistido antes de ser divulgado e quem organiza edita ou cancela depois.",
+        "Os limites de upload da capa dependem do contrato técnico; não fixar formato ou tamanho na tela.",
+        "A lista de participantes segue autorização: mostra apenas quem permite aparecer."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/70-web-evento-organizar.html",
+      "prompt": "Prancha criada em 12/09/2026 por render de HTML sobre os tokens reais (packages/tokens/src/tokens.css), na geometria da convenção web do guia: 2076x757, dois desktops lógicos de 1440x1056 reduzidos por scale 0.716667. Painel 1 Novo evento com Título, Descrição, Início, Local, Capa do evento e Quem pode ver, derivados de apps/web/app/(shell)/events/event-form.tsx. Painel 2 evento publicado na visão de quem organiza, com Editar evento e Cancelar evento, participantes e perguntas. Shell conforme a prancha 48-web-eventos. Diferente das demais pranchas, o PNG é render determinístico de HTML, não geração por image_gen.",
+      "file": "70-web-evento-organizar.png",
+      "path": "docs/design/visual-guide-2026-09-06/70-web-evento-organizar.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "71-web-auth-recuperacao",
+      "kind": "web",
+      "group": "auth",
+      "title": "Web: recuperar o acesso",
+      "screens": [
+        "Esqueceu sua senha",
+        "Crie uma senha nova"
+      ],
+      "reviewNotes": [
+        "O retorno do pedido é neutro de propósito: não confirma se o e-mail tem conta. Não trocar por mensagem que revele cadastro, e não transformar falha do provedor em 'enviado'.",
+        "Divergência declarada com R08: a spec pede 'senha nova e confirmação'; a tela implementada usa mostrar/ocultar senha em vez de campo de confirmação. A prancha segue a tela implementada e registra a divergência para decisão do dono.",
+        "A política de senha é a do Auth; o texto não deve fixar número além do que o provedor exige.",
+        "A foto da coluna esquerda é bloco ilustrativo; consolidar com o asset real ao implementar."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/71-web-auth-recuperacao.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell conforme a prancha 36-web-auth-entrada. Painel 1 Esqueceu sua senha? com e-mail, Enviar link e o retorno neutro exigido por R07. Painel 2 Crie uma senha nova com mostrar/ocultar senha e a política. Copy reconciliada com as rotas /recuperar-senha e /nova-senha.",
+      "file": "71-web-auth-recuperacao.png",
+      "path": "docs/design/visual-guide-2026-09-06/71-web-auth-recuperacao.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "72-web-auth-link-invalido",
+      "kind": "web",
+      "group": "auth",
+      "title": "Web: link inválido ou expirado",
+      "screens": [
+        "Este link não vale mais",
+        "Não foi possível entrar"
+      ],
+      "reviewNotes": [
+        "As duas telas dizem o que aconteceu e qual é o próximo passo. Não culpar quem chegou, não expor detalhe técnico do provedor, e não prometer prazo de novo envio.",
+        "R06 exige a tela de callback inválido. O caminho de recuperação vencida precisa oferecer pedir outro link, sem devolver a pessoa para o começo.",
+        "A foto da coluna esquerda é bloco ilustrativo; consolidar com o asset real ao implementar."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/72-web-auth-link-invalido.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell conforme a prancha 36-web-auth-entrada. Painel 1 é o estado de link de recuperação vencido de /nova-senha. Painel 2 é /auth/callback-error, exigido por R06. Copy reconciliada com as telas implementadas.",
+      "file": "72-web-auth-link-invalido.png",
+      "path": "docs/design/visual-guide-2026-09-06/72-web-auth-link-invalido.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "73-web-comunidade-pedidos",
+      "kind": "web",
+      "group": "community",
+      "title": "Web: decidir pedidos de entrada",
+      "screens": [
+        "Pedidos de entrada",
+        "Ver o pedido"
+      ],
+      "reviewNotes": [
+        "O motivo do pedido é privado: aparece só para quem administra, e o pedido não entra no feed enquanto estiver pendente. Não expor o motivo a outro membro nem listar participantes a quem não é aprovado.",
+        "R30 pede decisão conforme capacidade. A tela implementada não mostra vagas; a prancha desenha o indicador e registra a divergência para decisão do dono.",
+        "A lista de candidatos não vira roster: nomes de pendentes não são a lista de membros da comunidade.",
+        "Membros, vagas e o ano de criação são ilustrativos; consolidar com consulta real ao implementar."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/73-web-comunidade-pedidos.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do console do dono da comunidade conforme apps/web/app/(owner)/communities/[id]/admin/layout.tsx, que usa navegação de topo e não a lateral do membro. Painel 1 é a fila de pedidos com seleção em massa e ação por linha. Painel 2 é o pedido aberto, com o motivo privado e o rail Sobre a comunidade. Copy reconciliada com R30 e com a tela implementada em admin/pending.",
+      "file": "73-web-comunidade-pedidos.png",
+      "path": "docs/design/visual-guide-2026-09-06/73-web-comunidade-pedidos.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "74-web-guia-curadoria",
+      "kind": "web",
+      "group": "guia",
+      "title": "Web: curar o Guia",
+      "screens": [
+        "Fila do Guia",
+        "Sugestões de correção"
+      ],
+      "reviewNotes": [
+        "Nada é publicado sem revisão humana. A fila não publica sozinha, e a origem da sugestão (IA ou membro) fica visível para quem decide.",
+        "Aplicar uma correção publica a versão revisada e registra quem sugeriu. Não apagar o histórico da versão anterior.",
+        "O horário, o nome do posto e o telefone são ilustrativos; consolidar com dado real ao implementar.",
+        "A nota de origem da sugestão de correção não deve virar promessa de prazo nem prova de verificação."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/74-web-guia-curadoria.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do painel do operador conforme apps/web/app/(admin)/layout.tsx. Painel 1 é a fila com sugestão de IA e sugestão manual, cada uma com aprovar e recusar. Painel 2 é a sugestão de correção com o antes e o depois do trecho do artigo. Copy reconciliada com R39 e com a tela implementada em guide-queue.",
+      "file": "74-web-guia-curadoria.png",
+      "path": "docs/design/visual-guide-2026-09-06/74-web-guia-curadoria.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "75-web-conversas",
+      "kind": "web",
+      "group": "community",
+      "title": "Web: central de conversas",
+      "screens": [
+        "Caixa de entrada",
+        "Conversa aberta"
+      ],
+      "reviewNotes": [
+        "C12 pede conversa com URL estável. A rota /messages/[id] é conferida no servidor pela RLS de dm_conversations (select apenas para participante) — conversa de outra pessoa e conversa inexistente respondem igual 404, sem enumerar ids. A prancha abre a tela direto por URL e o estado se reconstrói.",
+        "Lista da inbox usa o contexto da conversa (Grupo em comum, Evento em comum, Recomendação, Família) como selo pequeno e colorido, derivado de dm_conversations.context_type — não como texto corrido. Renata M. e Paulo M. aparecem com selo Grupo em comum; Ana Cláudia com Evento em comum; João Sarmento com Recomendação; Lúcia Prado com Família.",
+        "Bloqueio é bidirecional. O código mostra os dois rótulos 'Você bloqueou' (Paulo M.) e 'Bloqueado(a)' (alguém bloqueou você), como em dm_blocks. Bloquear no header do thread só aparece quando você bloqueou a outra conta; se a outra conta bloqueou, o thread mostra 'Você foi bloqueado' e o input some.",
+        "Estado da mensagem própria segue a matriz do chat-thread: 'Enviando…' durante o insert otimista, 'Enviado' depois do servidor confirmar, 'Não enviado — tentar novamente' se o insert falhou. A prancha desenha a falha real com a mensagem preservada e o botão Tentar novamente chamando o mesmo deliverMessage.",
+        "Denúncia de mensagem do outro abre disclosure com motivo (mín. 10 caracteres), nota de privacidade alertando para não incluir CPF/telefone/endereço e motivo redigido antes da análise. O alvo nunca vê o resultado interno nem a identidade de quem denunciou — essa parte fica fora da prancha porque não é visível.",
+        "A conversa só abre com contexto autorizado: o RPC open_conversation confere no servidor que existe contexto compartilhado entre as duas contas (shared_group, shared_event, recommendation_thread, accepted_family). A UI da Nova conversa mostra Pessoas com quem você pode conversar e bloqueia a criação sem contexto.",
+        "Avatar da outra pessoa usa o display_name resolvido de profiles ou, se não houver, cai para 'Participante' — nunca nome chumbado. Membros com nomes reais e cores de avatar vêm de fixtures únicas e não se repetem entre conversas da mesma captura.",
+        "Quem bloqueou aparece na lista com o rótulo discreto Você bloqueou; clicar entra no thread com header em estado de bloqueio (botão vira Desbloquear) e o input some. Esta prancha não desenha o estado de 'alguém me bloqueou' — fica para a tela de Bloqueios nas Configurações.",
+        "Selecionar uma conversa navega para /messages/<id> (router.push), não para estado local: URL é fonte da verdade, abrir deep-link ou voltar/avançar do navegador reconstrói a tela. A linha selecionada fica destacada com pine100; as outras ficam em surface com hover sunken.",
+        "Indicador de 'nova mensagem' (badge na lista) não foi desenhado: a implementação atual marca lidas no servidor mas não renderiza badge explícito por conversa. A contagem de não lidas vive só na bolinha do sino no topo."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/75-web-conversas.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do membro copiado de src/70-web-evento-organizar.html. Painel 1 mostra a caixa de entrada com cinco conversas (uma marcada como bloqueada pelo próprio usuário) e o estado vazio do thread ao lado. Painel 2 abre a conversa selecionada com Renata Menezes, mostrando mensagem do outro (com botão Denunciar), mensagem própria enviada, nova mensagem do outro e mensagem própria que falhou ao enviar (estado 'Não enviado — tentar novamente' com botão de retry). Copy reconciliada com apps/web/app/(shell)/messages/page.tsx, [id]/page.tsx, conversation-inbox.tsx e chat-thread.tsx.",
+      "file": "75-web-conversas.png",
+      "path": "docs/design/visual-guide-2026-09-06/75-web-conversas.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "76-web-familia",
+      "kind": "web",
+      "group": "profile",
+      "title": "Web: convidar a família",
+      "screens": [
+        "Convidar um familiar",
+        "Convite pendente"
+      ],
+      "reviewNotes": [
+        "Apenas titulares verificados criam convite — o código mostra nota restritiva quando a conta ainda não passou pela verificação de vínculo. A prancha desenha o caminho verificado, que é o estado em que a ação fica disponível.",
+        "A conta do familiar é independente: o convite não concede participação em comunidade privada nem acesso a dados do titular. Texto da prancha segue o código.",
+        "O link aparece uma única vez. O servidor guarda só o digest do token (migration 20260815130000); o link cru nunca é persistido nem devolvido depois de sair da tela. A prancha mostra esse contrato — não inventar histórico do link.",
+        "Os e-mails mascarados (m***, r***, a***) são ilustrativos; o servidor guarda só o digest SHA-256 do e-mail normalizado, nunca o endereço completo. Pendentes são exemplos; os 5 ativos e o limite de 7 dias vêm do contrato real.",
+        "Não há promessa de prazo de retorno do familiar nem de tempo que o convite fica visível além dos 7 dias. Cancelar e reenviar são as ações permitidas: revogar invalida o token, criar novo convite é a forma de reenviar.",
+        "Lacuna registrada: nenhum contrato de tarefa possui isoladamente a rota /configuracoes/familia. A prancha está ancorada em RECON-031, que cobre o conjunto de configurações (incluindo família) — não existe um card só desta tela."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/76-web-familia.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do membro conforme apps/web/app/components/bivaque/app-shell.tsx e subshell de Configurações (cabeçalho + coluna vertical de seções) conforme apps/web/app/(shell)/configuracoes/layout.tsx e configuracoes-nav.tsx, com a subrota família marcada como ativa em Privacidade. Painel 1 é o convite novo com o formulário de e-mail e a lista de pendentes com revogar por linha. Painel 2 é o convite pronto após criar: o link único aparece com o aviso de uma única vez, o botão copiar e revogar, e o convite na lista com reenviar e cancelar. Copy reconciliada com C07 e com a tela implementada em apps/web/app/(shell)/configuracoes/familia e em profile/family-invite-section-actions.",
+      "file": "76-web-familia.png",
+      "path": "docs/design/visual-guide-2026-09-06/76-web-familia.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "77-web-ajuda",
+      "kind": "web",
+      "group": "profile",
+      "title": "Web: pedir ajuda com canal real",
+      "screens": [
+        "Acesso e uso",
+        "Regras e suporte"
+      ],
+      "reviewNotes": [
+        "O canal de suporte é o mesmo endereço configurado em NEXT_PUBLIC_SUPPORT_EMAIL (apps/web/lib/support.ts). Sem a variável, o valor é o sentinela '<<DEFINIR>>', que o gate de escopo recusa em produção. O endereço da prancha (suporte@bivaque.app) é ilustrativo e deve ser consolidado com a variável real no deploy.",
+        "Não há promessa de prazo de resposta nem chat, telefone ou sistema de chamados. O código é explícito nisso e a prancha mantém o mesmo limite: o botão leva a um mailto, não a um sistema de atendimento.",
+        "Os documentos legais vêm das rotas /privacidade e /codigo-de-conduta (C04/C13). A prancha não copia texto legal — o link aponta para a versão usada no registro, conforme ADR-20260907-consentimento-no-cadastro.",
+        "A seção 'Quando você entra em contato' é uma orientação geral de uso, não uma promessa de SLA. O suporte não publica tempo máximo nem mínimo de resposta.",
+        "A seção 'Usar o Bivaque' reforça a regra de cidade como filtro de descoberta, não como autorização de comunidade — coerente com a regra de que escolher cidade não concede participação privada.",
+        "Lacuna registrada: o botão Entrar do bloco 'Acesso e conta' aponta para /login, que existe, mas o link de destino fora do shell não foi validado nesta prancha. A spec §4.1 R02 é a referência."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/77-web-ajuda.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do membro conforme apps/web/app/components/bivaque/app-shell.tsx. /ajuda não tem subshell — o conteúdo vive no main da shell, max-w-2xl centralizado, conforme apps/web/app/(shell)/ajuda/page.tsx. Painel 1 mostra o topo da página com H1 'Ajuda', lead, e as seções 'Acesso e conta' e 'Usar o Bivaque' com listas de destinos reais. Painel 2 continua com 'Documentos e regras' (dois cartões com seta para as rotas legais) e 'Falar com a equipe' com o botão mailto e a nota explícita de que não há chat nem sistema de chamados. Copy reconciliada com C13 e com a tela implementada em ajuda/page.tsx e apps/web/lib/support.ts.",
+      "file": "77-web-ajuda.png",
+      "path": "docs/design/visual-guide-2026-09-06/77-web-ajuda.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "78-web-prestador-operacao",
+      "kind": "web",
+      "group": "negocio",
+      "title": "Web: catálogo e conta do prestador",
+      "screens": [
+        "Catálogo e portfólio",
+        "Conta e área de atendimento"
+      ],
+      "reviewNotes": [
+        "Shell divergente declarado: o briefing pediu a casca do membro (src/70-web-evento-organizar), mas as rotas /prestador/* vivem em apps/web/app/(provider)/layout.tsx, que monta o ProviderShell próprio — sidebar com wordmark, rótulo de seção 'MEU NEGÓCIO', cartão do negócio (Clima Certo / Assistência técnica), itens Pedidos / Minha ficha / Catálogo / Área de atendimento / Conta, sem Salvos/Notificações/seletor de cidade. A prancha segue o shell real, que é a autoridade visual do prestador.",
+        "Rótulo da coluna de pedidos da prancha 23 é 'Quando' (contém 'Nesta semana' e 'A combinar'); não se chama 'Contato'. Esta prancha não toca a fila — a correção permanece registrada na 23 e vale para qualquer evolução futura.",
+        "Pessoa conectada no painel é a responsável pelo negócio (Clima Certo), não o cliente. Avatares e iniciais seguem a mesma identidade em sidebar e cabeçalho.",
+        "Exibição de telefone permanece opcional; não bloquear a ficha completa por ausência de número. A completude da vitrine é calculada sobre descrição, serviços cadastrados, regiões e fotos — não sobre contato.",
+        "Não exibir posto, OM autodeclarada, selo de verificação ou dados privados de elegibilidade na ficha pública. As fotos vêm do bucket privado por URL assinada de curta duração; a UI não mostra chave nem caminho.",
+        "Itens, preços, descrição, telefone e região atendida são fictícios; consolidar fixtures coerentes ao implementar. O limite de 5 MB e o allowed_mime_types (JPEG/PNG/WebP) vêm do contrato técnico — a prancha apenas ecoa o que está implementado.",
+        "A região 'Brasília, DF' e a comunidade 'Jardim das Acácias' são fixtures de seed e não definem privilégio automático de escrita nem adesão."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/78-web-prestador-operacao.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do prestador conforme apps/web/app/(provider)/provider-shell.tsx, não a casca do membro. Painel 1 é o catálogo (/prestador/catalogo): formulário 'Publicar item' (título, descrição opcional, preço em centavos com vazio = sob orçamento), lista 'Meu catálogo' com reordenação e remoção, e o formulário 'Adicionar foto ao portfólio'. Painel 2 combina Conta e Área de atendimento (/prestador/conta + /prestador/atendimento): Conta traz o e-mail de acesso gerenciado pelo suporte, telefone opcional e o checkbox de telefone público; Área de atendimento mostra a região atual atendida e o toggle de comunidade. Copy reconciliada com RECON-024, ADR-20260820-conta-de-prestador e o guia do prestador.",
+      "file": "78-web-prestador-operacao.png",
+      "path": "docs/design/visual-guide-2026-09-06/78-web-prestador-operacao.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "79-web-indicar-prestador",
+      "kind": "web",
+      "group": "negocio",
+      "title": "Web: indicar e aceitar prestador",
+      "screens": [
+        "Indicar prestador",
+        "Aceitar o convite"
+      ],
+      "reviewNotes": [
+        "Casca divergente do briefing declarado: a tela de indicação /communities/[id]/indicar-prestador vive em apps/web/app/(shell)/layout.tsx (casca do membro), e não no console do dono (src/73). A indicação é feita por um membro aprovado da comunidade. A prancha segue o código real — a casca do membro.",
+        "Casca de pré-autenticação declarada para o aceite: /prestador-convite/[token] mora em apps/web/app/(preauth), não em (shell). O convite pode ser aberto por alguém sem sessão autenticada — o fluxo usa o mesmo mockup de navegador e a mesma foto ilustrativa da prancha 71 (src/71-web-auth-recuperacao).",
+        "Convite de prestador NÃO é convite familiar. A aceitação cria conta civil de prestador, separada dos membros: a tela explicita que ela não dá acesso a feed, perfis, grupos, eventos ou listas da comunidade. Convite familiar tem outra rota e outro contrato (R17).",
+        "Confirmação por e-mail, não por código: o mecanismo real configurado em apps/web/app/(preauth)/prestador-convite/[token]/acceptance.tsx usa createBrowserClient().auth.signInWithOtp com emailRedirectTo=/auth/callback. Não pintar caixas de OTP nem inventar contador — o caminho é link no e-mail.",
+        "A frase 'O convite expira em sete dias' vem da tela implementada (apps/web/app/(shell)/communities/[id]/indicar-prestador/page.tsx). A prancha reproduz o que está em produção; o prazo é responsabilidade da implementação, não da autoridade visual.",
+        "Convite é enfileirado, não entregue: o toast atual de sucesso diz 'O prestador receberá o link quando o canal de e-mail estiver disponível.' A prancha mostra o botão Enviar convite ativo, mas não afirma envio confirmado.",
+        "Acesso restrito do prestador está declarado na tela de indicação em cartão azul-petróleo: a) vê somente a própria ficha e conversas iniciadas por membros; b) não vê feed, perfis, grupos, eventos, comunidades nem listas de membros; c) na conversa, vê apenas o nome de exibição de quem falou. Esse contrato precisa ser preservado na implementação.",
+        "Não exibir posto, OM autodeclarada, selo de verificação ou dados privados de elegibilidade na ficha pública. Os campos opcionais auto-declarados (Força Armada, OM) ficam desligados por padrão.",
+        "A comunidade indicada é 'Jardim das Acácias' (fixture); o e-mail convidado usa domínio example.invalid para evitar dado real. Implementar com fixtures coerentes."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/79-web-indicar-prestador.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Painel 1 é a tela de indicação (/communities/[id]/indicar-prestador) com casca do membro, breadcrumb da comunidade, cartão azul-petróleo 'Acesso restrito do prestador' e formulário com Nome do prestador ou negócio + E-mail do prestador. Painel 2 é a tela de aceite (/prestador-convite/[token]) com casca de pré-autenticação, mesma foto ilustrativa da prancha 71, e o caminho de confirmação por link no e-mail (signInWithOtp → emailRedirectTo=/auth/callback). Copy reconciliada com R47, ADR-20260820-conta-de-prestador e as telas implementadas.",
+      "file": "79-web-indicar-prestador.png",
+      "path": "docs/design/visual-guide-2026-09-06/79-web-indicar-prestador.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "80-web-recomendacoes",
+      "kind": "web",
+      "group": "guia",
+      "title": "Web: indicações e referências",
+      "screens": [
+        "Pedidos de indicação recebidos",
+        "Responder uma indicação"
+      ],
+      "reviewNotes": [
+        "A rota /recommendations é do segmento de membro e o utilizador é o próprio membro pedindo ou respondendo a pedidos. A casca é a lateral padrão do membro (apps/web/app/(shell)/layout.tsx), não a do prestador. O briefing atribui a tarefa ao teammate 'prestador', mas a tela não é do prestador — é do membro. A prancha segue a autoridade real do código.",
+        "Pedidos de indicação NÃO são marketplace: a própria tela traz o aviso 'Este é um espaço de utilidade comunitária, não um marketplace'. Não inventar estrelas, selos, ranking, promessa comercial, SLA ou pagamento. O texto de ajuda da caixa 'Pedir indicação' pede para evitar termos comerciais como preço, pagamento, anúncio ou contato comercial — manter o mesmo aviso.",
+        "Marcador 'Ajudou a resolver': só a autora marca a resposta que resolveu, e a marca fica visível para todos com borda esquerda verde e chip 'Ajudou a resolver'. A resposta marcada define o status 'Pedido resolvido' do pedido, exibido em faixa abaixo da lista de respostas. 'Reabrir' volta o pedido ao estado normal e remove a marca — usado só pela autora.",
+        "Não desenhar curtidas: o sistema não tem like/curtida em pedido de indicação. Os únicos controles por resposta são Editar/Excluir (próprio autor) e Ajudou a resolver / Remover marca (autora do pedido).",
+        "Alcance: o pedido nasce com escopo locality (a cidade) ou group (um grupo do qual o autor participa). Quando a categoria é 'Saúde & bem-estar' o escopo locality é escondido — a tela obriga a escolher um grupo. A etiqueta do alcance aparece como chip Manaus / Grupo ao lado da categoria.",
+        "Confirmação de publicação: o toast atual diz 'Pedido publicado!'. A prancha mostra o estado pós-publicação (lista atualizada com o novo pedido) e não afirma sucesso de envio antes da persistência. Falha de envio preserva o texto da caixa (não há reset automático) e exibe mensagem de erro sem expor motivo técnico privado.",
+        "Detecção de CPF/CEP: a caixa do pedido detecta números de CPF/CEP e pede confirmação explícita antes de publicar. A prancha não pinta estado de aviso — é comportamento do formulário, não um cartão visual fixo. Não exibir dado sensível nem sugerir armazenamento local.",
+        "Manaus é fixture do seed; cidade de exemplo, não barreira de acesso. As categorias, nomes de autores e datas são fictícios; consolidar fixtures coerentes ao implementar."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/80-web-recomendacoes.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Casca do membro conforme apps/web/app/(shell)/layout.tsx. Painel 1 mostra o conteúdo da aba Pedidos com a lista de pedidos de indicação recebidos: cards com chips de categoria e alcance, título, corpo, respostas existentes, caixa de resposta e o botão Salvar. Painel 2 abre um pedido específico para demonstrar o marcador 'Ajudou a resolver' (borda esquerda verde + chip), a faixa 'Pedido resolvido' e o botão Reabrir; o botão Responder fica desabilitado após a resolução. Copy reconciliada com a tela implementada em apps/web/app/(shell)/recommendations/page.tsx e o componente app/components/bivaque/recommendation-requests.tsx.",
+      "file": "80-web-recomendacoes.png",
+      "path": "docs/design/visual-guide-2026-09-06/80-web-recomendacoes.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "81-web-comunidade-admin",
+      "kind": "web",
+      "group": "community",
+      "title": "Web: administrar a comunidade",
+      "screens": [
+        "Administração da comunidade",
+        "Imagens da comunidade"
+      ],
+      "reviewNotes": [
+        "R31 lista três subrotas: /admin (geral com links), /admin/moderators, /admin/providers. A prancha une as duas primeiras em uma só tela (Administração da comunidade) porque a navegação interna é uma lista de blocos — não um índice de links — e isso é mais coerente com a spec §4.3 'gestão já existente: configurações, responsáveis/moderadores e prestadores autorizados'. A página /admin raiz não foi desenhada: a tela concreta da subrota não tem conteúdo útil sem os blocos.",
+        "Só o dono promove e despromove moderadores. A migration 023 corrigiu a RPC para exigir owner_user_id; despromover moderador é também do dono e a RPC já fazia isso. A tela implementada em admin/moderators usa dois Server Actions separados (addCommunityModeratorAction e removeCommunityModeratorAction). A linha do próprio dono aparece com selo Dono e sem botão — não há como se despromover.",
+        "Dono da vila não precisa aparecer na lista de 'Promover membro aprovado'. O filtro da page.tsx é `role=member, status=approved`, então o próprio dono (role=owner) fica de fora. A lista de 'Moderadores atuais' mostra moderador+owner com ordenação por role (owner primeiro) — Renata e João como moderadores, Carlos como dono.",
+        "Prestadores atestados (admin/providers) passam pela RPC list_community_providers, que reconfere a posse no banco com caller explícito. Revogar não apaga: marca data/motivo e desliga o alcance; o estado revogado continua visível aqui para auditoria. A prancha mostra uma ficha ativa com campo de motivo e botão Revogar ficha (perigo), e uma ficha revogada (Rosana) com selo rose e data de revogação — sem campo de motivo, sem botão.",
+        "Imagens da comunidade (admin/media) usa MediaField duas vezes (Faixa de topo e Miniatura), com aviso de erro e aviso de sucesso por papel (erro: rose100 com borda rose700; sucesso: pine100 com pine700). A página mostra 'Faixa atualizada.' como confirmação recente, depois o upload e o Remover. Os limites (10MB, PNG/JPG/WEBP) vêm de COMMUNITY_IMAGE_MAX_BYTES e COMMUNITY_IMAGE_MIME_TYPES em lib/communities/community-media.ts.",
+        "Só quem responde pela comunidade pode enviar, trocar e remover as imagens. A checagem é canManage = community.owner_user_id === user.id — não inclui moderadores. A prancha desenha o caso positivo (Carlos é o dono). O caso negativo aparece como parágrafo em rose700/Sunken dizendo 'Só quem responde pela {nome} pode enviar, trocar ou remover as imagens.'",
+        "Imagens são reescritas pelo navegador antes de subir para remover EXIF — o canvas reencoda em JPEG q=0.92 conforme media-form.tsx linha 38-56. A URL servida vem de signCommunityImageUrls, que retorna URLs assinadas válidas por 24h. Esse detalhe de segurança aparece como nota privada em rose100 ao fim da tela 2.",
+        "Lacuna registrada: nenhum contrato RECON-* possui a rota do console de administração. A prancha está ancorada no RECON-009 (mesmo contrato da 73-web-comunidade-pedidos — quem entra na comunidade), e o console em si não tem dono no contrato. RECON-024 cobre o painel do prestador (R45/R46), não a gestão da comunidade.",
+        "A navegação do console do dono é o que está implementado em admin/layout.tsx: 'Console — {nome}' à esquerda e os links Pedidos de entrada, Imagens, Voltar à comunidade à direita. A prancha adiciona um link Administração para refletir o índice de /admin (admin/page.tsx) sem alterar o layout.tsx; quem reproduzir a tela deve confirmar a versão real do layout."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/81-web-comunidade-admin.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do console do dono copiado de src/73-web-comunidade-pedidos.html, com o link Administração adicionado ao lado de Imagens para refletir admin/page.tsx (o layout.tsx atual tem só Pedidos de entrada, Imagens e Voltar à comunidade — divergência registrada). Painel 1 une admin/moderators e admin/providers em uma só tela de Administração da comunidade: Moderadores atuais (Carlos Ribeiro como dono com selo Dono, Renata Menezes e João Sarmento como moderadores com botão Despromover), Promover membro aprovado (Lúcia Prado e Ana Cláudia como membros aprovados com botão Promover), e Prestadores atestados (Marcelo Silveira ativo com campo de motivo e Revogar ficha; Rosana Borges revogada em 03/09/2026). Painel 2 é admin/media com o aviso de sucesso 'Faixa atualizada.', o bloco Faixa de topo (imagem larga 168px com legenda alternativa) e o bloco Miniatura (imagem quadrada 148px), cada um com upload dashed-border e botão Remover.",
+      "file": "81-web-comunidade-admin.png",
+      "path": "docs/design/visual-guide-2026-09-06/81-web-comunidade-admin.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "82-web-localidade",
+      "kind": "web",
+      "group": "community",
+      "title": "Web: declarar mudança de cidade",
+      "screens": [
+        "Declarar mudança de cidade",
+        "Transferência declarada"
+      ],
+      "reviewNotes": [
+        "R21 separa explorar destino de declarar mudança. O seletor de cidade no topo do shell (CityReference já cumpre isso) é a primeira ação; declarar mudança é um caminho explícito, não a exploração no Explorar. A prancha painel 1 desenha o formulário de declaração — cidade de destino e data de saída — antes que a pessoa tente publicar e descubra sozinha que o alcance mudou.",
+        "A transferência NÃO migra comunidades automaticamente. As participações em vilas da cidade atual continuam até a data marcada; depois disso a pessoa precisa pedir entrada em vilas da cidade nova. Esta é a frase que o ADR-20260816-shells-e-navegacao lista como risco de pergunta de suporte.",
+        "Switcher no painel 2 é em pílula, não em abas sublinhadas. RECON-047 já registrou a exceção: as duas cidades do membro são um seletor segmentado, e isso é como a prancha apresenta cidade (pranchas 39 e 61) — cartões e seletor, nunca abas. O tab visivelmente ativo ganha pine700 sólido com texto branco e o chip 'saindo' na opção da cidade de destino.",
+        "A aba 'Brasília, DF' fica ativa por padrão mesmo após a declaração. Trocar para a aba da cidade de origem mostra o aviso 'Você só lê aqui — a transferência já aconteceu. Para publicar, use {cidade atual}.' (readOnly = true) ou 'Você está saindo de {cidade de origem} em {data}. Até lá, continua podendo publicar aqui normalmente.' (readOnly = false). A prancha painel 2 não troca de aba — Brasília fica ativa porque ainda é a cidade atual; ler Boa Vista exige clicar no seletor.",
+        "Quem está declarado como saindo vê um cartão de confirmação em pine100 com ícone de check em pine700 sólido e a frase 'Transferência declarada.' mais a data e o destino. Esse cartão é o que diferencia declarar mudança (painel 1) de transferência declarada (painel 2) — o formulário some, o estado atual entra.",
+        "A declaração usa declare_locality_transfer e o cancelamento usa reverse_locality_transfer (citados em page.tsx linhas 13-14). Esses são os contratos de banco; o que o usuário vê é o formulário (painel 1) e o estado resultante (painel 2). Não há promessa de SLA, prazo de processamento ou mudança automática — só a data escolhida pelo membro.",
+        "Não há migration automática de participações: vilas de Brasília onde a pessoa é membro continuam até ela pedir entrada em Boa Vista ou cancelar a transferência. A nota privada no rodapé do painel 2 reforça isso; é a mesma frase que o ADR lista como risco de pergunta de suporte, e merece aparecer antes que ela aconteça.",
+        "Lacuna registrada: nenhum contrato RECON-* cobre a tela /localidade (R21). A prancha está ancorada na spec §4.2 R21 e na própria page.tsx; não há contrato isolado. RECON-014/RECON-016 cobrem /onboarding/locality (R14) — escolher cidade na primeira chegada — que é diferente de declarar mudança posterior.",
+        "Cidades exibidas (Brasília, Boa Vista) são ilustrativas: a implementação lê de /api/localities/[uf]. Datas de saída são ilustrativas; consolidar com o contrato do banco no declare_locality_transfer."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/82-web-localidade.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do membro copiado de src/70-web-evento-organizar.html. Painel 1 é o estado sem outbound declarado (CityReference): cabeçalho 'Brasília, DF', seção 'Estou de mudança' com campo de cidade de destino (Boa Vista, RR), data '1º de dezembro de 2026' e botões Declarar saída + Cancelar; depois cartões de Próximos eventos da cidade, Guia de chegada e Vitrine de prestadores. Painel 2 é o estado pós-declaração: seletor em pílula com 'Brasília, DF' ativa e 'Boa Vista, RR (saindo)' com chip amber, cabeçalho de Brasília, cartão de confirmação em pine100 com ícone de check em pine700 sólido, e os mesmos blocos de cidade; nota privada no rodapé reforça que vilas não migram.",
+      "file": "82-web-localidade.png",
+      "path": "docs/design/visual-guide-2026-09-06/82-web-localidade.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "83-web-landing",
+      "kind": "web",
+      "group": "base",
+      "title": "Web: primeiro contato público",
+      "screens": [
+        "Primeiro contato",
+        "Como entrar e o que esperar"
+      ],
+      "reviewNotes": [
+        "Landing pública para visitante (R01). Antes da admissão não há navegação funcional de membro nem conteúdo privado — a prancha inteira é o shell público.",
+        "Copy reconciliada com apps/web/app/landing/landing.tsx. Hero reproduz o headline 'A comunidade vai com você' e os três passos da seção 'Por dentro do Bivaque'.",
+        "Cidade 'Brasília, DF' usada apenas como exemplo dentro do mock do produto; o seletor real depende da entrada do visitante.",
+        "Imagens da hero, da seção de mudança e do mock do produto são blocos ilustrativos; consolidar com o asset real ao implementar (não usar fotografia como dado).",
+        "Força Armada e OM não aparecem no perfil: destaque explícito no card 'Seu perfil é para convivência' da seção Confiança.",
+        "Não há promessa de prazo, de compartilhamento automático de contato, nem de verificação pública; o selo 'BIVAQUE' é o wordmark canônico.",
+        "Não mostra lista de membros nem avatares individuais; o mock apresenta perguntas e respostas sem expor rostes.",
+        "A seção de meio de página (o relato de uma dúvida resolvida) não está nesta prancha: com o hero em altura de composição, ela não caberia em 1056px sem esmagar as outras. Fica registrada como não desenhada, e o hero foi corrigido de 1056px para 600px porque o flex o estava reduzindo a 58px."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/83-web-landing.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell público conforme apps/web/app/landing/landing.tsx: topbar com BIVAQUE, âncoras Por dentro / Pertencimento / Confiança, botão Entrar à direita. Painel 1 = hero + manifesto + 'Por dentro do Bivaque' com mock do produto. Painel 2 = camadas de pertencimento (cidade, comunidade, grupo), três cartões de confiança e CTA de fechamento. Copy reconciliada com a tela implementada.",
+      "file": "83-web-landing.png",
+      "path": "docs/design/visual-guide-2026-09-06/83-web-landing.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "84-web-busca",
+      "kind": "web",
+      "group": "base",
+      "title": "Web: busca agrupada",
+      "screens": [
+        "Resultados da busca",
+        "Nenhum resultado"
+      ],
+      "reviewNotes": [
+        "Rota /explorar/busca (R20, prancha 61). Resultados agrupados por tipo já implementado: Guia, Serviços, Eventos. Mercado e Moradia ainda não entram na busca — a coluna lateral do painel 2 registra esse limite de implementação, sem prometer prazo.",
+        "Termo canônico no URL é q=; search= é só alias de borda. Trocar a cidade em /localidade refaz as três consultas; nenhum resultado mistura cidades sem indicação.",
+        "A busca do cabeçalho funciona como um único campo; ela respeita a cidade ativa do contexto, não cria nova permissão nem abre conteúdo privado.",
+        "Falha de uma das três (providers/guide/events) vira estado de erro na página inteira, não lista vazia disfarçada; o componente ErrorState preserva o termo em q= para refazer.",
+        "Nada de promessa comercial (selo, ranking, avaliação). Os resultados de Serviços não exibem estrelas nem notas inventadas.",
+        "Resultados são fictícios (escolas, profissionais e evento ilustrativos) — consolidar fixtures únicas de pessoas e eventos ao implementar."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/84-web-busca.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell de membro conforme a prancha 70-web-evento-organizar. Painel 1 = busca agrupada com termo 'escola transferência' e três grupos (Guia da cidade, Serviços, Eventos). Painel 2 = busca vazia para 'translado de mobília pesada' com ações Limpar e Trocar de cidade, mais coluna lateral com variações e nota sobre Mercado/Moradia. Copy reconciliada com apps/web/app/(shell)/explorar/busca/page.tsx.",
+      "file": "84-web-busca.png",
+      "path": "docs/design/visual-guide-2026-09-06/84-web-busca.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
+    },
+    {
+      "id": "85-web-arrivals",
+      "kind": "web",
+      "group": "operations",
+      "title": "Web: operar chegadas e transferências",
+      "screens": [
+        "Chegadas declaradas",
+        "Nenhuma transferência declarada"
+      ],
+      "reviewNotes": [
+        "Rota /arrivals (O05). Painel do operador com nav de topo Admissões / Denúncias / Guia de chegada / Chegadas. Página implementada em apps/web/app/(admin)/arrivals/page.tsx.",
+        "Lacuna encontrada pela análise de chegabilidade: a página é apenas leitura. Mostra volume por cidade, mas não abre a chegada, não filtra por janela, não tem ação por linha. O painel 1 registra isso num cartão amber para que o revisor não ache que a lacuna foi fechada pela prancha.",
+        "A coluna 'Próximo passo' do painel 1 está propositalmente vazia com o rótulo ' sem ação por linha hoje' — não inventar atalho que o código ainda não tem.",
+        "A RPC list_locality_arrivals_volume é operator-only e respeita a RLS do painel do operador. Cidade e contagem são os únicos campos expostos; nomes, contatos e endereços nunca aparecem aqui.",
+        "Painel 2 mostra o estado vazio honesto: a RPC devolveu lista vazia, então a tela não inventa volume. Ações oferecidas são Atualizar, Voltar para Admissões e Abrir Admissões — destinos que já existem no shell do operador.",
+        "Sem promessa de prazo de entrega da próxima versão da página. Quando a tela ganhar destino próprio (abrir chegada, mudar janela, histórico), a prancha é refeita com a nova evidência.",
+        "Brasília, Manaus, Recife, Salvador e Porto Alegre são cidades ilustrativas para preencher a tabela do painel 1; consolidar fixtures únicas de cidades e contagens ao implementar."
+      ],
+      "source": "docs/design/visual-guide-2026-09-06/src/85-web-arrivals.html",
+      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do operador conforme apps/web/app/(admin)/layout.tsx: topbar com BIVAQUE · Operação e nav Admissões / Denúncias / Guia de chegada / Chegadas. Painel 1 = chegadas declaradas com cinco cidades fictícias, chips de janela e origem, e cartão amber registrando a lacuna de chegabilidade. Painel 2 = estado vazio honesto quando a RPC devolve lista vazia, com ações Atualizar / Voltar / Abrir Admissões. Copy reconciliada com apps/web/app/(admin)/arrivals/page.tsx.",
+      "file": "85-web-arrivals.png",
+      "path": "docs/design/visual-guide-2026-09-06/85-web-arrivals.png",
+      "status": "Referencia visual",
+      "reviewedAt": "2026-09-12"
     }
   ],
   "pending": [],
