@@ -18,6 +18,7 @@ import { BIO_FIELD_LABEL, BIO_MAX_LENGTH, bioFromRow, validateBio } from "../../
 import { callProfileBioRpc } from "../../../lib/profile/profile-bio-rpcs"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "../../components/bivaque/avatar"
+import { ModalCloseTrigger } from "../../components/bivaque/close-button"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../components/bivaque/skeleton"
@@ -655,7 +656,7 @@ export default function ProfilePage() {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>Sair da conta</Modal.Heading>
-                <Modal.CloseTrigger className="min-h-11 min-w-11" />
+                <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-muted">

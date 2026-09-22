@@ -30,6 +30,7 @@ import {
 import { classifyPublishError } from "../../../lib/composer/publish-error"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { ModalCloseTrigger } from "./close-button"
 import { ConnectionLostState } from "./error-state"
 import {
   type AudienceDestination,
@@ -391,7 +392,7 @@ export function CreatePostModal({
             <Modal.Dialog className="max-w-4xl">
               <Modal.Header>
                 <Modal.Heading>Criar publicação</Modal.Heading>
-                <Modal.CloseTrigger className="min-h-11 min-w-11" />
+                <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <div className="gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]">
