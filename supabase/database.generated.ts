@@ -2464,7 +2464,13 @@ export type Database = {
         Returns: string
       }
       feed_community: {
-        Args: { p_community_id: string; p_order?: string }
+        Args: {
+          p_before_created_at?: string
+          p_before_id?: string
+          p_community_id: string
+          p_limit?: number
+          p_order?: string
+        }
         Returns: {
           comment_count: number
           community_id: string
