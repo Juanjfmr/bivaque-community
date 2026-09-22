@@ -3104,8 +3104,8 @@
       "title": "A membra nao e avisada quando o prestador responde o pedido",
       "priority": "P1",
       "category": "backend",
-      "status": "repo",
-      "description": "Observado na simulacao de 22/09/2026 (HRN-004): o prestador responde o pedido pelo painel, a mensagem aparece em /pedidos/[id] para a membra, mas nenhuma notificacao chega a ela — /notifications de membro-1 so lista comentarios antigos. O tipo service_request e o deep-link /pedidos/[id] ja existem (deep-links.ts), mas hoje so o aviso de pedido cancelado pela purga os usa. Sem aviso e sem entrada para /pedidos (NAV-PEDIDOS-ORFA), a resposta do prestador nao tem como chegar a quem pediu. Entra em repo porque o conserto e um gatilho de notificacao em migration, e o conteudo do aviso e decisao de produto DECISAO DO DONO 22/09/2026: avisar so a primeira resposta do prestador (quando o pedido passa a Em conversa), sem o texto da mensagem — por exemplo \"Climatiza Manaus respondeu seu pedido\" —, levando a /pedidos/[id]. Segue em repo ate o ADR, por exigir migration.",
+      "status": "blocked",
+      "description": "Observado na simulacao de 22/09/2026 (HRN-004): o prestador responde o pedido pelo painel, a mensagem aparece em /pedidos/[id] para a membra, mas nenhuma notificacao chega a ela — /notifications de membro-1 so lista comentarios antigos. O tipo service_request e o deep-link /pedidos/[id] ja existem (deep-links.ts), mas hoje so o aviso de pedido cancelado pela purga os usa. Sem aviso e sem entrada para /pedidos (NAV-PEDIDOS-ORFA), a resposta do prestador nao tem como chegar a quem pediu. Entra em repo porque o conserto e um gatilho de notificacao em migration, e o conteudo do aviso e decisao de produto DECISAO DO DONO 22/09/2026: avisar so a primeira resposta do prestador (quando o pedido passa a Em conversa), sem o texto da mensagem — por exemplo \"Climatiza Manaus respondeu seu pedido\" —, levando a /pedidos/[id]. Segue em repo ate o ADR, por exigir migration. ADR aceito em 22/09/2026. Implementacao SEGURADA no mesmo dia: a premissa \"uma vez por pedido, na transicao\" falha porque todos os pedidos do par dividem a conversa — ver PEDIDO-CONVERSA-COMPARTILHADA.",
       "checklist": [
         "Decidir o que avisa [FEITO 22/09: so a primeira resposta, sem o texto]",
         "Gatilho no banco com o tipo service_request existente, sem expor o texto da mensagem no aviso",
@@ -3117,7 +3117,10 @@
         "tests/e2e/journey-pedir-servico.spec.ts passa: a resposta do prestador persiste e aparece para a membra em /pedidos/[id]",
         "Mesma execucao: /notifications de membro-1 sem nenhum item de pedido"
       ],
-      "tests": ["tests/e2e/journey-pedir-servico.spec.ts"]
+      "tests": ["tests/e2e/journey-pedir-servico.spec.ts"],
+      "blockers": [
+        "PEDIDO-CONVERSA-COMPARTILHADA: a transicao open -> in_conversation, onde o aviso nasce, hoje escolhe um pedido qualquer da conversa do par"
+      ]
     },
     {
       "phase": "Reconstrução",
@@ -3320,6 +3323,35 @@
       ],
       "updatedAt": "2026-09-22",
       "sourceRevision": "ec9928bf"
+    },
+    {
+      "id": "PEDIDO-CONVERSA-COMPARTILHADA",
+      "title": "Todos os pedidos do mesmo par dividem uma conversa: situacao errada e mensagens misturadas",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "blocked",
+      "description": "Achado em 22/09/2026 ao implementar o ADR-20260922-aviso-da-primeira-resposta. dm_conversations tem unique (participant_a, participant_b), e create_service_request (20260912063553_reconcile_service_requests.sql) reaproveita a conversa do par. Consequencias medidas no banco local (membro-1 x Climatiza Manaus): 9 pedidos na MESMA conversa; 4 continuam open embora o prestador tenha respondido, porque send_conversation_message localiza o pedido por conversation_id com select into e muda um qualquer; e /pedidos/[id] carrega dm_messages pela conversa, entao cada pedido mostra as 12 mensagens de todos os pedidos do par. Bloqueado: resolver mexe no modelo de conversa (R3) e muda a premissa do aviso da primeira resposta.",
+      "checklist": [
+        "Decisao do dono sobre o modelo: conversa por pedido, ou conversa do par com mensagens marcadas por pedido, ou so corrigir a transicao",
+        "ADR",
+        "Migration nova com pgTAP positivo e negativo",
+        "Cada pedido mostra so a conversa dele; a primeira resposta muda a situacao do pedido certo"
+      ],
+      "proof": [
+        "select conversation_id, status, count(*) de service_requests de membro-1: 41000000-...-023 | open 4 | in_conversation 5",
+        "dm_messages da conversa 023: 12 linhas, todas carregadas em qualquer /pedidos/[id] do par (page.tsx filtra so por conversation_id)"
+      ],
+      "tests": ["tests/e2e/journey-pedir-servico.spec.ts"],
+      "links": [
+        "supabase/migrations/20260912063553_reconcile_service_requests.sql",
+        "supabase/migrations/20260915101543_account_deletion.sql",
+        "apps/web/app/(shell)/pedidos/[id]/page.tsx"
+      ],
+      "dependencies": [],
+      "blockers": ["Decisao do dono sobre o modelo de conversa dos pedidos"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "8c945de8"
     }
   ]
 }
