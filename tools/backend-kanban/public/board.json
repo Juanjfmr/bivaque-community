@@ -3278,7 +3278,7 @@
       "category": "backend",
       "status": "next",
       "risk": "R3",
-      "description": "A Home carrega 372 cartoes e produz main.scrollHeight de 129.980px a 1440 (achado A1 da adjudicacao visual r6). public.feed_community recebe so p_community_id e p_order — sem limit, offset ou cursor —, roda quatro subconsultas laterais por post ANTES de ordenar, e e chamada sem limite em tres lugares: (shell)/inicio/home-loaders.ts:125, (shell)/community/page.tsx:121 e (shell)/communities/[id]/community-detail-loaders.ts:231. Nao existe carregar mais em componente nenhum do feed. Decisao registrada em docs/decisions/ADR-20260922-feed-paginado-por-cursor.md: Recentes vira fluxo paginado por cursor (par created_at + id, porque os ids sao gen_random_uuid e aleatorios) e Relevantes vira LISTA LIMITADA sem rolagem infinita. R3 por tocar supabase/migrations. A autorizacao atual e preservada integralmente — muda quanto se le, nunca quem pode ler.",
+      "description": "A Home carrega 372 cartoes e produz main.scrollHeight de 129.980px a 1440 (achado A1 da adjudicacao visual r6). public.feed_community recebe so p_community_id e p_order — sem limit, offset ou cursor —, roda quatro subconsultas laterais por post ANTES de ordenar, e e chamada sem limite em tres lugares: (shell)/inicio/home-loaders.ts:125, (shell)/community/page.tsx:121 e (shell)/communities/[id]/community-detail-loaders.ts:231. Nao existe carregar mais em componente nenhum do feed. Decisao registrada em docs/decisions/ADR-20260922-feed-paginado-por-cursor.md: Recentes vira fluxo paginado por cursor (par created_at + id, porque os ids sao gen_random_uuid e aleatorios) e Relevantes vira LISTA LIMITADA sem rolagem infinita. R3 por tocar supabase/migrations. A autorizacao atual e preservada integralmente — muda quanto se le, nunca quem pode ler. NAO entra no card PROD-INICIO-UX-20260919: e trabalho novo, com card proprio. Sem dependencia bloqueante.",
       "checklist": [
         "Nova assinatura com p_before_created_at, p_before_id e p_limit default 20, com o SERVIDOR impondo teto de 50",
         "A assinatura antiga de dois argumentos e APAGADA na mesma migration (no Postgres acrescentar parametros cria sobrecarga, e a versao sem limite continuaria chamavel)",
@@ -3326,9 +3326,7 @@
         "apps/web/app/(shell)/community/page.tsx",
         "apps/web/app/(shell)/communities/[id]/community-detail-loaders.ts"
       ],
-      "dependencies": [
-        "Nenhuma bloqueante. Nao entra no card PROD-INICIO-UX-20260919: e trabalho novo, com card proprio."
-      ],
+      "dependencies": [],
       "blockers": [],
       "updatedAt": "2026-09-22",
       "sourceRevision": "f4df3b0"
