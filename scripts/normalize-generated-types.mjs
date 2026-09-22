@@ -10,7 +10,8 @@ const normalizedSignature =
 
 const nullablePath = [
   "          // The RPC accepts NULL to clear the image pointer; the type generator",
-  "          // does not express nullable function arguments.",
+  "          // does not express nullable function arguments. Regenerate with",
+  "          // `npx pnpm@11.18.0 generate:types` to restore this adjustment.",
   "          p_path: string | null",
 ].join("\n")
 
