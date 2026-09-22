@@ -14,6 +14,8 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { FEED_PAGE_ERROR_MESSAGE, loadFeedPage } from "../../../lib/feed/feed-page-loader"
+import type { FeedCursor, FeedOrder } from "../../../lib/feed/feed-pagination"
 
 type InicioClient = SupabaseClient<Database>
 
@@ -23,7 +25,9 @@ export type PrimaryCommunity =
   | { status: "none" }
   | { status: "ready"; id: string; name: string | null }
 
-export const FEED_ERROR_MESSAGE = "Não foi possível carregar as publicações. Tente novamente."
+// Mesma copy do loader de página (uma fonte só): a mensagem de uma consulta que
+// falhou não pode divergir entre o feed da Home e o de /community.
+export const FEED_ERROR_MESSAGE = FEED_PAGE_ERROR_MESSAGE
 
 export type FeedOutcome = { status: "ok"; posts: unknown[] } | { status: "error"; message: string }
 
@@ -120,23 +124,19 @@ export async function loadPrimaryCommunity(supabase: InicioClient): Promise<Prim
 export async function loadCommunityFeed(
   supabase: InicioClient,
   communityId: string,
+  options: { order?: FeedOrder; cursor?: FeedCursor | null } = {},
 ): Promise<FeedOutcome> {
-  try {
-    const { data, error: feedError } = await supabase.rpc("feed_community", {
-      p_community_id: communityId,
-      p_order: "recent",
-    })
-
-    if (feedError) {
-      // O erro é lido e devolvido como estado recuperável — renderizar lista
-      // vazia no lugar de uma consulta que falhou é o bug que a casa proíbe.
-      return { status: "error", message: FEED_ERROR_MESSAGE }
-    }
-
-    return { status: "ok", posts: (data as unknown[] | null) ?? [] }
-  } catch {
-    return { status: "error", message: FEED_ERROR_MESSAGE }
-  }
+  // FEED-PAGINACAO-CURSOR (rodada 2): esta chamada pede UMA página — a primeira
+  // quando não há cursor. Antes ela pedia o feed inteiro (376 cartões a 1440,
+  // `main.scrollHeight` de 131.155 px); a página seguinte sai do botão
+  // "Carregar mais", pelo mesmo `loadFeedPage` que os outros dois chamadores
+  // usam. O cursor é o par `created_at` + `id` e não vai na requisição quando é
+  // a primeira página.
+  return loadFeedPage(supabase, {
+    communityId,
+    order: options.order ?? "recent",
+    cursor: options.cursor ?? null,
+  })
 }
 
 // A aba "Acompanhando" (prancha 01) lê o mesmo canal dos outros feeds:

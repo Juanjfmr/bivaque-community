@@ -15,6 +15,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import { signCommunityImageUrls } from "../../../../lib/communities/community-image-urls"
+import { loadFeedPage } from "../../../../lib/feed/feed-page-loader"
 import {
   buildGroupCards,
   enterableGroupIds,
@@ -215,7 +216,7 @@ export async function loadCommunityDetail(
   // ── membro aprovado ────────────────────────────────────────────────────────
   const membership: MembershipLite = { role: mine?.role ?? "member", status: "approved" }
 
-  const [groupsResult, myGroupsResult, countResult, feedResult] = await Promise.all([
+  const [groupsResult, myGroupsResult, countResult, feedOutcome] = await Promise.all([
     supabase
       .from("groups")
       .select("id, name, description, visibility")
@@ -228,7 +229,11 @@ export async function loadCommunityDetail(
       .select("user_id", { count: "exact", head: true })
       .eq("community_id", community.id)
       .eq("status", "approved"),
-    supabase.rpc("feed_community", { p_community_id: community.id, p_order: "recent" }),
+    // FEED-PAGINACAO-CURSOR (rodada 2): a PRIMEIRA página, sem cursor, com o
+    // limite de uma página — pedida AQUI, no servidor, e já renderizada no HTML
+    // da rota. As seguintes saem do botão "Carregar mais", no cliente
+    // (community-detail-screen), pelo mesmo caminho de leitura.
+    loadFeedPage(supabase, { communityId: community.id, order: "recent" }),
   ])
 
   if (groupsResult.error) {
@@ -245,7 +250,7 @@ export async function loadCommunityDetail(
     // falha de leitura, não estado vazio.
     throw new Error("Falha ao contar os membros da comunidade.")
   }
-  if (feedResult.error) {
+  if (feedOutcome.status === "error") {
     throw new Error("Falha ao ler as publicações da comunidade.")
   }
 
@@ -316,7 +321,7 @@ export async function loadCommunityDetail(
     canModerate: membership.role !== "member",
     memberCount: countResult.count,
     groups: buildGroupCards(groups, myMemberships, approvedCountByGroupId),
-    feed: (feedResult.data as FeedCommunityRow[] | null) ?? [],
+    feed: feedOutcome.posts,
     transferCandidates,
   }
 }

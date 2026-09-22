@@ -26,10 +26,12 @@ import { useRouter } from "next/navigation"
 import { type FormEvent, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { communityImageAltText } from "../../../../lib/communities/community-media"
+import { useFeedPagination } from "../../../../lib/feed/use-feed-pagination"
 import { Card } from "../../../components/bivaque/card"
 import { ModalCloseTrigger } from "../../../components/bivaque/close-button"
 import { AccessUnavailableState, EmptyState } from "../../../components/bivaque/empty-state"
 import { ErrorState } from "../../../components/bivaque/error-state"
+import { FeedLoadMore } from "../../../components/bivaque/feed-load-more"
 import { FeedPost } from "../../../components/bivaque/feed-post"
 import { transferCommunityOwnershipAction } from "../actions"
 import {
@@ -41,6 +43,7 @@ import { formatCreatedOn, formatRequestedOn, type GroupCard } from "./community-
 import type { CommunityDetailView } from "./community-detail-loaders"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
+type FeedCommunityRow = Database["public"]["Functions"]["feed_community"]["Returns"][number]
 
 type ReadyView = Extract<CommunityDetailView, { status: "ready" }>
 
@@ -229,6 +232,47 @@ function GroupCardItem({ group }: { group: GroupCard }) {
   )
 }
 
+// FEED-PAGINACAO-CURSOR (rodada 2): a PRIMEIRA página deste feed chega pronta no
+// HTML — quem a pede é `loadCommunityDetail`, no SERVIDOR (`page.tsx`), com o
+// cliente de servidor e a sessão do cookie. As seguintes saem daqui, pelo botão
+// "Carregar mais", e cada uma revalida autorização DENTRO da função
+// (`feed_community` é `security definer` com a checagem `am_member`): paginar
+// muda QUANTO se lê, nunca QUEM pode ler.
+function CommunityFeed({
+  communityId,
+  firstPage,
+}: {
+  communityId: string
+  firstPage: FeedCommunityRow[]
+}) {
+  const { posts, hasMore, loadingMore, loadMoreError, loadMore } =
+    useFeedPagination<FeedCommunityRow>({ communityId, order: "recent", firstPage })
+
+  if (posts.length === 0) {
+    return (
+      <EmptyState
+        title="Nenhuma conversa ainda"
+        description="Quando alguém desta comunidade publicar, a publicação aparece aqui."
+      />
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {posts.map((post, index) => (
+        <FeedPost key={post.id} post={post as unknown as FeedPostRow} index={index} />
+      ))}
+      {/* Falha da página seguinte mantém as conversas acima na tela. */}
+      <FeedLoadMore
+        hasMore={hasMore}
+        loading={loadingMore}
+        error={loadMoreError}
+        onLoadMore={loadMore}
+      />
+    </div>
+  )
+}
+
 function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }> }) {
   const { presentation, canModerate, membership, transferCandidates } = view
   return (
@@ -246,18 +290,7 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
         </Tabs.ListContainer>
 
         <TabPanel id="conversas" className="pt-4">
-          {view.feed.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {view.feed.map((post, index) => (
-                <FeedPost key={post.id} post={post as unknown as FeedPostRow} index={index} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title="Nenhuma conversa ainda"
-              description="Quando alguém desta comunidade publicar, a publicação aparece aqui."
-            />
-          )}
+          <CommunityFeed communityId={presentation.id} firstPage={view.feed} />
         </TabPanel>
 
         <TabPanel id="grupos" className="pt-4">

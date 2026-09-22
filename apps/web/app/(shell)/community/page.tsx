@@ -4,6 +4,8 @@ import { Button, ButtonGroup, ToggleButton } from "@heroui/react"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
+import { loadFeedPage } from "../../../lib/feed/feed-page-loader"
+import { useFeedPagination } from "../../../lib/feed/use-feed-pagination"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { isLocalityStale } from "../../../lib/locality-density"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -11,6 +13,7 @@ import { CityReference } from "../../components/bivaque/city-reference"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedComposer } from "../../components/bivaque/feed-composer"
+import { FEED_END_LABEL, FeedLoadMore } from "../../components/bivaque/feed-load-more"
 import { CreatePostModal, FeedPost } from "../../components/bivaque/feed-post"
 import {
   FeedRailDisclosure,
@@ -22,7 +25,12 @@ import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
 
 export default function CommunityPage() {
-  const [posts, setPosts] = useState<FeedPostRow[]>([])
+  // FEED-PAGINACAO-CURSOR (rodada 2): a PRIMEIRA página é a que esta rota pede
+  // quando abre — uma chamada, sem cursor, com o limite de página que o servidor
+  // confere (teto de 50 dentro da função). As seguintes NÃO vêm junto: saem do
+  // botão "Carregar mais", uma por vez, e o que já está na tela nunca é apagado
+  // por uma falha delas.
+  const [firstPage, setFirstPage] = useState<FeedPostRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -36,7 +44,6 @@ export default function CommunityPage() {
   const [hasResolved, setHasResolved] = useState(false)
   const [sortOrder, setSortOrder] = useState<"recent" | "relevant">("recent")
   const [transitioning, setTransitioning] = useState(false)
-  const [atEnd, setAtEnd] = useState(false)
   const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set())
 
   const { current } = useLocalityContext()
@@ -53,11 +60,19 @@ export default function CommunityPage() {
   // disclosure do telefone). Ver useFeedRailData para por que ela não é portão.
   const railData = useFeedRailData()
 
+  // A lista na tela é a página 1 desta rota MAIS o que o botão já trouxe, sem id
+  // repetido (`appendFeedPage`). Trocar Recentes/Relevantes troca a página 1 e o
+  // hook descarta o que foi acrescentado: recomeça do zero.
+  const { posts, hasMore, loadingMore, loadMoreError, loadMore } = useFeedPagination<FeedPostRow>({
+    communityId: primaryCommunityId,
+    order: sortOrder,
+    firstPage,
+  })
+
   const loadFeed = useCallback(
     async (order: "recent" | "relevant" = sortOrder) => {
       setLoading(true)
       setError("")
-      setAtEnd(false)
 
       const {
         data: { user },
@@ -110,7 +125,7 @@ export default function CommunityPage() {
       // da cidade (§6.2), renderizada por <CityReference />. O RPC feed_posts
       // continua existindo — profile/page.tsx:129 o usa e a Task 7 conserta.
       if (!communityId) {
-        setPosts([])
+        setFirstPage([])
         setPrimaryCommunityId(null)
         setPrimaryCommunityName(null)
         setLoading(false)
@@ -118,27 +133,23 @@ export default function CommunityPage() {
         return
       }
 
-      const feed = await supabase.rpc("feed_community", {
-        p_community_id: communityId,
-        p_order: order,
-      })
+      // Primeira página: sem cursor, limite de uma página. O par `created_at` +
+      // `id` só entra na requisição quando existe página anterior.
+      const feed = await loadFeedPage(supabase, { communityId, order })
 
-      if (feed.error) {
-        setError("Não foi possível carregar as publicações. Tente novamente.")
+      if (feed.status === "error") {
+        setError(feed.message)
         setLoading(false)
         return
       }
 
-      const newPosts = (feed.data as unknown as FeedPostRow[]) ?? []
-      setPosts(newPosts)
+      // Referência nova ⇒ o hook zera o que foi acrescentado e o cursor volta ao
+      // fim desta página.
+      setFirstPage(feed.posts as unknown as FeedPostRow[])
       setPrimaryCommunityId(communityId ?? null)
       setPrimaryCommunityName(communityName)
       setLoading(false)
       setHasResolved(true)
-
-      if (newPosts.length === 0) {
-        setAtEnd(false)
-      }
     },
     [sortOrder, supabase],
   )
@@ -341,8 +352,29 @@ export default function CommunityPage() {
               {/* empty state — P0 Task 9: below the §3.4 density threshold the copy
               reads "Você é dos primeiros aqui" instead of "Nenhuma publicação
               ainda", because the second sentence describes a quiet room, not a
-              beginning. The threshold is the locality member count, not Manaus. */}
-              {!loading && !error && posts.length === 0 && (
+              beginning. The threshold is the locality member count, not Manaus.
+              FEED-PAGINACAO-CURSOR: em `Relevantes` o vazio NÃO é o mesmo fato —
+              a lista é limitada (7 dias, mínimo 1 comentário), então ela pode
+              estar vazia numa comunidade cheia. Aí a copy diz isso e leva de
+              volta para `Recentes`, que é onde o conteúdo está. */}
+              {!loading && !error && posts.length === 0 && sortOrder === "relevant" && (
+                <EmptyState
+                  title="Não há nada em destaque nesta semana"
+                  description="Nenhuma publicação dos últimos sete dias recebeu resposta ainda. As mais recentes continuam na aba Recentes."
+                  action={
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      className="min-h-11"
+                      onPress={() => handleSortChange("recent")}
+                    >
+                      Ver as recentes
+                    </Button>
+                  }
+                />
+              )}
+
+              {!loading && !error && posts.length === 0 && sortOrder === "recent" && (
                 <EmptyState
                   title={
                     isLocalityStale(memberCount)
@@ -355,7 +387,12 @@ export default function CommunityPage() {
                       : "Seja o primeiro a compartilhar algo com a sua comunidade."
                   }
                   action={
-                    <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      className="min-h-11"
+                      onPress={() => handleOpenModal()}
+                    >
                       Publicar
                     </Button>
                   }
@@ -395,9 +432,22 @@ export default function CommunityPage() {
                 </div>
               )}
 
-              {/* end-of-feed marker */}
-              {!loading && !error && posts.length > 0 && !atEnd && (
-                <p className="py-4 text-center text-sm text-muted"> Você está em dia</p>
+              {/* Fim da lista e página seguinte. Fica FORA do bloco da lista de
+                  propósito: falha ao carregar a página seguinte mantém os
+                  cartões que já estão na tela e só acrescenta a mensagem com
+                  "Tentar novamente" abaixo deles. Enquanto houver página, o
+                  marcador de fim NÃO aparece — dizer "você está em dia" com
+                  mais publicações esperando seria falso. */}
+              {!loading && !error && posts.length > 0 && (
+                <FeedLoadMore
+                  hasMore={hasMore}
+                  loading={loadingMore}
+                  error={loadMoreError}
+                  onLoadMore={loadMore}
+                  endLabel={
+                    sortOrder === "relevant" ? "Fim dos destaques da semana" : FEED_END_LABEL
+                  }
+                />
               )}
             </div>
 

@@ -89,6 +89,42 @@ function readEnvLocal(key: string): string | undefined {
   return undefined
 }
 
+// FEED-PAGINACAO-CURSOR (rodada 2): /community deixou de renderizar as 376
+// publicações de uma vez. Ele abre com UMA página de 20 e a seguinte sai do
+// botão "Carregar mais". O marcador de Manaus está no rank 35 — ou seja, na
+// SEGUNDA página. A ASSERÇÃO deste arquivo não muda (um post de Manaus tem de
+// estar visível para o membro de Manaus); o que muda é a SEQUÊNCIA: em vez de
+// contar com todas as páginas já renderizadas, o teste pede as páginas
+// seguintes pelo botão até o marcador aparecer — que é a via autorizada:
+// "se o teste prova que um post é visível, pagine até ele". A asserção final
+// continua sendo exatamente o `toBeVisible` de antes.
+//
+// O botão também é o único jeito de pedir página: nada aqui rola a tela para
+// disparar carregamento automático (ele não existe).
+async function paginateUntilVisible(page: Page, marker: string): Promise<void> {
+  const target = page.getByText(marker).first()
+  const cards = page.locator("article[data-post-id]")
+  const loadMore = page.getByTestId("feed-load-more").getByRole("button", { name: "Carregar mais" })
+
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    if (await target.isVisible().catch(() => false)) return
+    if ((await loadMore.count()) === 0) return
+
+    const before = await cards.count()
+    await loadMore.click()
+    await expect
+      .poll(
+        async () => {
+          if (await target.isVisible().catch(() => false)) return true
+          if ((await loadMore.count()) === 0) return true
+          return (await cards.count()) > before
+        },
+        { timeout: 30000, message: "a página seguinte chegou antes da asserção" },
+      )
+      .toBe(true)
+  }
+}
+
 function requireCredentials(): { anonKey: string; password: string } {
   const anonKey =
     process.env["SUPABASE_ANON_KEY"] ??
@@ -176,7 +212,15 @@ test.describe("two localities: each member sees only their own city", () => {
       timeout: 15000,
     })
 
-    // And seeded Manaus post content is rendered for them
+    // And seeded Manaus post content is rendered for them.
+    //
+    // A asserção é a MESMA de antes — o marcador de Manaus visível para o membro
+    // de Manaus. O que mudou foi a sequência: como o feed agora abre com uma
+    // página (o marcador está no rank 35, segunda página), o teste PAGINA até
+    // ele pelo botão "Carregar mais" em vez de esperar as 376 publicações de uma
+    // vez. Nada foi afrouxado: se o marcador não aparecer em página nenhuma, o
+    // `toBeVisible` abaixo falha como sempre falhou.
+    await paginateUntilVisible(page, MANAUS_POST_MARKER)
     await expect(page.getByText(MANAUS_POST_MARKER).first()).toBeVisible({
       timeout: 15000,
     })

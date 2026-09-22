@@ -230,7 +230,14 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
   const isOwnPost = Boolean(currentUserId && post.user_id === currentUserId)
 
   return (
-    <article className="motion-card-enter motion-lift rounded-2xl border border-border bg-[var(--semantic-surface)] shadow-[var(--semantic-elevation-raised)] overflow-hidden">
+    // `data-post-id` (FEED-PAGINACAO-CURSOR, rodada 2): o id real da linha vai ao
+    // DOM para o e2e contar cartões e provar que a página seguinte não repetiu
+    // nenhum. Não é estilo nem comportamento — nenhum CSS e nenhum seletor do app
+    // dependem dele.
+    <article
+      data-post-id={post.id}
+      className="motion-card-enter motion-lift rounded-2xl border border-border bg-[var(--semantic-surface)] shadow-[var(--semantic-elevation-raised)] overflow-hidden"
+    >
       <div className="flex">
         {/* Left accent rail */}
         <div className="w-0.5 shrink-0 bg-[var(--semantic-action-primary)] opacity-75 rounded-full my-3 ml-3" />

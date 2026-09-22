@@ -6,10 +6,12 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useFeedPagination } from "../../../lib/feed/use-feed-pagination"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "../../components/bivaque/avatar"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
+import { FeedLoadMore } from "../../components/bivaque/feed-load-more"
 import { FeedPost, type FeedPostProps } from "../../components/bivaque/feed-post"
 import { EventsIllustration } from "../../components/bivaque/illustrations"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
@@ -69,7 +71,12 @@ export function CommunitySection({
   refreshKey,
   event,
 }: CommunitySectionProps) {
-  const [posts, setPosts] = useState<FeedPostRow[]>([])
+  // FEED-PAGINACAO-CURSOR (rodada 2): `firstPage` é a PRIMEIRA página do feed,
+  // pedida no carregamento da seção. Antes desta rodada a Home pedia o feed
+  // inteiro — 376 cartões a 1440, `main.scrollHeight` de 131.155 px. A página
+  // seguinte sai do botão "Carregar mais" (nunca de rolagem automática) e a
+  // falha dela não apaga o que já está na tela.
+  const [firstPage, setFirstPage] = useState<FeedPostRow[]>([])
   // "idle" cobre o frame entre a comunidade ficar pronta e o efeito disparar:
   // sem ele, o EmptyState piscaria antes do skeleton numa comunidade com posts.
   const [phase, setPhase] = useState<"idle" | "loading" | "done">("idle")
@@ -86,6 +93,16 @@ export function CommunitySection({
   const supabase = createBrowserClient()
   const guardRef = useRef(createRequestGuard())
   const followGuardRef = useRef(createRequestGuard())
+
+  // A aba "Recentes" é o único fluxo paginado desta seção ("Acompanhando" é uma
+  // lista curta do próprio membro). Trocar de aba não apaga a página 1: voltar
+  // para Recentes devolve a lista como estava, e o que o botão trouxe continua
+  // valendo enquanto a página 1 for a mesma.
+  const { posts, hasMore, loadingMore, loadMoreError, loadMore } = useFeedPagination<FeedPostRow>({
+    communityId: primary.status === "ready" ? primary.id : null,
+    order: "recent",
+    firstPage,
+  })
 
   const loadFeed = useCallback(() => {
     if (primary.status !== "ready") {
@@ -106,7 +123,7 @@ export function CommunitySection({
         setPhase("idle")
         return
       }
-      setPosts(outcome.posts as unknown as FeedPostRow[])
+      setFirstPage(outcome.posts as unknown as FeedPostRow[])
       setPhase("done")
     })
   }, [primary, supabase])
@@ -187,21 +204,32 @@ export function CommunitySection({
         }
       />
     ) : (
-      posts
-        .filter((post) => !hiddenPostIds.has(post.id))
-        .flatMap((post, index) => {
-          // A prancha 01 intercala o card do evento próximo entre as
-          // publicações do feed; sem evento (ou com consulta que falhou) o
-          // feed segue só com posts — nunca um card com dado pendurado.
-          const showEvent = index === 0 && event !== null
-          const cards: React.ReactNode[] = [
-            <FeedPost key={post.id} post={post} index={index} onHide={handleHidePost} />,
-          ]
-          if (showEvent) {
-            cards.push(<FeedEventCard key="feed-event-card" event={event} />)
-          }
-          return cards
-        })
+      <>
+        {posts
+          .filter((post) => !hiddenPostIds.has(post.id))
+          .flatMap((post, index) => {
+            // A prancha 01 intercala o card do evento próximo entre as
+            // publicações do feed; sem evento (ou com consulta que falhou) o
+            // feed segue só com posts — nunca um card com dado pendurado.
+            const showEvent = index === 0 && event !== null
+            const cards: React.ReactNode[] = [
+              <FeedPost key={post.id} post={post} index={index} onHide={handleHidePost} />,
+            ]
+            if (showEvent) {
+              cards.push(<FeedEventCard key="feed-event-card" event={event} />)
+            }
+            return cards
+          })}
+        {/* Página seguinte e fim da lista, FORA do bloco de cartões: falha ao
+            carregar mantém o feed inteiro na tela e só acrescenta a mensagem
+            com "Tentar novamente" abaixo dele. */}
+        <FeedLoadMore
+          hasMore={hasMore}
+          loading={loadingMore}
+          error={loadMoreError}
+          onLoadMore={loadMore}
+        />
+      </>
     )
 
   return (
