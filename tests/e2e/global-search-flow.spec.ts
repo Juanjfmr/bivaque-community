@@ -22,6 +22,7 @@ if (!password) {
   throw new Error(
     "USER_PASSWORD is required. Set it in the environment or as BIVAQUE_VISUAL_PASSWORD in apps/web/.env.local.",
   )
+}
 
 async function mintSession(email: string) {
   const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
