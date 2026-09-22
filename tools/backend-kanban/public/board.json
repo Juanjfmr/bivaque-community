@@ -3094,7 +3094,8 @@
       "phase": "Reconstrução",
       "links": [
         "apps/web/app/(shell)/notifications/deep-links.ts",
-        "apps/web/app/(provider)/prestador/pedidos/[id]/page.tsx"
+        "apps/web/app/(provider)/prestador/pedidos/[id]/page.tsx",
+        "docs/decisions/ADR-20260922-aviso-da-primeira-resposta.md"
       ],
       "dependencies": [],
       "updatedAt": "2026-09-22",
@@ -3109,7 +3110,8 @@
         "Decidir o que avisa [FEITO 22/09: so a primeira resposta, sem o texto]",
         "Gatilho no banco com o tipo service_request existente, sem expor o texto da mensagem no aviso",
         "pgTAP: o aviso chega so para a outra ponta do pedido, nunca para terceiros",
-        "Trocar o atalho de 17-web-pedido-servico#0 em journey-pedir-servico.spec.ts pelo clique no aviso"
+        "Trocar o atalho de 17-web-pedido-servico#0 em journey-pedir-servico.spec.ts pelo clique no aviso",
+        "ADR-20260922-aviso-da-primeira-resposta redigido em 22/09 (proposed); aguarda aprovacao do texto pelo dono"
       ],
       "proof": [
         "tests/e2e/journey-pedir-servico.spec.ts passa: a resposta do prestador persiste e aparece para a membra em /pedidos/[id]",
@@ -3121,7 +3123,8 @@
       "phase": "Reconstrução",
       "links": [
         "apps/web/app/(preauth)/onboarding/page.tsx",
-        "docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md"
+        "docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
+        "docs/decisions/ADR-20260922-identidade-quando-portal-falha.md"
       ],
       "dependencies": [],
       "updatedAt": "2026-09-22",
@@ -3136,7 +3139,8 @@
         "Decidir se erro temporario libera o envio de identidade [FEITO 22/09: libera na hora, sem esperar tentativas]",
         "Se liberar: oferecer a saida na tela e abrir /onboarding/documento para esse estado",
         "Conferir se a tentativa com erro temporario deve aparecer na fila do operador",
-        "Trocar as lacunas 39-web-onboarding-contexto#0/#1 em journey-entrar-e-ser-admitido.spec.ts por passos observados"
+        "Trocar as lacunas 39-web-onboarding-contexto#0/#1 em journey-entrar-e-ser-admitido.spec.ts por passos observados",
+        "ADR-20260922-identidade-quando-portal-falha redigido em 22/09 (proposed); aguarda aprovacao do texto pelo dono"
       ],
       "proof": [
         "tests/e2e/journey-entrar-e-ser-admitido.spec.ts: CPF -> alerta de instabilidade, permanece em /onboarding; goto /onboarding/documento volta para /onboarding",
