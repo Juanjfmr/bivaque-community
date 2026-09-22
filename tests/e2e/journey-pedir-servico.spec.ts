@@ -130,6 +130,18 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         { timeout: 20_000 },
       )
 
+      // O retorno chega à membra sem ela procurar: o ícone de conversas do cabeçalho
+      // passa a dizer que há mensagem nova (MSG-SEM-ENTRADA). Outra aba, porque a tela de
+      // sucesso foi desenhada antes da resposta existir.
+      const glance = await memberContext.newPage()
+      await glance.goto("/inicio")
+      await expect(
+        glance.getByRole("link", { name: /^Conversas, \d+ com mensagem nova/ }),
+      ).toBeVisible({
+        timeout: 20_000,
+      })
+      await glance.close()
+
       await pedir.passo(
         "17-web-pedido-servico#0",
         member,
@@ -142,6 +154,15 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         },
         { persona: "membra" },
       )
+
+      // Lida a resposta, a novidade some do cabeçalho: abrir o acompanhamento registra a
+      // leitura no servidor, e a próxima página já não conta a conversa como nova.
+      await expect(async () => {
+        await member.goto("/inicio")
+        await expect(member.getByRole("link", { name: "Conversas", exact: true })).toBeVisible({
+          timeout: 3_000,
+        })
+      }).toPass({ timeout: 20_000 })
 
       // E reencontra depois, pelo Perfil: a lista de pedidos tem entrada própria.
       await member.goto("/profile")

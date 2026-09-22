@@ -3,7 +3,16 @@
 import { brandTokens } from "@bivaque/tokens"
 import { Kbd, Tooltip } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
-import { Bell, Bookmark, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
+import {
+  Bell,
+  Bookmark,
+  ChevronsLeft,
+  Lightbulb,
+  MapPin,
+  MessageCircle,
+  PanelLeft,
+  Settings,
+} from "lucide-react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
@@ -29,7 +38,7 @@ export function AppShell({ children }: AppShellProperties) {
   const activeNav = resolveActiveNav(pathname, NAV_ITEMS)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const { current } = useLocalityContext()
-  const { communities, displayName, unreadCount } = useMemberContext()
+  const { communities, displayName, unreadCount, unreadConversations } = useMemberContext()
   // Read synchronously on the first client render so a tablet never paints the
   // expanded sidebar before snapping to the rail.
   const [canExpand, setCanExpand] = useState(() =>
@@ -123,6 +132,24 @@ export function AppShell({ children }: AppShellProperties) {
             >
               <Lightbulb size={18} aria-hidden="true" />
               Indicações
+            </a>
+
+            {/* Caixa de conversas (MSG-SEM-ENTRADA, decisão do dono de 22/09/2026): sem
+                esta porta, /messages só abria por "Entrar em contato" ou notificação. */}
+            <a
+              href="/messages"
+              aria-label={conversationsLabel(unreadConversations)}
+              className="relative flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+            >
+              <MessageCircle size={20} aria-hidden="true" />
+              {unreadConversations > 0 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1 right-1 flex min-w-4 items-center justify-center rounded-full bg-[var(--semantic-action-primary)] px-1 text-[10px] leading-4 font-semibold text-[var(--semantic-text-on-strong)]"
+                >
+                  {unreadConversations > 99 ? "99+" : unreadConversations}
+                </span>
+              ) : null}
             </a>
 
             <a
@@ -444,4 +471,9 @@ function SidebarCommunityItem({
   ) : (
     anchor
   )
+}
+
+function conversationsLabel(unread: number): string {
+  if (unread === 0) return "Conversas"
+  return unread === 1 ? "Conversas, 1 com mensagem nova" : `Conversas, ${unread} com mensagem nova`
 }

@@ -3183,7 +3183,8 @@
         "Baseline 22/09 (build 8632239, personas em serie): 0 quebrados, 33 rotas sem link, 8 orfas verdadeiras + /guide/[id]/correcao travada",
         "Depois (build desta arvore na :3211): link-crawl.spec.ts 1 passed — 57 de 87 rotas alcancadas por link, 30 com porta declarada e justificada, 0 quebrados, 0 sem porta, 0 portas velhas",
         "portas-de-entrada.spec.ts 4 passed: dono edita o imovel pelo detalhe; outra conta nao ve o link e a URL direta cai em 'Imovel nao encontrado'; Imoveis leva a anunciar e a alertas; o cartao do Guia abre a referencia",
-        "Medida invalidada e refeita: com as personas em paralelo o Supabase local deixou de responder my_account_kind, o proxy falhou fechado em /onboarding e o operador foi medido como quem nao tem conta. O rastreador roda em serie e reprova persona que nao entrou onde devia"
+        "Medida invalidada e refeita: com as personas em paralelo o Supabase local deixou de responder my_account_kind, o proxy falhou fechado em /onboarding e o operador foi medido como quem nao tem conta. O rastreador roda em serie e reprova persona que nao entrou onde devia",
+        "22/09, depois do icone de conversas: medida tornada deterministica — a rota onde um redirect deixa a pessoa e percorrida mas nao conta como alcancada, porque dependia de qual link o rastreador seguiu antes. Duas rodadas seguidas identicas: 56 rotas por link, 0 quebrados, 0 sem porta, 0 portas velhas; /community e /onboarding/locality declaradas como FLUXO"
       ],
       "tests": [
         "tests/e2e/link-crawl.spec.ts",
@@ -3241,21 +3242,27 @@
         "apps/web/app/(shell)/messages/conversation-inbox.tsx"
       ],
       "dependencies": [],
-      "proof": [],
+      "proof": [
+        "Contador: countUnreadConversations (lib/messages/unread-conversations.ts) conta CONVERSAS com mensagem de terceiros depois do last_read_at, com duas leituras RLS-scoped no layout do shell e teto de 200 linhas, sem N+1 e sem migration. tests/unit/messages/unread-conversations.test.ts: 4 passed",
+        "journey-pedir-servico.spec.ts passa com o ciclo do retorno: apos a resposta do prestador o icone diz \"Conversas, N com mensagem nova\"; aberto o acompanhamento, volta a \"Conversas\". portas-de-entrada.spec.ts: o icone abre /messages em 375, 768 e 1440. Regressao shell-navigation, shell-accessibility-denials, nav-container-invariant, recon-032-messages: 74 passed / 10 skipped",
+        "Achado no caminho: /pedidos/[id] so marcava lida ao clicar numa resposta ou enviar mensagem, embora o painel mostre a conversa inteira. Agora registra a leitura no servidor ao abrir, e mantem nesta visita os marcadores de nao lida da prancha 17"
+      ],
       "tests": ["tests/e2e/link-crawl.spec.ts"],
       "updatedAt": "2026-09-22",
-      "sourceRevision": "8632239",
+      "sourceRevision": "506abff7",
       "id": "MSG-SEM-ENTRADA",
       "title": "A caixa de conversas nao tem entrada na navegacao",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Achado do rastreador de 22/09/2026 (HRN-005). /messages so abre por 'Entrar em contato' na ficha do prestador, 'Tenho interesse' no anuncio ou por notificacao. Quem ja tem conversas nao tem como abrir a caixa quando quer. A prancha 75 tambem nao desenha a entrada (lateral com Inicio, Explorar, Comunidades, Perfil, Salvos e Notificacoes). Bloqueado em decisao do dono: onde a entrada nasce — item na lateral, icone no cabecalho ao lado do sino, ou atalho no Perfil. DECISAO DO DONO 22/09/2026: icone de conversas no cabecalho, ao lado do sino, com contador de nao lidas; a navegacao primaria nao muda.",
       "checklist": [
         "Decisao do dono sobre o lugar da entrada [FEITO 22/09: icone no cabecalho ao lado do sino, com contador de nao lidas]",
-        "Criar a entrada e provar em 375 e 1440",
-        "Tirar /messages de PORTAS_FORA_DO_LINK em link-crawl.spec.ts"
-      ]
+        "Criar a entrada e provar em 375 e 1440 [FEITO: portas-de-entrada.spec.ts nas tres larguras]",
+        "Tirar /messages de PORTAS_FORA_DO_LINK em link-crawl.spec.ts [FEITO: o rastreador alcanca /messages por link]",
+        "Abrir o acompanhamento do pedido registra a leitura [FEITO: sem isso o badge contava como nova uma resposta ja vista]"
+      ],
+      "completedAt": "2026-09-22"
     },
     {
       "phase": "Reconstrução",

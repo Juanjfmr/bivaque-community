@@ -23,6 +23,8 @@ export type MemberContextValue = {
   displayName: string
   communities: MemberCommunity[]
   unreadCount: number
+  /** Conversas com mensagem de outra pessoa depois da última leitura (ícone do cabeçalho). */
+  unreadConversations: number
 }
 
 const MemberContext = createContext<MemberContextValue | null>(null)

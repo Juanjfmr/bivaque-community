@@ -52,3 +52,14 @@ test.describe("portas de entrada", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText(name)
   })
 })
+
+// O cabeçalho aparece nas três larguras, então esta porta é provada nas três.
+test.describe("porta da caixa de conversas", () => {
+  test("o ícone de conversas do cabeçalho abre a caixa", async ({ page }) => {
+    await signInAs(page.context(), OTHER)
+    await page.goto("/inicio")
+    await page.getByRole("link", { name: /^Conversas/ }).click()
+    await expect(page).toHaveURL(/\/messages/)
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 })
+  })
+})

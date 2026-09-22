@@ -113,6 +113,11 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "CONDICIONAL: 'Convidar membros' na aba Sobre; 'Mais opções' > 'Convidar' em /communities",
   },
   {
+    route: "/community",
+    porta:
+      "FLUXO: fim do onboarding ('Ir para a comunidade'), notificação de publicação e redirects",
+  },
+  {
     route: "/consent",
     porta:
       "DÍVIDA ROTA-CONSENT-LEGADA: portão removido pelo ADR-20260907-consentimento-no-cadastro",
@@ -142,16 +147,16 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   { route: "/mercado/[id]/editar", porta: "BOTÃO: 'Editar' em /meus-anuncios" },
   { route: "/mercado/novo", porta: "BOTÃO: 'Anunciar' em /mercado e /meus-anuncios" },
-  {
-    route: "/messages",
-    porta: "DÍVIDA MSG-SEM-ENTRADA: só por 'Entrar em contato', 'Tenho interesse' e notificação",
-  },
   { route: "/messages/[id]", porta: "FLUXO: escolher conversa na caixa, ou ?conversation=" },
   { route: "/nova-senha", porta: "EXTERNO: link do e-mail de recuperação de senha" },
   { route: "/onboarding", porta: "FLUXO: proxy, cadastro e consentimento" },
   {
     route: "/onboarding/documento",
     porta: "FLUXO: verificação recusada e 'Enviar identidade' no status",
+  },
+  {
+    route: "/onboarding/locality",
+    porta: "FLUXO: proxy redireciona quem é verificado e ainda não escolheu cidade",
   },
   { route: "/onboarding/perfil", porta: "FLUXO: passo seguinte à escolha da cidade" },
   { route: "/onboarding/status", porta: "FLUXO: proxy e notificação de entrada recusada" },
@@ -227,8 +232,10 @@ async function crawl(
     if (`${landed.pathname}${landed.search}` !== visit.target) {
       redirects.push({ persona, target: visit.target, landed: landed.pathname })
     }
-    const landedPattern = frontier.offer({ target: landed.pathname, from: visit.target, persona })
-    if (landedPattern) reached.add(landedPattern.route)
+    // A rota onde um redirecionamento deixou a pessoa é percorrida, mas não conta como
+    // alcançada: depende de qual link o rastreador seguiu antes, e a medida oscilava entre
+    // rodadas. Só conta o que algum link aponta; o resto aparece sempre e é declarado.
+    frontier.offer({ target: landed.pathname, from: visit.target, persona })
 
     const hrefs = await page.$$eval("a[href]", (anchors) =>
       anchors.map((anchor) => anchor.getAttribute("href") ?? ""),

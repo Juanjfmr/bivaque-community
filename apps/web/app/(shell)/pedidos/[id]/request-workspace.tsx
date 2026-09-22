@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   countUnread,
   formatRequestDate,
@@ -117,6 +117,15 @@ export function RequestWorkspace({
     const result = await markRequestRead(conversationId)
     if (result.ok) setLastReadAt(new Date().toISOString())
   }, [conversationId])
+
+  // Abrir o acompanhamento é ler: o painel mostra a conversa inteira. O servidor registra
+  // a leitura ao abrir, para o ícone de conversas do cabeçalho não contar como nova uma
+  // resposta já vista. O lastReadAt local NÃO muda aqui: os marcadores de "não lida"
+  // seguem nesta visita, mostrando o que chegou desde a última (prancha 17).
+  const hasUnreadOnOpen = countUnread(initialMessages, viewerId, initialLastReadAt) > 0
+  useEffect(() => {
+    if (conversationId && hasUnreadOnOpen) void markRequestRead(conversationId)
+  }, [conversationId, hasUnreadOnOpen])
 
   const deliver = useCallback(
     async (clientKey: string, content: string) => {
