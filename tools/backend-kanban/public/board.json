@@ -3099,25 +3099,30 @@
       ],
       "dependencies": [],
       "updatedAt": "2026-09-22",
-      "sourceRevision": "65fc81f",
+      "sourceRevision": "f300b62d",
       "id": "NOTIF-PEDIDO-RESPOSTA",
       "title": "A membra nao e avisada quando o prestador responde o pedido",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
+      "status": "done",
       "description": "Observado na simulacao de 22/09/2026 (HRN-004): o prestador responde o pedido pelo painel, a mensagem aparece em /pedidos/[id] para a membra, mas nenhuma notificacao chega a ela — /notifications de membro-1 so lista comentarios antigos. O tipo service_request e o deep-link /pedidos/[id] ja existem (deep-links.ts), mas hoje so o aviso de pedido cancelado pela purga os usa. Sem aviso e sem entrada para /pedidos (NAV-PEDIDOS-ORFA), a resposta do prestador nao tem como chegar a quem pediu. Entra em repo porque o conserto e um gatilho de notificacao em migration, e o conteudo do aviso e decisao de produto DECISAO DO DONO 22/09/2026: avisar so a primeira resposta do prestador (quando o pedido passa a Em conversa), sem o texto da mensagem — por exemplo \"Climatiza Manaus respondeu seu pedido\" —, levando a /pedidos/[id]. Segue em repo ate o ADR, por exigir migration. ADR aceito em 22/09/2026. Implementacao SEGURADA no mesmo dia: a premissa \"uma vez por pedido, na transicao\" falha porque todos os pedidos do par dividem a conversa — ver PEDIDO-CONVERSA-COMPARTILHADA. DESTRAVADO em 22/09/2026: PEDIDO-CONVERSA-COMPARTILHADA entregue, a transicao agora muda o pedido certo.",
       "checklist": [
         "Decidir o que avisa [FEITO 22/09: so a primeira resposta, sem o texto]",
-        "Gatilho no banco com o tipo service_request existente, sem expor o texto da mensagem no aviso",
-        "pgTAP: o aviso chega so para a outra ponta do pedido, nunca para terceiros",
-        "Trocar o atalho de 17-web-pedido-servico#0 em journey-pedir-servico.spec.ts pelo clique no aviso",
-        "ADR-20260922-aviso-da-primeira-resposta redigido em 22/09 (proposed); aguarda aprovacao do texto pelo dono"
+        "ADR-20260922-aviso-da-primeira-resposta aceito [FEITO 22/09]",
+        "Gatilho no banco com o tipo service_request existente, sem o texto [FEITO: 20260922161000, no ramo da transicao open -> in_conversation de send_conversation_message, honrando notification_preferences.messages]",
+        "pgTAP: o aviso chega so para quem pediu [FEITO: service-request-first-reply-notice.sql 8/8]",
+        "A central distingue os avisos de pedido pela action [FEITO: \"{prestador} respondeu seu pedido\"; o cancelamento segue neutro]",
+        "Trocar o atalho de 17-web-pedido-servico#0 pelo clique no aviso [FEITO de outro jeito: o passo 17 ja e clique em Acompanhar pedido; a jornada agora tambem abre a central e clica no aviso]"
       ],
       "proof": [
         "tests/e2e/journey-pedir-servico.spec.ts passa: a resposta do prestador persiste e aparece para a membra em /pedidos/[id]",
-        "Mesma execucao: /notifications de membro-1 sem nenhum item de pedido"
+        "Mesma execucao: /notifications de membro-1 sem nenhum item de pedido",
+        "pgTAP service-request-first-reply-notice.sql 8/8: um aviso na primeira resposta e nenhum na segunda; destinatario quem pediu; ator nulo; tipo e alvo o pedido; mensagem de quem pediu nao avisa o prestador; nenhum terceiro; com messages desligado o aviso nao sai e a situacao muda mesmo assim",
+        "tests/unit/notifications/service-request-labels.test.ts: a resposta nao aparece como pedido encerrado; o cancelamento segue neutro; nome da ficha ou frase neutra; os dois levam a /pedidos/[id] sem ator",
+        "journey-pedir-servico.spec.ts: depois da resposta, a central da membra mostra \"Climatiza Manaus respondeu seu pedido\" e o clique abre o acompanhamento. Rodada final: 4 jornadas + rastreador 5 passed; regressao 57 passed / 1 failed — recommendation-reply-notify em strict mode (8 botoes Responder em /recommendations), acumulo de dados de rodadas anteriores no banco compartilhado, fora do escopo deste lote"
       ],
-      "tests": ["tests/e2e/journey-pedir-servico.spec.ts"]
+      "tests": ["tests/e2e/journey-pedir-servico.spec.ts"],
+      "completedAt": "2026-09-22"
     },
     {
       "phase": "Reconstrução",

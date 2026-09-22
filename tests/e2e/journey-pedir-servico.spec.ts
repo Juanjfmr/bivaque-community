@@ -140,6 +140,16 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
       ).toBeVisible({
         timeout: 20_000,
       })
+      // E a central avisa quem respondeu (ADR-20260922-aviso-da-primeira-resposta): o
+      // nome vem da ficha do prestador, e o clique leva ao acompanhamento do pedido.
+      await glance.goto("/notifications")
+      const notice = glance.getByRole("button", {
+        name: new RegExp(`${PROVIDER_NAME} respondeu seu pedido`),
+      })
+      await expect(notice.first()).toBeVisible({ timeout: 20_000 })
+      await notice.first().click()
+      await expect(glance).toHaveURL(/\/pedidos\/[0-9a-f-]+$/, { timeout: 20_000 })
+      await expect(glance.getByText(marker).first()).toBeVisible({ timeout: 20_000 })
       await glance.close()
 
       await pedir.passo(
