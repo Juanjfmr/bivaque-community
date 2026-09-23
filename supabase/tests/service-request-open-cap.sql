@@ -108,7 +108,10 @@ select throws_ok(
 -- ── 2. fechar e cancelar liberam vaga ───────────────────────────────────────
 
 set local role postgres;
-update public.service_requests set status = 'closed' where idempotency_key = 'k-cap-1';
+-- service_requests_closed_consistency: closed exige closed_at.
+update public.service_requests
+   set status = 'closed', closed_at = now()
+ where idempotency_key = 'k-cap-1';
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);

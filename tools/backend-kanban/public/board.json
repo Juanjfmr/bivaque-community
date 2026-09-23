@@ -3451,14 +3451,15 @@
       "proof": [
         "tests/unit/service-requests/open-cap-message.test.ts 3/3: o 54000 vira a frase com a saida ('Feche ou cancele um para enviar outro'), outra falha continua no aviso generico que preserva o texto, e o caminho feliz devolve o pedido",
         "npx pnpm@11.18.0 gate em 23/09/2026: lint, typecheck, test (951 unit + 189 + 76 mobile + 19 web + 114 de escopo) e secrets verdes; o build foi pulado por falta do arquivo de ambiente local nesta arvore",
-        "PENDENTE de execucao: supabase/tests/service-request-open-cap.sql (8 asserts) nao rodou -- o Docker e a stack Supabase nao subiram nesta maquina em 23/09. Proximo passo concreto: subir a stack, recriar o banco local e rodar a suite pgTAP"
+        "supabase/tests/service-request-open-cap.sql 8/8 em 23/09/2026 (npx pnpm@11.18.0 test:db, migration aplicada por psql em transacao com a linha em schema_migrations, porque o banco local tinha historico divergente de outro branch). A primeira execucao revelou defeito do proprio teste: fechar sem closed_at viola service_requests_closed_consistency e abortava a transacao depois do 3o assert; corrigido no teste, a migration nao mudou",
+        "PENDENTE: a suite pgTAP inteira teve 22 arquivos vermelhos nesse banco com seed e dados acumulados (contagens e listagens, ex. have 6 want 2 em avisos); nenhum deles chama create_service_request. Proximo passo concreto: recriar o banco local sem seed (db reset --local --no-seed, bloqueado pelo bash-guard para o agente, precisa ser rodado pelo dono) ou o CI, e rodar test:db para confirmar a classificacao"
       ],
       "tests": [
         "supabase/tests/service-request-open-cap.sql",
         "tests/unit/service-requests/open-cap-message.test.ts"
       ],
       "updatedAt": "2026-09-23",
-      "sourceRevision": "28df5b8d",
+      "sourceRevision": "45acdc9e",
       "id": "PEDIDO-TETO-POR-PAR",
       "title": "Nao ha teto de pedidos abertos entre a mesma pessoa e o mesmo prestador",
       "priority": "P2",
@@ -3468,7 +3469,7 @@
       "checklist": [
         "Decisao do dono sobre o teto [FEITO 23/09: cinco pedidos em aberto por par, entre tres opcoes apresentadas]",
         "ADR-20260923-teto-de-pedidos-por-par aceito [FEITO 23/09]",
-        "Migration com pgTAP [ESCRITA: 20260923120000_service_request_open_cap.sql e supabase/tests/service-request-open-cap.sql; FALTA aplicar e rodar a suite pgTAP, que exige a stack Supabase]",
+        "Migration com pgTAP [FEITO 23/09: 20260923120000_service_request_open_cap.sql aplicada e supabase/tests/service-request-open-cap.sql 8/8; FALTA a suite inteira verde num banco recriado sem seed]",
         "A recusa diz a saida na tela [FEITO: 54000 traduzido na action do formulario]"
       ]
     },
