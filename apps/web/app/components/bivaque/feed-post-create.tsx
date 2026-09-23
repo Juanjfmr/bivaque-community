@@ -28,8 +28,10 @@ import {
 import {
   clearPostDraft,
   hasDraftContent,
+  loadPostAudience,
   loadPostDraft,
   type PostDraftFields,
+  savePostAudience,
   savePostDraftFields,
 } from "./feed-post-draft"
 import { DraftDiscardDialog, DraftNotices } from "./feed-post-draft-ui"
@@ -68,15 +70,17 @@ export function CreatePostModal({
 }: CreatePostModalProps) {
   const modal = useOverlayState({ defaultOpen: true, onOpenChange: (open) => !open && onClose() })
   const { current: locality } = useLocalityContext()
-  const initialDraft = useRef(loadPostDraft())
-  const [postType, setPostType] = useState(
-    initialDraft.current?.postType ?? defaultPostType ?? "text",
-  )
-  const [content, setContent] = useState(initialDraft.current?.content ?? "")
-  const [details, setDetails] = useState(initialDraft.current?.details ?? "")
-  const [photoPath, setPhotoPath] = useState(initialDraft.current?.photoPath ?? "")
-  const [linkUrl, setLinkUrl] = useState(initialDraft.current?.linkUrl ?? "")
-  const [pollOptions, setPollOptions] = useState<string[]>(initialDraft.current?.pollOptions ?? [])
+  const currentUser = useCurrentUser()
+  const ownerId = currentUser.user?.id ?? null
+  const draftScopeKey = ownerId ? `${ownerId}:${localityId}` : null
+  const loadedDraftScopeRef = useRef<string | null>(null)
+  const [draftReady, setDraftReady] = useState(false)
+  const [postType, setPostType] = useState(defaultPostType ?? "text")
+  const [content, setContent] = useState("")
+  const [details, setDetails] = useState("")
+  const [photoPath, setPhotoPath] = useState("")
+  const [linkUrl, setLinkUrl] = useState("")
+  const [pollOptions, setPollOptions] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
   // O `kind` do classificador decide a SUPERFÍCIE do erro: falha de transporte
   // (offline, DNS, timeout) é o estado "Sem conexão" da prancha 60, com retomada
@@ -88,7 +92,7 @@ export function CreatePostModal({
   const [audienceKey, setAudienceKey] = useState<AudienceKey>(
     defaultCommunityId ? `community:${defaultCommunityId}` : CITY_AUDIENCE_KEY,
   )
-  const [draftRestored, setDraftRestored] = useState(hasDraftContent(initialDraft.current))
+  const [draftRestored, setDraftRestored] = useState(false)
   // Dito quando a audiência cai da vila para a cidade sem a pessoa ter pedido.
   const [audienceFallback, setAudienceFallback] = useState("")
   const [storageUnavailable, setStorageUnavailable] = useState(false)
@@ -96,9 +100,17 @@ export function CreatePostModal({
   const supabase = createBrowserClient()
 
   const audience = usePostAudience(localityId)
-  const currentUser = useCurrentUser()
   const city = cityDestination(locality?.cityName ?? "")
   const destinations: AudienceDestination[] = [city, ...audience.communities, ...audience.groups]
+  const availableAudienceKeys = useMemo(
+    () =>
+      new Set([
+        CITY_AUDIENCE_KEY,
+        ...audience.communities.map((d) => d.key),
+        ...audience.groups.map((d) => d.key),
+      ]),
+    [audience.communities, audience.groups],
+  )
   // `selected` existe para EXIBIR o destino (o nome no seletor). Ele cai para a
   // cidade quando a chave ainda não está na lista — e a lista chega depois,
   // porque é uma consulta.
@@ -111,6 +123,42 @@ export function CreatePostModal({
   // versão anterior montava o insert a partir do communityId direto, sem
   // passar por uma lista que pode estar vazia.
   const selectedKind = parseAudienceKey(audienceKey)
+
+  useEffect(() => {
+    if (currentUser.loading) return
+    loadedDraftScopeRef.current = draftScopeKey
+
+    if (!ownerId) {
+      setPostType(defaultPostType ?? "text")
+      setContent("")
+      setDetails("")
+      setPhotoPath("")
+      setLinkUrl("")
+      setPollOptions([])
+      setAudienceKey(defaultCommunityId ? `community:${defaultCommunityId}` : CITY_AUDIENCE_KEY)
+      setDraftRestored(false)
+      setDraftReady(true)
+      return
+    }
+
+    const draft = loadPostDraft(ownerId, localityId)
+    if (draft) {
+      setPostType(draft.postType)
+      setContent(draft.content)
+      setDetails(draft.details)
+      setPhotoPath(draft.photoPath)
+      setLinkUrl(draft.linkUrl)
+      setPollOptions(draft.pollOptions)
+      setAudienceKey(draft.audienceKey)
+      setDraftRestored(hasDraftContent(draft))
+    } else {
+      const preferredAudience = defaultCommunityId
+        ? `community:${defaultCommunityId}`
+        : loadPostAudience(ownerId, localityId)
+      if (preferredAudience) setAudienceKey(preferredAudience)
+    }
+    setDraftReady(true)
+  }, [currentUser.loading, draftScopeKey, ownerId, localityId, defaultCommunityId, defaultPostType])
 
   useEffect(() => {
     if (!modal.isOpen) {
@@ -129,46 +177,42 @@ export function CreatePostModal({
     }
   }, [modal.isOpen])
 
-  // A audiência default só pode ser uma comunidade real da pessoa. Se a lista
-  // carregou e não contém a pré-seleção, o destino volta para a cidade — o
-  // aviso de audiência nunca descreve um destino que não estava disponível.
-  //
-  // E a troca é DITA. Cair da vila para a cidade alarga o alcance do que a
-  // pessoa vai escrever; fazer isso em silêncio é o vazamento por desatenção
-  // que a onda E documentou. A versão anterior deste componente avisava neste
-  // caso e a separação da RECON-014 perdeu o aviso — ele volta aqui.
+  // A audiência salva é apenas uma preferência local. Depois que a consulta
+  // real termina, qualquer chave que não esteja mais autorizada (revogação,
+  // mudança de cidade) volta para a cidade com aviso explícito.
+  // O servidor deve autorizar todo destino antes de publicar.
   useEffect(() => {
-    if (audience.loading || audience.error) return
-    if (selectedKind.kind === "community" && defaultCommunityId) {
-      const stillThere = audience.communities.some(
-        (d) => d.key === `community:${defaultCommunityId}`,
+    if (audience.loading || audience.error || !draftReady) return
+    if (!availableAudienceKeys.has(audienceKey)) {
+      setAudienceKey(CITY_AUDIENCE_KEY)
+      setAudienceFallback(
+        "Esse destino não está mais disponível. A publicação foi ajustada para toda a cidade — confira antes de publicar.",
       )
-      if (!stillThere) {
-        setAudienceKey(CITY_AUDIENCE_KEY)
-        setAudienceFallback(
-          "Sua vila não está disponível agora. O destino mudou para toda a cidade — confira antes de publicar.",
-        )
-      }
     }
-  }, [
-    audience.loading,
-    audience.error,
-    audience.communities,
-    defaultCommunityId,
-    selectedKind.kind,
-  ])
+  }, [audience.loading, audience.error, audienceKey, availableAudienceKeys, draftReady])
 
   // Autosave do rascunho — melhor esforço, nunca quebra a tela. Campos todos
   // vazios removem o rascunho (a pessoa esvaziou de propósito); publicar ou
   // descartar confirmado são os outros dois caminhos de limpeza.
-  const persistDraft = useCallback((fields: PostDraftFields) => {
-    if (hasDraftContent({ ...fields, savedAt: 0 })) {
-      setStorageUnavailable(!savePostDraftFields(fields))
-    } else {
-      clearPostDraft()
-      setStorageUnavailable(false)
+  const persistDraft = useCallback(
+    (fields: PostDraftFields) => {
+      if (!draftReady || !ownerId || loadedDraftScopeRef.current !== draftScopeKey) return
+      const scope = { ownerId, localityId, audienceKey }
+      if (hasDraftContent({ ...scope, ...fields, savedAt: 0 })) {
+        setStorageUnavailable(!savePostDraftFields(fields, scope))
+      } else {
+        clearPostDraft(ownerId)
+        setStorageUnavailable(false)
+      }
+    },
+    [audienceKey, draftReady, draftScopeKey, localityId, ownerId],
+  )
+
+  useEffect(() => {
+    if (draftReady && ownerId) {
+      savePostAudience(ownerId, localityId, audienceKey)
     }
-  }, [])
+  }, [audienceKey, draftReady, localityId, ownerId])
 
   const draftFields = useMemo<PostDraftFields>(
     () => ({ postType, content, details, linkUrl, pollOptions, photoPath }),
@@ -209,6 +253,7 @@ export function CreatePostModal({
   }, [audience.error])
 
   const handleSubmit = useCallback(async () => {
+    if (!draftReady || audience.loading || audience.error) return
     setError("")
     setErrorKind(null)
     setPhotoError("")
@@ -282,7 +327,7 @@ export function CreatePostModal({
 
     // Publicado: o rascunho cumpriu o papel dele e sai do navegador só agora,
     // pela ação concluída da pessoa — nunca antes, nunca sozinho.
-    clearPostDraft()
+    clearPostDraft(ownerId)
     resetForm()
     showToast(
       kind.kind === "community"
@@ -309,12 +354,16 @@ export function CreatePostModal({
   }, [
     content,
     details,
+    draftReady,
+    audience.loading,
+    audience.error,
     postType,
     photoPath,
     linkUrl,
     pollOptions,
     piiWarning,
     audienceKey,
+    ownerId,
     localityId,
     locality?.cityName,
     supabase,
@@ -326,7 +375,7 @@ export function CreatePostModal({
   const discardConfirm = useOverlayState()
 
   const discardDraft = useCallback(() => {
-    clearPostDraft()
+    clearPostDraft(ownerId)
     setContent("")
     setDetails("")
     setLinkUrl("")
@@ -335,7 +384,7 @@ export function CreatePostModal({
     setDraftRestored(false)
     setStorageUnavailable(false)
     discardConfirm.close()
-  }, [discardConfirm])
+  }, [discardConfirm, ownerId])
 
   const placeName =
     selectedKind.kind === "city"
@@ -503,7 +552,13 @@ export function CreatePostModal({
                     <div className="mt-4 flex flex-col items-end gap-1">
                       <Button
                         onPress={handleSubmit}
-                        isDisabled={submitting || !content.trim()}
+                        isDisabled={
+                          submitting ||
+                          !draftReady ||
+                          audience.loading ||
+                          Boolean(audience.error) ||
+                          !content.trim()
+                        }
                         variant="primary"
                         aria-busy={submitting}
                         data-testid="publish-submit"

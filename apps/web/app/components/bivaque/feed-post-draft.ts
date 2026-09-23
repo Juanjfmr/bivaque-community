@@ -1,19 +1,20 @@
 // Rascunho de publicação — armazenamento do PRÓPRIO navegador (RECON-014).
 //
-// Regras do contrato, travadas aqui e não na UI:
-//  - O rascunho nunca vai para o servidor nem para qualquer armazenamento
-//    compartilhado: este módulo só toca localStorage.
-//  - Toda leitura e toda escrita passam por try/catch. Em aba anônima ou com
-//    dados de site bloqueados o acessor LANÇA — a tela não pode quebrar por
-//    causa disso; o chamador recebe null/false e segue funcionando.
-//  - O rascunho nunca vira publicação sozinho: quem publica é a pessoa, com o
-//    botão Publicar. Descartar rascunho é explícito e confirmável na UI; aqui,
-//    clearPostDraft é chamado apenas por ação da pessoa (descartar confirmado,
-//    publicação concluída, ou esvaziamento manual de todos os campos).
+// O texto nunca vai para o servidor nem para armazenamento compartilhado. A
+// chave é namespaced por usuário e locality: trocar de conta no mesmo navegador
+// não pode revelar o rascunho anterior. A audiência persistida é apenas uma
+// preferência local; o insert continua sendo autorizado pelo servidor.
 
-const DRAFT_KEY = "bivaque.post-draft.v1"
+const DRAFT_KEY_PREFIX = "bivaque.post-draft.v2"
+const AUDIENCE_KEY_PREFIX = "bivaque.post-audience.v1"
 
-export interface PostDraft {
+export interface PostDraftScope {
+  ownerId: string
+  localityId: string
+  audienceKey: string
+}
+
+export interface PostDraft extends PostDraftScope {
   postType: string
   content: string
   details: string
@@ -44,6 +45,14 @@ function storage(): Storage | null {
   }
 }
 
+function draftKey(ownerId: string): string {
+  return `${DRAFT_KEY_PREFIX}:${encodeURIComponent(ownerId)}`
+}
+
+function audienceStorageKey(ownerId: string, localityId: string): string {
+  return `${AUDIENCE_KEY_PREFIX}:${encodeURIComponent(ownerId)}:${encodeURIComponent(localityId)}`
+}
+
 // O conteúdo do localStorage é dado não-confiável (pode ser antigo, de outra
 // versão, ou corrompido por outra aba). Nada entra na UI sem validação de
 // shape — nada é "confiado" só porque estava guardado.
@@ -58,7 +67,15 @@ function parseDraft(raw: string): PostDraft | null {
   const candidate = parsed as Record<string, unknown>
   const text = (key: string): string =>
     typeof candidate[key] === "string" ? (candidate[key] as string) : ""
-  const draft: PostDraft = {
+  const ownerId = text("ownerId")
+  const localityId = text("localityId")
+  const audienceKey = text("audienceKey")
+  if (!ownerId || !localityId || !audienceKey) return null
+
+  return {
+    ownerId,
+    localityId,
+    audienceKey,
     postType:
       candidate["postType"] === "photo" ||
       candidate["postType"] === "link" ||
@@ -74,18 +91,22 @@ function parseDraft(raw: string): PostDraft | null {
     photoPath: text("photoPath"),
     savedAt: typeof candidate["savedAt"] === "number" ? (candidate["savedAt"] as number) : 0,
   }
-  return draft
 }
 
-/** Lê o rascunho salvo. null quando não há rascunho OU quando o acesso ao
- *  armazenamento é negado (aba anônima, dados de site bloqueados). */
-export function loadPostDraft(): PostDraft | null {
+/** Lê o rascunho do membro e locality atuais; null quando não há ou o acesso é negado. */
+export function loadPostDraft(
+  ownerId: string | null | undefined,
+  localityId: string,
+): PostDraft | null {
+  if (!ownerId) return null
   try {
     const store = storage()
     if (!store) return null
-    const raw = store.getItem(DRAFT_KEY)
+    const raw = store.getItem(draftKey(ownerId))
     if (raw === null) return null
-    return parseDraft(raw)
+    const draft = parseDraft(raw)
+    if (!draft || draft.ownerId !== ownerId || draft.localityId !== localityId) return null
+    return draft
   } catch {
     return null
   }
@@ -100,34 +121,65 @@ export interface PostDraftFields {
   photoPath: string
 }
 
-/** Grava os campos correntes como rascunho, carimbando a hora. */
-export function savePostDraftFields(fields: PostDraftFields): boolean {
-  return savePostDraft({ ...fields, savedAt: Date.now() })
+/** Grava os campos correntes no namespace do membro/locality. */
+export function savePostDraftFields(fields: PostDraftFields, scope: PostDraftScope): boolean {
+  if (!scope.ownerId || !scope.localityId || !scope.audienceKey) return false
+  return savePostDraft({ ...scope, ...fields, savedAt: Date.now() })
 }
 
-/** Grava o rascunho. false quando o navegador recusa armazenamento — a UI
- *  avisa que não pôde guardar e o texto da pessoa continua no formulário. */
+/** Grava o rascunho. false quando o navegador recusa armazenamento. */
 export function savePostDraft(draft: PostDraft): boolean {
   try {
     const store = storage()
     if (!store) return false
-    store.setItem(DRAFT_KEY, JSON.stringify(draft))
+    store.setItem(draftKey(draft.ownerId), JSON.stringify(draft))
     return true
   } catch {
     return false
   }
 }
 
-/** Remove o rascunho do navegador. true quando o armazenamento estava
- *  disponível e apagou; false quando o acesso é negado (nada foi apagado
- *  porque não havia onde estar). */
-export function clearPostDraft(): boolean {
+/** Remove somente o rascunho do membro atual. */
+export function clearPostDraft(ownerId: string | null | undefined): boolean {
+  if (!ownerId) return false
   try {
     const store = storage()
     if (!store) return false
-    store.removeItem(DRAFT_KEY)
+    store.removeItem(draftKey(ownerId))
     return true
   } catch {
     return false
+  }
+}
+
+/** Guarda a última audiência escolhida, sem guardar conteúdo. */
+export function savePostAudience(
+  ownerId: string | null | undefined,
+  localityId: string,
+  audienceKey: string,
+): boolean {
+  if (!ownerId || !localityId || !audienceKey) return false
+  try {
+    const store = storage()
+    if (!store) return false
+    store.setItem(audienceStorageKey(ownerId, localityId), audienceKey)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Recupera a preferência local; a autorização real é revalidada pelo compositor. */
+export function loadPostAudience(
+  ownerId: string | null | undefined,
+  localityId: string,
+): string | null {
+  if (!ownerId) return null
+  try {
+    const store = storage()
+    if (!store) return null
+    return store.getItem(audienceStorageKey(ownerId, localityId))
+  } catch {
+    return null
   }
 }

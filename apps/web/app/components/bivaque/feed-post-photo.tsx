@@ -1,7 +1,7 @@
 "use client"
 
 // Anexos de foto da publicação (prancha 45): caixa "Clique para adicionar uma
-// foto — PNG, JPG até 10MB". O upload é real e passa pelo mesmo caminho do
+// foto — PNG, JPG até 5MB". O upload é real e passa pelo mesmo caminho do
 // compositor anterior (uploadPostPhotoAction), com remoção de EXIF pelo
 // canvas antes de sair do dispositivo. Falha é recuperável e nomeada; nunca
 // aparece como sucesso.
@@ -10,7 +10,7 @@ import { Button, Spinner } from "@heroui/react"
 import { ImagePlus, Trash2 } from "lucide-react"
 import { useCallback, useRef, useState } from "react"
 
-const MAX_PHOTO_BYTES = 10 * 1024 * 1024
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024
 
 interface PhotoFieldProps {
   value: string
@@ -33,7 +33,7 @@ export function PhotoField({
     async (file: File) => {
       onError("")
       if (file.size > MAX_PHOTO_BYTES) {
-        onError("A foto deve ter no máximo 10MB.")
+        onError("A foto deve ter no máximo 5MB.")
         return
       }
       setUploading(true)
@@ -62,7 +62,7 @@ export function PhotoField({
         const result = await uploadPostPhotoAction(formData)
         onChange(result.photoPath)
       } catch (err) {
-        // O teto de 10MB é da caixa; o servidor ainda revalida o blob
+        // O teto de 5MB é da caixa; o servidor ainda revalida o blob
         // reencodado. Recusa por tamanho vira convite honesto a escolher
         // imagem menor — nunca silêncio, nunca sucesso falso.
         const reason = err instanceof Error ? err.message : ""
@@ -113,7 +113,7 @@ export function PhotoField({
             <ImagePlus size={18} aria-hidden="true" className="text-muted" />
             <span className="flex flex-col">
               <span className="text-sm font-medium">Clique para adicionar uma foto</span>
-              <span className="text-xs text-muted">PNG, JPG até 10MB</span>
+              <span className="text-xs text-muted">PNG, JPG até 5MB</span>
             </span>
           </span>
         )}

@@ -7,15 +7,27 @@ authority:
   - docs/design/visual-guide-2026-09-06/45-web-publicacao.png
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
   - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1
+  - Relatório comparativo Mobbin e autorização do responsável em 23/09/2026 para rascunho, público efotos
 
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    feed-post.tsx tem 1022 linhas e concentra cartao, modal de criacao, edicao e acoes; feed-composer.tsx tem 69 e so abre o modal. O arquivo passa do limite de 500 linhas do projeto e a composicao nao segue a prancha 45. Nao ha recuperacao de rascunho.
+    A implementação atual separa o compositor, mas o rascunho usa uma chave global
+    bivaque.post-draft.v1 e é carregado antes de resolver a audiência e a cidade.
+    Uma pessoa que sai e entra como outra conta no mesmo navegador pode receber o
+    texto anterior; reabrir o modal também perde o destino escolhido. A correção
+    torna a chave por membro, carrega o rascunho só no contexto atual e preserva
+    a audiência sem alterar a autorização do insert.
 
 allowed_paths:
   - apps/web/app/components/bivaque/feed-post.tsx
   - apps/web/app/components/bivaque/feed-composer.tsx
+  - apps/web/app/components/bivaque/feed-post-create.tsx
+  - apps/web/app/components/bivaque/feed-post-draft.ts
+  - apps/web/app/components/bivaque/feed-post-audience.tsx
+  - apps/web/app/components/bivaque/feed-post-photo.tsx
+  - apps/web/app/components/bivaque/feed-post-shared.tsx
+  - tests/unit/composer/
   - docs/agents/tasks/RECON-014.task.yml
 
 forbidden:
@@ -38,6 +50,9 @@ acceptance:
   - criar publicacao e editar seguem a composicao da prancha 45
   - a audiencia oferecida e a real do membro — comunidade e grupo vem de consulta, nunca de lista fixa
   - o rascunho sobrevive a interrupcao pelo armazenamento do proprio navegador do membro; ele NAO vira publicacao, nao sai do dispositivo e nao e enviado ao servidor
+  - o rascunho e a preferencia de audiencia sao namespaced por membro e locality; trocar de conta nao expoe o texto anterior
+  - o rascunho so e recuperado quando a audiencia persistida continua autorizada; uma revogacao volta a cidade com aviso, sem publicar automaticamente
+  - reabrir o compositor recupera a ultima audiencia escolhida sem transformar o rascunho em publicacao
   - descartar rascunho e explicito e reversivel ate confirmar — nao apaga em silencio
   - feed-post.tsx termina abaixo de 500 linhas; a separacao e por responsabilidade (cartao / criacao / edicao), nao corte arbitrario
   - nenhuma consumidora do modulo quebra: a mudanca de superficie mantem as props que /inicio, /communities e /explorar ja passam
@@ -50,6 +65,7 @@ acceptance:
 
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-014.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/composer/draft-scope.test.ts tests/unit/composer/audience-reset.test.ts
   - npx pnpm@11.18.0 gate
   - node scripts/visual/loop.mjs
 

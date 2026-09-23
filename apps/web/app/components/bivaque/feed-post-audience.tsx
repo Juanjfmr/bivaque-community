@@ -107,7 +107,11 @@ export function usePostAudience(localityId: string): AudienceState {
 
       const [communitiesResult, groupsResult] = await Promise.all([
         communityIds.length > 0
-          ? supabase.from("communities").select("id, name").in("id", communityIds)
+          ? supabase
+              .from("communities")
+              .select("id, name")
+              .in("id", communityIds)
+              .eq("locality_id", localityId)
           : Promise.resolve({ data: [] as { id: string; name: string }[], error: null }),
         groupIds.length > 0
           ? supabase
