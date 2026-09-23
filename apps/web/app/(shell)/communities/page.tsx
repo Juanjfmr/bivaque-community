@@ -3,7 +3,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
 import { signCommunityImageUrls } from "../../../lib/communities/community-image-urls"
-import type { CommunityCard, MyMembership } from "./communities-data"
+import { type CommunityCard, currentLocalityId, type MyMembership } from "./communities-data"
 import { CommunitiesScreen } from "./communities-screen"
 
 type CommunityRow = Pick<
@@ -18,6 +18,11 @@ type LocalityRow = Pick<
   Database["public"]["Tables"]["localities"]["Row"],
   "id" | "city_name" | "state_code"
 >
+type LocalityMembershipRow = {
+  locality_id: string
+  kind: "current" | "leaving"
+  joined_at: string
+}
 
 export default async function CommunitiesPage({
   searchParams,
@@ -47,20 +52,20 @@ export default async function CommunitiesPage({
     redirect("/login?return=/communities")
   }
 
-  // P0 Task 7: locality lives in the membership, not the profile — the
-  // migration 20260817031237 dropped profiles.locality_id. Mirror the
-  // resolution in (shell)/layout.tsx: one membership, ordered by joined_at.
+  // Locality lives in the membership, not the profile. The current row is the
+  // default even when a declared transfer left an older `leaving` row behind;
+  // that older locality remains selectable for read-only exploration.
   const { data: localityRows, error: localityMembershipsError } = await supabase
     .from("locality_memberships")
-    .select("locality_id")
+    .select("locality_id, kind, joined_at")
     .order("joined_at", { ascending: true })
 
   if (localityMembershipsError) {
     throw new Error(`Falha ao ler as localidades: ${localityMembershipsError.message}`)
   }
-  const myLocalityIds = ((localityRows as { locality_id: string }[] | null) ?? []).map(
-    (row) => row.locality_id,
-  )
+  const membershipsByLocality = (localityRows as LocalityMembershipRow[] | null) ?? []
+  const myLocalityIds = [...new Set(membershipsByLocality.map((row) => row.locality_id))]
+  const defaultLocalityId = currentLocalityId(membershipsByLocality) ?? myLocalityIds[0] ?? null
 
   // Same "?locality" convention the events screen uses for the city switcher:
   // a param only selects among localities I actually belong to (anything else
@@ -68,7 +73,7 @@ export default async function CommunitiesPage({
   const params = await searchParams
   const requested = typeof params.locality === "string" ? params.locality : null
   const viewingLocalityId =
-    requested && myLocalityIds.includes(requested) ? requested : (myLocalityIds[0] ?? null)
+    requested && myLocalityIds.includes(requested) ? requested : defaultLocalityId
 
   const { data: membershipData, error: membershipsError } = await supabase
     .from("community_memberships")

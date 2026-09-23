@@ -85,6 +85,12 @@ export function partitionCommunities(
   return { mine, pending, discover }
 }
 
+export function currentLocalityId(
+  memberships: Array<{ locality_id: string; kind: "current" | "leaving" }>,
+): string | null {
+  return memberships.find((membership) => membership.kind === "current")?.locality_id ?? null
+}
+
 export function filterCommunities(communities: CommunityCard[], query: string): CommunityCard[] {
   const needle = query.trim().toLocaleLowerCase("pt-BR")
   if (needle.length === 0) return communities
@@ -93,6 +99,18 @@ export function filterCommunities(communities: CommunityCard[], query: string): 
       community.name.toLocaleLowerCase("pt-BR").includes(needle) ||
       (community.description ?? "").toLocaleLowerCase("pt-BR").includes(needle),
   )
+}
+
+export function selectCommunityForResults(
+  communities: CommunityCard[],
+  selectedId: string | null,
+  query: string,
+): CommunityCard | null {
+  const filtered = filterCommunities(communities, query)
+  if (query.trim().length > 0 && !filtered.some((community) => community.id === selectedId)) {
+    return filtered[0] ?? null
+  }
+  return filtered.find((community) => community.id === selectedId) ?? filtered[0] ?? null
 }
 
 /** "10 de set." a partir de `joined_at` real — nunca uma data chumbada. */

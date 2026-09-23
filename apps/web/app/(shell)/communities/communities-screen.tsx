@@ -2,10 +2,11 @@
 
 import { Button, Chip, Dropdown, SearchField, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
 import { MoreHorizontal } from "lucide-react"
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { type FormEvent, useMemo, useRef, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import {
   type CommunityImageKind,
   communityImageAltText,
@@ -21,6 +22,7 @@ import {
   formatRequestedOn,
   type MyMembership,
   partitionCommunities,
+  selectCommunityForResults,
 } from "./communities-data"
 
 const DISCOVER_PREVIEW_COUNT = 5
@@ -60,12 +62,12 @@ function CommunityGlyph({ className = "" }: { className?: string }) {
 // Só ações com rota real entram; nada de item morto no menu.
 function CommunityCardMenu({ communityId }: { communityId: string }) {
   const items: { key: string; label: string; href: string }[] = [
-    { key: "view", label: "Ver comunidade", href: "/communities/" + communityId },
-    { key: "invite", label: "Convidar", href: "/communities/" + communityId + "/invite" },
+    { key: "view", label: "Ver comunidade", href: `/communities/${communityId}` },
+    { key: "invite", label: "Convidar", href: `/communities/${communityId}/invite` },
     {
       key: "provider",
       label: "Indicar prestador",
-      href: "/communities/" + communityId + "/indicar-prestador",
+      href: `/communities/${communityId}/indicar-prestador`,
     },
   ]
   return (
@@ -152,14 +154,36 @@ export function CommunitiesScreen({
   knownCommunities,
   viewingCityLabel,
 }: CommunitiesScreenProps) {
-  const [tab, setTab] = useState("minhas")
-  const [query, setQuery] = useState("")
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [tab, setTab] = useState(() =>
+    searchParams.get("aba") === "descobrir" ? "descobrir" : "minhas",
+  )
+  const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get("comunidade"))
   const [expanded, setExpanded] = useState(false)
   const [submitError, setSubmitError] = useState("")
+  const [motivo, setMotivo] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
-  const router = useRouter()
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (tab === "descobrir") params.set("aba", "descobrir")
+    else params.delete("aba")
+
+    const cleanQuery = query.trim()
+    if (cleanQuery) params.set("q", cleanQuery)
+    else params.delete("q")
+
+    if (selectedId) params.set("comunidade", selectedId)
+    else params.delete("comunidade")
+
+    const nextQuery = params.toString()
+    if (nextQuery === searchParams.toString()) return
+    router.replace(`${pathname}${nextQuery ? `?${nextQuery}` : ""}` as Route, { scroll: false })
+  }, [pathname, query, router, searchParams, selectedId, tab])
 
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState("")
@@ -198,7 +222,7 @@ export function CommunitiesScreen({
   const discoverVisible = expanded
     ? discoverFiltered
     : discoverFiltered.slice(0, DISCOVER_PREVIEW_COUNT)
-  const selected = discover.find((c) => c.id === selectedId) ?? discoverVisible[0] ?? null
+  const selected = selectCommunityForResults(discover, selectedId, query)
   const selectedStatus = selected ? membershipByCommunity.get(selected.id)?.status : undefined
   const selectedReason = selected ? (membershipByCommunity.get(selected.id)?.reason ?? null) : null
   const selectedRequestedOn = selected
@@ -212,6 +236,7 @@ export function CommunitiesScreen({
     try {
       await requestCommunityMembershipAction(new FormData(form))
       form.reset()
+      setMotivo("")
     } catch {
       setSubmitError("Não foi possível enviar o pedido agora. Tente novamente.")
     } finally {
@@ -230,6 +255,7 @@ export function CommunitiesScreen({
         onSelectionChange={(key) => {
           setTab(String(key))
           setSubmitError("")
+          setMotivo("")
         }}
         className="tabs--secondary [&_[data-slot=tab]]:min-h-11 [&_[data-slot=tab]]:px-3"
       >
@@ -354,9 +380,17 @@ export function CommunitiesScreen({
                   value={query}
                   onChange={(value) => {
                     setQuery(value)
+                    setSelectedId(null)
                     setExpanded(false)
+                    setMotivo("")
+                    setSubmitError("")
                   }}
-                  onClear={() => setQuery("")}
+                  onClear={() => {
+                    setQuery("")
+                    setSelectedId(null)
+                    setMotivo("")
+                    setSubmitError("")
+                  }}
                 >
                   <SearchField.Group>
                     <SearchField.SearchIcon />
@@ -401,7 +435,16 @@ export function CommunitiesScreen({
                     title="Nenhuma comunidade encontrada com esse termo"
                     description="Tente outro nome ou limpe a busca."
                     action={
-                      <Button size="sm" variant="tertiary" onPress={() => setQuery("")}>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onPress={() => {
+                          setQuery("")
+                          setSelectedId(null)
+                          setMotivo("")
+                          setSubmitError("")
+                        }}
+                      >
                         Limpar busca
                       </Button>
                     }
@@ -415,7 +458,11 @@ export function CommunitiesScreen({
                           <li key={community.id}>
                             <button
                               type="button"
-                              onClick={() => setSelectedId(community.id)}
+                              onClick={() => {
+                                setSelectedId(community.id)
+                                setMotivo("")
+                                setSubmitError("")
+                              }}
                               aria-pressed={isSelected}
                               className={`flex min-h-11 w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)] ${
                                 isSelected
@@ -503,6 +550,7 @@ export function CommunitiesScreen({
                       </div>
                     ) : (
                       <form
+                        key={selected.id}
                         ref={formRef}
                         onSubmit={handleSubmit}
                         className="flex flex-col gap-3"
@@ -518,6 +566,8 @@ export function CommunitiesScreen({
                             name="motivo"
                             rows={3}
                             maxLength={500}
+                            value={motivo}
+                            onChange={(event) => setMotivo(event.target.value)}
                             placeholder="Conte um pouco sobre seu interesse"
                             className="w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 py-2 text-sm leading-relaxed transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--semantic-action-context)]"
                           />
