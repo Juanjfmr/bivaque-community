@@ -96,8 +96,9 @@ test.describe("home is the vila feed; without a vila, the city reference", () =>
       timeout: 15000,
     })
 
-    // And the composer is wired
-    await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
+    // And the composer is wired — o lançador do O06, não o "Publicar" do
+    // estado vazio do feed (community-section.tsx:250), que não existe com posts.
+    await expect(page.getByTestId("intent-pergunta")).toBeVisible()
   })
 
   test("member with no approved community sees the city reference, not a feed", async ({
