@@ -3,7 +3,12 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
 import { signCommunityImageUrls } from "../../../lib/communities/community-image-urls"
-import type { CommunityCard, MyMembership } from "./communities-data"
+import {
+  type CommunityCard,
+  type CommunityGroupCard,
+  MY_GROUPS_LIMIT,
+  type MyMembership,
+} from "./communities-data"
 import { CommunitiesScreen } from "./communities-screen"
 
 type CommunityRow = Pick<
@@ -17,6 +22,14 @@ type MembershipRow = Pick<
 type LocalityRow = Pick<
   Database["public"]["Tables"]["localities"]["Row"],
   "id" | "city_name" | "state_code"
+>
+type GroupRow = Pick<
+  Database["public"]["Tables"]["groups"]["Row"],
+  "id" | "name" | "description" | "visibility" | "locality_id" | "community_id"
+>
+type GroupMembershipRow = Pick<
+  Database["public"]["Tables"]["group_memberships"]["Row"],
+  "group_id" | "status"
 >
 
 export default async function CommunitiesPage({
@@ -144,7 +157,75 @@ export default async function CommunitiesPage({
   }
 
   const allCommunities = [...localCommunities, ...otherCommunities]
-  const localityIds = [...new Set(allCommunities.map((row) => row.locality_id))]
+
+  // ── Grupos: os meus e os da cidade em exibição ─────────────────────────────
+  // FE-GRUPOS-ALCANCAVEIS (19/09/2026): o grupo de cidade passa a ter casa no
+  // destino Comunidades. Dois conjuntos, e só eles:
+  //   * meus grupos — vínculo aprovado, de qualquer cidade;
+  //   * grupos SEM comunidade da cidade em exibição — os que não têm outra tela.
+  // Grupo de comunidade fica fora de propósito: ele já aparece na aba "Grupos"
+  // da própria comunidade, e uma segunda porta para a mesma sala é invenção.
+  //
+  // `limit+1` é o detector de truncamento: com 51 linhas a lista foi cortada e
+  // a tela avisa; sem isso o corte seria silencioso. A ordem é por entrada no
+  // grupo, para o corte (quando acontece) ser determinístico e significativo.
+  const { data: myGroupRows, error: myGroupsError } = await supabase
+    .from("group_memberships")
+    .select("group_id, status")
+    .eq("user_id", user.id)
+    .eq("status", "approved")
+    .order("joined_at", { ascending: false })
+    .limit(MY_GROUPS_LIMIT + 1)
+
+  if (myGroupsError) {
+    throw new Error(`Falha ao ler os seus grupos: ${myGroupsError.message}`)
+  }
+  const myGroupRowList = (myGroupRows as GroupMembershipRow[] | null) ?? []
+  const myGroupsTruncated = myGroupRowList.length > MY_GROUPS_LIMIT
+  const myGroupIds = [
+    ...new Set(myGroupRowList.slice(0, MY_GROUPS_LIMIT).map((row) => row.group_id)),
+  ]
+
+  const groupColumns = "id, name, description, visibility, locality_id, community_id"
+  const groupRowsById = new Map<string, GroupRow>()
+
+  if (myGroupIds.length > 0) {
+    const { data, error } = await supabase
+      .from("groups")
+      .select(groupColumns)
+      .in("id", myGroupIds)
+      .eq("is_deleted", false)
+      .order("name")
+
+    if (error) {
+      throw new Error(`Falha ao ler os seus grupos: ${error.message}`)
+    }
+    for (const row of (data as GroupRow[] | null) ?? []) groupRowsById.set(row.id, row)
+  }
+
+  if (viewingLocalityId) {
+    const { data, error } = await supabase
+      .from("groups")
+      .select(groupColumns)
+      .eq("locality_id", viewingLocalityId)
+      .is("community_id", null)
+      .eq("is_deleted", false)
+      .order("name")
+
+    if (error) {
+      throw new Error(`Falha ao ler os grupos da cidade: ${error.message}`)
+    }
+    for (const row of (data as GroupRow[] | null) ?? []) groupRowsById.set(row.id, row)
+  }
+
+  const groupRows = [...groupRowsById.values()]
+
+  const localityIds = [
+    ...new Set([
+      ...allCommunities.map((row) => row.locality_id),
+      ...groupRows.map((row) => row.locality_id),
+    ]),
+  ]
 
   let cityLabelById = new Map<string, string>()
   if (localityIds.length > 0) {
@@ -183,12 +264,31 @@ export default async function CommunitiesPage({
     thumbnailUrl: imageUrlsByCommunity.get(row.id)?.thumbnailUrl ?? null,
   })
 
+  // `memberCount` fica `null`: a contagem pela Data API é limitada por
+  // `max_rows` (mil linhas por resposta) e um grupo cheio devolveria um número
+  // menor que o real sem erro. A tela omite a linha quando o número é nulo —
+  // ver o contrato em communities-data.ts.
+  const groupCards: CommunityGroupCard[] = groupRows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    visibility: row.visibility,
+    localityId: row.locality_id,
+    cityLabel: cityLabelById.get(row.locality_id) ?? null,
+    cityLevel: row.community_id === null,
+    participating: myGroupIds.includes(row.id),
+    memberCount: null,
+  }))
+
   return (
     <CommunitiesScreen
       localCommunities={localCommunities.map(toCard)}
       memberships={memberships}
       knownCommunities={allCommunities.map(toCard)}
       viewingCityLabel={viewingLocalityId ? (cityLabelById.get(viewingLocalityId) ?? null) : null}
+      groups={groupCards}
+      viewingLocalityId={viewingLocalityId}
+      myGroupsTruncated={myGroupsTruncated}
     />
   )
 }

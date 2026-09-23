@@ -101,3 +101,79 @@ export function formatRequestedOn(iso: string): string {
   if (Number.isNaN(date.getTime())) return ""
   return date.toLocaleDateString("pt-BR", { day: "numeric", month: "short" }).replace(/\.$/, "")
 }
+
+// ── Grupos (FE-GRUPOS-ALCANCAVEIS, 19/09/2026) ─────────────────────────────
+//
+// Um grupo de CIDADE (`community_id` nulo) não aparecia em tela nenhuma deste
+// destino: a aba "Grupos" de uma comunidade filtra por `community_id`, e
+// `/groups` — a única lista que o mostra — não tinha entrada na navegação, só
+// links condicionais. Medido em produção (`main` 90e4c94), com um grupo real do
+// dono invisível no login dele.
+//
+// A partição é pura de propósito, como `partitionCommunities`: a regra que
+// decide "o que é meu" e "o que é da cidade" precisa ser auditável longe do JSX.
+
+/** Teto de "meus grupos" numa única leitura; a tela avisa quando é atingido. */
+export const MY_GROUPS_LIMIT = 50
+
+export type CommunityGroupCard = {
+  id: string
+  name: string
+  description: string | null
+  visibility: "public" | "private"
+  /** Cidade do grupo — pode ser outra quando eu participo de um grupo de fora. */
+  localityId: string
+  cityLabel: string | null
+  /** `community_id` nulo: grupo da cidade, sem comunidade. */
+  cityLevel: boolean
+  /** Participo com vínculo aprovado (lido de `group_memberships`). */
+  participating: boolean
+  /**
+   * Aprovados, quando existe leitura COMPLETA; `null` = indisponível.
+   *
+   * Hoje sempre `null`: a contagem pela Data API é limitada por `max_rows` e
+   * `group_memberships` responde no máximo mil linhas por consulta, então um
+   * grupo cheio devolveria um número menor que o real sem erro nenhum. Número
+   * otimista é pior que ausência de número — a tela omite a linha, nunca
+   * afirma "0 membros".
+   */
+  memberCount: number | null
+}
+
+export type GroupsPartition = {
+  /** Meus grupos — qualquer cidade, qualquer escopo. */
+  mine: CommunityGroupCard[]
+  /** Grupos sem comunidade da cidade em exibição em que ainda não participo. */
+  city: CommunityGroupCard[]
+}
+
+/**
+ * Grupos que eu já tenho e grupos da cidade que ainda não são meus.
+ *
+ * O grupo de comunidade NÃO entra em `city`: ele já tem casa na aba "Grupos" da
+ * própria comunidade, e listá-lo aqui inventaria uma segunda porta para a mesma
+ * sala. A comparação de cidade é por `localityId`, não por confiança na consulta
+ * que montou a lista — é a mesma razão pela qual `partitionCommunities` recebe a
+ * cidade em exibição em vez de assumir que todo mundo já veio filtrado.
+ */
+export function partitionGroupCards(
+  groups: CommunityGroupCard[],
+  viewingLocalityId: string | null,
+): GroupsPartition {
+  const mine: CommunityGroupCard[] = []
+  const city: CommunityGroupCard[] = []
+  for (const group of groups) {
+    if (group.participating) {
+      mine.push(group)
+      continue
+    }
+    if (group.cityLevel && viewingLocalityId !== null && group.localityId === viewingLocalityId) {
+      city.push(group)
+    }
+  }
+  const byName = (a: CommunityGroupCard, b: CommunityGroupCard) =>
+    a.name.localeCompare(b.name, "pt-BR")
+  mine.sort(byName)
+  city.sort(byName)
+  return { mine, city }
+}
