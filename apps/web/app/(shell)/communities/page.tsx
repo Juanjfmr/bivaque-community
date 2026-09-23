@@ -27,10 +27,7 @@ type GroupRow = Pick<
   Database["public"]["Tables"]["groups"]["Row"],
   "id" | "name" | "description" | "visibility" | "locality_id" | "community_id"
 >
-type GroupMembershipRow = Pick<
-  Database["public"]["Tables"]["group_memberships"]["Row"],
-  "group_id" | "status"
->
+type GroupMembershipRow = Pick<Database["public"]["Tables"]["group_memberships"]["Row"], "group_id">
 
 export default async function CommunitiesPage({
   searchParams,
@@ -166,25 +163,30 @@ export default async function CommunitiesPage({
   // Grupo de comunidade fica fora de propósito: ele já aparece na aba "Grupos"
   // da própria comunidade, e uma segunda porta para a mesma sala é invenção.
   //
-  // `limit+1` é o detector de truncamento: com 51 linhas a lista foi cortada e
-  // a tela avisa; sem isso o corte seria silencioso. A ordem é por entrada no
+  // Quando os vínculos aprovados passam de `MY_GROUPS_LIMIT`, a lista foi
+  // cortada e a tela avisa — o corte não é silencioso. A ordem é por entrada no
   // grupo, para o corte (quando acontece) ser determinístico e significativo.
+  //
+  // Sem `.limit`: TODOS os vínculos aprovados decidem "participo", inclusive os
+  // que ficam fora do teto. Se o teto também decidisse participação, um grupo meu
+  // além do corte apareceria como "Entrar" e o clique cairia no conflito de
+  // unique. O teto limita só a leitura dos dados do grupo e a URL do `.in` —
+  // nunca a resposta sobre pertencimento.
   const { data: myGroupRows, error: myGroupsError } = await supabase
     .from("group_memberships")
-    .select("group_id, status")
+    .select("group_id")
     .eq("user_id", user.id)
     .eq("status", "approved")
     .order("joined_at", { ascending: false })
-    .limit(MY_GROUPS_LIMIT + 1)
 
   if (myGroupsError) {
     throw new Error(`Falha ao ler os seus grupos: ${myGroupsError.message}`)
   }
-  const myGroupRowList = (myGroupRows as GroupMembershipRow[] | null) ?? []
-  const myGroupsTruncated = myGroupRowList.length > MY_GROUPS_LIMIT
-  const myGroupIds = [
-    ...new Set(myGroupRowList.slice(0, MY_GROUPS_LIMIT).map((row) => row.group_id)),
-  ]
+  const participatingGroupIds = new Set(
+    ((myGroupRows as GroupMembershipRow[] | null) ?? []).map((row) => row.group_id),
+  )
+  const myGroupsTruncated = participatingGroupIds.size > MY_GROUPS_LIMIT
+  const myGroupIds = [...participatingGroupIds].slice(0, MY_GROUPS_LIMIT)
 
   const groupColumns = "id, name, description, visibility, locality_id, community_id"
   const groupRowsById = new Map<string, GroupRow>()
@@ -276,7 +278,7 @@ export default async function CommunitiesPage({
     localityId: row.locality_id,
     cityLabel: cityLabelById.get(row.locality_id) ?? null,
     cityLevel: row.community_id === null,
-    participating: myGroupIds.includes(row.id),
+    participating: participatingGroupIds.has(row.id),
     memberCount: null,
   }))
 
