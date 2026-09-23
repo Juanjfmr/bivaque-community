@@ -3440,19 +3440,36 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["supabase/migrations/20260922160100_conversation_per_request.sql"],
+      "links": [
+        "supabase/migrations/20260922160100_conversation_per_request.sql",
+        "supabase/migrations/20260923120000_service_request_open_cap.sql",
+        "docs/decisions/ADR-20260923-teto-de-pedidos-por-par.md",
+        "apps/web/app/(shell)/pedidos/novo/actions.ts"
+      ],
       "dependencies": [],
-      "proof": [],
-      "tests": [],
-      "updatedAt": "2026-09-22",
-      "sourceRevision": "de05e856",
+      "proof": [
+        "tests/unit/service-requests/open-cap-message.test.ts 3/3: o 54000 vira a frase com a saida ('Feche ou cancele um para enviar outro'), outra falha continua no aviso generico que preserva o texto, e o caminho feliz devolve o pedido",
+        "npx pnpm@11.18.0 gate em 23/09/2026: lint, typecheck, test (951 unit + 189 + 76 mobile + 19 web + 114 de escopo) e secrets verdes; o build foi pulado por falta do arquivo de ambiente local nesta arvore",
+        "PENDENTE de execucao: supabase/tests/service-request-open-cap.sql (8 asserts) nao rodou -- o Docker e a stack Supabase nao subiram nesta maquina em 23/09. Proximo passo concreto: subir a stack, recriar o banco local e rodar a suite pgTAP"
+      ],
+      "tests": [
+        "supabase/tests/service-request-open-cap.sql",
+        "tests/unit/service-requests/open-cap-message.test.ts"
+      ],
+      "updatedAt": "2026-09-23",
+      "sourceRevision": "28df5b8d",
       "id": "PEDIDO-TETO-POR-PAR",
       "title": "Nao ha teto de pedidos abertos entre a mesma pessoa e o mesmo prestador",
       "priority": "P2",
       "category": "backend",
-      "status": "repo",
+      "status": "now",
       "description": "Achado MEDIUM (parte 2) da auditoria de 22/09/2026. Com uma conversa por pedido, uma pessoa pode abrir quantos pedidos quiser para o mesmo prestador; a chave de idempotencia e do chamador e nao limita volume. Decidir o teto (ex.: pedidos abertos por par, ou por janela de tempo) e decisao de produto; a regra antiabuso de uma conversa por par existia para isso.",
-      "checklist": ["Decisao do dono sobre o teto", "ADR e migration com pgTAP"]
+      "checklist": [
+        "Decisao do dono sobre o teto [FEITO 23/09: cinco pedidos em aberto por par, entre tres opcoes apresentadas]",
+        "ADR-20260923-teto-de-pedidos-por-par aceito [FEITO 23/09]",
+        "Migration com pgTAP [ESCRITA: 20260923120000_service_request_open_cap.sql e supabase/tests/service-request-open-cap.sql; FALTA aplicar e rodar a suite pgTAP, que exige a stack Supabase]",
+        "A recusa diz a saida na tela [FEITO: 54000 traduzido na action do formulario]"
+      ]
     },
     {
       "phase": "Reconstrução",
