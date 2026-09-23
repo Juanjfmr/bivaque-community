@@ -98,9 +98,7 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
     await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
-    const trigger = page
-      .getByRole("button", { name: /No que você está pensando?|^Publicar$/ })
-      .first()
+    const trigger = page.getByTestId("intent-pergunta")
     await expect(trigger).toBeVisible({ timeout: 15000 })
     await trigger.click()
 
@@ -118,9 +116,7 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
     await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
-    const trigger = page
-      .getByRole("button", { name: /No que você está pensando?|^Publicar$/ })
-      .first()
+    const trigger = page.getByTestId("intent-pergunta")
     await trigger.click()
 
     const dialog = page.getByRole("dialog")
@@ -192,7 +188,14 @@ test.describe("DS-029 visible focus on non-tablist controls", () => {
     await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
-    await page.locator("header").first().click()
+    // O centro do header virou o seletor de cidade do O06
+    // (`data-testid="locality-switcher"`); clicar nele abre o diálogo e tira o
+    // foco. O canto (4,4) cai no padding do container do header, não em um
+    // controle — app-shell.tsx:85-97 tem ali um irmão vazio de propósito.
+    await page
+      .locator("header")
+      .first()
+      .click({ position: { x: 4, y: 4 } })
     await page.keyboard.press("Tab")
     await page.keyboard.press("Tab")
 
