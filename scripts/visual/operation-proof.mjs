@@ -85,13 +85,22 @@ try {
         "page",
       )
       await page.goBack()
-      for (const label of ["Voltar ao Bivaque", "Sair da operação"]) {
-        await page.getByRole("link", { name: label, exact: true }).click()
-        await expect(page).toHaveURL(/\/inicio$/)
-        await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
-        await page.goBack()
-        await expect(nav).toBeVisible()
-      }
+      // A única saída — "Voltar ao Bivaque": devolve ao produto com a sessão
+      // viva, e o retorno pelo histórico do navegador reencontra o shell.
+      await page.getByRole("link", { name: "Voltar ao Bivaque", exact: true }).click()
+      await expect(page).toHaveURL(/\/inicio$/)
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
+      await page.goBack()
+      await expect(nav).toBeVisible()
+      // "Sair da operação" foi REMOVIDO por decisão do dono (2026-09-10): a
+      // prancha 58 o desenha, mas o produto não oferece logout no shell de
+      // operação — a saída de sessão vive no perfil. Prova a ausência nas três
+      // larguras: nenhum link, botão ou texto com esse rótulo.
+      await expect(page.getByRole("link", { name: "Sair da operação", exact: true })).toHaveCount(0)
+      await expect(page.getByRole("button", { name: "Sair da operação", exact: true })).toHaveCount(
+        0,
+      )
+      await expect(page.getByText("Sair da operação", { exact: true })).toHaveCount(0)
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth > innerWidth + 1,
       )
@@ -107,7 +116,8 @@ try {
           "reload",
           "detail",
           "keyboard-skip",
-          "both-exits-preserve-session",
+          "voltar-preserves-session",
+          "no-sair-da-operacao",
           "browser-back",
           "no-overflow",
           "no-pageerror",

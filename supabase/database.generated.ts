@@ -3098,6 +3098,7 @@ export type Database = {
         | "admission_rejected"
         | "listing_alert"
         | "service_request"
+        | "event_invite"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -3331,6 +3332,7 @@ export const Constants = {
         "admission_rejected",
         "listing_alert",
         "service_request",
+        "event_invite",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

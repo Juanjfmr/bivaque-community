@@ -53,11 +53,18 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
           {/* Os quatro itens viraram componente cliente: só ele sabe qual é a
               rota atual e pode marcar aria-current (RECON-049, fila do lote M). */}
           <OperatorNav />
+          {/* Decisão do dono (2026-09-10, commit cefa14d6): "Sair da operação"
+              saiu do shell de operação — é ação que sai da operação e não
+              pertence à navegação do operador, e o produto não oferece logout
+              aqui (a saída de sessão vive no perfil). A única saída é "Voltar ao
+              Bivaque", que devolve ao produto preservando a sessão. O ícone fica
+              em aria-hidden para o nome acessível ser exatamente o rótulo. */}
           <Link
             href="/inicio"
-            className="ml-auto inline-flex min-h-11 items-center rounded-md px-3 text-sm text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:text-foreground"
+            className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:text-foreground"
           >
-            Sair da operação
+            <span aria-hidden="true">←</span>
+            <span>Voltar ao Bivaque</span>
           </Link>
         </div>
       </nav>

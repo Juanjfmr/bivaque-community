@@ -59,6 +59,7 @@ export function rendersWithActor(notification: NotificationRow): boolean {
     case "invitation_accepted":
     case "event_rsvp":
     case "event_change":
+    case "event_invite":
     case "direct_message":
     case "recommendation_reply":
       return true
@@ -79,6 +80,8 @@ export function formatNotificationLabel(notification: NotificationRow): string {
       return "confirmou presença no seu evento"
     case "event_change":
       return "atualizou um evento com sua presença"
+    case "event_invite":
+      return "convidou você para um evento"
     case "event_reminder":
       return "Lembrete: o encontro que você confirmou é amanhã"
     case "direct_message":
@@ -135,6 +138,7 @@ export function resolveNotificationHref(
     case "event_rsvp":
     case "event_change":
     case "event_reminder":
+    case "event_invite":
       return `/events/${notification.target_id}`
     case "direct_message":
       return `/messages?conversation=${notification.target_id}`
