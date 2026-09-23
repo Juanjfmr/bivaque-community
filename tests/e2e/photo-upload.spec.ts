@@ -9,10 +9,12 @@ test.describe("photo upload", () => {
   test("the composer has a file picker for photos", async ({ page }) => {
     // Given a session of a member
     await seedSession(page.context())
-    // When they open the home and open the composer. O rotulo mudou junto com a
-    // rota: o compositor de /inicio pergunta "O que voce quer compartilhar?".
+    // When they open the home and open the composer. Desde o O06 o modal
+    // "Criar publicação" abre pelo lançador "Fazer uma pergunta".
     await page.goto("/inicio")
-    await page.getByRole("button", { name: "O que você quer compartilhar?" }).click()
+    const ask = page.getByTestId("intent-pergunta")
+    await expect(ask).toBeVisible({ timeout: 20000 })
+    await ask.click()
 
     // And select Photo type
     const dialog = page.getByRole("dialog", { name: "Criar publicação" })
