@@ -108,6 +108,24 @@ export class Frontier {
     return pattern
   }
 
+  /**
+   * Entrada declarada: enfileira mesmo com a rota já no teto. Uma tela pode viver atrás de
+   * `?tab=` — a mesma rota com outra query é outra tela, e o teto por rota descartaria a segunda
+   * porta. Continua deduplicando pelo par persona+target e contando no `perRoute`.
+   */
+  enter(visit: Visit): RoutePattern | null {
+    const pathname = visit.target.split("?")[0] ?? visit.target
+    const pattern = matchRoute(pathname, this.patterns)
+    if (!pattern || pattern.kind === "handler") return pattern
+    const key = `${visit.persona} ${visit.target}`
+    if (this.seen.has(key)) return pattern
+    this.seen.add(key)
+    const routeKey = `${visit.persona} ${pattern.route}`
+    this.perRoute.set(routeKey, (this.perRoute.get(routeKey) ?? 0) + 1)
+    this.queue.push(visit)
+    return pattern
+  }
+
   next(): Visit | undefined {
     return this.queue.shift()
   }

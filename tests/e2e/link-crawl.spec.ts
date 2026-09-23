@@ -62,7 +62,10 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
   {
     nome: "prestador",
     email: "prestador-seed@bivaque.example.invalid",
-    entradas: ["/prestador"],
+    // A fila mostra só a aba ativa (?tab=; padrão "novos"), e o pedido respondido sai da aba
+    // padrão — a porta do detalhe só existe nas outras abas. São entradas declaradas, não links:
+    // passam por frontier.enter, que ignora o teto por rota.
+    entradas: ["/prestador", "/prestador?tab=em_conversa", "/prestador?tab=encerrados"],
     chega: /^\/prestador$/,
   },
   {
@@ -192,7 +195,7 @@ async function crawl(
   redirects: Array<{ persona: string; target: string; landed: string }>,
 ): Promise<number> {
   const frontier = new Frontier(patterns, CAP_PER_ROUTE)
-  for (const entrada of entradas) frontier.offer({ target: entrada, from: "(entrada)", persona })
+  for (const entrada of entradas) frontier.enter({ target: entrada, from: "(entrada)", persona })
   const page = await context.newPage()
   page.setDefaultNavigationTimeout(NAV_TIMEOUT)
   let visits = 0

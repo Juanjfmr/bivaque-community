@@ -67,6 +67,37 @@ describe("modelo do rastreador de links", () => {
     expect(queued).toEqual(["/pedidos/1", "/pedidos/2"])
   })
 
+  it("entrada declarada aceita outra query da mesma rota; offer recusa", () => {
+    const patterns = buildPatterns(["prestador/page.tsx"], [])
+    const entrada = new Frontier(patterns, 1)
+    const enter = (target: string) =>
+      entrada.enter({ target, from: "(entrada)", persona: "prestador" })
+    enter("/prestador")
+    enter("/prestador?tab=em_conversa")
+    const enfileiradas: string[] = []
+    for (let v = entrada.next(); v; v = entrada.next()) enfileiradas.push(v.target)
+    expect(enfileiradas).toEqual(["/prestador", "/prestador?tab=em_conversa"])
+
+    const link = new Frontier(patterns, 1)
+    const offer = (target: string) => link.offer({ target, from: "/", persona: "prestador" })
+    offer("/prestador")
+    offer("/prestador?tab=em_conversa")
+    const ofertadas: string[] = []
+    for (let v = link.next(); v; v = link.next()) ofertadas.push(v.target)
+    expect(ofertadas).toEqual(["/prestador"])
+  })
+
+  it("enter não enfileira o mesmo alvo duas vezes", () => {
+    const frontier = new Frontier(buildPatterns(["prestador/page.tsx"], []), 1)
+    const enter = (target: string) =>
+      frontier.enter({ target, from: "(entrada)", persona: "prestador" })
+    enter("/prestador?tab=em_conversa")
+    enter("/prestador?tab=em_conversa")
+    const enfileiradas: string[] = []
+    for (let v = frontier.next(); v; v = frontier.next()) enfileiradas.push(v.target)
+    expect(enfileiradas).toEqual(["/prestador?tab=em_conversa"])
+  })
+
   it("rota sem caminho e sem porta declarada é acusada; exceção velha também", () => {
     const patterns = buildPatterns(PAGES, HANDLERS)
     const reached = new Set(["/", "/pedidos", "/pedidos/[id]", "/communities/[id]/admin"])
