@@ -16,8 +16,13 @@ test.describe("seletor de cidade", () => {
     const switcher = page.getByTestId("locality-switcher")
     await expect(switcher).toBeVisible({ timeout: 20_000 })
 
-    // O rótulo inicial é a cidade do membro, sem parâmetro na URL.
-    const ownLabel = (await switcher.innerText()).trim()
+    // O rótulo inicial é a cidade do membro, sem parâmetro na URL. Abaixo de sm
+    // o texto do botão é `hidden sm:inline` (locality-switcher.tsx:92), então o
+    // nome legível vem do aria-label — `Cidade: <cidade>. Trocar cidade` (:88).
+    const ownLabel = ((await switcher.getAttribute("aria-label")) ?? "")
+      .replace(/^Cidade: /, "")
+      .replace(/\. Trocar cidade$/, "")
+      .trim()
     expect(ownLabel.length).toBeGreaterThan(0)
     expect(page.url()).not.toContain("locality=")
 
