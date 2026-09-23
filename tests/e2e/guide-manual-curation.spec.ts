@@ -97,6 +97,6 @@ test.describe("guide manual curation from replies", () => {
     // arrivals/page.tsx documents relying on.
     await page.goto("/guide-queue")
 
-    await expect(page).toHaveURL(/\/community/)
+    await expect(page).toHaveURL(/\/inicio/)
   })
 })
