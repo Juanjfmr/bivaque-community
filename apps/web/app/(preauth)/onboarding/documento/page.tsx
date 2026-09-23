@@ -55,7 +55,7 @@ export default async function OnboardingDocumentPage() {
   }
 
   if (membershipResult.data !== null) {
-    redirect("/community")
+    redirect("/inicio")
   }
 
   const status = (outcomeResult.data as OutcomeRpcRow[] | null)?.[0]?.status ?? null

@@ -56,8 +56,9 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
         "60-web-estados#1",
         page,
         async () => {
-          await page.goto("/community")
-          await page.getByRole("button", { name: "No que você está pensando?" }).click()
+          // /community virou encaminhamento (O06): o compositor abre pelo lançador da Home.
+          await page.goto("/inicio")
+          await page.getByTestId("intent-pergunta").click()
           const editor = page.getByRole("dialog")
           await editor.getByRole("textbox").first().fill(text)
 

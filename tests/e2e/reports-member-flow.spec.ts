@@ -172,7 +172,7 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
     try {
       const page = await context.newPage()
       await signInAsCookie(context, REPORTER_EMAIL)
-      await page.goto("/community", { waitUntil: "load" })
+      await page.goto("/inicio", { waitUntil: "load" })
       await expect(page).toHaveURL(/\/community$/)
 
       // O post municipal fixo pertence ao proprio dono-vila e nao pode ser

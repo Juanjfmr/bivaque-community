@@ -94,11 +94,10 @@ test.describe("a pergunta vem antes do resto", () => {
     // Given — a owner da vila, que é quem tem feed onde publicar
     await signInAs(page, VILA_OWNER_EMAIL)
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto("/community")
-    await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-      timeout: 20000,
-    })
-    await page.getByRole("button", { name: "Publicar" }).first().click()
+    await page.goto("/inicio", { waitUntil: "load" })
+    const ask = page.getByTestId("intent-pergunta")
+    await expect(ask).toBeVisible({ timeout: 20000 })
+    await ask.click()
     await expect(page.getByRole("dialog")).toBeVisible()
     // A lista de destinos é consulta: sem esperar, o grupo "Quem pode ver?"
     // pode ainda não estar no DOM e a comparação viraria erro de ausência.

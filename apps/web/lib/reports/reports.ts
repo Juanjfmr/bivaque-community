@@ -1,6 +1,7 @@
 import { scrubReportReason } from "@bivaque/domain"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { postFocusHref } from "../../app/(shell)/community/legacy-target"
 
 // Prancha 56-web-confianca e spec C10: a denuncia do membro tem motivo de
 // lista fechada — Spam, Conteúdo inadequado, Informação enganosa, Outro — e
@@ -235,7 +236,7 @@ export type OwnReport = {
 }
 
 const TARGET_HREF: Record<ReportTargetType, (id: string) => string | null> = {
-  post: (id) => `/community?post=${id}`,
+  post: (id) => postFocusHref(id),
   comment: () => null,
   group: (id) => `/groups/${id}`,
   message: () => null,

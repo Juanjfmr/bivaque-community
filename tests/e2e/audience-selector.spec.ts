@@ -69,12 +69,13 @@ test.describe("audience selector and reach chip", () => {
     await seedSession(page.context())
     await page.setViewportSize({ width: 1280, height: 800 })
 
-    // When the composer opens
-    await page.goto("/community")
-    await page
-      .getByRole("button", { name: /Publicar/ })
-      .first()
-      .click()
+    // When the composer opens — desde o O06 /community encaminha para /inicio e
+    // o modal "Criar publicação" abre pelo lançador "Fazer uma pergunta".
+    await page.goto("/inicio", { waitUntil: "load" })
+    const ask = page.getByTestId("intent-pergunta")
+    await expect(ask).toBeVisible({ timeout: 20000 })
+    await ask.click()
+    await expect(page.getByRole("dialog")).toBeVisible()
 
     // Then the audience section renders with a notice
     await expect(page.getByText(/vão ler/i).first()).toBeVisible()
@@ -86,7 +87,7 @@ test.describe("audience selector and reach chip", () => {
     await signInAs(page, VILA_OWNER_EMAIL)
 
     // When the member opens the home feed
-    await page.goto("/community")
+    await page.goto("/inicio")
 
     // Then a city-reach chip is visible on the city-wide post. The chip
     // (feed-post.tsx:289) is a static HeroUI Chip, not an interactive

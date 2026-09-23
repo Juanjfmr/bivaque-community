@@ -23,6 +23,7 @@ import { GlobalSearchField } from "../search/global-search-field"
 import { resolveActiveNav } from "../shell/active-nav"
 import { MemberAvatar } from "./avatar"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
+import { LocalitySwitcher } from "./locality-switcher"
 
 interface AppShellProperties {
   children: ReactNode
@@ -106,14 +107,10 @@ export function AppShell({ children }: AppShellProperties) {
               data-testid="shell-locality-pill"
               className="flex items-center gap-1.5 min-h-11 px-2 rounded-lg"
             >
-              <MapPin
-                size={16}
-                className="text-[var(--semantic-action-primary)]"
-                aria-hidden="true"
-              />
-              <span className="text-sm font-medium hidden sm:inline">
-                {current.cityName}, {current.stateCode}
-              </span>
+              {/* RUN-006: a prancha 01 desenha a cidade como CONTROLE (pino +
+                  chevron), nao como rotulo. Trocar aqui muda a cidade que a
+                  tela olha, nunca a que a pessoa pertence. */}
+              <LocalitySwitcher />
             </div>
 
             {/* Decidido em 18/09/2026 (RECON-038 #4): a prancha 01 não desenha o

@@ -47,7 +47,7 @@ export default async function ProviderLayout({ children }: Readonly<{ children: 
   })
 
   if (!isProvider) {
-    redirect("/community")
+    redirect("/inicio")
   }
 
   // A ficha é visível ao dono pela RLS owner-only — leitura com o cliente

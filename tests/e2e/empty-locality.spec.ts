@@ -130,7 +130,7 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
     await signInAs(page, EMPTY_LOCALITY_EMAIL)
 
     // When they open the feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
     // Then the honest copy is rendered instead of "Nenhuma publicação ainda"
     await expect(page.getByText("Você é dos primeiros aqui.")).toBeVisible({ timeout: 15000 })
@@ -205,7 +205,7 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
     await signInAs(page, EMPTY_LOCALITY_EMAIL)
 
     // When they open the feed
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
     // Then the page is interactive
     await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible({

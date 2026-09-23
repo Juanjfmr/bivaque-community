@@ -52,7 +52,7 @@ export default function OnboardingLocalityPage() {
         if (statusRes.ok) {
           const status = (await statusRes.json()) as { localityMember?: boolean }
           if (status.localityMember) {
-            router.replace("/community")
+            router.replace("/inicio")
             return
           }
         }

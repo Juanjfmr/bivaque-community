@@ -97,7 +97,7 @@ function OnboardingFlow() {
         }
 
         if (data.localityMember) {
-          router.replace("/community")
+          router.replace("/inicio")
           return
         }
         if (data.status === "verified") {
@@ -247,7 +247,7 @@ function OnboardingFlow() {
       if (data["localityMember"]) {
         setResult("Convite aceito. Sua conta está pronta.")
         setStep("done")
-        router.push("/community")
+        router.push("/inicio")
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao aceitar convite")

@@ -9,9 +9,12 @@ test.describe("photo upload", () => {
   test("the composer has a file picker for photos", async ({ page }) => {
     // Given a session of a member
     await seedSession(page.context())
-    // When they open the community page and open the shell composer
-    await page.goto("/community")
-    await page.getByRole("button", { name: "No que você está pensando?" }).click()
+    // When they open the home and open the composer. Desde o O06 o modal
+    // "Criar publicação" abre pelo lançador "Fazer uma pergunta".
+    await page.goto("/inicio")
+    const ask = page.getByTestId("intent-pergunta")
+    await expect(ask).toBeVisible({ timeout: 20000 })
+    await ask.click()
 
     // And select Photo type
     const dialog = page.getByRole("dialog", { name: "Criar publicação" })

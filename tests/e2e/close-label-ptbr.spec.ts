@@ -84,11 +84,11 @@ test.describe("o gatilho de fechar fala português", () => {
       // Given — a owner da vila, no tamanho medido
       await signInAs(page, VILA_OWNER_EMAIL)
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
-      await page.goto("/community")
-      await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-        timeout: 20000,
-      })
-      await page.getByRole("button", { name: "Publicar" }).first().click()
+      // /community virou encaminhamento (O06): o compositor abre pelo lançador da Home.
+      await page.goto("/inicio")
+      const ask = page.getByTestId("intent-pergunta")
+      await expect(ask).toBeVisible({ timeout: 20000 })
+      await ask.click()
       const dialog = page.getByRole("dialog")
       await expect(dialog).toBeVisible()
 

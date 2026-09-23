@@ -76,13 +76,17 @@ test.describe("home is the vila feed; without a vila, the city reference", () =>
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When the member opens the home
-    await page.goto("/community")
+    await page.goto("/inicio")
 
-    // Then the h1 is the vila name (section title), not "Bivaque" and not "Manaus, AM"
+    // Then the context line names the member own vila. Em /inicio o unico h1 e
+    // a saudacao (prancha 01), entao o nome da vila e asserido onde ele de fato
+    // esta — na linha "comunidade · cidade", nao num heading.
     // Timeout generoso no PRIMEIRO assert: quando este é o primeiro spec a rodar
     // contra um servidor recém-compilado (lote serial, projeto mobile), o JIT do
     // Next estoura os 5s padrão antes de qualquer dado — visto em 2026-08-25.
-    await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
+    // app-shell.tsx:455 renderiza o nome na lateral como sr-only (rail no
+    // mobile); o parágrafo da saudação (greeting.tsx:37) é o visível.
+    await expect(page.locator("p", { hasText: "Vila Ajuricaba" }).first()).toBeVisible({
       timeout: 20000,
     })
 
@@ -92,8 +96,9 @@ test.describe("home is the vila feed; without a vila, the city reference", () =>
       timeout: 15000,
     })
 
-    // And the composer is wired
-    await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
+    // And the composer is wired — o lançador do O06, não o "Publicar" do
+    // estado vazio do feed (community-section.tsx:250), que não existe com posts.
+    await expect(page.getByTestId("intent-pergunta")).toBeVisible()
   })
 
   test("member with no approved community sees the city reference, not a feed", async ({
@@ -107,8 +112,9 @@ test.describe("home is the vila feed; without a vila, the city reference", () =>
     await signInAs(page, "visual@bivaque.example.invalid")
     await page.setViewportSize({ width: 375, height: 812 })
 
-    // When the member opens the home
-    await page.goto("/community")
+    // When the member opens the city reference. Ela saiu da home junto com a
+    // rota legada: /localidade e onde CityReference vive hoje.
+    await page.goto("/localidade")
 
     // Then there is no feed list (no post cards)
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0)

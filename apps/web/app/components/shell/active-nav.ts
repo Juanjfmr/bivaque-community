@@ -69,7 +69,6 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/recommendations", "explorar"],
   ["/prestadores", "explorar"],
   ["/communities", "comunidades"],
-  ["/community", "comunidades"],
   ["/groups", "comunidades"],
   ["/profile", "perfil"],
   ["/configuracoes", "perfil"],

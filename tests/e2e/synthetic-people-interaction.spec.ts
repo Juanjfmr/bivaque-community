@@ -178,8 +178,10 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
 
     // 1. A autora publica
     await withPersona(browser, AUTHOR_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-      await page.getByRole("button", { name: "Publicar" }).first().click()
+      await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
+      const ask = page.getByTestId("intent-pergunta")
+      await expect(ask).toBeVisible({ timeout: 20000 })
+      await ask.click()
       const modal = page.getByRole("dialog")
       await expect(modal.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
       await modal.getByLabel("Pergunta").fill(postText)
@@ -189,7 +191,7 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
 
     // 2. A comentarista curte e comenta
     await withPersona(browser, COMMENTER_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+      await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
       const post = page.locator("article", { hasText: postText })
       await post.getByRole("button", { name: "Curtir publicação" }).click()
       await expect(post.getByRole("button", { name: "Descurtir publicação" })).toBeVisible({
@@ -202,7 +204,7 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
 
     // 3. A segunda pessoa também curte
     await withPersona(browser, SECOND_REACTOR_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+      await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
       const post = page.locator("article", { hasText: postText })
       const reactionCreated = page.waitForResponse(
         (response) =>
@@ -228,7 +230,7 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
 
     // 4. A autora volta e vê a contagem de duas curtidas
     await withPersona(browser, AUTHOR_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+      await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
       await expect(
         page.locator("article", { hasText: postText }).getByRole("button", {
           name: "Curtir publicação",

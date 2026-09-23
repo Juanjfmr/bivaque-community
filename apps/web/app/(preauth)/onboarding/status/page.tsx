@@ -59,7 +59,7 @@ export default async function OnboardingStatusPage() {
   }
 
   if (membershipResult.data !== null) {
-    redirect("/community")
+    redirect("/inicio")
   }
 
   const row = (outcomeResult.data as OutcomeRpcRow[] | null)?.[0] ?? null

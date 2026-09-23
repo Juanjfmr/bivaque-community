@@ -14,6 +14,7 @@
 import { Dropdown } from "@heroui/react"
 import { MoreHorizontal } from "lucide-react"
 import { useCallback } from "react"
+import { postFocusHref } from "../../(shell)/community/legacy-target"
 
 // Alvo mínimo dos itens do menu: 44px, a régua que a auditoria pediu para o menu
 // contextual. O componente é compartilhado, então o feed e o fluxo de indicação
@@ -67,7 +68,7 @@ export function LeanOverflowMenu({
   triggerLabel = "Mais opções",
 }: LeanOverflowMenuProps) {
   const handleShare = useCallback(async () => {
-    const url = `${window.location.origin}${sharePath ?? `/community?post=${postId}`}`
+    const url = `${window.location.origin}${sharePath ?? postFocusHref(postId)}`
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
         await navigator.share({ title: "Bivaque", url })

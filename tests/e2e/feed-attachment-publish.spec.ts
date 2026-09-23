@@ -145,16 +145,15 @@ async function readPostRow(
   return rows
 }
 
-/** Abre o compositor pelo caminho determinístico do feed da vila. */
+/** Abre o compositor pela Home, onde se publica desde que /community virou encaminhamento (O06). */
 async function openComposer(page: Page): Promise<void> {
   // Caminho relativo: o baseURL do playwright.config.ts decide o servidor (o CI serve em :3000).
-  await page.goto("/community", { waitUntil: "load" })
-  // O shell pode estar hidratando quando o Next respondeu; sem esperar o h1 da
-  // vila, o primeiro clique cai fora do handler de React e o modal nunca abre.
-  await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-    timeout: 20000,
-  })
-  await page.getByRole("button", { name: "Publicar" }).first().click()
+  await page.goto("/inicio", { waitUntil: "load" })
+  // O shell pode estar hidratando quando o Next respondeu; sem esperar o lançador
+  // renderizar, o primeiro clique cai fora do handler de React e o modal nunca abre.
+  const ask = page.getByTestId("intent-pergunta")
+  await expect(ask).toBeVisible({ timeout: 20000 })
+  await ask.click()
   await expect(page.getByRole("dialog")).toBeVisible()
   await expect(page.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
 }

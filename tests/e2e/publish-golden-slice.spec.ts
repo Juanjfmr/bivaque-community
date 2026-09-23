@@ -128,15 +128,14 @@ async function seedVilaOwnerSession(context: BrowserContext): Promise<void> {
 }
 
 async function openComposer(page: Page): Promise<void> {
-  await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-  // O shell pode estar hidratando quando o Next respondeu. Esperar o h1
-  // da vila aparecer antes de tentar abrir o compositor — sem isso, o
-  // primeiro clique pode cair fora do handler de React e o modal nunca
-  // abre.
-  await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-    timeout: 20000,
-  })
-  await page.getByRole("button", { name: "Publicar" }).first().click()
+  await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
+  // O shell pode estar hidratando quando o Next respondeu; sem esperar o
+  // lançador renderizar, o primeiro clique cai fora do handler de React e o
+  // modal nunca abre. Desde o O06 o compositor abre por aqui, não pelo
+  // "Publicar" (que só existe no estado vazio do feed).
+  const ask = page.getByTestId("intent-pergunta")
+  await expect(ask).toBeVisible({ timeout: 20000 })
+  await ask.click()
   await expect(page.getByRole("dialog")).toBeVisible()
   await expect(page.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
 }

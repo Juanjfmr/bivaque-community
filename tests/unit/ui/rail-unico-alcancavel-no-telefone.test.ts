@@ -129,19 +129,14 @@ describe("/community: eventos, grupos e boas práticas alcançam o telefone", ()
     expect(panels).toContain("Boas praticas")
   })
 
-  it("o dado do trilho e do disclosure vem de UMA leitura", () => {
-    // Duas instâncias consultando por conta própria dobrariam as consultas; o
-    // hook é o que garante que as duas montagens mostram o mesmo dado. A página
-    // chama a leitura UMA vez e entrega o mesmo objeto às duas montagens.
-    //
-    // O `enabled` que o commit dbdf984 documentou saiu no 27a8baa (serializava a
-    // leitura atrás da resolução de membership: medido 2.360 ms → ~4.700 ms). A
-    // asserção é sobre a fonte ÚNICA do dado, não sobre o portão — o portão era
-    // decisão de latência, e afirmá-lo aqui travaria uma otimização legítima.
+  it("o dado do trilho vem de UMA fonte, e /community não o lê mais", () => {
+    // O hook é o que garante que duas montagens mostram o mesmo dado sem dobrar
+    // as consultas. Até o O06 (PR #76) a página /community chamava a leitura uma
+    // vez e entregava às duas montagens; o O06 transformou /community em rota de
+    // compatibilidade que só encaminha, então ela não monta trilho nenhum e não
+    // pode disparar leitura nenhuma.
     expect(source).toContain("useFeedRailData")
-    const chamadas = page.match(/useFeedRailData\(/g) ?? []
-    expect(chamadas.length, "uma leitura só para as duas montagens").toBe(1)
-    expect(page).toContain("<FeedRailDisclosure data={railData} />")
-    expect(page).toContain("<FeedRightRail data={railData} />")
+    expect(page).toContain("redirect(")
+    expect(page).not.toMatch(/useFeedRailData\(|<FeedRightRail|<FeedRailDisclosure/)
   })
 })
