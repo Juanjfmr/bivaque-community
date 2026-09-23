@@ -13,6 +13,11 @@ critic_review: Veredito registrado em 2026-08-16 por autorizacao explicita do do
 
 # A transferência é um estado de primeira classe, e o pertencimento deixa de ser exclusivo
 
+> **Substituição parcial (2026-09-23):** a recusa da alternativa B quanto à **leitura**
+> foi substituída pelo [`ADR-20260919-leitura-nacional-da-cidade`](ADR-20260919-leitura-nacional-da-cidade.md).
+> A razão da recusa — perguntar antes de chegar exige vínculo — continua valendo, e a
+> transferência declarada segue sendo o caminho de mudança de residência.
+
 ## Problem
 
 O caso central do produto não é atendido, e ele é exatamente o caso da janela de dezembro.
