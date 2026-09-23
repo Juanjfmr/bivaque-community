@@ -126,7 +126,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
     event.preventDefault()
     // Envio em andamento não duplica: teclar Enter com o request voando já
     // contou duas vezes contra o provedor em outras telas desta base.
-    if (submittingRef.current) return
+    if (submittingRef.current || googleSubmittingRef.current || loading !== null) return
     setResult(null)
 
     // No cadastro a senha é conferida antes de sair daqui: mandar o servidor
@@ -152,7 +152,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
         // O aceite precisa chegar ao callback por um canal que o navegador não
         // possa editar. A Server Action cria o cookie HttpOnly antes do
         // signUp; a query do link é apenas o destino, nunca a prova.
-        await prepareSignupConsentAction()
+        await prepareSignupConsentAction("email")
       } catch {
         setResult({
           outcome: "failed",
@@ -177,7 +177,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             // O destino do link carrega apenas o fluxo. O aceite fica no
             // cookie HttpOnly emitido pela Server Action; uma query editável
             // não pode registrar o aceite de outra pessoa.
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&flow=signup`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&flow=signup-confirmation`,
           },
         })
         const view = classifySignUp(error)
@@ -243,7 +243,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
   }
 
   const handleGoogle = async () => {
-    if (googleSubmittingRef.current || loading !== null) return
+    if (googleSubmittingRef.current || submittingRef.current || loading !== null) return
     if (mode === "signup" && !accepted) return
     googleSubmittingRef.current = true
     setResult(null)
@@ -253,7 +253,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
       if (mode === "signup") {
         // O OAuth volta em outra navegação. O callback recebe este cookie
         // HttpOnly para distinguir o cadastro aceito de um callback forjado.
-        await prepareSignupConsentAction()
+        await prepareSignupConsentAction("google")
       }
 
       if (onGoogleSignIn) {
@@ -262,7 +262,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
         const { error } = await createBrowserClient().auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destination() ?? "/onboarding")}${mode === "signup" ? "&flow=signup" : ""}`,
+            redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destination() ?? "/onboarding")}${mode === "signup" ? "&flow=signup-google" : ""}`,
           },
         })
         if (error) throw error

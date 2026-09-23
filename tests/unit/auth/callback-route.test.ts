@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { signupConsentValue } from "web/lib/auth/signup-intent"
 
 const state = vi.hoisted(() => ({
   cookies: new Map<string, string>(),
@@ -9,6 +10,7 @@ const state = vi.hoisted(() => ({
   },
   exchangeError: null as { message: string } | null,
   consentCalls: 0,
+  consentError: null as { message: string } | null,
 }))
 
 vi.mock("next/headers", () => ({
@@ -42,7 +44,7 @@ vi.mock("web/lib/supabase/server", () => ({
   createServerClient: vi.fn(() => ({
     rpc: vi.fn(async () => {
       state.consentCalls += 1
-      return { error: null }
+      return { error: state.consentError }
     }),
   })),
 }))
@@ -64,6 +66,7 @@ beforeEach(() => {
   }
   state.exchangeError = null
   state.consentCalls = 0
+  state.consentError = null
 })
 
 afterEach(() => {
@@ -74,7 +77,7 @@ describe("callback de Auth", () => {
   it("não registra aceite quando a query foi forjada sem intent HttpOnly", async () => {
     const response = await GET(
       new Request(
-        "https://app.example/auth/callback?code=valid&next=/auth/confirmar-email&flow=signup&consent=2",
+        "https://app.example/auth/callback?code=valid&next=/auth/confirmar-email&flow=signup-confirmation&consent=2",
       ),
     )
 
@@ -83,17 +86,84 @@ describe("callback de Auth", () => {
   })
 
   it("registra o aceite quando o intent server-side acompanha o fluxo", async () => {
-    state.cookies.set("bivaque-signup-consent-intent", "ready")
+    state.cookies.set("bivaque-signup-consent-intent", signupConsentValue("email"))
 
     const response = await GET(
       new Request(
-        "https://app.example/auth/callback?code=valid&next=/auth/confirmar-email&flow=signup&consent=2",
+        "https://app.example/auth/callback?code=valid&next=/auth/confirmar-email&flow=signup-confirmation&consent=2",
       ),
     )
 
     expect(response.headers.get("location")).toBe("https://app.example/")
     expect(state.consentCalls).toBe(1)
     expect(state.cookies.has("bivaque-signup-consent-intent")).toBe(false)
+  })
+
+  it("leva um link de confirmação sem code para o estado expirado", async () => {
+    const response = await GET(
+      new Request(
+        "https://app.example/auth/callback?error=access_denied&next=/auth/confirmar-email",
+      ),
+    )
+
+    expect(response.headers.get("location")).toBe(
+      "https://app.example/auth/confirmar-email?estado=expirado",
+    )
+  })
+
+  it("leva um link de recuperação sem code para pedir outro", async () => {
+    const response = await GET(
+      new Request("https://app.example/auth/callback?error=access_denied&next=/nova-senha"),
+    )
+
+    expect(response.headers.get("location")).toBe("https://app.example/recuperar-senha?origem=link")
+  })
+
+  it("recusa destinos de API e entrada antes de trocar a sessão", async () => {
+    const response = await GET(
+      new Request("https://app.example/auth/callback?code=valid&next=/api/health"),
+    )
+
+    expect(response.headers.get("location")).toBe("https://app.example/auth/callback-error")
+    expect(state.consentCalls).toBe(0)
+  })
+
+  it("preserva um destino de membro allowlisted com query", async () => {
+    const response = await GET(
+      new Request("https://app.example/auth/callback?code=valid&next=/events/12%3Ftab%3Dx"),
+    )
+
+    expect(response.headers.get("location")).toBe("https://app.example/events/12?tab=x")
+  })
+
+  it("mantém o intent para retry quando o registro do aceite falha", async () => {
+    state.cookies.set("bivaque-signup-consent-intent", signupConsentValue("email"))
+    state.consentError = { message: "database unavailable" }
+
+    const response = await GET(
+      new Request(
+        "https://app.example/auth/callback?code=valid&next=/auth/confirmar-email&flow=signup-confirmation",
+      ),
+    )
+
+    expect(response.headers.get("location")).toBe(
+      "https://app.example/auth/callback-error?motivo=consentimento",
+    )
+    expect(state.consentCalls).toBe(1)
+    expect(state.cookies.has("bivaque-signup-consent-intent")).toBe(true)
+  })
+
+  it("não reaproveita o intent de e-mail em um callback Google", async () => {
+    state.cookies.set("bivaque-signup-consent-intent", signupConsentValue("email"))
+
+    const response = await GET(
+      new Request(
+        "https://app.example/auth/callback?code=valid&next=/onboarding&flow=signup-google",
+      ),
+    )
+
+    expect(response.headers.get("location")).toBe("https://app.example/onboarding")
+    expect(state.consentCalls).toBe(0)
   })
 
   it("só cria a sessão de recuperação quando o provedor devolveu redirectType recovery", async () => {

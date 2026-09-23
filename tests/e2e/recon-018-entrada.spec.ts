@@ -236,6 +236,23 @@ test.describe("prancha 37 — confirmar e-mail", () => {
     await expect(page.locator("input")).toHaveCount(0)
   })
 
+  test("link expirado em outra janela oferece reenvio sem endereço plantado", async ({ page }) => {
+    await page.route("**/auth/v1/resend**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: "{}" })
+    })
+    await openConfirmar(page, {
+      url: "/auth/confirmar-email?estado=expirado",
+      pendingEmail: null,
+    })
+
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira seu e-mail")
+    await expect(page.getByLabel("E-mail do cadastro")).toBeVisible()
+    await expect(page.getByRole("button", { name: "Enviar novo link" })).toBeDisabled()
+    await page.getByLabel("E-mail do cadastro").fill("outra@exemplo.invalid")
+    await page.getByRole("button", { name: "Enviar novo link" }).click()
+    await expect(page.getByText(/link já está a caminho/i)).toBeVisible()
+  })
+
   test("painel pendente ecoa o endereço e oferece alterar e reenviar", async ({ page }) => {
     await openConfirmar(page)
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira seu e-mail")

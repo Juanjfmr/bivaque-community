@@ -4,7 +4,7 @@ import { Button } from "@heroui/react"
 import { Eye, EyeOff, Info, Lock } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { passwordProblem } from "../../../lib/auth/password-auth"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
 import styles from "../recuperar-senha/recuperar-senha.module.css"
@@ -29,10 +29,11 @@ export default function NovaSenhaClient({ recoveryReady }: NovaSenhaClientProps)
   const [session, setSession] = useState<"ready" | "missing">(recoveryReady ? "ready" : "missing")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const submittingRef = useRef(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (loading || !recoveryReady) return
+    if (submittingRef.current || loading || !recoveryReady) return
 
     const problem = passwordProblem(password)
     if (problem) {
@@ -41,6 +42,7 @@ export default function NovaSenhaClient({ recoveryReady }: NovaSenhaClientProps)
     }
 
     setError(null)
+    submittingRef.current = true
     setLoading(true)
     try {
       const result = await updatePasswordFromRecoveryAction(password)
@@ -64,6 +66,7 @@ export default function NovaSenhaClient({ recoveryReady }: NovaSenhaClientProps)
     } catch {
       setError("Verifique sua conexão e tente de novo.")
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }
@@ -141,7 +144,14 @@ export default function NovaSenhaClient({ recoveryReady }: NovaSenhaClientProps)
                 </Button>
               </form>
 
-              {error && <FeedbackAlert variant="danger" description={error} />}
+              {error && (
+                <>
+                  <FeedbackAlert variant="danger" description={error} />
+                  <Link href="/recuperar-senha" className={styles["outlineLink"]}>
+                    Pedir outro link
+                  </Link>
+                </>
+              )}
             </>
           )}
         </section>

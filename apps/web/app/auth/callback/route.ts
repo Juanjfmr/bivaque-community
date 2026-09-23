@@ -10,13 +10,15 @@ import {
 } from "../../../lib/auth/recovery-intent"
 import {
   hasSignupConsentIntent,
+  SIGNUP_CONSENT_EMAIL_FLOW,
+  SIGNUP_CONSENT_GOOGLE_FLOW,
   SIGNUP_CONSENT_INTENT_COOKIE,
 } from "../../../lib/auth/signup-intent"
 import { log } from "../../../lib/logger"
-import { sanitizeNext } from "../../../lib/security/sanitize-next"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 import {
   callbackFailureTarget,
+  callbackNext,
   callbackSuccessTarget,
   shouldOpenRecoveryIntent,
   shouldRecordSignupConsent,
@@ -32,10 +34,14 @@ const COOKIE_OPTIONS = {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get("code")
-  const next = sanitizeNext(searchParams.get("next"))
+  const next = callbackNext(searchParams.get("next"))
+
+  if (next === null) {
+    return NextResponse.redirect(new URL("/auth/callback-error", request.url))
+  }
 
   if (!code) {
-    return NextResponse.redirect(new URL("/auth/callback-error", request.url))
+    return NextResponse.redirect(new URL(callbackFailureTarget(next), request.url))
   }
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -47,9 +53,17 @@ export async function GET(request: Request) {
   }
 
   const cookieStore = await cookies()
-  const hasServerConsentIntent =
-    searchParams.get("flow") === "signup" &&
-    hasSignupConsentIntent(cookieStore.get(SIGNUP_CONSENT_INTENT_COOKIE)?.value)
+  const flow = searchParams.get("flow")
+  const consentFlow =
+    flow === SIGNUP_CONSENT_EMAIL_FLOW
+      ? ("email" as const)
+      : flow === SIGNUP_CONSENT_GOOGLE_FLOW
+        ? ("google" as const)
+        : null
+  const hasConsentCookie = hasSignupConsentIntent(
+    cookieStore.get(SIGNUP_CONSENT_INTENT_COOKIE)?.value,
+    consentFlow ?? undefined,
+  )
 
   const supabase = createServerClient<Database>(url, key, {
     cookies: {
@@ -74,6 +88,12 @@ export async function GET(request: Request) {
 
   const redirectType =
     "redirectType" in data && typeof data.redirectType === "string" ? data.redirectType : null
+  const hasServerConsentIntent =
+    hasConsentCookie &&
+    ((flow === SIGNUP_CONSENT_EMAIL_FLOW && next === "/auth/confirmar-email") ||
+      (flow === SIGNUP_CONSENT_GOOGLE_FLOW &&
+        redirectType !== "recovery" &&
+        next !== "/nova-senha"))
   if (shouldOpenRecoveryIntent(redirectType, next)) {
     cookieStore.set(RECOVERY_INTENT_COOKIE, RECOVERY_INTENT_VALUE, {
       httpOnly: true,
@@ -82,10 +102,6 @@ export async function GET(request: Request) {
       sameSite: "lax",
       secure: process.env["NODE_ENV"] === "production",
     })
-  }
-
-  if (hasServerConsentIntent) {
-    cookieStore.delete({ name: SIGNUP_CONSENT_INTENT_COOKIE, path: "/auth" })
   }
 
   // Aceite do cadastro que veio por confirmação de e-mail: sem sessão no
@@ -97,7 +113,9 @@ export async function GET(request: Request) {
     const userId = data.user?.id
     if (!userId) {
       log.error("auth callback consent recording failed: no user after exchange")
-      return NextResponse.redirect(new URL("/auth/callback-error", request.url))
+      return NextResponse.redirect(
+        new URL("/auth/callback-error?motivo=consentimento", request.url),
+      )
     }
     const service = createServiceClient()
     const { error: consentError } = await service.rpc("record_consent_acceptance", {
@@ -107,8 +125,11 @@ export async function GET(request: Request) {
     })
     if (consentError) {
       log.error("auth callback consent recording failed", { message: consentError.message })
-      return NextResponse.redirect(new URL("/auth/callback-error", request.url))
+      return NextResponse.redirect(
+        new URL("/auth/callback-error?motivo=consentimento", request.url),
+      )
     }
+    cookieStore.delete({ name: SIGNUP_CONSENT_INTENT_COOKIE, path: "/auth" })
   }
 
   const redirectUrl = new URL(callbackSuccessTarget(next), request.url)

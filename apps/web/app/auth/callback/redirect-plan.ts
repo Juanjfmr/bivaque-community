@@ -1,4 +1,9 @@
 import { isRecoveryNext, RECOVERY_PATH } from "../../../lib/auth/recovery-intent"
+import {
+  DEFAULT_NEXT,
+  resolvePostLoginDestination,
+  sanitizeNext,
+} from "../../../lib/security/sanitize-next"
 
 /**
  * Decisões de destino do /auth/callback, puras para poderem ser travadas por
@@ -19,6 +24,15 @@ import { isRecoveryNext, RECOVERY_PATH } from "../../../lib/auth/recovery-intent
 
 export const CONFIRM_EMAIL_PATH = "/auth/confirmar-email"
 export { RECOVERY_PATH }
+
+export function callbackNext(value: string | null | undefined): string | null {
+  if (value === null || value === "") return DEFAULT_NEXT
+  const clean = sanitizeNext(value)
+  if (clean === CONFIRM_EMAIL_PATH || isRecoveryNext(clean)) return clean
+  const postLogin = resolvePostLoginDestination([value])
+  if (postLogin !== DEFAULT_NEXT || value === DEFAULT_NEXT) return postLogin
+  return null
+}
 
 export function callbackFailureTarget(sanitizedNext: string): string {
   if (sanitizedNext === CONFIRM_EMAIL_PATH) return `${CONFIRM_EMAIL_PATH}?estado=expirado`

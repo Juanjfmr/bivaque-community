@@ -63,8 +63,12 @@ describe("entrada — destino pós-entrada só interno (R02)", () => {
   })
 
   it("envio em andamento não duplica", () => {
-    expect(webEntry).toContain("if (submittingRef.current) return")
-    expect(webEntry).toContain("if (googleSubmittingRef.current || loading !== null) return")
+    expect(webEntry).toContain(
+      "if (submittingRef.current || googleSubmittingRef.current || loading !== null) return",
+    )
+    expect(webEntry).toContain(
+      "if (googleSubmittingRef.current || submittingRef.current || loading !== null) return",
+    )
   })
 })
 
@@ -119,7 +123,7 @@ describe("cadastro — R03 leva a R04 quando o provedor exige confirmação", ()
   })
 
   it("o aceite usa intent server-side, não uma query que pode ser editada", () => {
-    expect(webEntry).toContain("next=/auth/confirmar-email&flow=signup")
+    expect(webEntry).toContain("next=/auth/confirmar-email&flow=signup-confirmation")
     expect(webEntry).not.toContain("consent=")
     expect(callbackRoute).toContain("shouldRecordSignupConsent")
     expect(callbackRoute).toContain("record_consent_acceptance")

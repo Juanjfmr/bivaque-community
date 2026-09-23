@@ -6,13 +6,14 @@ import { cookies } from "next/headers"
 import {
   SIGNUP_CONSENT_INTENT_COOKIE,
   SIGNUP_CONSENT_INTENT_MAX_AGE_SECONDS,
-  SIGNUP_CONSENT_INTENT_VALUE,
+  type SignupConsentFlow,
+  signupConsentValue,
 } from "../../../lib/auth/signup-intent"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
-export async function prepareSignupConsentAction(): Promise<void> {
+export async function prepareSignupConsentAction(flow: SignupConsentFlow = "email"): Promise<void> {
   const cookieStore = await cookies()
-  cookieStore.set(SIGNUP_CONSENT_INTENT_COOKIE, SIGNUP_CONSENT_INTENT_VALUE, {
+  cookieStore.set(SIGNUP_CONSENT_INTENT_COOKIE, signupConsentValue(flow), {
     httpOnly: true,
     maxAge: SIGNUP_CONSENT_INTENT_MAX_AGE_SECONDS,
     path: "/auth",

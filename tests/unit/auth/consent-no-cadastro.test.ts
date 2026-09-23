@@ -92,13 +92,14 @@ describe("o aceite é registrado no servidor, não só na tela", () => {
   it("Google no cadastro inicia um intent server-side antes do OAuth", () => {
     expect(consentActions).toContain("prepareSignupConsentAction")
     expect(consentActions).toContain("httpOnly: true")
-    expect(webEntry).toContain("await prepareSignupConsentAction()")
-    expect(webEntry).toContain("&flow=signup")
+    expect(webEntry).toContain('await prepareSignupConsentAction("email")')
+    expect(webEntry).toContain('await prepareSignupConsentAction("google")')
+    expect(webEntry).toContain("&flow=signup-google")
     expect(webEntry).not.toContain("consent=")
-    expect(webEntry.indexOf("await prepareSignupConsentAction()")).toBeLessThan(
+    expect(webEntry.indexOf('await prepareSignupConsentAction("google")')).toBeLessThan(
       webEntry.indexOf("signInWithOAuth"),
     )
-    expect(webEntry.indexOf("await prepareSignupConsentAction()")).toBeLessThan(
+    expect(webEntry.indexOf('await prepareSignupConsentAction("email")')).toBeLessThan(
       webEntry.indexOf("supabase.auth.signUp"),
     )
   })
@@ -106,7 +107,8 @@ describe("o aceite é registrado no servidor, não só na tela", () => {
   it("o callback só registra o aceite quando o marker ou o intent server-side existe", () => {
     expect(signupIntent).toContain("SIGNUP_CONSENT_INTENT_COOKIE")
     expect(signupIntent).toContain("hasSignupConsentIntent")
-    expect(callbackRoute).toContain('searchParams.get("flow") === "signup"')
+    expect(callbackRoute).toContain("SIGNUP_CONSENT_EMAIL_FLOW")
+    expect(callbackRoute).toContain("SIGNUP_CONSENT_GOOGLE_FLOW")
     expect(callbackRoute).toContain("hasSignupConsentIntent")
     expect(callbackRoute).toContain(
       'cookieStore.delete({ name: SIGNUP_CONSENT_INTENT_COOKIE, path: "/auth" })',
