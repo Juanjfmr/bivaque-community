@@ -158,8 +158,8 @@
 | [Participação e grupos](../design/visual-guide-2026-09-06/flows.html#41-mobile-comunidade-participacao) | Mobile | 3 |
 | [Comunidades web](../design/visual-guide-2026-09-06/flows.html#42-web-comunidades) | Desktop web | 2 |
 | [Comunidade, pedidos e grupos web](../design/visual-guide-2026-09-06/flows.html#43-web-comunidade-grupos) | Desktop web | 2 |
-| [Criar pergunta e escolher público](../design/visual-guide-2026-09-06/flows.html#44-mobile-publicacao) | Mobile | 3 |
-| [Publicação e rascunho web](../design/visual-guide-2026-09-06/flows.html#45-web-publicacao) | Desktop web | 2 |
+| [Perguntar ou pedir indicação](../design/visual-guide-2026-09-06/flows.html#44-mobile-publicacao) | Mobile | 3 |
+| [Guia antes do pedido web](../design/visual-guide-2026-09-06/flows.html#45-web-publicacao) | Desktop web | 2 |
 | [Web: decidir pedidos de entrada](../design/visual-guide-2026-09-06/flows.html#73-web-comunidade-pedidos) | Desktop web | 2 |
 | [Web: central de conversas](../design/visual-guide-2026-09-06/flows.html#75-web-conversas) | Desktop web | 2 |
 | [Web: administrar a comunidade](../design/visual-guide-2026-09-06/flows.html#81-web-comunidade-admin) | Desktop web | 2 |
@@ -224,15 +224,15 @@
 | [Web: Guia da cidade](../design/visual-guide-2026-09-06/flows.html#12-web-guia) | Desktop web | 1 |
 | [Guia: referência, origem e correção](../design/visual-guide-2026-09-06/flows.html#24-mobile-guia-referencia) | Mobile | 3 |
 | [Artigo completo do Guia web](../design/visual-guide-2026-09-06/flows.html#25-web-guia-referencia) | Desktop web | 1 |
-| [Web: curar o Guia](../design/visual-guide-2026-09-06/flows.html#74-web-guia-curadoria) | Desktop web | 2 |
-| [Web: indicações e referências](../design/visual-guide-2026-09-06/flows.html#80-web-recomendacoes) | Desktop web | 2 |
+| [Web: curar referências da comunidade](../design/visual-guide-2026-09-06/flows.html#74-web-guia-curadoria) | Desktop web | 2 |
+| [Web: responder e sugerir referências](../design/visual-guide-2026-09-06/flows.html#80-web-recomendacoes) | Desktop web | 2 |
 
 ### Início e descoberta (5)
 
 | Prancha | Plataforma | Telas |
 |---|---|---|
 | [Início: chegada, participação e mudança](../design/visual-guide-2026-09-06/flows.html#00-mobile-inicio) | Mobile | 3 |
-| [Web: início](../design/visual-guide-2026-09-06/flows.html#01-web-inicio) | Desktop web | 1 |
+| [Web: início com intenções claras](../design/visual-guide-2026-09-06/flows.html#01-web-inicio) | Desktop web | 1 |
 | [Explorar e serviços](../design/visual-guide-2026-09-06/flows.html#02-mobile-explorar) | Mobile | 3 |
 | [Web: primeiro contato público](../design/visual-guide-2026-09-06/flows.html#83-web-landing) | Desktop web | 2 |
 | [Web: busca agrupada](../design/visual-guide-2026-09-06/flows.html#84-web-busca) | Desktop web | 2 |

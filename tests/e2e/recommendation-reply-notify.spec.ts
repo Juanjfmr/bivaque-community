@@ -82,9 +82,13 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     await page.goto("/recommendations")
     await page.getByRole("tab", { name: "Pedidos" }).click()
 
+    // DS-006 (prancha 80): `Responder` ABRE a composição daquele pedido — o
+    // campo não existe montado antes do clique, e o mesmo botão fecha. Por isso
+    // a ordem é abrir, escrever, enviar: quem envia é `Enviar resposta`.
+    await page.getByRole("button", { name: "Responder", exact: true }).click()
     const replyBox = page.getByLabel(`Responder a ${REQUEST_TITLE}`)
     await replyBox.fill("Conheço um ótimo, te mando o contato.")
-    await page.getByRole("button", { name: "Responder", exact: true }).click()
+    await page.getByRole("button", { name: "Enviar resposta", exact: true }).click()
 
     // Then the author sees a notification for it, in a fresh session so the
     // two accounts never share cookies/state

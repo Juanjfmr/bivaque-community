@@ -1,0 +1,110 @@
+task_id: DS-006
+
+objective: >
+  A Home ativa prioriza retornos relevantes e oferece Perguntar ou Pedir uma
+  indicacao em um lancador compacto; o fluxo consulta o Guia antes da
+  comunidade e respostas usam Responder, sem polegar, curtida ou componentes
+  genericos impondo a composicao visual.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/01-web-inicio.png
+  - docs/design/visual-guide-2026-09-06/45-web-publicacao.png
+  - docs/design/visual-guide-2026-09-06/74-web-guia-curadoria.png
+  - docs/design/visual-guide-2026-09-06/80-web-recomendacoes.png
+  - docs/design/visual-guide-2026-09-06/MOBBIN-INDICACOES-2026-09-20.md
+  - docs/agents/AUDIT-PRODUCAO-2026-09-19-INICIO.md, correcao de 20/09/2026
+  - instrucao explicita do responsavel em 20/09/2026
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/inicio/composer.tsx oferece uma unica entrada generica;
+    apps/web/app/components/bivaque/recommendation-requests.tsx deixa o textarea
+    Responder com uma indicacao sempre aberto e nao consulta o Guia antes do
+    pedido. recommendation_replies persiste apenas body/request/author, portanto
+    nao existe hoje verdade de servidor para afirmar que uma resposta esta
+    vinculada a um item do Guia. O responsavel tambem constatou que a
+    implementacao vem adaptando as pranchas ao aspecto e a composicao dos
+    componentes HeroUI, produzindo telas visualmente genericas e fluxos
+    incompletos. As pranchas revisadas em 20/09/2026 sao a referencia de
+    hierarquia, densidade e composicao; HeroUI e camada de comportamento.
+
+allowed_paths:
+  - apps/web/app/(shell)/inicio/
+  - apps/web/app/(shell)/recommendations/
+  - apps/web/app/components/bivaque/recommendation-requests.tsx
+  - apps/web/app/components/bivaque/feed-composer.tsx
+  - apps/web/app/components/bivaque/feed-composer-modal.tsx
+  - apps/web/app/components/bivaque/feed-post-menu.tsx
+  - apps/web/app/components/bivaque/intent-launcher.tsx
+  - apps/web/app/components/bivaque/guide-first-request.tsx
+  - apps/web/lib/recommendations/
+  - tests/unit/recommendations/
+  - tests/unit/ui/
+  - tests/e2e/recommendations-health-scope.spec.ts
+  - tests/e2e/recommendation-reply-notify.spec.ts
+  - tests/e2e/publish-golden-slice.spec.ts
+  - docs/agents/tasks/DS-006.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - criar ou alterar migration, schema, RLS, RPC, auth ou tipos gerados
+  - fingir que uma resposta esta ligada ao Guia quando nao ha verdade persistida
+  - rotular uma resposta como Ainda nao esta no Guia sem dado verificavel
+  - publicar automaticamente uma referencia no Guia
+  - transformar indicacoes em marketplace, nota, ranking, estrela ou promessa comercial
+  - usar polegar ou botao Indicar como comando para enviar resposta
+  - deixar Denunciar como acao primaria ou fora do menu contextual
+  - trocar HeroUI v3 ou os wrappers Bivaque por outra biblioteca
+  - remodelar a prancha para caber na aparencia ou composicao padrao de um componente HeroUI
+  - embrulhar todo bloco em Card apenas porque o wrapper existe
+  - aceitar JSX, typecheck ou uso de HeroUI como prova de qualidade visual ou funcionamento
+  - deixar controles estaticos, links falsos ou estados sem operacao real para imitar a prancha
+  - descartar alteracoes de outras sessoes ou afrouxar testes para obter verde
+
+acceptance:
+  - na Home ativa, um retorno relevante aparece antes de um lancador compacto com Fazer uma pergunta e Pedir uma indicacao
+  - o lancador nao ocupa o papel de hero nem empurra o primeiro item do feed para fora da dobra em 768 e 1440
+  - estado novo ou vazio pode explicar as duas intencoes com mais espaco sem impor esse volume a membros ativos
+  - Fazer uma pergunta abre o compositor existente e Pedir uma indicacao chega ao painel correto de /recommendations
+  - o painel de pedir indicacao oferece consulta ao Guia antes de revelar o formulario comunitario
+  - resultados do Guia abrem a referencia existente; o fallback explicito permite seguir para a comunidade
+  - cada pedido usa Responder para abrir e fechar o formulario de resposta, sem textarea duplicado sempre visivel
+  - nao existe polegar, curtida, Isso ajudou ou botao Indicar no fluxo de indicacao
+  - Denunciar, Ocultar e Silenciar, quando aplicaveis, permanecem no overflow
+  - o fluxo nao exibe vinculo, status de curadoria ou aprovacao que o servidor nao consiga provar
+  - foco, teclado e alvos funcionam em 375, 768 e 1440 sem esconder a acao primaria
+  - falha de busca ou envio preserva a entrada e oferece recuperacao em portugues
+  - um revisor consegue reconhecer nas capturas a mesma hierarquia, densidade, espacamento e prioridade de acao das pranchas 01, 45 e 80
+  - layout sem interacao usa HTML semantico e tokens; HeroUI e usado onde fornece comportamento acessivel, sem determinar a composicao
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/DS-006.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/recommendations tests/unit/ui
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 build
+  - node scripts/visual/loop.mjs --fast com capturas de /inicio e /recommendations em 375/768/1440
+  - comparacao lado a lado das capturas de runtime com 01-web-inicio.png, 45-web-publicacao.png e 80-web-recomendacoes.png
+  - interacao de navegador provando os dois destinos da Home, busca no Guia, fallback, abertura de Responder e preservacao apos erro
+
+traps:
+  - A tabela recommendation_replies nao possui guide_entry_id; nao inferir o vinculo pelo texto.
+  - suggest_guide_entry cria candidata pending, mas nao e atomica com a resposta e nao a religa depois.
+  - O caminho completo de candidata mais resposta e religacao posterior exige contrato funcional separado se os contratos atuais nao bastarem.
+  - A cidade e o grupo sao escopos reais; nao fixar Manaus nem usar cidade como permissao inventada.
+  - O executor precisa confirmar que consegue inspecionar os PNGs; modelo sem visao deve parar em vez de reconstruir por memoria ou somente pelo texto.
+  - HeroUI v3 continua sendo a biblioteca permitida, mas nao e a direcao visual. Use seus primitivos para foco, teclado, overlay e estado; a composicao vem das pranchas.
+  - O implementador nao aprova a propria evidencia visual.
+
+risk: >
+  Reestruturacao visual e de interacao em Home e Indicacoes, preservando os
+  contratos atuais de persistencia, autorizacao e curadoria.
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

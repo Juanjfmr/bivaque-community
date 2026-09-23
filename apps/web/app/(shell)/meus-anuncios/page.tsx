@@ -28,6 +28,7 @@ import {
 } from "../../../lib/listings/lifecycle"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
+import { ModalCloseTrigger } from "../../components/bivaque/close-button"
 import { AccessUnavailableState, EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { Skeleton } from "../../components/bivaque/skeleton"
@@ -571,7 +572,7 @@ export default function MeusAnunciosPage() {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>{pendingCopy?.title ?? "Confirmar"}</Modal.Heading>
-                <Modal.CloseTrigger className="min-h-11 min-w-11" />
+                <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 {pendingCopy === null ? null : <p className="text-sm">{pendingCopy.body}</p>}

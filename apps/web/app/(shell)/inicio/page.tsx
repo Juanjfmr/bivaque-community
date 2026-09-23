@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { CreatePostModal } from "../../components/bivaque/feed-post"
+import { IntentLauncher } from "../../components/bivaque/intent-launcher"
 import { CommunitySection, type PrimaryCommunity } from "./community-section"
-import { InicioComposer } from "./composer"
 import { InicioGreeting } from "./greeting"
 import {
   createRequestGuard,
@@ -14,7 +14,7 @@ import {
   type NextEvent,
 } from "./home-loaders"
 import { ReturnStrip } from "./return-strip"
-import { InicioRightRail } from "./right-rail"
+import { InicioRailDisclosure, InicioRightRail } from "./right-rail"
 
 // RECON-002 (prancha 01-web-inicio): home de quem participa.
 //
@@ -29,7 +29,10 @@ export default function InicioPage() {
   const { current } = useLocalityContext()
   const [primary, setPrimary] = useState<PrimaryCommunity>({ status: "loading" })
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [defaultPostType, setDefaultPostType] = useState<string | undefined>(undefined)
+  // Dica da ENTRADA, não formato escolhido: "Fazer uma pergunta" abre sem
+  // anexo (o lançador passa "text") e o `post_type` é derivado do anexo real no
+  // compositor. Nada aqui decide o formato por conta própria.
+  const [entryAttachment, setEntryAttachment] = useState<string | undefined>(undefined)
   const [refreshKey, setRefreshKey] = useState(0)
   // O evento próximo é resolvido UMA vez aqui e servido ao rail "Seu próximo
   // encontro" e ao card do feed (prancha 01) — os dois mostram o mesmo evento,
@@ -60,8 +63,10 @@ export default function InicioPage() {
     })
   }, [supabase, current.id])
 
-  const handleOpenModal = useCallback((postType?: string) => {
-    setDefaultPostType(postType)
+  // `handleOpenModal` mantém o nome: tests/unit/ui/intent-launcher.test.ts
+  // afirma a chamada `handleOpenModal("text")` do lançador verbatim.
+  const handleOpenModal = useCallback((attachment?: string) => {
+    setEntryAttachment(attachment)
     setShowCreateModal(true)
   }, [])
 
@@ -75,8 +80,23 @@ export default function InicioPage() {
       <div className="mx-auto flex w-full max-w-[56rem] flex-1 gap-6 px-4 pt-4 pb-8">
         <div className="min-w-0 flex-1 space-y-4">
           <InicioGreeting communityName={primary.status === "ready" ? primary.name : null} />
-          <InicioComposer onOpen={handleOpenModal} />
+          {/* DS-006 (prancha 01, ajuste de 20/09): o retorno relevante vem
+              ANTES do lançador de intenções. A faixa só existe com notificação
+              não-lida real (devolve null sem linha legível), então a Home de
+              quem não tem retorno nenhum não ganha um bloco vazio no lugar. */}
           <ReturnStrip />
+          {/* `explain` só no estado novo/sem comunidade aprovada: ali explicar as
+              duas intenções vale o espaço. Membro ativo recebe a faixa compacta,
+              que não empurra o primeiro item do feed para fora da dobra. */}
+          <IntentLauncher
+            variant={primary.status === "none" ? "explain" : "compact"}
+            onAskQuestion={() => handleOpenModal("text")}
+          />
+          {/* O trilho da prancha 01 não existe abaixo de 1024px. O conteúdo que
+              só existe nele (os atalhos e "De mudança?") desce para cá fechado:
+              continua alcançável sem inventar um rail que a prancha não desenha
+              e sem empurrar o primeiro item do feed para fora da dobra. */}
+          <InicioRailDisclosure />
           <CommunitySection
             primary={primary}
             onRetryPrimary={loadPrimary}
@@ -92,12 +112,12 @@ export default function InicioPage() {
       {showCreateModal && (
         <CreatePostModal
           localityId={current.id}
-          defaultPostType={defaultPostType}
+          initialAttachment={entryAttachment}
           defaultCommunityId={primary.status === "ready" ? primary.id : undefined}
           onCreated={handleCreated}
           onClose={() => {
             setShowCreateModal(false)
-            setDefaultPostType(undefined)
+            setEntryAttachment(undefined)
           }}
         />
       )}

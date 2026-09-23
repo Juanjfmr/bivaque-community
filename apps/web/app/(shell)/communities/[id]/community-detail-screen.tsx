@@ -27,6 +27,7 @@ import { type FormEvent, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { communityImageAltText } from "../../../../lib/communities/community-media"
 import { Card } from "../../../components/bivaque/card"
+import { ModalCloseTrigger } from "../../../components/bivaque/close-button"
 import { AccessUnavailableState, EmptyState } from "../../../components/bivaque/empty-state"
 import { ErrorState } from "../../../components/bivaque/error-state"
 import { FeedPost } from "../../../components/bivaque/feed-post"
@@ -165,7 +166,7 @@ function CommunityHero({ view }: { view: ReadyView }) {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>Sair da comunidade?</Modal.Heading>
-                <Modal.CloseTrigger className="min-h-11 min-w-11" />
+                <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-muted">

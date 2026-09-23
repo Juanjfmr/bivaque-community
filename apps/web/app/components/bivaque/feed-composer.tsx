@@ -6,7 +6,9 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
 
 interface FeedComposerProps {
-  onOpenModal: (defaultPostType?: string) => void
+  /** Dica de anexo para o compositor: "link" abre já com o campo de URL
+   *  oferecido. Nunca é escolha de formato — o `post_type` sai do anexo real. */
+  onOpenModal: (attachment?: string) => void
 }
 
 export function FeedComposer({ onOpenModal }: FeedComposerProps) {

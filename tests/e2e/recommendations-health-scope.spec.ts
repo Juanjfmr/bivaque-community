@@ -15,6 +15,11 @@ test.describe("health request scope", () => {
     await page.goto("/recommendations")
     await page.getByRole("tab", { name: /Pedir indicação/i }).click()
 
+    // DS-006 (prancha 45): o painel abre no estágio do Guia — a busca vem ANTES
+    // do formulário comunitário, então o campo de categoria só existe depois do
+    // fallback explícito. A sequência mudou; a prova abaixo é a mesma.
+    await page.getByRole("button", { name: /Não encontrou\? Perguntar à comunidade/ }).click()
+
     // And select the Saúde category
     const catTrigger = page.locator('[aria-label="Categoria"]').first()
     await catTrigger.click()
