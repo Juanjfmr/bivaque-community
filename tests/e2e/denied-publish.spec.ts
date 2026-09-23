@@ -181,9 +181,9 @@ test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)",
       // Persona eh a dona da Vila Ajuricaba (mesma do publish-golden-slice).
       // Como ela esta suspensa, o RLS veto no POST /rest/v1/posts
       // (policy posts_insert_locality_member tem AND NOT is_account_suspended(auth.uid())).
-      const publishButton = page.getByRole("button", { name: "Publicar" }).first()
-      await expect(publishButton).toBeVisible({ timeout: 15000 })
-      await publishButton.click()
+      const ask = page.getByTestId("intent-pergunta")
+      await expect(ask).toBeVisible({ timeout: 15000 })
+      await ask.click()
       await page.getByRole("heading", { name: "Criar publicação" }).waitFor({ timeout: 10000 })
 
       await page.getByLabel("Pergunta").fill(`${contentPrefix} membro suspenso tentou publicar`)
