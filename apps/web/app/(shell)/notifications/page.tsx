@@ -144,7 +144,11 @@ async function loadEnrichment(
   const groupIds = notifications.filter((n) => n.type === "group_admission").map((n) => n.target_id)
   const eventIds = notifications
     .filter(
-      (n) => n.type === "event_rsvp" || n.type === "event_change" || n.type === "event_reminder",
+      (n) =>
+        n.type === "event_rsvp" ||
+        n.type === "event_change" ||
+        n.type === "event_reminder" ||
+        n.type === "event_invite",
     )
     .map((n) => n.target_id)
   const requestIds = notifications
@@ -220,7 +224,10 @@ async function loadEnrichment(
         ? `post:${n.target_id}`
         : n.type === "group_admission"
           ? `group:${n.target_id}`
-          : n.type === "event_rsvp" || n.type === "event_change" || n.type === "event_reminder"
+          : n.type === "event_rsvp" ||
+              n.type === "event_change" ||
+              n.type === "event_reminder" ||
+              n.type === "event_invite"
             ? `event:${n.target_id}`
             : n.type === "recommendation_reply"
               ? `request:${n.target_id}`
