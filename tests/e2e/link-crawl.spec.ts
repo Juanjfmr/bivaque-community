@@ -95,16 +95,27 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     route: "/communities/[id]/admin",
     porta:
       "CONDICIONAL: menu do console, cuja entrada é 'Analisar pedidos de entrada' na aba Sobre (moderador)",
+    dependeDeDados: true,
   },
-  { route: "/communities/[id]/admin/media", porta: "CONDICIONAL: menu do console (moderador)" },
-  { route: "/communities/[id]/admin/moderators", porta: "CONDICIONAL: hub do console (moderador)" },
+  {
+    route: "/communities/[id]/admin/media",
+    porta: "CONDICIONAL: menu do console (moderador)",
+    dependeDeDados: true,
+  },
+  {
+    route: "/communities/[id]/admin/moderators",
+    porta: "CONDICIONAL: hub do console (moderador)",
+    dependeDeDados: true,
+  },
   {
     route: "/communities/[id]/admin/pending",
     porta: "CONDICIONAL: 'Analisar pedidos de entrada' na aba Sobre da comunidade (moderador)",
+    dependeDeDados: true,
   },
   {
     route: "/communities/[id]/admin/providers",
     porta: "CONDICIONAL: 'Prestadores atestados' no hub do console (moderador)",
+    dependeDeDados: true,
   },
   {
     route: "/communities/[id]/indicar-prestador",
@@ -114,11 +125,13 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     route: "/communities/[id]/invite",
     porta:
       "CONDICIONAL: 'Convidar membros' na aba Sobre; 'Mais opções' > 'Convidar' em /communities",
+    dependeDeDados: true,
   },
   {
     route: "/community",
     porta:
       "FLUXO: fim do onboarding ('Ir para a comunidade'), notificação de publicação e redirects",
+    dependeDeDados: true,
   },
   {
     route: "/consent",
@@ -128,12 +141,17 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   {
     route: "/denuncias/[id]",
     porta: "CONDICIONAL: lista de /denuncias, quando a pessoa já denunciou",
+    dependeDeDados: true,
   },
   {
     route: "/denuncias/nova",
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
-  { route: "/events/[id]/editar", porta: "CONDICIONAL: 'Editar evento' para quem organiza" },
+  {
+    route: "/events/[id]/editar",
+    porta: "CONDICIONAL: 'Editar evento' para quem organiza",
+    dependeDeDados: true,
+  },
   {
     route: "/events/novo",
     porta: "DÍVIDA EVENTOS-CRIACAO-DUPLICADA: /events cria pelo formulário embutido",
@@ -142,10 +160,12 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   {
     route: "/guide/[id]/correcao",
     porta: "CONDICIONAL: 'Sugerir atualização' no artigo, quando a referência tem guia publicado",
+    dependeDeDados: true,
   },
   {
     route: "/imoveis/[id]/editar",
     porta: "CONDICIONAL: 'Editar anúncio' no detalhe, só para o dono",
+    dependeDeDados: true,
   },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   { route: "/mercado/[id]/editar", porta: "BOTÃO: 'Editar' em /meus-anuncios" },

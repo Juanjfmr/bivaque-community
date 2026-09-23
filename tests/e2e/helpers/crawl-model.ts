@@ -135,6 +135,11 @@ export interface AllowedUnreached {
   readonly route: string
   /** Por onde se chega de verdade: e-mail, link compartilhado, botão que navega por código. */
   readonly porta: string
+  /**
+   * O link desta porta só aparece em certo estado dos dados: ser alcançada por link NÃO a torna
+   * velha, só deixar de existir torna.
+   */
+  readonly dependeDeDados?: boolean
 }
 
 /** Rotas de página que nenhuma persona alcançou e que não têm porta declarada. */
@@ -159,7 +164,11 @@ export function staleAllowances(
 ): string[] {
   const pages = new Set(patterns.filter((p) => p.kind === "page").map((p) => p.route))
   return allowed
-    .filter((entry) => reached.has(entry.route) || !pages.has(entry.route))
+    .filter((entry) =>
+      entry.dependeDeDados
+        ? !pages.has(entry.route)
+        : reached.has(entry.route) || !pages.has(entry.route),
+    )
     .map((entry) => entry.route)
     .sort()
 }

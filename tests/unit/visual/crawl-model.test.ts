@@ -109,4 +109,29 @@ describe("modelo do rastreador de links", () => {
     expect(unreachedRoutes(patterns, reached, allowed)).toEqual(["/pedidos/novo"])
     expect(staleAllowances(patterns, reached, allowed)).toEqual(["/pedidos", "/sumiu"])
   })
+
+  it("porta condicional alcançada por link não envelhece", () => {
+    const patterns = buildPatterns(PAGES, HANDLERS)
+    const allowed = [
+      {
+        route: "/pedidos/[id]",
+        porta: "CONDICIONAL: link só com dado criado",
+        dependeDeDados: true,
+      },
+    ]
+    expect(staleAllowances(patterns, new Set(["/pedidos/[id]"]), allowed)).toEqual([])
+  })
+
+  it("porta condicional cuja rota sumiu envelhece", () => {
+    const patterns = buildPatterns(PAGES, HANDLERS)
+    const allowed = [{ route: "/sumiu", porta: "CONDICIONAL: rota removida", dependeDeDados: true }]
+    expect(staleAllowances(patterns, new Set(), allowed)).toEqual(["/sumiu"])
+  })
+
+  it("porta sem dependeDeDados alcançada continua velha", () => {
+    const patterns = buildPatterns(PAGES, HANDLERS)
+    const reached = new Set(["/pedidos/[id]"])
+    const allowed = [{ route: "/pedidos/[id]", porta: "velha: hoje tem link" }]
+    expect(staleAllowances(patterns, reached, allowed)).toEqual(["/pedidos/[id]"])
+  })
 })
