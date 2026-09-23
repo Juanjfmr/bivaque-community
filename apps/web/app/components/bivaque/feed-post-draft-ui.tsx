@@ -6,6 +6,7 @@
 // sempre uma ação explícita com confirmação — nunca acontece em silêncio.
 
 import { Button, Modal } from "@heroui/react"
+import { ModalCloseTrigger } from "./close-button"
 import { FeedbackAlert } from "./feedback-alert"
 
 interface DraftNoticesProps {
@@ -68,7 +69,7 @@ export function DraftDiscardDialog({ open, onOpenChange, onDiscard }: DraftDisca
           <Modal.Dialog>
             <Modal.Header>
               <Modal.Heading>Descartar rascunho?</Modal.Heading>
-              <Modal.CloseTrigger className="min-h-11 min-w-11" />
+              <ModalCloseTrigger className="min-h-11 min-w-11" />
             </Modal.Header>
             <Modal.Body>
               <p className="text-sm">

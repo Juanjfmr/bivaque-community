@@ -13,8 +13,13 @@
 -- knowledge, no commercial terms).
 
 -- The reply is marked as 'promoted' so the queue doesn't show it again.
--- A reply can be promoted at most once (unique constraint on
--- source_reply_id).
+-- A reply can be promoted at most once. That guarantee comes from the primary
+-- key of public.recommendation_reply_promotions (reply_id) and from the check
+-- inside promote_reply_to_guide_entry below — NOT from a unique constraint on
+-- arrival_guide_entries.source_reply_id, which an earlier revision of this
+-- comment claimed and which no migration created. The partial unique index on
+-- source_reply_id arrives later, in 20260923200000_guide_candidate_queue.sql,
+-- to protect the other writer (the scheduled candidate job).
 
 create table public.recommendation_reply_promotions (
   reply_id uuid primary key references public.recommendation_replies (id) on delete cascade,
@@ -37,9 +42,10 @@ grant all on table public.recommendation_reply_promotions to service_role;
 --      (a reply from locality A cannot become a guide entry for locality B);
 --   4. creates the entry with status='approved', source='manual', and
 --      the operator recorded in reviewed_by;
---   5. creates the promotion record (the unique constraint on
---      source_reply_id in arrival_guide_entries + the FK in promotions
---      gives us 'promoted at most once' for free).
+--   5. creates the promotion record; the primary key on reply_id plus the
+--      check in step 2 give us 'promoted at most once' on this path. (This
+--      comment also used to credit a unique constraint on source_reply_id that
+--      never existed — see the note at the top of this file.)
 create function public.promote_reply_to_guide_entry(
   p_reply_id uuid,
   p_locality_id uuid,

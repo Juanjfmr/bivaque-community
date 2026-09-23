@@ -4,6 +4,7 @@ import { Button, Chip, Form, Input, Radio, RadioGroup, SearchField, TextArea } f
 import type { SVGProps } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { SearchClearButton } from "../../components/bivaque/close-button"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { GroupsIllustration } from "../../components/bivaque/illustrations"
@@ -523,7 +524,7 @@ export default function GroupsPage() {
         <SearchField.Group>
           <SearchField.SearchIcon />
           <SearchField.Input placeholder="Buscar grupos..." className="transition-colors" />
-          {searchQuery ? <SearchField.ClearButton /> : null}
+          {searchQuery ? <SearchClearButton /> : null}
         </SearchField.Group>
       </SearchField>
 

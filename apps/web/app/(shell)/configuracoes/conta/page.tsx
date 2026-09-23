@@ -5,6 +5,7 @@ import { ChevronRight, LogOut, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
+import { ModalCloseTrigger } from "../../../components/bivaque/close-button"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import { Skeleton } from "../../../components/bivaque/skeleton"
 
@@ -399,7 +400,7 @@ export default function ConfiguracoesContaPage() {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>Sair da sua conta?</Modal.Heading>
-                <Modal.CloseTrigger className="min-h-11 min-w-11" />
+                <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-muted">
@@ -430,7 +431,7 @@ export default function ConfiguracoesContaPage() {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>Solicitar exclusão da conta?</Modal.Heading>
-                <Modal.CloseTrigger className="min-h-11 min-w-11" />
+                <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm font-medium">

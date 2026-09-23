@@ -12,7 +12,11 @@ import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedComposer } from "../../components/bivaque/feed-composer"
 import { CreatePostModal, FeedPost } from "../../components/bivaque/feed-post"
-import { FeedRightRail } from "../../components/bivaque/feed-right-rail"
+import {
+  FeedRailDisclosure,
+  FeedRightRail,
+  useFeedRailData,
+} from "../../components/bivaque/feed-right-rail"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
@@ -22,7 +26,9 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [defaultPostType, setDefaultPostType] = useState<string | undefined>(undefined)
+  // Dica da ENTRADA (o botão "Link" do compositor), não formato escolhido: o
+  // `post_type` é derivado do anexo real dentro do CreatePostModal.
+  const [entryAttachment, setEntryAttachment] = useState<string | undefined>(undefined)
   const [memberCount, setMemberCount] = useState<number | null>(null)
   const [memberCountError, setMemberCountError] = useState(false)
   const [primaryCommunityId, setPrimaryCommunityId] = useState<string | null>(null)
@@ -42,6 +48,10 @@ export default function CommunityPage() {
   const hasScrolledToDeepLink = useRef(false)
 
   const supabase = createBrowserClient()
+
+  // Uma leitura só serve as duas montagens do trilho (a de >=1024px e o
+  // disclosure do telefone). Ver useFeedRailData para por que ela não é portão.
+  const railData = useFeedRailData()
 
   const loadFeed = useCallback(
     async (order: "recent" | "relevant" = sortOrder) => {
@@ -145,8 +155,8 @@ export default function CommunityPage() {
     [sortOrder, loadFeed],
   )
 
-  const handleOpenModal = useCallback((postType?: string) => {
-    setDefaultPostType(postType)
+  const handleOpenModal = useCallback((attachment?: string) => {
+    setEntryAttachment(attachment)
     setShowCreateModal(true)
   }, [])
 
@@ -237,11 +247,11 @@ export default function CommunityPage() {
           {showCreateModal && (
             <CreatePostModal
               localityId={current.id}
-              defaultPostType={defaultPostType}
+              initialAttachment={entryAttachment}
               onCreated={handleCreated}
               onClose={() => {
                 setShowCreateModal(false)
-                setDefaultPostType(undefined)
+                setEntryAttachment(undefined)
               }}
             />
           )}
@@ -308,6 +318,13 @@ export default function CommunityPage() {
                   Relevantes
                 </ToggleButton>
               </ButtonGroup>
+
+              {/* Abaixo de 1024px o trilho não existe: o que ele carrega (eventos,
+                  grupos e as regras) não aparece em nenhum outro lugar desta rota,
+                  então desce fechado para a coluna do feed. Fechado porque o feed
+                  não tem limite de itens — aberto por padrão, empurraria as
+                  publicações para baixo de uma lista de contexto. */}
+              <FeedRailDisclosure data={railData} />
 
               {/* error state */}
               {error && <ErrorState message={error} onRetry={() => loadFeed(sortOrder)} />}
@@ -385,18 +402,18 @@ export default function CommunityPage() {
             </div>
 
             {/* right rail */}
-            <FeedRightRail />
+            <FeedRightRail data={railData} />
           </div>
 
           {showCreateModal && (
             <CreatePostModal
               localityId={current.id}
-              defaultPostType={defaultPostType}
+              initialAttachment={entryAttachment}
               defaultCommunityId={primaryCommunityId ?? undefined}
               onCreated={handleCreated}
               onClose={() => {
                 setShowCreateModal(false)
-                setDefaultPostType(undefined)
+                setEntryAttachment(undefined)
               }}
             />
           )}

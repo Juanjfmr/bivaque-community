@@ -1,13 +1,13 @@
 # Mapa de telas — Bivaque
 
-Atualizado em 08/09/2026. 59 pranchas: 84 telas/estados mobile e 53 web. Cobertura visual não é implementação; o quadro existente acompanha execução.
+Atualizado em 20/09/2026. 75 pranchas: 84 telas/estados mobile e 85 web. Cobertura visual não é implementação; o quadro existente acompanha execução.
 
 ## Referências entregues
 
 | Prancha | Plataforma | Telas/estados |
 |---|---|---|
 | [00-mobile-inicio — Início: chegada, participação e mudança](./00-mobile-inicio.png) | mobile | Cheguei agora; Faço parte; Estou de mudança |
-| [01-web-inicio — Web: início](./01-web-inicio.png) | web | Home de quem participa |
+| [01-web-inicio — Web: início com intenções claras](./01-web-inicio.png) | web | Home com intenções e pedido vinculado ao Guia |
 | [02-mobile-explorar — Explorar e serviços](./02-mobile-explorar.png) | mobile | Explorar; Resultados de serviços; Ficha do prestador |
 | [10-mobile-guia — Guia: descoberta e categorias](./10-mobile-guia.png) | mobile | Guia da cidade; Artigo de chegada; Categoria Educação |
 | [11-mobile-mercado — Mercado: descobrir e anunciar](./11-mobile-mercado.png) | mobile | Produtos; Detalhe do item; Novo anúncio |
@@ -39,8 +39,8 @@ Atualizado em 08/09/2026. 59 pranchas: 84 telas/estados mobile e 53 web. Cobertu
 | [41-mobile-comunidade-participacao — Participação e grupos](./41-mobile-comunidade-participacao.png) | mobile | Pedido pendente; Comunidade de membro e grupos; Sair da comunidade |
 | [42-web-comunidades — Comunidades web](./42-web-comunidades.png) | web | Minhas comunidades; Descoberta e apresentação |
 | [43-web-comunidade-grupos — Comunidade, pedidos e grupos web](./43-web-comunidade-grupos.png) | web | Comunidade de membro e grupos; Pedido pendente |
-| [44-mobile-publicacao — Criar pergunta e escolher público](./44-mobile-publicacao.png) | mobile | Escrever pergunta; Escolher público; Publicação enviada |
-| [45-web-publicacao — Publicação e rascunho web](./45-web-publicacao.png) | web | Criar publicação; Editar e recuperar rascunho |
+| [44-mobile-publicacao — Perguntar ou pedir indicação](./44-mobile-publicacao.png) | mobile | Escolher intenção; Consultar o Guia; Sugerir referência fora do Guia |
+| [45-web-publicacao — Guia antes do pedido web](./45-web-publicacao.png) | web | Buscar no Guia; Perguntar à comunidade quando não encontrar |
 | [46-mobile-eventos — Eventos e presença](./46-mobile-eventos.png) | mobile | Descobrir eventos; Detalhe de evento; Presença confirmada |
 | [47-mobile-eventos-cancelamento — Cancelamento de presença e evento](./47-mobile-eventos-cancelamento.png) | mobile | Cancelar presença; Presença cancelada; Evento cancelado |
 | [48-web-eventos — Eventos web](./48-web-eventos.png) | web | Lista e filtros; Detalhe e gestão de presença |
@@ -65,6 +65,22 @@ Atualizado em 08/09/2026. 59 pranchas: 84 telas/estados mobile e 53 web. Cobertu
 | [67-web-evento-informacoes — Informações do evento na web](./67-web-evento-informacoes.png) | web | Reenviar pergunta; Ler resposta e continuar |
 | [68-mobile-identidade-recuperacao — Identidade: envio e recuperação](./68-mobile-identidade-recuperacao.png) | mobile | Enviar identidade; Acompanhar análise; Substituir arquivo ilegível |
 | [69-web-identidade-recuperacao — Identidade: envio e recuperação web](./69-web-identidade-recuperacao.png) | web | Enviar identidade; Substituir arquivo ilegível |
+| [70-web-evento-organizar — Web: organizar um evento](./70-web-evento-organizar.png) | web | Novo evento; Evento publicado |
+| [71-web-auth-recuperacao — Web: recuperar o acesso](./71-web-auth-recuperacao.png) | web | Esqueceu sua senha; Crie uma senha nova |
+| [72-web-auth-link-invalido — Web: link inválido ou expirado](./72-web-auth-link-invalido.png) | web | Este link não vale mais; Não foi possível entrar |
+| [73-web-comunidade-pedidos — Web: decidir pedidos de entrada](./73-web-comunidade-pedidos.png) | web | Pedidos de entrada; Ver o pedido |
+| [74-web-guia-curadoria — Web: curar referências da comunidade](./74-web-guia-curadoria.png) | web | Candidata e possível duplicidade; Revisão humana e publicação |
+| [75-web-conversas — Web: central de conversas](./75-web-conversas.png) | web | Caixa de entrada; Conversa aberta |
+| [76-web-familia — Web: convidar a família](./76-web-familia.png) | web | Convidar um familiar; Convite pendente |
+| [77-web-ajuda — Web: pedir ajuda com canal real](./77-web-ajuda.png) | web | Acesso e uso; Regras e suporte |
+| [78-web-prestador-operacao — Web: catálogo e conta do prestador](./78-web-prestador-operacao.png) | web | Catálogo e portfólio; Conta e área de atendimento |
+| [79-web-indicar-prestador — Web: indicar e aceitar prestador](./79-web-indicar-prestador.png) | web | Indicar prestador; Aceitar o convite |
+| [80-web-recomendacoes — Web: responder e sugerir referências](./80-web-recomendacoes.png) | web | Resposta vinculada ou ainda fora do Guia; Publicar resposta e enviar candidata à revisão |
+| [81-web-comunidade-admin — Web: administrar a comunidade](./81-web-comunidade-admin.png) | web | Administração da comunidade; Imagens da comunidade |
+| [82-web-localidade — Web: declarar mudança de cidade](./82-web-localidade.png) | web | Declarar mudança de cidade; Transferência declarada |
+| [83-web-landing — Web: primeiro contato público](./83-web-landing.png) | web | Primeiro contato; Como entrar e o que esperar |
+| [84-web-busca — Web: busca agrupada](./84-web-busca.png) | web | Resultados da busca; Nenhum resultado |
+| [85-web-arrivals — Web: operar chegadas e transferências](./85-web-arrivals.png) | web | Chegadas declaradas; Nenhuma transferência declarada |
 
 ## Seleção pelos agentes
 
