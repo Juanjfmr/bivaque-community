@@ -167,7 +167,7 @@ test.describe("community feed", () => {
     // o unico h1 e a saudacao (prancha 01) e a secao do feed traz o proprio
     // titulo, que e o sinal estavel de que a pagina montou.
     await expect(page.getByRole("heading", { name: "Na comunidade" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
+    await expect(page.getByTestId("intent-pergunta")).toBeVisible()
   })
 
   test("feed page is reachable at all three viewport widths", async ({ page, context }) => {
