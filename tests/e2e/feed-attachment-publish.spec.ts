@@ -34,7 +34,6 @@ import { expect, request, test } from "@playwright/test"
 import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
-const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3210"
 
 const FOTO_LIGADA_E_VAZIA = "Anexe a foto ou desligue o anexo de foto para publicar."
 const LINK_LIGADO_E_VAZIO = "Informe o endereço do link ou desligue o anexo de link para publicar."
@@ -148,7 +147,8 @@ async function readPostRow(
 
 /** Abre o compositor pelo caminho determinístico do feed da vila. */
 async function openComposer(page: Page): Promise<void> {
-  await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+  // Caminho relativo: o baseURL do playwright.config.ts decide o servidor (o CI serve em :3000).
+  await page.goto("/community", { waitUntil: "load" })
   // O shell pode estar hidratando quando o Next respondeu; sem esperar o h1 da
   // vila, o primeiro clique cai fora do handler de React e o modal nunca abre.
   await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
