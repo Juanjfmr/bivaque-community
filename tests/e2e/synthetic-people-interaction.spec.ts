@@ -179,7 +179,9 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
     // 1. A autora publica
     await withPersona(browser, AUTHOR_EMAIL, async (page) => {
       await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
-      await page.getByRole("button", { name: "Publicar" }).first().click()
+      const ask = page.getByTestId("intent-pergunta")
+      await expect(ask).toBeVisible({ timeout: 20000 })
+      await ask.click()
       const modal = page.getByRole("dialog")
       await expect(modal.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
       await modal.getByLabel("Pergunta").fill(postText)
