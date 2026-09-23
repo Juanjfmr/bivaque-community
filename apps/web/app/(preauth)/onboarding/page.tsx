@@ -2,6 +2,7 @@
 
 import { isValidCpf } from "@bivaque/domain"
 import { Button, Form, Input, Radio, RadioGroup, Spinner } from "@heroui/react"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { purgeCpfResidue } from "../../../lib/onboarding/storage"
@@ -53,6 +54,9 @@ function OnboardingFlow() {
   const [role, setRole] = useState<RoleId>("military")
   const [cpf, setCpf] = useState("")
   const [error, setError] = useState<string | null>(null)
+  // ADR-20260922-identidade-quando-portal-falha: com o Portal indisponível, a identidade
+  // é oferecida na hora, abaixo da mensagem de instabilidade.
+  const [offerIdentity, setOfferIdentity] = useState(false)
   const [loading, setLoading] = useState(false)
   const [familyToken, setFamilyToken] = useState("")
   const [familyName, setFamilyName] = useState("")
@@ -112,6 +116,7 @@ function OnboardingFlow() {
 
   const handleVerifyCpf = async () => {
     setError(null)
+    setOfferIdentity(false)
 
     if (role === "family") {
       setStep("family")
@@ -181,6 +186,7 @@ function OnboardingFlow() {
         } else if (outcome["status"] === "temporary_error") {
           const errorCode = typeof outcome["errorCode"] === "string" ? outcome["errorCode"] : ""
           setError(verificationErrorMessage(errorCode, SUPPORT_EMAIL))
+          setOfferIdentity(true)
         }
       }
     } catch (err: unknown) {
@@ -387,6 +393,18 @@ function OnboardingFlow() {
         )}
 
         {error && <FeedbackAlert variant="danger" description={error} />}
+
+        {offerIdentity && (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted">
+              Você não precisa esperar: envie sua identidade militar digital e a equipe analisa. A
+              análise por identidade leva mais tempo que a conferência por CPF.
+            </p>
+            <Link href="/onboarding/documento" className={styles["primaryLink"] ?? ""}>
+              Enviar identidade agora
+            </Link>
+          </div>
+        )}
 
         {step !== "done" && !(step === "verify" && loading) && (
           <p className={styles["documentFooterNote"]}>

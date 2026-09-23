@@ -1,0 +1,84 @@
+task_id: HRN-004
+
+objective: >
+  As jornadas do guia visual passam a ser andadas no app de verdade. Um spec abre
+  uma jornada de scripts/visual/flows/journeys.json pelo id e registra cada passo
+  que observa, com captura; o registro recusa passo que a jornada nao cita,
+  recusa concluir com passo faltando, e separa o que foi observado por clique,
+  o que so foi alcancado pela URL (atalho) e o que o ambiente nao entrega
+  (lacuna). Um relatorio poe prancha e tela real lado a lado, na ordem da
+  jornada. Piloto com cinco jornadas web: pedir e responder um servico, entrar
+  e ser admitido, operar admissoes e quando algo falha.
+
+authority:
+  - Pedido do dono em 22/09/2026 para montar o piloto do teste simulado de usuario
+  - tools/backend-kanban/public/board.json, card TEST-MASSA-JORNADAS (cobertura E2E de Pedidos; executar cada jornada com entrada, acao, feedback e follow-up)
+  - scripts/visual/flows/journeys.json, que se declara documental e nao gravado em runtime
+  - docs/design/visual-guide-2026-09-06/VALIDACAO-2026-09-08.json, runtime "Nao executado"
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 22/09/2026 na revisao 65fc81f. Nenhum spec em tests/e2e cobre a
+    vertical de Pedidos (grep de "pedidos" em tests/e2e vazio). journeys.json
+    tem 61 jornadas, 38 web, e nenhuma e executada: o mapa prova cobertura de
+    tela, nao que o app percorre a jornada. VALIDACAO-2026-09-08.json registra
+    runtime "Nao executado".
+
+allowed_paths:
+  - tests/e2e/helpers/journey-ledger.ts
+  - tests/e2e/helpers/journey.ts
+  - tests/e2e/helpers/session.ts
+  - tests/e2e/journey-pedir-servico.spec.ts
+  - tests/e2e/journey-entrar-e-ser-admitido.spec.ts
+  - tests/e2e/journey-quando-algo-falha.spec.ts
+  - tests/e2e/journeys.playwright.config.ts
+  - tests/unit/visual/journey-ledger.test.ts
+  - tests/unit/visual/journey-report.test.ts
+  - scripts/visual/journey-report.mjs
+  - docs/agents/tasks/HRN-004.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - corrigir no mesmo lote os achados que a simulacao revelou; eles viram cards com prova
+  - afirmar em teste o comportamento defeituoso (por exemplo, exigir que nao haja notificacao) so para travar o que existe
+  - decidir admissao ou mudar persona semeada que outros specs leem
+  - alterar playwright.config.ts da raiz ou os scripts do package.json, contratados por tests/scope
+  - registrar como observado um passo que so foi alcancado pela URL ou que o ambiente nao entrega
+  - tocar autorizacao, schema, migration ou estado do banco alem das linhas que o proprio spec cria
+
+acceptance:
+  - o registro recusa passo fora da jornada, registro duplicado, lacuna sem motivo, atalho sem motivo e conclusao com passo pendente, com teste de unidade para cada recusa
+  - as cinco jornadas do piloto concluem contra o build deste checkout, com cada passo registrado
+  - a jornada de pedido fecha o ciclo de duas personas, com o que a membra escreve aparecendo para o prestador e a resposta dele aparecendo para ela
+  - cada permissao exercitada tem o negativo junto, ou seja, membro comum nao abre a fila de admissoes
+  - o relatorio mostra prancha e captura de cada passo, sem imagem quebrada, e destaca lacunas e atalhos
+  - os specs levam a tag @stateful e entram no lote serial do CI pela config da raiz
+  - os achados viram cards ou provas no board na mesma entrega
+  - gate completo verde, com o codigo de saida lido direto
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HRN-004.task.yml
+  - npx vitest run tests/unit/visual/journey-ledger.test.ts tests/unit/visual/journey-report.test.ts
+  - JOURNEY_BASE_URL=http://127.0.0.1:3211 npx playwright test -c tests/e2e/journeys.playwright.config.ts
+  - node scripts/visual/journey-report.mjs --json
+  - npx pnpm@11.18.0 gate
+
+traps:
+  - A :3000 desta maquina costuma ser de outro checkout; o reuseExistingServer da config da raiz testaria o codigo errado. Sirva o build deste checkout noutra porta e use a config das jornadas
+  - O stack local tem enable_confirmations = false e nao tem chave do Portal; confirmacao de e-mail e verificacao por CPF nao concluem aqui e entram como lacuna, nao como falha do app
+  - NEXT_PUBLIC_SUPPORT_EMAIL ausente mostra o sentinela <<DEFINIR>> por desenho (lib/support.ts); nao e defeito
+  - Ha UM Supabase local compartilhado; os specs criam linhas proprias com marcador e nao apagam nem recriam o banco
+
+risk: >
+  Harness de teste de ponta a ponta e relatorio local de evidencia. Escreve no
+  banco local apenas as linhas que cada spec cria.
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

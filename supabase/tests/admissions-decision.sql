@@ -11,7 +11,9 @@
 --   1. service_role chamando com operator_id errado -> negado
 --   2. service_role chamando com operator_id correto, mas sem document -> not found
 --   3. service_role chamando com operator_id correto + document pending + sem locality ->
---      "cannot approve: no locality for the user"
+--      sucesso desde o ADR-20260922-aprovacao-por-identidade-sem-cidade: documento aprovado
+--      com reviewed_locality_id nulo, verified, e NENHUMA membership ou profile (a pessoa
+--      escolhe a cidade depois, por provision_member_locality). Antes: "cannot approve".
 --   4. service_role chamando com operator_id correto + document pending + com locality ->
 --      sucesso: review_status vira 'approved', upsert_verification_outcome marca verified,
 --      locality_memberships ganha linha, profiles ganha display_name 'Membro'
@@ -23,7 +25,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(15);
+select plan(21);
 
 \ir fixtures/foundation.inc
 \ir fixtures/reports.inc
@@ -79,6 +81,20 @@ insert into private.verification_documents (
   now() - interval '1 hour'
 );
 
+-- Documento pending de quem ainda nao escolheu cidade (teste 3)
+insert into auth.users (id, email) values
+  ('20000000-0000-4000-8000-000000000095', 'no-city-user@example.invalid');
+
+insert into private.verification_documents (
+  id, user_id, storage_object_path, mime_type, expires_at
+) values (
+  '50000000-0000-4000-8000-000000000095',
+  '20000000-0000-4000-8000-000000000095',
+  'verification/test-no-city-95.pdf',
+  'application/pdf',
+  now() + interval '7 days'
+);
+
 -- Documento pending de outro user, para o teste 5 e 6
 insert into auth.users (id, email) values
   ('20000000-0000-4000-8000-000000000096', 'reject-user@example.invalid');
@@ -123,18 +139,64 @@ select throws_ok(
   'document_id inexistente lanca excecao'
 );
 
--- 3. operator_id correto + document pending + sem locality -> "cannot approve"
-select throws_ok(
+-- 3. operator_id correto + document pending + sem locality -> aprova sem cidade
+select lives_ok(
   $$
     select public.decide_verification_document(
-      '50000000-0000-4000-8000-000000000099'::uuid,
+      '50000000-0000-4000-8000-000000000095'::uuid,
       'approved'::text,
       null::text,
       '10000000-0000-4000-8000-000000000001'::uuid
     )
   $$,
-  'cannot approve: no locality for the user',
-  'aprovacao sem locality lanca excecao'
+  'aprovacao sem locality e sucesso (a cidade vem depois)'
+);
+
+select is(
+  (select review_status::text from private.verification_documents
+   where id = '50000000-0000-4000-8000-000000000095'),
+  'approved',
+  'sem cidade: documento aprovado'
+);
+
+select is(
+  (select reviewed_locality_id from private.verification_documents
+   where id = '50000000-0000-4000-8000-000000000095'),
+  null::uuid,
+  'sem cidade: reviewed_locality_id fica nulo'
+);
+
+select is(
+  (select status::text from private.verification_outcomes
+   where user_id = '20000000-0000-4000-8000-000000000095'),
+  'verified',
+  'sem cidade: verification_outcome vira verified'
+);
+
+select is(
+  (select count(*)::integer from public.locality_memberships
+   where user_id = '20000000-0000-4000-8000-000000000095'),
+  0,
+  'sem cidade: nenhuma membership e inventada'
+);
+
+select is(
+  (select count(*)::integer from public.profiles
+   where user_id = '20000000-0000-4000-8000-000000000095'),
+  0,
+  'sem cidade: nenhum profile antes da escolha da cidade'
+);
+
+select results_eq(
+  $$
+    select count(*)::integer
+    from public.outbox
+    where recipient = 'no-city-user@example.invalid'
+      and type = 'verification_decision'
+      and payload ->> 'status' = 'approved'
+  $$,
+  array[1],
+  'sem cidade: o e-mail de aprovacao continua enfileirado'
 );
 
 -- 4. operator_id correto + document pending + com locality -> sucesso

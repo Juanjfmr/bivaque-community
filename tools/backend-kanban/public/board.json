@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-12",
+  "updatedAt": "2026-09-22",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -2257,7 +2257,9 @@
         "Lacunas de E2E nomeadas em 16/09 (lote AB), sem spec dedicada hoje: o ciclo pergunta ao organizador -> resposta -> presenca -> cancelamento (RECON-029) e a INTERACAO de envio/troca/remocao das imagens de comunidade (RECON-034). As duas telas provam renderizacao e contrato; a jornada ponta a ponta nao existe",
         "Armadilha de ferramenta medida em 16/09: report.json nao gravava a URL do recurso que falhou, entao 404 de imagem passava como '0 achados'. capture.mjs agora registra failedRequests (status + URL) ao lado de consoleErrors, sem mudar o veredito do proof",
         "MEDICAO E2E 18/09/2026 (lote AR): a suite completa rodou no ambiente local com o seed e a senha do operador — 659 passed / 58 failed / 6 skipped em 7.5 min, nos tres viewports. Os 58 nao sao 58 defeitos: sao 55 blocos de erro com apenas SETE assinaturas distintas, quatro delas a mesma espera vencida (toHaveCount/toHaveClass/timeout de click), mais 'strict mode violation' em seletores que ficaram ambiguos com a UI reconstruida (getByRole heading 'Eve...', button 'Buscar') e um 'Elemento nao encontrado' de composer com rotulo antigo. O baseline registrado e de 01/09/2026 (597 passed / 0 failed) — antes de ~323 commits da campanha, que cresceu a suite para 723 testes. Ou seja: e DIVIDA DA CAMPANHA, nao regressao do trabalho de 18/09 — e a prova direta e que os contratos das telas tocadas hoje passam (shell-navigation 'Indicacoes reachable at 375/768/1440' verde). Os specs mais afetados: manaus-pilot-full-journey, recommendation-reply-notify, ds-029-conformance-probes, two-localities, event-invites, guide-manual-curation, onboarding-holder-family, provider-vitrine, vila-home, recon-032-salvos/messages, persistent-login",
-        "Separar o lote E2E stateful do paralelo e dar consumidor a tag [FEITO 18/09, lote AX]: test:e2e --grep-invert @stateful (paralelo), test:e2e:stateful --workers=1, test:e2e:all encadeando, CI rodando os DOIS passos, e o contrato de escopo fixando os tres comandos. Oito specs marcados (quem escreve em linha que outros leem). Contencao removida na raiz: group-admin-cycle deixou de disputar o grupo privado com synthetic-people-interaction e group-event-detail-denials — passou a usar um grupo privado proprio, 29 passed nos tres viewports"
+        "Separar o lote E2E stateful do paralelo e dar consumidor a tag [FEITO 18/09, lote AX]: test:e2e --grep-invert @stateful (paralelo), test:e2e:stateful --workers=1, test:e2e:all encadeando, CI rodando os DOIS passos, e o contrato de escopo fixando os tres comandos. Oito specs marcados (quem escreve em linha que outros leem). Contencao removida na raiz: group-admin-cycle deixou de disputar o grupo privado com synthetic-people-interaction e group-event-detail-denials — passou a usar um grupo privado proprio, 29 passed nos tres viewports",
+        "Piloto de jornada simulada [FEITO 22/09, HRN-004]: tests/e2e/helpers/journey.ts abre uma jornada de journeys.json pelo id e registra cada passo observado, com captura; o registro recusa passo fora da jornada e conclusao com passo faltando, e separa observado, ATALHO (so pela URL) e LACUNA (ambiente nao entrega). scripts/visual/journey-report.mjs poe prancha e tela real lado a lado. Proximo passo: estender as 33 jornadas web restantes no mesmo molde",
+        "Transformar scripts/visual/flows/reachability.mjs em teste de CI que reprova rota orfa (herdado de NAV-PEDIDOS-ORFA em 22/09); hoje a analise roda a mao e reporta 0 orfas [FEITO 22/09 de outro jeito: tests/e2e/link-crawl.spec.ts mede em runtime e reprova rota sem porta; a analise estatica ficou como pista — NAV-ROTAS-SEM-PORTA]"
       ],
       "proof": [
         "Auditoria de 12/09 contra 041823f: 86 page.tsx e todas as 31 pranchas web com rota; specs novas na linha viva apenas recon-032-denuncias.spec.ts e recon-032-salvos.spec.ts",
@@ -2278,13 +2280,18 @@
         "RECUSADO, com o motivo: restaurar pre-condicao apagando linhas com service role nao funciona — service_role NAO tem grant de DELETE em group_memberships nem em recommendation_saves (o grant e minimo por desenho; so community_memberships tem DELETE). O erro real foi 403/42501 com o proprio banco sugerindo 'GRANT SELECT, DELETE ... TO service_role'. Afrouxar o grant para o teste passar seria trocar postura de seguranca por conveniencia de teste: nao foi feito. O caminho e cada spec nao depender de estado que outro escreve, ou o runner do lote rodar serial (que e o que tests/e2e/recon-032.playwright.config.ts ja faz para o lote dele).",
         "CORRIGIDO no caminho e mantido: (a) 'Eventos' como name de role casa por SUBSTRING e batia em 'Explorar eventos' e 'Seus eventos' — strict mode violation em dois specs, agora com o texto real do h1 e exact:true; (b) 'Pedir entrada' e form action e o teste asseria antes da resposta — agora espera o POST.",
         "ACHADO DE AMBIENTE 18/09/2026, medido e nao suposto: a MESMA suite que deu 711 passed / 6 failed em 6.2 min passou a dar 685 / 32 em 17.1 min sem nenhuma mudanca de produto entre as duas execucoes. A causa foi memoria: a maquina tem 15.7 GB e estava com 3 GB livres, com um dev server Next meu consumindo 1.4 GB. Com workers=2 a execucao chegou a crashar o Node (Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), libuv/Windows) e marcou 214 falhas — que nao sao 214 defeitos, e o runner morrendo. CONCLUSAO: medicao de E2E nesta maquina exige ambiente limpo (dev server parado, memoria livre) e a comparacao so vale entre execucoes nas mesmas condicoes. Numeros de E2E medidos sob pressao de memoria nao devem ser usados para decidir.",
-        "MEDICAO FINAL 18/09/2026 com a maquina descarregada: lote normal 655 passed / 5 failed em 6.2 min + lote stateful 57 passed em 4.4 min. As 5 do lote normal sao timeout de INFRAESTRUTURA (browserContext.newPage estourando 30s, ERR_ABORTED, click timeout) em avatar-denials, event-invites e recon-018-entrada — os tres passam 57/57 quando rodados isolados, o que fecha a atribuicao: nao sao defeito de produto nem colisao de dados, e a maquina sob carga (eu rodei dois lotes completos com build em sequencia). O caminho de isolamento esta entregue e com contrato; o que falta nao e mecanismo, e ambiente com folga para a suite inteira"
+        "MEDICAO FINAL 18/09/2026 com a maquina descarregada: lote normal 655 passed / 5 failed em 6.2 min + lote stateful 57 passed em 4.4 min. As 5 do lote normal sao timeout de INFRAESTRUTURA (browserContext.newPage estourando 30s, ERR_ABORTED, click timeout) em avatar-denials, event-invites e recon-018-entrada — os tres passam 57/57 quando rodados isolados, o que fecha a atribuicao: nao sao defeito de produto nem colisao de dados, e a maquina sob carga (eu rodei dois lotes completos com build em sequencia). O caminho de isolamento esta entregue e com contrato; o que falta nao e mecanismo, e ambiente com folga para a suite inteira",
+        "HRN-004 22/09/2026 contra o build de 65fc81f servido na :3211 (a :3000 era de outro checkout): cinco jornadas web concluidas — web-pedir-um-servico (5 passos, 1 atalho), web-responder-um-pedido (1), web-entrar-e-ser-admitido (6, 3 lacunas de ambiente), web-operar-admissoes (2), web-quando-algo-falha (2). Primeira cobertura E2E de Pedidos: a membra pede, o prestador ve no painel e responde, a membra le a resposta. Relatorio: 29 imagens, 0 quebradas",
+        "Achados da simulacao 22/09 (HRN-004): (1) sem notificacao para a membra quando o prestador responde o pedido — NOTIF-PEDIDO-RESPOSTA; (2) com erro temporario do Portal a alternativa por identidade nao aparece nem abre pela URL — ONB-CPF-SEM-SAIDA; (3) o estado de acesso indisponivel diz 'fica em outra cidade' em vez de nomear a cidade — COMM-CIDADE-ROTULO; (4) depois de 'Pedido enviado' nao ha caminho para acompanhar o pedido — prova em NAV-PEDIDOS-ORFA; (5) o Explorar real nao tem 'Conteudos em destaque' nem 'Profissionais em destaque' da prancha 61 — ja coberto por RECON-W00-PLACEHOLDERS",
+        "22/09/2026, lote seguinte ao HRN-004: dois achados da simulacao corrigidos e fechados com a propria jornada como prova — NAV-PEDIDOS-ORFA (atalho do passo 17 virou clique) e COMM-CIDADE-ROTULO (estado de acesso indisponivel nomeia a cidade). Jornadas: 4 passed, 0 atalhos",
+        "22/09/2026 (HRN-005): rastreador de links em runtime verde — 0 links quebrados, 0 rotas sem porta; cinco orfas ganharam porta e tres viraram card (EVENTOS-CRIACAO-DUPLICADA, MSG-SEM-ENTRADA, ROTA-CONSENT-LEGADA)"
       ],
       "tests": [
         "npx pnpm@11.18.0 db:reset (com seed) em janela própria com o banco compartilhado coordenado",
         "npx pnpm@11.18.0 test:db (banco sem seed) antes de qualquer captura visual",
         "node scripts/visual/loop.mjs",
-        "npx pnpm@11.18.0 test:e2e --workers=1"
+        "npx pnpm@11.18.0 test:e2e --workers=1",
+        "JOURNEY_BASE_URL=http://127.0.0.1:3211 npx playwright test -c tests/e2e/journeys.playwright.config.ts && node scripts/visual/journey-report.mjs"
       ],
       "links": [
         "Execução dos lotes | ../../docs/agents/RECON-WEB-EXECUCAO.md",
@@ -2293,8 +2300,8 @@
         "ADR de anúncios | ../../docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-18",
-      "sourceRevision": "29dc42b"
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "8632239"
     },
     {
       "id": "BLOCK-SUSPENSION-EXPOSURE",
@@ -2558,23 +2565,35 @@
       "phase": "MVP-06",
       "priority": "P2",
       "category": "intelligence",
-      "status": "next",
+      "status": "done",
       "description": "A tela /pedidos existe, tem titulo Meus pedidos e lista os pedidos da pessoa, mas nada no produto leva ate ela. Varredura de 12/09/2026 em apps/web/app: os unicos links para /pedidos sao autolinks dentro da propria area (a lista e o workspace do pedido). O unico caminho externo do dominio leva a /pedidos/novo, a partir da ficha do prestador. Entao a pessoa consegue criar um pedido e nao consegue reencontrar os pedidos dela, a nao ser pelo link que aparece ao terminar a criacao. O RECON-042 atribuiu /pedidos ao container Perfil pelo DESIGN_SYSTEM 7.1; a atribuicao so vira verdade quando existir uma entrada em Perfil.",
       "checklist": [
-        "Decidir onde nasce a entrada: Perfil e o lugar que o DESIGN_SYSTEM 7.1 indica",
-        "Criar a entrada e conferir que ela aparece para quem nao tem pedido nenhum",
-        "Teste que reprova quando uma rota do mapa de identidade nao tem nenhum link de entrada fora da propria area",
-        "Reconferir o container de /pedidos depois que a entrada existir"
+        "Decidir onde nasce a entrada: Perfil e o lugar que o DESIGN_SYSTEM 7.1 indica [FEITO 22/09: atalhos do perfil com Meus pedidos, Meus anuncios e Configuracoes, rail da prancha 51]",
+        "Criar a entrada e conferir que ela aparece para quem nao tem pedido nenhum [FEITO 22/09: a entrada e estatica, nao depende de haver pedido; visivel em 375 e 1440 — abaixo de lg logo apos o cartao de identidade]",
+        "Porta no momento em que o pedido nasce [FEITO 22/09: o sucesso de /pedidos/novo ganhou 'Acompanhar pedido' para /pedidos/<id>]",
+        "Teste que reprova quando uma rota do mapa de identidade nao tem nenhum link de entrada fora da propria area [PARCIAL 22/09: journey-pedir-servico.spec.ts reprova se a entrada do Perfil ou o link do sucesso sumirem, e scripts/visual/flows/reachability.mjs reporta 0 orfas; transformar a analise de alcance em teste de CI ficou como item do TEST-MASSA-JORNADAS]",
+        "Reconferir o container de /pedidos depois que a entrada existir [FEITO 22/09: active-nav mapeia /pedidos para perfil, e a entrada agora vive no Perfil]"
       ],
-      "proof": [],
-      "tests": [],
+      "proof": [
+        "Simulacao de 22/09/2026 (HRN-004, tests/e2e/journey-pedir-servico.spec.ts): a descricao acima diz que o link aparece 'ao terminar a criacao', e o app real nao o tem — o sucesso de /pedidos/novo mostra 'Pedido enviado' com um unico link, 'Voltar ao perfil', para a ficha do prestador. A membra so reencontra o pedido pela URL; o passo 17-web-pedido-servico#0 fica registrado como ATALHO por isso",
+        "22/09/2026, build desta arvore na :3211: journey-pedir-servico.spec.ts passa com o passo 17-web-pedido-servico#0 alcancado por clique em 'Acompanhar pedido' (0 atalhos, antes 1) e a membra reencontra o pedido por Perfil > Meus pedidos. Regressao: member-profile-denials e shell-navigation 28 passed / 2 skipped nos tres viewports. reachability.mjs: 0 orfas"
+      ],
+      "tests": [
+        "tests/e2e/journey-pedir-servico.spec.ts",
+        "tests/e2e/member-profile-denials.spec.ts",
+        "tests/e2e/shell-navigation.spec.ts",
+        "node scripts/visual/flows/reachability.mjs"
+      ],
       "links": [
         "apps/web/app/(shell)/pedidos/page.tsx",
-        "apps/web/app/components/shell/active-nav.ts"
+        "apps/web/app/components/shell/active-nav.ts",
+        "apps/web/app/(shell)/profile/page.tsx",
+        "apps/web/app/(shell)/pedidos/novo/request-form.tsx"
       ],
-      "updatedAt": "2026-09-12",
-      "sourceRevision": "64b1c39",
-      "dependencies": []
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "037f610",
+      "dependencies": [],
+      "completedAt": "2026-09-22"
     },
     {
       "id": "RECON-039",
@@ -3071,6 +3090,406 @@
       "dependencies": [],
       "updatedAt": "2026-09-19",
       "sourceRevision": "90e4c94"
+    },
+    {
+      "phase": "Reconstrução",
+      "links": [
+        "apps/web/app/(shell)/notifications/deep-links.ts",
+        "apps/web/app/(provider)/prestador/pedidos/[id]/page.tsx",
+        "docs/decisions/ADR-20260922-aviso-da-primeira-resposta.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "f300b62d",
+      "id": "NOTIF-PEDIDO-RESPOSTA",
+      "title": "A membra nao e avisada quando o prestador responde o pedido",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "description": "Observado na simulacao de 22/09/2026 (HRN-004): o prestador responde o pedido pelo painel, a mensagem aparece em /pedidos/[id] para a membra, mas nenhuma notificacao chega a ela — /notifications de membro-1 so lista comentarios antigos. O tipo service_request e o deep-link /pedidos/[id] ja existem (deep-links.ts), mas hoje so o aviso de pedido cancelado pela purga os usa. Sem aviso e sem entrada para /pedidos (NAV-PEDIDOS-ORFA), a resposta do prestador nao tem como chegar a quem pediu. Entra em repo porque o conserto e um gatilho de notificacao em migration, e o conteudo do aviso e decisao de produto DECISAO DO DONO 22/09/2026: avisar so a primeira resposta do prestador (quando o pedido passa a Em conversa), sem o texto da mensagem — por exemplo \"Climatiza Manaus respondeu seu pedido\" —, levando a /pedidos/[id]. Segue em repo ate o ADR, por exigir migration. ADR aceito em 22/09/2026. Implementacao SEGURADA no mesmo dia: a premissa \"uma vez por pedido, na transicao\" falha porque todos os pedidos do par dividem a conversa — ver PEDIDO-CONVERSA-COMPARTILHADA. DESTRAVADO em 22/09/2026: PEDIDO-CONVERSA-COMPARTILHADA entregue, a transicao agora muda o pedido certo.",
+      "checklist": [
+        "Decidir o que avisa [FEITO 22/09: so a primeira resposta, sem o texto]",
+        "ADR-20260922-aviso-da-primeira-resposta aceito [FEITO 22/09]",
+        "Gatilho no banco com o tipo service_request existente, sem o texto [FEITO: 20260922161000, no ramo da transicao open -> in_conversation de send_conversation_message, honrando notification_preferences.messages]",
+        "pgTAP: o aviso chega so para quem pediu [FEITO: service-request-first-reply-notice.sql 8/8]",
+        "A central distingue os avisos de pedido pela action [FEITO: \"{prestador} respondeu seu pedido\"; o cancelamento segue neutro]",
+        "Trocar o atalho de 17-web-pedido-servico#0 pelo clique no aviso [FEITO de outro jeito: o passo 17 ja e clique em Acompanhar pedido; a jornada agora tambem abre a central e clica no aviso]"
+      ],
+      "proof": [
+        "tests/e2e/journey-pedir-servico.spec.ts passa: a resposta do prestador persiste e aparece para a membra em /pedidos/[id]",
+        "Mesma execucao: /notifications de membro-1 sem nenhum item de pedido",
+        "pgTAP service-request-first-reply-notice.sql 8/8: um aviso na primeira resposta e nenhum na segunda; destinatario quem pediu; ator nulo; tipo e alvo o pedido; mensagem de quem pediu nao avisa o prestador; nenhum terceiro; com messages desligado o aviso nao sai e a situacao muda mesmo assim",
+        "tests/unit/notifications/service-request-labels.test.ts: a resposta nao aparece como pedido encerrado; o cancelamento segue neutro; nome da ficha ou frase neutra; os dois levam a /pedidos/[id] sem ator",
+        "journey-pedir-servico.spec.ts: depois da resposta, a central da membra mostra \"Climatiza Manaus respondeu seu pedido\" e o clique abre o acompanhamento. Rodada final: 4 jornadas + rastreador 5 passed; regressao 57 passed / 1 failed — recommendation-reply-notify em strict mode (8 botoes Responder em /recommendations), acumulo de dados de rodadas anteriores no banco compartilhado, fora do escopo deste lote"
+      ],
+      "tests": ["tests/e2e/journey-pedir-servico.spec.ts"],
+      "completedAt": "2026-09-22"
+    },
+    {
+      "phase": "Reconstrução",
+      "links": [
+        "apps/web/app/(preauth)/onboarding/page.tsx",
+        "docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md",
+        "docs/decisions/ADR-20260922-identidade-quando-portal-falha.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "ec9928bf",
+      "id": "ONB-CPF-SEM-SAIDA",
+      "title": "Com o Portal fora, a verificacao por CPF nao oferece a identidade como alternativa",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Observado na simulacao de 22/09/2026 (HRN-004): a tela /onboarding promete 'Se nao conseguirmos confirmar, voce podera enviar sua identidade', e o DECISOES-2026-09-07 define CPF rapido com fallback por identidade. No resultado temporary_error (Portal indisponivel ou chave ausente) a pagina so mostra 'Estamos com uma instabilidade... tente mais tarde' e nao oferece a identidade; /onboarding/documento devolve para /onboarding. So o resultado rejected leva ao envio (onboarding/page.tsx). Com o Portal fora, quem chega fica sem caminho. Na mesma execucao, a tentativa com chave ausente nao apareceu na fila do operador. Entra em repo: liberar identidade no erro temporario toca verificacao e CPF (R3) e precisa da decisao do dono DECISAO DO DONO 22/09/2026: no erro temporario, oferecer o envio de identidade na hora — a mensagem de instabilidade fica, e \"Enviar identidade agora\" libera /onboarding/documento. Segue em repo ate o ADR que registra a decisao, por tocar verificacao de identidade (R3).",
+      "checklist": [
+        "Decidir se erro temporario libera o envio de identidade [FEITO 22/09: libera na hora]",
+        "Oferecer a saida na tela e abrir /onboarding/documento para esse estado [FEITO: \"Enviar identidade agora\"; o ramo de chave ausente passa a gravar temporary_error]",
+        "Conferir se a tentativa com erro temporario aparece na fila do operador [FEITO: depois do envio, \"Em analise · Documento para decidir\" em /admissions]",
+        "ADR-20260922-identidade-quando-portal-falha aceito [FEITO 22/09]",
+        "Trocar as lacunas 39 da jornada por passos observados [MOVIDO para ONB-IDENTIDADE-SEM-CIDADE: a aprovacao do documento esta quebrada antes deste ADR]"
+      ],
+      "proof": [
+        "tests/e2e/journey-entrar-e-ser-admitido.spec.ts: CPF -> alerta de instabilidade, permanece em /onboarding; goto /onboarding/documento volta para /onboarding",
+        "apps/web/app/(preauth)/onboarding/page.tsx: rejected -> /onboarding/documento; temporary_error -> so setError",
+        "journey-entrar-e-ser-admitido.spec.ts 2 passed: CPF -> instabilidade -> \"Enviar identidade agora\" -> envio do arquivo -> \"Documento enviado\". Banco: verification_outcomes pending, 1 documento; /admissions?q=<email> mostra \"Em analise · Documento para decidir\"",
+        "Unidade: verify-and-provision.test.ts (sem chave grava temporary_error por upsert_verification_outcome sem consumir tentativa; falha de gravacao sobe) e browser-outcome.test.ts (o reason tecnico nao chega ao navegador)"
+      ],
+      "tests": ["tests/e2e/journey-entrar-e-ser-admitido.spec.ts"],
+      "completedAt": "2026-09-22"
+    },
+    {
+      "phase": "Reconstrução",
+      "links": [
+        "apps/web/app/(shell)/communities/[id]/community-detail-screen.tsx",
+        "apps/web/app/(shell)/communities/[id]/community-detail-loaders.ts"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "037f610",
+      "id": "COMM-CIDADE-ROTULO",
+      "title": "Acesso indisponivel diz 'fica em outra cidade' sem nomear a cidade",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "done",
+      "description": "Observado na simulacao de 22/09/2026 (HRN-004, journey-quando-algo-falha): membro-1 (Manaus) abre a Vila Petropolis (Rio) e le 'Vila Petropolis fica em outra cidade'. O texto foi escrito para nomear a cidade (community-detail-screen.tsx usa cityLabel ?? 'outra cidade'), entao o rotulo chega vazio para quem nao e da cidade. Causa nao investigada: pode ser a leitura da localidade barrada para nao-membro; se for, a correcao nao pode abrir dado da localidade alem do nome. CAUSA medida em 22/09: a policy localities_select_same_membership so abre a propria cidade. CORRECAO sem tocar RLS nem migration: resolveCityLabel le com a sessao e, se vier vazio, le so city_name e state_code desta localidade pelo cliente de servidor — o mesmo catalogo IBGE que /api/localities/[uf] ja serve a qualquer pessoa",
+      "checklist": [
+        "Achar por que cityLabel chega nulo para membro de outra cidade [FEITO: RLS de localities restrita a propria cidade]",
+        "Nomear a cidade sem abrir mais que o nome [FEITO: recurso ao catalogo le so city_name e state_code, so do locality_id da comunidade que a pessoa ja le]",
+        "Afirmar o nome da cidade em journey-quando-algo-falha.spec.ts [FEITO: 'fica em Rio de Janeiro, RJ' e ausencia de 'outra cidade']"
+      ],
+      "proof": [
+        "tests/e2e/journey-quando-algo-falha.spec.ts, passo 60-web-estados#0",
+        "tests/unit/communities/community-city-label.test.ts: sessao que ja le nao toca o catalogo; de fora le so nome e UF desta localidade; sem catalogo fica nulo; falha de leitura lanca",
+        "22/09/2026, build desta arvore na :3211: journey-quando-algo-falha.spec.ts passa afirmando 'fica em Rio de Janeiro, RJ'"
+      ],
+      "tests": [
+        "tests/e2e/journey-quando-algo-falha.spec.ts",
+        "tests/unit/communities/community-city-label.test.ts"
+      ],
+      "completedAt": "2026-09-22"
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["docs/agents/tasks/HRN-005.task.yml"],
+      "dependencies": [],
+      "proof": [
+        "Baseline 22/09 (build 8632239, personas em serie): 0 quebrados, 33 rotas sem link, 8 orfas verdadeiras + /guide/[id]/correcao travada",
+        "Depois (build desta arvore na :3211): link-crawl.spec.ts 1 passed — 57 de 87 rotas alcancadas por link, 30 com porta declarada e justificada, 0 quebrados, 0 sem porta, 0 portas velhas",
+        "portas-de-entrada.spec.ts 4 passed: dono edita o imovel pelo detalhe; outra conta nao ve o link e a URL direta cai em 'Imovel nao encontrado'; Imoveis leva a anunciar e a alertas; o cartao do Guia abre a referencia",
+        "Medida invalidada e refeita: com as personas em paralelo o Supabase local deixou de responder my_account_kind, o proxy falhou fechado em /onboarding e o operador foi medido como quem nao tem conta. O rastreador roda em serie e reprova persona que nao entrou onde devia",
+        "22/09, depois do icone de conversas: medida tornada deterministica — a rota onde um redirect deixa a pessoa e percorrida mas nao conta como alcancada, porque dependia de qual link o rastreador seguiu antes. Duas rodadas seguidas identicas: 56 rotas por link, 0 quebrados, 0 sem porta, 0 portas velhas; /community e /onboarding/locality declaradas como FLUXO"
+      ],
+      "tests": [
+        "tests/e2e/link-crawl.spec.ts",
+        "tests/e2e/portas-de-entrada.spec.ts",
+        "tests/unit/visual/crawl-model.test.ts"
+      ],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "8632239",
+      "id": "NAV-ROTAS-SEM-PORTA",
+      "title": "Nenhum link leva a lugar nenhum e nenhuma tela so abre pela URL",
+      "priority": "P1",
+      "category": "testing",
+      "status": "done",
+      "completedAt": "2026-09-22",
+      "description": "Pedido do dono em 22/09/2026: chegar a um local apenas com o link e severidade alta. tests/e2e/link-crawl.spec.ts anda como seis personas, segue todo <a href> renderizado e reprova link para rota inexistente, 404 (inclusive o 200 com tela de nao encontrado do streaming) e tela de erro, rota de pagina sem link e sem porta declarada, e porta declarada que ficou velha. Contrato HRN-005. A analise estatica reachability.mjs ficou como pista: acusava dois falsos 'links quebrados' (concatenacao) e nao via nenhuma orfa real.",
+      "checklist": [
+        "Rastreador em runtime com prova de entrada por persona [FEITO]",
+        "Triagem rota a rota das 33 sem link: FLUXO, EXTERNO, BOTAO, CONDICIONAL, DIVIDA ou ORFA [FEITO]",
+        "Porta para /guide/[id] (nome do item no cartao e em Atualizados recentemente) [FEITO]",
+        "Portas para /imoveis/novo e /imoveis/alertas no cabecalho de /imoveis [FEITO]",
+        "'Editar anuncio' no detalhe do imovel, so para o dono, com negativo [FEITO]",
+        "'Prestadores atestados' no hub do console do dono [FEITO]",
+        "Dividas com card: EVENTOS-CRIACAO-DUPLICADA, MSG-SEM-ENTRADA, ROTA-CONSENT-LEGADA [FEITO]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": [
+        "apps/web/app/(shell)/events/page.tsx",
+        "apps/web/app/(shell)/events/novo/page.tsx"
+      ],
+      "dependencies": [],
+      "proof": [],
+      "tests": ["tests/e2e/link-crawl.spec.ts"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "8632239",
+      "id": "EVENTOS-CRIACAO-DUPLICADA",
+      "title": "Criar evento existe duas vezes e a rota dedicada nao tem porta",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Achado do rastreador de 22/09/2026 (HRN-005). /events cria evento por um formulario embutido (setView('create'), events/page.tsx) e /events/novo (RECON-029, prancha 70) cria pela rota dedicada com EventForm, a mesma de /events/[id]/editar. Nenhum link leva a /events/novo. A funcao nao esta bloqueada, mas ha dois caminhos de criacao que podem divergir. Consolidar num so: os botoes 'Criar evento' levam a /events/novo e o formulario embutido sai.",
+      "checklist": [
+        "Conferir que /events/novo cobre tudo o que o formulario embutido faz (alcance, grupo, comunidade)",
+        "Trocar os botoes 'Criar evento' de /events por link para /events/novo",
+        "Remover o formulario embutido e o estado que so ele usa",
+        "Ajustar manaus-pilot-full-journey e empty-locality, que esperam botao 'Criar evento'",
+        "Tirar /events/novo de PORTAS_FORA_DO_LINK em link-crawl.spec.ts"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": [
+        "docs/design/visual-guide-2026-09-06/75-web-conversas.png",
+        "apps/web/app/(shell)/messages/conversation-inbox.tsx"
+      ],
+      "dependencies": [],
+      "proof": [
+        "Contador: countUnreadConversations (lib/messages/unread-conversations.ts) conta CONVERSAS com mensagem de terceiros depois do last_read_at, com duas leituras RLS-scoped no layout do shell e teto de 200 linhas, sem N+1 e sem migration. tests/unit/messages/unread-conversations.test.ts: 4 passed",
+        "journey-pedir-servico.spec.ts passa com o ciclo do retorno: apos a resposta do prestador o icone diz \"Conversas, N com mensagem nova\"; aberto o acompanhamento, volta a \"Conversas\". portas-de-entrada.spec.ts: o icone abre /messages em 375, 768 e 1440. Regressao shell-navigation, shell-accessibility-denials, nav-container-invariant, recon-032-messages: 74 passed / 10 skipped",
+        "Achado no caminho: /pedidos/[id] so marcava lida ao clicar numa resposta ou enviar mensagem, embora o painel mostre a conversa inteira. Agora registra a leitura no servidor ao abrir, e mantem nesta visita os marcadores de nao lida da prancha 17"
+      ],
+      "tests": ["tests/e2e/link-crawl.spec.ts"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "506abff7",
+      "id": "MSG-SEM-ENTRADA",
+      "title": "A caixa de conversas nao tem entrada na navegacao",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Achado do rastreador de 22/09/2026 (HRN-005). /messages so abre por 'Entrar em contato' na ficha do prestador, 'Tenho interesse' no anuncio ou por notificacao. Quem ja tem conversas nao tem como abrir a caixa quando quer. A prancha 75 tambem nao desenha a entrada (lateral com Inicio, Explorar, Comunidades, Perfil, Salvos e Notificacoes). Bloqueado em decisao do dono: onde a entrada nasce — item na lateral, icone no cabecalho ao lado do sino, ou atalho no Perfil. DECISAO DO DONO 22/09/2026: icone de conversas no cabecalho, ao lado do sino, com contador de nao lidas; a navegacao primaria nao muda.",
+      "checklist": [
+        "Decisao do dono sobre o lugar da entrada [FEITO 22/09: icone no cabecalho ao lado do sino, com contador de nao lidas]",
+        "Criar a entrada e provar em 375 e 1440 [FEITO: portas-de-entrada.spec.ts nas tres larguras]",
+        "Tirar /messages de PORTAS_FORA_DO_LINK em link-crawl.spec.ts [FEITO: o rastreador alcanca /messages por link]",
+        "Abrir o acompanhamento do pedido registra a leitura [FEITO: sem isso o badge contava como nova uma resposta ja vista]"
+      ],
+      "completedAt": "2026-09-22"
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["apps/web/app/(preauth)/consent/page.tsx"],
+      "dependencies": [],
+      "proof": [],
+      "tests": ["tests/e2e/link-crawl.spec.ts", "tests/e2e/manaus-pilot-denials.spec.ts"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "8632239",
+      "id": "ROTA-CONSENT-LEGADA",
+      "title": "/consent continua servida depois que o portao saiu do produto",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "description": "Achado do rastreador de 22/09/2026 (HRN-005). O ADR-20260907-consentimento-no-cadastro tirou o portao de /consent (o aceite vive no cadastro), mas a rota segue servida e nada leva ate ela. manaus-pilot-denials.spec.ts ainda a visita. Decidir entre remover a rota (com redirect para quem tem link antigo) ou mante-la como destino legado declarado.",
+      "checklist": [
+        "Conferir quem ainda depende de /consent (proxy.ts, active-nav.ts, specs de negacao)",
+        "Remover ou redirecionar, ajustando os specs",
+        "Tirar /consent de PORTAS_FORA_DO_LINK em link-crawl.spec.ts"
+      ]
+    },
+    {
+      "id": "ONB-IDENTIDADE-SEM-CIDADE",
+      "title": "Ninguem novo consegue ser aprovado por identidade: a aprovacao exige cidade que o fluxo so pede depois",
+      "phase": "Reconstrução",
+      "priority": "P0",
+      "category": "backend",
+      "status": "done",
+      "description": "Achado na jornada simulada de 22/09/2026, ao implementar o ADR-20260922-identidade-quando-portal-falha. decide_verification_document (supabase/migrations/20260822215307_outbox_verification_decision.sql) so aprova quem ja tem linha em locality_memberships — levanta \"cannot approve: no locality for the user\" — e usa essa cidade para criar membership e profile. O onboarding atual pede a cidade DEPOIS da verificacao (verificado sem membership -> /onboarding/locality -> provision_member_locality). Logo, nenhuma pessoa nova passa pela identidade: nem pelo erro temporario do Portal (ADR de 22/09) nem pelo CPF recusado, caminho que ja existia. Medido: o operador clica Aprovar documento e recebe \"Nao foi possivel registrar agora\"; o log do servidor registra o erro do RPC. Bloqueado: mudar o RPC security definer do schema private e R3 e precisa de decisao do dono e ADR.",
+      "checklist": [
+        "Decisao do dono [FEITO 22/09: aprovar sem cidade]",
+        "ADR-20260922-aprovacao-por-identidade-sem-cidade aceito [FEITO 22/09]",
+        "Migration nova com pgTAP [FEITO: 20260922153901_approve_identity_without_locality; admissions-decision.sql 21/21, com o caso sem cidade afirmando aprovado, verified, reviewed_locality_id nulo, nenhuma membership, nenhum profile e o e-mail enfileirado]",
+        "Lacunas 39 da jornada viram passos observados [FEITO]"
+      ],
+      "proof": [
+        "journey-entrar-e-ser-admitido.spec.ts: o envio chega a fila; aprovar falha com \"cannot approve: no locality for the user\" (log admission decide failed, 22/09 15:21)",
+        "onboarding/locality/page.tsx: a cidade e escolhida depois da verificacao; o proxy leva verificado sem membership para la",
+        "journey-entrar-e-ser-admitido.spec.ts 2 passed: cadastro -> CPF com Portal fora -> Enviar identidade agora -> operador aprova (log admission decide ok) -> escolhe Manaus -> personalizacao -> boas-vindas. Banco: verified, 1 membership, 1 profile. Unica lacuna restante: 37, confirmacao de e-mail desligada no stack local",
+        "Regressao pgTAP: verification-document-status.sql 7/7, verification-documents.sql 12/12",
+        "Achado no caminho e corrigido: /onboarding/perfil estava fora da allowlist do proxy, e o verificado sem membership voltava a /onboarding/locality ao clicar Continuar — ninguem novo concluia o cadastro, nem pelo CPF aprovado. tests/unit/onboarding/onboarding-proxy-allowlist.test.ts",
+        "Migration aplicada no banco local compartilhado por psql, sem reset: supabase migration up recusou porque o banco tem 20260921134129 (guide_candidate_queue) e 20260922103620 (feed_community_cursor_pagination) de outro checkout; o historico dessas nao foi tocado"
+      ],
+      "tests": ["tests/e2e/journey-entrar-e-ser-admitido.spec.ts"],
+      "links": [
+        "supabase/migrations/20260822215307_outbox_verification_decision.sql",
+        "docs/decisions/ADR-20260922-identidade-quando-portal-falha.md",
+        "docs/decisions/ADR-20260922-aprovacao-por-identidade-sem-cidade.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "c996fc9d",
+      "completedAt": "2026-09-22"
+    },
+    {
+      "id": "PEDIDO-CONVERSA-COMPARTILHADA",
+      "title": "Todos os pedidos do mesmo par dividem uma conversa: situacao errada e mensagens misturadas",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "description": "Achado em 22/09/2026 ao implementar o ADR-20260922-aviso-da-primeira-resposta. dm_conversations tem unique (participant_a, participant_b), e create_service_request (20260912063553_reconcile_service_requests.sql) reaproveita a conversa do par. Consequencias medidas no banco local (membro-1 x Climatiza Manaus): 9 pedidos na MESMA conversa; 4 continuam open embora o prestador tenha respondido, porque send_conversation_message localiza o pedido por conversation_id com select into e muda um qualquer; e /pedidos/[id] carrega dm_messages pela conversa, entao cada pedido mostra as 12 mensagens de todos os pedidos do par. Bloqueado: resolver mexe no modelo de conversa (R3) e muda a premissa do aviso da primeira resposta.",
+      "checklist": [
+        "Decisao do dono [FEITO 22/09: conversa por pedido]",
+        "ADR-20260922-conversa-por-pedido aceito [FEITO 22/09]",
+        "Migrations novas com pgTAP [FEITO: 20260922160000 (valor service_request no enum) e 20260922160100 (indice parcial por par, unico por pedido; create_service_request, open_conversation e send_conversation_message)]",
+        "Cada pedido novo mostra so a sua conversa, e a primeira resposta muda o pedido certo [FEITO]",
+        "Legado declarado: pedidos anteriores continuam na conversa compartilhada, porque as mensagens gravadas nao dizem de qual pedido sao; neles a resposta muda o aberto mais recente"
+      ],
+      "proof": [
+        "select conversation_id, status, count(*) de service_requests de membro-1: 41000000-...-023 | open 4 | in_conversation 5",
+        "dm_messages da conversa 023: 12 linhas, todas carregadas em qualquer /pedidos/[id] do par (page.tsx filtra so por conversation_id)",
+        "service-request-conversation-per-request.sql 11/11: dois pedidos do par, duas conversas com o proprio pedido como contexto; a resposta muda so o pedido dela e nao aparece no outro; open_conversation recusa contexto service_request (42501) e o contato geral segue abrindo a conversa do par, unica; no legado a resposta muda o aberto mais recente",
+        "Regressao pgTAP no banco migrado: service-requests 31/31 (asserção do contexto atualizada para o contrato novo), service-request-tracking 26/26, account-deletion 41/41, dm-context-allowed 26/26, dm-context-denials 25/25, event-questions 15/15, listing-market 37/37, reports-unified-targets 10/10, rls-or-column-regression 69/69. service-request-cancelled-notice 6/8 e full-regression 81/85 contam a tabela inteira e o banco compartilhado tem o seed (armadilha do AGENTS.md); atribuicao nao provada por reset, que o banco compartilhado nao permite",
+        "E2E contra o build desta arvore: as quatro jornadas passam, e recon-032-messages, provider-vitrine, portas-de-entrada e event-invites 15 passed. Banco: o pedido novo da jornada esta in_conversation, com conversa de contexto service_request = o proprio pedido e 1 mensagem",
+        "Caixa de conversas: rotulos para provider, listing, event_question e service_request, que antes apareciam como o nome cru do enum"
+      ],
+      "tests": ["tests/e2e/journey-pedir-servico.spec.ts"],
+      "links": [
+        "supabase/migrations/20260912063553_reconcile_service_requests.sql",
+        "supabase/migrations/20260915101543_account_deletion.sql",
+        "apps/web/app/(shell)/pedidos/[id]/page.tsx",
+        "docs/decisions/ADR-20260922-conversa-por-pedido.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "ae4f833a",
+      "completedAt": "2026-09-22"
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["apps/web/app/api/onboarding/route.ts", "apps/web/proxy.ts"],
+      "dependencies": [],
+      "proof": [
+        "Depois da correcao, a mesma chamada: provision 403 verification is required, 0 membership, 0 perfil",
+        "tests/unit/onboarding/provision-requires-verification.test.ts 7 casos; jornada de entrada (verificada) segue passando"
+      ],
+      "tests": [
+        "tests/unit/onboarding/provision-requires-verification.test.ts",
+        "tests/e2e/journey-entrar-e-ser-admitido.spec.ts"
+      ],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "de05e856",
+      "id": "SEC-PROVISION-SEM-VERIFICACAO",
+      "title": "Qualquer conta logada virava membro sem verificacao",
+      "priority": "P0",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-09-22",
+      "description": "Achado CRITICAL da auditoria independente (security-auditor) de 22/09/2026 sobre ae4f833a, f300b62d e de05e856. /api/onboarding action provision conferia so o consentimento: conta nunca verificada, pendente, recusada ou prestador ganhava locality_membership e perfil, e com isso leitura da cidade (is_locality_member nao consulta verificacao). A causa e de 17/08 (9ebea59c); o ae4f833a, ao liberar /onboarding/perfil no proxy, transformou a chamada manual num caminho de cliques na interface, e o comentario do proxy afirmava uma reconferencia que nao existia.",
+      "checklist": [
+        "Reproduzir [FEITO: conta nova nunca verificada -> provision 200, 1 membership, 1 perfil]",
+        "provision exige read_verification_status = verified, lido pelo usuario do token; 403 generico caso contrario [FEITO]",
+        "Testes negativos para nunca verificou, pendente, erro temporario, recusada; situacao vinda do corpo ignorada; falha de leitura nao libera [FEITO]",
+        "Comentario falso do proxy corrigido [FEITO]",
+        "Artefato da reproducao removido do banco local (membership e perfil de repro-mucwb9e0) [FEITO]",
+        "Defesa em profundidade: provision_member_locality recusar quem nao e verified nem familia aceita [PENDENTE: R3, fica como proximo passo]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["apps/web/app/(preauth)/onboarding/perfil/perfil-actions.ts"],
+      "dependencies": [],
+      "proof": [
+        "tests/unit/onboarding/interest-options-require-verification.test.ts 6/6; a lista nem e consultada sem verified"
+      ],
+      "tests": ["tests/unit/onboarding/interest-options-require-verification.test.ts"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "de05e856",
+      "id": "SEC-INTERESSES-SEM-VERIFICACAO",
+      "title": "Personalizacao listava grupos de qualquer cidade para conta nao verificada",
+      "priority": "P2",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-09-22",
+      "description": "Achado MEDIUM da auditoria de 22/09/2026. loadInterestOptionsAction (onboarding/perfil) lia list_available_groups_for_interests com service_role e p_locality_id do cliente, conferindo so a sessao. Agora exige verificacao verified pelo usuario da sessao antes de listar.",
+      "checklist": [
+        "Exigir verified antes de listar [FEITO]",
+        "Teste negativo por situacao e falha de leitura [FEITO]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["supabase/migrations/20260922162000_service_request_block_checks.sql"],
+      "dependencies": [],
+      "proof": [
+        "pgTAP: bloqueado pelo prestador e quem bloqueou recebem 42501 blocked; pedido sem bloqueio segue criando"
+      ],
+      "tests": ["supabase/tests/service-request-conversation-per-request.sql"],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "de05e856",
+      "id": "SEC-PEDIDO-SEM-BLOQUEIO",
+      "title": "Pedido de servico ignorava bloqueio e exclusao de conta",
+      "priority": "P2",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-09-22",
+      "description": "Achado MEDIUM da auditoria de 22/09/2026 sobre a conversa por pedido. create_service_request nao conferia dm_blocks nem account_deletion_requested (pre-existente), e agora cada pedido abre uma conversa nova — quem foi bloqueado seguia mandando pedidos. O ADR-20260922-conversa-por-pedido ja dizia que bloqueios valem para as duas conversas. Migration 20260922162000 aplica as mesmas regras de open_conversation.",
+      "checklist": [
+        "Conferir bloqueio nos dois sentidos e exclusao de conta [FEITO]",
+        "pgTAP [FEITO: service-request-conversation-per-request.sql 13/13]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": [
+        "supabase/migrations/20260922160100_conversation_per_request.sql",
+        "supabase/migrations/20260923120000_service_request_open_cap.sql",
+        "docs/decisions/ADR-20260923-teto-de-pedidos-por-par.md",
+        "apps/web/app/(shell)/pedidos/novo/actions.ts"
+      ],
+      "dependencies": [],
+      "proof": [
+        "tests/unit/service-requests/open-cap-message.test.ts 3/3: o 54000 vira a frase com a saida ('Feche ou cancele um para enviar outro'), outra falha continua no aviso generico que preserva o texto, e o caminho feliz devolve o pedido",
+        "npx pnpm@11.18.0 gate em 23/09/2026: lint, typecheck, test (951 unit + 189 + 76 mobile + 19 web + 114 de escopo) e secrets verdes; o build foi pulado por falta do arquivo de ambiente local nesta arvore",
+        "PENDENTE de execucao: supabase/tests/service-request-open-cap.sql (8 asserts) nao rodou -- o Docker e a stack Supabase nao subiram nesta maquina em 23/09. Proximo passo concreto: subir a stack, recriar o banco local e rodar a suite pgTAP"
+      ],
+      "tests": [
+        "supabase/tests/service-request-open-cap.sql",
+        "tests/unit/service-requests/open-cap-message.test.ts"
+      ],
+      "updatedAt": "2026-09-23",
+      "sourceRevision": "28df5b8d",
+      "id": "PEDIDO-TETO-POR-PAR",
+      "title": "Nao ha teto de pedidos abertos entre a mesma pessoa e o mesmo prestador",
+      "priority": "P2",
+      "category": "backend",
+      "status": "now",
+      "description": "Achado MEDIUM (parte 2) da auditoria de 22/09/2026. Com uma conversa por pedido, uma pessoa pode abrir quantos pedidos quiser para o mesmo prestador; a chave de idempotencia e do chamador e nao limita volume. Decidir o teto (ex.: pedidos abertos por par, ou por janela de tempo) e decisao de produto; a regra antiabuso de uma conversa por par existia para isso.",
+      "checklist": [
+        "Decisao do dono sobre o teto [FEITO 23/09: cinco pedidos em aberto por par, entre tres opcoes apresentadas]",
+        "ADR-20260923-teto-de-pedidos-por-par aceito [FEITO 23/09]",
+        "Migration com pgTAP [ESCRITA: 20260923120000_service_request_open_cap.sql e supabase/tests/service-request-open-cap.sql; FALTA aplicar e rodar a suite pgTAP, que exige a stack Supabase]",
+        "A recusa diz a saida na tela [FEITO: 54000 traduzido na action do formulario]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["supabase/migrations/20260911051230_event_question_thread.sql"],
+      "dependencies": [],
+      "proof": [],
+      "tests": [],
+      "updatedAt": "2026-09-22",
+      "sourceRevision": "de05e856",
+      "id": "EVENTO-PERGUNTA-SELECT-INTO",
+      "title": "open_event_question pode recusar sem motivo quando o par tem conversas de pedido",
+      "priority": "P3",
+      "category": "backend",
+      "status": "next",
+      "description": "Achado LOW da auditoria de 22/09/2026. open_event_question (20260911051230_event_question_thread.sql:73-84) faz select ... into pela dupla esperando uma linha; com conversas de pedido, o par pode ter varias, e o Postgres escolhe uma arbitraria — pode recusar (\"another context\") mesmo com a conversa de pergunta existindo. Falha fechada, sem acesso indevido.",
+      "checklist": [
+        "Filtrar por context_type <> service_request na busca da conversa do par",
+        "pgTAP com par que tem conversa de pedido e de pergunta"
+      ]
     }
   ]
 }

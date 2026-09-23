@@ -1,7 +1,7 @@
 "use client"
 
 import { Button, Tabs } from "@heroui/react"
-import { CalendarDays, ChevronRight, ShieldCheck, UserX } from "lucide-react"
+import { CalendarDays, ChevronRight, ClipboardList, ShieldCheck, UserX } from "lucide-react"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
@@ -19,6 +19,8 @@ import {
   type ReportTarget,
   rendersWithActor,
   resolveNotificationHref,
+  SERVICE_REQUEST_FIRST_REPLY,
+  serviceRequestReplyLabel,
 } from "./deep-links"
 
 // RECON-006 (prancha 54-web-retorno): central de retorno. A prancha define a
@@ -114,6 +116,8 @@ function excerpt(text: string | null, max = 72): string | null {
 type Enrichment = {
   actorNames: Map<string, string>
   subjects: Map<string, string>
+  /** Nome da ficha do prestador, por notificação de primeira resposta. */
+  providerNames: Map<string, string>
 }
 
 // Assunto por tipo: o alvo da notificação existe e é legível pela RLS do
@@ -123,7 +127,11 @@ async function loadEnrichment(
   supabase: ReturnType<typeof createBrowserClient>,
   notifications: NotificationRow[],
 ): Promise<Enrichment> {
-  const enrichment: Enrichment = { actorNames: new Map(), subjects: new Map() }
+  const enrichment: Enrichment = {
+    actorNames: new Map(),
+    subjects: new Map(),
+    providerNames: new Map(),
+  }
 
   const actorIds = [
     ...new Set(
@@ -143,7 +151,11 @@ async function loadEnrichment(
     .filter((n) => n.type === "recommendation_reply")
     .map((n) => n.target_id)
 
-  const [actors, posts, groups, events, requests] = await Promise.all([
+  const replyRequestIds = notifications
+    .filter((n) => n.type === "service_request" && n.action === SERVICE_REQUEST_FIRST_REPLY)
+    .map((n) => n.target_id)
+
+  const [actors, posts, groups, events, requests, replyRequests] = await Promise.all([
     actorIds.length > 0
       ? supabase.from("profiles").select("user_id, display_name").in("user_id", actorIds)
       : Promise.resolve({ data: null }),
@@ -158,6 +170,13 @@ async function loadEnrichment(
       : Promise.resolve({ data: null }),
     requestIds.length > 0
       ? supabase.from("recommendation_requests").select("id, title").in("id", requestIds)
+      : Promise.resolve({ data: null }),
+    // Quem pediu lê o próprio pedido (RLS) e, por ele, o nome da ficha.
+    replyRequestIds.length > 0
+      ? supabase
+          .from("service_requests")
+          .select("id, provider_profiles(display_name)")
+          .in("id", replyRequestIds)
       : Promise.resolve({ data: null }),
   ])
 
@@ -183,7 +202,19 @@ async function loadEnrichment(
     subjectByTarget.set(`request:${row.id}`, row.title)
   }
 
+  const providerByRequest = new Map<string, string>()
+  for (const row of (replyRequests.data as
+    | { id: string; provider_profiles: { display_name: string } | null }[]
+    | null) ?? []) {
+    const name = row.provider_profiles?.display_name?.trim()
+    if (name) providerByRequest.set(row.id, name)
+  }
+
   for (const n of notifications) {
+    if (n.type === "service_request" && n.action === SERVICE_REQUEST_FIRST_REPLY) {
+      const name = providerByRequest.get(n.target_id)
+      if (name) enrichment.providerNames.set(n.id, name)
+    }
     const key =
       n.type === "comment"
         ? `post:${n.target_id}`
@@ -257,6 +288,7 @@ export default function NotificationsPage() {
   const [enrichment, setEnrichment] = useState<Enrichment>({
     actorNames: new Map(),
     subjects: new Map(),
+    providerNames: new Map(),
   })
   const supabase = createBrowserClient()
 
@@ -520,7 +552,13 @@ export default function NotificationsPage() {
                         ? (enrichment.actorNames.get(notification.actor_user_id) ?? null)
                         : null
                       const subject = enrichment.subjects.get(notification.id) ?? null
-                      const label = formatNotificationLabel(notification)
+                      const label =
+                        notification.type === "service_request" &&
+                        notification.action === SERVICE_REQUEST_FIRST_REPLY
+                          ? serviceRequestReplyLabel(
+                              enrichment.providerNames.get(notification.id) ?? null,
+                            )
+                          : formatNotificationLabel(notification)
                       return (
                         <li key={notification.id}>
                           {/* A <div role="button">, not a native <button>: the
@@ -558,6 +596,8 @@ export default function NotificationsPage() {
                                   <ShieldCheck size={18} />
                                 ) : notification.type === "admission_rejected" ? (
                                   <UserX size={18} />
+                                ) : notification.type === "service_request" ? (
+                                  <ClipboardList size={18} />
                                 ) : (
                                   <CalendarDays size={18} />
                                 )}

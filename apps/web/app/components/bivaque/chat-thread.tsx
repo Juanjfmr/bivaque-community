@@ -15,6 +15,12 @@ const CONTEXT_LABELS: Record<string, string> = {
   shared_event: "Evento em comum",
   recommendation_thread: "Recomendação",
   accepted_family: "Família",
+  // Sem estes, a caixa mostrava o nome cru do enum ("provider", "listing"...).
+  provider: "Prestador",
+  listing: "Anúncio",
+  event_question: "Pergunta sobre evento",
+  // ADR-20260922-conversa-por-pedido: cada pedido tem a sua conversa.
+  service_request: "Pedido de serviço",
 }
 
 interface ChatThreadProps {
