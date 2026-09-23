@@ -10,7 +10,7 @@ import {
   TextArea,
   useOverlayState,
 } from "@heroui/react"
-import { ChevronRight, MapPin, Settings } from "lucide-react"
+import { ChevronRight, ClipboardList, MapPin, Settings, Tag } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
@@ -53,6 +53,36 @@ import NotificationPreferencesSection from "./notification-preferences-section"
 // valor digitado não se perde.
 // Nada aqui vem de fixture: nome, cidade, atividade e foto vêm de contexto
 // ou de consulta real; sem dado, estado vazio honesto.
+
+const PROFILE_SHORTCUTS = [
+  { href: "/pedidos", label: "Meus pedidos", hint: "Acompanhe seus pedidos", Icon: ClipboardList },
+  { href: "/meus-anuncios", label: "Meus anúncios", hint: "Gerencie seus anúncios", Icon: Tag },
+  { href: "#configuracoes", label: "Configurações", hint: "Gerencie sua conta", Icon: Settings },
+] as const
+
+// Só uma das duas cópias fica visível por largura; a escondida sai da árvore de acessibilidade.
+function ProfileShortcuts({ className }: { className: string }) {
+  return (
+    <nav aria-label="Atalhos do perfil" className={`space-y-3 ${className}`}>
+      {PROFILE_SHORTCUTS.map(({ href, label, hint, Icon }) => (
+        <a
+          key={href}
+          href={href}
+          className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border bg-[var(--surface)] p-4 transition-colors hover:bg-[var(--surface-sunken)]"
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--muted)]" />
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">{label}</span>
+              <span className="block text-xs text-muted">{hint}</span>
+            </span>
+          </span>
+          <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--muted)]" />
+        </a>
+      ))}
+    </nav>
+  )
+}
 
 interface ProfileRow {
   user_id: string
@@ -393,6 +423,8 @@ export default function ProfilePage() {
             </div>
           </header>
 
+          <ProfileShortcuts className="lg:hidden" />
+
           <section
             aria-labelledby="edit-profile-heading"
             className="rounded-xl border border-border bg-[var(--surface)] p-6"
@@ -626,27 +658,14 @@ export default function ProfilePage() {
           </section>
         </div>
 
-        {/* Rail da prancha 51: "Meus anúncios" e "Meu negócio" não entram —
-            nenhuma rota existe hoje para eles, e link morto é proibição
-            explícita do contrato. O item que tem destino real (esta mesma
-            página, seção Configurações) fica. */}
-        <aside aria-label="Atalhos do perfil" className="hidden lg:block">
-          <div className="sticky top-6 space-y-3">
-            <a
-              href="#configuracoes"
-              className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border bg-[var(--surface)] p-4 transition-colors hover:bg-[var(--surface-sunken)]"
-            >
-              <span className="flex min-w-0 items-center gap-3">
-                <Settings aria-hidden="true" className="h-5 w-5 shrink-0 text-[var(--muted)]" />
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium">Configurações</span>
-                  <span className="block text-xs text-muted">Gerencie sua conta</span>
-                </span>
-              </span>
-              <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--muted)]" />
-            </a>
-          </div>
-        </aside>
+        {/* Rail da prancha 51. "Meus pedidos" entra porque o DESIGN_SYSTEM 7.1
+            põe /pedidos no Perfil e nada mais levava até lá (NAV-PEDIDOS-ORFA).
+            "Meu negócio" não entra: o painel do prestador é outra conta, não o
+            perfil do membro. Abaixo de lg a mesma lista vem logo depois do
+            cartão de identidade — esconder deixava o celular sem a entrada. */}
+        <div className="hidden lg:block">
+          <ProfileShortcuts className="lg:sticky lg:top-6" />
+        </div>
       </div>
 
       <Modal state={signOutModal}>

@@ -126,11 +126,20 @@ export async function proxy(request: NextRequest) {
   // documento rejeitado, manda de volta para cá, em laço. A página decide o
   // estado (pendente/verificado/sem direito) sozinha, então liberar o path é
   // seguro: quem não deve ver o formulário é redirecionado por ela.
+  // /onboarding/perfil (prancha 39, personalização) é o passo seguinte à cidade:
+  // fora da allowlist, o verificado sem membership era devolvido a
+  // /onboarding/locality ao clicar Continuar, e NINGUÉM novo concluía o
+  // cadastro — achado da jornada simulada de 22/09/2026. A página decide o
+  // estado sozinha (sem cidade guardada e sem vínculo, volta para a cidade). A
+  // autorização NÃO é desta allowlist: /api/onboarding `provision` exige
+  // verificação `verified`, lida no servidor pelo usuário do token, e recusa o
+  // resto com 403 (tests/unit/onboarding/provision-requires-verification.test.ts).
   if (
     pathname === "/onboarding" ||
     pathname.startsWith("/onboarding/status") ||
     pathname.startsWith("/onboarding/documento") ||
-    pathname.startsWith("/onboarding/locality")
+    pathname.startsWith("/onboarding/locality") ||
+    pathname.startsWith("/onboarding/perfil")
   ) {
     return supabaseResponse
   }

@@ -128,7 +128,15 @@ export function encodeAuthCookieValue(body: PasswordGrantBody, email: string): s
  * authenticated shell instead of redirecting to /login.
  */
 export async function seedSession(context: BrowserContext): Promise<void> {
-  const { anonKey, email, password } = requireEnv()
+  await signInAs(context, requireEnv().email)
+}
+
+/**
+ * Same as seedSession, for any seeded persona. Every seed account shares the one
+ * disposable password (supabase/seed.sql), so only the e-mail changes.
+ */
+export async function signInAs(context: BrowserContext, email: string): Promise<void> {
+  const { anonKey, password } = requireEnv()
 
   const api = await request.newContext()
   const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {

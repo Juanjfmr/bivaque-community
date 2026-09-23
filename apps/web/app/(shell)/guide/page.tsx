@@ -12,6 +12,7 @@ import {
   Lightbulb,
   Search,
 } from "lucide-react"
+import type { Route } from "next"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
@@ -516,7 +517,12 @@ function GuideContent() {
                       <li key={entry.id} className="flex items-center gap-3 px-4 py-3">
                         <Icon size={18} aria-hidden="true" className="shrink-0 text-muted" />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{entry.name}</p>
+                          <Link
+                            href={`/guide/${entry.id}` as Route}
+                            className="block truncate text-sm font-medium transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                          >
+                            {entry.name}
+                          </Link>
                           <p className="truncate text-xs text-muted">
                             {CATEGORY_LABELS[entry.category]}
                           </p>
@@ -665,7 +671,16 @@ function GuideEntryCard({
                 <Bookmark size={18} aria-hidden="true" fill={saved ? "currentColor" : "none"} />
               </button>
             </div>
-            <h3 className="mt-0.5 text-base font-semibold">{entry.name}</h3>
+            {/* A porta para a referência completa (prancha 25). Sem ela, /guide/[id]
+                só se alcançava digitando a URL — achado do rastreador de links. */}
+            <h3 className="mt-0.5 text-base font-semibold">
+              <Link
+                href={`/guide/${entry.id}` as Route}
+                className="inline-flex min-h-11 items-center transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+              >
+                {entry.name}
+              </Link>
+            </h3>
             {entry.description && (
               <p className="mt-1 text-sm leading-relaxed text-muted">{entry.description}</p>
             )}

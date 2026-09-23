@@ -90,9 +90,27 @@ export default async function ImoveisPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Explorar moradia</h1>
-        <p className="text-sm text-muted">Encontre apartamentos para alugar em {cityLabel}</p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Explorar moradia</h1>
+          <p className="text-sm text-muted">Encontre apartamentos para alugar em {cityLabel}</p>
+        </div>
+        {/* Anunciar e gerenciar alertas (prancha 65) só se alcançavam digitando a URL —
+            achado do rastreador de links, 22/09/2026. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/imoveis/alertas"
+            className="flex min-h-11 items-center rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-hover)]"
+          >
+            Meus alertas
+          </Link>
+          <Link
+            href="/imoveis/novo"
+            className="flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors"
+          >
+            Anunciar imóvel
+          </Link>
+        </div>
       </header>
 
       <form action="/imoveis" method="get" className="mt-5 flex flex-wrap items-center gap-2">

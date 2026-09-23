@@ -90,6 +90,17 @@ export async function submitServiceRequest(formData: FormData): Promise<ServiceR
   })
 
   if (error) {
+    // ADR-20260923-teto-de-pedidos-por-par: cinco em aberto por par, recusados
+    // com 54000 (o mesmo código do teto de convites). A recusa precisa dizer a
+    // saída — "feche ou cancele um" —, senão vira o erro genérico abaixo e a
+    // pessoa reenvia o mesmo pedido sem entender.
+    if (error.code === "54000") {
+      return {
+        status: "error",
+        message:
+          "Você já tem cinco pedidos em aberto com este prestador. Feche ou cancele um para enviar outro.",
+      }
+    }
     log.error("pedidos: create_service_request failed", { error: error.message, user_id: user.id })
     return {
       status: "error",

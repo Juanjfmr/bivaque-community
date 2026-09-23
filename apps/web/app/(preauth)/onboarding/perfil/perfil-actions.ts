@@ -42,6 +42,21 @@ export async function loadInterestOptionsAction(localityId: string): Promise<Int
   }
 
   const supabase = createServiceClient()
+
+  // Só quem foi verificado vê os grupos: a leitura é service_role e o
+  // `p_locality_id` vem do cliente, então sem esta conferência uma conta não
+  // verificada listava os grupos de qualquer cidade (auditoria de 22/09/2026,
+  // achado MEDIUM). A situação é lida pelo usuário da sessão, nunca do corpo.
+  const { data: statusRows, error: statusError } = await supabase.rpc("read_verification_status", {
+    p_user_id: user.id,
+  })
+  if (statusError) {
+    throw new Error("Não foi possível carregar os interesses. Tente novamente.")
+  }
+  if ((statusRows as { status: string }[] | null)?.[0]?.status !== "verified") {
+    throw new Error("Conclua a verificação de acesso para escolher interesses.")
+  }
+
   const { data, error } = await callUserGroupInterestsRpc(
     supabase,
     "list_available_groups_for_interests",

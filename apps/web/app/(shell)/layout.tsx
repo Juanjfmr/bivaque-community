@@ -6,8 +6,12 @@ import { signCommunityImageUrls } from "../../lib/communities/community-image-ur
 import { LocalityContextProvider, type LocalityCurrent } from "../../lib/locality-context"
 import { log } from "../../lib/logger"
 import { MemberContextProvider } from "../../lib/member-context"
+import { countUnreadConversations } from "../../lib/messages/unread-conversations"
 import { AppShell } from "../components/bivaque/app-shell"
 import { ToastProvider } from "../components/bivaque/toast"
+
+// Mensagens recentes de terceiros lidas para o badge de conversas do cabeçalho.
+const UNREAD_CONVERSATIONS_SCAN = 200
 
 type ShellLayoutProperties = Readonly<{
   children: ReactNode
@@ -216,9 +220,33 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
 
   const unreadCount = unreadRaw ?? 0
 
+  // Ícone de conversas do cabeçalho (MSG-SEM-ENTRADA). Duas leituras RLS-scoped, sem
+  // N+1: os próprios estados de leitura e as mensagens recentes de outras pessoas — a
+  // policy de dm_messages já restringe às conversas em que o membro participa. O teto
+  // de linhas limita o custo por página; o badge satura em "99+" antes disso importar.
+  const [readStatesResult, incomingResult] = await Promise.all([
+    supabase.from("dm_read_states").select("conversation_id, last_read_at").eq("user_id", user.id),
+    supabase
+      .from("dm_messages")
+      .select("conversation_id, created_at")
+      .neq("sender_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(UNREAD_CONVERSATIONS_SCAN),
+  ])
+  if (readStatesResult.error || incomingResult.error) {
+    log.error("shell: could not resolve unread conversations", {
+      user_id: user.id,
+      error: (readStatesResult.error ?? incomingResult.error)?.message,
+    })
+  }
+  const unreadConversations =
+    readStatesResult.error || incomingResult.error
+      ? 0
+      : countUnreadConversations(readStatesResult.data ?? [], incomingResult.data ?? [])
+
   return (
     <LocalityContextProvider value={{ current, outbound }}>
-      <MemberContextProvider value={{ displayName, communities, unreadCount }}>
+      <MemberContextProvider value={{ displayName, communities, unreadCount, unreadConversations }}>
         <ToastProvider>
           <AppShell>{children}</AppShell>
         </ToastProvider>
