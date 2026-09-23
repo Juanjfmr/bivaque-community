@@ -3476,21 +3476,48 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["supabase/migrations/20260911051230_event_question_thread.sql"],
+      "links": [
+        "supabase/migrations/20260911051230_event_question_thread.sql",
+        "supabase/migrations/20260923161129_event_question_ignores_service_requests.sql"
+      ],
+      "dependencies": [],
+      "proof": [
+        "Revisao independente do PR #79 (DeepSeek V4.1 Flash via OpenCode, 23/09/2026) reclassificou como MEDIUM: regressao do proprio PR, provada em transacao com rollback -- par com so conversa de pedido recebia 42501 'another context' ao perguntar sobre evento",
+        "20260923161129_event_question_ignores_service_requests.sql: corpo identico ao original, so o select filtra context_type <> 'service_request' (o indice parcial garante no maximo uma linha); conferido por diff",
+        "npx pnpm@11.18.0 test:db em 23/09/2026: Result PASS, 125 arquivos, 1645 asserts; supabase/tests/event-question-with-service-request.sql ok (positivo com pedido aberto, idempotencia, recusa preservada para outro evento)"
+      ],
+      "tests": ["supabase/tests/event-question-with-service-request.sql"],
+      "updatedAt": "2026-09-23",
+      "completedAt": "2026-09-23",
+      "sourceRevision": "caa0c56f",
+      "id": "EVENTO-PERGUNTA-SELECT-INTO",
+      "title": "open_event_question pode recusar sem motivo quando o par tem conversas de pedido",
+      "priority": "P2",
+      "category": "backend",
+      "status": "done",
+      "description": "Achado LOW da auditoria de 22/09/2026. open_event_question (20260911051230_event_question_thread.sql:73-84) faz select ... into pela dupla esperando uma linha; com conversas de pedido, o par pode ter varias, e o Postgres escolhe uma arbitraria — pode recusar (\"another context\") mesmo com a conversa de pergunta existindo. Falha fechada, sem acesso indevido.",
+      "checklist": [
+        "Filtrar por context_type <> service_request na busca da conversa do par [FEITO 23/09: 20260923161129]",
+        "pgTAP com par que tem conversa de pedido e de pergunta [FEITO 23/09: event-question-with-service-request.sql]"
+      ]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": ["apps/web/app/(shell)/pedidos/[id]/actions.ts"],
       "dependencies": [],
       "proof": [],
       "tests": [],
-      "updatedAt": "2026-09-22",
-      "sourceRevision": "de05e856",
-      "id": "EVENTO-PERGUNTA-SELECT-INTO",
-      "title": "open_event_question pode recusar sem motivo quando o par tem conversas de pedido",
+      "updatedAt": "2026-09-23",
+      "sourceRevision": "caa0c56f",
+      "id": "PEDIDO-MENSAGEM-ERRO-CRU",
+      "title": "Enviar mensagem no pedido devolve a mensagem crua do banco para a tela",
       "priority": "P3",
-      "category": "backend",
+      "category": "frontend",
       "status": "next",
-      "description": "Achado LOW da auditoria de 22/09/2026. open_event_question (20260911051230_event_question_thread.sql:73-84) faz select ... into pela dupla esperando uma linha; com conversas de pedido, o par pode ter varias, e o Postgres escolhe uma arbitraria — pode recusar (\"another context\") mesmo com a conversa de pergunta existindo. Falha fechada, sem acesso indevido.",
+      "description": "Achado LOW, preexistente, da revisao independente do PR #79 (23/09/2026). apps/web/app/(shell)/pedidos/[id]/actions.ts:85 devolve error.message do PostgREST em { status: 'error', message }, contra o proprio comentario do arquivo que promete traduzir erro em estado de tela. As mensagens hoje sao 'blocked', 'not a participant', 'message required' (sem dado pessoal), mas em ingles e tecnicas.",
       "checklist": [
-        "Filtrar por context_type <> service_request na busca da conversa do par",
-        "pgTAP com par que tem conversa de pedido e de pergunta"
+        "Traduzir os erros conhecidos em frase com saida e manter o detalhe so no log, como pedidos/novo/actions.ts",
+        "Teste unitario da traducao e do caminho generico"
       ]
     }
   ]
