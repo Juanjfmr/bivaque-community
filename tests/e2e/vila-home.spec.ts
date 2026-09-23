@@ -84,7 +84,9 @@ test.describe("home is the vila feed; without a vila, the city reference", () =>
     // Timeout generoso no PRIMEIRO assert: quando este é o primeiro spec a rodar
     // contra um servidor recém-compilado (lote serial, projeto mobile), o JIT do
     // Next estoura os 5s padrão antes de qualquer dado — visto em 2026-08-25.
-    await expect(page.getByText("Vila Ajuricaba").first()).toBeVisible({
+    // app-shell.tsx:455 renderiza o nome na lateral como sr-only (rail no
+    // mobile); o parágrafo da saudação (greeting.tsx:37) é o visível.
+    await expect(page.locator("p", { hasText: "Vila Ajuricaba" }).first()).toBeVisible({
       timeout: 20000,
     })
 
