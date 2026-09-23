@@ -172,7 +172,7 @@ test.describe("two localities: each member sees only their own city", () => {
 
     // Then the page is interactive (load control — without it the negative
     // assertions in the sibling test could pass vacuously on an error page)
-    await expect(page.getByRole("button", { name: "Publicar" })).toBeVisible({
+    await expect(page.getByTestId("intent-pergunta")).toBeVisible({
       timeout: 15000,
     })
 
@@ -190,7 +190,7 @@ test.describe("two localities: each member sees only their own city", () => {
     await page.goto(`${APP_URL}/inicio`, { waitUntil: "load" })
 
     // Then the page is interactive for them too
-    await expect(page.getByRole("button", { name: "Publicar" })).toBeVisible({
+    await expect(page.getByTestId("intent-pergunta")).toBeVisible({
       timeout: 15000,
     })
 
