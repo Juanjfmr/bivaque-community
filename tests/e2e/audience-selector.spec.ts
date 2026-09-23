@@ -69,12 +69,13 @@ test.describe("audience selector and reach chip", () => {
     await seedSession(page.context())
     await page.setViewportSize({ width: 1280, height: 800 })
 
-    // When the composer opens
-    await page.goto("/inicio")
-    await page
-      .getByRole("button", { name: /Publicar/ })
-      .first()
-      .click()
+    // When the composer opens — desde o O06 /community encaminha para /inicio e
+    // o modal "Criar publicação" abre pelo lançador "Fazer uma pergunta".
+    await page.goto("/inicio", { waitUntil: "load" })
+    const ask = page.getByTestId("intent-pergunta")
+    await expect(ask).toBeVisible({ timeout: 20000 })
+    await ask.click()
+    await expect(page.getByRole("dialog")).toBeVisible()
 
     // Then the audience section renders with a notice
     await expect(page.getByText(/vão ler/i).first()).toBeVisible()
