@@ -14,6 +14,8 @@ const PUBLIC_PATHS = [
   "/recuperar-senha",
   "/nova-senha",
   "/auth/callback",
+  "/auth/confirmar-email",
+  "/auth/callback-error",
   "/consent",
   "/privacidade",
   "/codigo-de-conduta",
@@ -42,8 +44,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Public paths bypass all checks — no session round-trip needed.
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+  // Public paths bypass all checks — no session round-trip needed. The
+  // boundary check matters: `/login-admin` must not inherit `/login`'s gate.
+  if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return NextResponse.next()
   }
 
@@ -113,7 +116,7 @@ export async function proxy(request: NextRequest) {
 
   if (!user) {
     const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("redirect", pathname)
+    loginUrl.searchParams.set("redirect", `${pathname}${request.nextUrl.search}`)
     return NextResponse.redirect(loginUrl)
   }
 

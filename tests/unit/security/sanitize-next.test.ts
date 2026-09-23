@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { DEFAULT_NEXT, sanitizeNext } from "web/lib/security/sanitize-next"
+import {
+  DEFAULT_NEXT,
+  resolvePostLoginDestination,
+  sanitizeNext,
+} from "web/lib/security/sanitize-next"
 
 describe("sanitizeNext", () => {
   describe("positives", () => {
@@ -38,6 +42,34 @@ describe("sanitizeNext", () => {
       expect(sanitizeNext(123 as unknown as string)).toBe(DEFAULT_NEXT)
       expect(sanitizeNext({} as unknown as string)).toBe(DEFAULT_NEXT)
       expect(sanitizeNext([] as unknown as string)).toBe(DEFAULT_NEXT)
+    })
+  })
+
+  describe("resolvePostLoginDestination", () => {
+    it("aceita redirect, return ou next e preserva query", () => {
+      expect(resolvePostLoginDestination([null, "/profile?tab=security", undefined])).toBe(
+        "/profile?tab=security",
+      )
+      expect(resolvePostLoginDestination([null, null, "/events/12?from=inicio"])).toBe(
+        "/events/12?from=inicio",
+      )
+    })
+
+    it("ignora destinos de entrada, externos, APIs e caminhos normalizados", () => {
+      expect(
+        resolvePostLoginDestination([
+          "/login?return=/perfil",
+          "/signup",
+          "/auth/callback",
+          "/login/",
+          "/login/../api/health",
+          "/api/health",
+          "/_next/static/chunk.js",
+        ]),
+      ).toBe(DEFAULT_NEXT)
+      expect(resolvePostLoginDestination(["https://exemplo.invalid", null, undefined])).toBe(
+        DEFAULT_NEXT,
+      )
     })
   })
 })

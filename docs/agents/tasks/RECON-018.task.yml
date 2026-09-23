@@ -1,9 +1,10 @@
 task_id: RECON-018
 
 objective: >
-  A entrada web passa a ser a das pranchas 36 e 37: entrar e criar conta na composicao de duas
-  colunas com imagem sangrada, e confirmar o e-mail com reenvio limitado pelo servidor, usando
-  o mecanismo de senha que o ADR aprovado determina.
+  A entrada web passa a ser das pranchas 36 e 37 e a manter uma jornada contínua e recuperável:
+  entrar e criar conta na composição de duas colunas, confirmar o e-mail com reenvio limitado
+  pelo servidor, preservar o destino autorizado e oferecer recuperação clara, usando o mecanismo
+  de senha e o aceite definidos pelos ADRs aprovados.
 
 authority:
   - docs/design/visual-guide-2026-09-06/72-web-auth-link-invalido.png
@@ -16,23 +17,33 @@ authority:
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.1 R02 R03 R04 R06 R07 R08
   - docs/decisions/ADR-20260907-login-com-senha.md
   - docs/decisions/ADR-20260907-consentimento-no-cadastro.md
+  - Relatório comparativo Mobbin e autorização do responsável em 23/09/2026 para continuidade Auth
 
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    As rotas existem em apps/web/app/(preauth) e nunca foram comparadas com as pranchas 36 e 37.
-    Nao existe rota de confirmacao de e-mail; a prancha 37 desenha a tela e o catalogo pede R04.
-    Medido em 09/09/2026 na arvore de codex/ajuste-de-auditoria.
+    A árvore atual contém as telas, mas a auditoria de 23/09/2026 mediu confirmação ausente na
+    allowlist explícita do proxy, callback-error apenas coberto por prefixo (o que também expunha
+    lookalikes), destino fragmentado entre redirect/return/next, Google sem respeitar o aceite no
+    cadastro, erro de senha curta capaz de travar o próximo submit e recuperação expirada sem
+    caminho para pedir outro link. Revisão de entrada: 4f78aa97, worktree
+    C:/Users/juana/bivaque-journey-ux.
 
 allowed_paths:
   - apps/web/app/(preauth)/login/
   - apps/web/app/(preauth)/signup/
   - apps/web/app/(preauth)/recuperar-senha/
   - apps/web/app/(preauth)/nova-senha/
+  - apps/web/app/(preauth)/consent/
   - apps/web/app/auth/
   - apps/web/app/components/auth/
+  - apps/web/lib/auth/
+  - apps/web/lib/security/
+  - apps/web/proxy.ts
   - scripts/visual/capture.mjs
   - tests/unit/ui/
+  - tests/unit/security/
+  - tests/unit/auth/
   - tests/e2e/
   - docs/agents/tasks/RECON-018.task.yml
 
@@ -44,7 +55,7 @@ forbidden:
   - distinguir e-mail inexistente de senha errada em qualquer mensagem
   - prometer envio ou reenvio sem confirmacao do servidor
   - criar migration, policy ou coluna
-  - tocar apps/web/proxy.ts ou o shell de membro
+  - transformar o proxy em autorização de negócio ou permitir destino externo
   - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
   - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
 
@@ -52,17 +63,21 @@ acceptance:
   - entrar usa e-mail e senha com mostrar e ocultar, botao Entrar, Esqueci minha senha, Google e Criar conta
   - criar conta pede nome de apresentacao, e-mail, senha e o aceite explicito com os links legais
   - a composicao das duas telas segue a prancha 36 - imagem sangrada a esquerda com o wordmark sobreposto, formulario a direita, separador ou, botao do Google secundario e links de rodape
+  - a recuperacao fica proxima ao campo de senha, a regra de senha aparece antes do submit e o estado disabled e visualmente distinto
+  - a rota de confirmacao de e-mail e o callback-error sao alcancaveis sem sessao e nao deixam o visitante em loop para login
   - a rota de confirmacao de e-mail existe, mostra o endereco, oferece alterar e-mail e reenviar com contador regressivo limitado pelo servidor
   - o estado expirado mostra o alerta e oferece novo envio sem reenviar material vencido
   - credencial errada devolve uma mensagem unica, e limite de tentativa e falha de rede sao distinguiveis dela
-  - sessao persiste apos recarregar e o destino pos-entrada aceita somente rota interna permitida
-  - recuperar senha devolve resposta neutra e o link abre a redefinicao por callback valido
+  - sessao persiste apos recarregar e o destino pos-entrada aceita somente rota interna permitida, preservando query e aceitando redirect, return e next
+  - uma senha fraca nao trava a tentativa seguinte e o Google no cadastro nao ignora o aceite
+  - recuperar senha devolve resposta neutra, distingue falha real do provedor e um link expirado oferece novo pedido
   - todos os estados fechados - carregando, erro recuperavel, sessao expirada e envio em andamento sem duplicar
   - exatamente um h1 por tela, contraste maior ou igual a 4,5:1, alvos maiores ou iguais a 44x44 e foco visivel
   - as rotas tocadas estao cadastradas em scripts/visual/capture.mjs e a captura registra Authenticated capture quando aplicavel
 
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-018.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/auth/password-auth.test.ts tests/unit/security/sanitize-next.test.ts tests/unit/ui/recon-018-resend-clock.test.ts tests/unit/ui/recon-018-telas-entrada.test.ts
   - npx pnpm@11.18.0 gate
   - npx pnpm@11.18.0 build
   - npx pnpm@11.18.0 test:e2e

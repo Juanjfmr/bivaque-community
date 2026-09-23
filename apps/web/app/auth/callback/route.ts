@@ -3,12 +3,22 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
+import {
+  RECOVERY_INTENT_COOKIE,
+  RECOVERY_INTENT_MAX_AGE_SECONDS,
+  RECOVERY_INTENT_VALUE,
+} from "../../../lib/auth/recovery-intent"
+import {
+  hasSignupConsentIntent,
+  SIGNUP_CONSENT_INTENT_COOKIE,
+} from "../../../lib/auth/signup-intent"
 import { log } from "../../../lib/logger"
 import { sanitizeNext } from "../../../lib/security/sanitize-next"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 import {
   callbackFailureTarget,
   callbackSuccessTarget,
+  shouldOpenRecoveryIntent,
   shouldRecordSignupConsent,
 } from "./redirect-plan"
 
@@ -37,6 +47,9 @@ export async function GET(request: Request) {
   }
 
   const cookieStore = await cookies()
+  const hasServerConsentIntent =
+    searchParams.get("flow") === "signup" &&
+    hasSignupConsentIntent(cookieStore.get(SIGNUP_CONSENT_INTENT_COOKIE)?.value)
 
   const supabase = createServerClient<Database>(url, key, {
     cookies: {
@@ -59,12 +72,28 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL(callbackFailureTarget(next), request.url))
   }
 
+  const redirectType =
+    "redirectType" in data && typeof data.redirectType === "string" ? data.redirectType : null
+  if (shouldOpenRecoveryIntent(redirectType, next)) {
+    cookieStore.set(RECOVERY_INTENT_COOKIE, RECOVERY_INTENT_VALUE, {
+      httpOnly: true,
+      maxAge: RECOVERY_INTENT_MAX_AGE_SECONDS,
+      path: "/nova-senha",
+      sameSite: "lax",
+      secure: process.env["NODE_ENV"] === "production",
+    })
+  }
+
+  if (hasServerConsentIntent) {
+    cookieStore.delete({ name: SIGNUP_CONSENT_INTENT_COOKIE, path: "/auth" })
+  }
+
   // Aceite do cadastro que veio por confirmação de e-mail: sem sessão no
   // momento do signUp não havia como gravar, e o ADR manda registrar na
   // criação da conta. A troca acabou de completar a criação — é aqui, com o
   // id resolvido da sessão trocada (nunca de corpo ou query), que o aceite
   // entra. Falha aqui não vira "cadastro aparentemente completo" (R03).
-  if (shouldRecordSignupConsent(searchParams.get("consent"), CONSENT_VERSION)) {
+  if (shouldRecordSignupConsent(hasServerConsentIntent)) {
     const userId = data.user?.id
     if (!userId) {
       log.error("auth callback consent recording failed: no user after exchange")

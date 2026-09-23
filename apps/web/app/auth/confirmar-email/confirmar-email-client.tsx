@@ -1,12 +1,12 @@
 "use client"
 
-import { CONSENT_VERSION } from "@bivaque/domain"
 import { Button } from "@heroui/react"
 import { Mail } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { prepareSignupConsentAction } from "../../(preauth)/consent/actions"
 import {
   classifyResend,
   computeResendCooldown,
@@ -57,6 +57,7 @@ export function ConfirmarEmailClient() {
   const [email, setEmail] = useState<string | null>(null)
   const [cooldown, setCooldown] = useState(0)
   const [sending, setSending] = useState(false)
+  const sendingRef = useRef(false)
   const [notice, setNotice] = useState<Notice | null>(null)
   const lastResendAtRef = useRef<number | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -132,18 +133,25 @@ export function ConfirmarEmailClient() {
   }, [counting])
 
   const handleResend = useCallback(async () => {
-    if (sending || cooldown > 0 || !email) return
+    if (sendingRef.current || sending || cooldown > 0 || !email) return
+    sendingRef.current = true
     setSending(true)
     setNotice(null)
     try {
+      try {
+        await prepareSignupConsentAction()
+      } catch {
+        setNotice({ variant: "danger", message: "Não foi possível pedir outro link agora." })
+        return
+      }
+
       const { error } = await createBrowserClient().auth.resend({
         type: "signup",
         email,
         options: {
-          // O link volta pelo callback, que troca o code por sessão e registra
-          // o aceite pendente do cadastro (marcador `consent` na URL do próprio
-          // link — gerado pelo servidor, não por cookie forjável).
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&consent=${encodeURIComponent(String(CONSENT_VERSION))}`,
+          // O destino usa apenas o marker de fluxo. A prova do aceite é o
+          // cookie HttpOnly emitido pela Server Action acima.
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&flow=signup`,
         },
       })
       const view = classifyResend(error)
@@ -172,6 +180,7 @@ export function ConfirmarEmailClient() {
         setNotice({ variant: "danger", message: view.message })
       }
     } finally {
+      sendingRef.current = false
       setSending(false)
     }
   }, [cooldown, email, sending])

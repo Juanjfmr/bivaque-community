@@ -18,3 +18,70 @@ export function sanitizeNext(value: string | null | undefined): string {
   if (!SAFE_PATH.test(value)) return DEFAULT_NEXT
   return value
 }
+
+const POST_LOGIN_ALLOWED_PREFIXES = [
+  "/inicio",
+  "/explorar",
+  "/guide",
+  "/events",
+  "/mercado",
+  "/meus-anuncios",
+  "/imoveis",
+  "/recommendations",
+  "/prestadores",
+  "/prestador",
+  "/communities",
+  "/community",
+  "/groups",
+  "/profile",
+  "/configuracoes",
+  "/messages",
+  "/notifications",
+  "/pedidos",
+  "/denuncias",
+  "/ajuda",
+  "/localidade",
+  "/salvos",
+  "/onboarding",
+  "/admissions",
+  "/reports",
+  "/arrivals",
+  "/guide-queue",
+] as const
+
+function isPostLoginAllowed(pathname: string): boolean {
+  return POST_LOGIN_ALLOWED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  )
+}
+
+function normalizePostLoginPath(value: string | null | undefined): string | null {
+  const clean = sanitizeNext(value)
+  if (clean === DEFAULT_NEXT) return DEFAULT_NEXT
+
+  try {
+    const parsed = new URL(clean, "https://bivaque.invalid")
+    const decodedPathname = decodeURIComponent(parsed.pathname)
+    if (decodedPathname.split("/").some((segment) => segment === "." || segment === "..")) {
+      return null
+    }
+    if (!isPostLoginAllowed(parsed.pathname)) return null
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Resolve os nomes legado e atual de destino sem permitir que a tela de login
+ * devolva a pessoa para entrada, API, asset ou rota não autorizada. A query e
+ * o fragmento são preservados; a comparação é por fronteira de segmento, não
+ * por prefixo de string.
+ */
+export function resolvePostLoginDestination(values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    const clean = normalizePostLoginPath(value)
+    if (clean !== null && clean !== DEFAULT_NEXT) return clean
+  }
+  return DEFAULT_NEXT
+}

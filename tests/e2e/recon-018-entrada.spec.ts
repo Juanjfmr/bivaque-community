@@ -3,10 +3,9 @@
 // Execução paralela em andamento: o banco local é compartilhado, então este
 // spec NÃO cria contas. Os caminhos de estado real são negativos (credencial
 // errada, e-mail duplicado — ambos recusados pelo provedor sem gravar nada) e
-// o painel de confirmação usa a sessão do seed + o estado local da tela. O
-// reenvio limitado pelo servidor é exercitado com a resposta 429 REAL do
-// provedor reproduzida sobre o transporte (a mensagem "after 47 seconds" é o
-// formato medido do GoTrue); a geração do 429 em si é do provedor e fica
+// o painel de confirmação é público, provado sem injetar sessão. O reenvio
+// limitado pelo servidor é exercitado com a resposta 429 REAL do provedor
+// reproduzida sobre o transporte; a geração do 429 em si é do provedor e fica
 // registrada como pendência de ambiente no card.
 //
 // Credenciais: nunca inline — ambiente primeiro, apps/web/.env.local depois
@@ -155,6 +154,7 @@ test.describe("prancha 36 — criar conta", () => {
     await page.locator("#bivaque-signup-email").fill(MEMBER_EMAIL)
     await page.locator("#bivaque-signup-password").fill("senha-forte-123")
     await expect(page.getByRole("button", { name: "Criar conta", exact: true })).toBeDisabled()
+    await expect(page.getByRole("button", { name: /Continuar com Google/ })).toBeDisabled()
     await page.locator("#bivaque-signup-consent").check()
     await expect(page.getByRole("button", { name: "Criar conta", exact: true })).toBeEnabled()
   })
@@ -172,7 +172,7 @@ test.describe("prancha 36 — criar conta", () => {
 
   test("senha curta é barrada no cliente antes da ida ao provedor", async ({ page }) => {
     let requests = 0
-    await page.route("**/auth/v1/signup", async (route) => {
+    await page.route("**/auth/v1/signup**", async (route) => {
       requests += 1
       await route.abort()
     })
@@ -185,19 +185,34 @@ test.describe("prancha 36 — criar conta", () => {
     await expect(page.getByText("Use ao menos 8 caracteres.")).toBeVisible()
     expect(requests).toBe(0)
   })
+
+  test("uma validação fraca não trava a próxima tentativa", async ({ page }) => {
+    let requests = 0
+    await page.route("**/auth/v1/signup**", async (route) => {
+      requests += 1
+      await route.abort()
+    })
+    await page.goto("/signup")
+    await page.locator("#bivaque-signup-name").fill("Ana")
+    await page.locator("#bivaque-signup-email").fill("curta@exemplo.invalid")
+    await page.locator("#bivaque-signup-consent").check()
+    await page.locator("#bivaque-signup-password").fill("abc123")
+    await page.getByRole("button", { name: "Criar conta", exact: true }).click()
+    await expect(page.getByText("Use ao menos 8 caracteres.")).toBeVisible()
+    await page.locator("#bivaque-signup-password").fill("senha-forte-123")
+    await page.getByRole("button", { name: "Criar conta", exact: true }).click()
+    await expect(page.getByText("Use ao menos 8 caracteres.")).toHaveCount(0)
+    await expect.poll(() => requests, { timeout: 15_000 }).toBe(1)
+  })
 })
 
 test.describe("prancha 37 — confirmar e-mail", () => {
-  // /auth/confirmar-email não está em PUBLIC_PATHS do proxy: sem sessão, o
-  // gate devolve para /login. É o bloqueio registrado no card — por isso os
-  // testes entram como membro do seed, do mesmo jeito que a captura.
+  // A confirmação é pública: quem ainda não tem sessão precisa abrir o link
+  // e ver o estado real, em vez de ser devolvido ao login pela allowlist.
   async function openConfirmar(
     page: import("@playwright/test").Page,
-    context: import("@playwright/test").BrowserContext,
     options: { url?: string; pendingEmail?: string | null } = {},
   ): Promise<void> {
-    const { seedSession } = await import("./helpers/session")
-    await seedSession(context)
     // `null` explícito significa "sem cadastro pendente" — `??` o trocaria pelo
     // padrão e plantaria a flag que o caso negativo precisa NÃO ter.
     const pendingEmail =
@@ -215,20 +230,14 @@ test.describe("prancha 37 — confirmar e-mail", () => {
     await page.goto(options.url ?? "/auth/confirmar-email")
   }
 
-  test("sem cadastro pendente a tela é honesta e não tem caixas de código", async ({
-    context,
-    page,
-  }) => {
-    await openConfirmar(page, context, { pendingEmail: null })
+  test("sem cadastro pendente a tela é honesta e não tem caixas de código", async ({ page }) => {
+    await openConfirmar(page, { pendingEmail: null })
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Nada para confirmar")
     await expect(page.locator("input")).toHaveCount(0)
   })
 
-  test("painel pendente ecoa o endereço e oferece alterar e reenviar", async ({
-    context,
-    page,
-  }) => {
-    await openConfirmar(page, context)
+  test("painel pendente ecoa o endereço e oferece alterar e reenviar", async ({ page }) => {
+    await openConfirmar(page)
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira seu e-mail")
     await expect(page.getByText("ana@exemplo.invalid")).toBeVisible()
     await expect(page.getByRole("link", { name: "Alterar e-mail" })).toHaveAttribute(
@@ -240,7 +249,6 @@ test.describe("prancha 37 — confirmar e-mail", () => {
   })
 
   test("reenvio aceito pelo servidor inicia o contador; sem aceite, nada anda", async ({
-    context,
     page,
   }) => {
     let resendCalls = 0
@@ -248,7 +256,7 @@ test.describe("prancha 37 — confirmar e-mail", () => {
       resendCalls += 1
       await route.fulfill({ status: 200, contentType: "application/json", body: "{}" })
     })
-    await openConfirmar(page, context)
+    await openConfirmar(page)
     await page.getByRole("button", { name: "Reenviar link de confirmação" }).click()
     await expect(page.getByRole("button", { name: /Reenviar em 0[01]:\d\d/ })).toBeDisabled()
     expect(resendCalls).toBe(1)
@@ -258,10 +266,7 @@ test.describe("prancha 37 — confirmar e-mail", () => {
     await expect(page.getByRole("button", { name: /Reenviar em 00:/ })).toBeDisabled()
   })
 
-  test("429 do servidor manda no contador e a mensagem é distinguível", async ({
-    context,
-    page,
-  }) => {
+  test("429 do servidor manda no contador e a mensagem é distinguível", async ({ page }) => {
     await page.route("**/auth/v1/resend**", async (route) => {
       await route.fulfill({
         status: 429,
@@ -274,7 +279,7 @@ test.describe("prancha 37 — confirmar e-mail", () => {
         }),
       })
     })
-    await openConfirmar(page, context)
+    await openConfirmar(page)
     await page.getByRole("button", { name: "Reenviar link de confirmação" }).click()
     await expect(page.getByText("Aguarde 47s para pedir outro link.")).toBeVisible()
     await expect(page.getByRole("button", { name: "Reenviar em 00:47" })).toBeDisabled()
@@ -282,18 +287,18 @@ test.describe("prancha 37 — confirmar e-mail", () => {
     await expect(page.getByText(/já está a caminho/)).toHaveCount(0)
   })
 
-  test("falha de rede não vira contador nem promessa", async ({ context, page }) => {
+  test("falha de rede não vira contador nem promessa", async ({ page }) => {
     await page.route("**/auth/v1/resend**", async (route) => {
       await route.abort("connectionrefused")
     })
-    await openConfirmar(page, context)
+    await openConfirmar(page)
     await page.getByRole("button", { name: "Reenviar link de confirmação" }).click()
     await expect(page.getByText("Verifique sua conexão e tente de novo.")).toBeVisible()
     await expect(page.getByText(/já está a caminho/)).toHaveCount(0)
   })
 
-  test("painel expirado oferece envio novo, sem material vencido", async ({ context, page }) => {
-    await openConfirmar(page, context, { url: "/auth/confirmar-email?estado=expirado" })
+  test("painel expirado oferece envio novo, sem material vencido", async ({ page }) => {
+    await openConfirmar(page, { url: "/auth/confirmar-email?estado=expirado" })
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Confira seu e-mail")
     await expect(page.getByText("Este link expirou ou já foi usado.")).toBeVisible()
     await expect(page.getByRole("button", { name: "Enviar novo link" })).toBeVisible()

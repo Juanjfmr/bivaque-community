@@ -154,6 +154,30 @@
   font-weight: var(--semantic-typography-label-weight);
 }
 
+.passwordHint {
+  margin: -8px 0 0;
+  color: var(--semantic-text-secondary);
+  font-size: var(--semantic-typography-meta-size);
+  line-height: var(--semantic-typography-body-line-height);
+}
+
+.inlineRecovery {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 44px;
+  align-items: center;
+  margin-top: -8px;
+  color: var(--semantic-action-primary);
+  font-size: var(--semantic-typography-label-size);
+  font-weight: var(--semantic-typography-label-weight);
+  text-decoration: none;
+}
+
+.inlineRecovery:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .inputShell {
   display: grid;
   grid-template-columns: 22px 1fr auto;
@@ -224,6 +248,20 @@
 
 .primaryButton:hover {
   background: var(--semantic-action-primary-hover);
+}
+
+.primaryButton:disabled,
+.googleButton:disabled {
+  color: var(--semantic-text-secondary);
+  background: var(--semantic-selected);
+  border-color: var(--semantic-border);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.primaryButton:disabled:hover,
+.googleButton:disabled:hover {
+  background: var(--semantic-selected);
 }
 
 .primaryButton svg {
@@ -374,9 +412,8 @@
   height: 20px;
 }
 
-/* Rodapé da prancha: no entrar, "Criar conta" à esquerda e a recuperação à
-   direita; no cadastro, "Já tenho conta" centrado. Links, não texto com link
-   embutido — é o que a referência mostra. */
+/* Rodapé da prancha: a recuperação fica junto ao campo de senha; aqui ficam
+   apenas os links de retorno entre entrar e criar conta. */
 .entryLinks {
   display: flex;
   align-items: center;

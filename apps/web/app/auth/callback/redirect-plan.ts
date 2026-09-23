@@ -1,3 +1,5 @@
+import { isRecoveryNext, RECOVERY_PATH } from "../../../lib/auth/recovery-intent"
+
 /**
  * Decisões de destino do /auth/callback, puras para poderem ser travadas por
  * teste sem runtime Next. A regra que elas guardam:
@@ -5,8 +7,10 @@
  *   - falha no link que veio da TELA DE CONFIRMAÇÃO (next=/auth/confirmar-email)
  *     devolve a pessoa ao painel expirado da prancha 37, com contador e envio
  *     novo — não ao beco sem saída do callback-error;
- *   - falha de qualquer outro link (Google, recuperação) vai ao callback-error
- *     sem detalhe sensível (R06);
+ *   - falha de qualquer outro link (Google) vai ao callback-error sem detalhe
+ *     sensível (R06);
+ *   - link de recuperação inválido volta ao formulário de recuperação para
+ *     que a pessoa peça outro link, em vez de ficar presa no callback-error;
  *   - sucesso no link de confirmação entrega "/" — quem resolve o destino é o
  *     proxy, com a sessão recém-trocada; o callback não escolhe rota de membro.
  *
@@ -14,26 +18,30 @@
  */
 
 export const CONFIRM_EMAIL_PATH = "/auth/confirmar-email"
+export { RECOVERY_PATH }
 
 export function callbackFailureTarget(sanitizedNext: string): string {
-  return sanitizedNext === CONFIRM_EMAIL_PATH
-    ? `${CONFIRM_EMAIL_PATH}?estado=expirado`
-    : "/auth/callback-error"
+  if (sanitizedNext === CONFIRM_EMAIL_PATH) return `${CONFIRM_EMAIL_PATH}?estado=expirado`
+  if (isRecoveryNext(sanitizedNext)) return "/recuperar-senha?origem=link"
+  return "/auth/callback-error"
 }
 
 export function callbackSuccessTarget(sanitizedNext: string): string {
   return sanitizedNext === CONFIRM_EMAIL_PATH ? "/" : sanitizedNext
 }
 
-/**
- * O marcador `consent` chega dentro do link de confirmação — URL assinada e
- * emitida pelo próprio GoTrue no envio, não cookie que o cliente escreve. Ele
- * diz apenas "esta conta nasceu de um cadastro que aceitou os textos na versão
- * corrente"; as versões gravadas são as constantes do servidor.
- */
-export function shouldRecordSignupConsent(
-  consentParam: string | null,
-  currentVersion: number,
+export function shouldOpenRecoveryIntent(
+  redirectType: string | null,
+  sanitizedNext: string,
 ): boolean {
-  return consentParam !== null && consentParam === String(currentVersion)
+  return redirectType === "recovery" && isRecoveryNext(sanitizedNext)
+}
+
+/**
+ * O aceite só é aceito quando o navegador recebeu um intent HttpOnly emitido pela
+ * Server Action depois que a caixa foi marcada. Query params são informativas;
+ * não são autorização nem prova de aceite.
+ */
+export function shouldRecordSignupConsent(hasServerIntent: boolean): boolean {
+  return hasServerIntent
 }

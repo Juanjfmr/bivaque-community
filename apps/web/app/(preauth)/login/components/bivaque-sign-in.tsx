@@ -1,8 +1,8 @@
 "use client"
 
-import { CONSENT_VERSION } from "@bivaque/domain"
 import { Button } from "@heroui/react"
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, User } from "lucide-react"
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -13,11 +13,11 @@ import {
   type PasswordAuthView,
   passwordProblem,
 } from "../../../../lib/auth/password-auth"
-import { sanitizeNext } from "../../../../lib/security/sanitize-next"
+import { resolvePostLoginDestination } from "../../../../lib/security/sanitize-next"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { writePendingConfirmation } from "../../../components/auth/resend-clock"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
-import { recordConsentAction } from "../../consent/actions"
+import { prepareSignupConsentAction, recordConsentAction } from "../../consent/actions"
 import styles from "./bivaque-sign-in.module.css"
 
 interface BivaqueSignInProps {
@@ -98,21 +98,28 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
   // Dois cliques dentro do mesmo tick lêem o mesmo `loading` (estado do React
   // atualiza depois); o ref muda na hora e é o que segura a segunda request.
   const submittingRef = useRef(false)
+  const googleSubmittingRef = useRef(false)
 
   const copy = entryCopy[mode]
   const titleId = mode === "signup" ? "signup-title" : "login-title"
   const prefix = mode === "signup" ? "bivaque-signup" : "bivaque-signin"
 
-  // Destino pós-entrada: o proxy anota ?redirect= quando devolve alguém para cá.
-  // Aceita só rota interna — sanitize-next rejeita absoluta, //host e
-  // javascript: — e na ausência cai no funil de onboarding, que é o caminho
-  // atual. Sem isso, o destino seria sempre /onboarding mesmo quando a pessoa
-  // foi expulsa de uma rota específica para a tela de entrar.
+  // Destino pós-entrada: o proxy e as telas de onboarding usam nomes diferentes
+  // ao longo da jornada. Todos passam pelo mesmo resolvedor; nenhum query
+  // param consegue devolver a pessoa para login, callback ou signup.
   const destination = (): string | null => {
-    const raw = searchParams.get("redirect")
-    if (raw === null || raw === "") return null
-    const clean = sanitizeNext(raw)
+    const clean = resolvePostLoginDestination([
+      searchParams.get("redirect"),
+      searchParams.get("return"),
+      searchParams.get("next"),
+    ])
     return clean === "/" ? null : clean
+  }
+
+  const alternateHref = (): string => {
+    const clean = destination()
+    if (!clean) return copy.alternateHref
+    return `${copy.alternateHref}?redirect=${encodeURIComponent(clean)}`
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -120,7 +127,6 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
     // Envio em andamento não duplica: teclar Enter com o request voando já
     // contou duas vezes contra o provedor em outras telas desta base.
     if (submittingRef.current) return
-    submittingRef.current = true
     setResult(null)
 
     // No cadastro a senha é conferida antes de sair daqui: mandar o servidor
@@ -135,7 +141,30 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
       }
     }
 
+    // A trava só é armada depois da validação síncrona. Se fosse posta antes,
+    // uma senha fraca retornaria antes do finally e deixaria a próxima tentativa
+    // bloqueada até recarregar a página.
+    submittingRef.current = true
     setLoading("form")
+
+    if (mode === "signup") {
+      try {
+        // O aceite precisa chegar ao callback por um canal que o navegador não
+        // possa editar. A Server Action cria o cookie HttpOnly antes do
+        // signUp; a query do link é apenas o destino, nunca a prova.
+        await prepareSignupConsentAction()
+      } catch {
+        setResult({
+          outcome: "failed",
+          message: "Não foi possível iniciar o cadastro. Tente novamente.",
+          diagnostic: "consent-intent",
+        })
+        submittingRef.current = false
+        setLoading(null)
+        return
+      }
+    }
+
     const supabase = createBrowserClient()
 
     try {
@@ -145,10 +174,10 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
           password,
           options: {
             data: { display_name: name.trim() },
-            // Quando o provedor exige confirmação, o link nasce daqui e volta
-            // pelo callback com o marcador do aceite. O endereço viaja dentro
-            // do link assinado pelo servidor, nunca em query da nossa tela.
-            emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&consent=${encodeURIComponent(String(CONSENT_VERSION))}`,
+            // O destino do link carrega apenas o fluxo. O aceite fica no
+            // cookie HttpOnly emitido pela Server Action; uma query editável
+            // não pode registrar o aceite de outra pessoa.
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&flow=signup`,
           },
         })
         const view = classifySignUp(error)
@@ -214,24 +243,42 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
   }
 
   const handleGoogle = async () => {
-    if (loading !== null) return
+    if (googleSubmittingRef.current || loading !== null) return
+    if (mode === "signup" && !accepted) return
+    googleSubmittingRef.current = true
     setResult(null)
     setLoading("google")
 
     try {
+      if (mode === "signup") {
+        // O OAuth volta em outra navegação. O callback recebe este cookie
+        // HttpOnly para distinguir o cadastro aceito de um callback forjado.
+        await prepareSignupConsentAction()
+      }
+
       if (onGoogleSignIn) {
         await onGoogleSignIn()
       } else {
         const { error } = await createBrowserClient().auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destination() ?? "/onboarding")}`,
+            redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destination() ?? "/onboarding")}${mode === "signup" ? "&flow=signup" : ""}`,
           },
         })
         if (error) throw error
       }
     } catch (thrown) {
-      setResult(classifySignIn(thrown))
+      setResult(
+        mode === "signup"
+          ? {
+              outcome: "failed",
+              message: "Não foi possível entrar com Google.",
+              diagnostic: "oauth",
+            }
+          : classifySignIn(thrown),
+      )
+    } finally {
+      googleSubmittingRef.current = false
       setLoading(null)
     }
   }
@@ -264,7 +311,7 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
               // nome civil completo. O rótulo simples diz isso sem prometer o
               // que o campo não exige.
               <label className={styles["field"]} htmlFor={`${prefix}-name`}>
-                <span>Nome</span>
+                <span>Nome de apresentação</span>
                 <span className={styles["inputShell"]}>
                   <User aria-hidden="true" />
                   <input
@@ -325,6 +372,16 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             </label>
 
             {mode === "signup" && (
+              <p className={styles["passwordHint"]}>Ao menos 8 caracteres, com letras e números.</p>
+            )}
+
+            {mode === "login" && (
+              <Link href={{ pathname: "/recuperar-senha" }} className={styles["inlineRecovery"]}>
+                Esqueci minha senha
+              </Link>
+            )}
+
+            {mode === "signup" && (
               // O texto vem da versão aprovada (ADR-20260907-consentimento-no-
               // cadastro), não da prancha: "Termos de uso" e "Código de
               // convivência" não têm rota nem texto aprovado, e a guia proíbe
@@ -359,6 +416,21 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             >
               {loading === "form" ? copy.loading : copy.submit}
             </Button>
+
+            {result && result.outcome !== "ok" && (
+              <FeedbackAlert
+                variant={result.outcome === "offline" ? "warning" : "danger"}
+                description={
+                  result.suggestSignIn ? (
+                    <>
+                      {result.message} <Link href={{ pathname: "/login" }}>Entrar</Link>
+                    </>
+                  ) : (
+                    result.message
+                  )
+                }
+              />
+            )}
           </form>
 
           <div className={styles["divider"]}>
@@ -369,32 +441,14 @@ export function BivaqueSignIn({ onGoogleSignIn, mode = "login" }: BivaqueSignInP
             onPress={handleGoogle}
             variant="outline"
             className={styles["googleButton"] ?? ""}
-            isDisabled={loading !== null}
+            isDisabled={loading !== null || (mode === "signup" && !accepted)}
           >
             <GoogleIcon />
             {loading === "google" ? "Abrindo Google..." : copy.google}
           </Button>
 
-          {result && result.outcome !== "ok" && (
-            <FeedbackAlert
-              variant={result.outcome === "offline" ? "warning" : "danger"}
-              description={
-                result.suggestSignIn ? (
-                  <>
-                    {result.message} <Link href={{ pathname: "/login" }}>Entrar</Link>
-                  </>
-                ) : (
-                  result.message
-                )
-              }
-            />
-          )}
-
           <p className={styles["entryLinks"]} data-mode={mode}>
-            <Link href={{ pathname: copy.alternateHref }}>{copy.alternateLabel}</Link>
-            {mode === "login" && (
-              <Link href={{ pathname: "/recuperar-senha" }}>Esqueci minha senha</Link>
-            )}
+            <Link href={alternateHref() as Route}>{copy.alternateLabel}</Link>
           </p>
         </div>
       </section>

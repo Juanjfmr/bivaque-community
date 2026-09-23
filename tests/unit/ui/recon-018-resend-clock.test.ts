@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   callbackFailureTarget,
   callbackSuccessTarget,
+  shouldOpenRecoveryIntent,
   shouldRecordSignupConsent,
 } from "web/app/auth/callback/redirect-plan"
 import {
@@ -63,9 +64,14 @@ describe("redirect-plan — destino do callback sem enumeração e sem loop", ()
     )
   })
 
-  it("falha de Google ou recuperação vai ao callback-error, sem estado de tela", () => {
+  it("falha de Google vai ao callback-error, sem estado de tela", () => {
     expect(callbackFailureTarget("/onboarding")).toBe("/auth/callback-error")
-    expect(callbackFailureTarget("/nova-senha")).toBe("/auth/callback-error")
+    expect(callbackFailureTarget("/auth/callback")).toBe("/auth/callback-error")
+  })
+
+  it("link de recuperação expirado permite pedir outro", () => {
+    expect(callbackFailureTarget("/nova-senha")).toBe("/recuperar-senha?origem=link")
+    expect(callbackFailureTarget("/nova-senha?flow=recovery")).toBe("/recuperar-senha?origem=link")
   })
 
   it("confirmação bem-sucedida entrega a resolução de destino ao proxy", () => {
@@ -73,10 +79,15 @@ describe("redirect-plan — destino do callback sem enumeração e sem loop", ()
     expect(callbackSuccessTarget("/inicio")).toBe("/inicio")
   })
 
-  it("só registra aceite quando o link carrega a versão corrente", () => {
-    expect(shouldRecordSignupConsent("2", 2)).toBe(true)
-    expect(shouldRecordSignupConsent(null, 2)).toBe(false)
-    expect(shouldRecordSignupConsent("1", 2)).toBe(false)
-    expect(shouldRecordSignupConsent("", 2)).toBe(false)
+  it("só registra aceite quando o intent server-side foi emitido", () => {
+    expect(shouldRecordSignupConsent(true)).toBe(true)
+    expect(shouldRecordSignupConsent(false)).toBe(false)
+  })
+
+  it("só abre recuperação quando o provador identifies o redirect como recovery", () => {
+    expect(shouldOpenRecoveryIntent("recovery", "/nova-senha")).toBe(true)
+    expect(shouldOpenRecoveryIntent("recovery", "/inicio")).toBe(false)
+    expect(shouldOpenRecoveryIntent("signup", "/nova-senha")).toBe(false)
+    expect(shouldOpenRecoveryIntent(null, "/nova-senha")).toBe(false)
   })
 })

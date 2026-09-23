@@ -3,7 +3,7 @@
 import { Button } from "@heroui/react"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { classifyEntrySend } from "../../../lib/auth/entry-send"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { computeResendCooldown, formatCountdown } from "../../components/auth/resend-clock"
@@ -29,9 +29,15 @@ export default function RecuperarSenhaPage() {
   const [sent, setSent] = useState(false)
   const [offline, setOffline] = useState(false)
   const [loading, setLoading] = useState(false)
+  const submittingRef = useRef(false)
   const [cooldown, setCooldown] = useState(0)
   const [limite, setLimite] = useState<string | null>(null)
   const [falha, setFalha] = useState<string | null>(null)
+  const [linkExpired, setLinkExpired] = useState(false)
+
+  useEffect(() => {
+    setLinkExpired(new URLSearchParams(window.location.search).get("origem") === "link")
+  }, [])
 
   const counting = cooldown > 0
   useEffect(() => {
@@ -46,7 +52,8 @@ export default function RecuperarSenhaPage() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (loading || cooldown > 0) return
+    if (submittingRef.current || loading || cooldown > 0) return
+    submittingRef.current = true
     setLoading(true)
     setOffline(false)
     setLimite(null)
@@ -85,6 +92,7 @@ export default function RecuperarSenhaPage() {
       // depender da conta existir.
       setOffline(true)
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }
@@ -100,6 +108,14 @@ export default function RecuperarSenhaPage() {
           <p className={styles["lead"]}>
             Digite seu e-mail. Enviamos um link para você criar uma senha nova.
           </p>
+
+          {linkExpired && (
+            <FeedbackAlert
+              variant="warning"
+              title="O link expirou"
+              description="Peça um novo link para continuar. O endereço não precisa ser confirmado novamente."
+            />
+          )}
 
           <form className={styles["form"]} onSubmit={handleSubmit}>
             <label className={styles["field"]} htmlFor="recuperar-email">
