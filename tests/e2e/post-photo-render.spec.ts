@@ -24,7 +24,9 @@ test.describe("@stateful foto da publicação", () => {
     await seedSession(page.context())
     await page.goto("/inicio")
 
-    await page.getByRole("button", { name: "O que você quer compartilhar?" }).click()
+    const ask = page.getByTestId("intent-pergunta")
+    await expect(ask).toBeVisible({ timeout: 20000 })
+    await ask.click()
     const dialog = page.getByRole("dialog", { name: "Criar publicação" })
     await expect(dialog).toBeVisible()
 
