@@ -18,13 +18,13 @@ import { InicioRightRail } from "./right-rail"
 
 // RECON-002 (prancha 01-web-inicio): home de quem participa.
 //
-// A comunidade primária — a mais antiga entre as aprovadas, mesma resolução
-// da rota /community — é lida uma vez aqui e serve às três consumidoras: a
-// linha de contexto do cabeçalho, o feed "Na comunidade" e a audiência padrão
-// do modal de publicação. Falha de leitura (inclusive rejeição de rede) vira
-// estado recuperável na seção, não nome chumbado, vazio fingido nem
-// carregamento infinito. A guarda de requisição descarta resposta atrasada de
-// tentativa anterior — ela não sobrescreve o contexto já resolvido.
+// A comunidade primária — a mais antiga entre as aprovadas na cidade atual —
+// é lida uma vez aqui e serve às três consumidoras: a linha de contexto do
+// cabeçalho, o feed "Na comunidade" e a audiência padrão do modal de
+// publicação. Falha de leitura (inclusive rejeição de rede) vira estado
+// recuperável na seção, não nome chumbado, vazio fingido nem carregamento
+// infinito. A guarda de requisição descarta resposta atrasada de tentativa
+// anterior — ela não sobrescreve o contexto já resolvido.
 export default function InicioPage() {
   const { current } = useLocalityContext()
   const [primary, setPrimary] = useState<PrimaryCommunity>({ status: "loading" })
@@ -43,10 +43,10 @@ export default function InicioPage() {
     const isCurrent = guardRef.current.begin()
     setPrimary({ status: "loading" })
     // O loader nunca rejeita: o then sem catch não solta rejection no console.
-    void loadPrimaryCommunity(supabase).then((state) => {
+    void loadPrimaryCommunity(supabase, current.id).then((state) => {
       if (isCurrent()) setPrimary(state)
     })
-  }, [supabase])
+  }, [current.id, supabase])
 
   useEffect(() => {
     loadPrimary()
