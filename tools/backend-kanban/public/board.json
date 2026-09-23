@@ -3718,6 +3718,34 @@
         "Decisao do dono pendente: resposta cujo lugar ja esta no Guia fica 'devida' para sempre e o P3b reenviaria o mesmo corpo a cada execucao — o marcador de 'ja tentado, nada produzido' e estado novo"
       ],
       "completedChecklist": [false, true, true, true, true, false, true, false, true, true]
+    },
+    {
+      "id": "FE-GRUPOS-ALCANCAVEIS",
+      "title": "Web: grupo da cidade sem superficie — /groups inalcancavel e localidade errada",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "Reportado pelo dono em 19/09/2026 contra producao (main 90e4c94): existe um grupo (\"Corrida\") no login dele e ele nao aparece em lugar nenhum. Causa medida: (1) o unico fluxo de criacao do app (apps/web/app/(shell)/groups/page.tsx -> rpc create_group) cria grupo de CIDADE, com community_id NULL; a aba \"Grupos\" de /communities/[id] filtra community_id = <comunidade>, entao nunca mostra esses grupos; a RPC create_group_in_community existe no banco (20260805215419:233) e NENHUM codigo a chama; (2) /groups e a unica tela que lista grupo de cidade e nao tem entrada nenhuma na navegacao — so links condicionais (onboarding/welcome uma vez; profile/interests so quando a cidade nao tem grupo publico; recommendations no estado vazio ou no \"Ver todos\" de \"grupos para descobrir\", que exclui os grupos em que a pessoa JA esta); (3) defeito provado no runtime: /groups resolve \"minha cidade\" com locality_memberships.select(locality_id).eq(user_id).limit(1) SEM kind='current' — para a conta com transferencia declarada do seed essa consulta devolve a linha 'leaving' (Manaus) enquanto (shell)/layout.tsx renderiza a 'current' (Rio), entao o membro transferido ve os grupos da origem e os do destino somem; (4) a tela chama a cidade de \"sua comunidade\" (copy). O red-team ja registrou a confusao Grupo x Comunidade em docs/red-team/lote-2-grupos.md F66 (P1, balde B). Decisao do dono em 19/09/2026: os grupos aparecem DENTRO do destino Comunidades, sem criar quinta aba — o mapa de navegacao ja declara /groups no container \"comunidades\" (apps/web/app/components/shell/active-nav.ts:73).",
+      "checklist": [
+        "Corrigir a resolucao de localidade em /groups: usar a localidade corrente (kind='current'), a mesma fonte do shell, em vez de .limit(1) sem filtro",
+        "Dar entrada estavel aos grupos dentro do destino Comunidades (meus grupos + grupos da cidade), sem criar quinta aba e sem duplicar o diretorio de comunidades",
+        "Corrigir a copy que chama a localidade de \"comunidade\"",
+        "Provar em navegador: o grupo de cidade aparece pelo caminho de navegacao (nao por URL digitada) e o membro transferido ve os grupos da cidade corrente",
+        "Teste de regressao para o membro com vinculo 'leaving' + 'current' (o caso que hoje escolhe a cidade errada)"
+      ],
+      "proof": [
+        "Investigacao de 19/09/2026 contra main 90e4c94: consulta real replicada com o JWT do membro no Supabase local — conta membro-transferencia devolve locality_memberships 'leaving' Manaus na consulta da pagina e 'current' Rio no shell; a lista da pagina mostra os 8 grupos de Manaus",
+        "apps/web/app/(shell)/groups/page.tsx:137-155 (resolucao da localidade) e :151-156 (filtro por locality_id)",
+        "apps/web/app/(shell)/communities/[id]/community-detail-loaders.ts:174-180 (filtro community_id)",
+        "grep create_group_in_community em apps/web: nenhuma chamada; so migration 20260805215419 e pgTAP",
+        "apps/web/app/components/shell/active-nav.ts:73 — /groups declarado no container comunidades",
+        "docs/red-team/lote-2-grupos.md F66 — Grupo x Comunidade sem hierarquia declarada, surface de create_group_in_community inexistente",
+        "Portado em 23/09/2026 sobre o main (59192069) a partir de um trabalho que estava sem commit; revisao independente (DeepSeek, somente leitura) classificou o produto como correto e sem mudanca de RLS. npx pnpm@11.18.0 gate verde: 1116 unit + 189 + 76 mobile + 19 web + 117 de escopo. PENDENTE: e2e tests/e2e/groups-navegavel.spec.ts no CI (GitHub Actions bloqueado por cobranca em 23/09)"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-23",
+      "sourceRevision": "aa7d6472"
     }
   ]
 }

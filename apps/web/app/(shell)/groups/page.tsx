@@ -3,6 +3,7 @@
 import { Button, Chip, Form, Input, Radio, RadioGroup, SearchField, TextArea } from "@heroui/react"
 import type { SVGProps } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { SearchClearButton } from "../../components/bivaque/close-button"
 import { EmptyState } from "../../components/bivaque/empty-state"
@@ -10,6 +11,7 @@ import { ErrorState } from "../../components/bivaque/error-state"
 import { GroupsIllustration } from "../../components/bivaque/illustrations"
 import { ReportButton } from "../../components/bivaque/report-button"
 import { GroupCardSkeleton, Skeleton } from "../../components/bivaque/skeleton"
+import { resolveGroupsScope } from "./groups-scope"
 
 type GroupRow = {
   id: string
@@ -99,8 +101,22 @@ function OnboardingBlock({ groupName, onDismiss }: { groupName: string; onDismis
 export default function GroupsPage() {
   const supabase = createBrowserClient()
 
+  // A cidade vem do MESMO provider que o shell usa para escrever o nome da
+  // cidade no cabeçalho — resolvido no servidor por `kind = 'current'`.
+  //
+  // Antes esta página reconsultava `locality_memberships` com `.limit(1)` e
+  // SEM filtro de `kind`. Para quem tinha transferência declarada (uma linha
+  // `current` e uma `leaving`) a consulta devolvia a linha `leaving` — a cidade
+  // de ORIGEM — enquanto o shell renderizava a `current`. O membro via os
+  // grupos da cidade errada e os da cidade onde mora sumiam, sem erro nenhum
+  // na tela. Fonte única: não existem duas verdades sobre onde a pessoa está.
+  // A lista cobre as DUAS cidades enquanto o vínculo de saída existir: o
+  // ADR-20260816 mantém a origem legível e publicável até o prazo declarado, e
+  // esconder os grupos de lá seria uma regressão nova sobre o defeito antigo.
+  const { current, outbound } = useLocalityContext()
+  const scope = useMemo(() => resolveGroupsScope(current, outbound), [current, outbound])
+
   const [userId, setUserId] = useState<string | null>(null)
-  const [profileLocalityId, setProfileLocalityId] = useState<string | null>(null)
   const [groups, setGroups] = useState<GroupRow[]>([])
   const [memberships, setMemberships] = useState<MembershipRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -134,25 +150,10 @@ export default function GroupsPage() {
       }
       setUserId(authData.user.id)
 
-      const { data: membershipData } = await supabase
-        .from("locality_memberships")
-        .select("locality_id")
-        .eq("user_id", authData.user.id)
-        .limit(1)
-        .maybeSingle()
-
-      if (!membershipData) {
-        setError("Você ainda não pertence a uma localidade.")
-        setLoading(false)
-        return
-      }
-      const localityId = membershipData.locality_id
-      setProfileLocalityId(localityId)
-
       const { data: groupsData, error: groupsError } = await supabase
         .from("groups")
         .select("*")
-        .eq("locality_id", localityId)
+        .in("locality_id", scope.localityIds)
         .order("created_at", { ascending: false })
 
       const { data: membershipsData, error: membershipsError } = await supabase
@@ -178,7 +179,7 @@ export default function GroupsPage() {
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [supabase, scope])
 
   useEffect(() => {
     loadData()
@@ -191,14 +192,13 @@ export default function GroupsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!profileLocalityId) return
     setCreating(true)
     setError(null)
 
     const args = {
       p_name: createName,
       p_visibility: createVisibility,
-      p_locality_id: profileLocalityId,
+      p_locality_id: current.id,
       ...(createDescription ? { p_description: createDescription } : {}),
     }
     const { error: rpcError } = await supabase.rpc("create_group", args)
@@ -393,6 +393,14 @@ export default function GroupsPage() {
               </Chip>
               <ReportButton targetType="group" targetId={group.id} label="Denunciar" />
             </div>
+            {/* Grupo que não é da cidade corrente nunca aparece sem rótulo:
+                com duas cidades em jogo (transferência declarada), "Pesca e
+                Trilha" sem cidade é ambíguo para quem vai clicar. */}
+            {scope.multipleCities && group.locality_id !== current.id && (
+              <p className="text-xs text-muted">
+                {scope.cityLabelByLocalityId.get(group.locality_id) ?? "Outra cidade"}
+              </p>
+            )}
             {group.description && <p className="text-sm text-muted">{group.description}</p>}
           </div>
 
@@ -511,7 +519,7 @@ export default function GroupsPage() {
         <h1 id="groups-heading" className="text-2xl font-semibold tracking-tight">
           Grupos
         </h1>
-        <p className="text-sm text-muted">Grupos da sua comunidade.</p>
+        <p className="text-sm text-muted">{scope.headline}</p>
       </section>
 
       <SearchField
@@ -537,13 +545,13 @@ export default function GroupsPage() {
         />
       )}
 
-      {profileLocalityId && !showCreate && (
+      {!showCreate && (
         <Button variant="primary" className="self-start" onPress={() => setShowCreate(true)}>
           Criar grupo
         </Button>
       )}
 
-      {showCreate && profileLocalityId && (
+      {showCreate && (
         <Form
           onSubmit={handleCreate}
           className="flex flex-col gap-4 rounded-lg border border-border p-4"
@@ -580,9 +588,7 @@ export default function GroupsPage() {
                 </Radio.Control>
                 <div className="flex flex-col gap-0.5">
                   <span>Público</span>
-                  <span className="text-xs text-muted">
-                    Qualquer membro da comunidade pode entrar.
-                  </span>
+                  <span className="text-xs text-muted">Qualquer membro da cidade pode entrar.</span>
                 </div>
               </Radio.Content>
             </Radio>
@@ -613,7 +619,7 @@ export default function GroupsPage() {
       {!error && groups.length === 0 && !showCreate ? (
         <EmptyState
           title="Nenhum grupo ainda"
-          description="Crie ou entre em um grupo para se conectar com outros membros da sua comunidade."
+          description="Crie ou entre em um grupo para se conectar com outros membros da sua cidade."
           illustration={<GroupsIllustration />}
           action={
             <Button variant="primary" size="sm" onPress={() => setShowCreate(true)}>

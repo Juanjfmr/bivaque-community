@@ -906,6 +906,44 @@ values
   )
 on conflict (user_id) do nothing;
 
+-- ── Um grupo de CIDADE no Rio, para a lista cobrir as duas cidades ─────────
+-- FE-GRUPOS-ALCANCAVEIS (19/09/2026): a conta com transferência declarada
+-- (membro-transferencia@) tem vínculo 'current' no Rio e 'leaving' em Manaus.
+-- O defeito corrigido era a lista de grupos resolver a cidade por
+-- `locality_memberships.limit(1)` sem `kind`, o que devolvia a linha 'leaving'
+-- — a cidade de ORIGEM. Sem um grupo na cidade de DESTINO, o spec veria o
+-- mesmo resultado antes e depois da correção e não provaria nada.
+--
+-- A inserção vive AQUI, e não junto dos 8 grupos de Manaus, porque
+-- `groups.created_by` referencia auth.users: o dono do Rio nasce logo acima.
+-- O id do grupo é fixo; a LOCALIDADE é resolvida pelo ibge_code, porque o id
+-- dela nasce de gen_random_uuid() a cada reset (mesma regra das memberships).
+insert into public.groups (
+  id, name, description, visibility, locality_id, created_by, owner_user_id, created_at
+)
+select
+  '60000000-0000-4000-8000-000000000101',
+  'Corrida na Orla',
+  'Encontros de corrida na orla, ritmo livre, todo mundo é bem-vindo.',
+  'public',
+  id,
+  '20000000-0000-4000-8000-000000000009',
+  '20000000-0000-4000-8000-000000000009',
+  now() - interval '30 days'
+from public.localities
+where ibge_code = '3304557'
+on conflict (id) do nothing;
+
+insert into public.group_memberships (group_id, user_id, role, status, joined_at)
+values (
+  '60000000-0000-4000-8000-000000000101',
+  '20000000-0000-4000-8000-000000000009',
+  'owner',
+  'approved',
+  now() - interval '30 days'
+)
+on conflict (group_id, user_id) do nothing;
+
 insert into public.communities (id, locality_id, name, description, created_by, owner_user_id, created_at)
 select
   '71000000-0000-4000-8000-000000000002',
