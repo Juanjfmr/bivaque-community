@@ -36,6 +36,16 @@ export default async function CommunityAdminHome({ params }: { params: Promise<{
             Imagens da comunidade
           </Link>
         </li>
+        {/* Sem este item, a lista de prestadores atestados só se alcançava digitando a
+            URL (achado do rastreador de links, 22/09/2026). */}
+        <li>
+          <Link
+            href={`/communities/${communityId}/admin/providers` as Route}
+            className="inline-flex min-h-11 items-center rounded-md border border-border bg-[var(--surface-sunken)] px-3 text-foreground hover:underline"
+          >
+            Prestadores atestados
+          </Link>
+        </li>
       </ul>
     </div>
   )

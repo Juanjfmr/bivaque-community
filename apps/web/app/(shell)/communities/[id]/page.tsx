@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
+import { createServerClient as createCatalogClient } from "../../../../lib/supabase/server"
 import { isUuid } from "./community-detail-data"
 import { loadCommunityDetail } from "./community-detail-loaders"
 import { CommunityDetailScreen } from "./community-detail-screen"
@@ -35,7 +36,8 @@ export default async function CommunityDetailPage({ params }: { params: Promise<
     redirect(`/login?return=/communities/${communityId}`)
   }
 
-  const view = await loadCommunityDetail(supabase, communityId, user.id)
+  // O catálogo de cidades só nomeia a cidade para quem é de fora; ver resolveCityLabel.
+  const view = await loadCommunityDetail(supabase, communityId, user.id, createCatalogClient)
   if (view.status === "not-found") {
     notFound()
   }

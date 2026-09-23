@@ -1,7 +1,7 @@
 {
   "title": "Bivaque — Guia visual de construção",
   "date": "2026-09-06",
-  "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
+  "sourceRevision": "9581313",
   "generationTool": "image_gen integrado; a prancha 70 é render determinístico de HTML sobre os tokens reais",
   "scope": "Conceitos mobile e web autorizados nesta conversa. Referências de aparência e fluxo; não comprovam disponibilidade no aplicativo.",
   "artifacts": [
@@ -25,16 +25,22 @@
     {
       "id": "01-web-inicio",
       "kind": "web",
-      "title": "Web: início",
+      "title": "Web: início com intenções claras",
       "screens": [
-        "Home de quem participa"
+        "Home com intenções e pedido vinculado ao Guia"
       ],
-      "source": "~/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-9a2bb87f-d5c4-4be2-b610-69b47c667f60.png",
+      "source": "~/.codex/generated_images/01a0bbdb-28c9-7471-9f2f-0697128accb1/exec-99b8cd9e-9bc8-4538-9e93-0308befb6761.png",
       "path": "docs/design/visual-guide-2026-09-06/01-web-inicio.png",
       "prompt": "Use case ui-mockup. BIVAQUE national Brazilian community app for military families, veterans, pensioners. Input image is STYLE REFERENCE ONLY: user approved its finished native app visual language. Produce further screens of this SAME app with strong consistent identity. Deliver one high-resolution raster reference board intended as a visual construction guide, not code. Portuguese impeccable, crisp readable type. Mature, welcoming, true shipped-product quality. Forest green #164734 flat primary, off-white #FAFBF8 canvas, white surfaces, warm charcoal text, muted sage #EEF1E7 selected surfaces, understated light gray borders only where needed. SF Pro / Inter-like sans serif; big clear headings, 16px equivalent mobile body, 12-14px metadata. Subtle line icons consistent family, purposeful generous whitespace, precise grids. No gradients, no glassmorphism, no gold, no gamification, no ratings, no public verification badges, no military ranks, no large slogans. Brazilian everyday civilian photographs and diverse realistic adults. A national app with geographic context clearly separate from communities. No fake analytics or arbitrary new features. All example names and content are fictional. Match exact navigation words consistently: Início, Explorar, Comunidades, Perfil. Green active icon on pale sage rounded selection; public discussions not unrestricted private member chat. Audience must be explicit before posting. ONE artifact per call. No English UI, no annotation clutter. Treat photos/avatar likenesses as illustrative.\nCOMPOSITION: ONE full desktop WEB APP screen, approximately 1440x1000 logical pixels, landscape, large crisp high-resolution output. Edge-to-edge app viewport, no physical monitor, no mobile phone, no billboard, no heading outside UI. Adapt to desktop, do not stretch a phone. SAME SHELL across web images: 220px light sidebar white with BIVAQUE forest-green wordmark top; primary nav Início, Explorar, Comunidades, Perfil with appropriate active sage selection; secondary links Salvos, Notificações; 'Minhas comunidades' heading with Jardim das Acácias and Famílias em Brasília below; bottom Carlos Ribeiro avatar and Configurações. Main area top 72px toolbar with search 'Buscar no Bivaque', city selector Brasília, DF, bell and avatar right. Main canvas near-white, content at 32px gutters. 600-650px main reading column and 300px contextual right rail when appropriate; discovery uses grid. Precise accessible Inter typography. Sidebar is light, not a giant dark mass. Keep all navigation terminology identical to mobile reference.\nSCREEN SPECIFICATION:\nHOME desktop of active member Carlos, Início active. Main header breadcrumb Jardim das Acácias · Brasília, heading 'Bom dia, Carlos.' and subtle date 'Sábado, 12 de setembro'. Primary composer row Carlos avatar, 'O que você quer compartilhar?' and compact Publicar button. Calm sage notice 'Ana respondeu à sua pergunta' / 'Sobre escolas na Asa Norte' action 'Ver resposta'. Feed title Na comunidade, tabs Recentes and Acompanhando only. First beautifully laid out discussion: Mariana Santos avatar, há 2 h, audience Jardim das Acácias, title 'Mudança para Recife: alguma indicação?', two-line body about needing transportadora; indented Paulo Ribeiro reply preview with green hairline 'Fiz esse trajeto em julho. Deixei algumas dicas na conversa.' Actions '6 respostas', 'Acompanhar'. Second event post Café entre vizinhos with wide authentic community breakfast photo, modest date chip SÁB 12, 9h · Praça da comunidade. Third post partially visible below fold. Right rail: next gathering card 'Seu próximo encontro', Café entre vizinhos, Ver evento, compact 3 avatars; useful guide 'Precisa de uma indicação?' links Serviços, Guia da cidade, Pedir ajuda. Lower rail origin/destination module 'De mudança?' / 'Prepare sua chegada em outra cidade' link 'Explorar destino'. Real desktop density, not dashboard, no giant hero.",
       "group": "base",
       "file": "01-web-inicio.png",
-      "reviewNotes": [],
+      "reviewNotes": [
+        "Na Home ativa, o retorno relevante vem antes do lançador compacto; o primeiro item do feed continua visível na dobra.",
+        "Fazer uma pergunta e Pedir uma indicação têm destinos distintos, sem formar um hero permanente.",
+        "Estado novo ou vazio pode explicar as intenções com mais espaço; HeroUI não redefine a composição aprovada."
+      ],
+      "revisionPrompt": "Preservar a Home ativa compacta: retorno relevante primeiro, lançador de duas intenções abaixo e feed alto na dobra. Não converter cada bloco em Card nem adaptar a hierarquia ao aspecto padrão do HeroUI.",
+      "reviewedAt": "2026-09-20",
       "status": "Referencia visual"
     },
     {
@@ -732,24 +738,27 @@
       "id": "44-mobile-publicacao",
       "kind": "mobile",
       "group": "community",
-      "title": "Criar pergunta e escolher público",
+      "title": "Perguntar ou pedir indicação",
       "screens": [
-        "Escrever pergunta",
-        "Escolher público",
-        "Publicação enviada"
+        "Escolher intenção",
+        "Consultar o Guia",
+        "Sugerir referência fora do Guia"
       ],
       "file": "44-mobile-publicacao.png",
       "status": "Referencia visual",
       "prompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: three large matching phone screens side by side, one landscape high resolution board, each a full tall native mobile viewport with narrow dark phone bezel, status bar 9:41, proper safe areas. No cropped screen. Match the reference quality. Three mobile composer flow screens. First back and 'Nova pergunta', user Carlos Ribeiro avatar, explicit audience pill 'Jardim das Acácias', title field 'Indicação de escola na Asa Norte?', body 'Estamos organizando a mudança. Alguém pode compartilhar sua experiência?', attach photo icon optional, primary 'Publicar'. Second same form with audience native bottom sheet 'Quem pode ver?', available radio Jardim das Acácias selected / Famílias em Brasília, short 'Escolha uma comunidade da qual você participa.', Aplicar. Third posted question detail matching exact text Carlos Ribeiro, read-only audience, success toast 'Pergunta publicada', Responder and Acompanhar. No public unrestricted audience or audience editing by readers.",
-      "source": "C:\\Users\\juana\\.codex\\generated_images\\01a07740-ae93-78c2-b2d4-c77857b1def5\\exec-05e03a15-1b57-404c-9a42-31a808b23a20.png",
+      "source": "C:\\Users\\juana\\.codex\\generated_images\\01a0bbdb-28c9-7471-9f2f-0697128accb1\\exec-dc6b9503-f7cd-44d6-8638-83cbe0360e48.png",
       "executedPrompt": "Edit target: supplied BIVAQUE three-phone composer board. Preserve exact style, people, question content, navigation and phones. Replace 'Para qual comunidade?' with 'Quem pode ver?'. Left selected audience 'Toda a cidade' with subtitle 'Brasília, DF'. Middle audience sheet three radio options: 'Toda a cidade' / 'Brasília, DF' selected first; 'Jardim das Acácias' / 'Comunidade'; 'Famílias em Brasília' / 'Comunidade'. Helper 'Pergunte para a cidade ou para uma comunidade da qual participa.' Keep Aplicar. Third published state must reflect city audience: author metadata 'Há 1 min • Brasília, DF', audience block city icon 'Toda a cidade' / 'Brasília, DF'. No claim visible publicly outside Bivaque, no community-only audience helper. All remaining content unchanged.",
       "reviewNotes": [
-        "Correção aplicada: Toda a cidade • Brasília, DF é uma escolha de público, além de comunidades autorizadas. Destino aparece antes e depois da publicação.",
-        "Cidade significa alcance local no Bivaque, não publicação anônima na internet. Respostas herdam o público. O contador de caracteres é ilustrativo."
+        "A indicação consulta o Guia antes de perguntar à comunidade; a busca reduz duplicidade sem bloquear o pedido.",
+        "~~Quando a referência não existe, a resposta é publicada imediatamente com Ainda não está no Guia e a candidata segue para revisão humana.~~ **Divergência de 21/09/2026 (ADR-20260921, aprovado, R3):** este fluxo foi **descartado** e não será construído. A única policy de leitura de `arrival_guide_entries` exige `status='approved'`, então o membro não leria a própria candidata e a etiqueta afirmaria o que o servidor não sabe. Para o membro: pergunta, resposta, fim. A alimentação do Guia passa a ser um **job agendado**. O painel 3 desta prancha (\"Sugerir referência fora do Guia\") não tem contraparte a construir.",
+        "Não usar polegar ou botão Indicar como ação de resposta."
       ],
+      "revisionPrompt": "Três telas mobile: escolher Pergunta ou Indicação, consultar o Guia e sugerir nova referência; a resposta publica agora e somente a candidata aguarda revisão humana.",
       "reviewState": "Inspecionada; observar notas e correções pendentes",
       "sourceHistory": [
-        "C:\\Users\\juana\\.codex\\generated_images\\01a07740-ae93-78c2-b2d4-c77857b1def5\\exec-ecd2da2a-1e57-4422-902b-48c884308c0c.png"
+        "C:\\Users\\juana\\.codex\\generated_images\\01a07740-ae93-78c2-b2d4-c77857b1def5\\exec-ecd2da2a-1e57-4422-902b-48c884308c0c.png",
+        "C:\\Users\\juana\\.codex\\generated_images\\01a07740-ae93-78c2-b2d4-c77857b1def5\\exec-05e03a15-1b57-404c-9a42-31a808b23a20.png"
       ],
       "lastEditPrompt": "Edit target: supplied BIVAQUE three-phone composer board. Preserve exact style, people, question content, navigation and phones. Replace 'Para qual comunidade?' with 'Quem pode ver?'. Left selected audience 'Toda a cidade' with subtitle 'Brasília, DF'. Middle audience sheet three radio options: 'Toda a cidade' / 'Brasília, DF' selected first; 'Jardim das Acácias' / 'Comunidade'; 'Famílias em Brasília' / 'Comunidade'. Helper 'Pergunte para a cidade ou para uma comunidade da qual participa.' Keep Aplicar. Third published state must reflect city audience: author metadata 'Há 1 min • Brasília, DF', audience block city icon 'Toda a cidade' / 'Brasília, DF'. No claim visible publicly outside Bivaque, no community-only audience helper. All remaining content unchanged.",
       "path": "docs/design/visual-guide-2026-09-06/44-mobile-publicacao.png",
@@ -759,22 +768,24 @@
       "id": "45-web-publicacao",
       "kind": "web",
       "group": "community",
-      "title": "Publicação e rascunho web",
+      "title": "Guia antes do pedido web",
       "screens": [
-        "Criar publicação",
-        "Editar e recuperar rascunho"
+        "Buscar no Guia",
+        "Perguntar à comunidade quando não encontrar"
       ],
       "file": "45-web-publicacao.png",
       "status": "Referencia visual",
       "prompt": "Edit BIVAQUE two desktop board preserving layout and style. Left Nova pergunta: audience label 'Quem pode ver?' show TWO radio options: selected 'Toda a cidade · Brasília, DF' helper 'Membros do Bivaque nesta cidade'; unselected 'Jardim das Acácias'. Preview audience 'Toda a cidade · Brasília, DF' and footer 'Visível para membros do Bivaque em Brasília.' Keep question composer and Publicar. Right Editar publicação original audience 'Jardim das Acácias' READ ONLY text with lock, no dropdown. Dialog 'Sair sem salvar?' safe action 'Continuar editando' solid forest green, destructive 'Descartar alterações' red outline. Remove duplicate Tentar novamente action; retain Salvar alterações. Remove arbitrary upload size and character counters on both. No public internet access. Professional readable Portuguese flat white/green design.",
-      "source": "C:/Users/juana/.codex/generated_images/01a07740-ae93-78c2-b2d4-c77857b1def5/exec-c020ff8a-0007-4493-bb95-ade876a3e6cc.png",
+      "source": "C:/Users/juana/.codex/generated_images/01a0bbdb-28c9-7471-9f2f-0697128accb1/exec-5387e36b-20a9-4532-95d6-f51ca8fe5e4c.png",
       "executedPrompt": "Use case: ui-mockup. Create a finished-product BIVAQUE visual construction reference, matching the supplied STYLE REFERENCE image, not editing it. National Brazilian community app; Portuguese UI. Crisp legible Inter/SF-like type, forest green #164734, white/light ivory surfaces, charcoal text, pale sage selected states, flat fills, thin neutral borders, generous but purposeful spacing. Mature practical native interface, no gradients, decorative dashboards, gold, verification badges, military ranks or invented guarantees. Imaginary people/data only. Preserve main navigation words when present: Início, Explorar, Comunidades, Perfil. City is context, not permission. Buttons at least 44px equivalent, clear field labels, realistic density. No external presentation headings or explanatory annotations. Each panel is an actual distinct full application viewport. COMPOSITION: two complete desktop browser application viewports side by side on a very wide high-resolution board (roughly 2880x1050 logical canvas). Each viewport is desktop 1440px layout, not a phone stretched. Fine readable type, no physical monitors. Auth has no member sidebar. For signed-in views use consistent 220px WHITE sidebar BIVAQUE logo and Início / Explorar / Comunidades / Perfil, secondary Salvos / Notificações, user Carlos Ribeiro and Configurações below, top search Buscar no Bivaque, city Brasília, DF, bell, avatar. Desktop member shell Início active. Left central composer card Nova pergunta, Carlos Ribeiro, explicit audience Jardim das Acácias dropdown, titled text 'Indicação de escola na Asa Norte?', short body about moving, optional photo, Publicar, right compact preview visible audience. Right Editar publicação same stored text, top amber inline 'Não foi possível salvar. Seu texto continua aqui.', Salvar alterações and Tentar novamente only one primary Save, link Voltar, a small leave confirmation dialog 'Sair sem salvar?' buttons Continuar editando and Descartar alterações. No changing others posts or public audience. STRICT COPY: Do not add fields, buttons, promises, eligibility criteria, deadlines, or product behavior not specified. No password field. Use only the requested brief text; omit filler paragraphs. In Auth never add signed-in navigation. In signed-in screens show the exact 4 navigation destinations once.",
       "reviewNotes": [
-        "Público selecionável apenas na criação; edição mantém o alcance original. O limite ilustrativo de 10MB deve vir do contrato real."
+        "Padrão Mobbin/Nextdoor: descobrir referências existentes antes de abrir um pedido aos vizinhos.",
+        "O fallback preserva rascunho e torna o alcance explícito; não cria curtida, nota ou ranking."
       ],
+      "revisionPrompt": "Dois estados web: busca no Guia antes do pedido e fallback para perguntar à comunidade com alcance explícito, prévia e rascunho preservado.",
       "reviewState": "Inspecionada; observar notas e correções pendentes",
       "pendingEdit": {
-        "status": "blocked",
+        "status": "resolved",
         "reason": "usage_limit_reached (HTTP 429), 2026-09-07",
         "prompt": "Edit the supplied BIVAQUE board only as follows, preserve professional style and remaining content: Composer novo com Quem pode ver? oferece Toda a cidade • Brasília, DF e comunidades autorizadas. Prévia repete alcance. Edição mantém público original somente leitura. Continuar editando é primária no diálogo, Descartar alterações secundária; remover tentativa duplicada.",
         "sourceImage": "45-web-publicacao.png"
@@ -1375,23 +1386,23 @@
       "id": "74-web-guia-curadoria",
       "kind": "web",
       "group": "guia",
-      "title": "Web: curar o Guia",
+      "title": "Web: curar referências da comunidade",
       "screens": [
-        "Fila do Guia",
-        "Sugestões de correção"
+        "Candidata e possível duplicidade",
+        "Revisão humana e publicação"
       ],
       "reviewNotes": [
-        "Nada é publicado sem revisão humana. A fila não publica sozinha, e a origem da sugestão (IA ou membro) fica visível para quem decide.",
-        "Aplicar uma correção publica a versão revisada e registra quem sugeriu. Não apagar o histórico da versão anterior.",
-        "O horário, o nome do posto e o telefone são ilustrativos; consolidar com dado real ao implementar.",
-        "A nota de origem da sugestão de correção não deve virar promessa de prazo nem prova de verificação."
+        "A resposta da comunidade é publicada antes da curadoria; somente a referência candidata espera revisão. **Divergência de 21/09/2026 (ADR-20260921, aprovado, R3):** a curadoria continua humana e nada entra no Guia automaticamente, mas a candidata **deixou de nascer da resposta do membro**: ela passa a ser preparada por um job agendado (dedup contra o Guia da localidade antes de escrever, `source='ai'`, `confidence`, `source_reply_id`). A leitura \"a resposta do membro gera a candidata\" está superada; a fila do operador permanece.",
+        "Nada entra no Guia automaticamente. O operador deduplica, aprova, solicita ajuste ou rejeita e a origem permanece registrada.",
+        "A aprovação ou mesclagem deve religar a resposta ao item canônico do Guia. **Divergência de 21/09/2026 (ADR-20260921, aprovado, R3):** a religação continua e agora é automática: `arrival_guide_entries.source_reply_id` já é o que move o `Ver no Guia`, então aprovar a candidata liga a resposta sozinha, sem interface nova e sem ação do membro."
       ],
-      "source": "docs/design/visual-guide-2026-09-06/src/74-web-guia-curadoria.html",
+      "revisionPrompt": "Dois estados de operação: candidata derivada da resposta com possível duplicidade e revisão humana com origem e trilha de decisão preservadas.",
+      "source": "~/.codex/generated_images/01a0bbdb-28c9-7471-9f2f-0697128accb1/exec-15f6d886-1150-44db-8474-75104607161c.png",
       "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Shell do painel do operador conforme apps/web/app/(admin)/layout.tsx. Painel 1 é a fila com sugestão de IA e sugestão manual, cada uma com aprovar e recusar. Painel 2 é a sugestão de correção com o antes e o depois do trecho do artigo. Copy reconciliada com R39 e com a tela implementada em guide-queue.",
       "file": "74-web-guia-curadoria.png",
       "path": "docs/design/visual-guide-2026-09-06/74-web-guia-curadoria.png",
       "status": "Referencia visual",
-      "reviewedAt": "2026-09-12"
+      "reviewedAt": "2026-09-20"
     },
     {
       "id": "75-web-conversas",
@@ -1525,27 +1536,25 @@
       "id": "80-web-recomendacoes",
       "kind": "web",
       "group": "guia",
-      "title": "Web: indicações e referências",
+      "title": "Web: responder e sugerir referências",
       "screens": [
-        "Pedidos de indicação recebidos",
-        "Responder uma indicação"
+        "Resposta vinculada ou ainda fora do Guia",
+        "Publicar resposta e enviar candidata à revisão"
       ],
       "reviewNotes": [
-        "A rota /recommendations é do segmento de membro e o utilizador é o próprio membro pedindo ou respondendo a pedidos. A casca é a lateral padrão do membro (apps/web/app/(shell)/layout.tsx), não a do prestador. O briefing atribui a tarefa ao teammate 'prestador', mas a tela não é do prestador — é do membro. A prancha segue a autoridade real do código.",
-        "Pedidos de indicação NÃO são marketplace: a própria tela traz o aviso 'Este é um espaço de utilidade comunitária, não um marketplace'. Não inventar estrelas, selos, ranking, promessa comercial, SLA ou pagamento. O texto de ajuda da caixa 'Pedir indicação' pede para evitar termos comerciais como preço, pagamento, anúncio ou contato comercial — manter o mesmo aviso.",
-        "Marcador 'Ajudou a resolver': só a autora marca a resposta que resolveu, e a marca fica visível para todos com borda esquerda verde e chip 'Ajudou a resolver'. A resposta marcada define o status 'Pedido resolvido' do pedido, exibido em faixa abaixo da lista de respostas. 'Reabrir' volta o pedido ao estado normal e remove a marca — usado só pela autora.",
-        "Não desenhar curtidas: o sistema não tem like/curtida em pedido de indicação. Os únicos controles por resposta são Editar/Excluir (próprio autor) e Ajudou a resolver / Remover marca (autora do pedido).",
-        "Alcance: o pedido nasce com escopo locality (a cidade) ou group (um grupo do qual o autor participa). Quando a categoria é 'Saúde & bem-estar' o escopo locality é escondido — a tela obriga a escolher um grupo. A etiqueta do alcance aparece como chip Manaus / Grupo ao lado da categoria.",
-        "Confirmação de publicação: o toast atual diz 'Pedido publicado!'. A prancha mostra o estado pós-publicação (lista atualizada com o novo pedido) e não afirma sucesso de envio antes da persistência. Falha de envio preserva o texto da caixa (não há reset automático) e exibe mensagem de erro sem expor motivo técnico privado.",
-        "Detecção de CPF/CEP: a caixa do pedido detecta números de CPF/CEP e pede confirmação explícita antes de publicar. A prancha não pinta estado de aviso — é comportamento do formulário, não um cartão visual fixo. Não exibir dado sensível nem sugerir armazenamento local.",
-        "Manaus é fixture do seed; cidade de exemplo, não barreira de acesso. As categorias, nomes de autores e datas são fictícios; consolidar fixtures coerentes ao implementar."
+        "Mobbin/Nextdoor: Responder abre a contribuição; o MVP não usa polegar, curtida ou Isso ajudou nesse fluxo.",
+        "~~Com correspondência, a resposta aponta para o item do Guia. Sem correspondência, aparece imediatamente como Ainda não está no Guia e envia uma candidata à curadoria.~~ **Divergência de 21/09/2026 (ADR-20260921, aprovado, R3):** ver a nota de divergência abaixo. Esta afirmação descrevia o fluxo do membro, que foi descartado; a religação continua existindo, mas pelo operador (via `source_reply_id`), não por ação de quem respondeu.",
+        "A autora pode marcar `Ajudou a resolver` (rótulo do produto, ADR-20260909) independentemente da aprovação no Guia; Denunciar permanece no overflow.",
+        "Não inventar estrelas, selos, ranking, promessa comercial, SLA ou pagamento.",
+        "Divergencia registrada em 21/09/2026 (ADR-20260921, aprovado, R3): o painel 2 desta prancha NAO sera construido. O fluxo de referencia candidata voltado ao membro foi descartado porque a unica policy de leitura de arrival_guide_entries exige status='approved' — o membro nao leria a propria candidata e a etiqueta afirmaria o que o servidor nao sabe. Para o membro: pergunta, resposta, fim. A alimentacao do Guia passa a ser trabalho de sistema: job agendado le respostas com sinal de qualidade, deduplica contra o Guia da localidade antes de escrever e grava pending com source='ai', confidence e source_reply_id. A religacao continua existindo pelo operador, via source_reply_id. ESTENDIDA em 21/09/2026: o rotulo de fechamento NAO e pendencia em aberto. A prancha desenha `Resolveu meu pedido` e o codigo usa `Ajudou a resolver` (ADR-20260909, implementado) — divergencia registrada entre prancha e implementacao, resolvida em favor do ADR. Causa do erro corrigido aqui: a afirmação de que não havia ocorrência \"em imagem\" veio de `grep` sobre arquivos de TEXTO, e **grep não lê PNG** — a prancha nunca foi olhada antes de a frase ser escrita."
       ],
-      "source": "docs/design/visual-guide-2026-09-06/src/80-web-recomendacoes.html",
-      "prompt": "Prancha criada em 12/09/2026 por render determinístico de HTML sobre os tokens reais, na geometria da convenção web (2076x757, dois painéis de 1032, split em 0.497/0.503). Casca do membro conforme apps/web/app/(shell)/layout.tsx. Painel 1 mostra o conteúdo da aba Pedidos com a lista de pedidos de indicação recebidos: cards com chips de categoria e alcance, título, corpo, respostas existentes, caixa de resposta e o botão Salvar. Painel 2 abre um pedido específico para demonstrar o marcador 'Ajudou a resolver' (borda esquerda verde + chip), a faixa 'Pedido resolvido' e o botão Reabrir; o botão Responder fica desabilitado após a resolução. Copy reconciliada com a tela implementada em apps/web/app/(shell)/recommendations/page.tsx e o componente app/components/bivaque/recommendation-requests.tsx.",
+      "revisionPrompt": "Dois estados web: resposta vinculada com Ver no Guia e Resolveu meu pedido; referência ausente publicada como Ainda não está no Guia e enviada à revisão. Sem polegar, curtida ou Isso ajudou.",
+      "source": "~/.codex/generated_images/01a0bbdb-28c9-7471-9f2f-0697128accb1/exec-ea7fd820-9d34-45a6-82c2-578c6201f1ca.png",
+      "prompt": "Prancha web revisada para o fluxo de recomendações do Bivaque. Mostra, lado a lado, uma resposta associada a referência existente no Guia e uma resposta cuja referência ainda não existe. A primeira oferece Ver no Guia e, somente à autora do pedido, Resolveu meu pedido. A segunda informa Ainda não está no Guia e Referência enviada para revisão, sem bloquear a publicação. Denunciar permanece no overflow. Não há polegar, curtida, Isso ajudou, estrelas, ranking ou status que o servidor não consiga provar.",
       "file": "80-web-recomendacoes.png",
       "path": "docs/design/visual-guide-2026-09-06/80-web-recomendacoes.png",
       "status": "Referencia visual",
-      "reviewedAt": "2026-09-12"
+      "reviewedAt": "2026-09-20"
     },
     {
       "id": "81-web-comunidade-admin",
@@ -1682,9 +1691,28 @@
     "status": "partial",
     "details": "auth-generation.json"
   },
-  "updatedAt": "2026-09-08",
+  "updatedAt": "2026-09-21",
   "expansionProvenance": "./expansion-generation.json",
-  "pendingCorrections": [],
+  "pendingCorrections": [
+    {
+      "id": "80-web-recomendacoes-painel-2",
+      "reason": "ADR-20260921-curadoria-assistida-do-guia (aprovado, R3) — fluxo descartado por decisao do dono",
+      "instructions": "Nada a construir. O painel 2 da prancha 80 (referencia candidata, chip Ainda nao esta no Guia, Publicar resposta e enviar candidata a revisao) foi descartado e a nota de 20/09 em MOBBIN-INDICACOES-2026-09-20.md descreve esse fluxo. A divergencia esta registrada no README (secao 80-web-recomendacoes) e na secao Divergencia registrada em 21/09/2026 daquela nota. Nao redesenhar nem regerar a imagem: ela segue como referencia de composicao do que existir. ESTENDIDA em 21/09/2026: o rotulo de fechamento tambem diverge entre prancha e implementacao — a prancha desenha \"Resolveu meu pedido\" e o codigo usa \"Ajudou a resolver\" (ADR-20260909, implementado). Nada a construir: a divergencia esta resolvida em favor do ADR e o rotulo do produto nao muda. NAO regerar a imagem; a prancha segue valida como referencia historica. Causa do erro que esta nota corrige: a afirmacao de que o rotulo nao aparecia \"em imagem\" veio de grep sobre arquivos de texto, e grep nao le PNG.",
+      "registeredAt": "2026-09-21"
+    },
+    {
+      "id": "44-mobile-publicacao-painel-3",
+      "reason": "ADR-20260921-curadoria-assistida-do-guia (aprovado, R3) — fluxo descartado por decisao do dono",
+      "instructions": "Nada a construir. O painel 3 da prancha 44 (Sugerir referencia fora do Guia) e a nota de 20/09 descrevem o fluxo de referencia candidata voltado ao membro, descartado pelo ADR. A divergencia esta registrada no README (secao 44-mobile-publicacao), na reviewNote desta prancha e na secao Divergencia registrada em 21/09/2026 de MOBBIN-INDICACOES-2026-09-20.md. NAO redesenhar nem regerar a imagem: ela segue como referencia historica valida de composicao; o que muda e a nota que prometia construir.",
+      "registeredAt": "2026-09-21"
+    },
+    {
+      "id": "74-web-guia-curadoria-origem-da-candidata",
+      "reason": "ADR-20260921 — a fila do operador permanece, mas a candidata deixou de nascer da resposta do membro",
+      "instructions": "A tela do operador continua sendo construida (P3c). O que muda e a origem da candidata: ela passa a ser preparada por job agendado, com dedup contra o Guia da localidade antes de escrever. A leitura 'a resposta do membro gera a candidata' esta superada. A religacao resposta<->item canonico continua e agora e automatica via source_reply_id.",
+      "registeredAt": "2026-09-21"
+    }
+  ],
   "resolvedCorrections": [
     {
       "id": "34-mobile-onboarding-contexto",

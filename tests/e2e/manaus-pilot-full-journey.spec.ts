@@ -340,8 +340,10 @@ test.describe("events journey", () => {
     await seedSession(context)
     await page.goto("/events")
 
-    // Then the create event button is visible
-    await expect(page.getByRole("button", { name: "Criar evento" })).toBeVisible()
+    // Then the create event toggle in the page header is visible. The empty states
+    // repeat the same call to action when the member has no events of their own,
+    // so the header toggle -- first in document order -- is the one asserted.
+    await expect(page.getByRole("button", { name: "Criar evento" }).first()).toBeVisible()
   })
 })
 

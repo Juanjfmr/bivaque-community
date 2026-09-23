@@ -5,6 +5,7 @@ import { Building2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
+import { SearchClearButton } from "../../../components/bivaque/close-button"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import { readStoredCity, type StoredCity, writeStoredCity } from "../city-storage"
 import { ContextSteps } from "../components/context-steps"
@@ -128,7 +129,7 @@ export default function OnboardingLocalityPage() {
           <SearchField.Group>
             <SearchField.SearchIcon />
             <SearchField.Input placeholder="Buscar cidade" />
-            {query ? <SearchField.ClearButton /> : null}
+            {query ? <SearchClearButton /> : null}
           </SearchField.Group>
         </SearchField>
 

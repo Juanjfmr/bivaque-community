@@ -4,11 +4,22 @@
 // é a única peça que conhece as ações do post (ocultar, compartilhar,
 // denunciar, editar) — o cartão decide SE oferece editar (autoria), o menu
 // só renderiza o que recebeu.
+//
+// DS-006: o mesmo menu serve o pedido e a resposta de indicação. Os rótulos
+// mudam (o alvo não é uma publicação) e o link de compartilhar é o do pedido.
+// O nome acessível do gatilho fica no default "Mais opções" — que
+// tests/e2e/reports-member-flow.spec.ts clica — e o chamador que tem contexto
+// passa um `triggerLabel` específico, sempre prefixado por "Mais opções".
 
 import { Dropdown } from "@heroui/react"
 import { MoreHorizontal } from "lucide-react"
 import { useCallback } from "react"
 import { postFocusHref } from "../../(shell)/community/legacy-target"
+
+// Alvo mínimo dos itens do menu: 44px, a régua que a auditoria pediu para o menu
+// contextual. O componente é compartilhado, então o feed e o fluxo de indicação
+// passam a cumprir juntos — a mudança é deliberada, não efeito colateral.
+const ITEM_CLASS = "min-h-11"
 
 interface LeanOverflowMenuProps {
   postId: string
@@ -17,11 +28,47 @@ interface LeanOverflowMenuProps {
   /** presente só quando o post é da própria pessoa (autorias conferidas no
    *  servidor; o item aparece para quem o UPDATE da RLS aceita) */
   onEdit?: (() => void) | undefined
+  /** Exclusão do próprio conteúdo. O feed não usa este item; o pedido e a
+   *  resposta de indicação usam, para a ação destrutiva não virar botão
+   *  visível ao lado da ação primária. */
+  onDelete?: (() => void) | undefined
+  /** Reabertura do pedido resolvido (só a autora). */
+  onReopen?: (() => void) | undefined
+  /** Nomes dos itens quando o alvo é um pedido ou uma resposta de indicação. */
+  labels?: {
+    edit?: string
+    delete?: string
+    hide?: string
+    share?: string
+    report?: string
+    reopen?: string
+  }
+  /** Caminho a compartilhar quando não é uma publicação (ex.: /recommendations). */
+  sharePath?: string
+  /** Nome acessível do menu; o padrão é o da publicação. */
+  menuLabel?: string
+  /** Nome acessível do gatilho. O default "Mais opções" permanece porque o e2e
+   *  do fluxo de denúncia clica exatamente por ele e porque o feed — 346
+   *  gatilhos em feed-post-card.tsx, fora de allowed_paths — ainda depende dele.
+   *  Quem tem contexto (o pedido e a resposta de indicação) passa o seu,
+   *  sempre começando por "Mais opções". */
+  triggerLabel?: string
 }
 
-export function LeanOverflowMenu({ postId, onHide, onReport, onEdit }: LeanOverflowMenuProps) {
+export function LeanOverflowMenu({
+  postId,
+  onHide,
+  onReport,
+  onEdit,
+  onDelete,
+  onReopen,
+  labels,
+  sharePath,
+  menuLabel = "Ações da publicação",
+  triggerLabel = "Mais opções",
+}: LeanOverflowMenuProps) {
   const handleShare = useCallback(async () => {
-    const url = `${window.location.origin}${postFocusHref(postId)}`
+    const url = `${window.location.origin}${sharePath ?? postFocusHref(postId)}`
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
         await navigator.share({ title: "Bivaque", url })
@@ -39,7 +86,7 @@ export function LeanOverflowMenu({ postId, onHide, onReport, onEdit }: LeanOverf
         /* noop */
       }
     }
-  }, [postId])
+  }, [postId, sharePath])
 
   const handleAction = useCallback(
     (key: React.KeyboardEvent | React.MouseEvent | string | number) => {
@@ -51,9 +98,13 @@ export function LeanOverflowMenu({ postId, onHide, onReport, onEdit }: LeanOverf
         onReport?.()
       } else if (key === "edit") {
         onEdit?.()
+      } else if (key === "delete") {
+        onDelete?.()
+      } else if (key === "reopen") {
+        onReopen?.()
       }
     },
-    [postId, onHide, onReport, onEdit, handleShare],
+    [postId, onHide, onReport, onEdit, onDelete, onReopen, handleShare],
   )
 
   return (
@@ -64,28 +115,38 @@ export function LeanOverflowMenu({ postId, onHide, onReport, onEdit }: LeanOverf
           hidratação no console de toda tela com cartão de publicação. As props
           do botão vão no próprio Trigger. O nome acessível segue "Mais opções"
           porque tests/e2e/reports-member-flow.spec.ts clica por ele. */}
-      <Dropdown.Trigger aria-label="Mais opções" className="rounded-full min-h-11 min-w-11">
+      <Dropdown.Trigger aria-label={triggerLabel} className="rounded-full min-h-11 min-w-11">
         <MoreHorizontal size={18} aria-hidden="true" />
       </Dropdown.Trigger>
       <Dropdown.Popover placement="bottom end">
-        <Dropdown.Menu aria-label="Ações da publicação" onAction={handleAction}>
+        <Dropdown.Menu aria-label={menuLabel} onAction={handleAction}>
           {onEdit ? (
-            <Dropdown.Item key="edit" id="edit">
-              Editar publicação
+            <Dropdown.Item key="edit" id="edit" className={ITEM_CLASS}>
+              {labels?.edit ?? "Editar publicação"}
             </Dropdown.Item>
           ) : null}
-          <Dropdown.Item key="hide" id="hide">
-            Ocultar publicação
+          {onDelete ? (
+            <Dropdown.Item key="delete" id="delete" className={ITEM_CLASS}>
+              {labels?.delete ?? "Excluir publicação"}
+            </Dropdown.Item>
+          ) : null}
+          {onReopen ? (
+            <Dropdown.Item key="reopen" id="reopen" className={ITEM_CLASS}>
+              {labels?.reopen ?? "Reabrir"}
+            </Dropdown.Item>
+          ) : null}
+          <Dropdown.Item key="hide" id="hide" className={ITEM_CLASS}>
+            {labels?.hide ?? "Ocultar publicação"}
           </Dropdown.Item>
-          <Dropdown.Item key="share" id="share">
-            Compartilhar
+          <Dropdown.Item key="share" id="share" className={ITEM_CLASS}>
+            {labels?.share ?? "Compartilhar"}
           </Dropdown.Item>
           {/* F160: o post e o alvo central do fluxo de moderacao e era o unico
               sem acao de denuncia — o comentario tinha, o post nao. O menu e o
               lugar certo: um "Denunciar" visivel em cada card do feed convida
               ao uso e polui a leitura. */}
-          <Dropdown.Item key="report" id="report">
-            Denunciar publicação
+          <Dropdown.Item key="report" id="report" className={ITEM_CLASS}>
+            {labels?.report ?? "Denunciar publicação"}
           </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown.Popover>

@@ -42,6 +42,18 @@ export type ReportTarget = {
 // que o pedido foi encerrado porque a outra parte saiu, e nomear quem saiu
 // revelaria a exclusão — por isso o ator é nulo no banco e o tipo fica fora
 // daqui de propósito. Não "consertar" adicionando o case.
+export const SERVICE_REQUEST_FIRST_REPLY = "provider_first_reply"
+
+/**
+ * A frase do aviso de primeira resposta quando o nome da ficha do prestador é
+ * conhecido. O ator no banco é nulo (o prestador não tem perfil de membro), então
+ * o nome vem da ficha, lido pelo pedido; sem ele, vale o rótulo neutro.
+ */
+export function serviceRequestReplyLabel(providerName: string | null): string {
+  const name = providerName?.trim()
+  return name ? `${name} respondeu seu pedido` : "Seu pedido recebeu uma resposta"
+}
+
 export function rendersWithActor(notification: NotificationRow): boolean {
   switch (notification.type) {
     case "comment":
@@ -88,6 +100,12 @@ export function formatNotificationLabel(notification: NotificationRow): string {
       // (spec R13). O estado completo fica em /onboarding/status.
       return "Sua participação não foi liberada"
     case "service_request":
+      // ADR-20260922-aviso-da-primeira-resposta: o mesmo tipo carrega dois
+      // avisos, e a action os separa. Sem esta distinção, uma resposta do
+      // prestador apareceria como "pedido encerrado".
+      if (notification.action === SERVICE_REQUEST_FIRST_REPLY) {
+        return "Seu pedido recebeu uma resposta"
+      }
       // Aviso NEUTRO: o pedido foi encerrado porque a outra parte não está mais
       // na plataforma. Não dizer que houve exclusão de conta — o motivo da saída
       // é dado pessoal de quem saiu, e contá-lo a terceiro é o que a LGPD veda.

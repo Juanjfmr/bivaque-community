@@ -11,6 +11,7 @@ import {
   communityImageAltText,
 } from "../../../lib/communities/community-media"
 import { Card } from "../../components/bivaque/card"
+import { SearchClearButton } from "../../components/bivaque/close-button"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { cancelCommunityRequestAction } from "./[id]/actions"
@@ -364,7 +365,7 @@ export function CommunitiesScreen({
                       placeholder="Buscar comunidades"
                       className="transition-colors"
                     />
-                    {query ? <SearchField.ClearButton /> : null}
+                    {query ? <SearchClearButton /> : null}
                   </SearchField.Group>
                 </SearchField>
 

@@ -1371,11 +1371,13 @@ async function main() {
         await waitForHeading(page, route)
         if (SCENARIO === "publish" || SCENARIO === "offline") {
           await page
-            // O composer real escreve "O que você quer compartilhar?" desde a
-            // RECON-002; o seletor antigo ("No que você está pensando?") deixava
-            // o cenário publish morrer em timeout e a composição da prancha 45
-            // sem captura nenhuma.
-            .getByRole("button", { name: "O que você quer compartilhar?", exact: true })
+            // DS-006 (prancha 01, 20/09/2026) substituiu a entrada genérica do
+            // Início pelo lançador compacto de duas intenções: o nome acessível
+            // "O que você quer compartilhar?" deixou de existir e o cenário
+            // publish morria em timeout. `Fazer uma pergunta` abre o MESMO
+            // CreatePostModal — medido: o diálogo "Criar publicação" fica
+            // visível ao clicar, e Escape o fecha.
+            .getByRole("button", { name: "Fazer uma pergunta", exact: true })
             .click()
           await page
             .getByRole("dialog", { name: route.dialog, exact: true })

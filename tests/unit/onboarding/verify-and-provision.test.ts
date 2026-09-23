@@ -45,7 +45,24 @@ describe("verifyEligibility (P0 Task 4)", () => {
       },
     })
 
-    expect(supabase.rpc).not.toHaveBeenCalled()
+    // ADR-20260922-identidade-quando-portal-falha: sem a chave, o erro temporário é
+    // GRAVADO, para /onboarding/documento abrir a alternativa por identidade. Não consome
+    // tentativa nem chama o Portal — a anti-enumeração continua intacta.
+    expect(supabase.rpc).toHaveBeenCalledTimes(1)
+    expect(supabase.rpc).toHaveBeenCalledWith("upsert_verification_outcome", {
+      p_user_id: "user-1",
+      p_status: "temporary_error",
+    })
+  })
+
+  it("surfaces a failure to record the temporary result instead of hiding it", async () => {
+    vi.stubEnv("PORTAL_DADOS_API_KEY", "")
+    const rpc = vi.fn(async () => ({ data: null, error: { message: "boom" } }))
+    const supabase = { rpc, from: vi.fn() } as unknown as VerifySupabase
+
+    await expect(
+      verifyEligibility(supabase, { userId: "user-1", cpf: "12345678901", consentVersion: 2 }),
+    ).rejects.toThrow(/Failed to upsert verification outcome/)
   })
 
   it("returns a generic pending result without calling the Portal when the limit is exhausted", async () => {

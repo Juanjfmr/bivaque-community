@@ -45,6 +45,17 @@ export async function verifyEligibility(
   if (!apiKey) {
     // Keep a missing deployment secret in the same safe UI path as an
     // unavailable Portal. Never turn configuration drift into a raw 500.
+    // ADR-20260922-identidade-quando-portal-falha: the temporary result is
+    // RECORDED, so /onboarding/documento opens the identity fallback and the
+    // operator queue sees the person. No attempt is consumed and the Portal is
+    // not called, so the anti-enumeration contract is unchanged.
+    const { error: recordError } = await supabase.rpc("upsert_verification_outcome", {
+      p_user_id: userId,
+      p_status: "temporary_error",
+    })
+    if (recordError) {
+      throw new Error(`Failed to upsert verification outcome: ${recordError.message}`)
+    }
     return {
       outcome: {
         status: "temporary_error",

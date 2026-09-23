@@ -5,6 +5,7 @@ import { Button, Modal, Radio, RadioGroup, TextArea, useOverlayState } from "@he
 import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { ModalCloseTrigger } from "./close-button"
 import { currentUserIdOnce } from "./feed-post-shared"
 import { FeedbackAlert } from "./feedback-alert"
 
@@ -218,7 +219,7 @@ export function ReportButton({
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>{presentation.title}</Modal.Heading>
-                <Modal.CloseTrigger className="min-h-11 min-w-11" />
+                <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 {success ? (

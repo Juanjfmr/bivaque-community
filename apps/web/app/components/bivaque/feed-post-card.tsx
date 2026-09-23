@@ -20,7 +20,6 @@ import {
   currentUserIdOnce,
   type FeedPostRow,
   formatRelativeTime,
-  POST_TYPE_LABELS,
 } from "./feed-post-shared"
 import { FeedbackAlert } from "./feedback-alert"
 import { ReportButton } from "./report-button"
@@ -306,9 +305,12 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
                   </Chip>
                 ) : null}
               </div>
+              {/* As publicações são perguntas e indicações (prancha 44, painel
+                  1): o formato não é metadado do cartão. "Texto"/"Foto"/"Link"
+                  descrevem como o registro foi montado, não o que a pessoa
+                  quis fazer — e "Enquete" não existe no produto. Fica só o
+                  tempo relativo. */}
               <div className="flex items-center gap-1.5 text-xs text-muted">
-                <span>{POST_TYPE_LABELS[shown.post_type] ?? shown.post_type}</span>
-                <span aria-hidden="true">·</span>
                 <span>{formatRelativeTime(shown.created_at)}</span>
               </div>
             </div>
@@ -389,22 +391,11 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
             </a>
           )}
 
-          {/* Poll */}
-          {shown.post_type === "poll" && shown.poll_options && (
-            <div className="mt-3 space-y-1.5">
-              {(shown.poll_options as unknown as string[]).map((option, i) => (
-                <div
-                  key={option}
-                  className="flex items-center gap-2.5 rounded-lg bg-[var(--semantic-surface-sunken)] px-3 py-2.5 text-sm"
-                >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-xs text-muted">
-                    {i + 1}
-                  </span>
-                  <span>{option}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Sem bloco de enquete: o produto não tem enquete (prancha 44,
+              painel 1), nenhum caminho grava `poll_options` e `public.posts`
+              tem zero linhas com `post_type='poll'` — não há dado legado a
+              preservar. Foto e link continuam renderizando abaixo, porque são
+              anexos reais de uma pergunta. */}
 
           {/* Rodapé de conversa da prancha 01: a contagem de respostas à
               esquerda e "Acompanhar" à direita, acima da barra de engajamento

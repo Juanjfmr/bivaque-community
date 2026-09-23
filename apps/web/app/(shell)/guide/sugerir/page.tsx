@@ -117,6 +117,27 @@ export default function SuggestGuideEntryPage() {
       <Card className="mt-6 p-5">
         <Form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
+            <label htmlFor="sugestao-nome" className="text-sm font-medium">
+              Nome
+            </label>
+            <Input
+              id="sugestao-nome"
+              aria-label="Nome da referência"
+              required
+              minLength={2}
+              maxLength={120}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </div>
+
+          {/* NOME ANTES DE TIPO (prancha 44 painel 3). A prancha desenha
+              "Nome" como primeiro campo e "Categoria" logo abaixo. O código
+              liderava por "Tipo de referência": pedia a CLASSIFICAÇÃO antes de
+              saber o que está sendo classificado. Mesma classe do compositor e
+              do formulário comunitário — uma decisão SOBRE o conteúdo tomando a
+              frente do conteúdo. */}
+          <div className="flex flex-col gap-1">
             <label htmlFor="sugestao-categoria" className="text-sm font-medium">
               Tipo de referência
             </label>
@@ -136,21 +157,6 @@ export default function SuggestGuideEntryPage() {
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label htmlFor="sugestao-nome" className="text-sm font-medium">
-              Nome
-            </label>
-            <Input
-              id="sugestao-nome"
-              aria-label="Nome da referência"
-              required
-              minLength={2}
-              maxLength={120}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
           </div>
 
           <div className="flex flex-col gap-1">

@@ -121,15 +121,18 @@ select results_eq(
   'o solicitante lê o próprio pedido'
 );
 
+-- ADR-20260922-conversa-por-pedido: a conversa e do PROPRIO pedido (contexto
+-- service_request, context_id = id do pedido), nao mais a do par com o prestador.
 select results_eq(
   $$
     select count(*)
-      from public.dm_conversations
-     where context_type = 'provider'
-       and context_id = '30000000-0000-4000-8000-000000000025'
+      from public.dm_conversations c
+      join public.service_requests r on r.conversation_id = c.id
+     where c.context_type = 'service_request'
+       and c.context_id = r.id
   $$,
   array[1::bigint],
-  'o pedido abriu a conversa de contexto fixo'
+  'o pedido abriu a conversa do proprio pedido'
 );
 
 -- ── idempotência: reenviar não duplica ──────────────────────────────────────

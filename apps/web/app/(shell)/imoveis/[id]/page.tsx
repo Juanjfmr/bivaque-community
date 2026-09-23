@@ -1,4 +1,5 @@
 import { BedDouble, Calendar, Car, Info, Ruler, Waves } from "lucide-react"
+import type { Route } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { headlinePrice, propertyCostLines } from "../../../../lib/listings/costs"
@@ -30,11 +31,17 @@ function formatAvailableFrom(value: string | null): string | null {
 export default async function ImovelDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const client = await createListingClient()
+  const {
+    data: { user },
+  } = await client.auth.getUser()
 
   const property = await getPropertyDetail(client, id)
   if (property === null) {
     notFound()
   }
+  // Mesma regra de /imoveis/[id]/editar: só o dono edita. Sem esta porta a edição
+  // só se alcançava digitando a URL (achado do rastreador de links, 22/09/2026).
+  const isOwner = user !== null && property.ownerUserId === user.id
 
   const signed = await signPhotoPaths(
     client,
@@ -113,6 +120,14 @@ export default async function ImovelDetailPage({ params }: { params: Promise<{ i
             <SaveListingButton listingId={property.id} initialSaved={saved} />
           </span>
           <ShareButton title={property.title} path={`/imoveis/${property.id}`} />
+          {isOwner ? (
+            <Link
+              href={`/imoveis/${property.id}/editar` as Route}
+              className="flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors"
+            >
+              Editar anúncio
+            </Link>
+          ) : null}
         </div>
       </header>
 

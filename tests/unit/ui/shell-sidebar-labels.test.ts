@@ -23,7 +23,10 @@ function extractLabeledAnchors(source: string): Array<{ href: string; label: str
   const anchors = new Map<string, { href: string; label: string }>()
   const anchorPattern = /<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g
   for (const match of source.matchAll(anchorPattern)) {
-    const label = /<span[^>]*>([^<]+)<\/span>/.exec(match[2])?.[1]?.trim()
+    // Span com aria-hidden (o contador do ícone de conversas) não é rótulo: é enfeite
+    // que o leitor de tela nem ouve. O rótulo é o primeiro span que sobra.
+    const visible = match[2].replace(/<span\b[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/span>/g, "")
+    const label = /<span[^>]*>([^<]+)<\/span>/.exec(visible)?.[1]?.trim()
     if (label) anchors.set(label, { href: match[1], label })
   }
   const secondaryPattern = /<SidebarSecondaryItem\b([\s\S]*?)\/>/g
@@ -54,6 +57,14 @@ describe("RECON-042, defeito 1 — o rótulo do item da lateral corresponde ao d
       href: "/configuracoes",
       label: "Configurações",
     })
+  })
+
+  it("o ícone de conversas do cabeçalho leva a /messages", () => {
+    const source = readFileSync(appShell, "utf8")
+    const anchor = /<a\b[^>]*href="\/messages"[^>]*>/.exec(source)?.[0]
+    expect(anchor, "o cabeçalho precisa de uma porta para a caixa de conversas").toBeDefined()
+    expect(anchor).toContain("aria-label={conversationsLabel(unreadConversations)}")
+    expect(source).toMatch(/if \(unread === 0\) return "Conversas"/)
   })
 
   it("o avatar do cabeçalho continua levando a /profile", () => {

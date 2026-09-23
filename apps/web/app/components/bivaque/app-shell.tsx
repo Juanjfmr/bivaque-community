@@ -3,7 +3,16 @@
 import { brandTokens } from "@bivaque/tokens"
 import { Kbd, Tooltip } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
-import { Bell, Bookmark, ChevronsLeft, Lightbulb, MapPin, PanelLeft, Settings } from "lucide-react"
+import {
+  Bell,
+  Bookmark,
+  ChevronsLeft,
+  Lightbulb,
+  MapPin,
+  MessageCircle,
+  PanelLeft,
+  Settings,
+} from "lucide-react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { type ReactNode, useCallback, useEffect, useState } from "react"
@@ -30,7 +39,7 @@ export function AppShell({ children }: AppShellProperties) {
   const activeNav = resolveActiveNav(pathname, NAV_ITEMS)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const { current } = useLocalityContext()
-  const { communities, displayName, unreadCount } = useMemberContext()
+  const { communities, displayName, unreadCount, unreadConversations } = useMemberContext()
   // Read synchronously on the first client render so a tablet never paints the
   // expanded sidebar before snapping to the rail.
   const [canExpand, setCanExpand] = useState(() =>
@@ -74,23 +83,18 @@ export function AppShell({ children }: AppShellProperties) {
             44px sem espremer as ações; de sm para cima fica entre o pill da
             cidade e as ações, como na prancha 61. */}
         <div className="flex min-h-[var(--semantic-nav-height)] flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2 sm:flex-nowrap sm:py-0">
-          {/* Left section — só o toggle de largura da lateral. A cidade foi
-              para a direita, junto do sino, como a prancha desenha. */}
-          <div className="flex items-center gap-3">
-            {/* Sidebar toggle visible on desktop */}
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              aria-label={isRail ? "Expandir menu lateral" : "Recolher menu lateral"}
-              className="hidden lg:flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
-            >
-              {isRail ? (
-                <PanelLeft size={20} aria-hidden="true" />
-              ) : (
-                <ChevronsLeft size={20} aria-hidden="true" />
-              )}
-            </button>
-          </div>
+          {/* Âncora da primeira linha do cabeçalho — vazia de propósito. Abaixo
+              de sm o campo de busca desce para a segunda linha (`order-last`);
+              sem este irmão, o `justify-between` empurraria as ações (cidade,
+              Indicações, sino, perfil) para a borda esquerda. A cidade fica à
+              direita, junto do sino, como a prancha desenha.
+
+              O acionador de largura da lateral não mora aqui: a prancha desenha
+              este cabeçalho como busca + cidade + ações, sem controle na borda
+              esquerda, e recolher/expandir pertence ao cabeçalho da própria
+              lateral, junto do nome. Foi este o controle duplicado do achado P2
+              da auditoria de 19/09/2026. */}
+          <div className="flex items-center gap-3" />
 
           {/* Search — order-last on mobile, centered on desktop */}
           <div className="order-last w-full sm:order-none sm:mx-2 sm:w-auto sm:max-w-xl sm:flex-1">
@@ -120,6 +124,24 @@ export function AppShell({ children }: AppShellProperties) {
             >
               <Lightbulb size={18} aria-hidden="true" />
               Indicações
+            </a>
+
+            {/* Caixa de conversas (MSG-SEM-ENTRADA, decisão do dono de 22/09/2026): sem
+                esta porta, /messages só abria por "Entrar em contato" ou notificação. */}
+            <a
+              href="/messages"
+              aria-label={conversationsLabel(unreadConversations)}
+              className="relative flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+            >
+              <MessageCircle size={20} aria-hidden="true" />
+              {unreadConversations > 0 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-1 right-1 flex min-w-4 items-center justify-center rounded-full bg-[var(--semantic-action-primary)] px-1 text-[10px] leading-4 font-semibold text-[var(--semantic-text-on-strong)]"
+                >
+                  {unreadConversations > 99 ? "99+" : unreadConversations}
+                </span>
+              ) : null}
             </a>
 
             <a
@@ -441,4 +463,9 @@ function SidebarCommunityItem({
   ) : (
     anchor
   )
+}
+
+function conversationsLabel(unread: number): string {
+  if (unread === 0) return "Conversas"
+  return unread === 1 ? "Conversas, 1 com mensagem nova" : `Conversas, ${unread} com mensagem nova`
 }

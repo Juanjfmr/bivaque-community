@@ -182,7 +182,7 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
       await page.getByRole("button", { name: "Publicar" }).first().click()
       const modal = page.getByRole("dialog")
       await expect(modal.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
-      await modal.getByLabel("Conteúdo").fill(postText)
+      await modal.getByLabel("Pergunta").fill(postText)
       await modal.getByRole("button", { name: "Publicar" }).click()
       await expect(page.locator("article", { hasText: postText })).toBeVisible({ timeout: 15_000 })
     })

@@ -163,7 +163,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     await expect(audienceNotice).toContainText(/aprovados desta vila/i)
 
     // And — digita o texto único e submete
-    await dialog.getByLabel("Conteúdo").fill(postText)
+    await dialog.getByLabel("Pergunta").fill(postText)
     const submit = dialog.getByTestId("publish-submit")
     const insertResponse = page.waitForResponse(
       (response) =>
@@ -239,7 +239,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     })
 
     // And — o membro escreve e tenta publicar (vai falhar pelo abort)
-    await dialog.getByLabel("Conteúdo").fill(errorPostText)
+    await dialog.getByLabel("Pergunta").fill(errorPostText)
     await dialog.getByTestId("publish-submit").click()
 
     // Then — FeedbackAlert danger aparece com copy genérica
@@ -249,7 +249,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     ).toBeVisible({ timeout: 10000 })
 
     // And — o rascunho foi preservado (texto continua no TextArea)
-    await expect(dialog.getByLabel("Conteúdo")).toHaveValue(errorPostText)
+    await expect(dialog.getByLabel("Pergunta")).toHaveValue(errorPostText)
 
     // And — o modal continua aberto para o caminho de recuperação
     await expect(dialog).toBeVisible()
@@ -261,7 +261,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     // And — limpamos a interceptação e reescrevemos o rascunho com novo
     // texto para publicar com sucesso
     await page.unroute("**/rest/v1/posts")
-    await dialog.getByLabel("Conteúdo").fill(recoveryText)
+    await dialog.getByLabel("Pergunta").fill(recoveryText)
     const successInsert = page.waitForResponse(
       (response) =>
         response.url().includes("/rest/v1/posts") &&

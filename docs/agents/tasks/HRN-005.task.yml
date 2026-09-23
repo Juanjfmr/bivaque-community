@@ -1,0 +1,84 @@
+task_id: HRN-005
+
+objective: >
+  Nenhum link do app leva a lugar nenhum, e nenhuma tela só se alcança digitando
+  a URL sem que isso esteja declarado e justificado. Um rastreador em runtime entra
+  como cada persona pelas portas reais dela, segue todo link que o app renderiza e
+  reprova link para rota inexistente, 404 ou tela de erro, rota de pagina sem porta
+  e porta declarada que ficou velha. As rotas que so se alcancavam pela URL ganham
+  porta: o artigo do Guia, anunciar imovel, alertas de imoveis, editar o proprio
+  imovel e os prestadores atestados no console do dono.
+
+authority:
+  - Pedido do dono em 22/09/2026 — chegar a um local apenas com o link e severidade alta e deve ser tratado
+  - docs/agents/tasks/HRN-004.task.yml e o card TEST-MASSA-JORNADAS (item herdado de NAV-PEDIDOS-ORFA)
+  - docs/design/visual-guide-2026-09-06/25-web-guia-referencia.png e 65-web-imoveis-alertas.png
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Medido em 22/09/2026 contra o build da revisao 8632239 servido na :3211, com as
+    seis personas em serie (a execucao paralela contaminou a medida: o proxy falhou
+    fechado em /onboarding para o operador). Resultado: 0 links quebrados e 33 rotas
+    de pagina sem nenhum link. A triagem rota a rota no codigo separou oito orfas
+    verdadeiras — /guide/[id], /imoveis/novo, /imoveis/alertas, /imoveis/[id]/editar,
+    /communities/[id]/admin/providers, /events/novo, /denuncias/nova e /consent — mais
+    /guide/[id]/correcao, travada atras de /guide/[id]. A analise estatica
+    scripts/visual/flows/reachability.mjs acusava dois links quebrados que eram falso
+    positivo de concatenacao e nao via nenhuma destas orfas.
+
+allowed_paths:
+  - tests/e2e/helpers/crawl-model.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/portas-de-entrada.spec.ts
+  - tests/e2e/journeys.playwright.config.ts
+  - tests/unit/visual/crawl-model.test.ts
+  - apps/web/app/(shell)/guide/page.tsx
+  - apps/web/app/(shell)/imoveis/page.tsx
+  - apps/web/app/(shell)/imoveis/[id]/page.tsx
+  - apps/web/app/(owner)/communities/[id]/admin/page.tsx
+  - docs/agents/tasks/HRN-005.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+
+forbidden:
+  - declarar como porta uma rota que so se alcanca digitando a URL, sem card que a resolva
+  - consolidar a criacao de eventos ou remover /consent neste lote; viram cards
+  - adicionar entrada de Mensagens na navegacao principal, que a prancha 75 nao desenha, sem decisao do dono
+  - mudar autorizacao, RLS, schema ou migration; o link de editar imovel segue a mesma regra de dono da pagina de edicao
+  - rodar as personas em paralelo contra o Supabase local compartilhado
+
+acceptance:
+  - o rastreador reprova link para rota inexistente, 404 (inclusive o 200 com tela de nao encontrado do streaming) e tela de erro
+  - o rastreador reprova rota de pagina sem link e sem porta declarada, e porta declarada que ficou velha
+  - cada persona prova que entrou onde devia antes de ser medida
+  - toda porta declarada diz por onde se chega de verdade, e as que sao divida apontam para card
+  - o artigo do Guia, anunciar imovel e alertas de imoveis passam a ser alcancados por link
+  - editar imovel aparece so para o dono, com negativo para outra conta
+  - o modelo do rastreador tem teste de unidade
+  - gate completo verde, com o codigo de saida lido direto
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HRN-005.task.yml
+  - npx vitest run tests/unit/visual/crawl-model.test.ts
+  - JOURNEY_BASE_URL=http://127.0.0.1:3211 npx playwright test -c tests/e2e/journeys.playwright.config.ts link-crawl
+  - npx playwright test tests/e2e/portas-de-entrada.spec.ts contra o build deste checkout
+  - npx pnpm@11.18.0 gate
+
+traps:
+  - Personas em paralelo fazem my_account_kind falhar no Supabase local compartilhado, e o proxy falha fechado em /onboarding; o rastreador roda em serie e verifica a entrada de cada persona
+  - A area de operacao nao tem <main>; ler texto por locator espera ate o fim do teste
+  - Com streaming, notFound() responde HTTP 200; o sinal de 404 e o texto do segmento
+  - O rastreador nao abre abas nem clica botoes; porta atras de aba ou de router.push entra declarada como CONDICIONAL ou BOTAO
+
+risk: >
+  Harness de teste e portas de navegacao em telas de leitura; o link de editar
+  imovel reusa a regra de dono ja aplicada na pagina de edicao.
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: FAIL
+
+closure:
+  requires_runtime_evidence: true

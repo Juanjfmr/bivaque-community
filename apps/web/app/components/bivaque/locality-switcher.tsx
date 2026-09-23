@@ -25,6 +25,7 @@ import type { Route } from "next"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
+import { ModalCloseTrigger, SearchClearButton } from "./close-button"
 import { ErrorState } from "./error-state"
 import { type SwitcherCity, searchSwitcherCitiesAction } from "./locality-actions"
 
@@ -98,7 +99,7 @@ export function LocalitySwitcher() {
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading>Trocar cidade</Modal.Heading>
-                <Modal.CloseTrigger className="min-h-11 min-w-11" />
+                <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="mb-3 text-sm text-muted">
@@ -115,7 +116,7 @@ export function LocalitySwitcher() {
                   <SearchField.Group>
                     <SearchField.SearchIcon />
                     <SearchField.Input placeholder="Buscar cidade" />
-                    {query ? <SearchField.ClearButton /> : null}
+                    {query ? <SearchClearButton /> : null}
                   </SearchField.Group>
                 </SearchField>
 

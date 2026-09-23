@@ -2972,10 +2972,9 @@ export type Database = {
           p_caller_user_id: string
           p_community_id: string
           p_kind: string
-          // À MÃO: a função aceita NULL para limpar o ponteiro da imagem
-          // ("if p_path is not null and split_part(...)"). O gerador não
-          // expressa nulabilidade de argumento, então esta linha é ajustada
-          // depois do generate:types — preservar em toda regeneração.
+          // The RPC accepts NULL to clear the image pointer; the type generator
+          // does not express nullable function arguments. Regenerate with
+          // `npx pnpm@11.18.0 generate:types` to restore this adjustment.
           p_path: string | null
         }
         Returns: undefined
@@ -3062,6 +3061,7 @@ export type Database = {
         | "provider"
         | "listing"
         | "event_question"
+        | "service_request"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
@@ -3291,6 +3291,7 @@ export const Constants = {
         "provider",
         "listing",
         "event_question",
+        "service_request",
       ],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going", "not_going"],
@@ -3388,4 +3389,3 @@ export const Constants = {
     },
   },
 } as const
-

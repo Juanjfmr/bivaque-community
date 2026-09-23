@@ -82,7 +82,14 @@ export function RequestForm({
           title="Pedido enviado"
           description={`Seu pedido para ${providerName} foi enviado. Ele receberá o pedido e poderá responder.`}
         />
-        <div className="mt-4">
+        {/* NAV-PEDIDOS-ORFA: a porta para acompanhar nasce aqui, onde o pedido nasce. */}
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <Link
+            href={`/pedidos/${result.requestId}` as Route}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--semantic-action-primary)] px-5 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors"
+          >
+            Acompanhar pedido
+          </Link>
           <Link
             href={`/prestadores/${providerId}` as Route}
             className="inline-flex min-h-11 items-center justify-center text-sm font-medium underline"

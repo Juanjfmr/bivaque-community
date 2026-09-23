@@ -16,14 +16,12 @@ export type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns
 }
 export type CommentRow = Database["public"]["Tables"]["comments"]["Row"]
 
-export const POST_TYPE_LABELS: Record<string, string> = {
-  text: "Texto",
-  photo: "Foto",
-  link: "Link",
-  poll: "Enquete",
-}
-
-export const POST_TYPE_ORDER = ["text", "photo", "link", "poll"] as const
+// As publicações são FAZER PERGUNTA e PEDIR INDICAÇÃO (prancha 44, painel 1).
+// Não existe escolha de formato na interface — o `post_type` é derivado do anexo
+// real no compositor (feed-post-create) — e o cartão não o exibe como metadado.
+// `POST_TYPE_LABELS` ("Texto/Foto/Link/Enquete") e `POST_TYPE_ORDER` existiam só
+// para o seletor de formato e para o metadado do cartão, e saíram com os dois
+// consumidores. Não há enquete no produto.
 
 export function formatRelativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()

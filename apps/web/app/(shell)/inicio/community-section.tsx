@@ -285,7 +285,17 @@ export function CommunitySection({
 
   return (
     <section aria-labelledby="na-comunidade-titulo">
-      <div className="flex items-center justify-between gap-3">
+      {/* A 375 o título e as abas NÃO cabem na mesma linha: "Na comunidade" mede
+          126 px e o par Recentes/Acompanhando pede ~240 px, contra ~343 px de
+          largura útil — o `justify-between` espremia o h2 para 103 px e ele
+          quebrava em duas linhas (h=56), contra uma linha a 768 e 1440 (h=28).
+          Abaixo de `sm` os dois empilham, cada um com a largura inteira, e o h2
+          volta a uma linha. A prancha 00 painel 2 resolve o mesmo aperto
+          trocando as duas abas por um seletor compacto ("Recentes ⌄"); como
+          este app não tem essa variante de Tabs, empilhar é a adaptação honesta
+          que não inventa um controle novo nem deixa o título truncado. De `sm`
+          para cima o arranjo é exatamente o de antes. */}
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <h2 id="na-comunidade-titulo" className="text-lg font-semibold tracking-tight">
           Na comunidade
         </h2>
