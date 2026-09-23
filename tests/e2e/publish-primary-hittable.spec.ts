@@ -75,15 +75,14 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-/** Abre o compositor pela vila e habilita o primário escrevendo a pergunta —
- *  é o estado em que a pessoa clica (desabilitado, `elementFromPoint` ainda
- *  devolveria o botão e a prova não diria nada sobre o clique). */
+/** Abre o compositor pela Home (O06) e habilita o primário escrevendo a
+ *  pergunta — é o estado em que a pessoa clica (desabilitado, `elementFromPoint`
+ *  ainda devolveria o botão e a prova não diria nada sobre o clique). */
 async function openComposer(page: Page): Promise<void> {
-  await page.goto("/community")
-  await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-    timeout: 20000,
-  })
-  await page.getByRole("button", { name: "Publicar" }).first().click()
+  await page.goto("/inicio", { waitUntil: "load" })
+  const ask = page.getByTestId("intent-pergunta")
+  await expect(ask).toBeVisible({ timeout: 20000 })
+  await ask.click()
   await expect(page.getByRole("dialog")).toBeVisible()
   await page.getByRole("dialog").getByLabel("Pergunta").fill("sonda de hit-test")
   // A lista de destinos é consulta: esperar o aviso assentar deixa o layout
