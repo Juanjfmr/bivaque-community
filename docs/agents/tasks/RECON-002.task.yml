@@ -30,6 +30,7 @@ allowed_paths:
   - docs/agents/tasks/RECON-002.task.yml
   - tests/unit/ui/inicio-recon.test.tsx
   - tests/unit/ui/inicio-going-line.test.ts
+  - tests/unit/inicio/home-loaders.test.ts
 
 forbidden:
   - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
@@ -62,7 +63,7 @@ acceptance:
 
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-002.task.yml
-  - npx pnpm@11.18.0 exec vitest run tests/unit/ui/inicio-going-line.test.ts
+  - npx pnpm@11.18.0 exec vitest run tests/unit/ui/inicio-going-line.test.ts tests/unit/inicio/home-loaders.test.ts
   - npx pnpm@11.18.0 gate
   - node scripts/visual/loop.mjs
 

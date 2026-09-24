@@ -85,6 +85,47 @@ export function partitionCommunities(
   return { mine, pending, discover }
 }
 
+export type CommunityUrlState = {
+  tab: "minhas" | "descobrir"
+  query: string
+  selectedId: string | null
+}
+
+export type CommunityUrlChanges = Partial<{
+  tab: CommunityUrlState["tab"]
+  query: string | null
+  selectedId: string | null
+}>
+
+export function readCommunityUrlState(params: URLSearchParams): CommunityUrlState {
+  return {
+    tab: params.get("aba") === "descobrir" ? "descobrir" : "minhas",
+    query: params.get("q") ?? "",
+    selectedId: params.get("comunidade"),
+  }
+}
+
+export function writeCommunityUrlState(
+  current: URLSearchParams,
+  changes: CommunityUrlChanges,
+): string {
+  const params = new URLSearchParams(current.toString())
+  if (changes.tab !== undefined) {
+    if (changes.tab === "descobrir") params.set("aba", "descobrir")
+    else params.delete("aba")
+  }
+  if (changes.query !== undefined) {
+    const query = changes.query?.trim() ?? ""
+    if (query) params.set("q", query)
+    else params.delete("q")
+  }
+  if (changes.selectedId !== undefined) {
+    if (changes.selectedId) params.set("comunidade", changes.selectedId)
+    else params.delete("comunidade")
+  }
+  return params.toString()
+}
+
 export function currentLocalityId(
   memberships: Array<{ locality_id: string; kind: "current" | "leaving" }>,
 ): string | null {

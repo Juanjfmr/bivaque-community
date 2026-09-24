@@ -22,6 +22,7 @@ baseline:
 allowed_paths:
   - apps/web/app/(shell)/communities/
   - tests/unit/communities/
+  - tests/e2e/communities-url-state.spec.ts
   - docs/agents/tasks/RECON-004.task.yml
 
 forbidden:
@@ -55,6 +56,7 @@ acceptance:
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-004.task.yml
   - npx pnpm@11.18.0 exec vitest run tests/unit/communities/community-selection.test.ts tests/unit/communities/community-city-label.test.ts
+  - npx pnpm@11.18.0 exec playwright test tests/e2e/communities-url-state.spec.ts --project=desktop-1440 --workers=1
   - npx pnpm@11.18.0 gate
   - node scripts/visual/loop.mjs
 

@@ -4,7 +4,9 @@ import { describe, expect, it } from "vitest"
 import {
   type CommunityCard,
   currentLocalityId,
+  readCommunityUrlState,
   selectCommunityForResults,
+  writeCommunityUrlState,
 } from "web/app/(shell)/communities/communities-data"
 
 const screenSource = readFileSync(
@@ -65,13 +67,36 @@ describe("seleção do painel de comunidade", () => {
   })
 })
 
+describe("estado de navegação das comunidades", () => {
+  it("lê e escreve abas, busca e seleção sem perder outros parâmetros", () => {
+    const current = new URLSearchParams("cidade=origin&aba=minhas&q=vila&comunidade=a")
+    expect(readCommunityUrlState(current)).toEqual({
+      tab: "minhas",
+      query: "vila",
+      selectedId: "a",
+    })
+    expect(
+      writeCommunityUrlState(current, { tab: "descobrir", query: "nova", selectedId: "b" }),
+    ).toBe("cidade=origin&aba=descobrir&q=nova&comunidade=b")
+  })
+
+  it("remove uma seleção inválida sem apagar a cidade e a busca", () => {
+    const current = new URLSearchParams("cidade=origin&aba=descobrir&q=vila&comunidade=invalida")
+    expect(writeCommunityUrlState(current, { selectedId: null })).toBe(
+      "cidade=origin&aba=descobrir&q=vila",
+    )
+  })
+})
+
 describe("motivo do pedido", () => {
   it("é controlado e desmontado junto com a troca de comunidade", () => {
     expect(screenSource).toContain("value={motivo}")
     expect(screenSource).toContain("onChange={(event) => setMotivo(event.target.value)}")
     expect(screenSource).toContain("key={selected.id}")
     expect(screenSource).toContain("useSearchParams")
+    expect(screenSource).toContain("router.push")
     expect(screenSource).toContain("router.replace")
-    expect(screenSource).toContain('params.set("aba", "descobrir")')
+    expect(screenSource).toContain("writeCommunityUrlState")
+    expect(screenSource).toContain("selectedId: canonicalId")
   })
 })

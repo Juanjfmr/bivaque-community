@@ -6,7 +6,7 @@ import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   type CommunityImageKind,
   communityImageAltText,
@@ -18,11 +18,14 @@ import { cancelCommunityRequestAction } from "./[id]/actions"
 import { requestCommunityMembershipAction } from "./actions"
 import {
   type CommunityCard,
+  type CommunityUrlChanges,
   filterCommunities,
   formatRequestedOn,
   type MyMembership,
   partitionCommunities,
+  readCommunityUrlState,
   selectCommunityForResults,
+  writeCommunityUrlState,
 } from "./communities-data"
 
 const DISCOVER_PREVIEW_COUNT = 5
@@ -157,33 +160,34 @@ export function CommunitiesScreen({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [tab, setTab] = useState(() =>
-    searchParams.get("aba") === "descobrir" ? "descobrir" : "minhas",
-  )
-  const [query, setQuery] = useState(() => searchParams.get("q") ?? "")
-  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get("comunidade"))
+  const urlState = readCommunityUrlState(searchParams)
+  const tab = urlState.tab
+  const query = urlState.query
+  const selectedId = urlState.selectedId
   const [expanded, setExpanded] = useState(false)
   const [submitError, setSubmitError] = useState("")
   const [motivo, setMotivo] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  const previousSelectedIdRef = useRef(selectedId)
+
+  const updateUrl = useCallback(
+    (changes: CommunityUrlChanges, mode: "push" | "replace") => {
+      const nextQuery = writeCommunityUrlState(searchParams, changes)
+      if (nextQuery === searchParams.toString()) return
+      const nextUrl = `${pathname}${nextQuery ? `?${nextQuery}` : ""}` as Route
+      if (mode === "push") router.push(nextUrl, { scroll: false })
+      else router.replace(nextUrl, { scroll: false })
+    },
+    [pathname, router, searchParams],
+  )
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString())
-    if (tab === "descobrir") params.set("aba", "descobrir")
-    else params.delete("aba")
-
-    const cleanQuery = query.trim()
-    if (cleanQuery) params.set("q", cleanQuery)
-    else params.delete("q")
-
-    if (selectedId) params.set("comunidade", selectedId)
-    else params.delete("comunidade")
-
-    const nextQuery = params.toString()
-    if (nextQuery === searchParams.toString()) return
-    router.replace(`${pathname}${nextQuery ? `?${nextQuery}` : ""}` as Route, { scroll: false })
-  }, [pathname, query, router, searchParams, selectedId, tab])
+    if (previousSelectedIdRef.current === selectedId) return
+    previousSelectedIdRef.current = selectedId
+    setMotivo("")
+    setSubmitError("")
+  }, [selectedId])
 
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState("")
@@ -223,6 +227,13 @@ export function CommunitiesScreen({
     ? discoverFiltered
     : discoverFiltered.slice(0, DISCOVER_PREVIEW_COUNT)
   const selected = selectCommunityForResults(discover, selectedId, query)
+  useEffect(() => {
+    if (tab !== "descobrir") return
+    const canonicalId = selected?.id ?? null
+    if (canonicalId !== selectedId) {
+      updateUrl({ selectedId: canonicalId }, "replace")
+    }
+  }, [selected?.id, selectedId, tab, updateUrl])
   const selectedStatus = selected ? membershipByCommunity.get(selected.id)?.status : undefined
   const selectedReason = selected ? (membershipByCommunity.get(selected.id)?.reason ?? null) : null
   const selectedRequestedOn = selected
@@ -253,7 +264,8 @@ export function CommunitiesScreen({
       <Tabs
         selectedKey={tab}
         onSelectionChange={(key) => {
-          setTab(String(key))
+          const nextTab = key === "descobrir" ? "descobrir" : "minhas"
+          updateUrl({ tab: nextTab, selectedId: null }, "push")
           setSubmitError("")
           setMotivo("")
         }}
@@ -275,7 +287,11 @@ export function CommunitiesScreen({
                     title="Você ainda não participa de nenhuma comunidade"
                     description="Descubra as comunidades da sua cidade e peça participação — ela depende de aprovação."
                     action={
-                      <Button size="sm" variant="primary" onPress={() => setTab("descobrir")}>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onPress={() => updateUrl({ tab: "descobrir", selectedId: null }, "push")}
+                      >
                         Descobrir comunidades
                       </Button>
                     }
@@ -379,15 +395,14 @@ export function CommunitiesScreen({
                   aria-label="Buscar comunidades"
                   value={query}
                   onChange={(value) => {
-                    setQuery(value)
-                    setSelectedId(null)
+                    updateUrl({ query: value, selectedId: null }, "replace")
                     setExpanded(false)
                     setMotivo("")
                     setSubmitError("")
                   }}
                   onClear={() => {
-                    setQuery("")
-                    setSelectedId(null)
+                    updateUrl({ query: null, selectedId: null }, "replace")
+                    setExpanded(false)
                     setMotivo("")
                     setSubmitError("")
                   }}
@@ -439,8 +454,7 @@ export function CommunitiesScreen({
                         size="sm"
                         variant="tertiary"
                         onPress={() => {
-                          setQuery("")
-                          setSelectedId(null)
+                          updateUrl({ query: null, selectedId: null }, "replace")
                           setMotivo("")
                           setSubmitError("")
                         }}
@@ -459,7 +473,7 @@ export function CommunitiesScreen({
                             <button
                               type="button"
                               onClick={() => {
-                                setSelectedId(community.id)
+                                updateUrl({ selectedId: community.id }, "push")
                                 setMotivo("")
                                 setSubmitError("")
                               }}
