@@ -90,6 +90,8 @@ describe("estado de navegação das comunidades", () => {
 
 describe("motivo do pedido", () => {
   it("é controlado e desmontado junto com a troca de comunidade", () => {
+    expect(screenSource).toContain("motivoState")
+    expect(screenSource).toContain("motivoState.communityId === selectedId")
     expect(screenSource).toContain("value={motivo}")
     expect(screenSource).toContain("onChange={(event) => setMotivo(event.target.value)}")
     expect(screenSource).toContain("key={selected.id}")

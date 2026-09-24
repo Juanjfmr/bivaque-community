@@ -166,10 +166,15 @@ export function CommunitiesScreen({
   const selectedId = urlState.selectedId
   const [expanded, setExpanded] = useState(false)
   const [submitError, setSubmitError] = useState("")
-  const [motivo, setMotivo] = useState("")
+  const [motivoState, setMotivoState] = useState<{ communityId: string | null; value: string }>({
+    communityId: selectedId,
+    value: "",
+  })
+  const motivo =
+    selectedId !== null && motivoState.communityId === selectedId ? motivoState.value : ""
+  const setMotivo = (value: string) => setMotivoState({ communityId: selectedId, value })
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
-  const previousSelectedIdRef = useRef(selectedId)
 
   const updateUrl = useCallback(
     (changes: CommunityUrlChanges, mode: "push" | "replace") => {
@@ -183,9 +188,7 @@ export function CommunitiesScreen({
   )
 
   useEffect(() => {
-    if (previousSelectedIdRef.current === selectedId) return
-    previousSelectedIdRef.current = selectedId
-    setMotivo("")
+    setMotivoState({ communityId: selectedId, value: "" })
     setSubmitError("")
   }, [selectedId])
 
