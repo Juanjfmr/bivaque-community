@@ -2103,7 +2103,7 @@
         "npx pnpm@11.18.0 gate → verde",
         "git 86e24ad",
         "2026-09-11: DRIFT — /inicio e /explorar nao contem mais Conteudo em construcao em chore/integracao-r3. Ausencia de placeholder nao prova fidelidade; confrontar com a prancha antes de fechar.",
-        "2026-09-24: commits 056c54e3, 4475723a e e1b46a19; Home filtra a comunidade primária pela cidade current, Comunidades usa a URL como fonte de verdade com push/replace e prova E2E de back/forward; unitários e gate completos verdes."
+        "2026-09-24: commits 056c54e3, 4475723a, e1b46a19 e 250fc469; Home filtra a comunidade primária pela cidade current, Comunidades usa a URL como fonte de verdade com push/replace, motivo derivado do contexto e prova E2E de back/forward; unitários e gate completos verdes."
       ],
       "tests": [],
       "links": [
@@ -2115,7 +2115,7 @@
       "dependencies": [],
       "phase": "Reconstrução",
       "updatedAt": "2026-09-24",
-      "sourceRevision": "e1b46a19"
+      "sourceRevision": "250fc469"
     },
     {
       "id": "RECON-005-BLOQUEADO",
