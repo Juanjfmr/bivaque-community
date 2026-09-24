@@ -3508,14 +3508,14 @@
       "links": ["apps/web/app/(shell)/pedidos/[id]/actions.ts"],
       "dependencies": [],
       "proof": [
-        "2026-09-24: a action traduz request is terminal para copy de estado, revalida /pedidos, detalhe e prestador, mantém o detalhe técnico no log e a jornada E2E prova duas respostas do prestador no mesmo pedido; commit 105a63e."
+        "2026-09-24: a action traduz request is terminal para copy de estado, revalida /pedidos, detalhe e prestador, mantém o detalhe técnico no log, reconcilia estado local após refresh e preserva texto no retry; a jornada E2E prova duas respostas do prestador no mesmo pedido; commit 92d384d."
       ],
       "tests": [
         "npx pnpm@11.18.0 exec vitest run tests/unit/service-requests/cancel-action.test.ts"
       ],
       "updatedAt": "2026-09-24",
       "completedAt": "2026-09-24",
-      "sourceRevision": "105a63e2",
+      "sourceRevision": "92d384d",
       "id": "PEDIDO-MENSAGEM-ERRO-CRU",
       "title": "Enviar mensagem no pedido devolve a mensagem crua do banco para a tela",
       "priority": "P3",
