@@ -31,7 +31,13 @@ import { Card } from "../../../components/bivaque/card"
 import { AccessUnavailableState } from "../../../components/bivaque/empty-state"
 import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
 import { sendFailureLabel } from "../../../components/bivaque/message-delivery"
-import { closeRequest, markRequestRead, saveRequestEdit, sendRequestMessage } from "./actions"
+import {
+  cancelRequest,
+  closeRequest,
+  markRequestRead,
+  saveRequestEdit,
+  sendRequestMessage,
+} from "./actions"
 
 // RECON-023 — a composicao da prancha 17 (R44). O estado do pedido vem da
 // COLUNA e a conversa do registro persistido; o cliente nunca deriva situacao
@@ -52,6 +58,8 @@ type RequestViewModel = {
   createdAt: string
   closedAt: string | null
   closedByUserId: string | null
+  cancelledAt: string | null
+  cancelledByUserId: string | null
   providerName: string
   categoryLabel: string
   location: string | null
@@ -77,6 +85,10 @@ export function RequestWorkspace({
   const [status, setStatus] = useState<ServiceRequestStatus>(request.status)
   const [closedAt, setClosedAt] = useState<string | null>(request.closedAt)
   const [closedByUserId, setClosedByUserId] = useState<string | null>(request.closedByUserId)
+  const [cancelledAt, setCancelledAt] = useState<string | null>(request.cancelledAt)
+  const [cancelledByUserId, setCancelledByUserId] = useState<string | null>(
+    request.cancelledByUserId,
+  )
   const [description, setDescription] = useState(request.description)
   const [whenText, setWhenText] = useState(request.whenText)
 
@@ -101,6 +113,9 @@ export function RequestWorkspace({
   const [closing, setClosing] = useState(false)
   const [closeError, setCloseError] = useState<string | null>(null)
   const [closeNotice, setCloseNotice] = useState<string | null>(null)
+  const [confirmingCancel, setConfirmingCancel] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
 
   const [editing, setEditing] = useState(false)
   const [editDescription, setEditDescription] = useState(request.description)
@@ -236,6 +251,28 @@ export function RequestWorkspace({
       setCloseNotice("O pedido já havia sido encerrado por outra pessoa.")
     }
   }, [request.id, viewerId])
+
+  const handleCancel = useCallback(async () => {
+    setCancelling(true)
+    setCancelError(null)
+    const result = await cancelRequest(request.id)
+    setCancelling(false)
+
+    if (result.status === "session") {
+      setSessionExpired(true)
+      return
+    }
+    if (result.status === "error") {
+      setCancelError("Não foi possível cancelar o pedido agora. Tente novamente.")
+      return
+    }
+
+    setStatus(result.status)
+    setCancelledAt(result.cancelledAt)
+    setCancelledByUserId(result.cancelledByUserId)
+    setConfirmingCancel(false)
+    setCloseNotice("Pedido cancelado. A conversa foi encerrada para novas mensagens.")
+  }, [request.id])
 
   const handleSaveEdit = useCallback(async () => {
     const validation = validateEditDescription(editDescription)
@@ -387,11 +424,56 @@ export function RequestWorkspace({
             {closeError ? (
               <FeedbackAlert variant="danger" description={closeError} className="max-w-sm" />
             ) : null}
+            {isRequester ? (
+              confirmingCancel ? (
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <span className="text-sm text-muted">Cancelar este pedido?</span>
+                  <Button
+                    variant="secondary"
+                    className="min-h-11"
+                    isDisabled={cancelling}
+                    onPress={() => void handleCancel()}
+                  >
+                    {cancelling ? "Cancelando…" : "Confirmar cancelamento"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="min-h-11"
+                    onPress={() => setConfirmingCancel(false)}
+                  >
+                    Voltar
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  className="min-h-11"
+                  onPress={() => setConfirmingCancel(true)}
+                >
+                  Cancelar pedido
+                </Button>
+              )
+            ) : null}
+            {cancelError ? (
+              <FeedbackAlert variant="danger" description={cancelError} className="max-w-sm" />
+            ) : null}
           </div>
         ) : (
           <p className="text-sm text-muted">
-            {closeActorIsOther ? "Encerrado por outra pessoa" : "Encerrado"}
-            {closedAt ? ` em ${formatRequestDate(closedAt)}` : ""}
+            {status === "cancelled"
+              ? cancelledByUserId && cancelledByUserId !== viewerId
+                ? "Cancelado por outra pessoa"
+                : "Cancelado"
+              : closeActorIsOther
+                ? "Encerrado por outra pessoa"
+                : "Encerrado"}
+            {status === "cancelled"
+              ? cancelledAt
+                ? ` em ${formatRequestDate(cancelledAt)}`
+                : ""
+              : closedAt
+                ? ` em ${formatRequestDate(closedAt)}`
+                : ""}
           </p>
         )}
       </header>
@@ -578,25 +660,46 @@ export function RequestWorkspace({
                   <FeedbackAlert variant="danger" description={sendError} />
                 </div>
               ) : null}
-              <div className="flex items-end gap-2">
-                <TextArea
-                  placeholder="Escreva uma mensagem"
-                  aria-label="Escreva uma mensagem"
-                  value={newMessage}
-                  onChange={(event) => setNewMessage((event.target as HTMLTextAreaElement).value)}
-                  rows={2}
-                  maxLength={2000}
-                  className="flex-1"
-                />
-                <Button
-                  variant="primary"
-                  className="min-h-11"
-                  isDisabled={sending || newMessage.trim().length === 0}
-                  onPress={handleSend}
-                >
-                  Enviar
-                </Button>
-              </div>
+              {closed ? (
+                <div className="rounded-xl border border-border bg-[var(--semantic-surface-sunken)] px-4 py-4 text-sm text-muted">
+                  <p className="font-medium text-foreground">
+                    {status === "cancelled" ? "Pedido cancelado" : "Pedido encerrado"}
+                  </p>
+                  <p className="mt-1">
+                    {status === "cancelled"
+                      ? "A conversa continua visível para consulta, mas não aceita novas mensagens."
+                      : "Este pedido não aceita novas mensagens. Você pode voltar aos meus pedidos."}
+                  </p>
+                  {status === "cancelled" ? (
+                    <Link
+                      href={"/explorar/servicos" as Route}
+                      className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-[var(--semantic-action-primary)] underline underline-offset-4"
+                    >
+                      Pedir outro serviço
+                    </Link>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="flex items-end gap-2">
+                  <TextArea
+                    placeholder="Escreva uma mensagem"
+                    aria-label="Escreva uma mensagem"
+                    value={newMessage}
+                    onChange={(event) => setNewMessage((event.target as HTMLTextAreaElement).value)}
+                    rows={2}
+                    maxLength={2000}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="primary"
+                    className="min-h-11"
+                    isDisabled={sending || newMessage.trim().length === 0}
+                    onPress={handleSend}
+                  >
+                    Enviar
+                  </Button>
+                </div>
+              )}
               <p className="mt-2 text-xs text-muted">Mantenha a conversa no contexto do pedido.</p>
               <p className="text-xs text-muted">
                 Evite enviar contatos pessoais ou solicitar pagamentos antecipados.

@@ -34,6 +34,15 @@ export type CloseRequestState =
   | { status: "error"; message: string }
   | { status: "session" }
 
+export type CancelRequestState =
+  | {
+      status: "cancelled"
+      cancelledAt: string | null
+      cancelledByUserId: string | null
+    }
+  | { status: "error"; message: string }
+  | { status: "session" }
+
 export type EditRequestState =
   | { status: "saved"; description: string; whenText: string | null }
   | { status: "error"; message: string }
@@ -116,6 +125,30 @@ export async function closeRequest(requestId: string): Promise<CloseRequestState
     requestStatus: row.status,
     closedAt: row.closed_at,
     closedByUserId: row.closed_by_user_id,
+  }
+}
+
+export async function cancelRequest(requestId: string): Promise<CancelRequestState> {
+  const client = await authedClient()
+  const { data, error } = await client.rpc("cancel_service_request", {
+    p_request_id: requestId,
+  })
+
+  if (error) {
+    if (isSessionError(error.message)) return { status: "session" }
+    log.error("pedidos: cancel_service_request failed", { error: error.message })
+    return { status: "error", message: "Não foi possível cancelar o pedido agora." }
+  }
+
+  const row = data as {
+    status: ServiceRequestStatus
+    cancelled_at: string | null
+    cancelled_by_user_id: string | null
+  }
+  return {
+    status: "cancelled",
+    cancelledAt: row.cancelled_at,
+    cancelledByUserId: row.cancelled_by_user_id,
   }
 }
 

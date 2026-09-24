@@ -318,15 +318,18 @@ export async function deletePortfolioPhotoAction(formData: FormData): Promise<vo
 export async function respondToRequestAction(formData: FormData): Promise<void> {
   const requestId = text(formData, "requestId")
   const conversationId = text(formData, "conversationId")
+  const clientKey = text(formData, "clientKey")
   const content = text(formData, "content") ?? ""
   if (!requestId) throw new Error("requestId required")
   if (!conversationId) throw new Error("conversationId required")
+  if (!clientKey) throw new Error("clientKey required")
   if (content.trim().length === 0) throw new Error("Escreva uma resposta antes de enviar.")
 
   const { client } = await requireAuthClient()
   const { error } = await client.rpc("send_conversation_message", {
     p_conversation_id: conversationId,
     p_content: content,
+    p_client_key: clientKey,
   })
   if (error) throw new Error(`Falha ao responder: ${error.message}`)
 

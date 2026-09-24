@@ -17,11 +17,13 @@ describe("resposta do prestador ao pedido (RECON-044)", () => {
   it("usa o RPC canonico send_conversation_message, nao o nome morto do RECON-024", () => {
     expect(actions).toMatch(/rpc\("send_conversation_message"/)
     expect(actions).toContain("p_conversation_id: conversationId")
+    expect(actions).toContain("p_client_key: clientKey")
     expect(actions).not.toMatch(/rpc\("respond_to_service_request"/)
   })
 
   it("o formulario envia a conversa do proprio pedido", () => {
     expect(detailPage).toContain('name="conversationId"')
     expect(detailPage).toContain("value={request.conversation_id}")
+    expect(detailPage).toContain('name="clientKey"')
   })
 })

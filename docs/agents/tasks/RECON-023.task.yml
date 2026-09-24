@@ -10,13 +10,16 @@ authority:
   - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 17-web-pedido-servico
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.6 R43 R44 e secao 4.8 C12
   - docs/agents/tasks/RECON-022.task.yml
+  - Relatório comparativo Mobbin e autorização do responsável em 23/09/2026 para estados terminais e retenção da conversa
 
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    Nao existem as rotas de lista e detalhe de pedido, nem a tabela que as sustenta. RECON-022
-    cria o objeto e a conversa de contexto; este contrato entrega o acompanhamento. Medido em
-    09/09/2026.
+    A lista e o detalhe existem, mas o acompanhamento ainda oferece apenas
+    encerrar; o RPC e os testes de banco já definem cancelamento pelo solicitante.
+    A tela não expõe esse estado terminal, não carrega cancelled_at/by e mantém o
+    composer ativo depois de closed/cancelled. A correção usa o contrato já
+    autorizado, sem criar tabela, RPC ou política nova.
 
 allowed_paths:
   - apps/web/app/(shell)/pedidos/
@@ -26,6 +29,7 @@ allowed_paths:
   - supabase/tests/
   - scripts/visual/capture.mjs
   - tests/unit/
+  - tests/e2e/journey-pedir-servico.spec.ts
   - docs/agents/tasks/RECON-023.task.yml
 
 forbidden:
@@ -45,6 +49,8 @@ acceptance:
   - a conversa persiste, ordena por tempo, deduplica envio repetido e preserva o texto no erro
   - o rail direito traz o resumo do servico solicitado, o botao de editar pedido e o publico do pedido, com o aviso de que valores e pagamento sao combinados entre as pessoas
   - encerrar registra ator e e idempotente, e o estado sobrevive a recarregar em outra sessao
+  - o solicitante pode cancelar um pedido aberto/em conversa pelo RPC autorizado; a tela mostra Cancelado, ator e instante, e não deixa compositor ativo
+  - closed e cancelled são terminais para nova mensagem, mas preservam a leitura da conversa; terceiro e prestador não ganham cancelamento por UI ou chamada direta
   - terceiro nao le a conversa nem o pedido, inclusive por chamada direta sem interface
   - as policies que sustentam a leitura entram na mesma migration das colunas que elas leem
   - todos os estados fechados - carregando, vazio que leva a busca, erro recuperavel, sessao expirada e conflito de encerramento concorrente
@@ -53,6 +59,7 @@ acceptance:
 
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-023.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/service-requests/cancel-action.test.ts tests/unit/service-requests/tracking.test.ts
   - npx pnpm@11.18.0 gate
   - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
   - npx pnpm@11.18.0 build

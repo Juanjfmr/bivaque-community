@@ -169,7 +169,7 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
       // leitura no servidor, e a próxima página já não conta a conversa como nova.
       await expect(async () => {
         await member.goto("/inicio")
-        await expect(member.getByRole("link", { name: "Conversas", exact: true })).toBeVisible({
+        await expect(member.getByRole("link", { name: /^Conversas/ })).toBeVisible({
           timeout: 3_000,
         })
       }).toPass({ timeout: 20_000 })
@@ -184,6 +184,17 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         timeout: 20_000,
       })
       await expect(member.getByRole("link").filter({ hasText: marker })).toBeVisible()
+
+      // O solicitante fecha o ciclo real: cancelar é terminal, some o composer e
+      // não finge que o prestador continue em atendimento.
+      await member.getByRole("link").filter({ hasText: marker }).first().click()
+      await expect(member).toHaveURL(/\/pedidos\/[0-9a-f-]+$/)
+      await member.getByRole("button", { name: "Cancelar pedido" }).click()
+      await member.getByRole("button", { name: "Confirmar cancelamento" }).click()
+      await expect(member.getByText("Pedido cancelado", { exact: true })).toBeVisible({
+        timeout: 20_000,
+      })
+      await expect(member.getByRole("textbox", { name: "Escreva uma mensagem" })).toHaveCount(0)
 
       pedir.concluir()
       responder.concluir()

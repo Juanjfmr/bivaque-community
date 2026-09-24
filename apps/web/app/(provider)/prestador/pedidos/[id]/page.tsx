@@ -100,6 +100,7 @@ export default async function PrestadorPedidoPage({
   }
 
   const isOpen = request.status === "open" || request.status === "in_conversation"
+  const responseClientKey = crypto.randomUUID()
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
@@ -164,6 +165,7 @@ export default async function PrestadorPedidoPage({
           <form action={respondToRequestAction} className="space-y-3">
             <input type="hidden" name="requestId" value={request.id} />
             <input type="hidden" name="conversationId" value={request.conversation_id} />
+            <input type="hidden" name="clientKey" value={responseClientKey} />
             <label htmlFor="content" className="block text-sm font-medium">
               Escreva uma mensagem
             </label>
@@ -200,7 +202,9 @@ export default async function PrestadorPedidoPage({
         </section>
       ) : (
         <p role="status" className="mt-6 text-sm text-muted">
-          Este pedido está encerrado. O histórico continua disponível.
+          {request.status === "cancelled"
+            ? "Este pedido foi cancelado pelo solicitante. O histórico continua disponível."
+            : "Este pedido está encerrado. O histórico continua disponível."}
         </p>
       )}
     </div>
