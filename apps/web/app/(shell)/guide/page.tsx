@@ -519,7 +519,7 @@ function GuideContent() {
                         <div className="min-w-0 flex-1">
                           <Link
                             href={`/guide/${entry.id}` as Route}
-                            className="block truncate text-sm font-medium transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                            className="inline-flex min-h-11 items-center truncate text-sm font-medium transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                           >
                             {entry.name}
                           </Link>

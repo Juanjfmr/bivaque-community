@@ -381,7 +381,7 @@ export function RequestWorkspace({
               href={"/explorar" as Route}
               className="motion-press inline-flex min-h-11 items-center px-1 transition-colors duration-[var(--semantic-motion-duration-instant)] hover:text-foreground"
             >
-              Mercado
+              Explorar
             </Link>
           </li>
           <li aria-hidden="true">/</li>

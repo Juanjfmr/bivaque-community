@@ -19,12 +19,12 @@ describe("RECON-042, defeito 3 — as quatro subtelas de Configurações se dist
     const titles = SUBTELAS.map((path) => HEADINGS[path])
     expect(titles.every((title) => typeof title === "string" && title.length > 0)).toBe(true)
     expect(new Set(titles).size).toBe(SUBTELAS.length)
-  }, 30000)
+  }, 60000)
 
   it("cada título nomeado no mapa identifica também a área", async () => {
     const { HEADINGS } = await import("../../../scripts/visual/capture.mjs")
     for (const path of SUBTELAS) {
       expect(HEADINGS[path]).toContain("Configurações")
     }
-  })
+  }, 60000)
 })

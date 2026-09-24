@@ -63,7 +63,7 @@ const PROFILE_SHORTCUTS = [
 // Só uma das duas cópias fica visível por largura; a escondida sai da árvore de acessibilidade.
 function ProfileShortcuts({ className }: { className: string }) {
   return (
-    <nav aria-label="Atalhos do perfil" className={`space-y-3 ${className}`}>
+    <section aria-label="Atalhos do perfil" className={`space-y-3 ${className}`}>
       {PROFILE_SHORTCUTS.map(({ href, label, hint, Icon }) => (
         <a
           key={href}
@@ -80,7 +80,7 @@ function ProfileShortcuts({ className }: { className: string }) {
           <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--muted)]" />
         </a>
       ))}
-    </nav>
+    </section>
   )
 }
 

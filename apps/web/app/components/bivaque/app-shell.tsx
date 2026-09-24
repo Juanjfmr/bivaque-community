@@ -145,7 +145,7 @@ export function AppShell({ children }: AppShellProperties) {
               {unreadConversations > 0 ? (
                 <span
                   aria-hidden="true"
-                  className="absolute top-1 right-1 flex min-w-4 items-center justify-center rounded-full bg-[var(--semantic-action-primary)] px-1 text-[10px] leading-4 font-semibold text-[var(--semantic-text-on-strong)]"
+                  className="absolute top-1 right-1 flex min-w-5 items-center justify-center rounded-full bg-[var(--semantic-action-primary)] px-1 text-[13px] leading-4 font-semibold text-[var(--semantic-text-on-strong)]"
                 >
                   {unreadConversations > 99 ? "99+" : unreadConversations}
                 </span>

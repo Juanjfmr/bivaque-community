@@ -62,6 +62,8 @@ export const SEED_ACCOUNTS = {
   // visual@ é o ator com denúncias próprias e conversa DM semeadas (RECON-051).
   // Sem ele, `fixture: "own-report"` não tem o que resolver.
   visual: "visual@bivaque.example.invalid",
+  // O dono da comunidade administra o console e organiza o evento de edição.
+  donoVila: "dono-vila@bivaque.example.invalid",
 }
 
 const VIEWPORTS = [
@@ -339,6 +341,7 @@ export const ROUTES = [
     path: "/events/70000000-0000-4000-8000-0000000000a1/editar",
     name: "event-editar",
     auth: true,
+    account: "donoVila",
   },
   { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
@@ -362,11 +365,13 @@ export const ROUTES = [
     path: "/communities/71000000-0000-4000-8000-000000000001/admin/media",
     name: "community-admin-media",
     auth: true,
+    account: "donoVila",
   },
   {
     path: "/communities/71000000-0000-4000-8000-000000000001/admin/pending",
     name: "community-admin-pending",
     auth: true,
+    account: "donoVila",
   },
   {
     path: "/auth/callback-error",
@@ -449,6 +454,7 @@ export const ROUTES = [
     path: "/prestadores/30000000-0000-4000-8000-000000000010",
     name: "provider-public-ficha",
     auth: true,
+    account: "membro1",
   },
   // RECON-022: o formulário de pedido com destinatário fixo na URL. A fixture
   // concreta é a ficha semeada da vitrine G (Climatiza Manaus).
@@ -456,6 +462,7 @@ export const ROUTES = [
     path: "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010",
     name: "pedido-novo",
     auth: true,
+    account: "membro1",
   },
   // RECON-023: a lista e o detalhe da prancha 17. A fixture concreta e o
   // pedido semeado de membro-1@ para a Climatiza Manaus (seed.sql) — e o
@@ -1191,6 +1198,7 @@ async function main() {
     ...new Map(selected.map((route) => [`${route.path}:${route.auth}`, route])).values(),
   ].map((route) => ({
     ...route,
+    account: SCENARIO === "edit" ? "donoVila" : SCENARIO === "offline" ? "membro1" : route.account,
     name: `${route.name}${route.auth ? "--authenticated" : "--visitor"}${SCENARIO ? `--${SCENARIO}` : ""}`,
     // A rota pode declarar o próprio contrato de h1: uma rota de fronteira (o
     // funil sem sessão, por exemplo) não aterrissa na própria tela, e o título
@@ -1387,8 +1395,7 @@ async function main() {
           // se captura é o estado real que a pessoa vê, com o rascunho no lugar.
           await page
             .getByRole("dialog", { name: route.dialog, exact: true })
-            .getByRole("textbox")
-            .first()
+            .getByLabel("Conteúdo")
             .fill("Teste de conexão do compositor.")
           await context.setOffline(true)
           await page.getByTestId("publish-submit").click()

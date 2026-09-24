@@ -405,7 +405,7 @@ export default function MeusAnunciosPage() {
                           <button
                             type="button"
                             onClick={() => setSelectedId(listing.id)}
-                            className="flex items-center gap-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus-outer)]"
+                            className="flex items-center gap-3 text-left transition-colors duration-[var(--semantic-motion-duration-fast)] hover:bg-[var(--semantic-surface-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus-outer)]"
                           >
                             <span className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-[var(--semantic-surface-sunken)]">
                               {state.photos[listing.id] == null ? (
@@ -551,7 +551,7 @@ export default function MeusAnunciosPage() {
 
               <Link
                 href={`/mercado/${selected.id}` as Route}
-                className="flex min-h-11 items-center justify-center rounded-lg border border-border text-sm font-medium text-[var(--semantic-action-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus-outer)]"
+                className="flex min-h-11 items-center justify-center rounded-lg border border-border text-sm font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-fast)] hover:bg-[var(--semantic-selected)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-focus-outer)]"
               >
                 Ver anúncio
               </Link>

@@ -120,6 +120,24 @@ test("every captured route declares an identity contract, and none is orphaned",
   }
 })
 
+test("owner-only captures use the seeded owning account", async () => {
+  const { ROUTES, SEED_ACCOUNTS } = await import("../../scripts/visual/capture.mjs")
+  const accountFor = (path) => ROUTES.find((route) => route.path === path)?.account
+  assert.equal(SEED_ACCOUNTS.donoVila, "dono-vila@bivaque.example.invalid")
+  for (const path of [
+    "/communities/71000000-0000-4000-8000-000000000001/admin/media",
+    "/communities/71000000-0000-4000-8000-000000000001/admin/pending",
+    "/events/70000000-0000-4000-8000-0000000000a1/editar",
+  ]) {
+    assert.equal(accountFor(path), "donoVila", path)
+  }
+  assert.equal(accountFor("/prestadores/30000000-0000-4000-8000-000000000010"), "membro1")
+  assert.equal(
+    accountFor("/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010"),
+    "membro1",
+  )
+})
+
 test("both proof writers record whether the tree was dirty", () => {
   // A report that names only the commit attributes the evidence to code the
   // commit does not contain whenever the work is still uncommitted.

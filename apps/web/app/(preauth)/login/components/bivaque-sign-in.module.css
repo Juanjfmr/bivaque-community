@@ -171,6 +171,7 @@
   font-size: var(--semantic-typography-label-size);
   font-weight: var(--semantic-typography-label-weight);
   text-decoration: none;
+  transition: color var(--semantic-motion-duration-base) var(--semantic-motion-ease-out);
 }
 
 .inlineRecovery:hover {
