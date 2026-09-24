@@ -60,6 +60,9 @@ describe("cancelamento de pedido pelo solicitante", () => {
     expect(workspaceSource).toContain("cancelRequest")
     expect(workspaceSource).toContain("Cancelar pedido")
     expect(workspaceSource).toContain("Pedido cancelado")
+    expect(workspaceSource).toContain("router.refresh()")
+    expect(workspaceSource).toContain("setStatus(request.status)")
+    expect(workspaceSource).toContain("setCancelledAt(request.cancelledAt)")
     expect(workspaceSource).toContain("{closed ? (")
   })
 

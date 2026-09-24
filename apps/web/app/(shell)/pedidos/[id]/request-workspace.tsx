@@ -128,6 +128,28 @@ export function RequestWorkspace({
 
   const [sessionExpired, setSessionExpired] = useState(false)
 
+  // router.refresh() preserva useState; sincroniza o estado local com os
+  // props do Server Component depois de uma corrida terminal em outra sessão.
+  useEffect(() => {
+    setStatus(request.status)
+    setClosedAt(request.closedAt)
+    setClosedByUserId(request.closedByUserId)
+    setCancelledAt(request.cancelledAt)
+    setCancelledByUserId(request.cancelledByUserId)
+    setDescription(request.description)
+    setWhenText(request.whenText)
+    setEditDescription(request.description)
+    setEditWhen(request.whenText ?? "")
+  }, [
+    request.status,
+    request.closedAt,
+    request.closedByUserId,
+    request.cancelledAt,
+    request.cancelledByUserId,
+    request.description,
+    request.whenText,
+  ])
+
   const closed = isClosedStatus(status)
 
   const markRead = useCallback(async () => {

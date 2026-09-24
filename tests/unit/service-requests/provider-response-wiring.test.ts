@@ -45,6 +45,8 @@ describe("resposta do prestador ao pedido (RECON-044)", () => {
     expect(responseForm).toContain("useState")
     expect(responseForm).toContain("useEffect")
     expect(responseForm).toContain("setClientKey(newClientKey())")
+    expect(responseForm).toContain("value={content}")
+    expect(responseForm).toContain("setContent(submittedContent)")
     expect(responseForm).toContain("useActionState")
     expect(responseForm).toContain("pending")
     expect(detailPage).toContain("cancelled_at, cancelled_by_user_id")

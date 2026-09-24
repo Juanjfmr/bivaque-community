@@ -128,6 +128,7 @@ export async function closeRequest(requestId: string): Promise<CloseRequestState
 
   if (error) {
     if (isSessionError(error.message)) return { status: "session" }
+    revalidateRequestSurfaces(requestId)
     log.error("pedidos: close_service_request failed", { error: error.message })
     return { status: "error", message: error.message }
   }
@@ -158,6 +159,7 @@ export async function cancelRequest(requestId: string): Promise<CancelRequestSta
 
   if (error) {
     if (isSessionError(error.message)) return { status: "session" }
+    revalidateRequestSurfaces(requestId)
     log.error("pedidos: cancel_service_request failed", { error: error.message })
     return { status: "error", message: "Não foi possível cancelar o pedido agora." }
   }
@@ -199,6 +201,7 @@ export async function saveRequestEdit(input: {
 
   if (error) {
     if (isSessionError(error.message)) return { status: "session" }
+    revalidateRequestSurfaces(input.requestId)
     log.error("pedidos: update_service_request failed", { error: error.message })
     return { status: "error", message: error.message }
   }

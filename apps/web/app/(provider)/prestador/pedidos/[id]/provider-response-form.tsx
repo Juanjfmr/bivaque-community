@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useActionState, useEffect, useRef, useState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { FeedbackAlert } from "../../../../components/bivaque/feedback-alert"
 import { respondToRequestAction } from "../../actions"
 
@@ -23,16 +23,21 @@ function newClientKey(): string {
  */
 export function ProviderResponseForm({ requestId, conversationId }: ProviderResponseFormProps) {
   const router = useRouter()
-  const formRef = useRef<HTMLFormElement>(null)
   const [clientKey, setClientKey] = useState<string | null>(null)
+  const [content, setContent] = useState("")
   const [state, formAction, pending] = useActionState<ResponseFormState, FormData>(
     async (_previous, formData) => {
+      const submittedContent =
+        typeof formData.get("content") === "string" ? String(formData.get("content")) : content
       try {
         await respondToRequestAction(formData)
-        formRef.current?.reset()
+        setContent("")
         setClientKey(newClientKey())
         return { error: null }
       } catch {
+        // O reset nativo do React não pode apagar o texto que a pessoa ainda
+        // precisa para tentar novamente.
+        setContent(submittedContent)
         router.refresh()
         return { error: "Não foi possível enviar a resposta agora. Tente novamente." }
       }
@@ -47,7 +52,7 @@ export function ProviderResponseForm({ requestId, conversationId }: ProviderResp
   return (
     <div className="space-y-3">
       {state.error ? <FeedbackAlert variant="danger" description={state.error} /> : null}
-      <form ref={formRef} action={formAction} className="space-y-3">
+      <form action={formAction} className="space-y-3">
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="conversationId" value={conversationId} />
         <input type="hidden" name="clientKey" value={clientKey ?? ""} />
@@ -57,6 +62,8 @@ export function ProviderResponseForm({ requestId, conversationId }: ProviderResp
         <textarea
           id="content"
           name="content"
+          value={content}
+          onChange={(event) => setContent(event.target.value)}
           required
           maxLength={2000}
           rows={3}
