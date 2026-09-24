@@ -1,6 +1,7 @@
 "use server"
 
 import { createServerClient } from "@supabase/ssr"
+import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { log } from "../../../../lib/logger"
 import {
@@ -90,8 +91,14 @@ export async function sendRequestMessage(input: {
 
   if (error) {
     if (isSessionError(error.message)) return { status: "session" }
+    if (error.message.includes("request is terminal")) {
+      return {
+        status: "error",
+        message: "Este pedido está encerrado e não aceita novas mensagens.",
+      }
+    }
     log.error("pedidos: send_conversation_message failed", { error: error.message })
-    return { status: "error", message: error.message }
+    return { status: "error", message: "Não foi possível enviar a mensagem agora." }
   }
 
   const row = data as {
@@ -120,6 +127,13 @@ export async function closeRequest(requestId: string): Promise<CloseRequestState
     closed_at: string | null
     closed_by_user_id: string | null
   }
+  if (row.status === "cancelled") {
+    return { status: "error", message: "Este pedido já foi cancelado." }
+  }
+  revalidatePath("/pedidos")
+  revalidatePath(`/pedidos/${requestId}`)
+  revalidatePath("/prestador")
+  revalidatePath(`/prestador/pedidos/${requestId}`)
   return {
     status: "closed",
     requestStatus: row.status,
@@ -145,6 +159,13 @@ export async function cancelRequest(requestId: string): Promise<CancelRequestSta
     cancelled_at: string | null
     cancelled_by_user_id: string | null
   }
+  if (row.status !== "cancelled") {
+    return { status: "error", message: "Este pedido já foi encerrado." }
+  }
+  revalidatePath("/pedidos")
+  revalidatePath(`/pedidos/${requestId}`)
+  revalidatePath("/prestador")
+  revalidatePath(`/prestador/pedidos/${requestId}`)
   return {
     status: "cancelled",
     cancelledAt: row.cancelled_at,
@@ -177,6 +198,8 @@ export async function saveRequestEdit(input: {
   }
 
   const row = data as { description: string; when_text: string | null }
+  revalidatePath("/pedidos")
+  revalidatePath(`/pedidos/${input.requestId}`)
   return { status: "saved", description: row.description, whenText: row.when_text }
 }
 

@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   countUnread,
@@ -82,6 +83,7 @@ export function RequestWorkspace({
   initialMessages,
   initialLastReadAt,
 }: RequestWorkspaceProps) {
+  const router = useRouter()
   const [status, setStatus] = useState<ServiceRequestStatus>(request.status)
   const [closedAt, setClosedAt] = useState<string | null>(request.closedAt)
   const [closedByUserId, setClosedByUserId] = useState<string | null>(request.closedByUserId)
@@ -250,7 +252,8 @@ export function RequestWorkspace({
     if (result.closedByUserId && result.closedByUserId !== viewerId) {
       setCloseNotice("O pedido já havia sido encerrado por outra pessoa.")
     }
-  }, [request.id, viewerId])
+    router.refresh()
+  }, [request.id, router, viewerId])
 
   const handleCancel = useCallback(async () => {
     setCancelling(true)
@@ -272,7 +275,8 @@ export function RequestWorkspace({
     setCancelledByUserId(result.cancelledByUserId)
     setConfirmingCancel(false)
     setCloseNotice("Pedido cancelado. A conversa foi encerrada para novas mensagens.")
-  }, [request.id])
+    router.refresh()
+  }, [request.id, router])
 
   const handleSaveEdit = useCallback(async () => {
     const validation = validateEditDescription(editDescription)
@@ -301,7 +305,8 @@ export function RequestWorkspace({
     setDescription(result.description)
     setWhenText(result.whenText)
     setEditing(false)
-  }, [request.id, editDescription, editWhen])
+    router.refresh()
+  }, [request.id, editDescription, editWhen, router])
 
   const responses = useMemo(
     () => messages.filter((message) => message.sender_id !== viewerId),

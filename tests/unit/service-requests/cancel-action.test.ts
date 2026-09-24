@@ -15,6 +15,8 @@ vi.mock("next/headers", () => ({
   cookies: vi.fn(async () => ({ getAll: () => [], setAll: () => {} })),
 }))
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
+
 vi.mock("@supabase/ssr", () => ({
   createServerClient: vi.fn(() => ({
     rpc: vi.fn(async () => ({ data: state.data, error: state.error })),

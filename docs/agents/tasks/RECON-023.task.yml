@@ -51,6 +51,8 @@ acceptance:
   - encerrar registra ator e e idempotente, e o estado sobrevive a recarregar em outra sessao
   - o solicitante pode cancelar um pedido aberto/em conversa pelo RPC autorizado; a tela mostra Cancelado, ator e instante, e não deixa compositor ativo
   - closed e cancelled são terminais para nova mensagem, mas preservam a leitura da conversa; terceiro e prestador não ganham cancelamento por UI ou chamada direta
+  - a RPC bloqueia mensagem depois de closed/cancelled e close depois de cancelled; a ação revalida a lista e o detalhe
+  - a tela do prestador também exibe o instante de cancelamento e nunca transforma cancelled em closed
   - terceiro nao le a conversa nem o pedido, inclusive por chamada direta sem interface
   - as policies que sustentam a leitura entram na mesma migration das colunas que elas leem
   - todos os estados fechados - carregando, vazio que leva a busca, erro recuperavel, sessao expirada e conflito de encerramento concorrente
@@ -62,6 +64,7 @@ proof:
   - npx pnpm@11.18.0 exec vitest run tests/unit/service-requests/cancel-action.test.ts tests/unit/service-requests/tracking.test.ts
   - npx pnpm@11.18.0 gate
   - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
+  - supabase/tests/service-request-terminal.sql: mensagem após closed/cancelled e close após cancelled são negados
   - npx pnpm@11.18.0 build
   - npx pnpm@11.18.0 test:e2e do ciclo entre duas contas
   - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440

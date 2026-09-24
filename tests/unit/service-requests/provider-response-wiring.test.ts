@@ -12,6 +12,20 @@ const detailPage = readFileSync(
   join(root, "apps", "web", "app", "(provider)", "prestador", "pedidos", "[id]", "page.tsx"),
   "utf8",
 )
+const responseForm = readFileSync(
+  join(
+    root,
+    "apps",
+    "web",
+    "app",
+    "(provider)",
+    "prestador",
+    "pedidos",
+    "[id]",
+    "provider-response-form.tsx",
+  ),
+  "utf8",
+)
 
 describe("resposta do prestador ao pedido (RECON-044)", () => {
   it("usa o RPC canonico send_conversation_message, nao o nome morto do RECON-024", () => {
@@ -22,8 +36,15 @@ describe("resposta do prestador ao pedido (RECON-044)", () => {
   })
 
   it("o formulario envia a conversa do proprio pedido", () => {
-    expect(detailPage).toContain('name="conversationId"')
-    expect(detailPage).toContain("value={request.conversation_id}")
-    expect(detailPage).toContain('name="clientKey"')
+    expect(detailPage).toContain("ProviderResponseForm")
+    expect(detailPage).toContain("conversationId={request.conversation_id}")
+    expect(responseForm).toContain('name="conversationId"')
+    expect(responseForm).toContain("value={conversationId}")
+    expect(responseForm).toContain('name="clientKey"')
+    expect(responseForm).toContain("useState")
+    expect(responseForm).toContain("useActionState")
+    expect(responseForm).toContain("pending")
+    expect(detailPage).toContain("cancelled_at, cancelled_by_user_id")
+    expect(detailPage).toContain("request.cancelled_at")
   })
 })
