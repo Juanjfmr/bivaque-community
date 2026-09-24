@@ -227,10 +227,10 @@ export function CreatePostModal({
   )
 
   useEffect(() => {
-    if (draftReady && ownerId) {
+    if (draftReady && ownerId && scopeIsCurrent) {
       savePostAudience(ownerId, localityId, audienceKey)
     }
-  }, [audienceKey, draftReady, localityId, ownerId])
+  }, [audienceKey, draftReady, localityId, ownerId, scopeIsCurrent])
 
   const draftFields = useMemo<PostDraftFields>(
     () => ({ postType, content, details, linkUrl, pollOptions, photoPath }),
