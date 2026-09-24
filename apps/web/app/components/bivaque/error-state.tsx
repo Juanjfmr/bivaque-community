@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@heroui/react"
+import { useEffect, useState } from "react"
 import { FeedbackAlert } from "./feedback-alert"
 
 interface ErrorStateProps {
@@ -34,6 +35,7 @@ interface ConnectionLostStateProps {
   description?: string
   onRetry?: () => void
   retryLabel?: string
+  retryDisabled?: boolean
   className?: string
 }
 
@@ -47,9 +49,22 @@ export function ConnectionLostState({
   description = "Não foi possível completar esta consulta por falta de conexão. Verifique a internet e tente de novo.",
   onRetry,
   retryLabel = "Tentar novamente",
+  retryDisabled = false,
   className = "",
 }: ConnectionLostStateProps) {
+  const [online, setOnline] = useState(true)
+  useEffect(() => {
+    const update = () => setOnline(window.navigator.onLine)
+    update()
+    window.addEventListener("online", update)
+    window.addEventListener("offline", update)
+    return () => {
+      window.removeEventListener("online", update)
+      window.removeEventListener("offline", update)
+    }
+  }, [])
   const handleRetry = onRetry ?? (() => window.location.reload())
+  const retryIsDisabled = retryDisabled || !online
   return (
     <FeedbackAlert
       variant="warning"
@@ -57,7 +72,7 @@ export function ConnectionLostState({
       description={description}
       className={className}
       actions={
-        <Button variant="tertiary" size="sm" onPress={handleRetry}>
+        <Button variant="tertiary" size="sm" onPress={handleRetry} isDisabled={retryIsDisabled}>
           {retryLabel}
         </Button>
       }

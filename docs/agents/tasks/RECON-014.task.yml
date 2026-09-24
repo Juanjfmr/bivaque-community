@@ -27,8 +27,27 @@ allowed_paths:
   - apps/web/app/components/bivaque/feed-post-audience.tsx
   - apps/web/app/components/bivaque/feed-post-photo.tsx
   - apps/web/app/components/bivaque/feed-post-shared.tsx
-  - tests/unit/composer/
+  - apps/web/app/(shell)/publicacoes/
+  - apps/web/app/(shell)/inicio/
+  - apps/web/app/(shell)/community/
+  - apps/web/app/components/bivaque/feed-post-card.tsx
+  - apps/web/app/components/bivaque/error-state.tsx
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/globals.css
+  - scripts/visual/capture.mjs
+  - scripts/visual/capture-proof.mjs
+  - scripts/visual/compare.mjs
+  - tests/scope/visual-capture-proof.test.mjs
+  - tests/unit/ui/shell-active-nav.test.ts
+  - tests/unit/ui/no-photo-poll-controls.test.ts
+  - tests/e2e/composer-layout.spec.ts
   - tests/e2e/publish-golden-slice.spec.ts
+  - tests/e2e/synthetic-people-interaction.spec.ts
+  - tests/e2e/denied-publish.spec.ts
+  - tests/e2e/photo-upload.spec.ts
+  - tests/e2e/journey-quando-algo-falha.spec.ts
+  - tests/unit/composer/
   - docs/agents/tasks/RECON-014.task.yml
 
 forbidden:
@@ -48,8 +67,11 @@ forbidden:
   - introduzir familia tipografica, biblioteca de componentes ou modo escuro
 
 acceptance:
-  - criar publicacao e editar seguem a composicao da prancha 45
-  - a audiencia oferecida e a real do membro — comunidade e grupo vem de consulta, nunca de lista fixa
+  - a criação e a edição seguem a composição da prancha 45
+  - a entrada real da comunidade e o menu de edição do card conduzem às rotas estáveis `/publicacoes/nova` e `/publicacoes/[id]/editar`
+  - o compositor de página inteira exibe título, autoria, público real, prévia, foto opcional, rascunho, feedback de erro e retorno de cancelamento
+  - salvar uma foto em uma publicação textual altera o tipo para `photo` e mantém a restrição de integridade do banco
+  - a audiência oferecida é a real do membro — comunidade e grupo vem de consulta, nunca de lista fixa
   - o rascunho sobrevive a interrupcao pelo armazenamento do proprio navegador do membro; ele NAO vira publicacao, nao sai do dispositivo e nao e enviado ao servidor
   - o rascunho e a preferencia de audiencia sao namespaced por membro e locality; trocar de conta nao expoe o texto anterior
   - o rascunho so e recuperado quando a audiencia persistida continua autorizada; uma revogacao volta a cidade com aviso, sem publicar automaticamente
@@ -69,6 +91,10 @@ proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-014.task.yml
   - npx pnpm@11.18.0 exec vitest run tests/unit/composer/draft-scope.test.ts tests/unit/composer/audience-reset.test.ts
   - npx pnpm@11.18.0 exec playwright test tests/e2e/publish-golden-slice.spec.ts --workers=1
+  - npx pnpm@11.18.0 exec playwright test tests/e2e/composer-layout.spec.ts --project=desktop-1440 --workers=1
+  - BIVAQUE_VISUAL_SCENARIO=edit node scripts/visual/capture.mjs
+  - BIVAQUE_VISUAL_SCENARIO=publish node scripts/visual/capture.mjs
+  - BIVAQUE_VISUAL_SCENARIO=offline node scripts/visual/capture.mjs
   - npx pnpm@11.18.0 gate
   - node scripts/visual/loop.mjs
 

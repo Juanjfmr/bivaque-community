@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-22",
+  "updatedAt": "2026-09-24",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -2723,8 +2723,8 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "frontend",
-      "status": "done",
-      "description": "Os itens [componente], [backend] e [dado] da auditoria visual web foram fechados em nove lotes (M a V) entre 15/09 e 16/09: contratos de captura (0 INVALID no app inteiro), painel do operador, régua de movimento, formulários, convite de prestador, Salvos e Sugerir referência do guia, Reenviar do convite familiar e os estados vazios. Resta UM item, e ele não é escolha de agente: o ramo de acesso negado em /communities/[id] (prancha 60) depende de decidir o que é uma comunidade não apresentável.",
+      "status": "repo",
+      "description": "Os itens [componente], [backend] e [dado] da auditoria visual web foram fechados em nove lotes (M a V) entre 15/09 e 16/09: contratos de captura (0 INVALID no app inteiro), painel do operador, régua de movimento, formulários, convite de prestador, Salvos e Sugerir referência do guia, Reenviar do convite familiar e os estados vazios. Resta UM item, e ele não é escolha de agente: o ramo de acesso negado em /communities/[id] (prancha 60) depende de decidir o que é uma comunidade não apresentável. Em 24/09/2026 a revisão de fidelidade reabriu a parte visual: 0 finding mecânico não fecha a prancha, e o antigo closure de 45/60 por modal não é evidência da página de referência.",
       "checklist": [
         "01: faixa de atividade, aba Acompanhando, card De mudança?, avatares de presença, card de evento no feed ✅ 15/09 (aba Acompanhando: post_follows + feed_following + botão no cartão; De mudança? → /localidade; card de evento no feed; faixa verificada). Avatares de presença ✅ 16/09 (lote Z: o seed não tinha NENHUMA linha em event_rsvps — a copy da prancha não tinha de onde sair. Cinco membros de Manaus confirmam no próximo evento, e o rail e o cartão do feed renderizam 4 avatares + \"Dono da Vila, Bruno Almeida e mais 3 pessoas vão\"; captura recon-loteZ-inicio: 0 achados). Pegadinha medida: a `occurrence_date` é a data UTC (`starts_at.slice(0,10)`), não a data que a tela mostra — semear 19/09 local deixava a presença invisível",
         "12: bloco editorial do guia (hero, cards com foto, referências por assunto, atualizados recentemente) e rail Comece por aqui/Ajude a melhorar ✅ 15/09 (captura recon049-guia-final2: 0 findings). As FOTOS do guia não são [dado]: medido em 16/09, `arrival_guide_entries` não tem coluna de imagem (photo/image/banner = 0 linhas) e nenhuma tela do guia usa imagem — é [backend] e virou o card RECON-030-GUIA-FOTOS",
@@ -2743,7 +2743,8 @@
         "84: rail direito ✅ 15/09 (estados com resultado, vazio e sem termo; buscas recentes no localStorage) e seções Serviços/Eventos ✅ verificadas com termos que casam (rotas explorar-busca-servico e explorar-busca-evento no capture)",
         "60 item 1: estado de acesso negado ✅ 16/09 (lote X) — decisão do dono: nome e estado da comunidade não são sigilosos. A policy communities_select_locality_member deu lugar a communities_select_authenticated (is_deleted = false), então a linha da comunidade é legível por qualquer pessoa autenticada; o público `outsider` entrou no loader e a tela renderiza AccessUnavailableState com o nome e o caminho de volta. PARTICIPAR continua fechado: request_community_membership já exigia ser da cidade, e roster/grupos/feed têm policies próprias. 8 asserções pgTAP (community-presentation-access.sql: lê a apresentação; NÃO vê roster; NÃO vê grupos; NÃO pede entrada; apagada invisível; anon sem privilégio; soft delete preserva a linha). captura .visual/recon-loteX-outsider VALID com 0 achados nas três larguras; re-captura completa .visual/recon-loteX-final com 249 capturas, 0 INVALID, 0 achados, 0 high; pgTAP canônico 119 arquivos / 1568 testes PASS)",
         "60 item 2: estado offline da composição ✅ 16/09 (lote Y) — ConnectionLostState tinha zero instâncias e agora é a superfície de falha de transporte no compositor (o rascunho é real: feed-post-draft + autosave). Dois defeitos medidos no caminho: o classificador classificava falha de transporte como rejeição de servidor (o cliente embrulha o erro de fetch em forma de PostgREST com details preenchido e code vazio), e o compositor abria duas colunas por breakpoint de JANELA dentro de um diálogo de 512px, deixando 120px para o formulário — corrigido para max-w-4xl (dialogo 896px, formulario 504px), o que conserta a prancha 45 junto. Cenário de captura offline novo (escreve, corta a rede, publica) com contrato nominal (expectedFallback); publish/edit/offline VALID com 0 achados",
-        "45: composição verificada e provada em 15/09 — vive no diálogo Criar publicação (abas, radios Quem pode ver? com cidade + comunidade e sub-rótulos, rail Como sua publicação será vista, caixa de foto, Publicar/Cancelar); cenário publish do capture consertado e captura .visual/recon049-publicacao5 com 0 findings; a11y do diálogo corrigida (radio 44px, fechar 44px). EDIÇÃO ✅ 15/09 (lote J): cenário BIVAQUE_VISUAL_SCENARIO=edit abre o menu do próprio autor e entra em Editar publicação — .visual/recon049-edicao3, VALID e 0 findings, depois de corrigir o botão de fechar de 24x24 que a primeira captura do diálogo expôs (o defeito foi sistêmico: todos os <Modal.CloseTrigger /> do produto ganharam min-h-11 min-w-11)"
+        "45: composição verificada e provada em 15/09 — vive no diálogo Criar publicação (abas, radios Quem pode ver? com cidade + comunidade e sub-rótulos, rail Como sua publicação será vista, caixa de foto, Publicar/Cancelar); cenário publish do capture consertado e captura .visual/recon049-publicacao5 com 0 findings; a11y do diálogo corrigida (radio 44px, fechar 44px). EDIÇÃO ✅ 15/09 (lote J): cenário BIVAQUE_VISUAL_SCENARIO=edit abre o menu do próprio autor e entra em Editar publicação — .visual/recon049-edicao3, VALID e 0 findings, depois de corrigir o botão de fechar de 24x24 que a primeira captura do diálogo expôs (o defeito foi sistêmico: todos os <Modal.CloseTrigger /> do produto ganharam min-h-11 min-w-11)",
+        "RECON-053: fidelidade visual por prancha, superfície, ator e estado; a aprovação mecânica de 45/60 foi reaberta"
       ],
       "proof": [
         ".visual/compare/julgamento.md — itens [componente] por par; adjudicados registrados na fase [forma]",
@@ -2760,17 +2761,23 @@
         "Lote F fechado em 15/09: /explorar/busca ganhou o rail dos três estados (0 findings nas capturas recon049-busca, recon049-busca-vazio, recon049-busca-servico e recon049-busca-evento); a ausência das seções Serviços/Eventos era artefato do termo, provado com termos que casam",
         "BUG de runtime corrigido no lote E: o convite familiar nunca era criado — sendFamilyInviteAction enviava o digest do e-mail sem o prefixo \\x exigido pelo PostgREST, violando o CHECK octet_length = 32 (23514). Corrigido com byteaDigestParam e coberto por guard-rail estático tests/scope/invite-digest-serialization.test.mjs (com controle positivo e negativo)",
         "Fila revelada pelo lote M e FECHADA em três lotes. N: painel do operador inteiro (nav com aria-current, alvos de 44px, nome acessível) e as duas trilhas atrasadas. O: a régua de movimento media um filho escolhido a dedo em vez da estrutura pintada do controle, e os formulários de publicação/prestador estavam sem transição. P: os 42 achados da matriz de canais (/configuracoes e /configuracoes/notificacoes — o label do checkbox media 16x16 e o do switch 41x25), o link de 38px de /auth/callback-error e a medida de leitura de /prestadores/<id>, que era defeito da RÉGUA (box de 616px ÷ meio em = 88 caracteres numa linha de 42 caracteres). Prova final: .visual/recon-loteP-completo — 237 capturas, 0 INVALID, 0 achados e 0 high no aplicativo inteiro (era 433 achados/123 high depois do lote M). Revisão independente dos lotes M–Q passou com ressalvas, e as ressalvas viraram o lote S: régua de leitura desconta padding, movimento exige animação real (nome de keyframes, propriedade diferente de none), alvo de toque fecha 44x44 em uma das caixas em vez da união, a página do convite separa erro de backend de token desconhecido, as trilhas voltaram a ser lista ordenada, o pgTAP do convite cobre aceito/maiúsculas/vazio/comunidade apagada (plan 15) e o report grava o hash da régua (rulers.capture/rulers.proof) para os números serem atribuíveis",
-        "[backend] Salvos do guia ✅ 15/09 (lote R: guide_entry_saves + marcador no cartão + aba Guia em /salvos com a URL acompanhando a aba; 9 asserções pgTAP). Sugerir referência ✅ 15/09 (lote T: suggest_guide_entry grava pending na fila que /guide-queue já revisa, com cidade derivada da associação, submitted_by e cota de cinco pendentes por pessoa; 13 asserções pgTAP; rota /guide/sugerir capturada em VALID com 0 achados). Reenviar do convite familiar ✅ 15/09 (lote U: resend_family_invitation reemite — gira o digest, devolve 7 dias e enfileira mensagem nova; o endereço é confirmado de novo porque o banco não guarda e-mail, e a função só aceita se o digest bater; 8 asserções pgTAP). No mesmo caminho, dois defeitos reais medidos e corrigidos: o convite NÃO nascia para domínios de dois níveis (a máscara usava o primeiro ponto e o CHECK da tabela recusava — quebrava para @exemplo.com.br) e o FormData do reenvio era montado com Object.assign, que não registra entradas)"
+        "[backend] Salvos do guia ✅ 15/09 (lote R: guide_entry_saves + marcador no cartão + aba Guia em /salvos com a URL acompanhando a aba; 9 asserções pgTAP). Sugerir referência ✅ 15/09 (lote T: suggest_guide_entry grava pending na fila que /guide-queue já revisa, com cidade derivada da associação, submitted_by e cota de cinco pendentes por pessoa; 13 asserções pgTAP; rota /guide/sugerir capturada em VALID com 0 achados). Reenviar do convite familiar ✅ 15/09 (lote U: resend_family_invitation reemite — gira o digest, devolve 7 dias e enfileira mensagem nova; o endereço é confirmado de novo porque o banco não guarda e-mail, e a função só aceita se o digest bater; 8 asserções pgTAP). No mesmo caminho, dois defeitos reais medidos e corrigidos: o convite NÃO nascia para domínios de dois níveis (a máscara usava o primeiro ponto e o CHECK da tabela recusava — quebrava para @exemplo.com.br) e o FormData do reenvio era montado com Object.assign, que não registra entradas)",
+        ".visual/2026-09-24T22-59-06-287Z/report.md e .visual/compare/index.html — a nova execução conserva 0 high, mas falha honestamente na ausência de artigo real e deixa a fidelidade humana pendente"
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
         "recaptura por rota (scripts/visual/capture.mjs) com prova válida"
       ],
       "links": [".visual/compare/julgamento.md", "docs/agents/PRANCHAS-WEB-RESTANTES.md"],
-      "updatedAt": "2026-09-16",
-      "sourceRevision": "285059d",
+      "updatedAt": "2026-09-24",
+      "sourceRevision": "3b4e8cfc5ac4a74a213a26495519795b17871d03",
       "dependencies": [],
-      "completedAt": "2026-09-16"
+      "completedAt": null,
+      "drift": {
+        "documented": "RECON-049 fechou 45/60 e a auditoria visual web como concluídas em 16/09/2026",
+        "observed": "A revisão de 24/09/2026 encontrou a criação/edição como modal, o artigo do Guia sem fixture real e vários pares com estado/ator/superfície divergentes",
+        "action": "Executar RECON-053-FIDELIDADE-WEB; não marcar fidelidade como PASS enquanto a revisão visual independente e os dados reais não existirem"
+      }
     },
     {
       "id": "RECON-050",
@@ -3527,6 +3534,45 @@
         "Teste unitario da traducao e do caminho generico"
       ],
       "completedChecklist": [true, true]
+    },
+    {
+      "id": "RECON-053-FIDELIDADE-WEB",
+      "title": "Fidelidade visual web: substituir aprovação mecânica por julgamento por prancha",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "A auditoria mecânica verde não prova fidelidade. A revisão visual independente de 24/09/2026 reprovou a entrega global: as pranchas 45/60 eram modais sobre o feed, o Guia não tinha artigo estruturado real e várias rotas tinham estado/ator/superfície divergentes. Este card reabriu a superfície sem declarar esses desvios resolvidos por screenshots ou por seed fictício.",
+      "checklist": [
+        "45/60: provar criação, edição e offline nas superfícies addressáveis /publicacoes/nova e /publicacoes/[id]/editar, nos três viewports, com ator e estado reais",
+        "12/25: obter artigo e seções editoriais reais; não fabricar seed para fazer a captura passar; estados sem artigo permanecem Fidelity BLOCKED",
+        "42/43/60: capturar e julgar as comunidades nos atores member, discover e pending, sem deduplicar rotas pelo mesmo path",
+        "julgar as demais pranchas web por superfície, estado, ator, hierarquia e anatomia; 0 finding mecânico nunca é PASS de fidelidade",
+        "registrar o veredito independente e o próximo passo concreto no relatório/board antes de fechar qualquer card"
+      ],
+      "proof": [
+        ".visual/2026-09-24T22-59-06-287Z/report.md — loop verde em lint/typecheck/test/build, captura com 0 high mas 6 INVALID porque o seed não tem artigo/seções reais",
+        ".visual/compare/index.html — pares 45/60 agora usam as rotas de página, mas a nota continua 'revisão visual humana ainda não aprovada'",
+        ".visual/2026-09-24T22-49-54-138Z/report.json — edição criada no fluxo real community->publish->menu, destino Vila Ajuricaba, alvo dinâmico, página sem role dialog e cleanup registrado",
+        ".visual/2026-09-24T21-37-55-671Z/report.json e .visual/2026-09-24T21-38-53-836Z/report.json — captura publish/offline também parte do feed real, com contadores e retry offline",
+        "Playwright desktop: 15/15 testes direcionais passaram, incluindo owner gate, PATCH real com readback post_type=photo, erro de edição e confirmação de descarte",
+        "Revisão visual independente de 24/09/2026 — veredito global FAIL; nenhum par deve ser tratado como aprovado por mechanically ok"
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 exec playwright test tests/e2e/composer-layout.spec.ts --project=desktop-1440 --workers=1",
+        "node scripts/visual/loop.mjs",
+        "node scripts/visual/compare.mjs"
+      ],
+      "links": [
+        "docs/design/visual-guide-2026-09-06/45-web-publicacao.png",
+        "docs/design/visual-guide-2026-09-06/60-web-estados.png",
+        "docs/agents/design-audit/README.md",
+        "docs/agents/tasks/RECON-053-FIDELIDADE-WEB.task.yml"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-24",
+      "sourceRevision": "3b4e8cfc5ac4a74a213a26495519795b17871d03"
     }
   ]
 }

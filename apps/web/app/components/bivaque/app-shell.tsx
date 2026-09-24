@@ -364,7 +364,7 @@ export function AppShell({ children }: AppShellProperties) {
       <BottomNav />
 
       {/* Keyboard shortcut hint */}
-      <div className="hidden lg:flex fixed bottom-4 right-4 z-30">
+      <div className="pointer-events-none hidden lg:flex fixed bottom-4 right-4 z-30">
         <span className="flex items-center gap-1.5 text-xs text-muted bg-[var(--semantic-surface)] border border-border rounded-md px-2 py-1 shadow-[var(--semantic-elevation-raised)]">
           <Kbd>Ctrl</Kbd>
           <span>+</span>

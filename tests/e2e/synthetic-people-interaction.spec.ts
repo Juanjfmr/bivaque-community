@@ -176,14 +176,17 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
     const postText = `Boa tarde! Ensaio de interação sintética ${runToken}`
     const commentText = `Combinado, valeu! ${runToken}`
 
-    // 1. A autora publica
+    // 1. A autora publica pela rota addressável alcançada pelo feed real
     await withPersona(browser, AUTHOR_EMAIL, async (page) => {
       await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
       await page.getByRole("button", { name: "Publicar" }).first().click()
-      const modal = page.getByRole("dialog")
-      await expect(modal.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
-      await modal.getByLabel("Conteúdo").fill(postText)
-      await modal.getByRole("button", { name: "Publicar" }).click()
+      await expect(page).toHaveURL(/\/publicacoes\/nova/)
+      const composer = page.locator("[data-composer-form]")
+      await expect(composer).toBeVisible()
+      await expect(composer).toHaveAttribute("data-draft-ready", "true")
+      await composer.getByLabel("Conteúdo").fill(postText)
+      await composer.getByRole("button", { name: "Publicar" }).click()
+      await expect(page).toHaveURL(/\/community/)
       await expect(page.locator("article", { hasText: postText })).toBeVisible({ timeout: 15_000 })
     })
 

@@ -6,10 +6,10 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
 
 interface FeedComposerProps {
-  onOpenModal: (defaultPostType?: string) => void
+  onOpenComposer: (defaultPostType?: string) => void
 }
 
-export function FeedComposer({ onOpenModal }: FeedComposerProps) {
+export function FeedComposer({ onOpenComposer }: FeedComposerProps) {
   const [avatarLetter, setAvatarLetter] = useState("?")
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
   const supabase = createBrowserClient()
@@ -47,7 +47,7 @@ export function FeedComposer({ onOpenModal }: FeedComposerProps) {
 
       <button
         type="button"
-        onClick={() => onOpenModal()}
+        onClick={() => onOpenComposer()}
         className="flex min-h-11 flex-1 cursor-pointer items-center rounded-lg border border-border bg-[var(--semantic-surface-sunken)] px-3 text-sm text-muted text-left transition-colors duration-[var(--semantic-motion-duration-instant)] hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
       >
         No que você está pensando?
@@ -58,7 +58,7 @@ export function FeedComposer({ onOpenModal }: FeedComposerProps) {
           size="sm"
           variant="tertiary"
           aria-label="Nova publicação com link"
-          onPress={() => onOpenModal("link")}
+          onPress={() => onOpenComposer("link")}
           className="min-h-11 min-w-11"
         >
           Link

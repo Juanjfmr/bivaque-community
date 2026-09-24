@@ -1,7 +1,8 @@
 "use client"
 
 import { Button, ButtonGroup, ToggleButton } from "@heroui/react"
-import { useSearchParams } from "next/navigation"
+import type { Route } from "next"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { useLocalityContext } from "../../../lib/locality-context"
@@ -11,7 +12,7 @@ import { CityReference } from "../../components/bivaque/city-reference"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedComposer } from "../../components/bivaque/feed-composer"
-import { CreatePostModal, FeedPost } from "../../components/bivaque/feed-post"
+import { FeedPost } from "../../components/bivaque/feed-post"
 import { FeedRightRail } from "../../components/bivaque/feed-right-rail"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
 
@@ -21,8 +22,7 @@ export default function CommunityPage() {
   const [posts, setPosts] = useState<FeedPostRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [defaultPostType, setDefaultPostType] = useState<string | undefined>(undefined)
+  const router = useRouter()
   const [memberCount, setMemberCount] = useState<number | null>(null)
   const [memberCountError, setMemberCountError] = useState(false)
   const [primaryCommunityId, setPrimaryCommunityId] = useState<string | null>(null)
@@ -145,16 +145,15 @@ export default function CommunityPage() {
     [sortOrder, loadFeed],
   )
 
-  const handleOpenModal = useCallback((postType?: string) => {
-    setDefaultPostType(postType)
-    setShowCreateModal(true)
-  }, [])
-
-  const handleCreated = useCallback(() => {
-    loadFeed(sortOrder).catch(() => {
-      /* errors handled in loadFeed */
-    })
-  }, [loadFeed, sortOrder])
+  const handleOpenComposer = useCallback(
+    (postType?: string) => {
+      const params = new URLSearchParams({ origem: "/community" })
+      if (postType) params.set("tipo", postType)
+      if (primaryCommunityId) params.set("comunidade", primaryCommunityId)
+      router.push(`/publicacoes/nova?${params.toString()}` as Route)
+    },
+    [primaryCommunityId, router],
+  )
 
   const handleHidePost = useCallback((postId: string) => {
     setHiddenPostIds((prev) => new Set(prev).add(postId))
@@ -228,24 +227,10 @@ export default function CommunityPage() {
       {/* Onda E Task 2: quando o membro não pertence a nenhuma comunidade, a
           home é a referência da cidade (§6.2), não o feed da vila. O feed
           municipal é morto pela D48. CityReference é o mesmo conteúdo que a
-          rota /localidade (Task 3) vai expor. O CreatePostModal continua
-          disponível — o membro ainda pode publicar com alcance da cidade
-          mesmo sem estar numa vila. */}
+          rota /localidade (Task 3) vai expor. A publicação continua disponível
+          na rota addressável, mesmo sem estar numa vila. */}
       {hasResolved && !primaryCommunityId && !error ? (
-        <>
-          <CityReference onPublish={() => handleOpenModal()} />
-          {showCreateModal && (
-            <CreatePostModal
-              localityId={current.id}
-              defaultPostType={defaultPostType}
-              onCreated={handleCreated}
-              onClose={() => {
-                setShowCreateModal(false)
-                setDefaultPostType(undefined)
-              }}
-            />
-          )}
-        </>
+        <CityReference onPublish={() => handleOpenComposer()} />
       ) : (
         <>
           {/* locality header — sticky under app header */}
@@ -274,7 +259,7 @@ export default function CommunityPage() {
                   </a>
                 )}
               </div>
-              <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
+              <Button size="sm" variant="primary" onPress={() => handleOpenComposer()}>
                 Publicar
               </Button>
             </div>
@@ -284,7 +269,7 @@ export default function CommunityPage() {
             {/* feed column */}
             <div className="min-w-0 flex-1 space-y-3">
               {/* composer entry */}
-              <FeedComposer onOpenModal={handleOpenModal} />
+              <FeedComposer onOpenComposer={handleOpenComposer} />
 
               {/* sort control */}
               <ButtonGroup
@@ -338,7 +323,7 @@ export default function CommunityPage() {
                       : "Seja o primeiro a compartilhar algo com a sua comunidade."
                   }
                   action={
-                    <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
+                    <Button size="sm" variant="primary" onPress={() => handleOpenComposer()}>
                       Publicar
                     </Button>
                   }
@@ -387,19 +372,6 @@ export default function CommunityPage() {
             {/* right rail */}
             <FeedRightRail />
           </div>
-
-          {showCreateModal && (
-            <CreatePostModal
-              localityId={current.id}
-              defaultPostType={defaultPostType}
-              defaultCommunityId={primaryCommunityId ?? undefined}
-              onCreated={handleCreated}
-              onClose={() => {
-                setShowCreateModal(false)
-                setDefaultPostType(undefined)
-              }}
-            />
-          )}
         </>
       )}
     </div>

@@ -57,8 +57,10 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
         page,
         async () => {
           await page.goto("/community")
-          await page.getByRole("button", { name: "No que você está pensando?" }).click()
-          const editor = page.getByRole("dialog")
+          await page.getByRole("button", { name: "Publicar" }).first().click()
+          await expect(page).toHaveURL(/\/publicacoes\/nova/)
+          const editor = page.locator("[data-composer-form]")
+          await expect(editor).toHaveAttribute("data-draft-ready", "true")
           await editor.getByRole("textbox").first().fill(text)
 
           await page.route("**/rest/v1/posts**", (route) =>
@@ -66,24 +68,37 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
               ? route.abort("internetdisconnected")
               : route.continue(),
           )
+          await page.evaluate(() => {
+            Object.defineProperty(window.navigator, "onLine", {
+              configurable: true,
+              get: () => false,
+            })
+            window.dispatchEvent(new Event("offline"))
+          })
           await editor.getByRole("button", { name: "Publicar" }).click()
 
-          const lost = editor.getByRole("alert").filter({ hasText: "Sem conexão" })
+          const lost = page.getByRole("alert").filter({ hasText: "Sem conexão" })
           await expect(lost).toBeVisible({ timeout: 20_000 })
           await expect(editor.getByRole("textbox").first()).toHaveValue(text)
           await expect(lost.getByRole("button", { name: "Tentar novamente" })).toBeVisible()
+          await expect(lost.getByRole("button", { name: "Tentar novamente" })).toBeDisabled()
+          // O runner não fecha um snapshot com o transporte abortado; a rede
+          // volta depois da observação, antes do snapshot da jornada.
+          await page.evaluate(() => {
+            Object.defineProperty(window.navigator, "onLine", {
+              configurable: true,
+              get: () => true,
+            })
+            window.dispatchEvent(new Event("online"))
+          })
         },
         { persona: "membra" },
       )
 
       // Retomada: a rede volta e o mesmo texto publica, sem redigitar.
       await page.unroute("**/rest/v1/posts**")
-      await page
-        .getByRole("dialog")
-        .getByRole("alert")
-        .getByRole("button", { name: "Tentar novamente" })
-        .click()
-      await expect(page.getByRole("dialog")).toBeHidden({ timeout: 20_000 })
+      await page.getByRole("alert").getByRole("button", { name: "Tentar novamente" }).click()
+      await expect(page).toHaveURL(/\/community/, { timeout: 20_000 })
       await expect(page.getByRole("article").filter({ hasText: text })).toBeVisible({
         timeout: 20_000,
       })

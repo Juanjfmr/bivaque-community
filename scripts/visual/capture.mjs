@@ -26,6 +26,19 @@ const OUT_ROOT = process.env["BIVAQUE_VISUAL_OUT"] ?? ".visual"
 const RUN_ID = process.env["BIVAQUE_VISUAL_RUN"] ?? new Date().toISOString().replace(/[:.]/g, "-")
 const ROUTE_PATH = process.env["BIVAQUE_VISUAL_ROUTE"]
 const SCENARIO = process.env["BIVAQUE_VISUAL_SCENARIO"]
+const SCENARIO_PAGE_PATH = "/publicacoes/nova"
+const SCENARIO_EDIT_PATH = "/publicacoes/80000000-0000-4000-8000-000000000f01/editar"
+const CAPTURE_QUESTION_TITLE =
+  `${"Qual escola pública perto da Asa Norte oferece melhor ensino médio? "}${"detalhes".repeat(8)}`.slice(
+    0,
+    64,
+  )
+const CAPTURE_QUESTION_BODY =
+  `${"Gostaria de comparar a rotina, o transporte e as opções de matrícula. "}${"Mais contexto ".repeat(20)}`.slice(
+    0,
+    200,
+  )
+const SCENARIO_FLOW_CONTENT = `Publicação para auditoria visual ${RUN_ID}`
 
 // Fixture de captura de Moradia: o anúncio REAL de `supabase/seed.sql`
 // (`b2000000-…0001`, "Apartamento 2 quartos", ativo, com `property_details` e
@@ -62,6 +75,9 @@ export const SEED_ACCOUNTS = {
   // visual@ é o ator com denúncias próprias e conversa DM semeadas (RECON-051).
   // Sem ele, `fixture: "own-report"` não tem o que resolver.
   visual: "visual@bivaque.example.invalid",
+  // membro-20 tem pedido pendente, então captura a mesma comunidade como
+  // descoberta e como "em análise" sem inventar uma segunda fixture.
+  pendingCommunity: "membro-20@bivaque.example.invalid",
   // O dono da comunidade administra o console e organiza o evento de edição.
   donoVila: "dono-vila@bivaque.example.invalid",
 }
@@ -102,6 +118,8 @@ export const HEADINGS = {
   "/arrivals": "^Chegadas declaradas$",
   "/guide-queue": "Guia|Referências",
   "/inicio": "Bom dia|Boa tarde|Boa noite|Olá",
+  "/publicacoes/nova": "^Nova pergunta$",
+  [SCENARIO_EDIT_PATH]: "^Editar publicação$",
   "/explorar": "Explorar",
   // h1 medido no arquivo que renderiza a rota (servicos/page.tsx:520): sem
   // termo a tela é "Prestadores de serviço"; com termo, "Resultados para …" —
@@ -112,6 +130,8 @@ export const HEADINGS = {
   "/configuracoes": "^Configurações · Notificações$",
   "/groups": "Grupos",
   "/communities": "Comunidades",
+  "/communities?aba=minhas": "^Comunidades$",
+  "/communities?aba=descobrir": "^Comunidades$",
   // O h1 desta rota é o NOME da comunidade principal de quem lê ("Vila
   // Ajuricaba" para a conta de captura), caindo para "Cidade, UF" só quando não
   // há vila — dado, não contrato. Com "Comunidade|Manaus" fixo a captura saía
@@ -345,6 +365,28 @@ export const ROUTES = [
   },
   { path: "/community", name: "community", auth: true },
   { path: "/communities", name: "communities", auth: true },
+  {
+    path: "/communities?aba=minhas",
+    name: "communities-member",
+    auth: true,
+    account: "membro1",
+  },
+  {
+    // A tela de descoberta abre a primeira comunidade disponível e materializa
+    // essa seleção na URL; o destino esperado é, portanto, o estado completo,
+    // não a query inicial.
+    path: "/communities?aba=descobrir",
+    name: "communities-discover",
+    auth: true,
+    account: "pendingCommunity",
+    expectedPath: "/communities?aba=descobrir&comunidade=71000000-0000-4000-8000-000000000001",
+  },
+  {
+    path: "/communities?aba=minhas",
+    name: "communities-pending",
+    auth: true,
+    account: "pendingCommunity",
+  },
   // RECON-034 — apresentação com faixa/miniatura e o console de imagens do dono.
   {
     path: "/communities/71000000-0000-4000-8000-000000000001",
@@ -396,14 +438,32 @@ export const ROUTES = [
     path: "/guide/a0000000-0000-4000-8000-000000000001",
     name: "guide-article",
     auth: true,
+    // H1 + status 200 não bastam: diretório e artigo têm o mesmo título-base.
+    // Estes marcos só existem quando o runtime entrega a prancha 25 completa.
+    requiredText: ["Neste guia", "Origem desta referência", "Algo mudou?"],
   },
   {
     path: "/guide/a0000000-0000-4000-8000-000000000001/correcao",
     name: "guide-article-correcao",
     auth: true,
+    // A rota pode explicar honestamente que o artigo ainda não existe; nesse
+    // caso a captura deve falhar, não ser aceita como o estado de correção.
+    requiredText: ["O que precisa mudar?", "Minhas sugestões"],
   },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
   { path: "/inicio", name: "inicio", auth: true },
+  {
+    path: "/publicacoes/nova",
+    name: "publication-new",
+    auth: true,
+  },
+  {
+    path: SCENARIO_EDIT_PATH,
+    name: "publication-edit",
+    auth: true,
+    account: "donoVila",
+    requiredText: ["Destino da publicação", "Salvar alterações", "Como sua publicação será vista"],
+  },
   { path: "/explorar", name: "explorar", auth: true },
   { path: "/explorar/servicos", name: "explorar-servicos", auth: true },
   // RECON-021: painel direito da prancha 61 com o fixture real do seed —
@@ -604,6 +664,47 @@ const TOKEN_SOURCE = JSON.parse(
 // nomeada do seed (`fetchSession("operador")`), e a prova de operação pede um
 // e-mail direto (`fetchSession({ email })`), porque ali o ator é o próprio
 // objeto da prova e não pode depender de variável de ambiente.
+async function findScenarioPostId(auth, content) {
+  const url =
+    process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
+    process.env["SUPABASE_URL"] ??
+    dotEnv["NEXT_PUBLIC_SUPABASE_URL"] ??
+    dotEnv["SUPABASE_URL"]
+  const anonKey =
+    process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  if (!url || !anonKey || !auth?.session?.access_token) return null
+  const response = await fetch(
+    `${url}/rest/v1/posts?content=eq.${encodeURIComponent(content)}&select=id&limit=1`,
+    {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${auth.session.access_token}`,
+      },
+    },
+  )
+  if (!response.ok) return null
+  const rows = await response.json()
+  return Array.isArray(rows) ? (rows[0]?.id ?? null) : null
+}
+
+async function deleteScenarioPost(auth, postId) {
+  const url =
+    process.env["NEXT_PUBLIC_SUPABASE_URL"] ??
+    process.env["SUPABASE_URL"] ??
+    dotEnv["NEXT_PUBLIC_SUPABASE_URL"] ??
+    dotEnv["SUPABASE_URL"]
+  const anonKey =
+    process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"] ?? dotEnv["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  if (!url || !anonKey || !auth?.session?.access_token) return false
+  return fetch(`${url}/rest/v1/posts?id=eq.${encodeURIComponent(postId)}`, {
+    method: "DELETE",
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${auth.session.access_token}`,
+    },
+  })
+}
+
 export async function fetchSession(input) {
   const options = typeof input === "string" ? { account: input } : (input ?? {})
   const { account, email: emailOverride } = options
@@ -821,6 +922,33 @@ export function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) 
       "html",
       `scrollWidth ${document.documentElement.scrollWidth} > clientWidth ${document.documentElement.clientWidth}`,
     )
+  }
+
+  // A fidelidade do compositor não pode ser reduzida a "o campo existe".
+  // Em uma coluna de formulário desktop, um controle de texto que ocupa menos
+  // de 72% da própria coluna é um sinal objetivo de que a composição está
+  // espremida — o caso observado na captura offline (192px dentro de 504px).
+  // A regra é limitada ao marcador explícito dos dois diálogos; formulários
+  // menores/legítimos não são inventados como evidência de fidelidade.
+  const composerForm = document.querySelector("[data-composer-form]")
+  if (composerForm && window.innerWidth >= 1024) {
+    const formWidth = composerForm.getBoundingClientRect().width
+    const controls = [
+      ...composerForm.querySelectorAll(
+        'textarea, input:not([type="radio"]):not([type="checkbox"]):not([type="file"])',
+      ),
+    ]
+    for (const control of controls) {
+      const width = control.getBoundingClientRect().width
+      if (formWidth > 0 && width > 0 && width < formWidth * 0.72) {
+        add(
+          "form-control-width",
+          "high",
+          describe(control),
+          `desktop form control is ${Math.round(width)}px inside a ${Math.round(formWidth)}px column`,
+        )
+      }
+    }
   }
 
   const interactive = [...document.querySelectorAll("a, button, [role='button'], input, select")]
@@ -1178,14 +1306,21 @@ async function main() {
   if (SCENARIO && !["publish", "edit", "offline"].includes(SCENARIO)) {
     throw new Error(`Unknown visual scenario: ${SCENARIO}`)
   }
-  if (SCENARIO && ROUTE_PATH && ROUTE_PATH !== "/inicio") {
-    throw new Error(`The ${SCENARIO} scenario starts at /inicio`)
+  if (
+    SCENARIO &&
+    ROUTE_PATH &&
+    ROUTE_PATH !== SCENARIO_PAGE_PATH &&
+    !(SCENARIO === "edit" && ROUTE_PATH === SCENARIO_EDIT_PATH)
+  ) {
+    throw new Error(`The ${SCENARIO} scenario starts at ${SCENARIO_PAGE_PATH}`)
   }
   // BIVAQUE_VISUAL_ROUTE casa o caminho exato ou o nome da rota — o nome é a
   // única forma de pedir uma rota cujo caminho só existe em runtime (fixture).
   // Lista separada por vírgula roda várias rotas num único processo, para que o
   // report.json da run carregue a prova de todas elas de uma vez.
-  const requestedList = (SCENARIO ? "/inicio" : (ROUTE_PATH ?? ""))
+  const requestedList = (
+    SCENARIO ? (SCENARIO === "edit" ? SCENARIO_EDIT_PATH : SCENARIO_PAGE_PATH) : (ROUTE_PATH ?? "")
+  )
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean)
@@ -1195,22 +1330,27 @@ async function main() {
       )
     : ROUTES
   const routes = [
-    ...new Map(selected.map((route) => [`${route.path}:${route.auth}`, route])).values(),
+    ...new Map(
+      selected.map((route) => [
+        `${route.path}:${route.auth}:${route.account ?? ""}:${route.name}`,
+        route,
+      ]),
+    ).values(),
   ].map((route) => ({
     ...route,
-    account: SCENARIO === "edit" ? "donoVila" : SCENARIO === "offline" ? "membro1" : route.account,
+    account:
+      SCENARIO === "edit"
+        ? "donoVila"
+        : SCENARIO === "publish" || SCENARIO === "offline"
+          ? "membro1"
+          : route.account,
     name: `${route.name}${route.auth ? "--authenticated" : "--visitor"}${SCENARIO ? `--${SCENARIO}` : ""}`,
     // A rota pode declarar o próprio contrato de h1: uma rota de fronteira (o
     // funil sem sessão, por exemplo) não aterrissa na própria tela, e o título
     // honesto é o da tela onde ela aterrissa.
     expectedHeading: route.heading ?? HEADINGS[route.path],
     operator: ["/admissions", "/reports", "/guide-queue", "/arrivals"].includes(route.path),
-    dialog:
-      SCENARIO === "publish" || SCENARIO === "offline"
-        ? "Criar publicação"
-        : SCENARIO === "edit"
-          ? "Editar publicação"
-          : undefined,
+    dialog: undefined,
     // A rota continua com o contrato estrito; só a corrida declarada como
     // offline tolera a cópia "Sem conexão" — que é o ESTADO da prancha 60, não
     // uma tela ausente.
@@ -1360,63 +1500,137 @@ async function main() {
 
       const label = `${route.name}--${viewport.name}`
       let targetPath = route.path
+      let createdPostId = null
+      let captureResult = null
       try {
-        targetPath = await resolveRoutePath(route, auth)
-        let response = await openRoute(page, targetPath)
-        // Um destino /login numa rota autenticada que não o espera é token
-        // vencido, não defeito de tela: reabre a sessão e navega de novo, uma
-        // vez. Se ainda assim aterrissar em /login, o veredito fica como está.
-        if (
-          route.auth &&
-          route.expectedPath !== "/login*" &&
-          new URL(page.url()).pathname === "/login"
-        ) {
-          auth = await sessionFor(route, { force: true })
-          await applySession(context, route, auth)
+        let response
+        if (SCENARIO === "edit") {
+          // O estado de edição é alcançado pelo mesmo caminho que a pessoa usa:
+          // cria uma publicação real na comunidade e abre o menu do autor.
+          // O post é removido ao final para não transformar a auditoria em seed.
+          targetPath = "/community"
           response = await openRoute(page, targetPath)
+          if (new URL(page.url()).pathname === "/login") {
+            auth = await sessionFor(route, { force: true })
+            await applySession(context, route, auth)
+            response = await openRoute(page, targetPath)
+          }
+          await page.locator("h1").first().waitFor({ state: "visible", timeout: 15_000 })
+          await page.getByRole("button", { name: "Publicar" }).first().click()
+          await page.waitForURL(/\/publicacoes\/nova/, { timeout: 15_000 })
+          const flowComposer = page.locator("[data-composer-form]")
+          await flowComposer.waitFor({ state: "visible", timeout: 15_000 })
+          await page.waitForFunction(
+            () =>
+              document.querySelector("[data-composer-form]")?.getAttribute("data-draft-ready") ===
+              "true",
+            undefined,
+            { timeout: 15_000 },
+          )
+          const communityOption = flowComposer.getByText("Vila Ajuricaba", { exact: true })
+          await communityOption.waitFor({ state: "visible", timeout: 15_000 })
+          await communityOption.click()
+          await flowComposer.getByLabel("Conteúdo").fill(SCENARIO_FLOW_CONTENT)
+          const createdResponsePromise = page.waitForResponse(
+            (candidate) =>
+              candidate.url().includes("/rest/v1/posts") && candidate.request().method() === "POST",
+            { timeout: 20_000 },
+          )
+          await flowComposer.getByTestId("publish-submit").click()
+          const createdResponse = await createdResponsePromise
+          if (createdResponse.status() < 200 || createdResponse.status() >= 300) {
+            throw new Error(`Scenario post creation returned ${createdResponse.status()}`)
+          }
+          createdPostId = await findScenarioPostId(auth, SCENARIO_FLOW_CONTENT)
+          if (!createdPostId) {
+            throw new Error("The scenario post was created but could not be identified for cleanup")
+          }
+          await page.waitForURL(/\/community/, { timeout: 15_000 })
+          const card = page.locator("article").filter({ hasText: SCENARIO_FLOW_CONTENT }).first()
+          await card.waitFor({ state: "visible", timeout: 15_000 })
+          await card.getByRole("button", { name: "Mais opções" }).click()
+          await page.getByRole("menuitem", { name: "Editar publicação" }).click()
+          await page.waitForURL(/\/publicacoes\/[^/]+\/editar/, { timeout: 15_000 })
+          targetPath = new URL(page.url()).pathname
+        } else if (SCENARIO === "publish" || SCENARIO === "offline") {
+          // A captura dos estados de criação/offline também parte do feed real,
+          // para que a URL final não esconda um atalho de teste.
+          targetPath = "/community"
+          response = await openRoute(page, targetPath)
+          if (new URL(page.url()).pathname === "/login") {
+            auth = await sessionFor(route, { force: true })
+            await applySession(context, route, auth)
+            response = await openRoute(page, targetPath)
+          }
+          await page.locator("h1").first().waitFor({ state: "visible", timeout: 15_000 })
+          await page.getByRole("button", { name: "Publicar" }).first().click()
+          await page.waitForURL(/\/publicacoes\/nova/, { timeout: 15_000 })
+          targetPath = `${new URL(page.url()).pathname}${new URL(page.url()).search}`
+        } else {
+          targetPath = await resolveRoutePath(route, auth)
+          response = await openRoute(page, targetPath)
+          // Um destino /login numa rota autenticada que não o espera é token
+          // vencido, não defeito de tela: reabre a sessão e navega de novo, uma
+          // vez. Se ainda assim aterrissar em /login, o veredito fica como está.
+          if (
+            route.auth &&
+            route.expectedPath !== "/login*" &&
+            new URL(page.url()).pathname === "/login"
+          ) {
+            auth = await sessionFor(route, { force: true })
+            await applySession(context, route, auth)
+            response = await openRoute(page, targetPath)
+          }
         }
         await waitForHeading(page, route)
+        if (SCENARIO === "edit") {
+          await page
+            .locator('[data-composer-form="edit"]')
+            .waitFor({ state: "visible", timeout: 15_000 })
+          await page
+            .getByRole("heading", { level: 1, name: "Editar publicação" })
+            .waitFor({ state: "visible", timeout: 15_000 })
+        }
         if (SCENARIO === "publish" || SCENARIO === "offline") {
-          await page
-            // O composer real escreve "O que você quer compartilhar?" desde a
-            // RECON-002; o seletor antigo ("No que você está pensando?") deixava
-            // o cenário publish morrer em timeout e a composição da prancha 45
-            // sem captura nenhuma.
-            .getByRole("button", { name: "O que você quer compartilhar?", exact: true })
-            .click()
-          await page
-            .getByRole("dialog", { name: route.dialog, exact: true })
-            .waitFor({ state: "visible" })
+          // A rota estável já nasce no compositor. O trigger só é acionado no
+          // caminho legado do modal, que ainda é coberto pelo cenário de edição.
+          if (route.path === "/inicio") {
+            await page
+              .getByRole("button", { name: "O que você quer compartilhar?", exact: true })
+              .click()
+          }
+          if (route.dialog) {
+            await page
+              .getByRole("dialog", { name: route.dialog, exact: true })
+              .waitFor({ state: "visible" })
+          }
+        }
+
+        if (SCENARIO === "publish" || SCENARIO === "offline") {
+          await page.waitForFunction(
+            () =>
+              document.querySelector("[data-composer-form]")?.getAttribute("data-draft-ready") ===
+              "true",
+            undefined,
+            { timeout: 15_000 },
+          )
+          const composer = page.locator("[data-composer-form]")
+          await composer.waitFor({ state: "visible" })
+          await composer.getByLabel("Conteúdo").fill(CAPTURE_QUESTION_TITLE)
+          await composer.getByLabel("Detalhes").fill(CAPTURE_QUESTION_BODY)
+          await composer.getByText("64/120", { exact: true }).waitFor({ state: "attached" })
+          await composer.getByText("200/1000", { exact: true }).waitFor({ state: "attached" })
         }
 
         if (SCENARIO === "offline") {
           // Prancha 60, painel direito: a conexão cai com o texto já escrito. O
           // cenário escreve, CORTA a rede do contexto e tenta publicar — o que
           // se captura é o estado real que a pessoa vê, com o rascunho no lugar.
-          await page
-            .getByRole("dialog", { name: route.dialog, exact: true })
-            .getByLabel("Conteúdo")
-            .fill("Teste de conexão do compositor.")
           await context.setOffline(true)
           await page.getByTestId("publish-submit").click()
           await page
             .getByText("Sem conexão", { exact: true })
             .waitFor({ state: "visible", timeout: 20_000 })
-        }
-
-        if (SCENARIO === "edit") {
-          // Prancha 45 painel 3 (edição): o item "Editar publicação" só existe
-          // no menu do PRÓPRIO autor (a autoria é conferida no servidor), e o
-          // post do autor vem da fixture RECON-051.
-          const card = page
-            .locator("article")
-            .filter({ hasText: "horta comunitária da vila" })
-            .first()
-          await card.getByRole("button", { name: "Mais opções" }).first().click()
-          await page.getByRole("menuitem", { name: "Editar publicação" }).click()
-          await page
-            .getByRole("dialog", { name: route.dialog, exact: true })
-            .waitFor({ state: "visible", timeout: 15_000 })
         }
 
         // Two shots per route: the fold shot keeps first-impression detail legible for
@@ -1430,6 +1644,10 @@ async function main() {
           minimumTextSize: TOKEN_SOURCE.contrast.minimumTextSize,
           readingMeasureMax: Number(TOKEN_SOURCE.primitive["type-reading-max-characters"]),
         })
+        const missingRequiredText = await page.evaluate((expected) => {
+          const body = document.body.innerText || ""
+          return expected.filter((value) => !body.includes(value))
+        }, route.requiredText ?? [])
         const observed = {
           heading: audit.heading,
           operator: await page
@@ -1450,6 +1668,7 @@ async function main() {
             return match ? match[0] : null
           }),
           pageErrors,
+          missingRequiredText,
         }
         const landedOn = new URL(page.url()).pathname + new URL(page.url()).search
         const proof = assessCapture({
@@ -1462,21 +1681,29 @@ async function main() {
           observed,
         })
 
-        results.push({
+        captureResult = {
           route: route.path,
           target: targetPath,
           viewport: viewport.name,
           status: response?.status() ?? 0,
           landedOn,
           actor: route.operator ? "operator" : route.auth ? "member" : "visitor",
+          actorAccount: route.operator ? "operator" : (route.account ?? null),
           state: SCENARIO ?? "route",
+          flow:
+            SCENARIO === "edit"
+              ? "community-feed -> create -> author-menu -> edit"
+              : SCENARIO === "publish" || SCENARIO === "offline"
+                ? "community-feed -> publicacoes/nova"
+                : "direct-route",
           proof,
           screenshot: fold,
           screenshotFull: full,
           consoleErrors: consoleErrors.splice(0),
           failedRequests: failedRequests.splice(0),
           ...audit,
-        })
+        }
+        results.push(captureResult)
       } catch (error) {
         results.push({
           route: route.path,
@@ -1488,6 +1715,24 @@ async function main() {
           proof: { valid: false, failures: ["Capture did not reach its expected state"] },
         })
       } finally {
+        if (createdPostId) {
+          const cleanup = await deleteScenarioPost(auth, createdPostId)
+          const cleanupOk = cleanup !== false && cleanup.ok
+          if (captureResult) {
+            captureResult.cleanup = cleanupOk
+              ? "deleted"
+              : `failed:${cleanup === false ? "unavailable" : cleanup.status}`
+            if (!cleanupOk) {
+              captureResult.failedRequests.push(
+                `cleanup ${cleanup === false ? "unavailable" : cleanup.status} for scenario post`,
+              )
+            }
+          } else if (!cleanupOk) {
+            failedRequests.push(
+              `cleanup ${cleanup === false ? "unavailable" : cleanup.status} for scenario post`,
+            )
+          }
+        }
         await context.close()
       }
     }

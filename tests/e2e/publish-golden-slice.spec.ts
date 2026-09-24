@@ -15,7 +15,7 @@
 //   - Caminho de erro: o mesmo membro intercepta o POST /rest/v1/posts
 //     com route.abort() para simular falha de rede/PostgREST, submete
 //     com texto novo, verifica que o FeedbackAlert danger aparece, que
-//     o rascunho é preservado, que o modal continua aberto, e então
+//     o rascunho é preservado, que a página continua disponível, e então
 //     limpa a interceptação e publica com sucesso.
 //
 // Persona: dono-vila@bivaque.example.invalid — owner aprovada da Vila
@@ -29,11 +29,11 @@
 // Determinístico: serial-safe (workers=1 no playwright.config) e os
 // textos únicos por timestamp impedem colisão com execuções anteriores.
 // Roda nos 3 viewports (mobile-375, tablet-768, desktop-1440) porque o
-// shell é responsivo e o modal abre nos três.
+// shell é responsivo e a rota de composição abre nos três.
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import type { BrowserContext, Page } from "@playwright/test"
+import type { BrowserContext, Locator, Page } from "@playwright/test"
 import { expect, request, test } from "@playwright/test"
 import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
@@ -127,18 +127,20 @@ async function seedVilaOwnerSession(context: BrowserContext): Promise<void> {
   ])
 }
 
-async function openComposer(page: Page): Promise<void> {
+async function openComposer(page: Page): Promise<Locator> {
   await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-  // O shell pode estar hidratando quando o Next respondeu. Esperar o h1
-  // da vila aparecer antes de tentar abrir o compositor — sem isso, o
-  // primeiro clique pode cair fora do handler de React e o modal nunca
-  // abre.
+  // O fluxo real da comunidade navega para a rota addressável; o teste não
+  // pula diretamente para a URL nem reintroduz o modal legado.
   await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
     timeout: 20000,
   })
   await page.getByRole("button", { name: "Publicar" }).first().click()
-  await expect(page.getByRole("dialog")).toBeVisible()
-  await expect(page.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
+  await expect(page).toHaveURL(/\/publicacoes\/nova/)
+  await expect(page.getByRole("heading", { level: 1, name: "Nova pergunta" })).toBeVisible()
+  const form = page.locator("[data-composer-form]")
+  await expect(form).toBeVisible()
+  await expect(form).toHaveAttribute("data-draft-ready", "true")
+  return form
 }
 
 test.setTimeout(180_000)
@@ -154,17 +156,16 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     const postText = `GS-E2E Olá vila, marcador da fatia W1 ${runToken}`
 
     // When — abre o compositor a partir da vila
-    await openComposer(page)
-    const dialog = page.getByRole("dialog")
+    const composer = await openComposer(page)
 
     // And — vê o aviso de audiência descrevendo quem vai ler (a vila)
-    const audienceNotice = dialog.getByTestId("audience-notice")
+    const audienceNotice = composer.getByTestId("audience-notice")
     await expect(audienceNotice).toBeVisible()
     await expect(audienceNotice).toContainText(/aprovados desta vila/i)
 
     // And — digita o texto único e submete
-    await dialog.getByLabel("Conteúdo").fill(postText)
-    const submit = dialog.getByTestId("publish-submit")
+    await composer.getByLabel("Conteúdo").fill(postText)
+    const submit = composer.getByTestId("publish-submit")
     const insertResponse = page.waitForResponse(
       (response) =>
         response.url().includes("/rest/v1/posts") && response.request().method() === "POST",
@@ -177,77 +178,60 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     expect(response.status(), "POST /rest/v1/posts deve ser aceito").toBeGreaterThanOrEqual(200)
     expect(response.status()).toBeLessThan(300)
 
-    // And — feedback de sucesso visível: toast OU estado pending; a rede
-    // local costuma ser rápida demais para capturar o spinner, então o
-    // assert é tolerante. O modal fecha (o contratual em publish-error
-    // é success → resetForm + modal.close).
-    const successToast = page
-      .getByText(/Publicado na sua vila|Publicado para toda a cidade/i)
-      .first()
-    const successModalClosed = await dialog.isHidden().catch(() => false)
-    if (!successModalClosed) {
-      // Se o modal ainda está aberto (slow CI), o pending também prova
-      // o caminho. Aceitamos qualquer um dos dois como prova de progresso.
-      await expect(dialog.getByTestId("publish-submit")).toContainText(/Publicando/i)
-    } else {
-      // Modal fechou: o toast precisa estar visível na pilha do ToastProvider
-      // montado em (shell)/layout.tsx. Esperar com tolerância a auto-dismiss.
-      await expect(successToast).toBeVisible({ timeout: 5000 })
-    }
+    // And — a rota retorna ao feed e o feedback de sucesso fica disponível.
+    await expect(page).toHaveURL(/\/community/)
+    await expect(
+      page.getByText(/Publicado na sua vila|Publicado para toda a cidade/i).first(),
+    ).toBeVisible({ timeout: 5000 })
 
-    // And — o post aparece no feed da vila após o reload do onCreated()
+    // And — o post aparece no feed da vila após o retorno
     const post = page.locator("article", { hasText: postText })
     await expect(post).toBeVisible({ timeout: 15000 })
 
     // And — persiste depois de recarregar (prova de persistência real,
     // não otimista: o post foi mesmo escrito em posts e voltou via RLS).
-    // Timeout generoso: o servidor dev local serve a primeira passagem
-    // pós-reload bem mais devagar que o build de produção.
     await page.reload({ waitUntil: "load" })
     await expect(page.locator("article", { hasText: postText })).toBeVisible({
       timeout: 30000,
     })
     // Reabrir depois de publicar não pode ressuscitar o texto no flush de unmount.
-    await openComposer(page)
-    await expect(page.getByRole("dialog").getByLabel("Conteúdo")).toHaveValue("")
-    await page.getByRole("dialog").getByRole("button", { name: "Cancelar", exact: true }).click()
+    const reopenedComposer = await openComposer(page)
+    await expect(reopenedComposer.getByLabel("Conteúdo")).toHaveValue("")
+    await page.getByRole("button", { name: "Cancelar", exact: true }).click()
   })
 
   test("rascunho sobrevive ao fechamento e só some após descarte confirmado", async ({ page }) => {
     await seedVilaOwnerSession(page.context())
 
     const draftText = `GS-E2E rascunho recuperável ${Date.now().toString(36)}`
-    await openComposer(page)
-
-    const firstDialog = page.getByRole("dialog")
-    await firstDialog.getByLabel("Conteúdo").fill(draftText)
+    const firstComposer = await openComposer(page)
+    await firstComposer.getByLabel("Conteúdo").fill(draftText)
     // Fecha antes do debounce de 400ms: prova o flush de unmount, não apenas
     // um autosave que já teve tempo de terminar.
-    await firstDialog.getByRole("button", { name: "Cancelar", exact: true }).click()
-    await expect(firstDialog).toBeHidden()
+    await page.getByRole("button", { name: "Cancelar", exact: true }).click()
+    await expect(page).toHaveURL(/\/community/)
 
-    await openComposer(page)
-    const reopenedDialog = page.getByRole("dialog")
-    await expect(reopenedDialog.getByLabel("Conteúdo")).toHaveValue(draftText)
-    await expect(reopenedDialog.getByText("Rascunho recuperado")).toBeVisible()
+    const reopenedComposer = await openComposer(page)
+    await expect(reopenedComposer.getByLabel("Conteúdo")).toHaveValue(draftText)
+    await expect(reopenedComposer.getByText("Rascunho recuperado")).toBeVisible()
 
-    await reopenedDialog
+    await reopenedComposer
       .getByRole("button", { name: "Descartar rascunho salvo neste navegador" })
       .click()
     const discardDialog = page.getByRole("dialog").filter({ hasText: "Descartar rascunho?" })
     await expect(discardDialog).toBeVisible()
     await discardDialog.getByRole("button", { name: "Manter rascunho" }).click()
-    await expect(reopenedDialog.getByLabel("Conteúdo")).toHaveValue(draftText)
+    await expect(reopenedComposer.getByLabel("Conteúdo")).toHaveValue(draftText)
 
-    await reopenedDialog
+    await reopenedComposer
       .getByRole("button", { name: "Descartar rascunho salvo neste navegador" })
       .click()
     await discardDialog.getByRole("button", { name: "Descartar rascunho", exact: true }).click()
-    await expect(reopenedDialog.getByLabel("Conteúdo")).toHaveValue("")
-    await expect(reopenedDialog.getByText("Rascunho recuperado")).toHaveCount(0)
-    await reopenedDialog.getByRole("button", { name: "Cancelar", exact: true }).click()
-    await openComposer(page)
-    await expect(page.getByRole("dialog").getByLabel("Conteúdo")).toHaveValue("")
+    await expect(reopenedComposer.getByLabel("Conteúdo")).toHaveValue("")
+    await expect(reopenedComposer.getByText("Rascunho recuperado")).toHaveCount(0)
+    await page.getByRole("button", { name: "Cancelar", exact: true }).click()
+    const afterDiscard = await openComposer(page)
+    await expect(afterDiscard.getByLabel("Conteúdo")).toHaveValue("")
   })
 
   test("caminho de erro: insert abortado mostra FeedbackAlert, preserva o rascunho, depois publica com sucesso", async ({
@@ -261,8 +245,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     const recoveryText = `GS-E2E Recuperação após erro ${runToken}`
 
     // When — o compositor está aberto
-    await openComposer(page)
-    const dialog = page.getByRole("dialog")
+    const composer = await openComposer(page)
 
     // And — instalamos a interceptação do POST /rest/v1/posts antes de
     // submeter. O erro 500 do PostgREST força o caminho server do
@@ -280,20 +263,25 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     })
 
     // And — o membro escreve e tenta publicar (vai falhar pelo abort)
-    await dialog.getByLabel("Conteúdo").fill(errorPostText)
-    await dialog.getByTestId("publish-submit").click()
+    await composer.getByLabel("Conteúdo").fill(errorPostText)
+    await composer.getByTestId("publish-submit").click()
 
     // Then — FeedbackAlert danger aparece com copy genérica
     // (DESIGN_SPEC §3.2: anti-enumeração; mensagem nunca cita o 500)
     await expect(
-      dialog.getByText(/Não foi possível criar a publicação|Verifique sua conexão/i).first(),
+      composer
+        .getByText(
+          /Não foi possível criar a publicação|Verifique sua conexão|Tente publicar quando a conexão voltar/i,
+        )
+        .first(),
     ).toBeVisible({ timeout: 10000 })
 
     // And — o rascunho foi preservado (texto continua no TextArea)
-    await expect(dialog.getByLabel("Conteúdo")).toHaveValue(errorPostText)
+    await expect(composer.getByLabel("Conteúdo")).toHaveValue(errorPostText)
 
-    // And — o modal continua aberto para o caminho de recuperação
-    await expect(dialog).toBeVisible()
+    // And — a página continua disponível para o caminho de recuperação
+    await expect(page).toHaveURL(/\/publicacoes\/nova/)
+    await expect(composer).toBeVisible()
 
     // And — o post NÃO chegou ao banco: o feed da vila ainda não o contém
     // porque a request foi abortada antes de chegar ao PostgREST.
@@ -302,7 +290,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     // And — limpamos a interceptação e reescrevemos o rascunho com novo
     // texto para publicar com sucesso
     await page.unroute("**/rest/v1/posts")
-    await dialog.getByLabel("Conteúdo").fill(recoveryText)
+    await composer.getByLabel("Conteúdo").fill(recoveryText)
     const successInsert = page.waitForResponse(
       (response) =>
         response.url().includes("/rest/v1/posts") &&
@@ -311,20 +299,21 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
         response.status() < 300,
       { timeout: 15000 },
     )
-    await dialog.getByTestId("publish-submit").click()
+    const retryButton = page.getByRole("alert").getByRole("button", { name: "Tentar novamente" })
+    if (await retryButton.count()) {
+      await retryButton.click()
+    } else {
+      await composer.getByTestId("publish-submit").click()
+    }
     const okResponse = await successInsert
     expect(okResponse.status()).toBeGreaterThanOrEqual(200)
     expect(okResponse.status()).toBeLessThan(300)
 
-    // And — feedback de sucesso visível (toast ou modal fechou)
-    const modalClosed = await dialog.isHidden().catch(() => false)
-    if (modalClosed) {
-      await expect(
-        page.getByText(/Publicado na sua vila|Publicado para toda a cidade/i).first(),
-      ).toBeVisible({ timeout: 5000 })
-    } else {
-      await expect(dialog.getByTestId("publish-submit")).toContainText(/Publicando/i)
-    }
+    // And — a rota retorna ao feed e o feedback de sucesso fica disponível.
+    await expect(page).toHaveURL(/\/community/)
+    await expect(
+      page.getByText(/Publicado na sua vila|Publicado para toda a cidade/i).first(),
+    ).toBeVisible({ timeout: 5000 })
 
     // And — o post de recuperação aparece no feed
     await expect(page.locator("article", { hasText: recoveryText })).toBeVisible({

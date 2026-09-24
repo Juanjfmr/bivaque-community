@@ -8,9 +8,8 @@ import { MemberAvatar } from "../../components/bivaque/avatar"
 import { useAvatarSrc } from "./use-avatar-src"
 
 interface InicioComposerProps {
-  // Abre o fluxo de publicação que já existe (CreatePostModal, montado pela
-  // página). A barra daqui é só a entrada — nenhum mecanismo de publicação é
-  // duplicado: mesma audiência, mesma checagem de PII, mesmo insert.
+  // Abre a rota estável de publicação. A barra daqui é só a entrada — o
+  // compositor real continua sendo o mesmo módulo, sem uma segunda implementação.
   onOpen: (defaultPostType?: string) => void
 }
 

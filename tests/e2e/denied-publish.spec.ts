@@ -169,22 +169,23 @@ test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)",
     const { serviceRoleKey } = requireCredentials()
     const contentPrefix = `GS-DENIED ${Date.now().toString(36)}`
 
-    await setSuspended(serviceRoleKey, true)
-
     try {
       const context = await browser.newContext()
       const page = await context.newPage()
       await seedVilaOwnerSession(context)
       await page.setViewportSize({ width: 1280, height: 800 })
-      await page.goto("/community", { waitUntil: "load" })
-
       // Persona eh a dona da Vila Ajuricaba (mesma do publish-golden-slice).
-      // Como ela esta suspensa, o RLS veto no POST /rest/v1/posts
+      // Depois que o compositor carrega, a conta é suspensa; o RLS veto no POST /rest/v1/posts
       // (policy posts_insert_locality_member tem AND NOT is_account_suspended(auth.uid())).
-      const publishButton = page.getByRole("button", { name: "Publicar" }).first()
-      await expect(publishButton).toBeVisible({ timeout: 15000 })
-      await publishButton.click()
-      await page.getByRole("heading", { name: "Criar publicação" }).waitFor({ timeout: 10000 })
+      // A rota é aberta sem selecionar community para isolar a prova do INSERT; a entrada
+      // real da comunidade é coberta pelo golden slice positivo.
+      await page.goto("/publicacoes/nova", { waitUntil: "load" })
+      await expect(page.getByRole("heading", { level: 1, name: "Nova pergunta" })).toBeVisible({
+        timeout: 10000,
+      })
+      const composer = page.locator("[data-composer-form]")
+      await expect(composer).toHaveAttribute("data-draft-ready", "true")
+      await setSuspended(serviceRoleKey, true)
 
       await page.getByLabel("Conteúdo").fill(`${contentPrefix} membro suspenso tentou publicar`)
       await page.getByTestId("publish-submit").click()
@@ -199,8 +200,8 @@ test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)",
       const alert = page.locator('[role="alert"]').first()
       await expect(alert).toBeVisible({ timeout: 5000 })
 
-      // Modal continua aberto com o rascunho preservado (botao Cancelar e
-      // Publicar seguem visiveis) — o membro nao perdeu o que escreveu.
+      // A página continua disponível com o rascunho preservado (o botão
+      // Publicar segue visível) — o membro não perdeu o que escreveu.
       await expect(page.getByTestId("publish-submit")).toBeVisible()
 
       // Prova negativa via DB: query com a service_role (bypassa RLS)

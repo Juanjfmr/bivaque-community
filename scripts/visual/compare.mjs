@@ -48,10 +48,15 @@ for (const run of readdirSync(VISUAL)) {
   const quando = statSync(report).mtime
   for (const entrada of data.results ?? []) {
     if (!entrada.screenshot || entrada.status !== 200) continue
-    const atual = ultimaPorRota.get(entrada.route)
-    if (!atual || quando > atual.quando) {
-      ultimaPorRota.set(entrada.route, { ...entrada, quando, run, data })
+    const chaveEstado = `${entrada.state ?? "route"}:${entrada.actorAccount ?? entrada.actor ?? ""}:${entrada.viewport}`
+    const atuais = ultimaPorRota.get(entrada.route) ?? []
+    const indice = atuais.findIndex((atual) => atual.chaveEstado === chaveEstado)
+    if (indice === -1) {
+      atuais.push({ ...entrada, chaveEstado, quando, run, data })
+    } else if (quando > atuais[indice].quando) {
+      atuais[indice] = { ...entrada, chaveEstado, quando, run, data }
     }
+    ultimaPorRota.set(entrada.route, atuais)
   }
 }
 
@@ -71,6 +76,26 @@ try {
   /* inventário ausente: só o lado do runtime aparece */
 }
 
+// A seção 15 descreve a conversa de uma publicação, não o compositor. O
+// inventário antigo apontava `/publicacoes/nova`; não deixar essa associação
+// contaminar o par com screenshots de criação/offline.
+if (pranchaRota.get("15-web-conversa")?.includes("/publicacoes/nova")) {
+  pranchaRota.set("15-web-conversa", ["/publicacoes/[id]"])
+}
+
+// As pranchas canônicas estão no guia, mas não entram no inventário de
+// roteamento. O compare ainda deve mostrar a evidência runtime quando a rota
+// existe. O estado de edição legado ainda vem do modal do feed e permanece
+// sinalizado como divergência; criação/offline agora têm a rota estável.
+for (const [prancha, rotas] of [
+  ["12-web-guia", ["/guide"]],
+  ["42-web-comunidades", ["/communities"]],
+  ["45-web-publicacao", ["/publicacoes/nova", "/publicacoes/[id]/editar", "/inicio"]],
+  ["60-web-estados", ["/communities/71000000-0000-4000-8000-000000000002", "/publicacoes/nova"]],
+]) {
+  if (!pranchaRota.has(prancha)) pranchaRota.set(prancha, rotas)
+}
+
 // rota -> prancha (primeira que reivindica a rota)
 const pranchaDaRota = new Map()
 for (const [prancha, rotas] of pranchaRota) {
@@ -83,15 +108,111 @@ for (const [prancha, rotas] of pranchaRota) {
 function achadosPara(padrao, mapa) {
   const out = []
   const pSegs = padrao.split("/").filter(Boolean)
-  for (const [concreta, dado] of mapa) {
+  for (const [concreta, dados] of mapa) {
     const limpa = concreta.split("?")[0]
+    if (padrao === "/publicacoes/[id]" && limpa === "/publicacoes/nova") continue
     const segs = limpa.split("/").filter(Boolean)
     if (pSegs.length !== segs.length) continue
     if (pSegs.every((s, i) => s.startsWith("[") || s === segs[i])) {
-      out.push({ rota: concreta, dado })
+      for (const dado of dados) out.push({ rota: concreta, dado })
     }
   }
   return out
+}
+
+// Publication has separate create/edit states; 60 has the denied state and
+// the connection-failure state. The concrete routes are part of the contract,
+// otherwise a home feed screenshot can masquerade as a question composer.
+function estadoCompativel(prancha, dado) {
+  if (prancha === "45-web-publicacao") {
+    return (
+      (dado.route === "/publicacoes/nova" && dado.state === "publish") ||
+      ((dado.route === "/inicio" || dado.route.endsWith("/editar")) && dado.state === "edit")
+    )
+  }
+  if (prancha === "60-web-estados") {
+    if (dado.route.endsWith("/71000000-0000-4000-8000-000000000002")) {
+      return dado.state === "route"
+    }
+    return dado.route === "/publicacoes/nova" && dado.state === "offline"
+  }
+  return true
+}
+
+function canonicalizeCaptures(prancha, captures) {
+  if (prancha === "60-web-estados") {
+    const selected = [...captures]
+    for (const viewport of ["mobile-375", "tablet-768", "desktop-1440"]) {
+      const offline = selected.filter(
+        (capture) =>
+          capture.dado.route === "/publicacoes/nova" &&
+          capture.dado.state === "offline" &&
+          capture.dado.viewport === viewport,
+      )
+      if (offline.length <= 1) continue
+      const newest = offline.reduce((latest, capture) =>
+        capture.dado.quando > latest.dado.quando ? capture : latest,
+      )
+      for (let index = selected.length - 1; index >= 0; index -= 1) {
+        const capture = selected[index]
+        if (
+          capture.dado.route === "/publicacoes/nova" &&
+          capture.dado.state === "offline" &&
+          capture.dado.viewport === viewport &&
+          capture !== newest
+        ) {
+          selected.splice(index, 1)
+        }
+      }
+    }
+    return selected
+  }
+  if (prancha !== "45-web-publicacao") return captures
+  const selected = [...captures]
+  for (const viewport of ["mobile-375", "tablet-768", "desktop-1440"]) {
+    const pageEdit = selected.some(
+      (capture) =>
+        capture.dado.route.endsWith("/editar") &&
+        capture.dado.state === "edit" &&
+        capture.dado.viewport === viewport,
+    )
+    if (pageEdit) {
+      for (let index = selected.length - 1; index >= 0; index -= 1) {
+        const capture = selected[index]
+        if (
+          capture.dado.route === "/inicio" &&
+          capture.dado.state === "edit" &&
+          capture.dado.viewport === viewport
+        ) {
+          selected.splice(index, 1)
+        }
+      }
+    }
+
+    const pagePublish = selected.filter(
+      (capture) =>
+        capture.dado.route === "/publicacoes/nova" &&
+        capture.dado.state === "publish" &&
+        capture.dado.viewport === viewport,
+    )
+    if (pagePublish.length > 1) {
+      const newest = pagePublish.reduce((latest, capture) =>
+        capture.dado.quando > latest.dado.quando ? capture : latest,
+      )
+      for (let index = selected.length - 1; index >= 0; index -= 1) {
+        const capture = selected[index]
+        if (
+          capture.dado.route === "/publicacoes/nova" &&
+          capture.dado.state === "publish" &&
+          capture.dado.viewport === viewport &&
+          capture !== newest
+        ) {
+          selected.splice(index, 1)
+        }
+      }
+    }
+  }
+  return selected
 }
 
 // ---------------------------------------------------------------- pareamento
@@ -99,7 +220,12 @@ function achadosPara(padrao, mapa) {
 const pares = [] // prancha com captura
 const pranchaSemCaptura = []
 for (const [prancha, rotas] of [...pranchaRota.entries()].sort()) {
-  const capturas = rotas.flatMap((r) => achadosPara(r, ultimaPorRota)).filter((c) => c.dado)
+  const capturas = canonicalizeCaptures(
+    prancha,
+    rotas
+      .flatMap((r) => achadosPara(r, ultimaPorRota))
+      .filter((c) => c.dado && estadoCompativel(prancha, c.dado)),
+  )
   if (capturas.length) pares.push({ prancha, rotas, capturas })
   else pranchaSemCaptura.push(prancha)
 }
@@ -113,27 +239,50 @@ const arquivoPrancha = (id) => {
   return a ? join(GUIDE, a.file) : null
 }
 
+function fidelityWarning(prancha, dado) {
+  if (dado.proof?.valid === false) {
+    return "Captura inválida: a prova de estado/rota não fecha; não usar como fidelidade."
+  }
+  if (prancha === "43-web-comunidade-grupos") {
+    return "BLOCKED: a rota da comunidade precisa de revisão por estado e ator antes de aceitar a aparência desta prancha."
+  }
+  if (
+    (prancha === "45-web-publicacao" || prancha === "60-web-estados") &&
+    dado.route === "/inicio"
+  ) {
+    return "ATENÇÃO: a captura é um modal sobre o feed; a prancha mostra uma página de composição inteira. Não é evidência de fidelidade."
+  }
+  return "Fidelidade: revisão visual humana ainda não aprovada."
+}
+
 const cartao = (par) => {
   const png = arquivoPrancha(par.prancha)
   const ref =
     png && existsSync(png)
       ? `<img src="${url(png)}" alt="prancha ${par.prancha}">`
       : "<p>PNG ausente</p>"
-  const lados = par.capturas
+  const lados = [...par.capturas]
+    .sort((a, b) =>
+      `${a.dado.state}:${a.dado.viewport}`.localeCompare(`${b.dado.state}:${b.dado.viewport}`),
+    )
     .map((c) => {
       const d = c.dado
+      const displayRoute = d.target ?? c.rota
       const foto = join(repoRoot, d.screenshot)
       const total = d.data.total ?? 0
       const high = d.data.high ?? 0
-      const selo =
-        high > 0
+      const valid = d.proof?.valid !== false
+      const selo = !valid
+        ? `<span class="selo ruim">captura inválida</span>`
+        : high > 0
           ? `<span class="selo ruim">${high} high</span>`
           : total > 0
             ? `<span class="selo medio">${total}</span>`
-            : `<span class="selo ok">limpo</span>`
+            : `<span class="selo ok">mecanicamente ok</span>`
       return `<figure>
-        <img src="${url(foto)}" alt="runtime ${c.rota} ${d.viewport}" loading="lazy">
-        <figcaption><code>${c.rota}</code> · ${d.viewport} ${selo}</figcaption>
+        <img src="${url(foto)}" alt="runtime ${displayRoute} ${d.viewport}" loading="lazy">
+        <figcaption><code>${displayRoute}</code> · ${d.state ?? "route"} · ${d.actorAccount ?? d.actor ?? "desconhecido"} · ${d.viewport} ${selo}</figcaption>
+         <p class="fidelity-note">${fidelityWarning(par.prancha, d)}</p>
       </figure>`
     })
     .join("")
@@ -182,6 +331,7 @@ code{background:var(--sage);padding:1px 6px;border-radius:6px;font-size:12px}
 .selo.ok{background:var(--sage);color:var(--green)}
 .selo.medio{background:#FFF0D5;color:#8A4B00}
 .selo.ruim{background:#FDE8E7;color:#B42318}
+ .fidelity-note{margin:4px 0 0;color:#8A4B00;font-size:11px;line-height:1.35}
 .lista{columns:2;font-size:13px;color:var(--muted);margin:8px 0 0;padding-left:18px}
 .lista li{break-inside:avoid}
 </style>
@@ -189,8 +339,8 @@ code{background:var(--sage);padding:1px 6px;border-radius:6px;font-size:12px}
 <body>
 <header class="topo">
   <h1>Prancha × runtime</h1>
-  <p class="lede">O que foi aprovado, ao lado do que está no ar. Pareamento por rota, não por pixel.</p>
-  <p class="aviso"><strong>Isto não julga.</strong> Semelhança não é prova de acerto e diferença não é prova de erro: a prancha é proposta de aparência, e as notas textuais prevalecem sobre o bitmap. O veredito é da rubrica, e é humano.</p>
+  <p class="lede">O que foi aprovado, ao lado do que está no ar. O pareamento é por rota/estado; “mecanicamente ok” nunca significa fidelidade aprovada.</p>
+  <p class="aviso"><strong>Isto não julga fidelidade.</strong> Semelhança não é prova de acerto e diferença não é prova de erro: a prancha é proposta de aparência, e as notas textuais prevalecem sobre o bitmap. Um runtime mecanicamente limpo ainda pode ter superfície, densidade ou hierarquia divergentes; o veredito é da rubrica, e é humano.</p>
   <div class="sumario">
     <span><b>${pares.length}</b> pranchas com captura</span>
     <span><b>${pranchaSemCaptura.length}</b> pranchas sem captura</span>

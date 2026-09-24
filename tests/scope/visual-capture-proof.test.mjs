@@ -52,6 +52,22 @@ test("HTTP 200 fallback and a closed or different dialog are not valid state evi
   )
 })
 
+test("a rota com marcadores de estado não aceita a tela de diretório", () => {
+  const state = {
+    ...sample(),
+    route: {
+      ...sample().route,
+      path: "/guide/entry",
+      requiredText: ["Neste guia", "Origem desta referência"],
+    },
+    landedOn: "/guide/entry",
+    observed: { ...sample().observed, missingRequiredText: ["Neste guia"] },
+  }
+  assert.equal(assessCapture(state).valid, false)
+  state.observed.missingRequiredText = []
+  assert.equal(assessCapture(state).valid, true)
+})
+
 test("public captures are explicit; missing identity contract fails closed", () => {
   const state = {
     ...sample(),
@@ -136,6 +152,14 @@ test("owner-only captures use the seeded owning account", async () => {
     accountFor("/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010"),
     "membro1",
   )
+})
+
+test("rotas com o mesmo path preservam atores diferentes", async () => {
+  const { ROUTES } = await import("../../scripts/visual/capture.mjs")
+  const member = ROUTES.find((route) => route.name === "communities-member")
+  const pending = ROUTES.find((route) => route.name === "communities-pending")
+  assert.equal(member?.account, "membro1")
+  assert.equal(pending?.account, "pendingCommunity")
 })
 
 test("both proof writers record whether the tree was dirty", () => {

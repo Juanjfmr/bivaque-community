@@ -9,16 +9,16 @@ describe("composer exposes no unimplemented controls", () => {
   const content = readFileSync(composerFile, "utf8")
 
   it("has no photo control", () => {
-    expect(content).not.toMatch(/onOpenModal\(\s*["']photo["']/)
+    expect(content).not.toMatch(/onOpenComposer\(\s*["']photo["']/)
     expect(content).not.toMatch(/aria-label="Nova publicacao com foto"/)
   })
 
   it("has no poll control", () => {
-    expect(content).not.toMatch(/onOpenModal\(\s*["']poll["']/)
+    expect(content).not.toMatch(/onOpenComposer\(\s*["']poll["']/)
     expect(content).not.toMatch(/aria-label="Nova enquete"/)
   })
 
   it("keeps the link control", () => {
-    expect(content).toMatch(/onOpenModal\(\s*["']link["']/)
+    expect(content).toMatch(/onOpenComposer\(\s*["']link["']/)
   })
 })

@@ -68,6 +68,13 @@ body {
   }
 }
 
+@layer components {
+  button[data-slot="close-button"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
 @layer utilities {
   .type-display {
     font-size: var(--semantic-typography-display-size);

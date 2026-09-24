@@ -46,6 +46,10 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
 
   it("cada container primário acende a si mesmo", () => {
     expect(resolveActiveNav("/inicio", PRIMARY)).toEqual({ kind: "primary", id: "inicio" })
+    expect(resolveActiveNav("/publicacoes/nova", PRIMARY)).toEqual({
+      kind: "primary",
+      id: "inicio",
+    })
     expect(resolveActiveNav("/explorar", PRIMARY)).toEqual({ kind: "primary", id: "explorar" })
     expect(resolveActiveNav("/explorar/servicos", PRIMARY)).toEqual({
       kind: "primary",
