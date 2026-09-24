@@ -1774,7 +1774,8 @@
         "Drift resolvido: os três specs E2E de entrada apontavam para o botão Receber link para entrar e headings da tela de magic link, removidos da tela em c0bf309 (feat(auth): login com e-mail e senha na web) sem atualização dos specs — verificado como falha pré-existente, não regressão desta mudança.",
         "Divergências intencionais da prancha, todas por autoridade textual posterior: campo Senha e botão Entrar em vez de Receber código (ADR-20260907-login-com-senha, que registra que a prancha precisa ser regerada); Esqueci minha senha em vez de Preciso de ajuda (mesma ADR, copy explícita); aceite com textos aprovados em vez de Termos de uso/Código de convivência (regra da guia: copy legal nunca vem da imagem; ADR-20260907-consentimento-no-cadastro); rótulo Nome em vez de Nome completo (nota da prancha: nome de apresentação não exige nome civil); Google no cadastro mantido (ADR) embora o painel direito do bitmap não o mostre.",
         "2026-09-11: DRIFT RESOLVIDO — a prancha 36 foi entregue pelo RECON-018 (2cbdccc), junto com a 37. Este card descrevia trabalho que outro lote fez; nao ha entrada web separada a construir. Falta a mesma prova que falta ao RECON-018.",
-        "Lote AS 18/09/2026: a prancha 36 foi regerada por render deterministico de HTML (nao por image_gen), com a fonte versionada no repositorio — a referencia visual passa a desenhar o mecanismo aprovado pela ADR de senha. O item 6 (revisao independente + CI contra a revisao entregue) segue pendente"
+        "Lote AS 18/09/2026: a prancha 36 foi regerada por render deterministico de HTML (nao por image_gen), com a fonte versionada no repositorio — a referencia visual passa a desenhar o mecanismo aprovado pela ADR de senha. O item 6 (revisao independente + CI contra a revisao entregue) segue pendente",
+        "2026-09-24: lote Auth corrigiu callbacks sem code, allowlist de destino, intents de aceite por fluxo, retry de consentimento e guards concorrentes; commits 18eb415b e 4dbf14ac; gate/build verdes e E2E RECON-018 directed verde."
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
@@ -1789,8 +1790,8 @@
         "Tela | ../../apps/web/app/(preauth)/login/components/bivaque-sign-in.tsx"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-18",
-      "sourceRevision": "5a27e2e"
+      "updatedAt": "2026-09-24",
+      "sourceRevision": "4dbf14ac"
     },
     {
       "id": "RECON-W00-PLACEHOLDERS",
@@ -2101,7 +2102,8 @@
       "proof": [
         "npx pnpm@11.18.0 gate → verde",
         "git 86e24ad",
-        "2026-09-11: DRIFT — /inicio e /explorar nao contem mais Conteudo em construcao em chore/integracao-r3. Ausencia de placeholder nao prova fidelidade; confrontar com a prancha antes de fechar."
+        "2026-09-11: DRIFT — /inicio e /explorar nao contem mais Conteudo em construcao em chore/integracao-r3. Ausencia de placeholder nao prova fidelidade; confrontar com a prancha antes de fechar.",
+        "2026-09-24: commits 056c54e3 e 4475723a; Home filtra a comunidade primária pela cidade current, Comunidades preserva busca/aba/seleção na URL e limpa o motivo ao trocar; unitários e gate completos verdes."
       ],
       "tests": [],
       "links": [
@@ -2112,8 +2114,8 @@
       ],
       "dependencies": [],
       "phase": "Reconstrução",
-      "updatedAt": "2026-09-11",
-      "sourceRevision": "86e24ad"
+      "updatedAt": "2026-09-24",
+      "sourceRevision": "4475723a"
     },
     {
       "id": "RECON-005-BLOQUEADO",
