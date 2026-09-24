@@ -2103,7 +2103,7 @@
         "npx pnpm@11.18.0 gate → verde",
         "git 86e24ad",
         "2026-09-11: DRIFT — /inicio e /explorar nao contem mais Conteudo em construcao em chore/integracao-r3. Ausencia de placeholder nao prova fidelidade; confrontar com a prancha antes de fechar.",
-        "2026-09-24: commits 056c54e3 e 4475723a; Home filtra a comunidade primária pela cidade current, Comunidades preserva busca/aba/seleção na URL e limpa o motivo ao trocar; unitários e gate completos verdes."
+        "2026-09-24: commits 056c54e3, 4475723a e e1b46a19; Home filtra a comunidade primária pela cidade current, Comunidades usa a URL como fonte de verdade com push/replace e prova E2E de back/forward; unitários e gate completos verdes."
       ],
       "tests": [],
       "links": [
@@ -2115,7 +2115,7 @@
       "dependencies": [],
       "phase": "Reconstrução",
       "updatedAt": "2026-09-24",
-      "sourceRevision": "4475723a"
+      "sourceRevision": "e1b46a19"
     },
     {
       "id": "RECON-005-BLOQUEADO",
@@ -3507,20 +3507,26 @@
       "phase": "Reconstrução",
       "links": ["apps/web/app/(shell)/pedidos/[id]/actions.ts"],
       "dependencies": [],
-      "proof": [],
-      "tests": [],
-      "updatedAt": "2026-09-23",
-      "sourceRevision": "caa0c56f",
+      "proof": [
+        "2026-09-24: a action traduz request is terminal para copy de estado, revalida /pedidos, detalhe e prestador, e mantém o detalhe técnico no log; testes unitários e build verdes."
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 exec vitest run tests/unit/service-requests/cancel-action.test.ts"
+      ],
+      "updatedAt": "2026-09-24",
+      "completedAt": "2026-09-24",
+      "sourceRevision": "55959d97",
       "id": "PEDIDO-MENSAGEM-ERRO-CRU",
       "title": "Enviar mensagem no pedido devolve a mensagem crua do banco para a tela",
       "priority": "P3",
       "category": "frontend",
-      "status": "next",
-      "description": "Achado LOW, preexistente, da revisao independente do PR #79 (23/09/2026). apps/web/app/(shell)/pedidos/[id]/actions.ts:85 devolve error.message do PostgREST em { status: 'error', message }, contra o proprio comentario do arquivo que promete traduzir erro em estado de tela. As mensagens hoje sao 'blocked', 'not a participant', 'message required' (sem dado pessoal), mas em ingles e tecnicas.",
+      "status": "done",
+      "description": "Achado LOW, preexistente, da revisao independente do PR #79 (23/09/2026). A action agora traduz o estado terminal para copy de tela, revalida as rotas afetadas e mantém o detalhe técnico apenas no log.",
       "checklist": [
         "Traduzir os erros conhecidos em frase com saida e manter o detalhe so no log, como pedidos/novo/actions.ts",
         "Teste unitario da traducao e do caminho generico"
-      ]
+      ],
+      "completedChecklist": [true, true]
     }
   ]
 }
