@@ -162,6 +162,15 @@ test("rotas com o mesmo path preservam atores diferentes", async () => {
   assert.equal(pending?.account, "pendingCommunity")
 })
 
+test("a captura de acesso negado declara ator, estado e fluxo", async () => {
+  const { ROUTES } = await import("../../scripts/visual/capture.mjs")
+  const route = ROUTES.find((item) => item.name === "community-outsider")
+  assert.equal(route?.account, "membro1")
+  assert.equal(route?.state, "denied")
+  assert.equal(route?.flow, "direct-route")
+  assert.deepEqual(route?.requiredText, ["Você ainda não tem acesso", "Trocar de cidade"])
+})
+
 test("both proof writers record whether the tree was dirty", () => {
   // A report that names only the commit attributes the evidence to code the
   // commit does not contain whenever the work is still uncommitted.

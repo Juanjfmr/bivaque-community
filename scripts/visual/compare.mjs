@@ -48,7 +48,7 @@ for (const run of readdirSync(VISUAL)) {
   const quando = statSync(report).mtime
   for (const entrada of data.results ?? []) {
     if (!entrada.screenshot || entrada.status !== 200) continue
-    const chaveEstado = `${entrada.state ?? "route"}:${entrada.actorAccount ?? entrada.actor ?? ""}:${entrada.viewport}`
+    const chaveEstado = `${entrada.state ?? "route"}:${entrada.actorAccount ?? entrada.actor ?? ""}:${entrada.flow ?? "direct-route"}:${entrada.viewport}`
     const atuais = ultimaPorRota.get(entrada.route) ?? []
     const indice = atuais.findIndex((atual) => atual.chaveEstado === chaveEstado)
     if (indice === -1) {
@@ -132,7 +132,7 @@ function estadoCompativel(prancha, dado) {
   }
   if (prancha === "60-web-estados") {
     if (dado.route.endsWith("/71000000-0000-4000-8000-000000000002")) {
-      return dado.state === "route"
+      return dado.state === "denied" && dado.actorAccount === "membro1"
     }
     return dado.route === "/publicacoes/nova" && dado.state === "offline"
   }
@@ -170,15 +170,26 @@ function canonicalizeCaptures(prancha, captures) {
   if (prancha !== "45-web-publicacao") return captures
   const selected = [...captures]
   for (const viewport of ["mobile-375", "tablet-768", "desktop-1440"]) {
-    const pageEdit = selected.some(
+    const pageEdit = selected.filter(
       (capture) =>
         capture.dado.route.endsWith("/editar") &&
         capture.dado.state === "edit" &&
         capture.dado.viewport === viewport,
     )
-    if (pageEdit) {
+    if (pageEdit.length) {
+      const newestPageEdit = pageEdit.reduce((latest, capture) =>
+        capture.dado.quando > latest.dado.quando ? capture : latest,
+      )
       for (let index = selected.length - 1; index >= 0; index -= 1) {
         const capture = selected[index]
+        if (
+          capture.dado.route.endsWith("/editar") &&
+          capture.dado.state === "edit" &&
+          capture.dado.viewport === viewport &&
+          capture !== newestPageEdit
+        ) {
+          selected.splice(index, 1)
+        }
         if (
           capture.dado.route === "/inicio" &&
           capture.dado.state === "edit" &&
@@ -246,6 +257,9 @@ function fidelityWarning(prancha, dado) {
   if (prancha === "43-web-comunidade-grupos") {
     return "BLOCKED: a rota da comunidade precisa de revisão por estado e ator antes de aceitar a aparência desta prancha."
   }
+  if (prancha === "60-web-estados" && dado.state === "denied") {
+    return "REVISÃO PENDENTE: o estado de acesso está autorizado pelo owner; a ação “Trocar de cidade” versus “Voltar” da prancha ainda precisa de adjudicação visual."
+  }
   if (
     (prancha === "45-web-publicacao" || prancha === "60-web-estados") &&
     dado.route === "/inicio"
@@ -281,7 +295,7 @@ const cartao = (par) => {
             : `<span class="selo ok">mecanicamente ok</span>`
       return `<figure>
         <img src="${url(foto)}" alt="runtime ${displayRoute} ${d.viewport}" loading="lazy">
-        <figcaption><code>${displayRoute}</code> · ${d.state ?? "route"} · ${d.actorAccount ?? d.actor ?? "desconhecido"} · ${d.viewport} ${selo}</figcaption>
+        <figcaption><code>${displayRoute}</code> · ${d.state ?? "route"} · ${d.actorAccount ?? d.actor ?? "desconhecido"} · ${d.flow ?? "direct-route"} · ${d.viewport} ${selo}</figcaption>
          <p class="fidelity-note">${fidelityWarning(par.prancha, d)}</p>
       </figure>`
     })

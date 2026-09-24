@@ -401,6 +401,10 @@ export const ROUTES = [
     path: "/communities/71000000-0000-4000-8000-000000000002",
     name: "community-outsider",
     auth: true,
+    account: "membro1",
+    state: "denied",
+    flow: "direct-route",
+    requiredText: ["Você ainda não tem acesso", "Trocar de cidade"],
     expectedFallback: "^Você ainda não tem acesso",
   },
   {
@@ -1689,13 +1693,13 @@ async function main() {
           landedOn,
           actor: route.operator ? "operator" : route.auth ? "member" : "visitor",
           actorAccount: route.operator ? "operator" : (route.account ?? null),
-          state: SCENARIO ?? "route",
+          state: SCENARIO ?? route.state ?? "route",
           flow:
             SCENARIO === "edit"
               ? "community-feed -> create -> author-menu -> edit"
               : SCENARIO === "publish" || SCENARIO === "offline"
                 ? "community-feed -> publicacoes/nova"
-                : "direct-route",
+                : (route.flow ?? "direct-route"),
           proof,
           screenshot: fold,
           screenshotFull: full,
