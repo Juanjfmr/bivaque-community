@@ -207,6 +207,10 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     await expect(page.locator("article", { hasText: postText })).toBeVisible({
       timeout: 30000,
     })
+    // Reabrir depois de publicar não pode ressuscitar o texto no flush de unmount.
+    await openComposer(page)
+    await expect(page.getByRole("dialog").getByLabel("Conteúdo")).toHaveValue("")
+    await page.getByRole("dialog").getByRole("button", { name: "Cancelar", exact: true }).click()
   })
 
   test("rascunho sobrevive ao fechamento e só some após descarte confirmado", async ({ page }) => {
@@ -217,7 +221,8 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
 
     const firstDialog = page.getByRole("dialog")
     await firstDialog.getByLabel("Conteúdo").fill(draftText)
-    await page.waitForTimeout(700)
+    // Fecha antes do debounce de 400ms: prova o flush de unmount, não apenas
+    // um autosave que já teve tempo de terminar.
     await firstDialog.getByRole("button", { name: "Cancelar", exact: true }).click()
     await expect(firstDialog).toBeHidden()
 
@@ -240,6 +245,9 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     await discardDialog.getByRole("button", { name: "Descartar rascunho", exact: true }).click()
     await expect(reopenedDialog.getByLabel("Conteúdo")).toHaveValue("")
     await expect(reopenedDialog.getByText("Rascunho recuperado")).toHaveCount(0)
+    await reopenedDialog.getByRole("button", { name: "Cancelar", exact: true }).click()
+    await openComposer(page)
+    await expect(page.getByRole("dialog").getByLabel("Conteúdo")).toHaveValue("")
   })
 
   test("caminho de erro: insert abortado mostra FeedbackAlert, preserva o rascunho, depois publica com sucesso", async ({

@@ -74,6 +74,8 @@ export function CreatePostModal({
   const ownerId = currentUser.user?.id ?? null
   const draftScopeKey = ownerId ? `${ownerId}:${localityId}` : null
   const loadedDraftScopeRef = useRef<string | null>(null)
+  const suppressDraftFlushRef = useRef(false)
+  const scopeIsCurrent = loadedDraftScopeRef.current === draftScopeKey
   const [draftReady, setDraftReady] = useState(false)
   const [postType, setPostType] = useState(defaultPostType ?? "text")
   const [content, setContent] = useState("")
@@ -125,6 +127,7 @@ export function CreatePostModal({
   const selectedKind = parseAudienceKey(audienceKey)
 
   useEffect(() => {
+    suppressDraftFlushRef.current = false
     if (currentUser.loading) {
       loadedDraftScopeRef.current = null
       setDraftReady(false)
@@ -194,14 +197,21 @@ export function CreatePostModal({
   // mudança de cidade) volta para a cidade com aviso explícito.
   // O servidor deve autorizar todo destino antes de publicar.
   useEffect(() => {
-    if (audience.loading || audience.error || !draftReady) return
+    if (audience.loading || audience.error || !draftReady || !scopeIsCurrent) return
     if (!availableAudienceKeys.has(audienceKey)) {
       setAudienceKey(CITY_AUDIENCE_KEY)
       setAudienceFallback(
         "Esse destino não está mais disponível. A publicação foi ajustada para toda a cidade — confira antes de publicar.",
       )
     }
-  }, [audience.loading, audience.error, audienceKey, availableAudienceKeys, draftReady])
+  }, [
+    audience.loading,
+    audience.error,
+    audienceKey,
+    availableAudienceKeys,
+    draftReady,
+    scopeIsCurrent,
+  ])
 
   // Autosave do rascunho — melhor esforço, nunca quebra a tela. Campos vazios
   // não removem nada: apagar o rascunho é uma ação explícita, confirmada pelo
@@ -233,14 +243,17 @@ export function CreatePostModal({
   }, [draftFields, persistDraft])
 
   // O debounce acima é cancelado quando o modal fecha antes do timer — sem
-  // este flush, a última coisa digitada antes de fechar se perderia. O callback
-  // fica em uma ref para que a limpeza só ocorra no unmount; antes, a mudança
-  // de audiência/locality executava o cleanup e podia gravar no escopo errado.
+  // este flush, a última coisa digitada antes de fechar se perderia. O cleanup
+  // roda no unmount e também na troca de escopo/audiência; a closure executa
+  // com o contexto anterior, antes de o próximo efeito zerar os campos.
   const latestFields = useRef(draftFields)
   latestFields.current = draftFields
-  const persistDraftRef = useRef(persistDraft)
-  persistDraftRef.current = persistDraft
-  useEffect(() => () => persistDraftRef.current(latestFields.current), [])
+  useEffect(() => {
+    return () => {
+      if (suppressDraftFlushRef.current) return
+      persistDraft(latestFields.current)
+    }
+  }, [persistDraft])
 
   const resetForm = useCallback(() => {
     setPostType("text")
@@ -264,7 +277,7 @@ export function CreatePostModal({
   }, [audience.error])
 
   const handleSubmit = useCallback(async () => {
-    if (!draftReady || audience.loading || audience.error) return
+    if (!draftReady || !scopeIsCurrent || audience.loading || audience.error) return
     setError("")
     setErrorKind(null)
     setPhotoError("")
@@ -337,7 +350,9 @@ export function CreatePostModal({
     }
 
     // Publicado: o rascunho cumpriu o papel dele e sai do navegador só agora,
-    // pela ação concluída da pessoa — nunca antes, nunca sozinho.
+    // pela ação concluída da pessoa — nunca antes, nunca sozinho. A guarda
+    // impede que o cleanup do unmount recrie o texto já publicado.
+    suppressDraftFlushRef.current = true
     clearPostDraft(ownerId, localityId)
     resetForm()
     showToast(
@@ -366,6 +381,7 @@ export function CreatePostModal({
     content,
     details,
     draftReady,
+    scopeIsCurrent,
     audience.loading,
     audience.error,
     postType,
@@ -566,6 +582,7 @@ export function CreatePostModal({
                         isDisabled={
                           submitting ||
                           !draftReady ||
+                          !scopeIsCurrent ||
                           audience.loading ||
                           Boolean(audience.error) ||
                           !content.trim()

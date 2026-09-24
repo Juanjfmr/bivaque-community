@@ -7,17 +7,17 @@ authority:
   - docs/design/visual-guide-2026-09-06/45-web-publicacao.png
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
   - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1
-  - Relatório comparativo Mobbin e autorização do responsável em 23/09/2026 para rascunho, público efotos
+  - Relatório comparativo Mobbin e autorização do responsável em 23/09/2026 para rascunho, público e fotos
 
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
     A implementação atual separa o compositor, mas o rascunho usa uma chave global
-    bivaque.post-draft.v1 e é carregado antes de resolver a audiência e a cidade.
+    bivaque.post-draft.v2 e é carregado antes de resolver a audiência e a cidade.
     Uma pessoa que sai e entra como outra conta no mesmo navegador pode receber o
-    texto anterior; reabrir o modal também perde o destino escolhido. A correção
-    torna a chave por membro, carrega o rascunho só no contexto atual e preserva
-    a audiência sem alterar a autorização do insert.
+    texto anterior; a mesma chave também apaga o rascunho de outra localidade. A
+    correção usa bivaque.post-draft.v3 por membro/locality, carrega só no contexto
+    atual e preserva a audiência sem alterar a autorização do insert.
 
 allowed_paths:
   - apps/web/app/components/bivaque/feed-post.tsx
