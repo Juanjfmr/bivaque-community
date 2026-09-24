@@ -40,8 +40,9 @@ const fields = {
 }
 
 beforeEach(() => {
-  storage.removeItem("bivaque.post-draft.v2:user-a")
-  storage.removeItem("bivaque.post-draft.v2:user-b")
+  storage.removeItem("bivaque.post-draft.v3:user-a:locality-a")
+  storage.removeItem("bivaque.post-draft.v3:user-a:locality-b")
+  storage.removeItem("bivaque.post-draft.v3:user-b:locality-a")
   storage.removeItem("bivaque.post-audience.v1:user-a:locality-a")
   storage.removeItem("bivaque.post-audience.v1:user-a:locality-b")
   vi.stubGlobal("window", { localStorage: storage })
@@ -65,6 +66,25 @@ describe("rascunho de publicação isolado por membro e locality", () => {
     })
   })
 
+  it("mantém rascunhos simultâneos de duas localidades", () => {
+    savePostDraftFields(fields, {
+      ownerId: "user-a",
+      localityId: "locality-a",
+      audienceKey: "community:community-a",
+    })
+    savePostDraftFields(
+      { ...fields, content: "Mensagem da outra cidade" },
+      {
+        ownerId: "user-a",
+        localityId: "locality-b",
+        audienceKey: "city",
+      },
+    )
+
+    expect(loadPostDraft("user-a", "locality-a")?.content).toBe("Mensagem privada")
+    expect(loadPostDraft("user-a", "locality-b")?.content).toBe("Mensagem da outra cidade")
+  })
+
   it("não expõe o mesmo texto para outra conta ou outra cidade", () => {
     savePostDraftFields(fields, {
       ownerId: "user-a",
@@ -76,16 +96,25 @@ describe("rascunho de publicação isolado por membro e locality", () => {
     expect(loadPostDraft("user-a", "locality-b")).toBeNull()
   })
 
-  it("não importa o formato global antigo", () => {
+  it("não importa formatos antigos sem escopo de locality", () => {
     storage.setItem(
       "bivaque.post-draft.v1",
       JSON.stringify({ ...fields, postType: "text", savedAt: Date.now() }),
+    )
+    storage.setItem(
+      "bivaque.post-draft.v2:user-a",
+      JSON.stringify({
+        ...fields,
+        ownerId: "user-a",
+        localityId: "locality-a",
+        audienceKey: "city",
+      }),
     )
 
     expect(loadPostDraft("user-a", "locality-a")).toBeNull()
   })
 
-  it("limpa apenas o rascunho do membro atual", () => {
+  it("limpa somente o rascunho do membro e locality atuais", () => {
     savePostDraftFields(fields, {
       ownerId: "user-a",
       localityId: "locality-a",
@@ -99,11 +128,20 @@ describe("rascunho de publicação isolado por membro e locality", () => {
         audienceKey: "community:community-b",
       },
     )
+    savePostDraftFields(
+      { ...fields, content: "Outra cidade" },
+      {
+        ownerId: "user-a",
+        localityId: "locality-b",
+        audienceKey: "city",
+      },
+    )
 
-    clearPostDraft("user-a")
+    clearPostDraft("user-a", "locality-a")
 
     expect(loadPostDraft("user-a", "locality-a")).toBeNull()
     expect(loadPostDraft("user-b", "locality-a")?.content).toBe("Outra conta")
+    expect(loadPostDraft("user-a", "locality-b")?.content).toBe("Outra cidade")
   })
 
   it("mantém a audiência como preferência local do mesmo contexto", () => {
@@ -113,10 +151,21 @@ describe("rascunho de publicação isolado por membro e locality", () => {
     expect(loadPostAudience("user-a", "locality-b")).toBeNull()
   })
 
-  it("o compositor só restaura e salva depois do contexto estar resolvido", () => {
+  it("reinicia o formulário e protege autosave quando o escopo muda", () => {
     expect(composerSource).toContain("loadPostDraft(ownerId, localityId)")
-    expect(composerSource).toContain("clearPostDraft(ownerId)")
-    expect(composerSource).toContain("!draftReady || audience.loading || audience.error")
+    expect(composerSource).toContain("loadedDraftScopeRef.current = null")
+    expect(composerSource).toContain("setDraftReady(false)")
+    expect(composerSource).toContain("persistDraftRef.current")
+    expect(composerSource).toContain("clearPostDraft(ownerId, localityId)")
     expect(composerSource).toContain("availableAudienceKeys.has(audienceKey)")
+  })
+
+  it("não apaga rascunho quando os campos ficam vazios", () => {
+    const persistBlock = composerSource.slice(
+      composerSource.indexOf("const persistDraft"),
+      composerSource.indexOf("const draftFields"),
+    )
+    expect(persistBlock).toContain("if (!hasDraftContent")
+    expect(persistBlock).not.toContain("clearPostDraft")
   })
 })

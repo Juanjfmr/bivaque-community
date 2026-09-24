@@ -60,12 +60,21 @@ export function usePostAudience(localityId: string): AudienceState {
     let cancelled = false
     setLoading(true)
     setError(null)
+    setCommunities([])
+    setGroups([])
     ;(async () => {
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser()
       if (cancelled) return
+      if (userError) {
+        setError("Não foi possível verificar sua sessão. Tente novamente.")
+        setLoading(false)
+        return
+      }
       if (!user) {
+        setError("Sua sessão não está disponível. Entre novamente para escolher uma audiência.")
         setLoading(false)
         return
       }
@@ -90,7 +99,7 @@ export function usePostAudience(localityId: string): AudienceState {
         // membro pode escolher (DS-002/DS-014). Com a lista indisponível, só
         // a cidade resta, e o aviso diz exatamente isso.
         setError(
-          "Não foi possível carregar suas comunidades e grupos. O post será publicado para toda a cidade.",
+          "Não foi possível carregar suas comunidades e grupos. Nenhum destino foi assumido; tente novamente.",
         )
         setCommunities([])
         setGroups([])
@@ -125,7 +134,7 @@ export function usePostAudience(localityId: string): AudienceState {
 
       if (communitiesResult.error || groupsResult.error) {
         setError(
-          "Não foi possível carregar suas comunidades e grupos. Você ainda pode publicar para a cidade inteira.",
+          "Não foi possível carregar suas comunidades e grupos. Nenhum destino foi assumido; tente novamente.",
         )
         setCommunities([])
         setGroups([])
@@ -152,7 +161,11 @@ export function usePostAudience(localityId: string): AudienceState {
         })),
       )
       setLoading(false)
-    })()
+    })().catch(() => {
+      if (cancelled) return
+      setError("Não foi possível carregar suas comunidades e grupos. Tente novamente.")
+      setLoading(false)
+    })
     return () => {
       cancelled = true
     }

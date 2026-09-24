@@ -1,11 +1,12 @@
 // Rascunho de publicação — armazenamento do PRÓPRIO navegador (RECON-014).
 //
 // O texto nunca vai para o servidor nem para armazenamento compartilhado. A
-// chave é namespaced por usuário e locality: trocar de conta no mesmo navegador
-// não pode revelar o rascunho anterior. A audiência persistida é apenas uma
-// preferência local; o insert continua sendo autorizado pelo servidor.
+// chave é namespaced por usuário e locality: trocar de conta ou de cidade no
+// mesmo navegador não pode revelar nem apagar o rascunho anterior. A audiência
+// persistida é apenas uma preferência local; o insert continua sendo autorizado
+// pelo servidor.
 
-const DRAFT_KEY_PREFIX = "bivaque.post-draft.v2"
+const DRAFT_KEY_PREFIX = "bivaque.post-draft.v3"
 const AUDIENCE_KEY_PREFIX = "bivaque.post-audience.v1"
 
 export interface PostDraftScope {
@@ -45,8 +46,8 @@ function storage(): Storage | null {
   }
 }
 
-function draftKey(ownerId: string): string {
-  return `${DRAFT_KEY_PREFIX}:${encodeURIComponent(ownerId)}`
+function draftKey(ownerId: string, localityId: string): string {
+  return `${DRAFT_KEY_PREFIX}:${encodeURIComponent(ownerId)}:${encodeURIComponent(localityId)}`
 }
 
 function audienceStorageKey(ownerId: string, localityId: string): string {
@@ -98,11 +99,11 @@ export function loadPostDraft(
   ownerId: string | null | undefined,
   localityId: string,
 ): PostDraft | null {
-  if (!ownerId) return null
+  if (!ownerId || !localityId) return null
   try {
     const store = storage()
     if (!store) return null
-    const raw = store.getItem(draftKey(ownerId))
+    const raw = store.getItem(draftKey(ownerId, localityId))
     if (raw === null) return null
     const draft = parseDraft(raw)
     if (!draft || draft.ownerId !== ownerId || draft.localityId !== localityId) return null
@@ -129,23 +130,27 @@ export function savePostDraftFields(fields: PostDraftFields, scope: PostDraftSco
 
 /** Grava o rascunho. false quando o navegador recusa armazenamento. */
 export function savePostDraft(draft: PostDraft): boolean {
+  if (!draft.ownerId || !draft.localityId) return false
   try {
     const store = storage()
     if (!store) return false
-    store.setItem(draftKey(draft.ownerId), JSON.stringify(draft))
+    store.setItem(draftKey(draft.ownerId, draft.localityId), JSON.stringify(draft))
     return true
   } catch {
     return false
   }
 }
 
-/** Remove somente o rascunho do membro atual. */
-export function clearPostDraft(ownerId: string | null | undefined): boolean {
-  if (!ownerId) return false
+/** Remove somente o rascunho do membro e locality atuais. */
+export function clearPostDraft(
+  ownerId: string | null | undefined,
+  localityId: string | null | undefined,
+): boolean {
+  if (!ownerId || !localityId) return false
   try {
     const store = storage()
     if (!store) return false
-    store.removeItem(draftKey(ownerId))
+    store.removeItem(draftKey(ownerId, localityId))
     return true
   } catch {
     return false
@@ -174,7 +179,7 @@ export function loadPostAudience(
   ownerId: string | null | undefined,
   localityId: string,
 ): string | null {
-  if (!ownerId) return null
+  if (!ownerId || !localityId) return null
   try {
     const store = storage()
     if (!store) return null

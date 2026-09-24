@@ -12,4 +12,12 @@ describe("audiência da publicação respeita a cidade atual", () => {
     expect(source).toContain('.from("communities")')
     expect(source).toContain('.eq("locality_id", localityId)')
   })
+
+  it("limpa listas antigas e não transforma erro de sessão em cidade implícita", () => {
+    expect(source).toContain("setCommunities([])")
+    expect(source).toContain("setGroups([])")
+    expect(source).toContain("if (userError)")
+    expect(source).toContain("Nenhum destino foi assumido")
+    expect(source).toContain(".catch(() =>")
+  })
 })

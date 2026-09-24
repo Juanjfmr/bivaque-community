@@ -28,6 +28,7 @@ allowed_paths:
   - apps/web/app/components/bivaque/feed-post-photo.tsx
   - apps/web/app/components/bivaque/feed-post-shared.tsx
   - tests/unit/composer/
+  - tests/e2e/publish-golden-slice.spec.ts
   - docs/agents/tasks/RECON-014.task.yml
 
 forbidden:
@@ -53,6 +54,7 @@ acceptance:
   - o rascunho e a preferencia de audiencia sao namespaced por membro e locality; trocar de conta nao expoe o texto anterior
   - o rascunho so e recuperado quando a audiencia persistida continua autorizada; uma revogacao volta a cidade com aviso, sem publicar automaticamente
   - reabrir o compositor recupera a ultima audiencia escolhida sem transformar o rascunho em publicacao
+  - fechar e reabrir o compositor preserva o rascunho; campos vazios nunca o apagam e o descarte exige confirmação
   - descartar rascunho e explicito e reversivel ate confirmar — nao apaga em silencio
   - feed-post.tsx termina abaixo de 500 linhas; a separacao e por responsabilidade (cartao / criacao / edicao), nao corte arbitrario
   - nenhuma consumidora do modulo quebra: a mudanca de superficie mantem as props que /inicio, /communities e /explorar ja passam
@@ -66,6 +68,7 @@ acceptance:
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-014.task.yml
   - npx pnpm@11.18.0 exec vitest run tests/unit/composer/draft-scope.test.ts tests/unit/composer/audience-reset.test.ts
+  - npx pnpm@11.18.0 exec playwright test tests/e2e/publish-golden-slice.spec.ts --workers=1
   - npx pnpm@11.18.0 gate
   - node scripts/visual/loop.mjs
 

@@ -209,6 +209,39 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     })
   })
 
+  test("rascunho sobrevive ao fechamento e só some após descarte confirmado", async ({ page }) => {
+    await seedVilaOwnerSession(page.context())
+
+    const draftText = `GS-E2E rascunho recuperável ${Date.now().toString(36)}`
+    await openComposer(page)
+
+    const firstDialog = page.getByRole("dialog")
+    await firstDialog.getByLabel("Conteúdo").fill(draftText)
+    await page.waitForTimeout(700)
+    await firstDialog.getByRole("button", { name: "Cancelar", exact: true }).click()
+    await expect(firstDialog).toBeHidden()
+
+    await openComposer(page)
+    const reopenedDialog = page.getByRole("dialog")
+    await expect(reopenedDialog.getByLabel("Conteúdo")).toHaveValue(draftText)
+    await expect(reopenedDialog.getByText("Rascunho recuperado")).toBeVisible()
+
+    await reopenedDialog
+      .getByRole("button", { name: "Descartar rascunho salvo neste navegador" })
+      .click()
+    const discardDialog = page.getByRole("dialog").filter({ hasText: "Descartar rascunho?" })
+    await expect(discardDialog).toBeVisible()
+    await discardDialog.getByRole("button", { name: "Manter rascunho" }).click()
+    await expect(reopenedDialog.getByLabel("Conteúdo")).toHaveValue(draftText)
+
+    await reopenedDialog
+      .getByRole("button", { name: "Descartar rascunho salvo neste navegador" })
+      .click()
+    await discardDialog.getByRole("button", { name: "Descartar rascunho", exact: true }).click()
+    await expect(reopenedDialog.getByLabel("Conteúdo")).toHaveValue("")
+    await expect(reopenedDialog.getByText("Rascunho recuperado")).toHaveCount(0)
+  })
+
   test("caminho de erro: insert abortado mostra FeedbackAlert, preserva o rascunho, depois publica com sucesso", async ({
     page,
   }) => {

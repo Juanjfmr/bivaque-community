@@ -125,18 +125,28 @@ export function CreatePostModal({
   const selectedKind = parseAudienceKey(audienceKey)
 
   useEffect(() => {
-    if (currentUser.loading) return
-    loadedDraftScopeRef.current = draftScopeKey
+    if (currentUser.loading) {
+      loadedDraftScopeRef.current = null
+      setDraftReady(false)
+      return
+    }
+
+    // Uma troca de conta/locality nunca pode herdar os campos da tela anterior.
+    // O unload flush e o autosave ficam presos ao guard de escopo abaixo.
+    loadedDraftScopeRef.current = null
+    setDraftReady(false)
+    setPostType(defaultPostType ?? "text")
+    setContent("")
+    setDetails("")
+    setPhotoPath("")
+    setLinkUrl("")
+    setPollOptions([])
+    setAudienceKey(defaultCommunityId ? `community:${defaultCommunityId}` : CITY_AUDIENCE_KEY)
+    setDraftRestored(false)
+    setAudienceFallback("")
+    setStorageUnavailable(false)
 
     if (!ownerId) {
-      setPostType(defaultPostType ?? "text")
-      setContent("")
-      setDetails("")
-      setPhotoPath("")
-      setLinkUrl("")
-      setPollOptions([])
-      setAudienceKey(defaultCommunityId ? `community:${defaultCommunityId}` : CITY_AUDIENCE_KEY)
-      setDraftRestored(false)
       setDraftReady(true)
       return
     }
@@ -157,6 +167,8 @@ export function CreatePostModal({
         : loadPostAudience(ownerId, localityId)
       if (preferredAudience) setAudienceKey(preferredAudience)
     }
+
+    loadedDraftScopeRef.current = draftScopeKey
     setDraftReady(true)
   }, [currentUser.loading, draftScopeKey, ownerId, localityId, defaultCommunityId, defaultPostType])
 
@@ -191,19 +203,15 @@ export function CreatePostModal({
     }
   }, [audience.loading, audience.error, audienceKey, availableAudienceKeys, draftReady])
 
-  // Autosave do rascunho — melhor esforço, nunca quebra a tela. Campos todos
-  // vazios removem o rascunho (a pessoa esvaziou de propósito); publicar ou
-  // descartar confirmado são os outros dois caminhos de limpeza.
+  // Autosave do rascunho — melhor esforço, nunca quebra a tela. Campos vazios
+  // não removem nada: apagar o rascunho é uma ação explícita, confirmada pelo
+  // diálogo. Assim, uma edição que chega a zero não apaga o texto anterior.
   const persistDraft = useCallback(
     (fields: PostDraftFields) => {
       if (!draftReady || !ownerId || loadedDraftScopeRef.current !== draftScopeKey) return
       const scope = { ownerId, localityId, audienceKey }
-      if (hasDraftContent({ ...scope, ...fields, savedAt: 0 })) {
-        setStorageUnavailable(!savePostDraftFields(fields, scope))
-      } else {
-        clearPostDraft(ownerId)
-        setStorageUnavailable(false)
-      }
+      if (!hasDraftContent({ ...scope, ...fields, savedAt: 0 })) return
+      setStorageUnavailable(!savePostDraftFields(fields, scope))
     },
     [audienceKey, draftReady, draftScopeKey, localityId, ownerId],
   )
@@ -225,11 +233,14 @@ export function CreatePostModal({
   }, [draftFields, persistDraft])
 
   // O debounce acima é cancelado quando o modal fecha antes do timer — sem
-  // este flush, a última coisa digitada antes de fechar se perderia, que é
-  // exatamente o caso que o rascunho existe para cobrir.
+  // este flush, a última coisa digitada antes de fechar se perderia. O callback
+  // fica em uma ref para que a limpeza só ocorra no unmount; antes, a mudança
+  // de audiência/locality executava o cleanup e podia gravar no escopo errado.
   const latestFields = useRef(draftFields)
   latestFields.current = draftFields
-  useEffect(() => () => persistDraft(latestFields.current), [persistDraft])
+  const persistDraftRef = useRef(persistDraft)
+  persistDraftRef.current = persistDraft
+  useEffect(() => () => persistDraftRef.current(latestFields.current), [])
 
   const resetForm = useCallback(() => {
     setPostType("text")
@@ -327,7 +338,7 @@ export function CreatePostModal({
 
     // Publicado: o rascunho cumpriu o papel dele e sai do navegador só agora,
     // pela ação concluída da pessoa — nunca antes, nunca sozinho.
-    clearPostDraft(ownerId)
+    clearPostDraft(ownerId, localityId)
     resetForm()
     showToast(
       kind.kind === "community"
@@ -375,7 +386,7 @@ export function CreatePostModal({
   const discardConfirm = useOverlayState()
 
   const discardDraft = useCallback(() => {
-    clearPostDraft(ownerId)
+    clearPostDraft(ownerId, localityId)
     setContent("")
     setDetails("")
     setLinkUrl("")
@@ -384,7 +395,7 @@ export function CreatePostModal({
     setDraftRestored(false)
     setStorageUnavailable(false)
     discardConfirm.close()
-  }, [discardConfirm, ownerId])
+  }, [discardConfirm, ownerId, localityId])
 
   const placeName =
     selectedKind.kind === "city"
