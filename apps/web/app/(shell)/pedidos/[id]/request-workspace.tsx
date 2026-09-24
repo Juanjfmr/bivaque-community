@@ -84,6 +84,7 @@ export function RequestWorkspace({
   initialLastReadAt,
 }: RequestWorkspaceProps) {
   const router = useRouter()
+  const requestId = request.id
   const [status, setStatus] = useState<ServiceRequestStatus>(request.status)
   const [closedAt, setClosedAt] = useState<string | null>(request.closedAt)
   const [closedByUserId, setClosedByUserId] = useState<string | null>(request.closedByUserId)
@@ -153,7 +154,7 @@ export function RequestWorkspace({
       setSending(true)
       setSendError(null)
 
-      const result = await sendRequestMessage({ conversationId, content, clientKey })
+      const result = await sendRequestMessage({ requestId, conversationId, content, clientKey })
 
       setSending(false)
 
@@ -170,6 +171,7 @@ export function RequestWorkspace({
           ),
         )
         setNewMessage((prev) => (prev.trim().length > 0 ? prev : content))
+        router.refresh()
         return
       }
 
@@ -185,7 +187,7 @@ export function RequestWorkspace({
       setNewMessage("")
       void markRead()
     },
-    [conversationId, markRead],
+    [conversationId, markRead, requestId, router],
   )
 
   const handleSend = useCallback(() => {
@@ -242,6 +244,7 @@ export function RequestWorkspace({
     }
     if (result.status === "error") {
       setCloseError("Não foi possível encerrar agora. Tente novamente.")
+      router.refresh()
       return
     }
 
@@ -267,6 +270,7 @@ export function RequestWorkspace({
     }
     if (result.status === "error") {
       setCancelError("Não foi possível cancelar o pedido agora. Tente novamente.")
+      router.refresh()
       return
     }
 
@@ -299,6 +303,7 @@ export function RequestWorkspace({
     }
     if (result.status === "error") {
       setEditError("Não foi possível salvar agora. Seu texto continua aqui.")
+      router.refresh()
       return
     }
 

@@ -32,6 +32,7 @@ describe("resposta do prestador ao pedido (RECON-044)", () => {
     expect(actions).toMatch(/rpc\("send_conversation_message"/)
     expect(actions).toContain("p_conversation_id: conversationId")
     expect(actions).toContain("p_client_key: clientKey")
+    expect(actions).toContain('revalidatePath("/pedidos")')
     expect(actions).not.toMatch(/rpc\("respond_to_service_request"/)
   })
 
@@ -42,6 +43,8 @@ describe("resposta do prestador ao pedido (RECON-044)", () => {
     expect(responseForm).toContain("value={conversationId}")
     expect(responseForm).toContain('name="clientKey"')
     expect(responseForm).toContain("useState")
+    expect(responseForm).toContain("useEffect")
+    expect(responseForm).toContain("setClientKey(newClientKey())")
     expect(responseForm).toContain("useActionState")
     expect(responseForm).toContain("pending")
     expect(detailPage).toContain("cancelled_at, cancelled_by_user_id")

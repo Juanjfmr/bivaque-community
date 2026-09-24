@@ -20,10 +20,10 @@ baseline:
   status: FAIL-EVIDENCED
   evidence: >
     O painel e a resposta do prestador existem, mas a chave p_client_key era
-    gerada no Server Component a cada renderização. Um retry do formulário
-    podia receber outra chave e duplicar a resposta. A correção torna a chave
-    estado do formulário client-side estável enquanto ele permanece montado e
-    reutiliza a coluna idempotente já existente, sem alterar autorização.
+    gerada no Server Component a cada renderização. Um retry podia receber outra
+    chave e duplicar a resposta. A correção torna a chave estado do formulário
+    client-side estável durante uma tentativa, adiada para depois da hidratação,
+    e rotaciona depois de uma resposta aceita para permitir a próxima mensagem.
 
 allowed_paths:
   - apps/web/app/(provider)/
@@ -67,7 +67,7 @@ proof:
   - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
   - npx pnpm@11.18.0 build
   - npx pnpm@11.18.0 test:e2e do ciclo entre cliente e prestador
-  - tests/e2e/journey-pedir-servico.spec.ts fecha o ciclo de resposta e não deixa compositor terminal
+  - tests/e2e/journey-pedir-servico.spec.ts fecha o ciclo de duas respostas do prestador e não deixa compositor terminal
   - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
 
 risk: isolamento entre negocios e situacao do pedido

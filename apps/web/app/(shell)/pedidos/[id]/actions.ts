@@ -72,7 +72,15 @@ function isSessionError(message: string | undefined): boolean {
   return (message ?? "").includes("unauthenticated")
 }
 
+function revalidateRequestSurfaces(requestId: string): void {
+  revalidatePath("/pedidos")
+  revalidatePath(`/pedidos/${requestId}`)
+  revalidatePath("/prestador")
+  revalidatePath(`/prestador/pedidos/${requestId}`)
+}
+
 export async function sendRequestMessage(input: {
+  requestId: string
   conversationId: string
   content: string
   clientKey: string
@@ -92,6 +100,7 @@ export async function sendRequestMessage(input: {
   if (error) {
     if (isSessionError(error.message)) return { status: "session" }
     if (error.message.includes("request is terminal")) {
+      revalidateRequestSurfaces(input.requestId)
       return {
         status: "error",
         message: "Este pedido está encerrado e não aceita novas mensagens.",
@@ -107,6 +116,7 @@ export async function sendRequestMessage(input: {
     content: string
     created_at: string
   }
+  revalidateRequestSurfaces(input.requestId)
   return { status: "sent", message: row }
 }
 
@@ -128,12 +138,10 @@ export async function closeRequest(requestId: string): Promise<CloseRequestState
     closed_by_user_id: string | null
   }
   if (row.status === "cancelled") {
+    revalidateRequestSurfaces(requestId)
     return { status: "error", message: "Este pedido já foi cancelado." }
   }
-  revalidatePath("/pedidos")
-  revalidatePath(`/pedidos/${requestId}`)
-  revalidatePath("/prestador")
-  revalidatePath(`/prestador/pedidos/${requestId}`)
+  revalidateRequestSurfaces(requestId)
   return {
     status: "closed",
     requestStatus: row.status,
@@ -160,12 +168,10 @@ export async function cancelRequest(requestId: string): Promise<CancelRequestSta
     cancelled_by_user_id: string | null
   }
   if (row.status !== "cancelled") {
+    revalidateRequestSurfaces(requestId)
     return { status: "error", message: "Este pedido já foi encerrado." }
   }
-  revalidatePath("/pedidos")
-  revalidatePath(`/pedidos/${requestId}`)
-  revalidatePath("/prestador")
-  revalidatePath(`/prestador/pedidos/${requestId}`)
+  revalidateRequestSurfaces(requestId)
   return {
     status: "cancelled",
     cancelledAt: row.cancelled_at,
@@ -198,8 +204,7 @@ export async function saveRequestEdit(input: {
   }
 
   const row = data as { description: string; when_text: string | null }
-  revalidatePath("/pedidos")
-  revalidatePath(`/pedidos/${input.requestId}`)
+  revalidateRequestSurfaces(input.requestId)
   return { status: "saved", description: row.description, whenText: row.when_text }
 }
 

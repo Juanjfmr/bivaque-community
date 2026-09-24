@@ -66,7 +66,7 @@ proof:
   - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
   - supabase/tests/service-request-terminal.sql: mensagem após closed/cancelled e close após cancelled são negados
   - npx pnpm@11.18.0 build
-  - npx pnpm@11.18.0 test:e2e do ciclo entre duas contas
+  - npx pnpm@11.18.0 test:e2e do ciclo entre duas contas, incluindo duas respostas do prestador no mesmo pedido
   - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
 
 risk: conversa entre contas e situacao do pedido

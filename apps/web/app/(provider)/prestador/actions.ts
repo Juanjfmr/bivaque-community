@@ -335,6 +335,8 @@ export async function respondToRequestAction(formData: FormData): Promise<void> 
 
   revalidatePath("/prestador")
   revalidatePath(`/prestador/pedidos/${requestId}`)
+  revalidatePath("/pedidos")
+  revalidatePath(`/pedidos/${requestId}`)
 }
 
 export async function closeRequestAction(formData: FormData): Promise<void> {
@@ -347,6 +349,8 @@ export async function closeRequestAction(formData: FormData): Promise<void> {
 
   revalidatePath("/prestador")
   revalidatePath(`/prestador/pedidos/${requestId}`)
+  revalidatePath("/pedidos")
+  revalidatePath(`/pedidos/${requestId}`)
 }
 
 // Área de atendimento: liga/desliga o alcance gratuito da comunidade que

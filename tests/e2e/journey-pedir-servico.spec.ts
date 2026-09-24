@@ -130,6 +130,15 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         { timeout: 20_000 },
       )
 
+      // Uma segunda resposta no mesmo formulário precisa usar uma nova chave;
+      // caso contrário, o RPC deduplicaria silenciosamente a mensagem.
+      const secondReply = `Resposta seguinte ${stamp}: também consigo pela manhã.`
+      await provider.getByLabel("Escreva uma mensagem").fill(secondReply)
+      await provider.getByRole("button", { name: "Enviar", exact: true }).click()
+      await expect(
+        provider.getByRole("region", { name: "Conversa" }).getByText(secondReply),
+      ).toBeVisible({ timeout: 20_000 })
+
       // O retorno chega à membra sem ela procurar: o ícone de conversas do cabeçalho
       // passa a dizer que há mensagem nova (MSG-SEM-ENTRADA). Outra aba, porque a tela de
       // sucesso foi desenhada antes da resposta existir.
