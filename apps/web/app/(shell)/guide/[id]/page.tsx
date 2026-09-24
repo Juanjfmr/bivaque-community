@@ -11,6 +11,7 @@ import {
   loadGuideArticle,
 } from "../../../../lib/guide/guide-article"
 import { Card } from "../../../components/bivaque/card"
+import { GuideEntrySaveButton } from "./guide-entry-save-button"
 import { GuideToc } from "./guide-toc"
 
 // RECON-030 — prancha 25-web-guia-referencia: o artigo estruturado ESTENDE a
@@ -29,11 +30,10 @@ import { GuideToc } from "./guide-toc"
 // entrada de diretório como antes — nunca 500 por uma extensão ausente.
 //
 // O que a prancha mostra e nenhum dado real sustenta não é renderizado: sem
-// imagem no artigo não há capa; sem seções não há sumário "Neste guia"; sem
-// mecanismo real de salvar referência não há botão "Salvar" (a lacuna é
-// declarada na entrega, não coberta por um controle morto). A origem entra só
-// com colunas reais e a linha de conversa só quando ESTE membro pode ver a
-// resposta pela RLS de recommendation_replies.
+// imagem no artigo não há capa; sem seções não há sumário "Neste guia". O
+// botão de salvar usa a tabela real guide_entry_saves e a RLS; não é um
+// controle morto. A origem entra só com colunas reais e a linha de conversa
+// só quando ESTE membro pode ver a resposta pela RLS de recommendation_replies.
 
 type GuideEntryRow = Database["public"]["Tables"]["arrival_guide_entries"]["Row"]
 type GuideCategory = GuideEntryRow["category"]
@@ -230,9 +230,10 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
     notFound()
   }
 
-  const [origin, article] = await Promise.all([
+  const [origin, article, savedEntry] = await Promise.all([
     loadVisibleOrigin(supabase, entry),
     loadGuideArticle(supabase, entry.id),
+    supabase.from("guide_entry_saves").select("entry_id").eq("entry_id", entry.id).maybeSingle(),
   ])
   const toc = article ? buildGuideToc(article.sections) : []
   const heading = article ? article.title : entry.name
@@ -274,6 +275,15 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
                 : `Atualizado em ${formatGuideDate(entry.updated_at)}`}{" "}
               · Curadoria Bivaque
             </p>
+            <GuideEntrySaveButton
+              entryId={entry.id}
+              initiallySaved={!savedEntry.error && Boolean(savedEntry.data)}
+              initialSaveError={
+                savedEntry.error
+                  ? "Não foi possível verificar se esta referência já está salva. Recarregue a página para tentar novamente."
+                  : null
+              }
+            />
           </header>
 
           {article ? (

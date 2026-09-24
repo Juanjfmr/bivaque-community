@@ -55,14 +55,14 @@ describe("buildSavedItems", () => {
 })
 
 describe("buildGuideSavedItems", () => {
-  it("hidrata a referência viva e aponta para o filtro real do guia", () => {
+  it("hidrata a referência viva e aponta para o artigo endereçável", () => {
     const [item] = buildGuideSavedItems(guideSaves, [liveEntry])
     expect(item).toMatchObject({
       kind: "guia",
       available: true,
       title: "Escola Modelo do Centro",
       category: "school",
-      href: "/guide?q=Escola%20Modelo%20do%20Centro",
+      href: "/guide/g-1",
     })
   })
 

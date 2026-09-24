@@ -81,8 +81,8 @@ export function buildSavedItems(
   })
 }
 
-// Referência do guia: o destino real é o filtro do próprio guia (`?q=` casa
-// nome e descrição), porque entrada do guia não tem rota de detalhe.
+// Referência do guia: o destino real é o artigo endereçável, não a busca do
+// diretório. O mesmo `entry_id` identifica a versão editorial vigente.
 export function buildGuideSavedItems(
   saves: Array<{ entry_id: string; saved_at: string }>,
   entries: Array<{
@@ -119,7 +119,7 @@ export function buildGuideSavedItems(
       title: entry.name,
       excerpt: excerptOf(entry.description ?? ""),
       category: entry.category,
-      href: `/guide?q=${encodeURIComponent(entry.name)}`,
+      href: `/guide/${entry.id}`,
     }
   })
 }

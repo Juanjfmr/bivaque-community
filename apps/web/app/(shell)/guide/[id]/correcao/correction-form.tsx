@@ -68,7 +68,15 @@ export function CorrectionForm({
         <FeedbackAlert
           variant="warning"
           title="Não foi possível enviar"
-          description={state.message}
+          description={
+            <span className="flex flex-col gap-1">
+              <span>{state.message}</span>
+              <span className="text-xs">
+                Recebemos: “{state.receivedDescription}”
+                {state.receivedReference ? ` — referência: ${state.receivedReference}` : ""}
+              </span>
+            </span>
+          }
         />
       )}
 
