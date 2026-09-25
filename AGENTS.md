@@ -334,6 +334,11 @@ provider** — the global `toast()` helper only renders through it.
 - Never persist: raw CPF, Portal payload, military organization, rank, residential address,
   documents, or a public verification badge. Portal source label `reformado` maps to internal
   `veteran` only. Family accounts stay independent Auth users after accepting an invite.
+  "Residential address" means the member's own address as profile or identity data. An address
+  the member chooses to publish in a listing (`listings.address`) or as an event venue is content
+  by the owner's decision of 25/09/2026 — see
+  [`ADR-20260925-endereco-por-escolha`](docs/decisions/ADR-20260925-endereco-por-escolha.md). Do
+  not remove it as a privacy violation.
   > **Open R3 proposal against this line.**
   > [`ADR-20260811-om-declarada`](docs/decisions/ADR-20260811-om-declarada.md) proposes
   > allowing the member to *declare* branch, status, unit and class — distinguishing what the

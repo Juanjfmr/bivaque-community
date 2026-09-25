@@ -220,29 +220,31 @@ select throws_ok(
 -- ---------------------------------------------------------------------------
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 
-select is_empty(
+-- Consulta a outra cidade (20260925161111): imóvel ativo de alcance cidade é
+-- consultável, com detalhe e foto; o de comunidade, não.
+select isnt_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000002' $$,
-  'membro de outra cidade não vê anúncio de público cidade'
+  'membro de outra cidade consulta anúncio de público cidade'
 );
 select is_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000003' $$,
   'não membro não vê anúncio de público comunidade'
 );
-select is_empty(
+select isnt_empty(
   $$ select 1 from public.property_details where listing_id = 'a0000000-0000-4000-8000-000000000002' $$,
-  'detalhes do imóvel não vazam para fora do público'
+  'quem consulta a cidade lê o detalhe do imóvel'
 );
-select is_empty(
+select isnt_empty(
   $$ select 1 from public.listing_photos where listing_id = 'a0000000-0000-4000-8000-000000000002' $$,
-  'linha de foto não vaza para fora do público'
+  'quem consulta a cidade lê a linha da foto'
 );
-select is_empty(
+select isnt_empty(
   $$
     select 1 from storage.objects
      where bucket_id = 'listing-photos'
        and name = 'a0000000-0000-4000-8000-000000000002/foto-1.webp'
   $$,
-  'objeto da foto não vaza para fora do público'
+  'quem consulta a cidade lê o objeto da foto'
 );
 
 -- ---------------------------------------------------------------------------
@@ -323,7 +325,9 @@ select isnt_empty(
 );
 
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
-select throws_ok(
+-- Consulta a outra cidade (20260925161111): quem consulta salva o anúncio para
+-- decidir depois; o salvamento continua só dele.
+select lives_ok(
   $$
     insert into public.listing_saves (listing_id, user_id)
     values (
@@ -331,12 +335,14 @@ select throws_ok(
       '10000000-0000-4000-8000-000000000003'
     )
   $$,
-  '42501',
-  null,
-  'conta fora do público não salva anúncio que não alcança'
+  'quem consulta a cidade salva o anúncio que lê'
 );
 select is_empty(
-  $$ select 1 from public.listing_saves where listing_id = 'a0000000-0000-4000-8000-000000000002' $$,
+  $$
+    select 1 from public.listing_saves
+     where listing_id = 'a0000000-0000-4000-8000-000000000002'
+       and user_id <> (select auth.uid())
+  $$,
   'salvamento alheio não é visível'
 );
 

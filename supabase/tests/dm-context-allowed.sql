@@ -347,9 +347,11 @@ select results_eq(
   'reporter sees their own report'
 );
 
--- ── message content rejects PII ──────────────────────────────────────────────
+-- ── o conteúdo da mensagem é de quem escreve ────────────────────────────────
+-- Migration 20260925181213: o dono revogou o filtro de conteúdo das mensagens
+-- (CPF, patente, OM, endereço). Antes, estes três casos eram recusas.
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.dm_messages (conversation_id, sender_id, content)
     select c.id,
@@ -360,12 +362,10 @@ select throws_ok(
       and c.participant_a = '10000000-0000-4000-8000-000000000008'
     limit 1
   $$,
-  23514,
-  null,
-  'message CHECK rejects CPF pattern'
+  'message accepts a CPF the sender chose to share'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.dm_messages (conversation_id, sender_id, content)
     select c.id,
@@ -376,12 +376,10 @@ select throws_ok(
       and c.participant_a = '10000000-0000-4000-8000-000000000008'
     limit 1
   $$,
-  23514,
-  null,
-  'message CHECK rejects military organization reference'
+  'message accepts a military organization reference'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.dm_messages (conversation_id, sender_id, content)
     select c.id,
@@ -392,9 +390,7 @@ select throws_ok(
       and c.participant_a = '10000000-0000-4000-8000-000000000008'
     limit 1
   $$,
-  23514,
-  null,
-  'message CHECK rejects address pattern'
+  'message CHECK accepts an address the sender chose to share'
 );
 
 -- ── onda G Task 6: contexto `provider` e o nome do correspondente ────────────

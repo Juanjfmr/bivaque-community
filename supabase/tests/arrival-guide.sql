@@ -72,9 +72,11 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- Consulta a outra cidade (20260925161111): quem é de outra cidade consulta o Guia,
+-- mas só o aprovado.
 select is_empty(
-  'select 1 from public.arrival_guide_entries',
-  'cross-locality member sees no guide entries'
+  $$ select 1 from public.arrival_guide_entries where status <> 'approved' $$,
+  'cross-locality member sees only approved guide entries'
 );
 
 -- ── non-member sees nothing and cannot insert ─────────────────────────────

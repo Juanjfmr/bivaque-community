@@ -192,8 +192,10 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- Consulta a outra cidade (20260925161111): o catálogo inteiro é legível a quem tem
+-- cidade; o que se prova aqui é a leitura da própria.
 select results_eq(
-  'select slug from public.localities order by slug',
+  $$ select slug from public.localities where slug = 'manaus-am' $$,
   $$ values ('manaus-am'::text) $$,
   'verified member reads Manaus'
 );

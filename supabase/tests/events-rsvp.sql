@@ -156,9 +156,11 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- Consulta a outra cidade (20260925161111): encontro de alcance cidade é consultável;
+-- de comunidade e de grupo, não.
 select is_empty(
-  'select 1 from public.events',
-  'cross-locality user sees no events from another locality'
+  $$ select 1 from public.events where community_id is not null or group_id is not null $$,
+  'cross-locality user sees no community or group events from another locality'
 );
 
 select is_empty(

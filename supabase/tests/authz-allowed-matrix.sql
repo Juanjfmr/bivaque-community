@@ -134,8 +134,10 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- Consulta a outra cidade (20260925161111): o catálogo inteiro é legível a quem tem
+-- cidade; o que se prova aqui é a leitura da própria.
 select results_eq(
-  'select slug from public.localities order by slug',
+  $$ select slug from public.localities where slug = 'manaus-am' $$,
   $$ values ('manaus-am'::text) $$,
   'verified holder reads the Manaus locality'
 );
@@ -162,8 +164,10 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- Consulta a outra cidade (20260925161111): o catálogo inteiro é legível a quem tem
+-- cidade; o que se prova aqui é a leitura da própria.
 select results_eq(
-  'select slug from public.localities order by slug',
+  $$ select slug from public.localities where slug = 'manaus-am' $$,
   $$ values ('manaus-am'::text) $$,
   'accepted family member (also a Manaus member) reads Manaus'
 );
@@ -190,8 +194,10 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- Consulta a outra cidade (20260925161111): o catálogo inteiro é legível a quem tem
+-- cidade; o que se prova aqui é a leitura da própria.
 select results_eq(
-  'select slug from public.localities order by slug',
+  $$ select slug from public.localities where slug = 'manaus-am' $$,
   $$ values ('manaus-am'::text) $$,
   'unverified locality member can still read their own locality'
 );

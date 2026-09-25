@@ -1,13 +1,17 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(21);
 
 \ir fixtures/foundation.inc
 \ir fixtures/events.inc
 \ir fixtures/authz.inc
 
--- ── venue CHECK constraint: rejects personal/residential/military addresses ──
+-- ── o local é escolha de quem organiza (migration 20260925174442) ─────────
+-- Até 25/09/2026 o banco recusava endereço e instalação militar no local. O
+-- dono revogou as duas travas ("a liberdade é dele"; "são localizações que são
+-- encontradas no Google"). O que antes era recusa aqui vira aceitação, e o
+-- limite de tamanho passa a valer no banco.
 
 set local role authenticated;
 select set_config(
@@ -17,7 +21,7 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.events (organizer_id, locality_id, title, starts_at, venue)
     values (
@@ -28,12 +32,10 @@ select throws_ok(
       'Rua das Flores, 123'
     )
   $$,
-  23514,
-  null,
-  'venue CHECK rejects value containing "Rua"'
+  'venue aceita "Rua" por escolha de quem organiza'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.events (organizer_id, locality_id, title, starts_at, venue)
     values (
@@ -44,12 +46,10 @@ select throws_ok(
       'Avenida Principal, 456'
     )
   $$,
-  23514,
-  null,
-  'venue CHECK rejects value containing "Avenida"'
+  'venue aceita "Avenida" por escolha de quem organiza'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.events (organizer_id, locality_id, title, starts_at, venue)
     values (
@@ -60,12 +60,10 @@ select throws_ok(
       'Quartel General'
     )
   $$,
-  23514,
-  null,
-  'venue CHECK rejects value containing "Quartel"'
+  'venue aceita "Quartel" por escolha de quem organiza'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.events (organizer_id, locality_id, title, starts_at, venue)
     values (
@@ -76,12 +74,10 @@ select throws_ok(
       'Condomínio Residencial Bela Vista'
     )
   $$,
-  23514,
-  null,
-  'venue CHECK rejects value containing "Condomínio" or "Residencial"'
+  'venue aceita "Condomínio" or "Residencial" por escolha de quem organiza'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.events (organizer_id, locality_id, title, starts_at, venue)
     values (
@@ -92,12 +88,10 @@ select throws_ok(
       'Endereço: Rua X'
     )
   $$,
-  23514,
-  null,
-  'venue CHECK rejects value containing "Endereço"'
+  'venue aceita "Endereço" por escolha de quem organiza'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.events (organizer_id, locality_id, title, starts_at, venue)
     values (
@@ -108,12 +102,10 @@ select throws_ok(
       'Base Aérea de Manaus'
     )
   $$,
-  23514,
-  null,
-  'venue CHECK rejects value containing "Base Aérea"'
+  'venue aceita "Base Aérea" por escolha de quem organiza'
 );
 
-select throws_ok(
+select lives_ok(
   $$
     insert into public.events (organizer_id, locality_id, title, starts_at, venue)
     values (
@@ -124,9 +116,23 @@ select throws_ok(
       'CEP 69000-000'
     )
   $$,
+  'venue aceita "CEP" por escolha de quem organiza'
+);
+
+select throws_ok(
+  $$
+    insert into public.events (organizer_id, locality_id, title, starts_at, venue)
+    values (
+      '10000000-0000-4000-8000-000000000001',
+      '00000000-0000-4000-8000-000000000001',
+      'Evento Longo',
+      '2026-09-10 10:00:00+00',
+      repeat('x', 201)
+    )
+  $$,
   23514,
   null,
-  'venue CHECK rejects value containing "CEP"'
+  'venue passa de 200 caracteres e é recusado pelo banco'
 );
 
 -- ── valid venues pass CHECK ─────────────────────────────────────────────────
@@ -327,7 +333,7 @@ select throws_ok(
   'waitlist user cannot create an event'
 );
 
--- ── organizer cannot set venue to a residential address ─────────────────────
+-- ── organizer sets a free-text venue ───────────────────────────────────────
 
 set local role authenticated;
 select set_config(

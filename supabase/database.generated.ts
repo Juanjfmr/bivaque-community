@@ -1084,6 +1084,7 @@ export type Database = {
       }
       listings: {
         Row: {
+          address: string | null
           available_until: string | null
           category: string | null
           closed_at: string | null
@@ -1104,6 +1105,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           available_until?: string | null
           category?: string | null
           closed_at?: string | null
@@ -1124,6 +1126,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           available_until?: string | null
           category?: string | null
           closed_at?: string | null
