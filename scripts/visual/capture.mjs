@@ -1630,6 +1630,17 @@ async function main() {
           // Prancha 60, painel direito: a conexão cai com o texto já escrito. O
           // cenário escreve, CORTA a rede do contexto e tenta publicar — o que
           // se captura é o estado real que a pessoa vê, com o rascunho no lugar.
+          // A audiência pode terminar de carregar depois do primeiro paint;
+          // cortar a rede antes disso produziria um botão legitimamente
+          // desabilitado, que não representa o estado de publicação.
+          await page.waitForFunction(
+            () => {
+              const button = document.querySelector('[data-testid="publish-submit"]')
+              return button instanceof HTMLButtonElement && !button.disabled
+            },
+            undefined,
+            { timeout: 15_000 },
+          )
           await context.setOffline(true)
           await page.getByTestId("publish-submit").click()
           await page
