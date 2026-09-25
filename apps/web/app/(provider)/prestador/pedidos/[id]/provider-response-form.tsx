@@ -1,7 +1,8 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useActionState, useEffect, useState } from "react"
+import { useActionState, useEffect, useRef, useState } from "react"
+import { newClientKey, shouldRotateClientKey } from "../../../../../lib/service-requests/client-key"
 import { FeedbackAlert } from "../../../../components/bivaque/feedback-alert"
 import { respondToRequestAction } from "../../actions"
 
@@ -12,26 +13,26 @@ interface ProviderResponseFormProps {
 
 type ResponseFormState = { error: string | null }
 
-function newClientKey(): string {
-  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`
-}
-
 /**
  * A chave é criada depois da hidratação e vive no estado do formulário. Um
- * duplo clique ou retry usa a mesma chave; depois de uma resposta aceita, uma
- * nova chave é gerada para que a próxima mensagem não seja deduplicada.
+ * duplo clique ou retry DO MESMO TEXTO usa a mesma chave; editar o texto depois
+ * de uma tentativa gera chave nova (senão o servidor devolveria a mensagem
+ * antiga), e uma resposta aceita também, para a próxima não ser deduplicada.
  */
 export function ProviderResponseForm({ requestId, conversationId }: ProviderResponseFormProps) {
   const router = useRouter()
   const [clientKey, setClientKey] = useState<string | null>(null)
   const [content, setContent] = useState("")
+  const lastSubmittedRef = useRef<string | null>(null)
   const [state, formAction, pending] = useActionState<ResponseFormState, FormData>(
     async (_previous, formData) => {
       const submittedContent =
         typeof formData.get("content") === "string" ? String(formData.get("content")) : content
+      lastSubmittedRef.current = submittedContent
       try {
         await respondToRequestAction(formData)
         setContent("")
+        lastSubmittedRef.current = null
         setClientKey(newClientKey())
         return { error: null }
       } catch {
@@ -63,7 +64,14 @@ export function ProviderResponseForm({ requestId, conversationId }: ProviderResp
           id="content"
           name="content"
           value={content}
-          onChange={(event) => setContent(event.target.value)}
+          onChange={(event) => {
+            const next = event.target.value
+            if (shouldRotateClientKey(lastSubmittedRef.current, next)) {
+              lastSubmittedRef.current = null
+              setClientKey(newClientKey())
+            }
+            setContent(next)
+          }}
           required
           maxLength={2000}
           rows={3}

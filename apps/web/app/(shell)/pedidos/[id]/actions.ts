@@ -25,6 +25,9 @@ export type SendMessageState =
   | { status: "error"; message: string }
   | { status: "session" }
 
+// `conflict`: o pedido terminou por outro caminho (a outra parte encerrou, ou
+// quem pediu cancelou) entre abrir a tela e confirmar. Não é erro para tentar
+// de novo: a tela avisa o que aconteceu e recarrega o estado final.
 export type CloseRequestState =
   | {
       status: "closed"
@@ -32,6 +35,7 @@ export type CloseRequestState =
       closedAt: string | null
       closedByUserId: string | null
     }
+  | { status: "conflict"; message: string }
   | { status: "error"; message: string }
   | { status: "session" }
 
@@ -41,8 +45,13 @@ export type CancelRequestState =
       cancelledAt: string | null
       cancelledByUserId: string | null
     }
+  | { status: "conflict"; message: string }
   | { status: "error"; message: string }
   | { status: "session" }
+
+export const CLOSE_CONFLICT_CANCELLED = "Este pedido já foi cancelado por quem pediu."
+export const CANCEL_CONFLICT_FINISHED =
+  "Este pedido já foi encerrado e não pode mais ser cancelado."
 
 export type EditRequestState =
   | { status: "saved"; description: string; whenText: string | null }
@@ -130,7 +139,8 @@ export async function closeRequest(requestId: string): Promise<CloseRequestState
     if (isSessionError(error.message)) return { status: "session" }
     revalidateRequestSurfaces(requestId)
     log.error("pedidos: close_service_request failed", { error: error.message })
-    return { status: "error", message: error.message }
+    // A frase do banco nunca chega à tela.
+    return { status: "error", message: "Não foi possível encerrar o pedido agora." }
   }
 
   const row = data as {
@@ -140,7 +150,7 @@ export async function closeRequest(requestId: string): Promise<CloseRequestState
   }
   if (row.status === "cancelled") {
     revalidateRequestSurfaces(requestId)
-    return { status: "error", message: "Este pedido já foi cancelado." }
+    return { status: "conflict", message: CLOSE_CONFLICT_CANCELLED }
   }
   revalidateRequestSurfaces(requestId)
   return {
@@ -160,6 +170,10 @@ export async function cancelRequest(requestId: string): Promise<CancelRequestSta
   if (error) {
     if (isSessionError(error.message)) return { status: "session" }
     revalidateRequestSurfaces(requestId)
+    if (error.message.includes("request already finished")) {
+      // Perdeu a corrida para um encerramento: conflito, não falha.
+      return { status: "conflict", message: CANCEL_CONFLICT_FINISHED }
+    }
     log.error("pedidos: cancel_service_request failed", { error: error.message })
     return { status: "error", message: "Não foi possível cancelar o pedido agora." }
   }
@@ -171,7 +185,7 @@ export async function cancelRequest(requestId: string): Promise<CancelRequestSta
   }
   if (row.status !== "cancelled") {
     revalidateRequestSurfaces(requestId)
-    return { status: "error", message: "Este pedido já foi encerrado." }
+    return { status: "conflict", message: CANCEL_CONFLICT_FINISHED }
   }
   revalidateRequestSurfaces(requestId)
   return {

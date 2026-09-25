@@ -25,7 +25,12 @@ vi.mock("@supabase/ssr", () => ({
 
 vi.mock("web/lib/logger", () => ({ log: { error: vi.fn() } }))
 
-import { cancelRequest } from "web/app/(shell)/pedidos/[id]/actions"
+import {
+  CANCEL_CONFLICT_FINISHED,
+  CLOSE_CONFLICT_CANCELLED,
+  cancelRequest,
+  closeRequest,
+} from "web/app/(shell)/pedidos/[id]/actions"
 
 const workspaceSource = readFileSync(
   join(import.meta.dirname, "../../../apps/web/app/(shell)/pedidos/[id]/request-workspace.tsx"),
@@ -64,6 +69,38 @@ describe("cancelamento de pedido pelo solicitante", () => {
     expect(workspaceSource).toContain("setStatus(request.status)")
     expect(workspaceSource).toContain("setCancelledAt(request.cancelledAt)")
     expect(workspaceSource).toContain("{closed ? (")
+  })
+
+  it("cancelar um pedido que acabou de ser encerrado é conflito, não falha genérica", async () => {
+    state.error = { message: "request already finished" }
+
+    const result = await cancelRequest("50000000-0000-4000-8000-0000000000a1")
+
+    expect(result).toEqual({ status: "conflict", message: CANCEL_CONFLICT_FINISHED })
+  })
+
+  it("encerrar um pedido cancelado é conflito com a frase do produto", async () => {
+    state.data = { status: "cancelled", closed_at: null, closed_by_user_id: null }
+
+    const result = await closeRequest("50000000-0000-4000-8000-0000000000a1")
+
+    expect(result).toEqual({ status: "conflict", message: CLOSE_CONFLICT_CANCELLED })
+  })
+
+  it("a frase do banco nunca chega à tela no encerramento", async () => {
+    state.error = { message: "request not found" }
+
+    const result = await closeRequest("50000000-0000-4000-8000-0000000000a1")
+
+    expect(result).toEqual({
+      status: "error",
+      message: "Não foi possível encerrar o pedido agora.",
+    })
+  })
+
+  it("a tela trata o conflito mostrando o estado final", () => {
+    expect(workspaceSource).toContain('result.status === "conflict"')
+    expect(workspaceSource).toContain("setCloseNotice(result.message)")
   })
 
   it("não transforma erro do servidor em sucesso", async () => {

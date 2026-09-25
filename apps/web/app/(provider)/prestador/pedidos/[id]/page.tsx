@@ -11,6 +11,7 @@ import {
   SERVICE_REQUEST_STATUS_LABELS,
   type ServiceRequestStatus,
 } from "../../../../../lib/service-requests/status"
+import { formatRequestDate } from "../../../../../lib/service-requests/tracking"
 import { createServerClient as createServiceClient } from "../../../../../lib/supabase/server"
 import { closeRequestAction } from "../../actions"
 import { ProviderResponseForm } from "./provider-response-form"
@@ -185,7 +186,7 @@ export default async function PrestadorPedidoPage({
       ) : (
         <p role="status" className="mt-6 text-sm text-muted">
           {request.status === "cancelled"
-            ? `Este pedido foi cancelado${request.cancelled_at ? ` em ${formatReceived(request.cancelled_at)}` : ""}. O histórico continua disponível.`
+            ? `Este pedido foi cancelado${request.cancelled_at ? ` em ${formatRequestDate(request.cancelled_at)}` : ""}. O histórico continua disponível.`
             : "Este pedido está encerrado. O histórico continua disponível."}
         </p>
       )}

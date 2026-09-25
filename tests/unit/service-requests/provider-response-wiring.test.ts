@@ -52,4 +52,13 @@ describe("resposta do prestador ao pedido (RECON-044)", () => {
     expect(detailPage).toContain("cancelled_at, cancelled_by_user_id")
     expect(detailPage).toContain("request.cancelled_at")
   })
+
+  it("o cancelamento mostra a data, não um tempo relativo", () => {
+    expect(detailPage).toContain("formatRequestDate(request.cancelled_at)")
+    expect(detailPage).not.toContain("formatReceived(request.cancelled_at)")
+  })
+
+  it("texto editado depois de uma tentativa gera chave nova", () => {
+    expect(responseForm).toContain("shouldRotateClientKey(lastSubmittedRef.current, next)")
+  })
 })

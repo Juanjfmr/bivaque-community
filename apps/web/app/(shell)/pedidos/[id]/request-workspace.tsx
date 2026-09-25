@@ -264,6 +264,14 @@ export function RequestWorkspace({
       setSessionExpired(true)
       return
     }
+    if (result.status === "conflict") {
+      // Outro caminho terminou o pedido: diz o que aconteceu e mostra o
+      // estado final, sem pedir nova tentativa.
+      setConfirmingClose(false)
+      setCloseNotice(result.message)
+      router.refresh()
+      return
+    }
     if (result.status === "error") {
       setCloseError("Não foi possível encerrar agora. Tente novamente.")
       router.refresh()
@@ -288,6 +296,12 @@ export function RequestWorkspace({
 
     if (result.status === "session") {
       setSessionExpired(true)
+      return
+    }
+    if (result.status === "conflict") {
+      setConfirmingCancel(false)
+      setCloseNotice(result.message)
+      router.refresh()
       return
     }
     if (result.status === "error") {
