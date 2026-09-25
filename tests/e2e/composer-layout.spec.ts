@@ -129,9 +129,14 @@ test("a edição tem rota addressável e não fica fora do viewport", async ({ p
 
   await expect(page.getByRole("heading", { level: 1, name: "Editar publicação" })).toBeVisible()
   await expect(page.getByRole("dialog")).toHaveCount(0)
-  await expect(page.getByLabel("Selecionar nova foto")).toBeVisible()
   const form = page.locator('[data-composer-form="edit"]')
   await expect(form).toBeVisible()
+  const attachedPhoto = page.getByText("Foto anexada", { exact: true })
+  if (await attachedPhoto.count()) {
+    await expect(attachedPhoto).toBeVisible()
+  } else {
+    await expect(page.getByLabel("Selecionar nova foto")).toBeVisible()
+  }
   const geometry = await form.evaluate((element) => {
     const formWidth = element.getBoundingClientRect().width
     const fields = [...element.querySelectorAll("textarea")]

@@ -69,7 +69,8 @@ body {
 }
 
 @layer components {
-  button[data-slot="close-button"] {
+  button[data-slot="close-button"],
+  button.close-button {
     min-width: 44px;
     min-height: 44px;
   }
