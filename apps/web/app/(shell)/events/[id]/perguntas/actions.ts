@@ -55,6 +55,9 @@ function friendlyQuestionError(message: string | undefined): string {
   if (message.includes("blocked")) {
     return "Não é possível enviar a esta pessoa."
   }
+  if (message.includes("recipient unavailable") || message.includes("account unavailable")) {
+    return "Esta conversa não está mais disponível."
+  }
   if (message.includes("cannot access event") || message.includes("event not found")) {
     return "Você não tem acesso a este evento."
   }

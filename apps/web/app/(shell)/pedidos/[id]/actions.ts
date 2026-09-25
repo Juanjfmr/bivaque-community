@@ -5,10 +5,15 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { log } from "../../../../lib/logger"
 import {
+  CANCEL_CONFLICT_FINISHED,
+  CLOSE_CONFLICT_CANCELLED,
+} from "../../../../lib/service-requests/conflict-messages"
+import {
   type ServiceRequestStatus,
   validateEditDescription,
   validateMessageContent,
 } from "../../../../lib/service-requests/tracking"
+import { REQUEST_TERMINAL_MESSAGE } from "../../../components/bivaque/message-delivery"
 
 // RECON-023 — as escritas do acompanhamento do pedido.
 //
@@ -48,10 +53,6 @@ export type CancelRequestState =
   | { status: "conflict"; message: string }
   | { status: "error"; message: string }
   | { status: "session" }
-
-export const CLOSE_CONFLICT_CANCELLED = "Este pedido já foi cancelado por quem pediu."
-export const CANCEL_CONFLICT_FINISHED =
-  "Este pedido já foi encerrado e não pode mais ser cancelado."
 
 export type EditRequestState =
   | { status: "saved"; description: string; whenText: string | null }
@@ -110,10 +111,7 @@ export async function sendRequestMessage(input: {
     if (isSessionError(error.message)) return { status: "session" }
     if (error.message.includes("request is terminal")) {
       revalidateRequestSurfaces(input.requestId)
-      return {
-        status: "error",
-        message: "Este pedido está encerrado e não aceita novas mensagens.",
-      }
+      return { status: "error", message: REQUEST_TERMINAL_MESSAGE }
     }
     log.error("pedidos: send_conversation_message failed", { error: error.message })
     return { status: "error", message: "Não foi possível enviar a mensagem agora." }

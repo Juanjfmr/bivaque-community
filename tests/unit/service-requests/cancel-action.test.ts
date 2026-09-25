@@ -25,12 +25,11 @@ vi.mock("@supabase/ssr", () => ({
 
 vi.mock("web/lib/logger", () => ({ log: { error: vi.fn() } }))
 
+import { cancelRequest, closeRequest } from "web/app/(shell)/pedidos/[id]/actions"
 import {
   CANCEL_CONFLICT_FINISHED,
   CLOSE_CONFLICT_CANCELLED,
-  cancelRequest,
-  closeRequest,
-} from "web/app/(shell)/pedidos/[id]/actions"
+} from "web/lib/service-requests/conflict-messages"
 
 const workspaceSource = readFileSync(
   join(import.meta.dirname, "../../../apps/web/app/(shell)/pedidos/[id]/request-workspace.tsx"),
@@ -104,7 +103,7 @@ describe("cancelamento de pedido pelo solicitante", () => {
   })
 
   it("não transforma erro do servidor em sucesso", async () => {
-    state.error = { message: "only the requester cancels" }
+    state.error = { message: "request not found" }
 
     const result = await cancelRequest("50000000-0000-4000-8000-0000000000a1")
 

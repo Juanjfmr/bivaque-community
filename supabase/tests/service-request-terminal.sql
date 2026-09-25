@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(15);
+select plan(20);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -133,7 +133,7 @@ select throws_ok(
 );
 
 -- INSERT DIRETO em dm_messages (fora da RPC): a policy de insert não olha o
--- pedido; o gatilho dm_messages_guard_request_state é quem recusa.
+-- pedido; o gatilho dm_messages_guard_insert é quem recusa.
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000027', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
@@ -236,6 +236,104 @@ select throws_ok(
   '42501',
   'request not found',
   'cancelar pedido de outra pessoa usa a mesma frase de inexistente'
+);
+
+-- Conversa ANTIGA do par (tipo provider, anterior à conversa por pedido de
+-- 22/09) com um pedido terminal pendurado: é o chat geral das duas pessoas e
+-- continua aceitando mensagem — o gatilho só vigia conversa de pedido.
+set local role postgres;
+insert into public.dm_conversations (id, participant_a, participant_b, context_type, context_id)
+values (
+  '41000000-0000-4000-8000-0000000000f7',
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000027',
+  'provider',
+  '30000000-0000-4000-8000-000000000027'
+);
+update public.service_requests
+   set conversation_id = '41000000-0000-4000-8000-0000000000f7'
+ where idempotency_key = 'terminal-cancelled';
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select lives_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    values (
+      '41000000-0000-4000-8000-0000000000f7',
+      '10000000-0000-4000-8000-000000000001',
+      'Chat geral do par segue aberto'
+    )
+  $$,
+  'conversa antiga do par com pedido terminal continua aceitando o chat geral'
+);
+
+-- Quem NÃO participa recebe a recusa da RLS (42501), nunca a do estado do
+-- pedido (22023): a resposta não pode contar que a conversa existe nem que o
+-- pedido terminou.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select throws_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    values (
+      (select conversation_id from public.service_requests where idempotency_key = 'terminal-active'),
+      '10000000-0000-4000-8000-000000000003',
+      'Estranho sondando a conversa'
+    )
+  $$,
+  '42501',
+  'new row violates row-level security policy for table "dm_messages"',
+  'quem nao participa recebe a recusa da RLS, nao o estado do pedido'
+);
+select throws_ok(
+  $$ select public.close_service_request(
+       (select id from public.service_requests where idempotency_key = 'terminal-active')
+     ) $$,
+  '42501',
+  'request not found',
+  'encerrar pedido alheio usa a mesma frase de inexistente'
+);
+
+-- Conta em exclusão: o insert direto recusa como a RPC já recusava.
+set local role postgres;
+insert into public.account_deletion_requests (user_id, due_at)
+values ('10000000-0000-4000-8000-000000000027', now() + interval '30 days');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select throws_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    values (
+      '41000000-0000-4000-8000-0000000000f7',
+      '10000000-0000-4000-8000-000000000001',
+      'Mensagem para conta em exclusao'
+    )
+  $$,
+  '42501',
+  'recipient unavailable',
+  'insert direto para conta em exclusao e recusado'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000027', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select throws_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    values (
+      '41000000-0000-4000-8000-0000000000f7',
+      '10000000-0000-4000-8000-000000000027',
+      'Conta em exclusao tentando enviar'
+    )
+  $$,
+  '42501',
+  'account unavailable',
+  'conta em exclusao nao envia por insert direto'
 );
 
 select * from finish();

@@ -1,64 +1,104 @@
--- Estado terminal dos pedidos também no INSERT direto (RECON-023/024).
+-- Regras de envio também no INSERT direto em dm_messages (RECON-023/024).
 --
 -- 20260924005748 travou a RPC send_conversation_message, mas `authenticated`
 -- mantém `insert` em public.dm_messages (20260802001500:97) e a policy
 -- dm_messages_insert_sender só confere remetente, participante e bloqueio.
--- Um participante conseguia gravar num pedido closed/cancelled com um POST
--- direto em /rest/v1/dm_messages. A regra passa a morar num gatilho BEFORE
+-- O chat de /messages grava direto na tabela, então um participante gravava
+-- num pedido closed/cancelled, e também numa conversa com conta em exclusão —
+-- duas regras que só a RPC aplicava. Elas passam a morar num gatilho BEFORE
 -- INSERT, que vale para a RPC e para o insert direto:
 --
---   * conversa sem pedido vinculado (DM de contexto, pergunta de evento)
---     segue livre — o gatilho não muda nada ali;
---   * conversa com pedido: aceita enquanto houver PELO MENOS UM pedido não
---     terminal. Conversa antiga compartilhada por mais de um pedido do par
---     não fica muda porque um deles terminou.
+--   * quem NÃO participa da conversa sai sem consulta nenhuma: a policy
+--     recusa com 42501. O gatilho roda antes da RLS e com privilégio de dono;
+--     responder outra coisa a um estranho (ou travar os pedidos dele) diria
+--     que a conversa existe e em que estado está;
+--   * conta em exclusão (remetente ou destinatário): recusa em qualquer
+--     conversa, com as mesmas frases da RPC;
+--   * pedido terminal: só conversa DE PEDIDO (context_type = 'service_request',
+--     criada por create_service_request desde 20260922160100) é vigiada, e
+--     aceita enquanto houver PELO MENOS UM pedido não terminal ligado a ela.
+--     Conversa de outro tipo segue livre, MESMO que carregue pedidos antigos:
+--     até 22/09 o pedido reaproveitava a conversa do par (`provider`,
+--     `event_question`…), que é o chat geral das duas pessoas — encerrar um
+--     pedido antigo não pode calar esse chat (open_conversation sempre devolve
+--     a mesma conversa do par). Nessas conversas a trava continua na RPC, que a
+--     página do pedido usa.
 --
--- `for share` nos pedidos serializa com close/cancel (que usam `for update`):
--- se o encerramento ganhou a corrida, o gatilho enxerga o estado final.
+-- `for share`, em ordem de id, serializa com close/cancel (que usam
+-- `for update`): se o encerramento ganhou a corrida, o gatilho enxerga o
+-- estado final; a ordem fixa evita ciclo de espera entre transações que travam
+-- os mesmos pedidos.
 --
 -- A RPC passa a preferir um pedido ativo ao escolher qual pedido da conversa
 -- avançar, e close/cancel usam a mesma frase para inexistente e não
 -- autorizado.
 
-create function private.guard_dm_message_request_state()
+-- O gatilho procura os pedidos da conversa a cada mensagem gravada.
+create index if not exists service_requests_conversation_idx
+  on public.service_requests (conversation_id);
+
+create function private.guard_dm_message_insert()
 returns trigger
 language plpgsql
 security definer
 set search_path to ''
 as $function$
 declare
-  v_linked boolean;
-  v_active boolean;
+  v_conv public.dm_conversations%rowtype;
+  v_other uuid;
 begin
-  perform 1
-    from public.service_requests r
-   where r.conversation_id = new.conversation_id
-   for share;
-  v_linked := found;
-  if not v_linked then
+  select * into v_conv
+    from public.dm_conversations c
+   where c.id = new.conversation_id;
+  if not found
+     or new.sender_id is null
+     or new.sender_id not in (v_conv.participant_a, v_conv.participant_b) then
+    -- A RLS (dm_messages_insert_sender) é quem recusa, com 42501.
     return new;
   end if;
 
-  select exists (
+  if private.account_deletion_requested(new.sender_id) then
+    raise exception 'account unavailable' using errcode = '42501';
+  end if;
+  v_other := case
+    when v_conv.participant_a = new.sender_id then v_conv.participant_b
+    else v_conv.participant_a
+  end;
+  if private.account_deletion_requested(v_other) then
+    raise exception 'recipient unavailable' using errcode = '42501';
+  end if;
+
+  if v_conv.context_type <> 'service_request' then
+    return new;
+  end if;
+
+  perform 1
+    from public.service_requests r
+   where r.conversation_id = new.conversation_id
+   order by r.id
+   for share;
+  if not found then
+    return new;
+  end if;
+
+  if not exists (
     select 1
       from public.service_requests r
      where r.conversation_id = new.conversation_id
        and r.status in ('open', 'in_conversation')
-  ) into v_active;
-
-  if not v_active then
+  ) then
     raise exception 'request is terminal' using errcode = '22023';
   end if;
   return new;
 end;
 $function$;
 
-revoke all on function private.guard_dm_message_request_state() from public, anon, authenticated;
+revoke all on function private.guard_dm_message_insert() from public, anon, authenticated;
 
-create trigger dm_messages_guard_request_state
+create trigger dm_messages_guard_insert
 before insert on public.dm_messages
 for each row
-execute function private.guard_dm_message_request_state();
+execute function private.guard_dm_message_insert();
 
 
 CREATE OR REPLACE FUNCTION public.send_conversation_message(
