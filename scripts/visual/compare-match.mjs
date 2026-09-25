@@ -8,6 +8,15 @@
 // toda prancha de rota dinâmica parecia "sem captura" quando na verdade estava no disco.
 const DYNAMIC_SEGMENT = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
+// `[id]` é chave de banco e só casa com UUID — é o que separa /guide/sugerir
+// (rota estática) de /guide/[id]. Outros parâmetros (`[token]` de convite) não
+// têm formato fixo e casam com qualquer segmento não vazio.
+function segmentMatches(pattern, concrete) {
+  if (!pattern.startsWith("[")) return pattern === concrete
+  if (!concrete) return false
+  return pattern === "[id]" ? DYNAMIC_SEGMENT.test(concrete) : true
+}
+
 export function achadosPara(padrao, mapa) {
   const out = []
   const pSegs = padrao.split("/").filter(Boolean)
@@ -16,9 +25,7 @@ export function achadosPara(padrao, mapa) {
     if (padrao === "/publicacoes/[id]" && limpa === "/publicacoes/nova") continue
     const segs = limpa.split("/").filter(Boolean)
     if (pSegs.length !== segs.length) continue
-    if (
-      pSegs.every((s, i) => (s.startsWith("[") ? DYNAMIC_SEGMENT.test(segs[i]) : s === segs[i]))
-    ) {
+    if (pSegs.every((s, i) => segmentMatches(s, segs[i]))) {
       for (const dado of dados) out.push({ rota: concreta, dado })
     }
   }

@@ -25,6 +25,7 @@ import {
   type MyMembership,
   partitionCommunities,
   readCommunityUrlState,
+  reconcileSearchText,
   selectCommunityForResults,
   writeCommunityUrlState,
 } from "./communities-data"
@@ -193,19 +194,25 @@ export function CommunitiesScreen({
   )
 
   const [searchText, setSearchText] = useState(query)
+  // O termo que o PRÓPRIO campo mandou para a URL. Quando a navegação desse
+  // termo chega, a pessoa pode já ter digitado mais ("vila" na URL, "vila aj"
+  // no campo): essa volta não pode sobrescrever o campo.
+  const pushedQueryRef = useRef<string | null>(null)
   // Mudança de busca que veio de FORA do campo (limpar, voltar no histórico):
   // o campo acompanha a URL. O texto que só difere por espaço nas pontas é o
   // mesmo termo e fica como a pessoa digitou.
   useEffect(() => {
-    setSearchText((current) => (current.trim() === query ? current : query))
+    const pushed = pushedQueryRef.current
+    pushedQueryRef.current = null
+    setSearchText((current) => reconcileSearchText(current, query, pushed))
   }, [query])
   // Uma navegação por pausa na digitação, não por tecla.
   useEffect(() => {
     if (searchText.trim() === query) return
-    const timer = setTimeout(
-      () => updateUrl({ query: searchText, selectedId: null }, "replace"),
-      SEARCH_URL_DEBOUNCE_MS,
-    )
+    const timer = setTimeout(() => {
+      pushedQueryRef.current = searchText.trim()
+      updateUrl({ query: searchText, selectedId: null }, "replace")
+    }, SEARCH_URL_DEBOUNCE_MS)
     return () => clearTimeout(timer)
   }, [searchText, query, updateUrl])
 

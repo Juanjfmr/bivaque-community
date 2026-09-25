@@ -57,7 +57,8 @@ describe("a edição só anuncia sucesso quando o banco alterou a linha", () => 
 
   it("a edição volta para a tela de origem, validada pela allowlist", () => {
     expect(card).toContain("?origem=")
-    expect(card).toContain("encodeURIComponent(pathname)")
+    expect(card).toContain("window.location.pathname")
+    expect(card).toContain("window.location.search")
     expect(route).toContain('resolvePostLoginDestination([searchParams.get("origem")])')
     expect(route).not.toContain('router.push("/community")')
   })

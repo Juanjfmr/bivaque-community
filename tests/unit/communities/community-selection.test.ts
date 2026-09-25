@@ -5,6 +5,7 @@ import {
   type CommunityCard,
   currentLocalityId,
   readCommunityUrlState,
+  reconcileSearchText,
   selectCommunityForResults,
   writeCommunityUrlState,
 } from "web/app/(shell)/communities/communities-data"
@@ -109,5 +110,19 @@ describe("motivo do pedido", () => {
     expect(screenSource).not.toContain("value={query}")
     expect(screenSource).toContain("SEARCH_URL_DEBOUNCE_MS")
     expect(writeCommunityUrlState(new URLSearchParams(), { query: " vila aj " })).toBe("q=vila+aj")
+  })
+
+  it("a volta da URL que o próprio campo mandou não apaga o que continuou sendo digitado", () => {
+    // Enviou "vila"; enquanto a navegação carregava, a pessoa digitou "vila aj".
+    expect(reconcileSearchText("vila aj", "vila", "vila")).toBe("vila aj")
+  })
+
+  it("mudança vinda de fora (voltar no histórico, limpar) manda no campo", () => {
+    expect(reconcileSearchText("vila aj", "ajuricaba", null)).toBe("ajuricaba")
+    expect(reconcileSearchText("vila aj", "", null)).toBe("")
+  })
+
+  it("espaço nas pontas é o mesmo termo e fica como digitado", () => {
+    expect(reconcileSearchText("vila ", "vila", null)).toBe("vila ")
   })
 })

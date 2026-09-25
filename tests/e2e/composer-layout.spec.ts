@@ -62,6 +62,27 @@ test("edição de texto com foto envia um tipo de postagem válido", async ({ pa
     "photo",
   )
   await expect(page.getByText("Foto anexada", { exact: true })).toBeVisible()
+
+  // Remover a foto devolve o post a texto — e deixa o seed como estava, para
+  // os outros testes não dependerem da ordem de execução.
+  await page.getByRole("button", { name: "Remover foto" }).click()
+  const restorePromise = page.waitForResponse(
+    (candidate) =>
+      candidate.url().includes("/rest/v1/posts") && candidate.request().method() === "PATCH",
+    { timeout: 20_000 },
+  )
+  await page.getByTestId("edit-save-submit").click()
+  const restore = await restorePromise
+  expect(restore.status()).toBeLessThan(300)
+  expect(restore.request().postDataJSON()).toMatchObject({ post_type: "text", photo_path: null })
+
+  await page.goto("/publicacoes/80000000-0000-4000-8000-000000000f01/editar", {
+    waitUntil: "networkidle",
+  })
+  await expect(page.locator('[data-composer-form="edit"]')).toHaveAttribute(
+    "data-post-type",
+    "text",
+  )
 })
 
 test("erro de edição preserva o texto e mantém a rota disponível", async ({ page }) => {
@@ -131,12 +152,9 @@ test("a edição tem rota addressável e não fica fora do viewport", async ({ p
   await expect(page.getByRole("dialog")).toHaveCount(0)
   const form = page.locator('[data-composer-form="edit"]')
   await expect(form).toBeVisible()
-  const attachedPhoto = page.getByText("Foto anexada", { exact: true })
-  if (await attachedPhoto.count()) {
-    await expect(attachedPhoto).toBeVisible()
-  } else {
-    await expect(page.getByLabel("Selecionar nova foto")).toBeVisible()
-  }
+  // O teste da foto devolve o post a texto ao terminar: aqui o seed está no
+  // estado original, sem foto anexada.
+  await expect(page.getByLabel("Selecionar nova foto")).toBeVisible()
   const geometry = await form.evaluate((element) => {
     const formWidth = element.getBoundingClientRect().width
     const fields = [...element.querySelectorAll("textarea")]

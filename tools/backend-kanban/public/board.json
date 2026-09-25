@@ -3802,7 +3802,9 @@
         "2026-09-25: pgTAP no stack local, migrations pendentes aplicadas dentro da transação de cada teste (rollback): service-request-terminal 15/15, conversation-per-request 13/13, tracking 26/26, open-cap 8/8, event-questions 15/15, dm-context-allowed 26/26, dm-context-denials 25/25. RED: com o gatilho desligado os 3 asserts de insert direto falham.",
         "2026-09-25: suíte pgTAP completa (seed carregado por outra sessão no stack compartilhado) tem 56 falhas IDÊNTICAS com e sem a migration nova — contaminação de seed, não regressão.",
         "2026-09-25: gate verde (lint, typecheck, 1237+189+95 unit, 124 scope, secrets); supabase db lint sem erros.",
-        "Revisão independente (reviewer + security-auditor) de 25/09/2026 originou os itens; nenhuma prova de runtime (e2e/test:db em banco limpo) rodou ainda."
+        "Revisão independente (reviewer + security-auditor) de 25/09/2026 originou os itens; nenhuma prova de runtime (e2e/test:db em banco limpo) rodou ainda.",
+        "2026-09-25 (2ª rodada): service-request-terminal 20/20 com a migration aplicada na transação; RED com o gatilho desligado derruba 5 asserts (insert direto em pedido terminal e conta em exclusão). Suíte pgTAP completa: 1633 ok / 59 falhas IDÊNTICAS com e sem a migration (seed do stack compartilhado).",
+        "2026-09-25 (2ª rodada): tests/unit/architecture/use-server-exports.test.ts varre os arquivos \"use server\" e falha com export que não seja async function (provado injetando uma constante)."
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
@@ -3816,7 +3818,7 @@
       "priority": "P1",
       "category": "backend",
       "status": "now",
-      "description": "Revisão independente (reviewer + security-auditor, 25/09/2026) da branch de jornadas web e do merge com o PR #80. Corrigidos no código com testes; falta a prova de runtime independente (runtime-verifier: test:db em banco limpo e e2e) antes de fechar.",
+      "description": "Revisão independente (reviewer + security-auditor, duas rodadas em 25/09/2026) da branch de jornadas web, do merge com o PR #80 e da integração da branch codex/journey-ux-20260923. Corrigidos no código com testes; falta a prova de runtime independente (runtime-verifier: test:db em banco limpo e e2e) antes de fechar.",
       "checklist": [
         "Pedido terminal: INSERT direto em dm_messages recusado por gatilho (RPC e insert direto), conversa compartilhada aceita enquanto houver pedido ativo, close/cancel sem confirmar existência",
         "Destino pós-login e callback: /invite, /publicacoes e /prestador-convite na allowlist, com teste de cobertura contra as pastas de rota; caracteres de controle recusados",
@@ -3826,9 +3828,25 @@
         "Edição: sem ramo modal morto, foto removida vira text, zero linhas alteradas é falha, volta para a tela de origem",
         "Pedidos: conflito explícito ao encerrar/cancelar, data absoluta do cancelamento, chave de repetição gira quando o texto muda",
         "Rascunhos antigos (v1/v2) apagados; comparador visual falha fechado sem prova",
+        "2ª rodada: gatilho só vigia conversa de pedido (chat geral do par com pedido antigo segue livre), não responde a quem não participa, aplica a exclusão de conta também ao insert direto, trava em ordem de id e ganha índice em service_requests.conversation_id",
+        "2ª rodada: /messages e pergunta de evento mostram pedido encerrado / conversa indisponível em vez de 'verifique sua conexão'; frases de conflito fora do arquivo \"use server\" (quebraria o next build), com guarda de teste",
+        "2ª rodada: busca não perde o que foi digitado enquanto a URL carrega; edição volta com a query de origem; teste de edição restaura o seed; comparador casa [token] e exige UUID só em [id]",
         "Prova de runtime independente: test:db em banco limpo e os e2e listados"
       ],
-      "completedChecklist": [true, true, true, true, true, true, true, true, false]
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false
+      ]
     }
   ]
 }

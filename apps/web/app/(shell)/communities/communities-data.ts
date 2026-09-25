@@ -126,6 +126,18 @@ export function writeCommunityUrlState(
   return params.toString()
 }
 
+/**
+ * Texto do campo de busca quando a URL muda. `pushed` é o termo que o próprio
+ * campo mandou para a URL: a volta dele não sobrescreve o que a pessoa continuou
+ * digitando enquanto a navegação carregava. Mudança vinda de fora (voltar no
+ * histórico, limpar) manda; espaço nas pontas é o mesmo termo e fica como
+ * digitado.
+ */
+export function reconcileSearchText(current: string, query: string, pushed: string | null): string {
+  if (pushed === query) return current
+  return current.trim() === query ? current : query
+}
+
 export function currentLocalityId(
   memberships: Array<{ locality_id: string; kind: "current" | "leaving" }>,
 ): string | null {

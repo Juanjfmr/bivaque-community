@@ -187,6 +187,15 @@ test("segmento estático não casa com uma rota dinâmica", async () => {
   )
 })
 
+test("parâmetro que não é [id] casa com token de qualquer formato", async () => {
+  const { achadosPara } = await import("../../scripts/visual/compare-match.mjs")
+  const captures = new Map([["/invite/tok-abc123", [{ proof: { valid: true } }]]])
+  assert.deepEqual(
+    achadosPara("/invite/[token]", captures).map((item) => item.rota),
+    ["/invite/tok-abc123"],
+  )
+})
+
 test("both proof writers record whether the tree was dirty", () => {
   // A report that names only the commit attributes the evidence to code the
   // commit does not contain whenever the work is still uncommitted.
