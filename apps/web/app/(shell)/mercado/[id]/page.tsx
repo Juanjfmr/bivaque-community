@@ -57,7 +57,7 @@ export default function ListingDetailPage() {
     const { data, error } = await supabase
       .from("listings")
       .select(
-        "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,status,locality_id,community_id,created_at",
+        "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,address,status,locality_id,community_id,created_at",
       )
       .eq("id", listingId)
       .maybeSingle()
@@ -286,6 +286,13 @@ export default function ListingDetailPage() {
               <MapPin size={15} aria-hidden="true" />
               {listing.neighborhood}
             </p>
+            {/* Endereço por escolha de quem anuncia (migration 20260925174442). */}
+            {listing.address ? (
+              <p className="text-sm text-[var(--semantic-text-primary)]">
+                <span className="text-muted">Endereço: </span>
+                {listing.address}
+              </p>
+            ) : null}
           </div>
 
           <div className="border-t border-border pt-4">

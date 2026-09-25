@@ -20,6 +20,7 @@ const EMPTY: PropertyDraftInput = {
   areaM2: "",
   description: "",
   neighborhood: "",
+  address: "",
   availableFrom: "",
 }
 

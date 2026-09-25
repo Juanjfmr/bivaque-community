@@ -1,27 +1,24 @@
 "use client"
 
-import { Button, Tabs } from "@heroui/react"
-import { Clock, MapPin } from "lucide-react"
-import type { Route } from "next"
+import { Tabs } from "@heroui/react"
+import { ChevronRight } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { MemberAvatar } from "../../components/bivaque/avatar"
-import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedPost, type FeedPostProps } from "../../components/bivaque/feed-post"
-import { EventsIllustration } from "../../components/bivaque/illustrations"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
-import { eventDateChip, formatEventTimePtBr } from "./formatters"
+import { Button, ButtonLink } from "../../components/ui/button"
+import { EmptyBlock } from "../../components/ui/panel"
 import {
-  buildGoingLine,
   createRequestGuard,
   loadCommunityFeed,
   loadFollowedFeed,
-  type NextEvent,
   type PrimaryCommunity,
 } from "./home-loaders"
+import { NewBadge } from "./hub-section"
+import { newLabel } from "./hub-view"
+import { countInWindow, type NoveltyWindow } from "./novelty"
 
 // RECON-002 (prancha 01): seção "Na comunidade".
 //
@@ -57,9 +54,11 @@ interface CommunitySectionProps {
   onPublish: () => void
   // Incrementado pela página quando uma publicação é criada — recarrega o feed.
   refreshKey: number
-  // Evento próximo da localidade, já resolvido pela página (mesmo evento do
-  // rail "Seu próximo encontro"): a prancha 01 desenha o card no feed também.
-  event: NextEvent | null
+  // No Início a seção é uma PRÉVIA (o feed inteiro mora em /community): só os
+  // primeiros posts de cada aba, com "Ver tudo" levando ao resto.
+  previewLimit?: number
+  // Janela da última visita: o selo "3 novas" ao lado do nome da comunidade.
+  novelty?: NoveltyWindow | null
 }
 
 export function CommunitySection({
@@ -67,7 +66,8 @@ export function CommunitySection({
   onRetryPrimary,
   onPublish,
   refreshKey,
-  event,
+  previewLimit = 3,
+  novelty = null,
 }: CommunitySectionProps) {
   const [posts, setPosts] = useState<FeedPostRow[]>([])
   // "idle" cobre o frame entre a comunidade ficar pronta e o efeito disparar:
@@ -82,7 +82,6 @@ export function CommunitySection({
   // A cada visita à aba, o feed de acompanhados é relido: um follow novo no
   // cartão (ou um desfollow) aparece sem exigir refresh da página.
   const [followReload, setFollowReload] = useState(0)
-  const router = useRouter()
   const supabase = createBrowserClient()
   const guardRef = useRef(createRequestGuard())
   const followGuardRef = useRef(createRequestGuard())
@@ -156,7 +155,7 @@ export function CommunitySection({
         <FeedCardSkeleton />
       </div>
     ) : followedPosts.length === 0 ? (
-      <EmptyState
+      <EmptyBlock
         title="Você ainda não acompanha publicações"
         description={
           'Toque em "Acompanhar" em uma publicação para acompanhar as respostas por aqui.'
@@ -165,6 +164,7 @@ export function CommunitySection({
     ) : (
       followedPosts
         .filter((post) => !hiddenPostIds.has(post.id))
+        .slice(0, previewLimit)
         .map((post, index) => (
           <FeedPost key={post.id} post={post} index={index} onHide={handleHidePost} />
         ))
@@ -177,11 +177,11 @@ export function CommunitySection({
         <FeedCardSkeleton />
       </div>
     ) : posts.length === 0 ? (
-      <EmptyState
+      <EmptyBlock
         title="Nenhuma publicação ainda"
         description="Seja o primeiro a compartilhar algo com a sua comunidade."
         action={
-          <Button size="sm" variant="primary" className="min-h-11" onPress={onPublish}>
+          <Button variant="primary" onClick={onPublish}>
             Publicar
           </Button>
         }
@@ -189,37 +189,52 @@ export function CommunitySection({
     ) : (
       posts
         .filter((post) => !hiddenPostIds.has(post.id))
-        .flatMap((post, index) => {
-          // A prancha 01 intercala o card do evento próximo entre as
-          // publicações do feed; sem evento (ou com consulta que falhou) o
-          // feed segue só com posts — nunca um card com dado pendurado.
-          const showEvent = index === 0 && event !== null
-          const cards: React.ReactNode[] = [
-            <FeedPost key={post.id} post={post} index={index} onHide={handleHidePost} />,
-          ]
-          if (showEvent) {
-            cards.push(<FeedEventCard key="feed-event-card" event={event} />)
-          }
-          return cards
-        })
+        .slice(0, previewLimit)
+        .map((post, index) => (
+          <FeedPost key={post.id} post={post} index={index} onHide={handleHidePost} />
+        ))
     )
 
+  // Contado sobre o feed lido (o mesmo que a prévia recorta), só na aba Recentes.
+  const newPosts =
+    novelty && phase === "done" && !error
+      ? countInWindow(
+          posts.map((post) => post.created_at),
+          novelty,
+        )
+      : 0
+
+  const hasMore =
+    primary.status === "ready" &&
+    (tab === "recentes"
+      ? phase === "done" && !error && posts.length > previewLimit
+      : followPhase === "done" && !followError && followedPosts.length > previewLimit)
+
   return (
-    <section aria-labelledby="na-comunidade-titulo">
-      {/* A 375 o título e as abas NÃO cabem na mesma linha: "Na comunidade" mede
-          126 px e o par Recentes/Acompanhando pede ~240 px, contra ~343 px de
-          largura útil — o `justify-between` espremia o h2 para 103 px e ele
-          quebrava em duas linhas (h=56), contra uma linha a 768 e 1440 (h=28).
-          Abaixo de `sm` os dois empilham, cada um com a largura inteira, e o h2
-          volta a uma linha. A prancha 00 painel 2 resolve o mesmo aperto
-          trocando as duas abas por um seletor compacto ("Recentes ⌄"); como
-          este app não tem essa variante de Tabs, empilhar é a adaptação honesta
-          que não inventa um controle novo nem deixa o título truncado. De `sm`
-          para cima o arranjo é exatamente o de antes. */}
-      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-        <h2 id="na-comunidade-titulo" className="text-lg font-semibold tracking-tight">
-          Na comunidade
-        </h2>
+    <section id="secao-comunidade" aria-labelledby="na-comunidade-titulo" className="scroll-mt-16">
+      {/* Cabeçalho da prévia: o nome da comunidade e "Ver tudo" na mesma linha,
+          e as abas coladas logo abaixo, sobre uma linha que atravessa a coluna
+          (referência: Threads). Nada disputa a linha com o título a 375. */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 id="na-comunidade-titulo" className="min-w-0 text-base font-semibold text-ui-ink">
+            <span className="block truncate">
+              {primary.status === "ready" && primary.name ? primary.name : "Na sua comunidade"}
+            </span>
+          </h2>
+          {newPosts > 0 ? <NewBadge label={newLabel(newPosts, "f")} /> : null}
+        </div>
+        {primary.status === "ready" ? (
+          <Link
+            href="/community"
+            className="-mr-2 inline-flex min-h-11 shrink-0 items-center gap-1 rounded-ui px-2 text-sm font-semibold text-ui-brand transition-colors hover:bg-ui-subtle"
+          >
+            Ver tudo
+            <ChevronRight size={16} aria-hidden="true" />
+          </Link>
+        ) : null}
+      </div>
+      <div className="border-b border-ui-line">
         <Tabs
           aria-label="Conteúdo da comunidade"
           selectedKey={tab}
@@ -238,7 +253,7 @@ export function CommunitySection({
         </Tabs>
       </div>
 
-      <div className="mt-3 space-y-3">
+      <div className="mt-3 space-y-4">
         {primary.status === "loading" ? (
           <div className="space-y-2" aria-busy="true">
             <FeedCardSkeleton />
@@ -250,18 +265,13 @@ export function CommunitySection({
             onRetry={onRetryPrimary}
           />
         ) : primary.status === "none" ? (
-          <EmptyState
+          <EmptyBlock
             title="Você ainda não participa de uma comunidade"
             description="Peça para entrar em uma comunidade perto de você para ver as publicações aqui."
             action={
-              <Button
-                size="sm"
-                variant="primary"
-                className="min-h-11"
-                onPress={() => router.push("/communities")}
-              >
+              <ButtonLink href="/communities" variant="primary">
                 Ver comunidades
-              </Button>
+              </ButtonLink>
             }
           />
         ) : tab === "acompanhando" ? (
@@ -275,76 +285,16 @@ export function CommunitySection({
         ) : (
           recentesListView
         )}
+        {hasMore ? (
+          <Link
+            href="/community"
+            className="flex min-h-11 items-center justify-center gap-1 rounded-ui-lg bg-ui-surface text-sm font-semibold text-ui-brand shadow-ui ring-1 ring-ui-line transition-colors hover:bg-ui-subtle"
+          >
+            Ver todas as publicações
+            <ChevronRight size={16} aria-hidden="true" />
+          </Link>
+        ) : null}
       </div>
     </section>
-  )
-}
-
-// Card do evento próximo no feed (prancha 01: "Café entre vizinhos" com foto,
-// chip de data, presença e "Ver evento"). A foto larga é placeholder honesto
-// — o seed ainda não carrega imagens de evento; o chip e a linha de presença
-// vêm dos mesmos formatters do rail "Seu próximo encontro".
-function FeedEventCard({ event }: { event: NextEvent }) {
-  const chip = eventDateChip(event.startsAt)
-  const time = formatEventTimePtBr(event.startsAt)
-  const goingAttendees = event.goingAttendees.slice(0, 3)
-  const peopleLine = buildGoingLine(
-    goingAttendees.map((attendee) => attendee.name),
-    event.goingCount ?? 0,
-  )
-
-  return (
-    <Link
-      href={("/events/" + event.id) as Route}
-      className="group overflow-hidden rounded-2xl border border-border bg-[var(--semantic-surface)] shadow-[var(--semantic-elevation-raised)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-      aria-label={"Ver evento: " + event.title}
-    >
-      <div className="relative">
-        <div
-          className="flex h-32 items-center justify-center bg-[var(--semantic-surface-sunken)]"
-          aria-hidden="true"
-        >
-          <EventsIllustration className="h-14 w-20" />
-        </div>
-        <div className="absolute bottom-3 left-3 flex w-12 flex-col items-center rounded-lg bg-[var(--semantic-surface)] py-1.5 text-center shadow-sm">
-          <span className="text-xs font-semibold uppercase tracking-wide">{chip.weekday}</span>
-          <span className="text-lg font-semibold leading-tight">{chip.day}</span>
-        </div>
-      </div>
-      <div className="flex items-center justify-between gap-3 p-4">
-        <div className="min-w-0">
-          <p className="truncate text-base font-semibold tracking-tight">{event.title}</p>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted">
-            <Clock size={14} aria-hidden="true" />
-            <span>{time}</span>
-            {event.venue ? (
-              <>
-                <span aria-hidden="true">·</span>
-                <MapPin size={14} aria-hidden="true" />
-                <span className="truncate">{event.venue}</span>
-              </>
-            ) : null}
-          </p>
-          {peopleLine ? (
-            <div className="mt-2 flex items-center gap-2">
-              <div className="flex -space-x-2" aria-hidden="true">
-                {goingAttendees.map((attendee) => (
-                  <MemberAvatar
-                    key={attendee.userId}
-                    name={attendee.name}
-                    size="sm"
-                    className="ring-2 ring-[var(--semantic-surface)]"
-                  />
-                ))}
-              </div>
-              <p className="text-xs text-muted">{peopleLine}</p>
-            </div>
-          ) : null}
-        </div>
-        <span className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] group-hover:bg-[var(--semantic-selected)]">
-          Ver evento
-        </span>
-      </div>
-    </Link>
   )
 }

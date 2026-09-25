@@ -29,28 +29,34 @@ export function InicioGreeting({ communityName }: InicioGreetingProps) {
     setNow(new Date())
   }, [])
 
+  // Duas linhas, não três: a saudação é o h1, e lugar e data dividem uma linha
+  // de apoio. O feed começa mais perto do topo (referência: Nextdoor).
   return (
-    <header className="pt-2">
-      <p className="text-sm text-muted">
-        {communityName ? (
-          <>
-            <span className="font-medium text-foreground">{communityName}</span>
-            {" · "}
-          </>
-        ) : null}
-        {current.cityName}
-      </p>
+    <header>
       {now === null ? (
-        <div className="mt-1 space-y-2" aria-busy="true">
-          <Skeleton className="h-9 w-64 max-w-full rounded-lg" />
-          <Skeleton className="h-4 w-40 max-w-full rounded" />
+        <div className="space-y-2" aria-busy="true">
+          <Skeleton className="h-8 w-56 max-w-full rounded-ui" />
+          <Skeleton className="h-4 w-72 max-w-full rounded-ui" />
         </div>
       ) : (
         <>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="text-2xl leading-tight font-semibold tracking-tight text-ui-ink sm:text-[1.75rem]">
             {greetingFor(now.getHours())}, {firstNameOf(displayName)}.
           </h1>
-          <p className="mt-1 text-sm text-muted">{formatTodayPtBr(now)}</p>
+          <p className="mt-1 text-sm text-ui-ink-2">
+            {communityName ? (
+              <>
+                <span className="font-medium text-ui-ink">{communityName}</span>
+                <span aria-hidden="true"> · </span>
+              </>
+            ) : null}
+            <span className="font-medium text-ui-brand">{current.cityName}</span>
+            {/* A data só entra de sm para cima: a 375 ela quebrava a linha. */}
+            <span className="hidden sm:inline">
+              <span aria-hidden="true"> · </span>
+              {formatTodayPtBr(now)}
+            </span>
+          </p>
         </>
       )}
     </header>

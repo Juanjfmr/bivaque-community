@@ -214,7 +214,7 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
             maxLength={200}
           />
           <p className="text-xs text-muted">
-            O local deve ser um espaço público. Endereços pessoais ou militares não são permitidos.
+            Pode ser um lugar ou um endereço. Ele aparece para quem vê o encontro.
           </p>
         </div>
 

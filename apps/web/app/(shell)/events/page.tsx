@@ -1092,8 +1092,7 @@ function EventsContent() {
               maxLength={200}
             />
             <p className="text-xs text-muted">
-              O local deve ser um espa&ccedil;o p&uacute;blico. Endere&ccedil;os pessoais ou
-              militares n&atilde;o s&atilde;o permitidos.
+              Pode ser um lugar ou um endere&ccedil;o. Ele aparece para quem v&ecirc; o encontro.
             </p>
 
             {/* HeroUI v3 Checkbox is a compound component: the bare

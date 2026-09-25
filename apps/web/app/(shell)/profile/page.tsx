@@ -12,7 +12,7 @@ import {
 } from "@heroui/react"
 import { ChevronRight, ClipboardList, MapPin, Settings, Tag } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { Suspense, useCallback, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { BIO_FIELD_LABEL, BIO_MAX_LENGTH, bioFromRow, validateBio } from "../../../lib/profile/bio"
 import { callProfileBioRpc } from "../../../lib/profile/profile-bio-rpcs"
@@ -41,6 +41,7 @@ import {
 import { saveAffiliationAction } from "./affiliation-actions"
 import AvatarSection from "./avatar-section"
 import { saveBioAction } from "./bio-actions"
+import { CitySection } from "./city-section"
 import FamilyInviteSection from "./family-invite-section"
 import NotificationPreferencesSection from "./notification-preferences-section"
 
@@ -622,6 +623,12 @@ export default function ProfilePage() {
               </div>
             </div>
           </section>
+
+          {/* Cidade antes das configurações: é o que decide onde você publica. O
+              Suspense é exigido pelo useSearchParams (?mudar=) da seção. */}
+          <Suspense fallback={null}>
+            <CitySection />
+          </Suspense>
 
           <section
             id="configuracoes"

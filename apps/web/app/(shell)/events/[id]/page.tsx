@@ -367,6 +367,20 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
   const isCancelled = event.status === "cancelled"
   const isCompleted = event.status === "completed"
 
+  // Consulta a outra cidade (migration 20260925161111): quem não é da cidade
+  // do encontro o LÊ, mas confirmar presença, ver quem vai e perguntar ao
+  // organizador continuam de quem é de lá — o banco recusaria. A tela diz isso
+  // em vez de oferecer botões que falham e de afirmar "ninguém confirmou".
+  const { data: localMembership, error: membershipError } = await authClient
+    .from("locality_memberships")
+    .select("locality_id")
+    .eq("locality_id", event.locality_id)
+    .maybeSingle()
+  if (membershipError) {
+    throw new Error(`failed to read locality membership: ${membershipError.message}`)
+  }
+  const isVisitor = localMembership === null
+
   return (
     <div className="flex flex-1 flex-col">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6">
@@ -464,7 +478,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                   não exige RSVP. Leva ao fio da pergunta, cujo destinatário é
                   derivado do evento e cuja conversa a RLS só abre a quem
                   participa. */}
-              {!isOrganizer ? (
+              {!isOrganizer && !isVisitor ? (
                 <section aria-labelledby="ask-organizer-heading" className="flex flex-col gap-2">
                   <h2 id="ask-organizer-heading" className="text-base font-semibold tracking-tight">
                     Pergunte ao organizador
@@ -520,79 +534,105 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
               ) : null}
             </div>
 
-            <aside aria-labelledby="vou-vai-heading" className="lg:sticky lg:top-20 lg:self-start">
-              <div className="flex flex-col gap-4 rounded-2xl border border-border bg-[var(--semantic-surface)] p-4">
-                <h2 id="vou-vai-heading" className="text-base font-semibold tracking-tight">
-                  Você vai
-                </h2>
+            {isVisitor ? (
+              <aside
+                aria-labelledby="consulta-heading"
+                className="lg:sticky lg:top-20 lg:self-start"
+              >
+                <div className="flex flex-col gap-2 rounded-ui-lg bg-ui-brand-soft p-4 ring-1 ring-ui-line">
+                  <h2 id="consulta-heading" className="text-base font-semibold text-ui-ink">
+                    Encontro de outra cidade
+                  </h2>
+                  <p className="text-sm text-ui-ink-2">
+                    Você está consultando. Confirmar presença e perguntar ao organizador ficam para
+                    quem é da cidade do encontro.
+                  </p>
+                  <Link
+                    href={"/profile#cidade" as Route}
+                    className="-ml-2 inline-flex min-h-11 items-center rounded-ui px-2 text-sm font-semibold text-ui-brand transition-colors hover:bg-ui-subtle"
+                  >
+                    Vai se mudar? Mude a sua cidade
+                  </Link>
+                </div>
+              </aside>
+            ) : (
+              <aside
+                aria-labelledby="vou-vai-heading"
+                className="lg:sticky lg:top-20 lg:self-start"
+              >
+                <div className="flex flex-col gap-4 rounded-2xl border border-border bg-[var(--semantic-surface)] p-4">
+                  <h2 id="vou-vai-heading" className="text-base font-semibold tracking-tight">
+                    Você vai
+                  </h2>
 
-                {attendees.length > 0 ? (
-                  <div className="flex -space-x-2" aria-hidden="true">
-                    {attendees.map((a) => (
-                      <MemberAvatar
-                        key={a.user_id}
-                        name={attendeeNames.get(a.user_id)}
-                        size="sm"
-                        className="ring-2 ring-[var(--semantic-surface)]"
-                      />
-                    ))}
-                  </div>
-                ) : null}
+                  {attendees.length > 0 ? (
+                    <div className="flex -space-x-2" aria-hidden="true">
+                      {attendees.map((a) => (
+                        <MemberAvatar
+                          key={a.user_id}
+                          name={attendeeNames.get(a.user_id)}
+                          size="sm"
+                          className="ring-2 ring-[var(--semantic-surface)]"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
 
-                <p className="text-sm text-muted">
-                  {buildGoingCopy(goingCount ?? 0, myRsvp === "going")}
-                </p>
+                  <p className="text-sm text-muted">
+                    {buildGoingCopy(goingCount ?? 0, myRsvp === "going")}
+                  </p>
 
-                {!isOrganizer && !isCancelled ? (
-                  <div className="flex flex-col gap-3">
-                    {myRsvp === "going" ? (
-                      <CancelPresenceControl
-                        eventId={event.id}
-                        cancelRsvpAction={cancelRsvpAction}
-                      />
-                    ) : (
-                      <>
-                        <div className="flex flex-wrap gap-2">
-                          <RsvpButton
-                            eventId={event.id}
-                            status="going"
-                            label="Vou"
-                            isCurrent={false}
-                          />
-                          <RsvpButton
-                            eventId={event.id}
-                            status="interested"
-                            label="Talvez"
-                            isCurrent={myRsvp === "interested"}
-                            variant="secondary"
-                          />
-                          <RsvpButton
-                            eventId={event.id}
-                            status="not_going"
-                            label="Não vou"
-                            isCurrent={myRsvp === "not_going"}
-                            variant="tertiary"
-                          />
-                        </div>
-                        {myRsvp !== null ? (
-                          <form action={cancelRsvpAction}>
-                            <input type="hidden" name="eventId" value={event.id} />
-                            <Button
-                              type="submit"
-                              size="sm"
+                  {!isOrganizer && !isCancelled ? (
+                    <div className="flex flex-col gap-3">
+                      {myRsvp === "going" ? (
+                        <CancelPresenceControl
+                          eventId={event.id}
+                          cancelRsvpAction={cancelRsvpAction}
+                        />
+                      ) : (
+                        <>
+                          <div className="flex flex-wrap gap-2">
+                            <RsvpButton
+                              eventId={event.id}
+                              status="going"
+                              label="Vou"
+                              isCurrent={false}
+                            />
+                            <RsvpButton
+                              eventId={event.id}
+                              status="interested"
+                              label="Talvez"
+                              isCurrent={myRsvp === "interested"}
+                              variant="secondary"
+                            />
+                            <RsvpButton
+                              eventId={event.id}
+                              status="not_going"
+                              label="Não vou"
+                              isCurrent={myRsvp === "not_going"}
                               variant="tertiary"
-                              className="min-h-11 w-full"
-                            >
-                              Remover meu RSVP
-                            </Button>
-                          </form>
-                        ) : null}
-                      </>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            </aside>
+                            />
+                          </div>
+                          {myRsvp !== null ? (
+                            <form action={cancelRsvpAction}>
+                              <input type="hidden" name="eventId" value={event.id} />
+                              <Button
+                                type="submit"
+                                size="sm"
+                                variant="tertiary"
+                                className="min-h-11 w-full"
+                              >
+                                Remover meu RSVP
+                              </Button>
+                            </form>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              </aside>
+            )}
           </div>
         </article>
       </div>

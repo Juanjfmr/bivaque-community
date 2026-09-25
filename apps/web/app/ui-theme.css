@@ -1,0 +1,60 @@
+/* Sistema visual mínimo — experimento de 25/09/2026.
+ *
+ * Vinte valores, registrados no Tailwind: as telas escrevem `bg-ui-surface`,
+ * `text-ui-ink-2`, `border-ui-line`, `rounded-ui` — nunca `bg-[var(--…)]`.
+ * Um raio para tudo que não é círculo. Uma altura para tudo que se toca (h-11).
+ * Quatro tamanhos de texto: xs (meta), sm (interface), base (leitura), e os
+ * títulos text-xl / text-[1.75rem]. Se uma tela precisa de um valor que não
+ * está aqui, a tela está errada — não o sistema.
+ *
+ * As cores são os primitivos de packages/tokens (tokens.json continua sendo a
+ * fonte da paleta); este arquivo só escolhe QUAIS deles o produto usa.
+ */
+
+@theme {
+  --color-ui-bg: var(--primitive-paper-100);
+  --color-ui-surface: var(--primitive-paper-0);
+  --color-ui-subtle: var(--primitive-pine-100);
+  --color-ui-ink: var(--primitive-ink-900);
+  --color-ui-ink-2: var(--primitive-ink-700);
+  --color-ui-line: color-mix(in srgb, var(--primitive-ink-900) 8%, transparent);
+  --color-ui-line-strong: color-mix(in srgb, var(--primitive-ink-900) 22%, transparent);
+
+  --color-ui-brand: var(--primitive-pine-700);
+  --color-ui-brand-hover: var(--primitive-pine-hover);
+  --color-ui-brand-soft: var(--primitive-leaf-100);
+  --color-ui-on-brand: var(--primitive-paper-50);
+
+  --color-ui-success: var(--primitive-leaf-700);
+  --color-ui-warning: var(--primitive-amber-700);
+  --color-ui-warning-soft: var(--primitive-amber-100);
+  --color-ui-danger: var(--primitive-rose-700);
+  --color-ui-danger-soft: var(--primitive-rose-100);
+
+  /* Dois raios, não um: o controle (10px) fica dentro da superfície (16px), e a
+     diferença entre os dois é o que tira o aspecto "quadrado" da tela. */
+  --radius-ui: 0.625rem;
+  --radius-ui-lg: 1rem;
+
+  /* O menor texto do produto é 13px: a régua de auditoria não aceita menos, e
+     redefinir `xs` aqui corrige também as telas antigas que usam text-xs. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.125rem;
+
+  --shadow-ui:
+    0 1px 2px color-mix(in srgb, var(--primitive-ink-900) 4%, transparent),
+    0 2px 10px color-mix(in srgb, var(--primitive-ink-900) 4%, transparent);
+  --shadow-ui-hover:
+    0 2px 4px color-mix(in srgb, var(--primitive-ink-900) 5%, transparent),
+    0 8px 24px color-mix(in srgb, var(--primitive-ink-900) 7%, transparent);
+}
+
+/* As telas antigas continuam nos tokens semânticos. Apontá-los para os mesmos
+   valores faz as 80 rotas ainda não recriadas conviverem com as novas sem
+   parecer outro produto: mesma tela de fundo, mesma borda, mesmo raio. */
+:root {
+  --semantic-canvas: var(--color-ui-bg);
+  --semantic-border: var(--color-ui-line);
+  --semantic-radius-control: var(--radius-ui);
+  --semantic-radius-card: var(--radius-ui-lg);
+}

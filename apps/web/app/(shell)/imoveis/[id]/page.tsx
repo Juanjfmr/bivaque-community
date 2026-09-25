@@ -113,6 +113,13 @@ export default async function ImovelDetailPage({ params }: { params: Promise<{ i
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{property.title}</h1>
           <p className="text-sm text-muted">{location || "Localização aproximada"}</p>
+          {/* Endereço por escolha de quem anuncia (migration 20260925174442). */}
+          {property.address ? (
+            <p className="text-sm">
+              <span className="text-muted">Endereço: </span>
+              {property.address}
+            </p>
+          ) : null}
         </div>
         <div className="flex items-center gap-3">
           <span className="flex min-h-11 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium">

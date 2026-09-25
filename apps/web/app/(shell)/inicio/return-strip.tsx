@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronRight } from "lucide-react"
+import { ChevronDown, ChevronRight } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -94,23 +94,14 @@ async function loadSubject(
   }
 }
 
-async function buildStrip(supabase: ReturnType<typeof createBrowserClient>): Promise<Strip | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return null
+// Até três retornos não lidos, do mais recente para o mais antigo. Cada um é
+// montado pelo mesmo classificador da central de notificações.
+const MAX_STRIPS = 3
 
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("*")
-    .is("read_at", null)
-    .order("created_at", { ascending: false })
-    .limit(1)
-
-  if (error) return null
-  const row = ((data as unknown as NotificationRow[] | null) ?? [])[0]
-  if (!row) return null
-
+async function buildOne(
+  supabase: ReturnType<typeof createBrowserClient>,
+  row: NotificationRow,
+): Promise<Strip> {
   let actorName: string | null = null
   if (rendersWithActor(row) && row.actor_user_id) {
     const { data: actor } = await supabase
@@ -139,28 +130,96 @@ async function buildStrip(supabase: ReturnType<typeof createBrowserClient>): Pro
   }
 }
 
+async function buildStrips(supabase: ReturnType<typeof createBrowserClient>): Promise<Strip[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .is("read_at", null)
+    .order("created_at", { ascending: false })
+    .limit(MAX_STRIPS)
+
+  if (error) return []
+  const rows = (data as unknown as NotificationRow[] | null) ?? []
+  return Promise.all(rows.map((row) => buildOne(supabase, row)))
+}
+
+// "Para você agora": os retornos empilhados e recolhidos (referência: as
+// notificações agrupadas do iOS). Recolhida, a pilha mostra o primeiro retorno
+// e a borda dos outros por baixo; "Ver mais N" abre a lista. Sem retorno
+// legível, nada é desenhado — a Home não ganha bloco vazio.
 export function ReturnStrip() {
-  const [strip, setStrip] = useState<Strip | null>(null)
-  const actorAvatarSrc = useAvatarSrc(strip?.actorId ?? null)
+  const [strips, setStrips] = useState<Strip[]>([])
+  const [expanded, setExpanded] = useState(false)
   const supabase = createBrowserClient()
 
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      const result = await buildStrip(supabase)
-      if (!cancelled) setStrip(result)
+      const result = await buildStrips(supabase)
+      if (!cancelled) setStrips(result)
     })()
     return () => {
       cancelled = true
     }
   }, [supabase])
 
+  const strip = strips[0] ?? null
   if (strip === null) return null
+  const rest = strips.slice(1)
+
+  return (
+    <section aria-label="Para você agora" className="space-y-2">
+      <div className="relative isolate">
+        <StripCard strip={strip} />
+        {!expanded && rest.length > 0 ? (
+          <>
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-3 -bottom-1.5 -z-10 h-4 rounded-b-ui-lg bg-ui-brand-soft/70"
+            />
+            {rest.length > 1 ? (
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-6 -bottom-3 -z-20 h-4 rounded-b-ui-lg bg-ui-brand-soft/40"
+              />
+            ) : null}
+          </>
+        ) : null}
+      </div>
+      {expanded ? rest.map((item) => <StripCard key={item.id} strip={item} />) : null}
+      {rest.length > 0 ? (
+        <div className={`flex justify-center ${expanded ? "" : "pt-2"}`}>
+          <button
+            type="button"
+            aria-expanded={expanded}
+            onClick={() => setExpanded(!expanded)}
+            className="inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-sm font-semibold text-ui-brand transition-colors hover:bg-ui-subtle"
+          >
+            {expanded ? "Mostrar menos" : `Ver mais ${rest.length}`}
+            <ChevronDown
+              size={16}
+              aria-hidden="true"
+              className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+            />
+          </button>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
+function StripCard({ strip }: { strip: Strip }) {
+  const actorAvatarSrc = useAvatarSrc(strip.actorId ?? null)
 
   return (
     <div
       data-testid="return-strip"
-      className="flex items-center gap-3 rounded-xl border border-border bg-[var(--accent-soft)] p-3"
+      className="motion-card-enter flex items-center gap-3 rounded-ui-lg bg-ui-brand-soft py-3 pr-2 pl-3 sm:pl-4"
     >
       {strip.actorId ? (
         <MemberAvatar
@@ -170,30 +229,18 @@ export function ReturnStrip() {
         />
       ) : null}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold leading-snug">
+        <p className="text-sm leading-snug font-semibold text-ui-ink">
           {strip.actorName ? `${strip.actorName} ${strip.label}` : strip.label}
         </p>
-        {strip.subject && <p className="mt-0.5 truncate text-sm text-muted">{strip.subject}</p>}
+        {strip.subject && <p className="mt-0.5 truncate text-sm text-ui-ink-2">{strip.subject}</p>}
       </div>
-      {/* A 375 a faixa fica com DUAS linhas de título mais UMA de apoio (h=86,5
-          medidos); a 768 e 1440, UMA linha de título mais UMA de apoio (h=70) —
-          e é esse arranjo largo que a prancha 00 painel 2 desenha. O rótulo do
-          CTA ocupava 127 px das 343 px da faixa e espremia a coluna de texto
-          para 126 px: o título "Ana respondeu ao seu pedido" caía em QUATRO
-          linhas e a faixa ia a h=125. A prancha resolve o mesmo aperto
-          desenhando só o chevron no telefone — o texto do CTA não aparece lá. O
-          rótulo continua no DOM (sr-only abaixo de `sm`), então o nome
-          acessível não muda em nenhuma largura; `min-w-11` mantém o alvo em
-          44 px, que a régua do produto exige.
-          POR QUE ESTE ARRANJO, e não a faixa empilhada — a conta, medida a 375:
-          com o CTA empilhado na própria faixa a coluna de texto iria a 317 px,
-          e o título (309,44 px de largura natural) caberia em UMA linha; mas a
-          faixa empilhada mede 175,25 px de altura, contra os 86,5 px daqui. Ou
-          seja: duas linhas NÃO é piso físico da faixa — é o piso DESTE arranjo
-          em linha, e ele se defende porque a alternativa é pior. */}
+      {/* No telefone só o chevron aparece; o rótulo continua no DOM (sr-only
+          abaixo de `sm`), então o nome acessível não muda em nenhuma largura, e
+          `min-w-11` mantém o alvo em 44 px. Com o rótulo visível a 375 a coluna
+          de texto caía para 126 px e o título quebrava em quatro linhas. */}
       <Link
         href={strip.href as Route}
-        className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-lg px-3 text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+        className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1 rounded-ui px-3 text-sm font-semibold text-ui-brand transition-colors hover:bg-ui-subtle"
       >
         <span className="sr-only sm:not-sr-only">{strip.cta}</span>
         <ChevronRight size={16} aria-hidden="true" />

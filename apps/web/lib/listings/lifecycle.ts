@@ -4,6 +4,7 @@
 // (migration 20260911043436_listing_lifecycle.sql): o servidor é a autoridade,
 // a tela apenas não oferece o que o servidor recusaria.
 
+import { validateAddress } from "./address"
 import {
   isListingCategory,
   isNeighborhoodLike,
@@ -169,6 +170,8 @@ export interface ListingEditDraft {
   condition: string
   description: string
   neighborhood: string
+  /** Opcional: vazio apaga o endereço. */
+  address?: string
 }
 
 export interface ValidatedListingEdit {
@@ -177,6 +180,7 @@ export interface ValidatedListingEdit {
   condition: ListingCondition
   description: string
   neighborhood: string
+  address: string | null
   priceCents: number
 }
 
@@ -187,6 +191,7 @@ export type ListingEditField =
   | "condition"
   | "description"
   | "neighborhood"
+  | "address"
 
 export type ListingEditErrors = Partial<Record<ListingEditField, string>>
 
@@ -212,11 +217,12 @@ export interface ManagedListingRow {
   published_at: string | null
   available_until: string | null
   pickup_note: string | null
+  address: string | null
   updated_at: string
 }
 
 export const MANAGED_LISTING_SELECT =
-  "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,status,locality_id,community_id,created_at,published_at,available_until,pickup_note,updated_at"
+  "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,status,locality_id,community_id,created_at,published_at,available_until,pickup_note,address,updated_at"
 
 export function validateListingEdit(draft: ListingEditDraft): ListingEditValidation {
   const errors: ListingEditErrors = {}
@@ -243,12 +249,21 @@ export function validateListingEdit(draft: ListingEditDraft): ListingEditValidat
   if (neighborhood.length === 0) errors.neighborhood = "Informe o bairro."
   else if (neighborhood.length > 80) errors.neighborhood = "O bairro passa de 80 caracteres."
   else if (!isNeighborhoodLike(neighborhood)) {
-    errors.neighborhood = "Use só o bairro. Endereço, número ou complemento não entram."
+    errors.neighborhood = "Use só o bairro aqui. O endereço tem campo próprio, logo abaixo."
   }
+
+  // Endereço: opcional, por escolha de quem anuncia (migration 20260925174442).
+  const address = validateAddress(draft.address)
+  if (!address.ok) errors.address = address.error
 
   if (Object.keys(errors).length > 0) return { ok: false, errors }
 
-  if (!isListingCategory(draft.category) || condition === null || typeof price !== "number") {
+  if (
+    !isListingCategory(draft.category) ||
+    condition === null ||
+    typeof price !== "number" ||
+    !address.ok
+  ) {
     return { ok: false, errors: { category: "Confira os campos do anúncio." } }
   }
 
@@ -260,6 +275,7 @@ export function validateListingEdit(draft: ListingEditDraft): ListingEditValidat
       condition,
       description,
       neighborhood,
+      address: address.value,
       priceCents: price,
     },
   }

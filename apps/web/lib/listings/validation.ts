@@ -6,6 +6,7 @@
 // nenhum custo é obrigatório — ausente é estado válido, não erro. A mesma
 // função é usada pela Server Action e pelos testes unitários.
 
+import { validateAddress } from "./address"
 import {
   LISTING_DEAL_LABELS,
   type ListingDeal,
@@ -41,6 +42,8 @@ export interface PropertyDraftInput {
   areaM2: string
   description: string
   neighborhood: string
+  /** Opcional, por escolha de quem anuncia (migration 20260925174442). */
+  address?: string
   availableFrom: string
 }
 
@@ -145,7 +148,13 @@ export function validatePropertyDraft(input: PropertyDraftInput): FieldValidatio
     optionalArea(input.areaM2),
     optionalLength(input.description, "description", 2000),
     optionalLength(input.neighborhood, "neighborhood", 80),
+    addressField(input.address),
   )
+}
+
+function addressField(value: string | undefined): FieldValidation {
+  const result = validateAddress(value)
+  return result.ok ? ok : fail("address", result.error)
 }
 
 export function parseOptionalCents(value: string): number | null {

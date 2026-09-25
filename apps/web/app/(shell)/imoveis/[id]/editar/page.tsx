@@ -50,6 +50,7 @@ export default async function EditarImovelPage({ params }: { params: Promise<{ i
     areaM2: property.areaM2 === null ? "" : String(property.areaM2),
     description: property.description ?? "",
     neighborhood: property.neighborhood ?? "",
+    address: property.address ?? "",
     availableFrom: property.availableFrom ?? "",
   }
 

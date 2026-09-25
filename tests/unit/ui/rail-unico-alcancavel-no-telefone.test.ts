@@ -46,58 +46,42 @@ function functionBody(source: string, name: string): string {
   return source.slice(start, end)
 }
 
-describe("/inicio: os atalhos de conteúdo único alcançam o telefone", () => {
-  const source = read("apps", "web", "app", "(shell)", "inicio", "right-rail.tsx")
+// /inicio mudou em 25/09/2026: o disclosure "Atalhos da home" saiu. A mesma
+// propriedade continua travada, agora provada pelo outro lado — cada destino do
+// trilho (preso a >=1024px) tem porta visível no telefone em OUTRO lugar.
+describe("/inicio: o que o trilho oferece continua alcançável no telefone", () => {
+  const rail = read("apps", "web", "app", "(shell)", "inicio", "right-rail.tsx")
+  const explorar = read("apps", "web", "app", "(shell)", "explorar", "page.tsx")
+  const busca = read("apps", "web", "app", "(shell)", "explorar", "busca", "page.tsx")
+  const shell = read("apps", "web", "app", "components", "bivaque", "app-shell.tsx")
   const page = read("apps", "web", "app", "(shell)", "inicio", "page.tsx")
-  const disclosure = functionBody(source, "InicioRailDisclosure")
-  const duplicateRail = functionBody(source, "InicioRightRail")
-  const uniqueContent = functionBody(source, "HomeShortcutCards")
 
-  it("o bloco de conteúdo único NÃO está preso a hidden lg:block", () => {
-    expect(disclosure).not.toMatch(PINNED_TO_DESKTOP)
-    // E o contrário está dito: ele existe abaixo de 1024px, então some a partir
-    // de 1024px, onde o trilho completo volta.
-    expect(disclosure).toContain("lg:hidden")
+  it("o trilho continua preso a >=1024px", () => {
+    expect(rail).toContain('<aside className="hidden w-80 shrink-0 lg:block"')
   })
 
-  it("o bloco duplicado — o próprio trilho — CONTINUA preso", () => {
-    expect(duplicateRail).toMatch(PINNED_TO_DESKTOP)
-    expect(duplicateRail).toContain("w-72")
+  it("o Guia do trilho tem porta no Explorar", () => {
+    expect(rail).toContain('action="/guide"')
+    expect(explorar).toContain('href: "/guide"')
+    expect(explorar).toContain('href: "/explorar/servicos"')
   })
 
-  it("o disclosure monta o MESMO conteúdo único do trilho", () => {
-    // Uma fonte só: se o disclosure montasse uma cópia, tirar um atalho do
-    // trilho deixaria a cópia viva (ou o contrário).
-    expect(disclosure).toContain("HomeShortcutCards")
-    expect(duplicateRail).toContain("HomeShortcutCards")
+  it("'De mudança?' tem porta fora do trilho", () => {
+    expect(rail).toContain('href="/localidade"')
+    expect(busca).toContain('href="/localidade"')
   })
 
-  it("o conteúdo único é exatamente o que não existe em outro lugar da rota", () => {
-    // Os três destinos únicos vivem numa tabela só, e o card que o disclosure
-    // monta renderiza essa tabela: tirar um atalho daqui tira das duas
-    // montagens, que é o que uma fonte única deve fazer.
-    const tabela = source.slice(
-      source.indexOf("const SHORTCUTS"),
-      source.indexOf("export function InicioRightRail"),
+  it("Indicações tem porta no cabeçalho, em toda largura", () => {
+    expect(shell).toContain('href="/recommendations"')
+  })
+
+  it("abaixo de 1024px a agenda da semana desce para a coluna principal", () => {
+    // A mesma leitura (hub.data.events) monta o trilho e o carrossel.
+    expect(rail).toContain("<WeekEventsList state={events}")
+    expect(page).toMatch(
+      /<div className="lg:hidden">\s*<WeekEventsCarousel state=\{hub\.data\.events\}/,
     )
-    for (const href of ['"/explorar/servicos"', '"/guide"']) {
-      expect(tabela, href).toContain(href)
-    }
-    // /localidade é o card "De mudança?", separado dos atalhos e fora da tabela.
-    expect(uniqueContent, "/localidade").toContain('"/localidade"')
-    expect(uniqueContent).toContain("SHORTCUTS.map(")
-    // O complemento fica fora do disclosure: "Seu próximo encontro" é o mesmo
-    // evento, do mesmo loader, que o feed já desenha — repeti-lo no telefone
-    // seria ruído.
-    expect(uniqueContent).not.toContain("NextMeetingCard")
-  })
-
-  it("a página MONTA o disclosure, logo depois do lançador de intenções", () => {
-    expect(page).toContain("<InicioRailDisclosure />")
-    const launcher = page.indexOf("<IntentLauncher")
-    const mounted = page.indexOf("<InicioRailDisclosure />")
-    expect(launcher).toBeGreaterThan(-1)
-    expect(mounted).toBeGreaterThan(launcher)
+    expect(page).toMatch(/<div className="lg:hidden">\s*<MovingCard \/>/)
   })
 })
 

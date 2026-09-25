@@ -18,6 +18,7 @@ import {
   useFeedRailData,
 } from "../../components/bivaque/feed-right-rail"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
+import { POST_CREATED_EVENT } from "../../components/shell/create-menu"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
 
@@ -165,6 +166,13 @@ export default function CommunityPage() {
       /* errors handled in loadFeed */
     })
   }, [loadFeed, sortOrder])
+
+  // Pergunta publicada pelo menu de criação do shell: o feed recarrega como se
+  // tivesse sido publicada daqui.
+  useEffect(() => {
+    window.addEventListener(POST_CREATED_EVENT, handleCreated)
+    return () => window.removeEventListener(POST_CREATED_EVENT, handleCreated)
+  }, [handleCreated])
 
   const handleHidePost = useCallback((postId: string) => {
     setHiddenPostIds((prev) => new Set(prev).add(postId))

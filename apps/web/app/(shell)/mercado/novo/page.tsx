@@ -6,6 +6,7 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useRef, useState } from "react"
+import { ADDRESS_HINT, ADDRESS_MAX } from "../../../../lib/listings/address"
 import {
   buildListingPhotoPath,
   LISTING_CATEGORIES,
@@ -64,6 +65,7 @@ export default function NovoAnuncioPage() {
   const [condition, setCondition] = useState("used")
   const [description, setDescription] = useState("")
   const [neighborhood, setNeighborhood] = useState("")
+  const [address, setAddress] = useState("")
   const [audienceKey, setAudienceKey] = useState("locality")
   const [photos, setPhotos] = useState<PendingPhoto[]>([])
   const [errors, setErrors] = useState<NewListingErrors>({})
@@ -124,6 +126,7 @@ export default function NovoAnuncioPage() {
       condition,
       description,
       neighborhood,
+      address,
       audienceType: selectedCommunity === null ? "locality" : "community",
       localityId: selectedCommunity === null ? current.id : null,
       communityId: selectedCommunity,
@@ -161,6 +164,7 @@ export default function NovoAnuncioPage() {
         price_cents: value.priceCents,
         condition: value.condition,
         neighborhood: value.neighborhood,
+        address: value.address,
         published_at: publish ? new Date().toISOString() : null,
       })
       .select("id")
@@ -327,10 +331,24 @@ export default function NovoAnuncioPage() {
               onChange={(event) => setNeighborhood(event.target.value)}
               className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
             />
-            <p className="text-xs text-muted">
-              Só o bairro. Endereço, número ou complemento não entram.
-            </p>
+            <p className="text-xs text-muted">Só o bairro. O endereço vem no campo abaixo.</p>
             {fieldError("neighborhood")}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label htmlFor="anuncio-endereco" className="text-sm font-medium">
+              Endereço <span className="font-normal text-muted">(opcional)</span>
+            </label>
+            <input
+              id="anuncio-endereco"
+              value={address}
+              maxLength={ADDRESS_MAX}
+              autoComplete="street-address"
+              onChange={(event) => setAddress(event.target.value)}
+              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
+            />
+            <p className="text-xs text-muted">{ADDRESS_HINT}</p>
+            {fieldError("address")}
           </div>
 
           <div className="flex flex-col gap-2">

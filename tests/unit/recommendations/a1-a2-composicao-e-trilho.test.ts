@@ -28,7 +28,7 @@ describe("A1 — medida compartilhada e largura de leitura", () => {
     const inicio = read("apps", "web", "app", "(shell)", "inicio", "page.tsx")
     // A medida é literalmente a mesma string nos dois arquivos: não é uma
     // segunda medida inventada para a mesma coluna.
-    const medida = "mx-auto flex w-full max-w-[56rem]"
+    const medida = "mx-auto flex w-full max-w-[72rem]"
     expect(inicio).toContain(medida)
     expect(page).toContain(medida)
   })

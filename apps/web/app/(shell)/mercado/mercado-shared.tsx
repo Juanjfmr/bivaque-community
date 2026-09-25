@@ -18,6 +18,8 @@ export interface ListingRow {
   price_cents: number
   condition: string
   neighborhood: string
+  /** Só a página do anúncio lê: a lista não precisa do endereço. */
+  address?: string | null
   status: string
   locality_id: string | null
   community_id: string | null

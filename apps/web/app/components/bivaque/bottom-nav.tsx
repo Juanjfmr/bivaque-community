@@ -119,7 +119,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--semantic-surface)] pb-[env(safe-area-inset-bottom,0px)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-ui-line bg-ui-surface pb-[env(safe-area-inset-bottom,0px)] md:hidden"
     >
       <Tabs selectedKey={selectedKey} variant="primary" aria-label="Navegação principal">
         <Tabs.List aria-label="Seções do aplicativo" className="flex justify-around">
@@ -128,13 +128,18 @@ export function BottomNav() {
               key={item.id}
               id={item.id}
               href={item.href}
-              className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 px-1 py-1 text-xs font-medium"
+              className="flex h-16 min-w-11 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium text-ui-ink-2 data-[selected=true]:text-ui-brand"
             >
-              <NavIcon
-                Icon={item.Icon}
-                IconActive={item.IconActive}
-                active={selectedKey === item.id}
-              />
+              {/* Pílula atrás do ícone ativo, como na prancha 00. */}
+              <span
+                className={`flex h-8 w-14 items-center justify-center rounded-full transition-colors ${selectedKey === item.id ? "bg-ui-brand-soft" : ""}`}
+              >
+                <NavIcon
+                  Icon={item.Icon}
+                  IconActive={item.IconActive}
+                  active={selectedKey === item.id}
+                />
+              </span>
               <span>{item.shortLabel ?? item.label}</span>
             </Tabs.Tab>
           ))}

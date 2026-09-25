@@ -35,10 +35,9 @@ describe("ordem da Home (DS-006)", () => {
 
   it("o lançador compacto é uma faixa, não um hero", () => {
     // A variante compacta é a faixa de uma linha: avatar + rótulo + duas ações.
-    expect(launcher).toContain(
-      'className="flex items-center gap-3 rounded-xl border border-border bg-[var(--semantic-surface)] p-3"',
-    )
-    expect(launcher).toContain("sm:flex-row")
+    // Desde a reconstrução de 25/09/2026 a faixa usa o sistema mínimo
+    // (ui-theme.css); o que se trava é o arranjo em linha, não a string de cor.
+    expect(launcher).toMatch(/className="flex items-center gap-3[^"]*"/)
     // Nenhuma medida de hero no arquivo: sem padding vertical grande, sem
     // tipografia de destaque e sem altura mínima de bloco.
     expect(launcher).not.toMatch(/py-(8|10|12|16)|text-(2xl|3xl|4xl)|min-h-(48|56|64|72)/)

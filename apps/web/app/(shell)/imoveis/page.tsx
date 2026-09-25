@@ -76,7 +76,10 @@ export default async function ImoveisPage({
     ? `${localityRow.localities.city_name}, ${localityRow.localities.state_code}`
     : "sua cidade"
 
-  const { rows, count } = await searchProperties(client, filters)
+  const { rows, count } = await searchProperties(client, filters, {
+    localityId,
+    withCommunities: true,
+  })
   const savedIds = await getSavedListingIds(
     client,
     rows.map((row) => row.id),

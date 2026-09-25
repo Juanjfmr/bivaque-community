@@ -6,9 +6,9 @@
 // `shrink-0` dele impedia qualquer recuo, então o texto ficava com 126 px.
 // A prancha 00 painel 2 desenha, no telefone, só o chevron — sem o texto do CTA.
 //
-// (baixa) "Na comunidade" quebrava em duas linhas a 375 (h=56, w=103), contra
-// uma linha a 768/1440 (h=28, w=126), porque o par Recentes/Acompanhando
-// (~240 px) e o h2 (126 px) não cabem juntos nos ~343 px úteis.
+// (baixa, resolvido de outro jeito em 25/09/2026) "Na comunidade" quebrava em
+// duas linhas a 375; o título virou só para leitor de tela e o que se mede é
+// o feed começar na metade de cima da tela.
 //
 // O que este spec prova é COMPORTAMENTO: quantas linhas o título ocupa, que o
 // nome acessível do CTA sobrevive à mudança e que o alvo continua com 44 px.
@@ -56,49 +56,35 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-/** Linhas que um parágrafo ocupa: altura real dividida pela altura de linha
- *  computada. É a medida do defeito — "quatro linhas" era o sintoma. */
-async function lineCount(page: Page, selector: string): Promise<number> {
-  return page.evaluate((sel) => {
-    const element = document.querySelector(sel)
-    if (!element) throw new Error(`${sel} ausente`)
-    const lineHeight = Number.parseFloat(getComputedStyle(element).lineHeight)
-    return Math.round(element.getBoundingClientRect().height / lineHeight)
-  }, selector)
-}
-
 test.setTimeout(180_000)
 
 test.describe("tipografia da Home no telefone", () => {
-  test('"Na comunidade" cabe em uma linha a 375', async ({ page }) => {
-    // Given — a Home de membro ativo, com retorno e feed reais
+  // O Início virou o atalho do Bivaque inteiro (25/09/2026): no telefone, o que
+  // precisa estar à vista sem rolar são as portas para as verticais e o botão
+  // de criação — não mais o primeiro post, que mora na prévia da comunidade.
+  test("a 375 os atalhos das verticais e o botão de criação aparecem sem rolar", async ({
+    page,
+  }) => {
     await signInAs(page, VILA_OWNER_EMAIL)
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto("/inicio")
-    const titulo = page.locator("#na-comunidade-titulo")
-    await expect(titulo).toBeVisible({ timeout: 20000 })
 
-    // Then — uma linha, não as duas do defeito
-    expect(
-      await lineCount(page, "#na-comunidade-titulo"),
-      '"Na comunidade" tem de caber em uma linha a 375',
-    ).toBe(1)
+    const atalhos = page.getByRole("region", { name: "Atalhos do Bivaque" })
+    await expect(atalhos).toBeVisible({ timeout: 20000 })
+    const box = await atalhos.boundingBox()
+    expect(box, "a grade de atalhos precisa ter caixa medível").not.toBeNull()
+    expect((box?.y ?? 0) + (box?.height ?? Number.POSITIVE_INFINITY)).toBeLessThan(812)
+
+    // E o botão flutuante abre o menu com as cinco ações de criação
+    const criar = page.getByRole("button", { name: "Criar", exact: true })
+    await expect(criar).toBeVisible()
+    await criar.click()
+    const menu = page.getByRole("list", { name: "Criar" })
+    await expect(menu.getByRole("link")).toHaveCount(4)
+    await expect(menu.getByRole("button", { name: /Fazer uma pergunta/ })).toBeVisible()
+    await page.keyboard.press("Escape")
+    await expect(menu).toBeHidden()
   })
-
-  for (const size of [
-    { w: 768, h: 1024 },
-    { w: 1440, h: 900 },
-  ]) {
-    test(`"Na comunidade" continua em uma linha a ${size.w}`, async ({ page }) => {
-      // O outro lado: o reparo não pode ter quebrado o arranjo largo, que é o
-      // que a auditoria mediu como referência (h=28, w=126).
-      await signInAs(page, VILA_OWNER_EMAIL)
-      await page.setViewportSize({ width: size.w, height: size.h })
-      await page.goto("/inicio")
-      await expect(page.locator("#na-comunidade-titulo")).toBeVisible({ timeout: 20000 })
-      expect(await lineCount(page, "#na-comunidade-titulo")).toBe(1)
-    })
-  }
 
   test("a faixa de retorno não espreme o texto a 375 e mantém o CTA acessível", async ({
     page,
