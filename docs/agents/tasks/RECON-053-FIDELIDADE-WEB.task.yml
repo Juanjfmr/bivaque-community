@@ -19,7 +19,7 @@ authority:
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    .visual/2026-09-25T02-00-00-000Z/report.md é o loop completo limpo da revisão
+    .visual/2026-09-25T01-39-20-733Z/report.md é o loop completo limpo da revisão
     atual: lint/typecheck/test/build verdes, zero findings altos, seis capturas
     inválidas do Guia e fidelidade ainda não avaliada. As capturas de 45/60
     e denied foram refeitas com ator, estado e fluxo explícitos; a revisão
