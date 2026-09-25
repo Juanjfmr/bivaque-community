@@ -171,6 +171,19 @@ test("a captura de acesso negado declara ator, estado e fluxo", async () => {
   assert.deepEqual(route?.requiredText, ["Você ainda não tem acesso", "Trocar de cidade"])
 })
 
+test("segmento estático não casa com uma rota dinâmica", async () => {
+  const { achadosPara } = await import("../../scripts/visual/compare.mjs")
+  const captures = new Map([
+    ["/guide/a0000000-0000-4000-8000-000000000001", [{ proof: { valid: true } }]],
+    ["/guide/sugerir", [{ proof: { valid: true } }]],
+  ])
+  const found = achadosPara("/guide/[id]", captures)
+  assert.deepEqual(
+    found.map((item) => item.rota),
+    ["/guide/a0000000-0000-4000-8000-000000000001"],
+  )
+})
+
 test("both proof writers record whether the tree was dirty", () => {
   // A report that names only the commit attributes the evidence to code the
   // commit does not contain whenever the work is still uncommitted.

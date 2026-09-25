@@ -14,6 +14,7 @@
 // Uso:
 //   node scripts/visual/compare.mjs
 
+import { execFileSync } from "node:child_process"
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { join, relative, sep } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -23,6 +24,9 @@ const VISUAL = join(repoRoot, ".visual")
 const GUIDE = join(repoRoot, "docs", "design", "visual-guide-2026-09-06")
 const INVENTORY = join(repoRoot, "docs", "agents", "PRANCHAS-WEB-RESTANTES.md")
 const OUT_DIR = join(VISUAL, "compare")
+const CURRENT_REVISION =
+  process.env["BIVAQUE_COMPARE_REVISION"] ??
+  execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim()
 
 const url = (abs) => relative(OUT_DIR, abs).split(sep).join("/")
 
@@ -45,6 +49,11 @@ for (const run of readdirSync(VISUAL)) {
   } catch {
     continue
   }
+  // A comparação é uma prova da revisão atual. Um screenshot de um run antigo
+  // continua sendo útil para auditoria, mas não pode competir por mtime com o
+  // estado entregue; do contrário uma revisão de board poderia herdar um PASS
+  // mecânico de outro commit.
+  if (data.runnerRevision !== CURRENT_REVISION || data.runnerDirty !== false) continue
   const quando = statSync(report).mtime
   for (const entrada of data.results ?? []) {
     if (!entrada.screenshot || entrada.status !== 200) continue
@@ -105,7 +114,9 @@ for (const [prancha, rotas] of pranchaRota) {
 // A captura não guarda o padrão, guarda a rota concreta (`/communities/71000.../admin/media`
 // depois de substituir o `[id]` máscara e adicionar query real). Sem casar concreto com o padrão,
 // toda prancha de rota dinâmica parecia "sem captura" quando na verdade estava no disco.
-function achadosPara(padrao, mapa) {
+const DYNAMIC_SEGMENT = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+export function achadosPara(padrao, mapa) {
   const out = []
   const pSegs = padrao.split("/").filter(Boolean)
   for (const [concreta, dados] of mapa) {
@@ -113,7 +124,9 @@ function achadosPara(padrao, mapa) {
     if (padrao === "/publicacoes/[id]" && limpa === "/publicacoes/nova") continue
     const segs = limpa.split("/").filter(Boolean)
     if (pSegs.length !== segs.length) continue
-    if (pSegs.every((s, i) => s.startsWith("[") || s === segs[i])) {
+    if (
+      pSegs.every((s, i) => (s.startsWith("[") ? DYNAMIC_SEGMENT.test(segs[i]) : s === segs[i]))
+    ) {
       for (const dado of dados) out.push({ rota: concreta, dado })
     }
   }
@@ -353,7 +366,7 @@ code{background:var(--sage);padding:1px 6px;border-radius:6px;font-size:12px}
 <body>
 <header class="topo">
   <h1>Prancha × runtime</h1>
-  <p class="lede">O que foi aprovado, ao lado do que está no ar. O pareamento é por rota/estado; “mecanicamente ok” nunca significa fidelidade aprovada.</p>
+  <p class="lede">O que foi aprovado, ao lado do que está no ar. O pareamento é por rota/estado; “mecanicamente ok” nunca significa fidelidade aprovada. Revisão considerada: <code>${CURRENT_REVISION.slice(0, 12)}</code>.</p>
   <p class="aviso"><strong>Isto não julga fidelidade.</strong> Semelhança não é prova de acerto e diferença não é prova de erro: a prancha é proposta de aparência, e as notas textuais prevalecem sobre o bitmap. Um runtime mecanicamente limpo ainda pode ter superfície, densidade ou hierarquia divergentes; o veredito é da rubrica, e é humano.</p>
   <div class="sumario">
     <span><b>${pares.length}</b> pranchas com captura</span>
