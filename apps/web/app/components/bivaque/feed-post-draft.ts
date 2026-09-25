@@ -15,6 +15,12 @@
 // na leitura. O rascunho nunca vira publicação sozinho.
 
 const DRAFT_KEY_PREFIX = "bivaque.post-draft.v3"
+// Formatos anteriores: v1 era UMA chave global (qualquer conta do navegador lia
+// o mesmo texto); v2 era por usuário, sem localidade. Nenhum dos dois é lido;
+// eles são apagados para o texto de quem usou o aparelho antes não ficar no
+// armazenamento de um dispositivo compartilhado.
+const LEGACY_DRAFT_KEY = "bivaque.post-draft.v1"
+const LEGACY_SCOPED_DRAFT_PREFIX = "bivaque.post-draft.v2"
 const AUDIENCE_KEY_PREFIX = "bivaque.post-audience.v1"
 
 export interface PostDraftScope {
@@ -87,12 +93,30 @@ function parseDraft(raw: string): PostDraft | null {
   }
 }
 
+/** Remove os rascunhos em formato antigo. Melhor esforço: nunca lança. */
+export function purgeLegacyPostDrafts(): void {
+  try {
+    const store = storage()
+    if (!store) return
+    store.removeItem(LEGACY_DRAFT_KEY)
+    const legacy: string[] = []
+    for (let index = 0; index < store.length; index += 1) {
+      const key = store.key(index)
+      if (key?.startsWith(LEGACY_SCOPED_DRAFT_PREFIX)) legacy.push(key)
+    }
+    for (const key of legacy) store.removeItem(key)
+  } catch {
+    // Armazenamento bloqueado: não há o que limpar e a tela segue.
+  }
+}
+
 /** Lê o rascunho do membro e locality atuais; null quando não há ou o acesso é negado. */
 export function loadPostDraft(
   ownerId: string | null | undefined,
   localityId: string,
 ): PostDraft | null {
   if (!ownerId || !localityId) return null
+  purgeLegacyPostDrafts()
   try {
     const store = storage()
     if (!store) return null

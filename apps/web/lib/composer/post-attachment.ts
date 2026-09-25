@@ -82,3 +82,29 @@ export function attachmentPublishBlocker(
   }
   return null
 }
+
+/** As colunas que a EDIÇÃO grava. O destino nunca muda (a prancha 45 trava o
+ *  seletor); o que muda é o texto e a foto:
+ *    foto presente               → photo, com o caminho
+ *    post de foto sem foto agora → text, photo_path null (a pessoa removeu a
+ *                                  foto; `photo` sem foto violaria o sentido do
+ *                                  tipo e deixaria o cartão com imagem quebrada)
+ *    demais casos                → o tipo original, sem tocar em photo_path
+ *  Link não é editado aqui: um post de link mantém tipo e `link_url`. */
+export interface EditedPostColumns {
+  content: string
+  post_type: string
+  photo_path?: string | null
+}
+
+export function deriveEditedPost(
+  originalType: string,
+  content: string,
+  photoPath: string,
+): EditedPostColumns {
+  const photo = photoPath.trim()
+  if (originalType === "link") return { content, post_type: "link" }
+  if (photo) return { content, post_type: "photo", photo_path: photo }
+  if (originalType === "photo") return { content, post_type: "text", photo_path: null }
+  return { content, post_type: originalType }
+}

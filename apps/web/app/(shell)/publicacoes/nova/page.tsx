@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback } from "react"
 import { normalizeAttachment } from "../../../../lib/composer/post-attachment"
 import { useLocalityContext } from "../../../../lib/locality-context"
-import { CreatePostModal } from "../../../components/bivaque/feed-post"
+import { CreatePostPage } from "../../../components/bivaque/feed-post"
 
 export default function NewPublicationPage() {
   const router = useRouter()
@@ -26,8 +26,7 @@ export default function NewPublicationPage() {
   }, [returnPath, router])
 
   return (
-    <CreatePostModal
-      pageMode
+    <CreatePostPage
       localityId={current.id}
       initialAttachment={initialAttachment}
       defaultCommunityId={defaultCommunityId}

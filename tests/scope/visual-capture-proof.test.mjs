@@ -7,6 +7,7 @@ import {
   isCaptureReportPassing,
   summarizeCaptures,
 } from "../../scripts/visual/capture-proof.mjs"
+import { captureVerdict } from "../../scripts/visual/capture-verdict.mjs"
 
 const sample = () => ({
   route: {
@@ -179,4 +180,25 @@ test("both proof writers record whether the tree was dirty", () => {
     assert.match(source, /"status",\s*"--porcelain"/, script)
     assert.match(source, /dirty/i, script)
   }
+})
+
+// Comparador: falha FECHADA. Só `proof.valid === true` concorre a verde.
+
+test("comparador: captura sem prova não vira 'mecanicamente ok'", () => {
+  assert.equal(captureVerdict({ data: { total: 0, high: 0 } }).kind, "unproven")
+  assert.equal(captureVerdict({ proof: null, data: { total: 0, high: 0 } }).kind, "unproven")
+  assert.equal(captureVerdict({ proof: {}, data: { total: 0, high: 0 } }).kind, "unproven")
+})
+
+test("comparador: prova inválida e achados continuam vermelhos", () => {
+  assert.equal(captureVerdict({ proof: { valid: false }, data: {} }).kind, "invalid")
+  assert.equal(captureVerdict({ proof: { valid: true }, data: { high: 2, total: 3 } }).kind, "high")
+  assert.equal(captureVerdict({ proof: { valid: true }, data: { total: 1 } }).kind, "findings")
+})
+
+test("comparador: só prova válida sem achado é 'mecanicamente ok'", () => {
+  assert.deepEqual(captureVerdict({ proof: { valid: true }, data: { total: 0, high: 0 } }), {
+    kind: "ok",
+    label: "mecanicamente ok",
+  })
 })

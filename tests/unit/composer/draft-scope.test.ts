@@ -23,6 +23,14 @@ class MemoryStorage {
   removeItem(key: string): void {
     this.values.delete(key)
   }
+
+  get length(): number {
+    return this.values.size
+  }
+
+  key(index: number): string | null {
+    return [...this.values.keys()][index] ?? null
+  }
 }
 
 const storage = new MemoryStorage()
@@ -31,11 +39,9 @@ const composerSource = readFileSync(
   "utf8",
 )
 const fields = {
-  postType: "text",
   content: "Mensagem privada",
   details: "",
   linkUrl: "",
-  pollOptions: [],
   photoPath: "",
 }
 
@@ -168,5 +174,19 @@ describe("rascunho de publicação isolado por membro e locality", () => {
     )
     expect(persistBlock).toContain("if (!hasDraftContent")
     expect(persistBlock).not.toContain("clearPostDraft")
+  })
+
+  it("apaga os rascunhos em formato antigo ao ler, sem tocar no atual", () => {
+    savePostDraftFields(fields, {
+      ownerId: "user-a",
+      localityId: "locality-a",
+      audienceKey: "city",
+    })
+    storage.setItem("bivaque.post-draft.v1", JSON.stringify({ content: "Texto de outra conta" }))
+    storage.setItem("bivaque.post-draft.v2:user-b", JSON.stringify({ content: "Texto antigo" }))
+
+    expect(loadPostDraft("user-a", "locality-a")?.content).toBe("Mensagem privada")
+    expect(storage.getItem("bivaque.post-draft.v1")).toBeNull()
+    expect(storage.getItem("bivaque.post-draft.v2:user-b")).toBeNull()
   })
 })

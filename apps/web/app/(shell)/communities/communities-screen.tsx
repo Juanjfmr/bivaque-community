@@ -30,6 +30,10 @@ import {
 } from "./communities-data"
 
 const DISCOVER_PREVIEW_COUNT = 5
+// A URL guarda a busca LIMPA (sem espaço nas pontas); o campo guarda o texto
+// cru que a pessoa digita. Sem essa separação, "vila " virava "vila" na URL,
+// o campo controlado lia de volta "vila" e o espaço sumia a cada tecla.
+const SEARCH_URL_DEBOUNCE_MS = 300
 
 type CommunitiesScreenProps = {
   /** Comunidades da cidade em exibição (filtro aplicado na página-servidor). */
@@ -187,6 +191,23 @@ export function CommunitiesScreen({
     },
     [pathname, router, searchParams],
   )
+
+  const [searchText, setSearchText] = useState(query)
+  // Mudança de busca que veio de FORA do campo (limpar, voltar no histórico):
+  // o campo acompanha a URL. O texto que só difere por espaço nas pontas é o
+  // mesmo termo e fica como a pessoa digitou.
+  useEffect(() => {
+    setSearchText((current) => (current.trim() === query ? current : query))
+  }, [query])
+  // Uma navegação por pausa na digitação, não por tecla.
+  useEffect(() => {
+    if (searchText.trim() === query) return
+    const timer = setTimeout(
+      () => updateUrl({ query: searchText, selectedId: null }, "replace"),
+      SEARCH_URL_DEBOUNCE_MS,
+    )
+    return () => clearTimeout(timer)
+  }, [searchText, query, updateUrl])
 
   useEffect(() => {
     setMotivoState({ communityId: selectedId, value: "" })
@@ -397,14 +418,15 @@ export function CommunitiesScreen({
               <section aria-label="Descobrir comunidades" className="flex flex-col gap-3">
                 <SearchField
                   aria-label="Buscar comunidades"
-                  value={query}
+                  value={searchText}
                   onChange={(value) => {
-                    updateUrl({ query: value, selectedId: null }, "replace")
+                    setSearchText(value)
                     setExpanded(false)
                     setMotivo("")
                     setSubmitError("")
                   }}
                   onClear={() => {
+                    setSearchText("")
                     updateUrl({ query: null, selectedId: null }, "replace")
                     setExpanded(false)
                     setMotivo("")
@@ -417,7 +439,7 @@ export function CommunitiesScreen({
                       placeholder="Buscar comunidades"
                       className="transition-colors"
                     />
-                    {query ? <SearchClearButton /> : null}
+                    {searchText ? <SearchClearButton /> : null}
                   </SearchField.Group>
                 </SearchField>
 
@@ -458,6 +480,7 @@ export function CommunitiesScreen({
                         size="sm"
                         variant="tertiary"
                         onPress={() => {
+                          setSearchText("")
                           updateUrl({ query: null, selectedId: null }, "replace")
                           setMotivo("")
                           setSubmitError("")

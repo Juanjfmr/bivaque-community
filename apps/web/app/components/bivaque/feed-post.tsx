@@ -8,6 +8,6 @@
 // os arquivos novos abaixo de 500 linhas cada.
 
 export { FeedPost, type FeedPostProps } from "./feed-post-card"
-export { CreatePostModal } from "./feed-post-create"
-export { EditPostModal } from "./feed-post-edit"
+export { CreatePostPage } from "./feed-post-create"
+export { EditPostPage } from "./feed-post-edit"
 export type { FeedPostRow } from "./feed-post-shared"

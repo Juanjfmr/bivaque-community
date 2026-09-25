@@ -19,6 +19,16 @@ test.describe("continuidade de navegação das comunidades", () => {
     expect(discoverSearch).toContain("aba=descobrir")
     expect(discoverSearch).toContain("q=ajuricaba")
 
+    // Um termo com espaço: o campo guarda o texto cru enquanto a URL recebe o
+    // termo limpo depois da pausa. Antes, o espaço sumia a cada tecla.
+    const search = page.getByLabel("Buscar comunidades")
+    await search.fill("")
+    await search.pressSequentially("vila aj", { delay: 40 })
+    await expect(search).toHaveValue("vila aj")
+    await expect.poll(() => new URL(page.url()).searchParams.get("q")).toBe("vila aj")
+    await search.fill("ajuricaba")
+    await expect(page).toHaveURL(/q=ajuricaba/)
+
     await page.getByRole("tab", { name: "Minhas comunidades" }).click()
     await expect(page).not.toHaveURL(/aba=descobrir/)
     await page.goBack()

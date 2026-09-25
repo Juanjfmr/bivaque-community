@@ -20,7 +20,7 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 //
 // Each describe block corresponds to one Phase 6 "After remediation" check.
 // Tests use the seeded `visual@bivaque.example.invalid` account so the
-// shell, composer modal, and groups page are all reachable with real
+// shell, publication routes, and groups page are all reachable with real
 // data. The reduced-motion probe emulates the media feature via
 // Playwright; the others read computed styles or geometry.
 
@@ -92,20 +92,30 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
-  test("opening the composer moves focus into the dialog", async ({ page }) => {
-    await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-    await page.waitForLoadState("networkidle")
+// O compositor de publicação virou rota (/publicacoes/nova, R24) e deixou de
+// ser modal. O ciclo de foco de modal é medido num modal real do mesmo fluxo:
+// a confirmação "Sair sem salvar?" da edição (/publicacoes/[id]/editar, R26),
+// aberta pelo "Cancelar" com alteração pendente.
+const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+const VILA_OWNER_POST_ID = "80000000-0000-4000-8000-000000000f01"
 
-    const trigger = page
-      .getByRole("button", { name: /No que você está pensando?|^Publicar$/ })
-      .first()
-    await expect(trigger).toBeVisible({ timeout: 15000 })
-    await trigger.click()
+async function openExitConfirmation(page: Page) {
+  await signInAs(page, VILA_OWNER_EMAIL)
+  await page.goto(`${APP_URL}/publicacoes/${VILA_OWNER_POST_ID}/editar`, { waitUntil: "load" })
+  await page.waitForLoadState("networkidle")
+  await page.getByLabel("Conteúdo").fill("Alteração para abrir a confirmação de saída.")
+  const trigger = page.getByRole("button", { name: "Cancelar", exact: true })
+  await expect(trigger).toBeVisible({ timeout: 15000 })
+  await trigger.focus()
+  await page.keyboard.press("Enter")
+  const dialog = page.getByRole("dialog", { name: "Sair sem salvar?" })
+  await expect(dialog).toBeVisible({ timeout: 10000 })
+  return { trigger, dialog }
+}
 
-    const dialog = page.getByRole("dialog")
-    await expect(dialog).toBeVisible({ timeout: 10000 })
+test.describe("DS-029 modal focus lifecycle (confirmação de saída da edição)", () => {
+  test("opening the modal moves focus into the dialog", async ({ page }) => {
+    const { dialog } = await openExitConfirmation(page)
 
     const activeIsInsideDialog = await dialog
       .evaluate((el) => el.contains(document.activeElement))
@@ -114,17 +124,7 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
   })
 
   test("Escape closes the modal and focus returns to the trigger", async ({ page }) => {
-    await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-    await page.waitForLoadState("networkidle")
-
-    const trigger = page
-      .getByRole("button", { name: /No que você está pensando?|^Publicar$/ })
-      .first()
-    await trigger.click()
-
-    const dialog = page.getByRole("dialog")
-    await expect(dialog).toBeVisible({ timeout: 10000 })
+    const { trigger, dialog } = await openExitConfirmation(page)
 
     await page.keyboard.press("Escape")
     await expect(dialog).toBeHidden({ timeout: 5000 })

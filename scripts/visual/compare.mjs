@@ -17,6 +17,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { join, relative, sep } from "node:path"
 import { fileURLToPath } from "node:url"
+import { captureVerdict } from "./capture-verdict.mjs"
 
 const repoRoot = fileURLToPath(new URL("../../", import.meta.url))
 const VISUAL = join(repoRoot, ".visual")
@@ -254,6 +255,9 @@ function fidelityWarning(prancha, dado) {
   if (dado.proof?.valid === false) {
     return "Captura inválida: a prova de estado/rota não fecha; não usar como fidelidade."
   }
+  if (dado.proof?.valid !== true) {
+    return "Captura sem prova de estado/rota: não usar como fidelidade nem como verde mecânico."
+  }
   if (prancha === "43-web-comunidade-grupos") {
     return "BLOCKED: a rota da comunidade precisa de revisão por estado e ator antes de aceitar a aparência desta prancha."
   }
@@ -283,16 +287,10 @@ const cartao = (par) => {
       const d = c.dado
       const displayRoute = d.target ?? c.rota
       const foto = join(repoRoot, d.screenshot)
-      const total = d.data.total ?? 0
-      const high = d.data.high ?? 0
-      const valid = d.proof?.valid !== false
-      const selo = !valid
-        ? `<span class="selo ruim">captura inválida</span>`
-        : high > 0
-          ? `<span class="selo ruim">${high} high</span>`
-          : total > 0
-            ? `<span class="selo medio">${total}</span>`
-            : `<span class="selo ok">mecanicamente ok</span>`
+      const verdict = captureVerdict(d)
+      const seloClass =
+        verdict.kind === "ok" ? "ok" : verdict.kind === "findings" ? "medio" : "ruim"
+      const selo = `<span class="selo ${seloClass}">${verdict.label}</span>`
       return `<figure>
         <img src="${url(foto)}" alt="runtime ${displayRoute} ${d.viewport}" loading="lazy">
         <figcaption><code>${displayRoute}</code> · ${d.state ?? "route"} · ${d.actorAccount ?? d.actor ?? "desconhecido"} · ${d.flow ?? "direct-route"} · ${d.viewport} ${selo}</figcaption>

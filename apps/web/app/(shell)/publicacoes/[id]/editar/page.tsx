@@ -1,8 +1,10 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import type { Route } from "next"
+import { useRouter, useSearchParams } from "next/navigation"
 import { use, useCallback, useEffect, useMemo, useState } from "react"
 import type { Database } from "supabase/database.generated"
+import { resolvePostLoginDestination } from "../../../../../lib/security/sanitize-next"
 import { createBrowserClient } from "../../../../../lib/supabase/client"
 import { ErrorState } from "../../../../components/bivaque/error-state"
 import { EditPostPage } from "../../../../components/bivaque/feed-post-edit"
@@ -29,6 +31,11 @@ type LoadState =
 export default function EditPublicationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // Volta para a tela de onde a pessoa veio (o cartão manda `?origem=`), pela
+  // mesma allowlist do login: nada de destino externo nem de rota inventada.
+  const origin = resolvePostLoginDestination([searchParams.get("origem")])
+  const returnPath = (origin === "/" ? "/community" : origin) as Route
   const supabase = useMemo(() => createBrowserClient(), [])
   const [state, setState] = useState<LoadState>({ status: "loading" })
 
@@ -105,8 +112,8 @@ export default function EditPublicationPage({ params }: { params: Promise<{ id: 
     <EditPostPage
       post={state.post}
       authorName={state.authorName}
-      onSaved={() => router.prefetch("/community")}
-      onClose={() => router.push("/community")}
+      onSaved={() => router.prefetch(returnPath)}
+      onClose={() => router.push(returnPath)}
     />
   )
 }

@@ -2,11 +2,11 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 2026-09-24
+**Snapshot:** 2026-09-25
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 113 frentes · 11 agora · 7 bloqueadas · 58 concluídas · 1 drifts
+**Mapa:** 114 frentes · 12 agora · 7 bloqueadas · 58 concluídas · 1 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -24,6 +24,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **RECON-AUTH-ENTRADA-WEB** · P1 · Web: entrada fiel à prancha 36-web-auth-entrada sem tocar o mecanismo
 - **RECON-W00-FUNDACAO** · P1 · W00: baseline, contratos e fundação da reconstrução web
 - **RECON-W00-TELAS** · P1 · Quatro telas da reconstrucao web saem do placeholder
+- **REVISAO-JORNADAS-WEB-20260925** · P1 · Achados da revisão independente da branch de jornadas web
 - **TEST-MASSA-JORNADAS** · P1 · Campanha de teste em massa: seed de jornada e execução completa na linha viva
 
 ## Bloqueios

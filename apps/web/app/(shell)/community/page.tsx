@@ -19,6 +19,7 @@ import {
   useFeedRailData,
 } from "../../components/bivaque/feed-right-rail"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
+import { loadPrimaryCommunity } from "../inicio/home-loaders"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
 
@@ -68,15 +69,12 @@ export default function CommunityPage() {
         return
       }
 
-      const { data: membershipsData, error: membershipsError } = await supabase
-        .from("community_memberships")
-        .select("community_id")
-        .eq("user_id", user.id)
-        .eq("status", "approved")
-        .order("joined_at", { ascending: true })
-        .limit(1)
-
-      if (membershipsError) {
+      // Mesma escolha da Home (loadPrimaryCommunity): a membership aprovada
+      // mais antiga ENTRE as comunidades da cidade atual. Sem o filtro de
+      // localidade, depois de uma transferência a vila de origem virava o
+      // contexto desta tela e o `?comunidade=` do compositor.
+      const primary = await loadPrimaryCommunity(supabase, current.id)
+      if (primary.status === "error") {
         // Reading the error is not optional: silently swallowing it is how the
         // group member list rendered empty in production before — README §"Duas
         // coisas que o E2E ensinou".
@@ -84,24 +82,8 @@ export default function CommunityPage() {
         setLoading(false)
         return
       }
-
-      const communityId = ((membershipsData as { community_id: string }[] | null) ?? [])[0]
-        ?.community_id
-
-      let communityName: string | null = null
-      if (communityId) {
-        const { data: communityData, error: communityError } = await supabase
-          .from("communities")
-          .select("name")
-          .eq("id", communityId)
-          .maybeSingle()
-        if (communityError) {
-          setError("Não foi possível identificar sua comunidade. Tente novamente.")
-          setLoading(false)
-          return
-        }
-        communityName = (communityData as { name: string } | null)?.name ?? null
-      }
+      const communityId = primary.status === "ready" ? primary.id : undefined
+      const communityName = primary.status === "ready" ? primary.name : null
 
       // Onda E Task 2: quando o membro não pertence a comunidade nenhuma, NÃO
       // caímos no feed_posts (Manhattan-reach). A home passa a ser a referência
@@ -138,7 +120,7 @@ export default function CommunityPage() {
         setAtEnd(false)
       }
     },
-    [sortOrder, supabase],
+    [sortOrder, supabase, current.id],
   )
 
   const handleSortChange = useCallback(

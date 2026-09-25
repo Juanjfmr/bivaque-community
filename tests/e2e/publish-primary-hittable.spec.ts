@@ -93,14 +93,16 @@ async function openComposer(page: Page): Promise<void> {
   // estável antes de medir o ponto.
   await expect(page.getByTestId("audience-notice")).not.toBeEmpty({ timeout: 15000 })
   // Numa PÁGINA, chegar ao fim do formulário rolando a própria janela é o
-  // caminho normal; o defeito que esta guarda protege é o do primário preso num
-  // contêiner com rolagem INTERNA. Por isso a janela rola até o botão — e só
-  // ela: `scrollableAncestors` abaixo continua exigindo zero rolagem interna.
+  // caminho normal. A janela rola só até o primário ENTRAR pela borda de baixo
+  // — a posição em que a pessoa o encontra rolando —, e só ela: sem
+  // centralizar o botão (isso esconderia uma barra fixa inferior cobrindo-o) e
+  // sem rolar contêiner interno — `scrollableAncestors` abaixo continua
+  // exigindo zero rolagem interna.
   await page.evaluate(() => {
     const button = document.querySelector('[data-testid="publish-submit"]')
     if (!button) throw new Error("publish-submit não está no DOM")
-    const rect = button.getBoundingClientRect()
-    window.scrollBy(0, rect.top - window.innerHeight / 2)
+    const overflow = button.getBoundingClientRect().bottom - window.innerHeight
+    if (overflow > 0) window.scrollBy(0, Math.ceil(overflow) + 1)
   })
 }
 

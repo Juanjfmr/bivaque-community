@@ -17,9 +17,9 @@
 // publicação sozinho.
 
 import { detectCep, detectCpf } from "@bivaque/domain"
-import { Button, Input, Modal, Spinner, TextArea, useOverlayState } from "@heroui/react"
+import { Button, Input, Spinner, TextArea, useOverlayState } from "@heroui/react"
 import { ImagePlus, Link2 } from "lucide-react"
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import {
   attachmentPublishBlocker,
@@ -31,7 +31,6 @@ import { classifyPublishError } from "../../../lib/composer/publish-error"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
-import { ModalCloseTrigger } from "./close-button"
 import { ConnectionLostState } from "./error-state"
 import {
   type AudienceDestination,
@@ -64,7 +63,7 @@ import {
 import { FeedbackAlert } from "./feedback-alert"
 import { showToast } from "./toast"
 
-interface CreatePostModalProps {
+interface CreatePostPageProps {
   localityId: string
   /** Dica da TELA DE ENTRADA: qual anexo já vem oferecido ao abrir. Nunca
    *  escolhe o formato — o `post_type` sai do anexo real (`derived`), então
@@ -73,27 +72,21 @@ interface CreatePostModalProps {
   defaultCommunityId?: string | undefined
   onCreated: () => void
   onClose: () => void
-  /**
-   * The same composer contract can be mounted on the addressable
-   * /publicacoes/nova surface. The modal remains the compact in-feed entry
-   * point until every caller has moved to the route.
-   */
-  pageMode?: boolean
 }
 
 const AUTOSAVE_DELAY_MS = 400
 const QUESTION_TITLE_MAX = 120
 const QUESTION_BODY_MAX = 1000
 
-export function CreatePostModal({
+// Compositor da rota estável /publicacoes/nova (R24). Não há mais modal: a
+// Home, a comunidade e o feed levam todos para a rota.
+export function CreatePostPage({
   localityId,
   initialAttachment,
   defaultCommunityId,
   onCreated,
   onClose,
-  pageMode = false,
-}: CreatePostModalProps) {
-  const modal = useOverlayState({ defaultOpen: true, onOpenChange: (open) => !open && onClose() })
+}: CreatePostPageProps) {
   const { current: locality } = useLocalityContext()
   const currentUser = useCurrentUser()
   const ownerId = currentUser.user?.id ?? null
@@ -124,7 +117,6 @@ export function CreatePostModal({
   // Dito quando a audiência cai da vila para a cidade sem a pessoa ter pedido.
   const [audienceFallback, setAudienceFallback] = useState("")
   const [storageUnavailable, setStorageUnavailable] = useState(false)
-  const dialogContentRef = useRef<HTMLDivElement>(null)
   const supabase = createBrowserClient()
 
   const audience = usePostAudience(localityId)
@@ -213,23 +205,6 @@ export function CreatePostModal({
     initialAttachment,
   ])
 
-  useEffect(() => {
-    if (!modal.isOpen) {
-      onClose()
-    }
-  }, [modal.isOpen, onClose])
-
-  useLayoutEffect(() => {
-    if (pageMode || !modal.isOpen) return
-    if (!dialogContentRef.current) return
-    const focusable = dialogContentRef.current.querySelector<HTMLElement>(
-      'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
-    )
-    if (focusable && document.activeElement !== focusable) {
-      focusable.focus()
-    }
-  }, [modal.isOpen, pageMode])
-
   // A audiência salva é apenas uma preferência local. Depois que a consulta
   // real termina, qualquer chave que não esteja mais autorizada (revogação,
   // mudança de cidade) volta para a cidade com aviso explícito.
@@ -304,7 +279,7 @@ export function CreatePostModal({
     return () => clearTimeout(timer)
   }, [draftFields, persistDraft])
 
-  // O debounce acima é cancelado quando o modal fecha antes do timer — sem
+  // O debounce acima é cancelado quando a pessoa sai da rota antes do timer — sem
   // este flush, a última coisa digitada antes de fechar se perderia. O cleanup
   // roda no unmount e também na troca de escopo/audiência; a closure executa
   // com o contexto anterior, antes de o próximo efeito zerar os campos.
@@ -347,11 +322,11 @@ export function CreatePostModal({
       setError("A publicação precisa de texto.")
       return
     }
-    if (pageMode && content.length > QUESTION_TITLE_MAX) {
+    if (content.length > QUESTION_TITLE_MAX) {
       setError(`A pergunta pode ter no máximo ${QUESTION_TITLE_MAX} caracteres.`)
       return
     }
-    if (pageMode && details.length > QUESTION_BODY_MAX) {
+    if (details.length > QUESTION_BODY_MAX) {
       setError(`O corpo pode ter no máximo ${QUESTION_BODY_MAX} caracteres.`)
       return
     }
@@ -432,7 +407,6 @@ export function CreatePostModal({
             },
     )
     onCreated()
-    modal.close()
     setSubmitting(false)
   }, [
     content,
@@ -453,8 +427,6 @@ export function CreatePostModal({
     supabase,
     resetForm,
     onCreated,
-    modal,
-    pageMode,
   ])
 
   const handleSaveDraft = useCallback(() => {
@@ -496,7 +468,7 @@ export function CreatePostModal({
         : null
 
   const audienceNotice = audienceNoticeText(selectedKind.kind, locality?.cityName ?? null)
-  const offlinePage = pageMode && errorKind === "network"
+  const offlinePage = errorKind === "network"
 
   const reachNotice = placeName
     ? `Visível para membros do Bivaque em ${placeName}.`
@@ -531,18 +503,12 @@ export function CreatePostModal({
   const composerContent = (
     <div
       className={
-        pageMode
-          ? offlinePage
-            ? "mx-auto grid w-full max-w-6xl grid-cols-[minmax(0,42rem)] justify-start gap-8 px-6 py-8"
-            : "mx-auto grid w-full max-w-6xl gap-8 px-6 py-8 lg:grid-cols-[minmax(0,38rem)_20rem]"
-          : "gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px]"
+        offlinePage
+          ? "mx-auto grid w-full max-w-6xl grid-cols-[minmax(0,42rem)] justify-start gap-8 px-6 py-8"
+          : "mx-auto grid w-full max-w-6xl gap-8 px-6 py-8 lg:grid-cols-[minmax(0,38rem)_20rem]"
       }
     >
-      <div
-        ref={dialogContentRef}
-        data-composer-form="true"
-        data-draft-ready={draftReady ? "true" : "false"}
-      >
+      <div data-composer-form="true" data-draft-ready={draftReady ? "true" : "false"}>
         {offlinePage ? (
           <>
             <div className="mb-6 flex justify-end">
@@ -554,7 +520,7 @@ export function CreatePostModal({
             </div>
             <div className="mb-6">
               <ConnectionLostState
-                description={offlinePage ? "Tente publicar quando a conexão voltar." : error}
+                description="Tente publicar quando a conexão voltar."
                 onRetry={() => {
                   void handleSubmit()
                 }}
@@ -573,7 +539,7 @@ export function CreatePostModal({
             (prancha 45 painel 2). */}
         <div className="mt-4">
           <label htmlFor="post-conteudo" className="mb-1 block text-sm font-medium">
-            {pageMode ? "Qual é a sua pergunta?" : "Pergunta"} <span aria-hidden="true">*</span>
+            Qual é a sua pergunta? <span aria-hidden="true">*</span>
             <span className="sr-only"> (obrigatório)</span>
           </label>
           <TextArea
@@ -581,18 +547,16 @@ export function CreatePostModal({
             aria-label="Pergunta"
             required
             aria-required="true"
-            maxLength={pageMode ? QUESTION_TITLE_MAX : undefined}
-            aria-describedby={pageMode ? "post-conteudo-counter" : undefined}
+            maxLength={QUESTION_TITLE_MAX}
+            aria-describedby="post-conteudo-counter"
             className="w-full"
-            placeholder={pageMode ? "Escreva sua pergunta" : "O que você quer perguntar?"}
+            placeholder="Escreva sua pergunta"
             value={content}
             onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
           />
-          {pageMode ? (
-            <p id="post-conteudo-counter" className="mt-1 text-right text-xs text-muted">
-              {content.length}/{QUESTION_TITLE_MAX}
-            </p>
-          ) : null}
+          <p id="post-conteudo-counter" className="mt-1 text-right text-xs text-muted">
+            {content.length}/{QUESTION_TITLE_MAX}
+          </p>
         </div>
 
         {!offlinePage ? (
@@ -618,27 +582,21 @@ export function CreatePostModal({
 
         <div className="mt-4">
           <label htmlFor="post-detalhes" className="mb-1 block text-sm font-medium">
-            {pageMode ? "Conte mais sobre sua dúvida (opcional)" : "Detalhes (opcional)"}
+            Conte mais sobre sua dúvida (opcional)
           </label>
           <TextArea
             id="post-detalhes"
             aria-label="Detalhes"
-            maxLength={pageMode ? QUESTION_BODY_MAX : undefined}
-            aria-describedby={pageMode ? "post-detalhes-counter" : undefined}
+            maxLength={QUESTION_BODY_MAX}
+            aria-describedby="post-detalhes-counter"
             className="w-full"
-            placeholder={
-              pageMode
-                ? "Conte mais sobre sua dúvida, se quiser"
-                : "Conte mais sobre sua publicação, se quiser"
-            }
+            placeholder="Conte mais sobre sua dúvida, se quiser"
             value={details}
             onChange={(e) => setDetails((e.target as HTMLTextAreaElement).value)}
           />
-          {pageMode ? (
-            <p id="post-detalhes-counter" className="mt-1 text-right text-xs text-muted">
-              {details.length}/{QUESTION_BODY_MAX}
-            </p>
-          ) : null}
+          <p id="post-detalhes-counter" className="mt-1 text-right text-xs text-muted">
+            {details.length}/{QUESTION_BODY_MAX}
+          </p>
         </div>
 
         {/* Anexo é opção SOBRE a pergunta, nunca passo anterior: vem DEPOIS do
@@ -698,36 +656,21 @@ export function CreatePostModal({
 
         {error && !offlinePage ? (
           <div className="mt-4" data-testid="publish-error">
-            {/* Prancha 60, painel direito: falha de TRANSPORTE é o
-              estado "Sem conexão" — a ação nunca chegou ao servidor,
-              então a retomada é real (republicar) e o rascunho fica.
-              Rejeição do servidor segue no alerta genérico, que é o
+            {/* Falha de TRANSPORTE é o estado "Sem conexão" da prancha 60,
+              tratado no topo do formulário (`offlinePage`). Aqui só chega
+              rejeição do servidor, no alerta genérico, que é o
               anti-enumeração do lib/composer/publish-error. */}
-            {errorKind === "network" ? (
-              <ConnectionLostState
-                description={offlinePage ? "Tente publicar quando a conexão voltar." : error}
-                onRetry={() => {
-                  void handleSubmit()
-                }}
-              />
-            ) : (
-              <FeedbackAlert
-                variant="danger"
-                description={offlinePage ? "Tente publicar quando a conexão voltar." : error}
-              />
-            )}
+            <FeedbackAlert variant="danger" description={error} />
           </div>
         ) : null}
         {piiWarning ? (
           <PostPiiWarning onConfirm={handleSubmit} onCancel={() => setPiiWarning(false)} />
         ) : null}
 
-        {/* No MODAL, o primário vive na barra de ações do rodapé, fora da área
-            que rola: com ele no fim do `Modal.Body` (overflow-y-auto), o centro
-            do botão caía fora da caixa visível em 375x568 e o hit-test resolvia
-            para o "Cancelar" do rodapé (medido em 19/09/2026). Na ROTA não há
-            corpo rolável, e o primário fecha o formulário. */}
-        {pageMode && !offlinePage ? (
+        {/* O primário fecha o formulário. A rota não tem corpo com rolagem
+            interna — o defeito do antigo modal (primário recortado pelo
+            `Modal.Body` em 375x568, medido em 19/09/2026) não se aplica. */}
+        {!offlinePage ? (
           <div className="mt-4 flex flex-col items-end gap-1">
             {publishButton}
             <p className="text-xs text-[var(--semantic-action-primary)]">{reachNotice}</p>
@@ -752,156 +695,48 @@ export function CreatePostModal({
     </div>
   )
 
-  if (pageMode) {
-    return (
-      <>
-        <div className="flex min-h-full flex-col bg-[var(--semantic-surface)]">
-          <header className="border-b border-border bg-[var(--semantic-surface)]">
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-medium text-[var(--semantic-link)] transition-colors hover:bg-[var(--semantic-selected)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                >
-                  <span aria-hidden="true">←</span> Voltar
-                </button>
-                <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Nova pergunta</h1>
-              </div>
-              <div className="flex items-center gap-2 pl-1">
-                <MemberAvatar name={currentUser.user?.displayName ?? "Você"} size="sm" />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">
-                    {currentUser.user?.displayName ?? "Você"}
-                  </span>
-                  <span className="text-xs text-muted">Agora mesmo</span>
-                </div>
-              </div>
-            </div>
-          </header>
-          <main className="flex-1">{composerContent}</main>
-          <footer className="border-t border-border bg-[var(--semantic-surface)]">
-            <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-3 px-6 pb-20 pt-4">
-              <Button
-                variant="tertiary"
-                onPress={handleSaveDraft}
-                isDisabled={submitting || !content.trim()}
-              >
-                Salvar rascunho
-              </Button>
-              <Button variant="tertiary" onPress={onClose} isDisabled={submitting}>
-                Cancelar
-              </Button>
-            </div>
-          </footer>
-        </div>
-        <DraftDiscardDialog
-          open={discardConfirm.isOpen}
-          onOpenChange={discardConfirm.setOpen}
-          onDiscard={discardDraft}
-        />
-      </>
-    )
-  }
-
   return (
     <>
-      <Modal state={modal}>
-        <Modal.Backdrop
-          {...(pageMode
-            ? {
-                variant: "transparent" as const,
-                isDismissable: false,
-                className: "!static !min-h-screen !bg-transparent !p-0",
-              }
-            : {})}
-        >
-          {/* O compositor é de duas colunas (formulário + "Como sua publicação
-              será vista"), como a prancha 45 desenha. O prefixo `lg:` do grid
-              responde à LARGURA DA JANELA, não à do diálogo: num monitor de
-              1440px o `size="lg"` (512px) abria as duas colunas e sobravam 120px
-              para o formulário — medido no navegador em 16/09/2026 (coluna do
-              formulário e alerta de erro em 120px de largura). A largura do
-              diálogo acompanha o conteúdo. */}
-          <Modal.Container
-            {...(pageMode
-              ? { size: "cover" as const, className: "!static !min-h-screen !p-0" }
-              : { size: "lg" as const })}
-          >
-            <Modal.Dialog
-              className={
-                pageMode
-                  ? "!m-0 !min-h-screen !w-full !max-w-none !rounded-none !border-0 !bg-transparent !shadow-none"
-                  : "max-w-4xl"
-              }
+      <div className="flex min-h-full flex-col bg-[var(--semantic-surface)]">
+        <header className="border-b border-border bg-[var(--semantic-surface)]">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-6 py-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-medium text-[var(--semantic-link)] transition-colors hover:bg-[var(--semantic-selected)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+              >
+                <span aria-hidden="true">←</span> Voltar
+              </button>
+              <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Nova pergunta</h1>
+            </div>
+            <div className="flex items-center gap-2 pl-1">
+              <MemberAvatar name={currentUser.user?.displayName ?? "Você"} size="sm" />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">
+                  {currentUser.user?.displayName ?? "Você"}
+                </span>
+                <span className="text-xs text-muted">Agora mesmo</span>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="flex-1">{composerContent}</main>
+        <footer className="border-t border-border bg-[var(--semantic-surface)]">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-3 px-6 pb-20 pt-4">
+            <Button
+              variant="tertiary"
+              onPress={handleSaveDraft}
+              isDisabled={submitting || !content.trim()}
             >
-              <Modal.Header
-                className={
-                  pageMode
-                    ? "mx-auto flex w-full max-w-5xl items-center border-b border-border bg-[var(--semantic-surface)] px-6 py-4"
-                    : ""
-                }
-              >
-                {pageMode ? (
-                  <div className="flex min-w-0 items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-medium text-[var(--semantic-link)] transition-colors hover:bg-[var(--semantic-selected)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                    >
-                      <span aria-hidden="true">←</span> Voltar
-                    </button>
-                    <Modal.Heading className="sr-only">Criar publicação</Modal.Heading>
-                    <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-                      Nova pergunta
-                    </h1>
-                  </div>
-                ) : (
-                  <Modal.Heading>Criar publicação</Modal.Heading>
-                )}
-                <ModalCloseTrigger className={pageMode ? "hidden" : "min-h-11 min-w-11"} />
-              </Modal.Header>
-              <Modal.Body
-                className={
-                  pageMode ? "!flex-1 !overflow-visible !bg-[var(--semantic-surface)] !p-0" : ""
-                }
-              >
-                {composerContent}
-              </Modal.Body>
-              <Modal.Footer
-                className={
-                  pageMode
-                    ? "mx-auto flex w-full max-w-5xl items-center justify-end gap-3 border-t border-border bg-[var(--semantic-surface)] px-6 pb-20 pt-4"
-                    : ""
-                }
-              >
-                {pageMode ? (
-                  <>
-                    <Button
-                      variant="tertiary"
-                      onPress={handleSaveDraft}
-                      isDisabled={submitting || !content.trim()}
-                    >
-                      Salvar rascunho
-                    </Button>
-                    <Button variant="tertiary" onPress={onClose} isDisabled={submitting}>
-                      Cancelar
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button variant="tertiary" onPress={modal.close} isDisabled={submitting}>
-                      Cancelar
-                    </Button>
-                    {publishButton}
-                  </>
-                )}
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
-
+              Salvar rascunho
+            </Button>
+            <Button variant="tertiary" onPress={onClose} isDisabled={submitting}>
+              Cancelar
+            </Button>
+          </div>
+        </footer>
+      </div>
       <DraftDiscardDialog
         open={discardConfirm.isOpen}
         onOpenChange={discardConfirm.setOpen}

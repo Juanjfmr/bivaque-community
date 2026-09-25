@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-24",
+  "updatedAt": "2026-09-25",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -3416,23 +3416,35 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["apps/web/app/(preauth)/consent/page.tsx"],
+      "links": [
+        "apps/web/app/(preauth)/consent/page.tsx",
+        "apps/web/lib/onboarding/consent-required.ts",
+        "apps/web/app/(preauth)/onboarding/page.tsx"
+      ],
       "dependencies": [],
-      "proof": [],
-      "tests": ["tests/e2e/link-crawl.spec.ts", "tests/e2e/manaus-pilot-denials.spec.ts"],
-      "updatedAt": "2026-09-22",
-      "sourceRevision": "8632239",
+      "proof": [
+        "2026-09-25: apps/web/lib/onboarding/consent-required.ts + onboarding/page.tsx trocam o 403 cru pelo caminho para /consent; callback-error aponta para /consent; tests/unit/onboarding/consent-required.test.ts. Sem prova de runtime ainda."
+      ],
+      "tests": [
+        "tests/e2e/link-crawl.spec.ts",
+        "tests/e2e/manaus-pilot-denials.spec.ts",
+        "npx pnpm@11.18.0 exec vitest run tests/unit/onboarding/consent-required.test.ts"
+      ],
+      "updatedAt": "2026-09-25",
+      "sourceRevision": "8512ca7a",
       "id": "ROTA-CONSENT-LEGADA",
       "title": "/consent continua servida depois que o portao saiu do produto",
       "priority": "P3",
       "category": "frontend",
       "status": "next",
-      "description": "Achado do rastreador de 22/09/2026 (HRN-005). O ADR-20260907-consentimento-no-cadastro tirou o portao de /consent (o aceite vive no cadastro), mas a rota segue servida e nada leva ate ela. manaus-pilot-denials.spec.ts ainda a visita. Decidir entre remover a rota (com redirect para quem tem link antigo) ou mante-la como destino legado declarado.",
+      "description": "Achado do rastreador de 22/09/2026 (HRN-005). Decisão de 25/09/2026: /consent fica como destino DECLARADO de recuperação do aceite, não como portão. Quem confirma o e-mail noutro aparelho (sem o intent HttpOnly do cadastro) chega ao onboarding sem aceite; o 403 'consent is required' agora leva a /consent, e /auth/callback-error?motivo=consentimento também. A rota só é alcançada por esses estados, por isso continua fora do rastreador de links, com a porta declarada.",
       "checklist": [
         "Conferir quem ainda depende de /consent (proxy.ts, active-nav.ts, specs de negacao)",
-        "Remover ou redirecionar, ajustando os specs",
-        "Tirar /consent de PORTAS_FORA_DO_LINK em link-crawl.spec.ts"
-      ]
+        "Decidir: manter como destino de recuperação do aceite (onboarding 403 e callback-error)",
+        "Declarar a porta real em PORTAS_FORA_DO_LINK de link-crawl.spec.ts",
+        "Prova de runtime: conta sem aceite no onboarding chega a /consent, aceita e volta ao onboarding"
+      ],
+      "completedChecklist": [true, true, true, false]
     },
     {
       "id": "ONB-IDENTIDADE-SEM-CIDADE",
@@ -3772,6 +3784,49 @@
         "Decisao do dono pendente: resposta cujo lugar ja esta no Guia fica 'devida' para sempre e o P3b reenviaria o mesmo corpo a cada execucao — o marcador de 'ja tentado, nada produzido' e estado novo"
       ],
       "completedChecklist": [false, true, true, true, true, false, true, false, true, true]
+    },
+    {
+      "phase": "Reconstrução",
+      "links": [
+        "supabase/migrations/20260925010221_service_request_terminal_blocks_direct_insert.sql",
+        "apps/web/lib/security/sanitize-next.ts",
+        "apps/web/lib/onboarding/consent-required.ts",
+        "apps/web/app/(shell)/communities/communities-screen.tsx",
+        "apps/web/app/(shell)/community/page.tsx",
+        "apps/web/app/components/bivaque/feed-post-edit.tsx"
+      ],
+      "dependencies": [],
+      "proof": [
+        "2026-09-25: pgTAP no stack local, migrations pendentes aplicadas dentro da transação de cada teste (rollback): service-request-terminal 15/15, conversation-per-request 13/13, tracking 26/26, open-cap 8/8, event-questions 15/15, dm-context-allowed 26/26, dm-context-denials 25/25. RED: com o gatilho desligado os 3 asserts de insert direto falham.",
+        "2026-09-25: suíte pgTAP completa (seed carregado por outra sessão no stack compartilhado) tem 56 falhas IDÊNTICAS com e sem a migration nova — contaminação de seed, não regressão.",
+        "2026-09-25: gate verde (lint, typecheck, 1237+189+95 unit, 124 scope, secrets); supabase db lint sem erros.",
+        "Revisão independente (reviewer + security-auditor) de 25/09/2026 originou os itens; nenhuma prova de runtime (e2e/test:db em banco limpo) rodou ainda."
+      ],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 test:db",
+        "npx pnpm@11.18.0 exec playwright test tests/e2e/communities-url-state.spec.ts tests/e2e/publish-primary-hittable.spec.ts tests/e2e/close-label-ptbr.spec.ts tests/e2e/ds-029-conformance-probes.spec.ts tests/e2e/feed-attachment-publish.spec.ts tests/e2e/question-first-order.spec.ts tests/e2e/composer-layout.spec.ts"
+      ],
+      "updatedAt": "2026-09-25",
+      "sourceRevision": "8512ca7a",
+      "id": "REVISAO-JORNADAS-WEB-20260925",
+      "title": "Achados da revisão independente da branch de jornadas web",
+      "priority": "P1",
+      "category": "backend",
+      "status": "now",
+      "description": "Revisão independente (reviewer + security-auditor, 25/09/2026) da branch de jornadas web e do merge com o PR #80. Corrigidos no código com testes; falta a prova de runtime independente (runtime-verifier: test:db em banco limpo e e2e) antes de fechar.",
+      "checklist": [
+        "Pedido terminal: INSERT direto em dm_messages recusado por gatilho (RPC e insert direto), conversa compartilhada aceita enquanto houver pedido ativo, close/cancel sem confirmar existência",
+        "Destino pós-login e callback: /invite, /publicacoes e /prestador-convite na allowlist, com teste de cobertura contra as pastas de rota; caracteres de controle recusados",
+        "Aceite perdido em outro aparelho: onboarding e callback-error levam a /consent; reenvio de confirmação não emite intent de aceite",
+        "Busca de comunidades aceita espaço (texto cru no campo, URL com atraso)",
+        "Comunidade principal: /community filtra pela cidade atual; o Início abre o compositor com a comunidade principal (decisão do dono de 25/09/2026)",
+        "Edição: sem ramo modal morto, foto removida vira text, zero linhas alteradas é falha, volta para a tela de origem",
+        "Pedidos: conflito explícito ao encerrar/cancelar, data absoluta do cancelamento, chave de repetição gira quando o texto muda",
+        "Rascunhos antigos (v1/v2) apagados; comparador visual falha fechado sem prova",
+        "Prova de runtime independente: test:db em banco limpo e os e2e listados"
+      ],
+      "completedChecklist": [true, true, true, true, true, true, true, true, false]
     }
   ]
 }

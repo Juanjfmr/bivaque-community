@@ -7,6 +7,7 @@ import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { IntentLauncher } from "../../components/bivaque/intent-launcher"
 import { CommunitySection, type PrimaryCommunity } from "./community-section"
+import { composerQuery } from "./composer-query"
 import { InicioGreeting } from "./greeting"
 import {
   createRequestGuard,
@@ -61,15 +62,17 @@ export default function InicioPage() {
   }, [supabase, current.id])
 
   // "Fazer uma pergunta" e o "Publicar" da comunidade abrem a rota estável
-  // /publicacoes/nova (R24). A dica de anexo nunca escolhe o formato: o
-  // `post_type` é derivado do anexo real no compositor.
+  // /publicacoes/nova (R24). O público padrão é a comunidade principal — a
+  // mesma que dá contexto ao cabeçalho e ao feed desta tela; sem comunidade
+  // principal pronta, o compositor usa a preferência salva ou a cidade. A dica
+  // de anexo nunca escolhe o formato: o `post_type` sai do anexo real.
+  const primaryCommunityId = primary.status === "ready" ? primary.id : null
   const handleOpenComposer = useCallback(
     (attachment?: string) => {
       setRefreshKey((previous) => previous + 1)
-      const query = attachment ? `?tipo=${encodeURIComponent(attachment)}` : ""
-      router.push(`/publicacoes/nova${query}` as Route)
+      router.push(`/publicacoes/nova?${composerQuery(primaryCommunityId, attachment)}` as Route)
     },
-    [router],
+    [router, primaryCommunityId],
   )
 
   return (

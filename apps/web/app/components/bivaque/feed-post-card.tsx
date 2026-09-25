@@ -8,7 +8,7 @@
 import { Button, Chip, Input, useOverlayState } from "@heroui/react"
 import { Bookmark, ExternalLink, Heart, Link2, MessageCircle, Share2 } from "lucide-react"
 import type { Route } from "next"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -68,6 +68,7 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
   const [groupName, setGroupName] = useState<string>("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const router = useRouter()
+  const pathname = usePathname()
   const supabase = createBrowserClient()
 
   // Uma requisição para todos os cartões: ver currentUserIdOnce.
@@ -278,7 +279,10 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
                 onReport={reportModal.open}
                 onEdit={
                   isOwnPost
-                    ? () => router.push(`/publicacoes/${post.id}/editar` as Route)
+                    ? () =>
+                        router.push(
+                          `/publicacoes/${post.id}/editar?origem=${encodeURIComponent(pathname)}` as Route,
+                        )
                     : undefined
                 }
               />

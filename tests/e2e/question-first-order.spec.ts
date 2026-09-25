@@ -119,8 +119,10 @@ test.describe("a pergunta vem antes do resto", () => {
       const labels = Array.from(composer.querySelectorAll("label, legend, [id$='-heading']"))
       return (labels[0]?.textContent ?? "").replace(/\s+/g, " ").trim()
     })
-    // Na rota o rótulo visível é "Qual é a sua pergunta?".
-    expect(firstField).toMatch(/pergunta/i)
+    // Na rota o rótulo visível do campo da pergunta é "Qual é a sua pergunta?".
+    // A frase exata, e não /pergunta/i: a legenda "Anexar à pergunta" também
+    // casaria e esconderia o anexo voltando para antes da pergunta.
+    expect(firstField).toContain("Qual é a sua pergunta?")
   })
 
   test("formulário comunitário: pergunta antes de categoria e alcance", async ({ page }) => {

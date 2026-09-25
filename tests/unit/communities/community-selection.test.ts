@@ -101,4 +101,13 @@ describe("motivo do pedido", () => {
     expect(screenSource).toContain("writeCommunityUrlState")
     expect(screenSource).toContain("selectedId: canonicalId")
   })
+
+  it("o campo de busca guarda o texto cru; a URL recebe o termo limpo com atraso", () => {
+    // O campo controlado pela URL perdia o espaço digitado (a URL guarda o
+    // termo com trim). O valor do campo é estado local.
+    expect(screenSource).toContain("value={searchText}")
+    expect(screenSource).not.toContain("value={query}")
+    expect(screenSource).toContain("SEARCH_URL_DEBOUNCE_MS")
+    expect(writeCommunityUrlState(new URLSearchParams(), { query: " vila aj " })).toBe("q=vila+aj")
+  })
 })
