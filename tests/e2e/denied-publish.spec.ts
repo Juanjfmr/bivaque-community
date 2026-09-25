@@ -187,7 +187,7 @@ test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)",
       await expect(composer).toHaveAttribute("data-draft-ready", "true")
       await setSuspended(serviceRoleKey, true)
 
-      await page.getByLabel("Conteúdo").fill(`${contentPrefix} membro suspenso tentou publicar`)
+      await page.getByLabel("Pergunta").fill(`${contentPrefix} membro suspenso tentou publicar`)
       await page.getByTestId("publish-submit").click()
 
       // Copy generica: lib/composer/publish-error.ts classifica 42501 como

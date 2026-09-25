@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback } from "react"
+import { normalizeAttachment } from "../../../../lib/composer/post-attachment"
 import { useLocalityContext } from "../../../../lib/locality-context"
 import { CreatePostModal } from "../../../components/bivaque/feed-post"
-import { POST_TYPE_ORDER } from "../../../components/bivaque/feed-post-shared"
 
 export default function NewPublicationPage() {
   const router = useRouter()
@@ -17,11 +17,9 @@ export default function NewPublicationPage() {
     requestedCommunity && /^[0-9a-f-]{36}$/i.test(requestedCommunity)
       ? requestedCommunity
       : undefined
-  const defaultPostType = POST_TYPE_ORDER.includes(
-    requestedType as (typeof POST_TYPE_ORDER)[number],
-  )
-    ? (requestedType ?? undefined)
-    : undefined
+  // `?tipo=` é só a dica de qual anexo já vem oferecido; o formato gravado sai
+  // do anexo real no compositor.
+  const initialAttachment = normalizeAttachment(requestedType ?? undefined) ?? undefined
 
   const close = useCallback(() => {
     router.push(returnPath)
@@ -31,7 +29,7 @@ export default function NewPublicationPage() {
     <CreatePostModal
       pageMode
       localityId={current.id}
-      defaultPostType={defaultPostType}
+      initialAttachment={initialAttachment}
       defaultCommunityId={defaultCommunityId}
       onCreated={close}
       onClose={close}

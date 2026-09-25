@@ -184,7 +184,7 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
       const composer = page.locator("[data-composer-form]")
       await expect(composer).toBeVisible()
       await expect(composer).toHaveAttribute("data-draft-ready", "true")
-      await composer.getByLabel("Conteúdo").fill(postText)
+      await composer.getByLabel("Pergunta").fill(postText)
       await composer.getByRole("button", { name: "Publicar" }).click()
       await expect(page).toHaveURL(/\/community/)
       await expect(page.locator("article", { hasText: postText })).toBeVisible({ timeout: 15_000 })

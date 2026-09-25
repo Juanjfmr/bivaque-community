@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
+import { IntentLauncher } from "../../components/bivaque/intent-launcher"
 import { CommunitySection, type PrimaryCommunity } from "./community-section"
-import { InicioComposer } from "./composer"
 import { InicioGreeting } from "./greeting"
 import {
   createRequestGuard,
@@ -15,7 +15,7 @@ import {
   type NextEvent,
 } from "./home-loaders"
 import { ReturnStrip } from "./return-strip"
-import { InicioRightRail } from "./right-rail"
+import { InicioRailDisclosure, InicioRightRail } from "./right-rail"
 
 // RECON-002 (prancha 01-web-inicio): home de quem participa.
 //
@@ -60,10 +60,13 @@ export default function InicioPage() {
     })
   }, [supabase, current.id])
 
+  // "Fazer uma pergunta" e o "Publicar" da comunidade abrem a rota estável
+  // /publicacoes/nova (R24). A dica de anexo nunca escolhe o formato: o
+  // `post_type` é derivado do anexo real no compositor.
   const handleOpenComposer = useCallback(
-    (postType?: string) => {
+    (attachment?: string) => {
       setRefreshKey((previous) => previous + 1)
-      const query = postType ? `?tipo=${encodeURIComponent(postType)}` : ""
+      const query = attachment ? `?tipo=${encodeURIComponent(attachment)}` : ""
       router.push(`/publicacoes/nova${query}` as Route)
     },
     [router],
@@ -74,8 +77,23 @@ export default function InicioPage() {
       <div className="mx-auto flex w-full max-w-[56rem] flex-1 gap-6 px-4 pt-4 pb-8">
         <div className="min-w-0 flex-1 space-y-4">
           <InicioGreeting communityName={primary.status === "ready" ? primary.name : null} />
-          <InicioComposer onOpen={handleOpenComposer} />
+          {/* DS-006 (prancha 01, ajuste de 20/09): o retorno relevante vem
+              ANTES do lançador de intenções. A faixa só existe com notificação
+              não-lida real (devolve null sem linha legível), então a Home de
+              quem não tem retorno nenhum não ganha um bloco vazio no lugar. */}
           <ReturnStrip />
+          {/* `explain` só no estado novo/sem comunidade aprovada: ali explicar as
+              duas intenções vale o espaço. Membro ativo recebe a faixa compacta,
+              que não empurra o primeiro item do feed para fora da dobra. */}
+          <IntentLauncher
+            variant={primary.status === "none" ? "explain" : "compact"}
+            onAskQuestion={() => handleOpenComposer()}
+          />
+          {/* O trilho da prancha 01 não existe abaixo de 1024px. O conteúdo que
+              só existe nele (os atalhos e "De mudança?") desce para cá fechado:
+              continua alcançável sem inventar um rail que a prancha não desenha
+              e sem empurrar o primeiro item do feed para fora da dobra. */}
+          <InicioRailDisclosure />
           <CommunitySection
             primary={primary}
             onRetryPrimary={loadPrimary}

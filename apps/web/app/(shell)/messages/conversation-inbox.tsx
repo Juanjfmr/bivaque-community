@@ -9,6 +9,7 @@ import {
   CONTEXT_LABELS,
   formatLastMessagePreview,
 } from "../../components/bivaque/chat-thread"
+import { ModalCloseTrigger } from "../../components/bivaque/close-button"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedbackAlert } from "../../components/bivaque/feedback-alert"
@@ -687,7 +688,7 @@ export function ConversationInbox({
             <Modal.Dialog>
               <Modal.Header>
                 <Modal.Heading className="text-base font-semibold">Nova conversa</Modal.Heading>
-                <Modal.CloseTrigger className="min-h-11 min-w-11" />
+                <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-muted">

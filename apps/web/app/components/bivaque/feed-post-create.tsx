@@ -1,8 +1,14 @@
 "use client"
 
-// Criação de publicação (prancha 45, painel esquerdo). Composição: destino
-// real ("Quem pode ver?"), texto, detalhes opcionais, foto opcional e a
-// prévia "Como sua publicação será vista" repetindo o público escolhido.
+// Criação de publicação (prancha 44 painel 1 + prancha 45). Composição: a
+// PERGUNTA primeiro, depois destino real ("Quem pode ver?"), detalhes
+// opcionais, anexo opcional e a prévia "Como sua publicação será vista".
+//
+// A intenção já foi escolhida na tela anterior ("Fazer uma pergunta" /
+// "Pedir uma indicação"), então o compositor NÃO pergunta o formato de novo:
+// não existe seletor de Texto/Foto/Link/Enquete antes do conteúdo. Anexar foto
+// ou link é opção SOBRE a pergunta e começa vazia; é o ANEXO REAL que deriva o
+// `post_type` gravado (ver `derived`). Não há enquete — nem editor, nem estado.
 //
 // Rascunho (RECON-014): o texto fica no armazenamento do PRÓPRIO navegador
 // (feed-post-draft), nunca no servidor; quem foi interrompido recupera o que
@@ -12,12 +18,20 @@
 
 import { detectCep, detectCpf } from "@bivaque/domain"
 import { Button, Input, Modal, Spinner, TextArea, useOverlayState } from "@heroui/react"
+import { ImagePlus, Link2 } from "lucide-react"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
+import {
+  attachmentPublishBlocker,
+  derivePostType,
+  normalizeAttachment,
+  type PostAttachment,
+} from "../../../lib/composer/post-attachment"
 import { classifyPublishError } from "../../../lib/composer/publish-error"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
+import { ModalCloseTrigger } from "./close-button"
 import { ConnectionLostState } from "./error-state"
 import {
   type AudienceDestination,
@@ -39,14 +53,11 @@ import {
 import { DraftDiscardDialog, DraftNotices } from "./feed-post-draft-ui"
 import { PhotoField } from "./feed-post-photo"
 import { PostPiiWarning } from "./feed-post-pii-warning"
-import { PollEditor } from "./feed-post-poll-editor"
 import { PostPreview } from "./feed-post-preview"
 import {
   type AudienceKey,
   CITY_AUDIENCE_KEY,
   composePostContent,
-  POST_TYPE_LABELS,
-  POST_TYPE_ORDER,
   parseAudienceKey,
   useCurrentUser,
 } from "./feed-post-shared"
@@ -55,7 +66,10 @@ import { showToast } from "./toast"
 
 interface CreatePostModalProps {
   localityId: string
-  defaultPostType?: string | undefined
+  /** Dica da TELA DE ENTRADA: qual anexo já vem oferecido ao abrir. Nunca
+   *  escolhe o formato — o `post_type` sai do anexo real (`derived`), então
+   *  abrir por aqui e não anexar nada publica uma pergunta de texto. */
+  initialAttachment?: string | undefined
   defaultCommunityId?: string | undefined
   onCreated: () => void
   onClose: () => void
@@ -73,7 +87,7 @@ const QUESTION_BODY_MAX = 1000
 
 export function CreatePostModal({
   localityId,
-  defaultPostType,
+  initialAttachment,
   defaultCommunityId,
   onCreated,
   onClose,
@@ -88,12 +102,13 @@ export function CreatePostModal({
   const suppressDraftFlushRef = useRef(false)
   const scopeIsCurrent = loadedDraftScopeRef.current === draftScopeKey
   const [draftReady, setDraftReady] = useState(false)
-  const [postType, setPostType] = useState(defaultPostType ?? "text")
+  const [attachment, setAttachment] = useState<PostAttachment>(() =>
+    normalizeAttachment(initialAttachment),
+  )
   const [content, setContent] = useState("")
   const [details, setDetails] = useState("")
   const [photoPath, setPhotoPath] = useState("")
   const [linkUrl, setLinkUrl] = useState("")
-  const [pollOptions, setPollOptions] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
   // O `kind` do classificador decide a SUPERFÍCIE do erro: falha de transporte
   // (offline, DNS, timeout) é o estado "Sem conexão" da prancha 60, com retomada
@@ -149,12 +164,11 @@ export function CreatePostModal({
     // O unload flush e o autosave ficam presos ao guard de escopo abaixo.
     loadedDraftScopeRef.current = null
     setDraftReady(false)
-    setPostType(defaultPostType ?? "text")
+    setAttachment(normalizeAttachment(initialAttachment))
     setContent("")
     setDetails("")
     setPhotoPath("")
     setLinkUrl("")
-    setPollOptions([])
     setAudienceKey(defaultCommunityId ? `community:${defaultCommunityId}` : CITY_AUDIENCE_KEY)
     setDraftRestored(false)
     setAudienceFallback("")
@@ -167,12 +181,18 @@ export function CreatePostModal({
 
     const draft = loadPostDraft(ownerId, localityId)
     if (draft) {
-      setPostType(draft.postType)
+      // O rascunho não guarda formato: o anexo restaurado sai do anexo real.
+      setAttachment(
+        draft.photoPath.trim()
+          ? "photo"
+          : draft.linkUrl.trim()
+            ? "link"
+            : normalizeAttachment(initialAttachment),
+      )
       setContent(draft.content)
       setDetails(draft.details)
       setPhotoPath(draft.photoPath)
       setLinkUrl(draft.linkUrl)
-      setPollOptions(draft.pollOptions)
       setAudienceKey(draft.audienceKey)
       setDraftRestored(hasDraftContent(draft))
     } else {
@@ -184,7 +204,14 @@ export function CreatePostModal({
 
     loadedDraftScopeRef.current = draftScopeKey
     setDraftReady(true)
-  }, [currentUser.loading, draftScopeKey, ownerId, localityId, defaultCommunityId, defaultPostType])
+  }, [
+    currentUser.loading,
+    draftScopeKey,
+    ownerId,
+    localityId,
+    defaultCommunityId,
+    initialAttachment,
+  ])
 
   useEffect(() => {
     if (!modal.isOpen) {
@@ -224,6 +251,28 @@ export function CreatePostModal({
     scopeIsCurrent,
   ])
 
+  // Trocar de anexo LIMPA o outro. É o que mantém o estado representável no
+  // banco: `photo_path` e `link_url` não coexistem sob as CHECKs de
+  // `public.posts`, e um campo escondido mas preenchido publicaria um anexo que
+  // ninguém vê.
+  const selectAttachment = useCallback(
+    (next: PostAttachment) => {
+      const chosen = attachment === next ? null : next
+      if (chosen !== "photo") setPhotoPath("")
+      if (chosen !== "link") setLinkUrl("")
+      setAttachment(chosen)
+    },
+    [attachment],
+  )
+
+  // O ANEXO DERIVA O FORMATO. Tipo e colunas extras saem do mesmo objeto
+  // (`lib/composer/post-attachment`); anexo ligado e vazio cai no ramo `text`
+  // e é barrado por `attachmentPublishBlocker` no handleSubmit.
+  const derived = useMemo(
+    () => derivePostType(attachment, photoPath, linkUrl),
+    [attachment, photoPath, linkUrl],
+  )
+
   // Autosave do rascunho — melhor esforço, nunca quebra a tela. Campos vazios
   // não removem nada: apagar o rascunho é uma ação explícita, confirmada pelo
   // diálogo. Assim, uma edição que chega a zero não apaga o texto anterior.
@@ -246,8 +295,8 @@ export function CreatePostModal({
   }, [audienceKey, draftReady, localityId, ownerId, scopeIsCurrent])
 
   const draftFields = useMemo<PostDraftFields>(
-    () => ({ postType, content, details, linkUrl, pollOptions, photoPath }),
-    [postType, content, details, linkUrl, pollOptions, photoPath],
+    () => ({ content, details, linkUrl, photoPath }),
+    [content, details, linkUrl, photoPath],
   )
 
   useEffect(() => {
@@ -269,12 +318,11 @@ export function CreatePostModal({
   }, [persistDraft])
 
   const resetForm = useCallback(() => {
-    setPostType("text")
+    setAttachment(null)
     setContent("")
     setDetails("")
     setPhotoPath("")
     setLinkUrl("")
-    setPollOptions([])
     setError("")
     setErrorKind(null)
     setPhotoError("")
@@ -294,8 +342,6 @@ export function CreatePostModal({
     setError("")
     setErrorKind(null)
     setPhotoError("")
-    const effectivePostType =
-      pageMode && postType === "text" && photoPath.trim() ? "photo" : postType
 
     if (!content.trim()) {
       setError("A publicação precisa de texto.")
@@ -309,16 +355,12 @@ export function CreatePostModal({
       setError(`O corpo pode ter no máximo ${QUESTION_BODY_MAX} caracteres.`)
       return
     }
-    if (effectivePostType === "photo" && !photoPath.trim()) {
-      setError("Foto requer uma imagem anexada")
-      return
-    }
-    if (effectivePostType === "link" && !linkUrl.trim()) {
-      setError("Link requer uma URL")
-      return
-    }
-    if (effectivePostType === "poll" && pollOptions.length < 2) {
-      setError("Enquete requer pelo menos 2 opções")
+    // O anexo escolhido e o anexo publicado têm de ser o mesmo: anexo ligado e
+    // vazio (ou foto ainda enviando) não pode virar pergunta de texto em
+    // silêncio.
+    const blocked = attachmentPublishBlocker(attachment, photoPath, linkUrl)
+    if (blocked) {
+      setError(blocked)
       return
     }
 
@@ -335,26 +377,18 @@ export function CreatePostModal({
     const kind = parseAudienceKey(audienceKey)
     const insertData = {
       locality_id: localityId,
-      post_type: effectivePostType,
+      post_type: derived.postType,
       content: composed,
       community_id: kind.kind === "community" ? kind.id : null,
       group_id: kind.kind === "group" ? kind.id : null,
     } as const
 
-    const extras: { photo_path?: string; link_url?: string; poll_options?: string[] } = {}
-    if (effectivePostType === "photo" && photoPath.trim()) {
-      extras.photo_path = photoPath.trim()
-    }
-    if (postType === "link" && linkUrl.trim()) {
-      extras.link_url = linkUrl.trim()
-    }
-    if (postType === "poll" && pollOptions.length >= 2) {
-      extras.poll_options = pollOptions
-    }
-
-    const { error: insertError } = await supabase
-      .from("posts")
-      .insert({ ...insertData, ...extras } as Database["public"]["Tables"]["posts"]["Insert"])
+    // Tipo e extras saem do MESMO objeto `derived`: a coluna extra nunca entra
+    // sem o `post_type` que a CHECK correspondente exige.
+    const { error: insertError } = await supabase.from("posts").insert({
+      ...insertData,
+      ...derived.extras,
+    } as Database["public"]["Tables"]["posts"]["Insert"])
 
     if (insertError) {
       // Anti-enumeração: 42501 (RLS), 23505 (unique) e qualquer outra
@@ -407,10 +441,10 @@ export function CreatePostModal({
     scopeIsCurrent,
     audience.loading,
     audience.error,
-    postType,
+    derived,
+    attachment,
     photoPath,
     linkUrl,
-    pollOptions,
     piiWarning,
     audienceKey,
     ownerId,
@@ -444,10 +478,10 @@ export function CreatePostModal({
 
   const discardDraft = useCallback(() => {
     clearPostDraft(ownerId, localityId)
+    setAttachment(null)
     setContent("")
     setDetails("")
     setLinkUrl("")
-    setPollOptions([])
     setPhotoPath("")
     setDraftRestored(false)
     setStorageUnavailable(false)
@@ -463,6 +497,36 @@ export function CreatePostModal({
 
   const audienceNotice = audienceNoticeText(selectedKind.kind, locality?.cityName ?? null)
   const offlinePage = pageMode && errorKind === "network"
+
+  const reachNotice = placeName
+    ? `Visível para membros do Bivaque em ${placeName}.`
+    : "Escolha quem pode ver."
+
+  const publishButton = (
+    <Button
+      onPress={handleSubmit}
+      isDisabled={
+        submitting ||
+        !draftReady ||
+        !scopeIsCurrent ||
+        audience.loading ||
+        Boolean(audience.error) ||
+        !content.trim()
+      }
+      variant="primary"
+      aria-busy={submitting}
+      data-testid="publish-submit"
+    >
+      {submitting ? (
+        <>
+          <Spinner size="sm" aria-label="Publicando" />
+          Publicando…
+        </>
+      ) : (
+        "Publicar"
+      )}
+    </Button>
+  )
 
   const composerContent = (
     <div
@@ -498,26 +562,38 @@ export function CreatePostModal({
             </div>
           </>
         ) : null}
-        {!offlinePage ? (
-          <div className="flex gap-2 overflow-x-auto">
-            {POST_TYPE_ORDER.map((type) => (
-              <Button
-                key={type}
-                size="sm"
-                variant={postType === type ? "primary" : "tertiary"}
-                onPress={() => setPostType(type)}
-              >
-                {POST_TYPE_LABELS[type]}
-              </Button>
-            ))}
-          </div>
-        ) : null}
-
         <DraftNotices
           draftRestored={draftRestored}
           storageUnavailable={storageUnavailable}
           onRequestDiscard={discardConfirm.open}
         />
+
+        {/* A PERGUNTA VEM PRIMEIRO: destino é decisão SOBRE a pergunta — quem
+            vai ler o que já foi escrito —, não um passo que a antecede
+            (prancha 45 painel 2). */}
+        <div className="mt-4">
+          <label htmlFor="post-conteudo" className="mb-1 block text-sm font-medium">
+            {pageMode ? "Qual é a sua pergunta?" : "Pergunta"} <span aria-hidden="true">*</span>
+            <span className="sr-only"> (obrigatório)</span>
+          </label>
+          <TextArea
+            id="post-conteudo"
+            aria-label="Pergunta"
+            required
+            aria-required="true"
+            maxLength={pageMode ? QUESTION_TITLE_MAX : undefined}
+            aria-describedby={pageMode ? "post-conteudo-counter" : undefined}
+            className="w-full"
+            placeholder={pageMode ? "Escreva sua pergunta" : "O que você quer perguntar?"}
+            value={content}
+            onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
+          />
+          {pageMode ? (
+            <p id="post-conteudo-counter" className="mt-1 text-right text-xs text-muted">
+              {content.length}/{QUESTION_TITLE_MAX}
+            </p>
+          ) : null}
+        </div>
 
         {!offlinePage ? (
           <div className="mt-4">
@@ -539,36 +615,6 @@ export function CreatePostModal({
             )}
           </div>
         ) : null}
-
-        <div className="mt-4">
-          <label htmlFor="post-conteudo" className="mb-1 block text-sm font-medium">
-            {pageMode ? "Qual é a sua pergunta?" : "Conteúdo"} <span aria-hidden="true">*</span>
-            <span className="sr-only"> (obrigatório)</span>
-          </label>
-          <TextArea
-            id="post-conteudo"
-            aria-label="Conteúdo"
-            required
-            aria-required="true"
-            maxLength={pageMode ? QUESTION_TITLE_MAX : undefined}
-            aria-describedby={pageMode ? "post-conteudo-counter" : undefined}
-            className="w-full"
-            placeholder={
-              postType === "poll"
-                ? "Pergunta da enquete..."
-                : pageMode
-                  ? "Escreva sua pergunta"
-                  : "O que você quer compartilhar?"
-            }
-            value={content}
-            onChange={(e) => setContent((e.target as HTMLTextAreaElement).value)}
-          />
-          {pageMode ? (
-            <p id="post-conteudo-counter" className="mt-1 text-right text-xs text-muted">
-              {content.length}/{QUESTION_TITLE_MAX}
-            </p>
-          ) : null}
-        </div>
 
         <div className="mt-4">
           <label htmlFor="post-detalhes" className="mb-1 block text-sm font-medium">
@@ -595,30 +641,59 @@ export function CreatePostModal({
           ) : null}
         </div>
 
-        {postType === "photo" || (pageMode && !offlinePage) ? (
-          <div className="mt-4">
-            <p className="mb-1 text-sm font-medium">Adicionar foto (opcional)</p>
-            <PhotoField value={photoPath} onChange={setPhotoPath} onError={setPhotoError} />
-            {photoError ? (
-              <p aria-live="polite" className="mt-1 text-xs text-[var(--semantic-danger)]">
-                {photoError}
-              </p>
+        {/* Anexo é opção SOBRE a pergunta, nunca passo anterior: vem DEPOIS do
+            texto, começa vazio (nenhum anexo é o default) e não decide o formato
+            sozinho — quem decide é o anexo real, em `derived`. O `min-w-0`
+            neutraliza o `min-inline-size: min-content` padrão do fieldset, que
+            estouraria a coluna do formulário em 375px. */}
+        {!offlinePage ? (
+          <fieldset className="mt-4 min-w-0">
+            <legend className="mb-1 block text-sm font-medium">Anexar à pergunta (opcional)</legend>
+            <p className="mb-2 text-xs text-muted">Uma pergunta pode levar uma foto ou um link.</p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant={attachment === "photo" ? "primary" : "tertiary"}
+                aria-pressed={attachment === "photo"}
+                onPress={() => selectAttachment("photo")}
+                className="min-h-11"
+              >
+                <ImagePlus size={16} aria-hidden="true" />
+                Foto
+              </Button>
+              <Button
+                size="sm"
+                variant={attachment === "link" ? "primary" : "tertiary"}
+                aria-pressed={attachment === "link"}
+                onPress={() => selectAttachment("link")}
+                className="min-h-11"
+              >
+                <Link2 size={16} aria-hidden="true" />
+                Link
+              </Button>
+            </div>
+
+            {attachment === "photo" ? (
+              <div className="mt-3">
+                <PhotoField value={photoPath} onChange={setPhotoPath} onError={setPhotoError} />
+                {photoError ? (
+                  <p aria-live="polite" className="mt-1 text-xs text-[var(--semantic-danger)]">
+                    {photoError}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
-          </div>
-        ) : null}
 
-        {postType === "link" ? (
-          <Input
-            aria-label="URL"
-            placeholder="URL (https://...)"
-            value={linkUrl}
-            onChange={(e) => setLinkUrl((e.target as HTMLInputElement).value)}
-            className="mt-4 w-full"
-          />
-        ) : null}
-
-        {postType === "poll" ? (
-          <PollEditor options={pollOptions} onOptionsChange={setPollOptions} />
+            {attachment === "link" ? (
+              <Input
+                aria-label="URL"
+                placeholder="URL (https://...)"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl((e.target as HTMLInputElement).value)}
+                className="mt-3 w-full"
+              />
+            ) : null}
+          </fieldset>
         ) : null}
 
         {error && !offlinePage ? (
@@ -647,43 +722,18 @@ export function CreatePostModal({
           <PostPiiWarning onConfirm={handleSubmit} onCancel={() => setPiiWarning(false)} />
         ) : null}
 
-        {!offlinePage ? (
+        {/* No MODAL, o primário vive na barra de ações do rodapé, fora da área
+            que rola: com ele no fim do `Modal.Body` (overflow-y-auto), o centro
+            do botão caía fora da caixa visível em 375x568 e o hit-test resolvia
+            para o "Cancelar" do rodapé (medido em 19/09/2026). Na ROTA não há
+            corpo rolável, e o primário fecha o formulário. */}
+        {pageMode && !offlinePage ? (
           <div className="mt-4 flex flex-col items-end gap-1">
-            <Button
-              onPress={handleSubmit}
-              isDisabled={
-                submitting ||
-                !draftReady ||
-                !scopeIsCurrent ||
-                audience.loading ||
-                Boolean(audience.error) ||
-                !content.trim()
-              }
-              variant="primary"
-              aria-busy={submitting}
-              data-testid="publish-submit"
-            >
-              {submitting ? (
-                <>
-                  <Spinner size="sm" aria-label="Publicando" />
-                  Publicando…
-                </>
-              ) : (
-                "Publicar"
-              )}
-            </Button>
-            <p className="text-xs text-[var(--semantic-action-primary)]">
-              {placeName
-                ? `Visível para membros do Bivaque em ${placeName}.`
-                : "Escolha quem pode ver."}
-            </p>
+            {publishButton}
+            <p className="text-xs text-[var(--semantic-action-primary)]">{reachNotice}</p>
           </div>
         ) : (
-          <p className="mt-4 text-xs text-[var(--semantic-action-primary)]">
-            {placeName
-              ? `Visível para membros do Bivaque em ${placeName}.`
-              : "Escolha quem pode ver."}
-          </p>
+          <p className="mt-4 text-xs text-[var(--semantic-action-primary)]">{reachNotice}</p>
         )}
       </div>
 
@@ -809,10 +859,7 @@ export function CreatePostModal({
                 ) : (
                   <Modal.Heading>Criar publicação</Modal.Heading>
                 )}
-                <Modal.CloseTrigger
-                  className={pageMode ? "hidden" : "min-h-11 min-w-11"}
-                  aria-label="Fechar"
-                />
+                <ModalCloseTrigger className={pageMode ? "hidden" : "min-h-11 min-w-11"} />
               </Modal.Header>
               <Modal.Body
                 className={
@@ -842,9 +889,12 @@ export function CreatePostModal({
                     </Button>
                   </>
                 ) : (
-                  <Button variant="tertiary" onPress={modal.close} isDisabled={submitting}>
-                    Cancelar
-                  </Button>
+                  <>
+                    <Button variant="tertiary" onPress={modal.close} isDisabled={submitting}>
+                      Cancelar
+                    </Button>
+                    {publishButton}
+                  </>
                 )}
               </Modal.Footer>
             </Modal.Dialog>

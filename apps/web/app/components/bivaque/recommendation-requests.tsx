@@ -1,12 +1,25 @@
 "use client"
 
-import { Button, Chip, Input, TextArea } from "@heroui/react"
+import { Button, Chip, Input, TextArea, useOverlayState } from "@heroui/react"
+import { ExternalLink, MapPin } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
+import { useLocalityContext } from "../../../lib/locality-context"
 import { callResolutionRpc } from "../../../lib/recommendations/resolution-rpcs"
+import { localityScopeLabel } from "../../../lib/recommendations/scope-label"
+import { overflowTriggerLabel } from "../../../lib/recommendations/trigger-label"
+import {
+  readFailure,
+  resolutionOperation,
+  writeFailure,
+} from "../../../lib/recommendations/write-failure-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { Card } from "./card"
 import { EmptyState } from "./empty-state"
+import { LeanOverflowMenu } from "./feed-post-menu"
 import { FeedbackAlert } from "./feedback-alert"
+import { ReportButton, type ReportTargetType } from "./report-button"
 import { Skeleton } from "./skeleton"
 
 type RequestRow = {
@@ -30,6 +43,17 @@ type ReplyRow = {
   created_at: string
 }
 
+// DS-006: o ÚNICO vínculo resposta↔Guia que o servidor prova. `source_reply_id`
+// é preenchido por `promote_reply_to_guide` (operador) quando a resposta vira
+// item canônico. `recommendation_replies` não tem coluna de vínculo na escrita
+// e `recommendation_reply_promotions` é service_role — um membro não lê nenhuma
+// das duas. Sem linha aqui, a tela não mostra vínculo nenhum.
+type GuideLinkRow = {
+  id: string
+  name: string
+  source_reply_id: string | null
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
   servicos_locais: "Serviços locais",
   saude_bem_estar: "Saúde & bem-estar",
@@ -50,6 +74,22 @@ function formatDate(iso: string): string {
 
 export default function RecommendationRequests() {
   const supabase = createBrowserClient()
+  // DS-006: o chip de alcance fala do PEDIDO, não de quem lê. A localidade do
+  // pedido já vem no próprio SELECT (`locality_id`); usar a cidade da sessão
+  // rotulava um pedido de outra cidade com a cidade errada.
+  const { current, outbound } = useLocalityContext()
+
+  const localityLabelFor = useCallback(
+    (request: Pick<RequestRow, "group_id" | "locality_id">): string =>
+      localityScopeLabel({
+        groupId: request.group_id,
+        localityId: request.locality_id,
+        currentId: current.id,
+        currentCityName: current.cityName,
+        outbound,
+      }),
+    [current.id, current.cityName, outbound],
+  )
 
   const [requests, setRequests] = useState<RequestRow[]>([])
   const [repliesByRequest, setRepliesByRequest] = useState<Record<string, ReplyRow[]>>({})
@@ -62,7 +102,11 @@ export default function RecommendationRequests() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [feedback, setFeedback] = useState("")
-  const [replyText, setReplyText] = useState("")
+  // DS-006 (prancha 80): `Responder` abre e fecha UMA composição por pedido. O
+  // rascunho é POR PEDIDO — antes havia um único `replyText` para todos, e
+  // digitar em um pedido apagava o texto dos outros.
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
+  const [openReplyId, setOpenReplyId] = useState<string | null>(null)
   const [replyingId, setReplyingId] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -72,6 +116,19 @@ export default function RecommendationRequests() {
   const [editReplyText, setEditReplyText] = useState("")
   const [resolvingId, setResolvingId] = useState<string | null>(null)
   const [resolutionAction, setResolutionAction] = useState<string | null>(null)
+  // Moderação e ações raras ficam no overflow (prancha 80): ocultar é gesto
+  // local desta lista, denunciar abre o modal real de /reports.
+  const [hiddenRequestIds, setHiddenRequestIds] = useState<Set<string>>(new Set())
+  const [hiddenReplyIds, setHiddenReplyIds] = useState<Set<string>>(new Set())
+  const [guideLinksByReplyId, setGuideLinksByReplyId] = useState<
+    Record<string, { id: string; name: string }>
+  >({})
+  const [reportTarget, setReportTarget] = useState<{
+    type: ReportTargetType
+    id: string
+    authorId: string | null
+  } | null>(null)
+  const reportModal = useOverlayState()
 
   const loadRequests = useCallback(async () => {
     setLoading(true)
@@ -95,7 +152,9 @@ export default function RecommendationRequests() {
       .order("created_at", { ascending: false })
 
     if (requestError) {
-      setError("Não foi possível carregar os pedidos de indicação.")
+      // A frase já era de produto; o que faltava era a causa. `readFailure`
+      // registra e devolve o MESMO texto que já estava na tela.
+      setError(readFailure("carregar_pedidos", requestError.message))
       setLoading(false)
       return
     }
@@ -119,8 +178,9 @@ export default function RecommendationRequests() {
             .in("request_id", requestIds),
         ])
 
-      if (repliesError || savesError) {
-        setError("Não foi possível carregar respostas e salvos.")
+      const falhaDaCarga = repliesError ?? savesError
+      if (falhaDaCarga) {
+        setError(readFailure("carregar_respostas_e_salvos", falhaDaCarga.message))
         setLoading(false)
         return
       }
@@ -133,6 +193,29 @@ export default function RecommendationRequests() {
       setSavedRequestIds(
         new Set((savesData as { request_id: string }[] | null)?.map((save) => save.request_id)),
       )
+
+      // Vínculo real com o Guia (prancha 80: "Transmuda Recife" + "Ver no Guia").
+      // Só leitura de dado aprovado da própria localidade, pela RLS existente.
+      // Falha aqui não derruba a conversa: sem o dado, nenhum vínculo aparece.
+      const replyIds = Object.values(nextReplies)
+        .flat()
+        .map((reply) => reply.id)
+      const nextGuideLinks: Record<string, { id: string; name: string }> = {}
+      if (replyIds.length > 0) {
+        const { data: linkData, error: linkError } = await supabase
+          .from("arrival_guide_entries")
+          .select("id, name, source_reply_id")
+          .in("source_reply_id", replyIds)
+          .eq("status", "approved")
+        if (!linkError) {
+          for (const row of (linkData as unknown as GuideLinkRow[] | null) ?? []) {
+            if (row.source_reply_id) {
+              nextGuideLinks[row.source_reply_id] = { id: row.id, name: row.name }
+            }
+          }
+        }
+      }
+      setGuideLinksByReplyId(nextGuideLinks)
 
       const authorIds = [
         ...new Set([
@@ -163,6 +246,7 @@ export default function RecommendationRequests() {
       setRepliesByRequest({})
       setSavedRequestIds(new Set())
       setAuthorNames({})
+      setGuideLinksByReplyId({})
     }
 
     setLoading(false)
@@ -177,7 +261,7 @@ export default function RecommendationRequests() {
       setReplyingId(requestId)
       setFeedback("")
 
-      const body = replyText.trim()
+      const body = (replyDrafts[requestId] ?? "").trim()
       if (body.length < 5) {
         setFeedback("Escreva uma resposta com pelo menos 5 caracteres.")
         setReplyingId(null)
@@ -191,16 +275,19 @@ export default function RecommendationRequests() {
       })
 
       if (replyError) {
-        setFeedback(replyError.message)
+        // ITEM 9: frase de produto na tela, causa crua no log.
+        setFeedback(writeFailure("responder_pedido", replyError.message))
         setReplyingId(null)
         return
       }
 
-      setReplyText("")
+      // A composição daquele pedido fecha e o rascunho dele é o único limpo.
+      setReplyDrafts((previous) => ({ ...previous, [requestId]: "" }))
+      setOpenReplyId((previous) => (previous === requestId ? null : previous))
       setReplyingId(null)
       await loadRequests()
     },
-    [supabase, currentUserId, replyText, loadRequests],
+    [supabase, currentUserId, replyDrafts, loadRequests],
   )
 
   const toggleSave = useCallback(
@@ -216,7 +303,7 @@ export default function RecommendationRequests() {
           .eq("request_id", requestId)
 
         if (deleteError) {
-          setFeedback(deleteError.message)
+          setFeedback(writeFailure("remover_pedido_salvo", deleteError.message))
           setSavingId(null)
           return
         }
@@ -233,7 +320,7 @@ export default function RecommendationRequests() {
         })
 
         if (insertError) {
-          setFeedback(insertError.message)
+          setFeedback(writeFailure("salvar_pedido", insertError.message))
           setSavingId(null)
           return
         }
@@ -274,7 +361,7 @@ export default function RecommendationRequests() {
         .eq("author_id", currentUserId)
 
       if (updateError) {
-        setFeedback(updateError.message)
+        setFeedback(writeFailure("editar_pedido", updateError.message))
         return
       }
 
@@ -294,7 +381,7 @@ export default function RecommendationRequests() {
         .eq("author_id", currentUserId)
 
       if (deleteError) {
-        setFeedback(deleteError.message)
+        setFeedback(writeFailure("excluir_pedido", deleteError.message))
         return
       }
 
@@ -314,7 +401,7 @@ export default function RecommendationRequests() {
         .eq("author_id", currentUserId)
 
       if (deleteError) {
-        setFeedback(deleteError.message)
+        setFeedback(writeFailure("excluir_resposta", deleteError.message))
         return
       }
       await loadRequests()
@@ -341,7 +428,7 @@ export default function RecommendationRequests() {
         .eq("author_id", currentUserId)
 
       if (updateError) {
-        setFeedback(updateError.message)
+        setFeedback(writeFailure("editar_resposta", updateError.message))
         return
       }
       cancelEditReply()
@@ -367,7 +454,7 @@ export default function RecommendationRequests() {
       })
       setResolvingId(null)
       if (rpcError) {
-        setFeedback(rpcError.message)
+        setFeedback(writeFailure("resolver_pedido", rpcError.message))
         return
       }
       await loadRequests()
@@ -383,7 +470,8 @@ export default function RecommendationRequests() {
       const { error: rpcError } = await call()
       setResolutionAction(null)
       if (rpcError) {
-        setFeedback(rpcError.message)
+        // A chave diz QUAL das três ações falhou (marcar, limpar ou reabrir).
+        setFeedback(writeFailure(resolutionOperation(actionKey), rpcError.message))
         return
       }
       await loadRequests()
@@ -420,6 +508,44 @@ export default function RecommendationRequests() {
     [runResolutionAction, supabase],
   )
 
+  // ─ DS-006: composição de resposta, ocultar e denunciar ────────────────────
+
+  const setReplyDraft = useCallback((requestId: string, value: string) => {
+    // Estado POR PEDIDO (ver o comentário do useState): cada composição guarda
+    // o próprio texto e fechar uma não apaga o rascunho da outra.
+    setReplyDrafts((previous) => ({ ...previous, [requestId]: value }))
+  }, [])
+
+  // `Responder` é abre/fecha, não envio. Um único formulário por pedido: o
+  // textarea só existe montado quando aquele pedido está aberto, e o botão que
+  // o abriu é o mesmo que o fecha.
+  const toggleReplyComposer = useCallback((requestId: string) => {
+    setFeedback("")
+    setOpenReplyId((previous) => (previous === requestId ? null : requestId))
+  }, [])
+
+  const closeReplyComposer = useCallback(() => setOpenReplyId(null), [])
+
+  const openReport = useCallback(
+    (type: ReportTargetType, id: string, authorId: string | null) => {
+      setReportTarget({ type, id, authorId })
+      reportModal.open()
+    },
+    [reportModal],
+  )
+
+  const handleHideRequest = useCallback((requestId: string) => {
+    setHiddenRequestIds((previous) => new Set(previous).add(requestId))
+  }, [])
+
+  const handleHideReply = useCallback((replyId: string) => {
+    setHiddenReplyIds((previous) => new Set(previous).add(replyId))
+  }, [])
+
+  // Ocultar é gesto local da lista (nada é apagado no servidor): o pedido some
+  // desta leitura e volta no próximo carregamento da página.
+  const visibleRequests = requests.filter((request) => !hiddenRequestIds.has(request.id))
+
   return (
     <div className="flex flex-col gap-4">
       {feedback && (
@@ -435,276 +561,422 @@ export default function RecommendationRequests() {
         </div>
       )}
 
-      {!loading && !error && requests.length === 0 && (
+      {!loading && !error && visibleRequests.length === 0 && (
         <EmptyState
           title="Nenhum pedido por aqui"
           description="Quando alguém pedir uma indicação, ela aparecerá nesta lista com as respostas."
         />
       )}
 
-      {!loading && !error && requests.length > 0 && (
+      {!loading && !error && visibleRequests.length > 0 && (
         <div className="flex flex-col gap-4">
-          {requests.map((request) => {
-            const replies = repliesByRequest[request.id] ?? []
+          {visibleRequests.map((request) => {
+            const replies = (repliesByRequest[request.id] ?? []).filter(
+              (reply) => !hiddenReplyIds.has(reply.id),
+            )
             const isEditing = editingId === request.id
             const isSaved = savedRequestIds.has(request.id)
             const isAuthor = request.author_id === currentUserId
 
             return (
-              <Card key={request.id} className="p-4">
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Chip size="sm" variant="soft">
-                          {CATEGORY_LABELS[request.category] ?? request.category}
-                        </Chip>
-                        <Chip size="sm" variant="soft">
-                          {request.group_id ? "Grupo" : "Manaus"}
-                        </Chip>
-                        <span className="text-xs text-muted">
-                          {formatDate(request.created_at)}
-                          {authorNames[request.author_id]
-                            ? ` · ${authorNames[request.author_id]}`
-                            : ""}
-                        </span>
-                        {request.is_resolved && (
-                          <Chip size="sm" variant="soft" color="success">
-                            ✓ Resolvida pela autora
-                          </Chip>
-                        )}
+              // A âncora `#req-<id>` que /salvos, /notifications e o Guia já
+              // emitem precisa existir: o wrapper Card não repassa `id`, então
+              // o alvo do hash fica no elemento que esta tela controla.
+              <div key={request.id} id={`req-${request.id}`} className="scroll-mt-24">
+                <Card className="p-4">
+                  <div className="flex flex-col gap-3">
+                    {/* Prancha 80: o pedido abre pelo TÍTULO, como título da
+                        conversa — não por um h3 de 14px depois dos chips. O h1
+                        da rota continua "Indicações": a captura visual e o e2e
+                        dependem dele. */}
+                    <div className="flex items-start justify-between gap-3">
+                      <h2 className="min-w-0 text-2xl font-semibold tracking-tight sm:text-3xl">
+                        {request.title}
+                      </h2>
+
+                      {/* Ações raras e de moderação vivem no overflow (prancha 80).
+                        `Denunciar` nunca é ação primária. */}
+                      <div className="shrink-0">
+                        <LeanOverflowMenu
+                          postId={request.id}
+                          sharePath={`/recommendations?focus=${request.id}#req-${request.id}`}
+                          menuLabel="Ações do pedido"
+                          // GATILHO SEM ROTULO: o nome do gatilho diz QUAL pedido
+                          // este botao abre; sem ele todos os gatilhos da lista
+                          // ficam no default generico "Mais opções". O prefixo
+                          // "Mais opções" e preservado de proposito — o e2e
+                          // clica por ele sem `exact`.
+                          triggerLabel={overflowTriggerLabel("do pedido", request.title)}
+                          labels={{
+                            edit: "Editar pedido",
+                            delete: "Excluir pedido",
+                            hide: "Ocultar pedido",
+                            share: "Compartilhar pedido",
+                            report: "Denunciar pedido",
+                            reopen: "Reabrir pedido",
+                          }}
+                          onEdit={isAuthor && !isEditing ? () => startEdit(request) : undefined}
+                          onDelete={isAuthor ? () => deleteRequest(request.id) : undefined}
+                          onHide={handleHideRequest}
+                          // Reabrir fica no overflow quando o fechamento já está
+                          // dito pela resposta marcada: assim o pedido não repete
+                          // o mesmo aviso em dois lugares.
+                          onReopen={
+                            isAuthor && request.is_resolved
+                              ? () => handleReopenRequest(request.id)
+                              : undefined
+                          }
+                          onReport={() =>
+                            openReport("recommendation_request", request.id, request.author_id)
+                          }
+                        />
                       </div>
                     </div>
 
-                    {isAuthor && !isEditing && (
-                      <div className="flex shrink-0 gap-2">
-                        <Button
-                          size="sm"
-                          variant="tertiary"
-                          className="text-xs"
-                          onPress={() => startEdit(request)}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="tertiary"
-                          className="text-xs"
-                          onPress={() => deleteRequest(request.id)}
-                        >
-                          Excluir
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  {isEditing ? (
-                    <div className="flex flex-col gap-3">
-                      <Input
-                        aria-label="Título"
-                        value={editTitle}
-                        onChange={(event) => setEditTitle((event.target as HTMLInputElement).value)}
-                      />
-                      <TextArea
-                        aria-label="Descrição"
-                        rows={3}
-                        value={editBody}
-                        onChange={(event) =>
-                          setEditBody((event.target as HTMLTextAreaElement).value)
-                        }
-                      />
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="primary" onPress={() => saveEdit(request.id)}>
-                          Salvar
-                        </Button>
-                        <Button size="sm" variant="tertiary" onPress={cancelEdit}>
-                          Cancelar
-                        </Button>
-                      </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Chip size="sm" variant="soft">
+                        {CATEGORY_LABELS[request.category] ?? request.category}
+                      </Chip>
+                      <Chip size="sm" variant="soft">
+                        {localityLabelFor(request)}
+                      </Chip>
+                      <span className="text-xs text-muted">
+                        {formatDate(request.created_at)}
+                        {authorNames[request.author_id]
+                          ? ` · ${authorNames[request.author_id]}`
+                          : ""}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      <h3 className="text-sm font-semibold">{request.title}</h3>
-                      <p className="text-sm text-muted">{request.body}</p>
-                    </div>
-                  )}
 
-                  {replies.length > 0 && (
-                    <ul className="flex flex-col gap-2 border-t border-border pt-3">
-                      {replies.map((reply) => {
-                        const isMarked = request.resolved_reply_id === reply.id
-                        const isMarking = resolutionAction === `mark:${request.id}:${reply.id}`
-                        const isClearing = resolutionAction === `clear:${request.id}`
-
-                        return (
-                          <li
-                            key={reply.id}
-                            className={`flex flex-col gap-1 rounded-md border border-border p-2 text-sm ${
-                              isMarked
-                                ? "border-l-4 border-l-[var(--semantic-success)] bg-[var(--semantic-success-soft)]"
-                                : ""
-                            }`}
+                    {isEditing ? (
+                      <div className="flex flex-col gap-3">
+                        <Input
+                          aria-label="Título"
+                          value={editTitle}
+                          onChange={(event) =>
+                            setEditTitle((event.target as HTMLInputElement).value)
+                          }
+                        />
+                        <TextArea
+                          aria-label="Descrição"
+                          rows={3}
+                          value={editBody}
+                          onChange={(event) =>
+                            setEditBody((event.target as HTMLTextAreaElement).value)
+                          }
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            className="rounded-[var(--semantic-radius-control)]"
+                            onPress={() => saveEdit(request.id)}
                           >
-                            {isMarked && (
-                              <div className="flex">
-                                <Chip size="sm" variant="soft" color="success">
-                                  Ajudou a resolver
-                                </Chip>
-                              </div>
-                            )}
-                            {editReplyId === reply.id ? (
-                              <div className="flex flex-col gap-2">
-                                <TextArea
-                                  aria-label="Editar resposta"
-                                  rows={2}
-                                  value={editReplyText}
-                                  onChange={(event) =>
-                                    setEditReplyText((event.target as HTMLTextAreaElement).value)
-                                  }
-                                />
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="primary"
-                                    onPress={() => saveEditReply(reply.id)}
-                                  >
-                                    Salvar
-                                  </Button>
-                                  <Button size="sm" variant="tertiary" onPress={cancelEditReply}>
-                                    Cancelar
-                                  </Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                <span className="flex flex-col gap-1 text-sm text-muted">
-                                  {authorNames[reply.author_id] && (
-                                    <span className="text-xs font-medium text-foreground">
-                                      {authorNames[reply.author_id]}
-                                    </span>
-                                  )}
-                                  {reply.body}
-                                </span>
-                                <div className="flex shrink-0 flex-wrap gap-1.5 sm:justify-end">
-                                  {reply.author_id === currentUserId && (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        variant="tertiary"
-                                        className="min-h-11 text-xs"
-                                        onPress={() => {
-                                          setEditReplyId(reply.id)
-                                          setEditReplyText(reply.body)
-                                        }}
-                                      >
-                                        Editar
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="tertiary"
-                                        className="min-h-11 text-xs"
-                                        onPress={() => handleDeleteReply(reply.id)}
-                                      >
-                                        Excluir
-                                      </Button>
-                                    </>
-                                  )}
-                                  {isAuthor && !isMarked && (
-                                    <Button
-                                      size="sm"
-                                      variant="tertiary"
-                                      className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                                      isDisabled={isMarking}
-                                      onPress={() => handleMarkResolvedReply(request.id, reply.id)}
-                                    >
-                                      {isMarking ? "Marcando..." : "Ajudou a resolver"}
-                                    </Button>
-                                  )}
-                                  {isAuthor && isMarked && (
-                                    <Button
-                                      size="sm"
-                                      variant="tertiary"
-                                      className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                                      isDisabled={isClearing}
-                                      onPress={() => handleClearResolvedReply(request.id)}
-                                    >
-                                      {isClearing ? "Removendo..." : "Remover marca"}
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  )}
+                            Salvar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="tertiary"
+                            className="rounded-[var(--semantic-radius-control)]"
+                            onPress={cancelEdit}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      // A1 (parecer R2): o corpo do pedido é leitura longa —
+                      // medido a 1120 px e ~132 caracteres por linha antes do
+                      // reparo. `measure-reading` aplica o limite do produto
+                      // (semantic.typography-reading-measure, 72ch).
+                      <p className="measure-reading text-sm text-muted">{request.body}</p>
+                    )}
 
-                  {request.is_resolved ? (
-                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-[var(--semantic-surface-sunken)] px-3 py-2">
-                      <span className="text-xs font-medium text-muted">✅ Pedido resolvido</span>
-                      {isAuthor && (
-                        <Button
-                          size="sm"
-                          variant="tertiary"
-                          className="min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
-                          isDisabled={resolutionAction === `reopen:${request.id}`}
-                          onPress={() => handleReopenRequest(request.id)}
-                        >
-                          {resolutionAction === `reopen:${request.id}` ? "Reabrindo..." : "Reabrir"}
-                        </Button>
-                      )}
-                    </div>
-                  ) : isAuthor ? (
-                    <div className="flex justify-end border-t border-border pt-3">
+                    {/* DS-006 (prancha 80): `Responder` fica logo sob o corpo do
+                        pedido, antes das respostas — não depois de toda a
+                        conversa. Ele abre e fecha a composição deste pedido. */}
+                    <div className="flex flex-wrap gap-2 border-t border-border pt-3">
                       <Button
                         size="sm"
-                        variant="tertiary"
-                        className="text-xs"
-                        isDisabled={resolvingId === request.id}
-                        onPress={() => handleMarkResolved(request.id)}
-                      >
-                        Marcar como resolvido
-                      </Button>
-                    </div>
-                  ) : null}
-
-                  <div className="flex flex-col gap-2 border-t border-border pt-3">
-                    <TextArea
-                      aria-label={`Responder a ${request.title}`}
-                      placeholder="Responder com uma indicação..."
-                      rows={2}
-                      value={replyingId === request.id ? replyText : ""}
-                      onChange={(event) => {
-                        setReplyingId(request.id)
-                        setReplyText((event.target as HTMLTextAreaElement).value)
-                      }}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        isDisabled={replyingId === request.id && replyText.trim().length < 5}
-                        onPress={() => handleReply(request.id)}
+                        variant={openReplyId === request.id ? "secondary" : "primary"}
+                        className="rounded-[var(--semantic-radius-control)]"
+                        aria-expanded={openReplyId === request.id}
+                        aria-controls={`reply-composer-${request.id}`}
+                        onPress={() => toggleReplyComposer(request.id)}
                       >
                         Responder
                       </Button>
                       <Button
                         size="sm"
                         variant={isSaved ? "secondary" : "tertiary"}
+                        className="rounded-[var(--semantic-radius-control)]"
                         isDisabled={savingId === request.id}
                         onPress={() => toggleSave(request.id)}
                       >
                         {savingId === request.id ? "Salvando..." : isSaved ? "Salvo" : "Salvar"}
                       </Button>
                     </div>
+
+                    {openReplyId === request.id ? (
+                      <div id={`reply-composer-${request.id}`} className="flex flex-col gap-2">
+                        <TextArea
+                          aria-label={`Responder a ${request.title}`}
+                          placeholder="Responder com uma indicação..."
+                          rows={2}
+                          autoFocus
+                          value={replyDrafts[request.id] ?? ""}
+                          onChange={(event) =>
+                            setReplyDraft(request.id, (event.target as HTMLTextAreaElement).value)
+                          }
+                          // Escape fecha a composição sem publicar nada — o
+                          // gesto de sair de um campo de resposta.
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape") closeReplyComposer()
+                          }}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            className="rounded-[var(--semantic-radius-control)]"
+                            isDisabled={
+                              replyingId === request.id ||
+                              (replyDrafts[request.id] ?? "").trim().length < 5
+                            }
+                            onPress={() => handleReply(request.id)}
+                          >
+                            {replyingId === request.id ? "Enviando..." : "Enviar resposta"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="tertiary"
+                            className="rounded-[var(--semantic-radius-control)]"
+                            onPress={closeReplyComposer}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {replies.length > 0 && (
+                      <ul className="flex flex-col gap-2 border-t border-border pt-3">
+                        {replies.map((reply) => {
+                          const isMarked = request.resolved_reply_id === reply.id
+                          const isMarking = resolutionAction === `mark:${request.id}:${reply.id}`
+                          const isClearing = resolutionAction === `clear:${request.id}`
+                          // Vínculo com o Guia SÓ quando o servidor tem a linha
+                          // (item canônico promovido a partir desta resposta). Sem
+                          // ela, nenhuma etiqueta de curadoria é desenhada.
+                          const guideLink = guideLinksByReplyId[reply.id]
+
+                          return (
+                            <li
+                              key={reply.id}
+                              className={`flex flex-col gap-1 rounded-[var(--semantic-radius-card)] border border-border p-2 text-sm ${
+                                isMarked
+                                  ? "border-l-4 border-l-[var(--semantic-success)] bg-[var(--semantic-success-soft)]"
+                                  : ""
+                              }`}
+                            >
+                              {isMarked && (
+                                <div className="flex">
+                                  <Chip size="sm" variant="soft" color="success">
+                                    Ajudou a resolver
+                                  </Chip>
+                                </div>
+                              )}
+                              {guideLink ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="flex items-center gap-1.5 text-xs font-medium text-muted">
+                                    <MapPin size={12} aria-hidden="true" />
+                                    {guideLink.name}
+                                  </span>
+                                  <Link
+                                    href={`/guide/${guideLink.id}` as Route}
+                                    className="inline-flex min-h-11 items-center gap-1 rounded-[var(--semantic-radius-control)] border border-[var(--semantic-action-primary)] px-2 text-xs font-medium text-[var(--semantic-action-primary)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                  >
+                                    Ver no Guia
+                                    <ExternalLink size={12} aria-hidden="true" />
+                                  </Link>
+                                </div>
+                              ) : null}
+                              {editReplyId === reply.id ? (
+                                <div className="flex flex-col gap-2">
+                                  <TextArea
+                                    aria-label="Editar resposta"
+                                    rows={2}
+                                    value={editReplyText}
+                                    onChange={(event) =>
+                                      setEditReplyText((event.target as HTMLTextAreaElement).value)
+                                    }
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="primary"
+                                      className="rounded-[var(--semantic-radius-control)]"
+                                      onPress={() => saveEditReply(reply.id)}
+                                    >
+                                      Salvar
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="tertiary"
+                                      className="rounded-[var(--semantic-radius-control)]"
+                                      onPress={cancelEditReply}
+                                    >
+                                      Cancelar
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                  {/* A1: mesma medida de leitura do corpo do
+                                      pedido — a resposta é texto corrido, não
+                                      lista de comparação (DESIGN_SYSTEM §8.2). */}
+                                  <span className="measure-reading flex flex-col gap-1 text-sm text-muted">
+                                    {authorNames[reply.author_id] && (
+                                      <span className="text-xs font-medium text-foreground">
+                                        {authorNames[reply.author_id]}
+                                      </span>
+                                    )}
+                                    {reply.body}
+                                  </span>
+                                  <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:justify-end">
+                                    {isAuthor && !isMarked && (
+                                      <Button
+                                        size="sm"
+                                        variant="tertiary"
+                                        className="rounded-[var(--semantic-radius-control)] min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                        isDisabled={isMarking}
+                                        onPress={() =>
+                                          handleMarkResolvedReply(request.id, reply.id)
+                                        }
+                                      >
+                                        {isMarking ? "Marcando..." : "Ajudou a resolver"}
+                                      </Button>
+                                    )}
+                                    {isAuthor && isMarked && (
+                                      <Button
+                                        size="sm"
+                                        variant="tertiary"
+                                        className="rounded-[var(--semantic-radius-control)] min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                                        isDisabled={isClearing}
+                                        onPress={() => handleClearResolvedReply(request.id)}
+                                      >
+                                        {isClearing ? "Removendo..." : "Remover marca"}
+                                      </Button>
+                                    )}
+                                    {/* Editar, excluir, ocultar e denunciar são
+                                      ações raras: ficam no overflow, nunca ao
+                                      lado do fechamento do ciclo. */}
+                                    <LeanOverflowMenu
+                                      postId={reply.id}
+                                      menuLabel="Ações da resposta"
+                                      // Mesma causa do gatilho do pedido: a
+                                      // resposta nao tem titulo, entao o nome
+                                      // acessivel identifica pelo proprio texto.
+                                      triggerLabel={overflowTriggerLabel("da resposta", reply.body)}
+                                      labels={{
+                                        edit: "Editar resposta",
+                                        delete: "Excluir resposta",
+                                        hide: "Ocultar resposta",
+                                        report: "Denunciar resposta",
+                                      }}
+                                      onEdit={
+                                        reply.author_id === currentUserId
+                                          ? () => {
+                                              setEditReplyId(reply.id)
+                                              setEditReplyText(reply.body)
+                                            }
+                                          : undefined
+                                      }
+                                      onDelete={
+                                        reply.author_id === currentUserId
+                                          ? () => handleDeleteReply(reply.id)
+                                          : undefined
+                                      }
+                                      onHide={handleHideReply}
+                                      onReport={() =>
+                                        openReport(
+                                          "recommendation_reply",
+                                          reply.id,
+                                          reply.author_id,
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
+
+                    {/* UM sinal de fechamento por estado (DS-006, prancha 80):
+                        com resposta marcada, o chip `Ajudou a resolver` naquela
+                        resposta já diz o que aconteceu, e `Reabrir` vive no
+                        overflow; sem resposta marcada, esta faixa é o único
+                        lugar que diz que a autora resolveu — e o único com
+                        `Reabrir`. Antes os dois apareciam juntos, somando três
+                        avisos para o mesmo fato. */}
+                    {request.is_resolved && request.resolved_reply_id === null ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--semantic-radius-card)] bg-[var(--semantic-surface-sunken)] px-3 py-2">
+                        <span className="text-xs font-medium text-muted">
+                          Resolvida pela autora
+                        </span>
+                        {isAuthor && (
+                          <Button
+                            size="sm"
+                            variant="tertiary"
+                            className="rounded-[var(--semantic-radius-control)] min-h-11 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                            isDisabled={resolutionAction === `reopen:${request.id}`}
+                            onPress={() => handleReopenRequest(request.id)}
+                          >
+                            {resolutionAction === `reopen:${request.id}`
+                              ? "Reabrindo..."
+                              : "Reabrir"}
+                          </Button>
+                        )}
+                      </div>
+                    ) : !request.is_resolved && isAuthor ? (
+                      <div className="flex justify-end border-t border-border pt-3">
+                        <Button
+                          size="sm"
+                          variant="tertiary"
+                          className="rounded-[var(--semantic-radius-control)] text-xs"
+                          isDisabled={resolvingId === request.id}
+                          onPress={() => handleMarkResolved(request.id)}
+                        >
+                          Marcar como resolvido
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </div>
             )
           })}
         </div>
       )}
+
+      {/* Um único modal de denúncia para a lista inteira, reiniciado pelo
+          `key`: o alvo vem do overflow que o abriu (pedido ou resposta), e o
+          ReportButton continua sendo o mecanismo real de /reports.
+          `blockUserId` só entra quando há autor conhecido — `exactOptionalPropertyTypes`
+          não aceita `undefined` explícito, e bloqueio sem saber a quem bloquear
+          não é oferecido. */}
+      {reportTarget ? (
+        <ReportButton
+          key={`${reportTarget.type}:${reportTarget.id}`}
+          targetType={reportTarget.type}
+          targetId={reportTarget.id}
+          {...(reportTarget.authorId ? { blockUserId: reportTarget.authorId } : {})}
+          externalState={reportModal}
+        />
+      ) : null}
     </div>
   )
 }

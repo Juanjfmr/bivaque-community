@@ -17,6 +17,7 @@ import type { Database } from "supabase/database.generated"
 import { classifyPublishError } from "../../../lib/composer/publish-error"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
+import { ModalCloseTrigger } from "./close-button"
 import { DestinationIcon, usePostDestinationLabel } from "./feed-post-audience"
 import { PhotoField } from "./feed-post-photo"
 import { composePostContent, splitPostContent } from "./feed-post-shared"
@@ -229,10 +230,7 @@ export function EditPostModal({
                 ) : (
                   <Modal.Heading>Editar publicação</Modal.Heading>
                 )}
-                <Modal.CloseTrigger
-                  className={pageMode ? "hidden" : "min-h-11 min-w-11"}
-                  aria-label="Fechar"
-                />
+                <ModalCloseTrigger className={pageMode ? "hidden" : "min-h-11 min-w-11"} />
               </Modal.Header>
               <Modal.Body
                 className={
@@ -641,7 +639,7 @@ function ExitConfirmDialog({
           <Modal.Dialog>
             <Modal.Header>
               <Modal.Heading>Sair sem salvar?</Modal.Heading>
-              <Modal.CloseTrigger className="min-h-11 min-w-11" />
+              <ModalCloseTrigger className="min-h-11 min-w-11" />
             </Modal.Header>
             <Modal.Body>
               <p className="text-sm">Se sair agora, as alterações feitas não serão salvas.</p>

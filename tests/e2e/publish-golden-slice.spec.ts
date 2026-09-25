@@ -164,7 +164,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     await expect(audienceNotice).toContainText(/aprovados desta vila/i)
 
     // And — digita o texto único e submete
-    await composer.getByLabel("Conteúdo").fill(postText)
+    await composer.getByLabel("Pergunta").fill(postText)
     const submit = composer.getByTestId("publish-submit")
     const insertResponse = page.waitForResponse(
       (response) =>
@@ -196,7 +196,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     })
     // Reabrir depois de publicar não pode ressuscitar o texto no flush de unmount.
     const reopenedComposer = await openComposer(page)
-    await expect(reopenedComposer.getByLabel("Conteúdo")).toHaveValue("")
+    await expect(reopenedComposer.getByLabel("Pergunta")).toHaveValue("")
     await page.getByRole("button", { name: "Cancelar", exact: true }).click()
   })
 
@@ -205,14 +205,14 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
 
     const draftText = `GS-E2E rascunho recuperável ${Date.now().toString(36)}`
     const firstComposer = await openComposer(page)
-    await firstComposer.getByLabel("Conteúdo").fill(draftText)
+    await firstComposer.getByLabel("Pergunta").fill(draftText)
     // Fecha antes do debounce de 400ms: prova o flush de unmount, não apenas
     // um autosave que já teve tempo de terminar.
     await page.getByRole("button", { name: "Cancelar", exact: true }).click()
     await expect(page).toHaveURL(/\/community/)
 
     const reopenedComposer = await openComposer(page)
-    await expect(reopenedComposer.getByLabel("Conteúdo")).toHaveValue(draftText)
+    await expect(reopenedComposer.getByLabel("Pergunta")).toHaveValue(draftText)
     await expect(reopenedComposer.getByText("Rascunho recuperado")).toBeVisible()
 
     await reopenedComposer
@@ -221,17 +221,17 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     const discardDialog = page.getByRole("dialog").filter({ hasText: "Descartar rascunho?" })
     await expect(discardDialog).toBeVisible()
     await discardDialog.getByRole("button", { name: "Manter rascunho" }).click()
-    await expect(reopenedComposer.getByLabel("Conteúdo")).toHaveValue(draftText)
+    await expect(reopenedComposer.getByLabel("Pergunta")).toHaveValue(draftText)
 
     await reopenedComposer
       .getByRole("button", { name: "Descartar rascunho salvo neste navegador" })
       .click()
     await discardDialog.getByRole("button", { name: "Descartar rascunho", exact: true }).click()
-    await expect(reopenedComposer.getByLabel("Conteúdo")).toHaveValue("")
+    await expect(reopenedComposer.getByLabel("Pergunta")).toHaveValue("")
     await expect(reopenedComposer.getByText("Rascunho recuperado")).toHaveCount(0)
     await page.getByRole("button", { name: "Cancelar", exact: true }).click()
     const afterDiscard = await openComposer(page)
-    await expect(afterDiscard.getByLabel("Conteúdo")).toHaveValue("")
+    await expect(afterDiscard.getByLabel("Pergunta")).toHaveValue("")
   })
 
   test("caminho de erro: insert abortado mostra FeedbackAlert, preserva o rascunho, depois publica com sucesso", async ({
@@ -263,7 +263,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     })
 
     // And — o membro escreve e tenta publicar (vai falhar pelo abort)
-    await composer.getByLabel("Conteúdo").fill(errorPostText)
+    await composer.getByLabel("Pergunta").fill(errorPostText)
     await composer.getByTestId("publish-submit").click()
 
     // Then — FeedbackAlert danger aparece com copy genérica
@@ -277,7 +277,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     ).toBeVisible({ timeout: 10000 })
 
     // And — o rascunho foi preservado (texto continua no TextArea)
-    await expect(composer.getByLabel("Conteúdo")).toHaveValue(errorPostText)
+    await expect(composer.getByLabel("Pergunta")).toHaveValue(errorPostText)
 
     // And — a página continua disponível para o caminho de recuperação
     await expect(page).toHaveURL(/\/publicacoes\/nova/)
@@ -290,7 +290,7 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     // And — limpamos a interceptação e reescrevemos o rascunho com novo
     // texto para publicar com sucesso
     await page.unroute("**/rest/v1/posts")
-    await composer.getByLabel("Conteúdo").fill(recoveryText)
+    await composer.getByLabel("Pergunta").fill(recoveryText)
     const successInsert = page.waitForResponse(
       (response) =>
         response.url().includes("/rest/v1/posts") &&

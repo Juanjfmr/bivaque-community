@@ -1534,7 +1534,7 @@ async function main() {
           const communityOption = flowComposer.getByText("Vila Ajuricaba", { exact: true })
           await communityOption.waitFor({ state: "visible", timeout: 15_000 })
           await communityOption.click()
-          await flowComposer.getByLabel("Conteúdo").fill(SCENARIO_FLOW_CONTENT)
+          await flowComposer.getByLabel("Pergunta").fill(SCENARIO_FLOW_CONTENT)
           const createdResponsePromise = page.waitForResponse(
             (candidate) =>
               candidate.url().includes("/rest/v1/posts") && candidate.request().method() === "POST",
@@ -1596,12 +1596,12 @@ async function main() {
             .waitFor({ state: "visible", timeout: 15_000 })
         }
         if (SCENARIO === "publish" || SCENARIO === "offline") {
-          // A rota estável já nasce no compositor. O trigger só é acionado no
-          // caminho legado do modal, que ainda é coberto pelo cenário de edição.
+          // A rota estável já nasce no compositor. Pelo Início, a entrada é o
+          // lançador de duas intenções (DS-006): `Fazer uma pergunta` leva à
+          // mesma rota /publicacoes/nova.
           if (route.path === "/inicio") {
-            await page
-              .getByRole("button", { name: "O que você quer compartilhar?", exact: true })
-              .click()
+            await page.getByRole("button", { name: "Fazer uma pergunta", exact: true }).click()
+            await page.waitForURL(/\/publicacoes\/nova/, { timeout: 15_000 })
           }
           if (route.dialog) {
             await page
@@ -1620,7 +1620,7 @@ async function main() {
           )
           const composer = page.locator("[data-composer-form]")
           await composer.waitFor({ state: "visible" })
-          await composer.getByLabel("Conteúdo").fill(CAPTURE_QUESTION_TITLE)
+          await composer.getByLabel("Pergunta").fill(CAPTURE_QUESTION_TITLE)
           await composer.getByLabel("Detalhes").fill(CAPTURE_QUESTION_BODY)
           await composer.getByText("64/120", { exact: true }).waitFor({ state: "attached" })
           await composer.getByText("200/1000", { exact: true }).waitFor({ state: "attached" })

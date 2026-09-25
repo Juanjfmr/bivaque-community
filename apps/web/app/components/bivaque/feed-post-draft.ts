@@ -5,6 +5,14 @@
 // mesmo navegador não pode revelar nem apagar o rascunho anterior. A audiência
 // persistida é apenas uma preferência local; o insert continua sendo autorizado
 // pelo servidor.
+//
+// Toda leitura e toda escrita passam por try/catch: em aba anônima ou com dados
+// de site bloqueados o acessor LANÇA, e a tela não pode quebrar por isso.
+//
+// O rascunho guarda o que a PESSOA escreveu (texto, detalhes, anexo) e não o
+// formato: o `post_type` é derivado do anexo real no compositor
+// (feed-post-create). Chaves antigas de formato e de enquete são descartadas
+// na leitura. O rascunho nunca vira publicação sozinho.
 
 const DRAFT_KEY_PREFIX = "bivaque.post-draft.v3"
 const AUDIENCE_KEY_PREFIX = "bivaque.post-audience.v1"
@@ -16,11 +24,9 @@ export interface PostDraftScope {
 }
 
 export interface PostDraft extends PostDraftScope {
-  postType: string
   content: string
   details: string
   linkUrl: string
-  pollOptions: string[]
   photoPath: string
   /** unix-ms do último salvamento, para a UI dizer "rascunho salvo há X" */
   savedAt: number
@@ -29,11 +35,7 @@ export interface PostDraft extends PostDraftScope {
 export function hasDraftContent(draft: PostDraft | null | undefined): boolean {
   if (!draft) return false
   return Boolean(
-    draft.content.trim() ||
-      draft.details.trim() ||
-      draft.linkUrl.trim() ||
-      draft.pollOptions.length > 0 ||
-      draft.photoPath.trim(),
+    draft.content.trim() || draft.details.trim() || draft.linkUrl.trim() || draft.photoPath.trim(),
   )
 }
 
@@ -77,18 +79,9 @@ function parseDraft(raw: string): PostDraft | null {
     ownerId,
     localityId,
     audienceKey,
-    postType:
-      candidate["postType"] === "photo" ||
-      candidate["postType"] === "link" ||
-      candidate["postType"] === "poll"
-        ? (candidate["postType"] as string)
-        : "text",
     content: text("content"),
     details: text("details"),
     linkUrl: text("linkUrl"),
-    pollOptions: Array.isArray(candidate["pollOptions"])
-      ? candidate["pollOptions"].filter((item): item is string => typeof item === "string")
-      : [],
     photoPath: text("photoPath"),
     savedAt: typeof candidate["savedAt"] === "number" ? (candidate["savedAt"] as number) : 0,
   }
@@ -114,11 +107,9 @@ export function loadPostDraft(
 }
 
 export interface PostDraftFields {
-  postType: string
   content: string
   details: string
   linkUrl: string
-  pollOptions: string[]
   photoPath: string
 }
 
