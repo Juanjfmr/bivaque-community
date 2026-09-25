@@ -3557,7 +3557,7 @@
         ".visual/2026-09-25T01-54-16-463Z/report.json e .visual/2026-09-25T01-54-41-623Z/report.json — publicação/offline partem do feed real, com contadores e retry offline",
         ".visual/2026-09-25T01-54-03-886Z/report.json — acesso negado capturado com actorAccount membro1, state denied e flow direct-route",
         "Playwright desktop: 15/15 testes direcionais passaram, incluindo owner gate, PATCH real com readback post_type=photo, erro de edição e confirmação de descarte",
-        "Evidência gerada no runner acafba66295e; este commit altera somente board/task e não muda runtime, comparator ou testes"
+        "Evidência gerada no runner acafba66295e; commits posteriores alteram somente board/task/teste, sem mudar runtime ou comparator"
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
