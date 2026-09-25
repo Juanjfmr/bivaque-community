@@ -136,7 +136,7 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   {
     route: "/consent",
     porta:
-      "DÍVIDA ROTA-CONSENT-LEGADA: portão removido pelo ADR-20260907-consentimento-no-cadastro",
+      "ESTADO: recuperação do aceite — onboarding (403 sem aceite) e /auth/callback-error?motivo=consentimento levam até ela",
   },
   {
     route: "/denuncias/[id]",

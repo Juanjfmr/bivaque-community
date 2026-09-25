@@ -1,0 +1,66 @@
+# Auditoria de fidelidade visual web — contrato de evidência, não de seed.
+# A tarefa termina apenas com revisão humana por prancha; 0 findings mecânicos
+# não é aprovação visual.
+
+task_id: RECON-053
+
+objective: >
+  Cada par web deve ser julgado contra a prancha pela superfície, ator, estado,
+  hierarquia e anatomia observados no runtime; a auditoria mecânica continua
+  separada e nunca declara fidelidade por si só.
+
+authority:
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md
+  - docs/design/visual-guide-2026-09-06/README.md
+  - docs/agents/design-audit/README.md
+  - tools/backend-kanban/public/board.json
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    .visual/2026-09-25T01-39-20-733Z/report.md é o loop completo limpo da revisão
+    atual: lint/typecheck/test/build verdes, zero findings altos, seis capturas
+    inválidas do Guia e fidelidade ainda não avaliada. As capturas de 45/60
+    e denied foram refeitas com ator, estado e fluxo explícitos; a revisão
+    independente mantém o veredito global FAIL/BLOCKED enquanto não houver
+    artigo real e julgamento humano congelado.
+
+allowed_paths:
+  - scripts/visual/
+  - tests/scope/visual-capture-proof.test.mjs
+  - tools/backend-kanban/
+  - docs/agents/tasks/RECON-053-FIDELIDADE-WEB.task.yml
+
+forbidden:
+  - criar artigo, sugestão, seed ou contagem fictícia para fazer uma captura passar
+  - transformar mechanically ok, 0 findings ou uma rota alcançável em PASS de fidelidade
+  - substituir a prancha por uma captura legada sem registrar a divergência
+  - alterar a decisão do owner sobre a comunidade negada sem novo julgamento documentado
+  - fechar RECON-053 ou RECON-049 enquanto houver review ou fidelity BLOCKED
+
+acceptance:
+  - o comparador separa findings mecânicos, prova de estado/rota e fidelidade
+  - capturas inválidas falham fechadas e não aparecem como mechanically ok
+  - 45/60 registram no relatório a rota final, ator, estado e fluxo de entrada real
+  - a edição é uma superfície de página standalone, com destino comunitário real, prévia, foto válida e autorização de autor
+  - o estado offline preserva rascunho, contadores reais e retry desabilitado até a rede voltar
+  - estados de erro e descarte da edição possessem prova de runtime
+  - a ausência de artigo do Guia permanece BLOCKED até existir dado editorial real
+  - a revisão independente e o próximo passo concreto ficam registrados antes de qualquer fechamento
+
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 exec playwright test tests/e2e/composer-layout.spec.ts tests/e2e/publish-golden-slice.spec.ts --project=desktop-1440 --workers=1
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - node scripts/visual/loop.mjs
+  - node scripts/visual/compare.mjs
+
+risk: acessibilidade
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

@@ -1,7 +1,6 @@
 "use client"
 
-import { CONSENT_VERSION } from "@bivaque/domain"
-import { Button } from "@heroui/react"
+import { Button, Input } from "@heroui/react"
 import { Mail } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
@@ -45,7 +44,7 @@ interface Notice {
 }
 
 function resolvePhase(expired: boolean, email: string | null): Phase {
-  if (expired) return email ? "expired" : "none"
+  if (expired) return "expired"
   return email ? "pending" : "none"
 }
 
@@ -55,8 +54,10 @@ export function ConfirmarEmailClient() {
 
   const [phase, setPhase] = useState<Phase>("resolving")
   const [email, setEmail] = useState<string | null>(null)
+  const [emailInput, setEmailInput] = useState("")
   const [cooldown, setCooldown] = useState(0)
   const [sending, setSending] = useState(false)
+  const sendingRef = useRef(false)
   const [notice, setNotice] = useState<Notice | null>(null)
   const lastResendAtRef = useRef<number | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -131,50 +132,60 @@ export function ConfirmarEmailClient() {
     }
   }, [counting])
 
-  const handleResend = useCallback(async () => {
-    if (sending || cooldown > 0 || !email) return
-    setSending(true)
-    setNotice(null)
-    try {
-      const { error } = await createBrowserClient().auth.resend({
-        type: "signup",
-        email,
-        options: {
-          // O link volta pelo callback, que troca o code por sessão e registra
-          // o aceite pendente do cadastro (marcador `consent` na URL do próprio
-          // link — gerado pelo servidor, não por cookie forjável).
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&consent=${encodeURIComponent(String(CONSENT_VERSION))}`,
-        },
-      })
-      const view = classifyResend(error)
-      if (view.outcome === "sent") {
-        // Só conta reenvio aceito: antes da confirmação do servidor o
-        // contador não anda nem a tela anuncia envio.
-        lastResendAtRef.current = Date.now()
-        writePendingConfirmation({ email, lastResendAt: lastResendAtRef.current })
-        setCooldown(
-          computeResendCooldown({ lastResendAt: lastResendAtRef.current, now: Date.now() }),
-        )
-        setNotice({ variant: "success", message: view.message })
-      } else if (view.outcome === "rate-limited") {
-        // O número veio do servidor (mensagem 429 ou Retry-After): ele manda.
-        setCooldown(
-          computeResendCooldown({
-            lastResendAt: null,
-            serverSeconds: view.retryAfterSeconds ?? null,
-            now: Date.now(),
-          }),
-        )
-        setNotice({ variant: "warning", message: view.message })
-      } else if (view.outcome === "offline") {
-        setNotice({ variant: "warning", message: view.message })
-      } else {
-        setNotice({ variant: "danger", message: view.message })
+  const handleResend = useCallback(
+    async (emailOverride?: string) => {
+      const targetEmail = (emailOverride ?? email ?? "").trim()
+      if (sendingRef.current || sending || cooldown > 0 || !targetEmail) return
+      sendingRef.current = true
+      setSending(true)
+      setNotice(null)
+      try {
+        // Esta tela não tem a caixa de aceite, então não emite o cookie de
+        // aceite: ele só nasce no cadastro, onde a caixa foi marcada. Se o
+        // cookie não estiver mais aqui (outro aparelho, mais de 24h), o
+        // onboarding leva a pessoa a /consent.
+        const { error } = await createBrowserClient().auth.resend({
+          type: "signup",
+          email: targetEmail,
+          options: {
+            // O destino usa apenas o marker de fluxo. A prova do aceite é o
+            // cookie HttpOnly emitido no cadastro.
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&flow=signup-confirmation`,
+          },
+        })
+        const view = classifyResend(error)
+        if (view.outcome === "sent") {
+          // Só conta reenvio aceito: antes da confirmação do servidor o
+          // contador não anda nem a tela anuncia envio.
+          lastResendAtRef.current = Date.now()
+          writePendingConfirmation({ email: targetEmail, lastResendAt: lastResendAtRef.current })
+          setEmail(targetEmail)
+          setCooldown(
+            computeResendCooldown({ lastResendAt: lastResendAtRef.current, now: Date.now() }),
+          )
+          setNotice({ variant: "success", message: view.message })
+        } else if (view.outcome === "rate-limited") {
+          // O número veio do servidor (mensagem 429 ou Retry-After): ele manda.
+          setCooldown(
+            computeResendCooldown({
+              lastResendAt: null,
+              serverSeconds: view.retryAfterSeconds ?? null,
+              now: Date.now(),
+            }),
+          )
+          setNotice({ variant: "warning", message: view.message })
+        } else if (view.outcome === "offline") {
+          setNotice({ variant: "warning", message: view.message })
+        } else {
+          setNotice({ variant: "danger", message: view.message })
+        }
+      } finally {
+        sendingRef.current = false
+        setSending(false)
       }
-    } finally {
-      setSending(false)
-    }
-  }, [cooldown, email, sending])
+    },
+    [cooldown, email, sending],
+  )
 
   if (phase === "resolving") {
     return (
@@ -252,11 +263,17 @@ export function ConfirmarEmailClient() {
           </h1>
 
           <p className={styles["support"]}>
-            Abrimos um link de confirmação para
-            <br />
-            {/* O endereço vem da sessão ou do registro local do cadastro —
-                nunca da URL. */}
-            <strong className={styles["emailEcho"]}>{email}</strong>
+            {email ? (
+              <>
+                Abrimos um link de confirmação para
+                <br />
+                {/* O endereço vem da sessão ou do registro local do cadastro —
+                    nunca da URL. */}
+                <strong className={styles["emailEcho"]}>{email}</strong>
+              </>
+            ) : (
+              "Não encontramos o endereço deste cadastro nesta janela. Digite-o abaixo para pedir um novo link."
+            )}
           </p>
 
           {isExpired ? (
@@ -268,11 +285,25 @@ export function ConfirmarEmailClient() {
                 className={styles["expiredAlert"] ?? ""}
                 description="Este link expirou ou já foi usado. Peça um novo para continuar."
               />
+              {!email && (
+                <label className="flex flex-col gap-1 text-sm font-medium" htmlFor="confirm-email">
+                  E-mail do cadastro
+                  <Input
+                    id="confirm-email"
+                    type="email"
+                    autoComplete="email"
+                    value={emailInput}
+                    onChange={(event) => setEmailInput(event.target.value)}
+                    placeholder="voce@exemplo.invalid"
+                    required
+                  />
+                </label>
+              )}
               <Button
                 variant="primary"
                 className={styles["primaryButton"] ?? ""}
-                onPress={handleResend}
-                isDisabled={sending || cooldown > 0}
+                onPress={() => void handleResend(email || emailInput)}
+                isDisabled={sending || cooldown > 0 || (!email && !emailInput.trim())}
               >
                 {sending
                   ? "Enviando..."
@@ -301,8 +332,8 @@ export function ConfirmarEmailClient() {
               <Button
                 variant="primary"
                 className={styles["primaryButton"] ?? ""}
-                onPress={handleResend}
-                isDisabled={sending || cooldown > 0}
+                onPress={() => void handleResend(email || emailInput)}
+                isDisabled={sending || cooldown > 0 || (!email && !emailInput.trim())}
               >
                 {sending
                   ? "Enviando..."

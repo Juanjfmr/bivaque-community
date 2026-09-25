@@ -42,6 +42,9 @@ export function assessCapture({ route, authenticated, status, landedOn, observed
       new RegExp(declaredFallback, "i").test(observed.fallback)
     if (!tolerated) failures.push(`Unexpected unavailable state: "${observed.fallback}"`)
   }
+  if (observed?.missingRequiredText?.length > 0) {
+    failures.push(`Required state markers missing: ${observed.missingRequiredText.join(", ")}`)
+  }
   if (observed?.pageErrors > 0) failures.push("Unhandled browser exception")
   return { valid: failures.length === 0, failures }
 }

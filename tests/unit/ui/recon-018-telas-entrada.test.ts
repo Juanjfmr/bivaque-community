@@ -30,16 +30,32 @@ const confirmarClient = read(
 )
 const confirmarPage = read("apps", "web", "app", "auth", "confirmar-email", "page.tsx")
 const recoverPage = read("apps", "web", "app", "(preauth)", "recuperar-senha", "page.tsx")
-const newPasswordPage = read("apps", "web", "app", "(preauth)", "nova-senha", "page.tsx")
+const newPasswordPage = read(
+  "apps",
+  "web",
+  "app",
+  "(preauth)",
+  "nova-senha",
+  "nova-senha-client.tsx",
+)
+const newPasswordServerPage = read("apps", "web", "app", "(preauth)", "nova-senha", "page.tsx")
 const callbackRoute = read("apps", "web", "app", "auth", "callback", "route.ts")
+const proxy = read("apps", "web", "proxy.ts")
+const redirectPlan = read("apps", "web", "app", "auth", "callback", "redirect-plan.ts")
 const captureScript = read("scripts", "visual", "capture.mjs")
 
 describe("entrada — destino pós-entrada só interno (R02)", () => {
   it("lê o redirect anotado pelo proxy e passa pelo sanitizador", () => {
     expect(webEntry).toContain('searchParams.get("redirect")')
-    expect(webEntry).toContain("sanitizeNext")
+    expect(webEntry).toContain("resolvePostLoginDestination")
     expect(webEntry).toContain("const destinoCadastro = destination()")
     expect(webEntry).toContain("window.location.assign(destinoCadastro)")
+  })
+
+  it("aceita return e next como entradas equivalentes sem perder query", () => {
+    expect(webEntry).toContain('searchParams.get("return")')
+    expect(webEntry).toContain('searchParams.get("next")')
+    expect(webEntry).toContain("resolvePostLoginDestination")
   })
 
   it("o Google leva o mesmo destino validado, não um hardcoded", () => {
@@ -47,7 +63,51 @@ describe("entrada — destino pós-entrada só interno (R02)", () => {
   })
 
   it("envio em andamento não duplica", () => {
-    expect(webEntry).toContain("if (loading !== null) return")
+    expect(webEntry).toContain(
+      "if (submittingRef.current || googleSubmittingRef.current || loading !== null) return",
+    )
+    expect(webEntry).toContain(
+      "if (googleSubmittingRef.current || submittingRef.current || loading !== null) return",
+    )
+  })
+})
+
+describe("continuidade de entrada — correções do relatório Mobbin", () => {
+  it("libera confirmação e callback-error sem abrir lookalikes", () => {
+    expect(proxy).toContain('"/auth/confirmar-email"')
+    expect(proxy).toContain('"/auth/callback-error"')
+    expect(proxy).toContain("pathname === p || pathname.startsWith")
+  })
+
+  it("mantém a recuperação próxima ao campo e explica a regra da senha", () => {
+    expect(webEntry).toContain('className={styles["inlineRecovery"]}')
+    expect(webEntry).toContain("com letras e números")
+  })
+
+  it("não deixa Google contornar o aceite do cadastro", () => {
+    expect(webEntry).toContain('mode === "signup" && !accepted')
+    expect(webEntry).toContain('isDisabled={loading !== null || (mode === "signup" && !accepted)}')
+    expect(webEntry).toContain("googleSubmittingRef")
+  })
+
+  it("preserva o destino ao alternar entre entrar e criar conta", () => {
+    expect(webEntry).toContain("alternateHref")
+    expect(webEntry).toContain("redirect")
+  })
+
+  it("nome de apresentação deixa claro o contrato sem pedir nome civil", () => {
+    expect(webEntry).toContain("Nome de apresentação")
+  })
+
+  it("devolve link de recuperação expirado para um novo pedido", () => {
+    expect(redirectPlan).toContain("isRecoveryNext(sanitizedNext)")
+    expect(redirectPlan).toContain('"/recuperar-senha?origem=link"')
+  })
+
+  it("a recuperação só abre com o tipo real devolvido pelo provedor", () => {
+    expect(callbackRoute).toContain("shouldOpenRecoveryIntent(redirectType, next)")
+    expect(redirectPlan).toContain('redirectType === "recovery"')
+    expect(recoverPage).not.toContain("flow=recovery")
   })
 })
 
@@ -62,8 +122,9 @@ describe("cadastro — R03 leva a R04 quando o provedor exige confirmação", ()
     expect(webEntry).toContain("recordConsentAction()")
   })
 
-  it("o marcador do aceite viaja no link assinado pelo servidor, não em cookie forjável", () => {
-    expect(webEntry).toContain("next=/auth/confirmar-email&consent=")
+  it("o aceite usa intent server-side, não uma query que pode ser editada", () => {
+    expect(webEntry).toContain("next=/auth/confirmar-email&flow=signup-confirmation")
+    expect(webEntry).not.toContain("consent=")
     expect(callbackRoute).toContain("shouldRecordSignupConsent")
     expect(callbackRoute).toContain("record_consent_acceptance")
     expect(callbackRoute).toContain("p_user_id: userId")
@@ -93,6 +154,7 @@ describe("confirmação — prancha 37 sem as caixas de código", () => {
     expect(confirmarClient).toContain("classifyResend")
     expect(confirmarClient).toContain('view.outcome === "sent"')
     expect(confirmarClient).toContain("serverSeconds: view.retryAfterSeconds")
+    expect(confirmarClient).toContain("sendingRef")
   })
 
   it("nenhum endereço vaza em query, título ou caminho de redirect", () => {
@@ -113,6 +175,7 @@ describe("recuperação — neutra, mas distinguível (R07)", () => {
   it("limite e rede não se disfarçam de enviado", () => {
     expect(recoverPage).toContain('view.outcome === "rate-limited"')
     expect(recoverPage).toContain("setOffline(true)")
+    expect(recoverPage).toContain("submittingRef")
     expect(recoverPage).toMatch(/Aguarde \$\{formatCountdown\(cooldown\)\}/)
   })
 })
@@ -121,6 +184,12 @@ describe("senha nova — devolve ao destino autorizado, não ao portão morto (R
   it("não manda mais para /consent", () => {
     expect(newPasswordPage).not.toContain('router.push("/consent")')
     expect(newPasswordPage).toContain('router.push("/")')
+  })
+
+  it("a troca de senha passa pelo action que consome o intent", () => {
+    expect(newPasswordPage).toContain("updatePasswordFromRecoveryAction")
+    expect(newPasswordPage).not.toContain("createBrowserClient().auth.updateUser")
+    expect(newPasswordServerPage).toContain("hasRecoveryIntent")
   })
 })
 

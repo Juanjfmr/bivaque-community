@@ -1,7 +1,7 @@
 task_id: RECON-004
 
 objective: >
-  A rota /communities passa a ser a tela de comunidades da prancha 42: minhas comunidades, descoberta das disponíveis na cidade e a apresentação de cada uma, com o motivo opcional privado antes de enviar o pedido de participação.
+  A rota /communities passa a ser a tela de comunidades da prancha 42: minhas comunidades, descoberta das disponíveis na cidade e a apresentação de cada uma, com o motivo opcional privado antes de enviar o pedido de participação. A busca, a aba e a seleção sobrevivem à URL; trocar de comunidade limpa o motivo para não transportar contexto privado.
 
 authority:
   - docs/design/visual-guide-2026-09-06/42-web-comunidades.png
@@ -9,14 +9,20 @@ authority:
   - manifest.json reviewNotes de 42-web-comunidades - Motivo opcional privado antes do envio. Filtrar resultados pela cidade selecionada.
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §8 gate G1
   - docs/agents/DESIGN_SYSTEM.md §5, §9.1
+  - Relatório comparativo Mobbin e autorização do responsável em 23/09/2026 para busca, seleção e motivo
 
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    apps/web/app/(shell)/communities/page.tsx lê communities e community_memberships e renderiza uma lista mínima com botão Pedir entrada. Não separa minhas comunidades de descoberta, não mostra apresentação, e não oferece o campo de motivo opcional que a correção do responsável de 07/09 exige.
+    A tela atual separa Minhas/Descobrir e carrega o motivo, mas a seleção
+    do painel não é invalidada pela busca: o texto de uma comunidade pode continuar
+    sendo enviado para outra. A aba, q e comunidade também não eram persistidas na URL,
+    e a localidade default ainda podia sair da membership leaving mais antiga.
 
 allowed_paths:
   - apps/web/app/(shell)/communities/
+  - tests/unit/communities/
+  - tests/e2e/communities-url-state.spec.ts
   - docs/agents/tasks/RECON-004.task.yml
 
 forbidden:
@@ -37,6 +43,8 @@ acceptance:
   - antes de enviar o pedido, há um campo 'Por que você quer participar? (opcional)' — vazio não bloqueia o envio
   - o motivo acompanha o pedido para quem analisa; nunca vira publicação nem biografia
   - no estado pendente o motivo aparece só como resumo de leitura, e nada sugere que a pessoa já é membro
+  - busca sem resultado não deixa a apresentação anterior visível; aba, termo e comunidade selecionados sobrevivem a reload e links
+  - trocar de comunidade limpa o motivo antes do novo envio, sem apagar o texto quando a própria request falhar
   - visitante de comunidade privada não vê contagem de membros nem lista de participantes
   - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperável com nova tentativa
   - nenhum dado inventado sobrevive na tela
@@ -47,6 +55,8 @@ acceptance:
 
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-004.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/communities/community-selection.test.ts tests/unit/communities/community-city-label.test.ts
+  - npx pnpm@11.18.0 exec playwright test tests/e2e/communities-url-state.spec.ts --project=desktop-1440 --workers=1
   - npx pnpm@11.18.0 gate
   - node scripts/visual/loop.mjs
 

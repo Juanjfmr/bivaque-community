@@ -1,13 +1,19 @@
 "use server"
 
 import { createServerClient } from "@supabase/ssr"
+import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { log } from "../../../../lib/logger"
+import {
+  CANCEL_CONFLICT_FINISHED,
+  CLOSE_CONFLICT_CANCELLED,
+} from "../../../../lib/service-requests/conflict-messages"
 import {
   type ServiceRequestStatus,
   validateEditDescription,
   validateMessageContent,
 } from "../../../../lib/service-requests/tracking"
+import { REQUEST_TERMINAL_MESSAGE } from "../../../components/bivaque/message-delivery"
 
 // RECON-023 — as escritas do acompanhamento do pedido.
 //
@@ -24,6 +30,9 @@ export type SendMessageState =
   | { status: "error"; message: string }
   | { status: "session" }
 
+// `conflict`: o pedido terminou por outro caminho (a outra parte encerrou, ou
+// quem pediu cancelou) entre abrir a tela e confirmar. Não é erro para tentar
+// de novo: a tela avisa o que aconteceu e recarrega o estado final.
 export type CloseRequestState =
   | {
       status: "closed"
@@ -31,6 +40,17 @@ export type CloseRequestState =
       closedAt: string | null
       closedByUserId: string | null
     }
+  | { status: "conflict"; message: string }
+  | { status: "error"; message: string }
+  | { status: "session" }
+
+export type CancelRequestState =
+  | {
+      status: "cancelled"
+      cancelledAt: string | null
+      cancelledByUserId: string | null
+    }
+  | { status: "conflict"; message: string }
   | { status: "error"; message: string }
   | { status: "session" }
 
@@ -62,7 +82,15 @@ function isSessionError(message: string | undefined): boolean {
   return (message ?? "").includes("unauthenticated")
 }
 
+function revalidateRequestSurfaces(requestId: string): void {
+  revalidatePath("/pedidos")
+  revalidatePath(`/pedidos/${requestId}`)
+  revalidatePath("/prestador")
+  revalidatePath(`/prestador/pedidos/${requestId}`)
+}
+
 export async function sendRequestMessage(input: {
+  requestId: string
   conversationId: string
   content: string
   clientKey: string
@@ -81,8 +109,12 @@ export async function sendRequestMessage(input: {
 
   if (error) {
     if (isSessionError(error.message)) return { status: "session" }
+    if (error.message.includes("request is terminal")) {
+      revalidateRequestSurfaces(input.requestId)
+      return { status: "error", message: REQUEST_TERMINAL_MESSAGE }
+    }
     log.error("pedidos: send_conversation_message failed", { error: error.message })
-    return { status: "error", message: error.message }
+    return { status: "error", message: "Não foi possível enviar a mensagem agora." }
   }
 
   const row = data as {
@@ -91,6 +123,7 @@ export async function sendRequestMessage(input: {
     content: string
     created_at: string
   }
+  revalidateRequestSurfaces(input.requestId)
   return { status: "sent", message: row }
 }
 
@@ -102,8 +135,10 @@ export async function closeRequest(requestId: string): Promise<CloseRequestState
 
   if (error) {
     if (isSessionError(error.message)) return { status: "session" }
+    revalidateRequestSurfaces(requestId)
     log.error("pedidos: close_service_request failed", { error: error.message })
-    return { status: "error", message: error.message }
+    // A frase do banco nunca chega à tela.
+    return { status: "error", message: "Não foi possível encerrar o pedido agora." }
   }
 
   const row = data as {
@@ -111,11 +146,50 @@ export async function closeRequest(requestId: string): Promise<CloseRequestState
     closed_at: string | null
     closed_by_user_id: string | null
   }
+  if (row.status === "cancelled") {
+    revalidateRequestSurfaces(requestId)
+    return { status: "conflict", message: CLOSE_CONFLICT_CANCELLED }
+  }
+  revalidateRequestSurfaces(requestId)
   return {
     status: "closed",
     requestStatus: row.status,
     closedAt: row.closed_at,
     closedByUserId: row.closed_by_user_id,
+  }
+}
+
+export async function cancelRequest(requestId: string): Promise<CancelRequestState> {
+  const client = await authedClient()
+  const { data, error } = await client.rpc("cancel_service_request", {
+    p_request_id: requestId,
+  })
+
+  if (error) {
+    if (isSessionError(error.message)) return { status: "session" }
+    revalidateRequestSurfaces(requestId)
+    if (error.message.includes("request already finished")) {
+      // Perdeu a corrida para um encerramento: conflito, não falha.
+      return { status: "conflict", message: CANCEL_CONFLICT_FINISHED }
+    }
+    log.error("pedidos: cancel_service_request failed", { error: error.message })
+    return { status: "error", message: "Não foi possível cancelar o pedido agora." }
+  }
+
+  const row = data as {
+    status: ServiceRequestStatus
+    cancelled_at: string | null
+    cancelled_by_user_id: string | null
+  }
+  if (row.status !== "cancelled") {
+    revalidateRequestSurfaces(requestId)
+    return { status: "conflict", message: CANCEL_CONFLICT_FINISHED }
+  }
+  revalidateRequestSurfaces(requestId)
+  return {
+    status: "cancelled",
+    cancelledAt: row.cancelled_at,
+    cancelledByUserId: row.cancelled_by_user_id,
   }
 }
 
@@ -139,11 +213,13 @@ export async function saveRequestEdit(input: {
 
   if (error) {
     if (isSessionError(error.message)) return { status: "session" }
+    revalidateRequestSurfaces(input.requestId)
     log.error("pedidos: update_service_request failed", { error: error.message })
     return { status: "error", message: error.message }
   }
 
   const row = data as { description: string; when_text: string | null }
+  revalidateRequestSurfaces(input.requestId)
   return { status: "saved", description: row.description, whenText: row.when_text }
 }
 

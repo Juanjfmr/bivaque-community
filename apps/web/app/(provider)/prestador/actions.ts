@@ -311,6 +311,13 @@ export async function deletePortfolioPhotoAction(formData: FormData): Promise<vo
 
 // ── RECON-024: fila de pedidos, área de atendimento e conta ─────────────────
 
+function revalidateServiceRequestSurfaces(requestId: string): void {
+  revalidatePath("/prestador")
+  revalidatePath(`/prestador/pedidos/${requestId}`)
+  revalidatePath("/pedidos")
+  revalidatePath(`/pedidos/${requestId}`)
+}
+
 // A resposta usa o RPC canonico `send_conversation_message`, que deriva o
 // remetente da sessao, grava a mensagem e move open -> in_conversation na
 // MESMA transacao (ADR D1). O nome do RECON-024 (`respond_to_service_request`)
@@ -318,20 +325,25 @@ export async function deletePortfolioPhotoAction(formData: FormData): Promise<vo
 export async function respondToRequestAction(formData: FormData): Promise<void> {
   const requestId = text(formData, "requestId")
   const conversationId = text(formData, "conversationId")
+  const clientKey = text(formData, "clientKey")
   const content = text(formData, "content") ?? ""
   if (!requestId) throw new Error("requestId required")
   if (!conversationId) throw new Error("conversationId required")
+  if (!clientKey) throw new Error("clientKey required")
   if (content.trim().length === 0) throw new Error("Escreva uma resposta antes de enviar.")
 
   const { client } = await requireAuthClient()
   const { error } = await client.rpc("send_conversation_message", {
     p_conversation_id: conversationId,
     p_content: content,
+    p_client_key: clientKey,
   })
-  if (error) throw new Error(`Falha ao responder: ${error.message}`)
+  if (error) {
+    revalidateServiceRequestSurfaces(requestId)
+    throw new Error(`Falha ao responder: ${error.message}`)
+  }
 
-  revalidatePath("/prestador")
-  revalidatePath(`/prestador/pedidos/${requestId}`)
+  revalidateServiceRequestSurfaces(requestId)
 }
 
 export async function closeRequestAction(formData: FormData): Promise<void> {
@@ -340,10 +352,12 @@ export async function closeRequestAction(formData: FormData): Promise<void> {
 
   const { client } = await requireAuthClient()
   const { error } = await client.rpc("close_service_request", { p_request_id: requestId })
-  if (error) throw new Error(`Falha ao encerrar: ${error.message}`)
+  if (error) {
+    revalidateServiceRequestSurfaces(requestId)
+    throw new Error(`Falha ao encerrar: ${error.message}`)
+  }
 
-  revalidatePath("/prestador")
-  revalidatePath(`/prestador/pedidos/${requestId}`)
+  revalidateServiceRequestSurfaces(requestId)
 }
 
 // Área de atendimento: liga/desliga o alcance gratuito da comunidade que

@@ -62,14 +62,14 @@ describe("foto e link continuam sendo anexos reais de uma pergunta", () => {
     // O outro lado da asserção: tirar formato e enquete não pode ter levado os
     // anexos junto. Eles não são formato — são o que a pessoa anexou, e o
     // cartão continua dizendo de qual host veio o link.
-    expect(code).toContain('shown.post_type === "photo"')
-    expect(code).toContain('shown.post_type === "link"')
-    expect(code).toContain("shown.photo_path")
-    expect(code).toContain("shown.link_url")
+    expect(code).toContain('post.post_type === "photo"')
+    expect(code).toContain('post.post_type === "link"')
+    expect(code).toContain("post.photo_path")
+    expect(code).toContain("post.link_url")
     expect(code).toContain("linkHostname")
   })
 
   it("o tempo relativo continua sendo o metadado do cabeçalho", () => {
-    expect(code).toContain("formatRelativeTime(shown.created_at)")
+    expect(code).toContain("formatRelativeTime(post.created_at)")
   })
 })

@@ -33,6 +33,8 @@ type RequestRow = {
   updated_at: string
   closed_at: string | null
   closed_by_user_id: string | null
+  cancelled_at: string | null
+  cancelled_by_user_id: string | null
   conversation_id: string | null
   provider_profiles: { display_name: string; category: ProviderCategory } | null
 }
@@ -114,7 +116,7 @@ export default async function PedidoDetalhePage({ params }: { params: Promise<{ 
   const requestQuery = await client
     .from("service_requests")
     .select(
-      "id, requester_user_id, provider_user_id, provider_id, description, when_text, status, created_at, updated_at, closed_at, closed_by_user_id, conversation_id, provider_profiles(display_name, category)",
+      "id, requester_user_id, provider_user_id, provider_id, description, when_text, status, created_at, updated_at, closed_at, closed_by_user_id, cancelled_at, cancelled_by_user_id, conversation_id, provider_profiles(display_name, category)",
     )
     .eq("id", id)
     .maybeSingle()
@@ -172,6 +174,8 @@ export default async function PedidoDetalhePage({ params }: { params: Promise<{ 
         createdAt: request.created_at,
         closedAt: request.closed_at,
         closedByUserId: request.closed_by_user_id,
+        cancelledAt: request.cancelled_at,
+        cancelledByUserId: request.cancelled_by_user_id,
         providerName,
         categoryLabel,
         location,

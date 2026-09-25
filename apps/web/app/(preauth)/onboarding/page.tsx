@@ -5,6 +5,7 @@ import { Button, Form, Input, Radio, RadioGroup, Spinner } from "@heroui/react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
+import { CONSENT_PATH, isConsentRequired } from "../../../lib/onboarding/consent-required"
 import { purgeCpfResidue } from "../../../lib/onboarding/storage"
 import { verificationErrorMessage } from "../../../lib/portal/verification-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
@@ -54,6 +55,9 @@ function OnboardingFlow() {
   const [role, setRole] = useState<RoleId>("military")
   const [cpf, setCpf] = useState("")
   const [error, setError] = useState<string | null>(null)
+  // Conta sem aceite (confirmação aberta noutro aparelho): em vez do 403 cru,
+  // a tela oferece o caminho para /consent.
+  const [needsConsent, setNeedsConsent] = useState(false)
   // ADR-20260922-identidade-quando-portal-falha: com o Portal indisponível, a identidade
   // é oferecida na hora, abaixo da mensagem de instabilidade.
   const [offerIdentity, setOfferIdentity] = useState(false)
@@ -158,6 +162,10 @@ function OnboardingFlow() {
 
       const data = (await response.json()) as Record<string, unknown>
 
+      if (isConsentRequired(response.status, data)) {
+        setNeedsConsent(true)
+        return
+      }
       if (typeof data["error"] === "string") {
         setError(data["error"] as string)
         return
@@ -239,6 +247,10 @@ function OnboardingFlow() {
 
       const data = (await response.json()) as Record<string, unknown>
 
+      if (isConsentRequired(response.status, data)) {
+        setNeedsConsent(true)
+        return
+      }
       if (typeof data["error"] === "string") {
         setError(data["error"] as string)
         return
@@ -393,6 +405,21 @@ function OnboardingFlow() {
         )}
 
         {error && <FeedbackAlert variant="danger" description={error} />}
+
+        {needsConsent && (
+          <div className="flex flex-col gap-2" data-testid="onboarding-consent-required">
+            <FeedbackAlert
+              variant="warning"
+              description="Antes de continuar, falta o seu aceite dos termos de uso e do código de conduta. Isso acontece quando o e-mail é confirmado em outro aparelho."
+            />
+            <Link
+              href={CONSENT_PATH}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors hover:bg-[var(--semantic-action-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+            >
+              Revisar e aceitar os termos
+            </Link>
+          </div>
+        )}
 
         {offerIdentity && (
           <div className="flex flex-col gap-2">

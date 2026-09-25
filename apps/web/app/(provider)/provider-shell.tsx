@@ -88,7 +88,7 @@ function NavLinks({ compact }: Readonly<{ compact: boolean }>) {
             aria-current={active ? "page" : undefined}
             className={
               compact
-                ? `flex min-h-11 min-w-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                ? `flex min-h-11 min-w-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     active
                       ? "bg-[var(--semantic-selected)] text-[var(--semantic-action-primary)]"
                       : "text-muted"

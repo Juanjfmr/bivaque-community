@@ -1,7 +1,8 @@
 "use client"
 
 import { Button, ButtonGroup, ToggleButton } from "@heroui/react"
-import { useSearchParams } from "next/navigation"
+import type { Route } from "next"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { useLocalityContext } from "../../../lib/locality-context"
@@ -11,13 +12,14 @@ import { CityReference } from "../../components/bivaque/city-reference"
 import { EmptyState } from "../../components/bivaque/empty-state"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedComposer } from "../../components/bivaque/feed-composer"
-import { CreatePostModal, FeedPost } from "../../components/bivaque/feed-post"
+import { FeedPost } from "../../components/bivaque/feed-post"
 import {
   FeedRailDisclosure,
   FeedRightRail,
   useFeedRailData,
 } from "../../components/bivaque/feed-right-rail"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
+import { loadPrimaryCommunity } from "../inicio/home-loaders"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
 
@@ -25,10 +27,7 @@ export default function CommunityPage() {
   const [posts, setPosts] = useState<FeedPostRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  // Dica da ENTRADA (o botão "Link" do compositor), não formato escolhido: o
-  // `post_type` é derivado do anexo real dentro do CreatePostModal.
-  const [entryAttachment, setEntryAttachment] = useState<string | undefined>(undefined)
+  const router = useRouter()
   const [memberCount, setMemberCount] = useState<number | null>(null)
   const [memberCountError, setMemberCountError] = useState(false)
   const [primaryCommunityId, setPrimaryCommunityId] = useState<string | null>(null)
@@ -70,15 +69,12 @@ export default function CommunityPage() {
         return
       }
 
-      const { data: membershipsData, error: membershipsError } = await supabase
-        .from("community_memberships")
-        .select("community_id")
-        .eq("user_id", user.id)
-        .eq("status", "approved")
-        .order("joined_at", { ascending: true })
-        .limit(1)
-
-      if (membershipsError) {
+      // Mesma escolha da Home (loadPrimaryCommunity): a membership aprovada
+      // mais antiga ENTRE as comunidades da cidade atual. Sem o filtro de
+      // localidade, depois de uma transferência a vila de origem virava o
+      // contexto desta tela e o `?comunidade=` do compositor.
+      const primary = await loadPrimaryCommunity(supabase, current.id)
+      if (primary.status === "error") {
         // Reading the error is not optional: silently swallowing it is how the
         // group member list rendered empty in production before — README §"Duas
         // coisas que o E2E ensinou".
@@ -86,24 +82,8 @@ export default function CommunityPage() {
         setLoading(false)
         return
       }
-
-      const communityId = ((membershipsData as { community_id: string }[] | null) ?? [])[0]
-        ?.community_id
-
-      let communityName: string | null = null
-      if (communityId) {
-        const { data: communityData, error: communityError } = await supabase
-          .from("communities")
-          .select("name")
-          .eq("id", communityId)
-          .maybeSingle()
-        if (communityError) {
-          setError("Não foi possível identificar sua comunidade. Tente novamente.")
-          setLoading(false)
-          return
-        }
-        communityName = (communityData as { name: string } | null)?.name ?? null
-      }
+      const communityId = primary.status === "ready" ? primary.id : undefined
+      const communityName = primary.status === "ready" ? primary.name : null
 
       // Onda E Task 2: quando o membro não pertence a comunidade nenhuma, NÃO
       // caímos no feed_posts (Manhattan-reach). A home passa a ser a referência
@@ -140,7 +120,7 @@ export default function CommunityPage() {
         setAtEnd(false)
       }
     },
-    [sortOrder, supabase],
+    [sortOrder, supabase, current.id],
   )
 
   const handleSortChange = useCallback(
@@ -155,16 +135,15 @@ export default function CommunityPage() {
     [sortOrder, loadFeed],
   )
 
-  const handleOpenModal = useCallback((attachment?: string) => {
-    setEntryAttachment(attachment)
-    setShowCreateModal(true)
-  }, [])
-
-  const handleCreated = useCallback(() => {
-    loadFeed(sortOrder).catch(() => {
-      /* errors handled in loadFeed */
-    })
-  }, [loadFeed, sortOrder])
+  const handleOpenComposer = useCallback(
+    (postType?: string) => {
+      const params = new URLSearchParams({ origem: "/community" })
+      if (postType) params.set("tipo", postType)
+      if (primaryCommunityId) params.set("comunidade", primaryCommunityId)
+      router.push(`/publicacoes/nova?${params.toString()}` as Route)
+    },
+    [primaryCommunityId, router],
+  )
 
   const handleHidePost = useCallback((postId: string) => {
     setHiddenPostIds((prev) => new Set(prev).add(postId))
@@ -238,24 +217,10 @@ export default function CommunityPage() {
       {/* Onda E Task 2: quando o membro não pertence a nenhuma comunidade, a
           home é a referência da cidade (§6.2), não o feed da vila. O feed
           municipal é morto pela D48. CityReference é o mesmo conteúdo que a
-          rota /localidade (Task 3) vai expor. O CreatePostModal continua
-          disponível — o membro ainda pode publicar com alcance da cidade
-          mesmo sem estar numa vila. */}
+          rota /localidade (Task 3) vai expor. A publicação continua disponível
+          na rota addressável, mesmo sem estar numa vila. */}
       {hasResolved && !primaryCommunityId && !error ? (
-        <>
-          <CityReference onPublish={() => handleOpenModal()} />
-          {showCreateModal && (
-            <CreatePostModal
-              localityId={current.id}
-              initialAttachment={entryAttachment}
-              onCreated={handleCreated}
-              onClose={() => {
-                setShowCreateModal(false)
-                setEntryAttachment(undefined)
-              }}
-            />
-          )}
-        </>
+        <CityReference onPublish={() => handleOpenComposer()} />
       ) : (
         <>
           {/* locality header — sticky under app header */}
@@ -284,7 +249,7 @@ export default function CommunityPage() {
                   </a>
                 )}
               </div>
-              <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
+              <Button size="sm" variant="primary" onPress={() => handleOpenComposer()}>
                 Publicar
               </Button>
             </div>
@@ -294,7 +259,7 @@ export default function CommunityPage() {
             {/* feed column */}
             <div className="min-w-0 flex-1 space-y-3">
               {/* composer entry */}
-              <FeedComposer onOpenModal={handleOpenModal} />
+              <FeedComposer onOpenComposer={handleOpenComposer} />
 
               {/* sort control */}
               <ButtonGroup
@@ -355,7 +320,7 @@ export default function CommunityPage() {
                       : "Seja o primeiro a compartilhar algo com a sua comunidade."
                   }
                   action={
-                    <Button size="sm" variant="primary" onPress={() => handleOpenModal()}>
+                    <Button size="sm" variant="primary" onPress={() => handleOpenComposer()}>
                       Publicar
                     </Button>
                   }
@@ -404,19 +369,6 @@ export default function CommunityPage() {
             {/* right rail */}
             <FeedRightRail data={railData} />
           </div>
-
-          {showCreateModal && (
-            <CreatePostModal
-              localityId={current.id}
-              initialAttachment={entryAttachment}
-              defaultCommunityId={primaryCommunityId ?? undefined}
-              onCreated={handleCreated}
-              onClose={() => {
-                setShowCreateModal(false)
-                setEntryAttachment(undefined)
-              }}
-            />
-          )}
         </>
       )}
     </div>

@@ -30,9 +30,11 @@ describe("lançador de intenções da Home (DS-006)", () => {
   })
 
   it("a pergunta reusa o mecanismo de publicação que já existe", () => {
-    // A página abre o CreatePostModal montado nela; o lançador não publica nada.
-    expect(page).toContain('onAskQuestion={() => handleOpenModal("text")}')
-    expect(page).toContain("<CreatePostModal")
+    // A página leva à rota estável /publicacoes/nova (R24), onde vive o mesmo
+    // compositor; o lançador não publica nada.
+    expect(page).toContain("onAskQuestion={() => handleOpenComposer()}")
+    expect(page).toContain("/publicacoes/nova")
+    expect(page).not.toContain("<CreatePostModal")
     expect(launcher).not.toContain('.from("posts")')
     expect(launcher).not.toContain(".insert(")
   })

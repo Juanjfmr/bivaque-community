@@ -25,6 +25,9 @@ const webEntry = read(
 )
 const mobileEntry = read("apps", "mobile", "app", "(auth)", "acesso.tsx")
 const consentRoute = read("apps", "web", "app", "api", "consent", "route.ts")
+const consentActions = read("apps", "web", "app", "(preauth)", "consent", "actions.ts")
+const callbackRoute = read("apps", "web", "app", "auth", "callback", "route.ts")
+const signupIntent = read("apps", "web", "lib", "auth", "signup-intent.ts")
 const proxy = read("apps", "web", "proxy.ts")
 
 describe("o aceite aparece no cadastro, e só nele", () => {
@@ -84,6 +87,32 @@ describe("o aceite é registrado no servidor, não só na tela", () => {
   it("as versões vêm do contrato compartilhado, não de quem chama", () => {
     expect(consentRoute).toContain("p_consent_version: CONSENT_VERSION")
     expect(consentRoute).toContain("p_code_of_conduct_version: CODE_OF_CONDUCT_VERSION")
+  })
+
+  it("Google no cadastro inicia um intent server-side antes do OAuth", () => {
+    expect(consentActions).toContain("prepareSignupConsentAction")
+    expect(consentActions).toContain("httpOnly: true")
+    expect(webEntry).toContain('await prepareSignupConsentAction("email")')
+    expect(webEntry).toContain('await prepareSignupConsentAction("google")')
+    expect(webEntry).toContain("&flow=signup-google")
+    expect(webEntry).not.toContain("consent=")
+    expect(webEntry.indexOf('await prepareSignupConsentAction("google")')).toBeLessThan(
+      webEntry.indexOf("signInWithOAuth"),
+    )
+    expect(webEntry.indexOf('await prepareSignupConsentAction("email")')).toBeLessThan(
+      webEntry.indexOf("supabase.auth.signUp"),
+    )
+  })
+
+  it("o callback só registra o aceite quando o marker ou o intent server-side existe", () => {
+    expect(signupIntent).toContain("SIGNUP_CONSENT_INTENT_COOKIE")
+    expect(signupIntent).toContain("hasSignupConsentIntent")
+    expect(callbackRoute).toContain("SIGNUP_CONSENT_EMAIL_FLOW")
+    expect(callbackRoute).toContain("SIGNUP_CONSENT_GOOGLE_FLOW")
+    expect(callbackRoute).toContain("hasSignupConsentIntent")
+    expect(callbackRoute).toContain(
+      'cookieStore.delete({ name: SIGNUP_CONSENT_INTENT_COOKIE, path: "/auth" })',
+    )
   })
 })
 

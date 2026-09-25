@@ -12,16 +12,53 @@ const detailPage = readFileSync(
   join(root, "apps", "web", "app", "(provider)", "prestador", "pedidos", "[id]", "page.tsx"),
   "utf8",
 )
+const responseForm = readFileSync(
+  join(
+    root,
+    "apps",
+    "web",
+    "app",
+    "(provider)",
+    "prestador",
+    "pedidos",
+    "[id]",
+    "provider-response-form.tsx",
+  ),
+  "utf8",
+)
 
 describe("resposta do prestador ao pedido (RECON-044)", () => {
   it("usa o RPC canonico send_conversation_message, nao o nome morto do RECON-024", () => {
     expect(actions).toMatch(/rpc\("send_conversation_message"/)
     expect(actions).toContain("p_conversation_id: conversationId")
+    expect(actions).toContain("p_client_key: clientKey")
+    expect(actions).toContain('revalidatePath("/pedidos")')
     expect(actions).not.toMatch(/rpc\("respond_to_service_request"/)
   })
 
   it("o formulario envia a conversa do proprio pedido", () => {
-    expect(detailPage).toContain('name="conversationId"')
-    expect(detailPage).toContain("value={request.conversation_id}")
+    expect(detailPage).toContain("ProviderResponseForm")
+    expect(detailPage).toContain("conversationId={request.conversation_id}")
+    expect(responseForm).toContain('name="conversationId"')
+    expect(responseForm).toContain("value={conversationId}")
+    expect(responseForm).toContain('name="clientKey"')
+    expect(responseForm).toContain("useState")
+    expect(responseForm).toContain("useEffect")
+    expect(responseForm).toContain("setClientKey(newClientKey())")
+    expect(responseForm).toContain("value={content}")
+    expect(responseForm).toContain("setContent(submittedContent)")
+    expect(responseForm).toContain("useActionState")
+    expect(responseForm).toContain("pending")
+    expect(detailPage).toContain("cancelled_at, cancelled_by_user_id")
+    expect(detailPage).toContain("request.cancelled_at")
+  })
+
+  it("o cancelamento mostra a data, não um tempo relativo", () => {
+    expect(detailPage).toContain("formatRequestDate(request.cancelled_at)")
+    expect(detailPage).not.toContain("formatReceived(request.cancelled_at)")
+  })
+
+  it("texto editado depois de uma tentativa gera chave nova", () => {
+    expect(responseForm).toContain("shouldRotateClientKey(lastSubmittedRef.current, next)")
   })
 })

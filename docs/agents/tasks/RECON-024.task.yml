@@ -14,13 +14,16 @@ authority:
   - docs/agents/PRANCHAS-WEB-RESTANTES.md secao 23-web-meu-negocio
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.6 R45 R46
   - docs/decisions/ADR-20260820-conta-de-prestador.md
+  - Relatório comparativo Mobbin e autorização do responsável em 23/09/2026 para resposta idempotente
 
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    /prestador, /prestador/ficha e /prestador/catalogo existem e nunca foram comparadas com a
-    prancha 23. Nao existem a fila por situacao, o detalhe de pedido do prestador, a area de
-    atendimento nem a conta do negocio. Medido em 09/09/2026.
+    O painel e a resposta do prestador existem, mas a chave p_client_key era
+    gerada no Server Component a cada renderização. Um retry podia receber outra
+    chave e duplicar a resposta. A correção torna a chave estado do formulário
+    client-side estável durante uma tentativa, adiada para depois da hidratação,
+    e rotaciona depois de uma resposta aceita para permitir a próxima mensagem.
 
 allowed_paths:
   - apps/web/app/(provider)/
@@ -48,6 +51,7 @@ acceptance:
   - a fila segue a prancha - abas Novos, Em conversa e Encerrados com contagem real, e a tabela com Cliente, Servico solicitado, Regiao, Quando, Recebido e o botao de responder
   - o cartao do pedido selecionado traz nome, local, quando, recebido, titulo, corpo, chip de categoria e o botao que abre a conversa
   - a primeira resposta move o pedido para Em conversa na mesma transacao que grava a mensagem, e as contagens das abas mudam
+  - a resposta do prestador envia uma chave idempotente estável; repetir o submit não cria uma segunda mensagem
   - o rail segue a prancha - capa do negocio, cartao com nome, categoria, area atendida e Ver minha ficha, e o cartao de completude com a pendencia e o checklist
   - a completude usa campos reais e o telefone continua opcional
   - as rotas de area de atendimento e conta existem com efeito real, e salvar altera o que a ficha publica mostra
@@ -58,10 +62,12 @@ acceptance:
 
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-024.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/service-requests/provider-response-wiring.test.ts
   - npx pnpm@11.18.0 gate
   - reset local sem seed seguido de npx pnpm@11.18.0 test:db com caso positivo e negativo
   - npx pnpm@11.18.0 build
   - npx pnpm@11.18.0 test:e2e do ciclo entre cliente e prestador
+  - tests/e2e/journey-pedir-servico.spec.ts fecha o ciclo de duas respostas do prestador e não deixa compositor terminal
   - node scripts/visual/capture.mjs para cada rota tocada em 375 768 e 1440
 
 risk: isolamento entre negocios e situacao do pedido

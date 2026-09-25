@@ -85,6 +85,65 @@ export function partitionCommunities(
   return { mine, pending, discover }
 }
 
+export type CommunityUrlState = {
+  tab: "minhas" | "descobrir"
+  query: string
+  selectedId: string | null
+}
+
+export type CommunityUrlChanges = Partial<{
+  tab: CommunityUrlState["tab"]
+  query: string | null
+  selectedId: string | null
+}>
+
+export function readCommunityUrlState(params: URLSearchParams): CommunityUrlState {
+  return {
+    tab: params.get("aba") === "descobrir" ? "descobrir" : "minhas",
+    query: params.get("q") ?? "",
+    selectedId: params.get("comunidade"),
+  }
+}
+
+export function writeCommunityUrlState(
+  current: URLSearchParams,
+  changes: CommunityUrlChanges,
+): string {
+  const params = new URLSearchParams(current.toString())
+  if (changes.tab !== undefined) {
+    if (changes.tab === "descobrir") params.set("aba", "descobrir")
+    else params.delete("aba")
+  }
+  if (changes.query !== undefined) {
+    const query = changes.query?.trim() ?? ""
+    if (query) params.set("q", query)
+    else params.delete("q")
+  }
+  if (changes.selectedId !== undefined) {
+    if (changes.selectedId) params.set("comunidade", changes.selectedId)
+    else params.delete("comunidade")
+  }
+  return params.toString()
+}
+
+/**
+ * Texto do campo de busca quando a URL muda. `pushed` é o termo que o próprio
+ * campo mandou para a URL: a volta dele não sobrescreve o que a pessoa continuou
+ * digitando enquanto a navegação carregava. Mudança vinda de fora (voltar no
+ * histórico, limpar) manda; espaço nas pontas é o mesmo termo e fica como
+ * digitado.
+ */
+export function reconcileSearchText(current: string, query: string, pushed: string | null): string {
+  if (pushed === query) return current
+  return current.trim() === query ? current : query
+}
+
+export function currentLocalityId(
+  memberships: Array<{ locality_id: string; kind: "current" | "leaving" }>,
+): string | null {
+  return memberships.find((membership) => membership.kind === "current")?.locality_id ?? null
+}
+
 export function filterCommunities(communities: CommunityCard[], query: string): CommunityCard[] {
   const needle = query.trim().toLocaleLowerCase("pt-BR")
   if (needle.length === 0) return communities
@@ -93,6 +152,18 @@ export function filterCommunities(communities: CommunityCard[], query: string): 
       community.name.toLocaleLowerCase("pt-BR").includes(needle) ||
       (community.description ?? "").toLocaleLowerCase("pt-BR").includes(needle),
   )
+}
+
+export function selectCommunityForResults(
+  communities: CommunityCard[],
+  selectedId: string | null,
+  query: string,
+): CommunityCard | null {
+  const filtered = filterCommunities(communities, query)
+  if (query.trim().length > 0 && !filtered.some((community) => community.id === selectedId)) {
+    return filtered[0] ?? null
+  }
+  return filtered.find((community) => community.id === selectedId) ?? filtered[0] ?? null
 }
 
 /** "10 de set." a partir de `joined_at` real — nunca uma data chumbada. */

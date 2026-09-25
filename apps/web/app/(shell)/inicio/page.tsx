@@ -1,11 +1,13 @@
 "use client"
 
+import type { Route } from "next"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { CreatePostModal } from "../../components/bivaque/feed-post"
 import { IntentLauncher } from "../../components/bivaque/intent-launcher"
 import { CommunitySection, type PrimaryCommunity } from "./community-section"
+import { composerQuery } from "./composer-query"
 import { InicioGreeting } from "./greeting"
 import {
   createRequestGuard,
@@ -18,21 +20,17 @@ import { InicioRailDisclosure, InicioRightRail } from "./right-rail"
 
 // RECON-002 (prancha 01-web-inicio): home de quem participa.
 //
-// A comunidade primária — a mais antiga entre as aprovadas, mesma resolução
-// da rota /community — é lida uma vez aqui e serve às três consumidoras: a
-// linha de contexto do cabeçalho, o feed "Na comunidade" e a audiência padrão
-// do modal de publicação. Falha de leitura (inclusive rejeição de rede) vira
-// estado recuperável na seção, não nome chumbado, vazio fingido nem
-// carregamento infinito. A guarda de requisição descarta resposta atrasada de
-// tentativa anterior — ela não sobrescreve o contexto já resolvido.
+// A comunidade primária — a mais antiga entre as aprovadas na cidade atual —
+// é lida uma vez aqui e serve às três consumidoras: a linha de contexto do
+// cabeçalho, o feed "Na comunidade" e a audiência padrão do modal de
+// publicação. Falha de leitura (inclusive rejeição de rede) vira estado
+// recuperável na seção, não nome chumbado, vazio fingido nem carregamento
+// infinito. A guarda de requisição descarta resposta atrasada de tentativa
+// anterior — ela não sobrescreve o contexto já resolvido.
 export default function InicioPage() {
   const { current } = useLocalityContext()
+  const router = useRouter()
   const [primary, setPrimary] = useState<PrimaryCommunity>({ status: "loading" })
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  // Dica da ENTRADA, não formato escolhido: "Fazer uma pergunta" abre sem
-  // anexo (o lançador passa "text") e o `post_type` é derivado do anexo real no
-  // compositor. Nada aqui decide o formato por conta própria.
-  const [entryAttachment, setEntryAttachment] = useState<string | undefined>(undefined)
   const [refreshKey, setRefreshKey] = useState(0)
   // O evento próximo é resolvido UMA vez aqui e servido ao rail "Seu próximo
   // encontro" e ao card do feed (prancha 01) — os dois mostram o mesmo evento,
@@ -46,10 +44,10 @@ export default function InicioPage() {
     const isCurrent = guardRef.current.begin()
     setPrimary({ status: "loading" })
     // O loader nunca rejeita: o then sem catch não solta rejection no console.
-    void loadPrimaryCommunity(supabase).then((state) => {
+    void loadPrimaryCommunity(supabase, current.id).then((state) => {
       if (isCurrent()) setPrimary(state)
     })
-  }, [supabase])
+  }, [current.id, supabase])
 
   useEffect(() => {
     loadPrimary()
@@ -63,17 +61,19 @@ export default function InicioPage() {
     })
   }, [supabase, current.id])
 
-  // `handleOpenModal` mantém o nome: tests/unit/ui/intent-launcher.test.ts
-  // afirma a chamada `handleOpenModal("text")` do lançador verbatim.
-  const handleOpenModal = useCallback((attachment?: string) => {
-    setEntryAttachment(attachment)
-    setShowCreateModal(true)
-  }, [])
-
-  const handleCreated = useCallback(() => {
-    setRefreshKey((prev) => prev + 1)
-    loadPrimary()
-  }, [loadPrimary])
+  // "Fazer uma pergunta" e o "Publicar" da comunidade abrem a rota estável
+  // /publicacoes/nova (R24). O público padrão é a comunidade principal — a
+  // mesma que dá contexto ao cabeçalho e ao feed desta tela; sem comunidade
+  // principal pronta, o compositor usa a preferência salva ou a cidade. A dica
+  // de anexo nunca escolhe o formato: o `post_type` sai do anexo real.
+  const primaryCommunityId = primary.status === "ready" ? primary.id : null
+  const handleOpenComposer = useCallback(
+    (attachment?: string) => {
+      setRefreshKey((previous) => previous + 1)
+      router.push(`/publicacoes/nova?${composerQuery(primaryCommunityId, attachment)}` as Route)
+    },
+    [router, primaryCommunityId],
+  )
 
   return (
     <div className="flex flex-1 flex-col">
@@ -90,7 +90,7 @@ export default function InicioPage() {
               que não empurra o primeiro item do feed para fora da dobra. */}
           <IntentLauncher
             variant={primary.status === "none" ? "explain" : "compact"}
-            onAskQuestion={() => handleOpenModal("text")}
+            onAskQuestion={() => handleOpenComposer()}
           />
           {/* O trilho da prancha 01 não existe abaixo de 1024px. O conteúdo que
               só existe nele (os atalhos e "De mudança?") desce para cá fechado:
@@ -100,7 +100,7 @@ export default function InicioPage() {
           <CommunitySection
             primary={primary}
             onRetryPrimary={loadPrimary}
-            onPublish={() => handleOpenModal()}
+            onPublish={() => handleOpenComposer()}
             refreshKey={refreshKey}
             event={nextEvent}
           />
@@ -108,19 +108,6 @@ export default function InicioPage() {
 
         <InicioRightRail event={nextEvent} />
       </div>
-
-      {showCreateModal && (
-        <CreatePostModal
-          localityId={current.id}
-          initialAttachment={entryAttachment}
-          defaultCommunityId={primary.status === "ready" ? primary.id : undefined}
-          onCreated={handleCreated}
-          onClose={() => {
-            setShowCreateModal(false)
-            setEntryAttachment(undefined)
-          }}
-        />
-      )}
     </div>
   )
 }

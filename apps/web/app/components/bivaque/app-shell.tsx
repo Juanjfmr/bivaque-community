@@ -140,7 +140,7 @@ export function AppShell({ children }: AppShellProperties) {
               {unreadConversations > 0 ? (
                 <span
                   aria-hidden="true"
-                  className="absolute top-1 right-1 flex min-w-4 items-center justify-center rounded-full bg-[var(--semantic-action-primary)] px-1 text-[10px] leading-4 font-semibold text-[var(--semantic-text-on-strong)]"
+                  className="absolute top-1 right-1 flex min-w-5 items-center justify-center rounded-full bg-[var(--semantic-action-primary)] px-1 text-[13px] leading-4 font-semibold text-[var(--semantic-text-on-strong)]"
                 >
                   {unreadConversations > 99 ? "99+" : unreadConversations}
                 </span>
@@ -359,7 +359,7 @@ export function AppShell({ children }: AppShellProperties) {
       <BottomNav />
 
       {/* Keyboard shortcut hint */}
-      <div className="hidden lg:flex fixed bottom-4 right-4 z-30">
+      <div className="pointer-events-none hidden lg:flex fixed bottom-4 right-4 z-30">
         <span className="flex items-center gap-1.5 text-xs text-muted bg-[var(--semantic-surface)] border border-border rounded-md px-2 py-1 shadow-[var(--semantic-elevation-raised)]">
           <Kbd>Ctrl</Kbd>
           <span>+</span>

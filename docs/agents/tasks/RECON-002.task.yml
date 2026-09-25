@@ -4,28 +4,33 @@ objective: >
   A rota /inicio deixa de ser scaffold e passa a ser a home de quem participa da
   prancha 01-web-inicio: saudação com o nome e a data reais, contexto de
   localidade, composer, tira de retorno, seção "Na comunidade" e o rail direito
-  com próximo encontro, atalhos de descoberta e chegada em outra cidade.
+  com próximo encontro, atalhos de descoberta e chegada em outra cidade. A
+  comunidade primária é resolvida dentro da cidade current, nunca pela membership
+  mais antiga de uma transferência.
 
 authority:
   - docs/design/visual-guide-2026-09-06/01-web-inicio.png — referência de composição
   - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7 — /inicio é o container "Início"
   - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md §8 gate G1
   - docs/agents/DESIGN_SYSTEM.md §5 (tokens), §7.2 (feed e conversa), §9.1 (WCAG 2.2 AA)
+  - Relatório comparativo Mobbin e autorização do responsável em 23/09/2026 para contexto e retorno
 
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    apps/web/app/(shell)/inicio/page.tsx renderiza PageHeader mais um parágrafo
-    dizendo "Conteúdo em construção (prancha 01)". Zero leitura, zero escrita.
-    A rota é destino do redirect da raiz (proxy.ts), primeiro item da navegação e
-    destino da recuperação de segmento, então o placeholder está no caminho de
-    todo membro que entra.
+    A implementação atual já tem greeting, composer, feed, retorno e rail, mas
+    loadPrimaryCommunity escolhe a membership approved mais antiga sem filtrar
+    locality_id. Depois de uma transferência declarada, a Home pode misturar
+    comunidade da origem com a cidade current e usar a audiência errada no
+    composer. A correção é local na leitura e não muda autorização nem RPC.
 
 allowed_paths:
   - apps/web/app/(shell)/inicio/
   - apps/web/app/components/bivaque/
   - docs/agents/tasks/RECON-002.task.yml
   - tests/unit/ui/inicio-recon.test.tsx
+  - tests/unit/ui/inicio-going-line.test.ts
+  - tests/unit/inicio/home-loaders.test.ts
 
 forbidden:
   - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
@@ -45,6 +50,7 @@ acceptance:
   - requisições antigas não sobrescrevem contexto atual; rejeição de rede deixa erro recuperável, não carregamento infinito
   - a saudação usa o nome real do membro (useMemberContext) e a saudação varia com a hora do dia; a data é a de hoje, formatada em pt-BR
   - o contexto acima da saudação usa a localidade real (useLocalityContext) e, quando houver, a comunidade do membro
+  - a comunidade primária e o contexto do composer são filtrados pela localidade current; membership da origem em transferência não vira padrão
   - o composer abre o fluxo de publicação que já existe, sem duplicar mecanismo
   - a seção "Na comunidade" fecha os estados: skeleton no carregamento, vazio honesto quando não há o que mostrar, erro recuperável com nova tentativa
   - o rail direito só mostra cartão com dado real; cartão sem dado não é renderizado com conteúdo inventado
@@ -57,6 +63,7 @@ acceptance:
 
 proof:
   - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-002.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/ui/inicio-going-line.test.ts tests/unit/inicio/home-loaders.test.ts
   - npx pnpm@11.18.0 gate
   - node scripts/visual/loop.mjs
 

@@ -25,10 +25,14 @@ allowed_paths:
   - apps/web/app/(shell)/guide/
   - apps/web/app/(admin)/guide-queue/
   - apps/web/lib/guide/
+  - apps/web/lib/saves/saved-items.ts
   - supabase/migrations/
   - supabase/tests/
   - scripts/visual/capture.mjs
+  - scripts/visual/compare.mjs
   - tests/unit/
+  - tests/e2e/guide-save.spec.ts
+  - tests/e2e/composer-layout.spec.ts
   - docs/agents/tasks/RECON-030.task.yml
 
 forbidden:
@@ -43,6 +47,7 @@ forbidden:
 
 acceptance:
   - o artigo segue a prancha 25 - trilha, titulo editorial, subtitulo, linha de revisao e curadoria, botao de salvar, imagem de capa e o corpo em secoes com titulo e texto
+  - o botao de salvar alterna a referencia real em guide_entry_saves, persiste apos recarregar e permite remover o salvamento
   - o rail traz o indice das secoes com o item ativo destacado, o cartao de origem da referencia e o cartao de sugestao de atualizacao
   - o indice e gerado das secoes, e as ancoras funcionam por teclado
   - a origem aparece quando o dado existe, e leva a conversa quando o leitor tem acesso, sem vazar quando nao tem

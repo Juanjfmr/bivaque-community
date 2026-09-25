@@ -23,6 +23,27 @@ export type PrimaryCommunity =
   | { status: "none" }
   | { status: "ready"; id: string; name: string | null }
 
+type ApprovedCommunityMembership = { community_id: string; joined_at: string }
+type CommunityIdentity = { id: string; locality_id: string; name: string | null }
+
+export function pickPrimaryCommunity(
+  memberships: ApprovedCommunityMembership[],
+  communities: CommunityIdentity[],
+  localityId: string,
+): { id: string; name: string | null } | null {
+  const byId = new Map(
+    communities
+      .filter((community) => community.locality_id === localityId)
+      .map((community) => [community.id, community]),
+  )
+
+  for (const membership of memberships) {
+    const community = byId.get(membership.community_id)
+    if (community) return { id: community.id, name: community.name }
+  }
+  return null
+}
+
 export const FEED_ERROR_MESSAGE = "Não foi possível carregar as publicações. Tente novamente."
 
 export type FeedOutcome = { status: "ok"; posts: unknown[] } | { status: "error"; message: string }
@@ -75,40 +96,54 @@ export function createRequestGuard(): { begin: () => () => boolean } {
   }
 }
 
-// A comunidade primária — a mais antiga entre as aprovadas, mesma resolução da
-// rota /community — lida uma vez pela página e servida às três consumidoras.
-export async function loadPrimaryCommunity(supabase: InicioClient): Promise<PrimaryCommunity> {
+// A comunidade primária — a mais antiga entre as aprovadas **na cidade atual** —
+// lida uma vez pela página e servida às três consumidoras. A filtragem por
+// localidade vem depois da membership: uma transferência declarada pode deixar
+// a comunidade de origem visível, mas ela não pode virar o contexto da Home.
+export async function loadPrimaryCommunity(
+  supabase: InicioClient,
+  localityId: string,
+): Promise<PrimaryCommunity> {
   try {
     const {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) return { status: "error" }
 
-    const { data: membership, error: membershipError } = await supabase
+    const { data: memberships, error: membershipError } = await supabase
       .from("community_memberships")
-      .select("community_id")
+      .select("community_id, joined_at")
       .eq("user_id", user.id)
       .eq("status", "approved")
       .order("joined_at", { ascending: true })
-      .limit(1)
 
     if (membershipError) return { status: "error" }
 
-    const communityId = ((membership as { community_id: string }[] | null) ?? [])[0]?.community_id
-    if (!communityId) return { status: "none" }
+    const approved = (memberships as ApprovedCommunityMembership[] | null) ?? []
+    if (approved.length === 0) return { status: "none" }
 
-    const { data: community, error: communityError } = await supabase
+    const { data: communities, error: communitiesError } = await supabase
       .from("communities")
-      .select("name")
-      .eq("id", communityId)
-      .maybeSingle()
+      .select("id, locality_id, name")
+      .in(
+        "id",
+        approved.map((membership) => membership.community_id),
+      )
+      .eq("locality_id", localityId)
 
-    if (communityError) return { status: "error" }
+    if (communitiesError) return { status: "error" }
+
+    const primary = pickPrimaryCommunity(
+      approved,
+      (communities as CommunityIdentity[] | null) ?? [],
+      localityId,
+    )
+    if (!primary) return { status: "none" }
 
     return {
       status: "ready",
-      id: communityId,
-      name: (community as { name: string } | null)?.name ?? null,
+      id: primary.id,
+      name: primary.name,
     }
   } catch {
     // Rejeição de rede (getUser/arquitetura offline) é erro recuperável na

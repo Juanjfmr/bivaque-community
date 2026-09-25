@@ -155,8 +155,12 @@ async function openComposer(page: Page): Promise<void> {
     timeout: 20000,
   })
   await page.getByRole("button", { name: "Publicar" }).first().click()
-  await expect(page.getByRole("dialog")).toBeVisible()
-  await expect(page.getByRole("heading", { name: "Criar publicação" })).toBeVisible()
+  // O compositor mora na rota estável /publicacoes/nova (R24), não num modal.
+  await page.waitForURL(/\/publicacoes\/nova/, { timeout: 15000 })
+  await expect(page.getByRole("heading", { name: "Nova pergunta" })).toBeVisible()
+  await expect(page.locator("[data-composer-form]")).toHaveAttribute("data-draft-ready", "true", {
+    timeout: 15000,
+  })
 }
 
 /** Conta os POST em /rest/v1/posts que a página dispara. "Não publica" é uma
@@ -183,7 +187,7 @@ test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@s
     const inserts = countPublishRequests(page)
 
     await openComposer(page)
-    const dialog = page.getByRole("dialog")
+    const dialog = page.locator("[data-composer-form]")
     await dialog.getByLabel("Pergunta").fill(marker)
 
     // When — liga "Foto" e NÃO escolhe arquivo nenhum
@@ -212,7 +216,7 @@ test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@s
     const inserts = countPublishRequests(page)
 
     await openComposer(page)
-    const dialog = page.getByRole("dialog")
+    const dialog = page.locator("[data-composer-form]")
     await dialog.getByLabel("Pergunta").fill(marker)
 
     // When — liga "Link" e NÃO preenche a URL. O seletor abre com o campo de URL
@@ -238,7 +242,7 @@ test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@s
     const inserts = countPublishRequests(page)
 
     await openComposer(page)
-    const dialog = page.getByRole("dialog")
+    const dialog = page.locator("[data-composer-form]")
     await dialog.getByLabel("Pergunta").fill(marker)
 
     // Given — o anexo de foto chegou a ser ligado e recusado
@@ -301,7 +305,7 @@ test.describe("anexo ligado e vazio não vira publicação de texto", { tag: "@s
     let uploadStarted = false
 
     await openComposer(page)
-    const dialog = page.getByRole("dialog")
+    const dialog = page.locator("[data-composer-form]")
     await dialog.getByLabel("Pergunta").fill(marker)
     await dialog.getByRole("button", { name: "Foto", exact: true }).click()
 
@@ -360,7 +364,7 @@ test.describe("instrumento", { tag: "@stateful" }, () => {
   test("o compositor oferece os dois anexos depois da pergunta", async ({ page }) => {
     await signInAsVilaOwner(page.context())
     await openComposer(page)
-    const dialog = page.getByRole("dialog")
+    const dialog = page.locator("[data-composer-form]")
 
     await expect(dialog.getByRole("button", { name: "Foto", exact: true })).toBeVisible()
     await expect(dialog.getByRole("button", { name: "Link", exact: true })).toBeVisible()

@@ -7,6 +7,7 @@ import {
   isCaptureReportPassing,
   summarizeCaptures,
 } from "../../scripts/visual/capture-proof.mjs"
+import { captureVerdict } from "../../scripts/visual/capture-verdict.mjs"
 
 const sample = () => ({
   route: {
@@ -50,6 +51,22 @@ test("HTTP 200 fallback and a closed or different dialog are not valid state evi
     assessCapture({ ...state, observed: { ...state.observed, dialog: "Criar publicação" } }).valid,
     true,
   )
+})
+
+test("a rota com marcadores de estado não aceita a tela de diretório", () => {
+  const state = {
+    ...sample(),
+    route: {
+      ...sample().route,
+      path: "/guide/entry",
+      requiredText: ["Neste guia", "Origem desta referência"],
+    },
+    landedOn: "/guide/entry",
+    observed: { ...sample().observed, missingRequiredText: ["Neste guia"] },
+  }
+  assert.equal(assessCapture(state).valid, false)
+  state.observed.missingRequiredText = []
+  assert.equal(assessCapture(state).valid, true)
 })
 
 test("public captures are explicit; missing identity contract fails closed", () => {
@@ -120,6 +137,65 @@ test("every captured route declares an identity contract, and none is orphaned",
   }
 })
 
+test("owner-only captures use the seeded owning account", async () => {
+  const { ROUTES, SEED_ACCOUNTS } = await import("../../scripts/visual/capture.mjs")
+  const accountFor = (path) => ROUTES.find((route) => route.path === path)?.account
+  assert.equal(SEED_ACCOUNTS.donoVila, "dono-vila@bivaque.example.invalid")
+  for (const path of [
+    "/communities/71000000-0000-4000-8000-000000000001/admin/media",
+    "/communities/71000000-0000-4000-8000-000000000001/admin/pending",
+    "/events/70000000-0000-4000-8000-0000000000a1/editar",
+  ]) {
+    assert.equal(accountFor(path), "donoVila", path)
+  }
+  assert.equal(accountFor("/prestadores/30000000-0000-4000-8000-000000000010"), "membro1")
+  assert.equal(
+    accountFor("/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010"),
+    "membro1",
+  )
+})
+
+test("rotas com o mesmo path preservam atores diferentes", async () => {
+  const { ROUTES } = await import("../../scripts/visual/capture.mjs")
+  const member = ROUTES.find((route) => route.name === "communities-member")
+  const pending = ROUTES.find((route) => route.name === "communities-pending")
+  assert.equal(member?.account, "membro1")
+  assert.equal(pending?.account, "pendingCommunity")
+})
+
+test("a captura de acesso negado declara ator, estado e fluxo", async () => {
+  const { ROUTES } = await import("../../scripts/visual/capture.mjs")
+  const route = ROUTES.find((item) => item.name === "community-outsider")
+  assert.equal(route?.account, "membro1")
+  assert.equal(route?.state, "denied")
+  assert.equal(route?.flow, "direct-route")
+  assert.deepEqual(route?.requiredText, ["Você ainda não tem acesso", "Trocar de cidade"])
+})
+
+test("segmento estático não casa com uma rota dinâmica", async () => {
+  // Módulo puro: importar compare.mjs executaria o comparador (e encerraria o
+  // processo quando .visual/ não existe, como no CI).
+  const { achadosPara } = await import("../../scripts/visual/compare-match.mjs")
+  const captures = new Map([
+    ["/guide/a0000000-0000-4000-8000-000000000001", [{ proof: { valid: true } }]],
+    ["/guide/sugerir", [{ proof: { valid: true } }]],
+  ])
+  const found = achadosPara("/guide/[id]", captures)
+  assert.deepEqual(
+    found.map((item) => item.rota),
+    ["/guide/a0000000-0000-4000-8000-000000000001"],
+  )
+})
+
+test("parâmetro que não é [id] casa com token de qualquer formato", async () => {
+  const { achadosPara } = await import("../../scripts/visual/compare-match.mjs")
+  const captures = new Map([["/invite/tok-abc123", [{ proof: { valid: true } }]]])
+  assert.deepEqual(
+    achadosPara("/invite/[token]", captures).map((item) => item.rota),
+    ["/invite/tok-abc123"],
+  )
+})
+
 test("both proof writers record whether the tree was dirty", () => {
   // A report that names only the commit attributes the evidence to code the
   // commit does not contain whenever the work is still uncommitted.
@@ -128,4 +204,25 @@ test("both proof writers record whether the tree was dirty", () => {
     assert.match(source, /"status",\s*"--porcelain"/, script)
     assert.match(source, /dirty/i, script)
   }
+})
+
+// Comparador: falha FECHADA. Só `proof.valid === true` concorre a verde.
+
+test("comparador: captura sem prova não vira 'mecanicamente ok'", () => {
+  assert.equal(captureVerdict({ data: { total: 0, high: 0 } }).kind, "unproven")
+  assert.equal(captureVerdict({ proof: null, data: { total: 0, high: 0 } }).kind, "unproven")
+  assert.equal(captureVerdict({ proof: {}, data: { total: 0, high: 0 } }).kind, "unproven")
+})
+
+test("comparador: prova inválida e achados continuam vermelhos", () => {
+  assert.equal(captureVerdict({ proof: { valid: false }, data: {} }).kind, "invalid")
+  assert.equal(captureVerdict({ proof: { valid: true }, data: { high: 2, total: 3 } }).kind, "high")
+  assert.equal(captureVerdict({ proof: { valid: true }, data: { total: 1 } }).kind, "findings")
+})
+
+test("comparador: só prova válida sem achado é 'mecanicamente ok'", () => {
+  assert.deepEqual(captureVerdict({ proof: { valid: true }, data: { total: 0, high: 0 } }), {
+    kind: "ok",
+    label: "mecanicamente ok",
+  })
 })

@@ -23,7 +23,8 @@ const signupPage = join(appDir, "(preauth)", "signup", "page.tsx")
 const landingPage = join(appDir, "landing", "landing.tsx")
 const classifier = join(root, "apps", "web", "lib", "auth", "password-auth.ts")
 const recoverPage = join(appDir, "(preauth)", "recuperar-senha", "page.tsx")
-const newPasswordPage = join(appDir, "(preauth)", "nova-senha", "page.tsx")
+const newPasswordPage = join(appDir, "(preauth)", "nova-senha", "nova-senha-client.tsx")
+const newPasswordServerPage = join(appDir, "(preauth)", "nova-senha", "page.tsx")
 
 function collectSourceFiles(dir: string): string[] {
   const files: string[] = []
@@ -77,6 +78,14 @@ describe("senha vem acompanhada de recuperação", () => {
     const source = read(newPasswordPage)
     expect(source).toContain("Este link não vale mais")
     expect(source).toContain("Pedir outro link")
+    expect(source).toContain("updatePasswordFromRecoveryAction")
+    expect(source).not.toContain("createBrowserClient().auth.updateUser")
+  })
+
+  it("a tela server-side exige o intent de recuperação antes de renderizar o formulário", () => {
+    const source = read(newPasswordServerPage)
+    expect(source).toContain("RECOVERY_INTENT_COOKIE")
+    expect(source).toContain("hasRecoveryIntent")
   })
 
   it("a política de senha espelha a do provedor, sem exigência inventada", () => {

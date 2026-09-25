@@ -1,5 +1,36 @@
 import { describe, expect, it } from "vitest"
-import { buildGoingLine } from "../../../apps/web/app/(shell)/inicio/home-loaders"
+import {
+  buildGoingLine,
+  pickPrimaryCommunity,
+} from "../../../apps/web/app/(shell)/inicio/home-loaders"
+
+describe("contexto de cidade da Home", () => {
+  it("escolhe a comunidade aprovada mais antiga dentro da cidade atual", () => {
+    expect(
+      pickPrimaryCommunity(
+        [
+          { community_id: "old-origin", joined_at: "2026-01-01" },
+          { community_id: "current", joined_at: "2026-02-01" },
+        ],
+        [
+          { id: "old-origin", locality_id: "origin", name: "Origem" },
+          { id: "current", locality_id: "current", name: "Atual" },
+        ],
+        "current",
+      ),
+    ).toEqual({ id: "current", name: "Atual" })
+  })
+
+  it("não usa comunidade de outra cidade como contexto principal", () => {
+    expect(
+      pickPrimaryCommunity(
+        [{ community_id: "old-origin", joined_at: "2026-01-01" }],
+        [{ id: "old-origin", locality_id: "origin", name: "Origem" }],
+        "current",
+      ),
+    ).toBeNull()
+  })
+})
 
 describe("buildGoingLine monta a linha de presença do próximo encontro", () => {
   it("sem gente não inventa linha", () => {

@@ -33,6 +33,8 @@ import {
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+// Publicação do seed de propriedade da owner (a mesma de composer-layout.spec.ts).
+const VILA_OWNER_POST_ID = "80000000-0000-4000-8000-000000000f01"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
@@ -78,18 +80,18 @@ test.setTimeout(180_000)
 
 test.describe("o gatilho de fechar fala português", () => {
   for (const viewport of VIEWPORTS) {
-    test(`compositor: o gatilho de fechar se chama "Fechar" em ${viewport.label}`, async ({
+    test(`publicação: o gatilho de fechar se chama "Fechar" em ${viewport.label}`, async ({
       page,
     }) => {
-      // Given — a owner da vila, no tamanho medido
+      // Given — a owner da vila, no tamanho medido. O compositor vive nas rotas
+      // estáveis /publicacoes/nova e /publicacoes/[id]/editar (R24/R26), sem
+      // gatilho de fechar; o modal do fluxo é a confirmação de saída da edição.
       await signInAs(page, VILA_OWNER_EMAIL)
       await page.setViewportSize({ width: viewport.width, height: viewport.height })
-      await page.goto("/community")
-      await expect(page.getByRole("heading", { name: "Vila Ajuricaba" })).toBeVisible({
-        timeout: 20000,
-      })
-      await page.getByRole("button", { name: "Publicar" }).first().click()
-      const dialog = page.getByRole("dialog")
+      await page.goto(`/publicacoes/${VILA_OWNER_POST_ID}/editar`, { waitUntil: "networkidle" })
+      await page.getByLabel("Conteúdo").fill("Alteração para abrir a confirmação de saída.")
+      await page.getByRole("button", { name: "Cancelar", exact: true }).click()
+      const dialog = page.getByRole("dialog", { name: "Sair sem salvar?" })
       await expect(dialog).toBeVisible()
 
       // Then — o nome acessível resolvido pela árvore é "Fechar"

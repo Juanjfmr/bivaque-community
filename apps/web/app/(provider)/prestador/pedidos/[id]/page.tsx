@@ -11,8 +11,10 @@ import {
   SERVICE_REQUEST_STATUS_LABELS,
   type ServiceRequestStatus,
 } from "../../../../../lib/service-requests/status"
+import { formatRequestDate } from "../../../../../lib/service-requests/tracking"
 import { createServerClient as createServiceClient } from "../../../../../lib/supabase/server"
-import { closeRequestAction, respondToRequestAction } from "../../actions"
+import { closeRequestAction } from "../../actions"
+import { ProviderResponseForm } from "./provider-response-form"
 
 interface RequestRow {
   id: string
@@ -23,6 +25,8 @@ interface RequestRow {
   category: ProviderCategory
   status: ServiceRequestStatus
   created_at: string
+  cancelled_at: string | null
+  cancelled_by_user_id: string | null
 }
 
 interface MessageRow {
@@ -60,7 +64,9 @@ export default async function PrestadorPedidoPage({
 
   const { data: requestRow, error: requestError } = await authClient
     .from("service_requests")
-    .select("id, conversation_id, description, when_text, region, category, status, created_at")
+    .select(
+      "id, conversation_id, description, when_text, region, category, status, created_at, cancelled_at, cancelled_by_user_id",
+    )
     .eq("id", id)
     .maybeSingle()
   if (requestError) throw new Error(`Falha ao carregar o pedido: ${requestError.message}`)
@@ -161,28 +167,7 @@ export default async function PrestadorPedidoPage({
 
       {isOpen ? (
         <section aria-label="Responder" className="mt-6 space-y-3">
-          <form action={respondToRequestAction} className="space-y-3">
-            <input type="hidden" name="requestId" value={request.id} />
-            <input type="hidden" name="conversationId" value={request.conversation_id} />
-            <label htmlFor="content" className="block text-sm font-medium">
-              Escreva uma mensagem
-            </label>
-            <textarea
-              id="content"
-              name="content"
-              required
-              maxLength={2000}
-              rows={3}
-              className="w-full rounded-lg border border-border bg-[var(--semantic-surface)] p-3 text-sm"
-              placeholder="Responda ao pedido"
-            />
-            <button
-              type="submit"
-              className="inline-flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-5 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors"
-            >
-              Enviar
-            </button>
-          </form>
+          <ProviderResponseForm requestId={request.id} conversationId={request.conversation_id} />
 
           <form action={closeRequestAction}>
             <input type="hidden" name="requestId" value={request.id} />
@@ -200,7 +185,9 @@ export default async function PrestadorPedidoPage({
         </section>
       ) : (
         <p role="status" className="mt-6 text-sm text-muted">
-          Este pedido está encerrado. O histórico continua disponível.
+          {request.status === "cancelled"
+            ? `Este pedido foi cancelado${request.cancelled_at ? ` em ${formatRequestDate(request.cancelled_at)}` : ""}. O histórico continua disponível.`
+            : "Este pedido está encerrado. O histórico continua disponível."}
         </p>
       )}
     </div>

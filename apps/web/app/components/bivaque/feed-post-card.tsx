@@ -7,11 +7,12 @@
 
 import { Button, Chip, Input, useOverlayState } from "@heroui/react"
 import { Bookmark, ExternalLink, Heart, Link2, MessageCircle, Share2 } from "lucide-react"
+import type { Route } from "next"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
-import { EditPostModal } from "./feed-post-edit"
 import { LeanOverflowMenu } from "./feed-post-menu"
 import {
   type CommentRow,
@@ -66,15 +67,8 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
   const [localityName, setLocalityName] = useState<string>("")
   const [groupName, setGroupName] = useState<string>("")
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [editOpen, setEditOpen] = useState(false)
-  // Depois de um UPDATE aceito, o cartão mostra o texto gravado sem esperar
-  // o feed recarregar; nada aqui reescreve o post no servidor por trás da UI.
-  const [edited, setEdited] = useState<{ content: string; photoPath: string | null } | null>(null)
+  const router = useRouter()
   const supabase = createBrowserClient()
-
-  const shown: FeedPostRow = edited
-    ? { ...post, content: edited.content, photo_path: edited.photoPath ?? "" }
-    : post
 
   // Uma requisição para todos os cartões: ver currentUserIdOnce.
   useEffect(() => {
@@ -123,7 +117,7 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
     }
   }, [post.group_id, supabase])
 
-  const bodyLong = (shown.content ?? "").length > 280
+  const bodyLong = (post.content ?? "").length > 280
   const clampedClass = expanded ? "" : "line-clamp-4"
 
   const loadComments = useCallback(async () => {
@@ -219,9 +213,9 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
   const previewComments = comments.slice(-2)
 
   const linkHostname = (() => {
-    if (!shown.link_url) return ""
+    if (!post.link_url) return ""
     try {
-      return new URL(shown.link_url).hostname
+      return new URL(post.link_url).hostname
     } catch {
       return ""
     }
@@ -239,24 +233,24 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
           {/* Header row */}
           <div className="flex items-center gap-3">
             <MemberAvatar
-              name={shown.display_name}
-              src={shown.user_id ? `/api/avatar/${shown.user_id}` : null}
+              name={post.display_name}
+              src={post.user_id ? `/api/avatar/${post.user_id}` : null}
               className="h-9 w-9 text-sm"
             />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-semibold truncate">
-                  {shown.display_name ?? "Membro"}
+                  {post.display_name ?? "Membro"}
                 </span>
                 {/* Onda E Task 4 Step 4: chip de alcance. Post de cidade e post
                     de grupo têm públicos de tamanhos muito diferentes — dizer
                     "cidade inteira" num post de grupo é a mentira de alcance
                     que a regra 2 da §12 proíbe. */}
-                {shown.community_id === null && shown.group_id ? (
+                {post.community_id === null && post.group_id ? (
                   <Chip size="sm" variant="soft" aria-label="Alcance: só o grupo">
                     {groupName || "Grupo"}
                   </Chip>
-                ) : shown.community_id === null ? (
+                ) : post.community_id === null ? (
                   <Chip
                     size="sm"
                     variant="soft"
@@ -272,7 +266,7 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
                   quis fazer — e "Enquete" não existe no produto. Fica só o
                   tempo relativo. */}
               <div className="flex items-center gap-1.5 text-xs text-muted">
-                <span>{formatRelativeTime(shown.created_at)}</span>
+                <span>{formatRelativeTime(post.created_at)}</span>
               </div>
             </div>
 
@@ -282,7 +276,18 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
                 postId={post.id}
                 onHide={onHide}
                 onReport={reportModal.open}
-                onEdit={isOwnPost ? () => setEditOpen(true) : undefined}
+                onEdit={
+                  isOwnPost
+                    ? () =>
+                        router.push(
+                          // A origem inclui a query (aba, filtro, post em foco):
+                          // a volta da edição devolve a tela como estava.
+                          `/publicacoes/${post.id}/editar?origem=${encodeURIComponent(
+                            `${window.location.pathname}${window.location.search}`,
+                          )}` as Route,
+                        )
+                    : undefined
+                }
               />
               <ReportButton targetType="post" targetId={post.id} externalState={reportModal} />
             </div>
@@ -292,7 +297,7 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
           <p
             className={`mt-3 text-sm break-words whitespace-pre-wrap leading-relaxed ${clampedClass}`}
           >
-            {shown.content}
+            {post.content}
           </p>
           {bodyLong && (
             <button
@@ -307,7 +312,7 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
           )}
 
           {/* Photo */}
-          {shown.post_type === "photo" && shown.photo_path && (
+          {post.post_type === "photo" && post.photo_path && (
             <div className="mt-3 rounded-lg bg-[var(--semantic-surface-sunken)] p-4 text-center">
               <div className="flex flex-col items-center gap-2 text-muted">
                 <svg
@@ -323,15 +328,15 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
                   <circle cx="8.5" cy="8.5" r="1.5" />
                   <polyline points="21 15 16 10 5 21" />
                 </svg>
-                <span className="text-xs">Foto: {shown.photo_path}</span>
+                <span className="text-xs">Foto: {post.photo_path}</span>
               </div>
             </div>
           )}
 
           {/* Rich link preview */}
-          {shown.post_type === "link" && shown.link_url && (
+          {post.post_type === "link" && post.link_url && (
             <a
-              href={shown.link_url}
+              href={post.link_url}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Abrir link: ${linkHostname}`}
@@ -340,8 +345,8 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
               <div className="flex items-center gap-3 rounded-lg border border-border bg-[var(--semantic-surface-sunken)]/60 p-3 transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)]">
                 <Link2 className="h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs text-muted">{linkHostname || shown.link_url}</p>
-                  <p className="truncate text-sm">{shown.link_url}</p>
+                  <p className="truncate text-xs text-muted">{linkHostname || post.link_url}</p>
+                  <p className="truncate text-sm">{post.link_url}</p>
                 </div>
                 <ExternalLink className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
               </div>
@@ -367,8 +372,8 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
               className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
             >
               <MessageCircle size={16} aria-hidden="true" />
-              {Number(shown.comment_count ?? 0) > 0
-                ? `${shown.comment_count} ${Number(shown.comment_count) === 1 ? "resposta" : "respostas"}`
+              {Number(post.comment_count ?? 0) > 0
+                ? `${post.comment_count} ${Number(post.comment_count) === 1 ? "resposta" : "respostas"}`
                 : "Sem respostas"}
             </button>
             <button
@@ -410,7 +415,7 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
               className="flex flex-1 min-h-11 items-center justify-center gap-1.5 text-sm font-medium text-muted transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--semantic-focus)]"
             >
               <MessageCircle size={18} aria-hidden="true" />
-              {shown.comment_count > 0 ? shown.comment_count : "Comentar"}
+              {post.comment_count > 0 ? post.comment_count : "Comentar"}
             </button>
 
             <button
@@ -490,14 +495,6 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
           )}
         </div>
       </div>
-
-      {editOpen ? (
-        <EditPostModal
-          post={post}
-          onClose={() => setEditOpen(false)}
-          onSaved={(content, photoPath) => setEdited({ content, photoPath })}
-        />
-      ) : null}
     </article>
   )
 }

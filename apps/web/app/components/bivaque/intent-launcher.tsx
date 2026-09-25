@@ -13,8 +13,8 @@ import { MemberAvatar } from "./avatar"
 // DS-006 (prancha 01, ajuste de densidade de 20/09): o lançador de intenções
 // da Home. Duas ações distintas, lado a lado, com o mesmo peso:
 //
-// 1. `Fazer uma pergunta` — abre o compositor que JÁ existe (CreatePostModal,
-//    montado pela página). Nada de segundo mecanismo de publicação: a pergunta
+// 1. `Fazer uma pergunta` — leva ao compositor que JÁ existe, na rota
+//    /publicacoes/nova (R24). Nada de segundo mecanismo de publicação: a pergunta
 //    é uma publicação de texto e passa pelo mesmo insert, pela mesma audiência e
 //    pela mesma checagem de PII.
 // 2. `Pedir uma indicação` — chega ao painel do Guia em /recommendations pelo

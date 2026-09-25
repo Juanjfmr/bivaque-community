@@ -2,11 +2,11 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 2026-09-23
+**Snapshot:** 2026-09-25
 
 > Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
 
-**Mapa:** 112 frentes · 10 agora · 7 bloqueadas · 58 concluídas · 0 drifts
+**Mapa:** 114 frentes · 12 agora · 7 bloqueadas · 58 concluídas · 1 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -20,9 +20,11 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
 - **RECON-029-EVENTO-PERGUNTA** · P1 · Evento: pergunta ao organizador (prancha 67) e rotas de criar/editar
 - **RECON-034** · P1 · RECON-034: imagem de comunidade — faixa e miniatura (pranchas 42/43)
+- **RECON-053-FIDELIDADE-WEB** · P1 · Fidelidade visual web: substituir aprovação mecânica por julgamento por prancha
 - **RECON-AUTH-ENTRADA-WEB** · P1 · Web: entrada fiel à prancha 36-web-auth-entrada sem tocar o mecanismo
 - **RECON-W00-FUNDACAO** · P1 · W00: baseline, contratos e fundação da reconstrução web
 - **RECON-W00-TELAS** · P1 · Quatro telas da reconstrucao web saem do placeholder
+- **REVISAO-JORNADAS-WEB-20260925** · P1 · Achados da revisão independente da branch de jornadas web
 - **TEST-MASSA-JORNADAS** · P1 · Campanha de teste em massa: seed de jornada e execução completa na linha viva
 
 ## Bloqueios
@@ -37,11 +39,12 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Drift aberto
 
-Nenhum card.
+- **RECON-049** · P1 · Fechar os itens [componente] restantes da auditoria visual web — Executar RECON-053-FIDELIDADE-WEB; não marcar fidelidade como PASS enquanto a revisão visual independente e os dados reais não existirem
 
 ## Triagem prioritária
 
 - **REPO-SECRETS-ROTATION** · P0 · Rotação de chaves Portal e Resend
+- **RECON-049** · P1 · Fechar os itens [componente] restantes da auditoria visual web
 - **DOC-20260906-RECONSTRUCAO** · P1 · Publicar e ampliar guia visual e autoridade de construção
 - **DRIFT-STATUS-RECONCILIATION** · P1 · Reconciliar documentação com runtime após cada ciclo
 - **PROXY-SURFACE-RISK** · P1 · Superfície de escape do gate de rota documentada e reduzida

@@ -70,9 +70,21 @@ function mapDecisionError(message: string): CorrectionDecisionState {
   return { status: "error", message: "Não foi possível registrar a decisão. Tente novamente." }
 }
 
-async function revoke(entryId: string): Promise<void> {
+async function authoritativeEntryId(requestId: string): Promise<string | null> {
+  const serviceClient = createServiceClient()
+  const { data, error } = await serviceClient
+    .from("guide_correction_requests")
+    .select("article:guide_articles(entry_id)")
+    .eq("id", requestId)
+    .maybeSingle()
+  if (error) return null
+  const article = data?.article as { entry_id?: string } | null
+  return article?.entry_id ?? null
+}
+
+async function revoke(entryId: string | null): Promise<void> {
   revalidatePath("/guide-queue")
-  if (entryId.length > 0) {
+  if (entryId) {
     revalidatePath(`/guide/${entryId}`)
     revalidatePath(`/guide/${entryId}/correcao`)
   }
@@ -88,7 +100,6 @@ export async function applyCorrectionAction(
   formData: FormData,
 ): Promise<CorrectionDecisionState> {
   const requestId = text(formData, "requestId")
-  const entryId = text(formData, "entryId")
   if (requestId.length === 0) {
     return { status: "error", message: "Sugestão inválida." }
   }
@@ -121,7 +132,7 @@ export async function applyCorrectionAction(
     return mapDecisionError(error.message)
   }
 
-  await revoke(entryId)
+  await revoke(await authoritativeEntryId(requestId))
   return {
     status: "ok",
     message: "Correção aplicada e publicada. A versão anterior ficou registrada.",
@@ -133,7 +144,6 @@ export async function rejectCorrectionAction(
   formData: FormData,
 ): Promise<CorrectionDecisionState> {
   const requestId = text(formData, "requestId")
-  const entryId = text(formData, "entryId")
   if (requestId.length === 0) {
     return { status: "error", message: "Sugestão inválida." }
   }
@@ -161,7 +171,7 @@ export async function rejectCorrectionAction(
     return mapDecisionError(error.message)
   }
 
-  await revoke(entryId)
+  await revoke(await authoritativeEntryId(requestId))
   return {
     status: "ok",
     message: "Sugestão rejeitada com justificativa. O solicitante verá a decisão.",

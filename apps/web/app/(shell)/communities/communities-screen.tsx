@@ -2,10 +2,11 @@
 
 import { Button, Chip, Dropdown, SearchField, Tab, TabList, TabPanel, Tabs } from "@heroui/react"
 import { MoreHorizontal } from "lucide-react"
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { type FormEvent, useMemo, useRef, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   type CommunityImageKind,
   communityImageAltText,
@@ -18,13 +19,22 @@ import { cancelCommunityRequestAction } from "./[id]/actions"
 import { requestCommunityMembershipAction } from "./actions"
 import {
   type CommunityCard,
+  type CommunityUrlChanges,
   filterCommunities,
   formatRequestedOn,
   type MyMembership,
   partitionCommunities,
+  readCommunityUrlState,
+  reconcileSearchText,
+  selectCommunityForResults,
+  writeCommunityUrlState,
 } from "./communities-data"
 
 const DISCOVER_PREVIEW_COUNT = 5
+// A URL guarda a busca LIMPA (sem espaço nas pontas); o campo guarda o texto
+// cru que a pessoa digita. Sem essa separação, "vila " virava "vila" na URL,
+// o campo controlado lia de volta "vila" e o espaço sumia a cada tecla.
+const SEARCH_URL_DEBOUNCE_MS = 300
 
 type CommunitiesScreenProps = {
   /** Comunidades da cidade em exibição (filtro aplicado na página-servidor). */
@@ -61,12 +71,12 @@ function CommunityGlyph({ className = "" }: { className?: string }) {
 // Só ações com rota real entram; nada de item morto no menu.
 function CommunityCardMenu({ communityId }: { communityId: string }) {
   const items: { key: string; label: string; href: string }[] = [
-    { key: "view", label: "Ver comunidade", href: "/communities/" + communityId },
-    { key: "invite", label: "Convidar", href: "/communities/" + communityId + "/invite" },
+    { key: "view", label: "Ver comunidade", href: `/communities/${communityId}` },
+    { key: "invite", label: "Convidar", href: `/communities/${communityId}/invite` },
     {
       key: "provider",
       label: "Indicar prestador",
-      href: "/communities/" + communityId + "/indicar-prestador",
+      href: `/communities/${communityId}/indicar-prestador`,
     },
   ]
   return (
@@ -153,14 +163,63 @@ export function CommunitiesScreen({
   knownCommunities,
   viewingCityLabel,
 }: CommunitiesScreenProps) {
-  const [tab, setTab] = useState("minhas")
-  const [query, setQuery] = useState("")
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const urlState = readCommunityUrlState(searchParams)
+  const tab = urlState.tab
+  const query = urlState.query
+  const selectedId = urlState.selectedId
   const [expanded, setExpanded] = useState(false)
   const [submitError, setSubmitError] = useState("")
+  const [motivoState, setMotivoState] = useState<{ communityId: string | null; value: string }>({
+    communityId: selectedId,
+    value: "",
+  })
+  const motivo =
+    selectedId !== null && motivoState.communityId === selectedId ? motivoState.value : ""
+  const setMotivo = (value: string) => setMotivoState({ communityId: selectedId, value })
   const [submitting, setSubmitting] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
-  const router = useRouter()
+
+  const updateUrl = useCallback(
+    (changes: CommunityUrlChanges, mode: "push" | "replace") => {
+      const nextQuery = writeCommunityUrlState(searchParams, changes)
+      if (nextQuery === searchParams.toString()) return
+      const nextUrl = `${pathname}${nextQuery ? `?${nextQuery}` : ""}` as Route
+      if (mode === "push") router.push(nextUrl, { scroll: false })
+      else router.replace(nextUrl, { scroll: false })
+    },
+    [pathname, router, searchParams],
+  )
+
+  const [searchText, setSearchText] = useState(query)
+  // O termo que o PRÓPRIO campo mandou para a URL. Quando a navegação desse
+  // termo chega, a pessoa pode já ter digitado mais ("vila" na URL, "vila aj"
+  // no campo): essa volta não pode sobrescrever o campo.
+  const pushedQueryRef = useRef<string | null>(null)
+  // Mudança de busca que veio de FORA do campo (limpar, voltar no histórico):
+  // o campo acompanha a URL. O texto que só difere por espaço nas pontas é o
+  // mesmo termo e fica como a pessoa digitou.
+  useEffect(() => {
+    const pushed = pushedQueryRef.current
+    pushedQueryRef.current = null
+    setSearchText((current) => reconcileSearchText(current, query, pushed))
+  }, [query])
+  // Uma navegação por pausa na digitação, não por tecla.
+  useEffect(() => {
+    if (searchText.trim() === query) return
+    const timer = setTimeout(() => {
+      pushedQueryRef.current = searchText.trim()
+      updateUrl({ query: searchText, selectedId: null }, "replace")
+    }, SEARCH_URL_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [searchText, query, updateUrl])
+
+  useEffect(() => {
+    setMotivoState({ communityId: selectedId, value: "" })
+    setSubmitError("")
+  }, [selectedId])
 
   const [cancelling, setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState("")
@@ -199,7 +258,14 @@ export function CommunitiesScreen({
   const discoverVisible = expanded
     ? discoverFiltered
     : discoverFiltered.slice(0, DISCOVER_PREVIEW_COUNT)
-  const selected = discover.find((c) => c.id === selectedId) ?? discoverVisible[0] ?? null
+  const selected = selectCommunityForResults(discover, selectedId, query)
+  useEffect(() => {
+    if (tab !== "descobrir") return
+    const canonicalId = selected?.id ?? null
+    if (canonicalId !== selectedId) {
+      updateUrl({ selectedId: canonicalId }, "replace")
+    }
+  }, [selected?.id, selectedId, tab, updateUrl])
   const selectedStatus = selected ? membershipByCommunity.get(selected.id)?.status : undefined
   const selectedReason = selected ? (membershipByCommunity.get(selected.id)?.reason ?? null) : null
   const selectedRequestedOn = selected
@@ -213,6 +279,7 @@ export function CommunitiesScreen({
     try {
       await requestCommunityMembershipAction(new FormData(form))
       form.reset()
+      setMotivo("")
     } catch {
       setSubmitError("Não foi possível enviar o pedido agora. Tente novamente.")
     } finally {
@@ -229,8 +296,10 @@ export function CommunitiesScreen({
       <Tabs
         selectedKey={tab}
         onSelectionChange={(key) => {
-          setTab(String(key))
+          const nextTab = key === "descobrir" ? "descobrir" : "minhas"
+          updateUrl({ tab: nextTab, selectedId: null }, "push")
           setSubmitError("")
+          setMotivo("")
         }}
         className="tabs--secondary [&_[data-slot=tab]]:min-h-11 [&_[data-slot=tab]]:px-3"
       >
@@ -250,7 +319,11 @@ export function CommunitiesScreen({
                     title="Você ainda não participa de nenhuma comunidade"
                     description="Descubra as comunidades da sua cidade e peça participação — ela depende de aprovação."
                     action={
-                      <Button size="sm" variant="primary" onPress={() => setTab("descobrir")}>
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onPress={() => updateUrl({ tab: "descobrir", selectedId: null }, "push")}
+                      >
                         Descobrir comunidades
                       </Button>
                     }
@@ -352,12 +425,20 @@ export function CommunitiesScreen({
               <section aria-label="Descobrir comunidades" className="flex flex-col gap-3">
                 <SearchField
                   aria-label="Buscar comunidades"
-                  value={query}
+                  value={searchText}
                   onChange={(value) => {
-                    setQuery(value)
+                    setSearchText(value)
                     setExpanded(false)
+                    setMotivo("")
+                    setSubmitError("")
                   }}
-                  onClear={() => setQuery("")}
+                  onClear={() => {
+                    setSearchText("")
+                    updateUrl({ query: null, selectedId: null }, "replace")
+                    setExpanded(false)
+                    setMotivo("")
+                    setSubmitError("")
+                  }}
                 >
                   <SearchField.Group>
                     <SearchField.SearchIcon />
@@ -365,7 +446,7 @@ export function CommunitiesScreen({
                       placeholder="Buscar comunidades"
                       className="transition-colors"
                     />
-                    {query ? <SearchClearButton /> : null}
+                    {searchText ? <SearchClearButton /> : null}
                   </SearchField.Group>
                 </SearchField>
 
@@ -402,7 +483,16 @@ export function CommunitiesScreen({
                     title="Nenhuma comunidade encontrada com esse termo"
                     description="Tente outro nome ou limpe a busca."
                     action={
-                      <Button size="sm" variant="tertiary" onPress={() => setQuery("")}>
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onPress={() => {
+                          setSearchText("")
+                          updateUrl({ query: null, selectedId: null }, "replace")
+                          setMotivo("")
+                          setSubmitError("")
+                        }}
+                      >
                         Limpar busca
                       </Button>
                     }
@@ -416,7 +506,11 @@ export function CommunitiesScreen({
                           <li key={community.id}>
                             <button
                               type="button"
-                              onClick={() => setSelectedId(community.id)}
+                              onClick={() => {
+                                updateUrl({ selectedId: community.id }, "push")
+                                setMotivo("")
+                                setSubmitError("")
+                              }}
                               aria-pressed={isSelected}
                               className={`flex min-h-11 w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)] ${
                                 isSelected
@@ -504,6 +598,7 @@ export function CommunitiesScreen({
                       </div>
                     ) : (
                       <form
+                        key={selected.id}
                         ref={formRef}
                         onSubmit={handleSubmit}
                         className="flex flex-col gap-3"
@@ -519,6 +614,8 @@ export function CommunitiesScreen({
                             name="motivo"
                             rows={3}
                             maxLength={500}
+                            value={motivo}
+                            onChange={(event) => setMotivo(event.target.value)}
                             placeholder="Conte um pouco sobre seu interesse"
                             className="w-full rounded-lg border border-border bg-[var(--semantic-surface)] px-3 py-2 text-sm leading-relaxed transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[var(--semantic-action-context)]"
                           />

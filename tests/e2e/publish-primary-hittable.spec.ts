@@ -84,11 +84,26 @@ async function openComposer(page: Page): Promise<void> {
     timeout: 20000,
   })
   await page.getByRole("button", { name: "Publicar" }).first().click()
-  await expect(page.getByRole("dialog")).toBeVisible()
-  await page.getByRole("dialog").getByLabel("Pergunta").fill("sonda de hit-test")
+  // O compositor mora na rota estável /publicacoes/nova (R24), não num modal.
+  await page.waitForURL(/\/publicacoes\/nova/, { timeout: 15000 })
+  const composer = page.locator("[data-composer-form]")
+  await expect(composer).toHaveAttribute("data-draft-ready", "true", { timeout: 15000 })
+  await composer.getByLabel("Pergunta").fill("sonda de hit-test")
   // A lista de destinos é consulta: esperar o aviso assentar deixa o layout
   // estável antes de medir o ponto.
   await expect(page.getByTestId("audience-notice")).not.toBeEmpty({ timeout: 15000 })
+  // Numa PÁGINA, chegar ao fim do formulário rolando a própria janela é o
+  // caminho normal. A janela rola só até o primário ENTRAR pela borda de baixo
+  // — a posição em que a pessoa o encontra rolando —, e só ela: sem
+  // centralizar o botão (isso esconderia uma barra fixa inferior cobrindo-o) e
+  // sem rolar contêiner interno — `scrollableAncestors` abaixo continua
+  // exigindo zero rolagem interna.
+  await page.evaluate(() => {
+    const button = document.querySelector('[data-testid="publish-submit"]')
+    if (!button) throw new Error("publish-submit não está no DOM")
+    const overflow = button.getBoundingClientRect().bottom - window.innerHeight
+    if (overflow > 0) window.scrollBy(0, Math.ceil(overflow) + 1)
+  })
 }
 
 const VIEWPORTS = [

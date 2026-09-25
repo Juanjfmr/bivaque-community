@@ -99,7 +99,9 @@ test.describe("a pergunta vem antes do resto", () => {
       timeout: 20000,
     })
     await page.getByRole("button", { name: "Publicar" }).first().click()
-    await expect(page.getByRole("dialog")).toBeVisible()
+    // O compositor mora na rota estável /publicacoes/nova (R24), não num modal.
+    await page.waitForURL(/\/publicacoes\/nova/, { timeout: 15000 })
+    await expect(page.locator("[data-composer-form]")).toBeVisible()
     // A lista de destinos é consulta: sem esperar, o grupo "Quem pode ver?"
     // pode ainda não estar no DOM e a comparação viraria erro de ausência.
     await expect(page.getByTestId("audience-notice")).not.toBeEmpty({ timeout: 15000 })
@@ -110,14 +112,17 @@ test.describe("a pergunta vem antes do resto", () => {
       'a pergunta tem de vir antes de "Quem pode ver?"',
     ).toBe(true)
 
-    // And — o primeiro campo rotulado do diálogo é a pergunta, não o destino
+    // And — o primeiro campo rotulado do compositor é a pergunta, não o destino
     const firstField = await page.evaluate(() => {
-      const dialog = document.querySelector('[role="dialog"]')
-      if (!dialog) throw new Error("diálogo ausente")
-      const labels = Array.from(dialog.querySelectorAll("label, legend, [id$='-heading']"))
+      const composer = document.querySelector("[data-composer-form]")
+      if (!composer) throw new Error("compositor ausente")
+      const labels = Array.from(composer.querySelectorAll("label, legend, [id$='-heading']"))
       return (labels[0]?.textContent ?? "").replace(/\s+/g, " ").trim()
     })
-    expect(firstField).toContain("Pergunta")
+    // Na rota o rótulo visível do campo da pergunta é "Qual é a sua pergunta?".
+    // A frase exata, e não /pergunta/i: a legenda "Anexar à pergunta" também
+    // casaria e esconderia o anexo voltando para antes da pergunta.
+    expect(firstField).toContain("Qual é a sua pergunta?")
   })
 
   test("formulário comunitário: pergunta antes de categoria e alcance", async ({ page }) => {

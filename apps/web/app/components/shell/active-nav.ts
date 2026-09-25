@@ -53,6 +53,7 @@ export const SECONDARY_SELF_ROUTES = ["/salvos"] as const
 // fronteira (`matches`), então `/prestadores` não casa `/prestador`.
 export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]> = [
   ["/inicio", "inicio"],
+  ["/publicacoes", "inicio"],
   ["/explorar", "explorar"],
   ["/guide", "explorar"],
   ["/events", "explorar"],

@@ -3,7 +3,24 @@
 import { CODE_OF_CONDUCT_VERSION, CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import {
+  SIGNUP_CONSENT_INTENT_COOKIE,
+  SIGNUP_CONSENT_INTENT_MAX_AGE_SECONDS,
+  type SignupConsentFlow,
+  signupConsentValue,
+} from "../../../lib/auth/signup-intent"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
+
+export async function prepareSignupConsentAction(flow: SignupConsentFlow = "email"): Promise<void> {
+  const cookieStore = await cookies()
+  cookieStore.set(SIGNUP_CONSENT_INTENT_COOKIE, signupConsentValue(flow), {
+    httpOnly: true,
+    maxAge: SIGNUP_CONSENT_INTENT_MAX_AGE_SECONDS,
+    path: "/auth",
+    sameSite: "lax",
+    secure: process.env["NODE_ENV"] === "production",
+  })
+}
 
 async function readSessionUserId(): Promise<string | null> {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -44,4 +61,9 @@ export async function recordConsentAction(): Promise<void> {
   if (error) {
     throw new Error(error.message)
   }
+
+  // O consentimento foi gravado; o intent de curta duração não pode ser
+  // reaproveitado por um callback OAuth posterior.
+  const cookieStore = await cookies()
+  cookieStore.delete({ name: SIGNUP_CONSENT_INTENT_COOKIE, path: "/auth" })
 }

@@ -35,9 +35,24 @@ export function formatRelativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
 }
 
+// Frase unica do pedido encerrado, usada pela action do pedido e pelo chat.
+export const REQUEST_TERMINAL_MESSAGE = "Este pedido está encerrado e não aceita novas mensagens."
+export const CONVERSATION_UNAVAILABLE_MESSAGE = "Esta conversa não está mais disponível."
+
 // Rotulo de falha para a pessoa: a mensagem fica visivel como nao enviada com
 // o motivo em linguagem clara. O erro cru do servidor nao vai para a tela.
 export function sendFailureLabel(message: string | undefined): string {
+  // Pedido encerrado/cancelado: o gatilho do banco recusa ("request is
+  // terminal") e a action do pedido ja devolve a frase pronta. Nao e falha de
+  // conexao — tentar de novo nunca vai funcionar.
+  if (message?.includes("request is terminal") || message === REQUEST_TERMINAL_MESSAGE) {
+    return REQUEST_TERMINAL_MESSAGE
+  }
+  // Conta em exclusão (de quem envia ou de quem recebe): a conversa não aceita
+  // mais mensagens. Mesma frase para os dois lados — não diz quem saiu.
+  if (message?.includes("recipient unavailable") || message?.includes("account unavailable")) {
+    return CONVERSATION_UNAVAILABLE_MESSAGE
+  }
   if (message?.includes("blocked")) {
     return "Não é possível enviar: conversa bloqueada ou não autorizada."
   }
