@@ -3552,12 +3552,12 @@
       ],
       "proof": [
         ".visual/2026-09-25T01-39-20-733Z/report.md — loop completo limpo em lint/typecheck/test/build, 0 high, mas 6 INVALID porque o seed não tem artigo/seções reais",
-        ".visual/compare/index.html — comparação congelada no runnerRevision acabfa66295e; 45 tem 6 capturas e 60 tem 6 estados denied/offline, com fluxo e estado visíveis",
+        ".visual/compare/index.html — comparação congelada no runnerRevision acafba66295e; 45 tem 6 capturas e 60 tem 6 estados denied/offline, com fluxo e estado visíveis",
         ".visual/2026-09-25T01-55-06-077Z/report.json — edição criada no fluxo real community->publish->menu, destino Vila Ajuricaba, alvo dinâmico, página sem role dialog e cleanup registrado",
         ".visual/2026-09-25T01-54-16-463Z/report.json e .visual/2026-09-25T01-54-41-623Z/report.json — publicação/offline partem do feed real, com contadores e retry offline",
         ".visual/2026-09-25T01-54-03-886Z/report.json — acesso negado capturado com actorAccount membro1, state denied e flow direct-route",
         "Playwright desktop: 15/15 testes direcionais passaram, incluindo owner gate, PATCH real com readback post_type=photo, erro de edição e confirmação de descarte",
-        "Evidência gerada no runner acabfa66295e; este commit altera somente board/task e não muda runtime, comparator ou testes"
+        "Evidência gerada no runner acafba66295e; este commit altera somente board/task e não muda runtime, comparator ou testes"
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
