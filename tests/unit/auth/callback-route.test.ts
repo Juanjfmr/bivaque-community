@@ -136,6 +136,16 @@ describe("callback de Auth", () => {
     expect(response.headers.get("location")).toBe("https://app.example/events/12?tab=x")
   })
 
+  it("leva o magic link do convite de prestador de volta ao convite", async () => {
+    // A origem do link é (preauth)/prestador-convite/[token]/acceptance.tsx:
+    // emailRedirectTo = /auth/callback?next=/prestador-convite/<token>.
+    const response = await GET(
+      new Request("https://app.example/auth/callback?code=valid&next=/prestador-convite/tok-9"),
+    )
+
+    expect(response.headers.get("location")).toBe("https://app.example/prestador-convite/tok-9")
+  })
+
   it("mantém o intent para retry quando o registro do aceite falha", async () => {
     state.cookies.set("bivaque-signup-consent-intent", signupConsentValue("email"))
     state.consentError = { message: "database unavailable" }

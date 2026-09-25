@@ -1,6 +1,9 @@
+import { readdirSync } from "node:fs"
+import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import {
   DEFAULT_NEXT,
+  POST_LOGIN_ALLOWED_PREFIXES,
   resolvePostLoginDestination,
   sanitizeNext,
 } from "web/lib/security/sanitize-next"
@@ -70,6 +73,50 @@ describe("sanitizeNext", () => {
       expect(resolvePostLoginDestination(["https://exemplo.invalid", null, undefined])).toBe(
         DEFAULT_NEXT,
       )
+    })
+
+    it("preserva convite de comunidade, convite de prestador e rotas de publicação", () => {
+      expect(resolvePostLoginDestination(["/invite/tok-123"])).toBe("/invite/tok-123")
+      expect(resolvePostLoginDestination(["/prestador-convite/abc"])).toBe("/prestador-convite/abc")
+      expect(resolvePostLoginDestination(["/publicacoes/nova?tipo=link"])).toBe(
+        "/publicacoes/nova?tipo=link",
+      )
+      expect(resolvePostLoginDestination(["/publicacoes/p1/editar"])).toBe("/publicacoes/p1/editar")
+    })
+  })
+
+  describe("caracteres de controle", () => {
+    it.each([
+      ["/\t/exemplo.invalid"],
+      ["/\n/exemplo.invalid"],
+      ["/\r/exemplo.invalid"],
+      ["/a\u0000"],
+    ])("recusa %j, que o navegador reduziria a outro host", (input) => {
+      expect(sanitizeNext(input)).toBe(DEFAULT_NEXT)
+      expect(resolvePostLoginDestination([input])).toBe(DEFAULT_NEXT)
+    })
+  })
+
+  describe("cobertura da allowlist contra as rotas reais", () => {
+    // Pastas de rota autenticadas (e o convite de prestador, que é a porta de
+    // entrada do magic link). Uma rota nova fora da allowlist faz o login
+    // devolver a pessoa para "/" e perder o destino — como aconteceu com
+    // /invite, /publicacoes e /prestador-convite.
+    const appDir = join(process.cwd(), "apps", "web", "app")
+    const routeDirs = (group: string) =>
+      readdirSync(join(appDir, group), { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && !/^[(_[]/.test(entry.name))
+        .map((entry) => `/${entry.name}`)
+    const expected = [
+      ...routeDirs("(shell)"),
+      ...routeDirs("(provider)"),
+      ...routeDirs("(admin)"),
+      "/prestador-convite",
+    ]
+
+    it.each(expected)("%s está na allowlist pós-login", (prefix) => {
+      expect(POST_LOGIN_ALLOWED_PREFIXES).toContain(prefix)
+      expect(resolvePostLoginDestination([`${prefix}/x`])).toBe(`${prefix}/x`)
     })
   })
 })

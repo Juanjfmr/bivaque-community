@@ -6,7 +6,6 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { prepareSignupConsentAction } from "../../(preauth)/consent/actions"
 import {
   classifyResend,
   computeResendCooldown,
@@ -141,19 +140,16 @@ export function ConfirmarEmailClient() {
       setSending(true)
       setNotice(null)
       try {
-        try {
-          await prepareSignupConsentAction("email")
-        } catch {
-          setNotice({ variant: "danger", message: "Não foi possível pedir outro link agora." })
-          return
-        }
-
+        // Esta tela não tem a caixa de aceite, então não emite o cookie de
+        // aceite: ele só nasce no cadastro, onde a caixa foi marcada. Se o
+        // cookie não estiver mais aqui (outro aparelho, mais de 24h), o
+        // onboarding leva a pessoa a /consent.
         const { error } = await createBrowserClient().auth.resend({
           type: "signup",
           email: targetEmail,
           options: {
             // O destino usa apenas o marker de fluxo. A prova do aceite é o
-            // cookie HttpOnly emitido pela Server Action acima.
+            // cookie HttpOnly emitido no cadastro.
             emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/confirmar-email&flow=signup-confirmation`,
           },
         })

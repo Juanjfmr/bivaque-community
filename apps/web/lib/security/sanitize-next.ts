@@ -8,7 +8,10 @@
 // Negatives: "https://exemplo.invalid", "//exemplo.invalid",
 //            "/\\exemplo.invalid", "javascript:alert(1)", "http:/exemplo.invalid",
 //            "" (missing), anything that does not start with a single "/".
-const SAFE_PATH = /^\/(?!\/)[^\\]*$/
+// Control characters are rejected too: browsers strip TAB/CR/LF from URLs, so
+// "/<TAB>/exemplo.invalid" would become the protocol-relative "//exemplo.invalid".
+// biome-ignore lint/suspicious/noControlCharactersInRegex: the control range is the point.
+const SAFE_PATH = /^\/(?!\/)[^\\\u0000-\u001f\u007f]*$/
 
 export const DEFAULT_NEXT = "/"
 
@@ -19,9 +22,15 @@ export function sanitizeNext(value: string | null | undefined): string {
   return value
 }
 
-const POST_LOGIN_ALLOWED_PREFIXES = [
+// Coberta por tests/unit/security/sanitize-next.test.ts contra as pastas de rota
+// reais: uma rota autenticada nova que fique fora daqui quebra o teste, em vez
+// de mandar a pessoa para "/" depois do login.
+export const POST_LOGIN_ALLOWED_PREFIXES = [
   "/inicio",
   "/explorar",
+  "/publicacoes",
+  "/invite",
+  "/prestador-convite",
   "/guide",
   "/events",
   "/mercado",
