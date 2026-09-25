@@ -2762,7 +2762,7 @@
         "BUG de runtime corrigido no lote E: o convite familiar nunca era criado — sendFamilyInviteAction enviava o digest do e-mail sem o prefixo \\x exigido pelo PostgREST, violando o CHECK octet_length = 32 (23514). Corrigido com byteaDigestParam e coberto por guard-rail estático tests/scope/invite-digest-serialization.test.mjs (com controle positivo e negativo)",
         "Fila revelada pelo lote M e FECHADA em três lotes. N: painel do operador inteiro (nav com aria-current, alvos de 44px, nome acessível) e as duas trilhas atrasadas. O: a régua de movimento media um filho escolhido a dedo em vez da estrutura pintada do controle, e os formulários de publicação/prestador estavam sem transição. P: os 42 achados da matriz de canais (/configuracoes e /configuracoes/notificacoes — o label do checkbox media 16x16 e o do switch 41x25), o link de 38px de /auth/callback-error e a medida de leitura de /prestadores/<id>, que era defeito da RÉGUA (box de 616px ÷ meio em = 88 caracteres numa linha de 42 caracteres). Prova final: .visual/recon-loteP-completo — 237 capturas, 0 INVALID, 0 achados e 0 high no aplicativo inteiro (era 433 achados/123 high depois do lote M). Revisão independente dos lotes M–Q passou com ressalvas, e as ressalvas viraram o lote S: régua de leitura desconta padding, movimento exige animação real (nome de keyframes, propriedade diferente de none), alvo de toque fecha 44x44 em uma das caixas em vez da união, a página do convite separa erro de backend de token desconhecido, as trilhas voltaram a ser lista ordenada, o pgTAP do convite cobre aceito/maiúsculas/vazio/comunidade apagada (plan 15) e o report grava o hash da régua (rulers.capture/rulers.proof) para os números serem atribuíveis",
         "[backend] Salvos do guia ✅ 15/09 (lote R: guide_entry_saves + marcador no cartão + aba Guia em /salvos com a URL acompanhando a aba; 9 asserções pgTAP). Sugerir referência ✅ 15/09 (lote T: suggest_guide_entry grava pending na fila que /guide-queue já revisa, com cidade derivada da associação, submitted_by e cota de cinco pendentes por pessoa; 13 asserções pgTAP; rota /guide/sugerir capturada em VALID com 0 achados). Reenviar do convite familiar ✅ 15/09 (lote U: resend_family_invitation reemite — gira o digest, devolve 7 dias e enfileira mensagem nova; o endereço é confirmado de novo porque o banco não guarda e-mail, e a função só aceita se o digest bater; 8 asserções pgTAP). No mesmo caminho, dois defeitos reais medidos e corrigidos: o convite NÃO nascia para domínios de dois níveis (a máscara usava o primeiro ponto e o CHECK da tabela recusava — quebrava para @exemplo.com.br) e o FormData do reenvio era montado com Object.assign, que não registra entradas)",
-        ".visual/2026-09-24T23-17-07-690Z/report.md e .visual/compare/index.html — a nova execução conserva 0 high, mas falha honestamente na ausência de artigo real e deixa a fidelidade humana pendente"
+        ".visual/2026-09-25T00-40-53-015Z/report.md e .visual/compare/index.html — a nova execução conserva 0 high, mas falha honestamente na ausência de artigo real e deixa a fidelidade humana pendente"
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
@@ -3551,12 +3551,13 @@
         "registrar o veredito independente e o próximo passo concreto no relatório/board antes de fechar qualquer card"
       ],
       "proof": [
-        ".visual/2026-09-24T23-17-07-690Z/report.md — loop verde em lint/typecheck/test/build, captura com 0 high mas 6 INVALID porque o seed não tem artigo/seções reais",
-        ".visual/compare/index.html — pares 45/60 agora usam as rotas de página, mas a nota continua 'revisão visual humana ainda não aprovada'",
-        ".visual/2026-09-24T22-49-54-138Z/report.json — edição criada no fluxo real community->publish->menu, destino Vila Ajuricaba, alvo dinâmico, página sem role dialog e cleanup registrado",
-        ".visual/2026-09-24T21-37-55-671Z/report.json e .visual/2026-09-24T21-38-53-836Z/report.json — captura publish/offline também parte do feed real, com contadores e retry offline",
+        ".visual/2026-09-25T00-40-53-015Z/report.md — loop completo limpo em lint/typecheck/test/build, 0 high, mas 6 INVALID porque o seed não tem artigo/seções reais",
+        ".visual/compare/index.html — 45 tem 6 capturas (edição standalone + publicação real) e 60 tem 6 (negado com membro1 + offline), com fluxo e estado visíveis; fidelidade continua sob revisão",
+        ".visual/2026-09-25T01-02-45-379Z/report.json — edição criada no fluxo real community->publish->menu, destino Vila Ajuricaba, alvo dinâmico, página sem role dialog e cleanup registrado",
+        ".visual/2026-09-25T01-01-21-978Z/report.json e .visual/2026-09-25T01-02-07-160Z/report.json — publicação/offline partem do feed real, com contadores e retry offline",
+        ".visual/2026-09-25T01-01-09-182Z/report.json — acesso negado capturado com actorAccount membro1, state denied e flow direct-route",
         "Playwright desktop: 15/15 testes direcionais passaram, incluindo owner gate, PATCH real com readback post_type=photo, erro de edição e confirmação de descarte",
-        "Revisão visual independente de 24/09/2026 — veredito global FAIL; nenhum par deve ser tratado como aprovado por mechanically ok"
+        "Revisão visual independente de 24/09/2026 — veredito global FAIL/BLOCKED; nenhum par deve ser tratado como aprovado por mechanically ok"
       ],
       "tests": [
         "npx pnpm@11.18.0 gate",
@@ -3571,8 +3572,8 @@
         "docs/agents/tasks/RECON-053-FIDELIDADE-WEB.task.yml"
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-24",
-      "sourceRevision": "3b4e8cfc5ac4a74a213a26495519795b17871d03"
+      "updatedAt": "2026-09-25",
+      "sourceRevision": "8017e0a62acbaa5156e2f43b442248fc360204fd"
     }
   ]
 }

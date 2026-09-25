@@ -19,10 +19,12 @@ authority:
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    .visual/2026-09-24T22-10-35-560Z/report.md registra lint/typecheck/test/build
-    verdes, zero findings mecânicos altos, seis capturas inválidas do Guia e
-    fidelidade não avaliada. A revisão independente mantém o veredito global
-    FAIL/BLOCKED enquanto não houver artigo real e julgamento humano congelado.
+    .visual/2026-09-25T00-40-53-015Z/report.md é o loop completo limpo da revisão
+    atual: lint/typecheck/test/build verdes, zero findings altos, seis capturas
+    inválidas do Guia e fidelidade ainda não avaliada. As capturas de 45/60
+    e denied foram refeitas com ator, estado e fluxo explícitos; a revisão
+    independente mantém o veredito global FAIL/BLOCKED enquanto não houver
+    artigo real e julgamento humano congelado.
 
 allowed_paths:
   - scripts/visual/
