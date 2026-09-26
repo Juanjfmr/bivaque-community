@@ -25,7 +25,6 @@ import {
   affiliationFromRows,
   armedForceFromKey,
   EMPTY_AFFILIATION,
-  isAffiliationUntouched,
   normalizeAffiliation,
   OM_MAX_LENGTH,
   VISIBILITY_STATE_LABELS,
@@ -184,23 +183,26 @@ export default function EditarPerfilPage() {
       .eq("user_id", profile?.user_id ?? "")
 
     if (updateError) {
-      setNameFeedback({ type: "error", message: "Não foi possível salvar. Tente novamente." })
+      setNameFeedback({
+        type: "error",
+        message: "Não foi possível salvar seu nome. Tente novamente.",
+      })
       setSaving(false)
       return
     }
 
     setProfile((prev) => (prev ? { ...prev, display_name: trimmed } : prev))
-    setNameFeedback({ type: "success", message: "Nome atualizado." })
+    // Tudo salvo, a pessoa volta ao perfil e vê o resultado ali; o que falhar
+    // fica nesta tela, com a mensagem do campo e o texto preservado.
+    let failed = false
 
     // A bio é apagável: esvaziar grava NULL (D3). A action revalida no
     // servidor; o erro é recuperável e o texto da pessoa continua no formulário.
     try {
       await saveBioAction(bio)
       setServerBio(bio)
-      if (bio.trim().length > 0) {
-        setBioFeedback({ type: "success", message: "Apresentação atualizada." })
-      }
     } catch (err) {
+      failed = true
       setBioFeedback({
         type: "error",
         message:
@@ -218,10 +220,8 @@ export default function EditarPerfilPage() {
     try {
       await saveAffiliationAction(normalized)
       setServerAffiliation(normalized)
-      if (!isAffiliationUntouched(normalized)) {
-        setAffiliationFeedback({ type: "success", message: "Força Armada e OM atualizados." })
-      }
     } catch (err) {
+      failed = true
       // Erro recuperável com os valores da pessoa intocados no formulário —
       // o estado do draft não é resetado em caminho nenhum de falha.
       setAffiliationFeedback({
@@ -233,6 +233,7 @@ export default function EditarPerfilPage() {
       })
     }
     setSaving(false)
+    if (!failed) router.push("/profile")
   }
 
   const handleCancel = () => {

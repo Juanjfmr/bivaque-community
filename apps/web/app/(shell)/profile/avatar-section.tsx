@@ -49,7 +49,7 @@ export default function AvatarSection() {
               const url = await getAvatarSignedUrlAction()
               setSrc(url)
             } catch (err) {
-              setError(err instanceof Error ? err.message : "Erro no upload")
+              setError(err instanceof Error ? err.message : "Não foi possível enviar a foto")
             } finally {
               setUploading(false)
             }
@@ -73,7 +73,7 @@ export default function AvatarSection() {
       </div>
       {error && <p className="mt-2 text-xs text-danger">{error}</p>}
       <p className="mt-2 text-xs text-muted">
-        PNG, JPEG ou WebP até 5MB. A foto é privada por padrão.
+        PNG, JPEG ou WebP, até 5 MB. Quem é da sua cidade vê sua foto.
       </p>
     </div>
   )

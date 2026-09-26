@@ -266,7 +266,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
               status === "resolvido" ? "bg-ui-brand-soft text-ui-brand" : "bg-ui-subtle text-ui-ink"
             }`}
           >
-            {status === "resolvido" ? "Resolvida pela autora" : STATUS_LABELS[status]}
+            {status === "resolvido" ? "Resolvido por quem pediu" : STATUS_LABELS[status]}
           </span>
         </div>
         <h1 className="mt-1 text-xl leading-snug font-semibold tracking-tight text-ui-ink">
@@ -497,7 +497,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
           />
           <div className="mt-3 flex justify-end">
             <Button variant="primary" isPending={busy === "reply"} onPress={() => void sendReply()}>
-              Responder
+              {isAuthor ? "Enviar" : "Responder"}
             </Button>
           </div>
         </div>

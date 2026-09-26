@@ -7,9 +7,9 @@ import {
 } from "../../../apps/web/lib/recommendations/resolution"
 
 // RECON-035 — a resposta que resolveu. Desde 25/09/2026 a conversa do pedido é
-// a tela de detalhe das indicações (ADR-20260925-memoria-de-indicacoes); os
-// rótulos continuam os da decisão do dono de 09/09: "Ajudou a resolver" e
-// "Resolvida pela autora".
+// a tela de detalhe das indicações (ADR-20260925-memoria-de-indicacoes); o
+// rótulo da marca continua o da decisão do dono de 09/09: "Ajudou a resolver".
+// O selo do pedido diz "Resolvido por quem pediu", sem gênero fixo.
 
 const root = join(import.meta.dirname, "..", "..", "..")
 const detailPath = join(
@@ -57,7 +57,7 @@ describe("resolution marker (RECON-035)", () => {
     const source = readFileSync(detailPath, "utf8")
     expect(source).toContain("resolved_reply_id")
     expect(source).toContain("Ajudou a resolver")
-    expect(source).toContain("Resolvida pela autora")
+    expect(source).toContain("Resolvido por quem pediu")
     expect(source).toContain("Remover marca")
   })
 

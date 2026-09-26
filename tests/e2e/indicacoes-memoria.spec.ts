@@ -60,7 +60,7 @@ test.describe("indicações com memória", () => {
     await asker.reload()
     await asker.getByRole("button", { name: /^Ajudou a resolver/ }).click()
     await expect(asker.getByText(/Ajudou a resolver · resposta de/)).toBeVisible()
-    await expect(asker.getByText("Resolvida pela autora")).toBeVisible()
+    await expect(asker.getByText("Resolvido por quem pediu")).toBeVisible()
 
     // Uma terceira pessoa procura e vê a resposta sem abrir a conversa.
     const laterContext = await browser.newContext()

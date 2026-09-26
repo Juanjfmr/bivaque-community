@@ -108,7 +108,7 @@ export default function ConfiguracoesNotificacoesPage() {
 
     try {
       await updateNotificationChannelStateAction(form)
-      setFeedback({ type: "success", message: "Preferências salvas com sucesso." })
+      setFeedback({ type: "success", message: "Preferências salvas." })
     } catch (err) {
       setFeedback({
         type: "error",
@@ -151,14 +151,12 @@ export default function ConfiguracoesNotificacoesPage() {
         <h2 id="notif-heading" className="text-lg font-semibold tracking-tight">
           Notificações
         </h2>
-        <p className="mt-1 text-sm text-muted">
-          Escolha sobre o que e como você deseja receber notificações.
-        </p>
+        <p className="mt-1 text-sm text-muted">Escolha o que você quer receber e por onde.</p>
       </div>
 
       <div className="rounded-xl border border-border bg-[var(--surface)]">
         <div className="border-b border-border px-4 py-3">
-          <h3 className="text-sm font-medium">Tipos de notificação</h3>
+          <h3 className="text-sm font-medium">O que avisar</h3>
         </div>
         <ul className="divide-y divide-border">
           <li className="flex min-h-11 items-center justify-between gap-4 px-4 py-3">
@@ -169,7 +167,7 @@ export default function ConfiguracoesNotificacoesPage() {
               </span>
             </span>
             <Switch
-              aria-label="Notificações de respostas"
+              aria-label="Avisos de respostas"
               isSelected={comments}
               onChange={(isSelected) => {
                 setComments(isSelected)
@@ -185,13 +183,13 @@ export default function ConfiguracoesNotificacoesPage() {
           </li>
           <li className="flex min-h-11 items-center justify-between gap-4 px-4 py-3">
             <span className="min-w-0">
-              <span className="block text-sm font-medium">Eventos</span>
+              <span className="block text-sm font-medium">Encontros</span>
               <span className="block text-sm text-muted">
-                Lembretes e atualizações sobre eventos das comunidades.
+                Lembretes e mudanças nos encontros que você confirmou.
               </span>
             </span>
             <Switch
-              aria-label="Notificações de eventos"
+              aria-label="Avisos de encontros"
               isSelected={events}
               onChange={(isSelected) => {
                 setEvents(isSelected)
@@ -253,10 +251,9 @@ export default function ConfiguracoesNotificacoesPage() {
       </div>
 
       <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
-        <h3 className="text-sm font-medium">Canais de entrega</h3>
+        <h3 className="text-sm font-medium">Por onde avisar</h3>
         <p className="mt-1 text-sm text-muted">
-          Escolha onde você deseja receber as notificações. Por e-mail, os pedidos de indicação
-          chegam num resumo por dia.
+          Por e-mail, os pedidos de indicação chegam num resumo por dia.
         </p>
 
         {/* Cinco colunas não cabem em 375 px com rótulo inteiro: os cabeçalhos
@@ -264,9 +261,7 @@ export default function ConfiguracoesNotificacoesPage() {
             rola — nunca a página. */}
         <div className="-mx-4 mt-3 overflow-x-auto px-4">
           <table className="w-full min-w-0 border-collapse text-sm">
-            <caption className="sr-only">
-              Matriz de canais de entrega por tipo de notificação
-            </caption>
+            <caption className="sr-only">Por onde cada aviso chega</caption>
             <thead>
               <tr className="text-left text-muted">
                 <th scope="col" className="py-2 font-medium">
@@ -276,7 +271,7 @@ export default function ConfiguracoesNotificacoesPage() {
                   Respostas
                 </th>
                 <th scope="col" className="px-1 py-2 text-center text-xs font-medium">
-                  Eventos
+                  Encontros
                 </th>
                 <th scope="col" className="px-1 py-2 text-center text-xs font-medium">
                   Indicações
@@ -309,7 +304,7 @@ export default function ConfiguracoesNotificacoesPage() {
                 </td>
                 <td className="py-3 text-center">
                   <Checkbox
-                    aria-label="Eventos no aplicativo"
+                    aria-label="Encontros no aplicativo"
                     isSelected={channelOf(channels, "events", "in_app")}
                     isDisabled={!events}
                     onChange={(isSelected) =>
@@ -368,7 +363,7 @@ export default function ConfiguracoesNotificacoesPage() {
                 </td>
                 <td className="py-3 text-center">
                   <Checkbox
-                    aria-label="Eventos por e-mail"
+                    aria-label="Encontros por e-mail"
                     isSelected={channelOf(channels, "events", "email")}
                     isDisabled={!events}
                     onChange={(isSelected) =>

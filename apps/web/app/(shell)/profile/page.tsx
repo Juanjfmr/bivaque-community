@@ -353,13 +353,11 @@ export default function ProfilePage() {
           <Modal.Container size="sm">
             <Modal.Dialog>
               <Modal.Header>
-                <Modal.Heading>Sair da conta</Modal.Heading>
+                <Modal.Heading>Sair da conta?</Modal.Heading>
                 <ModalCloseTrigger className="min-h-11 min-w-11" />
               </Modal.Header>
               <Modal.Body>
-                <p className="text-sm text-muted">
-                  Tem certeza que deseja sair? Você poderá entrar novamente a qualquer momento.
-                </p>
+                <p className="text-sm text-muted">Você pode entrar de novo quando quiser.</p>
                 {signOutError ? (
                   <div className="mt-2">
                     <FeedbackAlert variant="danger" description={signOutError} />
