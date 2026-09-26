@@ -395,7 +395,7 @@
         "Gerar e revisar database.generated.ts",
         "Eliminar migrations dependentes de estado histórico",
         "Separar lote E2E seed-driven e registrar execucao [ok 18/09, lotes AR/AS]: a suite roda com seed e senha do operador; sem a variavel dois specs de operador abortam a suite inteira e a execucao vira 'No tests found'. Primeira medicao: 659/58/6. Depois do realinhamento a reconstrucao (lote AS), desktop-1440 caiu de 12 para 5 falhas e as correcoes foram TODAS de contrato de teste, verificadas no codigo-fonte antes de trocar copy. Achados de metodo registrados: medir o input de busca global e concluir 'sem busca de pessoas' (dois specs de privacidade D43 escopados); procurar o card na aba default quando ele vive na aba Pedidos (elemento existia com altura 0, hidden e nao ausente); usar a conta errada (o pedido do seed e da visual@, e o seedSession() aponta para a dono-vila@); contexto sem viewport herdando 375 no contador da sidebar larga; e o banco precisar de reset+seed antes da suite, porque posts 'GS-E2E' de rodadas anteriores empurram o conteudo do seed para fora do feed",
-        "Regularizar impedimento externo de Actions e obter CI e revisao independentes da revisao entregue [PARCIAL 18/09]: o CI voltou a rodar — oito runs seguidos de deploy-migrations na main terminam SUCCESS (Gate + Push migrations), o que resolve o impedimento de Actions registrado em 06/09. Falta o pipeline de PR completo (com pgTAP e E2E) rodar contra a revisao entregue, e a protecao de merge segue nao comprovada"
+        "Regularizar Actions de PR e obter CI e revisao independentes da revisao entregue [PARCIAL 26/09]: CI de PR voltou; a revisão automática ainda precisa passar com este ajuste. Proteção de merge segue não comprovada"
       ],
       "proof": [
         "O README dos planos documenta a interferência do perfil Visual Capture",
@@ -403,15 +403,16 @@
         "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento",
         "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar.",
         "Lote AR 18/09/2026: CI de volta (8 runs SUCCESS na main); a suite E2E foi executada pela primeira vez nesta sessao e mediu 659/58/6, com as falhas atribuidas a campanha por assinatura de erro e nao ao trabalho do dia",
-        "Lote AS 18/09/2026: suite realinhada. Em desktop-1440: 12 -> 5 falhas (235 passed). Das 5, duas (community-batch-approval e group-admin-cycle) passam isoladas e falham na suite por interferencia de estado compartilhado entre specs. Gate completo verde e test:scope 114/0. A suite nos tres viewports foi medida em seguida e o numero ficou registrado aqui"
+        "Lote AS 18/09/2026: suite realinhada. Em desktop-1440: 12 -> 5 falhas (235 passed). Das 5, duas (community-batch-approval e group-admin-cycle) passam isoladas e falham na suite por interferencia de estado compartilhado entre specs. Gate completo verde e test:scope 114/0. A suite nos tres viewports foi medida em seguida e o numero ficou registrado aqui",
+        "26/09/2026: reexecução da revisão em PRs 68–84 confirmou dois defeitos do workflow: Dependabot não recebe o segredo DEEPSEEK_API_KEY (erro de autenticação) e revisões regulares atingem --max-turns 60. O segredo existe no repositório; não foi exposto nem lido. A correção adiciona verificação com aviso quando indisponível, limita a revisão ao diff e eleva o teto a 100; falta validar o workflow em CI após integração"
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
       "links": [
         "Protocolo | ../../docs/superpowers/plans/README.md",
         "Evidências externas datadas e links dos runs | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-18",
-      "sourceRevision": "5a27e2e",
+      "updatedAt": "2026-09-26",
+      "sourceRevision": "5919206",
       "dependencies": []
     },
     {

@@ -22,20 +22,28 @@ jobs:
   review:
     name: Claude Code review (DeepSeek V4.1 Flash)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Check review credential
+        id: credential
+        shell: bash
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          if [[ -n "$DEEPSEEK_API_KEY" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Claude Code Review
+        if: steps.credential.outputs.available == 'true'
         uses: anthropics/claude-code-action@v1
         with:
-          # Allowlist Dependabot so its mechanical version bumps still pass review.
-          # The action's hardcoded default blocks any bot; we permit this one explicit
-          # actor and nothing else. '*' is intentionally not used — the project's docs
-          # are public (AGENTS.md, .claude/memory.md) and the action warns about it.
-          allowed_bots: dependabot[bot]
           # Chave DeepSeek (formato Anthropic em api.deepseek.com/anthropic).
           # Rota "tolerada sem suporte" — ver AGENTS.md/notas de decisão.
           anthropic_api_key: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -55,7 +63,10 @@ jobs:
             HEAD SHA: ${{ github.event.pull_request.head.sha }}
 
             Revise este PR do Bivaque Community (Next.js 16 + TypeScript + Supabase + pnpm).
-            Leia o AGENTS.md antes. Foque em:
+            Comece por `git diff --stat` e `git diff`. Leia apenas as seções de AGENTS.md e
+            os arquivos diretamente relacionados aos hunks alterados; não percorra o repositório
+            nem leia documentos inteiros sem necessidade. Limite os achados ao que o diff introduz
+            ou deixa sem atender. Foque em:
 
             1. **Spec/contrato**: o diff cumpre o que o título/comentário promete?
             2. **RLS/Supabase**: scope column com policy na MESMA migration (Padrão 6 —
@@ -70,14 +81,20 @@ jobs:
             execução, descreva o comando que o provaria em vez de tentar rodá-lo.
 
             Poste comentários inline via MCP do GitHub apenas nos pontos que
-            exigem ação. Termine com um resumo: APROVADO / MUDANÇAS PEDIDAS e
-            os 3 achados mais importantes. Não invente problemas — só o que é real.
+            exigem ação, no máximo três achados acionáveis. Não repita comentários já existentes.
+            Termine com um resumo: APROVADO / MUDANÇAS PEDIDAS e os achados encontrados.
+            Não invente problemas — só o que é real.
           claude_args: |
             --model deepseek-flash
-            --max-turns 60
+            --max-turns 100
 
             --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git show:*),Bash(git log:*),mcp__github_inline_comment__create_inline_comment"
             --disallowedTools "Bash(pnpm install*),Bash(npx pnpm*),Edit,Write"
 
+      - name: Report skipped review
+        if: steps.credential.outputs.available != 'true'
+        run: echo "::warning title=Review skipped::DEEPSEEK_API_KEY is unavailable to this event, commonly for Dependabot or fork pull requests. Configure the secret for that event or request a maintainer review."
+
       - name: Resultado
+        if: steps.credential.outputs.available == 'true'
         run: echo "Review concluído — ver comentários no PR"
