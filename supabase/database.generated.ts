@@ -897,6 +897,38 @@ export type Database = {
           },
         ]
       }
+      indication_alert_deliveries: {
+        Row: {
+          created_at: string
+          kind: string
+          request_id: string
+          suppressed: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          kind: string
+          request_id: string
+          suppressed?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          kind?: string
+          request_id?: string
+          suppressed?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indication_alert_deliveries_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_alert_deliveries: {
         Row: {
           alert_id: string
@@ -2334,6 +2366,10 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      can_manage_provider_profile: {
+        Args: { p_provider_id: string }
+        Returns: boolean
+      }
       can_receive_invite_to_event: {
         Args: { p_event_id: string; p_user_id: string }
         Returns: boolean
@@ -2418,6 +2454,14 @@ export type Database = {
           p_description: string
           p_name: string
           p_visibility: Database["public"]["Enums"]["group_visibility"]
+        }
+        Returns: string
+      }
+      create_member_business_page: {
+        Args: {
+          p_bio?: string
+          p_category: Database["public"]["Enums"]["provider_category"]
+          p_display_name: string
         }
         Returns: string
       }
@@ -2576,24 +2620,6 @@ export type Database = {
         Returns: boolean
       }
       is_provider_account: { Args: { p_user_id: string }; Returns: boolean }
-      create_member_business_page: {
-        Args: {
-          p_bio?: string | null
-          p_category: Database["public"]["Enums"]["provider_category"]
-          p_display_name: string
-        }
-        Returns: string
-      }
-      can_manage_provider_profile: { Args: { p_provider_id: string }; Returns: boolean }
-      update_member_business_page: {
-        Args: {
-          p_bio?: string | null
-          p_category: Database["public"]["Enums"]["provider_category"]
-          p_display_name: string
-          p_provider_id: string
-        }
-        Returns: undefined
-      }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
       leave_community: { Args: { p_community_id: string }; Returns: undefined }
@@ -3066,6 +3092,15 @@ export type Database = {
       transition_listing: {
         Args: { p_action: string; p_listing_id: string }
         Returns: Database["public"]["Enums"]["listing_status"]
+      }
+      update_member_business_page: {
+        Args: {
+          p_bio?: string
+          p_category: Database["public"]["Enums"]["provider_category"]
+          p_display_name: string
+          p_provider_id: string
+        }
+        Returns: undefined
       }
       update_service_request: {
         Args: {

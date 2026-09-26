@@ -55,7 +55,7 @@ export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
     const values = {
       display_name: name.trim(),
       category: category as ProviderCategory,
-      bio: bio.trim() || null,
+      bio: bio.trim(),
     }
 
     if (profile) {
@@ -63,7 +63,7 @@ export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
         p_provider_id: profile.id,
         p_display_name: values.display_name,
         p_category: values.category,
-        p_bio: values.bio,
+        ...(values.bio ? { p_bio: values.bio } : {}),
       })
       if (updateError) {
         setError(
@@ -83,7 +83,7 @@ export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
       {
         p_display_name: values.display_name,
         p_category: values.category,
-        p_bio: values.bio,
+        ...(values.bio ? { p_bio: values.bio } : {}),
       },
     )
     if (createError || !providerId) {
