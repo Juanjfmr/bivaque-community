@@ -39,17 +39,19 @@ describe("pedir leva à caixa de pedir", () => {
     }
   })
 
-  it("a página lê ?pedir=1 e foca a caixa", () => {
-    expect(web("app", "(shell)", "indicacoes", "page.tsx")).toContain(
-      'searchParams.get("pedir") === "1"',
-    )
+  it("a Comunidade lê ?pedir=1 e ?q= e a caixa foca", () => {
+    const community = web("app", "(shell)", "community", "page.tsx")
+    expect(community).toContain('searchParams.get("pedir") === "1"')
+    expect(community).toContain('searchParams.get("q")')
     expect(web("app", "components", "indications", "ask-indication.tsx")).toContain(
       "if (autoFocus) inputRef.current?.focus()",
     )
   })
 
   it("o cabeçalho leva a Indicações", () => {
-    expect(web("app", "components", "bivaque", "app-shell.tsx")).toContain('href="/indicacoes"')
+    expect(web("app", "components", "bivaque", "app-shell.tsx")).toContain(
+      'href="/community?vista=indicacoes"',
+    )
   })
 })
 
@@ -69,5 +71,22 @@ describe("pedido em uma frase, sem trava nem aviso", () => {
   it("não avisa nem barra saúde", () => {
     expect(ask).not.toMatch(/saude_bem_estar/)
     expect(ask).not.toMatch(/todos os membros da cidade verão/i)
+  })
+})
+
+// O menu de mais opções é compartilhado com o feed: item sem ação não aparece.
+// Antes, "Ocultar" e "Denunciar" apareciam na própria resposta e não faziam nada.
+describe("menu de mais opções sem item morto", () => {
+  const menu = web("app", "components", "bivaque", "feed-post-menu.tsx")
+
+  it("ocultar e denunciar só existem quando alguém os executa", () => {
+    expect(menu).toMatch(/\{onHide \? \(\s*<Dropdown\.Item key="hide"/)
+    expect(menu).toMatch(/\{onReport \? \(\s*<Dropdown\.Item key="report"/)
+  })
+
+  it("no detalhe, quem escreveu não denuncia o próprio conteúdo", () => {
+    const detail = web("app", "components", "indications", "indication-detail.tsx")
+    expect(detail).toMatch(/onReport=\{\s*isAuthor\s*\?\s*undefined/)
+    expect(detail).toMatch(/onReport=\{\s*isOwnReply\s*\?\s*undefined/)
   })
 })

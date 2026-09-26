@@ -129,3 +129,70 @@ describe("matchesTerm", () => {
     expect(matchesTerm("escola", [null, "hospital"])).toBe(false)
   })
 })
+
+// ADR-20260925-memoria-de-indicacoes: a memória de indicações entra primeiro.
+describe("grupo Indicações", () => {
+  const row = (id: string, overrides: Record<string, unknown> = {}) => ({
+    id,
+    title: "Alguém indica pediatra?",
+    body: "",
+    category: "saude_bem_estar" as const,
+    created_at: "2026-09-01T12:00:00Z",
+    is_resolved: true,
+    group_id: "",
+    group_name: "",
+    reply_count: 2,
+    resolved_reply_body: "A Dra. Helena, na Policlínica.",
+    matched_reply_body: "",
+    ...overrides,
+  })
+
+  it("vem antes dos outros grupos e usa todas as linhas que a função casou", () => {
+    const groups = buildSearchGroups({
+      term: "pediatra",
+      providers: [],
+      guideEntries: [guideEntry("g1", "Pediatra do Hospital")],
+      events: [],
+      indications: [row("i1"), row("i2"), row("i3"), row("i4")],
+    })
+    expect(groups.map((group) => group.key)).toEqual(["indicacoes", "guia"])
+    const indicacoes = groups[0]
+    expect(indicacoes?.total).toBe(4)
+    expect(indicacoes?.items).toHaveLength(GROUP_PREVIEW_LIMIT)
+  })
+
+  it("mostra a resposta que resolveu, leva ao pedido e passa o termo adiante", () => {
+    const [group] = buildSearchGroups({
+      term: "pediatra",
+      providers: [],
+      guideEntries: [],
+      events: [],
+      indications: [row("i1")],
+    })
+    expect(group?.items[0]).toMatchObject({
+      title: "Alguém indica pediatra?",
+      snippet: "A Dra. Helena, na Policlínica.",
+      meta: "Saúde · Resolvido",
+      href: "/indicacoes/i1",
+    })
+    expect(group?.verTodosHref).toBe("/community?vista=indicacoes&q=pediatra")
+  })
+
+  it("sem resposta marcada, o trecho é a resposta que casou", () => {
+    const [group] = buildSearchGroups({
+      term: "raimundo",
+      providers: [],
+      guideEntries: [],
+      events: [],
+      indications: [
+        row("i1", {
+          is_resolved: false,
+          resolved_reply_body: null,
+          matched_reply_body: "Seu Raimundo eletricista.",
+        }),
+      ],
+    })
+    expect(group?.items[0]?.snippet).toBe("Seu Raimundo eletricista.")
+    expect(group?.items[0]?.meta).toBe("Saúde")
+  })
+})

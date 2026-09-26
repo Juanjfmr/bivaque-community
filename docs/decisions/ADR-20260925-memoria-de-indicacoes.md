@@ -75,6 +75,25 @@ Na interface:
 - **A Comunidade** ganha as vistas Conversa e Indicações, com a vista na URL
   (`/community?vista=indicacoes`). Indicações acende a aba Comunidades.
 
+Segunda rodada, no mesmo dia, a pedido do dono ("vamos fazer"):
+
+- **`/recommendations` aposentada.** Cada aba tinha outra casa: Explorar em `/groups` e
+  `/events`, Pedir e Pedidos nas Indicações, Salvas em `/salvos`. O endereço redireciona:
+  `?focus=<id>` vai ao pedido, `?aba=request` à caixa de pedir, `?aba=saved` aos salvos, e o
+  resto à vista Indicações. `/indicacoes` também só redireciona.
+- **Indicações moram na Comunidade.** "Pedir uma indicação" (botão de criar e Início) abre
+  `/community?vista=indicacoes&pedir=1`, com a caixa focada. Quem ainda não tem comunidade
+  vê a mesma vista, abaixo do convite para entrar numa.
+- **O Guia antes de pedir.** A caixa mostra também "No Guia da cidade", que era o que a
+  página antiga fazia de bom antes do formulário.
+- **Busca do topo.** Indicações entra como primeiro grupo, com a resposta que resolveu no
+  trecho. "Ver todos" leva o termo para a caixa de pedir.
+- **Rótulos da decisão de 09/09.** "Ajudou a resolver", "Resolvida pela autora" e "Remover
+  marca", como o dono escolheu no ADR-20260909-resposta-que-resolveu. A primeira rodada tinha
+  usado "Isso resolveu".
+- **Moderação no menu de mais opções** (DS-006), com nome acessível por item. O menu
+  compartilhado deixa de mostrar "Ocultar" e "Denunciar" quando não há ação.
+
 ## Alternatives considered
 
 - **Tipo de publicação "pedido" no feed.** Duplicaria respostas, resolvido, salvos e avisos, que
@@ -89,8 +108,8 @@ Na interface:
   formulário antigo; o novo publica na cidade.
 - **Busca com ruído.** Mitigado pela regra de metade dos termos para casamento só em resposta, e
   provado em pgTAP.
-- **`/recommendations` continua existindo**, com as abas antigas. Nada mais aponta para o pedido
-  lá, mas a página ainda permite pedir. Unificar ou retirar é trabalho seguinte.
+- **Link antigo de `/recommendations`**: redireciona. O endereço fica enquanto houver
+  notificação ou favorito apontando para ele.
 
 ## Reversal cost
 

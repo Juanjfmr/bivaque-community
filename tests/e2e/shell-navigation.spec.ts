@@ -85,7 +85,7 @@ test.describe("Indicações discoverable entry", () => {
     // do RECON-038 #4, e o nome acessível passou a vir do próprio texto.
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/recommendations")
+    await expect(indications).toHaveAttribute("href", "/community?vista=indicacoes")
   })
 
   test("keeps its accessible name in the 768px rail", async ({ page, context }) => {
@@ -99,7 +99,7 @@ test.describe("Indicações discoverable entry", () => {
     // Then the header entry is still named and reachable
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/recommendations")
+    await expect(indications).toHaveAttribute("href", "/community?vista=indicacoes")
   })
 
   test("is reachable from the header at 1440px", async ({ page, context }) => {
@@ -113,7 +113,7 @@ test.describe("Indicações discoverable entry", () => {
     // Then Indicações is reachable from the header, where it is a link
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/recommendations")
+    await expect(indications).toHaveAttribute("href", "/community?vista=indicacoes")
   })
 })
 

@@ -3,7 +3,7 @@
 // fixture da captura /salvos. Idempotente por construção: começa limpando.
 //
 // Localizadores: o seed tem UM pedido de indicação e nenhum outro botão
-// "Salvar" visível em /recommendations (o de edição só existe para o autor).
+// "Salvar" visível na página do pedido (o de edição só existe para o autor).
 // O spec afirma essa unicidade (toHaveCount(1)) em vez de assumi-la — se o
 // seed ganhar outro pedido, ele falha alto em vez de clicar no card errado.
 
@@ -47,12 +47,10 @@ test.describe("salvos: origem, destino e remoção", { tag: "@stateful" }, () =>
     }
 
     // ── salvar na origem ─────────────────────────────────────────────────────
-    // A tela ganhou abas na reconstrução (Explorar / Pedir indicação / Pedidos /
-    // Salvas) e o card do pedido vive na aba Pedidos — a default é Explorar, e
-    // sem o clique o título existe no DOM com altura 0 (hidden, não ausente).
-    await page.goto("/recommendations")
-    await page.getByRole("tab", { name: /^Pedidos/ }).click()
-    await expect(page.getByText(REQUEST_TITLE, { exact: true })).toBeVisible({
+    // Desde 25/09/2026 o pedido tem página própria, /indicacoes/<id>
+    // (ADR-20260925-memoria-de-indicacoes), com o "Salvar" no cabeçalho.
+    await page.goto(`/indicacoes/${REQUEST_ID}`)
+    await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible({
       timeout: 15_000,
     })
     // O estado do toggle vem do servidor; se sobrou um salvamento de execucao
@@ -131,11 +129,8 @@ test.describe("salvos: origem, destino e remoção", { tag: "@stateful" }, () =>
     await expect(page.getByText("Nada salvo ainda")).toBeVisible({ timeout: 10_000 })
     await expect(page.getByText(REQUEST_TITLE, { exact: true })).toHaveCount(0)
 
-    // Volta para a origem na aba certa: o botão do pedido só existe na aba
-    // Pedidos (a default é Explorar). Antes este trecho abria /recommendations
-    // sem ?focus e procurava o botão na aba errada.
-    await page.goto("/recommendations")
-    await page.getByRole("tab", { name: /^Pedidos/ }).click()
+    // Volta para a origem: a página do próprio pedido.
+    await page.goto(`/indicacoes/${REQUEST_ID}`)
     await expect(page.getByRole("button", { name: "Salvar", exact: true })).toBeVisible({
       timeout: 10_000,
     })

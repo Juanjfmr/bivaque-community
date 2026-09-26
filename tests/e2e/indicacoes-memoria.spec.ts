@@ -3,7 +3,7 @@
 //
 // O ciclo inteiro, com três pessoas do seed: quem pede procura antes e publica
 // um pedido de saúde para a cidade; outra pessoa acha pela busca, sem acento, e
-// responde; quem pediu marca "Isso resolveu"; uma terceira procura e vê a
+// responde; quem pediu marca "Ajudou a resolver"; uma terceira procura e vê a
 // resposta sem abrir a conversa.
 
 import { expect, test } from "@playwright/test"
@@ -26,6 +26,7 @@ test.describe("indicações com memória", () => {
 
     // Pedir começa por procurar: a caixa chega focada.
     await asker.goto("/indicacoes?pedir=1")
+    await asker.waitForURL(/\/community\?vista=indicacoes&pedir=1$/)
     const askBox = asker.getByRole("textbox", { name: "O que você procura" })
     await expect(askBox).toBeFocused()
     await askBox.fill(question)
@@ -57,8 +58,9 @@ test.describe("indicações com memória", () => {
 
     // Quem pediu marca a resposta que resolveu.
     await asker.reload()
-    await asker.getByRole("button", { name: "Isso resolveu" }).click()
-    await expect(asker.getByText(/Resolveu · resposta de/)).toBeVisible()
+    await asker.getByRole("button", { name: /^Ajudou a resolver/ }).click()
+    await expect(asker.getByText(/Ajudou a resolver · resposta de/)).toBeVisible()
+    await expect(asker.getByText("Resolvida pela autora")).toBeVisible()
 
     // Uma terceira pessoa procura e vê a resposta sem abrir a conversa.
     const laterContext = await browser.newContext()

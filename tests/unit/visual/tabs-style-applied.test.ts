@@ -66,6 +66,11 @@ const EXCEPTIONS = [
     reason:
       "seletor segmentado em pílula das duas cidades do membro (atual e destino), não fileira de abas de conteúdo; a prancha apresenta cidade como cartões/seletor",
   },
+  {
+    file: "apps/web/app/(shell)/community/view-switch.tsx",
+    reason:
+      "seletor segmentado em pílula das duas vistas da comunidade (Conversa e Indicações), com o mesmo peso; as abas de conteúdo abaixo dele (ordem do feed, filtros de pedidos) usam o estilo do produto",
+  },
 ] as const
 
 function unstyleWithoutException(sources: Map<string, string>): string[] {

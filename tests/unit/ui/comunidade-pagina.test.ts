@@ -26,7 +26,7 @@ describe("página da Comunidade", () => {
     const jsx = page.slice(page.indexOf("<CommunityHeader"))
     const order = [
       "<CommunityHeader",
-      'aria-label="Vistas da comunidade"',
+      "<CommunityViewSwitch",
       "<FeedComposer",
       'aria-label="Ordenar publicações"',
       "<FeedRailDisclosure",
@@ -56,16 +56,18 @@ describe("página da Comunidade", () => {
 
 // ADR-20260925-memoria-de-indicacoes: a conversa corre, as indicações ficam.
 describe("vistas da comunidade", () => {
+  const viewSwitch = web("(shell)", "community", "view-switch.tsx")
+
   it("Conversa e Indicações, com a vista na URL", () => {
-    expect(page).toContain('searchParams.get("vista") === "indicacoes"')
-    expect(page).toContain('"/community?vista=indicacoes"')
+    expect(page).toContain('readCommunityView(searchParams.get("vista"))')
+    expect(viewSwitch).toContain('return vista === "indicacoes" ? "indicacoes" : "conversa"')
+    expect(viewSwitch).toContain('"/community?vista=indicacoes"')
   })
 
-  it("a vista Indicações é a mesma peça da rota /indicacoes, na cidade do membro", () => {
-    expect(page).toContain(
-      "<IndicationsPanel localityId={current.id} cityName={current.cityName} />",
-    )
-    expect(web("(shell)", "indicacoes", "page.tsx")).toContain("<IndicationsPanel")
+  it("com ou sem comunidade, a vista Indicações mostra o painel da cidade do membro", () => {
+    const panels = page.match(/<IndicationsPanel\s+localityId=\{current\.id\}/g) ?? []
+    expect(panels.length).toBe(2)
+    expect(page.match(/<CommunityViewSwitch view=\{view\} \/>/g)?.length).toBe(2)
   })
 })
 

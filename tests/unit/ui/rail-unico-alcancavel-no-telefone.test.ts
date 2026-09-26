@@ -72,7 +72,7 @@ describe("/inicio: o que o trilho oferece continua alcançável no telefone", ()
   })
 
   it("Indicações tem porta no cabeçalho, em toda largura", () => {
-    expect(shell).toContain('href="/indicacoes"')
+    expect(shell).toContain('href="/community?vista=indicacoes"')
   })
 
   it("abaixo de 1024px a agenda da semana desce para a coluna principal", () => {

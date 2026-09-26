@@ -16,9 +16,10 @@ describe("pedido de saúde para a cidade", () => {
     expect(source).toContain("drop constraint recommendation_health_needs_group")
   })
 
-  it("o formulário antigo oferece a cidade para qualquer categoria, sem aviso", () => {
-    const page = read("apps", "web", "app", "(shell)", "recommendations", "page.tsx")
-    expect(page).not.toContain('requestCategory !== "saude_bem_estar"')
-    expect(page).not.toMatch(/Saúde começam em grupo/)
+  it("o formulário novo publica na cidade para qualquer assunto, sem aviso", () => {
+    const ask = read("apps", "web", "app", "components", "indications", "ask-indication.tsx")
+    expect(ask).toContain("locality_id: localityId")
+    expect(ask).not.toContain("saude_bem_estar")
+    expect(ask).not.toMatch(/começam em grupo/)
   })
 })

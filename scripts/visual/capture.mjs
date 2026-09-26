@@ -119,8 +119,8 @@ export const HEADINGS = {
   "/events": "^Explorar eventos$",
   "/notifications": "^Notificações$",
   "/messages": "^Mensagens$",
-  "/recommendations": "^Indicações$",
-  "/indicacoes": "^Indicações$",
+  // A vista Indicações da Comunidade: o h1 é o nome da comunidade do ator.
+  "/community?vista=indicacoes": DYNAMIC_HEADING,
   "/indicacoes/80000000-0000-4000-8000-000000000f01":
     "^Alguém indica pediatra que atenda pelo FuSEx\\?$",
   "/prestador": "^Orçamentos para você$",
@@ -203,7 +203,8 @@ export const HEADINGS = {
   "/pedidos": "^Meus orçamentos$",
   // O título do pedido vem da primeira linha da própria descrição do pedido.
   "/pedidos/40000000-0000-4000-8000-000000000023": DYNAMIC_HEADING,
-  "/recommendations?focus=80000000-0000-4000-8000-000000000f00": "^Indicações$",
+  // A conversa do pedido semeado: o h1 é o título do pedido.
+  "/indicacoes/80000000-0000-4000-8000-000000000f00": "^Alguém conhece um bom encanador\\?$",
   "/salvos": "^Salvos$",
   // A aba chega pela URL: o atalho "Salvos" do topo do guia manda para cá com o
   // tipo escolhido, então a variante é chave própria de contrato.
@@ -478,18 +479,16 @@ export const ROUTES = [
   },
   { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },
-  { path: "/recommendations", name: "recommendations", auth: true },
-  // RECON-035: a conversa vive na aba "Pedidos". O foco no pedido semeado
-  // (visual@ é a autora) pré-seleciona a aba para a captura mostrar o ator e
-  // o destino sem depender de clique.
+  // Memória de indicações (ADR-20260925-memoria-de-indicacoes). /recommendations
+  // e /indicacoes só redirecionam; a lista é a vista Indicações da Comunidade.
+  // RECON-035: a conversa do pedido semeado (visual@ é a autora) mostra o ator,
+  // a marca e o destino; o pedido resolvido mostra a memória.
+  { path: "/community?vista=indicacoes", name: "indicacoes", auth: true },
   {
-    path: "/recommendations?focus=80000000-0000-4000-8000-000000000f00",
-    name: "recommendations-conversa",
+    path: "/indicacoes/80000000-0000-4000-8000-000000000f00",
+    name: "indicacao-conversa",
     auth: true,
   },
-  // Memória de indicações (ADR-20260925-memoria-de-indicacoes): a lista da
-  // cidade e a conversa de um pedido resolvido do seed.
-  { path: "/indicacoes", name: "indicacoes", auth: true },
   {
     path: "/indicacoes/80000000-0000-4000-8000-000000000f01",
     name: "indicacao-resolvida",

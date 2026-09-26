@@ -8,7 +8,8 @@ import { describe, expect, it } from "vitest"
 // GATILHO (`data-slot="dropdown-trigger"`), identico em todos os itens.
 //
 // Teste em duas camadas: o comportamento do rotulo (unidade) e a fiacao do
-// chamador (fonte), porque foi a fiacao que faltou.
+// chamador (fonte), porque foi a fiacao que faltou. Desde 25/09/2026 o chamador
+// e a tela de detalhe das indicacoes (ADR-20260925-memoria-de-indicacoes).
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
@@ -21,8 +22,8 @@ const componente = join(
   "web",
   "app",
   "components",
-  "bivaque",
-  "recommendation-requests.tsx",
+  "indications",
+  "indication-detail.tsx",
 )
 const menu = join(root, "apps", "web", "app", "components", "bivaque", "feed-post-menu.tsx")
 const cartaoDoFeed = join(root, "apps", "web", "app", "components", "bivaque", "feed-post-card.tsx")

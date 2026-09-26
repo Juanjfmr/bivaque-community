@@ -19,7 +19,7 @@ const VIEWPORTS = [
   { name: "tablet-768", width: 768, height: 1024 },
   { name: "desktop-1440", width: 1440, height: 900 },
 ]
-const ROUTES = ["/salvos", "/recommendations", "/events"]
+const ROUTES = ["/salvos", "/events"]
 
 // O ator importa: as abas de participacao de /events so renderizam quando a
 // pessoa tem evento proprio (`hasOwnEvents`, events/page.tsx:912). Com o ator

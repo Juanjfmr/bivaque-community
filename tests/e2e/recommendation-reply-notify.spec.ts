@@ -5,10 +5,9 @@
 // gaps found running the E2E realignment: (1) the seed had zero rows in
 // recommendation_requests at all — seed.sql now seeds one authored by the
 // default seedSession() account (visual@bivaque.example.invalid); (2) the
-// "Ajudou a resolver" button lives inside the "Pedidos" tab
-// (recommendation-requests.tsx, rendered under Tabs key="requests"), not
-// the default "Explorar" tab /recommendations lands on — the spec never
-// switched tabs.
+// "Ajudou a resolver" button lived inside the "Pedidos" tab of the old
+// /recommendations page. Since 25/09/2026 the request has its own page,
+// /indicacoes/<id> (ADR-20260925-memoria-de-indicacoes).
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
@@ -30,6 +29,7 @@ const REPLIER_EMAIL = "membro-3@bivaque.example.invalid"
 // não é autor, e a notificação de resposta nunca chega a quem a escreveu.
 const AUTHOR_EMAIL = "visual@bivaque.example.invalid"
 const REQUEST_TITLE = "Alguém conhece um bom encanador?"
+const REQUEST_PATH = "/indicacoes/80000000-0000-4000-8000-000000000f00"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
@@ -79,16 +79,11 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     // encanador?", 80000000-...-000f00)
     await signInAs(page, REPLIER_EMAIL)
     await page.setViewportSize({ width: 1280, height: 800 })
-    await page.goto("/recommendations")
-    await page.getByRole("tab", { name: "Pedidos" }).click()
-
-    // DS-006 (prancha 80): `Responder` ABRE a composição daquele pedido — o
-    // campo não existe montado antes do clique, e o mesmo botão fecha. Por isso
-    // a ordem é abrir, escrever, enviar: quem envia é `Enviar resposta`.
+    await page.goto(REQUEST_PATH)
+    await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible()
+    await page.getByLabel("Sua indicação").fill("Conheço um ótimo, te mando o contato.")
     await page.getByRole("button", { name: "Responder", exact: true }).click()
-    const replyBox = page.getByLabel(`Responder a ${REQUEST_TITLE}`)
-    await replyBox.fill("Conheço um ótimo, te mando o contato.")
-    await page.getByRole("button", { name: "Enviar resposta", exact: true }).click()
+    await expect(page.getByText("Conheço um ótimo, te mando o contato.")).toBeVisible()
 
     // Then the author sees a notification for it, in a fresh session so the
     // two accounts never share cookies/state
@@ -119,23 +114,25 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     await signInAs(page, AUTHOR_EMAIL)
     await page.setViewportSize({ width: 1280, height: 800 })
 
-    // When they open the recommendations page and switch to their requests
-    await page.goto("/recommendations")
-    await page.getByRole("tab", { name: "Pedidos" }).click()
+    // When they open their request
+    await page.goto(REQUEST_PATH)
 
-    // Then the "Ajudou a resolver" action is reachable for a request
-    await expect(page.getByRole("button", { name: /Ajudou a resolver/ }).first()).toBeVisible()
+    // Then the "Ajudou a resolver" action is reachable on a reply that is not
+    // the marked one (the seed marks the first reply)
+    await expect(page.getByRole("button", { name: /^Ajudou a resolver/ }).first()).toBeVisible()
   })
 
   test("the invite surface has no people search (D43)", async ({ page }) => {
     // Given a session
     await seedSession(page.context())
-    await page.goto("/recommendations")
+    await page.goto("/community?vista=indicacoes")
+    await expect(page.getByRole("heading", { name: "O que você procura?" })).toBeVisible()
 
     // Then no people-search input is present on the recommendation surface.
     // Escopado ao conteúdo da página: o cabeçalho tem busca global de conteúdo
     // (RECON-021) e o locator global contava esse campo, medindo outra coisa.
-    const surface = page.locator('[role="tabpanel"]:not([hidden])')
+    const surface = page.locator("main")
     await expect(surface.locator('input[type="search"]')).toHaveCount(0)
+    await expect(surface.getByText(/buscar pessoas|buscar membros/i)).toHaveCount(0)
   })
 })

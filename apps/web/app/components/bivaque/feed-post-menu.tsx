@@ -134,9 +134,13 @@ export function LeanOverflowMenu({
               {labels?.reopen ?? "Reabrir"}
             </Dropdown.Item>
           ) : null}
-          <Dropdown.Item key="hide" id="hide" className={ITEM_CLASS}>
-            {labels?.hide ?? "Ocultar publicação"}
-          </Dropdown.Item>
+          {/* Item sem ação não aparece: "Ocultar" sem quem oculte, ou
+              "Denunciar" no próprio conteúdo, seriam cliques que não fazem nada. */}
+          {onHide ? (
+            <Dropdown.Item key="hide" id="hide" className={ITEM_CLASS}>
+              {labels?.hide ?? "Ocultar publicação"}
+            </Dropdown.Item>
+          ) : null}
           <Dropdown.Item key="share" id="share" className={ITEM_CLASS}>
             {labels?.share ?? "Compartilhar"}
           </Dropdown.Item>
@@ -144,9 +148,11 @@ export function LeanOverflowMenu({
               sem acao de denuncia — o comentario tinha, o post nao. O menu e o
               lugar certo: um "Denunciar" visivel em cada card do feed convida
               ao uso e polui a leitura. */}
-          <Dropdown.Item key="report" id="report" className={ITEM_CLASS}>
-            {labels?.report ?? "Denunciar publicação"}
-          </Dropdown.Item>
+          {onReport ? (
+            <Dropdown.Item key="report" id="report" className={ITEM_CLASS}>
+              {labels?.report ?? "Denunciar publicação"}
+            </Dropdown.Item>
+          ) : null}
         </Dropdown.Menu>
       </Dropdown.Popover>
     </Dropdown>

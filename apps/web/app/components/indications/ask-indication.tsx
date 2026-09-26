@@ -1,11 +1,14 @@
 "use client"
 
 import { Button, TextArea } from "@heroui/react"
-import { Search } from "lucide-react"
+import { BookOpen, Search } from "lucide-react"
 import type { Route } from "next"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useId, useRef, useState } from "react"
 import {
+  type GuideCandidate,
+  guideMatches,
   INDICATION_CATEGORIES,
   INDICATION_SEARCH_DEBOUNCE_MS,
   INDICATION_SEARCH_MIN_CHARS,
@@ -18,13 +21,20 @@ import {
   titleProblem,
 } from "../../../lib/indications/indications"
 import { log } from "../../../lib/logger"
+import { GUIDE_CATEGORY_LABELS } from "../../../lib/recommendations/guide-search"
+import { writeFailure } from "../../../lib/recommendations/write-failure-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { IndicationItem } from "./indication-item"
 
 // Pedir começa por procurar (ADR-20260925-memoria-de-indicacoes). A mesma
 // frase serve às duas coisas: enquanto se escreve, aparece o que a cidade já
 // perguntou; se nada serve, a frase vira o pedido. Uma frase basta — detalhe e
-// categoria são opcionais, e a categoria vem sugerida pelo texto.
+// categoria são opcionais, e a categoria vem sugerida pelo texto. O Guia da
+// cidade entra junto: se o lugar já está lá, nem é preciso perguntar.
+
+type GuideState =
+  | { kind: "idle" | "loading" | "error" }
+  | { kind: "done"; entries: GuideCandidate[] }
 
 type SimilarState =
   | { kind: "idle" }
@@ -36,16 +46,19 @@ export function AskIndication({
   localityId,
   cityName,
   autoFocus = false,
+  initialQuery = "",
 }: {
   localityId: string
   cityName: string
   autoFocus?: boolean
+  /** Termo vindo da busca do topo ("Ver todos"): a caixa já procura por ele. */
+  initialQuery?: string
 }) {
   const router = useRouter()
   const inputId = useId()
   const detailsId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
-  const [draft, setDraft] = useState("")
+  const [draft, setDraft] = useState(initialQuery)
   const [similar, setSimilar] = useState<SimilarState>({ kind: "idle" })
   const [composing, setComposing] = useState(false)
   const [pickedCategory, setPickedCategory] = useState<IndicationCategory | null>(null)
@@ -53,6 +66,7 @@ export function AskIndication({
   const [publishing, setPublishing] = useState(false)
   const [publishError, setPublishError] = useState("")
   const [now] = useState(() => new Date())
+  const [guide, setGuide] = useState<GuideState>({ kind: "idle" })
 
   const query = draft.trim()
   const category = pickedCategory ?? suggestCategory(query) ?? "outros"
@@ -60,6 +74,27 @@ export function AskIndication({
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus()
   }, [autoFocus])
+
+  // O Guia aprovado da cidade é curto: lê uma vez, quando a pessoa começa a
+  // escrever, e casa os termos aqui (mesma leitura de /guide, pela RLS).
+  const wantsGuide = query.length >= INDICATION_SEARCH_MIN_CHARS
+  useEffect(() => {
+    if (!wantsGuide || guide.kind !== "idle") return
+    setGuide({ kind: "loading" })
+    void createBrowserClient()
+      .from("arrival_guide_entries")
+      .select("id, name, description, category")
+      .eq("locality_id", localityId)
+      .eq("status", "approved")
+      .then(({ data, error }) => {
+        if (error) {
+          log.error("indication_guide_failed", { serverMessage: error.message })
+          setGuide({ kind: "error" })
+          return
+        }
+        setGuide({ kind: "done", entries: (data ?? []) as GuideCandidate[] })
+      })
+  }, [wantsGuide, guide.kind, localityId])
 
   useEffect(() => {
     if (query.length < INDICATION_SEARCH_MIN_CHARS) {
@@ -119,17 +154,15 @@ export function AskIndication({
       .select("id")
       .single()
     if (error || !data) {
-      log.error("indication_publish_failed", { serverMessage: error?.message ?? "sem linha" })
       setPublishing(false)
-      setPublishError(
-        "Não foi possível publicar seu pedido. Seu texto continua aqui. Tente novamente.",
-      )
+      setPublishError(writeFailure("publicar_pedido", error?.message ?? "insert sem linha"))
       return
     }
     router.push(indicationHref(data.id) as Route)
   }
 
   const showResults = similar.kind !== "idle"
+  const guideHits = guide.kind === "done" && wantsGuide ? guideMatches(guide.entries, query) : []
 
   return (
     <section
@@ -190,6 +223,40 @@ export function AskIndication({
                 ))}
               </ul>
             </>
+          ) : null}
+          {guideHits.length > 0 ? (
+            <div className="mt-4">
+              <h3 className="text-xs font-semibold tracking-wide text-ui-ink-2 uppercase">
+                No Guia da cidade
+              </h3>
+              <ul className="mt-2 space-y-2">
+                {guideHits.map((entry) => (
+                  <li key={entry.id}>
+                    <Link
+                      href={`/guide/${entry.id}` as Route}
+                      className="flex items-start gap-2 rounded-ui-lg bg-ui-surface px-3 py-2.5 ring-1 ring-ui-line transition-colors hover:bg-ui-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ui-brand"
+                    >
+                      <BookOpen
+                        size={16}
+                        className="mt-0.5 shrink-0 text-ui-brand"
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-ui-ink">
+                          {entry.name}
+                        </span>
+                        <span className="block text-xs text-ui-ink-2">
+                          {GUIDE_CATEGORY_LABELS[entry.category] ?? "Guia"}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {guide.kind === "error" ? (
+            <p className="mt-3 text-xs text-ui-ink-2">O Guia da cidade não carregou agora.</p>
           ) : null}
         </div>
       ) : null}

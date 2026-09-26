@@ -3734,9 +3734,10 @@
         "/indicacoes, /indicacoes/[id] e vista Indicações na Comunidade [FEITO, provado a 375 e 1440]",
         "Todas as portas do pedido em /indicacoes/<id> (notificação, salvos, denúncia, Guia, Início, compartilhar) [FEITO]",
         "/pedidos rotulado Orçamentos [FEITO]",
-        "Spec E2E do ciclo pedir → responder → Isso resolveu → achar pela busca",
-        "Decidir o destino de /recommendations (ainda permite pedir pelo formulário antigo)",
-        "Busca do cabeçalho incluir Indicações",
+        "Spec E2E do ciclo pedir → responder → Ajudou a resolver → achar pela busca [ESCRITO: tests/e2e/indicacoes-memoria.spec.ts; não executado — CI sem cota e sem build local]",
+        "Destino de /recommendations [FEITO 25/09: aposentada, redireciona por aba e por pedido; código e testes da página antiga removidos]",
+        "Busca do cabeçalho incluir Indicações [FEITO: primeiro grupo, Ver todos leva o termo à caixa]",
+        "Pedir pela conversa [FEITO: botão de criar e Início abrem /community?vista=indicacoes&pedir=1; quem não tem comunidade também vê a vista]",
         "Referências do Mobbin para o desenho (MCP desconectado na sessão de 25/09)"
       ],
       "proof": [

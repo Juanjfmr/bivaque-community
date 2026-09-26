@@ -19,6 +19,10 @@ import {
   type ProviderHit,
   type SearchGroup,
 } from "../../../../lib/search/groups"
+
+// Quantos pedidos a busca traz: o grupo mostra três e conta o resto.
+const INDICATION_SEARCH_LIMIT = 20
+
 import { isSessionExpiredError, resolveTerm } from "../../../../lib/search/params"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { Card } from "../../../components/bivaque/card"
@@ -130,7 +134,7 @@ function BuscaContent() {
 
     setStatus("loading")
     const nowIso = new Date().toISOString()
-    const [providers, guide, events] = await Promise.all([
+    const [providers, guide, events, indications] = await Promise.all([
       supabase.rpc("search_providers", { p_query: term }),
       supabase
         .from("arrival_guide_entries")
@@ -144,14 +148,19 @@ function BuscaContent() {
         .neq("status", "cancelled")
         .gte("starts_at", nowIso)
         .order("starts_at", { ascending: true }),
+      supabase.rpc("list_indications", {
+        p_locality_id: current.id,
+        p_query: term,
+        p_limit: INDICATION_SEARCH_LIMIT,
+      }),
     ])
 
     if (seq !== searchSeq.current) return
 
-    const failed = [providers, guide, events].find((result) => result.error)
+    const failed = [providers, guide, events, indications].find((result) => result.error)
     if (failed?.error) {
       // Uma consulta que falha não pode virar lista vazia disfarçada: a tela
-      // inteira declara o erro e a retomada refaz as três.
+      // inteira declara o erro e a retomada refaz todas.
       setGroups([])
       setStatus(isSessionExpiredError(failed.error) ? "expired" : "error")
       return
@@ -163,6 +172,7 @@ function BuscaContent() {
         providers: (providers.data ?? []) as unknown as ProviderHit[],
         guideEntries: (guide.data ?? []) as unknown as GuideHit[],
         events: (events.data ?? []) as unknown as EventHit[],
+        indications: indications.data ?? [],
       }),
     )
     setStatus("ok")
@@ -193,8 +203,8 @@ function BuscaContent() {
         {term === "" ? "Buscar no Bivaque" : `Resultados para “${term}”`}
       </h1>
       <p className="mt-1 text-sm text-muted">
-        {current.cityName}, {current.stateCode} — guia, serviços e eventos. A busca usa sua cidade
-        atual; trocar a cidade refaz as três consultas.
+        {current.cityName}, {current.stateCode} — indicações, guia, serviços e eventos. A busca usa
+        sua cidade atual; trocar a cidade refaz as consultas.
       </p>
 
       <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start lg:gap-8">
@@ -274,7 +284,7 @@ function BuscaContent() {
                 <h2 className="text-sm font-semibold">Termo e cidade</h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted">
                   O termo fica na URL como <span className="font-medium">?q=</span>. Trocar de
-                  cidade em Localidade refaz as três buscas.
+                  cidade em Localidade refaz as buscas.
                 </p>
               </Card>
               <Card className="p-4">
@@ -322,7 +332,7 @@ function BuscaContent() {
                 <h2 className="text-sm font-semibold">Buscar em outra cidade</h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted">
                   Se o termo faz sentido em outra cidade, troque a cidade atual em Localidade: a
-                  busca refaz as três consultas.
+                  busca refaz as consultas.
                 </p>
                 <Link
                   href="/localidade"

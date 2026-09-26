@@ -189,7 +189,7 @@ export function AppShell({ children }: AppShellProperties) {
             {/* Nome acessível pelo aria-label em toda largura; o texto visível
                 entra a partir de lg, onde há espaço para ele. */}
             <a
-              href="/indicacoes"
+              href="/community?vista=indicacoes"
               aria-label="Indicações"
               className={`${ICON_BUTTON} lg:w-auto lg:gap-1.5 lg:px-3 lg:text-sm lg:font-medium`}
             >

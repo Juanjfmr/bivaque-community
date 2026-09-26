@@ -60,7 +60,7 @@ function readyCount<T>(state: Loaded<T>, pick: (data: T) => number): number | nu
 
 const SHORTCUTS: Shortcut[] = [
   {
-    href: "/indicacoes",
+    href: "/community?vista=indicacoes",
     label: "Perguntas",
     icon: MessageCircleQuestion,
     fallback: "À cidade",

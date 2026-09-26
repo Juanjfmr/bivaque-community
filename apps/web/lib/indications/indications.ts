@@ -41,8 +41,14 @@ export function indicationHref(requestId: string): string {
   return `/indicacoes/${requestId}`
 }
 
+/**
+ * As indicações moram na Comunidade, ao lado da conversa: é lá que o membro
+ * já está. /indicacoes e /recommendations redirecionam para cá.
+ */
+export const INDICATIONS_HREF = "/community?vista=indicacoes"
+
 /** Destino de "Pedir uma indicação": a caixa de pedir já aberta e focada. */
-export const ASK_INDICATION_HREF = "/indicacoes?pedir=1"
+export const ASK_INDICATION_HREF = `${INDICATIONS_HREF}&pedir=1`
 
 // Palavras que denunciam a categoria. Sem acento e em minúsculas: o texto é
 // normalizado antes. A primeira categoria com palavra encontrada vence, então
@@ -187,4 +193,88 @@ export function relativeAge(iso: string, now: Date): string {
   if (months < 12) return months === 1 ? "há 1 mês" : `há ${months} meses`
   const years = Math.floor(months / 12)
   return years === 1 ? "há 1 ano" : `há ${years} anos`
+}
+
+// Palavras de pergunta que não dizem o que se procura. Espelha a lista de
+// private.indication_terms (migration 20260926004501), para o Guia casar pelo
+// mesmo critério que a memória de indicações.
+const QUESTION_WORDS = new Set([
+  "alguem",
+  "algum",
+  "alguma",
+  "indica",
+  "indicam",
+  "indicar",
+  "indique",
+  "indicacao",
+  "indicacoes",
+  "recomenda",
+  "recomendam",
+  "recomendacao",
+  "procuro",
+  "procurando",
+  "preciso",
+  "precisando",
+  "conhece",
+  "conhecem",
+  "sabe",
+  "sabem",
+  "bom",
+  "boa",
+  "bons",
+  "boas",
+  "onde",
+  "quem",
+  "qual",
+  "quais",
+  "tem",
+  "pra",
+  "pro",
+  "favor",
+  "aqui",
+  "gente",
+  "pessoal",
+  "algo",
+  "para",
+  "por",
+  "com",
+  "que",
+  "uma",
+  "uns",
+  "umas",
+  "dos",
+  "das",
+  "nos",
+  "nas",
+  "meu",
+  "minha",
+  "the",
+])
+
+/** Termos do que a pessoa escreveu: sem acento, sem palavras de pergunta. */
+export function queryTerms(text: string): string[] {
+  const words = normalize(text).split(/[^a-z0-9]+/)
+  return [...new Set(words.filter((word) => word.length >= 3 && !QUESTION_WORDS.has(word)))]
+}
+
+export interface GuideCandidate {
+  id: string
+  name: string
+  description: string | null
+  category: string
+}
+
+/** Itens do Guia em que algum termo aparece no nome ou na descrição. */
+export function guideMatches<T extends GuideCandidate>(entries: T[], text: string, limit = 3): T[] {
+  const terms = queryTerms(text)
+  if (terms.length === 0) return []
+  return entries
+    .map((entry) => {
+      const haystack = normalize(`${entry.name} ${entry.description ?? ""}`)
+      return { entry, hits: terms.filter((term) => haystack.includes(term)).length }
+    })
+    .filter((scored) => scored.hits > 0)
+    .sort((a, b) => b.hits - a.hits)
+    .slice(0, limit)
+    .map((scored) => scored.entry)
 }

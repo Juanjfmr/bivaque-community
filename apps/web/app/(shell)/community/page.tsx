@@ -2,8 +2,7 @@
 
 import { Tabs } from "@heroui/react"
 import { CheckCircle2 } from "lucide-react"
-import type { Route } from "next"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { useLocalityContext } from "../../../lib/locality-context"
@@ -30,6 +29,7 @@ import { CommunityHeader } from "./community-header"
 import { appendPage, DEEP_LINK_MAX_PAGES, hasMoreAfter, pageParams } from "./feed-pages"
 import { sectionFeed } from "./feed-sections"
 import { useCommunityHeader } from "./use-community-header"
+import { CommunityViewSwitch, readCommunityView } from "./view-switch"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
 type SortOrder = "recent" | "relevant"
@@ -39,13 +39,6 @@ type SortOrder = "recent" | "relevant"
 // Runna; a linha "Post about…" + "Post" do Threads; o trilho com regras do X e
 // próximos encontros do Circle. A ordem da página: quem é a comunidade →
 // publicar → como ler (abas presas ao topo) → as publicações.
-
-type CommunityView = "conversa" | "indicacoes"
-
-const VIEW_TABS: { key: CommunityView; label: string }[] = [
-  { key: "conversa", label: "Conversa" },
-  { key: "indicacoes", label: "Indicações" },
-]
 
 const SORT_TABS: { key: SortOrder; label: string }[] = [
   { key: "recent", label: "Recentes" },
@@ -83,13 +76,11 @@ export default function CommunityPage() {
     ? `${current.cityName}, ${current.stateCode}`
     : current.cityName
 
-  const router = useRouter()
   const searchParams = useSearchParams()
   const targetPostId = searchParams.get("post")
-  // Duas vistas da mesma comunidade (ADR-20260925-memoria-de-indicacoes): a
-  // conversa corre, as indicações ficam. A vista mora na URL para o link de
-  // "Pedir uma indicação" e o botão voltar chegarem nela.
-  const view: CommunityView = searchParams.get("vista") === "indicacoes" ? "indicacoes" : "conversa"
+  const view = readCommunityView(searchParams.get("vista"))
+  const autoFocusAsk = searchParams.get("pedir") === "1"
+  const initialQuery = searchParams.get("q") ?? ""
   const [highlightedPostId, setHighlightedPostId] = useState<string | null>(null)
   const postRefs = useRef<Map<string, HTMLElement | null>>(new Map())
   const hasScrolledToDeepLink = useRef(false)
@@ -346,10 +337,22 @@ export default function CommunityPage() {
           — o membro ainda pode publicar com alcance da cidade. */}
       {hasResolved && !primaryCommunityId && !error ? (
         <>
-          <div className="mx-auto w-full max-w-[72rem] px-4 pt-4 sm:pt-6 lg:px-8">
+          <div className="mx-auto w-full max-w-[72rem] space-y-4 px-4 pt-4 sm:pt-6 lg:px-8">
             <JoinCommunityCard />
+            {/* Sem comunidade, as indicações da cidade continuam ao alcance. */}
+            <CommunityViewSwitch view={view} />
+            {view === "indicacoes" ? (
+              <div className="pb-8">
+                <IndicationsPanel
+                  localityId={current.id}
+                  cityName={current.cityName}
+                  autoFocusAsk={autoFocusAsk}
+                  initialQuery={initialQuery}
+                />
+              </div>
+            ) : null}
           </div>
-          <CityReference onPublish={() => handleOpenModal()} />
+          {view === "conversa" ? <CityReference onPublish={() => handleOpenModal()} /> : null}
           {showCreateModal && (
             <CreatePostModal
               localityId={current.id}
@@ -378,33 +381,15 @@ export default function CommunityPage() {
                 <h1 className="text-xl font-semibold tracking-tight text-ui-ink">Comunidade</h1>
               )}
 
-              <Tabs
-                aria-label="Vistas da comunidade"
-                selectedKey={view}
-                onSelectionChange={(key) =>
-                  router.replace(
-                    (key === "indicacoes" ? "/community?vista=indicacoes" : "/community") as Route,
-                    { scroll: false },
-                  )
-                }
-              >
-                {/* Seletor segmentado: as duas vistas têm o mesmo peso, e a escolhida
-                    fica em superfície clara sobre o trilho. */}
-                <Tabs.List className="grid grid-cols-2 gap-1 rounded-full bg-ui-subtle p-1">
-                  {VIEW_TABS.map((item) => (
-                    <Tabs.Tab
-                      key={item.key}
-                      id={item.key}
-                      className="flex min-h-10 items-center justify-center rounded-full text-sm font-semibold text-ui-ink-2 transition-colors data-[selected=true]:bg-ui-surface data-[selected=true]:text-ui-ink data-[selected=true]:shadow-ui"
-                    >
-                      {item.label}
-                    </Tabs.Tab>
-                  ))}
-                </Tabs.List>
-              </Tabs>
+              <CommunityViewSwitch view={view} />
 
               {view === "indicacoes" ? (
-                <IndicationsPanel localityId={current.id} cityName={current.cityName} />
+                <IndicationsPanel
+                  localityId={current.id}
+                  cityName={current.cityName}
+                  autoFocusAsk={autoFocusAsk}
+                  initialQuery={initialQuery}
+                />
               ) : (
                 <>
                   <FeedComposer

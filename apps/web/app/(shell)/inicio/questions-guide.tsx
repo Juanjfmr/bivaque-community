@@ -65,7 +65,7 @@ export function OpenQuestions({
       id="secao-perguntas"
       title={title}
       icon={MessageCircleQuestion}
-      href="/indicacoes"
+      href="/community?vista=indicacoes"
       badge={badge}
     >
       {state.status === "loading" ? (

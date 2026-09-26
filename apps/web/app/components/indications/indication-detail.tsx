@@ -1,18 +1,21 @@
 "use client"
 
-import { Button, TextArea } from "@heroui/react"
+import { Button, TextArea, useOverlayState } from "@heroui/react"
 import { ArrowLeft, Bookmark, BookmarkCheck, CheckCircle2, ExternalLink } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useCallback, useEffect, useId, useState } from "react"
 import {
   categoryLabel,
+  INDICATIONS_HREF,
   type IndicationCategory,
+  indicationHref,
   indicationStatus,
   relativeAge,
   STATUS_LABELS,
 } from "../../../lib/indications/indications"
 import { callResolutionRpc } from "../../../lib/recommendations/resolution-rpcs"
+import { accessibleSuffix, overflowTriggerLabel } from "../../../lib/recommendations/trigger-label"
 import {
   readFailure,
   type WriteOperation,
@@ -22,11 +25,12 @@ import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "../bivaque/avatar"
 import { EmptyState } from "../bivaque/empty-state"
 import { ErrorState } from "../bivaque/error-state"
-import { ReportButton } from "../bivaque/report-button"
+import { LeanOverflowMenu } from "../bivaque/feed-post-menu"
+import { ReportButton, type ReportTargetType } from "../bivaque/report-button"
 import { Skeleton } from "../bivaque/skeleton"
 
 // A conversa de um pedido de indicação. O gesto que dá memória à cidade é o de
-// quem perguntou: "Isso resolveu" guarda a resposta junto do pedido, e é ela
+// quem perguntou: "Ajudou a resolver" guarda a resposta junto do pedido, e é ela
 // que aparece para quem procurar a mesma coisa depois.
 
 const REPLY_MIN = 5
@@ -145,6 +149,18 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
   const [feedback, setFeedback] = useState("")
   const [now] = useState(() => new Date())
   const replyId = useId()
+  // Moderação e ações raras ficam no menu de mais opções (DS-006): um único
+  // modal de denúncia, apontado para o pedido ou para a resposta escolhida.
+  const reportModal = useOverlayState()
+  const [reportTarget, setReportTarget] = useState<{
+    type: ReportTargetType
+    id: string
+    authorId: string
+  } | null>(null)
+  const openReport = (type: ReportTargetType, id: string, authorId: string) => {
+    setReportTarget({ type, id, authorId })
+    reportModal.open()
+  }
 
   const reload = useCallback(async () => {
     setState(await loadIndication(requestId))
@@ -199,7 +215,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
           title="Este pedido não está disponível"
           description="Ele pode ter sido excluído por quem perguntou ou ser de um grupo do qual você não participa."
           action={
-            <Link href={"/indicacoes" as Route} className="text-sm font-semibold text-ui-brand">
+            <Link href={INDICATIONS_HREF as Route} className="text-sm font-semibold text-ui-brand">
               Ver as indicações da cidade
             </Link>
           }
@@ -232,7 +248,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-4 pb-10 sm:pt-6 lg:px-8">
       <Link
-        href={"/indicacoes" as Route}
+        href={INDICATIONS_HREF as Route}
         className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-ui-brand"
       >
         <ArrowLeft size={16} aria-hidden="true" />
@@ -250,7 +266,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
               status === "resolvido" ? "bg-ui-brand-soft text-ui-brand" : "bg-ui-subtle text-ui-ink"
             }`}
           >
-            {STATUS_LABELS[status]}
+            {status === "resolvido" ? "Resolvida pela autora" : STATUS_LABELS[status]}
           </span>
         </div>
         <h1 className="mt-1 text-xl leading-snug font-semibold tracking-tight text-ui-ink">
@@ -264,7 +280,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
           <div className="mt-4 rounded-ui bg-ui-brand-soft p-3">
             <p className="flex items-center gap-1.5 text-xs font-semibold text-ui-brand">
               <CheckCircle2 size={14} aria-hidden="true" />
-              Resolveu · resposta de {nameOf(resolvedReply.author_id)}
+              Ajudou a resolver · resposta de {nameOf(resolvedReply.author_id)}
             </p>
             <p className="mt-1 text-sm whitespace-pre-line text-ui-ink">{resolvedReply.body}</p>
           </div>
@@ -296,29 +312,34 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
             )}
             {saved ? "Salvo" : "Salvar"}
           </Button>
-          {isAuthor && request.is_resolved ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              isPending={busy === "reopen"}
-              onPress={() =>
-                void run("reopen", "reabrir_pedido", () =>
-                  callResolutionRpc(supabase, "reopen_recommendation", {
-                    p_request_id: request.id,
-                  }),
-                )
+          <div className="ml-auto">
+            <LeanOverflowMenu
+              postId={request.id}
+              sharePath={indicationHref(request.id)}
+              menuLabel="Ações do pedido"
+              triggerLabel={overflowTriggerLabel("do pedido", request.title)}
+              labels={{
+                share: "Compartilhar pedido",
+                report: "Denunciar pedido",
+                reopen: "Reabrir pedido",
+              }}
+              onReport={
+                isAuthor
+                  ? undefined
+                  : () => openReport("recommendation_request", request.id, request.author_id)
               }
-            >
-              Reabrir pedido
-            </Button>
-          ) : null}
-          {isAuthor ? null : (
-            <ReportButton
-              targetType="recommendation_request"
-              targetId={request.id}
-              blockUserId={request.author_id}
+              onReopen={
+                isAuthor && request.is_resolved
+                  ? () =>
+                      void run("reopen", "reabrir_pedido", () =>
+                        callResolutionRpc(supabase, "reopen_recommendation", {
+                          p_request_id: request.id,
+                        }),
+                      )
+                  : undefined
+              }
             />
-          )}
+          </div>
         </div>
       </article>
 
@@ -337,7 +358,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
 
         {isAuthor && !request.is_resolved && replies.length > 0 ? (
           <p className="text-sm text-ui-ink-2">
-            Quando uma resposta resolver, toque em “Isso resolveu”. Ela fica guardada para quem
+            Quando uma resposta resolver, toque em “Ajudou a resolver”. Ela fica guardada para quem
             procurar a mesma coisa depois.
           </p>
         ) : null}
@@ -346,6 +367,7 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
           {replies.map((reply) => {
             const marked = reply.id === request.resolved_reply_id
             const guide = guideLinks[reply.id]
+            const isOwnReply = reply.author_id === viewerId
             return (
               <li
                 key={reply.id}
@@ -362,12 +384,42 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
                     <span className="font-semibold text-ui-ink">{nameOf(reply.author_id)}</span>{" "}
                     <span className="text-ui-ink-2">· {relativeAge(reply.created_at, now)}</span>
                   </p>
-                  {marked ? (
-                    <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-ui-brand-soft px-2 py-0.5 text-xs font-semibold text-ui-brand">
-                      <CheckCircle2 size={12} aria-hidden="true" />
-                      Resolveu
-                    </span>
-                  ) : null}
+                  <div className="ml-auto flex shrink-0 items-center gap-1">
+                    {marked ? (
+                      <span className="flex items-center gap-1 rounded-full bg-ui-brand-soft px-2 py-0.5 text-xs font-semibold text-ui-brand">
+                        <CheckCircle2 size={12} aria-hidden="true" />
+                        Ajudou a resolver
+                      </span>
+                    ) : null}
+                    <LeanOverflowMenu
+                      postId={reply.id}
+                      sharePath={indicationHref(request.id)}
+                      menuLabel="Ações da resposta"
+                      triggerLabel={overflowTriggerLabel("da resposta", reply.body)}
+                      labels={{
+                        share: "Compartilhar pedido",
+                        report: "Denunciar resposta",
+                        delete: "Excluir resposta",
+                      }}
+                      onReport={
+                        isOwnReply
+                          ? undefined
+                          : () => openReport("recommendation_reply", reply.id, reply.author_id)
+                      }
+                      onDelete={
+                        isOwnReply
+                          ? () =>
+                              void run(`delete:${reply.id}`, "excluir_resposta", () =>
+                                supabase
+                                  .from("recommendation_replies")
+                                  .delete()
+                                  .eq("id", reply.id)
+                                  .eq("author_id", viewerId),
+                              )
+                          : undefined
+                      }
+                    />
+                  </div>
                 </div>
                 <p className="mt-2 text-sm whitespace-pre-line text-ui-ink">{reply.body}</p>
                 {guide ? (
@@ -379,66 +431,47 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
                     {guide.name} no Guia
                   </Link>
                 ) : null}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {isAuthor && !marked ? (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      isPending={busy === `mark:${reply.id}`}
-                      onPress={() =>
-                        void run(`mark:${reply.id}`, "marcar_resposta", () =>
-                          callResolutionRpc(supabase, "mark_recommendation_reply_resolved", {
-                            p_request_id: request.id,
-                            p_reply_id: reply.id,
-                          }),
-                        )
-                      }
-                    >
-                      <CheckCircle2 size={16} aria-hidden="true" />
-                      Isso resolveu
-                    </Button>
-                  ) : null}
-                  {isAuthor && marked ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      isPending={busy === "clear"}
-                      onPress={() =>
-                        void run("clear", "limpar_marca", () =>
-                          callResolutionRpc(supabase, "clear_recommendation_resolved_reply", {
-                            p_request_id: request.id,
-                          }),
-                        )
-                      }
-                    >
-                      Desmarcar
-                    </Button>
-                  ) : null}
-                  {reply.author_id === viewerId ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      isPending={busy === `delete:${reply.id}`}
-                      onPress={() =>
-                        void run(`delete:${reply.id}`, "excluir_resposta", () =>
-                          supabase
-                            .from("recommendation_replies")
-                            .delete()
-                            .eq("id", reply.id)
-                            .eq("author_id", viewerId),
-                        )
-                      }
-                    >
-                      Excluir
-                    </Button>
-                  ) : (
-                    <ReportButton
-                      targetType="recommendation_reply"
-                      targetId={reply.id}
-                      blockUserId={reply.author_id}
-                    />
-                  )}
-                </div>
+                {isAuthor ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {!marked ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        isPending={busy === `mark:${reply.id}`}
+                        // Uma por resposta: o nome diz qual, começando pelo
+                        // rótulo visível (WCAG 2.5.3).
+                        aria-label={`Ajudou a resolver: resposta de ${nameOf(reply.author_id)}, ${accessibleSuffix(reply.body)}`}
+                        onPress={() =>
+                          void run(`mark:${reply.id}`, "marcar_resposta", () =>
+                            callResolutionRpc(supabase, "mark_recommendation_reply_resolved", {
+                              p_request_id: request.id,
+                              p_reply_id: reply.id,
+                            }),
+                          )
+                        }
+                      >
+                        <CheckCircle2 size={16} aria-hidden="true" />
+                        Ajudou a resolver
+                      </Button>
+                    ) : null}
+                    {marked ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isPending={busy === "clear"}
+                        onPress={() =>
+                          void run("clear", "limpar_marca", () =>
+                            callResolutionRpc(supabase, "clear_recommendation_resolved_reply", {
+                              p_request_id: request.id,
+                            }),
+                          )
+                        }
+                      >
+                        Remover marca
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
               </li>
             )
           })}
@@ -469,6 +502,15 @@ export function IndicationDetail({ requestId }: { requestId: string }) {
           </div>
         </div>
       </section>
+
+      {reportTarget ? (
+        <ReportButton
+          targetType={reportTarget.type}
+          targetId={reportTarget.id}
+          blockUserId={reportTarget.authorId}
+          externalState={reportModal}
+        />
+      ) : null}
     </div>
   )
 }

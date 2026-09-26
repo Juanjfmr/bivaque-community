@@ -2,12 +2,19 @@ import { describe, expect, it } from "vitest"
 import {
   ASK_INDICATION_HREF,
   categoryLabel,
+  guideMatches,
+  INDICATIONS_HREF,
   indicationHref,
   indicationStatus,
+  queryTerms,
   relativeAge,
   suggestCategory,
   titleProblem,
 } from "../../../apps/web/lib/indications/indications"
+import {
+  indicacoesRedirect,
+  recommendationsRedirect,
+} from "../../../apps/web/lib/indications/legacy-routes"
 
 describe("categoria sugerida pelo pedido", () => {
   it.each([
@@ -72,11 +79,74 @@ describe("um pedido, um endereço", () => {
   it("o detalhe mora em /indicacoes/<id>", () => {
     expect(indicationHref("abc")).toBe("/indicacoes/abc")
   })
-  it("pedir abre a caixa de pedir", () => {
-    expect(ASK_INDICATION_HREF).toBe("/indicacoes?pedir=1")
+  it("as indicações moram na Comunidade, e pedir abre a caixa focada", () => {
+    expect(INDICATIONS_HREF).toBe("/community?vista=indicacoes")
+    expect(ASK_INDICATION_HREF).toBe("/community?vista=indicacoes&pedir=1")
   })
   it("rótulo de categoria desconhecida cai em Outros", () => {
     expect(categoryLabel("outros")).toBe("Outros")
     expect(categoryLabel("saude_bem_estar")).toBe("Saúde")
+  })
+})
+
+describe("o Guia antes de pedir", () => {
+  const guide = [
+    {
+      id: "h",
+      name: "Hospital de Guarnição",
+      description: "Pronto-socorro e pediatria",
+      category: "hospital",
+    },
+    {
+      id: "c",
+      name: "Colégio Militar",
+      description: "Ensino fundamental e médio",
+      category: "school",
+    },
+    {
+      id: "t",
+      name: "Rota Norte Mudanças",
+      description: "Transportadora de mudança",
+      category: "transporter",
+    },
+  ]
+
+  it("tira acento e palavras de pergunta", () => {
+    expect(queryTerms("Alguém indica um médico pediatra?")).toEqual(["medico", "pediatra"])
+  })
+
+  it("acha pelo nome ou pela descrição, sem acento", () => {
+    expect(guideMatches(guide, "Alguém indica pediatria?").map((entry) => entry.id)).toEqual(["h"])
+    expect(guideMatches(guide, "colegio para meu filho").map((entry) => entry.id)).toEqual(["c"])
+  })
+
+  it("quem casa mais termos vem primeiro, e só palavras de pergunta não trazem nada", () => {
+    expect(guideMatches(guide, "transportadora mudança").map((entry) => entry.id)).toEqual(["t"])
+    expect(guideMatches(guide, "alguém indica?")).toEqual([])
+  })
+})
+
+// /indicacoes e /recommendations continuam só para link antigo chegar ao lugar.
+describe("endereços antigos", () => {
+  const id = "80000000-0000-4000-8000-000000000f01"
+
+  it("/indicacoes vai à vista, e ?pedir=1 à caixa de pedir", () => {
+    expect(indicacoesRedirect({})).toBe("/community?vista=indicacoes")
+    expect(indicacoesRedirect({ pedir: "1" })).toBe("/community?vista=indicacoes&pedir=1")
+  })
+
+  it("/recommendations?focus=<id> abre o próprio pedido", () => {
+    expect(recommendationsRedirect({ focus: id })).toBe(`/indicacoes/${id}`)
+  })
+
+  it("focus que não é id não vira endereço", () => {
+    expect(recommendationsRedirect({ focus: "../admin" })).toBe("/community?vista=indicacoes")
+  })
+
+  it("cada aba antiga tem destino", () => {
+    expect(recommendationsRedirect({ aba: "request" })).toBe("/community?vista=indicacoes&pedir=1")
+    expect(recommendationsRedirect({ aba: "saved" })).toBe("/salvos?aba=indicacao")
+    expect(recommendationsRedirect({ aba: "browse" })).toBe("/community?vista=indicacoes")
+    expect(recommendationsRedirect({})).toBe("/community?vista=indicacoes")
   })
 })

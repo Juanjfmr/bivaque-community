@@ -9,6 +9,7 @@ import {
   type IndicationRow,
 } from "../../../lib/indications/indications"
 import { log } from "../../../lib/logger"
+import { readFailure } from "../../../lib/recommendations/write-failure-copy"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { EmptyState } from "../bivaque/empty-state"
 import { ErrorState } from "../bivaque/error-state"
@@ -31,17 +32,19 @@ type FilterKey = (typeof FILTERS)[number]["key"]
 
 type ListState =
   | { kind: "loading" }
-  | { kind: "error" }
+  | { kind: "error"; message: string }
   | { kind: "done"; rows: IndicationRow[]; hasMore: boolean }
 
 export function IndicationsPanel({
   localityId,
   cityName,
   autoFocusAsk = false,
+  initialQuery = "",
 }: {
   localityId: string
   cityName: string
   autoFocusAsk?: boolean
+  initialQuery?: string
 }) {
   const [filter, setFilter] = useState<FilterKey>("recentes")
   const [category, setCategory] = useState<IndicationCategory | null>(null)
@@ -75,8 +78,7 @@ export function IndicationsPanel({
     const { data, error } = await fetchPage(0)
     if (mine !== generation.current) return
     if (error) {
-      log.error("indication_list_failed", { serverMessage: error.message })
-      setList({ kind: "error" })
+      setList({ kind: "error", message: readFailure("carregar_pedidos", error.message) })
       return
     }
     const rows = data ?? []
@@ -124,7 +126,12 @@ export function IndicationsPanel({
 
   return (
     <div className="space-y-4">
-      <AskIndication localityId={localityId} cityName={cityName} autoFocus={autoFocusAsk} />
+      <AskIndication
+        localityId={localityId}
+        cityName={cityName}
+        autoFocus={autoFocusAsk}
+        initialQuery={initialQuery}
+      />
 
       <div className="space-y-3">
         <Tabs
@@ -170,10 +177,7 @@ export function IndicationsPanel({
       ) : null}
 
       {list.kind === "error" ? (
-        <ErrorState
-          message="Não foi possível carregar os pedidos de indicação."
-          onRetry={() => void loadFirst()}
-        />
+        <ErrorState message={list.message} onRetry={() => void loadFirst()} />
       ) : null}
 
       {list.kind === "done" && list.rows.length === 0 ? (
