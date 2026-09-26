@@ -65,12 +65,32 @@ que Mercado e Serviços ficavam separados:
   quem vende publica, quem compra procura. Serviços é o **GetNinjas do Bivaque**, como no plano
   original: quem precisa publica o pedido, e ele chega a **todos os negócios da categoria na
   cidade**, que respondem com orçamento; a pessoa compara e escolhe. O pedido direto a um
-  negócio (o `/pedidos` de hoje) continua, a partir da página dele. Responder a pedido é grátis:
-  a cobrança por contato do GetNinjas segue recusada.
+  negócio (o `/pedidos` de hoje) continua, a partir da página dele. A cobrança por contato do
+  GetNinjas segue recusada; o limite de respostas está em D10.
 - **D9 — Uma porta, duas saídas.** "O que você precisa?" oferece "Perguntar à cidade" (indicação,
   respondida por vizinhos, vira memória) e "Receber orçamentos de negócios" (pedido de serviço),
   marcáveis juntos. Os negócios já indicados aparecem ali com "Pedir orçamento". Sem preferência
   do dono; decisão reversível, porque os dois fluxos continuam separados por baixo.
+
+Complemento do dono em 26/09/2026, depois de separar as verticais (desapegos, negócios locais,
+orçamentos, moradia, benefícios e encontros):
+
+- **D10 — Responder a pedidos aberto entra no plano, não em créditos.** No degrau grátis, o
+  negócio responde a até **5 pedidos abertos por mês**; o Plano do negócio tira o limite. Não há
+  pacote de créditos nem cobrança por resposta. O pedido continua chegando a todos os negócios da
+  categoria, pagantes ou não; o limite é de resposta, nunca de recebimento. Pedido direto feito
+  na página do negócio não conta no limite. O número 5 é valor inicial, a calibrar com uso.
+- **D11 — Mercado reúne desapegos e o que as páginas de negócio vendem.** Desapego é o anúncio
+  de membro, típico de quem é transferido (modelo OLX). Produto de negócio aparece no Mercado com
+  o nome da página.
+- **D12 — Moradia continua separada, no espírito do MilitaryByOwner.** Compra e aluguel entre
+  quem é da comunidade, com filtros próprios. O Explorar ganha as entradas "Chegando na cidade" e
+  "Saindo da cidade", que cruzam Moradia, desapegos, indicações e negócios em torno da
+  transferência, sem fundir as abas.
+- **D13 — Desconto para a comunidade é parte grátis da página.** O negócio pode oferecer um
+  desconto a quem é da comunidade; ele vale para **todos os membros** e nunca fica restrito a quem
+  paga algo ao Bivaque. Benefícios pagos são outro produto:
+  [ADR-20260926-bivaque-mais](ADR-20260926-bivaque-mais.md).
 
 **Continua proibido** (§7.3 e ADR-20260820-alcance-pago D7): posição dentro de resultados,
 prioridade em indicação, ausência do rótulo, anúncio no feed, cobrar para não ser enterrado,
@@ -81,7 +101,12 @@ separado e rotulado; ele nunca muda a ordem de uma busca nem de uma lista de ind
 
 - **Uma assinatura só, de R$ 49** (20/08). Porta cara para quem vende bolo, e vendia um alcance que
   o Mercado já dá de graça.
-- **Cobrança por lead (GetNinjas).** Recusada em 20/08: incentiva gerar conversa.
+- **Cobrança por lead (GetNinjas).** Recusada em 20/08: incentiva gerar conversa. Revista em
+  26/09 com pacote de créditos e com modelo híbrido; ficou o limite no grátis (D10), porque a
+  receita vem da assinatura e não do volume de pedidos.
+- **Moradia dentro do Mercado.** Recusada em 26/09: esconde os filtros de imóvel um nível abaixo.
+- **Desconto local só para pagantes.** Recusado em 26/09: deixaria a cidade pior para quem não
+  paga.
 - **Juntar Mercado e Moradia.** Recusada: Moradia tem filtros próprios (quartos, valor, bairro).
 - **Reconhecer o negócio nas respostas por IA.** Fica para depois; a marcação por quem responde é a
   fonte da contagem.
@@ -113,4 +138,5 @@ também, o mercado e serviços devem ter uma página para cada usuário, com os 
 "Sim, indicações reais"; "1, mas com uma correção, o mercado já é para toda a cidade, para todos";
 "Quem responde marca o negócio"; "Sim, alcance grátis para todos". Em 26/09: "Mercado e
 Serviços" (onde nasce a página); "Sim, pedido aberto aos negócios"; sem preferência sobre a porta
-única.
+única. Ainda em 26/09: "Incluso no plano"; "Separada, com transferência"; "Só externos; desconto
+local para todos".
