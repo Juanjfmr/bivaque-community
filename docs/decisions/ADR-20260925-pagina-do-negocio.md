@@ -33,7 +33,7 @@ cidade inteira. O Mercado, porém, já alcança a cidade inteira para todos, de 
 Decisões do dono em 25/09/2026:
 
 - **D1 — O Explorar é a cidade, por intenção.** Portas: "Preciso de alguém ou de um lugar" (uma
-  busca sobre indicações resolvidas, Guia e negócios, com "Pedir à cidade" quando nada serve),
+  busca sobre indicações resolvidas, Guia e negócios, com a porta de D9 quando nada serve),
   Mercado, Moradia e Encontros. **Mercado e Moradia continuam separados.**
 - **D2 — Página do negócio, uma só para Mercado e Serviços.** Nome, categoria (a lista fechada da
   §7.2.1), bairro e área de atendimento, contato escolhido pelo dono, horário, fotos, catálogo,
@@ -54,6 +54,23 @@ Decisões do dono em 25/09/2026:
   | Grátis | R$ 0 | Página completa, na cidade toda, marcável em indicações |
   | Destaque de momento | R$ 9,90/semana | Bloco "Patrocinado" da categoria no Explorar, sempre rotulado |
   | Plano do negócio | R$ 39/mês | Estatísticas da página, 4 destaques de momento por mês e, depois, ferramentas (agendamento) |
+
+Complemento do dono em 26/09/2026, depois de perguntar por que a página nascia no Perfil e por
+que Mercado e Serviços ficavam separados:
+
+- **D7 — A página do negócio nasce onde a vontade nasce.** Em Serviços ("Ofereça seus serviços")
+  e no Mercado ("Vende com frequência? Crie a página do seu negócio", inclusive ao publicar). O
+  Perfil só mostra o atalho "Seu negócio" depois que ele existe.
+- **D8 — Mercado e Serviços são fluxos opostos, unidos pela página do negócio.** Mercado é oferta:
+  quem vende publica, quem compra procura. Serviços é o **GetNinjas do Bivaque**, como no plano
+  original: quem precisa publica o pedido, e ele chega a **todos os negócios da categoria na
+  cidade**, que respondem com orçamento; a pessoa compara e escolhe. O pedido direto a um
+  negócio (o `/pedidos` de hoje) continua, a partir da página dele. Responder a pedido é grátis:
+  a cobrança por contato do GetNinjas segue recusada.
+- **D9 — Uma porta, duas saídas.** "O que você precisa?" oferece "Perguntar à cidade" (indicação,
+  respondida por vizinhos, vira memória) e "Receber orçamentos de negócios" (pedido de serviço),
+  marcáveis juntos. Os negócios já indicados aparecem ali com "Pedir orçamento". Sem preferência
+  do dono; decisão reversível, porque os dois fluxos continuam separados por baixo.
 
 **Continua proibido** (§7.3 e ADR-20260820-alcance-pago D7): posição dentro de resultados,
 prioridade em indicação, ausência do rótulo, anúncio no feed, cobrar para não ser enterrado,
@@ -94,4 +111,6 @@ Dono (Juan), sessão de 25/09/2026. Respostas: "A cidade, por intenção"; "pens
 também, o mercado e serviços devem ter uma página para cada usuário, com os detalhes do negócio";
 "Manter separados"; "1, mas o prestador não pode chegar só por convite"; "Rever preço e pacote";
 "Sim, indicações reais"; "1, mas com uma correção, o mercado já é para toda a cidade, para todos";
-"Quem responde marca o negócio"; "Sim, alcance grátis para todos".
+"Quem responde marca o negócio"; "Sim, alcance grátis para todos". Em 26/09: "Mercado e
+Serviços" (onde nasce a página); "Sim, pedido aberto aos negócios"; sem preferência sobre a porta
+única.
