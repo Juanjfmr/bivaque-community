@@ -91,10 +91,9 @@ export const VISIBILITY_STATE_LABELS = { on: "Ativado", off: "Desativado" } as c
 // Nota permanente do grupo (consentimento + afordância de apagar). Nunca usa
 // "remover" para o toggle: ele oculta. O caminho de apagar é limpar o campo.
 export const AFFILIATION_SEMANTICS_NOTE =
-  "Ligar o 'Exibir no perfil' mostra o campo a quem já pode ver seu perfil " +
-  "(mesma cidade); desligar oculta, sem desfazer o que já foi visto. " +
-  "Para deixar de informar, limpe o campo: 'Nenhuma' na Força Armada, " +
-  "texto vazio na OM."
+  "Com “Exibir no perfil” ligado, quem é da sua cidade vê o campo; desligado, " +
+  "ele sai do seu perfil. Para apagar, escolha “Nenhuma” na Força Armada ou " +
+  "deixe a OM em branco."
 
 export function isAffiliationUntouched(draft: AffiliationDraft): boolean {
   return (

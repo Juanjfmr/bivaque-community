@@ -177,7 +177,7 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
       // E reencontra depois, pelo Perfil: a lista de pedidos tem entrada própria.
       await member.goto("/profile")
       await member
-        .getByRole("navigation", { name: "Atalhos do perfil" })
+        .getByRole("region", { name: "Seu espaço" })
         .getByRole("link", { name: /Meus orçamentos/ })
         .click()
       await expect(member.getByRole("heading", { level: 1, name: "Meus orçamentos" })).toBeVisible({

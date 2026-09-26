@@ -2,10 +2,13 @@
 
 import { Button } from "@heroui/react"
 import { useEffect, useState } from "react"
+import { useMemberContext } from "../../../lib/member-context"
 import { MemberAvatar } from "../../components/bivaque/avatar"
 import { getAvatarSignedUrlAction, uploadAvatarAction } from "./avatar-actions"
 
 export default function AvatarSection() {
+  // A inicial de quem ainda não tem foto sai do nome da pessoa, não de um texto fixo.
+  const { displayName } = useMemberContext()
   const [src, setSrc] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -36,7 +39,7 @@ export default function AvatarSection() {
     <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
       <p className="text-sm font-medium">Foto de perfil</p>
       <div className="mt-3 flex items-center gap-3">
-        <MemberAvatar name="me" size="lg" src={src} />
+        <MemberAvatar name={displayName} size="lg" src={src} />
         <form
           action={async (formData) => {
             setUploading(true)
