@@ -28,6 +28,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Check review workflow integrity
+        id: integrity
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$DEFAULT_BRANCH"
+          if git diff --quiet FETCH_HEAD HEAD -- .github/workflows/claude-review.yml; then
+            echo "matches-default=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matches-default=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check review credential
         id: credential
         shell: bash
@@ -41,7 +54,7 @@ jobs:
           fi
 
       - name: Claude Code Review
-        if: steps.credential.outputs.available == 'true'
+        if: steps.credential.outputs.available == 'true' && steps.integrity.outputs.matches-default == 'true'
         uses: anthropics/claude-code-action@v1
         with:
           # Chave DeepSeek (formato Anthropic em api.deepseek.com/anthropic).
@@ -92,9 +105,18 @@ jobs:
             --disallowedTools "Bash(pnpm install*),Bash(npx pnpm*),Edit,Write"
 
       - name: Report skipped review
-        if: steps.credential.outputs.available != 'true'
-        run: echo "::warning title=Review skipped::DEEPSEEK_API_KEY is unavailable to this event, commonly for Dependabot or fork pull requests. Configure the secret for that event or request a maintainer review."
+        if: steps.credential.outputs.available != 'true' || steps.integrity.outputs.matches-default != 'true'
+        shell: bash
+        env:
+          CREDENTIAL_AVAILABLE: ${{ steps.credential.outputs.available }}
+          WORKFLOW_MATCHES_DEFAULT: ${{ steps.integrity.outputs.matches-default }}
+        run: |
+          if [[ "$WORKFLOW_MATCHES_DEFAULT" != "true" ]]; then
+            echo "::warning title=Review skipped::claude-code-action requires this workflow to match the default branch. This change must be integrated before automated reviews can run."
+          elif [[ "$CREDENTIAL_AVAILABLE" != "true" ]]; then
+            echo "::warning title=Review skipped::DEEPSEEK_API_KEY is unavailable to this event, commonly for Dependabot or fork pull requests. Configure the secret for that event or request a maintainer review."
+          fi
 
       - name: Resultado
-        if: steps.credential.outputs.available == 'true'
-        run: echo "Review concluído — ver comentários no PR"
+        if: steps.credential.outputs.available == 'true' && steps.integrity.outputs.matches-default == 'true'
+        run: echo "A ação de revisão terminou; confirme o parecer e os comentários no PR antes de tratar o check como aprovação."
