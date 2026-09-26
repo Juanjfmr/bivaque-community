@@ -1,0 +1,466 @@
+begin;
+
+create extension if not exists pgtap with schema extensions;
+select plan(26);
+
+\ir fixtures/foundation.inc
+\ir fixtures/trust.inc
+\ir fixtures/authz.inc
+\ir fixtures/dm.inc
+\ir fixtures/communities.inc
+
+-- Onda G Task 6: prestador da vila A para o contexto `provider`.
+set local role postgres;
+insert into auth.users (id, email)
+values ('10000000-0000-4000-8000-000000000025', 'provider-dm@example.invalid');
+insert into public.provider_accounts (
+  auth_user_id, invited_by, community_id, locality_id
+)
+values (
+  '10000000-0000-4000-8000-000000000025',
+  '10000000-0000-4000-8000-000000000001',
+  '70000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001'
+);
+insert into public.provider_profiles (
+  id, owner_user_id, display_name, category
+)
+values (
+  '30000000-0000-4000-8000-000000000025',
+  '10000000-0000-4000-8000-000000000025',
+  'Prestador DM',
+  'alimentacao'
+);
+insert into public.provider_reach (provider_id, scope_type, scope_id, source)
+values (
+  '30000000-0000-4000-8000-000000000025',
+  'community',
+  '70000000-0000-4000-8000-000000000001',
+  'free'
+);
+
+set local role postgres;
+insert into public.locality_memberships (user_id, locality_id)
+values (
+  '10000000-0000-4000-8000-000000000008',
+  '00000000-0000-4000-8000-000000000001'
+)
+on conflict do nothing;
+
+-- ── helper: can_dm_between ───────────────────────────────────────────────────
+
+-- Shared group: 008 and 009 share group 40000000-0000-4000-8000-000000000001
+select is(
+  private.can_dm_between(
+    '10000000-0000-4000-8000-000000000008',
+    '10000000-0000-4000-8000-000000000009'
+  ),
+  true,
+  'can_dm_between returns true for shared-group pair'
+);
+
+-- Shared event: 008 and 009 both RSVPed to event 40000000-0000-4000-8000-000000000010
+select is(
+  private.can_dm_between(
+    '10000000-0000-4000-8000-000000000008',
+    '10000000-0000-4000-8000-000000000009'
+  ),
+  true,
+  'can_dm_between returns true for shared-event pair'
+);
+
+-- Recommendation thread: 008 authored request, 009 replied
+select is(
+  private.can_dm_between(
+    '10000000-0000-4000-8000-000000000008',
+    '10000000-0000-4000-8000-000000000009'
+  ),
+  true,
+  'can_dm_between returns true for recommendation-thread pair'
+);
+
+-- Accepted family: 001 and 002 have a family link (from authz.inc)
+select is(
+  private.can_dm_between(
+    '10000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000002'
+  ),
+  true,
+  'can_dm_between returns true for accepted-family pair'
+);
+
+-- No shared context: 002 and 010 share nothing
+select is(
+  private.can_dm_between(
+    '10000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000010'
+  ),
+  false,
+  'can_dm_between returns false for no-context pair'
+);
+
+-- ── create conversations via each context ────────────────────────────────────
+
+-- Group context conversation: 008 starts conversation with 009
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000008',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000009',
+      'shared_group',
+      '40000000-0000-4000-8000-000000000001'
+    )
+  $$,
+  'participant can open conversation via shared_group context through the RPC'
+);
+
+-- Defeito 1 corrigido: o participante de UUID MAIOR também abre o par — a
+-- ordenação é do servidor, e reabrir devolve a MESMA conversa.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000009',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000008',
+      'shared_group',
+      '40000000-0000-4000-8000-000000000001'
+    )
+  $$,
+  'higher-uuid participant opens the same pair without violating ordering'
+);
+
+select results_eq(
+  $$
+    select count(*)
+      from public.dm_conversations
+     where participant_a = '10000000-0000-4000-8000-000000000008'
+       and participant_b = '10000000-0000-4000-8000-000000000009'
+  $$,
+  array[1::bigint],
+  'reopening returns the same conversation, never a second one'
+);
+
+-- Family context: 001 creates conversation with 002
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000001',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000002',
+      'accepted_family',
+      '20000000-0000-4000-8000-000000000001'
+    )
+  $$,
+  'participant can open conversation via accepted_family context through the RPC'
+);
+
+-- ── participants can see their conversations ─────────────────────────────────
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000008',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select results_eq(
+  'select count(*) from public.dm_conversations',
+  array[1::bigint],
+  'participant sees their 1 conversation'
+);
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000009',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select results_eq(
+  'select count(*) from public.dm_conversations',
+  array[1::bigint],
+  'other participant also sees the same 1 conversation'
+);
+
+-- ── send a message ───────────────────────────────────────────────────────────
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000008',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+-- Get the group-context conversation ID
+select lives_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    select c.id,
+           '10000000-0000-4000-8000-000000000008',
+           'Ola, esta e uma mensagem de teste'
+    from public.dm_conversations c
+    where c.context_type = 'shared_group'
+      and c.participant_a = '10000000-0000-4000-8000-000000000008'
+    limit 1
+  $$,
+  'participant can send a message in their conversation'
+);
+
+-- Other participant can read the message
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000009',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select results_eq(
+  'select count(*) from public.dm_messages',
+  array[1::bigint],
+  'other participant sees the message'
+);
+
+-- Other participant can also send a message
+select lives_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    select c.id,
+           '10000000-0000-4000-8000-000000000009',
+           'Resposta de teste'
+    from public.dm_conversations c
+    where c.context_type = 'shared_group'
+      and c.participant_a = '10000000-0000-4000-8000-000000000008'
+    limit 1
+  $$,
+  'other participant can reply'
+);
+
+-- ── block a user ─────────────────────────────────────────────────────────────
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000009',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    insert into public.dm_blocks (blocker_user_id, blocked_user_id)
+    values (
+      '10000000-0000-4000-8000-000000000009',
+      '10000000-0000-4000-8000-000000000010'
+    )
+  $$,
+  'user can block another user'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from public.dm_blocks
+    where blocker_user_id = '10000000-0000-4000-8000-000000000009'
+  $$,
+  array[1::bigint],
+  'blocker sees their own block'
+);
+
+-- ── unblock ──────────────────────────────────────────────────────────────────
+
+select lives_ok(
+  $$
+    delete from public.dm_blocks
+    where blocker_user_id = '10000000-0000-4000-8000-000000000009'
+      and blocked_user_id = '10000000-0000-4000-8000-000000000010'
+  $$,
+  'user can unblock'
+);
+
+select is_empty(
+  $$
+    select 1
+    from public.dm_blocks
+    where blocker_user_id = '10000000-0000-4000-8000-000000000009'
+      and blocked_user_id = '10000000-0000-4000-8000-000000000010'
+  $$,
+  'block removed after unblock'
+);
+
+-- ── report a message ─────────────────────────────────────────────────────────
+
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000008',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    insert into public.reports (reporter_user_id, target_type, target_id, reason)
+    select '10000000-0000-4000-8000-000000000008',
+           'message',
+           m.id,
+           'Esta mensagem contem conteudo inapropriado para a comunidade'
+    from public.dm_messages m
+    join public.dm_conversations c
+      on c.id = m.conversation_id
+    where c.participant_a = '10000000-0000-4000-8000-000000000008'
+      and c.context_type = 'shared_group'
+      and m.sender_id = '10000000-0000-4000-8000-000000000009'
+    limit 1
+  $$,
+  'participant can report a message in their conversation'
+);
+
+select results_eq(
+  $$
+    select count(*) from public.reports
+    where reporter_user_id = '10000000-0000-4000-8000-000000000008'
+  $$,
+  array[1::bigint],
+  'reporter sees their own report'
+);
+
+-- ── o conteúdo da mensagem é de quem escreve ────────────────────────────────
+-- Migration 20260925181213: o dono revogou o filtro de conteúdo das mensagens
+-- (CPF, patente, OM, endereço). Antes, estes três casos eram recusas.
+
+select lives_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    select c.id,
+           '10000000-0000-4000-8000-000000000008',
+           'Meu CPF e 123.456.789-00'
+    from public.dm_conversations c
+    where c.context_type = 'shared_group'
+      and c.participant_a = '10000000-0000-4000-8000-000000000008'
+    limit 1
+  $$,
+  'message accepts a CPF the sender chose to share'
+);
+
+select lives_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    select c.id,
+           '10000000-0000-4000-8000-000000000008',
+           'Minha organizacao militar e essa'
+    from public.dm_conversations c
+    where c.context_type = 'shared_group'
+      and c.participant_a = '10000000-0000-4000-8000-000000000008'
+    limit 1
+  $$,
+  'message accepts a military organization reference'
+);
+
+select lives_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    select c.id,
+           '10000000-0000-4000-8000-000000000008',
+           'Meu endereco e Rua das Flores 123'
+    from public.dm_conversations c
+    where c.context_type = 'shared_group'
+      and c.participant_a = '10000000-0000-4000-8000-000000000008'
+    limit 1
+  $$,
+  'message CHECK accepts an address the sender chose to share'
+);
+
+-- ── onda G Task 6: contexto `provider` e o nome do correspondente ────────────
+
+-- Membro que VÊ a ficha abre conversa com o prestador.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000001',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    select public.open_conversation(
+      '10000000-0000-4000-8000-000000000025',
+      'provider',
+      '30000000-0000-4000-8000-000000000025'
+    )
+  $$,
+  'member who can see the showcase opens a provider conversation'
+);
+
+-- O prestador RESPONDE dentro da conversa já existente (aberta pelo membro):
+-- localiza a conversa pelo contexto e insere a mensagem — a policy nova
+-- aceita porque ele é participante e não há bloqueio.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000025',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select lives_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    select c.id,
+           '10000000-0000-4000-8000-000000000025',
+           'Resposta do prestador dentro da conversa aberta pelo membro'
+      from public.dm_conversations c
+     where c.context_type = 'provider'
+       and c.context_id = '30000000-0000-4000-8000-000000000025'
+     limit 1
+  $$,
+  'provider replies inside the member-opened conversation'
+);
+
+-- Nome do correspondente para quem participa: 008 lê o display_name de 009.
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000008',
+  true
+);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select results_eq(
+  $$
+    select public.conversation_counterpart_name(
+      (select c.id
+         from public.dm_conversations c
+        where c.participant_a = '10000000-0000-4000-8000-000000000008'
+          and c.participant_b = '10000000-0000-4000-8000-000000000009')
+    )
+  $$,
+  $$ values ('DM User B'::text) $$,
+  'participant reads the counterpart display name via the narrow RPC'
+);
+
+select * from finish();
+rollback;

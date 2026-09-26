@@ -31,7 +31,7 @@ export function GlobalSearchField() {
             type="search"
             placeholder="Buscar no Bivaque"
             autoComplete="off"
-            className="min-h-11 w-full bg-transparent text-sm text-ui-ink outline-none transition-colors placeholder:text-ui-ink-2"
+            className="min-h-11 min-w-11 w-full bg-transparent text-sm text-ui-ink outline-none transition-colors placeholder:text-ui-ink-2"
           />
         </div>
       </form>

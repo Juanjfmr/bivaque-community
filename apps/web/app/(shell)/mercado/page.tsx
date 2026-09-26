@@ -298,6 +298,12 @@ function MercadoContent() {
           <p className="text-sm text-muted">Produtos e serviços de quem faz parte da sua região.</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href={"/negocio" as Route}
+            className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-[var(--semantic-action-primary)] transition-colors hover:bg-[var(--semantic-selected)]"
+          >
+            Meu negócio
+          </Link>
           <Button
             variant="tertiary"
             size="sm"

@@ -23,6 +23,7 @@ const FORM_SEGMENTS = new Set([
 export function showsCreateAction(pathname: string): boolean {
   const path = pathname.replace(/\/+$/, "") || "/"
   if (path === "/configuracoes" || path.startsWith("/configuracoes/")) return false
+  if (path === "/negocio" || path.startsWith("/negocio/")) return false
   if (path.startsWith("/cidade/")) return false
   // A caixa de conversas (/messages) e a lista de pedidos (/pedidos) mantêm o
   // botão; só a conversa aberta, com o campo de mensagem, o dispensa.

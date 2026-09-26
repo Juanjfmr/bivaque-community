@@ -1,0 +1,81 @@
+task_id: BIZ-001
+
+objective: >
+  Um membro admitido pode criar e manter uma única página de negócio com alcance gratuito restrito
+  à cidade atual, enquanto a conta, o shell, o convite, o alcance e a revogação do prestador civil
+  existente preservam o comportamento atual.
+
+authority:
+  - docs/decisions/ADR-20260925-pagina-do-negocio.md secao D2 D3 D5 e contrato de autorizacao da primeira fatia
+  - docs/decisions/ADR-20260820-conta-de-prestador.md
+  - docs/agents/AGENT_ARCHITECTURE.md secao 5
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em e300889f provider_profiles.owner_user_id referencia provider_accounts e as policies da
+    ficha, catalogo, portfolio e storage exigem prestador civil; membros nao conseguem criar uma
+    pagina. Ver migrations 20260822014934_provider_accounts.sql e 20260825185327_provider_showcase.sql.
+
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/provider-member-business.sql
+  - supabase/database.generated.ts
+  - supabase/seed.sql
+  - apps/web/app/(shell)/negocio/
+  - apps/web/app/(provider)/prestador/actions.ts
+  - apps/web/app/(shell)/profile/page.tsx
+  - apps/web/app/(shell)/explorar/servicos/
+  - apps/web/app/(shell)/mercado/
+  - apps/web/app/components/search/global-search-field.tsx
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/components/shell/create-visibility.ts
+  - apps/web/lib/providers/
+  - scripts/visual/capture.mjs
+  - tests/unit/providers/
+  - tests/e2e/provider-member-business.spec.ts
+  - tests/unit/ui/shell-active-nav.test.ts
+  - tests/unit/ui/shell-create-action.test.ts
+  - docs/agents/tasks/BIZ-001.task.yml
+  - docs/PRODUCT_STATUS.md
+  - docs/decisions/ADR-20260925-pagina-do-negocio.md
+  - tools/backend-kanban/BOARD.md
+  - tools/backend-kanban/public/board.json
+
+forbidden:
+  - criar provider_accounts para um membro ou mudar my_account_kind por causa da página
+  - aceitar owner_user_id, locality_id, reach scope ou reach source do cliente na RPC de criação
+  - permitir alcance maior que a cidade atual do membro nesta fatia
+  - alterar o fluxo de convite, shell, reach ou revogação civil já existente
+  - habilitar escrita direta do membro em provider_reach
+  - permitir editar, mover, apagar ou subir foto para página de outra pessoa
+  - editar migration aplicada
+
+acceptance:
+  - RPC autenticada cria atomicamente uma página e um único alcance free/locality para a membership current/active derivada da sessão
+  - usuário sem membership atual ativa, não autenticado ou com conta civil não pode usar a RPC de página de membro
+  - membro permanece account kind member e não ganha linha provider_accounts
+  - RPC de edição altera somente nome/categoria/descrição; telefone continua vazio e não pode ser alterado diretamente até existir leitura pública condicional segura
+  - dono membro pode editar ficha, catálogo e portfólio e enviar fotos somente na pasta própria
+  - outro membro não pode alterar ficha, catálogo, portfólio ou foto, nem escolher owner ou cidade
+  - outro membro da mesma cidade encontra a ficha e sua foto pela busca; membro de outra cidade não encontra por leitura direta, storage ou busca
+  - revogação civil continua desligando reach e negando edição, catálogo e upload do prestador revogado
+  - portas de criação em Serviços e Mercado e atalho Seu negócio no Perfil após criação levam ao fluxo real da página
+  - falha de rede ou validação mantém os valores preenchidos e apresenta erro honesto
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/BIZ-001.task.yml
+  - npx pnpm@11.18.0 test:scope
+  - supabase test db: provider-member-business.sql e suites provider-account-boundary, provider-invitation, provider-showcase-scope, provider-search-scope e provider-revocation
+  - npx pnpm@11.18.0 typecheck
+  - npx pnpm@11.18.0 build
+  - capturas das rotas tocadas em 375, 768 e 1440
+
+risk: ownership da página, autorização por localidade, RLS e upload privado
+risk_level: R3
+adr: docs/decisions/ADR-20260925-pagina-do-negocio.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
