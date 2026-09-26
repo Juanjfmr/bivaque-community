@@ -15,6 +15,7 @@
 -- Faixas de UUID, para não colidir com supabase/tests/fixtures/foundation.inc,
 -- que usa a faixa 10000000-…:
 --   20000000-…  as duas contas exigidas pelo PILOT_RUNBOOK §1
+--   21000000-…  personas isoladas de testes E2E
 
 begin;
 
@@ -81,6 +82,49 @@ values
     '', '', '', '', '', '', '', '',
     now() - interval '10 days',
     now()
+  ),
+  -- Persona isolada para o E2E de criação repetível da página de negócio.
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '21000000-0000-4000-8000-000000000001',
+    'authenticated',
+    'authenticated',
+    'negocio-e2e-mobile@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '30 days',
+    now()
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '21000000-0000-4000-8000-000000000002',
+    'authenticated',
+    'authenticated',
+    'negocio-e2e-tablet@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '30 days',
+    now()
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '21000000-0000-4000-8000-000000000003',
+    'authenticated',
+    'authenticated',
+    'negocio-e2e-desktop@bivaque.example.invalid',
+    crypt('bivaque-e2e-local', gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    '', '', '', '', '', '', '', '',
+    now() - interval '30 days',
+    now()
   )
 on conflict (id) do nothing;
 
@@ -93,7 +137,25 @@ values
     'active_federal_military',
     now() - interval '90 days'
   ),
-  ('20000000-0000-4000-8000-000000000002', 'rejected', null, now() - interval '10 days')
+  ('20000000-0000-4000-8000-000000000002', 'rejected', null, now() - interval '10 days'),
+  (
+    '21000000-0000-4000-8000-000000000001',
+    'verified',
+    'active_federal_military',
+    now() - interval '30 days'
+  ),
+  (
+    '21000000-0000-4000-8000-000000000002',
+    'verified',
+    'active_federal_military',
+    now() - interval '30 days'
+  ),
+  (
+    '21000000-0000-4000-8000-000000000003',
+    'verified',
+    'active_federal_military',
+    now() - interval '30 days'
+  )
 on conflict (user_id) do nothing;
 
 insert into public.locality_memberships (user_id, locality_id, joined_at)
@@ -102,6 +164,21 @@ values
     '20000000-0000-4000-8000-000000000001',
     '00000000-0000-4000-8000-000000000001',
     now() - interval '90 days'
+  ),
+  (
+    '21000000-0000-4000-8000-000000000001',
+    '00000000-0000-4000-8000-000000000001',
+    now() - interval '30 days'
+  ),
+  (
+    '21000000-0000-4000-8000-000000000002',
+    '00000000-0000-4000-8000-000000000001',
+    now() - interval '30 days'
+  ),
+  (
+    '21000000-0000-4000-8000-000000000003',
+    '00000000-0000-4000-8000-000000000001',
+    now() - interval '30 days'
   )
 on conflict (user_id, locality_id) do nothing;
 
@@ -131,6 +208,27 @@ values
     'locality_members',
     1,
     now() - interval '90 days'
+  ),
+  (
+    '21000000-0000-4000-8000-000000000001',
+    'Negócio E2E',
+    'locality_members',
+    1,
+    now() - interval '30 days'
+  ),
+  (
+    '21000000-0000-4000-8000-000000000002',
+    'Negócio E2E tablet',
+    'locality_members',
+    1,
+    now() - interval '30 days'
+  ),
+  (
+    '21000000-0000-4000-8000-000000000003',
+    'Negócio E2E desktop',
+    'locality_members',
+    1,
+    now() - interval '30 days'
   )
 on conflict (user_id) do nothing;
 

@@ -36,7 +36,11 @@ function formatPrice(cents: number): string {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 }
 
-export default async function PrestadorCatalogoPage() {
+export default async function PrestadorCatalogoPage({
+  businessPage = false,
+}: {
+  businessPage?: boolean
+} = {}) {
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anonKey = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
   if (!url || !anonKey) {
@@ -66,8 +70,26 @@ export default async function PrestadorCatalogoPage() {
   if (profileError) throw new Error(`Falha ao localizar a ficha: ${profileError.message}`)
 
   if (!profile) {
+    if (businessPage) {
+      return (
+        <section className="rounded-ui-lg bg-ui-surface p-5 shadow-ui ring-1 ring-ui-line">
+          <h1 className="text-xl font-semibold tracking-tight text-ui-ink">Catálogo e portfólio</h1>
+          <p className="mt-2 max-w-prose text-sm leading-relaxed text-ui-ink-2">
+            Primeiro crie a página do seu negócio. Depois, você poderá apresentar seus serviços e
+            fotos para quem vive na cidade.
+          </p>
+          <Link
+            href="/negocio"
+            className="mt-4 inline-flex h-11 items-center justify-center rounded-ui bg-ui-brand px-4 text-sm font-semibold text-ui-on-brand transition-colors duration-150 hover:bg-ui-brand-hover"
+          >
+            Criar página do negócio
+          </Link>
+        </section>
+      )
+    }
+
     return (
-      <main className="mx-auto w-full max-w-2xl px-6 py-10">
+      <div className="mx-auto w-full max-w-2xl px-6 py-10">
         <h1 className="text-2xl font-semibold">Catálogo e portfólio</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Crie sua ficha primeiro — o catálogo se prende a ela.
@@ -80,7 +102,7 @@ export default async function PrestadorCatalogoPage() {
             Criar minha ficha
           </Link>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -113,16 +135,16 @@ export default async function PrestadorCatalogoPage() {
   const urlById = new Map(photoUrls.map((entry) => [entry.id, entry.url]))
 
   return (
-    <main className="mx-auto w-full max-w-2xl space-y-8 px-6 py-10">
+    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-4 pb-10 sm:pt-6">
       <section
         aria-label="Publicar item"
-        className="rounded-lg border border-border bg-surface p-5"
+        className="rounded-ui-lg bg-ui-surface p-4 shadow-ui ring-1 ring-ui-line sm:p-5"
       >
-        <h1 className="text-lg font-medium">Publicar item</h1>
+        <h1 className="text-lg font-semibold text-ui-ink">Publicar item</h1>
         <form action={saveCatalogItemAction} aria-label="Publicar item" className="mt-4 space-y-4">
           <input type="hidden" name="providerId" value={profileId} />
           <div>
-            <label htmlFor="novo-titulo" className="text-sm font-medium">
+            <label htmlFor="novo-titulo" className="text-sm font-medium text-ui-ink">
               Título do item
             </label>
             {/* Par label+htmlFor: o Input da HeroUI instalada não repassa
@@ -139,8 +161,8 @@ export default async function PrestadorCatalogoPage() {
             />
           </div>
           <div>
-            <label htmlFor="nova-descricao" className="text-sm font-medium">
-              Descrição <span className="font-normal text-muted-foreground">(opcional)</span>
+            <label htmlFor="nova-descricao" className="text-sm font-medium text-ui-ink">
+              Descrição <span className="font-normal text-ui-ink-2">(opcional)</span>
             </label>
             <TextArea
               id="nova-descricao"
@@ -150,7 +172,7 @@ export default async function PrestadorCatalogoPage() {
             />
           </div>
           <div>
-            <label htmlFor="novo-preco" className="text-sm font-medium">
+            <label htmlFor="novo-preco" className="text-sm font-medium text-ui-ink">
               Preço em centavos{" "}
               <span className="font-normal text-muted-foreground">(vazio é sob orçamento)</span>
             </label>
@@ -170,17 +192,22 @@ export default async function PrestadorCatalogoPage() {
       </section>
 
       <section aria-label="Meu catálogo" className="space-y-3">
-        <h2 className="text-lg font-medium">Meu catálogo</h2>
+        <h2 className="text-lg font-semibold text-ui-ink">Meu catálogo</h2>
         {catalog.length === 0 ? (
-          <p className="text-sm text-muted">Nenhum item publicado ainda.</p>
+          <p className="rounded-ui-lg bg-ui-surface px-4 py-3 text-sm text-ui-ink-2 ring-1 ring-ui-line">
+            Nenhum item publicado ainda.
+          </p>
         ) : (
           <ul className="space-y-3">
             {catalog.map((item) => (
-              <li key={item.id} className="rounded-lg border border-border bg-surface p-4">
+              <li
+                key={item.id}
+                className="rounded-ui-lg bg-ui-surface p-4 shadow-ui ring-1 ring-ui-line"
+              >
                 {/* Título visível fora do form: o valor do input não aparece
                     em leitura de tela nem em listagem — o cartão precisa
                     identificar o item à primeira vista. */}
-                <p className="text-sm font-semibold">{item.title}</p>
+                <p className="text-sm font-semibold text-ui-ink">{item.title}</p>
                 <form action={saveCatalogItemAction} className="mt-3 space-y-3">
                   <input type="hidden" name="itemId" value={item.id} />
                   <div>
@@ -270,16 +297,14 @@ export default async function PrestadorCatalogoPage() {
 
       <section
         aria-label="Adicionar foto ao portfólio"
-        className="rounded-lg border border-border bg-surface p-5"
+        className="rounded-ui-lg bg-ui-surface p-4 shadow-ui ring-1 ring-ui-line sm:p-5"
       >
-        <h2 className="text-lg font-medium">Adicionar foto ao portfólio</h2>
+        <h2 className="text-lg font-semibold text-ui-ink">Adicionar foto ao portfólio</h2>
         <form action={addPortfolioPhotoAction} className="mt-4 space-y-3">
           <div>
-            <label htmlFor="foto-arquivo" className="text-sm font-medium">
+            <label htmlFor="foto-arquivo" className="text-sm font-medium text-ui-ink">
               Escolher imagem{" "}
-              <span className="font-normal text-muted-foreground">
-                (JPEG, PNG ou WebP até 5 MB)
-              </span>
+              <span className="font-normal text-ui-ink-2">(JPEG, PNG ou WebP até 5 MB)</span>
             </label>
             {/* accept alinhado ao allowed_mime_types do bucket; max via validação server-side. */}
             <input
@@ -304,34 +329,39 @@ export default async function PrestadorCatalogoPage() {
       </section>
 
       <section aria-label="Meu portfólio" className="space-y-3">
-        <h2 className="text-lg font-medium">Meu portfólio</h2>
+        <h2 className="text-lg font-semibold text-ui-ink">Meu portfólio</h2>
         {photoRows.length === 0 ? (
-          <p className="text-sm text-muted">Nenhuma foto publicada ainda.</p>
+          <p className="rounded-ui-lg bg-ui-surface px-4 py-3 text-sm text-ui-ink-2 ring-1 ring-ui-line">
+            Nenhuma foto publicada ainda.
+          </p>
         ) : (
           <ul className="space-y-3">
             {photoRows.map((photo) => {
               const url = urlById.get(photo.id)
               return (
-                <li key={photo.id} className="rounded-lg border border-border bg-surface p-4">
+                <li
+                  key={photo.id}
+                  className="rounded-ui-lg bg-ui-surface p-4 shadow-ui ring-1 ring-ui-line"
+                >
                   {url ? (
                     // biome-ignore lint/performance/noImgElement: URL assinada de bucket privado expira em 1h; otimizador colocaria link volátil em cache.
                     <img
                       src={url}
                       alt={photo.caption ?? "Foto do portfólio"}
-                      className="aspect-4/3 w-full rounded-md border border-border object-cover"
+                      className="aspect-4/3 w-full rounded-ui border border-ui-line object-cover"
                     />
                   ) : (
                     <div
                       role="img"
                       aria-label={photo.caption ?? "Foto indisponível"}
-                      className="aspect-4/3 w-full rounded-md border border-border bg-[var(--paper)]"
+                      className="aspect-4/3 w-full rounded-ui border border-ui-line bg-ui-bg"
                     />
                   )}
                   <form action={updatePhotoCaptionAction} className="mt-3 space-y-2">
                     <input type="hidden" name="photoId" value={photo.id} />
                     <label
                       htmlFor={`legenda-${photo.id}`}
-                      className="text-xs font-medium text-muted"
+                      className="text-xs font-medium text-ui-ink-2"
                     >
                       Legenda da foto
                     </label>
@@ -383,6 +413,6 @@ export default async function PrestadorCatalogoPage() {
           </ul>
         )}
       </section>
-    </main>
+    </div>
   )
 }

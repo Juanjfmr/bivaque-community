@@ -93,6 +93,7 @@ export default function ProfilePage() {
   const { current } = useLocalityContext()
   const { communities } = useMemberContext()
   const [identity, setIdentity] = useState<Identity | null>(null)
+  const [hasBusinessPage, setHasBusinessPage] = useState(false)
   const [error, setError] = useState("")
   const signOutModal = useOverlayState()
   const [signingOut, setSigningOut] = useState(false)
@@ -108,24 +109,27 @@ export default function ProfilePage() {
       setError("Sua sessão expirou. Entre novamente para continuar.")
       return
     }
-    const [profileResult, bioResult, affiliationResult, membershipResult] = await Promise.all([
-      supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
-      callProfileBioRpc(supabase, "get_profile_bio", { p_user_id: user.id }),
-      supabase
-        .from("profile_affiliations")
-        .select("field, value, is_visible")
-        .eq("user_id", user.id),
-      supabase
-        .from("locality_memberships")
-        .select("joined_at")
-        .eq("user_id", user.id)
-        .eq("kind", "current")
-        .maybeSingle(),
-    ])
+    const [profileResult, bioResult, affiliationResult, membershipResult, businessResult] =
+      await Promise.all([
+        supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle(),
+        callProfileBioRpc(supabase, "get_profile_bio", { p_user_id: user.id }),
+        supabase
+          .from("profile_affiliations")
+          .select("field, value, is_visible")
+          .eq("user_id", user.id),
+        supabase
+          .from("locality_memberships")
+          .select("joined_at")
+          .eq("user_id", user.id)
+          .eq("kind", "current")
+          .maybeSingle(),
+        supabase.from("provider_profiles").select("id").eq("owner_user_id", user.id).maybeSingle(),
+      ])
     if (profileResult.error || !profileResult.data) {
       setError("Não foi possível carregar seu perfil. Tente novamente.")
       return
     }
+    setHasBusinessPage(!businessResult.error && businessResult.data !== null)
     // Apresentação, etiquetas e data são enfeite do cabeçalho: se falharem, o
     // perfil aparece sem eles, com o nome.
     setIdentity({
@@ -247,7 +251,7 @@ export default function ProfilePage() {
           ) : (
             <Link
               href="/profile/editar"
-              className="mt-3 inline-block text-sm font-semibold text-ui-brand"
+              className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-ui-brand transition-colors"
             >
               Conte um pouco sobre você
             </Link>
@@ -277,6 +281,17 @@ export default function ProfilePage() {
               </Link>
             </li>
           ))}
+          {hasBusinessPage ? (
+            <li>
+              <Link
+                href={"/negocio" as Route}
+                className="flex min-h-11 items-center gap-2 rounded-ui bg-ui-bg px-3 py-3 text-sm font-medium text-ui-ink ring-1 ring-ui-line transition-colors hover:bg-ui-subtle"
+              >
+                <Tag size={18} className="shrink-0 text-ui-brand" aria-hidden="true" />
+                Seu negócio
+              </Link>
+            </li>
+          ) : null}
         </ul>
       </section>
 
@@ -288,14 +303,20 @@ export default function ProfilePage() {
           <h2 id="perfil-comunidades" className="text-base font-semibold text-ui-ink">
             Suas comunidades
           </h2>
-          <Link href="/communities" className="text-sm font-semibold text-ui-brand">
+          <Link
+            href="/communities"
+            className="inline-flex min-h-11 items-center text-sm font-semibold text-ui-brand transition-colors"
+          >
             Ver todas
           </Link>
         </div>
         {communities.length === 0 ? (
           <p className="mt-2 text-sm text-ui-ink-2">
             Você ainda não entrou em uma comunidade.{" "}
-            <Link href="/communities" className="font-semibold text-ui-brand">
+            <Link
+              href="/communities"
+              className="inline-flex min-h-11 items-center font-semibold text-ui-brand transition-colors"
+            >
               Encontre a sua
             </Link>
             .
@@ -306,7 +327,7 @@ export default function ProfilePage() {
               <li key={community.id}>
                 <Link
                   href={`/communities/${community.id}` as Route}
-                  className="flex min-h-12 items-center gap-3 py-2 hover:text-ui-brand"
+                  className="flex min-h-12 items-center gap-3 py-2 transition-colors hover:text-ui-brand"
                 >
                   {community.thumbnailUrl ? (
                     // biome-ignore lint/performance/noImgElement: URL assinada de bucket privado

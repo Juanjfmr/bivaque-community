@@ -33,6 +33,8 @@ describe("onde o botão de criação aparece", () => {
     "/pedidos/abc",
     "/pedidos/novo",
     "/mercado/novo",
+    "/negocio",
+    "/negocio/catalogo",
     "/mercado/abc/editar",
     "/imoveis/novo",
     "/events/novo",

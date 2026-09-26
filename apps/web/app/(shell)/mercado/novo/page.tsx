@@ -230,6 +230,16 @@ export default function NovoAnuncioPage() {
       </Link>
 
       <h1 className="text-2xl font-semibold tracking-tight">Novo anúncio</h1>
+      <p className="-mt-4 text-sm text-muted">
+        Vende com frequência?{" "}
+        <Link
+          href={"/negocio" as Route}
+          className="inline-flex min-h-11 items-center font-medium text-[var(--semantic-action-primary)] underline transition-colors"
+        >
+          Crie a página do seu negócio
+        </Link>{" "}
+        para reunir o que você oferece.
+      </p>
 
       {submitError ? <FeedbackAlert variant="danger" description={submitError} /> : null}
 

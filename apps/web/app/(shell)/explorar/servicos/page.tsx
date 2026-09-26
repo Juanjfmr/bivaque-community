@@ -348,6 +348,12 @@ function ServicosContent() {
         <h1 className="text-xl font-semibold tracking-tight">
           {term === "" ? "Prestadores de serviço" : `Resultados para “${term}”`}
         </h1>
+        <Link
+          href={"/negocio" as Route}
+          className="ml-auto inline-flex min-h-11 items-center rounded-lg border border-border px-3 text-sm font-medium text-[var(--semantic-action-primary)] transition-colors hover:bg-[var(--semantic-selected)]"
+        >
+          Ofereça seus serviços
+        </Link>
       </div>
 
       <div className="mt-4 grid grid-cols-1 items-end gap-3 sm:grid-cols-[1fr_1fr_auto]">
