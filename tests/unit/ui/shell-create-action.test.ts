@@ -67,6 +67,15 @@ describe("montagem no shell", () => {
     expect(shell).toContain("{askOpen ? (")
   })
 
+  // No celular a linha de busca recolhe ao rolar para baixo e volta ao subir;
+  // aberta a tela ela está à vista, e não some enquanto alguém digita.
+  it("a busca do cabeçalho do celular cede espaço ao ler e não some digitando", () => {
+    expect(shell).toContain("useHideOnScroll({ keepWhileFocused: searchRowRef })")
+    expect(shell).toContain("inert={searchHidden}")
+    const hook = read("apps", "web", "app", "components", "shell", "use-hide-on-scroll.ts")
+    expect(hook).toContain("keepWhileFocused?.current?.contains(document.activeElement)")
+  })
+
   it("o menu fecha com Esc e devolve o foco a quem abriu", () => {
     expect(menu).toContain('event.key === "Escape"')
     expect(menu).toContain("triggerRef.current?.focus()")
@@ -77,8 +86,10 @@ describe("montagem no shell", () => {
   // Rolar para baixo tira o botão do caminho do conteúdo; ele continua na ordem
   // de foco (sem inert nem aria-hidden) e o foco o traz de volta.
   it("o botão flutuante sai ao rolar para baixo sem sumir do teclado", () => {
-    expect(menu).toContain("useHideOnScrollDown(open)")
-    expect(menu).toContain('document.querySelector("main")')
+    // A regra de rolagem é compartilhada com a busca do cabeçalho do celular.
+    expect(menu).toContain("useHideOnScroll({ disabled: open })")
+    const hook = read("apps", "web", "app", "components", "shell", "use-hide-on-scroll.ts")
+    expect(hook).toContain('document.querySelector("main")')
     expect(menu).toContain("onFocus={reveal}")
     expect(menu).toContain("motion-reduce:transition-none")
     const fab = menu.slice(menu.indexOf("export function CreateFab"))

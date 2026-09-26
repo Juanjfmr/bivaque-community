@@ -20,6 +20,3 @@ export const DEFAULT_RECOMMENDATION_TAB: RecommendationTabId = "browse"
 export function resolveRecommendationTab(value: string | null | undefined): RecommendationTabId {
   return RECOMMENDATION_TAB_IDS.find((id) => id === value) ?? DEFAULT_RECOMMENDATION_TAB
 }
-
-/** Destino real da intenção `Pedir uma indicação` (prancha 01/45). */
-export const ASK_INDICATION_HREF = "/recommendations?aba=request"

@@ -113,7 +113,7 @@ test.describe("salvos: origem, destino e remoção", { tag: "@stateful" }, () =>
     // abrir leva ao destino real do pedido
     await expect(page.getByRole("link", { name: REQUEST_TITLE })).toHaveAttribute(
       "href",
-      new RegExp(`/recommendations\\?focus=${REQUEST_ID}`),
+      new RegExp(`/indicacoes/${REQUEST_ID}$`),
     )
 
     // ── busca da prancha ─────────────────────────────────────────────────────

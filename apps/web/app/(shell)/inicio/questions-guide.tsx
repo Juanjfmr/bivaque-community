@@ -65,7 +65,7 @@ export function OpenQuestions({
       id="secao-perguntas"
       title={title}
       icon={MessageCircleQuestion}
-      href="/recommendations"
+      href="/indicacoes"
       badge={badge}
     >
       {state.status === "loading" ? (
@@ -79,7 +79,7 @@ export function OpenQuestions({
           {state.data.items.map((question) => (
             <Row
               key={question.id}
-              href={`/recommendations?focus=${question.id}#req-${question.id}`}
+              href={`/indicacoes/${question.id}`}
               title={question.title}
               meta={`${relativeTime(question.createdAt)} · Você pode ajudar`}
             />

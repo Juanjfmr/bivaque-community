@@ -57,7 +57,7 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
         page,
         async () => {
           await page.goto("/community")
-          await page.getByRole("button", { name: "No que você está pensando?" }).click()
+          await page.getByRole("button", { name: /^Escreva/ }).click()
           const editor = page.getByRole("dialog")
           await editor.getByRole("textbox").first().fill(text)
 

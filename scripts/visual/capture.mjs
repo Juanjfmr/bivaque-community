@@ -120,7 +120,10 @@ export const HEADINGS = {
   "/notifications": "^Notificações$",
   "/messages": "^Mensagens$",
   "/recommendations": "^Indicações$",
-  "/prestador": "^Pedidos para você$",
+  "/indicacoes": "^Indicações$",
+  "/indicacoes/80000000-0000-4000-8000-000000000f01":
+    "^Alguém indica pediatra que atenda pelo FuSEx\\?$",
+  "/prestador": "^Orçamentos para você$",
   "/prestador/ficha": "^Minha ficha$",
   "/prestador/catalogo": "^Publicar item$",
   // RECON-024 trouxe estas duas ao entrar na integração, sem contrato — e o
@@ -197,7 +200,7 @@ export const HEADINGS = {
   "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010": "^Do que você precisa\\?$",
   // Prancha 79, painel 2: o H1 da tela que o prestador convidado abre.
   [`/prestador-convite/${PROVIDER_INVITE_TOKEN}`]: "^Ofereça seus serviços no Bivaque$",
-  "/pedidos": "^Meus pedidos$",
+  "/pedidos": "^Meus orçamentos$",
   // O título do pedido vem da primeira linha da própria descrição do pedido.
   "/pedidos/40000000-0000-4000-8000-000000000023": DYNAMIC_HEADING,
   "/recommendations?focus=80000000-0000-4000-8000-000000000f00": "^Indicações$",
@@ -482,6 +485,14 @@ export const ROUTES = [
   {
     path: "/recommendations?focus=80000000-0000-4000-8000-000000000f00",
     name: "recommendations-conversa",
+    auth: true,
+  },
+  // Memória de indicações (ADR-20260925-memoria-de-indicacoes): a lista da
+  // cidade e a conversa de um pedido resolvido do seed.
+  { path: "/indicacoes", name: "indicacoes", auth: true },
+  {
+    path: "/indicacoes/80000000-0000-4000-8000-000000000f01",
+    name: "indicacao-resolvida",
     auth: true,
   },
   { path: "/messages", name: "messages", auth: true },

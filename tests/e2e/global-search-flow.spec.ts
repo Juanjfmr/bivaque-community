@@ -65,7 +65,9 @@ test.describe("busca global do cabecalho", () => {
     const page = await context.newPage()
 
     await page.goto("/inicio")
-    const field = page.getByLabel("Buscar no Bivaque")
+    // O shell monta dois campos (desktop e celular, um sempre escondido), cada
+    // um com o próprio id desde 25/09/2026: o teste usa o que está à vista.
+    const field = page.getByLabel("Buscar no Bivaque").locator("visible=true")
     await expect(field).toBeVisible()
 
     await field.fill("escola")

@@ -599,7 +599,7 @@ export default function RecommendationRequests() {
                       <div className="shrink-0">
                         <LeanOverflowMenu
                           postId={request.id}
-                          sharePath={`/recommendations?focus=${request.id}#req-${request.id}`}
+                          sharePath={`/indicacoes/${request.id}`}
                           menuLabel="Ações do pedido"
                           // GATILHO SEM ROTULO: o nome do gatilho diz QUAL pedido
                           // este botao abre; sem ele todos os gatilhos da lista

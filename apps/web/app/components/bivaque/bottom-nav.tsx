@@ -15,6 +15,7 @@ import {
 import { Tabs } from "@heroui/react"
 import { usePathname } from "next/navigation"
 import type { ElementType, SVGProps } from "react"
+import { resolveActiveNav } from "../shell/active-nav"
 
 export interface NavItem {
   id: string
@@ -105,16 +106,17 @@ export function BottomNav() {
 
   const items = NAV_ITEMS
 
-  const secondaryPersonal =
-    pathname.startsWith("/messages") ||
-    pathname.startsWith("/notifications") ||
-    pathname.startsWith("/salvos") ||
-    pathname.startsWith("/denuncias") ||
-    pathname.startsWith("/ajuda")
-  const fallbackId = secondaryPersonal ? "perfil" : "inicio"
+  // A MESMA regra da lateral (active-nav.ts). Antes a barra tinha a própria:
+  // casava só o prefixo do item e caía em "Início" para todo o resto — então
+  // /community, /guide, /events, /mercado e /cidade acendiam Início no celular
+  // enquanto a lateral do desktop acendia o lugar certo (25/09/2026). Salvos,
+  // que na lateral tem item próprio, fica em Perfil aqui (é coisa da pessoa);
+  // O componente de abas não tem "nenhuma selecionada"; "Início" fica só como
+  // último recurso para rota sem área declarada — o que, dentro do shell, o
+  // teste de escopo de active-nav já impede.
+  const active = resolveActiveNav(pathname, items)
   const selectedKey =
-    items.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
-    fallbackId
+    active.kind === "primary" ? active.id : active.kind === "secondary" ? "perfil" : "inicio"
 
   return (
     <nav

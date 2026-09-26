@@ -1,39 +1,24 @@
-import { describe, expect, it } from "vitest"
-
-// Onda F Task 7 — guard the server-side rule + UI explanation.
-// The CHECK constraint is the single source of truth (Step 1); the UI
-// explanation prevents users from triggering 23514 in the first place
-// (Step 2). Either path must not regress.
-
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
+import { describe, expect, it } from "vitest"
+
+// A Onda F Task 7 criou "saúde começa em grupo". O dono retirou a trava e o
+// aviso em 25/09/2026 (ADR-20260925-memoria-de-indicacoes): o pedido de
+// pediatra pode ir para a cidade. O banco é a fonte; a tela não pode
+// reintroduzir a trava escondendo a opção da cidade.
 
 const root = join(import.meta.dirname, "..", "..", "..")
-const migration = join(
-  root,
-  "supabase",
-  "migrations",
-  "20260821000013_recommendation_health_needs_group.sql",
-)
-const pagePath = join(root, "apps", "web", "app", "(shell)", "recommendations", "page.tsx")
+const read = (...segments: string[]) => readFileSync(join(root, ...segments), "utf8")
 
-describe("recommendation health scope (F7)", () => {
-  it("the migration adds the constraint with the correct expression", () => {
-    const source = readFileSync(migration, "utf8")
-    expect(source).toContain("recommendation_health_needs_group")
-    expect(source).toContain("category <>")
-    expect(source).toContain("saude_bem_estar")
-    expect(source).toContain("group_id is not null")
+describe("pedido de saúde para a cidade", () => {
+  it("a migration retira a trava de saúde", () => {
+    const source = read("supabase", "migrations", "20260926004501_memoria_de_indicacoes.sql")
+    expect(source).toContain("drop constraint recommendation_health_needs_group")
   })
 
-  it("the page UI explains the health scope before submit", () => {
-    const source = readFileSync(pagePath, "utf8")
-    // The explanation appears when the category is saude_bem_estar
-    // and the locality option is hidden in the same condition.
-    expect(source).toContain("saude_bem_estar")
-    expect(source).toMatch(/Pedidos.*Saúde.*grupo/)
-    // The locality option is conditionally hidden (ternary with saude_bem_estar)
-    // The locality option is hidden when category is saude_bem_estar
-    expect(source).toContain('requestCategory !== "saude_bem_estar"')
+  it("o formulário antigo oferece a cidade para qualquer categoria, sem aviso", () => {
+    const page = read("apps", "web", "app", "(shell)", "recommendations", "page.tsx")
+    expect(page).not.toContain('requestCategory !== "saude_bem_estar"')
+    expect(page).not.toMatch(/Saúde começam em grupo/)
   })
 })

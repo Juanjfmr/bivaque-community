@@ -57,7 +57,12 @@ import NotificationPreferencesSection from "./notification-preferences-section"
 // ou de consulta real; sem dado, estado vazio honesto.
 
 const PROFILE_SHORTCUTS = [
-  { href: "/pedidos", label: "Meus pedidos", hint: "Acompanhe seus pedidos", Icon: ClipboardList },
+  {
+    href: "/pedidos",
+    label: "Meus orçamentos",
+    hint: "Pedidos a prestadores",
+    Icon: ClipboardList,
+  },
   { href: "/meus-anuncios", label: "Meus anúncios", hint: "Gerencie seus anúncios", Icon: Tag },
   { href: "#configuracoes", label: "Configurações", hint: "Gerencie sua conta", Icon: Settings },
 ] as const

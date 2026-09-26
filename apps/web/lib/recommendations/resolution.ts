@@ -1,9 +1,10 @@
 // RECON-035 — leitura da marca "resposta que resolveu".
 //
 // A marca é um ponteiro dentro da conversa (ADR-20260909-resposta-que-resolveu,
-// D5): não é reputação, ranking, selo de perfil nem insumo de busca. Este
-// módulo só decide, para um pedido e uma resposta, qual é o estado de leitura —
-// nada de agregar ou pontuar.
+// D5): não é reputação, ranking nem selo de perfil. Desde 25/09/2026 ela
+// alimenta a busca de indicações (ADR-20260925-memoria-de-indicacoes, D2), no
+// banco. Este módulo só decide, para um pedido e uma resposta, qual é o estado
+// de leitura — nada de agregar ou pontuar.
 
 export interface ResolutionView {
   is_resolved: boolean

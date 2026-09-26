@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import {
-  ASK_INDICATION_HREF,
   DEFAULT_RECOMMENDATION_TAB,
   RECOMMENDATION_TAB_IDS,
   resolveRecommendationTab,
@@ -35,8 +34,9 @@ describe("aba de /recommendations por URL (DS-006)", () => {
     expect(DEFAULT_RECOMMENDATION_TAB).toBe("browse")
   })
 
-  it("o destino da Home usa o parâmetro que a página lê", () => {
-    expect(ASK_INDICATION_HREF).toBe("/recommendations?aba=request")
+  // "Pedir uma indicação" saiu desta página em 25/09/2026 e vai para
+  // /indicacoes?pedir=1 (tests/unit/indications). A aba continua endereçável.
+  it("a página lê a aba pela URL", () => {
     expect(page).toContain('searchParams.get("aba")')
     expect(page).toContain('resolveRecommendationTab(searchParams.get("aba"))')
     // O parâmetro é lido uma segunda vez para o caso de a página já estar

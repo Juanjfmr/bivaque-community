@@ -239,7 +239,7 @@ const TARGET_HREF: Record<ReportTargetType, (id: string) => string | null> = {
   comment: () => null,
   group: (id) => `/groups/${id}`,
   message: () => null,
-  recommendation_request: (id) => `/recommendations?focus=${id}#req-${id}`,
+  recommendation_request: (id) => `/indicacoes/${id}`,
   recommendation_reply: () => null,
 }
 

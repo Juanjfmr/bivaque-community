@@ -324,9 +324,7 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
                   Esta referência nasceu de uma conversa da comunidade.
                 </p>
                 <Link
-                  href={
-                    `/recommendations?focus=${origin.requestId}#req-${origin.requestId}` as Route
-                  }
+                  href={`/indicacoes/${origin.requestId}` as Route}
                   className="mt-2 inline-flex min-h-11 w-fit items-center text-sm font-medium text-[var(--semantic-link)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                 >
                   Ver conversa

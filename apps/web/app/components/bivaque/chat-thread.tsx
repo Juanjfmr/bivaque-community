@@ -20,7 +20,7 @@ const CONTEXT_LABELS: Record<string, string> = {
   listing: "Anúncio",
   event_question: "Pergunta sobre evento",
   // ADR-20260922-conversa-por-pedido: cada pedido tem a sua conversa.
-  service_request: "Pedido de serviço",
+  service_request: "Orçamento",
 }
 
 interface ChatThreadProps {

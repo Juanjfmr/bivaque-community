@@ -14,6 +14,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
+import { COUNT_CAP } from "./hub-loaders"
 
 type InicioClient = SupabaseClient<Database>
 
@@ -117,14 +118,21 @@ export async function loadPrimaryCommunity(supabase: InicioClient): Promise<Prim
   }
 }
 
+/** Quantas publicações a prévia do Início lê (mostra 3; conta novidade sobre todas). */
+export const COMMUNITY_PREVIEW_READ = COUNT_CAP
+
 export async function loadCommunityFeed(
   supabase: InicioClient,
   communityId: string,
 ): Promise<FeedOutcome> {
   try {
+    // A prévia mostra 3, mas o selo "N novas" conta sobre o que foi lido: 50
+    // cobre o selo até o teto dele ("50+", hub-loaders COUNT_CAP) sem trazer a
+    // comunidade inteira (350 publicações na Vila Ajuricaba antes deste teto).
     const { data, error: feedError } = await supabase.rpc("feed_community", {
       p_community_id: communityId,
       p_order: "recent",
+      p_limit: COMMUNITY_PREVIEW_READ,
     })
 
     if (feedError) {

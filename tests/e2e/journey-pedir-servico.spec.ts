@@ -108,7 +108,7 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         async () => {
           await provider.goto("/prestador")
           await expect(
-            provider.getByRole("heading", { level: 1, name: "Pedidos para você" }),
+            provider.getByRole("heading", { level: 1, name: "Orçamentos para você" }),
           ).toBeVisible({ timeout: 20_000 })
           await expect(provider.getByRole("tab", { name: /^Novos \(\d+\)/ })).toBeVisible()
           await expect(provider.getByRole("row").filter({ hasText: marker })).toBeVisible()
@@ -178,9 +178,9 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
       await member.goto("/profile")
       await member
         .getByRole("navigation", { name: "Atalhos do perfil" })
-        .getByRole("link", { name: /Meus pedidos/ })
+        .getByRole("link", { name: /Meus orçamentos/ })
         .click()
-      await expect(member.getByRole("heading", { level: 1, name: "Meus pedidos" })).toBeVisible({
+      await expect(member.getByRole("heading", { level: 1, name: "Meus orçamentos" })).toBeVisible({
         timeout: 20_000,
       })
       await expect(member.getByRole("link").filter({ hasText: marker })).toBeVisible()

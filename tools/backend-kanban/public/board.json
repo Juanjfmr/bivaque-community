@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-23",
+  "updatedAt": "2026-09-25",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -3718,6 +3718,44 @@
         "Decisao do dono pendente: resposta cujo lugar ja esta no Guia fica 'devida' para sempre e o P3b reenviaria o mesmo corpo a cada execucao — o marcador de 'ja tentado, nada produzido' e estado novo"
       ],
       "completedChecklist": [false, true, true, true, true, false, true, false, true, true]
+    },
+    {
+      "id": "INDICACOES-MEMORIA",
+      "title": "Indicações com memória: pedir começa por procurar, e a resposta que resolveu fica achável",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "now",
+      "description": "Decisão do dono em 25/09/2026: as comunidades existem para substituir o grupo de WhatsApp com memória — \"as pessoas pedem indicação pelo whatsapp e 10 minutos depois ninguem mais acha\". O pedido de indicação morava só em /recommendations, a busca não o alcançava e saúde exigia grupo. ADR-20260925-memoria-de-indicacoes: saúde sem trava nem aviso, resolvido alimenta a busca (altera a D5 de ADR-20260909-resposta-que-resolveu), Indicações + Orçamentos. Entregue: list_indications (busca em português sem acento, no pedido e nas respostas), /indicacoes com busca antes de pedir, /indicacoes/[id] como endereço único, vista Indicações na Comunidade.",
+      "checklist": [
+        "ADR com as decisões do dono [FEITO 25/09]",
+        "Migration 20260926004501: saúde sem trava, detalhe opcional, list_indications [FEITO; aplicada à mão no banco local, falta o reset limpo pelo dono]",
+        "pgTAP memoria-de-indicacoes.sql [FEITO 12/12]; recommendations-health-scope.sql invertido [FEITO 3/3]",
+        "/indicacoes, /indicacoes/[id] e vista Indicações na Comunidade [FEITO, provado a 375 e 1440]",
+        "Todas as portas do pedido em /indicacoes/<id> (notificação, salvos, denúncia, Guia, Início, compartilhar) [FEITO]",
+        "/pedidos rotulado Orçamentos [FEITO]",
+        "Spec E2E do ciclo pedir → responder → Isso resolveu → achar pela busca",
+        "Decidir o destino de /recommendations (ainda permite pedir pelo formulário antigo)",
+        "Busca do cabeçalho incluir Indicações",
+        "Referências do Mobbin para o desenho (MCP desconectado na sessão de 25/09)"
+      ],
+      "proof": [
+        "pgTAP memoria-de-indicacoes.sql 12/12 no banco local (migration aplicada à mão)",
+        "Navegador 375 e 1440, três contas: foco na caixa com ?pedir=1; 'Alguém indica pediatra?' traz o pedido resolvido com a resposta; frase nova sem parecido abre 'Pedir à cidade' com categoria sugerida; publicar leva a /indicacoes/<id>; outro membro acha a pergunta sem acento e responde; a autora marca 'Isso resolveu'; um terceiro busca por prefixo e vê a resposta sem abrir a conversa; /community?vista=indicacoes acende Comunidades; nenhum erro de página"
+      ],
+      "tests": [
+        "supabase/tests/memoria-de-indicacoes.sql",
+        "tests/unit/indications/indications.test.ts",
+        "tests/unit/indications/portas.test.ts"
+      ],
+      "links": [
+        "docs/decisions/ADR-20260925-memoria-de-indicacoes.md",
+        "supabase/migrations/20260926004501_memoria_de_indicacoes.sql",
+        "apps/web/app/components/indications/"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-25",
+      "sourceRevision": "686fd5fd"
     }
   ]
 }

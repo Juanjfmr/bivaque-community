@@ -72,7 +72,7 @@ describe("/inicio: o que o trilho oferece continua alcançável no telefone", ()
   })
 
   it("Indicações tem porta no cabeçalho, em toda largura", () => {
-    expect(shell).toContain('href="/recommendations"')
+    expect(shell).toContain('href="/indicacoes"')
   })
 
   it("abaixo de 1024px a agenda da semana desce para a coluna principal", () => {
@@ -97,8 +97,10 @@ describe("/community: eventos, grupos e boas práticas alcançam o telefone", ()
   })
 
   it("o bloco duplicado — o próprio trilho — CONTINUA preso", () => {
+    // A largura mudou com o sistema visual mínimo (w-72 → w-80, 25/09/2026); o
+    // que se trava é o trilho continuar só do desktop e com largura fixa.
     expect(duplicateRail).toMatch(PINNED_TO_DESKTOP)
-    expect(duplicateRail).toContain("w-72")
+    expect(duplicateRail).toMatch(/\bw-\d+\b/)
   })
 
   it("o disclosure monta o MESMO painel do trilho", () => {
@@ -108,9 +110,9 @@ describe("/community: eventos, grupos e boas práticas alcançam o telefone", ()
 
   it("o painel carrega o que a rota não dá em nenhum outro lugar", () => {
     const panels = functionBody(source, "FeedRailPanels")
-    expect(panels).toContain("Proximos eventos")
+    expect(panels).toContain("Próximos encontros")
     expect(panels).toContain("Grupos ativos")
-    expect(panels).toContain("Boas praticas")
+    expect(panels).toContain("Boas práticas")
   })
 
   it("o dado do trilho e do disclosure vem de UMA leitura", () => {

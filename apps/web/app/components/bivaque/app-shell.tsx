@@ -7,7 +7,7 @@ import dynamic from "next/dynamic"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { type ReactNode, useCallback, useState } from "react"
+import { type ReactNode, useCallback, useRef, useState } from "react"
 import { communityImageAltText } from "../../../lib/communities/community-media"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
@@ -16,6 +16,7 @@ import { resolveActiveNav } from "../shell/active-nav"
 import { CitySwitcher } from "../shell/city-switcher"
 import { CreateButton, CreateFab, POST_CREATED_EVENT } from "../shell/create-menu"
 import { showsCreateAction } from "../shell/create-visibility"
+import { useHideOnScroll } from "../shell/use-hide-on-scroll"
 import { MemberAvatar } from "./avatar"
 import { BottomNav, NAV_ITEMS } from "./bottom-nav"
 
@@ -55,6 +56,8 @@ const CreatePostModal = dynamic(
 export function AppShell({ children }: AppShellProperties) {
   const pathname = usePathname()
   const activeNav = resolveActiveNav(pathname, NAV_ITEMS)
+  const searchRowRef = useRef<HTMLDivElement>(null)
+  const { hidden: searchHidden } = useHideOnScroll({ keepWhileFocused: searchRowRef })
   const { current } = useLocalityContext()
   const { communities, displayName, unreadCount, unreadConversations } = useMemberContext()
   const cityLabel = `${current.cityName}, ${current.stateCode}`
@@ -186,7 +189,7 @@ export function AppShell({ children }: AppShellProperties) {
             {/* Nome acessível pelo aria-label em toda largura; o texto visível
                 entra a partir de lg, onde há espaço para ele. */}
             <a
-              href="/recommendations"
+              href="/indicacoes"
               aria-label="Indicações"
               className={`${ICON_BUTTON} lg:w-auto lg:gap-1.5 lg:px-3 lg:text-sm lg:font-medium`}
             >
@@ -223,19 +226,32 @@ export function AppShell({ children }: AppShellProperties) {
               ) : null}
             </a>
 
+            {/* No celular o avatar repetia a aba Perfil da barra inferior. */}
             <a
               href="/profile"
               aria-label="Perfil"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-ui-subtle"
+              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-ui-subtle md:flex"
             >
               <MemberAvatar name={displayName} size="sm" />
             </a>
           </div>
 
           {/* No telefone a busca desce para uma segunda linha, larga, como o
-              campo da prancha 00. */}
-          <div className="px-4 pb-3 md:hidden">
-            <GlobalSearchField />
+              campo da prancha 00 — e recolhe ao rolar para baixo (ler) e volta
+              ao rolar para cima (procurar), como o botão de criação. Aberta a
+              tela, ela está lá; lendo, o cabeçalho cede 57px ao conteúdo.
+              Enquanto alguém digita nela, não some. */}
+          <div
+            ref={searchRowRef}
+            className={`grid transition-[grid-template-rows] duration-200 motion-reduce:transition-none md:hidden ${
+              searchHidden ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
+            }`}
+          >
+            <div className="overflow-hidden" inert={searchHidden}>
+              <div className="px-4 pb-3">
+                <GlobalSearchField />
+              </div>
+            </div>
           </div>
         </header>
 

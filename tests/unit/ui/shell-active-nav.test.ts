@@ -145,3 +145,29 @@ describe("RECON-042, defeito 2 — toda rota do mapa de captura declara containe
     }
   })
 })
+
+// 25/09/2026: a barra inferior do celular tinha regra própria (prefixo do item,
+// senão "Início") e acendia Início em /community, /guide, /events, /mercado e
+// /cidade, enquanto a lateral acendia o lugar certo. Agora as duas usam
+// resolveActiveNav — a mesma resposta nos dois tamanhos.
+describe("barra inferior do celular usa a mesma regra da lateral", () => {
+  const bottomNavSource = readFileSync(bottomNav, "utf8")
+
+  it("resolve a aba pelo active-nav, não por prefixo próprio", () => {
+    expect(bottomNavSource).toContain("resolveActiveNav(pathname, items)")
+    expect(bottomNavSource).not.toContain("pathname.startsWith(`${item.href}/`)")
+  })
+
+  it.each([
+    ["/community", "comunidades"],
+    ["/guide", "explorar"],
+    ["/events/abc", "explorar"],
+    ["/mercado", "explorar"],
+    ["/cidade/abc", "explorar"],
+    ["/indicacoes", "comunidades"],
+    ["/indicacoes/abc", "comunidades"],
+    ["/notifications", "perfil"],
+  ])("%s acende %s", (path, id) => {
+    expect(resolveActiveNav(path, PRIMARY)).toEqual({ kind: "primary", id })
+  })
+})

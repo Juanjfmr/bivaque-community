@@ -5,7 +5,8 @@ import { CalendarPlus, House, MapPin, MessageCircle, Plus, ShoppingBag, X } from
 import type { Route } from "next"
 import Link from "next/link"
 import { useCallback, useEffect, useId, useRef, useState } from "react"
-import { ASK_INDICATION_HREF } from "../../../lib/recommendations/request-tab"
+import { ASK_INDICATION_HREF } from "../../../lib/indications/indications"
+import { useHideOnScroll } from "./use-hide-on-scroll"
 
 /** Disparado pelo shell quando uma pergunta é publicada pelo menu de criação,
  *  para a tela aberta (o Início, por exemplo) recarregar o que mostra. */
@@ -155,53 +156,14 @@ function ActionItems({
   )
 }
 
-/** Quanto rolar numa direção antes de o botão reagir: tremida de dedo não conta. */
-const SCROLL_SLACK = 12
-/** Perto do topo o botão fica sempre à vista. */
-const SCROLL_TOP_ZONE = 96
-
-// Rolar para baixo é ler: o botão sai do caminho do conteúdo (ele cobria o fim
-// das linhas e o "Ver tudo" das seções). Rolar para cima é procurar: ele volta.
-// Referência: o botão estendido do Material e o compositor do Threads. O
-// contêiner que rola é o `main` do shell, não a janela.
-function useHideOnScrollDown(disabled: boolean) {
-  const [hidden, setHidden] = useState(false)
-
-  useEffect(() => {
-    if (disabled) {
-      setHidden(false)
-      return
-    }
-    const scroller = document.querySelector("main")
-    if (!scroller) return
-    let anchor = scroller.scrollTop
-    const onScroll = () => {
-      const y = scroller.scrollTop
-      if (y < SCROLL_TOP_ZONE) {
-        setHidden(false)
-        anchor = y
-        return
-      }
-      if (y - anchor > SCROLL_SLACK) {
-        setHidden(true)
-        anchor = y
-      } else if (anchor - y > SCROLL_SLACK) {
-        setHidden(false)
-        anchor = y
-      }
-    }
-    scroller.addEventListener("scroll", onScroll, { passive: true })
-    return () => scroller.removeEventListener("scroll", onScroll)
-  }, [disabled])
-
-  return { hidden, reveal: () => setHidden(false) }
-}
-
+// Rolar para baixo tira o botão do caminho do conteúdo (ele cobria o fim das
+// linhas e o "Ver tudo" das seções); rolar para cima o traz de volta. A regra
+// mora em use-hide-on-scroll.ts, compartilhada com a busca do cabeçalho.
 /** Botão flutuante do telefone (abaixo de md, onde existe a barra inferior). */
 export function CreateFab({ onAsk }: { onAsk: () => void }) {
   const { open, setOpen, close, triggerRef, listRef } = useMenu()
   const menuId = useId()
-  const { hidden, reveal } = useHideOnScrollDown(open)
+  const { hidden, reveal } = useHideOnScroll({ disabled: open })
 
   return (
     <div className="md:hidden">

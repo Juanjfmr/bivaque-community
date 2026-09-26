@@ -139,9 +139,8 @@ export function resolveNotificationHref(
     case "direct_message":
       return `/messages?conversation=${notification.target_id}`
     case "recommendation_reply":
-      // Same deep-link the Salvas tab uses (F6 Step 2): switches to the
-      // Pedidos tab and scrolls to the request.
-      return `/recommendations?focus=${notification.target_id}#req-${notification.target_id}`
+      // O pedido tem um endereço só (ADR-20260925-memoria-de-indicacoes).
+      return `/indicacoes/${notification.target_id}`
     case "report_resolved":
       return resolveReportTargetHref(reportTarget)
     case "admission_rejected":
@@ -172,7 +171,7 @@ export function resolveReportTargetHref(target: ReportTarget | null): string | n
       // outra consulta; /messages é o destino real da caixa de entrada.
       return "/messages"
     case "recommendation_request":
-      return `/recommendations?focus=${target.target_id}#req-${target.target_id}`
+      return `/indicacoes/${target.target_id}`
     case "provider_profile":
       return `/prestadores/${target.target_id}`
     default:

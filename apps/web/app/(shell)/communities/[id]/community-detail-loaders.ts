@@ -38,6 +38,9 @@ type LocalityRow = Pick<
   Database["public"]["Tables"]["localities"]["Row"],
   "city_name" | "state_code"
 >
+
+/** Publicações que o detalhe mostra (antes, a comunidade inteira de uma vez). */
+export const COMMUNITY_DETAIL_FEED = 10
 type FeedCommunityRow = Database["public"]["Functions"]["feed_community"]["Returns"][number]
 
 export type CommunityPresentation = {
@@ -94,7 +97,10 @@ export type CommunityDetailView =
       /** Contagem exata de aprovados — carregada só porque quem lê é membro. */
       memberCount: number
       groups: ReturnType<typeof buildGroupCards>
+      /** As COMMUNITY_DETAIL_FEED mais recentes; o feed completo mora em /community. */
       feed: FeedCommunityRow[]
+      /** É a comunidade principal da pessoa — a que /community mostra inteira. */
+      isPrimary: boolean
       /** Roster para o seletor de transferência — só o dono carrega isto. */
       transferCandidates: TransferCandidate[]
     }
@@ -234,7 +240,7 @@ export async function loadCommunityDetail(
   // ── membro aprovado ────────────────────────────────────────────────────────
   const membership: MembershipLite = { role: mine?.role ?? "member", status: "approved" }
 
-  const [groupsResult, myGroupsResult, countResult, feedResult] = await Promise.all([
+  const [groupsResult, myGroupsResult, countResult, feedResult, primaryResult] = await Promise.all([
     supabase
       .from("groups")
       .select("id, name, description, visibility")
@@ -247,7 +253,20 @@ export async function loadCommunityDetail(
       .select("user_id", { count: "exact", head: true })
       .eq("community_id", community.id)
       .eq("status", "approved"),
-    supabase.rpc("feed_community", { p_community_id: community.id, p_order: "recent" }),
+    supabase.rpc("feed_community", {
+      p_community_id: community.id,
+      p_order: "recent",
+      p_limit: COMMUNITY_DETAIL_FEED,
+    }),
+    // A comunidade principal da pessoa (a mais antiga entre as aprovadas, a
+    // mesma regra de /community): só para ela existe o feed completo.
+    supabase
+      .from("community_memberships")
+      .select("community_id")
+      .eq("user_id", userId)
+      .eq("status", "approved")
+      .order("joined_at", { ascending: true })
+      .limit(1),
   ])
 
   if (groupsResult.error) {
@@ -336,6 +355,10 @@ export async function loadCommunityDetail(
     memberCount: countResult.count,
     groups: buildGroupCards(groups, myMemberships, approvedCountByGroupId),
     feed: (feedResult.data as FeedCommunityRow[] | null) ?? [],
+    isPrimary:
+      !primaryResult.error &&
+      ((primaryResult.data as { community_id: string }[] | null) ?? [])[0]?.community_id ===
+        community.id,
     transferCandidates,
   }
 }

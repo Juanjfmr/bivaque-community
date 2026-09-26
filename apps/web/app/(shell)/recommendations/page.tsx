@@ -927,13 +927,6 @@ export default function RecommendationsPage() {
                             setRequestCategory(key as RecommendationCategory)
                             setRequestError("")
                             setRequestFieldError(null)
-                            // F7 Step 2: when Saúde is picked, force scope to a group
-                            // (the locality option is hidden, so the user must pick a
-                            // group; auto-select the first group to keep the form valid).
-                            if (key === "saude_bem_estar" && requestScope === "locality") {
-                              const firstGroup = myGroups[0]
-                              if (firstGroup) setRequestScope(firstGroup.id)
-                            }
                           }
                         }}
                         isRequired
@@ -987,14 +980,9 @@ export default function RecommendationsPage() {
                         </Select.Trigger>
                         <Select.Popover>
                           <ListBox>
-                            {/* F7 Step 2: Saúde começa em grupo. The locality option is
-                      hidden when the category is health, with an explanatory
-                      line above the select. */}
-                            {requestCategory !== "saude_bem_estar" ? (
-                              <ListBox.Item key="locality" id="locality">
-                                {current.cityName}
-                              </ListBox.Item>
-                            ) : null}
+                            <ListBox.Item key="locality" id="locality">
+                              {current.cityName}
+                            </ListBox.Item>
                             {myGroups.map((group) => (
                               <ListBox.Item key={group.id} id={group.id}>
                                 {group.name}
@@ -1003,12 +991,6 @@ export default function RecommendationsPage() {
                           </ListBox>
                         </Select.Popover>
                       </Select>
-                      {requestCategory === "saude_bem_estar" ? (
-                        <p className="text-xs text-muted">
-                          Pedidos de Saúde começam em grupo — escolha um dos seus grupos como
-                          alcance.
-                        </p>
-                      ) : null}
                     </div>
                   </div>
 
