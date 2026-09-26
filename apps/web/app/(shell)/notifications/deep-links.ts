@@ -89,6 +89,19 @@ export function formatNotificationLabel(notification: NotificationRow): string {
       return notification.action === "replied_to_saved"
         ? "respondeu a um pedido de indicação que você salvou"
         : "respondeu ao seu pedido de indicação"
+    case "recommendation_request":
+      // ADR-20260925-aviso-de-pedido: o mesmo tipo carrega quatro avisos, e a
+      // action os separa. O título do pedido entra como assunto da linha.
+      switch (notification.action) {
+        case "unanswered":
+          return "Este pedido ainda está sem resposta. Você conhece alguém?"
+        case "resolve_prompt":
+          return "Alguma resposta ajudou a resolver seu pedido?"
+        case "digest":
+          return "Há pedidos de indicação esperando resposta na sua cidade"
+        default:
+          return "Alguém da sua cidade pediu uma indicação"
+      }
     case "report_resolved":
       // Confirma a análise, nunca o desfecho aplicado ao conteúdo (runbook §6:
       // "sem revelar a ação tomada"). Frase impessoal: o ator é o operador.
@@ -141,6 +154,11 @@ export function resolveNotificationHref(
     case "recommendation_reply":
       // O pedido tem um endereço só (ADR-20260925-memoria-de-indicacoes).
       return `/indicacoes/${notification.target_id}`
+    case "recommendation_request":
+      // O aviso do dia aponta para a cidade: a lista de pedidos sem resposta.
+      return notification.action === "digest"
+        ? "/community?vista=indicacoes"
+        : `/indicacoes/${notification.target_id}`
     case "report_resolved":
       return resolveReportTargetHref(reportTarget)
     case "admission_rejected":

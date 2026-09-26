@@ -210,6 +210,8 @@ describe("todo tipo de outbox tem decisao declarada de preferencia", () => {
     event_invite: "events",
     direct_message: "messages",
     product_news: "product_news",
+    // ADR-20260925-aviso-de-pedido: resumo diário, opt-in.
+    indications_digest: "indications",
     verification_decision: null,
     verification_resolved: null,
     recommendation_reply: null,

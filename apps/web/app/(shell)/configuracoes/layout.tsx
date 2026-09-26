@@ -11,7 +11,7 @@ export default function ConfiguracoesLayout({ children }: { children: ReactNode 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-4">
       <ConfiguracoesHeader />
-      <div className="mt-6 grid gap-4 md:grid-cols-[200px_minmax(0,1fr)]">
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-[200px_minmax(0,1fr)]">
         <ConfiguracoesNav />
         <div className="min-w-0">{children}</div>
       </div>

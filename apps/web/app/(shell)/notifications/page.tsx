@@ -148,7 +148,11 @@ async function loadEnrichment(
     )
     .map((n) => n.target_id)
   const requestIds = notifications
-    .filter((n) => n.type === "recommendation_reply")
+    .filter(
+      (n) =>
+        n.type === "recommendation_reply" ||
+        (n.type === "recommendation_request" && n.action !== "digest"),
+    )
     .map((n) => n.target_id)
 
   const replyRequestIds = notifications
@@ -222,7 +226,8 @@ async function loadEnrichment(
           ? `group:${n.target_id}`
           : n.type === "event_rsvp" || n.type === "event_change" || n.type === "event_reminder"
             ? `event:${n.target_id}`
-            : n.type === "recommendation_reply"
+            : n.type === "recommendation_reply" ||
+                (n.type === "recommendation_request" && n.action !== "digest")
               ? `request:${n.target_id}`
               : null
     const subject = key ? subjectByTarget.get(key) : undefined

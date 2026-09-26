@@ -3758,6 +3758,38 @@
       "dependencies": [],
       "updatedAt": "2026-09-25",
       "sourceRevision": "686fd5fd"
+    },
+    {
+      "id": "INDICACOES-AVISO",
+      "title": "Aviso de pedido de indicação: a cidade fica sabendo em minutos",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "now",
+      "description": "Decisão do dono em 25/09/2026 (ADR-20260925-aviso-de-pedido): um pedido novo avisa quem pode lê-lo (cidade, ou grupo), no máximo 3 avisos por pessoa em 24 h e o excedente vira um aviso único do dia; sino na hora e resumo diário por e-mail só para quem ligar; pedido parado 24 h avisa de novo; 3 dias depois da primeira resposta, quem pediu é perguntado se alguma ajudou a resolver.",
+      "checklist": [
+        "ADR com as decisões do dono [FEITO 25/09]",
+        "Migrations 20260926022408 e 20260926022416: tipo, preferência indications, entregas, jobs [FEITO; aplicadas à mão no banco local]",
+        "pgTAP aviso-de-pedido.sql [FEITO 22/22, com controle negativo]",
+        "Texto e destino no sino, preferência em Configurações, e-mail do resumo [FEITO]",
+        "Prova no navegador: pedido de uma conta aparece no sino de outra [FEITO 25/09]",
+        "Medir tempo até a primeira resposta e pedidos sem resposta em 24 h depois do lançamento"
+      ],
+      "proof": [
+        "pgTAP aviso-de-pedido.sql 22/22 no banco local; sem a preferência desligada e sem o bloqueio, os casos 5 e 7 falham",
+        "Navegador 25/09: membro-2 pede pela caixa; o job avisa 303 membros da cidade (seed); membro-3 vê \"Alguém da sua cidade pediu uma indicação\" com o título no sino, a 375, e o toque abre o pedido; em Configurações a linha Pedidos de indicação aparece com sino ligado e resumo por e-mail desligado, e ligar o resumo grava. Achado no caminho: a grade de Configurações crescia além de 375 px no celular — corrigida"
+      ],
+      "tests": [
+        "supabase/tests/aviso-de-pedido.sql",
+        "tests/unit/notifications/aviso-de-pedido.test.ts"
+      ],
+      "links": [
+        "docs/decisions/ADR-20260925-aviso-de-pedido.md",
+        "supabase/migrations/20260926022416_aviso_de_pedido.sql"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-25",
+      "sourceRevision": "a15d00f8"
     }
   ]
 }

@@ -1295,6 +1295,7 @@ export type Database = {
         Row: {
           comments: boolean
           events: boolean
+          indications: boolean
           mentions: boolean
           messages: boolean
           product_news: boolean
@@ -1304,6 +1305,7 @@ export type Database = {
         Insert: {
           comments?: boolean
           events?: boolean
+          indications?: boolean
           mentions?: boolean
           messages?: boolean
           product_news?: boolean
@@ -1313,6 +1315,7 @@ export type Database = {
         Update: {
           comments?: boolean
           events?: boolean
+          indications?: boolean
           mentions?: boolean
           messages?: boolean
           product_news?: boolean
@@ -3129,6 +3132,7 @@ export type Database = {
         | "admission_rejected"
         | "listing_alert"
         | "service_request"
+        | "recommendation_request"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -3362,6 +3366,7 @@ export const Constants = {
         "admission_rejected",
         "listing_alert",
         "service_request",
+        "recommendation_request",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

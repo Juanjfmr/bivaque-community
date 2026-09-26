@@ -18,7 +18,7 @@ import {
 // matriz porque é escolha de tipo, não de canal, e nasce desligada.
 
 type ChannelRow = {
-  notificationType: "comments" | "events" | "product_news"
+  notificationType: "comments" | "events" | "product_news" | "indications"
   channel: "in_app" | "email"
   enabled: boolean
 }
@@ -51,6 +51,7 @@ export default function ConfiguracoesNotificacoesPage() {
   const [comments, setComments] = useState(true)
   const [events, setEvents] = useState(true)
   const [productNews, setProductNews] = useState(false)
+  const [indications, setIndications] = useState(true)
   const [channels, setChannels] = useState<ChannelRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -72,6 +73,7 @@ export default function ConfiguracoesNotificacoesPage() {
       setComments(state.comments)
       setEvents(state.events)
       setProductNews(state.productNews)
+      setIndications(state.indications)
       setChannels(state.channels as ChannelRow[])
     } catch {
       setError("Não foi possível carregar suas preferências. Tente novamente.")
@@ -92,10 +94,17 @@ export default function ConfiguracoesNotificacoesPage() {
     if (comments) form.append("comments", "on")
     if (events) form.append("events", "on")
     if (productNews) form.append("productNews", "on")
+    if (indications) form.append("indications", "on")
     if (comments && channelOf(channels, "comments", "in_app")) form.append("commentsInApp", "on")
     if (comments && channelOf(channels, "comments", "email")) form.append("commentsEmail", "on")
     if (events && channelOf(channels, "events", "in_app")) form.append("eventsInApp", "on")
     if (events && channelOf(channels, "events", "email")) form.append("eventsEmail", "on")
+    if (indications && channelOf(channels, "indications", "in_app")) {
+      form.append("indicationsInApp", "on")
+    }
+    if (indications && channelOf(channels, "indications", "email")) {
+      form.append("indicationsEmail", "on")
+    }
 
     try {
       await updateNotificationChannelStateAction(form)
@@ -198,6 +207,28 @@ export default function ConfiguracoesNotificacoesPage() {
           </li>
           <li className="flex min-h-11 items-center justify-between gap-4 px-4 py-3">
             <span className="min-w-0">
+              <span className="block text-sm font-medium">Pedidos de indicação</span>
+              <span className="block text-sm text-muted">
+                Quando alguém da sua cidade pede uma indicação. No máximo 3 avisos por dia.
+              </span>
+            </span>
+            <Switch
+              aria-label="Avisos de pedidos de indicação"
+              isSelected={indications}
+              onChange={(isSelected) => {
+                setIndications(isSelected)
+                setFeedback(null)
+              }}
+            >
+              <Switch.Content className="min-h-11 min-w-11 items-center gap-0">
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch.Content>
+            </Switch>
+          </li>
+          <li className="flex min-h-11 items-center justify-between gap-4 px-4 py-3">
+            <span className="min-w-0">
               <span className="block text-sm font-medium">Novidades do Bivaque</span>
               <span className="block text-sm text-muted">
                 Notícias, atualizações e dicas sobre o Bivaque.
@@ -223,109 +254,160 @@ export default function ConfiguracoesNotificacoesPage() {
 
       <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
         <h3 className="text-sm font-medium">Canais de entrega</h3>
-        <p className="mt-1 text-sm text-muted">Escolha onde você deseja receber as notificações.</p>
+        <p className="mt-1 text-sm text-muted">
+          Escolha onde você deseja receber as notificações. Por e-mail, os pedidos de indicação
+          chegam num resumo por dia.
+        </p>
 
-        <table className="mt-3 w-full border-collapse text-sm">
-          <caption className="sr-only">Matriz de canais de entrega por tipo de notificação</caption>
-          <thead>
-            <tr className="text-left text-muted">
-              <th scope="col" className="py-2 font-medium">
-                Canal
-              </th>
-              <th scope="col" className="py-2 text-center font-medium">
-                Respostas
-              </th>
-              <th scope="col" className="py-2 text-center font-medium">
-                Eventos
-              </th>
-              <th scope="col" className="py-2 text-center font-medium">
-                Novidades
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-t border-border">
-              <th scope="row" className="py-3 text-left font-normal">
-                No aplicativo
-              </th>
-              <td className="py-3 text-center">
-                <Checkbox
-                  aria-label="Respostas no aplicativo"
-                  isSelected={channelOf(channels, "comments", "in_app")}
-                  isDisabled={!comments}
-                  onChange={(isSelected) =>
-                    setChannels((prev) => setChannel(prev, "comments", "in_app", isSelected))
-                  }
+        {/* Cinco colunas não cabem em 375 px com rótulo inteiro: os cabeçalhos
+            descem para texto pequeno e, se ainda faltar espaço, só a tabela
+            rola — nunca a página. */}
+        <div className="-mx-4 mt-3 overflow-x-auto px-4">
+          <table className="w-full min-w-0 border-collapse text-sm">
+            <caption className="sr-only">
+              Matriz de canais de entrega por tipo de notificação
+            </caption>
+            <thead>
+              <tr className="text-left text-muted">
+                <th scope="col" className="py-2 font-medium">
+                  Canal
+                </th>
+                <th scope="col" className="px-1 py-2 text-center text-xs font-medium">
+                  Respostas
+                </th>
+                <th scope="col" className="px-1 py-2 text-center text-xs font-medium">
+                  Eventos
+                </th>
+                <th scope="col" className="px-1 py-2 text-center text-xs font-medium">
+                  Indicações
+                </th>
+                <th scope="col" className="px-1 py-2 text-center text-xs font-medium">
+                  Novidades
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-t border-border">
+                <th scope="row" className="py-3 text-left font-normal">
+                  No aplicativo
+                </th>
+                <td className="py-3 text-center">
+                  <Checkbox
+                    aria-label="Respostas no aplicativo"
+                    isSelected={channelOf(channels, "comments", "in_app")}
+                    isDisabled={!comments}
+                    onChange={(isSelected) =>
+                      setChannels((prev) => setChannel(prev, "comments", "in_app", isSelected))
+                    }
+                  >
+                    <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                    </Checkbox.Content>
+                  </Checkbox>
+                </td>
+                <td className="py-3 text-center">
+                  <Checkbox
+                    aria-label="Eventos no aplicativo"
+                    isSelected={channelOf(channels, "events", "in_app")}
+                    isDisabled={!events}
+                    onChange={(isSelected) =>
+                      setChannels((prev) => setChannel(prev, "events", "in_app", isSelected))
+                    }
+                  >
+                    <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                    </Checkbox.Content>
+                  </Checkbox>
+                </td>
+                <td className="py-3 text-center">
+                  <Checkbox
+                    aria-label="Pedidos de indicação no aplicativo"
+                    isSelected={channelOf(channels, "indications", "in_app")}
+                    isDisabled={!indications}
+                    onChange={(isSelected) =>
+                      setChannels((prev) => setChannel(prev, "indications", "in_app", isSelected))
+                    }
+                  >
+                    <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                    </Checkbox.Content>
+                  </Checkbox>
+                </td>
+                <td
+                  className={`py-3 text-center text-muted ${channelsDisabled}`}
+                  aria-hidden="true"
                 >
-                  <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
-                    <Checkbox.Control>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                  </Checkbox.Content>
-                </Checkbox>
-              </td>
-              <td className="py-3 text-center">
-                <Checkbox
-                  aria-label="Eventos no aplicativo"
-                  isSelected={channelOf(channels, "events", "in_app")}
-                  isDisabled={!events}
-                  onChange={(isSelected) =>
-                    setChannels((prev) => setChannel(prev, "events", "in_app", isSelected))
-                  }
+                  —
+                </td>
+              </tr>
+              <tr className="border-t border-border">
+                <th scope="row" className="py-3 text-left font-normal">
+                  E-mail
+                </th>
+                <td className="py-3 text-center">
+                  <Checkbox
+                    aria-label="Respostas por e-mail"
+                    isSelected={channelOf(channels, "comments", "email")}
+                    isDisabled={!comments}
+                    onChange={(isSelected) =>
+                      setChannels((prev) => setChannel(prev, "comments", "email", isSelected))
+                    }
+                  >
+                    <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                    </Checkbox.Content>
+                  </Checkbox>
+                </td>
+                <td className="py-3 text-center">
+                  <Checkbox
+                    aria-label="Eventos por e-mail"
+                    isSelected={channelOf(channels, "events", "email")}
+                    isDisabled={!events}
+                    onChange={(isSelected) =>
+                      setChannels((prev) => setChannel(prev, "events", "email", isSelected))
+                    }
+                  >
+                    <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                    </Checkbox.Content>
+                  </Checkbox>
+                </td>
+                <td className="py-3 text-center">
+                  <Checkbox
+                    aria-label="Resumo diário de pedidos de indicação por e-mail"
+                    isSelected={channelOf(channels, "indications", "email")}
+                    isDisabled={!indications}
+                    onChange={(isSelected) =>
+                      setChannels((prev) => setChannel(prev, "indications", "email", isSelected))
+                    }
+                  >
+                    <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
+                      <Checkbox.Control>
+                        <Checkbox.Indicator />
+                      </Checkbox.Control>
+                    </Checkbox.Content>
+                  </Checkbox>
+                </td>
+                <td
+                  className={`py-3 text-center text-muted ${channelsDisabled}`}
+                  aria-hidden="true"
                 >
-                  <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
-                    <Checkbox.Control>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                  </Checkbox.Content>
-                </Checkbox>
-              </td>
-              <td className={`py-3 text-center text-muted ${channelsDisabled}`} aria-hidden="true">
-                —
-              </td>
-            </tr>
-            <tr className="border-t border-border">
-              <th scope="row" className="py-3 text-left font-normal">
-                E-mail
-              </th>
-              <td className="py-3 text-center">
-                <Checkbox
-                  aria-label="Respostas por e-mail"
-                  isSelected={channelOf(channels, "comments", "email")}
-                  isDisabled={!comments}
-                  onChange={(isSelected) =>
-                    setChannels((prev) => setChannel(prev, "comments", "email", isSelected))
-                  }
-                >
-                  <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
-                    <Checkbox.Control>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                  </Checkbox.Content>
-                </Checkbox>
-              </td>
-              <td className="py-3 text-center">
-                <Checkbox
-                  aria-label="Eventos por e-mail"
-                  isSelected={channelOf(channels, "events", "email")}
-                  isDisabled={!events}
-                  onChange={(isSelected) =>
-                    setChannels((prev) => setChannel(prev, "events", "email", isSelected))
-                  }
-                >
-                  <Checkbox.Content className="min-h-11 min-w-11 items-center justify-center">
-                    <Checkbox.Control>
-                      <Checkbox.Indicator />
-                    </Checkbox.Control>
-                  </Checkbox.Content>
-                </Checkbox>
-              </td>
-              <td className={`py-3 text-center text-muted ${channelsDisabled}`} aria-hidden="true">
-                —
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  —
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {feedback && (

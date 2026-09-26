@@ -24,10 +24,16 @@ export interface NotificationChannelState {
   comments: boolean
   events: boolean
   productNews: boolean
+  indications: boolean
   channels: ChannelPreference[]
 }
 
-const TYPE_KEYS: readonly NotificationTypeKey[] = ["comments", "events", "product_news"]
+const TYPE_KEYS: readonly NotificationTypeKey[] = [
+  "comments",
+  "events",
+  "product_news",
+  "indications",
+]
 const CHANNELS: readonly NotificationChannel[] = ["in_app", "email"]
 
 async function readSessionUserId(): Promise<string | null> {
@@ -54,7 +60,13 @@ async function readSessionUserId(): Promise<string | null> {
 // Missing matrix row keeps the type state (deliver when the type is on). This
 // mirrors `private.notification_channel_allows` so the screen never shows a
 // channel that the dispatcher would ignore.
-function defaultChannelEnabled(typeEnabled: boolean): boolean {
+// The e-mail of indications is the daily digest, and it is opt-in.
+function defaultChannelEnabled(
+  typeEnabled: boolean,
+  notificationType: NotificationTypeKey,
+  channel: NotificationChannel,
+): boolean {
+  if (notificationType === "indications" && channel === "email") return false
   return typeEnabled
 }
 
@@ -66,7 +78,7 @@ export async function getNotificationChannelStateAction(): Promise<NotificationC
   const [preferenceResult, matrixResult] = await Promise.all([
     supabase
       .from("notification_preferences")
-      .select("comments, events, product_news")
+      .select("comments, events, product_news, indications")
       .eq("user_id", userId)
       .maybeSingle(),
     supabase
@@ -82,10 +94,12 @@ export async function getNotificationChannelStateAction(): Promise<NotificationC
   const comments = preference?.comments ?? true
   const events = preference?.events ?? true
   const productNews = preference?.product_news ?? false
+  const indications = preference?.indications ?? true
   const typeEnabled: Record<NotificationTypeKey, boolean> = {
     comments,
     events,
     product_news: productNews,
+    indications,
     mentions: true,
     messages: true,
   }
@@ -103,12 +117,12 @@ export async function getNotificationChannelStateAction(): Promise<NotificationC
       const key = `${notificationType}:${channel}`
       const enabled = stored.has(key)
         ? (stored.get(key) as boolean)
-        : defaultChannelEnabled(typeEnabled[notificationType])
+        : defaultChannelEnabled(typeEnabled[notificationType], notificationType, channel)
       channels.push({ notificationType, channel, enabled })
     }
   }
 
-  return { comments, events, productNews, channels }
+  return { comments, events, productNews, indications, channels }
 }
 
 export async function updateNotificationChannelStateAction(formData: FormData) {
@@ -118,15 +132,21 @@ export async function updateNotificationChannelStateAction(formData: FormData) {
   const comments = formData.get("comments") === "on"
   const events = formData.get("events") === "on"
   const productNews = formData.get("productNews") === "on"
+  const indications = formData.get("indications") === "on"
 
   const channelValue = (name: string): boolean => formData.get(name) === "on"
 
   const supabase = createServiceClient()
   const now = new Date().toISOString()
 
-  const { error: preferenceError } = await supabase
-    .from("notification_preferences")
-    .upsert({ user_id: userId, comments, events, product_news: productNews, updated_at: now })
+  const { error: preferenceError } = await supabase.from("notification_preferences").upsert({
+    user_id: userId,
+    comments,
+    events,
+    product_news: productNews,
+    indications,
+    updated_at: now,
+  })
   if (preferenceError) throw new Error(preferenceError.message)
 
   // A type that is off delivers by no channel, so its channel rows are written
@@ -158,6 +178,16 @@ export async function updateNotificationChannelStateAction(formData: FormData) {
     },
     { notification_type: "product_news", channel: "in_app", enabled: productNews },
     { notification_type: "product_news", channel: "email", enabled: productNews },
+    {
+      notification_type: "indications",
+      channel: "in_app",
+      enabled: indications && channelValue("indicationsInApp"),
+    },
+    {
+      notification_type: "indications",
+      channel: "email",
+      enabled: indications && channelValue("indicationsEmail"),
+    },
   ]
   const rows = baseRows.map((row) => ({ ...row, user_id: userId, updated_at: now }))
 
