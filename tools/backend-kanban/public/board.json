@@ -3729,7 +3729,7 @@
       "description": "Decisão do dono em 25/09/2026: as comunidades existem para substituir o grupo de WhatsApp com memória — \"as pessoas pedem indicação pelo whatsapp e 10 minutos depois ninguem mais acha\". O pedido de indicação morava só em /recommendations, a busca não o alcançava e saúde exigia grupo. ADR-20260925-memoria-de-indicacoes: saúde sem trava nem aviso, resolvido alimenta a busca (altera a D5 de ADR-20260909-resposta-que-resolveu), Indicações + Orçamentos. Entregue: list_indications (busca em português sem acento, no pedido e nas respostas), /indicacoes com busca antes de pedir, /indicacoes/[id] como endereço único, vista Indicações na Comunidade.",
       "checklist": [
         "ADR com as decisões do dono [FEITO 25/09]",
-        "Migration 20260926004501: saúde sem trava, detalhe opcional, list_indications [FEITO; aplicada à mão no banco local, falta o reset limpo pelo dono]",
+        "Migration 20260926004501: saúde sem trava, detalhe opcional, list_indications [FEITO; reset limpo pelo dono em 25/09: db reset --no-seed + test:db, 130 arquivos, 1726 testes, PASS]",
         "pgTAP memoria-de-indicacoes.sql [FEITO 12/12]; recommendations-health-scope.sql invertido [FEITO 3/3]",
         "/indicacoes, /indicacoes/[id] e vista Indicações na Comunidade [FEITO, provado a 375 e 1440]",
         "Todas as portas do pedido em /indicacoes/<id> (notificação, salvos, denúncia, Guia, Início, compartilhar) [FEITO]",
@@ -3742,6 +3742,7 @@
       ],
       "proof": [
         "pgTAP memoria-de-indicacoes.sql 12/12 no banco local (migration aplicada à mão)",
+        "Reset limpo rodado pelo dono em 25/09/2026: supabase db reset --local --no-seed e test:db — Files=130, Tests=1726, Result: PASS; as 6 migrations da branch aplicam do zero",
         "Navegador 375 e 1440, três contas: foco na caixa com ?pedir=1; 'Alguém indica pediatra?' traz o pedido resolvido com a resposta; frase nova sem parecido abre 'Pedir à cidade' com categoria sugerida; publicar leva a /indicacoes/<id>; outro membro acha a pergunta sem acento e responde; a autora marca 'Isso resolveu'; um terceiro busca por prefixo e vê a resposta sem abrir a conversa; /community?vista=indicacoes acende Comunidades; nenhum erro de página"
       ],
       "tests": [
