@@ -2467,7 +2467,12 @@ export type Database = {
         Returns: string
       }
       feed_community: {
-        Args: { p_community_id: string; p_order?: string }
+        Args: {
+          p_community_id: string
+          p_limit?: number
+          p_offset?: number
+          p_order?: string
+        }
         Returns: {
           comment_count: number
           community_id: string
@@ -2607,6 +2612,29 @@ export type Database = {
           display_name: string
           provider_user_id: string
           revoked_at: string
+        }[]
+      }
+      list_indications: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["recommendation_category"]
+          p_limit?: number
+          p_locality_id: string
+          p_offset?: number
+          p_query?: string
+          p_resolved?: boolean
+        }
+        Returns: {
+          body: string
+          category: Database["public"]["Enums"]["recommendation_category"]
+          created_at: string
+          group_id: string
+          group_name: string
+          id: string
+          is_resolved: boolean
+          matched_reply_body: string
+          reply_count: number
+          resolved_reply_body: string
+          title: string
         }[]
       }
       list_invitable_members_for_event: {

@@ -1542,6 +1542,78 @@ update public.recommendation_requests
        resolved_reply_id = 'd0000000-0000-4000-8000-000000000001'
  where id = '80000000-0000-4000-8000-000000000f00';
 
+-- Memória de indicações (ADR-20260925-memoria-de-indicacoes): pedidos da
+-- cidade com respostas, parte resolvida, para a busca antes de perguntar e a
+-- vista Indicações da Comunidade terem o que mostrar.
+insert into public.recommendation_requests (id, author_id, locality_id, title, body, category, created_at)
+values
+  ('80000000-0000-4000-8000-000000000f01', '30000000-0000-4000-8000-000000000021', '00000000-0000-4000-8000-000000000001',
+   'Alguém indica pediatra que atenda pelo FuSEx?', 'Minha filha tem 3 anos, chegamos em agosto.', 'saude_bem_estar', now() - interval '40 days'),
+  ('80000000-0000-4000-8000-000000000f02', '30000000-0000-4000-8000-000000000024', '00000000-0000-4000-8000-000000000001',
+   'Dentista para criança na zona centro-sul', '', 'saude_bem_estar', now() - interval '25 days'),
+  ('80000000-0000-4000-8000-000000000f03', '30000000-0000-4000-8000-000000000026', '00000000-0000-4000-8000-000000000001',
+   'Eletricista de confiança para trocar o quadro de luz', 'Casa funcional na Vila Militar, quadro antigo desarmando.', 'servicos_locais', now() - interval '18 days'),
+  ('80000000-0000-4000-8000-000000000f04', '30000000-0000-4000-8000-000000000029', '00000000-0000-4000-8000-000000000001',
+   'Transportadora para mudança Manaus → Brasília', 'Mudança de PCS em dezembro, 3 quartos.', 'transporte', now() - interval '60 days'),
+  ('80000000-0000-4000-8000-000000000f05', '30000000-0000-4000-8000-00000000002c', '00000000-0000-4000-8000-000000000001',
+   'Escola bilíngue perto do Dom Pedro', 'Filho de 7 anos, vindo do Rio.', 'educacao', now() - interval '12 days'),
+  ('80000000-0000-4000-8000-000000000f06', '30000000-0000-4000-8000-00000000002e', '00000000-0000-4000-8000-000000000001',
+   'Onde fazer revisão do carro com preço honesto?', '', 'servicos_locais', now() - interval '6 days'),
+  ('80000000-0000-4000-8000-000000000f07', '30000000-0000-4000-8000-00000000002f', '00000000-0000-4000-8000-000000000001',
+   'Natação para criança de 5 anos', 'De preferência perto da Vila Militar.', 'esporte_lazer', now() - interval '9 days'),
+  ('80000000-0000-4000-8000-000000000f08', '30000000-0000-4000-8000-000000000031', '00000000-0000-4000-8000-000000000001',
+   'Alguém conhece ortopedista bom?', 'Dor no joelho depois do TAF.', 'saude_bem_estar', now() - interval '3 days'),
+  ('80000000-0000-4000-8000-000000000f09', '30000000-0000-4000-8000-000000000032', '00000000-0000-4000-8000-000000000001',
+   'Diarista para faxina semanal no Parque Dez', '', 'servicos_locais', now() - interval '2 days'),
+  ('80000000-0000-4000-8000-000000000f0a', '30000000-0000-4000-8000-000000000034', '00000000-0000-4000-8000-000000000001',
+   'Restaurante para aniversário com crianças', 'Umas 20 pessoas no sábado.', 'alimentacao', now() - interval '15 days')
+on conflict (id) do nothing;
+
+insert into public.recommendation_replies (id, request_id, author_id, body, created_at)
+values
+  ('d0000000-0000-4000-8000-000000000010', '80000000-0000-4000-8000-000000000f01', '30000000-0000-4000-8000-000000000022',
+   'A Dra. Helena Castro, na Policlínica da Vila Militar. Atende FuSEx e é muito paciente.', now() - interval '40 days' + interval '3 hours'),
+  ('d0000000-0000-4000-8000-000000000011', '80000000-0000-4000-8000-000000000f01', '30000000-0000-4000-8000-000000000023',
+   'Dr. Marcos Aguiar no Adrianópolis. Consulta rápida, mas tem que marcar com antecedência.', now() - interval '40 days' + interval '9 hours'),
+  ('d0000000-0000-4000-8000-000000000012', '80000000-0000-4000-8000-000000000f02', '30000000-0000-4000-8000-000000000025',
+   'Odontopediatria Sorriso Miúdo, na Djalma Batista. Meus dois filhos vão lá.', now() - interval '25 days' + interval '5 hours'),
+  ('d0000000-0000-4000-8000-000000000013', '80000000-0000-4000-8000-000000000f03', '30000000-0000-4000-8000-000000000027',
+   'Seu Raimundo eletricista, atende a vila há anos. Chama no (92) 99111-2233.', now() - interval '18 days' + interval '2 hours'),
+  ('d0000000-0000-4000-8000-000000000014', '80000000-0000-4000-8000-000000000f03', '30000000-0000-4000-8000-000000000028',
+   'Usei o Raimundo também, preço justo.', now() - interval '18 days' + interval '20 hours'),
+  ('d0000000-0000-4000-8000-000000000015', '80000000-0000-4000-8000-000000000f04', '30000000-0000-4000-8000-00000000002a',
+   'Fizemos com a Rota Norte Mudanças, chegou tudo inteiro em 12 dias.', now() - interval '60 days' + interval '6 hours'),
+  ('d0000000-0000-4000-8000-000000000016', '80000000-0000-4000-8000-000000000f04', '30000000-0000-4000-8000-00000000002b',
+   'Evite contratar sem vistoria prévia, tive problema com uma empresa pequena.', now() - interval '60 days' + interval '30 hours'),
+  ('d0000000-0000-4000-8000-000000000017', '80000000-0000-4000-8000-000000000f05', '30000000-0000-4000-8000-00000000002d',
+   'O Colégio Lato Sensu tem turma bilíngue e desconto para militar.', now() - interval '12 days' + interval '4 hours'),
+  ('d0000000-0000-4000-8000-000000000018', '80000000-0000-4000-8000-000000000f07', '30000000-0000-4000-8000-000000000030',
+   'A Vila Olímpica tem turma infantil de manhã, e é barato.', now() - interval '9 days' + interval '8 hours'),
+  ('d0000000-0000-4000-8000-000000000019', '80000000-0000-4000-8000-000000000f09', '30000000-0000-4000-8000-000000000033',
+   'A Dona Célia faz faxina na minha casa há um ano. Passo o contato por mensagem.', now() - interval '2 days' + interval '1 hours'),
+  ('d0000000-0000-4000-8000-00000000001a', '80000000-0000-4000-8000-000000000f0a', '30000000-0000-4000-8000-000000000035',
+   'Choupana tem espaço kids e reserva de mesa grande.', now() - interval '15 days' + interval '3 hours')
+on conflict (id) do nothing;
+
+update public.recommendation_requests
+   set is_resolved = true, resolved_reply_id = 'd0000000-0000-4000-8000-000000000010'
+ where id = '80000000-0000-4000-8000-000000000f01';
+update public.recommendation_requests
+   set is_resolved = true, resolved_reply_id = 'd0000000-0000-4000-8000-000000000012'
+ where id = '80000000-0000-4000-8000-000000000f02';
+update public.recommendation_requests
+   set is_resolved = true, resolved_reply_id = 'd0000000-0000-4000-8000-000000000013'
+ where id = '80000000-0000-4000-8000-000000000f03';
+update public.recommendation_requests
+   set is_resolved = true, resolved_reply_id = 'd0000000-0000-4000-8000-000000000015'
+ where id = '80000000-0000-4000-8000-000000000f04';
+update public.recommendation_requests
+   set is_resolved = true, resolved_reply_id = 'd0000000-0000-4000-8000-000000000018'
+ where id = '80000000-0000-4000-8000-000000000f07';
+update public.recommendation_requests
+   set is_resolved = true, resolved_reply_id = 'd0000000-0000-4000-8000-00000000001a'
+ where id = '80000000-0000-4000-8000-000000000f0a';
+
 -- 4) Denúncia do membro conectado (contra conteúdo de terceiro: denunciar o
 --    próprio conteúdo é recusado pelo produto) e uma pessoa bloqueada.
 insert into public.reports (reporter_user_id, target_type, target_id, reason, status, created_at)

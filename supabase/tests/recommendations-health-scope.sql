@@ -1,4 +1,7 @@
--- Onda F Task 7 — health requests must start inside a group.
+-- Onda F Task 7 criou a trava "saúde começa em grupo"; a migration
+-- 20260926004501 (ADR-20260925-memoria-de-indicacoes) a retirou por decisão do
+-- dono. O arquivo agora prova o contrário: saúde vai para a cidade ou para o
+-- grupo, à escolha de quem pede.
 
 begin;
 
@@ -10,8 +13,8 @@ select plan(3);
 
 reset role;
 
--- A locality-only health request must be REJECTED.
-select throws_ok(
+-- A locality-only health request is now ACCEPTED.
+select lives_ok(
   $$
     insert into public.recommendation_requests (
       author_id, locality_id, group_id, title, body, category
@@ -24,9 +27,7 @@ select throws_ok(
       'saude_bem_estar'
     )
   $$,
-  '23514',
-  null,
-  'F7-: health request without group_id is rejected by CHECK (23514)'
+  'health request for the whole city (no group) is accepted'
 );
 
 -- A health request with group_id PASSES.
@@ -43,11 +44,11 @@ select lives_ok(
       'saude_bem_estar'
     )
   $$,
-  'F7+: health request WITH group_id passes the CHECK'
+  'health request inside a group is still accepted'
 );
 
 -- A non-health category (servicos_locais) with locality_id but no group_id
--- PASSES — the new constraint is category-specific.
+-- PASSES.
 select lives_ok(
   $$
     insert into public.recommendation_requests (
@@ -61,7 +62,7 @@ select lives_ok(
       'servicos_locais'
     )
   $$,
-  'F7+: non-health locality request (without group) still passes'
+  'non-health locality request (without group) still passes'
 );
 
 select * from finish();
