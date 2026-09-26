@@ -144,6 +144,13 @@ describe("RECON-042, defeito 2 — toda rota do mapa de captura declara containe
       expect(prefix.startsWith("/")).toBe(true)
     }
   })
+
+  it("a gestão do negócio do membro pertence ao espaço Perfil", () => {
+    expect(resolveActiveNav("/negocio/catalogo", PRIMARY)).toEqual({
+      kind: "primary",
+      id: "perfil",
+    })
+  })
 })
 
 // 25/09/2026: a barra inferior do celular tinha regra própria (prefixo do item,

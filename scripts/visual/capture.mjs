@@ -167,6 +167,9 @@ export const HEADINGS = {
   "/onboarding/perfil": "^Deixe com a sua cara\\.$",
   "/mercado": "^O que você precisa pode estar por perto$",
   "/mercado/novo": "^Novo anúncio$",
+  "/negocio": "^(Seu negócio|Crie a página do seu negócio)$",
+  "/negocio/catalogo": "^Catálogo e portfólio$",
+  "/prestadores/<member-business>": DYNAMIC_HEADING,
   "/meus-anuncios": "^Meus anúncios$",
   "/mercado/a0000000-0000-4000-8000-000000000001/editar": "^Editar anúncio$",
   // O h1 do detalhe é o título do próprio evento.
@@ -310,6 +313,20 @@ export const ROUTES = [
   // capture-a quando a fixture existir.
   { path: "/mercado", name: "mercado", auth: true },
   { path: "/mercado/novo", name: "mercado-novo", auth: true },
+  { path: "/negocio", name: "member-business", auth: true, account: "visual" },
+  {
+    path: "/negocio/catalogo",
+    name: "member-business-catalog",
+    auth: true,
+    account: "visual",
+  },
+  {
+    path: "/prestadores/<member-business>",
+    name: "member-business-public",
+    auth: true,
+    account: "visual",
+    fixture: "member-business",
+  },
   // RECON-026: a gestão dos próprios anúncios. `/meus-anuncios` é rota fixa. A
   // edição depende de um anúncio no seed; `supabase/seed.sql` está fora dos
   // allowed_paths deste lote, então o caminho fica cadastrado com um id

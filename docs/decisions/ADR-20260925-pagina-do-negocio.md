@@ -7,8 +7,8 @@ approved_at: 2026-09-25
 accepted_at: 2026-09-25
 expires_at:
 linked_plan:
-critic_verdict: pending
-critic_review: Decisões do dono na sessão de 25/09/2026. Revisão independente ainda não rodou.
+critic_verdict: pass
+critic_review: PASS independente em 26/09/2026 após explicitar ownership, preservação do prestador civil, baseline, métrica de sucesso e condição de reabertura.
 supersedes_in_part: ADR-20260820-alcance-pago (D1 e D2 — o que se vende); ADR-20260820-conta-de-prestador (entrada só por convite)
 ---
 
@@ -92,6 +92,30 @@ orçamentos, moradia, benefícios e encontros):
   paga algo ao Bivaque. Benefícios pagos são outro produto:
   [ADR-20260926-bivaque-mais](ADR-20260926-bivaque-mais.md).
 
+### Contrato de autorização da primeira fatia
+
+A primeira implementação de D3 abre a ficha existente para **membro já admitido**, sem abrir
+ainda o cadastro civil de D3 nem reescrever o alcance legado dos prestadores civis:
+
+- membro elegível é o usuário autenticado que possui uma `locality_memberships` atual e ativa;
+  a localidade dessa linha é derivada no servidor e nunca aceita do cliente;
+- possuir uma página **não cria `provider_accounts`**, não muda `my_account_kind()` e não move o
+  membro para o shell de prestador;
+- `provider_profiles` pode pertencer a um membro elegível ou a uma conta civil de prestador
+  ativa. Catálogo, portfólio e upload de foto usam o mesmo ownership e nunca permitem escrita
+  cross-user;
+- o formulário do membro altera apenas nome, categoria e descrição por RPC; telefone e sua
+  visibilidade ficam fora desta primeira fatia, pois a leitura por coluna ainda precisa de um
+  contrato que diferencie dono e público. A RPC de criação deixa esses campos vazios e a política
+  não permite que o membro os altere diretamente;
+- para o membro, a criação da ficha e do alcance gratuito da sua cidade atual é uma operação
+  atômica. Uma falha não deixa ficha órfã nem permite escolher outra localidade;
+- o prestador civil existente mantém nesta fatia seu convite, shell, alcance comunitário e
+  revogação atuais. A reconciliação do alcance civil legado para a cidade inteira, exigida por D5,
+  é uma mudança separada para não misturar duas fronteiras de autorização no mesmo lote;
+- a visibilidade pública continua dependendo de `provider_reach` ativo. Revogar o prestador civil
+  continua desativando seu alcance; ser dono da ficha não concede visibilidade fora do alcance.
+
 **Continua proibido** (§7.3 e ADR-20260820-alcance-pago D7): posição dentro de resultados,
 prioridade em indicação, ausência do rótulo, anúncio no feed, cobrar para não ser enterrado,
 intermediar o pagamento do serviço, crédito consignado militar. O destaque aparece num bloco
@@ -117,6 +141,12 @@ Nextdoor: página de negócio grátis; o pago são ofertas locais em unidades pe
 US$ 1/dia, média de US$ 75 por campanha). OLX: planos mensais por perfil, com saldo de destaques.
 GetNinjas: cadastro grátis, cobrança por contato.
 
+Referências de interface consultadas em 26/09/2026 no Mobbin: [Nextdoor — perfil de negócio](https://mobbin.com/flows/3c5a68e8-7886-4458-ad9f-403304ed73ec), [Fresha — criação de perfil no marketplace](https://mobbin.com/flows/2246ab8a-c605-47ff-ac30-45c2e3fb3d17), [Fresha — prévia do perfil](https://mobbin.com/flows/ef0e19c8-6f36-4f5a-8fc7-bfddff4943cc) e [Airtasker — cadastrar serviços](https://mobbin.com/flows/a88dcee0-07d7-4a93-aafe-fe4ac56e1072). Elas orientam a apresentação pública, a criação pelo dono, a prévia e a descoberta de serviços; vínculo à identidade admitida e alcance derivado da localidade são decisões próprias do Bivaque.
+
+**Divergência deliberada do baseline:** o Bivaque não usa claim de ficha de terceiro nem converte
+o membro em uma conta comercial separada. A página nasce vinculada à identidade autenticada já
+admitida; o alcance inicial do membro é derivado da sua cidade atual.
+
 ## Risks
 
 - **Cadastro aberto de prestador civil.** Sem convite, a confiança passa a vir das indicações. O
@@ -129,6 +159,20 @@ GetNinjas: cadastro grátis, cobrança por contato.
 ## Reversal cost
 
 Médio. Voltar a cobrar alcance exigiria tirar de quem já tem. Por isso D5 vale como compromisso.
+
+## Success metric and reopen condition
+
+Esta primeira fatia passa quando um membro elegível cria uma página, ela nasce com alcance
+gratuito somente na cidade atual, aparece na busca para outro membro dessa cidade, pode ser
+editada apenas pelo próprio dono e o fluxo civil existente continua passando seus testes de
+convite, edição e revogação. O caminho negativo deve provar que outro membro não assume, edita,
+publica catálogo nem envia foto na ficha alheia.
+
+Reabrir o contrato de autorização se a página precisar sobreviver sem um membro atual, operar em
+múltiplas cidades, ser transferida entre pessoas, ou se a abertura do cadastro civil exigir uma
+identidade comercial diferente da conta autenticada. A migração do alcance civil de comunidade
+para cidade inteira permanece necessária para concluir D5 e não é considerada fechada por esta
+fatia.
 
 ## Approval
 

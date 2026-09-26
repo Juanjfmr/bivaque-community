@@ -1860,15 +1860,7 @@ export type Database = {
           owner_user_id?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "provider_profiles_owner_user_id_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: true
-            referencedRelation: "provider_accounts"
-            referencedColumns: ["auth_user_id"]
-          },
-        ]
+        Relationships: []
       }
       provider_reach: {
         Row: {
@@ -2584,6 +2576,24 @@ export type Database = {
         Returns: boolean
       }
       is_provider_account: { Args: { p_user_id: string }; Returns: boolean }
+      create_member_business_page: {
+        Args: {
+          p_bio?: string | null
+          p_category: Database["public"]["Enums"]["provider_category"]
+          p_display_name: string
+        }
+        Returns: string
+      }
+      can_manage_provider_profile: { Args: { p_provider_id: string }; Returns: boolean }
+      update_member_business_page: {
+        Args: {
+          p_bio?: string | null
+          p_category: Database["public"]["Enums"]["provider_category"]
+          p_display_name: string
+          p_provider_id: string
+        }
+        Returns: undefined
+      }
       is_verified_holder: { Args: { p_user_id: string }; Returns: boolean }
       join_group: { Args: { p_group_id: string }; Returns: undefined }
       leave_community: { Args: { p_community_id: string }; Returns: undefined }

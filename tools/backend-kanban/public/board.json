@@ -1398,18 +1398,31 @@
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
-      "description": "Identidade, cat�logo, portf�lio, alcance por vila/comunidade e revoga��o pelo dono da comunidade. As tr�s colunas que o prestador preenche sozinho no dia um.",
+      "status": "now",
+      "description": "Ficha pública de negócio para prestador civil convidado e membro admitido: identidade, catálogo, portfólio e alcance. Esta entrega adiciona página própria para membro, com alcance gratuito na localidade ativa e sem criar conta civil; pedidos e respostas seguem no card de pedidos de serviço.",
       "checklist": [
-        "provider_profiles/catalago/portfolio tabelas com RLS",
-        "can_see_provider gating visibilidade",
-        "/prestadores/[id] member view"
+        "provider_profiles/catalog/portfolio tables and RLS",
+        "can_see_provider gates visibility",
+        "/prestadores/[id] member view",
+        "admitted member creates and edits own business page through atomic profile + locality reach RPC",
+        "member catalog/portfolio/photo ownership and locality isolation have pgTAP coverage",
+        "civil invitation, shell, reach and revocation regression suites run with BIZ-001 pgTAP on an isolated/aligned database [PASS: 132 files / 1789 tests]",
+        "web entry points in Services, Market, listing composer and Profile"
       ],
-      "proof": [],
-      "tests": ["provider-showcase-scope.sql"],
+      "proof": [
+        "2026-09-26: ADR-20260925-pagina-do-negocio critic_verdict PASS; independent R3 security audit PASS for the scoped design.",
+        "2026-09-26: BIZ-001 implementation built; lint, typecheck, unit, privacy, scope and secrets checks passed. Full pgTAP PASS on an isolated no-seed stack: 132 files / 1789 tests; shared local database was not mutated.",
+        "2026-09-26: independent R3 static security review PASS after fixing transferred-member visibility; browser cycle and 375/768/1440 visual capture remain open."
+      ],
+      "tests": [
+        "provider-showcase-scope.sql",
+        "provider-member-business.sql",
+        "provider-invitation.sql",
+        "provider-revocation.sql"
+      ],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
+      "updatedAt": "2026-09-26",
+      "sourceRevision": "e300889f",
       "dependencies": ["G-TASK-1"]
     },
     {
