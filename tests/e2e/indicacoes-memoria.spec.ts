@@ -30,7 +30,15 @@ test.describe("indicações com memória", () => {
     const askBox = asker.getByRole("textbox", { name: "O que você procura" })
     await expect(askBox).toBeFocused()
     await askBox.fill(question)
-    await expect(asker.getByText("Ninguém perguntou isso ainda.")).toBeVisible()
+    // A busca terminou e ESTA pergunta ainda não existe. Não se exige "Ninguém
+    // perguntou": a busca pontua por termo (list_indications) e os três projetos
+    // do Playwright dividem o banco, então o pedido "Fonoaudiólogo infantil" que
+    // o projeto anterior publicou aparece aqui, com outra marca.
+    const searchBox = asker.getByRole("region", { name: "O que você procura?" })
+    await expect(
+      searchBox.getByText(/^(Ninguém perguntou isso ainda\.|Já perguntaram)$/),
+    ).toBeVisible()
+    await expect(searchBox.getByRole("link", { name: new RegExp(question) })).toHaveCount(0)
 
     // Saúde vai para a cidade, com a categoria sugerida e sem aviso.
     await asker.getByRole("button", { name: "Pedir à cidade" }).click()
