@@ -50,7 +50,12 @@ test.describe("indicações com memória", () => {
     await helper.goto("/indicacoes")
     await helper.getByRole("textbox", { name: "O que você procura" }).fill(`fonoaudiologo ${mark}`)
     await expect(helper.getByText("Já perguntaram")).toBeVisible()
-    await helper.getByRole("link", { name: new RegExp(question) }).click()
+    // O pedido novo também está na lista de recentes logo abaixo: o achado da
+    // busca é o que está na caixa "O que você procura?".
+    await helper
+      .getByRole("region", { name: "O que você procura?" })
+      .getByRole("link", { name: new RegExp(question) })
+      .click()
     await helper.waitForURL(`**${requestPath}`)
     await helper.getByLabel("Sua indicação").fill(answer)
     await helper.getByRole("button", { name: "Responder" }).click()
@@ -68,7 +73,9 @@ test.describe("indicações com memória", () => {
     const later = await laterContext.newPage()
     await later.goto("/indicacoes")
     await later.getByRole("textbox", { name: "O que você procura" }).fill(`fono ${mark}`)
-    const hit = later.getByRole("link", { name: new RegExp(question) })
+    const hit = later
+      .getByRole("region", { name: "O que você procura?" })
+      .getByRole("link", { name: new RegExp(question) })
     await expect(hit).toContainText("Resolvido")
     await expect(hit).toContainText(answer)
 

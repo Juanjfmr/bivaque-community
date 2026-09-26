@@ -383,7 +383,16 @@ export default function CommunityPage() {
 
               <CommunityViewSwitch view={view} />
 
-              {view === "indicacoes" ? (
+              {/* Antes de saber se a pessoa tem comunidade, nada interativo: a
+              resposta pode trocar a página inteira (sem comunidade, a referência
+              da cidade) e o que ela tivesse digitado se perderia na troca. */}
+              {!hasResolved && !error ? (
+                <div className="space-y-4" aria-busy="true">
+                  <FeedCardSkeleton />
+                  <FeedCardSkeleton />
+                  <FeedCardSkeleton />
+                </div>
+              ) : view === "indicacoes" ? (
                 <IndicationsPanel
                   localityId={current.id}
                   cityName={current.cityName}

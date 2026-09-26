@@ -131,11 +131,11 @@ test.describe("tipografia da Home no telefone", () => {
     const cta = faixa.getByRole("link", { name: /Ver (resposta|notificação)/ })
     await expect(cta).toBeVisible()
     const box = await cta.boundingBox()
-    expect(box?.width ?? 0, "alvo do CTA com pelo menos 44 px de largura").toBeGreaterThanOrEqual(
-      44,
-    )
-    expect(box?.height ?? 0, "alvo do CTA com pelo menos 44 px de altura").toBeGreaterThanOrEqual(
-      44,
-    )
+    // Centésimos de pixel: com a faixa em posição fracionária, o retângulo de um
+    // alvo de 44 px chega como 43,99997 (visto no CI, 26/09/2026). Arredondar
+    // aqui não aceita um alvo menor — 43,9 continua reprovado.
+    const px = (value: number | undefined) => Math.round((value ?? 0) * 100) / 100
+    expect(px(box?.width), "alvo do CTA com pelo menos 44 px de largura").toBeGreaterThanOrEqual(44)
+    expect(px(box?.height), "alvo do CTA com pelo menos 44 px de altura").toBeGreaterThanOrEqual(44)
   })
 })

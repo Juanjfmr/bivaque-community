@@ -9,9 +9,11 @@ test.describe("photo upload", () => {
   test("the composer has a file picker for photos", async ({ page }) => {
     // Given a session of a member
     await seedSession(page.context())
-    // When they open the community page and open the shell composer
+    // When they open the community page and open the composer. A conta do
+    // seedSession() não tem comunidade: a Comunidade é a referência da cidade,
+    // e publicar começa pelo "Publicar" dela.
     await page.goto("/community")
-    await page.getByRole("button", { name: /^Escreva/ }).click()
+    await page.getByRole("button", { name: "Publicar" }).first().click()
 
     // And select Photo type
     const dialog = page.getByRole("dialog", { name: "Criar publicação" })

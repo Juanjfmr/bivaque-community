@@ -24,6 +24,8 @@ import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
 const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
+// "Aviso da cidade para todas as vilas" (seed.sql): publicação com alcance da cidade.
+const LOCALITY_REACH_POST_ID = "80000000-0000-4000-8000-000000000f01"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
@@ -75,8 +77,10 @@ test.describe("home is the vila feed; without a vila, the city reference", () =>
     await signInAs(page, VILA_OWNER_EMAIL)
     await page.setViewportSize({ width: 375, height: 812 })
 
-    // When the member opens the home
-    await page.goto("/community")
+    // When the member opens the vila feed at the locality-reach post. O feed vem
+    // em páginas de 20 (feed-pages.ts) e o aviso, de dois dias atrás, fica além
+    // da primeira no seed: o link direto busca as páginas seguintes até ele.
+    await page.goto(`/community?post=${LOCALITY_REACH_POST_ID}`)
 
     // Then the h1 is the vila name (section title), not "Bivaque" and not "Manaus, AM"
     // Timeout generoso no PRIMEIRO assert: quando este é o primeiro spec a rodar

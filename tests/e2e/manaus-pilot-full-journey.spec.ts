@@ -163,8 +163,11 @@ test.describe("community feed", () => {
     // When the user navigates to the community page
     await page.goto("/community")
 
-    // Then the community page renders (middleware passes, Supabase may show error or empty)
-    await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible()
+    // Then the community page renders. A conta do seedSession() não tem
+    // comunidade: a Comunidade mostra a referência da cidade, com o nome dela.
+    await expect(page.getByRole("heading", { level: 1, name: "Manaus", exact: true })).toBeVisible({
+      timeout: 15000,
+    })
     await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
   })
 
@@ -174,7 +177,9 @@ test.describe("community feed", () => {
     await page.goto("/community")
 
     // Then the community page renders without horizontal overflow
-    await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible()
+    await expect(page.getByRole("heading", { level: 1, name: "Manaus", exact: true })).toBeVisible({
+      timeout: 15000,
+    })
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
     const viewportWidth = await page.evaluate(() => window.innerWidth)
     expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)

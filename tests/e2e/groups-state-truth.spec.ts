@@ -162,8 +162,15 @@ test.describe("DS-016/027 — /groups action failure shows user-safe copy, not r
     await page.route("**/rest/v1/rpc/create_group**", (route) => route.fulfill(FAKE_DUPLICATE_KEY))
 
     await page.getByRole("button", { name: "Criar grupo" }).first().click()
-    await page.getByRole("textbox", { name: "Nome do grupo" }).fill("Test group")
-    await page.getByRole("button", { name: "Criar", exact: true }).click()
+    const nameField = page.getByRole("textbox", { name: "Nome do grupo" })
+    await nameField.fill("Test group")
+    // O "Criar" do formulário, não o menu de criação do shell (botão flutuante
+    // no celular, "Criar" no cabeçalho do desktop), que tem o mesmo nome.
+    await page
+      .locator("form")
+      .filter({ has: nameField })
+      .getByRole("button", { name: "Criar", exact: true })
+      .click()
 
     const alert = page.getByRole("alert").filter({ hasText: "Algo deu errado" })
     await expect(alert).toBeVisible({ timeout: 10000 })
