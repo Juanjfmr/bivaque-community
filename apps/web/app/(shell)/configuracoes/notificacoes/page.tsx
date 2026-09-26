@@ -326,9 +326,6 @@ export default function ConfiguracoesNotificacoesPage() {
             </tr>
           </tbody>
         </table>
-        <p className="mt-2 text-xs text-muted">
-          O envio por push no navegador não aparece porque ainda não há serviço de push conectado.
-        </p>
       </div>
 
       {feedback && (

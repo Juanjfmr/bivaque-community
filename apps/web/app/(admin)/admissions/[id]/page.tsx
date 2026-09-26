@@ -199,7 +199,7 @@ export default async function AdmissionAnalysisPage({
   const nextStep = document
     ? "Abra o documento, confira o resumo e registre a decisão."
     : caseClosed
-      ? "Caso encerrado. Nada mais é esperado nesta tela."
+      ? "Caso encerrado."
       : status === "temporary_error"
         ? "A reconciliação automática tenta novamente em ciclo próprio; encerre com motivo se decidir assim."
         : "Aguarde o próximo ciclo de verificação ou encerre o caso com motivo."

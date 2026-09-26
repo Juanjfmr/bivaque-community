@@ -197,7 +197,7 @@ export default function ListingDetailPage() {
       <div className="mx-auto w-full max-w-5xl px-4 py-8">
         <AccessUnavailableState
           title="Anúncio indisponível"
-          description="Ele pode ter sido pausado, encerrado ou estar fora do seu alcance."
+          description="Ele pode ter sido pausado ou encerrado."
           primaryAction={
             <Button variant="primary" size="sm" onPress={() => router.push("/mercado" as Route)}>
               Voltar para o Mercado
@@ -321,7 +321,7 @@ export default function ListingDetailPage() {
                   Tenho interesse
                 </Button>
                 <p className="text-xs text-muted">
-                  Este anúncio é seu. Você não conversa consigo mesmo por aqui.
+                  Este anúncio é seu. Quem se interessar fala com você por mensagem.
                 </p>
               </div>
             ) : listing.status !== "active" ? (

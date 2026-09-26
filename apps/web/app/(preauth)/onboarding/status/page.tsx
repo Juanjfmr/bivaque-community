@@ -114,8 +114,8 @@ export default async function OnboardingStatusPage() {
     status === "pending"
       ? "Você não precisa repetir seus dados. Assim que a análise terminar, sua entrada continua do ponto em que parou."
       : isTemporaryError
-        ? "A fonte oficial não respondeu como esperado. Sua tentativa não foi perdida."
-        : "A consulta automática não encontrou confirmação para um dos papéis aceitos pelo Bivaque."
+        ? "Não conseguimos confirmar agora. Seus dados estão salvos; tente de novo em instantes."
+        : "Não encontramos seu vínculo pelo CPF."
 
   return (
     <AdmissionShell stage="access" titleId="status-heading" title={title} description={description}>
@@ -126,8 +126,8 @@ export default async function OnboardingStatusPage() {
           </p>
         ) : (
           <p className={styles["statusLead"]}>
-            Você pode refazer a consulta se houver algum dado a conferir. Se acredita que a fonte
-            oficial não refletiu sua situação, envie sua identidade para análise.
+            Confira seus dados e tente de novo. Se estiver tudo certo, envie sua identidade e a
+            equipe analisa.
           </p>
         )}
 

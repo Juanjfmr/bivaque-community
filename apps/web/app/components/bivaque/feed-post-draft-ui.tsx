@@ -27,13 +27,13 @@ export function DraftNotices({
           <FeedbackAlert
             variant="info"
             title="Rascunho recuperado"
-            description="Seu texto estava guardado neste navegador e não foi publicado. Ele continua aqui até você publicar ou descartar."
+            description="Você tinha um texto não publicado. Ele continua aqui até você publicar ou descartar."
             actions={
               <Button
                 size="sm"
                 variant="tertiary"
                 onPress={onRequestDiscard}
-                aria-label="Descartar rascunho salvo neste navegador"
+                aria-label="Descartar rascunho"
               >
                 Descartar rascunho
               </Button>
@@ -72,9 +72,7 @@ export function DraftDiscardDialog({ open, onOpenChange, onDiscard }: DraftDisca
               <ModalCloseTrigger className="min-h-11 min-w-11" />
             </Modal.Header>
             <Modal.Body>
-              <p className="text-sm">
-                O texto guardado neste navegador será apagado e não poderá ser recuperado.
-              </p>
+              <p className="text-sm">O rascunho será apagado e não poderá ser recuperado.</p>
             </Modal.Body>
             <Modal.Footer>
               <Button variant="primary" onPress={() => onOpenChange(false)}>

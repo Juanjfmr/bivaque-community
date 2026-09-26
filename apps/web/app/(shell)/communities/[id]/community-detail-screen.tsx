@@ -303,7 +303,7 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
                   href={`/communities/${presentation.id}/invite` as Route}
                   className="inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
                 >
-                  Convidar membros — o convite carrega o escopo desta comunidade
+                  Convidar pessoas para esta comunidade
                 </Link>
               </li>
               {canModerate && (

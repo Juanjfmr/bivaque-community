@@ -88,8 +88,7 @@ export function InterestsSection() {
       <header>
         <h1 className="text-lg font-semibold tracking-tight">Assuntos de interesse</h1>
         <p className="mt-1 text-sm text-muted">
-          Estes interesses são usados para sugerir grupos da sua cidade. Nada além disso — o produto
-          não usa essa informação para outra coisa (LGPD, finalidade declarada).
+          Usamos seus interesses só para sugerir grupos da sua cidade.
         </p>
       </header>
 

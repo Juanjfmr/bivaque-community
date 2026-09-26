@@ -544,8 +544,8 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                     Encontro de outra cidade
                   </h2>
                   <p className="text-sm text-ui-ink-2">
-                    Você está consultando. Confirmar presença e perguntar ao organizador ficam para
-                    quem é da cidade do encontro.
+                    Você está vendo outra cidade. Confirmar presença e perguntar ao organizador
+                    ficam para quem mora lá.
                   </p>
                   <Link
                     href={"/profile#cidade" as Route}

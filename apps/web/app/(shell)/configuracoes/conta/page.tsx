@@ -277,7 +277,7 @@ export default function ConfiguracoesContaPage() {
                 onChange={(event) => setNewEmail((event.target as HTMLInputElement).value)}
               />
               <p className="text-xs text-muted">
-                A troca exige confirmar o acesso e é concluída pelo link enviado aos dois endereços.
+                Para trocar, enviamos um link de confirmação ao e-mail atual e ao novo.
               </p>
               <div className="flex gap-2">
                 <Button

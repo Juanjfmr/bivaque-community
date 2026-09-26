@@ -227,9 +227,7 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
               Toda a cidade — {current.cityName}
               {current.stateCode ? `, ${current.stateCode}` : ""}
             </div>
-            <p className="text-xs text-muted">
-              O alcance é a cidade em que o evento é criado; a edição não o altera.
-            </p>
+            <p className="text-xs text-muted">O encontro vale para a cidade onde foi criado.</p>
           </div>
         ) : (
           <p className="text-xs text-muted">
@@ -265,9 +263,7 @@ export function EventForm({ mode, initial, cancelled = false }: EventFormProps) 
             <ol className="mt-2 flex flex-col gap-2 text-sm text-muted">
               <li className="flex gap-2">
                 <span className="font-semibold text-[var(--semantic-action-primary)]">1.</span>
-                <span>
-                  O evento é salvo antes de ser divulgado — nada aparece sem estar gravado.
-                </span>
+                <span>Seu encontro fica salvo, e você pode editar quando quiser.</span>
               </li>
               <li className="flex gap-2">
                 <span className="font-semibold text-[var(--semantic-action-primary)]">2.</span>

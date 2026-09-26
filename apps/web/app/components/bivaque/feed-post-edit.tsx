@@ -106,7 +106,7 @@ export function EditPostModal({ post, onClose, onSaved }: EditPostModalProps) {
     setSaving(false)
     showToast({
       title: "Alterações salvas",
-      description: "A publicação foi atualizada para quem já podia vê-la.",
+      description: "Publicação atualizada.",
       variant: "success",
     })
     onSaved(composed, post.post_type === "photo" ? photoPath.trim() || null : null)

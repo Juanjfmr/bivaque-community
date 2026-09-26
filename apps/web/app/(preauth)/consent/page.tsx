@@ -14,7 +14,7 @@ export default function ConsentPage() {
       description="O Bivaque usa verificação de elegibilidade e dados pessoais para manter uma comunidade fechada. Leia os documentos antes de continuar."
       asideEyebrow="O que sustenta a comunidade"
       asideTitle="Confiança não é um detalhe."
-      asideDescription="As regras valem para todos. O aceite fica registrado com a versão apresentada nesta tela."
+      asideDescription="As regras valem para todos. Guardamos seu aceite junto com a versão que você leu."
     >
       <div className={styles["stack"]}>
         <section aria-labelledby="documents-heading" className="space-y-3">

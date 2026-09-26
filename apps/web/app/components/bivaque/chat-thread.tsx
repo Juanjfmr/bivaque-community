@@ -215,7 +215,7 @@ export function ChatThread({
         } else if (error.message.includes("own content")) {
           setReportError("Voce nao pode denunciar a propria mensagem.")
         } else {
-          setReportError("Nao foi possivel enviar a denuncia agora. Tente novamente em instantes.")
+          setReportError("Não foi possível enviar a denúncia agora. Tente novamente em instantes.")
         }
         return
       }
@@ -413,7 +413,7 @@ export function ChatThread({
                         className="text-sm"
                       />
                       <p id={`report-privacy-${msg.id}`} className="text-xs text-muted" role="note">
-                        Não inclua CPF, telefone ou endereço. O motivo é redigido antes da análise.
+                        Não inclua CPF, telefone ou endereço: quem analisa não precisa deles.
                       </p>
                       {reportError && (
                         <div id={`report-error-${msg.id}`}>

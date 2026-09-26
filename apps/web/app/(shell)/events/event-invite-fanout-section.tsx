@@ -52,8 +52,8 @@ export function EventInviteFanoutSection({ eventId }: { eventId: string }) {
         Convidar para este evento
       </h2>
       <p className="text-sm text-muted">
-        Você pode convidar membros da sua comunidade e dos seus grupos — sem busca de pessoas (D43).
-        Quem aceitar confirma presença; quem já foi convidado está listado abaixo.
+        Convide pessoas da sua comunidade e dos seus grupos. Quem aceitar confirma presença; quem já
+        foi convidado aparece abaixo.
       </p>
 
       {invitable.length === 0 ? (

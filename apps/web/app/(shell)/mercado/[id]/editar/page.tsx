@@ -537,7 +537,7 @@ export default function EditarAnuncioPage() {
               className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface-sunken)] px-3 text-sm text-[var(--semantic-text-secondary)]"
             />
             <p id="editar-comunidade-ajuda" className="text-xs text-muted">
-              O público é escolhido na criação e não muda depois — trocá-lo contornaria o acesso.
+              O público do anúncio não muda depois de publicado.
             </p>
           </div>
         </div>

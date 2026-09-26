@@ -1198,9 +1198,8 @@ function EventsContent() {
                 )}
 
                 <p className="text-xs text-muted">
-                  A data acima só define o horário e o ponto de partida — o dia real é calculado
-                  pelo padrão escolhido. Em meses mais curtos, o dia fixo é ajustado para o último
-                  dia do mês, nunca para uma data inválida.
+                  A data acima marca o horário e o primeiro encontro. Nos meses mais curtos, o
+                  encontro cai no último dia do mês.
                 </p>
 
                 {holidayWarning && (

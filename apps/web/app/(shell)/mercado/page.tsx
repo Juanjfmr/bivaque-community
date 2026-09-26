@@ -511,7 +511,7 @@ function MercadoContent() {
               description={
                 filtersActive
                   ? "Ajuste ou limpe os filtros para ver mais resultados."
-                  : "Publique o primeiro anúncio da sua região e ele aparece nesta busca."
+                  : "Publique o primeiro anúncio da sua região."
               }
               action={
                 filtersActive ? (

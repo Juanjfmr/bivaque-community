@@ -19,8 +19,8 @@ export default async function CommunityInvitePage({ params }: PageProps) {
       <header>
         <h1 className="text-lg font-semibold tracking-tight">Convidar membros</h1>
         <p className="mt-1 text-sm text-muted">
-          Cada convite carrega o escopo da vila: o link só vale para esta comunidade, e a aceitação
-          cria um pedido de entrada — o dono ainda aprova.
+          O link vale só para esta comunidade. Quem aceitar ainda passa pela aprovação de quem cuida
+          dela.
         </p>
       </header>
 

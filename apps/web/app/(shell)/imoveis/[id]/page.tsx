@@ -1,4 +1,4 @@
-import { BedDouble, Calendar, Car, Info, Ruler, Waves } from "lucide-react"
+import { BedDouble, Calendar, Car, Ruler, Waves } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -10,6 +10,7 @@ import { Card } from "../../../components/bivaque/card"
 import { ListingAlertForm } from "../alert-form"
 import { SaveListingButton } from "../save-listing-button"
 import { ShareButton } from "../share-button"
+import { PropertyInterestButton } from "./interest-button"
 
 // RECON-027 — prancha 19. A ficha do imóvel. As cinco invenções do gerador
 // (prazo de resposta, tempo de associação, compartilhamento automático de
@@ -261,20 +262,12 @@ export default async function ImovelDetailPage({ params }: { params: Promise<{ i
             <p className="text-sm">{property.ownerName ?? "Membro do Bivaque"}</p>
           </Card>
 
-          <div className="space-y-2">
-            <button
-              type="button"
-              disabled
-              aria-describedby="interesse-explicacao"
-              className="min-h-11 w-full rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] opacity-60 transition-colors duration-[var(--semantic-motion-duration-fast)]"
-            >
-              Tenho interesse
-            </button>
-            <p id="interesse-explicacao" className="flex items-start gap-2 text-xs text-muted">
-              <Info size={14} aria-hidden="true" className="mt-0.5 shrink-0" />A conversa com o
-              anunciante entra junto da central de mensagens; até lá o contato fica indisponível.
-            </p>
-          </div>
+          <PropertyInterestButton
+            listingId={property.id}
+            ownerUserId={property.ownerUserId}
+            isOwner={isOwner}
+            isActive={property.status === "active"}
+          />
         </aside>
       </div>
     </div>

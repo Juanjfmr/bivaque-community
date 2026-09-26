@@ -16,7 +16,7 @@ const ERROR_MESSAGES: Record<ReportMutationError, string> = {
   "sessao-expirada": "Sua sessão expirou. Faça login novamente antes de enviar.",
   "motivo-invalido": "Escolha um motivo válido para a denúncia.",
   "explicacao-longa": `A explicação deve ter no máximo ${EXPLANATION_MAX} caracteres.`,
-  "alvo-invalido": "Este conteúdo não está mais ao seu alcance, então não pode ser denunciado.",
+  "alvo-invalido": "Este conteúdo não está mais disponível.",
   "ja-denunciado": "Você já denunciou este conteúdo. Sua denúncia anterior segue na fila.",
   "proprio-conteudo": "Você não pode denunciar o seu próprio conteúdo.",
   falha: "Não foi possível enviar a denúncia agora. Tente novamente.",
@@ -73,7 +73,7 @@ export function NewReportForm({
         <FeedbackAlert
           variant="success"
           title="Denúncia enviada."
-          description="Ela entra na fila de moderação que a equipe lê. Se houver uma decisão, o retorno chega como notificação no app."
+          description="A equipe vai analisar. Você recebe um aviso quando houver uma decisão."
         />
         <a
           href={`/denuncias/${receipt.reportId}`}
@@ -174,8 +174,7 @@ export function NewReportForm({
           {explanation.length}/{EXPLANATION_MAX}
         </p>
         <p className="text-xs text-muted" role="note">
-          Não digite CPF, telefone nem endereço. O motivo passa por redação automática antes de
-          chegar ao operador.
+          Não inclua CPF, telefone ou endereço: quem analisa não precisa deles.
         </p>
       </div>
       {error && <FeedbackAlert variant="danger" description={error} />}

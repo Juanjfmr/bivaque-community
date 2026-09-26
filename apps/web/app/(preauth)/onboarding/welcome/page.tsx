@@ -9,7 +9,7 @@ export default function OnboardingWelcomePage() {
       current="concluir"
       titleId="welcome-heading"
       title="Você chegou ao Bivaque."
-      description="Sua conta, elegibilidade e localidade estão prontas. Agora escolha por onde quer começar."
+      description="Tudo pronto. Escolha por onde quer começar."
     >
       <div className={styles["stack"]}>
         <Link href="/community" className={styles["primaryLink"]}>

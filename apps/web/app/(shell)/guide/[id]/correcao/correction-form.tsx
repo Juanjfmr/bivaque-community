@@ -113,8 +113,7 @@ export function CorrectionForm({
           className="min-h-32 rounded-xl border border-border bg-[var(--semantic-surface)] px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
         />
         <p id={`${descriptionId}-help`} role="note" className="text-xs text-muted">
-          Descreva o que está incorreto ou desatualizado. A sugestão vai para a curadoria; nada é
-          publicado automaticamente.
+          Conte o que está errado ou desatualizado. A equipe revisa antes de mudar o Guia.
         </p>
       </div>
 

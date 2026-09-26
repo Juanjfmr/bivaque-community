@@ -472,7 +472,7 @@ function GuideContent() {
                 description={
                   isLocalityStale(memberCount)
                     ? "Ainda não há referências aprovadas no guia desta cidade."
-                    : "As entradas publicadas aqui passam por curadoria humana."
+                    : "Quem mora aqui pode sugerir lugares, e a equipe revisa cada um."
                 }
               />
             )}
@@ -577,16 +577,16 @@ function GuideContent() {
                 Sobre o guia
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                Conteúdo curado por famílias, veteranos e pensionistas que moram na cidade. Nada
-                entra aqui de forma automática.
+                Referências de famílias, veteranos e pensionistas que moram na cidade, revisadas uma
+                a uma.
               </p>
             </Card>
 
             <Card className="p-4">
               <h2 className="text-base font-semibold tracking-tight">Ajude a melhorar o guia</h2>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                Achou uma referência desatualizada ou conhece um serviço que faltou? O canal de
-                contato do produto é o mesmo dos avisos transacionais.
+                Achou uma referência desatualizada ou conhece um lugar que faltou? Conte para a
+                gente.
               </p>
               <Link
                 href="/ajuda"

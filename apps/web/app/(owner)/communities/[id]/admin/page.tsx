@@ -8,8 +8,7 @@ export default async function CommunityAdminHome({ params }: { params: Promise<{
     <div className="mx-auto w-full max-w-2xl space-y-4 px-4 pt-6 pb-8">
       <h1 className="text-lg font-semibold tracking-tight">Administração da comunidade</h1>
       <p className="text-sm text-muted">
-        Aprovação e moderação da própria comunidade. Outras seções entram aqui quando a onda
-        correspondente fechar (§12 regra 3).
+        Aprove quem pede para entrar e cuide da moderação da sua comunidade.
       </p>
       <ul className="space-y-2 text-sm">
         <li>

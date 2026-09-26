@@ -329,9 +329,7 @@ function SavedCard({
               Indisponível
             </span>
             <p className="text-sm font-medium">Conteúdo indisponível</p>
-            <p className="text-xs text-muted">
-              Este conteúdo não está mais acessível. O que ele dizia não fica guardado aqui.
-            </p>
+            <p className="text-xs text-muted">Este conteúdo foi removido.</p>
           </>
         )}
         <div className="mt-auto flex items-center gap-2 pt-2">

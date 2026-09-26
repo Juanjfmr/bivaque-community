@@ -691,7 +691,7 @@ export default function ProfilePage() {
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-muted">
-                  Tem certeza que deseja sair da conta? Você podera entrar novamente a qualquer
+                  Tem certeza que deseja sair da conta? Você poderá entrar novamente a qualquer
                   momento.
                 </p>
                 {signOutError && (

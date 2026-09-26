@@ -231,7 +231,7 @@ export function ReportButton({
                     <FeedbackAlert
                       variant="success"
                       title="Denúncia enviada."
-                      description="Ela entra na fila de moderação que a equipe lê. Se houver uma decisão, o retorno chega como notificação no app."
+                      description="A equipe vai analisar. Você recebe um aviso quando houver uma decisão."
                     />
                     {canOfferBlock ? (
                       <div>
@@ -308,8 +308,8 @@ export function ReportButton({
                         {explanation.length}/{EXPLANATION_MAX}
                       </p>
                       <p id="report-reason-help" className="text-xs text-muted" role="note">
-                        Não digite CPF, telefone nem endereço. O motivo passa por redação automática
-                        antes de chegar ao operador e fica registrado por dois anos.
+                        Não inclua CPF, telefone ou endereço: quem analisa não precisa deles. A
+                        denúncia fica guardada por dois anos.
                       </p>
                     </div>
                     {error && (
