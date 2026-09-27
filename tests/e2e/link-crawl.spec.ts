@@ -178,7 +178,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   { route: "/mercado/[id]/editar", porta: "BOTÃO: 'Editar' em /meus-anuncios" },
-  { route: "/mercado/novo", porta: "BOTÃO: 'Anunciar' em /mercado e /meus-anuncios" },
   { route: "/messages/[id]", porta: "FLUXO: escolher conversa na caixa, ou ?conversation=" },
   {
     route: "/negocio/catalogo",
