@@ -57,7 +57,7 @@ function InvalidTarget() {
         <FeedbackAlert
           variant="warning"
           title="Conteúdo não encontrado"
-          description="Este endereço de denúncia não corresponde a um conteúdo que você pode ver. Ele pode ter sido removido, ou o tipo e o identificador não são válidos."
+          description="Não encontramos esse conteúdo. Ele pode ter sido removido."
         />
       </div>
       <a

@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest"
 
 const DM_MESSAGE_CONTENT_MAX_LENGTH = 2000
 
-const DM_PROHIBITED_PII_PATTERN =
-  /(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{11}|CPF|cpf|patente|posto\s+militar|gradua[cç][aã]o\s+militar|OM\s|organiza[cç][aã]o\s+militar|endere[cç]o|resid[eê]ncia|residencia|rua\s+\w+|avenida\s+\w+|quadra\s+\d|lote\s+\d|cep\s+\d|bairro\s+\w+|logradouro|portal\s+da\s+transpar[eê]ncia)/i
+// Sem padrão proibido: o dono revogou o filtro de conteúdo das mensagens
+// (migration 20260925181213, ADR-20260925-endereco-por-escolha). CPF, patente,
+// OM e endereço são escolha de quem escreve. Só o tamanho continua limitado.
 
 const DM_CONTEXT_TYPES = [
   "shared_group",
@@ -16,103 +17,102 @@ function isDmMessageContentValid(content: string): boolean {
   const trimmed = content.trim()
   if (trimmed.length < 1) return false
   if (trimmed.length > DM_MESSAGE_CONTENT_MAX_LENGTH) return false
-  if (DM_PROHIBITED_PII_PATTERN.test(trimmed)) return false
   return true
 }
 
-describe("DM privacy — PII/CPF/rank/OM/address redaction", () => {
+describe("DM privacy — message content is the sender's choice; only length is limited", () => {
   // ── content rejection ──────────────────────────────────────────────────────
 
-  it("rejects message containing a CPF number (formatted)", () => {
-    expect(isDmMessageContentValid("Meu CPF e 123.456.789-00")).toBe(false)
+  it("accepts message containing a CPF number (formatted)", () => {
+    expect(isDmMessageContentValid("Meu CPF e 123.456.789-00")).toBe(true)
   })
 
-  it("rejects message containing a CPF number (unformatted 11 digits)", () => {
-    expect(isDmMessageContentValid("CPF 12345678901 registrado")).toBe(false)
+  it("accepts message containing a CPF number (unformatted 11 digits)", () => {
+    expect(isDmMessageContentValid("CPF 12345678901 registrado")).toBe(true)
   })
 
-  it("rejects message containing the word 'CPF'", () => {
-    expect(isDmMessageContentValid("Qual o seu CPF?")).toBe(false)
+  it("accepts message containing the word 'CPF'", () => {
+    expect(isDmMessageContentValid("Qual o seu CPF?")).toBe(true)
   })
 
-  it("rejects message containing 'patente'", () => {
-    expect(isDmMessageContentValid("Qual a sua patente militar?")).toBe(false)
+  it("accepts message containing 'patente'", () => {
+    expect(isDmMessageContentValid("Qual a sua patente militar?")).toBe(true)
   })
 
-  it("rejects message containing 'posto militar'", () => {
-    expect(isDmMessageContentValid("Meu posto militar e oficial")).toBe(false)
+  it("accepts message containing 'posto militar'", () => {
+    expect(isDmMessageContentValid("Meu posto militar e oficial")).toBe(true)
   })
 
-  it("rejects message containing 'graduacao militar'", () => {
-    expect(isDmMessageContentValid("Minha graduacao militar e sargento")).toBe(false)
+  it("accepts message containing 'graduacao militar'", () => {
+    expect(isDmMessageContentValid("Minha graduacao militar e sargento")).toBe(true)
   })
 
-  it("rejects message containing 'graduação militar'", () => {
-    expect(isDmMessageContentValid("Qual graduação militar voce tem?")).toBe(false)
+  it("accepts message containing 'graduação militar'", () => {
+    expect(isDmMessageContentValid("Qual graduação militar voce tem?")).toBe(true)
   })
 
-  it("rejects message containing 'OM' as standalone term", () => {
-    expect(isDmMessageContentValid("Minha OM e o batalhao")).toBe(false)
+  it("accepts message containing 'OM' as standalone term", () => {
+    expect(isDmMessageContentValid("Minha OM e o batalhao")).toBe(true)
   })
 
-  it("rejects message containing 'organizacao militar'", () => {
-    expect(isDmMessageContentValid("Sobre a organizacao militar...")).toBe(false)
+  it("accepts message containing 'organizacao militar'", () => {
+    expect(isDmMessageContentValid("Sobre a organizacao militar...")).toBe(true)
   })
 
-  it("rejects message containing 'organização militar'", () => {
-    expect(isDmMessageContentValid("A organização militar onde servi")).toBe(false)
+  it("accepts message containing 'organização militar'", () => {
+    expect(isDmMessageContentValid("A organização militar onde servi")).toBe(true)
   })
 
-  it("rejects message containing 'endereco'", () => {
-    expect(isDmMessageContentValid("Meu endereco e sigiloso")).toBe(false)
+  it("accepts message containing 'endereco'", () => {
+    expect(isDmMessageContentValid("Meu endereco e sigiloso")).toBe(true)
   })
 
-  it("rejects message containing 'endereço'", () => {
-    expect(isDmMessageContentValid("Qual o endereço do evento?")).toBe(false)
+  it("accepts message containing 'endereço'", () => {
+    expect(isDmMessageContentValid("Qual o endereço do evento?")).toBe(true)
   })
 
-  it("rejects message containing 'residencia'", () => {
-    expect(isDmMessageContentValid("Minha residencia fica perto")).toBe(false)
+  it("accepts message containing 'residencia'", () => {
+    expect(isDmMessageContentValid("Minha residencia fica perto")).toBe(true)
   })
 
-  it("rejects message containing 'residência'", () => {
-    expect(isDmMessageContentValid("A residência do fulano...")).toBe(false)
+  it("accepts message containing 'residência'", () => {
+    expect(isDmMessageContentValid("A residência do fulano...")).toBe(true)
   })
 
-  it("rejects message containing a street name (Rua)", () => {
-    expect(isDmMessageContentValid("Moro na Rua das Flores")).toBe(false)
+  it("accepts message containing a street name (Rua)", () => {
+    expect(isDmMessageContentValid("Moro na Rua das Flores")).toBe(true)
   })
 
-  it("rejects message containing 'Avenida' with street name", () => {
-    expect(isDmMessageContentValid("Fica na Avenida Brasil")).toBe(false)
+  it("accepts message containing 'Avenida' with street name", () => {
+    expect(isDmMessageContentValid("Fica na Avenida Brasil")).toBe(true)
   })
 
-  it("rejects message containing 'Quadra' with number", () => {
-    expect(isDmMessageContentValid("Quadra 5 do conjunto")).toBe(false)
+  it("accepts message containing 'Quadra' with number", () => {
+    expect(isDmMessageContentValid("Quadra 5 do conjunto")).toBe(true)
   })
 
-  it("rejects message containing 'Lote' with number", () => {
-    expect(isDmMessageContentValid("Meu Lote 23 fica no fundo")).toBe(false)
+  it("accepts message containing 'Lote' with number", () => {
+    expect(isDmMessageContentValid("Meu Lote 23 fica no fundo")).toBe(true)
   })
 
-  it("rejects message containing 'CEP' with number", () => {
-    expect(isDmMessageContentValid("Meu CEP 69000 sera enviado")).toBe(false)
+  it("accepts message containing 'CEP' with number", () => {
+    expect(isDmMessageContentValid("Meu CEP 69000 sera enviado")).toBe(true)
   })
 
-  it("rejects message containing 'Bairro' with name", () => {
-    expect(isDmMessageContentValid("No Bairro Compensa tem tudo")).toBe(false)
+  it("accepts message containing 'Bairro' with name", () => {
+    expect(isDmMessageContentValid("No Bairro Compensa tem tudo")).toBe(true)
   })
 
-  it("rejects message containing 'logradouro'", () => {
-    expect(isDmMessageContentValid("Qual o logradouro da unidade?")).toBe(false)
+  it("accepts message containing 'logradouro'", () => {
+    expect(isDmMessageContentValid("Qual o logradouro da unidade?")).toBe(true)
   })
 
-  it("rejects message containing 'Portal da Transparencia'", () => {
-    expect(isDmMessageContentValid("Consultei no Portal da Transparencia")).toBe(false)
+  it("accepts message containing 'Portal da Transparencia'", () => {
+    expect(isDmMessageContentValid("Consultei no Portal da Transparencia")).toBe(true)
   })
 
-  it("rejects message containing 'Portal da Transparência'", () => {
-    expect(isDmMessageContentValid("No Portal da Transparência consta")).toBe(false)
+  it("accepts message containing 'Portal da Transparência'", () => {
+    expect(isDmMessageContentValid("No Portal da Transparência consta")).toBe(true)
   })
 
   // ── acceptance: normal messages pass ────────────────────────────────────────

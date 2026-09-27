@@ -1,50 +1,42 @@
 "use client"
 
-import { MapPin, MessageCircle } from "lucide-react"
+import { MapPin } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { ASK_INDICATION_HREF } from "../../../lib/indications/indications"
 import { useMemberContext } from "../../../lib/member-context"
-import { ASK_INDICATION_HREF } from "../../../lib/recommendations/request-tab"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { useAvatarSrc } from "../../(shell)/inicio/use-avatar-src"
 import { MemberAvatar } from "./avatar"
 
-// DS-006 (prancha 01, ajuste de densidade de 20/09): o lançador de intenções
-// da Home. Duas ações distintas, lado a lado, com o mesmo peso:
+// O ponto de publicação da Home — reconstrução de 25/09/2026, com Threads,
+// Circle e Nextdoor como referência: UMA linha, não um bloco. Antes eram duas
+// ações grandes (e uma variante "explain" com dois cards) que empurravam o
+// primeiro post para o meio da tela no telefone.
 //
-// 1. `Fazer uma pergunta` — abre o compositor que JÁ existe (CreatePostModal,
-//    montado pela página). Nada de segundo mecanismo de publicação: a pergunta
-//    é uma publicação de texto e passa pelo mesmo insert, pela mesma audiência e
-//    pela mesma checagem de PII.
-// 2. `Pedir uma indicação` — chega ao painel do Guia em /recommendations pelo
-//    parâmetro de aba que o produto já usa (`?aba=`, o mesmo de /salvos).
-//
-// O lançador não é hero: `compact` é uma faixa de uma linha (o avatar e o
-// rótulo da esquerda, as duas ações à direita) que não empurra o primeiro item
-// do feed para fora da dobra em 768 e 1440. `explain` existe para o estado novo
-// ou sem comunidade aprovada, onde explicar as duas intenções vale o espaço —
-// membro ativo nunca recebe esse volume.
-//
-// HeroUI continua sendo a camada de comportamento (foco visível, alvo de 44px,
-// teclado). A composição — ordem, densidade, hierarquia — vem da prancha, não do
-// componente: por isso as duas ações são HTML semântico com os tokens do
-// produto, e não dois `Card` embrulhando o bloco.
+// As duas intenções continuam distintas e reais:
+// 1. `Fazer uma pergunta` — o campo inteiro é o botão; abre o compositor que JÁ
+//    existe (CreatePostModal, montado pela página), mesmo insert, mesma
+//    audiência, mesma checagem de PII.
+// 2. `Pedir uma indicação` — ação secundária na mesma linha, para o painel do
+//    Guia em /recommendations pelo parâmetro de aba real.
 
 interface IntentLauncherProps {
   /** Abre o compositor existente. A pergunta não tem superfície própria. */
   onAskQuestion: () => void
-  variant?: "compact" | "explain"
 }
 
 const ACTION_BASE =
-  "flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+  "flex min-h-11 items-center gap-2 rounded-full text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ui-brand focus-visible:ring-offset-2"
 
-const ACTION_BORDERED = `${ACTION_BASE} border border-border bg-[var(--semantic-surface)] hover:border-accent hover:bg-[var(--semantic-selected)]`
+// O campo: parece entrada de texto, é um botão (abre o modal).
+const ACTION_FIELD = `${ACTION_BASE} min-w-0 flex-1 bg-ui-bg px-4 text-left text-ui-ink-2 hover:bg-ui-subtle`
 
-const ACTION_PRIMARY = `${ACTION_BASE} bg-[var(--semantic-action-primary)] text-white hover:bg-[var(--semantic-action-primary-hover)]`
+// A indicação: só ícone no telefone, ícone e rótulo de sm para cima.
+const ACTION_SECONDARY = `${ACTION_BASE} min-w-11 shrink-0 justify-center font-semibold text-ui-brand hover:bg-ui-subtle sm:px-3`
 
-export function IntentLauncher({ onAskQuestion, variant = "compact" }: IntentLauncherProps) {
+export function IntentLauncher({ onAskQuestion }: IntentLauncherProps) {
   const { displayName } = useMemberContext()
   const [userId, setUserId] = useState<string | null>(null)
   const avatarSrc = useAvatarSrc(userId)
@@ -70,71 +62,28 @@ export function IntentLauncher({ onAskQuestion, variant = "compact" }: IntentLau
       data-testid="intent-pergunta"
       className={className}
     >
-      <MessageCircle size={18} aria-hidden="true" />
-      Fazer uma pergunta
+      <span className="truncate">Fazer uma pergunta…</span>
     </button>
   )
 
   const indicationAction = (className: string) => (
     <Link href={ASK_INDICATION_HREF as Route} data-testid="intent-indicacao" className={className}>
-      <MapPin size={18} aria-hidden="true" />
-      Pedir uma indicação
+      <MapPin size={18} className="shrink-0" aria-hidden="true" />
+      <span className="sr-only sm:not-sr-only">Pedir uma indicação</span>
     </Link>
   )
-
-  if (variant === "explain") {
-    return (
-      <section
-        aria-labelledby="intent-launcher-titulo"
-        className="rounded-xl border border-border bg-[var(--semantic-surface)] p-4 sm:p-5"
-      >
-        <h2 id="intent-launcher-titulo" className="text-base font-semibold tracking-tight">
-          O que você quer fazer?
-        </h2>
-        <p className="mt-1 text-sm leading-relaxed text-muted">
-          Duas coisas funcionam desde já, mesmo antes de você participar de uma comunidade aprovada.
-        </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-2 rounded-lg border border-border bg-[var(--semantic-surface-sunken)] p-4">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--semantic-selected)] text-accent">
-              <MessageCircle size={18} aria-hidden="true" />
-            </span>
-            <h3 className="text-sm font-semibold">Fazer uma pergunta</h3>
-            <p className="text-sm leading-relaxed text-muted">
-              Escreva sua dúvida para a cidade e para os grupos que você já tem.
-            </p>
-            {askAction(ACTION_PRIMARY)}
-          </div>
-          <div className="flex flex-col gap-2 rounded-lg border border-border bg-[var(--semantic-surface-sunken)] p-4">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--semantic-selected)] text-accent">
-              <MapPin size={18} aria-hidden="true" />
-            </span>
-            <h3 className="text-sm font-semibold">Pedir uma indicação</h3>
-            <p className="text-sm leading-relaxed text-muted">
-              Procure primeiro no Guia da cidade. Se não houver referência, a comunidade responde.
-            </p>
-            {indicationAction(ACTION_BORDERED)}
-          </div>
-        </div>
-      </section>
-    )
-  }
 
   return (
     <section
       aria-labelledby="intent-launcher-titulo"
-      className="flex items-center gap-3 rounded-xl border border-border bg-[var(--semantic-surface)] p-3"
+      className="flex items-center gap-3 rounded-ui-lg border border-ui-line bg-ui-surface p-2 pl-3 shadow-ui"
     >
-      <MemberAvatar name={displayName} src={avatarSrc} className="h-10 w-10 shrink-0 text-sm" />
-      <div className="min-w-0 flex-1">
-        <h2 id="intent-launcher-titulo" className="text-sm font-medium text-muted">
-          O que você quer fazer?
-        </h2>
-        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-          {askAction(ACTION_BORDERED)}
-          {indicationAction(ACTION_BORDERED)}
-        </div>
-      </div>
+      <h2 id="intent-launcher-titulo" className="sr-only">
+        Publicar na comunidade
+      </h2>
+      <MemberAvatar name={displayName} src={avatarSrc} className="h-9 w-9 shrink-0 text-sm" />
+      {askAction(ACTION_FIELD)}
+      {indicationAction(ACTION_SECONDARY)}
     </section>
   )
 }

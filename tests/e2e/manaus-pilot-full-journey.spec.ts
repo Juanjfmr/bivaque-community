@@ -163,8 +163,11 @@ test.describe("community feed", () => {
     // When the user navigates to the community page
     await page.goto("/community")
 
-    // Then the community page renders (middleware passes, Supabase may show error or empty)
-    await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible()
+    // Then the community page renders. A conta do seedSession() não tem
+    // comunidade: a Comunidade mostra a referência da cidade, com o nome dela.
+    await expect(page.getByRole("heading", { level: 1, name: "Manaus", exact: true })).toBeVisible({
+      timeout: 15000,
+    })
     await expect(page.getByRole("button", { name: "Publicar" }).first()).toBeVisible()
   })
 
@@ -174,7 +177,9 @@ test.describe("community feed", () => {
     await page.goto("/community")
 
     // Then the community page renders without horizontal overflow
-    await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible()
+    await expect(page.getByRole("heading", { level: 1, name: "Manaus", exact: true })).toBeVisible({
+      timeout: 15000,
+    })
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
     const viewportWidth = await page.evaluate(() => window.innerWidth)
     expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)
@@ -267,41 +272,21 @@ test.describe("recommendations journey", () => {
     await expect(page.getByRole("heading", { name: "Que bom ter você de volta." })).toBeVisible()
   })
 
-  test("recommendations page with consent cookie renders browse tab", async ({ page, context }) => {
-    // Given a browser with consent cookie
+  // /recommendations foi aposentada em 25/09/2026 (ADR-20260925-memoria-de-indicacoes):
+  // o endereço antigo leva à vista Indicações da Comunidade.
+  test("recommendations leva à vista Indicações da Comunidade", async ({ page, context }) => {
     await seedSession(context)
-
-    // When the user navigates to the recommendations page
     await page.goto("/recommendations")
-
-    // Then the recommendations page renders mock data
-    await expect(page.getByRole("heading", { name: "Indicações" })).toBeVisible()
-    await expect(page.getByText(/Descubra grupos e eventos da sua comunidade/)).toBeVisible()
-
-    // The "Explorar" tab is visible with mock recommendation cards
-    await expect(page.locator("main").getByRole("tab", { name: "Explorar" })).toBeVisible()
-    await expect(page.locator("main").getByRole("tab", { name: "Pedir indicação" })).toBeVisible()
-    await expect(page.locator("main").getByRole("tab", { name: "Salvas" })).toBeVisible()
+    await page.waitForURL(/\/community\?vista=indicacoes$/)
+    await expect(page.getByRole("heading", { name: "O que você procura?" })).toBeVisible()
+    await expect(page.getByRole("tab", { name: "Indicações", selected: true })).toBeVisible()
   })
 
-  test("recommendations browse tab renders cards and tabs are present", async ({
-    page,
-    context,
-  }) => {
-    // Given the consent cookie
+  test("a aba antiga de pedir chega à caixa de pedir focada", async ({ page, context }) => {
     await seedSession(context)
-    await page.goto("/recommendations")
-
-    // Then the three tabs are present
-    await expect(page.getByRole("heading", { name: "Indicações" })).toBeVisible()
-
-    const browseTab = page.locator("main").getByRole("tab", { name: "Explorar" })
-    const requestTab = page.locator("main").getByRole("tab", { name: "Pedir indicação" })
-    const savedTab = page.locator("main").getByRole("tab", { name: "Salvas" })
-
-    await expect(browseTab).toBeVisible()
-    await expect(requestTab).toBeVisible()
-    await expect(savedTab).toBeVisible()
+    await page.goto("/recommendations?aba=request")
+    await page.waitForURL(/\/community\?vista=indicacoes&pedir=1$/)
+    await expect(page.getByRole("textbox", { name: "O que você procura" })).toBeFocused()
   })
 })
 

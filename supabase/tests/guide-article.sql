@@ -219,9 +219,11 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- Consulta a outra cidade (20260925161111): quem é de outra cidade consulta o artigo
+-- publicado, nunca rascunho nem arquivado.
 select is_empty(
-  'select 1 from public.guide_articles',
-  'a member of another locality sees no articles'
+  $$ select 1 from public.guide_articles where status <> 'published' $$,
+  'a member of another locality sees only published articles'
 );
 
 -- ── decisão da curadoria (service_role) ─────────────────────────────────────

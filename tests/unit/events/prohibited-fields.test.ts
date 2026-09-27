@@ -62,19 +62,26 @@ describe("EventCreateSchema prohibited fields", () => {
     expect(result.success).toBe(false)
   })
 
-  it("rejects venue containing a residential address pattern", () => {
+  // Desde 25/09/2026 o endereço do local é escolha de quem organiza
+  // (migration 20260925174442): o contrato aceita, e o banco também.
+  it("accepts a venue with a street address, by the organizer's choice", () => {
     const result = EventCreateSchema.safeParse({
       ...validEvent,
       venue: "Rua das Flores, 123 - Apartamento 45",
     })
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(true)
   })
 
-  it("rejects venue containing a military address", () => {
+  it("accepts a venue that names a military installation", () => {
     const result = EventCreateSchema.safeParse({
       ...validEvent,
       venue: "Quartel General do Exército",
     })
+    expect(result.success).toBe(true)
+  })
+
+  it("still caps the venue at 200 characters", () => {
+    const result = EventCreateSchema.safeParse({ ...validEvent, venue: "x".repeat(201) })
     expect(result.success).toBe(false)
   })
 })

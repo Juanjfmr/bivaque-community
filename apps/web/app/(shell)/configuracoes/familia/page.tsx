@@ -356,8 +356,7 @@ export default function ConfiguracoesFamiliaPage() {
         <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted">
           <li>O link expira em 7 dias e só pode ser usado uma vez.</li>
           <li>
-            Se expirar, use Reenviar: o link antigo deixa de valer e o novo vale outros 7 dias. O
-            banco guarda apenas o digest do token, então o endereço é confirmado de novo.
+            Se expirar, toque em Reenviar: o link antigo deixa de valer e o novo vale mais 7 dias.
           </li>
         </ul>
       </div>

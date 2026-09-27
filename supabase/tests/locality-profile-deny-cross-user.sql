@@ -13,13 +13,16 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select is_empty(
+-- Consulta a outra cidade (20260925161111): o nome de outra cidade é catálogo, legível a
+-- quem tem cidade. O que continua fechado a quem é de fora está em
+-- consulta-outra-cidade.sql (perfis, roster, posts seguem nos seus testes).
+select isnt_empty(
   $$
     select 1
     from public.localities
     where id = '00000000-0000-4000-8000-000000000002'
   $$,
-  'a Manaus member cannot read another locality'
+  'a Manaus member consults another locality of the catalog'
 );
 
 select is_empty(

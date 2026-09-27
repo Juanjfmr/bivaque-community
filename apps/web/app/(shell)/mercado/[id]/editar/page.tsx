@@ -6,6 +6,7 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { ADDRESS_HINT, ADDRESS_MAX } from "../../../../../lib/listings/address"
 import {
   buildListingPhotoPath,
   LISTING_CATEGORIES,
@@ -76,6 +77,7 @@ export default function EditarAnuncioPage() {
   const [condition, setCondition] = useState("used")
   const [description, setDescription] = useState("")
   const [neighborhood, setNeighborhood] = useState("")
+  const [address, setAddress] = useState("")
   const [errors, setErrors] = useState<ListingEditErrors>({})
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -127,6 +129,7 @@ export default function EditarAnuncioPage() {
     setCondition(listing.condition)
     setDescription(listing.description)
     setNeighborhood(listing.neighborhood)
+    setAddress(listing.address ?? "")
 
     let photoPath: string | null = null
     let photoUrl: string | null = null
@@ -168,6 +171,7 @@ export default function EditarAnuncioPage() {
       condition,
       description,
       neighborhood,
+      address,
     })
     if (!validation.ok) {
       setErrors(validation.errors)
@@ -188,6 +192,7 @@ export default function EditarAnuncioPage() {
         condition: value.condition,
         description: value.description,
         neighborhood: value.neighborhood,
+        address: value.address,
       })
       .eq("id", state.listing.id)
       .eq("updated_at", state.listing.updated_at)
@@ -504,6 +509,22 @@ export default function EditarAnuncioPage() {
           </div>
 
           <div className="flex flex-col gap-1">
+            <label htmlFor="editar-endereco" className="text-sm font-medium">
+              Endereço <span className="font-normal text-muted">(opcional)</span>
+            </label>
+            <input
+              id="editar-endereco"
+              value={address}
+              maxLength={ADDRESS_MAX}
+              autoComplete="street-address"
+              onChange={(event) => setAddress(event.target.value)}
+              className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface)] px-3 text-sm transition-colors duration-[var(--semantic-motion-duration-fast)]"
+            />
+            <p className="text-xs text-muted">{ADDRESS_HINT}</p>
+            {fieldError("address")}
+          </div>
+
+          <div className="flex flex-col gap-1">
             <label htmlFor="editar-comunidade" className="text-sm font-medium">
               Comunidade (não é possível alterar)
             </label>
@@ -516,7 +537,7 @@ export default function EditarAnuncioPage() {
               className="min-h-11 rounded-lg border border-border bg-[var(--semantic-surface-sunken)] px-3 text-sm text-[var(--semantic-text-secondary)]"
             />
             <p id="editar-comunidade-ajuda" className="text-xs text-muted">
-              O público é escolhido na criação e não muda depois — trocá-lo contornaria o acesso.
+              O público do anúncio não muda depois de publicado.
             </p>
           </div>
         </div>

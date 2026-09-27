@@ -27,6 +27,7 @@ export interface PropertySummary {
   suites: number | null
   parkingSpots: number | null
   areaM2: number | null
+  createdAt: string
 }
 
 export interface PropertyDetail extends PropertySummary {
@@ -38,6 +39,8 @@ export interface PropertyDetail extends PropertySummary {
   ownerUserId: string
   ownerName: string | null
   audienceLabel: string
+  /** Por escolha de quem anuncia; null quando não informado. */
+  address: string | null
   photos: { id: string; path: string }[]
 }
 
@@ -48,6 +51,8 @@ interface RawRow {
   status: ListingStatus
   neighborhood: string | null
   owner_user_id: string
+  created_at: string
+  address: string | null
   localities: { city_name: string; state_code: string } | null
   communities: { name: string } | null
   property_details: {
@@ -70,7 +75,7 @@ interface RawRow {
 // `property_details!inner` faz o filtro do satélite excluir o anúncio que não
 // casa — sem o `!inner`, o PostgREST filtraria só o embed e a contagem mentiria.
 const SELECT =
-  "id, title, description, status, neighborhood, owner_user_id, " +
+  "id, title, description, status, neighborhood, owner_user_id, created_at, address, " +
   "localities(city_name, state_code), communities(name), " +
   "property_details!inner(deal, property_type, rent_cents, condo_fee_cents, iptu_cents, " +
   "sale_price_cents, bedrooms, suites, parking_spots, area_m2, amenities, available_from), " +
@@ -95,7 +100,21 @@ function toSummary(row: RawRow): PropertySummary {
     suites: details?.suites ?? null,
     parkingSpots: details?.parking_spots ?? null,
     areaM2: details?.area_m2 ?? null,
+    createdAt: row.created_at,
   }
+}
+
+/**
+ * De que cidade é a busca. Desde a consulta a outra cidade (migration
+ * 20260925161111), a RLS deixa qualquer membro verificado LER imóvel de
+ * alcance cidade de qualquer cidade — então a cidade não pode mais vir só da
+ * RLS: toda busca diz de qual cidade é. `withCommunities` soma os imóveis das
+ * comunidades do membro (a RLS decide quais), o que só faz sentido na própria
+ * cidade; na consulta, só o alcance cidade daquela cidade.
+ */
+export interface PropertyScope {
+  localityId: string
+  withCommunities: boolean
 }
 
 // A busca da prancha 65. Só anúncio ativo de Moradia, filtrado no servidor pelo
@@ -103,12 +122,17 @@ function toSummary(row: RawRow): PropertySummary {
 export async function searchProperties(
   client: Client,
   filters: ListingFilters,
+  scope: PropertyScope,
 ): Promise<{ rows: PropertySummary[]; count: number }> {
   let query = client
     .from("listings")
     .select(SELECT, { count: "exact" })
     .eq("kind", "property")
     .eq("status", "active")
+
+  query = scope.withCommunities
+    ? query.or(`locality_id.eq.${scope.localityId},community_id.not.is.null`)
+    : query.eq("locality_id", scope.localityId)
 
   if (filters.search) query = query.ilike("title", `%${filters.search}%`)
   if (filters.neighborhood) query = query.ilike("neighborhood", `%${filters.neighborhood}%`)
@@ -201,6 +225,7 @@ export async function getPropertyDetail(
   return {
     ...summary,
     description: row.description,
+    address: row.address,
     iptuCents: row.property_details.iptu_cents,
     propertyType: row.property_details.property_type,
     amenities: row.property_details.amenities ?? [],

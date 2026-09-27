@@ -8,6 +8,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import type { ActionState } from "./action-state"
+import { validateAddress } from "./address"
 import { parseListingFilters, type RawSearchParams } from "./filters"
 import { createListingClient } from "./ssr-client"
 import { MAX_LISTING_PHOTOS, MAX_PHOTO_BYTES } from "./types"
@@ -40,8 +41,15 @@ function readPropertyDraft(formData: FormData): PropertyDraftInput {
     areaM2: value("areaM2"),
     description: value("description"),
     neighborhood: value("neighborhood"),
+    address: value("address"),
     availableFrom: value("availableFrom"),
   }
+}
+
+// Já validado por validatePropertyDraft; aqui só normaliza (vazio vira null).
+function addressValue(raw: string | undefined): string | null {
+  const result = validateAddress(raw)
+  return result.ok ? result.value : null
 }
 
 async function currentUserId(): Promise<string | null> {
@@ -111,6 +119,7 @@ export async function createPropertyAction(formData: FormData): Promise<ActionSt
       title: draft.title.trim(),
       description: draft.description.trim() || null,
       neighborhood: draft.neighborhood.trim() || null,
+      address: addressValue(draft.address),
       published_at: status === "active" ? new Date().toISOString() : null,
       ...audience,
     })
@@ -181,6 +190,7 @@ export async function updatePropertyAction(formData: FormData): Promise<ActionSt
       title: draft.title.trim(),
       description: draft.description.trim() || null,
       neighborhood: draft.neighborhood.trim() || null,
+      address: addressValue(draft.address),
     })
     .eq("id", listingId)
 

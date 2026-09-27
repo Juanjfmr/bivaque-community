@@ -183,7 +183,7 @@ export default async function PrestadorHomePage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-semibold">Pedidos para você</h1>
+      <h1 className="text-2xl font-semibold">Orçamentos para você</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Organize as conversas e mantenha sua ficha atualizada.
       </p>

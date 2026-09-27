@@ -7,10 +7,16 @@
 // showing a module that is not integrated.
 
 import { PROVIDER_CATEGORY_LABELS, type ProviderCategory } from "@bivaque/domain"
+import {
+  categoryLabel,
+  INDICATIONS_HREF,
+  type IndicationRow,
+  indicationHref,
+} from "../indications/indications"
 
 export const GROUP_PREVIEW_LIMIT = 3
 
-export type SearchGroupKey = "guia" | "servicos" | "eventos"
+export type SearchGroupKey = "indicacoes" | "guia" | "servicos" | "eventos"
 
 export interface SearchItem {
   key: string
@@ -57,9 +63,12 @@ const GUIDE_CATEGORY_LABELS: Record<GuideHit["category"], string> = {
   courier: "Despachante",
 }
 
-const GROUP_ORDER: SearchGroupKey[] = ["guia", "servicos", "eventos"]
+// Indicações primeiro (ADR-20260925-memoria-de-indicacoes): o que a cidade já
+// perguntou e respondeu é a memória que o grupo de mensagens não tem.
+const GROUP_ORDER: SearchGroupKey[] = ["indicacoes", "guia", "servicos", "eventos"]
 
 const GROUP_LABELS: Record<SearchGroupKey, string> = {
+  indicacoes: "Indicações",
   guia: "Guia da cidade",
   servicos: "Serviços",
   eventos: "Eventos",
@@ -90,6 +99,8 @@ export interface GroupSources {
   providers: ProviderHit[]
   guideEntries: GuideHit[]
   events: EventHit[]
+  /** Linhas de `list_indications` para o termo: a função já casou o termo. */
+  indications?: IndicationRow[]
 }
 
 export function buildSearchGroups({
@@ -97,8 +108,21 @@ export function buildSearchGroups({
   providers,
   guideEntries,
   events,
+  indications = [],
 }: GroupSources): SearchGroup[] {
   const encoded = encodeURIComponent(term)
+  // A função do banco já casou o termo (sem acento, no pedido e nas respostas);
+  // refiltrar aqui com includes() perderia os casos sem acento e mentiria na
+  // contagem. A resposta que resolveu é o trecho: é ela que dispensa perguntar.
+  const indicacoesItems: SearchItem[] = indications.map((row) => ({
+    key: `indicacoes-${row.id}`,
+    title: row.title,
+    snippet: snippet(row.resolved_reply_body ?? row.matched_reply_body ?? row.body),
+    meta: row.is_resolved
+      ? `${categoryLabel(row.category)} · Resolvido`
+      : categoryLabel(row.category),
+    href: indicationHref(row.id),
+  }))
   const guiaItems: SearchItem[] = guideEntries
     .filter((entry) => matchesTerm(term, [entry.name, entry.description]))
     .map((entry) => ({
@@ -131,11 +155,13 @@ export function buildSearchGroups({
     }))
 
   const byKey: Record<SearchGroupKey, SearchItem[]> = {
+    indicacoes: indicacoesItems,
     guia: guiaItems,
     servicos: servicosItems,
     eventos: eventosItems,
   }
   const verTodos: Record<SearchGroupKey, string> = {
+    indicacoes: `${INDICATIONS_HREF}&q=${encoded}`,
     guia: `/guide?q=${encoded}`,
     servicos: `/explorar/servicos?q=${encoded}`,
     // The events domain has no term filter (prancha 48 defines only the

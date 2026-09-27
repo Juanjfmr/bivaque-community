@@ -1,23 +1,30 @@
 "use client"
 
-import { Button } from "@heroui/react"
+import { Link2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { MemberAvatar } from "./avatar"
+
+// A linha de publicar da Comunidade (25/09/2026). Referência do Mobbin: o
+// "Post about…" + "Post" do Threads numa linha só. O campo inteiro abre o
+// compositor; o link é um atalho que abre já com o campo de URL; "Publicar" é
+// a ação explícita para quem procura o botão.
 
 interface FeedComposerProps {
   /** Dica de anexo para o compositor: "link" abre já com o campo de URL
    *  oferecido. Nunca é escolha de formato — o `post_type` sai do anexo real. */
   onOpenModal: (attachment?: string) => void
+  /** Para quem a publicação vai, no convite do campo. */
+  communityName?: string | null
 }
 
-export function FeedComposer({ onOpenModal }: FeedComposerProps) {
+export function FeedComposer({ onOpenModal, communityName = null }: FeedComposerProps) {
   const [avatarLetter, setAvatarLetter] = useState("?")
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
-  const supabase = createBrowserClient()
 
   useEffect(() => {
     let cancelled = false
+    const supabase = createBrowserClient()
     ;(async () => {
       const {
         data: { user },
@@ -41,31 +48,41 @@ export function FeedComposer({ onOpenModal }: FeedComposerProps) {
     return () => {
       cancelled = true
     }
-  }, [supabase])
+  }, [])
+
+  const invitation = communityName ? `Escreva para ${communityName}…` : "Escreva para a comunidade…"
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-[var(--semantic-surface)] p-3">
-      <MemberAvatar name={avatarLetter} src={avatarSrc} className="h-10 w-10 text-sm" />
+    <div className="flex items-center gap-2 rounded-ui-lg bg-ui-surface p-2 shadow-ui ring-1 ring-ui-line sm:gap-3 sm:p-3">
+      <MemberAvatar name={avatarLetter} src={avatarSrc} className="h-10 w-10 shrink-0 text-sm" />
 
       <button
         type="button"
         onClick={() => onOpenModal()}
-        className="flex min-h-11 flex-1 cursor-pointer items-center rounded-lg border border-border bg-[var(--semantic-surface-sunken)] px-3 text-sm text-muted text-left transition-colors duration-[var(--semantic-motion-duration-instant)] hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+        className="flex min-h-11 min-w-0 flex-1 items-center rounded-full bg-ui-bg px-4 text-left text-sm text-ui-ink-2 transition-colors hover:bg-ui-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-brand"
       >
-        No que você está pensando?
+        {/* No telefone o nome da comunidade não cabe ao lado do botão: o
+            convite fica curto, e o nome completo volta do sm para cima. */}
+        <span className="truncate sm:hidden">Escreva algo…</span>
+        <span className="hidden truncate sm:inline">{invitation}</span>
       </button>
 
-      <div className="hidden gap-1.5 sm:flex">
-        <Button
-          size="sm"
-          variant="tertiary"
-          aria-label="Nova publicação com link"
-          onPress={() => onOpenModal("link")}
-          className="min-h-11 min-w-11"
-        >
-          Link
-        </Button>
-      </div>
+      <button
+        type="button"
+        aria-label="Nova publicação com link"
+        onClick={() => onOpenModal("link")}
+        className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full text-ui-ink-2 transition-colors hover:bg-ui-subtle hover:text-ui-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-brand sm:inline-flex"
+      >
+        <Link2 size={18} aria-hidden="true" />
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onOpenModal()}
+        className="inline-flex h-11 shrink-0 items-center rounded-full bg-ui-brand px-4 text-sm font-semibold text-ui-on-brand transition-colors hover:bg-ui-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ui-brand"
+      >
+        Publicar
+      </button>
     </div>
   )
 }

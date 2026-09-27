@@ -73,6 +73,10 @@ decidida. A prancha 15 fica com essa divergência declarada no lote RECON-033.
 Não é reputação, não é ranking, não é selo de perfil, não é insumo de busca ou de recomendação.
 É um ponteiro dentro de uma conversa. Não aparece agregada no perfil de ninguém.
 
+> **Alterada em 25/09/2026** pelo [ADR-20260925-memoria-de-indicacoes](ADR-20260925-memoria-de-indicacoes.md)
+> (D2): a marca passa a alimentar busca e ordenação — resolvido primeiro, resposta marcada junto
+> do pedido. Continua proibido virar reputação, ranking de pessoa, selo ou contagem no perfil.
+
 ## Alternatives considered
 
 1. **Tabela `recommendation_reply_helpful` (N marcas por pergunta, uma por pessoa).** É o

@@ -3,6 +3,7 @@
 @import "tailwindcss";
 @import "@heroui/styles";
 @import "../../../packages/tokens/src/tokens.css";
+@import "./ui-theme.css";
 
 body {
   margin: 0;
@@ -235,6 +236,11 @@ body {
       var(--semantic-motion-ease-out) both;
   }
 
+  .motion-fab-item {
+    animation: motion-fab-item var(--semantic-motion-duration-base) var(--semantic-motion-ease-out)
+      both;
+  }
+
   .motion-press {
     transition: transform var(--semantic-motion-duration-fast) var(--semantic-motion-ease-spring);
   }
@@ -260,6 +266,13 @@ body {
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+}
+
+@keyframes motion-fab-item {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
   }
 }
 

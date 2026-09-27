@@ -41,7 +41,7 @@ const isExact = (href: string) => (pathname: string) => pathname === href
 const NAV_ITEMS: NavItem[] = [
   {
     href: "/prestador",
-    label: "Pedidos",
+    label: "Orçamentos",
     Icon: Inbox,
     // "Pedidos" é dono de /prestador e de /prestador/pedidos/*, mas NÃO de
     // /prestador/ficha — um `startsWith("/prestador/")` genérico acenderia

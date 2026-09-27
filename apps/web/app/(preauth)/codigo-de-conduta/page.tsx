@@ -21,7 +21,7 @@ export default async function CodeOfConductPage() {
       description="Versão 2 · 31 de agosto de 2026 · Alpha fechado"
       asideEyebrow="Bivaque"
       asideTitle="Regras simples para uma comunidade confiável."
-      asideDescription="Esta é a versão completa apresentada no fluxo de entrada."
+      asideDescription="Esta é a versão completa."
     >
       <section
         aria-labelledby="conduct-heading"

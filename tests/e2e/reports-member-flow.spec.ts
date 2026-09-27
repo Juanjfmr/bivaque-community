@@ -206,7 +206,9 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
       // no painel do operador — nao uma garantia dada a quem denuncia.
       // resolve_report garante fila e notificacao quando houver decisao, e nada
       // sobre quando.
-      await expect(page.getByText(/entra na fila de moderação/i)).toBeVisible({
+      // Copy de fd547dc: fala com a pessoa ("A equipe vai analisar"), sem
+      // descrever a fila por dentro e sem prometer prazo.
+      await expect(page.getByText(/A equipe vai analisar/i)).toBeVisible({
         timeout: 5000,
       })
       await expect(page.getByText(/48 horas/)).toHaveCount(0)

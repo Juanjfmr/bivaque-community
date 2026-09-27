@@ -225,9 +225,7 @@ export default async function OtherMemberProfilePage({ params }: PageProps) {
           {bio.trim().length > 0 ? (
             <p className="mt-1 text-sm leading-relaxed whitespace-pre-line text-muted">{bio}</p>
           ) : null}
-          <p className="mt-1 text-sm text-muted">
-            Apenas conteúdo que você e esta pessoa podem ver pela mesma cidade.
-          </p>
+          <p className="mt-1 text-sm text-muted">Publicações que vocês dois podem ver.</p>
         </div>
       </header>
 

@@ -8,21 +8,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import {
-  resolutionOperation,
   WRITE_FAILURE_COPY,
   type WriteOperation,
   writeFailure,
 } from "web/lib/recommendations/write-failure-copy"
 
 const root = join(import.meta.dirname, "..", "..", "..")
+// Desde 25/09/2026 a conversa do pedido é a tela de detalhe das indicações
+// (ADR-20260925-memoria-de-indicacoes).
 const componente = join(
   root,
   "apps",
   "web",
   "app",
   "components",
-  "bivaque",
-  "recommendation-requests.tsx",
+  "indications",
+  "indication-detail.tsx",
 )
 
 const OPERACOES = Object.keys(WRITE_FAILURE_COPY) as WriteOperation[]
@@ -78,9 +79,8 @@ describe("falha de escrita em indicações: frase de produto + causa no log", ()
     const frases = OPERACOES.map((operacao) => WRITE_FAILURE_COPY[operacao])
     expect(new Set(frases).size).toBe(OPERACOES.length)
     expect(WRITE_FAILURE_COPY.responder_pedido).toContain("enviar sua resposta")
-    expect(WRITE_FAILURE_COPY.excluir_pedido).toContain("excluir o pedido")
     expect(WRITE_FAILURE_COPY.excluir_resposta).toContain("excluir a resposta")
-    expect(WRITE_FAILURE_COPY.editar_resposta).toContain("alterações da resposta")
+    expect(WRITE_FAILURE_COPY.marcar_resposta).toContain("marcar a resposta")
     expect(WRITE_FAILURE_COPY.reabrir_pedido).toContain("reabrir o pedido")
   })
 
@@ -96,15 +96,9 @@ describe("falha de escrita em indicações: frase de produto + causa no log", ()
     expect(registro.serverMessage).toBe(CRU)
     expect(registro.serverMessage).not.toBe("[REDACTED]")
   })
-
-  it("mapeia a chave do botão de resolução para a ação que falhou", () => {
-    expect(resolutionOperation("mark:pedido:resposta")).toBe("marcar_resposta")
-    expect(resolutionOperation("clear:pedido")).toBe("limpar_marca")
-    expect(resolutionOperation("reopen:pedido")).toBe("reabrir_pedido")
-  })
 })
 
-describe("fiação em recommendation-requests.tsx", () => {
+describe("fiação em indication-detail.tsx", () => {
   const fonte = readFileSync(componente, "utf8")
 
   it("nenhum error.message do servidor vai direto para o feedback", () => {
@@ -112,18 +106,14 @@ describe("fiação em recommendation-requests.tsx", () => {
     expect(fonte).not.toMatch(/setFeedback\(\s*\w+\.message\s*\)/)
   })
 
-  it("toda operação de escrita passa a causa crua para writeFailure", () => {
-    const operacoesUsadas = [
-      ...fonte.matchAll(/writeFailure\(\s*(?:"([a-z_]+)"|resolutionOperation\()/g),
-    ].map((m) => m[1] ?? "resolucao-por-chave")
-    expect(operacoesUsadas.length).toBeGreaterThanOrEqual(9)
-    for (const nome of operacoesUsadas) {
-      if (nome === "resolucao-por-chave") continue
-      expect(OPERACOES).toContain(nome as WriteOperation)
-    }
-    // A causa é repassada, não engolida: a mensagem crua entra na chamada.
-    const causasRepassadas = fonte.match(/[Ee]rror\.message/g) ?? []
-    expect(causasRepassadas.length).toBeGreaterThanOrEqual(9)
+  it("toda escrita passa pela operação identificada, com a causa junto", () => {
+    // Uma porta só para as escritas: `run(chave, operação, chamada)`.
+    expect(fonte).toContain("setFeedback(writeFailure(operation, error.message))")
+    const operacoes = [...fonte.matchAll(/void run\(\s*[^,]+,\s*(?:saved \? )?"([a-z_]+)"/g)].map(
+      (m) => m[1] as string,
+    )
+    expect(operacoes.length).toBeGreaterThanOrEqual(5)
+    for (const nome of operacoes) expect(OPERACOES).toContain(nome as WriteOperation)
   })
 
   it("usa o logger do projeto em vez de console direto", () => {

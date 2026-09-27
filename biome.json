@@ -60,6 +60,14 @@
   },
   "overrides": [
     {
+      "includes": ["apps/web/app/ui-theme.css"],
+      "css": {
+        "parser": {
+          "tailwindDirectives": true
+        }
+      }
+    },
+    {
       "includes": [".opencode/**/*.json"],
       "json": {
         "parser": {

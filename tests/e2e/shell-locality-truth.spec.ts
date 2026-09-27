@@ -152,9 +152,16 @@ test.describe("DS-010 — shell header reflects real current locality, not pilot
     await page.waitForLoadState("networkidle")
     await page.waitForTimeout(500)
 
-    const profileText = (await page.locator("main").textContent()) ?? ""
+    // O cabeçalho do perfil (o <header> dentro do main) é onde um fallback para
+    // o piloto apareceria. A seção "Sua cidade" mais abaixo cita Manaus de
+    // propósito: é o aviso de transferência ("Você está saindo de Manaus, AM").
+    const profileHeader = page.locator("main header").first()
+    const profileText = (await profileHeader.textContent()) ?? ""
 
     expect(profileText).toMatch(/Rio de Janeiro/)
     expect(profileText).not.toMatch(/Manaus, AM/)
+
+    // And the transfer notice names the origin city, never as the current one
+    await expect(page.locator("main").getByText(/Você está saindo de Manaus, AM/)).toBeVisible()
   })
 })

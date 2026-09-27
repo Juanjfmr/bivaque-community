@@ -12,7 +12,7 @@ export default function SegmentErrorBoundary({
 }) {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-6 pb-8">
-      <h1 className="text-2xl font-semibold tracking-tight">Pedido de serviço</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Orçamento</h1>
       <div className="mt-4">
         <ErrorState message="Não foi possível carregar este pedido." onRetry={reset} />
       </div>

@@ -16,7 +16,7 @@ import {
 describe("D1 — o limite da bio é o número do contador da prancha", () => {
   it("fixa 300 caracteres", () => {
     expect(BIO_MAX_LENGTH).toBe(300)
-    expect(BIO_FIELD_LABEL).toBe("Bio")
+    expect(BIO_FIELD_LABEL).toBe("Apresentação")
   })
 
   it("aceita exatamente 300 (positivo)", () => {

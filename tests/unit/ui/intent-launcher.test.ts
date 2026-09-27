@@ -60,9 +60,12 @@ describe("lançador de intenções da Home (DS-006)", () => {
     expect(launcher).toContain('aria-labelledby="intent-launcher-titulo"')
   })
 
-  it("o estado novo ou vazio explica as duas intenções; o membro ativo não recebe esse volume", () => {
-    expect(launcher).toContain('variant = "compact"')
-    expect(launcher).toContain('if (variant === "explain")')
-    expect(page).toContain('variant={primary.status === "none" ? "explain" : "compact"}')
+  it("quem não tem comunidade é orientado pelo feed, não por um lançador maior", () => {
+    // Desde 25/09/2026 o lançador é uma linha só em todo estado; a explicação
+    // para quem ainda não participa mora no estado vazio do feed, com a ação.
+    const section = read("apps", "web", "app", "(shell)", "inicio", "community-section.tsx")
+    expect(launcher).not.toContain('variant === "explain"')
+    expect(section).toContain("Você ainda não participa de uma comunidade")
+    expect(section).toContain('href="/communities"')
   })
 })

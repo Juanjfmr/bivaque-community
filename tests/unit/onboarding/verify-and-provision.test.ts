@@ -23,6 +23,7 @@ function makeSupabase(attemptAllowed: boolean) {
 
 afterEach(() => {
   vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
 })
 
 describe("verifyEligibility (P0 Task 4)", () => {
@@ -88,6 +89,10 @@ describe("verifyEligibility (P0 Task 4)", () => {
     // The post-eligibility step asks for the locality; the reconciliation job
     // (D2) reuses verify and therefore never provisions either.
     vi.stubEnv("PORTAL_DADOS_API_KEY", "chave-valida")
+    // Sem chamada real ao Portal (AGENTS.md: "no live Portal calls"). Antes de
+    // 25/09/2026 este teste ia à rede com a chave falsa e dependia de o Portal
+    // responder em menos de 5 s; nesse dia não respondeu e o teste expirou.
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("[]", { status: 200 })))
 
     const supabase = makeSupabase(true)
 

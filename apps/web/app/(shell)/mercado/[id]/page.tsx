@@ -57,7 +57,7 @@ export default function ListingDetailPage() {
     const { data, error } = await supabase
       .from("listings")
       .select(
-        "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,status,locality_id,community_id,created_at",
+        "id,owner_user_id,title,description,category,price_cents,condition,neighborhood,address,status,locality_id,community_id,created_at",
       )
       .eq("id", listingId)
       .maybeSingle()
@@ -197,7 +197,7 @@ export default function ListingDetailPage() {
       <div className="mx-auto w-full max-w-5xl px-4 py-8">
         <AccessUnavailableState
           title="Anúncio indisponível"
-          description="Ele pode ter sido pausado, encerrado ou estar fora do seu alcance."
+          description="Ele pode ter sido pausado ou encerrado."
           primaryAction={
             <Button variant="primary" size="sm" onPress={() => router.push("/mercado" as Route)}>
               Voltar para o Mercado
@@ -286,6 +286,13 @@ export default function ListingDetailPage() {
               <MapPin size={15} aria-hidden="true" />
               {listing.neighborhood}
             </p>
+            {/* Endereço por escolha de quem anuncia (migration 20260925174442). */}
+            {listing.address ? (
+              <p className="text-sm text-[var(--semantic-text-primary)]">
+                <span className="text-muted">Endereço: </span>
+                {listing.address}
+              </p>
+            ) : null}
           </div>
 
           <div className="border-t border-border pt-4">
@@ -314,7 +321,7 @@ export default function ListingDetailPage() {
                   Tenho interesse
                 </Button>
                 <p className="text-xs text-muted">
-                  Este anúncio é seu. Você não conversa consigo mesmo por aqui.
+                  Este anúncio é seu. Quem se interessar fala com você por mensagem.
                 </p>
               </div>
             ) : listing.status !== "active" ? (

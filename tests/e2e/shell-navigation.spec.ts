@@ -85,7 +85,7 @@ test.describe("Indicações discoverable entry", () => {
     // do RECON-038 #4, e o nome acessível passou a vir do próprio texto.
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/recommendations")
+    await expect(indications).toHaveAttribute("href", "/community?vista=indicacoes")
   })
 
   test("keeps its accessible name in the 768px rail", async ({ page, context }) => {
@@ -99,7 +99,7 @@ test.describe("Indicações discoverable entry", () => {
     // Then the header entry is still named and reachable
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/recommendations")
+    await expect(indications).toHaveAttribute("href", "/community?vista=indicacoes")
   })
 
   test("is reachable from the header at 1440px", async ({ page, context }) => {
@@ -113,7 +113,7 @@ test.describe("Indicações discoverable entry", () => {
     // Then Indicações is reachable from the header, where it is a link
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/recommendations")
+    await expect(indications).toHaveAttribute("href", "/community?vista=indicacoes")
   })
 })
 
@@ -138,8 +138,11 @@ test.describe("Navigation tab links", () => {
   })
 })
 
-test.describe("Profile reachable from the header avatar", () => {
-  test("header avatar links to /profile on mobile", async ({ page, context }) => {
+test.describe("Profile reachable on mobile", () => {
+  test("the bottom nav reaches /profile and the header has no avatar on mobile", async ({
+    page,
+    context,
+  }) => {
     // Given an authenticated member on the mobile-375 viewport
     await seedSession(context)
     await page.setViewportSize({ width: 375, height: 812 })
@@ -147,14 +150,16 @@ test.describe("Profile reachable from the header avatar", () => {
     // When they open the home route
     await page.goto("/inicio")
 
-    // Then the header avatar links to /profile — the regression this plan can
-    // cause. Scoped to <header> because "Perfil" is now also a nav container.
-    const avatar = page.locator("header").getByRole("link", { name: "Perfil" })
-    await expect(avatar).toBeVisible()
-    await expect(avatar).toHaveAttribute("href", "/profile")
+    // Then the header does not repeat Perfil: no celular o avatar repetia a aba
+    // Perfil da barra inferior e saiu do cabeçalho (app-shell.tsx).
+    await expect(page.locator("header").getByRole("link", { name: "Perfil" })).toBeHidden()
 
-    // And activating it lands on the profile route
-    await avatar.click()
+    // And the Perfil tab of the bottom nav lands on the profile route
+    const tab = page
+      .locator('[data-slot="tabs-list"][aria-label="Seções do aplicativo"]')
+      .getByRole("tab", { name: /Perfil/ })
+    await expect(tab).toBeVisible()
+    await tab.click()
     await expect(page).toHaveURL(/\/profile/)
   })
 })

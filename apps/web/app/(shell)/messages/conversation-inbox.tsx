@@ -692,8 +692,7 @@ export function ConversationInbox({
               </Modal.Header>
               <Modal.Body>
                 <p className="text-sm text-muted">
-                  Pessoas com quem você pode conversar (compartilham um grupo, evento, recomendação
-                  ou vínculo familiar).
+                  Pessoas com quem você divide um grupo, um encontro, uma indicação ou a família.
                 </p>
 
                 {createError && <FeedbackAlert variant="danger" description={createError} />}

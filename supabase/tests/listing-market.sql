@@ -90,9 +90,10 @@ select isnt_empty(
   '002 vê o anúncio da comunidade B, onde é aprovado'
 );
 
-select is_empty(
+-- Consulta a outra cidade (20260925161111): anúncio ativo de alcance cidade é consultável.
+select isnt_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000004' $$,
-  '002 não vê o anúncio de outra cidade'
+  '002 consulta o anúncio ativo de outra cidade'
 );
 
 -- 004 = aprovado na comunidade A, não em B, e morador da cidade 1
@@ -128,9 +129,9 @@ select isnt_empty(
   '003 vê o anúncio da própria cidade'
 );
 
-select is_empty(
+select isnt_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000001' $$,
-  '003 não vê o anúncio de cidade alheia'
+  '003 consulta o anúncio ativo de cidade alheia'
 );
 
 -- 005 = sem cidade nem comunidade
@@ -166,9 +167,9 @@ select isnt_empty(
   'o dono vê o próprio rascunho'
 );
 
-select is_empty(
+select isnt_empty(
   $$ select 1 from public.listings where id = 'a0000000-0000-4000-8000-000000000004' $$,
-  'o dono não vê o anúncio de terceiro fora do alcance'
+  'o dono também consulta anúncio ativo de outra cidade'
 );
 
 -- ── escrita: dono conferido no servidor, item exige campos no banco ──────────
@@ -350,12 +351,14 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select is_empty(
+-- Consulta a outra cidade (20260925161111): a foto segue o anúncio; a negação para
+-- anúncio de comunidade está em consulta-outra-cidade.sql.
+select isnt_empty(
   $$
     select 1 from public.listing_photos
      where listing_id = 'a0000000-0000-4000-8000-000000000001'
   $$,
-  'quem não alcança o anúncio não vê a foto'
+  'quem consulta a cidade vê a foto do anúncio'
 );
 
 -- ── storage: leitura derivada do anúncio, escrita só do dono ─────────────────
@@ -406,9 +409,9 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select is_empty(
+select isnt_empty(
   $$ select 1 from storage.objects where id = 'b0000000-0000-4000-8000-000000000001' $$,
-  'quem não alcança o anúncio não lê o objeto'
+  'quem consulta a cidade lê o objeto da foto'
 );
 
 select throws_ok(
@@ -500,7 +503,10 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select throws_ok(
+-- Consulta a outra cidade (20260925161111): quem consulta pode chamar o anunciante —
+-- é o caso de quem compra ou aluga na cidade para onde vai. A negação para
+-- anúncio de comunidade continua no bloco de comunidade deste arquivo.
+select lives_ok(
   $$
     select public.open_conversation(
       '10000000-0000-4000-8000-000000000001',
@@ -508,9 +514,7 @@ select throws_ok(
       'a0000000-0000-4000-8000-000000000001'
     )
   $$,
-  42501,
-  null,
-  'quem não alcança o público não abre conversa'
+  'quem consulta a cidade pode chamar o anunciante'
 );
 
 -- rascunho não recebe interesse

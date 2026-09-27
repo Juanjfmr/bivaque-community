@@ -218,8 +218,7 @@ export function CityReference({
             Guia de chegada
           </h2>
           <p className="mt-2 text-sm text-muted">
-            Colégio, hospital, transportadora, despachante — referência curada para quem chega ou
-            precisa de informação permanente sobre a cidade.
+            Colégio, hospital, transportadora, despachante: referências para quem está chegando.
           </p>
           <div className="mt-3">
             <Link
@@ -330,8 +329,8 @@ export function CityReference({
           Entrar numa vila
         </h2>
         <p className="mt-2 text-sm text-muted">
-          A vila é a sala: o lugar onde o conteúdo acontece, com 500 a 600 pessoas que dividem o
-          mesmo condomínio e os mesmos ciclos de transferência. Você pede entrada, o dono aprova.
+          A vila é onde a conversa acontece: vizinhos do mesmo condomínio, que passam pelas mesmas
+          mudanças. Você pede para entrar e quem cuida dela aprova.
         </p>
         <div className="mt-3">
           <Link

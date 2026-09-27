@@ -10,7 +10,13 @@
 
 export type NotificationChannel = "in_app" | "email"
 
-export type NotificationTypeKey = "comments" | "events" | "mentions" | "messages" | "product_news"
+export type NotificationTypeKey =
+  | "comments"
+  | "events"
+  | "mentions"
+  | "messages"
+  | "product_news"
+  | "indications"
 
 export const NOTIFICATION_TYPE_KEYS: readonly NotificationTypeKey[] = [
   "comments",
@@ -18,6 +24,7 @@ export const NOTIFICATION_TYPE_KEYS: readonly NotificationTypeKey[] = [
   "mentions",
   "messages",
   "product_news",
+  "indications",
 ]
 
 export const NOTIFICATION_CHANNELS: readonly NotificationChannel[] = ["in_app", "email"]
@@ -34,6 +41,10 @@ const OUTBOX_TYPE_TO_PREFERENCE_KEY: Record<string, NotificationTypeKey> = {
   event_invite: "events",
   direct_message: "messages",
   product_news: "product_news",
+  // ADR-20260925-aviso-de-pedido: o aviso de pedido novo e o resumo diário são
+  // o mesmo tipo de preferência.
+  recommendation_request: "indications",
+  indications_digest: "indications",
 }
 
 // Only the outbox `email` channel maps to a user-facing matrix channel.
@@ -50,6 +61,7 @@ export interface TypePreferenceRow {
   messages: boolean
   mentions: boolean
   product_news: boolean
+  indications?: boolean
 }
 
 export interface ChannelPreferenceRow {
@@ -70,6 +82,13 @@ function typeEnabled(key: NotificationTypeKey, preference: TypePreferenceRow | u
   return typeof value === "boolean" ? value : key !== "product_news"
 }
 
+// Without a matrix row the channel follows the type — except the e-mail of
+// indications: the daily digest is opt-in (ADR-20260925-aviso-de-pedido). Same
+// rule as `private.notification_channel_allows`.
+function channelDefault(key: NotificationTypeKey, channel: NotificationChannel): boolean {
+  return !(key === "indications" && channel === "email")
+}
+
 export function notificationChannelAllows(input: {
   type: string
   channel: NotificationChannel
@@ -83,7 +102,7 @@ export function notificationChannelAllows(input: {
   const row = input.matrix.find(
     (entry) => entry.notification_type === key && entry.channel === input.channel,
   )
-  return row ? row.enabled : true
+  return row ? row.enabled : channelDefault(key, input.channel)
 }
 
 export function outboxDeliveryAllowed(input: {

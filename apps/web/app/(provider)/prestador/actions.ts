@@ -154,6 +154,7 @@ export async function saveCatalogItemAction(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/prestador/catalogo")
+  revalidatePath("/negocio/catalogo")
   revalidatePath("/prestador")
 }
 
@@ -166,6 +167,7 @@ export async function deleteCatalogItemAction(formData: FormData): Promise<void>
   if (error) throw new Error(`Falha ao remover o item: ${error.message}`)
 
   revalidatePath("/prestador/catalogo")
+  revalidatePath("/negocio/catalogo")
 }
 
 // Reordenação por resequenciamento 0..n-1 na ordem informada. Cada update é
@@ -207,6 +209,7 @@ async function moveRow(
   ids[target] = moving
   await resequence(client, table, ids)
   revalidatePath("/prestador/catalogo")
+  revalidatePath("/negocio/catalogo")
 }
 
 export async function moveCatalogItemUpAction(formData: FormData): Promise<void> {
@@ -265,6 +268,7 @@ export async function addPortfolioPhotoAction(formData: FormData): Promise<void>
   if (error) throw new Error(`Falha ao registrar a foto: ${error.message}`)
 
   revalidatePath("/prestador/catalogo")
+  revalidatePath("/negocio/catalogo")
 }
 
 export async function updatePhotoCaptionAction(formData: FormData): Promise<void> {
@@ -280,6 +284,7 @@ export async function updatePhotoCaptionAction(formData: FormData): Promise<void
   if (error) throw new Error(`Falha ao salvar a legenda: ${error.message}`)
 
   revalidatePath("/prestador/catalogo")
+  revalidatePath("/negocio/catalogo")
 }
 
 export async function deletePortfolioPhotoAction(formData: FormData): Promise<void> {
@@ -307,6 +312,7 @@ export async function deletePortfolioPhotoAction(formData: FormData): Promise<vo
   if (error) throw new Error(`Falha ao remover a foto: ${error.message}`)
 
   revalidatePath("/prestador/catalogo")
+  revalidatePath("/negocio/catalogo")
 }
 
 // ── RECON-024: fila de pedidos, área de atendimento e conta ─────────────────

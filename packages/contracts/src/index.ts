@@ -64,18 +64,9 @@ export const EventCreateSchema = z
     groupId: z.string().uuid().optional(),
     startsAt: z.string().datetime(),
     endsAt: z.string().datetime().optional(),
-    venue: z
-      .string()
-      .trim()
-      .max(200)
-      .refine(
-        (v) =>
-          !/\b(rua|avenida|travessa|alameda|quadra|lote|cep|número|numero|apartamento|apto\b|bloco\s+\d|residencial|residência|residencia|condomínio|condominio|endereço|endereco|logradouro|bairro|complemento|referência|referencia|militar\s|quartel|batalhão|batalhao|regimento|base\s+aérea|base\s+aerea|base\s+naval|arsenal|depósito\s+militar|deposito\s+militar)\b/i.test(
-            v,
-          ),
-        { message: "venue must not contain a personal, residential, or military address" },
-      )
-      .optional(),
+    // O local é escolha de quem organiza — endereço e instalação militar
+    // inclusive (decisão do dono, 25/09/2026; migration 20260925174442).
+    venue: z.string().trim().max(200).optional(),
   })
   .readonly()
 

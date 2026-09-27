@@ -15,7 +15,7 @@ export const BIO_MAX_LENGTH = 300
 // D2: a bio segue a visibilidade do perfil. Não existe "Exibir no perfil"
 // próprio para ela — quem alcança o perfil lê a bio; por isso a tela não
 // desenha um controle para isso e não promete um.
-export const BIO_FIELD_LABEL = "Bio"
+export const BIO_FIELD_LABEL = "Apresentação"
 
 export function bioLength(raw: string): number {
   return raw.trim().length

@@ -65,7 +65,7 @@ export default async function DenunciaDetalhePage({ params }: { params: Promise<
           <FeedbackAlert
             variant="warning"
             title="Conteúdo indisponível"
-            description="O conteúdo desta denúncia não está mais acessível. O que ele dizia não fica guardado aqui."
+            description="O conteúdo desta denúncia foi removido."
           />
         )}
       </div>

@@ -195,6 +195,9 @@ test.describe("cinco pessoas sintéticas interagindo", () => {
       await expect(post.getByRole("button", { name: "Descurtir publicação" })).toBeVisible({
         timeout: 10_000,
       })
+      // O campo de resposta abre por "Responder" desde a reconstrução do cartão
+      // (25/09/2026): ele não ocupa mais todo cartão fechado.
+      await post.getByRole("button", { name: /Responder|resposta/ }).click()
       await post.getByLabel("Comentário", { exact: true }).fill(commentText)
       await post.getByRole("button", { name: "Enviar comentário" }).click()
       await expect(post.getByText(commentText)).toBeVisible({ timeout: 10_000 })

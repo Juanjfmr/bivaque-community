@@ -36,7 +36,7 @@ describe("buildSavedItems", () => {
       available: true,
       title: "Bom pediatra particular",
       category: "saude_bem_estar",
-      href: "/recommendations?focus=r-1#req-r-1",
+      href: "/indicacoes/r-1",
     })
   })
 

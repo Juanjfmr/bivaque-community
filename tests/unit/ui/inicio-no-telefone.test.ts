@@ -39,10 +39,13 @@ describe("a faixa de retorno mantém o CTA acessível e com alvo de 44 px", () =
   })
 })
 
-describe("o cabeçalho de 'Na comunidade' ganha largura em vez de esconder o título", () => {
-  it("abaixo de sm o título e as abas empilham", () => {
-    expect(secao).toContain("flex flex-col items-start gap-2")
-    expect(secao).toContain("sm:flex-row sm:items-center sm:justify-between")
+describe("o título da comunidade não disputa a linha com as abas", () => {
+  it("título e 'Ver tudo' numa linha, abas numa linha própria abaixo", () => {
+    // Desde 25/09/2026 a comunidade é uma prévia: o título divide a linha só com
+    // "Ver tudo", e as abas ficam sozinhas logo abaixo — nada empilha a 375.
+    expect(secao).toContain('id="na-comunidade-titulo"')
+    expect(secao).toContain('href="/community"')
+    expect(secao).toContain('className="border-b border-ui-line"')
   })
 
   it("o título não é truncado nem limitado por clamp", () => {

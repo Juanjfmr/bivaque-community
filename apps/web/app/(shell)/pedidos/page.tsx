@@ -98,7 +98,7 @@ export default async function PedidosPage({
     <div className="mx-auto w-full max-w-5xl px-4 pt-6 pb-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <header className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Meus pedidos</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Meus orçamentos</h1>
           <p className="text-sm text-muted">
             Acompanhe o que você pediu e a resposta de quem atende.
           </p>

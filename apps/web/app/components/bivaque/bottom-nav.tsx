@@ -15,6 +15,7 @@ import {
 import { Tabs } from "@heroui/react"
 import { usePathname } from "next/navigation"
 import type { ElementType, SVGProps } from "react"
+import { resolveActiveNav } from "../shell/active-nav"
 
 export interface NavItem {
   id: string
@@ -105,21 +106,22 @@ export function BottomNav() {
 
   const items = NAV_ITEMS
 
-  const secondaryPersonal =
-    pathname.startsWith("/messages") ||
-    pathname.startsWith("/notifications") ||
-    pathname.startsWith("/salvos") ||
-    pathname.startsWith("/denuncias") ||
-    pathname.startsWith("/ajuda")
-  const fallbackId = secondaryPersonal ? "perfil" : "inicio"
+  // A MESMA regra da lateral (active-nav.ts). Antes a barra tinha a própria:
+  // casava só o prefixo do item e caía em "Início" para todo o resto — então
+  // /community, /guide, /events, /mercado e /cidade acendiam Início no celular
+  // enquanto a lateral do desktop acendia o lugar certo (25/09/2026). Salvos,
+  // que na lateral tem item próprio, fica em Perfil aqui (é coisa da pessoa);
+  // O componente de abas não tem "nenhuma selecionada"; "Início" fica só como
+  // último recurso para rota sem área declarada — o que, dentro do shell, o
+  // teste de escopo de active-nav já impede.
+  const active = resolveActiveNav(pathname, items)
   const selectedKey =
-    items.find((item) => item.href === pathname || pathname.startsWith(`${item.href}/`))?.id ??
-    fallbackId
+    active.kind === "primary" ? active.id : active.kind === "secondary" ? "perfil" : "inicio"
 
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--semantic-surface)] pb-[env(safe-area-inset-bottom,0px)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-ui-line bg-ui-surface pb-[env(safe-area-inset-bottom,0px)] md:hidden"
     >
       <Tabs selectedKey={selectedKey} variant="primary" aria-label="Navegação principal">
         <Tabs.List aria-label="Seções do aplicativo" className="flex justify-around">
@@ -128,13 +130,18 @@ export function BottomNav() {
               key={item.id}
               id={item.id}
               href={item.href}
-              className="flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 px-1 py-1 text-xs font-medium"
+              className="flex h-16 min-w-11 flex-col items-center justify-center gap-0.5 px-1 text-xs font-medium text-ui-ink-2 data-[selected=true]:text-ui-brand"
             >
-              <NavIcon
-                Icon={item.Icon}
-                IconActive={item.IconActive}
-                active={selectedKey === item.id}
-              />
+              {/* Pílula atrás do ícone ativo, como na prancha 00. */}
+              <span
+                className={`flex h-8 w-14 items-center justify-center rounded-full transition-colors ${selectedKey === item.id ? "bg-ui-brand-soft" : ""}`}
+              >
+                <NavIcon
+                  Icon={item.Icon}
+                  IconActive={item.IconActive}
+                  active={selectedKey === item.id}
+                />
+              </span>
               <span>{item.shortLabel ?? item.label}</span>
             </Tabs.Tab>
           ))}

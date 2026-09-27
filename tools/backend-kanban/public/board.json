@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-23",
+  "updatedAt": "2026-09-25",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -1398,18 +1398,31 @@
       "phase": "G1",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
-      "description": "Identidade, cat�logo, portf�lio, alcance por vila/comunidade e revoga��o pelo dono da comunidade. As tr�s colunas que o prestador preenche sozinho no dia um.",
+      "status": "now",
+      "description": "Ficha pública de negócio para prestador civil convidado e membro admitido: identidade, catálogo, portfólio e alcance. Esta entrega adiciona página própria para membro, com alcance gratuito na localidade ativa e sem criar conta civil; pedidos e respostas seguem no card de pedidos de serviço.",
       "checklist": [
-        "provider_profiles/catalago/portfolio tabelas com RLS",
-        "can_see_provider gating visibilidade",
-        "/prestadores/[id] member view"
+        "provider_profiles/catalog/portfolio tables and RLS",
+        "can_see_provider gates visibility",
+        "/prestadores/[id] member view",
+        "admitted member creates and edits own business page through atomic profile + locality reach RPC",
+        "member catalog/portfolio/photo ownership and locality isolation have pgTAP coverage",
+        "civil invitation, shell, reach and revocation regression suites run with BIZ-001 pgTAP on an isolated/aligned database [PASS: 132 files / 1789 tests]",
+        "web entry points in Services, Market, listing composer and Profile"
       ],
-      "proof": [],
-      "tests": ["provider-showcase-scope.sql"],
+      "proof": [
+        "2026-09-26: ADR-20260925-pagina-do-negocio critic_verdict PASS; independent R3 security audit PASS for the scoped design.",
+        "2026-09-26: BIZ-001 implementation built; lint, typecheck, unit, privacy, scope and secrets checks passed. Full pgTAP PASS on an isolated no-seed stack: 132 files / 1789 tests; shared local database was not mutated.",
+        "2026-09-26: independent R3 static security review PASS after fixing transferred-member visibility; browser cycle and 375/768/1440 visual capture remain open."
+      ],
+      "tests": [
+        "provider-showcase-scope.sql",
+        "provider-member-business.sql",
+        "provider-invitation.sql",
+        "provider-revocation.sql"
+      ],
       "links": ["Plano G | ../../docs/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
-      "updatedAt": "2026-08-22",
-      "sourceRevision": "8713635",
+      "updatedAt": "2026-09-26",
+      "sourceRevision": "e300889f",
       "dependencies": ["G-TASK-1"]
     },
     {
@@ -3718,6 +3731,78 @@
         "Decisao do dono pendente: resposta cujo lugar ja esta no Guia fica 'devida' para sempre e o P3b reenviaria o mesmo corpo a cada execucao — o marcador de 'ja tentado, nada produzido' e estado novo"
       ],
       "completedChecklist": [false, true, true, true, true, false, true, false, true, true]
+    },
+    {
+      "id": "INDICACOES-MEMORIA",
+      "title": "Indicações com memória: pedir começa por procurar, e a resposta que resolveu fica achável",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "now",
+      "description": "Decisão do dono em 25/09/2026: as comunidades existem para substituir o grupo de WhatsApp com memória — \"as pessoas pedem indicação pelo whatsapp e 10 minutos depois ninguem mais acha\". O pedido de indicação morava só em /recommendations, a busca não o alcançava e saúde exigia grupo. ADR-20260925-memoria-de-indicacoes: saúde sem trava nem aviso, resolvido alimenta a busca (altera a D5 de ADR-20260909-resposta-que-resolveu), Indicações + Orçamentos. Entregue: list_indications (busca em português sem acento, no pedido e nas respostas), /indicacoes com busca antes de pedir, /indicacoes/[id] como endereço único, vista Indicações na Comunidade.",
+      "checklist": [
+        "ADR com as decisões do dono [FEITO 25/09]",
+        "Migration 20260926004501: saúde sem trava, detalhe opcional, list_indications [FEITO; reset limpo pelo dono em 25/09: db reset --no-seed + test:db, 130 arquivos, 1726 testes, PASS]",
+        "pgTAP memoria-de-indicacoes.sql [FEITO 12/12]; recommendations-health-scope.sql invertido [FEITO 3/3]",
+        "/indicacoes, /indicacoes/[id] e vista Indicações na Comunidade [FEITO, provado a 375 e 1440]",
+        "Todas as portas do pedido em /indicacoes/<id> (notificação, salvos, denúncia, Guia, Início, compartilhar) [FEITO]",
+        "/pedidos rotulado Orçamentos [FEITO]",
+        "Spec E2E do ciclo pedir → responder → Ajudou a resolver → achar pela busca [ESCRITO: tests/e2e/indicacoes-memoria.spec.ts; não executado — CI sem cota e sem build local]",
+        "Destino de /recommendations [FEITO 25/09: aposentada, redireciona por aba e por pedido; código e testes da página antiga removidos]",
+        "Busca do cabeçalho incluir Indicações [FEITO: primeiro grupo, Ver todos leva o termo à caixa]",
+        "Pedir pela conversa [FEITO: botão de criar e Início abrem /community?vista=indicacoes&pedir=1; quem não tem comunidade também vê a vista]",
+        "Referências do Mobbin para o desenho (MCP desconectado na sessão de 25/09)"
+      ],
+      "proof": [
+        "pgTAP memoria-de-indicacoes.sql 12/12 no banco local (migration aplicada à mão)",
+        "Reset limpo rodado pelo dono em 25/09/2026: supabase db reset --local --no-seed e test:db — Files=130, Tests=1726, Result: PASS; as 6 migrations da branch aplicam do zero",
+        "Navegador 375 e 1440, três contas: foco na caixa com ?pedir=1; 'Alguém indica pediatra?' traz o pedido resolvido com a resposta; frase nova sem parecido abre 'Pedir à cidade' com categoria sugerida; publicar leva a /indicacoes/<id>; outro membro acha a pergunta sem acento e responde; a autora marca 'Isso resolveu'; um terceiro busca por prefixo e vê a resposta sem abrir a conversa; /community?vista=indicacoes acende Comunidades; nenhum erro de página"
+      ],
+      "tests": [
+        "supabase/tests/memoria-de-indicacoes.sql",
+        "tests/unit/indications/indications.test.ts",
+        "tests/unit/indications/portas.test.ts"
+      ],
+      "links": [
+        "docs/decisions/ADR-20260925-memoria-de-indicacoes.md",
+        "supabase/migrations/20260926004501_memoria_de_indicacoes.sql",
+        "apps/web/app/components/indications/"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-25",
+      "sourceRevision": "686fd5fd"
+    },
+    {
+      "id": "INDICACOES-AVISO",
+      "title": "Aviso de pedido de indicação: a cidade fica sabendo em minutos",
+      "phase": "Reconstrução",
+      "priority": "P1",
+      "category": "backend",
+      "status": "now",
+      "description": "Decisão do dono em 25/09/2026 (ADR-20260925-aviso-de-pedido): um pedido novo avisa quem pode lê-lo (cidade, ou grupo), no máximo 3 avisos por pessoa em 24 h e o excedente vira um aviso único do dia; sino na hora e resumo diário por e-mail só para quem ligar; pedido parado 24 h avisa de novo; 3 dias depois da primeira resposta, quem pediu é perguntado se alguma ajudou a resolver.",
+      "checklist": [
+        "ADR com as decisões do dono [FEITO 25/09]",
+        "Migrations 20260926022408 e 20260926022416: tipo, preferência indications, entregas, jobs [FEITO; aplicadas à mão no banco local]",
+        "pgTAP aviso-de-pedido.sql [FEITO 22/22, com controle negativo]",
+        "Texto e destino no sino, preferência em Configurações, e-mail do resumo [FEITO]",
+        "Prova no navegador: pedido de uma conta aparece no sino de outra [FEITO 25/09]",
+        "Medir tempo até a primeira resposta e pedidos sem resposta em 24 h depois do lançamento"
+      ],
+      "proof": [
+        "pgTAP aviso-de-pedido.sql 22/22 no banco local; sem a preferência desligada e sem o bloqueio, os casos 5 e 7 falham",
+        "Navegador 25/09: membro-2 pede pela caixa; o job avisa 303 membros da cidade (seed); membro-3 vê \"Alguém da sua cidade pediu uma indicação\" com o título no sino, a 375, e o toque abre o pedido; em Configurações a linha Pedidos de indicação aparece com sino ligado e resumo por e-mail desligado, e ligar o resumo grava. Achado no caminho: a grade de Configurações crescia além de 375 px no celular — corrigida"
+      ],
+      "tests": [
+        "supabase/tests/aviso-de-pedido.sql",
+        "tests/unit/notifications/aviso-de-pedido.test.ts"
+      ],
+      "links": [
+        "docs/decisions/ADR-20260925-aviso-de-pedido.md",
+        "supabase/migrations/20260926022416_aviso_de_pedido.sql"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-09-25",
+      "sourceRevision": "a15d00f8"
     }
   ]
 }

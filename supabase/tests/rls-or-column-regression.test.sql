@@ -46,6 +46,10 @@ select results_eq(
         'om', 'portal_payload', 'nome_completo', 'rg', 'passaporte',
         'data_nascimento', 'nome_mae', 'telefone', 'celular'
       )
+      -- Única exceção, deliberada: o endereço que o anunciante ESCOLHE publicar
+      -- no anúncio (ADR-20260925-endereco-por-escolha). Continua proibido
+      -- guardar endereço da pessoa em perfil ou em qualquer outra tabela.
+      and not (table_name = 'listings' and column_name = 'address')
   $$,
   array[0::bigint],
   'GUARD: no PII columns (cpf/rank/address/om/portal_payload/etc) exist in public schema'

@@ -54,6 +54,25 @@ jobs:
       - name: Start local Supabase
         run: pnpm exec supabase start
 
+      # `generate:types` and `test:db` pull two more images on first use. The
+      # public ECR answers anonymous pulls with "toomanyrequests: Rate exceeded"
+      # at busy hours, which failed this job twice before any test ran
+      # (26/09/2026). Pull them here with backoff; if ECR still refuses, take the
+      # same tag from Docker Hub and retag it under the name the CLI asks for.
+      # Tags follow the pinned CLI (2.107.0).
+      - name: Pre-pull Supabase tool images
+        run: |
+          pull() {
+            local ecr="public.ecr.aws/supabase/$1" hub="supabase/$1"
+            for delay in 0 10 30 60; do
+              sleep "$delay"
+              docker pull -q "$ecr" && return 0
+            done
+            docker pull -q "$hub" && docker tag "$hub" "$ecr"
+          }
+          pull postgres-meta:v0.96.1
+          pull pg_prove:3.36
+
       # Next inlines NEXT_PUBLIC_* at build time, so the stack has to be up and
       # the env written before `pnpm build` runs — not after it.
       #

@@ -119,8 +119,11 @@ export const HEADINGS = {
   "/events": "^Explorar eventos$",
   "/notifications": "^Notificações$",
   "/messages": "^Mensagens$",
-  "/recommendations": "^Indicações$",
-  "/prestador": "^Pedidos para você$",
+  // A vista Indicações da Comunidade: o h1 é o nome da comunidade do ator.
+  "/community?vista=indicacoes": DYNAMIC_HEADING,
+  "/indicacoes/80000000-0000-4000-8000-000000000f01":
+    "^Alguém indica pediatra que atenda pelo FuSEx\\?$",
+  "/prestador": "^Orçamentos para você$",
   "/prestador/ficha": "^Minha ficha$",
   "/prestador/catalogo": "^Publicar item$",
   // RECON-024 trouxe estas duas ao entrar na integração, sem contrato — e o
@@ -142,6 +145,7 @@ export const HEADINGS = {
   "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador": DYNAMIC_HEADING,
   "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
   "/profile": DYNAMIC_HEADING,
+  "/profile/editar": "^Editar perfil$",
   // Perfil de TERCEIRO (prancha 51): a visão que lê a afiliação declarada. Nunca
   // foi capturada, e é justamente a tela que a leitura por alvo serve — depois
   // do achado de enumeração em lote, quem lê deixa de ser a tabela (não
@@ -163,6 +167,9 @@ export const HEADINGS = {
   "/onboarding/perfil": "^Deixe com a sua cara\\.$",
   "/mercado": "^O que você precisa pode estar por perto$",
   "/mercado/novo": "^Novo anúncio$",
+  "/negocio": "^(Seu negócio|Crie a página do seu negócio)$",
+  "/negocio/catalogo": "^Catálogo e portfólio$",
+  "/prestadores/<member-business>": DYNAMIC_HEADING,
   "/meus-anuncios": "^Meus anúncios$",
   "/mercado/a0000000-0000-4000-8000-000000000001/editar": "^Editar anúncio$",
   // O h1 do detalhe é o título do próprio evento.
@@ -197,10 +204,11 @@ export const HEADINGS = {
   "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010": "^Do que você precisa\\?$",
   // Prancha 79, painel 2: o H1 da tela que o prestador convidado abre.
   [`/prestador-convite/${PROVIDER_INVITE_TOKEN}`]: "^Ofereça seus serviços no Bivaque$",
-  "/pedidos": "^Meus pedidos$",
+  "/pedidos": "^Meus orçamentos$",
   // O título do pedido vem da primeira linha da própria descrição do pedido.
   "/pedidos/40000000-0000-4000-8000-000000000023": DYNAMIC_HEADING,
-  "/recommendations?focus=80000000-0000-4000-8000-000000000f00": "^Indicações$",
+  // A conversa do pedido semeado: o h1 é o título do pedido.
+  "/indicacoes/80000000-0000-4000-8000-000000000f00": "^Alguém conhece um bom encanador\\?$",
   "/salvos": "^Salvos$",
   // A aba chega pela URL: o atalho "Salvos" do topo do guia manda para cá com o
   // tipo escolhido, então a variante é chave própria de contrato.
@@ -292,6 +300,7 @@ export const ROUTES = [
   // Grupos do seed são 60000000-… (70000000-… é a faixa dos eventos).
   { path: "/groups/60000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
   { path: "/profile", name: "profile", auth: true },
+  { path: "/profile/editar", name: "profile-editar", auth: true },
   // Perfil de terceiro (prancha 51): a visão que consome a leitura por alvo.
   // O alvo tem Força Armada declarada e visível no seed.
   { path: "/profile/20000000-0000-4000-8000-000000000001", name: "profile-member", auth: true },
@@ -304,6 +313,20 @@ export const ROUTES = [
   // capture-a quando a fixture existir.
   { path: "/mercado", name: "mercado", auth: true },
   { path: "/mercado/novo", name: "mercado-novo", auth: true },
+  { path: "/negocio", name: "member-business", auth: true, account: "visual" },
+  {
+    path: "/negocio/catalogo",
+    name: "member-business-catalog",
+    auth: true,
+    account: "visual",
+  },
+  {
+    path: "/prestadores/<member-business>",
+    name: "member-business-public",
+    auth: true,
+    account: "visual",
+    fixture: "member-business",
+  },
   // RECON-026: a gestão dos próprios anúncios. `/meus-anuncios` é rota fixa. A
   // edição depende de um anúncio no seed; `supabase/seed.sql` está fora dos
   // allowed_paths deste lote, então o caminho fica cadastrado com um id
@@ -475,13 +498,19 @@ export const ROUTES = [
   },
   { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },
-  { path: "/recommendations", name: "recommendations", auth: true },
-  // RECON-035: a conversa vive na aba "Pedidos". O foco no pedido semeado
-  // (visual@ é a autora) pré-seleciona a aba para a captura mostrar o ator e
-  // o destino sem depender de clique.
+  // Memória de indicações (ADR-20260925-memoria-de-indicacoes). /recommendations
+  // e /indicacoes só redirecionam; a lista é a vista Indicações da Comunidade.
+  // RECON-035: a conversa do pedido semeado (visual@ é a autora) mostra o ator,
+  // a marca e o destino; o pedido resolvido mostra a memória.
+  { path: "/community?vista=indicacoes", name: "indicacoes", auth: true },
   {
-    path: "/recommendations?focus=80000000-0000-4000-8000-000000000f00",
-    name: "recommendations-conversa",
+    path: "/indicacoes/80000000-0000-4000-8000-000000000f00",
+    name: "indicacao-conversa",
+    auth: true,
+  },
+  {
+    path: "/indicacoes/80000000-0000-4000-8000-000000000f01",
+    name: "indicacao-resolvida",
     auth: true,
   },
   { path: "/messages", name: "messages", auth: true },

@@ -6,15 +6,20 @@ import {
   replyResolution,
 } from "../../../apps/web/lib/recommendations/resolution"
 
+// RECON-035 — a resposta que resolveu. Desde 25/09/2026 a conversa do pedido é
+// a tela de detalhe das indicações (ADR-20260925-memoria-de-indicacoes); o
+// rótulo da marca continua o da decisão do dono de 09/09: "Ajudou a resolver".
+// O selo do pedido diz "Resolvido por quem pediu", sem gênero fixo.
+
 const root = join(import.meta.dirname, "..", "..", "..")
-const requestsPath = join(
+const detailPath = join(
   root,
   "apps",
   "web",
   "app",
   "components",
-  "bivaque",
-  "recommendation-requests.tsx",
+  "indications",
+  "indication-detail.tsx",
 )
 
 describe("resolution marker (RECON-035)", () => {
@@ -40,24 +45,29 @@ describe("resolution marker (RECON-035)", () => {
   })
 
   it("writes through the server RPCs, never a direct table update", () => {
-    const source = readFileSync(requestsPath, "utf8")
+    const source = readFileSync(detailPath, "utf8")
     expect(source).toContain("mark_recommendation_reply_resolved")
     expect(source).toContain("clear_recommendation_resolved_reply")
     expect(source).toContain("reopen_recommendation")
     expect(source).toContain("callResolutionRpc")
+    expect(source).not.toMatch(/\.update\(\s*\{[^}]*resolved_reply_id/)
   })
 
-  it("reads the marker and renders the print's highlight and chips", () => {
-    const source = readFileSync(requestsPath, "utf8")
+  it("reads the marker and uses the owner's labels", () => {
+    const source = readFileSync(detailPath, "utf8")
     expect(source).toContain("resolved_reply_id")
     expect(source).toContain("Ajudou a resolver")
-    expect(source).toContain("Resolvida pela autora")
-    expect(source).toContain("var(--semantic-success)")
+    expect(source).toContain("Resolvido por quem pediu")
+    expect(source).toContain("Remover marca")
   })
 
   it("gates every resolution control behind isAuthor", () => {
-    const source = readFileSync(requestsPath, "utf8")
-    expect(source).toContain("{isAuthor && !isMarked && (")
-    expect(source).toContain("{isAuthor && isMarked && (")
+    const source = readFileSync(detailPath, "utf8")
+    // A fileira de ações da resposta só existe para quem perguntou; dentro
+    // dela, marcar e remover a marca se excluem.
+    expect(source).toContain("{isAuthor ? (")
+    expect(source).toContain("{!marked ? (")
+    expect(source).toContain("{marked ? (")
+    expect(source).toContain("isAuthor && request.is_resolved")
   })
 })

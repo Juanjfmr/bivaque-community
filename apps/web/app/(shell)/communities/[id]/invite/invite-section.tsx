@@ -77,14 +77,13 @@ export function CommunityInviteSection({ communityId }: { communityId: string })
       <div className="rounded-xl border border-border bg-[var(--surface)] p-4">
         <p className="text-sm font-medium">Convite de membro</p>
         <p className="mt-1 text-xs text-muted">
-          Cada convite carrega o escopo desta vila: o link só vale para esta comunidade, e a
-          aceitação cria um pedido de entrada — o dono ainda aprova.
+          O link vale só para esta comunidade. Quem aceitar ainda passa pela aprovação de quem cuida
+          dela.
         </p>
 
         {!isVerified ? (
           <p className="mt-3 text-xs text-muted">
-            Apenas titulares verificados podem enviar convites. Conclua a verificação do seu CPF
-            para liberar esta seção.
+            Só titulares verificados convidam. Conclua sua verificação para poder convidar.
           </p>
         ) : !isMember ? (
           <p className="mt-3 text-xs text-muted">

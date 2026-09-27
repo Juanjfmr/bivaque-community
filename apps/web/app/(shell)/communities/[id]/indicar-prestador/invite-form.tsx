@@ -20,8 +20,8 @@ export function ProviderInvitationForm({ communityId }: { communityId: string })
       }
       form.reset()
       showToast({
-        title: "Convite enfileirado",
-        description: "O prestador receberá o link quando o canal de e-mail estiver disponível.",
+        title: "Convite criado",
+        description: "Enviamos o convite para o e-mail do prestador.",
         variant: "success",
       })
     } catch {

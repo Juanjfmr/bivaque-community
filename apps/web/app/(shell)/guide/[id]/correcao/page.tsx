@@ -159,10 +159,14 @@ export default async function GuideCorrectionPage({ params }: { params: Promise<
       ) : (
         <Card className="mt-6 p-4 sm:p-6">
           <p className="text-sm leading-relaxed text-[var(--semantic-text-primary)]">
-            Esta referência ainda não recebe sugestões de correção pelo aplicativo. Você pode voltar
-            ao artigo e, quando a curadoria publicar o conteúdo estruturado, sugerir uma atualização
-            por aqui.
+            Viu algo errado nesta referência? Conte para a equipe pela Ajuda.
           </p>
+          <Link
+            href="/ajuda"
+            className="mt-3 mr-4 inline-flex min-h-11 items-center text-sm font-medium text-[var(--semantic-link)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+          >
+            Falar com a equipe
+          </Link>
           <Link
             href={`/guide/${entry.id}`}
             className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-[var(--semantic-link)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"

@@ -34,15 +34,10 @@ export const WRITE_FAILURE_COPY = {
   // fluxo pode ficar sem próximo passo declarado.
   publicar_pedido:
     "Não foi possível publicar seu pedido. Seu texto continua aqui. Tente novamente.",
-  entrar_no_grupo: "Não foi possível entrar no grupo. Tente novamente.",
   responder_pedido: "Não foi possível enviar sua resposta. Tente novamente.",
   salvar_pedido: "Não foi possível salvar este pedido na sua lista. Tente novamente.",
   remover_pedido_salvo: "Não foi possível remover este pedido da sua lista. Tente novamente.",
-  editar_pedido: "Não foi possível salvar as alterações do pedido. Tente novamente.",
-  excluir_pedido: "Não foi possível excluir o pedido. Tente novamente.",
-  editar_resposta: "Não foi possível salvar as alterações da resposta. Tente novamente.",
   excluir_resposta: "Não foi possível excluir a resposta. Tente novamente.",
-  resolver_pedido: "Não foi possível marcar o pedido como resolvido. Tente novamente.",
   marcar_resposta: "Não foi possível marcar a resposta como resolvida. Tente novamente.",
   limpar_marca: "Não foi possível remover a marca de resolvido. Tente novamente.",
   reabrir_pedido: "Não foi possível reabrir o pedido. Tente novamente.",
@@ -75,9 +70,6 @@ export function writeFailure(operation: WriteOperation, serverMessage: string): 
 export const READ_FAILURE_COPY = {
   // ErrorState já desenha o botão "Tentar novamente" — repetir no texto seria
   // pedir duas vezes a mesma ação.
-  carregar_recomendacoes: "Não foi possível carregar as recomendações.",
-  // Aqui não há retomada desenhada: sem a frase, sobra só "não carregou".
-  carregar_salvos: "Não foi possível carregar suas indicações salvas. Tente novamente.",
   carregar_pedidos: "Não foi possível carregar os pedidos de indicação.",
   carregar_respostas_e_salvos: "Não foi possível carregar respostas e salvos.",
 } as const
@@ -95,15 +87,4 @@ export type ReadOperation = keyof typeof READ_FAILURE_COPY
 export function readFailure(operation: ReadOperation, serverMessage: string): string {
   log.error("recommendation_read_failed", { operation, serverMessage })
   return READ_FAILURE_COPY[operation]
-}
-
-/**
- * Operação de resolução a partir da chave que a tela já usa no estado do botão
- * (`mark:<pedido>:<resposta>` | `clear:<pedido>` | `reopen:<pedido>`), para a
- * mensagem dizer qual das três ações falhou.
- */
-export function resolutionOperation(actionKey: string): WriteOperation {
-  if (actionKey.startsWith("mark:")) return "marcar_resposta"
-  if (actionKey.startsWith("clear:")) return "limpar_marca"
-  return "reabrir_pedido"
 }

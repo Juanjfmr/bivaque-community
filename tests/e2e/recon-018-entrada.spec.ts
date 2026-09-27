@@ -129,7 +129,13 @@ test.describe("prancha 36 — entrar", () => {
     // load estabiliza antes do reload — o que o teste quer provar é a sessão
     // sobrevivendo ao reload, não a corrida.
     await page.waitForLoadState("load")
-    await page.reload()
+    // Mesmo depois do load, o reload ainda saiu ERR_ABORTED uma vez no CI
+    // (tablet-768, 26/09/2026) sem navegação nossa em /profile. Repetir o reload
+    // abortado não muda o que se prova: a página recarregada segue em /profile,
+    // com sessão.
+    await expect(async () => {
+      await page.reload()
+    }).toPass({ timeout: 15_000 })
     await expect(page).toHaveURL(/\/profile/)
     await expect(page.getByRole("link", { name: "Entrar" })).toHaveCount(0)
   })

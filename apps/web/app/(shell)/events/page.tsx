@@ -1092,8 +1092,7 @@ function EventsContent() {
               maxLength={200}
             />
             <p className="text-xs text-muted">
-              O local deve ser um espa&ccedil;o p&uacute;blico. Endere&ccedil;os pessoais ou
-              militares n&atilde;o s&atilde;o permitidos.
+              Pode ser um lugar ou um endere&ccedil;o. Ele aparece para quem v&ecirc; o encontro.
             </p>
 
             {/* HeroUI v3 Checkbox is a compound component: the bare
@@ -1199,9 +1198,8 @@ function EventsContent() {
                 )}
 
                 <p className="text-xs text-muted">
-                  A data acima só define o horário e o ponto de partida — o dia real é calculado
-                  pelo padrão escolhido. Em meses mais curtos, o dia fixo é ajustado para o último
-                  dia do mês, nunca para uma data inválida.
+                  A data acima marca o horário e o primeiro encontro. Nos meses mais curtos, o
+                  encontro cai no último dia do mês.
                 </p>
 
                 {holidayWarning && (

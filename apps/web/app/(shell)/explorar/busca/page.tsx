@@ -11,6 +11,7 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useRef, useState } from "react"
+import { ASK_INDICATION_HREF } from "../../../../lib/indications/indications"
 import { useLocalityContext } from "../../../../lib/locality-context"
 import {
   buildSearchGroups,
@@ -19,6 +20,10 @@ import {
   type ProviderHit,
   type SearchGroup,
 } from "../../../../lib/search/groups"
+
+// Quantos pedidos a busca traz: o grupo mostra três e conta o resto.
+const INDICATION_SEARCH_LIMIT = 20
+
 import { isSessionExpiredError, resolveTerm } from "../../../../lib/search/params"
 import { createBrowserClient } from "../../../../lib/supabase/client"
 import { Card } from "../../../components/bivaque/card"
@@ -130,7 +135,7 @@ function BuscaContent() {
 
     setStatus("loading")
     const nowIso = new Date().toISOString()
-    const [providers, guide, events] = await Promise.all([
+    const [providers, guide, events, indications] = await Promise.all([
       supabase.rpc("search_providers", { p_query: term }),
       supabase
         .from("arrival_guide_entries")
@@ -144,14 +149,19 @@ function BuscaContent() {
         .neq("status", "cancelled")
         .gte("starts_at", nowIso)
         .order("starts_at", { ascending: true }),
+      supabase.rpc("list_indications", {
+        p_locality_id: current.id,
+        p_query: term,
+        p_limit: INDICATION_SEARCH_LIMIT,
+      }),
     ])
 
     if (seq !== searchSeq.current) return
 
-    const failed = [providers, guide, events].find((result) => result.error)
+    const failed = [providers, guide, events, indications].find((result) => result.error)
     if (failed?.error) {
       // Uma consulta que falha não pode virar lista vazia disfarçada: a tela
-      // inteira declara o erro e a retomada refaz as três.
+      // inteira declara o erro e a retomada refaz todas.
       setGroups([])
       setStatus(isSessionExpiredError(failed.error) ? "expired" : "error")
       return
@@ -163,6 +173,7 @@ function BuscaContent() {
         providers: (providers.data ?? []) as unknown as ProviderHit[],
         guideEntries: (guide.data ?? []) as unknown as GuideHit[],
         events: (events.data ?? []) as unknown as EventHit[],
+        indications: indications.data ?? [],
       }),
     )
     setStatus("ok")
@@ -185,6 +196,9 @@ function BuscaContent() {
     void runSearch()
   }, [runSearch])
 
+  // Quando a busca não resolve, o próximo passo é perguntar a quem mora aqui:
+  // a caixa de pedir já chega com o termo escrito.
+  const askCity = `${ASK_INDICATION_HREF}&q=${encodeURIComponent(term)}`
   const buscaExpira = `/login?redirect=${encodeURIComponent(`/explorar/busca?q=${term}`)}`
 
   return (
@@ -193,8 +207,7 @@ function BuscaContent() {
         {term === "" ? "Buscar no Bivaque" : `Resultados para “${term}”`}
       </h1>
       <p className="mt-1 text-sm text-muted">
-        {current.cityName}, {current.stateCode} — guia, serviços e eventos. A busca usa sua cidade
-        atual; trocar a cidade refaz as três consultas.
+        Em {current.cityName}, {current.stateCode}.
       </p>
 
       <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start lg:gap-8">
@@ -207,7 +220,7 @@ function BuscaContent() {
           ) : status === "expired" ? (
             <AccessUnavailableState
               title="Sua sessão expirou"
-              description="Entre de novo para buscar. Seus filtros e o termo continuam na página anterior."
+              description="Entre de novo para continuar buscando."
               primaryAction={
                 <Link
                   href={buscaExpira as Route}
@@ -225,7 +238,7 @@ function BuscaContent() {
           ) : status === "idle" ? (
             <EmptyState
               title="Digite o que você procura"
-              description="A busca do cabeçalho encontra guias, profissionais e eventos na sua cidade."
+              description={`Indicações de quem mora em ${current.cityName}, lugares do Guia, profissionais e encontros.`}
               action={
                 <Link
                   href="/explorar"
@@ -237,10 +250,16 @@ function BuscaContent() {
             />
           ) : groups.length === 0 ? (
             <EmptyState
-              title={`Nenhum resultado para “${term}”`}
-              description={`Nada no guia, nos serviços ou nos eventos de ${current.cityName} corresponde a esse termo.`}
+              title={`Nada sobre “${term}” ainda`}
+              description={`Ninguém em ${current.cityName} falou disso por aqui. Pergunte: alguém da cidade pode indicar.`}
               action={
                 <div className="flex flex-wrap items-center justify-center gap-2">
+                  <Link
+                    href={askCity as Route}
+                    className="flex min-h-11 items-center rounded-lg bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors duration-[var(--semantic-motion-duration-instant)] hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+                  >
+                    Perguntar à cidade
+                  </Link>
                   <button
                     type="button"
                     onClick={() => router.push("/explorar/busca")}
@@ -248,12 +267,6 @@ function BuscaContent() {
                   >
                     Limpar busca
                   </button>
-                  <Link
-                    href="/localidade"
-                    className="flex min-h-11 items-center rounded-lg border border-border px-4 text-sm font-medium transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
-                  >
-                    Trocar de cidade
-                  </Link>
                 </div>
               }
             />
@@ -267,21 +280,14 @@ function BuscaContent() {
         </div>
 
         {/* Rail da prancha 84: muda com o estado da busca. */}
-        <aside aria-label="Sobre esta busca" className="mt-8 flex flex-col gap-3 lg:mt-0">
+        <aside aria-label="Mais caminhos" className="mt-8 flex flex-col gap-3 lg:mt-0">
           {status === "ok" && groups.length > 0 ? (
             <>
-              <Card className="p-4">
-                <h2 className="text-sm font-semibold">Termo e cidade</h2>
-                <p className="mt-1 text-sm leading-relaxed text-muted">
-                  O termo fica na URL como <span className="font-medium">?q=</span>. Trocar de
-                  cidade em Localidade refaz as três buscas.
-                </p>
-              </Card>
               <Card className="p-4">
                 <h2 className="text-sm font-semibold">Buscas recentes</h2>
                 {recentes.length === 0 ? (
                   <p className="mt-1 text-sm leading-relaxed text-muted">
-                    As buscas que você fizer aqui aparecem nesta lista, só neste navegador.
+                    Suas buscas recentes aparecem aqui.
                   </p>
                 ) : (
                   <ul className="mt-2 flex flex-wrap gap-2">
@@ -299,11 +305,17 @@ function BuscaContent() {
                 )}
               </Card>
               <Card className="p-4">
-                <h2 className="text-sm font-semibold">Quando nada aparece</h2>
+                <h2 className="text-sm font-semibold">Não achou o que queria?</h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted">
-                  Troque palavras-chave, limpe o termo ou experimente outra cidade vizinha. Mercado
-                  e Moradia ainda não entram aqui.
+                  Pergunte à cidade. Quem já passou por isso costuma responder.
                 </p>
+                <Link
+                  href={askCity as Route}
+                  className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg text-sm font-medium text-accent transition-colors duration-[var(--semantic-motion-duration-instant)] hover:bg-[var(--semantic-selected)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
+                >
+                  Perguntar à cidade
+                  <ArrowRight size={14} aria-hidden="true" />
+                </Link>
               </Card>
             </>
           ) : null}
@@ -311,18 +323,16 @@ function BuscaContent() {
           {status === "ok" && groups.length === 0 ? (
             <>
               <Card className="p-4">
-                <h2 className="text-sm font-semibold">Tente variações</h2>
+                <h2 className="text-sm font-semibold">Outro jeito de procurar</h2>
                 <ul className="mt-1 flex flex-col gap-1 text-sm leading-relaxed text-muted">
-                  <li>Use menos palavras e o termo mais específico.</li>
-                  <li>Confira a grafia: a busca não corrige acento nem plural.</li>
-                  <li>Procure o nome próprio do lugar ou do serviço.</li>
+                  <li>Use menos palavras.</li>
+                  <li>Tente o nome do lugar ou do serviço.</li>
                 </ul>
               </Card>
               <Card className="p-4">
-                <h2 className="text-sm font-semibold">Buscar em outra cidade</h2>
+                <h2 className="text-sm font-semibold">Procurando em outra cidade?</h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted">
-                  Se o termo faz sentido em outra cidade, troque a cidade atual em Localidade: a
-                  busca refaz as três consultas.
+                  Troque a cidade e busque de novo.
                 </p>
                 <Link
                   href="/localidade"
@@ -333,9 +343,9 @@ function BuscaContent() {
                 </Link>
               </Card>
               <Card className="p-4">
-                <h2 className="text-sm font-semibold">Mercado e Moradia</h2>
+                <h2 className="text-sm font-semibold">Algo à venda ou para alugar?</h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted">
-                  Esses dois ainda não entram na busca — cada um tem a própria lista.
+                  Veja os anúncios da cidade.
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Link
@@ -360,7 +370,7 @@ function BuscaContent() {
               <h2 className="text-sm font-semibold">Buscas recentes</h2>
               {recentes.length === 0 ? (
                 <p className="mt-1 text-sm leading-relaxed text-muted">
-                  As buscas que você fizer aqui aparecem nesta lista, só neste navegador.
+                  Suas buscas recentes aparecem aqui.
                 </p>
               ) : (
                 <ul className="mt-2 flex flex-wrap gap-2">

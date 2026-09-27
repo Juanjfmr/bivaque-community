@@ -38,7 +38,7 @@ import {
   requestJoinWithReasonAction,
 } from "./actions"
 import { formatCreatedOn, formatRequestedOn, type GroupCard } from "./community-detail-data"
-import type { CommunityDetailView } from "./community-detail-loaders"
+import { COMMUNITY_DETAIL_FEED, type CommunityDetailView } from "./community-detail-loaders"
 
 type FeedPostRow = Database["public"]["Functions"]["feed_posts"]["Returns"][number]
 
@@ -251,6 +251,20 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
               {view.feed.map((post, index) => (
                 <FeedPost key={post.id} post={post as unknown as FeedPostRow} index={index} />
               ))}
+              {view.feed.length >= COMMUNITY_DETAIL_FEED ? (
+                view.isPrimary ? (
+                  <Link
+                    href={"/community" as Route}
+                    className="flex min-h-11 items-center justify-center rounded-ui-lg bg-ui-surface text-sm font-semibold text-ui-brand shadow-ui ring-1 ring-ui-line transition-colors hover:bg-ui-subtle"
+                  >
+                    Ver todas as publicações
+                  </Link>
+                ) : (
+                  <p className="py-2 text-center text-sm text-ui-ink-2">
+                    As {COMMUNITY_DETAIL_FEED} publicações mais recentes.
+                  </p>
+                )
+              ) : null}
             </div>
           ) : (
             <EmptyState
@@ -289,7 +303,7 @@ function MemberBody({ view }: { view: Extract<ReadyView, { audience: "member" }>
                   href={`/communities/${presentation.id}/invite` as Route}
                   className="inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
                 >
-                  Convidar membros — o convite carrega o escopo desta comunidade
+                  Convidar pessoas para esta comunidade
                 </Link>
               </li>
               {canModerate && (

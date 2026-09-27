@@ -67,11 +67,14 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/meus-anuncios", "explorar"],
   ["/imoveis", "explorar"],
   ["/recommendations", "explorar"],
+  // Indicações é uma vista da comunidade (ADR-20260925-memoria-de-indicacoes).
+  ["/indicacoes", "comunidades"],
   ["/prestadores", "explorar"],
   ["/communities", "comunidades"],
   ["/community", "comunidades"],
   ["/groups", "comunidades"],
   ["/profile", "perfil"],
+  ["/negocio", "perfil"],
   ["/configuracoes", "perfil"],
   ["/messages", "perfil"],
   ["/notifications", "perfil"],
@@ -88,6 +91,9 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   // não "de quem é o dado": acender Perfil aqui mandaria a pessoa para um
   // container que não alcança esta tela.
   ["/localidade", "explorar"],
+  // Consulta a outra cidade (25/09/2026): é descoberta — Guia, encontros e
+  // anúncios de outro lugar —, e a volta é pelo mesmo caminho de /localidade.
+  ["/cidade", "explorar"],
 ]
 
 // Rotas que renderizam FORA do shell do membro: funil de entrada, onboarding,

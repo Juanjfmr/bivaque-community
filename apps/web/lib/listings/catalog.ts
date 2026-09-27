@@ -1,3 +1,5 @@
+import { validateAddress } from "./address"
+
 // RECON-025 — lógica pura do Mercado: categorias, filtros, preço, validação do
 // anúncio e o caminho do objeto no bucket. Sem I/O e sem React, para ser
 // provada por teste unitário antes de qualquer tela.
@@ -249,6 +251,8 @@ export interface NewListingDraft {
   condition: string
   description: string
   neighborhood: string
+  /** Opcional: vazio é "não informar". */
+  address?: string
   audienceType: ListingAudienceType
   localityId: string | null
   communityId: string | null
@@ -261,6 +265,7 @@ export interface ValidatedNewListing {
   condition: ListingCondition
   description: string
   neighborhood: string
+  address: string | null
   priceCents: number
   audienceType: ListingAudienceType
   localityId: string | null
@@ -274,6 +279,7 @@ export type NewListingField =
   | "condition"
   | "description"
   | "neighborhood"
+  | "address"
   | "audience"
   | "photos"
 
@@ -308,8 +314,12 @@ export function validateNewListing(draft: NewListingDraft): NewListingValidation
   if (neighborhood.length === 0) errors.neighborhood = "Informe o bairro."
   else if (neighborhood.length > 80) errors.neighborhood = "O bairro passa de 80 caracteres."
   else if (!isNeighborhoodLike(neighborhood)) {
-    errors.neighborhood = "Use só o bairro. Endereço, número ou complemento não entram."
+    errors.neighborhood = "Use só o bairro aqui. O endereço tem campo próprio, logo abaixo."
   }
+
+  // Endereço: opcional, por escolha de quem anuncia (migration 20260925174442).
+  const address = validateAddress(draft.address)
+  if (!address.ok) errors.address = address.error
 
   if (draft.audienceType === "locality" && draft.localityId === null) {
     errors.audience = "Escolha a cidade que pode ver o anúncio."
@@ -325,7 +335,12 @@ export function validateNewListing(draft: NewListingDraft): NewListingValidation
   if (Object.keys(errors).length > 0) return { ok: false, errors }
 
   // Os `if` acima garantem os tipos; a checagem estreita o que o TS não vê.
-  if (!isListingCategory(draft.category) || condition === null || typeof price !== "number") {
+  if (
+    !isListingCategory(draft.category) ||
+    condition === null ||
+    typeof price !== "number" ||
+    !address.ok
+  ) {
     return { ok: false, errors: { category: "Confira os campos do anúncio." } }
   }
 
@@ -337,6 +352,7 @@ export function validateNewListing(draft: NewListingDraft): NewListingValidation
       condition,
       description,
       neighborhood,
+      address: address.value,
       priceCents: price,
       audienceType: draft.audienceType,
       localityId: draft.audienceType === "locality" ? draft.localityId : null,

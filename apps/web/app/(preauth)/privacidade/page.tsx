@@ -21,7 +21,7 @@ export default async function PrivacyPage() {
       description="Versão 2 · 31 de agosto de 2026 · Alpha fechado"
       asideEyebrow="Bivaque"
       asideTitle="Dados tratados com finalidade clara."
-      asideDescription="Esta é a versão completa apresentada no fluxo de entrada."
+      asideDescription="Esta é a versão completa."
     >
       <section
         aria-labelledby="privacy-heading"

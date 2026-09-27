@@ -3,7 +3,6 @@ import { RefreshCw, X } from "lucide-react"
 import type { Route } from "next"
 import { cookies } from "next/headers"
 import Link from "next/link"
-import { FeedbackAlert } from "../../../app/components/bivaque/feedback-alert"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda T Task 5, Step 2 — o console do fundador enxerga.
@@ -83,9 +82,6 @@ export default async function AdminArrivalsPage() {
           />
           Janela: chegadas ativas neste momento
         </span>
-        <span className="inline-flex items-center rounded-md border border-border px-3 py-1 text-xs text-muted">
-          Origem dos dados: list_locality_arrivals_volume
-        </span>
         <Link
           href={"/arrivals" as Route}
           className="ml-auto inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)]"
@@ -108,9 +104,8 @@ export default async function AdminArrivalsPage() {
               Nenhuma transferência declarada no momento
             </h2>
             <p className="max-w-md text-sm text-muted">
-              A RPC list_locality_arrivals_volume devolveu uma lista vazia. Sem chegadas ativas em
-              nenhuma cidade, este painel não tem o que mostrar — e isso não é erro, é o estado
-              real.
+              Ninguém declarou mudança para outra cidade agora. Quando alguém declarar, a cidade de
+              destino aparece aqui.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Link
@@ -122,23 +117,12 @@ export default async function AdminArrivalsPage() {
               </Link>
               <Link
                 href="/admissions"
-                className="inline-flex min-h-11 items-center rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-selected)]"
-              >
-                Voltar para Admissões
-              </Link>
-              <Link
-                href="/admissions"
                 className="inline-flex min-h-11 items-center rounded-md bg-[var(--semantic-action-primary)] px-4 text-sm font-medium text-[var(--semantic-text-on-strong)] transition-colors hover:bg-[var(--semantic-action-primary-hover)]"
               >
                 Abrir Admissões
               </Link>
             </div>
           </div>
-          <FeedbackAlert
-            variant="warning"
-            title="Estado vazio honesto."
-            description="A tela não inventa volume para preencher colunas nem promete ação por linha que ainda não existe. Quando chegar o destino de cada chegada (abrir pedido, mudar janela, ver histórico), a prancha é refeita — sem prazo declarado."
-          />
         </>
       ) : (
         <table className="w-full border-collapse text-sm">
@@ -149,9 +133,6 @@ export default async function AdminArrivalsPage() {
               </th>
               <th scope="col" className="px-4 py-3 font-medium">
                 Chegadas
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Próximo passo
               </th>
             </tr>
           </thead>
@@ -167,24 +148,14 @@ export default async function AdminArrivalsPage() {
                 <td className="px-4 py-3 text-muted">
                   {row.arrivals_count} {row.arrivals_count === 1 ? "chegada" : "chegadas"}
                 </td>
-                <td className="px-4 py-3 text-xs text-muted">sem ação por linha hoje</td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
 
-      {volume.length > 0 && (
-        <FeedbackAlert
-          variant="warning"
-          title="Lacuna encontrada pela análise de chegabilidade."
-          description="A página atual é apenas leitura: mostra volume por cidade, mas não abre a chegada, não filtra por janela nem permite ações operacionais por linha. Quando a página ganhar destino próprio, ele aparece aqui — NÃO declarar prazo de entrega."
-        />
-      )}
-
       <p className="text-xs text-muted">
-        A página inteira é read-only. O RPC é operator-only e respeita a RLS do painel do operador:
-        nenhum dado pessoal cru sai daqui.
+        Aqui aparecem só números por cidade. Nenhum dado pessoal de quem está chegando.
       </p>
     </section>
   )

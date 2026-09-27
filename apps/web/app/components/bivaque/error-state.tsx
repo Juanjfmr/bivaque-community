@@ -44,7 +44,7 @@ interface ConnectionLostStateProps {
 // mensagem sem reconsultar não é retomada e não pertence a este estado.
 // variant="warning" faz o FeedbackAlert usar role="alert" (assertivo).
 export function ConnectionLostState({
-  description = "Não foi possível completar esta consulta por falta de conexão. Verifique a internet e tente de novo.",
+  description = "Sem conexão. Verifique a internet e tente de novo.",
   onRetry,
   retryLabel = "Tentar novamente",
   className = "",

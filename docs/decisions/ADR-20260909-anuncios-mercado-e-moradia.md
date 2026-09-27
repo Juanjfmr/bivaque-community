@@ -72,6 +72,9 @@ interesse novo; o histórico existente continua legível para quem já participa
 
 ### D5 — Localização
 
+> **Revogado em 25/09/2026** por [ADR-20260925-endereco-por-escolha](ADR-20260925-endereco-por-escolha.md):
+> o anúncio aceita endereço opcional, por escolha de quem anuncia. O texto abaixo é histórico.
+
 Anúncio guarda **cidade e bairro**, nunca endereço, número, complemento ou coordenada.
 "Águas Claras, Brasília - DF" é o grão máximo. Isso mantém a proibição de endereço residencial
 da §4.7 e é o que as pranchas 13, 19 e 65 desenham.

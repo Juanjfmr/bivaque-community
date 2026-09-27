@@ -58,9 +58,8 @@ export default function AjudaPage() {
           Acesso e conta
         </h2>
         <p className="mt-2 text-sm leading-relaxed">
-          Entrar é por link enviado ao seu e-mail. Se o link expirou, solicite outro na tela de
-          entrada. Se a sessão expirou no meio do uso, faça login novamente: nada do que estava
-          aberto se perde além do rascunho não enviado.
+          Você entra com seu e-mail e sua senha. Esqueceu a senha? Peça um link novo na tela de
+          entrada. Se sair no meio do uso, é só entrar de novo.
         </p>
         <DestinationList links={ACCOUNT_LINKS} />
       </section>
@@ -70,11 +69,11 @@ export default function AjudaPage() {
           Usar o Bivaque
         </h2>
         <p className="mt-2 text-sm leading-relaxed">
-          Explorar reúne Guia, Mercado, serviços, moradia e eventos da cidade selecionada. Escolher
-          uma cidade serve para explorar; participar de comunidade privada continua pedindo
-          autorização. O que você marcou para ver depois fica em Salvos, e as respostas, aprovações
-          e avisos chegam em Notificações. Conteúdo fora das regras pode ser denunciado pelo menu da
-          própria publicação ou conversa.
+          Em Explorar estão o Guia, o Mercado, os serviços, a moradia e os encontros da cidade. Você
+          pode olhar outras cidades; para entrar numa comunidade, ela precisa aprovar. O que você
+          marcou para ver depois fica em Salvos, e as respostas, aprovações e avisos chegam em
+          Notificações. Conteúdo fora das regras pode ser denunciado pelo menu da própria publicação
+          ou conversa.
         </p>
         <DestinationList links={USAGE_LINKS} />
       </section>
@@ -91,8 +90,7 @@ export default function AjudaPage() {
           Falar com a equipe
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          O canal de suporte do Bivaque é o e-mail abaixo. Não há chat, telefone ou sistema de
-          chamados: escreva para cá e a equipe responde pelo mesmo e-mail.
+          Escreva para o e-mail abaixo. A equipe responde por lá.
         </p>
         <a
           href={`mailto:${SUPPORT_EMAIL}`}
@@ -101,9 +99,7 @@ export default function AjudaPage() {
           <Mail size={16} aria-hidden="true" />
           {SUPPORT_EMAIL}
         </a>
-        <p className="mt-2 text-sm text-muted">
-          Este é o mesmo canal usado nos avisos transacionais do produto.
-        </p>
+        <p className="mt-2 text-sm text-muted">É deste endereço que chegam os avisos do Bivaque.</p>
       </section>
     </div>
   )

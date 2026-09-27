@@ -12,10 +12,10 @@
 //      ["Toda a cidade · Manaus", "Vila Ajuricaba", "Pergunta *", "Detalhes",
 //      "Anexar"]. O commit 0023e0d tirou o seletor de FORMATO da frente e
 //      escreveu essa frase no cabeçalho, mas o seletor de PÚBLICO ficou.
-//   2. Formulário comunitário (/recommendations?aba=request), a 375. Liderava
-//      por "Categoria" e "Para qual comunidade você está perguntando?" antes de
-//      "O que você procura". A prancha 45 painel 2 desenha a pergunta primeiro,
-//      com categoria e alcance descendo para depois dela.
+//   2. Pedir indicação, a 375. O formulário antigo (/recommendations) liderava
+//      por "Categoria" e "Para qual comunidade você está perguntando?". Desde
+//      25/09/2026 é a caixa de pedir das Indicações: a frase vem primeiro, e
+//      assunto e detalhes só aparecem depois dela.
 //   3. Sugerir referência (/guide/sugerir). Liderava por "Tipo de referência"
 //      antes de "Nome". A prancha 44 painel 3 desenha "Nome" primeiro.
 //      (AMPLIAÇÃO: esta terceira superfície não estava nomeada no brief; entrou
@@ -120,32 +120,37 @@ test.describe("a pergunta vem antes do resto", () => {
     expect(firstField).toContain("Pergunta")
   })
 
-  test("formulário comunitário: pergunta antes de categoria e alcance", async ({ page }) => {
-    // Given — a sessão autenticada e a aba de pedido
+  test("pedir indicação: a pergunta vem antes do assunto e dos detalhes", async ({ page }) => {
+    // Given — a sessão autenticada e a caixa de pedir (ADR-20260925-memoria-de-indicacoes)
     await seedSession(page.context())
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto("/recommendations?aba=request")
-    await expect(page.getByRole("heading", { name: /Antes de perguntar/ })).toBeVisible({
-      timeout: 20000,
-    })
+    await page.goto("/community?vista=indicacoes&pedir=1")
+    const question = page.getByRole("textbox", { name: "O que você procura" })
+    await expect(question).toBeVisible({ timeout: 20000 })
 
-    // When — a pessoa declara que não encontrou e vai perguntar à comunidade
-    await page.getByRole("button", { name: /Perguntar à comunidade/ }).click()
-    await expect(page.getByRole("heading", { name: "Perguntar à comunidade" })).toBeVisible()
-    await expect(page.locator("#pedido-titulo")).toBeVisible()
+    // When — a pessoa escreve e decide pedir à cidade
+    await question.fill(`Afinador de piano ${Date.now().toString(36)}`)
+    await page.getByRole("button", { name: "Pedir à cidade" }).click()
+    const askBox = page.getByRole("region", { name: "O que você procura?" })
+    const subject = askBox.getByRole("group", { name: "Assunto" })
+    const details = askBox.getByLabel(/Detalhes/)
+    await expect(subject).toBeVisible()
 
-    // Then — "O que você procura?" precede Categoria e Alcance
-    expect(
-      await precedes(page, "pedido-titulo", "pedido-categoria-label"),
-      'a pergunta tem de vir antes de "Categoria"',
-    ).toBe(true)
-    expect(
-      await precedes(page, "pedido-titulo", "pedido-alcance-label"),
-      'a pergunta tem de vir antes de "Para qual comunidade você está perguntando?"',
-    ).toBe(true)
-
-    // And — a descrição continua DEPOIS da pergunta, na ordem da prancha
-    expect(await precedes(page, "pedido-titulo", "pedido-descricao")).toBe(true)
+    // Then — a pergunta precede o assunto e os detalhes no DOM
+    const input = await question.elementHandle()
+    for (const [name, field] of [
+      ["assunto", subject],
+      ["detalhes", details],
+    ] as const) {
+      const follows = await field.evaluate(
+        (element, first) =>
+          Boolean(
+            first && first.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING,
+          ),
+        input,
+      )
+      expect(follows, `a pergunta vem antes de ${name}`).toBe(true)
+    }
   })
 
   test("sugerir referência: nome antes do tipo", async ({ page }) => {

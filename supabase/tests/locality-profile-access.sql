@@ -13,10 +13,12 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- Consulta a outra cidade (20260925161111): o membro lê a própria cidade e consulta
+-- as outras do catálogo.
 select results_eq(
-  'select slug from public.localities order by slug',
-  $$ values ('manaus-am'::text) $$,
-  'a Manaus member sees only the Manaus locality'
+  $$ select slug from public.localities where slug in ('manaus-am', 'test-other-locality') order by slug $$,
+  $$ values ('manaus-am'::text), ('test-other-locality'::text) $$,
+  'a Manaus member reads Manaus and consults another city of the catalog'
 );
 
 select results_eq(

@@ -897,6 +897,38 @@ export type Database = {
           },
         ]
       }
+      indication_alert_deliveries: {
+        Row: {
+          created_at: string
+          kind: string
+          request_id: string
+          suppressed: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          kind: string
+          request_id: string
+          suppressed?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          kind?: string
+          request_id?: string
+          suppressed?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indication_alert_deliveries_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_alert_deliveries: {
         Row: {
           alert_id: string
@@ -1084,6 +1116,7 @@ export type Database = {
       }
       listings: {
         Row: {
+          address: string | null
           available_until: string | null
           category: string | null
           closed_at: string | null
@@ -1104,6 +1137,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           available_until?: string | null
           category?: string | null
           closed_at?: string | null
@@ -1124,6 +1158,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           available_until?: string | null
           category?: string | null
           closed_at?: string | null
@@ -1292,6 +1327,7 @@ export type Database = {
         Row: {
           comments: boolean
           events: boolean
+          indications: boolean
           mentions: boolean
           messages: boolean
           product_news: boolean
@@ -1301,6 +1337,7 @@ export type Database = {
         Insert: {
           comments?: boolean
           events?: boolean
+          indications?: boolean
           mentions?: boolean
           messages?: boolean
           product_news?: boolean
@@ -1310,6 +1347,7 @@ export type Database = {
         Update: {
           comments?: boolean
           events?: boolean
+          indications?: boolean
           mentions?: boolean
           messages?: boolean
           product_news?: boolean
@@ -1854,15 +1892,7 @@ export type Database = {
           owner_user_id?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "provider_profiles_owner_user_id_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: true
-            referencedRelation: "provider_accounts"
-            referencedColumns: ["auth_user_id"]
-          },
-        ]
+        Relationships: []
       }
       provider_reach: {
         Row: {
@@ -2336,6 +2366,10 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      can_manage_provider_profile: {
+        Args: { p_provider_id: string }
+        Returns: boolean
+      }
       can_receive_invite_to_event: {
         Args: { p_event_id: string; p_user_id: string }
         Returns: boolean
@@ -2423,6 +2457,14 @@ export type Database = {
         }
         Returns: string
       }
+      create_member_business_page: {
+        Args: {
+          p_bio?: string
+          p_category: Database["public"]["Enums"]["provider_category"]
+          p_display_name: string
+        }
+        Returns: string
+      }
       create_provider_invitation: {
         Args: {
           p_community_id: string
@@ -2464,7 +2506,12 @@ export type Database = {
         Returns: string
       }
       feed_community: {
-        Args: { p_community_id: string; p_order?: string }
+        Args: {
+          p_community_id: string
+          p_limit?: number
+          p_offset?: number
+          p_order?: string
+        }
         Returns: {
           comment_count: number
           community_id: string
@@ -2604,6 +2651,29 @@ export type Database = {
           display_name: string
           provider_user_id: string
           revoked_at: string
+        }[]
+      }
+      list_indications: {
+        Args: {
+          p_category?: Database["public"]["Enums"]["recommendation_category"]
+          p_limit?: number
+          p_locality_id: string
+          p_offset?: number
+          p_query?: string
+          p_resolved?: boolean
+        }
+        Returns: {
+          body: string
+          category: Database["public"]["Enums"]["recommendation_category"]
+          created_at: string
+          group_id: string
+          group_name: string
+          id: string
+          is_resolved: boolean
+          matched_reply_body: string
+          reply_count: number
+          resolved_reply_body: string
+          title: string
         }[]
       }
       list_invitable_members_for_event: {
@@ -3023,6 +3093,15 @@ export type Database = {
         Args: { p_action: string; p_listing_id: string }
         Returns: Database["public"]["Enums"]["listing_status"]
       }
+      update_member_business_page: {
+        Args: {
+          p_bio?: string
+          p_category: Database["public"]["Enums"]["provider_category"]
+          p_display_name: string
+          p_provider_id: string
+        }
+        Returns: undefined
+      }
       update_service_request: {
         Args: {
           p_description: string
@@ -3098,6 +3177,7 @@ export type Database = {
         | "admission_rejected"
         | "listing_alert"
         | "service_request"
+        | "recommendation_request"
       outbox_channel: "email"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
@@ -3331,6 +3411,7 @@ export const Constants = {
         "admission_rejected",
         "listing_alert",
         "service_request",
+        "recommendation_request",
       ],
       outbox_channel: ["email"],
       outbox_status: ["pending", "sent", "failed", "skipped"],

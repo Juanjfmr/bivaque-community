@@ -25,7 +25,14 @@ interface RenderedEmail {
   text: string
 }
 
-function renderEmail(message: OutboxMessage): RenderedEmail {
+// Endereço público do app, para links dentro do e-mail.
+function siteOrigin(): string {
+  const configuredOrigin = process.env["NEXT_PUBLIC_SITE_URL"]?.replace(/\/$/, "")
+  const vercelHost = process.env["VERCEL_URL"]?.replace(/^https?:\/\//, "").replace(/\/$/, "")
+  return configuredOrigin ?? (vercelHost ? `https://${vercelHost}` : "http://127.0.0.1:3000")
+}
+
+export function renderEmail(message: OutboxMessage): RenderedEmail {
   const payload = message.payload
   switch (message.type) {
     case "verification_decision":
@@ -59,6 +66,30 @@ function renderEmail(message: OutboxMessage): RenderedEmail {
         subject: "Você recebeu uma resposta",
         text: "Sua indicação recebeu uma resposta. Acesse o Bivaque para conferir.",
       }
+    case "indications_digest": {
+      // ADR-20260925-aviso-de-pedido: um e-mail por dia, só para quem ligou.
+      const city = typeof payload["city_name"] === "string" ? payload["city_name"] : "sua cidade"
+      const count = typeof payload["open_count"] === "number" ? payload["open_count"] : 0
+      const titles = Array.isArray(payload["titles"])
+        ? payload["titles"].filter((title): title is string => typeof title === "string")
+        : []
+      const subject =
+        count === 1
+          ? `1 pedido de indicação esperando resposta em ${city}`
+          : `${count} pedidos de indicação esperando resposta em ${city}`
+      return {
+        subject,
+        text: [
+          `Gente de ${city} está pedindo ajuda e ainda ninguém respondeu:`,
+          "",
+          ...titles.map((title) => `• ${title}`),
+          "",
+          `Se você conhece alguém, responda em ${siteOrigin()}/community?vista=indicacoes`,
+          "",
+          "Você recebe este resumo porque ligou os pedidos de indicação por e-mail. Para parar, desligue em Configurações > Notificações.",
+        ].join("\n"),
+      }
+    }
     case "community_invite":
       return {
         subject: "Você recebeu um convite de comunidade",
@@ -75,10 +106,7 @@ function renderEmail(message: OutboxMessage): RenderedEmail {
         payload["invite_path"].startsWith("/prestador-convite/")
           ? payload["invite_path"]
           : "/"
-      const configuredOrigin = process.env["NEXT_PUBLIC_SITE_URL"]?.replace(/\/$/, "")
-      const vercelHost = process.env["VERCEL_URL"]?.replace(/^https?:\/\//, "").replace(/\/$/, "")
-      const origin =
-        configuredOrigin ?? (vercelHost ? `https://${vercelHost}` : "http://127.0.0.1:3000")
+      const origin = siteOrigin()
       return {
         subject: "Você recebeu um convite para oferecer seus serviços",
         text:

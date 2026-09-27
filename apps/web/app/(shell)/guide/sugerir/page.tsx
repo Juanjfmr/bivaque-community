@@ -109,8 +109,8 @@ export default function SuggestGuideEntryPage() {
       <header className="mt-2 space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Sugerir referência</h1>
         <p className="text-sm text-muted">
-          Indique um lugar ou serviço que ajudou você a chegar. A curadoria é humana: a referência
-          só aparece no guia depois que a operação revisar.
+          Indique um lugar ou serviço que ajudou você a chegar. A equipe revisa antes de ele
+          aparecer no Guia.
         </p>
       </header>
 

@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     const [preferencesResult, channelPreferencesResult] = await Promise.all([
       supabase
         .from("notification_preferences")
-        .select("user_id, comments, events, messages, mentions, product_news")
+        .select("user_id, comments, events, messages, mentions, product_news, indications")
         .in("user_id", userIds),
       supabase
         .from("notification_channel_preferences")

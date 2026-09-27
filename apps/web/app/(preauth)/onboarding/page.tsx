@@ -265,7 +265,7 @@ function OnboardingFlow() {
       >
         <div className={styles["loadingState"]}>
           <Spinner size="lg" color="accent" />
-          <p>Consultando o estado da sua entrada...</p>
+          <p>Verificando sua entrada…</p>
         </div>
       </AdmissionShell>
     )
@@ -289,7 +289,7 @@ function OnboardingFlow() {
         {step === "verify" && loading && (
           <div className={styles["loadingState"]}>
             <Spinner size="lg" color="accent" />
-            <p>Consultando a fonte oficial...</p>
+            <p>Conferindo seus dados…</p>
           </div>
         )}
 

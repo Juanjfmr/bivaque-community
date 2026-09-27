@@ -7,6 +7,7 @@ import {
   removeListingPhotoAction,
   updatePropertyAction,
 } from "../../../lib/listings/actions"
+import { ADDRESS_HINT, ADDRESS_MAX } from "../../../lib/listings/address"
 import {
   MAX_LISTING_PHOTOS,
   PROPERTY_TYPE_LABELS,
@@ -292,6 +293,22 @@ export function PropertyForm({
                 defaultValue={defaults.neighborhood}
                 className={fieldClass}
               />
+            </label>
+            <label className={`${labelClass} col-span-2`}>
+              <span>
+                Endereço <span className="font-normal text-muted">(opcional)</span>
+              </span>
+              <input
+                name="address"
+                defaultValue={defaults.address ?? ""}
+                maxLength={ADDRESS_MAX}
+                autoComplete="street-address"
+                aria-describedby="imovel-endereco-ajuda"
+                className={fieldClass}
+              />
+              <span id="imovel-endereco-ajuda" className="text-xs font-normal text-muted">
+                {ADDRESS_HINT}
+              </span>
             </label>
           </div>
 

@@ -211,8 +211,7 @@ export function ConfirmarEmailClient() {
               Nada para confirmar
             </h1>
             <p className={styles["support"]}>
-              Não há confirmação de e-mail pendente nesta janela do navegador — ela já foi
-              concluída, ou o cadastro foi feito em outra janela.
+              Não há confirmação pendente por aqui. Se você já confirmou, é só entrar.
             </p>
             <Link href="/login" className={styles["actionLink"]}>
               Entrar

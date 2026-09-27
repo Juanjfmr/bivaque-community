@@ -230,6 +230,19 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
     notFound()
   }
 
+  // Consulta a outra cidade (migration 20260925161111): quem é de fora LÊ a
+  // referência; sugerir atualização continua de quem é da cidade (o banco
+  // recusaria), então o cartão "Algo mudou?" não aparece para quem consulta.
+  const { data: localMembership, error: membershipError } = await supabase
+    .from("locality_memberships")
+    .select("locality_id")
+    .eq("locality_id", entry.locality_id)
+    .maybeSingle()
+  if (membershipError) {
+    throw new Error(`Falha ao conferir a cidade da referência: ${membershipError.message}`)
+  }
+  const isVisitor = localMembership === null
+
   const [origin, article] = await Promise.all([
     loadVisibleOrigin(supabase, entry),
     loadGuideArticle(supabase, entry.id),
@@ -311,9 +324,7 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
                   Esta referência nasceu de uma conversa da comunidade.
                 </p>
                 <Link
-                  href={
-                    `/recommendations?focus=${origin.requestId}#req-${origin.requestId}` as Route
-                  }
+                  href={`/indicacoes/${origin.requestId}` as Route}
                   className="mt-2 inline-flex min-h-11 w-fit items-center text-sm font-medium text-[var(--semantic-link)] transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)]"
                 >
                   Ver conversa
@@ -335,30 +346,32 @@ export default async function GuideEntryPage({ params }: { params: Promise<{ id:
             ) : null}
           </Card>
 
-          <Card className="p-4">
-            <h2 className="text-base font-semibold tracking-tight">Algo mudou?</h2>
-            <p id="guia-sugestao-motivo" className="mt-2 text-sm leading-relaxed text-muted">
-              Conte para a curadoria se alguma informação não estiver mais correta ou se você tiver
-              uma sugestão para melhorar este guia.
-            </p>
-            {article ? (
-              <Link
-                href={`/guide/${entry.id}/correcao` as Route}
-                className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
-              >
-                Sugerir atualização
-              </Link>
-            ) : (
-              <Button
-                variant="primary"
-                className="mt-3 w-full"
-                isDisabled
-                aria-describedby="guia-sugestao-motivo"
-              >
-                Sugerir atualização
-              </Button>
-            )}
-          </Card>
+          {isVisitor ? null : (
+            <Card className="p-4">
+              <h2 className="text-base font-semibold tracking-tight">Algo mudou?</h2>
+              <p id="guia-sugestao-motivo" className="mt-2 text-sm leading-relaxed text-muted">
+                Conte para a curadoria se alguma informação não estiver mais correta ou se você
+                tiver uma sugestão para melhorar este guia.
+              </p>
+              {article ? (
+                <Link
+                  href={`/guide/${entry.id}/correcao` as Route}
+                  className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[var(--semantic-action-primary)] px-4 text-sm font-semibold text-[var(--semantic-action-on-strong)] transition-colors hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--semantic-focus)] focus-visible:ring-offset-2"
+                >
+                  Sugerir atualização
+                </Link>
+              ) : (
+                <Button
+                  variant="primary"
+                  className="mt-3 w-full"
+                  isDisabled
+                  aria-describedby="guia-sugestao-motivo"
+                >
+                  Sugerir atualização
+                </Button>
+              )}
+            </Card>
+          )}
         </aside>
       </div>
     </div>

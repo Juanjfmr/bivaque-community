@@ -75,8 +75,8 @@ export function buildSavedItems(
       title: request.title,
       excerpt: excerptOf(request.body),
       category: request.category,
-      // Deep-link real da casa: abre a lista de pedidos focando o item.
-      href: `/recommendations?focus=${save.request_id}#req-${save.request_id}`,
+      // O pedido tem um endereço só (ADR-20260925-memoria-de-indicacoes).
+      href: `/indicacoes/${save.request_id}`,
     }
   })
 }
