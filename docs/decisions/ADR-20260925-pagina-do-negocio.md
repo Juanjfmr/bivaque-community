@@ -114,7 +114,14 @@ ainda o cadastro civil de D3 nem reescrever o alcance legado dos prestadores civ
   revogação atuais. A reconciliação do alcance civil legado para a cidade inteira, exigida por D5,
   é uma mudança separada para não misturar duas fronteiras de autorização no mesmo lote;
 - a visibilidade pública continua dependendo de `provider_reach` ativo. Revogar o prestador civil
-  continua desativando seu alcance; ser dono da ficha não concede visibilidade fora do alcance.
+  continua desativando seu alcance; ser dono da ficha não concede visibilidade fora do alcance;
+- **a página do membro segue o dono na mudança de cidade** (decisão do dono, 27/09/2026, reaberta
+  pela revisão do PR #86): quando a filiação atual e ativa do dono muda de cidade, o alcance
+  gratuito da página vai com ela. A página passa a aparecer na cidade nova, some da antiga, e o
+  dono continua editando e apagando. Uma página que tenha ficado presa se acerta quando o dono
+  pede para criá-la de novo. O alcance do prestador civil não é movido.
+  Migration `20260927005841_member_business_page_follows_owner`; prova em
+  `supabase/tests/provider-member-business-transfer.sql`.
 
 **Continua proibido** (§7.3 e ADR-20260820-alcance-pago D7): posição dentro de resultados,
 prioridade em indicação, ausência do rótulo, anúncio no feed, cobrar para não ser enterrado,
