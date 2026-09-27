@@ -101,6 +101,9 @@ export default function CommunityPage() {
       setLoading(true)
       setError("")
       setLoadMoreError(false)
+      // Uma página em voo da leitura anterior é descartada pela geração (abaixo,
+      // em loadMore) e não desliga o próprio "carregando": a recarga desliga.
+      setLoadingMore(false)
       setHasMore(false)
 
       const {
