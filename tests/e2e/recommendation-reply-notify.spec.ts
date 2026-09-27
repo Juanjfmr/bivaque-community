@@ -81,9 +81,15 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto(REQUEST_PATH)
     await expect(page.getByRole("heading", { level: 1, name: REQUEST_TITLE })).toBeVisible()
-    await page.getByLabel("Sua indicação").fill("Conheço um ótimo, te mando o contato.")
+    // Texto único por execução: a suíte serial passa pelos três projetos no
+    // mesmo banco, e a resposta de um projeto anterior continua na página.
+    const reply = `Conheço um ótimo, te mando o contato. ${Date.now().toString(36)}`
+    const replyBox = page.getByLabel("Sua indicação")
+    await replyBox.fill(reply)
     await page.getByRole("button", { name: "Responder", exact: true }).click()
-    await expect(page.getByText("Conheço um ótimo, te mando o contato.")).toBeVisible()
+    // Enviada: o campo esvazia e a resposta entra na lista.
+    await expect(replyBox).toHaveValue("")
+    await expect(page.getByRole("paragraph").filter({ hasText: reply })).toBeVisible()
 
     // Then the author sees a notification for it, in a fresh session so the
     // two accounts never share cookies/state

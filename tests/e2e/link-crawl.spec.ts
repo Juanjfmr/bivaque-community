@@ -92,6 +92,10 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta: "FLUXO: router.push depois do cadastro e next= do link de confirmação",
   },
   {
+    route: "/cidade/[id]",
+    porta: "BOTÃO: 'Sua cidade' no cabeçalho > outra cidade (city-switcher, router.push)",
+  },
+  {
     route: "/communities/[id]/admin",
     porta:
       "CONDICIONAL: menu do console, cuja entrada é 'Analisar pedidos de entrada' na aba Sobre (moderador)",
@@ -167,10 +171,20 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta: "CONDICIONAL: 'Editar anúncio' no detalhe, só para o dono",
     dependeDeDados: true,
   },
+  {
+    route: "/indicacoes",
+    porta:
+      "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",
+  },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   { route: "/mercado/[id]/editar", porta: "BOTÃO: 'Editar' em /meus-anuncios" },
   { route: "/mercado/novo", porta: "BOTÃO: 'Anunciar' em /mercado e /meus-anuncios" },
   { route: "/messages/[id]", porta: "FLUXO: escolher conversa na caixa, ou ?conversation=" },
+  {
+    route: "/negocio/catalogo",
+    porta: "CONDICIONAL: 'Catálogo' em /negocio, só depois que a página do negócio existe",
+    dependeDeDados: true,
+  },
   { route: "/nova-senha", porta: "EXTERNO: link do e-mail de recuperação de senha" },
   { route: "/onboarding", porta: "FLUXO: proxy, cadastro e consentimento" },
   {
@@ -186,6 +200,10 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding" },
   { route: "/pedidos/novo", porta: "BOTÃO: 'Pedir serviço' na ficha do prestador" },
   { route: "/prestador-convite/[token]", porta: "EXTERNO: e-mail de convite do prestador" },
+  {
+    route: "/recommendations",
+    porta: "FLUXO: aposentada em 25/09/2026; redireciona links antigos para a Comunidade",
+  },
 ]
 
 function listFiles(dir: string, name: string, out: string[] = []): string[] {

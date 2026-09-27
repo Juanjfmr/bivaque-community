@@ -184,16 +184,14 @@ test.describe("golden slice: publicar → feedback → reload → persistência"
     const successToast = page
       .getByText(/Publicado na sua vila|Publicado para toda a cidade/i)
       .first()
-    const successModalClosed = await dialog.isHidden().catch(() => false)
-    if (!successModalClosed) {
-      // Se o modal ainda está aberto (slow CI), o pending também prova
-      // o caminho. Aceitamos qualquer um dos dois como prova de progresso.
-      await expect(dialog.getByTestId("publish-submit")).toContainText(/Publicando/i)
-    } else {
-      // Modal fechou: o toast precisa estar visível na pilha do ToastProvider
-      // montado em (shell)/layout.tsx. Esperar com tolerância a auto-dismiss.
-      await expect(successToast).toBeVisible({ timeout: 5000 })
-    }
+    // Uma espera só para os dois: checar se o diálogo fechou e depois esperar
+    // um deles corria — no mobile-375 o diálogo fechou entre as duas leituras
+    // e o "Publicando" deixou de existir (CI, 27/09/2026).
+    await expect(
+      successToast
+        .or(dialog.getByTestId("publish-submit").filter({ hasText: /Publicando/i }))
+        .first(),
+    ).toBeVisible({ timeout: 5000 })
 
     // And — o post aparece no feed da vila após o reload do onCreated()
     const post = page.locator("article", { hasText: postText })
