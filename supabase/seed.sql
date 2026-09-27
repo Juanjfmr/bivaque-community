@@ -666,8 +666,13 @@ select
   ])[i],
   (case when i in (6, 8) then 'private' else 'public' end)::group_visibility,
   '00000000-0000-4000-8000-000000000001',
-  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
-  ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
+  -- O dono do grupo i é o membro que recebe a linha role = 'owner' logo
+  -- abaixo: membro j é dono do grupo 1 + (j % 8), logo o grupo i pertence ao
+  -- membro 1 + ((i + 6) % 8). Com owner_user_id = membro i, a página mostrava
+  -- "Excluir grupo" a quem delete_group recusava (a RPC confere a linha de
+  -- group_memberships, não esta coluna).
+  ('30000000-0000-4000-8000-' || lpad(to_hex(1 + ((i + 6) % 8)), 12, '0'))::uuid,
+  ('30000000-0000-4000-8000-' || lpad(to_hex(1 + ((i + 6) % 8)), 12, '0'))::uuid,
   now() - make_interval(days => 80 - (i * 3))
 from generate_series(1, 8) as i
 on conflict (id) do nothing;

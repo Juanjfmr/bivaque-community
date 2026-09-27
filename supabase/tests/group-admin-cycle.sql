@@ -3,7 +3,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(12);
 
 \ir fixtures/foundation.inc
 \ir fixtures/groups.inc
@@ -163,6 +163,14 @@ select is_empty(
       and is_deleted = false
   $$,
   'F8+: soft-deleted group is excluded from select queries'
+);
+
+-- A repeated delete by the owner (double submit, retry) is a no-op, not an
+-- error: the owner membership survives the soft delete, so the check still
+-- passes and the update sets the same value again.
+select lives_ok(
+  $$ select public.delete_group('40000000-0000-4000-8000-000000000001'::uuid) $$,
+  'F8+: deleting an already deleted group again does not raise for the owner'
 );
 
 -- ── POSITIVE 6: the is_deleted column exists and defaults to false ──────────

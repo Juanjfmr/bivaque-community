@@ -222,6 +222,9 @@ async function deleteGroupAction(formData: FormData) {
 
   revalidatePath(`/groups/${groupId}`)
   revalidatePath("/groups")
+  // The detail page of a deleted group is a 404; send the owner back to the
+  // list instead, where the group no longer appears.
+  redirect("/groups")
 }
 
 export {
@@ -330,7 +333,11 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
 
   const isApproved = membership?.status === "approved"
   const isPending = membership?.status === "pending"
-  const isOwner = group.owner_user_id === user.id
+  // Same fact private.is_group_owner checks in delete_group and
+  // transfer_group_ownership: the approved owner membership, not
+  // groups.owner_user_id. Deriving it from the column showed the admin
+  // actions to accounts the RPCs then refused.
+  const isOwner = isApproved && membership?.role === "owner"
   // F8: moderator can reject/remove members. Owner is implicitly a moderator.
   const isModerator = isOwner || membership?.role === "moderator"
 

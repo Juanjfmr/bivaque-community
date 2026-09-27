@@ -27,10 +27,14 @@ const CONSENT_COOKIE = "bivaque-consent-version"
 // como estado válido) e o before/after limpar pela própria UI, que é o fluxo
 // autorizado.
 
-// Group 1 "Caminhada no Mindu" is owned by membro-1 (30000000-...-0001).
-const GROUP_OWNER_EMAIL = "membro-1@bivaque.example.invalid"
+// Group 1 "Caminhada no Mindu" is owned by membro-8 (30000000-...-0008): the
+// seed gives member j the owner membership of group 1 + (j % 8), and
+// groups.owner_user_id follows it. membro-7 is an approved plain member of
+// group 1 (j = 7 joins groups 8 and 1).
+const GROUP_OWNER_EMAIL = "membro-8@bivaque.example.invalid"
+const GROUP_MEMBER_EMAIL = "membro-7@bivaque.example.invalid"
 const GROUP_ID = "60000000-0000-4000-8000-000000000001"
-const GROUP_NAME = "Caminhada no Mindu"
+const MANAUS_LOCALITY_ID = "00000000-0000-4000-8000-000000000001"
 // Grupo privado EXCLUSIVO deste spec para o fluxo de pedido/cancelamento.
 // Antes usava "Mães da Cidade" (60000000-...-0006), que TAMBÉM é usada por
 // synthetic-people-interaction e group-event-detail-denials: o pedido pendente
@@ -41,17 +45,23 @@ const GROUP_NAME = "Caminhada no Mindu"
 // usando e por isso é o mesmo cenário sem a disputa.
 const PRIVATE_GROUP_ID = "60000000-0000-4000-8000-000000000008"
 
-async function signInAs(page: Page, email: string): Promise<void> {
-  const anonKey =
+function anonKey(): string {
+  const key =
     process.env["SUPABASE_ANON_KEY"] ??
     readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
     readEnvLocal("SUPABASE_ANON_KEY")
+  if (!key) throw new Error("SUPABASE_ANON_KEY is required")
+  return key
+}
+
+// Signs the page in and returns the access token, so a test can also call
+// PostgREST as that same member.
+async function signInAs(page: Page, email: string): Promise<string> {
   const password = process.env["USER_PASSWORD"] ?? "bivaque-e2e-local"
-  if (!anonKey) throw new Error("SUPABASE_ANON_KEY is required")
 
   const api = page.context().request
   const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    headers: { apikey: anonKey, "Content-Type": "application/json" },
+    headers: { apikey: anonKey(), "Content-Type": "application/json" },
     data: { email, password },
   })
   if (response.status() !== 200) {
@@ -80,6 +90,15 @@ async function signInAs(page: Page, email: string): Promise<void> {
     { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
     { name: CONSENT_COOKIE, value: CURRENT_CONSENT, ...shared },
   ])
+  return body.access_token
+}
+
+function restHeaders(accessToken: string): Record<string, string> {
+  return {
+    apikey: anonKey(),
+    Authorization: `Bearer ${accessToken}`,
+    "Content-Type": "application/json",
+  }
 }
 
 test.describe("group admin cycle", { tag: "@stateful" }, () => {
@@ -96,25 +115,75 @@ test.describe("group admin cycle", { tag: "@stateful" }, () => {
     await expect(page.getByRole("button", { name: /Transferir/i })).toBeVisible()
   })
 
-  test("the owner deletes their own group and it disappears", async ({ page }) => {
-    // deleteGroupAction used to write is_deleted through the authenticated
-    // client directly and always threw — block_soft_delete_groups only
-    // allows the toggle from service_role. delete_group (a security definer
-    // RPC) is the fix; this asserts the button's actual effect, not just
-    // its visibility.
-    await signInAs(page, GROUP_OWNER_EMAIL)
-    await page.goto(`/groups/${GROUP_ID}`)
+  test("the owner deletes their own group and it disappears", async ({ page }, testInfo) => {
+    // The group is created here, not taken from the seed: the three viewport
+    // projects share one database, so deleting a seed group in the first one
+    // would leave nothing for the other two (and group 1 is read by other
+    // specs). An earlier version clicked delete on group 1 and asserted only
+    // that the heading vanished — the server action's error page also makes
+    // it vanish, so the test passed while delete_group refused every click
+    // (the seed owner lacked the owner membership the RPC checks).
+    const accessToken = await signInAs(page, GROUP_OWNER_EMAIL)
+    const api = page.context().request
+    const groupName = `Exclusão E2E ${testInfo.project.name} ${Date.now()}`
+    const created = await api.post(`${SUPABASE_URL}/rest/v1/rpc/create_group`, {
+      headers: restHeaders(accessToken),
+      data: {
+        p_name: groupName,
+        p_visibility: "public",
+        p_locality_id: MANAUS_LOCALITY_ID,
+      },
+    })
+    expect(created.status(), await created.text()).toBe(200)
+    const groupId = (await created.json()) as string
 
-    const heading = page.getByRole("heading", { name: GROUP_NAME })
-    await expect(heading).toBeVisible()
+    await page.goto(`/groups/${groupId}`)
+    await expect(page.getByRole("heading", { name: groupName })).toBeVisible()
 
+    // When the owner clicks delete, the server action succeeds (a thrown
+    // action answers 500) and sends them back to the list.
+    const action = page.waitForResponse(
+      (r) => r.request().method() === "POST" && r.url().includes(`/groups/${groupId}`),
+    )
     await page.getByRole("button", { name: /Excluir grupo/i }).click()
+    expect((await action).status()).toBeLessThan(400)
+    await expect(page).toHaveURL(/\/groups$/)
+    await expect(page.getByText(groupName)).toHaveCount(0)
 
-    // Then the group is excluded by RLS (is_deleted = false filter) even
-    // for its own owner — the page renders the not-found UI. We assert
-    // the UI, not the HTTP status — next 16 notFound() responds 200 per
-    // the E2E lesson in the plan README.
-    await expect(heading).toHaveCount(0)
+    // Then the deletion is persisted, not just hidden by the redirect.
+    const remaining = await api.get(
+      `${SUPABASE_URL}/rest/v1/groups?select=id&id=eq.${groupId}&is_deleted=eq.false`,
+      { headers: restHeaders(accessToken) },
+    )
+    expect(remaining.status()).toBe(200)
+    expect(await remaining.json()).toEqual([])
+  })
+
+  test("a member who is not the owner can neither see nor use delete", async ({ page }) => {
+    // Given an approved plain member of group 1
+    const accessToken = await signInAs(page, GROUP_MEMBER_EMAIL)
+    await page.goto(`/groups/${GROUP_ID}`)
+    await expect(page.getByRole("heading", { name: "Caminhada no Mindu" })).toBeVisible()
+
+    // Then the admin actions are not offered
+    await expect(page.getByRole("button", { name: /Excluir grupo/i })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: /Transferir/i })).toHaveCount(0)
+
+    // And calling delete_group directly is refused by the database, not
+    // merely hidden by the page
+    const api = page.context().request
+    const denied = await api.post(`${SUPABASE_URL}/rest/v1/rpc/delete_group`, {
+      headers: restHeaders(accessToken),
+      data: { p_group_id: GROUP_ID },
+    })
+    expect(denied.status()).toBeGreaterThanOrEqual(400)
+    expect(await denied.text()).toContain("only the group owner can delete the group")
+
+    const stillThere = await api.get(
+      `${SUPABASE_URL}/rest/v1/groups?select=id&id=eq.${GROUP_ID}&is_deleted=eq.false`,
+      { headers: restHeaders(accessToken) },
+    )
+    expect(await stillThere.json()).toEqual([{ id: GROUP_ID }])
   })
 
   test("a pending member can cancel their request", async ({ page }) => {
