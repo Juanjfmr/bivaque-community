@@ -32,13 +32,13 @@
     "flows:check": "node scripts/visual/flows-gallery.mjs --check && node scripts/visual/flows-verify.mjs --check"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.7",
+    "@biomejs/biome": "^2.5.14",
     "@bivaque/contracts": "workspace:*",
     "@bivaque/domain": "workspace:*",
     "@playwright/test": "1.51.1",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.6.2",
     "supabase": "2.107.0",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.2"
   }
 }
