@@ -103,8 +103,8 @@ e clique direito sem efeito.
 **Prova:** `P32` estendida; sondas de texto atualizadas sem enfraquecer a asserção.
 
 ### Task 6 — Verificação e relatório
-- [x] `verify.mjs` verde (93 verificações: 69 herdadas + 24 novas), saída colada em **Evidência de execução**.
-- [x] `mutate.mjs`: 9 mutantes herdados + 9 novos, 18 detectados.
+- [x] `verify.mjs` verde nos dois modos de movimento (107 verificações: 69 herdadas + 24 do polimento + 14 dos filtros), saída colada em **Evidência de execução**.
+- [x] `mutate.mjs`: 9 mutantes herdados (M1 a M9) + 28 novos (M10 a M37), 37 detectados por asserção (falha por exceção ou erro de JavaScript da página não conta). Cada uma das 19 sondas novas (P36 a P54) tem ao menos um mutante.
 - [x] `npx pnpm@11.18.0 gate`: lint, typecheck, test e secrets verdes. O Biome exclui só o HTML. (`build` não rodou localmente: falta `apps/web/.env.local`; a confirmação é a CI do PR.)
 - [x] Notas de "o que continua sem prova" reescritas no README.
 
@@ -116,29 +116,34 @@ e clique direito sem efeito.
 > no celular; campos de imóvel no **padrão de mercado** (a definição dos campos ficou com a implementação); tudo
 > no #88.
 
-- [ ] Motor único e declarativo: grupos (múltipla escolha, mínimo, faixa, teto, bandeira, "todas as marcadas",
+- [x] Motor único e declarativo: grupos (múltipla escolha, mínimo, faixa, teto, bandeira, "todas as marcadas",
       única), contagem por opção calculada com os outros filtros aplicados, etiquetas dos filtros ativos com ✕,
       "Limpar tudo", ordenar e contagem de resultados numa região viva.
-- [ ] Painel lateral fixo no computador; no celular, botão "Filtros (n)" que abre uma folha com "Ver N resultados".
-- [ ] Imóveis: tipo, quartos, banheiros, vagas, área, aluguel, condomínio (teto e incluso), bairro, mobiliado,
+- [x] Painel lateral fixo no computador; no celular, botão "Filtros (n)" que abre uma folha com "Ver N resultados".
+- [x] Imóveis: tipo, quartos, banheiros, vagas, área, aluguel, condomínio (teto e incluso), bairro, mobiliado,
       aceita pet, comodidades (todas as marcadas), garantia aceita (qualquer uma), disponível quando eu chegar.
-- [ ] Serviços: tipo em dois níveis (categoria e especialidade), região atendida, recomendado pela comunidade,
+- [x] Serviços: tipo em dois níveis (categoria e especialidade), região atendida, recomendado pela comunidade,
       mínimo de contratações, "a partir de" (teto), atende sábado. Ordem padrão continua sendo a evidência; ordenar
       por preço é escolha da pessoa e nunca compra posição.
-- [ ] Desapegos: categoria e subcategoria, preço, condição, janela de retirada, bairro.
-- [ ] Eventos: categoria, quando, período do dia, gratuito, bom para crianças, comunidade.
-- [ ] Benefícios: categoria, como resgatar, validade, ainda não resgatados.
-- [ ] Referências: assunto, situação da revisão, comunidade, mínimo de relatos, salvas.
-- [ ] Dados fictícios ampliados o bastante para as combinações darem resultado.
-- [ ] **O anúncio obedece aos mesmos filtros**; filtrar ou ordenar nunca reordena nem esconde o rótulo da faixa paga.
-- [ ] Os formulários de anunciar (imóvel, desapego, serviço, evento) pedem os campos novos; o que a pessoa publica
+- [x] Desapegos: categoria e subcategoria, preço, condição, janela de retirada, bairro.
+- [x] Eventos: categoria, quando, período do dia, gratuito, bom para crianças, comunidade.
+- [x] Benefícios: categoria, como resgatar, validade, ainda não resgatados.
+- [x] Referências: assunto, situação da revisão, comunidade, mínimo de relatos, salvas.
+- [x] Dados fictícios ampliados o bastante para as combinações darem resultado.
+- [x] **O anúncio obedece aos mesmos filtros**; filtrar ou ordenar nunca reordena nem esconde o rótulo da faixa paga.
+- [x] Os formulários de anunciar (imóvel, desapego, serviço, evento) pedem os campos novos; o que a pessoa publica
       aparece nos filtros.
-- [ ] Sem resultado: a tela diz qual filtro remover e quantos resultados voltam.
+- [x] Sem resultado: a tela diz qual filtro remover e quantos resultados voltam.
 
-**Prova:** sondas guiadas pelos dados (o conjunto esperado sai de um cálculo sobre `DB`, não de números fixos) por
-catálogo; contagem de opção igual ao resultado real; anúncio obedece ao filtro; ordenar; limpar; sem resultado;
-folha no celular; publicar e depois filtrar. Mutantes: anúncio que fura o filtro, "Limpar tudo" que não limpa,
-ordenação de preço invertida e contagem de opção errada.
+**Prova:** P48 a P54, guiadas pelos dados (o conjunto esperado sai de um cálculo sobre `DB`, escrito na sonda de
+forma independente do motor, e não de números fixos): imóveis (P48), serviços (P49), desapegos (P50), eventos,
+benefícios e referências (P51), sem resultado, ✕ e Limpar tudo (P52), publicar e depois filtrar (P53), painel no
+computador e folha no celular (P54). A contagem de cada opção é comparada com o resultado real ao escolhê-la, o
+anúncio é conferido contra o filtro e contra a faixa própria, e ordenar por preço não move o anúncio. P35 passou a
+conferir os campos novos dos formulários. Mutantes M27 a M37: anúncio que fura o filtro, "Limpar tudo" que não
+limpa, ordenação de preço invertida, contagem de opção errada, mínimo que vira igual, especialidade que não zera ao
+trocar o tipo, comodidades do anúncio publicado perdidas, sem-resultado sem sugestão, "Ver N" que não acompanha,
+bairros que viram "todos ao mesmo tempo" e comodidades que viram "qualquer uma".
 
 ## Como rodar
 
@@ -149,13 +154,13 @@ node docs/design/prototype-v35/mutate.mjs
 
 ## Evidência de execução
 
-Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `86a458244c019286`, `verify.mjs` `bf1fbf58f8f931d6`, `mutate.mjs` `629b6a1597a80c5f`.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `e2058879c995d737`, `verify.mjs` `8731cdd26655848d`, `mutate.mjs` `4616e250a82955d0`.
 Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
 porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
 **Quem verificou:** o próprio implementador. Não é revisão independente nem verificação de runtime independente
 (seção 14 do processo de construção). As camadas independentes que existem são a CI do PR, o revisor automático do
-PR e a revisão do dono. O revisor automático já apontou achados neste PR (abaixo), todos tratados.
+PR e a revisão do dono. O revisor automático já apontou achados neste PR, em duas rodadas (abaixo), todos tratados.
 
 `node docs/design/prototype-v35/verify.mjs` (movimento reduzido, o padrão), saída 0 (títulos cortados em 118 caracteres):
 
@@ -243,8 +248,8 @@ PASS P41@1440     com preferência normal a troca de tela e a janela animam; com
 PASS P41@390      com preferência normal a troca de tela e a janela animam; com movimento reduzido nenhuma passa de 1 
 PASS P42@1440     botão ⋯: abre com foco no 1º item, setas/Home/End/letra movem, Esc devolve o foco ao botão, Tab fech
 PASS P42@390      botão ⋯: abre com foco no 1º item, setas/Home/End/letra movem, Esc devolve o foco ao botão, Tab fech
-PASS P43@1440     varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique d
-PASS P43@390      varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique d
+PASS P43@1440     varredura: cada item de cada menu (15 tipos de terceiros e 4 de anúncio próprio) faz efeito; botão ⋯
+PASS P43@390      varredura: cada item de cada menu (15 tipos de terceiros e 4 de anúncio próprio) faz efeito; botão ⋯
 PASS P44@1440     ocultar, denunciar, arquivar, silenciar e dispensar mudam o estado de verdade, têm 'Desfazer' e fica
 PASS P44@390      ocultar, denunciar, arquivar, silenciar e dispensar mudam o estado de verdade, têm 'Desfazer' e fica
 PASS P45@1440     portas alternativas: clique direito e tecla de menu abrem o mesmo menu; toque longo abre a folha sem
@@ -253,14 +258,28 @@ PASS P46@1440     validação inline: erro junto do campo (aria-invalid + aria-d
 PASS P46@390      validação inline: erro junto do campo (aria-invalid + aria-describedby), foco no primeiro, nada é en
 PASS P47@1440     ligar conversa a uma necessidade: sem nenhuma necessidade ativa o formulário abre com uma opção marc
 PASS P47@390      ligar conversa a uma necessidade: sem nenhuma necessidade ativa o formulário abre com uma opção marc
+PASS P48@1440     imóveis: cada combinação mostra exatamente o conjunto calculado sobre os dados; a contagem de cada o
+PASS P48@390      imóveis: cada combinação mostra exatamente o conjunto calculado sobre os dados; a contagem de cada o
+PASS P49@1440     serviços: tipo em dois níveis (trocar a categoria limpa a especialidade), região, recomendado, contr
+PASS P49@390      serviços: tipo em dois níveis (trocar a categoria limpa a especialidade), região, recomendado, contr
+PASS P50@1440     desapegos: categoria e tipo de item, preço, condição, retirada e bairro batem com os dados; ordenar 
+PASS P50@390      desapegos: categoria e tipo de item, preço, condição, retirada e bairro batem com os dados; ordenar 
+PASS P51@1440     eventos, benefícios e referências: categoria, quando, período, gratuito, crianças, como resgatar, va
+PASS P51@390      eventos, benefícios e referências: categoria, quando, período, gratuito, crianças, como resgatar, va
+PASS P52@1440     sem resultado: diz qual filtro tirar e quantos voltam (o número é o que aparece ao tirar); Limpar tu
+PASS P52@390      sem resultado: diz qual filtro tirar e quantos voltam (o número é o que aparece ao tirar); Limpar tu
+PASS P53@1440     o que a pessoa anuncia aparece nos filtros (imóvel, desapego, evento) e o serviço só depois de aprov
+PASS P53@390      o que a pessoa anuncia aparece nos filtros (imóvel, desapego, evento) e o serviço só depois de aprov
+PASS P54@1440     computador: painel fixo e sem botão Filtros; celular: sem painel, botão Filtros (n) abre folha com f
+PASS P54@390      computador: painel fixo e sem botão Filtros; celular: sem painel, botão Filtros (n) abre folha com f
 
-93/93 verificações passaram (48 sondas; a maioria roda em 1440 e em 390 px)
+107/107 verificações passaram (55 sondas; a maioria roda em 1440 e em 390 px)
 ```
 
 `MOTION=normal node docs/design/prototype-v35/verify.mjs` (animação e transição ligadas), saída 0: as mesmas
-93 linhas `PASS`, nenhuma `FAIL`, e a mesma linha final `93/93 verific`.
+107 linhas `PASS`, nenhuma `FAIL`, e a mesma linha final `107/107 verific`.
 
-`node docs/design/prototype-v35/mutate.mjs`, saída 0 (19 quebras, 19 detectadas):
+`node docs/design/prototype-v35/mutate.mjs`, saída 0 (37 quebras, 37 detectadas por asserção):
 
 ```
 DETECTADA      M1 anúncio entra no orgânico → FAIL P01@1440     anúncio nunca aparece na zona orgânica do Resolver (5 
@@ -277,10 +296,28 @@ DETECTADA      M12 anúncio ganha 'por que apareceu' no menu → FAIL P43@1440  
 DETECTADA      M13 ocultar não oculta → FAIL P44@1440     ocultar, denunciar, arquivar, silenciar e dispensar mudam o 
 DETECTADA      M14 Desfazer do salvamento não desfaz → FAIL P44@1440     ocultar, denunciar, arquivar, silenciar e dis
 DETECTADA      M15 validação inline desligada → FAIL P46@1440     validação inline: erro junto do campo (aria-invalid 
-DETECTADA      M16 botão ⋯ escondido → FAIL P43@1440     varredura: cada item de cada menu (15 tipos) faz efeito; botã
-DETECTADA      M17 clique direito não abre o menu → FAIL P43@1440     varredura: cada item de cada menu (15 tipos) faz
+DETECTADA      M16 botão ⋯ escondido → FAIL P43@1440     varredura: cada item de cada menu (15 tipos de terceiros e 4 
+DETECTADA      M17 clique direito não abre o menu → FAIL P43@1440     varredura: cada item de cada menu (15 tipos de t
 DETECTADA      M18 ligar conversa sem necessidade estoura → FAIL P47@1440     ligar conversa a uma necessidade: sem ne
 DETECTADA      M19 símbolo Unicode volta como ícone → FAIL P36@1440     ícones são SVG do sprite (nenhum símbolo Unico
+DETECTADA      M20 texto cru na tela (template dentro de aspas simples) → FAIL P36@1440     ícones são SVG do sprite (
+DETECTADA      M21 Enter na paleta não navega → FAIL P37@1440     paleta de comandos: abre, filtra, setas movem a sele
+DETECTADA      M22 título da página não acompanha a tela → FAIL P39@1440     trilha nas telas de segundo nível volta a
+DETECTADA      M23 movimento reduzido ignorado → FAIL P41@1440     com preferência normal a troca de tela e a janela a
+DETECTADA      M24 Esc não devolve o foco ao botão ⋯ → FAIL P42@1440     botão ⋯: abre com foco no 1º item, setas/Home
+DETECTADA      M25 toque longo também abre o cartão → FAIL P45@1440     portas alternativas: clique direito e tecla de
+DETECTADA      M26 anúncio próprio oferece o menu de terceiros → FAIL P43@1440     varredura: cada item de cada menu (
+DETECTADA      M27 anúncio fura o filtro → FAIL P48@1440     imóveis: cada combinação mostra exatamente o conjunto cal
+DETECTADA      M28 Limpar tudo não limpa os filtros → FAIL P48@1440     imóveis: cada combinação mostra exatamente o c
+DETECTADA      M29 ordenar por menor preço sai invertido → FAIL P49@1440     serviços: tipo em dois níveis (trocar a c
+DETECTADA      M30 contagem da opção não bate com o resultado → FAIL P48@1440     imóveis: cada combinação mostra exat
+DETECTADA      M31 mínimo de quartos vira quantidade exata → FAIL P48@1440     imóveis: cada combinação mostra exatame
+DETECTADA      M32 trocar o tipo de serviço não limpa a especialidade → FAIL P49@1440     serviços: tipo em dois nívei
+DETECTADA      M33 comodidades do anúncio publicado se perdem → FAIL P53@1440     o que a pessoa anuncia aparece nos f
+DETECTADA      M34 sem resultado não sugere o que tirar → FAIL P52@1440     sem resultado: diz qual filtro tirar e qua
+DETECTADA      M35 folha do celular não atualiza 'Ver N' → FAIL P54@390      computador: painel fixo e sem botão Filtr
+DETECTADA      M36 bairros escolhidos viram 'todos ao mesmo tempo' → FAIL P50@1440     desapegos: categoria e tipo de 
+DETECTADA      M37 comodidades 'todas as marcadas' viram 'qualquer uma' → FAIL P48@1440     imóveis: cada combinação m
 DETECTADA      M7 data exata de terceiros → FAIL P15@1440     nenhuma data exata de terceiros em tela; Desapegos inver
 todas as mutações detectadas
 ```
@@ -316,6 +353,28 @@ Do revisor automático do PR:
   lista exata está no README.
 - **A P36 não pegava o `❯`** (categoria Unicode "Pe", fora da lista de símbolos). A regex passou a cobrir os
   colchetes ornamentais, o mutante M19 reintroduz o glifo e é detectado.
+
+Da revisão do PR, segunda rodada:
+
+- **A contagem de mutantes do v34 estava certa em 9, e não 8** (o `grep` do revisor ignorava o M6, escrito numa linha
+  só que começa com `[`). Conferir: `grep -o '"M[0-9]* ' docs/design/prototype-v34/mutate.mjs | sort -u` lista M1 a M9.
+  A parte que procede era a cobertura: das 12 sondas novas só 6 tinham mutante. Agora as 19 sondas novas têm.
+- **`mutate.mjs` aceitava qualquer FAIL da sonda-alvo, inclusive o de página quebrada.** Passou a exigir falha de
+  asserção. Isso revelou que M9, M15, M28, M31 e M33 eram "detectados" só porque a sonda estourava tempo ou a página
+  dava erro: P35 e P46 e as sondas de filtro foram reescritas para falhar por asserção, e há `guard()` para que um
+  passo travado depois do primeiro erro entre no relatório.
+- **Os menus de anúncio próprio nunca eram abertos por sonda** (lista diferente: "Encerrar anúncio", sem Ocultar
+  nem Denunciar). P43 ganhou 4 casos (imóvel, desapego, evento e pergunta próprios) e o mutante M26.
+
+Achados por mim ao revisar o próprio diff:
+
+- **"A que mais ajudou" aparecia como `${ic("check")}` cru na tela de pergunta resolvida** (aspas simples no lugar de
+  crase, herança da troca do glifo por ícone). Nenhuma sonda enxergava. P36 agora varre texto cru (`${`, `[object`,
+  `undefined`, `NaN`) inclusive nessa tela; mutante M20.
+- **Ao trocar o tipo de serviço, a opção ficava desabilitada por causa da especialidade já marcada** (o grupo pai
+  era contado com o filho aplicado). A contagem de um grupo agora ignora os grupos que dependem dele.
+- **P05 achava o cartão do prestador por um trecho de texto** ("Manutenção") que as especialidades novas também
+  contêm; passou a achar pelo título.
 
 ## O que continua sem prova
 
