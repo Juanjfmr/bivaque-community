@@ -43,7 +43,7 @@ No celular (ou janela de 390 px):
 ```sh
 node docs/design/prototype-v35/verify.mjs                 # 55 sondas, 107 verificações; a maioria roda em 1440 e 390 px
 MOTION=normal node docs/design/prototype-v35/verify.mjs   # a mesma suíte com animação e transição ligadas
-node docs/design/prototype-v35/mutate.mjs                 # quebra 37 invariantes; termina em 0 só se todas forem detectadas por asserção
+node docs/design/prototype-v35/mutate.mjs                 # quebra 40 invariantes; termina em 0 só se todas forem detectadas por asserção
 ```
 
 Por padrão as sondas rodam com **movimento reduzido**, que dá medidas estáveis de posição e tamanho. Isso pode esconder
@@ -59,7 +59,7 @@ com limite de 8 s por ação. Nenhuma sonda foi enfraquecida; P05, P27, P29, P32
 verificações novas do polimento e 14 dos filtros. A verificação é do próprio implementador, **não** é revisão
 independente.
 
-O v34 tinha 9 mutantes (M1 a M9) e o v35 tem 37: os 9 herdados e 28 novos, e as 19 sondas novas (P36 a P54) têm ao
+O v34 tinha 9 mutantes (M1 a M9) e o v35 tem 40: os 9 herdados e 31 novos, e as 19 sondas novas (P36 a P54) têm ao
 menos um. Uma quebra só conta como detectada quando a sonda **falha por asserção**: falha por exceção da sonda ou
 por erro de JavaScript da página (a página só quebrou) não conta. `MUT=M9,M15` roda só alguns.
 

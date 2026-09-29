@@ -224,6 +224,14 @@ const muts = [
     'case "all": { const a = asArr(g.get(x)); return v.some((k) => a.includes(k)) }',
   ],
   [
+    "M38 alvo de toque menor que 44 px",
+    "P29",
+    ".kebab{position:relative;z-index:3;width:44px;height:44px;min-height:44px;",
+    ".kebab{position:relative;z-index:3;width:30px;height:30px;min-height:30px;",
+  ],
+  ["M39 texto sem contraste suficiente", "P30", "--muted:#586560", "--muted:#a9b3ae"],
+  ["M40 texto menor que 12 px", "P36", "--fs-xs:.75rem", "--fs-xs:.625rem"],
+  [
     "M7 data exata de terceiros",
     "P15",
     'return (+d <= 10 ? "início de " : +d <= 20 ? "meados de " : "fim de ") + mon',

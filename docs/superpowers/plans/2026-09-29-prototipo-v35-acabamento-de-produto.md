@@ -42,7 +42,8 @@ script nem folha de estilo de terceiro. Ícones em SVG inline (sprite `<symbol>`
   2. Anúncio pago oferece "Ocultar" e "Denunciar"; nunca "por que apareceu".
   3. Todo gesto (clique direito, toque longo, atalho) tem equivalente por teclado e por toque simples.
   4. Nenhum movimento essencial: com `prefers-reduced-motion`, nada anima e tudo continua utilizável.
-  5. Texto ≥ 12 px, alvos ≥ 44 px, contraste ≥ 4,5:1, foco visível em tudo que age.
+  5. Texto ≥ 12 px, alvos ≥ 44 px e contraste ≥ 4,5:1 são medidos (P36, P29 e P30; mutantes M40, M38 e M39). Foco
+     visível vem do `:focus-visible` global e **não é medido por nenhuma sonda**.
   6. Sem latência artificial: estados de carregamento cobrem imagens e revelação, não atraso simulado
      (atraso falso esconderia o comportamento real e tornaria as sondas instáveis).
 - **Polimento não é validação.** Um protótipo mais bonito não prova escala, recorrência nem
@@ -104,7 +105,7 @@ e clique direito sem efeito.
 
 ### Task 6 — Verificação e relatório
 - [x] `verify.mjs` verde nos dois modos de movimento (107 verificações: 69 herdadas + 24 do polimento + 14 dos filtros), saída colada em **Evidência de execução**.
-- [x] `mutate.mjs`: 9 mutantes herdados (M1 a M9) + 28 novos (M10 a M37), 37 detectados por asserção (falha por exceção ou erro de JavaScript da página não conta). Cada uma das 19 sondas novas (P36 a P54) tem ao menos um mutante.
+- [x] `mutate.mjs`: 9 mutantes herdados (M1 a M9) + 31 novos (M10 a M40), 40 detectados por asserção (falha por exceção ou erro de JavaScript da página não conta). Cada uma das 19 sondas novas (P36 a P54) tem ao menos um mutante.
 - [x] `npx pnpm@11.18.0 gate`: lint, typecheck, test e secrets verdes. O Biome exclui só o HTML. (`build` não rodou localmente: falta `apps/web/.env.local`; a confirmação é a CI do PR.)
 - [x] Notas de "o que continua sem prova" reescritas no README.
 
@@ -154,7 +155,7 @@ node docs/design/prototype-v35/mutate.mjs
 
 ## Evidência de execução
 
-Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `e2058879c995d737`, `verify.mjs` `8731cdd26655848d`, `mutate.mjs` `4616e250a82955d0`.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `e2058879c995d737`, `verify.mjs` `8731cdd26655848d`, `mutate.mjs` `68bb10cd8b3a511f`.
 Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
 porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
@@ -279,7 +280,7 @@ PASS P54@390      computador: painel fixo e sem botão Filtros; celular: sem pai
 `MOTION=normal node docs/design/prototype-v35/verify.mjs` (animação e transição ligadas), saída 0: as mesmas
 107 linhas `PASS`, nenhuma `FAIL`, e a mesma linha final `107/107 verific`.
 
-`node docs/design/prototype-v35/mutate.mjs`, saída 0 (37 quebras, 37 detectadas por asserção):
+`node docs/design/prototype-v35/mutate.mjs`, saída 0 (40 quebras, 40 detectadas por asserção):
 
 ```
 DETECTADA      M1 anúncio entra no orgânico → FAIL P01@1440     anúncio nunca aparece na zona orgânica do Resolver (5 
@@ -318,6 +319,9 @@ DETECTADA      M34 sem resultado não sugere o que tirar → FAIL P52@1440     s
 DETECTADA      M35 folha do celular não atualiza 'Ver N' → FAIL P54@390      computador: painel fixo e sem botão Filtr
 DETECTADA      M36 bairros escolhidos viram 'todos ao mesmo tempo' → FAIL P50@1440     desapegos: categoria e tipo de 
 DETECTADA      M37 comodidades 'todas as marcadas' viram 'qualquer uma' → FAIL P48@1440     imóveis: cada combinação m
+DETECTADA      M38 alvo de toque menor que 44 px → FAIL P29@1440+390 alvos de toque ≥ 44px nos controles (1440 e 390) 
+DETECTADA      M39 texto sem contraste suficiente → FAIL P30@1440     contraste de texto ≥ 4,5:1 (fora de imagens)  → 
+DETECTADA      M40 texto menor que 12 px → FAIL P36@1440     ícones são SVG do sprite (nenhum símbolo Unicode em texto
 DETECTADA      M7 data exata de terceiros → FAIL P15@1440     nenhuma data exata de terceiros em tela; Desapegos inver
 todas as mutações detectadas
 ```
@@ -358,7 +362,7 @@ Da revisão do PR, segunda rodada:
 
 - **A contagem de mutantes do v34 estava certa em 9, e não 8** (o `grep` do revisor ignorava o M6, escrito numa linha
   só que começa com `[`). Conferir: `grep -o '"M[0-9]* ' docs/design/prototype-v34/mutate.mjs | sort -u` lista M1 a M9.
-  A parte que procede era a cobertura: das 12 sondas novas só 6 tinham mutante. Agora as 19 sondas novas têm.
+  A parte que procede era a cobertura: das 12 sondas novas só 6 tinham mutante. Agora as 19 sondas novas têm, e as regras 4 e 5 também (M23, M38, M39, M40).
 - **`mutate.mjs` aceitava qualquer FAIL da sonda-alvo, inclusive o de página quebrada.** Passou a exigir falha de
   asserção. Isso revelou que M9, M15, M28, M31 e M33 eram "detectados" só porque a sonda estourava tempo ou a página
   dava erro: P35 e P46 e as sondas de filtro foram reescritas para falhar por asserção, e há `guard()` para que um
