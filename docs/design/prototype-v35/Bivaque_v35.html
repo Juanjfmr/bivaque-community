@@ -640,8 +640,8 @@ img{display:block;width:100%;height:100%;object-fit:cover}
     <div class="sep"></div>
     <div class="nav-group-label" id="typeLabel">Explorar por tipo</div>
     <nav class="nav" id="typeNav" aria-labelledby="typeLabel"></nav>
-    <button class="context" data-act="openContext" aria-label="Meu contexto: editar transferência">
-      <span class="k">Meu contexto</span><b id="ctxTitle"></b><span id="ctxMeta"></span><div class="bar"><i id="ctxBar"></i></div>
+    <button class="context" data-act="openContext" aria-label="Sua mudança: editar transferência">
+      <span class="k">Sua mudança</span><b id="ctxTitle"></b><span id="ctxMeta"></span><div class="bar"><i id="ctxBar"></i></div>
     </button>
   </aside>
   <main class="shell">
@@ -1435,7 +1435,7 @@ function providerEvidence(pid) {
 }
 function evSummary(pid) {
   const list = providerEvidence(pid)
-  // Resultado (deu certo / parcial / não) só conta quem contratou. Quem só mencionou aparece à parte.
+  // Resultado (deu certo / parcial / não) só conta quem contratou. Quem só ouviu falar aparece à parte.
   const c = { yes: 0, partial: 0, no: 0, hired: 0, mentioned: 0, total: list.length, last: "" }
   list.forEach((e) => { if (e.kind === "hired") { c[e.result]++; c.hired++ } else c.mentioned++; if (e.month > c.last) c.last = e.month })
   return c
@@ -1454,7 +1454,7 @@ function evLine(pid) {
 function hiredLine(pid) {
   const c = evSummary(pid)
   if (!c.total) return "Ninguém registrou resultado"
-  return `${plural(c.hired, "contratou", "contrataram")}${c.mentioned ? ` · ${c.mentioned} só mencionou` : ""}`
+  return `${plural(c.hired, "contratou", "contrataram")}${c.mentioned ? ` · ${c.mentioned} só ouviu falar` : ""}`
 }
 function evScore(pid) { const c = evSummary(pid); return c.yes * 2 + c.partial - c.no * 2 + c.total * 0.1 }
 function evBadge(pid) {
@@ -1841,7 +1841,7 @@ const H1 = (t, sub, right = "", page = "") => `${crumbs(page)}<div class="surfac
 const SITUATIONS = [
   ["Estou chegando ou sendo transferido", "moradia, escola e documentos", "onde morar chegando em novembro", "swap"],
   ["Preciso de alguém para resolver algo", "serviços e orçamentos", "preciso instalar um split", "briefcase"],
-  ["Quero vender ou comprar", "itens de quem sai e de quem chega", "quero vender o sofá antes da mudança", "tag"],
+  ["Quero vender ou comprar", "desapegos de quem sai e de quem chega", "quero vender o sofá antes da mudança", "tag"],
   ["Quero entender a cidade", "bairros, escolas, saúde", "escola para minha filha", "pin"],
 ]
 
@@ -1859,7 +1859,7 @@ function shellUpdate() {
   const t = T()
   $("#ctxTitle").textContent = `${city(t.from).name} → ${city(t.to).name}`
   $("#ctxMeta").textContent = `${PHASE_LABEL[phaseOf(t)]} · ${phaseLine(t)}`
-  $("#topCityChip").innerHTML = `${ic("pin")}<span>${esc(focusLabel())}</span>${ic("chevron-down")}`
+  $("#topCityChip").innerHTML = `${ic("pin")}<span>Resolver em: ${esc(focusLabel())}</span>${ic("chevron-down")}`
   const b = $("#bellBadge"); const prev = b.textContent; b.textContent = n; b.hidden = !n
   if (n && prev !== String(n)) { b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop") }
   $("#bellBtn").setAttribute("aria-label", n ? `Notificações, ${n} não lidas` : "Notificações")
@@ -1877,7 +1877,7 @@ function homeSides() {
 }
 function tilesFor(side) {
   const t = T(); const k = cityKey(side); const c = city(k); const ph = phaseOf(t)
-  if (!c.content) return [{ title: `Ainda não há base em ${c.name}`, sub: "Pergunte a quem já viveu lá", act: "openAsk", data: { comm: "" }, ic: "help" }]
+  if (!c.content) return [{ title: `Ainda não há dados de ${c.name}`, sub: "Pergunte a quem já viveu lá", act: "openAsk", data: { comm: "" }, ic: "help" }]
   const q = (s) => ({ act: "runQuery", data: { q: s } })
   if (side === "destination") {
     if (ph === "settled") return [{ title: "Ajudar quem vai chegar", sub: "Perguntas abertas na comunidade", act: "go", data: { page: "community", id: commOfCity(k)?.id }, ic: "users" }, { title: "Registrar o que você resolveu", sub: "Vira evidência para a próxima família", act: "openNeeds", data: {}, ic: "check-circle" }, { title: "Renovar uma referência", sub: "Sua experiência atualiza o que a comunidade sabe", act: "go", data: { page: "refs" }, ic: "book" }]
@@ -1918,23 +1918,23 @@ VIEWS.home = () => {
   if (th) feed.push({ badge: "Comunidade", cls: "blue", title: th.title, meta: `${repliesOf(th).length} respostas · você pode ajudar`, data: { dtype: "thread", id: th.id }, img: PH.crowd })
   const bens = vis("benefit", DB.benefits.filter((b) => b.city === first && benefitState(b) !== "expired")).slice(0, 2)
   return `<section class="hero"><div class="hero-inner">
-    <button class="context-pill" data-act="openContext">${ic("pin")} ${esc(city(t.from).name)} → ${esc(city(t.to).name)}<span class="opt"> · ${fmtShort(t.date)}</span> · ${esc(phaseLine(t))} ${ic("chevron-down")}</button>
+    <button class="context-pill" data-act="openContext">${ic("pin")}<span>${esc(city(t.from).name)} → ${esc(city(t.to).name)}<span class="opt"> · ${fmtShort(t.date)}</span> · ${esc(phaseLine(t))}</span>${ic("chevron-down")}</button>
     <h1 class="page-title">O que você precisa resolver hoje?</h1>
-    <p>Descreva com suas palavras. O Bivaque procura pessoas, referências e ofertas no lado certo da sua mudança.</p>
+    <p>Conte o que você precisa. O Bivaque busca pessoas, referências e ofertas na cidade certa da sua mudança.</p>
     <form class="resolver" data-form="heroSearch" role="search"><label class="sr-only" for="homeQuery">Descreva o que você precisa</label>${ic("search")}
       <input id="homeQuery" name="q" autocomplete="off" placeholder="${innerWidth < 760 ? "Ex.: escola para minha filha" : "escola para minha filha, mudança para Brasília, instalar um split..."}"><button type="submit"><span class="go-label">Encontrar caminho</span>${ic("arrow-right")}</button></form>
-    <div class="hero-tools"><button data-act="openTrust">${ic("shield-check")} Rede verificada para militares, familiares e veteranos</button><span class="div" aria-hidden="true"></span>
+    <div class="hero-tools"><button data-act="openTrust">${ic("shield-check")} Rede verificada</button><span class="div" aria-hidden="true"></span>
       <button data-act="setFocus" data-focus="origin" aria-pressed="${S.focus === "origin"}">${ic("pin")} Saída · ${esc(city(t.from).name)}</button>
       <button data-act="setFocus" data-focus="destination" aria-pressed="${S.focus === "destination"}">${ic("pin")} Chegada · ${esc(city(t.to).name)}</button></div>
   </div></section>
   <div class="intent-row">${SITUATIONS.map(([b, s, q, i]) => `<button class="intent-pill" data-act="runQuery" data-q="${esc(q)}"><span class="bubble" aria-hidden="true">${ic(i)}</span><span><b>${esc(b)}</b><small>${esc(s)}</small></span></button>`).join("")}</div>
   ${typeChips()}
-  <div class="section"><div class="section-head"><div><h2>Continuar de onde você parou</h2><p>Só o que pede alguma ação sua.</p></div><button class="link-btn" data-act="openNeeds">Ver todas (${S.needs.length})</button></div>
+  <div class="section"><div class="section-head"><div><h2>Continuar de onde você parou</h2><p>Só o que pede alguma ação sua.</p></div><button class="link-btn" data-act="openNeeds">Ver tudo (${S.needs.length})</button></div>
     <div class="continue-grid">${act.slice(0, 3).map(needCard).join("") || `<div class="empty-state">Nada aguardando você. Descreva algo acima para começar.</div>`}</div></div>
   <div class="section"><div class="section-head"><div><h2>Sua transferência: ${esc(city(t.from).name)} → ${esc(city(t.to).name)}</h2><p>${PHASE_LABEL[ph]} · ${esc(phaseLine(t))}${ph === "arrived" ? "" : ""}</p></div><button class="link-btn" data-act="openContext">Ajustar</button></div>
     <div class="two-sides${sides.length === 1 ? " one" : ""}">${sides.map((s) => `<div class="side-col"><h3 class="side-title">${s === "origin" ? "Saída" : "Chegada"} · ${esc(city(cityKey(s)).name)}</h3>${tilesFor(s).map(tileCard).join("")}</div>`).join("")}</div>
     ${ph === "arrived" && S.needs.some((n) => n.city === t.from && !["resolved", "abandoned"].includes(n.status)) ? `<button class="link-btn pend" data-act="setFocus" data-focus="origin">Pendências em ${esc(city(t.from).name)}: ${S.needs.filter((n) => n.city === t.from && !["resolved", "abandoned"].includes(n.status)).length}</button>` : ""}</div>
-  <div class="section activity-grid"><div><div class="section-head"><div><h2>Agora na sua rede</h2><p>${esc(firstCity.name)} · o que aconteceu e pede sua atenção.</p></div><button class="link-btn" data-act="go" data-page="explorar">Explorar por tipo</button></div>
+  <div class="section activity-grid"><div><div class="section-head"><div><h2>Agora na sua rede</h2><p>Novidades em ${esc(firstCity.name)}.</p></div><button class="link-btn" data-act="go" data-page="explorar">Explorar por tipo</button></div>
       <div class="feed">${feed.map((f) => `<article class="feed-card card"${md(f.data.dtype, f.data.id, f.title)}><div class="photo">${img(f.img, 500)}${kebab(f.title)}</div><div class="body"><span class="badge ${f.cls}">${esc(f.badge)}</span><h3>${cardLink(f.title, f.data)}</h3><p>${esc(f.meta)}</p></div></article>`).join("")}</div></div>
     <aside class="benefit-panel" aria-label="Benefícios"><div class="section-head"><div><h2>Benefícios</h2><p>Parceiros em ${esc(firstCity.name)}.</p></div><button class="link-btn light" data-act="go" data-page="benefits">Ver todos ${ic("arrow-right")}</button></div>
       <div class="benefit-list">${bens.map((b) => `<article class="benefit card"><div class="pic">${img(b.img, 300)}</div><div><h3>${cardLink(b.partner, { dtype: "benefit", id: b.id })}</h3><p>${esc(b.offer)}</p></div></article>`).join("") || `<p class="muted-light">Nenhum benefício vigente aqui.</p>`}</div></aside></div>`
@@ -1944,8 +1944,8 @@ VIEWS.home = () => {
 function sideExplain(cl, cityKeyRes) {
   const t = T()
   if (cl.mention) return `Você citou ${city(cl.mention).name}.`
-  if (S.focus !== "auto") return `Foco escolhido: ${focusLabel()}.`
-  return `Pela fase (${PHASE_LABEL[phaseOf(t)].toLowerCase()}), este assunto costuma ser resolvido em ${city(cityKeyRes).name}.`
+  if (S.focus !== "auto") return `Você escolheu resolver em ${focusLabel()}.`
+  return `Pela fase da sua mudança (${PHASE_LABEL[phaseOf(t)].toLowerCase()}), este assunto costuma ser resolvido em ${city(cityKeyRes).name}.`
 }
 function trackedNeed(q) { return S.needs.find((n) => n.status !== "abandoned" && n.query && norm(n.query) === norm(q)) }
 VIEWS.resolver = (p) => {
@@ -1958,7 +1958,7 @@ VIEWS.resolver = (p) => {
   } else {
     const cl = classify(q, p.forced)
     if (cl.type === "clarify") {
-      body = `<div class="clarify-state" id="results"><h2>Preciso de um detalhe antes de buscar</h2><p>${esc(cl.question)}</p><div class="choice-row">${cl.options.map((o) => `<button class="filter" data-act="runForced" data-q="${esc(q)}" data-intent="${o.intent}" data-param="${o.param || ""}">${esc(o.label)}</button>`).join("")}</div></div>`
+      body = `<div class="clarify-state" id="results"><h2>Só mais um detalhe antes de buscar</h2><p>${esc(cl.question)}</p><div class="choice-row">${cl.options.map((o) => `<button class="filter" data-act="runForced" data-q="${esc(q)}" data-intent="${o.intent}" data-param="${o.param || ""}">${esc(o.label)}</button>`).join("")}</div></div>`
     } else if (cl.type === "empty") {
       body = `<div class="empty-state" id="results"><h2>Ainda não encontrei uma resposta confiável</h2><p>Em vez de inventar resultados, o Bivaque pode levar sua dúvida a quem já viveu isso.</p>
         <div class="choice-row"><button class="primary" data-act="openAsk" data-q="${esc(q)}">Perguntar à comunidade</button><button class="secondary" data-act="openPeople" data-q="${esc(q)}">Quem já viveu isso?</button></div></div>`
@@ -1968,19 +1968,19 @@ VIEWS.resolver = (p) => {
       if (r.cold) body = coldStartBlock(r.cityKey, q)
       else {
         body = `<div id="results"><p class="side-explain">${esc(sideExplain(cl, r.cityKey))} <button class="link-btn" data-act="openContext">Mudar</button></p>
-          <div class="result-zone"><div class="result-zone-title">Resultados orgânicos · ${esc(city(r.cityKey).name)}</div><div class="result-row">${r.organic.map(resultCard).join("") || `<div class="empty-state">Ainda não há resultados orgânicos aqui. Pergunte a quem já viveu isso.</div>`}</div></div>
-          ${r.sponsored.length ? `<div class="sponsored-zone"><div class="result-zone-title">Anúncio · não altera a ordem dos resultados acima</div><div class="result-row">${r.sponsored.map(resultCard).join("")}</div></div>` : ""}
+          <div class="result-zone"><div class="result-zone-title">Resultados · ${esc(city(r.cityKey).name)}</div><div class="result-row">${r.organic.map(resultCard).join("") || `<div class="empty-state">Ainda não há resultados aqui. Pergunte a quem já viveu isso.</div>`}</div></div>
+          ${r.sponsored.length ? `<div class="sponsored-zone"><div class="result-zone-title">Anúncio · não muda a ordem dos resultados acima</div><div class="result-row">${r.sponsored.map(resultCard).join("")}</div></div>` : ""}
           <div class="tail">${r.tail.map((x) => `<button class="secondary" data-act="${x.act}" data-comm="${x.comm}" data-q="${esc(q)}">${esc(x.label)}</button>`).join("")}
           ${tracked ? `<button class="secondary" data-act="openNeed" data-id="${tracked.id}">${ic("check")} Acompanhando · abrir necessidade</button>` : `<button class="primary" data-act="trackSearch" data-q="${esc(q)}" data-intent="${cl.intent}" data-city="${r.cityKey}">Acompanhar esta busca</button>`}</div>
-          <p class="privacy-note">Buscar não salva nada. A busca só vira necessidade quando você acompanha.</p></div>`
+          <p class="privacy-note">Buscar não salva nada. Só ao acompanhar a busca ela vira uma necessidade sua.</p></div>`
       }
     }
   }
-  return `${H1("Resolver", "Diga o que precisa. O resultado vem do lado certo da sua mudança.")}${form}${seg}${typeChips()}${body}`
+  return `${H1("Resolver", "Diga o que você precisa. Os resultados vêm da cidade certa da sua mudança.")}${form}${seg}${typeChips()}${body}`
 }
 function coldStartBlock(cityKey, q) {
   const c = city(cityKey)
-  return `<div class="empty-state" id="results"><h2>Ainda não há base em ${esc(c.name)}</h2><p>Ninguém da rede registrou referências, prestadores ou eventos lá. Isso não é um catálogo vazio para você preencher sozinho: comece pelo conhecimento de quem já viveu a cidade.</p>
+  return `<div class="empty-state" id="results"><h2>Ainda não há dados de ${esc(c.name)}</h2><p>Ninguém da rede registrou referências, prestadores ou eventos lá ainda. Comece perguntando a quem já viveu na cidade.</p>
     <div class="choice-row"><button class="primary" data-act="openAsk" data-q="${esc(q || "")}" data-comm="" data-city="${cityKey}">Perguntar a quem já viveu em ${esc(c.name)}</button><button class="secondary" data-act="openRequestCommunity" data-city="${cityKey}">Ser avisado quando abrir a comunidade</button></div></div>`
 }
 VIEWS.explorar = () => {
@@ -1992,7 +1992,7 @@ VIEWS.explorar = () => {
       ["services", "Serviços", n(DB.providers)], ["housing", "Imóveis", n(DB.housing)], ["market", "Desapegos", n(visibleMarket())], ["events", "Eventos", n(DB.events)], ["benefits", "Benefícios", n(DB.benefits)], ["refs", "Referências", n(DB.refs)],
     ].map(([p, l, num]) => `<article class="tile card"><span class="ico" aria-hidden="true">${TYPES.find((x) => x[0] === p)[2]}</span><div><h3>${cardLink(l, { page: p, side: s }, "go")}</h3><span>${num} em ${esc(c.name)}</span></div><span class="arrow" aria-hidden="true">${ic("chevron-right")}</span></article>`).join("")}</div>` : coldStartBlock(k, "")}</div>`
   }).join("")
-  return `${H1("Explorar por tipo", "Catálogos dos dois lados da mudança. O caminho principal continua sendo o Resolver.")}<div class="two-sides">${blocks}</div>`
+  return `${H1("Explorar por tipo", "Tudo o que a rede tem em Manaus e em Brasília. Se preferir, descreva o que precisa no Resolver.")}<div class="two-sides">${blocks}</div>`
 }
 
 /* ---------- catálogos ---------- */
@@ -2016,7 +2016,7 @@ function catShell(kind, title, sub, side, list, opts = {}) {
   const st = catState(kind)
   const cta = opts.cta ? `<button class="primary" data-act="${opts.cta[0]}" data-type="${opts.cta[2] || ""}">${esc(opts.cta[1])}</button>` : ""
   const filters = FILTERS[kind] ? `<div class="filter-row" role="group" aria-label="Filtros">${FILTERS[kind].map(([v, l]) => `<button class="filter" data-act="setCatFilter" data-kind="${kind}" data-v="${v}" aria-pressed="${st.f === v}">${l}</button>`).join("")}</div>` : ""
-  return `${H1(title, sub, cta, kind)}<div class="cat-tools"><label class="surface-search">${ic("search")}<input data-input="catQuery" data-kind="${kind}" value="${esc(st.q)}" aria-label="Buscar em ${esc(title)}" placeholder="Buscar"></label>${sideSeg(kind, side)}</div>${filters}${opts.before || ""}<div id="catList" class="${opts.cls || "cards-3"}">${list}</div>`
+  return `${H1(title, sub, cta, kind)}<div class="cat-tools"><label class="surface-search">${ic("search")}<input data-input="catQuery" data-kind="${kind}" value="${esc(st.q)}" aria-label="Buscar em ${esc(title)}" placeholder="Buscar em ${esc(title)}"></label>${sideSeg(kind, side)}</div>${filters}${opts.before || ""}<div id="catList" class="${opts.cls || "cards-3"}">${list}</div>`
 }
 const passes = (kind, text, tags) => { const st = catState(kind); const t = norm(text + " " + (tags || []).join(" ")); return (st.f === "todos" || t.includes(st.f)) && (!st.q || t.includes(norm(st.q))) }
 const emptyList = (kind) => `<div class="no-results">Nenhum resultado com esses filtros. Amplie a busca ou pergunte a quem já viveu isso. <button class="link-btn" data-act="openAsk" data-q="">Perguntar</button></div>`
@@ -2025,7 +2025,7 @@ VIEWS.services = (p) => {
   const all = vis("provider", DB.providers.filter((x) => x.city === k))
   const org = all.filter((x) => !x.campaign && passes("services", x.name + x.about, x.tags)).sort((a, b) => evScore(b.id) - evScore(a.id))
   const ads = all.filter((x) => x.campaign && passes("services", x.name + x.about, x.tags))
-  const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não altera a ordem da lista</div><div class="service-list">${ads.map(providerCard).join("")}</div></div>` : ""
+  const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não muda a ordem da lista</div><div class="service-list">${ads.map(providerCard).join("")}</div></div>` : ""
   const cold = !city(k).content ? coldStartBlock(k, "") : ""
   return catShell("services", "Serviços", "Ordem pela evidência de quem contratou, nunca pelo pagamento.", side, cold || org.map(providerCard).join("") || emptyList("services"), { cls: "service-list", before, cta: ["openOffer", "Oferecer meu serviço", "service"] })
 }
@@ -2035,7 +2035,7 @@ VIEWS.housing = (p) => {
   const own = S.own.housing.filter((h) => h.city === k && !h.closed)
   const org = [...own, ...all.filter((h) => !h.campaign)].filter((h) => passes("housing", h.title + h.bairro, h.tags)).sort((a, b) => housingFit(b).score - housingFit(a).score)
   const ads = all.filter((h) => h.campaign && passes("housing", h.title + h.bairro, h.tags))
-  const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não altera a ordem da lista</div><div class="cards-3">${ads.map((h) => listingCard(h)).join("")}</div></div>` : ""
+  const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não muda a ordem da lista</div><div class="cards-3">${ads.map((h) => listingCard(h)).join("")}</div></div>` : ""
   const sub = side === "destination" ? `Imóveis em ${city(k).name}, ordenados pela sua chegada em ${windowLabel(t.date)} e pelo perfil da família.` : `Imóveis em ${city(k).name} para quem está chegando. Você também pode anunciar o seu.`
   const cold = !city(k).content ? coldStartBlock(k, "") : ""
   return catShell("housing", "Moradia", sub, side, cold || org.map((h) => listingCard(h, !!h.mine)).join("") || emptyList("housing"), { before, cta: ["openOffer", "Anunciar imóvel", "housing"] })
@@ -2057,7 +2057,7 @@ VIEWS.events = (p) => {
   const side = catSide("events", p); const k = cityKey(side)
   const all = [...S.own.events.filter((e) => e.city === k), ...vis("event", DB.events.filter((e) => e.city === k))].filter((e) => daysUntil(e.date) >= 0 && passes("events", e.title + e.place)).sort((a, b) => a.date.localeCompare(b.date))
   const ads = all.filter((e) => e.campaign)
-  const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não altera a ordem da lista</div><div class="cards-3">${ads.map((e) => eventCard(e)).join("")}</div></div>` : ""
+  const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não muda a ordem da lista</div><div class="cards-3">${ads.map((e) => eventCard(e)).join("")}</div></div>` : ""
   const cold = !city(k).content ? coldStartBlock(k, "") : ""
   return catShell("events", "Eventos", `Próximos em ${city(k).name}, por data.`, side, cold || all.filter((e) => !e.campaign).map((e) => eventCard(e, !!e.mine)).join("") || emptyList("events"), { before, cta: ["openOffer", "Organizar evento", "event"] })
 }
@@ -2100,7 +2100,7 @@ VIEWS.community = (p) => {
     <div class="community-card"><div class="section-head"><div><h2>Precisa da sua experiência</h2><p>Perguntas abertas para quem já viveu isso.</p></div><button class="primary" data-act="openAsk" data-comm="${id}" data-q="">Fazer uma pergunta</button></div>
       ${qs.filter((t) => !S.resolvedThreads[t.id]).slice(0, 4).map((t) => `<div class="question"${md("thread", t.id, t.title, false, t.own)}><span class="ico" aria-hidden="true">${ic("help")}</span><div><b>${cardLink(t.title, { dtype: "thread", id: t.id })}</b><span>${repliesOf(t).length} respostas · ${esc(t.ago || "agora")}${t.own ? " · sua pergunta" : ""}</span></div>${kebab(t.title)}</div>`).join("") || `<p class="muted">Nenhuma pergunta aberta. Seja a primeira pessoa a perguntar.</p>`}
       <button class="link-btn" data-act="openThreadList" data-id="${id}">Ver todas (${qs.length})</button></div>
-    <div class="section"><div class="section-head"><div><h2>Círculos</h2><p>Assuntos dentro da comunidade. A memória continua sendo da comunidade.</p></div></div><div class="choice-row">${circles.map((x) => `<button class="filter" data-act="openCircle" data-id="${x.id}" aria-pressed="${!!S.follows[x.id]}">${S.follows[x.id] ? ic("check") : ""}${esc(x.name)}</button>`).join("")}</div></div>
+    <div class="section"><div class="section-head"><div><h2>Círculos</h2><p>Assuntos dentro da comunidade, para você acompanhar só o que interessa.</p></div></div><div class="choice-row">${circles.map((x) => `<button class="filter" data-act="openCircle" data-id="${x.id}" aria-pressed="${!!S.follows[x.id]}">${S.follows[x.id] ? ic("check") : ""}${esc(x.name)}</button>`).join("")}</div></div>
     <div class="section"><div class="section-head"><div><h2>Acontecendo na comunidade</h2><p>Eventos de ${esc(city(c.city).name)}.</p></div></div>
       <div class="event-strip">${evs.map((e) => `<article class="event card"><div class="photo">${img(e.img, 600)}</div><div class="body"><span class="badge violet">${fmtShort(e.date)} · ${esc(e.time)}</span>${S.rsvps[e.id] === "going" ? `<span class="badge good">${ic("check")} Você vai</span>` : ""}<h3>${cardLink(e.title, { dtype: "event", id: e.id })}</h3><span>${esc(e.place)}</span></div></article>`).join("") || `<p class="muted">Nenhum evento marcado. Quem sabe você organiza o primeiro?</p>`}</div></div></div>${memory}</div>`
 }
@@ -2117,16 +2117,16 @@ VIEWS.messages = (p) => {
   if (cur) {
     const n = cur.needId ? needById(cur.needId) : null
     panel = `<div class="conversation-panel"><button class="back-inline mobile-only" data-act="go" data-page="messages">${ic("chevron-left")} Conversas</button><h2 class="conv-h">${esc(cur.with)}</h2>
-      <div class="anchor-card"><small>Necessidade</small>${n ? `<button class="anchor-link" data-act="openNeed" data-id="${n.id}">${esc(n.title)} · ${STATUS[n.status]}</button>` : `<b>Sem necessidade vinculada</b> <button class="link-btn" data-act="linkNeed" data-id="${cur.id}">Ligar a uma necessidade</button>`}
-        <small class="mt">Objeto</small>${cur.obj ? `<button class="anchor-link" data-act="openObj" data-dtype="${cur.obj.type}" data-id="${cur.obj.id}">${esc(objLabel(cur.obj))}</button>` : "<b>Conversa direta</b>"}</div>
+      <div class="anchor-card"><small>Necessidade</small>${n ? `<button class="anchor-link" data-act="openNeed" data-id="${n.id}">${esc(n.title)} · ${STATUS[n.status]}</button>` : `<b>Nenhuma necessidade ligada</b> <button class="link-btn" data-act="linkNeed" data-id="${cur.id}">Ligar a uma necessidade</button>`}
+        <small class="mt">Sobre</small>${cur.obj ? `<button class="anchor-link" data-act="openObj" data-dtype="${cur.obj.type}" data-id="${cur.obj.id}">${esc(objLabel(cur.obj))}</button>` : "<b>Conversa direta</b>"}</div>
       <div class="messages" role="log" aria-live="polite">${cur.msgs.map((m) => `<div class="bubble-chat${m.me ? " me" : ""}">${esc(m.text)}</div>`).join("")}</div>
-      ${cur.status === "pending" ? `<p class="privacy-note">Aguardando aceite. Nada além do tema e do lado da mudança foi compartilhado.</p>` : `<form class="composer-line" data-form="sendMsg" data-id="${cur.id}"><label class="sr-only" for="msg">Mensagem</label><input id="msg" name="text" autocomplete="off" placeholder="Escreva uma mensagem"><button class="primary" type="submit">Enviar</button></form>`}</div>`
+      ${cur.status === "pending" ? `<p class="privacy-note">Aguardando aceite. Nada além do tema e da cidade do assunto foi compartilhado.</p>` : `<form class="composer-line" data-form="sendMsg" data-id="${cur.id}"><label class="sr-only" for="msg">Mensagem</label><input id="msg" name="text" autocomplete="off" placeholder="Escreva uma mensagem"><button class="primary" type="submit">Enviar</button></form>`}</div>`
   }
   return `${H1("Conversas", "Cada conversa fica ligada ao que você está resolvendo.")}<div class="inbox-grid${cur ? " has-open" : ""}"><div class="inbox-list">${list.map(item).join("") || `<p class="muted pad">${INBOX.archived ? "Nenhuma conversa arquivada." : "Nenhuma conversa ainda."}</p>`}${nArch || INBOX.archived ? `<button class="link-btn inbox-foot" data-act="toggleArchivedList">${INBOX.archived ? "Voltar às conversas" : `Ver arquivadas (${nArch})`}</button>` : ""}</div>${panel}</div>`
 }
 function objLabel(o) {
   const src = { provider: () => provider(o.id)?.name, housing: () => { const h = byId([...DB.housing, ...S.own.housing], o.id); return h && `${h.title} · ${h.bairro}` }, market: () => byId([...DB.market, ...S.own.market], o.id)?.title, event: () => byId([...DB.events, ...S.own.events], o.id)?.title, person: () => byId(DB.people, o.id)?.name }[o.type]
-  return (src && src()) || "Objeto"
+  return (src && src()) || "Item"
 }
 function convAnchorLabel(c) { const n = c.needId ? needById(c.needId) : null; return n ? INTENTS[n.intent].label + " · " + STATUS[n.status] : c.obj ? objLabel(c.obj) : "Conversa direta" }
 
@@ -2144,13 +2144,13 @@ VIEWS.profile = () => {
   const done = S.needs.filter((n) => n.status === "resolved")
   return `${H1("Você", "Suas necessidades, salvos, transferências e histórico.", `<button class="city-chip" data-act="openContext">Ajustar contexto</button>`)}
   <div class="profile-grid">
-    <section class="profile-card"><h2>Necessidades abertas</h2>${act.map((n) => `<div class="profile-row"${md("need", n.id, n.title)}><div><b>${cardLink(n.title, { id: n.id }, "openNeed")}</b><span>${DIR[n.dir]} · ${STATUS[n.status]} · ${esc(city(n.city).name)}</span></div>${kebab(n.title)}</div>`).join("") || '<p class="muted">Nada aberto.</p>'}<button class="link-btn" data-act="openNeeds">Ver todas (${S.needs.length})</button></section>
+    <section class="profile-card"><h2>Em andamento</h2>${act.map((n) => `<div class="profile-row"${md("need", n.id, n.title)}><div><b>${cardLink(n.title, { id: n.id }, "openNeed")}</b><span>${DIR[n.dir]} · ${STATUS[n.status]} · ${esc(city(n.city).name)}</span></div>${kebab(n.title)}</div>`).join("") || '<p class="muted">Nada aberto.</p>'}<button class="link-btn" data-act="openNeeds">Ver tudo (${S.needs.length})</button></section>
     <section class="profile-card"><h2>Salvos</h2>${S.saved.length ? S.saved.map((s) => `<div class="profile-row"><div><b>${cardLink(savedLabel(s), { dtype: s.type, id: s.id })}</b><span>${esc(s.type === "ref" ? "Referência" : s.type === "housing" ? "Imóvel" : s.type === "market" ? "Desapego" : s.type === "benefit" ? "Benefício" : s.type === "event" ? "Evento" : "Prestador")}</span></div><button class="link-btn" data-act="toggleSave" data-type="${s.type}" data-id="${s.id}" aria-label="Remover dos salvos">Remover</button></div>`).join("") : '<p class="muted">Toque no coração de qualquer imóvel, desapego ou referência para guardar aqui.</p>'}</section>
     ${Object.keys(S.hidden).length ? `<section class="profile-card"><h2>Itens ocultos</h2>${Object.keys(S.hidden).map((k) => { const [type, ...rest] = k.split(":"); const id = rest.join(":"); return `<div class="profile-row"><div><b>${esc(labelOfItem(type, id))}</b><span>${esc(ITEM_KIND[type] || "Item")}</span></div><button class="link-btn" data-act="unhideItem" data-key="${esc(k)}" aria-label="Mostrar de novo: ${esc(labelOfItem(type, id))}">Mostrar de novo</button></div>` }).join("")}<p class="privacy-note">Itens ocultos não aparecem para você em nenhuma lista. Só você vê esta lista.</p></section>` : ""}
     <section class="profile-card"><h2>Transferências</h2>${S.transitions.map((x) => `<div class="profile-row"><div><b>${esc(city(x.from).name)} → ${esc(city(x.to).name)}${x.id === S.activeT ? " · ativa" : ""}</b><span>${fmtShort(x.date)} · ${x.adults} adultos, ${x.kids} criança${x.kids === 1 ? "" : "s"} · só você vê a data exata</span></div>${x.id === S.activeT ? "" : `<button class="link-btn" data-act="switchT" data-id="${x.id}">Tornar ativa</button>`}</div>`).join("")}<button class="link-btn" data-act="openContext">Editar ou adicionar transferência</button></section>
     <section class="profile-card"><h2>Resolvido recentemente</h2>${done.map((n) => `<div class="profile-row"><div><b>${cardLink(n.title, { id: n.id }, "openNeed")}</b><span>${n.result ? RESULT_TXT[n.result] : "Resolvido"}</span></div></div>`).join("") || '<p class="muted">Quando você marcar um resultado, ele aparece aqui.</p>'}</section>
     <section class="profile-card"><h2>Meu negócio</h2><p class="muted">Veja como um prestador recebe pedidos e responde com proposta.</p><button class="secondary" data-act="go" data-page="provider">Abrir painel do prestador (demonstração)</button></section>
-    <section class="profile-card demo"><h2>Demonstração</h2><p class="muted">Hoje na demonstração: <b>${fmtShort(today())}</b>. Respostas de terceiros, aprovações e datas avançam só aqui, e aparecem rotuladas como simuladas.</p>
+    <section class="profile-card demo"><h2>Controles da demonstração</h2><p class="muted">Hoje na demonstração: <b>${fmtShort(today())}</b>. Respostas de terceiros, aprovações e datas avançam só aqui, e aparecem rotuladas como simuladas.</p>
       <div class="choice-row"><button class="secondary" data-act="advance" data-n="3">Avançar 3 dias</button><button class="secondary" data-act="advanceToMove">Ir à data da mudança</button><button class="secondary" data-act="resetDemo">Reiniciar</button></div></section>
   </div>`
 }
@@ -2167,12 +2167,12 @@ const SEED_REQS = [
 VIEWS.provider = () => {
   const p = provider("p-manut"); const mine = S.own.provider
   const reqs = [...S.quotes.map((q) => ({ id: q.id, who: "Membro da rede", what: q.what, when: q.when, where: q.where, size: q.size, need: q.needId, quote: q })), ...SEED_REQS.map((r) => ({ ...r, seed: true }))]
-  return `${H1("Meu negócio", "Demonstração: você vê os pedidos como cada prestador os veria.", "", "provider")}
-  ${mine ? `<div class="context-card wide"><small>Seu cadastro</small><b>${esc(mine.name)}</b><span>${mine.status === "verification" ? "Em verificação de identidade e CNPJ. Aparece em Serviços quando aprovado." : "Ativo"}</span></div>` : `<div class="context-card wide"><small>Seu cadastro</small><b>Você ainda não é prestador</b><button class="secondary" data-act="openOffer" data-type="service">Oferecer meu serviço</button></div>`}
+  return `${H1("Meu negócio", "Assim um prestador recebe pedidos e responde com proposta. Dados de demonstração.", "", "provider")}
+  ${mine ? `<div class="context-card wide"><small>Seu cadastro</small><b>${esc(mine.name)}</b><span>${mine.status === "verification" ? "Em verificação de identidade e CNPJ. Aparece em Serviços quando aprovado." : "Ativo"}</span></div>` : `<div class="context-card wide"><small>Seu cadastro de prestador</small><b>Você ainda não tem cadastro</b><button class="secondary" data-act="openOffer" data-type="service">Oferecer meu serviço</button></div>`}
   <div class="profile-grid"><section class="profile-card"><h2>Pedidos recebidos</h2>${reqs.map((r) => `<div class="req"><b>${esc(r.what)}</b><span>${esc(r.who)} · ${esc(r.when)} · ${esc(r.where)}${r.size ? " · " + esc(r.size) : ""}</span>
       ${(r.quote && r.quote.replied) || S.provSeed?.[r.id] ? '<span class="badge good">Respondido</span>' : `<form class="proposal-form" data-form="sendProposal" data-id="${r.id}"><div class="field"><label for="pp-${r.id}">Preço (R$)</label><input id="pp-${r.id}" name="price" inputmode="numeric" required></div><div class="field"><label for="pd-${r.id}">Prazo (dias)</label><input id="pd-${r.id}" name="days" inputmode="numeric" required></div><button class="primary" type="submit">Enviar proposta</button></form>`}</div>`).join("") || '<p class="muted">Nenhum pedido.</p>'}</section>
     <section class="profile-card"><h2>Sua ficha pública</h2><p><b>${esc(p.name)}</b> ${seal()}</p><p>${esc(evLine(p.id))}</p><p class="muted">${esc(hiredLine(p.id))}</p><p class="privacy-note">Quem procura vê exatamente esta evidência, com a mesma regra para todos os prestadores, anunciantes ou não.</p></section>
-    <section class="profile-card"><h2>Como aparecer</h2><p><b>Orgânico:</b> a ordem vem da evidência de quem contratou. Nada compra posição.</p><p><b>Anúncio:</b> fica numa faixa separada, rotulada, sem “por que apareceu” e sem alterar a evidência.</p><button class="secondary" data-act="openObj" data-dtype="provider" data-id="p-amazon">Ver como um anúncio aparece</button></section></div>`
+    <section class="profile-card"><h2>Como você aparece nas listas</h2><p><b>Sem anúncio:</b> a ordem vem do resultado de quem contratou. Nada compra posição.</p><p><b>Com anúncio:</b> fica numa faixa separada e rotulada. Não recebe “por que apareceu” e não muda o resultado de quem contratou.</p><button class="secondary" data-act="openObj" data-dtype="provider" data-id="p-amazon">Ver como um anúncio aparece</button></section></div>`
 }
 
 /* ===== Gavetas, formulários e ações ===== */
@@ -2181,7 +2181,7 @@ const field = (id, label, input, hint = "") => `<div class="field"><label for="$
 const opt = (v, l, sel) => `<option value="${esc(v)}"${sel ? " selected" : ""}>${esc(l)}</option>`
 const val = (id) => (document.getElementById(id) || {}).value || ""
 const saveBtn = (type, id) => { const on = savedHas(type, id); return `<button class="secondary" data-act="toggleSave"${attrs({ type, id })} aria-pressed="${on}">${ic("heart", on ? "fill" : "")} ${on ? "Salvo" : "Salvar"}</button>` }
-const kindTxt = (k) => (k === "hired" ? "contratou" : "só mencionou")
+const kindTxt = (k) => (k === "hired" ? "contratou" : "só ouviu falar")
 const commName = (id) => (id && comm(id) ? comm(id).name : "rede")
 function windowOptions() {
   const out = []
@@ -2200,7 +2200,7 @@ A.runForced = (d) => go("resolver", { q: d.q, forced: { intent: d.intent, param:
 A.heroSearch = (d, f) => { const q = f.q.value.trim(); if (q) go("resolver", { q }); else f.q.focus() }
 A.resolverSearch = (d, f) => { const q = f.q.value.trim(); go("resolver", q ? { q } : {}, { replace: true, keepScroll: true }) }
 A.globalSearch = (d, f) => { const q = f.q.value.trim(); if (q) { f.q.value = ""; go("resolver", { q }) } }
-A.setFocus = (d) => { S.focus = d.focus; save(); if (overlayOpen) closeDrawer(); render(); toast("Priorizando: " + focusLabel()) }
+A.setFocus = (d) => { S.focus = d.focus; save(); if (overlayOpen) closeDrawer(); render(); toast("Resolvendo em: " + focusLabel()) }
 A.setCatSide = (d) => go(d.page, { side: d.side }, { replace: true, keepScroll: true })
 A.setCatFilter = (d) => { catState(d.kind).f = d.v; render() }
 document.addEventListener("input", (e) => {
@@ -2299,10 +2299,10 @@ DR.provider = (id) => {
 }
 A.openEvidence = (d) => {
   const id = d.id; const p = provider(id); const list = providerEvidence(id).sort((a, c) => c.month.localeCompare(a.month))
-  openDrawer(`${drawerHead("Resultados: " + p.name, "Quem, quando e com que vínculo. Sem texto livre de ninguém.")}
+  openDrawer(`${drawerHead("Resultados: " + p.name, "Quem, quando e com que vínculo. Nada do que as pessoas escreveram é publicado.")}
     <div class="detail-box"><p><b>${esc(evLine(id))}</b></p><p>${esc(hiredLine(id))}</p></div>
     <ul class="ev-list big">${list.map((e) => `<li><b>${RESULT_TXT[e.result]}</b> · ${kindTxt(e.kind)} · ${monthShort(e.month)} · membro da ${esc(commName(e.community))}</li>`).join("") || "<li>Ninguém registrou resultado ainda.</li>"}</ul>
-    <p class="privacy-note">A evidência guarda categoria, cidade, mês e resultado. O que você escreveu na sua necessidade fica só com você.</p>`)
+    <p class="privacy-note">Aqui só entram categoria, cidade, mês e resultado. O que você escreveu na sua necessidade fica só com você.</p>`)
 }
 A.openEvidenceGroup = (d) => {
   const list = [...DB.evidence.filter((e) => e.community === d.comm && !e.providerId), ...S.evidence.filter((e) => e.share && e.community === d.comm && !e.providerId && e.category === d.cat)].filter((e) => !e.category || e.category === d.cat)
@@ -2378,12 +2378,12 @@ DR.person = (id, d) => {
 A.openHelp = (d) => {
   const p = byId(DB.people, d.id)
   const needs = activeNeeds()
-  openDrawer(`${drawerHead("Pedir ajuda a " + p.name, "Você escolhe o que ela vê.")}
+  openDrawer(`${drawerHead("Pedir ajuda a " + p.name, "Você escolhe o que será compartilhado.")}
     <form data-form="submitHelp" data-id="${d.id}">
       ${field("hp-topic", "Sobre qual tema?", `<select id="hp-topic" name="topic">${p.topics.map((t, i) => opt(t, p.topicLabels[i])).join("")}</select>`, "Só temas que a pessoa aceitou.")}
       ${field("hp-need", "Ligar a qual necessidade?", `<select id="hp-need" name="need">${needs.map((n) => opt(n.id, n.title)).join("")}${opt("new", "Criar uma necessidade nova")}</select>`)}
       ${field("hp-note", "Mensagem (privada)", `<textarea id="hp-note" name="note" rows="3" placeholder="Opcional"></textarea>`)}
-      <p class="privacy-note">Compartilhado: o tema e o lado da mudança. Nada mais.</p>
+      <p class="privacy-note">Será compartilhado: o tema e a cidade do assunto. Nada mais.</p>
       <div class="detail-actions"><button class="primary" type="submit">Enviar pedido</button></div></form>`)
 }
 A.submitHelp = (d, f) => {
@@ -2552,14 +2552,14 @@ A.openNeed = (d) => {
   const cv = S.convs.find((x) => x.needId === n.id); const th = n.threadId ? threadOf(n.threadId) : null
   const next = n.status === "resolved" ? "O resultado virou evidência (ou ficou privado, se você escolheu assim)." : pend ? `Você tem ${pend} proposta${pend > 1 ? "s" : ""} para comparar.` : n.status === "contracted" ? "Quando terminar, registre o resultado." : sd ? `Sem novidade há ${sd} dias. Tente outro caminho ou pergunte a quem já viveu isso.` : n.waitingCity ? `Aguardando a abertura da comunidade em ${city(n.waitingCity).name}.` : "Veja caminhos, converse ou pergunte à comunidade."
   openDrawer(`${drawerHead(n.title, `${DIR[n.dir]} · ${c.name}`, `<span class="need-status ${n.status}">${STATUS[n.status]}</span>`)}
-    <div class="context-grid"><div class="context-card"><small>Lado</small><b>${esc(c.name)}</b><span>${n.city === T().from ? "resolver antes da saída" : "preparar a chegada"}</span></div><div class="context-card"><small>Ligações</small><b>${cv ? "Conversa ativa" : th ? "Pergunta na comunidade" : "Nenhuma ainda"}</b><span>${n.proposals.length ? n.proposals.length + " proposta(s)" : "—"}</span></div></div>
+    <div class="context-grid"><div class="context-card"><small>Cidade</small><b>${esc(c.name)}</b><span>${n.city === T().from ? "resolver antes da saída" : "preparar a chegada"}</span></div><div class="context-card"><small>Ligações</small><b>${cv ? "Conversa ativa" : th ? "Pergunta na comunidade" : "Nenhuma ainda"}</b><span>${n.proposals.length ? n.proposals.length + " proposta(s)" : "—"}</span></div></div>
     <div class="detail-box mt"><h3>Próximo passo</h3><p>${esc(next)}</p></div>
     <div class="detail-actions">${n.status !== "resolved" && n.status !== "abandoned" ? `${pend ? `<button class="primary" data-act="openProposals" data-id="${n.id}">Comparar propostas</button>` : ""}<button class="secondary" data-act="runQuery" data-q="${esc(n.query || n.title)}">Ver caminhos</button>${cv ? `<button class="secondary" data-act="openConv" data-id="${cv.id}">Abrir conversa</button>` : ""}${th ? `<button class="secondary" data-act="openObj" data-dtype="thread" data-id="${th.id}">Abrir pergunta</button>` : ""}<button class="secondary" data-act="abandonNeed" data-id="${n.id}">Encerrar</button><button class="${pend ? "secondary" : "primary"}" data-act="openResolution" data-id="${n.id}">Marcar resultado</button>` : n.status === "resolved" ? `<button class="secondary" data-act="showEvidenceOf" data-id="${n.id}">Ver evidência gerada</button>` : ""}</div>`)
 }
 A.abandonNeed = (d) => {
   const n = needById(d.id); const prev = { status: n.status, last: n.last }
   n.status = "abandoned"; n.last = S.day; save(); settle()
-  toast("Necessidade encerrada. Nenhuma evidência foi criada.", { undo: () => { n.status = prev.status; n.last = prev.last; save(); render() } })
+  toast("Necessidade encerrada. Nada foi publicado.", { undo: () => { n.status = prev.status; n.last = prev.last; save(); render() } })
 }
 A.showEvidenceOf = (d) => {
   const n = needById(d.id); const e = S.evidence.find((x) => x.needId === d.id)
@@ -2789,7 +2789,7 @@ A.composeGo = () => {
 A.openContext = () => {
   const t = T()
   openDrawer(`${drawerHead("Onde você quer resolver agora?", "A data exata da sua transferência é privada. Terceiros só veem janelas aproximadas.")}
-    <div class="switch-list">${[["auto", "Automático", `Pela fase (${PHASE_LABEL[phaseOf(t)].toLowerCase()}): o Bivaque decide o lado de cada assunto.`], ["origin", city(t.from).name + " · saída", "Serviços, desapegos e pendências de quem está saindo."], ["destination", city(t.to).name + " · chegada", "Moradia, escolas, referências e comunidade de quem está chegando."]].map(([f, l, s]) => `<button class="switch-item${S.focus === f ? " active" : ""}" data-act="setFocus" data-focus="${f}"><div class="grow"><b>${esc(l)}</b><span>${esc(s)}</span></div>${S.focus === f ? ic("check") : ic("chevron-right")}</button>`).join("")}</div>
+    <div class="switch-list">${[["auto", "Automático", `Pela fase (${PHASE_LABEL[phaseOf(t)].toLowerCase()}): o Bivaque escolhe a cidade de cada assunto.`], ["origin", city(t.from).name + " · saída", "Serviços, desapegos e pendências de quem está saindo."], ["destination", city(t.to).name + " · chegada", "Moradia, escolas, referências e comunidade de quem está chegando."]].map(([f, l, s]) => `<button class="switch-item${S.focus === f ? " active" : ""}" data-act="setFocus" data-focus="${f}"><div class="grow"><b>${esc(l)}</b><span>${esc(s)}</span></div>${S.focus === f ? ic("check") : ic("chevron-right")}</button>`).join("")}</div>
     <h3 class="sub-h">Transferências</h3><div class="switch-list">${S.transitions.map((x) => `<button class="switch-item${x.id === S.activeT ? " active" : ""}" data-act="switchT" data-id="${x.id}"><div class="grow"><b>${esc(city(x.from).name)} → ${esc(city(x.to).name)}</b><span>${fmtShort(x.date)} · ${x.id === S.activeT ? "ativa" : "tornar ativa"}</span></div></button>`).join("")}</div>
     <div class="detail-actions"><button class="secondary" data-act="editT" data-id="${t.id}">Editar esta transferência</button><button class="secondary" data-act="addT">Adicionar outra transferência</button></div>`)
 }

@@ -198,7 +198,7 @@ await probe(
     const t = await drawer(page)
     const bad = []
     if (!/não deu certo/.test(t)) bad.push("evidência negativa não aparece")
-    if (!/contrataram/.test(t) || !/só mencionou/.test(t))
+    if (!/contrataram/.test(t) || !/só ouviu falar/.test(t))
       bad.push("vínculo contratou×mencionou ausente")
     if (!/mais recente [a-z]{3}\/\d{2}/.test(t)) bad.push("recência ausente")
     await A(page, "closeDrawer")
@@ -213,7 +213,7 @@ await probe(
 await probe(
   "P03b",
   "Confiança",
-  "selo 'Recomendado' só com maioria de contratações bem-sucedidas; quem só mencionou não conta como resultado",
+  "selo 'Recomendado' só com maioria de contratações bem-sucedidas; quem só ouviu falar não conta como resultado",
   async () => {
     const { ctx, page } = await fresh()
     const bad = []
@@ -352,7 +352,7 @@ await probe(
     if (/Mudança Manaus/.test(anchor))
       bad.push(`conversa ancorada na mudança: ${anchor.replace(/\n/g, " ")}`)
     await go(page, "messages", { id: "c-house" })
-    if (!/Sem necessidade vinculada/.test(await view(page)))
+    if (!/Nenhuma necessidade ligada/.test(await view(page)))
       bad.push("conversa sem necessidade não é declarada")
     await ctx.close()
     return [!bad.length, bad.join(" | ")]
@@ -589,12 +589,12 @@ await probe(
       __bv.S.activeT = "tn"
     })
     await go(page, "home")
-    if (!/Ainda não há base em Natal/.test(await view(page)))
+    if (!/Ainda não há dados de Natal/.test(await view(page)))
       bad.push("Home sem cold start para Natal")
     await go(page, "services", { side: "destination" })
-    if (!/Ainda não há base em Natal/.test(await view(page))) bad.push("catálogo sem cold start")
+    if (!/Ainda não há dados de Natal/.test(await view(page))) bad.push("catálogo sem cold start")
     await search(page, "escola para minha filha")
-    if (!/Ainda não há base em Natal/.test(await view(page))) bad.push("Resolver sem cold start")
+    if (!/Ainda não há dados de Natal/.test(await view(page))) bad.push("Resolver sem cold start")
     await ctx.close()
     return [!bad.length, bad.join(" | ")]
   },
@@ -1765,7 +1765,7 @@ await probe(
     const { ctx, page } = await fresh()
     const bad = []
     const forbidden =
-      /sinal\(is\)|Cidade não é comunidade|Inventário comercial|identificado visualmente|Sinais separados do pagamento|Oferta comercial separada|Atalhos contextuais|Referências devem mostrar|sem calendário vazio|Conhecimento reutilizável|Memória que continua útil|Cidades são apenas/
+      /sinal\(is\)|Cidade não é comunidade|Inventário comercial|identificado visualmente|Sinais separados do pagamento|Oferta comercial separada|Atalhos contextuais|Referências devem mostrar|sem calendário vazio|Conhecimento reutilizável|Memória que continua útil|Cidades são apenas|lado certo|Resultados orgânicos|orgânic|Rede verificada para|Meu contexto|Foco escolhido|Ainda não há base|só mencionou|Demonstração: você vê|ainda não é prestador|Objeto/
     const scan = async (label) => {
       const t = `${await view(page)}\n${await drawer(page)}`
       if (forbidden.test(t)) bad.push(`${label}: ${t.match(forbidden)[0]}`)

@@ -92,8 +92,8 @@ script nem folha de estilo de terceiro. Ícones em SVG inline (sprite `<symbol>`
 **Prova:** sonda de desfazer (estado volta); sonda de validação; zero campos sem rótulo (`P29`).
 
 ### Task 5 — Copy
-- [ ] Passe completo, por tela, em português direto, sem vocabulário interno. Um commit isolado.
-- [ ] Lista antes → depois no corpo do PR. `P32` ganha as frases proibidas novas.
+- [x] Passe por tela, em português direto, sem vocabulário interno (41 trocas). Um commit isolado, para o dono poder reverter só a copy. O termo "necessidade" foi mantido de propósito: é o objeto do produto; trocar por "assunto" ou "pedido" é mecânico e fica para decisão do dono.
+- [x] Lista antes → depois no corpo do PR. `P32` ganha as frases proibidas novas ("lado certo", "orgânic", "Meu contexto", "Foco escolhido", "só mencionou", "Objeto" e outras).
 
 **Prova:** `P32` estendida; sondas de texto atualizadas sem enfraquecer a asserção.
 
