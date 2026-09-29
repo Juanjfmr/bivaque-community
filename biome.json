@@ -19,7 +19,7 @@
       "!**/.reasonix",
       "!**/docs/agents/design-audit/experiments",
       "!**/docs/design/visual-guide-2026-09-06",
-      "!**/docs/design/prototype-v34",
+      "!**/docs/design/prototype-v34/Bivaque_v34.html",
       "!**/.vercel",
       "!**/supabase/.temp",
       "!**/apps/mobile/dist-android",

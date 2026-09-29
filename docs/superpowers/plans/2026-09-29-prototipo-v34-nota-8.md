@@ -133,6 +133,7 @@ nenhum ingresso ocorre sem confirmação; o consentimento exibido é o tema real
 - [x] "Explorar por tipo" nos dois tamanhos; busca no celular; uma aba ativa; sem sobreposição.
 - [x] Alvos de toque ≥ 44px; rótulos; foco visível; `aria-current`.
 - [x] Sem texto de bastidor; sem "sinal(is)"; sem repetição de "por que apareceu".
+- [x] Sem requisição de fonte, script ou folha de estilo de terceiro; tipografia é a Public Sans do produto (`DESIGN_SYSTEM.md` §4.3), auto-hospedada.
 
 **Prova:** zero alvos < 44px nos controles; zero campos sem rótulo; Home com no máximo 16 cards.
 
@@ -146,16 +147,16 @@ nenhum ingresso ocorre sem confirmação; o consentimento exibido é o tema real
 
 ### Task 9 — Verificação e relatório
 
-- [x] `verify.mjs` verde em 1440 e 390 (34 sondas, saída 0); saída colada em **Evidência de execução**.
+- [x] `verify.mjs` verde: 67 verificações (35 sondas; a maioria roda em 1440 e em 390 px), saída 0; saída colada em **Evidência de execução**.
 - [x] Teste de mutação (`mutate.mjs`): 7 quebras de invariante, 7 detectadas.
-- [x] `npx pnpm@11.18.0 gate`: lint, typecheck, test e secrets verdes (Biome exclui o protótipo, como já exclui o guia visual).
+- [x] `npx pnpm@11.18.0 gate`: lint, typecheck, test e secrets verdes. O Biome exclui só o HTML (`!**/docs/design/prototype-v34/Bivaque_v34.html`); `verify.mjs` e `mutate.mjs` passam pelo linter e pelo formatador do repositório.
 - [ ] `build` do gate: **não rodou localmente** (falta `apps/web/.env.local`, que exige o stack Supabase). A confirmação é a CI do PR.
 - [x] Notas re-atribuídas com base e limites declarados (abaixo). Verificação independente **pendente**.
 
 ## Como rodar
 
 ```sh
-node docs/design/prototype-v34/verify.mjs   # 34 sondas, 1440 e 390 px; termina em 0 só se todas passarem
+node docs/design/prototype-v34/verify.mjs   # 35 sondas; termina em 0 só se todas passarem
 node docs/design/prototype-v34/mutate.mjs   # quebra 7 invariantes; termina em 0 só se todas forem detectadas
 ```
 
@@ -163,62 +164,100 @@ Rode os dois **antes de alterar o HTML**. Ficam fora de `pnpm test` e da CI de p
 e ligar isso ao gate ou ao workflow ampliaria este PR para infraestrutura de produto por causa de um
 protótipo de referência. Se o v34 virar autoridade, esse é o momento de decidir se entram na CI.
 
+**Cobertura de viewport:** as sondas de comportamento e de estado rodam em 1440 e em 390 px. P27 (cliques
+mortos), P29 (alvos de toque) e P31 (mobile) percorrem os dois tamanhos por conta própria e rodam uma vez.
+
 ## Evidência de execução
 
-Revisão testada: `66ab4d1` (arquivo do protótipo inalterado desde então), 29/09/2026, Chromium do Playwright.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v34.html` `9ab57a3bf8ba0d59`, `verify.mjs` `256a688030a5d9d7`.
+Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
+porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
 `node docs/design/prototype-v34/verify.mjs; echo $?`
 
 ```text
-PASS P01  anúncio nunca aparece na zona orgânica do Resolver (5 buscas + 4 extras, 3 focos)
-PASS P02  catálogos: anúncio só na faixa rotulada; selo e evidência iguais; sem estrelas
-PASS P03  ficha do prestador: resultado, recência e vínculo (contratou × mencionou); zero e poucos relatos
-PASS P03b selo 'Recomendado' só com maioria de contratações bem-sucedidas; quem só mencionou não conta como resultado
-PASS P04  benefício: condição, validade, resgate persistente e estado vencido
-PASS P05  painel do prestador: pedido recebido → proposta chega a quem pediu, com a mesma ficha pública
-PASS P06  as 5 buscas do roteiro criam 0 necessidades; 'Acompanhar' cria exatamente 1
-PASS P07  orçamento pelo catálogo não toca na necessidade de mudança; conversa ancora na escolhida
-PASS P08  3 propostas comparáveis; escolher cria 'contratei' e conversa; deu certo? aparece depois de 3 dias
-PASS P09  Contribuir: infere direção e tipo, você corrige, vê prévia e o anúncio publicado aparece (4 tipos)
-PASS P10  alternar o foco muda Home e Resolver; cidade citada vence o foco
-PASS P11  casos âncora devolvem resultados heterogêneos (mudança, ar-condicionado, saúde em Brasília)
-PASS P12  esclarecimento muda o resultado; vazio útil; sem estrelas de 'humor'
-PASS P13  Home muda com a fase e com a transferência; várias transferências; cidade sem base = cold start
-PASS P14  editar transferência: destino e data mudam a fase; origem = destino é recusado
-PASS P15  nenhuma data exata de terceiros em tela; Desapegos invertido por lado
-PASS P16  perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito colateral
-PASS P17  regra de ingresso aplicada (transição elegível × pedido) e leitura bloqueada a quem não é membro
-PASS P18  fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador não vem preenchido errado
-PASS P19  pergunta parecida oferece a existente antes de publicar (dedupe)
-PASS P20  consentimento só pelos temas aceitos; 'pedir ajuda' deixa rastro ligado à necessidade e aceite chega depois
-PASS P21  referência com curador nomeado; evidência compartilhada aciona revisão; resposta que ajudou conta
-PASS P22  salvos, presença, resposta e mensagem persistem depois de recarregar
-PASS P23  notificações só existem com o estado que as gera; 'Amanhã' só com presença; badge = não lidas
-PASS P24  avanço de tempo gera novidade real: desapego na janela, resposta à sua pergunta, proposta ao pedido
-PASS P25  texto com apóstrofo ou HTML não quebra nem executa
-PASS P26  gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair da página
-PASS P27  todo controle com data-act produz efeito, nas páginas e nas gavetas (1440 e 390)
-PASS P28  campos com rótulo, botões com nome, imagens com alt, um item ativo por navegação
-PASS P29  alvos de toque ≥ 44px nos controles (1440 e 390)
-PASS P30  contraste de texto ≥ 4,5:1 (fora de imagens)
-PASS P31  390px: sem rolagem horizontal, FAB fora da barra, entradas para todos os tipos, busca e lista/detalhe de conversas
-PASS P32  sem texto de bastidor; 'por que apareceu' no máximo uma vez por card e nunca em anúncio
-PASS P33  estados: zero, um e muitos; vencido; sem resposta; resolvido; interessado; salvo
+PASS P01@1440     anúncio nunca aparece na zona orgânica do Resolver (5 buscas + 4 extras, 3 focos)
+PASS P01@390      anúncio nunca aparece na zona orgânica do Resolver (5 buscas + 4 extras, 3 focos)
+PASS P02@1440     catálogos: anúncio só na faixa rotulada; selo e evidência iguais; sem estrelas
+PASS P02@390      catálogos: anúncio só na faixa rotulada; selo e evidência iguais; sem estrelas
+PASS P03@1440     ficha do prestador: resultado, recência e vínculo (contratou × mencionou); zero e poucos relatos
+PASS P03@390      ficha do prestador: resultado, recência e vínculo (contratou × mencionou); zero e poucos relatos
+PASS P03b@1440    selo 'Recomendado' só com maioria de contratações bem-sucedidas; quem só mencionou não conta como resultado
+PASS P03b@390     selo 'Recomendado' só com maioria de contratações bem-sucedidas; quem só mencionou não conta como resultado
+PASS P04@1440     benefício: condição, validade, resgate persistente e estado vencido
+PASS P04@390      benefício: condição, validade, resgate persistente e estado vencido
+PASS P05@1440     painel do prestador: pedido recebido → proposta chega a quem pediu, com a mesma ficha pública
+PASS P05@390      painel do prestador: pedido recebido → proposta chega a quem pediu, com a mesma ficha pública
+PASS P06@1440     as 5 buscas do roteiro criam 0 necessidades; 'Acompanhar' cria exatamente 1
+PASS P06@390      as 5 buscas do roteiro criam 0 necessidades; 'Acompanhar' cria exatamente 1
+PASS P07@1440     orçamento pelo catálogo não toca na necessidade de mudança; conversa ancora na escolhida
+PASS P07@390      orçamento pelo catálogo não toca na necessidade de mudança; conversa ancora na escolhida
+PASS P08@1440     3 propostas comparáveis; escolher cria 'contratei' e conversa; deu certo? aparece depois de 3 dias
+PASS P08@390      3 propostas comparáveis; escolher cria 'contratei' e conversa; deu certo? aparece depois de 3 dias
+PASS P09@1440     Contribuir: infere direção e tipo, você corrige, vê prévia e o anúncio publicado aparece (4 tipos)
+PASS P09@390      Contribuir: infere direção e tipo, você corrige, vê prévia e o anúncio publicado aparece (4 tipos)
+PASS P10@1440     alternar o foco muda Home e Resolver; cidade citada vence o foco
+PASS P10@390      alternar o foco muda Home e Resolver; cidade citada vence o foco
+PASS P11@1440     casos âncora devolvem resultados heterogêneos (mudança, ar-condicionado, saúde em Brasília)
+PASS P11@390      casos âncora devolvem resultados heterogêneos (mudança, ar-condicionado, saúde em Brasília)
+PASS P12@1440     esclarecimento muda o resultado; vazio útil; sem estrelas de 'humor'
+PASS P12@390      esclarecimento muda o resultado; vazio útil; sem estrelas de 'humor'
+PASS P13@1440     Home muda com a fase e com a transferência; várias transferências; cidade sem base = cold start
+PASS P13@390      Home muda com a fase e com a transferência; várias transferências; cidade sem base = cold start
+PASS P14@1440     editar transferência: destino e data mudam a fase; origem = destino é recusado
+PASS P14@390      editar transferência: destino e data mudam a fase; origem = destino é recusado
+PASS P15@1440     nenhuma data exata de terceiros em tela; Desapegos invertido por lado
+PASS P15@390      nenhuma data exata de terceiros em tela; Desapegos invertido por lado
+PASS P16@1440     perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito colateral
+PASS P16@390      perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito colateral
+PASS P17@1440     regra de ingresso aplicada (transição elegível × pedido) e leitura bloqueada a quem não é membro
+PASS P17@390      regra de ingresso aplicada (transição elegível × pedido) e leitura bloqueada a quem não é membro
+PASS P18@1440     fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador não vem preenchido errado
+PASS P18@390      fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador não vem preenchido errado
+PASS P19@1440     pergunta parecida oferece a existente antes de publicar (dedupe)
+PASS P19@390      pergunta parecida oferece a existente antes de publicar (dedupe)
+PASS P20@1440     consentimento só pelos temas aceitos; 'pedir ajuda' deixa rastro ligado à necessidade e aceite chega depois
+PASS P20@390      consentimento só pelos temas aceitos; 'pedir ajuda' deixa rastro ligado à necessidade e aceite chega depois
+PASS P21@1440     referência com curador nomeado; evidência compartilhada aciona revisão; resposta que ajudou conta
+PASS P21@390      referência com curador nomeado; evidência compartilhada aciona revisão; resposta que ajudou conta
+PASS P22@1440     salvos, presença, resposta e mensagem persistem depois de recarregar
+PASS P22@390      salvos, presença, resposta e mensagem persistem depois de recarregar
+PASS P23@1440     notificações só existem com o estado que as gera; 'Amanhã' só com presença; badge = não lidas
+PASS P23@390      notificações só existem com o estado que as gera; 'Amanhã' só com presença; badge = não lidas
+PASS P24@1440     avanço de tempo gera novidade real: desapego na janela, resposta à sua pergunta, proposta ao pedido
+PASS P24@390      avanço de tempo gera novidade real: desapego na janela, resposta à sua pergunta, proposta ao pedido
+PASS P25@1440     texto com apóstrofo ou HTML não quebra nem executa
+PASS P25@390      texto com apóstrofo ou HTML não quebra nem executa
+PASS P26@1440     gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair da página
+PASS P26@390      gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair da página
+PASS P27@1440+390 todo controle com data-act produz efeito, nas páginas e nas gavetas (1440 e 390)
+PASS P34@1440     nenhuma fonte, script ou folha de estilo de terceiro é pedida; Public Sans auto-hospedada carrega
+PASS P34@390      nenhuma fonte, script ou folha de estilo de terceiro é pedida; Public Sans auto-hospedada carrega
+PASS P28@1440     campos com rótulo, botões com nome, imagens com alt, um item ativo por navegação
+PASS P28@390      campos com rótulo, botões com nome, imagens com alt, um item ativo por navegação
+PASS P29@1440+390 alvos de toque ≥ 44px nos controles (1440 e 390)
+PASS P30@1440     contraste de texto ≥ 4,5:1 (fora de imagens)
+PASS P30@390      contraste de texto ≥ 4,5:1 (fora de imagens)
+PASS P31@1440+390 390px: sem rolagem horizontal, FAB fora da barra, entradas para todos os tipos, busca e lista/detalhe de conversas
+PASS P32@1440     sem texto de bastidor; 'por que apareceu' no máximo uma vez por card e nunca em anúncio
+PASS P32@390      sem texto de bastidor; 'por que apareceu' no máximo uma vez por card e nunca em anúncio
+PASS P33@1440     estados: zero, um e muitos; vencido; sem resposta; resolvido; interessado; salvo
+PASS P33@390      estados: zero, um e muitos; vencido; sem resposta; resolvido; interessado; salvo
 
-34/34 sondas passaram
+67/67 verificações passaram (35 sondas; a maioria roda em 1440 e em 390 px)
 exit=0
 ```
 
 `node docs/design/prototype-v34/mutate.mjs; echo $?`
 
 ```text
-DETECTADA      M1 anúncio entra no orgânico → FAIL P01  anúncio nunca aparece na zona orgânica do Resolver (5 buscas + 4 extras, 3 focos)  → auto|preciso in
-DETECTADA      M2 busca cria necessidade → FAIL P06  as 5 buscas do roteiro criam 0 necessidades; 'Acompanhar' cria exatamente 1  → necessidades 4 → 9 ap
-DETECTADA      M3 orçamento ancora na mudança → FAIL P07  orçamento pelo catálogo não toca na necessidade de mudança; conversa ancora na escolhida  → n-move f
-DETECTADA      M4 evidência guarda texto livre → FAIL P18  fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador não vem p
-DETECTADA      M5 entra na comunidade sem confirmar → FAIL P16  perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito colatera
-DETECTADA      M6 gaveta sem role=dialog → FAIL P26  gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair da págin
-DETECTADA      M7 data exata de terceiros → FAIL P15  nenhuma data exata de terceiros em tela; Desapegos invertido por lado  → home: data exata em "R$ 1.4
+DETECTADA      M1 anúncio entra no orgânico → FAIL P01@1440     anúncio nunca aparece na zona orgânica do Resolver (5 buscas + 4 extras, 3 focos)  → auto|pr
+DETECTADA      M2 busca cria necessidade → FAIL P06@1440     as 5 buscas do roteiro criam 0 necessidades; 'Acompanhar' cria exatamente 1  → necessidades 
+DETECTADA      M3 orçamento ancora na mudança → FAIL P07@1440     orçamento pelo catálogo não toca na necessidade de mudança; conversa ancora na escolhida  → 
+DETECTADA      M4 evidência guarda texto livre → FAIL P18@1440     fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador n
+DETECTADA      M5 entra na comunidade sem confirmar → FAIL P16@1440     perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito 
+DETECTADA      M6 gaveta sem role=dialog → FAIL P26@1440     gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair 
+DETECTADA      M7 data exata de terceiros → FAIL P15@1440     nenhuma data exata de terceiros em tela; Desapegos invertido por lado  → home: data exata em
 todas as mutações detectadas
 exit=0
 ```
@@ -229,7 +268,7 @@ exit=0
 - Unidade arquitetural, Necessidade: P06, P07, P08 (a Necessidade como contêiner, sem herdar "necessidade corrente").
 - Resolver: P01, P11, P12 (anúncio fora do orgânico, casos âncora, esclarecimento e vazio).
 - Contexto, Descoberta: P10, P13, P14, P31 (lado da mudança, fase, cold start, entradas no celular).
-- Comunidade, Confiança: P16, P17, P18, P19, P20, P03, P03b (ingresso, publicação, evidência sem texto livre, consentimento).
+- Comunidade, Confiança: P16, P17, P18, P19, P20, P03, P03b, P34 (ingresso, publicação, evidência sem texto livre, consentimento, nenhum terceiro no caminho crítico).
 - Memória: P21, P22 (curadoria, persistência).
 - Serviços, Imóveis, Desapegos, Eventos: P02, P05, P09, P15, P33.
 - Benefícios, Monetização: P04, P05, P01, P02.
@@ -239,7 +278,8 @@ exit=0
 
 **Ressalvas:** Escalabilidade, Recorrência e Diferenciação recebem 8 pelo desenho e pela demonstração, e não
 foram confirmadas com uso real. As sondas foram escritas e executadas por quem implementou, então **não são
-revisão independente**. O autoteste do arquivo (`?selftest=1`) não conta como evidência.
+revisão independente**. O autoteste do arquivo (`?selftest=1`) não conta como evidência. As fotos de
+demonstração vêm do Unsplash (terceiro, só imagem); em produção seriam próprias.
 
 **Não executado:** `build` local (ver acima); revisão independente e verificador de runtime independentes;
 auditoria de telas (não se aplica: nenhuma tela de produto foi tocada); ADRs das fronteiras R3.

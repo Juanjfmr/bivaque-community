@@ -17,10 +17,18 @@ Em **Você → Demonstração** há um relógio de demonstração (+3 dias, ir �
 node docs/design/prototype-v34/verify.mjs
 ```
 
-Usa `@playwright/test` (ou `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`). Roda as sondas em 1440 e 390 px.
+Usa `@playwright/test` (ou `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`). São 35 sondas; a maioria roda em 1440 e em 390 px,
+e P27, P29 e P31 percorrem os dois tamanhos por conta própria.
 `node docs/design/prototype-v34/mutate.mjs` quebra 7 invariantes de propósito e exige que a sonda certa acuse cada uma.
 A saída de referência está no plano, em "Evidência de execução".
 O autoteste do arquivo (`?selftest=1`) é só regressão local e **não** conta como evidência.
+
+## Tipografia e terceiros
+
+A fonte é a Public Sans do produto (`docs/agents/DESIGN_SYSTEM.md` §4.3), auto-hospedada: o HTML referencia os
+WOFF2 de `apps/web/app/fonts` por caminho relativo. Copiado sozinho, o arquivo cai na fonte do sistema.
+Nenhuma fonte, script ou folha de estilo de terceiro é carregada (sonda P34). As fotos de demonstração vêm do
+Unsplash (terceiro, só imagem); em produção seriam próprias.
 
 ## O que é simulado (e aparece rotulado)
 
