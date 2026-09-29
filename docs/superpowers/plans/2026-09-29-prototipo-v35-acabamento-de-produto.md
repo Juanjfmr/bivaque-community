@@ -86,7 +86,7 @@ script nem folha de estilo de terceiro. Ícones em SVG inline (sprite `<symbol>`
 
 ### Task 4 — Feedback e formulários
 - [x] Aviso com "Desfazer" (salvar, ocultar, arquivar, silenciar, encerrar, dispensar, presença) que realmente desfaz.
-- [ ] Validação inline (`aria-invalid`, `aria-describedby`, foco no primeiro erro); rótulos reais no painel do prestador.
+- [x] Validação inline (`aria-invalid`, `aria-describedby`, foco no primeiro erro); rótulos reais no painel do prestador.
 - [x] Itens ocultos visíveis e reversíveis em Você; denúncia registra só o motivo (sem texto livre); emblemas e barra de progresso animados.
 
 **Prova:** sonda de desfazer (estado volta); sonda de validação; zero campos sem rótulo (`P29`).

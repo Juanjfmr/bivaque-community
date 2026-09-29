@@ -548,9 +548,6 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 .empty-conv .bubble{width:56px;height:56px;border-radius:var(--r-lg)}
 .empty-conv h2{font-size:var(--fs-lg)}
 .empty-conv p{max-width:42ch}
-.proposal-form{flex-wrap:wrap}
-.proposal-form input{flex:1 1 130px}
-.proposal-form .primary{flex:0 0 auto}
 @media(max-width:760px){
   .context-pill .opt{display:none}
   .hero-tools{display:grid;grid-template-columns:1fr 1fr}
@@ -625,6 +622,12 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   .menu-title{display:block;padding:var(--sp-3) var(--sp-3) var(--sp-2);font-weight:800;font-size:var(--fs-md);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .menu-item{min-height:52px;font-size:1rem}
 }
+.proposal-form{display:grid;grid-template-columns:1fr 1fr auto;gap:var(--sp-3);align-items:end;margin-top:var(--sp-2)}
+.proposal-form .field{margin:0}
+.field.err .err-msg,.err-msg{color:var(--rose-600);font-size:var(--fs-sm);font-weight:600;display:flex;gap:6px;align-items:center}
+.check.err{color:var(--rose-600)}
+.check+.err-msg{margin:-4px 0 var(--sp-3) 36px}
+@media(max-width:760px){.proposal-form{grid-template-columns:1fr 1fr}.proposal-form .primary{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -985,6 +988,7 @@ function go(page, params = {}, opts = {}) {
 function render(anim) {
   const v = $("#view")
   v.innerHTML = VIEWS[route.page](route.params)
+  $$("form[data-form]", v).forEach((x) => (x.noValidate = true))
   if (anim) { v.classList.remove("enter"); void v.offsetWidth; v.classList.add("enter") }
   shellUpdate()
 }
@@ -1008,6 +1012,7 @@ function openDrawer(html, opts = {}) {
   menuClose(false)
   const dr = $("#drawer")
   dr.innerHTML = `<div class="sheet-handle" aria-hidden="true"></div>${html}`
+  $$("form[data-form]", dr).forEach((x) => (x.noValidate = true))
   dr.className = "drawer" + (opts.cls ? " " + opts.cls : "")
   dr.style.transform = ""
   if (!overlayOpen) {
@@ -1086,6 +1091,7 @@ document.addEventListener("submit", (e) => {
   const f = e.target.closest("form[data-form]")
   if (!f) return
   e.preventDefault()
+  if (!validateForm(f)) return
   const fn = A[f.dataset.form]
   if (!fn) { console.error("formulário sem ação:", f.dataset.form); return }
   fn({ ...f.dataset }, f, e)
@@ -1376,6 +1382,45 @@ document.addEventListener("pointercancel", cancelLp)
 document.addEventListener("scroll", cancelLp, true)
 document.addEventListener("click", (e) => { if (suppressClick && Date.now() - suppressClick < 800) { e.stopPropagation(); e.preventDefault(); suppressClick = 0 } }, true)
 A.toastUndo = () => { const f = undoFn; undoFn = null; $("#toast").hidden = true; if (f) { f(); toast("Desfeito.") } }
+
+/* ---- validação inline: mensagem junto do campo, aria-invalid + aria-describedby, foco no primeiro erro.
+   Os formulários usam novalidate: a mensagem do navegador não aparece, a nossa sim. ---- */
+function fieldBox(el) { return el.closest(".field") || el.closest(".check") }
+function fieldOk(el) {
+  const box = fieldBox(el); if (!box) return
+  box.classList.remove("err"); el.removeAttribute("aria-invalid")
+  const m = box.classList.contains("check") ? (box.nextElementSibling?.classList.contains("err-msg") ? box.nextElementSibling : null) : box.querySelector(".err-msg")
+  if (m) { el.setAttribute("aria-describedby", (el.getAttribute("aria-describedby") || "").split(" ").filter((x) => x && x !== m.id).join(" ")); if (!el.getAttribute("aria-describedby")) el.removeAttribute("aria-describedby"); m.remove() }
+}
+function fieldErr(el, msg) {
+  const box = fieldBox(el); if (!box) return
+  fieldOk(el)
+  box.classList.add("err"); el.setAttribute("aria-invalid", "true")
+  const m = document.createElement("small")
+  m.className = "err-msg"; m.id = "err-" + (el.id || el.name)
+  m.innerHTML = `${ic("alert", "ic-sm")}<span>${esc(msg)}</span>`
+  if (box.classList.contains("check")) box.insertAdjacentElement("afterend", m); else box.append(m)
+  el.setAttribute("aria-describedby", [(el.getAttribute("aria-describedby") || ""), m.id].filter(Boolean).join(" "))
+}
+function validateForm(f) {
+  let first = null
+  for (const el of [...f.elements]) {
+    if (!el.name || el.disabled || ["hidden", "submit", "button", "radio"].includes(el.type)) continue
+    let msg = ""
+    if (el.type === "checkbox") { if (el.required && !el.checked) msg = "Marque para continuar." }
+    else {
+      const v = (el.value || "").trim()
+      if (el.required && !v) msg = "Preencha este campo."
+      else if (v && el.required && el.inputMode === "numeric" && !(/^\d+$/.test(v) && +v > 0)) msg = "Informe um número maior que zero."
+      else if (v && el.type === "date" && el.min && v < el.min) msg = "Escolha uma data a partir de hoje."
+    }
+    if (msg) { fieldErr(el, msg); first = first || el } else fieldOk(el)
+  }
+  if (first) first.focus()
+  return !first
+}
+document.addEventListener("input", (e) => { if (e.target.getAttribute && e.target.getAttribute("aria-invalid") === "true") fieldOk(e.target) })
+document.addEventListener("change", (e) => { if (e.target.getAttribute && e.target.getAttribute("aria-invalid") === "true") fieldOk(e.target) })
 
 /* ===== Motor: evidência, resolver, necessidades, notificações, relógio ===== */
 const byId = (arr, id) => arr.find((x) => x.id === id)
@@ -2125,7 +2170,7 @@ VIEWS.provider = () => {
   return `${H1("Meu negócio", "Demonstração: você vê os pedidos como cada prestador os veria.", "", "provider")}
   ${mine ? `<div class="context-card wide"><small>Seu cadastro</small><b>${esc(mine.name)}</b><span>${mine.status === "verification" ? "Em verificação de identidade e CNPJ. Aparece em Serviços quando aprovado." : "Ativo"}</span></div>` : `<div class="context-card wide"><small>Seu cadastro</small><b>Você ainda não é prestador</b><button class="secondary" data-act="openOffer" data-type="service">Oferecer meu serviço</button></div>`}
   <div class="profile-grid"><section class="profile-card"><h2>Pedidos recebidos</h2>${reqs.map((r) => `<div class="req"><b>${esc(r.what)}</b><span>${esc(r.who)} · ${esc(r.when)} · ${esc(r.where)}${r.size ? " · " + esc(r.size) : ""}</span>
-      ${(r.quote && r.quote.replied) || S.provSeed?.[r.id] ? '<span class="badge good">Respondido</span>' : `<form class="composer-line proposal-form" data-form="sendProposal" data-id="${r.id}"><label class="sr-only" for="pp-${r.id}">Preço</label><input id="pp-${r.id}" name="price" inputmode="numeric" placeholder="Preço em R$" required><label class="sr-only" for="pd-${r.id}">Prazo</label><input id="pd-${r.id}" name="days" inputmode="numeric" placeholder="Prazo (dias)" required><button class="primary" type="submit">Enviar proposta</button></form>`}</div>`).join("") || '<p class="muted">Nenhum pedido.</p>'}</section>
+      ${(r.quote && r.quote.replied) || S.provSeed?.[r.id] ? '<span class="badge good">Respondido</span>' : `<form class="proposal-form" data-form="sendProposal" data-id="${r.id}"><div class="field"><label for="pp-${r.id}">Preço (R$)</label><input id="pp-${r.id}" name="price" inputmode="numeric" required></div><div class="field"><label for="pd-${r.id}">Prazo (dias)</label><input id="pd-${r.id}" name="days" inputmode="numeric" required></div><button class="primary" type="submit">Enviar proposta</button></form>`}</div>`).join("") || '<p class="muted">Nenhum pedido.</p>'}</section>
     <section class="profile-card"><h2>Sua ficha pública</h2><p><b>${esc(p.name)}</b> ${seal()}</p><p>${esc(evLine(p.id))}</p><p class="muted">${esc(hiredLine(p.id))}</p><p class="privacy-note">Quem procura vê exatamente esta evidência, com a mesma regra para todos os prestadores, anunciantes ou não.</p></section>
     <section class="profile-card"><h2>Como aparecer</h2><p><b>Orgânico:</b> a ordem vem da evidência de quem contratou. Nada compra posição.</p><p><b>Anúncio:</b> fica numa faixa separada, rotulada, sem “por que apareceu” e sem alterar a evidência.</p><button class="secondary" data-act="openObj" data-dtype="provider" data-id="p-amazon">Ver como um anúncio aparece</button></section></div>`
 }

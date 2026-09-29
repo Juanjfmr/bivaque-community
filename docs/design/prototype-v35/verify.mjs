@@ -2477,7 +2477,7 @@ await probe(
     await page.locator("#drawer input[value=scam]").check()
     await page.locator("#drawer button[type=submit]").click()
     const rep = await S(page, (S) =>
-      S.reports.map((r) => Object.keys(r).sort().join(",") + ":" + r.reason),
+      S.reports.map((r) => `${Object.keys(r).sort().join(",")}:${r.reason}`),
     )
     if (rep.length !== 1 || !/scam$/.test(rep[0]) || /text|msg|note/.test(rep[0]))
       bad.push(`denúncia: ${JSON.stringify(rep)}`)
@@ -2619,6 +2619,86 @@ await probe(
     if (!(await mp.evaluate(() => __bv.overlayOpen() && !document.getElementById("ctxMenu"))))
       bad.push("toque curto não abre o cartão")
     await mctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+
+/* ============ v35: FORMULÁRIOS ============ */
+await probe(
+  "P46",
+  "Formulários",
+  "validação inline: erro junto do campo (aria-invalid + aria-describedby), foco no primeiro, nada é enviado; corrigir limpa; consentimento exige marcar; painel do prestador com rótulos visíveis",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    const info = (id) =>
+      page.evaluate((id) => {
+        const el = document.getElementById(id)
+        const m = (el?.getAttribute("aria-describedby") || "")
+          .split(" ")
+          .map((x) => document.getElementById(x))
+          .find((x) => x?.classList.contains("err-msg"))
+        return {
+          inv: el?.getAttribute("aria-invalid"),
+          msg: m?.innerText.trim(),
+          focus: document.activeElement?.id === id,
+        }
+      }, id)
+    const state0 = await S(page, (S) =>
+      JSON.stringify([S.own, S.needs.length, S.convs.length, S.membership]),
+    )
+    await A(page, "openOffer", { type: "sell" })
+    await page.locator("#drawer button[type=submit]").click()
+    let t = await info("o-title")
+    if (t.inv !== "true" || !/Preencha/.test(t.msg || "") || !t.focus)
+      bad.push(`título vazio: ${JSON.stringify(t)}`)
+    if ((await info("o-price")).inv !== "true") bad.push("preço vazio sem erro")
+    if (/Prévia/.test(await drawer(page))) bad.push("avançou com campos vazios")
+    await page.fill("#o-title", "Mesa")
+    await page.fill("#o-price", "abc")
+    await page.locator("#drawer button[type=submit]").click()
+    t = await info("o-price")
+    if (t.inv !== "true" || !/número/.test(t.msg || ""))
+      bad.push(`preço inválido: ${JSON.stringify(t)}`)
+    await page.fill("#o-price", "120")
+    if ((await info("o-price")).inv === "true") bad.push("o erro não some ao corrigir")
+    await page.locator("#drawer button[type=submit]").click()
+    if (!/Prévia/.test(await drawer(page))) bad.push("formulário válido não avança")
+    await A(page, "closeDrawer")
+    await A(page, "openJoin", { id: "arrivalsBsb" })
+    await page.locator("#drawer button[type=submit]").click()
+    const ck = await page.evaluate(() => {
+      const c = document.querySelector("#drawer input[name=ok]")
+      return {
+        inv: c.getAttribute("aria-invalid"),
+        msg: document.getElementById(c.getAttribute("aria-describedby") || "x")?.innerText.trim(),
+        member: __bv.S.membership.arrivalsBsb,
+      }
+    })
+    if (ck.inv !== "true" || !/Marque/.test(ck.msg || "") || ck.member)
+      bad.push(`consentimento: ${JSON.stringify(ck)}`)
+    await A(page, "closeDrawer")
+    await go(page, "provider")
+    const lbl = await page.evaluate(() => {
+      const ls = [...document.querySelectorAll(".proposal-form label")]
+      return (
+        ls.length >= 4 &&
+        ls.every((l) => l.offsetParent !== null && !l.classList.contains("sr-only"))
+      )
+    })
+    if (!lbl) bad.push("rótulos do painel do prestador não estão visíveis")
+    await page.locator(".proposal-form button[type=submit]").first().click()
+    if (
+      (await page
+        .locator(".proposal-form:first-of-type .field.err, .req:first-child .field.err")
+        .count()) !== 2
+    )
+      bad.push("proposta vazia não acusa os dois campos")
+    const state1 = await S(page, (S) =>
+      JSON.stringify([S.own, S.needs.length, S.convs.length, S.membership]),
+    )
+    if (state0 !== state1) bad.push("formulário inválido alterou o estado")
+    await ctx.close()
     return [!bad.length, bad.slice(0, 4).join(" | ")]
   },
 )

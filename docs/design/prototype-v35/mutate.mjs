@@ -85,6 +85,7 @@ const muts = [
     "{ undo: () => flip() })",
     "{ undo: () => {} })",
   ],
+  ["M15 validação inline desligada", "P46", "if (!validateForm(f)) return", "validateForm(f)"],
   [
     "M7 data exata de terceiros",
     "P15",
