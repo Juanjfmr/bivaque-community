@@ -34,12 +34,19 @@ No celular (ou janela de 390 px):
 ## Como verificar
 
 ```sh
-node docs/design/prototype-v35/verify.mjs   # 48 sondas, 93 verificações; a maioria roda em 1440 e 390 px
-node docs/design/prototype-v35/mutate.mjs   # quebra 18 invariantes; termina em 0 só se todas forem detectadas
+node docs/design/prototype-v35/verify.mjs                 # 48 sondas, 93 verificações; a maioria roda em 1440 e 390 px
+MOTION=normal node docs/design/prototype-v35/verify.mjs   # a mesma suíte com animação e transição ligadas
+node docs/design/prototype-v35/mutate.mjs                 # quebra 19 invariantes; termina em 0 só se todas forem detectadas
 ```
 
-As 69 verificações do v34 continuam (três mudaram de texto ou seletor; cada mudança está no PR) e há 24 novas.
-A verificação é do próprio implementador, **não** é revisão independente.
+Por padrão as sondas rodam com **movimento reduzido**, que dá medidas estáveis de posição e tamanho. Isso pode esconder
+defeitos que só existem com movimento ligado, por isso a mesma suíte também roda com `MOTION=normal`, e as duas passam na versão registrada no plano. A P41 confere, nos dois
+modos, que anima quando pode e não anima quando o sistema pede.
+
+As 69 verificações do v34 continuam. Oito sondas herdadas mudaram: P03, P03b, P07 e P13 (texto novo da copy);
+P27, P29 e P31 (seletor ou fluxo novo: o botão flutuante saiu, o menu conta como efeito, linhas de pergunta e de
+conversa entram na medida de alvo); P32 (mais frases proibidas). Nenhuma foi enfraquecida; P27, P29 e P32 foram
+ampliadas. Há 24 verificações novas. A verificação é do próprio implementador, **não** é revisão independente.
 
 ## O que mudou em relação ao v34
 

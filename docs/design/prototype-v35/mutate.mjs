@@ -106,6 +106,13 @@ const muts = [
     '<input type="radio" name="need" value="new"><div class="grow"><b>Criar uma necessidade nova</b><span>Título editável depois</span>',
   ],
   [
+    "M19 símbolo Unicode volta como ícone",
+    "P36",
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: trecho literal do HTML a ser substituído
+    '<span class="arrow" aria-hidden="true">${ic("chevron-right")}</span>',
+    '<span class="arrow" aria-hidden="true">❯</span>',
+  ],
+  [
     "M7 data exata de terceiros",
     "P15",
     'return (+d <= 10 ? "início de " : +d <= 20 ? "meados de " : "fim de ") + mon',

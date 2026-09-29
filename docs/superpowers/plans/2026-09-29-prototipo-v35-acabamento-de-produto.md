@@ -108,6 +108,38 @@ e clique direito sem efeito.
 - [x] `npx pnpm@11.18.0 gate`: lint, typecheck, test e secrets verdes. O Biome exclui só o HTML. (`build` não rodou localmente: falta `apps/web/.env.local`; a confirmação é a CI do PR.)
 - [x] Notas de "o que continua sem prova" reescritas no README.
 
+### Task 7 — Filtros de verdade nos seis catálogos
+
+> **Origem:** o dono apontou, depois de testar o v35, que os catálogos só tinham uma linha de chips: faltavam
+> quartos, localização, tamanho, vaga e condomínio nos imóveis, tipo de serviço nos serviços e o mesmo nos
+> desapegos. Proposta apresentada e autorizada: escopo **todos os catálogos**; painel lateral no computador e folha
+> no celular; campos de imóvel no **padrão de mercado** (a definição dos campos ficou com a implementação); tudo
+> no #88.
+
+- [ ] Motor único e declarativo: grupos (múltipla escolha, mínimo, faixa, teto, bandeira, "todas as marcadas",
+      única), contagem por opção calculada com os outros filtros aplicados, etiquetas dos filtros ativos com ✕,
+      "Limpar tudo", ordenar e contagem de resultados numa região viva.
+- [ ] Painel lateral fixo no computador; no celular, botão "Filtros (n)" que abre uma folha com "Ver N resultados".
+- [ ] Imóveis: tipo, quartos, banheiros, vagas, área, aluguel, condomínio (teto e incluso), bairro, mobiliado,
+      aceita pet, comodidades (todas as marcadas), garantia aceita (qualquer uma), disponível quando eu chegar.
+- [ ] Serviços: tipo em dois níveis (categoria e especialidade), região atendida, recomendado pela comunidade,
+      mínimo de contratações, "a partir de" (teto), atende sábado. Ordem padrão continua sendo a evidência; ordenar
+      por preço é escolha da pessoa e nunca compra posição.
+- [ ] Desapegos: categoria e subcategoria, preço, condição, janela de retirada, bairro.
+- [ ] Eventos: categoria, quando, período do dia, gratuito, bom para crianças, comunidade.
+- [ ] Benefícios: categoria, como resgatar, validade, ainda não resgatados.
+- [ ] Referências: assunto, situação da revisão, comunidade, mínimo de relatos, salvas.
+- [ ] Dados fictícios ampliados o bastante para as combinações darem resultado.
+- [ ] **O anúncio obedece aos mesmos filtros**; filtrar ou ordenar nunca reordena nem esconde o rótulo da faixa paga.
+- [ ] Os formulários de anunciar (imóvel, desapego, serviço, evento) pedem os campos novos; o que a pessoa publica
+      aparece nos filtros.
+- [ ] Sem resultado: a tela diz qual filtro remover e quantos resultados voltam.
+
+**Prova:** sondas guiadas pelos dados (o conjunto esperado sai de um cálculo sobre `DB`, não de números fixos) por
+catálogo; contagem de opção igual ao resultado real; anúncio obedece ao filtro; ordenar; limpar; sem resultado;
+folha no celular; publicar e depois filtrar. Mutantes: anúncio que fura o filtro, "Limpar tudo" que não limpa,
+ordenação de preço invertida e contagem de opção errada.
+
 ## Como rodar
 
 ```sh
@@ -117,15 +149,15 @@ node docs/design/prototype-v35/mutate.mjs
 
 ## Evidência de execução
 
-Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `86a458244c019286`, `verify.mjs` `cd6fea88ebce6893`, `mutate.mjs` `53a5f06429c8e806`.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `86a458244c019286`, `verify.mjs` `bf1fbf58f8f931d6`, `mutate.mjs` `629b6a1597a80c5f`.
 Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
 porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
 **Quem verificou:** o próprio implementador. Não é revisão independente nem verificação de runtime independente
 (seção 14 do processo de construção). As camadas independentes que existem são a CI do PR, o revisor automático do
-PR e a revisão do dono. O revisor automático já apontou dois achados neste PR (abaixo), ambos tratados.
+PR e a revisão do dono. O revisor automático já apontou achados neste PR (abaixo), todos tratados.
 
-`node docs/design/prototype-v35/verify.mjs`, saída 0 (títulos cortados em 118 caracteres):
+`node docs/design/prototype-v35/verify.mjs` (movimento reduzido, o padrão), saída 0 (títulos cortados em 118 caracteres):
 
 ```
 PASS P01@1440     anúncio nunca aparece na zona orgânica do Resolver (5 buscas + 4 extras, 3 focos)
@@ -134,8 +166,8 @@ PASS P02@1440     catálogos: anúncio só na faixa rotulada; selo e evidência 
 PASS P02@390      catálogos: anúncio só na faixa rotulada; selo e evidência iguais; sem estrelas
 PASS P03@1440     ficha do prestador: resultado, recência e vínculo (contratou × mencionou); zero e poucos relatos
 PASS P03@390      ficha do prestador: resultado, recência e vínculo (contratou × mencionou); zero e poucos relatos
-PASS P03b@1440    selo 'Recomendado' só com maioria de contratações bem-sucedidas; quem só ouviu falar não conta como…
-PASS P03b@390     selo 'Recomendado' só com maioria de contratações bem-sucedidas; quem só ouviu falar não conta como…
+PASS P03b@1440    selo 'Recomendado' só com maioria de contratações bem-sucedidas; quem só ouviu falar não conta como 
+PASS P03b@390     selo 'Recomendado' só com maioria de contratações bem-sucedidas; quem só ouviu falar não conta como 
 PASS P04@1440     benefício: condição, validade, resgate persistente e estado vencido
 PASS P04@390      benefício: condição, validade, resgate persistente e estado vencido
 PASS P05@1440     painel do prestador: pedido recebido → proposta chega a quem pediu, com a mesma ficha pública
@@ -160,30 +192,30 @@ PASS P14@1440     editar transferência: destino e data mudam a fase; origem = d
 PASS P14@390      editar transferência: destino e data mudam a fase; origem = destino é recusado
 PASS P15@1440     nenhuma data exata de terceiros em tela; Desapegos invertido por lado
 PASS P15@390      nenhuma data exata de terceiros em tela; Desapegos invertido por lado
-PASS P16@1440     perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito colater…
-PASS P16@390      perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito colater…
+PASS P16@1440     perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito colatera
+PASS P16@390      perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito colatera
 PASS P17@1440     regra de ingresso aplicada (transição elegível × pedido) e leitura bloqueada a quem não é membro
 PASS P17@390      regra de ingresso aplicada (transição elegível × pedido) e leitura bloqueada a quem não é membro
-PASS P18@1440     fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador não vem …
-PASS P18@390      fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador não vem …
+PASS P18@1440     fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador não vem p
+PASS P18@390      fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador não vem p
 PASS P19@1440     pergunta parecida oferece a existente antes de publicar (dedupe)
 PASS P19@390      pergunta parecida oferece a existente antes de publicar (dedupe)
-PASS P20@1440     consentimento só pelos temas aceitos; 'pedir ajuda' deixa rastro ligado à necessidade e aceite cheg…
-PASS P20@390      consentimento só pelos temas aceitos; 'pedir ajuda' deixa rastro ligado à necessidade e aceite cheg…
+PASS P20@1440     consentimento só pelos temas aceitos; 'pedir ajuda' deixa rastro ligado à necessidade e aceite chega
+PASS P20@390      consentimento só pelos temas aceitos; 'pedir ajuda' deixa rastro ligado à necessidade e aceite chega
 PASS P21@1440     referência com curador nomeado; evidência compartilhada aciona revisão; resposta que ajudou conta
 PASS P21@390      referência com curador nomeado; evidência compartilhada aciona revisão; resposta que ajudou conta
 PASS P22@1440     salvos, presença, resposta e mensagem persistem depois de recarregar
 PASS P22@390      salvos, presença, resposta e mensagem persistem depois de recarregar
 PASS P23@1440     notificações só existem com o estado que as gera; 'Amanhã' só com presença; badge = não lidas
 PASS P23@390      notificações só existem com o estado que as gera; 'Amanhã' só com presença; badge = não lidas
-PASS P24@1440     avanço de tempo gera novidade causal: desapego na janela, resposta à sua pergunta, proposta ao seu …
-PASS P24@390      avanço de tempo gera novidade causal: desapego na janela, resposta à sua pergunta, proposta ao seu …
-PASS P35@1440     Editar preserva todos os campos e o publicado é exatamente a prévia (imóvel, serviço, evento, desap…
-PASS P35@390      Editar preserva todos os campos e o publicado é exatamente a prévia (imóvel, serviço, evento, desap…
+PASS P24@1440     avanço de tempo gera novidade causal: desapego na janela, resposta à sua pergunta, proposta ao seu p
+PASS P24@390      avanço de tempo gera novidade causal: desapego na janela, resposta à sua pergunta, proposta ao seu p
+PASS P35@1440     Editar preserva todos os campos e o publicado é exatamente a prévia (imóvel, serviço, evento, desape
+PASS P35@390      Editar preserva todos os campos e o publicado é exatamente a prévia (imóvel, serviço, evento, desape
 PASS P25@1440     texto com apóstrofo ou HTML não quebra nem executa
 PASS P25@390      texto com apóstrofo ou HTML não quebra nem executa
-PASS P26@1440     gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair da pági…
-PASS P26@390      gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair da pági…
+PASS P26@1440     gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair da págin
+PASS P26@390      gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair da págin
 PASS P27@1440+390 todo controle com data-act produz efeito, nas páginas e nas gavetas (1440 e 390)
 PASS P34@1440     nenhuma fonte, script ou folha de estilo de terceiro é pedida; Public Sans auto-hospedada carrega
 PASS P34@390      nenhuma fonte, script ou folha de estilo de terceiro é pedida; Public Sans auto-hospedada carrega
@@ -192,62 +224,65 @@ PASS P28@390      campos com rótulo, botões com nome, imagens com alt, um item
 PASS P29@1440+390 alvos de toque ≥ 44px nos controles (1440 e 390)
 PASS P30@1440     contraste de texto ≥ 4,5:1 (fora de imagens)
 PASS P30@390      contraste de texto ≥ 4,5:1 (fora de imagens)
-PASS P31@1440+390 390px: sem rolagem horizontal, Contribuir na barra superior e sem botão flutuante, entradas para to…
+PASS P31@1440+390 390px: sem rolagem horizontal, Contribuir na barra superior e sem botão flutuante, entradas para tod
 PASS P32@1440     sem texto de bastidor; 'por que apareceu' no máximo uma vez por card e nunca em anúncio
 PASS P32@390      sem texto de bastidor; 'por que apareceu' no máximo uma vez por card e nunca em anúncio
 PASS P33@1440     estados: zero, um e muitos; vencido; sem resposta; resolvido; interessado; salvo
 PASS P33@390      estados: zero, um e muitos; vencido; sem resposta; resolvido; interessado; salvo
-PASS P36@1440     ícones são SVG do sprite (nenhum glifo Unicode como ícone), todo <use> resolve, nenhum texto < 12 p…
-PASS P36@390      ícones são SVG do sprite (nenhum glifo Unicode como ícone), todo <use> resolve, nenhum texto < 12 p…
-PASS P37@1440     paleta de comandos: abre, filtra, setas movem a seleção, Enter navega e foca a tela, Esc e Ctrl+K f…
-PASS P37@390      paleta de comandos: abre, filtra, setas movem a seleção, Enter navega e foca a tela, Esc e Ctrl+K f…
-PASS P38@1440     atalhos: g + letra navega, / abre a paleta, ? abre o quadro; nada dispara dentro de campo de texto …
-PASS P38@390      atalhos: g + letra navega, / abre a paleta, ? abre o quadro; nada dispara dentro de campo de texto …
+PASS P36@1440     ícones são SVG do sprite (nenhum símbolo Unicode em texto além de → de rota, $, + e as setas de tecl
+PASS P36@390      ícones são SVG do sprite (nenhum símbolo Unicode em texto além de → de rota, $, + e as setas de tecl
+PASS P37@1440     paleta de comandos: abre, filtra, setas movem a seleção, Enter navega e foca a tela, Esc e Ctrl+K fe
+PASS P37@390      paleta de comandos: abre, filtra, setas movem a seleção, Enter navega e foca a tela, Esc e Ctrl+K fe
+PASS P38@1440     atalhos: g + letra navega, / abre a paleta, ? abre o quadro; nada dispara dentro de campo de texto n
+PASS P38@390      atalhos: g + letra navega, / abre a paleta, ? abre o quadro; nada dispara dentro de campo de texto n
 PASS P39@1440     trilha nas telas de segundo nível volta ao pai; título e anúncio acompanham a página
 PASS P39@390      trilha nas telas de segundo nível volta ao pai; título e anúncio acompanham a página
-PASS P40@1440     janela: clique no fundo fecha, selecionar texto e soltar fora não fecha, rolagem do fundo trava; no…
-PASS P40@390      janela: clique no fundo fecha, selecionar texto e soltar fora não fecha, rolagem do fundo trava; no…
-PASS P41@1440     com preferência normal a troca de tela e a janela animam; com movimento reduzido nenhuma passa de 1…
-PASS P41@390      com preferência normal a troca de tela e a janela animam; com movimento reduzido nenhuma passa de 1…
-PASS P42@1440     botão ⋯: abre com foco no 1º item, setas/Home/End/letra movem, Esc devolve o foco ao botão, Tab fec…
-PASS P42@390      botão ⋯: abre com foco no 1º item, setas/Home/End/letra movem, Esc devolve o foco ao botão, Tab fec…
-PASS P43@1440     varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique …
-PASS P43@390      varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique …
-PASS P44@1440     ocultar, denunciar, arquivar, silenciar e dispensar mudam o estado de verdade, têm 'Desfazer' e fic…
-PASS P44@390      ocultar, denunciar, arquivar, silenciar e dispensar mudam o estado de verdade, têm 'Desfazer' e fic…
-PASS P45@1440     portas alternativas: clique direito e tecla de menu abrem o mesmo menu; toque longo abre a folha se…
-PASS P45@390      portas alternativas: clique direito e tecla de menu abrem o mesmo menu; toque longo abre a folha se…
-PASS P46@1440     validação inline: erro junto do campo (aria-invalid + aria-describedby), foco no primeiro, nada é e…
-PASS P46@390      validação inline: erro junto do campo (aria-invalid + aria-describedby), foco no primeiro, nada é e…
-PASS P47@1440     ligar conversa a uma necessidade: sem nenhuma necessidade ativa o formulário abre com uma opção mar…
-PASS P47@390      ligar conversa a uma necessidade: sem nenhuma necessidade ativa o formulário abre com uma opção mar…
+PASS P40@1440     janela: clique no fundo fecha, selecionar texto e soltar fora não fecha, rolagem do fundo trava; no 
+PASS P40@390      janela: clique no fundo fecha, selecionar texto e soltar fora não fecha, rolagem do fundo trava; no 
+PASS P41@1440     com preferência normal a troca de tela e a janela animam; com movimento reduzido nenhuma passa de 1 
+PASS P41@390      com preferência normal a troca de tela e a janela animam; com movimento reduzido nenhuma passa de 1 
+PASS P42@1440     botão ⋯: abre com foco no 1º item, setas/Home/End/letra movem, Esc devolve o foco ao botão, Tab fech
+PASS P42@390      botão ⋯: abre com foco no 1º item, setas/Home/End/letra movem, Esc devolve o foco ao botão, Tab fech
+PASS P43@1440     varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique d
+PASS P43@390      varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique d
+PASS P44@1440     ocultar, denunciar, arquivar, silenciar e dispensar mudam o estado de verdade, têm 'Desfazer' e fica
+PASS P44@390      ocultar, denunciar, arquivar, silenciar e dispensar mudam o estado de verdade, têm 'Desfazer' e fica
+PASS P45@1440     portas alternativas: clique direito e tecla de menu abrem o mesmo menu; toque longo abre a folha sem
+PASS P45@390      portas alternativas: clique direito e tecla de menu abrem o mesmo menu; toque longo abre a folha sem
+PASS P46@1440     validação inline: erro junto do campo (aria-invalid + aria-describedby), foco no primeiro, nada é en
+PASS P46@390      validação inline: erro junto do campo (aria-invalid + aria-describedby), foco no primeiro, nada é en
+PASS P47@1440     ligar conversa a uma necessidade: sem nenhuma necessidade ativa o formulário abre com uma opção marc
+PASS P47@390      ligar conversa a uma necessidade: sem nenhuma necessidade ativa o formulário abre com uma opção marc
 
 93/93 verificações passaram (48 sondas; a maioria roda em 1440 e em 390 px)
 ```
 
-`node docs/design/prototype-v35/mutate.mjs`, saída 0 (18 quebras, 18 detectadas):
+`MOTION=normal node docs/design/prototype-v35/verify.mjs` (animação e transição ligadas), saída 0: as mesmas
+93 linhas `PASS`, nenhuma `FAIL`, e a mesma linha final `93/93 verific`.
+
+`node docs/design/prototype-v35/mutate.mjs`, saída 0 (19 quebras, 19 detectadas):
 
 ```
-DETECTADA      M1 anúncio entra no orgânico → FAIL P01@1440     anúncio nunca aparece na zona orgânica do Resolver (5…
-DETECTADA      M2 busca cria necessidade → FAIL P06@1440     as 5 buscas do roteiro criam 0 necessidades; 'Acompanhar…
-DETECTADA      M3 orçamento ancora na mudança → FAIL P07@1440     orçamento pelo catálogo não toca na necessidade de …
-DETECTADA      M4 evidência guarda texto livre → FAIL P18@1440     fechar necessidade com nome de criança não deixa o…
-DETECTADA      M5 entra na comunidade sem confirmar → FAIL P16@1440     perguntar exige entrar (com consentimento), e…
-DETECTADA      M6 gaveta sem role=dialog → FAIL P26@1440     gaveta é diálogo: foco entra e fica, Esc fecha e devolve…
-DETECTADA      M8 o tempo passa e o pedido não recebe proposta → FAIL P24@1440     avanço de tempo gera novidade caus…
-DETECTADA      M9 Editar descarta o que a pessoa preencheu → FAIL P35@1440     Editar preserva todos os campos e o pu…
-DETECTADA      M10 atalho dispara dentro de campo de texto → FAIL P38@1440     atalhos: g + letra navega, / abre a pa…
-DETECTADA      M11 selecionar texto e soltar fora fecha a janela → FAIL P40@1440     janela: clique no fundo fecha, s…
-DETECTADA      M12 anúncio ganha 'por que apareceu' no menu → FAIL P43@1440     varredura: cada item de cada menu (15…
-DETECTADA      M13 ocultar não oculta → FAIL P44@1440     ocultar, denunciar, arquivar, silenciar e dispensar mudam o…
-DETECTADA      M14 Desfazer do salvamento não desfaz → FAIL P44@1440     ocultar, denunciar, arquivar, silenciar e di…
-DETECTADA      M15 validação inline desligada → FAIL P46@1440     validação inline: erro junto do campo (aria-invalid…
-DETECTADA      M16 botão ⋯ escondido → FAIL P43@1440     varredura: cada item de cada menu (15 tipos) faz efeito; bot…
-DETECTADA      M17 clique direito não abre o menu → FAIL P43@1440     varredura: cada item de cada menu (15 tipos) fa…
-DETECTADA      M18 ligar conversa sem necessidade estoura → FAIL P47@1440     ligar conversa a uma necessidade: sem n…
-DETECTADA      M7 data exata de terceiros → FAIL P15@1440     nenhuma data exata de terceiros em tela; Desapegos inve…
+DETECTADA      M1 anúncio entra no orgânico → FAIL P01@1440     anúncio nunca aparece na zona orgânica do Resolver (5 
+DETECTADA      M2 busca cria necessidade → FAIL P06@1440     as 5 buscas do roteiro criam 0 necessidades; 'Acompanhar'
+DETECTADA      M3 orçamento ancora na mudança → FAIL P07@1440     orçamento pelo catálogo não toca na necessidade de m
+DETECTADA      M4 evidência guarda texto livre → FAIL P18@1440     fechar necessidade com nome de criança não deixa o 
+DETECTADA      M5 entra na comunidade sem confirmar → FAIL P16@1440     perguntar exige entrar (com consentimento), ed
+DETECTADA      M6 gaveta sem role=dialog → FAIL P26@1440     gaveta é diálogo: foco entra e fica, Esc fecha e devolve 
+DETECTADA      M8 o tempo passa e o pedido não recebe proposta → FAIL P24@1440     avanço de tempo gera novidade causa
+DETECTADA      M9 Editar descarta o que a pessoa preencheu → FAIL P35@1440     Editar preserva todos os campos e o pub
+DETECTADA      M10 atalho dispara dentro de campo de texto → FAIL P38@1440     atalhos: g + letra navega, / abre a pal
+DETECTADA      M11 selecionar texto e soltar fora fecha a janela → FAIL P40@1440     janela: clique no fundo fecha, se
+DETECTADA      M12 anúncio ganha 'por que apareceu' no menu → FAIL P43@1440     varredura: cada item de cada menu (15 
+DETECTADA      M13 ocultar não oculta → FAIL P44@1440     ocultar, denunciar, arquivar, silenciar e dispensar mudam o 
+DETECTADA      M14 Desfazer do salvamento não desfaz → FAIL P44@1440     ocultar, denunciar, arquivar, silenciar e dis
+DETECTADA      M15 validação inline desligada → FAIL P46@1440     validação inline: erro junto do campo (aria-invalid 
+DETECTADA      M16 botão ⋯ escondido → FAIL P43@1440     varredura: cada item de cada menu (15 tipos) faz efeito; botã
+DETECTADA      M17 clique direito não abre o menu → FAIL P43@1440     varredura: cada item de cada menu (15 tipos) faz
+DETECTADA      M18 ligar conversa sem necessidade estoura → FAIL P47@1440     ligar conversa a uma necessidade: sem ne
+DETECTADA      M19 símbolo Unicode volta como ícone → FAIL P36@1440     ícones são SVG do sprite (nenhum símbolo Unico
+DETECTADA      M7 data exata de terceiros → FAIL P15@1440     nenhuma data exata de terceiros em tela; Desapegos inver
 todas as mutações detectadas
-exit 0
 ```
 
 `npx pnpm@11.18.0 gate`: lint, typecheck, test (117 de scope, 0 falhas) e secrets verdes. O passo `build` **não
@@ -274,6 +309,13 @@ Do revisor automático do PR:
 - **A regra 1 do plano era declarada e não medida, e por leitura era falsa** (em Conversas, "Silenciar" e
   "Arquivar" só existem no menu). A regra foi reescrita para o que é verdade e passa a ser medido: botão ⋯
   visível e na ordem de Tab nos 15 tipos, e clique direito com a mesma lista do botão (P43); mutantes M16 e M17.
+- **A suíte rodava só com movimento reduzido**, o que podia esconder defeitos que só existem com movimento ligado
+  (foi assim que o atraso do menu passou). Agora `MOTION=normal` roda a mesma suíte com animação e transição, as
+  duas passam, e o README diz qual modo é o padrão e por quê.
+- **O README dizia que três sondas herdadas mudaram; eram oito** (P03, P03b, P07, P13, P27, P29, P31, P32). A
+  lista exata está no README.
+- **A P36 não pegava o `❯`** (categoria Unicode "Pe", fora da lista de símbolos). A regex passou a cobrir os
+  colchetes ornamentais, o mutante M19 reintroduz o glifo e é detectado.
 
 ## O que continua sem prova
 

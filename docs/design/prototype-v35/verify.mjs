@@ -26,6 +26,9 @@ const DESK = { width: 1440, height: 900 },
   MOB = { width: 390, height: 844 }
 const results = []
 const pageErrors = []
+// Por padrão as sondas rodam com movimento reduzido (medidas estáveis). MOTION=normal roda a suíte inteira
+// com animação e transição ligadas, que é o que a maioria das pessoas recebe.
+const MOTION = process.env.MOTION === "normal" ? "no-preference" : "reduce"
 
 let CUR = DESK
 const VPS = [
@@ -34,7 +37,7 @@ const VPS = [
 ]
 const ONCE = new Set(["P27", "P29", "P31"]) // já percorrem os dois viewports por conta própria
 async function fresh(vp = CUR) {
-  const ctx = await browser.newContext({ viewport: vp, reducedMotion: "reduce" })
+  const ctx = await browser.newContext({ viewport: vp, reducedMotion: MOTION })
   const page = await ctx.newPage()
   page.on("pageerror", (e) => pageErrors.push(e.message))
   await page.route(/unsplash\.com|fonts\.(googleapis|gstatic)\.com/, (r) => r.abort())
@@ -47,6 +50,16 @@ const S = (page, f, arg) =>
     `(() => { const S = __bv.S; const arg = ${JSON.stringify(arg ?? null)}; return (${f.toString()})(S, arg) })()`,
   )
 const go = (page, p, params = {}) => page.evaluate(([p, params]) => __bv.go(p, params), [p, params])
+// espera as animações finitas terminarem (as infinitas, como o esqueleto de imagem, não contam)
+const settle = (page) =>
+  page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getComputedTiming().iterations !== Number.POSITIVE_INFINITY)
+        .map((a) => a.finished.catch(() => {})),
+    ),
+  )
 const view = (page) => page.evaluate(() => document.querySelector("#view").innerText)
 const drawer = (page) =>
   page.evaluate(() =>
@@ -1855,13 +1868,13 @@ await probe(
 await probe(
   "P36",
   "Visual",
-  "ícones são SVG do sprite (nenhum glifo Unicode como ícone), todo <use> resolve, nenhum texto < 12 px, mídia com reserva quando a foto falha",
+  "ícones são SVG do sprite (nenhum símbolo Unicode em texto além de → de rota, $, + e as setas de teclado), todo <use> resolve, nenhum texto < 12 px, mídia com reserva quando a foto falha",
   async () => {
     const { ctx, page } = await fresh()
     const bad = []
     const scan = async (label) => {
       const r = await page.evaluate(() => {
-        const glyph = /[⌂⌕◎◌○▤▱◫◇✦⌁⇄✎✚☑⌖↗♥♡✔✓▾＋♧●×›‹]/g
+        const glyph = /[\p{S}\u2768-\u2775›‹«»]/gu
         const txt = `${document.getElementById("app").innerText}\n${document.getElementById("drawer").innerText}`
         const small = []
         document.querySelectorAll("#app *, #drawer *").forEach((e) => {
@@ -1874,7 +1887,7 @@ await probe(
             )
         })
         return {
-          glyphs: [...new Set(txt.match(glyph) || [])],
+          glyphs: [...new Set(txt.match(glyph) || [])].filter((c) => !"→$+↑↓⌘".includes(c)),
           small: [...new Set(small)],
           orphan: [...document.querySelectorAll("use")]
             .map((u) => u.getAttribute("href"))
@@ -2135,7 +2148,7 @@ await probe(
       bad.push("rolagem do fundo não destrava")
     if (MOBILE()) {
       await A(page, "openObj", { dtype: "provider", id: "p-amazon" })
-      await page.waitForTimeout(150)
+      await settle(page)
       const h = await page.locator(".sheet-handle").boundingBox()
       await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2)
       await page.mouse.down()
@@ -2230,6 +2243,7 @@ await probe(
     )
       bad.push("botão sem aria-haspopup/aria-expanded=false")
     await kb.click()
+    await settle(page)
     const o = await page.evaluate(() => {
       const m = document.getElementById("ctxMenu")
       const r = m?.getBoundingClientRect()
@@ -2600,7 +2614,7 @@ await probe(
     const mctx = await browser.newContext({
       viewport: MOB,
       hasTouch: true,
-      reducedMotion: "reduce",
+      reducedMotion: MOTION,
     })
     const mp = await mctx.newPage()
     mp.on("pageerror", (e) => pageErrors.push(e.message))
