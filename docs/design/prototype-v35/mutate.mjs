@@ -1,5 +1,6 @@
 // Teste de mutação: quebra de propósito invariantes e confirma que a sonda certa acusa cada uma.
 // Uso: node docs/design/prototype-v35/mutate.mjs   (termina em 0 só se TODAS as quebras forem detectadas)
+//      MUT=M9,M15 node docs/design/prototype-v35/mutate.mjs   (só algumas, para depurar)
 // Frágil de propósito: cada mutação troca um trecho exato do HTML. Se o trecho mudar, o script avisa.
 
 import { spawnSync } from "node:child_process"
@@ -113,6 +114,50 @@ const muts = [
     '<span class="arrow" aria-hidden="true">❯</span>',
   ],
   [
+    "M20 texto cru na tela (template dentro de aspas simples)",
+    "P36",
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: trecho literal do HTML a ser substituído
+    '`<small class="good">${ic("check")} A que mais ajudou</small>`',
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: trecho literal do HTML a ser substituído
+    '\'<small class="good">${ic("check")} A que mais ajudou</small>\'',
+  ],
+  [
+    "M21 Enter na paleta não navega",
+    "P37",
+    'A[it.run.act](it.run.d || {}, document.createElement("button"))',
+    "void it",
+  ],
+  [
+    "M22 título da página não acompanha a tela",
+    "P39",
+    'PAGE_TITLE[route.page]) || "Bivaque"} · Bivaque, protótipo v35',
+    'PAGE_TITLE.home) || "Bivaque"} · Bivaque, protótipo v35',
+  ],
+  [
+    "M23 movimento reduzido ignorado",
+    "P41",
+    "@media (prefers-reduced-motion:reduce){",
+    "@media (prefers-reduced-motion:no-preference-off){",
+  ],
+  [
+    "M24 Esc não devolve o foco ao botão ⋯",
+    "P42",
+    "if (restore && document.contains(trigger)) trigger.focus()",
+    "if (restore && document.contains(trigger)) document.body.focus()",
+  ],
+  [
+    "M25 toque longo também abre o cartão",
+    "P45",
+    "suppressClick = Date.now(); openMenuFor(c, { x, y })",
+    "openMenuFor(c, { x, y })",
+  ],
+  [
+    "M26 anúncio próprio oferece o menu de terceiros",
+    "P43",
+    'return own ? [detail("housing", "Ver detalhes"), sep, { label: "Encerrar anúncio"',
+    'return false ? [detail("housing", "Ver detalhes"), sep, { label: "Encerrar anúncio"',
+  ],
+  [
     "M7 data exata de terceiros",
     "P15",
     'return (+d <= 10 ? "início de " : +d <= 20 ? "meados de " : "fim de ") + mon',
@@ -121,7 +166,9 @@ const muts = [
 ]
 const dir = mkdtempSync(join(tmpdir(), "bv35-"))
 let ok = true
+const only = process.env.MUT ? new Set(process.env.MUT.split(",")) : null // ex.: MUT=M9,M15
 for (const [name, probe, old, neu] of muts) {
+  if (only && !only.has(name.split(" ")[0])) continue
   if (!src.includes(old)) {
     console.log("!! trecho não encontrado (o HTML mudou):", name)
     ok = false
@@ -134,9 +181,21 @@ for (const [name, probe, old, neu] of muts) {
     encoding: "utf8",
   })
   const lines = r.stdout.split("\n").filter((l) => /^(PASS|FAIL) /.test(l))
-  const line = lines.find((l) => l.startsWith("FAIL")) || lines[0] || ""
-  const caught = lines.some((l) => l.startsWith("FAIL"))
-  console.log(`${(caught ? "DETECTADA      " : "NÃO DETECTADA  ") + name} → ${line.slice(0, 110)}`)
+  // Só conta como detectada uma falha de ASSERÇÃO. Uma sonda que falha porque a página quebrou
+  // (exceção da própria sonda ou erro de JavaScript na página) prova que o mutante estragou algo,
+  // não que a sonda enxerga a violação que ele representa.
+  // Falha de asserção = sobra texto de asserção depois de tirar o "erro JS" anexado; "exceção:" sozinha
+  // significa que a sonda nem chegou a concluir (ex.: esgotou o tempo esperando um botão que sumiu).
+  const assertion = (l) => {
+    const main = l.split("→").slice(1).join("→").split(" · erro JS:")[0].trim()
+    return main !== "" && !main.startsWith("exceção:")
+  }
+  const fails = lines.filter((l) => l.startsWith("FAIL"))
+  const asserted = fails.filter(assertion)
+  const caught = asserted.length > 0
+  const line = asserted[0] || fails[0] || lines[0] || ""
+  const tag = caught ? "DETECTADA      " : fails.length ? "SÓ QUEBROU A PÁGINA " : "NÃO DETECTADA  "
+  console.log(`${tag + name} → ${line.slice(0, 110)}`)
   ok = ok && caught
 }
 rmSync(dir, { recursive: true, force: true })

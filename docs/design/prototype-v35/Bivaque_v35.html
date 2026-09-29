@@ -2418,7 +2418,7 @@ DR.thread = (id) => {
   if (!isMember(c.id)) { A.openJoin({ id: c.id }); return }
   const r = repliesOf(t); const done = S.resolvedThreads[id]
   openDrawer(`${drawerHead(t.title, `${c.name} · ${r.length} respostas`, done ? '<span class="badge good">Resolvida</span>' : "")}
-    <div>${r.map((x, i) => `<div class="thread-response"><b>${esc(x[0])}</b><p>${esc(x[1])}</p>${t.own && !done ? `<button class="link-btn" data-act="resolveThread" data-id="${id}" data-i="${i}">Esta resposta ajudou</button>` : done && done.i === i ? '<small class="good">${ic("check")} A que mais ajudou</small>' : ""}</div>`).join("") || '<p class="muted">Ainda sem respostas. Quando alguém responder, você recebe uma notificação.</p>'}</div>
+    <div>${r.map((x, i) => `<div class="thread-response"><b>${esc(x[0])}</b><p>${esc(x[1])}</p>${t.own && !done ? `<button class="link-btn" data-act="resolveThread" data-id="${id}" data-i="${i}">Esta resposta ajudou</button>` : done && done.i === i ? `<small class="good">${ic("check")} A que mais ajudou</small>` : ""}</div>`).join("") || '<p class="muted">Ainda sem respostas. Quando alguém responder, você recebe uma notificação.</p>'}</div>
     <form class="composer-line" data-form="postReply" data-id="${id}"><label class="sr-only" for="rp">Sua resposta</label><input id="rp" name="text" autocomplete="off" placeholder="Compartilhe sua experiência" required><button class="primary" type="submit">Responder</button></form>`)
 }
 A.postReply = (d, f) => {

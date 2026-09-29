@@ -1145,9 +1145,17 @@ await probe(
       await page.click("#drawer button[type=submit]")
       await page.click("#drawer [data-act=offerBack]")
       const depois = await read(sels)
+      let diverged = false
       for (const q of sels)
-        if (antes[q] !== depois[q])
+        if (antes[q] !== depois[q]) {
           bad.push(`${type} ${q}: "${antes[q]}" virou "${depois[q]}" depois de Editar`)
+          diverged = true
+        }
+      if (diverged) {
+        // campos em branco não passam da validação: seguir só produziria um erro de tempo esgotado
+        await A(page, "closeDrawer")
+        continue
+      }
       await page.click("#drawer button[type=submit]")
       await page.click("#drawer [data-act=offerPublish]")
       await page.waitForTimeout(60)
@@ -1868,7 +1876,7 @@ await probe(
 await probe(
   "P36",
   "Visual",
-  "ícones são SVG do sprite (nenhum símbolo Unicode em texto além de → de rota, $, + e as setas de teclado), todo <use> resolve, nenhum texto < 12 px, mídia com reserva quando a foto falha",
+  "ícones são SVG do sprite (nenhum símbolo Unicode em texto além de → de rota, $, + e as setas de teclado), todo <use> resolve, nenhum texto < 12 px, nenhum texto cru (${, [object, undefined, NaN), mídia com reserva quando a foto falha",
   async () => {
     const { ctx, page } = await fresh()
     const bad = []
@@ -1893,12 +1901,14 @@ await probe(
             .map((u) => u.getAttribute("href"))
             .filter((h) => !document.querySelector(h)),
           noUse: document.querySelectorAll("svg.ic:not(:has(use))").length,
+          raw: (txt.match(/\$\{|\[object |\bundefined\b|\bNaN\b/) || [])[0] || "",
         }
       })
       if (r.glyphs.length) bad.push(`${label}: glifo ${r.glyphs.join("")}`)
       if (r.small.length) bad.push(`${label}: texto < 12px ${r.small.slice(0, 2).join(",")}`)
       if (r.orphan.length) bad.push(`${label}: <use> sem símbolo ${r.orphan[0]}`)
       if (r.noUse) bad.push(`${label}: svg.ic sem <use>`)
+      if (r.raw) bad.push(`${label}: texto cru na tela (${r.raw})`)
     }
     for (const [p, params] of [
       ["home", {}],
@@ -1933,6 +1943,10 @@ await probe(
       await scan(a[0])
       await A(page, "closeDrawer")
     }
+    await A(page, "resolveThread", { id: "t-neigh", i: 0 })
+    await A(page, "openObj", { dtype: "thread", id: "t-neigh" })
+    await scan("pergunta resolvida")
+    await A(page, "closeDrawer")
     await go(page, "services", { side: "origin" })
     await page.waitForTimeout(250)
     const fb = await page.evaluate(() => {
@@ -2381,11 +2395,90 @@ const MENU_CASES = [
     "#results .result-card .kebab",
     { has: ["Pedir orçamento"] },
   ],
+  // Anúncio próprio: a lista é outra (encerrar em vez de ocultar ou denunciar). A publicação é semeada
+  // direto no estado porque o teste de menu não quer depender do formulário.
+  [
+    "imóvel próprio",
+    "housing",
+    { side: "origin" },
+    ".listing[data-mown] .kebab",
+    { has: ["Ver detalhes", "Encerrar anúncio"], not: /Ocultar|Denunciar|Por que apareceu/ },
+    (page) =>
+      page.evaluate(() => {
+        __bv.S.own.housing.unshift({
+          id: "h-own1",
+          mine: true,
+          city: "manaus",
+          title: "Apartamento",
+          bairro: "Flores",
+          beds: 2,
+          m2: 0,
+          rent: 2000,
+          from: "2026-11-01",
+          furnished: false,
+          tags: ["apartamento"],
+          img: "1600210492486-724fe5c67fb0",
+          owner: "Você",
+        })
+      }),
+  ],
+  [
+    "desapego próprio",
+    "market",
+    { side: "origin" },
+    ".listing[data-mown] .kebab",
+    { has: ["Ver detalhes", "Encerrar anúncio"], not: /Ocultar|Denunciar|Falar com/ },
+    (page) =>
+      page.evaluate(() => {
+        __bv.S.own.market.unshift({
+          id: "m-own1",
+          mine: true,
+          city: "manaus",
+          title: "Cadeira",
+          price: 120,
+          cat: "moveis",
+          window: "2026-10-10",
+          seller: "Você",
+          img: "1555041469-a586c61ea9bc",
+          appears: 0,
+        })
+      }),
+  ],
+  [
+    "evento próprio",
+    "events",
+    { side: "origin" },
+    ".listing[data-mown] .kebab",
+    { has: ["Ver detalhes"], not: /Ocultar|Denunciar|Confirmar presença/ },
+    (page) =>
+      page.evaluate(() => {
+        __bv.S.own.events.unshift({
+          id: "e-own1",
+          mine: true,
+          city: "manaus",
+          community: "ajuricaba",
+          title: "Encontro",
+          date: "2026-10-10",
+          time: "10h",
+          place: "Praça",
+          img: "1529156069898-49953e39b3ac",
+          going: 0,
+          organizer: "Você",
+        })
+      }),
+  ],
+  [
+    "pergunta própria",
+    "community",
+    { id: "ajuricaba" },
+    ".question[data-mown] .kebab",
+    { has: ["Abrir pergunta"], not: /Ocultar|Denunciar/ },
+  ],
 ]
 await probe(
   "P43",
   "Menu de contexto",
-  "varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique direito abre a mesma lista; anúncio nunca oferece 'por que apareceu'",
+  "varredura: cada item de cada menu (15 tipos de terceiros e 4 de anúncio próprio) faz efeito; botão ⋯ visível e na ordem de Tab; clique direito abre a mesma lista; anúncio nunca oferece 'por que apareceu'",
   async () => {
     const bad = []
     let total = 0
@@ -2399,10 +2492,11 @@ await probe(
           document.querySelector("#view").innerHTML.length,
         ]),
       )
-    for (const [name, p, params, sel, exp] of MENU_CASES) {
+    for (const [name, p, params, sel, exp, seed] of MENU_CASES) {
       let n = 0
       {
         const { ctx, page } = await fresh()
+        if (seed) await seed(page)
         await go(page, p, params)
         if (!(await page.locator(sel).count())) {
           bad.push(`${name}: sem botão ⋯ em ${p}`)
@@ -2435,6 +2529,7 @@ await probe(
       }
       for (let i = 0; i < n; i++) {
         const { ctx, page } = await fresh()
+        if (seed) await seed(page)
         await go(page, p, params)
         await page.locator(sel).first().click()
         const before = await effect(page)
@@ -2676,19 +2771,33 @@ await probe(
     const state0 = await S(page, (S) =>
       JSON.stringify([S.own, S.needs.length, S.convs.length, S.membership]),
     )
+    // se a validação falhar em segurar o envio, a prévia abre e os campos somem: reabre o formulário
+    // para as verificações seguintes acusarem por asserção, e não por tempo esgotado
+    const reopen = async () => {
+      if (!/Prévia/.test(await drawer(page))) return
+      await A(page, "closeDrawer")
+      await A(page, "openOffer", { type: "sell" })
+    }
     await A(page, "openOffer", { type: "sell" })
     await page.locator("#drawer button[type=submit]").click()
     let t = await info("o-title")
     if (t.inv !== "true" || !/Preencha/.test(t.msg || "") || !t.focus)
       bad.push(`título vazio: ${JSON.stringify(t)}`)
     if ((await info("o-price")).inv !== "true") bad.push("preço vazio sem erro")
-    if (/Prévia/.test(await drawer(page))) bad.push("avançou com campos vazios")
+    if (/Prévia/.test(await drawer(page))) {
+      bad.push("avançou com campos vazios")
+      await reopen()
+    }
     await page.fill("#o-title", "Mesa")
     await page.fill("#o-price", "abc")
     await page.locator("#drawer button[type=submit]").click()
     t = await info("o-price")
     if (t.inv !== "true" || !/número/.test(t.msg || ""))
       bad.push(`preço inválido: ${JSON.stringify(t)}`)
+    if (/Prévia/.test(await drawer(page))) {
+      await reopen()
+      await page.fill("#o-title", "Mesa")
+    }
     await page.fill("#o-price", "120")
     if ((await info("o-price")).inv === "true") bad.push("o erro não some ao corrigir")
     await page.locator("#drawer button[type=submit]").click()
@@ -2699,8 +2808,8 @@ await probe(
     const ck = await page.evaluate(() => {
       const c = document.querySelector("#drawer input[name=ok]")
       return {
-        inv: c.getAttribute("aria-invalid"),
-        msg: document.getElementById(c.getAttribute("aria-describedby") || "x")?.innerText.trim(),
+        inv: c?.getAttribute("aria-invalid"),
+        msg: document.getElementById(c?.getAttribute("aria-describedby") || "x")?.innerText.trim(),
         member: __bv.S.membership.arrivalsBsb,
       }
     })
