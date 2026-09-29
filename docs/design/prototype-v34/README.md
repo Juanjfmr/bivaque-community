@@ -18,6 +18,8 @@ node docs/design/prototype-v34/verify.mjs
 ```
 
 Usa `@playwright/test` (ou `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`). Roda as sondas em 1440 e 390 px.
+`node docs/design/prototype-v34/mutate.mjs` quebra 7 invariantes de propósito e exige que a sonda certa acuse cada uma.
+A saída de referência está no plano, em "Evidência de execução".
 O autoteste do arquivo (`?selftest=1`) é só regressão local e **não** conta como evidência.
 
 ## O que é simulado (e aparece rotulado)
