@@ -630,6 +630,80 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 .check.err{color:var(--rose-600)}
 .check+.err-msg{margin:-4px 0 var(--sp-3) 36px}
 @media(max-width:760px){.proposal-form{grid-template-columns:1fr 1fr}.proposal-form .primary{grid-column:1/-1}}
+
+/* ---- filtros dos catálogos: painel no computador, folha no celular ---- */
+.cat-layout{display:block}
+.fpanel{display:none}
+.cat-main{min-width:0}
+.fbar{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;margin:var(--sp-3) 0}
+.fcount{margin:0;color:var(--ink-2);font-size:var(--fs-md);flex:1;min-width:180px}
+.fbtn{display:inline-flex;align-items:center;gap:var(--sp-2)}
+.fbtn .ic{width:18px;height:18px}
+.fsort{display:inline-flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-sm);color:var(--muted)}
+.fsort select{border:1px solid var(--line-2);border-radius:var(--r-md);min-height:44px;padding:0 var(--sp-3);background:var(--surface);font-size:var(--fs-md);color:var(--ink)}
+.active-filters{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center;margin:0 0 var(--sp-4)}
+.fpill{display:inline-flex;align-items:center;gap:2px;min-height:44px;padding:0 0 0 var(--sp-3);border:1px solid var(--pine-2);background:var(--pine-50);color:var(--pine);border-radius:var(--r-pill);font-size:var(--fs-sm);font-weight:600}
+.fpill button{min-width:44px;min-height:44px;border:0;background:transparent;color:var(--pine);display:inline-grid;place-items:center;border-radius:50%;cursor:pointer}
+.fpill button:hover{background:var(--pine-100)}
+.fpill .ic{width:16px;height:16px}
+.fgroup{border-top:1px solid var(--line)}
+.fgroup>summary{list-style:none;display:flex;align-items:center;gap:var(--sp-2);min-height:48px;cursor:pointer;font-weight:700;font-size:var(--fs-md);color:var(--ink)}
+.fgroup>summary::-webkit-details-marker{display:none}
+.fgroup>summary>span:first-child{flex:1}
+.fgroup>summary .ic{width:18px;height:18px;color:var(--muted);transition:transform var(--dur-2) var(--ease)}
+.fgroup[open]>summary .ic{transform:rotate(180deg)}
+.fgroup>summary:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
+.fsel{background:var(--pine);color:#fff;border-radius:var(--r-pill);min-width:22px;height:22px;display:inline-grid;place-items:center;font-size:var(--fs-xs);padding:0 6px;font-weight:800}
+.fbody{padding:0 0 var(--sp-3)}
+.fcheck{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-size:var(--fs-md)}
+.fcheck input{width:20px;height:20px;accent-color:var(--pine);flex:none;margin:0}
+.fcheck .fl{flex:1}
+.fcheck .fc{color:var(--muted);font-size:var(--fs-xs);font-variant-numeric:tabular-nums}
+.fcheck.off{cursor:not-allowed}
+.fcheck.off .fl,.fcheck.off .fc{color:var(--muted)}
+.fchecks{display:grid}
+.fchips{display:flex;flex-wrap:wrap;gap:var(--sp-2)}
+.fchip{position:relative;display:inline-flex;min-height:44px;min-width:44px}
+.fchip input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer}
+.fchip span{display:inline-flex;align-items:center;justify-content:center;width:100%;padding:0 var(--sp-4);border:1px solid var(--line-2);border-radius:var(--r-pill);font-size:var(--fs-md);background:var(--surface);color:var(--ink)}
+.fchip input:checked+span{background:var(--pine);border-color:var(--pine);color:#fff}
+.fchip input:focus-visible+span{outline:3px solid var(--focus);outline-offset:2px}
+.fchip.off span{background:var(--surface-2);color:var(--muted);border-style:dashed}
+.fchip .fc{margin-left:6px;font-style:normal;font-size:var(--fs-xs)}
+.frange{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2)}
+.frange .field,.fbody>.field{margin-bottom:var(--sp-2)}
+.fhint{margin:4px 0 0;color:var(--muted);font-size:var(--fs-sm)}
+.fp-head{display:flex;align-items:center;justify-content:space-between;min-height:52px}
+.fp-head h2{font-size:var(--fs-lg);margin:0}
+.link-btn:disabled{opacity:1;color:var(--muted)}
+.svc-tags{color:var(--muted);font-size:var(--fs-sm);margin-top:2px}
+.facts{display:grid;grid-template-columns:max-content 1fr;gap:6px var(--sp-4);margin:var(--sp-2) 0 var(--sp-3)}
+.facts>div{display:contents}
+.facts dt{color:var(--muted);font-size:var(--fs-sm)}
+.facts dd{margin:0;font-size:var(--fs-md);color:var(--ink)}
+.no-results .choice-row{justify-content:center;margin-top:var(--sp-3)}
+.no-results .fhint{margin:var(--sp-2) 0}
+.drawer.filters{padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:min(88vh,780px)}
+.fs-head{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--line)}
+.fs-head h2{margin:0;font-size:var(--fs-xl);font-weight:800}
+.fs-body{flex:1;overflow:auto;padding:0 var(--sp-5)}
+.fs-foot{display:flex;gap:var(--sp-3);padding:var(--sp-3) var(--sp-5) calc(var(--sp-3) + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface)}
+.fs-foot .primary{flex:1}
+@media(min-width:1081px){
+  .cat-layout{display:grid;grid-template-columns:minmax(250px,290px) minmax(0,1fr);gap:var(--sp-6);align-items:start}
+  .fpanel{display:block;position:sticky;top:calc(var(--topbar) + var(--sp-3));max-height:calc(100vh - var(--topbar) - var(--sp-6));overflow:auto;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:0 var(--sp-4) var(--sp-3)}
+  .fbtn{display:none}
+  .fbar{margin-top:0}
+}
+@media(max-width:760px){
+  .drawer.filters{height:88vh;max-height:88vh;border-radius:var(--r-xl) var(--r-xl) 0 0;padding:0}
+  .drawer.filters .sheet-handle{margin:0;height:24px}
+  .fbar .fsort{flex:1 1 100%}
+  .fsort select{flex:1}
+  .fbar .fbtn{flex:1}
+}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0 var(--sp-3)}
+.fchecks .fcheck{min-height:44px}
 </style>
 </head>
 <body>
@@ -687,6 +761,7 @@ const ICONS = {
   "chevron-right": '<path d="m9 6 6 6-6 6"/>',
   "chevron-left": '<path d="m15 6-6 6 6 6"/>',
   "chevron-down": '<path d="m6 9 6 6 6-6"/>',
+  sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
   x: '<path d="M6 6l12 12M18 6 6 18"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   "check-circle": '<circle cx="12" cy="12" r="9"/><path d="m8.5 12.3 2.4 2.4 4.6-5"/>',
@@ -761,16 +836,27 @@ const E = (providerId, result, kind, month, community) => ({ providerId, result,
 
 const DB = {
   providers: [
-    { id: "p-amazon", name: "Amazon Climatização", city: "manaus", tags: ["climatizacao", "split"], area: "Flores, Dom Pedro, Ponta Negra", about: "Instalação e manutenção de ar-condicionado em Manaus.", img: PH.clim, campaign: { label: "Anúncio" }, benefit: "b-ac", base: 1800 },
-    { id: "p-frio", name: "Frio Norte Refrigeração", city: "manaus", tags: ["climatizacao", "split"], area: "Adrianópolis, Flores, Aleixo", about: "Instalação, limpeza e conserto de split e geladeira.", img: PH.maint, base: 1500 },
-    { id: "p-manut", name: "Manutenção & Reparos", city: "manaus", tags: ["manutencao", "eletrica", "hidraulica", "split"], area: "Flores e Dom Pedro", about: "Elétrica, hidráulica e pequenos reparos.", img: PH.maint, base: 600 },
-    { id: "p-mud", name: "Manaus Mudanças", city: "manaus", tags: ["mudanca", "transporte"], area: "Manaus para todo o Brasil", about: "Mudanças residenciais interestaduais, com embalagem opcional.", img: PH.move, base: 9800 },
-    { id: "p-clinica", name: "Clínica Vida Amazônica", city: "manaus", tags: ["saude", "pediatria"], area: "Adrianópolis", about: "Atendimento para adultos e crianças, com horário de sábado.", img: PH.clinic, campaign: { label: "Parceiro comercial" }, benefit: null, base: 350 },
-    { id: "p-bsb-mud", name: "Cerrado Fretes e Mudanças", city: "brasilia", tags: ["mudanca", "transporte"], area: "Brasília e entorno, rotas para o Norte", about: "Fretes e mudanças com rota Norte–Centro-Oeste.", img: PH.move, base: 8900 },
-    { id: "p-transbrasil", name: "Transbrasil Mudanças", city: "brasilia", tags: ["mudanca", "transporte"], area: "Brasília, rotas nacionais", about: "Mudanças completas com seguro opcional.", img: PH.move, base: 11200 },
-    { id: "p-bsb-clim", name: "Clima Planalto", city: "brasilia", tags: ["climatizacao", "split"], area: "Asa Norte, Sudoeste, Águas Claras", about: "Instalação e manutenção de climatização.", img: PH.clim, base: 1400 },
-    { id: "p-bsb-saude", name: "Clínica Ipê Pediatria", city: "brasilia", tags: ["saude", "pediatria"], area: "Asa Norte e Noroeste", about: "Pediatria e vacinação, com agenda para quem acaba de chegar.", img: PH.clinic, base: 380 },
-    { id: "p-bsb-manut", name: "Reparos Sudoeste", city: "brasilia", tags: ["manutencao", "eletrica", "hidraulica"], area: "Sudoeste e Noroeste", about: "Reparos residenciais e montagem de móveis.", img: PH.maint, base: 450 },
+    { id: "p-amazon", cat: "climatizacao", svc: ["instalacao", "limpeza", "manutencao_ar"], regions: ["Flores", "Dom Pedro", "Ponta Negra"], sat: true, name: "Amazon Climatização", city: "manaus", tags: ["climatizacao", "split"], area: "Flores, Dom Pedro, Ponta Negra", about: "Instalação e manutenção de ar-condicionado em Manaus.", img: PH.clim, campaign: { label: "Anúncio" }, benefit: "b-ac", base: 1800 },
+    { id: "p-frio", cat: "climatizacao", svc: ["instalacao", "limpeza", "manutencao_ar"], regions: ["Adrianópolis", "Flores", "Aleixo"], sat: false, name: "Frio Norte Refrigeração", city: "manaus", tags: ["climatizacao", "split"], area: "Adrianópolis, Flores, Aleixo", about: "Instalação, limpeza e conserto de split e geladeira.", img: PH.maint, base: 1500 },
+    { id: "p-manut", cat: "casa", svc: ["eletrica", "hidraulica"], regions: ["Flores", "Dom Pedro"], sat: true, name: "Manutenção & Reparos", city: "manaus", tags: ["manutencao", "eletrica", "hidraulica", "split"], area: "Flores e Dom Pedro", about: "Elétrica, hidráulica e pequenos reparos.", img: PH.maint, base: 600 },
+    { id: "p-mud", cat: "mudanca", svc: ["interestadual", "embalagem"], regions: ["*"], sat: false, name: "Manaus Mudanças", city: "manaus", tags: ["mudanca", "transporte"], area: "Manaus para todo o Brasil", about: "Mudanças residenciais interestaduais, com embalagem opcional.", img: PH.move, base: 9800 },
+    { id: "p-clinica", cat: "saude", svc: ["pediatria", "clinico", "vacinacao"], regions: ["Adrianópolis"], sat: true, name: "Clínica Vida Amazônica", city: "manaus", tags: ["saude", "pediatria"], area: "Adrianópolis", about: "Atendimento para adultos e crianças, com horário de sábado.", img: PH.clinic, campaign: { label: "Parceiro comercial" }, benefit: null, base: 350 },
+    { id: "p-bsb-mud", cat: "mudanca", svc: ["interestadual"], regions: ["*"], sat: false, name: "Cerrado Fretes e Mudanças", city: "brasilia", tags: ["mudanca", "transporte"], area: "Brasília e entorno, rotas para o Norte", about: "Fretes e mudanças com rota Norte–Centro-Oeste.", img: PH.move, base: 8900 },
+    { id: "p-transbrasil", cat: "mudanca", svc: ["interestadual", "embalagem", "guardamoveis"], regions: ["*"], sat: true, name: "Transbrasil Mudanças", city: "brasilia", tags: ["mudanca", "transporte"], area: "Brasília, rotas nacionais", about: "Mudanças completas com seguro opcional.", img: PH.move, base: 11200 },
+    { id: "p-bsb-clim", cat: "climatizacao", svc: ["instalacao", "manutencao_ar"], regions: ["Asa Norte", "Sudoeste", "Águas Claras"], sat: false, name: "Clima Planalto", city: "brasilia", tags: ["climatizacao", "split"], area: "Asa Norte, Sudoeste, Águas Claras", about: "Instalação e manutenção de climatização.", img: PH.clim, base: 1400 },
+    { id: "p-bsb-saude", cat: "saude", svc: ["pediatria", "vacinacao"], regions: ["Asa Norte", "Noroeste"], sat: false, name: "Clínica Ipê Pediatria", city: "brasilia", tags: ["saude", "pediatria"], area: "Asa Norte e Noroeste", about: "Pediatria e vacinação, com agenda para quem acaba de chegar.", img: PH.clinic, base: 380 },
+    { id: "p-bsb-manut", cat: "casa", svc: ["eletrica", "hidraulica", "montagem"], regions: ["Sudoeste", "Noroeste"], sat: true, name: "Reparos Sudoeste", city: "brasilia", tags: ["manutencao", "eletrica", "hidraulica"], area: "Sudoeste e Noroeste", about: "Reparos residenciais e montagem de móveis.", img: PH.maint, base: 450 },
+    { id: "p-mao-pintura", name: "Cor & Prumo Pinturas", city: "manaus", cat: "casa", svc: ["pintura"], regions: ["Flores", "Adrianópolis", "Aleixo"], sat: true, tags: ["pintura"], area: "Flores, Adrianópolis, Aleixo", about: "Pintura residencial e de saída de imóvel, com laudo de devolução.", img: PH.maint, base: 900 },
+    { id: "p-mao-montagem", name: "Monta Fácil Manaus", city: "manaus", cat: "casa", svc: ["montagem"], regions: ["Ponta Negra", "Dom Pedro", "Flores"], sat: true, tags: ["montagem"], area: "Ponta Negra, Dom Pedro, Flores", about: "Montagem e desmontagem de móveis para quem está chegando ou saindo.", img: PH.maint, base: 180 },
+    { id: "p-mao-baba", name: "Rede Cuidar Babás", city: "manaus", cat: "cuidados", svc: ["baba"], regions: ["Ponta Negra", "Flores", "Dom Pedro"], sat: false, tags: ["cuidados"], area: "Ponta Negra, Flores, Dom Pedro", about: "Babás e cuidadoras com referência conferida, por diária ou mensal.", img: PH.family, base: 120 },
+    { id: "p-mao-reforco", name: "Reforço Ajuricaba", city: "manaus", cat: "cuidados", svc: ["reforco"], regions: ["Flores", "Adrianópolis"], sat: true, tags: ["reforco"], area: "Flores, Adrianópolis", about: "Reforço escolar do 1º ao 9º ano, em grupos pequenos.", img: PH.school, base: 280 },
+    { id: "p-mao-odonto", name: "Sorriso Manauara Odontologia", city: "manaus", cat: "saude", svc: ["odonto"], regions: ["Adrianópolis", "Ponta Negra"], sat: true, tags: ["odonto"], area: "Adrianópolis, Ponta Negra", about: "Odontologia geral e infantil, com horário aos sábados.", img: PH.clinic, base: 200 },
+    { id: "p-mao-frete", name: "Frete Rápido Manaus", city: "manaus", cat: "mudanca", svc: ["local", "embalagem"], regions: ["*"], sat: true, tags: ["frete"], area: "Manaus inteira", about: "Fretes e mudanças dentro de Manaus, com ajudantes.", img: PH.move, base: 450 },
+    { id: "p-bsb-pintura", name: "Prumo Planalto Pinturas", city: "brasilia", cat: "casa", svc: ["pintura"], regions: ["Asa Norte", "Sudoeste", "Noroeste", "Águas Claras"], sat: false, tags: ["pintura"], area: "Asa Norte, Sudoeste, Noroeste", about: "Pintura de apartamentos e casas, com prazo combinado por escrito.", img: PH.maint, base: 1100 },
+    { id: "p-bsb-baba", name: "Lar Doce Cuidadoras", city: "brasilia", cat: "cuidados", svc: ["baba"], regions: ["Asa Norte", "Sudoeste"], sat: false, tags: ["cuidados"], area: "Asa Norte e Sudoeste", about: "Cuidadoras para crianças e idosos, com período de adaptação.", img: PH.family, base: 140 },
+    { id: "p-bsb-reforco", name: "Reforço Eixo", city: "brasilia", cat: "cuidados", svc: ["reforco"], regions: ["Asa Norte", "Águas Claras"], sat: true, tags: ["reforco"], area: "Asa Norte e Águas Claras", about: "Reforço para quem muda de currículo no meio do ano.", img: PH.school, base: 300 },
+    { id: "p-bsb-odonto", name: "Odonto Noroeste", city: "brasilia", cat: "saude", svc: ["odonto"], regions: ["Noroeste", "Sudoeste"], sat: false, tags: ["odonto"], area: "Noroeste e Sudoeste", about: "Clínica odontológica com agenda para quem acabou de chegar.", img: PH.clinic, base: 220 },
+    { id: "p-bsb-frete", name: "Carreto Candango", city: "brasilia", cat: "mudanca", svc: ["local", "guardamoveis"], regions: ["*"], sat: true, tags: ["frete"], area: "Distrito Federal", about: "Fretes locais e guarda-móveis por semana ou por mês.", img: PH.move, base: 520 },
   ],
   evidence: [
     E("p-amazon", "yes", "hired", "2026-09", "ajuricaba"), E("p-amazon", "yes", "hired", "2026-08", "ajuricaba"),
@@ -786,36 +872,76 @@ const DB = {
     E("p-transbrasil", "yes", "hired", "2026-09", "arrivalsBsb"), E("p-transbrasil", "yes", "hired", "2026-08", "arrivalsBsb"),
     E("p-bsb-clim", "yes", "hired", "2026-09", "arrivalsBsb"), E("p-bsb-clim", "yes", "mentioned", "2026-08", "arrivalsBsb"),
     E("p-bsb-saude", "yes", "hired", "2026-09", "arrivalsBsb"), E("p-bsb-saude", "yes", "hired", "2026-09", "arrivalsBsb"),
+    E("p-mao-pintura", "yes", "hired", "2026-09", "ajuricaba"), E("p-mao-pintura", "yes", "hired", "2026-08", "ajuricaba"),
+    E("p-mao-baba", "yes", "hired", "2026-09", "ajuricaba"), E("p-mao-baba", "yes", "mentioned", "2026-08", "ajuricaba"),
+    E("p-mao-frete", "yes", "hired", "2026-08", "ajuricaba"), E("p-mao-frete", "partial", "hired", "2026-09", "ajuricaba"),
+    E("p-mao-reforco", "yes", "hired", "2026-09", "ajuricaba"),
+    E("p-bsb-frete", "yes", "hired", "2026-09", "arrivalsBsb"), E("p-bsb-frete", "yes", "hired", "2026-08", "arrivalsBsb"),
+    E("p-bsb-reforco", "yes", "hired", "2026-09", "arrivalsBsb"), E("p-bsb-reforco", "partial", "hired", "2026-08", "arrivalsBsb"),
+    E("p-bsb-baba", "no", "hired", "2026-09", "arrivalsBsb"), E("p-bsb-baba", "yes", "hired", "2026-08", "arrivalsBsb"),
   ],
   housing: [
-    { id: "h-bsb-asa", city: "brasilia", title: "Apartamento mobiliado", bairro: "Asa Norte", beds: 3, m2: 98, rent: 3500, from: "2026-11-01", furnished: true, tags: ["apartamento", "mobiliado", "escolas"], img: PH.apt1, campaign: { label: "Destaque" }, owner: "Imobiliária Eixo" },
-    { id: "h-bsb-aguas", city: "brasilia", title: "Apartamento 2 quartos", bairro: "Águas Claras", beds: 2, m2: 75, rent: 2800, from: "2026-11-01", furnished: true, tags: ["apartamento", "mobiliado", "escolas"], img: PH.apt2, owner: "Gabriel M." },
-    { id: "h-bsb-sudoeste", city: "brasilia", title: "Casa 3 quartos com quintal", bairro: "Sudoeste", beds: 3, m2: 180, rent: 4200, from: "2026-11-05", furnished: false, tags: ["casa", "quintal"], img: PH.house, owner: "Marcelo A." },
-    { id: "h-bsb-noroeste", city: "brasilia", title: "Apartamento 3 quartos", bairro: "Noroeste", beds: 3, m2: 92, rent: 3900, from: "2026-11-01", furnished: false, tags: ["apartamento", "escolas"], img: PH.apt2, owner: "Renata P." },
-    { id: "h-mao-ponta", city: "manaus", title: "Apartamento 3 quartos", bairro: "Ponta Negra", beds: 3, m2: 98, rent: 3200, from: "2026-11-01", furnished: true, tags: ["apartamento", "mobiliado"], img: PH.apt1, owner: "Família saindo de Manaus" },
-    { id: "h-mao-flores", city: "manaus", title: "Apartamento 2 quartos", bairro: "Flores", beds: 2, m2: 70, rent: 2400, from: "2026-10-15", furnished: false, tags: ["apartamento", "escolas"], img: PH.apt2, owner: "Luciana F." },
+    { id: "h-bsb-asa", type: "apartamento", baths: 2, parking: 1, condo: 780, amen: ["portaria24", "academia", "elevador"], guar: ["fiador", "seguroFianca"], pets: false, city: "brasilia", title: "Apartamento mobiliado", bairro: "Asa Norte", beds: 3, m2: 98, rent: 3500, from: "2026-11-01", furnished: true, tags: ["apartamento", "mobiliado", "escolas"], img: PH.apt1, campaign: { label: "Destaque" }, owner: "Imobiliária Eixo" },
+    { id: "h-bsb-aguas", type: "apartamento", baths: 2, parking: 1, condo: 620, amen: ["piscina", "academia", "playground", "churrasqueira", "portaria24", "elevador"], guar: ["caucao", "seguroFianca"], pets: true, city: "brasilia", title: "Apartamento 2 quartos", bairro: "Águas Claras", beds: 2, m2: 75, rent: 2800, from: "2026-11-01", furnished: true, tags: ["apartamento", "mobiliado", "escolas"], img: PH.apt2, owner: "Gabriel M." },
+    { id: "h-bsb-sudoeste", type: "casa", baths: 2, parking: 2, condo: 0, amen: ["churrasqueira", "varanda"], guar: ["fiador", "titulo"], pets: true, city: "brasilia", title: "Casa 3 quartos com quintal", bairro: "Sudoeste", beds: 3, m2: 180, rent: 4200, from: "2026-11-05", furnished: false, tags: ["casa", "quintal"], img: PH.house, owner: "Marcelo A." },
+    { id: "h-bsb-noroeste", type: "apartamento", baths: 2, parking: 2, condo: 890, amen: ["piscina", "portaria24", "elevador", "salaoFestas", "varanda", "playground"], guar: ["seguroFianca", "caucao"], pets: false, city: "brasilia", title: "Apartamento 3 quartos", bairro: "Noroeste", beds: 3, m2: 92, rent: 3900, from: "2026-11-01", furnished: false, tags: ["apartamento", "escolas"], img: PH.apt2, owner: "Renata P." },
+    { id: "h-mao-ponta", type: "apartamento", baths: 2, parking: 2, condo: 720, amen: ["piscina", "academia", "portaria24", "churrasqueira", "elevador"], guar: ["fiador", "caucao"], pets: true, city: "manaus", title: "Apartamento 3 quartos", bairro: "Ponta Negra", beds: 3, m2: 98, rent: 3200, from: "2026-11-01", furnished: true, tags: ["apartamento", "mobiliado"], img: PH.apt1, owner: "Família saindo de Manaus" },
+    { id: "h-mao-flores", type: "apartamento", baths: 1, parking: 1, condo: 480, amen: ["portaria24", "elevador", "varanda"], guar: ["fiador"], pets: false, city: "manaus", title: "Apartamento 2 quartos", bairro: "Flores", beds: 2, m2: 70, rent: 2400, from: "2026-10-15", furnished: false, tags: ["apartamento", "escolas"], img: PH.apt2, owner: "Luciana F." },
+    { id: "h-bsb-kit-asa", city: "brasilia", title: "Kitnet mobiliada", type: "kitnet", bairro: "Asa Norte", beds: 1, baths: 1, parking: 0, m2: 32, rent: 1900, condo: 350, amen: ["portaria24", "elevador"], guar: ["caucao", "seguroFianca"], pets: false, from: "2026-11-01", furnished: true, tags: ["kitnet", "mobiliado"], img: PH.apt1, owner: "Priscila O." },
+    { id: "h-bsb-aguas3", city: "brasilia", title: "Apartamento 3 quartos com lazer", type: "apartamento", bairro: "Águas Claras", beds: 3, baths: 2, parking: 2, m2: 110, rent: 4100, condo: 950, amen: ["piscina", "academia", "salaoFestas", "playground", "churrasqueira", "portaria24", "elevador", "varanda"], guar: ["seguroFianca"], pets: true, from: "2026-11-10", furnished: false, tags: ["apartamento", "escolas"], img: PH.apt2, owner: "Thiago S." },
+    { id: "h-bsb-sudoeste-ap", city: "brasilia", title: "Apartamento 2 quartos, condomínio incluso", type: "apartamento", bairro: "Sudoeste", beds: 2, baths: 1, parking: 1, m2: 64, rent: 2900, condoIn: true, amen: ["portaria24", "elevador"], guar: ["caucao", "fiador"], pets: true, from: "2026-11-05", furnished: false, tags: ["apartamento"], img: PH.apt1, owner: "Camila R." },
+    { id: "h-bsb-lago", city: "brasilia", title: "Casa 4 quartos com piscina", type: "casa", bairro: "Lago Norte", beds: 4, baths: 3, parking: 3, m2: 260, rent: 7800, condo: 0, amen: ["piscina", "churrasqueira", "varanda"], guar: ["fiador", "titulo"], pets: true, from: "2026-12-01", furnished: false, tags: ["casa", "quintal"], img: PH.house, owner: "Fábio L." },
+    { id: "h-mao-adrian", city: "manaus", title: "Apartamento 1 quarto mobiliado", type: "apartamento", bairro: "Adrianópolis", beds: 1, baths: 1, parking: 1, m2: 48, rent: 1800, condo: 420, amen: ["portaria24", "elevador"], guar: ["fiador", "caucao"], pets: false, from: "2026-10-20", furnished: true, tags: ["apartamento", "mobiliado"], img: PH.apt1, owner: "Rodrigo P." },
+    { id: "h-mao-aleixo", city: "manaus", title: "Casa 3 quartos com quintal", type: "casa", bairro: "Aleixo", beds: 3, baths: 2, parking: 2, m2: 150, rent: 3600, condo: 0, amen: ["churrasqueira", "varanda"], guar: ["fiador"], pets: true, from: "2026-11-01", furnished: false, tags: ["casa", "quintal"], img: PH.house, owner: "Dulce M." },
+    { id: "h-mao-dompedro", city: "manaus", title: "Apartamento 2 quartos, condomínio incluso", type: "apartamento", bairro: "Dom Pedro", beds: 2, baths: 2, parking: 1, m2: 78, rent: 2600, condoIn: true, amen: ["piscina", "playground", "portaria24"], guar: ["seguroFianca", "caucao"], pets: true, from: "2026-10-25", furnished: false, tags: ["apartamento", "escolas"], img: PH.apt2, owner: "Elaine S." },
+    { id: "h-mao-kit-flores", city: "manaus", title: "Kitnet perto do comércio", type: "kitnet", bairro: "Flores", beds: 1, baths: 1, parking: 0, m2: 30, rent: 1200, condo: 200, amen: [], guar: ["caucao"], pets: false, from: "2026-10-10", furnished: true, tags: ["kitnet", "mobiliado"], img: PH.apt2, owner: "Jonas T." },
   ],
   market: [
-    { id: "m-mao-sofa", city: "manaus", title: "Sofá retrátil seminovo", price: 800, cat: "moveis", window: "2026-10-03", seller: "Luana M.", img: PH.sofa, appears: 0 },
-    { id: "m-mao-berco", city: "manaus", title: "Berço + colchão", price: 450, cat: "infantil", window: "2026-10-02", seller: "Paulo R.", img: PH.crib, appears: 0 },
-    { id: "m-mao-nb", city: "manaus", title: "Notebook Dell", price: 2000, cat: "eletronicos", window: "2026-10-06", seller: "Ricardo A.", img: PH.nb, appears: 0 },
-    { id: "m-bsb-mesa", city: "brasilia", title: "Mesa de jantar 6 lugares", price: 650, cat: "moveis", window: "2026-10-28", seller: "Carla S.", img: PH.sofa, appears: 0 },
-    { id: "m-bsb-geladeira", city: "brasilia", title: "Geladeira frost free", price: 1400, cat: "eletronicos", window: "2026-11-05", seller: "Rodrigo T.", img: PH.nb, appears: 0 },
-    { id: "m-bsb-comoda", city: "brasilia", title: "Cômoda infantil", price: 300, cat: "infantil", window: "2026-11-02", seller: "Fernanda C.", img: PH.crib, appears: 3 },
+    { id: "m-mao-sofa", sub: "sofa", cond: "seminovo", bairro: "Ponta Negra", city: "manaus", title: "Sofá retrátil seminovo", price: 800, cat: "moveis", window: "2026-10-03", seller: "Luana M.", img: PH.sofa, appears: 0 },
+    { id: "m-mao-berco", sub: "berco", cond: "seminovo", bairro: "Flores", city: "manaus", title: "Berço + colchão", price: 450, cat: "infantil", window: "2026-10-02", seller: "Paulo R.", img: PH.crib, appears: 0 },
+    { id: "m-mao-nb", sub: "notebook", cond: "seminovo", bairro: "Adrianópolis", city: "manaus", title: "Notebook Dell", price: 2000, cat: "eletronicos", window: "2026-10-06", seller: "Ricardo A.", img: PH.nb, appears: 0 },
+    { id: "m-bsb-mesa", sub: "mesa", cond: "usado", bairro: "Sudoeste", city: "brasilia", title: "Mesa de jantar 6 lugares", price: 650, cat: "moveis", window: "2026-10-28", seller: "Carla S.", img: PH.sofa, appears: 0 },
+    { id: "m-bsb-geladeira", sub: "geladeira", cond: "seminovo", bairro: "Águas Claras", city: "brasilia", title: "Geladeira frost free", price: 1400, cat: "eletro", window: "2026-11-05", seller: "Rodrigo T.", img: PH.nb, appears: 0 },
+    { id: "m-bsb-comoda", sub: "berco", cond: "seminovo", bairro: "Asa Norte", city: "brasilia", title: "Cômoda infantil", price: 300, cat: "infantil", window: "2026-11-02", seller: "Fernanda C.", img: PH.crib, appears: 3 },
+    { id: "m-mao-geladeira", city: "manaus", title: "Geladeira duplex 400 L", price: 1500, cat: "eletro", sub: "geladeira", cond: "usado", bairro: "Dom Pedro", window: "2026-10-08", seller: "Mônica L.", img: PH.nb, appears: 0 },
+    { id: "m-mao-arcond", city: "manaus", title: "Ar-condicionado split 12.000 BTU", price: 900, cat: "eletro", sub: "arcond", cond: "seminovo", bairro: "Flores", window: "2026-10-15", seller: "Sérgio B.", img: PH.clim, appears: 0 },
+    { id: "m-mao-mesa", city: "manaus", title: "Mesa com 4 cadeiras", price: 350, cat: "moveis", sub: "mesa", cond: "usado", bairro: "Adrianópolis", window: "2026-10-12", seller: "Ana C.", img: PH.sofa, appears: 0 },
+    { id: "m-mao-cama", city: "manaus", title: "Cama box casal", price: 600, cat: "moveis", sub: "cama", cond: "seminovo", bairro: "Ponta Negra", window: "2026-10-20", seller: "Rafael P.", img: PH.sofa, appears: 0 },
+    { id: "m-mao-bike", city: "manaus", title: "Bicicleta aro 29", price: 700, cat: "lazer", sub: "bike", cond: "seminovo", bairro: "Ponta Negra", window: "2026-10-10", seller: "Diego F.", img: PH.run, appears: 0 },
+    { id: "m-mao-carrinho", city: "manaus", title: "Carrinho de bebê com bebê conforto", price: 550, cat: "infantil", sub: "carrinho", cond: "seminovo", bairro: "Flores", window: "2026-10-05", seller: "Juliana T.", img: PH.crib, appears: 0 },
+    { id: "m-mao-tv", city: "manaus", title: "TV 50 polegadas", price: 1300, cat: "eletronicos", sub: "tv", cond: "seminovo", bairro: "Adrianópolis", window: "2026-10-18", seller: "Ricardo A.", img: PH.nb, appears: 0 },
+    { id: "m-bsb-sofa", city: "brasilia", title: "Sofá 3 lugares", price: 900, cat: "moveis", sub: "sofa", cond: "seminovo", bairro: "Noroeste", window: "2026-11-06", seller: "Beatriz K.", img: PH.sofa, appears: 0 },
+    { id: "m-bsb-fogao", city: "brasilia", title: "Fogão 5 bocas", price: 500, cat: "eletro", sub: "fogao", cond: "usado", bairro: "Águas Claras", window: "2026-11-03", seller: "Helder V.", img: PH.nb, appears: 0 },
+    { id: "m-bsb-lavadora", city: "brasilia", title: "Máquina de lavar 11 kg", price: 1100, cat: "eletro", sub: "lavar", cond: "seminovo", bairro: "Asa Norte", window: "2026-11-08", seller: "Cláudia N.", img: PH.nb, appears: 0 },
+    { id: "m-bsb-berco", city: "brasilia", title: "Berço com colchão", price: 400, cat: "infantil", sub: "berco", cond: "seminovo", bairro: "Sudoeste", window: "2026-11-12", seller: "Marcelo A.", img: PH.crib, appears: 0 },
+    { id: "m-bsb-notebook", city: "brasilia", title: "Notebook i5 com 16 GB", price: 2200, cat: "eletronicos", sub: "notebook", cond: "seminovo", bairro: "Asa Norte", window: "2026-11-04", seller: "Thiago S.", img: PH.nb, appears: 0 },
+    { id: "m-bsb-bike", city: "brasilia", title: "Bicicleta dobrável", price: 800, cat: "lazer", sub: "bike", cond: "seminovo", bairro: "Águas Claras", window: "2026-11-10", seller: "Larissa P.", img: PH.run, appears: 0 },
+    { id: "m-bsb-panelas", city: "brasilia", title: "Conjunto de panelas e utensílios", price: 250, cat: "casa", sub: "utensilios", cond: "usado", bairro: "Sudoeste", window: "2026-11-15", seller: "Fátima R.", img: PH.food, appears: 0 },
   ],
   demands: [
     { id: "d-mao-moveis", city: "manaus", count: 2, cats: ["moveis", "infantil"], window: "2026-11-03", label: "Famílias chegando a Manaus procuram móveis" },
   ],
   events: [
-    { id: "e-sunset", city: "manaus", community: "ajuricaba", title: "Pôr do sol no Rio Negro", date: "2026-10-03", time: "16h", place: "Marina do Davi", img: PH.sunset, campaign: { label: "Patrocinado" }, going: 18, organizer: "Rio Negro Experiências" },
-    { id: "e-familia", city: "manaus", community: "ajuricaba", title: "Passeio com famílias", date: "2026-10-04", time: "9h", place: "Praia da Lua", img: PH.family, going: 12, organizer: "Aline G." },
-    { id: "e-festival", city: "manaus", community: "ajuricaba", title: "Festival da Amazônia", date: "2026-10-02", time: "18h", place: "Centro", img: PH.festival, going: 31, organizer: "Prefeitura" },
-    { id: "e-barco", city: "manaus", community: "ajuricaba", title: "Passeio de barco na orla", date: "2026-10-04", time: "16h", place: "Orla da Ponta Negra", img: PH.boat, going: 14, organizer: "Luciana F." },
-    { id: "e-corrida", city: "manaus", community: "ajuricaba", title: "Corrida de sábado", date: "2026-10-03", time: "6h", place: "Ponta Negra", img: PH.run, going: 12, organizer: "Grupo Corrida Norte" },
-    { id: "e-troca", city: "manaus", community: "ajuricaba", title: "Feira de trocas da comunidade", date: "2026-10-03", time: "9h", place: "Salão da Vila Ajuricaba", img: PH.crowd, going: 22, organizer: "Vila Ajuricaba" },
-    { id: "e-bsb-boasvindas", city: "brasilia", community: "arrivalsBsb", title: "Encontro de boas-vindas", date: "2026-11-07", time: "10h", place: "Parque da Cidade", img: PH.crowd, going: 40, organizer: "Chegando a Brasília" },
-    { id: "e-bsb-corrida", city: "brasilia", community: "arrivalsBsb", title: "Corrida no Eixão", date: "2026-11-08", time: "6h", place: "Eixão Sul", img: PH.run, going: 16, organizer: "Marcelo A." },
-    { id: "e-bsb-troca", city: "brasilia", community: "arrivalsBsb", title: "Feira de trocas", date: "2026-11-14", time: "9h", place: "Asa Sul", img: PH.family, going: 25, organizer: "Chegando a Brasília" },
+    { id: "e-sunset", cat: "passeio", kids: false, free: false, city: "manaus", community: "ajuricaba", title: "Pôr do sol no Rio Negro", date: "2026-10-03", time: "16h", place: "Marina do Davi", img: PH.sunset, campaign: { label: "Patrocinado" }, going: 18, organizer: "Rio Negro Experiências" },
+    { id: "e-familia", cat: "familia", kids: true, free: true, city: "manaus", community: "ajuricaba", title: "Passeio com famílias", date: "2026-10-04", time: "9h", place: "Praia da Lua", img: PH.family, going: 12, organizer: "Aline G." },
+    { id: "e-festival", cat: "cultura", kids: true, free: true, city: "manaus", community: "ajuricaba", title: "Festival da Amazônia", date: "2026-10-02", time: "18h", place: "Centro", img: PH.festival, going: 31, organizer: "Prefeitura" },
+    { id: "e-barco", cat: "passeio", kids: true, free: false, city: "manaus", community: "ajuricaba", title: "Passeio de barco na orla", date: "2026-10-04", time: "16h", place: "Orla da Ponta Negra", img: PH.boat, going: 14, organizer: "Luciana F." },
+    { id: "e-corrida", cat: "esporte", kids: false, free: true, city: "manaus", community: "ajuricaba", title: "Corrida de sábado", date: "2026-10-03", time: "6h", place: "Ponta Negra", img: PH.run, going: 12, organizer: "Grupo Corrida Norte" },
+    { id: "e-troca", cat: "feira", kids: true, free: true, city: "manaus", community: "ajuricaba", title: "Feira de trocas da comunidade", date: "2026-10-03", time: "9h", place: "Salão da Vila Ajuricaba", img: PH.crowd, going: 22, organizer: "Vila Ajuricaba" },
+    { id: "e-bsb-boasvindas", cat: "comunidade", kids: true, free: true, city: "brasilia", community: "arrivalsBsb", title: "Encontro de boas-vindas", date: "2026-11-07", time: "10h", place: "Parque da Cidade", img: PH.crowd, going: 40, organizer: "Chegando a Brasília" },
+    { id: "e-bsb-corrida", cat: "esporte", kids: false, free: true, city: "brasilia", community: "arrivalsBsb", title: "Corrida no Eixão", date: "2026-11-08", time: "6h", place: "Eixão Sul", img: PH.run, going: 16, organizer: "Marcelo A." },
+    { id: "e-bsb-troca", cat: "feira", kids: true, free: true, city: "brasilia", community: "arrivalsBsb", title: "Feira de trocas", date: "2026-11-14", time: "9h", place: "Asa Sul", img: PH.family, going: 25, organizer: "Chegando a Brasília" },
+    { id: "e-mao-yoga", city: "manaus", community: "ajuricaba", title: "Yoga ao amanhecer", cat: "esporte", kids: false, free: true, date: "2026-10-03", time: "6h", place: "Ponta Negra", img: PH.sunset, going: 9, organizer: "Grupo Bem-Estar" },
+    { id: "e-mao-roda", city: "manaus", community: "ajuricaba", title: "Roda de conversa sobre a mudança", cat: "comunidade", kids: false, free: true, date: "2026-10-06", time: "19h", place: "Salão da Vila Ajuricaba", img: PH.crowd, going: 15, organizer: "Vila Ajuricaba" },
+    { id: "e-mao-jantar", city: "manaus", community: "ajuricaba", title: "Jantar de confraternização", cat: "gastronomia", kids: false, free: false, date: "2026-10-09", time: "20h", place: "Restaurante Banzeiro", img: PH.food, going: 20, organizer: "Vila Ajuricaba" },
+    { id: "e-mao-cinema", city: "manaus", community: "ajuricaba", title: "Cinema ao ar livre com as crianças", cat: "cultura", kids: true, free: true, date: "2026-10-10", time: "18h", place: "Praça da Vila", img: PH.festival, going: 27, organizer: "Vila Ajuricaba" },
+    { id: "e-mao-trilha", city: "manaus", community: "ajuricaba", title: "Trilha guiada no Tarumã", cat: "passeio", kids: false, free: false, date: "2026-10-11", time: "7h", place: "Tarumã", img: PH.family, going: 11, organizer: "Trilhas do Norte" },
+    { id: "e-mao-sabores", city: "manaus", community: "ajuricaba", title: "Feira de sabores da região", cat: "gastronomia", kids: true, free: true, date: "2026-10-17", time: "10h", place: "Praça da Vila", img: PH.food, going: 33, organizer: "Vila Ajuricaba" },
+    { id: "e-bsb-piquenique", city: "brasilia", community: "arrivalsBsb", title: "Piquenique de famílias", cat: "familia", kids: true, free: true, date: "2026-11-08", time: "10h", place: "Parque Ana Lídia", img: PH.family, going: 22, organizer: "Chegando a Brasília" },
+    { id: "e-bsb-cine", city: "brasilia", community: "arrivalsBsb", title: "Cineclube da vizinhança", cat: "cultura", kids: false, free: true, date: "2026-11-12", time: "19h", place: "Asa Norte", img: PH.festival, going: 14, organizer: "Renata P." },
+    { id: "e-bsb-jantar", city: "brasilia", community: "arrivalsBsb", title: "Jantar das famílias que chegaram", cat: "gastronomia", kids: false, free: false, date: "2026-11-13", time: "20h", place: "Sudoeste", img: PH.food, going: 18, organizer: "Chegando a Brasília" },
+    { id: "e-bsb-pedal", city: "brasilia", community: "arrivalsBsb", title: "Pedal no Lago Paranoá", cat: "esporte", kids: false, free: true, date: "2026-11-15", time: "7h", place: "Lago Norte", img: PH.run, going: 17, organizer: "Marcelo A." },
+    { id: "e-bsb-visita", city: "brasilia", community: "arrivalsBsb", title: "Visita guiada à Praça dos Três Poderes", cat: "passeio", kids: true, free: true, date: "2026-11-21", time: "9h", place: "Praça dos Três Poderes", img: PH.crowd, going: 12, organizer: "Chegando a Brasília" },
   ],
   refs: [
     { id: "r-bsb-esc-inf", city: "brasilia", title: "Escolas em Brasília · 3 a 5 anos", tags: ["escola", "infantil"], summary: "Síntese de experiências por região para educação infantil. Prioriza deslocamento, adaptação e vagas reais, não uma lista de “melhores escolas”.", needs: 5, reports: 4, reviewed: "2026-09-20", until: "2026-12-20", community: "arrivalsBsb", img: PH.school, newSince: 0 },
@@ -856,12 +982,20 @@ const DB = {
     { id: "pe-aline", name: "Aline G.", city: "manaus", ctx: "Mãe · moradora de Manaus", topics: ["saude", "pediatria"], topicLabels: ["pediatria", "saúde infantil"] },
   ],
   benefits: [
-    { id: "b-ac", partner: "Amazon Climatização", offer: "10% OFF na instalação de split", city: "manaus", until: "2026-11-30", how: "code", terms: "Solicite o código antes de contratar. Vale para uma instalação por família.", img: PH.clim, campaign: true },
-    { id: "b-gym", partner: "Academia Life", offer: "1ª semana gratuita · plano família", city: "manaus", until: "2026-11-30", how: "show", terms: "Apresente o código na recepção. Uma semana por família.", img: PH.gym },
-    { id: "b-food", partner: "Restaurante Banzeiro", offer: "15% de desconto", city: "manaus", until: "2026-10-31", how: "show", terms: "Válido de segunda a quinta, no salão.", img: PH.food },
-    { id: "b-hotel", partner: "Hotel Tropical Manaus", offer: "Tarifa especial para visitas e familiares", city: "manaus", until: "2026-12-31", how: "partner", terms: "Solicite a tarifa Bivaque no canal do parceiro, informando as datas.", img: PH.hotel },
-    { id: "b-bsb-apart", partner: "Apart-hotel Asa Norte", offer: "7 noites com desconto para quem chega", city: "brasilia", until: "2026-12-31", how: "code", terms: "Para membros com transferência para Brasília nos próximos 60 dias.", img: PH.hotel },
-    { id: "b-bsb-mercado", partner: "Mercado Sudoeste", offer: "Cesta de boas-vindas com 10% OFF", city: "brasilia", until: "2026-12-31", how: "show", terms: "Válido na primeira compra, com retirada na loja.", img: PH.food },
+    { id: "b-ac", cat: "servicos", partner: "Amazon Climatização", offer: "10% OFF na instalação de split", city: "manaus", until: "2026-11-30", how: "code", terms: "Solicite o código antes de contratar. Vale para uma instalação por família.", img: PH.clim, campaign: true },
+    { id: "b-gym", cat: "saude", partner: "Academia Life", offer: "1ª semana gratuita · plano família", city: "manaus", until: "2026-11-30", how: "show", terms: "Apresente o código na recepção. Uma semana por família.", img: PH.gym },
+    { id: "b-food", cat: "alimentacao", partner: "Restaurante Banzeiro", offer: "15% de desconto", city: "manaus", until: "2026-10-31", how: "show", terms: "Válido de segunda a quinta, no salão.", img: PH.food },
+    { id: "b-hotel", cat: "hospedagem", partner: "Hotel Tropical Manaus", offer: "Tarifa especial para visitas e familiares", city: "manaus", until: "2026-12-31", how: "partner", terms: "Solicite a tarifa Bivaque no canal do parceiro, informando as datas.", img: PH.hotel },
+    { id: "b-bsb-apart", cat: "hospedagem", partner: "Apart-hotel Asa Norte", offer: "7 noites com desconto para quem chega", city: "brasilia", until: "2026-12-31", how: "code", terms: "Para membros com transferência para Brasília nos próximos 60 dias.", img: PH.hotel },
+    { id: "b-bsb-mercado", cat: "mercado", partner: "Mercado Sudoeste", offer: "Cesta de boas-vindas com 10% OFF", city: "brasilia", until: "2026-12-31", how: "show", terms: "Válido na primeira compra, com retirada na loja.", img: PH.food },
+    { id: "b-mao-farmacia", partner: "Farmácia Rio Negro", offer: "8% de desconto em medicamentos e perfumaria", cat: "saude", city: "manaus", until: "2026-12-15", how: "show", terms: "Apresente o código no caixa. Não vale para medicamentos controlados.", img: PH.health },
+    { id: "b-mao-idiomas", partner: "Escola de Idiomas Norte", offer: "Matrícula gratuita no 1º semestre", cat: "educacao", city: "manaus", until: "2026-10-10", how: "partner", terms: "Solicite no canal do parceiro, informando a idade dos alunos.", img: PH.school },
+    { id: "b-mao-passeio", partner: "Passeio Rio Negro", offer: "20% no passeio de barco em grupo", cat: "lazer", city: "manaus", until: "2026-11-15", how: "code", terms: "Vale para grupos de até 6 pessoas, de segunda a sexta.", img: PH.boat },
+    { id: "b-mao-mercado", partner: "Supermercado Amazonas", offer: "5% em compras acima de R$ 200", cat: "mercado", city: "manaus", until: "2026-12-31", how: "show", terms: "Uma compra por semana, com retirada ou entrega.", img: PH.food },
+    { id: "b-bsb-natacao", partner: "Escola de Natação Planalto", offer: "1ª aula grátis para crianças", cat: "lazer", city: "brasilia", until: "2026-12-31", how: "show", terms: "Aula experimental, sujeita à disponibilidade de horário.", img: PH.gym },
+    { id: "b-bsb-farmacia", partner: "Farmácia Brasília Popular", offer: "10% em itens de higiene e bebê", cat: "saude", city: "brasilia", until: "2026-12-31", how: "code", terms: "Solicite o código antes de comprar. Não acumula com outras ofertas.", img: PH.health },
+    { id: "b-bsb-restaurante", partner: "Restaurante Cerrado", offer: "12% no almoço de segunda a sexta", cat: "alimentacao", city: "brasilia", until: "2026-10-12", how: "show", terms: "Válido no salão, para até 6 pessoas.", img: PH.food },
+    { id: "b-bsb-ingles", partner: "Curso de Inglês Eixo", offer: "Sem taxa de matrícula", cat: "educacao", city: "brasilia", until: "2026-12-20", how: "partner", terms: "Informe ao parceiro que você chegou por transferência.", img: PH.school },
   ],
 }
 
@@ -1414,6 +1548,7 @@ function validateForm(f) {
       const v = (el.value || "").trim()
       if (el.required && !v) msg = "Preencha este campo."
       else if (v && el.required && el.inputMode === "numeric" && !(/^\d+$/.test(v) && +v > 0)) msg = "Informe um número maior que zero."
+      else if (v && el.inputMode === "numeric" && !/^\d+$/.test(v)) msg = "Use só números."
       else if (v && el.type === "date" && el.min && v < el.min) msg = "Escolha uma data a partir de hoje."
     }
     if (msg) { fieldErr(el, msg); first = first || el } else fieldOk(el)
@@ -1791,35 +1926,35 @@ function providerCard(p) {
   return `<article class="service-card card${ad ? " is-ad" : ""}"${md("provider", p.id, p.name, ad)}><div class="pic">${img(p.img, 400)}</div><div class="sc-body">
     <div class="badges">${ad ? badgeAd(ad.label) : ""}<span class="badge ${b.cls}">${esc(b.txt)}</span></div>
     <h3>${cardLink(p.name, { dtype: "provider", id: p.id })}</h3>
-    <div class="trust">${esc(evLine(p.id))}</div><div class="trust">${esc(hiredLine(p.id))} · atende ${esc(p.area.split(",")[0])}</div>
+    <div class="trust">${esc(evLine(p.id))}</div><div class="trust">${esc(hiredLine(p.id))} · atende ${esc(p.area.split(",")[0])}</div>${p.svc ? `<div class="svc-tags">${esc(p.svc.slice(0, 3).map((k) => lab(SVC_ALL, k)).join(" · "))}</div>` : ""}
     <div class="sc-actions">${seal()}<button class="cta" data-act="openQuote"${attrs({ id: p.id })}>Solicitar orçamento</button></div></div>${kebab(p.name)}</article>`
 }
 function listingCard(h, own) {
   const ad = h.campaign
   return `<article class="listing card${ad ? " is-ad" : ""}"${md("housing", h.id, h.title, ad, own)}><div class="photo">${img(h.img, 800)}${ad ? `<span class="sponsor">${badgeAd(ad.label)}</span>` : ""}${own ? `<span class="sponsor">${badgeAd("Seu anúncio")}</span>` : ""}${heart("housing", h.id)}${kebab(h.title)}</div>
     <div class="body"><span class="badge">${esc(h.bairro)} · ${esc(city(h.city).name)}</span><h3>${cardLink(h.title, { dtype: "housing", id: h.id })}</h3>
-    <div class="price">${money(h.rent)}/mês</div><div class="meta">${h.m2} m² · ${h.beds} quartos${h.furnished ? " · mobiliado" : ""} · a partir de ${esc(windowLabel(h.from))}</div>
+    <div class="price">${money(h.rent)}/mês</div><div class="meta">${esc(housingMeta(h))}</div><div class="meta">${esc(condoText(h))}${h.furnished ? " · mobiliado" : ""} · a partir de ${esc(windowLabel(h.from))}</div>
     ${ad ? "" : `<div class="why">Por que apareceu: ${esc(whyHousing(h))}</div>`}</div></article>`
 }
 function marketCard(m, own) {
   const mi = marketItem(m)
   return `<article class="listing card"${md("market", m.id, m.title, false, own)}><div class="photo">${img(m.img, 800)}${own ? `<span class="sponsor">${badgeAd("Seu anúncio")}</span>` : ""}${heart("market", m.id)}${kebab(m.title)}</div>
-    <div class="body"><span class="badge pink">${esc(m.cat)} · ${esc(city(m.city).name)}</span><h3>${cardLink(m.title, { dtype: "market", id: m.id })}</h3>
-    <div class="price">${money(m.price)}</div><div class="meta">Retirada em ${esc(windowLabel(m.window))} · ${esc(m.seller)}</div>
+    <div class="body"><span class="badge pink">${esc(lab(MKT_CATS, m.cat))} · ${esc(city(m.city).name)}</span>${m.cond ? `<span class="badge">${esc(lab(CONDS, m.cond))}</span>` : ""}<h3>${cardLink(m.title, { dtype: "market", id: m.id })}</h3>
+    <div class="price">${money(m.price)}</div><div class="meta">${m.bairro ? `${esc(m.bairro)} · ` : ""}Retirada em ${esc(windowLabel(m.window))} · ${esc(m.seller)}</div>
     ${own ? "" : `<div class="why">Por que apareceu: ${esc(mi.why)}</div>`}</div></article>`
 }
 function eventCard(e, own) {
   const going = S.rsvps[e.id] === "going"; const ad = e.campaign
   return `<article class="listing card${ad ? " is-ad" : ""}"${md("event", e.id, e.title, ad, own)}><div class="photo">${img(e.img, 800)}${ad ? `<span class="sponsor">${badgeAd(ad.label)}</span>` : ""}${own ? `<span class="sponsor">${badgeAd("Seu evento")}</span>` : ""}${kebab(e.title)}</div>
     <div class="body"><span class="badge violet">${weekday(e.date)}, ${fmtShort(e.date)} · ${esc(e.time)}</span>${going ? `<span class="badge good">${ic("check")} Você vai</span>` : ""}<h3>${cardLink(e.title, { dtype: "event", id: e.id })}</h3>
-    <div class="meta">${esc(e.place)} · ${e.going + (going ? 1 : 0)} confirmados · ${esc(comm(e.community).name)}</div></div></article>`
+    <div class="meta">${esc(e.place)} · ${e.going + (going ? 1 : 0)} confirmados · ${esc(comm(e.community).name)}</div><div class="meta">${esc(lab(EV_CATS, e.cat || "comunidade"))} · ${(e.free ?? !e.price) ? "gratuito" : "entrada paga"}${e.kids ? " · bom para crianças" : ""}</div></div></article>`
 }
 function benefitState(b) { const d = daysUntil(b.until); return d < 0 ? "expired" : d <= 14 ? "soon" : "ok" }
 function benefitCard(b) {
   const st = benefitState(b); const got = S.redeemed[b.id]
   return `<article class="listing card${st === "expired" ? " is-expired" : ""}"${md("benefit", b.id, b.partner, !!b.campaign)}><div class="photo">${img(b.img, 800)}<span class="sponsor">${badgeAd(b.campaign ? "Oferta do anunciante" : "Parceiro")}</span>${kebab(b.partner)}</div>
     <div class="body">${st === "expired" ? '<span class="badge">Vencido</span>' : st === "soon" ? '<span class="badge gold">Vence em breve</span>' : ""}${got ? '<span class="badge good">Resgatado</span>' : ""}<h3>${cardLink(b.partner, { dtype: "benefit", id: b.id })}</h3>
-    <div class="price">${esc(b.offer)}</div><div class="meta">${esc(city(b.city).name)} · válido até ${fmtShort(b.until)}</div></div></article>`
+    <div class="price">${esc(b.offer)}</div><div class="meta">${b.cat ? `${esc(lab(BEN_CATS, b.cat))} · ` : ""}${esc(city(b.city).name)} · válido até ${fmtShort(b.until)}</div></div></article>`
 }
 function refCard(r) {
   const i = refInfo(r)
@@ -1998,8 +2133,6 @@ VIEWS.explorar = () => {
 }
 
 /* ---------- catálogos ---------- */
-const CAT = {}
-function catState(kind) { return (CAT[kind] = CAT[kind] || { q: "", f: "todos" }) }
 function catSide(kind, p) {
   if (p.side) return p.side
   const intent = { services: "service", housing: "housing", market: "buy", events: "event", benefits: "people", refs: "docs" }[kind]
@@ -2009,72 +2142,405 @@ function sideSeg(kind, side) {
   const t = T()
   return `<div class="seg" role="group" aria-label="Cidade">${[["origin", city(t.from).name + " · saída"], ["destination", city(t.to).name + " · chegada"]].map(([s, l]) => `<button data-act="setCatSide" data-page="${kind}" data-side="${s}" aria-pressed="${side === s}">${esc(l)}</button>`).join("")}</div>`
 }
-const FILTERS = {
-  services: [["todos", "Todos"], ["climatizacao", "Climatização"], ["mudanca", "Mudança"], ["manutencao", "Manutenção"], ["saude", "Saúde"]],
-  housing: [["todos", "Todos"], ["apartamento", "Apartamentos"], ["casa", "Casas"], ["mobiliado", "Mobiliados"]],
-  market: [["todos", "Todos"], ["moveis", "Móveis"], ["eletronicos", "Eletrônicos"], ["infantil", "Infantil"]],
+/* ===== Filtros dos catálogos: um motor declarativo para os seis catálogos ===== */
+const FILT = {}
+const CATCTX = {}
+const FLOCAL = { housing: ["bairro"], services: ["region"], market: ["bairro"], events: ["comm"], benefits: [], refs: ["comm"] }
+const filtState = (kind) => (FILT[kind] = FILT[kind] || { q: "", sort: null, g: {}, open: {} })
+const asArr = (v) => (Array.isArray(v) ? v : v == null || v === "" ? [] : [v])
+const digits = (v) => { const t = String(v ?? "").replace(/\D/g, ""); return t === "" ? null : +t }
+const lab = (opts, k) => (opts.find(([x]) => x === k) || [k, k])[1]
+const uniqSorted = (arr) => [...new Set(arr.filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"))
+
+/* ---- vocabulários ---- */
+const HOUSE_TYPES = [["apartamento", "Apartamento"], ["casa", "Casa"], ["kitnet", "Kitnet ou studio"]]
+const AMEN = [["piscina", "Piscina"], ["academia", "Academia"], ["portaria24", "Portaria 24 h"], ["churrasqueira", "Churrasqueira"], ["playground", "Playground"], ["elevador", "Elevador"], ["varanda", "Varanda"], ["salaoFestas", "Salão de festas"]]
+const GUAR = [["fiador", "Fiador"], ["caucao", "Caução"], ["seguroFianca", "Seguro-fiança"], ["titulo", "Título de capitalização"]]
+const SVC_CATS = [["climatizacao", "Climatização"], ["casa", "Elétrica, hidráulica e reparos"], ["mudanca", "Mudança e frete"], ["saude", "Saúde"], ["cuidados", "Cuidados e educação"]]
+const SVC_SUBS = {
+  climatizacao: [["instalacao", "Instalação de split"], ["limpeza", "Limpeza e higienização"], ["manutencao_ar", "Manutenção e conserto"]],
+  casa: [["eletrica", "Elétrica"], ["hidraulica", "Hidráulica"], ["pintura", "Pintura"], ["montagem", "Montagem de móveis"]],
+  mudanca: [["local", "Mudança local"], ["interestadual", "Mudança interestadual"], ["embalagem", "Embalagem e proteção"], ["guardamoveis", "Guarda-móveis"]],
+  saude: [["pediatria", "Pediatria"], ["clinico", "Clínico geral"], ["vacinacao", "Vacinação"], ["odonto", "Odontologia"]],
+  cuidados: [["baba", "Babá e cuidadores"], ["reforco", "Reforço escolar"]],
 }
-function catShell(kind, title, sub, side, list, opts = {}) {
-  const st = catState(kind)
-  const cta = opts.cta ? `<button class="primary" data-act="${opts.cta[0]}" data-type="${opts.cta[2] || ""}">${esc(opts.cta[1])}</button>` : ""
-  const filters = FILTERS[kind] ? `<div class="filter-row" role="group" aria-label="Filtros">${FILTERS[kind].map(([v, l]) => `<button class="filter" data-act="setCatFilter" data-kind="${kind}" data-v="${v}" aria-pressed="${st.f === v}">${l}</button>`).join("")}</div>` : ""
-  return `${H1(title, sub, cta, kind)}<div class="cat-tools"><label class="surface-search">${ic("search")}<input data-input="catQuery" data-kind="${kind}" value="${esc(st.q)}" aria-label="Buscar em ${esc(title)}" placeholder="Buscar em ${esc(title)}"></label>${sideSeg(kind, side)}</div>${filters}${opts.before || ""}<div id="catList" class="${opts.cls || "cards-3"}">${list}</div>`
+const MKT_CATS = [["moveis", "Móveis"], ["eletro", "Eletrodomésticos"], ["eletronicos", "Eletrônicos"], ["infantil", "Infantil"], ["casa", "Casa e decoração"], ["lazer", "Esporte e lazer"]]
+const MKT_SUBS = {
+  moveis: [["sofa", "Sofás e poltronas"], ["mesa", "Mesas e cadeiras"], ["cama", "Camas e colchões"], ["armario", "Armários e estantes"]],
+  eletro: [["geladeira", "Geladeiras"], ["fogao", "Fogões e cooktops"], ["lavar", "Máquinas de lavar"], ["arcond", "Ar-condicionado"], ["micro", "Micro-ondas e air fryers"]],
+  eletronicos: [["notebook", "Notebooks e tablets"], ["tv", "TVs e áudio"], ["celular", "Celulares"]],
+  infantil: [["berco", "Berços e cômodas"], ["carrinho", "Carrinhos e cadeirinhas"], ["brinquedos", "Brinquedos"]],
+  casa: [["utensilios", "Utensílios"], ["decoracao", "Decoração"]],
+  lazer: [["bike", "Bicicletas"], ["fitness", "Fitness"]],
 }
-const passes = (kind, text, tags) => { const st = catState(kind); const t = norm(text + " " + (tags || []).join(" ")); return (st.f === "todos" || t.includes(st.f)) && (!st.q || t.includes(norm(st.q))) }
-const emptyList = (kind) => `<div class="no-results">Nenhum resultado com esses filtros. Amplie a busca ou pergunte a quem já viveu isso. <button class="link-btn" data-act="openAsk" data-q="">Perguntar</button></div>`
-VIEWS.services = (p) => {
-  const side = catSide("services", p); const k = cityKey(side)
-  const all = vis("provider", DB.providers.filter((x) => x.city === k))
-  const org = all.filter((x) => !x.campaign && passes("services", x.name + x.about, x.tags)).sort((a, b) => evScore(b.id) - evScore(a.id))
-  const ads = all.filter((x) => x.campaign && passes("services", x.name + x.about, x.tags))
-  const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não muda a ordem da lista</div><div class="service-list">${ads.map(providerCard).join("")}</div></div>` : ""
-  const cold = !city(k).content ? coldStartBlock(k, "") : ""
-  return catShell("services", "Serviços", "Ordem pela evidência de quem contratou, nunca pelo pagamento.", side, cold || org.map(providerCard).join("") || emptyList("services"), { cls: "service-list", before, cta: ["openOffer", "Oferecer meu serviço", "service"] })
+const CONDS = [["novo", "Novo"], ["seminovo", "Seminovo"], ["usado", "Usado"]]
+const EV_CATS = [["esporte", "Esporte"], ["familia", "Família"], ["cultura", "Cultura e música"], ["passeio", "Passeios"], ["gastronomia", "Gastronomia"], ["feira", "Feiras e trocas"], ["comunidade", "Comunidade"]]
+const BEN_CATS = [["servicos", "Serviços"], ["saude", "Saúde"], ["alimentacao", "Alimentação"], ["hospedagem", "Hospedagem"], ["lazer", "Lazer"], ["mercado", "Mercado"], ["educacao", "Educação"]]
+const BEN_HOW = [["code", "Com código"], ["show", "Mostrar na loja"], ["partner", "Pelo parceiro"]]
+const REF_SUBJ = [["escola", "Escola"], ["moradia", "Moradia"], ["saude", "Saúde"], ["documentos", "Documentos"], ["mudanca", "Mudança"], ["desapego", "Desapego"], ["climatizacao", "Climatização"]]
+const REF_AGE = [["infantil", "3 a 5 anos"], ["fundamental", "6 a 10 anos"], ["medio", "Adolescentes"]]
+const REF_STATUS_OPTS = [["ok", "Em dia"], ["vencendo", "Vence em breve"], ["revisao", "Em revisão pela curadoria"]]
+const dayPart = (time) => { const h = parseInt(String(time), 10); return h < 12 ? "manha" : h < 18 ? "tarde" : "noite" }
+const isWeekend = (iso) => [0, 6].includes(new Date(iso + "T12:00:00").getDay())
+
+/* ---- construtores de grupo ---- */
+const G = {
+  multi: (id, label, opts, get, x = {}) => ({ id, label, kind: "multi", opts, get, ...x }),
+  all: (id, label, opts, get, x = {}) => ({ id, label, kind: "all", opts, get, ...x }),
+  one: (id, label, opts, get, x = {}) => ({ id, label, kind: "one", opts, get, ...x }),
+  min: (id, label, opts, get, x = {}) => ({ id, label, kind: "min", opts, get, ...x }),
+  range: (id, label, get, x = {}) => ({ id, label, kind: "range", get, ...x }),
+  max: (id, label, get, x = {}) => ({ id, label, kind: "max", get, ...x }),
+  flag: (id, label, test, x = {}) => ({ id, label, kind: "flag", test, ...x }),
 }
-VIEWS.housing = (p) => {
-  const side = catSide("housing", p); const k = cityKey(side); const t = T()
-  const all = vis("housing", DB.housing.filter((h) => h.city === k))
-  const own = S.own.housing.filter((h) => h.city === k && !h.closed)
-  const org = [...own, ...all.filter((h) => !h.campaign)].filter((h) => passes("housing", h.title + h.bairro, h.tags)).sort((a, b) => housingFit(b).score - housingFit(a).score)
-  const ads = all.filter((h) => h.campaign && passes("housing", h.title + h.bairro, h.tags))
-  const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não muda a ordem da lista</div><div class="cards-3">${ads.map((h) => listingCard(h)).join("")}</div></div>` : ""
-  const sub = side === "destination" ? `Imóveis em ${city(k).name}, ordenados pela sua chegada em ${windowLabel(t.date)} e pelo perfil da família.` : `Imóveis em ${city(k).name} para quem está chegando. Você também pode anunciar o seu.`
-  const cold = !city(k).content ? coldStartBlock(k, "") : ""
-  return catShell("housing", "Moradia", sub, side, cold || org.map((h) => listingCard(h, !!h.mine)).join("") || emptyList("housing"), { before, cta: ["openOffer", "Anunciar imóvel", "housing"] })
+const gOpts = (g, st) => (typeof g.opts === "function" ? g.opts(st) : g.opts || [])
+const gHidden = (g, st) => !!(g.hidden && g.hidden(st))
+const gActive = (g, v) => (g.kind === "multi" || g.kind === "all" ? !!(v && v.length) : g.kind === "range" ? !!(v && (v.min != null || v.max != null)) : g.kind === "flag" ? !!v : v != null && v !== "")
+function gPass(g, v, x) {
+  if (!gActive(g, v)) return true
+  switch (g.kind) {
+    case "multi": { const a = asArr(g.get(x)); return v.some((k) => a.includes(k)) }
+    case "all": { const a = asArr(g.get(x)); return v.every((k) => a.includes(k)) }
+    case "one": return g.match ? g.match(x, v) : asArr(g.get(x)).includes(v)
+    case "min": return (g.get(x) ?? 0) >= v
+    case "range": { const n = g.get(x); return n != null && (v.min == null || n >= v.min) && (v.max == null || n <= v.max) }
+    case "max": { const n = g.get(x); return n != null && n <= v }
+    case "flag": return !!g.test(x)
+    default: return true
+  }
 }
-VIEWS.market = (p) => {
-  const side = catSide("market", p); const k = cityKey(side); const t = T()
-  const own = S.own.market.filter((m) => m.city === k && !m.closed)
-  const items = [...own, ...visibleMarket().filter((m) => m.city === k)].filter((m) => passes("market", m.title, [m.cat]))
+function filtRes(spec, st, skip) {
+  const q = norm(st.q || "")
+  // ao contar as opções de um grupo, ele e os grupos que dependem dele (tipo de serviço e especialidade) ficam de fora
+  const sg = skip && spec.groups.find((x) => x.id === skip)
+  const off = (g) => g.id === skip || !!(sg && (sg.clears || []).includes(g.id))
+  return spec.items.filter((x) => (skip === "q" || !q || norm(spec.text(x)).includes(q)) && spec.groups.every((g) => off(g) || gHidden(g, st) || gPass(g, st.g[g.id], x)))
+}
+function facet(spec, st, g, key) {
+  const base = filtRes(spec, st, g.kind === "all" ? null : g.id)
+  const has = (x) => (g.kind === "min" ? (g.get(x) ?? 0) >= key : g.kind === "flag" ? !!g.test(x) : g.match ? g.match(x, key) : asArr(g.get(x)).includes(key))
+  return base.filter(has).length
+}
+function rangeBounds(spec, st, g) {
+  const vals = filtRes(spec, st, g.id).map(g.get).filter((n) => n != null && n > 0)
+  return vals.length ? [Math.min(...vals), Math.max(...vals)] : null
+}
+const fmtG = (g, n) => (g.money ? money(n) : g.unit ? `${n} ${g.unit}` : String(n))
+const rangeText = (g, v) => (v.min != null && v.max != null ? `${fmtG(g, v.min)} a ${fmtG(g, v.max)}` : v.min != null ? `a partir de ${fmtG(g, v.min)}` : `até ${fmtG(g, v.max)}`)
+function activeChips(spec, st) {
+  const out = []
+  if (st.q) out.push({ gid: "q", label: `Busca: “${st.q}”` })
+  for (const g of spec.groups) {
+    if (gHidden(g, st)) continue
+    const v = st.g[g.id]
+    if (!gActive(g, v)) continue
+    const nm = g.short || g.label
+    if (g.kind === "multi" || g.kind === "all") v.forEach((k) => out.push({ gid: g.id, key: k, label: `${nm}: ${lab(gOpts(g, st), k)}` }))
+    else if (g.kind === "min") out.push({ gid: g.id, label: `${nm} ${v}+` })
+    else if (g.kind === "range") out.push({ gid: g.id, label: `${nm}: ${rangeText(g, v)}` })
+    else if (g.kind === "max") out.push({ gid: g.id, label: `${nm} até ${fmtG(g, v)}` })
+    else if (g.kind === "flag") out.push({ gid: g.id, label: g.label })
+    else if (g.kind === "one") out.push({ gid: g.id, label: `${nm}: ${lab(gOpts(g, st), v)}` })
+  }
+  return out
+}
+const nActive = (spec, st) => (st.q ? 1 : 0) + spec.groups.filter((g) => !gHidden(g, st) && gActive(g, st.g[g.id])).length
+
+/* ---- especificação de cada catálogo (o painel, a lista e a ordenação nascem daqui) ---- */
+const bairroOpts = (items, key = "bairro") => uniqSorted(items.map((x) => x[key])).map((b) => [b, b])
+const FSPEC = {}
+FSPEC.housing = ({ side, k }) => {
+  const t = T()
+  const items = [...S.own.housing.filter((h) => h.city === k && !h.closed), ...vis("housing", DB.housing.filter((h) => h.city === k))]
+  return {
+    kind: "housing", title: "Moradia", noun: ["imóvel", "imóveis"], cls: "cards-3", items, isAd: (h) => !!h.campaign, card: (h) => listingCard(h, !!h.mine),
+    sub: side === "destination" ? `Imóveis em ${city(k).name}, ordenados pela sua chegada em ${windowLabel(t.date)} e pelo perfil da família.` : `Imóveis em ${city(k).name} para quem está chegando. Você também pode anunciar o seu.`,
+    cta: ["openOffer", "Anunciar imóvel", "housing"],
+    text: (h) => `${h.title} ${h.bairro} ${(h.tags || []).join(" ")} ${lab(HOUSE_TYPES, h.type || "apartamento")}`,
+    groups: [
+      G.multi("type", "Tipo", HOUSE_TYPES, (h) => h.type || "apartamento", { open: true }),
+      G.min("beds", "Quartos", [1, 2, 3, 4], (h) => h.beds ?? 0, { open: true }),
+      G.min("baths", "Banheiros", [1, 2, 3], (h) => h.baths ?? 0),
+      G.min("parking", "Vagas de garagem", [1, 2, 3], (h) => h.parking ?? 0, { open: true, short: "Vagas" }),
+      G.range("m2", "Área (m²)", (h) => h.m2 || null, { unit: "m²", short: "Área" }),
+      G.range("rent", "Aluguel (R$)", (h) => h.rent, { money: true, open: true, short: "Aluguel" }),
+      G.max("condo", "Condomínio até (R$)", (h) => (h.condoIn ? 0 : h.condo ?? 0), { money: true, short: "Condomínio" }),
+      G.multi("bairro", "Bairro", bairroOpts(items), (h) => h.bairro, { open: true }),
+      G.all("amen", "Comodidades", AMEN, (h) => h.amen || [], { note: "Só aparecem imóveis com todas as marcadas." }),
+      G.multi("guar", "Garantia aceita", GUAR, (h) => h.guar || [], { note: "Aparecem imóveis que aceitam qualquer uma das marcadas." }),
+      G.flag("condoIn", "Condomínio incluso no aluguel", (h) => !!h.condoIn, { other: true }),
+      G.flag("furnished", "Só mobiliados", (h) => !!h.furnished, { other: true }),
+      G.flag("pets", "Aceita animais de estimação", (h) => !!h.pets, { other: true }),
+      G.flag("avail", "Disponível quando eu chegar", (h) => daysUntil(h.from) <= daysUntil(t.date) + 7, { other: true }),
+    ],
+    sorts: [["fit", "Melhor para você", (a, b) => housingFit(b).score - housingFit(a).score], ["rent", "Menor aluguel", (a, b) => a.rent - b.rent], ["rentDesc", "Maior aluguel", (a, b) => b.rent - a.rent], ["m2", "Maior área", (a, b) => (b.m2 || 0) - (a.m2 || 0)], ["beds", "Mais quartos", (a, b) => (b.beds ?? 0) - (a.beds ?? 0)]],
+  }
+}
+FSPEC.services = ({ side, k }) => {
+  const items = vis("provider", DB.providers.filter((p) => p.city === k))
+  const regs = uniqSorted(items.flatMap((p) => (p.regions || []).filter((r) => r !== "*"))).map((b) => [b, b])
+  const regKeys = regs.map(([r]) => r)
+  return {
+    kind: "services", title: "Serviços", noun: ["prestador", "prestadores"], cls: "service-list", items, isAd: (p) => !!p.campaign, card: providerCard,
+    sub: "Ordem pela evidência de quem contratou, nunca pelo pagamento.", cta: ["openOffer", "Oferecer meu serviço", "service"],
+    text: (p) => `${p.name} ${p.about} ${(p.tags || []).join(" ")} ${(p.svc || []).map((s) => lab(Object.values(SVC_SUBS).flat(), s)).join(" ")}`,
+    groups: [
+      G.one("cat", "Tipo de serviço", SVC_CATS, (p) => p.cat, { open: true, short: "Tipo", clears: ["sub"] }),
+      G.multi("sub", "Especialidade", (st) => SVC_SUBS[st.g.cat] || [], (p) => p.svc || [], { open: true, hidden: (st) => !st.g.cat }),
+      G.multi("region", "Região atendida", regs, (p) => ((p.regions || []).includes("*") ? regKeys : p.regions || []), { open: true, short: "Região" }),
+      G.min("hired", "Contratações com resultado", [1, 2, 3], (p) => evSummary(p.id).hired, { short: "Contratações" }),
+      G.max("base", "A partir de, até (R$)", (p) => p.base, { money: true, short: "A partir de" }),
+      G.flag("rec", "Recomendados pela comunidade", (p) => evBadge(p.id).cls === "good", { other: true }),
+      G.flag("sat", "Atende aos sábados", (p) => !!p.sat, { other: true }),
+    ],
+    sorts: [["score", "Melhor resultado", (a, b) => evScore(b.id) - evScore(a.id)], ["price", "Menor preço inicial", (a, b) => a.base - b.base], ["hired", "Mais contratações", (a, b) => evSummary(b.id).hired - evSummary(a.id).hired || evScore(b.id) - evScore(a.id)]],
+  }
+}
+const MKT_WIN = [["week", "Esta semana"], ["month", "Este mês"], ["before", "Antes da minha mudança"], ["after", "Depois da minha chegada"]]
+FSPEC.market = ({ side, k }) => {
+  const t = T()
+  const items = [...S.own.market.filter((m) => m.city === k && !m.closed), ...visibleMarket().filter((m) => m.city === k)]
   let before = ""
   if (side === "origin") {
     const dem = DB.demands.filter((d) => d.city === k)
     before = `<div class="context-card wide"><small>Para quem está saindo de ${esc(city(k).name)}</small>${dem.map((d) => `<button class="switch-item" data-act="openObj" data-dtype="demand" data-id="${d.id}"><div class="grow"><b>${d.count} ${esc(d.label.toLowerCase())}</b><span>Janela aproximada: ${esc(monthName(d.window))} · sem nomes nem datas exatas</span></div>${ic("chevron-right")}</button>`).join("")}<p class="privacy-note">Quem sai vê a demanda de quem chega; quem chega vê a oferta de quem sai.</p></div>`
   }
-  const sub = side === "destination" ? `O que quem sai de ${city(k).name} deixa para quem chega.` : `O que a comunidade de ${city(k).name} está passando adiante.`
-  const cold = !city(k).content ? coldStartBlock(k, "") : ""
-  return catShell("market", "Desapegos", sub, side, cold || items.map((m) => marketCard(m, !!m.mine)).join("") || emptyList("market"), { before, cta: ["openOffer", "Anunciar desapego", "sell"] })
+  return {
+    kind: "market", title: "Desapegos", noun: ["desapego", "desapegos"], cls: "cards-3", items, isAd: () => false, card: (m) => marketCard(m, !!m.mine), before,
+    sub: side === "destination" ? `O que quem sai de ${city(k).name} deixa para quem chega.` : `O que a comunidade de ${city(k).name} está passando adiante.`,
+    cta: ["openOffer", "Anunciar desapego", "sell"],
+    text: (m) => `${m.title} ${m.bairro || ""} ${lab(MKT_CATS, m.cat)} ${lab(Object.values(MKT_SUBS).flat(), m.sub || "")}`,
+    groups: [
+      G.one("cat", "Categoria", MKT_CATS, (m) => m.cat, { open: true, clears: ["sub"] }),
+      G.multi("sub", "Tipo de item", (st) => MKT_SUBS[st.g.cat] || [], (m) => m.sub || "", { open: true, hidden: (st) => !st.g.cat }),
+      G.range("price", "Preço (R$)", (m) => m.price, { money: true, open: true, short: "Preço" }),
+      G.multi("cond", "Condição", CONDS, (m) => m.cond || "usado", { open: true }),
+      G.one("win", "Retirada", MKT_WIN, () => null, { match: (m, v) => (v === "week" ? daysUntil(m.window) <= 7 : v === "month" ? daysUntil(m.window) <= 31 : v === "before" ? daysUntil(m.window) <= daysUntil(t.date) : daysUntil(m.window) > daysUntil(t.date)), short: "Retirada" }),
+      G.multi("bairro", "Bairro", bairroOpts(items), (m) => m.bairro || "", {}),
+    ],
+    sorts: [["window", "Retirada mais próxima", (a, b) => a.window.localeCompare(b.window)], ["price", "Menor preço", (a, b) => a.price - b.price], ["priceDesc", "Maior preço", (a, b) => b.price - a.price]],
+  }
 }
-VIEWS.events = (p) => {
-  const side = catSide("events", p); const k = cityKey(side)
-  const all = [...S.own.events.filter((e) => e.city === k), ...vis("event", DB.events.filter((e) => e.city === k))].filter((e) => daysUntil(e.date) >= 0 && passes("events", e.title + e.place)).sort((a, b) => a.date.localeCompare(b.date))
-  const ads = all.filter((e) => e.campaign)
-  const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não muda a ordem da lista</div><div class="cards-3">${ads.map((e) => eventCard(e)).join("")}</div></div>` : ""
-  const cold = !city(k).content ? coldStartBlock(k, "") : ""
-  return catShell("events", "Eventos", `Próximos em ${city(k).name}, por data.`, side, cold || all.filter((e) => !e.campaign).map((e) => eventCard(e, !!e.mine)).join("") || emptyList("events"), { before, cta: ["openOffer", "Organizar evento", "event"] })
+const EV_WHEN = [["week", "Esta semana"], ["weekend", "Fim de semana"], ["month", "Este mês"]]
+FSPEC.events = ({ side, k }) => {
+  const items = [...S.own.events.filter((e) => e.city === k), ...vis("event", DB.events.filter((e) => e.city === k))].filter((e) => daysUntil(e.date) >= 0)
+  return {
+    kind: "events", title: "Eventos", noun: ["evento", "eventos"], cls: "cards-3", items, isAd: (e) => !!e.campaign, card: (e) => eventCard(e, !!e.mine),
+    sub: `Próximos em ${city(k).name}, por data.`, cta: ["openOffer", "Organizar evento", "event"],
+    text: (e) => `${e.title} ${e.place} ${lab(EV_CATS, e.cat || "comunidade")}`,
+    groups: [
+      G.multi("cat", "Categoria", EV_CATS, (e) => e.cat || "comunidade", { open: true }),
+      G.one("when", "Quando", EV_WHEN, () => null, { open: true, match: (e, v) => (v === "week" ? daysUntil(e.date) <= 7 : v === "weekend" ? isWeekend(e.date) && daysUntil(e.date) <= 14 : daysUntil(e.date) <= 30), short: "Quando" }),
+      G.multi("part", "Período do dia", [["manha", "Manhã"], ["tarde", "Tarde"], ["noite", "Noite"]], (e) => dayPart(e.time), { short: "Período" }),
+      G.multi("comm", "Comunidade", uniqSorted(items.map((e) => e.community)).map((c) => [c, commName(c)]), (e) => e.community, { short: "Comunidade" }),
+      G.flag("free", "Só gratuitos", (e) => e.free ?? !e.price, { other: true }),
+      G.flag("kids", "Bom para crianças", (e) => !!e.kids, { other: true }),
+    ],
+    sorts: [["date", "Data", (a, b) => a.date.localeCompare(b.date)], ["going", "Mais confirmados", (a, b) => (b.going || 0) - (a.going || 0)]],
+  }
 }
-VIEWS.benefits = (p) => {
-  const side = catSide("benefits", p); const k = cityKey(side)
-  const list = vis("benefit", DB.benefits).filter((b) => b.city === k && passes("benefits", b.partner + b.offer)).sort((a, b) => (benefitState(a) === "expired") - (benefitState(b) === "expired") || a.until.localeCompare(b.until))
-  const cold = !city(k).content ? coldStartBlock(k, "") : ""
-  return catShell("benefits", "Benefícios", `Condições de parceiros em ${city(k).name}, com validade e como usar.`, side, cold || list.map(benefitCard).join("") || emptyList("benefits"))
+FSPEC.benefits = ({ side, k }) => {
+  const items = vis("benefit", DB.benefits.filter((b) => b.city === k))
+  return {
+    kind: "benefits", title: "Benefícios", noun: ["benefício", "benefícios"], cls: "cards-3", items, isAd: () => false, card: benefitCard,
+    sub: `Condições de parceiros em ${city(k).name}, com validade e como usar.`, cta: null,
+    text: (b) => `${b.partner} ${b.offer} ${lab(BEN_CATS, b.cat || "")}`,
+    groups: [
+      G.multi("cat", "Categoria", BEN_CATS, (b) => b.cat, { open: true }),
+      G.multi("how", "Como resgatar", BEN_HOW, (b) => b.how, { open: true, short: "Resgate" }),
+      G.one("valid", "Validade", [["ok", "Vigentes"], ["soon", "Vencem em breve"], ["expired", "Vencidas"]], () => null, { open: true, match: (b, v) => (v === "ok" ? benefitState(b) !== "expired" : benefitState(b) === v), short: "Validade" }),
+      G.flag("fresh", "Ainda não resgatei", (b) => !S.redeemed[b.id], { other: true }),
+    ],
+    sorts: [["until", "Vencem primeiro", (a, b) => (benefitState(a) === "expired") - (benefitState(b) === "expired") || a.until.localeCompare(b.until)], ["name", "Nome (A a Z)", (a, b) => a.partner.localeCompare(b.partner, "pt-BR")]],
+  }
 }
-VIEWS.refs = (p) => {
-  const side = catSide("refs", p); const k = cityKey(side)
-  const list = DB.refs.filter((r) => r.city === k && passes("refs", r.title + r.summary, r.tags))
-  const cold = !city(k).content ? coldStartBlock(k, "") : ""
-  return catShell("refs", "Referências", `O que a comunidade já sabe sobre ${city(k).name}, com origem, revisão e curador.`, side, cold || list.map(refCard).join("") || emptyList("refs"), { cls: "stack" })
+FSPEC.refs = ({ side, k }) => {
+  const items = DB.refs.filter((r) => r.city === k)
+  return {
+    kind: "refs", title: "Referências", noun: ["referência", "referências"], cls: "stack", items, isAd: () => false, card: refCard,
+    sub: `O que a comunidade já sabe sobre ${city(k).name}, com origem, revisão e curador.`, cta: null,
+    text: (r) => `${r.title} ${r.summary} ${(r.tags || []).join(" ")}`,
+    groups: [
+      G.multi("subj", "Assunto", REF_SUBJ, (r) => r.tags || [], { open: true }),
+      G.multi("age", "Faixa etária", REF_AGE, (r) => r.tags || [], { short: "Faixa", hidden: (st) => !(st.g.subj || []).includes("escola") }),
+      G.multi("status", "Situação da revisão", REF_STATUS_OPTS, (r) => refInfo(r).status, { open: true, short: "Revisão" }),
+      G.multi("comm", "Comunidade", uniqSorted(items.map((r) => r.community)).map((c) => [c, commName(c)]), (r) => r.community, { short: "Comunidade" }),
+      G.min("rel", "Relatos de origem", [5, 10, 15], (r) => r.needs + r.reports, { short: "Relatos" }),
+      G.flag("saved", "Só as que salvei", (r) => savedHas("ref", r.id), { other: true }),
+    ],
+    sorts: [["recent", "Revisadas há menos tempo", (a, b) => b.reviewed.localeCompare(a.reviewed)], ["rel", "Mais relatos", (a, b) => b.needs + b.reports - (a.needs + a.reports)], ["az", "Título (A a Z)", (a, b) => a.title.localeCompare(b.title, "pt-BR")]],
+  }
 }
+const catSpec = (kind) => { const c = CATCTX[kind] || { side: catSide(kind, route.params || {}) }; return FSPEC[kind]({ side: c.side, k: cityKey(c.side) }) }
+
+/* ---- painel de filtros (mesmo HTML na lateral do computador e na folha do celular) ---- */
+function fgroupHTML(kind, spec, st, g, where) {
+  const opts = gOpts(g, st); const v = st.g[g.id]; const active = gActive(g, v)
+  const key = (k) => `data-fkey="${g.id}|${esc(k)}|${where}"`
+  const open = (st.open[g.id] ?? g.open ?? false) || active
+  let body = ""
+  if (g.kind === "multi" || g.kind === "all") {
+    body = opts.map(([k, l]) => {
+      const on = !!(v && v.includes(k)); const n = facet(spec, st, g, k); const off = !on && n === 0
+      return `<label class="fcheck${off ? " off" : ""}"><input type="checkbox" data-filt="${g.id}" data-fgk="${g.kind}" data-fv="${esc(k)}" ${key(k)}${on ? " checked" : ""}${off ? " disabled" : ""}><span class="fl">${esc(l)}</span><span class="fc">${n}</span></label>`
+    }).join("") + (g.note ? `<p class="fhint">${esc(g.note)}</p>` : "")
+  } else if (g.kind === "min" || g.kind === "one") {
+    const chips = [["", "Qualquer"], ...opts.map((o) => (Array.isArray(o) ? o : [o, `${o}+`]))]
+    body = `<div class="fchips" role="radiogroup" aria-label="${esc(g.label)}">${chips.map(([k, l]) => {
+      const on = (v == null ? "" : String(v)) === String(k)
+      const n = k === "" ? null : facet(spec, st, g, g.kind === "min" ? +k : k)
+      const off = k !== "" && !on && n === 0
+      return `<label class="fchip${off ? " off" : ""}"><input type="radio" name="f-${g.id}-${where}" data-filt="${g.id}" data-fgk="${g.kind}" data-fv="${esc(k)}" ${key(k)}${on ? " checked" : ""}${off ? " disabled" : ""}><span>${esc(l)}${n != null ? ` <i class="fc">${n}</i>` : ""}</span></label>`
+    }).join("")}</div>`
+  } else if (g.kind === "range") {
+    const r = v || {}; const b = rangeBounds(spec, st, g)
+    body = `<div class="frange">${["min", "max"].map((w) => `<div class="field"><label for="f-${g.id}-${w}-${where}">${w === "min" ? "Mínimo" : "Máximo"}</label><input id="f-${g.id}-${w}-${where}" inputmode="numeric" autocomplete="off" data-filt="${g.id}" data-fgk="range" data-fw="${w}" ${key(w)} value="${r[w] ?? ""}" placeholder="${b ? b[w === "min" ? 0 : 1] : ""}"></div>`).join("")}</div>${b ? `<p class="fhint">Disponível: ${esc(fmtG(g, b[0]))} a ${esc(fmtG(g, b[1]))}</p>` : ""}`
+  } else if (g.kind === "max") {
+    const b = rangeBounds(spec, st, g)
+    body = `<div class="field"><label for="f-${g.id}-${where}">Até</label><input id="f-${g.id}-${where}" inputmode="numeric" autocomplete="off" data-filt="${g.id}" data-fgk="max" ${key("max")} value="${v ?? ""}" placeholder="${b ? b[1] : ""}"></div>${b ? `<p class="fhint">Disponível: ${esc(fmtG(g, b[0]))} a ${esc(fmtG(g, b[1]))}</p>` : ""}`
+  }
+  const nSel = g.kind === "multi" || g.kind === "all" ? (v || []).length : 1
+  return `<details class="fgroup" data-gid="${g.id}"${open ? " open" : ""}><summary><span>${esc(g.label)}</span>${active ? `<span class="fsel" aria-label="${nSel} selecionado${nSel === 1 ? "" : "s"}">${nSel}</span>` : ""}${ic("chevron-down")}</summary><div class="fbody">${body}</div></details>`
+}
+function fpanelInner(kind, spec, st, where) {
+  const shown = spec.groups.filter((g) => !gHidden(g, st))
+  const flags = shown.filter((g) => g.kind === "flag")
+  const others = shown.filter((g) => g.kind !== "flag")
+  const flagBox = flags.length ? `<details class="fgroup" data-gid="_flags" open><summary><span>Mais opções</span>${ic("chevron-down")}</summary><div class="fbody">${flags.map((g) => { const on = !!st.g[g.id]; const n = facet(spec, st, g, true); const off = !on && n === 0; return `<label class="fcheck${off ? " off" : ""}"><input type="checkbox" data-filt="${g.id}" data-fgk="flag" data-fkey="${g.id}|flag|${where}"${on ? " checked" : ""}${off ? " disabled" : ""}><span class="fl">${esc(g.label)}</span><span class="fc">${n}</span></label>` }).join("")}</div></details>` : ""
+  return others.map((g) => fgroupHTML(kind, spec, st, g, where)).join("") + flagBox
+}
+function fpanelHTML(kind, spec, st) {
+  const n = nActive(spec, st)
+  return `<aside class="fpanel" id="fpanel" data-fkind="${kind}" aria-label="Filtros de ${esc(spec.title)}"><div class="fp-head"><h2>Filtros</h2>${n ? `<button class="link-btn" data-act="filtClear" data-kind="${kind}">Limpar tudo</button>` : ""}</div>${fpanelInner(kind, spec, st, "p")}</aside>`
+}
+const doneLabel = (spec, n) => `Ver ${n} ${n === 1 ? spec.noun[0] : spec.noun[1]}`
+const fsFootHTML = (kind, spec, st, n) => `<button class="secondary" data-act="filtClear" data-kind="${kind}"${nActive(spec, st) ? "" : " disabled"}>Limpar tudo</button><button class="primary" id="fsDone" data-act="closeDrawer">${doneLabel(spec, n)}</button>`
+function filterSheetHTML(kind) {
+  const spec = catSpec(kind); const st = filtState(kind); const n = filtRes(spec, st).length
+  return `<div class="fs-head"><h2 id="dlgTitle" tabindex="-1">Filtros</h2><button class="close-btn" data-act="closeDrawer" aria-label="Fechar">${ic("x")}</button></div>
+    <div class="fs-body" id="fsBody" data-fkind="${kind}">${fpanelInner(kind, spec, st, "d")}</div>
+    <div class="fs-foot" id="fsFoot">${fsFootHTML(kind, spec, st, n)}</div>`
+}
+function refreshFilterSheet() {
+  if (!FSHEET || !overlayOpen) return
+  const body = $("#fsBody"); if (!body) return
+  const kind = FSHEET.kind; const spec = catSpec(kind); const st = filtState(kind)
+  const top = body.scrollTop
+  body.innerHTML = fpanelInner(kind, spec, st, "d"); body.scrollTop = top
+  $("#fsFoot").innerHTML = fsFootHTML(kind, spec, st, filtRes(spec, st).length)
+}
+A.openFilters = (d) => { FSHEET = { kind: d.kind }; openDrawer(filterSheetHTML(d.kind), { cls: "filters" }) }
+
+/* ---- página do catálogo ---- */
+function sortedOrganic(spec, st, list) {
+  const s = spec.sorts.find(([k]) => k === st.sort) || spec.sorts[0]
+  return [...list].sort(s[2])
+}
+function emptyResults(spec, st, kind, adsShown) {
+  const chips = activeChips(spec, st)
+  const sug = chips.map((c) => ({ c, n: filtRes(spec, st, c.gid === "q" ? "q" : c.gid).length })).filter((x) => x.n > 0 && x.n > adsShown).sort((a, b) => b.n - a.n)
+  const seen = new Set(); const top = []
+  for (const x of sug) { const id = x.c.gid; if (seen.has(id)) continue; seen.add(id); top.push(x); if (top.length === 2) break }
+  const lead = adsShown ? `Nada além do anúncio acima combina com esses filtros.` : `Nenhum ${spec.noun[0]} com esses filtros.`
+  return `<div class="no-results"><p><b>${lead}</b></p>${top.length ? `<p class="fhint">Para voltar a ter resultados:</p><div class="choice-row">${top.map((x) => `<button class="secondary" data-act="filtRemove" data-kind="${kind}" data-gid="${x.c.gid}" ${x.c.key ? `data-key="${esc(x.c.key)}"` : ""}>Tirar “${esc(x.c.label)}” (${plural(x.n, spec.noun[0], spec.noun[1])})</button>`).join("")}</div>` : ""}<div class="choice-row">${chips.length ? `<button class="primary" data-act="filtClear" data-kind="${kind}">Limpar tudo</button>` : ""}<button class="link-btn" data-act="openAsk" data-q="">Perguntar a quem já viveu isso</button></div></div>`
+}
+function catPage(kind, p) {
+  const side = catSide(kind, p); const k = cityKey(side)
+  CATCTX[kind] = { side }
+  const spec = FSPEC[kind]({ side, k }); const st = filtState(kind)
+  // filtros de uma cidade não valem para a outra: bairro, região e faixa de preço mudam de lugar para lugar
+  if (st.side !== undefined && st.side !== side) { st.q = ""; st.g = {}; st.sort = null }
+  st.side = side
+  const cta = spec.cta ? `<button class="primary" data-act="${spec.cta[0]}" data-type="${spec.cta[2] || ""}">${esc(spec.cta[1])}</button>` : ""
+  const head = `${H1(spec.title, spec.sub, cta, kind)}<div class="cat-tools"><label class="surface-search">${ic("search")}<input data-input="catQuery" data-kind="${kind}" data-fkey="q|${kind}|p" value="${esc(st.q)}" aria-label="Buscar em ${esc(spec.title)}" placeholder="Buscar em ${esc(spec.title)}"></label>${sideSeg(kind, side)}</div>`
+  if (!city(k).content) return `${head}${coldStartBlock(k, "")}`
+  const res = filtRes(spec, st)
+  const ads = res.filter(spec.isAd); const org = sortedOrganic(spec, st, res.filter((x) => !spec.isAd(x)))
+  CATCTX[kind].count = res.length
+  const chips = activeChips(spec, st); const na = nActive(spec, st)
+  const band = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não muda a ordem da lista</div><div class="${spec.cls === "stack" ? "stack" : spec.cls}">${ads.map((x) => spec.card(x)).join("")}</div></div>` : ""
+  const sortSel = spec.sorts.length > 1 ? `<label class="fsort"><span>Ordenar por</span><select data-fsort="${kind}" data-fkey="sort|${kind}|p">${spec.sorts.map(([v, l]) => `<option value="${v}"${(st.sort || spec.sorts[0][0]) === v ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></label>` : ""
+  const main = `<section class="cat-main" aria-label="Resultados de ${esc(spec.title)}" data-fkind="${kind}">
+    <div class="fbar"><p class="fcount"><b>${res.length}</b> ${res.length === 1 ? spec.noun[0] : spec.noun[1]} em ${esc(city(k).name)}${na ? ` · ${plural(na, "filtro ativo", "filtros ativos")}` : ""}</p><button class="secondary fbtn" data-act="openFilters" data-kind="${kind}" aria-haspopup="dialog">${ic("sliders")} Filtros${na ? ` (${na})` : ""}</button>${sortSel}</div>
+    ${chips.length ? `<div class="active-filters" role="group" aria-label="Filtros ativos">${chips.map((c) => `<span class="fpill">${esc(c.label)}<button data-act="filtRemove" data-kind="${kind}" data-gid="${c.gid}"${c.key ? ` data-key="${esc(c.key)}"` : ""} aria-label="Remover filtro: ${esc(c.label)}">${ic("x")}</button></span>`).join("")}<button class="link-btn" data-act="filtClear" data-kind="${kind}">Limpar tudo</button></div>` : ""}
+    ${spec.before || ""}${band}
+    <div id="catList" class="${spec.cls}">${org.length ? org.map((x) => spec.card(x)).join("") : ads.length ? "" : emptyResults(spec, st, kind, 0)}</div>
+    ${!org.length && ads.length ? emptyResults(spec, st, kind, ads.length) : ""}</section>`
+  return `${head}<div class="cat-layout">${fpanelHTML(kind, spec, st)}${main}</div>`
+}
+for (const kind of ["services", "housing", "market", "events", "benefits", "refs"]) VIEWS[kind] = (p) => catPage(kind, p)
+
+/* ---- ações e eventos dos filtros ---- */
+function catRender() {
+  const a = document.activeElement
+  const key = a && a.dataset && a.dataset.fkey
+  const sel = a && typeof a.selectionStart === "number" ? [a.selectionStart, a.selectionEnd] : null
+  const ps = $("#fpanel") ? $("#fpanel").scrollTop : 0
+  render()
+  if ($("#fpanel")) $("#fpanel").scrollTop = ps
+  refreshFilterSheet()
+  const el = key ? document.querySelector(`[data-fkey="${CSS.escape(key)}"]`) : null
+  if (el && !el.disabled) { el.focus(); if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]) } catch (e) { /* tipo sem seleção */ } } }
+  const c = CATCTX[route.page]
+  if (c && c.count != null) announce(`${c.count} ${c.count === 1 ? FSPEC[route.page]({ side: c.side, k: cityKey(c.side) }).noun[0] : FSPEC[route.page]({ side: c.side, k: cityKey(c.side) }).noun[1]}`)
+}
+function filtSet(kind, gid, gk, val, extra = {}) {
+  const st = filtState(kind); const spec = catSpec(kind); const g = spec.groups.find((x) => x.id === gid)
+  if (!g) return
+  if (gk === "multi" || gk === "all") { const a = new Set(st.g[gid] || []); if (extra.checked) a.add(val); else a.delete(val); st.g[gid] = [...a] }
+  else if (gk === "min") st.g[gid] = val === "" ? null : +val
+  else if (gk === "one") st.g[gid] = val === "" ? null : val
+  else if (gk === "flag") st.g[gid] = !!extra.checked
+  else if (gk === "range") { st.g[gid] = { ...(st.g[gid] || {}), [extra.w]: digits(val) } }
+  else if (gk === "max") st.g[gid] = digits(val)
+  for (const c of g.clears || []) delete st.g[c]
+  catRender()
+}
+document.addEventListener("change", (e) => {
+  const el = e.target
+  if (!el.dataset) return
+  const host = el.closest("[data-fkind]")
+  if (el.dataset.fsort) { filtState(el.dataset.fsort).sort = el.value; catRender(); return }
+  if (!el.dataset.filt || !host || el.dataset.fgk === "range" || el.dataset.fgk === "max") return
+  filtSet(host.dataset.fkind, el.dataset.filt, el.dataset.fgk, el.dataset.fv ?? el.value, { checked: el.checked, w: el.dataset.fw })
+})
+// campos numéricos filtram enquanto se digita; "change" dispararia no Tab e devolveria o foco ao campo anterior
+document.addEventListener("input", (e) => {
+  const el = e.target
+  if (!el.dataset || !el.dataset.filt || (el.dataset.fgk !== "range" && el.dataset.fgk !== "max")) return
+  const host = el.closest("[data-fkind]")
+  if (host) filtSet(host.dataset.fkind, el.dataset.filt, el.dataset.fgk, el.value, { w: el.dataset.fw })
+})
+document.addEventListener("toggle", (e) => {
+  const d = e.target
+  if (!d.classList || !d.classList.contains("fgroup")) return
+  const host = d.closest("[data-fkind]")
+  if (host) filtState(host.dataset.fkind).open[d.dataset.gid] = d.open
+}, true)
+A.filtClear = (d) => { const st = filtState(d.kind); st.q = ""; st.g = {}; catRender() }
+A.filtRemove = (d) => {
+  const st = filtState(d.kind)
+  if (d.gid === "q") st.q = ""
+  else {
+    const g = catSpec(d.kind).groups.find((x) => x.id === d.gid)
+    if (d.key !== undefined && Array.isArray(st.g[d.gid])) st.g[d.gid] = st.g[d.gid].filter((x) => x !== d.key)
+    else delete st.g[d.gid]
+    for (const c of (g && g.clears) || []) delete st.g[c]
+  }
+  catRender()
+}
+
+
+let FSHEET = null
+const SVC_ALL = Object.values(SVC_SUBS).flat()
+const MKT_ALL = Object.values(MKT_SUBS).flat()
+const housingMeta = (h) => [h.m2 ? `${h.m2} m²` : "", plural(h.beds, "quarto", "quartos"), h.baths ? plural(h.baths, "banheiro", "banheiros") : "", h.parking ? plural(h.parking, "vaga", "vagas") : "sem vaga"].filter(Boolean).join(" · ")
+const condoText = (h) => (h.condoIn ? "condomínio incluso" : h.condo ? `condomínio ${money(h.condo)}` : "sem condomínio")
+const facts = (rows) => `<dl class="facts">${rows.filter(Boolean).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`
+const listOf = (opts, arr) => (arr || []).map((k) => lab(opts, k)).join(", ")
+const housingFacts = (h) => facts([["Tipo", lab(HOUSE_TYPES, h.type || "apartamento")], ["Quartos", h.beds], h.baths ? ["Banheiros", h.baths] : null, ["Vagas de garagem", h.parking ? h.parking : "Sem vaga"], h.m2 ? ["Área", `${h.m2} m²`] : null, ["Aluguel", `${money(h.rent)}/mês`], ["Condomínio", h.condoIn ? "Incluso no aluguel" : h.condo ? `${money(h.condo)}/mês` : "Sem condomínio"], ["Mobiliado", h.furnished ? "Sim" : "Não"], ["Animais de estimação", h.pets ? "Aceita" : "Não aceita"], (h.amen || []).length ? ["Comodidades", listOf(AMEN, h.amen)] : null, (h.guar || []).length ? ["Garantia aceita", listOf(GUAR, h.guar)] : null])
+const marketFacts = (m) => facts([["Categoria", lab(MKT_CATS, m.cat)], m.sub ? ["Tipo de item", lab(MKT_ALL, m.sub)] : null, ["Condição", lab(CONDS, m.cond || "usado")], m.bairro ? ["Bairro", m.bairro] : null])
+const eventFacts = (e) => facts([["Categoria", lab(EV_CATS, e.cat || "comunidade")], ["Entrada", (e.free ?? !e.price) ? "Gratuita" : "Paga"], ["Crianças", e.kids ? "Bom para crianças" : "Sem foco em crianças"], ["Período", lab([["manha", "Manhã"], ["tarde", "Tarde"], ["noite", "Noite"]], dayPart(e.time))]])
 
 /* ---------- Comunidade ---------- */
 function activeComm() { return S.activeComm && comm(S.activeComm) ? S.activeComm : Object.keys(S.membership).find((k) => isMember(k)) || "ajuricaba" }
@@ -2204,13 +2670,11 @@ A.resolverSearch = (d, f) => { const q = f.q.value.trim(); go("resolver", q ? { 
 A.globalSearch = (d, f) => { const q = f.q.value.trim(); if (q) { f.q.value = ""; go("resolver", { q }) } }
 A.setFocus = (d) => { S.focus = d.focus; save(); if (overlayOpen) closeDrawer(); render(); toast("Resolvendo em: " + focusLabel()) }
 A.setCatSide = (d) => go(d.page, { side: d.side }, { replace: true, keepScroll: true })
-A.setCatFilter = (d) => { catState(d.kind).f = d.v; render() }
 document.addEventListener("input", (e) => {
-  const el = e.target.closest("[data-input='catQuery']")
+  const el = e.target.closest && e.target.closest("[data-input='catQuery']")
   if (!el) return
-  catState(el.dataset.kind).q = el.value
-  const pos = el.selectionStart
-  render(); const n = $("[data-input='catQuery']"); if (n) { n.focus(); n.setSelectionRange(pos, pos) }
+  filtState(el.dataset.kind).q = el.value
+  catRender()
 })
 A.toggleSave = (d, el) => {
   const flip = () => {
@@ -2314,7 +2778,7 @@ DR.housing = (id) => {
   const h = byId([...DB.housing, ...S.own.housing], id); const ad = h.campaign
   openDrawer(`${drawerHead(`${h.title} · ${h.bairro}`, `${money(h.rent)}/mês · ${city(h.city).name}`, ad ? badgeAd(ad.label) : h.mine ? badgeAd("Seu anúncio") : "")}
     <div class="detail-hero">${img(h.img, 900)}</div>
-    <div class="detail-grid"><div class="detail-box"><h3>Detalhes</h3><p>${h.m2} m² · ${h.beds} quartos${h.furnished ? " · mobiliado" : ""} · a partir de ${esc(windowLabel(h.from))}. O endereço exato só aparece depois do contato.</p></div>
+    <div class="detail-grid"><div class="detail-box"><h3>Detalhes</h3>${housingFacts(h)}<p class="privacy-note">A partir de ${esc(windowLabel(h.from))}. O endereço exato só aparece depois do contato.</p></div>
     <div class="detail-box"><h3>${ad ? "Anúncio" : "Por que apareceu"}</h3><p>${ad ? "Destaque pago. Não recebe explicação de relevância e não altera a ordem da lista." : esc(whyHousing(h))}</p></div></div>
     <div class="detail-actions">${saveBtn("housing", id)}${h.mine ? `<button class="secondary" data-act="closeOwn" data-kind="housing" data-id="${id}">Encerrar anúncio</button>` : `<button class="primary" data-act="startConv" data-dtype="housing" data-id="${id}">Conversar sobre o imóvel</button>`}</div>`)
 }
@@ -2322,7 +2786,7 @@ DR.market = (id) => {
   const m = byId([...DB.market, ...S.own.market], id)
   openDrawer(`${drawerHead(m.title, `${money(m.price)} · ${city(m.city).name}`, m.mine ? badgeAd("Seu anúncio") : "")}
     <div class="detail-hero">${img(m.img, 900)}</div>
-    <div class="detail-grid"><div class="detail-box"><h3>Detalhes</h3><p>Retirada em ${esc(windowLabel(m.window))}. A data exata é combinada só na conversa. Vendedor: ${esc(m.seller)}.</p></div>
+    <div class="detail-grid"><div class="detail-box"><h3>Detalhes</h3>${marketFacts(m)}<p>Retirada em ${esc(windowLabel(m.window))}. A data exata é combinada só na conversa. Vendedor: ${esc(m.seller)}.</p></div>
     <div class="detail-box"><h3>${m.mine ? "Seu anúncio" : "Por que apareceu"}</h3><p>${m.mine ? "Quem pediu aviso para este tipo de item foi avisado, sem ver seu nome." : esc(marketItem(m).why)}</p></div></div>
     <div class="detail-actions">${saveBtn("market", id)}${m.mine ? `<button class="secondary" data-act="closeOwn" data-kind="market" data-id="${id}">Encerrar anúncio</button>` : `<button class="primary" data-act="startConv" data-dtype="market" data-id="${id}">Falar com ${esc(m.seller)}</button>`}</div>`)
 }
@@ -2331,7 +2795,7 @@ DR.event = (id) => {
   const e = byId([...DB.events, ...S.own.events], id); const going = S.rsvps[id] === "going"; const ad = e.campaign
   openDrawer(`${drawerHead(e.title, `${weekday(e.date)}, ${fmtShort(e.date)} · ${e.time} · ${e.place}`, ad ? badgeAd(ad.label) : "")}
     <div class="detail-hero">${img(e.img, 900)}</div>
-    <div class="detail-grid"><div class="detail-box"><h3>Detalhes</h3><p>Organização: ${esc(e.organizer)}. ${e.going + (going ? 1 : 0)} pessoas confirmaram. Evento da comunidade ${esc(commName(e.community))}.</p></div>
+    <div class="detail-grid"><div class="detail-box"><h3>Detalhes</h3>${eventFacts(e)}<p>Organização: ${esc(e.organizer)}. ${e.going + (going ? 1 : 0)} pessoas confirmaram. Evento da comunidade ${esc(commName(e.community))}.</p></div>
     <div class="detail-box"><h3>${ad ? "Anúncio" : "Presença"}</h3><p>${ad ? "Evento patrocinado. O patrocínio não altera quem confirmou presença." : going ? "Você confirmou presença. Pode cancelar quando quiser." : "Confirmar presença avisa o organizador e lembra você na véspera."}</p></div></div>
     <div class="detail-actions">${going ? `<button class="secondary" data-act="rsvp" data-id="${id}" data-set="cancel">Cancelar presença</button>` : `<button class="primary" data-act="rsvp" data-id="${id}" data-set="going">Confirmar presença</button>`}</div>`)
 }
@@ -2688,67 +3152,105 @@ A.openOffer = (d) => {
   if (!d.type) { openDrawer(`${drawerHead("O que você quer oferecer?", "Escolha o tipo. Você revisa antes de publicar.")}<div class="switch-list">${OFFER_TYPES.map(([k, l]) => `<button class="switch-item" data-act="openOffer" data-type="${k}"><div class="grow"><b>${l}</b><span>${{ sell: "Algo que você quer passar adiante", housing: "Um imóvel para alugar", service: "Seu trabalho, com verificação", event: "Um encontro para a comunidade" }[k]}</span></div>${ic("chevron-right")}</button>`).join("")}</div>`); return }
   offerForm(d.type, d.prefill || "")
 }
-function offerForm(type, pre, data = {}) {
+const formVals = (f) => { const o = {}; for (const [k, val] of new FormData(f)) o[k] = k in o ? [].concat(o[k], val) : val; return o }
+const checks = (name, opts, sel) => `<div class="fchecks">${opts.map(([k, l]) => `<label class="fcheck"><input type="checkbox" name="${name}" value="${k}"${asArr(sel).includes(k) ? " checked" : ""}><span class="fl">${esc(l)}</span></label>`).join("")}</div>`
+const flagBox = (name, label, on) => `<label class="fcheck"><input type="checkbox" name="${name}" value="1"${on ? " checked" : ""}><span class="fl">${esc(label)}</span></label>`
+const MKT_IMG = { moveis: "sofa", eletro: "nb", eletronicos: "nb", infantil: "crib", casa: "food", lazer: "run" }
+function offerForm(type, pre, data = {}, editing = false) {
   const t = T(); const win = windowOptions()
   const cityOpts = (sel) => [t.from, t.to].map((k) => opt(k, city(k).name, k === sel)).join("")
+  const mcat = data.cat || "moveis"; const scat = data.cat || SVC_CATS[0][0]
   const f = {
     sell: `${field("o-title", "O que você está passando adiante", `<input id="o-title" name="title" required value="${esc(data.title || pre.replace(/^quero vender( o| um| uma)?/i, "").trim())}">`)}
-      ${field("o-cat", "Tipo", `<select id="o-cat" name="cat">${[["moveis", "Móveis"], ["infantil", "Infantil"], ["eletronicos", "Eletrônicos"]].map(([v, l]) => opt(v, l, data.cat === v)).join("")}</select>`)}
+      ${field("o-cat", "Categoria", `<select id="o-cat" name="cat">${MKT_CATS.map(([v, l]) => opt(v, l, mcat === v)).join("")}</select>`)}
+      ${field("o-sub", "Tipo de item", `<select id="o-sub" name="sub">${(MKT_SUBS[mcat] || []).map(([v, l]) => opt(v, l, data.sub === v)).join("")}</select>`)}
+      ${field("o-cond", "Condição", `<select id="o-cond" name="cond">${CONDS.map(([v, l]) => opt(v, l, (data.cond || "usado") === v)).join("")}</select>`)}
       ${field("o-price", "Preço (R$)", `<input id="o-price" name="price" inputmode="numeric" required value="${esc(data.price || "")}">`)}
       ${field("o-win", "Janela de retirada", `<select id="o-win" name="win">${win.map((w) => opt(w.iso, w.label, data.win === w.iso)).join("")}</select>`, "Só a janela aparece para os outros. A data exata é combinada na conversa.")}
-      ${field("o-city", "Cidade", `<select id="o-city" name="city">${cityOpts(data.city || t.from)}</select>`)}`,
-    housing: `${field("o-type", "Tipo", `<select id="o-type" name="htype">${["Apartamento", "Casa"].map((x) => opt(x, x, data.htype === x)).join("")}</select>`)}
+      ${field("o-city", "Cidade", `<select id="o-city" name="city">${cityOpts(data.city || t.from)}</select>`)}
+      ${field("o-bairro", "Bairro", `<input id="o-bairro" name="bairro" value="${esc(data.bairro || "")}">`, "Só o bairro aparece. O endereço fica com você.")}`,
+    housing: `${field("o-type", "Tipo", `<select id="o-type" name="htype">${HOUSE_TYPES.map(([, l]) => opt(l, l, data.htype === l)).join("")}</select>`)}
       ${field("o-bairro", "Bairro", `<input id="o-bairro" name="bairro" required value="${esc(data.bairro || "")}">`)}
-      ${field("o-beds", "Quartos", `<input id="o-beds" name="beds" inputmode="numeric" required value="${esc(data.beds || "2")}">`)}
-      ${field("o-rent", "Aluguel (R$/mês)", `<input id="o-rent" name="rent" inputmode="numeric" required value="${esc(data.rent || "")}">`)}
+      <div class="form-row">
+        ${field("o-beds", "Quartos", `<input id="o-beds" name="beds" inputmode="numeric" required value="${esc(data.beds || "2")}">`)}
+        ${field("o-baths", "Banheiros", `<input id="o-baths" name="baths" inputmode="numeric" value="${esc(data.baths ?? "1")}">`)}
+        ${field("o-parking", "Vagas", `<input id="o-parking" name="parking" inputmode="numeric" value="${esc(data.parking ?? "0")}">`)}
+        ${field("o-m2", "Área (m²)", `<input id="o-m2" name="m2" inputmode="numeric" value="${esc(data.m2 || "")}">`)}
+      </div>
+      <div class="form-row">
+        ${field("o-rent", "Aluguel (R$/mês)", `<input id="o-rent" name="rent" inputmode="numeric" required value="${esc(data.rent || "")}">`)}
+        ${field("o-condo", "Condomínio (R$/mês)", `<input id="o-condo" name="condo" inputmode="numeric" value="${esc(data.condo || "")}">`)}
+      </div>
+      <p class="fhint">Deixe o condomínio em branco se não houver. Se já está no aluguel, marque a caixa abaixo.</p>
+      ${flagBox("condoIn", "Condomínio incluso no aluguel", data.condoIn)}
       ${field("o-from", "Disponível a partir de", `<select id="o-from" name="from">${win.map((w) => opt(w.iso, w.label, data.from === w.iso)).join("")}</select>`)}
       ${field("o-city", "Cidade", `<select id="o-city" name="city">${cityOpts(data.city || t.from)}</select>`)}
+      ${flagBox("furnished", "Mobiliado", data.furnished)}
+      ${flagBox("pets", "Aceita animais de estimação", data.pets)}
+      <fieldset class="field"><legend>Comodidades</legend>${checks("amen", AMEN, data.amen)}</fieldset>
+      <fieldset class="field"><legend>Garantia aceita</legend>${checks("guar", GUAR, data.guar)}</fieldset>
       <p class="privacy-note">O endereço exato não é publicado. Só depois do contato.</p>`,
     service: `${field("o-name", "Nome do negócio", `<input id="o-name" name="name" required value="${esc(data.name || "")}">`)}
-      ${field("o-cat", "Categoria", `<select id="o-cat" name="cat">${[["manutencao", "Manutenção e reparos"], ["climatizacao", "Climatização"], ["mudanca", "Mudança e frete"], ["saude", "Saúde"]].map(([v, l]) => opt(v, l, data.cat === v)).join("")}</select>`)}
+      ${field("o-cat", "Tipo de serviço", `<select id="o-cat" name="cat">${SVC_CATS.map(([v, l]) => opt(v, l, scat === v)).join("")}</select>`)}
+      <fieldset class="field"><legend>Especialidades</legend>${checks("svc", SVC_SUBS[scat] || [], data.svc)}</fieldset>
       ${field("o-area", "Onde atende", `<input id="o-area" name="area" required value="${esc(data.area || "")}">`)}
       ${field("o-city", "Cidade", `<select id="o-city" name="city">${cityOpts(data.city || t.from)}</select>`)}
+      ${flagBox("sat", "Atendo aos sábados", data.sat)}
       <div class="detail-box"><h3>Verificação</h3><p>Todo prestador passa por verificação de identidade e CNPJ. Você só aparece em Serviços depois de aprovado. Ser anunciante não muda a verificação.</p></div>`,
     event: `${field("o-title", "Nome do evento", `<input id="o-title" name="title" required value="${esc(data.title || "")}">`)}
+      ${field("o-ecat", "Categoria", `<select id="o-ecat" name="ecat">${EV_CATS.map(([v, l]) => opt(v, l, (data.ecat || "comunidade") === v)).join("")}</select>`)}
       ${field("o-date", "Data", `<input id="o-date" name="date" type="date" min="${today()}" required value="${esc(data.date || isoAdd(today(), 7))}">`)}
       ${field("o-time", "Horário", `<input id="o-time" name="time" required value="${esc(data.time || "10h")}">`)}
       ${field("o-place", "Local", `<input id="o-place" name="place" required value="${esc(data.place || "")}">`)}
-      ${field("o-comm", "Publicar em", `<select id="o-comm" name="comm">${Object.values(DB.communities).filter((c) => isMember(c.id)).map((c) => opt(c.id, c.name, data.comm === c.id)).join("")}</select>`)}`,
+      ${field("o-comm", "Publicar em", `<select id="o-comm" name="comm">${Object.values(DB.communities).filter((c) => isMember(c.id)).map((c) => opt(c.id, c.name, data.comm === c.id)).join("")}</select>`)}
+      ${flagBox("free", "Entrada gratuita", editing ? data.free : true)}
+      ${flagBox("kids", "Bom para crianças", data.kids)}`,
   }[type]
   openDrawer(`${drawerHead({ sell: "Anunciar desapego", housing: "Anunciar imóvel", service: "Oferecer meu serviço", event: "Organizar evento" }[type], "Você vê uma prévia antes de publicar.")}<form data-form="offerPreview" data-type="${type}">${f}<div class="detail-actions"><button class="primary" type="submit">Ver prévia</button></div></form>`)
 }
+// a lista de tipos depende da categoria escolhida: refaz o formulário sem perder o que já foi digitado
+document.addEventListener("change", (e) => {
+  const el = e.target
+  const f = el.closest && el.closest("form[data-form='offerPreview']")
+  if (!f || el.id !== "o-cat" || !["sell", "service"].includes(f.dataset.type)) return
+  const v = formVals(f)
+  delete v.sub; delete v.svc
+  offerForm(f.dataset.type, "", v, true)
+  $("#o-cat")?.focus()
+})
 A.offerPreview = (d, f) => {
-  const v = Object.fromEntries(new FormData(f)); DRAFT = { type: d.type, v }
+  const v = formVals(f); DRAFT = { type: d.type, v }
   const show = {
-    sell: () => `<b>${esc(v.title)}</b><br>${money(v.price)} · retirada em ${esc(windowLabel(v.win))} · ${esc(city(v.city).name)}`,
-    housing: () => `<b>${esc(v.htype)} · ${esc(v.bairro)}</b><br>${v.beds} quartos · ${money(v.rent)}/mês · a partir de ${esc(windowLabel(v.from))} · ${esc(city(v.city).name)}`,
-    service: () => `<b>${esc(v.name)}</b><br>${esc(v.area)} · ${esc(city(v.city).name)}<br><span class="badge gold">Em verificação de identidade e CNPJ</span>`,
-    event: () => `<b>${esc(v.title)}</b><br>${fmtShort(v.date)} · ${esc(v.time)} · ${esc(v.place)} · ${esc(commName(v.comm))}`,
+    sell: () => `<b>${esc(v.title)}</b><br>${money(v.price)} · ${esc(lab(CONDS, v.cond))} · ${esc(lab(MKT_CATS, v.cat))}${v.sub ? `, ${esc(lab(MKT_ALL, v.sub).toLowerCase())}` : ""}<br>Retirada em ${esc(windowLabel(v.win))} · ${v.bairro ? `${esc(v.bairro)}, ` : ""}${esc(city(v.city).name)}`,
+    housing: () => `<b>${esc(v.htype)} · ${esc(v.bairro)}</b><br>${v.beds} quartos · ${v.baths || 1} banheiros · ${+v.parking ? `${v.parking} vagas` : "sem vaga"}${+v.m2 ? ` · ${v.m2} m²` : ""}<br>${money(v.rent)}/mês · ${v.condoIn ? "condomínio incluso" : +v.condo ? `condomínio ${money(v.condo)}` : "sem condomínio"} · a partir de ${esc(windowLabel(v.from))} · ${esc(city(v.city).name)}${v.furnished ? "<br>Mobiliado" : ""}${v.pets ? "<br>Aceita animais de estimação" : ""}${asArr(v.amen).length ? `<br>Comodidades: ${esc(listOf(AMEN, asArr(v.amen)))}` : ""}${asArr(v.guar).length ? `<br>Garantia aceita: ${esc(listOf(GUAR, asArr(v.guar)))}` : ""}`,
+    service: () => `<b>${esc(v.name)}</b><br>${esc(lab(SVC_CATS, v.cat))}${asArr(v.svc).length ? ` · ${esc(listOf(SVC_ALL, asArr(v.svc)))}` : ""}<br>${esc(v.area)} · ${esc(city(v.city).name)}${v.sat ? " · atende aos sábados" : ""}<br><span class="badge gold">Em verificação de identidade e CNPJ</span>`,
+    event: () => `<b>${esc(v.title)}</b><br>${fmtShort(v.date)} · ${esc(v.time)} · ${esc(v.place)} · ${esc(commName(v.comm))}<br>${esc(lab(EV_CATS, v.ecat))} · ${v.free ? "gratuito" : "entrada paga"}${v.kids ? " · bom para crianças" : ""}`,
   }[d.type]()
   openDrawer(`${drawerHead("Prévia", d.type === "service" ? "Serviços só publica depois da verificação." : "É assim que aparece para os outros.")}<div class="preview-card">${show}</div>
     ${d.type === "sell" ? `<p class="privacy-note">A data exata (${fmtShort(v.win)}) só você vê. Quem pediu aviso para este tipo de item é avisado sem ver seu nome.</p>` : ""}
     <div class="detail-actions"><button class="secondary" data-act="offerBack">Editar</button><button class="primary" data-act="offerPublish">${d.type === "service" ? "Enviar para verificação" : "Publicar"}</button></div>`)
 }
-A.offerBack = () => offerForm(DRAFT.type, "", DRAFT.v)
+A.offerBack = () => offerForm(DRAFT.type, "", DRAFT.v, true)
 A.offerPublish = () => {
   const { type, v } = DRAFT
   if (type === "sell") {
-    const it = { id: uid("m"), mine: true, city: v.city, title: v.title.trim(), price: +v.price, cat: v.cat, window: v.win, seller: "Você", img: PH[{ moveis: "sofa", infantil: "crib", eletronicos: "nb" }[v.cat]], appears: 0 }
+    const it = { id: uid("m"), mine: true, city: v.city, title: v.title.trim(), price: +v.price, cat: v.cat, sub: v.sub || "", cond: v.cond || "usado", bairro: (v.bairro || "").trim(), window: v.win, seller: "Você", img: PH[MKT_IMG[v.cat] || "sofa"], appears: 0 }
     S.own.market.unshift(it)
     createNeed({ title: it.title, dir: "offer", intent: "sell", cityKey: v.city, extra: { ownRef: { type: "market", id: it.id } } })
     const hit = DB.demands.filter((x) => S.alerts.includes(x.id) && x.city === v.city && x.cats.includes(v.cat)).reduce((s, x) => s + x.count, 0)
     save(); go("market", { side: sideOfCity(v.city) }); toast(hit ? `Desapego publicado. ${hit} famílias que pediram aviso foram avisadas.` : "Desapego publicado. Ele já aparece em Desapegos.")
   } else if (type === "housing") {
-    const h = { id: uid("h"), mine: true, city: v.city, title: v.htype, bairro: v.bairro.trim(), beds: +v.beds, m2: 0, rent: +v.rent, from: v.from, furnished: false, tags: [v.htype.toLowerCase()], img: PH.apt2, owner: "Você" }
+    const kind = (HOUSE_TYPES.find(([, l]) => l === v.htype) || ["apartamento"])[0]
+    const h = { id: uid("h"), mine: true, city: v.city, title: v.htype, type: kind, bairro: v.bairro.trim(), beds: +v.beds, baths: +v.baths || 1, parking: +v.parking || 0, m2: +v.m2 || 0, rent: +v.rent, condoIn: !!v.condoIn, condo: v.condoIn ? 0 : +v.condo || 0, from: v.from, furnished: !!v.furnished, pets: !!v.pets, amen: asArr(v.amen), guar: asArr(v.guar), tags: [kind], img: PH.apt2, owner: "Você" }
     S.own.housing.unshift(h)
     createNeed({ title: `${v.htype} em ${v.bairro}`, dir: "offer", intent: "housing", cityKey: v.city, extra: { ownRef: { type: "housing", id: h.id } } })
     save(); go("housing", { side: sideOfCity(v.city) }); toast("Imóvel publicado. Ele já aparece em Moradia.")
   } else if (type === "service") {
-    S.own.provider = { name: v.name.trim(), tags: [v.cat], area: v.area, city: v.city, status: "verification", day: S.day }
+    S.own.provider = { name: v.name.trim(), tags: [v.cat], cat: v.cat, svc: asArr(v.svc), sat: !!v.sat, area: v.area, city: v.city, status: "verification", day: S.day }
     createNeed({ title: `Oferecer serviço: ${v.name}`, dir: "offer", intent: "service", cityKey: v.city, extra: { waitingVerification: true } })
     save(); go("provider"); toast("Enviado para verificação. Ele só aparece em Serviços depois de aprovado.")
   } else {
-    const e = { id: uid("e"), mine: true, city: comm(v.comm).city, community: v.comm, title: v.title.trim(), date: v.date, time: v.time, place: v.place.trim(), img: PH.crowd, going: 0, organizer: "Você" }
+    const e = { id: uid("e"), mine: true, city: comm(v.comm).city, community: v.comm, title: v.title.trim(), cat: v.ecat || "comunidade", free: !!v.free, kids: !!v.kids, date: v.date, time: v.time, place: v.place.trim(), img: PH.crowd, going: 0, organizer: "Você" }
     S.own.events.unshift(e)
     createNeed({ title: e.title, dir: "offer", intent: "event", cityKey: e.city, extra: { ownRef: { type: "event", id: e.id } } })
     save(); go("events", { side: sideOfCity(e.city) }); toast("Evento publicado na comunidade e em Eventos.")

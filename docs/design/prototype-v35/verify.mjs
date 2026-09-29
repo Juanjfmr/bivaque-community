@@ -39,6 +39,7 @@ const ONCE = new Set(["P27", "P29", "P31"]) // já percorrem os dois viewports p
 async function fresh(vp = CUR) {
   const ctx = await browser.newContext({ viewport: vp, reducedMotion: MOTION })
   const page = await ctx.newPage()
+  page.setDefaultTimeout(8000) // um controle que sumiu falha em segundos, com o seletor no erro
   page.on("pageerror", (e) => pageErrors.push(e.message))
   await page.route(/unsplash\.com|fonts\.(googleapis|gstatic)\.com/, (r) => r.abort())
   await page.goto(PAGE_URL)
@@ -86,7 +87,7 @@ async function probe(id, area, title, fn) {
       detail = r[1] || ""
     } catch (e) {
       ok = false
-      detail = `exceção: ${String(e).split("\n")[0]}`
+      detail = `exceção: ${String(e).split("\n").slice(0, 4).join(" ").slice(0, 260)}`
     }
     if (pageErrors.length > before) {
       ok = false
@@ -309,7 +310,7 @@ await probe(
     const card = await page.evaluate(
       () =>
         [...document.querySelectorAll(".service-card")]
-          .find((c) => /Manutenção/.test(c.innerText))
+          .find((c) => c.querySelector("h3")?.innerText.startsWith("Manutenção"))
           .querySelector(".trust").innerText,
     )
     if (panel !== card) bad.push(`ficha do painel ≠ ficha pública ("${panel}" vs "${card}")`)
@@ -1069,12 +1070,34 @@ await probe(
     }
     const read = (sels) =>
       page.evaluate(
-        (sels) => Object.fromEntries(sels.map((q) => [q, document.querySelector(q).value])),
+        (sels) =>
+          Object.fromEntries(
+            sels.map((q) => {
+              const e = document.querySelector(q)
+              if (!e) return [q, "(campo ausente)"]
+              return [q, e.type === "checkbox" ? e.checked : e.value]
+            }),
+          ),
         sels,
       )
     const cases = {
       housing: [
-        ["#o-type", "#o-bairro", "#o-beds", "#o-rent", "#o-from", "#o-city"],
+        [
+          "#o-type",
+          "#o-bairro",
+          "#o-beds",
+          "#o-rent",
+          "#o-from",
+          "#o-city",
+          "#o-baths",
+          "#o-parking",
+          "#o-m2",
+          "#o-condo",
+          "input[name=pets]",
+          "input[name=furnished]",
+          "input[name=amen][value=piscina]",
+          "input[name=guar][value=titulo]",
+        ],
         async () => {
           await pick("#o-type", 1)
           await page.fill("#o-bairro", "Adrianópolis")
@@ -1082,8 +1105,24 @@ await probe(
           await page.fill("#o-rent", "2900")
           await pick("#o-from", 4)
           await pick("#o-city", 1)
+          await page.fill("#o-baths", "3")
+          await page.fill("#o-parking", "2")
+          await page.fill("#o-m2", "88")
+          await page.fill("#o-condo", "450")
+          await page.check("input[name=pets]")
+          await page.check("input[name=furnished]")
+          await page.check("input[name=amen][value=piscina]")
+          await page.check("input[name=guar][value=titulo]")
         },
         (o, b) =>
+          String(o.baths) === b["#o-baths"] &&
+          String(o.parking) === b["#o-parking"] &&
+          String(o.m2) === b["#o-m2"] &&
+          String(o.condo) === b["#o-condo"] &&
+          o.pets === b["input[name=pets]"] &&
+          o.furnished === b["input[name=furnished]"] &&
+          o.amen.includes("piscina") === b["input[name=amen][value=piscina]"] &&
+          o.guar.includes("titulo") === b["input[name=guar][value=titulo]"] &&
           o.title === b["#o-type"] &&
           o.from === b["#o-from"] &&
           o.city === b["#o-city"] &&
@@ -1092,22 +1131,45 @@ await probe(
           o.bairro === b["#o-bairro"],
       ],
       service: [
-        ["#o-name", "#o-cat", "#o-area", "#o-city"],
+        [
+          "#o-name",
+          "#o-cat",
+          "#o-area",
+          "#o-city",
+          "input[name=svc][value=odonto]",
+          "input[name=sat]",
+        ],
         async () => {
           await page.fill("#o-name", "Clínica Teste")
           await pick("#o-cat", 3)
+          await page.check("input[name=svc][value=odonto]")
+          await page.check("input[name=sat]")
           await page.fill("#o-area", "Flores")
           await pick("#o-city", 1)
         },
         (o, b) =>
+          o.svc.includes("odonto") === b["input[name=svc][value=odonto]"] &&
+          o.sat === b["input[name=sat]"] &&
           o.tags[0] === b["#o-cat"] &&
           o.city === b["#o-city"] &&
           o.name === b["#o-name"] &&
           o.area === b["#o-area"],
       ],
       event: [
-        ["#o-title", "#o-date", "#o-time", "#o-place", "#o-comm"],
+        [
+          "#o-title",
+          "#o-date",
+          "#o-time",
+          "#o-place",
+          "#o-comm",
+          "#o-ecat",
+          "input[name=kids]",
+          "input[name=free]",
+        ],
         async () => {
+          await pick("#o-ecat", 2)
+          await page.check("input[name=kids]")
+          await page.uncheck("input[name=free]")
           await page.fill("#o-title", "Encontro X")
           await page.fill("#o-date", "2026-10-11")
           await page.fill("#o-time", "19h")
@@ -1115,6 +1177,9 @@ await probe(
           await pick("#o-comm", 1)
         },
         (o, b) =>
+          o.cat === b["#o-ecat"] &&
+          o.kids === b["input[name=kids]"] &&
+          o.free === b["input[name=free]"] &&
           o.community === b["#o-comm"] &&
           o.city === "brasilia" &&
           o.title === b["#o-title"] &&
@@ -1122,15 +1187,21 @@ await probe(
           o.place === b["#o-place"],
       ],
       sell: [
-        ["#o-title", "#o-cat", "#o-price", "#o-win", "#o-city"],
+        ["#o-title", "#o-cat", "#o-price", "#o-win", "#o-city", "#o-sub", "#o-cond", "#o-bairro"],
         async () => {
           await page.fill("#o-title", "Cadeira")
           await pick("#o-cat", 2)
+          await pick("#o-sub", 1)
+          await pick("#o-cond", 0)
+          await page.fill("#o-bairro", "Flores")
           await page.fill("#o-price", "120")
           await pick("#o-win", 4)
           await pick("#o-city", 1)
         },
         (o, b) =>
+          o.sub === b["#o-sub"] &&
+          o.cond === b["#o-cond"] &&
+          o.bairro === b["#o-bairro"] &&
           o.cat === b["#o-cat"] &&
           o.window === b["#o-win"] &&
           o.city === b["#o-city"] &&
@@ -2876,6 +2947,764 @@ await probe(
       bad.push(`ligar sem necessidades: ${JSON.stringify(after)}`)
     await ctx.close()
     return [!bad.length, bad.slice(0, 3).join(" | ")]
+  },
+)
+
+/* ============ FILTROS DOS CATÁLOGOS ============ */
+// O conjunto esperado sai de um cálculo sobre os dados (DB), escrito aqui de forma independente do motor.
+const BASE_TODAY = "2026-09-29"
+const dias = (iso) =>
+  Math.round((new Date(`${iso}T12:00:00`) - new Date(`${BASE_TODAY}T12:00:00`)) / 864e5)
+const ids = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll("#view .cat-main [data-mid]")].map((e) => e.dataset.mid),
+  )
+const organicIds = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll("#catList [data-mid]")].map((e) => e.dataset.mid),
+  )
+const adIds = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll(".ad-band [data-mid]")].map((e) => e.dataset.mid),
+  )
+const total = (page) => page.evaluate(() => +(document.querySelector(".fcount b")?.innerText ?? -1))
+const dbRows = (page, key, city) =>
+  page.evaluate(([key, city]) => __bv.DB[key].filter((x) => x.city === city), [key, city])
+const sameSet = (a, b) =>
+  a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|")
+// abre o filtro pelo caminho que a pessoa tem: painel no computador, folha no celular
+async function openFilterUI(page) {
+  if (MOBILE()) {
+    await page.locator(".fbtn").click()
+    await page.waitForSelector("#fsBody")
+    return "#fsBody"
+  }
+  return "#fpanel"
+}
+async function closeFilterUI(page) {
+  if (MOBILE()) await page.locator("#fsDone").click()
+}
+const groupOpen = async (page, scope, gid) => {
+  // as bandeiras (sim ou não) ficam todas no grupo "Mais opções"
+  let d = page.locator(`${scope} details[data-gid="${gid}"]`)
+  if (!(await d.count())) d = page.locator(`${scope} details[data-gid="_flags"]`)
+  if (!(await d.evaluate((e) => e.open, null, { timeout: 3000 })))
+    await d.locator("summary").click()
+}
+// aplica uma escolha pelo controle real
+async function pick(page, scope, gid, key) {
+  await groupOpen(page, scope, gid)
+  const sel = `${scope} [data-filt="${gid}"]`
+  if (key === undefined) await page.locator(sel).first().click()
+  else await page.locator(`${sel}[data-fv="${key}"]`).click()
+}
+async function fillNum(page, scope, gid, which, v) {
+  await groupOpen(page, scope, gid)
+  const sel = which
+    ? `${scope} [data-filt="${gid}"][data-fw="${which}"]`
+    : `${scope} [data-filt="${gid}"]`
+  await page.locator(sel).fill(String(v))
+}
+const optCount = (page, scope, gid, key) =>
+  page.evaluate(
+    ([scope, gid, key]) => {
+      const i = document.querySelector(`${scope} [data-filt="${gid}"][data-fv="${key}"]`)
+      return i ? +i.closest("label").querySelector(".fc")?.innerText : null
+    },
+    [scope, gid, key],
+  )
+// confere a tela contra o esperado; devolve texto do problema ou ""
+async function conferir(page, rotulo, esperado) {
+  const vis = await ids(page)
+  if (!sameSet(vis, esperado))
+    return `${rotulo}: tela [${[...vis].sort().join(",")}] esperado [${[...esperado].sort().join(",")}]`
+  const n = await total(page)
+  if (n !== esperado.length) return `${rotulo}: contagem ${n}, esperado ${esperado.length}`
+  return ""
+}
+// Um passo que depende do anterior pode travar depois de uma verificação que já falhou. Se já há erro
+// registrado, a interrupção vira parte do relatório em vez de esconder a asserção atrás de um tempo esgotado.
+async function guard(bad, fn) {
+  try {
+    await fn()
+  } catch (e) {
+    if (!bad.length) throw e
+    bad.push(`interrompida depois do primeiro erro (${String(e).split("\n")[0].slice(0, 70)})`)
+  }
+}
+const goCat = async (page, p, side = "origin") => {
+  await go(page, p, { side })
+  await page.waitForSelector(".fcount")
+}
+
+await probe(
+  "P48",
+  "Filtros",
+  "imóveis: cada combinação mostra exatamente o conjunto calculado sobre os dados; a contagem de cada opção é o resultado real; o anúncio obedece ao filtro e fica na faixa própria",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await guard(bad, async () => {
+      await goCat(page, "housing", "destination")
+      const all = await dbRows(page, "housing", "brasilia")
+      const H = (f) => all.filter(f).map((h) => h.id)
+      let scope = await openFilterUI(page)
+      let p = await conferir(
+        page,
+        "sem filtro",
+        H(() => true),
+      )
+      if (p) bad.push(p)
+      // 1) contagem da opção = resultado ao escolher (primeira escolha do grupo)
+      const nBeds3 = await optCount(page, scope, "beds", 3)
+      await pick(page, scope, "beds", 3)
+      if ((await total(page)) !== H((h) => (h.beds ?? 0) >= 3).length)
+        bad.push("quartos 3+ fora do cálculo")
+      if (nBeds3 !== null && nBeds3 !== (await total(page))) bad.push(`opção 3+ prometia ${nBeds3}`)
+      // 2) combinação: quartos, vaga, tipo
+      await pick(page, scope, "parking", 1)
+      await pick(page, scope, "type", "apartamento")
+      p = await conferir(
+        page,
+        "apto 3+ quartos e vaga",
+        H((h) => h.type === "apartamento" && h.beds >= 3 && h.parking >= 1),
+      )
+      if (p) bad.push(p)
+      // 3) faixa de aluguel digitada
+      await fillNum(page, scope, "rent", "min", 3000)
+      await fillNum(page, scope, "rent", "max", 4200)
+      p = await conferir(
+        page,
+        "aluguel 3000 a 4200",
+        H(
+          (h) =>
+            h.type === "apartamento" &&
+            h.beds >= 3 &&
+            h.parking >= 1 &&
+            h.rent >= 3000 &&
+            h.rent <= 4200,
+        ),
+      )
+      if (p) bad.push(p)
+      // 4) comodidades: todas as marcadas; garantia: qualquer uma
+      await pick(page, scope, "amen", "piscina")
+      await pick(page, scope, "amen", "portaria24")
+      p = await conferir(
+        page,
+        "piscina e portaria",
+        H(
+          (h) =>
+            h.type === "apartamento" &&
+            h.beds >= 3 &&
+            h.parking >= 1 &&
+            h.rent >= 3000 &&
+            h.rent <= 4200 &&
+            (h.amen || []).includes("piscina") &&
+            (h.amen || []).includes("portaria24"),
+        ),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      if ((await total(page)) !== all.length) bad.push("Limpar tudo não devolveu todos")
+      // 5) condomínio: teto e incluso; garantia (qualquer)
+      await fillNum(page, scope, "condo", null, 800)
+      p = await conferir(
+        page,
+        "condomínio até 800",
+        H((h) => (h.condoIn ? 0 : (h.condo ?? 0)) <= 800),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "guar", "fiador")
+      await pick(page, scope, "guar", "titulo")
+      p = await conferir(
+        page,
+        "condomínio e fiador ou título",
+        H(
+          (h) =>
+            (h.condoIn ? 0 : (h.condo ?? 0)) <= 800 &&
+            ((h.guar || []).includes("fiador") || (h.guar || []).includes("titulo")),
+        ),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      // 6) bandeiras
+      await pick(page, scope, "pets")
+      await pick(page, scope, "furnished")
+      p = await conferir(
+        page,
+        "pets e mobiliado",
+        H((h) => h.pets && h.furnished),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      // 7) anúncio: obedece ao filtro e nunca entra na lista orgânica
+      const ad = all.find((h) => h.campaign)
+      scope = await openFilterUI(page)
+      await pick(page, scope, "beds", 3)
+      let a = await adIds(page)
+      if (!a.includes(ad.id)) bad.push("anúncio de 3 quartos sumiu com o filtro 3+")
+      if ((await organicIds(page)).includes(ad.id)) bad.push("anúncio entrou na lista orgânica")
+      await pick(page, scope, "beds", 4)
+      a = await adIds(page)
+      if (a.includes(ad.id)) bad.push("anúncio de 3 quartos furou o filtro 4+")
+      await closeFilterUI(page)
+    })
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+
+await probe(
+  "P49",
+  "Filtros",
+  "serviços: tipo em dois níveis (trocar a categoria limpa a especialidade), região, recomendado, contratações e sábado batem com os dados; ordenar por preço é escolha da pessoa e não move o anúncio",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await guard(bad, async () => {
+      await goCat(page, "services", "origin")
+      const all = await dbRows(page, "providers", "manaus")
+      const ev = await page.evaluate(() => __bv.DB.evidence)
+      const hired = (id) => ev.filter((e) => e.providerId === id && e.kind === "hired").length
+      const rec = (id) => {
+        const l = ev.filter((e) => e.providerId === id)
+        const h = l.filter((e) => e.kind === "hired")
+        const y = h.filter((e) => e.result === "yes").length
+        return l.length >= 2 && h.length >= 2 && y / h.length >= 0.75
+      }
+      const score = (id) => {
+        const l = ev.filter((e) => e.providerId === id)
+        const h = l.filter((e) => e.kind === "hired")
+        const c = (r) => h.filter((e) => e.result === r).length
+        return c("yes") * 2 + c("partial") - c("no") * 2 + l.length * 0.1
+      }
+      const P = (f) => all.filter(f).map((x) => x.id)
+      const scope = await openFilterUI(page)
+      if ((await page.locator(`${scope} details[data-gid="sub"]`).count()) !== 0)
+        bad.push("especialidade aparece antes de escolher o tipo de serviço")
+      await pick(page, scope, "cat", "casa")
+      let p = await conferir(
+        page,
+        "tipo casa",
+        P((x) => x.cat === "casa"),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "sub", "eletrica")
+      p = await conferir(
+        page,
+        "casa e elétrica",
+        P((x) => x.cat === "casa" && x.svc.includes("eletrica")),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "cat", "climatizacao")
+      if ((await page.locator(`${scope} details[data-gid="sub"] input:checked`).count()) !== 0)
+        bad.push("trocar o tipo não limpou a especialidade")
+      p = await conferir(
+        page,
+        "tipo climatização",
+        P((x) => x.cat === "climatizacao"),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "cat", "")
+      await pick(page, scope, "region", "Flores")
+      p = await conferir(
+        page,
+        "região Flores (inclui quem atende toda a cidade)",
+        P((x) => x.regions.includes("Flores") || x.regions.includes("*")),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "rec")
+      p = await conferir(
+        page,
+        "Flores e recomendado",
+        P((x) => (x.regions.includes("Flores") || x.regions.includes("*")) && rec(x.id)),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      const scope2 = await openFilterUI(page)
+      await pick(page, scope2, "hired", 2)
+      p = await conferir(
+        page,
+        "2+ contratações",
+        P((x) => hired(x.id) >= 2),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope2, "sat")
+      p = await conferir(
+        page,
+        "2+ contratações e sábado",
+        P((x) => hired(x.id) >= 2 && x.sat),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      // ordem padrão é a evidência; preço é escolha explícita; anúncio fica onde está
+      const adBefore = await adIds(page)
+      const def = await organicIds(page)
+      const sc = def.map(score)
+      if (sc.some((v, i) => i && v > sc[i - 1] + 1e-9))
+        bad.push("ordem padrão não segue a evidência")
+      await page.selectOption('[data-fsort="services"]', "price")
+      const byPrice = (await organicIds(page)).map((id) => all.find((x) => x.id === id).base)
+      if (byPrice.some((v, i) => i && v < byPrice[i - 1]))
+        bad.push(`ordenar por preço não é crescente: ${byPrice}`)
+      if (JSON.stringify(await adIds(page)) !== JSON.stringify(adBefore))
+        bad.push("ordenar mexeu no anúncio")
+      if ((await organicIds(page)).some((id) => adBefore.includes(id)))
+        bad.push("anúncio caiu na lista ao ordenar")
+    })
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+
+await probe(
+  "P50",
+  "Filtros",
+  "desapegos: categoria e tipo de item, preço, condição, retirada e bairro batem com os dados; ordenar por preço em ambos os sentidos",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await guard(bad, async () => {
+      await goCat(page, "market", "origin")
+      const all = (await dbRows(page, "market", "manaus")).filter((m) => m.appears <= 0)
+      const M = (f) => all.filter(f).map((x) => x.id)
+      const scope = await openFilterUI(page)
+      await pick(page, scope, "cat", "eletro")
+      let p = await conferir(
+        page,
+        "eletrodomésticos",
+        M((m) => m.cat === "eletro"),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "sub", "geladeira")
+      p = await conferir(
+        page,
+        "geladeiras",
+        M((m) => m.cat === "eletro" && m.sub === "geladeira"),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "cat", "")
+      await fillNum(page, scope, "price", "min", 500)
+      await fillNum(page, scope, "price", "max", 900)
+      p = await conferir(
+        page,
+        "preço 500 a 900",
+        M((m) => m.price >= 500 && m.price <= 900),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "cond", "seminovo")
+      p = await conferir(
+        page,
+        "500 a 900 seminovo",
+        M((m) => m.price >= 500 && m.price <= 900 && m.cond === "seminovo"),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      const scope2 = await openFilterUI(page)
+      await pick(page, scope2, "bairro", "Flores")
+      await pick(page, scope2, "bairro", "Ponta Negra")
+      p = await conferir(
+        page,
+        "Flores ou Ponta Negra",
+        M((m) => ["Flores", "Ponta Negra"].includes(m.bairro)),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      const scope3 = await openFilterUI(page)
+      await pick(page, scope3, "win", "week")
+      p = await conferir(
+        page,
+        "retirada esta semana",
+        M((m) => dias(m.window) <= 7),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      const prices = async () =>
+        (await organicIds(page)).map((id) => all.find((x) => x.id === id).price)
+      await page.selectOption('[data-fsort="market"]', "price")
+      let v = await prices()
+      if (v.some((x, i) => i && x < v[i - 1])) bad.push(`menor preço não é crescente: ${v}`)
+      await page.selectOption('[data-fsort="market"]', "priceDesc")
+      v = await prices()
+      if (v.some((x, i) => i && x > v[i - 1])) bad.push(`maior preço não é decrescente: ${v}`)
+    })
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+
+await probe(
+  "P51",
+  "Filtros",
+  "eventos, benefícios e referências: categoria, quando, período, gratuito, crianças, como resgatar, validade, assunto, revisão e relatos batem com os dados",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await guard(bad, async () => {
+      // eventos
+      await goCat(page, "events", "origin")
+      const evs = (await dbRows(page, "events", "manaus")).filter((e) => dias(e.date) >= 0)
+      const E = (f) => evs.filter(f).map((x) => x.id)
+      let scope = await openFilterUI(page)
+      await pick(page, scope, "cat", "gastronomia")
+      let p = await conferir(
+        page,
+        "gastronomia",
+        E((e) => e.cat === "gastronomia"),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "cat", "esporte")
+      p = await conferir(
+        page,
+        "gastronomia ou esporte",
+        E((e) => ["gastronomia", "esporte"].includes(e.cat)),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      await pick(page, scope, "when", "weekend")
+      p = await conferir(
+        page,
+        "fim de semana",
+        E((e) => [0, 6].includes(new Date(`${e.date}T12:00:00`).getDay()) && dias(e.date) <= 14),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "free")
+      await pick(page, scope, "kids")
+      p = await conferir(
+        page,
+        "fim de semana, gratuito, crianças",
+        E(
+          (e) =>
+            [0, 6].includes(new Date(`${e.date}T12:00:00`).getDay()) &&
+            dias(e.date) <= 14 &&
+            e.free &&
+            e.kids,
+        ),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      await pick(page, scope, "part", "noite")
+      p = await conferir(
+        page,
+        "noite",
+        E((e) => parseInt(e.time, 10) >= 18),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      // benefícios
+      await goCat(page, "benefits", "origin")
+      const bens = await dbRows(page, "benefits", "manaus")
+      const B = (f) => bens.filter(f).map((x) => x.id)
+      scope = await openFilterUI(page)
+      await pick(page, scope, "how", "code")
+      p = await conferir(
+        page,
+        "resgate com código",
+        B((b) => b.how === "code"),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "how", "partner")
+      await pick(page, scope, "cat", "hospedagem")
+      p = await conferir(
+        page,
+        "código ou parceiro, hospedagem",
+        B((b) => ["code", "partner"].includes(b.how) && b.cat === "hospedagem"),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      await pick(page, scope, "valid", "soon")
+      p = await conferir(
+        page,
+        "vencem em breve",
+        B((b) => dias(b.until) >= 0 && dias(b.until) <= 14),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      // referências (Brasília)
+      await goCat(page, "refs", "destination")
+      const refs = await dbRows(page, "refs", "brasilia")
+      const R = (f) => refs.filter(f).map((x) => x.id)
+      scope = await openFilterUI(page)
+      if ((await page.locator(`${scope} details[data-gid="age"]`).count()) !== 0)
+        bad.push("faixa etária aparece sem escolher o assunto escola")
+      await pick(page, scope, "subj", "escola")
+      p = await conferir(
+        page,
+        "assunto escola",
+        R((r) => r.tags.includes("escola")),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "age", "fundamental")
+      p = await conferir(
+        page,
+        "escola, 6 a 10 anos",
+        R((r) => r.tags.includes("escola") && r.tags.includes("fundamental")),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      await pick(page, scope, "rel", 10)
+      p = await conferir(
+        page,
+        "10+ relatos",
+        R((r) => r.needs + r.reports >= 10),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+    })
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+
+await probe(
+  "P52",
+  "Filtros",
+  "sem resultado: diz qual filtro tirar e quantos voltam (o número é o que aparece ao tirar); Limpar tudo e o ✕ de cada filtro ativo desfazem",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await guard(bad, async () => {
+      await goCat(page, "housing", "destination")
+      const all = await dbRows(page, "housing", "brasilia")
+      let scope = await openFilterUI(page)
+      await pick(page, scope, "beds", 4)
+      await fillNum(page, scope, "rent", "max", 1000)
+      await closeFilterUI(page)
+      const txt = await page.locator(".no-results").innerText()
+      if (!/Nenhum imóvel com esses filtros/.test(txt))
+        bad.push(`texto do vazio: ${txt.slice(0, 80)}`)
+      const sug = page.locator(".no-results [data-act=filtRemove]")
+      const nSug = await sug.count()
+      if (!nSug) bad.push("vazio sem sugestão de filtro para tirar")
+      else {
+        const t = await sug.first().innerText()
+        const m = t.match(/\((\d+) imóve/)
+        await sug.first().click()
+        const n = await total(page)
+        if (!m || +m[1] !== n) bad.push(`sugestão prometia ${m?.[1]} e voltaram ${n}`)
+      }
+      // ✕ de um filtro ativo
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      await pick(page, scope, "beds", 3)
+      await pick(page, scope, "parking", 2)
+      await closeFilterUI(page)
+      const chips = await page.locator(".active-filters .fpill").count()
+      if (chips !== 2) bad.push(`esperava 2 filtros ativos e vieram ${chips}`)
+      await page.locator('.active-filters .fpill [data-act="filtRemove"]').first().click()
+      if ((await page.locator(".active-filters .fpill").count()) !== 1)
+        bad.push("✕ não removeu só um filtro")
+      if ((await total(page)) !== all.filter((h) => h.parking >= 2).length)
+        bad.push("contagem depois do ✕ errada")
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      if ((await total(page)) !== all.length || (await page.locator(".active-filters").count()))
+        bad.push("Limpar tudo não deixou a lista completa e sem filtros ativos")
+      // busca por texto combina com filtros e some com o vazio
+      await page.fill("[data-input=catQuery]", "casa")
+      if (
+        (await total(page)) !==
+        all.filter((h) => /casa/i.test(`${h.title} ${h.bairro} ${h.tags.join(" ")}`)).length
+      )
+        bad.push("busca por texto fora do cálculo")
+    })
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+
+await probe(
+  "P53",
+  "Filtros",
+  "o que a pessoa anuncia aparece nos filtros (imóvel, desapego, evento) e o serviço só depois de aprovado; o formulário pede os campos novos",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await guard(bad, async () => {
+      // uma opção desabilitada (zero resultados) é um beco sem saída: o imóvel publicado tem de manter
+      // habilitadas as opções que ele atende
+      let scope
+      const okPick = async (gid, key) => {
+        const sel = `${scope} [data-filt="${gid}"]${key === undefined ? "" : `[data-fv="${key}"]`}`
+        if (!(await page.locator(sel).first().isEnabled())) {
+          bad.push(
+            `opção ${gid}=${key ?? "sim"} ficou desabilitada, mas o que foi publicado a atende`,
+          )
+          throw new Error("opção desabilitada")
+        }
+        await pick(page, scope, gid, key)
+      }
+      await page.evaluate(() => {
+        __bv.S.membership.arrivalsBsb = "member"
+      })
+      // imóvel
+      await A(page, "openOffer", { type: "housing" })
+      for (const id of ["o-baths", "o-parking", "o-m2", "o-condo"])
+        if (!(await page.locator(`#${id}`).count())) bad.push(`formulário de imóvel sem #${id}`)
+      await page.selectOption("#o-type", "Kitnet ou studio")
+      await page.fill("#o-bairro", "Adrianópolis")
+      await page.fill("#o-beds", "1")
+      await page.fill("#o-baths", "1")
+      await page.fill("#o-parking", "1")
+      await page.fill("#o-m2", "35")
+      await page.fill("#o-rent", "1700")
+      await page.fill("#o-condo", "300")
+      await page.check("input[name=amen][value=piscina]")
+      await page.check("input[name=guar][value=titulo]")
+      await page.check("input[name=pets]")
+      await page.click("#drawer button[type=submit]")
+      await page.click("#drawer [data-act=offerPublish]")
+      await page.waitForSelector(".fcount")
+      scope = await openFilterUI(page)
+      await okPick("type", "kitnet")
+      await okPick("parking", 1)
+      await okPick("amen", "piscina")
+      await okPick("guar", "titulo")
+      await okPick("pets")
+      const mine = await page.locator("#catList [data-mown]").count()
+      if (mine !== 1) bad.push(`imóvel publicado não aparece nos filtros que ele atende (${mine})`)
+      await fillNum(page, scope, "rent", "max", 1000)
+      if ((await page.locator("#catList [data-mown]").count()) !== 0)
+        bad.push("imóvel de R$ 1.700 apareceu no teto de R$ 1.000")
+      await closeFilterUI(page)
+      // desapego
+      await A(page, "openOffer", { type: "sell" })
+      await page.fill("#o-title", "Split 9000 BTU")
+      await page.selectOption("#o-cat", "eletro")
+      await page.selectOption("#o-sub", "arcond")
+      await page.selectOption("#o-cond", "novo")
+      await page.fill("#o-price", "450")
+      await page.click("#drawer button[type=submit]")
+      await page.click("#drawer [data-act=offerPublish]")
+      await page.waitForSelector(".fcount")
+      scope = await openFilterUI(page)
+      await okPick("cat", "eletro")
+      await okPick("sub", "arcond")
+      await okPick("cond", "novo")
+      if ((await page.locator("#catList [data-mown]").count()) !== 1)
+        bad.push("desapego publicado não aparece nos filtros que ele atende")
+      await okPick("cond", "novo") // desmarca
+      await okPick("cond", "seminovo")
+      if ((await page.locator("#catList [data-mown]").count()) !== 0)
+        bad.push("desapego novo apareceu no filtro de seminovo")
+      await closeFilterUI(page)
+      // evento
+      await A(page, "openOffer", { type: "event" })
+      await page.fill("#o-title", "Pedal de domingo")
+      await page.selectOption("#o-ecat", "esporte")
+      await page.fill("#o-date", "2026-10-11")
+      await page.fill("#o-time", "7h")
+      await page.fill("#o-place", "Orla")
+      await page.selectOption("#o-comm", "ajuricaba")
+      await page.check("input[name=kids]")
+      await page.click("#drawer button[type=submit]")
+      await page.click("#drawer [data-act=offerPublish]")
+      await page.waitForSelector(".fcount")
+      scope = await openFilterUI(page)
+      await okPick("cat", "esporte")
+      await okPick("kids")
+      await okPick("free")
+      if ((await page.locator("#catList [data-mown]").count()) !== 1)
+        bad.push("evento publicado não aparece nos filtros que ele atende")
+      await closeFilterUI(page)
+      // serviço: só depois de aprovado
+      await A(page, "openOffer", { type: "service" })
+      await page.fill("#o-name", "Pintura Teste")
+      await page.selectOption("#o-cat", "casa")
+      await page.check("input[name=svc][value=pintura]")
+      await page.fill("#o-area", "Flores")
+      await page.click("#drawer button[type=submit]")
+      await page.click("#drawer [data-act=offerPublish]")
+      await goCat(page, "services", "origin")
+      if (/Pintura Teste/.test(await view(page)))
+        bad.push("serviço em verificação apareceu no catálogo")
+      const own = await page.evaluate(() => __bv.S.own.provider)
+      if (own?.cat !== "casa" || !own.svc?.includes("pintura"))
+        bad.push(`serviço guardou ${JSON.stringify(own)?.slice(0, 80)}`)
+    })
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+
+await probe(
+  "P54",
+  "Filtros",
+  "computador: painel fixo e sem botão Filtros; celular: sem painel, botão Filtros (n) abre folha com foco, 'Ver N' acompanha a lista, Esc devolve o foco; a contagem é anunciada; mudar de lado zera os filtros",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await guard(bad, async () => {
+      await goCat(page, "housing", "destination")
+      const vis = (sel) =>
+        page.evaluate((s) => {
+          const e = document.querySelector(s)
+          return !!e && e.offsetParent !== null
+        }, sel)
+      if (MOBILE()) {
+        if (await vis("#fpanel")) bad.push("painel visível no celular")
+        if (!(await vis(".fbtn"))) bad.push("sem botão Filtros no celular")
+        await page.locator(".fbtn").click()
+        const d = await page.evaluate(() => ({
+          role: document.getElementById("drawer").getAttribute("role"),
+          inside: document.getElementById("drawer").contains(document.activeElement),
+          inert: document.getElementById("app").inert,
+        }))
+        if (d.role !== "dialog" || !d.inside || !d.inert) bad.push(`folha: ${JSON.stringify(d)}`)
+        await pick(page, "#fsBody", "beds", 3)
+        const all = await dbRows(page, "housing", "brasilia")
+        const n = all.filter((h) => h.beds >= 3).length
+        if (!new RegExp(`Ver ${n} imóveis`).test(await page.locator("#fsDone").innerText()))
+          bad.push(`'Ver N' não acompanhou: ${await page.locator("#fsDone").innerText()}`)
+        if ((await total(page)) !== n) bad.push("lista embaixo não acompanhou a folha")
+        await page.keyboard.press("Escape")
+        if (!(await page.evaluate(() => document.getElementById("overlay").hidden)))
+          bad.push("Esc não fechou a folha")
+        if (!(await page.evaluate(() => document.activeElement?.classList.contains("fbtn"))))
+          bad.push("foco não voltou ao botão Filtros")
+        if (!/Filtros \(1\)/.test(await page.locator(".fbtn").innerText()))
+          bad.push("botão não mostra o número de filtros")
+      } else {
+        if (!(await vis("#fpanel"))) bad.push("sem painel no computador")
+        if (await vis(".fbtn")) bad.push("botão Filtros visível no computador")
+        const top0 = await page.evaluate(
+          () => document.getElementById("fpanel").getBoundingClientRect().top,
+        )
+        await page.evaluate(() => window.scrollBy(0, 400))
+        const top1 = await page.evaluate(
+          () => document.getElementById("fpanel").getBoundingClientRect().top,
+        )
+        if (top1 < 0 || top1 > top0 + 1)
+          bad.push(`painel não fica fixo ao rolar (${top0} → ${top1})`)
+        await pick(page, "#fpanel", "beds", 3)
+      }
+      const live = await page.evaluate(() => document.getElementById("live").textContent)
+      await page.waitForTimeout(120)
+      const live2 = await page.evaluate(() => document.getElementById("live").textContent)
+      if (!/imóve/.test(live2 || live)) bad.push(`contagem não anunciada: "${live2}"`)
+      await goCat(page, "housing", "origin")
+      if (await page.locator(".active-filters").count())
+        bad.push("mudar de lado manteve filtros de outra cidade")
+    })
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
   },
 )
 

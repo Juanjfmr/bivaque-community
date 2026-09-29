@@ -53,8 +53,8 @@ const muts = [
   [
     "M9 Editar descarta o que a pessoa preencheu",
     "P35",
-    'A.offerBack = () => offerForm(DRAFT.type, "", DRAFT.v)',
-    'A.offerBack = () => offerForm(DRAFT.type, "", {})',
+    'A.offerBack = () => offerForm(DRAFT.type, "", DRAFT.v, true)',
+    'A.offerBack = () => offerForm(DRAFT.type, "", {}, true)',
   ],
   [
     "M10 atalho dispara dentro de campo de texto",
@@ -156,6 +156,72 @@ const muts = [
     "P43",
     'return own ? [detail("housing", "Ver detalhes"), sep, { label: "Encerrar anúncio"',
     'return false ? [detail("housing", "Ver detalhes"), sep, { label: "Encerrar anúncio"',
+  ],
+  [
+    "M27 anúncio fura o filtro",
+    "P48",
+    "const ads = res.filter(spec.isAd)",
+    "const ads = spec.items.filter(spec.isAd)",
+  ],
+  [
+    "M28 Limpar tudo não limpa os filtros",
+    "P48",
+    'st.q = ""; st.g = {}; catRender() }\nA.filtRemove',
+    'st.q = ""; catRender() }\nA.filtRemove',
+  ],
+  [
+    "M29 ordenar por menor preço sai invertido",
+    "P49",
+    '["price", "Menor preço inicial", (a, b) => a.base - b.base]',
+    '["price", "Menor preço inicial", (a, b) => b.base - a.base]',
+  ],
+  [
+    "M30 contagem da opção não bate com o resultado",
+    "P48",
+    "return base.filter(has).length",
+    "return base.filter(has).length + 1",
+  ],
+  [
+    "M31 mínimo de quartos vira quantidade exata",
+    "P48",
+    'case "min": return (g.get(x) ?? 0) >= v',
+    'case "min": return (g.get(x) ?? 0) === v',
+  ],
+  [
+    "M32 trocar o tipo de serviço não limpa a especialidade",
+    "P49",
+    "for (const c of g.clears || []) delete st.g[c]\n  catRender()",
+    "catRender()",
+  ],
+  [
+    "M33 comodidades do anúncio publicado se perdem",
+    "P53",
+    "amen: asArr(v.amen), guar: asArr(v.guar), tags: [kind]",
+    "amen: [], guar: asArr(v.guar), tags: [kind]",
+  ],
+  [
+    "M34 sem resultado não sugere o que tirar",
+    "P52",
+    ".filter((x) => x.n > 0 && x.n > adsShown)",
+    ".filter(() => false)",
+  ],
+  [
+    "M35 folha do celular não atualiza 'Ver N'",
+    "P54",
+    '$("#fsFoot").innerHTML = fsFootHTML(kind, spec, st, filtRes(spec, st).length)',
+    "void 0",
+  ],
+  [
+    "M36 bairros escolhidos viram 'todos ao mesmo tempo'",
+    "P50",
+    'case "multi": { const a = asArr(g.get(x)); return v.some((k) => a.includes(k)) }',
+    'case "multi": { const a = asArr(g.get(x)); return v.every((k) => a.includes(k)) }',
+  ],
+  [
+    "M37 comodidades 'todas as marcadas' viram 'qualquer uma'",
+    "P48",
+    'case "all": { const a = asArr(g.get(x)); return v.every((k) => a.includes(k)) }',
+    'case "all": { const a = asArr(g.get(x)); return v.some((k) => a.includes(k)) }',
   ],
   [
     "M7 data exata de terceiros",
