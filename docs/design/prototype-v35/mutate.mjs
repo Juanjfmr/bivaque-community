@@ -58,14 +58,32 @@ const muts = [
   [
     "M10 atalho dispara dentro de campo de texto",
     "P38",
-    "if (typing || overlayOpen || e.ctrlKey || e.metaKey || e.altKey) return",
-    "if (overlayOpen || e.ctrlKey || e.metaKey || e.altKey) return",
+    "if (typing || overlayOpen || MENU || e.ctrlKey || e.metaKey || e.altKey) return",
+    "if (overlayOpen || MENU || e.ctrlKey || e.metaKey || e.altKey) return",
   ],
   [
     "M11 selecionar texto e soltar fora fecha a janela",
     "P40",
     'if (e.target.id === "overlay" && was) closeDrawer()',
     'if (e.target.id === "overlay") closeDrawer()',
+  ],
+  [
+    "M12 anúncio ganha 'por que apareceu' no menu",
+    "P43",
+    '...(ad ? [] : [{ label: "Por que apareceu", icon: "info", act: "openWhy", d: { dtype: "provider", id } }])',
+    '{ label: "Por que apareceu", icon: "info", act: "openWhy", d: { dtype: "provider", id } }',
+  ],
+  [
+    "M13 ocultar não oculta",
+    "P44",
+    'const vis = (type, arr) => arr.filter((x) => !S.hidden[type + ":" + x.id])',
+    "const vis = (type, arr) => arr",
+  ],
+  [
+    "M14 Desfazer do salvamento não desfaz",
+    "P44",
+    "{ undo: () => flip() })",
+    "{ undo: () => {} })",
   ],
   [
     "M7 data exata de terceiros",

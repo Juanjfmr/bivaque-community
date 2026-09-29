@@ -474,7 +474,7 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
 @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
   .card:hover,.intent-pill:hover,.context-pill:hover{transform:none}
 }
 
@@ -589,6 +589,42 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   .drawer.palette .sheet-handle{margin:0;height:24px}
   .pal-close{display:inline-flex}.pal-esc,.pal-foot{display:none}
 }
+.kebab{position:relative;z-index:3;width:44px;height:44px;min-height:44px;border-radius:50%;border:0;background:transparent;color:var(--muted);display:inline-grid;place-items:center;cursor:pointer;flex:none;transition:background var(--dur-1),color var(--dur-1)}
+.kebab:hover{background:var(--surface-2);color:var(--ink)}
+.kebab[aria-expanded=true]{background:var(--pine-50);color:var(--pine)}
+.service-card>.kebab,.ref-card>.kebab,.result-card>.kebab{position:absolute;top:6px;right:6px}
+.service-card .badges{padding-right:44px}
+.ref-card>div:nth-child(2){padding-right:40px}
+.result-card{padding-right:var(--sp-4)}
+.listing .photo .kebab,.feed-card .photo .kebab{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.94);color:var(--ink-2);box-shadow:var(--sh-1)}
+.listing .photo .kebab:hover,.feed-card .photo .kebab:hover{background:#fff}
+.listing .photo .heart{right:56px}
+.inbox-item>div{flex:1;min-width:0}
+.who{display:flex;align-items:center;gap:6px}.who .card-link{display:inline}
+.mute-ico{color:var(--muted);display:inline-grid}.mute-ico .ic{width:16px;height:16px}
+.inbox-foot{width:100%;justify-content:center;border-top:1px solid var(--line);border-radius:0}
+.toast-btn{border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:var(--r-sm);min-height:44px;padding:0 var(--sp-3);font-weight:700;font-size:var(--fs-sm);cursor:pointer;transition:background var(--dur-1)}
+.toast-btn:hover{background:rgba(255,255,255,.26)}
+[data-mt]{-webkit-touch-callout:none}
+@media(pointer:coarse){[data-mt]{-webkit-user-select:none;user-select:none}}
+.menu-wrap{position:fixed;inset:0;z-index:120}
+.menu-backdrop{position:absolute;inset:0;background:transparent}
+.menu{position:absolute;min-width:248px;max-width:min(340px,calc(100vw - 16px));background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-pop);padding:6px;animation:menu var(--dur-2) var(--ease) backwards}
+.menu-title{display:none}
+.menu-item{display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:44px;padding:0 var(--sp-3);border:0;background:transparent;border-radius:var(--r-md);font-size:var(--fs-md);font-weight:600;color:var(--ink);text-align:left;cursor:pointer}
+.menu-item .ic{width:20px;height:20px;color:var(--muted)}
+.menu-item:hover,.menu-item:focus-visible{background:var(--pine-50);outline:none}
+.menu-item:focus-visible{box-shadow:inset 0 0 0 2px var(--focus)}
+.menu-item.danger,.menu-item.danger .ic{color:var(--rose-600)}
+.menu-item.danger:hover,.menu-item.danger:focus-visible{background:var(--rose-50)}
+.menu-sep{height:1px;background:var(--line);margin:6px 8px}
+@keyframes menu{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media(max-width:760px){
+  .menu-backdrop{background:rgba(9,25,20,.5);animation:fade var(--dur-2) var(--ease-io) backwards}
+  .menu{position:fixed;left:0;right:0;bottom:0;top:auto;max-width:none;border-radius:var(--r-xl) var(--r-xl) 0 0;padding:var(--sp-2) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom));animation:sheet var(--dur-3) var(--ease) backwards}
+  .menu-title{display:block;padding:var(--sp-3) var(--sp-3) var(--sp-2);font-weight:800;font-size:var(--fs-md);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .menu-item{min-height:52px;font-size:1rem}
+}
 </style>
 </head>
 <body>
@@ -623,7 +659,7 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 </div>
 <div class="overlay" id="overlay" hidden><div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"></div></div>
 <div id="live" class="sr-only" role="status" aria-live="polite"></div>
-<div class="toast-lock" id="toast" role="status" aria-live="polite" hidden></div>
+<div class="toast-lock" id="toast" role="status" aria-live="polite" hidden><span id="toastMsg"></span><button type="button" class="toast-btn" id="toastUndo" data-act="toastUndo" hidden>Desfazer</button></div>
 <script>
 /* ===== Ícones: um sprite SVG único, traço de 1,75. Nenhum glifo Unicode serve de ícone. ===== */
 const ICONS = {
@@ -865,6 +901,7 @@ function seedState() {
     quotes: [], evidence: [], saved: [], rsvps: {}, redeemed: {}, threads: [], extraReplies: {}, resolvedThreads: {},
     helpReqs: [], alerts: [], follows: {}, readN: {}, refSuggest: {}, refExtra: {},
     own: { market: [], housing: [], events: [], provider: null },
+    hidden: {}, reports: [], dismissedN: {},
     log: [],
   }
 }
@@ -936,6 +973,7 @@ let toastN = 0
 const VIEWS = {}
 function go(page, params = {}, opts = {}) {
   if (!VIEWS[page]) return
+  menuClose(false)
   if (overlayOpen) hideOverlay()
   route = { page, params }
   const st = { page, params }
@@ -967,6 +1005,7 @@ window.addEventListener("popstate", (e) => {
 
 /* ---- gaveta (diálogo) ---- */
 function openDrawer(html, opts = {}) {
+  menuClose(false)
   const dr = $("#drawer")
   dr.innerHTML = `<div class="sheet-handle" aria-hidden="true"></div>${html}`
   dr.className = "drawer" + (opts.cls ? " " + opts.cls : "")
@@ -981,7 +1020,9 @@ function openDrawer(html, opts = {}) {
   $("#app").inert = true
   document.documentElement.classList.add("has-overlay")
   const title = $("#dlgTitle", dr)
-  setTimeout(() => (opts.focus ? $(opts.focus, dr) : title || $("button,input", dr))?.focus(), 10)
+  // campo de digitação recebe o foco na hora: quem aperta Ctrl+K e já digita não pode perder letras
+  if (opts.focus) $(opts.focus, dr)?.focus()
+  else setTimeout(() => (title || $("button,input", dr))?.focus(), 10)
 }
 function hideOverlay() {
   // o foco não pode ficar num elemento escondido: o navegador só o solta no próximo quadro
@@ -1022,10 +1063,13 @@ document.addEventListener("keydown", (e) => {
 
 
 /* ---- aviso ---- */
-let toastTimer
-function toast(msg) {
-  const t = $("#toast"); t.textContent = msg; t.hidden = false; toastN++
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 3200)
+let toastTimer, undoFn = null
+function toast(msg, opts = {}) {
+  const t = $("#toast"); $("#toastMsg").textContent = msg; toastN++
+  undoFn = opts.undo || null
+  $("#toastUndo").hidden = !undoFn
+  t.hidden = false
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; undoFn = null }, undoFn ? 7000 : 3200)
 }
 
 /* ---- despacho: nenhum JavaScript em atributo ---- */
@@ -1135,6 +1179,7 @@ function palSelect(i) {
 const palOpen = () => overlayOpen && !!$("#palQ")
 A.openPalette = () => {
   if (palOpen()) return
+  menuClose(false)
   PAL.i = 0
   openDrawer(`<h2 id="dlgTitle" class="sr-only" tabindex="-1">Busca rápida e comandos</h2>
     <div class="pal-head">${ic("search")}<input id="palQ" role="combobox" aria-expanded="true" aria-controls="palList" aria-autocomplete="list" aria-activedescendant="pal-0" aria-label="Buscar ou ir para" placeholder="Buscar ou ir para…" autocomplete="off"><kbd class="kbd pal-esc">Esc</kbd><button class="close-btn pal-close" data-act="closeDrawer" aria-label="Fechar">${ic("x")}</button></div>
@@ -1172,7 +1217,7 @@ document.addEventListener("keydown", (e) => {
   }
   const t = e.target
   const typing = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))
-  if (typing || overlayOpen || e.ctrlKey || e.metaKey || e.altKey) return
+  if (typing || overlayOpen || MENU || e.ctrlKey || e.metaKey || e.altKey) return
   if (gPending) {
     gPending = false; clearTimeout(gTimer)
     const p = { h: "home", r: "resolver", c: "community", m: "messages", v: "profile", n: "notifications" }[e.key]
@@ -1185,6 +1230,152 @@ document.addEventListener("keydown", (e) => {
 })
 if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) $("#kbdHint").textContent = "⌘ K"
 
+
+/* ===== Menus de contexto: um componente, quatro portas (botão ⋯, clique direito, tecla de menu, toque longo).
+   O botão ⋯ é sempre o caminho visível; as outras portas são atalhos para o mesmo menu. ===== */
+const md = (mt, id, label, ad, own) => attrs({ mt, mid: id, ml: label, mad: ad ? "1" : undefined, mown: own ? "1" : undefined })
+const kebab = (label) => `<button class="kebab" data-act="openMenu" aria-haspopup="menu" aria-expanded="false" aria-label="Mais ações: ${esc(label)}">${ic("more")}</button>`
+const vis = (type, arr) => arr.filter((x) => !S.hidden[type + ":" + x.id])
+const settle = () => (overlayOpen ? closeDrawer() : render())
+let MENU = null
+function menuDef(ds) {
+  const mt = ds.mt; const id = ds.mid; const ad = ds.mad === "1"; const own = ds.mown === "1"
+  const sep = { sep: true }
+  const save = (type) => ({ label: savedHas(type, id) ? "Remover dos salvos" : "Salvar", icon: "heart", act: "toggleSave", d: { type, id } })
+  const hide = (type, noun) => ({ label: ad ? "Ocultar este anúncio" : `Ocultar ${noun}`, icon: "eye-off", act: "hideItem", d: { type, id } })
+  const report = (type, noun = "") => ({ label: ad ? "Denunciar anúncio" : `Denunciar${noun}`, icon: "flag", act: "openReport", d: { type, id, ad: ad ? "1" : "" }, danger: true })
+  const detail = (dtype, label) => ({ label, icon: "eye", act: "openObj", d: { dtype, id } })
+  switch (mt) {
+    case "provider":
+      return [{ label: "Pedir orçamento", icon: "send", act: "openQuote", d: { id } }, { label: "Ver resultados de quem contratou", icon: "check-circle", act: "openEvidence", d: { id } }, save("provider"), ...(ad ? [] : [{ label: "Por que apareceu", icon: "info", act: "openWhy", d: { dtype: "provider", id } }]), sep, hide("provider", "este prestador"), report("provider")]
+    case "housing":
+      return own ? [detail("housing", "Ver detalhes"), sep, { label: "Encerrar anúncio", icon: "trash", act: "closeOwn", d: { kind: "housing", id }, danger: true }]
+        : [{ label: "Conversar sobre o imóvel", icon: "message", act: "startConv", d: { dtype: "housing", id } }, save("housing"), detail("housing", "Ver detalhes"), sep, hide("housing", "este imóvel"), report("housing")]
+    case "market":
+      return own ? [detail("market", "Ver detalhes"), sep, { label: "Encerrar anúncio", icon: "trash", act: "closeOwn", d: { kind: "market", id }, danger: true }]
+        : [{ label: "Falar com o vendedor", icon: "message", act: "startConv", d: { dtype: "market", id } }, save("market"), detail("market", "Ver detalhes"), sep, hide("market", "este desapego"), report("market")]
+    case "event": {
+      const going = S.rsvps[id] === "going"
+      return own ? [detail("event", "Ver detalhes")]
+        : [{ label: going ? "Cancelar presença" : "Confirmar presença", icon: going ? "x" : "check", act: "rsvp", d: { id, set: going ? "cancel" : "going" } }, detail("event", "Ver detalhes"), save("event"), sep, hide("event", "este evento"), report("event")]
+    }
+    case "benefit":
+      return [detail("benefit", "Ver como usar"), save("benefit"), sep, hide("benefit", "esta oferta"), report("benefit")]
+    case "ref": {
+      const r = byId(DB.refs, id)
+      return [detail("ref", "Abrir referência"), save("ref"), { label: "Sugerir correção", icon: "pencil", act: "openSuggest", d: { id } }, { label: "Perguntar algo específico", icon: "help", act: "openAsk", d: { comm: r.community, q: "", ctx: r.title } }]
+    }
+    case "thread":
+      return own ? [detail("thread", "Abrir pergunta")] : [detail("thread", "Abrir pergunta"), sep, hide("thread", "esta pergunta"), report("thread")]
+    case "need": {
+      const n = needById(id)
+      if (!n) return []
+      const pend = n.proposals.filter((p) => p.status === "sent").length
+      return [{ label: "Ver caminhos", icon: "compass", act: "runQuery", d: { q: n.query || n.title } }, ...(pend ? [{ label: "Comparar propostas", icon: "check-double", act: "openProposals", d: { id } }] : []), { label: "Marcar resultado", icon: "check-circle", act: "openResolution", d: { id } }, sep, { label: "Encerrar necessidade", icon: "x", act: "abandonNeed", d: { id }, danger: true }]
+    }
+    case "conv": {
+      const c = byId(S.convs, id)
+      if (!c) return []
+      return [{ label: c.unread ? "Marcar como lida" : "Marcar como não lida", icon: "mail", act: "toggleRead", d: { id } }, { label: c.muted ? "Reativar avisos" : "Silenciar", icon: "volume-off", act: "toggleMute", d: { id } }, { label: c.archived ? "Desarquivar" : "Arquivar", icon: "archive", act: "archiveConv", d: { id } }, sep, report("conv", " conversa")]
+    }
+    case "notif": {
+      const n = deriveNotifs().find((x) => x.id === id)
+      return [{ label: "Abrir", icon: "eye", act: "openNotif", d: { nid: id } }, { label: n && n.read ? "Marcar como não lida" : "Marcar como lida", icon: "check-double", act: "toggleReadN", d: { nid: id } }, sep, { label: "Dispensar", icon: "x", act: "dismissN", d: { nid: id }, danger: true }]
+    }
+  }
+  return []
+}
+const isSheet = () => matchMedia("(max-width:760px)").matches
+function menuPlace(menu, o) {
+  if (isSheet()) return
+  const pad = 8; const vw = innerWidth; const vh = innerHeight
+  menu.style.left = "0px"; menu.style.top = "0px"
+  const r = menu.getBoundingClientRect()
+  let x; let y
+  if (o.anchor) { x = o.anchor.right - r.width; y = o.anchor.bottom + 6; if (y + r.height > vh - pad) y = o.anchor.top - r.height - 6 }
+  else { x = o.x; y = o.y; if (x + r.width > vw - pad) x = o.x - r.width; if (y + r.height > vh - pad) y = o.y - r.height }
+  menu.style.left = Math.max(pad, Math.min(x, vw - r.width - pad)) + "px"
+  menu.style.top = Math.max(pad, Math.min(y, vh - r.height - pad)) + "px"
+}
+let menuAt = { y: 0, w: 0, h: 0 }
+// só fecha se a página realmente andou desde a abertura (um evento de rolagem que já estava a caminho não conta)
+const menuScroll = () => { if (Math.abs(scrollY - menuAt.y) > 2 || innerWidth !== menuAt.w || innerHeight !== menuAt.h) menuClose(false) }
+function menuOpen(items, o) {
+  menuClose(false)
+  if (!items.length) return
+  const wrap = document.createElement("div")
+  wrap.className = "menu-wrap"; wrap.id = "ctxWrap"
+  wrap.innerHTML = `<div class="menu-backdrop"></div><div class="menu" id="ctxMenu" role="menu" aria-label="${esc(o.label || "Ações")}"><div class="menu-title" aria-hidden="true">${esc(o.label || "")}</div>${items.map((it, i) => (it.sep ? '<div class="menu-sep" role="separator"></div>' : `<button type="button" role="menuitem" tabindex="-1" class="menu-item${it.danger ? " danger" : ""}" data-act="menuRun" data-i="${i}">${ic(it.icon)}<span>${esc(it.label)}</span></button>`)).join("")}</div>`
+  document.body.append(wrap)
+  MENU = { items, wrap, trigger: o.trigger || null, container: o.container || null }
+  if (o.trigger) o.trigger.setAttribute("aria-expanded", "true")
+  menuPlace($("#ctxMenu"), o)
+  $(".menu-backdrop", wrap).addEventListener("click", () => menuClose(true))
+  menuAt = { y: scrollY, w: innerWidth, h: innerHeight }
+  if (!isSheet()) { window.addEventListener("scroll", menuScroll); window.addEventListener("resize", menuScroll) }
+  $("#ctxMenu .menu-item")?.focus({ preventScroll: true })
+}
+function menuClose(restore) {
+  if (!MENU) return
+  const { wrap, trigger } = MENU
+  MENU = null
+  wrap.remove()
+  window.removeEventListener("scroll", menuScroll); window.removeEventListener("resize", menuScroll)
+  if (trigger) { trigger.setAttribute("aria-expanded", "false"); if (restore && document.contains(trigger)) trigger.focus() }
+}
+function openMenuFor(c, o) {
+  if (MENU && MENU.container === c) return
+  menuOpen(menuDef(c.dataset), { label: c.dataset.ml, trigger: c.querySelector(".kebab"), container: c, ...o })
+}
+A.openMenu = (d, el) => {
+  const c = el.closest("[data-mt]")
+  if (c) menuOpen(menuDef(c.dataset), { label: c.dataset.ml, trigger: el, container: c, anchor: el.getBoundingClientRect() })
+}
+A.menuRun = (d) => {
+  const it = MENU && MENU.items[+d.i]
+  if (!it) return
+  const trig = MENU.trigger
+  menuClose(true)
+  A[it.act]({ ...it.d }, trig || document.createElement("button"))
+}
+document.addEventListener("keydown", (e) => {
+  if (!MENU) return
+  const items = $$("#ctxMenu .menu-item"); const cur = items.indexOf(document.activeElement)
+  const at = (i) => items[(i + items.length) % items.length]?.focus()
+  if (e.key === "ArrowDown") { e.preventDefault(); at(cur + 1) }
+  else if (e.key === "ArrowUp") { e.preventDefault(); at(cur <= 0 ? items.length - 1 : cur - 1) }
+  else if (e.key === "Home") { e.preventDefault(); at(0) }
+  else if (e.key === "End") { e.preventDefault(); at(items.length - 1) }
+  else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); menuClose(true) }
+  else if (e.key === "Tab") { e.preventDefault(); menuClose(true) }
+  else if (e.key.length === 1 && /\S/.test(e.key) && !e.ctrlKey && !e.metaKey) {
+    const k = norm(e.key)
+    const idx = items.map((_, i) => (cur + 1 + i) % items.length).find((i) => norm(items[i].textContent.trim()).startsWith(k))
+    if (idx !== undefined) items[idx].focus()
+  }
+}, true)
+document.addEventListener("contextmenu", (e) => {
+  const c = e.target.closest && e.target.closest("[data-mt]")
+  if (!c || (e.button === 2 && e.shiftKey)) return
+  e.preventDefault()
+  if (e.button === 2) openMenuFor(c, { x: e.clientX, y: e.clientY })
+  else openMenuFor(c, { anchor: (c.querySelector(".kebab") || c).getBoundingClientRect() })
+})
+let lp = null; let suppressClick = 0
+document.addEventListener("pointerdown", (e) => {
+  if (e.pointerType !== "touch" || e.button > 0) return
+  const c = e.target.closest && e.target.closest("[data-mt]")
+  if (!c || e.target.closest(".kebab, .heart, .seal, .cta, input, select, textarea")) return
+  const x = e.clientX; const y = e.clientY
+  lp = { x, y, t: setTimeout(() => { lp = null; suppressClick = Date.now(); openMenuFor(c, { x, y }) }, 520) }
+})
+const cancelLp = () => { if (lp) { clearTimeout(lp.t); lp = null } }
+document.addEventListener("pointermove", (e) => { if (lp && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) > 10) cancelLp() })
+document.addEventListener("pointerup", cancelLp)
+document.addEventListener("pointercancel", cancelLp)
+document.addEventListener("scroll", cancelLp, true)
+document.addEventListener("click", (e) => { if (suppressClick && Date.now() - suppressClick < 800) { e.stopPropagation(); e.preventDefault(); suppressClick = 0 } }, true)
+A.toastUndo = () => { const f = undoFn; undoFn = null; $("#toast").hidden = true; if (f) { f(); toast("Desfeito.") } }
 
 /* ===== Motor: evidência, resolver, necessidades, notificações, relógio ===== */
 const byId = (arr, id) => arr.find((x) => x.id === id)
@@ -1352,7 +1543,7 @@ function providerItem(p, ctx, why) {
   return O({ type: "Serviço", tone: "", dtype: "provider", id: p.id, title: p.name, meta: evLine(p.id), why, ad: !!p.campaign, badge: p.campaign ? p.campaign.label : b.txt })
 }
 function providersFor(cityKey, wanted, ctx) {
-  const list = DB.providers.filter((p) => p.city === cityKey && fits(p.tags, wanted))
+  const list = vis("provider", DB.providers.filter((p) => p.city === cityKey && fits(p.tags, wanted)))
   const organic = list.filter((p) => !p.campaign).sort((a, b) => evScore(b.id) - evScore(a.id))
   const sponsored = list.filter((p) => p.campaign).slice(0, 1)
   return { organic, sponsored }
@@ -1377,7 +1568,7 @@ function whyHousing(h) {
   if (t.kids && h.tags.includes("escolas") && h.city === t.to) bits.push("escolas próximas para 1 criança")
   return bits.join(" · ")
 }
-const visibleMarket = () => DB.market.filter((m) => m.appears <= S.day)
+const visibleMarket = () => vis("market", DB.market.filter((m) => m.appears <= S.day))
 
 function buildResults(cl) {
   const t = T(); const tags = qTags(cl)
@@ -1388,7 +1579,7 @@ function buildResults(cl) {
   const route = cityKey === t.from || cityKey === t.to ? `${city(t.from).name} → ${city(t.to).name}` : ""
   const ref = (r, why) => O({ type: "Referência", tone: "blue", dtype: "ref", id: r.id, title: r.title, meta: `Revisada em ${fmtShort(r.reviewed)} · origem: ${r.needs + r.reports} relatos`, why })
   const people = (tg) => matchPeople(tg, cityKey).map(({ p, hit }) => O({ type: "Pessoa", tone: "violet", dtype: "person", id: p.id, title: `${p.name} · ${p.ctx}`, meta: "Aceitou responder sobre: " + p.topicLabels.join(", "), why: "tema aceito que combina com a busca: " + hit.join(", ") }))
-  const threadItems = (tg) => allThreads().filter((th) => th.community && comm(th.community).city === cityKey && fits(th.tags, tg) && isMember(th.community)).slice(0, 1).map((th) => O({ type: "Comunidade", tone: "", dtype: "thread", id: th.id, title: th.title, meta: `${repliesOf(th).length} respostas · ${comm(th.community).name}`, why: "pergunta parecida na sua comunidade" }))
+  const threadItems = (tg) => vis("thread", allThreads()).filter((th) => th.community && comm(th.community).city === cityKey && fits(th.tags, tg) && isMember(th.community)).slice(0, 1).map((th) => O({ type: "Comunidade", tone: "", dtype: "thread", id: th.id, title: th.title, meta: `${repliesOf(th).length} respostas · ${comm(th.community).name}`, why: "pergunta parecida na sua comunidade" }))
   switch (cl.intent) {
     case "school": {
       const stage = cl.param
@@ -1400,7 +1591,7 @@ function buildResults(cl) {
       break
     }
     case "housing": {
-      const list = DB.housing.filter((h) => h.city === cityKey)
+      const list = vis("housing", DB.housing.filter((h) => h.city === cityKey))
       list.filter((h) => !h.campaign).sort((a, b) => housingFit(b).score - housingFit(a).score).forEach((h) => out.organic.push(O({ type: "Imóvel", tone: "", dtype: "housing", id: h.id, title: `${h.title} · ${h.bairro}`, meta: `${money(h.rent)}/mês · ${h.m2} m²${h.furnished ? " · mobiliado" : ""}`, why: whyHousing(h) })))
       list.filter((h) => h.campaign).slice(0, 1).forEach((h) => out.sponsored.push(O({ type: "Anúncio", tone: "gold", dtype: "housing", id: h.id, title: `${h.title} · ${h.bairro}`, meta: `${money(h.rent)}/mês · ${h.m2} m²`, ad: true, badge: h.campaign.label })))
       refsFor(cityKey, "moradia").slice(0, 1).forEach((r) => out.organic.push(ref(r, `relatos de bairros em ${c.name}`)))
@@ -1436,7 +1627,7 @@ function buildResults(cl) {
       break
     }
     case "event": {
-      const evs = DB.events.filter((e) => e.city === cityKey && daysUntil(e.date) >= 0).sort((a, b) => a.date.localeCompare(b.date))
+      const evs = vis("event", DB.events.filter((e) => e.city === cityKey && daysUntil(e.date) >= 0)).sort((a, b) => a.date.localeCompare(b.date))
       evs.filter((e) => !e.campaign).slice(0, 3).forEach((e) => out.organic.push(O({ type: "Evento", tone: "violet", dtype: "event", id: e.id, title: e.title, meta: `${weekday(e.date)}, ${fmtShort(e.date)} · ${e.time} · ${e.place}`, why: `${e.going} pessoas confirmaram · ${comm(e.community).name}` })))
       evs.filter((e) => e.campaign).slice(0, 1).forEach((e) => out.sponsored.push(O({ type: "Anúncio", tone: "gold", dtype: "event", id: e.id, title: e.title, meta: `${weekday(e.date)}, ${fmtShort(e.date)} · ${e.time}`, ad: true, badge: e.campaign.label })))
       break
@@ -1444,7 +1635,7 @@ function buildResults(cl) {
     case "sell": {
       out.organic.push(O({ type: "Ação", tone: "pink", act: "openOffer", dtype: "market", title: "Anunciar desapego com janela de retirada", meta: "A data exata só aparece na conversa", why: `você sai de ${city(t.from).name} em ${windowLabel(t.date)}`, extra: { prefill: cl.n } }))
       DB.demands.filter((d) => d.city === cityKey).forEach((d) => out.organic.push(O({ type: "Demanda", tone: "blue", dtype: "demand", id: d.id, title: `${d.count} ${d.label.toLowerCase()}`, meta: "Janela aproximada: " + monthName(d.window), why: "famílias que aceitaram ser avisadas, sem expor datas ou nomes" })))
-      DB.events.filter((e) => e.city === cityKey && /troca/i.test(e.title) && daysUntil(e.date) >= 0).slice(0, 1).forEach((e) => out.organic.push(O({ type: "Evento", tone: "violet", dtype: "event", id: e.id, title: e.title, meta: `${weekday(e.date)}, ${fmtShort(e.date)} · ${e.time}`, why: "onde as trocas acontecem antes das transferências" })))
+      vis("event", DB.events.filter((e) => e.city === cityKey && /troca/i.test(e.title) && daysUntil(e.date) >= 0)).slice(0, 1).forEach((e) => out.organic.push(O({ type: "Evento", tone: "violet", dtype: "event", id: e.id, title: e.title, meta: `${weekday(e.date)}, ${fmtShort(e.date)} · ${e.time}`, why: "onde as trocas acontecem antes das transferências" })))
       refsFor(cityKey, "desapego").slice(0, 1).forEach((r) => out.organic.push(ref(r, "como definir a janela de retirada sem expor sua data")))
       break
     }
@@ -1484,7 +1675,7 @@ function deriveNotifs() {
     const sd = staleDays(n)
     if (sd) add("stale-" + n.id, n.last, `Sem novidade há ${sd} dias`, `${INTENTS[n.intent].label} · tentar outro caminho`, "openNeed", { id: n.id }, true)
   })
-  S.convs.filter((c) => c.unread).forEach((c) => add("conv-" + c.id, c.msgs.at(-1).day, `${c.with} respondeu`, c.msgs.at(-1).text.slice(0, 70), "openConv", { id: c.id }, true))
+  S.convs.filter((c) => c.unread && !c.muted && !c.archived).forEach((c) => add("conv-" + c.id, c.msgs.at(-1).day, `${c.with} respondeu`, c.msgs.at(-1).text.slice(0, 70), "openConv", { id: c.id }, true))
   Object.entries(S.rsvps).forEach(([eid, st]) => {
     const e = byId([...DB.events, ...S.own.events], eid)
     if (st === "going" && e && daysUntil(e.date) === 1) add("ev-" + eid, S.day, `Amanhã: ${e.title}`, `${e.time} · ${e.place}`, "openObj", { dtype: "event", id: eid }, true)
@@ -1494,7 +1685,7 @@ function deriveNotifs() {
   Object.entries(S.membership).forEach(([id, st]) => { if (st === "member" && S.memberSince[id] !== undefined && S.memberSince[id] > 0) add("mem-" + id, S.memberSince[id], `Você entrou em ${comm(id).name}`, "Pedido aprovado", "openObj", { dtype: "community", id }, false) })
   visibleMarket().filter((m) => m.appears > 0).forEach((m) => { const t = T(); if (m.city === t.to) add("mk-" + m.id, m.appears, `Novo desapego na sua janela: ${m.title}`, `${city(m.city).name} · retirada em ${windowLabel(m.window)}`, "openObj", { dtype: "market", id: m.id }, false) })
   DB.refs.forEach((r) => { const i = refInfo(r); if (i.status === "revisao" && S.saved.some((s) => s.type === "ref" && s.id === r.id)) add("ref-" + r.id, S.day, `Referência que você salvou entrou em revisão`, r.title, "openObj", { dtype: "ref", id: r.id }, false) })
-  return list.sort((a, b) => b.day - a.day).map((n) => ({ ...n, read: !!S.readN[n.id] }))
+  return list.filter((n) => !S.dismissedN[n.id]).sort((a, b) => b.day - a.day).map((n) => ({ ...n, read: !!S.readN[n.id] }))
 }
 const unreadCount = () => deriveNotifs().filter((n) => !n.read).length
 
@@ -1550,49 +1741,50 @@ function cardLink(label, data, act = "openObj") { return `<button class="card-li
 function providerCard(p) {
   const b = evBadge(p.id)
   const ad = p.campaign
-  return `<article class="service-card card${ad ? " is-ad" : ""}"><div class="pic">${img(p.img, 400)}</div><div class="sc-body">
+  return `<article class="service-card card${ad ? " is-ad" : ""}"${md("provider", p.id, p.name, ad)}><div class="pic">${img(p.img, 400)}</div><div class="sc-body">
     <div class="badges">${ad ? badgeAd(ad.label) : ""}<span class="badge ${b.cls}">${esc(b.txt)}</span></div>
     <h3>${cardLink(p.name, { dtype: "provider", id: p.id })}</h3>
     <div class="trust">${esc(evLine(p.id))}</div><div class="trust">${esc(hiredLine(p.id))} · atende ${esc(p.area.split(",")[0])}</div>
-    <div class="sc-actions">${seal()}<button class="cta" data-act="openQuote"${attrs({ id: p.id })}>Solicitar orçamento</button></div></div></article>`
+    <div class="sc-actions">${seal()}<button class="cta" data-act="openQuote"${attrs({ id: p.id })}>Solicitar orçamento</button></div></div>${kebab(p.name)}</article>`
 }
 function listingCard(h, own) {
   const ad = h.campaign
-  return `<article class="listing card${ad ? " is-ad" : ""}"><div class="photo">${img(h.img, 800)}${ad ? `<span class="sponsor">${badgeAd(ad.label)}</span>` : ""}${own ? `<span class="sponsor">${badgeAd("Seu anúncio")}</span>` : ""}${heart("housing", h.id)}</div>
+  return `<article class="listing card${ad ? " is-ad" : ""}"${md("housing", h.id, h.title, ad, own)}><div class="photo">${img(h.img, 800)}${ad ? `<span class="sponsor">${badgeAd(ad.label)}</span>` : ""}${own ? `<span class="sponsor">${badgeAd("Seu anúncio")}</span>` : ""}${heart("housing", h.id)}${kebab(h.title)}</div>
     <div class="body"><span class="badge">${esc(h.bairro)} · ${esc(city(h.city).name)}</span><h3>${cardLink(h.title, { dtype: "housing", id: h.id })}</h3>
     <div class="price">${money(h.rent)}/mês</div><div class="meta">${h.m2} m² · ${h.beds} quartos${h.furnished ? " · mobiliado" : ""} · a partir de ${esc(windowLabel(h.from))}</div>
     ${ad ? "" : `<div class="why">Por que apareceu: ${esc(whyHousing(h))}</div>`}</div></article>`
 }
 function marketCard(m, own) {
   const mi = marketItem(m)
-  return `<article class="listing card"><div class="photo">${img(m.img, 800)}${own ? `<span class="sponsor">${badgeAd("Seu anúncio")}</span>` : ""}${heart("market", m.id)}</div>
+  return `<article class="listing card"${md("market", m.id, m.title, false, own)}><div class="photo">${img(m.img, 800)}${own ? `<span class="sponsor">${badgeAd("Seu anúncio")}</span>` : ""}${heart("market", m.id)}${kebab(m.title)}</div>
     <div class="body"><span class="badge pink">${esc(m.cat)} · ${esc(city(m.city).name)}</span><h3>${cardLink(m.title, { dtype: "market", id: m.id })}</h3>
     <div class="price">${money(m.price)}</div><div class="meta">Retirada em ${esc(windowLabel(m.window))} · ${esc(m.seller)}</div>
     ${own ? "" : `<div class="why">Por que apareceu: ${esc(mi.why)}</div>`}</div></article>`
 }
 function eventCard(e, own) {
   const going = S.rsvps[e.id] === "going"; const ad = e.campaign
-  return `<article class="listing card${ad ? " is-ad" : ""}"><div class="photo">${img(e.img, 800)}${ad ? `<span class="sponsor">${badgeAd(ad.label)}</span>` : ""}${own ? `<span class="sponsor">${badgeAd("Seu evento")}</span>` : ""}</div>
+  return `<article class="listing card${ad ? " is-ad" : ""}"${md("event", e.id, e.title, ad, own)}><div class="photo">${img(e.img, 800)}${ad ? `<span class="sponsor">${badgeAd(ad.label)}</span>` : ""}${own ? `<span class="sponsor">${badgeAd("Seu evento")}</span>` : ""}${kebab(e.title)}</div>
     <div class="body"><span class="badge violet">${weekday(e.date)}, ${fmtShort(e.date)} · ${esc(e.time)}</span>${going ? `<span class="badge good">${ic("check")} Você vai</span>` : ""}<h3>${cardLink(e.title, { dtype: "event", id: e.id })}</h3>
     <div class="meta">${esc(e.place)} · ${e.going + (going ? 1 : 0)} confirmados · ${esc(comm(e.community).name)}</div></div></article>`
 }
 function benefitState(b) { const d = daysUntil(b.until); return d < 0 ? "expired" : d <= 14 ? "soon" : "ok" }
 function benefitCard(b) {
   const st = benefitState(b); const got = S.redeemed[b.id]
-  return `<article class="listing card${st === "expired" ? " is-expired" : ""}"><div class="photo">${img(b.img, 800)}<span class="sponsor">${badgeAd(b.campaign ? "Oferta do anunciante" : "Parceiro")}</span></div>
+  return `<article class="listing card${st === "expired" ? " is-expired" : ""}"${md("benefit", b.id, b.partner, !!b.campaign)}><div class="photo">${img(b.img, 800)}<span class="sponsor">${badgeAd(b.campaign ? "Oferta do anunciante" : "Parceiro")}</span>${kebab(b.partner)}</div>
     <div class="body">${st === "expired" ? '<span class="badge">Vencido</span>' : st === "soon" ? '<span class="badge gold">Vence em breve</span>' : ""}${got ? '<span class="badge good">Resgatado</span>' : ""}<h3>${cardLink(b.partner, { dtype: "benefit", id: b.id })}</h3>
     <div class="price">${esc(b.offer)}</div><div class="meta">${esc(city(b.city).name)} · válido até ${fmtShort(b.until)}</div></div></article>`
 }
 function refCard(r) {
   const i = refInfo(r)
-  return `<article class="ref-card card"><div class="ico">${ic("book")}</div><div><span class="badge blue">Referência</span> <span class="badge ${i.status === "ok" ? "good" : "gold"}">${REF_STATUS[i.status]}</span>
-    <h3>${cardLink(r.title, { dtype: "ref", id: r.id })}</h3><div class="meta">Revisada em ${fmtShort(r.reviewed)} · ${r.needs + r.reports} relatos · ${esc(i.curator)}</div></div></article>`
+  return `<article class="ref-card card"${md("ref", r.id, r.title)}><div class="ico">${ic("book")}</div><div><span class="badge blue">Referência</span> <span class="badge ${i.status === "ok" ? "good" : "gold"}">${REF_STATUS[i.status]}</span>
+    <h3>${cardLink(r.title, { dtype: "ref", id: r.id })}</h3><div class="meta">Revisada em ${fmtShort(r.reviewed)} · ${r.needs + r.reports} relatos · ${esc(i.curator)}</div></div>${kebab(r.title)}</article>`
 }
 function resultCard(x) {
   const ad = x.ad
-  return `<article class="result-card card${ad ? " is-ad" : ""}"><span class="badge ${x.tone || ""}">${esc(x.type)}</span>${x.badge ? ` <span class="badge ${ad ? "ad" : ""}">${esc(x.badge)}</span>` : ""}
+  const mn = x.act === "openObj" && ["provider", "housing", "market", "event", "ref", "thread"].includes(x.dtype)
+  return `<article class="result-card card${ad ? " is-ad" : ""}"${mn ? md(x.dtype, x.id, x.title, ad) : ""}><span class="badge ${x.tone || ""}">${esc(x.type)}</span>${x.badge ? ` <span class="badge ${ad ? "ad" : ""}">${esc(x.badge)}</span>` : ""}
     <h3>${cardLink(x.title, { dtype: x.dtype, id: x.id, prefill: x.extra?.prefill, comm: x.comm }, x.act)}</h3><p>${esc(x.meta || "")}</p>
-    ${!ad && x.why ? `<div class="why">Por que apareceu: ${esc(x.why)}</div>` : ""}</article>`
+    ${!ad && x.why ? `<div class="why">Por que apareceu: ${esc(x.why)}</div>` : ""}${mn ? kebab(x.title) : ""}</article>`
 }
 function typeChips() {
   return `<nav class="chip-row" aria-label="Explorar por tipo">${TYPES.map(([p, l, i]) => `<button class="filter" data-act="go" data-page="${p}">${ic(i)}<span>${l}</span></button>`).join("")}</nav>`
@@ -1613,7 +1805,7 @@ function focusShort() { return S.focus === "origin" ? city(T().from).name : S.fo
 function shellUpdate() {
   const cur = NAV_OF[route.page] || route.page
   const n = unreadCount()
-  const cvN = S.convs.filter((c) => c.unread).length
+  const cvN = S.convs.filter((c) => c.unread && !c.muted && !c.archived).length
   const cnt = (p) => (p === "messages" && cvN ? `<span class="count">${cvN}<span class="sr-only"> não lidas</span></span>` : "")
   const nav = (arr) => arr.map(([p, l, i]) => `<button data-act="go" data-page="${p}"${cur === p ? ' aria-current="page"' : ""}>${ic(i)}<span>${l}</span>${cnt(p)}</button>`).join("")
   $("#sideNav").innerHTML = nav(PRIMARY)
@@ -1664,8 +1856,8 @@ function tileCard(x) {
 function needCard(n) {
   const sd = staleDays(n); const c = city(n.city)
   const meta = n.proposals.filter((p) => p.status === "sent").length ? `${n.proposals.filter((p) => p.status === "sent").length} propostas para comparar` : sd ? `sem novidade há ${sd} dias` : `${c.name} · ${STATUS[n.status].toLowerCase()}`
-  return `<article class="continue-card card"><div class="pic ico-pic" aria-hidden="true">${ic({ housing: "building", school: "grad", moving: "truck", sell: "tag", service: "briefcase", health: "health", event: "calendar" }[n.intent] || "arrow-right")}</div>
-    <div><small>${DIR[n.dir]} · ${STATUS[n.status]}</small><h3>${cardLink(n.title, { id: n.id }, "openNeed")}</h3><span>${esc(meta)}</span></div><div class="arrow" aria-hidden="true">${ic("chevron-right")}</div></article>`
+  return `<article class="continue-card card"${md("need", n.id, n.title)}><div class="pic ico-pic" aria-hidden="true">${ic({ housing: "building", school: "grad", moving: "truck", sell: "tag", service: "briefcase", health: "health", event: "calendar" }[n.intent] || "arrow-right")}</div>
+    <div><small>${DIR[n.dir]} · ${STATUS[n.status]}</small><h3>${cardLink(n.title, { id: n.id }, "openNeed")}</h3><span>${esc(meta)}</span></div>${kebab(n.title)}</article>`
 }
 VIEWS.home = () => {
   const t = T(); const ph = phaseOf(t); const sides = homeSides()
@@ -1675,11 +1867,11 @@ VIEWS.home = () => {
   const feed = []
   const mk = visibleMarket().filter((m) => m.city === first).sort((a, b) => b.appears - a.appears || Math.abs(daysUntil(a.window) - daysUntil(t.date)) - Math.abs(daysUntil(b.window) - daysUntil(t.date)))[0]
   if (mk) feed.push({ badge: "Desapego", cls: "pink", title: mk.title, meta: `${money(mk.price)} · retirada em ${windowLabel(mk.window)}`, data: { dtype: "market", id: mk.id }, img: mk.img })
-  const ev = DB.events.filter((e) => e.city === first && !e.campaign && daysUntil(e.date) >= 0).sort((a, b) => a.date.localeCompare(b.date))[0]
+  const ev = vis("event", DB.events.filter((e) => e.city === first && !e.campaign && daysUntil(e.date) >= 0)).sort((a, b) => a.date.localeCompare(b.date))[0]
   if (ev) feed.push({ badge: "Evento", cls: "violet", title: ev.title, meta: `${weekday(ev.date)}, ${fmtShort(ev.date)} · ${ev.time}`, data: { dtype: "event", id: ev.id }, img: ev.img })
-  const th = allThreads().find((x) => isMember(x.community) && comm(x.community).city === first && !x.own && !S.resolvedThreads[x.id])
+  const th = allThreads().find((x) => isMember(x.community) && comm(x.community).city === first && !x.own && !S.resolvedThreads[x.id] && !S.hidden["thread:" + x.id])
   if (th) feed.push({ badge: "Comunidade", cls: "blue", title: th.title, meta: `${repliesOf(th).length} respostas · você pode ajudar`, data: { dtype: "thread", id: th.id }, img: PH.crowd })
-  const bens = DB.benefits.filter((b) => b.city === first && benefitState(b) !== "expired").slice(0, 2)
+  const bens = vis("benefit", DB.benefits.filter((b) => b.city === first && benefitState(b) !== "expired")).slice(0, 2)
   return `<section class="hero"><div class="hero-inner">
     <button class="context-pill" data-act="openContext">${ic("pin")} ${esc(city(t.from).name)} → ${esc(city(t.to).name)}<span class="opt"> · ${fmtShort(t.date)}</span> · ${esc(phaseLine(t))} ${ic("chevron-down")}</button>
     <h1 class="page-title">O que você precisa resolver hoje?</h1>
@@ -1698,7 +1890,7 @@ VIEWS.home = () => {
     <div class="two-sides${sides.length === 1 ? " one" : ""}">${sides.map((s) => `<div class="side-col"><h3 class="side-title">${s === "origin" ? "Saída" : "Chegada"} · ${esc(city(cityKey(s)).name)}</h3>${tilesFor(s).map(tileCard).join("")}</div>`).join("")}</div>
     ${ph === "arrived" && S.needs.some((n) => n.city === t.from && !["resolved", "abandoned"].includes(n.status)) ? `<button class="link-btn pend" data-act="setFocus" data-focus="origin">Pendências em ${esc(city(t.from).name)}: ${S.needs.filter((n) => n.city === t.from && !["resolved", "abandoned"].includes(n.status)).length}</button>` : ""}</div>
   <div class="section activity-grid"><div><div class="section-head"><div><h2>Agora na sua rede</h2><p>${esc(firstCity.name)} · o que aconteceu e pede sua atenção.</p></div><button class="link-btn" data-act="go" data-page="explorar">Explorar por tipo</button></div>
-      <div class="feed">${feed.map((f) => `<article class="feed-card card"><div class="photo">${img(f.img, 500)}</div><div class="body"><span class="badge ${f.cls}">${esc(f.badge)}</span><h3>${cardLink(f.title, f.data)}</h3><p>${esc(f.meta)}</p></div></article>`).join("")}</div></div>
+      <div class="feed">${feed.map((f) => `<article class="feed-card card"${md(f.data.dtype, f.data.id, f.title)}><div class="photo">${img(f.img, 500)}${kebab(f.title)}</div><div class="body"><span class="badge ${f.cls}">${esc(f.badge)}</span><h3>${cardLink(f.title, f.data)}</h3><p>${esc(f.meta)}</p></div></article>`).join("")}</div></div>
     <aside class="benefit-panel" aria-label="Benefícios"><div class="section-head"><div><h2>Benefícios</h2><p>Parceiros em ${esc(firstCity.name)}.</p></div><button class="link-btn light" data-act="go" data-page="benefits">Ver todos ${ic("arrow-right")}</button></div>
       <div class="benefit-list">${bens.map((b) => `<article class="benefit card"><div class="pic">${img(b.img, 300)}</div><div><h3>${cardLink(b.partner, { dtype: "benefit", id: b.id })}</h3><p>${esc(b.offer)}</p></div></article>`).join("") || `<p class="muted-light">Nenhum benefício vigente aqui.</p>`}</div></aside></div>`
 }
@@ -1785,7 +1977,7 @@ const passes = (kind, text, tags) => { const st = catState(kind); const t = norm
 const emptyList = (kind) => `<div class="no-results">Nenhum resultado com esses filtros. Amplie a busca ou pergunte a quem já viveu isso. <button class="link-btn" data-act="openAsk" data-q="">Perguntar</button></div>`
 VIEWS.services = (p) => {
   const side = catSide("services", p); const k = cityKey(side)
-  const all = DB.providers.filter((x) => x.city === k)
+  const all = vis("provider", DB.providers.filter((x) => x.city === k))
   const org = all.filter((x) => !x.campaign && passes("services", x.name + x.about, x.tags)).sort((a, b) => evScore(b.id) - evScore(a.id))
   const ads = all.filter((x) => x.campaign && passes("services", x.name + x.about, x.tags))
   const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não altera a ordem da lista</div><div class="service-list">${ads.map(providerCard).join("")}</div></div>` : ""
@@ -1794,7 +1986,7 @@ VIEWS.services = (p) => {
 }
 VIEWS.housing = (p) => {
   const side = catSide("housing", p); const k = cityKey(side); const t = T()
-  const all = DB.housing.filter((h) => h.city === k)
+  const all = vis("housing", DB.housing.filter((h) => h.city === k))
   const own = S.own.housing.filter((h) => h.city === k && !h.closed)
   const org = [...own, ...all.filter((h) => !h.campaign)].filter((h) => passes("housing", h.title + h.bairro, h.tags)).sort((a, b) => housingFit(b).score - housingFit(a).score)
   const ads = all.filter((h) => h.campaign && passes("housing", h.title + h.bairro, h.tags))
@@ -1818,7 +2010,7 @@ VIEWS.market = (p) => {
 }
 VIEWS.events = (p) => {
   const side = catSide("events", p); const k = cityKey(side)
-  const all = [...S.own.events.filter((e) => e.city === k), ...DB.events.filter((e) => e.city === k)].filter((e) => daysUntil(e.date) >= 0 && passes("events", e.title + e.place)).sort((a, b) => a.date.localeCompare(b.date))
+  const all = [...S.own.events.filter((e) => e.city === k), ...vis("event", DB.events.filter((e) => e.city === k))].filter((e) => daysUntil(e.date) >= 0 && passes("events", e.title + e.place)).sort((a, b) => a.date.localeCompare(b.date))
   const ads = all.filter((e) => e.campaign)
   const before = ads.length ? `<div class="ad-band"><div class="result-zone-title">Anúncio · não altera a ordem da lista</div><div class="cards-3">${ads.map((e) => eventCard(e)).join("")}</div></div>` : ""
   const cold = !city(k).content ? coldStartBlock(k, "") : ""
@@ -1826,7 +2018,7 @@ VIEWS.events = (p) => {
 }
 VIEWS.benefits = (p) => {
   const side = catSide("benefits", p); const k = cityKey(side)
-  const list = DB.benefits.filter((b) => b.city === k && passes("benefits", b.partner + b.offer)).sort((a, b) => (benefitState(a) === "expired") - (benefitState(b) === "expired") || a.until.localeCompare(b.until))
+  const list = vis("benefit", DB.benefits).filter((b) => b.city === k && passes("benefits", b.partner + b.offer)).sort((a, b) => (benefitState(a) === "expired") - (benefitState(b) === "expired") || a.until.localeCompare(b.until))
   const cold = !city(k).content ? coldStartBlock(k, "") : ""
   return catShell("benefits", "Benefícios", `Condições de parceiros em ${city(k).name}, com validade e como usar.`, side, cold || list.map(benefitCard).join("") || emptyList("benefits"))
 }
@@ -1849,7 +2041,7 @@ function joinBlock(c) {
 VIEWS.community = (p) => {
   const id = p.id || activeComm(); const c = comm(id); S.activeComm = id
   const member = isMember(id)
-  const qs = allThreads().filter((t) => t.community === id)
+  const qs = vis("thread", allThreads()).filter((t) => t.community === id)
   const evs = [...S.own.events, ...DB.events].filter((e) => e.community === id && daysUntil(e.date) >= 0).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3)
   const refs = DB.refs.filter((r) => r.community === id)
   const evGroups = communityEvidence(id)
@@ -1861,7 +2053,7 @@ VIEWS.community = (p) => {
   if (!member) return `${head}${joinBlock(c)}<div class="community-layout"><div class="community-card"><h2>${qs.length} perguntas abertas</h2><p class="muted">O conteúdo é visível para membros.</p></div>${memory}</div>`
   return `${head}<div class="community-layout"><div>
     <div class="community-card"><div class="section-head"><div><h2>Precisa da sua experiência</h2><p>Perguntas abertas para quem já viveu isso.</p></div><button class="primary" data-act="openAsk" data-comm="${id}" data-q="">Fazer uma pergunta</button></div>
-      ${qs.filter((t) => !S.resolvedThreads[t.id]).slice(0, 4).map((t) => `<button class="question" data-act="openObj" data-dtype="thread" data-id="${t.id}"><span class="ico" aria-hidden="true">${ic("help")}</span><div><b>${esc(t.title)}</b><span>${repliesOf(t).length} respostas · ${esc(t.ago || "agora")}${t.own ? " · sua pergunta" : ""}</span></div><span class="arrow" aria-hidden="true">${ic("chevron-right")}</span></button>`).join("") || `<p class="muted">Nenhuma pergunta aberta. Seja a primeira pessoa a perguntar.</p>`}
+      ${qs.filter((t) => !S.resolvedThreads[t.id]).slice(0, 4).map((t) => `<div class="question"${md("thread", t.id, t.title, false, t.own)}><span class="ico" aria-hidden="true">${ic("help")}</span><div><b>${cardLink(t.title, { dtype: "thread", id: t.id })}</b><span>${repliesOf(t).length} respostas · ${esc(t.ago || "agora")}${t.own ? " · sua pergunta" : ""}</span></div>${kebab(t.title)}</div>`).join("") || `<p class="muted">Nenhuma pergunta aberta. Seja a primeira pessoa a perguntar.</p>`}
       <button class="link-btn" data-act="openThreadList" data-id="${id}">Ver todas (${qs.length})</button></div>
     <div class="section"><div class="section-head"><div><h2>Círculos</h2><p>Assuntos dentro da comunidade. A memória continua sendo da comunidade.</p></div></div><div class="choice-row">${circles.map((x) => `<button class="filter" data-act="openCircle" data-id="${x.id}" aria-pressed="${!!S.follows[x.id]}">${S.follows[x.id] ? ic("check") : ""}${esc(x.name)}</button>`).join("")}</div></div>
     <div class="section"><div class="section-head"><div><h2>Acontecendo na comunidade</h2><p>Eventos de ${esc(city(c.city).name)}.</p></div></div>
@@ -1870,10 +2062,12 @@ VIEWS.community = (p) => {
 
 /* ---------- Conversas ---------- */
 const convOpen = () => route.params.id
+const INBOX = { archived: false }
 VIEWS.messages = (p) => {
-  const list = S.convs
+  const list = S.convs.filter((c) => (INBOX.archived ? c.archived : !c.archived))
+  const nArch = S.convs.filter((c) => c.archived).length
   const cur = byId(S.convs, p.id) || null
-  const item = (c) => `<button class="inbox-item${cur && cur.id === c.id ? " active" : ""}" data-act="openConv" data-id="${c.id}"><span class="mini-avatar" aria-hidden="true">${esc(c.with.slice(0, 2).toUpperCase())}</span><div><b>${esc(c.with)}${c.unread ? ' <span class="dot" aria-label="não lida"></span>' : ""}</b><span>${esc(convAnchorLabel(c))}${c.status === "pending" ? " · aguardando aceite" : ""}</span></div></button>`
+  const item = (c) => `<div class="inbox-item${cur && cur.id === c.id ? " active" : ""}"${md("conv", c.id, c.with)}><span class="mini-avatar" aria-hidden="true">${esc(c.with.slice(0, 2).toUpperCase())}</span><div><b class="who">${cardLink(c.with, { id: c.id }, "openConv")}${c.unread ? ' <span class="dot" aria-label="não lida"></span>' : ""}${c.muted ? `<span class="mute-ico" role="img" aria-label="silenciada">${ic("volume-off")}</span>` : ""}</b><span>${esc(convAnchorLabel(c))}${c.status === "pending" ? " · aguardando aceite" : ""}</span></div>${kebab(c.with)}</div>`
   let panel = `<div class="conversation-panel empty-conv"><span class="bubble" aria-hidden="true">${ic("message")}</span><h2>Escolha uma conversa</h2><p class="muted">Cada conversa está ligada ao objeto e, quando existe, à necessidade que você está resolvendo.</p></div>`
   if (cur) {
     const n = cur.needId ? needById(cur.needId) : null
@@ -1883,7 +2077,7 @@ VIEWS.messages = (p) => {
       <div class="messages" role="log" aria-live="polite">${cur.msgs.map((m) => `<div class="bubble-chat${m.me ? " me" : ""}">${esc(m.text)}</div>`).join("")}</div>
       ${cur.status === "pending" ? `<p class="privacy-note">Aguardando aceite. Nada além do tema e do lado da mudança foi compartilhado.</p>` : `<form class="composer-line" data-form="sendMsg" data-id="${cur.id}"><label class="sr-only" for="msg">Mensagem</label><input id="msg" name="text" autocomplete="off" placeholder="Escreva uma mensagem"><button class="primary" type="submit">Enviar</button></form>`}</div>`
   }
-  return `${H1("Conversas", "Cada conversa fica ligada ao que você está resolvendo.")}<div class="inbox-grid${cur ? " has-open" : ""}"><div class="inbox-list">${list.map(item).join("") || `<p class="muted pad">Nenhuma conversa ainda.</p>`}</div>${panel}</div>`
+  return `${H1("Conversas", "Cada conversa fica ligada ao que você está resolvendo.")}<div class="inbox-grid${cur ? " has-open" : ""}"><div class="inbox-list">${list.map(item).join("") || `<p class="muted pad">${INBOX.archived ? "Nenhuma conversa arquivada." : "Nenhuma conversa ainda."}</p>`}${nArch || INBOX.archived ? `<button class="link-btn inbox-foot" data-act="toggleArchivedList">${INBOX.archived ? "Voltar às conversas" : `Ver arquivadas (${nArch})`}</button>` : ""}</div>${panel}</div>`
 }
 function objLabel(o) {
   const src = { provider: () => provider(o.id)?.name, housing: () => { const h = byId([...DB.housing, ...S.own.housing], o.id); return h && `${h.title} · ${h.bairro}` }, market: () => byId([...DB.market, ...S.own.market], o.id)?.title, event: () => byId([...DB.events, ...S.own.events], o.id)?.title, person: () => byId(DB.people, o.id)?.name }[o.type]
@@ -1894,7 +2088,7 @@ function convAnchorLabel(c) { const n = c.needId ? needById(c.needId) : null; re
 /* ---------- Notificações ---------- */
 VIEWS.notifications = () => {
   const list = deriveNotifs()
-  const grp = (title, arr) => arr.length ? `<h2 class="sub-h">${title}</h2><div class="notice-stack">${arr.map((n) => `<article class="notice-card card${n.read ? "" : " unread"}"><span class="notice-icon" aria-hidden="true">${ic(n.action ? "alert" : "bell")}</span><div><h3>${cardLink(n.title, { nid: n.id }, "openNotif")}</h3><span>${esc(n.sub)}</span></div><span class="arrow" aria-hidden="true">${ic("chevron-right")}</span></article>`).join("")}</div>` : ""
+  const grp = (title, arr) => arr.length ? `<h2 class="sub-h">${title}</h2><div class="notice-stack">${arr.map((n) => `<article class="notice-card card${n.read ? "" : " unread"}"${md("notif", n.id, n.title)}><span class="notice-icon" aria-hidden="true">${ic(n.action ? "alert" : "bell")}</span><div><h3>${cardLink(n.title, { nid: n.id }, "openNotif")}</h3><span>${esc(n.sub)}</span></div>${kebab(n.title)}</article>`).join("")}</div>` : ""
   return `${H1("Notificações", "Só o que mudou de verdade no que você acompanha.", "", "notifications")}${grp("Pede sua ação", list.filter((n) => n.action))}${grp("Novidades", list.filter((n) => !n.action))}${list.length ? "" : `<div class="empty-state">Nada novo. Quando algo mudar, aparece aqui, e só aqui.</div>`}`
 }
 
@@ -1905,8 +2099,9 @@ VIEWS.profile = () => {
   const done = S.needs.filter((n) => n.status === "resolved")
   return `${H1("Você", "Suas necessidades, salvos, transferências e histórico.", `<button class="city-chip" data-act="openContext">Ajustar contexto</button>`)}
   <div class="profile-grid">
-    <section class="profile-card"><h2>Necessidades abertas</h2>${act.map((n) => `<div class="profile-row"><div><b>${cardLink(n.title, { id: n.id }, "openNeed")}</b><span>${DIR[n.dir]} · ${STATUS[n.status]} · ${esc(city(n.city).name)}</span></div></div>`).join("") || '<p class="muted">Nada aberto.</p>'}<button class="link-btn" data-act="openNeeds">Ver todas (${S.needs.length})</button></section>
+    <section class="profile-card"><h2>Necessidades abertas</h2>${act.map((n) => `<div class="profile-row"${md("need", n.id, n.title)}><div><b>${cardLink(n.title, { id: n.id }, "openNeed")}</b><span>${DIR[n.dir]} · ${STATUS[n.status]} · ${esc(city(n.city).name)}</span></div>${kebab(n.title)}</div>`).join("") || '<p class="muted">Nada aberto.</p>'}<button class="link-btn" data-act="openNeeds">Ver todas (${S.needs.length})</button></section>
     <section class="profile-card"><h2>Salvos</h2>${S.saved.length ? S.saved.map((s) => `<div class="profile-row"><div><b>${cardLink(savedLabel(s), { dtype: s.type, id: s.id })}</b><span>${esc(s.type === "ref" ? "Referência" : s.type === "housing" ? "Imóvel" : s.type === "market" ? "Desapego" : s.type === "benefit" ? "Benefício" : s.type === "event" ? "Evento" : "Prestador")}</span></div><button class="link-btn" data-act="toggleSave" data-type="${s.type}" data-id="${s.id}" aria-label="Remover dos salvos">Remover</button></div>`).join("") : '<p class="muted">Toque no coração de qualquer imóvel, desapego ou referência para guardar aqui.</p>'}</section>
+    ${Object.keys(S.hidden).length ? `<section class="profile-card"><h2>Itens ocultos</h2>${Object.keys(S.hidden).map((k) => { const [type, ...rest] = k.split(":"); const id = rest.join(":"); return `<div class="profile-row"><div><b>${esc(labelOfItem(type, id))}</b><span>${esc(ITEM_KIND[type] || "Item")}</span></div><button class="link-btn" data-act="unhideItem" data-key="${esc(k)}" aria-label="Mostrar de novo: ${esc(labelOfItem(type, id))}">Mostrar de novo</button></div>` }).join("")}<p class="privacy-note">Itens ocultos não aparecem para você em nenhuma lista. Só você vê esta lista.</p></section>` : ""}
     <section class="profile-card"><h2>Transferências</h2>${S.transitions.map((x) => `<div class="profile-row"><div><b>${esc(city(x.from).name)} → ${esc(city(x.to).name)}${x.id === S.activeT ? " · ativa" : ""}</b><span>${fmtShort(x.date)} · ${x.adults} adultos, ${x.kids} criança${x.kids === 1 ? "" : "s"} · só você vê a data exata</span></div>${x.id === S.activeT ? "" : `<button class="link-btn" data-act="switchT" data-id="${x.id}">Tornar ativa</button>`}</div>`).join("")}<button class="link-btn" data-act="openContext">Editar ou adicionar transferência</button></section>
     <section class="profile-card"><h2>Resolvido recentemente</h2>${done.map((n) => `<div class="profile-row"><div><b>${cardLink(n.title, { id: n.id }, "openNeed")}</b><span>${n.result ? RESULT_TXT[n.result] : "Resolvido"}</span></div></div>`).join("") || '<p class="muted">Quando você marcar um resultado, ele aparece aqui.</p>'}</section>
     <section class="profile-card"><h2>Meu negócio</h2><p class="muted">Veja como um prestador recebe pedidos e responde com proposta.</p><button class="secondary" data-act="go" data-page="provider">Abrir painel do prestador (demonstração)</button></section>
@@ -1971,14 +2166,77 @@ document.addEventListener("input", (e) => {
   render(); const n = $("[data-input='catQuery']"); if (n) { n.focus(); n.setSelectionRange(pos, pos) }
 })
 A.toggleSave = (d, el) => {
-  const i = S.saved.findIndex((s) => s.type === d.type && s.id === d.id)
-  if (i >= 0) S.saved.splice(i, 1); else S.saved.push({ type: d.type, id: d.id })
-  save(); const on = i < 0
-  if (el.classList.contains("heart")) { el.innerHTML = ic("heart", on ? "fill" : ""); if (on) { el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse") } } else if (el.classList.contains("secondary")) { el.innerHTML = `${ic("heart", on ? "fill" : "")} ${on ? "Salvo" : "Salvar"}` }
-  el.setAttribute("aria-pressed", on)
-  if (route.page === "profile") render()
-  toast(on ? "Salvo em Você → Salvos." : "Removido dos salvos.")
+  const flip = () => {
+    const i = S.saved.findIndex((s) => s.type === d.type && s.id === d.id)
+    if (i >= 0) S.saved.splice(i, 1); else S.saved.push({ type: d.type, id: d.id })
+    save()
+    const on = i < 0
+    $$(`.heart[data-type="${d.type}"][data-id="${CSS.escape(d.id)}"]`).forEach((h) => {
+      h.innerHTML = ic("heart", on ? "fill" : ""); h.setAttribute("aria-pressed", on); h.setAttribute("aria-label", on ? "Remover dos salvos" : "Salvar")
+      if (on) { h.classList.remove("pulse"); void h.offsetWidth; h.classList.add("pulse") }
+    })
+    if (el && el.classList.contains("secondary")) el.innerHTML = `${ic("heart", on ? "fill" : "")} ${on ? "Salvo" : "Salvar"}`
+    if (el && el.hasAttribute("aria-pressed")) el.setAttribute("aria-pressed", on)
+    if (route.page === "profile") render()
+    return on
+  }
+  const on = flip()
+  toast(on ? "Salvo em Você → Salvos." : "Removido dos salvos.", { undo: () => flip() })
 }
+
+
+/* ---------- ações dos menus de contexto ---------- */
+const ITEM_KIND = { provider: "Prestador", housing: "Imóvel", market: "Desapego", event: "Evento", benefit: "Benefício", thread: "Pergunta" }
+const labelOfItem = (type, id) => ({
+  provider: () => provider(id)?.name,
+  housing: () => { const h = byId([...DB.housing, ...S.own.housing], id); return h && `${h.title} · ${h.bairro}` },
+  market: () => byId([...DB.market, ...S.own.market], id)?.title,
+  event: () => byId([...DB.events, ...S.own.events], id)?.title,
+  benefit: () => byId(DB.benefits, id)?.partner,
+  thread: () => threadOf(id)?.title,
+  conv: () => byId(S.convs, id)?.with,
+}[type]?.() || "Item")
+A.hideItem = (d) => {
+  const k = d.type + ":" + d.id
+  S.hidden[k] = true; save(); render(); $("#view").focus({ preventScroll: true })
+  toast("Oculto para você.", { undo: () => { delete S.hidden[k]; save(); render() } })
+}
+A.unhideItem = (d) => { delete S.hidden[d.key]; save(); render(); toast("De volta às listas.") }
+const REPORT_REASONS = [["spam", "Spam ou propaganda"], ["scam", "Golpe ou pedido de dinheiro suspeito"], ["false", "Informação falsa"], ["abuse", "Comportamento ofensivo"], ["other", "Outro motivo"]]
+A.openReport = (d) => {
+  const ad = d.ad === "1"
+  openDrawer(`${drawerHead(ad ? "Denunciar anúncio" : "Denunciar", labelOfItem(d.type, d.id))}
+    <form data-form="submitReport" data-type="${d.type}" data-id="${d.id}">
+      <fieldset class="field"><legend>Qual é o problema?</legend><div class="stack">${[...(ad ? [["ad", "Anúncio enganoso ou sem rótulo"]] : []), ...REPORT_REASONS].map(([v, l], i) => `<label class="radio-pill"><input type="radio" name="reason" value="${v}"${i === 0 ? " checked" : ""}> ${l}</label>`).join("")}</div></fieldset>
+      <label class="check"><input type="checkbox" name="hide" checked> ${d.type === "conv" ? "Arquivar também esta conversa" : "Ocultar também para mim"}</label>
+      <p class="privacy-note">Só a moderação vê a denúncia. A pessoa denunciada não é avisada.</p>
+      <div class="detail-actions"><button class="primary" type="submit">Enviar denúncia</button></div></form>`)
+}
+A.submitReport = (d, f) => {
+  const reason = f.querySelector("input[name=reason]:checked").value
+  S.reports.push({ type: d.type, id: d.id, reason, day: S.day })
+  if (f.hide.checked) { if (d.type === "conv") { const c = byId(S.convs, d.id); if (c) c.archived = true } else S.hidden[d.type + ":" + d.id] = true }
+  save(); closeDrawer(); toast("Denúncia enviada. Só a moderação vê.")
+}
+A.openWhy = (d) => {
+  const p = provider(d.id); const t = whyProvider(p, {})
+  openDrawer(`${drawerHead("Por que apareceu", p.name)}<div class="detail-box"><p>${esc(t[0].toUpperCase() + t.slice(1))}.</p></div>
+    <p class="privacy-note">A ordem vem do resultado de quem contratou. Anúncio não compra posição e não recebe esta explicação.</p>`)
+}
+A.toggleRead = (d) => { const c = byId(S.convs, d.id); c.unread = !c.unread; save(); render(); toast(c.unread ? "Marcada como não lida." : "Marcada como lida.") }
+A.toggleMute = (d) => {
+  const c = byId(S.convs, d.id); c.muted = !c.muted; save(); render()
+  toast(c.muted ? "Conversa silenciada. Você não recebe aviso dela." : "Avisos da conversa reativados.", { undo: () => { c.muted = !c.muted; save(); render() } })
+}
+A.archiveConv = (d) => {
+  const c = byId(S.convs, d.id); const to = !c.archived
+  c.archived = to; save()
+  if (to && route.page === "messages" && route.params.id === c.id) go("messages", {}, { replace: true }); else render()
+  toast(to ? "Conversa arquivada." : "Conversa desarquivada.", { undo: () => { c.archived = !to; save(); render() } })
+}
+A.toggleArchivedList = () => { INBOX.archived = !INBOX.archived; render() }
+A.toggleReadN = (d) => { if (S.readN[d.nid]) delete S.readN[d.nid]; else S.readN[d.nid] = true; save(); render() }
+A.dismissN = (d) => { S.dismissedN[d.nid] = true; save(); render(); toast("Aviso dispensado.", { undo: () => { delete S.dismissedN[d.nid]; save(); render() } }) }
 
 /* ---------- objetos ---------- */
 A.openObj = (d) => { const f = DR[d.dtype]; if (!f) { console.error("sem gaveta para", d.dtype); return } f(d.id, d) }
@@ -2021,7 +2279,7 @@ DR.market = (id) => {
     <div class="detail-box"><h3>${m.mine ? "Seu anúncio" : "Por que apareceu"}</h3><p>${m.mine ? "Quem pediu aviso para este tipo de item foi avisado, sem ver seu nome." : esc(marketItem(m).why)}</p></div></div>
     <div class="detail-actions">${saveBtn("market", id)}${m.mine ? `<button class="secondary" data-act="closeOwn" data-kind="market" data-id="${id}">Encerrar anúncio</button>` : `<button class="primary" data-act="startConv" data-dtype="market" data-id="${id}">Falar com ${esc(m.seller)}</button>`}</div>`)
 }
-A.closeOwn = (d) => { const l = S.own[d.kind].find((x) => x.id === d.id); if (l) l.closed = true; save(); closeDrawer(); toast("Anúncio encerrado.") }
+A.closeOwn = (d) => { const l = S.own[d.kind].find((x) => x.id === d.id); if (!l) return; l.closed = true; save(); settle(); toast("Anúncio encerrado.", { undo: () => { l.closed = false; save(); render() } }) }
 DR.event = (id) => {
   const e = byId([...DB.events, ...S.own.events], id); const going = S.rsvps[id] === "going"; const ad = e.campaign
   openDrawer(`${drawerHead(e.title, `${weekday(e.date)}, ${fmtShort(e.date)} · ${e.time} · ${e.place}`, ad ? badgeAd(ad.label) : "")}
@@ -2031,8 +2289,10 @@ DR.event = (id) => {
     <div class="detail-actions">${going ? `<button class="secondary" data-act="rsvp" data-id="${id}" data-set="cancel">Cancelar presença</button>` : `<button class="primary" data-act="rsvp" data-id="${id}" data-set="going">Confirmar presença</button>`}</div>`)
 }
 A.rsvp = (d) => {
+  const was = S.rsvps[d.id]
   if (d.set === "going") S.rsvps[d.id] = "going"; else delete S.rsvps[d.id]
-  save(); toast(d.set === "going" ? "Presença confirmada." : "Presença cancelada."); closeDrawer()
+  save(); settle()
+  toast(d.set === "going" ? "Presença confirmada." : "Presença cancelada.", { undo: () => { if (was) S.rsvps[d.id] = was; else delete S.rsvps[d.id]; save(); render() } })
 }
 DR.benefit = (id) => {
   const b = byId(DB.benefits, id); const st = benefitState(b); const got = S.redeemed[id]
@@ -2251,7 +2511,11 @@ A.openNeed = (d) => {
     <div class="detail-box mt"><h3>Próximo passo</h3><p>${esc(next)}</p></div>
     <div class="detail-actions">${n.status !== "resolved" && n.status !== "abandoned" ? `${pend ? `<button class="primary" data-act="openProposals" data-id="${n.id}">Comparar propostas</button>` : ""}<button class="secondary" data-act="runQuery" data-q="${esc(n.query || n.title)}">Ver caminhos</button>${cv ? `<button class="secondary" data-act="openConv" data-id="${cv.id}">Abrir conversa</button>` : ""}${th ? `<button class="secondary" data-act="openObj" data-dtype="thread" data-id="${th.id}">Abrir pergunta</button>` : ""}<button class="secondary" data-act="abandonNeed" data-id="${n.id}">Encerrar</button><button class="${pend ? "secondary" : "primary"}" data-act="openResolution" data-id="${n.id}">Marcar resultado</button>` : n.status === "resolved" ? `<button class="secondary" data-act="showEvidenceOf" data-id="${n.id}">Ver evidência gerada</button>` : ""}</div>`)
 }
-A.abandonNeed = (d) => { const n = needById(d.id); n.status = "abandoned"; n.last = S.day; save(); closeDrawer(); toast("Necessidade encerrada. Nenhuma evidência foi criada.") }
+A.abandonNeed = (d) => {
+  const n = needById(d.id); const prev = { status: n.status, last: n.last }
+  n.status = "abandoned"; n.last = S.day; save(); settle()
+  toast("Necessidade encerrada. Nenhuma evidência foi criada.", { undo: () => { n.status = prev.status; n.last = prev.last; save(); render() } })
+}
 A.showEvidenceOf = (d) => {
   const n = needById(d.id); const e = S.evidence.find((x) => x.needId === d.id)
   if (e && e.share && e.providerId) A.openEvidence({ id: e.providerId })

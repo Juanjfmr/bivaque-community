@@ -1291,6 +1291,7 @@ await probe(
               o: __bv.overlayOpen(),
               v: document.querySelector("#view").innerHTML.length,
               d: document.getElementById("drawer").innerHTML.length,
+              m: !!document.getElementById("ctxMenu"),
               f:
                 document.activeElement &&
                 (document.activeElement.id || document.activeElement.tagName),
@@ -1310,11 +1311,13 @@ await probe(
               o: __bv.overlayOpen(),
               v: document.querySelector("#view").innerHTML.length,
               d: document.getElementById("drawer").innerHTML.length,
+              m: !!document.getElementById("ctxMenu"),
               f:
                 document.activeElement &&
                 (document.activeElement.id || document.activeElement.tagName),
             }
             if (
+              a.m === b.m &&
               a.r === b.r &&
               a.s === b.s &&
               a.t === b.t &&
@@ -1324,6 +1327,8 @@ await probe(
               a.f === b.f
             )
               dead.push(label)
+            if (document.getElementById("ctxMenu"))
+              document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }))
             if (__bv.overlayOpen() && scope !== "drawer")
               document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))
             if (scope === "drawer" && !__bv.overlayOpen()) return { dead, n, reopen: true, i }
@@ -1551,7 +1556,9 @@ await probe("P29", "A11y", "alvos de toque ≥ 44px nos controles (1440 e 390)",
             let w = r.width,
               h = r.height
             if (e.classList.contains("card-link")) {
-              const c = (e.closest(".card, .profile-row") || e).getBoundingClientRect()
+              const c = (
+                e.closest(".card, .profile-row, .question, .inbox-item") || e
+              ).getBoundingClientRect()
               w = c.width
               h = c.height
             }
@@ -2194,6 +2201,425 @@ await probe(
       await ctx.close()
     }
     return [!bad.length, bad.slice(0, 3).join(" | ")]
+  },
+)
+
+/* ============ v35: MENUS DE CONTEXTO ============ */
+const menuLabels = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll("#ctxMenu .menu-item")].map((b) =>
+      b.innerText.replace(/\s+/g, " ").trim(),
+    ),
+  )
+await probe(
+  "P42",
+  "Menu de contexto",
+  "botão ⋯: abre com foco no 1º item, setas/Home/End/letra movem, Esc devolve o foco ao botão, Tab fecha, aria-expanded acompanha; no celular vira folha",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await go(page, "services", { side: "origin" })
+    const kb = page.locator(".service-card:not(.is-ad) .kebab").first()
+    const focusIdx = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll("#ctxMenu .menu-item")].indexOf(document.activeElement),
+      )
+    if (
+      (await kb.getAttribute("aria-haspopup")) !== "menu" ||
+      (await kb.getAttribute("aria-expanded")) !== "false"
+    )
+      bad.push("botão sem aria-haspopup/aria-expanded=false")
+    await kb.click()
+    const o = await page.evaluate(() => {
+      const m = document.getElementById("ctxMenu")
+      const r = m?.getBoundingClientRect()
+      const cs = m && getComputedStyle(m)
+      return {
+        role: m?.getAttribute("role"),
+        n: m?.querySelectorAll("[role=menuitem]").length,
+        foc: document.activeElement?.getAttribute("role"),
+        pos: cs?.position,
+        title: m && getComputedStyle(m.querySelector(".menu-title")).display,
+        inside: r && r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight,
+        label: m?.getAttribute("aria-label"),
+      }
+    })
+    if (o.role !== "menu" || o.n < 5 || o.foc !== "menuitem")
+      bad.push(`abertura: ${JSON.stringify(o)}`)
+    if (!o.inside) bad.push("menu fora da tela")
+    if (!/^Manutenção|^Frio|^Manaus|^Clínica|^Amazon/.test(o.label || ""))
+      bad.push(`menu sem nome acessível do item: ${o.label}`)
+    if (MOBILE() ? o.pos !== "fixed" || o.title === "none" : o.pos !== "absolute")
+      bad.push(`layout do tamanho de tela: ${o.pos}/${o.title}`)
+    if ((await kb.getAttribute("aria-expanded")) !== "true") bad.push("aria-expanded não vira true")
+    if ((await focusIdx()) !== 0) bad.push("foco não começa no 1º item")
+    await page.keyboard.press("ArrowDown")
+    if ((await focusIdx()) !== 1) bad.push("ArrowDown não avança")
+    await page.keyboard.press("End")
+    const n = (await menuLabels(page)).length
+    if ((await focusIdx()) !== n - 1) bad.push("End não vai ao último")
+    await page.keyboard.press("ArrowDown")
+    if ((await focusIdx()) !== 0) bad.push("ArrowDown no último não volta ao primeiro")
+    await page.keyboard.press("Home")
+    await page.keyboard.press("ArrowUp")
+    if ((await focusIdx()) !== n - 1) bad.push("ArrowUp no primeiro não vai ao último")
+    await page.keyboard.press("Home")
+    await page.keyboard.press("s")
+    const lab = await page.evaluate(() => document.activeElement.innerText.trim())
+    if (!/^S/i.test(lab)) bad.push(`letra 's' foi para "${lab}"`)
+    await page.keyboard.press("Escape")
+    const c = await page.evaluate(() => ({
+      gone: !document.getElementById("ctxMenu"),
+      foc: document.activeElement?.classList.contains("kebab"),
+      exp: document.querySelector(".service-card:not(.is-ad) .kebab").getAttribute("aria-expanded"),
+    }))
+    if (!c.gone || !c.foc || c.exp !== "false") bad.push(`Esc: ${JSON.stringify(c)}`)
+    await kb.click()
+    await page.keyboard.press("Tab")
+    const t = await page.evaluate(() => ({
+      gone: !document.getElementById("ctxMenu"),
+      foc: document.activeElement?.classList.contains("kebab"),
+    }))
+    if (!t.gone || !t.foc) bad.push(`Tab não fecha e devolve o foco: ${JSON.stringify(t)}`)
+    await kb.click()
+    await page.mouse.click(2, 2)
+    if (await page.evaluate(() => !!document.getElementById("ctxMenu")))
+      bad.push("clique fora não fecha")
+    if (await page.evaluate(() => __bv.overlayOpen() || __bv.route().page !== "services"))
+      bad.push("clique fora acionou o que estava por baixo")
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+const MENU_CASES = [
+  [
+    "prestador orgânico",
+    "services",
+    { side: "origin" },
+    ".service-card:not(.is-ad) .kebab",
+    { has: ["Por que apareceu", "Ocultar este prestador", "Denunciar"] },
+  ],
+  [
+    "prestador anúncio",
+    "services",
+    { side: "origin" },
+    ".service-card.is-ad .kebab",
+    { has: ["Ocultar este anúncio", "Denunciar anúncio"], not: /Por que apareceu/ },
+  ],
+  [
+    "imóvel",
+    "housing",
+    { side: "destination" },
+    ".listing:not(.is-ad) .kebab",
+    { has: ["Ocultar este imóvel"] },
+  ],
+  [
+    "imóvel anúncio",
+    "housing",
+    { side: "destination" },
+    ".listing.is-ad .kebab",
+    { has: ["Ocultar este anúncio"], not: /Por que apareceu/ },
+  ],
+  [
+    "desapego",
+    "market",
+    { side: "destination" },
+    ".listing .kebab",
+    { has: ["Falar com o vendedor"] },
+  ],
+  [
+    "evento",
+    "events",
+    { side: "origin" },
+    ".listing:not(.is-ad) .kebab",
+    { has: ["Confirmar presença"] },
+  ],
+  [
+    "evento anúncio",
+    "events",
+    { side: "origin" },
+    ".listing.is-ad .kebab",
+    { has: ["Ocultar este anúncio"], not: /Por que apareceu/ },
+  ],
+  ["benefício", "benefits", { side: "origin" }, ".listing .kebab", { has: ["Ver como usar"] }],
+  ["referência", "refs", { side: "origin" }, ".ref-card .kebab", { has: ["Sugerir correção"] }],
+  [
+    "pergunta",
+    "community",
+    { id: "ajuricaba" },
+    ".question .kebab",
+    { has: ["Abrir pergunta", "Denunciar"] },
+  ],
+  [
+    "necessidade",
+    "home",
+    {},
+    ".continue-card .kebab",
+    { has: ["Ver caminhos", "Encerrar necessidade"] },
+  ],
+  ["conversa", "messages", {}, ".inbox-item .kebab", { has: ["Arquivar", "Silenciar"] }],
+  ["aviso", "notifications", {}, ".notice-card .kebab", { has: ["Abrir", "Dispensar"] }],
+  ["cartão da Início", "home", {}, ".feed-card .kebab", { has: ["Salvar"] }],
+  [
+    "resultado do Resolver",
+    "resolver",
+    { q: "preciso instalar um split" },
+    "#results .result-card .kebab",
+    { has: ["Pedir orçamento"] },
+  ],
+]
+await probe(
+  "P43",
+  "Menu de contexto",
+  "varredura: cada item de cada menu (15 tipos) faz efeito; anúncio nunca oferece 'por que apareceu'; itens esperados presentes",
+  async () => {
+    const bad = []
+    let total = 0
+    const effect = (page) =>
+      page.evaluate(() =>
+        JSON.stringify([
+          __bv.route(),
+          __bv.S,
+          __bv.toastN(),
+          __bv.overlayOpen(),
+          document.querySelector("#view").innerHTML.length,
+        ]),
+      )
+    for (const [name, p, params, sel, exp] of MENU_CASES) {
+      let n = 0
+      {
+        const { ctx, page } = await fresh()
+        await go(page, p, params)
+        if (!(await page.locator(sel).count())) {
+          bad.push(`${name}: sem botão ⋯ em ${p}`)
+          await ctx.close()
+          continue
+        }
+        await page.locator(sel).first().click()
+        const labels = await menuLabels(page)
+        n = labels.length
+        for (const h of exp.has)
+          if (!labels.some((l) => l === h))
+            bad.push(`${name}: falta "${h}" em [${labels.join("|")}]`)
+        if (exp.not && labels.some((l) => exp.not.test(l))) bad.push(`${name}: ${exp.not} presente`)
+        await ctx.close()
+      }
+      for (let i = 0; i < n; i++) {
+        const { ctx, page } = await fresh()
+        await go(page, p, params)
+        await page.locator(sel).first().click()
+        const before = await effect(page)
+        const label = (await menuLabels(page))[i]
+        await page.locator("#ctxMenu .menu-item").nth(i).click()
+        await page.waitForTimeout(30)
+        const after = await effect(page)
+        total++
+        if (before === after) bad.push(`${name}: "${label}" não faz nada`)
+        if (await page.evaluate(() => !!document.getElementById("ctxMenu")))
+          bad.push(`${name}: menu não fecha após "${label}"`)
+        await ctx.close()
+      }
+    }
+    return [!bad.length, `${total} itens varridos · ${bad.slice(0, 4).join(" | ")}`]
+  },
+)
+await probe(
+  "P44",
+  "Menu de contexto",
+  "ocultar, denunciar, arquivar, silenciar e dispensar mudam o estado de verdade, têm 'Desfazer' e ficam gerenciáveis em Você",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    const cards = () => page.locator(".service-card").count()
+    const pick = async (sel, label) => {
+      await page.locator(sel).first().click()
+      await page.locator("#ctxMenu .menu-item", { hasText: new RegExp(`^${label}`) }).click()
+    }
+    const undo = async () => {
+      if (!(await page.locator("#toastUndo").isVisible())) return false
+      await page.locator("#toastUndo").click()
+      return true
+    }
+    // ocultar prestador
+    await go(page, "services", { side: "origin" })
+    const n0 = await cards()
+    await pick(".service-card:not(.is-ad) .kebab", "Ocultar este prestador")
+    if ((await cards()) !== n0 - 1) bad.push(`ocultar: ${n0} → ${await cards()}`)
+    if (!(await undo())) bad.push("ocultar sem Desfazer")
+    if ((await cards()) !== n0) bad.push("Desfazer não trouxe o prestador de volta")
+    await pick(".service-card:not(.is-ad) .kebab", "Ocultar este prestador")
+    await search(page, "preciso instalar um split")
+    const hiddenId = await page.evaluate(() => Object.keys(__bv.S.hidden)[0]?.split(":")[1])
+    const inResults = await page.evaluate(
+      (id) => !!document.querySelector(`#results [data-id="${id}"]`),
+      hiddenId,
+    )
+    if (inResults) bad.push("prestador oculto ainda aparece no Resolver")
+    await go(page, "profile")
+    if (!/Itens ocultos/.test(await view(page))) bad.push("Você não lista itens ocultos")
+    await page.locator("#view [data-act=unhideItem]").first().click()
+    await go(page, "services", { side: "origin" })
+    if ((await cards()) !== n0) bad.push("Mostrar de novo não devolveu o prestador")
+    // anúncio oculto some, com a faixa
+    await pick(".service-card.is-ad .kebab", "Ocultar este anúncio")
+    if (
+      (await page.locator(".ad-band .is-ad").count()) !==
+      (await page.evaluate(
+        () => __bv.DB.providers.filter((p) => p.city === "manaus" && p.campaign).length,
+      )) -
+        1
+    )
+      bad.push("anúncio oculto continua na faixa")
+    // denunciar imóvel: motivo registrado, sem texto livre, item oculto
+    await go(page, "housing", { side: "destination" })
+    const h0 = await page.locator(".listing:not(.is-ad)").count()
+    await pick(".listing:not(.is-ad) .kebab", "Denunciar")
+    await page.locator("#drawer input[value=scam]").check()
+    await page.locator("#drawer button[type=submit]").click()
+    const rep = await S(page, (S) =>
+      S.reports.map((r) => Object.keys(r).sort().join(",") + ":" + r.reason),
+    )
+    if (rep.length !== 1 || !/scam$/.test(rep[0]) || /text|msg|note/.test(rep[0]))
+      bad.push(`denúncia: ${JSON.stringify(rep)}`)
+    if ((await page.locator(".listing:not(.is-ad)").count()) !== h0 - 1)
+      bad.push("denunciado não foi ocultado")
+    // conversa: arquivar (com Desfazer), ver arquivadas, silenciar tira do contador
+    await go(page, "messages")
+    const c0 = await page.locator(".inbox-item").count()
+    await pick(".inbox-item .kebab", "Silenciar")
+    if (
+      (await page.locator("#msgBadge").isVisible()) &&
+      (await page.locator("#msgBadge").textContent()) !== "0"
+    )
+      bad.push("conversa silenciada ainda conta como não lida")
+    if (await page.evaluate(() => __bv.deriveNotifs().some((n) => /respondeu/.test(n.title))))
+      bad.push("conversa silenciada ainda gera aviso")
+    await undo()
+    await pick(".inbox-item .kebab", "Arquivar")
+    if ((await page.locator(".inbox-item").count()) !== c0 - 1)
+      bad.push("arquivar não tirou da lista")
+    await page.locator("#view .inbox-foot").click()
+    if ((await page.locator(".inbox-item").count()) !== 1)
+      bad.push("Ver arquivadas não mostra a conversa")
+    await pick(".inbox-item .kebab", "Desarquivar")
+    await page
+      .locator("#view .inbox-foot")
+      .click()
+      .catch(() => {})
+    // aviso: dispensar com Desfazer
+    await go(page, "notifications")
+    const a0 = await page.locator(".notice-card").count()
+    await pick(".notice-card .kebab", "Dispensar")
+    if ((await page.locator(".notice-card").count()) !== a0 - 1)
+      bad.push("dispensar não tirou o aviso")
+    await undo()
+    if ((await page.locator(".notice-card").count()) !== a0) bad.push("Desfazer não trouxe o aviso")
+    await pick(".notice-card .kebab", "Marcar como lida")
+    if (!(await page.locator("#ctxMenu").count()) === false) bad.push("menu ficou aberto")
+    // necessidade: encerrar com Desfazer restaura o estado
+    await go(page, "home")
+    const nid = await page.locator(".continue-card").first().getAttribute("data-mid")
+    const st0 = await S(page, (S, id) => S.needs.find((n) => n.id === id).status, nid)
+    await pick(".continue-card .kebab", "Encerrar necessidade")
+    if ((await S(page, (S, id) => S.needs.find((n) => n.id === id).status, nid)) !== "abandoned")
+      bad.push("encerrar não encerra")
+    await undo()
+    if ((await S(page, (S, id) => S.needs.find((n) => n.id === id).status, nid)) !== st0)
+      bad.push("Desfazer não restaura a necessidade")
+    // salvar pelo coração e desfazer
+    await go(page, "housing", { side: "destination" })
+    await page.locator(".listing .heart").first().click()
+    if ((await page.locator(".listing .heart[aria-pressed=true]").count()) !== 1)
+      bad.push("coração não salva")
+    await undo()
+    if ((await page.locator(".listing .heart[aria-pressed=true]").count()) !== 0)
+      bad.push("Desfazer não desfaz o salvamento")
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+await probe(
+  "P45",
+  "Menu de contexto",
+  "portas alternativas: clique direito e tecla de menu abrem o mesmo menu; toque longo abre a folha sem abrir o cartão; toque curto ainda abre o cartão",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await go(page, "services", { side: "origin" })
+    const card = page.locator(".service-card:not(.is-ad)").first()
+    await page.locator(".service-card:not(.is-ad) .kebab").first().click()
+    const viaButton = await menuLabels(page)
+    await page.keyboard.press("Escape")
+    // clique direito
+    const box = await card.boundingBox()
+    await page.mouse.click(box.x + 200, box.y + 30, { button: "right" })
+    const viaRight = await menuLabels(page)
+    if (JSON.stringify(viaRight) !== JSON.stringify(viaButton))
+      bad.push(`clique direito ≠ botão: [${viaRight.join("|")}]`)
+    const pos = await page.evaluate(() => {
+      const r = document.getElementById("ctxMenu")?.getBoundingClientRect()
+      return r && { l: r.left, t: r.top, r: r.right, b: r.bottom }
+    })
+    if (!MOBILE() && pos && (pos.l < 0 || pos.r > 1440 || pos.b > 900))
+      bad.push("menu do clique direito fora da tela")
+    await page.keyboard.press("Escape")
+    // clique direito num texto selecionado dentro de campo não é sequestrado
+    await go(page, "resolver")
+    await page.fill("#rq", "texto")
+    await page.locator("#rq").click({ button: "right" })
+    if (await page.evaluate(() => !!document.getElementById("ctxMenu")))
+      bad.push("clique direito em campo de texto abriu o menu do app")
+    // tecla de menu
+    await go(page, "services", { side: "origin" })
+    await page.locator(".service-card:not(.is-ad) .card-link").first().focus()
+    await page.keyboard.press("Shift+F10")
+    if (!(await page.evaluate(() => !!document.getElementById("ctxMenu"))))
+      bad.push("Shift+F10 não abre o menu")
+    else {
+      await page.keyboard.press("Escape")
+      if (!(await page.evaluate(() => document.activeElement?.classList.contains("kebab"))))
+        bad.push("foco não voltou ao botão ⋯ depois da tecla de menu")
+    }
+    await ctx.close()
+    // toque longo × toque curto (celular com toque)
+    const mctx = await browser.newContext({
+      viewport: MOB,
+      hasTouch: true,
+      reducedMotion: "reduce",
+    })
+    const mp = await mctx.newPage()
+    mp.on("pageerror", (e) => pageErrors.push(e.message))
+    await mp.route(/unsplash\.com|fonts\.(googleapis|gstatic)\.com/, (r) => r.abort())
+    await mp.goto(PAGE_URL)
+    await mp.waitForFunction(() => window.__bv)
+    await go(mp, "services", { side: "origin" })
+    const cdp = await mctx.newCDPSession(mp)
+    const link = mp.locator(".service-card:not(.is-ad) .card-link").first()
+    await link.scrollIntoViewIfNeeded()
+    const lb = await mp.locator(".service-card:not(.is-ad)").first().boundingBox()
+    const pt = { x: lb.x + 160, y: lb.y + 40, id: 1 }
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [pt] })
+    await mp.waitForTimeout(700)
+    const during = await mp.evaluate(() => !!document.getElementById("ctxMenu"))
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] })
+    await mp.waitForTimeout(150)
+    const after = await mp.evaluate(() => ({
+      menu: !!document.getElementById("ctxMenu"),
+      drawer: __bv.overlayOpen(),
+      sheet: getComputedStyle(document.getElementById("ctxMenu") || document.body).position,
+    }))
+    if (!during || !after.menu)
+      bad.push(`toque longo não abre/mantém o menu: ${JSON.stringify({ during, after })}`)
+    if (after.drawer) bad.push("toque longo também abriu o cartão")
+    if (after.menu && after.sheet !== "fixed") bad.push("no celular o menu deveria ser folha")
+    await mp.keyboard.press("Escape")
+    await mp.waitForTimeout(50)
+    await link.tap()
+    await mp.waitForTimeout(80)
+    if (!(await mp.evaluate(() => __bv.overlayOpen() && !document.getElementById("ctxMenu"))))
+      bad.push("toque curto não abre o cartão")
+    await mctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
   },
 )
 

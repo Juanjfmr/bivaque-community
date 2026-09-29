@@ -76,18 +76,18 @@ script nem folha de estilo de terceiro. Ícones em SVG inline (sprite `<symbol>`
 **Prova:** sondas de teclado da paleta e dos atalhos; foco devolvido; `Esc`; movimento reduzido.
 
 ### Task 3 — Menus de contexto
-- [ ] Componente único (`role="menu"`), botão "⋯" visível, clique direito, tecla de menu e toque longo.
-- [ ] Teclado completo (setas, Home/End, Esc, Tab), foco devolvido; folha de ações no celular.
-- [ ] Itens por tipo (prestador, anúncio, imóvel, desapego, evento, benefício, referência, necessidade,
+- [x] Componente único (`role="menu"`), botão "⋯" visível, clique direito, tecla de menu e toque longo.
+- [x] Teclado completo (setas, Home/End, letra, Esc, Tab), foco devolvido; folha de ações no celular.
+- [x] Itens por tipo (prestador, anúncio, imóvel, desapego, evento, benefício, referência, necessidade,
       conversa, pergunta, notificação); Ocultar, Denunciar, Arquivar com estado real.
-- [ ] Anúncio sem "por que apareceu".
+- [x] Anúncio sem "por que apareceu".
 
 **Prova:** sondas de menu (teclado, clique direito, anúncio sem "por que apareceu", item some ao ocultar).
 
 ### Task 4 — Feedback e formulários
-- [ ] Aviso com "Desfazer" (salvar, ocultar, arquivar, encerrar) que realmente desfaz.
+- [x] Aviso com "Desfazer" (salvar, ocultar, arquivar, silenciar, encerrar, dispensar, presença) que realmente desfaz.
 - [ ] Validação inline (`aria-invalid`, `aria-describedby`, foco no primeiro erro); rótulos reais no painel do prestador.
-- [ ] Itens ocultos e denúncias visíveis em Você; emblemas e barra de progresso animados.
+- [x] Itens ocultos visíveis e reversíveis em Você; denúncia registra só o motivo (sem texto livre); emblemas e barra de progresso animados.
 
 **Prova:** sonda de desfazer (estado volta); sonda de validação; zero campos sem rótulo (`P29`).
 
