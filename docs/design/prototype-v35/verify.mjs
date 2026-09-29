@@ -34,7 +34,7 @@ const VPS = [
 ]
 const ONCE = new Set(["P27", "P29", "P31"]) // já percorrem os dois viewports por conta própria
 async function fresh(vp = CUR) {
-  const ctx = await browser.newContext({ viewport: vp })
+  const ctx = await browser.newContext({ viewport: vp, reducedMotion: "reduce" })
   const page = await ctx.newPage()
   page.on("pageerror", (e) => pageErrors.push(e.message))
   await page.route(/unsplash\.com|fonts\.(googleapis|gstatic)\.com/, (r) => r.abort())
@@ -1262,7 +1262,7 @@ await probe(
           const sel =
             scope === "drawer"
               ? "#drawer [data-act]"
-              : "#view [data-act], .topbar [data-act], #sideNav [data-act], #typeNav [data-act], #mobileNav [data-act], .fab-contribute[data-act], button.context[data-act]"
+              : "#view [data-act], .topbar [data-act], #sideNav [data-act], #typeNav [data-act], #mobileNav [data-act], button.context[data-act]"
           const n = document.querySelectorAll(sel).length
           const keep = {
             route: JSON.stringify(__bv.route()),
@@ -1672,7 +1672,7 @@ await probe("P30", "A11y", "contraste de texto ≥ 4,5:1 (fora de imagens)", asy
 await probe(
   "P31",
   "Mobile",
-  "390px: sem rolagem horizontal, FAB fora da barra, entradas para todos os tipos, busca e lista/detalhe de conversas",
+  "390px: sem rolagem horizontal, Contribuir na barra superior e sem botão flutuante, entradas para todos os tipos, busca e lista/detalhe de conversas",
   async () => {
     const { ctx, page } = await fresh(MOB)
     const bad = []
@@ -1698,15 +1698,19 @@ await probe(
     }
     await go(page, "home")
     const f = await page.evaluate(() => {
-      const a = document.querySelector(".fab-contribute").getBoundingClientRect(),
-        n = document.getElementById("mobileNav").getBoundingClientRect()
+      const add = document.querySelector(".topbar .top-add"),
+        tb = document.querySelector(".topbar").getBoundingClientRect(),
+        r = add?.getBoundingClientRect()
       return {
-        fab: a.bottom <= n.top + 1,
-        vis: getComputedStyle(document.querySelector(".fab-contribute")).display !== "none",
+        add: !!r && add.offsetParent !== null && r.top >= tb.top - 1 && r.bottom <= tb.bottom + 1,
+        floating: !!document.querySelector(".fab-contribute"),
+        tabs: document.querySelectorAll("#mobileNav button").length,
         search: document.querySelector(".topbar .mobile-only")?.offsetParent !== null,
       }
     })
-    if (!f.vis || !f.fab) bad.push("FAB ausente ou sobre a barra")
+    if (!f.add) bad.push("Contribuir ausente da barra superior")
+    if (f.floating) bad.push("botão flutuante ainda existe")
+    if (f.tabs !== 5) bad.push(`barra inferior com ${f.tabs} abas (esperado 5)`)
     if (!f.search) bad.push("sem busca no celular")
     for (const p of ["services", "housing", "market", "events", "benefits", "refs"]) {
       const n = await page.evaluate(
@@ -1837,6 +1841,87 @@ await probe(
       bad.push("coração não salva")
     await ctx.close()
     return [!bad.length, bad.join(" | ")]
+  },
+)
+
+/* ============ v35: SISTEMA VISUAL ============ */
+await probe(
+  "P36",
+  "Visual",
+  "ícones são SVG do sprite (nenhum glifo Unicode como ícone), todo <use> resolve, nenhum texto < 12 px, mídia com reserva quando a foto falha",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    const scan = async (label) => {
+      const r = await page.evaluate(() => {
+        const glyph = /[⌂⌕◎◌○▤▱◫◇✦⌁⇄✎✚☑⌖↗♥♡✔✓▾＋♧●×›‹]/g
+        const txt = `${document.getElementById("app").innerText}\n${document.getElementById("drawer").innerText}`
+        const small = []
+        document.querySelectorAll("#app *, #drawer *").forEach((e) => {
+          if (e.offsetParent === null || e.closest(".sr-only")) return
+          if (![...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) return
+          const fs = parseFloat(getComputedStyle(e).fontSize)
+          if (fs < 11.99)
+            small.push(
+              `${e.tagName.toLowerCase()}.${(e.className || "").toString().split(" ")[0]} ${fs}px`,
+            )
+        })
+        return {
+          glyphs: [...new Set(txt.match(glyph) || [])],
+          small: [...new Set(small)],
+          orphan: [...document.querySelectorAll("use")]
+            .map((u) => u.getAttribute("href"))
+            .filter((h) => !document.querySelector(h)),
+          noUse: document.querySelectorAll("svg.ic:not(:has(use))").length,
+        }
+      })
+      if (r.glyphs.length) bad.push(`${label}: glifo ${r.glyphs.join("")}`)
+      if (r.small.length) bad.push(`${label}: texto < 12px ${r.small.slice(0, 2).join(",")}`)
+      if (r.orphan.length) bad.push(`${label}: <use> sem símbolo ${r.orphan[0]}`)
+      if (r.noUse) bad.push(`${label}: svg.ic sem <use>`)
+    }
+    for (const [p, params] of [
+      ["home", {}],
+      ["resolver", { q: "preciso instalar um split" }],
+      ["services", { side: "origin" }],
+      ["housing", { side: "destination" }],
+      ["market", { side: "destination" }],
+      ["events", { side: "origin" }],
+      ["benefits", { side: "origin" }],
+      ["refs", { side: "origin" }],
+      ["community", { id: "ajuricaba" }],
+      ["messages", { id: "c-move" }],
+      ["notifications", {}],
+      ["profile", {}],
+      ["provider", {}],
+    ]) {
+      await go(page, p, params)
+      await scan(p)
+    }
+    for (const a of [
+      ["openContext", {}],
+      ["openTrust", {}],
+      ["openObj", { dtype: "provider", id: "p-amazon" }],
+      ["openObj", { dtype: "housing", id: "h-bsb-asa" }],
+      ["openObj", { dtype: "event", id: "e-familia" }],
+      ["openObj", { dtype: "ref", id: "r-bsb-docs" }],
+      ["openNeed", { id: "n-move" }],
+      ["openProposals", { id: "n-move" }],
+      ["openComposer", {}],
+    ]) {
+      await A(page, a[0], a[1])
+      await scan(a[0])
+      await A(page, "closeDrawer")
+    }
+    await go(page, "services", { side: "origin" })
+    await page.waitForTimeout(250)
+    const fb = await page.evaluate(() => {
+      const pic = document.querySelector(".service-card .pic")
+      return getComputedStyle(pic).backgroundImage
+    })
+    if (!/svg/.test(fb)) bad.push("foto que falhou não mostra a reserva de imagem")
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
   },
 )
 
