@@ -1,4 +1,4 @@
-// Teste de mutação: quebra de propósito 9 invariantes e confirma que a sonda certa acusa cada uma.
+// Teste de mutação: quebra de propósito invariantes e confirma que a sonda certa acusa cada uma.
 // Uso: node docs/design/prototype-v35/mutate.mjs   (termina em 0 só se TODAS as quebras forem detectadas)
 // Frágil de propósito: cada mutação troca um trecho exato do HTML. Se o trecho mudar, o script avisa.
 
@@ -54,6 +54,18 @@ const muts = [
     "P35",
     'A.offerBack = () => offerForm(DRAFT.type, "", DRAFT.v)',
     'A.offerBack = () => offerForm(DRAFT.type, "", {})',
+  ],
+  [
+    "M10 atalho dispara dentro de campo de texto",
+    "P38",
+    "if (typing || overlayOpen || e.ctrlKey || e.metaKey || e.altKey) return",
+    "if (overlayOpen || e.ctrlKey || e.metaKey || e.altKey) return",
+  ],
+  [
+    "M11 selecionar texto e soltar fora fecha a janela",
+    "P40",
+    'if (e.target.id === "overlay" && was) closeDrawer()',
+    'if (e.target.id === "overlay") closeDrawer()',
   ],
   [
     "M7 data exata de terceiros",

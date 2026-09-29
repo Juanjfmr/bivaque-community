@@ -57,21 +57,21 @@ script nem folha de estilo de terceiro. Ícones em SVG inline (sprite `<symbol>`
 - [x] Baseline: `verify.mjs` no v35 idêntico ao v34 → 69/69.
 
 ### Task 1 — Sistema visual
-- [ ] Tokens: cor (marca, neutros, semânticas), escala tipográfica, espaçamento, raio, sombra, movimento.
-- [ ] Sprite SVG único; troca de todos os glifos Unicode usados como ícone.
-- [ ] Componentes com estados: hover, foco, pressionado, desabilitado, vazio, erro.
-- [ ] Imagens com esqueleto até carregar e fallback quando falham.
-- [ ] Hierarquia da Início e dos catálogos revista para 390 px (hero menor, chips que não agem deixam de parecer botões).
+- [x] Tokens: cor (marca, neutros, semânticas), escala tipográfica, espaçamento, raio, sombra, movimento.
+- [x] Sprite SVG único; troca de todos os glifos Unicode usados como ícone.
+- [x] Componentes com estados: hover, foco, pressionado, desabilitado, vazio, erro.
+- [x] Imagens com esqueleto até carregar e fallback quando falham.
+- [x] Hierarquia da Início e dos catálogos revista para 390 px (hero menor, chips que não agem deixam de parecer botões).
 
 **Prova:** `P29` (alvos), `P30` (contraste), nova sonda: nenhum glifo de ícone no DOM; nenhum texto < 12 px.
 
 ### Task 2 — Navegação moderna
-- [ ] Barra inferior com ação central "Contribuir"; o botão flutuante sai.
-- [ ] Paleta de comandos (Ctrl/⌘+K, "/"), com ir para, criar, seus itens e buscar; combobox acessível.
-- [ ] Atalhos de teclado (`g` + letra, `?`) que ignoram campos de texto.
-- [ ] Transição de tela e de folha; reduzida com `prefers-reduced-motion`.
-- [ ] Trilha e "Voltar" nas telas de segundo nível.
-- [ ] Folha inferior no celular (alça, arrasto para fechar, toque no fundo); janela centralizada no desktop.
+- [x] Barra inferior com cinco abas; "Contribuir" vai para a barra superior e o botão flutuante sai. (Decisão: uma ação central custaria uma das cinco abas de pilares; Comunidade e Conversas ficam.)
+- [x] Paleta de comandos (Ctrl/⌘+K, "/"), com ir para, criar, seus itens e buscar; combobox acessível.
+- [x] Atalhos de teclado (`g` + letra, `?`) que ignoram campos de texto.
+- [x] Transição de tela e de folha; reduzida com `prefers-reduced-motion`.
+- [x] Trilha e "Voltar" nas telas de segundo nível.
+- [x] Folha inferior no celular (alça, arrasto para fechar, toque no fundo); janela centralizada no desktop.
 
 **Prova:** sondas de teclado da paleta e dos atalhos; foco devolvido; `Esc`; movimento reduzido.
 

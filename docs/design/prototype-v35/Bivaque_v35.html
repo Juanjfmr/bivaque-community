@@ -166,7 +166,7 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 
 .content{padding:var(--sp-6) 28px 48px;max-width:1320px;margin:0 auto}
 #view{outline:none}
-#view.enter>*{animation:enter var(--dur-3) var(--ease) both}
+#view.enter>*{animation:enter var(--dur-3) var(--ease) backwards}
 #view.enter>*:nth-child(2){animation-delay:40ms}#view.enter>*:nth-child(3){animation-delay:80ms}#view.enter>*:nth-child(n+4){animation-delay:120ms}
 
 .mobile-nav{display:none}
@@ -409,8 +409,8 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 /* ============================================================
    9. Janela, formulários e aviso
    ============================================================ */
-.overlay{position:fixed;inset:0;z-index:100;background:rgba(9,25,20,.52);backdrop-filter:blur(6px);display:grid;place-items:center;padding:var(--sp-6);animation:fade var(--dur-2) var(--ease-io) both}
-.drawer{width:min(680px,100%);max-height:min(88vh,780px);overflow:auto;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--line);box-shadow:var(--sh-pop);padding:var(--sp-6);outline:none;animation:dialog var(--dur-3) var(--ease) both}
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(9,25,20,.52);backdrop-filter:blur(6px);display:grid;place-items:center;padding:var(--sp-6);animation:fade var(--dur-2) var(--ease-io) backwards}
+.drawer{width:min(680px,100%);max-height:min(88vh,780px);overflow:auto;background:var(--surface);border-radius:var(--r-xl);border:1px solid var(--line);box-shadow:var(--sh-pop);padding:var(--sp-6);outline:none;animation:dialog var(--dur-3) var(--ease) backwards}
 .drawer-head{display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sp-4);margin-bottom:var(--sp-4)}
 .drawer-head h2{font-size:var(--fs-2xl);font-weight:800;line-height:1.1;letter-spacing:-.02em}
 .drawer-head p{color:var(--muted);margin:6px 0 0;font-size:var(--fs-md)}
@@ -461,7 +461,7 @@ img{display:block;width:100%;height:100%;object-fit:cover}
 .reference-meta div{padding:var(--sp-3);border-radius:var(--r-md);background:var(--surface-2)}
 .reference-meta small{display:block;color:var(--muted);font-size:var(--fs-xs);text-transform:uppercase;font-weight:800;letter-spacing:.06em}
 .reference-meta b{display:block;font-size:var(--fs-sm);margin-top:3px}
-.toast-lock{position:fixed;z-index:140;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 16px;border-radius:var(--r-md);box-shadow:var(--sh-pop);font-weight:600;font-size:var(--fs-sm);max-width:calc(100% - 28px);display:flex;align-items:center;gap:var(--sp-3);animation:toast var(--dur-3) var(--ease) both}
+.toast-lock{position:fixed;z-index:140;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 16px;border-radius:var(--r-md);box-shadow:var(--sh-pop);font-weight:600;font-size:var(--fs-sm);max-width:calc(100% - 28px);display:flex;align-items:center;gap:var(--sp-3);animation:toast var(--dur-3) var(--ease) backwards}
 
 /* ============================================================
    10. Movimento
@@ -529,7 +529,7 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   .proposal{flex-direction:column;align-items:stretch}
   .tail{justify-content:stretch}.tail button{flex:1}
   .overlay{padding:0;place-items:end center}
-  .drawer{width:100%;border-radius:var(--r-xl) var(--r-xl) 0 0;max-height:90vh;padding:var(--sp-5);animation:sheet var(--dur-3) var(--ease) both;padding-bottom:calc(var(--sp-5) + env(safe-area-inset-bottom))}
+  .drawer{width:100%;border-radius:var(--r-xl) var(--r-xl) 0 0;max-height:90vh;padding:var(--sp-5);animation:sheet var(--dur-3) var(--ease) backwards;padding-bottom:calc(var(--sp-5) + env(safe-area-inset-bottom))}
   .detail-grid{grid-template-columns:1fr}
   .drawer-head h2{font-size:1.5rem}
   .topbar .city-chip{max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -559,6 +559,36 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   .hero-tools button{justify-content:flex-start;padding:0 10px}
   .service-card{grid-template-columns:76px minmax(0,1fr)!important}
 }
+.kbd-btn{border:0;background:transparent;min-height:44px;padding:0 6px;display:inline-flex;align-items:center;border-radius:var(--r-sm);cursor:pointer}
+.kbd-btn:hover .kbd{background:var(--pine-50);border-color:var(--pine-2);color:var(--pine)}
+.sheet-handle{display:none}
+.overlay:has(.drawer.palette){place-items:start center;padding-top:12vh}
+.drawer.palette{width:min(640px,100%);padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:min(72vh,560px)}
+.pal-head{display:flex;align-items:center;gap:var(--sp-3);padding:0 var(--sp-4);border-bottom:1px solid var(--line);min-height:60px;color:var(--muted)}
+.pal-head input{flex:1;min-width:0;border:0;outline:0;background:transparent;min-height:56px;font-size:var(--fs-lg);color:var(--ink)}
+.pal-head input::placeholder{color:var(--muted)}
+.pal-close{display:none}
+.pal-list{overflow:auto;padding:var(--sp-2);flex:1}
+.pal-group{padding:var(--sp-3) var(--sp-3) 4px;font-size:var(--fs-xs);font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pal-item{display:flex;align-items:center;gap:var(--sp-3);width:100%;min-height:48px;padding:0 var(--sp-3);border:0;background:transparent;border-radius:var(--r-md);text-align:left;font-size:var(--fs-md);color:var(--ink);cursor:pointer}
+.pal-item .ic{width:20px;height:20px;color:var(--muted)}
+.pal-item[aria-selected=true]{background:var(--pine-50);color:var(--pine)}
+.pal-item[aria-selected=true] .ic{color:var(--pine)}
+.pal-item .hint{margin-left:auto;color:var(--muted);font-size:var(--fs-sm)}
+.pal-foot{display:flex;gap:var(--sp-5);padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--line);font-size:var(--fs-sm);color:var(--muted);background:var(--surface-2)}
+.shortcuts{margin:0;display:grid;gap:var(--sp-1)}
+.shortcuts>div{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-4);padding:var(--sp-3) 0;border-bottom:1px solid var(--line)}
+.shortcuts dt{display:flex;gap:6px}.shortcuts dd{margin:0;color:var(--ink-2)}
+.crumb-now{color:var(--muted);font-weight:600;padding:0 4px}
+.crumb-now::before{content:"/";margin-right:10px;color:var(--line-2)}
+@media(max-width:760px){
+  .sheet-handle{display:flex;justify-content:center;align-items:center;height:28px;margin:-10px 0 4px;cursor:grab;touch-action:none}
+  .sheet-handle::before{content:"";width:44px;height:5px;border-radius:3px;background:var(--line-2)}
+  .overlay:has(.drawer.palette){place-items:end center;padding-top:0}
+  .drawer.palette{width:100%;height:88vh;max-height:88vh;border-radius:var(--r-xl) var(--r-xl) 0 0}
+  .drawer.palette .sheet-handle{margin:0;height:24px}
+  .pal-close{display:inline-flex}.pal-esc,.pal-foot{display:none}
+}
 </style>
 </head>
 <body>
@@ -578,7 +608,7 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   <main class="shell">
     <header class="topbar">
       <span class="brand"><span class="logo-mark" aria-hidden="true"></span>Bivaque</span>
-      <form class="global-search" data-form="globalSearch" role="search"><label class="sr-only" for="gs">Buscar no Bivaque</label><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input id="gs" name="q" autocomplete="off" placeholder="Buscar no Bivaque"></form>
+      <form class="global-search" data-form="globalSearch" role="search"><label class="sr-only" for="gs">Buscar no Bivaque</label><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input id="gs" name="q" autocomplete="off" placeholder="Buscar no Bivaque"><button type="button" class="kbd-btn" data-act="openPalette" aria-label="Abrir busca rápida e comandos"><span class="kbd" id="kbdHint">Ctrl K</span></button></form>
       <div class="top-spacer"></div>
       <button class="icon-btn mobile-only" data-act="openSearch" aria-label="Buscar"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></button>
       <button class="city-chip desk-only" id="topCityChip" data-act="openContext" aria-label="Onde resolver agora"></button>
@@ -592,6 +622,7 @@ img{display:block;width:100%;height:100%;object-fit:cover}
   <nav class="mobile-nav" id="mobileNav" aria-label="Principal"></nav>
 </div>
 <div class="overlay" id="overlay" hidden><div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dlgTitle"></div></div>
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
 <div class="toast-lock" id="toast" role="status" aria-live="polite" hidden></div>
 <script>
 /* ===== Ícones: um sprite SVG único, traço de 1,75. Nenhum glifo Unicode serve de ícone. ===== */
@@ -911,7 +942,7 @@ function go(page, params = {}, opts = {}) {
   if (opts.replace) history.replaceState(st, "", "#" + page)
   else history.pushState(st, "", "#" + page)
   render(!opts.keepScroll)
-  if (!opts.keepScroll) window.scrollTo(0, 0)
+  if (!opts.keepScroll) { window.scrollTo(0, 0); announce(document.title.split(" · ")[0]) }
 }
 function render(anim) {
   const v = $("#view")
@@ -931,13 +962,15 @@ window.addEventListener("popstate", (e) => {
   if (st && st.sentinel) { history.back(); return }
   if (st && st.page && VIEWS[st.page]) route = { page: st.page, params: st.params || {} }
   else { const p = (location.hash || "#home").slice(1); route = { page: VIEWS[p] ? p : "home", params: {} } }
-  render()
+  render(true)
 })
 
 /* ---- gaveta (diálogo) ---- */
-function openDrawer(html) {
+function openDrawer(html, opts = {}) {
   const dr = $("#drawer")
-  dr.innerHTML = html
+  dr.innerHTML = `<div class="sheet-handle" aria-hidden="true"></div>${html}`
+  dr.className = "drawer" + (opts.cls ? " " + opts.cls : "")
+  dr.style.transform = ""
   if (!overlayOpen) {
     lastFocus = document.activeElement
     const a = lastFocus && lastFocus.dataset ? lastFocus.dataset : {}
@@ -948,12 +981,15 @@ function openDrawer(html) {
   $("#app").inert = true
   document.documentElement.classList.add("has-overlay")
   const title = $("#dlgTitle", dr)
-  setTimeout(() => (title || $("button,input", dr))?.focus(), 10)
+  setTimeout(() => (opts.focus ? $(opts.focus, dr) : title || $("button,input", dr))?.focus(), 10)
 }
 function hideOverlay() {
+  // o foco não pode ficar num elemento escondido: o navegador só o solta no próximo quadro
+  if ($("#drawer").contains(document.activeElement)) document.activeElement.blur()
   $("#overlay").hidden = true
   $("#app").inert = false
   overlayOpen = false
+  $("#drawer").style.transform = ""
   document.documentElement.classList.remove("has-overlay")
 }
 function restoreFocus() {
@@ -984,6 +1020,7 @@ document.addEventListener("keydown", (e) => {
   }
 })
 
+
 /* ---- aviso ---- */
 let toastTimer
 function toast(msg) {
@@ -1010,6 +1047,144 @@ document.addEventListener("submit", (e) => {
   fn({ ...f.dataset }, f, e)
 })
 document.addEventListener("error", (e) => { if (e.target.tagName === "IMG") e.target.classList.add("img-fail") }, true)
+
+/* ---- fundo fecha; alça arrasta (celular). Só fecha se o clique COMEÇOU no fundo,
+   para não fechar quando alguém seleciona texto e solta o mouse fora. ---- */
+let downOnOverlay = false
+$("#overlay").addEventListener("pointerdown", (e) => { downOnOverlay = e.target.id === "overlay" })
+$("#overlay").addEventListener("click", (e) => { const was = downOnOverlay; downOnOverlay = false; if (e.target.id === "overlay" && was) closeDrawer() })
+let drag = null
+document.addEventListener("pointerdown", (e) => {
+  const h = e.target.closest && e.target.closest(".sheet-handle")
+  if (!h || !overlayOpen) return
+  drag = { y: e.clientY, dy: 0 }
+  try { h.setPointerCapture(e.pointerId) } catch (err) { /* sem captura */ }
+  $("#drawer").style.transition = "none"
+})
+document.addEventListener("pointermove", (e) => {
+  if (!drag) return
+  drag.dy = Math.max(0, e.clientY - drag.y)
+  $("#drawer").style.transform = `translateY(${drag.dy}px)`
+})
+function endDrag() {
+  if (!drag) return
+  const dy = drag.dy; const dr = $("#drawer")
+  drag = null; dr.style.transition = ""
+  if (dy > 100) closeDrawer(); else dr.style.transform = ""
+}
+document.addEventListener("pointerup", endDrag)
+document.addEventListener("pointercancel", endDrag)
+
+/* ---- anúncio para leitor de tela e título por página ---- */
+const PAGE_TITLE = { home: "Início", resolver: "Resolver", explorar: "Explorar por tipo", services: "Serviços", housing: "Moradia", market: "Desapegos", events: "Eventos", benefits: "Benefícios", refs: "Referências", community: "Comunidade", messages: "Conversas", notifications: "Notificações", profile: "Você", provider: "Meu negócio" }
+function announce(msg) { const l = $("#live"); l.textContent = ""; setTimeout(() => (l.textContent = msg), 40) }
+const PARENT = { services: "explorar", housing: "explorar", market: "explorar", events: "explorar", benefits: "explorar", refs: "explorar", provider: "profile", notifications: "home" }
+function crumbs(page) {
+  const par = PARENT[page]
+  if (!par) return ""
+  return `<nav class="crumbs" aria-label="Trilha"><button data-act="go" data-page="${par}">${ic("chevron-left")}${esc(PAGE_TITLE[par])}</button><span class="crumb-now">${esc(PAGE_TITLE[page])}</span></nav>`
+}
+
+/* ---- paleta de comandos (Ctrl/⌘ + K, "/"): combobox com lista, teclado completo ---- */
+const PAL = { items: [], i: 0 }
+const TYPE_KW = { services: "prestador orçamento serviço", housing: "moradia imóvel alugar casa apartamento", market: "desapego vender comprar", events: "encontro passeio", benefits: "desconto parceiro", refs: "guia referência" }
+function palItems(q) {
+  const raw = q.trim(); const nq = norm(raw)
+  const all = []
+  const add = (group, label, icon, run, hint = "", kw = "") => all.push({ group, label, icon, run, hint, kw })
+  PRIMARY.forEach(([p, l, i]) => add("Ir para", l, i, { act: "go", d: { page: p } }))
+  add("Ir para", "Notificações", "bell", { act: "go", d: { page: "notifications" } })
+  TYPES.forEach(([p, l, i]) => add("Ir para", l, i, { act: "go", d: { page: p } }, "", TYPE_KW[p]))
+  add("Ir para", "Explorar por tipo", "arrows", { act: "go", d: { page: "explorar" } }, "", "catálogos")
+  add("Ir para", "Meu negócio", "briefcase", { act: "go", d: { page: "provider" } }, "", "prestador painel pedidos")
+  OFFER_TYPES.forEach(([k]) => add("Criar", { sell: "Anunciar desapego", housing: "Anunciar imóvel", service: "Oferecer meu serviço", event: "Organizar evento" }[k], { sell: "tag", housing: "building", service: "briefcase", event: "calendar" }[k], { act: "openOffer", d: { type: k } }))
+  add("Criar", "Fazer uma pergunta à comunidade", "help", { act: "openAsk", d: { q: "", comm: "" } })
+  activeNeeds().slice(0, 4).forEach((n) => add("Suas necessidades", n.title, "check-circle", { act: "openNeed", d: { id: n.id } }, STATUS[n.status]))
+  S.convs.filter((c) => !c.archived).slice(0, 4).forEach((c) => add("Conversas", c.with, "message", { act: "openConv", d: { id: c.id } }, c.unread ? "não lida" : ""))
+  add("Ações", "Onde resolver agora", "pin", { act: "openContext", d: {} }, "", "lado foco automático saída chegada transferência")
+  add("Ações", "Atalhos de teclado", "keyboard", { act: "openShortcuts", d: {} }, "?")
+  add("Ações", "Avançar 3 dias na demonstração", "fast-forward", { act: "advance", d: { n: 3 } })
+  if (!nq) {
+    const pick = (g, n) => all.filter((x) => x.group === g).slice(0, n)
+    return [...pick("Ir para", 5), ...pick("Criar", 4), ...pick("Suas necessidades", 2), ...pick("Conversas", 2), ...pick("Ações", 2)]
+  }
+  const toks = nq.split(/\s+/)
+  const hit = all.filter((x) => { const h = norm(x.label + " " + x.kw); return toks.every((t) => h.includes(t)) }).slice(0, 10)
+  return [{ group: "Buscar", label: `Buscar no Bivaque: “${raw}”`, icon: "search", run: { act: "runQuery", d: { q: raw } }, hint: "Resolver", kw: "" }, ...hit]
+}
+function palRender(q) {
+  PAL.items = palItems(q)
+  if (PAL.i >= PAL.items.length) PAL.i = Math.max(0, PAL.items.length - 1)
+  let last = ""; let html = ""
+  PAL.items.forEach((it, idx) => {
+    if (it.group !== last) { html += `<div class="pal-group" role="presentation">${esc(it.group)}</div>`; last = it.group }
+    html += `<button type="button" role="option" tabindex="-1" id="pal-${idx}" class="pal-item" data-act="palRun" data-i="${idx}" aria-selected="${idx === PAL.i}">${ic(it.icon)}<span>${esc(it.label)}</span>${it.hint ? `<span class="hint">${esc(it.hint)}</span>` : ""}</button>`
+  })
+  $("#palList").innerHTML = html
+  $("#palQ").setAttribute("aria-activedescendant", PAL.items.length ? "pal-" + PAL.i : "")
+  $("#palLive").textContent = `${PAL.items.length} ${PAL.items.length === 1 ? "resultado" : "resultados"}`
+  $("#palList [aria-selected=true]")?.scrollIntoView({ block: "nearest" })
+}
+function palSelect(i) {
+  if (!PAL.items.length) return
+  PAL.i = (i + PAL.items.length) % PAL.items.length
+  $$("#palList .pal-item").forEach((b, idx) => b.setAttribute("aria-selected", idx === PAL.i))
+  $("#palQ").setAttribute("aria-activedescendant", "pal-" + PAL.i)
+  $("#pal-" + PAL.i)?.scrollIntoView({ block: "nearest" })
+}
+const palOpen = () => overlayOpen && !!$("#palQ")
+A.openPalette = () => {
+  if (palOpen()) return
+  PAL.i = 0
+  openDrawer(`<h2 id="dlgTitle" class="sr-only" tabindex="-1">Busca rápida e comandos</h2>
+    <div class="pal-head">${ic("search")}<input id="palQ" role="combobox" aria-expanded="true" aria-controls="palList" aria-autocomplete="list" aria-activedescendant="pal-0" aria-label="Buscar ou ir para" placeholder="Buscar ou ir para…" autocomplete="off"><kbd class="kbd pal-esc">Esc</kbd><button class="close-btn pal-close" data-act="closeDrawer" aria-label="Fechar">${ic("x")}</button></div>
+    <div id="palList" class="pal-list" role="listbox" aria-label="Resultados"></div><p id="palLive" class="sr-only" role="status" aria-live="polite"></p>
+    <div class="pal-foot"><span><kbd class="kbd">↑</kbd> <kbd class="kbd">↓</kbd> navegar</span><span><kbd class="kbd">Enter</kbd> abrir</span><span><kbd class="kbd">Esc</kbd> fechar</span></div>`, { cls: "palette", focus: "#palQ" })
+  palRender("")
+}
+A.openSearch = () => A.openPalette()
+A.palRun = (d) => {
+  const it = PAL.items[+d.i]
+  if (!it) return
+  hideOverlay()
+  A[it.run.act](it.run.d || {}, document.createElement("button"))
+  if (it.run.act === "go") $("#view").focus({ preventScroll: true })
+}
+document.addEventListener("input", (e) => { if (e.target.id === "palQ") { PAL.i = 0; palRender(e.target.value) } })
+document.addEventListener("mousemove", (e) => {
+  const b = e.target.closest && e.target.closest(".pal-item")
+  if (b && +b.dataset.i !== PAL.i) palSelect(+b.dataset.i)
+})
+A.openShortcuts = () => openDrawer(`${drawerHead("Atalhos de teclado", "Funcionam fora dos campos de texto.")}
+  <dl class="shortcuts">${[["Ctrl K", "Busca rápida e comandos"], ["/", "Abrir a busca rápida"], ["g h", "Início"], ["g r", "Resolver"], ["g c", "Comunidade"], ["g m", "Conversas"], ["g v", "Você"], ["g n", "Notificações"], ["?", "Este quadro"], ["Esc", "Fechar a janela ou o menu"]].map(([k, l]) => `<div><dt>${k.split(" ").map((x) => `<kbd class="kbd">${esc(x)}</kbd>`).join(" ")}</dt><dd>${esc(l)}</dd></div>`).join("")}</dl>`)
+let gPending = false; let gTimer
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
+    e.preventDefault()
+    if (palOpen()) closeDrawer(); else if (!overlayOpen) A.openPalette()
+    return
+  }
+  if (palOpen() && e.target.id === "palQ" && !e.isComposing) {
+    if (e.key === "ArrowDown") { e.preventDefault(); palSelect(PAL.i + 1) }
+    else if (e.key === "ArrowUp") { e.preventDefault(); palSelect(PAL.i - 1) }
+    else if (e.key === "Enter") { e.preventDefault(); A.palRun({ i: PAL.i }) }
+    return
+  }
+  const t = e.target
+  const typing = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))
+  if (typing || overlayOpen || e.ctrlKey || e.metaKey || e.altKey) return
+  if (gPending) {
+    gPending = false; clearTimeout(gTimer)
+    const p = { h: "home", r: "resolver", c: "community", m: "messages", v: "profile", n: "notifications" }[e.key]
+    if (p) { e.preventDefault(); go(p); $("#view").focus({ preventScroll: true }) }
+    return
+  }
+  if (e.key === "/") { e.preventDefault(); A.openPalette() }
+  else if (e.key === "?") { e.preventDefault(); A.openShortcuts() }
+  else if (e.key === "g") { gPending = true; clearTimeout(gTimer); gTimer = setTimeout(() => (gPending = false), 1200) }
+})
+if (/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) $("#kbdHint").textContent = "⌘ K"
+
 
 /* ===== Motor: evidência, resolver, necessidades, notificações, relógio ===== */
 const byId = (arr, id) => arr.find((x) => x.id === id)
@@ -1425,7 +1600,7 @@ function typeChips() {
 const PRIMARY = [["home", "Início", "home"], ["resolver", "Resolver", "compass"], ["community", "Comunidade", "users"], ["messages", "Conversas", "message"], ["profile", "Você", "user"]]
 const TYPES = [["services", "Serviços", "briefcase"], ["housing", "Imóveis", "building"], ["market", "Desapegos", "tag"], ["events", "Eventos", "calendar"], ["benefits", "Benefícios", "gift"], ["refs", "Referências", "book"]]
 const NAV_OF = { provider: "profile", explorar: "resolver" }
-const H1 = (t, sub, right = "") => `<div class="surface-hero"><div><h1 class="page-title">${esc(t)}</h1>${sub ? `<p>${esc(sub)}</p>` : ""}</div>${right}</div>`
+const H1 = (t, sub, right = "", page = "") => `${crumbs(page)}<div class="surface-hero"><div><h1 class="page-title">${esc(t)}</h1>${sub ? `<p>${esc(sub)}</p>` : ""}</div>${right}</div>`
 const SITUATIONS = [
   ["Estou chegando ou sendo transferido", "moradia, escola e documentos", "onde morar chegando em novembro", "swap"],
   ["Preciso de alguém para resolver algo", "serviços e orçamentos", "preciso instalar um split", "briefcase"],
@@ -1453,7 +1628,7 @@ function shellUpdate() {
   $("#bellBtn").setAttribute("aria-label", n ? `Notificações, ${n} não lidas` : "Notificações")
   const mb = $("#msgBadge"); mb.textContent = cvN; mb.hidden = !cvN
   $("#ctxBar").style.width = { preparing: 25, moving: 60, arrived: 90, settled: 100 }[phaseOf(t)] + "%"
-  document.title = "Bivaque — Protótipo v35"
+  document.title = `${(route.page === "community" ? comm(activeComm()).name : PAGE_TITLE[route.page]) || "Bivaque"} · Bivaque, protótipo v35`
 }
 
 /* ---------- Início: muda com a fase e com o lado ---------- */
@@ -1604,7 +1779,7 @@ function catShell(kind, title, sub, side, list, opts = {}) {
   const st = catState(kind)
   const cta = opts.cta ? `<button class="primary" data-act="${opts.cta[0]}" data-type="${opts.cta[2] || ""}">${esc(opts.cta[1])}</button>` : ""
   const filters = FILTERS[kind] ? `<div class="filter-row" role="group" aria-label="Filtros">${FILTERS[kind].map(([v, l]) => `<button class="filter" data-act="setCatFilter" data-kind="${kind}" data-v="${v}" aria-pressed="${st.f === v}">${l}</button>`).join("")}</div>` : ""
-  return `${H1(title, sub, cta)}<div class="cat-tools"><label class="surface-search">${ic("search")}<input data-input="catQuery" data-kind="${kind}" value="${esc(st.q)}" aria-label="Buscar em ${esc(title)}" placeholder="Buscar"></label>${sideSeg(kind, side)}</div>${filters}${opts.before || ""}<div id="catList" class="${opts.cls || "cards-3"}">${list}</div>`
+  return `${H1(title, sub, cta, kind)}<div class="cat-tools"><label class="surface-search">${ic("search")}<input data-input="catQuery" data-kind="${kind}" value="${esc(st.q)}" aria-label="Buscar em ${esc(title)}" placeholder="Buscar"></label>${sideSeg(kind, side)}</div>${filters}${opts.before || ""}<div id="catList" class="${opts.cls || "cards-3"}">${list}</div>`
 }
 const passes = (kind, text, tags) => { const st = catState(kind); const t = norm(text + " " + (tags || []).join(" ")); return (st.f === "todos" || t.includes(st.f)) && (!st.q || t.includes(norm(st.q))) }
 const emptyList = (kind) => `<div class="no-results">Nenhum resultado com esses filtros. Amplie a busca ou pergunte a quem já viveu isso. <button class="link-btn" data-act="openAsk" data-q="">Perguntar</button></div>`
@@ -1720,7 +1895,7 @@ function convAnchorLabel(c) { const n = c.needId ? needById(c.needId) : null; re
 VIEWS.notifications = () => {
   const list = deriveNotifs()
   const grp = (title, arr) => arr.length ? `<h2 class="sub-h">${title}</h2><div class="notice-stack">${arr.map((n) => `<article class="notice-card card${n.read ? "" : " unread"}"><span class="notice-icon" aria-hidden="true">${ic(n.action ? "alert" : "bell")}</span><div><h3>${cardLink(n.title, { nid: n.id }, "openNotif")}</h3><span>${esc(n.sub)}</span></div><span class="arrow" aria-hidden="true">${ic("chevron-right")}</span></article>`).join("")}</div>` : ""
-  return `${H1("Notificações", "Só o que mudou de verdade no que você acompanha.")}${grp("Pede sua ação", list.filter((n) => n.action))}${grp("Novidades", list.filter((n) => !n.action))}${list.length ? "" : `<div class="empty-state">Nada novo. Quando algo mudar, aparece aqui, e só aqui.</div>`}`
+  return `${H1("Notificações", "Só o que mudou de verdade no que você acompanha.", "", "notifications")}${grp("Pede sua ação", list.filter((n) => n.action))}${grp("Novidades", list.filter((n) => !n.action))}${list.length ? "" : `<div class="empty-state">Nada novo. Quando algo mudar, aparece aqui, e só aqui.</div>`}`
 }
 
 /* ---------- Você ---------- */
@@ -1752,7 +1927,7 @@ const SEED_REQS = [
 VIEWS.provider = () => {
   const p = provider("p-manut"); const mine = S.own.provider
   const reqs = [...S.quotes.map((q) => ({ id: q.id, who: "Membro da rede", what: q.what, when: q.when, where: q.where, size: q.size, need: q.needId, quote: q })), ...SEED_REQS.map((r) => ({ ...r, seed: true }))]
-  return `${H1("Meu negócio", "Demonstração: você vê os pedidos como cada prestador os veria.")}
+  return `${H1("Meu negócio", "Demonstração: você vê os pedidos como cada prestador os veria.", "", "provider")}
   ${mine ? `<div class="context-card wide"><small>Seu cadastro</small><b>${esc(mine.name)}</b><span>${mine.status === "verification" ? "Em verificação de identidade e CNPJ. Aparece em Serviços quando aprovado." : "Ativo"}</span></div>` : `<div class="context-card wide"><small>Seu cadastro</small><b>Você ainda não é prestador</b><button class="secondary" data-act="openOffer" data-type="service">Oferecer meu serviço</button></div>`}
   <div class="profile-grid"><section class="profile-card"><h2>Pedidos recebidos</h2>${reqs.map((r) => `<div class="req"><b>${esc(r.what)}</b><span>${esc(r.who)} · ${esc(r.when)} · ${esc(r.where)}${r.size ? " · " + esc(r.size) : ""}</span>
       ${(r.quote && r.quote.replied) || S.provSeed?.[r.id] ? '<span class="badge good">Respondido</span>' : `<form class="composer-line proposal-form" data-form="sendProposal" data-id="${r.id}"><label class="sr-only" for="pp-${r.id}">Preço</label><input id="pp-${r.id}" name="price" inputmode="numeric" placeholder="Preço em R$" required><label class="sr-only" for="pd-${r.id}">Prazo</label><input id="pd-${r.id}" name="days" inputmode="numeric" placeholder="Prazo (dias)" required><button class="primary" type="submit">Enviar proposta</button></form>`}</div>`).join("") || '<p class="muted">Nenhum pedido.</p>'}</section>
@@ -1785,7 +1960,6 @@ A.runForced = (d) => go("resolver", { q: d.q, forced: { intent: d.intent, param:
 A.heroSearch = (d, f) => { const q = f.q.value.trim(); if (q) go("resolver", { q }); else f.q.focus() }
 A.resolverSearch = (d, f) => { const q = f.q.value.trim(); go("resolver", q ? { q } : {}, { replace: true, keepScroll: true }) }
 A.globalSearch = (d, f) => { const q = f.q.value.trim(); if (q) { f.q.value = ""; go("resolver", { q }) } }
-A.openSearch = () => { if (route.page === "resolver") { $("#rq")?.focus(); return } go("resolver", {}); $("#rq")?.focus() }
 A.setFocus = (d) => { S.focus = d.focus; save(); if (overlayOpen) closeDrawer(); render(); toast("Priorizando: " + focusLabel()) }
 A.setCatSide = (d) => go(d.page, { side: d.side }, { replace: true, keepScroll: true })
 A.setCatFilter = (d) => { catState(d.kind).f = d.v; render() }

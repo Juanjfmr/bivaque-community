@@ -1925,6 +1925,278 @@ await probe(
   },
 )
 
+/* ============ v35: NAVEGAÇÃO ============ */
+const MOBILE = () => CUR.width < 1000
+const openPal = async (page) => {
+  if (MOBILE()) await page.locator(".topbar .mobile-only[data-act=openSearch]").click()
+  else await page.keyboard.press("Control+k")
+}
+await probe(
+  "P37",
+  "Navegação",
+  "paleta de comandos: abre, filtra, setas movem a seleção, Enter navega e foca a tela, Esc e Ctrl+K fecham; buscar não cria necessidade",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    const n0 = await S(page, (S) => S.needs.length)
+    await openPal(page)
+    const o = await page.evaluate(() => ({
+      open: __bv.overlayOpen(),
+      focus: document.activeElement?.id,
+      role: document.activeElement?.getAttribute("role"),
+      exp: document.activeElement?.getAttribute("aria-expanded"),
+      n: document.querySelectorAll("#palList [role=option]").length,
+      sel: document.querySelectorAll("#palList [aria-selected=true]").length,
+      close: document.querySelector(".pal-close")?.offsetParent !== null,
+      esc: document.querySelector(".pal-esc")?.offsetParent !== null,
+    }))
+    if (!o.open || o.focus !== "palQ" || o.role !== "combobox" || o.exp !== "true")
+      bad.push(`abertura: ${JSON.stringify(o)}`)
+    if (o.n < 5 || o.sel !== 1) bad.push(`lista inicial: ${o.n} itens, ${o.sel} selecionados`)
+    if (MOBILE() ? !o.close : !o.esc) bad.push("falta o gesto de fechar deste tamanho de tela")
+    await page.keyboard.type("moradia")
+    const t = await page.evaluate(() =>
+      [...document.querySelectorAll("#palList [role=option]")].map((b) =>
+        b.innerText.replace(/\s+/g, " ").trim(),
+      ),
+    )
+    if (!/^Buscar no Bivaque: “moradia”/.test(t[0]) || !t.some((x) => /^Imóveis/.test(x)))
+      bad.push(`filtro: ${t.join("|")}`)
+    await page.keyboard.press("ArrowDown")
+    const a = await page.evaluate(() => {
+      const i = document.getElementById("palQ").getAttribute("aria-activedescendant")
+      return {
+        i,
+        sel: document.getElementById(i)?.getAttribute("aria-selected"),
+        n: document.querySelectorAll("#palList [aria-selected=true]").length,
+      }
+    })
+    if (a.i !== "pal-1" || a.sel !== "true" || a.n !== 1) bad.push(`seta: ${JSON.stringify(a)}`)
+    await page.keyboard.press("Enter")
+    const r = await page.evaluate(() => ({
+      page: __bv.route().page,
+      open: __bv.overlayOpen(),
+      focus: document.activeElement?.id,
+      inert: document.getElementById("app").inert,
+    }))
+    if (r.page !== "housing" || r.open || r.focus !== "view" || r.inert)
+      bad.push(`Enter em "Imóveis": ${JSON.stringify(r)}`)
+    // Ctrl+K alterna; Esc fecha
+    await page.keyboard.press("Control+k")
+    await page.keyboard.press("Control+k")
+    if (await page.evaluate(() => __bv.overlayOpen())) bad.push("Ctrl+K não fecha a paleta aberta")
+    await page.keyboard.press("Control+k")
+    await page.keyboard.press("Escape")
+    if (await page.evaluate(() => __bv.overlayOpen() || document.getElementById("app").inert))
+      bad.push("Esc não fecha a paleta")
+    // buscar leva ao Resolver sem criar necessidade
+    await page.keyboard.press("Control+k")
+    await page.keyboard.type("preciso instalar um split")
+    await page.keyboard.press("Enter")
+    const q = await page.evaluate(() => ({ page: __bv.route().page, q: __bv.route().params.q }))
+    if (q.page !== "resolver" || q.q !== "preciso instalar um split")
+      bad.push(`buscar: ${JSON.stringify(q)}`)
+    if ((await S(page, (S) => S.needs.length)) !== n0)
+      bad.push("buscar pela paleta criou necessidade")
+    // criar abre o formulário certo
+    await page.keyboard.press("Control+k")
+    await page.keyboard.type("desapego")
+    const idx = await page.evaluate(() =>
+      [...document.querySelectorAll("#palList [role=option]")].findIndex((b) =>
+        /^Anunciar desapego/.test(b.innerText.trim()),
+      ),
+    )
+    if (idx < 0) bad.push("'Anunciar desapego' não aparece ao buscar 'desapego'")
+    else {
+      for (let i = 0; i < idx; i++) await page.keyboard.press("ArrowDown")
+      await page.keyboard.press("Enter")
+      if (!/Anunciar desapego/.test(await drawer(page)))
+        bad.push("criar: formulário de desapego não abriu")
+    }
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+await probe(
+  "P38",
+  "Navegação",
+  "atalhos: g + letra navega, / abre a paleta, ? abre o quadro; nada dispara dentro de campo de texto nem com janela aberta",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    const cur = () => page.evaluate(() => __bv.route().page)
+    for (const [k, p] of [
+      ["r", "resolver"],
+      ["c", "community"],
+      ["m", "messages"],
+      ["v", "profile"],
+      ["n", "notifications"],
+      ["h", "home"],
+    ]) {
+      await page.keyboard.press("g")
+      await page.keyboard.press(k)
+      if ((await cur()) !== p) bad.push(`g ${k} → ${await cur()} (esperado ${p})`)
+    }
+    await go(page, "resolver")
+    await page.click("#rq")
+    await page.keyboard.type("gr/?")
+    const v = await page.evaluate(() => ({
+      p: __bv.route().page,
+      val: document.getElementById("rq").value,
+      open: __bv.overlayOpen(),
+    }))
+    if (v.p !== "resolver" || v.val !== "gr/?" || v.open)
+      bad.push(`digitar em campo disparou atalho: ${JSON.stringify(v)}`)
+    await go(page, "home")
+    await A(page, "openTrust")
+    await page.keyboard.press("g")
+    await page.keyboard.press("r")
+    if ((await cur()) !== "home") bad.push("g r navegou com janela aberta")
+    await A(page, "closeDrawer")
+    await page.evaluate(() => document.activeElement?.blur())
+    await page.keyboard.press("/")
+    if (!(await page.evaluate(() => !!document.getElementById("palQ"))))
+      bad.push("/ não abre a paleta")
+    await page.keyboard.press("Escape")
+    await page.keyboard.press("?")
+    if (!/Atalhos de teclado/.test(await drawer(page))) bad.push("? não abre o quadro de atalhos")
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+await probe(
+  "P39",
+  "Navegação",
+  "trilha nas telas de segundo nível volta ao pai; título e anúncio acompanham a página",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    const cur = () => page.evaluate(() => __bv.route().page)
+    for (const [p, params, parent] of [
+      ["services", { side: "origin" }, "explorar"],
+      ["housing", { side: "destination" }, "explorar"],
+      ["refs", { side: "origin" }, "explorar"],
+      ["provider", {}, "profile"],
+      ["notifications", {}, "home"],
+    ]) {
+      await go(page, p, params)
+      const c = await page.evaluate(() => ({
+        n: document.querySelectorAll("#view .crumbs").length,
+        title: document.title,
+      }))
+      if (c.n !== 1) bad.push(`${p}: ${c.n} trilhas`)
+      await page.locator("#view .crumbs button").click()
+      if ((await cur()) !== parent)
+        bad.push(`${p}: trilha vai a ${await cur()} (esperado ${parent})`)
+    }
+    await go(page, "home")
+    if (await page.evaluate(() => document.querySelectorAll("#view .crumbs").length))
+      bad.push("Início não deveria ter trilha")
+    await go(page, "services", { side: "origin" })
+    await page.waitForTimeout(120)
+    const t = await page.evaluate(() => ({
+      title: document.title,
+      live: document.getElementById("live").textContent,
+    }))
+    if (!/^Serviços/.test(t.title)) bad.push(`título: ${t.title}`)
+    if (t.live !== "Serviços") bad.push(`anúncio: "${t.live}"`)
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+await probe(
+  "P40",
+  "Navegação",
+  "janela: clique no fundo fecha, selecionar texto e soltar fora não fecha, rolagem do fundo trava; no celular a alça arrasta para fechar",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    const open = () => page.evaluate(() => __bv.overlayOpen())
+    const outside = MOBILE() ? [195, 20] : [5, 450]
+    await A(page, "openObj", { dtype: "provider", id: "p-amazon" })
+    if (!(await page.evaluate(() => document.documentElement.classList.contains("has-overlay"))))
+      bad.push("rolagem do fundo não trava")
+    const b = await page.locator("#dlgTitle").boundingBox()
+    await page.mouse.move(b.x + 10, b.y + 8)
+    await page.mouse.down()
+    await page.mouse.move(outside[0], outside[1], { steps: 4 })
+    await page.mouse.up()
+    if (!(await open())) bad.push("selecionar e soltar fora fechou a janela")
+    await page.mouse.click(outside[0], outside[1])
+    if (await open()) bad.push("clique no fundo não fecha")
+    if (await page.evaluate(() => document.documentElement.classList.contains("has-overlay")))
+      bad.push("rolagem do fundo não destrava")
+    if (MOBILE()) {
+      await A(page, "openObj", { dtype: "provider", id: "p-amazon" })
+      await page.waitForTimeout(150)
+      const h = await page.locator(".sheet-handle").boundingBox()
+      await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(h.x + h.width / 2, h.y + 40, { steps: 5 })
+      await page.mouse.up()
+      const back = await page.evaluate(() => ({
+        open: __bv.overlayOpen(),
+        tf: document.getElementById("drawer").style.transform,
+      }))
+      if (!back.open || back.tf) bad.push(`arraste curto deveria voltar: ${JSON.stringify(back)}`)
+      await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2)
+      await page.mouse.down()
+      await page.mouse.move(h.x + h.width / 2, h.y + 260, { steps: 8 })
+      await page.mouse.up()
+      if (await open()) bad.push("arraste longo da alça não fecha")
+    } else if (
+      (await page.locator(".sheet-handle").count()) &&
+      (await page
+        .locator(".sheet-handle")
+        .first()
+        .isVisible()
+        .catch(() => false))
+    ) {
+      bad.push("alça aparece no desktop")
+    }
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+await probe(
+  "P41",
+  "Movimento",
+  "com preferência normal a troca de tela e a janela animam; com movimento reduzido nenhuma passa de 1 ms",
+  async () => {
+    const bad = []
+    for (const rm of ["no-preference", "reduce"]) {
+      const ctx = await browser.newContext({ viewport: CUR, reducedMotion: rm })
+      const page = await ctx.newPage()
+      page.on("pageerror", (e) => pageErrors.push(e.message))
+      await page.route(/unsplash\.com|fonts\.(googleapis|gstatic)\.com/, (r) => r.abort())
+      await page.goto(PAGE_URL)
+      await page.waitForFunction(() => window.__bv)
+      await go(page, "services", { side: "origin" })
+      const v = await page.evaluate(() => {
+        const cs = getComputedStyle(document.querySelector("#view > *"))
+        return {
+          enter: document.getElementById("view").classList.contains("enter"),
+          name: cs.animationName,
+          dur: parseFloat(cs.animationDuration),
+        }
+      })
+      await A(page, "openTrust")
+      const d = await page.evaluate(() => {
+        const cs = getComputedStyle(document.getElementById("drawer"))
+        return { name: cs.animationName, dur: parseFloat(cs.animationDuration) }
+      })
+      if (rm === "no-preference") {
+        if (!v.enter || v.name === "none" || v.dur < 0.1)
+          bad.push(`tela não anima: ${JSON.stringify(v)}`)
+        if (d.name === "none" || d.dur < 0.1) bad.push(`janela não anima: ${JSON.stringify(d)}`)
+      } else if (v.dur > 0.001 || d.dur > 0.001)
+        bad.push(`movimento reduzido ignorado: ${JSON.stringify({ v, d })}`)
+      await ctx.close()
+    }
+    return [!bad.length, bad.slice(0, 3).join(" | ")]
+  },
+)
+
 await browser.close()
 const failed = results.filter((r) => !r.ok)
 console.log(
