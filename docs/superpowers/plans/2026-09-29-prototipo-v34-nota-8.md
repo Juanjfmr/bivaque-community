@@ -147,8 +147,8 @@ nenhum ingresso ocorre sem confirmação; o consentimento exibido é o tema real
 
 ### Task 9 — Verificação e relatório
 
-- [x] `verify.mjs` verde: 67 verificações (35 sondas; a maioria roda em 1440 e em 390 px), saída 0; saída colada em **Evidência de execução**.
-- [x] Teste de mutação (`mutate.mjs`): 7 quebras de invariante, 7 detectadas.
+- [x] `verify.mjs` verde: 69 verificações (36 sondas; a maioria roda em 1440 e em 390 px), saída 0; saída colada em **Evidência de execução**.
+- [x] Teste de mutação (`mutate.mjs`): 9 quebras, 9 detectadas.
 - [x] `npx pnpm@11.18.0 gate`: lint, typecheck, test e secrets verdes. O Biome exclui só o HTML (`!**/docs/design/prototype-v34/Bivaque_v34.html`); `verify.mjs` e `mutate.mjs` passam pelo linter e pelo formatador do repositório.
 - [ ] `build` do gate: **não rodou localmente** (falta `apps/web/.env.local`, que exige o stack Supabase). A confirmação é a CI do PR.
 - [x] Notas re-atribuídas com base e limites declarados (abaixo). Verificação independente **pendente**.
@@ -156,8 +156,8 @@ nenhum ingresso ocorre sem confirmação; o consentimento exibido é o tema real
 ## Como rodar
 
 ```sh
-node docs/design/prototype-v34/verify.mjs   # 35 sondas; termina em 0 só se todas passarem
-node docs/design/prototype-v34/mutate.mjs   # quebra 7 invariantes; termina em 0 só se todas forem detectadas
+node docs/design/prototype-v34/verify.mjs   # 36 sondas; termina em 0 só se todas passarem
+node docs/design/prototype-v34/mutate.mjs   # quebra 9 invariantes; termina em 0 só se todas forem detectadas
 ```
 
 Rode os dois **antes de alterar o HTML**. Ficam fora de `pnpm test` e da CI de propósito: exigem Chromium,
@@ -169,7 +169,7 @@ mortos), P29 (alvos de toque) e P31 (mobile) percorrem os dois tamanhos por cont
 
 ## Evidência de execução
 
-Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v34.html` `9ab57a3bf8ba0d59`, `verify.mjs` `256a688030a5d9d7`.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v34.html` `b76991c900f0a2be`, `verify.mjs` `dfecbf6561cdd890`, `mutate.mjs` `437e90572c4d8b03`.
 Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
 porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
@@ -224,8 +224,10 @@ PASS P22@1440     salvos, presença, resposta e mensagem persistem depois de rec
 PASS P22@390      salvos, presença, resposta e mensagem persistem depois de recarregar
 PASS P23@1440     notificações só existem com o estado que as gera; 'Amanhã' só com presença; badge = não lidas
 PASS P23@390      notificações só existem com o estado que as gera; 'Amanhã' só com presença; badge = não lidas
-PASS P24@1440     avanço de tempo gera novidade real: desapego na janela, resposta à sua pergunta, proposta ao pedido
-PASS P24@390      avanço de tempo gera novidade real: desapego na janela, resposta à sua pergunta, proposta ao pedido
+PASS P24@1440     avanço de tempo gera novidade causal: desapego na janela, resposta à sua pergunta, proposta ao seu pedido
+PASS P24@390      avanço de tempo gera novidade causal: desapego na janela, resposta à sua pergunta, proposta ao seu pedido
+PASS P35@1440     Editar preserva todos os campos e o publicado é exatamente a prévia (imóvel, serviço, evento, desapego)
+PASS P35@390      Editar preserva todos os campos e o publicado é exatamente a prévia (imóvel, serviço, evento, desapego)
 PASS P25@1440     texto com apóstrofo ou HTML não quebra nem executa
 PASS P25@390      texto com apóstrofo ou HTML não quebra nem executa
 PASS P26@1440     gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair da página
@@ -244,7 +246,7 @@ PASS P32@390      sem texto de bastidor; 'por que apareceu' no máximo uma vez p
 PASS P33@1440     estados: zero, um e muitos; vencido; sem resposta; resolvido; interessado; salvo
 PASS P33@390      estados: zero, um e muitos; vencido; sem resposta; resolvido; interessado; salvo
 
-67/67 verificações passaram (35 sondas; a maioria roda em 1440 e em 390 px)
+69/69 verificações passaram (36 sondas; a maioria roda em 1440 e em 390 px)
 exit=0
 ```
 
@@ -257,10 +259,16 @@ DETECTADA      M3 orçamento ancora na mudança → FAIL P07@1440     orçamento
 DETECTADA      M4 evidência guarda texto livre → FAIL P18@1440     fechar necessidade com nome de criança não deixa o nome em nenhuma tela pública; prestador n
 DETECTADA      M5 entra na comunidade sem confirmar → FAIL P16@1440     perguntar exige entrar (com consentimento), editar, ver prévia e confirmar; nada por efeito 
 DETECTADA      M6 gaveta sem role=dialog → FAIL P26@1440     gaveta é diálogo: foco entra e fica, Esc fecha e devolve o foco, Voltar fecha antes de sair 
+DETECTADA      M8 o tempo passa e o pedido não recebe proposta → FAIL P24@1440     avanço de tempo gera novidade causal: desapego na janela, resposta à sua pergunta, proposta 
+DETECTADA      M9 Editar descarta o que a pessoa preencheu → FAIL P35@1440     Editar preserva todos os campos e o publicado é exatamente a prévia (imóvel, serviço, evento
 DETECTADA      M7 data exata de terceiros → FAIL P15@1440     nenhuma data exata de terceiros em tela; Desapegos invertido por lado  → home: data exata em
 todas as mutações detectadas
 exit=0
 ```
+
+**Vermelho antes do verde:** a P35 foi executada contra o HTML anterior à correção do "Editar" e falhou como
+esperado ("Casa" virou "Apartamento", a data de disponibilidade mudou e o publicado divergiu da prévia). Só depois
+da correção ela passou.
 
 **Base das notas (8 em todas as áreas):**
 
@@ -272,7 +280,7 @@ exit=0
 - Memória: P21, P22 (curadoria, persistência).
 - Serviços, Imóveis, Desapegos, Eventos: P02, P05, P09, P15, P33.
 - Benefícios, Monetização: P04, P05, P01, P02.
-- Criação: P09. Recorrência: P23, P24. Mobile: P29, P31.
+- Criação: P09, P35. Recorrência: P23, P24. Mobile: P29, P31.
 - Diferenciação: P10, P18, P20 (mecanismos só do Bivaque, em comportamento).
 - Escalabilidade: P19, P21 (deduplicação e curadoria, como modelo).
 

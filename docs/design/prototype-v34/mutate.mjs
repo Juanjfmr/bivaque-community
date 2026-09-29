@@ -1,4 +1,4 @@
-// Teste de mutação: quebra de propósito 7 invariantes e confirma que a sonda certa acusa cada uma.
+// Teste de mutação: quebra de propósito 9 invariantes e confirma que a sonda certa acusa cada uma.
 // Uso: node docs/design/prototype-v34/mutate.mjs   (termina em 0 só se TODAS as quebras forem detectadas)
 // Frágil de propósito: cada mutação troca um trecho exato do HTML. Se o trecho mudar, o script avisa.
 
@@ -43,6 +43,18 @@ const muts = [
     'if (d.comm && !isMember(d.comm)) { S.membership[d.comm] = "member" }',
   ],
   ["M6 gaveta sem role=dialog", "P26", 'role="dialog" aria-modal="true" ', ""],
+  [
+    "M8 o tempo passa e o pedido não recebe proposta",
+    "P24",
+    'if (n) { n.proposals.push({ id: uid("pr"), providerId: q.providerId, price, days: 7,',
+    'if (false) { n.proposals.push({ id: uid("pr"), providerId: q.providerId, price, days: 7,',
+  ],
+  [
+    "M9 Editar descarta o que a pessoa preencheu",
+    "P35",
+    'A.offerBack = () => offerForm(DRAFT.type, "", DRAFT.v)',
+    'A.offerBack = () => offerForm(DRAFT.type, "", {})',
+  ],
   [
     "M7 data exata de terceiros",
     "P15",

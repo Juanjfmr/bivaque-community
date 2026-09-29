@@ -2005,15 +2005,15 @@ function offerForm(type, pre, data = {}) {
       ${field("o-price", "Preço (R$)", `<input id="o-price" name="price" inputmode="numeric" required value="${esc(data.price || "")}">`)}
       ${field("o-win", "Janela de retirada", `<select id="o-win" name="win">${win.map((w) => opt(w.iso, w.label, data.win === w.iso)).join("")}</select>`, "Só a janela aparece para os outros. A data exata é combinada na conversa.")}
       ${field("o-city", "Cidade", `<select id="o-city" name="city">${cityOpts(data.city || t.from)}</select>`)}`,
-    housing: `${field("o-type", "Tipo", `<select id="o-type" name="htype"><option>Apartamento</option><option>Casa</option></select>`)}
+    housing: `${field("o-type", "Tipo", `<select id="o-type" name="htype">${["Apartamento", "Casa"].map((x) => opt(x, x, data.htype === x)).join("")}</select>`)}
       ${field("o-bairro", "Bairro", `<input id="o-bairro" name="bairro" required value="${esc(data.bairro || "")}">`)}
       ${field("o-beds", "Quartos", `<input id="o-beds" name="beds" inputmode="numeric" required value="${esc(data.beds || "2")}">`)}
       ${field("o-rent", "Aluguel (R$/mês)", `<input id="o-rent" name="rent" inputmode="numeric" required value="${esc(data.rent || "")}">`)}
-      ${field("o-from", "Disponível a partir de", `<select id="o-from" name="from">${win.map((w) => opt(w.iso, w.label)).join("")}</select>`)}
+      ${field("o-from", "Disponível a partir de", `<select id="o-from" name="from">${win.map((w) => opt(w.iso, w.label, data.from === w.iso)).join("")}</select>`)}
       ${field("o-city", "Cidade", `<select id="o-city" name="city">${cityOpts(data.city || t.from)}</select>`)}
       <p class="privacy-note">O endereço exato não é publicado. Só depois do contato.</p>`,
     service: `${field("o-name", "Nome do negócio", `<input id="o-name" name="name" required value="${esc(data.name || "")}">`)}
-      ${field("o-cat", "Categoria", `<select id="o-cat" name="cat">${[["manutencao", "Manutenção e reparos"], ["climatizacao", "Climatização"], ["mudanca", "Mudança e frete"], ["saude", "Saúde"]].map(([v, l]) => opt(v, l)).join("")}</select>`)}
+      ${field("o-cat", "Categoria", `<select id="o-cat" name="cat">${[["manutencao", "Manutenção e reparos"], ["climatizacao", "Climatização"], ["mudanca", "Mudança e frete"], ["saude", "Saúde"]].map(([v, l]) => opt(v, l, data.cat === v)).join("")}</select>`)}
       ${field("o-area", "Onde atende", `<input id="o-area" name="area" required value="${esc(data.area || "")}">`)}
       ${field("o-city", "Cidade", `<select id="o-city" name="city">${cityOpts(data.city || t.from)}</select>`)}
       <div class="detail-box"><h3>Verificação</h3><p>Todo prestador passa por verificação de identidade e CNPJ. Você só aparece em Serviços depois de aprovado. Ser anunciante não muda a verificação.</p></div>`,
@@ -2021,7 +2021,7 @@ function offerForm(type, pre, data = {}) {
       ${field("o-date", "Data", `<input id="o-date" name="date" type="date" min="${today()}" required value="${esc(data.date || isoAdd(today(), 7))}">`)}
       ${field("o-time", "Horário", `<input id="o-time" name="time" required value="${esc(data.time || "10h")}">`)}
       ${field("o-place", "Local", `<input id="o-place" name="place" required value="${esc(data.place || "")}">`)}
-      ${field("o-comm", "Publicar em", `<select id="o-comm" name="comm">${Object.values(DB.communities).filter((c) => isMember(c.id)).map((c) => opt(c.id, c.name)).join("")}</select>`)}`,
+      ${field("o-comm", "Publicar em", `<select id="o-comm" name="comm">${Object.values(DB.communities).filter((c) => isMember(c.id)).map((c) => opt(c.id, c.name, data.comm === c.id)).join("")}</select>`)}`,
   }[type]
   openDrawer(`${drawerHead({ sell: "Anunciar desapego", housing: "Anunciar imóvel", service: "Oferecer meu serviço", event: "Organizar evento" }[type], "Você vê uma prévia antes de publicar.")}<form data-form="offerPreview" data-type="${type}">${f}<div class="detail-actions"><button class="primary" type="submit">Ver prévia</button></div></form>`)
 }
@@ -2037,7 +2037,7 @@ A.offerPreview = (d, f) => {
     ${d.type === "sell" ? `<p class="privacy-note">A data exata (${fmtShort(v.win)}) só você vê. Quem pediu aviso para este tipo de item é avisado sem ver seu nome.</p>` : ""}
     <div class="detail-actions"><button class="secondary" data-act="offerBack">Editar</button><button class="primary" data-act="offerPublish">${d.type === "service" ? "Enviar para verificação" : "Publicar"}</button></div>`)
 }
-A.offerBack = () => { const v = DRAFT.v; offerForm(DRAFT.type, "", { ...v, win: v.win }) }
+A.offerBack = () => offerForm(DRAFT.type, "", DRAFT.v)
 A.offerPublish = () => {
   const { type, v } = DRAFT
   if (type === "sell") {

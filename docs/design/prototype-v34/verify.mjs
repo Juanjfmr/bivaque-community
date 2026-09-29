@@ -990,11 +990,18 @@ await probe(
 await probe(
   "P24",
   "Recorrência",
-  "avanço de tempo gera novidade real: desapego na janela, resposta à sua pergunta, proposta ao pedido",
+  "avanço de tempo gera novidade causal: desapego na janela, resposta à sua pergunta, proposta ao seu pedido",
   async () => {
     const { ctx, page } = await fresh()
     const bad = []
-    const before = await page.evaluate(() => __bv.deriveNotifs().length)
+    // pedido real: orçamento a um prestador orgânico do catálogo
+    await go(page, "services", { side: "origin" })
+    await page.locator(".service-card:not(.is-ad) .cta").first().click()
+    await page.selectOption("#q-need", "new")
+    await page.click("#drawer button[type=submit]")
+    await page.waitForTimeout(80)
+    const nid = await S(page, (s) => s.quotes.at(-1).needId)
+    // pergunta própria, ainda sem resposta
     await page.evaluate(() => {
       __bv.S.threads.unshift({
         id: "t-x",
@@ -1003,24 +1010,151 @@ await probe(
         tags: [],
         author: "Você",
         own: true,
-        day: 0,
+        day: __bv.S.day,
         ago: "agora",
         replies: [],
       })
     })
+    const snap = (id) =>
+      page.evaluate((id) => {
+        const n = __bv.deriveNotifs()
+        return {
+          desapego: n.some((x) => /Novo desapego na sua janela/.test(x.title)),
+          resposta: n.some((x) => /Nova resposta na sua pergunta/.test(x.title)),
+          proposta: n.some((x) => x.act === "openProposals" && x.dataset.id === id),
+          propostas: __bv.needById(id).proposals.length,
+        }
+      }, id)
+    const antes = await snap(nid)
+    if (antes.desapego || antes.resposta || antes.proposta || antes.propostas)
+      bad.push(`novidade existia antes de o tempo passar: ${JSON.stringify(antes)}`)
     await A(page, "advance", { n: 3 })
-    const t = await page.evaluate(() => __bv.deriveNotifs().map((n) => n.title))
-    if (!t.some((x) => /Novo desapego na sua janela/.test(x)))
-      bad.push("sem novo desapego na janela")
-    if (!t.some((x) => /Nova resposta na sua pergunta/.test(x))) bad.push("sem resposta à pergunta")
-    if (!(await page.evaluate(() => __bv.deriveNotifs().length > 0)) || before === undefined)
-      bad.push("sem notificações")
+    const depois = await snap(nid)
+    if (!depois.desapego) bad.push("sem novo desapego na janela depois de 3 dias")
+    if (!depois.resposta) bad.push("sem resposta à sua pergunta depois de 3 dias")
+    if (!depois.proposta || depois.propostas !== 1)
+      bad.push(
+        `sem proposta ao seu pedido (propostas=${depois.propostas}, notificação=${depois.proposta})`,
+      )
     await ctx.close()
     return [!bad.length, bad.join(" | ")]
   },
 )
-
-/* ============ ROBUSTEZ, ACESSIBILIDADE, MOBILE ============ */
+await probe(
+  "P35",
+  "Criação",
+  "Editar preserva todos os campos e o publicado é exatamente a prévia (imóvel, serviço, evento, desapego)",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await page.evaluate(() => {
+      __bv.S.membership.arrivalsBsb = "member"
+    })
+    const pick = async (sel, i) => {
+      const vals = await page.$$eval(`${sel} option`, (o) => o.map((x) => x.value))
+      await page.selectOption(sel, vals[Math.min(i, vals.length - 1)])
+    }
+    const read = (sels) =>
+      page.evaluate(
+        (sels) => Object.fromEntries(sels.map((q) => [q, document.querySelector(q).value])),
+        sels,
+      )
+    const cases = {
+      housing: [
+        ["#o-type", "#o-bairro", "#o-beds", "#o-rent", "#o-from", "#o-city"],
+        async () => {
+          await pick("#o-type", 1)
+          await page.fill("#o-bairro", "Adrianópolis")
+          await page.fill("#o-beds", "4")
+          await page.fill("#o-rent", "2900")
+          await pick("#o-from", 4)
+          await pick("#o-city", 1)
+        },
+        (o, b) =>
+          o.title === b["#o-type"] &&
+          o.from === b["#o-from"] &&
+          o.city === b["#o-city"] &&
+          String(o.beds) === b["#o-beds"] &&
+          String(o.rent) === b["#o-rent"] &&
+          o.bairro === b["#o-bairro"],
+      ],
+      service: [
+        ["#o-name", "#o-cat", "#o-area", "#o-city"],
+        async () => {
+          await page.fill("#o-name", "Clínica Teste")
+          await pick("#o-cat", 3)
+          await page.fill("#o-area", "Flores")
+          await pick("#o-city", 1)
+        },
+        (o, b) =>
+          o.tags[0] === b["#o-cat"] &&
+          o.city === b["#o-city"] &&
+          o.name === b["#o-name"] &&
+          o.area === b["#o-area"],
+      ],
+      event: [
+        ["#o-title", "#o-date", "#o-time", "#o-place", "#o-comm"],
+        async () => {
+          await page.fill("#o-title", "Encontro X")
+          await page.fill("#o-date", "2026-10-11")
+          await page.fill("#o-time", "19h")
+          await page.fill("#o-place", "Praça")
+          await pick("#o-comm", 1)
+        },
+        (o, b) =>
+          o.community === b["#o-comm"] &&
+          o.city === "brasilia" &&
+          o.title === b["#o-title"] &&
+          o.date === b["#o-date"] &&
+          o.place === b["#o-place"],
+      ],
+      sell: [
+        ["#o-title", "#o-cat", "#o-price", "#o-win", "#o-city"],
+        async () => {
+          await page.fill("#o-title", "Cadeira")
+          await pick("#o-cat", 2)
+          await page.fill("#o-price", "120")
+          await pick("#o-win", 4)
+          await pick("#o-city", 1)
+        },
+        (o, b) =>
+          o.cat === b["#o-cat"] &&
+          o.window === b["#o-win"] &&
+          o.city === b["#o-city"] &&
+          String(o.price) === b["#o-price"] &&
+          o.title === b["#o-title"],
+      ],
+    }
+    for (const [type, [sels, fill, matches]] of Object.entries(cases)) {
+      await A(page, "openOffer", { type })
+      await fill()
+      const antes = await read(sels)
+      await page.click("#drawer button[type=submit]")
+      await page.click("#drawer [data-act=offerBack]")
+      const depois = await read(sels)
+      for (const q of sels)
+        if (antes[q] !== depois[q])
+          bad.push(`${type} ${q}: "${antes[q]}" virou "${depois[q]}" depois de Editar`)
+      await page.click("#drawer button[type=submit]")
+      await page.click("#drawer [data-act=offerPublish]")
+      await page.waitForTimeout(60)
+      const pub = await page.evaluate((t) => {
+        const o = __bv.S.own
+        return t === "housing"
+          ? o.housing[0]
+          : t === "service"
+            ? o.provider
+            : t === "event"
+              ? o.events[0]
+              : o.market[0]
+      }, type)
+      if (!pub || !matches(pub, antes))
+        bad.push(`${type}: o publicado difere da prévia: ${JSON.stringify(pub)?.slice(0, 120)}`)
+    }
+    await ctx.close()
+    return [!bad.length, bad.join(" | ")]
+  },
+)
 await probe("P25", "Robustez", "texto com apóstrofo ou HTML não quebra nem executa", async () => {
   const { ctx, page } = await fresh()
   const bad = []
