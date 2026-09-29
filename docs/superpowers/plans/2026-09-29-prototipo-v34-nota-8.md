@@ -21,7 +21,7 @@ que muda e é persistido em `localStorage`. Toda tela é renderizada a partir de
 usam delegação (`data-act`), sem JavaScript em atributo, o que elimina o bug de apóstrofo do v33 e
 permite varrer cliques mortos. Rotas usam `history.pushState`; gavetas são diálogos acessíveis.
 
-**Tech Stack:** HTML/CSS/JS sem dependências (fontes via Google Fonts, fotos via Unsplash como no v33).
+**Tech Stack:** HTML/CSS/JS sem dependências. Tipografia: Public Sans auto-hospedada (`apps/web/app/fonts`, `DESIGN_SYSTEM.md` §4.3), sem fonte, script nem folha de estilo de terceiro. Fotos de demonstração do Unsplash (terceiro, só imagem, declarado).
 Verificação: `@playwright/test` (`chromium`) já instalado no monorepo.
 
 ## Global Constraints
