@@ -2633,10 +2633,10 @@ A.submitConv = (d, f) => {
 }
 A.linkNeed = (d) => {
   const cv = byId(S.convs, d.id); const needs = activeNeeds()
-  openDrawer(`${drawerHead("Ligar a uma necessidade", cv.with)}<form data-form="submitLink" data-id="${d.id}"><div class="switch-list radio">${needs.map((n, i) => `<label class="switch-item"><input type="radio" name="need" value="${n.id}"${i === 0 ? " checked" : ""}><div class="grow"><b>${esc(n.title)}</b><span>${DIR[n.dir]} · ${STATUS[n.status]}</span></div></label>`).join("")}<label class="switch-item"><input type="radio" name="need" value="new"><div class="grow"><b>Criar uma necessidade nova</b><span>Título editável depois</span></div></label></div><div class="detail-actions"><button class="primary" type="submit">Ligar</button></div></form>`)
+  openDrawer(`${drawerHead("Ligar a uma necessidade", cv.with)}<form data-form="submitLink" data-id="${d.id}"><div class="switch-list radio">${needs.map((n, i) => `<label class="switch-item"><input type="radio" name="need" value="${n.id}"${i === 0 ? " checked" : ""}><div class="grow"><b>${esc(n.title)}</b><span>${DIR[n.dir]} · ${STATUS[n.status]}</span></div></label>`).join("")}<label class="switch-item"><input type="radio" name="need" value="new"${needs.length ? "" : " checked"}><div class="grow"><b>Criar uma necessidade nova</b><span>Título editável depois</span></div></label></div><div class="detail-actions"><button class="primary" type="submit">Ligar</button></div></form>`)
 }
 A.submitLink = (d, f) => {
-  const cv = byId(S.convs, d.id); const pick = f.querySelector("input[name=need]:checked").value
+  const cv = byId(S.convs, d.id); const pick = (f.querySelector("input[name=need]:checked") || { value: "new" }).value
   cv.needId = pick === "new" ? createNeed({ title: `Conversa com ${cv.with}`, dir: "need", intent: "other", cityKey: T().to }).id : pick
   touch(needById(cv.needId), "in_conversation"); save(); go("messages", { id: cv.id }); toast("Conversa ligada à necessidade.")
 }

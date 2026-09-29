@@ -2371,7 +2371,7 @@ const MENU_CASES = [
 await probe(
   "P43",
   "Menu de contexto",
-  "varredura: cada item de cada menu (15 tipos) faz efeito; anúncio nunca oferece 'por que apareceu'; itens esperados presentes",
+  "varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique direito abre a mesma lista; anúncio nunca oferece 'por que apareceu'",
   async () => {
     const bad = []
     let total = 0
@@ -2395,9 +2395,24 @@ await probe(
           await ctx.close()
           continue
         }
-        await page.locator(sel).first().click()
+        const kbEl = page.locator(sel).first()
+        if (!(await kbEl.isVisible())) {
+          bad.push(`${name}: botão ⋯ não está visível`)
+          await ctx.close()
+          continue
+        }
+        if (!(await kbEl.evaluate((e) => e.matches("button") && e.tabIndex >= 0)))
+          bad.push(`${name}: botão ⋯ fora da ordem de Tab`)
+        await kbEl.click()
         const labels = await menuLabels(page)
         n = labels.length
+        await page.keyboard.press("Escape")
+        await kbEl.locator("xpath=ancestor::*[@data-mt][1]").click({ button: "right" })
+        const viaRight = await menuLabels(page)
+        if (JSON.stringify(viaRight) !== JSON.stringify(labels))
+          bad.push(
+            `${name}: clique direito abre [${viaRight.join("|")}], o botão abre [${labels.join("|")}]`,
+          )
         for (const h of exp.has)
           if (!labels.some((l) => l === h))
             bad.push(`${name}: falta "${h}" em [${labels.join("|")}]`)
@@ -2700,6 +2715,44 @@ await probe(
     if (state0 !== state1) bad.push("formulário inválido alterou o estado")
     await ctx.close()
     return [!bad.length, bad.slice(0, 4).join(" | ")]
+  },
+)
+
+await probe(
+  "P47",
+  "Formulários",
+  "ligar conversa a uma necessidade: sem nenhuma necessidade ativa o formulário abre com uma opção marcada, envia sem erro de JS e cria a necessidade ligada",
+  async () => {
+    const { ctx, page } = await fresh()
+    const bad = []
+    await page.evaluate(() => {
+      for (const n of __bv.S.needs) n.status = "abandoned"
+    })
+    await go(page, "messages", { id: "c-house" })
+    await page.locator("#view [data-act=linkNeed]").click()
+    const r = await page.evaluate(() => ({
+      checked: [...document.querySelectorAll("#drawer input[name=need]:checked")].map(
+        (i) => i.value,
+      ),
+      total: document.querySelectorAll("#drawer input[name=need]").length,
+    }))
+    if (r.checked.length !== 1 || r.checked[0] !== "new")
+      bad.push(`opção marcada: ${JSON.stringify(r)}`)
+    const n0 = await S(page, (S) => S.needs.length)
+    await page.locator("#drawer button[type=submit]").click()
+    const after = await page.evaluate(() => {
+      const cv = __bv.S.convs.find((c) => c.id === "c-house")
+      return {
+        needs: __bv.S.needs.length,
+        linked: cv.needId,
+        exists: !!__bv.needById(cv.needId),
+        open: __bv.overlayOpen(),
+      }
+    })
+    if (after.needs !== n0 + 1 || !after.linked || !after.exists)
+      bad.push(`ligar sem necessidades: ${JSON.stringify(after)}`)
+    await ctx.close()
+    return [!bad.length, bad.slice(0, 3).join(" | ")]
   },
 )
 

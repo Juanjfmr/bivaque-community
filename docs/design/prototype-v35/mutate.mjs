@@ -87,6 +87,25 @@ const muts = [
   ],
   ["M15 validação inline desligada", "P46", "if (!validateForm(f)) return", "validateForm(f)"],
   [
+    "M16 botão ⋯ escondido",
+    "P43",
+    "background:transparent;color:var(--muted);display:inline-grid;place-items:center;cursor:pointer;flex:none;",
+    "background:transparent;color:var(--muted);display:none;place-items:center;cursor:pointer;flex:none;",
+  ],
+  [
+    "M17 clique direito não abre o menu",
+    "P43",
+    "if (e.button === 2) openMenuFor(c, { x: e.clientX, y: e.clientY })",
+    "if (e.button === 2) menuClose(false)",
+  ],
+  [
+    "M18 ligar conversa sem necessidade estoura",
+    "P47",
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: trecho literal do HTML a ser substituído
+    '<input type="radio" name="need" value="new"${needs.length ? "" : " checked"}><div class="grow"><b>Criar uma necessidade nova</b><span>Título editável depois</span>',
+    '<input type="radio" name="need" value="new"><div class="grow"><b>Criar uma necessidade nova</b><span>Título editável depois</span>',
+  ],
+  [
     "M7 data exata de terceiros",
     "P15",
     'return (+d <= 10 ? "início de " : +d <= 20 ? "meados de " : "fim de ") + mon',

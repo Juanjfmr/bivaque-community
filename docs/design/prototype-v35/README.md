@@ -34,11 +34,11 @@ No celular (ou janela de 390 px):
 ## Como verificar
 
 ```sh
-node docs/design/prototype-v35/verify.mjs   # 47 sondas, 91 verificações; a maioria roda em 1440 e 390 px
-node docs/design/prototype-v35/mutate.mjs   # quebra 15 invariantes; termina em 0 só se todas forem detectadas
+node docs/design/prototype-v35/verify.mjs   # 48 sondas, 93 verificações; a maioria roda em 1440 e 390 px
+node docs/design/prototype-v35/mutate.mjs   # quebra 18 invariantes; termina em 0 só se todas forem detectadas
 ```
 
-As 69 verificações do v34 continuam (três mudaram de texto ou seletor; cada mudança está no PR) e há 22 novas.
+As 69 verificações do v34 continuam (três mudaram de texto ou seletor; cada mudança está no PR) e há 24 novas.
 A verificação é do próprio implementador, **não** é revisão independente.
 
 ## O que mudou em relação ao v34

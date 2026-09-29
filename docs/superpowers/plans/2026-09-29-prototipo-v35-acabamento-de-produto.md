@@ -35,7 +35,10 @@ script nem folha de estilo de terceiro. Ícones em SVG inline (sprite `<symbol>`
   "por que apareceu"; nada publica nem ingressa sem passo explícito; evidência pública sem texto livre;
   data exata de terceiros nunca em tela; busca não cria necessidade.
 - **Novas regras deste plano:**
-  1. Menu de contexto nunca é o único caminho: todo item do menu tem equivalente visível ou no detalhe.
+  1. O menu não depende de gesto: o botão ⋯ está sempre visível e na ordem de Tab, e clique direito, tecla de
+     menu e toque longo abrem exatamente a mesma lista (P42, P43, P45). Ações secundárias como Ocultar, Arquivar e
+     Denunciar vivem só no menu, de propósito; uma versão anterior desta regra prometia um equivalente fora do menu
+     para cada item, o que era falso e nunca foi medido.
   2. Anúncio pago oferece "Ocultar" e "Denunciar"; nunca "por que apareceu".
   3. Todo gesto (clique direito, toque longo, atalho) tem equivalente por teclado e por toque simples.
   4. Nenhum movimento essencial: com `prefers-reduced-motion`, nada anima e tudo continua utilizável.
@@ -82,7 +85,9 @@ script nem folha de estilo de terceiro. Ícones em SVG inline (sprite `<symbol>`
       conversa, pergunta, notificação); Ocultar, Denunciar, Arquivar com estado real.
 - [x] Anúncio sem "por que apareceu".
 
-**Prova:** sondas de menu (teclado, clique direito, anúncio sem "por que apareceu", item some ao ocultar).
+**Prova:** sondas de menu (teclado, clique direito e toque longo com a mesma lista do botão, botão ⋯ visível e na
+ordem de Tab nos 15 tipos, anúncio sem "por que apareceu", item some ao ocultar); mutantes para botão escondido
+e clique direito sem efeito.
 
 ### Task 4 — Feedback e formulários
 - [x] Aviso com "Desfazer" (salvar, ocultar, arquivar, silenciar, encerrar, dispensar, presença) que realmente desfaz.
@@ -98,8 +103,8 @@ script nem folha de estilo de terceiro. Ícones em SVG inline (sprite `<symbol>`
 **Prova:** `P32` estendida; sondas de texto atualizadas sem enfraquecer a asserção.
 
 ### Task 6 — Verificação e relatório
-- [x] `verify.mjs` verde (91 verificações: 69 herdadas + 22 novas), saída colada em **Evidência de execução**.
-- [x] `mutate.mjs`: 9 mutantes herdados + 6 novos, 15 detectados.
+- [x] `verify.mjs` verde (93 verificações: 69 herdadas + 24 novas), saída colada em **Evidência de execução**.
+- [x] `mutate.mjs`: 9 mutantes herdados + 9 novos, 18 detectados.
 - [x] `npx pnpm@11.18.0 gate`: lint, typecheck, test e secrets verdes. O Biome exclui só o HTML. (`build` não rodou localmente: falta `apps/web/.env.local`; a confirmação é a CI do PR.)
 - [x] Notas de "o que continua sem prova" reescritas no README.
 
@@ -112,13 +117,13 @@ node docs/design/prototype-v35/mutate.mjs
 
 ## Evidência de execução
 
-Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `091c4ee55e4e12ad`, `verify.mjs` `eafc08211832eeea`, `mutate.mjs` `b42ef68f814d2208`.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `86a458244c019286`, `verify.mjs` `cd6fea88ebce6893`, `mutate.mjs` `53a5f06429c8e806`.
 Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
 porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
 **Quem verificou:** o próprio implementador. Não é revisão independente nem verificação de runtime independente
 (seção 14 do processo de construção). As camadas independentes que existem são a CI do PR, o revisor automático do
-PR e a revisão do dono; nenhuma delas rodou contra esta versão no momento em que este bloco foi escrito.
+PR e a revisão do dono. O revisor automático já apontou dois achados neste PR (abaixo), ambos tratados.
 
 `node docs/design/prototype-v35/verify.mjs`, saída 0 (títulos cortados em 118 caracteres):
 
@@ -206,19 +211,21 @@ PASS P41@1440     com preferência normal a troca de tela e a janela animam; com
 PASS P41@390      com preferência normal a troca de tela e a janela animam; com movimento reduzido nenhuma passa de 1…
 PASS P42@1440     botão ⋯: abre com foco no 1º item, setas/Home/End/letra movem, Esc devolve o foco ao botão, Tab fec…
 PASS P42@390      botão ⋯: abre com foco no 1º item, setas/Home/End/letra movem, Esc devolve o foco ao botão, Tab fec…
-PASS P43@1440     varredura: cada item de cada menu (15 tipos) faz efeito; anúncio nunca oferece 'por que apareceu'; …
-PASS P43@390      varredura: cada item de cada menu (15 tipos) faz efeito; anúncio nunca oferece 'por que apareceu'; …
+PASS P43@1440     varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique …
+PASS P43@390      varredura: cada item de cada menu (15 tipos) faz efeito; botão ⋯ visível e na ordem de Tab; clique …
 PASS P44@1440     ocultar, denunciar, arquivar, silenciar e dispensar mudam o estado de verdade, têm 'Desfazer' e fic…
 PASS P44@390      ocultar, denunciar, arquivar, silenciar e dispensar mudam o estado de verdade, têm 'Desfazer' e fic…
 PASS P45@1440     portas alternativas: clique direito e tecla de menu abrem o mesmo menu; toque longo abre a folha se…
 PASS P45@390      portas alternativas: clique direito e tecla de menu abrem o mesmo menu; toque longo abre a folha se…
 PASS P46@1440     validação inline: erro junto do campo (aria-invalid + aria-describedby), foco no primeiro, nada é e…
 PASS P46@390      validação inline: erro junto do campo (aria-invalid + aria-describedby), foco no primeiro, nada é e…
+PASS P47@1440     ligar conversa a uma necessidade: sem nenhuma necessidade ativa o formulário abre com uma opção mar…
+PASS P47@390      ligar conversa a uma necessidade: sem nenhuma necessidade ativa o formulário abre com uma opção mar…
 
-91/91 verificações passaram (47 sondas; a maioria roda em 1440 e em 390 px)
+93/93 verificações passaram (48 sondas; a maioria roda em 1440 e em 390 px)
 ```
 
-`node docs/design/prototype-v35/mutate.mjs`, saída 0 (15 quebras, 15 detectadas):
+`node docs/design/prototype-v35/mutate.mjs`, saída 0 (18 quebras, 18 detectadas):
 
 ```
 DETECTADA      M1 anúncio entra no orgânico → FAIL P01@1440     anúncio nunca aparece na zona orgânica do Resolver (5…
@@ -235,6 +242,9 @@ DETECTADA      M12 anúncio ganha 'por que apareceu' no menu → FAIL P43@1440  
 DETECTADA      M13 ocultar não oculta → FAIL P44@1440     ocultar, denunciar, arquivar, silenciar e dispensar mudam o…
 DETECTADA      M14 Desfazer do salvamento não desfaz → FAIL P44@1440     ocultar, denunciar, arquivar, silenciar e di…
 DETECTADA      M15 validação inline desligada → FAIL P46@1440     validação inline: erro junto do campo (aria-invalid…
+DETECTADA      M16 botão ⋯ escondido → FAIL P43@1440     varredura: cada item de cada menu (15 tipos) faz efeito; bot…
+DETECTADA      M17 clique direito não abre o menu → FAIL P43@1440     varredura: cada item de cada menu (15 tipos) fa…
+DETECTADA      M18 ligar conversa sem necessidade estoura → FAIL P47@1440     ligar conversa a uma necessidade: sem n…
 DETECTADA      M7 data exata de terceiros → FAIL P15@1440     nenhuma data exata de terceiros em tela; Desapegos inve…
 todas as mutações detectadas
 exit 0
@@ -243,7 +253,9 @@ exit 0
 `npx pnpm@11.18.0 gate`: lint, typecheck, test (117 de scope, 0 falhas) e secrets verdes. O passo `build` **não
 rodou localmente** (falta `apps/web/.env.local`, que exige a pilha Supabase); a confirmação é a CI do PR.
 
-## Achados dos testes durante a execução (corrigidos)
+## Achados durante a execução (corrigidos)
+
+Dos testes:
 
 - Com movimento reduzido, a transição global de 0,01 ms atrasava o posicionamento e o foco do menu de contexto
   (o foco não entrava no 1º item). Agora `prefers-reduced-motion` desliga animação e transição por completo.
@@ -251,6 +263,17 @@ rodou localmente** (falta `apps/web/.env.local`, que exige a pilha Supabase); a 
 - A paleta perdia as primeiras letras digitadas logo após Ctrl+K (o foco entrava 10 ms depois).
 - Ao fechar uma janela, o foco podia ficar num elemento escondido por um quadro, e o atalho seguinte era ignorado.
 - Uma animação com `scale` na janela fazia os controles medirem 43 px na sonda de alvo de toque.
+- O mutante M16 (botão ⋯ escondido) nasceu ineficaz: a declaração nova perdia para uma posterior da mesma regra.
+  Só o teste do próprio mutante mostrou isso; foi corrigido e detectado nos dois tamanhos de tela.
+
+Do revisor automático do PR:
+
+- **"Ligar a uma necessidade" estourava com zero necessidades ativas** (nenhuma opção marcada, `TypeError` no
+  envio). Existia desde o v34. Reproduzido antes com a P47 (vermelha nos dois tamanhos), corrigido (opção "nova"
+  marcada quando não há outra, e o envio não depende mais de haver uma marcada) e a P47 ficou verde; mutante M18.
+- **A regra 1 do plano era declarada e não medida, e por leitura era falsa** (em Conversas, "Silenciar" e
+  "Arquivar" só existem no menu). A regra foi reescrita para o que é verdade e passa a ser medido: botão ⋯
+  visível e na ordem de Tab nos 15 tipos, e clique direito com a mesma lista do botão (P43); mutantes M16 e M17.
 
 ## O que continua sem prova
 
