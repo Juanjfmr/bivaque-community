@@ -262,6 +262,14 @@ const muts = [
     "daysUntil(h.from) <= daysUntil(t.date) + 70",
   ],
   [
+    "M46 sugestão de vários valores tira só um valor, mas promete o grupo inteiro",
+    "P52",
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: trecho literal do HTML a ser substituído
+    'data-gid="${x.c.gid}">Tirar “${esc(whole(x.c))}” (',
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: trecho literal do HTML a ser substituído
+    'data-gid="${x.c.gid}" ${x.c.key ? `data-key="${esc(x.c.key)}"` : ""}>Tirar “${esc(whole(x.c))}” (',
+  ],
+  [
     "M7 data exata de terceiros",
     "P15",
     'return (+d <= 10 ? "início de " : +d <= 20 ? "meados de " : "fim de ") + mon',

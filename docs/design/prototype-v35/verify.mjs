@@ -3629,6 +3629,24 @@ await probe(
       await page.locator('.active-filters [data-act="filtClear"]').click()
       if ((await total(page)) !== all.length || (await page.locator(".active-filters").count()))
         bad.push("Limpar tudo não deixou a lista completa e sem filtros ativos")
+      // sem resultado com um grupo de VÁRIOS valores: a sugestão tira o grupo inteiro e a contagem promete isso
+      scope = await openFilterUI(page)
+      await pick(page, scope, "bairro", "Águas Claras")
+      await pick(page, scope, "bairro", "Noroeste")
+      await fillNum(page, scope, "m2", "max", 40)
+      await closeFilterUI(page)
+      const sugB = page.locator(".no-results [data-act=filtRemove]", { hasText: "Bairro" })
+      if (!(await sugB.count())) bad.push("vazio com dois bairros não sugere tirar o bairro")
+      else {
+        const t = await sugB.first().innerText()
+        const m = t.match(/\((\d+) imóve/)
+        if (!/Águas Claras, Noroeste/.test(t))
+          bad.push(`a sugestão não junta os dois bairros: ${t}`)
+        await sugB.first().click()
+        const n = await total(page)
+        if (!m || +m[1] !== n) bad.push(`sugestão do bairro prometia ${m?.[1]} e voltaram ${n}`)
+      }
+      await page.locator('.active-filters [data-act="filtClear"]').click()
       // busca por texto combina com filtros e some com o vazio
       await page.fill("[data-input=catQuery]", "casa")
       if (

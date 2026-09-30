@@ -105,7 +105,7 @@ e clique direito sem efeito.
 
 ### Task 6 — Verificação e relatório
 - [x] `verify.mjs` verde nos dois modos de movimento (107 verificações: 69 herdadas + 24 do polimento + 14 dos filtros), saída colada em **Evidência de execução**.
-- [x] `mutate.mjs`: 9 mutantes herdados (M1 a M9) + 36 novos (M10 a M45), 45 detectados por asserção (falha por exceção ou erro de JavaScript da página não conta). Cada uma das 19 sondas novas (P36 a P54) tem ao menos um mutante.
+- [x] `mutate.mjs`: 9 mutantes herdados (M1 a M9) + 37 novos (M10 a M46), 46 detectados por asserção (falha por exceção ou erro de JavaScript da página não conta). Cada uma das 19 sondas novas (P36 a P54) tem ao menos um mutante.
 - [x] `npx pnpm@11.18.0 gate`: lint, typecheck, test e secrets verdes. O Biome exclui só o HTML. (`build` não rodou localmente: falta `apps/web/.env.local`; a confirmação é a CI do PR.)
 - [x] Notas de "o que continua sem prova" reescritas no README.
 
@@ -141,12 +141,12 @@ forma independente do motor, e não de números fixos): imóveis (P48), serviço
 benefícios e referências (P51), sem resultado, ✕ e Limpar tudo (P52), publicar e depois filtrar (P53), painel no
 computador e folha no celular (P54). A contagem de cada opção é comparada com o resultado real ao escolhê-la, o
 anúncio é conferido contra o filtro e contra a faixa própria, e ordenar por preço não move o anúncio. P35 passou a
-conferir os campos novos dos formulários. Mutantes M27 a M37 e M41 a M45: anúncio que fura o filtro, "Limpar tudo" que não
+conferir os campos novos dos formulários. Mutantes M27 a M37 e M41 a M46: anúncio que fura o filtro, "Limpar tudo" que não
 limpa, ordenação de preço invertida, contagem de opção errada, mínimo que vira igual, especialidade que não zera ao
 trocar o tipo, comodidades do anúncio publicado perdidas, sem-resultado sem sugestão, "Ver N" que não acompanha,
 bairros que viram "todos ao mesmo tempo" e comodidades que viram "qualquer uma", faixa etária que aparece sem o
 assunto escola, fim de semana sem o limite de 14 dias, "vencem em breve" que inclui quem ainda tem prazo, "só as
-que salvei" que ignora o que foi salvo e "disponível quando eu chegar" que aceita qualquer data.
+que salvei" que ignora o que foi salvo "disponível quando eu chegar" que aceita qualquer data e sugestão de vários valores que tira só um deles.
 
 ## Como rodar
 
@@ -157,7 +157,7 @@ node docs/design/prototype-v35/mutate.mjs
 
 ## Evidência de execução
 
-Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `903afbaef2c156e2`, `verify.mjs` `25d5a3778895b571`, `mutate.mjs` `d7883e916c328526`.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `8d94b720a20485dc`, `verify.mjs` `e8d8bfbe7ce76057`, `mutate.mjs` `7691fa2a710362a5`.
 Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
 porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
@@ -282,7 +282,7 @@ PASS P54@390      computador: painel fixo e sem botão Filtros; celular: sem pai
 `MOTION=normal node docs/design/prototype-v35/verify.mjs` (animação e transição ligadas), saída 0: as mesmas
 107 linhas `PASS`, nenhuma `FAIL`, e a mesma linha final `107/107 verific`.
 
-`node docs/design/prototype-v35/mutate.mjs`, saída 0 (45 quebras, 45 detectadas por asserção, cada sonda-alvo com corrida de controle limpa):
+`node docs/design/prototype-v35/mutate.mjs`, saída 0 (46 quebras, 46 detectadas por asserção, cada sonda-alvo com corrida de controle limpa):
 
 ```
 DETECTADA      M1 anúncio entra no orgânico → FAIL P01@1440     anúncio nunca aparece na zona orgânica do Resolver (5 
@@ -329,6 +329,7 @@ DETECTADA      M42 fim de semana ignora o limite de 14 dias → FAIL P51@1440   
 DETECTADA      M43 vencem em breve passa a incluir os que ainda têm prazo → FAIL P51@1440     eventos, benefícios e re
 DETECTADA      M44 'Só as que salvei' ignora o que foi salvo → FAIL P51@1440     eventos, benefícios e referências: ca
 DETECTADA      M45 'disponível quando eu chegar' aceita qualquer data → FAIL P48@1440     imóveis: cada combinação mos
+DETECTADA      M46 sugestão de vários valores tira só um valor, mas promete o grupo inteiro → FAIL P52@1440     sem re
 DETECTADA      M7 data exata de terceiros → FAIL P15@1440     nenhuma data exata de terceiros em tela; Desapegos inver
 todas as mutações detectadas
 ```
@@ -404,6 +405,13 @@ Da revisão do PR, terceira rodada:
   atualiza o painel, e recarrega a lista quando o filtro está ativo.
 - README: reposta a ressalva do autoteste (`?selftest=1` não conta como evidência), a nota de que nada disso roda no
   CI do PR e a de que os tokens do protótipo não estão em `packages/tokens`.
+
+Da revisão do PR, quarta rodada:
+
+- **A sugestão do "sem resultado" prometia a contagem do grupo inteiro, mas o clique tirava só um valor** (Bairro
+  "Águas Claras" + "Noroeste": o botão dizia "Tirar Bairro: Águas Claras (N imóveis)" e o clique deixava "Noroeste"
+  ligado, então a tela podia seguir vazia). A sugestão agora tira o grupo inteiro e o texto junta os valores ("Bairro:
+  Águas Claras, Noroeste"). A P52 ganhou o cenário com dois bairros e uma faixa de área que esvazia a lista; mutante M46.
 
 ## O que continua sem prova
 

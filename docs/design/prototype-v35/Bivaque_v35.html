@@ -2450,8 +2450,10 @@ function emptyResults(spec, st, kind, adsShown) {
   const sug = chips.map((c) => ({ c, n: filtRes(spec, st, c.gid === "q" ? "q" : c.gid).length })).filter((x) => x.n > 0 && x.n > adsShown).sort((a, b) => b.n - a.n)
   const seen = new Set(); const top = []
   for (const x of sug) { const id = x.c.gid; if (seen.has(id)) continue; seen.add(id); top.push(x); if (top.length === 2) break }
+  // a sugestão tira o grupo inteiro (a contagem foi feita sem ele), então o texto junta os valores escolhidos
+  const whole = (c) => { const same = chips.filter((y) => y.gid === c.gid); return same.length < 2 ? c.label : `${same[0].label.split(": ")[0]}: ${same.map((y) => y.label.split(": ").slice(1).join(": ")).join(", ")}` }
   const lead = adsShown ? `Nada além do anúncio acima combina com esses filtros.` : `Nenhum ${spec.noun[0]} com esses filtros.`
-  return `<div class="no-results"><p><b>${lead}</b></p>${top.length ? `<p class="fhint">Para voltar a ter resultados:</p><div class="choice-row">${top.map((x) => `<button class="secondary" data-act="filtRemove" data-kind="${kind}" data-gid="${x.c.gid}" ${x.c.key ? `data-key="${esc(x.c.key)}"` : ""}>Tirar “${esc(x.c.label)}” (${plural(x.n, spec.noun[0], spec.noun[1])})</button>`).join("")}</div>` : ""}<div class="choice-row">${chips.length ? `<button class="primary" data-act="filtClear" data-kind="${kind}">Limpar tudo</button>` : ""}<button class="link-btn" data-act="openAsk" data-q="">Perguntar a quem já viveu isso</button></div></div>`
+  return `<div class="no-results"><p><b>${lead}</b></p>${top.length ? `<p class="fhint">Para voltar a ter resultados:</p><div class="choice-row">${top.map((x) => `<button class="secondary" data-act="filtRemove" data-kind="${kind}" data-gid="${x.c.gid}">Tirar “${esc(whole(x.c))}” (${plural(x.n, spec.noun[0], spec.noun[1])})</button>`).join("")}</div>` : ""}<div class="choice-row">${chips.length ? `<button class="primary" data-act="filtClear" data-kind="${kind}">Limpar tudo</button>` : ""}<button class="link-btn" data-act="openAsk" data-q="">Perguntar a quem já viveu isso</button></div></div>`
 }
 function catPage(kind, p) {
   const side = catSide(kind, p); const k = cityKey(side)
