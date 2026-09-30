@@ -2429,6 +2429,15 @@ function refreshFilterSheet() {
   body.innerHTML = fpanelInner(kind, spec, st, "d"); body.scrollTop = top
   $("#fsFoot").innerHTML = fsFootHTML(kind, spec, st, filtRes(spec, st).length)
 }
+// salvar ou desfazer fora do painel (coração, menu do cartão) muda a contagem de "Só as que salvei"
+function refreshPanel() {
+  const kind = route.page; const el = $("#fpanel")
+  if (!CATCTX[kind] || !el) return
+  const top = el.scrollTop
+  el.outerHTML = fpanelHTML(kind, catSpec(kind), filtState(kind))
+  const n = $("#fpanel"); if (n) n.scrollTop = top
+  refreshFilterSheet()
+}
 A.openFilters = (d) => { FSHEET = { kind: d.kind }; openDrawer(filterSheetHTML(d.kind), { cls: "filters" }) }
 
 /* ---- página do catálogo ---- */
@@ -2689,6 +2698,7 @@ A.toggleSave = (d, el) => {
     if (el && el.classList.contains("secondary")) el.innerHTML = `${ic("heart", on ? "fill" : "")} ${on ? "Salvo" : "Salvar"}`
     if (el && el.hasAttribute("aria-pressed")) el.setAttribute("aria-pressed", on)
     if (route.page === "profile") render()
+    if (CATCTX[route.page]) { if (filtState(route.page).g.saved) catRender(); else refreshPanel() }
     return on
   }
   const on = flip()
@@ -3360,7 +3370,7 @@ tick()
   render()
 }
 if (new URLSearchParams(location.search).get("selftest") === "1") setTimeout(selfTest, 50)
-window.__bv = { get S() { return S }, A, DB, VIEWS, route: () => route, toastN: () => toastN, buildResults, classify, sideCity, T, phaseOf, needById, deriveNotifs, go, render, overlayOpen: () => overlayOpen }
+window.__bv = { get S() { return S }, A, DB, VIEWS, today, route: () => route, toastN: () => toastN, buildResults, classify, sideCity, T, phaseOf, needById, deriveNotifs, go, render, overlayOpen: () => overlayOpen }
 
 </script>
 </body>

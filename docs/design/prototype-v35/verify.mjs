@@ -25,6 +25,8 @@ const browser = await chromium.launch(exe ? { executablePath: exe } : {})
 const DESK = { width: 1440, height: 900 },
   MOB = { width: 390, height: 844 }
 const results = []
+// a âncora de datas vem da própria página (today() do HTML), lida quando cada contexto nasce em fresh()
+let BASE_TODAY = ""
 const pageErrors = []
 // Por padrão as sondas rodam com movimento reduzido (medidas estáveis). MOTION=normal roda a suíte inteira
 // com animação e transição ligadas, que é o que a maioria das pessoas recebe.
@@ -44,6 +46,7 @@ async function fresh(vp = CUR) {
   await page.route(/unsplash\.com|fonts\.(googleapis|gstatic)\.com/, (r) => r.abort())
   await page.goto(PAGE_URL)
   await page.waitForFunction(() => window.__bv)
+  BASE_TODAY = await page.evaluate(() => __bv.today())
   return { ctx, page }
 }
 const S = (page, f, arg) =>
@@ -2952,7 +2955,6 @@ await probe(
 
 /* ============ FILTROS DOS CATÁLOGOS ============ */
 // O conjunto esperado sai de um cálculo sobre os dados (DB), escrito aqui de forma independente do motor.
-const BASE_TODAY = "2026-09-29"
 const dias = (iso) =>
   Math.round((new Date(`${iso}T12:00:00`) - new Date(`${BASE_TODAY}T12:00:00`)) / 864e5)
 const ids = (page) =>
@@ -3138,6 +3140,52 @@ await probe(
         page,
         "pets e mobiliado",
         H((h) => h.pets && h.furnished),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      // 6b) banheiros, área, bairro, condomínio incluso e disponível quando eu chegar
+      const tdate = await page.evaluate(() => __bv.T().date)
+      scope = await openFilterUI(page)
+      await pick(page, scope, "baths", 2)
+      await fillNum(page, scope, "m2", "min", 70)
+      await fillNum(page, scope, "m2", "max", 120)
+      p = await conferir(
+        page,
+        "2+ banheiros e 70 a 120 m²",
+        H((h) => h.baths >= 2 && h.m2 >= 70 && h.m2 <= 120),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "bairro", "Águas Claras")
+      await pick(page, scope, "bairro", "Noroeste")
+      p = await conferir(
+        page,
+        "…em Águas Claras ou Noroeste",
+        H(
+          (h) =>
+            h.baths >= 2 &&
+            h.m2 >= 70 &&
+            h.m2 <= 120 &&
+            ["Águas Claras", "Noroeste"].includes(h.bairro),
+        ),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      await pick(page, scope, "condoIn")
+      p = await conferir(
+        page,
+        "condomínio incluso",
+        H((h) => h.condoIn),
+      )
+      if (p) bad.push(p)
+      await pick(page, scope, "condoIn") // desmarca
+      await pick(page, scope, "avail")
+      p = await conferir(
+        page,
+        "disponível quando eu chegar (até 7 dias depois da data da mudança)",
+        H((h) => dias(h.from) <= dias(tdate) + 7),
       )
       if (p) bad.push(p)
       await closeFilterUI(page)
@@ -3405,6 +3453,16 @@ await probe(
       )
       if (p) bad.push(p)
       await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      await pick(page, scope, "comm", "ajuricaba")
+      p = await conferir(
+        page,
+        "comunidade Vila Ajuricaba",
+        E((e) => e.community === "ajuricaba"),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
       // benefícios
       await goCat(page, "benefits", "origin")
       const bens = await dbRows(page, "benefits", "manaus")
@@ -3436,7 +3494,22 @@ await probe(
       )
       if (p) bad.push(p)
       await closeFilterUI(page)
-      // referências (Brasília)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      await A(page, "redeem", { id: "b-ac" })
+      await A(page, "closeDrawer")
+      scope = await openFilterUI(page)
+      await pick(page, scope, "fresh")
+      p = await conferir(
+        page,
+        "ainda não resgatei",
+        B((b) => b.id !== "b-ac"),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      // referências (Brasília); uma delas passa de "em dia" para "em revisão" com relatos novos
+      await page.evaluate(() => {
+        __bv.S.refExtra["r-bsb-docs"] = 3
+      })
       await goCat(page, "refs", "destination")
       const refs = await dbRows(page, "refs", "brasilia")
       const R = (f) => refs.filter(f).map((x) => x.id)
@@ -3466,6 +3539,45 @@ await probe(
         "10+ relatos",
         R((r) => r.needs + r.reports >= 10),
       )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      // situação da revisão: o esperado sai do selo que cada cartão já mostra, sem depender da regra do motor
+      const selo = await page.evaluate(() =>
+        Object.fromEntries(
+          [...document.querySelectorAll("#catList .ref-card")].map((c) => [
+            c.dataset.mid,
+            c.querySelector(".badge.good, .badge.gold")?.innerText.trim(),
+          ]),
+        ),
+      )
+      const comSelo = (t) => Object.keys(selo).filter((id) => selo[id] === t)
+      scope = await openFilterUI(page)
+      if (!(await page.locator(`${scope} [data-filt="status"][data-fv="vencendo"]`).isDisabled()))
+        bad.push("'vence em breve' não tem nenhum resultado e deveria estar desabilitada")
+      await pick(page, scope, "status", "revisao")
+      p = await conferir(page, "em revisão pela curadoria", comSelo("Em revisão pela curadoria"))
+      if (p) bad.push(p)
+      await pick(page, scope, "status", "revisao") // desmarca
+      await pick(page, scope, "status", "ok")
+      p = await conferir(page, "revisão em dia", comSelo("Em dia"))
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      scope = await openFilterUI(page)
+      await pick(page, scope, "comm", "arrivalsBsb")
+      p = await conferir(
+        page,
+        "comunidade Chegando a Brasília",
+        R((r) => r.community === "arrivalsBsb"),
+      )
+      if (p) bad.push(p)
+      await closeFilterUI(page)
+      await page.locator('.active-filters [data-act="filtClear"]').click()
+      await A(page, "toggleSave", { type: "ref", id: "r-bsb-docs" })
+      scope = await openFilterUI(page)
+      await pick(page, scope, "saved")
+      p = await conferir(page, "só as que salvei", ["r-bsb-docs"])
       if (p) bad.push(p)
       await closeFilterUI(page)
     })

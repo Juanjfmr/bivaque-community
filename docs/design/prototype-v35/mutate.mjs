@@ -232,12 +232,56 @@ const muts = [
   ["M39 texto sem contraste suficiente", "P30", "--muted:#586560", "--muted:#a9b3ae"],
   ["M40 texto menor que 12 px", "P36", "--fs-xs:.75rem", "--fs-xs:.625rem"],
   [
+    "M41 faixa etária aparece sem escolher o assunto escola",
+    "P51",
+    'hidden: (st) => !(st.g.subj || []).includes("escola") }',
+    "hidden: () => false }",
+  ],
+  [
+    "M42 fim de semana ignora o limite de 14 dias",
+    "P51",
+    'v === "weekend" ? isWeekend(e.date) && daysUntil(e.date) <= 14 :',
+    'v === "weekend" ? isWeekend(e.date) :',
+  ],
+  [
+    "M43 vencem em breve passa a incluir os que ainda têm prazo",
+    "P51",
+    ": benefitState(b) === v),",
+    ': benefitState(b) !== "expired"),',
+  ],
+  [
+    "M44 'Só as que salvei' ignora o que foi salvo",
+    "P51",
+    '(r) => savedHas("ref", r.id), { other: true }',
+    "() => true, { other: true }",
+  ],
+  [
+    "M45 'disponível quando eu chegar' aceita qualquer data",
+    "P48",
+    "daysUntil(h.from) <= daysUntil(t.date) + 7",
+    "daysUntil(h.from) <= daysUntil(t.date) + 70",
+  ],
+  [
     "M7 data exata de terceiros",
     "P15",
     'return (+d <= 10 ? "início de " : +d <= 20 ? "meados de " : "fim de ") + mon',
     'return d + "/" + m',
   ],
 ]
+// Corrida de controle: uma sonda que já falha no arquivo sem mutação faria toda quebra que a aponta parecer
+// "detectada". Cada sonda-alvo é medida uma vez, sem mutação, antes de valer como prova.
+const controle = new Map()
+function limpa(probe) {
+  if (!controle.has(probe)) {
+    const r = spawnSync("node", [join(here, "verify.mjs")], {
+      env: { ...process.env, ONLY: probe },
+      encoding: "utf8",
+    })
+    const lines = r.stdout.split("\n").filter((l) => /^(PASS|FAIL) /.test(l))
+    controle.set(probe, lines.length > 0 && !lines.some((l) => l.startsWith("FAIL")))
+  }
+  return controle.get(probe)
+}
 const dir = mkdtempSync(join(tmpdir(), "bv35-"))
 let ok = true
 const only = process.env.MUT ? new Set(process.env.MUT.split(",")) : null // ex.: MUT=M9,M15
@@ -245,6 +289,11 @@ for (const [name, probe, old, neu] of muts) {
   if (only && !only.has(name.split(" ")[0])) continue
   if (!src.includes(old)) {
     console.log("!! trecho não encontrado (o HTML mudou):", name)
+    ok = false
+    continue
+  }
+  if (!limpa(probe)) {
+    console.log(`INCONCLUSIVO   ${name} → a sonda ${probe} já falha sem mutação`)
     ok = false
     continue
   }

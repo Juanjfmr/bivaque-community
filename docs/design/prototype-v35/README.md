@@ -4,7 +4,10 @@
 (PR #87). A autoridade visual segue sendo `docs/design/visual-guide-2026-09-06/`; o dono autorizou, só para este
 protótipo, liberdade para evoluir visual e navegação. Quem travar o v35 como referência precisa registrar que isso
 troca a navegação de 06/09 (Início / Explorar / Comunidades / Perfil) por Início / Resolver / Comunidade /
-Conversas / Você, com **Contribuir** na barra superior no celular.
+Conversas / Você, com **Contribuir** na barra superior no celular. Travar o v35 também exige migrar os tokens: a
+paleta do protótipo (`--pine` `#0c513f` e derivadas) **não** existe em `packages/tokens/src/tokens.json`, e o
+`tests/scope/design-contrast.test.mjs` só valida os pares de contraste declarados lá, então os pares do protótipo
+(medidos em execução pela P30) precisam ser refeitos sobre os tokens migrados.
 
 ## Como abrir
 
@@ -43,8 +46,15 @@ No celular (ou janela de 390 px):
 ```sh
 node docs/design/prototype-v35/verify.mjs                 # 55 sondas, 107 verificações; a maioria roda em 1440 e 390 px
 MOTION=normal node docs/design/prototype-v35/verify.mjs   # a mesma suíte com animação e transição ligadas
-node docs/design/prototype-v35/mutate.mjs                 # quebra 40 invariantes; termina em 0 só se todas forem detectadas por asserção
+node docs/design/prototype-v35/mutate.mjs                 # quebra 45 invariantes; termina em 0 só se todas forem detectadas por asserção
 ```
+
+**Nada disso roda no CI do PR.** O CI valida o `gate` e o build do app, não estas sondas: o "107/107" e o "45/45"
+existem porque alguém rodou os comandos e colou a saída no plano, e o que amarra o número ao código é o SHA-256
+escrito lá (`sha256sum` confere). Ligar as sondas ao CI (uma lane que rode `verify.mjs` nos dois modos e
+`mutate.mjs`) muda `.github/workflows` e fica para decisão do dono.
+
+O autoteste do arquivo (`Bivaque_v35.html?selftest=1`) é só regressão local e **não** conta como evidência.
 
 Por padrão as sondas rodam com **movimento reduzido**, que dá medidas estáveis de posição e tamanho. Isso pode esconder
 defeitos que só existem com movimento ligado, por isso a mesma suíte também roda com `MOTION=normal`, e as duas passam na versão registrada no plano. A P41 confere, nos dois
@@ -59,9 +69,11 @@ com limite de 8 s por ação. Nenhuma sonda foi enfraquecida; P05, P27, P29, P32
 verificações novas do polimento e 14 dos filtros. A verificação é do próprio implementador, **não** é revisão
 independente.
 
-O v34 tinha 9 mutantes (M1 a M9) e o v35 tem 40: os 9 herdados e 31 novos, e as 19 sondas novas (P36 a P54) têm ao
+O v34 tinha 9 mutantes (M1 a M9) e o v35 tem 45: os 9 herdados e 36 novos, e as 19 sondas novas (P36 a P54) têm ao
 menos um. Uma quebra só conta como detectada quando a sonda **falha por asserção**: falha por exceção da sonda ou
-por erro de JavaScript da página (a página só quebrou) não conta. `MUT=M9,M15` roda só alguns.
+por erro de JavaScript da página (a página só quebrou) não conta. Antes de valer, cada sonda-alvo roda uma vez sem
+mutação (corrida de controle): se ela já falha, o mutante sai como INCONCLUSIVO e o script reprova. `MUT=M9,M15`
+roda só alguns.
 
 ## O que mudou em relação ao v34
 
