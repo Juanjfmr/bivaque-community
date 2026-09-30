@@ -20,6 +20,8 @@
       "!**/docs/agents/design-audit/experiments",
       "!**/docs/design/visual-guide-2026-09-06",
       "!**/docs/design/prototype-v34/Bivaque_v34.html",
+      "!**/docs/design/prototype-v35/Bivaque_v35.html",
+      "!**/docs/design/prototype-v35/.mut.html",
       "!**/.vercel",
       "!**/supabase/.temp",
       "!**/apps/mobile/dist-android",
