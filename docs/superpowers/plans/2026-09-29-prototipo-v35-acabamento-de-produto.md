@@ -157,7 +157,7 @@ node docs/design/prototype-v35/mutate.mjs
 
 ## Evidência de execução
 
-Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `8d94b720a20485dc`, `verify.mjs` `e8d8bfbe7ce76057`, `mutate.mjs` `a4d173303a3aeb7d`.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `8d94b720a20485dc`, `verify.mjs` `e8d8bfbe7ce76057`, `mutate.mjs` `1802664df488dfb8`.
 Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
 porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
@@ -417,6 +417,10 @@ Da revisão do PR, quarta rodada:
   copiado para `/tmp`, P29, P30 e P36 seguem verdes (os mutantes M38 a M40 não dependiam da fonte) e só a P34, que
   mede o carregamento da fonte, cai. Mesmo assim a cópia passou a ficar ao lado do original (`.mut.html`, ignorada
   pelo git e apagada ao fim), para controle e mutante serem a mesma página.
+- **Um `.mut.html` esquecido por uma execução interrompida derrubaria o `pnpm lint`** (o Biome não lê o `.gitignore`).
+  Reproduzido com um arquivo de teste (lint saía 1). Agora `biome.json` exclui `.mut.html`, e o `mutate.mjs` apaga a
+  cópia ao sair, ao receber SIGINT ou SIGTERM (depois que a sonda em andamento termina, porque `spawnSync` bloqueia o
+  laço de eventos) e ao começar, se sobrou uma de uma execução que morreu.
 
 ## O que continua sem prova
 

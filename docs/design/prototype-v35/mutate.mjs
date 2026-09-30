@@ -292,6 +292,15 @@ function limpa(probe) {
 // A cópia mutada fica AO LADO do original: a Public Sans vem de caminho relativo (../../../apps/web/app/fonts),
 // e numa pasta temporária a fonte não carregaria, então o mutante seria medido numa página diferente da do controle.
 const mutFile = join(here, ".mut.html")
+// se o processo for interrompido no meio, a cópia não pode ficar na árvore
+const limpaCopia = () => rmSync(mutFile, { force: true })
+process.on("exit", limpaCopia)
+for (const sig of ["SIGINT", "SIGTERM"])
+  process.on(sig, () => {
+    limpaCopia()
+    process.exit(130)
+  })
+limpaCopia() // resto de uma execução anterior que morreu
 let ok = true
 const only = process.env.MUT ? new Set(process.env.MUT.split(",")) : null // ex.: MUT=M9,M15
 for (const [name, probe, old, neu] of muts) {
