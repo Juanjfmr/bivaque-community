@@ -328,7 +328,15 @@ for (const [name, probe, old, neu] of muts) {
   // Falha de asserção = sobra texto de asserção depois de tirar o "erro JS" anexado; "exceção:" sozinha
   // significa que a sonda nem chegou a concluir (ex.: esgotou o tempo esperando um botão que sumiu).
   const assertion = (l) => {
-    const main = l.split("→").slice(1).join("→").split(" · erro JS:")[0].trim()
+    // o separador do detalhe é "  → " (dois espaços): títulos como P05 e P36 têm um "→" próprio
+    const i = l.indexOf("  → ")
+    const main =
+      i < 0
+        ? ""
+        : l
+            .slice(i + 4)
+            .split(" · erro JS:")[0]
+            .trim()
     return main !== "" && !main.startsWith("exceção:")
   }
   const fails = lines.filter((l) => l.startsWith("FAIL"))

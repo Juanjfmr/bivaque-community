@@ -157,7 +157,7 @@ node docs/design/prototype-v35/mutate.mjs
 
 ## Evidência de execução
 
-Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `8d94b720a20485dc`, `verify.mjs` `e8d8bfbe7ce76057`, `mutate.mjs` `1802664df488dfb8`.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `8abeb267c0a76dd9`, `verify.mjs` `e8d8bfbe7ce76057`, `mutate.mjs` `f727401ed8f4475a`.
 Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
 porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
@@ -421,6 +421,13 @@ Da revisão do PR, quarta rodada:
   Reproduzido com um arquivo de teste (lint saía 1). Agora `biome.json` exclui `.mut.html`, e o `mutate.mjs` apaga a
   cópia ao sair, ao receber SIGINT ou SIGTERM (depois que a sonda em andamento termina, porque `spawnSync` bloqueia o
   laço de eventos) e ao começar, se sobrou uma de uma execução que morreu.
+- **O classificador de falha de asserção cortava em qualquer `→`, e os títulos de P05 e P36 têm uma seta própria**:
+  numa exceção da P36 o corte caía dentro do título, o resto não começava com "exceção:" e a página quebrada passava
+  por asserção. O corte agora é no separador exato do detalhe (`"  → "`, dois espaços), conferido com cinco linhas de
+  exemplo (exceção e asserção, com e sem seta no título). Os 46 seguem detectados: os mutantes da P36 falham por asserção.
+- **`FLOCAL` era código morto** (declarado e nunca lido) e o comentário de `catPage` prometia um reset só dos grupos
+  locais, quando trocar de lado zera todos os filtros (é o que a P54 mede). Removido, e o comentário passou a dizer o
+  que o código faz.
 
 ## O que continua sem prova
 

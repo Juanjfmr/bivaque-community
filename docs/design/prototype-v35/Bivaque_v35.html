@@ -2145,7 +2145,6 @@ function sideSeg(kind, side) {
 /* ===== Filtros dos catálogos: um motor declarativo para os seis catálogos ===== */
 const FILT = {}
 const CATCTX = {}
-const FLOCAL = { housing: ["bairro"], services: ["region"], market: ["bairro"], events: ["comm"], benefits: [], refs: ["comm"] }
 const filtState = (kind) => (FILT[kind] = FILT[kind] || { q: "", sort: null, g: {}, open: {} })
 const asArr = (v) => (Array.isArray(v) ? v : v == null || v === "" ? [] : [v])
 const digits = (v) => { const t = String(v ?? "").replace(/\D/g, ""); return t === "" ? null : +t }
@@ -2459,7 +2458,7 @@ function catPage(kind, p) {
   const side = catSide(kind, p); const k = cityKey(side)
   CATCTX[kind] = { side }
   const spec = FSPEC[kind]({ side, k }); const st = filtState(kind)
-  // filtros de uma cidade não valem para a outra: bairro, região e faixa de preço mudam de lugar para lugar
+  // trocar de lado (de cidade) zera todos os filtros: bairro, região e faixa de preço mudam de lugar para lugar
   if (st.side !== undefined && st.side !== side) { st.q = ""; st.g = {}; st.sort = null }
   st.side = side
   const cta = spec.cta ? `<button class="primary" data-act="${spec.cta[0]}" data-type="${spec.cta[2] || ""}">${esc(spec.cta[1])}</button>` : ""
