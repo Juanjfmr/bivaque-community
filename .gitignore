@@ -57,3 +57,6 @@ apps/mobile/build-log-*.txt
 
 # Store local do pnpm: ~82 mil arquivos, nunca versionado.
 .pnpm-store/
+
+# cópia temporária que o mutate.mjs do protótipo escreve ao lado do original
+docs/design/prototype-v35/.mut.html

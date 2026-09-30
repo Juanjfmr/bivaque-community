@@ -157,7 +157,7 @@ node docs/design/prototype-v35/mutate.mjs
 
 ## Evidência de execução
 
-Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `8d94b720a20485dc`, `verify.mjs` `e8d8bfbe7ce76057`, `mutate.mjs` `7691fa2a710362a5`.
+Arquivos testados (SHA-256, primeiros 16 caracteres): `Bivaque_v35.html` `8d94b720a20485dc`, `verify.mjs` `e8d8bfbe7ce76057`, `mutate.mjs` `a4d173303a3aeb7d`.
 Data: 29/09/2026. Chromium do Playwright. A evidência é amarrada ao conteúdo dos arquivos, e não a um commit,
 porque um commit não pode conter o próprio hash. Confira com `sha256sum`.
 
@@ -412,6 +412,11 @@ Da revisão do PR, quarta rodada:
   "Águas Claras" + "Noroeste": o botão dizia "Tirar Bairro: Águas Claras (N imóveis)" e o clique deixava "Noroeste"
   ligado, então a tela podia seguir vazia). A sugestão agora tira o grupo inteiro e o texto junta os valores ("Bairro:
   Águas Claras, Noroeste"). A P52 ganhou o cenário com dois bairros e uma faixa de área que esvazia a lista; mutante M46.
+- **O mutante era medido numa página diferente da do controle.** `mutate.mjs` gravava a cópia mutada numa pasta
+  temporária, onde a Public Sans (caminho relativo `../../../apps/web/app/fonts`) não carrega. Conferido: no arquivo
+  copiado para `/tmp`, P29, P30 e P36 seguem verdes (os mutantes M38 a M40 não dependiam da fonte) e só a P34, que
+  mede o carregamento da fonte, cai. Mesmo assim a cópia passou a ficar ao lado do original (`.mut.html`, ignorada
+  pelo git e apagada ao fim), para controle e mutante serem a mesma página.
 
 ## O que continua sem prova
 

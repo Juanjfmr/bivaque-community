@@ -4,8 +4,7 @@
 // Frágil de propósito: cada mutação troca um trecho exato do HTML. Se o trecho mudar, o script avisa.
 
 import { spawnSync } from "node:child_process"
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { readFileSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -290,7 +289,9 @@ function limpa(probe) {
   }
   return controle.get(probe)
 }
-const dir = mkdtempSync(join(tmpdir(), "bv35-"))
+// A cópia mutada fica AO LADO do original: a Public Sans vem de caminho relativo (../../../apps/web/app/fonts),
+// e numa pasta temporária a fonte não carregaria, então o mutante seria medido numa página diferente da do controle.
+const mutFile = join(here, ".mut.html")
 let ok = true
 const only = process.env.MUT ? new Set(process.env.MUT.split(",")) : null // ex.: MUT=M9,M15
 for (const [name, probe, old, neu] of muts) {
@@ -305,7 +306,7 @@ for (const [name, probe, old, neu] of muts) {
     ok = false
     continue
   }
-  const f = join(dir, "mut.html")
+  const f = mutFile
   writeFileSync(f, src.replace(old, neu))
   const r = spawnSync("node", [join(here, "verify.mjs"), f], {
     env: { ...process.env, ONLY: probe },
@@ -329,6 +330,6 @@ for (const [name, probe, old, neu] of muts) {
   console.log(`${tag + name} → ${line.slice(0, 110)}`)
   ok = ok && caught
 }
-rmSync(dir, { recursive: true, force: true })
+rmSync(mutFile, { force: true })
 console.log(ok ? "todas as mutações detectadas" : "HÁ MUTAÇÃO NÃO DETECTADA")
 process.exit(ok ? 0 : 1)
