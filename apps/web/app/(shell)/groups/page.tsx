@@ -198,9 +198,7 @@ export default function GroupsPage() {
         .range(from, to)
 
       if (directoryError) throw directoryError
-      const rows = ((data ?? []) as unknown as GroupDirectoryRow[]).filter(
-        (group) => !group.community_id || communities.some((item) => item.id === group.community_id),
-      )
+      const rows = (data ?? []) as unknown as GroupDirectoryRow[]
 
       const withCounts = await Promise.all(
         rows.map(async (group): Promise<GroupCardRow> => {
