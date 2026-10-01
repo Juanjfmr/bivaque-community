@@ -1,15 +1,14 @@
 import { Button } from "@heroui/react"
+import { createServerClient } from "@supabase/ssr"
 import { ArrowLeft, BookOpen, Search, Settings2, UsersRound } from "lucide-react"
 import type { Route } from "next"
-import Link from "next/link"
-import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
 import { FeedPost } from "../../../components/bivaque/feed-post"
 import styles from "../groups-v42.module.css"
-
 type GroupRow = Database["public"]["Tables"]["groups"]["Row"]
 type MembershipRow = Database["public"]["Tables"]["group_memberships"]["Row"]
 type FeedGroupRow = Database["public"]["Functions"]["feed_group"]["Returns"][number]
@@ -558,7 +557,7 @@ export default async function GroupDetailPage({
                   </div>
                 ) : null}
 
-                <form className={styles.feedSearch} method="get" role="search">
+                <search aria-label="Buscar no grupo">\n                  <form className={styles.feedSearch} method="get">
                   <Search size={19} aria-hidden="true" className="text-muted" />
                   <input
                     type="search"
@@ -601,7 +600,7 @@ export default async function GroupDetailPage({
                     {filter !== "all" ? <input type="hidden" name="filter" value={filter} /> : null}
                     <select name="order" defaultValue={order} className={styles.sort} aria-label="Ordenar conversas">
                       <option value="recent">Mais recentes</option>
-                      <option value="activity">Mais atividade</option>
+                      <option value="activity">Mais respostas</option>
                       <option value="oldest">Mais antigas</option>
                     </select>
                     <Button type="submit" size="sm" variant="secondary">Ordenar</Button>
