@@ -570,7 +570,8 @@ export default async function GroupDetailPage({
                   {filter !== "all" ? <input type="hidden" name="filter" value={filter} /> : null}
                   {order !== "recent" ? <input type="hidden" name="order" value={order} /> : null}
                   <Button type="submit" size="sm" variant="primary">Buscar</Button>
-                </form>
+                  </form>
+                </search>
 
                 <div className={styles.feedTools}>
                   <div className={styles.feedFilters}>
