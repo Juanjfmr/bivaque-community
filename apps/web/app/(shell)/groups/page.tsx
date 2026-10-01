@@ -51,6 +51,7 @@ export default function GroupsPage() {
   const [groups, setGroups] = useState<GroupCardRow[]>([])
   const [total, setTotal] = useState(0)
   const [scope, setScope] = useState<ScopeFilter>("all")
+  const [sort, setSort] = useState<"recent" | "name" | "oldest">("recent")
   const [page, setPage] = useState(1)
   const [queryDraft, setQueryDraft] = useState("")
   const [query, setQuery] = useState("")
@@ -193,9 +194,11 @@ export default function GroupsPage() {
 
       const from = (page - 1) * PAGE_SIZE
       const to = from + PAGE_SIZE - 1
-      const { data, count, error: directoryError } = await request
-        .order("created_at", { ascending: false })
-        .range(from, to)
+      const orderedRequest =
+        sort === "name"
+          ? request.order("name", { ascending: true })
+          : request.order("created_at", { ascending: sort === "oldest" })
+      const { data, count, error: directoryError } = await orderedRequest.range(from, to)
 
       if (directoryError) throw directoryError
       const rows = (data ?? []) as unknown as GroupDirectoryRow[]
@@ -233,7 +236,7 @@ export default function GroupsPage() {
     } finally {
       setDirectoryLoading(false)
     }
-  }, [communities, localityId, memberships, page, query, scope, supabase, userId])
+  }, [localityId, memberships, page, query, scope, sort, supabase, userId])
 
   useEffect(() => {
     if (!bootLoading) void loadDirectory()
@@ -360,7 +363,25 @@ export default function GroupsPage() {
               ? "Nenhum grupo"
               : `${startItem}–${endItem} de ${total} grupos`}
         </span>
-        <span>{cityLabel}</span>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span>{cityLabel}</span>
+          <label className="sr-only" htmlFor="groups-sort">
+            Ordenar grupos
+          </label>
+          <select
+            id="groups-sort"
+            className={styles.sort}
+            value={sort}
+            onChange={(event) => {
+              setSort(event.target.value as "recent" | "name" | "oldest")
+              setPage(1)
+            }}
+          >
+            <option value="recent">Mais recentes</option>
+            <option value="name">Nome A–Z</option>
+            <option value="oldest">Mais antigos</option>
+          </select>
+        </div>
       </div>
 
       {bootLoading || directoryLoading ? (
