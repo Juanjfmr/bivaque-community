@@ -188,7 +188,7 @@
 }
 
 .badgePrivate {
-  background: var(--semantic-surface)9ea;
+  background: var(--semantic-warning-soft);
   color: var(--semantic-warning);
 }
 
@@ -413,7 +413,7 @@
   padding: 16px;
   border: 1px solid var(--semantic-warning-soft);
   border-radius: 14px;
-  background: var(--semantic-surface)9ea;
+  background: var(--semantic-warning-soft);
   color: var(--semantic-warning);
   font-size: .875rem;
   line-height: 1.5;
