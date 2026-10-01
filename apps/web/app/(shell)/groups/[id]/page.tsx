@@ -472,32 +472,32 @@ export default async function GroupDetailPage({
   }
 
   return (
-    <main className={styles.detail}>
-      <Link href={"/groups" as Route} className={styles.back}>
+    <main className={styles["detail"]}>
+      <Link href={"/groups" as Route} className={styles["back"]}>
         <ArrowLeft size={17} aria-hidden="true" />
         Todos os grupos
       </Link>
 
-      <div className={styles.cover} aria-hidden="true" />
-      <header className={styles.identity}>
-        <div className={styles.identityText}>
-          <p className={styles.eyebrow}>
+      <div className={styles["cover"]} aria-hidden="true" />
+      <header className={styles["identity"]}>
+        <div className={styles["identityText"]}>
+          <p className={styles["eyebrow"]}>
             {scopeLabel} · {group.visibility === "private" ? "Grupo privado" : "Grupo público neste contexto"}
           </p>
           <h1>{group.name}</h1>
           {group.description ? <p>{group.description}</p> : null}
-          <div className={styles.groupMeta}>
+          <div className={styles["groupMeta"]}>
             <span>{approvedMemberCount ?? 0} participantes</span>
             <span>{feed.length} conversas visíveis</span>
           </div>
         </div>
 
-        <div className={styles.identityActions}>
+        <div className={styles["identityActions"]}>
           {isOwner ? (
-            <span className={`${styles.badge} ${styles.badgeMember}`}>Responsável</span>
+            <span className={`${styles["badge"]} ${styles["badgeMember"]}`}>Responsável</span>
           ) : isApproved ? (
             <>
-              <span className={`${styles.badge} ${styles.badgeMember}`}>
+              <span className={`${styles["badge"]} ${styles["badgeMember"]}`}>
                 {membership?.role === "moderator" ? "Moderação" : "Participando"}
               </span>
               <form action={leaveGroupAction}>
@@ -507,7 +507,7 @@ export default async function GroupDetailPage({
             </>
           ) : isPending ? (
             <>
-              <span className={`${styles.badge} ${styles.badgePending}`}>Pedido enviado</span>
+              <span className={`${styles["badge"]} ${styles["badgePending"]}`}>Pedido enviado</span>
               <form action={cancelPendingMembershipAction}>
                 <input type="hidden" name="groupId" value={group.id} />
                 <Button type="submit" size="sm" variant="tertiary">Cancelar pedido</Button>
@@ -525,34 +525,34 @@ export default async function GroupDetailPage({
       </header>
 
       {!canRead ? (
-        <div className={styles.warning} role="status">
+        <div className={styles["warning"]} role="status">
           As conversas deste grupo são visíveis somente para participantes aprovados.
         </div>
       ) : null}
 
-      <nav className={styles.tabs} aria-label="Seções do grupo">
-        {[
+      <nav className={styles["tabs"]} aria-label="Seções do grupo">
+        {([
           ["conversations", "Conversas"],
           ["references", "Referências"],
           ["about", "Sobre"],
-        ].map(([key, label]) => (
+        ] as const).map(([key, label]) => (
           <Link
             key={key}
             href={hrefFor({ tab: key, page: 1 })}
-            className={`${styles.tab} ${tab === key ? styles.tabActive : ""}`}
+            className={`${styles["tab"]} ${tab === key ? styles["tabActive"] : ""}`}
           >
             {label}
           </Link>
         ))}
       </nav>
 
-      <div className={styles.workspace}>
-        <section className={styles.mainColumn}>
+      <div className={styles["workspace"]}>
+        <section className={styles["mainColumn"]}>
           {tab === "conversations" ? (
             canRead ? (
               <>
                 {isApproved ? (
-                  <div className={styles.composerShell}>
+                  <div className={styles["composerShell"]}>
                     <p>
                       Use <strong>Contribuir</strong> e confirme este grupo como destino antes de publicar.
                     </p>
@@ -560,7 +560,7 @@ export default async function GroupDetailPage({
                 ) : null}
 
                 <search aria-label="Buscar no grupo">
-                  <form className={styles.feedSearch} method="get">
+                  <form className={styles["feedSearch"]} method="get">
                   <Search size={19} aria-hidden="true" className="text-muted" />
                   <input
                     type="search"
@@ -575,23 +575,23 @@ export default async function GroupDetailPage({
                   </form>
                 </search>
 
-                <div className={styles.feedTools}>
-                  <div className={styles.feedFilters}>
-                    {[
+                <div className={styles["feedTools"]}>
+                  <div className={styles["feedFilters"]}>
+                    {([
                       ["all", "Todas"],
                       ["unanswered", "Sem resposta"],
                       ["mine", "Suas publicações"],
-                    ].map(([key, label]) => (
+                    ] as const).map(([key, label]) => (
                       <Link
                         key={key}
                         href={hrefFor({ filter: key, page: 1 })}
-                        className={`${styles.filterButton} ${filter === key ? styles.filterActive : ""}`}
+                        className={`${styles["filterButton"]} ${filter === key ? styles["filterActive"] : ""}`}
                       >
                         {label}
                       </Link>
                     ))}
                     <span
-                      className={`${styles.filterButton} ${styles.disabledFilter}`}
+                      className={`${styles["filterButton"]} ${styles["disabledFilter"]}`}
                       aria-disabled="true"
                       title="O estado de resolução ainda não faz parte do feed de grupos."
                     >
@@ -602,7 +602,7 @@ export default async function GroupDetailPage({
                   <form method="get" className="flex items-center gap-2">
                     {query ? <input type="hidden" name="q" value={query} /> : null}
                     {filter !== "all" ? <input type="hidden" name="filter" value={filter} /> : null}
-                    <select name="order" defaultValue={order} className={styles.sort} aria-label="Ordenar conversas">
+                    <select name="order" defaultValue={order} className={styles["sort"]} aria-label="Ordenar conversas">
                       <option value="recent">Mais recentes</option>
                       <option value="activity">Mais respostas</option>
                       <option value="oldest">Mais antigas</option>
@@ -611,7 +611,7 @@ export default async function GroupDetailPage({
                   </form>
                 </div>
 
-                <div className={styles.summary}>
+                <div className={styles["summary"]}>
                   <span>
                     {feedTotal === 0
                       ? "Nenhuma conversa encontrada"
@@ -620,13 +620,13 @@ export default async function GroupDetailPage({
                 </div>
 
                 {visibleFeed.length > 0 ? (
-                  <div className={styles.feedList}>
+                  <div className={styles["feedList"]}>
                     {visibleFeed.map((post, index) => (
                       <FeedPost key={post.id} post={post} index={index} />
                     ))}
                   </div>
                 ) : (
-                  <div className={styles.empty}>
+                  <div className={styles["empty"]}>
                     <h2>{query || filter !== "all" ? "Nenhum resultado" : "Nenhuma conversa ainda"}</h2>
                     <p>
                       {query || filter !== "all"
@@ -637,18 +637,18 @@ export default async function GroupDetailPage({
                 )}
 
                 {feedPages > 1 ? (
-                  <nav className={styles.pagination} aria-label="Paginação das conversas">
+                  <nav className={styles["pagination"]} aria-label="Paginação das conversas">
                     <span>Página {safePage} de {feedPages}</span>
-                    <div className={styles.pageActions}>
+                    <div className={styles["pageActions"]}>
                       <Link
                         href={hrefFor({ page: Math.max(1, safePage - 1) })}
-                        className={`${styles.filterButton} ${safePage <= 1 ? styles.disabledFilter : ""}`}
+                        className={`${styles["filterButton"]} ${safePage <= 1 ? styles["disabledFilter"] : ""}`}
                       >
                         Anterior
                       </Link>
                       <Link
                         href={hrefFor({ page: Math.min(feedPages, safePage + 1) })}
-                        className={`${styles.filterButton} ${safePage >= feedPages ? styles.disabledFilter : ""}`}
+                        className={`${styles["filterButton"]} ${safePage >= feedPages ? styles["disabledFilter"] : ""}`}
                       >
                         Próxima
                       </Link>
@@ -657,7 +657,7 @@ export default async function GroupDetailPage({
                 ) : null}
               </>
             ) : (
-              <div className={styles.empty}>
+              <div className={styles["empty"]}>
                 <h2>Conteúdo indisponível</h2>
                 <p>Entre no grupo e aguarde aprovação para acessar as conversas privadas.</p>
               </div>
@@ -665,7 +665,7 @@ export default async function GroupDetailPage({
           ) : null}
 
           {tab === "references" ? (
-            <article className={styles.aboutCard}>
+            <article className={styles["aboutCard"]}>
               <h2>Referências do grupo</h2>
               <p>
                 Nenhuma referência estruturada está vinculada a este grupo no momento.
@@ -676,7 +676,7 @@ export default async function GroupDetailPage({
 
           {tab === "about" ? (
             <div className="grid gap-4">
-              <article className={styles.aboutCard}>
+              <article className={styles["aboutCard"]}>
                 <h2>Sobre o grupo</h2>
                 <p>{group.description || "Este grupo ainda não possui uma descrição."}</p>
                 <p>
@@ -689,17 +689,17 @@ export default async function GroupDetailPage({
                 <p><strong>Quem pode publicar:</strong> participantes aprovados no grupo.</p>
               </article>
 
-              <article className={styles.membersCard} id="participantes">
+              <article className={styles["membersCard"]} id="participantes">
                 <h2>Participantes</h2>
                 {members.length === 0 ? (
                   <p className="text-sm text-muted">Nenhum participante encontrado.</p>
                 ) : (
-                  <div className={styles.memberList}>
+                  <div className={styles["memberList"]}>
                     {members.map((member) => {
                       const self = member.user_id === user.id
                       return (
-                        <div key={member.user_id} className={styles.memberRow}>
-                          <div className={styles.memberInfo}>
+                        <div key={member.user_id} className={styles["memberRow"]}>
+                          <div className={styles["memberInfo"]}>
                             <b>{memberNames.get(member.user_id) ?? (self ? "Você" : "Membro")}</b>
                             <span>
                               {member.status === "pending"
@@ -713,7 +713,7 @@ export default async function GroupDetailPage({
                           </div>
 
                           {isModerator && !self ? (
-                            <div className={styles.memberActions}>
+                            <div className={styles["memberActions"]}>
                               {member.status === "pending" ? (
                                 <>
                                   <form action={approveMembershipAction}>
@@ -760,18 +760,18 @@ export default async function GroupDetailPage({
                 )}
 
                 {memberPages > 1 ? (
-                  <nav className={styles.pagination} aria-label="Paginação dos participantes">
+                  <nav className={styles["pagination"]} aria-label="Paginação dos participantes">
                     <span>Página {memberPage} de {memberPages}</span>
-                    <div className={styles.pageActions}>
+                    <div className={styles["pageActions"]}>
                       <Link
                         href={hrefFor({ tab: "about", memberPage: Math.max(1, memberPage - 1) })}
-                        className={`${styles.filterButton} ${memberPage <= 1 ? styles.disabledFilter : ""}`}
+                        className={`${styles["filterButton"]} ${memberPage <= 1 ? styles["disabledFilter"] : ""}`}
                       >
                         Anterior
                       </Link>
                       <Link
                         href={hrefFor({ tab: "about", memberPage: Math.min(memberPages, memberPage + 1) })}
-                        className={`${styles.filterButton} ${memberPage >= memberPages ? styles.disabledFilter : ""}`}
+                        className={`${styles["filterButton"]} ${memberPage >= memberPages ? styles["disabledFilter"] : ""}`}
                       >
                         Próxima
                       </Link>
@@ -780,7 +780,7 @@ export default async function GroupDetailPage({
                 ) : null}
 
                 {isOwner ? (
-                  <div className={styles.management}>
+                  <div className={styles["management"]}>
                     <form action={transferOwnershipAction}>
                       <input type="hidden" name="groupId" value={group.id} />
                       <select name="newOwnerId" required aria-label="Transferir responsabilidade para">
@@ -806,9 +806,9 @@ export default async function GroupDetailPage({
           ) : null}
         </section>
 
-        <aside className={styles.aside}>
+        <aside className={styles["aside"]}>
           <h2>Encontre no grupo</h2>
-          <div className={styles.asideLinks}>
+          <div className={styles["asideLinks"]}>
             <Link href={hrefFor({ tab: "conversations", filter: "unanswered", page: 1 })}>
               <UsersRound size={17} aria-hidden="true" /> Sem resposta
             </Link>
