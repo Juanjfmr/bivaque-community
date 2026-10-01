@@ -595,11 +595,7 @@ export default function GroupsPage() {
                       </label>
                     </fieldset>
 
-                    {createError ? (
-                      <p role="alert" className="text-sm font-semibold text-danger">
-                        {createError}
-                      </p>
-                    ) : null}
+                    {createError ? <ErrorState message={createError} /> : null}
                   </div>
                 </Modal.Body>
                 <Modal.Footer>
@@ -607,7 +603,7 @@ export default function GroupsPage() {
                     Cancelar
                   </Button>
                   <Button type="submit" variant="primary" isDisabled={creating}>
-                    {creating ? "Criando…" : "Criar grupo"}
+                    {creating ? "Criando…" : "Criar"}
                   </Button>
                 </Modal.Footer>
               </form>
