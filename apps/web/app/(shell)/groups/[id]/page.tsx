@@ -343,8 +343,8 @@ export default async function GroupDetailPage({
     .eq("is_deleted", false)
     .maybeSingle()
   if (groupError) throw new Error(`failed to read group: ${groupError.message}`)
-  const group = groupData as GroupRow | null
-  if (!group) notFound()
+  if (!groupData) notFound()
+  const group = groupData as GroupRow
 
   const { data: membershipData, error: membershipError } = await authClient
     .from("group_memberships")
