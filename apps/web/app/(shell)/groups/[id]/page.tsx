@@ -10,6 +10,7 @@ import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
 import { FeedPost } from "../../../components/bivaque/feed-post"
 import styles from "../groups-v42.module.css"
+
 type GroupRow = Database["public"]["Tables"]["groups"]["Row"]
 type MembershipRow = Database["public"]["Tables"]["group_memberships"]["Row"]
 type FeedGroupRow = Database["public"]["Functions"]["feed_group"]["Returns"][number]
