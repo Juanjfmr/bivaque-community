@@ -320,7 +320,8 @@ export default function GroupsPage() {
         </div>
       </header>
 
-      <search aria-label="Buscar grupos">\n        <form className={styles.searchForm} onSubmit={handleSearch}>
+      <search aria-label="Buscar grupos">
+        <form className={styles.searchForm} onSubmit={handleSearch}>
         <Search aria-hidden="true" />
         <input
           type="search"
