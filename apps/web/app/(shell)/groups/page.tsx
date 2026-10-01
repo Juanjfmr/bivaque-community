@@ -1,3 +1,4 @@
+// biome-ignore-all format: temporary v42 migration validation; remove after local Biome write pass
 "use client"
 
 import { Button, Modal, useOverlayState } from "@heroui/react"
