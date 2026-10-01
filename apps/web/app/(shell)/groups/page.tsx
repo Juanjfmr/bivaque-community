@@ -1,662 +1,598 @@
 "use client"
 
-import { Button, Chip, Form, Input, Radio, RadioGroup, SearchField, TextArea } from "@heroui/react"
-import type { SVGProps } from "react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { Button, Modal, useOverlayState } from "@heroui/react"
+import { Building2, LockKeyhole, MapPin, Search, UsersRound } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react"
+import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { SearchClearButton } from "../../components/bivaque/close-button"
-import { EmptyState } from "../../components/bivaque/empty-state"
+import { ModalCloseTrigger } from "../../components/bivaque/close-button"
 import { ErrorState } from "../../components/bivaque/error-state"
-import { GroupsIllustration } from "../../components/bivaque/illustrations"
-import { ReportButton } from "../../components/bivaque/report-button"
-import { GroupCardSkeleton, Skeleton } from "../../components/bivaque/skeleton"
+import styles from "./groups-v42.module.css"
 
-type GroupRow = {
-  id: string
-  name: string
-  description: string | null
-  visibility: "public" | "private"
-  locality_id: string
-  created_by: string
-  owner_user_id: string
-  created_at: string
+type GroupRow = Database["public"]["Tables"]["groups"]["Row"]
+type MembershipRow = Database["public"]["Tables"]["group_memberships"]["Row"]
+type CommunityRow = Pick<Database["public"]["Tables"]["communities"]["Row"], "id" | "name">
+type GroupDirectoryRow = GroupRow & {
+  communities: { name: string } | null
+}
+type GroupCardRow = GroupDirectoryRow & {
+  memberCount: number | null
+  postCount: number | null
 }
 
-type MembershipRow = {
-  group_id: string
-  user_id: string
-  role: "member" | "moderator" | "owner"
-  status: "pending" | "approved"
-  joined_at: string
+type ScopeFilter = "all" | "city" | "communities" | "mine"
+
+const PAGE_SIZE = 8
+
+function safeSearchTerm(value: string) {
+  return value.replace(/[%,()._*]/g, " ").replace(/\s+/g, " ").trim()
 }
 
-function CloseIcon(props: Omit<SVGProps<SVGSVGElement>, "ref">) {
-  const { ref: _ref, ...rest } = props as SVGProps<SVGSVGElement>
-  void _ref
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      viewBox="0 0 24 24"
-      {...rest}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M18 6 6 18M6 6l12 12" />
-    </svg>
-  )
-}
-
-function safeErrorMessage(action: string): string {
-  return `Não foi possível ${action}. Tente novamente.`
-}
-
-function OnboardingBlock({ groupName, onDismiss }: { groupName: string; onDismiss: () => void }) {
-  return (
-    <div
-      className="rounded-xl border-2 border-amber-200 bg-amber-50/60 p-5"
-      role="alert"
-      aria-label="Mensagem de boas-vindas ao grupo"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h3 className="text-lg font-semibold text-amber-900">Bem-vindo ao grupo!</h3>
-          <p className="mt-0.5 text-sm text-amber-700">
-            Comece sua jornada no <strong>&ldquo;{groupName}&rdquo;</strong>.
-          </p>
-        </div>
-        <Button
-          variant="tertiary"
-          size="sm"
-          onPress={onDismiss}
-          aria-label="Fechar mensagem de boas-vindas"
-          className="shrink-0 text-amber-700 hover:text-amber-900"
-        >
-          <CloseIcon className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="rounded-lg border border-amber-200 bg-white p-4 transition-shadow hover:shadow-sm">
-          <span aria-hidden="true" className="text-2xl">
-            &#128075;
-          </span>
-          <h4 className="mt-2 text-sm font-semibold text-foreground">Cumprimente-se</h4>
-          <p className="mt-0.5 text-xs text-muted">Apresente-se aos membros do grupo.</p>
-        </div>
-        <div className="rounded-lg border border-amber-200 bg-white p-4 transition-shadow hover:shadow-sm">
-          <span aria-hidden="true" className="text-2xl">
-            &#128226;
-          </span>
-          <h4 className="mt-2 text-sm font-semibold text-foreground">Compartilhe</h4>
-          <p className="mt-0.5 text-xs text-muted">Publique sua primeira mensagem.</p>
-        </div>
-      </div>
-    </div>
-  )
+function membershipLabel(membership: MembershipRow | undefined) {
+  if (!membership) return null
+  if (membership.status === "pending") return "Pedido enviado"
+  if (membership.role === "owner") return "Responsável"
+  if (membership.role === "moderator") return "Moderação"
+  return "Participando"
 }
 
 export default function GroupsPage() {
-  const supabase = createBrowserClient()
+  const supabase = useMemo(() => createBrowserClient(), [])
+  const createModal = useOverlayState()
 
   const [userId, setUserId] = useState<string | null>(null)
-  const [profileLocalityId, setProfileLocalityId] = useState<string | null>(null)
-  const [groups, setGroups] = useState<GroupRow[]>([])
+  const [localityId, setLocalityId] = useState<string | null>(null)
+  const [cityLabel, setCityLabel] = useState("sua cidade")
   const [memberships, setMemberships] = useState<MembershipRow[]>([])
-  const [loading, setLoading] = useState(true)
+  const [communities, setCommunities] = useState<CommunityRow[]>([])
+
+  const [groups, setGroups] = useState<GroupCardRow[]>([])
+  const [total, setTotal] = useState(0)
+  const [scope, setScope] = useState<ScopeFilter>("all")
+  const [page, setPage] = useState(1)
+  const [queryDraft, setQueryDraft] = useState("")
+  const [query, setQuery] = useState("")
+
+  const [bootLoading, setBootLoading] = useState(true)
+  const [directoryLoading, setDirectoryLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [recentlyJoinedGroupId, setRecentlyJoinedGroupId] = useState<string | null>(null)
-
-  // Create form state
-  const [showCreate, setShowCreate] = useState(false)
   const [createName, setCreateName] = useState("")
   const [createDescription, setCreateDescription] = useState("")
+  const [createScope, setCreateScope] = useState("city")
   const [createVisibility, setCreateVisibility] = useState<"public" | "private">("public")
   const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState("")
 
-  // Selected group for moderation
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
-  const [selectedGroupMembers, setSelectedGroupMembers] = useState<MembershipRow[]>([])
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const membershipByGroup = useMemo(
+    () => new Map(memberships.map((membership) => [membership.group_id, membership])),
+    [memberships],
+  )
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
+  const loadIdentity = useCallback(async () => {
+    setBootLoading(true)
     setError(null)
-
     try {
-      const { data: authData } = await supabase.auth.getUser()
-      if (!authData.user) {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
+      if (authError) throw authError
+      if (!user) {
         setError("Você precisa entrar para acessar os grupos.")
-        setLoading(false)
         return
       }
-      setUserId(authData.user.id)
+      setUserId(user.id)
 
-      const { data: membershipData } = await supabase
+      const { data: localityMembership, error: localityMembershipError } = await supabase
         .from("locality_memberships")
         .select("locality_id")
-        .eq("user_id", authData.user.id)
-        .limit(1)
+        .eq("user_id", user.id)
+        .eq("kind", "current")
         .maybeSingle()
 
-      if (!membershipData) {
-        setError("Você ainda não pertence a uma localidade.")
-        setLoading(false)
-        return
-      }
-      const localityId = membershipData.locality_id
-      setProfileLocalityId(localityId)
-
-      const { data: groupsData, error: groupsError } = await supabase
-        .from("groups")
-        .select("*")
-        .eq("locality_id", localityId)
-        .order("created_at", { ascending: false })
-
-      const { data: membershipsData, error: membershipsError } = await supabase
-        .from("group_memberships")
-        .select("*")
-        .eq("user_id", authData.user.id)
-
-      if (groupsError || membershipsError) {
-        if (groupsError) console.error("[groups] groups query failed:", groupsError)
-        if (membershipsError)
-          console.error("[groups] group_memberships query failed:", membershipsError)
-        setError(safeErrorMessage("carregar os grupos"))
-        setGroups([])
-        setMemberships([])
+      if (localityMembershipError) throw localityMembershipError
+      if (!localityMembership) {
+        setError("Defina sua cidade atual para acessar os grupos.")
         return
       }
 
-      setGroups((groupsData as GroupRow[] | null) ?? [])
-      setMemberships((membershipsData as MembershipRow[] | null) ?? [])
-    } catch (err) {
-      console.error("[groups] loadData unexpected error:", err)
-      setError(safeErrorMessage("carregar os grupos"))
+      const currentLocalityId = localityMembership.locality_id
+      setLocalityId(currentLocalityId)
+
+      const [
+        { data: locality, error: localityError },
+        { data: groupMemberships, error: membershipsError },
+        { data: communityMemberships, error: communityMembershipsError },
+      ] = await Promise.all([
+        supabase
+          .from("localities")
+          .select("city_name, state_code")
+          .eq("id", currentLocalityId)
+          .maybeSingle(),
+        supabase.from("group_memberships").select("*").eq("user_id", user.id),
+        supabase
+          .from("community_memberships")
+          .select("community_id")
+          .eq("user_id", user.id)
+          .eq("status", "approved"),
+      ])
+
+      if (localityError) throw localityError
+      if (membershipsError) throw membershipsError
+      if (communityMembershipsError) throw communityMembershipsError
+
+      if (locality) {
+        setCityLabel(`${locality.city_name} · ${locality.state_code}`)
+      }
+      setMemberships((groupMemberships as MembershipRow[] | null) ?? [])
+
+      const communityIds = (communityMemberships ?? []).map((item) => item.community_id)
+      if (communityIds.length === 0) {
+        setCommunities([])
+      } else {
+        const { data: communityRows, error: communitiesError } = await supabase
+          .from("communities")
+          .select("id, name")
+          .in("id", communityIds)
+          .eq("locality_id", currentLocalityId)
+          .eq("is_deleted", false)
+          .order("name")
+        if (communitiesError) throw communitiesError
+        setCommunities((communityRows as CommunityRow[] | null) ?? [])
+      }
+    } catch (cause) {
+      console.error("[groups] identity load failed", cause)
+      setError("Não foi possível carregar seus grupos. Tente novamente.")
     } finally {
-      setLoading(false)
+      setBootLoading(false)
     }
   }, [supabase])
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    void loadIdentity()
+  }, [loadIdentity])
 
-  const getMembership = (groupId: string) => memberships.find((m) => m.group_id === groupId)
+  const loadDirectory = useCallback(async () => {
+    if (!localityId || !userId) return
+    setDirectoryLoading(true)
+    setError(null)
 
-  const canModerate = (membership: MembershipRow | undefined) =>
-    membership?.role === "owner" || membership?.role === "moderator"
+    try {
+      const approvedIds = memberships
+        .filter((membership) => membership.status === "approved")
+        .map((membership) => membership.group_id)
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!profileLocalityId) return
+      if (scope === "mine" && approvedIds.length === 0) {
+        setGroups([])
+        setTotal(0)
+        return
+      }
+
+      let request = supabase
+        .from("groups")
+        .select(
+          "id, name, description, visibility, locality_id, community_id, created_by, owner_user_id, created_at, is_deleted, communities(name)",
+          { count: "exact" },
+        )
+        .eq("locality_id", localityId)
+        .eq("is_deleted", false)
+
+      if (scope === "city") request = request.is("community_id", null)
+      if (scope === "communities") request = request.not("community_id", "is", null)
+      if (scope === "mine") request = request.in("id", approvedIds)
+
+      const normalizedQuery = safeSearchTerm(query)
+      if (normalizedQuery) {
+        request = request.or(
+          `name.ilike.%${normalizedQuery}%,description.ilike.%${normalizedQuery}%`,
+        )
+      }
+
+      const from = (page - 1) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+      const { data, count, error: directoryError } = await request
+        .order("created_at", { ascending: false })
+        .range(from, to)
+
+      if (directoryError) throw directoryError
+      const rows = ((data ?? []) as unknown as GroupDirectoryRow[]).filter(
+        (group) => !group.community_id || communities.some((item) => item.id === group.community_id),
+      )
+
+      const withCounts = await Promise.all(
+        rows.map(async (group): Promise<GroupCardRow> => {
+          const [membersResult, postsResult] = await Promise.all([
+            supabase
+              .from("group_memberships")
+              .select("*", { count: "exact", head: true })
+              .eq("group_id", group.id)
+              .eq("status", "approved"),
+            supabase
+              .from("posts")
+              .select("*", { count: "exact", head: true })
+              .eq("group_id", group.id)
+              .eq("is_deleted", false),
+          ])
+
+          return {
+            ...group,
+            memberCount: membersResult.error ? null : membersResult.count,
+            postCount: postsResult.error ? null : postsResult.count,
+          }
+        }),
+      )
+
+      setGroups(withCounts)
+      setTotal(count ?? 0)
+    } catch (cause) {
+      console.error("[groups] directory load failed", cause)
+      setGroups([])
+      setTotal(0)
+      setError("Não foi possível carregar o diretório de grupos. Tente novamente.")
+    } finally {
+      setDirectoryLoading(false)
+    }
+  }, [communities, localityId, memberships, page, query, scope, supabase, userId])
+
+  useEffect(() => {
+    if (!bootLoading) void loadDirectory()
+  }, [bootLoading, loadDirectory])
+
+  function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPage(1)
+    setQuery(queryDraft.trim())
+  }
+
+  function selectScope(nextScope: ScopeFilter) {
+    setScope(nextScope)
+    setPage(1)
+  }
+
+  async function handleCreate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!localityId) return
+
     setCreating(true)
-    setError(null)
+    setCreateError("")
+    try {
+      const trimmedName = createName.trim()
+      const trimmedDescription = createDescription.trim()
+      if (!trimmedName) {
+        setCreateError("Informe o nome do grupo.")
+        return
+      }
 
-    const args = {
-      p_name: createName,
-      p_visibility: createVisibility,
-      p_locality_id: profileLocalityId,
-      ...(createDescription ? { p_description: createDescription } : {}),
-    }
-    const { error: rpcError } = await supabase.rpc("create_group", args)
-    if (rpcError) {
-      console.error("[groups] create_group failed:", rpcError)
-      setError(safeErrorMessage("criar o grupo"))
+      const result =
+        createScope === "city"
+          ? await supabase.rpc("create_group", {
+              p_name: trimmedName,
+              p_description: trimmedDescription,
+              p_visibility: createVisibility,
+              p_locality_id: localityId,
+            })
+          : await supabase.rpc("create_group_in_community", {
+              p_name: trimmedName,
+              p_description: trimmedDescription,
+              p_visibility: createVisibility,
+              p_community_id: createScope,
+            })
+
+      if (result.error) throw result.error
+
+      setCreateName("")
+      setCreateDescription("")
+      setCreateScope("city")
+      setCreateVisibility("public")
+      createModal.close()
+      setPage(1)
+      await loadIdentity()
+    } catch (cause) {
+      console.error("[groups] create failed", cause)
+      setCreateError("Não foi possível criar o grupo. Confira os dados e tente novamente.")
+    } finally {
       setCreating(false)
-      return
     }
-
-    setCreateName("")
-    setCreateDescription("")
-    setCreateVisibility("public")
-    setShowCreate(false)
-    await loadData()
-    setCreating(false)
   }
 
-  const handleJoin = async (groupId: string) => {
-    setActionLoading(groupId)
-    setError(null)
-
-    const { error: rpcError } = await supabase.rpc("join_group", {
-      p_group_id: groupId,
-    })
-    if (rpcError) {
-      console.error("[groups] join_group failed:", rpcError)
-      setError(safeErrorMessage("entrar no grupo"))
-      setActionLoading(null)
-      return
-    }
-    setRecentlyJoinedGroupId(groupId)
-    await loadData()
-    setActionLoading(null)
-  }
-
-  const handleLeave = async (groupId: string) => {
-    setActionLoading(groupId)
-    setError(null)
-
-    const { error: deleteError } = await supabase
-      .from("group_memberships")
-      .delete()
-      .eq("group_id", groupId)
-      .eq("user_id", userId ?? "")
-
-    if (deleteError) {
-      console.error("[groups] group_memberships delete failed:", deleteError)
-      setError(safeErrorMessage("sair do grupo"))
-      setActionLoading(null)
-      return
-    }
-    await loadData()
-    setActionLoading(null)
-  }
-
-  const handleApprove = async (groupId: string, targetUserId: string) => {
-    setActionLoading(groupId)
-    setError(null)
-
-    const { error: rpcError } = await supabase.rpc("approve_group_member", {
-      p_group_id: groupId,
-      p_user_id: targetUserId,
-    })
-    if (rpcError) {
-      console.error("[groups] approve_group_member failed:", rpcError)
-      setError(safeErrorMessage("aprovar o membro"))
-      setActionLoading(null)
-      return
-    }
-    await loadGroupMembers(groupId)
-    await loadData()
-    setActionLoading(null)
-  }
-
-  const handleAddModerator = async (groupId: string, targetUserId: string) => {
-    setActionLoading(groupId)
-    setError(null)
-
-    const { error: rpcError } = await supabase.rpc("add_group_moderator", {
-      p_group_id: groupId,
-      p_user_id: targetUserId,
-    })
-    if (rpcError) {
-      console.error("[groups] add_group_moderator failed:", rpcError)
-      setError(safeErrorMessage("adicionar o moderador"))
-      setActionLoading(null)
-      return
-    }
-    await loadGroupMembers(groupId)
-    setActionLoading(null)
-  }
-
-  const handleRemoveModerator = async (groupId: string, targetUserId: string) => {
-    setActionLoading(groupId)
-    setError(null)
-
-    const { error: rpcError } = await supabase.rpc("remove_group_moderator", {
-      p_group_id: groupId,
-      p_user_id: targetUserId,
-    })
-    if (rpcError) {
-      console.error("[groups] remove_group_moderator failed:", rpcError)
-      setError(safeErrorMessage("remover o moderador"))
-      setActionLoading(null)
-      return
-    }
-    await loadGroupMembers(groupId)
-    setActionLoading(null)
-  }
-
-  const loadGroupMembers = async (groupId: string) => {
-    const { data, error } = await supabase
-      .from("group_memberships")
-      .select("*")
-      .eq("group_id", groupId)
-    if (error) {
-      console.error("[groups] loadGroupMembers failed:", error)
-      setError(safeErrorMessage("carregar os membros"))
-      setSelectedGroupMembers([])
-      return
-    }
-    setSelectedGroupMembers((data as MembershipRow[] | null) ?? [])
-  }
-
-  const handleSelectGroup = (groupId: string) => {
-    if (selectedGroupId === groupId) {
-      setSelectedGroupId(null)
-      setSelectedGroupMembers([])
-      return
-    }
-    setSelectedGroupId(groupId)
-    loadGroupMembers(groupId)
-  }
-
-  // Derived data: search filtering, section splitting, recently joined detection
-  const filteredGroups = useMemo(() => {
-    if (!searchQuery.trim()) return groups
-    const q = searchQuery.toLowerCase().trim()
-    return groups.filter((g) => g.name.toLowerCase().includes(q))
-  }, [groups, searchQuery])
-
-  const { myGroups, nearbyGroups, hasApprovedMemberships } = useMemo(() => {
-    const approvedMemberIds = new Set(
-      memberships.filter((m) => m.status === "approved").map((m) => m.group_id),
-    )
-    const my = filteredGroups.filter((g) => approvedMemberIds.has(g.id))
-    const nearby = filteredGroups.filter((g) => !approvedMemberIds.has(g.id))
-    return {
-      myGroups: my,
-      nearbyGroups: nearby,
-      hasApprovedMemberships: memberships.some((m) => m.status === "approved"),
-    }
-  }, [filteredGroups, memberships])
-
-  const recentlyJoinedGroup = useMemo(() => {
-    if (!recentlyJoinedGroupId) return null
-    const membership = memberships.find((m) => m.group_id === recentlyJoinedGroupId)
-    if (membership?.status !== "approved") return null
-    return groups.find((g) => g.id === recentlyJoinedGroupId) ?? null
-  }, [recentlyJoinedGroupId, groups, memberships])
-
-  if (loading) {
-    return (
-      <div className="flex flex-1 flex-col gap-8 px-6 py-12">
-        <section className="flex flex-col gap-2">
-          <Skeleton className="h-7 w-40" />
-          <Skeleton className="h-4 w-56" />
-        </section>
-        <div className="flex flex-col gap-4" aria-busy="true">
-          <GroupCardSkeleton />
-          <GroupCardSkeleton />
-          <GroupCardSkeleton />
-        </div>
-      </div>
-    )
-  }
-
-  const renderGroupCard = (group: GroupRow) => {
-    const membership = getMembership(group.id)
-    const isModerator = canModerate(membership)
-    const isSelected = selectedGroupId === group.id
-
-    return (
-      <div key={group.id} className="flex flex-col gap-3 rounded-lg border border-border p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold">{group.name}</h3>
-              <Chip size="sm" variant="soft">
-                {group.visibility === "public" ? "Público" : "Privado"}
-              </Chip>
-              <ReportButton targetType="group" targetId={group.id} label="Denunciar" />
-            </div>
-            {group.description && <p className="text-sm text-muted">{group.description}</p>}
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            {!membership && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onPress={() => handleJoin(group.id)}
-                isDisabled={actionLoading === group.id}
-              >
-                {group.visibility === "public" ? "Entrar" : "Solicitar"}
-              </Button>
-            )}
-
-            {membership?.status === "pending" && (
-              <Chip size="sm" variant="soft">
-                Aguardando aprovação
-              </Chip>
-            )}
-
-            {membership?.status === "approved" && membership.role !== "owner" && (
-              <Button
-                variant="tertiary"
-                size="sm"
-                onPress={() => handleLeave(group.id)}
-                isDisabled={actionLoading === group.id}
-              >
-                Sair
-              </Button>
-            )}
-
-            {membership?.role === "owner" && (
-              <Chip size="sm" variant="soft">
-                Proprietário
-              </Chip>
-            )}
-
-            {isModerator && (
-              <Button
-                variant={isSelected ? "primary" : "tertiary"}
-                size="sm"
-                onPress={() => handleSelectGroup(group.id)}
-                isDisabled={actionLoading === group.id}
-              >
-                {isSelected ? "Fechar" : "Gerenciar"}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {isSelected && isModerator && (
-          <div className="flex flex-col gap-2 border-t border-border pt-3">
-            <h4 className="text-sm font-semibold">Membros</h4>
-            {selectedGroupMembers.length === 0 && (
-              <p className="text-xs text-muted">Nenhum membro encontrado.</p>
-            )}
-            {selectedGroupMembers.map((m) => (
-              <div
-                key={m.user_id}
-                className="flex items-center justify-between gap-2 rounded border border-border px-3 py-2 text-sm"
-              >
-                <div className="flex items-center gap-2">
-                  <span>{m.user_id === userId ? "Você" : m.user_id.slice(0, 8)}</span>
-                  <span className="text-xs text-muted">
-                    {m.role}
-                    {m.status === "pending" ? " · pendente" : ""}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  {m.status === "pending" && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onPress={() => handleApprove(group.id, m.user_id)}
-                      isDisabled={actionLoading === group.id}
-                    >
-                      Aprovar
-                    </Button>
-                  )}
-
-                  {m.status === "approved" && m.role === "member" && (
-                    <Button
-                      variant="tertiary"
-                      size="sm"
-                      onPress={() => handleAddModerator(group.id, m.user_id)}
-                      isDisabled={actionLoading === group.id}
-                    >
-                      Promover
-                    </Button>
-                  )}
-
-                  {m.role === "moderator" && (
-                    <Button
-                      variant="tertiary"
-                      size="sm"
-                      onPress={() => handleRemoveModerator(group.id, m.user_id)}
-                      isDisabled={actionLoading === group.id}
-                    >
-                      Rebaixar
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const startItem = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
+  const endItem = Math.min(page * PAGE_SIZE, total)
 
   return (
-    <div className="flex flex-1 flex-col gap-8 px-6 py-12">
-      <section className="flex flex-col gap-2" aria-labelledby="groups-heading">
-        <h1 id="groups-heading" className="text-2xl font-semibold tracking-tight">
-          Grupos
-        </h1>
-        <p className="text-sm text-muted">Grupos da sua comunidade.</p>
-      </section>
+    <main className={styles.directory}>
+      <header className={styles.hero}>
+        <div>
+          <h1>Grupos</h1>
+          <p>Encontre pessoas da cidade e das comunidades das quais você participa.</p>
+        </div>
+        <div className={styles.heroActions}>
+          <Button variant="primary" onPress={createModal.open}>
+            Criar grupo
+          </Button>
+          <Link href={"/communities" as Route} className={styles.filterButton}>
+            Ver comunidades
+          </Link>
+        </div>
+      </header>
 
-      <SearchField
-        aria-label="Buscar grupos"
-        value={searchQuery}
-        onChange={(value) => setSearchQuery(value)}
-        onClear={() => setSearchQuery("")}
-        className="max-w-md"
-      >
-        <SearchField.Group>
-          <SearchField.SearchIcon />
-          <SearchField.Input placeholder="Buscar grupos..." className="transition-colors" />
-          {searchQuery ? <SearchClearButton /> : null}
-        </SearchField.Group>
-      </SearchField>
-
-      {error && <ErrorState message={error} onRetry={() => loadData()} />}
-
-      {recentlyJoinedGroup && (
-        <OnboardingBlock
-          groupName={recentlyJoinedGroup.name}
-          onDismiss={() => setRecentlyJoinedGroupId(null)}
+      <form className={styles.searchForm} onSubmit={handleSearch} role="search">
+        <Search aria-hidden="true" />
+        <input
+          type="search"
+          value={queryDraft}
+          onChange={(event) => setQueryDraft(event.target.value)}
+          placeholder="Buscar grupos por nome ou assunto"
+          aria-label="Buscar grupos por nome ou assunto"
         />
-      )}
-
-      {profileLocalityId && !showCreate && (
-        <Button variant="primary" className="self-start" onPress={() => setShowCreate(true)}>
-          Criar grupo
+        <Button type="submit" size="sm" variant="primary">
+          Buscar
         </Button>
+      </form>
+
+      <nav className={styles.filterRow} aria-label="Filtrar grupos">
+        {([
+          ["all", "Todos"],
+          ["city", "Da cidade"],
+          ["communities", "Das comunidades"],
+          ["mine", "Meus grupos"],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            className={`${styles.filterButton} ${scope === key ? styles.filterActive : ""}`}
+            aria-pressed={scope === key}
+            onClick={() => selectScope(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
+      {error ? <ErrorState message={error} onRetry={() => void loadIdentity()} /> : null}
+
+      <div className={styles.summary} aria-live="polite">
+        <span>
+          {directoryLoading || bootLoading
+            ? "Carregando grupos…"
+            : total === 0
+              ? "Nenhum grupo"
+              : `${startItem}–${endItem} de ${total} grupos`}
+        </span>
+        <span>{cityLabel}</span>
+      </div>
+
+      {bootLoading || directoryLoading ? (
+        <div className={styles.stack} aria-busy="true" aria-label="Carregando grupos">
+          {[0, 1, 2].map((item) => (
+            <div key={item} className={styles.groupRow}>
+              <div className={styles.groupVisual} />
+              <div className={styles.groupBody}>
+                <div className="h-3 w-24 animate-pulse rounded bg-default-200" />
+                <div className="mt-3 h-5 w-52 animate-pulse rounded bg-default-200" />
+                <div className="mt-3 h-3 w-full max-w-xl animate-pulse rounded bg-default-100" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : groups.length === 0 ? (
+        <section className={styles.empty}>
+          <h2>{query ? "Nenhum grupo encontrado" : "Ainda não há grupos neste recorte"}</h2>
+          <p>
+            {query
+              ? "Tente outro termo ou amplie os filtros."
+              : scope === "mine"
+                ? "Entre em um grupo para encontrá-lo rapidamente aqui."
+                : "Você pode criar um grupo para reunir pessoas em torno de um assunto comum."}
+          </p>
+        </section>
+      ) : (
+        <div className={styles.stack}>
+          {groups.map((group) => {
+            const membership = membershipByGroup.get(group.id)
+            const scopeName = group.community_id
+              ? group.communities?.name ?? "Comunidade"
+              : cityLabel
+            const stateLabel = membershipLabel(membership)
+
+            return (
+              <article key={group.id} className={styles.groupRow}>
+                <div className={styles.groupVisual} aria-hidden="true">
+                  {group.community_id ? <Building2 /> : <UsersRound />}
+                </div>
+
+                <div className={styles.groupBody}>
+                  <div className={styles.badges}>
+                    <span
+                      className={`${styles.badge} ${
+                        group.visibility === "private" ? styles.badgePrivate : ""
+                      }`}
+                    >
+                      {group.visibility === "private" ? (
+                        <>
+                          <LockKeyhole size={13} aria-hidden="true" /> Privado
+                        </>
+                      ) : group.community_id ? (
+                        "Público na comunidade"
+                      ) : (
+                        "Público na cidade"
+                      )}
+                    </span>
+                    {stateLabel ? (
+                      <span
+                        className={`${styles.badge} ${
+                          membership?.status === "pending"
+                            ? styles.badgePending
+                            : styles.badgeMember
+                        }`}
+                      >
+                        {stateLabel}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <h2>{group.name}</h2>
+                  {group.description ? <p>{group.description}</p> : null}
+
+                  <div className={styles.groupMeta}>
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin size={13} aria-hidden="true" />
+                      {scopeName}
+                    </span>
+                    {group.memberCount !== null ? <span>{group.memberCount} participantes</span> : null}
+                    {group.postCount !== null ? <span>{group.postCount} conversas</span> : null}
+                  </div>
+                </div>
+
+                <Link
+                  href={`/groups/${group.id}` as Route}
+                  className={`${styles.filterButton} ${styles.groupAction}`}
+                >
+                  {membership?.status === "approved" ? "Abrir" : "Conhecer"}
+                </Link>
+              </article>
+            )
+          })}
+        </div>
       )}
 
-      {showCreate && profileLocalityId && (
-        <Form
-          onSubmit={handleCreate}
-          className="flex flex-col gap-4 rounded-lg border border-border p-4"
-        >
-          <h2 className="text-base font-semibold">Novo grupo</h2>
-
-          <Input
-            type="text"
-            aria-label="Nome do grupo"
-            placeholder="Nome do grupo"
-            value={createName}
-            onChange={(e) => setCreateName((e.target as HTMLInputElement).value)}
-            required
-          />
-
-          <TextArea
-            aria-label="Descrição"
-            placeholder="Descrição (opcional)"
-            value={createDescription}
-            onChange={(e) => setCreateDescription((e.target as HTMLTextAreaElement).value)}
-          />
-
-          <RadioGroup
-            aria-label="Visibilidade do grupo"
-            value={createVisibility}
-            onChange={(value) => setCreateVisibility(value as "public" | "private")}
-            isDisabled={creating}
-            orientation="vertical"
-          >
-            <Radio value="public">
-              <Radio.Content>
-                <Radio.Control>
-                  <Radio.Indicator />
-                </Radio.Control>
-                <div className="flex flex-col gap-0.5">
-                  <span>Público</span>
-                  <span className="text-xs text-muted">
-                    Qualquer membro da comunidade pode entrar.
-                  </span>
-                </div>
-              </Radio.Content>
-            </Radio>
-            <Radio value="private">
-              <Radio.Content>
-                <Radio.Control>
-                  <Radio.Indicator />
-                </Radio.Control>
-                <div className="flex flex-col gap-0.5">
-                  <span>Privado</span>
-                  <span className="text-xs text-muted">Novos membros precisam de aprovação.</span>
-                </div>
-              </Radio.Content>
-            </Radio>
-          </RadioGroup>
-
-          <div className="flex gap-2">
-            <Button type="submit" variant="primary" isDisabled={creating || !createName}>
-              {creating ? "Criando..." : "Criar"}
+      {!bootLoading && !directoryLoading && totalPages > 1 ? (
+        <nav className={styles.pagination} aria-label="Paginação de grupos">
+          <span>
+            Página {page} de {totalPages}
+          </span>
+          <div className={styles.pageActions}>
+            <Button
+              variant="secondary"
+              isDisabled={page <= 1}
+              onPress={() => setPage((value) => Math.max(1, value - 1))}
+            >
+              Anterior
             </Button>
-            <Button variant="tertiary" onPress={() => setShowCreate(false)} isDisabled={creating}>
-              Cancelar
+            <Button
+              variant="secondary"
+              isDisabled={page >= totalPages}
+              onPress={() => setPage((value) => Math.min(totalPages, value + 1))}
+            >
+              Próxima
             </Button>
           </div>
-        </Form>
-      )}
+        </nav>
+      ) : null}
 
-      {!error && groups.length === 0 && !showCreate ? (
-        <EmptyState
-          title="Nenhum grupo ainda"
-          description="Crie ou entre em um grupo para se conectar com outros membros da sua comunidade."
-          illustration={<GroupsIllustration />}
-          action={
-            <Button variant="primary" size="sm" onPress={() => setShowCreate(true)}>
-              Criar grupo
-            </Button>
-          }
-        />
-      ) : filteredGroups.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-8 text-center">
-          <p className="text-sm text-muted">
-            Nenhum grupo encontrado para <strong>&ldquo;{searchQuery}&rdquo;</strong>.
-          </p>
-          <Button variant="tertiary" size="sm" onPress={() => setSearchQuery("")}>
-            Limpar busca
-          </Button>
-        </div>
-      ) : (
-        <>
-          {hasApprovedMemberships && (
-            <section className="flex flex-col gap-3" aria-labelledby="my-groups-heading">
-              <h2 id="my-groups-heading" className="text-lg font-semibold tracking-tight">
-                Seus grupos
-              </h2>
-              {myGroups.length === 0 ? (
-                <p className="text-sm text-muted">Nenhum grupo seu corresponde à busca.</p>
-              ) : (
-                <div className="flex flex-col gap-4">{myGroups.map(renderGroupCard)}</div>
-              )}
-            </section>
-          )}
+      <Modal state={createModal}>
+        <Modal.Backdrop>
+          <Modal.Container size="md">
+            <Modal.Dialog>
+              <Modal.Header>
+                <div>
+                  <Modal.Heading>Criar grupo</Modal.Heading>
+                  <p className="mt-1 text-sm text-muted">Escolha a audiência e as regras de entrada.</p>
+                </div>
+                <ModalCloseTrigger />
+              </Modal.Header>
+              <form onSubmit={handleCreate}>
+                <Modal.Body>
+                  <div className={styles.modalFields}>
+                    <div className={styles.field}>
+                      <label htmlFor="group-name">Nome do grupo</label>
+                      <input
+                        id="group-name"
+                        value={createName}
+                        onChange={(event) => setCreateName(event.target.value)}
+                        maxLength={80}
+                        required
+                      />
+                    </div>
 
-          <section className="flex flex-col gap-3" aria-labelledby="nearby-groups-heading">
-            <h2 id="nearby-groups-heading" className="text-lg font-semibold tracking-tight">
-              Grupos próximos de você
-            </h2>
-            {nearbyGroups.length === 0 ? (
-              <p className="text-sm text-muted">Nenhum grupo próximo corresponde à busca.</p>
-            ) : (
-              <div className="flex flex-col gap-4">{nearbyGroups.map(renderGroupCard)}</div>
-            )}
-          </section>
-        </>
-      )}
-    </div>
+                    <div className={styles.field}>
+                      <label htmlFor="group-description">Descrição</label>
+                      <textarea
+                        id="group-description"
+                        value={createDescription}
+                        onChange={(event) => setCreateDescription(event.target.value)}
+                        placeholder="Explique o assunto e para quem este grupo é útil."
+                      />
+                    </div>
+
+                    <div className={styles.field}>
+                      <label htmlFor="group-scope">Onde este grupo vive</label>
+                      <select
+                        id="group-scope"
+                        value={createScope}
+                        onChange={(event) => setCreateScope(event.target.value)}
+                      >
+                        <option value="city">Cidade · {cityLabel}</option>
+                        {communities.map((community) => (
+                          <option key={community.id} value={community.id}>
+                            Comunidade · {community.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span className={styles.fieldHint}>
+                        Um grupo pode pertencer à cidade ou a uma comunidade específica.
+                      </span>
+                    </div>
+
+                    <fieldset className={styles.field}>
+                      <legend>Participação</legend>
+                      <label className="flex min-h-11 items-start gap-3 font-normal">
+                        <input
+                          type="radio"
+                          name="group-visibility"
+                          value="public"
+                          checked={createVisibility === "public"}
+                          onChange={() => setCreateVisibility("public")}
+                          className="mt-1 h-5 w-5 accent-[var(--ui-brand)]"
+                        />
+                        <span>
+                          <strong className="block text-sm">Público neste contexto</strong>
+                          <span className={styles.fieldHint}>
+                            Pessoas elegíveis no destino entram diretamente.
+                          </span>
+                        </span>
+                      </label>
+                      <label className="flex min-h-11 items-start gap-3 font-normal">
+                        <input
+                          type="radio"
+                          name="group-visibility"
+                          value="private"
+                          checked={createVisibility === "private"}
+                          onChange={() => setCreateVisibility("private")}
+                          className="mt-1 h-5 w-5 accent-[var(--ui-brand)]"
+                        />
+                        <span>
+                          <strong className="block text-sm">Privado</strong>
+                          <span className={styles.fieldHint}>
+                            A entrada depende de aprovação.
+                          </span>
+                        </span>
+                      </label>
+                    </fieldset>
+
+                    {createError ? (
+                      <p role="alert" className="text-sm font-semibold text-danger">
+                        {createError}
+                      </p>
+                    ) : null}
+                  </div>
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button type="button" variant="tertiary" onPress={createModal.close}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" variant="primary" isDisabled={creating}>
+                    {creating ? "Criando…" : "Criar grupo"}
+                  </Button>
+                </Modal.Footer>
+              </form>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
+    </main>
   )
 }
