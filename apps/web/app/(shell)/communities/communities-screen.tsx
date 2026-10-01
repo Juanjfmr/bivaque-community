@@ -222,8 +222,19 @@ export function CommunitiesScreen({
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-8">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Comunidades</h1>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Comunidades</h1>
+          <p className="text-sm text-muted">
+            Participe de comunidades e encontre grupos da sua cidade.
+          </p>
+        </div>
+        <Link
+          href="/groups"
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-[var(--semantic-action-primary)] transition-colors hover:bg-[var(--semantic-surface-sunken)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
+        >
+          Ver grupos
+        </Link>
       </header>
 
       <Tabs
