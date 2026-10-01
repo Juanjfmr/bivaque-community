@@ -305,24 +305,24 @@ export default function GroupsPage() {
   const endItem = Math.min(page * PAGE_SIZE, total)
 
   return (
-    <main className={styles.directory}>
-      <header className={styles.hero}>
+    <main className={styles["directory"]}>
+      <header className={styles["hero"]}>
         <div>
           <h1>Grupos</h1>
           <p>Encontre pessoas da cidade e das comunidades das quais você participa.</p>
         </div>
-        <div className={styles.heroActions}>
+        <div className={styles["heroActions"]}>
           <Button variant="primary" onPress={createModal.open}>
             Criar grupo
           </Button>
-          <Link href={"/communities" as Route} className={styles.filterButton}>
+          <Link href={"/communities" as Route} className={styles["filterButton"]}>
             Ver comunidades
           </Link>
         </div>
       </header>
 
       <search aria-label="Buscar grupos">
-        <form className={styles.searchForm} onSubmit={handleSearch}>
+        <form className={styles["searchForm"]} onSubmit={handleSearch}>
         <Search aria-hidden="true" />
         <input
           type="search"
@@ -337,7 +337,7 @@ export default function GroupsPage() {
         </form>
       </search>
 
-      <nav className={styles.filterRow} aria-label="Filtrar grupos">
+      <nav className={styles["filterRow"]} aria-label="Filtrar grupos">
         {([
           ["all", "Todos"],
           ["city", "Da cidade"],
@@ -347,7 +347,7 @@ export default function GroupsPage() {
           <button
             key={key}
             type="button"
-            className={`${styles.filterButton} ${scope === key ? styles.filterActive : ""}`}
+            className={`${styles["filterButton"]} ${scope === key ? styles["filterActive"] : ""}`}
             aria-pressed={scope === key}
             onClick={() => selectScope(key)}
           >
@@ -358,7 +358,7 @@ export default function GroupsPage() {
 
       {error ? <ErrorState message={error} onRetry={() => void loadIdentity()} /> : null}
 
-      <div className={styles.summary} aria-live="polite">
+      <div className={styles["summary"]} aria-live="polite">
         <span>
           {directoryLoading || bootLoading
             ? "Carregando grupos…"
@@ -373,7 +373,7 @@ export default function GroupsPage() {
           </label>
           <select
             id="groups-sort"
-            className={styles.sort}
+            className={styles["sort"]}
             value={sort}
             onChange={(event) => {
               setSort(event.target.value as "recent" | "name" | "oldest")
@@ -388,11 +388,11 @@ export default function GroupsPage() {
       </div>
 
       {bootLoading || directoryLoading ? (
-        <div className={styles.stack} role="status" aria-busy="true" aria-label="Carregando grupos">
+        <div className={styles["stack"]} role="status" aria-busy="true" aria-label="Carregando grupos">
           {[0, 1, 2].map((item) => (
-            <div key={item} className={styles.groupRow}>
-              <div className={styles.groupVisual} />
-              <div className={styles.groupBody}>
+            <div key={item} className={styles["groupRow"]}>
+              <div className={styles["groupVisual"]} />
+              <div className={styles["groupBody"]}>
                 <div className="h-3 w-24 animate-pulse rounded bg-default-200" />
                 <div className="mt-3 h-5 w-52 animate-pulse rounded bg-default-200" />
                 <div className="mt-3 h-3 w-full max-w-xl animate-pulse rounded bg-default-100" />
@@ -401,7 +401,7 @@ export default function GroupsPage() {
           ))}
         </div>
       ) : groups.length === 0 ? (
-        <section className={styles.empty}>
+        <section className={styles["empty"]}>
           <h2>{query ? "Nenhum grupo encontrado" : "Ainda não há grupos neste recorte"}</h2>
           <p>
             {query
@@ -412,7 +412,7 @@ export default function GroupsPage() {
           </p>
         </section>
       ) : (
-        <div className={styles.stack}>
+        <div className={styles["stack"]}>
           {groups.map((group) => {
             const membership = membershipByGroup.get(group.id)
             const scopeName = group.community_id
@@ -421,16 +421,16 @@ export default function GroupsPage() {
             const stateLabel = membershipLabel(membership)
 
             return (
-              <article key={group.id} className={styles.groupRow}>
-                <div className={styles.groupVisual} aria-hidden="true">
+              <article key={group.id} className={styles["groupRow"]}>
+                <div className={styles["groupVisual"]} aria-hidden="true">
                   {group.community_id ? <Building2 /> : <UsersRound />}
                 </div>
 
-                <div className={styles.groupBody}>
-                  <div className={styles.badges}>
+                <div className={styles["groupBody"]}>
+                  <div className={styles["badges"]}>
                     <span
-                      className={`${styles.badge} ${
-                        group.visibility === "private" ? styles.badgePrivate : ""
+                      className={`${styles["badge"]} ${
+                        group.visibility === "private" ? styles["badgePrivate"] : ""
                       }`}
                     >
                       {group.visibility === "private" ? (
@@ -445,10 +445,10 @@ export default function GroupsPage() {
                     </span>
                     {stateLabel ? (
                       <span
-                        className={`${styles.badge} ${
+                        className={`${styles["badge"]} ${
                           membership?.status === "pending"
-                            ? styles.badgePending
-                            : styles.badgeMember
+                            ? styles["badgePending"]
+                            : styles["badgeMember"]
                         }`}
                       >
                         {stateLabel}
@@ -459,7 +459,7 @@ export default function GroupsPage() {
                   <h2>{group.name}</h2>
                   {group.description ? <p>{group.description}</p> : null}
 
-                  <div className={styles.groupMeta}>
+                  <div className={styles["groupMeta"]}>
                     <span className="inline-flex items-center gap-1">
                       <MapPin size={13} aria-hidden="true" />
                       {scopeName}
@@ -471,7 +471,7 @@ export default function GroupsPage() {
 
                 <Link
                   href={`/groups/${group.id}` as Route}
-                  className={`${styles.filterButton} ${styles.groupAction}`}
+                  className={`${styles["filterButton"]} ${styles["groupAction"]}`}
                 >
                   {membership?.status === "approved" ? "Abrir" : "Conhecer"}
                 </Link>
@@ -482,11 +482,11 @@ export default function GroupsPage() {
       )}
 
       {!bootLoading && !directoryLoading && totalPages > 1 ? (
-        <nav className={styles.pagination} aria-label="Paginação de grupos">
+        <nav className={styles["pagination"]} aria-label="Paginação de grupos">
           <span>
             Página {page} de {totalPages}
           </span>
-          <div className={styles.pageActions}>
+          <div className={styles["pageActions"]}>
             <Button
               variant="secondary"
               isDisabled={page <= 1}
@@ -518,8 +518,8 @@ export default function GroupsPage() {
               </Modal.Header>
               <form onSubmit={handleCreate}>
                 <Modal.Body>
-                  <div className={styles.modalFields}>
-                    <div className={styles.field}>
+                  <div className={styles["modalFields"]}>
+                    <div className={styles["field"]}>
                       <label htmlFor="group-name">Nome do grupo</label>
                       <input
                         id="group-name"
@@ -530,7 +530,7 @@ export default function GroupsPage() {
                       />
                     </div>
 
-                    <div className={styles.field}>
+                    <div className={styles["field"]}>
                       <label htmlFor="group-description">Descrição</label>
                       <textarea
                         id="group-description"
@@ -540,7 +540,7 @@ export default function GroupsPage() {
                       />
                     </div>
 
-                    <div className={styles.field}>
+                    <div className={styles["field"]}>
                       <label htmlFor="group-scope">Onde este grupo vive</label>
                       <select
                         id="group-scope"
@@ -554,12 +554,12 @@ export default function GroupsPage() {
                           </option>
                         ))}
                       </select>
-                      <span className={styles.fieldHint}>
+                      <span className={styles["fieldHint"]}>
                         Um grupo pode pertencer à cidade ou a uma comunidade específica.
                       </span>
                     </div>
 
-                    <fieldset className={styles.field}>
+                    <fieldset className={styles["field"]}>
                       <legend>Participação</legend>
                       <label className="flex min-h-11 items-start gap-3 font-normal">
                         <input
@@ -572,7 +572,7 @@ export default function GroupsPage() {
                         />
                         <span>
                           <strong className="block text-sm">Público neste contexto</strong>
-                          <span className={styles.fieldHint}>
+                          <span className={styles["fieldHint"]}>
                             Pessoas elegíveis no destino entram diretamente.
                           </span>
                         </span>
@@ -588,7 +588,7 @@ export default function GroupsPage() {
                         />
                         <span>
                           <strong className="block text-sm">Privado</strong>
-                          <span className={styles.fieldHint}>
+                          <span className={styles["fieldHint"]}>
                             A entrada depende de aprovação.
                           </span>
                         </span>
