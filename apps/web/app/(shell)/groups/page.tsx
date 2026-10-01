@@ -320,7 +320,7 @@ export default function GroupsPage() {
         </div>
       </header>
 
-      <form className={styles.searchForm} onSubmit={handleSearch} role="search">
+      <search aria-label="Buscar grupos">\n        <form className={styles.searchForm} onSubmit={handleSearch}>
         <Search aria-hidden="true" />
         <input
           type="search"
@@ -385,7 +385,7 @@ export default function GroupsPage() {
       </div>
 
       {bootLoading || directoryLoading ? (
-        <div className={styles.stack} aria-busy="true" aria-label="Carregando grupos">
+        <div className={styles.stack} role="status" aria-busy="true" aria-label="Carregando grupos">
           {[0, 1, 2].map((item) => (
             <div key={item} className={styles.groupRow}>
               <div className={styles.groupVisual} />
