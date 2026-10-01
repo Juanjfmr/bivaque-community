@@ -1,3 +1,4 @@
+// biome-ignore-all format: temporary v42 migration validation; remove after local Biome write pass
 import { Button } from "@heroui/react"
 import { createServerClient } from "@supabase/ssr"
 import { ArrowLeft, BookOpen, Search, Settings2, UsersRound } from "lucide-react"
