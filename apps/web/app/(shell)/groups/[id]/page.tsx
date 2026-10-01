@@ -517,7 +517,7 @@ export default async function GroupDetailPage({
             <form action={joinGroupAction}>
               <input type="hidden" name="groupId" value={group.id} />
               <Button type="submit" size="sm" variant="primary">
-                {group.visibility === "public" ? "Entrar" : "Solicitar entrada"}
+                {group.visibility === "public" ? "Entrar" : "Pedir entrada"}
               </Button>
             </form>
           )}
@@ -797,7 +797,7 @@ export default async function GroupDetailPage({
                     </form>
                     <form action={deleteGroupAction}>
                       <input type="hidden" name="groupId" value={group.id} />
-                      <Button type="submit" size="sm" variant="danger">Encerrar grupo</Button>
+                      <Button type="submit" size="sm" variant="danger">Excluir grupo</Button>
                     </form>
                   </div>
                 ) : null}
