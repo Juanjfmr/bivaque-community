@@ -558,7 +558,8 @@ export default async function GroupDetailPage({
                   </div>
                 ) : null}
 
-                <search aria-label="Buscar no grupo">\n                  <form className={styles.feedSearch} method="get">
+                <search aria-label="Buscar no grupo">
+                  <form className={styles.feedSearch} method="get">
                   <Search size={19} aria-hidden="true" className="text-muted" />
                   <input
                     type="search"
