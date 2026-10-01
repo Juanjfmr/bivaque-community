@@ -331,10 +331,11 @@ export default function GroupsPage() {
           placeholder="Buscar grupos por nome ou assunto"
           aria-label="Buscar grupos por nome ou assunto"
         />
-        <Button type="submit" size="sm" variant="primary">
-          Buscar
-        </Button>
-      </form>
+          <Button type="submit" size="sm" variant="primary">
+            Buscar
+          </Button>
+        </form>
+      </search>
 
       <nav className={styles.filterRow} aria-label="Filtrar grupos">
         {([
