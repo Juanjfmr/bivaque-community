@@ -1,10 +1,14 @@
-import { Button } from "@heroui/react"\nimport { ArrowLeft, BookOpen, Search, Settings2, UsersRound } from "lucide-react"\nimport type { Route } from "next"\nimport Link from "next/link"
+import { Button } from "@heroui/react"
+import { ArrowLeft, BookOpen, Search, Settings2, UsersRound } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import type { Database } from "supabase/database.generated"
-import { FeedPost } from "../../../components/bivaque/feed-post"\nimport styles from "../groups-v42.module.css"
+import { FeedPost } from "../../../components/bivaque/feed-post"
+import styles from "../groups-v42.module.css"
 
 type GroupRow = Database["public"]["Tables"]["groups"]["Row"]
 type MembershipRow = Database["public"]["Tables"]["group_memberships"]["Row"]
