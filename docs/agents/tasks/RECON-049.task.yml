@@ -1,0 +1,55 @@
+task_id: RECON-049
+
+objective: >
+  As superficies /groups e /groups/[id] reproduzem a composicao visual e a hierarquia
+  de interacao da referencia Bivaque v42 usando dados reais, com busca e paginacao
+  executadas sobre o conjunto do backend em vez de somente sobre cards ja renderizados.
+
+authority:
+  - instrucao explicita do proprietario em 2026-09-30 para migrar Grupos a partir da referencia v42
+  - Bivaque_v42_migration_reference.html fornecido pelo proprietario
+  - apps/web/AGENTS.md
+  - docs/agents/DESIGN_SYSTEM.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    main 1134c7ce: /groups usa uma lista monolitica com filtro local no array carregado;
+    /groups/[id] usa coluna max-w-2xl com membros e feed, sem a composicao de capa,
+    identidade, workspace, rail, filtros e paginacao da referencia v42.
+
+allowed_paths:
+  - apps/web/app/(shell)/groups/page.tsx
+  - apps/web/app/(shell)/groups/[id]/page.tsx
+  - apps/web/app/(shell)/groups/groups-v42.module.css
+  - docs/agents/tasks/RECON-049.task.yml
+
+forbidden:
+  - alterar migrations, schema, policies ou funcoes do banco
+  - copiar dados ficticios, imagens demonstrativas, localStorage ou identidade por nome do HTML
+  - remover Server Actions ou regras existentes para simplificar a reproducao visual
+  - alterar a navegacao global fora da superficie de Grupos
+
+acceptance:
+  - o diretorio apresenta cabecalho, busca, filtros de escopo, cards horizontais e paginacao coerentes com a v42
+  - a pagina de grupo apresenta capa neutra, identidade, abas, workspace principal e rail lateral coerentes com a v42
+  - a busca do diretorio consulta o backend e a busca do grupo considera o acervo retornado pelo backend antes da paginacao visual
+  - criacao continua usando os contratos existentes para grupo de cidade ou de comunidade
+  - estados de carregamento, vazio, nenhum resultado e falha recuperavel permanecem distinguiveis
+  - grupos sem midia real usam tratamento neutro e nao recebem imagens ou conteudo ficticios
+
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e
+  - node scripts/visual/loop.mjs
+
+risk: fidelidade visual e interacao local sem mudanca de contrato de dados
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
