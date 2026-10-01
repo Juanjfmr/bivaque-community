@@ -22,6 +22,7 @@ allowed_paths:
   - apps/web/app/(shell)/groups/page.tsx
   - apps/web/app/(shell)/groups/[id]/page.tsx
   - apps/web/app/(shell)/groups/groups-v42.module.css
+  - apps/web/app/(shell)/communities/communities-screen.tsx
   - docs/agents/tasks/RECON-049.task.yml
 
 forbidden:
