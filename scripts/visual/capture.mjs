@@ -579,6 +579,122 @@ function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) {
   // what is NOT stored is the contract itself. Same for the runbook docs.
   const exposure =
     /((?:sua|seu|do usu[áa]rio|do membro|minha|seus|suas)\s+)?\b(patente|posto militar|gradua[çc][ãa]o militar|organiza[çc][ãa]o militar|endere[çc]o residencial|selo de verifica[çc][ãa]o|verificado publicamente)\b\s*[:-]/i
+  // ── gramática visual: camada de runtime (docs/agents/GRAMATICA-VISUAL.md §5) ──────────────
+  //
+  // As regras 1–11 medem o que é mecanicamente inválido. Estas medem o que passa em todas elas e
+  // ainda assim é defeito: um valor que quebra linha, uma coluna que repete o mesmo nome cem por
+  // cento das vezes, um número que não diz de onde veio. Foi assim que o produto de referência de
+  // 2026-09-24 ficou visualmente coerente com o pior defeito possível numa tela de dinheiro.
+  const visivel = (element) => {
+    const box = element.getBoundingClientRect()
+    return box.width > 0 && box.height > 0
+  }
+
+  // Quantas linhas de texto o elemento ocupa. `getClientRects` resolve inline; para bloco
+  // (td, div) é preciso comparar a altura de conteúdo com a entrelinha.
+  const linhasDeTexto = (element) => {
+    const rects = element.getClientRects().length
+    if (rects > 1) return rects
+    const style = getComputedStyle(element)
+    const lineHeight = Number.parseFloat(style.lineHeight)
+    if (!Number.isFinite(lineHeight) || lineHeight <= 0) return 1
+    const box = element.getBoundingClientRect()
+    const padding = Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom)
+    return Math.max(1, Math.round((box.height - padding) / lineHeight))
+  }
+
+  const NUMERO = /^[+\u2212-]?\s*(R\$\s*)?[\d][\d.,]*\s*(%|x)?$/
+
+  // 12. R-01 value-wrap — valor numérico não pode ocupar duas linhas
+  for (const element of document.querySelectorAll("td, th, dd, dt, span, strong, b, small")) {
+    if (element.children.length > 0 || !visivel(element)) continue
+    const text = (element.textContent ?? "").trim()
+    if (text.length === 0 || text.length > 24 || !NUMERO.test(text)) continue
+    const linhas = linhasDeTexto(element)
+    if (linhas > 1) {
+      add("value-wrap", "high", describe(element), `valor "${text}" em ${linhas} linhas`)
+    }
+  }
+
+  // 13. R-02 metric-without-context — número agregado precisa de subtexto que o explique
+  for (const element of document.querySelectorAll("p, span, strong, div, dd")) {
+    if (element.children.length > 0 || !visivel(element)) continue
+    const text = (element.textContent ?? "").trim()
+    if (!NUMERO.test(text) || Number.parseFloat(getComputedStyle(element).fontSize) < 20) continue
+    const parent = element.parentElement
+    if (!parent) continue
+    let contexto = (parent.textContent ?? "").trim().length - text.length >= 12
+    if (!contexto) {
+      for (const irmao of parent.children) {
+        if (irmao === element || irmao.contains(element)) continue
+        if ((irmao.textContent ?? "").trim().length >= 12) {
+          contexto = true
+          break
+        }
+      }
+    }
+    if (!contexto) {
+      add("metric-without-context", "medium", describe(element), `número ${text} sem subtexto`)
+    }
+  }
+
+  // 14. R-03 redundant-column — coluna que repete o mesmo valor em quase todas as linhas
+  for (const table of document.querySelectorAll("table")) {
+    if (!visivel(table)) continue
+    const rows = [...table.querySelectorAll("tbody tr")].filter(visivel)
+    if (rows.length < 4) continue
+    const colunas = Math.max(...rows.map((row) => row.children.length))
+    for (let indice = 0; indice < colunas; indice += 1) {
+      const valores = rows
+        .map((row) => (row.children[indice]?.textContent ?? "").trim())
+        .filter((valor) => valor.length > 0)
+      if (valores.length < 4) continue
+      const contagem = new Map()
+      for (const valor of valores) contagem.set(valor, (contagem.get(valor) ?? 0) + 1)
+      const [valor, repeticao] = [...contagem.entries()].sort((a, b) => b[1] - a[1])[0]
+      if (repeticao / valores.length < 0.9) continue
+      const header =
+        table.querySelectorAll("thead th")[indice]?.textContent?.trim() || `coluna ${indice + 1}`
+      add(
+        "redundant-column",
+        "medium",
+        describe(table),
+        `coluna "${header}" repete "${valor.slice(0, 40)}" em ${repeticao}/${valores.length} linhas`,
+      )
+    }
+  }
+
+  // 15. R-04 nested-surface — superfície com borda/raio dentro de outra superfície igual
+  const ehSuperficie = (element) => {
+    const style = getComputedStyle(element)
+    const raio = Number.parseFloat(style.borderTopLeftRadius) || 0
+    const temSombra = style.boxShadow !== "none"
+    const temBorda = Number.parseFloat(style.borderTopWidth) > 0
+    const fundo = parseColor(style.backgroundColor)
+    return raio >= 8 && (temSombra || temBorda) && fundo !== null && fundo.a > 0.9
+  }
+  for (const externo of document.querySelectorAll("section, article, aside")) {
+    if (!visivel(externo) || !ehSuperficie(externo)) continue
+    const fundoExterno = getComputedStyle(externo).backgroundColor
+    for (const interno of externo.querySelectorAll("section, article, aside")) {
+      if (interno === externo || !visivel(interno) || !ehSuperficie(interno)) continue
+      if (getComputedStyle(interno).backgroundColor === fundoExterno) continue
+      add(
+        "nested-surface",
+        "medium",
+        describe(interno),
+        "superfície com borda/raio dentro de outra",
+      )
+      break
+    }
+  }
+
+  // 16. R-05 multiple-tables — duas tabelas de topo na mesma rota
+  const tabelas = [...document.querySelectorAll("table")].filter(visivel)
+  if (tabelas.length > 1) {
+    add("multiple-tables", "medium", "table", `${tabelas.length} tabelas na mesma rota`)
+  }
+
   const bodyText = document.body.innerText || ""
   const hit = exposure.exec(bodyText)
   if (hit) {

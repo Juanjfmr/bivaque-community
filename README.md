@@ -11,6 +11,9 @@ arquivo:linha.
 
 ## Onde está a documentação
 
+**Reconstrução pelo Figma atual:** [referência, checkpoints e evidências](docs/agents/FIGMA-RASTREABILIDADE.md).
+O registro distingue trabalho preservado, provas concluídas e fluxos ainda pendentes.
+
 Este README é um roteador. Nada de produto vive aqui, para não virar mais uma cópia que
 envelhece.
 

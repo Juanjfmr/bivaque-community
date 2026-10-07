@@ -2,11 +2,11 @@
 
 <!-- Gerado por tools/backend-kanban/src/board.mjs. Não editar manualmente. -->
 
-**Snapshot:** 2026-09-09
+**Snapshot:** 2026-10-07
 
-> Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.
+> Figma atual niuOHiHkyc9eGaIQBY9hq4 e decisoes posteriores governam visual/experiencia web. Cobertura: docs/agents/FIGMA-ATUAL-COBERTURA.md, coordenada no card RECON-PRANCHAS-RESTANTES. Contagens abaixo incluem infraestrutura, Mobile e historico; cards done antigos nao sao percentual de fidelidade atual. W00 superado preservado frozen/history; nao reiniciar. Codigo e provas atuais determinam entrega, sem apagar evidencias ou criar outra fila.
 
-**Mapa:** 70 frentes · 8 agora · 8 bloqueadas · 27 concluídas · 0 drifts
+**Mapa:** 73 frentes · 4 agora · 9 bloqueadas · 27 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -16,12 +16,8 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 - **MOB-001-SESSION** · P0 · Mobile: contrato R3 de sessão (PKCE + secure-store + revogação)
 - **S6-MOBILE-RUNTIME** · P0 · Mobile: RUNTIME PROOF real no emulador + tipos Foto/Link/Enquete + realtime
-- **DS-001-DESIGN-SYSTEM** · P1 · Sistema de design canônico Casa comum
 - **MVP-05-TEST-BASELINE** · P1 · Baseline reproduzível de testes e tipos
-- **RECON-AUTH-ENTRADA-WEB** · P1 · Web: entrada fiel à prancha 36-web-auth-entrada sem tocar o mecanismo
-- **RECON-PRANCHAS-RESTANTES** · P1 · Pranchas web restantes: 17 lotes com o backend junto das telas
-- **RECON-W00-FUNDACAO** · P1 · W00: baseline, contratos e fundação da reconstrução web
-- **RECON-W00-TELAS** · P1 · Quatro telas da reconstrucao web saem do placeholder
+- **RECON-PRANCHAS-RESTANTES** · P1 · Figma atual: reconstruir e comprovar todos os ciclos web
 
 ## Bloqueios
 
@@ -33,6 +29,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 - **RECON-005-BLOQUEADO** · P1 · Tela /profile bloqueada por decisao R3 de visibilidade de campo — Aprovacao humana do ADR-20260908-perfil-campos-opcionais; Modelo de ameaca e texto de consentimento; Governanca LGPD (BLOCK-LEGAL-AI)
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Reconciliar ADR técnico com autorização de produto de 07/09; concluir threat model, leitura por campo, remoção e testes positivos/negativos
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança
+- **WEB-OG-METADATABASE** · P2 · OG da raiz resolve para localhost sem metadataBase — Dominio canonico de producao nao decidido; apps/web/.env.example nao possui variavel de URL publica
 
 ## Drift aberto
 
@@ -41,6 +38,7 @@ Nenhum card.
 ## Triagem prioritária
 
 - **REPO-SECRETS-ROTATION** · P0 · Rotação de chaves Portal e Resend
+- **AUDIT-NAV-ATIVO-ANCORA** · P1 · Auditoria: nav-active exige item atual em nav de ancora e de links legais
 - **DOC-20260906-RECONSTRUCAO** · P1 · Publicar e ampliar guia visual e autoridade de construção
 - **DRIFT-STATUS-RECONCILIATION** · P1 · Reconciliar documentação com runtime após cada ciclo
 - **PROXY-SURFACE-RISK** · P1 · Superfície de escape do gate de rota documentada e reduzida

@@ -1,5 +1,71 @@
 # Bivaque — processo de construção da nova versão
 
+## 0. Execução enxuta das pranchas web — 08/09/2026
+
+**Pedido posterior do responsável: reduzir burocracia e demora. Esta seção substitui a cadência e as leituras repetitivas das seções abaixo, dos planos antigos e das instruções dos agentes.** O catálogo funcional web continua valendo integralmente. Simplificar execução não reduz rotas, integração, acessibilidade ou proteção dos dados.
+
+### O que motivou a mudança
+
+Inspecionada a sessão Claude Code **Orquestração implementação web**, ID `fb6e648e-fed2-4339-b5a7-670c62518524`, registros de 08/09/2026 entre 04:57 e 19:58 UTC. Nesse recorte: 36 chamadas Bash contendo `pnpm@11.18.0 gate`, 7 ao loop visual, 8 ao validador de contratos e 7 chamadas AskUserQuestion. São contagens de chamadas, incluindo tentativas; não duração ativa nem prova de desperdício de cada execução. O log registra correções úteis de navegação, autorização e E2E, mas também:
+
+- plano, contrato, inventário, registro de testes, fechamento e parecer separados para a fundação;
+- confirmações para escolhas reversíveis já autorizadas e replanejamento após mudança de especificação;
+- quatro execuções Qwen sobre a mesma árvore, relatos de travamento e escrita fora do escopo;
+- avaliação de rotas não tocadas entrando no caminho crítico de uma entrega visual pequena.
+
+A leitura do log comprova ações registradas; não certifica as telas atuais. Não atribuir todas as mudanças da árvore compartilhada a esse executor.
+
+### Unidade de entrega e contexto
+
+1. **Um lote pequeno entrega um fluxo ou 1–3 telas relacionadas**, incluindo seus estados e integrações. Uma tela complexa pode ser o lote inteiro. Não abrir tarefa por componente, campo ou botão.
+2. Na primeira entrada, ler esta seção, as correções do dono e o card escolhido. Depois consultar somente os requisitos/rotas da especificação, PNGs com `reviewNotes` e código necessários ao lote. BIVAQUE, PRODUCT_STATUS, mapa, arquitetura e planos históricos são consulta dirigida; não reler tudo a cada chamada. AGENTS continua fornecendo regras técnicas.
+3. Reutilizar o card e contrato existentes. Para delegação, **um YAML válido por lote**, abrangendo as rotas/arquivos necessários; a validação do harness permanece. Reparos e ajustes visuais entram no mesmo contrato. Não criar plano separado se o card/contrato já define entrada, ação, persistência, erro, permissão e prova.
+4. Registrar evidência e pendências uma vez no card existente; capturas/logs ficam em `.visual/` ou no diretório de evidência existente. Não gerar relatório, inventário e handoff duplicando o mesmo resultado. Atualizar PRODUCT_STATUS apenas quando mudar uma afirmação de funcionamento.
+5. A primeira execução de implementação recebe a imagem e já constrói. Verificar visão uma vez por combinação de modelo/harness; não fazer uma chamada separada de descrição da imagem para cada tela.
+
+### Ordem por dependência real
+
+W00–W09 identificam áreas e critérios, não uma fila obrigatória de meses. A §7 da especificação detalha as dependências revistas. Uma API/consulta já existente e autorizada pode sustentar sua tela antes da conclusão dos outros módulos. Não aguardar IA de identidade, eventos ou perfil completo para construir Guia, Serviços ou Início com dados existentes.
+
+Bloqueio afeta o requisito que depende dele e a declaração de conclusão total, não todo o desenvolvimento. Testar como membro com conta fictícia verificada do seed e autorização real; nunca contornar admissão com bypass. Se faltar backend, incluí-lo no lote ou registrar a parte como pendente; não inventar dados no runtime nem trocar botão por sucesso falso. Vincular o complemento ao card original para que omitir um CTA provisoriamente não elimine sua entrega final.
+
+### Execução e concorrência
+
+- Por padrão, **um executor escreve por checkout**. Se outra sessão está escrevendo nele, usar checkout isolado e combinar a base explicitamente; não restaurar arquivos alheios para obter gate verde.
+- Com delegação autorizada, Qwen implementa o trabalho mecânico; Codex assumiu a coordenação por pedido posterior do responsável em 08/09/2026. O coordenador envia escopo curto, PNGs e critérios, sem reescrever a implementação simultaneamente. Revisão e verificação seguem papéis independentes por lote.
+- Até dois executores em paralelo somente com worktrees isolados, tarefas independentes e servidores/portas separados. Worktree isola arquivos, não banco. Reset, migration e testes que alteram o banco compartilhado são exclusivos. Lockfile, shell e tokens compartilhados têm um responsável.
+- `allowed_paths` orienta escopo; não é sandbox. Conferir o diff final inclusive arquivos novos. Mudança fora do escopo exige inspeção: se necessária e segura, ajustar o contrato e revisar junto; caso contrário, separar o hunk identificado. Não descartar tela inteira só porque a sessão escreveu no caminho errado.
+- Acompanhar ID da execução, log e última atividade. Após 5 minutos sem saída nem alteração, inspecionar processo/estado uma vez. Se continua ativo, aguardar evento ou verificar em intervalos de 1–2 minutos; silêncio sozinho não prova travamento. Confirmado erro ou travamento, preservar diff/log e retomar com a correção, sem reiniciar o diagnóstico do produto. Não iniciar cópia do executor enquanto o anterior escreve.
+
+### Três momentos de verificação
+
+| Momento | Executar | Não repetir sem motivo |
+|---|---|---|
+| Edição | Lint/tipos pertinentes e testes afetados; `gate --fast` nos pontos úteis; navegador da rota | Gate completo e suíte E2E inteira a cada ajuste de CSS |
+| Fechamento do lote | `gate` completo uma vez no candidato estável; build; testes de fluxo afetado, falha e acesso negado quando aplicável; capturas 375/768/1440 das rotas tocadas | Novo build por captura; inventário de todas as rotas por tela |
+| Integração/publicação | Regressão completa, CI da revisão, fluxos multiusuário e G6 antes da publicação | Exigir CI remoto em cada iteração local |
+
+Se mudar o código após um teste, repetir a prova afetada e verificar o conjunto integrado antes do fechamento. Não reutilizar evidência de código diferente sem avaliar o diff. Falha preexistente comprovada mantém seu card aberto; não paralisa módulo independente nem torna o gate global verde. Regressão introduzida, quebra do shell, vazamento ou falha do fluxo atual bloqueiam sua integração.
+
+**Captura direcionada já existe**, com servidor disponível e conta de teste do papel correto:
+
+```powershell
+$env:BIVAQUE_VISUAL_ROUTE = "/inicio"
+try { node scripts/visual/capture.mjs } finally { Remove-Item Env:BIVAQUE_VISUAL_ROUTE }
+```
+
+Esse comando captura e audita os três viewports, sem build nem gate. Não comprova sozinho interações. A rota precisa estar cadastrada no capturador; para novas rotas e detalhes, adicionar fixture concreta e confirmar que a captura não terminou em login/403. `loop.mjs --fast` ainda executa lint; o loop completo também executa tipos/testes/build. Escolher uma via, evitando duplicar esses mesmos comandos na mesma revisão. O `gate` inclui segredos; o loop visual não o substitui.
+
+### Revisão, qualidade e fechamento
+
+Manter implementador, revisor e verificador distintos **por lote**, sem criar três sessões para cada campo ou tela. Revisor recebe primeiro referência, critérios e diff; verificador exercita o candidato. Uma sessão pode revisar lotes sucessivos que não implementou, sem receber previamente a defesa do executor. Se o coordenador corrigiu código, outro revisor avalia essa parte. Sem revisão disponível, registrar revisão pendente e avançar somente trabalho independente; não chamar de aprovado.
+
+Corrigir antes de integrar: acesso indevido, perda de dados, fluxo principal quebrado, ação morta, ausência de estado essencial, erro de teclado/foco/contraste, overflow e divergência visual que descaracterize a prancha. Ajustes cosméticos menores que não prejudiquem uso podem ficar como itens concretos do mesmo card para acabamento; não bloquear a próxima tela independente. O card só fecha quando cumprir sua aceitação; o acabamento acordado continua exigido para a entrega web.
+
+Usar o `retry_budget` existente (normalmente 3) para reparos do mesmo defeito. Esgotado, registrar FAIL/BLOCKED e diagnóstico; escolher abordagem técnica diferente ou outro executor quando possível. Não pedir decisão humana sobre toda correção reversível, nem transformar o teto em aprovação. Perguntar apenas quando faltar decisão do dono ou autorização efetivamente necessária.
+
+**Próxima execução:** reconciliar os diffs já existentes de `/inicio`, `/explorar`, `/communities` e `/notifications`, um lote por vez, com seus RECON existentes. Inspecionar PNG, preservar trabalho útil e validar; não recomeçar W00 nem gerar outra demonstração de componentes. Depois selecionar a próxima tela com dependências reais disponíveis. Reportar: rotas entregues, evidência, pendência e próximo lote, em poucas linhas. Não aguardar novo “continue” dentro do escopo autorizado.
+
 > Escopo posterior de 08/09/2026: nesta rodada, entregar somente web, com rotas e integrações funcionais. A [especificação funcional web](../../superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md) detalha funcionamento e substitui a sequência genérica para essa entrega. Mobile continua como projeto futuro e não impede conclusão web.
 
 Versão de 6 de setembro de 2026. Documento de execução para ser entregue aos modelos responsáveis pela reconstrução web e mobile.
