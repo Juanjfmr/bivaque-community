@@ -1,0 +1,958 @@
+/* FIGMA-002 — superfícies de Imóveis na geometria das pranchas property-*
+   (list 1360px, detail, publish/review/edit). Mesma disciplina do shell:
+   papéis semânticos shell-* dos tokens canônicos, nenhum hex local. */
+
+.view {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px 32px 48px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.heading {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 800;
+  color: var(--semantic-shell-text-primary);
+}
+
+.eyebrow {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 1.02px;
+  text-transform: uppercase;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.subtitle {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.headRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.searchRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.searchForm {
+  display: flex;
+  flex: 1 1 260px;
+  gap: 10px;
+  min-width: 0;
+}
+
+.filterForm,
+.draftPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.draftPanel {
+  padding: 16px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+}
+
+.searchInput {
+  flex: 1 1 240px;
+  min-height: 44px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  padding: 0 14px;
+  font-size: 14px;
+}
+
+.searchInput:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+/* O campo de busca da prancha property-list abre com a lupa dentro dele, e não
+   como rótulo flutuante: o ícone é decorativo e o nome acessível continua
+   sendo o placeholder do input. */
+.searchField {
+  display: flex;
+  flex: 1 1 240px;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 44px;
+  padding-left: 14px;
+  border: 1px solid var(--semantic-shell-border-control);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+}
+
+.searchField:focus-within {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+.searchFieldIcon {
+  flex: none;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.searchField .searchInput {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.searchField .searchInput:focus-visible {
+  outline: none;
+}
+
+/* Ícone de ação dentro de botão (buscar, filtros, anunciar): 21px, à esquerda do
+   rótulo, com a mesma cor do texto do botão. */
+.buttonIcon {
+  flex: none;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: 10px;
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.chip:hover {
+  background: var(--semantic-shell-canvas);
+  color: var(--semantic-shell-text-primary);
+}
+
+.chip:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+.chipActive {
+  /* Prancha property-list: o chip ativo é superfície branca com CONTORNO de
+     controle e rótulo em cor de link. Fundo colorido sozinho lia como hover e
+     não marcava a seleção. */
+  background: var(--semantic-shell-surface);
+  border-color: var(--semantic-shell-border-control);
+  color: var(--semantic-shell-action);
+}
+
+.resultCount {
+  font-size: 13px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+/* ── grade de cards (prancha property-list) ── */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 120ms ease;
+}
+
+/* O botão flutuante de salvar é IRMÃO do link do card, nunca filho: botão dentro
+   de âncora é HTML inválido, roubaria o clique e duplicaria o alvo de foco. O
+   wrapper posiciona o botão sobre a capa sem mexer no link que cobre o card. */
+.cardWrap {
+  position: relative;
+  display: block;
+}
+
+.cardSaveFloat {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
+}
+
+.cardSaveFloatButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  background: var(--semantic-shell-surface);
+  box-shadow: 0 2px 5px rgb(18 63 82 / 5%);
+  color: var(--semantic-shell-text-secondary);
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.cardSaveFloatButton:hover:not(:disabled) {
+  color: var(--semantic-shell-action);
+}
+
+.cardSaveFloatButton:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.cardSaveFloatButton:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+.cardSaveFloatButton[data-saved="true"] {
+  color: var(--semantic-shell-action);
+  background: var(--semantic-shell-canvas);
+}
+
+.cardSaveError {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.moderationNotice {
+  margin: 16px 0 0;
+}
+
+.reportLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.card:hover {
+  box-shadow: 0 6px 18px rgb(15 46 52 / 10%);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+.cardCover {
+  display: block;
+  width: 100%;
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--semantic-shell-canvas);
+}
+
+.cardCover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cardCoverPlaceholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--semantic-shell-text-secondary);
+  font-size: 13px;
+}
+
+.cardTypeChip {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 16px 16px;
+}
+
+.cardNeighborhood {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 1.02px;
+  text-transform: uppercase;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.cardTitle {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  color: var(--semantic-shell-text-primary);
+}
+
+.cardPrice {
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 800;
+  color: var(--semantic-shell-text-primary);
+}
+
+.cardPriceSuffix {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.cardSpecs {
+  font-size: 13px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--semantic-shell-border-subtle);
+  font-size: 13px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.cardFooterAction {
+  font-weight: 700;
+  color: var(--semantic-shell-action);
+}
+
+/* ── detalhe (prancha property-detail) ── */
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--semantic-shell-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--semantic-shell-text-primary);
+}
+
+.backLink:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+.gallery {
+  position: relative;
+  border-radius: var(--semantic-shell-radius);
+  overflow: hidden;
+  background: var(--semantic-shell-canvas);
+}
+
+.gallery img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+}
+
+.galleryPlaceholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  color: var(--semantic-shell-text-secondary);
+  font-size: 14px;
+}
+
+.galleryBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.galleryCount {
+  font-size: 13px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.galleryNav {
+  display: flex;
+  gap: 8px;
+}
+
+.galleryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: 999px;
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.galleryButton:hover:not(:disabled) {
+  background: var(--semantic-shell-canvas);
+}
+
+.galleryButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.galleryButton:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+.detailColumns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 900px) {
+  .detailColumns {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--semantic-shell-brand-subtle);
+  color: var(--semantic-shell-action);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.specCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 20px 0 24px;
+}
+
+.specCard {
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-canvas);
+  padding: 20px 16px;
+}
+
+.specCardValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--semantic-shell-text-primary);
+}
+
+.specCardHint {
+  font-size: 12px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.costPanel {
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: fit-content;
+}
+
+.costPanelTitle {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.02px;
+  text-transform: uppercase;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.costMain {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--semantic-shell-text-primary);
+}
+
+.costLine {
+  font-size: 13px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.costTotal {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--semantic-shell-text-primary);
+  border-top: 1px solid var(--semantic-shell-border-subtle);
+  padding-top: 8px;
+}
+
+/* ── formulário (pranchas publish/edit) ── */
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px 16px;
+}
+
+@media (min-width: 768px) {
+  .formGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .formFull {
+    grid-column: 1 / -1;
+  }
+}
+
+.fieldLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--semantic-shell-text-primary);
+  margin-bottom: 6px;
+}
+
+.fieldInput {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  padding: 0 12px;
+  font-size: 16px;
+}
+
+.fieldTextarea {
+  width: 100%;
+  min-height: 72px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  padding: 10px 12px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.fieldInput:focus-visible,
+.fieldTextarea:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+.fieldInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fieldHint {
+  font-size: 12px;
+  color: var(--semantic-shell-text-secondary);
+  margin-top: 4px;
+}
+
+.checkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.checkLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--semantic-shell-text-primary);
+}
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-action);
+  color: var(--semantic-shell-action-on);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: var(--semantic-shell-action-hover);
+}
+
+.primaryButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.primaryButton:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background: var(--semantic-shell-canvas);
+}
+
+.secondaryButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.secondaryButton:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+.dangerButton {
+  composes: secondaryButton;
+  color: var(--semantic-danger);
+  border-color: var(--semantic-danger);
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ── revisão antes de publicar (prancha property-review) ── */
+
+.reviewCard {
+  width: 100%;
+  align-self: center;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  overflow: hidden;
+  max-width: 380px;
+}
+
+/* O cartão da lista de salvos NÃO é o painel de revisão da publicação: ele
+   ocupa a coluna de conteúdo da tela, alinhado com a busca e com a grade de
+   anúncios. Reaproveitar `.reviewCard` (380px, centralizado) deixava a lista
+   deslocada do resto da página. */
+.savedCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+}
+
+.savedList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reviewDescription {
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-canvas);
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--semantic-shell-text-primary);
+}
+
+.publishContainer :global(.modal__dialog) {
+  width: 820px;
+  max-width: calc(100vw - 32px);
+  background: var(--semantic-shell-surface);
+  padding: 0;
+}
+
+.reviewContainer :global(.modal__dialog) {
+  width: 610px;
+  max-width: calc(100vw - 32px);
+  background: var(--semantic-shell-surface);
+  padding: 0;
+}
+
+.publishContainer :global(.modal__heading),
+.reviewContainer :global(.modal__heading) {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+}
+
+.modalHeader {
+  padding: 24px 28px 12px;
+  font-size: 22px;
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px 28px 28px;
+}
+
+.modalBody .actionRow {
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid var(--semantic-shell-border-subtle);
+}
+
+.editView {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.editView .heading {
+  font-size: 22px;
+  line-height: 28px;
+}
+
+.editView .formGrid {
+  gap: 20px 16px;
+}
+
+.editClose {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.reviewEmptyTitle {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--semantic-shell-action);
+  margin-bottom: 6px;
+}
+
+.reviewDescription strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 700;
+  color: var(--semantic-shell-text-primary);
+  margin-bottom: 8px;
+}
+
+.neighborhoodPanel,
+.advertiserPanel {
+  margin-top: 24px;
+  padding: 20px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+}
+
+.advertiserLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  color: var(--semantic-shell-text-primary);
+  text-decoration: none;
+}
+
+.advertiserHint {
+  display: block;
+  font-size: 13px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+@media (max-width: 767px) {
+  .view {
+    padding: 20px 16px 32px;
+  }
+  .searchInput {
+    width: 0;
+    min-width: 0;
+  }
+  .modalBody {
+    padding: 12px 16px 20px;
+  }
+}
+
+.reviewNote {
+  font-size: 13px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+/* ── gerenciador de fotos (editar) ── */
+
+.photoRow {
+  flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  padding: 8px;
+}
+
+.photoThumb {
+  width: 72px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--semantic-shell-canvas);
+}
+
+.photoMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--semantic-shell-text-secondary);
+  flex: 1;
+}
+
+.photoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.miniButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: 8px;
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.miniButton:hover:not(:disabled) {
+  background: var(--semantic-shell-canvas);
+}
+
+.miniButton:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.miniButton:focus-visible {
+  outline: 2px solid var(--semantic-shell-action);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view *,
+  .modalBody * {
+    transition: none;
+  }
+}
