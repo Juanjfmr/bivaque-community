@@ -32,6 +32,7 @@ export const TARGET_LABELS: Record<string, string> = {
   message: "Mensagem privada",
   recommendation_request: "Pedido de indicação",
   recommendation_reply: "Resposta de indicação",
+  listing: "Anúncio de imóvel",
 }
 
 export const SEM_COMUNIDADE = "__sem-comunidade__"
@@ -195,6 +196,12 @@ export interface TargetInfo {
   authorName: string | null
   communityName: string | null
   contentCreatedAt: string | null
+  /**
+   * Só para `listing`: o anúncio ainda está oculto pela moderação. É o que
+   * habilita a ação explícita de restauração na fila. Ausente nos outros alvos,
+   * em vez de `false`, para a UI não sugerir um estado que não existe.
+   */
+  listingHidden?: boolean | null
 }
 
 const EMPTY_TARGET: TargetInfo = {
@@ -202,6 +209,7 @@ const EMPTY_TARGET: TargetInfo = {
   authorName: null,
   communityName: null,
   contentCreatedAt: null,
+  listingHidden: null,
 }
 
 function distinct(values: readonly (string | null | undefined)[] | undefined): string[] {
@@ -243,8 +251,9 @@ export async function resolveTargets(
   const messageIds = idsByType.get("message") ?? []
   const requestIds = idsByType.get("recommendation_request") ?? []
   const replyIds = idsByType.get("recommendation_reply") ?? []
+  const listingIds = idsByType.get("listing") ?? []
 
-  const [posts, comments, groups, messages, requests, replies] = await Promise.all([
+  const [posts, comments, groups, messages, requests, replies, listings] = await Promise.all([
     (async (): Promise<
       QueryResult<
         {
@@ -340,6 +349,29 @@ export async function resolveTargets(
       noteFailure("recommendation_replies", error)
       return { data: data ?? null, error }
     })(),
+    (async (): Promise<
+      QueryResult<
+        {
+          id: string
+          title: string
+          owner_user_id: string
+          community_id: string | null
+          moderation_hidden: boolean
+          created_at: string
+        }[]
+      >
+    > => {
+      // Alvo de anúncio: texto autorizado para a operação (título, autor,
+      // comunidade e a marca de ocultação). FOTO não entra aqui: a matriz de
+      // mídia do ADR é a mesma do membro, sem exceção de operador.
+      if (listingIds.length === 0) return { data: null, error: null }
+      const { data, error } = await client
+        .from("listings")
+        .select("id, title, owner_user_id, community_id, moderation_hidden, created_at")
+        .in("id", listingIds)
+      noteFailure("listings", error)
+      return { data: data ?? null, error }
+    })(),
   ])
 
   // Segunda perna: escopo transitivo (comentário → post; resposta → pedido).
@@ -399,6 +431,7 @@ export async function resolveTargets(
   const communityIds = distinct([
     ...(posts.data?.map((p) => p.community_id) ?? []),
     ...(groupScopes.map((g) => g.community_id) ?? []),
+    ...(listings.data?.map((l) => l.community_id) ?? []),
   ])
   let communityNames = new Map<string, string>()
   if (communityIds.length > 0) {
@@ -419,6 +452,7 @@ export async function resolveTargets(
     ...(messages.data?.map((m) => m.sender_id) ?? []),
     ...(requests.data?.map((r) => r.author_id) ?? []),
     ...(replies.data?.map((r) => r.author_id) ?? []),
+    ...(listings.data?.map((l) => l.owner_user_id) ?? []),
   ])
   let authorNames = new Map<string, string>()
   if (authorIds.length > 0) {
@@ -432,6 +466,7 @@ export async function resolveTargets(
 
   const postScope = new Map((posts.data ?? []).map((p) => [p.id, p]))
   const requestScope = new Map((requests.data ?? []).map((r) => [r.id, r]))
+  const listingScope = new Map((listings.data ?? []).map((l) => [l.id, l]))
 
   for (const ref of refs) {
     if (out.has(ref.target_id)) continue
@@ -513,6 +548,18 @@ export async function resolveTargets(
             ? communityNameFor(groupScope.get(request.group_id) ?? null)
             : null,
           contentCreatedAt: row.created_at,
+        })
+        break
+      }
+      case "listing": {
+        const row = listingScope.get(ref.target_id)
+        if (!row) break
+        out.set(ref.target_id, {
+          content: row.title,
+          authorName: authorNames.get(row.owner_user_id) ?? null,
+          communityName: communityNameFor(row.community_id),
+          contentCreatedAt: row.created_at,
+          listingHidden: row.moderation_hidden,
         })
         break
       }
