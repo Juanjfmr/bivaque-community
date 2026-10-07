@@ -1,5 +1,9 @@
 # Bivaque Community — Claude Code
 
+## Execução web enxuta — 08/09/2026
+
+Aplicar a seção 0 de [PROCESSO-DE-CONSTRUCAO.md](docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md). Essa instrução posterior substitui a cadência genérica abaixo: um lote de telas relacionadas, um contrato delegado, sem plano/parecer/handoff duplicados. Usar Qwen para implementação mecânica quando essa delegação estiver autorizada, um escritor por checkout; revisar o lote e mandar verificar o candidato. Resolver escolhas reversíveis sem pedir aprovação. Testes direcionados na edição, gate completo no lote estável e regressão na integração. Não exigir W01 inteiro para trabalhar em módulos independentes; não declarar fluxo integrado sem prova. Preservar três papéis independentes por lote e os limites técnicos R3.
+
 ## Reconstrução funcional web — revisão de 08/09/2026
 
 Leia `docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md` para a entrega atual, somente web: catálogo de rotas, funcionamento, sequência W00–W09 e gates. Substitui o plano anterior de apresentação sem persistência. UI isolada não conclui fluxo; backend, operação e retorno necessários entram na entrega. Mobile não bloqueia conclusão web. Preservar decisões técnicas R3 e registrar bloqueios reais; não reabrir escolhas de produto já autorizadas.

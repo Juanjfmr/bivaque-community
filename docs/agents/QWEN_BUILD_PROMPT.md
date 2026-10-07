@@ -1,66 +1,65 @@
-# Prompt de construção visual — Bivaque Community
+# Prompt de implementação das pranchas web — Bivaque
 
-## Reconstrução funcional web — revisão de 08/09/2026
+Atualizado em 08/09/2026 após revisão da execução no Claude Code. Preencher o bloco e anexar os PNGs à mesma chamada de implementação. Usar o contrato YAML existente válido; não pedir outro plano.
 
-Leia `docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md` para a entrega atual, somente web: catálogo de rotas, funcionamento, sequência W00–W09 e gates. Substitui o plano anterior de apresentação sem persistência. UI isolada não conclui fluxo; backend, operação e retorno necessários entram na entrega. Mobile não bloqueia conclusão web. Preservar decisões técnicas R3 e registrar bloqueios reais; não reabrir escolhas de produto já autorizadas.
+```text
+Implemente este lote do Bivaque web até a validação local.
 
-Use este texto como mensagem inicial para um modelo visual no repositório. O nome do arquivo é
-histórico: ele pode ser usado com Qwen3.8-Flash, GLM-5.3-Flash, MiniMax M3, Gemini 3.8 Flash ou outro
-modelo que aceite imagens e ferramentas. Escolha e compare candidatos conforme
-`docs/design/visual-guide-2026-09-06/MODELOS-PARA-CONSTRUCAO.md`.
+Card/contrato: [ID e caminho existente]
+Checkout/base: [diretório, SHA e alterações a preservar]
+Rotas: [1–3 telas relacionadas ou um fluxo pequeno]
+Referências: [PNGs web anexados e reviewNotes aplicáveis]
+Requisitos: [IDs/trechos da especificação funcional web]
+Comportamento: [entrada → ação → persistência → feedback → retorno; falha principal]
+Integrações: [consultas/actions/RPCs existentes; complemento necessário]
+Permissões: [ator autorizado e negação relevante]
+Arquivos: [caminhos do contrato, incluindo componentes necessários]
+Validação: [testes afetados e cenário no navegador]
 
----
+Siga AGENTS.md e a seção 0 de
+docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md.
+A versão visual atual e as correções do dono prevalecem sobre produto antigo.
+Agora só web. Leia contexto do lote; não releia toda a documentação.
+Inspecione a imagem e implemente na mesma execução, sem nova aprovação.
+Se não conseguir vê-la, registre a limitação antes de alegar fidelidade.
 
-Você está reconstruindo o Bivaque para web, Android e iOS em
-`C:\Users\juana\bivaque-community`.
+Reutilize código válido já escrito. Não refaça W00, inventário ou demo.
+Resolva escolhas reversíveis; preserve alterações de outras sessões.
+Se faltar arquivo no escopo, informe ao coordenador o ajuste mínimo necessário.
+Não paralise todo o produto nem altere fronteira sensível sem contrato adequado.
 
-## Autoridade e leitura obrigatória
+Use Next.js/React/TypeScript, HeroUI v3, wrappers e tokens existentes.
+Superfícies claras, verde profundo e composição desktop responsiva.
+Não use moldura de celular ou posicionamento da página por coordenadas do PNG.
+Implemente integração real, erro/vazio/carregamento e ações com destino real.
+Não substitua API por array local ou toast de sucesso. Preserve autorização.
 
-Antes de alterar código, leia nesta ordem:
+Durante edição: verificações direcionadas; gate --fast nos pontos úteis.
+Capture somente as rotas do lote no servidor disponível e compare com o PNG.
+Capture 375/768/1440 no candidato estável. No fechamento: gate completo,
+build e testes pertinentes uma vez, coordenados para evitar duplicação.
+Não faça reset em banco compartilhado com outro executor ativo.
+Não modifique migration aplicada nem exponha segredos.
 
-1. `AGENTS.md`.
-2. `docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md`.
-3. `docs/design/visual-guide-2026-09-06/DECISOES-2026-09-07.md`.
-4. `docs/design/visual-guide-2026-09-06/README.md`, `AGENTS.md` e `MAPA-DE-TELAS.md` daquela pasta.
-5. A prancha, as notas no `manifest.json`, os componentes, contratos e migrações da tarefa.
+Entregue: rotas/ações funcionais, diff, resultados de comandos, capturas
+e pendência concreta. Não declare aprovação independente de si próprio.
+Commit/push somente conforme atribuição e autorização da tarefa.
+```
 
-O processo e as decisões do guia são a versão atual do produto. Eles prevalecem sobre documentação antiga conflitante de produto e experiência. A experiência é nacional; Manaus e outras cidades nas imagens são exemplos, não fronteira de acesso. A navegação principal é **Início, Explorar, Comunidades e Perfil**, com Guia e Mercado como entradas explícitas em Explorar.
+## Instrução ao coordenador
 
-Não infira regra de negócio, persistência, permissão ou sucesso de uma imagem. Preserve segurança, privacidade, acessibilidade, autorização do servidor e integridade dos dados.
+- Reconciliar primeiro os RECON já escritos em /inicio, /explorar, /communities e /notifications, um lote por vez. Verificar estado atual; existência de arquivo não comprova conclusão.
+- Um escritor por checkout. Dois executores simultâneos somente em worktrees isolados, portas distintas e banco sob uso exclusivo quando necessário. Não redespachar tarefa ainda ativa.
+- Reutilizar contrato/card; revisão e prova por lote estável com implementador, revisor e verificador distintos. Registrar resultado uma vez no card.
+- Agrupar feedback em defeitos reproduzíveis. Respeitar retry_budget; esgotamento mantém FAIL/BLOCKED e exige diagnóstico e nova abordagem, nunca aprovação automática.
+- Bloqueio externo afeta seu requisito; selecionar próximo lote independente e manter o bloqueado aberto. Não pedir decisões reversíveis já autorizadas.
 
-## Preparação de cada tarefa
+## Correções que continuam obrigatórias
 
-1. Confirme que recebeu a imagem e descreva campos, ações, público e estados que ela mostra.
-2. Escolha uma única mudança observável. Inclua entrada, ação, feedback, próximo passo e a principal falha/recuperação.
-3. Leia o estado real de runtime e os contratos necessários. Documentação não prova entrega.
-4. Declare os componentes que reutilizará e os critérios de conclusão.
+Produto nacional; Manaus é exemplo. Navegação: Início, Explorar, Comunidades e Perfil, com Guia e Mercado explícitos.
 
-Não construa Auth, onboarding ou outro módulo inteiro em uma chamada. Não reproduza o PNG como uma imagem ou coordenadas absolutas; crie componentes responsivos próprios para web e mobile.
+Login com e-mail/senha e Google conforme contrato atual; aceite já registrado não se repete. Vínculo: **Sou militar das Forças Armadas**. CPF rápido é o caminho principal; identidade militar digital é **um arquivo completo**, com IA como fallback e processamento privado. IA pendente não é integração entregue.
 
-## Regras atuais que não podem regredir
+Motivo de participação opcional. Perguntas permitem **Toda a cidade** autorizada. Evento permite **Pedir mais informações** sem exigir RSVP. Força Armada e OM são opcionais e autodeclaradas, cada qual com visibilidade controlável inicialmente desligada. Não criar selo público, posto, endereço residencial, pagamento ou SLA inventado.
 
-- CPF é o caminho principal e praticamente imediato; identidade com reconhecimento por IA é a alternativa quando o CPF não concluir, com acompanhamento e reenvio de arquivo ilegível.
-- “Sou militar das Forças Armadas” é o rótulo de vínculo. Força Armada e OM são autodeclaradas, opcionais e têm controles individuais “Exibir no perfil” desligados inicialmente.
-- Pedido para entrar em comunidade inclui motivo opcional. Perguntas podem ter público “Toda a cidade” ou comunidades autorizadas; respostas herdam o público.
-- Eventos permitem “Pedir mais informações” antes e depois da confirmação de presença.
-- Não crie selo público de verificação, posto, patente, endereço residencial, contato automático, SLA inventado, pagamento, avaliação por estrelas ou promessa que não exista no contrato.
-
-## Stack e qualidade
-
-- Web: Next.js App Router, React, TypeScript, HeroUI v3 e Tailwind. Não introduza outra biblioteca de componentes.
-- Mobile: React Native, Expo e Expo Router; compartilhe contratos, domínio e tokens, não UI web.
-- Backend: Supabase. Segredos e operações privilegiadas ficam no servidor. Não duplique autorização nas telas.
-- Aplique os tokens e wrappers existentes. Interfaces usam superfícies claras, verde profundo, conteúdo humano e layouts próprios para cada plataforma.
-- Siga Biome: aspas duplas, sem ponto e vírgula, 2 espaços. Não edite migração aplicada.
-
-## Ciclo obrigatório
-
-Planeje → implemente → verifique → execute → capture → julgue → corrija.
-
-Rode as verificações proporcionais à mudança. Para edição rápida, use `npx pnpm@11.18.0 gate --fast`; para fechamento de código, use `npx pnpm@11.18.0 gate`. Para tela web, use `node scripts/visual/loop.mjs` e compare os viewports 375, 768 e 1440. Para mobile, execute e inspecione a interface nativa quando o ambiente permitir; uma captura web estreita não comprova mobile.
-
-Não declare que uma tela está pronta apenas porque renderizou. Verifique ação principal, falha, negação de acesso quando aplicável, teclado, toque, rolagem, foco, contraste, estado vazio e recuperação. Não altere um teste só para deixá-lo verde sem adaptar também o contrato substituído.
-
-## Entrega
-
-Ao concluir a tarefa, informe: comportamento entregue; arquivos alterados; testes/comandos e resultados; pranchas inspecionadas; evidência visual; limitações; e o resumo de continuidade para o próximo modelo. Se uma verificação não executou, diga isso. Implementador, revisor e verificador de runtime são papéis separados; não atribua aprovação independente a si mesmo.
+Referências: [decisões](../design/visual-guide-2026-09-06/DECISOES-2026-09-07.md), [catálogo funcional web](../superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md) e [processo §0](../design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md).

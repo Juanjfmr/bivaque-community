@@ -6,9 +6,10 @@ import { MemberAvatar } from "../../../components/bivaque/avatar"
 import { EmptyState } from "../../../components/bivaque/empty-state"
 import { parseReportReason } from "../../../components/bivaque/report-reasons"
 import { QueryError } from "../../admissions/query-error"
-import { resolveReport } from "../actions"
+import { resolveListingReport, resolveReport, restoreListing } from "../actions"
 import { formatDate, resolveTargets, shortLabel, TARGET_LABELS } from "../targets"
 import { DecisionForm, type DecisionState } from "./decision-form"
+import { ListingRestoreForm, type RestoreState } from "./listing-restore-form"
 
 // A análise lê pelo service_role atrás do gate do layout; sem dynamic o build
 // prerenderiza e quebra antes de existir request.
@@ -51,6 +52,35 @@ function decisionResult(r: { ok: boolean; error?: string }): DecisionState {
   return {
     status: "error",
     message: "Não foi possível registrar agora. Confira o estado da fila e tente novamente.",
+  }
+}
+
+function restoreResult(r: { ok: boolean; changed?: boolean; error?: string }): RestoreState {
+  if (r.ok && r.changed) {
+    return {
+      status: "ok",
+      message:
+        "O anúncio voltou a aparecer para quem tem acesso a ele. A situação e o público não mudaram.",
+    }
+  }
+  if (r.ok) {
+    // Idempotência dita à pessoa: repetir a restauração de um anúncio já visível
+    // não é erro nem sucesso novo — nada foi alterado.
+    return {
+      status: "unchanged",
+      message: "O anúncio já estava visível. Nada foi alterado e nenhum evento novo foi gravado.",
+    }
+  }
+  if (r.error === "forbidden") return { status: "forbidden", message: "" }
+  if (r.error === "missing-justification") {
+    return { status: "error", message: "A justificativa da restauração é obrigatória." }
+  }
+  if (r.error === "not-found") {
+    return { status: "error", message: "Este anúncio não existe mais." }
+  }
+  return {
+    status: "error",
+    message: "Não foi possível restaurar agora. Confira o estado da fila e tente novamente.",
   }
 }
 
@@ -187,6 +217,9 @@ export default async function AdminReportDetailPage({
     contentCreatedAt: null,
   }
 
+  const isListingTarget = view.targetType === "listing"
+  const listingHidden = isListingTarget && target.listingHidden === true
+
   const contentLabel = shortLabel(target.content)
   const parsedReason = parseReportReason(scrubReportReason(view.reason))
   const metaParts = [
@@ -204,8 +237,19 @@ export default async function AdminReportDetailPage({
     const justificativa = String(formData.get("justificativa") ?? "")
     // O alvo vem do fechamento desta página (params do servidor); o
     // formulário só entrega a decisão e a justificativa humanas.
-    const r = await resolveReport(view.id, decision, justificativa)
+    // Para anúncio, "ocultar" NÃO passa pelo resolve_report de service_role: a
+    // marca de moderação e a trilha exigem o RPC chamado com o JWT do operador,
+    // para que o ator gravado venha de auth.uid() (ADR-20261006).
+    const r = isListingTarget
+      ? await resolveListingReport(view.id, view.targetId, decision, justificativa)
+      : await resolveReport(view.id, decision, justificativa)
     return decisionResult(r)
+  }
+
+  async function restoreAction(_prev: RestoreState, formData: FormData): Promise<RestoreState> {
+    "use server"
+    const justificativa = String(formData.get("justificativa") ?? "")
+    return restoreResult(await restoreListing(view.targetId, justificativa))
   }
 
   return (
@@ -299,7 +343,7 @@ export default async function AdminReportDetailPage({
             </h2>
             <div className="mt-3">
               {caseClosed ? (
-                <div className="flex flex-col items-start gap-2">
+                <div className="flex flex-col items-start gap-3">
                   <Chip size="sm" variant="soft" color="default">
                     Concluída
                   </Chip>
@@ -309,9 +353,35 @@ export default async function AdminReportDetailPage({
                       <> Justificativa registrada: {view.operatorNote}</>
                     )}
                   </p>
+                  {isListingTarget ? (
+                    // O formulário fica montado depois da restauração, mesmo com
+                    // o anúncio já visível: é ele que carrega o retorno da ação.
+                    // Se saísse do DOM quando `listingHidden` vira falso, o
+                    // `revalidatePath` remontaria a página e o desfecho
+                    // desapareceria antes de ser lido — o operador ficaria sem
+                    // saber se a decisão entrou. O RPC é idempotente, então
+                    // repetir aqui devolve "nada mudou", nunca um falso sucesso.
+                    <div className="flex w-full flex-col gap-3">
+                      <p className="text-sm text-muted">
+                        {listingHidden
+                          ? "O anúncio continua oculto pela moderação. Encerrar a denúncia não o devolve: a restauração é uma decisão separada e auditada."
+                          : "Este anúncio não está oculto pela moderação no momento. Se voltar a ser ocultado, a restauração aparece aqui de novo."}
+                      </p>
+                      <ListingRestoreForm action={restoreAction} />
+                    </div>
+                  ) : null}
                 </div>
               ) : (
-                <DecisionForm action={decideAction} />
+                <>
+                  {isListingTarget ? (
+                    <p className="mb-4 text-sm text-muted">
+                      {listingHidden
+                        ? "Este anúncio já está oculto pela moderação; ocultar de novo resolve a denúncia sem duplicar o evento."
+                        : "Ocultar este anúncio deixa de mostrá-lo para terceiros e para quem o salvou, sem mudar a situação nem o público que o anunciante escolheu."}
+                    </p>
+                  ) : null}
+                  <DecisionForm action={decideAction} />
+                </>
               )}
             </div>
           </section>

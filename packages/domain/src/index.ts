@@ -109,6 +109,52 @@ export function detectCep(text: string): boolean {
 }
 
 export * from "./consent"
+export * from "./image-exif"
 export * from "./outbox"
 export * from "./pii-scrub"
 export * from "./rate-limit"
+
+// ── FIGMA-002: anúncios de moradia (ADR-20260909-anuncios-mercado-e-moradia) ──
+
+// Limite de fotos por anúncio: Moradia 12, Mercado 6 (ADR de mídia D4; o dono
+// reiterou 12 fotos na autorização de 05/10/2026). Validado no servidor.
+export const LISTING_PROPERTY_MAX_PHOTOS = 12
+export const LISTING_ITEM_MAX_PHOTOS = 6
+export const LISTING_PHOTO_MAX_SIZE_BYTES = 10 * 1024 * 1024
+
+export const LISTING_PROPERTY_TYPES = ["apartamento", "casa", "kitnet"] as const
+export type ListingPropertyType = (typeof LISTING_PROPERTY_TYPES)[number]
+
+export const LISTING_PROPERTY_TYPE_LABELS: Record<ListingPropertyType, string> = {
+  apartamento: "Apartamento",
+  casa: "Casa",
+  kitnet: "Kitnet",
+}
+
+export const LISTING_STATUSES = ["draft", "active", "paused", "reserved", "sold", "closed"] as const
+export type ListingStatus = (typeof LISTING_STATUSES)[number]
+
+export const LISTING_STATUS_LABELS: Record<ListingStatus, string> = {
+  draft: "Rascunho",
+  active: "Ativo",
+  paused: "Pausado",
+  reserved: "Reservado",
+  sold: "Vendido",
+  closed: "Encerrado",
+}
+
+// D6: custo ausente nunca vira R$ 0,00 nem entra em soma — vira este rótulo.
+export const LISTING_COST_UNINFORMED_LABEL = "Consultar anunciante"
+
+/**
+ * D6 com a leitura da prancha 19: o "total informado" soma SOMENTE os custos
+ * presentes; sem aluguel informado não há total nenhum.
+ */
+export function informedTotalCents(
+  rent: number | null,
+  condo: number | null,
+  iptu: number | null,
+): number | null {
+  if (rent === null) return null
+  return rent + (condo ?? 0) + (iptu ?? 0)
+}

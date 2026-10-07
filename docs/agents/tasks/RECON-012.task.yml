@@ -1,0 +1,58 @@
+task_id: RECON-012
+
+objective: >
+  Nasce a rota /configuracoes com a tela da prancha 52: preferencias e notificacoes, conta e privacidade, sobre os contratos que ja existem.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/52-web-configuracoes.png
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Nao existe rota de configuracoes. As preferencias vivem como aba dentro de /profile, e o rodape da sidebar rotula Configuracoes um link para /profile — o rotulo promete tela que nao existe (card SHELL-SETTINGS-LABEL).
+
+allowed_paths:
+  - apps/web/app/(shell)/configuracoes/
+  - docs/agents/tasks/RECON-012.task.yml
+
+forbidden:
+  - tocar apps/web/app/components/bivaque/ — diretorio compartilhado, esta onda roda em paralelo
+  - prometer prazo de exclusao de conta ou de resposta que contrato nenhum garante
+  - duplicar mecanismo de preferencia que ja existe em profile
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem ou qualquer dado — tudo vem de contexto ou consulta real
+  - inventar conteudo; sem dado real, estado vazio honesto
+  - linkar rota que nao existe
+  - prometer prazo, aprovacao, entrega ou alcance que o servidor nao garante
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+  - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
+  - introduzir familia tipografica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - a rota /configuracoes existe com os fallbacks de segmento no padrao do repositorio
+  - preferencias de notificacao usam as actions que ja existem, sem duplicar mecanismo
+  - metodo de acesso, exclusao de conta e preferencias refletem contrato real — nenhum prazo inventado
+  - o wordmark e o canonico
+  - a mudanca do link no rodape da sidebar NAO e desta tarefa: reporte a lacuna em vez de tocar app-shell.tsx
+  - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperavel com nova tentativa
+  - nenhum dado inventado sobrevive na tela
+  - exatamente um h1 na tela
+  - contraste >= 4,5:1, alvos >= 44x44, foco visivel
+  - npx pnpm@11.18.0 gate verde
+  - auditoria visual de /configuracoes em 375/768/1440 sem finding de severidade high
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-012.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: conta, privacidade e exclusao
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

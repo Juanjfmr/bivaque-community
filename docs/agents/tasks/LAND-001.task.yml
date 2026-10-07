@@ -1,0 +1,37 @@
+task_id: LAND-001
+objective: Landing pública apresenta o Bivaque através da continuidade entre cidades, ajuda e pessoas.
+authority:
+  - Pedido do responsável anexado em 2026-09-14, direção criativa e implementação da landing
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md seção 0
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: .visual/landing-before-2026-09-14/report.md e shots/root--visitor--desktop-1440--fold.png
+allowed_paths:
+  - apps/web/app/landing/
+  - apps/web/app/page.tsx
+  - apps/web/public/landing/
+  - apps/web/package.json
+  - pnpm-lock.yaml
+  - docs/agents/tasks/LAND-001.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - alterar autenticação, banco ou conteúdo privado
+  - descartar alterações de outras sessões
+  - publicar ou implantar o produto
+acceptance:
+  - Mensagem compreensível e CTAs preservam os destinos existentes
+  - Demonstração identificada sem contagens ou depoimentos apresentados como reais
+  - Composição própria em 375, 768 e 1440 com teclado e movimento reduzido
+  - Fotografia gerada local, dimensões reservadas e carregamento responsivo
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 build
+  - node scripts/visual/capture.mjs
+risk: apresentação e acessibilidade
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

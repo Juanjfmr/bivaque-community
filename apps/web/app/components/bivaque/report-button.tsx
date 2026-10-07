@@ -8,9 +8,10 @@ import { FeedbackAlert } from "./feedback-alert"
 import { submitReportAction } from "./report-actions"
 import { EXPLANATION_MAX, REPORT_REASONS } from "./report-reasons"
 
-// Os seis alvos de `public.report_target_type`. Os dois de indicacao entraram
+// Os alvos de `public.report_target_type`. Os dois de indicacao entraram
 // na H-Task 1 (20260821000031): a onda F transformou a resposta de indicacao no
-// ciclo central do produto e ela nao era denunciavel.
+// ciclo central do produto e ela nao era denunciavel. `listing` entrou pelo
+// ADR-20261006-anuncios-salvos-e-moderacao, com moderacao propria de anuncio.
 export type ReportTargetType =
   | "post"
   | "comment"
@@ -18,6 +19,7 @@ export type ReportTargetType =
   | "message"
   | "recommendation_request"
   | "recommendation_reply"
+  | "listing"
 
 // Composicao da prancha 56: o modal pergunta POR QUE a denuncia existe, em
 // categorias fechadas — a lista canônica vive em report-reasons.ts e é a mesma
@@ -30,6 +32,7 @@ const TARGET_PRESENTATION: Record<ReportTargetType, { title: string; question: s
   message: { title: "Denunciar mensagem", question: "esta mensagem" },
   recommendation_request: { title: "Denunciar pedido", question: "este pedido" },
   recommendation_reply: { title: "Denunciar resposta", question: "esta resposta" },
+  listing: { title: "Denunciar anúncio", question: "este anúncio" },
 }
 
 interface ReportButtonProps {
@@ -51,6 +54,13 @@ interface ReportButtonProps {
    * opcao nao aparece: nao se oferece bloqueio sem saber a quem bloquear.
    */
   blockUserId?: string
+  /**
+   * Nome acessível quando o rótulo visível já é a frase completa — a prancha
+   * property-detail escreve "Reportar anúncio" no botão, e a composição padrão
+   * (`rótulo + substantivo`) viraria "Reportar anúncio anúncio". Com este
+   * campo, o nome acessível é o próprio rótulo visível.
+   */
+  accessibilityLabel?: string
 }
 
 type BlockState = "idle" | "working" | "done"
@@ -61,6 +71,7 @@ export function ReportButton({
   label = "Denunciar",
   externalState,
   blockUserId,
+  accessibilityLabel,
 }: ReportButtonProps) {
   const ownModal = useOverlayState()
   const modal = externalState ?? ownModal
@@ -191,7 +202,9 @@ export function ReportButton({
             resetForm()
             modal.open()
           }}
-          aria-label={`${label} ${presentation.question.replace(/^(esta|este) /, "")}`}
+          aria-label={
+            accessibilityLabel ?? `${label} ${presentation.question.replace(/^(esta|este) /, "")}`
+          }
         >
           {label}
         </Button>

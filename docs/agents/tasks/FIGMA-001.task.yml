@@ -1,0 +1,118 @@
+task_id: FIGMA-001
+objective: >
+  A central de conversas real do Bivaque reproduz o prototipo atual em caixa, mensagem
+  e resposta, com acesso pelo shell superior, dados persistidos e recuperacao de falhas.
+authority:
+  - https://www.figma.com/design/niuOHiHkyc9eGaIQBY9hq4/Bivaque?node-id=7-5
+  - Pedido direto do dono em 05/10/2026 para usar OpenCode na conversao fiel do prototipo em producao
+  - Decisoes desta conversa - Comunidades fora da navegacao, Conversas no shell superior e ate 12 fotos
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0
+  - docs/agents/tasks/RECON-032.task.yml - capacidade existente de conversa enderecavel
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em 05/10/2026 o codigo apps/web/app/(shell)/messages/page.tsx foi inspecionado:
+    le dm_conversations e dm_messages mas seleciona conversa por query e nao possui rota
+    messages/[id]. O shell atual importa NAV_ITEMS antigos, lista communities do contexto
+    e nao reproduz o topbar do Figma 35:3123. Alta fidelidade MCP foi obtida para
+    35:3123, 35:2629, 221:43252, 221:43432 e 221:43842. Capturas de referencia 1360x1120
+    estao em .visual/opencode-figma-20261005/references. O checkout de execucao recebe
+    o diff de HEAD e arquivos nao versionados da origem antes da delegacao.
+allowed_paths:
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/bivaque/app-shell.module.css
+  - apps/web/app/components/bivaque/bottom-nav.tsx
+  - apps/web/app/components/bivaque/chat-thread.tsx
+  - apps/web/app/components/bivaque/chat-thread.module.css
+  - apps/web/app/(shell)/messages/
+  - apps/web/lib/member-context.tsx
+  - apps/web/public/figma/
+  - tests/unit/ui/
+  - tests/scope/navigation.test.mjs
+  - tests/e2e/shell-navigation.spec.ts
+  - tests/e2e/messages
+  # Ampliacao justificada em 05/10/2026 (coordenacao + revisao independente):
+  # estes dois specs travavam a navegacao antiga (4 containers e fallback Perfil
+  # para /messages) e ficariam vermelhos com a retirada de Comunidades autorizada
+  # pelo dono; reconcilia-los mantendo cobertura faz parte do contrato.
+  - tests/e2e/manaus-pilot-full-journey.spec.ts
+  - tests/e2e/nav-container-invariant.spec.ts
+  # Revisao independente GLM (05/10/2026): este spec travava contagem de abas e
+  # o alvo 44px do link Indicoes, ambos obsoletos com a navegacao desta versao;
+  # reconciliar mantendo cobertura de acesso/foco/tamanho.
+  - tests/e2e/shell-accessibility-denials.spec.ts
+  # Paleta aprovada pelo dono em 05/10/2026 entra na arquitetura canonica de
+  # tokens (primitivo -> semantico -> componente), nao em hex no CSS do shell.
+  - packages/tokens/src/tokens.json
+  - packages/tokens/src/tokens.css
+  - scripts/visual/capture.mjs
+  # Despacho do dono em 06/10/2026 (reparo Flash, rodada 1/3): o lado prestador
+  # da conversa nao existia — o painel apontava para /messages?conversation=, o
+  # proxy devolve o prestador para /prestador e o shell do membro recusa a conta
+  # provider. Ampliacao R2 limitada aos tres caminhos do painel; a apresentacao,
+  # os loaders e o thread sao os mesmos do membro (reuso, sem duplicar), e o
+  # mecanismo de acesso (RLS de participante) permanece inalterado. Proxy,
+  # layouts alheios e banco ficaram fora desta ampliacao.
+  - apps/web/app/(provider)/prestador/conversas/
+  - apps/web/app/(provider)/prestador/page.tsx
+  - apps/web/app/(provider)/layout.tsx
+  # Ampliacao anterior (despacho 05/10/2026, registrada no handoff da sessao):
+  # o 404 honesto pt-BR da ficha publica foi criado na arvore com autorizacao da
+  # coordenacao, mas a entrada nao chegou ao contrato; reconciliado agora para
+  # o diff final conferir com o allowed_paths.
+  - apps/web/app/(shell)/prestadores/[id]/not-found.tsx
+  # Reparos finais do dono (despacho Codex 06/10/2026): a navegacao do painel
+  # vira componente proprio com exatamente um aria-current por pathname (o
+  # thread ativa Conversas) e estados active/focus/hover visiveis a 120ms com
+  # reduced motion; o layout do painel passa a consumi-lo. A logica pura de
+  # correspondencia pathname -> item mora em provider-nav.ts, seguindo o
+  # padrao da casa (conversas-loaders.ts): o Vitest roda em node sem JSX,
+  # entao a decisao testavel nao pode viver dentro do .tsx do componente.
+  - apps/web/app/(provider)/provider-navigation.tsx
+  - apps/web/app/(provider)/provider-nav.ts
+  # O mesmo despacho pede os avisos de denuncia do chat-thread em portugues
+  # acentuado; este spec trava a string sem acento (Nao foi possivel enviar a
+  # denuncia agora) e ficaria vermelho com o reparo autorizado — reconciliar a
+  # assercao mantendo a cobertura de privacidade e foco faz parte do contrato
+  # (mesmo precedente dos specs acima).
+  - tests/e2e/reports-member-flow.spec.ts
+  - docs/agents/tasks/FIGMA-001.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - modificar banco, migrations, policies ou mecanismos de elegibilidade
+  - expor service_role no cliente, abrir conversa arbitraria ou contornar acesso existente
+  - apagar dados ou mudancas preexistentes e editar o checkout de origem
+  - restaurar Comunidades ou Grupos na navegacao por causa de documentacao antiga
+  - inventar pessoas, conversas, contadores, acordos ou sucesso nao persistido
+  - renderizar screenshot completo como interface ou manter asset temporario do Figma no runtime
+  - alterar landing, admissao, pagamentos, documento, perfil ou outras telas fora do lote
+  - criar link quebrado, pagina vazia, handler vazio ou toast como unica implementacao
+  - deploy, push ou publicacao em producao
+acceptance:
+  - shell superior tem botao Conversas acessivel que abre a caixa real
+  - Comunidades e Grupos nao aparecem na navegacao desta versao; dados e permissoes historicos permanecem
+  - tipografia Public Sans, superficies, espacamentos, cards e campo de resposta seguem os contextos MCP e capturas do Figma atual
+  - caixa e detalhe usam conversas reais permitidas e nao exemplos fixos do Figma
+  - URL direta e refresh reconstroem a conversa correta sem revelar conteudo alheio
+  - envio persiste, mostra retorno correto e impede submit duplicado enquanto pendente
+  - carregando, vazio, falha de leitura, falha de envio e retomada sao funcionais e preservam a mensagem
+  - envio e leitura proibidos pelo mecanismo existente continuam negados por chamada direta
+  - dados de membro, cidade e contador continuam dinamicos e nenhuma chave privilegiada chega ao navegador
+  - layout funciona em 375, 768 e 1440 sem overflow, com foco visivel e alvos de 44x44
+  - capturas autenticadas das rotas tocadas sao comparadas ao Figma e divergencias concretas sao registradas
+  - entradas dependentes de modulos futuros sao registradas sem link morto ou alegacao de shell completo
+  - gate e build reais no candidato estavel ou falhas preexistentes identificadas com prova
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/FIGMA-001.task.yml
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e --grep conversas
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE=/messages nos tres viewports
+risk: navegacao do membro e apresentacao de conversas autorizadas existentes
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

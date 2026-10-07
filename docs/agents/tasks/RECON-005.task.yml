@@ -1,0 +1,63 @@
+task_id: RECON-005
+
+objective: >
+  A rota /profile passa a ser o perfil da prancha 51: o proprio perfil, a edicao com Forca Armada e OM opcionais e visibilidade por campo desligada por padrao, e o perfil de outro membro respeitando as permissoes que ja existem.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/51-web-perfil.png
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1
+  - docs/decisions/ADR-20260908-perfil-campos-opcionais.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/profile/page.tsx e client component que le profiles e locality_memberships e edita display_name, com secoes separadas de avatar, interesses, preferencias e convite familiar. Nao segue a composicao da prancha 51 e os campos opcionais com controle Exibir no perfil nao existem.
+
+allowed_paths:
+  - apps/web/app/(shell)/profile/
+  - docs/agents/tasks/RECON-005.task.yml
+
+forbidden:
+  - persistir posto, patente, OM inferida pela verificacao, CPF cru ou endereco residencial
+  - exibir selo de verificacao sobre campo autodeclarado
+  - chamar de remover o controle que apenas oculta
+  - acrescentar campo alem de Forca Armada e OM — o ADR aprova esses dois, nao mais
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem ou qualquer dado — tudo vem de contexto ou consulta real
+  - inventar conteudo; sem dado real, estado vazio honesto
+  - linkar rota que nao existe
+  - prometer prazo, aprovacao, entrega ou alcance que o servidor nao garante
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+  - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
+  - introduzir familia tipografica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - Forca Armada como selecao fechada (Marinha, Exercito, Aeronautica) e OM como texto curto, ambos opcionais
+  - cada campo tem seu controle Exibir no perfil, desligado por padrao, e o estado do controle e visivel
+  - o controle NAO se chama remover: ele oculta. Apagar de verdade e limpar o campo — selecao vazia na Forca Armada, texto vazio na OM
+  - nenhum campo opcional e exigido para salvar
+  - o perfil de outro membro usa as RPCs de visibilidade que ja existem, sem contornar
+  - nenhuma patente, posto, OM inferida pela verificacao ou endereco residencial aparece em tela
+  - nenhum selo de verificacao sobre dado autodeclarado
+  - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperavel com nova tentativa
+  - nenhum dado inventado sobrevive na tela
+  - exatamente um h1 na tela
+  - contraste >= 4,5:1, alvos >= 44x44, foco visivel
+  - npx pnpm@11.18.0 gate verde
+  - auditoria visual de /profile em 375/768/1440 sem finding de severidade high
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-005.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: perfil e visibilidade de dado pessoal declarado
+risk_level: R3
+adr: docs/decisions/ADR-20260908-perfil-campos-opcionais.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

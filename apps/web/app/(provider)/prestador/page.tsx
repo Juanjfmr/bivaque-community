@@ -193,7 +193,10 @@ export default async function PrestadorHomePage() {
                     </span>
                   </span>
                   <Link
-                    href={`/messages?conversation=${order.id}`}
+                    // FIGMA-001 (delta provider 06/10/2026): a conversa abre no
+                    // shell do prestador. O link antigo para /messages era
+                    // devolvido pelo proxy ao painel — ação morta para o dono.
+                    href={`/prestador/conversas/${order.id}` as Route}
                     className="min-h-11 px-1 leading-[2.75rem] underline"
                   >
                     Abrir conversa

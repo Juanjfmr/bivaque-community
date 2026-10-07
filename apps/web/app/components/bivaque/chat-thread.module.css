@@ -1,0 +1,384 @@
+/* FIGMA-001 — detalhe da conversa (221:43432) e campo de resposta (221:43842).
+   Consome os papéis semânticos do shell (--semantic-shell-*) definidos na
+   arquitetura canônica de tokens (packages/tokens), globais ao tema — não
+   depende de ancestral .shell nem define cor local. */
+
+.threadView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 16px 32px;
+  max-width: 1128px;
+}
+
+@media (min-width: 768px) {
+  .threadView {
+    padding: 28px 32px 32px;
+  }
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  width: 240px;
+  max-width: 100%;
+  border: 1px solid var(--semantic-shell-border-control);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  font-size: 13px;
+  line-height: 18.2px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 120ms ease;
+}
+
+.backButton:hover {
+  background: var(--semantic-shell-canvas);
+}
+
+.heading {
+  margin: 0;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 700;
+  color: var(--semantic-shell-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.contextLabel {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--semantic-shell-text-primary);
+}
+
+.contextCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+}
+
+.contextTitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--semantic-shell-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.contextActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contextButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  flex: 1 1 220px;
+  border: 1px solid var(--semantic-shell-border-control);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  font-size: 13px;
+  line-height: 18.2px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.contextButton:hover {
+  background: var(--semantic-shell-canvas);
+}
+
+.contextButtonDanger {
+  border-color: var(--semantic-shell-border-subtle);
+  color: var(--semantic-danger);
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.messageCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+}
+
+.messageCardOwn {
+  background: var(--semantic-shell-brand-subtle);
+}
+
+.messageCardFailed {
+  border-color: var(--semantic-danger);
+}
+
+.messageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--semantic-shell-text-primary);
+}
+
+.messageTime {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.messageBody {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  color: var(--semantic-shell-text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.deliveryRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.deliveryLabel {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.deliveryLabelFailed {
+  color: var(--semantic-danger);
+}
+
+.retryButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--semantic-shell-border-control);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  font-size: 13px;
+  line-height: 18.2px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.retryButton:hover {
+  background: var(--semantic-shell-canvas);
+}
+
+.reportTrigger {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--semantic-shell-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+.reportTrigger:hover {
+  color: var(--semantic-danger);
+}
+
+.reportBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--semantic-shell-border-subtle);
+  padding-top: 12px;
+}
+
+.reportLabel {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--semantic-shell-text-primary);
+}
+
+.reportTextArea {
+  min-height: 88px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-canvas);
+  font-family: var(--semantic-font-family-interface);
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--semantic-shell-text-primary);
+  resize: vertical;
+}
+
+.reportNote {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.reportActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── composer (221:43842) — fixo no fim da área rolável ── */
+
+.composer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  background: var(--semantic-shell-surface);
+}
+
+@media (min-width: 768px) {
+  .composer {
+    padding: 12px 32px;
+  }
+}
+
+.composerField {
+  min-height: 56px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--semantic-shell-border-subtle);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-field);
+  font-family: var(--semantic-font-family-interface);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--semantic-shell-text-primary);
+  resize: vertical;
+}
+
+.composerField::placeholder {
+  color: var(--semantic-shell-text-secondary);
+}
+
+.composerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sendButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  width: 240px;
+  max-width: 100%;
+  border: 0;
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-action);
+  color: var(--semantic-shell-action-on);
+  font-size: 14px;
+  line-height: 19.6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.sendButton:hover:not(:disabled) {
+  background: var(--semantic-shell-action-hover);
+}
+
+.sendButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  width: 240px;
+  max-width: 100%;
+  border: 1px solid var(--semantic-shell-border-control);
+  border-radius: var(--semantic-shell-radius);
+  background: var(--semantic-shell-surface);
+  color: var(--semantic-shell-text-primary);
+  font-size: 13px;
+  line-height: 18.2px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    opacity 120ms ease;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: var(--semantic-shell-canvas);
+}
+
+.cancelButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.composerNote {
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.blockedNote {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--semantic-shell-text-secondary);
+}
+
+.stateBlock {
+  padding: 16px 0;
+}

@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bivaque — Pedidos para você</title>
+    <style>
+      :root {
+        --green-900: #123d2b;
+        --green-800: #17492f;
+        --green-700: #1c5638;
+        --green-600: #2f7a52;
+        --green-100: #e8f1ea;
+        --green-050: #f1f6f2;
+        --ink-900: #10161a;
+        --ink-700: #2f3a3f;
+        --ink-500: #5d6b72;
+        --ink-400: #7d8a90;
+        --line: #e4e8e6;
+        --line-soft: #eef1ef;
+        --surface: #ffffff;
+        --canvas: #f7f8f7;
+        --amber-bg: #f8f2e6;
+        --amber-ink: #9a6d16;
+        --radius-sm: 8px;
+        --radius: 12px;
+        --radius-lg: 16px;
+        --shadow-card: 0 1px 2px rgba(16, 22, 26, 0.04);
+        --font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font);
+        font-size: 15px;
+        color: var(--ink-900);
+        background: var(--canvas);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 280px minmax(0, 1fr);
+        min-height: 100vh;
+      }
+
+      /* ================= Sidebar ================= */
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        padding: 24px 18px 18px;
+        background: var(--surface);
+        border-right: 1px solid var(--line);
+      }
+
+      .brand {
+        padding: 0 4px;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: var(--green-800);
+      }
+
+      .eyebrow {
+        margin: 28px 4px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--ink-400);
+      }
+
+      .biz-switch {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 8px 10px;
+        border: 0;
+        border-radius: var(--radius);
+        background: transparent;
+        text-align: left;
+      }
+
+      .biz-switch:hover {
+        background: var(--green-050);
+      }
+
+      .tile {
+        display: grid;
+        flex: 0 0 auto;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: var(--green-100);
+        color: var(--green-700);
+      }
+
+      .biz-name {
+        display: block;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+
+      .biz-role {
+        display: block;
+        font-size: 13px;
+        line-height: 1.35;
+        color: var(--ink-500);
+      }
+
+      .biz-switch .chev {
+        flex: 0 0 auto;
+        margin-left: auto;
+        color: var(--ink-400);
+      }
+
+      .nav {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 14px;
+        border-radius: var(--radius);
+        font-size: 15px;
+        color: var(--ink-700);
+        text-decoration: none;
+      }
+
+      .nav-item svg {
+        flex: 0 0 auto;
+        color: var(--ink-500);
+      }
+
+      .nav-item:hover {
+        background: var(--green-050);
+      }
+
+      .nav-item[aria-current="page"] {
+        background: var(--green-100);
+        font-weight: 600;
+        color: var(--green-900);
+      }
+
+      .nav-item[aria-current="page"] svg {
+        color: var(--green-700);
+      }
+
+      .nav-group {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .dot {
+        margin-left: auto;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #1f8a4c;
+      }
+
+      .sidebar-footer {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-top: auto;
+        padding-top: 16px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .user-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        padding: 8px 12px;
+        border: 0;
+        border-radius: var(--radius);
+        background: transparent;
+        text-align: left;
+      }
+
+      .user-row:hover {
+        background: var(--green-050);
+      }
+
+      .user-row .name {
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .user-row .chev {
+        flex: 0 0 auto;
+        margin-left: auto;
+        color: var(--ink-400);
+      }
+
+      /* ---- Avatares: iniciais, sem dependência de rede ---- */
+
+      .avatar {
+        display: grid;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 50%;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        user-select: none;
+      }
+
+      .avatar.owner {
+        background: var(--green-100);
+        color: var(--green-800);
+      }
+
+      .avatar.client-a {
+        background: #e4ebef;
+        color: #3a5666;
+      }
+
+      .avatar.client-b {
+        background: #efe7e4;
+        color: #6b463a;
+      }
+
+      .avatar.s32 { width: 32px; height: 32px; font-size: 11.5px; }
+      .avatar.s36 { width: 36px; height: 36px; font-size: 12.5px; }
+      .avatar.s52 { width: 52px; height: 52px; font-size: 17px; }
+
+      /* ================= Topbar ================= */
+
+      .main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        padding: 18px 30px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .search {
+        position: relative;
+        flex: 0 1 570px;
+      }
+
+      .search svg {
+        position: absolute;
+        top: 50%;
+        left: 16px;
+        transform: translateY(-50%);
+        color: var(--ink-400);
+      }
+
+      .search input {
+        width: 100%;
+        padding: 12px 16px 12px 46px;
+        font: inherit;
+        font-size: 15px;
+        color: var(--ink-900);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        outline: none;
+      }
+
+      .search input::placeholder {
+        color: var(--ink-400);
+      }
+
+      .search input:focus-visible {
+        border-color: var(--green-600);
+        box-shadow: 0 0 0 3px rgba(47, 122, 82, 0.15);
+      }
+
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-left: auto;
+      }
+
+      .icon-btn {
+        display: grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--ink-700);
+      }
+
+      .icon-btn:hover {
+        background: var(--green-050);
+      }
+
+      .account-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 6px 4px 4px;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--ink-500);
+      }
+
+      .account-btn:hover {
+        background: var(--green-050);
+      }
+
+      /* ================= Conteúdo ================= */
+
+      .content {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 388px;
+        gap: 24px;
+        align-items: start;
+        padding: 28px 30px 44px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+      }
+
+      .lede {
+        margin: 8px 0 0;
+        font-size: 15.5px;
+        color: var(--ink-500);
+      }
+
+      .tabs {
+        display: flex;
+        gap: 30px;
+        margin: 24px 0 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .tab {
+        margin-bottom: -1px;
+        padding: 0 2px 12px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        font-size: 15px;
+        color: var(--ink-500);
+      }
+
+      .tab[aria-selected="true"] {
+        border-bottom-color: var(--green-800);
+        font-weight: 600;
+        color: var(--green-900);
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-card);
+      }
+
+      /* ---- Tabela de pedidos ---- */
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+
+      .table th {
+        padding: 20px 12px 14px;
+        font-size: 13.5px;
+        font-weight: 500;
+        text-align: left;
+        color: var(--ink-500);
+      }
+
+      .table td {
+        padding: 14px 12px;
+        font-size: 14.5px;
+        color: var(--ink-700);
+        border-top: 1px solid var(--line-soft);
+        vertical-align: middle;
+      }
+
+      .table th:first-child,
+      .table td:first-child {
+        padding-left: 22px;
+      }
+
+      .table th:last-child,
+      .table td:last-child {
+        padding-right: 20px;
+      }
+
+      .table col.c-client { width: 26%; }
+      .table col.c-service { width: 21%; }
+      .table col.c-region { width: 13%; }
+      .table col.c-when { width: 15%; }
+      .table col.c-received { width: 25%; }
+
+      .client {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+        color: var(--ink-900);
+      }
+
+      /* tempo e ação na mesma célula, sem invadir a coluna vizinha */
+      .cell-received {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        white-space: nowrap;
+      }
+
+      .cell-received .ago {
+        flex: 1 1 auto;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        font-size: 14.5px;
+        font-weight: 600;
+        white-space: nowrap;
+        text-decoration: none;
+      }
+
+      .btn-primary {
+        padding: 9px 18px;
+        background: var(--green-800);
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        background: var(--green-900);
+      }
+
+      .btn-primary.lg {
+        padding: 14px 26px;
+        border-radius: var(--radius);
+        font-size: 15.5px;
+      }
+
+      .btn-outline {
+        width: 100%;
+        padding: 12px 20px;
+        border-color: var(--green-800);
+        border-radius: var(--radius);
+        background: var(--surface);
+        font-size: 15px;
+        color: var(--green-900);
+      }
+
+      .btn-outline:hover {
+        background: var(--green-050);
+      }
+
+      .btn-quiet {
+        padding: 8px 14px;
+        border-color: var(--line);
+        background: var(--surface);
+        font-size: 13.5px;
+        color: var(--ink-900);
+      }
+
+      .btn-quiet:hover {
+        border-color: var(--ink-400);
+      }
+
+      /* ---- Detalhe do pedido ---- */
+
+      .detail {
+        margin-top: 20px;
+        padding: 22px 24px 26px;
+      }
+
+      .detail-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .detail-head .who {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .detail-head h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .detail-head .meta {
+        margin: 4px 0 0;
+        font-size: 14.5px;
+        line-height: 1.55;
+        color: var(--ink-500);
+      }
+
+      .detail-head .received {
+        flex: 0 0 auto;
+        margin: 3px 0 0;
+        font-size: 14px;
+        color: var(--ink-500);
+        white-space: nowrap;
+      }
+
+      .detail h3 {
+        margin: 20px 0 10px;
+        font-size: 16.5px;
+        font-weight: 700;
+      }
+
+      .detail .body {
+        margin: 0;
+        font-size: 15.5px;
+        line-height: 1.6;
+        color: var(--ink-700);
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 18px;
+        padding: 10px 18px 10px 14px;
+        border-radius: 10px;
+        background: var(--green-050);
+        font-size: 15px;
+        color: var(--ink-900);
+      }
+
+      .chip svg {
+        color: var(--green-600);
+      }
+
+      .detail-actions {
+        margin-top: 22px;
+      }
+
+      /* ================= Coluna lateral ================= */
+
+      .rail {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .profile-card {
+        overflow: hidden;
+        padding: 0;
+      }
+
+      .cover {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #dde4df;
+      }
+
+      .cover svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .profile-body {
+        padding: 18px 20px 22px;
+      }
+
+      .profile-body .tile {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+      }
+
+      .profile-body h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .profile-body .sub {
+        margin: 4px 0 0;
+        font-size: 15px;
+        color: var(--ink-500);
+      }
+
+      .profile-body .serves {
+        margin: 6px 0 0;
+        font-size: 15px;
+        color: var(--ink-500);
+      }
+
+      .profile-body .serves strong {
+        font-weight: 600;
+        color: var(--ink-900);
+      }
+
+      .profile-body .btn-outline {
+        margin-top: 18px;
+      }
+
+      .checklist-card {
+        padding: 20px;
+      }
+
+      .checklist-card h2 {
+        margin: 0;
+        font-size: 19.5px;
+        font-weight: 700;
+      }
+
+      .checklist-card > p {
+        margin: 8px 0 0;
+        font-size: 14.5px;
+        line-height: 1.5;
+        color: var(--ink-500);
+      }
+
+      .notice {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+        padding: 10px 10px 10px 14px;
+        border-radius: var(--radius);
+        background: var(--amber-bg);
+      }
+
+      .notice svg {
+        flex: 0 0 auto;
+        color: var(--amber-ink);
+      }
+
+      .notice span {
+        font-size: 14.5px;
+        color: var(--ink-700);
+      }
+
+      .notice .btn-quiet {
+        flex: 0 0 auto;
+        margin-left: auto;
+      }
+
+      .checklist {
+        list-style: none;
+        margin: 4px 0 0;
+        padding: 0;
+      }
+
+      .checklist li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 2px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .checklist li:last-child {
+        padding-bottom: 2px;
+        border-bottom: 0;
+      }
+
+      .checklist .label {
+        font-size: 15px;
+        color: var(--ink-900);
+      }
+
+      .checklist .hint {
+        display: block;
+        margin-top: 3px;
+        font-size: 14px;
+        color: var(--ink-500);
+      }
+
+      .checklist .status {
+        flex: 0 0 auto;
+        margin-left: auto;
+        font-size: 14px;
+        color: var(--ink-500);
+        white-space: nowrap;
+      }
+
+      .check {
+        flex: 0 0 auto;
+        color: #1f8a4c;
+      }
+
+      .pending {
+        flex: 0 0 auto;
+        color: var(--ink-400);
+      }
+
+      @media (max-width: 1180px) {
+        .content {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .app {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .sidebar {
+          display: none;
+        }
+        .table col.c-received { width: 30%; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- floco reutilizado: marca do negócio e chip de categoria -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-snow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M12 2.5v19M4.2 6.8l15.6 10.4M19.8 6.8 4.2 17.2" />
+        <path d="M12 6.6 9.5 4.5M12 6.6l2.5-2.1M12 17.4l-2.5 2.1M12 17.4l2.5 2.1" />
+        <path d="M6.9 10.6 4 10M6.9 13.4 4 14M17.1 10.6 20 10M17.1 13.4 20 14" />
+      </symbol>
+    </svg>
+
+    <div class="app">
+      <!-- ============ Sidebar ============ -->
+      <aside class="sidebar">
+        <div class="brand">BIVAQUE</div>
+
+        <p class="eyebrow">Meu negócio</p>
+
+        <button type="button" class="biz-switch">
+          <span class="tile" aria-hidden="true">
+            <svg width="22" height="22"><use href="#i-snow" /></svg>
+          </span>
+          <span>
+            <span class="biz-name">Clima Certo</span>
+            <span class="biz-role">Assistência técnica</span>
+          </span>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+
+        <nav class="nav" aria-label="Painel do negócio">
+          <a class="nav-item" href="#" aria-current="page">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="currentColor" d="M12 3.2c-4.9 0-8.3 3.4-8.3 7.6 0 2 .8 3.8 2.2 5.2L4.2 21l5-1.6c.9.2 1.8.4 2.8.4 4.9 0 8.3-3.4 8.3-7.6S16.9 3.2 12 3.2Z" />
+            </svg>
+            Pedidos
+          </a>
+          <a class="nav-item" href="#">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3.2 9.3 4.8 5h14.4l1.6 4.3" />
+              <path d="M4.6 9.3V20h14.8V9.3" />
+              <path d="M3.2 9.3h17.6" />
+              <path d="M8.8 20v-5.6h6.4V20" />
+            </svg>
+            Minha ficha
+          </a>
+          <a class="nav-item" href="#">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3.5" y="3.5" width="7" height="7" rx="1.6" />
+              <rect x="13.5" y="3.5" width="7" height="7" rx="1.6" />
+              <rect x="3.5" y="13.5" width="7" height="7" rx="1.6" />
+              <rect x="13.5" y="13.5" width="7" height="7" rx="1.6" />
+            </svg>
+            Catálogo
+          </a>
+          <a class="nav-item" href="#">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4.5 13.2V12a7.5 7.5 0 0 1 15 0v1.2" />
+              <rect x="2.5" y="12.8" width="4" height="6.4" rx="1.9" />
+              <rect x="17.5" y="12.8" width="4" height="6.4" rx="1.9" />
+              <path d="M19.5 19.2a2.8 2.8 0 0 1-2.8 2.8H13.5" />
+            </svg>
+            Área de atendimento
+          </a>
+          <a class="nav-item" href="#">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="10" r="3.1" />
+              <path d="M6.3 18.5a6.2 6.2 0 0 1 11.4 0" />
+            </svg>
+            Conta
+          </a>
+
+          <div class="nav-group">
+            <a class="nav-item" href="#">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6.5 4h11v17l-5.5-4-5.5 4Z" />
+              </svg>
+              Salvos
+            </a>
+            <a class="nav-item" href="#">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 10.5a6 6 0 0 1 12 0c0 3.6 1.3 5.2 1.9 6H4.1c.6-.8 1.9-2.4 1.9-6Z" />
+                <path d="M10 19.8a2.1 2.1 0 0 0 4 0" />
+              </svg>
+              Notificações
+              <span class="dot" aria-label="Há novidades"></span>
+            </a>
+          </div>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button type="button" class="user-row">
+            <span class="avatar s36 owner" aria-hidden="true">MT</span>
+            <span class="name">Marcos Teixeira</span>
+            <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </button>
+          <a class="nav-item" href="#">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.1" />
+              <path d="M19.3 14.9a1.7 1.7 0 0 0 .35 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-2.88 1.2v.2a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-2.88-1.25l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 3.1 14.9H2.9a2 2 0 0 1 0-4h.2A1.7 1.7 0 0 0 4.3 8l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 10 3.98V3.8a2 2 0 0 1 4 0V4a1.7 1.7 0 0 0 2.88 1.17l.06-.06a2 2 0 1 1 2.83 2.83L19.7 8a1.7 1.7 0 0 0 1.2 2.88h.2a2 2 0 0 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1.1Z" />
+            </svg>
+            Configurações
+          </a>
+        </div>
+      </aside>
+
+      <!-- ============ Área principal ============ -->
+      <div class="main">
+        <header class="topbar">
+          <div class="search">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="m15.5 15.5 4 4" />
+            </svg>
+            <label class="sr-only" for="q">Buscar nos pedidos</label>
+            <input id="q" type="search" placeholder="Buscar nos pedidos" />
+          </div>
+
+          <div class="topbar-actions">
+            <button type="button" class="icon-btn" aria-label="Notificações">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 10.5a6 6 0 0 1 12 0c0 3.6 1.3 5.2 1.9 6H4.1c.6-.8 1.9-2.4 1.9-6Z" />
+                <path d="M10 19.8a2.1 2.1 0 0 0 4 0" />
+              </svg>
+            </button>
+            <button type="button" class="account-btn" aria-label="Minha conta: Marcos Teixeira">
+              <span class="avatar s36 owner" aria-hidden="true">MT</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="content">
+          <!-- ---- Coluna principal ---- -->
+          <section>
+            <h1>Pedidos para você</h1>
+            <p class="lede">Organize as conversas e mantenha sua ficha atualizada.</p>
+
+            <div class="tabs" role="tablist" aria-label="Situação dos pedidos">
+              <button type="button" class="tab" role="tab" aria-selected="true">Novos (2)</button>
+              <button type="button" class="tab" role="tab" aria-selected="false">Em conversa (1)</button>
+              <button type="button" class="tab" role="tab" aria-selected="false">Encerrados</button>
+            </div>
+
+            <div class="card">
+              <table class="table">
+                <colgroup>
+                  <col class="c-client" />
+                  <col class="c-service" />
+                  <col class="c-region" />
+                  <col class="c-when" />
+                  <col class="c-received" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">Serviço solicitado</th>
+                    <th scope="col">Região</th>
+                    <th scope="col">Quando</th>
+                    <th scope="col">Recebido</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <span class="client">
+                        <span class="avatar s32 client-a" aria-hidden="true">CR</span>
+                        Carlos Ribeiro
+                      </span>
+                    </td>
+                    <td>Ar-condicionado não resfria</td>
+                    <td>Asa Norte</td>
+                    <td>Nesta semana</td>
+                    <td>
+                      <span class="cell-received">
+                        <span class="ago">há 20min</span>
+                        <button type="button" class="btn btn-primary">Responder</button>
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span class="client">
+                        <span class="avatar s32 client-b" aria-hidden="true">AL</span>
+                        Ana Lima
+                      </span>
+                    </td>
+                    <td>Limpeza de dois aparelhos</td>
+                    <td>Asa Sul</td>
+                    <td>A combinar</td>
+                    <td>
+                      <span class="cell-received">
+                        <span class="ago">há 1h</span>
+                        <button type="button" class="btn btn-primary">Responder</button>
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <article class="card detail">
+              <div class="detail-head">
+                <span class="avatar s52 client-a" aria-hidden="true">CR</span>
+                <div class="who">
+                  <h2>Carlos Ribeiro</h2>
+                  <p class="meta">
+                    Asa Norte &nbsp;•&nbsp; Brasília, DF<br />
+                    Nesta semana
+                  </p>
+                </div>
+                <p class="received">Recebido há 20min</p>
+              </div>
+
+              <h3>Ar-condicionado não resfria</h3>
+              <p class="body">
+                O ar não está gelando como antes. Já limpei os filtros e continua igual.<br />
+                O aparelho é split e fica na sala.
+              </p>
+
+              <span class="chip">
+                <svg width="18" height="18"><use href="#i-snow" /></svg>
+                Ar-condicionado
+              </span>
+
+              <div class="detail-actions">
+                <button type="button" class="btn btn-primary lg">Ver conversa</button>
+              </div>
+            </article>
+          </section>
+
+          <!-- ---- Coluna lateral ---- -->
+          <aside class="rail">
+            <section class="card profile-card">
+              <div class="cover" role="img" aria-label="Manutenção de ar-condicionado split">
+                <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#eaeee9" />
+                      <stop offset="1" stop-color="#d3ddd5" />
+                    </linearGradient>
+                    <linearGradient id="unit" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stop-color="#ffffff" />
+                      <stop offset="1" stop-color="#e3e8e4" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="320" height="180" fill="url(#wall)" />
+
+                  <!-- split na parede -->
+                  <rect x="30" y="24" width="176" height="50" rx="11" fill="url(#unit)" />
+                  <path d="M30 60h176v6a8 8 0 0 1-8 8H38a8 8 0 0 1-8-8Z" fill="#cbd5cd" />
+                  <g stroke="#bcc7be" stroke-width="1.3" stroke-linecap="round">
+                    <path d="M42 38h152M42 45h152M42 52h138" />
+                  </g>
+
+                  <!-- técnico -->
+                  <path d="M214 96c18 6 30 22 30 42v42h-92v-34c0-24 16-44 40-49Z" fill="#1c5638" />
+                  <path d="M152 146c-10 6-14 16-14 28v6h20v-34Z" fill="#17492f" />
+                  <circle cx="204" cy="70" r="20" fill="#c9a887" />
+                  <path d="M186 72c-2-13 7-24 20-24 12 0 21 8 22 19-8-3-16-4-24-3-7 1-13 4-18 8Z" fill="#123d2b" />
+                  <path d="M212 100c8 3 15 9 20 17l-26 10-9-22Z" fill="#123d2b" />
+                  <rect x="185" y="86" width="30" height="9" rx="4.5" fill="#e8dccb" />
+
+                  <!-- ar frio -->
+                  <g fill="#f2f6f2" opacity="0.85">
+                    <circle cx="112" cy="98" r="3.4" />
+                    <circle cx="88" cy="116" r="2.6" />
+                    <circle cx="132" cy="122" r="2.2" />
+                    <circle cx="66" cy="98" r="2" />
+                  </g>
+                </svg>
+              </div>
+              <div class="profile-body">
+                <span class="tile" aria-hidden="true">
+                  <svg width="26" height="26"><use href="#i-snow" /></svg>
+                </span>
+                <h2>Clima Certo</h2>
+                <p class="sub">Assistência técnica</p>
+                <p class="serves">Atende <strong>Brasília</strong></p>
+                <button type="button" class="btn btn-outline">Ver minha ficha</button>
+              </div>
+            </section>
+
+            <section class="card checklist-card">
+              <h2>Complete sua ficha</h2>
+              <p>Quanto mais completo, mais confiança e pedidos qualificados você recebe.</p>
+
+              <div class="notice">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7.5V12l3 2" />
+                </svg>
+                <span>Falta informar seus horários</span>
+                <button type="button" class="btn btn-quiet">Editar ficha</button>
+              </div>
+
+              <ul class="checklist">
+                <li>
+                  <svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.7 7.8-5.4 6a1.1 1.1 0 0 1-1.6.05L7 13.2a1.1 1.1 0 0 1 1.5-1.6l1.9 1.8 4.6-5.1a1.1 1.1 0 0 1 1.7 1.5Z" />
+                  </svg>
+                  <span class="label">Descrição do negócio</span>
+                  <span class="status">Informado</span>
+                </li>
+                <li>
+                  <svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.7 7.8-5.4 6a1.1 1.1 0 0 1-1.6.05L7 13.2a1.1 1.1 0 0 1 1.5-1.6l1.9 1.8 4.6-5.1a1.1 1.1 0 0 1 1.7 1.5Z" />
+                  </svg>
+                  <span class="label">Serviços cadastrados</span>
+                  <span class="status">Informado</span>
+                </li>
+                <li>
+                  <svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.7 7.8-5.4 6a1.1 1.1 0 0 1-1.6.05L7 13.2a1.1 1.1 0 0 1 1.5-1.6l1.9 1.8 4.6-5.1a1.1 1.1 0 0 1 1.7 1.5Z" />
+                  </svg>
+                  <span class="label">Regiões de atendimento</span>
+                  <span class="status">Informado</span>
+                </li>
+                <li>
+                  <svg class="check" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.7 7.8-5.4 6a1.1 1.1 0 0 1-1.6.05L7 13.2a1.1 1.1 0 0 1 1.5-1.6l1.9 1.8 4.6-5.1a1.1 1.1 0 0 1 1.7 1.5Z" />
+                  </svg>
+                  <span class="label">Fotos do negócio</span>
+                  <span class="status">Informado</span>
+                </li>
+                <li>
+                  <svg class="pending" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7.5V12l3 2" />
+                  </svg>
+                  <span class="label">
+                    Formas de contato
+                    <span class="hint">Adicione telefone e WhatsApp</span>
+                  </span>
+                  <span class="status">Opcional</span>
+                </li>
+              </ul>
+            </section>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

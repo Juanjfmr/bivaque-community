@@ -1,0 +1,59 @@
+task_id: RECON-011
+
+objective: >
+  A rota /reports passa a ser a operacao de denuncias da prancha 58: fila, analise e encerramento, com o veredito sempre humano.
+
+authority:
+  - docs/design/visual-guide-2026-09-06/58-web-operacao-moderacao.png
+  - docs/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 8 gate G1
+  - docs/agents/DESIGN_SYSTEM.md secao 5, secao 9.1
+  - docs/decisions/ADR-20260901-account-suspension.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(admin)/reports/page.tsx le list_open_reports e resolve por resolve_report. Nao segue a composicao da prancha 58.
+
+allowed_paths:
+  - apps/web/app/(admin)/reports/
+  - docs/agents/tasks/RECON-011.task.yml
+
+forbidden:
+  - tocar apps/web/app/components/bivaque/ — diretorio compartilhado, esta onda roda em paralelo
+  - pre-selecionar veredito automaticamente
+  - exibir motivo de denuncia sem a remocao de dado pessoal ja aplicada
+  - tocar proxy.ts, (shell)/layout.tsx, bottom-nav.tsx, NAV_ITEMS ou qualquer arquivo .sql
+  - criar migration, RPC, policy ou coluna
+  - chumbar nome, cidade, data, contagem ou qualquer dado — tudo vem de contexto ou consulta real
+  - inventar conteudo; sem dado real, estado vazio honesto
+  - linkar rota que nao existe
+  - prometer prazo, aprovacao, entrega ou alcance que o servidor nao garante
+  - texto de placeholder, href vazio, handler vazio ou toast como unica implementacao
+  - valor de cor cru em JSX, style inline ou classe utilitaria de paleta
+  - introduzir familia tipografica, biblioteca de componentes ou modo escuro
+
+acceptance:
+  - fila e analise seguem a composicao da prancha 58
+  - nenhum veredito vem pre-selecionado — a selecao e a justificativa representam decisao humana ja tomada
+  - o motivo da denuncia continua passando pela remocao de dado pessoal que ja existe
+  - encerrar notifica quem denunciou e oculta conforme o tipo, pelo mecanismo que ja existe
+  - todos os estados fechados: skeleton no carregamento, vazio honesto, erro recuperavel com nova tentativa
+  - nenhum dado inventado sobrevive na tela
+  - exatamente um h1 na tela
+  - contraste >= 4,5:1, alvos >= 44x44, foco visivel
+  - npx pnpm@11.18.0 gate verde
+  - auditoria visual de /reports em 375/768/1440 sem finding de severidade high
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RECON-011.task.yml
+  - npx pnpm@11.18.0 gate
+  - node scripts/visual/loop.mjs
+
+risk: moderacao e decisao sobre conteudo de membro
+risk_level: R3
+adr: docs/decisions/ADR-20260901-account-suspension.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

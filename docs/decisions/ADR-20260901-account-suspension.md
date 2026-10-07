@@ -162,10 +162,18 @@ denunciar mas não publicar") que boolean não cobre.
 
 ## Approval
 
-**Pendente de aprovação humana explícita.** Esta ADR foi redigida pelo
-orquestrador para reduzir a fricção da decisão, mas criar a flag +
-atualizar RLS + adicionar persona de seed é R3 (privacidade +
-autorização + audit trail) e irreversível depois de publicada.
+**Aprovado por Juan em 2026-09-01** (registro no commit `7532aea` —
+"ADRs 20260901-mobile-session e account-suspension aprovados em 2026-09-01";
+frontmatter `status: approved`). O texto desta seção ficou desatualizado
+quando o frontmatter foi atualizado; reconciliado em 2026-09-05.
+
+Nota de implementação (2026-09-05): a migration `20260901124348` divergiu
+do exemplo deste ADR ao recriar `posts_insert_locality_member` sem a
+cláusula de identidade (`user_id = auth.uid()`) e com read scope no lugar
+de write scope; corrigido pela migration `20260905152703`. Conflito aberto
+com o ADR-20260820-suspensao-de-conta (D54 preserva a escrita "denunciar"
+durante suspensão; esta ADR veta `reports` insert) registrado para decisão
+do dono — enquanto não resolvido, vale o texto mais recente (veto).
 
 ## Anexo técnico (adicionado 2026-09-01)
 

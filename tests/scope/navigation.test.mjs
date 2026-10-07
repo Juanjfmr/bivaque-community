@@ -3,14 +3,15 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import test from "node:test"
 
-// PROCESSO-DE-CONSTRUCAO.md §7 — navegação-alvo da reconstrução 2026-09-06.
-// Substitui os quatro containers históricos (cidade/community/groups/me) do
-// ADR-20260816. Os novos containers derivam do modelo de produto da versão
-// atual: Início (home de quem participa), Explorar (descoberta — inclui Guia
-// e Mercado como entradas), Comunidades (minhas + descoberta), Perfil (o
-// membro: perfil, conta, notificações, mensagens contextuais).
+// PROCESSO-DE-CONSTRUCAO.md §7 — navegação-alvo da reconstrução 2026-09-06,
+// reconciliada em 05/10/2026 pela decisão direta do dono (FIGMA-001):
+// Comunidades e Grupos SAÍRAM da navegação desta versão (rotas, dados e
+// políticas históricas permanecem). Os containers do shell do membro são:
+// Início (home de quem participa), Explorar (descoberta — inclui Guia e
+// Mercado como entradas) e Perfil (o membro: perfil, conta, configurações).
+// Conversas vive no shell superior e na sidebar, não como aba mobile.
 // Este teste é a task: é a única coisa que impede a divergência entre spec e código voltar.
-// (a) NAV_ITEMS tem exatamente esses quatro ids.
+// (a) NAV_ITEMS tem exatamente esses três ids.
 // (b) O número de itens respeita o teto de 5 (iOS HIG / Material).
 // (c) NAV_ITEMS bate com DESIGN_SYSTEM.md §7.1.
 
@@ -37,9 +38,9 @@ function navItemIds(source) {
 const navSource = readFileSync(NAV_PATH, "utf8")
 const guideSource = readFileSync(GUIDE_PATH, "utf8")
 
-test("NAV_ITEMS is exactly the four product-model containers", () => {
+test("NAV_ITEMS is exactly the product-model containers of this version", () => {
   const ids = navItemIds(navSource)
-  assert.deepEqual(ids, ["inicio", "explorar", "comunidades", "perfil"])
+  assert.deepEqual(ids, ["inicio", "explorar", "perfil"])
 })
 
 test("navigation item count respects the declared ceiling of five", () => {

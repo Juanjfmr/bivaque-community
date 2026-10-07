@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(68);
+select plan(70);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- GUARD 1: anon/authenticated have ZERO privileges on private.* tables
@@ -64,6 +64,9 @@ select columns_are(
     'visibility',
     'consent_version',
     'consented_at',
+    -- is_suspended: moderation state, não identidade — autorizada pelo
+    -- ADR-20260901-account-suspension (R3, aprovado em 2026-09-01).
+    'is_suspended',
     'created_at',
     'updated_at'
   ],
@@ -673,6 +676,12 @@ select results_eq(
   'GUARD: dm_blocks has exactly 3 policies'
 );
 
+-- FIGMA-002 (ADR-20261006): o alvo `listing` entra na denúncia com uma policy
+-- de INSERT PRÓPRIA — reports_insert_listing — para que o requisito "active,
+-- não ocultado, dentro da audiência do denunciante" não vire decorativo por
+-- OR entre policies permissivas. São três policies: select do denunciante,
+-- insert dos alvos antigos e insert de anúncio. O invariante real continua
+-- sendo: nenhum UPDATE e nenhum DELETE em reports.
 select results_eq(
   $$
     select count(*)
@@ -680,8 +689,33 @@ select results_eq(
     where schemaname = 'public'
       and tablename = 'reports'
   $$,
-  array[2::bigint],
-  'GUARD: reports has exactly 2 policies (no UPDATE, no DELETE)'
+  array[3::bigint],
+  'GUARD: reports has exactly 3 policies (reporter select, legacy insert, listing insert)'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'reports'
+      and cmd in ('UPDATE', 'DELETE')
+  $$,
+  array[0::bigint],
+  'GUARD: reports has no UPDATE and no DELETE policy'
+);
+
+select results_eq(
+  $$
+    select count(*)
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'reports'
+      and policyname = 'reports_insert_listing'
+      and cmd = 'INSERT'
+  $$,
+  array[1::bigint],
+  'GUARD: reports_insert_listing is the insert policy of the listing target'
 );
 
 select results_eq(

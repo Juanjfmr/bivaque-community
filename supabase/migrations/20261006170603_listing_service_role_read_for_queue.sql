@@ -1,0 +1,27 @@
+-- FIGMA-002 — o alvo `listing` na fila da operação precisa ler o texto do
+-- anúncio, e a plataforma não dá esse privilege a service_role.
+--
+-- Constatação medida nos dois stacks isolados: `service_role` tem SELECT em
+-- `posts` (que a fila já lia há ondas) e NÃO tem SELECT em `listings`. Sem esta
+-- migration, `resolveTargets` — usado pela fila e pela tela da denúncia —
+-- recebia "permission denied for table listings" e o cartão saía como
+-- "conteúdo não encontrado", exatamente o estado que o operador não pode
+-- decidir. O ADR autoriza: "A lista de reports fornece dados textuais
+-- autorizados à operação".
+--
+-- O grant é de LEITURA e só de texto. Não acompanha:
+--   * `listing_media` — que continua SEM SELECT para service_role, então o
+--     operador não tem caminho de byte para foto de anúncio por aqui. A matriz
+--     de mídia do ADR é a mesma do membro, sem exceção de operador, e o
+--     endpoint autenticado continua sendo o único caminho de bytes;
+--   * INSERT/UPDATE/DELETE em `listings` — a marca de moderação só muda pelo
+--     RPC autenticado (20261006164652), e o guard por papel continua valendo.
+-- As duas negativas estão travadas no pgTAP.
+--
+-- Nota: a policy de RLS de `public.listings` segue habilitada E forçada; o
+-- service_role a contorna por BYPASSRLS, como já fazia em todas as outras
+-- leituras da fila (reports, posts, grupos). A autorização do operador não vem
+-- deste grant — vem do gate `is_current_user_operator` do layout (admin), igual
+-- a todos os outros painéis.
+
+grant select on table public.listings to service_role;

@@ -1,16 +1,10 @@
 "use client"
 
-import {
-  HomeIcon,
-  MagnifyingGlassIcon,
-  UserCircleIcon,
-  UserGroupIcon,
-} from "@heroicons/react/24/outline"
+import { HomeIcon, MagnifyingGlassIcon, UserCircleIcon } from "@heroicons/react/24/outline"
 import {
   HomeIcon as HomeSolid,
   MagnifyingGlassIcon as MagnifyingGlassSolid,
   UserCircleIcon as UserCircleSolid,
-  UserGroupIcon as UserGroupSolid,
 } from "@heroicons/react/24/solid"
 import { Tabs } from "@heroui/react"
 import { usePathname } from "next/navigation"
@@ -27,22 +21,21 @@ export interface NavItem {
 
 // ── Os containers de navegação ──────────────────────────────────────────────
 //
-// A navegação do shell do membro espelha o MODELO DE PRODUTO da versão de
-// 2026-09-06 (docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md §7),
-// que substitui os quatro containers históricos do ADR-20260816. São quatro:
+// FIGMA-001 (decisão direta do dono em 05/10/2026, reconciliada em
+// tests/scope/navigation.test.mjs): Comunidades e Grupos SAÍRAM da navegação
+// desta versão. As rotas, os dados e as políticas de autorização históricas
+// permanecem; apenas não são mais container de navegação. Conversas vive no
+// shell superior (e na sidebar), não como aba mobile.
 //
-//   - "inicio"      → home de quem participa: a chegada, o que está acontecendo
-//                     na cidade e nas comunidades da pessoa (prancha 01).
-//   - "explorar"    → descoberta: busca de serviços e prestadores, com entradas
-//                     explícitas para Guia e Mercado (prancha 61).
-//   - "comunidades" → minhas comunidades + descoberta + apresentação; grupos
-//                     vivem dentro de uma comunidade, não como aba.
-//   - "perfil"      → o membro: perfil, conta, notificações e a conversa
-//                     contextual membro↔prestador. Não há inbox nem DM geral.
+//   - "inicio"   → home de quem participa: a chegada, o que está acontecendo
+//                  na cidade da pessoa.
+//   - "explorar" → descoberta: busca de serviços e prestadores, com entradas
+//                  explícitas para Guia e Mercado.
+//   - "perfil"   → o membro: perfil, conta e configurações.
 //
 // REGRA FALSIFICÁVEL (ADR-20260816, regra 2, preservada): se um destino novo
 // não couber em nenhum container, o destino está confuso — pare e reporte;
-// NÃO adicione uma aba. Teto de cinco itens; quatro ≤ cinco.
+// NÃO adicione uma aba. Teto de cinco itens; três ≤ cinco.
 export const NAV_ITEMS: NavItem[] = [
   {
     id: "inicio",
@@ -59,14 +52,6 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/explorar",
     Icon: MagnifyingGlassIcon,
     IconActive: MagnifyingGlassSolid,
-  },
-  {
-    id: "comunidades",
-    label: "Comunidades",
-    shortLabel: "Comunidades",
-    href: "/communities",
-    Icon: UserGroupIcon,
-    IconActive: UserGroupSolid,
   },
   {
     id: "perfil",
