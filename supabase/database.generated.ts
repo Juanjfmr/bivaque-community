@@ -614,6 +614,252 @@ export type Database = {
           },
         ]
       }
+      listing_interests: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          listing_id: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          listing_id: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          listing_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_interests_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "dm_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_interests_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_media: {
+        Row: {
+          byte_size: number
+          created_at: string
+          id: string
+          is_cover: boolean
+          listing_id: string
+          mime_type: string
+          object_path: string
+          position: number
+        }
+        Insert: {
+          byte_size: number
+          created_at?: string
+          id?: string
+          is_cover?: boolean
+          listing_id: string
+          mime_type: string
+          object_path: string
+          position: number
+        }
+        Update: {
+          byte_size?: number
+          created_at?: string
+          id?: string
+          is_cover?: boolean
+          listing_id?: string
+          mime_type?: string
+          object_path?: string
+          position?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_media_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_moderation_events: {
+        Row: {
+          action: Database["public"]["Enums"]["listing_moderation_action"]
+          created_at: string
+          id: string
+          listing_id: string
+          note: string | null
+          operator_user_id: string
+          report_id: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["listing_moderation_action"]
+          created_at?: string
+          id?: string
+          listing_id: string
+          note?: string | null
+          operator_user_id: string
+          report_id?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["listing_moderation_action"]
+          created_at?: string
+          id?: string
+          listing_id?: string
+          note?: string | null
+          operator_user_id?: string
+          report_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_moderation_events_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_moderation_events_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_saves: {
+        Row: {
+          listing_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          listing_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          listing_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_saves_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_status_history: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          from_status: Database["public"]["Enums"]["listing_status"] | null
+          id: string
+          listing_id: string
+          to_status: Database["public"]["Enums"]["listing_status"]
+        }
+        Insert: {
+          actor_user_id: string
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["listing_status"] | null
+          id?: string
+          listing_id: string
+          to_status: Database["public"]["Enums"]["listing_status"]
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          from_status?: Database["public"]["Enums"]["listing_status"] | null
+          id?: string
+          listing_id?: string
+          to_status?: Database["public"]["Enums"]["listing_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_status_history_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listings: {
+        Row: {
+          community_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          kind: Database["public"]["Enums"]["listing_kind"]
+          locality_id: string | null
+          moderation_hidden: boolean
+          moderation_hidden_at: string | null
+          moderation_hidden_by: string | null
+          owner_user_id: string
+          status: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          community_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          moderation_hidden?: boolean
+          moderation_hidden_at?: string | null
+          moderation_hidden_by?: string | null
+          owner_user_id: string
+          status?: Database["public"]["Enums"]["listing_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          community_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["listing_kind"]
+          locality_id?: string | null
+          moderation_hidden?: boolean
+          moderation_hidden_at?: string | null
+          moderation_hidden_by?: string | null
+          owner_user_id?: string
+          status?: Database["public"]["Enums"]["listing_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listings_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       localities: {
         Row: {
           admission_mode: Database["public"]["Enums"]["locality_admission_mode"]
@@ -1035,6 +1281,65 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["profile_visibility"]
         }
         Relationships: []
+      }
+      property_details: {
+        Row: {
+          accepts_pets: boolean
+          area_m2: number | null
+          available_from: string | null
+          bathrooms: number | null
+          bedrooms: number | null
+          condo_fee_cents: number | null
+          condo_included_in_rent: boolean
+          iptu_cents: number | null
+          is_furnished: boolean
+          listing_id: string
+          neighborhood: string
+          parking_spots: number | null
+          property_type: Database["public"]["Enums"]["listing_property_type"]
+          rent_cents: number | null
+        }
+        Insert: {
+          accepts_pets?: boolean
+          area_m2?: number | null
+          available_from?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          condo_fee_cents?: number | null
+          condo_included_in_rent?: boolean
+          iptu_cents?: number | null
+          is_furnished?: boolean
+          listing_id: string
+          neighborhood: string
+          parking_spots?: number | null
+          property_type: Database["public"]["Enums"]["listing_property_type"]
+          rent_cents?: number | null
+        }
+        Update: {
+          accepts_pets?: boolean
+          area_m2?: number | null
+          available_from?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          condo_fee_cents?: number | null
+          condo_included_in_rent?: boolean
+          iptu_cents?: number | null
+          is_furnished?: boolean
+          listing_id?: string
+          neighborhood?: string
+          parking_spots?: number | null
+          property_type?: Database["public"]["Enums"]["listing_property_type"]
+          rent_cents?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_details_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: true
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       provider_accounts: {
         Row: {
@@ -1622,6 +1927,28 @@ export type Database = {
         }
         Returns: string
       }
+      create_property_listing: {
+        Args: {
+          p_accepts_pets: boolean
+          p_area_m2: number
+          p_available_from: string
+          p_bathrooms: number
+          p_bedrooms: number
+          p_community_id: string
+          p_condo_fee_cents: number
+          p_condo_included_in_rent: boolean
+          p_description: string
+          p_iptu_cents: number
+          p_is_furnished: boolean
+          p_locality_id: string
+          p_neighborhood: string
+          p_parking_spots: number
+          p_property_type: Database["public"]["Enums"]["listing_property_type"]
+          p_rent_cents: number
+          p_title: string
+        }
+        Returns: string
+      }
       create_provider_invitation: {
         Args: {
           p_community_id: string
@@ -1866,9 +2193,22 @@ export type Database = {
           user_id: string
         }[]
       }
+      listing_media_set_order: {
+        Args: { p_listing_id: string; p_media_ids: string[] }
+        Returns: undefined
+      }
       mark_recommendation_resolved: {
         Args: { p_request_id: string }
         Returns: undefined
+      }
+      moderate_listing: {
+        Args: {
+          p_listing_id: string
+          p_action: string
+          p_note?: string
+          p_report_id?: string
+        }
+        Returns: boolean
       }
       my_account_kind: { Args: never; Returns: string }
       my_verification_status: {
@@ -1976,6 +2316,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      register_listing_interest: {
+        Args: { p_listing_id: string }
+        Returns: string
       }
       reject_pending_user: {
         Args: {
@@ -2105,12 +2449,23 @@ export type Database = {
         | "recommendation_thread"
         | "accepted_family"
         | "provider"
+        | "listing"
       event_invite_status: "pending" | "accepted" | "declined"
       event_rsvp_status: "interested" | "going" | "not_going"
       event_status: "upcoming" | "cancelled" | "completed"
       group_membership_role: "member" | "moderator" | "owner"
       group_membership_status: "pending" | "approved"
       group_visibility: "public" | "private"
+      listing_kind: "item" | "property"
+      listing_moderation_action: "hide" | "restore"
+      listing_property_type: "apartamento" | "casa" | "kitnet"
+      listing_status:
+        | "draft"
+        | "active"
+        | "paused"
+        | "reserved"
+        | "sold"
+        | "closed"
       locality_admission_mode:
         | "invite_only"
         | "waitlist_only"
@@ -2165,6 +2520,7 @@ export type Database = {
         | "recommendation_request"
         | "recommendation_reply"
         | "provider_profile"
+        | "listing"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2307,6 +2663,7 @@ export const Constants = {
         "recommendation_thread",
         "accepted_family",
         "provider",
+        "listing",
       ],
       event_invite_status: ["pending", "accepted", "declined"],
       event_rsvp_status: ["interested", "going", "not_going"],
@@ -2314,6 +2671,17 @@ export const Constants = {
       group_membership_role: ["member", "moderator", "owner"],
       group_membership_status: ["pending", "approved"],
       group_visibility: ["public", "private"],
+      listing_kind: ["item", "property"],
+      listing_moderation_action: ["hide", "restore"],
+      listing_property_type: ["apartamento", "casa", "kitnet"],
+      listing_status: [
+        "draft",
+        "active",
+        "paused",
+        "reserved",
+        "sold",
+        "closed",
+      ],
       locality_admission_mode: [
         "invite_only",
         "waitlist_only",
@@ -2372,6 +2740,7 @@ export const Constants = {
         "recommendation_request",
         "recommendation_reply",
         "provider_profile",
+        "listing",
       ],
     },
   },
