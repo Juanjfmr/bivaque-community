@@ -1,0 +1,138 @@
+task_id: FIGMA-002
+objective: >
+  O lote de imoveis do Bivaque entrega busca, detalhe, publicacao e edicao de
+  anuncios kind=property com ate 12 fotos (upload, ordem e capa), e o interesse
+  contextual que abre/reencontra a conversa do anuncio — tudo persistido no
+  dominio unico listings/property_details do ADR-20260909-anuncios-mercado-e-moradia,
+  com policies e testes positivos e negativos.
+authority:
+  - https://www.figma.com/design/niuOHiHkyc9eGaIQBY9hq4/Bivaque (pranchas property-list, property-detail, property-publish, property-review, property-edit em .visual/opencode-figma-20261005/references)
+  - Autorizacao direta do dono em 05/10/2026 para executar o lote de imoveis apos FIGMA-001, com limite de 12 fotos
+  - docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md (D1 a D7)
+  - docs/decisions/ADR-20260909-midia-de-membro.md (upload, EXIF, bucket privado)
+  - docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md (interesse = conversa contextual idempotente)
+  - docs/agents/tasks/RECON-027.task.yml e as partes de fundacao de RECON-025/RECON-026 que forem dependencia real
+  - Despacho novo Codex de 06/10/2026 registra aprovacao humana Juan para Salvar/Reportar apos critic PASS; integrar no mesmo escritor sem avaliadores ativos
+  - docs/decisions/ADR-20261006-anuncios-salvos-e-moderacao.md (approved; preservar aprovacao e parecer integralmente)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em 05/10/2026 nao existe tabela listings nem property_details em
+    supabase/migrations (inventario do ADR-20260909-anuncios-mercado-e-moradia,
+    linha 122), nenhuma rota /imoveis em apps/web/app/(shell), e as referencias
+    property-* do Figma atual foram abertas neste run (PNGs e MDs em
+    .visual/opencode-figma-20261005/references). O shell do FIGMA-001 ja reserva
+    a entrada de Imoveis como pendencia registrada, sem link morto.
+adr:
+  - docs/decisions/ADR-20260909-anuncios-mercado-e-moradia.md
+  - docs/decisions/ADR-20260909-midia-de-membro.md
+  - docs/decisions/ADR-20260909-pedidos-e-conversa-contextual.md
+  - docs/decisions/ADR-20261006-anuncios-salvos-e-moderacao.md
+allowed_paths:
+  - supabase/migrations/
+  - supabase/tests/
+  - supabase/seed.sql
+  - supabase/database.generated.ts
+  - apps/web/app/(shell)/imoveis/
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/bivaque/app-shell.module.css
+  - apps/web/app/components/bivaque/listing-*.tsx
+  - apps/web/app/components/bivaque/listing-*.module.css
+  - apps/web/lib/listings/
+  - packages/domain/
+  - tests/unit/ui/
+  - tests/e2e/imoveis/
+  - scripts/visual/capture.mjs
+  - docs/agents/tasks/FIGMA-002.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  # Ampliacao autorizada pela coordenacao em 06/10/2026 (despacho FIGMA-002):
+  # o contexto listing da conversa existente entra no shared inbox/thread pelo
+  # rotulo canonico, a origem /imoveis/<id> e o titulo do anuncio no detalhe —
+  # SOMENTE estes dois arquivos, sem refactor de nav nem regressao do 001
+  # (copy do consumidor e provas figma001 permanecem travadas).
+  - apps/web/app/(shell)/messages/conversas-loaders.ts
+  - apps/web/app/(shell)/messages/conversation-screen.tsx
+  # Novo escopo aprovado; consumidores compartilhados somente no ramo listing.
+  - docs/decisions/ADR-20261006-anuncios-salvos-e-moderacao.md
+  - apps/web/app/components/bivaque/report-button.tsx
+  - apps/web/app/components/bivaque/report-actions.ts
+  - apps/web/app/(admin)/reports/targets.ts
+  - apps/web/app/(admin)/reports/page.tsx
+  - apps/web/app/(admin)/reports/actions.ts
+  # A decisão do operador acontece na tela da DENÚNCIA (/reports/[id]), não na
+  # fila: sem estes dois arquivos o alvo listing não teria por onde ocultar,
+  # encerrar nem restaurar, e o ramo novo ficaria só no banco.
+  - apps/web/app/(admin)/reports/[id]/page.tsx
+  - apps/web/app/(admin)/reports/[id]/listing-restore-form.tsx
+  - apps/web/app/api/admin/reports/[id]/route.ts
+forbidden:
+  - endereco, numero, complemento ou coordenada em qualquer coluna ou tela (ADR D5)
+  - preco zero ou soma inventada quando valor ausente: null rende "Consultar anunciante" (ADR D6)
+  - publico que mude na edicao (ADR D3) e anuncio visivel fora do publico autorizado
+  - interesse que crie conversa duplicada ou mova dinheiro (ADR D4)
+  - mais de 12 fotos por anuncio; EXIF preservado no upload (ADR de midia)
+  - reset/stop do stack compartilhado; stack isolado para aplicar migrations e provar runtime
+  - tocar em landing, admissao, pagamentos, documento, perfil ou conversas fora do interesse de anuncio
+  - deploy, push ou publicacao em producao
+acceptance:
+  - migration unica cria listings, property_details, listing_media e listing_interests com RLS enabled+forced e grants minimos; coluna de escopo e policies na mesma migration
+  - busca /imoveis lista apenas anuncios active cujo publico o leitor alcanca, com filtro de tipo e texto; proprio anuncio aparece com interesse desabilitado e motivo
+  - detalhe /imoveis/[id] mostra fotos com ordem e capa, especificacoes, custos anulaveis honestos e o estado atual do anuncio
+  - publicacao valida no cliente e no servidor, grava draft->active somente por escrita autorizada, e a revisao antes de publicar nao persiste nada
+  - edicao muda tudo exceto publico; pausar/reativar/encerrar sao transicoes idempotentes gravadas
+  - upload aceita ate 12 fotos, define ordem e capa, rejeita a 13a no servidor; EXIF removido na entrada
+  - interesse que abra ou reencontre a conversa contextual listing, idempotente, visivel na central de conversas do FIGMA-001
+  - testes pgTAP positivos e negativos por operacao (leitor fora do publico, interesse em anuncio pausado, 13a foto, edicao de publico)
+  - e2e prova publicar -> buscar -> detalhe -> interesse -> conversa, e a negacao por chamada direta
+  - capturas autenticadas 375/768/1440 das rotas tocadas comparadas as pranchas property-*
+  - listing_saves privado enabled+forced RLS e grants minimos; salvar proprio allowed active nao oculto audiencia; inserir/remover idempotentes; estado e retorno salvos persistem por reload
+  - apos perda de acesso somente IDs e data dos saves proprios sao legiveis/removiveis sem join; joins nao revelam titulo foto status nem contador de inacessiveis; retorno quando elegivel novamente; terceiros e operador sem bypass
+  - listing report valida alvo real active nao oculto audiencia nao proprio; inexistente e nao autorizado mesma negativa; motivo validado e deduplicacao aberta preservados
+  - moderacao listing oculta separada do status e restaura somente operador; marca protegida de escrita direta; dono edita com aviso sem remover ocultacao; terceiro nao le busca salvos detalhe interesse nem nova origem de conversa
+  - eventos hide/restore append-only duraveis enabled+forced RLS; lock transacional idempotente; hide ligado a report resolve e audita atomicamente; report resolvido nao executa novo hide
+  - RPC listing SECURITY DEFINER search_path vazio JWT authenticated deriva auth.uid e papel canonico na transacao sem operadorID cliente; nega membro e report de outro tipo; resolve_report service_role dos outros alvos intacto
+  - endpoint autenticado de bytes sob imoveis valida sessao vinculo audiencia status moderacao por fetch; dono qualquer estado terceiro apenas active nao oculto audiencia; operador sem bypass; respostas private no-store sem signedURLs no cliente HTML JSON redirect ou Next optimizer
+  - pgTAP e E2E positivos e negativos fecham salvar desfazer retorno reload denunciar fila hide dismiss restore eventos e midia; mesma URL de bytes negada apos hide/perda audiencia; TTL legado maximo 600 sem promessa de revogacao retroativa
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/FIGMA-002.task.yml
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 exec supabase test db (stack isolado ou shadow)
+  - npx pnpm@11.18.0 test:e2e --grep imoveis
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE=/imoveis e /imoveis/<id> nos tres viewports
+risk: anuncio de moradia com midia de membro e conversa contextual
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  scope_extension_20261006:
+    state: approved_pending_implementation_and_proof
+    adr: docs/decisions/ADR-20261006-anuncios-salvos-e-moderacao.md
+    authority: Juan aprovou regras propostas apos critic PASS; despacho novo Codex, nao retry do reparo GLM
+    baseline: pre-salvar-reportar-baseline preserva gate 626unit 189privacy 107scope, E2E 15pass, capturas validas sem high e cleanup zero do build l5oDXRJSI2jpN3pZt5kXE
+    closure_rule: Imoveis nao e CANDIDATO_ESTAVEL final ate integrar novo escopo e provas seriais; Codex adjudica sem avaliador enquanto escritor ativo
+  review_delta_20261006:
+    state: reopened_attempt_1
+    authority: Adjudicacao direta Codex apos primeira revisao GLM; sem liberacao de Flash
+    repairs: INSERT property somente draft; rascunho explicito; filtros URL; fidelidade property-*; anunciante e compartilhamento reais
+    open_fidelity_gaps:
+      - Salvar anuncio desenhado em property-list/detail nao tem persistencia de listings; post_saves e recommendation_saves nao sao alvos substitutos
+      - Reportar anuncio desenhado em property-detail nao tem target listing no report_target_type nem resolucao/visibilidade/moderacao para esse alvo
+    technical_proposal: >
+      Salvar exige relacao listing_saves com user/listing unicos, RLS de dono e
+      leitura derivada do publico do anuncio, rotas de retorno e negativos de acesso.
+      Reportar exige enum listing e integracao coerente em validacao de alvo, RLS,
+      autorrelato, deduplicacao, listagem e resolucao da moderacao com testes.
+      Nao reaproveitar target_id de post nem simular sucesso. Lacunas continuam
+      no escopo autorizado do dono; implementacao depende de adjudicacao tecnica
+      R3 e eventual ampliacao de caminhos do consumidor de reports/salvos.
+      Historico da lacuna: adjudicacao agora aprovada pelo ADR-20261006;
+      escopo autorizado acima, comportamento ainda pendente de implementacao/prova.
+    coordination: Board canonico no origin C:/Users/juana/bivaque-community; nao criar fila ou card no worktree
+  review_delta_2314:
+    state: reopened_concrete_repairs_attempt_1
+    authority: Codex adjudica GLM delta PASS tecnico sem fechar contrato; nao iniciar Flash ainda
+    repairs: aviso de ocultacao tambem na edicao; negativo RPC report de outro tipo; semantica filtros numericos; compatibilidade API admin reports listing hide com JWT caller e regressao outros alvos
+    scope: ramo listing da API admin reports autorizado como consumidor do ADR approved; preserve resolve_report dos demais alvos
+  requires_runtime_evidence: true

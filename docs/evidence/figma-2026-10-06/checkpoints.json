@@ -1,0 +1,14 @@
+{
+  "writer": {
+    "commit": "9c30c40d522cd26dd14f8c5397324fb4560e7a88",
+    "ref": "refs/heads/checkpoint/figma-production-20261007-rastreabilidade",
+    "base": "b9faf50c282dc432240de867da0692486c4f4563",
+    "tree": "16eab84516d066313becc1a3075e053b2893615f"
+  },
+  "origin": {
+    "commit": "6d6f713af318c059fee685dc0140427a6a6842b0",
+    "ref": "refs/heads/checkpoint/figma-origin-20261007-rastreabilidade",
+    "base": "b9faf50c282dc432240de867da0692486c4f4563",
+    "tree": "8eda8c40feba43d6a75ca66a6089e6781e1a6f81"
+  }
+}
