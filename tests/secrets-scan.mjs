@@ -173,6 +173,18 @@ function isSlashSeparatedProse(matchText) {
   return segments.every((segment) => /^[A-Za-z]{2,}$/.test(segment))
 }
 
+// Figma design links cite the file key in the path:
+// figma.com/design/<key>/<file-name>. The generic regex starts its match after
+// "figma." and reads "com/design/<key>/<name>" as one blob. Only skipped when
+// the line really carries that figma.com URL; a file key grants no access by
+// itself, and a token pasted anywhere else on the line is still matched.
+function isFigmaDesignUrl(matchText, lineContent) {
+  if (!/^com\/(design|file|proto)\/[A-Za-z0-9]{10,40}\/[A-Za-z0-9._%-]*$/.test(matchText)) {
+    return false
+  }
+  return lineContent.includes(`figma.${matchText}`)
+}
+
 // ── scan ──
 
 const trackedFiles = execSync("git ls-files", { encoding: "utf8", cwd: root })
@@ -247,6 +259,8 @@ for (const file of trackedFiles) {
       // covers every documented false positive from both sides, so it is the
       // one that survives.
       if (pattern.name.startsWith("Generic base64") && isSlashSeparatedProse(match[0])) continue
+
+      if (pattern.name.startsWith("Generic base64") && isFigmaDesignUrl(match[0], line)) continue
 
       console.error(`${file}:${lineIdx + 1}: ${pattern.name} — ${match[0].substring(0, 60)}`)
       totalFindings++

@@ -1,0 +1,41 @@
+{
+  "recordedAt": "2026-10-07T02:29:57.690Z",
+  "workspace": "C:/Users/juana/.codex/worktrees/figma-production/bivaque-community",
+  "status": "EXECUTOR_E2E_PASS_NOT_CANDIDATE_APPROVAL",
+  "result": "27 passed (9.6m)",
+  "viewports": [375, 768, 1440],
+  "pending": [
+    "final gate",
+    "candidate source/build hashes",
+    "independent delta review",
+    "independent runtime",
+    "visual fidelity"
+  ],
+  "files": [
+    {
+      "pathSegments": [
+        ".visual",
+        "opencode-figma-20261005",
+        "figma002-runtime",
+        "e2e-delta-repair-run15.log"
+      ],
+      "bytes": 16706,
+      "sha256": "bc25d36b25e539e9f44a3bd8ac8c96219495e6b9f288538a6c8936935b1d3c29"
+    },
+    {
+      "pathSegments": [
+        ".visual",
+        "opencode-figma-20261005",
+        "figma002-runtime",
+        "CHECKPOINT-20261007.md"
+      ],
+      "bytes": 9650,
+      "sha256": "b3bf902c128967dd9ceb49a38dc73eb54aa79aceb7e8a6a915cd295843e247de"
+    },
+    {
+      "pathSegments": ["tests", "e2e", "imoveis", "shot.ts"],
+      "bytes": 4033,
+      "sha256": "541e97d56b2205d9f80b99834af8e8d5b9939cc5578d64c65ce225c62055e8a2"
+    }
+  ]
+}

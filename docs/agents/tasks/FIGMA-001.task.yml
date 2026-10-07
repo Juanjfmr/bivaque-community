@@ -1,0 +1,74 @@
+task_id: FIGMA-001
+objective: >
+  A central de conversas real do Bivaque reproduz o prototipo atual em caixa, mensagem
+  e resposta, com acesso pelo shell superior, dados persistidos e recuperacao de falhas.
+authority:
+  - https://www.figma.com/design/niuOHiHkyc9eGaIQBY9hq4/Bivaque?node-id=7-5
+  - Pedido direto do dono em 05/10/2026 para usar OpenCode na conversao fiel do prototipo em producao
+  - Decisoes desta conversa - Comunidades fora da navegacao, Conversas no shell superior e ate 12 fotos
+  - docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md secao 0
+  - docs/agents/tasks/RECON-032.task.yml - capacidade existente de conversa enderecavel
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em 05/10/2026 o codigo apps/web/app/(shell)/messages/page.tsx foi inspecionado:
+    le dm_conversations e dm_messages mas seleciona conversa por query e nao possui rota
+    messages/[id]. O shell atual importa NAV_ITEMS antigos, lista communities do contexto
+    e nao reproduz o topbar do Figma 35:3123. Alta fidelidade MCP foi obtida para
+    35:3123, 35:2629, 221:43252, 221:43432 e 221:43842. Capturas de referencia 1360x1120
+    estao em .visual/opencode-figma-20261005/references. O checkout de execucao recebe
+    o diff de HEAD e arquivos nao versionados da origem antes da delegacao.
+allowed_paths:
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/bivaque/app-shell.module.css
+  - apps/web/app/components/bivaque/bottom-nav.tsx
+  - apps/web/app/components/bivaque/chat-thread.tsx
+  - apps/web/app/components/bivaque/chat-thread.module.css
+  - apps/web/app/(shell)/messages/
+  - apps/web/lib/member-context.tsx
+  - apps/web/public/figma/
+  - tests/unit/ui/
+  - tests/scope/navigation.test.mjs
+  - tests/e2e/shell-navigation.spec.ts
+  - tests/e2e/messages
+  - scripts/visual/capture.mjs
+  - docs/agents/tasks/FIGMA-001.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - modificar banco, migrations, policies ou mecanismos de elegibilidade
+  - expor service_role no cliente, abrir conversa arbitraria ou contornar acesso existente
+  - apagar dados ou mudancas preexistentes e editar o checkout de origem
+  - restaurar Comunidades ou Grupos na navegacao por causa de documentacao antiga
+  - inventar pessoas, conversas, contadores, acordos ou sucesso nao persistido
+  - renderizar screenshot completo como interface ou manter asset temporario do Figma no runtime
+  - alterar landing, admissao, pagamentos, documento, perfil ou outras telas fora do lote
+  - criar link quebrado, pagina vazia, handler vazio ou toast como unica implementacao
+  - deploy, push ou publicacao em producao
+acceptance:
+  - shell superior tem botao Conversas acessivel que abre a caixa real
+  - Comunidades e Grupos nao aparecem na navegacao desta versao; dados e permissoes historicos permanecem
+  - tipografia Public Sans, superficies, espacamentos, cards e campo de resposta seguem os contextos MCP e capturas do Figma atual
+  - caixa e detalhe usam conversas reais permitidas e nao exemplos fixos do Figma
+  - URL direta e refresh reconstroem a conversa correta sem revelar conteudo alheio
+  - envio persiste, mostra retorno correto e impede submit duplicado enquanto pendente
+  - carregando, vazio, falha de leitura, falha de envio e retomada sao funcionais e preservam a mensagem
+  - envio e leitura proibidos pelo mecanismo existente continuam negados por chamada direta
+  - dados de membro, cidade e contador continuam dinamicos e nenhuma chave privilegiada chega ao navegador
+  - layout funciona em 375, 768 e 1440 sem overflow, com foco visivel e alvos de 44x44
+  - capturas autenticadas das rotas tocadas sao comparadas ao Figma e divergencias concretas sao registradas
+  - entradas dependentes de modulos futuros sao registradas sem link morto ou alegacao de shell completo
+  - gate e build reais no candidato estavel ou falhas preexistentes identificadas com prova
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/FIGMA-001.task.yml
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 build
+  - npx pnpm@11.18.0 test:e2e --grep conversas
+  - node scripts/visual/capture.mjs com BIVAQUE_VISUAL_ROUTE=/messages nos tres viewports
+risk: navegacao do membro e apresentacao de conversas autorizadas existentes
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
