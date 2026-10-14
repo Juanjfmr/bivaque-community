@@ -10,7 +10,7 @@ function itemForm(){return {title:$('#item-title').value.trim(),numPrice:Number(
 function validFields(ids){let first=null;for(const id of ids){const e=$('#'+id);if(e?.reportValidity&&!e.reportValidity())first??=e;}first?.focus();return !first;}
 async function submitItem(){
  if(!editor||!canPost())return;if(!validFields(['item-title','item-price','item-hood','item-desc',...(editor.type==='imovel'?['item-beds','item-area']:[])]))return;
- const data=itemForm();if(data.title.length<5||data.desc.length<12||data.numPrice<=0||!data.hood){notify('Complete título, preço, bairro e descrição.','error');return;}
+ const data=itemForm();const itemProblem=data.title.length<5?'O título precisa de pelo menos 5 letras.':data.numPrice<=0?'Informe um preço maior que zero.':!data.hood?'Escolha o bairro.':data.desc.length<12?'Descreva o anúncio com pelo menos 12 caracteres.':'';if(itemProblem){notify(itemProblem,'error');return;}
  const id=editor.id||uid('i'),draftId=editor.draftId,existing=itemById(id);
  const ok=mutate(()=>{if(existing)Object.assign(existing,data,{price:money(data.numPrice),per:data.kind==='imovel'?'/mês':'',updatedAt:Date.now(),demo:data.photos.some(p=>!p.startsWith('data:'))});else state.items.unshift({...data,id,city:state.homeCity,price:money(data.numPrice),per:data.kind==='imovel'?'/mês':'',status:'active',mine:true,seller:state.profile.name,sini:initals(state.profile.name),note:'Membro da comunidade',saved:false,createdAt:Date.now(),views:0,demo:false});if(draftId)state.drafts=state.drafts.filter(d=>d.id!==draftId);},{redraw:false});
  if(ok){await closeDialog(true);navigate('anuncio',id);notify(existing?'Anúncio atualizado':'Anúncio publicado');}

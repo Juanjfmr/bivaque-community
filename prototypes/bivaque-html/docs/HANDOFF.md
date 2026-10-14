@@ -5,8 +5,10 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
 
 ## Estado (14/10/2026)
 
-- **Protótipo concluído** (Rodadas 00 a 06 PASS). Candidato final
-  `dist/Bivaque_Material_Web.html`, SHA256 `569c0cbb…3f9e`. Ver [ROUND_06](ROUND_06.md).
+- **Protótipo concluído** (Rodadas 00 a 06 PASS) e polido (Rodada 07 PASS). Candidato
+  final `dist/Bivaque_Material_Web.html`, SHA256 `00575252…7f2c`. Ver [ROUND_06](ROUND_06.md)
+  e [ROUND_07](ROUND_07.md).
+- Antes do lançamento: auditoria de acessibilidade com axe-core e leitor de tela real.
 - Pendente de decisão humana: aprovação da parte comercial (R3, exige ADR).
 - Próximo passo do produto: adaptar ao backend seguindo [ADAPTERS](ADAPTERS.md).
 - Decisões de produto registradas: em grupo fechado, quem aprova é o moderador
@@ -56,6 +58,10 @@ node scripts/bivaque-html/round05-proof.mjs --full
 
 ```bash
 node scripts/bivaque-html/round06-proof.mjs --full
+```
+
+```bash
+node scripts/bivaque-html/round07-proof.mjs --full
 ```
 
 Durante o trabalho, as provas sem `--full` rodam só 375 claro;
