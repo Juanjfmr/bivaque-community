@@ -1,0 +1,57 @@
+task_id: HTML-004
+objective: >
+  Rodada 04 prova e corrige Comunidades/Grupos e Memoria/Indicacoes no prototipo:
+  entrar e sair, pedido a grupo fechado decidido pelo moderador, gestao de pedidos,
+  moderadores, criacao de grupo, publicacao, comentario, enquete, pergunta, resposta,
+  resolver, reabrir, curtir e origem.
+authority:
+  - Pedido explicito do usuario em 2026-10-14 para seguir para a Rodada 04
+  - Decisao do usuario em 2026-10-14 - em grupo fechado quem aprova e o moderador
+  - docs/bivaque-html-kit/ROADMAP.md rodada 04
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD a4c7e223. join-group categoria 2 no NAVIGATION_AFTER - grupo fechado anuncia
+    avaliacao do admin mas aprova por timer de 4500ms. Prova round04 em 375 claro
+    tambem mostrou aprovar pedido anunciando sucesso com falha de gravacao.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/groups/handlers.js
+  - prototypes/bivaque-html/src/features/profile/settings.js
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/proof-harness.mjs
+  - scripts/bivaque-html/round04-proof.mjs
+  - docs/agents/tasks/HTML-004.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, styles, data/demo ou vendor
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - redesenhar telas ou definir regras de produto alem da decisao registrada
+  - alterar arquivos ou descartar modificacoes de outras sessoes
+  - fazer merge, push ou publicacao
+acceptance:
+  - Pedido a grupo fechado permanece pendente sem aprovacao por tempo, inclusive apos reload
+  - Moderador aprova ou recusa com aviso e link para o grupo; recusa permite novo pedido
+  - Admin aprova e recusa pedidos; falha de gravacao nao anuncia sucesso
+  - Admin so sai do grupo com moderador nomeado
+  - Criacao de grupo valida nome curto e duplicado
+  - Publicacao, comentario, pergunta e resposta validam tamanho minimo e persistem
+  - Resolver, reabrir, curtir e origem funcionam
+  - Matriz 375 768 1440 claro escuro sem erros JavaScript nem requisicoes externas
+  - Regressao Rodadas 01 a 03, comparacao visual e gate sem perda
+proof:
+  - python scripts/bivaque-html/verify_reference.py
+  - python scripts/bivaque-html/build.py --check-current
+  - node scripts/bivaque-html/round04-proof.mjs --full
+  - node scripts/bivaque-html/round03-proof.mjs --full
+  - node scripts/bivaque-html/round02-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: moderacao e pertencimento demonstrativos
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

@@ -337,7 +337,12 @@ const checkpoints = {
       .locator('#confirm-dialog [data-action="confirm-ok"], #confirm-dialog md-filled-button')
       .last()
       .click()
-    await settle(page)
+    // A confirmação grava de forma assíncrona: espera a condição, não um tempo fixo.
+    await page
+      .waitForFunction((k) => JSON.parse(localStorage.getItem(k))?.stage === "seed", KEY, {
+        timeout: 5000,
+      })
+      .catch(() => {})
     s = await stored(page)
     expect(s.stage === "seed", "troca de cenário não aplicada")
     expect(s.incoming === 5, `famílias declaradas descartadas na troca de cenário: ${s.incoming}`)
@@ -346,7 +351,11 @@ const checkpoints = {
     await choose(page, "prototype-stage", "live")
     await action(page, "apply-prototype")
     await page.locator("#confirm-dialog md-filled-button").last().click()
-    await settle(page)
+    await page
+      .waitForFunction((k) => JSON.parse(localStorage.getItem(k))?.stage === "live", KEY, {
+        timeout: 5000,
+      })
+      .catch(() => {})
     s = await stored(page)
     expect(
       s.stage === "live" && s.incoming === 14,

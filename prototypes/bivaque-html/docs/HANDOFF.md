@@ -5,9 +5,10 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
 
 ## Estado (14/10/2026)
 
-- Rodadas 01, 02 e 03 **PASS**. Candidato `dist/Bivaque_Material_Web.html`, SHA256
-  `4834e15a…cef8`. Próxima pelo roadmap: **04 Comunidades/Grupos e Memória/Indicações**
-  (inclui o defeito conhecido `join-group`).
+- Rodadas 01 a 04 **PASS**. Candidato `dist/Bivaque_Material_Web.html`, SHA256
+  `7a638d2b…20ca`. Próxima pelo roadmap: **05 Eventos e Conversas/Notificações**.
+- Decisões de produto registradas: em grupo fechado, quem aprova é o moderador
+  (simulado em Controles do protótipo).
 - Gate completo do repo **verde** (`npx pnpm@11.18.0 gate`, exit 0). Se o TS2688
   `yargs` voltar, é `node_modules` corrompido por instalação interrompida, não código.
 - Pendências por domínio: [NEXT_DOMAINS](NEXT_DOMAINS.md). Ownership: [MODULE_MAP](MODULE_MAP.md).
@@ -41,6 +42,10 @@ node scripts/bivaque-html/round02-proof.mjs --full
 
 ```bash
 node scripts/bivaque-html/round03-proof.mjs --full
+```
+
+```bash
+node scripts/bivaque-html/round04-proof.mjs --full
 ```
 
 Durante o trabalho, as provas sem `--full` rodam só 375 claro;
