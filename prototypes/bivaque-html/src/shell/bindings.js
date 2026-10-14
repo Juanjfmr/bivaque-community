@@ -1,4 +1,6 @@
+let navigationBootstrapped=false;
 function bindScreen(){
+ if(!navigationBootstrapped){navigationBootstrapped=true;const context=history.state?.navigation;if(history.state?.dialog||history.state?.createMenu||history.state?.confirm)try{const {dialog:dialogEntry,createMenu,confirm:confirmEntry,...base}=history.state;const depth=history.state.overlayDepth||[history.state.dialog,history.state.createMenu,history.state.confirm].filter(Boolean).length;history.replaceState({...base,reloadedOverlayDepth:depth},'',location.href);navigationGhostDepth=depth;navigationGhostParent=base.parent||null;}catch{}if(context){root.scrollTop=context.scroll||0;if(route.name!=='conversa')navigationFocus(context.focus);}}
  bindMessagingScreen();
  bindOriginalGestures();
  const q=$('#search-query');if(q)requestAnimationFrame(()=>q.focus({preventScroll:true}));

@@ -1,7 +1,8 @@
+let createReturnDescriptor=null;
 function openCreate(anchor=$('#fab'),customChoices=null,contextMenu=false){
  if(createHistoryPromise){createHistoryPromise.then(()=>openCreate(anchor,customChoices,contextMenu));return;}
  if(createOpen){closeCreateMenu();return;}
- createAnchor=anchor;createOpen=true;createFocusIndex=0;
+ createAnchor=anchor;createReturnDescriptor=globalFocusDescriptor(anchor);createOpen=true;createFocusIndex=0;
  const choices=customChoices||[
   ['volunteer_activism','Pedir indicação','ask',''],
   ['sell','Anunciar desapego','create-item',''],
@@ -22,7 +23,7 @@ function openCreate(anchor=$('#fab'),customChoices=null,contextMenu=false){
  $('#main').inert=true;$('#nav').inert=true;$('#topbar').inert=true;
  // Toolbar actions can also open this menu, so retain the anchor's focus.
  if(anchor.id!=='fab')$('#topbar').inert=false;
- try{history.pushState({bivaque:true,createMenu:true},'',location.href);}catch{}
+ try{history.pushState({...history.state,bivaque:true,createMenu:true,overlayDepth:(history.state?.overlayDepth||0)+1},'',location.href);}catch{}
  requestAnimationFrame(()=>{
   if(!createOpen||createAnchor!==anchor)return;
   placeCreateMenu();popup.classList.add('open');$('#create-scrim').classList.add('open');
@@ -51,9 +52,11 @@ $('#create-scrim').addEventListener('click',()=>closeCreateMenu());
 document.addEventListener('keydown',e=>{
  if(!createOpen)return;
  if(e.key==='Escape'){e.preventDefault();closeCreateMenu();return;}
- if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){
-  e.preventDefault();const items=$$('md-filled-tonal-button',$('#create-menu'));
-  createFocusIndex=e.key==='Home'?0:e.key==='End'?items.length-1:(createFocusIndex+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;
+ if(['Tab','ArrowDown','ArrowUp','Home','End'].includes(e.key)){
+  e.preventDefault();const items=$$('md-filled-tonal-button',$('#create-menu')).filter(x=>!x.disabled);if(!items.length)return;
+  let active=document.activeElement;while(active?.shadowRoot?.activeElement)active=active.shadowRoot.activeElement;
+  const current=items.findIndex(item=>item===active||item.shadowRoot?.contains(active));
+  createFocusIndex=e.key==='Home'?0:e.key==='End'?items.length-1:((current<0?0:current)+(e.key==='ArrowUp'||e.key==='Tab'&&e.shiftKey?-1:1)+items.length)%items.length;
   items[createFocusIndex]?.focus({preventScroll:true});
  }
 });

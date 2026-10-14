@@ -1,10 +1,19 @@
 # Bivaque — Rodada 00.1: estabilização da fundação
 
-**Fechamento: BLOCKED para aprovação geral.** As correções do protótipo e suas
-provas dirigidas passaram. O gate do repositório permanece vermelho por arquivos
-preexistentes; a tipagem mobile também falha fora deste lote. O verificador
-independente executou e salvou a matriz funcional com PASS, mas seu parecer final
-foi interrompido por limite de execução. Não há aprovação geral, CI ou publicação.
+**Fechamento atualizado em 14/10/2026: PASS nos critérios do protótipo;
+BLOCKED para aprovação geral.** O verificador independente concluiu o parecer
+interrompido, conferiu hashes da revisão `217cdc9f`, executou sondas próprias em
+`file://` e repetiu integralmente as capturas visuais. O gate do repositório e a
+tipagem mobile mantêm os defeitos preexistentes registrados abaixo. Não há
+aprovação geral, CI ou publicação.
+
+Parecer: `.visual/bivaque-html-round01/prior-round-verification/independent-round001-verdict.json`,
+SHA256 `af238f8088a0cd815c3b59748d4d922ca7e186959317a67fc6012cff8ee8163f`.
+Prova funcional independente preservada: 96 checkpoints em seis contextos.
+Recaptura visual independente: 144 capturas finais, 144 pares consecutivos exatos,
+três réplicas estáveis; 12/12 comparações candidato/oracle autorizado exatas.
+As duas sondas suplementares inicialmente inadequadas e suas correções de
+medição permanecem no parecer, sem alterações em produção.
 
 ## O que foi corrigido
 

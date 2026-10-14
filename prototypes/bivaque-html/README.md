@@ -4,8 +4,14 @@ Protótipo demonstrativo do pacote `Bivaque_Codex_18_Agentes_HTML.zip`. Os dados
 conversas, cadastro e cobrança são exemplos locais; não há integração com Supabase.
 A rodada inicial modulariza o original sem mudar aparência, comportamento ou bytes.
 A Rodada 00.1 permite correções localizadas de conversas e apresentação, preservando
-a referência original. O [mapa dos módulos](docs/MODULE_MAP.md) descreve ownership,
+a referência original. A Rodada 01 conecta a navegação e as jornadas globais locais
+sob o [contrato HTML-001](../../docs/agents/tasks/HTML-001.task.yml).
+O [mapa dos módulos](docs/MODULE_MAP.md) descreve ownership,
 estado compartilhado e interfaces da aplicação.
+
+O [relatório da Rodada 01](docs/ROUND_01.md) registra 294 checkpoints funcionais
+aprovados e os bloqueios remanescentes. A aprovação final está BLOCKED pela captura
+visual estrita não reprodutível e pelos gates técnicos registrados; não é produto completo.
 
 ## Construir e conferir
 
@@ -37,6 +43,20 @@ para o original. Nenhum dos dois modos escreve o dist, e não podem ser combinad
 Use `--check` para a extração byte-idêntica; use `--check-current` depois de correções
 autorizadas. Um dist ausente/desatualizado falha em ambos os modos.
 
+Provas da navegação, na raiz (configure `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`
+quando o Chromium gerenciado não estiver instalado):
+
+```powershell
+node scripts/bivaque-html/round01-proof.mjs
+node scripts/bivaque-html/round001-proof.mjs
+node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+```
+
+A prova visual preserva o hash da baseline e pode reconstruí-la pelo commit
+`217cdc9f`, sem alterar os fontes atuais. O parâmetro controla igualmente o renderer
+de baseline/candidato; continua exigindo igualdade exata, sem tolerância ou máscaras.
+O inventário completo antes/depois e suas limitações estão em `docs/NAVIGATION_*.json`.
+
 O destino é fixo: `dist/Bivaque_Material_Web.html`. Caminhos divergentes e diretório /
 arquivo redirecionados por symlink são recusados. A escrita é atômica, evitando truncar
 um arquivo preexistente ligado por hardlink. Testes negativos do builder usam entradas
@@ -58,7 +78,9 @@ ambos usam a mesma chave de armazenamento local no mesmo origin.
 
 O HTML incorpora Material Web oficial, fontes e imagens. Links para sites, mapa,
 compartilhamento e outras capacidades do navegador continuam sujeitos ao ambiente.
-Suporte a abertura `file://` não foi declarado nem provado nesta rodada.
+O verificador da Rodada 00.1 comprovou abertura, envio e persistência em `file://`
+em 375 e 1440 px. Cópia e compartilhamento dependem das permissões do navegador;
+as jornadas devem apresentar uma recuperação manual quando a API não estiver disponível.
 
 ## Fronteiras dos fontes
 

@@ -151,3 +151,32 @@ A escrita usa substituição atômica e não trunca um arquivo preexistente com 
 
 Essas provas determinísticas não aprovam aparência, funcionamento, privacidade ou o
 contrato HTML-000. Revisão e prova de navegador continuam separadas do executor.
+
+## Interfaces globais da Rodada 01
+
+O contrato HTML-001 mantém os 48 fragmentos e o único IIFE. A necessidade comprovada
+foi ausência de dispatch dos atalhos e perda de contexto/foco, sem exigir novo router
+ou container de estado. A ordem central passa a ser `profileGlobalAction` →
+`messagingAction` → `groupAction` → switch existente. Cada dispatcher retorna
+`Promise<boolean>`; `true` inclui recusa com feedback específico.
+
+| Especialista | Ownership de implementação | Interface compartilhada |
+| --- | --- | --- |
+| Perfil e Família | `features/profile/views.js`, `demo-actions.js`, `settings.js` | `profileGlobalAction(action,value,el)`, `profileRestoreOverlay(kind)` |
+| Início/Descoberta | `features/home/views.js`, `features/search/`, `features/transfers/guide.js` | `renderPlan(kind,full)`, ações `guide`, `resume`, `plan-check`, `plan-go` |
+| Frontend Premium/Motion | `shell/navigation.js`, `create-menu.js`, `dialogs.js`, `bindings.js` | `navigate`, `back`, `navigationContext`, `globalFocus`, foco e overlays |
+| Encontros | `features/events/` | leitura Agenda/detalhe; operações futuras permanecem dependências explícitas |
+| Arquitetura/coordenador | `app/handlers.js`, manifest/template, build e integração | dispatch, ordem de montagem, ownership e registro de novas ações |
+| QA e revisor | scripts de prova e evidências | sem escrita nos fontes que certificam |
+
+`history.state.navigation` guarda rota, cidade, origem, filtros, posição e descritor
+do acionador da entrada. Não é uma segunda persistência de entidades. `localStorage`
+continua responsável por convites, avisos, checklist e preferências fictícias, pelo
+`mutate` existente. O retorno aos Avisos pode reabrir o overlay pelo contrato de Perfil.
+
+`app/handlers.js`, helpers do shell, SOURCE, ASSETS e estado global são áreas de
+coordenação exclusiva. Um especialista não deve adicionar listener de documento,
+alterar outro dispatcher ou editar esses arquivos em paralelo. Mudanças em funções
+compartilhadas de `features/messaging/actions.js` precisam coordenação e regressão
+da prova de Conversas. Novos emissores devem constar do inventário antes/depois,
+inclusive quando sua operação de domínio ainda estiver pendente.

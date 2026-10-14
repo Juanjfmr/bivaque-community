@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-10-13",
+  "updatedAt": "2026-10-14",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -2081,15 +2081,16 @@
       "priority": "P1",
       "category": "frontend",
       "status": "now",
-      "description": "Rodada 00.1: mensagens demo, foco/retorno, build e Home768 corrigidos. Provas funcionais e visuais dirigidas PASS; aprovacao geral BLOCKED por lint/tipagem externos e parecer final QA interrompido por limite. Original/backend/trabalho alheio preservados.",
+      "description": "Rodada01 PASS no escopo do prototipo: jornadas globais (294 checkpoints), visual por zona instavel do renderer com controle negativo, scanner de secrets limpo. Gate geral BLOCKED so por itens externos (lint docs/evidence de outra sessao; typecheck mobile yargs). Proximo: Rodada02 a partir de prototypes/bivaque-html/docs/HANDOFF.md.",
       "checklist": [
         "Instalar e validar os 18 perfis e o manifesto",
         "Inventariar referencia, rotas e acoes sem tratar regex como prova runtime",
         "Extrair fontes com build deterministico e preservar bytes do original",
-        "Estabilizar capturas: PASS final 144 capturas, 3 replicas exatas, zero colisao Home768; falta adjudicacao final independente",
-        "Conversas demo e revisao codigo PASS; continuar acoes restantes Guia/Agenda/Perfil e concluir gate/parecer QA antes do fechamento geral"
+        "Rodada00.1: parecer independente concluido PASS prototipo, 144 capturas; gate geral BLOCKED separado",
+        "Rodada01: navegacao global com runtime e visual comprovados; gates externos (lint docs/evidence, mobile yargs) fora deste card",
+        "Inventariar Rodada01 e comprovar 198 checkpoints globais +96 Conversas nos seis contextos, sem alegar dominio completo"
       ],
-      "completedChecklist": [true, true, true, false, false],
+      "completedChecklist": [true, true, true, true, true, true],
       "proof": [
         "Pedido explicito do usuario: instalar agentes e iniciar prototipo HTML do ZIP em area separada",
         "34 arquivos instalados sem overwrite; 18 TOML validos; hashes do manifesto verificados",
@@ -2106,7 +2107,16 @@
         "QA executou independent-functional: 6 contextos,96 checkpoints,30 capturas PASS; parecer final bloqueado pelo limite de execucao",
         "Visual executor:144 capturas finais e144 consecutivas idênticas,3 replicas por cenário,12/12 original/baseline e12/12 candidato/oracle; CSS revisto independentemente",
         "MODULE_MAP inventaria48fragmentos e contratos messagingAction/bindMessagingScreen; estado global reconhecido, ownership disjunto",
-        "ROUND_00_1.md e EVIDENCE_00_1.json registram provas, limitações e preparação condicional da Rodada01"
+        "ROUND_00_1.md e EVIDENCE_00_1.json registram provas, limitações e preparação condicional da Rodada01",
+        "Rodada00.1 parecer final independente PASS prototipo/BLOCKED geral em .visual/bivaque-html-round01/prior-round-verification/independent-round001-verdict.json",
+        "Rodada01 candidato SHA256 e6acf9e62140d396b2f9df0e74557ebc1c8a24a67a19d03c1ac2bdb6eadaaf87,2790480 bytes; referencia/CSS/assets/Material/manifest intactos",
+        "QA independente:192 checkpoints globais+6 filtros/teclado+96 Conversas,375/768/1440 claro/escuro,zero erros JS e requests externos",
+        "Inventario Acorn+DOM:19 rotas,147->151 acoes,55 com prova hash-compativel,0 sem handler,95 futuras/prova pendente,1 defeito preexistente join-group,11 emissores dinamicos retidos",
+        "Review codigo PASS b46+reavaliacao independente e6 de checkbox/foco; provas anteriores FAIL preservadas",
+        "20 builder/564 unit/189 privacidade/web-typecheck PASS; scope106/107FAIL:22base64 em imagens/fontes congeladas agora rastreadas pelo Git; scanner preservado",
+        "Visual BLOCKED depois de tres protocolos,inclusive CPU/sRGB:132capturas por protocolo/pares consecutivos exatos/zero overflow,replicas de mesmosbytes variam; metadados visuais iguais",
+        "ROUND_01.md,UI_UX_ROUND_01.md,NAVIGATION_BEFORE/AFTER e NEXT_DOMAINS registram provas,dependencias e bloqueios sem aprovacao ficticia",
+        "Fechamento Rodada01 2026-10-14: visual PASS 132 capturas, 12/12 estritos com 0 px fora da zona instavel, controle negativo detecta 6px; scope 107/107; build/test/secrets PASS por etapa"
       ],
       "tests": [
         "python scripts/bivaque-html/verify_reference.py",
@@ -2115,21 +2125,26 @@
         "node scripts/bivaque-html/round001-proof.mjs",
         "node scripts/bivaque-html/visual-stability.mjs",
         "node --test tests/scope/*.test.mjs",
-        "npx pnpm@11.18.0 gate"
+        "npx pnpm@11.18.0 gate",
+        "node scripts/bivaque-html/round01-proof.mjs",
+        "node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer",
+        "node scripts/bivaque-html/navigation-inventory.mjs"
       ],
       "links": [
         "Contrato | ../../docs/agents/tasks/HTML-000.task.yml",
         "Kit instalado | ../../docs/bivaque-html-kit/README.md",
         "Resultado da rodada | ../../prototypes/bivaque-html/docs/ROUND_00.md",
-        "Rodada00.1 | ../../prototypes/bivaque-html/docs/ROUND_00_1.md"
+        "Rodada00.1 | ../../prototypes/bivaque-html/docs/ROUND_00_1.md",
+        "Contrato Rodada01 | ../../docs/agents/tasks/HTML-001.task.yml",
+        "Rodada01 | ../../prototypes/bivaque-html/docs/ROUND_01.md",
+        "Inventario | ../../prototypes/bivaque-html/docs/NAVIGATION_AFTER.md"
       ],
-      "updatedAt": "2026-10-13",
-      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
+      "updatedAt": "2026-10-14",
+      "sourceRevision": "217cdc9fa54fc16ac36e53cf83cf90071bef076e",
       "dependencies": [],
       "blockers": [
-        "Gate global: dois JSONs preexistentes docs/evidence/figma-2026-10-06 com formatacao invalida, preservados",
-        "Typecheck separado: TS2688 yargs em mobile fora deste lote",
-        "Parecer final runtime independente interrompido por limite de execucao do agente, apos matriz funcional PASS"
+        "Gate lint: dois JSONs nao versionados de outra sessao em docs/evidence/figma-2026-10-06",
+        "Typecheck mobile TS2688 yargs fora deste lote"
       ]
     }
   ]
