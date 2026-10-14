@@ -5,9 +5,10 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
 
 ## Estado (14/10/2026)
 
-- Rodadas 01 a 05 **PASS**. Candidato `dist/Bivaque_Material_Web.html`, SHA256
-  `1352dea9…44c5`. Próxima e última pelo roadmap: **06 Monetização e acabamento
-  final** (prova ampla e lista de adaptadores Supabase).
+- **Protótipo concluído** (Rodadas 00 a 06 PASS). Candidato final
+  `dist/Bivaque_Material_Web.html`, SHA256 `569c0cbb…3f9e`. Ver [ROUND_06](ROUND_06.md).
+- Pendente de decisão humana: aprovação da parte comercial (R3, exige ADR).
+- Próximo passo do produto: adaptar ao backend seguindo [ADAPTERS](ADAPTERS.md).
 - Decisões de produto registradas: em grupo fechado, quem aprova é o moderador
   (simulado em Controles do protótipo).
 - Gate completo do repo **verde** (`npx pnpm@11.18.0 gate`, exit 0). Se o TS2688
@@ -51,6 +52,10 @@ node scripts/bivaque-html/round04-proof.mjs --full
 
 ```bash
 node scripts/bivaque-html/round05-proof.mjs --full
+```
+
+```bash
+node scripts/bivaque-html/round06-proof.mjs --full
 ```
 
 Durante o trabalho, as provas sem `--full` rodam só 375 claro;
