@@ -1,0 +1,48 @@
+task_id: HTML-008
+objective: >
+  Rodada 08 aplica a versao arrojada de movimento aprovada pelo usuario como teste:
+  a foto do cartao voa ate o detalhe e volta, o detalhe sobe em cascata e as listas
+  entram em cascata, isolado em arquivos proprios e desligado com movimento reduzido.
+authority:
+  - Pedido explicito do usuario em 2026-10-14 por uma versao mais arrojada, reduzivel depois
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD dab7f167. Navegacao entre cartao e detalhe sem continuidade visual; unica
+    animacao era translateX de 420ms na pagina inteira.
+allowed_paths:
+  - prototypes/bivaque-html/src/motion/bold-transitions.js
+  - prototypes/bivaque-html/src/styles/motion-bold.css
+  - prototypes/bivaque-html/src/shell/navigation.js
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/round08-proof.mjs
+  - scripts/bivaque-html/test_build.py
+  - docs/agents/tasks/HTML-008.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, vendor ou dados
+  - animar com movimento reduzido ativo
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - fazer merge, push ou publicacao
+acceptance:
+  - Foto voa do cartao ao detalhe e volta ao cartao de origem, sem restos na tela
+  - Foco volta ao cartao de origem e cliques rapidos nao quebram a rota
+  - Cascata de listas termina com todos os cartoes visiveis
+  - Com movimento reduzido nada anima
+  - Regressao de todas as rodadas, visual e gate
+proof:
+  - python scripts/bivaque-html/build.py --check-current
+  - python scripts/bivaque-html/test_build.py
+  - node scripts/bivaque-html/round08-proof.mjs --full
+  - node scripts/bivaque-html/round07-proof.mjs --full
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: movimento de interface demonstrativo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

@@ -36,6 +36,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 05/CSS | `src/styles/navigation.css` | Frontend premium | Navegação mobile e detalhes |
 | 06/CSS | `src/styles/overlays.css` | Frontend premium | Sheets/dialogs/drawer demo |
 | 07/CSS | `src/styles/groups.css` | Frontend premium | Aparência dos grupos |
+| 07b/CSS | `src/styles/motion-bold.css` | Motion/microinterações | Rodada 08: toque nos cartões e foto em voo; só sem movimento reduzido |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial e licenças; preservar |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -75,6 +76,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 44/App | `src/features/messaging/actions.js` | Conversas/notificações | Contato/conversa, dispatch de mensagens; contém share/copy e simulação de respostas compartilhados |
 | 45/App | `src/shell/bindings.js` | Frontend premium | Bindings de tela/dialog e links externos |
 | 46/App | `src/motion/gestures.js` | Motion/microinterações | Swipe, long press e retorno pela borda |
+| 46b/App | `src/motion/bold-transitions.js` | Motion/microinterações | Rodada 08: foto do cartão voa até o detalhe e volta, cascata no detalhe e nas listas; ganchos em `render()` de `shell/navigation.js`; intensidade na constante `BOLD` |
 | 47/App | `src/app/handlers.js` | Frontend premium | Dispatch central `perform`, ligação dos domínios |
 | 48/App | `src/app/start.js` | Arquitetura | Listener delegado, bootstrap, `window.Bivaque` e fechamento do IIFE |
 

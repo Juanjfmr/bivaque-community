@@ -2094,9 +2094,11 @@
         "Rodada04: grupos, moderacao (decisao: moderador aprova grupo fechado) e memoria/indicacoes com prova 78/78 e 3 defeitos corrigidos",
         "Rodada05: encontros ligados ao editor existente (criar, editar, presenca com vagas, cancelar com desfazer) com prova 72/72; achados da revisao corrigidos",
         "Rodada06: varredura 213 acoes sem botao morto (controle negativo), prova ampla de todas as rodadas, ADAPTERS.md; parte comercial so observada (R3 pendente de ADR)",
-        "Rodada07: polimento por medicao (contraste Ocultar, mensagens de erro especificas) com prova 48/48 e regressao completa; auditoria com tecnologia assistiva real ainda necessaria"
+        "Rodada07: polimento por medicao (contraste Ocultar, mensagens de erro especificas) com prova 48/48 e regressao completa; auditoria com tecnologia assistiva real ainda necessaria",
+        "Rodada08: movimento arrojado (foto voa cartao-detalhe, cascatas) isolado e reduzivel pela constante BOLD; prova 42/42"
       ],
       "completedChecklist": [
+        true,
         true,
         true,
         true,
@@ -2142,7 +2144,8 @@
         "Rodada04 2026-10-14: candidato 7a638d2b; round04 78/78, regressoes round03 108/108, round02 72/72, round01 PASS, visual PASS, gate verde; revisao independente MEDIUM corrigido",
         "Rodada05 2026-10-14: candidato 1352dea9; round05 72/72, regressoes round04 78/78, round03 108/108, round02 72/72, round01 PASS, visual PASS, gate verde",
         "Rodada06 2026-10-14: candidato 569c0cbb; round06 36/36, round05 72/72, round04 78/78, round03 108/108, round02 72/72, round01 e round001 PASS, visual PASS, gate verde",
-        "Rodada07 2026-10-14: candidato 00575252; round07 48/48, round06 36/36, round05 72/72, round04 78/78, round03 108/108, round02 72/72, round01/round001/visual PASS, gate verde"
+        "Rodada07 2026-10-14: candidato 00575252; round07 48/48, round06 36/36, round05 72/72, round04 78/78, round03 108/108, round02 72/72, round01/round001/visual PASS, gate verde",
+        "Rodada08 2026-10-14: round08 42/42, round07 48/48, gate verde; revisao: MEDIUM corrigido, HIGH nao reproduzido e corrigido de forma defensiva"
       ],
       "tests": [
         "python scripts/bivaque-html/verify_reference.py",
@@ -2160,7 +2163,8 @@
         "node scripts/bivaque-html/round04-proof.mjs --full",
         "node scripts/bivaque-html/round05-proof.mjs --full",
         "node scripts/bivaque-html/round06-proof.mjs --full",
-        "node scripts/bivaque-html/round07-proof.mjs --full"
+        "node scripts/bivaque-html/round07-proof.mjs --full",
+        "node scripts/bivaque-html/round08-proof.mjs --full"
       ],
       "links": [
         "Contrato | ../../docs/agents/tasks/HTML-000.task.yml",
@@ -2176,7 +2180,8 @@
         "Rodada05 | ../../prototypes/bivaque-html/docs/ROUND_05.md",
         "Rodada06 | ../../prototypes/bivaque-html/docs/ROUND_06.md",
         "Adaptadores | ../../prototypes/bivaque-html/docs/ADAPTERS.md",
-        "Rodada07 | ../../prototypes/bivaque-html/docs/ROUND_07.md"
+        "Rodada07 | ../../prototypes/bivaque-html/docs/ROUND_07.md",
+        "Rodada08 | ../../prototypes/bivaque-html/docs/ROUND_08.md"
       ],
       "updatedAt": "2026-10-14",
       "sourceRevision": "217cdc9fa54fc16ac36e53cf83cf90071bef076e",
