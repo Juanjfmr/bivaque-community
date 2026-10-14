@@ -1,0 +1,57 @@
+task_id: HTML-005
+objective: >
+  Rodada 05 liga Encontros/Eventos ao editor existente (criar, editar, publicar,
+  confirmar e cancelar presenca com limite de vagas, cancelar encontro com desfazer)
+  e prova agenda, retorno e nivel de avisos de grupo, sem tela nova.
+authority:
+  - Pedido explicito do usuario em 2026-10-14 para seguir para a Rodada 05
+  - docs/bivaque-html-kit/ROADMAP.md rodada 05
+  - prototypes/bivaque-html/docs/NEXT_DOMAINS.md prioridade P1 Encontros/Eventos
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD b85c65a3. Referencia original sem handler para create-event, edit-event,
+    submit-event, attend-event e delete-event; Rodada 01 os desviou para aviso de
+    dependencia. Prova round05 em 375 claro: 7 de 10 checkpoints FAIL.
+allowed_paths:
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/round05-proof.mjs
+  - scripts/bivaque-html/round01-proof.mjs
+  - docs/agents/tasks/HTML-005.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, styles, data/demo ou vendor
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - redesenhar telas ou tratar presenca local como confirmacao operacional externa
+  - ligar denuncia, que depende de moderacao real
+  - alterar arquivos ou descartar modificacoes de outras sessoes
+  - fazer merge, push ou publicacao
+acceptance:
+  - Criar encontro publica com validacao de titulo, local, descricao e data futura
+  - Editar salva sem duplicar
+  - Confirmar e cancelar presenca contam e persistem; encontro lotado recusa com aviso
+  - Presenca exige perfil verificado; falha de gravacao nao anuncia sucesso
+  - Cancelar encontro pede confirmacao, volta para a agenda e permite desfazer
+  - Agenda abre o encontro e voltar retorna; nivel de avisos do grupo persiste
+  - Provas da Rodada 01 que exigiam a dependencia sao atualizadas preservando a intencao
+  - Matriz 375 768 1440 claro escuro sem erros JavaScript nem requisicoes externas
+  - Regressao Rodadas 01 a 04, comparacao visual e gate sem perda
+proof:
+  - python scripts/bivaque-html/verify_reference.py
+  - python scripts/bivaque-html/build.py --check-current
+  - node scripts/bivaque-html/round05-proof.mjs --full
+  - node scripts/bivaque-html/round04-proof.mjs --full
+  - node scripts/bivaque-html/round03-proof.mjs --full
+  - node scripts/bivaque-html/round02-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: presenca e agenda demonstrativas
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

@@ -16,7 +16,12 @@ async function perform(action,value,el){
  case 'plan-go':{const [kind,id]=value.split('|'),step=state.plan[kind]?.find(x=>x.id===id);if(!['chegando','saindo'].includes(kind)||!step?.go){showGlobalDependency('plano-indisponivel');break;}if(dialog.open)await closeDialog(true);const [next,arg]=step.go;if(next==='filter')await perform('intent',arg,el);else if(next==='search')await perform('guide-search',arg,el);else if(next==='groups')await perform('groups','',el);else if(next==='publish')await perform(arg==='imovel'?'create-property':'create-item','',el);else if(next==='my-questions')await perform('my-questions','',el);else if(next==='destination'){if(!CITY_NAMES.includes(state.dest)){showGlobalDependency('plano-indisponivel');break;}if(mutate(()=>state.city=state.dest,{redraw:false}))navigate('guia');}else showGlobalDependency('plano-indisponivel');break;}
  case 'share':{const [type,id]=value.split('|');await share(type,id);break;}
  case 'copy-share':await copyText($('#share-link')?.value||'');break;
- case 'create-event':case 'edit-event':case 'delete-event':case 'attend-event':case 'submit-event':case 'report':case 'submit-report':showGlobalDependency(action);break;
+ case 'create-event':openEventEditor();break;
+ case 'edit-event':openEventEditor(value);break;
+ case 'submit-event':await submitEvent();break;
+ case 'attend-event':{const e=state.events.find(x=>x.id===value);if(!accessibleRecord(e)||e.mine||!canPost())break;if(!e.on&&e.date<dateISO()){notify('Este encontro já aconteceu.','info');break;}if(!e.on&&e.max&&(e.going||0)>=e.max){notify('As vagas deste encontro acabaram.','info');break;}if(mutate(()=>{e.on=!e.on;e.going=Math.max(0,(e.going||0)+(e.on?1:-1));}))notify(e.on?'Presença confirmada neste dispositivo':'Presença cancelada',e.on?'event_available':'event_busy');break;}
+ case 'delete-event':{const e=state.events.find(x=>x.id===value);if(!e?.mine||!canPost())break;confirm('Cancelar encontro?',`“${e.title}” sairá da agenda da cidade.`,()=>{const snapshot=structuredClone(e);if(mutate(()=>{state.events=state.events.filter(x=>x.id!==value);},{redraw:false})){navigate('agenda');notify('Encontro cancelado','event_busy',()=>mutate(()=>{state.events.unshift(snapshot);}));}});break;}
+ case 'report':case 'submit-report':showGlobalDependency(action);break;
  case 'search':searchQuery='';navigate('busca');break;
  case 'search-from-home':searchQuery=$('#home-search')?.value.trim()||'';saveRecent(searchQuery);navigate('busca');break;
  case 'clear-search':if(!searchQuery){back();break;}searchQuery='';$('#search-query').value='';$('#search-results').innerHTML=searchResults();$('#search-query').focus();break;

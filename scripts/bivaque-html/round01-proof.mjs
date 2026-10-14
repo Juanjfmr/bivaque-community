@@ -359,7 +359,7 @@ async function verify(width, theme) {
         ),
       )
     })
-    await test("create-history-back-and-explicit-event-dependency", async () => {
+    await test("create-history-back-and-event-editor", async () => {
       await reset()
       await action("create")
       await page.goBack()
@@ -371,7 +371,7 @@ async function verify(width, theme) {
         scope: page.locator("#create-menu"),
       })
       assert(await page.locator("#dialog").evaluate((e) => e.open))
-      assert(!/encontro (criado|publicado)/i.test(await page.locator("#dialog").innerText()))
+      await page.locator("#event-title").waitFor({ state: "visible" })
       await action("close-dialog")
       await expectFocus(page, "create")
     })
@@ -918,7 +918,7 @@ async function verify(width, theme) {
         ["create-item", "#item-title"],
         ["create-property", "#item-beds"],
         ["indicate", "#ind-name"],
-        ["create-event", null],
+        ["create-event", "#event-title"],
         ["my-biz", "#biz-name"],
       ]
       for (const [choice, field] of choices) {
@@ -1059,14 +1059,17 @@ async function verify(width, theme) {
       )
       await feedback(page, "rascunho exclu.do")
     })
-    await test("event-dependency-overlay-reload-back-no-phantom-history", async () => {
+    await test("event-editor-overlay-reload-back-no-phantom-history", async () => {
+      // Rodada 05 ligou os encontros: o overlay agora é o editor de um encontro próprio.
       const event = fixture.events[2] ?? fixture.events[0]
       assert(event)
-      await reset()
+      await reset((data) => {
+        data.events.find((item) => item.id === event.id).mine = true
+      })
       await action("agenda")
       await action("open-event", event.id)
       await route(page, "evento", event.id)
-      await action("attend-event", event.id)
+      await action("edit-event", event.id)
       assert(await page.locator("#dialog").evaluate((element) => element.open))
       const current = (await state(page)).events.find((item) => item.id === event.id)
       assert.equal(current.on, event.on)
