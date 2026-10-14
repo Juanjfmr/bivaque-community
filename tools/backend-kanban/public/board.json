@@ -2081,7 +2081,7 @@
       "priority": "P1",
       "category": "frontend",
       "status": "now",
-      "description": "Rodadas 01, 02 e 03 PASS e gate do repo verde em 2026-10-14. Proximo: Rodada 04 Comunidades/Grupos e Memoria/Indicacoes a partir de prototypes/bivaque-html/docs/HANDOFF.md.",
+      "description": "Rodadas 01 a 04 PASS e gate do repo verde em 2026-10-14. Proximo: Rodada 05 Eventos e Conversas/Notificacoes a partir de prototypes/bivaque-html/docs/HANDOFF.md.",
       "checklist": [
         "Instalar e validar os 18 perfis e o manifesto",
         "Inventariar referencia, rotas e acoes sem tratar regex como prova runtime",
@@ -2090,9 +2090,10 @@
         "Rodada01: navegacao global com runtime e visual comprovados; gates externos (lint docs/evidence, mobile yargs) fora deste card",
         "Inventariar Rodada01 e comprovar 198 checkpoints globais +96 Conversas nos seis contextos, sem alegar dominio completo",
         "Rodada02: onboarding, verificacao demo, cidade/momento, configuracoes e controles com prova 72/72 e 3 defeitos corrigidos",
-        "Rodada03: desapegos, imoveis e negocios com prova 108/108 e 2 defeitos corrigidos (foco em campo invalido, indicacao duplicada)"
+        "Rodada03: desapegos, imoveis e negocios com prova 108/108 e 2 defeitos corrigidos (foco em campo invalido, indicacao duplicada)",
+        "Rodada04: grupos, moderacao (decisao: moderador aprova grupo fechado) e memoria/indicacoes com prova 78/78 e 3 defeitos corrigidos"
       ],
-      "completedChecklist": [true, true, true, true, true, true, true, true],
+      "completedChecklist": [true, true, true, true, true, true, true, true, true],
       "proof": [
         "Pedido explicito do usuario: instalar agentes e iniciar prototipo HTML do ZIP em area separada",
         "34 arquivos instalados sem overwrite; 18 TOML validos; hashes do manifesto verificados",
@@ -2121,7 +2122,8 @@
         "Fechamento Rodada01 2026-10-14: visual PASS 132 capturas, 12/12 estritos com 0 px fora da zona instavel, controle negativo detecta 6px; scope 107/107; build/test/secrets PASS por etapa",
         "Gate verde 2026-10-14: JSONs docs/evidence formatados (conteudo identico) e @types/yargs incompleto reparado; lint/typecheck/build/test/secrets ok",
         "Rodada02 2026-10-14: candidato 6d62c647; round02 72/72 em 6 contextos, regressao round01 198 checkpoints PASS, visual PASS, gate verde; revisao independente sem achados CRITICAL/HIGH/MEDIUM",
-        "Rodada03 2026-10-14: candidato 4834e15a; round03 108/108, regressao round02 72/72 e round01 PASS, visual PASS, gate verde; revisao independente sem CRITICAL/HIGH/MEDIUM"
+        "Rodada03 2026-10-14: candidato 4834e15a; round03 108/108, regressao round02 72/72 e round01 PASS, visual PASS, gate verde; revisao independente sem CRITICAL/HIGH/MEDIUM",
+        "Rodada04 2026-10-14: candidato 7a638d2b; round04 78/78, regressoes round03 108/108, round02 72/72, round01 PASS, visual PASS, gate verde; revisao independente MEDIUM corrigido"
       ],
       "tests": [
         "python scripts/bivaque-html/verify_reference.py",
@@ -2135,7 +2137,8 @@
         "node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer",
         "node scripts/bivaque-html/navigation-inventory.mjs",
         "node scripts/bivaque-html/round02-proof.mjs --full",
-        "node scripts/bivaque-html/round03-proof.mjs --full"
+        "node scripts/bivaque-html/round03-proof.mjs --full",
+        "node scripts/bivaque-html/round04-proof.mjs --full"
       ],
       "links": [
         "Contrato | ../../docs/agents/tasks/HTML-000.task.yml",
@@ -2146,7 +2149,8 @@
         "Rodada01 | ../../prototypes/bivaque-html/docs/ROUND_01.md",
         "Inventario | ../../prototypes/bivaque-html/docs/NAVIGATION_AFTER.md",
         "Rodada02 | ../../prototypes/bivaque-html/docs/ROUND_02.md",
-        "Rodada03 | ../../prototypes/bivaque-html/docs/ROUND_03.md"
+        "Rodada03 | ../../prototypes/bivaque-html/docs/ROUND_03.md",
+        "Rodada04 | ../../prototypes/bivaque-html/docs/ROUND_04.md"
       ],
       "updatedAt": "2026-10-14",
       "sourceRevision": "217cdc9fa54fc16ac36e53cf83cf90071bef076e",

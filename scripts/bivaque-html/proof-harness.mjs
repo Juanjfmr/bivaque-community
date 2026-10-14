@@ -55,6 +55,14 @@ export async function failStorage(page) {
     }
   })
 }
+// O app só grava após a primeira alteração; aplicar a cidade atual sem mudanças força a gravação.
+export async function snapshot(page) {
+  if (!(await stored(page))) {
+    await action(page, "city")
+    await action(page, "apply-city")
+  }
+  return stored(page)
+}
 export async function reload(page) {
   await page.reload()
   await page.waitForFunction(() => window.Bivaque?.inspect().officialComponents)

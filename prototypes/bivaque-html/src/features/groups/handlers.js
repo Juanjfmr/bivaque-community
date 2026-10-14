@@ -1,14 +1,14 @@
 async function groupAction(action,value,el){
  switch(action){
  case 'join-group':{const g=gById(value);if(!g||!canPost())return true;if(g.on){return true;}
-  if(g.privacy==='fechado'){if(mutate(()=>{g.pending=true;}))notify('Pedido enviado. O admin do grupo vai avaliar.','hourglass_top');setTimeout(()=>{const x=gById(value);if(!x||!x.pending)return;mutate(()=>{x.pending=false;x.on=true;x.joinedAt=Date.now();state.notices.unshift({id:uid('n'),city:x.city,unread:true,text:`Sua entrada em ${x.t} foi aprovada.`,go:['grupo',x.id],when:'Agora'});});notify(`Você foi aprovado em ${x.t}`,'group',null);},4500);}
+  if(g.privacy==='fechado'){if(mutate(()=>{g.pending=true;}))notify('Pedido enviado. O moderador do grupo vai avaliar.','hourglass_top');}
   else if(mutate(()=>{g.on=true;g.joinedAt=Date.now();g.notif='destaques';state.leftAuto=(state.leftAuto||[]).filter(x=>x!==g.id);}))notify('Você entrou no grupo. Avisos: Destaques','group_add');return true;}
  case 'group-menu':{const g=gById(value);if(!g)return true;openCreate(el,[...Object.entries(NOTIF).map(([k,[ic,t,s]])=>[g.notif===k?'check':ic,`Avisos: ${t}${k==='destaques'?' (padrão)':''}`,'notif-level',s,`${g.id}|${k}`]),['logout','Sair do grupo','leave-group','Suas publicações continuam no grupo',g.id]]);return true;}
  case 'notif-level':{const [id,k]=value.split('|'),g=gById(id);if(g&&mutate(()=>{g.notif=k;}))notify(`Avisos do grupo: ${NOTIF[k][1]}`,NOTIF[k][0]);return true;}
  case 'leave-group':{const g=gById(value);if(!g)return true;if(g.role==='admin'&&!g.mods.length){notify('Nomeie um moderador antes de sair. Ele assume o grupo.','info');return true;}confirm('Sair do grupo?','Suas publicações continuam no grupo. Você pode entrar de novo quando quiser.',()=>{mutate(()=>{if(g.role==='admin'){g.role=null;}g.on=false;g.unread=0;if(g.auto)state.leftAuto=[...(state.leftAuto||[]),g.id];});notify('Você saiu do grupo','logout');});return true;}
  case 'invite-group':{const g=gById(value);if(!g)return true;const link=new URL(location.href);link.hash=`grupo/${encodeURIComponent(g.id)}`;external('https://wa.me/?text='+encodeURIComponent(`Entre no grupo "${g.t}" no Bivaque: ${link.href}`));return true;}
  case 'manage-group':openManage(value);return true;
- case 'approve-req':case 'deny-req':{const [id,i]=value.split('|'),g=gById(id);if(!g)return true;const r=g.requests[+i];mutate(()=>{g.requests.splice(+i,1);if(action==='approve-req')g.members++;},{redraw:false});notify(action==='approve-req'?`${r.name} agora faz parte do grupo`:'Pedido recusado',action==='approve-req'?'person_add':'close');openManage(id);render();return true;}
+ case 'approve-req':case 'deny-req':{const [id,i]=value.split('|'),g=gById(id);if(!g)return true;const r=g.requests[+i];if(!r||!mutate(()=>{g.requests.splice(+i,1);if(action==='approve-req')g.members++;},{redraw:false}))return true;notify(action==='approve-req'?`${r.name} agora faz parte do grupo`:'Pedido recusado',action==='approve-req'?'person_add':'close');openManage(id);render();return true;}
  case 'add-mod':{const g=gById(value),n=$('#mod-add',dialog)?.value;if(!g||!n){notify('Escolha um membro.','info');return true;}mutate(()=>{g.mods.push(n);},{redraw:false});openManage(value);return true;}
  case 'save-manage':{const g=gById(value);if(!g)return true;const pin=$('#manage-pinned',dialog).value.trim(),rules=$('#manage-rules',dialog).value.trim(),off=$('#manage-offers',dialog).selected,priv=$('#manage-privacy',dialog).value;if(mutate(()=>{g.pinned=pin;g.rules=rules||g.rules;g.allowOffers=off;g.privacy=priv;},{redraw:false})){await closeDialog(true);render();notify('Grupo atualizado');}return true;}
  case 'create-group':groupDraft=null;openGroupCreator();return true;
@@ -35,8 +35,12 @@ async function groupAction(action,value,el){
  case 'edit-interests':interestsDraft=null;openInterests();return true;
  case 'interest-toggle':{const onb=dialog.dataset.kind==='onboarding';const list=onb?(onboardDraft.interests=onboardDraft.interests||[]):interestsDraft;const i=list.indexOf(value);if(i>=0)list.splice(i,1);else{if(list.length>=3){notify('Escolha até 3 interesses.','info');}else list.push(value);}if(onb)renderOnboarding();else openInterests();return true;}
  case 'save-interests':{if(mutate(()=>{state.profile.interests=[...interestsDraft];},{redraw:false})){interestsDraft=null;await closeDialog(true);communityTab='grp';render();notify('Sugestões de grupos atualizadas','auto_awesome');}return true;}
+ case 'simulate-moderation':openModeration();return true;
+ case 'moderation-approve':case 'moderation-deny':{const g=gById(value);if(!g?.pending)return true;const ok=action==='moderation-approve';if(mutate(()=>{g.pending=false;if(ok){g.on=true;g.joinedAt=Date.now();g.notif='destaques';}state.notices.unshift({id:uid('n'),city:g.city,unread:true,text:ok?`Sua entrada em ${g.t} foi aprovada pelo moderador.`:`Seu pedido para ${g.t} não foi aprovado pelo moderador.`,go:['grupo',g.id],when:'Agora'});},{redraw:false})){notify(ok?`Você foi aprovado em ${g.t}`:`Pedido para ${g.t} recusado`,ok?'group':'close');openModeration(true);render();}return true;}
  case 'noop':return true;
  }
  return false;
 }
+// Modo teste: a decisão sobre grupos de terceiros cabe ao moderador deles; aqui ela é simulada.
+function openModeration(afterDecision=false){const list=state.groups.filter(g=>g.pending);if(!list.length){if(afterDecision){closeDialog(true);return;}notify('Nenhum pedido aguardando o moderador.','info');return;}showDialog('Decisão do moderador',`<p class="form-note">Simula a resposta do moderador de cada grupo fechado. Nada é enviado a pessoas reais.</p><div class="stack">${list.map(g=>`<div class="choice">${icon('shield_person')}<span class="txt"><b>${esc(g.t)}</b><small>${esc(g.city)} · aguardando aprovação</small></span>${btn('Aprovar','moderation-approve',g.id,'tonal')}${iconBtn('close','moderation-deny',g.id,'Recusar pedido')}</div>`).join('')}</div>`,btn('Fechar','close-dialog','','text'),'moderation');}
 
