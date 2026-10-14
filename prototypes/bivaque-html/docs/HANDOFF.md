@@ -5,8 +5,8 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
 
 ## Estado (14/10/2026)
 
-- Rodada 01 **PASS** no escopo do protótipo. Candidato
-  `dist/Bivaque_Material_Web.html`, SHA256 `e6acf9e6…af87`.
+- Rodadas 01 e 02 **PASS**. Candidato `dist/Bivaque_Material_Web.html`, SHA256
+  `6d62c647…1a02`. Próxima pelo roadmap: **03 Desapegos, Imóveis e Negócios**.
 - Gate completo do repo **verde** (`npx pnpm@11.18.0 gate`, exit 0). Se o TS2688
   `yargs` voltar, é `node_modules` corrompido por instalação interrompida, não código.
 - Pendências por domínio: [NEXT_DOMAINS](NEXT_DOMAINS.md). Ownership: [MODULE_MAP](MODULE_MAP.md).
@@ -33,6 +33,14 @@ No fechamento da rodada (uma vez; Chromium em
 ```bash
 node scripts/bivaque-html/round01-proof.mjs
 ```
+
+```bash
+node scripts/bivaque-html/round02-proof.mjs --full
+```
+
+Durante o trabalho, `round02-proof.mjs` sem `--full` roda só 375 claro;
+`BIVAQUE_HTML_CHECKPOINT=<nome>` roda um checkpoint. Copie esse formato para a
+prova da rodada nova.
 
 ```bash
 node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
