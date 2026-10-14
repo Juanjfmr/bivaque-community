@@ -1,0 +1,4 @@
+# Preserve byte-identical source assembly on Windows and Unix checkouts.
+src/** -text
+reference/** -text
+dist/** -text

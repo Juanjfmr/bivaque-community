@@ -1,0 +1,59 @@
+task_id: HTML-000
+objective: >
+  Rodada 00.1 estabiliza o prototipo separado: conversas ficticias abrem,
+  enviam e persistem, captura visual reproduzivel e build modular deterministico.
+authority:
+  - Pedido do usuario em 2026-10-13 para instalar os agentes e iniciar o prototipo HTML em area separada
+  - docs/bivaque-html-kit/tasks/ROUND_00.md
+  - Pedido explicito do usuario Rodada 00.1 em 2026-10-13 com cinco frentes e commit sem merge
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Referencia SHA256 29a402c4e717ab2826c2e2aa0c3da6bac7f7b2b390090ed22c5ff1f2cbb385a4
+    verificada; Rodada 00 gerou 48 fragmentos e dist identico; entrada e envio
+    de conversa falham, 44 de 48 pares visuais identicos e colisao da Home 768.
+    Evidencia preservada em .visual/bivaque-html-round00-1/baseline/.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - prototypes/bivaque-html/dist/
+  - prototypes/bivaque-html/README.md
+  - prototypes/bivaque-html/biome.json
+  - prototypes/bivaque-html/.gitattributes
+  - scripts/bivaque-html/
+  - docs/bivaque-html-kit/
+  - docs/agents/tasks/HTML-000.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - .visual/bivaque-html-round00/
+  - .visual/bivaque-html-round00-1/
+forbidden:
+  - modificar a referencia original
+  - alterar apps/web, apps/mobile, supabase ou configuracao global
+  - redesenhar o shell ou inventar integracoes reais
+  - sobrescrever alteracoes de outras sessoes
+acceptance:
+  - Entrada de conversa abre a tela correta e envio ficticio atualiza imediatamente o historico
+  - Mensagens persistem localmente e campo invalido ou falha de gravacao tem feedback sem perda do texto
+  - Retorno a lista e origem do contato funcionam com foco e teclado em desktop e mobile
+  - Quatro divergencias visuais investigadas com capturas repetidas e evidencia objetiva
+  - Colisao das legendas da Home 768 corrigida localmente sem redesenho
+  - Original congelado intacto e build deterministico com diferencas autorizadas explicitadas
+  - Mapa de ownership e contratos compartilhados evita edicao simultanea de arquivos
+  - Revisao e runtime independentes executados e falhas restantes classificadas sem PASS geral falso
+  - Relatorio ROUND_00_1 e commit especifico preservam trabalho alheio sem merge ou publicacao
+proof:
+  - python scripts/bivaque-html/verify_reference.py
+  - python scripts/bivaque-html/build.py --check-current
+  - python scripts/bivaque-html/test_build.py
+  - node scripts/bivaque-html/round001-proof.mjs
+  - node --test tests/scope/*.test.mjs
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HTML-000.task.yml
+  - npx pnpm@11.18.0 gate
+risk: prototipo demonstrativo isolado
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
