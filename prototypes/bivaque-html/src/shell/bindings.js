@@ -1,0 +1,18 @@
+function bindScreen(){
+ bindMessagingScreen();
+ bindOriginalGestures();
+ const q=$('#search-query');if(q)requestAnimationFrame(()=>q.focus({preventScroll:true}));
+ q?.addEventListener('input',()=>{searchQuery=q.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{$('#search-results').innerHTML=searchResults();},120);});q?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveRecent(q.value);}});
+ const bs=$('#biz-search');bs?.addEventListener('input',()=>{bizQuery=bs.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{const html=renderBusinesses(),tmp=document.createElement('div');tmp.innerHTML=html;$('#business-results').innerHTML=$('#business-results',tmp).innerHTML;},120);});
+ for(const [id,set] of [['catalog-hood',v=>searchHood=v],['catalog-sort',v=>searchSort=v],['catalog-min',v=>searchMin=v],['catalog-max',v=>searchMax=v]])$('#'+id)?.addEventListener(id.includes('min')||id.includes('max')?'input':'change',e=>{set(e.target.value);$('#catalog-results').innerHTML=itemResults(filteredItems());});
+ $('#digest-switch')?.addEventListener('change',e=>mutate(()=>{state.prefs.digest=e.target.selected;},{redraw:false}));
+ const gs=$('#group-search');gs?.addEventListener('input',()=>{groupQuery=gs.value;clearTimeout(searchTimer);searchTimer=setTimeout(()=>{$('#groups-body').innerHTML=groupsBody();},120);});
+ const tabs=$('#community-tabs');if(tabs)tabs.activeTabIndex=['ind','grp','biz'].indexOf(communityTab);
+}
+function saveRecent(q){q=q.trim();if(!q)return;mutate(()=>{state.recent=[q,...state.recent.filter(x=>x!==q)].slice(0,8);},{redraw:false});}
+function bindDialog(){
+ if(editor)$$('md-outlined-text-field,md-outlined-select,input[type=date],input[type=time]',dialog).forEach(e=>{e.addEventListener('input',()=>{editorDirty=true;});e.addEventListener('change',()=>{editorDirty=true;});});
+ $('#ask-input')?.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(updateSimilar,160);});
+ $('#upload-photos')?.addEventListener('change',async e=>{const current=editor;if(!current)return;const files=[...e.target.files].slice(0,6-current.photos.length);for(const file of files){if(file.size>12*1024*1024){notify('Use imagens de até 12 MB.','error');continue;}try{const bitmap=await createImageBitmap(file);const scale=Math.min(1,1400/Math.max(bitmap.width,bitmap.height));const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();if(editor!==current)return;current.photos.push(canvas.toDataURL('image/jpeg',.78));editorDirty=true;$('#photo-previews').innerHTML=photoPreviews();}catch{notify('Não foi possível abrir essa imagem. Tente JPG, PNG ou WebP.','error');}}e.target.value='';});
+}
+function external(url){window.open(url,'_blank','noopener,noreferrer');}

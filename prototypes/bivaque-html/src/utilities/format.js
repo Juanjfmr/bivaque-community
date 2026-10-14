@@ -1,0 +1,11 @@
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const icon=(n,slot='',filled=false)=>`<md-icon${slot?` slot="${slot}"`:''}${filled?' class="filled"':''} aria-hidden="true">${n}</md-icon>`;
+const mark=()=>`<svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#2f7654"/><path d="M20 14h17c8 0 13 4 13 11 0 4-2 7-6 9 5 2 8 6 8 12 0 8-6 13-15 13H20V14Zm11 9v8h5c3 0 5-1 5-4s-2-4-5-4h-5Zm0 17v10h6c4 0 6-2 6-5s-2-5-6-5h-6Z" fill="#f7f6ef"/></svg>`;
+const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}).format(Number(n)||0);
+const uid=p=>p+crypto.randomUUID().replaceAll('-','').slice(0,12);
+const dateISO=(offset=0)=>{const d=new Date();d.setDate(d.getDate()+offset);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+const dateLabel=d=>new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'numeric',month:'long'});
+const countDays=d=>Math.max(0,Math.ceil((new Date(d+'T12:00:00')-new Date(dateISO()+'T12:00:00'))/864e5));
+const initals=n=>(String(n).trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('')||'BV').toUpperCase();

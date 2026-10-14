@@ -1,6 +1,6 @@
 {
   "title": "Bivaque — mapa de fechamento e lançamento do MVP",
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-10-13",
   "sourcePolicy": "Código, migrations, testes e GitHub atual prevalecem. Documentação conflitante é drift temporário: o agente resolve, bloqueia com motivo real ou deixa próximo passo concreto.",
   "cards": [
     {
@@ -202,15 +202,16 @@
         "O README dos planos documenta a interferência do perfil Visual Capture",
         "pgTAP pode rodar isolado em schema já atualizado, mas não substitui db reset",
         "Baseline reproduzido 2026-08-25: db reset --no-seed limpo, test:db 90 arquivos / 1052 asserts PASS, db:lint sem erros, database.generated.ts regenerado (reporter_user_id opcional no Insert); resta registrar o lote E2E seed-driven no fechamento",
-        "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar."
+        "2026-09-06: últimos runs de CI e revisão consultados, de 31/08, falharam antes de executar por pagamentos/limite de gastos da conta GitHub segundo annotations. Proteção de main e rulesets retornam 403 por plano; bloqueio de merge não comprovado. Ação do responsável pela conta necessária; validação local pode continuar.",
+        "Rodada00.1 em2026-10-13: typecheck separado falha TS2688 definicao yargs ausente em apps/mobile; fora do prototipo, diff mobile preservado. Proxima resolucao: reproduzir dependencias/typings no host sem alterar artefatos HTML."
       ],
       "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
       "links": [
         "Protocolo | ../../docs/superpowers/plans/README.md",
         "Evidências externas datadas e links dos runs | ../../docs/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
       ],
-      "updatedAt": "2026-09-06",
-      "sourceRevision": "b2bf676818eb3a5b9ec6afebe5a91990e7b4c96a",
+      "updatedAt": "2026-10-13",
+      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
       "dependencies": []
     },
     {
@@ -2072,6 +2073,64 @@
       "phase": "Reconstrução",
       "updatedAt": "2026-09-10",
       "sourceRevision": "9f9a8bf"
+    },
+    {
+      "id": "HTML-000-PROTOTIPO",
+      "title": "Prototipo HTML separado: agentes, baseline e build modular",
+      "phase": "HTML-00",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "now",
+      "description": "Rodada 00.1: mensagens demo, foco/retorno, build e Home768 corrigidos. Provas funcionais e visuais dirigidas PASS; aprovacao geral BLOCKED por lint/tipagem externos e parecer final QA interrompido por limite. Original/backend/trabalho alheio preservados.",
+      "checklist": [
+        "Instalar e validar os 18 perfis e o manifesto",
+        "Inventariar referencia, rotas e acoes sem tratar regex como prova runtime",
+        "Extrair fontes com build deterministico e preservar bytes do original",
+        "Estabilizar capturas: PASS final 144 capturas, 3 replicas exatas, zero colisao Home768; falta adjudicacao final independente",
+        "Conversas demo e revisao codigo PASS; continuar acoes restantes Guia/Agenda/Perfil e concluir gate/parecer QA antes do fechamento geral"
+      ],
+      "completedChecklist": [true, true, true, false, false],
+      "proof": [
+        "Pedido explicito do usuario: instalar agentes e iniciar prototipo HTML do ZIP em area separada",
+        "34 arquivos instalados sem overwrite; 18 TOML validos; hashes do manifesto verificados",
+        "Referencia SHA256 29a402c4e717ab2826c2e2aa0c3da6bac7f7b2b390090ed22c5ff1f2cbb385a4",
+        "48 fragmentos/template/manifest e build standalone preservam exatamente os 2760578 bytes; node --check dos tres scripts e --check passaram",
+        "Revisor html_review PASS apos proteger output fixo dist, symlinks e escrita atomica; runtime-verifier html_ux_audit independente",
+        "Matriz independente: 12 contextos, 96 capturas, 44/48 pixels identicos; quatro diferencas localizadas preservadas, sem causa comprovada",
+        "Original e gerado falham em open-thread (12/12 contextos); send-message confirmado 3->3 mensagens, texto retido; 28 acoes literais sem handler",
+        "107/107 tests/scope passaram; Biome dirigido PASS; gate global parou em formatacao preexistente de dois JSONs docs/evidence/figma-2026-10-06 fora do lote",
+        "Evidencia e pendencias: prototypes/bivaque-html/docs/ROUND_00.md; .visual/bivaque-html-round00/independent-verdict.json",
+        "Servidor demonstrativo 127.0.0.1:4173/dist/Bivaque_Material_Web.html respondeu HTTP 200; sem commit/merge/publicacao",
+        "Rodada00.1: candidato SHA256 3a89428131ea76386ca0966d8dc7964cb0b7a58e398ed350a88148e35682e8c2; original intacto",
+        "20 testes builder +107 scope +564 unit passaram; gate lint FAIL externo e tipo mobile TS2688 registrados",
+        "QA executou independent-functional: 6 contextos,96 checkpoints,30 capturas PASS; parecer final bloqueado pelo limite de execucao",
+        "Visual executor:144 capturas finais e144 consecutivas idênticas,3 replicas por cenário,12/12 original/baseline e12/12 candidato/oracle; CSS revisto independentemente",
+        "MODULE_MAP inventaria48fragmentos e contratos messagingAction/bindMessagingScreen; estado global reconhecido, ownership disjunto",
+        "ROUND_00_1.md e EVIDENCE_00_1.json registram provas, limitações e preparação condicional da Rodada01"
+      ],
+      "tests": [
+        "python scripts/bivaque-html/verify_reference.py",
+        "python scripts/bivaque-html/build.py --check-current",
+        "python scripts/bivaque-html/test_build.py",
+        "node scripts/bivaque-html/round001-proof.mjs",
+        "node scripts/bivaque-html/visual-stability.mjs",
+        "node --test tests/scope/*.test.mjs",
+        "npx pnpm@11.18.0 gate"
+      ],
+      "links": [
+        "Contrato | ../../docs/agents/tasks/HTML-000.task.yml",
+        "Kit instalado | ../../docs/bivaque-html-kit/README.md",
+        "Resultado da rodada | ../../prototypes/bivaque-html/docs/ROUND_00.md",
+        "Rodada00.1 | ../../prototypes/bivaque-html/docs/ROUND_00_1.md"
+      ],
+      "updatedAt": "2026-10-13",
+      "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
+      "dependencies": [],
+      "blockers": [
+        "Gate global: dois JSONs preexistentes docs/evidence/figma-2026-10-06 com formatacao invalida, preservados",
+        "Typecheck separado: TS2688 yargs em mobile fora deste lote",
+        "Parecer final runtime independente interrompido por limite de execucao do agente, apos matriz funcional PASS"
+      ]
     }
   ]
 }
