@@ -2080,8 +2080,8 @@
       "phase": "HTML-00",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
-      "description": "Rodadas 01 a 05 PASS e gate do repo verde em 2026-10-14. Proximo: Rodada 06 Monetizacao e acabamento final a partir de prototypes/bivaque-html/docs/HANDOFF.md.",
+      "status": "done",
+      "description": "Prototipo HTML concluido em 2026-10-14: Rodadas 00 a 06 PASS, varredura sem botao morto nas telas, prova ampla e gate verdes, lista de adaptadores entregue. Pendente decisao humana: aprovacao da parte comercial (R3, ADR).",
       "checklist": [
         "Instalar e validar os 18 perfis e o manifesto",
         "Inventariar referencia, rotas e acoes sem tratar regex como prova runtime",
@@ -2092,9 +2092,10 @@
         "Rodada02: onboarding, verificacao demo, cidade/momento, configuracoes e controles com prova 72/72 e 3 defeitos corrigidos",
         "Rodada03: desapegos, imoveis e negocios com prova 108/108 e 2 defeitos corrigidos (foco em campo invalido, indicacao duplicada)",
         "Rodada04: grupos, moderacao (decisao: moderador aprova grupo fechado) e memoria/indicacoes com prova 78/78 e 3 defeitos corrigidos",
-        "Rodada05: encontros ligados ao editor existente (criar, editar, presenca com vagas, cancelar com desfazer) com prova 72/72; achados da revisao corrigidos"
+        "Rodada05: encontros ligados ao editor existente (criar, editar, presenca com vagas, cancelar com desfazer) com prova 72/72; achados da revisao corrigidos",
+        "Rodada06: varredura 213 acoes sem botao morto (controle negativo), prova ampla de todas as rodadas, ADAPTERS.md; parte comercial so observada (R3 pendente de ADR)"
       ],
-      "completedChecklist": [true, true, true, true, true, true, true, true, true, true],
+      "completedChecklist": [true, true, true, true, true, true, true, true, true, true, true],
       "proof": [
         "Pedido explicito do usuario: instalar agentes e iniciar prototipo HTML do ZIP em area separada",
         "34 arquivos instalados sem overwrite; 18 TOML validos; hashes do manifesto verificados",
@@ -2125,7 +2126,8 @@
         "Rodada02 2026-10-14: candidato 6d62c647; round02 72/72 em 6 contextos, regressao round01 198 checkpoints PASS, visual PASS, gate verde; revisao independente sem achados CRITICAL/HIGH/MEDIUM",
         "Rodada03 2026-10-14: candidato 4834e15a; round03 108/108, regressao round02 72/72 e round01 PASS, visual PASS, gate verde; revisao independente sem CRITICAL/HIGH/MEDIUM",
         "Rodada04 2026-10-14: candidato 7a638d2b; round04 78/78, regressoes round03 108/108, round02 72/72, round01 PASS, visual PASS, gate verde; revisao independente MEDIUM corrigido",
-        "Rodada05 2026-10-14: candidato 1352dea9; round05 72/72, regressoes round04 78/78, round03 108/108, round02 72/72, round01 PASS, visual PASS, gate verde"
+        "Rodada05 2026-10-14: candidato 1352dea9; round05 72/72, regressoes round04 78/78, round03 108/108, round02 72/72, round01 PASS, visual PASS, gate verde",
+        "Rodada06 2026-10-14: candidato 569c0cbb; round06 36/36, round05 72/72, round04 78/78, round03 108/108, round02 72/72, round01 e round001 PASS, visual PASS, gate verde"
       ],
       "tests": [
         "python scripts/bivaque-html/verify_reference.py",
@@ -2141,7 +2143,8 @@
         "node scripts/bivaque-html/round02-proof.mjs --full",
         "node scripts/bivaque-html/round03-proof.mjs --full",
         "node scripts/bivaque-html/round04-proof.mjs --full",
-        "node scripts/bivaque-html/round05-proof.mjs --full"
+        "node scripts/bivaque-html/round05-proof.mjs --full",
+        "node scripts/bivaque-html/round06-proof.mjs --full"
       ],
       "links": [
         "Contrato | ../../docs/agents/tasks/HTML-000.task.yml",
@@ -2154,12 +2157,15 @@
         "Rodada02 | ../../prototypes/bivaque-html/docs/ROUND_02.md",
         "Rodada03 | ../../prototypes/bivaque-html/docs/ROUND_03.md",
         "Rodada04 | ../../prototypes/bivaque-html/docs/ROUND_04.md",
-        "Rodada05 | ../../prototypes/bivaque-html/docs/ROUND_05.md"
+        "Rodada05 | ../../prototypes/bivaque-html/docs/ROUND_05.md",
+        "Rodada06 | ../../prototypes/bivaque-html/docs/ROUND_06.md",
+        "Adaptadores | ../../prototypes/bivaque-html/docs/ADAPTERS.md"
       ],
       "updatedAt": "2026-10-14",
       "sourceRevision": "217cdc9fa54fc16ac36e53cf83cf90071bef076e",
       "dependencies": [],
-      "blockers": []
+      "blockers": [],
+      "completedAt": "2026-10-14"
     }
   ]
 }

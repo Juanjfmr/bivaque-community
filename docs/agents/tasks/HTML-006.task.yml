@@ -1,0 +1,51 @@
+task_id: HTML-006
+objective: >
+  Rodada 06 fecha o prototipo HTML: varre todas as telas para nenhum botao sem
+  resposta, corrige a enquete ja votada, roda a prova ampla de todas as rodadas e
+  entrega a lista de adaptadores. A parte comercial do roadmap fica fora deste
+  contrato, porque e R3 pela RISK_MATRIX e exige ADR aprovado por pessoa.
+authority:
+  - Pedido explicito do usuario em 2026-10-14 para seguir para a Rodada 06
+  - docs/bivaque-html-kit/ROADMAP.md rodada 06 e criterios de HTML concluido
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 2eacac64. 31 acoes sem prova no inventario apos as Rodadas 02 a 05.
+    Varredura em 375 claro: enquete ja votada nao dava resposta ao clique.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/groups/handlers.js
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/round06-proof.mjs
+  - docs/agents/tasks/HTML-006.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, styles, data/demo ou vendor
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - alterar qualquer comportamento da tela de planos ou de destaque pago
+  - alterar arquivos ou descartar modificacoes de outras sessoes
+  - fazer merge, push ou publicacao
+acceptance:
+  - Denunciar nao anuncia registro inexistente
+  - Varredura em todas as telas sem acao clicavel sem resposta
+  - Prova ampla de todas as rodadas na matriz 375 768 1440 claro escuro, visual e gate
+  - Lista de adaptadores mapeia estado local para tabelas existentes e lacunas
+proof:
+  - python scripts/bivaque-html/verify_reference.py
+  - python scripts/bivaque-html/build.py --check-current
+  - node scripts/bivaque-html/round06-proof.mjs --full
+  - node scripts/bivaque-html/round05-proof.mjs --full
+  - node scripts/bivaque-html/round04-proof.mjs --full
+  - node scripts/bivaque-html/round03-proof.mjs --full
+  - node scripts/bivaque-html/round02-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round001-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: cobertura total de acoes demonstrativas
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
