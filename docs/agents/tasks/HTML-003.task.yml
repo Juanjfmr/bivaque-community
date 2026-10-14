@@ -1,0 +1,54 @@
+task_id: HTML-003
+objective: >
+  Rodada 03 prova e corrige Desapegos, Imoveis e Negocios no prototipo: publicar,
+  rascunho, editar, encerrar, excluir, salvar, interesse, oferta, visita, contatos,
+  galeria, indicacao, assumir e editar pagina de negocio, sem redesenho.
+authority:
+  - Pedido explicito do usuario em 2026-10-14 para seguir para a Rodada 03
+  - docs/bivaque-html-kit/ROADMAP.md rodada 03
+  - prototypes/bivaque-html/docs/HANDOFF.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 840c805f. Cerca de 30 acoes de listings e businesses em categoria 4 no
+    NAVIGATION_AFTER. Prova round03 em 375 claro: campo invalido nao recebe foco;
+    segunda indicacao do mesmo negocio duplica o depoimento.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/editor.js
+  - prototypes/bivaque-html/src/features/businesses/indication.js
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/proof-harness.mjs
+  - scripts/bivaque-html/round03-proof.mjs
+  - docs/agents/tasks/HTML-003.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, styles, data/demo ou vendor
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - redesenhar telas ou definir regras de produto novas
+  - alterar arquivos ou descartar modificacoes de outras sessoes
+  - fazer merge, push ou publicacao
+acceptance:
+  - Publicar desapego e imovel com validacao, foco no primeiro campo invalido e persistencia
+  - Rascunho salva, reabre e some ao publicar; editor sujo pede confirmacao ao fechar
+  - Editar nao duplica; encerrar, reativar e excluir tem desfazer
+  - Comprador salva, demonstra interesse, prepara oferta, combina visita e volta ao anuncio
+  - Negocio cria, valida contatos, recebe indicacao unica, pode ser assumido, editado e ver pedidos
+  - Falha de gravacao mantem editor e texto com feedback
+  - Matriz 375 768 1440 claro escuro sem erros JavaScript nem requisicoes externas
+  - Regressao Rodadas 01 e 02, comparacao visual e gate sem perda
+proof:
+  - python scripts/bivaque-html/verify_reference.py
+  - python scripts/bivaque-html/build.py --check-current
+  - node scripts/bivaque-html/round03-proof.mjs --full
+  - node scripts/bivaque-html/round02-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: publicacao e contato demonstrativos
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
