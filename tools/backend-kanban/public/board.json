@@ -2081,7 +2081,7 @@
       "priority": "P1",
       "category": "frontend",
       "status": "now",
-      "description": "Rodada01 PASS no escopo do prototipo: jornadas globais (294 checkpoints), visual por zona instavel do renderer com controle negativo, scanner de secrets limpo. Gate geral BLOCKED so por itens externos (lint docs/evidence de outra sessao; typecheck mobile yargs). Proximo: Rodada02 a partir de prototypes/bivaque-html/docs/HANDOFF.md.",
+      "description": "Rodada01 PASS e gate completo do repo verde em 2026-10-14. Proximo: Rodada02 a partir de prototypes/bivaque-html/docs/HANDOFF.md.",
       "checklist": [
         "Instalar e validar os 18 perfis e o manifesto",
         "Inventariar referencia, rotas e acoes sem tratar regex como prova runtime",
@@ -2116,7 +2116,8 @@
         "20 builder/564 unit/189 privacidade/web-typecheck PASS; scope106/107FAIL:22base64 em imagens/fontes congeladas agora rastreadas pelo Git; scanner preservado",
         "Visual BLOCKED depois de tres protocolos,inclusive CPU/sRGB:132capturas por protocolo/pares consecutivos exatos/zero overflow,replicas de mesmosbytes variam; metadados visuais iguais",
         "ROUND_01.md,UI_UX_ROUND_01.md,NAVIGATION_BEFORE/AFTER e NEXT_DOMAINS registram provas,dependencias e bloqueios sem aprovacao ficticia",
-        "Fechamento Rodada01 2026-10-14: visual PASS 132 capturas, 12/12 estritos com 0 px fora da zona instavel, controle negativo detecta 6px; scope 107/107; build/test/secrets PASS por etapa"
+        "Fechamento Rodada01 2026-10-14: visual PASS 132 capturas, 12/12 estritos com 0 px fora da zona instavel, controle negativo detecta 6px; scope 107/107; build/test/secrets PASS por etapa",
+        "Gate verde 2026-10-14: JSONs docs/evidence formatados (conteudo identico) e @types/yargs incompleto reparado; lint/typecheck/build/test/secrets ok"
       ],
       "tests": [
         "python scripts/bivaque-html/verify_reference.py",
@@ -2142,10 +2143,7 @@
       "updatedAt": "2026-10-14",
       "sourceRevision": "217cdc9fa54fc16ac36e53cf83cf90071bef076e",
       "dependencies": [],
-      "blockers": [
-        "Gate lint: dois JSONs nao versionados de outra sessao em docs/evidence/figma-2026-10-06",
-        "Typecheck mobile TS2688 yargs fora deste lote"
-      ]
+      "blockers": []
     }
   ]
 }

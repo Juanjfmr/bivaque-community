@@ -7,10 +7,8 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
 
 - Rodada 01 **PASS** no escopo do protótipo. Candidato
   `dist/Bivaque_Material_Web.html`, SHA256 `e6acf9e6…af87`.
-- Gate geral do repo: vermelho só por itens **externos**, que não são deste lote:
-  lint em `docs/evidence/figma-2026-10-06/*.json` (não versionados, outra sessão) e
-  typecheck `apps/mobile` TS2688 `yargs`. Não rode o gate inteiro esperando outro
-  resultado; rode as etapas abaixo.
+- Gate completo do repo **verde** (`npx pnpm@11.18.0 gate`, exit 0). Se o TS2688
+  `yargs` voltar, é `node_modules` corrompido por instalação interrompida, não código.
 - Pendências por domínio: [NEXT_DOMAINS](NEXT_DOMAINS.md). Ownership: [MODULE_MAP](MODULE_MAP.md).
 
 ## Regras que não mudam

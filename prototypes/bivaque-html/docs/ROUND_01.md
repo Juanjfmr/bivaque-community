@@ -3,8 +3,8 @@
 Data: 14/10/2026. Contrato: `docs/agents/tasks/HTML-001.task.yml` (R2).
 Base Git: `217cdc9fa54fc16ac36e53cf83cf90071bef076e`.
 
-**Veredito: PASS no escopo do protótipo (Rodada 01); gate geral do repositório
-BLOCKED por duas falhas externas.** Jornadas globais, revisão independente e
+**Veredito: PASS. Rodada 01 aprovada e gate completo do repositório verde
+(lint, typecheck, build, test, secrets) em 14/10/2026.** Jornadas globais, revisão independente e
 comparação visual passaram. A comparação visual foi corrigida no fechamento
 (ver "Fechamento" abaixo): o critério antigo exigia bytes idênticos entre contextos
 do Chromium, o que a própria referência congelada não cumpre. Domínios futuros e
@@ -29,7 +29,10 @@ produção não estão aprovados.
 - **Gate por etapa:** build PASS, test (unit+privacy+scope) PASS, secrets PASS.
   Lint FAIL só em `docs/evidence/figma-2026-10-06/*.json` (não versionados, outra
   sessão); typecheck FAIL só em `apps/mobile` TS2688 `yargs` (área com diff de outra
-  sessão). Nenhum dos dois foi alterado.
+  sessão). Depois, com autorização explícita: os dois JSONs foram formatados (conteúdo
+  JSON idêntico conferido por hash) e `node_modules/@types/yargs`, incompleto por
+  instalação interrompida (faltava `index.d.ts`), recebeu os arquivos ausentes da
+  cópia completa da mesma versão 17.0.35. `pnpm gate`: exit 0.
 
 ## Entrega efetiva
 
