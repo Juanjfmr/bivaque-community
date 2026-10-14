@@ -1,0 +1,53 @@
+task_id: HTML-002
+objective: >
+  Rodada 02 prova e corrige Acesso/onboarding, Cidade e momento (transferencia),
+  Configuracoes e controles do prototipo, com validacao, verificacao demo e
+  persistencia local comprovadas sem redesenho.
+authority:
+  - Pedido explicito do usuario em 2026-10-14 para continuar o trabalho do Codex
+  - docs/bivaque-html-kit/ROADMAP.md rodada 02
+  - prototypes/bivaque-html/docs/HANDOFF.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD f537625e. Acoes onboarding, onboard-next, onboard-prev, onboard-finish,
+    city, apply-city, settings, prototype, apply-prototype e reset-prototype em
+    categoria 4 (handler sem prova) no NAVIGATION_AFTER. Prova round02 em 375
+    claro: troca de cenario descarta familias declaradas; reinicio com falha de
+    gravacao anuncia sucesso.
+allowed_paths:
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/round02-proof.mjs
+  - docs/agents/tasks/HTML-002.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, styles, data/demo ou vendor
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - redesenhar telas ou definir regras de produto novas
+  - alterar arquivos ou descartar modificacoes de outras sessoes
+  - fazer merge, push ou publicacao
+acceptance:
+  - Cadastro completo demo com validacao de nome, termos, codigo de familia, cidade, data e destino
+  - Verificacao em analise salva e bloqueia publicacao com explicacao
+  - Voltar, voltar do navegador e Escape preservam rascunho e nao gravam dados parciais
+  - Cidade consultada bloqueia publicacao e o retorno a cidade de origem funciona
+  - Configuracoes e controles do prototipo persistem apos recarga
+  - Falha de gravacao mantem dialogo, estado anterior e feedback, sem anunciar sucesso
+  - Matriz 375 768 1440 claro escuro sem erros JavaScript nem requisicoes externas
+  - Regressao Rodada 01 e comparacao visual sem perda
+proof:
+  - python scripts/bivaque-html/verify_reference.py
+  - python scripts/bivaque-html/build.py --check-current
+  - node scripts/bivaque-html/round02-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: cadastro e permissoes demonstrativas
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

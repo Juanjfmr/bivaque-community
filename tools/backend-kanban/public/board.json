@@ -2081,16 +2081,17 @@
       "priority": "P1",
       "category": "frontend",
       "status": "now",
-      "description": "Rodada01 PASS e gate completo do repo verde em 2026-10-14. Proximo: Rodada02 a partir de prototypes/bivaque-html/docs/HANDOFF.md.",
+      "description": "Rodadas 01 e 02 PASS (acesso, cidade e momento, configuracoes) e gate do repo verde em 2026-10-14. Proximo: Rodada 03 Desapegos/Imoveis/Negocios a partir de prototypes/bivaque-html/docs/HANDOFF.md.",
       "checklist": [
         "Instalar e validar os 18 perfis e o manifesto",
         "Inventariar referencia, rotas e acoes sem tratar regex como prova runtime",
         "Extrair fontes com build deterministico e preservar bytes do original",
         "Rodada00.1: parecer independente concluido PASS prototipo, 144 capturas; gate geral BLOCKED separado",
         "Rodada01: navegacao global com runtime e visual comprovados; gates externos (lint docs/evidence, mobile yargs) fora deste card",
-        "Inventariar Rodada01 e comprovar 198 checkpoints globais +96 Conversas nos seis contextos, sem alegar dominio completo"
+        "Inventariar Rodada01 e comprovar 198 checkpoints globais +96 Conversas nos seis contextos, sem alegar dominio completo",
+        "Rodada02: onboarding, verificacao demo, cidade/momento, configuracoes e controles com prova 72/72 e 3 defeitos corrigidos"
       ],
-      "completedChecklist": [true, true, true, true, true, true],
+      "completedChecklist": [true, true, true, true, true, true, true],
       "proof": [
         "Pedido explicito do usuario: instalar agentes e iniciar prototipo HTML do ZIP em area separada",
         "34 arquivos instalados sem overwrite; 18 TOML validos; hashes do manifesto verificados",
@@ -2117,7 +2118,8 @@
         "Visual BLOCKED depois de tres protocolos,inclusive CPU/sRGB:132capturas por protocolo/pares consecutivos exatos/zero overflow,replicas de mesmosbytes variam; metadados visuais iguais",
         "ROUND_01.md,UI_UX_ROUND_01.md,NAVIGATION_BEFORE/AFTER e NEXT_DOMAINS registram provas,dependencias e bloqueios sem aprovacao ficticia",
         "Fechamento Rodada01 2026-10-14: visual PASS 132 capturas, 12/12 estritos com 0 px fora da zona instavel, controle negativo detecta 6px; scope 107/107; build/test/secrets PASS por etapa",
-        "Gate verde 2026-10-14: JSONs docs/evidence formatados (conteudo identico) e @types/yargs incompleto reparado; lint/typecheck/build/test/secrets ok"
+        "Gate verde 2026-10-14: JSONs docs/evidence formatados (conteudo identico) e @types/yargs incompleto reparado; lint/typecheck/build/test/secrets ok",
+        "Rodada02 2026-10-14: candidato 6d62c647; round02 72/72 em 6 contextos, regressao round01 198 checkpoints PASS, visual PASS, gate verde; revisao independente sem achados CRITICAL/HIGH/MEDIUM"
       ],
       "tests": [
         "python scripts/bivaque-html/verify_reference.py",
@@ -2129,7 +2131,8 @@
         "npx pnpm@11.18.0 gate",
         "node scripts/bivaque-html/round01-proof.mjs",
         "node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer",
-        "node scripts/bivaque-html/navigation-inventory.mjs"
+        "node scripts/bivaque-html/navigation-inventory.mjs",
+        "node scripts/bivaque-html/round02-proof.mjs --full"
       ],
       "links": [
         "Contrato | ../../docs/agents/tasks/HTML-000.task.yml",
@@ -2138,7 +2141,8 @@
         "Rodada00.1 | ../../prototypes/bivaque-html/docs/ROUND_00_1.md",
         "Contrato Rodada01 | ../../docs/agents/tasks/HTML-001.task.yml",
         "Rodada01 | ../../prototypes/bivaque-html/docs/ROUND_01.md",
-        "Inventario | ../../prototypes/bivaque-html/docs/NAVIGATION_AFTER.md"
+        "Inventario | ../../prototypes/bivaque-html/docs/NAVIGATION_AFTER.md",
+        "Rodada02 | ../../prototypes/bivaque-html/docs/ROUND_02.md"
       ],
       "updatedAt": "2026-10-14",
       "sourceRevision": "217cdc9fa54fc16ac36e53cf83cf90071bef076e",
