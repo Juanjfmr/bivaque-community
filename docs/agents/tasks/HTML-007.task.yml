@@ -1,0 +1,57 @@
+task_id: HTML-007
+objective: >
+  Rodada 07 de polimento premium no prototipo HTML: medir com criterios objetivos
+  sobreposicao do aviso, fim de tela escondido, nome acessivel, alt, contraste WCAG AA,
+  alvo minimo de toque, aviso anunciado e movimento reduzido, e corrigir somente o que
+  a medicao sustentar, incluindo mensagens de erro especificas. Sem redesenho.
+authority:
+  - Pedido explicito do usuario em 2026-10-14 para seguir com a rodada de polimento
+  - prototypes/bivaque-html/docs/UI_UX_ROUND_01.md (acabamento motivado por evidencia)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 485395cd. Medicao round07 em 375 e 1440: botao Ocultar com contraste 4,48
+    (minimo 4,5) e mensagem generica para data passada no encontro.
+allowed_paths:
+  - prototypes/bivaque-html/src/motion/gestures.js
+  - prototypes/bivaque-html/src/features/listings/editor.js
+  - prototypes/bivaque-html/src/features/events/editor.js
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/round07-proof.mjs
+  - docs/agents/tasks/HTML-007.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, tokens globais de cor, styles, data/demo ou vendor
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - redesenhar telas ou mudar o que a medicao nao sustentar
+  - alterar arquivos ou descartar modificacoes de outras sessoes
+  - fazer merge, push ou publicacao
+acceptance:
+  - Aviso nao cobre navegacao nem Criar; fim de cada tela alcancavel
+  - Controles com nome acessivel, imagens com alt e aviso anunciado a leitor de tela
+  - Contraste de texto WCAG AA e alvo de toque minimo de 24px nas telas principais
+  - Movimento reduzido respeitado em menu e dialogo
+  - Mensagens de validacao dizem o que corrigir
+  - Matriz 375 768 1440 claro escuro, regressao de todas as rodadas, visual e gate
+proof:
+  - python scripts/bivaque-html/verify_reference.py
+  - python scripts/bivaque-html/build.py --check-current
+  - node scripts/bivaque-html/round07-proof.mjs --full
+  - node scripts/bivaque-html/round06-proof.mjs --full
+  - node scripts/bivaque-html/round05-proof.mjs --full
+  - node scripts/bivaque-html/round04-proof.mjs --full
+  - node scripts/bivaque-html/round03-proof.mjs --full
+  - node scripts/bivaque-html/round02-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round001-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: acabamento e acessibilidade demonstrativos
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
