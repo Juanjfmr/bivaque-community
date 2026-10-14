@@ -1,30 +1,42 @@
 async function perform(action,value,el){
+ globalActionElement=el;navigationPendingContext=navigationContext();
+ if(typeof profileGlobalAction==='function'&&await profileGlobalAction(action,value,el))return;
  if(await messagingAction(action,value,el))return;
  if(await groupAction(action,value,el))return;
  switch(action){
  case 'nav':if(dialog.open)await closeDialog(true);navigate(value);break;
- case 'home':navigate('inicio');break;
+ case 'home':if(dialog.open)await closeDialog(true);navigate('inicio');break;
  case 'back':back();break;
+ case 'guide':if(dialog.open)await closeDialog(true);navigate('guia');break;
+ case 'agenda':if(dialog.open)await closeDialog(true);navigate('agenda');break;
+ case 'open-event':{const event=state.events.find(x=>x.id===value);if(!accessibleRecord(event)){showGlobalDependency('evento-indisponivel');break;}if(dialog.open)await closeDialog(true);navigate('evento',value);break;}
+ case 'resume':{const [type,id]=value.split('|'),ref=type==='item'?itemById(id):type==='biz'?bizById(id):type==='ask'?askById(id):null;if(!accessibleRecord(ref)||state.lastViewed?.city!==state.city){showDialog('Conteúdo anterior indisponível','<p class="form-note">A referência foi removida ou pertence a outra cidade. Seu restante de dados locais foi preservado.</p>',`${btn('Voltar','close-dialog','','text')}${btn('Explorar nesta cidade','catalog-all','','filled')}`);break;}await perform(type==='item'?'open-item':type==='biz'?'open-biz':'open-question',id,el);break;}
+ case 'plan':openLocalPlan(value);break;
+ case 'plan-check':{const [kind,id]=value.split('|'),step=state.plan[kind]?.find(x=>x.id===id);if(!['chegando','saindo'].includes(kind)||!step){showGlobalDependency('plano-indisponivel');break;}if(readonly()||!state.profile.verified){showDialog('Checklist indisponível',`<p class="form-note">${readonly()?`Você está consultando ${esc(state.city)}. As marcações locais estão disponíveis na sua cidade, ${esc(state.homeCity)}.`:'Seu perfil de teste precisa estar verificado antes de salvar marcações. Nenhuma etapa foi alterada.'}</p>`,`${btn('Voltar','close-dialog','','text')}${readonly()?btn('Voltar à minha cidade','home-city','','filled'):btn('Consultar verificação demonstrativa','onboarding','','filled')}`,'plan-permission');render();break;}const next=!step.done,saved=mutate(()=>{state.plan[kind].find(x=>x.id===id).done=next;},{redraw:false});if(dialog.dataset.kind==='local-plan'&&dialog.open)openLocalPlan(kind);else render();globalFocus('plan-check',value,dialog.open?dialog:root);if(saved)notify(next?'Etapa concluída neste dispositivo':'Etapa reaberta neste dispositivo');break;}
+ case 'plan-go':{const [kind,id]=value.split('|'),step=state.plan[kind]?.find(x=>x.id===id);if(!['chegando','saindo'].includes(kind)||!step?.go){showGlobalDependency('plano-indisponivel');break;}if(dialog.open)await closeDialog(true);const [next,arg]=step.go;if(next==='filter')await perform('intent',arg,el);else if(next==='search')await perform('guide-search',arg,el);else if(next==='groups')await perform('groups','',el);else if(next==='publish')await perform(arg==='imovel'?'create-property':'create-item','',el);else if(next==='my-questions')await perform('my-questions','',el);else if(next==='destination'){if(!CITY_NAMES.includes(state.dest)){showGlobalDependency('plano-indisponivel');break;}if(mutate(()=>state.city=state.dest,{redraw:false}))navigate('guia');}else showGlobalDependency('plano-indisponivel');break;}
+ case 'share':{const [type,id]=value.split('|');await share(type,id);break;}
+ case 'copy-share':await copyText($('#share-link')?.value||'');break;
+ case 'create-event':case 'edit-event':case 'delete-event':case 'attend-event':case 'submit-event':case 'report':case 'submit-report':showGlobalDependency(action);break;
  case 'search':searchQuery='';navigate('busca');break;
  case 'search-from-home':searchQuery=$('#home-search')?.value.trim()||'';saveRecent(searchQuery);navigate('busca');break;
  case 'clear-search':if(!searchQuery){back();break;}searchQuery='';$('#search-query').value='';$('#search-results').innerHTML=searchResults();$('#search-query').focus();break;
  case 'recent-search':case 'guide-search':searchQuery=value;saveRecent(value);navigate('busca');break;
- case 'search-type':searchType=value;render();break;
+ case 'search-type':searchType=value;render();globalFocus(action,value);break;
  case 'intent':if(value==='biz'){bizQuery='';bizCat='Todos';navigate('negocios');}else if(value==='ind'){communityTab='ind';navigate('comunidade');}else{catalogFilter=value;searchHood='Todos';searchMin=searchMax='';navigate('catalogo');}break;
- case 'catalog-all':catalogFilter='all';searchHood='Todos';searchMin=searchMax='';navigate('catalogo');break;
- case 'catalog-filter':catalogFilter=value;render();break;
+ case 'catalog-all':if(dialog.open)await closeDialog(true);catalogFilter='all';searchHood='Todos';searchMin=searchMax='';navigate('catalogo');break;
+ case 'catalog-filter':catalogFilter=value;render();globalFocus(action,value);break;
  case 'clear-filters':searchHood='Todos';searchMin=searchMax='';searchSort='recent';render();break;
  case 'businesses':bizCat='Todos';bizQuery='';navigate('negocios');break;
- case 'biz-filter':bizCat=value;render();break;
- case 'community-tab':communityTab=value;render();break;
- case 'question-filter':questionFilter=value;render();break;
+ case 'biz-filter':bizCat=value;render();globalFocus(action,value);break;
+ case 'community-tab':communityTab=value;render();globalFocus(action,value);break;
+ case 'question-filter':questionFilter=value;render();globalFocus(action,value);break;
  case 'city':openCity();break;
  case 'apply-city':{
   const city=$('#city-select').value,mode=$('#moment-select').value,dest=$('#destination-select').value,arrival=$('#arrival-date').value,leave=$('#leave-date').value;
   if(!CITY_NAMES.includes(city)||!arrival||!leave){notify('Confira a cidade e as datas.','error');break;}
   if(mutate(()=>{state.city=city;state.mode=mode;state.dest=dest;state.arrival=arrival;state.leaveDate=leave;},{redraw:false})){searchHood='Todos';searchMin=searchMax='';await closeDialog(true);navigate('inicio');}break;
  }
- case 'home-city':mutate(()=>state.city=state.homeCity,{redraw:false});navigate('inicio');break;
+ case 'home-city':if(mutate(()=>state.city=state.homeCity,{redraw:false})){if(dialog.open)await closeDialog(true);navigate('inicio');}break;
  case 'settings':openSettings();break;
  case 'save-settings':if(validFields(['profile-name'])){const name=$('#profile-name').value.trim();if(name.length<3){notify('Informe um nome com pelo menos 3 letras.','error');break;}const appearance=$('#appearance-select').value,showHood=$('#privacy-hood').selected,familyOnly=$('#privacy-family').selected;if(mutate(()=>{state.profile.name=name;Object.assign(state.prefs,{appearance,showHood,familyOnly});},{redraw:false})){await closeDialog(true);render();notify('Configurações salvas');}}break;
  case 'prototype':openPrototype();break;
@@ -57,7 +69,7 @@ async function perform(action,value,el){
  case 'item-visit':await contact('item',value,itemById(value)?.kind==='imovel'?'Olá! Podemos combinar uma visita ao imóvel?':'Olá! Como podemos combinar a retirada ou entrega?');break;
  case 'item-status':{const i=itemById(value);if(!i?.mine||i.city!==state.homeCity||!canPost())break;const previous=i.status;if(mutate(()=>{i.status=i.status==='sold'?'active':'sold';}))notify(i.status==='sold'?'Anúncio encerrado':'Anúncio reativado','check_circle',()=>mutate(()=>{i.status=previous;}));break;}
  case 'delete-item':{const i=itemById(value);if(!i?.mine||i.city!==state.homeCity||!canPost())break;confirm('Excluir anúncio?',`“${i.title}” sairá das ofertas. As conversas existentes serão preservadas.`,()=>{const snapshot=structuredClone(i);if(mutate(()=>{state.items=state.items.filter(x=>x.id!==value);if(state.lastViewed?.id===value)state.lastViewed=null;},{redraw:false})){myAdsFilter='active';navigate('meus-anuncios');notify('Anúncio excluído','delete',()=>mutate(()=>{state.items.unshift(snapshot);}));}});break;}
- case 'delete-draft':confirm('Excluir rascunho?','O texto e as fotos deste rascunho serão removidos.',()=>{mutate(()=>state.drafts=state.drafts.filter(d=>d.id!==value));notify('Rascunho excluído');});break;
+ case 'delete-draft':confirm('Excluir rascunho?','O texto e as fotos deste rascunho serão removidos.',()=>{if(mutate(()=>state.drafts=state.drafts.filter(d=>d.id!==value)))notify('Rascunho excluído');});break;
  case 'gallery':{const i=itemById(route.id);if(!i)break;$('#hero-image').src=image(i.photos[Number(value)]);$$('.gallery button').forEach((b,n)=>b.classList.toggle('selected',n===Number(value)));break;}
  case 'item-leads':case 'biz-leads':{
   const type=action==='item-leads'?'item':'biz',ts=state.threads.filter(t=>t.about.type===type&&t.about.id===value);showDialog('Contatos recebidos',ts.length?`<div class="list">${ts.map(t=>profileRow('chat_bubble',t.who,t.msgs.at(-1)?.t||'Conversa iniciada','open-thread',t.id)).join('')}</div>`:empty('Nenhum contato ainda','Os contatos sobre esta publicação aparecerão aqui.','chat_bubble'),btn('Fechar','close-dialog','','text'));break;
@@ -106,5 +118,16 @@ async function perform(action,value,el){
  }
  case 'onboard-finish':{const {city,mode,date}=onboardDraft;if(!CITY_NAMES.includes(city)||!date){notify('Confira sua cidade e a data.','error');break;}if(mutate(()=>{state.profile={...state.profile,name:onboardDraft.name,role:onboardDraft.role,force:onboardDraft.force,verified:onboardDraft.verified};state.city=state.homeCity=city;state.mode=mode;state.arrival=date;state.dest=onboardDraft.dest;if(mode==='saindo')state.leaveDate=date;state.profile.interests=[...(onboardDraft.interests||[])];state.leftAuto=[];state.onboarded=true;if(onboardDraft.invite){const i=state.invites.find(x=>x.code===onboardDraft.invite);if(i)i.used=true;}},{redraw:false})){await closeDialog(true);navigate('inicio');const t=state.groups.find(g=>g.auto&&g.on&&g.joinedAt>Date.now()-5000);notify(!onboardDraft.verified?'Perfil em análise. Você pode consultar o conteúdo.':t?`Perfil pronto. Você entrou em ${t.t}`:'Perfil de teste pronto',t?'flight_land':'check_circle');}break;}
  case 'undo':if(toastUndo){const fn=toastUndo;toastUndo=null;fn();$('#snackbar').classList.remove('show');}break;
+ default:showGlobalDependency(action);
  }
+}
+function openLocalPlan(kind){
+ if(!['chegando','saindo'].includes(kind)||!Array.isArray(state.plan[kind])){showGlobalDependency('plano-indisponivel');return;}
+ showDialog(kind==='chegando'?'Seu plano de chegada':'Seu plano de saída',`<p class="form-note">Checklist pessoal demonstrativo. As marcações ficam apenas neste dispositivo; nenhuma providência externa é realizada.</p>${renderPlan(kind,true)}`,btn('Fechar','close-dialog','','text'),'local-plan');
+}
+function showGlobalDependency(action){
+ const titles={'create-event':'Criar encontro','edit-event':'Editar encontro','delete-event':'Cancelar encontro','attend-event':'Confirmar presença','submit-event':'Publicar encontro','evento-indisponivel':'Encontro indisponível','plano-indisponivel':'Etapa indisponível',report:'Denunciar conteúdo','submit-report':'Registrar denúncia'};
+ const eventAction=['create-event','edit-event','delete-event','attend-event','submit-event'].includes(action),reportAction=['report','submit-report'].includes(action);
+ const text=eventAction?'Esta operação depende da rodada de Encontros: criação, presença, lotação e cancelamento ainda precisam de suas regras e provas. Nenhum encontro ou confirmação foi alterado. Você pode consultar a agenda existente.':reportAction?'O tratamento de denúncias depende da rodada de segurança e moderação. Nenhuma denúncia foi enviada ou registrada por esta ação.':'Este recurso não está disponível neste contexto da demonstração. Consulte os dados existentes ou retorne à página anterior.';
+ showDialog(titles[action]||'Ação indisponível nesta rodada',`<p class="form-note">${esc(text)}</p>`,`${btn('Voltar','close-dialog','','text')}${eventAction||action==='evento-indisponivel'?btn('Consultar Agenda','agenda','','filled'):btn('Ir para o início','home','','filled')}`,'dependency');
 }

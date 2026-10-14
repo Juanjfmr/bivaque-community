@@ -1,0 +1,62 @@
+task_id: HTML-001
+objective: >
+  Rodada 01 conecta as jornadas globais do prototipo Material Web separado,
+  com navegacao, retorno, menus, foco e feedback comprovados sem redesenho.
+authority:
+  - Pedido explicito do usuario BIVAQUE Rodada 01 em 2026-10-14
+  - prototypes/bivaque-html/docs/ROUND_00_1.md
+  - prototypes/bivaque-html/docs/MODULE_MAP.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 217cdc9fa54fc16ac36e53cf83cf90071bef076e e candidato
+    3a89428131ea76386ca0966d8dc7964cb0b7a58e398ed350a88148e35682e8c2.
+    Telas Guia, Agenda, Salvos e Meus anuncios existem sem ligacoes;
+    Familia, avisos, resume e share emitem acoes sem handler.
+    Fontes e diff preservados em .visual/bivaque-html-round01/baseline/.
+allowed_paths:
+  - prototypes/bivaque-html/src/
+  - prototypes/bivaque-html/docs/
+  - prototypes/bivaque-html/dist/
+  - prototypes/bivaque-html/README.md
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-001.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - .visual/bivaque-html-round01/
+forbidden:
+  - editar a referencia HTML congelada
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - redesenhar a navegacao principal ou definir novos precos e regras de produto
+  - aprofundar funcionalidades de eventos, comunidades, mercado ou cobranca
+  - alterar arquivos ou descartar modificacoes de outras sessoes
+  - fazer merge, push ou publicacao
+acceptance:
+  - Parecer independente da Rodada 00.1 concluido por camada antes de alterar fontes
+  - Inventario completo de rotas e acoes com emissores, status antes e depois, provas e dependencias
+  - Guia, Agenda, Salvos, Meus anuncios, Familia e avisos abrem conteudo real da demonstracao
+  - Resume, links de compartilhamento e informacoes de planos fecham entrada acao feedback e retorno
+  - Navegacao contextual, filtros globais, menus e Criar funcionam por clique e teclado
+  - Retorno e history apos recarga funcionam com foco correto, sem regressao de conversas
+  - Estados vazios e falhas sao explicitos e dependencias futuras nao viram falso sucesso ou toast generico
+  - Testes desktop mobile 375 768 1440 claro escuro e reduced motion sem erros JavaScript
+  - Original integro, build deterministico e comparacao visual preservam o layout autorizado
+  - UX avalia antes de mudanca visual estrutural e revisao e runtime sao independentes
+  - Relatorio ROUND_01, UX e inventario registram testes reais, pendencias priorizadas e bloqueios
+  - Commit rastreavel inclui somente a rodada e board sem merge ou publicacao
+proof:
+  - python scripts/bivaque-html/verify_reference.py
+  - python scripts/bivaque-html/build.py --check-current
+  - python scripts/bivaque-html/test_build.py
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round001-proof.mjs
+  - node --test tests/scope/*.test.mjs
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HTML-001.task.yml
+  - npx pnpm@11.18.0 gate
+risk: navegacao demonstrativa e acessibilidade
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

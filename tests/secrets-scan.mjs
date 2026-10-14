@@ -185,6 +185,16 @@ function isFigmaDesignUrl(matchText, lineContent) {
   return lineContent.includes(`figma.${matchText}`)
 }
 
+const mediaDataUriPrefix = /data:(?:image|font)\/[a-z0-9.+-]+;base64,$/
+
+function isInsideMediaDataUri(content, index) {
+  const opener = content.lastIndexOf(";base64,", index)
+  if (opener === -1) return false
+  const payloadStart = opener + ";base64,".length
+  if (!/^[A-Za-z0-9+/=]*$/.test(content.slice(payloadStart, index))) return false
+  return mediaDataUriPrefix.test(content.slice(Math.max(0, opener - 64), payloadStart))
+}
+
 // ── scan ──
 
 const trackedFiles = execSync("git ls-files", { encoding: "utf8", cwd: root })
@@ -261,6 +271,15 @@ for (const file of trackedFiles) {
       if (pattern.name.startsWith("Generic base64") && isSlashSeparatedProse(match[0])) continue
 
       if (pattern.name.startsWith("Generic base64") && isFigmaDesignUrl(match[0], line)) continue
+
+      // Skip image/font payloads embedded as data URIs. The .png/.woff files
+      // themselves are already skipped above; the HTML prototype inlines the
+      // same binaries as `data:image/webp;base64,...`. Only a match that sits
+      // inside an unbroken base64 run opened by an image/font data URI is
+      // skipped, so a token elsewhere in the same file is still reported.
+      if (pattern.name.startsWith("Generic base64") && isInsideMediaDataUri(content, match.index)) {
+        continue
+      }
 
       console.error(`${file}:${lineIdx + 1}: ${pattern.name} — ${match[0].substring(0, 60)}`)
       totalFindings++
