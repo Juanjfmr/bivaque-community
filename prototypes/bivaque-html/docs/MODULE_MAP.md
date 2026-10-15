@@ -37,7 +37,8 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 06/CSS | `src/styles/overlays.css` | Frontend premium | Sheets/dialogs/drawer demo |
 | 07/CSS | `src/styles/groups.css` | Frontend premium | Aparência dos grupos |
 | 07b/CSS | `src/styles/motion-bold.css` | Motion/microinterações | Rodada 08: toque nos cartões e foto em voo; só sem movimento reduzido |
-| 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial e licenças; preservar |
+| 07c/CSS | `src/styles/high-contrast.css` | Frontend premium | Rodada 09: alto contraste do sistema (forced-colors): contornos, aba ativa, barras de enquete e foco |
+| 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
 | 11/Dados | `src/data/demo/assets.js` | Arquitetura | `ASSETS`, imagens inline globais |
