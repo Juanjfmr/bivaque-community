@@ -456,10 +456,13 @@ async function verify(width, theme) {
       assert(
         listingIds.every((id) => fixture.items.find((item) => item.id === id).kind === "imovel"),
       )
-      await page.locator("#catalog-min input").fill("100000000")
+      // Rodada 10: faixa de preço virou md-slider; leva o mínimo ao extremo pelo teclado.
+      await page.locator("#catalog-price input").first().focus()
+      await page.keyboard.press("End")
+      await page.waitForTimeout(250)
       await feedback(page, "Nenhum an.ncio com esses filtros")
       await action("clear-filters")
-      assert.equal(await page.locator("#catalog-min input").inputValue(), "")
+      assert.equal(await page.locator("#catalog-price").evaluate((s) => s.valueStart), 0)
       assert(
         await page
           .locator('[data-action="catalog-filter"][data-value="imovel"]')

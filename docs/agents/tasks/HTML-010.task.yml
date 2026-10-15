@@ -1,0 +1,52 @@
+task_id: HTML-010
+objective: >
+  Rodada 10 adota componentes Material visiveis onde se encaixam (slider de faixa de
+  preco, chips de entrada de bairros e servicos, chips de sugestao em buscas e respostas
+  rapidas) e aplica decisoes do usuario sobre busca e campos por momento, com
+  aprovacao visual por capturas de antes e depois.
+authority:
+  - Pedido explicito do usuario em 2026-10-14 para adotar os recursos do Material Design
+  - Aprovacao do usuario em 2026-10-14 das 5 telas comparadas
+  - Decisao do usuario em 2026-10-14 - quem mora na cidade nao ve campos de transferencia
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD a5f2399e. Preco em dois campos numericos; bairros por virgula e servicos por
+    linha em texto livre; sugestoes de busca sumiam apos a primeira busca e eram
+    rotuladas como recentes; Cidade e momento e cadastro pediam datas e destino para
+    quem mora na cidade.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/
+  - prototypes/bivaque-html/src/shell/bindings.js
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-010.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, styles globais, data/demo ou vendor
+  - trocar componentes onde nao ha encaixe natural sem aprovacao
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - fazer merge, push ou publicacao sem confirmacao
+acceptance:
+  - Slider filtra, mostra a faixa e volta ao limpar filtros
+  - Chips de entrada adicionam, removem, ignoram repetidos, aceitam lista colada e marcam alteracao
+  - Respostas rapidas preenchem o rascunho sem enviar e sem apagar texto digitado
+  - Buscas recentes e sugestoes ficam em secoes separadas
+  - Campos de transferencia aparecem conforme o momento, inclusive no cadastro
+  - Regressao de todas as rodadas, visual e gate
+proof:
+  - node scripts/bivaque-html/round10-proof.mjs --full
+  - node scripts/bivaque-html/round06-proof.mjs --full
+  - node scripts/bivaque-html/round02-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: formularios e navegacao demonstrativos
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

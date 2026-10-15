@@ -1,5 +1,6 @@
 import {
   action,
+  addChips,
   choose,
   confirmOk,
   dialogKind,
@@ -264,8 +265,8 @@ const checkpoints = {
     await fill(page, "biz-name", "Marcenaria Teste")
     await choose(page, "biz-category")
     await fill(page, "biz-hours", "Seg a sex, 8h às 18h")
-    await fill(page, "biz-hoods", "Centro, Adrianópolis")
-    await fill(page, "biz-services", "Móveis sob medida")
+    await addChips(page, "biz-hoods", ["Centro", "Adrianópolis"])
+    await addChips(page, "biz-services", ["Móveis sob medida"])
     await fill(page, "biz-whatsapp", "123")
     await action(page, "submit-biz")
     expect(
@@ -368,8 +369,8 @@ const checkpoints = {
     await action(page, "confirm-claim", b.id)
     expect((await dialogKind(page)) !== null, "editor não abriu após assumir")
     await fill(page, "biz-hours", "Seg a sáb, 9h às 17h")
-    await fill(page, "biz-hoods", "Centro")
-    await fill(page, "biz-services", "Ajustes de farda")
+    await addChips(page, "biz-hoods", ["Centro"])
+    await addChips(page, "biz-services", ["Ajustes de farda"])
     await action(page, "submit-biz")
     const s = await stored(page)
     expect(s.myBiz?.id === b.id && s.myBiz.claimed && s.myBiz.live, "página assumida não publicada")
