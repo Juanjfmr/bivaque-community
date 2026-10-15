@@ -331,7 +331,9 @@ async function verify(width, theme) {
       const items = await page
         .locator("#create-menu [data-action]")
         .evaluateAll((items) => items.map((e) => e.dataset.action))
-      assert.equal(items.length, 6)
+      // Rodada 11 acrescentou "Contratar serviço" (create-request) aos 6 itens originais.
+      assert.equal(items.length, 7)
+      assert.ok(items.includes("create-request"))
       await expectFocus(page, items[0])
       for (let index = 1; index <= items.length; index++) {
         await page.keyboard.press("Tab")

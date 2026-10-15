@@ -8,6 +8,11 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
 - **Protótipo concluído** (Rodadas 00 a 06 PASS) e polido (Rodada 07 PASS). Candidato
   final `dist/Bivaque_Material_Web.html`, SHA256 `00575252…7f2c`. Ver [ROUND_06](ROUND_06.md)
   e [ROUND_07](ROUND_07.md).
+- Rodadas 08 a 10: movimento, pacote Material reproduzível e componentes Material
+  visíveis. **Rodada 11 (15/10):** "Contratar serviço", com pedido aberto e até 5
+  propostas de empresas do ramo, aprovado só para o protótipo pelo
+  [ADR-20261015](../../../docs/decisions/ADR-20261015-pedido-aberto-e-propostas.md). Ver
+  [ROUND_11](ROUND_11.md). Levar ao backend exige novo ADR depois do teste com pessoas.
 - Antes do lançamento: auditoria de acessibilidade com axe-core e leitor de tela real.
 - Pendente de decisão humana: aprovação da parte comercial (R3, exige ADR).
 - Próximo passo do produto: adaptar ao backend seguindo [ADAPTERS](ADAPTERS.md).

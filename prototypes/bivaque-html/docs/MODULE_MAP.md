@@ -76,6 +76,9 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 43/App | `src/features/auth/onboarding.js` | Acesso/onboarding | Cadastro e verificação fictícios |
 | 44/App | `src/features/messaging/actions.js` | Conversas/notificações | Contato/conversa, dispatch de mensagens; contém share/copy e simulação de respostas compartilhados |
 | 45/App | `src/shell/bindings.js` | Frontend premium | Bindings de tela/dialog e links externos |
+| 45a/App | `src/features/requests/model.js` | Negócios/serviços | Rodada 11: pedido aberto e propostas — regras, elegibilidade, simulação (ADR-20261015) |
+| 45b/App | `src/features/requests/views.js` | Negócios/serviços | Rodada 11: lista, detalhe com comparação, editores de pedido e proposta |
+| 45c/App | `src/features/requests/handlers.js` | Negócios/serviços | Rodada 11: ações `requestAction` (pedido, escolha, cancelamento, proposta) |
 | 46/App | `src/motion/gestures.js` | Motion/microinterações | Swipe, long press e retorno pela borda |
 | 46b/App | `src/motion/bold-transitions.js` | Motion/microinterações | Rodada 08: foto do cartão voa até o detalhe e volta, cascata no detalhe e nas listas; ganchos em `render()` de `shell/navigation.js`; intensidade na constante `BOLD` |
 | 47/App | `src/app/handlers.js` | Frontend premium | Dispatch central `perform`, ligação dos domínios |
