@@ -364,7 +364,17 @@ const checkpoints = {
     await action(page, "prototype")
     await action(page, "reset-prototype")
     await page.locator("#confirm-dialog md-filled-button").last().click()
-    await settle(page)
+    // Mesma espera por condição da troca de cenário: a confirmação grava de forma assíncrona.
+    await page
+      .waitForFunction(
+        (k) => {
+          const x = JSON.parse(localStorage.getItem(k))
+          return x?.stage === "live" && x?.profile?.verified === true
+        },
+        KEY,
+        { timeout: 5000 },
+      )
+      .catch(() => {})
     s = await stored(page)
     expect(s.stage === "live" && s.profile.verified === true, "reinício não restaurou exemplos")
   },

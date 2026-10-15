@@ -16,7 +16,8 @@
         "styles/navigation.css",
         "styles/overlays.css",
         "styles/groups.css",
-        "styles/motion-bold.css"
+        "styles/motion-bold.css",
+        "styles/high-contrast.css"
       ],
       "baselineSha256": "42afb0e44b759ec7669180b7afdf39b7d72b34458e6ee0dcfe0cf3c947268620"
     },
