@@ -23,7 +23,7 @@ function navigationRestore(context){
  if(CITY_NAMES.includes(context.city))state.city=context.city;
  origin=['inicio','comunidade','conversas','voce'].includes(context.origin)?context.origin:'inicio';
  const f=context.filters||{};
- communityTab=f.communityTab??communityTab;questionFilter=f.questionFilter??questionFilter;catalogFilter=f.catalogFilter??catalogFilter;searchType=f.searchType??searchType;searchQuery=f.searchQuery??searchQuery;searchHood=f.searchHood??searchHood;searchMin=f.searchMin??searchMin;searchMax=f.searchMax??searchMax;searchSort=f.searchSort??searchSort;bizCat=f.bizCat??bizCat;bizQuery=f.bizQuery??bizQuery;myAdsFilter=f.myAdsFilter??myAdsFilter;savedType=f.savedType??savedType;
+ communityTab=f.communityTab??communityTab;questionFilter=f.questionFilter??questionFilter;catalogFilter=f.catalogFilter??catalogFilter;searchType=f.searchType??searchType;searchQuery=f.searchQuery??searchQuery;searchHood=f.searchHood??searchHood;searchMin=f.searchMin??searchMin;searchMax=f.searchMax??searchMax;searchSort=f.searchSort??searchSort;bizCat=['Todos',...GROUP_NAMES].includes(f.bizCat)?f.bizCat:bizCat;bizQuery=f.bizQuery??bizQuery;myAdsFilter=f.myAdsFilter??myAdsFilter;savedType=f.savedType??savedType;
 }
 function parseRoute(){
  const [path,query]=location.hash.slice(1).split('?'),parts=path.split('/'),name=parts[0]||'inicio';navigationProblem='';

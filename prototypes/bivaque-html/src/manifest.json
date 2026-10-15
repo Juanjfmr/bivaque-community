@@ -46,6 +46,7 @@
         "app/open.js",
         "utilities/format.js",
         "data/demo/model.js",
+        "features/businesses/taxonomy.js",
         "features/groups/presets.js",
         "app/state.js",
         "shell/primitives.js",

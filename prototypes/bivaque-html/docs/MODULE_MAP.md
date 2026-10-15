@@ -45,6 +45,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 12/App | `src/app/open.js` | Arquitetura | Comentário, abertura do IIFE e strict mode |
 | 13/App | `src/utilities/format.js` | Arquitetura | Seletores, escaping, datas, ids e apresentação |
 | 14/App | `src/data/demo/model.js` | Arquitetura | Chave de storage e constantes do modelo demo |
+| 14a/App | `src/features/businesses/taxonomy.js` | Negócios/serviços | Rodada 12: grupos de serviço com especialidade opcional e migração das categorias antigas |
 | 15/App | `src/features/groups/presets.js` | Comunidades/grupos | Templates/interesses/notificações de grupo |
 | 16/App | `src/app/state.js` | Arquitetura | Inicialização, schema 2, `state`, `mutate`, seletores e permissões demo |
 | 17/App | `src/shell/primitives.js` | Frontend premium | HTML compartilhado, imagens e snackbar |

@@ -154,10 +154,10 @@ class BuilderInvariants(unittest.TestCase):
             self.assertIn("candidate differs from the original", output.getvalue())
             self.assertNotIn("source, dist and reference are byte-identical", output.getvalue())
 
-    def test_module_map_covers_all_54_fragments(self):
+    def test_module_map_covers_all_55_fragments(self):
         document = (BUILD.PROTOTYPE / "docs/MODULE_MAP.md").read_text(encoding="utf-8")
         paths = [name for slot in self.manifest["slots"] for name in slot["files"]]
-        self.assertEqual(len(paths), 54)  # Rodada 08: 2 de motion; Rodada 09: alto contraste; Rodada 11: 3 de pedidos
+        self.assertEqual(len(paths), 55)  # Rodada 08: 2 de motion; Rodada 09: alto contraste; Rodada 11: 3 de pedidos; Rodada 12: taxonomia
         for path in paths:
             with self.subTest(path=path):
                 self.assertIn(f"`src/{path}`", document)
