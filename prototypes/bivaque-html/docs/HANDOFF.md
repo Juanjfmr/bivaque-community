@@ -17,6 +17,17 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   `yargs` voltar, é `node_modules` corrompido por instalação interrompida, não código.
 - Pendências por domínio: [NEXT_DOMAINS](NEXT_DOMAINS.md). Ownership: [MODULE_MAP](MODULE_MAP.md).
 
+## Link de teste
+
+- **https://bivaque-prototipo.vercel.app**: projeto Vercel separado (`bivaque-prototipo`),
+  só com o HTML gerado. Tem `noindex` e não tem cache, então cada publicação aparece na
+  hora. Os dados de cada pessoa ficam no navegador dela.
+- Publicar uma nova versão, depois do commit da rodada (confere o build antes):
+
+```bash
+node scripts/bivaque-html/deploy-vercel.mjs
+```
+
 ## Regras que não mudam
 
 - Edite só `prototypes/bivaque-html/src/`. Nunca leia `dist/` nem `reference/`
