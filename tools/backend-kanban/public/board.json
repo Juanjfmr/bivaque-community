@@ -2096,9 +2096,11 @@
         "Rodada06: varredura 213 acoes sem botao morto (controle negativo), prova ampla de todas as rodadas, ADAPTERS.md; parte comercial so observada (R3 pendente de ADR)",
         "Rodada07: polimento por medicao (contraste Ocultar, mensagens de erro especificas) com prova 48/48 e regressao completa; auditoria com tecnologia assistiva real ainda necessaria",
         "Rodada08: movimento arrojado (foto voa cartao-detalhe, cascatas) isolado e reduzivel pela constante BOLD; prova 42/42",
-        "Rodada09: pacote Material reproduzivel (32->38 componentes, lockfile), progresso acessivel de fotos, alto contraste do sistema; prova 24/24"
+        "Rodada09: pacote Material reproduzivel (32->38 componentes, lockfile), progresso acessivel de fotos, alto contraste do sistema; prova 24/24",
+        "Rodada10: slider de preco, chips de entrada, respostas rapidas, busca com recentes e sugestoes, campos por momento; aprovacao visual do usuario; prova 72/72"
       ],
       "completedChecklist": [
+        true,
         true,
         true,
         true,
@@ -2148,7 +2150,8 @@
         "Rodada06 2026-10-14: candidato 569c0cbb; round06 36/36, round05 72/72, round04 78/78, round03 108/108, round02 72/72, round01 e round001 PASS, visual PASS, gate verde",
         "Rodada07 2026-10-14: candidato 00575252; round07 48/48, round06 36/36, round05 72/72, round04 78/78, round03 108/108, round02 72/72, round01/round001/visual PASS, gate verde",
         "Rodada08 2026-10-14: round08 42/42, round07 48/48, gate verde; revisao: MEDIUM corrigido, HIGH nao reproduzido e corrigido de forma defensiva",
-        "Rodada09 2026-10-14: candidato 814850d8; round09 24/24, regressoes 08..00.1 e visual PASS (round02 intermitente de teste corrigido), gate verde"
+        "Rodada09 2026-10-14: candidato 814850d8; round09 24/24, regressoes 08..00.1 e visual PASS (round02 intermitente de teste corrigido), gate verde",
+        "Rodada10 2026-10-14: candidato 390ab72c; aprovacao visual das 5 telas; round10 72/72 e todas as regressoes, visual e gate verdes sem falhas"
       ],
       "tests": [
         "python scripts/bivaque-html/verify_reference.py",
@@ -2168,7 +2171,8 @@
         "node scripts/bivaque-html/round06-proof.mjs --full",
         "node scripts/bivaque-html/round07-proof.mjs --full",
         "node scripts/bivaque-html/round08-proof.mjs --full",
-        "node scripts/bivaque-html/round09-proof.mjs --full"
+        "node scripts/bivaque-html/round09-proof.mjs --full",
+        "node scripts/bivaque-html/round10-proof.mjs --full"
       ],
       "links": [
         "Contrato | ../../docs/agents/tasks/HTML-000.task.yml",
@@ -2186,7 +2190,8 @@
         "Adaptadores | ../../prototypes/bivaque-html/docs/ADAPTERS.md",
         "Rodada07 | ../../prototypes/bivaque-html/docs/ROUND_07.md",
         "Rodada08 | ../../prototypes/bivaque-html/docs/ROUND_08.md",
-        "Rodada09 | ../../prototypes/bivaque-html/docs/ROUND_09.md"
+        "Rodada09 | ../../prototypes/bivaque-html/docs/ROUND_09.md",
+        "Rodada10 | ../../prototypes/bivaque-html/docs/ROUND_10.md"
       ],
       "updatedAt": "2026-10-14",
       "sourceRevision": "217cdc9fa54fc16ac36e53cf83cf90071bef076e",

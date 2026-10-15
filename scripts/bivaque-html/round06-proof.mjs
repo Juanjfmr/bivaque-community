@@ -1,5 +1,6 @@
 import {
   action,
+  addChips,
   choose,
   dialogKind,
   expect,
@@ -85,6 +86,12 @@ const signature = (page) =>
       store: h(localStorage.getItem("bivaque-material-web-v3") ?? ""),
       opened: (window.__opened ?? []).length,
       clip: window.__clip ?? 0,
+      // Rodada 10: respostas rápidas só preenchem o campo de mensagem.
+      fields: h(
+        [...document.querySelectorAll("md-outlined-text-field,md-filled-text-field,input,textarea")]
+          .map((e) => e.value ?? "")
+          .join("|"),
+      ),
       shared: window.__shared ?? 0,
     })
   })
@@ -102,8 +109,8 @@ const checkpoints = {
     await fill(page, "biz-name", "Marcenaria Teste")
     await choose(page, "biz-category")
     await fill(page, "biz-hours", "Seg a sex, 8h às 18h")
-    await fill(page, "biz-hoods", "Centro")
-    await fill(page, "biz-services", "Móveis sob medida")
+    await addChips(page, "biz-hoods", ["Centro"])
+    await addChips(page, "biz-services", ["Móveis sob medida"])
     await action(page, "submit-biz")
     await go(page, "negocios")
     const beforeOwn = await page

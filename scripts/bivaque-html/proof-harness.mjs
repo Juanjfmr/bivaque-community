@@ -34,15 +34,40 @@ export async function action(page, name, value) {
   await settle(page)
 }
 export async function choose(page, id, value) {
-  await page.locator(`#${id}`).click()
   const option = value
     ? page.locator(`#${id} md-select-option[value="${value}"]`)
     : page.locator(`#${id} md-select-option`).nth(1)
+  // O menu do md-select ignora o toque enquanto ainda anima o fechamento anterior:
+  // espera fechar e, se não abrir, toca de novo (como uma pessoa faria).
+  await page
+    .waitForFunction((x) => !document.getElementById(x)?.open, id, { timeout: 2000 })
+    .catch(() => {})
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.locator(`#${id}`).click()
+    if (
+      await option.waitFor({ state: "visible", timeout: 1500 }).then(
+        () => true,
+        () => false,
+      )
+    )
+      break
+  }
   await option.click()
+  await page
+    .waitForFunction((x) => !document.getElementById(x)?.open, id, { timeout: 2000 })
+    .catch(() => {})
   await settle(page)
 }
 export async function fill(page, id, text) {
   await page.locator(`#${id} input, #${id} textarea`).first().fill(String(text))
+}
+// Chips de entrada (Rodada 10): digita cada valor e confirma com Enter.
+export async function addChips(page, id, values) {
+  for (const value of values) {
+    await page.locator(`#${id}-entry input`).fill(value)
+    await page.locator(`#${id}-entry input`).press("Enter")
+  }
+  await settle(page)
 }
 export async function confirmOk(page) {
   await page.locator("#confirm-dialog md-filled-button").last().click()
