@@ -7,18 +7,18 @@ async function requestAction(action,value){
  case 'submit-request':{
   if(!editor||editor.kind!=='request'||!canPost())return true;
   if(requestList().filter(r=>r.mine&&requestActive(r)).length>=REQUEST_OPEN_MAX){notify(`Você já tem ${REQUEST_OPEN_MAX} pedidos abertos. Encerre ou cancele um antes.`,'info');return true;}
-  const cat=$('#request-cat').value,hood=$('#request-hood').value,desc=$('#request-desc').value.trim(),kind=$('#request-when').value,date=$('#request-date').value;
-  const problem=!CAT_NAMES.includes(cat)||cat==='Todos'?'Escolha o tipo de serviço.':!HOODS.includes(hood)?'Escolha o bairro.':desc.length<20?'Descreva o serviço com pelo menos 20 caracteres.':desc.length>1000?'A descrição pode ter até 1000 caracteres.':kind!=='asap'&&!date?'Informe a data.':kind!=='asap'&&date<dateISO()?'A data precisa ser hoje ou depois.':'';
+  const cat=$('#request-cat').value,spec=$('#request-spec')?.value||'',hood=$('#request-hood').value,desc=$('#request-desc').value.trim(),kind=$('#request-when').value,date=$('#request-date').value;
+  const problem=!GROUP_NAMES.includes(cat)?'Escolha o tipo de serviço.':spec&&!groupSpecs(cat).includes(spec)?'Escolha uma especialidade da lista.':!HOODS.includes(hood)?'Escolha o bairro.':desc.length<20?'Descreva o serviço com pelo menos 20 caracteres.':desc.length>1000?'A descrição pode ter até 1000 caracteres.':kind!=='asap'&&!date?'Informe a data.':kind!=='asap'&&date<dateISO()?'A data precisa ser hoje ou depois.':'';
   if(problem){notify(problem,'error');return true;}
   const id=uid('r'),at=Date.now();
-  if(mutate(()=>{state.requests=[{id,city:state.homeCity,cat,hood,desc,when:{kind,date:kind==='asap'?null:date},photos:editor.photos.slice(0,REQUEST_PHOTOS),status:'open',createdAt:at,expiresAt:at+REQUEST_DAYS*864e5,proposals:[],who:state.profile.name,mine:true},...requestList()];},{redraw:false})){await closeDialog(true);navigate('pedido',id);notify('Pedido enviado às empresas do ramo','send');}
+  if(mutate(()=>{state.requests=[{id,city:state.homeCity,cat,spec:spec||null,hood,desc,when:{kind,date:kind==='asap'?null:date},photos:editor.photos.slice(0,REQUEST_PHOTOS),status:'open',createdAt:at,expiresAt:at+REQUEST_DAYS*864e5,proposals:[],who:state.profile.name,mine:true},...requestList()];},{redraw:false})){await closeDialog(true);navigate('pedido',id);notify('Pedido enviado às empresas do ramo','send');}
   return true;
  }
  case 'choose-proposal':{
   const [rid,pid]=value.split('|'),r=requestById(rid),p=r?.proposals.find(x=>x.id===pid);if(!r?.mine||!canPost())return true;if(!requestActive(r)||p?.status!=='sent'){notify('Esta proposta não está mais disponível.','info');render();return true;}
   const b=bizById(p.bizId);
   confirm('Escolher esta proposta?',`${b?.name||'A empresa'} · ${proposalPrice(p)}. As outras propostas serão recusadas e a conversa com a empresa será aberta. ${REQUEST_NOTE}`,async()=>{if(!requestActive(r)||p.status!=='sent'){notify('Esta proposta não está mais disponível.','info');render();return;}let t=null;
-   if(mutate(()=>{r.status='chosen';r.chosen=pid;for(const x of r.proposals)if(x.status==='sent')x.status=x.id===pid?'chosen':'declined';requestDeclinedNotice(r);if(b){t=ensureThread('biz',b.id,`Olá! Escolhi sua proposta para ${r.cat} em ${r.hood}. Podemos combinar os detalhes?`);r.threadId=t?.id||null;}},{redraw:false})){if(t){messagingDrafts.delete(t.id);navigate('conversa',t.id);}else render();notify('Proposta escolhida. Combine os detalhes na conversa.','check_circle');}});
+   if(mutate(()=>{r.status='chosen';r.chosen=pid;for(const x of r.proposals)if(x.status==='sent')x.status=x.id===pid?'chosen':'declined';requestDeclinedNotice(r);if(b){t=ensureThread('biz',b.id,`Olá! Escolhi sua proposta para ${requestTitle(r)} em ${r.hood}. Podemos combinar os detalhes?`);r.threadId=t?.id||null;}},{redraw:false})){if(t){messagingDrafts.delete(t.id);navigate('conversa',t.id);}else render();notify('Proposta escolhida. Combine os detalhes na conversa.','check_circle');}});
   return true;
  }
  case 'cancel-request':{

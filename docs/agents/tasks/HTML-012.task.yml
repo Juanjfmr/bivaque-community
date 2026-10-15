@@ -1,0 +1,53 @@
+task_id: HTML-012
+objective: >
+  Rodada 12 troca as 11 categorias soltas do prototipo HTML por 12 grupos de servico mais
+  Outros, cada um com especialidade opcional, em pedidos abertos, paginas de negocio e
+  indicacoes. Pedido com especialidade chega as empresas do grupo que marcaram aquela
+  especialidade ou nenhuma. Os dados de exemplo antigos e o estado ja salvo sao convertidos
+  na carga. Separado: marcar um negocio num comentario de grupo so vale ao responder uma
+  pergunta.
+authority:
+  - Pedido explicito do usuario em 2026-10-15 - abranger mais servicos sem lista gigante, item e subitem opcional
+  - Aprovacao do usuario em 2026-10-15 da lista de 12 grupos e especialidades
+  - Decisao do usuario em 2026-10-15 - pedido com especialidade filtra quem recebe
+  - Decisao do usuario em 2026-10-15 - indicar negocio em evento e contar como indicacao nao faz sentido
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD 78b2c241. Pedido e negocio usavam 11 categorias soltas (Climatizacao e Refrigeracao
+    separadas, sem hidraulica, pintura, limpeza, tecnologia, documentos); comentario em
+    evento, oferta, enquete ou publicacao comum permitia marcar negocio e dava indicacao.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/
+  - prototypes/bivaque-html/src/app/state.js
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-012.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, styles globais, data/demo ou vendor
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Pedido, pagina do negocio e indicacao usam os 13 grupos; especialidade aparece so depois do grupo e some em Outros
+  - Especialidade adulterada de outro grupo e recusada e nada e salvo
+  - Pedido com especialidade nao chega a empresa que marcou outra especialidade do grupo, nem na simulacao nem no lado do prestador
+  - Dados de exemplo e estado salvo com categoria antiga aparecem no grupo e especialidade novos
+  - Comentario fora de pergunta nao mostra o campo nem conta indicacao, mesmo com tela adulterada
+  - Regressao de todas as rodadas, visual e gate
+proof:
+  - node scripts/bivaque-html/round12-proof.mjs --full
+  - node scripts/bivaque-html/round04-proof.mjs --full
+  - node scripts/bivaque-html/round11-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - npx pnpm@11.18.0 gate
+risk: categorias de servico e regra de quem recebe pedidos, so no prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

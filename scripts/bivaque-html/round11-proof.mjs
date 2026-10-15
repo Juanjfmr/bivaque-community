@@ -505,7 +505,7 @@ const checkpoints = {
       "request-cat",
       await (async () => {
         const s = await stored(page)
-        return s?.biz?.[0]?.cat ?? "Mudança"
+        return s?.biz?.[0]?.cat ?? "Mudança e transporte"
       })(),
     )
     await choose(page, "request-hood", "Centro")

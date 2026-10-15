@@ -47,10 +47,10 @@ async function perform(action,value,el){
  case 'prototype':openPrototype();break;
  case 'apply-prototype':{
   const stage=$('#prototype-stage').value,verified=$('#verified-test').selected,incoming=Math.min(10000,Math.max(0,Number($('#prototype-incoming').value)||0));
-  if(stage!==state.stage){confirm('Trocar o cenário de teste?','Isso substitui as alterações locais pelos exemplos do cenário escolhido.',async()=>{const prior=state;state=initial(stage);state.profile.verified=verified;if(incoming!==prior.incoming)state.incoming=incoming;if(!mutate(()=>{}, {redraw:false})){state=prior;return;}await closeDialog(true);navigate('inicio');notify('Cenário atualizado');});}
+  if(stage!==state.stage){confirm('Trocar o cenário de teste?','Isso substitui as alterações locais pelos exemplos do cenário escolhido.',async()=>{const prior=state;state=normalizeCategories(initial(stage));state.profile.verified=verified;if(incoming!==prior.incoming)state.incoming=incoming;if(!mutate(()=>{}, {redraw:false})){state=prior;return;}await closeDialog(true);navigate('inicio');notify('Cenário atualizado');});}
   else if(mutate(()=>{state.profile.verified=verified;state.incoming=incoming;},{redraw:false})){await closeDialog(true);render();notify('Permissão de teste atualizada');}break;
  }
- case 'reset-prototype':confirm('Recomeçar do zero?','Anúncios, conversas, salvos e outras alterações feitas neste dispositivo serão substituídos pelos exemplos iniciais.',async()=>{const prior=state;state=initial();if(!mutate(()=>{}, {redraw:false})){state=prior;return;}await closeDialog(true);navigate('inicio');notify('Protótipo reiniciado');});break;
+ case 'reset-prototype':confirm('Recomeçar do zero?','Anúncios, conversas, salvos e outras alterações feitas neste dispositivo serão substituídos pelos exemplos iniciais.',async()=>{const prior=state;state=normalizeCategories(initial());if(!mutate(()=>{}, {redraw:false})){state=prior;return;}await closeDialog(true);navigate('inicio');notify('Protótipo reiniciado');});break;
  case 'simulate-answer':simulateAnswer();break;
  case 'simulate-message':simulateMessage();break;
  case 'close-dialog':await closeDialog();break;

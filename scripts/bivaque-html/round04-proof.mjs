@@ -220,6 +220,45 @@ const checkpoints = {
     await action(page, "send-comment", `${g.id}|${p.id}`)
     expect((await group(page, g.id)).posts[0].comments.length === 1, "comentário não salvo")
   },
+  async "business-tag-only-on-questions"(page) {
+    // Decisão do usuário (2026-10-15): marcar um negócio só faz sentido ao responder um
+    // pedido de indicação. Em evento, oferta ou publicação comum não há campo nem indicação.
+    const s = await snapshot(page)
+    const mine = (x) => x.city === s.homeCity && x.on
+    const g = s.groups.find((x) => mine(x) && x.posts.some((p) => p.type !== "question"))
+    expect(g, "sem publicação que não seja pergunta")
+    const p = g.posts.find((x) => x.type !== "question")
+    const b = s.biz.find((x) => x.city === s.homeCity)
+    await go(page, `publicacao/${g.id}~${p.id}`)
+    expect(!(await page.locator("#comment-biz").count()), `marcar negócio em publicação ${p.type}`)
+    // Tela adulterada: o campo volta com um negócio escolhido; a indicação não pode contar.
+    await page.evaluate((id) => {
+      const field = document.createElement("select")
+      field.id = "comment-biz"
+      field.innerHTML = `<option value="${id}" selected>x</option>`
+      field.hidden = true
+      document.body.append(field)
+    }, b.id)
+    await fill(page, "comment-input", "Vou levar água para o grupo todo.")
+    await action(page, "send-comment", `${g.id}|${p.id}`)
+    const after = await stored(page)
+    const saved = after.groups.find((x) => x.id === g.id).posts.find((x) => x.id === p.id)
+    expect(saved.comments.at(-1)?.text.startsWith("Vou levar"), "comentário não salvo")
+    expect(!saved.comments.at(-1).biz, "comentário de publicação comum marcou negócio")
+    expect(
+      after.biz.find((x) => x.id === b.id).recN === b.recN,
+      "publicação comum deu indicação ao negócio",
+    )
+    // Responder a uma pergunta continua permitindo marcar o negócio.
+    await go(page, `grupo/${g.id}`)
+    await action(page, "new-post", g.id)
+    await action(page, "post-type", "question")
+    await fill(page, "post-text", "Alguém indica um eletricista perto da base?")
+    await action(page, "submit-post", g.id)
+    const q = (await group(page, g.id)).posts[0]
+    await go(page, `publicacao/${g.id}~${q.id}`)
+    expect(await page.locator("#comment-biz").count(), "pergunta sem campo de marcar negócio")
+  },
   async "poll-needs-membership"(page) {
     const s = await snapshot(page)
     const g = s.groups.find(
