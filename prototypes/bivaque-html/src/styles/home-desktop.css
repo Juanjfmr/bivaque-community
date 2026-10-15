@@ -1,0 +1,79 @@
+/* Rodada 13: Início do desktop (aprovada em 15/10/2026). Tudo a partir de 1024 px:
+   celular e tablet não mudam. Só a Início usa a largura maior; as outras páginas mantêm 1120 px. */
+@media(min-width:1024px){
+#page:has(>.home-desk){max-width:1360px;padding-top:28px}
+.home-desk{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start}
+.home-main{min-width:0}
+.home-side{position:sticky;top:84px;display:grid;gap:14px}
+/* Em telas baixas a coluna rola junto com a página, para nada ficar fora de alcance. */
+@media(max-height:760px){.home-side{position:static}}
+.home-desk .page-head{margin-bottom:14px}
+.home-desk .page-head h1{font-size:32px;line-height:40px}
+.home-desk .page-head p{margin-top:2px}
+.home-desk .home-top{grid-template-columns:minmax(0,1fr);gap:12px}
+.home-desk .intent-grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:none;gap:10px;margin-top:0}
+.home-desk .intent{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 12px;border:1px solid var(--md-sys-color-outline-variant);border-radius:14px;background:var(--md-sys-color-surface-container-lowest);font-size:15px}
+.home-desk .intent md-icon,.home-desk .intent:nth-child(2) md-icon{width:auto;height:auto;background:none;color:var(--md-sys-color-primary);font-size:24px}
+.home-alerts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-top:12px}
+.home-notice,.home-hire{display:flex;align-items:center;gap:12px;width:100%;min-width:0;padding:12px 16px;border-radius:16px;text-align:left;font:inherit;font-size:14px;line-height:20px;color:var(--md-sys-color-on-surface)}
+.home-notice{background:var(--md-sys-color-secondary-container);border:0}
+.home-hire{background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
+.home-notice b,.home-hire b{display:block;font-weight:650}
+.home-notice small,.home-hire small{display:block;color:var(--md-sys-color-on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-notice .grow,.home-hire .grow{min-width:0}
+.home-notice-go{display:inline-flex;align-items:center;gap:2px;flex:none;font-weight:600;color:var(--md-sys-color-primary)}
+.home-notice>md-icon,.home-hire>md-icon:first-child{color:var(--md-sys-color-primary)}
+.home-desk .section{margin-top:26px}
+.home-desk .section-title{margin-bottom:4px}
+.home-sub{margin:0 0 10px}
+.home-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.home-row .photo-card{width:auto}
+.home-row .cover,.home-row .card-link .cover{aspect-ratio:16/10}
+/* O botão do cartão estica até a altura da linha: conteúdo no topo, rodapé no fim. */
+.home-row .card-link{display:flex;flex-direction:column;justify-content:flex-start}
+.home-row .card-body{flex:1;padding:12px 14px 14px}
+.home-biz .card-body{display:flex;flex-direction:column;gap:2px}
+.home-biz h3{font-size:16px;line-height:22px}
+.home-biz-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
+.home-biz-go{white-space:nowrap;display:inline-flex;align-items:center;gap:2px;height:32px;padding:0 10px;border:1px solid var(--md-sys-color-outline);border-radius:16px;font-size:13px;font-weight:600;color:var(--md-sys-color-primary)}
+.home-biz-go md-icon{font-size:18px}
+.home-card{padding:14px 14px 6px;border-radius:22px;background:var(--md-sys-color-surface-container-lowest);border:1px solid var(--md-sys-color-outline-variant)}
+.home-card .section-title{margin-bottom:2px}
+.home-card .section-title h2{font-size:18px;white-space:nowrap}
+.home-card .list{border:0;background:none}
+.home-card .list-row{padding:10px 2px;gap:12px}
+.home-card .txt>b,.home-event .txt b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;line-height:20px}
+.home-meta{display:flex;gap:6px;min-width:0;white-space:nowrap}
+.home-meta>span:not(:first-child)::before{content:'·';margin-right:6px;color:var(--md-sys-color-on-surface-variant);font-weight:400}
+.home-meta-group{min-width:0;overflow:hidden;text-overflow:ellipsis}
+body:has(.home-desk) .topbar-in{max-width:1400px}
+.home-activity{color:var(--md-sys-color-primary);font-weight:600}
+/* Encontro: data à esquerda, texto com a largura toda e "Vou" embaixo. */
+.home-event{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;row-gap:8px;align-items:center}
+.home-event .event-date{grid-row:1/3;align-self:start}
+.home-event .txt{min-width:0;text-align:left}
+.home-event .txt small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.home-event-go{grid-column:2}
+/* "Bivaque" no cabeçalho da Início do desktop: a marca, não um título de página. */
+body:has(.home-desk) .topbar .brand{font-size:26px;line-height:32px;font-weight:750;letter-spacing:-.5px}
+.home-arrival{display:flex;gap:14px;padding:16px;background:var(--md-sys-color-secondary-container);color:var(--md-sys-color-on-surface);border:0}
+.home-arrival>md-icon{flex:none;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--md-sys-color-surface-container-lowest);color:var(--md-sys-color-primary);font-size:26px}
+.home-arrival h3{margin:2px 0 2px;font-size:16px}
+.home-arrival p{margin:0 0 2px;font-size:14px;line-height:20px;color:var(--md-sys-color-on-surface-variant)}
+.home-arrival md-text-button{margin-left:-12px}
+}
+/* Notebook: coluna lateral mais estreita e três cartões por linha. */
+@media(min-width:1024px) and (max-width:1279px){
+.home-desk{grid-template-columns:minmax(0,1fr) 272px;gap:18px}
+.home-desk .page-head h1{font-size:28px;line-height:36px}
+.home-desk .intent-grid{gap:8px}
+.home-desk .intent{gap:6px;padding:0 6px;font-size:14px}
+.home-desk .intent md-icon,.home-desk .intent:nth-child(2) md-icon{font-size:22px}
+.home-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.home-row>:nth-child(4){display:none}
+.home-alerts{grid-template-columns:minmax(0,1fr)}
+.home-meta{display:block;white-space:normal}
+.home-meta-group{display:block}
+.home-meta>span:not(:first-child)::before{margin:0 4px}
+.home-meta>.home-meta-group+span::before{content:none}
+}

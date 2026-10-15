@@ -13,6 +13,13 @@ são histórico: consulte apenas se uma decisão anterior estiver em dúvida.
   propostas de empresas do ramo, aprovado só para o protótipo pelo
   [ADR-20261015](../../../docs/decisions/ADR-20261015-pedido-aberto-e-propostas.md). Ver
   [ROUND_11](ROUND_11.md). Levar ao backend exige novo ADR depois do teste com pessoas.
+- **Rodada 12 (15/10):** 12 grupos de serviço + Outros, com especialidade opcional. Marcar
+  negócio só ao responder pergunta. Ver [ROUND_12](ROUND_12.md).
+- **Rodada 13 (15/10):** Início do desktop (≥ 1024 px) e painel "Criar no Bivaque" com
+  atalho C. **Nova base visual congelada** em `scripts/bivaque-html/round13-baseline.mjs`.
+  Ver [ROUND_13](ROUND_13.md).
+- Próximo assunto combinado com o usuário: componentes do 21st.dev (paleta de busca ⌘K,
+  contador com avatares, abas com indicador deslizante, comparação de propostas).
 - Antes do lançamento: auditoria de acessibilidade com axe-core e leitor de tela real.
 - Pendente de decisão humana: aprovação da parte comercial (R3, exige ADR).
 - Próximo passo do produto: adaptar ao backend seguindo [ADAPTERS](ADAPTERS.md).

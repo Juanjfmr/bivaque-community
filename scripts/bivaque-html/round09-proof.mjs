@@ -46,8 +46,11 @@ const COMPONENTS_KEPT = [
   "md-tabs",
   "md-text-button",
 ]
-// Peso da Rodada 08 (2.798.120 bytes) + folga de 120 KB para os componentes novos.
-const SIZE_BUDGET = 2_798_120 + 120 * 1024
+// O pacote Material não cresce além do da Rodada 09 (431.826 bytes, 38 componentes).
+const MATERIAL_BUDGET = 431_826
+// HTML inteiro: a folga de 120 KB da Rodada 09 foi consumida pelas funcionalidades aprovadas
+// das Rodadas 10 a 13 (Rodada 13: cerca de 2,93 MB). Teto de 3 MB para o protótipo.
+const SIZE_BUDGET = 3_000_000
 
 const checkpoints = {
   async "material-components-registered"(page) {
@@ -60,6 +63,13 @@ const checkpoints = {
       resolve(import.meta.dirname, "../../prototypes/bivaque-html/dist/Bivaque_Material_Web.html"),
     ).size
     expect(size <= SIZE_BUDGET, `HTML acima do orçamento: ${size} > ${SIZE_BUDGET}`)
+    const material = statSync(
+      resolve(
+        import.meta.dirname,
+        "../../prototypes/bivaque-html/src/vendor/material-web-2.5.0.js",
+      ),
+    ).size
+    expect(material <= MATERIAL_BUDGET, `pacote Material cresceu: ${material} > ${MATERIAL_BUDGET}`)
   },
   async "photo-processing-feedback"(page) {
     // Desacelera o processamento para observar o indicador (fotos grandes no celular).
