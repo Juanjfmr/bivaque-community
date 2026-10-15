@@ -5,6 +5,7 @@ import { createServer } from "node:http"
 import { join, resolve } from "node:path"
 import { chromium } from "@playwright/test"
 import { createDeterministicContext, stabilize } from "./capture-support.mjs"
+import { assertRound13Baseline, round13Baseline } from "./round13-baseline.mjs"
 
 const root = resolve(import.meta.dirname, "../..")
 const out = join(root, ".visual/bivaque-html-round00-1", `visual-${Date.now()}`)
@@ -34,11 +35,15 @@ if (!process.argv.includes("--baseline-only")) {
     tabletCorrection,
     "Only the frozen authorized CSS override may enter the visual oracle",
   )
-  stages.splice(stages.indexOf("candidate"), 0, "approved-layout")
+  stages.splice(stages.indexOf("candidate"), 0, "approved-layout", "round13")
 }
 const contents = Object.fromEntries(
   Object.entries(files).map(([stage, path]) => [stage, readFileSync(path)]),
 )
+// Rodada 13: o candidato passa a ser comparado com a base aprovada pelo usuário em
+// 2026-10-15. A comparação com o layout aprovado da Rodada 00.1 fica só informativa.
+contents.round13 = round13Baseline(root).bytes
+assertRound13Baseline(contents.round13)
 contents["approved-layout"] = Buffer.from(
   originalBytes.toString("utf8").replace("</style>", `${tabletCorrection}</style>`),
 )
@@ -95,20 +100,7 @@ try {
               if (scene === "create") {
                 await page.locator('[data-action="create"]:visible').first().click()
                 await page.locator("#create-menu").waitFor({ state: "visible" })
-                // Rodada 11: "Contratar serviço" entrou no menu com aprovação visual do usuário
-                // e prova própria (round11, round01). Sem ele, o resto do menu continua idêntico.
-                if (stage === "candidate") {
-                  await page.locator("#create-menu.open").waitFor()
-                  const removed = await page.evaluate(() => {
-                    const item = document.querySelector(
-                      '#create-menu [data-action="create-request"]',
-                    )
-                    item?.remove()
-                    window.dispatchEvent(new Event("resize"))
-                    return Boolean(item)
-                  })
-                  assert(removed, "Create menu lost the Round 11 item")
-                }
+                await page.locator("#create-menu.open").waitFor()
               }
               const beforeSettle = performance.now()
               const early = await page.screenshot({
@@ -174,6 +166,7 @@ try {
         const baseline = captures.find((c) => c.stage === "baseline")
         const candidate = captures.find((c) => c.stage === "candidate")
         const approved = captures.find((c) => c.stage === "approved-layout")
+        const round13 = captures.find((c) => c.stage === "round13")
         report.comparisons.push({
           width,
           theme,
@@ -182,6 +175,7 @@ try {
           originalBaselineIdentical: original.sha256 === baseline.sha256,
           candidateIdentical: candidate ? candidate.sha256 === original.sha256 : null,
           approvedLayoutIdentical: candidate ? candidate.sha256 === approved.sha256 : null,
+          round13Identical: candidate ? candidate.sha256 === round13.sha256 : null,
           candidateCollisions: candidate?.collisions ?? null,
         })
       }
@@ -193,7 +187,7 @@ try {
       (c) =>
         !c.repeatStable ||
         !c.originalBaselineIdentical ||
-        c.approvedLayoutIdentical === false ||
+        c.round13Identical === false ||
         (c.candidateCollisions !== null && c.candidateCollisions > 0),
     )
   report.status = failed ? "FAIL" : "PASS"

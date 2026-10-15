@@ -37,7 +37,9 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 06/CSS | `src/styles/overlays.css` | Frontend premium | Sheets/dialogs/drawer demo |
 | 07/CSS | `src/styles/groups.css` | Frontend premium | Aparência dos grupos |
 | 07b/CSS | `src/styles/motion-bold.css` | Motion/microinterações | Rodada 08: toque nos cartões e foto em voo; só sem movimento reduzido |
+| 07a/CSS | `src/styles/home-desktop.css` | Início/busca/descoberta | Rodada 13: Início do desktop (≥ 1024 px), duas colunas; celular e tablet não mudam |
 | 07c/CSS | `src/styles/high-contrast.css` | Frontend premium | Rodada 09: alto contraste do sistema (forced-colors): contornos, aba ativa, barras de enquete e foco |
+| 07d/CSS | `src/styles/create-rail.css` | Frontend premium | Rodada 13: botão "+ Criar" da barra lateral e painel de criação do desktop |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -51,6 +53,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 17/App | `src/shell/primitives.js` | Frontend premium | HTML compartilhado, imagens e snackbar |
 | 18/App | `src/shell/navigation.js` | Frontend premium | Router, history, tema, shell e dispatch de render |
 | 19/App | `src/features/home/views.js` | Início/busca/descoberta | Início e plano de chegada/saída |
+| 19a/App | `src/features/home/desktop.js` | Início/busca/descoberta | Rodada 13: `renderHomeDesktop`, aviso pessoal, serviços, grupos, próximo encontro e chegada |
 | 20/App | `src/features/listings/catalog.js` | Desapegos/mercado | Filtros compartilhados e catálogo de anúncios/imóveis |
 | 21/App | `src/features/businesses/catalog.js` | Negócios/serviços | Catálogo de negócios e publicidade identificada |
 | 22/App | `src/features/search/views.js` | Início/busca/descoberta | Busca transversal e sinônimos demo |

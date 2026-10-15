@@ -65,6 +65,12 @@ async function createMyBiz(page, cat) {
   await addChips(page, "biz-services", ["Atendimento geral"])
   await action(page, "submit-biz")
 }
+// A ação confirmada roda depois de a confirmação fechar e o histórico voltar: espera por
+// condição, como na Rodada 02, em vez de ler logo após o clique.
+async function confirmThen(page, check, arg) {
+  await confirmOk(page)
+  await page.waitForFunction(check, arg, { timeout: 5000 }).catch(() => {})
+}
 async function simulate(page) {
   await action(page, "prototype")
   await action(page, "simulate-proposals")
@@ -123,7 +129,7 @@ const checkpoints = {
     const pid = r.proposals[0].id
     await page.locator(`[data-action="choose-proposal"][data-value="${id}|${pid}"]`).click()
     await settle(page)
-    await confirmOk(page)
+    await confirmThen(page, () => window.Bivaque.inspect().route.name === "conversa")
     expect((await routeOf(page)).name === "conversa", "escolha não abriu a conversa")
     expect(
       /Escolhi sua proposta/.test(await page.locator("#chat-input textarea").inputValue()),
@@ -144,7 +150,13 @@ const checkpoints = {
     expect(/3 pedidos abertos/.test(await toast(page)), "permitiu o 4º pedido aberto")
     await go(page, `pedido/${ids[0]}`)
     await action(page, "cancel-request", ids[0])
-    await confirmOk(page)
+    await confirmThen(
+      page,
+      ([k, id]) =>
+        JSON.parse(localStorage.getItem(k)).requests.find((r) => r.id === id)?.status ===
+        "cancelled",
+      [KEY, ids[0]],
+    )
     expect((await req(page, ids[0])).status === "cancelled", "não cancelou")
     expect(
       !(await page.locator('[data-action="choose-proposal"]').count()),
@@ -231,7 +243,14 @@ const checkpoints = {
       "edição duplicou a proposta",
     )
     await action(page, "withdraw-proposal", rid)
-    await confirmOk(page)
+    await confirmThen(
+      page,
+      ([k, id, pid]) =>
+        JSON.parse(localStorage.getItem(k))
+          .requests.find((r) => r.id === id)
+          ?.proposals.find((p) => p.id === pid)?.status === "withdrawn",
+      [KEY, rid, mine.id],
+    )
     expect(
       (await req(page, rid)).proposals.find((p) => p.id === mine.id).status === "withdrawn",
       "não retirou",

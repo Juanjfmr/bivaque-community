@@ -1,0 +1,57 @@
+task_id: HTML-013
+objective: >
+  Rodada 13 cria a Inicio do desktop (a partir de 1024 px) aprovada pelo usuario: titulo
+  "O que voce precisa", busca e atalhos em linha, aviso pessoal por prioridade, Precisa
+  contratar, servicos com indicacoes e patrocinado rotulado, oportunidades e coluna lateral
+  com grupos, proximo encontro com Vou e chegada pelo momento. O botao Criar do desktop vira
+  "+ Criar" e se desdobra num painel de criacao, com atalho de teclado C. Celular e tablet
+  mantem a Inicio e o menu Criar originais. A Inicio aprovada vira a nova base visual congelada.
+authority:
+  - Pedido explicito do usuario em 2026-10-15 para implementar a Inicio web da versao 2 com os ajustes
+  - Decisao do usuario em 2026-10-15 - so desktop; nova base visual aprovada
+  - Pedidos do usuario em 2026-10-15 - otimizar espaco, corrigir texto do encontro, Bivaque maior, botao Criar alinhado e menos generico
+  - Aprovacao do usuario em 2026-10-15 do painel Criar inspirado no 21st.dev e no Mobbin
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD e44026d5. No desktop a Inicio era a do celular esticada (uma coluna, conteudo limitado
+    a 1120 px, servicos abaixo de grupos e desapegos); o "+" do botao Criar ficava 8 px fora do
+    centro e o menu era uma pilha de botoes sem descricao.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/home/
+  - prototypes/bivaque-html/src/shell/create-menu.js
+  - prototypes/bivaque-html/src/styles/home-desktop.css
+  - prototypes/bivaque-html/src/styles/create-rail.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-013.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - mudar a Inicio ou o menu Criar do celular e do tablet
+  - alterar backend, Supabase, migrations, politicas ou interfaces Next e Figma
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - A partir de 1024 px a Inicio tem duas colunas; abaixo disso fica identica a anterior, inclusive ao redimensionar
+  - Sem estrelas; patrocinado rotulado e visivel tambem no notebook
+  - Aviso pessoal na ordem pergunta respondida, pedido com propostas, avisos nao lidos
+  - Cartao de chegada pelo momento e Vou confirmando o proximo encontro
+  - Painel Criar com 7 opcoes, foco na primeira, Esc devolve o foco ao botao, X fecha
+  - Atalho C abre o Criar no desktop e nunca dentro de campo de texto nem no celular
+  - Todos os icones existem na fonte embutida
+  - Nova base visual congelada e regressao de todas as rodadas, visual e gate
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,768-light,768-dark,1024-light,1024-dark,1440-light,1440-dark node scripts/bivaque-html/round13-proof.mjs
+  - node scripts/bivaque-html/round01-proof.mjs
+  - node scripts/bivaque-html/round01-visual.mjs --deterministic-renderer
+  - node scripts/bivaque-html/visual-stability.mjs
+  - npx pnpm@11.18.0 gate
+risk: layout da Inicio do desktop e menu Criar, so no prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true

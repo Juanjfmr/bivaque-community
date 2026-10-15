@@ -2099,9 +2099,11 @@
         "Rodada09: pacote Material reproduzivel (32->38 componentes, lockfile), progresso acessivel de fotos, alto contraste do sistema; prova 24/24",
         "Rodada10: slider de preco, chips de entrada, respostas rapidas, busca com recentes e sugestoes, campos por momento; aprovacao visual do usuario; prova 72/72",
         "Rodada11: contratar servico (pedido aberto, ate 5 propostas, escolha abre conversa; lado do prestador, privacidade e denuncia) so no prototipo, ADR-20261015 aprovado pelo usuario; aprovacao visual; prova 78/78",
-        "Rodada12: 12 grupos de servico + Outros com especialidade opcional (pedido, pagina, indicacao); pedido com especialidade filtra quem recebe; marcar negocio so ao responder pergunta; prova 54/54"
+        "Rodada12: 12 grupos de servico + Outros com especialidade opcional (pedido, pagina, indicacao); pedido com especialidade filtra quem recebe; marcar negocio so ao responder pergunta; prova 54/54",
+        "Rodada13: Inicio do desktop (>=1024 px) e painel Criar no Bivaque com atalho C, aprovados pelo usuario; nova base visual congelada; prova 128/128"
       ],
       "completedChecklist": [
+        true,
         true,
         true,
         true,
@@ -2157,7 +2159,8 @@
         "Rodada09 2026-10-14: candidato 814850d8; round09 24/24, regressoes 08..00.1 e visual PASS (round02 intermitente de teste corrigido), gate verde",
         "Rodada10 2026-10-14: candidato 390ab72c; aprovacao visual das 5 telas; round10 72/72 e todas as regressoes, visual e gate verdes sem falhas",
         "Rodada11 2026-10-15: candidato 945ff539; round11 78/78, round08 42/42 (teste do voo passou a medir pelo relogio da animacao; falhava tambem no HEAD), round06 36/36, round01, visual estrito e visual-stability PASS, regressoes 10..00.1 PASS, gate verde",
-        "Rodada12 2026-10-15: candidato 3f1a1e0f; round12 54/54, round04 84/84, regressoes 11..00.1 e gate verdes; visual estrito difere so no HTML pelos nomes de categoria aprovados (nova base na Rodada 13)"
+        "Rodada12 2026-10-15: candidato 3f1a1e0f; round12 54/54, round04 84/84, regressoes 11..00.1 e gate verdes; visual estrito difere so no HTML pelos nomes de categoria aprovados (nova base na Rodada 13)",
+        "Rodada13 2026-10-15: candidato e nova base f63e6a9a; round13 128/128 em 8 contextos, regressoes 12..00.1, visual estrito e visual-stability contra a nova base e gate verdes"
       ],
       "tests": [
         "python scripts/bivaque-html/verify_reference.py",
@@ -2180,7 +2183,8 @@
         "node scripts/bivaque-html/round09-proof.mjs --full",
         "node scripts/bivaque-html/round10-proof.mjs --full",
         "node scripts/bivaque-html/round11-proof.mjs --full",
-        "node scripts/bivaque-html/round12-proof.mjs --full"
+        "node scripts/bivaque-html/round12-proof.mjs --full",
+        "node scripts/bivaque-html/round13-proof.mjs --full"
       ],
       "links": [
         "Contrato | ../../docs/agents/tasks/HTML-000.task.yml",

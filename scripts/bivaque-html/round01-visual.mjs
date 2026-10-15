@@ -1,5 +1,4 @@
 import assert from "node:assert/strict"
-import { execFileSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { createServer } from "node:http"
@@ -7,6 +6,7 @@ import { createRequire } from "node:module"
 import { join, resolve } from "node:path"
 import { chromium } from "@playwright/test"
 import { createDeterministicContext, stabilize } from "./capture-support.mjs"
+import { assertRound13Baseline, round13Baseline } from "./round13-baseline.mjs"
 
 const root = resolve(import.meta.dirname, "../..")
 const output = resolve(
@@ -15,64 +15,15 @@ const output = resolve(
     `.visual/bivaque-html-round01/independent-visual-${Date.now()}`,
 )
 const files = {
-  baseline: join(root, ".visual/bivaque-html-round01/baseline/round001.html"),
   candidate: join(root, "prototypes/bivaque-html/dist/Bivaque_Material_Web.html"),
 }
-const baselineRevision = "217cdc9fa54fc16ac36e53cf83cf90071bef076e"
-let baselineProvenance = { method: "frozen local file", path: files.baseline }
-function frozenBaseline() {
-  try {
-    return readFileSync(files.baseline)
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error
-    const gitSource = (relative) => {
-      assert(typeof relative === "string" && relative.length > 0)
-      const normalized = relative.replaceAll("\\", "/")
-      assert(
-        !normalized.startsWith("/") &&
-          !normalized.includes(":") &&
-          !normalized.split("/").includes(".."),
-      )
-      return execFileSync(
-        "git",
-        ["show", `${baselineRevision}:prototypes/bivaque-html/src/${normalized}`],
-        { cwd: root, maxBuffer: 16 * 1024 * 1024 },
-      )
-    }
-    const manifest = JSON.parse(gitSource("manifest.json"))
-    assert.equal(manifest.formatVersion, 1)
-    assert.equal(manifest.slots.length, 4)
-    let bytes = gitSource(manifest.template)
-    for (const slot of manifest.slots) {
-      const token = Buffer.from(slot.token)
-      const start = bytes.indexOf(token)
-      assert(
-        start >= 0 && bytes.lastIndexOf(token) === start,
-        "Frozen template token must occur once",
-      )
-      const content = Buffer.concat(slot.files.map(gitSource))
-      bytes = Buffer.concat([
-        bytes.subarray(0, start),
-        content,
-        bytes.subarray(start + token.length),
-      ])
-    }
-    baselineProvenance = {
-      method: "raw Git blobs, byte concatenation only",
-      revision: baselineRevision,
-      sourceRoot: "prototypes/bivaque-html/src/",
-      expectedHash: "3a89428131ea76386ca0966d8dc7964cb0b7a58e398ed350a88148e35682e8c2",
-    }
-    return bytes
-  }
-}
-const contents = { baseline: frozenBaseline(), candidate: readFileSync(files.candidate) }
+// Rodada 13: a comparação estrita usa a base aprovada pelo usuário em 2026-10-15. A base da
+// Rodada 00.1 continua guardada, mas já não representa a Início nem o Criar aprovados.
+const frozen = round13Baseline(root)
+const baselineProvenance = frozen.provenance
+const contents = { baseline: frozen.bytes, candidate: readFileSync(files.candidate) }
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex")
-assert.equal(
-  sha(contents.baseline),
-  "3a89428131ea76386ca0966d8dc7964cb0b7a58e398ed350a88148e35682e8c2",
-  "Previous-round visual baseline must remain frozen",
-)
+assertRound13Baseline(contents.baseline)
 const { PNG } = createRequire(import.meta.url)("pngjs")
 const report = {
   status: "RUNNING",
@@ -253,21 +204,7 @@ try {
             for (const scene of ["home", "create"]) {
               if (scene === "create") {
                 await page.locator('[data-action="create"]:visible').first().click()
-                // Rodada 11: "Contratar serviço" entrou no menu com aprovação visual do usuário
-                // e prova própria (round11, round01). Sem ele, o resto do menu continua estrito.
-                // Remove só depois de o menu abrir e se reposiciona pela altura de 6 itens.
-                if (stage === "candidate") {
-                  await page.locator("#create-menu.open").waitFor()
-                  const removed = await page.evaluate(() => {
-                    const item = document.querySelector(
-                      '#create-menu [data-action="create-request"]',
-                    )
-                    item?.remove()
-                    window.dispatchEvent(new Event("resize"))
-                    return Boolean(item)
-                  })
-                  assert(removed, "Create menu lost the Round 11 item")
-                }
+                await page.locator("#create-menu.open").waitFor()
               }
               const bytes = await capture(page, stage, scene, width, theme, repeat, true)
               frames.set(`${stage}-${scene}-${repeat}`, bytes)
