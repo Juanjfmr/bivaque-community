@@ -5,6 +5,7 @@ function openCreate(anchor=$('#fab'),customChoices=null,contextMenu=false){
  createAnchor=anchor;createReturnDescriptor=globalFocusDescriptor(anchor);createOpen=true;createFocusIndex=0;
  const choices=customChoices||[
   ['volunteer_activism','Pedir indicação','ask',''],
+  ['build','Contratar serviço','create-request','Propostas de empresas do ramo'],
   ['sell','Anunciar desapego','create-item',''],
   ['apartment','Anunciar imóvel','create-property',''],
   ['add_business','Indicar um negócio','indicate','Quem você já contrata e confia'],

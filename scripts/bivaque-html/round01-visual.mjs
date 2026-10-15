@@ -251,8 +251,24 @@ try {
           try {
             await page.goto(`${url}/${stage}.html#inicio`)
             for (const scene of ["home", "create"]) {
-              if (scene === "create")
+              if (scene === "create") {
                 await page.locator('[data-action="create"]:visible').first().click()
+                // Rodada 11: "Contratar serviço" entrou no menu com aprovação visual do usuário
+                // e prova própria (round11, round01). Sem ele, o resto do menu continua estrito.
+                // Remove só depois de o menu abrir e se reposiciona pela altura de 6 itens.
+                if (stage === "candidate") {
+                  await page.locator("#create-menu.open").waitFor()
+                  const removed = await page.evaluate(() => {
+                    const item = document.querySelector(
+                      '#create-menu [data-action="create-request"]',
+                    )
+                    item?.remove()
+                    window.dispatchEvent(new Event("resize"))
+                    return Boolean(item)
+                  })
+                  assert(removed, "Create menu lost the Round 11 item")
+                }
+              }
               const bytes = await capture(page, stage, scene, width, theme, repeat, true)
               frames.set(`${stage}-${scene}-${repeat}`, bytes)
             }

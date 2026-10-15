@@ -58,7 +58,18 @@ const checkpoints = {
     await settled(page)
     await page.locator('[data-action="back"]:visible').first().click()
     // Perto do fim do voo (560 ms), a cópia precisa estar sobre a foto do cartão de origem.
-    await page.waitForTimeout(470)
+    // O instante vem do relógio da animação: o voo só começa depois de a lista redesenhar, e
+    // esse atraso varia com a carga da máquina (falhava também no HEAD, 3 em 18 contextos).
+    await page
+      .waitForFunction(
+        () => {
+          const a = document.querySelector(".motion-flight")?.getAnimations()[0]
+          return a && a.currentTime >= 470
+        },
+        null,
+        { polling: "raf", timeout: 5000 },
+      )
+      .catch(() => {})
     const gap = await page.evaluate((v) => {
       const clone = document.querySelector(".motion-flight")
       const img = document.querySelector(`#main [data-action="open-item"][data-value="${v}"] img`)

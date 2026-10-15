@@ -32,6 +32,7 @@ const ROUTES = [
   "meus-anuncios",
   "voce",
   "conversas",
+  "pedidos",
 ]
 // Rotas de detalhe montadas a partir do estado de exemplo.
 async function detailRoutes(page) {

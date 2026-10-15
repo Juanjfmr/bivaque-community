@@ -95,6 +95,20 @@ try {
               if (scene === "create") {
                 await page.locator('[data-action="create"]:visible').first().click()
                 await page.locator("#create-menu").waitFor({ state: "visible" })
+                // Rodada 11: "Contratar serviço" entrou no menu com aprovação visual do usuário
+                // e prova própria (round11, round01). Sem ele, o resto do menu continua idêntico.
+                if (stage === "candidate") {
+                  await page.locator("#create-menu.open").waitFor()
+                  const removed = await page.evaluate(() => {
+                    const item = document.querySelector(
+                      '#create-menu [data-action="create-request"]',
+                    )
+                    item?.remove()
+                    window.dispatchEvent(new Event("resize"))
+                    return Boolean(item)
+                  })
+                  assert(removed, "Create menu lost the Round 11 item")
+                }
               }
               const beforeSettle = performance.now()
               const early = await page.screenshot({

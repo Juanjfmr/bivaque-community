@@ -2,7 +2,7 @@ async function perform(action,value,el){
  globalActionElement=el;navigationPendingContext=navigationContext();
  if(typeof profileGlobalAction==='function'&&await profileGlobalAction(action,value,el))return;
  if(await messagingAction(action,value,el))return;
- if(await groupAction(action,value,el))return;
+ if(await groupAction(action,value,el))return;if(await requestAction(action,value))return;
  switch(action){
  case 'nav':if(dialog.open)await closeDialog(true);navigate(value);break;
  case 'home':if(dialog.open)await closeDialog(true);navigate('inicio');break;
