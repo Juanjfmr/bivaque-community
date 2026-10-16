@@ -63,6 +63,8 @@ async function perform(action,value,el){
  case 'open-draft':openItemEditor('desapego',null,value);break;
  case 'save-draft':await saveDraft();break;
  case 'submit-item':await submitItem();break;
+ case 'cover-photo':coverEditorPhoto(Number(value));break;
+ case 'lightbox':{if(value==='item'){const i=itemById(route.id);if(!i)break;const photos=(i.photos||[]).map(image).filter(Boolean),sel=$('.gallery button.selected');openLightbox(photos,Number(sel?.dataset.value||0),i.title);}else if(value==='biz'){const b=bizById(route.id);if(!b)break;openLightbox((b.photos||[]).map(image).filter(Boolean),0,b.name);}break;}
  case 'remove-photo':if(editor){editor.photos.splice(Number(value),1);editorDirty=true;$('#photo-previews').innerHTML=photoPreviews();}break;
  case 'open-item':{
   const i=itemById(value);if(!i)break;if(i.city!==state.city)mutate(()=>state.city=i.city,{redraw:false});if(!i.mine)mutate(()=>i.views=(i.views||0)+1,{redraw:false});remember('item',value);if(dialog.open)await closeDialog(true);navigate('anuncio',value);break;

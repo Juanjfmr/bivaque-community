@@ -1,0 +1,47 @@
+task_id: HTML-018
+objective: >
+  Rodada 18 permite arrastar e soltar fotos nos editores (com selo Capa e Tornar capa) e cria a
+  galeria em tela cheia de anuncios e negocios, com setas, contador, miniaturas, teclado,
+  deslizar no celular e foco preso, inspiradas nos componentes de envio de imagem do 21st.dev.
+authority:
+  - Pedido do usuario em 2026-10-15 para executar a ordem sugerida de componentes do 21st.dev
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    HEAD cb39b117. Fotos so pelo botao, sem escolher a capa; fotos do anuncio so em miniaturas
+    pequenas, sem tela cheia.
+allowed_paths:
+  - prototypes/bivaque-html/src/features/listings/
+  - prototypes/bivaque-html/src/features/businesses/detail.js
+  - prototypes/bivaque-html/src/app/handlers.js
+  - prototypes/bivaque-html/src/shell/
+  - prototypes/bivaque-html/src/styles/photos.css
+  - prototypes/bivaque-html/src/manifest.json
+  - prototypes/bivaque-html/docs/
+  - scripts/bivaque-html/
+  - docs/agents/tasks/HTML-018.task.yml
+forbidden:
+  - enviar fotos para fora do navegador
+  - mudar o processamento das fotos (limite, 12 MB, 1400 px, JPEG)
+  - editar a referencia HTML congelada, styles globais existentes, data/demo ou vendor
+  - fazer merge ou push sem confirmacao
+acceptance:
+  - Soltar adiciona fotos validas, recusa outros arquivos e respeita o limite mesmo com duas remessas seguidas
+  - Soltar fora da area nao abre o arquivo no navegador
+  - Tornar capa move a foto para o inicio e anuncia a mudanca
+  - Galeria com setas, contador, miniaturas, teclado e deslizar; Esc fecha mesmo depois de clicar na foto
+  - Voltar do navegador fecha so a galeria; atalhos de criar e buscar nao abrem por baixo dela
+proof:
+  - BIVAQUE_HTML_CONTEXTS=375-light,375-dark,768-light,1024-light,1440-light,1440-dark node scripts/bivaque-html/round18-proof.mjs
+  - node scripts/bivaque-html/round03-proof.mjs --full
+  - node scripts/bivaque-html/round09-proof.mjs --full
+  - node scripts/bivaque-html/round11-proof.mjs --full
+  - node scripts/bivaque-html/round01-proof.mjs
+  - npx pnpm@11.18.0 gate
+risk: fotos locais e galeria, so no prototipo
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: BLOCKED
+closure:
+  requires_runtime_evidence: true
