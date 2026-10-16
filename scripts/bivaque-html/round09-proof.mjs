@@ -1,5 +1,6 @@
-import { statSync } from "node:fs"
+import { readFileSync, statSync } from "node:fs"
 import { resolve } from "node:path"
+import { gzipSync } from "node:zlib"
 import { expect, go, runProof, settle, snapshot, toast } from "./proof-harness.mjs"
 
 // Rodada 09: melhorias invisíveis. Pacote Material reproduzível com 5 componentes a mais,
@@ -48,9 +49,10 @@ const COMPONENTS_KEPT = [
 ]
 // O pacote Material não cresce além do da Rodada 09 (431.826 bytes, 38 componentes).
 const MATERIAL_BUDGET = 431_826
-// HTML inteiro: a folga de 120 KB da Rodada 09 foi consumida pelas funcionalidades aprovadas
-// das Rodadas 10 a 13 (Rodada 13: cerca de 2,93 MB). Teto de 3 MB para o protótipo.
-const SIZE_BUDGET = 3_000_000
+// HTML inteiro: o teto vale para o que o celular baixa (gzip, como a Vercel entrega), não para
+// o arquivo bruto, dominado por fotos e fontes embutidas que quase não comprimem. Rodada 20:
+// 2,98 MB brutos e 1,80 MB transferidos. Teto de 2 MB, aprovado pelo usuário em 2026-10-16.
+const TRANSFER_BUDGET = 2_000_000
 
 const checkpoints = {
   async "material-components-registered"(page) {
@@ -59,10 +61,14 @@ const checkpoints = {
       [...COMPONENTS_KEPT, ...COMPONENTS_ADDED],
     )
     expect(!missing.length, `componentes não registrados: ${missing.join(", ")}`)
-    const size = statSync(
+    const html = readFileSync(
       resolve(import.meta.dirname, "../../prototypes/bivaque-html/dist/Bivaque_Material_Web.html"),
-    ).size
-    expect(size <= SIZE_BUDGET, `HTML acima do orçamento: ${size} > ${SIZE_BUDGET}`)
+    )
+    const transfer = gzipSync(html, { level: 9 }).length
+    expect(
+      transfer <= TRANSFER_BUDGET,
+      `HTML transferido acima do orçamento: ${transfer} > ${TRANSFER_BUDGET} (bruto ${html.length})`,
+    )
     const material = statSync(
       resolve(
         import.meta.dirname,

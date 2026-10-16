@@ -47,6 +47,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07i/CSS | `src/styles/photos.css` | Desapegos/imóveis | Rodada 18: arrastar e soltar fotos, capa e galeria em tela cheia |
 | 07j/CSS | `src/styles/count-up.css` | Frontend premium | Rodada 19: contador animado e avatares de quem indicou |
 | 07k/CSS | `src/styles/chat-bubbles.css` | Frontend premium | Rodada 20: balões agrupados, separador de dia, estado, reações e entrada |
+| 07l/CSS | `src/styles/segmented.css` | Frontend premium | Rodada 21: pílula deslizante dos filtros |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
@@ -80,6 +81,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 35/App | `src/shell/create-menu.js` | Frontend premium | Menu Criar, keyboard e posicionamento |
 | 35a/App | `src/shell/command-palette.js` | Início/busca/descoberta | Rodada 14: paleta Ctrl+K/⌘K e "/": busca agrupada, páginas, ações de criar e buscas recentes |
 | 35b/App | `src/shell/count-up.js` | Frontend premium | Rodada 19: `animateCounts` (número sobe ao aparecer, respeita movimento reduzido) e `avatarStack` |
+| 35c/App | `src/shell/segmented.js` | Frontend premium | Rodada 21: `segmentsAfterRender` (indicador desliza do filtro anterior para o novo) |
 | 36/App | `src/features/profile/settings.js` | Perfil/família/movimentação | Cidade, configurações e controles de protótipo |
 | 37/App | `src/features/listings/editor.js` | Desapegos/mercado | Fotos, edição, validação e rascunho de anúncio/imóvel |
 | 37a/App | `src/features/listings/photos.js` | Desapegos/imóveis | Rodada 18: processamento das fotos (botão e soltar), capa e galeria em tela cheia |
