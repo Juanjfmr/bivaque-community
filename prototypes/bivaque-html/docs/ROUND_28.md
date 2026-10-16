@@ -32,3 +32,39 @@ selo.
 
 Fecha o lote B. A revisão única, a bateria completa, a aprovação visual e o deploy vêm em
 seguida.
+
+## Revisão independente do lote B (Rodadas 25 a 28)
+
+Sem CRITICAL nem HIGH. Os 6 MEDIUM foram corrigidos:
+
+1. **Fundo da tela:** pausar, excluir ou desfazer um alerta não atualizava a faixa do catálogo
+   nem a contagem em Você. Agora atualiza.
+2. **Alertas duplicados:** a mesma busca escolhida em outra ordem (pets e mobiliado ×
+   mobiliado e pets) virava um segundo alerta. Agora a comparação ignora a ordem.
+3. **Mensagens escondidas:** "alerta de outra cidade" e "alerta não existe mais" apareciam no
+   aviso de rodapé, por baixo do diálogo. Agora aparecem dentro da lista.
+4. **"Continuar" sem etapa à vista:** com 3 ou mais etapas feitas, o botão apontava para uma
+   etapa que o cartão não mostrava. Agora o cartão mostra a etapa atual e as vizinhas.
+5. **Texto do selo:**
+   - "Nome e cidade" (sem bairro), como diz o ADR;
+   - a família entra por convite de quem já foi verificado;
+   - "O anúncio é de quem anuncia" e "Combine com cuidado" ficam identificados no código como
+     orientação de produto, não decisão de ADR.
+6. **Validação do assistente:** vagas, condomínio e data não eram validados. Agora são;
+   condomínio negativo não deixa seguir.
+
+LOW corrigidos:
+
+- plural de quarto e vaga na revisão;
+- contagem da etapa sem anúncio duplo ao leitor de tela;
+- `aria-haspopup` no ícone do negócio;
+- alvo de toque do selo com 32 px;
+- exemplo do simulador sem preço zero.
+
+| Prova (375 e 1440, claro) | Resultado |
+| --- | --- |
+| Rodada 25, com ordem dos filtros e fundo atualizado | PASS, 16/16 |
+| Rodada 26, com a etapa atual à vista | PASS, 10/10 |
+| Rodada 27, com condomínio inválido | PASS, 16/16 |
+| Rodadas 28 e 15 | PASS: 4/4, 10/10 |
+| Gate completo | PASS |

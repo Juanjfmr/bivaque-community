@@ -51,6 +51,19 @@ const checkpoints = {
     )
     expect(await visible(page, "submit-item"), "sem Publicar na revisão")
   },
+  async "invalid-condo-blocks-step-two"(page) {
+    await openWizard(page)
+    await choose(page, "item-ptype", "Casa")
+    await fill(page, "item-title", "Casa com valor de condomínio inválido")
+    await choose(page, "item-hood")
+    await fill(page, "item-beds", "2")
+    await fill(page, "item-area", "80")
+    await wizNext(page)
+    await fill(page, "item-price", "2000")
+    await fill(page, "item-condo", "-500")
+    await wizNext(page)
+    expect(/Etapa 2 de 5/.test(await wizCount(page)), "avançou com condomínio negativo")
+  },
   async "back-keeps-values"(page) {
     await openWizard(page)
     await choose(page, "item-ptype", "Casa")
