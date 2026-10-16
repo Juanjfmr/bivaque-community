@@ -38,3 +38,23 @@ reposicionava sem animação. Agora ele só reposiciona quando a medida muda.
 
 Pelo método enxuto, a revisão independente e as provas antigas rodam no fechamento do lote.
 Candidato: `18ea2670…`.
+
+## Ajuste pedido: slider de preço
+
+O usuário apontou que o slider de preço ficava grande demais no desktop: ocupava a largura da
+página toda, cerca de 1.060 px.
+
+- **Desktop (a partir de 1024 px):** o preço divide a linha com Bairro e Ordenar, com cerca de
+  530 px, e os anúncios sobem.
+- **Tablet (720 a 1023 px):** Bairro e Ordenar ficam lado a lado sem quebrar "Mais recentes", e
+  o preço fica embaixo.
+- **Celular:** não mudou.
+
+Na mesma passada, a prova pegou outra interrupção do deslizar. O check do chip escolhido muda a
+largura dele no meio do movimento. Agora o observador segue com a transição em vez de cortar.
+
+| Prova | Resultado |
+| --- | --- |
+| Rodada 21 (375, 768 e 1440), 3 execuções seguidas | PASS, 45/45 |
+| Rodada 10, slider de preço (375, 768 e 1440) | PASS, 36/36 |
+| Gate completo | PASS |
