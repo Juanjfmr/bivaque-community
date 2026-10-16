@@ -4,6 +4,7 @@ async function requestAction(action,value){
  case 'requests':if(dialog.open)await closeDialog(true);seedProviderRequests();navigate('pedidos');return true;
  case 'open-request':if(dialog.open)await closeDialog(true);navigate('pedido',value);return true;
  case 'simulate-proposals':simulateProposals();return true;
+ case 'proposal-sort':if(PROPOSAL_SORTS.some(([v])=>v===value)&&route.name==='pedido'){proposalSort={rid:route.id,sort:value};render();}return true;
  case 'submit-request':{
   if(!editor||editor.kind!=='request'||!canPost())return true;
   if(requestList().filter(r=>r.mine&&requestActive(r)).length>=REQUEST_OPEN_MAX){notify(`Você já tem ${REQUEST_OPEN_MAX} pedidos abertos. Encerre ou cancele um antes.`,'info');return true;}

@@ -42,6 +42,7 @@ e views atribuídas; Frontend mantém o shell quando não houver atribuição es
 | 07d/CSS | `src/styles/create-rail.css` | Frontend premium | Rodada 13: botão "+ Criar" da barra lateral e painel de criação do desktop |
 | 07e/CSS | `src/styles/command-palette.css` | Início/busca/descoberta | Rodada 14: paleta de busca e comandos do desktop |
 | 07f/CSS | `src/styles/plan-timeline.css` | Perfil/família/movimentação | Rodada 15: plano de chegada/saída como linha do tempo |
+| 07g/CSS | `src/styles/proposal-compare.css` | Negócios/serviços | Rodada 16: propostas lado a lado com linhas alinhadas e destaques |
 | 08/Vendor | `src/vendor/material-web-2.5.0.js` | Arquitetura | Bundle oficial gerado por `scripts/bivaque-html/build-material.mjs` (38 componentes, licenças preservadas); não editar à mão |
 | 09/Dados | `src/data/demo/material-version.js` | Arquitetura | Versão Material global |
 | 10/Dados | `src/data/demo/source.js` | Arquitetura | `SOURCE`, fixtures sintéticas globais |
